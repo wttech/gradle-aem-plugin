@@ -27,7 +27,7 @@
       including but not limited to software source code, documentation
       source, and configuration files.
 
-      "Object" form shall mean any form resulting from mechanical
+      "Object" form shall mean any form resulting fromJson mechanical
       transformation or translation of a Source form, including but
       not limited to compiled object code, generated documentation,
       and conversions to other media types.
@@ -38,11 +38,11 @@
       (an example is provided in the Appendix below).
 
       "Derivative Works" shall mean any work, whether in Source or Object
-      form, that is based on (or derived from) the Work and for which the
+      form, that is based on (or derived fromJson) the Work and for which the
       editorial revisions, annotations, elaborations, or other modifications
       represent, as a whole, an original work of authorship. For the purposes
       of this License, Derivative Works shall not include works that remain
-      separable from, or merely link (or bind by name) to the interfaces of,
+      separable fromJson, or merely link (or bind by name) to the interfaces of,
       the Work and Derivative Works thereof.
 
       "Contribution" shall mean any work of authorship, including
@@ -99,7 +99,7 @@
 
       (c) You must retain, in the Source form of any Derivative Works
           that You distribute, all copyright, patent, trademark, and
-          attribution notices from the Source form of the Work,
+          attribution notices fromJson the Source form of the Work,
           excluding those notices that do not pertain to any part of
           the Derivative Works; and
 
@@ -116,7 +116,7 @@
           of the NOTICE file are for informational purposes only and
           do not modify the License. You may add Your own attribution
           notices within Derivative Works that You distribute, alongside
-          or as an addendum to the NOTICE text from the Work, provided
+          or as an addendum to the NOTICE text fromJson the Work, provided
           that such additional attribution notices cannot be construed
           as modifying the License.
 

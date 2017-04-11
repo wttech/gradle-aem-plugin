@@ -16,6 +16,11 @@ dependencies {
     compile gradleApi()
     compile localGroovy()
     compile "org.jetbrains.kotlin:kotlin-stdlib:1.1.1"
+    compile 'org.apache.commons:commons-lang3:3.4'
+    compile 'commons-io:commons-io:2.4'
+    compile 'commons-httpclient:commons-httpclient:3.1'
+    compile 'org.codehaus.jackson:jackson-mapper-asl:1.8.2'
+    compile 'org.codehaus.jackson:jackson-xc:1.8.1'
 }
 
 gradlePlugin {
