@@ -1,5 +1,12 @@
 package com.cognifide.gradle.aem
 
-class GreetingPlugin : Plugin<Project> {
+import org.gradle.api.Plugin
+import org.gradle.api.Project
+
+class AemPlugin : Plugin<Project> {
+
+    override fun apply(project: Project) {
+        // initially empty
+    }
 
 }
