@@ -8,9 +8,14 @@ plugins {
 group 'com.cognifide.gradle'
 version '1.0.0'
 
+repositories {
+    mavenCentral()
+}
+
 dependencies {
     compile gradleApi()
     compile localGroovy()
+    compile "org.jetbrains.kotlin:kotlin-stdlib:1.1.1"
 }
 
 gradlePlugin {
