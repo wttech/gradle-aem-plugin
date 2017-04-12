@@ -2,16 +2,13 @@ package com.cognifide.gradle.aem
 
 class AemConfig {
 
-    val instances = mutableListOf(
-            AemInstance("http://localhost:4502", "admin", "admin", "author"),
-            AemInstance("http://localhost:4503", "admin", "admin", "publish")
-    )
+    var instances = mutableListOf<AemInstance>()
 
     fun instance(url: String, user: String = "admin", password: String = "admin", type: String = "default") {
         instances.add(AemInstance(url, user, password, type))
     }
 
-    var connectionTimeout = 5000
+    var deployConnectionTimeout = 5000
 
     /**
      * Force upload or install packages.
@@ -26,7 +23,7 @@ class AemConfig {
 
     var bundlePath = ""
 
-    val fileIgnores = mutableListOf(
+    var fileIgnores = mutableListOf(
             "**/.git",
             "**/.git/**",
             "**/.gitattributes",
@@ -40,16 +37,22 @@ class AemConfig {
             "SLING-INF/**"
     )
 
-    val fileExpands = mutableListOf(
+    var fileExpands = mutableListOf(
             "**/filter.xml",
             "**/properties.xml"
     )
 
-    val expandProperties = mutableMapOf<String, String>()
+    var expandProperties = mutableMapOf<String, String>()
 
     var vaultCommonPath = "src/main/vault/common"
 
     var vaultProfilePath = "src/main/vault/profile"
+
+    var localPackagePath = ""
+
+    var remotePackagePath = ""
+
+    var assemblyFilePattern = ""
 
 }
 

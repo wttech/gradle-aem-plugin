@@ -1,5 +1,8 @@
 package com.cognifide.gradle.aem
 
+import com.cognifide.gradle.aem.deploy.ActivateTask
+import com.cognifide.gradle.aem.deploy.InstallTask
+import com.cognifide.gradle.aem.deploy.UploadTask
 import com.cognifide.gradle.aem.pkg.bundle.JarEmbedder
 import com.cognifide.gradle.aem.pkg.task.AssemblePackage
 import com.cognifide.gradle.aem.pkg.task.CreatePackage
@@ -30,12 +33,24 @@ class AemPlugin : Plugin<Project> {
 
     override fun apply(project: Project) {
         project.plugins.apply(BasePlugin::class.java)
+
         project.extensions.create(CONFIG_EXTENSION, AemConfig::class.java)
+
         project.tasks.create(CreatePackage.NAME, CreatePackage::class.java)
         project.tasks.create(AssemblePackage.NAME, AssemblePackage::class.java)
+        project.tasks.create(UploadTask.NAME, UploadTask::class.java)
+        project.tasks.create(InstallTask.NAME, InstallTask::class.java)
+        project.tasks.create(ActivateTask.NAME, ActivateTask::class.java)
 
         setupConfigs(project)
         setupJarEmbedder(project)
+
+        // TODO automatically define order for clean,[aemCreatePackage,aemCreateAssembly],aemUpload,aemInstall,aemActivate
+        // TODO build.dependsOn aemCreatePackage ? (or user defined).. rather yes
+        /**
+        aemUpload + aemInstall = aemDeploy
+        aemUpload + aemInstall + aemActivate = aemDistribute
+         */
     }
 
     private fun setupConfigs(project: Project) {

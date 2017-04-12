@@ -54,7 +54,7 @@ class DeploySynchronizer(val instance: AemInstance, val config: AemConfig) {
 
     private fun createHttpClient(user: String, password: String): HttpClient {
         val client = HttpClient()
-        client.httpConnectionManager.params.connectionTimeout = config.connectionTimeout
+        client.httpConnectionManager.params.connectionTimeout = config.deployConnectionTimeout
         client.params.isAuthenticationPreemptive = true
         client.state.setCredentials(AuthScope.ANY, UsernamePasswordCredentials(user, password))
 
