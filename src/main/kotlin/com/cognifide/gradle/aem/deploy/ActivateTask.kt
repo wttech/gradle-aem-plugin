@@ -1,15 +1,12 @@
 package com.cognifide.gradle.aem.deploy
 
 import org.gradle.api.tasks.TaskAction
-import org.slf4j.LoggerFactory
 import java.io.IOException
 
-class ActivateTask : DeployTask() {
+open class ActivateTask : AbstractTask() {
 
     companion object {
         val NAME = "aemActivate"
-
-        private val LOG = LoggerFactory.getLogger(ActivateTask::class.java)
     }
 
     @TaskAction
@@ -18,7 +15,7 @@ class ActivateTask : DeployTask() {
             val path = determineRemotePackagePath(sync)
             val url = sync.jsonTargetUrl + path + "/?cmd=replicate"
 
-            LOG.info("Activating package using command: " + url)
+            logger.info("Activating package using command: " + url)
 
             val json: String
             try {
@@ -30,14 +27,14 @@ class ActivateTask : DeployTask() {
             val response: UploadResponse = try {
                 UploadResponse.fromJson(json)
             } catch (e: IOException) {
-                LOG.error("Malformed JSON response", e)
+                logger.error("Malformed JSON response", e)
                 throw DeployException("Package activation failed")
             }
 
             if (response.isSuccess) {
-                LOG.info("Package activated")
+                logger.info("Package activated")
             } else {
-                LOG.error("Package activation failed: + " + response.msg)
+                logger.error("Package activation failed: + " + response.msg)
                 throw DeployException(response.msg.orEmpty())
             }
         }

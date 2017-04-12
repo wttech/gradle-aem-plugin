@@ -1,26 +1,22 @@
 package com.cognifide.gradle.aem.deploy
 
 import org.gradle.api.tasks.TaskAction
-import org.slf4j.LoggerFactory
-import java.io.File
 import java.io.FileNotFoundException
 import java.io.IOException
 
-class UploadTask : DeployTask() {
+open class UploadTask : AbstractTask() {
 
     companion object {
         val NAME = "aemUpload"
-
-        private val LOG = LoggerFactory.getLogger(UploadTask::class.java)
     }
 
     @TaskAction
     fun upload() {
         deploy { sync ->
-            val file = File(determineLocalPackagePath())
+            val file = determineLocalPackage()
             val url = sync.jsonTargetUrl + "/?cmd=upload"
 
-            LOG.info("Uploading package at path '{}' to URL '{}'", file.path, url)
+            logger.info("Uploading package at path '{}' to URL '{}'", file.path, url)
 
             try {
                 val json = sync.post(url, mapOf(
@@ -30,9 +26,9 @@ class UploadTask : DeployTask() {
                 val response = UploadResponse.fromJson(json)
 
                 if (response.isSuccess) {
-                    LOG.info(response.msg)
+                    logger.info(response.msg)
                 } else {
-                    LOG.error(response.msg)
+                    logger.error(response.msg)
                     throw DeployException(response.msg.orEmpty())
                 }
             } catch (e: FileNotFoundException) {

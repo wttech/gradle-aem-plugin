@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem
 
-class AemConfig {
+open class AemConfig {
 
     var instances = mutableListOf<AemInstance>()
 
@@ -19,7 +19,7 @@ class AemConfig {
 
     var acHandling = "merge_preserve"
 
-    var contentPath = "src/main/aem"
+    var contentPath = "src/main/content"
 
     var bundlePath = ""
 

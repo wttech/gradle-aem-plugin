@@ -1,13 +1,10 @@
 package com.cognifide.gradle.aem.deploy
 
-import org.slf4j.LoggerFactory
 import java.util.regex.Pattern
 
 class InstallResponse(private val rawHtml: String) {
 
     companion object {
-        val LOG = LoggerFactory.getLogger(InstallResponse::class.java)
-
         val ERROR_PATTERN = Pattern.compile("<span class=\"E\"><b>E</b>&nbsp;(.+)</span>")
 
         val PROCESSING_ERROR_PATTERN = Pattern

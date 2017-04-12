@@ -1,10 +1,10 @@
-package com.cognifide.gradle.aem.pkg.task
+package com.cognifide.gradle.aem.pkg
 
 import com.cognifide.gradle.aem.AemPlugin
 import org.gradle.api.Project
 import org.gradle.api.tasks.Input
 
-class AssemblePackage : AbstractPackage() {
+open class AssembleTask : PackageTask() {
 
     companion object {
         val NAME = "aemAssemble"

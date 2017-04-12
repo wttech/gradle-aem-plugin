@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.pkg.bundle
+package com.cognifide.gradle.aem.pkg
 
 import com.cognifide.gradle.aem.AemPlugin
 import org.gradle.api.Project

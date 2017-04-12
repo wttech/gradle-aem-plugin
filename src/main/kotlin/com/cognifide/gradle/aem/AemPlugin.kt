@@ -1,17 +1,18 @@
 package com.cognifide.gradle.aem
 
-import com.cognifide.gradle.aem.deploy.ActivateTask
-import com.cognifide.gradle.aem.deploy.InstallTask
-import com.cognifide.gradle.aem.deploy.UploadTask
-import com.cognifide.gradle.aem.pkg.bundle.JarEmbedder
-import com.cognifide.gradle.aem.pkg.task.AssemblePackage
-import com.cognifide.gradle.aem.pkg.task.CreatePackage
+import com.cognifide.gradle.aem.deploy.*
+import com.cognifide.gradle.aem.pkg.JarEmbedder
+import com.cognifide.gradle.aem.pkg.AssembleTask
+import com.cognifide.gradle.aem.pkg.CreateTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.plugins.BasePlugin
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.JavaPluginConvention
+import org.gradle.api.plugins.osgi.OsgiPlugin
+import org.gradle.api.tasks.SourceSet
+import org.gradle.language.base.plugins.LifecycleBasePlugin
 
 class AemPlugin : Plugin<Project> {
 
@@ -26,31 +27,41 @@ class AemPlugin : Plugin<Project> {
 
         val CONFIG_EMBED = "aemEmbed"
 
-        val CONFIG_SOURCE_SETS = listOf("main", "test")
+        val CONFIG_SOURCE_SETS = listOf(SourceSet.MAIN_SOURCE_SET_NAME, SourceSet.TEST_SOURCE_SET_NAME)
 
         val VLT_PATH = "META-INF/vault"
     }
 
     override fun apply(project: Project) {
         project.plugins.apply(BasePlugin::class.java)
-
+        project.plugins.apply(OsgiPlugin::class.java)
         project.extensions.create(CONFIG_EXTENSION, AemConfig::class.java)
 
-        project.tasks.create(CreatePackage.NAME, CreatePackage::class.java)
-        project.tasks.create(AssemblePackage.NAME, AssemblePackage::class.java)
-        project.tasks.create(UploadTask.NAME, UploadTask::class.java)
-        project.tasks.create(InstallTask.NAME, InstallTask::class.java)
-        project.tasks.create(ActivateTask.NAME, ActivateTask::class.java)
-
+        setupTasks(project)
         setupConfigs(project)
         setupJarEmbedder(project)
+    }
 
-        // TODO automatically define order for clean,[aemCreatePackage,aemCreateAssembly],aemUpload,aemInstall,aemActivate
-        // TODO build.dependsOn aemCreatePackage ? (or user defined).. rather yes
-        /**
-        aemUpload + aemInstall = aemDeploy
-        aemUpload + aemInstall + aemActivate = aemDistribute
-         */
+    private fun setupTasks(project: Project) {
+        val clean = project.tasks.getByName(LifecycleBasePlugin.CLEAN_TASK_NAME)
+        val create = project.tasks.create(CreateTask.NAME, CreateTask::class.java)
+        val assemble = project.tasks.create(AssembleTask.NAME, AssembleTask::class.java)
+        val upload = project.tasks.create(UploadTask.NAME, UploadTask::class.java)
+        val install = project.tasks.create(InstallTask.NAME, InstallTask::class.java)
+        val activate = project.tasks.create(ActivateTask.NAME, ActivateTask::class.java)
+        val deploy = project.tasks.create(DeployTask.NAME, DeployTask::class.java)
+        val distribute = project.tasks.create(DistributeTask.NAME, DistributeTask::class.java)
+
+        create.dependsOn(project.tasks.getByName(BasePlugin.ASSEMBLE_TASK_NAME))
+        create.mustRunAfter(clean)
+        assemble.mustRunAfter(clean)
+
+        upload.mustRunAfter(create, assemble)
+        install.mustRunAfter(create, assemble, upload)
+        activate.mustRunAfter(create, assemble, upload, install)
+
+        deploy.dependsOn(upload, install)
+        distribute.dependsOn(upload, install, activate)
     }
 
     private fun setupConfigs(project: Project) {

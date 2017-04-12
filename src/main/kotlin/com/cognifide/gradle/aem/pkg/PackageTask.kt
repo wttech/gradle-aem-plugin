@@ -1,13 +1,10 @@
-package com.cognifide.gradle.aem.pkg.task
+package com.cognifide.gradle.aem.pkg
 
 import com.cognifide.gradle.aem.AemConfig
 import com.cognifide.gradle.aem.AemPlugin
-import com.cognifide.gradle.aem.pkg.bundle.JarCollector
 import org.apache.commons.lang3.text.StrSubstitutor
 import org.gradle.api.Project
 import org.gradle.api.file.DuplicatesStrategy
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.bundling.Zip
 import org.gradle.language.base.plugins.LifecycleBasePlugin
@@ -18,33 +15,33 @@ import java.util.*
  * TODO Input is also effect of SCR plugin / metadata?
  * TODO Remove effective* fields and implement config decorator which will be placed as field for each task
  */
-abstract class AbstractPackage : Zip() {
+abstract class PackageTask : Zip() {
 
-    @Input
+ //   @Input
     var expandProperties = mutableMapOf<String, String>()
 
-    @Input
+ //   @Input
     var vaultCommonPath = ""
 
-    @Input
+ //   @Input
     var vaultProfilePath = ""
 
-    @Input
+ //   @Input
     var fileExpands = mutableListOf<String>()
 
-    @Input
+//    @Input
     var fileIgnores = mutableListOf<String>()
 
-    @Input
+//    @Input
     var contentPath = ""
 
-    @Input
+  //  @Input
     var bundlePath = ""
 
-    @Internal
+ //   @Internal
     var bundleCollectors: List<() -> List<File>> = mutableListOf()
 
-    @Internal
+ //   @Internal
     protected val config: AemConfig = project.extensions.getByType(AemConfig::class.java)
 
     init {
@@ -76,33 +73,39 @@ abstract class AbstractPackage : Zip() {
     }
 
     open val effectiveFileExpands
-        @Input get() = config.fileExpands + fileExpands
+        get() = config.fileExpands + fileExpands
 
     open val effectiveFileIgnores
-        @Input get() = config.fileIgnores + fileIgnores
-
-    open val effectiveContentPath
-        @Input get() = determineContentPath(project)
+        get() = config.fileIgnores + fileIgnores
 
     open val effectiveFileExpandProperties
-        @Input get() = project.properties + config.expandProperties + expandProperties
+        get() = project.properties + config.expandProperties + expandProperties
 
-    fun determineContentPath(project: Project) {
-        project.projectDir.path + "/" + arrayOf(contentPath, config.contentPath).filter { !it.isNullOrBlank() }.first()
+    open val effectiveBundlePath
+        get() = arrayOf(this.bundlePath, config.bundlePath, "jcr_root/apps/" + project.rootProject.name + "/install")
+                .filter { !it.isNullOrBlank() }.first()
+
+    fun determineContentPath(project: Project) : String {
+        return project.projectDir.path + "/" + arrayOf(contentPath, config.contentPath).filter { !it.isNullOrBlank() }.first()
     }
 
     open fun includeContent(project: Project) {
-        from(effectiveContentPath, {
-            exclude(effectiveFileIgnores)
-            exclude(this.effectiveFileExpands)
+        val contentDir = File(determineContentPath(project))
+        if (!contentDir.exists()) {
+            logger.info("Package JCR root directory does not exist: ${contentDir.absolutePath}")
+        }
+
+        from(contentDir, {
+         //   exclude(effectiveFileIgnores)
+        //    exclude(this.effectiveFileExpands)
         })
 
-        from(effectiveContentPath, {
-            exclude(effectiveFileIgnores)
-            include(this.effectiveFileExpands)
-            filter { line -> replaceProperties(line) }
-            expand(mapOf("project" to project.properties))
-        })
+//        from(contentDir, {
+//            exclude(effectiveFileIgnores)
+//            include(this.effectiveFileExpands)
+//            filter { line -> replaceProperties(line) }
+//            expand(mapOf("project" to project.properties))
+//        })
     }
 
     open fun includeProfile(profileName: String) {
@@ -126,23 +129,18 @@ abstract class AbstractPackage : Zip() {
         }
     }
 
-    protected open fun getBundlePath(): Any {
-        return arrayOf(this.bundlePath, config.bundlePath, "jcr_root/apps/" + project.rootProject.name + "/install")
-                .filter { !it.isNullOrBlank() }.first()
-    }
-
     protected open fun replaceProperties(content: String) = StrSubstitutor.replace(content, effectiveFileExpandProperties)
 
     protected open fun collectBundles(project: Project) = JarCollector(project).all.toList()
 
     protected open fun collectBundles(): List<File> {
-        return bundleCollectors.fold(TreeSet<File>(), { files, it -> it(); files }).toList()
+        return bundleCollectors.fold(TreeSet<File>(), { files, it -> files.addAll(it()); files }).toList()
     }
 
     protected fun copyBundles(jars: Collection<File>) {
         if (!jars.isEmpty()) {
             logger.info("Copying bundles into AEM package: " + jars.toString())
-            into(getBundlePath()) { spec -> spec.from(jars) }
+            into(effectiveBundlePath) { spec -> spec.from(jars) }
         }
     }
 }

@@ -2,15 +2,15 @@ package com.cognifide.gradle.aem.deploy
 
 import org.gradle.api.tasks.TaskAction
 
-open class DeployTask : AbstractTask() {
+open class DistributeTask : AbstractTask() {
 
     companion object {
-        val NAME = "aemDeploy"
+        val NAME = "aemDistribute"
     }
 
     @TaskAction
-    fun deploy() {
-        logger.info("Package deploy completed.")
+    fun distribute() {
+        logger.info("Package distribution completed.")
         filterInstances().onEach { logger.info("Instance: $it") }
     }
 
