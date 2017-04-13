@@ -1,58 +1,72 @@
 package com.cognifide.gradle.aem
 
-open class AemConfig {
+import org.gradle.api.Project
+import java.io.Serializable
 
-    var instances = mutableListOf<AemInstance>()
+data class AemConfig(
+        var instances: MutableList<AemInstance> = mutableListOf<AemInstance>(),
+
+        var deployConnectionTimeout: Int = 5000,
+
+        var deployForce: Boolean = true,
+
+        var recursiveInstall: Boolean = true,
+
+        var acHandling: String = "merge_preserve",
+
+        var contentPath: String = "src/main/content",
+
+        var bundlePath: String = "",
+
+        var fileIgnores: MutableList<String> = mutableListOf(
+                "**/.git",
+                "**/.git/**",
+                "**/.gitattributes",
+                "**/.gitignore",
+                "**/.gitmodules", "**/.vlt",
+                "**/package.json",
+                "**/clientlibs/Gruntfile.js",
+                "**/node_modules/**",
+                "jcr_root/.vlt-sync-config.properties",
+                "jcr_root/var/**",
+                "SLING-INF/**"
+        ),
+
+        var vaultProperties: MutableMap<String, String> = mutableMapOf<String, String>(),
+
+        var vaultCommonPath: String = "src/main/vault/common",
+
+        var vaultProfilePath: String = "src/main/vault/profile",
+
+        var localPackagePath: String = "",
+
+        var remotePackagePath: String = ""
+) : Serializable {
+    companion object {
+        fun extendFromGlobal(project: Project, defaultsProvider: (AemConfig) -> Unit = {}): AemConfig {
+            val global = AemPlugin.globalExtension(project).config
+            val extended = global.copy()
+
+            applyProjectDefaults(extended, project)
+            defaultsProvider(extended)
+
+            return extended
+        }
+
+        private fun applyProjectDefaults(config: AemConfig, project: Project) {
+            if (config.bundlePath.isNullOrBlank()) {
+                config.bundlePath = "jcr_root/apps/" + project.rootProject.name + "/install"
+            }
+
+            if (!config.vaultProperties.contains("assembly.name")) {
+                config.vaultProperties.put("assembly.name", project.rootProject.name)
+            }
+        }
+    }
 
     fun instance(url: String, user: String = "admin", password: String = "admin", type: String = "default") {
         instances.add(AemInstance(url, user, password, type))
     }
-
-    var deployConnectionTimeout = 5000
-
-    /**
-     * Force upload or install packages.
-     */
-    var deployForce = true
-
-    var recursiveInstall = true
-
-    var acHandling = "merge_preserve"
-
-    var contentPath = "src/main/content"
-
-    var bundlePath = ""
-
-    var fileIgnores = mutableListOf(
-            "**/.git",
-            "**/.git/**",
-            "**/.gitattributes",
-            "**/.gitignore",
-            "**/.gitmodules", "**/.vlt",
-            "**/package.json",
-            "**/clientlibs/Gruntfile.js",
-            "**/node_modules/**",
-            "jcr_root/.vlt-sync-config.properties",
-            "jcr_root/var/**",
-            "SLING-INF/**"
-    )
-
-    var fileExpands = mutableListOf(
-            "**/filter.xml",
-            "**/properties.xml"
-    )
-
-    var expandProperties = mutableMapOf<String, String>()
-
-    var vaultCommonPath = "src/main/vault/common"
-
-    var vaultProfilePath = "src/main/vault/profile"
-
-    var localPackagePath = ""
-
-    var remotePackagePath = ""
-
-    var assemblyFilePattern = ""
 
 }
 
