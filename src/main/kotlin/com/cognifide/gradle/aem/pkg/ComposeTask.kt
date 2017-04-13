@@ -53,7 +53,7 @@ open class ComposeTask : Zip(), AemTask {
         val jars = bundleCollectors.fold(TreeSet<File>(), { files, it -> files.addAll(it()); files }).toList()
         if (jars.isEmpty()) {
             logger.info("No bundles to copy into AEM package")
-        } else{
+        } else {
             logger.info("Copying bundles into AEM package: " + jars.toString())
             into(config.bundlePath) { spec -> spec.from(jars) }
         }
@@ -92,12 +92,14 @@ open class ComposeTask : Zip(), AemTask {
         contentCollectors += {
             val contentDir = File(determineContentPath(project))
             if (!contentDir.exists()) {
-                logger.info("Package JCR root directory does not exist: ${contentDir.absolutePath}")
-            }
+                logger.info("Package JCR content directory does not exist: ${contentDir.absolutePath}")
+            } else {
+                logger.info("Copying JCR content from: ${contentDir.absolutePath}")
 
-            from(contentDir, {
-                exclude(config.fileIgnores)
-            })
+                from(contentDir, {
+                    exclude(config.fileIgnores)
+                })
+            }
         }
     }
 
