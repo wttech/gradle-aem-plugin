@@ -8,7 +8,6 @@ import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.plugins.BasePlugin
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.bundling.Zip
 import java.io.File
 import java.util.*
@@ -25,73 +24,91 @@ open class ComposeTask : Zip(), AemTask {
     @Internal
     var bundleCollectors: List<() -> List<File>> = mutableListOf()
 
+    @Internal
+    var contentCollectors: List<() -> Unit> = mutableListOf()
+
     @Input
     override val config = AemConfig.extendFromGlobal(project)
 
     init {
-        description = "Composes AEM package from JCR content and built JAR bundles."
+        description = "Composes AEM / CRX package from JCR content and built JAR bundles."
         group = AemPlugin.TASK_GROUP
 
         duplicatesStrategy = DuplicatesStrategy.WARN
-        project.afterEvaluate({ assemble(project) })
-    }
+        project.afterEvaluate({ includeProject(project) })
 
-    @TaskAction
-    override fun copy() {
-        compose()
-        super.copy()
-    }
-
-    protected open fun compose() {
-        copyBundles(collectBundles())
-    }
-
-    fun assemble(projectPath: String) {
-        assemble(project.findProject(projectPath))
-    }
-
-    fun assemble(project: Project) {
-        includeContent(project)
-        bundleCollectors += { collectBundles(project) }
-        dependsOn("${project.path}:${BasePlugin.ASSEMBLE_TASK_NAME}")
-    }
-
-    fun determineContentPath(project: Project): String {
-        return project.projectDir.path + "/" + config.contentPath
-    }
-
-    open fun includeContent(project: Project) {
-        val contentDir = File(determineContentPath(project))
-        if (!contentDir.exists()) {
-            logger.info("Package JCR root directory does not exist: ${contentDir.absolutePath}")
-        }
-
-        from(contentDir, {
-            exclude(config.fileIgnores)
+        project.gradle.projectsEvaluated({
+            fromContents()
+            fromBundles()
         })
     }
 
-    open fun includeProfile(profileName: String) {
-        includeVault(project.relativePath(config.vaultCommonPath))
-        includeVault(project.relativePath(config.vaultProfilePath + "/" + profileName))
+    private fun determineContentPath(project: Project): String {
+        val task = project.tasks.getByName(ComposeTask.NAME) as ComposeTask
+
+        return project.projectDir.path + "/" + task.config.contentPath
     }
 
-    open fun includeVault(vltPath: Any) {
+    private fun fromBundles() {
+        val jars = bundleCollectors.fold(TreeSet<File>(), { files, it -> files.addAll(it()); files }).toList()
+        if (jars.isEmpty()) {
+            logger.info("No bundles to copy into AEM package")
+        } else{
+            logger.info("Copying bundles into AEM package: " + jars.toString())
+            into(config.bundlePath) { spec -> spec.from(jars) }
+        }
+    }
+
+    private fun fromContents() {
+        contentCollectors.onEach { it() }
+    }
+
+    fun includeProject(projectPath: String) {
+        includeProject(project.findProject(projectPath))
+    }
+
+    fun includeProject(project: Project) {
+        includeContent(project)
+        includeBundles(project)
+
+        dependsOn("${project.path}:${BasePlugin.ASSEMBLE_TASK_NAME}")
+    }
+
+    fun includeBundles(projectPath: String) {
+        includeBundles(project.findProject(projectPath))
+    }
+
+    fun includeBundles(project: Project) {
+        bundleCollectors += {
+            JarCollector(project).all.toList()
+        }
+    }
+
+    fun includeContent(projectPath: String) {
+        includeContent(project.findProject(projectPath))
+    }
+
+    fun includeContent(project: Project) {
+        contentCollectors += {
+            val contentDir = File(determineContentPath(project))
+            if (!contentDir.exists()) {
+                logger.info("Package JCR root directory does not exist: ${contentDir.absolutePath}")
+            }
+
+            from(contentDir, {
+                exclude(config.fileIgnores)
+            })
+        }
+    }
+
+    fun includeVault(vltPath: Any) {
         into(AemPlugin.VLT_PATH) {
             from(vltPath)
         }
     }
 
-    protected open fun collectBundles(project: Project) = JarCollector(project).all.toList()
-
-    protected open fun collectBundles(): List<File> {
-        return bundleCollectors.fold(TreeSet<File>(), { files, it -> files.addAll(it()); files }).toList()
-    }
-
-    protected fun copyBundles(jars: Collection<File>) {
-        if (!jars.isEmpty()) {
-            logger.info("Copying bundles into AEM package: " + jars.toString())
-            into(config.bundlePath) { spec -> spec.from(jars) }
-        }
+    fun includeVaultProfile(profileName: String) {
+        includeVault(project.relativePath(config.vaultCommonPath))
+        includeVault(project.relativePath(config.vaultProfilePath + "/" + profileName))
     }
 }
