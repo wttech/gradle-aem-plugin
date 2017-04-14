@@ -33,7 +33,7 @@ open class ComposeTask : Zip(), AemTask {
     var contentCollectors: List<() -> Unit> = mutableListOf()
 
     @OutputFile
-    val vaultPropertiesFile = File(project.buildDir, "${NAME}/vault/properties.xml")
+    val vaultPropertiesFile = File(project.buildDir, "${NAME}/${AemPlugin.VLT_PATH}/properties.xml")
 
     @Input
     override val config = AemConfig.extendFromGlobal(project)
@@ -82,14 +82,14 @@ open class ComposeTask : Zip(), AemTask {
     private fun includeVaultProperties() {
         contentCollectors += {
             into(AemPlugin.VLT_PATH, {
-                from(vaultPropertiesFile) // TODO fix path
+                from("${project.buildDir}/${NAME}")
             })
         }
     }
 
     private fun generateVaultProperties() {
         val input = if (config.vaultPropertiesPath.isBlank()) {
-            javaClass.getResourceAsStream("/vault/properties.xml")
+            javaClass.getResourceAsStream("/${AemPlugin.VLT_PATH}/properties.xml")
         } else {
             val file = File(config.vaultPropertiesPath)
             if (!file.exists()) {
