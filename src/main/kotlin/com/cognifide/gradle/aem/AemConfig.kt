@@ -4,6 +4,7 @@ import org.gradle.api.Project
 import java.io.Serializable
 
 data class AemConfig(
+
         var instances: MutableList<AemInstance> = mutableListOf<AemInstance>(),
 
         var deployConnectionTimeout: Int = 5000,
@@ -34,6 +35,8 @@ data class AemConfig(
 
         var vaultProperties: MutableMap<String, String> = mutableMapOf<String, String>(),
 
+        var vaultPropertiesPath : String = "",
+
         var vaultCommonPath: String = "src/main/vault/common",
 
         var vaultProfilePath: String = "src/main/vault/profile",
@@ -41,14 +44,14 @@ data class AemConfig(
         var localPackagePath: String = "",
 
         var remotePackagePath: String = ""
+
 ) : Serializable {
     companion object {
-        fun extendFromGlobal(project: Project, defaultsProvider: (AemConfig) -> Unit = {}): AemConfig {
-            val global = AemPlugin.globalExtension(project).config
+        fun extendFromGlobal(project: Project): AemConfig {
+            val global = (project.extensions.getByName(AemExtension.NAME) as AemExtension).config
             val extended = global.copy()
 
             applyProjectDefaults(extended, project)
-            defaultsProvider(extended)
 
             return extended
         }

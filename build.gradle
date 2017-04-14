@@ -19,8 +19,7 @@ dependencies {
     compile 'org.apache.commons:commons-lang3:3.4'
     compile 'commons-io:commons-io:2.4'
     compile 'commons-httpclient:commons-httpclient:3.1'
-    compile 'org.codehaus.jackson:jackson-mapper-asl:1.8.2'
-    compile 'org.codehaus.jackson:jackson-xc:1.8.1'
+    compile 'com.fasterxml.jackson.module:jackson-module-kotlin:2.8.8'
 }
 
 gradlePlugin {

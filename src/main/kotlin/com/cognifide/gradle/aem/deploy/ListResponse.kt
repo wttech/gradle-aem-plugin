@@ -1,7 +1,9 @@
 package com.cognifide.gradle.aem.deploy
 
-import org.codehaus.jackson.map.ObjectMapper
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.databind.ObjectMapper
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 class ListResponse private constructor() {
 
     companion object {
@@ -10,15 +12,13 @@ class ListResponse private constructor() {
         }
     }
 
-    var isSuccess: Boolean = false
+    lateinit var results: List<ListResult>
 
-    var results: List<Result>? = null
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    class ListResult {
+        lateinit var pid: String
 
-
-    class Result {
-        var pid: String? = null
-
-        val path: String? = null
+        lateinit var path: String
     }
 
 }

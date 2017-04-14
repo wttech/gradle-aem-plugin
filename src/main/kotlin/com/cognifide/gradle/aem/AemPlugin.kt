@@ -27,16 +27,6 @@ class AemPlugin : Plugin<Project> {
         val CONFIG_SOURCE_SETS = listOf(SourceSet.MAIN_SOURCE_SET_NAME, SourceSet.TEST_SOURCE_SET_NAME)
 
         val VLT_PATH = "META-INF/vault"
-
-        fun globalExtension(project: Project): AemExtension {
-            val container = project.rootProject.extensions
-            var extension = container.findByName(AemExtension.NAME) as AemExtension?
-            if (extension == null) {
-                extension = container.create(AemExtension.NAME, AemExtension::class.java) as AemExtension
-            }
-
-            return extension
-        }
     }
 
     override fun apply(project: Project) {
@@ -53,7 +43,7 @@ class AemPlugin : Plugin<Project> {
     }
 
     private fun setupExtensions(project: Project) {
-        project.extensions.add(AemExtension.NAME, globalExtension(project))
+        project.extensions.create(AemExtension.NAME, AemExtension::class.java)
     }
 
     private fun setupTasks(project: Project) {

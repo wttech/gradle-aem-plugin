@@ -3,11 +3,16 @@ package com.cognifide.gradle.aem.pkg
 import com.cognifide.gradle.aem.AemConfig
 import com.cognifide.gradle.aem.AemPlugin
 import com.cognifide.gradle.aem.AemTask
+import com.fasterxml.jackson.databind.util.ISO8601Utils
+import groovy.text.SimpleTemplateEngine
+import org.apache.commons.lang3.text.StrSubstitutor
 import org.gradle.api.Project
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.plugins.BasePlugin
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.OutputFile
+import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.bundling.Zip
 import java.io.File
 import java.util.*
@@ -27,6 +32,9 @@ open class ComposeTask : Zip(), AemTask {
     @Internal
     var contentCollectors: List<() -> Unit> = mutableListOf()
 
+    @OutputFile
+    val vaultPropertiesFile = File(project.buildDir, "${NAME}/vault/properties.xml")
+
     @Input
     override val config = AemConfig.extendFromGlobal(project)
 
@@ -35,12 +43,24 @@ open class ComposeTask : Zip(), AemTask {
         group = AemPlugin.TASK_GROUP
 
         duplicatesStrategy = DuplicatesStrategy.WARN
-        project.afterEvaluate({ includeProject(project) })
 
-        project.gradle.projectsEvaluated({
-            fromContents()
-            fromBundles()
+        // After this project configured
+        project.afterEvaluate({
+            includeProject(project)
+            includeVaultProperties()
         })
+
+        // After all projects configured
+        project.gradle.projectsEvaluated({
+            fromBundles()
+            fromContents()
+        })
+    }
+
+    @TaskAction
+    override fun copy() {
+        generateVaultProperties()
+        super.copy()
     }
 
     private fun determineContentPath(project: Project): String {
@@ -57,6 +77,50 @@ open class ComposeTask : Zip(), AemTask {
             logger.info("Copying bundles into AEM package: " + jars.toString())
             into(config.bundlePath) { spec -> spec.from(jars) }
         }
+    }
+
+    private fun includeVaultProperties() {
+        contentCollectors += {
+            into(AemPlugin.VLT_PATH, {
+                from(vaultPropertiesFile) // TODO fix path
+            })
+        }
+    }
+
+    private fun generateVaultProperties() {
+        val input = if (config.vaultPropertiesPath.isBlank()) {
+            javaClass.getResourceAsStream("/vault/properties.xml")
+        } else {
+            val file = File(config.vaultPropertiesPath)
+            if (!file.exists()) {
+                throw PackageException("Vault properties template file does not exist: '${file.absolutePath}'")
+            }
+
+            file.inputStream()
+        }
+
+        val xml = try {
+            expandProperties(input.bufferedReader().use { it.readText() })
+        } catch (e: Exception) {
+            throw PackageException("Cannot generate vault properties file. Probably some variables are not bound", e)
+        }
+
+        vaultPropertiesFile.parentFile.mkdirs()
+        vaultPropertiesFile.printWriter().use { it.print(xml) }
+    }
+
+    private fun expandProperties(source: String): String {
+        val props = System.getProperties().entries.fold(mutableMapOf<String, String>(), { map, entry ->
+            map.put(entry.key.toString(), entry.value.toString()); map
+        }) + config.vaultProperties
+        val interpolated = StrSubstitutor.replace(source, props)
+        val template = SimpleTemplateEngine().createTemplate(interpolated).make(mapOf(
+                "project" to project,
+                "config" to config,
+                "created" to ISO8601Utils.format(Date())
+        ))
+
+        return template.toString()
     }
 
     private fun fromContents() {
@@ -104,9 +168,9 @@ open class ComposeTask : Zip(), AemTask {
     }
 
     fun includeVault(vltPath: Any) {
-        into(AemPlugin.VLT_PATH) {
+        into(AemPlugin.VLT_PATH, {
             from(vltPath)
-        }
+        })
     }
 
     fun includeVaultProfile(profileName: String) {

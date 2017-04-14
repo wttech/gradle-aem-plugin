@@ -1,14 +1,16 @@
 package com.cognifide.gradle.aem.deploy
 
-import org.codehaus.jackson.map.ObjectMapper
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.databind.ObjectMapper
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 class UploadResponse private constructor() {
 
     var isSuccess: Boolean = false
 
-    var msg: String? = null
+    lateinit var msg: String
 
-    var path: String? = null
+    lateinit var path: String
 
     companion object {
 
