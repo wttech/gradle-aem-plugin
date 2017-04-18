@@ -6,6 +6,8 @@ import com.cognifide.gradle.aem.AemTask
 import com.fasterxml.jackson.databind.util.ISO8601Utils
 import groovy.text.SimpleTemplateEngine
 import org.apache.commons.io.FileUtils
+import org.apache.commons.io.FilenameUtils
+import org.apache.commons.io.IOCase
 import org.apache.commons.io.IOUtils
 import org.apache.commons.lang3.text.StrSubstitutor
 import org.gradle.api.Project
@@ -93,12 +95,22 @@ open class ComposeTask : Zip(), AemTask {
     }
 
     private fun copyContentVaultFiles() {
-        val contentDir = File("${determineContentPath(project)}/${AemPlugin.VLT_PATH}")
-        if (contentDir.exists()) {
-            if (!vaultDir.exists()) {
-                vaultDir.mkdirs()
-            }
+        val contentPath: String = if (!config.vaultFilesPath.isNullOrBlank()) {
+            config.vaultFilesPath
+        } else {
+            "${determineContentPath(project)}/${AemPlugin.VLT_PATH}"
+        }
 
+        val contentDir = File(contentPath)
+        if (!contentDir.exists()) {
+            logger.info("Vault files directory does not exist. Generated defaults will be used.")
+        }
+
+        if (!vaultDir.exists()) {
+            vaultDir.mkdirs()
+        }
+
+        if (contentDir.exists()) {
             FileUtils.copyDirectory(contentDir, vaultDir)
         }
     }
@@ -120,11 +132,8 @@ open class ComposeTask : Zip(), AemTask {
         }
     }
 
-    /**
-     * TODO Filter files / only *.xml and ... ?
-     */
     private fun expandVaultFiles() {
-        for (file in vaultDir.listFiles()) {
+        for (file in vaultDir.listFiles { _, name -> config.vaultFilesExpanded.any { FilenameUtils.wildcardMatch(name, it, IOCase.INSENSITIVE) } }) {
             val content = try {
                 expandProperties(file.inputStream().bufferedReader().use { it.readText() })
             } catch (e: Exception) {

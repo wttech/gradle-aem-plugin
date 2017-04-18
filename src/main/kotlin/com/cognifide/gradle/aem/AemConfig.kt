@@ -35,7 +35,9 @@ data class AemConfig(
 
         var vaultProperties: MutableMap<String, String> = mutableMapOf<String, String>(),
 
-        var vaultPropertiesPath : String = "",
+        var vaultFilesPath : String = "",
+
+        var vaultFilesExpanded : MutableList<String> = mutableListOf("*.xml"),
 
         var vaultCommonPath: String = "src/main/vault/common",
 
