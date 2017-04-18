@@ -76,26 +76,23 @@ abstract class AbstractTask : DefaultTask(), AemTask {
 
         val url = sync.listPackagesUrl
 
-        logger.info("Asking AEM for uploaded packages: '$url'")
+        logger.info("Asking AEM for uploaded packages using URL: '$url'")
 
         val json = sync.post(sync.listPackagesUrl)
         val response = try {
             ListResponse.fromJson(json)
-        } catch (e : Exception) {
+        } catch (e: Exception) {
             throw DeployException("Cannot ask AEM for uploaded packages!")
         }
 
-        val pid = "${project.group}:${project.name}:${project.version}"
-        val result = response.results.find { result -> result.pid == pid }
-        if (result == null) {
-            throw DeployException("Package with PID '$pid' is not uploaded on AEM.")
+        val path = response.resolvePath(project)
+        if (path.isNullOrBlank()) {
+            throw DeployException("Package is not uploaded on AEM.")
         }
 
-        val path = result.path!!
+        logger.info("Package found on AEM at path: '$path'")
 
-        logger.info("Package to be installed found at path: '${path}'")
-
-        return path
+        return path!!
     }
 
 }

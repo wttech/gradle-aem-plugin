@@ -9,8 +9,8 @@
     <entry key="groupId">${project.group}</entry>
     <entry key="version">${project.version}</entry>
     <entry key="requiresRoot">false</entry>
-    <entry key="group">com.ford.social</entry>
+    <entry key="group">${project.group}</entry>
     <entry key="description">${project.description}</entry>
     <entry key="artifactId">${project.name}</entry>
-    <entry key="path">/etc/packages/${project.group}/${project.name}-${project.version}.zip</entry>
+    <!--<entry key="path">/etc/packages/${project.group}/${project.name}-${project.version}.zip</entry>-->
 </properties>

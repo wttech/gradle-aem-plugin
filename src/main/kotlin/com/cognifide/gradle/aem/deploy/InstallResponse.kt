@@ -19,18 +19,21 @@ class InstallResponse(private val rawHtml: String) {
         FAIL, SUCCESS, SUCCESS_WITH_ERRORS
     }
 
+    private val _errors: MutableList<String> = mutableListOf()
+
     init {
         findErrorsByPattern(PROCESSING_ERROR_PATTERN, true)
         findErrorsByPattern(ERROR_PATTERN, false)
     }
 
-    private val _errors: MutableList<String> = mutableListOf()
-
     private fun findErrorsByPattern(pattern: Pattern, printStacktrace: Boolean) {
         val matcher = pattern.matcher(rawHtml)
 
         while (matcher.find()) {
-            _errors.add(matcher.group(1))
+            val error = matcher.group(1)
+
+            _errors.add(error)
+
             if (printStacktrace) {
                 if (matcher.groupCount() > 1) {
                     val secondGroup = matcher.group(2)

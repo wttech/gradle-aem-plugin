@@ -4,6 +4,13 @@
 
 [![Apache License, Version 2.0, January 2004](https://img.shields.io/github/license/neva-dev/felix-search-webconsole-plugin.svg?label=License)](http://www.apache.org/licenses/)
 
+## Configuration
+
+### Command line parameters:
+
+* Deploying only to filtered group of instances: `-Daem.deploy.type=publish`, default: `*`.
+* Skipping installed package resolution by download name (eliminating conflicts): `-Daem.deploy.skipDownloadName=true`, default: `false`.
+
 ## About
 
 Compose CRX Package and deploy it on AEM instances.
