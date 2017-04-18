@@ -5,6 +5,8 @@ import com.cognifide.gradle.aem.AemPlugin
 import com.cognifide.gradle.aem.AemTask
 import com.fasterxml.jackson.databind.util.ISO8601Utils
 import groovy.text.SimpleTemplateEngine
+import org.apache.commons.io.FileUtils
+import org.apache.commons.io.IOUtils
 import org.apache.commons.lang3.text.StrSubstitutor
 import org.gradle.api.Project
 import org.gradle.api.file.DuplicatesStrategy
@@ -17,6 +19,7 @@ import org.gradle.api.tasks.bundling.Zip
 import org.reflections.Reflections
 import org.reflections.scanners.ResourcesScanner
 import java.io.File
+import java.io.FileOutputStream
 import java.util.*
 
 /**
@@ -49,7 +52,7 @@ open class ComposeTask : Zip(), AemTask {
         // After this project configured
         project.afterEvaluate({
             includeProject(project)
-            includeVaultProperties()
+            includeVaultFiles()
         })
 
         // After all projects configured
@@ -61,7 +64,9 @@ open class ComposeTask : Zip(), AemTask {
 
     @TaskAction
     override fun copy() {
-        copyVaultFiles()
+        copyContentVaultFiles()
+        copyMissingVaultFiles()
+        expandVaultFiles()
         super.copy()
     }
 
@@ -81,7 +86,7 @@ open class ComposeTask : Zip(), AemTask {
         }
     }
 
-    private fun includeVaultProperties() {
+    private fun includeVaultFiles() {
         contentCollectors += {
             into(AemPlugin.VLT_PATH, {
                 from("${project.buildDir}/${NAME}")
@@ -89,33 +94,47 @@ open class ComposeTask : Zip(), AemTask {
         }
     }
 
-    private fun copyVaultFiles() {
-        for (path in Reflections(AemPlugin.VLT_PATH, ResourcesScanner()).getResources { true }) {
-            copyVaultFile(path.substringAfterLast("${AemPlugin.VLT_PATH}/"))
+    private fun copyContentVaultFiles() {
+        val contentDir = File("${determineContentPath(project)}/${AemPlugin.VLT_PATH}")
+        if (contentDir.exists()) {
+            if (!vaultDir.exists()) {
+                vaultDir.mkdirs()
+            }
+
+            FileUtils.copyDirectory(contentDir, vaultDir)
         }
     }
 
-    private fun copyVaultFile(fileName : String) {
-        val input = if (config.vaultPropertiesPath.isBlank()) {
-            javaClass.getResourceAsStream("/${AemPlugin.VLT_PATH}/$fileName")
-        } else {
-            val file = File(config.vaultPropertiesPath)
-            if (!file.exists()) {
-                throw PackageException("Vault properties template file does not exist: '${file.absolutePath}'")
+    private fun copyMissingVaultFiles() {
+        for (resourcePath in Reflections(AemPlugin.VLT_PATH, ResourcesScanner()).getResources { true }) {
+            val outputFile = File(vaultDir, resourcePath.substringAfterLast("${AemPlugin.VLT_PATH}/"))
+            if (!outputFile.exists()) {
+                val input = javaClass.getResourceAsStream("/" + resourcePath)
+                val output = FileOutputStream(outputFile)
+
+                try {
+                    IOUtils.copy(input, output)
+                } finally {
+                    IOUtils.closeQuietly(input)
+                    IOUtils.closeQuietly(output)
+                }
+            }
+        }
+    }
+
+    /**
+     * TODO Filter files / only *.xml and ... ?
+     */
+    private fun expandVaultFiles() {
+        for (file in vaultDir.listFiles()) {
+            val content = try {
+                expandProperties(file.inputStream().bufferedReader().use { it.readText() })
+            } catch (e: Exception) {
+                throw PackageException("Cannot fetch vault files properly. Probably some variables are not bound", e)
             }
 
-            file.inputStream()
+            file.printWriter().use { it.print(content) }
         }
-
-        val content = try {
-            expandProperties(input.bufferedReader().use { it.readText() })
-        } catch (e: Exception) {
-            throw PackageException("Cannot generate vault properties file. Probably some variables are not bound", e)
-        }
-
-        val file = File(vaultDir, fileName)
-        file.parentFile.mkdirs()
-        file.printWriter().use { it.print(content) }
     }
 
     private fun expandProperties(source: String): String {
@@ -141,7 +160,7 @@ open class ComposeTask : Zip(), AemTask {
     }
 
     fun includeProject(project: Project) {
-        includeContent(project)
+        includeJcrRoot(project)
         includeBundles(project)
 
         dependsOn("${project.path}:${BasePlugin.ASSEMBLE_TASK_NAME}")
@@ -157,13 +176,13 @@ open class ComposeTask : Zip(), AemTask {
         }
     }
 
-    fun includeContent(projectPath: String) {
-        includeContent(project.findProject(projectPath))
+    fun includeJcrRoot(projectPath: String) {
+        includeJcrRoot(project.findProject(projectPath))
     }
 
-    fun includeContent(project: Project) {
+    fun includeJcrRoot(project: Project) {
         contentCollectors += {
-            val contentDir = File(determineContentPath(project))
+            val contentDir = File("${determineContentPath(project)}")
             if (!contentDir.exists()) {
                 logger.info("Package JCR content directory does not exist: ${contentDir.absolutePath}")
             } else {
@@ -171,6 +190,7 @@ open class ComposeTask : Zip(), AemTask {
 
                 from(contentDir, {
                     exclude(config.fileIgnores)
+                    // TODO exclude vault files being later appended
                 })
             }
         }
