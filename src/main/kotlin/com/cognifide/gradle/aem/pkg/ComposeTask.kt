@@ -88,9 +88,7 @@ open class ComposeTask : Zip(), AemTask {
 
     private fun includeVaultFiles() {
         contentCollectors += {
-            into(AemPlugin.VLT_PATH, {
-                from("${project.buildDir}/${NAME}")
-            })
+            into(AemPlugin.VLT_PATH, { spec -> spec.from(vaultDir) })
         }
     }
 
@@ -182,24 +180,22 @@ open class ComposeTask : Zip(), AemTask {
 
     fun includeJcrRoot(project: Project) {
         contentCollectors += {
-            val contentDir = File("${determineContentPath(project)}")
+            val contentDir = File("${determineContentPath(project)}/${AemPlugin.JCR_ROOT}")
             if (!contentDir.exists()) {
                 logger.info("Package JCR content directory does not exist: ${contentDir.absolutePath}")
             } else {
                 logger.info("Copying JCR content from: ${contentDir.absolutePath}")
 
-                from(contentDir, {
+                into(AemPlugin.JCR_ROOT) { spec ->
+                    spec.from(contentDir)
                     exclude(config.fileIgnores)
-                    // TODO exclude vault files being later appended
-                })
+                }
             }
         }
     }
 
     fun includeVault(vltPath: Any) {
-        into(AemPlugin.VLT_PATH, {
-            from(vltPath)
-        })
+        into(AemPlugin.VLT_PATH, { spec -> spec.from(vltPath) })
     }
 
     fun includeVaultProfile(profileName: String) {
