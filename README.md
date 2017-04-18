@@ -8,8 +8,8 @@
 
 ### Command line parameters:
 
-* Deploying only to filtered group of instances: `-Daem.deploy.type=publish`, default: `*`.
-* Skipping installed package resolution by download name (eliminating conflicts): `-Daem.deploy.skipDownloadName=true`, default: `false`.
+* Deploying only to filtered group of instances: `-Paem.deploy.type=publish`, default: `*`.
+* Skipping installed package resolution by download name (eliminating conflicts): `-Paem.deploy.skipDownloadName=true`, default: `false`.
 
 ## About
 

@@ -15,7 +15,10 @@ abstract class AbstractTask : DefaultTask(), AemTask {
     override val config = AemConfig.extendFromGlobal(project)
 
     protected fun deploy(deployer: (sync: DeploySynchronizer) -> Unit) {
-        filterInstances().forEach({ instance -> deployer(DeploySynchronizer(instance, config)) })
+        filterInstances().forEach({ instance ->
+            logger.info("Deploying on: $instance")
+            deployer(DeploySynchronizer(instance, config))
+        })
     }
 
     protected fun filterInstances(): List<AemInstance> {

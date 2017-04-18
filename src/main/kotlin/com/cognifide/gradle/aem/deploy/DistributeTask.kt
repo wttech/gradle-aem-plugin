@@ -17,7 +17,7 @@ open class DistributeTask : AbstractTask() {
     @TaskAction
     fun distribute() {
         logger.info("Package distribution completed.")
-        filterInstances().onEach { logger.info("Instance: $it") }
+        filterInstances().onEach { logger.info("Distributed on: $it") }
     }
 
 }

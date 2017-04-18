@@ -17,7 +17,7 @@ open class DeployTask : AbstractTask() {
     @TaskAction
     fun deploy() {
         logger.info("Package deploy completed.")
-        filterInstances().onEach { logger.info("Instance: $it") }
+        filterInstances().onEach { logger.info("Deployed on: $it") }
     }
 
 }
