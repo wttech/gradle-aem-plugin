@@ -18,6 +18,7 @@ import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.bundling.Zip
+import org.gradle.language.base.plugins.LifecycleBasePlugin
 import org.reflections.Reflections
 import org.reflections.scanners.ResourcesScanner
 import java.io.File
@@ -170,7 +171,8 @@ open class ComposeTask : Zip(), AemTask {
         includeJcrRoot(project)
         includeBundles(project)
 
-        dependsOn("${project.path}:${BasePlugin.ASSEMBLE_TASK_NAME}")
+        dependsOn("${project.path}:${LifecycleBasePlugin.ASSEMBLE_TASK_NAME}")
+        dependsOn("${project.path}:${LifecycleBasePlugin.CHECK_TASK_NAME}")
     }
 
     fun includeBundles(projectPath: String) {
