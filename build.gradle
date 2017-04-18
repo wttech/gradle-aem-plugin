@@ -20,6 +20,7 @@ dependencies {
     compile 'commons-io:commons-io:2.4'
     compile 'commons-httpclient:commons-httpclient:3.1'
     compile 'com.fasterxml.jackson.module:jackson-module-kotlin:2.8.8'
+    compile 'org.reflections:reflections:0.9.11'
 }
 
 gradlePlugin {

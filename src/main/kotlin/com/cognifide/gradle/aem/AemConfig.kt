@@ -58,7 +58,7 @@ data class AemConfig(
 
         private fun applyProjectDefaults(config: AemConfig, project: Project) {
             if (config.bundlePath.isNullOrBlank()) {
-                config.bundlePath = "jcr_root/apps/" + project.rootProject.name + "/install"
+                config.bundlePath = "/apps/" + project.rootProject.name + "/install"
             }
 
             if (!config.vaultProperties.contains("assembly.name")) {

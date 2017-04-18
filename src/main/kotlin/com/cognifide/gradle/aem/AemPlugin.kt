@@ -27,6 +27,8 @@ class AemPlugin : Plugin<Project> {
         val CONFIG_SOURCE_SETS = listOf(SourceSet.MAIN_SOURCE_SET_NAME, SourceSet.TEST_SOURCE_SET_NAME)
 
         val VLT_PATH = "META-INF/vault"
+
+        val JCR_ROOT = "jcr_root"
     }
 
     override fun apply(project: Project) {

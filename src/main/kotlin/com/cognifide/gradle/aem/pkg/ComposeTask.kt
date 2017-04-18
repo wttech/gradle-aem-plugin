@@ -11,9 +11,11 @@ import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.plugins.BasePlugin
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.OutputFile
+import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.bundling.Zip
+import org.reflections.Reflections
+import org.reflections.scanners.ResourcesScanner
 import java.io.File
 import java.util.*
 
@@ -32,8 +34,8 @@ open class ComposeTask : Zip(), AemTask {
     @Internal
     var contentCollectors: List<() -> Unit> = mutableListOf()
 
-    @OutputFile
-    val vaultPropertiesFile = File(project.buildDir, "${NAME}/${AemPlugin.VLT_PATH}/properties.xml")
+    @OutputDirectory
+    val vaultDir = File(project.buildDir, "${NAME}/${AemPlugin.VLT_PATH}")
 
     @Input
     override val config = AemConfig.extendFromGlobal(project)
@@ -59,7 +61,7 @@ open class ComposeTask : Zip(), AemTask {
 
     @TaskAction
     override fun copy() {
-        generateVaultProperties()
+        copyVaultFiles()
         super.copy()
     }
 
@@ -75,7 +77,7 @@ open class ComposeTask : Zip(), AemTask {
             logger.info("No bundles to copy into AEM package")
         } else {
             logger.info("Copying bundles into AEM package: " + jars.toString())
-            into(config.bundlePath) { spec -> spec.from(jars) }
+            into("${AemPlugin.JCR_ROOT}/${config.bundlePath}") { spec -> spec.from(jars) }
         }
     }
 
@@ -87,9 +89,15 @@ open class ComposeTask : Zip(), AemTask {
         }
     }
 
-    private fun generateVaultProperties() {
+    private fun copyVaultFiles() {
+        for (path in Reflections(AemPlugin.VLT_PATH, ResourcesScanner()).getResources { true }) {
+            copyVaultFile(path.substringAfterLast("${AemPlugin.VLT_PATH}/"))
+        }
+    }
+
+    private fun copyVaultFile(fileName : String) {
         val input = if (config.vaultPropertiesPath.isBlank()) {
-            javaClass.getResourceAsStream("/${AemPlugin.VLT_PATH}/properties.xml")
+            javaClass.getResourceAsStream("/${AemPlugin.VLT_PATH}/$fileName")
         } else {
             val file = File(config.vaultPropertiesPath)
             if (!file.exists()) {
@@ -99,14 +107,15 @@ open class ComposeTask : Zip(), AemTask {
             file.inputStream()
         }
 
-        val xml = try {
+        val content = try {
             expandProperties(input.bufferedReader().use { it.readText() })
         } catch (e: Exception) {
             throw PackageException("Cannot generate vault properties file. Probably some variables are not bound", e)
         }
 
-        vaultPropertiesFile.parentFile.mkdirs()
-        vaultPropertiesFile.printWriter().use { it.print(xml) }
+        val file = File(vaultDir, fileName)
+        file.parentFile.mkdirs()
+        file.printWriter().use { it.print(content) }
     }
 
     private fun expandProperties(source: String): String {
