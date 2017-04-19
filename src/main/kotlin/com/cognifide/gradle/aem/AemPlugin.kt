@@ -64,8 +64,8 @@ class AemPlugin : Plugin<Project> {
         install.mustRunAfter(satisfy, compose, upload)
         activate.mustRunAfter(satisfy, compose, upload, install)
 
-        deploy.dependsOn(upload, install)
-        distribute.dependsOn(upload, install, activate)
+        deploy.mustRunAfter(satisfy, compose)
+        distribute.mustRunAfter(satisfy, compose)
     }
 
     private fun setupConfigs(project: Project) {

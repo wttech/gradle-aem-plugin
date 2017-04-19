@@ -6,5 +6,5 @@ data class AemInstance(
         val url: String,
         val user: String,
         val password: String,
-        val type: String
+        val group: String
 ) : Serializable

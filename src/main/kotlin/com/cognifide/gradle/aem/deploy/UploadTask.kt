@@ -16,9 +16,9 @@ open class UploadTask : AbstractTask() {
 
     @TaskAction
     fun upload() {
-        deploy { sync ->
+        deploy({ sync ->
             uploadPackage(determineLocalPackage(), sync)
-        }
+        })
     }
 
 }

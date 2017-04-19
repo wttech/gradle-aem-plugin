@@ -14,17 +14,17 @@ import java.io.IOException
 abstract class AbstractTask : DefaultTask(), AemTask {
 
     @Input
-    override val config = AemConfig.extendFromGlobal(project)
+    final override val config = AemConfig.extendFromGlobal(project)
 
-    protected fun deploy(deployer: (sync: DeploySynchronizer) -> Unit) {
-        filterInstances().forEach({ instance ->
+    protected fun deploy(deployer: (sync: DeploySynchronizer) -> Unit, instances: List<AemInstance> = filterInstances()) {
+        instances.onEach({ instance ->
             logger.info("Deploying on: $instance")
+
             deployer(DeploySynchronizer(instance, config))
         })
     }
 
-    protected fun filterInstances(): List<AemInstance> {
-        val props = project.properties
+    protected fun filterInstances(instanceGroup: String = "*"): List<AemInstance> {
         val instances = if (config.instances.isNotEmpty()) {
             config.instances
         } else {
@@ -32,16 +32,16 @@ abstract class AbstractTask : DefaultTask(), AemTask {
         }
 
         return instances.filter { instance ->
-            val type = props.getOrElse("aem.deploy.type", { "*" }) as String
+            val group = project.properties.getOrElse("aem.deploy.group", { instanceGroup }) as String
 
-            FilenameUtils.wildcardMatch(instance.type, type, IOCase.INSENSITIVE)
+            FilenameUtils.wildcardMatch(instance.group, group, IOCase.INSENSITIVE)
         }
     }
 
     private fun instancesFromProps(): List<AemInstance> {
         return listOf(
-                instanceFromProps("author", 4502),
-                instanceFromProps("publish", 4503)
+                instanceFromProps("local-author", 4502),
+                instanceFromProps("local-publish", 4503)
         )
     }
 

@@ -16,9 +16,9 @@ open class InstallTask : AbstractTask() {
 
     @TaskAction
     fun install() {
-        deploy { sync ->
+        deploy({ sync ->
             installPackage(determineRemotePackagePath(sync), sync)
-        }
+        })
     }
 
 }

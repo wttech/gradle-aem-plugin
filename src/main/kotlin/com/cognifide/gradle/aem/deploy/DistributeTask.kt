@@ -16,8 +16,18 @@ open class DistributeTask : AbstractTask() {
 
     @TaskAction
     fun distribute() {
-        logger.info("Package distribution completed.")
-        filterInstances().onEach { logger.info("Distributed on: $it") }
+        val instances = filterInstances("*-author")
+
+        logger.info("Distributing package to instance(s) (${instances.size})")
+
+        deploy({ sync ->
+            val packagePath = uploadPackage(determineLocalPackage(), sync).path
+
+            installPackage(packagePath, sync)
+            activatePackage(packagePath, sync)
+        }, instances)
+
+        instances.onEach { logger.info("Distributed package on: $it") }
     }
 
 }

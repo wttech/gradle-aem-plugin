@@ -16,9 +16,9 @@ open class ActivateTask : AbstractTask() {
 
     @TaskAction
     fun activate() {
-        deploy { sync ->
+        deploy({ sync ->
             activatePackage(determineRemotePackagePath(sync), sync)
-        }
+        })
     }
 
 }

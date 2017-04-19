@@ -37,7 +37,7 @@ open class SatisfyTask : AbstractTask() {
 
     @TaskAction
     fun satisfy() {
-        deploy { sync ->
+        deploy({ sync ->
             logger.info("Providing packages from local and remote sources.")
 
             val packageFiles = providers.map { it() }
@@ -52,7 +52,7 @@ open class SatisfyTask : AbstractTask() {
             filterInstances().onEach { instance ->
                 packageFiles.onEach { logger.info("Satisfied: ${it.absolutePath} on: $instance") }
             }
-        }
+        })
     }
 
     fun download(url: String) {

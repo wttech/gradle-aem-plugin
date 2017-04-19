@@ -16,8 +16,17 @@ open class DeployTask : AbstractTask() {
 
     @TaskAction
     fun deploy() {
-        logger.info("Package deploy completed.")
-        filterInstances().onEach { logger.info("Deployed on: $it") }
+        val instances = filterInstances()
+
+        logger.info("Deploying package on instance(s) (${instances.size})")
+
+        deploy({ sync ->
+            val packagePath = uploadPackage(determineLocalPackage(), sync).path
+
+            installPackage(packagePath, sync)
+        })
+
+        instances.onEach { logger.info("Deployed package on: $it") }
     }
 
 }
