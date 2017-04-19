@@ -28,7 +28,7 @@ abstract class AbstractTask : DefaultTask(), AemTask {
         val instances = if (config.instances.isNotEmpty()) {
             config.instances
         } else {
-            instancesFromProps()
+            AemInstance.fromString(project.properties["aem.deploy.instances"] as String?)
         }
 
         return instances.filter { instance ->
@@ -36,24 +36,6 @@ abstract class AbstractTask : DefaultTask(), AemTask {
 
             FilenameUtils.wildcardMatch(instance.group, group, IOCase.INSENSITIVE)
         }
-    }
-
-    private fun instancesFromProps(): List<AemInstance> {
-        return listOf(
-                instanceFromProps("local-author", 4502),
-                instanceFromProps("local-publish", 4503)
-        )
-    }
-
-    private fun instanceFromProps(type: String, port: Int): AemInstance {
-        val props = project.properties
-
-        return AemInstance(
-                props.getOrElse("aem.deploy.$type.url", { "http://localhost:$port" }) as String,
-                props.getOrElse("aem.deploy.$type.user", { "admin" }) as String,
-                props.getOrElse("aem.deploy.$type.password", { "admin" }) as String,
-                type
-        )
     }
 
     protected fun determineLocalPackage(): File {

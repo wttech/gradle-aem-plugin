@@ -77,8 +77,9 @@ task contentDeploy(dependsOn: [clean, build, aemDeploy])
 
 ### Command line:
 
-* Deploying only to filtered group of instances: `-Paem.deploy.group=author`, default: `*`.
-* Skipping installed package resolution by download name (eliminating conflicts): `-Paem.deploy.skipDownloadName=true`, default: `false`.
+* Deploying only to filtered group of instances: `-Paem.deploy.group=integration-*`, default: `*`.
+* Deploying only to instances specified explicitly: `-Paem.deploy.instances=http://localhost:4502,admin,admin,local-author;http://localhost:4503,admin,local-admin`
+* Skipping installed package resolution by download name (eliminating conflicts): `-Paem.deploy.skipDownloadName=true`, default: `false`. Only matters when Vault properties file is customized.
 
 ## License
 
