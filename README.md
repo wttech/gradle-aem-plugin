@@ -31,13 +31,13 @@ AEM developer - it's time to meet Gradle!
 
 ## Configuration
 
-### Tasks
+Example configuration listed below assumes building project by single command `gradle contentDeploy`.
+
+### Root project (shared)
 
 ```
 plugins.withId 'cognifide.aem', {
 
-    // Global configuration
-    
     aem {
         config {
             contentPath = "src/main/content"
@@ -46,18 +46,32 @@ plugins.withId 'cognifide.aem', {
         }
     }
 
-    // Project specific configuration
-    
-    aemCompose {
-        config {
-            contentPath = "src/main/aem"
-        }
-    }
-    
-    // Other task specific configurations
-    
-    // ...
 }
+
+```
+
+### Sub project (specific)
+
+```
+defaultTasks = ['contentDeploy']
+
+apply plugin: 'cognifide.aem'
+
+aemSatisfy {
+    local("pkg/apm-2.0.0.zip")
+    // download("https://github.com/Cognifide/APM/releases/download/cqsm-2.0.0/apm-2.0.0.zip")
+}
+
+aemCompose {
+    config {
+        contentPath = "src/main/content"
+    }
+
+    includeProject ':example.bundle'
+}
+
+build.dependsOn aemCompose
+task contentDeploy(dependsOn: [clean, build, aemDeploy])
 
 ```
 
