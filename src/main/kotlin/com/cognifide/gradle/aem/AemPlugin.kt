@@ -55,13 +55,14 @@ class AemPlugin : Plugin<Project> {
         val activate = project.tasks.create(ActivateTask.NAME, ActivateTask::class.java)
         val deploy = project.tasks.create(DeployTask.NAME, DeployTask::class.java)
         val distribute = project.tasks.create(DistributeTask.NAME, DistributeTask::class.java)
+        val satisfy = project.tasks.create(SatisfyTask.NAME, SatisfyTask::class.java)
 
         compose.dependsOn(project.tasks.getByName(LifecycleBasePlugin.ASSEMBLE_TASK_NAME), project.tasks.getByName(LifecycleBasePlugin.CHECK_TASK_NAME))
         compose.mustRunAfter(project.tasks.getByName(LifecycleBasePlugin.CLEAN_TASK_NAME))
 
-        upload.mustRunAfter(compose)
-        install.mustRunAfter(compose, upload)
-        activate.mustRunAfter(compose, upload, install)
+        upload.mustRunAfter(satisfy, compose)
+        install.mustRunAfter(satisfy, compose, upload)
+        activate.mustRunAfter(satisfy, compose, upload, install)
 
         deploy.dependsOn(upload, install)
         distribute.dependsOn(upload, install, activate)

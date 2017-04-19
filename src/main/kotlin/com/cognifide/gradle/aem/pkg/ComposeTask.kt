@@ -41,7 +41,7 @@ open class ComposeTask : Zip(), AemTask {
     var contentCollectors: List<() -> Unit> = mutableListOf()
 
     @OutputDirectory
-    val vaultDir = File(project.buildDir, "${NAME}/${AemPlugin.VLT_PATH}")
+    private val vaultDir = File(project.buildDir, "$NAME/${AemPlugin.VLT_PATH}")
 
     @Input
     override val config = AemConfig.extendFromGlobal(project)
