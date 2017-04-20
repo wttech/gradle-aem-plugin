@@ -26,7 +26,7 @@ AEM developer - it's time to meet Gradle!
 * `aemInstall` - Install uploaded CRX package on AEM instance(s).
 * `aemActivate` - Replicate installed CRX package to other AEM instance(s).
 * `aemDeploy` - Upload & install CRX package into AEM instance(s). Primary, recommended for of deployment. Optimized version of `aemUpload aemInstall`.
-* `aemDistribute` - Upload, install & activate CRX package into AEM instances(s). Secondary form of deployment. Optimized version of `aemUpload aemInstall aemActivate -Paem.deploy.group=*-author`.
+* `aemDistribute` - Upload, install & activate CRX package into AEM instances(s). Secondary form of deployment. Optimized version of `aemUpload aemInstall aemActivate -Paem.deploy.instance.group=*-author`.
 * `aemSatisfy` - Upload & install dependant CRX package(s) before deployment.
 
 ## Configuration
@@ -77,9 +77,14 @@ task contentDeploy(dependsOn: [clean, build, aemDeploy])
 
 ### Command line:
 
-* Deploying only to filtered group of instances: `-Paem.deploy.group=integration-*`, default: `*`.
-* Deploying only to instances specified explicitly: `-Paem.deploy.instances=http://localhost:4502,admin,admin,local-author;http://localhost:4503,admin,local-admin`
-* Skipping installed package resolution by download name (eliminating conflicts): `-Paem.deploy.skipDownloadName=true`, default: `false`. Only matters when Vault properties file is customized.
+* Deploying only to filtered group of instances, default: `*`:
+  * `-Paem.deploy.instance.group=integration-*`
+  * `-Paem.deploy.instance.group=*-author`
+* Deploying only to instances specified explicitly: 
+  * `-Paem.deploy.instance.list=http://localhost:4502,admin,admin;http://localhost:4503,admin,admin`
+* Skipping installed package resolution by download name (eliminating conflicts): 
+  * `-Paem.deploy.skipDownloadName=true`, default: `false`. 
+  * Only matters when Vault properties file is customized.
 
 ## License
 

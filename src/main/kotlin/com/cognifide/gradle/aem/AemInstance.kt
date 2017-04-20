@@ -10,14 +10,22 @@ data class AemInstance(
 ) : Serializable {
 
     companion object {
-        fun fromString(values: String?): List<AemInstance> {
-            val instances = mutableListOf<AemInstance>()
 
-            // TODO parse
-            // http://localhost:4502,admin,admin,local-author;http://localhost:4503,admin,admin,local-publish
+        fun parse(str: String): List<AemInstance> {
+            return str.split(";").map { line ->
+                val (url, user, password) = line.split(",")
 
-            return instances
+                AemInstance(url, user, password, "command-line")
+            }
         }
+
+        fun defaults(): List<AemInstance> {
+            return listOf(
+                    AemInstance("http://localhost:4502", "admin", "admin", "local-author"),
+                    AemInstance("http://localhost:4503", "admin", "admin", "local-publish")
+            )
+        }
+
     }
 
 }

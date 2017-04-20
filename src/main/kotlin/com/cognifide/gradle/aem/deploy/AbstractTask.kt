@@ -25,14 +25,19 @@ abstract class AbstractTask : DefaultTask(), AemTask {
     }
 
     protected fun filterInstances(instanceGroup: String = "*"): List<AemInstance> {
-        val instances = if (config.instances.isNotEmpty()) {
-            config.instances
+        val instanceValues = project.properties["aem.deploy.instance.list"] as String?
+        if (!instanceValues.isNullOrBlank()) {
+            return AemInstance.parse(instanceValues!!)
+        }
+
+        val instances = if (config.instances.isEmpty()) {
+            return AemInstance.defaults()
         } else {
-            AemInstance.fromString(project.properties["aem.deploy.instances"] as String?)
+            config.instances
         }
 
         return instances.filter { instance ->
-            val group = project.properties.getOrElse("aem.deploy.group", { instanceGroup }) as String
+            val group = project.properties.getOrElse("aem.deploy.instance.group", { instanceGroup }) as String
 
             FilenameUtils.wildcardMatch(instance.group, group, IOCase.INSENSITIVE)
         }
