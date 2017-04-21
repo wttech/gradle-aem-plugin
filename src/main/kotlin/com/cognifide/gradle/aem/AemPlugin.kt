@@ -26,8 +26,6 @@ class AemPlugin : Plugin<Project> {
     companion object {
         val TASK_GROUP = "AEM"
 
-        val CONFIG_PROVIDE = "aemProvide"
-
         val CONFIG_INSTALL = "aemInstall"
 
         val CONFIG_EMBED = "aemEmbed"
@@ -91,14 +89,13 @@ class AemPlugin : Plugin<Project> {
     }
 
     private fun setupConfigs(project: Project) {
-        createConfig(project, CONFIG_PROVIDE, JavaPlugin.IMPLEMENTATION_CONFIGURATION_NAME, true)
-        createConfig(project, CONFIG_INSTALL, JavaPlugin.IMPLEMENTATION_CONFIGURATION_NAME, false)
-        createConfig(project, CONFIG_EMBED, JavaPlugin.IMPLEMENTATION_CONFIGURATION_NAME, false)
+        createConfig(project, CONFIG_INSTALL, JavaPlugin.IMPLEMENTATION_CONFIGURATION_NAME)
+        createConfig(project, CONFIG_EMBED, JavaPlugin.IMPLEMENTATION_CONFIGURATION_NAME)
     }
 
-    private fun createConfig(project: Project, configName: String, configToBeExtended: String, transitive: Boolean): Configuration {
+    private fun createConfig(project: Project, configName: String, configToBeExtended: String): Configuration {
         val result = project.configurations.create(configName, {
-            it.isTransitive = transitive
+            it.isTransitive = false
         })
         forConfiguration(project, configToBeExtended, { config ->
             config.extendsFrom(result)

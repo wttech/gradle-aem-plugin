@@ -13,6 +13,14 @@ import java.io.File
 
 /**
  * Update manifest being used by 'jar' task of Java Plugin.
+ *
+ * Embedding does not work when official 'osgi' plugin is used.
+ *
+ * TODO Support both official 'osgi' and 'org.dm.bundle' plugins.
+ * TODO Make it abstract, addInstruction will be covered by specific implementations.
+ *
+ * https://issues.gradle.org/browse/GRADLE-1107
+ * https://github.com/TomDmitriev/gradle-bundle-plugin
  */
 class ManifestConfigurer(val project: Project) {
 
@@ -57,11 +65,11 @@ class ManifestConfigurer(val project: Project) {
         val list = mutableListOf(".")
         configuration.forEach { file -> list.add("${AemPlugin.OSGI_EMBED}/${file.name}") }
 
-        return list.joinToString { "," }
+        return list.joinToString(",")
     }
 
     private fun includeResource(configuration: Configuration): String {
-        return configuration.map { file -> "${AemPlugin.OSGI_EMBED}/${file.name}=${file.path}" }.joinToString { "," }
+        return configuration.map { file -> "${AemPlugin.OSGI_EMBED}/${file.name}" }.joinToString(",")
     }
 
     private fun includeServiceComponents() {
