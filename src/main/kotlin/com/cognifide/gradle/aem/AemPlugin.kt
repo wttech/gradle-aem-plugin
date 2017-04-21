@@ -91,9 +91,9 @@ class AemPlugin : Plugin<Project> {
     }
 
     private fun setupConfigs(project: Project) {
-        createConfig(project, CONFIG_PROVIDE, JavaPlugin.COMPILE_CONFIGURATION_NAME, true)
-        createConfig(project, CONFIG_INSTALL, JavaPlugin.COMPILE_CONFIGURATION_NAME, false)
-        createConfig(project, CONFIG_EMBED, JavaPlugin.COMPILE_CONFIGURATION_NAME, false)
+        createConfig(project, CONFIG_PROVIDE, JavaPlugin.IMPLEMENTATION_CONFIGURATION_NAME, true)
+        createConfig(project, CONFIG_INSTALL, JavaPlugin.IMPLEMENTATION_CONFIGURATION_NAME, false)
+        createConfig(project, CONFIG_EMBED, JavaPlugin.IMPLEMENTATION_CONFIGURATION_NAME, false)
     }
 
     private fun createConfig(project: Project, configName: String, configToBeExtended: String, transitive: Boolean): Configuration {

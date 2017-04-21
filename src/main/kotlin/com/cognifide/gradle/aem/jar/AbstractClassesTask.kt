@@ -6,6 +6,7 @@ import org.apache.felix.scrplugin.ant.SCRDescriptorTask
 import org.apache.tools.ant.types.Path
 import org.gradle.api.DefaultTask
 import org.gradle.api.plugins.JavaPluginConvention
+import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.TaskAction
@@ -17,6 +18,7 @@ abstract class AbstractClassesTask : DefaultTask(), AemTask {
 
     override val config = AemConfig.extendFromGlobal(project)
 
+    @InputDirectory
     val classesDir = sourceSet.output.classesDir
 
     @OutputDirectory
