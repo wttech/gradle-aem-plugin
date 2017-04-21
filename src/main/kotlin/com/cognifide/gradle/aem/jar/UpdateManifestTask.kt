@@ -29,7 +29,10 @@ open class UpdateManifestTask : DefaultTask(), AemTask {
 
     private fun addInstruction(name: String, valueProvider: () -> String) {
         if (!manifest.instructions.containsKey(name)) {
-            manifest.instruction(name, valueProvider())
+            val value = valueProvider()
+            if (!value.isNullOrBlank()) {
+                manifest.instruction(name, value)
+            }
         }
     }
 
@@ -60,7 +63,7 @@ open class UpdateManifestTask : DefaultTask(), AemTask {
         val jar = project.convention.getPlugin(JavaPluginConvention::class.java)
         val mainSourceSet = jar.sourceSets.getByName(SourceSet.MAIN_SOURCE_SET_NAME)
         val osgiInfDir = File(mainSourceSet.output.classesDir, AemPlugin.OSGI_INF)
-        val xmlFiles = osgiInfDir.listFiles({ _, name -> name.endsWith("*.xml") })
+        val xmlFiles = osgiInfDir.listFiles({ _, name -> name.endsWith(".xml") })
 
         return xmlFiles.map { file -> "${AemPlugin.OSGI_INF}/${file.name}" }.joinToString(",")
     }
