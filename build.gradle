@@ -13,14 +13,23 @@ repositories {
 }
 
 dependencies {
+
+    // Regular dependencies
+
     compile gradleApi()
     compile localGroovy()
+
     compile "org.jetbrains.kotlin:kotlin-stdlib:1.1.1"
     compile 'org.apache.commons:commons-lang3:3.4'
     compile 'commons-io:commons-io:2.4'
     compile 'commons-httpclient:commons-httpclient:3.1'
     compile 'com.fasterxml.jackson.module:jackson-module-kotlin:2.8.8'
     compile 'org.reflections:reflections:0.9.11'
+    compile "org.apache.felix:org.apache.felix.scr.generator:1.16.0"
+    compile "org.apache.felix:org.apache.felix.scr.ant:1.16.0"
+
+    // SCR runtime dependencies
+    compile 'org.osgi:org.osgi.compendium:4.3.1'
 }
 
 gradlePlugin {

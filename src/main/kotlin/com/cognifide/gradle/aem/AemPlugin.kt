@@ -1,8 +1,10 @@
 package com.cognifide.gradle.aem
 
 import com.cognifide.gradle.aem.deploy.*
+import com.cognifide.gradle.aem.jar.ProcessClassesTask
+import com.cognifide.gradle.aem.jar.ProcessTestClassesTask
+import com.cognifide.gradle.aem.jar.UpdateManifestTask
 import com.cognifide.gradle.aem.pkg.ComposeTask
-import com.cognifide.gradle.aem.pkg.JarEmbedder
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
@@ -29,6 +31,8 @@ class AemPlugin : Plugin<Project> {
         val VLT_PATH = "META-INF/vault"
 
         val JCR_ROOT = "jcr_root"
+
+        val OSGI_INF = "OSGI-INF"
     }
 
     override fun apply(project: Project) {
@@ -36,7 +40,6 @@ class AemPlugin : Plugin<Project> {
         setupExtensions(project)
         setupTasks(project)
         setupConfigs(project)
-        setupHooks(project)
     }
 
     private fun setupDependentPlugins(project: Project) {
@@ -49,6 +52,18 @@ class AemPlugin : Plugin<Project> {
     }
 
     private fun setupTasks(project: Project) {
+        project.plugins.withType(JavaPlugin::class.java, {
+            val jar = project.tasks.getByName(JavaPlugin.JAR_TASK_NAME)
+            val processClasses = project.tasks.create(ProcessClassesTask.NAME, ProcessClassesTask::class.java)
+            val processTestClasses = project.tasks.create(ProcessTestClassesTask.NAME, ProcessTestClassesTask::class.java)
+            val updateManifest = project.tasks.create(UpdateManifestTask.NAME, UpdateManifestTask::class.java)
+
+            processClasses.dependsOn(project.tasks.getByName(JavaPlugin.CLASSES_TASK_NAME))
+            processTestClasses.dependsOn(project.tasks.getByName(JavaPlugin.TEST_CLASSES_TASK_NAME))
+            updateManifest.dependsOn(processClasses)
+            jar.dependsOn(processClasses, processTestClasses, updateManifest)
+        })
+
         val compose = project.tasks.create(ComposeTask.NAME, ComposeTask::class.java)
         val upload = project.tasks.create(UploadTask.NAME, UploadTask::class.java)
         val install = project.tasks.create(InstallTask.NAME, InstallTask::class.java)
@@ -98,12 +113,6 @@ class AemPlugin : Plugin<Project> {
                     }
                 }
             }
-        }
-    }
-
-    private fun setupHooks(project: Project) {
-        project.plugins.withType(JavaPlugin::class.java) {
-            project.tasks.getByName(JavaPlugin.JAR_TASK_NAME).doFirst { JarEmbedder(project).embed() }
         }
     }
 
