@@ -45,7 +45,19 @@ data class AemConfig(
 
         var localPackagePath: String = "",
 
-        var remotePackagePath: String = ""
+        var remotePackagePath: String = "",
+
+        var scrEnabled: Boolean = true,
+
+        var scrStrictMode: Boolean = false,
+
+        var scrScanClasses: Boolean = true,
+
+        var scrExcludes: String = "",
+
+        var scrIncludes: String = "",
+
+        var scrSpecVersion: String = ""
 
 ) : Serializable {
     companion object {
@@ -61,10 +73,6 @@ data class AemConfig(
         private fun applyProjectDefaults(config: AemConfig, project: Project) {
             if (config.bundlePath.isNullOrBlank()) {
                 config.bundlePath = "/apps/" + project.rootProject.name + "/install"
-            }
-
-            if (!config.vaultProperties.contains("assembly.name")) {
-                config.vaultProperties.put("assembly.name", project.rootProject.name)
             }
         }
     }

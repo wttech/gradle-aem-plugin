@@ -12,7 +12,6 @@ import org.apache.commons.io.IOUtils
 import org.apache.commons.lang3.text.StrSubstitutor
 import org.gradle.api.Project
 import org.gradle.api.file.DuplicatesStrategy
-import org.gradle.api.plugins.BasePlugin
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.OutputDirectory
@@ -151,6 +150,7 @@ open class ComposeTask : Zip(), AemTask {
         }) + config.vaultProperties
         val interpolated = StrSubstitutor.replace(source, props)
         val template = SimpleTemplateEngine().createTemplate(interpolated).make(mapOf(
+                "rootProject" to project.rootProject,
                 "project" to project,
                 "config" to config,
                 "created" to ISO8601Utils.format(Date())

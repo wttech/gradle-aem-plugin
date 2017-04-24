@@ -50,12 +50,6 @@ open class UpdateManifestTask : DefaultTask(), AemTask {
 
     val jarConvention = project.convention.getPlugin(JavaPluginConvention::class.java)!!
 
-    @TaskAction
-    fun updateManifest() {
-        includeEmbedJars()
-        includeServiceComponents()
-    }
-
     val embeddableJars: List<File>
         @InputFiles
         get() {
@@ -71,40 +65,17 @@ open class UpdateManifestTask : DefaultTask(), AemTask {
             return osgiInfDir.listFiles({ _, name -> name.endsWith(".xml") }).toList().sortedBy { it.name }
         }
 
-    private fun osgiPluginApplied() = project.plugins.hasPlugin(OSGI_PLUGIN_ID)
-
-    private fun bundlePluginApplied() = project.plugins.hasPlugin(BUNDLE_PLUGIN_ID)
-
-    private fun addInstruction(name: String, valueProvider: () -> String) {
-        if (osgiPluginApplied()) {
-            addInstruction(jar.manifest as OsgiManifest, name, valueProvider())
-        } else if (bundlePluginApplied()) {
-            addInstruction(project.extensions.getByType(BundleExtension::class.java), name, valueProvider())
-        } else {
-            project.logger.warn("Cannot apply specific OSGi instruction to JAR manifest, because neither "
-                    + "'$OSGI_PLUGIN_ID' nor '$BUNDLE_PLUGIN_ID' are applied to project '${project.name}'.")
-        }
-    }
-
-    private fun addInstruction(manifest: OsgiManifest, name: String, value: String) {
-        if (!manifest.instructions.containsKey(name)) {
-            if (!value.isNullOrBlank()) {
-                manifest.instruction(name, value)
-            }
-        }
-    }
-
-    @Suppress("unchecked_cast")
-    private fun addInstruction(config: BundleExtension, name: String, value: String) {
-        val instructions = config.instructions as Map<String, Any>
-        if (!instructions.contains(name)) {
-            if (!value.isNullOrBlank()) {
-                config.instruction(name, value)
-            }
-        }
+    @TaskAction
+    fun updateManifest() {
+        includeEmbedJars()
+        includeServiceComponents()
     }
 
     private fun includeEmbedJars() {
+        if (embeddableJars.isEmpty()) {
+            return
+        }
+
         if (osgiPluginApplied()) {
             project.logger.warn("As of Gradle 3.5, jar embedding does not work when 'osgi' plugin is used."
                     + " Consider using 'org.dm.bundle' instead.")
@@ -127,14 +98,50 @@ open class UpdateManifestTask : DefaultTask(), AemTask {
         return embeddableJars.map { jar -> "${AemPlugin.OSGI_EMBED}/${jar.name}" }.joinToString(",")
     }
 
+
     private fun includeServiceComponents() {
-        addInstruction(SERVICE_COMPONENT_INSTRUCTION, { serviceComponentInstruction() })
+        if (config.scrEnabled && serviceComponents.isNotEmpty()) {
+            addInstruction(SERVICE_COMPONENT_INSTRUCTION, { serviceComponentInstruction() })
+        }
     }
 
     private fun serviceComponentInstruction(): String {
         project.logger.info("Including service components: ${serviceComponents.map { it.name }}")
 
         return serviceComponents.map { file -> "${AemPlugin.OSGI_INF}/${file.name}" }.joinToString(",")
+    }
+
+    private fun addInstruction(name: String, valueProvider: () -> String) {
+        if (osgiPluginApplied()) {
+            addInstruction(jar.manifest as OsgiManifest, name, valueProvider())
+        } else if (bundlePluginApplied()) {
+            addInstruction(project.extensions.getByType(BundleExtension::class.java), name, valueProvider())
+        } else {
+            project.logger.warn("Cannot apply specific OSGi instruction to JAR manifest, because neither "
+                    + "'$OSGI_PLUGIN_ID' nor '$BUNDLE_PLUGIN_ID' are applied to project '${project.name}'.")
+        }
+    }
+
+    private fun addInstruction(manifest: OsgiManifest, name: String, value: String) {
+        if (!manifest.instructions.containsKey(name)) {
+            if (!value.isNullOrBlank()) {
+                manifest.instruction(name, value)
+            }
+        }
+    }
+
+    private fun osgiPluginApplied() = project.plugins.hasPlugin(OSGI_PLUGIN_ID)
+
+    private fun bundlePluginApplied() = project.plugins.hasPlugin(BUNDLE_PLUGIN_ID)
+
+    @Suppress("unchecked_cast")
+    private fun addInstruction(config: BundleExtension, name: String, value: String) {
+        val instructions = config.instructions as Map<String, Any>
+        if (!instructions.contains(name)) {
+            if (!value.isNullOrBlank()) {
+                config.instruction(name, value)
+            }
+        }
     }
 
 }

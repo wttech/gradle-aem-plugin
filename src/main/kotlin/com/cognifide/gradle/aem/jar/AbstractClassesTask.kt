@@ -20,7 +20,7 @@ abstract class AbstractClassesTask : DefaultTask(), AemTask {
     override val config = AemConfig.extendFromGlobal(project)
 
     @InputDirectory
-    val classesDir = sourceSet.output.classesDir
+    val classesDir: File = sourceSet.output.classesDir
 
     @OutputDirectory
     val osgiInfDir = File(classesDir, AemPlugin.OSGI_INF)
@@ -32,13 +32,23 @@ abstract class AbstractClassesTask : DefaultTask(), AemTask {
             return
         }
 
-        logger.info("Processing SCR annotations")
+        logger.info("Processing classes in source set '${sourceSet.name}' at path '${classesDir.path}'")
+
+        processServiceComponents()
+    }
+
+    private fun processServiceComponents() {
+        if (!config.scrEnabled) {
+            return
+        }
+
+        logger.info("Executing ant task to generate XML descriptors for service components")
+
         prepareDestDir()
         executeScrTask()
 
         val xmlFiles = osgiInfDir.listFiles().toList()
-        logger.info("Service component files generated (${xmlFiles.size})")
-        xmlFiles.onEach { logger.info(it.absolutePath) }
+        logger.info("Generated ${xmlFiles.size} file(s) at path: ${osgiInfDir.absolutePath}")
     }
 
     private fun prepareDestDir() {
@@ -53,9 +63,19 @@ abstract class AbstractClassesTask : DefaultTask(), AemTask {
         antTask.setSrcdir(classesDir)
         antTask.setDestdir(classesDir)
         antTask.setClasspath(Path(antProject, sourceSet.runtimeClasspath.asPath))
-        antTask.setStrictMode(false)
+        antTask.setStrictMode(config.scrStrictMode)
         antTask.project = antProject
-        antTask.isScanClasses = true
+        antTask.isScanClasses = config.scrScanClasses
+
+        if (!config.scrExcludes.isNullOrBlank()) {
+            antTask.setExcludes(config.scrExcludes)
+        }
+        if (!config.scrIncludes.isNullOrBlank()) {
+            antTask.setIncludes(config.scrIncludes)
+        }
+        if (!config.scrSpecVersion.isNullOrBlank()) {
+            antTask.setSpecVersion(config.scrSpecVersion)
+        }
 
         antTask.execute()
 
