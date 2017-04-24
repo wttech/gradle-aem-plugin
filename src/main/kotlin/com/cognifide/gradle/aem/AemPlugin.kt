@@ -1,9 +1,9 @@
 package com.cognifide.gradle.aem
 
 import com.cognifide.gradle.aem.deploy.*
-import com.cognifide.gradle.aem.jar.ManifestConfigurer
 import com.cognifide.gradle.aem.jar.ProcessClassesTask
 import com.cognifide.gradle.aem.jar.ProcessTestClassesTask
+import com.cognifide.gradle.aem.jar.UpdateManifestTask
 import com.cognifide.gradle.aem.pkg.ComposeTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -11,7 +11,6 @@ import org.gradle.api.artifacts.Configuration
 import org.gradle.api.plugins.BasePlugin
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.JavaPluginConvention
-import org.gradle.api.plugins.osgi.OsgiPlugin
 import org.gradle.api.tasks.SourceSet
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 
@@ -58,15 +57,15 @@ class AemPlugin : Plugin<Project> {
 
     private fun setupTasks(project: Project) {
         project.plugins.withType(JavaPlugin::class.java, {
-            project.plugins.withType(OsgiPlugin::class.java, {
-                val jar = project.tasks.getByName(JavaPlugin.JAR_TASK_NAME)
-                val processClasses = project.tasks.create(ProcessClassesTask.NAME, ProcessClassesTask::class.java)
-                val processTestClasses = project.tasks.create(ProcessTestClassesTask.NAME, ProcessTestClassesTask::class.java)
+            val jar = project.tasks.getByName(JavaPlugin.JAR_TASK_NAME)
+            val processClasses = project.tasks.create(ProcessClassesTask.NAME, ProcessClassesTask::class.java)
+            val processTestClasses = project.tasks.create(ProcessTestClassesTask.NAME, ProcessTestClassesTask::class.java)
+            val updateManifest = project.tasks.create(UpdateManifestTask.NAME, UpdateManifestTask::class.java)
 
-                processClasses.dependsOn(project.tasks.getByName(JavaPlugin.CLASSES_TASK_NAME))
-                processTestClasses.dependsOn(project.tasks.getByName(JavaPlugin.TEST_CLASSES_TASK_NAME))
-                jar.dependsOn(processClasses, processTestClasses).doFirst({ ManifestConfigurer(project).configure() })
-            })
+            processClasses.dependsOn(project.tasks.getByName(JavaPlugin.CLASSES_TASK_NAME))
+            processTestClasses.dependsOn(project.tasks.getByName(JavaPlugin.TEST_CLASSES_TASK_NAME))
+            updateManifest.dependsOn(processClasses, processTestClasses)
+            jar.dependsOn(processClasses, processTestClasses, updateManifest)
         })
 
         val compose = project.tasks.create(ComposeTask.NAME, ComposeTask::class.java)

@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.jar
 
 import com.cognifide.gradle.aem.AemConfig
+import com.cognifide.gradle.aem.AemPlugin
 import com.cognifide.gradle.aem.AemTask
 import org.apache.felix.scrplugin.ant.SCRDescriptorTask
 import org.apache.tools.ant.types.Path
@@ -22,7 +23,7 @@ abstract class AbstractClassesTask : DefaultTask(), AemTask {
     val classesDir = sourceSet.output.classesDir
 
     @OutputDirectory
-    val osgiInfDir = File(classesDir, "OSGI-INF")
+    val osgiInfDir = File(classesDir, AemPlugin.OSGI_INF)
 
     @TaskAction
     fun processClasses() {
@@ -32,11 +33,17 @@ abstract class AbstractClassesTask : DefaultTask(), AemTask {
         }
 
         logger.info("Processing SCR annotations")
+        prepareDestDir()
         executeScrTask()
 
         val xmlFiles = osgiInfDir.listFiles().toList()
         logger.info("Service component files generated (${xmlFiles.size})")
         xmlFiles.onEach { logger.info(it.absolutePath) }
+    }
+
+    private fun prepareDestDir() {
+        osgiInfDir.deleteRecursively()
+        osgiInfDir.mkdirs()
     }
 
     private fun executeScrTask(): SCRDescriptorTask {

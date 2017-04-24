@@ -2,12 +2,15 @@ package com.cognifide.gradle.aem.jar
 
 import com.cognifide.gradle.aem.AemConfig
 import com.cognifide.gradle.aem.AemPlugin
+import com.cognifide.gradle.aem.AemTask
 import org.dm.gradle.plugins.bundle.BundleExtension
-import org.gradle.api.Project
+import org.gradle.api.DefaultTask
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.plugins.osgi.OsgiManifest
+import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.SourceSet
+import org.gradle.api.tasks.TaskAction
 import org.gradle.jvm.tasks.Jar
 import java.io.File
 
@@ -20,9 +23,11 @@ import java.io.File
  * @see <https://issues.gradle.org/browse/GRADLE-1107>
  * @see <https://github.com/TomDmitriev/gradle-bundle-plugin>
  */
-class ManifestConfigurer(val project: Project) {
+open class UpdateManifestTask : DefaultTask(), AemTask {
 
     companion object {
+        val NAME = "aemUpdateManifest"
+
         val SERVICE_COMPONENT_INSTRUCTION = "Service-Component"
 
         val BUNDLE_CLASSPATH_INSTRUCTION = "Bundle-ClassPath"
@@ -34,16 +39,37 @@ class ManifestConfigurer(val project: Project) {
         val BUNDLE_PLUGIN_ID = "org.dm.bundle"
     }
 
+    init {
+        group = AemPlugin.TASK_GROUP
+        description = "Update OSGi manifest instructions"
+    }
+
+    override val config = AemConfig.extendFromGlobal(project)
+
     val jar = project.tasks.getByName(JavaPlugin.JAR_TASK_NAME) as Jar
 
     val jarConvention = project.convention.getPlugin(JavaPluginConvention::class.java)!!
 
-    val config = AemConfig.extendFromGlobal(project)
-
-    fun configure() {
+    @TaskAction
+    fun updateManifest() {
         includeEmbedJars()
         includeServiceComponents()
     }
+
+    val embeddableJars: List<File>
+        @InputFiles
+        get() {
+            return jar.project.configurations.getByName(AemPlugin.CONFIG_EMBED).files.sortedBy { it.name }
+        }
+
+    val serviceComponents: List<File>
+        @InputFiles
+        get() {
+            val mainSourceSet = jarConvention.sourceSets.getByName(SourceSet.MAIN_SOURCE_SET_NAME)
+            val osgiInfDir = File(mainSourceSet.output.classesDir, AemPlugin.OSGI_INF)
+
+            return osgiInfDir.listFiles({ _, name -> name.endsWith(".xml") }).toList().sortedBy { it.name }
+        }
 
     private fun osgiPluginApplied() = project.plugins.hasPlugin(OSGI_PLUGIN_ID)
 
@@ -84,22 +110,21 @@ class ManifestConfigurer(val project: Project) {
                     + " Consider using 'org.dm.bundle' instead.")
         }
 
-        val config = jar.project.configurations.getByName(AemPlugin.CONFIG_EMBED)
-        val files = config.files
+        project.logger.info("Embedding jar files: ${embeddableJars.map { it.name }}")
 
-        addInstruction(BUNDLE_CLASSPATH_INSTRUCTION, { bundleClassPath(files) })
-        addInstruction(INCLUDE_RESOURCE_INSTRUCTION, { includeResource(files) })
+        addInstruction(BUNDLE_CLASSPATH_INSTRUCTION, { bundleClassPath() })
+        addInstruction(INCLUDE_RESOURCE_INSTRUCTION, { includeResource() })
     }
 
-    private fun bundleClassPath(files: Set<File>): String {
+    private fun bundleClassPath(): String {
         val list = mutableListOf(".")
-        files.onEach { file -> list.add("${AemPlugin.OSGI_EMBED}/${file.name}") }
+        embeddableJars.onEach { jar -> list.add("${AemPlugin.OSGI_EMBED}/${jar.name}") }
 
         return list.joinToString(",")
     }
 
-    private fun includeResource(files: Set<File>): String {
-        return files.map { file -> "${AemPlugin.OSGI_EMBED}/${file.name}" }.joinToString(",")
+    private fun includeResource(): String {
+        return embeddableJars.map { jar -> "${AemPlugin.OSGI_EMBED}/${jar.name}" }.joinToString(",")
     }
 
     private fun includeServiceComponents() {
@@ -107,11 +132,9 @@ class ManifestConfigurer(val project: Project) {
     }
 
     private fun serviceComponentInstruction(): String {
-        val mainSourceSet = jarConvention.sourceSets.getByName(SourceSet.MAIN_SOURCE_SET_NAME)
-        val osgiInfDir = File(mainSourceSet.output.classesDir, AemPlugin.OSGI_INF)
-        val xmlFiles = osgiInfDir.listFiles({ _, name -> name.endsWith(".xml") })
+        project.logger.info("Including service components: ${serviceComponents.map { it.name }}")
 
-        return xmlFiles.map { file -> "${AemPlugin.OSGI_INF}/${file.name}" }.joinToString(",")
+        return serviceComponents.map { file -> "${AemPlugin.OSGI_INF}/${file.name}" }.joinToString(",")
     }
 
 }

@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.jar
 
+import com.cognifide.gradle.aem.AemPlugin
 import org.gradle.api.tasks.SourceSet
 
 open class ProcessTestClassesTask : AbstractClassesTask() {
@@ -9,6 +10,11 @@ open class ProcessTestClassesTask : AbstractClassesTask() {
 
     companion object {
         val NAME = "aemProcessTestClasses"
+    }
+
+    init {
+        group = AemPlugin.TASK_GROUP
+        description = "Process compiled classes of test source set."
     }
 
 }
