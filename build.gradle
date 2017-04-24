@@ -30,6 +30,7 @@ dependencies {
     compile 'org.dm.gradle:gradle-bundle-plugin:0.10.0'
 
     // SCR runtime dependencies
+
     compile 'org.osgi:org.osgi.compendium:4.3.1'
 }
 
