@@ -27,6 +27,7 @@ dependencies {
     compile 'org.reflections:reflections:0.9.11'
     compile "org.apache.felix:org.apache.felix.scr.generator:1.16.0"
     compile "org.apache.felix:org.apache.felix.scr.ant:1.16.0"
+    compile 'org.dm.gradle:gradle-bundle-plugin:0.10.0'
 
     // SCR runtime dependencies
     compile 'org.osgi:org.osgi.compendium:4.3.1'
