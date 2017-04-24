@@ -95,9 +95,8 @@ open class UpdateManifestTask : DefaultTask(), AemTask {
     }
 
     private fun includeResource(): String {
-        return embeddableJars.map { jar -> "${AemPlugin.OSGI_EMBED}/${jar.name}" }.joinToString(",")
+        return embeddableJars.map { jar -> "${AemPlugin.OSGI_EMBED}/${jar.name}=${jar.path}" }.joinToString(",")
     }
-
 
     private fun includeServiceComponents() {
         if (config.scrEnabled && serviceComponents.isNotEmpty()) {
