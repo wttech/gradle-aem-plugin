@@ -199,7 +199,7 @@ open class ComposeTask : Zip(), AemTask {
 
                 into(AemPlugin.JCR_ROOT) { spec ->
                     spec.from(contentDir)
-                    exclude(config.fileIgnores)
+                    exclude(config.contentFileIgnores)
                 }
             }
         }

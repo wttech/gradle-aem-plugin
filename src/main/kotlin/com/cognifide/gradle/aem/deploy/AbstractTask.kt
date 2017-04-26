@@ -51,14 +51,12 @@ abstract class AbstractTask : DefaultTask(), AemTask {
             }
         }
 
-        val distPath = "${project.buildDir.path}/distributions"
-        val typicalPath = "$distPath/${project.name}-${project.version}.zip"
-        val typicalFile = File(typicalPath)
+        val typicalFile = File("${project.buildDir.path}/distributions/${project.name}-${project.version}.zip")
         if (typicalFile.exists()) {
             return typicalFile
         }
 
-        throw DeployException("Local package not found under path: '$typicalPath'. Is it built already?")
+        throw DeployException("Local package not found under path: '${typicalFile.absolutePath}'. Is it built already?")
     }
 
     protected fun determineRemotePackagePath(sync: DeploySynchronizer): String {
