@@ -23,6 +23,7 @@ AEM developer - it's time to meet Gradle!
 ## Configuration
 
 Recommended way to start using Gradle AEM Plugin is to clone and customize [example project](https://github.com/Cognifide/gradle-aem-example).
+All configuration options are listed [here](src/main/kotlin/com/cognifide/gradle/aem/AemConfig.kt).
 
 Example configuration listed below assumes building project by single command `gradle contentDeploy` or just `gradle`.
 
