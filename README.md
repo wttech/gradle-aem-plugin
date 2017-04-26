@@ -77,7 +77,7 @@ task contentDeploy(dependsOn: [clean, build, aemDeploy])
 * `aemUpload` - Upload composed CRX package into AEM instance(s).
 * `aemInstall` - Install uploaded CRX package on AEM instance(s).
 * `aemActivate` - Replicate installed CRX package to other AEM instance(s).
-* `aemDeploy` - Upload & install CRX package into AEM instance(s). Primary, recommended for of deployment. Optimized version of `aemUpload aemInstall`.
+* `aemDeploy` - Upload & install CRX package into AEM instance(s). Primary, recommended form of deployment. Optimized version of `aemUpload aemInstall`.
 * `aemDistribute` - Upload, install & activate CRX package into AEM instances(s). Secondary form of deployment. Optimized version of `aemUpload aemInstall aemActivate -Paem.deploy.instance.group=*-author`.
 * `aemSatisfy` - Upload & install dependant CRX package(s) before deployment.
 
