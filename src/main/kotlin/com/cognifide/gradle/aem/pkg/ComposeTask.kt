@@ -24,9 +24,6 @@ import java.io.File
 import java.io.FileOutputStream
 import java.util.*
 
-/**
- * TODO Input is also effected by SCR plugin / metadata?
- */
 open class ComposeTask : Zip(), AemTask {
 
     companion object {
@@ -137,7 +134,7 @@ open class ComposeTask : Zip(), AemTask {
             val content = try {
                 expandProperties(file.inputStream().bufferedReader().use { it.readText() })
             } catch (e: Exception) {
-                throw PackageException("Cannot fetch vault files properly. Probably some variables are not bound", e)
+                throw PackageException("Cannot expand Vault files properly. Probably some variables are not bound", e)
             }
 
             file.printWriter().use { it.print(content) }
