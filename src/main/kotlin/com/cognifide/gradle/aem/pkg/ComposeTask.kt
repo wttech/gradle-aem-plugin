@@ -113,6 +113,10 @@ open class ComposeTask : Zip(), AemTask {
     }
 
     private fun copyMissingVaultFiles() {
+        if (!config.vaultCopyMissingFiles) {
+            return
+        }
+
         for (resourcePath in Reflections(AemPlugin.VLT_PATH, ResourcesScanner()).getResources { true }) {
             val outputFile = File(vaultDir, resourcePath.substringAfterLast("${AemPlugin.VLT_PATH}/"))
             if (!outputFile.exists()) {

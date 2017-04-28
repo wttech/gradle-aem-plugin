@@ -62,6 +62,11 @@ data class AemConfig(
     ),
 
     /**
+     * Ensures that for directory 'META-INF/vault' default files will be generated when missing: 'config.xml', 'filter.xml', 'properties.xml' and 'settings.xml'.
+     */
+    var vaultCopyMissingFiles : Boolean = true,
+
+    /**
      * Define here custom properties that can be used in Vault files like 'properties.xml'.
      */
     var vaultProperties: MutableMap<String, String> = mutableMapOf<String, String>(),
