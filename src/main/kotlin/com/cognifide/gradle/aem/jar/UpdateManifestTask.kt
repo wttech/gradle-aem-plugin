@@ -61,8 +61,13 @@ open class UpdateManifestTask : DefaultTask(), AemTask {
         get() {
             val mainSourceSet = jarConvention.sourceSets.getByName(SourceSet.MAIN_SOURCE_SET_NAME)
             val osgiInfDir = File(mainSourceSet.output.classesDir, AemPlugin.OSGI_INF)
+            val files = osgiInfDir.listFiles({ _, name -> name.endsWith(".xml") })
 
-            return osgiInfDir.listFiles({ _, name -> name.endsWith(".xml") }).toList().sortedBy { it.name }
+            if (files == null) {
+                return listOf()
+            } else {
+                return files.toList().sortedBy { it.name }
+            }
         }
 
     @TaskAction

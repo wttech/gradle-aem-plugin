@@ -130,7 +130,9 @@ open class ComposeTask : Zip(), AemTask {
     }
 
     private fun expandVaultFiles() {
-        for (file in vaultDir.listFiles { _, name -> config.vaultFilesExpanded.any { FilenameUtils.wildcardMatch(name, it, IOCase.INSENSITIVE) } }) {
+        val files = vaultDir.listFiles { _, name -> config.vaultFilesExpanded.any { FilenameUtils.wildcardMatch(name, it, IOCase.INSENSITIVE) } } ?: return
+
+        for (file in files) {
             val content = try {
                 expandProperties(file.inputStream().bufferedReader().use { it.readText() })
             } catch (e: Exception) {
