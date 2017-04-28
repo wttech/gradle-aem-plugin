@@ -7,11 +7,13 @@ open class DistributeTask : AbstractTask() {
 
     companion object {
         val NAME = "aemDistribute"
+
+        val INSTANCE_FILTER_AUTHOR = "*-author"
     }
 
     init {
         group = AemPlugin.TASK_GROUP
-        description = "Distributes AEM package to instance(s). Upload, install then activate."
+        description = "Distributes AEM package to instance(s). Upload, install then activate only for instances with group '$INSTANCE_FILTER_AUTHOR'."
     }
 
     @TaskAction
@@ -21,7 +23,7 @@ open class DistributeTask : AbstractTask() {
 
             installPackage(packagePath, sync)
             activatePackage(packagePath, sync)
-        }, filterInstances("*-author"))
+        }, filterInstances(INSTANCE_FILTER_AUTHOR))
     }
 
 }

@@ -43,7 +43,7 @@ open class ComposeTask : Zip(), AemTask {
     override val config = AemConfig.extendFromGlobal(project)
 
     init {
-        description = "Composes AEM / CRX package from JCR content and built JAR bundles."
+        description = "Composes AEM package from JCR content and built OSGi bundles"
         group = AemPlugin.TASK_GROUP
 
         duplicatesStrategy = DuplicatesStrategy.WARN
