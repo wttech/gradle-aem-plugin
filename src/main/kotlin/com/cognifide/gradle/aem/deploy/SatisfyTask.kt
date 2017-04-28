@@ -71,19 +71,23 @@ open class SatisfyTask : AbstractTask() {
         provide {
             val file = File(downloadDir, FilenameUtils.getName(url))
 
-            logger.info("Downloading package from URL: $url")
+            if (file.exists()) {
+                logger.info("Reusing previously downloaded package from URL: $url")
+            } else {
+                logger.info("Downloading package from URL: $url")
 
-            val out = BufferedOutputStream(FileOutputStream(file))
-            val connection = URL(url).openConnection()
+                val out = BufferedOutputStream(FileOutputStream(file))
+                val connection = URL(url).openConnection()
 
-            configurer(connection)
-            connection.getInputStream().use { input ->
-                out.use { fileOut ->
-                    input.copyTo(fileOut)
+                configurer(connection)
+                connection.getInputStream().use { input ->
+                    out.use { fileOut ->
+                        input.copyTo(fileOut)
+                    }
                 }
-            }
 
-            logger.info("Packaged downloaded into path: ${file.absolutePath}")
+                logger.info("Packaged downloaded into path: ${file.absolutePath}")
+            }
 
             file
         }

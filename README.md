@@ -51,6 +51,10 @@ plugins.withId 'cognifide.aem', {
 
 ```
 
+Instances configuration can be even omitted, then *http://localhost:4502* and *http://localhost:4503* will be used by default.
+Content path can also be skipped, because value above is also default. This is only an example how to customize particular values.
+
+
 ### Sub project (specific)
 
 ```
@@ -59,8 +63,8 @@ defaultTasks = ['contentDeploy']
 apply plugin: 'cognifide.aem'
 
 aemSatisfy {
-    local("pkg/apm-2.0.0.zip")
-    // download("https://github.com/Cognifide/APM/releases/download/cqsm-2.0.0/apm-2.0.0.zip")
+    // local("pkg/vanityurls-components-1.0.2.zip")
+    download("https://github.com/Cognifide/APM/releases/download/cqsm-3.0.0/apm-3.0.0.zip")
 }
 
 aemCompose {
@@ -76,9 +80,11 @@ task contentDeploy(dependsOn: [clean, build, aemDeploy])
 
 ```
 
+Snippet above demonstrates customizations valid only for specific project.
+
 ## Tasks
 
-* `aemCompose` - Compose CRX package from JCR content and bundles.
+* `aemCompose` - Compose CRX package from JCR content and bundles. Extends ZIP task.
 * `aemUpload` - Upload composed CRX package into AEM instance(s).
 * `aemInstall` - Install uploaded CRX package on AEM instance(s).
 * `aemActivate` - Replicate installed CRX package to other AEM instance(s).
