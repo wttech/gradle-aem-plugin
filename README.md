@@ -38,7 +38,7 @@ plugins.withId 'cognifide.aem', {
         config {
             contentPath = "src/main/content"
             instance("http://localhost:4502", "admin", "admin", "local-author")
-            instance("http://localhost:4503", "admin", "admin", "local-publish")
+            // instance("http://localhost:4503", "admin", "admin", "local-publish")
         }
     }
 
