@@ -20,6 +20,11 @@ AEM developer - it's time to meet Gradle!
 * OSGi manifest customization by official 'osgi' plugin or feature rich 'org.dm.bundle' plugin.
 * Automated dependant packages installation from local and remote sources.
 
+## Requirements
+
+* Java >= 8, but target software can be compiled to older Java.
+* Gradle  >= 3.5.
+
 ## Configuration
 
 Recommended way to start using Gradle AEM Plugin is to clone and customize [example project](https://github.com/Cognifide/gradle-aem-example).
