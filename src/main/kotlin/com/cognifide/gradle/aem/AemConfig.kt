@@ -8,7 +8,7 @@ data class AemConfig(
     /**
      * List of AEM instances on which packages could be deployed.
      */
-    var instances: MutableList<AemInstance> = mutableListOf<AemInstance>(),
+    var instances: MutableList<AemInstance> = mutableListOf(),
 
     /**
      * Defines maximum time after which initializing connection to AEM will be aborted (e.g on upload, install).
@@ -69,7 +69,7 @@ data class AemConfig(
     /**
      * Define here custom properties that can be used in Vault files like 'properties.xml'.
      */
-    var vaultProperties: MutableMap<String, String> = mutableMapOf<String, String>(),
+    var vaultExpandProperties: MutableMap<String, String> = mutableMapOf(),
 
     /**
      * Custom path to Vault files that will be used to build CRX package.
@@ -91,6 +91,11 @@ data class AemConfig(
      * Points to Vault files from specific profile (e.g filters with only configuration to be installed).
      */
     var vaultProfilePath: String = "src/main/vault/profile",
+
+    /**
+     * Define here properties that will be skipped when pulling JCR content from AEM instance.
+     */
+    var vaultSkipProperties : MutableList<String> = mutableListOf("jcr:lastModified", "jcr:created", "cq:lastModified", "cq:lastReplicat*", "jcr:uuid"),
 
     /**
      * Custom path to composed CRX package being uploaded.

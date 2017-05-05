@@ -5,6 +5,7 @@ import com.cognifide.gradle.aem.jar.ProcessClassesTask
 import com.cognifide.gradle.aem.jar.ProcessTestClassesTask
 import com.cognifide.gradle.aem.jar.UpdateManifestTask
 import com.cognifide.gradle.aem.pkg.ComposeTask
+import com.cognifide.gradle.aem.pkg.PullTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
@@ -56,6 +57,8 @@ class AemPlugin : Plugin<Project> {
     }
 
     private fun setupTasks(project: Project) {
+        val clean = project.tasks.getByName(LifecycleBasePlugin.CLEAN_TASK_NAME)
+
         project.plugins.withType(JavaPlugin::class.java, {
             val jar = project.tasks.getByName(JavaPlugin.JAR_TASK_NAME)
             val processClasses = project.tasks.create(ProcessClassesTask.NAME, ProcessClassesTask::class.java)
@@ -77,7 +80,7 @@ class AemPlugin : Plugin<Project> {
         val satisfy = project.tasks.create(SatisfyTask.NAME, SatisfyTask::class.java)
 
         compose.dependsOn(project.tasks.getByName(LifecycleBasePlugin.ASSEMBLE_TASK_NAME), project.tasks.getByName(LifecycleBasePlugin.CHECK_TASK_NAME))
-        compose.mustRunAfter(project.tasks.getByName(LifecycleBasePlugin.CLEAN_TASK_NAME))
+        compose.mustRunAfter(clean)
 
         upload.mustRunAfter(satisfy, compose)
         install.mustRunAfter(satisfy, compose, upload)
@@ -85,6 +88,9 @@ class AemPlugin : Plugin<Project> {
 
         deploy.mustRunAfter(satisfy, compose)
         distribute.mustRunAfter(satisfy, compose)
+
+        val pull = project.tasks.create(PullTask.NAME, PullTask::class.java)
+        pull.mustRunAfter(clean)
     }
 
     private fun setupConfigs(project: Project) {

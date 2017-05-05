@@ -150,7 +150,7 @@ open class ComposeTask : Zip(), AemTask {
     private fun expandProperties(source: String): String {
         val props = System.getProperties().entries.fold(mutableMapOf<String, String>(), { map, entry ->
             map.put(entry.key.toString(), entry.value.toString()); map
-        }) + config.vaultProperties
+        }) + config.vaultExpandProperties
         val interpolated = StrSubstitutor.replace(source, props)
         val template = SimpleTemplateEngine().createTemplate(interpolated).make(mapOf(
                 "rootProject" to project.rootProject,
