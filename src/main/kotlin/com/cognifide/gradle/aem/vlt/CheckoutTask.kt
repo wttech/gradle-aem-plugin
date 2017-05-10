@@ -19,8 +19,8 @@ open class CheckoutTask : DefaultTask(), AemTask {
     @Input
     var params = mutableListOf("--force")
 
-    override val config: AemConfig
-        get() = AemConfig.extendFromGlobal(project)
+    @Input
+    final override val config: AemConfig = AemConfig.extendFromGlobal(project)
 
     @TaskAction
     fun checkout() {

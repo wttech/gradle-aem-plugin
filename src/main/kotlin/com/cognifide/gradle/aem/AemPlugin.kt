@@ -6,6 +6,7 @@ import com.cognifide.gradle.aem.jar.ProcessTestClassesTask
 import com.cognifide.gradle.aem.jar.UpdateManifestTask
 import com.cognifide.gradle.aem.pkg.ComposeTask
 import com.cognifide.gradle.aem.vlt.CheckoutTask
+import com.cognifide.gradle.aem.vlt.CleanTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
@@ -89,8 +90,11 @@ class AemPlugin : Plugin<Project> {
         deploy.mustRunAfter(satisfy, compose)
         distribute.mustRunAfter(satisfy, compose)
 
-        val checkout = project.tasks.create(CheckoutTask.NAME, CheckoutTask::class.java)
-        checkout.mustRunAfter(clean)
+        val vltClean = project.tasks.create(CleanTask.NAME, CleanTask::class.java)
+        val vltCheckout = project.tasks.create(CheckoutTask.NAME, CheckoutTask::class.java)
+
+        vltClean.mustRunAfter(clean)
+        vltCheckout.mustRunAfter(clean)
     }
 
     private fun setupConfigs(project: Project) {
