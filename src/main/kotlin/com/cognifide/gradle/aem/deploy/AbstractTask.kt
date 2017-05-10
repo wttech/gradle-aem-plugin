@@ -12,7 +12,7 @@ import java.io.IOException
 abstract class AbstractTask : DefaultTask(), AemTask {
 
     @Input
-    final override val config = AemConfig.extendFromGlobal(project)
+    final override val config = AemConfig.extend(project)
 
     protected fun deploy(deployer: (sync: DeploySynchronizer) -> Unit, instances: List<AemInstance> = filterInstances()) {
         instances.onEach({ instance ->

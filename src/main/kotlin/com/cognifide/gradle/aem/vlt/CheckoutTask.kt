@@ -20,14 +20,12 @@ open class CheckoutTask : DefaultTask(), AemTask {
     var params = mutableListOf("--force")
 
     @Input
-    final override val config: AemConfig = AemConfig.extendFromGlobal(project)
+    final override val config: AemConfig = AemConfig.extend(project)
 
     @TaskAction
     fun checkout() {
         val instance = AemInstance.filter(project, config).first()
-        val vltApp = VltApp(instance, config.determineContentPath(project))
-
-        // TODO vltApp.setLogLevel(logging.level.name)
+        val vltApp = VltApp(instance, config.determineContentPath(project), project.logger)
 
         val filter = File(config.vaultFilterPath)
         if (filter.exists()) {

@@ -5,28 +5,30 @@ import org.apache.commons.io.filefilter.NameFileFilter
 import org.apache.commons.io.filefilter.TrueFileFilter
 import org.apache.commons.lang3.CharEncoding
 import org.apache.commons.lang3.StringUtils
-import org.slf4j.LoggerFactory
+import org.gradle.api.logging.Logger
 import java.io.File
 import java.io.IOException
 import java.util.*
 
-class VltCleaner(val root: String) {
+class VltCleaner(val root: String, val logger: Logger) {
 
     companion object {
-        private val LOG = LoggerFactory.getLogger(VltCleaner::class.java)
+        val VLT_FILE = ".vlt"
+
+        val JCR_CONTENT_FILE = ".content.xml"
     }
 
     fun removeVltFiles() {
-        for (file in FileUtils.listFiles(File(root), NameFileFilter(".vlt"), TrueFileFilter.INSTANCE)) {
-            LOG.info("Deleting {}", file.path)
+        for (file in FileUtils.listFiles(File(root), NameFileFilter(VLT_FILE), TrueFileFilter.INSTANCE)) {
+            logger.info("Deleting {}", file.path)
             FileUtils.deleteQuietly(file)
         }
     }
 
     fun cleanupDotContent(contentProperties: List<String>) {
-        for (file in FileUtils.listFiles(File(root), NameFileFilter(".content.xml"), TrueFileFilter.INSTANCE)) {
+        for (file in FileUtils.listFiles(File(root), NameFileFilter(JCR_CONTENT_FILE), TrueFileFilter.INSTANCE)) {
             try {
-                LOG.info("Cleaning up {}", file.path)
+                logger.info("Cleaning up {}", file.path)
 
                 val lines = ArrayList<String>()
                 for (line in FileUtils.readLines(file, CharEncoding.UTF_8)) {

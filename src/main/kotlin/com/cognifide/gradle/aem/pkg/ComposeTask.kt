@@ -40,7 +40,7 @@ open class ComposeTask : Zip(), AemTask {
     private val vaultDir = File(project.buildDir, "$NAME/${AemPlugin.VLT_PATH}")
 
     @Input
-    final override val config = AemConfig.extendFromGlobal(project)
+    final override val config = AemConfig.extend(project)
 
     init {
         description = "Composes AEM package from JCR content and built OSGi bundles"

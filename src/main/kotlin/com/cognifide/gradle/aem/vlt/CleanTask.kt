@@ -13,11 +13,11 @@ open class CleanTask : DefaultTask(), AemTask {
     }
 
     @Input
-    final override val config = AemConfig.extendFromGlobal(project)
+    final override val config = AemConfig.extend(project)
 
     @TaskAction
     fun clean() {
-        val cleaner = VltCleaner(config.contentPath)
+        val cleaner = VltCleaner(config.contentPath, project.logger)
 
         cleaner.removeVltFiles()
         cleaner.cleanupDotContent(config.vaultSkipProperties)

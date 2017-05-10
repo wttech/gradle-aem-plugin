@@ -5,13 +5,9 @@ import org.apache.commons.cli2.CommandLine
 import org.apache.jackrabbit.vault.cli.VaultFsApp
 import org.apache.jackrabbit.vault.util.console.ExecutionContext
 import org.apache.jackrabbit.vault.util.console.commands.CmdConsole
-import org.slf4j.LoggerFactory
+import org.gradle.api.logging.Logger
 
-class VltApp(val instance: AemInstance, val contentPath: String) : VaultFsApp() {
-
-    companion object {
-        private val LOG = LoggerFactory.getLogger(VltApp::class.java)
-    }
+class VltApp(val instance: AemInstance, val contentPath: String, val logger: Logger) : VaultFsApp() {
 
     override fun getDefaultContext(): ExecutionContext {
         return defaultContext
@@ -26,7 +22,6 @@ class VltApp(val instance: AemInstance, val contentPath: String) : VaultFsApp() 
         val allParams = mutableListOf<String>()
         allParams.addAll(listOf("--credentials", instance.user + ":" + instance.password))
         allParams.add(command)
-        allParams.add("--force")
         allParams.addAll(params)
         allParams.addAll(listOf(instance.url, "/", contentPath))
 
@@ -34,7 +29,7 @@ class VltApp(val instance: AemInstance, val contentPath: String) : VaultFsApp() 
     }
 
     override fun prepare(cl: CommandLine) {
-        LOG.info(cl.toString())
+        logger.info("Executing Vault application: $cl")
 
         super.prepare(cl)
     }

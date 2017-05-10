@@ -15,7 +15,7 @@ abstract class AbstractClassesTask : DefaultTask(), AemTask {
     abstract val sourceSet: SourceSet
 
     @Input
-    final override val config = AemConfig.extendFromGlobal(project)
+    final override val config = AemConfig.extend(project)
 
     @InputDirectory
     val classesDir: File = sourceSet.output.classesDir

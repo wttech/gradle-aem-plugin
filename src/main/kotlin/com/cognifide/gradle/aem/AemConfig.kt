@@ -150,7 +150,7 @@ data class AemConfig(
 
 ) : Serializable {
     companion object {
-        fun extendFromGlobal(project: Project): AemConfig {
+        fun extend(project: Project): AemConfig {
             val global = (project.extensions.getByName(AemExtension.NAME) as AemExtension).config
             val extended = global.copy()
 
