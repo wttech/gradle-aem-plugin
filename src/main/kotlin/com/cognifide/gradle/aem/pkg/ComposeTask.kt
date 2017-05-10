@@ -165,11 +165,8 @@ open class ComposeTask : Zip(), AemTask {
     }
 
     fun includeProject(project: Project) {
-        includeJcrRoot(project)
+        includeContent(project)
         includeBundles(project)
-
-        dependsOn("${project.path}:${LifecycleBasePlugin.ASSEMBLE_TASK_NAME}")
-        dependsOn("${project.path}:${LifecycleBasePlugin.CHECK_TASK_NAME}")
     }
 
     fun includeBundles(projectPath: String) {
@@ -177,16 +174,20 @@ open class ComposeTask : Zip(), AemTask {
     }
 
     fun includeBundles(project: Project) {
+        dependProject(project)
+
         bundleCollectors += {
             JarCollector(project).all.toList()
         }
     }
 
-    fun includeJcrRoot(projectPath: String) {
-        includeJcrRoot(project.findProject(projectPath))
+    fun includeContent(projectPath: String) {
+        includeContent(project.findProject(projectPath))
     }
 
-    fun includeJcrRoot(project: Project) {
+    fun includeContent(project: Project) {
+        dependProject(project)
+
         contentCollectors += {
             val contentDir = File("${config.determineContentPath(project)}/${AemPlugin.JCR_ROOT}")
             if (!contentDir.exists()) {
@@ -209,5 +210,10 @@ open class ComposeTask : Zip(), AemTask {
     fun includeVaultProfile(profileName: String) {
         includeVault(project.relativePath(config.vaultCommonPath))
         includeVault(project.relativePath(config.vaultProfilePath + "/" + profileName))
+    }
+
+    fun dependProject(project: Project) {
+        dependsOn("${project.path}:${LifecycleBasePlugin.ASSEMBLE_TASK_NAME}")
+        dependsOn("${project.path}:${LifecycleBasePlugin.CHECK_TASK_NAME}")
     }
 }
