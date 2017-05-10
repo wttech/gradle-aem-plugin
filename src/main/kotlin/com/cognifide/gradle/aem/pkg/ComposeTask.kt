@@ -40,7 +40,7 @@ open class ComposeTask : Zip(), AemTask {
     private val vaultDir = File(project.buildDir, "$NAME/${AemPlugin.VLT_PATH}")
 
     @Input
-    override val config = AemConfig.extendFromGlobal(project)
+    final override val config = AemConfig.extend(project)
 
     init {
         description = "Composes AEM package from JCR content and built OSGi bundles"
@@ -69,12 +69,6 @@ open class ComposeTask : Zip(), AemTask {
         super.copy()
     }
 
-    private fun determineContentPath(project: Project): String {
-        val task = project.tasks.getByName(ComposeTask.NAME) as ComposeTask
-
-        return project.projectDir.path + "/" + task.config.contentPath
-    }
-
     private fun fromBundles() {
         val jars = bundleCollectors.fold(TreeSet<File>(), { files, it -> files.addAll(it()); files }).toList()
         if (jars.isEmpty()) {
@@ -95,7 +89,7 @@ open class ComposeTask : Zip(), AemTask {
         val contentPath: String = if (!config.vaultFilesPath.isNullOrBlank()) {
             config.vaultFilesPath
         } else {
-            "${determineContentPath(project)}/${AemPlugin.VLT_PATH}"
+            "${config.determineContentPath(project)}/${AemPlugin.VLT_PATH}"
         }
 
         val contentDir = File(contentPath)
@@ -150,7 +144,7 @@ open class ComposeTask : Zip(), AemTask {
     private fun expandProperties(source: String): String {
         val props = System.getProperties().entries.fold(mutableMapOf<String, String>(), { map, entry ->
             map.put(entry.key.toString(), entry.value.toString()); map
-        }) + config.vaultProperties
+        }) + config.vaultExpandProperties
         val interpolated = StrSubstitutor.replace(source, props)
         val template = SimpleTemplateEngine().createTemplate(interpolated).make(mapOf(
                 "rootProject" to project.rootProject,
@@ -171,11 +165,8 @@ open class ComposeTask : Zip(), AemTask {
     }
 
     fun includeProject(project: Project) {
-        includeJcrRoot(project)
+        includeContent(project)
         includeBundles(project)
-
-        dependsOn("${project.path}:${LifecycleBasePlugin.ASSEMBLE_TASK_NAME}")
-        dependsOn("${project.path}:${LifecycleBasePlugin.CHECK_TASK_NAME}")
     }
 
     fun includeBundles(projectPath: String) {
@@ -183,18 +174,22 @@ open class ComposeTask : Zip(), AemTask {
     }
 
     fun includeBundles(project: Project) {
+        dependProject(project)
+
         bundleCollectors += {
             JarCollector(project).all.toList()
         }
     }
 
-    fun includeJcrRoot(projectPath: String) {
-        includeJcrRoot(project.findProject(projectPath))
+    fun includeContent(projectPath: String) {
+        includeContent(project.findProject(projectPath))
     }
 
-    fun includeJcrRoot(project: Project) {
+    fun includeContent(project: Project) {
+        dependProject(project)
+
         contentCollectors += {
-            val contentDir = File("${determineContentPath(project)}/${AemPlugin.JCR_ROOT}")
+            val contentDir = File("${config.determineContentPath(project)}/${AemPlugin.JCR_ROOT}")
             if (!contentDir.exists()) {
                 logger.info("Package JCR content directory does not exist: ${contentDir.absolutePath}")
             } else {
@@ -215,5 +210,10 @@ open class ComposeTask : Zip(), AemTask {
     fun includeVaultProfile(profileName: String) {
         includeVault(project.relativePath(config.vaultCommonPath))
         includeVault(project.relativePath(config.vaultProfilePath + "/" + profileName))
+    }
+
+    fun dependProject(project: Project) {
+        dependsOn("${project.path}:${LifecycleBasePlugin.ASSEMBLE_TASK_NAME}")
+        dependsOn("${project.path}:${LifecycleBasePlugin.CHECK_TASK_NAME}")
     }
 }

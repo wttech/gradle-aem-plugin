@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem
 
+import com.cognifide.gradle.aem.pkg.ComposeTask
 import org.gradle.api.Project
 import java.io.Serializable
 
@@ -8,7 +9,7 @@ data class AemConfig(
     /**
      * List of AEM instances on which packages could be deployed.
      */
-    var instances: MutableList<AemInstance> = mutableListOf<AemInstance>(),
+    var instances: MutableList<AemInstance> = mutableListOf(),
 
     /**
      * Defines maximum time after which initializing connection to AEM will be aborted (e.g on upload, install).
@@ -69,7 +70,7 @@ data class AemConfig(
     /**
      * Define here custom properties that can be used in Vault files like 'properties.xml'.
      */
-    var vaultProperties: MutableMap<String, String> = mutableMapOf<String, String>(),
+    var vaultExpandProperties: MutableMap<String, String> = mutableMapOf(),
 
     /**
      * Custom path to Vault files that will be used to build CRX package.
@@ -91,6 +92,26 @@ data class AemConfig(
      * Points to Vault files from specific profile (e.g filters with only configuration to be installed).
      */
     var vaultProfilePath: String = "src/main/vault/profile",
+
+    /**
+     * Define here properties that will be skipped when pulling JCR content from AEM instance.
+     */
+    var vaultSkipProperties : MutableList<String> = mutableListOf("jcr:lastModified", "jcr:created", "cq:lastModified", "cq:lastReplicat*", "jcr:uuid"),
+
+    /**
+     * Filter file used when Vault files are being checked out from AEM instance.
+     */
+    var vaultFilterPath: String = "src/main/content/${AemPlugin.VLT_PATH}/filter.xml",
+
+    /**
+     * Extra parameters passed to VLT application while executing 'checkout' command.
+     */
+    var vaultCheckoutArgs : MutableList<String> = mutableListOf("--force"),
+
+    /**
+     * Specify characters to be used as line endings when cleaning up checked out JCR content.
+     */
+    var vaultLineSeparator : String = System.lineSeparator(),
 
     /**
      * Custom path to composed CRX package being uploaded.
@@ -139,7 +160,15 @@ data class AemConfig(
 
 ) : Serializable {
     companion object {
-        fun extendFromGlobal(project: Project): AemConfig {
+
+        /**
+         * Generally it is recommended to configure only extension config instead of config of concrete task, because
+         * there are combined tasks like `aemDeploy` which are using multiple properties at once.
+         *
+         * Copying properties and considering them as separate config is intentional, just to ensure that specific task
+         * configuration does not affect another.
+         */
+        fun extend(project: Project): AemConfig {
             val global = (project.extensions.getByName(AemExtension.NAME) as AemExtension).config
             val extended = global.copy()
 
@@ -149,14 +178,21 @@ data class AemConfig(
         }
 
         private fun applyProjectDefaults(config: AemConfig, project: Project) {
-            if (config.bundlePath.isNullOrBlank()) {
-                config.bundlePath = "/apps/" + project.rootProject.name + "/install"
-            }
+            config.bundlePath = "/apps/" + project.rootProject.name + "/install"
         }
     }
 
     fun instance(url: String, user: String = "admin", password: String = "admin", type: String = "default") {
         instances.add(AemInstance(url, user, password, type))
+    }
+
+    /**
+     * While including another project content, use path configured in that project.
+     */
+    fun determineContentPath(project: Project): String {
+        val task = project.tasks.getByName(ComposeTask.NAME) as ComposeTask
+
+        return project.projectDir.path + "/" + task.config.contentPath
     }
 
 }

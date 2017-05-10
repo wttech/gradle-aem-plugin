@@ -3,8 +3,6 @@ package com.cognifide.gradle.aem.deploy
 import com.cognifide.gradle.aem.AemConfig
 import com.cognifide.gradle.aem.AemInstance
 import com.cognifide.gradle.aem.AemTask
-import org.apache.commons.io.FilenameUtils
-import org.apache.commons.io.IOCase
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Input
 import java.io.File
@@ -14,7 +12,7 @@ import java.io.IOException
 abstract class AbstractTask : DefaultTask(), AemTask {
 
     @Input
-    final override val config = AemConfig.extendFromGlobal(project)
+    final override val config = AemConfig.extend(project)
 
     protected fun deploy(deployer: (sync: DeploySynchronizer) -> Unit, instances: List<AemInstance> = filterInstances()) {
         instances.onEach({ instance ->
@@ -25,22 +23,7 @@ abstract class AbstractTask : DefaultTask(), AemTask {
     }
 
     protected fun filterInstances(instanceGroup: String = "*"): List<AemInstance> {
-        val instanceValues = project.properties["aem.deploy.instance.list"] as String?
-        if (!instanceValues.isNullOrBlank()) {
-            return AemInstance.parse(instanceValues!!)
-        }
-
-        val instances = if (config.instances.isEmpty()) {
-            return AemInstance.defaults()
-        } else {
-            config.instances
-        }
-
-        return instances.filter { instance ->
-            val group = project.properties.getOrElse("aem.deploy.instance.group", { instanceGroup }) as String
-
-            FilenameUtils.wildcardMatch(instance.group, group, IOCase.INSENSITIVE)
-        }
+        return AemInstance.filter(project, config, instanceGroup)
     }
 
     protected fun determineLocalPackage(): File {

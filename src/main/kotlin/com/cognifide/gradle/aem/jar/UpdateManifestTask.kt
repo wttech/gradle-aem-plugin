@@ -8,6 +8,7 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.plugins.osgi.OsgiManifest
+import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.TaskAction
@@ -44,7 +45,8 @@ open class UpdateManifestTask : DefaultTask(), AemTask {
         description = "Update OSGi manifest instructions"
     }
 
-    override val config = AemConfig.extendFromGlobal(project)
+    @Input
+    final override val config = AemConfig.extend(project)
 
     val jar = project.tasks.getByName(JavaPlugin.JAR_TASK_NAME) as Jar
 
