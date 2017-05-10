@@ -99,7 +99,7 @@ data class AemConfig(
     var vaultSkipProperties : MutableList<String> = mutableListOf("jcr:lastModified", "jcr:created", "cq:lastModified", "cq:lastReplicat*", "jcr:uuid"),
 
     /**
-     *
+     * Filter file used when Vault files are being checked out from AEM instance.
      */
     var vaultFilterPath: String = "src/main/content/${AemPlugin.VLT_PATH}/filter.xml",
 
