@@ -7,6 +7,7 @@ import com.cognifide.gradle.aem.jar.UpdateManifestTask
 import com.cognifide.gradle.aem.pkg.ComposeTask
 import com.cognifide.gradle.aem.vlt.CheckoutTask
 import com.cognifide.gradle.aem.vlt.CleanTask
+import com.cognifide.gradle.aem.vlt.SyncTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
@@ -92,9 +93,11 @@ class AemPlugin : Plugin<Project> {
 
         val vltClean = project.tasks.create(CleanTask.NAME, CleanTask::class.java)
         val vltCheckout = project.tasks.create(CheckoutTask.NAME, CheckoutTask::class.java)
+        val vltSync = project.tasks.create(SyncTask.NAME, SyncTask::class.java)
 
         vltClean.mustRunAfter(clean)
         vltCheckout.mustRunAfter(clean)
+        vltSync.mustRunAfter(clean)
     }
 
     private fun setupConfigs(project: Project) {
