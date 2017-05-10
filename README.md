@@ -86,7 +86,7 @@ task contentDeploy(dependsOn: [clean, build, aemDeploy])
 
 Snippet above demonstrates customizations valid only for specific project.
 
-## Tasks
+### Tasks
 
 * `aemCompose` - Compose CRX package from JCR content and bundles. Available methods:
     * `includeProject(projectName: String)`, includes both bundles and JCR content from another project, example: `includeProject ':example.bundle'`.
@@ -100,13 +100,13 @@ Snippet above demonstrates customizations valid only for specific project.
 * `aemDistribute` - Upload, install & activate CRX package into AEM instances(s). Secondary form of deployment. Optimized version of `aemUpload aemInstall aemActivate -Paem.deploy.instance.group=*-author`.
 * `aemSatisfy` - Upload & install dependant CRX package(s) before deployment. Available methods:
     * `local(path: String)`, use CRX package from local file system.
-    * `download(url: String)`, use CRX package that will be downloaded from specified URL to local temporary directory.`.
+    * `download(url: String)`, use CRX package that will be downloaded from specified URL to local temporary directory.
     * `downloadBasicAuth(url: String, user = "admin", password = "admin")`, as above, but with Basic Auth support.
 * `aemCheckout` - Check out JCR content from running AEM author instance to local content path.
 * `aemClean` - Clean checked out JCR content.
 * `aemSync` - Check out then clean JCR content.
 
-### Command line:
+### Parameters
 
 * Deploying only to filtered group of instances
 
