@@ -21,6 +21,7 @@ AEM developer - it's time to meet Gradle!
 * OSGi manifest customization by official [osgi](https://docs.gradle.org/current/userguide/osgi_plugin.html) plugin or feature rich [org.dm.bundle](https://github.com/TomDmitriev/gradle-bundle-plugin) plugin.
 * Automated dependant packages installation from local and remote sources.
 * Smart Vault files generation (combining defaults with overiddables).
+* Checking out and cleaning JCR content from running AEM instance.
 
 ## Requirements
 
