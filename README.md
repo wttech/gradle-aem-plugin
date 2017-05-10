@@ -95,7 +95,9 @@ Snippet above demonstrates customizations valid only for specific project.
 * `aemDeploy` - Upload & install CRX package into AEM instance(s). Primary, recommended form of deployment. Optimized version of `aemUpload aemInstall`.
 * `aemDistribute` - Upload, install & activate CRX package into AEM instances(s). Secondary form of deployment. Optimized version of `aemUpload aemInstall aemActivate -Paem.deploy.instance.group=*-author`.
 * `aemSatisfy` - Upload & install dependant CRX package(s) before deployment.
-
+* `aemCheckout` - Check out JCR content from running AEM author instance to local content path.
+* `aemClean` - Clean checked out JCR content.
+* `aemSync` - Check out then clean JCR content.
 
 ### Command line:
 

@@ -7,16 +7,15 @@ import org.apache.jackrabbit.vault.cli.VaultFsApp
 import org.apache.jackrabbit.vault.util.console.ExecutionContext
 import org.apache.jackrabbit.vault.util.console.commands.CmdConsole
 import org.gradle.api.Project
-import org.gradle.api.logging.Logger
 import java.io.File
 
-class VltApp(val instance: AemInstance, val logger: Logger) : VaultFsApp() {
+class VltApp(val instance: AemInstance, val project: Project) : VaultFsApp() {
 
     companion object {
 
         fun checkout(project: Project, config: AemConfig) {
             val instance = AemInstance.filter(project, config, AemInstance.FILTER_AUTHOR).first()
-            val vltApp = VltApp(instance, project.logger)
+            val vltApp = VltApp(instance, project)
             val cmdArgs = config.vaultCheckoutArgs + listOf(instance.url, "/", config.determineContentPath(project))
 
             val filter = File(config.vaultFilterPath)
@@ -29,6 +28,10 @@ class VltApp(val instance: AemInstance, val logger: Logger) : VaultFsApp() {
 
     }
 
+    init {
+        configureLogger()
+    }
+
     override fun getDefaultContext(): ExecutionContext {
         return defaultContext
     }
@@ -38,7 +41,7 @@ class VltApp(val instance: AemInstance, val logger: Logger) : VaultFsApp() {
         ctx.installCommand(CmdConsole()); ctx
     }
 
-    fun executeCommand(args: List<String> = listOf()): Unit {
+    fun executeCommand(args: List<String>): Unit {
         val allArgs = mutableListOf<String>()
         allArgs.addAll(listOf("--credentials", instance.user + ":" + instance.password))
         allArgs.addAll(args)
@@ -47,8 +50,21 @@ class VltApp(val instance: AemInstance, val logger: Logger) : VaultFsApp() {
     }
 
     override fun prepare(cl: CommandLine) {
-        logger.info("Executing Vault application: $cl")
+        log.info("Executing Vault application: $cl")
 
         super.prepare(cl)
+    }
+
+    /**
+     * TODO Try to hide VLT output when 'gradle -i' is not specified, below is not working...
+     */
+    private fun configureLogger() {
+        log = project.logger
+        /*
+        val logLevel = project.logging.standardOutputCaptureLevel
+        if (logLevel != null) {
+            setLogLevel(logLevel.name)
+        }
+        */
     }
 }
