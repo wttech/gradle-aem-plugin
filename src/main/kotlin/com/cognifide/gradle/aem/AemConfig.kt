@@ -104,6 +104,16 @@ data class AemConfig(
     var vaultFilterPath: String = "src/main/content/${AemPlugin.VLT_PATH}/filter.xml",
 
     /**
+     * Extra parameters passed to VLT application while executing 'checkout' command.
+     */
+    var vaultCheckoutArgs : MutableList<String> = mutableListOf("--force"),
+
+    /**
+     * Specify characters to be used as line endings when cleaning up checked out JCR content.
+     */
+    var vaultLineSeparator : String = System.lineSeparator(),
+
+    /**
      * Custom path to composed CRX package being uploaded.
      * Default: "${project.buildDir.path}/distributions/${project.name}-${project.version}.zip"
      */
@@ -150,6 +160,14 @@ data class AemConfig(
 
 ) : Serializable {
     companion object {
+
+        /**
+         * Generally it is recommended to configure only extension config instead of config of concrete task, because
+         * there are combined tasks like `aemDeploy` which are using multiple properties at once.
+         *
+         * Copying properties and considering them as separate config is intentional, just to ensure that specific task
+         * configuration does not affect another.
+         */
         fun extend(project: Project): AemConfig {
             val global = (project.extensions.getByName(AemExtension.NAME) as AemExtension).config
             val extended = global.copy()

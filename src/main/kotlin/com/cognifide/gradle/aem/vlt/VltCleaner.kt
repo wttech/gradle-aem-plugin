@@ -1,10 +1,12 @@
 package com.cognifide.gradle.aem.vlt
 
+import com.cognifide.gradle.aem.AemConfig
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.filefilter.NameFileFilter
 import org.apache.commons.io.filefilter.TrueFileFilter
 import org.apache.commons.lang3.CharEncoding
 import org.apache.commons.lang3.StringUtils
+import org.gradle.api.Project
 import org.gradle.api.logging.Logger
 import java.io.File
 import java.io.IOException
@@ -16,6 +18,13 @@ class VltCleaner(val root: String, val logger: Logger) {
         val VLT_FILE = ".vlt"
 
         val JCR_CONTENT_FILE = ".content.xml"
+
+        fun clean(project : Project, config : AemConfig) {
+            val cleaner = VltCleaner(config.contentPath, project.logger)
+
+            cleaner.removeVltFiles()
+            cleaner.cleanupDotContent(config.vaultSkipProperties, config.vaultLineSeparator)
+        }
     }
 
     fun removeVltFiles() {
@@ -25,7 +34,7 @@ class VltCleaner(val root: String, val logger: Logger) {
         }
     }
 
-    fun cleanupDotContent(contentProperties: List<String>) {
+    fun cleanupDotContent(contentProperties: List<String>, lineEnding : String) {
         for (file in FileUtils.listFiles(File(root), NameFileFilter(JCR_CONTENT_FILE), TrueFileFilter.INSTANCE)) {
             try {
                 logger.info("Cleaning up {}", file.path)
@@ -47,7 +56,7 @@ class VltCleaner(val root: String, val logger: Logger) {
 
                 }
 
-                FileUtils.writeLines(file, CharEncoding.UTF_8, lines)
+                FileUtils.writeLines(file, CharEncoding.UTF_8, lines, lineEnding)
             } catch (e: IOException) {
                 throw VltException(String.format("Error opening %s", file.path), e)
             }

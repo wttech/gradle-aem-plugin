@@ -23,10 +23,8 @@ open class CleanTask : DefaultTask(), AemTask {
 
     @TaskAction
     fun clean() {
-        val cleaner = VltCleaner(config.contentPath, project.logger)
-
-        cleaner.removeVltFiles()
-        cleaner.cleanupDotContent(config.vaultSkipProperties)
+        logger.info("Cleaning checked out JCR content")
+        VltCleaner.clean(project, config)
     }
 
 }

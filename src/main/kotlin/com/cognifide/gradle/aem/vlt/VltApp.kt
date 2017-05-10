@@ -1,13 +1,33 @@
 package com.cognifide.gradle.aem.vlt
 
+import com.cognifide.gradle.aem.AemConfig
 import com.cognifide.gradle.aem.AemInstance
 import org.apache.commons.cli2.CommandLine
 import org.apache.jackrabbit.vault.cli.VaultFsApp
 import org.apache.jackrabbit.vault.util.console.ExecutionContext
 import org.apache.jackrabbit.vault.util.console.commands.CmdConsole
+import org.gradle.api.Project
 import org.gradle.api.logging.Logger
+import java.io.File
 
-class VltApp(val instance: AemInstance, val contentPath: String, val logger: Logger) : VaultFsApp() {
+class VltApp(val instance: AemInstance, val logger: Logger) : VaultFsApp() {
+
+    companion object {
+
+        fun checkout(project: Project, config: AemConfig) {
+            val instance = AemInstance.filter(project, config, AemInstance.FILTER_AUTHOR).first()
+            val vltApp = VltApp(instance, project.logger)
+            val cmdArgs = config.vaultCheckoutArgs + listOf(instance.url, "/", config.determineContentPath(project))
+
+            val filter = File(config.vaultFilterPath)
+            if (filter.exists()) {
+                vltApp.executeCommand(listOf(CheckoutTask.COMMAND, "-f", filter.absolutePath) + cmdArgs)
+            } else {
+                vltApp.executeCommand(listOf(CheckoutTask.COMMAND + cmdArgs))
+            }
+        }
+
+    }
 
     override fun getDefaultContext(): ExecutionContext {
         return defaultContext
@@ -18,14 +38,12 @@ class VltApp(val instance: AemInstance, val contentPath: String, val logger: Log
         ctx.installCommand(CmdConsole()); ctx
     }
 
-    fun executeCommand(command: String, params: List<String> = listOf()): Unit {
-        val allParams = mutableListOf<String>()
-        allParams.addAll(listOf("--credentials", instance.user + ":" + instance.password))
-        allParams.add(command)
-        allParams.addAll(params)
-        allParams.addAll(listOf(instance.url, "/", contentPath))
+    fun executeCommand(args: List<String> = listOf()): Unit {
+        val allArgs = mutableListOf<String>()
+        allArgs.addAll(listOf("--credentials", instance.user + ":" + instance.password))
+        allArgs.addAll(args)
 
-        run(allParams.toTypedArray())
+        run(allArgs.toTypedArray())
     }
 
     override fun prepare(cl: CommandLine) {
