@@ -64,16 +64,18 @@ defaultTasks = ['contentDeploy']
 
 apply plugin: 'cognifide.aem'
 
+aem {
+    config {
+        contentPath = "src/main/aem"
+    }
+}
+
 aemSatisfy {
     // local("pkg/vanityurls-components-1.0.2.zip")
     download("https://github.com/Cognifide/APM/releases/download/cqsm-3.0.0/apm-3.0.0.zip")
 }
 
 aemCompose {
-    config {
-        contentPath = "src/main/content"
-    }
-
     includeProject ':example.bundle'
 }
 
@@ -113,7 +115,7 @@ Snippet above demonstrates customizations valid only for specific project.
 * Skipping installed package resolution by download name (eliminating conflicts / only matters when Vault properties file is customized): 
 
 ```
--Paem.deploy.skipDownloadName=true`
+-Paem.deploy.skipDownloadName=true
 ```
 
 ## License

@@ -69,12 +69,6 @@ open class ComposeTask : Zip(), AemTask {
         super.copy()
     }
 
-    private fun determineContentPath(project: Project): String {
-        val task = project.tasks.getByName(ComposeTask.NAME) as ComposeTask
-
-        return project.projectDir.path + "/" + task.config.contentPath
-    }
-
     private fun fromBundles() {
         val jars = bundleCollectors.fold(TreeSet<File>(), { files, it -> files.addAll(it()); files }).toList()
         if (jars.isEmpty()) {
@@ -95,7 +89,7 @@ open class ComposeTask : Zip(), AemTask {
         val contentPath: String = if (!config.vaultFilesPath.isNullOrBlank()) {
             config.vaultFilesPath
         } else {
-            "${determineContentPath(project)}/${AemPlugin.VLT_PATH}"
+            "${config.determineContentPath(project)}/${AemPlugin.VLT_PATH}"
         }
 
         val contentDir = File(contentPath)
@@ -194,7 +188,7 @@ open class ComposeTask : Zip(), AemTask {
 
     fun includeJcrRoot(project: Project) {
         contentCollectors += {
-            val contentDir = File("${determineContentPath(project)}/${AemPlugin.JCR_ROOT}")
+            val contentDir = File("${config.determineContentPath(project)}/${AemPlugin.JCR_ROOT}")
             if (!contentDir.exists()) {
                 logger.info("Package JCR content directory does not exist: ${contentDir.absolutePath}")
             } else {

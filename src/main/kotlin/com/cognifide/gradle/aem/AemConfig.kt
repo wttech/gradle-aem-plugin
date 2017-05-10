@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem
 
+import com.cognifide.gradle.aem.pkg.ComposeTask
 import org.gradle.api.Project
 import java.io.Serializable
 
@@ -98,6 +99,11 @@ data class AemConfig(
     var vaultSkipProperties : MutableList<String> = mutableListOf("jcr:lastModified", "jcr:created", "cq:lastModified", "cq:lastReplicat*", "jcr:uuid"),
 
     /**
+     *
+     */
+    var vaultFilterPath: String = "src/main/content/${AemPlugin.VLT_PATH}/filter.xml",
+
+    /**
      * Custom path to composed CRX package being uploaded.
      * Default: "${project.buildDir.path}/distributions/${project.name}-${project.version}.zip"
      */
@@ -154,14 +160,21 @@ data class AemConfig(
         }
 
         private fun applyProjectDefaults(config: AemConfig, project: Project) {
-            if (config.bundlePath.isNullOrBlank()) {
-                config.bundlePath = "/apps/" + project.rootProject.name + "/install"
-            }
+            config.bundlePath = "/apps/" + project.rootProject.name + "/install"
         }
     }
 
     fun instance(url: String, user: String = "admin", password: String = "admin", type: String = "default") {
         instances.add(AemInstance(url, user, password, type))
+    }
+
+    /**
+     * While including another project content, use path configured in that project.
+     */
+    fun determineContentPath(project: Project): String {
+        val task = project.tasks.getByName(ComposeTask.NAME) as ComposeTask
+
+        return project.projectDir.path + "/" + task.config.contentPath
     }
 
 }
