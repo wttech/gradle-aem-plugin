@@ -16,14 +16,7 @@ class ListResponse private constructor() {
     lateinit var results: List<ListResult>
 
     fun resolvePath(project: Project): String? {
-        for (resolver in PathResolver.values()) {
-            val path = resolver.resolve(project, this)
-            if (path != null) {
-                return path
-            }
-        }
-
-        return null
+        return PathResolver.values().map { it.resolve(project, this) }.firstOrNull { it != null }
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
