@@ -15,11 +15,18 @@ abstract class AbstractTask : DefaultTask(), AemTask {
     final override val config = AemConfig.extend(project)
 
     protected fun deploy(deployer: (sync: DeploySynchronizer) -> Unit, instances: List<AemInstance> = filterInstances()) {
-        instances.onEach({ instance ->
-            logger.info("Deploying on: $instance")
+        val callback = { instance: AemInstance -> deploy(deployer, instance) }
+        if (config.deployParallel) {
+            instances.parallelStream().forEach(callback)
+        } else {
+            instances.onEach(callback)
+        }
+    }
 
-            deployer(DeploySynchronizer(instance, config))
-        })
+    protected fun deploy(deployer: (sync: DeploySynchronizer) -> Unit, instance: AemInstance) {
+        logger.info("Deploying on: $instance")
+
+        deployer(DeploySynchronizer(instance, config))
     }
 
     protected fun filterInstances(instanceGroup: String = "*"): List<AemInstance> {
@@ -76,7 +83,7 @@ abstract class AbstractTask : DefaultTask(), AemTask {
         try {
             val json = sync.post(url, mapOf(
                     "package" to file,
-                    "force" to config.deployForce
+                    "force" to config.uploadForce
             ))
             val response = UploadResponse.fromJson(json)
 

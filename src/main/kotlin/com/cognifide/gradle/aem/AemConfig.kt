@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem
 
 import com.cognifide.gradle.aem.pkg.ComposeTask
+import org.gradle.api.Incubating
 import org.gradle.api.Project
 import java.io.Serializable
 
@@ -17,9 +18,15 @@ data class AemConfig(
     var deployConnectionTimeout: Int = 5000,
 
     /**
+     * Perform deploy action (upload, install or activate) in parallel to multiple instances at once.
+     */
+    @Incubating
+    var deployParallel: Boolean = false,
+
+    /**
      * Force upload CRX package regardless if it was previously uploaded.
      */
-    var deployForce: Boolean = true,
+    var uploadForce: Boolean = true,
 
     /**
      * Determines if when on package install, sub-packages included in CRX package content should be also installed.
@@ -57,9 +64,7 @@ data class AemConfig(
             "**/package.json",
             "**/clientlibs/Gruntfile.js",
             "**/node_modules/**",
-            "jcr_root/.vlt-sync-config.properties",
-            "jcr_root/var/**",
-            "SLING-INF/**"
+            "jcr_root/.vlt-sync-config.properties"
     ),
 
     /**
