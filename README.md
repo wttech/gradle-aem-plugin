@@ -37,9 +37,31 @@ AEM developer - it's time to meet Gradle!
 Recommended way to start using Gradle AEM Plugin is to clone and customize [example project](https://github.com/Cognifide/gradle-aem-example).
 All configuration options are listed [here](src/main/kotlin/com/cognifide/gradle/aem/AemConfig.kt).
 
-Example configuration listed below assumes building project by single command `gradle contentDeploy` or just `gradle`.
+### Plugin setup
+
+Released versions of plugin are available on [Bintray](https://bintray.com/cognifide/maven-public/gradle-aem-plugin), 
+so that this repository need to be included in *buildscript* section.
+
+
+```
+buildscript {
+    repositories {
+        maven { url  "http://dl.bintray.com/cognifide/maven-public" }
+    }
+    
+    dependencies {
+        classpath 'com.cognifide.gradle:aem-plugin:1.0.0'
+    }
+}
+
+```
+
+Custom Gradle plugins need to have section above configured in all sub projects that need that custom plugin.
+As a consequence, it is worth to know [approach](https://github.com/Cognifide/gradle-aem-example/blob/master/gradle/buildscript.gradle) for simplification used in example project.
 
 ### Root project (shared)
+
+Example configuration listed below assumes building project by single command `gradle contentDeploy` or just `gradle`.
 
 ```
 defaultTasks = ['contentDeploy']
@@ -58,7 +80,7 @@ plugins.withId 'cognifide.aem', {
 
 ```
 
-Instances configuration can be even omitted, then *http://localhost:4502* and *http://localhost:4503* will be used by default.
+Instances configuration can be omitted, then *http://localhost:4502* and *http://localhost:4503* will be used by default.
 Content path can also be skipped, because value above is also default. This is only an example how to customize particular values.
 
 
@@ -131,6 +153,7 @@ Snippet above demonstrates customizations valid only for specific project.
 ```
 -Paem.deploy.skipDownloadName=true
 ```
+
 
 ## License
 
