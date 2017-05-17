@@ -65,7 +65,6 @@ bintray {
         licenses = ['Apache-2.0']
         vcsUrl = 'https://github.com/Cognifide/gradle-aem-plugin.git'
         labels = ['aem', 'cq', 'vault', 'scr']
-        publicDownloadNumbers = true
         version {
             name = project.version
             desc = "${project.description} ${project.version}"
