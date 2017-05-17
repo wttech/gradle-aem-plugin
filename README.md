@@ -1,11 +1,15 @@
 ![Cognifide logo](doc/cognifide-logo.png)
 
-# Gradle AEM Plugin
-
 [![Gradle Status](https://gradleupdate.appspot.com/Cognifide/gradle-aem-plugin/status.svg)](https://gradleupdate.appspot.com/Cognifide/gradle-aem-plugin/status)
 [![Apache License, Version 2.0, January 2004](https://img.shields.io/github/license/Cognifide/gradle-aem-plugin.svg?label=License)](http://www.apache.org/licenses/)
 
-## About
+# Gradle AEM Plugin
+
+<br>
+<p align="center">
+  <img src="doc/logo.png" alt="Gradle AEM Plugin Logo"/>
+</p>
+<br>
 
 Currently there is no popular way to build applications for AEM using Gradle build system. This project contains brand new Gradle plugin to assemble CRX package and deploy it on instance(s).
 
