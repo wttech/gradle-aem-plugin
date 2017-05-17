@@ -19,11 +19,11 @@ AEM developer - it's time to meet Gradle!
 
 ## Features
 
-* Composing CRX package from multiple content roots, bundles.
+* Composing CRX package from multiple JCR content roots, bundles.
 * Easy multi-deployment with instance groups.
 * Service component annotations processing (SCR).
 * OSGi manifest customization by official [osgi](https://docs.gradle.org/current/userguide/osgi_plugin.html) plugin or feature rich [org.dm.bundle](https://github.com/TomDmitriev/gradle-bundle-plugin) plugin.
-* Automated dependant packages installation from local and remote sources.
+* Automated dependent packages installation from local and remote sources.
 * Smart Vault files generation (combining defaults with overiddables).
 * Checking out and cleaning JCR content from running AEM instance.
 
@@ -125,7 +125,7 @@ Snippet above demonstrates customizations valid only for specific project.
 * `aemActivate` - Replicate installed CRX package to other AEM instance(s).
 * `aemDeploy` - Upload & install CRX package into AEM instance(s). Primary, recommended form of deployment. Optimized version of `aemUpload aemInstall`.
 * `aemDistribute` - Upload, install & activate CRX package into AEM instances(s). Secondary form of deployment. Optimized version of `aemUpload aemInstall aemActivate -Paem.deploy.instance.group=*-author`.
-* `aemSatisfy` - Upload & install dependant CRX package(s) before deployment. Available methods:
+* `aemSatisfy` - Upload & install dependent CRX package(s) before deployment. Available methods:
     * `local(path: String)`, use CRX package from local file system.
     * `download(url: String)`, use CRX package that will be downloaded from specified URL to local temporary directory.
     * `downloadBasicAuth(url: String, user = "admin", password = "admin")`, as above, but with Basic Auth support.
