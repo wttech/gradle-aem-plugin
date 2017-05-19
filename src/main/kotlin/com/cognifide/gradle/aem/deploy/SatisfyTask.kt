@@ -105,7 +105,7 @@ open class SatisfyTask : AbstractTask() {
     }
 
     fun local(path: String) {
-        provide { project.file(path) }
+        local(project.file(path))
     }
 
     fun local(file: File): Unit {

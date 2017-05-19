@@ -16,11 +16,13 @@ import java.io.IOException
 
 class DeploySynchronizer(val instance: AemInstance, val config: AemConfig) {
 
-    private val LOG = LoggerFactory.getLogger(DeploySynchronizer::class.java)
+    companion object {
+        private val LOG = LoggerFactory.getLogger(DeploySynchronizer::class.java)
 
-    val PACKAGE_MAMAGER_SERVICE_SUFFIX = "/crx/packmgr/service"
+        private val PACKAGE_MAMAGER_SERVICE_SUFFIX = "/crx/packmgr/service"
 
-    val PACKAGE_MANAGER_LIST_SUFFIX = "/crx/packmgr/list.jsp"
+        private val PACKAGE_MANAGER_LIST_SUFFIX = "/crx/packmgr/list.jsp"
+    }
 
     val jsonTargetUrl = instance.url + PACKAGE_MAMAGER_SERVICE_SUFFIX + "/.json"
 
