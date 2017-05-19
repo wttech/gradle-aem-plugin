@@ -127,6 +127,7 @@ Snippet above demonstrates customizations valid only for specific project.
 * `aemDistribute` - Upload, install & activate CRX package into AEM instances(s). Secondary form of deployment. Optimized version of `aemUpload aemInstall aemActivate -Paem.deploy.instance.group=*-author`.
 * `aemSatisfy` - Upload & install dependent CRX package(s) before deployment. Available methods:
     * `local(path: String)`, use CRX package from local file system.
+    * `local(file: File)`, same as above, but file can be even located outside the project.
     * `download(url: String)`, use CRX package that will be downloaded from specified URL to local temporary directory.
     * `downloadBasicAuth(url: String, user = "admin", password = "admin")`, as above, but with Basic Auth support.
 * `aemCheckout` - Check out JCR content from running AEM author instance to local content path.
