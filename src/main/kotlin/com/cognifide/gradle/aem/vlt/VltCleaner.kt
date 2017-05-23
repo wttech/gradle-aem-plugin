@@ -12,7 +12,7 @@ import java.io.File
 import java.io.IOException
 import java.util.*
 
-class VltCleaner(val root: String, val logger: Logger) {
+class VltCleaner(val root: File, val logger: Logger) {
 
     companion object {
         val VLT_FILE = ".vlt"
@@ -20,22 +20,27 @@ class VltCleaner(val root: String, val logger: Logger) {
         val JCR_CONTENT_FILE = ".content.xml"
 
         fun clean(project : Project, config : AemConfig) {
-            val cleaner = VltCleaner(config.contentPath, project.logger)
+            val contentDir = File(config.determineContentPath(project))
+            if (!contentDir.exists()) {
+                project.logger.warn("JCR content directory to be cleaned does not exist: ${contentDir.absolutePath}")
+                return
+            }
 
+            val cleaner = VltCleaner(contentDir, project.logger)
             cleaner.removeVltFiles()
             cleaner.cleanupDotContent(config.vaultSkipProperties, config.vaultLineSeparator)
         }
     }
 
     fun removeVltFiles() {
-        for (file in FileUtils.listFiles(File(root), NameFileFilter(VLT_FILE), TrueFileFilter.INSTANCE)) {
+        for (file in FileUtils.listFiles(root, NameFileFilter(VLT_FILE), TrueFileFilter.INSTANCE)) {
             logger.info("Deleting {}", file.path)
             FileUtils.deleteQuietly(file)
         }
     }
 
     fun cleanupDotContent(contentProperties: List<String>, lineEnding : String) {
-        for (file in FileUtils.listFiles(File(root), NameFileFilter(JCR_CONTENT_FILE), TrueFileFilter.INSTANCE)) {
+        for (file in FileUtils.listFiles(root, NameFileFilter(JCR_CONTENT_FILE), TrueFileFilter.INSTANCE)) {
             try {
                 logger.info("Cleaning up {}", file.path)
 
