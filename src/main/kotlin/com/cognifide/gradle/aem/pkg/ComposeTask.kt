@@ -213,6 +213,7 @@ open class ComposeTask : Zip(), AemTask {
     }
 
     fun dependProject(project: Project) {
+        dependsOn("${project.path}:${LifecycleBasePlugin.CLEAN_TASK_NAME}")
         dependsOn("${project.path}:${LifecycleBasePlugin.ASSEMBLE_TASK_NAME}")
         dependsOn("${project.path}:${LifecycleBasePlugin.CHECK_TASK_NAME}")
     }
