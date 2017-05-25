@@ -28,12 +28,6 @@ open class ComposeTask : Zip(), AemTask {
 
     companion object {
         val NAME = "aemCompose"
-
-        val INCLUDE_DEPEND_TASKS_DEFAULT = listOf(
-                LifecycleBasePlugin.CLEAN_TASK_NAME,
-                LifecycleBasePlugin.ASSEMBLE_TASK_NAME,
-                LifecycleBasePlugin.CHECK_TASK_NAME
-        )
     }
 
     @Internal
