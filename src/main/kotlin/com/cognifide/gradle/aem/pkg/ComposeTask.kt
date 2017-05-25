@@ -28,6 +28,12 @@ open class ComposeTask : Zip(), AemTask {
 
     companion object {
         val NAME = "aemCompose"
+
+        val INCLUDE_DEPEND_TASKS_DEFAULT = listOf(
+                LifecycleBasePlugin.CLEAN_TASK_NAME,
+                LifecycleBasePlugin.ASSEMBLE_TASK_NAME,
+                LifecycleBasePlugin.CHECK_TASK_NAME
+        )
     }
 
     @Internal
@@ -212,6 +218,7 @@ open class ComposeTask : Zip(), AemTask {
         includeVault(project.relativePath(config.vaultProfilePath + "/" + profileName))
     }
 
+    // TODO Inherit dependsOn from aemCompose task dependencies from project that is being included, instead such constant declaration
     fun dependProject(project: Project) {
         dependsOn("${project.path}:${LifecycleBasePlugin.CLEAN_TASK_NAME}")
         dependsOn("${project.path}:${LifecycleBasePlugin.ASSEMBLE_TASK_NAME}")
