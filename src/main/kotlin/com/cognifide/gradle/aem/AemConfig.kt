@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem
 import com.cognifide.gradle.aem.pkg.ComposeTask
 import org.gradle.api.Incubating
 import org.gradle.api.Project
+import org.gradle.language.base.plugins.LifecycleBasePlugin
 import java.io.Serializable
 
 data class AemConfig(
@@ -161,7 +162,24 @@ data class AemConfig(
     /**
      * Force specific declarative services version.
      */
-    var scrSpecVersion: String = ""
+    var scrSpecVersion: String = "",
+
+    /**
+     * Configure default task dependency assignments while including dependant project bundles.
+     */
+    var dependBundlesTaskNames: (Project) -> Set<String> = { setOf(
+            LifecycleBasePlugin.ASSEMBLE_TASK_NAME,
+            LifecycleBasePlugin.CHECK_TASK_NAME
+    )},
+
+    /**
+     * Configure default task dependency assignments while including dependant project content.
+     */
+    var dependContentTaskNames: (Project) -> Set<String> = { project ->
+        val task = project.tasks.getByName(ComposeTask.NAME)
+
+        task.taskDependencies.getDependencies(task).map { it.name }.toSet()
+    }
 
 ) : Serializable {
     companion object {
