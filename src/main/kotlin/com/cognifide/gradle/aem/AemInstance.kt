@@ -54,4 +54,8 @@ data class AemInstance(
 
     }
 
+    fun isValid() {
+        // TODO validate URL here, report errors in configuration phase
+    }
+
 }
