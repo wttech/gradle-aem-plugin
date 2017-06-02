@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem
 
 import com.cognifide.gradle.aem.pkg.ComposeTask
-import org.apache.commons.validator.routines.UrlValidator
 import org.gradle.api.Incubating
 import org.gradle.api.Project
 import java.io.Serializable
@@ -185,7 +184,6 @@ data class AemConfig(
             val extended = global.copy()
 
             applyProjectDefaults(extended, project)
-            project.afterEvaluate { extended.validate() }
 
             return extended
         }
@@ -220,23 +218,7 @@ data class AemConfig(
             throw AemException("Content path cannot be blank")
         }
 
-        instances.forEach { instance ->
-            if (!UrlValidator.getInstance().isValid(instance.url)) {
-                throw AemException("Malformed URL address detected in instance: $instance")
-            }
-
-            if (instance.user.isBlank()) {
-                throw AemException("User cannot be blank in instance: $instance")
-            }
-
-            if (instance.password.isBlank()) {
-                throw AemException("Password cannot be blank in instance: $instance")
-            }
-
-            if (instance.group.isBlank()) {
-                throw AemException("Group cannot be blank in instance: $instance")
-            }
-        }
+        instances.forEach { it.validate() }
     }
 
 }
