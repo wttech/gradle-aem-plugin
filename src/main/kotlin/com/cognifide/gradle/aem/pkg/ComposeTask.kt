@@ -31,7 +31,7 @@ open class ComposeTask : Zip(), AemTask {
     }
 
     @Internal
-    var bundleCollectors: List<() -> List<File>> = mutableListOf()
+    var bundleCollectors: MutableMap<String, MutableList<() -> Set<File>>> = mutableMapOf()
 
     @Internal
     var contentCollectors: List<() -> Unit> = mutableListOf()
@@ -70,12 +70,14 @@ open class ComposeTask : Zip(), AemTask {
     }
 
     private fun fromBundles() {
-        val jars = bundleCollectors.fold(TreeSet<File>(), { files, it -> files.addAll(it()); files }).toList()
-        if (jars.isEmpty()) {
-            logger.info("No bundles to copy into AEM package")
-        } else {
-            logger.info("Copying bundles into AEM package: " + jars.toString())
-            into("${AemPlugin.JCR_ROOT}/${config.bundlePath}") { spec -> spec.from(jars) }
+        for ((installPath, jarCollectors) in bundleCollectors) {
+            val jars = jarCollectors.fold(TreeSet<File>(), { files, it -> files.addAll(it()); files })
+            if (jars.isEmpty()) {
+                logger.info("No bundles to copy into AEM package at install path '$installPath'")
+            } else {
+                logger.info("Copying bundles into AEM package at install path '$installPath': " + jars.toString())
+                into("${AemPlugin.JCR_ROOT}/$installPath") { spec -> spec.from(jars) }
+            }
         }
     }
 
@@ -166,19 +168,31 @@ open class ComposeTask : Zip(), AemTask {
 
     fun includeProject(project: Project) {
         includeContent(project)
-        includeBundles(project)
+        includeBundles(project, config.bundlePath)
     }
 
     fun includeBundles(projectPath: String) {
-        includeBundles(project.findProject(projectPath))
+        includeBundles(project.findProject(projectPath), config.bundlePath)
     }
 
-    fun includeBundles(project: Project) {
+    fun includeBundles(projectPath: String, installPath: String) {
+        includeBundles(project.findProject(projectPath), installPath)
+    }
+
+    fun includeBundlesAtRunMode(projectPath: String, runMode : String) {
+        includeBundles(project.findProject(projectPath), "${config.bundlePath}.$runMode")
+    }
+
+    fun includeBundles(project: Project, installPath: String) {
         dependProject(project)
 
-        bundleCollectors += {
-            JarCollector(project).all.toList()
-        }
+        bundleCollectors.getOrPut(installPath, { mutableListOf() }).add({
+            JarCollector(project).all.toSet()
+        })
+    }
+
+    fun includeBundlesAtRunMode(project: Project, runMode: String) {
+        includeBundles(project, "${config.bundlePath}.$runMode")
     }
 
     fun includeContent(projectPath: String) {
