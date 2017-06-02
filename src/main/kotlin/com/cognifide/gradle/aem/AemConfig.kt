@@ -102,7 +102,13 @@ data class AemConfig(
     /**
      * Define here properties that will be skipped when pulling JCR content from AEM instance.
      */
-    var vaultSkipProperties : MutableList<String> = mutableListOf("jcr:lastModified", "jcr:created", "cq:lastModified", "cq:lastReplicat*", "jcr:uuid"),
+    var vaultSkipProperties : MutableList<String> = mutableListOf(
+            "jcr:lastModified",
+            "jcr:created",
+            "cq:lastModified",
+            "cq:lastReplicat*",
+            "jcr:uuid"
+    ),
 
     /**
      * Filter file used when Vault files are being checked out from AEM instance.
@@ -216,6 +222,21 @@ data class AemConfig(
         val task = project.tasks.getByName(ComposeTask.NAME) as ComposeTask
 
         return project.projectDir.path + "/" + task.config.contentPath
+    }
+
+    /**
+     * Following checks will be performed during configuration phase
+     */
+    fun validate() {
+        if (bundlePath.isBlank()) {
+            throw AemException("Bundle path cannot be blank")
+        }
+
+        if (contentPath.isBlank()) {
+            throw AemException("Content path cannot be blank")
+        }
+
+        instances.forEach { it.validate() }
     }
 
 }
