@@ -17,7 +17,6 @@ import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.bundling.Zip
-import org.gradle.language.base.plugins.LifecycleBasePlugin
 import org.reflections.Reflections
 import org.reflections.scanners.ResourcesScanner
 import java.io.File
@@ -170,11 +169,19 @@ open class ComposeTask : Zip(), AemTask {
     }
 
     fun includeBundles(projectPath: String) {
-        includeBundles(project.findProject(projectPath))
+        includeBundles(project.findProject(projectPath), config.dependBundlesTaskNames(project))
+    }
+
+    fun includeBundles(projectPath: String, taskNames: Set<String>) {
+        includeBundles(project.findProject(projectPath), taskNames)
     }
 
     fun includeBundles(project: Project) {
-        dependProject(project)
+        includeBundles(project, config.dependBundlesTaskNames(project))
+    }
+
+    fun includeBundles(project: Project, taskNames: Set<String>) {
+        dependProject(project, taskNames)
 
         bundleCollectors += {
             JarCollector(project).all.toList()
@@ -185,8 +192,16 @@ open class ComposeTask : Zip(), AemTask {
         includeContent(project.findProject(projectPath))
     }
 
+    fun includeContent(projectPath: String, taskNames : Set<String>) {
+        includeContent(project.findProject(projectPath), taskNames)
+    }
+
     fun includeContent(project: Project) {
-        dependProject(project)
+        includeContent(project, config.dependContentTaskNames(project))
+    }
+
+    fun includeContent(project: Project, taskNames : Set<String>) {
+        dependProject(project, taskNames)
 
         contentCollectors += {
             val contentDir = File("${config.determineContentPath(project)}/${AemPlugin.JCR_ROOT}")
@@ -203,6 +218,10 @@ open class ComposeTask : Zip(), AemTask {
         }
     }
 
+    fun dependProject(project: Project, taskNames : Set<String>) {
+        taskNames.forEach { taskName -> dependsOn("${project.path}:$taskName") }
+    }
+
     fun includeVault(vltPath: Any) {
         into(AemPlugin.VLT_PATH, { spec -> spec.from(vltPath) })
     }
@@ -210,11 +229,5 @@ open class ComposeTask : Zip(), AemTask {
     fun includeVaultProfile(profileName: String) {
         includeVault(project.relativePath(config.vaultCommonPath))
         includeVault(project.relativePath(config.vaultProfilePath + "/" + profileName))
-    }
-
-    fun dependProject(project: Project) {
-        dependsOn("${project.path}:${LifecycleBasePlugin.CLEAN_TASK_NAME}")
-        dependsOn("${project.path}:${LifecycleBasePlugin.ASSEMBLE_TASK_NAME}")
-        dependsOn("${project.path}:${LifecycleBasePlugin.CHECK_TASK_NAME}")
     }
 }
