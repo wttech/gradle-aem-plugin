@@ -91,6 +91,11 @@ defaultTasks = ['contentDeploy']
 
 apply plugin: 'cognifide.aem'
 
+project.ext {
+  // where to put the bundle in the content package (optional)
+  bundlePath = "/apps/some/folder"
+}
+
 aem {
     config {
         contentPath = "src/main/aem"

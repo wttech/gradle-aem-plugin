@@ -33,6 +33,7 @@ dependencies {
     compile 'org.dm.gradle:gradle-bundle-plugin:0.10.0'
     compile 'org.apache.jackrabbit.vault:org.apache.jackrabbit.vault:3.1.26'
     compile 'org.apache.jackrabbit.vault:vault-cli:3.1.6'
+    compile 'org.apache.jackrabbit:jackrabbit-api:2.7.4'
 
     // SCR runtime dependencies
 

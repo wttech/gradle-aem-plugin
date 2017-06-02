@@ -30,7 +30,7 @@ open class ComposeTask : Zip(), AemTask {
     }
 
     @Internal
-    var bundleCollectors: List<() -> List<File>> = mutableListOf()
+    var bundleCollectors: List<() -> Pair<String, List<File>>> = mutableListOf()
 
     @Internal
     var contentCollectors: List<() -> Unit> = mutableListOf()
@@ -69,12 +69,16 @@ open class ComposeTask : Zip(), AemTask {
     }
 
     private fun fromBundles() {
-        val jars = bundleCollectors.fold(TreeSet<File>(), { files, it -> files.addAll(it()); files }).toList()
-        if (jars.isEmpty()) {
-            logger.info("No bundles to copy into AEM package")
-        } else {
-            logger.info("Copying bundles into AEM package: " + jars.toString())
-            into("${AemPlugin.JCR_ROOT}/${config.bundlePath}") { spec -> spec.from(jars) }
+        bundleCollectors.forEach { t -> copyJarsToTarget(t) }
+    }
+
+    private fun copyJarsToTarget(t: (() -> Pair<String, List<File>>)) {
+        val pair = t()
+        val target = pair.first
+        val jars = pair.second
+        if (!jars.isEmpty()) {
+            logger.info("Copying bundles into AEM package: " + jars.toString() + " to " + target)
+            into("${AemPlugin.JCR_ROOT}/$target") { spec -> spec.from(jars) }
         }
     }
 
@@ -183,8 +187,12 @@ open class ComposeTask : Zip(), AemTask {
     fun includeBundles(project: Project, taskNames: Set<String>) {
         dependProject(project, taskNames)
 
+        val extraProperties = project.extensions.extraProperties
+        val bundlePath: String = if (extraProperties == null || !extraProperties.has("bundlePath")) config.bundlePath
+        else extraProperties.get("bundlePath") as String
+
         bundleCollectors += {
-            JarCollector(project).all.toList()
+            Pair(bundlePath, JarCollector(project).all.toList())
         }
     }
 
