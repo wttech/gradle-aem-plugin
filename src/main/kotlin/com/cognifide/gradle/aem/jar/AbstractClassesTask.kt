@@ -57,13 +57,13 @@ abstract class AbstractClassesTask : DefaultTask(), AemTask {
     private fun executeScrTask(): SCRDescriptorTask {
         val antTask = SCRDescriptorTask()
         val antProject = project.ant.project
+        val antClassPath = Path(antProject, sourceSet.runtimeClasspath.asPath)
 
         antTask.setSrcdir(classesDir)
         antTask.setDestdir(classesDir)
-        antTask.setClasspath(Path(antProject, sourceSet.runtimeClasspath.asPath))
+        antTask.setClasspath(antClassPath)
         antTask.setStrictMode(config.scrStrictMode)
         antTask.project = antProject
-        antTask.isScanClasses = config.scrScanClasses
 
         if (!config.scrExcludes.isNullOrBlank()) {
             antTask.setExcludes(config.scrExcludes)

@@ -136,17 +136,12 @@ data class AemConfig(
      * @see <http://felix.apache.org/documentation/subprojects/apache-felix-service-component-runtime.html>
      * @see <http://felix.apache.org/documentation/subprojects/apache-felix-maven-scr-plugin/apache-felix-maven-scr-plugin-use.html>
      */
-    var scrEnabled: Boolean = true,
+    var scrEnabled: Boolean = false,
 
     /**
      * Treat SCR warnings as errors
      */
     var scrStrictMode: Boolean = false,
-
-    /**
-     * Scan generated classes directory instead of sources directory
-     */
-    var scrScanClasses: Boolean = true,
 
     /**
      * Exclude source files being processed by SCR annotations scanner.

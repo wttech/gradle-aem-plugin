@@ -1,11 +1,14 @@
 package com.cognifide.gradle.aem.deploy
 
 import com.cognifide.gradle.aem.AemPlugin
+import groovy.lang.Closure
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.FilenameUtils
+import org.apache.commons.io.IOCase
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
+import org.gradle.util.ConfigureUtil
 import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileOutputStream
@@ -19,13 +22,24 @@ open class SatisfyTask : AbstractTask() {
         val NAME = "aemSatisfy"
 
         val DOWNLOAD_DIR = "downloadDir"
+
+        val GROUP_DEFAULT = "default"
+
+        val GROUP_FILTER_PROPERTY = "aem.deploy.satisfy.group"
+
+        val GROUP_FILTER_DEFAULT = "*"
     }
 
+    private data class Provider(val groupName: String, val provider: () -> File)
+
     @Internal
-    private val providers = mutableListOf<() -> File>()
+    private val providers = mutableListOf<Provider>()
 
     @OutputDirectory
     private val downloadDir = File(project.buildDir, "${SatisfyTask.NAME}/$DOWNLOAD_DIR")
+
+    @Internal
+    private var groupName: String = GROUP_DEFAULT
 
     init {
         group = AemPlugin.TASK_GROUP
@@ -41,7 +55,10 @@ open class SatisfyTask : AbstractTask() {
         deploy({ sync ->
             logger.info("Providing packages from local and remote sources.")
 
-            val packageFiles = providers.map { it() }
+            val groupFilter = project.properties.getOrElse(GROUP_FILTER_PROPERTY, { GROUP_FILTER_DEFAULT }) as String
+            val packageFiles = providers.filter({
+                groupFilter.split(",").any { FilenameUtils.wildcardMatch(it, groupFilter, IOCase.INSENSITIVE) }
+            }).map { it.provider() }
 
             logger.info("Packages provided (${packageFiles.size})")
             logger.info("Satisfying (uploading & installing)")
@@ -117,7 +134,14 @@ open class SatisfyTask : AbstractTask() {
     }
 
     fun provide(provider: () -> File): Unit {
-        providers += provider
+        providers += Provider(groupName, provider)
+    }
+
+    @Synchronized
+    fun group(name: String, configurer: Closure<*>) {
+        groupName = name
+        ConfigureUtil.configureSelf(configurer, this)
+        groupName = GROUP_DEFAULT
     }
 
 }
