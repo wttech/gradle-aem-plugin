@@ -26,8 +26,6 @@ open class UpdateManifestTask : DefaultTask(), AemTask {
     companion object {
         val NAME = "aemUpdateManifest"
 
-        val SERVICE_COMPONENT_INSTRUCTION = "Service-Component"
-
         val BUNDLE_CLASSPATH_INSTRUCTION = "Bundle-ClassPath"
 
         val INCLUDE_RESOURCE_INSTRUCTION = "Include-Resource"
@@ -74,7 +72,6 @@ open class UpdateManifestTask : DefaultTask(), AemTask {
     @TaskAction
     fun updateManifest() {
         includeEmbedJars()
-        includeServiceComponents()
     }
 
     private fun includeEmbedJars() {
@@ -102,12 +99,6 @@ open class UpdateManifestTask : DefaultTask(), AemTask {
 
     private fun includeResource(): String {
         return embeddableJars.map { jar -> "${AemPlugin.OSGI_EMBED}/${jar.name}=${jar.path}" }.joinToString(",")
-    }
-
-    private fun includeServiceComponents() {
-        if (config.scrEnabled && serviceComponents.isNotEmpty()) {
-            addInstruction(SERVICE_COMPONENT_INSTRUCTION, { serviceComponentInstruction() })
-        }
     }
 
     private fun serviceComponentInstruction(): String {

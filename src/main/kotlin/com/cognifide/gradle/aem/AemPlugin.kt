@@ -1,8 +1,6 @@
 package com.cognifide.gradle.aem
 
 import com.cognifide.gradle.aem.deploy.*
-import com.cognifide.gradle.aem.jar.ProcessClassesTask
-import com.cognifide.gradle.aem.jar.ProcessTestClassesTask
 import com.cognifide.gradle.aem.jar.UpdateManifestTask
 import com.cognifide.gradle.aem.pkg.ComposeTask
 import com.cognifide.gradle.aem.vlt.CheckoutTask
@@ -62,15 +60,13 @@ class AemPlugin : Plugin<Project> {
         val clean = project.tasks.getByName(LifecycleBasePlugin.CLEAN_TASK_NAME)
 
         project.plugins.withType(JavaPlugin::class.java, {
-            val jar = project.tasks.getByName(JavaPlugin.JAR_TASK_NAME)
-            val processClasses = project.tasks.create(ProcessClassesTask.NAME, ProcessClassesTask::class.java)
-            val processTestClasses = project.tasks.create(ProcessTestClassesTask.NAME, ProcessTestClassesTask::class.java)
+            val classes = project.tasks.getByName(JavaPlugin.CLASSES_TASK_NAME)
+            val testClasses = project.tasks.getByName(JavaPlugin.TEST_CLASSES_TASK_NAME)
             val updateManifest = project.tasks.create(UpdateManifestTask.NAME, UpdateManifestTask::class.java)
+            val jar = project.tasks.getByName(JavaPlugin.JAR_TASK_NAME)
 
-            processClasses.dependsOn(project.tasks.getByName(JavaPlugin.CLASSES_TASK_NAME))
-            processTestClasses.dependsOn(project.tasks.getByName(JavaPlugin.TEST_CLASSES_TASK_NAME))
-            updateManifest.dependsOn(processClasses, processTestClasses)
-            jar.dependsOn(processClasses, processTestClasses, updateManifest)
+            updateManifest.dependsOn(classes, testClasses)
+            jar.dependsOn(updateManifest)
         })
 
         val compose = project.tasks.create(ComposeTask.NAME, ComposeTask::class.java)

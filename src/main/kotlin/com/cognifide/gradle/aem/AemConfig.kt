@@ -128,35 +128,7 @@ data class AemConfig(
      * Custom path to CRX package that is uploaded on AEM instance.
      * Default: [automatically determined]
      */
-    var remotePackagePath: String = "",
-
-    /**
-     * Controls support of SCR Annotations which are used often in AEM development in Java sources.
-     *
-     * @see <http://felix.apache.org/documentation/subprojects/apache-felix-service-component-runtime.html>
-     * @see <http://felix.apache.org/documentation/subprojects/apache-felix-maven-scr-plugin/apache-felix-maven-scr-plugin-use.html>
-     */
-    var scrEnabled: Boolean = false,
-
-    /**
-     * Treat SCR warnings as errors
-     */
-    var scrStrictMode: Boolean = false,
-
-    /**
-     * Exclude source files being processed by SCR annotations scanner.
-     */
-    var scrExcludes: String = "",
-
-    /**
-     * Include source files being processed by SCR annotations scanner.
-     */
-    var scrIncludes: String = "",
-
-    /**
-     * Force specific declarative services version.
-     */
-    var scrSpecVersion: String = ""
+    var remotePackagePath: String = ""
 
 ) : Serializable {
     companion object {
