@@ -80,8 +80,8 @@ open class UpdateManifestTask : DefaultTask(), AemTask {
         }
 
         if (osgiPluginApplied()) {
-            project.logger.warn("As of Gradle 3.5, jar embedding does not work when 'osgi' plugin is used."
-                    + " Consider using 'org.dm.bundle' instead.")
+            project.logger.warn("As of Gradle 3.5, jar embedding does not work when '$OSGI_PLUGIN_ID' plugin is used."
+                    + " Consider using '$BUNDLE_PLUGIN_ID' instead.")
         }
 
         project.logger.info("Embedding jar files: ${embeddableJars.map { it.name }}")
