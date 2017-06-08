@@ -30,7 +30,7 @@ open class ComposeTask : Zip(), AemTask {
     }
 
     @Internal
-    var bundleCollectors: List<() -> List<File>> = mutableListOf()
+    var bundleCollectors: MutableMap<String, MutableList<() -> Set<File>>> = mutableMapOf()
 
     @Internal
     var contentCollectors: List<() -> Unit> = mutableListOf()
@@ -69,12 +69,14 @@ open class ComposeTask : Zip(), AemTask {
     }
 
     private fun fromBundles() {
-        val jars = bundleCollectors.fold(TreeSet<File>(), { files, it -> files.addAll(it()); files }).toList()
-        if (jars.isEmpty()) {
-            logger.info("No bundles to copy into AEM package")
-        } else {
-            logger.info("Copying bundles into AEM package: " + jars.toString())
-            into("${AemPlugin.JCR_ROOT}/${config.bundlePath}") { spec -> spec.from(jars) }
+        for ((installPath, jarCollectors) in bundleCollectors) {
+            val jars = jarCollectors.fold(TreeSet<File>(), { files, it -> files.addAll(it()); files })
+            if (jars.isEmpty()) {
+                logger.info("No bundles to copy into AEM package at install path '$installPath'")
+            } else {
+                logger.info("Copying bundles into AEM package at install path '$installPath': " + jars.toString())
+                into("${AemPlugin.JCR_ROOT}/$installPath") { spec -> spec.from(jars) }
+            }
         }
     }
 
@@ -165,43 +167,36 @@ open class ComposeTask : Zip(), AemTask {
 
     fun includeProject(project: Project) {
         includeContent(project)
-        includeBundles(project)
+        includeBundles(project, config.bundlePath)
     }
 
     fun includeBundles(projectPath: String) {
-        includeBundles(project.findProject(projectPath), config.dependBundlesTaskNames(project))
+        includeBundles(project.findProject(projectPath), config.bundlePath)
     }
 
-    fun includeBundles(projectPath: String, taskNames: Set<String>) {
-        includeBundles(project.findProject(projectPath), taskNames)
+    fun includeBundles(projectPath: String, installPath: String) {
+        includeBundles(project.findProject(projectPath), installPath)
     }
 
-    fun includeBundles(project: Project) {
-        includeBundles(project, config.dependBundlesTaskNames(project))
+    fun includeBundlesAtRunMode(projectPath: String, runMode : String) {
+        val project = project.findProject(projectPath)
+        includeBundles(project, "${config.bundlePath}.$runMode")
     }
 
-    fun includeBundles(project: Project, taskNames: Set<String>) {
-        dependProject(project, taskNames)
+    fun includeBundles(project: Project, installPath: String) {
+        dependProject(project, config.dependBundlesTaskNames(project))
 
-        bundleCollectors += {
-            JarCollector(project).all.toList()
-        }
+        bundleCollectors.getOrPut(installPath, { mutableListOf() }).add({
+            JarCollector(project).all.toSet()
+        })
     }
 
     fun includeContent(projectPath: String) {
         includeContent(project.findProject(projectPath))
     }
 
-    fun includeContent(projectPath: String, taskNames : Set<String>) {
-        includeContent(project.findProject(projectPath), taskNames)
-    }
-
     fun includeContent(project: Project) {
-        includeContent(project, config.dependContentTaskNames(project))
-    }
-
-    fun includeContent(project: Project, taskNames : Set<String>) {
-        dependProject(project, taskNames)
+        dependProject(project, config.dependContentTaskNames(project))
 
         contentCollectors += {
             val contentDir = File("${config.determineContentPath(project)}/${AemPlugin.JCR_ROOT}")
@@ -216,6 +211,10 @@ open class ComposeTask : Zip(), AemTask {
                 }
             }
         }
+    }
+
+    fun dependProject(projectPath: String, taskNames : Set<String>) {
+        dependProject(project.findProject(projectPath), taskNames)
     }
 
     fun dependProject(project: Project, taskNames : Set<String>) {
