@@ -1,6 +1,8 @@
 package com.cognifide.gradle.aem.vlt
 
-class VltException : Exception {
+import com.cognifide.gradle.aem.AemException
+
+class VltException : AemException {
 
     constructor(message: String, cause: Throwable) : super(message, cause)
 

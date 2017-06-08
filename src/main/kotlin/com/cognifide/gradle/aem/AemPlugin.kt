@@ -42,6 +42,7 @@ class AemPlugin : Plugin<Project> {
         setupExtensions(project)
         setupTasks(project)
         setupConfigs(project)
+        setupValidation(project)
     }
 
     private fun setupDependentPlugins(project: Project) {
@@ -136,6 +137,16 @@ class AemPlugin : Plugin<Project> {
         val jar = project.convention.getPlugin(JavaPluginConvention::class.java)
 
         jar.sourceSets.filter { CONFIG_SOURCE_SETS.contains(it.name) }.forEach { it.compileClasspath += config }
+    }
+
+    private fun setupValidation(project: Project) {
+        project.afterEvaluate {
+            project.tasks.forEach {task ->
+                if (task is AemTask) {
+                    task.config.validate()
+                }
+            }
+        }
     }
 
 }

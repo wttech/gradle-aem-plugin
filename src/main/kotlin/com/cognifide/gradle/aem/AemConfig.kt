@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem
 import com.cognifide.gradle.aem.pkg.ComposeTask
 import org.gradle.api.Incubating
 import org.gradle.api.Project
+import org.gradle.language.base.plugins.LifecycleBasePlugin
 import java.io.Serializable
 
 data class AemConfig(
@@ -101,7 +102,13 @@ data class AemConfig(
     /**
      * Define here properties that will be skipped when pulling JCR content from AEM instance.
      */
-    var vaultSkipProperties : MutableList<String> = mutableListOf("jcr:lastModified", "jcr:created", "cq:lastModified", "cq:lastReplicat*", "jcr:uuid"),
+    var vaultSkipProperties : MutableList<String> = mutableListOf(
+            "jcr:lastModified",
+            "jcr:created",
+            "cq:lastModified",
+            "cq:lastReplicat*",
+            "jcr:uuid"
+    ),
 
     /**
      * Filter file used when Vault files are being checked out from AEM instance.
@@ -128,7 +135,24 @@ data class AemConfig(
      * Custom path to CRX package that is uploaded on AEM instance.
      * Default: [automatically determined]
      */
-    var remotePackagePath: String = ""
+    var remotePackagePath: String = "",
+
+    /**
+     * Configure default task dependency assignments while including dependant project bundles.
+     */
+    var dependBundlesTaskNames: (Project) -> Set<String> = { setOf(
+            LifecycleBasePlugin.ASSEMBLE_TASK_NAME,
+            LifecycleBasePlugin.CHECK_TASK_NAME
+    )},
+
+    /**
+     * Configure default task dependency assignments while including dependant project content.
+     */
+    var dependContentTaskNames: (Project) -> Set<String> = { project ->
+        val task = project.tasks.getByName(ComposeTask.NAME)
+
+        task.taskDependencies.getDependencies(task).map { it.name }.toSet()
+    }
 
 ) : Serializable {
     companion object {
@@ -165,6 +189,21 @@ data class AemConfig(
         val task = project.tasks.getByName(ComposeTask.NAME) as ComposeTask
 
         return project.projectDir.path + "/" + task.config.contentPath
+    }
+
+    /**
+     * Following checks will be performed during configuration phase
+     */
+    fun validate() {
+        if (bundlePath.isBlank()) {
+            throw AemException("Bundle path cannot be blank")
+        }
+
+        if (contentPath.isBlank()) {
+            throw AemException("Content path cannot be blank")
+        }
+
+        instances.forEach { it.validate() }
     }
 
 }

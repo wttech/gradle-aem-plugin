@@ -1,8 +1,8 @@
-package com.cognifide.gradle.aem.deploy
+package com.cognifide.gradle.aem
 
-import com.cognifide.gradle.aem.AemException
+import org.gradle.api.GradleException
 
-class DeployException : AemException {
+open class AemException : GradleException {
 
     constructor(message: String, cause: Throwable) : super(message, cause)
 
