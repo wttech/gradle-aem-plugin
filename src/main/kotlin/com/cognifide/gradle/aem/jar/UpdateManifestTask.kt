@@ -97,6 +97,7 @@ open class UpdateManifestTask : DefaultTask(), AemTask {
         return list.joinToString(",")
     }
 
+    // TODO jar absolute path need to be removed / handled (it is visible in final manifest, to be compared with maven-bundle-plugin)
     private fun includeResource(): String {
         return embeddableJars.map { jar -> "${AemPlugin.OSGI_EMBED}/${jar.name}=${jar.path}" }.joinToString(",")
     }
