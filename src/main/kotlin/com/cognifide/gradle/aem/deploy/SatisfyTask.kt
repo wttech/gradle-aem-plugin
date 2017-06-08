@@ -1,11 +1,14 @@
 package com.cognifide.gradle.aem.deploy
 
 import com.cognifide.gradle.aem.AemPlugin
+import com.cognifide.gradle.aem.internal.PropertyParser
+import groovy.lang.Closure
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.FilenameUtils
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
+import org.gradle.util.ConfigureUtil
 import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileOutputStream
@@ -19,13 +22,21 @@ open class SatisfyTask : AbstractTask() {
         val NAME = "aemSatisfy"
 
         val DOWNLOAD_DIR = "downloadDir"
+
+        val GROUP_DEFAULT = "default"
+
     }
 
+    private data class Provider(val groupName: String, val provider: () -> File)
+
     @Internal
-    private val providers = mutableListOf<() -> File>()
+    private val providers = mutableListOf<Provider>()
 
     @OutputDirectory
     private val downloadDir = File(project.buildDir, "${SatisfyTask.NAME}/$DOWNLOAD_DIR")
+
+    @Internal
+    private var groupName: String = GROUP_DEFAULT
 
     init {
         group = AemPlugin.TASK_GROUP
@@ -41,17 +52,15 @@ open class SatisfyTask : AbstractTask() {
         deploy({ sync ->
             logger.info("Providing packages from local and remote sources.")
 
-            val packageFiles = providers.map { it() }
+            val packageFiles = providers.filter({ (groupName) ->
+                PropertyParser(project).filter(groupName, "aem.deploy.satisfy.group")
+            }).map { it.provider() }
 
             logger.info("Packages provided (${packageFiles.size})")
             logger.info("Satisfying (uploading & installing)")
 
             packageFiles.onEach { packageFile ->
                 installPackage(uploadPackage(packageFile, sync).path, sync)
-            }
-
-            filterInstances().onEach { instance ->
-                packageFiles.onEach { logger.info("Satisfied: ${it.absolutePath} on: $instance") }
             }
         })
     }
@@ -95,10 +104,14 @@ open class SatisfyTask : AbstractTask() {
         val connection = URL(url).openConnection()
 
         configurer(connection)
-        connection.getInputStream().use { input ->
-            out.use { fileOut ->
-                input.copyTo(fileOut)
+        try {
+            connection.getInputStream().use { input ->
+                out.use { fileOut ->
+                    input.copyTo(fileOut)
+                }
             }
+        } catch (e: Exception) {
+            throw DeployException("Cannot download package from URL $url or transfer it to path: ${file.absolutePath}", e)
         }
 
         logger.info("Packaged downloaded into path: ${file.absolutePath}")
@@ -117,7 +130,14 @@ open class SatisfyTask : AbstractTask() {
     }
 
     fun provide(provider: () -> File): Unit {
-        providers += provider
+        providers += Provider(groupName, provider)
+    }
+
+    @Synchronized
+    fun group(name: String, configurer: Closure<*>) {
+        groupName = name
+        ConfigureUtil.configureSelf(configurer, this)
+        groupName = GROUP_DEFAULT
     }
 
 }

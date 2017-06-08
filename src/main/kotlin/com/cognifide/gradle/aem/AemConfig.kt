@@ -138,39 +138,6 @@ data class AemConfig(
     var remotePackagePath: String = "",
 
     /**
-     * Controls support of SCR Annotations which are used often in AEM development in Java sources.
-     *
-     * @see <http://felix.apache.org/documentation/subprojects/apache-felix-service-component-runtime.html>
-     * @see <http://felix.apache.org/documentation/subprojects/apache-felix-maven-scr-plugin/apache-felix-maven-scr-plugin-use.html>
-     */
-    var scrEnabled: Boolean = true,
-
-    /**
-     * Treat SCR warnings as errors
-     */
-    var scrStrictMode: Boolean = false,
-
-    /**
-     * Scan generated classes directory instead of sources directory
-     */
-    var scrScanClasses: Boolean = true,
-
-    /**
-     * Exclude source files being processed by SCR annotations scanner.
-     */
-    var scrExcludes: String = "",
-
-    /**
-     * Include source files being processed by SCR annotations scanner.
-     */
-    var scrIncludes: String = "",
-
-    /**
-     * Force specific declarative services version.
-     */
-    var scrSpecVersion: String = "",
-
-    /**
      * Configure default task dependency assignments while including dependant project bundles.
      */
     var dependBundlesTaskNames: (Project) -> Set<String> = { setOf(
