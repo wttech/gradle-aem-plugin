@@ -1,6 +1,8 @@
 package com.cognifide.gradle.aem.pkg
 
-class PackageException : Exception {
+import com.cognifide.gradle.aem.AemException
+
+class PackageException : AemException {
 
     constructor(message: String, cause: Throwable) : super(message, cause)
 

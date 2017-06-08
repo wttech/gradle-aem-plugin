@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem
 import com.cognifide.gradle.aem.pkg.ComposeTask
 import org.gradle.api.Incubating
 import org.gradle.api.Project
+import org.gradle.language.base.plugins.LifecycleBasePlugin
 import java.io.Serializable
 
 data class AemConfig(
@@ -101,7 +102,13 @@ data class AemConfig(
     /**
      * Define here properties that will be skipped when pulling JCR content from AEM instance.
      */
-    var vaultSkipProperties : MutableList<String> = mutableListOf("jcr:lastModified", "jcr:created", "cq:lastModified", "cq:lastReplicat*", "jcr:uuid"),
+    var vaultSkipProperties : MutableList<String> = mutableListOf(
+            "jcr:lastModified",
+            "jcr:created",
+            "cq:lastModified",
+            "cq:lastReplicat*",
+            "jcr:uuid"
+    ),
 
     /**
      * Filter file used when Vault files are being checked out from AEM instance.
@@ -131,37 +138,21 @@ data class AemConfig(
     var remotePackagePath: String = "",
 
     /**
-     * Controls support of SCR Annotations which are used often in AEM development in Java sources.
-     *
-     * @see <http://felix.apache.org/documentation/subprojects/apache-felix-service-component-runtime.html>
-     * @see <http://felix.apache.org/documentation/subprojects/apache-felix-maven-scr-plugin/apache-felix-maven-scr-plugin-use.html>
+     * Configure default task dependency assignments while including dependant project bundles.
      */
-    var scrEnabled: Boolean = true,
+    var dependBundlesTaskNames: (Project) -> Set<String> = { setOf(
+            LifecycleBasePlugin.ASSEMBLE_TASK_NAME,
+            LifecycleBasePlugin.CHECK_TASK_NAME
+    )},
 
     /**
-     * Treat SCR warnings as errors
+     * Configure default task dependency assignments while including dependant project content.
      */
-    var scrStrictMode: Boolean = false,
+    var dependContentTaskNames: (Project) -> Set<String> = { project ->
+        val task = project.tasks.getByName(ComposeTask.NAME)
 
-    /**
-     * Scan generated classes directory instead of sources directory
-     */
-    var scrScanClasses: Boolean = true,
-
-    /**
-     * Exclude source files being processed by SCR annotations scanner.
-     */
-    var scrExcludes: String = "",
-
-    /**
-     * Include source files being processed by SCR annotations scanner.
-     */
-    var scrIncludes: String = "",
-
-    /**
-     * Force specific declarative services version.
-     */
-    var scrSpecVersion: String = ""
+        task.taskDependencies.getDependencies(task).map { it.name }.toSet()
+    }
 
 ) : Serializable {
     companion object {
@@ -198,6 +189,21 @@ data class AemConfig(
         val task = project.tasks.getByName(ComposeTask.NAME) as ComposeTask
 
         return project.projectDir.path + "/" + task.config.contentPath
+    }
+
+    /**
+     * Following checks will be performed during configuration phase
+     */
+    fun validate() {
+        if (bundlePath.isBlank()) {
+            throw AemException("Bundle path cannot be blank")
+        }
+
+        if (contentPath.isBlank()) {
+            throw AemException("Content path cannot be blank")
+        }
+
+        instances.forEach { it.validate() }
     }
 
 }

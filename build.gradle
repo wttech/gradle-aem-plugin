@@ -8,6 +8,7 @@ plugins {
 group 'com.cognifide.gradle'
 version '1.0.3-SNAPSHOT'
 description = 'Gradle AEM Plugin'
+defaultTasks = ['clean', 'publishToMavenLocal']
 
 repositories {
     mavenCentral()
@@ -24,17 +25,12 @@ dependencies {
     compile 'org.apache.commons:commons-lang3:3.4'
     compile 'commons-io:commons-io:2.4'
     compile 'commons-httpclient:commons-httpclient:3.1'
+    compile group: 'commons-validator', name: 'commons-validator', version: '1.6'
     compile 'com.fasterxml.jackson.module:jackson-module-kotlin:2.8.8'
     compile 'org.reflections:reflections:0.9.11'
-    compile "org.apache.felix:org.apache.felix.scr.generator:1.16.0"
-    compile "org.apache.felix:org.apache.felix.scr.ant:1.16.0"
     compile 'org.dm.gradle:gradle-bundle-plugin:0.10.0'
     compile 'org.apache.jackrabbit.vault:org.apache.jackrabbit.vault:3.1.26'
     compile 'org.apache.jackrabbit.vault:vault-cli:3.1.6'
-
-    // SCR runtime dependencies
-
-    compile 'org.osgi:org.osgi.compendium:4.3.1'
 }
 
 gradlePlugin {
