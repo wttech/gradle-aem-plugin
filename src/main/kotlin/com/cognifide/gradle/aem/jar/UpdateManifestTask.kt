@@ -18,7 +18,6 @@ import java.io.File
  * Update manifest being used by 'jar' task of Java Plugin.
  *
  * Both plugins 'osgi' and 'org.dm.bundle' are supported.
- * Dependency embedding does not work when official 'osgi' plugin is used.
  *
  * @see <https://issues.gradle.org/browse/GRADLE-1107>
  * @see <https://github.com/TomDmitriev/gradle-bundle-plugin>
@@ -27,8 +26,6 @@ open class UpdateManifestTask : DefaultTask(), AemTask {
 
     companion object {
         val NAME = "aemUpdateManifest"
-
-        val BUNDLE_CLASSPATH_INSTRUCTION = "Bundle-ClassPath"
 
         val OSGI_PLUGIN_ID = "osgi"
 
@@ -49,40 +46,34 @@ open class UpdateManifestTask : DefaultTask(), AemTask {
     val embeddableJars: List<File>
         @InputFiles
         get() {
-            return jar.project.configurations.getByName(AemPlugin.CONFIG_EMBED).files.sortedBy { it.name }
+            return project.configurations.getByName(AemPlugin.CONFIG_EMBED).files.sortedBy { it.name }
         }
 
-    @TaskAction
-    fun updateManifest() {
-        includeEmbedJars()
+    init {
+        project.afterEvaluate {
+            embedJars()
+        }
     }
 
-    private fun includeEmbedJars() {
+    private fun embedJars() {
         if (embeddableJars.isEmpty()) {
             return
         }
 
-        if (osgiPluginApplied()) {
-            project.logger.warn("As of Gradle 3.5, jar embedding does not work when '$OSGI_PLUGIN_ID' plugin is used."
-                    + " Consider using '$BUNDLE_PLUGIN_ID' instead.")
-        }
-
         project.logger.info("Embedding jar files: ${embeddableJars.map { it.name }}")
 
-        if (embeddableJars.isNotEmpty()) {
-            addInstruction(BUNDLE_CLASSPATH_INSTRUCTION, {
-                val list = mutableListOf(".")
-                embeddableJars.onEach { jar -> list.add(jar.name) }
-                list.joinToString(",")
-            })
-            jar.from(embeddableJars)
-        }
+        jar.from(embeddableJars)
+        addInstruction("Bundle-ClassPath", {
+            val list = mutableListOf(".")
+            embeddableJars.onEach { jar -> list.add(jar.name) }
+            list.joinToString(",")
+        })
     }
 
     private fun addInstruction(name: String, valueProvider: () -> String) {
-        if (osgiPluginApplied()) {
+        if (project.plugins.hasPlugin(OSGI_PLUGIN_ID)) {
             addInstruction(jar.manifest as OsgiManifest, name, valueProvider())
-        } else if (bundlePluginApplied()) {
+        } else if (project.plugins.hasPlugin(BUNDLE_PLUGIN_ID)) {
             addInstruction(project.extensions.getByType(BundleExtension::class.java), name, valueProvider())
         } else {
             project.logger.warn("Cannot apply specific OSGi instruction to JAR manifest, because neither "
@@ -98,10 +89,6 @@ open class UpdateManifestTask : DefaultTask(), AemTask {
         }
     }
 
-    private fun osgiPluginApplied() = project.plugins.hasPlugin(OSGI_PLUGIN_ID)
-
-    private fun bundlePluginApplied() = project.plugins.hasPlugin(BUNDLE_PLUGIN_ID)
-
     @Suppress("unchecked_cast")
     private fun addInstruction(config: BundleExtension, name: String, value: String) {
         val instructions = config.instructions as Map<String, Any>
@@ -110,6 +97,11 @@ open class UpdateManifestTask : DefaultTask(), AemTask {
                 config.instruction(name, value)
             }
         }
+    }
+
+    @TaskAction
+    fun updateManifest() {
+        // nothing to do in execution phase right now, hook for later ;)
     }
 
 }
