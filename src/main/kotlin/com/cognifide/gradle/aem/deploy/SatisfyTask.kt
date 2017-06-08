@@ -1,10 +1,10 @@
 package com.cognifide.gradle.aem.deploy
 
 import com.cognifide.gradle.aem.AemPlugin
+import com.cognifide.gradle.aem.internal.PropertyParser
 import groovy.lang.Closure
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.FilenameUtils
-import org.apache.commons.io.IOCase
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
@@ -25,9 +25,6 @@ open class SatisfyTask : AbstractTask() {
 
         val GROUP_DEFAULT = "default"
 
-        val GROUP_FILTER_PROPERTY = "aem.deploy.satisfy.group"
-
-        val GROUP_FILTER_DEFAULT = "*"
     }
 
     private data class Provider(val groupName: String, val provider: () -> File)
@@ -55,9 +52,8 @@ open class SatisfyTask : AbstractTask() {
         deploy({ sync ->
             logger.info("Providing packages from local and remote sources.")
 
-            val groupFilter = project.properties.getOrElse(GROUP_FILTER_PROPERTY, { GROUP_FILTER_DEFAULT }) as String
-            val packageFiles = providers.filter({
-                groupFilter.split(",").any { FilenameUtils.wildcardMatch(it, groupFilter, IOCase.INSENSITIVE) }
+            val packageFiles = providers.filter({ (groupName) ->
+                PropertyParser(project).filter(groupName, "aem.deploy.satisfy.group")
             }).map { it.provider() }
 
             logger.info("Packages provided (${packageFiles.size})")
@@ -65,10 +61,6 @@ open class SatisfyTask : AbstractTask() {
 
             packageFiles.onEach { packageFile ->
                 installPackage(uploadPackage(packageFile, sync).path, sync)
-            }
-
-            filterInstances().onEach { instance ->
-                packageFiles.onEach { logger.info("Satisfied: ${it.absolutePath} on: $instance") }
             }
         })
     }
@@ -112,10 +104,14 @@ open class SatisfyTask : AbstractTask() {
         val connection = URL(url).openConnection()
 
         configurer(connection)
-        connection.getInputStream().use { input ->
-            out.use { fileOut ->
-                input.copyTo(fileOut)
+        try {
+            connection.getInputStream().use { input ->
+                out.use { fileOut ->
+                    input.copyTo(fileOut)
+                }
             }
+        } catch (e: Exception) {
+            throw DeployException("Cannot download package from URL $url or transfer it to path: ${file.absolutePath}", e)
         }
 
         logger.info("Packaged downloaded into path: ${file.absolutePath}")

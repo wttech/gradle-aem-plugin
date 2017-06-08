@@ -21,8 +21,8 @@ AEM developer - it's time to meet Gradle!
 
 * Composing CRX package from multiple JCR content roots, bundles.
 * Easy multi-deployment with instance groups.
-* Service component annotations processing (SCR).
-* OSGi manifest customization by official [osgi](https://docs.gradle.org/current/userguide/osgi_plugin.html) plugin or feature rich [org.dm.bundle](https://github.com/TomDmitriev/gradle-bundle-plugin) plugin.
+* OSGi Declarative Services annotations support (instead of SCR, [see docs](http://blogs.adobe.com/experiencedelivers/experience-management/osgi/using-osgi-annotations-aem6-2/)).
+* OSGi Manifest customization by official [osgi](https://docs.gradle.org/current/userguide/osgi_plugin.html) plugin or feature rich [org.dm.bundle](https://github.com/TomDmitriev/gradle-bundle-plugin) plugin.
 * Automated dependent packages installation from local and remote sources.
 * Smart Vault files generation (combining defaults with overiddables).
 * Checking out and cleaning JCR content from running AEM instance.
@@ -137,7 +137,7 @@ Snippet above demonstrates customizations valid only for specific project.
 
 ### Parameters
 
-* Deploying only to filtered group of instances
+* Deploying only to filtered group of instances (filters with wildcards, comma delimited):
 
 ```
 -Paem.deploy.instance.group=integration-*
@@ -148,6 +148,12 @@ Snippet above demonstrates customizations valid only for specific project.
 
 ```
 -Paem.deploy.instance.list=http://localhost:4502,admin,admin;http://localhost:4503,admin,admin
+```
+
+* Satisfying only filtered group of packages (filters with wildcards, comma delimited):
+
+```
+-Paem.deploy.satisfy.group=tools 
 ```
 
 * Skipping installed package resolution by download name (eliminating conflicts / only matters when Vault properties file is customized): 

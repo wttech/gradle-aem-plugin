@@ -93,6 +93,8 @@ class AemPlugin : Plugin<Project> {
         deploy.mustRunAfter(satisfy, compose)
         distribute.mustRunAfter(satisfy, compose)
 
+        satisfy.mustRunAfter(clean)
+
         val vltClean = project.tasks.create(CleanTask.NAME, CleanTask::class.java)
         val vltCheckout = project.tasks.create(CheckoutTask.NAME, CheckoutTask::class.java)
         val vltSync = project.tasks.create(SyncTask.NAME, SyncTask::class.java)

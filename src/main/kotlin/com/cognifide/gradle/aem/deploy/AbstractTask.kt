@@ -29,7 +29,7 @@ abstract class AbstractTask : DefaultTask(), AemTask {
         deployer(DeploySynchronizer(instance, config))
     }
 
-    protected fun filterInstances(instanceGroup: String = "*"): List<AemInstance> {
+    protected fun filterInstances(instanceGroup: String = AemInstance.FILTER_DEFAULT): List<AemInstance> {
         return AemInstance.filter(project, config, instanceGroup)
     }
 
@@ -97,8 +97,8 @@ abstract class AbstractTask : DefaultTask(), AemTask {
             return response
         } catch (e: FileNotFoundException) {
             throw DeployException(String.format("Package file '%s' not found!", file.path), e)
-        } catch (e: IOException) {
-            throw DeployException(e.message.orEmpty(), e)
+        } catch (e: Exception) {
+            throw DeployException("Cannot upload package", e)
         }
     }
 
@@ -107,33 +107,37 @@ abstract class AbstractTask : DefaultTask(), AemTask {
 
         logger.info("Installing package using command: " + url)
 
-        val json = sync.post(url, mapOf(
-                "recursive" to config.recursiveInstall,
-                "acHandling" to config.acHandling
-        ))
-        val response = InstallResponse(json)
+        try {
+            val json = sync.post(url, mapOf(
+                    "recursive" to config.recursiveInstall,
+                    "acHandling" to config.acHandling
+            ))
+            val response = InstallResponse(json)
 
-        when (response.status) {
-            InstallResponse.Status.SUCCESS -> if (response.errors.isEmpty()) {
-                logger.info("Package successfully installed.")
-            } else {
-                logger.warn("Package installed with errors")
-                response.errors.forEach { logger.error(it) }
-                throw DeployException("Installation completed with errors!")
+            when (response.status) {
+                InstallResponse.Status.SUCCESS -> if (response.errors.isEmpty()) {
+                    logger.info("Package successfully installed.")
+                } else {
+                    logger.warn("Package installed with errors")
+                    response.errors.forEach { logger.error(it) }
+                    throw DeployException("Installation completed with errors!")
+                }
+                InstallResponse.Status.SUCCESS_WITH_ERRORS -> {
+                    logger.error("Package installed with errors.")
+                    response.errors.forEach { logger.error(it) }
+                    throw DeployException("Installation completed with errors!")
+                }
+                InstallResponse.Status.FAIL -> {
+                    logger.error("Installation failed.")
+                    response.errors.forEach { logger.error(it) }
+                    throw DeployException("Installation incomplete!")
+                }
             }
-            InstallResponse.Status.SUCCESS_WITH_ERRORS -> {
-                logger.error("Package installed with errors.")
-                response.errors.forEach { logger.error(it) }
-                throw DeployException("Installation completed with errors!")
-            }
-            InstallResponse.Status.FAIL -> {
-                logger.error("Installation failed.")
-                response.errors.forEach { logger.error(it) }
-                throw DeployException("Installation incomplete!")
-            }
+
+            return response
+        } catch (e: Exception) {
+            throw DeployException("Cannot install package", e)
         }
-
-        return response
     }
 
     protected fun activatePackage(path: String, sync: DeploySynchronizer): UploadResponse {
@@ -145,14 +149,14 @@ abstract class AbstractTask : DefaultTask(), AemTask {
         try {
             json = sync.post(url)
         } catch (e: DeployException) {
-            throw DeployException(e.message.orEmpty(), e)
+            throw DeployException("Cannot activate package", e)
         }
 
         val response: UploadResponse = try {
             UploadResponse.fromJson(json)
         } catch (e: IOException) {
             logger.error("Malformed JSON response", e)
-            throw DeployException("Package activation failed")
+            throw DeployException("Package activation failed", e)
         }
 
         if (response.isSuccess) {
