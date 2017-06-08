@@ -35,10 +35,6 @@ class AemPlugin : Plugin<Project> {
         val VLT_PATH = "META-INF/vault"
 
         val JCR_ROOT = "jcr_root"
-
-        val OSGI_INF = "OSGI-INF"
-
-        val OSGI_EMBED = "OSGI-INF/lib"
     }
 
     override fun apply(project: Project) {

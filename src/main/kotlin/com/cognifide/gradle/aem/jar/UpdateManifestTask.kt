@@ -30,8 +30,6 @@ open class UpdateManifestTask : DefaultTask(), AemTask {
 
         val BUNDLE_CLASSPATH_INSTRUCTION = "Bundle-ClassPath"
 
-        val INCLUDE_RESOURCE_INSTRUCTION = "Include-Resource"
-
         val OSGI_PLUGIN_ID = "osgi"
 
         val BUNDLE_PLUGIN_ID = "org.dm.bundle"
@@ -71,20 +69,14 @@ open class UpdateManifestTask : DefaultTask(), AemTask {
 
         project.logger.info("Embedding jar files: ${embeddableJars.map { it.name }}")
 
-        addInstruction(BUNDLE_CLASSPATH_INSTRUCTION, { bundleClassPath() })
-        addInstruction(INCLUDE_RESOURCE_INSTRUCTION, { includeResource() })
-    }
-
-    private fun bundleClassPath(): String {
-        val list = mutableListOf(".")
-        embeddableJars.onEach { jar -> list.add("${AemPlugin.OSGI_EMBED}/${jar.name}") }
-
-        return list.joinToString(",")
-    }
-
-    // TODO jar absolute path need to be removed / handled (it is visible in final manifest, to be compared with maven-bundle-plugin)
-    private fun includeResource(): String {
-        return embeddableJars.map { jar -> "${AemPlugin.OSGI_EMBED}/${jar.name}=${jar.path}" }.joinToString(",")
+        if (embeddableJars.isNotEmpty()) {
+            addInstruction(BUNDLE_CLASSPATH_INSTRUCTION, {
+                val list = mutableListOf(".")
+                embeddableJars.onEach { jar -> list.add(jar.name) }
+                list.joinToString(",")
+            })
+            jar.from(embeddableJars)
+        }
     }
 
     private fun addInstruction(name: String, valueProvider: () -> String) {
