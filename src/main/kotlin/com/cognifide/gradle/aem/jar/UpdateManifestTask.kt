@@ -6,9 +6,11 @@ import com.cognifide.gradle.aem.AemTask
 import org.dm.gradle.plugins.bundle.BundleExtension
 import org.gradle.api.DefaultTask
 import org.gradle.api.plugins.JavaPlugin
-import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.plugins.osgi.OsgiManifest
-import org.gradle.api.tasks.*
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.InputFiles
+import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.TaskAction
 import org.gradle.jvm.tasks.Jar
 import java.io.File
 
@@ -46,27 +48,10 @@ open class UpdateManifestTask : DefaultTask(), AemTask {
     @Internal
     val jar = project.tasks.getByName(JavaPlugin.JAR_TASK_NAME) as Jar
 
-    @Internal
-    val jarConvention = project.convention.getPlugin(JavaPluginConvention::class.java)!!
-
     val embeddableJars: List<File>
         @InputFiles
         get() {
             return jar.project.configurations.getByName(AemPlugin.CONFIG_EMBED).files.sortedBy { it.name }
-        }
-
-    val serviceComponents: List<File>
-        @InputFiles
-        get() {
-            val mainSourceSet = jarConvention.sourceSets.getByName(SourceSet.MAIN_SOURCE_SET_NAME)
-            val osgiInfDir = File(mainSourceSet.output.classesDir, AemPlugin.OSGI_INF)
-            val files = osgiInfDir.listFiles({ _, name -> name.endsWith(".xml") })
-
-            if (files == null) {
-                return listOf()
-            } else {
-                return files.toList().sortedBy { it.name }
-            }
         }
 
     @TaskAction
@@ -100,12 +85,6 @@ open class UpdateManifestTask : DefaultTask(), AemTask {
     // TODO jar absolute path need to be removed / handled (it is visible in final manifest, to be compared with maven-bundle-plugin)
     private fun includeResource(): String {
         return embeddableJars.map { jar -> "${AemPlugin.OSGI_EMBED}/${jar.name}=${jar.path}" }.joinToString(",")
-    }
-
-    private fun serviceComponentInstruction(): String {
-        project.logger.info("Including service components: ${serviceComponents.map { it.name }}")
-
-        return serviceComponents.map { file -> "${AemPlugin.OSGI_INF}/${file.name}" }.joinToString(",")
     }
 
     private fun addInstruction(name: String, valueProvider: () -> String) {
