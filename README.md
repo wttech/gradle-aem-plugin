@@ -131,6 +131,7 @@ Snippet above demonstrates customizations valid only for specific project.
     * `local(file: File)`, same as above, but file can be even located outside the project.
     * `download(url: String)`, use CRX package that will be downloaded from specified URL to local temporary directory.
     * `downloadBasicAuth(url: String, user = "admin", password = "admin")`, as above, but with Basic Auth support.
+    * `group(name: String, configurer: () -> Unit)`, useful for declaring group of packages to be installed only on demand (just use methods above in closure).
 * `aemCheckout` - Check out JCR content from running AEM author instance to local content path.
 * `aemClean` - Clean checked out JCR content.
 * `aemSync` - Check out then clean JCR content.
