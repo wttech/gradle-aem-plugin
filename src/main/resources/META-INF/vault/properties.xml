@@ -3,9 +3,10 @@
 <properties>
     <comment>${project.description}</comment>
     <entry key="createdBy">${user.name}</entry>
+    <entry key="created">${created}</entry>
+    <entry key="buildCount">${buildCount}</entry>
     <entry key="name">${project.name}</entry>
     <entry key="acHandling">${config.acHandling}</entry>
-    <entry key="created">${created}</entry>
     <entry key="groupId">${project.group}</entry>
     <entry key="version">${project.version}</entry>
     <entry key="requiresRoot">false</entry>

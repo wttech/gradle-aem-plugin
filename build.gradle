@@ -15,9 +15,6 @@ repositories {
 }
 
 dependencies {
-
-    // Regular dependencies
-
     compile gradleApi()
     compile localGroovy()
 

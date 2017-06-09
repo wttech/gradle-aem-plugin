@@ -21,6 +21,7 @@ import org.reflections.Reflections
 import org.reflections.scanners.ResourcesScanner
 import java.io.File
 import java.io.FileOutputStream
+import java.text.SimpleDateFormat
 import java.util.*
 
 open class ComposeTask : Zip(), AemTask {
@@ -147,11 +148,15 @@ open class ComposeTask : Zip(), AemTask {
             map.put(entry.key.toString(), entry.value.toString()); map
         }) + config.vaultExpandProperties
         val interpolated = StrSubstitutor.replace(source, props)
+
+        val now = Date()
+
         val template = SimpleTemplateEngine().createTemplate(interpolated).make(mapOf(
                 "rootProject" to project.rootProject,
                 "project" to project,
                 "config" to config,
-                "created" to ISO8601Utils.format(Date())
+                "created" to ISO8601Utils.format(now),
+                "buildCount" to SimpleDateFormat("yDDmmssSSS").format(now)
         ))
 
         return template.toString()
