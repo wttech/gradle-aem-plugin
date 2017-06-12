@@ -1,8 +1,6 @@
 package com.cognifide.gradle.aem
 
 import com.cognifide.gradle.aem.internal.PropertyParser
-import org.apache.commons.io.FilenameUtils
-import org.apache.commons.io.IOCase
 import org.apache.commons.validator.routines.UrlValidator
 import org.gradle.api.Project
 import java.io.Serializable
@@ -11,7 +9,7 @@ data class AemInstance(
         val url: String,
         val user: String,
         val password: String,
-        val group: String
+        val name: String
 ) : Serializable {
 
     companion object {
@@ -50,7 +48,7 @@ data class AemInstance(
             }
 
             return instances.filter { instance ->
-                PropertyParser(project).filter(instance.group, "aem.deploy.instance.group", instanceGroup)
+                PropertyParser(project).filter(instance.name, "aem.deploy.instance.group", instanceGroup)
             }
         }
     }
@@ -68,8 +66,8 @@ data class AemInstance(
             throw AemException("Password cannot be blank in $this")
         }
 
-        if (group.isBlank()) {
-            throw AemException("Group cannot be blank in $this")
+        if (name.isBlank()) {
+            throw AemException("Name cannot be blank in $this")
         }
     }
 
