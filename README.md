@@ -116,10 +116,10 @@ Snippet above demonstrates customizations valid only for specific project.
 ### Tasks
 
 * `aemCompose` - Compose CRX package from JCR content and bundles. Available methods:
-    * `includeProject(projectName: String)`, includes both bundles and JCR content from another project, example: `includeProject ':example.bundle'`.
-    * `includeContent(projectName: String)`, includes only JCR content, example: `includeContent ':example.design'`.
-    * `includeBundles(projectName: String)`, includes only bundles, example: `includeBundles ':example.auth'`.
-    * `includeBundlesAtRunMode(projectName: String, runMode: String)`, as above, useful when bundles need to be installed only on specific type of instance.
+    * `includeProject(projectPath: String)`, includes both bundles and JCR content from another project, example: `includeProject ':example.bundle'`.
+    * `includeContent(projectPath: String)`, includes only JCR content, example: `includeContent ':example.design'`.
+    * `includeBundles(projectPath: String)`, includes only bundles, example: `includeBundles ':example.auth'`.
+    * `includeBundlesAtRunMode(projectPath: String, runMode: String)`, as above, useful when bundles need to be installed only on specific type of instance.
     * all inherited from [ZIP task](https://docs.gradle.org/3.5/dsl/org.gradle.api.tasks.bundling.Zip.html).
 * `aemUpload` - Upload composed CRX package into AEM instance(s).
 * `aemInstall` - Install uploaded CRX package on AEM instance(s).
