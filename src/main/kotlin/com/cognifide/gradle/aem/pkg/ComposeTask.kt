@@ -36,6 +36,10 @@ open class ComposeTask : Zip(), AemTask {
     @Internal
     var contentCollectors: List<() -> Unit> = mutableListOf()
 
+    // TODO parse filter.xml from includeContent() calls and put lines here (use jsoup to retrieve them?)
+    @Internal
+    private val includedFilterRoots = mutableListOf<String>()
+
     @OutputDirectory
     private val vaultDir = File(project.buildDir, "$NAME/${AemPlugin.VLT_PATH}")
 
@@ -156,7 +160,8 @@ open class ComposeTask : Zip(), AemTask {
                 "project" to project,
                 "config" to config,
                 "created" to ISO8601Utils.format(now),
-                "buildCount" to SimpleDateFormat("yDDmmssSSS").format(now)
+                "buildCount" to SimpleDateFormat("yDDmmssSSS").format(now),
+                "includedFilterRoots" to includedFilterRoots.joinToString(config.vaultLineSeparator)
         ))
 
         return template.toString()
@@ -164,6 +169,28 @@ open class ComposeTask : Zip(), AemTask {
 
     private fun fromContents() {
         contentCollectors.onEach { it() }
+    }
+
+    fun includeSubprojects() {
+        includeSubprojects(true)
+    }
+
+    fun includeSubprojects(withSamePathPrefix: Boolean) {
+        project.gradle.afterProject { subproject ->
+            if (subproject.path != project.path && subproject.plugins.hasPlugin(AemPlugin.ID)) {
+                if (!withSamePathPrefix || subproject.path.startsWith("${project.path}:")) {
+                    includeProject(subproject)
+                }
+            }
+        }
+    }
+
+    fun includeProjects(vararg projects: Project) {
+        includeProjects(projects.toSet())
+    }
+
+    fun includeProjects(projects: Collection<Project>) {
+        projects.forEach { includeProject(it) }
     }
 
     fun includeProject(projectPath: String) {
@@ -183,7 +210,7 @@ open class ComposeTask : Zip(), AemTask {
         includeBundles(project.findProject(projectPath), installPath)
     }
 
-    fun includeBundlesAtRunMode(projectPath: String, runMode : String) {
+    fun includeBundlesAtRunMode(projectPath: String, runMode: String) {
         val project = project.findProject(projectPath)
         includeBundles(project, "${config.bundlePath}.$runMode")
     }
@@ -203,6 +230,7 @@ open class ComposeTask : Zip(), AemTask {
     fun includeContent(project: Project) {
         dependProject(project, config.dependContentTaskNames(project))
 
+        // TODO copy filter lines and assemble them into one aggregated file using var ${includedFilterRoots}
         contentCollectors += {
             val contentDir = File("${config.determineContentPath(project)}/${AemPlugin.JCR_ROOT}")
             if (!contentDir.exists()) {
@@ -218,11 +246,11 @@ open class ComposeTask : Zip(), AemTask {
         }
     }
 
-    fun dependProject(projectPath: String, taskNames : Set<String>) {
+    fun dependProject(projectPath: String, taskNames: Set<String>) {
         dependProject(project.findProject(projectPath), taskNames)
     }
 
-    fun dependProject(project: Project, taskNames : Set<String>) {
+    fun dependProject(project: Project, taskNames: Set<String>) {
         taskNames.forEach { taskName -> dependsOn("${project.path}:$taskName") }
     }
 
