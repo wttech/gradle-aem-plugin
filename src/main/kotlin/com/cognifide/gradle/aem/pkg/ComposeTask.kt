@@ -17,6 +17,8 @@ import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.bundling.Zip
+import org.jsoup.Jsoup
+import org.jsoup.parser.Parser
 import org.reflections.Reflections
 import org.reflections.scanners.ResourcesScanner
 import java.io.File
@@ -36,9 +38,8 @@ open class ComposeTask : Zip(), AemTask {
     @Internal
     var contentCollectors: List<() -> Unit> = mutableListOf()
 
-    // TODO parse filter.xml from includeContent() calls and put lines here (use jsoup to retrieve them?)
     @Internal
-    private val includedFilterRoots = mutableListOf<String>()
+    private val vaultFilters = mutableListOf<File>()
 
     @OutputDirectory
     private val vaultDir = File(project.buildDir, "$NAME/${AemPlugin.VLT_PATH}")
@@ -133,6 +134,15 @@ open class ComposeTask : Zip(), AemTask {
         }
     }
 
+    private fun parseVaultFilterRoots(): String {
+        val tags = vaultFilters.filter { it.exists() }.fold(mutableListOf<String>(), { tags, filter ->
+            val doc = Jsoup.parse(filter.bufferedReader().use { it.readText() }, "", Parser.xmlParser())
+            tags.addAll(doc.select("filter[root]").map { it.toString() }.toList()); tags
+        })
+
+        return tags.joinToString(config.vaultLineSeparator)
+    }
+
     private fun expandVaultFiles() {
         val files = vaultDir.listFiles { _, name -> config.vaultFilesExpanded.any { FilenameUtils.wildcardMatch(name, it, IOCase.INSENSITIVE) } } ?: return
 
@@ -161,9 +171,8 @@ open class ComposeTask : Zip(), AemTask {
                 "config" to config,
                 "created" to ISO8601Utils.format(now),
                 "buildCount" to SimpleDateFormat("yDDmmssSSS").format(now),
-                "includedFilterRoots" to includedFilterRoots.joinToString(config.vaultLineSeparator)
+                "filterRoots" to parseVaultFilterRoots()
         ))
-
         return template.toString()
     }
 
@@ -230,7 +239,10 @@ open class ComposeTask : Zip(), AemTask {
     fun includeContent(project: Project) {
         dependProject(project, config.dependContentTaskNames(project))
 
-        // TODO copy filter lines and assemble them into one aggregated file using var ${includedFilterRoots}
+        if (this.project.path != project.path) {
+            vaultFilters.add(project.file(config.vaultFilterPath))
+        }
+
         contentCollectors += {
             val contentDir = File("${config.determineContentPath(project)}/${AemPlugin.JCR_ROOT}")
             if (!contentDir.exists()) {
