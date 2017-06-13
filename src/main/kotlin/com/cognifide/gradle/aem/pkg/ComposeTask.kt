@@ -237,6 +237,8 @@ open class ComposeTask : Zip(), AemTask {
     }
 
     fun includeBundles(project: Project, installPath: String) {
+        val config = AemConfig.of(project)
+
         dependProject(project, config.dependBundlesTaskNames(project))
 
         bundleCollectors.getOrPut(installPath, { mutableListOf() }).add({
@@ -249,6 +251,8 @@ open class ComposeTask : Zip(), AemTask {
     }
 
     fun includeContent(project: Project) {
+        val config = AemConfig.of(project)
+
         dependProject(project, config.dependContentTaskNames(project))
 
         if (this.project.path != project.path) {
@@ -256,7 +260,7 @@ open class ComposeTask : Zip(), AemTask {
         }
 
         contentCollectors += {
-            val contentDir = File("${config.bundlePath}/${AemPlugin.JCR_ROOT}")
+            val contentDir = File("${config.contentPath}/${AemPlugin.JCR_ROOT}")
             if (!contentDir.exists()) {
                 logger.info("Package JCR content directory does not exist: ${contentDir.absolutePath}")
             } else {
