@@ -42,9 +42,10 @@ data class AemConfig(
     var acHandling: String = "merge_preserve",
 
     /**
-     * Relative to project, path to JCR content to be included in CRX package.
+     * Absolute path to JCR content to be included in CRX package.
+     * Default: "${project.projectDir.path}/src/main/content"
      */
-    var contentPath: String = "src/main/content",
+    var contentPath: String = "",
 
     /**
      * Content path to bundle jars being placed in CRX package.
@@ -173,22 +174,23 @@ data class AemConfig(
             return extended
         }
 
+        fun of(project: Project): AemConfig {
+            return (project.tasks.getByName(ComposeTask.NAME) as AemTask).config
+        }
+
         private fun applyProjectDefaults(config: AemConfig, project: Project) {
-            config.bundlePath = "/apps/" + project.rootProject.name + "/install"
+            if (project.path == project.rootProject.path) {
+                config.bundlePath = "/apps/${project.name}/install"
+            } else {
+                config.bundlePath = "/apps/${project.rootProject.name}/${project.name}/install"
+            }
+
+            config.contentPath = "${project.projectDir.path}/src/main/content"
         }
     }
 
     fun instance(url: String, user: String = "admin", password: String = "admin", type: String = "default") {
         instances.add(AemInstance(url, user, password, type))
-    }
-
-    /**
-     * While including another project content, use path configured in that project.
-     */
-    fun determineContentPath(project: Project): String {
-        val task = project.tasks.getByName(ComposeTask.NAME) as ComposeTask
-
-        return project.projectDir.path + "/" + task.config.contentPath
     }
 
     /**

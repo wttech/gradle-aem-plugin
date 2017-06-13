@@ -96,7 +96,7 @@ open class ComposeTask : Zip(), AemTask {
         val contentPath: String = if (!config.vaultFilesPath.isNullOrBlank()) {
             config.vaultFilesPath
         } else {
-            "${config.determineContentPath(project)}/${AemPlugin.VLT_PATH}"
+            "${config.contentPath}/${AemPlugin.VLT_PATH}"
         }
 
         val contentDir = File(contentPath)
@@ -139,6 +139,10 @@ open class ComposeTask : Zip(), AemTask {
             val doc = Jsoup.parse(filter.bufferedReader().use { it.readText() }, "", Parser.xmlParser())
             tags.addAll(doc.select("filter[root]").map { it.toString() }.toList()); tags
         })
+
+        if (tags.isEmpty()) {
+            tags.add("<filter root=\"${config.bundlePath}\"/>")
+        }
 
         return tags.joinToString(config.vaultLineSeparator)
     }
@@ -208,11 +212,17 @@ open class ComposeTask : Zip(), AemTask {
 
     fun includeProject(project: Project) {
         includeContent(project)
-        includeBundles(project, config.bundlePath)
+        includeBundles(project)
     }
 
     fun includeBundles(projectPath: String) {
-        includeBundles(project.findProject(projectPath), config.bundlePath)
+        val project = project.findProject(projectPath)
+
+        includeBundles(project, AemConfig.of(project).bundlePath)
+    }
+
+    fun includeBundles(project: Project) {
+        includeBundles(project, AemConfig.of(project).bundlePath)
     }
 
     fun includeBundles(projectPath: String, installPath: String) {
@@ -221,7 +231,9 @@ open class ComposeTask : Zip(), AemTask {
 
     fun includeBundlesAtRunMode(projectPath: String, runMode: String) {
         val project = project.findProject(projectPath)
-        includeBundles(project, "${config.bundlePath}.$runMode")
+        val bundlePath = AemConfig.of(project).bundlePath
+
+        includeBundles(project, "$bundlePath.$runMode")
     }
 
     fun includeBundles(project: Project, installPath: String) {
@@ -244,7 +256,7 @@ open class ComposeTask : Zip(), AemTask {
         }
 
         contentCollectors += {
-            val contentDir = File("${config.determineContentPath(project)}/${AemPlugin.JCR_ROOT}")
+            val contentDir = File("${config.bundlePath}/${AemPlugin.JCR_ROOT}")
             if (!contentDir.exists()) {
                 logger.info("Package JCR content directory does not exist: ${contentDir.absolutePath}")
             } else {
