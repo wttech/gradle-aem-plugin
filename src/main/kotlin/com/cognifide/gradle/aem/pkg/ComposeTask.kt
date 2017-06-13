@@ -33,7 +33,7 @@ open class ComposeTask : Zip(), AemTask {
     }
 
     @Internal
-    var bundleCollectors: MutableMap<String, MutableList<() -> Set<File>>> = mutableMapOf()
+    var bundleCollectors: List<() -> Unit> = mutableListOf()
 
     @Internal
     var contentCollectors: List<() -> Unit> = mutableListOf()
@@ -75,15 +75,7 @@ open class ComposeTask : Zip(), AemTask {
     }
 
     private fun fromBundles() {
-        for ((installPath, jarCollectors) in bundleCollectors) {
-            val jars = jarCollectors.fold(TreeSet<File>(), { files, it -> files.addAll(it()); files })
-            if (jars.isEmpty()) {
-                logger.info("No bundles to copy into AEM package at install path '$installPath'")
-            } else {
-                logger.info("Copying bundles into AEM package at install path '$installPath': " + jars.toString())
-                into("${AemPlugin.JCR_ROOT}/$installPath") { spec -> spec.from(jars) }
-            }
-        }
+        bundleCollectors.onEach { it() }
     }
 
     private fun includeVaultFiles() {
@@ -241,9 +233,19 @@ open class ComposeTask : Zip(), AemTask {
 
         dependProject(project, config.dependBundlesTaskNames(project))
 
-        bundleCollectors.getOrPut(installPath, { mutableListOf() }).add({
-            JarCollector(project).all.toSet()
-        })
+        bundleCollectors += {
+            val jars = JarCollector(project).all.toSet()
+
+            if (jars.isEmpty()) {
+                logger.info("No bundles to copy into AEM package at install path '$installPath'")
+            } else {
+                logger.info("Copying bundles into AEM package at install path '$installPath': " + jars.toString())
+
+                into("${AemPlugin.JCR_ROOT}/$installPath") { spec ->
+                    spec.from(jars)
+                }
+            }
+        }
     }
 
     fun includeContent(projectPath: String) {
