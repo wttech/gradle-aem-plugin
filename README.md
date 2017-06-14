@@ -15,7 +15,7 @@ Currently there is no popular way to build applications for AEM using Gradle bui
 
 Incremental build which takes seconds, not minutes. Developer who does not loose focus between build time gaps. Extend freely your build system directly in project. 
 
-AEM developer - it's time to meet Gradle!
+AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget to **star this project** on GitHub :)
 
 ## Features
 
