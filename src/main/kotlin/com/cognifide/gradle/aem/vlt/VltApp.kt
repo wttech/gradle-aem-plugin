@@ -13,8 +13,10 @@ class VltApp(val instance: AemInstance, val project: Project) : VaultFsApp() {
 
     companion object {
 
-        fun checkout(project: Project, config: AemConfig) {
-            val contentDir = File(config.determineContentPath(project))
+        fun checkout(project: Project) {
+            val config = AemConfig.of(project)
+            val contentDir = File(config.contentPath)
+
             if (!contentDir.exists()) {
                 project.logger.info("JCR content directory to be checked out does not exist: ${contentDir.absolutePath}")
             }

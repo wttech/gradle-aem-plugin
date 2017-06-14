@@ -11,8 +11,6 @@ import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.plugins.BasePlugin
 import org.gradle.api.plugins.JavaPlugin
-import org.gradle.api.plugins.JavaPluginConvention
-import org.gradle.api.tasks.SourceSet
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 
 /**
@@ -24,13 +22,13 @@ import org.gradle.language.base.plugins.LifecycleBasePlugin
 class AemPlugin : Plugin<Project> {
 
     companion object {
+        val ID = "cognifide.aem"
+
         val TASK_GROUP = "AEM"
 
         val CONFIG_INSTALL = "aemInstall"
 
         val CONFIG_EMBED = "aemEmbed"
-
-        val CONFIG_SOURCE_SETS = listOf(SourceSet.MAIN_SOURCE_SET_NAME, SourceSet.TEST_SOURCE_SET_NAME)
 
         val VLT_PATH = "META-INF/vault"
 
@@ -102,41 +100,16 @@ class AemPlugin : Plugin<Project> {
     }
 
     private fun setupConfigs(project: Project) {
-        createConfig(project, CONFIG_INSTALL, JavaPlugin.IMPLEMENTATION_CONFIGURATION_NAME)
-        createConfig(project, CONFIG_EMBED, JavaPlugin.IMPLEMENTATION_CONFIGURATION_NAME)
-    }
-
-    private fun createConfig(project: Project, configName: String, configToBeExtended: String): Configuration {
-        val result = project.configurations.create(configName, {
-            it.isTransitive = false
-        })
-        forConfiguration(project, configToBeExtended, { config ->
-            config.extendsFrom(result)
-            appendConfigurationToCompileClasspath(project, result)
-        })
-
-        return result
-    }
-
-    private fun forConfiguration(project: Project, name: String, creator: (Configuration) -> Unit) {
-        val config = project.configurations.findByName(name)
-        if (config != null) {
-            creator(config)
-        } else {
-            project.configurations.whenObjectAdded {
-                if (it is Configuration) {
-                    if (name == it.name) {
-                        creator(config)
-                    }
-                }
+        project.plugins.withType(JavaPlugin::class.java, {
+            val baseConfig = project.configurations.getByName(JavaPlugin.COMPILE_CONFIGURATION_NAME)
+            val configurer: (Configuration) -> Unit = {
+                it.isTransitive = false
+                baseConfig.extendsFrom(it)
             }
-        }
-    }
 
-    private fun appendConfigurationToCompileClasspath(project: Project, config: Configuration) {
-        val jar = project.convention.getPlugin(JavaPluginConvention::class.java)
-
-        jar.sourceSets.filter { CONFIG_SOURCE_SETS.contains(it.name) }.forEach { it.compileClasspath += config }
+            project.configurations.create(CONFIG_EMBED, configurer)
+            project.configurations.create(CONFIG_INSTALL, configurer)
+        })
     }
 
     private fun setupValidation(project: Project) {
