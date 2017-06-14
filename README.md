@@ -1,4 +1,4 @@
-![Cognifide logo](doc/cognifide-logo.png)
+![Cognifide logo](docs/cognifide-logo.png)
 
 [![Gradle Status](https://gradleupdate.appspot.com/Cognifide/gradle-aem-plugin/status.svg)](https://gradleupdate.appspot.com/Cognifide/gradle-aem-plugin/status)
 [![Apache License, Version 2.0, January 2004](https://img.shields.io/github/license/Cognifide/gradle-aem-plugin.svg?label=License)](http://www.apache.org/licenses/)
@@ -7,7 +7,7 @@
 
 <br>
 <p align="center">
-  <img src="doc/logo.png" alt="Gradle AEM Plugin Logo"/>
+  <img src="docs/logo.png" alt="Gradle AEM Plugin Logo"/>
 </p>
 <br>
 
