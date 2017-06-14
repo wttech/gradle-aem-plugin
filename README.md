@@ -20,12 +20,13 @@ AEM developer - it's time to meet Gradle!
 ## Features
 
 * Composing CRX package from multiple JCR content roots, bundles.
+* Automated all-in-one CRX packages generation (assemblies).
 * Easy multi-deployment with instance groups.
-* OSGi Declarative Services annotations support (instead of SCR, [see docs](http://blogs.adobe.com/experiencedelivers/experience-management/osgi/using-osgi-annotations-aem6-2/)).
-* OSGi Manifest customization by official [osgi](https://docs.gradle.org/current/userguide/osgi_plugin.html) plugin or feature rich [org.dm.bundle](https://github.com/TomDmitriev/gradle-bundle-plugin) plugin.
 * Automated dependent packages installation from local and remote sources.
 * Smart Vault files generation (combining defaults with overiddables).
 * Checking out and cleaning JCR content from running AEM instance.
+* OSGi Manifest customization by official [osgi](https://docs.gradle.org/current/userguide/osgi_plugin.html) plugin or feature rich [org.dm.bundle](https://github.com/TomDmitriev/gradle-bundle-plugin) plugin.
+* OSGi Declarative Services annotations support (instead of SCR, [see docs](http://blogs.adobe.com/experiencedelivers/experience-management/osgi/using-osgi-annotations-aem6-2/)).
 
 ## Requirements
 
@@ -35,13 +36,12 @@ AEM developer - it's time to meet Gradle!
 ## Configuration
 
 Recommended way to start using Gradle AEM Plugin is to clone and customize [example project](https://github.com/Cognifide/gradle-aem-example).
-All configuration options are listed [here](src/main/kotlin/com/cognifide/gradle/aem/AemConfig.kt).
+General configuration options are listed [here](src/main/kotlin/com/cognifide/gradle/aem/AemConfig.kt).
 
 ### Plugin setup
 
 Released versions of plugin are available on [Bintray](https://bintray.com/cognifide/maven-public/gradle-aem-plugin), 
 so that this repository need to be included in *buildscript* section.
-
 
 ```
 buildscript {
@@ -54,46 +54,15 @@ buildscript {
     }
 }
 
-```
-
-Custom Gradle plugins need to have section above configured in all sub projects that need that custom plugin.
-As a consequence, it is worth to know [approach](https://github.com/Cognifide/gradle-aem-example/blob/master/gradle/buildscript.gradle) for simplification used in example project.
-
-### Root project (shared)
-
-Example configuration listed below assumes building project by single command `gradle contentDeploy` or just `gradle`.
-
-```
-defaultTasks = ['contentDeploy']
-
-plugins.withId 'cognifide.aem', {
-
-    aem {
-        config {
-            contentPath = "src/main/content"
-            instance("http://localhost:4502", "admin", "admin", "local-author")
-            // instance("http://localhost:4503", "admin", "admin", "local-publish")
-        }
-    }
-
-}
-
-```
-
-Instances configuration can be omitted, then *http://localhost:4502* and *http://localhost:4503* will be used by default.
-Content path can also be skipped, because value above is also default. This is only an example how to customize particular values.
-
-
-### Sub project (specific)
-
-```
-defaultTasks = ['contentDeploy']
-
 apply plugin: 'cognifide.aem'
+
+defaultTasks = ['appDeploy']
 
 aem {
     config {
-        contentPath = "src/main/aem"
+        contentPath = "src/main/content"
+        instance("http://localhost:4502", "admin", "admin", "local-author")
+        // instance("http://localhost:4503", "admin", "admin", "local-publish")
     }
 }
 
@@ -102,25 +71,23 @@ aemSatisfy {
     download("https://github.com/Cognifide/APM/releases/download/cqsm-3.0.0/apm-3.0.0.zip")
 }
 
-aemCompose {
-    includeProject ':example.bundle'
-}
-
 build.dependsOn aemCompose
-task contentDeploy(dependsOn: [clean, build, aemDeploy])
-
+task appDeploy(dependsOn: [build, aemDeploy])
 ```
 
-Snippet above demonstrates customizations valid only for specific project.
+Instances configuration can be omitted, then *http://localhost:4502* and *http://localhost:4503* will be used by default.
+Content path can also be skipped, because value above is also default. This is only an example how to customize particular [values](src/main/kotlin/com/cognifide/gradle/aem/AemConfig.kt).
+
+For multi project build configuration, see [example project](https://github.com/Cognifide/gradle-aem-example).
 
 ### Tasks
 
 * `aemCompose` - Compose CRX package from JCR content and bundles. Available methods:
-    * `includeProject(projectPath: String)`, includes both bundles and JCR content from another project, example: `includeProject ':example.bundle'`.
-    * `includeContent(projectPath: String)`, includes only JCR content, example: `includeContent ':example.design'`.
-    * `includeBundles(projectPath: String)`, includes only bundles, example: `includeBundles ':example.auth'`.
+    * `includeProject(projectPath: String)`, includes both bundles and JCR content from another project, example: `includeProject ':core'`.
+    * `includeContent(projectPath: String)`, includes only JCR content, example: `includeContent ':design'`.
+    * `includeBundles(projectPath: String)`, includes only bundles, example: `includeBundles ':common'`.
     * `includeBundlesAtRunMode(projectPath: String, runMode: String)`, as above, useful when bundles need to be installed only on specific type of instance.
-    * `includeSubprojects(withSamePathPrefix: Boolean = true)`, includes both bundles and JCR from all nested subprojects, example: project `:app` will include `:app:common`, `:app:core` etc. Vault filter file will be automatically generated with all filter roots merged. Useful for building assemblies (all-in-one packages).
+    * `includeSubprojects(withSamePathPrefix: Boolean = true)`, includes both bundles and JCR content from all nested subprojects, example: project `:app` will include `:app:common`, `:app:core` etc. Vault filter file will be automatically generated with all filter roots merged. Useful for building assemblies (all-in-one packages).
     * all inherited from [ZIP task](https://docs.gradle.org/3.5/dsl/org.gradle.api.tasks.bundling.Zip.html).
 * `aemUpload` - Upload composed CRX package into AEM instance(s).
 * `aemInstall` - Install uploaded CRX package on AEM instance(s).
