@@ -50,7 +50,7 @@ buildscript {
     }
     
     dependencies {
-        classpath 'com.cognifide.gradle:aem-plugin:1.0.+'
+        classpath 'com.cognifide.gradle:aem-plugin:1.2.+'
     }
 }
 
@@ -120,6 +120,7 @@ Snippet above demonstrates customizations valid only for specific project.
     * `includeContent(projectPath: String)`, includes only JCR content, example: `includeContent ':example.design'`.
     * `includeBundles(projectPath: String)`, includes only bundles, example: `includeBundles ':example.auth'`.
     * `includeBundlesAtRunMode(projectPath: String, runMode: String)`, as above, useful when bundles need to be installed only on specific type of instance.
+    * `includeSubprojects(withSamePathPrefix: Boolean = true)`, includes both bundles and JCR from all nested subprojects, example: project `:app` will include `:app:common`, `:app:core` etc. Vault filter file will be automatically generated with all filter roots merged. Useful for building assemblies (all-in-one packages).
     * all inherited from [ZIP task](https://docs.gradle.org/3.5/dsl/org.gradle.api.tasks.bundling.Zip.html).
 * `aemUpload` - Upload composed CRX package into AEM instance(s).
 * `aemInstall` - Install uploaded CRX package on AEM instance(s).
@@ -163,6 +164,26 @@ Snippet above demonstrates customizations valid only for specific project.
 -Paem.deploy.skipDownloadName=true
 ```
 
+### Expandable variables
+
+By default, plugin is configured that in all XML files, variables can be injected:
+
+```
+aem {
+    vaultFilesExpanded = ["*.xml"]
+    vaultExpandProperties = [:]
+}
+```
+
+This feature is specially useful to generate valid *META-INF/properties.xml* file.
+What is more, there are predefined variables that also can be used:
+
+* `rootProject` - project with directory in which *settings.gradle* is located.
+* `project` - current project.
+* `config` - [AEM configuration](src/main/kotlin/com/cognifide/gradle/aem/AemConfig.kt).
+* `created` - current date in ISO8601 format.
+* `buildCount` - number to be used as CRX package build count (current date in format `yDDmmssSSS`).
+* `filterRoots` - after using method `includeContent` of `aemCompose` task, Vault filter roots all being gathered. This variable contains all these XML tags concatenated especially useful for building assemblies. If no projects will be included, then this variable will contain a single filter root with bundle install path to be able to deploy auto-generated package with JAR file only.
 
 ## License
 

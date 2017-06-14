@@ -101,10 +101,10 @@ class AemPlugin : Plugin<Project> {
 
     private fun setupConfigs(project: Project) {
         project.plugins.withType(JavaPlugin::class.java, {
-            val implementation = project.configurations.getByName(JavaPlugin.COMPILE_CONFIGURATION_NAME)
+            val baseConfig = project.configurations.getByName(JavaPlugin.COMPILE_CONFIGURATION_NAME)
             val configurer: (Configuration) -> Unit = {
                 it.isTransitive = false
-                implementation.extendsFrom(it)
+                baseConfig.extendsFrom(it)
             }
 
             project.configurations.create(CONFIG_EMBED, configurer)

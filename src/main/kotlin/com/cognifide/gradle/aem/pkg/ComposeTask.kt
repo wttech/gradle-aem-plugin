@@ -190,14 +190,6 @@ open class ComposeTask : Zip(), AemTask {
         }
     }
 
-    fun includeProjects(vararg projects: Project) {
-        includeProjects(projects.toSet())
-    }
-
-    fun includeProjects(projects: Collection<Project>) {
-        projects.forEach { includeProject(it) }
-    }
-
     fun includeProject(projectPath: String) {
         includeProject(project.findProject(projectPath))
     }
