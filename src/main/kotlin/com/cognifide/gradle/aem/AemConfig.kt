@@ -48,7 +48,7 @@ data class AemConfig(
     var contentPath: String = "",
 
     /**
-     * Content path to bundle jars being placed in CRX package.
+     * Content path for bundle jars being placed in CRX package.
      * Default: "/apps/${project.rootProject.name}/install".
      */
     var bundlePath: String = "",
@@ -76,8 +76,9 @@ data class AemConfig(
 
     /**
      * Define here custom properties that can be used in Vault files like 'properties.xml'.
+     * Could override predefined variables.
      */
-    var vaultExpandProperties: MutableMap<String, String> = mutableMapOf(),
+    var vaultExpandProperties: MutableMap<String, Any> = mutableMapOf(),
 
     /**
      * Custom path to Vault files that will be used to build CRX package.
@@ -86,7 +87,7 @@ data class AemConfig(
     var vaultFilesPath: String = "",
 
     /**
-     * Wildcard file name filter expression that is used to filter in which files properties can be injected.
+     * Wildcard file name filter expression that is used to filter in which Vault files properties can be injected.
      */
     var vaultFilesExpanded: MutableList<String> = mutableListOf("*.xml"),
 

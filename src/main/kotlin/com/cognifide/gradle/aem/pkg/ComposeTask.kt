@@ -3,13 +3,12 @@ package com.cognifide.gradle.aem.pkg
 import com.cognifide.gradle.aem.AemConfig
 import com.cognifide.gradle.aem.AemPlugin
 import com.cognifide.gradle.aem.AemTask
+import com.cognifide.gradle.aem.internal.PropertyParser
 import com.fasterxml.jackson.databind.util.ISO8601Utils
-import groovy.text.SimpleTemplateEngine
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.FilenameUtils
 import org.apache.commons.io.IOCase
 import org.apache.commons.io.IOUtils
-import org.apache.commons.lang3.text.StrSubstitutor
 import org.gradle.api.Project
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.tasks.Input
@@ -56,7 +55,7 @@ open class ComposeTask : Zip(), AemTask {
         // After this project configured
         project.afterEvaluate({
             includeProject(project)
-            includeVaultFiles()
+            includeVault(vaultDir)
         })
 
         // After all projects configured
@@ -143,34 +142,31 @@ open class ComposeTask : Zip(), AemTask {
         val files = vaultDir.listFiles { _, name -> config.vaultFilesExpanded.any { FilenameUtils.wildcardMatch(name, it, IOCase.INSENSITIVE) } } ?: return
 
         for (file in files) {
-            val content = try {
-                expandProperties(file.inputStream().bufferedReader().use { it.readText() })
+            val expandedContent = try {
+                val rawContent = file.inputStream().bufferedReader().use { it.readText() }
+                PropertyParser(project).expand(rawContent, expandPredefinedProps)
             } catch (e: Exception) {
                 throw PackageException("Cannot expand Vault files properly. Probably some variables are not bound", e)
             }
 
-            file.printWriter().use { it.print(content) }
+            file.printWriter().use { it.print(expandedContent) }
         }
     }
 
-    private fun expandProperties(source: String): String {
-        val props = System.getProperties().entries.fold(mutableMapOf<String, String>(), { map, entry ->
-            map.put(entry.key.toString(), entry.value.toString()); map
-        }) + config.vaultExpandProperties
-        val interpolated = StrSubstitutor.replace(source, props)
+    private val expandPredefinedProps: Map<String, Any>
+        get() {
+            val currentDate = Date()
 
-        val now = Date()
-
-        val template = SimpleTemplateEngine().createTemplate(interpolated).make(mapOf(
-                "rootProject" to project.rootProject,
-                "project" to project,
-                "config" to config,
-                "created" to ISO8601Utils.format(now),
-                "buildCount" to SimpleDateFormat("yDDmmssSSS").format(now),
-                "filterRoots" to parseVaultFilterRoots()
-        ))
-        return template.toString()
-    }
+            return mapOf(
+                    "rootProject" to project.rootProject,
+                    "project" to project,
+                    "config" to config,
+                    "currentDate" to currentDate,
+                    "created" to ISO8601Utils.format(currentDate),
+                    "buildCount" to SimpleDateFormat("yDDmmssSSS").format(currentDate),
+                    "filterRoots" to parseVaultFilterRoots()
+            )
+        }
 
     private fun fromContents() {
         contentCollectors.onEach { it() }
@@ -277,11 +273,10 @@ open class ComposeTask : Zip(), AemTask {
     }
 
     fun includeVault(vltPath: Any) {
-        into(AemPlugin.VLT_PATH, { spec -> spec.from(vltPath) })
-    }
+        contentCollectors += {
+            logger.info("Including Vault configuration into CRX package from: '$vltPath'")
 
-    fun includeVaultProfile(profileName: String) {
-        includeVault(project.relativePath(config.vaultCommonPath))
-        includeVault(project.relativePath(config.vaultProfilePath + "/" + profileName))
+            into(AemPlugin.VLT_PATH, { spec -> spec.from(vltPath) })
+        }
     }
 }
