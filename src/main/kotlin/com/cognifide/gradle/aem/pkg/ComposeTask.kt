@@ -173,20 +173,6 @@ open class ComposeTask : Zip(), AemTask {
         contentCollectors.onEach { it() }
     }
 
-    fun includeSubprojects() {
-        includeSubprojects(true)
-    }
-
-    fun includeSubprojects(withSamePathPrefix: Boolean) {
-        project.gradle.afterProject { subproject ->
-            if (subproject.path != project.path && subproject.plugins.hasPlugin(AemPlugin.ID)) {
-                if (!withSamePathPrefix || subproject.path.startsWith("${project.path}:")) {
-                    includeProject(subproject)
-                }
-            }
-        }
-    }
-
     fun includeProject(projectPath: String) {
         includeProject(project.findProject(projectPath))
     }
@@ -194,6 +180,24 @@ open class ComposeTask : Zip(), AemTask {
     fun includeProject(project: Project) {
         includeContent(project)
         includeBundles(project)
+    }
+
+    fun includeSubprojects() {
+        includeProjects("${project.path}:*")
+    }
+
+    fun includeProjects(pathFilter: String) {
+        project.gradle.afterProject { subproject ->
+            if (subproject.path != project.path
+                    && subproject.plugins.hasPlugin(AemPlugin.ID)
+                    && (pathFilter.isNullOrBlank() || FilenameUtils.wildcardMatch(subproject.path, pathFilter, IOCase.INSENSITIVE))) {
+                includeProject(subproject)
+            }
+        }
+    }
+
+    fun includeProjects(projectPaths: Collection<String>) {
+        projectPaths.onEach { includeProject(it) }
     }
 
     fun includeBundles(projectPath: String) {
@@ -225,11 +229,7 @@ open class ComposeTask : Zip(), AemTask {
         bundleCollectors += {
             val jars = JarCollector(project).all.toSet()
 
-            if (jars.isEmpty()) {
-                logger.info("No bundles to copy into AEM package at install path '$installPath'")
-            } else {
-                logger.info("Copying bundles into AEM package at install path '$installPath': " + jars.toString())
-
+            if (jars.isNotEmpty()) {
                 into("${AemPlugin.JCR_ROOT}/$installPath") { spec ->
                     spec.from(jars)
                 }
@@ -252,14 +252,10 @@ open class ComposeTask : Zip(), AemTask {
 
         contentCollectors += {
             val contentDir = File("${config.contentPath}/${AemPlugin.JCR_ROOT}")
-            if (!contentDir.exists()) {
-                logger.info("Package JCR content directory does not exist: ${contentDir.absolutePath}")
-            } else {
-                logger.info("Copying JCR content from: ${contentDir.absolutePath}")
-
+            if (contentDir.exists()) {
                 into(AemPlugin.JCR_ROOT) { spec ->
                     spec.from(contentDir)
-                    exclude(config.contentFileIgnores)
+                    spec.exclude(config.contentFileIgnores)
                 }
             }
         }
@@ -275,8 +271,6 @@ open class ComposeTask : Zip(), AemTask {
 
     fun includeVault(vltPath: Any) {
         contentCollectors += {
-            logger.info("Including Vault configuration into CRX package from: '$vltPath'")
-
             into(AemPlugin.VLT_PATH, { spec -> spec.from(vltPath) })
         }
     }

@@ -63,8 +63,6 @@ data class AemConfig(
             "**/.gitignore",
             "**/.gitmodules",
             "**/.vlt",
-            "**/package.json",
-            "**/clientlibs/Gruntfile.js",
             "**/node_modules/**",
             "jcr_root/.vlt-sync-config.properties"
     ),
@@ -183,6 +181,7 @@ data class AemConfig(
             if (project.path == project.rootProject.path) {
                 config.bundlePath = "/apps/${project.name}/install"
             } else {
+                // TODO reflect more deepness in project name (project.path.replace(':', '/') sth like that
                 config.bundlePath = "/apps/${project.rootProject.name}/${project.name}/install"
             }
 
