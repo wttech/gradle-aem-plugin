@@ -49,7 +49,7 @@ class AemPlugin : Plugin<Project> {
     }
 
     private fun setupExtensions(project: Project) {
-        project.extensions.create(AemExtension.NAME, AemExtension::class.java, project)
+        project.extensions.create(AemExtension.NAME, AemExtension::class.java)
     }
 
     private fun setupTasks(project: Project) {

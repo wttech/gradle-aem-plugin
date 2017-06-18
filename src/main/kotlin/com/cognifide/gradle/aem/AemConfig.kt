@@ -12,12 +12,6 @@ import java.util.*
 data class AemConfig(
 
     /**
-     * Base project
-     */
-    @Transient
-    val project: Project,
-
-    /**
      * List of AEM instances on which packages could be deployed.
      */
     var instances: MutableList<AemInstance> = mutableListOf(),
@@ -106,7 +100,7 @@ data class AemConfig(
     var fileFilter: ((ComposeTask, CopySpec) -> Unit) = { compose, spec ->
         spec.exclude(filesExcluded)
 
-        val propParser = PropertyParser(project)
+        val propParser = PropertyParser(compose.project)
         val props = compose.expandPredefinedProperties + fileProperties
 
         spec.filesMatching("${AemPlugin.VLT_PATH}/*.xml", {  metaSpec ->
@@ -120,7 +114,8 @@ data class AemConfig(
     var buildDate: Date = Date(),
 
     /**
-     * Ensures that for directory 'META-INF/vault' default files will be generated when missing: 'config.xml', 'filter.xml', 'properties.xml' and 'settings.xml'.
+     * Ensures that for directory 'META-INF/vault' default files will be generated when missing:
+     * 'config.xml', 'filter.xml', 'properties.xml' and 'settings.xml'.
      */
     var vaultCopyMissingFiles : Boolean = true,
 
@@ -189,6 +184,8 @@ data class AemConfig(
             val global = project.extensions.getByType(AemExtension::class.java).config
             val extended = global.copy()
 
+            extended.configure(project)
+
             return extended
         }
 
@@ -198,9 +195,9 @@ data class AemConfig(
     }
 
     /**
-     * Initialize configuration that depends on specific type of project.
+     * Initialize defaults that depends on concrete type of project.
      */
-    init {
+    fun configure(project: Project) {
         if (project.path == project.rootProject.path) {
             bundlePath = "/apps/${project.name}/install"
         } else {
