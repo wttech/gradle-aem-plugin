@@ -3,7 +3,6 @@ package com.cognifide.gradle.aem.pkg
 import com.cognifide.gradle.aem.AemConfig
 import com.cognifide.gradle.aem.AemPlugin
 import com.cognifide.gradle.aem.AemTask
-import com.cognifide.gradle.aem.internal.PropertyParser
 import com.fasterxml.jackson.databind.util.ISO8601Utils
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.FilenameUtils
@@ -23,7 +22,6 @@ import org.reflections.scanners.ResourcesScanner
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
-import java.util.*
 
 open class ComposeTask : Zip(), AemTask {
 
@@ -69,7 +67,6 @@ open class ComposeTask : Zip(), AemTask {
     override fun copy() {
         copyContentVaultFiles()
         copyMissingVaultFiles()
-        expandVaultFiles()
         super.copy()
     }
 
@@ -133,23 +130,7 @@ open class ComposeTask : Zip(), AemTask {
         return tags.joinToString(config.vaultLineSeparator)
     }
 
-    private fun expandVaultFiles() {
-        val files = vaultDir.listFiles { _, name -> config.vaultFilesExpanded.any { FilenameUtils.wildcardMatch(name, it, IOCase.INSENSITIVE) } } ?: return
-
-        for (file in files) {
-            val expandedContent = try {
-                expandSource(file.inputStream().bufferedReader().use { it.readText() })
-            } catch (e: Exception) {
-                throw PackageException("Cannot expand Vault files properly. Probably some variables are not bound", e)
-            }
-
-            file.printWriter().use { it.print(expandedContent) }
-        }
-    }
-
-    fun expandSource(source: String) = PropertyParser(project).expand(source, expandPredefinedProps)
-
-    private val expandPredefinedProps: Map<String, Any>
+    val expandPredefinedProperties: Map<String, Any>
         get() {
 
             return mapOf(
@@ -225,6 +206,7 @@ open class ComposeTask : Zip(), AemTask {
             if (jars.isNotEmpty()) {
                 into("${AemPlugin.JCR_ROOT}/$installPath") { spec ->
                     spec.from(jars)
+                    config.fileFilter(this, spec)
                 }
             }
         }
@@ -248,7 +230,7 @@ open class ComposeTask : Zip(), AemTask {
             if (contentDir.exists()) {
                 into(AemPlugin.JCR_ROOT) { spec ->
                     spec.from(contentDir)
-                    spec.exclude(config.contentFileIgnores)
+                    config.fileFilter(this, spec)
                 }
             }
         }
@@ -264,7 +246,10 @@ open class ComposeTask : Zip(), AemTask {
 
     fun includeVault(vltPath: Any) {
         contentCollectors += {
-            into(AemPlugin.VLT_PATH, { spec -> spec.from(vltPath) })
+            into(AemPlugin.VLT_PATH, {
+                spec -> spec.from(vltPath)
+                config.fileFilter(this, spec)
+            })
         }
     }
 }
