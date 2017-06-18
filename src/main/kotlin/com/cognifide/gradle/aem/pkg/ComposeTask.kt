@@ -77,12 +77,6 @@ open class ComposeTask : Zip(), AemTask {
         bundleCollectors.onEach { it() }
     }
 
-    private fun includeVaultFiles() {
-        contentCollectors += {
-            into(AemPlugin.VLT_PATH, { spec -> spec.from(vaultDir) })
-        }
-    }
-
     private fun copyContentVaultFiles() {
         val contentPath: String = if (!config.vaultFilesPath.isNullOrBlank()) {
             config.vaultFilesPath
@@ -144,8 +138,7 @@ open class ComposeTask : Zip(), AemTask {
 
         for (file in files) {
             val expandedContent = try {
-                val rawContent = file.inputStream().bufferedReader().use { it.readText() }
-                PropertyParser(project).expand(rawContent, expandPredefinedProps)
+                expandSource(file.inputStream().bufferedReader().use { it.readText() })
             } catch (e: Exception) {
                 throw PackageException("Cannot expand Vault files properly. Probably some variables are not bound", e)
             }
@@ -154,17 +147,17 @@ open class ComposeTask : Zip(), AemTask {
         }
     }
 
+    fun expandSource(source: String) = PropertyParser(project).expand(source, expandPredefinedProps)
+
     private val expandPredefinedProps: Map<String, Any>
         get() {
-            val currentDate = Date()
 
             return mapOf(
                     "rootProject" to project.rootProject,
                     "project" to project,
                     "config" to config,
-                    "currentDate" to currentDate,
-                    "created" to ISO8601Utils.format(currentDate),
-                    "buildCount" to SimpleDateFormat("yDDmmssSSS").format(currentDate),
+                    "created" to ISO8601Utils.format(config.buildDate),
+                    "buildCount" to SimpleDateFormat("yDDmmssSSS").format(config.buildDate),
                     "filterRoots" to parseVaultFilterRoots()
             )
         }

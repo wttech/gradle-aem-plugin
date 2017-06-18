@@ -5,6 +5,7 @@ import org.gradle.api.Incubating
 import org.gradle.api.Project
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 import java.io.Serializable
+import java.util.*
 
 data class AemConfig(
 
@@ -152,7 +153,12 @@ data class AemConfig(
         val task = project.tasks.getByName(ComposeTask.NAME)
 
         task.taskDependencies.getDependencies(task).map { it.name }.toSet()
-    }
+    },
+
+    /**
+     * Used to generate unique "buildCount" and "created" predefined expandable properties.
+     */
+    var buildDate: Date = Date()
 
 ) : Serializable {
     companion object {
