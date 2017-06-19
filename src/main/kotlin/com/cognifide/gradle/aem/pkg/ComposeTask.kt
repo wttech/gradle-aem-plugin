@@ -40,7 +40,7 @@ open class ComposeTask : Zip(), AemTask {
     private val vaultDir = File(project.buildDir, "$NAME/${AemPlugin.VLT_PATH}")
 
     @Input
-    final override val config = AemConfig.extend(project)
+    final override val config = AemConfig.create(this)
 
     init {
         description = "Composes AEM package from JCR content and built OSGi bundles"
@@ -78,14 +78,10 @@ open class ComposeTask : Zip(), AemTask {
             vaultDir.mkdirs()
         }
 
-        val paths = listOf(
-                config.vaultFilesPath,
-                "${config.contentPath}/${AemPlugin.VLT_PATH}"
-        )
-        val dirs = paths.filter { !it.isNullOrBlank() }.map { File(it) }.filter { it.exists() }
+        val dirs = config.vaultFilesDirs.filter { it.exists() }
 
         if (dirs.isEmpty()) {
-            logger.info("None of Vault files directories exist: $paths. Only generated defaults will be used.")
+            logger.info("None of Vault files directories exist: $dirs. Only generated defaults will be used.")
         } else {
             dirs.onEach { dir ->
                 logger.info("Copying Vault files from path: '${dir.absolutePath}'")

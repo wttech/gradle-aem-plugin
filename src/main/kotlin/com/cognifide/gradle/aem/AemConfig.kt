@@ -1,13 +1,24 @@
 package com.cognifide.gradle.aem
 
 import com.cognifide.gradle.aem.pkg.ComposeTask
+import org.gradle.api.DefaultTask
 import org.gradle.api.Incubating
 import org.gradle.api.Project
 import org.gradle.api.file.CopySpec
 import org.gradle.language.base.plugins.LifecycleBasePlugin
+import java.io.File
 import java.io.Serializable
 import java.util.*
 
+/**
+ * Aggregated collection of AEM related configuration.
+ *
+ * Notice that this whole object is serializable and marked ad input of tasks, so there is no need to mark
+ * each property as input.
+ *
+ * What is more, content paths, which are used to compose a CRX package are being processed to copy task,
+ * which automatically mark them as inputs, so package is being rebuild on any content changes.
+ */
 data class AemConfig(
 
     /**
@@ -179,15 +190,19 @@ data class AemConfig(
          * Copying properties and considering them as separate config is intentional, just to ensure that specific task
          * configuration does not affect another.
          */
-        fun extend(project: Project): AemConfig {
-            val global = project.extensions.getByType(AemExtension::class.java).config
+        fun create(task: DefaultTask): AemConfig {
+            val global =  task.project.extensions.getByType(AemExtension::class.java).config
             val extended = global.copy()
 
-            extended.configure(project)
+            extended.configure(task)
 
             return extended
         }
 
+        /**
+         * Shorthand getter for configuration related with specified project.
+         * Especially useful when including one project in another (composing assembly packages).
+         */
         fun of(project: Project): AemConfig {
             return (project.tasks.getByName(ComposeTask.NAME) as AemTask).config
         }
@@ -196,7 +211,11 @@ data class AemConfig(
     /**
      * Initialize defaults that depends on concrete type of project.
      */
-    fun configure(project: Project) {
+    fun configure(task: DefaultTask) {
+
+        // Default values
+        val project = task.project
+
         if (project.path == project.rootProject.path) {
             bundlePath = "/apps/${project.name}/install"
         } else {
@@ -206,6 +225,11 @@ data class AemConfig(
         contentPath =  "${project.projectDir.path}/src/main/content"
         vaultFilesPath ="${project.rootProject.projectDir.path}/src/main/resources/${AemPlugin.VLT_PATH}"
         vaultFilterPath = "${project.projectDir.path}/${AemPlugin.VLT_PATH}/filter.xml"
+
+        // Build caching
+        val inputs = task.inputs
+
+        vaultFilesDirs.forEach { inputs.dir(it) }
     }
 
     /**
@@ -230,6 +254,19 @@ data class AemConfig(
         instances.forEach { it.validate() }
     }
 
+    /**
+     * CRX package Vault files will be composed from given sources.
+     * If both will be non-existing, then files will be auto-generated.
+     */
+    val vaultFilesDirs : List<File>
+        get() {
+            val paths = listOf(
+                    vaultFilesPath,
+                    "$contentPath/${AemPlugin.VLT_PATH}"
+            )
+
+            return paths.filter { !it.isNullOrBlank() }.map { File(it) }
+        }
 }
 
 
