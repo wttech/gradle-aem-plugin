@@ -227,9 +227,11 @@ data class AemConfig(
         vaultFilterPath = "${project.projectDir.path}/${AemPlugin.VLT_PATH}/filter.xml"
 
         // Build caching
-        val inputs = task.inputs
+        project.afterEvaluate {
+            val inputs = task.inputs
 
-        vaultFilesDirs.forEach { inputs.dir(it) }
+            vaultFilesDirs.forEach { inputs.dir(it) }
+        }
     }
 
     /**
