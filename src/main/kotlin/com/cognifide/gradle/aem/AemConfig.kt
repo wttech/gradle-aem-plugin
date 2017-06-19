@@ -224,7 +224,7 @@ data class AemConfig(
 
         contentPath =  "${project.projectDir.path}/src/main/content"
         vaultFilesPath ="${project.rootProject.projectDir.path}/src/main/resources/${AemPlugin.VLT_PATH}"
-        vaultFilterPath = "${project.projectDir.path}/${AemPlugin.VLT_PATH}/filter.xml"
+        vaultFilterPath = "${project.projectDir.path}/src/main/content/${AemPlugin.VLT_PATH}/filter.xml"
 
         // Build caching
         project.afterEvaluate {
