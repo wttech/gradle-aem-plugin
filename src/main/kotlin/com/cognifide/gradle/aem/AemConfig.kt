@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem
 
-import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.pkg.ComposeTask
 import org.gradle.api.Incubating
 import org.gradle.api.Project
@@ -94,18 +93,10 @@ data class AemConfig(
     /**
      * Freely customize files being copied to CRX package.
      *
-     * Default: exclude files defined in 'filesExcluded' property and expand properties (provided by plugin
-     * merged with 'fileProperties') in files matching pattern 'META-INF/vault/\*.xml'.
+     * Default: exclude files defined in 'filesExcluded'.
      */
-    var fileFilter: ((ComposeTask, CopySpec) -> Unit) = { compose, spec ->
+    var fileFilter: ((CopySpec, ComposeTask) -> Unit) = { spec, _ ->
         spec.exclude(filesExcluded)
-
-        val propParser = PropertyParser(compose.project)
-        val props = compose.expandPredefinedProperties + fileProperties
-
-        spec.filesMatching("${AemPlugin.VLT_PATH}/*.xml", {  metaSpec ->
-            metaSpec.filter { line -> propParser.expand(line, props) }
-        })
     },
 
     /**
@@ -126,6 +117,12 @@ data class AemConfig(
     var vaultFilesPath: String = "",
 
     /**
+     * Wildcard file name filter expression that is used to filter in which Vault files properties can be injected.
+     * This also could be done 'by fileFilter', but due to performance optimization it is done separately.
+     */
+    var vaultFilesExpanded: MutableList<String> = mutableListOf("*.xml"),
+
+    /**
      * Define here properties that will be skipped when pulling JCR content from AEM instance.
      */
     var vaultSkipProperties : MutableList<String> = mutableListOf(
@@ -138,8 +135,10 @@ data class AemConfig(
 
     /**
      * Filter file used when Vault files are being checked out from running AEM instance.
+     *
+     * Default: "src/main/content/META-INF/vault/filter.xml"
      */
-    var vaultFilterPath: String = "src/main/content/${AemPlugin.VLT_PATH}/filter.xml",
+    var vaultFilterPath:String = "",
 
     /**
      * Extra parameters passed to VLT application while executing 'checkout' command.
@@ -204,7 +203,9 @@ data class AemConfig(
             bundlePath = "/apps/${project.rootProject.name}/${project.name}/install"
         }
 
-        contentPath = "${project.projectDir.path}/src/main/content"
+        contentPath =  "${project.projectDir.path}/src/main/content"
+        vaultFilesPath ="${project.rootProject.projectDir.path}/src/main/resources/${AemPlugin.VLT_PATH}"
+        vaultFilterPath = "${project.projectDir.path}/${AemPlugin.VLT_PATH}/filter.xml"
     }
 
     /**

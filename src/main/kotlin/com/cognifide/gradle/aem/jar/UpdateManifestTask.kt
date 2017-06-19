@@ -7,10 +7,7 @@ import org.dm.gradle.plugins.bundle.BundleExtension
 import org.gradle.api.DefaultTask
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.osgi.OsgiManifest
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.InputFiles
-import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.*
 import org.gradle.jvm.tasks.Jar
 import java.io.File
 

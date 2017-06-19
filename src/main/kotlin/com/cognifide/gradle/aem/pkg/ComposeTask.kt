@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.pkg
 import com.cognifide.gradle.aem.AemConfig
 import com.cognifide.gradle.aem.AemPlugin
 import com.cognifide.gradle.aem.AemTask
+import com.cognifide.gradle.aem.internal.PropertyParser
 import com.fasterxml.jackson.databind.util.ISO8601Utils
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.FilenameUtils
@@ -10,10 +11,7 @@ import org.apache.commons.io.IOCase
 import org.apache.commons.io.IOUtils
 import org.gradle.api.Project
 import org.gradle.api.file.DuplicatesStrategy
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.OutputDirectory
-import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.*
 import org.gradle.api.tasks.bundling.Zip
 import org.jsoup.Jsoup
 import org.jsoup.parser.Parser
@@ -67,6 +65,7 @@ open class ComposeTask : Zip(), AemTask {
     override fun copy() {
         copyContentVaultFiles()
         copyMissingVaultFiles()
+        expandVaultFiles()
         super.copy()
     }
 
@@ -75,23 +74,24 @@ open class ComposeTask : Zip(), AemTask {
     }
 
     private fun copyContentVaultFiles() {
-        val contentPath: String = if (!config.vaultFilesPath.isNullOrBlank()) {
-            config.vaultFilesPath
-        } else {
-            "${config.contentPath}/${AemPlugin.VLT_PATH}"
-        }
-
-        val contentDir = File(contentPath)
-        if (!contentDir.exists()) {
-            logger.info("Vault files directory does not exist. Generated defaults will be used.")
-        }
-
         if (!vaultDir.exists()) {
             vaultDir.mkdirs()
         }
 
-        if (contentDir.exists()) {
-            FileUtils.copyDirectory(contentDir, vaultDir)
+        val paths = listOf(
+                config.vaultFilesPath,
+                "${config.contentPath}/${AemPlugin.VLT_PATH}"
+        )
+        val dirs = paths.filter { !it.isNullOrBlank() }.map { File(it) }.filter { it.exists() }
+
+        if (dirs.isEmpty()) {
+            logger.info("None of Vault files directories exist: $paths. Only generated defaults will be used.")
+        } else {
+            dirs.onEach { dir ->
+                logger.info("Copying Vault files from path: '${dir.absolutePath}'")
+
+                FileUtils.copyDirectory(dir, vaultDir)
+            }
         }
     }
 
@@ -116,7 +116,21 @@ open class ComposeTask : Zip(), AemTask {
         }
     }
 
-    // TODO preserve order of inclusion in 'settings.xml' (does filter root order matter?)
+    private fun expandVaultFiles() {
+        val files = vaultDir.listFiles { _, name -> config.vaultFilesExpanded.any { FilenameUtils.wildcardMatch(name, it, IOCase.INSENSITIVE) } } ?: return
+
+        for (file in files) {
+            val expandedContent = try {
+                expandProperties( file.inputStream().bufferedReader().use { it.readText() })
+            } catch (e: Exception) {
+                throw PackageException("Cannot expand Vault files properly. Probably some variables are not bound", e)
+            }
+
+            file.printWriter().use { it.print(expandedContent) }
+        }
+    }
+
+    // TODO Preserve order of inclusion in 'settings.xml' (does filter root order matter?)
     private fun parseVaultFilterRoots(): String {
         val tags = vaultFilters.filter { it.exists() }.fold(mutableListOf<String>(), { tags, filter ->
             val doc = Jsoup.parse(filter.bufferedReader().use { it.readText() }, "", Parser.xmlParser())
@@ -130,7 +144,7 @@ open class ComposeTask : Zip(), AemTask {
         return tags.joinToString(config.vaultLineSeparator)
     }
 
-    val expandPredefinedProperties: Map<String, Any>
+    val filePredefinedProperties: Map<String, Any>
         get() {
 
             return mapOf(
@@ -142,6 +156,18 @@ open class ComposeTask : Zip(), AemTask {
                     "filterRoots" to parseVaultFilterRoots()
             )
         }
+
+    val fileAllProperties by lazy {
+        filePredefinedProperties + config.fileProperties
+    }
+
+    fun expandProperties(fileSource: String): String {
+        return expandProperties(fileSource, fileAllProperties)
+    }
+
+    fun expandProperties(fileSource: String, props: Map<String, Any>): String {
+        return PropertyParser(project).expand(fileSource, props)
+    }
 
     private fun fromContents() {
         contentCollectors.onEach { it() }
@@ -206,7 +232,7 @@ open class ComposeTask : Zip(), AemTask {
             if (jars.isNotEmpty()) {
                 into("${AemPlugin.JCR_ROOT}/$installPath") { spec ->
                     spec.from(jars)
-                    config.fileFilter(this, spec)
+                    config.fileFilter(spec, this)
                 }
             }
         }
@@ -221,8 +247,8 @@ open class ComposeTask : Zip(), AemTask {
 
         dependProject(project, config.dependContentTaskNames(project))
 
-        if (this.project.path != project.path) {
-            vaultFilters.add(project.file(config.vaultFilterPath))
+        if (this.project.path != project.path && !config.vaultFilterPath.isNullOrBlank()) {
+            vaultFilters.add(File(config.vaultFilterPath))
         }
 
         contentCollectors += {
@@ -230,7 +256,7 @@ open class ComposeTask : Zip(), AemTask {
             if (contentDir.exists()) {
                 into(AemPlugin.JCR_ROOT) { spec ->
                     spec.from(contentDir)
-                    config.fileFilter(this, spec)
+                    config.fileFilter(spec, this)
                 }
             }
         }
@@ -247,8 +273,9 @@ open class ComposeTask : Zip(), AemTask {
     fun includeVault(vltPath: Any) {
         contentCollectors += {
             into(AemPlugin.VLT_PATH, {
-                spec -> spec.from(vltPath)
-                config.fileFilter(this, spec)
+                spec ->
+                spec.from(vltPath)
+                config.fileFilter(spec, this)
             })
         }
     }
