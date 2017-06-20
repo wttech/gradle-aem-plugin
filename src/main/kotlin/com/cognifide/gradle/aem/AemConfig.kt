@@ -13,11 +13,11 @@ import java.util.*
 /**
  * Aggregated collection of AEM related configuration.
  *
- * Notice that this whole object is serializable and marked ad input of tasks, so there is no need to mark
+ * Notice that this whole object is serializable and marked as input of tasks, so there is no need to mark
  * each property as input.
  *
- * What is more, content paths, which are used to compose a CRX package are being processed to copy task,
- * which automatically mark them as inputs, so package is being rebuild on any content changes.
+ * What is more, content paths which are used to compose a CRX package are being processed by copy task,
+ * which automatically mark them as inputs so package is being rebuild on any content change.
  */
 data class AemConfig(
 
@@ -258,7 +258,7 @@ data class AemConfig(
 
     /**
      * CRX package Vault files will be composed from given sources.
-     * If both will be non-existing, then files will be auto-generated.
+     * Missing files required by package within installation will be auto-generated if 'vaultCopyMissingFiles' is enabled.
      */
     val vaultFilesDirs : List<File>
         get() {
