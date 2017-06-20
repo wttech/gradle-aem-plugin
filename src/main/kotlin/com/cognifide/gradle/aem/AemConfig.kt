@@ -184,35 +184,23 @@ data class AemConfig(
     companion object {
 
         /**
-         * Generally it is recommended to configure only extension config instead of config of concrete task, because
-         * there are combined tasks like `aemDeploy` which are using multiple properties at once.
-         *
-         * Copying properties and considering them as separate config is intentional, just to ensure that specific task
-         * configuration does not affect another.
-         */
-        fun create(task: DefaultTask): AemConfig {
-            val global =  task.project.extensions.getByType(AemExtension::class.java).config
-            val extended = global.copy()
-
-            extended.configure(task)
-
-            return extended
-        }
-
-        /**
          * Shorthand getter for configuration related with specified project.
          * Especially useful when including one project in another (composing assembly packages).
          */
         fun of(project: Project): AemConfig {
-            return (project.tasks.getByName(ComposeTask.NAME) as AemTask).config
+            return project.extensions.getByType(AemExtension::class.java).config
         }
+
+        fun of(task: DefaultTask): AemConfig {
+            return of(task.project)
+        }
+
     }
 
     /**
      * Initialize defaults that depends on concrete type of project.
      */
     fun configure(task: DefaultTask) {
-
         // Default values
         val project = task.project
 
@@ -225,13 +213,12 @@ data class AemConfig(
         contentPath =  "${project.projectDir.path}/src/main/content"
         vaultFilesPath ="${project.rootProject.projectDir.path}/src/main/resources/${AemPlugin.VLT_PATH}"
         vaultFilterPath = "${project.projectDir.path}/src/main/content/${AemPlugin.VLT_PATH}/filter.xml"
+    }
 
-        // Build caching
-        project.afterEvaluate {
-            val inputs = task.inputs
+    fun attach(task: DefaultTask) {
+        val inputs = task.inputs
 
-            vaultFilesDirs.forEach { inputs.dir(it) }
-        }
+        vaultFilesDirs.forEach { inputs.dir(it) }
     }
 
     /**

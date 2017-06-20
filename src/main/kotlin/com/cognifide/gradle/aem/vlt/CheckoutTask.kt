@@ -16,7 +16,7 @@ open class CheckoutTask : DefaultTask(), AemTask {
     }
 
     @Input
-    final override val config: AemConfig = AemConfig.create(this)
+    final override val config: AemConfig = AemConfig.of(project)
 
     init {
         group = AemPlugin.TASK_GROUP

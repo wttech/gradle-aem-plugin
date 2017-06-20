@@ -143,6 +143,12 @@ For multi project build configuration, see [example project](https://github.com/
 -Paem.deploy.satisfy.group=tools 
 ```
 
+* Checking out JCR content using filter at custom path:
+
+```
+-Paem.vlt.checkout.filterPath=src/main/content/META-INF/vault/custom-filter.xml
+```
+
 * Skipping installed package resolution by download name (eliminating conflicts / only matters when Vault properties file is customized): 
 
 ```
@@ -166,7 +172,6 @@ What is more, there are predefined variables that also can be used:
 * `rootProject` - project with directory in which *settings.gradle* is located.
 * `project` - current project.
 * `config` - [AEM configuration](src/main/kotlin/com/cognifide/gradle/aem/AemConfig.kt).
-* `currentDate`
 * `created` - current date in ISO8601 format.
 * `buildCount` - number to be used as CRX package build count (current date in format `yDDmmssSSS`).
 * `filterRoots` - after using method `includeContent` of `aemCompose` task, all Vault filter roots are being gathered. This variable contains all these XML tags concatenated especially useful for building assemblies. If no projects will be included, then this variable will contain a single filter root with bundle install path to be able to deploy auto-generated package with JAR file only.

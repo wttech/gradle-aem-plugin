@@ -1,14 +1,13 @@
 package com.cognifide.gradle.aem
 
-import groovy.lang.Closure
-import org.gradle.util.ConfigureUtil
-
+/**
+ * @since 1.3  Task configuration cannot be directly modified, because was confusing for plugin users.
+ *
+ * Instead: aemCompose { config { /* ... */ } }
+ * Simply write: aem { config { /* ... */ } }
+ */
 interface AemTask {
 
     val config: AemConfig
-
-    fun config(closure: Closure<*>) {
-        ConfigureUtil.configure(closure, config)
-    }
 
 }
