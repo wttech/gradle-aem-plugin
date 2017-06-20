@@ -13,5 +13,4 @@
     <entry key="group">${project.group}</entry>
     <entry key="description">${project.description}</entry>
     <entry key="artifactId">${project.name}</entry>
-    <!--<entry key="path">${config.remotePackagePath}</entry>-->
 </properties>

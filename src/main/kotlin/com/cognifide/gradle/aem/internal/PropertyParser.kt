@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem.internal
 
-import com.cognifide.gradle.aem.AemConfig
 import groovy.text.SimpleTemplateEngine
 import org.apache.commons.io.FilenameUtils
 import org.apache.commons.io.IOCase
@@ -13,8 +12,6 @@ class PropertyParser(val project: Project) {
         val FILTER_DEFAULT = "*"
     }
 
-    private val config = AemConfig.of(project)
-
     fun filter(value: String, propName: String, propDefault: String = FILTER_DEFAULT): Boolean {
         val filters = project.properties.getOrElse(propName, { propDefault }) as String
 
@@ -23,19 +20,17 @@ class PropertyParser(val project: Project) {
         }
     }
 
-    fun expand(source: String, predefinedProperties: Map<String, Any>): String {
+    fun expand(source: String, properties: Map<String, Any>): String {
         val interpolated = StrSubstitutor.replace(source, systemProperties)
-        val templateProps = predefinedProperties + config.vaultExpandProperties
-        val template = SimpleTemplateEngine().createTemplate(interpolated).make(templateProps)
+        val template = SimpleTemplateEngine().createTemplate(interpolated).make(properties)
 
         return template.toString()
     }
 
-    val systemProperties: Map<String, String>
-        get() {
-            return System.getProperties().entries.fold(mutableMapOf<String, String>(), { props, prop ->
-                props.put(prop.key.toString(), prop.value.toString()); props
-            })
-        }
+    val systemProperties: Map<String, String> by lazy {
+        System.getProperties().entries.fold(mutableMapOf<String, String>(), { props, prop ->
+            props.put(prop.key.toString(), prop.value.toString()); props
+        })
+    }
 
 }

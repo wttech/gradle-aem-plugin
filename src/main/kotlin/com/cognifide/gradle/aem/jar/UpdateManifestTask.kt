@@ -7,10 +7,7 @@ import org.dm.gradle.plugins.bundle.BundleExtension
 import org.gradle.api.DefaultTask
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.osgi.OsgiManifest
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.InputFiles
-import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.*
 import org.gradle.jvm.tasks.Jar
 import java.io.File
 
@@ -38,7 +35,7 @@ open class UpdateManifestTask : DefaultTask(), AemTask {
     }
 
     @Input
-    final override val config = AemConfig.extend(project)
+    final override val config = AemConfig.create(this)
 
     @Internal
     val jar = project.tasks.getByName(JavaPlugin.JAR_TASK_NAME) as Jar

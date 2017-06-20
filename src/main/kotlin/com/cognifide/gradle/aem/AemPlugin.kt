@@ -14,15 +14,16 @@ import org.gradle.api.plugins.JavaPlugin
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 
 /**
- * JVM based languages like Groovy or Kotlin have implicitly applied 'java' plugin. We also need 'osgi' plugin,
- * because we are updating jar manifest with OSGi specific instructions, so both plugins need to be applied.
+ * Plugin assumptions:
  *
- * Projects can have only 'aem' plugin applied intentionally to generate packages with content only.
+ * JVM based languages like Groovy or Kotlin have implicitly applied 'java' plugin.
+ * Projects can have only 'com.cognifide.aem' plugin applied intentionally to generate packages with content only.
+ * Projects can have applied official 'osgi' or 'org.dm.bundle' plugins to customize OSGi manifest.
  */
 class AemPlugin : Plugin<Project> {
 
     companion object {
-        val ID = "cognifide.aem"
+        val ID = "com.cognifide.aem"
 
         val TASK_GROUP = "AEM"
 

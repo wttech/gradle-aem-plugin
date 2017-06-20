@@ -1,11 +1,24 @@
 package com.cognifide.gradle.aem
 
 import com.cognifide.gradle.aem.pkg.ComposeTask
+import org.gradle.api.DefaultTask
 import org.gradle.api.Incubating
 import org.gradle.api.Project
+import org.gradle.api.file.CopySpec
 import org.gradle.language.base.plugins.LifecycleBasePlugin
+import java.io.File
 import java.io.Serializable
+import java.util.*
 
+/**
+ * Aggregated collection of AEM related configuration.
+ *
+ * Notice that this whole object is serializable and marked as input of tasks, so there is no need to mark
+ * each property as input.
+ *
+ * What is more, content paths which are used to compose a CRX package are being processed by copy task,
+ * which automatically mark them as inputs so package is being rebuild on any content change.
+ */
 data class AemConfig(
 
     /**
@@ -43,6 +56,7 @@ data class AemConfig(
 
     /**
      * Absolute path to JCR content to be included in CRX package.
+     *
      * Default: "${project.projectDir.path}/src/main/content"
      */
     var contentPath: String = "",
@@ -54,31 +68,58 @@ data class AemConfig(
     var bundlePath: String = "",
 
     /**
+     * Custom path to composed CRX package being uploaded.
+     *
+     * Default: "${project.buildDir.path}/distributions/${project.name}-${project.version}.zip"
+     */
+    var localPackagePath: String = "",
+
+    /**
+     * Custom path to CRX package that is uploaded on AEM instance.
+     *
+     * Default: [automatically determined]
+     */
+    var remotePackagePath: String = "",
+
+    /**
      * Exclude files being a part of CRX package.
      */
-    var contentFileIgnores: MutableList<String> = mutableListOf(
+    var filesExcluded: MutableList<String> = mutableListOf(
             "**/.git",
             "**/.git/**",
             "**/.gitattributes",
             "**/.gitignore",
             "**/.gitmodules",
             "**/.vlt",
-            "**/package.json",
-            "**/clientlibs/Gruntfile.js",
             "**/node_modules/**",
             "jcr_root/.vlt-sync-config.properties"
     ),
 
     /**
-     * Ensures that for directory 'META-INF/vault' default files will be generated when missing: 'config.xml', 'filter.xml', 'properties.xml' and 'settings.xml'.
+     * Define here custom properties that can be used in CRX package files like 'META-INF/vault/properties.xml'.
+     * Could override predefined properties provided by plugin itself.
      */
-    var vaultCopyMissingFiles : Boolean = true,
+    var fileProperties: MutableMap<String, Any> = mutableMapOf(),
 
     /**
-     * Define here custom properties that can be used in Vault files like 'properties.xml'.
-     * Could override predefined variables.
+     * Freely customize files being copied to CRX package.
+     *
+     * Default: exclude files defined in 'filesExcluded'.
      */
-    var vaultExpandProperties: MutableMap<String, Any> = mutableMapOf(),
+    var fileFilter: ((CopySpec, ComposeTask) -> Unit) = { spec, _ ->
+        spec.exclude(filesExcluded)
+    },
+
+    /**
+     * Used to generate unique "buildCount" and "created" predefined file properties.
+     */
+    var buildDate: Date = Date(),
+
+    /**
+     * Ensures that for directory 'META-INF/vault' default files will be generated when missing:
+     * 'config.xml', 'filter.xml', 'properties.xml' and 'settings.xml'.
+     */
+    var vaultCopyMissingFiles : Boolean = true,
 
     /**
      * Custom path to Vault files that will be used to build CRX package.
@@ -88,18 +129,9 @@ data class AemConfig(
 
     /**
      * Wildcard file name filter expression that is used to filter in which Vault files properties can be injected.
+     * This also could be done 'by fileFilter', but due to performance optimization it is done separately.
      */
     var vaultFilesExpanded: MutableList<String> = mutableListOf("*.xml"),
-
-    /**
-     * Points to Vault files for all package profiles.
-     */
-    var vaultCommonPath: String = "src/main/vault/common",
-
-    /**
-     * Points to Vault files from specific profile (e.g filters with only configuration to be installed).
-     */
-    var vaultProfilePath: String = "src/main/vault/profile",
 
     /**
      * Define here properties that will be skipped when pulling JCR content from AEM instance.
@@ -113,9 +145,11 @@ data class AemConfig(
     ),
 
     /**
-     * Filter file used when Vault files are being checked out from AEM instance.
+     * Filter file used when Vault files are being checked out from running AEM instance.
+     *
+     * Default: "src/main/content/META-INF/vault/filter.xml"
      */
-    var vaultFilterPath: String = "src/main/content/${AemPlugin.VLT_PATH}/filter.xml",
+    var vaultFilterPath:String = "",
 
     /**
      * Extra parameters passed to VLT application while executing 'checkout' command.
@@ -128,19 +162,8 @@ data class AemConfig(
     var vaultLineSeparator : String = System.lineSeparator(),
 
     /**
-     * Custom path to composed CRX package being uploaded.
-     * Default: "${project.buildDir.path}/distributions/${project.name}-${project.version}.zip"
-     */
-    var localPackagePath: String = "",
-
-    /**
-     * Custom path to CRX package that is uploaded on AEM instance.
-     * Default: [automatically determined]
-     */
-    var remotePackagePath: String = "",
-
-    /**
      * Configure default task dependency assignments while including dependant project bundles.
+     * Simplifies multi-module project configuration.
      */
     var dependBundlesTaskNames: (Project) -> Set<String> = { setOf(
             LifecycleBasePlugin.ASSEMBLE_TASK_NAME,
@@ -149,6 +172,7 @@ data class AemConfig(
 
     /**
      * Configure default task dependency assignments while including dependant project content.
+     * Simplifies multi-module project configuration.
      */
     var dependContentTaskNames: (Project) -> Set<String> = { project ->
         val task = project.tasks.getByName(ComposeTask.NAME)
@@ -166,36 +190,59 @@ data class AemConfig(
          * Copying properties and considering them as separate config is intentional, just to ensure that specific task
          * configuration does not affect another.
          */
-        fun extend(project: Project): AemConfig {
-            val global = (project.extensions.getByName(AemExtension.NAME) as AemExtension).config
+        fun create(task: DefaultTask): AemConfig {
+            val global =  task.project.extensions.getByType(AemExtension::class.java).config
             val extended = global.copy()
 
-            applyProjectDefaults(extended, project)
+            extended.configure(task)
 
             return extended
         }
 
+        /**
+         * Shorthand getter for configuration related with specified project.
+         * Especially useful when including one project in another (composing assembly packages).
+         */
         fun of(project: Project): AemConfig {
             return (project.tasks.getByName(ComposeTask.NAME) as AemTask).config
         }
+    }
 
-        private fun applyProjectDefaults(config: AemConfig, project: Project) {
-            if (project.path == project.rootProject.path) {
-                config.bundlePath = "/apps/${project.name}/install"
-            } else {
-                config.bundlePath = "/apps/${project.rootProject.name}/${project.name}/install"
-            }
+    /**
+     * Initialize defaults that depends on concrete type of project.
+     */
+    fun configure(task: DefaultTask) {
 
-            config.contentPath = "${project.projectDir.path}/src/main/content"
+        // Default values
+        val project = task.project
+
+        if (project.path == project.rootProject.path) {
+            bundlePath = "/apps/${project.name}/install"
+        } else {
+            bundlePath = "/apps/${project.rootProject.name}/${project.name}/install"
+        }
+
+        contentPath =  "${project.projectDir.path}/src/main/content"
+        vaultFilesPath ="${project.rootProject.projectDir.path}/src/main/resources/${AemPlugin.VLT_PATH}"
+        vaultFilterPath = "${project.projectDir.path}/src/main/content/${AemPlugin.VLT_PATH}/filter.xml"
+
+        // Build caching
+        project.afterEvaluate {
+            val inputs = task.inputs
+
+            vaultFilesDirs.forEach { inputs.dir(it) }
         }
     }
 
+    /**
+     * Declare new deployment target (AEM instance).
+     */
     fun instance(url: String, user: String = "admin", password: String = "admin", type: String = "default") {
         instances.add(AemInstance(url, user, password, type))
     }
 
     /**
-     * Following checks will be performed during configuration phase
+     * Following checks will be performed during configuration phase.
      */
     fun validate() {
         if (bundlePath.isBlank()) {
@@ -209,6 +256,19 @@ data class AemConfig(
         instances.forEach { it.validate() }
     }
 
+    /**
+     * CRX package Vault files will be composed from given sources.
+     * Missing files required by package within installation will be auto-generated if 'vaultCopyMissingFiles' is enabled.
+     */
+    val vaultFilesDirs : List<File>
+        get() {
+            val paths = listOf(
+                    vaultFilesPath,
+                    "$contentPath/${AemPlugin.VLT_PATH}"
+            )
+
+            return paths.filter { !it.isNullOrBlank() }.map { File(it) }
+        }
 }
 
 

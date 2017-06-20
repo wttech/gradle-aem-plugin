@@ -34,7 +34,7 @@ dependencies {
 gradlePlugin {
     plugins {
         aem {
-            id = "cognifide.aem"
+            id = "com.cognifide.aem"
             implementationClass = "com.cognifide.gradle.aem.AemPlugin"
         }
     }

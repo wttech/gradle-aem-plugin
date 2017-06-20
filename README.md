@@ -43,6 +43,9 @@ General configuration options are listed [here](src/main/kotlin/com/cognifide/gr
 Released versions of plugin are available on [Bintray](https://bintray.com/cognifide/maven-public/gradle-aem-plugin), 
 so that this repository need to be included in *buildscript* section.
 
+
+#### Minimal:
+
 ```
 buildscript {
     repositories {
@@ -55,6 +58,16 @@ buildscript {
 }
 
 apply plugin: 'cognifide.aem'
+
+build.dependsOn aemCompose
+```
+
+Building and deploying to AEM via command: `gradle build aemDeploy`.
+
+#### Extra:
+
+```
+apply plugin: 'kotlin' // 'java' or whatever you like to compile bundle
 
 defaultTasks = ['appDeploy']
 
@@ -71,9 +84,13 @@ aemSatisfy {
     download("https://github.com/Cognifide/APM/releases/download/cqsm-3.0.0/apm-3.0.0.zip")
 }
 
-build.dependsOn aemCompose
 task appDeploy(dependsOn: [build, aemDeploy])
 ```
+
+Preinstalling dependent packages on AEM via command: `gradle aemSatisfy`.
+
+Building and deploying to AEM via command: `gradle appDeploy` or just `gradle`.
+
 
 Instances configuration can be omitted, then *http://localhost:4502* and *http://localhost:4503* will be used by default.
 Content path can also be skipped, because value above is also default. This is only an example how to customize particular [values](src/main/kotlin/com/cognifide/gradle/aem/AemConfig.kt).
@@ -87,7 +104,8 @@ For multi project build configuration, see [example project](https://github.com/
     * `includeContent(projectPath: String)`, includes only JCR content, example: `includeContent ':design'`.
     * `includeBundles(projectPath: String)`, includes only bundles, example: `includeBundles ':common'`.
     * `includeBundlesAtRunMode(projectPath: String, runMode: String)`, as above, useful when bundles need to be installed only on specific type of instance.
-    * `includeSubprojects(withSamePathPrefix: Boolean = true)`, includes both bundles and JCR content from all nested subprojects, example: project `:app` will include `:app:common`, `:app:core` etc. Vault filter file will be automatically generated with all filter roots merged. Useful for building assemblies (all-in-one packages).
+    * `includeProjects(pathPrefix: String)`, includes both bundles and JCR content from all AEM projects (excluding itself) in which project path is matching specified filter. Vault filter roots will be automatically merged and available in property `${filterRoots}` in *filter.xml* file. Useful for building assemblies (all-in-one packages).
+    * `includeSubprojects()`, alias for method above: `includeProjects("${project.path}:*")`.
     * all inherited from [ZIP task](https://docs.gradle.org/3.5/dsl/org.gradle.api.tasks.bundling.Zip.html).
 * `aemUpload` - Upload composed CRX package into AEM instance(s).
 * `aemInstall` - Install uploaded CRX package on AEM instance(s).
@@ -131,9 +149,9 @@ For multi project build configuration, see [example project](https://github.com/
 -Paem.deploy.skipDownloadName=true
 ```
 
-### Expandable variables
+### Expandable properties
 
-By default, plugin is configured that in all XML files, variables can be injected:
+By default, plugin is configured that in all XML files, properties can be injected:
 
 ```
 aem {
@@ -148,9 +166,10 @@ What is more, there are predefined variables that also can be used:
 * `rootProject` - project with directory in which *settings.gradle* is located.
 * `project` - current project.
 * `config` - [AEM configuration](src/main/kotlin/com/cognifide/gradle/aem/AemConfig.kt).
+* `currentDate`
 * `created` - current date in ISO8601 format.
 * `buildCount` - number to be used as CRX package build count (current date in format `yDDmmssSSS`).
-* `filterRoots` - after using method `includeContent` of `aemCompose` task, Vault filter roots all being gathered. This variable contains all these XML tags concatenated especially useful for building assemblies. If no projects will be included, then this variable will contain a single filter root with bundle install path to be able to deploy auto-generated package with JAR file only.
+* `filterRoots` - after using method `includeContent` of `aemCompose` task, all Vault filter roots are being gathered. This variable contains all these XML tags concatenated especially useful for building assemblies. If no projects will be included, then this variable will contain a single filter root with bundle install path to be able to deploy auto-generated package with JAR file only.
 
 ## License
 
