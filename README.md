@@ -143,16 +143,16 @@ For multi project build configuration, see [example project](https://github.com/
 -Paem.deploy.satisfy.group=tools 
 ```
 
-* Checking out JCR content using filter at custom path:
-
-```
--Paem.vlt.checkout.filterPath=src/main/content/META-INF/vault/custom-filter.xml
-```
-
 * Skipping installed package resolution by download name (eliminating conflicts / only matters when Vault properties file is customized): 
 
 ```
 -Paem.deploy.skipDownloadName=true
+```
+
+* Checking out JCR content using filter at custom path:
+
+```
+-Paem.vlt.checkout.filterPath=src/main/content/META-INF/vault/custom-filter.xml
 ```
 
 ### Expandable properties
