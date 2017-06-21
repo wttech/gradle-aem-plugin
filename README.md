@@ -57,7 +57,7 @@ buildscript {
     }
 }
 
-apply plugin: 'cognifide.aem'
+apply plugin: 'com.cognifide.aem'
 
 build.dependsOn aemCompose
 ```
