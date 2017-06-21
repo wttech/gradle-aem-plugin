@@ -173,7 +173,7 @@ What is more, there are predefined variables that also can be used:
 * `project` - current project.
 * `config` - [AEM configuration](src/main/kotlin/com/cognifide/gradle/aem/AemConfig.kt).
 * `created` - current date in ISO8601 format.
-* `buildCount` - number to be used as CRX package build count (current date in format `yDDmmssSSS`).
+* `buildCount` - number to be used as CRX package build count (`config.buildDate` in format `yDDmmssSSS`).
 * `filterRoots` - after using method `includeContent` of `aemCompose` task, all Vault filter roots are being gathered. This variable contains all these XML tags concatenated especially useful for building assemblies. If no projects will be included, then this variable will contain a single filter root with bundle install path to be able to deploy auto-generated package with JAR file only.
 
 ## License
