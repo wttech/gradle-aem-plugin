@@ -26,7 +26,7 @@ class VltApp(val instance: AemInstance, val project: Project) : VaultFsApp() {
             val cmdArgs = listOf(instance.url, "/") + config.vaultCheckoutArgs + contentDir.absolutePath
 
             var filter = File(config.vaultFilterPath)
-            val cmdFilterPath = project.properties["aem.vlt.checkout.filterPath"] as String
+            val cmdFilterPath = project.properties["aem.vlt.checkout.filterPath"] as String?
             if (!cmdFilterPath.isNullOrBlank()) {
                 val cmdFilter = project.file(cmdFilterPath)
                 if (!cmdFilter.exists()) {

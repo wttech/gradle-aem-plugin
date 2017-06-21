@@ -21,7 +21,7 @@ class VltCleaner(val root: File, val logger: Logger) {
 
         fun clean(project : Project) {
             val config = AemConfig.of(project)
-            val contentDir = File(config.bundlePath)
+            val contentDir = File(config.contentPath)
 
             if (!contentDir.exists()) {
                 project.logger.warn("JCR content directory to be cleaned does not exist: ${contentDir.absolutePath}")
