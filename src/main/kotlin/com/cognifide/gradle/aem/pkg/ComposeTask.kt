@@ -140,21 +140,8 @@ open class ComposeTask : Zip(), AemTask {
         return tags.joinToString(config.vaultLineSeparator)
     }
 
-    val filePredefinedProperties: Map<String, Any>
-        get() {
-
-            return mapOf(
-                    "rootProject" to project.rootProject,
-                    "project" to project,
-                    "config" to config,
-                    "created" to ISO8601Utils.format(config.buildDate),
-                    "buildCount" to SimpleDateFormat("yDDmmssSSS").format(config.buildDate),
-                    "filterRoots" to parseVaultFilterRoots()
-            )
-        }
-
     val fileAllProperties by lazy {
-        filePredefinedProperties + config.fileProperties
+        mapOf("filterRoots" to parseVaultFilterRoots()) + config.fileProperties
     }
 
     fun expandProperties(fileSource: String): String {

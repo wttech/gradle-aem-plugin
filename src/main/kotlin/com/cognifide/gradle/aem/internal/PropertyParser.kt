@@ -1,10 +1,13 @@
 package com.cognifide.gradle.aem.internal
 
+import com.cognifide.gradle.aem.AemConfig
+import com.fasterxml.jackson.databind.util.ISO8601Utils
 import groovy.text.SimpleTemplateEngine
 import org.apache.commons.io.FilenameUtils
 import org.apache.commons.io.IOCase
 import org.apache.commons.lang3.text.StrSubstitutor
 import org.gradle.api.Project
+import java.text.SimpleDateFormat
 
 class PropertyParser(val project: Project) {
 
@@ -20,9 +23,10 @@ class PropertyParser(val project: Project) {
         }
     }
 
-    fun expand(source: String, properties: Map<String, Any>): String {
+    fun expand(source: String, properties: Map<String, Any> = mapOf()): String {
         val interpolated = StrSubstitutor.replace(source, systemProperties)
-        val template = SimpleTemplateEngine().createTemplate(interpolated).make(properties)
+        val allProperties = aemProperties + properties
+        val template = SimpleTemplateEngine().createTemplate(interpolated).make(allProperties)
 
         return template.toString()
     }
@@ -32,5 +36,19 @@ class PropertyParser(val project: Project) {
             props.put(prop.key.toString(), prop.value.toString()); props
         })
     }
+
+    val aemProperties: Map<String, Any>
+        get() {
+            val config = AemConfig.of(project)
+
+            return mapOf(
+                    "rootProject" to project.rootProject,
+                    "project" to project,
+                    "config" to config,
+                    "instances" to config.instancesByName,
+                    "created" to ISO8601Utils.format(config.buildDate),
+                    "buildCount" to SimpleDateFormat("yDDmmssSSS").format(config.buildDate)
+            )
+        }
 
 }

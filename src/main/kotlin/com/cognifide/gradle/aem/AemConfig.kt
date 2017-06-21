@@ -120,7 +120,7 @@ data class AemConfig(
      * Ensures that for directory 'META-INF/vault' default files will be generated when missing:
      * 'config.xml', 'filter.xml', 'properties.xml' and 'settings.xml'.
      */
-    var vaultCopyMissingFiles : Boolean = true,
+    var vaultCopyMissingFiles: Boolean = true,
 
     /**
      * Custom path to Vault files that will be used to build CRX package.
@@ -138,7 +138,7 @@ data class AemConfig(
     /**
      * Define here properties that will be skipped when pulling JCR content from AEM instance.
      */
-    var vaultSkipProperties : MutableList<String> = mutableListOf(
+    var vaultSkipProperties: MutableList<String> = mutableListOf(
             "jcr:lastModified",
             "jcr:created",
             "cq:lastModified",
@@ -154,14 +154,14 @@ data class AemConfig(
     var vaultFilterPath:String = "",
 
     /**
-     * Extra parameters passed to VLT application while executing 'checkout' command.
+     * Global options which are being applied to any Vault related command like 'aemVault' or 'aemCheckout'.
      */
-    var vaultCheckoutArgs : MutableList<String> = mutableListOf("--force"),
+    var vaultGlobalOptions: String = "--credentials \${instance.credentials}",
 
     /**
      * Specify characters to be used as line endings when cleaning up checked out JCR content.
      */
-    var vaultLineSeparator : String = System.lineSeparator(),
+    var vaultLineSeparator: String = System.lineSeparator(),
 
     /**
      * Configure default task dependency assignments while including dependant project bundles.
@@ -230,6 +230,11 @@ data class AemConfig(
         instances.add(AemInstance(url, user, password, type))
     }
 
+    val instancesByName: Map<String, AemInstance>
+        get() = instances.fold(mutableMapOf<String, AemInstance>(), { map, instance ->
+            map.put(instance.name, instance); map
+        })
+
     /**
      * Following checks will be performed during configuration phase.
      */
@@ -242,6 +247,10 @@ data class AemConfig(
             throw AemException("Content path cannot be blank")
         }
 
+        if (instances.size != instancesByName.size) {
+            throw AemException("Instance names must be unique")
+        }
+
         instances.forEach { it.validate() }
     }
 
@@ -249,7 +258,7 @@ data class AemConfig(
      * CRX package Vault files will be composed from given sources.
      * Missing files required by package within installation will be auto-generated if 'vaultCopyMissingFiles' is enabled.
      */
-    val vaultFilesDirs : List<File>
+    val vaultFilesDirs: List<File>
         get() {
             val paths = listOf(
                     vaultFilesPath,
@@ -258,6 +267,8 @@ data class AemConfig(
 
             return paths.filter { !it.isNullOrBlank() }.map { File(it) }
         }
+
+
 }
 
 

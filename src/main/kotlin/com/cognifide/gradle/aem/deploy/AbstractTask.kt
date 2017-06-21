@@ -30,7 +30,7 @@ abstract class AbstractTask : DefaultTask(), AemTask {
     }
 
     protected fun filterInstances(instanceGroup: String = AemInstance.FILTER_DEFAULT): List<AemInstance> {
-        return AemInstance.filter(project, config, instanceGroup)
+        return AemInstance.filter(project, instanceGroup)
     }
 
     protected fun determineLocalPackage(): File {

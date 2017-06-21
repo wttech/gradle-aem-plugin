@@ -7,10 +7,10 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.TaskAction
 
-open class CheckoutTask : DefaultTask(), AemTask {
+open class VaultTask : DefaultTask(), AemTask {
 
     companion object {
-        val NAME = "aemCheckout"
+        val NAME = "aemVault"
     }
 
     @Input
@@ -18,13 +18,19 @@ open class CheckoutTask : DefaultTask(), AemTask {
 
     init {
         group = AemPlugin.TASK_GROUP
-        description = "Check out JCR content from running AEM instance."
+        description = "Perform any Vault command."
     }
 
     @TaskAction
-    fun checkout() {
-        logger.info("Checking out content from AEM")
-        VltCommand.checkout(project)
+    fun perform() {
+        val command = project.properties["aem.vlt.command"] as String?
+        if (command.isNullOrBlank()) {
+            throw VltException("Vault command is cannot be blank.")
+        }
+
+        logger.info("Performing Vault command: $command")
+
+        VltCommand.raw(project, command!!)
     }
 
 }
