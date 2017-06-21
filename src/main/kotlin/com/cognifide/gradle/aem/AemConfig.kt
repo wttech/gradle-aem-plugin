@@ -64,6 +64,8 @@ data class AemConfig(
     /**
      * Content path for bundle jars being placed in CRX package.
      * Default: "/apps/${project.rootProject.name}/install".
+     *
+     * Must be absolute or relative to current working directory.
      */
     var bundlePath: String = "",
 
@@ -124,6 +126,8 @@ data class AemConfig(
     /**
      * Custom path to Vault files that will be used to build CRX package.
      * Useful to share same files for all packages, like package thumbnail.
+     *
+     * Must be absolute or relative to current working directory.
      */
     var vaultFilesPath: String = "",
 

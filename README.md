@@ -73,7 +73,7 @@ defaultTasks = ['appDeploy']
 
 aem {
     config {
-        contentPath = "src/main/content"
+        contentPath = project.file("src/main/content")
         instance("http://localhost:4502", "admin", "admin", "local-author")
         // instance("http://localhost:4503", "admin", "admin", "local-publish")
     }
