@@ -103,6 +103,7 @@ For multi project build configuration, see [example project](https://github.com/
     * `includeProject(projectPath: String)`, includes both bundles and JCR content from another project, example: `includeProject ':core'`.
     * `includeContent(projectPath: String)`, includes only JCR content, example: `includeContent ':design'`.
     * `includeBundles(projectPath: String)`, includes only bundles, example: `includeBundles ':common'`.
+    * `includeBundles(projectPath: String, installPath: String)`, includes only bundles at custom install path, example: `includeBundles(':common', '/apps/my-app/install')`.
     * `includeBundlesAtRunMode(projectPath: String, runMode: String)`, as above, useful when bundles need to be installed only on specific type of instance.
     * `includeProjects(pathPrefix: String)`, includes both bundles and JCR content from all AEM projects (excluding itself) in which project path is matching specified filter. Vault filter roots will be automatically merged and available in property `${filterRoots}` in *filter.xml* file. Useful for building assemblies (all-in-one packages).
     * `includeSubprojects()`, alias for method above: `includeProjects("${project.path}:*")`.
