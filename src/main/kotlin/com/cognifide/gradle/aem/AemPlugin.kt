@@ -6,6 +6,7 @@ import com.cognifide.gradle.aem.pkg.ComposeTask
 import com.cognifide.gradle.aem.vlt.CheckoutTask
 import com.cognifide.gradle.aem.vlt.CleanTask
 import com.cognifide.gradle.aem.vlt.SyncTask
+import org.gradle.api.DefaultTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
@@ -40,8 +41,8 @@ class AemPlugin : Plugin<Project> {
         setupDependentPlugins(project)
         setupExtensions(project)
         setupTasks(project)
-        setupConfigs(project)
-        setupValidation(project)
+        setupConfigurations(project)
+        setupConfig(project)
     }
 
     private fun setupDependentPlugins(project: Project) {
@@ -100,7 +101,7 @@ class AemPlugin : Plugin<Project> {
         vltSync.mustRunAfter(clean)
     }
 
-    private fun setupConfigs(project: Project) {
+    private fun setupConfigurations(project: Project) {
         project.plugins.withType(JavaPlugin::class.java, {
             val baseConfig = project.configurations.getByName(JavaPlugin.COMPILE_CONFIGURATION_NAME)
             val configurer: (Configuration) -> Unit = {
@@ -113,14 +114,21 @@ class AemPlugin : Plugin<Project> {
         })
     }
 
-    private fun setupValidation(project: Project) {
-        project.afterEvaluate {
-            project.tasks.forEach {task ->
-                if (task is AemTask) {
-                    task.config.validate()
-                }
+    private fun setupConfig(project: Project) {
+        project.tasks.forEach {task ->
+            if (task is AemTask && task is DefaultTask) {
+                task.config.configure(task)
             }
         }
+
+        project.afterEvaluate({
+            project.tasks.forEach {task ->
+                if (task is AemTask && task is DefaultTask) {
+                    task.config.validate()
+                    task.config.attach(task)
+                }
+            }
+        })
     }
 
 }

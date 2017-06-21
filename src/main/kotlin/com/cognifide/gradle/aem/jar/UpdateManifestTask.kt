@@ -35,7 +35,7 @@ open class UpdateManifestTask : DefaultTask(), AemTask {
     }
 
     @Input
-    final override val config = AemConfig.create(this)
+    final override val config = AemConfig.of(project)
 
     @Internal
     val jar = project.tasks.getByName(JavaPlugin.JAR_TASK_NAME) as Jar

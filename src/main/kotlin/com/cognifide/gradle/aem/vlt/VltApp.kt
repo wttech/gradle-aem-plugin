@@ -25,7 +25,17 @@ class VltApp(val instance: AemInstance, val project: Project) : VaultFsApp() {
             val vltApp = VltApp(instance, project)
             val cmdArgs = listOf(instance.url, "/") + config.vaultCheckoutArgs + contentDir.absolutePath
 
-            val filter = File(config.vaultFilterPath)
+            var filter = File(config.vaultFilterPath)
+            val cmdFilterPath = project.properties["aem.vlt.checkout.filterPath"] as String
+            if (!cmdFilterPath.isNullOrBlank()) {
+                val cmdFilter = project.file(cmdFilterPath)
+                if (!cmdFilter.exists()) {
+                    throw VltException("Vault check out filter file does not exist at path: ${cmdFilter.absolutePath}")
+                }
+
+                filter = cmdFilter
+            }
+
             if (filter.exists()) {
                 vltApp.executeCommand(listOf(CheckoutTask.COMMAND, "-f", filter.absolutePath) + cmdArgs)
             } else {

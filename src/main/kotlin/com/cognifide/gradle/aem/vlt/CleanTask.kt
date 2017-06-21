@@ -14,7 +14,7 @@ open class CleanTask : DefaultTask(), AemTask {
     }
 
     @Input
-    final override val config = AemConfig.create(this)
+    final override val config = AemConfig.of(project)
 
     init {
         group = AemPlugin.TASK_GROUP
