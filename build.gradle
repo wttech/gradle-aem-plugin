@@ -26,7 +26,7 @@ dependencies {
     compile 'com.fasterxml.jackson.module:jackson-module-kotlin:2.8.8'
     compile 'org.reflections:reflections:0.9.11'
     compile 'org.dm.gradle:gradle-bundle-plugin:0.10.0'
-    compile 'org.apache.jackrabbit.vault:vault-cli:3.1.38'
+    compile 'org.apache.jackrabbit.vault:vault-cli:3.1.24'
     compile 'org.jsoup:jsoup:1.10.3'
 }
 
