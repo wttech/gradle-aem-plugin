@@ -147,7 +147,7 @@ gradle aemSatisfy -Paem.deploy.satisfy.group=hotfix-*,groovy-console
 * Checking out JCR content using filter at custom path (for subproject *content*):
 
 ```
-gradle :content:aemCheckout -Paem.vlt.checkout.filterPath=src/main/content/META-INF/vault/custom-filter.xml
+gradle :content:aemCheckout -Paem.vlt.filter=src/main/content/META-INF/vault/custom-filter.xml
 ```
 
 * Executing any Vault command at custom working directory (for subproject *content*):
