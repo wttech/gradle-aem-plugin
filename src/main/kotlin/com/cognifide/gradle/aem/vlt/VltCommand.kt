@@ -63,16 +63,15 @@ object VltCommand {
     }
 
     fun determineInstance(project: Project): AemInstance {
-        var instance = AemInstance.filter(project, AemInstance.FILTER_AUTHOR).first()
-
         val cmdInstanceArg = project.properties["aem.vlt.instance"] as String?
         if (!cmdInstanceArg.isNullOrBlank()) {
             val cmdInstance = AemInstance.parse(cmdInstanceArg!!).first()
             cmdInstance.validate()
-            instance = cmdInstance
+
+            return cmdInstance
         }
 
-        return instance
+        return AemInstance.filter(project, AemInstance.FILTER_AUTHOR).first()
     }
 
 }
