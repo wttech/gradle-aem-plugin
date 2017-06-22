@@ -1,12 +1,10 @@
 package com.cognifide.gradle.aem.vlt
 
-import com.cognifide.gradle.aem.AemConfig
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.filefilter.NameFileFilter
 import org.apache.commons.io.filefilter.TrueFileFilter
 import org.apache.commons.lang3.CharEncoding
 import org.apache.commons.lang3.StringUtils
-import org.gradle.api.Project
 import org.gradle.api.logging.Logger
 import java.io.File
 import java.io.IOException
@@ -18,20 +16,6 @@ class VltCleaner(val root: File, val logger: Logger) {
         val VLT_FILE = ".vlt"
 
         val JCR_CONTENT_FILE = ".content.xml"
-
-        fun clean(project : Project) {
-            val config = AemConfig.of(project)
-            val contentDir = File(config.bundlePath)
-
-            if (!contentDir.exists()) {
-                project.logger.warn("JCR content directory to be cleaned does not exist: ${contentDir.absolutePath}")
-                return
-            }
-
-            val cleaner = VltCleaner(contentDir, project.logger)
-            cleaner.removeVltFiles()
-            cleaner.cleanupDotContent(config.vaultSkipProperties, config.vaultLineSeparator)
-        }
     }
 
     fun removeVltFiles() {

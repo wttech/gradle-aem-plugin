@@ -35,7 +35,8 @@ data class AemInstance(
             )
         }
 
-        fun filter(project: Project, config: AemConfig, instanceGroup: String = FILTER_DEFAULT): List<AemInstance> {
+        fun filter(project: Project, instanceFilter: String = FILTER_DEFAULT): List<AemInstance> {
+            val config = AemConfig.of(project)
             val instanceValues = project.properties["aem.deploy.instance.list"] as String?
             if (!instanceValues.isNullOrBlank()) {
                 return AemInstance.parse(instanceValues!!)
@@ -48,10 +49,13 @@ data class AemInstance(
             }
 
             return instances.filter { instance ->
-                PropertyParser(project).filter(instance.name, "aem.deploy.instance.group", instanceGroup)
+                PropertyParser(project).filter(instance.name, "aem.deploy.instance.name", instanceFilter)
             }
         }
     }
+
+    val credentials: String
+        get() = "$user:$password"
 
     fun validate() {
         if (!URL_VALIDATOR.isValid(url)) {

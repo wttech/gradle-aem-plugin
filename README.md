@@ -24,7 +24,7 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
 * Easy multi-deployment with instance groups.
 * Automated dependent packages installation from local and remote sources.
 * Smart Vault files generation (combining defaults with overiddables).
-* Checking out and cleaning JCR content from running AEM instance.
+* Embedded Vault tool for checking out and cleaning JCR content from running AEM instance.
 * OSGi Manifest customization by official [osgi](https://docs.gradle.org/current/userguide/osgi_plugin.html) plugin or feature rich [org.dm.bundle](https://github.com/TomDmitriev/gradle-bundle-plugin) plugin.
 * OSGi Declarative Services annotations support (instead of SCR, [see docs](http://blogs.adobe.com/experiencedelivers/experience-management/osgi/using-osgi-annotations-aem6-2/)).
 
@@ -112,7 +112,7 @@ For multi project build configuration, see [example project](https://github.com/
 * `aemInstall` - Install uploaded CRX package on AEM instance(s).
 * `aemActivate` - Replicate installed CRX package to other AEM instance(s).
 * `aemDeploy` - Upload & install CRX package into AEM instance(s). Primary, recommended form of deployment. Optimized version of `aemUpload aemInstall`.
-* `aemDistribute` - Upload, install & activate CRX package into AEM instances(s). Secondary form of deployment. Optimized version of `aemUpload aemInstall aemActivate -Paem.deploy.instance.group=*-author`.
+* `aemDistribute` - Upload, install & activate CRX package into AEM instances(s). Secondary form of deployment. Optimized version of `aemUpload aemInstall aemActivate -Paem.deploy.instance.name=*-author`.
 * `aemSatisfy` - Upload & install dependent CRX package(s) before deployment. Available methods:
     * `local(path: String)`, use CRX package from local file system.
     * `local(file: File)`, same as above, but file can be even located outside the project.
@@ -122,60 +122,88 @@ For multi project build configuration, see [example project](https://github.com/
 * `aemCheckout` - Check out JCR content from running AEM author instance to local content path.
 * `aemClean` - Clean checked out JCR content.
 * `aemSync` - Check out then clean JCR content.
+* `aemVlt` - Execute any Vault command. See parameters section for more details.
 
 ### Parameters
 
 * Deploying only to filtered group of instances (filters with wildcards, comma delimited):
 
 ```
--Paem.deploy.instance.group=integration-*
--Paem.deploy.instance.group=*-author
+gradle aemDeploy -Paem.deploy.instance.name=integration-*
+gradle aemDeploy -Paem.deploy.instance.name=*-author
 ```
    
 * Deploying only to instances specified explicitly: 
 
 ```
--Paem.deploy.instance.list=http://localhost:4502,admin,admin;http://localhost:4503,admin,admin
+gradle aemDeploy -Paem.deploy.instance.list=http://localhost:4502,admin,admin;http://localhost:4503,admin,admin
 ```
 
 * Satisfying only filtered group of packages (filters with wildcards, comma delimited):
 
 ```
--Paem.deploy.satisfy.group=tools 
+gradle aemSatisfy -Paem.deploy.satisfy.group=hotfix-*,groovy-console
 ```
+
+* Checking out JCR content using filter at custom path (for subproject *content*):
+
+```
+gradle :content:aemCheckout -Paem.vlt.filter=src/main/content/META-INF/vault/custom-filter.xml
+```
+
+* Executing any Vault command at custom working directory (for subproject *content*):
+
+```
+gradle :content:aemVlt -Paem.vlt.command='checkout --force -f ${filter.absolutePath} ${instance.url}' 
+```
+
+Task `aemCheckout` is just an straightforward alias for above command. 
+It is allowed to execute any command listed in [VLT Tool documentation](https://docs.adobe.com/docs/en/aem/6-2/develop/dev-tools/ht-vlttool.html).
+Gradle requires to have working directory with file *build.gradle* in it, but Vault tool can work at any directory under *jcr_root*. To change working directory for Vault, use property `aem.vlt.path` which is relative path to be appended to *jcr_root* for project task being currently executed.
 
 * Skipping installed package resolution by download name (eliminating conflicts / only matters when Vault properties file is customized): 
 
 ```
--Paem.deploy.skipDownloadName=true
-```
-
-* Checking out JCR content using filter at custom path:
-
-```
--Paem.vlt.checkout.filterPath=src/main/content/META-INF/vault/custom-filter.xml
+gradle aemInstall -Paem.deploy.skipDownloadName=true
 ```
 
 ### Expandable properties
 
-By default, plugin is configured that in all XML files, properties can be injected:
+By default, plugin is configured that in all XML files located under path *META-INF/vault*,properties can be injected using syntax: `${property}`.
+
+Related configuration:
 
 ```
 aem {
+    fileProperties = [
+        "organization": "My Company"
+    ]
     vaultFilesExpanded = ["*.xml"]
-    vaultExpandProperties = [:]
 }
 ```
 
 This feature is specially useful to generate valid *META-INF/properties.xml* file.
-What is more, there are predefined variables that also can be used:
 
+Predefined properties:
 * `rootProject` - project with directory in which *settings.gradle* is located.
 * `project` - current project.
 * `config` - [AEM configuration](src/main/kotlin/com/cognifide/gradle/aem/AemConfig.kt).
 * `created` - current date in ISO8601 format.
 * `buildCount` - number to be used as CRX package build count (`config.buildDate` in format `yDDmmssSSS`).
-* `filterRoots` - after using method `includeContent` of `aemCompose` task, all Vault filter roots are being gathered. This variable contains all these XML tags concatenated especially useful for building assemblies. If no projects will be included, then this variable will contain a single filter root with bundle install path to be able to deploy auto-generated package with JAR file only.
+
+Task specific:
+* `aemCompose` - properties which are being dynamically calculated basing on content actually included into package.
+   * `filterRoots` - after using method `includeContent` of `aemCompose` task, all Vault filter roots are being gathered. This property contains all these XML tags concatenated especially useful for building assemblies. If no projects will be included, then this variable will contain a single filter root with bundle path to be able to deploy auto-generated package with JAR file only.
+* `aemVlt` - properties are being injected to command specified in `aem.vlt.command` property. Following properties are being used internally also by `aemCheckout`.
+   * `instance` - instance used to communicate with while performing Vault commands. Determined by (order take precedence): properties `aem.vlt.instance`, `aem.deploy.instance.list`, `aem.deploy.instance.name` and as fallback first instance which name matches filter `*-author`.
+   * `filter` - path to Vault workspace filter file  *META-INF/vault/filter.xml*. Determined by (order take precedence): property: `aem.vlt.filter`, configuration `vaultFilterPath`.
+
+## Known issues
+
+### Vault tasks parallelism
+
+Vault tool current working directory cannot be easily configured, because of its API. AEM plugin is temporarily changing current working directory for Vault, then returning it back to original value.
+In case of that workaround, Vault tasks should not be run in parallel (by separated daemon processed / JVM synchronization bypassed), because of potential unpredictable behavior.
 
 ## License
 

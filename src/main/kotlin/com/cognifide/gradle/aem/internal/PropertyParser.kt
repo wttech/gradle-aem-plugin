@@ -1,10 +1,14 @@
 package com.cognifide.gradle.aem.internal
 
+import com.cognifide.gradle.aem.AemConfig
+import com.cognifide.gradle.aem.AemException
+import com.fasterxml.jackson.databind.util.ISO8601Utils
 import groovy.text.SimpleTemplateEngine
 import org.apache.commons.io.FilenameUtils
 import org.apache.commons.io.IOCase
 import org.apache.commons.lang3.text.StrSubstitutor
 import org.gradle.api.Project
+import java.text.SimpleDateFormat
 
 class PropertyParser(val project: Project) {
 
@@ -20,11 +24,16 @@ class PropertyParser(val project: Project) {
         }
     }
 
-    fun expand(source: String, properties: Map<String, Any>): String {
-        val interpolated = StrSubstitutor.replace(source, systemProperties)
-        val template = SimpleTemplateEngine().createTemplate(interpolated).make(properties)
+    fun expand(source: String, properties: Map<String, Any> = mapOf()): String {
+        try {
+            val interpolated = StrSubstitutor.replace(source, systemProperties)
+            val allProperties = aemProperties + properties
+            val template = SimpleTemplateEngine().createTemplate(interpolated).make(allProperties)
 
-        return template.toString()
+            return template.toString()
+        } catch (e: Throwable) {
+            throw AemException("Cannot expand properly all properties. Probably used non-existing field name. Source: '$source'", e)
+        }
     }
 
     val systemProperties: Map<String, String> by lazy {
@@ -32,5 +41,19 @@ class PropertyParser(val project: Project) {
             props.put(prop.key.toString(), prop.value.toString()); props
         })
     }
+
+    val aemProperties: Map<String, Any>
+        get() {
+            val config = AemConfig.of(project)
+
+            return mapOf(
+                    "rootProject" to project.rootProject,
+                    "project" to project,
+                    "config" to config,
+                    "instances" to config.instancesByName,
+                    "created" to ISO8601Utils.format(config.buildDate),
+                    "buildCount" to SimpleDateFormat("yDDmmssSSS").format(config.buildDate)
+            )
+        }
 
 }
