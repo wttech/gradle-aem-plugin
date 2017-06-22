@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.internal
 
 import com.cognifide.gradle.aem.AemConfig
+import com.cognifide.gradle.aem.AemException
 import com.fasterxml.jackson.databind.util.ISO8601Utils
 import groovy.text.SimpleTemplateEngine
 import org.apache.commons.io.FilenameUtils
@@ -24,11 +25,15 @@ class PropertyParser(val project: Project) {
     }
 
     fun expand(source: String, properties: Map<String, Any> = mapOf()): String {
-        val interpolated = StrSubstitutor.replace(source, systemProperties)
-        val allProperties = aemProperties + properties
-        val template = SimpleTemplateEngine().createTemplate(interpolated).make(allProperties)
+        try {
+            val interpolated = StrSubstitutor.replace(source, systemProperties)
+            val allProperties = aemProperties + properties
+            val template = SimpleTemplateEngine().createTemplate(interpolated).make(allProperties)
 
-        return template.toString()
+            return template.toString()
+        } catch (e: Throwable) {
+            throw AemException("Cannot expand properly all properties. Probably used non-existing field name. Source: '$source'", e)
+        }
     }
 
     val systemProperties: Map<String, String> by lazy {

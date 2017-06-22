@@ -30,15 +30,15 @@ object VltCommand {
             project.logger.info("JCR content directory to be checked out does not exist: ${contentDir.absolutePath}")
         }
 
-        raw(project, "checkout --force --filter \${filter.absolutePath} \${instance.url}")
+        raw(project, "checkout --force --filter \${filter} \${instance.url}")
     }
 
     fun raw(project: Project, command: String) {
-        val app = VltApp(project.logger)
+        val app = VltApp(project)
         val config = AemConfig.of(project)
         val specificProps = mapOf(
                 "instance" to determineInstance(project),
-                "filter" to determineFilter(project)
+                "filter" to determineFilter(project).absolutePath
         )
         val fullCommand = PropertyParser(project).expand("${config.vaultGlobalOptions} $command".trim(), specificProps)
 
@@ -48,7 +48,7 @@ object VltCommand {
     fun determineFilter(project: Project): File {
         val config = AemConfig.of(project)
         var filter = File(config.vaultFilterPath)
-        val cmdFilterPath = project.properties["aem.vlt.checkout.filterPath"] as String?
+        val cmdFilterPath = project.properties["aem.vlt.filter"] as String?
 
         if (!cmdFilterPath.isNullOrBlank()) {
             val cmdFilter = project.file(cmdFilterPath)

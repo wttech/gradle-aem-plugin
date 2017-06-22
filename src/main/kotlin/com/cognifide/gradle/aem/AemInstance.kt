@@ -35,7 +35,7 @@ data class AemInstance(
             )
         }
 
-        fun filter(project: Project, instanceGroup: String = FILTER_DEFAULT): List<AemInstance> {
+        fun filter(project: Project, instanceFilter: String = FILTER_DEFAULT): List<AemInstance> {
             val config = AemConfig.of(project)
             val instanceValues = project.properties["aem.deploy.instance.list"] as String?
             if (!instanceValues.isNullOrBlank()) {
@@ -49,7 +49,7 @@ data class AemInstance(
             }
 
             return instances.filter { instance ->
-                PropertyParser(project).filter(instance.name, "aem.deploy.instance.group", instanceGroup)
+                PropertyParser(project).filter(instance.name, "aem.deploy.instance.name", instanceFilter)
             }
         }
     }

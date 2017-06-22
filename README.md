@@ -112,7 +112,7 @@ For multi project build configuration, see [example project](https://github.com/
 * `aemInstall` - Install uploaded CRX package on AEM instance(s).
 * `aemActivate` - Replicate installed CRX package to other AEM instance(s).
 * `aemDeploy` - Upload & install CRX package into AEM instance(s). Primary, recommended form of deployment. Optimized version of `aemUpload aemInstall`.
-* `aemDistribute` - Upload, install & activate CRX package into AEM instances(s). Secondary form of deployment. Optimized version of `aemUpload aemInstall aemActivate -Paem.deploy.instance.group=*-author`.
+* `aemDistribute` - Upload, install & activate CRX package into AEM instances(s). Secondary form of deployment. Optimized version of `aemUpload aemInstall aemActivate -Paem.deploy.instance.name=*-author`.
 * `aemSatisfy` - Upload & install dependent CRX package(s) before deployment. Available methods:
     * `local(path: String)`, use CRX package from local file system.
     * `local(file: File)`, same as above, but file can be even located outside the project.
@@ -128,32 +128,42 @@ For multi project build configuration, see [example project](https://github.com/
 * Deploying only to filtered group of instances (filters with wildcards, comma delimited):
 
 ```
--Paem.deploy.instance.group=integration-*
--Paem.deploy.instance.group=*-author
+gradle aemDeploy -Paem.deploy.instance.name=integration-*
+gradle aemDeploy -Paem.deploy.instance.name=*-author
 ```
    
 * Deploying only to instances specified explicitly: 
 
 ```
--Paem.deploy.instance.list=http://localhost:4502,admin,admin;http://localhost:4503,admin,admin
+gradle aemDeploy -Paem.deploy.instance.list=http://localhost:4502,admin,admin;http://localhost:4503,admin,admin
 ```
 
 * Satisfying only filtered group of packages (filters with wildcards, comma delimited):
 
 ```
--Paem.deploy.satisfy.group=tools 
+gradle aemSatisfy -Paem.deploy.satisfy.group=hotfix-*,groovy-console
 ```
+
+* Checking out JCR content using filter at custom path (for subproject *content*):
+
+```
+gradle :content:aemCheckout -Paem.vlt.checkout.filterPath=src/main/content/META-INF/vault/custom-filter.xml
+```
+
+* Executing any Vault command at custom working directory (for subproject *content*):
+
+```
+gradle :content:aemVlt -Paem.vlt.command='checkout --force -f ${filter.absolutePath} ${instance.url}' 
+```
+
+Task `aemCheckout` is just an straightforward alias for above command. 
+It is allowed to execute any command listed in [VLT Tool documentation](https://docs.adobe.com/docs/en/aem/6-2/develop/dev-tools/ht-vlttool.html).
+Gradle requires to have working directory with file *build.gradle* in it, but Vault tool can work at any directory under *jcr_root*. To change working directory for Vault, use property `aem.vlt.path` which is relative path to be appended under *jcr_root* for project task being currently executed.
 
 * Skipping installed package resolution by download name (eliminating conflicts / only matters when Vault properties file is customized): 
 
 ```
--Paem.deploy.skipDownloadName=true
-```
-
-* Checking out JCR content using filter at custom path:
-
-```
--Paem.vlt.checkout.filterPath=src/main/content/META-INF/vault/custom-filter.xml
+gradle aemInstall -Paem.deploy.skipDownloadName=true
 ```
 
 ### Expandable properties

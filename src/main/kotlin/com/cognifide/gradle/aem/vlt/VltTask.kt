@@ -7,10 +7,10 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.TaskAction
 
-open class VaultTask : DefaultTask(), AemTask {
+open class VltTask : DefaultTask(), AemTask {
 
     companion object {
-        val NAME = "aemVault"
+        val NAME = "aemVlt"
     }
 
     @Input
@@ -18,17 +18,15 @@ open class VaultTask : DefaultTask(), AemTask {
 
     init {
         group = AemPlugin.TASK_GROUP
-        description = "Perform any Vault command."
+        description = "Execute any Vault command."
     }
 
     @TaskAction
     fun perform() {
         val command = project.properties["aem.vlt.command"] as String?
         if (command.isNullOrBlank()) {
-            throw VltException("Vault command is cannot be blank.")
+            throw VltException("Vault command cannot be blank.")
         }
-
-        logger.info("Performing Vault command: $command")
 
         VltCommand.raw(project, command!!)
     }

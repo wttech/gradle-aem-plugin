@@ -6,7 +6,7 @@ import com.cognifide.gradle.aem.pkg.ComposeTask
 import com.cognifide.gradle.aem.vlt.CheckoutTask
 import com.cognifide.gradle.aem.vlt.CleanTask
 import com.cognifide.gradle.aem.vlt.SyncTask
-import com.cognifide.gradle.aem.vlt.VaultTask
+import com.cognifide.gradle.aem.vlt.VltTask
 import org.gradle.api.DefaultTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -94,7 +94,7 @@ class AemPlugin : Plugin<Project> {
         satisfy.mustRunAfter(clean)
 
         val vltClean = project.tasks.create(CleanTask.NAME, CleanTask::class.java)
-        val vltRaw = project.tasks.create(VaultTask.NAME, VaultTask::class.java)
+        val vltRaw = project.tasks.create(VltTask.NAME, VltTask::class.java)
         val vltCheckout = project.tasks.create(CheckoutTask.NAME, CheckoutTask::class.java)
         val vltSync = project.tasks.create(SyncTask.NAME, SyncTask::class.java)
 
