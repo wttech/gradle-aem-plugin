@@ -100,7 +100,9 @@ data class AemConfig(
      * Define here custom properties that can be used in CRX package files like 'META-INF/vault/properties.xml'.
      * Could override predefined properties provided by plugin itself.
      */
-    var fileProperties: MutableMap<String, Any> = mutableMapOf(),
+    var fileProperties: MutableMap<String, Any> = mutableMapOf(
+            "requiresRoot" to "false"
+    ),
 
     /**
      * Freely customize files being copied to CRX package.
