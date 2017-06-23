@@ -203,10 +203,9 @@ data class AemConfig(
      * Initialize defaults that depends on concrete type of project.
      */
     fun configure(task: DefaultTask) {
-        // Default values
         val project = task.project
 
-        if (project.path == project.rootProject.path) {
+        if (project == project.rootProject) {
             bundlePath = "/apps/${project.name}/install"
         } else {
             bundlePath = "/apps/${project.rootProject.name}/${project.name}/install"
