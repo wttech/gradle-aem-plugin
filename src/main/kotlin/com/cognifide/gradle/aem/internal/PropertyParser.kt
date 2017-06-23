@@ -4,8 +4,6 @@ import com.cognifide.gradle.aem.AemConfig
 import com.cognifide.gradle.aem.AemException
 import com.fasterxml.jackson.databind.util.ISO8601Utils
 import groovy.text.SimpleTemplateEngine
-import org.apache.commons.io.FilenameUtils
-import org.apache.commons.io.IOCase
 import org.apache.commons.lang3.text.StrSubstitutor
 import org.gradle.api.Project
 import java.text.SimpleDateFormat
@@ -19,9 +17,7 @@ class PropertyParser(val project: Project) {
     fun filter(value: String, propName: String, propDefault: String = FILTER_DEFAULT): Boolean {
         val filters = project.properties.getOrElse(propName, { propDefault }) as String
 
-        return filters.split(",").any { group ->
-            FilenameUtils.wildcardMatch(value, group, IOCase.INSENSITIVE)
-        }
+        return filters.split(",").any { group -> Patterns.wildcard(value, group) }
     }
 
     fun expand(source: String, properties: Map<String, Any> = mapOf()): String {

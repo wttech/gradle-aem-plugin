@@ -7,6 +7,7 @@ import com.cognifide.gradle.aem.vlt.CheckoutTask
 import com.cognifide.gradle.aem.vlt.CleanTask
 import com.cognifide.gradle.aem.vlt.SyncTask
 import com.cognifide.gradle.aem.vlt.VltTask
+import com.google.common.base.CaseFormat
 import org.gradle.api.DefaultTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -36,6 +37,10 @@ class AemPlugin : Plugin<Project> {
         val VLT_PATH = "META-INF/vault"
 
         val JCR_ROOT = "jcr_root"
+
+        val DEPLOY_TASK_ROOT = "aemRootDeploy"
+
+        val DEPLOY_TASK_RULE = "Pattern: aem<ProjectPath>Deploy: Build CRX package and deploy it to AEM instance(s). Use preemptive '$DEPLOY_TASK_ROOT' for root project."
     }
 
     override fun apply(project: Project) {
@@ -77,9 +82,11 @@ class AemPlugin : Plugin<Project> {
 
         val assemble = project.tasks.getByName(LifecycleBasePlugin.ASSEMBLE_TASK_NAME)
         val check = project.tasks.getByName(LifecycleBasePlugin.CHECK_TASK_NAME)
+        val build = project.tasks.getByName(LifecycleBasePlugin.BUILD_TASK_NAME)
 
         assemble.mustRunAfter(clean)
         check.mustRunAfter(clean)
+        build.dependsOn(compose)
 
         compose.dependsOn(assemble, check)
         compose.mustRunAfter(clean)
@@ -102,6 +109,25 @@ class AemPlugin : Plugin<Project> {
         vltRaw.mustRunAfter(clean)
         vltCheckout.mustRunAfter(clean)
         vltSync.mustRunAfter(clean)
+
+        project.tasks.addRule(DEPLOY_TASK_RULE, { taskName ->
+            val desiredTaskName = if (project == project.rootProject) {
+                DEPLOY_TASK_ROOT
+            } else {
+                "aem${CaseFormat.LOWER_HYPHEN.to(CaseFormat.UPPER_CAMEL, project.path.replace(":", "-"))}Deploy"
+            }
+
+            if (taskName == desiredTaskName) {
+                if (project.tasks.findByName(taskName) != null) {
+                    project.logger.info("Deploy rule task '$taskName' already exists, so it will be not created.")
+                } else {
+                    project.logger.info("Creating deploy rule task named '$taskName'.")
+
+                    val task = project.tasks.create(taskName)
+                    task.dependsOn(build, deploy)
+                }
+            }
+        })
     }
 
     private fun setupConfigurations(project: Project) {
@@ -118,14 +144,14 @@ class AemPlugin : Plugin<Project> {
     }
 
     private fun setupConfig(project: Project) {
-        project.tasks.forEach {task ->
+        project.tasks.forEach { task ->
             if (task is AemTask && task is DefaultTask) {
                 task.config.configure(task)
             }
         }
 
         project.afterEvaluate({
-            project.tasks.forEach {task ->
+            project.tasks.forEach { task ->
                 if (task is AemTask && task is DefaultTask) {
                     task.config.validate()
                     task.config.attach(task)

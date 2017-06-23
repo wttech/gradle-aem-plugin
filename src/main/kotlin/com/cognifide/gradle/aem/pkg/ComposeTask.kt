@@ -3,15 +3,16 @@ package com.cognifide.gradle.aem.pkg
 import com.cognifide.gradle.aem.AemConfig
 import com.cognifide.gradle.aem.AemPlugin
 import com.cognifide.gradle.aem.AemTask
+import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.PropertyParser
-import com.fasterxml.jackson.databind.util.ISO8601Utils
 import org.apache.commons.io.FileUtils
-import org.apache.commons.io.FilenameUtils
-import org.apache.commons.io.IOCase
 import org.apache.commons.io.IOUtils
 import org.gradle.api.Project
 import org.gradle.api.file.DuplicatesStrategy
-import org.gradle.api.tasks.*
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.bundling.Zip
 import org.jsoup.Jsoup
 import org.jsoup.parser.Parser
@@ -19,7 +20,6 @@ import org.reflections.Reflections
 import org.reflections.scanners.ResourcesScanner
 import java.io.File
 import java.io.FileOutputStream
-import java.text.SimpleDateFormat
 
 open class ComposeTask : Zip(), AemTask {
 
@@ -113,7 +113,7 @@ open class ComposeTask : Zip(), AemTask {
     }
 
     private fun expandVaultFiles() {
-        val files = vaultDir.listFiles { _, name -> config.vaultFilesExpanded.any { FilenameUtils.wildcardMatch(name, it, IOCase.INSENSITIVE) } } ?: return
+        val files = vaultDir.listFiles { _, name -> config.vaultFilesExpanded.any { Patterns.wildcard(name, it) } } ?: return
 
         for (file in files) {
             val expandedContent = try {
@@ -171,9 +171,9 @@ open class ComposeTask : Zip(), AemTask {
 
     fun includeProjects(pathFilter: String) {
         project.gradle.afterProject { subproject ->
-            if (subproject.path != project.path
+            if (subproject != project
                     && subproject.plugins.hasPlugin(AemPlugin.ID)
-                    && (pathFilter.isNullOrBlank() || FilenameUtils.wildcardMatch(subproject.path, pathFilter, IOCase.INSENSITIVE))) {
+                    && (pathFilter.isNullOrBlank() || Patterns.wildcard(subproject.path, pathFilter))) {
                 includeProject(subproject)
             }
         }
@@ -230,7 +230,7 @@ open class ComposeTask : Zip(), AemTask {
 
         dependProject(project, config.dependContentTaskNames(project))
 
-        if (this.project.path != project.path && !config.vaultFilterPath.isNullOrBlank()) {
+        if (this.project != project && !config.vaultFilterPath.isNullOrBlank()) {
             vaultFilters.add(File(config.vaultFilterPath))
         }
 
