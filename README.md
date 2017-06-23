@@ -124,6 +124,10 @@ For multi project build configuration, see [example project](https://github.com/
 * `aemSync` - Check out then clean JCR content.
 * `aemVlt` - Execute any Vault command. See parameters section for more details.
 
+### Task rules
+
+* `aem<ProjectPath>Deploy` - Build CRX package and deploy it to AEM instance(s). For root project use reserved `aemRootDeploy`. It is recommended to include appropriate deploy task name in [default tasks](https://docs.gradle.org/current/userguide/tutorial_using_tasks.html#sec:default_tasks) of project. For instance, to deploy project at path `:app:design` use task named `aemAppDesignDeploy`.
+
 ### Parameters
 
 * Deploying only to filtered group of instances (filters with wildcards, comma delimited):
