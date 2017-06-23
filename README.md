@@ -58,18 +58,16 @@ buildscript {
 }
 
 apply plugin: 'com.cognifide.aem'
-
-build.dependsOn aemCompose
 ```
 
-Building and deploying to AEM via command: `gradle build aemDeploy`.
+Building and deploying to AEM via command: `gradle aemRootDeploy` or `gradle build aemDeploy`.
 
 #### Extra:
 
 ```
 apply plugin: 'kotlin' // 'java' or whatever you like to compile bundle
 
-defaultTasks = ['appDeploy']
+defaultTasks = ['aemRootDeploy']
 
 aem {
     config {
@@ -84,13 +82,11 @@ aemSatisfy {
     download("https://github.com/Cognifide/APM/releases/download/cqsm-3.0.0/apm-3.0.0.zip")
 }
 
-task appDeploy(dependsOn: [build, aemDeploy])
 ```
 
 Preinstalling dependent packages on AEM via command: `gradle aemSatisfy`.
 
-Building and deploying to AEM via command: `gradle appDeploy` or just `gradle`.
-
+Building and deploying to AEM via most simple command: `gradle`.
 
 Instances configuration can be omitted, then *http://localhost:4502* and *http://localhost:4503* will be used by default.
 Content path can also be skipped, because value above is also default. This is only an example how to customize particular [values](src/main/kotlin/com/cognifide/gradle/aem/AemConfig.kt).
