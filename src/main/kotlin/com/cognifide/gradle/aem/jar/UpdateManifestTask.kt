@@ -34,7 +34,7 @@ open class UpdateManifestTask : DefaultTask(), AemTask {
         description = "Update OSGi manifest instructions"
     }
 
-    @Input
+    @Nested
     final override val config = AemConfig.of(project)
 
     @Internal

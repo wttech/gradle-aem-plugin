@@ -4,14 +4,14 @@ import com.cognifide.gradle.aem.AemConfig
 import com.cognifide.gradle.aem.AemInstance
 import com.cognifide.gradle.aem.AemTask
 import org.gradle.api.DefaultTask
-import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Nested
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.IOException
 
 abstract class AbstractTask : DefaultTask(), AemTask {
 
-    @Input
+    @Nested
     final override val config = AemConfig.of(project)
 
     protected fun deploy(deployer: (sync: DeploySynchronizer) -> Unit, instances: List<AemInstance> = filterInstances()) {

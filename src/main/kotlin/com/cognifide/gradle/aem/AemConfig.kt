@@ -5,6 +5,7 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.Incubating
 import org.gradle.api.Project
 import org.gradle.api.file.CopySpec
+import org.gradle.api.tasks.Input
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 import java.io.File
 import java.io.Serializable
@@ -24,27 +25,32 @@ data class AemConfig(
     /**
      * List of AEM instances on which packages could be deployed.
      */
+    @Input
     var instances: MutableList<AemInstance> = mutableListOf(),
 
     /**
      * Defines maximum time after which initializing connection to AEM will be aborted (e.g on upload, install).
      */
+    @Input
     var deployConnectionTimeout: Int = 5000,
 
     /**
      * Perform deploy action (upload, install or activate) in parallel to multiple instances at once.
      */
     @Incubating
+    @Input
     var deployParallel: Boolean = false,
 
     /**
      * Force upload CRX package regardless if it was previously uploaded.
      */
+    @Input
     var uploadForce: Boolean = true,
 
     /**
      * Determines if when on package install, sub-packages included in CRX package content should be also installed.
      */
+    @Input
     var recursiveInstall: Boolean = true,
 
     /**
@@ -52,6 +58,7 @@ data class AemConfig(
      *
      * @see <https://jackrabbit.apache.org/filevault/apidocs/org/apache/jackrabbit/vault/fs/io/AccessControlHandling.html>
      */
+    @Input
     var acHandling: String = "merge_preserve",
 
     /**
@@ -60,12 +67,14 @@ data class AemConfig(
      *
      * Default: "${project.projectDir.path}/src/main/content"
      */
+    @Input
     var contentPath: String = "",
 
     /**
      * Content path for bundle jars being placed in CRX package.
      * Default: "/apps/${project.rootProject.name}/install".
      */
+    @Input
     var bundlePath: String = "",
 
     /**
@@ -73,6 +82,7 @@ data class AemConfig(
      *
      * Default: "${project.buildDir.path}/distributions/${project.name}-${project.version}.zip"
      */
+    @Input
     var localPackagePath: String = "",
 
     /**
@@ -80,11 +90,13 @@ data class AemConfig(
      *
      * Default: [automatically determined]
      */
+    @Input
     var remotePackagePath: String = "",
 
     /**
      * Exclude files being a part of CRX package.
      */
+    @Input
     var filesExcluded: MutableList<String> = mutableListOf(
             "**/.git",
             "**/.git/**",
@@ -100,6 +112,7 @@ data class AemConfig(
      * Define here custom properties that can be used in CRX package files like 'META-INF/vault/properties.xml'.
      * Could override predefined properties provided by plugin itself.
      */
+    @Input
     var fileProperties: MutableMap<String, Any> = mutableMapOf(
             "requiresRoot" to "false"
     ),
@@ -109,6 +122,7 @@ data class AemConfig(
      *
      * Default: exclude files defined in 'filesExcluded'.
      */
+    @Input
     var fileFilter: ((CopySpec, ComposeTask) -> Unit) = { spec, _ ->
         spec.exclude(filesExcluded)
     },
@@ -116,12 +130,14 @@ data class AemConfig(
     /**
      * Used to generate unique "buildCount" and "created" predefined file properties.
      */
+    @Input
     var buildDate: Date = Date(),
 
     /**
      * Ensures that for directory 'META-INF/vault' default files will be generated when missing:
      * 'config.xml', 'filter.xml', 'properties.xml' and 'settings.xml'.
      */
+    @Input
     var vaultCopyMissingFiles: Boolean = true,
 
     /**
@@ -129,17 +145,20 @@ data class AemConfig(
      * Useful to share same files for all packages, like package thumbnail.
      * Must be absolute or relative to current working directory.
      */
+    @Input
     var vaultFilesPath: String = "",
 
     /**
      * Wildcard file name filter expression that is used to filter in which Vault files properties can be injected.
      * This also could be done 'by fileFilter', but due to performance optimization it is done separately.
      */
+    @Input
     var vaultFilesExpanded: MutableList<String> = mutableListOf("*.xml"),
 
     /**
      * Define here properties that will be skipped when pulling JCR content from AEM instance.
      */
+    @Input
     var vaultSkipProperties: MutableList<String> = mutableListOf(
             "jcr:lastModified",
             "jcr:created",
@@ -153,22 +172,26 @@ data class AemConfig(
      *
      * Default: "src/main/content/META-INF/vault/filter.xml"
      */
+    @Input
     var vaultFilterPath:String = "",
 
     /**
      * Global options which are being applied to any Vault related command like 'aemVault' or 'aemCheckout'.
      */
+    @Input
     var vaultGlobalOptions: String = "--credentials \${instance.credentials}",
 
     /**
      * Specify characters to be used as line endings when cleaning up checked out JCR content.
      */
+    @Input
     var vaultLineSeparator: String = System.lineSeparator(),
 
     /**
      * Configure default task dependency assignments while including dependant project bundles.
      * Simplifies multi-module project configuration.
      */
+    @Input
     var dependBundlesTaskNames: (Project) -> Set<String> = { setOf(
             LifecycleBasePlugin.ASSEMBLE_TASK_NAME,
             LifecycleBasePlugin.CHECK_TASK_NAME
@@ -178,6 +201,7 @@ data class AemConfig(
      * Configure default task dependency assignments while including dependant project content.
      * Simplifies multi-module project configuration.
      */
+    @Input
     var dependContentTaskNames: (Project) -> Set<String> = { project ->
         val task = project.tasks.getByName(ComposeTask.NAME)
 

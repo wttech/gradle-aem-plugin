@@ -5,6 +5,7 @@ import com.cognifide.gradle.aem.AemPlugin
 import com.cognifide.gradle.aem.AemTask
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
 
 open class CleanTask : DefaultTask(), AemTask {
@@ -13,7 +14,7 @@ open class CleanTask : DefaultTask(), AemTask {
         val NAME = "aemClean"
     }
 
-    @Input
+    @Nested
     final override val config = AemConfig.of(project)
 
     init {
