@@ -22,6 +22,8 @@ open class ComposeTask : Zip(), AemTask {
 
     companion object {
         val NAME = "aemCompose"
+
+        val DEPENDENCIES_SUFFIX = ".dependencies"
     }
 
     @Internal
@@ -71,9 +73,10 @@ open class ComposeTask : Zip(), AemTask {
     }
 
     private fun copyContentVaultFiles() {
-        if (!vaultDir.exists()) {
-            vaultDir.mkdirs()
+        if (vaultDir.exists()) {
+            vaultDir.deleteRecursively()
         }
+        vaultDir.mkdirs()
 
         val dirs = config.vaultFilesDirs.filter { it.exists() }
 
@@ -201,10 +204,18 @@ open class ComposeTask : Zip(), AemTask {
         includeBundles(project, "$bundlePath.$runMode")
     }
 
+    fun includeBundlesAtSamePath(projectPath: String) {
+        includeBundles(project.findProject(projectPath), config.bundlePath)
+    }
+
+    fun includeBundlesAtSamePath(projectPath: String, runMode: String) {
+        includeBundles(project.findProject(projectPath), "${config.bundlePath}.$runMode")
+    }
+
     fun includeBundles(project: Project, installPath: String) {
         val config = AemConfig.of(project)
 
-        dependProject(project, config.dependBundlesTaskNames(project))
+        dependProject(project, config.dependBundlesTaskNames)
 
         bundleCollectors += {
             val jars = JarCollector(project).all.toSet()
@@ -225,7 +236,7 @@ open class ComposeTask : Zip(), AemTask {
     fun includeContent(project: Project) {
         val config = AemConfig.of(project)
 
-        dependProject(project, config.dependContentTaskNames(project))
+        dependProject(project, config.dependContentTaskNames)
 
         if (this.project != project && !config.vaultFilterPath.isNullOrBlank()) {
             vaultFilters.add(File(config.vaultFilterPath))
@@ -242,18 +253,32 @@ open class ComposeTask : Zip(), AemTask {
         }
     }
 
-    fun dependProject(projectPath: String, taskNames: Set<String>) {
+    fun dependProject(projectPath: String, taskNames: Collection<String>) {
         dependProject(project.findProject(projectPath), taskNames)
     }
 
-    fun dependProject(project: Project, taskNames: Set<String>) {
-        taskNames.forEach { taskName -> dependsOn("${project.path}:$taskName") }
+    fun dependProject(project: Project, taskNames: Collection<String>) {
+        val effectiveTaskNames = taskNames.fold(mutableListOf<String>(), { names, name ->
+            if (name.endsWith(DEPENDENCIES_SUFFIX)) {
+                val task = project.tasks.getByName(name.substringBeforeLast(DEPENDENCIES_SUFFIX))
+                val dependencies = task.taskDependencies.getDependencies(task).map { it.name }
+
+                names.addAll(dependencies)
+            } else {
+                names.add(name)
+            }
+
+            names
+        })
+
+        effectiveTaskNames.forEach { taskName ->
+            dependsOn("${project.path}:$taskName")
+        }
     }
 
     fun includeVault(vltPath: Any) {
         contentCollectors += {
-            into(AemPlugin.VLT_PATH, {
-                spec ->
+            into(AemPlugin.VLT_PATH, { spec ->
                 spec.from(vltPath)
                 config.fileFilter(spec, this)
             })

@@ -192,21 +192,19 @@ data class AemConfig(
      * Simplifies multi-module project configuration.
      */
     @Input
-    var dependBundlesTaskNames: (Project) -> Set<String> = { setOf(
+    var dependBundlesTaskNames: List<String> = mutableListOf(
             LifecycleBasePlugin.ASSEMBLE_TASK_NAME,
             LifecycleBasePlugin.CHECK_TASK_NAME
-    )},
+    ),
 
     /**
      * Configure default task dependency assignments while including dependant project content.
      * Simplifies multi-module project configuration.
      */
     @Input
-    var dependContentTaskNames: (Project) -> Set<String> = { project ->
-        val task = project.tasks.getByName(ComposeTask.NAME)
-
-        task.taskDependencies.getDependencies(task).map { it.name }.toSet()
-    }
+    var dependContentTaskNames: List<String> = mutableListOf(
+            ComposeTask.NAME + ComposeTask.DEPENDENCIES_SUFFIX
+    )
 
 ) : Serializable {
     companion object {
