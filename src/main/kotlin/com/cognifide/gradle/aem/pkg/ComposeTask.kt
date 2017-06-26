@@ -43,6 +43,10 @@ open class ComposeTask : Zip(), AemTask {
     @Nested
     final override val config = AemConfig.of(project)
 
+    @Input
+    @Optional
+    private var archiveName: String? = null
+
     init {
         description = "Composes AEM package from JCR content and built OSGi bundles"
         group = AemPlugin.TASK_GROUP
@@ -119,7 +123,7 @@ open class ComposeTask : Zip(), AemTask {
 
         for (file in files) {
             val expandedContent = try {
-                expandProperties( file.inputStream().bufferedReader().use { it.readText() })
+                expandProperties(file.inputStream().bufferedReader().use { it.readText() })
             } catch (e: Exception) {
                 throw PackageException("Cannot expand Vault files properly. Probably some variables are not bound", e)
             }
@@ -285,5 +289,28 @@ open class ComposeTask : Zip(), AemTask {
                 config.fileFilter(spec, this)
             })
         }
+    }
+
+    val defaultArchiveName: String = super.getArchiveName()
+
+    val extendedArchiveName: String
+        get() {
+            return if (project == project.rootProject || project.name == project.rootProject.name) {
+                defaultArchiveName
+            } else {
+                "${PropertyParser(project).namePrefix}-$defaultArchiveName"
+            }
+        }
+
+    override fun setArchiveName(name: String?) {
+        this.archiveName = name
+    }
+
+    override fun getArchiveName(): String {
+        if (archiveName != null) {
+            return archiveName!!
+        }
+
+        return extendedArchiveName
     }
 }
