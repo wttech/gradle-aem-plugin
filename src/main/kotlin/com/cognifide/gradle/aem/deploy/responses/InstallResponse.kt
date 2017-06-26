@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.deploy.response
+package com.cognifide.gradle.aem.deploy.responses
 
 import com.cognifide.gradle.aem.deploy.ErrorPattern
 import java.util.regex.Pattern
