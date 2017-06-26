@@ -128,12 +128,6 @@ data class AemConfig(
     },
 
     /**
-     * Used to generate unique "buildCount" and "created" predefined file properties.
-     */
-    @Input
-    var buildDate: Date = Date(),
-
-    /**
      * Ensures that for directory 'META-INF/vault' default files will be generated when missing:
      * 'config.xml', 'filter.xml', 'properties.xml' and 'settings.xml'.
      */

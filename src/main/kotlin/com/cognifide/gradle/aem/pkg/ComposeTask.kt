@@ -35,6 +35,8 @@ open class ComposeTask : Zip(), AemTask {
     @Internal
     private val vaultFilters = mutableListOf<File>()
 
+    // TODO Because of ZIP/copy task #includeVault(), files under this directory are treated as input but should be as output (to get right caching)
+    // TODO Input property 'rootSpec$1$3' file gradle-aem-example\build\aemCompose\META-INF\vault\properties.xml has changed.
     @OutputDirectory
     private val vaultDir = File(project.buildDir, "$NAME/${AemPlugin.VLT_PATH}")
 
