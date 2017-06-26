@@ -5,10 +5,7 @@ import com.cognifide.gradle.aem.AemInstance
 import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.deploy.DeployException
 import com.cognifide.gradle.aem.deploy.DeploySynchronizer
-import com.cognifide.gradle.aem.deploy.response.AbstractHtmlResponse
-import com.cognifide.gradle.aem.deploy.response.InstallResponse
-import com.cognifide.gradle.aem.deploy.response.ListResponse
-import com.cognifide.gradle.aem.deploy.response.UploadResponse
+import com.cognifide.gradle.aem.deploy.response.*
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Input
 import java.io.File
@@ -16,6 +13,10 @@ import java.io.FileNotFoundException
 import java.io.IOException
 
 abstract class AbstractTask : DefaultTask(), AemTask {
+
+    companion object {
+        const val USER_AWARENESS_PROP: String = "aem.force"
+    }
 
     @Input
     final override val config = AemConfig.of(project)
@@ -173,6 +174,81 @@ abstract class AbstractTask : DefaultTask(), AemTask {
         }
 
         return response
+    }
+
+    protected fun deletePackage(installedPackagePath: String, sync: DeploySynchronizer) {
+        val url = sync.htmlTargetUrl + installedPackagePath + "/?cmd=delete"
+
+        logger.info("Deleting package using command: " + url)
+
+        try {
+            val rawHtml = sync.post(url)
+            val response = DeleteResponse(rawHtml)
+
+            when (response.status) {
+                AbstractHtmlResponse.Status.SUCCESS,
+                AbstractHtmlResponse.Status.SUCCESS_WITH_ERRORS -> if (response.errors.isEmpty()) {
+                    logger.info("Package successfully deleted.")
+                } else {
+                    logger.warn("Package deleted with errors.")
+                    response.errors.forEach { logger.error(it) }
+                    throw DeployException("Package deleted with errors!")
+                }
+                AbstractHtmlResponse.Status.FAIL -> {
+                    logger.error("Package deleting failed.")
+                    response.errors.forEach { logger.error(it) }
+                    throw DeployException("Package deleting failed!")
+                }
+            }
+
+        } catch (e: Exception) {
+            throw DeployException("Cannot delete package.", e)
+        }
+    }
+
+    protected fun uninstallPackage(installedPackagePath: String, sync: DeploySynchronizer) {
+        val url = sync.htmlTargetUrl + installedPackagePath + "/?cmd=uninstall"
+
+        logger.info("Uninstalling package using command: " + url)
+
+        try {
+            val rawHtml = sync.post(url, mapOf(
+                    "recursive" to config.recursiveInstall,
+                    "acHandling" to config.acHandling
+            ))
+            val response = UninstallResponse(rawHtml)
+
+            when (response.status) {
+                AbstractHtmlResponse.Status.SUCCESS,
+                AbstractHtmlResponse.Status.SUCCESS_WITH_ERRORS -> if (response.errors.isEmpty()) {
+                    logger.info("Package successfully uninstalled.")
+                } else {
+                    logger.warn("Package uninstalled with errors.")
+                    response.errors.forEach { logger.error(it) }
+                    throw DeployException("Package uninstalled with errors!")
+                }
+                AbstractHtmlResponse.Status.FAIL -> {
+                    logger.error("Package uninstalling failed.")
+                    response.errors.forEach { logger.error(it) }
+                    throw DeployException("Package uninstalling failed!")
+                }
+            }
+
+        } catch (e: Exception) {
+            throw DeployException("Cannot uninstall package.", e)
+        }
+    }
+
+    protected fun ensureUserAwareness(taskName: String) {
+        if (project.properties.containsKey(USER_AWARENESS_PROP)) return
+
+        throw DeployException(
+                "**********\n" +
+                "!!! WARNING !!!\n" +
+                "$taskName operation may inflict damage to your content if used unintentionally or .\n" +
+                "Please add \"aem.force\" property to the build command to confirm that you are aware of the potential content loss.\n" +
+                "\ne.g. \"gradle :$taskName -Paem.force\"\n" +
+                "**********\n")
     }
 
 }

@@ -59,6 +59,7 @@ class AemPlugin : Plugin<Project> {
         project.extensions.create(AemExtension.NAME, AemExtension::class.java)
     }
 
+    @Suppress("UNUSED_VARIABLE")
     private fun setupTasks(project: Project) {
         val clean = project.tasks.getByName(LifecycleBasePlugin.CLEAN_TASK_NAME)
 
@@ -76,6 +77,9 @@ class AemPlugin : Plugin<Project> {
         val upload = project.tasks.create(UploadTask.NAME, UploadTask::class.java)
         val install = project.tasks.create(InstallTask.NAME, InstallTask::class.java)
         val activate = project.tasks.create(ActivateTask.NAME, ActivateTask::class.java)
+        val uninstall = project.tasks.create(UninstallTask.NAME, UninstallTask::class.java)
+        val delete = project.tasks.create(DeleteTask.NAME, DeleteTask::class.java)
+        val purge = project.tasks.create(PurgeTask.NAME, PurgeTask::class.java)
         val deploy = project.tasks.create(DeployTask.NAME, DeployTask::class.java)
         val distribute = project.tasks.create(DistributeTask.NAME, DistributeTask::class.java)
         val satisfy = project.tasks.create(SatisfyTask.NAME, SatisfyTask::class.java)
