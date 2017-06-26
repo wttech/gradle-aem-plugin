@@ -2,7 +2,7 @@ package com.cognifide.gradle.aem.deploy
 
 import java.util.regex.Pattern
 
-class InstallResponse(private val rawHtml: String) {
+class InstallResponse(private val rawHtml: String) : AbstractHtmlResponse(rawHtml) {
 
     companion object {
         val ERROR_PATTERN = Pattern.compile("<span class=\"E\"><b>E</b>&nbsp;(.+)</span>")
@@ -15,37 +15,12 @@ class InstallResponse(private val rawHtml: String) {
         val INSTALL_SUCCESS_WITH_ERRORS = "<span class=\"Package imported (with errors"
     }
 
-    enum class Status {
-        FAIL, SUCCESS, SUCCESS_WITH_ERRORS
+    override fun getErrorPatterns(): List<ErrorPattern> {
+        return mutableListOf(
+                ErrorPattern(PROCESSING_ERROR_PATTERN, true),
+                ErrorPattern(ERROR_PATTERN, false)
+        )
     }
-
-    private val _errors: MutableList<String> = mutableListOf()
-
-    init {
-        findErrorsByPattern(PROCESSING_ERROR_PATTERN, true)
-        findErrorsByPattern(ERROR_PATTERN, false)
-    }
-
-    private fun findErrorsByPattern(pattern: Pattern, printStacktrace: Boolean) {
-        val matcher = pattern.matcher(rawHtml)
-
-        while (matcher.find()) {
-            val error = matcher.group(1)
-
-            _errors.add(error)
-
-            if (printStacktrace) {
-                if (matcher.groupCount() > 1) {
-                    val secondGroup = matcher.group(2)
-                    if (!secondGroup.isNullOrBlank()) {
-                        _errors.add(secondGroup)
-                    }
-                }
-            }
-        }
-    }
-
-    val errors: List<String> = _errors.toList()
 
     val status: Status
         get() {

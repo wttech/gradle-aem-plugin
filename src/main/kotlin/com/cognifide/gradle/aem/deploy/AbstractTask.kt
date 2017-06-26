@@ -115,19 +115,19 @@ abstract class AbstractTask : DefaultTask(), AemTask {
             val response = InstallResponse(json)
 
             when (response.status) {
-                InstallResponse.Status.SUCCESS -> if (response.errors.isEmpty()) {
+                AbstractHtmlResponse.Status.SUCCESS -> if (response.errors.isEmpty()) {
                     logger.info("Package successfully installed.")
                 } else {
                     logger.warn("Package installed with errors")
                     response.errors.forEach { logger.error(it) }
                     throw DeployException("Installation completed with errors!")
                 }
-                InstallResponse.Status.SUCCESS_WITH_ERRORS -> {
+                AbstractHtmlResponse.Status.SUCCESS_WITH_ERRORS -> {
                     logger.error("Package installed with errors.")
                     response.errors.forEach { logger.error(it) }
                     throw DeployException("Installation completed with errors!")
                 }
-                InstallResponse.Status.FAIL -> {
+                AbstractHtmlResponse.Status.FAIL -> {
                     logger.error("Installation failed.")
                     response.errors.forEach { logger.error(it) }
                     throw DeployException("Installation incomplete!")
@@ -136,7 +136,7 @@ abstract class AbstractTask : DefaultTask(), AemTask {
 
             return response
         } catch (e: Exception) {
-            throw DeployException("Cannot install package", e)
+            throw DeployException("Cannot install package.", e)
         }
     }
 
