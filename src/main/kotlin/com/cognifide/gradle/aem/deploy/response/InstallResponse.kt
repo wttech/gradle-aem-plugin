@@ -1,5 +1,6 @@
-package com.cognifide.gradle.aem.deploy
+package com.cognifide.gradle.aem.deploy.response
 
+import com.cognifide.gradle.aem.deploy.ErrorPattern
 import java.util.regex.Pattern
 
 class InstallResponse(private val rawHtml: String) : AbstractHtmlResponse(rawHtml) {

@@ -1,6 +1,7 @@
-package com.cognifide.gradle.aem.deploy;
+package com.cognifide.gradle.aem.deploy.response;
 
 
+import com.cognifide.gradle.aem.deploy.ErrorPattern
 import java.util.regex.Pattern;
 
 abstract class AbstractHtmlResponse(private val rawHtml: String) {
@@ -19,7 +20,7 @@ abstract class AbstractHtmlResponse(private val rawHtml: String) {
         })
     }
 
-    private fun findErrorsByPattern(pattern:Pattern, printStacktrace: Boolean, message: String) {
+    private fun findErrorsByPattern(pattern: Pattern, printStacktrace: Boolean, message: String) {
         val matcher = pattern.matcher(rawHtml)
 
         while (matcher.find()) {

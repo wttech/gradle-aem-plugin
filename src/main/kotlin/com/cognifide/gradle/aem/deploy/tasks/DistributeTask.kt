@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.deploy
+package com.cognifide.gradle.aem.deploy.tasks
 
 import com.cognifide.gradle.aem.AemInstance
 import com.cognifide.gradle.aem.AemPlugin

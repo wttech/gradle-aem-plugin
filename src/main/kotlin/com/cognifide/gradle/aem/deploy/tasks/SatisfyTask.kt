@@ -1,6 +1,7 @@
-package com.cognifide.gradle.aem.deploy
+package com.cognifide.gradle.aem.deploy.tasks
 
 import com.cognifide.gradle.aem.AemPlugin
+import com.cognifide.gradle.aem.deploy.DeployException
 import com.cognifide.gradle.aem.internal.PropertyParser
 import groovy.lang.Closure
 import org.apache.commons.io.FileUtils
