@@ -10,15 +10,15 @@ import java.io.File
 import java.io.FileNotFoundException
 import java.io.IOException
 
-abstract class AbstractTask : DefaultTask(), AemTask {
+abstract class SyncTask : DefaultTask(), AemTask {
 
     @Input
     final override val config = AemConfig.of(project)
 
     val propertyParser = PropertyParser(project)
 
-    protected fun deploy(deployer: (sync: DeploySynchronizer) -> Unit, instances: List<AemInstance> = filterInstances()) {
-        val callback = { instance: AemInstance -> deploy(deployer, instance) }
+    protected fun synchronize(deployer: (sync: DeploySynchronizer) -> Unit, instances: List<AemInstance> = filterInstances()) {
+        val callback = { instance: AemInstance -> synchronize(deployer, instance) }
         if (config.deployParallel) {
             instances.parallelStream().forEach(callback)
         } else {
@@ -26,8 +26,8 @@ abstract class AbstractTask : DefaultTask(), AemTask {
         }
     }
 
-    protected fun deploy(deployer: (sync: DeploySynchronizer) -> Unit, instance: AemInstance) {
-        logger.info("Deploying on: $instance")
+    protected fun synchronize(deployer: (sync: DeploySynchronizer) -> Unit, instance: AemInstance) {
+        logger.info("Synchronizing with: $instance")
 
         deployer(DeploySynchronizer(instance, config))
     }
@@ -70,7 +70,7 @@ abstract class AbstractTask : DefaultTask(), AemTask {
 
         val path = response.resolvePath(project)
         if (path.isNullOrBlank()) {
-            throw DeployException("Package is not uploaded on AEM.")
+            throw DeployException("Package is not uploaded on AEM instance.")
         }
 
         logger.info("Package found on AEM at path: '$path'")

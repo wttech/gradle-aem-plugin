@@ -3,7 +3,7 @@ package com.cognifide.gradle.aem.deploy
 import com.cognifide.gradle.aem.AemPlugin
 import org.gradle.api.tasks.TaskAction
 
-open class DeleteTask : AbstractTask() {
+open class DeleteTask : SyncTask() {
 
     companion object {
         val NAME = "aemDelete"
@@ -16,7 +16,7 @@ open class DeleteTask : AbstractTask() {
 
     @TaskAction
     fun delete() {
-        deploy({ sync ->
+        synchronize({ sync ->
             propertyParser.checkForce()
 
             deletePackage(determineRemotePackagePath(sync), sync)

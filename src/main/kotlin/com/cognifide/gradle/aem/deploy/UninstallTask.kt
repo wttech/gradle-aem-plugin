@@ -3,7 +3,7 @@ package com.cognifide.gradle.aem.deploy
 import com.cognifide.gradle.aem.AemPlugin
 import org.gradle.api.tasks.TaskAction
 
-open class UninstallTask : AbstractTask() {
+open class UninstallTask : SyncTask() {
 
     companion object {
         val NAME = "aemUninstall"
@@ -16,7 +16,7 @@ open class UninstallTask : AbstractTask() {
 
     @TaskAction
     fun uninstall() {
-        deploy({ sync ->
+        synchronize({ sync ->
             propertyParser.checkForce()
 
             uninstallPackage(determineRemotePackagePath(sync), sync)

@@ -16,7 +16,7 @@ import java.net.URL
 import java.net.URLConnection
 import java.util.*
 
-open class SatisfyTask : AbstractTask() {
+open class SatisfyTask : SyncTask() {
 
     companion object {
         val NAME = "aemSatisfy"
@@ -49,7 +49,7 @@ open class SatisfyTask : AbstractTask() {
 
     @TaskAction
     fun satisfy() {
-        deploy({ sync ->
+        synchronize({ sync ->
             logger.info("Providing packages from local and remote sources.")
 
             val packageFiles = providers.filter({ (groupName) ->
