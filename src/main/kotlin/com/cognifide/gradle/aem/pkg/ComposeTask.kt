@@ -5,18 +5,13 @@ import com.cognifide.gradle.aem.AemPlugin
 import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.PropertyParser
-import org.apache.commons.io.FileUtils
-import org.apache.commons.io.IOUtils
 import org.gradle.api.Project
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.tasks.*
 import org.gradle.api.tasks.bundling.Zip
 import org.jsoup.Jsoup
 import org.jsoup.parser.Parser
-import org.reflections.Reflections
-import org.reflections.scanners.ResourcesScanner
 import java.io.File
-import java.io.FileOutputStream
 
 open class ComposeTask : Zip(), AemTask {
 
@@ -26,22 +21,20 @@ open class ComposeTask : Zip(), AemTask {
         val DEPENDENCIES_SUFFIX = ".dependencies"
     }
 
-    @Internal
-    var bundleCollectors: List<() -> Unit> = mutableListOf()
+    @Nested
+    final override val config = AemConfig.of(project)
+
+    @InputDirectory
+    val vaultDir = AemTask.temporaryDir(project, AemPlugin.VLT_PATH)
 
     @Internal
-    var contentCollectors: List<() -> Unit> = mutableListOf()
+    private var bundleCollectors: List<() -> Unit> = mutableListOf()
+
+    @Internal
+    private var contentCollectors: List<() -> Unit> = mutableListOf()
 
     @Internal
     private val vaultFilters = mutableListOf<File>()
-
-    // TODO Because of ZIP/copy task #includeVault(), files under this directory are treated as input but should be as output (to get right caching)
-    // TODO Input property 'rootSpec$1$3' file gradle-aem-example\build\aemCompose\META-INF\vault\properties.xml has changed.
-    @OutputDirectory
-    private val vaultDir = File(project.buildDir, "$NAME/${AemPlugin.VLT_PATH}")
-
-    @Nested
-    final override val config = AemConfig.of(project)
 
     @Input
     @Optional
@@ -68,54 +61,12 @@ open class ComposeTask : Zip(), AemTask {
 
     @TaskAction
     override fun copy() {
-        copyContentVaultFiles()
-        copyMissingVaultFiles()
         expandVaultFiles()
         super.copy()
     }
 
     private fun fromBundles() {
         bundleCollectors.onEach { it() }
-    }
-
-    private fun copyContentVaultFiles() {
-        if (vaultDir.exists()) {
-            vaultDir.deleteRecursively()
-        }
-        vaultDir.mkdirs()
-
-        val dirs = config.vaultFilesDirs.filter { it.exists() }
-
-        if (dirs.isEmpty()) {
-            logger.info("None of Vault files directories exist: $dirs. Only generated defaults will be used.")
-        } else {
-            dirs.onEach { dir ->
-                logger.info("Copying Vault files from path: '${dir.absolutePath}'")
-
-                FileUtils.copyDirectory(dir, vaultDir)
-            }
-        }
-    }
-
-    private fun copyMissingVaultFiles() {
-        if (!config.vaultCopyMissingFiles) {
-            return
-        }
-
-        for (resourcePath in Reflections(AemPlugin.VLT_PATH, ResourcesScanner()).getResources { true }) {
-            val outputFile = File(vaultDir, resourcePath.substringAfterLast("${AemPlugin.VLT_PATH}/"))
-            if (!outputFile.exists()) {
-                val input = javaClass.getResourceAsStream("/" + resourcePath)
-                val output = FileOutputStream(outputFile)
-
-                try {
-                    IOUtils.copy(input, output)
-                } finally {
-                    IOUtils.closeQuietly(input)
-                    IOUtils.closeQuietly(output)
-                }
-            }
-        }
     }
 
     private fun expandVaultFiles() {
