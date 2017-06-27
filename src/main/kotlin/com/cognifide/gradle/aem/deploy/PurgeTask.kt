@@ -1,6 +1,7 @@
-package com.cognifide.gradle.aem.deploy.tasks
+package com.cognifide.gradle.aem.deploy
 
 import com.cognifide.gradle.aem.AemPlugin
+import org.gradle.api.tasks.TaskAction
 
 open class PurgeTask : AbstractTask() {
 
@@ -13,15 +14,15 @@ open class PurgeTask : AbstractTask() {
         description = "Uninstalls and then deletes AEM package on instance(s)."
     }
 
-    @org.gradle.api.tasks.TaskAction
-    fun install() {
+    @TaskAction
+    fun purge() {
         deploy({ sync ->
-            ensureUserAwareness(NAME)
+            propertyParser.checkForce()
 
-            val packageToPurge = determineRemotePackagePath(sync);
+            val packagePath = determineRemotePackagePath(sync);
 
-            uninstallPackage(packageToPurge, sync)
-            deletePackage(packageToPurge, sync)
+            uninstallPackage(packagePath, sync)
+            deletePackage(packagePath, sync)
         })
     }
 

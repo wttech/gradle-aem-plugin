@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.deploy.tasks
+package com.cognifide.gradle.aem.deploy
 
 import com.cognifide.gradle.aem.AemPlugin
 import org.gradle.api.tasks.TaskAction
@@ -15,9 +15,9 @@ open class DeleteTask : AbstractTask() {
     }
 
     @TaskAction
-    fun install() {
+    fun delete() {
         deploy({ sync ->
-            ensureUserAwareness(NAME)
+            propertyParser.checkForce()
 
             deletePackage(determineRemotePackagePath(sync), sync)
         })

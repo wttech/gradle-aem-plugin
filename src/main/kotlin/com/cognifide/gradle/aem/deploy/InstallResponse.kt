@@ -1,9 +1,8 @@
-package com.cognifide.gradle.aem.deploy.responses
+package com.cognifide.gradle.aem.deploy
 
-import com.cognifide.gradle.aem.deploy.ErrorPattern
 import java.util.regex.Pattern
 
-class InstallResponse(private val rawHtml: String) : AbstractHtmlResponse(rawHtml) {
+class InstallResponse(private val rawHtml: String) : HtmlResponse(rawHtml) {
 
     companion object {
         val ERROR_PATTERN = Pattern.compile("<span class=\"E\"><b>E</b>&nbsp;(.+)</span>")
@@ -23,7 +22,7 @@ class InstallResponse(private val rawHtml: String) : AbstractHtmlResponse(rawHtm
         )
     }
 
-    val status: Status
+    override val status: Status
         get() {
             return if (rawHtml.contains(INSTALL_SUCCESS)) {
                 Status.SUCCESS

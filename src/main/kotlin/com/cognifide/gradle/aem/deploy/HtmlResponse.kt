@@ -1,14 +1,15 @@
-package com.cognifide.gradle.aem.deploy.responses;
+package com.cognifide.gradle.aem.deploy;
 
 
-import com.cognifide.gradle.aem.deploy.ErrorPattern
 import java.util.regex.Pattern;
 
-abstract class AbstractHtmlResponse(private val rawHtml: String) {
+abstract class HtmlResponse(private val rawHtml: String) {
 
     enum class Status {
         FAIL, SUCCESS, SUCCESS_WITH_ERRORS
     }
+
+    abstract val status: Status
 
     private val _errors: MutableList<String> = mutableListOf()
 

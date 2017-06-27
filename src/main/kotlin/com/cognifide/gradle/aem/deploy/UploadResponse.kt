@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.deploy.responses
+package com.cognifide.gradle.aem.deploy
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.databind.ObjectMapper

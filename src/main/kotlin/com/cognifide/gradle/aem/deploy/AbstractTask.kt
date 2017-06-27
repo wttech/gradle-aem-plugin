@@ -1,11 +1,9 @@
-package com.cognifide.gradle.aem.deploy.tasks
+package com.cognifide.gradle.aem.deploy
 
 import com.cognifide.gradle.aem.AemConfig
 import com.cognifide.gradle.aem.AemInstance
 import com.cognifide.gradle.aem.AemTask
-import com.cognifide.gradle.aem.deploy.DeployException
-import com.cognifide.gradle.aem.deploy.DeploySynchronizer
-import com.cognifide.gradle.aem.deploy.responses.*
+import com.cognifide.gradle.aem.internal.PropertyParser
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Input
 import java.io.File
@@ -14,12 +12,10 @@ import java.io.IOException
 
 abstract class AbstractTask : DefaultTask(), AemTask {
 
-    companion object {
-        const val USER_AWARENESS_PROP: String = "aem.force"
-    }
-
     @Input
     final override val config = AemConfig.of(project)
+
+    val propertyParser = PropertyParser(project)
 
     protected fun deploy(deployer: (sync: DeploySynchronizer) -> Unit, instances: List<AemInstance> = filterInstances()) {
         val callback = { instance: AemInstance -> deploy(deployer, instance) }
@@ -122,19 +118,19 @@ abstract class AbstractTask : DefaultTask(), AemTask {
             val response = InstallResponse(json)
 
             when (response.status) {
-                AbstractHtmlResponse.Status.SUCCESS -> if (response.errors.isEmpty()) {
+                HtmlResponse.Status.SUCCESS -> if (response.errors.isEmpty()) {
                     logger.info("Package successfully installed.")
                 } else {
                     logger.warn("Package installed with errors")
                     response.errors.forEach { logger.error(it) }
                     throw DeployException("Installation completed with errors!")
                 }
-                AbstractHtmlResponse.Status.SUCCESS_WITH_ERRORS -> {
+                HtmlResponse.Status.SUCCESS_WITH_ERRORS -> {
                     logger.error("Package installed with errors.")
                     response.errors.forEach { logger.error(it) }
                     throw DeployException("Installation completed with errors!")
                 }
-                AbstractHtmlResponse.Status.FAIL -> {
+                HtmlResponse.Status.FAIL -> {
                     logger.error("Installation failed.")
                     response.errors.forEach { logger.error(it) }
                     throw DeployException("Installation incomplete!")
@@ -186,15 +182,15 @@ abstract class AbstractTask : DefaultTask(), AemTask {
             val response = DeleteResponse(rawHtml)
 
             when (response.status) {
-                AbstractHtmlResponse.Status.SUCCESS,
-                AbstractHtmlResponse.Status.SUCCESS_WITH_ERRORS -> if (response.errors.isEmpty()) {
+                HtmlResponse.Status.SUCCESS,
+                HtmlResponse.Status.SUCCESS_WITH_ERRORS -> if (response.errors.isEmpty()) {
                     logger.info("Package successfully deleted.")
                 } else {
                     logger.warn("Package deleted with errors.")
                     response.errors.forEach { logger.error(it) }
                     throw DeployException("Package deleted with errors!")
                 }
-                AbstractHtmlResponse.Status.FAIL -> {
+                HtmlResponse.Status.FAIL -> {
                     logger.error("Package deleting failed.")
                     response.errors.forEach { logger.error(it) }
                     throw DeployException("Package deleting failed!")
@@ -219,15 +215,15 @@ abstract class AbstractTask : DefaultTask(), AemTask {
             val response = UninstallResponse(rawHtml)
 
             when (response.status) {
-                AbstractHtmlResponse.Status.SUCCESS,
-                AbstractHtmlResponse.Status.SUCCESS_WITH_ERRORS -> if (response.errors.isEmpty()) {
+                HtmlResponse.Status.SUCCESS,
+                HtmlResponse.Status.SUCCESS_WITH_ERRORS -> if (response.errors.isEmpty()) {
                     logger.info("Package successfully uninstalled.")
                 } else {
                     logger.warn("Package uninstalled with errors.")
                     response.errors.forEach { logger.error(it) }
                     throw DeployException("Package uninstalled with errors!")
                 }
-                AbstractHtmlResponse.Status.FAIL -> {
+                HtmlResponse.Status.FAIL -> {
                     logger.error("Package uninstalling failed.")
                     response.errors.forEach { logger.error(it) }
                     throw DeployException("Package uninstalling failed!")
@@ -237,18 +233,6 @@ abstract class AbstractTask : DefaultTask(), AemTask {
         } catch (e: Exception) {
             throw DeployException("Cannot uninstall package.", e)
         }
-    }
-
-    protected fun ensureUserAwareness(taskName: String) {
-        if (project.properties.containsKey(USER_AWARENESS_PROP)) return
-
-        throw DeployException(
-                "**********\n" +
-                "!!! WARNING !!!\n" +
-                "$taskName operation may inflict damage to your content if used unintentionally or .\n" +
-                "Please add \"aem.force\" property to the build command to confirm that you are aware of the potential content loss.\n" +
-                "\ne.g. \"gradle :$taskName -Paem.force\"\n" +
-                "**********\n")
     }
 
 }

@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.deploy.tasks
+package com.cognifide.gradle.aem.deploy
 
 import com.cognifide.gradle.aem.AemPlugin
 import org.gradle.api.tasks.TaskAction
@@ -15,9 +15,9 @@ open class UninstallTask : AbstractTask() {
     }
 
     @TaskAction
-    fun install() {
+    fun uninstall() {
         deploy({ sync ->
-            ensureUserAwareness(NAME)
+            propertyParser.checkForce()
 
             uninstallPackage(determineRemotePackagePath(sync), sync)
         })

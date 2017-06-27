@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem
 
-import com.cognifide.gradle.aem.deploy.tasks.*
+import com.cognifide.gradle.aem.deploy.*
 import com.cognifide.gradle.aem.jar.UpdateManifestTask
 import com.cognifide.gradle.aem.pkg.ComposeTask
 import com.cognifide.gradle.aem.vlt.CheckoutTask
@@ -59,7 +59,6 @@ class AemPlugin : Plugin<Project> {
         project.extensions.create(AemExtension.NAME, AemExtension::class.java)
     }
 
-    @Suppress("UNUSED_VARIABLE")
     private fun setupTasks(project: Project) {
         val clean = project.tasks.getByName(LifecycleBasePlugin.CLEAN_TASK_NAME)
 
@@ -77,12 +76,13 @@ class AemPlugin : Plugin<Project> {
         val upload = project.tasks.create(UploadTask.NAME, UploadTask::class.java)
         val install = project.tasks.create(InstallTask.NAME, InstallTask::class.java)
         val activate = project.tasks.create(ActivateTask.NAME, ActivateTask::class.java)
-        val uninstall = project.tasks.create(UninstallTask.NAME, UninstallTask::class.java)
-        val delete = project.tasks.create(DeleteTask.NAME, DeleteTask::class.java)
-        val purge = project.tasks.create(PurgeTask.NAME, PurgeTask::class.java)
         val deploy = project.tasks.create(DeployTask.NAME, DeployTask::class.java)
         val distribute = project.tasks.create(DistributeTask.NAME, DistributeTask::class.java)
         val satisfy = project.tasks.create(SatisfyTask.NAME, SatisfyTask::class.java)
+
+        project.tasks.create(UninstallTask.NAME, UninstallTask::class.java)
+        project.tasks.create(DeleteTask.NAME, DeleteTask::class.java)
+        project.tasks.create(PurgeTask.NAME, PurgeTask::class.java)
 
         val assemble = project.tasks.getByName(LifecycleBasePlugin.ASSEMBLE_TASK_NAME)
         val check = project.tasks.getByName(LifecycleBasePlugin.CHECK_TASK_NAME)
@@ -101,8 +101,6 @@ class AemPlugin : Plugin<Project> {
 
         deploy.mustRunAfter(satisfy, compose)
         distribute.mustRunAfter(satisfy, compose)
-
-        satisfy.mustRunAfter(clean)
 
         val vltClean = project.tasks.create(CleanTask.NAME, CleanTask::class.java)
         val vltRaw = project.tasks.create(VltTask.NAME, VltTask::class.java)

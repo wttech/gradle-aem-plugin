@@ -1,7 +1,6 @@
-package com.cognifide.gradle.aem.deploy.tasks
+package com.cognifide.gradle.aem.deploy
 
 import com.cognifide.gradle.aem.AemPlugin
-import com.cognifide.gradle.aem.deploy.DeployException
 import com.cognifide.gradle.aem.internal.PropertyParser
 import groovy.lang.Closure
 import org.apache.commons.io.FileUtils
@@ -34,7 +33,7 @@ open class SatisfyTask : AbstractTask() {
     private val providers = mutableListOf<Provider>()
 
     @OutputDirectory
-    private val downloadDir = File(project.buildDir, "${SatisfyTask.NAME}/$DOWNLOAD_DIR")
+    private val downloadDir = File(project.buildDir, "${NAME}/${DOWNLOAD_DIR}")
 
     @Internal
     private var groupName: String = GROUP_DEFAULT
