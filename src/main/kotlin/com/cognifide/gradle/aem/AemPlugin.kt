@@ -31,8 +31,6 @@ class AemPlugin : Plugin<Project> {
 
         val TASK_GROUP = "AEM"
 
-        val TASK_TEMP_PATH = "aem"
-
         val CONFIG_INSTALL = "aemInstall"
 
         val CONFIG_EMBED = "aemEmbed"

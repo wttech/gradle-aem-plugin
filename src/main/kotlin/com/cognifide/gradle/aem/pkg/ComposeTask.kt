@@ -5,6 +5,7 @@ import com.cognifide.gradle.aem.AemPlugin
 import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.PropertyParser
+import org.apache.commons.io.FileUtils
 import org.gradle.api.Project
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.tasks.*
@@ -25,7 +26,10 @@ open class ComposeTask : Zip(), AemTask {
     final override val config = AemConfig.of(project)
 
     @InputDirectory
-    val vaultDir = AemTask.temporaryDir(project, AemPlugin.VLT_PATH)
+    val vaultInputDir = File(project.buildDir, "${PrepareTask.NAME}/${AemPlugin.VLT_PATH}")
+
+    @OutputDirectory
+    val vaultOutputDir = File(project.buildDir, "$NAME/${AemPlugin.VLT_PATH}")
 
     @Internal
     private var bundleCollectors: List<() -> Unit> = mutableListOf()
@@ -49,7 +53,7 @@ open class ComposeTask : Zip(), AemTask {
         // After this project configured
         project.afterEvaluate({
             includeProject(project)
-            includeVault(vaultDir)
+            includeVault(vaultOutputDir)
         })
 
         // After all projects configured
@@ -70,7 +74,9 @@ open class ComposeTask : Zip(), AemTask {
     }
 
     private fun expandVaultFiles() {
-        val files = vaultDir.listFiles { _, name -> config.vaultFilesExpanded.any { Patterns.wildcard(name, it) } } ?: return
+        FileUtils.copyDirectory(vaultInputDir, vaultOutputDir)
+
+        val files = vaultOutputDir.listFiles { _, name -> config.vaultFilesExpanded.any { Patterns.wildcard(name, it) } } ?: return
 
         for (file in files) {
             val expandedContent = try {

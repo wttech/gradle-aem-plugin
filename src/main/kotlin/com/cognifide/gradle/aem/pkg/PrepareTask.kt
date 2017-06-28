@@ -8,6 +8,7 @@ import org.apache.commons.io.IOUtils
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
+import org.gradle.util.GFileUtils
 import org.reflections.Reflections
 import org.reflections.scanners.ResourcesScanner
 import java.io.File
@@ -22,11 +23,13 @@ open class PrepareTask : DefaultTask(), AemTask {
     final override val config = AemConfig.of(project)
 
     @OutputDirectory
-    val vaultDir = AemTask.temporaryDir(project, AemPlugin.VLT_PATH)
+    val vaultDir = File(project.buildDir, "$NAME/${AemPlugin.VLT_PATH}")
 
     init {
         description = "Prepare Vault files before composing CRX package"
         group = AemPlugin.TASK_GROUP
+
+        GFileUtils.mkdirs(vaultDir)
     }
 
     @TaskAction
