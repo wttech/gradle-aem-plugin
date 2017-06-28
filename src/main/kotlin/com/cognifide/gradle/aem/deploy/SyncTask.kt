@@ -6,6 +6,7 @@ import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.internal.PropertyParser
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Internal
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.IOException
@@ -15,7 +16,8 @@ abstract class SyncTask : DefaultTask(), AemTask {
     @Input
     final override val config = AemConfig.of(project)
 
-    val propertyParser = PropertyParser(project)
+    @Internal
+    protected val propertyParser = PropertyParser(project)
 
     protected fun synchronize(deployer: (sync: DeploySynchronizer) -> Unit, instances: List<AemInstance> = filterInstances()) {
         val callback = { instance: AemInstance -> synchronize(deployer, instance) }

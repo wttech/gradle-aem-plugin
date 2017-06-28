@@ -15,7 +15,7 @@ class PropertyParser(val project: Project) {
 
     companion object {
         const val FILTER_DEFAULT = "*"
-        const val FORCE_PROP: String = "aem.force"
+        const val FORCE_PROP = "aem.force"
     }
 
     fun filter(value: String, propName: String, propDefault: String = FILTER_DEFAULT): Boolean {
@@ -60,7 +60,7 @@ class PropertyParser(val project: Project) {
         if (!project.properties.containsKey(FORCE_PROP) || !BooleanUtils.toBoolean(project.properties[FORCE_PROP] as String?)) {
             throw DeployException(
                     "Warning! This task execution must be confirmed by specyfing explicitly parameter '-P$FORCE_PROP=true'. " +
-                    "Before continuing it is recommended to protect against potential data loss by checking out content using '${SyncTask.NAME}' task."
+                    "Before continuing it is recommended to protect against potential data loss by checking out JCR content using '${SyncTask.NAME}' task."
             )
         }
     }

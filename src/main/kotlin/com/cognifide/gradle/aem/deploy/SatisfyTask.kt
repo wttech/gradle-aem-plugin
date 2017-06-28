@@ -33,7 +33,7 @@ open class SatisfyTask : SyncTask() {
     private val providers = mutableListOf<Provider>()
 
     @OutputDirectory
-    private val downloadDir = File(project.buildDir, "${NAME}/${DOWNLOAD_DIR}")
+    private val downloadDir = File(project.buildDir, "$NAME/$DOWNLOAD_DIR")
 
     @Internal
     private var groupName: String = GROUP_DEFAULT

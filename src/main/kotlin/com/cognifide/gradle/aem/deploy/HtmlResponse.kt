@@ -1,7 +1,7 @@
-package com.cognifide.gradle.aem.deploy;
+package com.cognifide.gradle.aem.deploy
 
 
-import java.util.regex.Pattern;
+import java.util.regex.Pattern
 
 abstract class HtmlResponse(private val rawHtml: String) {
 
