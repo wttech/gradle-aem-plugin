@@ -6,41 +6,43 @@ import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.PropertyParser
 import org.apache.commons.io.FileUtils
-import org.apache.commons.io.IOUtils
 import org.gradle.api.Project
 import org.gradle.api.file.DuplicatesStrategy
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.OutputDirectory
-import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.*
 import org.gradle.api.tasks.bundling.Zip
 import org.jsoup.Jsoup
 import org.jsoup.parser.Parser
-import org.reflections.Reflections
-import org.reflections.scanners.ResourcesScanner
 import java.io.File
-import java.io.FileOutputStream
 
 open class ComposeTask : Zip(), AemTask {
 
     companion object {
         val NAME = "aemCompose"
+
+        val DEPENDENCIES_SUFFIX = ".dependencies"
     }
 
-    @Internal
-    var bundleCollectors: List<() -> Unit> = mutableListOf()
+    @Nested
+    final override val config = AemConfig.of(project)
+
+    @InputDirectory
+    val vaultInputDir = File(project.buildDir, "${PrepareTask.NAME}/${AemPlugin.VLT_PATH}")
+
+    @OutputDirectory
+    val vaultOutputDir = File(project.buildDir, "$NAME/${AemPlugin.VLT_PATH}")
 
     @Internal
-    var contentCollectors: List<() -> Unit> = mutableListOf()
+    private var bundleCollectors: List<() -> Unit> = mutableListOf()
+
+    @Internal
+    private var contentCollectors: List<() -> Unit> = mutableListOf()
 
     @Internal
     private val vaultFilters = mutableListOf<File>()
 
-    @OutputDirectory
-    private val vaultDir = File(project.buildDir, "$NAME/${AemPlugin.VLT_PATH}")
-
     @Input
-    final override val config = AemConfig.of(project)
+    @Optional
+    private var archiveName: String? = null
 
     init {
         description = "Composes AEM package from JCR content and built OSGi bundles"
@@ -51,7 +53,7 @@ open class ComposeTask : Zip(), AemTask {
         // After this project configured
         project.afterEvaluate({
             includeProject(project)
-            includeVault(vaultDir)
+            includeVault(vaultOutputDir)
         })
 
         // After all projects configured
@@ -63,8 +65,6 @@ open class ComposeTask : Zip(), AemTask {
 
     @TaskAction
     override fun copy() {
-        copyContentVaultFiles()
-        copyMissingVaultFiles()
         expandVaultFiles()
         super.copy()
     }
@@ -73,51 +73,14 @@ open class ComposeTask : Zip(), AemTask {
         bundleCollectors.onEach { it() }
     }
 
-    private fun copyContentVaultFiles() {
-        if (!vaultDir.exists()) {
-            vaultDir.mkdirs()
-        }
-
-        val dirs = config.vaultFilesDirs.filter { it.exists() }
-
-        if (dirs.isEmpty()) {
-            logger.info("None of Vault files directories exist: $dirs. Only generated defaults will be used.")
-        } else {
-            dirs.onEach { dir ->
-                logger.info("Copying Vault files from path: '${dir.absolutePath}'")
-
-                FileUtils.copyDirectory(dir, vaultDir)
-            }
-        }
-    }
-
-    private fun copyMissingVaultFiles() {
-        if (!config.vaultCopyMissingFiles) {
-            return
-        }
-
-        for (resourcePath in Reflections(AemPlugin.VLT_PATH, ResourcesScanner()).getResources { true }) {
-            val outputFile = File(vaultDir, resourcePath.substringAfterLast("${AemPlugin.VLT_PATH}/"))
-            if (!outputFile.exists()) {
-                val input = javaClass.getResourceAsStream("/" + resourcePath)
-                val output = FileOutputStream(outputFile)
-
-                try {
-                    IOUtils.copy(input, output)
-                } finally {
-                    IOUtils.closeQuietly(input)
-                    IOUtils.closeQuietly(output)
-                }
-            }
-        }
-    }
-
     private fun expandVaultFiles() {
-        val files = vaultDir.listFiles { _, name -> config.vaultFilesExpanded.any { Patterns.wildcard(name, it) } } ?: return
+        FileUtils.copyDirectory(vaultInputDir, vaultOutputDir)
+
+        val files = vaultOutputDir.listFiles { _, name -> config.vaultFilesExpanded.any { Patterns.wildcard(name, it) } } ?: return
 
         for (file in files) {
             val expandedContent = try {
-                expandProperties( file.inputStream().bufferedReader().use { it.readText() })
+                expandProperties(file.inputStream().bufferedReader().use { it.readText() })
             } catch (e: Exception) {
                 throw PackageException("Cannot expand Vault files properly. Probably some variables are not bound", e)
             }
@@ -204,10 +167,18 @@ open class ComposeTask : Zip(), AemTask {
         includeBundles(project, "$bundlePath.$runMode")
     }
 
+    fun includeBundlesAtSamePath(projectPath: String) {
+        includeBundles(project.findProject(projectPath), config.bundlePath)
+    }
+
+    fun includeBundlesAtSamePath(projectPath: String, runMode: String) {
+        includeBundles(project.findProject(projectPath), "${config.bundlePath}.$runMode")
+    }
+
     fun includeBundles(project: Project, installPath: String) {
         val config = AemConfig.of(project)
 
-        dependProject(project, config.dependBundlesTaskNames(project))
+        dependProject(project, config.dependBundlesTaskNames)
 
         bundleCollectors += {
             val jars = JarCollector(project).all.toSet()
@@ -228,7 +199,7 @@ open class ComposeTask : Zip(), AemTask {
     fun includeContent(project: Project) {
         val config = AemConfig.of(project)
 
-        dependProject(project, config.dependContentTaskNames(project))
+        dependProject(project, config.dependContentTaskNames)
 
         if (this.project != project && !config.vaultFilterPath.isNullOrBlank()) {
             vaultFilters.add(File(config.vaultFilterPath))
@@ -245,21 +216,58 @@ open class ComposeTask : Zip(), AemTask {
         }
     }
 
-    fun dependProject(projectPath: String, taskNames: Set<String>) {
+    fun dependProject(projectPath: String, taskNames: Collection<String>) {
         dependProject(project.findProject(projectPath), taskNames)
     }
 
-    fun dependProject(project: Project, taskNames: Set<String>) {
-        taskNames.forEach { taskName -> dependsOn("${project.path}:$taskName") }
+    fun dependProject(project: Project, taskNames: Collection<String>) {
+        val effectiveTaskNames = taskNames.fold(mutableListOf<String>(), { names, name ->
+            if (name.endsWith(DEPENDENCIES_SUFFIX)) {
+                val task = project.tasks.getByName(name.substringBeforeLast(DEPENDENCIES_SUFFIX))
+                val dependencies = task.taskDependencies.getDependencies(task).map { it.name }
+
+                names.addAll(dependencies)
+            } else {
+                names.add(name)
+            }
+
+            names
+        })
+
+        effectiveTaskNames.forEach { taskName ->
+            dependsOn("${project.path}:$taskName")
+        }
     }
 
     fun includeVault(vltPath: Any) {
         contentCollectors += {
-            into(AemPlugin.VLT_PATH, {
-                spec ->
+            into(AemPlugin.VLT_PATH, { spec ->
                 spec.from(vltPath)
                 config.fileFilter(spec, this)
             })
         }
+    }
+
+    val defaultArchiveName: String = super.getArchiveName()
+
+    val extendedArchiveName: String
+        get() {
+            return if (project == project.rootProject || project.name == project.rootProject.name) {
+                defaultArchiveName
+            } else {
+                "${PropertyParser(project).namePrefix}-$defaultArchiveName"
+            }
+        }
+
+    override fun setArchiveName(name: String?) {
+        this.archiveName = name
+    }
+
+    override fun getArchiveName(): String {
+        if (archiveName != null) {
+            return archiveName!!
+        }
+
+        return extendedArchiveName
     }
 }

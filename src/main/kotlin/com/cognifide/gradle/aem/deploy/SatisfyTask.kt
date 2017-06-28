@@ -24,16 +24,15 @@ open class SatisfyTask : AbstractTask() {
         val DOWNLOAD_DIR = "downloadDir"
 
         val GROUP_DEFAULT = "default"
-
     }
+
+    @OutputDirectory
+    val downloadDir = File(temporaryDir, DOWNLOAD_DIR)
 
     private data class Provider(val groupName: String, val provider: () -> File)
 
     @Internal
     private val providers = mutableListOf<Provider>()
-
-    @OutputDirectory
-    private val downloadDir = File(project.buildDir, "${SatisfyTask.NAME}/$DOWNLOAD_DIR")
 
     @Internal
     private var groupName: String = GROUP_DEFAULT

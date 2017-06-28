@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem
 import com.cognifide.gradle.aem.deploy.*
 import com.cognifide.gradle.aem.jar.UpdateManifestTask
 import com.cognifide.gradle.aem.pkg.ComposeTask
+import com.cognifide.gradle.aem.pkg.PrepareTask
 import com.cognifide.gradle.aem.vlt.CheckoutTask
 import com.cognifide.gradle.aem.vlt.CleanTask
 import com.cognifide.gradle.aem.vlt.SyncTask
@@ -72,6 +73,7 @@ class AemPlugin : Plugin<Project> {
             jar.dependsOn(updateManifest)
         })
 
+        val prepare = project.tasks.create(PrepareTask.NAME, PrepareTask::class.java)
         val compose = project.tasks.create(ComposeTask.NAME, ComposeTask::class.java)
         val upload = project.tasks.create(UploadTask.NAME, UploadTask::class.java)
         val install = project.tasks.create(InstallTask.NAME, InstallTask::class.java)
@@ -88,7 +90,9 @@ class AemPlugin : Plugin<Project> {
         check.mustRunAfter(clean)
         build.dependsOn(compose)
 
-        compose.dependsOn(assemble, check)
+        prepare.mustRunAfter(clean)
+
+        compose.dependsOn(prepare, assemble, check)
         compose.mustRunAfter(clean)
 
         upload.mustRunAfter(satisfy, compose)

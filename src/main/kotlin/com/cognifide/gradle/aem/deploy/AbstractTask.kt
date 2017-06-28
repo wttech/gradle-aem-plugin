@@ -3,15 +3,16 @@ package com.cognifide.gradle.aem.deploy
 import com.cognifide.gradle.aem.AemConfig
 import com.cognifide.gradle.aem.AemInstance
 import com.cognifide.gradle.aem.AemTask
+import com.cognifide.gradle.aem.pkg.ComposeTask
 import org.gradle.api.DefaultTask
-import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Nested
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.IOException
 
 abstract class AbstractTask : DefaultTask(), AemTask {
 
-    @Input
+    @Nested
     final override val config = AemConfig.of(project)
 
     protected fun deploy(deployer: (sync: DeploySynchronizer) -> Unit, instances: List<AemInstance> = filterInstances()) {
@@ -41,12 +42,12 @@ abstract class AbstractTask : DefaultTask(), AemTask {
             }
         }
 
-        val typicalFile = File("${project.buildDir.path}/distributions/${project.name}-${project.version}.zip")
-        if (typicalFile.exists()) {
-            return typicalFile
+        val archiveFile = (project.tasks.getByName(ComposeTask.NAME) as ComposeTask).archivePath
+        if (archiveFile.exists()) {
+            return archiveFile
         }
 
-        throw DeployException("Local package not found under path: '${typicalFile.absolutePath}'. Is it built already?")
+        throw DeployException("Local package not found under path: '${archiveFile.absolutePath}'. Is it built already?")
     }
 
     protected fun determineRemotePackagePath(sync: DeploySynchronizer): String {

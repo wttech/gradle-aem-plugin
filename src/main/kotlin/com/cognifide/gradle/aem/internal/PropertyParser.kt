@@ -7,6 +7,7 @@ import groovy.text.SimpleTemplateEngine
 import org.apache.commons.lang3.text.StrSubstitutor
 import org.gradle.api.Project
 import java.text.SimpleDateFormat
+import java.util.*
 
 class PropertyParser(val project: Project) {
 
@@ -41,15 +42,32 @@ class PropertyParser(val project: Project) {
     val aemProperties: Map<String, Any>
         get() {
             val config = AemConfig.of(project)
+            val buildDate = Date()
 
             return mapOf(
                     "rootProject" to project.rootProject,
                     "project" to project,
+                    "name" to name,
                     "config" to config,
                     "instances" to config.instancesByName,
-                    "created" to ISO8601Utils.format(config.buildDate),
-                    "buildCount" to SimpleDateFormat("yDDmmssSSS").format(config.buildDate)
+                    "created" to ISO8601Utils.format(buildDate),
+                    "buildCount" to SimpleDateFormat("yDDmmssSSS").format(buildDate)
             )
         }
+
+    val namePrefix: String = if (isUniqueProjectName()) {
+        project.name
+    } else {
+        "${project.rootProject.name}${project.path}".replace(":", "-").substringBeforeLast("-")
+    }
+
+    val name: String
+        get() = if (isUniqueProjectName()) {
+            project.name
+        } else {
+            "$namePrefix-${project.name}"
+        }
+
+    private fun isUniqueProjectName() = project == project.rootProject || project.name == project.rootProject.name
 
 }
