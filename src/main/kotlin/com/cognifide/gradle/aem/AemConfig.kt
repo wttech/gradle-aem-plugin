@@ -4,12 +4,10 @@ import com.cognifide.gradle.aem.pkg.ComposeTask
 import org.gradle.api.DefaultTask
 import org.gradle.api.Incubating
 import org.gradle.api.Project
-import org.gradle.api.file.CopySpec
 import org.gradle.api.tasks.Input
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 import java.io.File
 import java.io.Serializable
-import java.util.*
 
 /**
  * Aggregated collection of AEM related configuration.
@@ -109,6 +107,13 @@ data class AemConfig(
     ),
 
     /**
+     * Wildcard file name filter expression that is used to filter in which Vault files properties can be injected.
+     * This also could be done 'by fileFilter', but due to performance optimization it is done separately.
+     */
+    @Input
+    var filesExpanded: MutableList<String> = mutableListOf("**/*.xml"),
+
+    /**
      * Define here custom properties that can be used in CRX package files like 'META-INF/vault/properties.xml'.
      * Could override predefined properties provided by plugin itself.
      */
@@ -116,16 +121,6 @@ data class AemConfig(
     var fileProperties: MutableMap<String, Any> = mutableMapOf(
             "requiresRoot" to "false"
     ),
-
-    /**
-     * Freely customize files being copied to CRX package.
-     *
-     * Default: exclude files defined in 'filesExcluded'.
-     */
-    @Input
-    var fileFilter: ((CopySpec, ComposeTask) -> Unit) = { spec, _ ->
-        spec.exclude(filesExcluded)
-    },
 
     /**
      * Ensures that for directory 'META-INF/vault' default files will be generated when missing:
@@ -141,13 +136,6 @@ data class AemConfig(
      */
     @Input
     var vaultFilesPath: String = "",
-
-    /**
-     * Wildcard file name filter expression that is used to filter in which Vault files properties can be injected.
-     * This also could be done 'by fileFilter', but due to performance optimization it is done separately.
-     */
-    @Input
-    var vaultFilesExpanded: MutableList<String> = mutableListOf("*.xml"),
 
     /**
      * Define here properties that will be skipped when pulling JCR content from AEM instance.
@@ -285,7 +273,4 @@ data class AemConfig(
             return paths.filter { !it.isNullOrBlank() }.map { File(it) }
         }
 
-
 }
-
-

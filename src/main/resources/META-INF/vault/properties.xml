@@ -2,15 +2,13 @@
 <!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
 <properties>
     <comment>${project.description}</comment>
-    <entry key="createdBy">${user.name}</entry>
-    <entry key="created">${created}</entry>
-    <entry key="buildCount">${buildCount}</entry>
-    <entry key="name">${name}</entry>
-    <entry key="acHandling">${config.acHandling}</entry>
-    <entry key="groupId">${project.group}</entry>
-    <entry key="version">${project.version}</entry>
-    <entry key="requiresRoot">${requiresRoot}</entry>
     <entry key="group">${project.group}</entry>
-    <entry key="description">${project.description}</entry>
+    <entry key="name">${name}</entry>
+    <entry key="version">${project.version}</entry>
+    <entry key="groupId">${project.group}</entry>
     <entry key="artifactId">${project.name}</entry>
+    <entry key="description">${project.description}</entry>
+    <entry key="createdBy">${user.name}</entry>
+    <entry key="acHandling">${config.acHandling}</entry>
+    <entry key="requiresRoot">${requiresRoot}</entry>
 </properties>

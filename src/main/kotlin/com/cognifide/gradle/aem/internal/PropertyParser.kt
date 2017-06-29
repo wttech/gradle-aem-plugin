@@ -52,7 +52,7 @@ class PropertyParser(val project: Project) {
                     "instances" to config.instancesByName,
                     "created" to ISO8601Utils.format(buildDate),
                     "buildCount" to SimpleDateFormat("yDDmmssSSS").format(buildDate)
-            )
+            ) + config.fileProperties
         }
 
     val namePrefix: String = if (isUniqueProjectName()) {

@@ -8,6 +8,7 @@ import com.cognifide.gradle.aem.internal.PropertyParser
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
 import org.gradle.api.Project
+import org.gradle.api.file.CopySpec
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.tasks.*
 import org.gradle.api.tasks.bundling.Zip
@@ -33,10 +34,11 @@ open class ComposeTask : Zip(), AemTask {
     var contentCollectors: List<() -> Unit> = mutableListOf()
 
     @Internal
+    val propertyParser = PropertyParser(project)
+
+    @Internal
     private val vaultFilters = mutableListOf<File>()
 
-    // TODO Because of ZIP/copy task #includeVault(), files under this directory are treated as input but should be as output (to get right caching)
-    // TODO Input property 'rootSpec$1$3' file gradle-aem-example\build\aemCompose\META-INF\vault\properties.xml has changed.
     @OutputDirectory
     private val vaultDir = File(project.buildDir, "$NAME/${AemPlugin.VLT_PATH}")
 
@@ -46,6 +48,14 @@ open class ComposeTask : Zip(), AemTask {
     @Input
     @Optional
     private var archiveName: String? = null
+
+    @Internal
+    var fileFilter: ((CopySpec) -> Unit) = { spec ->
+        spec.exclude(config.filesExcluded)
+        spec.filesMatching(config.filesExpanded, { files ->
+            files.filter({ line -> propertyParser.expand(line, fileProperties)})
+        })
+    }
 
     init {
         description = "Composes AEM package from JCR content and built OSGi bundles"
@@ -70,7 +80,6 @@ open class ComposeTask : Zip(), AemTask {
     override fun copy() {
         copyContentVaultFiles()
         copyMissingVaultFiles()
-        expandVaultFiles()
         super.copy()
     }
 
@@ -118,20 +127,6 @@ open class ComposeTask : Zip(), AemTask {
         }
     }
 
-    private fun expandVaultFiles() {
-        val files = vaultDir.listFiles { _, name -> config.vaultFilesExpanded.any { Patterns.wildcard(name, it) } } ?: return
-
-        for (file in files) {
-            val expandedContent = try {
-                expandProperties(file.inputStream().bufferedReader().use { it.readText() })
-            } catch (e: Exception) {
-                throw PackageException("Cannot expand Vault files properly. Probably some variables are not bound", e)
-            }
-
-            file.printWriter().use { it.print(expandedContent) }
-        }
-    }
-
     // TODO Preserve order of inclusion in 'settings.xml' (does filter root order matter?)
     private fun parseVaultFilterRoots(): String {
         val tags = vaultFilters.filter { it.exists() }.fold(mutableListOf<String>(), { tags, filter ->
@@ -146,16 +141,8 @@ open class ComposeTask : Zip(), AemTask {
         return tags.joinToString(config.vaultLineSeparator)
     }
 
-    val fileAllProperties by lazy {
-        mapOf("filterRoots" to parseVaultFilterRoots()) + config.fileProperties
-    }
-
-    fun expandProperties(fileSource: String): String {
-        return expandProperties(fileSource, fileAllProperties)
-    }
-
-    fun expandProperties(fileSource: String, props: Map<String, Any>): String {
-        return PropertyParser(project).expand(fileSource, props)
+    val fileProperties by lazy {
+        mapOf("filterRoots" to parseVaultFilterRoots())
     }
 
     private fun fromContents() {
@@ -229,7 +216,7 @@ open class ComposeTask : Zip(), AemTask {
             if (jars.isNotEmpty()) {
                 into("${AemPlugin.JCR_ROOT}/$installPath") { spec ->
                     spec.from(jars)
-                    config.fileFilter(spec, this)
+                    fileFilter(spec)
                 }
             }
         }
@@ -253,7 +240,7 @@ open class ComposeTask : Zip(), AemTask {
             if (contentDir.exists()) {
                 into(AemPlugin.JCR_ROOT) { spec ->
                     spec.from(contentDir)
-                    config.fileFilter(spec, this)
+                    fileFilter(spec)
                 }
             }
         }
@@ -286,19 +273,20 @@ open class ComposeTask : Zip(), AemTask {
         contentCollectors += {
             into(AemPlugin.VLT_PATH, { spec ->
                 spec.from(vltPath)
-                config.fileFilter(spec, this)
+                fileFilter(spec)
             })
         }
     }
 
-    val defaultArchiveName: String = super.getArchiveName()
+    val defaultArchiveName: String
+        get() = super.getArchiveName()
 
     val extendedArchiveName: String
         get() {
             return if (project == project.rootProject || project.name == project.rootProject.name) {
                 defaultArchiveName
             } else {
-                "${PropertyParser(project).namePrefix}-$defaultArchiveName"
+                "${propertyParser.namePrefix}-$defaultArchiveName"
             }
         }
 
