@@ -9,6 +9,7 @@ import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 import org.gradle.util.ConfigureUtil
+import org.gradle.util.GFileUtils
 import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileOutputStream
@@ -41,10 +42,6 @@ open class SatisfyTask : AbstractTask() {
     init {
         group = AemPlugin.TASK_GROUP
         description = "Satisfies AEM by uploading & installing dependent packages on instance(s)."
-
-        if (!downloadDir.exists()) {
-            downloadDir.mkdirs()
-        }
     }
 
     @TaskAction
@@ -79,6 +76,8 @@ open class SatisfyTask : AbstractTask() {
 
     private fun download(url: String, configurer: (URLConnection) -> Unit) {
         provide {
+            GFileUtils.mkdirs(downloadDir)
+
             val file = File(downloadDir, FilenameUtils.getName(url))
 
             if (file.exists()) {
