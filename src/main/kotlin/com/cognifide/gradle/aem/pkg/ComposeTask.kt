@@ -45,7 +45,7 @@ open class ComposeTask : Zip(), AemTask {
     @Internal
     var fileFilter: ((CopySpec) -> Unit) = { spec ->
         spec.exclude(config.filesExcluded)
-        spec.filesMatching(config.filesExpanded, { files ->
+        spec.filesMatching(config.filesExpanded, { files -> // TODO parse only META-INF/vault/*.xml (filter using matching only using file name?)
             files.filter({ line -> propertyParser.expand(line, fileProperties)})
         })
     }
