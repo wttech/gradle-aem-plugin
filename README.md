@@ -99,8 +99,10 @@ For multi project build configuration, see [example project](https://github.com/
     * `includeProject(projectPath: String)`, includes both bundles and JCR content from another project, example: `includeProject ':core'`.
     * `includeContent(projectPath: String)`, includes only JCR content, example: `includeContent ':design'`.
     * `includeBundles(projectPath: String)`, includes only bundles, example: `includeBundles ':common'`.
-    * `includeBundles(projectPath: String, installPath: String)`, includes only bundles at custom install path, example: `includeBundles(':common', '/apps/my-app/install')`.
-    * `includeBundlesAtRunMode(projectPath: String, runMode: String)`, as above, useful when bundles need to be installed only on specific type of instance.
+    * `includeBundlesAtPath(projectPath: String, installPath: String)`, includes only bundles at custom install path, example: `includeBundles(':common', '/apps/my-app/install')`.
+    * `includeBundles(projectPath: String, runMode: String)`, as above, useful when bundles need to be installed only on specific type of instance.
+    * `mergeBundles(projectPath: String)`, includes only bundles at same install path.
+    * `mergeBundles(projectPath: String, runMode: String)`, as above, useful when bundles need to be installed only on specific type of instance.
     * `includeProjects(pathPrefix: String)`, includes both bundles and JCR content from all AEM projects (excluding itself) in which project path is matching specified filter. Vault filter roots will be automatically merged and available in property `${filterRoots}` in *filter.xml* file. Useful for building assemblies (all-in-one packages).
     * `includeSubprojects()`, alias for method above: `includeProjects("${project.path}:*")`.
     * all inherited from [ZIP task](https://docs.gradle.org/3.5/dsl/org.gradle.api.tasks.bundling.Zip.html).
@@ -204,6 +206,11 @@ Task specific:
 
 Vault tool current working directory cannot be easily configured, because of its API. AEM plugin is temporarily changing current working directory for Vault, then returning it back to original value.
 In case of that workaround, Vault tasks should not be run in parallel (by separated daemon processed / JVM synchronization bypassed), because of potential unpredictable behavior.
+
+### Caching task `aemCompose`
+
+Expandable properties with dynamically calculated value (unique per build) like `created` and `buildCount` are not used by default generated properties file intentionally, 
+because such usages will effectively forbid caching `aemCompose` task and it will be never `UP-TO-DATE`.
 
 ## License
 

@@ -11,7 +11,7 @@ open class UploadTask : AbstractTask() {
 
     init {
         group = AemPlugin.TASK_GROUP
-        description = "Uploads AEM package to instance(s)."
+        description = "Uploads CRX package to instance(s)."
     }
 
     @TaskAction

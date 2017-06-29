@@ -11,7 +11,7 @@ open class DeployTask : AbstractTask() {
 
     init {
         group = AemPlugin.TASK_GROUP
-        description = "Deploys AEM package on instance(s). Upload then install."
+        description = "Deploys CRX package on instance(s). Upload then install."
     }
 
     @TaskAction

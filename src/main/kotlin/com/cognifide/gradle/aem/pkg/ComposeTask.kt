@@ -5,8 +5,6 @@ import com.cognifide.gradle.aem.AemPlugin
 import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.PropertyParser
-import org.apache.commons.io.FileUtils
-import org.apache.commons.io.IOUtils
 import org.gradle.api.Project
 import org.gradle.api.file.CopySpec
 import org.gradle.api.file.DuplicatesStrategy
@@ -14,10 +12,7 @@ import org.gradle.api.tasks.*
 import org.gradle.api.tasks.bundling.Zip
 import org.jsoup.Jsoup
 import org.jsoup.parser.Parser
-import org.reflections.Reflections
-import org.reflections.scanners.ResourcesScanner
 import java.io.File
-import java.io.FileOutputStream
 
 open class ComposeTask : Zip(), AemTask {
 
@@ -26,6 +21,15 @@ open class ComposeTask : Zip(), AemTask {
 
         val DEPENDENCIES_SUFFIX = ".dependencies"
     }
+
+    @Nested
+    final override val config = AemConfig.of(project)
+
+    @InputFiles
+    val vaultFilters = mutableListOf<File>()
+
+    @InputDirectory
+    val vaultDir = File(project.buildDir, "${PrepareTask.NAME}/${AemPlugin.VLT_PATH}")
 
     @Internal
     var bundleCollectors: List<() -> Unit> = mutableListOf()
@@ -36,17 +40,6 @@ open class ComposeTask : Zip(), AemTask {
     @Internal
     val propertyParser = PropertyParser(project)
 
-    @Internal
-    private val vaultFilters = mutableListOf<File>()
-
-    @OutputDirectory
-    private val vaultDir = File(project.buildDir, "$NAME/${AemPlugin.VLT_PATH}")
-
-    @Nested
-    final override val config = AemConfig.of(project)
-
-    @Input
-    @Optional
     private var archiveName: String? = null
 
     @Internal
@@ -58,7 +51,7 @@ open class ComposeTask : Zip(), AemTask {
     }
 
     init {
-        description = "Composes AEM package from JCR content and built OSGi bundles"
+        description = "Composes CRX package from JCR content and built OSGi bundles"
         group = AemPlugin.TASK_GROUP
 
         duplicatesStrategy = DuplicatesStrategy.WARN
@@ -76,55 +69,8 @@ open class ComposeTask : Zip(), AemTask {
         })
     }
 
-    @TaskAction
-    override fun copy() {
-        copyContentVaultFiles()
-        copyMissingVaultFiles()
-        super.copy()
-    }
-
     private fun fromBundles() {
         bundleCollectors.onEach { it() }
-    }
-
-    private fun copyContentVaultFiles() {
-        if (vaultDir.exists()) {
-            vaultDir.deleteRecursively()
-        }
-        vaultDir.mkdirs()
-
-        val dirs = config.vaultFilesDirs.filter { it.exists() }
-
-        if (dirs.isEmpty()) {
-            logger.info("None of Vault files directories exist: $dirs. Only generated defaults will be used.")
-        } else {
-            dirs.onEach { dir ->
-                logger.info("Copying Vault files from path: '${dir.absolutePath}'")
-
-                FileUtils.copyDirectory(dir, vaultDir)
-            }
-        }
-    }
-
-    private fun copyMissingVaultFiles() {
-        if (!config.vaultCopyMissingFiles) {
-            return
-        }
-
-        for (resourcePath in Reflections(AemPlugin.VLT_PATH, ResourcesScanner()).getResources { true }) {
-            val outputFile = File(vaultDir, resourcePath.substringAfterLast("${AemPlugin.VLT_PATH}/"))
-            if (!outputFile.exists()) {
-                val input = javaClass.getResourceAsStream("/" + resourcePath)
-                val output = FileOutputStream(outputFile)
-
-                try {
-                    IOUtils.copy(input, output)
-                } finally {
-                    IOUtils.closeQuietly(input)
-                    IOUtils.closeQuietly(output)
-                }
-            }
-        }
     }
 
     // TODO Preserve order of inclusion in 'settings.xml' (does filter root order matter?)
@@ -141,6 +87,7 @@ open class ComposeTask : Zip(), AemTask {
         return tags.joinToString(config.vaultLineSeparator)
     }
 
+    @get:Internal
     val fileProperties by lazy {
         mapOf("filterRoots" to parseVaultFilterRoots())
     }
@@ -179,33 +126,33 @@ open class ComposeTask : Zip(), AemTask {
     fun includeBundles(projectPath: String) {
         val project = project.findProject(projectPath)
 
-        includeBundles(project, AemConfig.of(project).bundlePath)
+        includeBundlesAtPath(project, AemConfig.of(project).bundlePath)
     }
 
     fun includeBundles(project: Project) {
-        includeBundles(project, AemConfig.of(project).bundlePath)
+        includeBundlesAtPath(project, AemConfig.of(project).bundlePath)
     }
 
-    fun includeBundles(projectPath: String, installPath: String) {
-        includeBundles(project.findProject(projectPath), installPath)
-    }
-
-    fun includeBundlesAtRunMode(projectPath: String, runMode: String) {
+    fun includeBundles(projectPath: String, runMode: String) {
         val project = project.findProject(projectPath)
         val bundlePath = AemConfig.of(project).bundlePath
 
-        includeBundles(project, "$bundlePath.$runMode")
+        includeBundlesAtPath(project, "$bundlePath.$runMode")
     }
 
-    fun includeBundlesAtSamePath(projectPath: String) {
-        includeBundles(project.findProject(projectPath), config.bundlePath)
+    fun mergeBundles(projectPath: String) {
+        includeBundlesAtPath(project.findProject(projectPath), config.bundlePath)
     }
 
-    fun includeBundlesAtSamePath(projectPath: String, runMode: String) {
-        includeBundles(project.findProject(projectPath), "${config.bundlePath}.$runMode")
+    fun mergeBundles(projectPath: String, runMode: String) {
+        includeBundlesAtPath(project.findProject(projectPath), "${config.bundlePath}.$runMode")
     }
 
-    fun includeBundles(project: Project, installPath: String) {
+    fun includeBundlesAtPath(projectPath: String, installPath: String) {
+        includeBundlesAtPath(project.findProject(projectPath), installPath)
+    }
+
+    fun includeBundlesAtPath(project: Project, installPath: String) {
         val config = AemConfig.of(project)
 
         dependProject(project, config.dependBundlesTaskNames)
@@ -278,9 +225,11 @@ open class ComposeTask : Zip(), AemTask {
         }
     }
 
+    @get:Internal
     val defaultArchiveName: String
         get() = super.getArchiveName()
 
+    @get:Internal
     val extendedArchiveName: String
         get() {
             return if (project == project.rootProject || project.name == project.rootProject.name) {

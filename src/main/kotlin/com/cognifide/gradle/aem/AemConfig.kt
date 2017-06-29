@@ -5,6 +5,7 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.Incubating
 import org.gradle.api.Project
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Internal
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 import java.io.File
 import java.io.Serializable
@@ -235,6 +236,7 @@ data class AemConfig(
         instances.add(AemInstance(url, user, password, type))
     }
 
+    @get:Internal
     val instancesByName: Map<String, AemInstance>
         get() = instances.fold(mutableMapOf<String, AemInstance>(), { map, instance ->
             map.put(instance.name, instance); map
@@ -263,6 +265,7 @@ data class AemConfig(
      * CRX package Vault files will be composed from given sources.
      * Missing files required by package within installation will be auto-generated if 'vaultCopyMissingFiles' is enabled.
      */
+    @get:Internal
     val vaultFilesDirs: List<File>
         get() {
             val paths = listOf(
