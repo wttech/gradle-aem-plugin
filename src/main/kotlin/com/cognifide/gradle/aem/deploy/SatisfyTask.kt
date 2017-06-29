@@ -33,7 +33,7 @@ open class SatisfyTask : AbstractTask() {
     @Internal
     private val providers = mutableListOf<Provider>()
 
-    @OutputDirectory
+    @Internal
     private val downloadDir = File(project.buildDir, "${SatisfyTask.NAME}/$DOWNLOAD_DIR")
 
     @Internal
