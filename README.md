@@ -17,6 +17,12 @@ Incremental build which takes seconds, not minutes. Developer who does not loose
 
 AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget to **star this project** on GitHub :)
 
+<br>
+<p align="center">
+  <img src="docs/example-build.gif" alt="Example Project Build"/>
+</p>
+<br>
+
 ## Features
 
 * Composing CRX package from multiple JCR content roots, bundles.
@@ -27,11 +33,6 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
 * Embedded Vault tool for checking out and cleaning JCR content from running AEM instance.
 * OSGi Manifest customization by official [osgi](https://docs.gradle.org/current/userguide/osgi_plugin.html) plugin or feature rich [org.dm.bundle](https://github.com/TomDmitriev/gradle-bundle-plugin) plugin.
 * OSGi Declarative Services annotations support (instead of SCR, [see docs](http://blogs.adobe.com/experiencedelivers/experience-management/osgi/using-osgi-annotations-aem6-2/)).
-
-<br>
-<p align="center">
-  <img src="docs/example-build.gif" alt="Example Project Build"/>
-</p>
 
 ## Requirements
 
