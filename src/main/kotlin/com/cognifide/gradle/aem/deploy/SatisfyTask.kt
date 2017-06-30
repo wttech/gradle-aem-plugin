@@ -16,7 +16,7 @@ import java.net.URL
 import java.net.URLConnection
 import java.util.*
 
-open class SatisfyTask : AbstractTask() {
+open class SatisfyTask : SyncTask() {
 
     companion object {
         val NAME = "aemSatisfy"
@@ -33,7 +33,7 @@ open class SatisfyTask : AbstractTask() {
     private val providers = mutableListOf<Provider>()
 
     @OutputDirectory
-    private val downloadDir = File(project.buildDir, "${SatisfyTask.NAME}/$DOWNLOAD_DIR")
+    private val downloadDir = File(project.buildDir, "$NAME/$DOWNLOAD_DIR")
 
     @Internal
     private var groupName: String = GROUP_DEFAULT
@@ -49,7 +49,7 @@ open class SatisfyTask : AbstractTask() {
 
     @TaskAction
     fun satisfy() {
-        deploy({ sync ->
+        synchronize({ sync ->
             logger.info("Providing packages from local and remote sources.")
 
             val packageFiles = providers.filter({ (groupName) ->

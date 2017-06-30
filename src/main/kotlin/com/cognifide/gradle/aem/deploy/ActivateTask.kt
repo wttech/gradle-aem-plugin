@@ -3,7 +3,7 @@ package com.cognifide.gradle.aem.deploy
 import com.cognifide.gradle.aem.AemPlugin
 import org.gradle.api.tasks.TaskAction
 
-open class ActivateTask : AbstractTask() {
+open class ActivateTask : SyncTask() {
 
     companion object {
         val NAME = "aemActivate"
@@ -16,7 +16,7 @@ open class ActivateTask : AbstractTask() {
 
     @TaskAction
     fun activate() {
-        deploy({ sync ->
+        synchronize({ sync ->
             activatePackage(determineRemotePackagePath(sync), sync)
         })
     }

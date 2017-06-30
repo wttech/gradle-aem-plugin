@@ -3,21 +3,23 @@ package com.cognifide.gradle.aem.deploy
 import com.cognifide.gradle.aem.AemPlugin
 import org.gradle.api.tasks.TaskAction
 
-open class UploadTask : SyncTask() {
+open class UninstallTask : SyncTask() {
 
     companion object {
-        val NAME = "aemUpload"
+        val NAME = "aemUninstall"
     }
 
     init {
         group = AemPlugin.TASK_GROUP
-        description = "Uploads AEM package to instance(s)."
+        description = "Uninstalls AEM package on instance(s)."
     }
 
     @TaskAction
-    fun upload() {
+    fun uninstall() {
         synchronize({ sync ->
-            uploadPackage(determineLocalPackage(), sync)
+            propertyParser.checkForce()
+
+            uninstallPackage(determineRemotePackagePath(sync), sync)
         })
     }
 
