@@ -79,7 +79,7 @@ data class AemConfig(
     /**
      * Custom path to composed CRX package being uploaded.
      *
-     * Default: "${project.buildDir.path}/distributions/${project.name}-${project.version}.zip"
+     * Default: [automatically determined]
      */
     @Input
     var localPackagePath: String = "",
