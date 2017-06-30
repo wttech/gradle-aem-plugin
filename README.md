@@ -5,11 +5,9 @@
 
 # Gradle AEM Plugin
 
-<br>
 <p align="center">
   <img src="docs/logo.png" alt="Gradle AEM Plugin Logo"/>
 </p>
-<br>
 
 Currently there is no popular way to build applications for AEM using Gradle build system. This project contains brand new Gradle plugin to assemble CRX package and deploy it on instance(s).
 
