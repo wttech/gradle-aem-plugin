@@ -5,7 +5,7 @@ import java.util.regex.Pattern
 class InstallResponse(private val rawHtml: String) : HtmlResponse(rawHtml) {
 
     companion object {
-        val ERROR_PATTERN = Pattern.compile("<span class=\"E\"><b>E</b>&nbsp;(.+)</span>")
+        val ERROR_PATTERN = Pattern.compile("<span class=\"E\"><b>E</b>&nbsp;(.+\\s??.+)</span>")
 
         val PROCESSING_ERROR_PATTERN = Pattern
                 .compile("<span class=\"error\">(.+)</span><br><code><pre>([\\s\\S]+)</pre>")
