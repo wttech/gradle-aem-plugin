@@ -112,7 +112,7 @@ data class AemConfig(
      * This also could be done 'by fileFilter', but due to performance optimization it is done separately.
      */
     @Input
-    var filesExpanded: MutableList<String> = mutableListOf("**/*.xml"),
+    var filesExpanded: MutableList<String> = mutableListOf("**/${AemPlugin.VLT_PATH}/*.xml"),
 
     /**
      * Define here custom properties that can be used in CRX package files like 'META-INF/vault/properties.xml'.
@@ -156,7 +156,7 @@ data class AemConfig(
      * Default: "src/main/content/META-INF/vault/filter.xml"
      */
     @Input
-    var vaultFilterPath:String = "",
+    var vaultFilterPath: String = "",
 
     /**
      * Global options which are being applied to any Vault related command like 'aemVault' or 'aemCheckout'.

@@ -22,10 +22,9 @@ open class SatisfyTask : AbstractTask() {
     companion object {
         val NAME = "aemSatisfy"
 
-        val DOWNLOAD_DIR = "downloadDir"
+        val DOWNLOAD_DIR = "download"
 
         val GROUP_DEFAULT = "default"
-
     }
 
     private data class Provider(val groupName: String, val provider: () -> File)

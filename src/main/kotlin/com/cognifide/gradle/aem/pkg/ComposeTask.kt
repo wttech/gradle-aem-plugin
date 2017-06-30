@@ -45,12 +45,13 @@ open class ComposeTask : Zip(), AemTask {
 
     private var archiveName: String? = null
 
-    // TODO parse only META-INF/vault/*.xml (filter using matching only using file name?)
     @Internal
     var fileFilter: ((CopySpec) -> Unit) = { spec ->
         spec.exclude(config.filesExcluded)
-        spec.filesMatching(config.filesExpanded, { files ->
-            files.filter({ line -> propertyParser.expand(line, fileProperties) })
+        spec.eachFile({ fileDetail ->
+            if (Patterns.wildcard(fileDetail.file, config.filesExpanded)) {
+                fileDetail.filter({ line -> propertyParser.expand(line, fileProperties) })
+            }
         })
     }
 
