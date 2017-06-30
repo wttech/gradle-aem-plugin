@@ -114,7 +114,10 @@ For multi project build configuration, see [example project](https://github.com/
     * `includeSubprojects()`, alias for method above: `includeProjects("${project.path}:*")`.
     * all inherited from [ZIP task](https://docs.gradle.org/3.5/dsl/org.gradle.api.tasks.bundling.Zip.html).
 * `aemUpload` - Upload composed CRX package into AEM instance(s).
+* `aemDelete` - Delete uploaded CRX package from AEM instance(s).
 * `aemInstall` - Install uploaded CRX package on AEM instance(s).
+* `aemUninstall` - Uninstall uploaded CRX package on AEM instance(s).
+* `aemPurge` - Fail-safe combination of `aemUninstall` and `aemDelete`.
 * `aemActivate` - Replicate installed CRX package to other AEM instance(s).
 * `aemDeploy` - Upload & install CRX package into AEM instance(s). Primary, recommended form of deployment. Optimized version of `aemUpload aemInstall`.
 * `aemDistribute` - Upload, install & activate CRX package into AEM instances(s). Secondary form of deployment. Optimized version of `aemUpload aemInstall aemActivate -Paem.deploy.instance.name=*-author`.
