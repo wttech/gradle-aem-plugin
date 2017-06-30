@@ -55,11 +55,12 @@ so that this repository need to be included in *buildscript* section.
 ```
 buildscript {
     repositories {
+        mavenCentral() 
         maven { url  "http://dl.bintray.com/cognifide/maven-public" }
     }
     
     dependencies {
-        classpath 'com.cognifide.gradle:aem-plugin:1.3.+'
+        classpath 'com.cognifide.gradle:aem-plugin:1.4.+'
     }
 }
 
