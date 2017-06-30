@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.deploy
 
-import com.cognifide.gradle.aem.AemPlugin
+import com.cognifide.gradle.aem.AemTask
 import org.gradle.api.tasks.TaskAction
 
 open class UninstallTask : SyncTask() {
@@ -10,7 +10,7 @@ open class UninstallTask : SyncTask() {
     }
 
     init {
-        group = AemPlugin.TASK_GROUP
+        group = AemTask.GROUP
         description = "Uninstalls AEM package on instance(s)."
     }
 

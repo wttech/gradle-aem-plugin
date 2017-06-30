@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem.vlt
 
 import com.cognifide.gradle.aem.AemConfig
-import com.cognifide.gradle.aem.AemPlugin
 import com.cognifide.gradle.aem.AemTask
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Nested
@@ -17,7 +16,7 @@ open class VltTask : DefaultTask(), AemTask {
     final override val config: AemConfig = AemConfig.of(project)
 
     init {
-        group = AemPlugin.TASK_GROUP
+        group = AemTask.GROUP
         description = "Execute any Vault command."
     }
 

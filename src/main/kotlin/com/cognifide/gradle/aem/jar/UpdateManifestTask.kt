@@ -7,7 +7,10 @@ import org.dm.gradle.plugins.bundle.BundleExtension
 import org.gradle.api.DefaultTask
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.osgi.OsgiManifest
-import org.gradle.api.tasks.*
+import org.gradle.api.tasks.InputFiles
+import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.Nested
+import org.gradle.api.tasks.TaskAction
 import org.gradle.jvm.tasks.Jar
 import java.io.File
 
@@ -30,7 +33,7 @@ open class UpdateManifestTask : DefaultTask(), AemTask {
     }
 
     init {
-        group = AemPlugin.TASK_GROUP
+        group = AemTask.GROUP
         description = "Update OSGi manifest instructions"
     }
 

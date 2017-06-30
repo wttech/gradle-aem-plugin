@@ -29,7 +29,7 @@ open class PrepareTask : DefaultTask(), AemTask {
 
     init {
         description = "Prepare Vault files before composing CRX package"
-        group = AemPlugin.TASK_GROUP
+        group = AemTask.GROUP
 
         GFileUtils.mkdirs(vaultDir)
     }

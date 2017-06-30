@@ -1,10 +1,8 @@
 package com.cognifide.gradle.aem.vlt
 
 import com.cognifide.gradle.aem.AemConfig
-import com.cognifide.gradle.aem.AemPlugin
 import com.cognifide.gradle.aem.AemTask
 import org.gradle.api.DefaultTask
-import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
 
@@ -18,7 +16,7 @@ open class SyncTask : DefaultTask(), AemTask {
     final override val config: AemConfig = AemConfig.of(project)
 
     init {
-        group = AemPlugin.TASK_GROUP
+        group = AemTask.GROUP
         description = "Check out then clean JCR content."
     }
 
