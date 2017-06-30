@@ -28,6 +28,11 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
 * OSGi Manifest customization by official [osgi](https://docs.gradle.org/current/userguide/osgi_plugin.html) plugin or feature rich [org.dm.bundle](https://github.com/TomDmitriev/gradle-bundle-plugin) plugin.
 * OSGi Declarative Services annotations support (instead of SCR, [see docs](http://blogs.adobe.com/experiencedelivers/experience-management/osgi/using-osgi-annotations-aem6-2/)).
 
+<br>
+<p align="center">
+  <img src="docs/example-build.png" alt="Example Project Build"/>
+</p>
+
 ## Requirements
 
 * Java >= 8, but target software can be compiled to older Java.
