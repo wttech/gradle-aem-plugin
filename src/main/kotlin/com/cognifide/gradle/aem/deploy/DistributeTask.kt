@@ -12,7 +12,7 @@ open class DistributeTask : SyncTask() {
 
     init {
         group = AemPlugin.TASK_GROUP
-        description = "Distributes AEM package to instance(s). Upload, install then activate only for instances with group '${AemInstance.FILTER_AUTHOR}'."
+        description = "Distributes CRX package to instance(s). Upload, install then activate only for instances with group '${AemInstance.FILTER_AUTHOR}'."
     }
 
     @TaskAction

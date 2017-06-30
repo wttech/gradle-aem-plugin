@@ -10,11 +10,13 @@ import org.apache.commons.lang3.BooleanUtils
 import org.apache.commons.lang3.text.StrSubstitutor
 import org.gradle.api.Project
 import java.text.SimpleDateFormat
+import java.util.*
 
 class PropertyParser(val project: Project) {
 
     companion object {
         const val FILTER_DEFAULT = "*"
+
         const val FORCE_PROP = "aem.force"
     }
 
@@ -45,16 +47,34 @@ class PropertyParser(val project: Project) {
     val aemProperties: Map<String, Any>
         get() {
             val config = AemConfig.of(project)
+            val buildDate = Date()
 
             return mapOf(
                     "rootProject" to project.rootProject,
                     "project" to project,
+                    "name" to name,
                     "config" to config,
                     "instances" to config.instancesByName,
-                    "created" to ISO8601Utils.format(config.buildDate),
-                    "buildCount" to SimpleDateFormat("yDDmmssSSS").format(config.buildDate)
-            )
+                    "buildDate" to buildDate,
+                    "buildCount" to SimpleDateFormat("yDDmmssSSS").format(buildDate),
+                    "created" to ISO8601Utils.format(buildDate)
+            ) + config.fileProperties
         }
+
+    val namePrefix: String = if (isUniqueProjectName()) {
+        project.name
+    } else {
+        "${project.rootProject.name}${project.path}".replace(":", "-").substringBeforeLast("-")
+    }
+
+    val name: String
+        get() = if (isUniqueProjectName()) {
+            project.name
+        } else {
+            "$namePrefix-${project.name}"
+        }
+
+    private fun isUniqueProjectName() = project == project.rootProject || project.name == project.rootProject.name
 
     fun checkForce() {
         if (!project.properties.containsKey(FORCE_PROP) || !BooleanUtils.toBoolean(project.properties[FORCE_PROP] as String?)) {

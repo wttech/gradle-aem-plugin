@@ -99,8 +99,10 @@ For multi project build configuration, see [example project](https://github.com/
     * `includeProject(projectPath: String)`, includes both bundles and JCR content from another project, example: `includeProject ':core'`.
     * `includeContent(projectPath: String)`, includes only JCR content, example: `includeContent ':design'`.
     * `includeBundles(projectPath: String)`, includes only bundles, example: `includeBundles ':common'`.
-    * `includeBundles(projectPath: String, installPath: String)`, includes only bundles at custom install path, example: `includeBundles(':common', '/apps/my-app/install')`.
-    * `includeBundlesAtRunMode(projectPath: String, runMode: String)`, as above, useful when bundles need to be installed only on specific type of instance.
+    * `includeBundlesAtPath(projectPath: String, installPath: String)`, includes only bundles at custom install path, example: `includeBundles(':common', '/apps/my-app/install')`.
+    * `includeBundles(projectPath: String, runMode: String)`, as above, useful when bundles need to be installed only on specific type of instance.
+    * `mergeBundles(projectPath: String)`, includes only bundles at same install path.
+    * `mergeBundles(projectPath: String, runMode: String)`, as above, useful when bundles need to be installed only on specific type of instance.
     * `includeProjects(pathPrefix: String)`, includes both bundles and JCR content from all AEM projects (excluding itself) in which project path is matching specified filter. Vault filter roots will be automatically merged and available in property `${filterRoots}` in *filter.xml* file. Useful for building assemblies (all-in-one packages).
     * `includeSubprojects()`, alias for method above: `includeProjects("${project.path}:*")`.
     * all inherited from [ZIP task](https://docs.gradle.org/3.5/dsl/org.gradle.api.tasks.bundling.Zip.html).
@@ -169,7 +171,7 @@ gradle aemInstall -Paem.deploy.skipDownloadName=true
 
 ### Expandable properties
 
-By default, plugin is configured that in all XML files located under path *META-INF/vault*,properties can be injected using syntax: `${property}`.
+By default, plugin is configured that in all XML files located under path *META-INF/vault* properties can be injected using syntax: `${property}`.
 
 Related configuration:
 
@@ -178,7 +180,7 @@ aem {
     fileProperties = [
         "organization": "My Company"
     ]
-    vaultFilesExpanded = ["*.xml"]
+    filesExpanded = ["*.xml"]
 }
 ```
 
@@ -188,8 +190,9 @@ Predefined properties:
 * `rootProject` - project with directory in which *settings.gradle* is located.
 * `project` - current project.
 * `config` - [AEM configuration](src/main/kotlin/com/cognifide/gradle/aem/AemConfig.kt).
+* `buildDate` - date when CRX package composing started.
+* `buildCount` - number to be used as CRX package build count (`buildDate` in format `yDDmmssSSS`).
 * `created` - current date in ISO8601 format.
-* `buildCount` - number to be used as CRX package build count (`config.buildDate` in format `yDDmmssSSS`).
 
 Task specific:
 * `aemCompose` - properties which are being dynamically calculated basing on content actually included into package.
@@ -199,6 +202,11 @@ Task specific:
    * `filter` - path to Vault workspace filter file  *META-INF/vault/filter.xml*. Determined by (order take precedence): property: `aem.vlt.filter`, configuration `vaultFilterPath`.
 
 ## Known issues
+
+### Caching task `aemCompose`
+
+Expandable properties with dynamically calculated value (unique per build) like `created` and `buildCount` are not used by default generated properties file intentionally, 
+because such usages will effectively forbid caching `aemCompose` task and it will be never `UP-TO-DATE`.
 
 ### Vault tasks parallelism
 

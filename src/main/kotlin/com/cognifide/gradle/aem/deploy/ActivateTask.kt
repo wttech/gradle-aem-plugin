@@ -11,7 +11,7 @@ open class ActivateTask : SyncTask() {
 
     init {
         group = AemPlugin.TASK_GROUP
-        description = "Activates AEM package on instance(s)."
+        description = "Activates CRX package on instance(s)."
     }
 
     @TaskAction

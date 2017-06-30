@@ -1,12 +1,12 @@
 package com.cognifide.gradle.aem.deploy
 
 import com.cognifide.gradle.aem.AemPlugin
+import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.internal.PropertyParser
 import groovy.lang.Closure
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.FilenameUtils
 import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 import org.gradle.util.ConfigureUtil
 import java.io.BufferedOutputStream
@@ -21,10 +21,9 @@ open class SatisfyTask : SyncTask() {
     companion object {
         val NAME = "aemSatisfy"
 
-        val DOWNLOAD_DIR = "downloadDir"
+        val DOWNLOAD_DIR = "download"
 
         val GROUP_DEFAULT = "default"
-
     }
 
     private data class Provider(val groupName: String, val provider: () -> File)
@@ -32,8 +31,8 @@ open class SatisfyTask : SyncTask() {
     @Internal
     private val providers = mutableListOf<Provider>()
 
-    @OutputDirectory
-    private val downloadDir = File(project.buildDir, "$NAME/$DOWNLOAD_DIR")
+    @Internal
+    private val downloadDir = AemTask.temporaryDir(project, NAME, DOWNLOAD_DIR)
 
     @Internal
     private var groupName: String = GROUP_DEFAULT
@@ -41,10 +40,6 @@ open class SatisfyTask : SyncTask() {
     init {
         group = AemPlugin.TASK_GROUP
         description = "Satisfies AEM by uploading & installing dependent packages on instance(s)."
-
-        if (!downloadDir.exists()) {
-            downloadDir.mkdirs()
-        }
     }
 
     @TaskAction
