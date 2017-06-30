@@ -30,7 +30,7 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
 
 <br>
 <p align="center">
-  <img src="docs/example-build.png" alt="Example Project Build"/>
+  <img src="docs/example-build.gif" alt="Example Project Build"/>
 </p>
 
 ## Requirements
