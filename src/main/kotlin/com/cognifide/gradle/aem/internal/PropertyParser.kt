@@ -50,8 +50,9 @@ class PropertyParser(val project: Project) {
                     "name" to name,
                     "config" to config,
                     "instances" to config.instancesByName,
-                    "created" to ISO8601Utils.format(buildDate),
-                    "buildCount" to SimpleDateFormat("yDDmmssSSS").format(buildDate)
+                    "buildDate" to buildDate,
+                    "buildCount" to SimpleDateFormat("yDDmmssSSS").format(buildDate),
+                    "created" to ISO8601Utils.format(buildDate)
             ) + config.fileProperties
         }
 

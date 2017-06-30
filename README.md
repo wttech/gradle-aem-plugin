@@ -171,7 +171,7 @@ gradle aemInstall -Paem.deploy.skipDownloadName=true
 
 ### Expandable properties
 
-By default, plugin is configured that in all XML files located under path *META-INF/vault*,properties can be injected using syntax: `${property}`.
+By default, plugin is configured that in all XML files located under path *META-INF/vault* properties can be injected using syntax: `${property}`.
 
 Related configuration:
 
@@ -180,7 +180,7 @@ aem {
     fileProperties = [
         "organization": "My Company"
     ]
-    vaultFilesExpanded = ["*.xml"]
+    filesExpanded = ["*.xml"]
 }
 ```
 
@@ -190,8 +190,9 @@ Predefined properties:
 * `rootProject` - project with directory in which *settings.gradle* is located.
 * `project` - current project.
 * `config` - [AEM configuration](src/main/kotlin/com/cognifide/gradle/aem/AemConfig.kt).
+* `buildDate` - date when CRX package composing started.
+* `buildCount` - number to be used as CRX package build count (`buildDate` in format `yDDmmssSSS`).
 * `created` - current date in ISO8601 format.
-* `buildCount` - number to be used as CRX package build count (`config.buildDate` in format `yDDmmssSSS`).
 
 Task specific:
 * `aemCompose` - properties which are being dynamically calculated basing on content actually included into package.
@@ -202,15 +203,15 @@ Task specific:
 
 ## Known issues
 
-### Vault tasks parallelism
-
-Vault tool current working directory cannot be easily configured, because of its API. AEM plugin is temporarily changing current working directory for Vault, then returning it back to original value.
-In case of that workaround, Vault tasks should not be run in parallel (by separated daemon processed / JVM synchronization bypassed), because of potential unpredictable behavior.
-
 ### Caching task `aemCompose`
 
 Expandable properties with dynamically calculated value (unique per build) like `created` and `buildCount` are not used by default generated properties file intentionally, 
 because such usages will effectively forbid caching `aemCompose` task and it will be never `UP-TO-DATE`.
+
+### Vault tasks parallelism
+
+Vault tool current working directory cannot be easily configured, because of its API. AEM plugin is temporarily changing current working directory for Vault, then returning it back to original value.
+In case of that workaround, Vault tasks should not be run in parallel (by separated daemon processed / JVM synchronization bypassed), because of potential unpredictable behavior.
 
 ## License
 

@@ -8,7 +8,10 @@ import com.cognifide.gradle.aem.internal.PropertyParser
 import org.gradle.api.Project
 import org.gradle.api.file.CopySpec
 import org.gradle.api.file.DuplicatesStrategy
-import org.gradle.api.tasks.*
+import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.tasks.InputFiles
+import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.bundling.Zip
 import org.jsoup.Jsoup
 import org.jsoup.parser.Parser
@@ -29,7 +32,7 @@ open class ComposeTask : Zip(), AemTask {
     val vaultFilters = mutableListOf<File>()
 
     @InputDirectory
-    val vaultDir = File(project.buildDir, "${PrepareTask.NAME}/${AemPlugin.VLT_PATH}")
+    val vaultDir = AemTask.temporaryDir(project, PrepareTask.NAME, AemPlugin.VLT_PATH)
 
     @Internal
     var bundleCollectors: List<() -> Unit> = mutableListOf()
@@ -42,11 +45,12 @@ open class ComposeTask : Zip(), AemTask {
 
     private var archiveName: String? = null
 
+    // TODO parse only META-INF/vault/*.xml (filter using matching only using file name?)
     @Internal
     var fileFilter: ((CopySpec) -> Unit) = { spec ->
         spec.exclude(config.filesExcluded)
-        spec.filesMatching(config.filesExpanded, { files -> // TODO parse only META-INF/vault/*.xml (filter using matching only using file name?)
-            files.filter({ line -> propertyParser.expand(line, fileProperties)})
+        spec.filesMatching(config.filesExpanded, { files ->
+            files.filter({ line -> propertyParser.expand(line, fileProperties) })
         })
     }
 

@@ -25,7 +25,7 @@ open class PrepareTask : DefaultTask(), AemTask {
     final override val config = AemConfig.of(project)
 
     @OutputDirectory
-    val vaultDir = File(project.buildDir, "$NAME/${AemPlugin.VLT_PATH}")
+    val vaultDir = AemTask.temporaryDir(project, NAME, AemPlugin.VLT_PATH)
 
     init {
         description = "Prepare Vault files before composing CRX package"
