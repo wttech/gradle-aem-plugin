@@ -3,21 +3,23 @@ package com.cognifide.gradle.aem.deploy
 import com.cognifide.gradle.aem.AemPlugin
 import org.gradle.api.tasks.TaskAction
 
-open class ActivateTask : SyncTask() {
+open class DeleteTask : SyncTask() {
 
     companion object {
-        val NAME = "aemActivate"
+        val NAME = "aemDelete"
     }
 
     init {
         group = AemPlugin.TASK_GROUP
-        description = "Activates CRX package on instance(s)."
+        description = "Deletes AEM package on instance(s)."
     }
 
     @TaskAction
-    fun activate() {
+    fun delete() {
         synchronize({ sync ->
-            activatePackage(determineRemotePackagePath(sync), sync)
+            propertyParser.checkForce()
+
+            deletePackage(determineRemotePackagePath(sync), sync)
         })
     }
 

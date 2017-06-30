@@ -3,7 +3,7 @@ package com.cognifide.gradle.aem.deploy
 import com.cognifide.gradle.aem.AemPlugin
 import org.gradle.api.tasks.TaskAction
 
-open class UploadTask : AbstractTask() {
+open class UploadTask : SyncTask() {
 
     companion object {
         val NAME = "aemUpload"
@@ -16,7 +16,7 @@ open class UploadTask : AbstractTask() {
 
     @TaskAction
     fun upload() {
-        deploy({ sync ->
+        synchronize({ sync ->
             uploadPackage(determineLocalPackage(), sync)
         })
     }

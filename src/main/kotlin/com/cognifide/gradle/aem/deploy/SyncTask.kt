@@ -4,19 +4,24 @@ import com.cognifide.gradle.aem.AemConfig
 import com.cognifide.gradle.aem.AemInstance
 import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.pkg.ComposeTask
+import com.cognifide.gradle.aem.internal.PropertyParser
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Nested
+import org.gradle.api.tasks.Internal
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.IOException
 
-abstract class AbstractTask : DefaultTask(), AemTask {
+abstract class SyncTask : DefaultTask(), AemTask {
 
     @Nested
     final override val config = AemConfig.of(project)
 
-    protected fun deploy(deployer: (sync: DeploySynchronizer) -> Unit, instances: List<AemInstance> = filterInstances()) {
-        val callback = { instance: AemInstance -> deploy(deployer, instance) }
+    @Internal
+    protected val propertyParser = PropertyParser(project)
+
+    protected fun synchronize(deployer: (sync: DeploySynchronizer) -> Unit, instances: List<AemInstance> = filterInstances()) {
+        val callback = { instance: AemInstance -> synchronize(deployer, instance) }
         if (config.deployParallel) {
             instances.parallelStream().forEach(callback)
         } else {
@@ -24,8 +29,8 @@ abstract class AbstractTask : DefaultTask(), AemTask {
         }
     }
 
-    protected fun deploy(deployer: (sync: DeploySynchronizer) -> Unit, instance: AemInstance) {
-        logger.info("Deploying on: $instance")
+    protected fun synchronize(deployer: (sync: DeploySynchronizer) -> Unit, instance: AemInstance) {
+        logger.info("Synchronizing with: $instance")
 
         deployer(DeploySynchronizer(instance, config))
     }
@@ -68,7 +73,7 @@ abstract class AbstractTask : DefaultTask(), AemTask {
 
         val path = response.resolvePath(project)
         if (path.isNullOrBlank()) {
-            throw DeployException("Package is not uploaded on AEM.")
+            throw DeployException("Package is not uploaded on AEM instance.")
         }
 
         logger.info("Package found on AEM at path: '$path'")
@@ -116,19 +121,19 @@ abstract class AbstractTask : DefaultTask(), AemTask {
             val response = InstallResponse(json)
 
             when (response.status) {
-                InstallResponse.Status.SUCCESS -> if (response.errors.isEmpty()) {
+                HtmlResponse.Status.SUCCESS -> if (response.errors.isEmpty()) {
                     logger.info("Package successfully installed.")
                 } else {
                     logger.warn("Package installed with errors")
                     response.errors.forEach { logger.error(it) }
                     throw DeployException("Installation completed with errors!")
                 }
-                InstallResponse.Status.SUCCESS_WITH_ERRORS -> {
+                HtmlResponse.Status.SUCCESS_WITH_ERRORS -> {
                     logger.error("Package installed with errors.")
                     response.errors.forEach { logger.error(it) }
                     throw DeployException("Installation completed with errors!")
                 }
-                InstallResponse.Status.FAIL -> {
+                HtmlResponse.Status.FAIL -> {
                     logger.error("Installation failed.")
                     response.errors.forEach { logger.error(it) }
                     throw DeployException("Installation incomplete!")
@@ -137,7 +142,7 @@ abstract class AbstractTask : DefaultTask(), AemTask {
 
             return response
         } catch (e: Exception) {
-            throw DeployException("Cannot install package", e)
+            throw DeployException("Cannot install package.", e)
         }
     }
 
@@ -168,6 +173,69 @@ abstract class AbstractTask : DefaultTask(), AemTask {
         }
 
         return response
+    }
+
+    protected fun deletePackage(installedPackagePath: String, sync: DeploySynchronizer) {
+        val url = sync.htmlTargetUrl + installedPackagePath + "/?cmd=delete"
+
+        logger.info("Deleting package using command: " + url)
+
+        try {
+            val rawHtml = sync.post(url)
+            val response = DeleteResponse(rawHtml)
+
+            when (response.status) {
+                HtmlResponse.Status.SUCCESS,
+                HtmlResponse.Status.SUCCESS_WITH_ERRORS -> if (response.errors.isEmpty()) {
+                    logger.info("Package successfully deleted.")
+                } else {
+                    logger.warn("Package deleted with errors.")
+                    response.errors.forEach { logger.error(it) }
+                    throw DeployException("Package deleted with errors!")
+                }
+                HtmlResponse.Status.FAIL -> {
+                    logger.error("Package deleting failed.")
+                    response.errors.forEach { logger.error(it) }
+                    throw DeployException("Package deleting failed!")
+                }
+            }
+
+        } catch (e: Exception) {
+            throw DeployException("Cannot delete package.", e)
+        }
+    }
+
+    protected fun uninstallPackage(installedPackagePath: String, sync: DeploySynchronizer) {
+        val url = sync.htmlTargetUrl + installedPackagePath + "/?cmd=uninstall"
+
+        logger.info("Uninstalling package using command: " + url)
+
+        try {
+            val rawHtml = sync.post(url, mapOf(
+                    "recursive" to config.recursiveInstall,
+                    "acHandling" to config.acHandling
+            ))
+            val response = UninstallResponse(rawHtml)
+
+            when (response.status) {
+                HtmlResponse.Status.SUCCESS,
+                HtmlResponse.Status.SUCCESS_WITH_ERRORS -> if (response.errors.isEmpty()) {
+                    logger.info("Package successfully uninstalled.")
+                } else {
+                    logger.warn("Package uninstalled with errors.")
+                    response.errors.forEach { logger.error(it) }
+                    throw DeployException("Package uninstalled with errors!")
+                }
+                HtmlResponse.Status.FAIL -> {
+                    logger.error("Package uninstalling failed.")
+                    response.errors.forEach { logger.error(it) }
+                    throw DeployException("Package uninstalling failed!")
+                }
+            }
+
+        } catch (e: Exception) {
+            throw DeployException("Cannot uninstall package.", e)
+        }
     }
 
 }

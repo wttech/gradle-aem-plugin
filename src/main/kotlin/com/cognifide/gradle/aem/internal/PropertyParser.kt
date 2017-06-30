@@ -2,8 +2,11 @@ package com.cognifide.gradle.aem.internal
 
 import com.cognifide.gradle.aem.AemConfig
 import com.cognifide.gradle.aem.AemException
+import com.cognifide.gradle.aem.deploy.DeployException
+import com.cognifide.gradle.aem.vlt.SyncTask
 import com.fasterxml.jackson.databind.util.ISO8601Utils
 import groovy.text.SimpleTemplateEngine
+import org.apache.commons.lang3.BooleanUtils
 import org.apache.commons.lang3.text.StrSubstitutor
 import org.gradle.api.Project
 import java.text.SimpleDateFormat
@@ -12,7 +15,9 @@ import java.util.*
 class PropertyParser(val project: Project) {
 
     companion object {
-        val FILTER_DEFAULT = "*"
+        const val FILTER_DEFAULT = "*"
+
+        const val FORCE_PROP = "aem.force"
     }
 
     fun filter(value: String, propName: String, propDefault: String = FILTER_DEFAULT): Boolean {
@@ -42,7 +47,6 @@ class PropertyParser(val project: Project) {
     val aemProperties: Map<String, Any>
         get() {
             val config = AemConfig.of(project)
-            val buildDate = Date()
 
             return mapOf(
                     "rootProject" to project.rootProject,
@@ -70,5 +74,14 @@ class PropertyParser(val project: Project) {
         }
 
     private fun isUniqueProjectName() = project == project.rootProject || project.name == project.rootProject.name
+
+    fun checkForce() {
+        if (!project.properties.containsKey(FORCE_PROP) || !BooleanUtils.toBoolean(project.properties[FORCE_PROP] as String?)) {
+            throw DeployException(
+                    "Warning! This task execution must be confirmed by specyfing explicitly parameter '-P$FORCE_PROP=true'. " +
+                    "Before continuing it is recommended to protect against potential data loss by checking out JCR content using '${SyncTask.NAME}' task."
+            )
+        }
+    }
 
 }

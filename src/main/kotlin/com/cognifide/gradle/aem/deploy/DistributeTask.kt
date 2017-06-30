@@ -4,7 +4,7 @@ import com.cognifide.gradle.aem.AemInstance
 import com.cognifide.gradle.aem.AemPlugin
 import org.gradle.api.tasks.TaskAction
 
-open class DistributeTask : AbstractTask() {
+open class DistributeTask : SyncTask() {
 
     companion object {
         val NAME = "aemDistribute"
@@ -17,7 +17,7 @@ open class DistributeTask : AbstractTask() {
 
     @TaskAction
     fun distribute() {
-        deploy({ sync ->
+        synchronize({ sync ->
             val packagePath = uploadPackage(determineLocalPackage(), sync).path
 
             installPackage(packagePath, sync)

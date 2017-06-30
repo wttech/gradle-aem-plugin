@@ -9,7 +9,6 @@ import org.apache.commons.io.FilenameUtils
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 import org.gradle.util.ConfigureUtil
-import org.gradle.util.GFileUtils
 import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileOutputStream
@@ -17,7 +16,7 @@ import java.net.URL
 import java.net.URLConnection
 import java.util.*
 
-open class SatisfyTask : AbstractTask() {
+open class SatisfyTask : SyncTask() {
 
     companion object {
         val NAME = "aemSatisfy"
@@ -45,7 +44,7 @@ open class SatisfyTask : AbstractTask() {
 
     @TaskAction
     fun satisfy() {
-        deploy({ sync ->
+        synchronize({ sync ->
             logger.info("Providing packages from local and remote sources.")
 
             val packageFiles = providers.filter({ (groupName) ->
@@ -75,8 +74,6 @@ open class SatisfyTask : AbstractTask() {
 
     private fun download(url: String, configurer: (URLConnection) -> Unit) {
         provide {
-            GFileUtils.mkdirs(downloadDir)
-
             val file = File(downloadDir, FilenameUtils.getName(url))
 
             if (file.exists()) {

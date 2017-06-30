@@ -82,6 +82,10 @@ class AemPlugin : Plugin<Project> {
         val distribute = project.tasks.create(DistributeTask.NAME, DistributeTask::class.java)
         val satisfy = project.tasks.create(SatisfyTask.NAME, SatisfyTask::class.java)
 
+        project.tasks.create(UninstallTask.NAME, UninstallTask::class.java)
+        project.tasks.create(DeleteTask.NAME, DeleteTask::class.java)
+        project.tasks.create(PurgeTask.NAME, PurgeTask::class.java)
+
         val assemble = project.tasks.getByName(LifecycleBasePlugin.ASSEMBLE_TASK_NAME)
         val check = project.tasks.getByName(LifecycleBasePlugin.CHECK_TASK_NAME)
         val build = project.tasks.getByName(LifecycleBasePlugin.BUILD_TASK_NAME)
@@ -101,8 +105,6 @@ class AemPlugin : Plugin<Project> {
 
         deploy.mustRunAfter(satisfy, compose)
         distribute.mustRunAfter(satisfy, compose)
-
-        satisfy.mustRunAfter(clean)
 
         val vltClean = project.tasks.create(CleanTask.NAME, CleanTask::class.java)
         val vltRaw = project.tasks.create(VltTask.NAME, VltTask::class.java)
