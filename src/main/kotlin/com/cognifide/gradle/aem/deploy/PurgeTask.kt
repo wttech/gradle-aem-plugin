@@ -11,7 +11,7 @@ open class PurgeTask : SyncTask() {
 
     init {
         group = AemPlugin.TASK_GROUP
-        description = "Uninstalls and then deletes AEM package on instance(s)."
+        description = "Uninstalls and then deletes CRX package on AEM instance(s)."
     }
 
     @TaskAction

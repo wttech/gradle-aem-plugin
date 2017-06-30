@@ -47,6 +47,7 @@ class PropertyParser(val project: Project) {
     val aemProperties: Map<String, Any>
         get() {
             val config = AemConfig.of(project)
+            val buildDate = Date()
 
             return mapOf(
                     "rootProject" to project.rootProject,
