@@ -97,6 +97,7 @@ data class AemConfig(
      */
     @Input
     var filesExcluded: MutableList<String> = mutableListOf(
+            "**/.gradle",
             "**/.git",
             "**/.git/**",
             "**/.gitattributes",

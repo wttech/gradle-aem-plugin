@@ -1,5 +1,7 @@
 package com.cognifide.gradle.aem.deploy
 
+import com.cognifide.gradle.aem.internal.PropertyParser
+import com.cognifide.gradle.aem.pkg.ComposeTask
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.gradle.api.Project
@@ -16,7 +18,10 @@ class ListResponse private constructor() {
     lateinit var results: List<ListResult>
 
     fun resolvePath(project: Project): String? {
-        return PathResolver.values().map { it.resolve(project, this) }.firstOrNull { it != null }
+        return PathResolver.values()
+                .asSequence()
+                .map { it.resolve(project, this) }
+                .firstOrNull { it != null }
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -37,12 +42,14 @@ class ListResponse private constructor() {
         BY_PROJECT_PROPS() {
             override fun resolve(project: Project, response: ListResponse): String? {
                 var path: String? = null
-                val props = "[group=${project.group}][name=${project.name}][version=${project.version}]"
+
+                val projectName = PropertyParser(project).name
+                val props = "[group=${project.group}][name=$projectName][version=${project.version}]"
 
                 project.logger.info("Trying to find package by project properties: $props")
 
                 val result = response.results.find { result ->
-                    (result.group == project.group) && (result.name == project.name) && (result.version == project.version)
+                    (result.group == project.group) && (result.name == projectName) && (result.version == project.version)
                 }
 
                 if (result != null) {
@@ -59,16 +66,24 @@ class ListResponse private constructor() {
         BY_CONVENTION_PATH() {
             override fun resolve(project: Project, response: ListResponse): String? {
                 var path: String? = null
-                val conventionPath: String = "/etc/packages/${project.group}/${project.name}-${project.version}.zip"
 
-                project.logger.info("Trying to find package by convention path '$conventionPath'.")
+                val projectName = PropertyParser(project).name
+                val conventionPaths = listOf(
+                        "/etc/packages/${project.group}/${(project.tasks.getByName(ComposeTask.NAME) as ComposeTask).archiveName}",
+                        "/etc/packages/${project.group}/$projectName-${project.version}.zip"
+                )
 
-                val result = response.results.find { result -> result.path == conventionPath }
-                if (result != null) {
-                    path = result.path
-                    project.logger.info("Package found by convention path.")
-                } else {
-                    project.logger.info("Package cannot be found by convention path.")
+                for (conventionPath in conventionPaths) {
+                    project.logger.info("Trying to find package by convention path '$conventionPath'.")
+
+                    val result = response.results.find { result -> result.path == conventionPath }
+                    if (result != null) {
+                        path = result.path
+                        project.logger.info("Package found by convention path.")
+                        break
+                    } else {
+                        project.logger.info("Package cannot be found by convention path.")
+                    }
                 }
 
                 return path
@@ -77,7 +92,9 @@ class ListResponse private constructor() {
         BY_DOWNLOAD_NAME() {
             override fun resolve(project: Project, response: ListResponse): String? {
                 var path: String? = null
-                val downloadName = "${project.name}-${project.version}.zip"
+
+                val projectName = PropertyParser(project).name
+                val downloadName = "$projectName-${project.version}.zip"
 
                 if (!(project.properties.getOrElse("aem.deploy.skipDownloadName", { true }) as Boolean)) {
                     project.logger.info("Finding package by download namme '$downloadName' is skipped.")
