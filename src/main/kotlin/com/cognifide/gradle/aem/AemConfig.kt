@@ -10,6 +10,7 @@ import org.gradle.api.tasks.Internal
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 import java.io.File
 import java.io.Serializable
+import java.util.*
 
 /**
  * Aggregated collection of AEM related configuration.
@@ -189,7 +190,13 @@ data class AemConfig(
         @Input
         var dependContentTaskNames: List<String> = mutableListOf(
                 ComposeTask.NAME + ComposeTask.DEPENDENCIES_SUFFIX
-        )
+        ),
+
+        /**
+         * Build date used as base for calculating 'created' and 'buildCount' package properties.
+         */
+        @Internal
+        var buildDate: Date = Date()
 
 ) : Serializable {
     companion object {

@@ -53,15 +53,13 @@ class PropertyParser(val project: Project) {
     val aemProperties: Map<String, Any>
         get() {
             val config = AemConfig.of(project)
-            val buildDate = Date()
 
             return mapOf(
                     "name" to name,
                     "config" to config,
                     "instances" to config.instancesByName,
-                    "buildDate" to buildDate,
-                    "buildCount" to SimpleDateFormat("yDDmmssSSS").format(buildDate),
-                    "created" to ISO8601Utils.format(buildDate)
+                    "buildCount" to SimpleDateFormat("yDDmmssSSS").format(config.buildDate),
+                    "created" to ISO8601Utils.format(config.buildDate)
             )
         }
 
