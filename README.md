@@ -129,6 +129,7 @@ For multi project build configuration, see [example project](https://github.com/
 * `aemClean` - Clean checked out JCR content.
 * `aemSync` - Check out then clean JCR content.
 * `aemVlt` - Execute any Vault command. See parameters section for more details.
+* `aemDebug` - Dumps effective AEM build configuration of project to JSON file.
 
 ### Task rules
 
@@ -188,7 +189,9 @@ aem {
     fileProperties = [
         "organization": "My Company"
     ]
-    filesExpanded = ["*.xml"]
+    filesExpanded = [
+        "**/META-INF/vault/*.xml"
+    ]
 }
 ```
 
@@ -200,7 +203,7 @@ Predefined properties:
 * `config` - [AEM configuration](src/main/kotlin/com/cognifide/gradle/aem/AemConfig.kt).
 * `buildDate` - date when CRX package composing started.
 * `buildCount` - number to be used as CRX package build count (`buildDate` in format `yDDmmssSSS`).
-* `created` - current date in ISO8601 format.
+* `created` - current date in *ISO8601* format.
 
 Task specific:
 * `aemCompose` - properties which are being dynamically calculated basing on content actually included into package.

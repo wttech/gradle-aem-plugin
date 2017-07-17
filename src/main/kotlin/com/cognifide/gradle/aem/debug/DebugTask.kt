@@ -22,7 +22,7 @@ open class DebugTask : DefaultTask(), AemTask {
 
     init {
         group = AemTask.GROUP
-        description = "Dumps effective AEM build configuration of project to JSON format"
+        description = "Dumps effective AEM build configuration of project to JSON file"
     }
 
     @TaskAction
