@@ -23,6 +23,8 @@ open class DebugTask : DefaultTask(), AemTask {
     init {
         group = AemTask.GROUP
         description = "Dumps effective AEM build configuration of project to JSON file"
+
+        outputs.upToDateWhen { false }
     }
 
     @TaskAction
