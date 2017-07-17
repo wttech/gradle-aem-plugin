@@ -12,9 +12,9 @@ import java.io.File
  */
 interface AemTask {
 
-    val config: AemConfig
-
     companion object {
+        val GROUP = "AEM"
+
         fun temporaryDir(project: Project, taskName: String, path: String): File {
             val dir = File(project.buildDir, "aem/$taskName/$path")
 
@@ -22,6 +22,16 @@ interface AemTask {
 
             return dir
         }
+
+        fun temporaryFile(project: Project, taskName: String, name: String): File {
+            val dir = File(project.buildDir, "aem/$taskName")
+
+            GFileUtils.mkdirs(dir)
+
+            return File(dir, name)
+        }
     }
+
+    val config: AemConfig
 
 }

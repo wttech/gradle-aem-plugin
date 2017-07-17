@@ -29,7 +29,7 @@ class PropertyParser(val project: Project) {
     fun expand(source: String, properties: Map<String, Any> = mapOf()): String {
         try {
             val interpolated = StrSubstitutor.replace(source, systemProperties)
-            val allProperties = aemProperties + properties
+            val allProperties = projectProperties + aemProperties + configProperties + properties
             val template = SimpleTemplateEngine().createTemplate(interpolated).make(allProperties)
 
             return template.toString()
@@ -44,22 +44,29 @@ class PropertyParser(val project: Project) {
         })
     }
 
+    val projectProperties: Map<String, Any>
+        get() = mapOf(
+                "rootProject" to project.rootProject,
+                "project" to project
+        )
+
     val aemProperties: Map<String, Any>
         get() {
             val config = AemConfig.of(project)
             val buildDate = Date()
 
             return mapOf(
-                    "rootProject" to project.rootProject,
-                    "project" to project,
                     "name" to name,
                     "config" to config,
                     "instances" to config.instancesByName,
                     "buildDate" to buildDate,
                     "buildCount" to SimpleDateFormat("yDDmmssSSS").format(buildDate),
                     "created" to ISO8601Utils.format(buildDate)
-            ) + config.fileProperties
+            )
         }
+
+    val configProperties: Map<String, Any>
+        get() = AemConfig.of(project).fileProperties
 
     val namePrefix: String = if (isUniqueProjectName()) {
         project.name
@@ -80,7 +87,7 @@ class PropertyParser(val project: Project) {
         if (!project.properties.containsKey(FORCE_PROP) || !BooleanUtils.toBoolean(project.properties[FORCE_PROP] as String?)) {
             throw DeployException(
                     "Warning! This task execution must be confirmed by specyfing explicitly parameter '-P$FORCE_PROP=true'. " +
-                    "Before continuing it is recommended to protect against potential data loss by checking out JCR content using '${SyncTask.NAME}' task."
+                            "Before continuing it is recommended to protect against potential data loss by checking out JCR content using '${SyncTask.NAME}' task."
             )
         }
     }

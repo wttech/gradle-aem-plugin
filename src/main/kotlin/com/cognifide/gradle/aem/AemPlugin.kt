@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem
 
 import com.cognifide.gradle.aem.deploy.*
+import com.cognifide.gradle.aem.debug.DebugTask
 import com.cognifide.gradle.aem.jar.UpdateManifestTask
 import com.cognifide.gradle.aem.pkg.ComposeTask
 import com.cognifide.gradle.aem.pkg.PrepareTask
@@ -28,8 +29,6 @@ class AemPlugin : Plugin<Project> {
 
     companion object {
         val ID = "com.cognifide.aem"
-
-        val TASK_GROUP = "AEM"
 
         val CONFIG_INSTALL = "aemInstall"
 
@@ -85,6 +84,7 @@ class AemPlugin : Plugin<Project> {
         project.tasks.create(UninstallTask.NAME, UninstallTask::class.java)
         project.tasks.create(DeleteTask.NAME, DeleteTask::class.java)
         project.tasks.create(PurgeTask.NAME, PurgeTask::class.java)
+        project.tasks.create(DebugTask.NAME, DebugTask::class.java)
 
         val assemble = project.tasks.getByName(LifecycleBasePlugin.ASSEMBLE_TASK_NAME)
         val check = project.tasks.getByName(LifecycleBasePlugin.CHECK_TASK_NAME)

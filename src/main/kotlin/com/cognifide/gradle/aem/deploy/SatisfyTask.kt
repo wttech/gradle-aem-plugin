@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem.deploy
 
-import com.cognifide.gradle.aem.AemPlugin
 import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.internal.PropertyParser
 import groovy.lang.Closure
@@ -38,7 +37,7 @@ open class SatisfyTask : SyncTask() {
     private var groupName: String = GROUP_DEFAULT
 
     init {
-        group = AemPlugin.TASK_GROUP
+        group = AemTask.GROUP
         description = "Satisfies AEM by uploading & installing dependent packages on instance(s)."
     }
 

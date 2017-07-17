@@ -57,7 +57,7 @@ open class ComposeTask : Zip(), AemTask {
 
     init {
         description = "Composes CRX package from JCR content and built OSGi bundles"
-        group = AemPlugin.TASK_GROUP
+        group = AemTask.GROUP
 
         duplicatesStrategy = DuplicatesStrategy.WARN
 
