@@ -4,6 +4,7 @@ import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.pkg.ComposeTask
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.apache.commons.lang3.BooleanUtils
 import org.gradle.api.Project
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -96,8 +97,8 @@ class ListResponse private constructor() {
                 val projectName = PropertyParser(project).name
                 val downloadName = "$projectName-${project.version}.zip"
 
-                if (!(project.properties.getOrElse("aem.deploy.skipDownloadName", { true }) as Boolean)) {
-                    project.logger.info("Finding package by download namme '$downloadName' is skipped.")
+                if (BooleanUtils.toBoolean(project.properties.getOrElse("aem.deploy.skipDownloadName", { "true" }) as String?)) {
+                    project.logger.info("Finding package by download name '$downloadName' is skipped.")
                 } else {
                     project.logger.warn("Trying to find package by download name '$downloadName' which can collide with other packages.")
 
