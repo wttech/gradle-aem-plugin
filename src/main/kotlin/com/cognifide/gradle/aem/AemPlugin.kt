@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem
 
 import com.cognifide.gradle.aem.deploy.*
-import com.cognifide.gradle.aem.internal.DebugTask
+import com.cognifide.gradle.aem.debug.DebugTask
 import com.cognifide.gradle.aem.jar.UpdateManifestTask
 import com.cognifide.gradle.aem.pkg.ComposeTask
 import com.cognifide.gradle.aem.pkg.PrepareTask

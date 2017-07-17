@@ -22,6 +22,14 @@ interface AemTask {
 
             return dir
         }
+
+        fun temporaryFile(project: Project, taskName: String, name: String): File {
+            val dir = File(project.buildDir, "aem/$taskName")
+
+            GFileUtils.mkdirs(dir)
+
+            return File(dir, name)
+        }
     }
 
     val config: AemConfig
