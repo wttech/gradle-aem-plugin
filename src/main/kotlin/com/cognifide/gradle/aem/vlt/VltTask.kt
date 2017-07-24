@@ -27,7 +27,7 @@ open class VltTask : DefaultTask(), AemTask {
             throw VltException("Vault command cannot be blank.")
         }
 
-        VltCommand.raw(project, command!!)
+        VltCommand(project).raw(command!!)
     }
 
 }

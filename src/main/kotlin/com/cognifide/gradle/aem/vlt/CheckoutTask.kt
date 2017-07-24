@@ -23,7 +23,7 @@ open class CheckoutTask : DefaultTask(), AemTask {
     @TaskAction
     fun checkout() {
         logger.info("Checking out content from AEM")
-        VltCommand.checkout(project)
+        VltCommand(project).checkout()
     }
 
 }
