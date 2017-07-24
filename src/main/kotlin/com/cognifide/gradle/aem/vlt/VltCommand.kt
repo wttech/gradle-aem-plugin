@@ -77,13 +77,13 @@ class VltCommand(val project: Project) {
 
         val authorInstance = AemInstance.filter(project, AemInstance.FILTER_AUTHOR).firstOrNull()
         if (authorInstance != null) {
-            logger.info("Using instance matching filter '${AemInstance.FILTER_AUTHOR}': $authorInstance")
+            logger.info("Using first instance matching filter '${AemInstance.FILTER_AUTHOR}': $authorInstance")
             return authorInstance
         }
 
         val anyInstance = AemInstance.filter(project, AemInstance.FILTER_ANY).firstOrNull()
         if (anyInstance != null) {
-            logger.info("Using instance matching filter '${AemInstance.FILTER_ANY}': $anyInstance")
+            logger.info("Using first instance matching filter '${AemInstance.FILTER_ANY}': $anyInstance")
             return anyInstance
         }
 
