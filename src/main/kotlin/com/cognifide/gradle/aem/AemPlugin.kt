@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem
 
-import com.cognifide.gradle.aem.deploy.*
 import com.cognifide.gradle.aem.debug.DebugTask
+import com.cognifide.gradle.aem.deploy.*
 import com.cognifide.gradle.aem.jar.UpdateManifestTask
 import com.cognifide.gradle.aem.pkg.ComposeTask
 import com.cognifide.gradle.aem.pkg.PrepareTask
@@ -72,6 +72,7 @@ class AemPlugin : Plugin<Project> {
             jar.dependsOn(updateManifest)
         })
 
+        val create = project.tasks.create(CreateTask.NAME, CreateTask::class.java)
         val prepare = project.tasks.create(PrepareTask.NAME, PrepareTask::class.java)
         val compose = project.tasks.create(ComposeTask.NAME, ComposeTask::class.java)
         val upload = project.tasks.create(UploadTask.NAME, UploadTask::class.java)
@@ -81,6 +82,7 @@ class AemPlugin : Plugin<Project> {
         val distribute = project.tasks.create(DistributeTask.NAME, DistributeTask::class.java)
         val satisfy = project.tasks.create(SatisfyTask.NAME, SatisfyTask::class.java)
 
+        project.tasks.create(DestroyTask.NAME, DestroyTask::class.java)
         project.tasks.create(UninstallTask.NAME, UninstallTask::class.java)
         project.tasks.create(DeleteTask.NAME, DeleteTask::class.java)
         project.tasks.create(PurgeTask.NAME, PurgeTask::class.java)
@@ -94,17 +96,18 @@ class AemPlugin : Plugin<Project> {
         check.mustRunAfter(clean)
         build.dependsOn(compose)
 
+        create.mustRunAfter(clean)
         prepare.mustRunAfter(clean)
 
         compose.dependsOn(prepare, assemble, check)
         compose.mustRunAfter(clean)
 
-        upload.mustRunAfter(satisfy, compose)
-        install.mustRunAfter(satisfy, compose, upload)
-        activate.mustRunAfter(satisfy, compose, upload, install)
+        upload.mustRunAfter(create, satisfy, compose)
+        install.mustRunAfter(create, satisfy, compose, upload)
+        activate.mustRunAfter(create, satisfy, compose, upload, install)
 
-        deploy.mustRunAfter(satisfy, compose)
-        distribute.mustRunAfter(satisfy, compose)
+        deploy.mustRunAfter(create, satisfy, compose)
+        distribute.mustRunAfter(create, satisfy, compose)
 
         val vltClean = project.tasks.create(CleanTask.NAME, CleanTask::class.java)
         val vltRaw = project.tasks.create(VltTask.NAME, VltTask::class.java)

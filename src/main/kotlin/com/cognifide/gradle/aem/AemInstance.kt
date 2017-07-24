@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem
 
+import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.internal.PropertyParser
-import org.apache.commons.validator.routines.UrlValidator
 import org.gradle.api.Project
 import java.io.Serializable
 
@@ -9,7 +9,8 @@ data class AemInstance(
         val url: String,
         val user: String,
         val password: String,
-        val name: String
+        val name: String,
+        val debugPort: String? = null
 ) : Serializable {
 
     companion object {
@@ -19,8 +20,6 @@ data class AemInstance(
         val FILTER_LOCAL = "local-*"
 
         val FILTER_AUTHOR = "*-author"
-
-        val URL_VALIDATOR = UrlValidator(arrayOf("http", "https"), UrlValidator.ALLOW_LOCAL_URLS)
 
         fun parse(str: String): List<AemInstance> {
             return str.split(";").map { line ->
@@ -60,7 +59,7 @@ data class AemInstance(
         get() = "$user:$password"
 
     fun validate() {
-        if (!URL_VALIDATOR.isValid(url)) {
+        if (!Formats.URL_VALIDATOR.isValid(url)) {
             throw AemException("Malformed URL address detected in $this")
         }
 

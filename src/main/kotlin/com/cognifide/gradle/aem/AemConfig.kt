@@ -196,7 +196,15 @@ data class AemConfig(
          * Build date used as base for calculating 'created' and 'buildCount' package properties.
          */
         @Internal
-        var buildDate: Date = Date()
+        var buildDate: Date = Date(),
+
+        /**
+         * Path in which local AEM instances will be stored.
+         *
+         * Default: "${System.getProperty("user.home")}/.gradle/aem/${project.rootProject.name}"
+         */
+        @Input
+        var instancesPath: String = ""
 
 ) : Serializable {
     companion object {
@@ -230,6 +238,7 @@ data class AemConfig(
         contentPath = "${project.projectDir.path}/src/main/content"
         vaultFilesPath = "${project.rootProject.projectDir.path}/src/main/resources/${AemPlugin.VLT_PATH}"
         vaultFilterPath = "${project.projectDir.path}/src/main/content/${AemPlugin.VLT_PATH}/filter.xml"
+        instancesPath = "${System.getProperty("user.home")}/.gradle/aem/${project.rootProject.name}"
     }
 
     fun attach(task: DefaultTask) {
