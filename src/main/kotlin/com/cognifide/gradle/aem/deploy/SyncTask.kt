@@ -35,7 +35,7 @@ abstract class SyncTask : DefaultTask(), AemTask {
         deployer(DeploySynchronizer(instance, config))
     }
 
-    protected fun filterInstances(instanceGroup: String = AemInstance.FILTER_DEFAULT): List<AemInstance> {
+    protected fun filterInstances(instanceGroup: String = AemInstance.FILTER_LOCAL): List<AemInstance> {
         return AemInstance.filter(project, instanceGroup)
     }
 

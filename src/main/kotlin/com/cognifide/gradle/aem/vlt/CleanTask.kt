@@ -23,7 +23,7 @@ open class CleanTask : DefaultTask(), AemTask {
     @TaskAction
     fun clean() {
         logger.info("Cleaning checked out JCR content")
-        VltCommand.clean(project)
+        VltCommand(project).clean()
     }
 
 }
