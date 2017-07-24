@@ -76,12 +76,12 @@ class FileResolver(val project: Project, val downloadDir: File) {
 
     private fun downloadSmb(url: String) {
         resolve {
-            val file = File(downloadDir, FilenameUtils.getName(url))
+            val localFile = File(downloadDir, FilenameUtils.getName(url))
 
-            logger.info("Downloading from Samba URL: $url")
-            // TODO ...
+            logger.info("Downloading from Samba URL '$url' to '${localFile.absolutePath}'")
+            SmbFileResolver.of(project).download(url, localFile)
 
-            file
+            localFile
         }
     }
 

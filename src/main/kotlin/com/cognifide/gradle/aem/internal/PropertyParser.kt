@@ -10,7 +10,6 @@ import org.apache.commons.lang3.BooleanUtils
 import org.apache.commons.lang3.text.StrSubstitutor
 import org.gradle.api.Project
 import java.text.SimpleDateFormat
-import java.util.*
 
 class PropertyParser(val project: Project) {
 
@@ -18,6 +17,14 @@ class PropertyParser(val project: Project) {
         const val FILTER_DEFAULT = "*"
 
         const val FORCE_PROP = "aem.force"
+    }
+
+    fun prop(name: String, defaultValue: () -> String): String {
+        return prop(name) ?: defaultValue()
+    }
+
+    fun prop(name: String): String? {
+        return project.properties[name] as String? ?: systemProperties[name]
     }
 
     fun filter(value: String, propName: String, propDefault: String = FILTER_DEFAULT): Boolean {

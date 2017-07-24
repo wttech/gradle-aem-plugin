@@ -54,15 +54,15 @@ open class CreateTask : SyncTask() {
             return
         }
 
+        logger.info("Resolving files")
+        val files = instanceFileProvider.resolveFiles()
+
         synchronize({ sync ->
             val localInstance = AemLocalInstance(sync.instance, project)
+
             logger.info("Creating: $localInstance")
-
-            logger.info("Resolving files")
-            instanceFileProvider.resolveFiles()
-
-            logger.info("Processing configuration")
-            localInstance.create()
+            localInstance.create(files)
+            logger.info("Created: $localInstance")
         })
     }
 

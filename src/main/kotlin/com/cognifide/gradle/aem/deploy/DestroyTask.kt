@@ -22,6 +22,7 @@ open class DestroyTask : SyncTask() {
 
             logger.info("Destroying: $localInstance")
             localInstance.destroy()
+            logger.info("Destroyed: $localInstance")
         })
     }
 

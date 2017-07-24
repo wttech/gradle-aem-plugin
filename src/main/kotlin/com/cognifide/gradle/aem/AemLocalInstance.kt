@@ -1,8 +1,10 @@
 package com.cognifide.gradle.aem
 
 import com.cognifide.gradle.aem.internal.Patterns
+import org.apache.commons.io.FileUtils
 import org.gradle.api.Project
 import org.gradle.api.logging.Logger
+import org.gradle.util.GFileUtils
 import java.io.File
 
 /**
@@ -30,7 +32,11 @@ class AemLocalInstance(val base: AemInstance, val project: Project) {
 
     val license = File(dir, "license.properties")
 
-    fun create() {
+    fun create(files: List<File>) {
+        logger.info("Copying instance files to '${dir.absolutePath}'")
+        GFileUtils.mkdirs(dir)
+        files.forEach { FileUtils.copyFileToDirectory(it, dir) }
+
         logger.info("JAR file found: ${jar.absolutePath}, exists: ${jar.exists()}")
         logger.info("License file found: ${license.absolutePath}, exists: ${jar.exists()}")
 
