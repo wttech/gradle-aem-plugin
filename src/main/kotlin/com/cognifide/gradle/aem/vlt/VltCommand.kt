@@ -71,7 +71,8 @@ object VltCommand {
             return cmdInstance
         }
 
-        return AemInstance.filter(project, AemInstance.FILTER_AUTHOR).first()
+        return AemInstance.filter(project, AemInstance.FILTER_AUTHOR).firstOrNull()
+                ?: AemInstance.filter(project, AemInstance.FILTER_ANY).first()
     }
 
 }

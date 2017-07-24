@@ -14,7 +14,9 @@ data class AemInstance(
 
     companion object {
 
-        val FILTER_DEFAULT = PropertyParser.FILTER_DEFAULT
+        val FILTER_ANY = PropertyParser.FILTER_DEFAULT
+
+        val FILTER_LOCAL = "local-*"
 
         val FILTER_AUTHOR = "*-author"
 
@@ -35,7 +37,7 @@ data class AemInstance(
             )
         }
 
-        fun filter(project: Project, instanceFilter: String = FILTER_DEFAULT): List<AemInstance> {
+        fun filter(project: Project, instanceFilter: String = FILTER_LOCAL): List<AemInstance> {
             val config = AemConfig.of(project)
             val instanceValues = project.properties["aem.deploy.instance.list"] as String?
             if (!instanceValues.isNullOrBlank()) {
