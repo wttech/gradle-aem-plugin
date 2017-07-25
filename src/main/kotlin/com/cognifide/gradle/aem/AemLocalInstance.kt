@@ -40,10 +40,8 @@ class AemLocalInstance(val base: AemInstance, val project: Project) {
         logger.info("JAR file found: ${jar.absolutePath}, exists: ${jar.exists()}")
         logger.info("License file found: ${license.absolutePath}, exists: ${jar.exists()}")
 
-        FileOperations.copyResources("local-instance", dir, true, { file, input ->
+        FileOperations.copyResources("local-instance", dir, false, { file, input ->
             if (Patterns.wildcard(file, listOf("**/*.bat", "**/*.sh"))) {
-                input
-            } else {
                 val text = input.bufferedReader().use { it.readText() }
 
                 PropertyParser(project).expand(text, mapOf(
@@ -51,6 +49,8 @@ class AemLocalInstance(val base: AemInstance, val project: Project) {
                         "jar" to jar,
                         "license" to license
                 )).byteInputStream()
+            } else {
+                input
             }
         })
     }

@@ -249,9 +249,12 @@ data class AemConfig(
 
     /**
      * Declare new deployment target (AEM instance).
+     *
+     * TODO defaults params not work properly with groovy build.gradle
+     * TODO introduce localInstance and remoteInstance methods
      */
-    fun instance(url: String, user: String = "admin", password: String = "admin", type: String = "default") {
-        instances.add(AemInstance(url, user, password, type))
+    fun instance(url: String, type: String, user: String = "admin", password: String = "admin", environment: String = "local") {
+        instances.add(AemInstance(url, user, password, environment, type))
     }
 
     /**

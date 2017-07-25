@@ -12,8 +12,10 @@ data class AemInstance(
         val url: String,
         val user: String,
         val password: String,
-        val name: String,
-        val debugPort: String? = null
+        val environment: String,
+        val type: String,
+        val debugPort: String? = null,
+        val httpPort: String? = null
 ) : Serializable {
 
     companion object {
@@ -24,18 +26,27 @@ data class AemInstance(
 
         val FILTER_AUTHOR = "*-author"
 
+        val ENVIRONMENT_CMD = "cmd"
+
+        val ENVIRONMENT_LOCAL = "local"
+
+        val TYPE_AUTHOR = "author"
+
+        val TYPE_PUBLISH = "publish"
+
         fun parse(str: String): List<AemInstance> {
             return str.split(";").map { line ->
-                val (url, user, password) = line.split(",")
+                // TODO auto-detect type basing on port number when 3 parts specified not 4/ maybe using constructor
+                val (url, type, user, password) = line.split(",")
 
-                AemInstance(url, user, password, "command-line")
+                AemInstance(url, user, password, ENVIRONMENT_CMD, type)
             }
         }
 
         fun defaults(): List<AemInstance> {
             return listOf(
-                    AemInstance("http://localhost:4502", "admin", "admin", "local-author"),
-                    AemInstance("http://localhost:4503", "admin", "admin", "local-publish")
+                    AemInstance("http://localhost:4502", "admin", "admin", ENVIRONMENT_LOCAL, TYPE_AUTHOR),
+                    AemInstance("http://localhost:4503", "admin", "admin", ENVIRONMENT_LOCAL, TYPE_PUBLISH)
             )
         }
 
@@ -61,6 +72,9 @@ data class AemInstance(
     val credentials: String
         get() = "$user:$password"
 
+    val name: String
+        get() = "$environment-$type"
+
     fun validate() {
         if (!Formats.URL_VALIDATOR.isValid(url)) {
             throw AemException("Malformed URL address detected in $this")
@@ -74,8 +88,12 @@ data class AemInstance(
             throw AemException("Password cannot be blank in $this")
         }
 
-        if (name.isBlank()) {
-            throw AemException("Name cannot be blank in $this")
+        if (environment.isBlank()) {
+            throw AemException("Environment cannot be blank in $this")
+        }
+
+        if (type.isBlank()) {
+            throw AemException("Type cannot be blank in $this")
         }
     }
 
