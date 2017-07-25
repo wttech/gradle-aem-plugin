@@ -8,8 +8,6 @@ import org.gradle.util.GFileUtils
 import java.io.File
 
 /**
- * TODO download jar and license file using SMB or HTTP (share code used in aemSatisfy)
- * TODO generate start.bat or start.sh with debug ports
  * TODO put each dir into create:destroy outputs / task caching
  */
 class AemLocalInstance(val base: AemInstance, val project: Project) {
@@ -22,7 +20,7 @@ class AemLocalInstance(val base: AemInstance, val project: Project) {
 
     val jar: File by lazy {
         var result: File? = null
-        val files = dir.listFiles({ file, _ -> Patterns.wildcard(file, "cq-quickstart*.jar") })
+        val files = dir.listFiles({ _, name -> Patterns.wildcard(name, "cq-quickstart*.jar") })
         if (files != null) {
             result = files.firstOrNull()
         }

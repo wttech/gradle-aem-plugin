@@ -5,6 +5,9 @@ import com.cognifide.gradle.aem.internal.PropertyParser
 import org.gradle.api.Project
 import java.io.Serializable
 
+/**
+ * TODO inherit from this, introduce methods 'config.localInstance()', 'config.remoteInstance() = config.instance()'
+ */
 data class AemInstance(
         val url: String,
         val user: String,

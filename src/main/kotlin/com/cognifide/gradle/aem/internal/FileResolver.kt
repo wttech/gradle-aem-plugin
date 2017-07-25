@@ -1,5 +1,6 @@
-package com.cognifide.gradle.aem.deploy
+package com.cognifide.gradle.aem.internal
 
+import com.cognifide.gradle.aem.deploy.DeployException // TODO ...
 import groovy.lang.Closure
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.FilenameUtils

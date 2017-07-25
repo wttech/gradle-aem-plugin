@@ -14,4 +14,16 @@ object Formats {
                 .writeValueAsString(value)
     }
 
+    fun bytesToHuman(bytes: Long): String {
+        if (bytes < 1024) {
+            return bytes.toString() + " B"
+        } else if (bytes < 1024 * 1024) {
+            return (bytes / 1024).toString() + " KB"
+        } else if (bytes < 1024 * 1024 * 1024) {
+            return String.format("%.2f MB", bytes / (1024.0 * 1024.0))
+        } else {
+            return String.format("%.2f GB", bytes / (1024.0 * 1024.0 * 1024.0))
+        }
+    }
+
 }
