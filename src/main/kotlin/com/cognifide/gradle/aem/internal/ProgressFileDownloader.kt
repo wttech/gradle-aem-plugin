@@ -5,13 +5,23 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
 
-class FileDownloader(val project: Project, url: String, val size: Long = 0) {
+open class ProgressFileDownloader(val project: Project) {
 
-    val progressLogger = ProgressLogger(project, "Downloading file: $url")
+    var size: Long = 0
+
+    var header: String = "Downloading"
 
     private var processedBytes: Long = 0
 
     private var loggedKb: Long = 0
+
+    private val progressLogger by lazy {
+        ProgressLogger(project, header)
+    }
+
+    fun headerSourceTarget(sourceUrl: String, targetFile: File) {
+        header = "Downloading: $sourceUrl -> ${targetFile.absolutePath}"
+    }
 
     fun download(input: InputStream, outputFile: File) {
         try {
@@ -50,12 +60,10 @@ class FileDownloader(val project: Project, url: String, val size: Long = 0) {
         if (processedKb > loggedKb) {
             var msg = Formats.bytesToHuman(processedBytes)
             if (size > 0) {
-                msg += "/" + Formats.bytesToHuman(size)
+                msg += "/${Formats.bytesToHuman(size)} [${Formats.percent(processedBytes, size)}]"
             }
-            msg += " downloaded"
             progressLogger.progress(msg)
             loggedKb = processedKb
         }
     }
-
 }

@@ -22,6 +22,8 @@ open class SatisfyTask : SyncTask() {
     init {
         group = AemTask.GROUP
         description = "Satisfies AEM by uploading & installing dependent packages on instance(s)."
+
+        packageProvider.attach(this)
     }
 
     fun packages(closure: Closure<*>) {
@@ -34,8 +36,8 @@ open class SatisfyTask : SyncTask() {
             logger.info("Providing packages from local and remote sources.")
 
             val filterProp = "aem.deploy.satisfy.group"
-            val packageFiles = packageProvider.resolveFiles({ (groupName) ->
-                PropertyParser(project).filter(groupName, filterProp)
+            val packageFiles = packageProvider.resolveFiles({ resolver ->
+                PropertyParser(project).filter(resolver.group, filterProp)
             })
 
             logger.info("Packages provided (${packageFiles.size})")

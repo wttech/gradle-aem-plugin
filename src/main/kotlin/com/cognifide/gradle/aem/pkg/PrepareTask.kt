@@ -3,17 +3,13 @@ package com.cognifide.gradle.aem.pkg
 import com.cognifide.gradle.aem.AemConfig
 import com.cognifide.gradle.aem.AemPlugin
 import com.cognifide.gradle.aem.AemTask
+import com.cognifide.gradle.aem.internal.FileOperations
 import org.apache.commons.io.FileUtils
-import org.apache.commons.io.IOUtils
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 import org.gradle.util.GFileUtils
-import org.reflections.Reflections
-import org.reflections.scanners.ResourcesScanner
-import java.io.File
-import java.io.FileOutputStream
 
 open class PrepareTask : DefaultTask(), AemTask {
 
@@ -64,19 +60,6 @@ open class PrepareTask : DefaultTask(), AemTask {
             return
         }
 
-        for (resourcePath in Reflections(AemPlugin.VLT_PATH, ResourcesScanner()).getResources { true }) {
-            val outputFile = File(vaultDir, resourcePath.substringAfterLast("${AemPlugin.VLT_PATH}/"))
-            if (!outputFile.exists()) {
-                val input = javaClass.getResourceAsStream("/" + resourcePath)
-                val output = FileOutputStream(outputFile)
-
-                try {
-                    IOUtils.copy(input, output)
-                } finally {
-                    IOUtils.closeQuietly(input)
-                    IOUtils.closeQuietly(output)
-                }
-            }
-        }
+        FileOperations.copyResources(AemPlugin.VLT_PATH, vaultDir)
     }
 }

@@ -19,14 +19,6 @@ class PropertyParser(val project: Project) {
         const val FORCE_PROP = "aem.force"
     }
 
-    fun prop(name: String, defaultValue: () -> String): String {
-        return prop(name) ?: defaultValue()
-    }
-
-    fun prop(name: String): String? {
-        return project.properties[name] as String? ?: systemProperties[name]
-    }
-
     fun filter(value: String, propName: String, propDefault: String = FILTER_DEFAULT): Boolean {
         val filters = project.properties.getOrElse(propName, { propDefault }) as String
 

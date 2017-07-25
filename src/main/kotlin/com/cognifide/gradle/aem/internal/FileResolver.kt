@@ -1,18 +1,15 @@
 package com.cognifide.gradle.aem.internal
 
-import com.cognifide.gradle.aem.deploy.DeployException // TODO ...
+import com.google.common.hash.HashCode
 import groovy.lang.Closure
-import org.apache.commons.io.FileUtils
 import org.apache.commons.io.FilenameUtils
+import org.apache.commons.lang3.builder.HashCodeBuilder
+import org.gradle.api.DefaultTask
 import org.gradle.api.Project
 import org.gradle.api.logging.Logger
 import org.gradle.util.ConfigureUtil
-import java.io.BufferedOutputStream
+import org.gradle.util.GFileUtils
 import java.io.File
-import java.io.FileOutputStream
-import java.net.URL
-import java.net.URLConnection
-import java.util.*
 
 class FileResolver(val project: Project, val downloadDir: File) {
 
@@ -22,111 +19,118 @@ class FileResolver(val project: Project, val downloadDir: File) {
 
     val logger: Logger = project.logger
 
-    data class Resolver(val groupName: String, val resolver: () -> File)
+    data class Resolver(val id: String, val group: String, val callback: (File) -> File)
 
     private val resolvers = mutableListOf<Resolver>()
 
-    private var groupName: String = GROUP_DEFAULT
+    private var group: String = GROUP_DEFAULT
 
     val configured: Boolean
         get() = resolvers.isNotEmpty()
+
+    val configurationHash: Int
+        get() {
+            val builder = HashCodeBuilder()
+            resolvers.forEach { builder.append(it.id) }
+
+            return builder.toHashCode()
+        }
+
+    fun attach(task: DefaultTask, prop: String = "fileResolver") {
+        task.outputs.dir(downloadDir)
+        project.afterEvaluate {
+            task.inputs.property(prop, configurationHash)
+        }
+    }
 
     fun resolveFiles(): List<File> {
         return resolveFiles { true }
     }
 
     fun resolveFiles(filter: (Resolver) -> Boolean): List<File> {
-        return resolvers.filter(filter).map { it.resolver() }
+        return resolvers.filter(filter).map { it.callback(File("$downloadDir/${it.id}")) }
     }
 
     fun download(url: String) {
-        if (url.startsWith("smb://")) {
-            downloadSmb(url)
+        if (SmbFileDownloader.handles(url)) {
+            downloadSmbAuth(url)
         } else {
-            downloadHttp(url, {})
+            downloadHttp(url)
         }
     }
 
-    fun downloadBasicAuth(url: String, user: String = "admin", password: String = "admin") {
-        downloadHttp(url, { conn ->
-            logger.info("Downloading with basic authorization support. Used credentials: [user=$user][password=$password]")
+    private fun downloadFileFor(targetDir: File, sourceUrl: String): File {
+        GFileUtils.mkdirs(targetDir)
 
-            conn.setRequestProperty("Authorization", "Basic ${Base64.getEncoder().encodeToString("$user:$password".toByteArray())}")
+        return File(targetDir, FilenameUtils.getName(sourceUrl))
+    }
+
+    fun downloadSmb(url: String) {
+        resolve(url, { dir ->
+            val file = downloadFileFor(dir, url)
+            val downloader = SmbFileDownloader(project)
+
+            downloader.download(url, file)
+
+            file
         })
     }
 
-    private fun downloadHttp(url: String, configurer: (URLConnection) -> Unit) {
-        resolve {
-            val file = File(downloadDir, FilenameUtils.getName(url))
+    fun downloadSmbAuth(url: String, domain: String? = null, username: String? = null, password: String? = null) {
+        resolve(url, { dir ->
+            val file = downloadFileFor(dir, url)
+            val downloader = SmbFileDownloader(project)
 
-            if (file.exists()) {
-                logger.info("Reusing previously downloaded file from URL: $url")
+            downloader.domain = domain ?: project.properties["aem.smb.domain"] as String?
+            downloader.username = username ?: project.properties["aem.smb.username"] as String?
+            downloader.password = password ?: project.properties["aem.smb.password"] as String?
 
-                if (FileUtils.sizeOf(file) == 0L) {
-                    logger.warn("Corrupted file detected '${file.absolutePath}'. Deleting file from URL: $url")
-                    file.delete()
-                    download(url, file, configurer)
-                }
-            } else {
-                download(url, file, configurer)
-            }
+            downloader.download(url, file)
 
             file
-        }
+        })
     }
 
-    private fun downloadSmb(url: String) {
-        resolve {
-            val localFile = File(downloadDir, FilenameUtils.getName(url))
-
-            logger.info("Downloading from Samba URL '$url' to '${localFile.absolutePath}'")
-            SmbFileResolver.of(project).download(url, localFile)
-
-            localFile
-        }
+    fun downloadHttp(url: String) {
+        resolve(url, { dir ->
+            val file = downloadFileFor(dir, url)
+            HttpFileDownloader(project).download(url, file)
+            file
+        })
     }
 
-    private fun download(url: String, file: File, configurer: (URLConnection) -> Unit) {
-        logger.info("Downloading file from URL: $url")
+    fun downloadHttpAuth(url: String, user: String? = null, password: String? = null) {
+        resolve(arrayOf(url, user, password), { dir ->
+            val file = downloadFileFor(dir, url)
+            val downloader = HttpFileDownloader(project)
 
-        val out = BufferedOutputStream(FileOutputStream(file))
-        val connection = URL(url).openConnection()
+            downloader.user = user ?: project.properties["aem.http.user"] as String?
+            downloader.password = password ?: project.properties["aem.http.password"] as String?
 
-        configurer(connection)
-        try {
-            connection.getInputStream().use { input ->
-                out.use { fileOut ->
-                    input.copyTo(fileOut)
-                }
-            }
-        } catch (e: Exception) {
-            throw DeployException("Cannot download file from URL $url or transfer it to path: ${file.absolutePath}", e)
-        }
+            downloader.download(url, file)
 
-        logger.info("File downloaded into path: ${file.absolutePath}")
+            file
+        })
     }
 
     fun local(path: String) {
         local(project.file(path))
     }
 
-    fun local(file: File): Unit {
-        resolve {
-            logger.info("Local file used from path: ${file.absolutePath}'")
-
-            file
-        }
+    fun local(sourceFile: File): Unit {
+        resolve(sourceFile.absolutePath, { sourceFile })
     }
 
-    fun resolve(resolver: () -> File): Unit {
-        resolvers += Resolver(groupName, resolver)
+    fun resolve(hash: Any, resolver: (File) -> File): Unit {
+        val id = HashCode.fromInt(HashCodeBuilder().append(hash).toHashCode()).toString()
+        resolvers += Resolver(id, group, resolver)
     }
 
     @Synchronized
     fun group(name: String, configurer: Closure<*>) {
-        groupName = name
+        group = name
         ConfigureUtil.configureSelf(configurer, this)
-        groupName = GROUP_DEFAULT
+        group = GROUP_DEFAULT
     }
 
 }

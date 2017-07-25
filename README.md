@@ -65,14 +65,14 @@ buildscript {
 apply plugin: 'com.cognifide.aem'
 ```
 
-Building and deploying to AEM via command: `gradle aemRootDeploy` or `gradle build aemDeploy`.
+Building and deploying to AEM via command: `gradle aemBuild`.
 
 #### Extra:
 
 ```
 apply plugin: 'kotlin' // 'java' or whatever you like to compile bundle
 
-defaultTasks = ['aemRootDeploy']
+defaultTasks = ['aemBuild']
 
 aem {
     config {
@@ -133,7 +133,7 @@ For multi project build configuration, see [example project](https://github.com/
 
 ### Task rules
 
-* `aem<ProjectPath>Deploy` - Build CRX package and deploy it to AEM instance(s). For root project use reserved `aemRootDeploy`. It is recommended to include appropriate deploy task name in [default tasks](https://docs.gradle.org/current/userguide/tutorial_using_tasks.html#sec:default_tasks) of project. For instance, to deploy project at path `:app:design` use task named `aemAppDesignDeploy`.
+* `aem<ProjectPath>Build` - Build CRX package and deploy it to AEM instance(s). It is recommended to include appropriate deploy task name in [default tasks](https://docs.gradle.org/current/userguide/tutorial_using_tasks.html#sec:default_tasks) of project. For instance, to deploy project at path `:app:design` use task named `aemAppDesignBuild`.
 
 ### Parameters
 

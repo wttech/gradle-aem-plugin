@@ -1,6 +1,8 @@
 package com.cognifide.gradle.aem
 
+import com.cognifide.gradle.aem.internal.FileOperations
 import com.cognifide.gradle.aem.internal.Patterns
+import com.cognifide.gradle.aem.internal.PropertyParser
 import org.apache.commons.io.FileUtils
 import org.gradle.api.Project
 import org.gradle.api.logging.Logger
@@ -38,11 +40,31 @@ class AemLocalInstance(val base: AemInstance, val project: Project) {
         logger.info("JAR file found: ${jar.absolutePath}, exists: ${jar.exists()}")
         logger.info("License file found: ${license.absolutePath}, exists: ${jar.exists()}")
 
-        // TODO generate start.bat, start.sh with corresponding debug port from base.debugPort
+        FileOperations.copyResources("local-instance", dir, true, { file, input ->
+            if (Patterns.wildcard(file, listOf("**/*.bat", "**/*.sh"))) {
+                input
+            } else {
+                val text = input.bufferedReader().use { it.readText() }
+
+                PropertyParser(project).expand(text, mapOf(
+                        "instance" to base,
+                        "jar" to jar,
+                        "license" to license
+                )).byteInputStream()
+            }
+        })
     }
 
     fun destroy() {
         dir.deleteRecursively()
+    }
+
+    fun up() {
+        Runtime.getRuntime().exec("java -jar ${jar.absolutePath}")
+    }
+
+    fun down() {
+        // TODO ...
     }
 
     override fun toString(): String {

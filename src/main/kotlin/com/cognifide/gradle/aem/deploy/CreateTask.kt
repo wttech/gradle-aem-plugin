@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.deploy
 
+import com.cognifide.gradle.aem.AemInstance
 import com.cognifide.gradle.aem.AemLocalInstance
 import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.internal.FileResolver
@@ -21,22 +22,24 @@ open class CreateTask : SyncTask() {
     }
 
     @Internal
-    val instanceFileProvider = FileResolver(project, AemTask.temporaryDir(project, NAME, DOWNLOAD_DIR))
+    val instanceFileResolver = FileResolver(project, AemTask.temporaryDir(project, NAME, DOWNLOAD_DIR))
 
     init {
         group = AemTask.GROUP
         description = "Creates local AEM instance(s)."
+
+        instanceFileResolver.attach(this)
     }
 
     fun instanceFiles(closure: Closure<*>) {
-        ConfigureUtil.configure(closure, instanceFileProvider)
+        ConfigureUtil.configure(closure, instanceFileResolver)
     }
 
     fun instanceJar() {
         val jarUrl = project.properties[JAR_URL_PROP] as String?
                 ?: project.extensions.extraProperties[JAR_URL_PROP] as String?
         if (!jarUrl.isNullOrBlank()) {
-            instanceFileProvider.download(jarUrl!!)
+            instanceFileResolver.download(jarUrl!!)
         }
     }
 
@@ -44,19 +47,19 @@ open class CreateTask : SyncTask() {
         val licenseUrl = project.properties[LICENSE_URL_PROP] as String?
                 ?: project.extensions.extraProperties[LICENSE_URL_PROP] as String?
         if (!licenseUrl.isNullOrBlank()) {
-            instanceFileProvider.download(licenseUrl!!)
+            instanceFileResolver.download(licenseUrl!!)
         }
     }
 
     @TaskAction
     fun create() {
-        if (!instanceFileProvider.configured) {
+        if (!instanceFileResolver.configured) {
             logger.info("Skipping creation, because no instance files are configured.")
             return
         }
 
         logger.info("Resolving files")
-        val files = instanceFileProvider.resolveFiles()
+        val files = instanceFileResolver.resolveFiles()
 
         synchronize({ sync ->
             val localInstance = AemLocalInstance(sync.instance, project)
@@ -64,7 +67,7 @@ open class CreateTask : SyncTask() {
             logger.info("Creating: $localInstance")
             localInstance.create(files)
             logger.info("Created: $localInstance")
-        })
+        }, AemInstance.filter(project, AemInstance.FILTER_LOCAL))
     }
 
 }

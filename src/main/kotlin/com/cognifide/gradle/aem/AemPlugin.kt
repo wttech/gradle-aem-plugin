@@ -38,9 +38,9 @@ class AemPlugin : Plugin<Project> {
 
         val JCR_ROOT = "jcr_root"
 
-        val DEPLOY_TASK_ROOT = "aemRootDeploy"
+        val BUILD_TASK_ROOT = "aemBuild"
 
-        val DEPLOY_TASK_RULE = "Pattern: aem<ProjectPath>Deploy: Build CRX package and deploy it to AEM instance(s). Use preemptive '$DEPLOY_TASK_ROOT' for root project."
+        val BUILD_TASK_RULE = "Pattern: aem<ProjectPath>Build: Build CRX package and deploy it to AEM instance(s)."
     }
 
     override fun apply(project: Project) {
@@ -73,6 +73,7 @@ class AemPlugin : Plugin<Project> {
         })
 
         val create = project.tasks.create(CreateTask.NAME, CreateTask::class.java)
+        val up = project.tasks.create(UpTask.NAME, UpTask::class.java)
         val prepare = project.tasks.create(PrepareTask.NAME, PrepareTask::class.java)
         val compose = project.tasks.create(ComposeTask.NAME, ComposeTask::class.java)
         val upload = project.tasks.create(UploadTask.NAME, UploadTask::class.java)
@@ -82,6 +83,7 @@ class AemPlugin : Plugin<Project> {
         val distribute = project.tasks.create(DistributeTask.NAME, DistributeTask::class.java)
         val satisfy = project.tasks.create(SatisfyTask.NAME, SatisfyTask::class.java)
 
+        project.tasks.create(DownTask.NAME, DownTask::class.java)
         project.tasks.create(DestroyTask.NAME, DestroyTask::class.java)
         project.tasks.create(UninstallTask.NAME, UninstallTask::class.java)
         project.tasks.create(DeleteTask.NAME, DeleteTask::class.java)
@@ -97,7 +99,8 @@ class AemPlugin : Plugin<Project> {
         build.dependsOn(compose)
 
         create.mustRunAfter(clean)
-        prepare.mustRunAfter(clean)
+        up.mustRunAfter(clean, create)
+        prepare.mustRunAfter(clean, create, up)
 
         compose.dependsOn(prepare, assemble, check)
         compose.mustRunAfter(clean)
@@ -119,18 +122,18 @@ class AemPlugin : Plugin<Project> {
         vltCheckout.mustRunAfter(clean)
         vltSync.mustRunAfter(clean)
 
-        project.tasks.addRule(DEPLOY_TASK_RULE, { taskName ->
+        project.tasks.addRule(BUILD_TASK_RULE, { taskName ->
             val desiredTaskName = if (project == project.rootProject) {
-                DEPLOY_TASK_ROOT
+                BUILD_TASK_ROOT
             } else {
-                "aem${CaseFormat.LOWER_HYPHEN.to(CaseFormat.UPPER_CAMEL, project.path.replace(":", "-"))}Deploy"
+                "aem${CaseFormat.LOWER_HYPHEN.to(CaseFormat.UPPER_CAMEL, project.path.replace(":", "-"))}Build"
             }
 
             if (taskName == desiredTaskName) {
                 if (project.tasks.findByName(taskName) != null) {
-                    project.logger.info("Deploy rule task '$taskName' already exists, so it will be not created.")
+                    project.logger.info("Build rule task '$taskName' already exists, so it will be not created.")
                 } else {
-                    project.logger.info("Creating deploy rule task named '$taskName'.")
+                    project.logger.info("Creating build rule task named '$taskName'.")
 
                     val task = project.tasks.create(taskName)
                     task.dependsOn(build, deploy)
