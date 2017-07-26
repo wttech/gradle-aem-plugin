@@ -1,22 +1,14 @@
-package com.cognifide.gradle.aem
+package com.cognifide.gradle.aem.instance
 
+import com.cognifide.gradle.aem.AemConfig
+import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.internal.PropertyParser
 import org.gradle.api.Project
 import java.io.Serializable
+import java.net.URL
 
-/**
- * TODO inherit from this, introduce methods 'config.localInstance()', 'config.remoteInstance() = config.instance()'
- */
-data class AemInstance(
-        val url: String,
-        val user: String,
-        val password: String,
-        val environment: String,
-        val type: String,
-        val debugPort: String? = null,
-        val httpPort: String? = null
-) : Serializable {
+interface AemInstance : Serializable {
 
     companion object {
 
@@ -28,25 +20,38 @@ data class AemInstance(
 
         val ENVIRONMENT_CMD = "cmd"
 
-        val ENVIRONMENT_LOCAL = "local"
+        val URL_AUTHOR_DEFAULT = "http://localhost:4502"
 
-        val TYPE_AUTHOR = "author"
+        val URL_PUBLISH_DEFAULT = "http://localhost:4503"
 
-        val TYPE_PUBLISH = "publish"
+        val USER_DEFAULT = "admin"
+
+        val PASSWORD_DEFAULT = "admin"
 
         fun parse(str: String): List<AemInstance> {
             return str.split(";").map { line ->
-                // TODO auto-detect type basing on port number when 3 parts specified not 4/ maybe using constructor
-                val (url, type, user, password) = line.split(",")
+                val parts = line.split(",")
 
-                AemInstance(url, user, password, ENVIRONMENT_CMD, type)
+                when (parts.size) {
+                    4 -> {
+                        val (url, type, user, password) = parts
+                        AemRemoteInstance(url, user, password, ENVIRONMENT_CMD, type)
+                    }
+                    3 -> {
+                        val (url, user, password) = parts
+                        AemRemoteInstance(url, user, password, ENVIRONMENT_CMD, AemInstanceType.byUrl(url).name)
+                    }
+                    else -> {
+                        throw AemException("Cannot parse instance string: '$str'")
+                    }
+                }
             }
         }
 
         fun defaults(): List<AemInstance> {
             return listOf(
-                    AemInstance("http://localhost:4502", "admin", "admin", ENVIRONMENT_LOCAL, TYPE_AUTHOR),
-                    AemInstance("http://localhost:4503", "admin", "admin", ENVIRONMENT_LOCAL, TYPE_PUBLISH)
+                    AemLocalInstance(URL_AUTHOR_DEFAULT),
+                    AemLocalInstance(URL_PUBLISH_DEFAULT)
             )
         }
 
@@ -54,11 +59,11 @@ data class AemInstance(
             val config = AemConfig.of(project)
             val instanceValues = project.properties["aem.deploy.instance.list"] as String?
             if (!instanceValues.isNullOrBlank()) {
-                return AemInstance.parse(instanceValues!!)
+                return parse(instanceValues!!)
             }
 
             val instances = if (config.instances.isEmpty()) {
-                return AemInstance.defaults()
+                return defaults()
             } else {
                 config.instances
             }
@@ -67,16 +72,37 @@ data class AemInstance(
                 PropertyParser(project).filter(instance.name, "aem.deploy.instance.name", instanceFilter)
             }
         }
+
+        fun portOfUrl(url: String): Int {
+            return URL(url).port
+        }
+
     }
+
+    val httpUrl: String
+
+    val httpPort: Int
+        get() = portOfUrl(httpUrl)
+
+    val user: String
+
+    val password: String
+
+    val environment: String
+
+    val typeName: String
+
+    val type: AemInstanceType
+        get() = AemInstanceType.byName(typeName)
 
     val credentials: String
         get() = "$user:$password"
 
     val name: String
-        get() = "$environment-$type"
+        get() = "$environment-$typeName"
 
     fun validate() {
-        if (!Formats.URL_VALIDATOR.isValid(url)) {
+        if (!Formats.URL_VALIDATOR.isValid(httpUrl)) {
             throw AemException("Malformed URL address detected in $this")
         }
 
@@ -92,7 +118,7 @@ data class AemInstance(
             throw AemException("Environment cannot be blank in $this")
         }
 
-        if (type.isBlank()) {
+        if (typeName.isBlank()) {
             throw AemException("Type cannot be blank in $this")
         }
     }

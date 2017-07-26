@@ -1,5 +1,8 @@
 package com.cognifide.gradle.aem
 
+import com.cognifide.gradle.aem.instance.AemInstance
+import com.cognifide.gradle.aem.instance.AemLocalInstance
+import com.cognifide.gradle.aem.instance.AemRemoteInstance
 import com.cognifide.gradle.aem.pkg.ComposeTask
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.gradle.api.DefaultTask
@@ -249,12 +252,26 @@ data class AemConfig(
 
     /**
      * Declare new deployment target (AEM instance).
-     *
-     * TODO defaults params not work properly with groovy build.gradle
-     * TODO introduce localInstance and remoteInstance methods
      */
-    fun instance(url: String, type: String, user: String = "admin", password: String = "admin", environment: String = "local") {
-        instances.add(AemInstance(url, user, password, environment, type))
+
+    fun localInstance(httpUrl: String) {
+        instances.add(AemLocalInstance(httpUrl))
+    }
+
+    fun localInstance(httpUrl: String, user: String, password: String) {
+        instances.add(AemLocalInstance(httpUrl, user, password))
+    }
+
+    fun localInstance(httpUrl: String, user: String, password: String, type: String, debugPort: Int) {
+        instances.add(AemLocalInstance(httpUrl, user, password, type, debugPort))
+    }
+
+    fun remoteInstance(httpUrl: String, environment: String) {
+        instances.add(AemRemoteInstance(httpUrl, environment))
+    }
+
+    fun remoteInstance(httpUrl: String, user: String, password: String, type: String, environment: String) {
+        instances.add(AemRemoteInstance(httpUrl, user, password, type, environment))
     }
 
     /**

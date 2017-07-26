@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.vlt
 
 import com.cognifide.gradle.aem.AemConfig
-import com.cognifide.gradle.aem.AemInstance
+import com.cognifide.gradle.aem.instance.AemInstance
 import com.cognifide.gradle.aem.internal.PropertyParser
 import org.gradle.api.Project
 import org.gradle.api.logging.Logger

@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.deploy
 
 import com.cognifide.gradle.aem.AemConfig
-import com.cognifide.gradle.aem.AemInstance
+import com.cognifide.gradle.aem.instance.AemInstance
 import org.apache.commons.httpclient.HttpClient
 import org.apache.commons.httpclient.HttpStatus
 import org.apache.commons.httpclient.UsernamePasswordCredentials
@@ -24,11 +24,11 @@ class DeploySynchronizer(val instance: AemInstance, val config: AemConfig) {
         private val PACKAGE_MANAGER_LIST_SUFFIX = "/crx/packmgr/list.jsp"
     }
 
-    val jsonTargetUrl = instance.url + PACKAGE_MAMAGER_SERVICE_SUFFIX + "/.json"
+    val jsonTargetUrl = instance.httpUrl + PACKAGE_MAMAGER_SERVICE_SUFFIX + "/.json"
 
-    val htmlTargetUrl = instance.url + PACKAGE_MAMAGER_SERVICE_SUFFIX + "/.html"
+    val htmlTargetUrl = instance.httpUrl + PACKAGE_MAMAGER_SERVICE_SUFFIX + "/.html"
 
-    val listPackagesUrl = instance.url + PACKAGE_MANAGER_LIST_SUFFIX
+    val listPackagesUrl = instance.httpUrl + PACKAGE_MANAGER_LIST_SUFFIX
 
     fun post(url: String, parts: List<Part> = listOf()): String {
         val method = PostMethod(url)

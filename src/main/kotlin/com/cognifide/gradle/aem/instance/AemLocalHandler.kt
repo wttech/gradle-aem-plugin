@@ -1,5 +1,6 @@
-package com.cognifide.gradle.aem
+package com.cognifide.gradle.aem.instance
 
+import com.cognifide.gradle.aem.AemConfig
 import com.cognifide.gradle.aem.internal.FileOperations
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.PropertyParser
@@ -12,7 +13,7 @@ import java.io.File
 /**
  * TODO put each dir into create:destroy outputs / task caching
  */
-class AemLocalInstance(val base: AemInstance, val project: Project) {
+class AemLocalHandler(val base: AemInstance, val project: Project) {
 
     val logger: Logger = project.logger
 
@@ -68,7 +69,7 @@ class AemLocalInstance(val base: AemInstance, val project: Project) {
     }
 
     override fun toString(): String {
-        return "AemLocalInstance(dir=${dir.absolutePath})"
+        return "AemLocalHandler(dir=${dir.absolutePath})"
     }
 
 }

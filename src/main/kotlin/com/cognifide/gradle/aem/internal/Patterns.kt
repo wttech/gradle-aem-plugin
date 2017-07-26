@@ -6,7 +6,7 @@ import java.io.File
 
 object Patterns {
 
-    fun wildcard(file: File, matchers: Collection<String>): Boolean {
+    fun wildcard(file: File, matchers: Iterable<String>): Boolean {
         return matchers.any { wildcard(file, it) }
     }
 
@@ -15,11 +15,11 @@ object Patterns {
     }
 
     fun wildcard(path: String, matcher: String): Boolean {
-        return FilenameUtils.wildcardMatch(path, matcher, IOCase.INSENSITIVE)
+        return wildcard(path, listOf(matcher))
     }
 
-    fun wildcardSensitive(path: String, matcher: String): Boolean {
-        return FilenameUtils.wildcardMatch(path, matcher, IOCase.SENSITIVE)
+    fun wildcard(path: String, matchers: Iterable<String>): Boolean {
+        return matchers.any { matcher -> FilenameUtils.wildcardMatch(path, matcher, IOCase.INSENSITIVE) }
     }
 
     private fun normalizePath(path: String): String {

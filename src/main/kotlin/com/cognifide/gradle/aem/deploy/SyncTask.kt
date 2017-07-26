@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.deploy
 
 import com.cognifide.gradle.aem.AemConfig
-import com.cognifide.gradle.aem.AemInstance
+import com.cognifide.gradle.aem.instance.AemInstance
 import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.pkg.ComposeTask
 import com.cognifide.gradle.aem.internal.PropertyParser

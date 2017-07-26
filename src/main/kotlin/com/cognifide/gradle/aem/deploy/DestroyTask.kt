@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.deploy
 
-import com.cognifide.gradle.aem.AemInstance
-import com.cognifide.gradle.aem.AemLocalInstance
+import com.cognifide.gradle.aem.instance.AemInstance
+import com.cognifide.gradle.aem.instance.AemLocalHandler
 import com.cognifide.gradle.aem.AemTask
 import org.gradle.api.tasks.TaskAction
 
@@ -19,7 +19,7 @@ open class DestroyTask : SyncTask() {
     @TaskAction
     fun create() {
         synchronize({ sync ->
-            val localInstance = AemLocalInstance(sync.instance, project)
+            val localInstance = AemLocalHandler(sync.instance, project)
 
             logger.info("Destroying: $localInstance")
             localInstance.destroy()

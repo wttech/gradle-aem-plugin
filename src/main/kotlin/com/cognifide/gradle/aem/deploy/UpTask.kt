@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.deploy
 
-import com.cognifide.gradle.aem.AemLocalInstance
+import com.cognifide.gradle.aem.instance.AemLocalHandler
 import com.cognifide.gradle.aem.AemTask
 import org.gradle.api.tasks.TaskAction
 
@@ -18,7 +18,7 @@ open class UpTask : SyncTask() {
     @TaskAction
     fun up() {
         synchronize({ sync ->
-            val localInstance = AemLocalInstance(sync.instance, project)
+            val localInstance = AemLocalHandler(sync.instance, project)
 
             logger.info("Turning on: $localInstance")
             localInstance.up()

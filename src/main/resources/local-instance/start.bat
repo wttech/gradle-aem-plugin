@@ -1,1 +1,1 @@
-java -Xrs -Xms128m -Xmx256m -Xmx1536M -XX:PermSize=256m -XX:MaxPermSize=256m -noverify -Xdebug -Xrunjdwp:transport=dt_socket,address=${instance.debugPort},server=y,suspend=n -jar ${jar.absolutePath} -verbose -p ${instance.httpPort} -r ${instance.type} -nointeractive
+java -Xrs -Xms128m -Xmx256m -Xmx1536M -XX:PermSize=256m -XX:MaxPermSize=256m -noverify -Xdebug -Xrunjdwp:transport=dt_socket,address=${instance.debugPort},server=y,suspend=n -jar ${jar.absolutePath} -verbose -p ${instance.httpPort} -r ${instance.typeName} -nointeractive
