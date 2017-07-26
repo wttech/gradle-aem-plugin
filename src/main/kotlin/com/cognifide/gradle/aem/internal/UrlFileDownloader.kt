@@ -5,13 +5,19 @@ import org.gradle.api.logging.Logger
 import java.io.File
 import java.net.URL
 
-class HttpFileDownloader(val project: Project) {
+class UrlFileDownloader(val project: Project) {
 
     var user: String? = null
 
     var password: String? = null
 
     val logger: Logger = project.logger
+
+    companion object {
+        fun handles(sourceUrl: String): Boolean {
+            return !sourceUrl.isNullOrBlank() && Patterns.wildcard(sourceUrl, "*://*")
+        }
+    }
 
     fun download(url: String, file: File) {
         val connection = URL(url).openConnection()

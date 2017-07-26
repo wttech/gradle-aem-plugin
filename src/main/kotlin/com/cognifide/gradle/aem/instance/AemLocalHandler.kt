@@ -41,6 +41,7 @@ class AemLocalHandler(val base: AemInstance, val project: Project) {
         logger.info("JAR file found: ${jar.absolutePath}, exists: ${jar.exists()}")
         logger.info("License file found: ${license.absolutePath}, exists: ${jar.exists()}")
 
+        // TODO make these files configurable (firstly copy from project), then use resources, then expand
         FileOperations.copyResources("local-instance", dir, false, { file, input ->
             if (Patterns.wildcard(file, listOf("**/*.bat", "**/*.sh"))) {
                 val text = input.bufferedReader().use { it.readText() }

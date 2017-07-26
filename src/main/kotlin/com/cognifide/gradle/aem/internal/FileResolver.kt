@@ -51,11 +51,13 @@ class FileResolver(val project: Project, val downloadDir: File) {
         return resolvers.filter(filter).map { it.callback(File("$downloadDir/${it.id}")) }
     }
 
-    fun download(url: String) {
+    fun url(url: String) {
         if (SmbFileDownloader.handles(url)) {
             downloadSmbAuth(url)
-        } else {
+        } else if (UrlFileDownloader.handles(url)) {
             downloadHttp(url)
+        } else {
+            local(url)
         }
     }
 
@@ -94,7 +96,7 @@ class FileResolver(val project: Project, val downloadDir: File) {
     fun downloadHttp(url: String) {
         resolve(url, { dir ->
             val file = downloadFileFor(dir, url)
-            HttpFileDownloader(project).download(url, file)
+            UrlFileDownloader(project).download(url, file)
             file
         })
     }
@@ -102,7 +104,7 @@ class FileResolver(val project: Project, val downloadDir: File) {
     fun downloadHttpAuth(url: String, user: String? = null, password: String? = null) {
         resolve(arrayOf(url, user, password), { dir ->
             val file = downloadFileFor(dir, url)
-            val downloader = HttpFileDownloader(project)
+            val downloader = UrlFileDownloader(project)
 
             downloader.user = user ?: project.properties["aem.http.user"] as String?
             downloader.password = password ?: project.properties["aem.http.password"] as String?

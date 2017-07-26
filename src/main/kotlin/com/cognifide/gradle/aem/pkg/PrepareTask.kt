@@ -27,7 +27,9 @@ open class PrepareTask : DefaultTask(), AemTask {
         description = "Prepare Vault files before composing CRX package"
         group = AemTask.GROUP
 
-        GFileUtils.mkdirs(vaultDir)
+        project.afterEvaluate {
+            config.vaultFilesDirs.forEach { inputs.dir(it) }
+        }
     }
 
     @TaskAction

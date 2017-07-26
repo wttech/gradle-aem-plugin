@@ -29,6 +29,9 @@ open class CreateTask : SyncTask() {
         description = "Creates local AEM instance(s)."
 
         instanceFileResolver.attach(this)
+        project.afterEvaluate {
+            outputs.dir(config.instancesPath)
+        }
     }
 
     fun instanceFiles(closure: Closure<*>) {
@@ -39,7 +42,7 @@ open class CreateTask : SyncTask() {
         val jarUrl = project.properties[JAR_URL_PROP] as String?
                 ?: project.extensions.extraProperties[JAR_URL_PROP] as String?
         if (!jarUrl.isNullOrBlank()) {
-            instanceFileResolver.download(jarUrl!!)
+            instanceFileResolver.url(jarUrl!!)
         }
     }
 
@@ -47,7 +50,7 @@ open class CreateTask : SyncTask() {
         val licenseUrl = project.properties[LICENSE_URL_PROP] as String?
                 ?: project.extensions.extraProperties[LICENSE_URL_PROP] as String?
         if (!licenseUrl.isNullOrBlank()) {
-            instanceFileResolver.download(licenseUrl!!)
+            instanceFileResolver.url(licenseUrl!!)
         }
     }
 
@@ -67,7 +70,7 @@ open class CreateTask : SyncTask() {
             logger.info("Creating: $localInstance")
             localInstance.create(files)
             logger.info("Created: $localInstance")
-        }, AemInstance.filter(project, AemInstance.FILTER_LOCAL))
+        }, AemInstance.filter(project, AemInstance.FILTER_LOCAL)) // TODO only AemLocalInstance instances
     }
 
 }
