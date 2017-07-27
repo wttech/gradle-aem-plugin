@@ -62,6 +62,6 @@ open class PrepareTask : DefaultTask(), AemTask {
             return
         }
 
-        FileOperations.copyResources(AemPlugin.VLT_PATH, vaultDir)
+        FileOperations.copyResources(AemPlugin.VLT_PATH, vaultDir, true)
     }
 }

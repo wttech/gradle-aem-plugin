@@ -115,7 +115,6 @@ data class AemConfig(
 
         /**
          * Wildcard file name filter expression that is used to filter in which Vault files properties can be injected.
-         * This also could be done 'by fileFilter', but due to performance optimization it is done separately.
          */
         @Input
         var filesExpanded: MutableList<String> = mutableListOf("**/${AemPlugin.VLT_PATH}/*.xml"),
@@ -140,6 +139,8 @@ data class AemConfig(
          * Custom path to Vault files that will be used to build CRX package.
          * Useful to share same files for all packages, like package thumbnail.
          * Must be absolute or relative to current working directory.
+         *
+         * Default: "{rootProject}/src/main/resources/META-INF/vault"
          */
         @Input
         var vaultFilesPath: String = "",
@@ -207,7 +208,20 @@ data class AemConfig(
          * Default: "${System.getProperty("user.home")}/.gradle/aem/${project.rootProject.name}"
          */
         @Input
-        var instancesPath: String = ""
+        var instancesPath: String = "",
+
+        /**
+         * Path from which extra files for local AEM instances will be copied.
+         * Useful for overriding default startup scripts ('start.bat' or 'start.sh') or providing some files inside 'crx-quickstart'.
+         */
+        @Input
+        var instanceFilesPath: String = "",
+
+        /**
+         * Wildcard file name filter expression that is used to filter in which instance files properties can be injected.
+         */
+        @Input
+        var instanceFilesExpanded: MutableList<String> = mutableListOf("**/*.properties", "**/*.sh", "**/*.bat", "**/*.xml")
 
 ) : Serializable {
     companion object {
@@ -242,6 +256,7 @@ data class AemConfig(
         vaultFilesPath = "${project.rootProject.projectDir.path}/src/main/resources/${AemPlugin.VLT_PATH}"
         vaultFilterPath = "${project.projectDir.path}/src/main/content/${AemPlugin.VLT_PATH}/filter.xml"
         instancesPath = "${System.getProperty("user.home")}/.gradle/aem/${project.rootProject.name}"
+        instanceFilesPath = "${project.rootProject.projectDir.path}/src/main/resources/${AemPlugin.INSTANCE_FILES_PATH}"
     }
 
     fun attach(task: DefaultTask) {

@@ -41,6 +41,8 @@ class AemPlugin : Plugin<Project> {
         val BUILD_TASK_ROOT = "aemBuild"
 
         val BUILD_TASK_RULE = "Pattern: aem<ProjectPath>Build: Build CRX package and deploy it to AEM instance(s)."
+
+        val INSTANCE_FILES_PATH = "local-instance"
     }
 
     override fun apply(project: Project) {
