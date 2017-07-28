@@ -2,7 +2,7 @@ package com.cognifide.gradle.aem.instance
 
 import java.io.Serializable
 
-data class AemLocalInstance(
+class AemLocalInstance(
         override val httpUrl: String,
         override val user: String,
         override val password: String,
@@ -36,5 +36,9 @@ data class AemLocalInstance(
 
     override val environment: String
         get() = ENVIRONMENT
+
+    override fun toString(): String {
+        return "AemLocalInstance(httpUrl='$httpUrl', user='$user', password='$hiddenPassword', typeName='$typeName', debugPort=$debugPort)"
+    }
 
 }

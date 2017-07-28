@@ -2,7 +2,7 @@ package com.cognifide.gradle.aem.instance
 
 import java.io.Serializable
 
-data class AemRemoteInstance(
+class AemRemoteInstance(
         override val httpUrl: String,
         override val user: String,
         override val password: String,
@@ -17,5 +17,9 @@ data class AemRemoteInstance(
             AemInstanceType.byUrl(httpUrl).name,
             environment
     )
+
+    override fun toString(): String {
+        return "AemRemoteInstance(httpUrl='$httpUrl', user='$user', password='$hiddenPassword', typeName='$typeName', environment='$environment')"
+    }
 
 }

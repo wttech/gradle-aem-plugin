@@ -259,12 +259,6 @@ data class AemConfig(
         instanceFilesPath = "${project.rootProject.projectDir.path}/src/main/resources/${AemPlugin.INSTANCE_FILES_PATH}"
     }
 
-    fun attach(task: DefaultTask) {
-        val inputs = task.inputs
-
-        vaultFilesDirs.forEach { inputs.dir(it) }
-    }
-
     /**
      * Declare new deployment target (AEM instance).
      */

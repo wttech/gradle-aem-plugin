@@ -2,21 +2,32 @@ package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.AemConfig
 import com.cognifide.gradle.aem.AemException
-import com.cognifide.gradle.aem.AemPlugin
 import com.cognifide.gradle.aem.internal.FileOperations
-import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.PropertyParser
 import org.apache.commons.io.FileUtils
+import org.apache.tools.ant.taskdefs.condition.Os
 import org.gradle.api.Project
 import org.gradle.api.logging.Logger
 import org.gradle.util.GFileUtils
+import org.zeroturnaround.zip.ZipUtil
 import java.io.File
 import java.io.Serializable
 
 /**
- * TODO Manage background AEM process properly (java-service-wrapper or commons-exec?)
+ * TODO accept only AemLocalInstance here
  */
-class AemLocalHandler(val base: AemInstance, val project: Project) {
+class AemLocalHandler(val project: Project, val base: AemInstance) {
+
+    companion object {
+        val JAR_STATIC_FILES_PATH = "static/"
+
+        val QUICKSTART_BIN = "crx-quickstart/bin"
+    }
+
+    class Script(val script: File, val command: List<String>) {
+        val commandLine: List<String>
+            get() = command + listOf(script.absolutePath)
+    }
 
     val logger: Logger = project.logger
 
@@ -25,33 +36,49 @@ class AemLocalHandler(val base: AemInstance, val project: Project) {
     val dir = File("${config.instancesPath}/${base.name}")
 
     val jar: File by lazy {
-        var result: File? = null
-        val files = dir.listFiles({ _, name -> Patterns.wildcard(name, "cq-quickstart*.jar") })
-        if (files != null) {
-            result = files.firstOrNull()
-        }
-
-        result ?: File(dir, "cq-quickstart.jar")
+        FileOperations.find(dir, listOf("cq-quickstart*.jar")) ?: File(dir, "cq-quickstart.jar")
     }
+
+    val staticDir = File(dir, "crx-quickstart")
 
     val license = File(dir, "license.properties")
 
-    fun create(files: List<File>) {
-        logger.info("Creating instance at path '${dir.absolutePath}'")
-
-        val filesDir = File(config.instanceFilesPath)
-
-        logger.info("Copying configured instance files from '${filesDir.absolutePath}'")
-        if (filesDir.exists()) {
-            FileUtils.copyDirectory(filesDir, dir)
+    val startScript: Script
+        get() {
+            return if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+                Script(File(dir, "$QUICKSTART_BIN/start.bat"), listOf("cmd", "/c"))
+            } else {
+                Script(File(dir, "$QUICKSTART_BIN/bin/start"), listOf("sh"))
+            }
         }
+
+    val stopScript: Script
+        get() {
+            return if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+                Script(File(dir, "$QUICKSTART_BIN/stop.bat"), listOf("cmd", "/c", "start"))
+            } else {
+                Script(File(dir, "$QUICKSTART_BIN/stop"), listOf("sh"))
+            }
+        }
+
+    fun create(files: List<File>) {
+        cleanDir(true)
+
+        logger.info("Creating instance at path '${dir.absolutePath}'")
 
         logger.info("Copying resolved instance files: ${files.map { it.absolutePath }}")
         GFileUtils.mkdirs(dir)
         files.forEach { FileUtils.copyFileToDirectory(it, dir) }
 
-        logger.info("Copying missing instance files (preserving defaults")
-        FileOperations.copyResources(AemPlugin.INSTANCE_FILES_PATH, dir, true)
+        logger.info("Extracting static files from JAR")
+        extract()
+
+        val filesDir = File(config.instanceFilesPath)
+
+        logger.info("Overriding instance files using dir: ${filesDir.absolutePath}")
+        if (filesDir.exists()) {
+            FileUtils.copyDirectory(filesDir, dir)
+        }
 
         logger.info("Expanding instance files")
         FileOperations.amendFiles(dir, config.instanceFilesExpanded, { source ->
@@ -59,6 +86,26 @@ class AemLocalHandler(val base: AemInstance, val project: Project) {
         })
 
         logger.info("Created instance with success")
+    }
+
+    // TODO maybe introduce progress bar here somehow
+    fun extract() {
+        ZipUtil.unpack(jar, staticDir) { name ->
+            if (name.startsWith(JAR_STATIC_FILES_PATH)) {
+                name.substring(JAR_STATIC_FILES_PATH.length)
+            } else {
+                name
+            }
+        }
+    }
+
+    private fun cleanDir(create: Boolean) {
+        if (dir.exists()) {
+            dir.deleteRecursively()
+        }
+        if (create) {
+            dir.mkdirs()
+        }
     }
 
     fun validate() {
@@ -69,6 +116,14 @@ class AemLocalHandler(val base: AemInstance, val project: Project) {
         if (!license.exists()) {
             throw AemException("License file not found at path: ${license.absolutePath}")
         }
+    }
+
+    fun up() {
+        Runtime.getRuntime().exec(startScript.commandLine.toTypedArray())
+    }
+
+    fun down() {
+        Runtime.getRuntime().exec(stopScript.commandLine.toTypedArray())
     }
 
     val properties: Map<String, Serializable>
@@ -83,23 +138,9 @@ class AemLocalHandler(val base: AemInstance, val project: Project) {
     fun destroy() {
         logger.info("Destroying instance at path '${dir.absolutePath}'")
 
-        if (dir.exists()) {
-            dir.deleteRecursively()
-
-        }
+        cleanDir(false)
 
         logger.info("Destroyed instance with success")
-    }
-
-
-    // TODO Implement 'up'
-    fun up() {
-        Runtime.getRuntime().exec("java -jar ${jar.absolutePath}")
-    }
-
-    // TODO Implement 'down'
-    fun down() {
-        // ...
     }
 
     override fun toString(): String {

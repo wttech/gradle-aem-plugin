@@ -57,7 +57,7 @@ open class CreateTask : SyncTask() {
     @TaskAction
     fun create() {
         if (!instanceFileResolver.configured) {
-            logger.info("Skipping creation, because no instance files are configured.")
+            logger.warn("Skipping creation, because no instance files are configured.")
             return
         }
 
@@ -65,7 +65,7 @@ open class CreateTask : SyncTask() {
         val files = instanceFileResolver.resolveFiles()
 
         logger.info("Creating instances")
-        synchronize({ AemLocalHandler(it.instance, project).create(files) }, AemInstance.filter(project, AemInstance.FILTER_LOCAL))
+        synchronize({ AemLocalHandler(project, it.instance).create(files) }, AemInstance.filter(project, AemInstance.FILTER_LOCAL))
     }
 
 }

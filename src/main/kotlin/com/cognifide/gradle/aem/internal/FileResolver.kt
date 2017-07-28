@@ -52,7 +52,9 @@ class FileResolver(val project: Project, val downloadDir: File) {
     }
 
     fun url(url: String) {
-        if (SmbFileDownloader.handles(url)) {
+        if (SftpFileDownloader.handles(url)) {
+            downloadSftpAuth(url)
+        } else if (SmbFileDownloader.handles(url)) {
             downloadSmbAuth(url)
         } else if (UrlFileDownloader.handles(url)) {
             downloadHttp(url)
@@ -65,6 +67,31 @@ class FileResolver(val project: Project, val downloadDir: File) {
         GFileUtils.mkdirs(targetDir)
 
         return File(targetDir, FilenameUtils.getName(sourceUrl))
+    }
+
+    fun downloadSftp(url: String) {
+        resolve(url, { dir ->
+            val file = downloadFileFor(dir, url)
+            val downloader = SftpFileDownloader(project)
+
+            downloader.download(url, file)
+
+            file
+        })
+    }
+
+    fun downloadSftpAuth(url: String, username: String? = null, password: String? = null) {
+        resolve(url, { dir ->
+            val file = downloadFileFor(dir, url)
+            val downloader = SftpFileDownloader(project)
+
+            downloader.username = username ?: project.properties["aem.sftp.username"] as String?
+            downloader.password = password ?: project.properties["aem.sftp.password"] as String?
+
+            downloader.download(url, file)
+
+            file
+        })
     }
 
     fun downloadSmb(url: String) {

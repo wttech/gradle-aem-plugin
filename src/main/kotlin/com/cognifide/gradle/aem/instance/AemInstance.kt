@@ -88,6 +88,9 @@ interface AemInstance : Serializable {
 
     val password: String
 
+    val hiddenPassword: String
+        get() = "*".repeat(password.length)
+
     val environment: String
 
     val typeName: String

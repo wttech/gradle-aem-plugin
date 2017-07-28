@@ -21,7 +21,7 @@ import org.gradle.language.base.plugins.LifecycleBasePlugin
 /**
  * Plugin assumptions:
  *
- * JVM based languages like Groovy or Kotlin have implicitly applied 'java' plugin.
+ * JVM based languages like Groovy or Kotlin must have implicitly applied 'java' plugin.
  * Projects can have only 'com.cognifide.aem' plugin applied intentionally to generate packages with content only.
  * Projects can have applied official 'osgi' or 'org.dm.bundle' plugins to customize OSGi manifest.
  */
@@ -74,22 +74,17 @@ class AemPlugin : Plugin<Project> {
             jar.dependsOn(updateManifest)
         })
 
-        val create = project.tasks.create(CreateTask.NAME, CreateTask::class.java)
-        val up = project.tasks.create(UpTask.NAME, UpTask::class.java)
         val prepare = project.tasks.create(PrepareTask.NAME, PrepareTask::class.java)
         val compose = project.tasks.create(ComposeTask.NAME, ComposeTask::class.java)
         val upload = project.tasks.create(UploadTask.NAME, UploadTask::class.java)
+        project.tasks.create(DeleteTask.NAME, DeleteTask::class.java)
+        project.tasks.create(PurgeTask.NAME, PurgeTask::class.java)
         val install = project.tasks.create(InstallTask.NAME, InstallTask::class.java)
+        project.tasks.create(UninstallTask.NAME, UninstallTask::class.java)
         val activate = project.tasks.create(ActivateTask.NAME, ActivateTask::class.java)
         val deploy = project.tasks.create(DeployTask.NAME, DeployTask::class.java)
         val distribute = project.tasks.create(DistributeTask.NAME, DistributeTask::class.java)
-        val satisfy = project.tasks.create(SatisfyTask.NAME, SatisfyTask::class.java)
 
-        project.tasks.create(DownTask.NAME, DownTask::class.java)
-        project.tasks.create(DestroyTask.NAME, DestroyTask::class.java)
-        project.tasks.create(UninstallTask.NAME, UninstallTask::class.java)
-        project.tasks.create(DeleteTask.NAME, DeleteTask::class.java)
-        project.tasks.create(PurgeTask.NAME, PurgeTask::class.java)
         project.tasks.create(DebugTask.NAME, DebugTask::class.java)
 
         val assemble = project.tasks.getByName(LifecycleBasePlugin.ASSEMBLE_TASK_NAME)
@@ -100,19 +95,29 @@ class AemPlugin : Plugin<Project> {
         check.mustRunAfter(clean)
         build.dependsOn(compose)
 
-        create.mustRunAfter(clean)
-        up.mustRunAfter(clean, create)
-        prepare.mustRunAfter(clean, create, up)
+        if (project == project.rootProject) {
+            val create = project.tasks.create(CreateTask.NAME, CreateTask::class.java)
+            val destroy = project.tasks.create(DestroyTask.NAME, DestroyTask::class.java)
+            val up = project.tasks.create(UpTask.NAME, UpTask::class.java)
+            val down = project.tasks.create(DownTask.NAME, DownTask::class.java)
+            project.tasks.create(SatisfyTask.NAME, SatisfyTask::class.java)
+
+            create.mustRunAfter(clean)
+            up.mustRunAfter(clean, create)
+            destroy.mustRunAfter(down)
+        }
+
+        prepare.mustRunAfter(clean)
 
         compose.dependsOn(prepare, assemble, check)
         compose.mustRunAfter(clean)
 
-        upload.mustRunAfter(create, satisfy, compose)
-        install.mustRunAfter(create, satisfy, compose, upload)
-        activate.mustRunAfter(create, satisfy, compose, upload, install)
+        upload.mustRunAfter(compose)
+        install.mustRunAfter(compose, upload)
+        activate.mustRunAfter(compose, upload, install)
 
-        deploy.mustRunAfter(create, satisfy, compose)
-        distribute.mustRunAfter(create, satisfy, compose)
+        deploy.mustRunAfter(compose)
+        distribute.mustRunAfter(compose)
 
         val vltClean = project.tasks.create(CleanTask.NAME, CleanTask::class.java)
         val vltRaw = project.tasks.create(VltTask.NAME, VltTask::class.java)
@@ -168,7 +173,6 @@ class AemPlugin : Plugin<Project> {
             project.tasks.forEach { task ->
                 if (task is AemTask && task is DefaultTask) {
                     task.config.validate()
-                    task.config.attach(task)
                 }
             }
         })

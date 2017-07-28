@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.deploy
 
-import com.cognifide.gradle.aem.instance.AemLocalHandler
 import com.cognifide.gradle.aem.AemTask
+import com.cognifide.gradle.aem.instance.AemLocalHandler
 import org.gradle.api.tasks.TaskAction
 
 open class DownTask : SyncTask() {
@@ -17,13 +17,7 @@ open class DownTask : SyncTask() {
 
     @TaskAction
     fun down() {
-        synchronize({ sync ->
-            val localInstance = AemLocalHandler(sync.instance, project)
-
-            logger.info("Turning off: $localInstance")
-            localInstance.down()
-            logger.info("Turned off: $localInstance")
-        })
+        synchronize({ AemLocalHandler(project, it.instance).down() })
     }
 
 }

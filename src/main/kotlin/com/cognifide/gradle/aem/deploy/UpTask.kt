@@ -17,13 +17,7 @@ open class UpTask : SyncTask() {
 
     @TaskAction
     fun up() {
-        synchronize({ sync ->
-            val localInstance = AemLocalHandler(sync.instance, project)
-
-            logger.info("Turning on: $localInstance")
-            localInstance.up()
-            logger.info("Turned on: $localInstance")
-        })
+        synchronize({ AemLocalHandler(project, it.instance).up() })
     }
 
 }

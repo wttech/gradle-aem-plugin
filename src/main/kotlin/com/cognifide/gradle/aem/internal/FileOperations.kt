@@ -49,4 +49,13 @@ object FileOperations {
         file.printWriter().use { it.print(source) }
     }
 
+    fun find(dir: File, patterns: List<String>): File? {
+        var result: File? = null
+        val files = dir.listFiles({ _, name -> Patterns.wildcard(name, patterns) })
+        if (files != null) {
+            result = files.firstOrNull()
+        }
+        return result
+    }
+
 }
