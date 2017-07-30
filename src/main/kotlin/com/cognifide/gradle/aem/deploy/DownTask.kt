@@ -17,10 +17,6 @@ open class DownTask : SyncTask() {
 
     @TaskAction
     fun down() {
-        if (!AemLocalHandler.configured(project)) {
-            return
-        }
-
         synchronize({ AemLocalHandler(project, it.instance).down() })
     }
 

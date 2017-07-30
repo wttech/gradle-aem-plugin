@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.deploy
 
-import com.cognifide.gradle.aem.instance.AemLocalHandler
 import com.cognifide.gradle.aem.AemTask
+import com.cognifide.gradle.aem.instance.AemLocalHandler
 import org.gradle.api.tasks.TaskAction
 
 open class UpTask : SyncTask() {
@@ -17,10 +17,6 @@ open class UpTask : SyncTask() {
 
     @TaskAction
     fun up() {
-        if (!AemLocalHandler.configured(project)) {
-            return
-        }
-
         synchronize({ AemLocalHandler(project, it.instance).up() })
     }
 

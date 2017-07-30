@@ -18,10 +18,6 @@ open class DestroyTask : SyncTask() {
 
     @TaskAction
     fun destroy() {
-        if (!AemLocalHandler.configured(project)) {
-            return
-        }
-
         synchronize({ AemLocalHandler(project, it.instance).destroy() }, AemInstance.filter(project, AemInstance.FILTER_LOCAL))
     }
 

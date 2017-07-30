@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.pkg
 
 import com.cognifide.gradle.aem.AemConfig
-import com.cognifide.gradle.aem.AemPlugin
+import com.cognifide.gradle.aem.AemPackagePlugin
 import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.internal.FileOperations
 import org.apache.commons.io.FileUtils
@@ -9,7 +9,6 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
-import org.gradle.util.GFileUtils
 
 open class PrepareTask : DefaultTask(), AemTask {
 
@@ -21,7 +20,7 @@ open class PrepareTask : DefaultTask(), AemTask {
     final override val config = AemConfig.of(project)
 
     @OutputDirectory
-    val vaultDir = AemTask.temporaryDir(project, NAME, AemPlugin.VLT_PATH)
+    val vaultDir = AemTask.temporaryDir(project, NAME, AemPackagePlugin.VLT_PATH)
 
     init {
         description = "Prepare Vault files before composing CRX package"
@@ -62,6 +61,6 @@ open class PrepareTask : DefaultTask(), AemTask {
             return
         }
 
-        FileOperations.copyResources(AemPlugin.VLT_PATH, vaultDir, true)
+        FileOperations.copyResources(AemPackagePlugin.VLT_PATH, vaultDir, true)
     }
 }

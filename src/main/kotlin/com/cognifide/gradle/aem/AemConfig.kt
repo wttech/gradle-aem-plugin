@@ -117,7 +117,7 @@ data class AemConfig(
          * Wildcard file name filter expression that is used to filter in which Vault files properties can be injected.
          */
         @Input
-        var filesExpanded: MutableList<String> = mutableListOf("**/${AemPlugin.VLT_PATH}/*.xml"),
+        var filesExpanded: MutableList<String> = mutableListOf("**/${AemPackagePlugin.VLT_PATH}/*.xml"),
 
         /**
          * Define here custom properties that can be used in CRX package files like 'META-INF/vault/properties.xml'.
@@ -245,9 +245,7 @@ data class AemConfig(
     /**
      * Initialize defaults that depends on concrete type of project.
      */
-    fun configure(task: DefaultTask) {
-        val project = task.project
-
+    fun configure(project: Project) {
         if (project == project.rootProject) {
             bundlePath = "/apps/${project.name}/install"
         } else {
@@ -255,10 +253,12 @@ data class AemConfig(
         }
 
         contentPath = "${project.projectDir.path}/src/main/content"
-        vaultFilesPath = "${project.rootProject.projectDir.path}/src/main/resources/${AemPlugin.VLT_PATH}"
-        vaultFilterPath = "${project.projectDir.path}/src/main/content/${AemPlugin.VLT_PATH}/filter.xml"
+        vaultFilesPath = "${project.rootProject.projectDir.path}/src/main/resources/${AemPackagePlugin.VLT_PATH}"
+        vaultFilterPath = "${project.projectDir.path}/src/main/content/${AemPackagePlugin.VLT_PATH}/filter.xml"
         instancesPath = "${System.getProperty("user.home")}/.gradle/aem/${project.rootProject.name}"
-        instanceFilesPath = "${project.rootProject.projectDir.path}/src/main/resources/${AemPlugin.INSTANCE_FILES_PATH}"
+        instanceFilesPath = "${project.rootProject.projectDir.path}/src/main/resources/${AemInstancePlugin.FILES_PATH}"
+
+        project.afterEvaluate { validate() }
     }
 
     /**
@@ -314,7 +314,7 @@ data class AemConfig(
         get() {
             val paths = listOf(
                     vaultFilesPath,
-                    "$contentPath/${AemPlugin.VLT_PATH}"
+                    "$contentPath/${AemPackagePlugin.VLT_PATH}"
             )
 
             return paths.filter { !it.isNullOrBlank() }.map { File(it) }

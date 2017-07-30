@@ -2,14 +2,13 @@ package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.AemConfig
 import com.cognifide.gradle.aem.AemException
-import com.cognifide.gradle.aem.AemPlugin
-import com.cognifide.gradle.aem.deploy.CreateTask
+import com.cognifide.gradle.aem.AemInstancePlugin
 import com.cognifide.gradle.aem.internal.FileOperations
 import com.cognifide.gradle.aem.internal.PropertyParser
 import org.apache.commons.io.FileUtils
-import org.apache.tools.ant.taskdefs.condition.Os
 import org.gradle.api.Project
 import org.gradle.api.logging.Logger
+import org.gradle.internal.os.OperatingSystem
 import org.gradle.util.GFileUtils
 import org.zeroturnaround.zip.ZipUtil
 import java.io.File
@@ -21,10 +20,6 @@ class AemLocalHandler(val project: Project, val base: AemInstance) {
 
     companion object {
         val JAR_STATIC_FILES_PATH = "static/"
-
-        fun configured(project: Project): Boolean {
-            return (project.tasks.getByName(CreateTask.NAME) as CreateTask).instanceFileResolver.configured
-        }
     }
 
     class Script(val script: File, val command: List<String>) {
@@ -48,7 +43,7 @@ class AemLocalHandler(val project: Project, val base: AemInstance) {
 
     val startScript: Script
         get() {
-            return if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+            return if (OperatingSystem.current().isWindows) {
                 Script(File(dir, "start.bat"), listOf("cmd", "/C"))
             } else {
                 Script(File(dir, "start.sh"), listOf("sh"))
@@ -57,7 +52,7 @@ class AemLocalHandler(val project: Project, val base: AemInstance) {
 
     val stopScript: Script
         get() {
-            return if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+            return if (OperatingSystem.current().isWindows) {
                 Script(File(dir, "stop.bat"), listOf("cmd", "/C"))
             } else {
                 Script(File(dir, "stop.sh"), listOf("sh"))
@@ -77,7 +72,7 @@ class AemLocalHandler(val project: Project, val base: AemInstance) {
         extract()
 
         logger.info("Creating default instance files")
-        FileOperations.copyResources(AemPlugin.INSTANCE_FILES_PATH, dir, true)
+        FileOperations.copyResources(AemInstancePlugin.FILES_PATH, dir, true)
 
         val filesDir = File(config.instanceFilesPath)
 

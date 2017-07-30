@@ -1,7 +1,8 @@
 package com.cognifide.gradle.aem.pkg
 
+import com.cognifide.gradle.aem.AemBasePlugin
 import com.cognifide.gradle.aem.AemConfig
-import com.cognifide.gradle.aem.AemPlugin
+import com.cognifide.gradle.aem.AemPackagePlugin
 import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.PropertyParser
@@ -32,7 +33,7 @@ open class ComposeTask : Zip(), AemTask {
     val vaultFilters = mutableListOf<File>()
 
     @InputDirectory
-    val vaultDir = AemTask.temporaryDir(project, PrepareTask.NAME, AemPlugin.VLT_PATH)
+    val vaultDir = AemTask.temporaryDir(project, PrepareTask.NAME, AemPackagePlugin.VLT_PATH)
 
     @Internal
     var bundleCollectors: List<() -> Unit> = mutableListOf()
@@ -117,7 +118,7 @@ open class ComposeTask : Zip(), AemTask {
     fun includeProjects(pathFilter: String) {
         project.gradle.afterProject { subproject ->
             if (subproject != project
-                    && subproject.plugins.hasPlugin(AemPlugin.ID)
+                    && subproject.plugins.hasPlugin(AemBasePlugin.ID)
                     && (pathFilter.isNullOrBlank() || Patterns.wildcard(subproject.path, pathFilter))) {
                 includeProject(subproject)
             }
@@ -166,7 +167,7 @@ open class ComposeTask : Zip(), AemTask {
             val jars = JarCollector(project).all.toSet()
 
             if (jars.isNotEmpty()) {
-                into("${AemPlugin.JCR_ROOT}/$installPath") { spec ->
+                into("${AemPackagePlugin.JCR_ROOT}/$installPath") { spec ->
                     spec.from(jars)
                     fileFilter(spec)
                 }
@@ -188,9 +189,9 @@ open class ComposeTask : Zip(), AemTask {
         }
 
         contentCollectors += {
-            val contentDir = File("${config.contentPath}/${AemPlugin.JCR_ROOT}")
+            val contentDir = File("${config.contentPath}/${AemPackagePlugin.JCR_ROOT}")
             if (contentDir.exists()) {
-                into(AemPlugin.JCR_ROOT) { spec ->
+                into(AemPackagePlugin.JCR_ROOT) { spec ->
                     spec.from(contentDir)
                     fileFilter(spec)
                 }
@@ -223,7 +224,7 @@ open class ComposeTask : Zip(), AemTask {
 
     fun includeVault(vltPath: Any) {
         contentCollectors += {
-            into(AemPlugin.VLT_PATH, { spec ->
+            into(AemPackagePlugin.VLT_PATH, { spec ->
                 spec.from(vltPath)
                 fileFilter(spec)
             })
