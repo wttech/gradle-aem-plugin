@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.deploy
 import com.cognifide.gradle.aem.AemConfig
 import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.instance.AemInstance
+import com.cognifide.gradle.aem.instance.AemLocalHandle
 import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.pkg.ComposeTask
 import org.gradle.api.DefaultTask
@@ -20,8 +21,12 @@ abstract class SyncTask : DefaultTask(), AemTask {
     @Internal
     protected val propertyParser = PropertyParser(project)
 
-    protected fun synchronize(deployer: (sync: DeploySynchronizer) -> Unit, instances: List<AemInstance> = filterInstances()) {
-        val callback = { instance: AemInstance -> synchronize(deployer, instance) }
+    protected fun synchronizeInstances(deployer: (DeploySynchronizer) -> Unit) {
+        synchronizeInstances(deployer, AemInstance.filter(project, AemInstance.FILTER_LOCAL))
+    }
+
+    protected fun <T : AemInstance> synchronizeInstances(deployer: (DeploySynchronizer) -> Unit, instances: List<T>) {
+        val callback = { instance: T -> synchronizeInstances(deployer, instance) }
         if (config.deployParallel) {
             instances.parallelStream().forEach(callback)
         } else {
@@ -29,10 +34,16 @@ abstract class SyncTask : DefaultTask(), AemTask {
         }
     }
 
-    protected fun synchronize(deployer: (sync: DeploySynchronizer) -> Unit, instance: AemInstance) {
+    protected fun <T : AemInstance> synchronizeInstances(deployer: (DeploySynchronizer) -> Unit, instance: T) {
         logger.info("Synchronizing with: $instance")
 
         deployer(DeploySynchronizer(instance, config))
+    }
+
+    protected fun synchronizeLocalInstances(handler: (AemLocalHandle) -> Unit) {
+        AemInstance.locals(project).forEach { instance ->
+            handler(AemLocalHandle(project, DeploySynchronizer(instance, config)))
+        }
     }
 
     protected fun filterInstances(instanceGroup: String = AemInstance.FILTER_LOCAL): List<AemInstance> {

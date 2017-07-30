@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.instance
 import com.cognifide.gradle.aem.AemConfig
 import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.AemInstancePlugin
+import com.cognifide.gradle.aem.deploy.DeploySynchronizer
 import com.cognifide.gradle.aem.internal.FileOperations
 import com.cognifide.gradle.aem.internal.PropertyParser
 import org.apache.commons.io.FileUtils
@@ -13,10 +14,7 @@ import org.gradle.util.GFileUtils
 import org.zeroturnaround.zip.ZipUtil
 import java.io.File
 
-/**
- * TODO accept only AemLocalInstance here
- */
-class AemLocalHandler(val project: Project, val base: AemInstance) {
+class AemLocalHandle(val project: Project, val sync: DeploySynchronizer) {
 
     companion object {
         val JAR_STATIC_FILES_PATH = "static/"
@@ -27,11 +25,13 @@ class AemLocalHandler(val project: Project, val base: AemInstance) {
             get() = command + listOf(script.absolutePath)
     }
 
+    val instance = sync.instance
+
     val logger: Logger = project.logger
 
     val config = AemConfig.of(project)
 
-    val dir = File("${config.instancesPath}/${base.name}")
+    val dir = File("${config.instancesPath}/${instance.name}")
 
     val jar: File by lazy {
         FileOperations.find(dir, listOf("cq-quickstart*.jar")) ?: File(dir, "cq-quickstart.jar")
@@ -134,9 +134,9 @@ class AemLocalHandler(val project: Project, val base: AemInstance) {
     val properties: Map<String, Any>
         get() {
             return mapOf(
-                    "instance" to base,
+                    "instance" to sync.instance,
                     "instancePath" to dir.absolutePath,
-                    "handler" to this
+                    "handle" to this
             )
         }
 
@@ -149,7 +149,7 @@ class AemLocalHandler(val project: Project, val base: AemInstance) {
     }
 
     override fun toString(): String {
-        return "AemLocalHandler(dir=${dir.absolutePath}, base=$base)"
+        return "AemLocalHandler(dir=${dir.absolutePath}, instance=$instance)"
     }
 
 }

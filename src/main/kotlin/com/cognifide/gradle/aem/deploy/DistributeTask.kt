@@ -17,7 +17,7 @@ open class DistributeTask : SyncTask() {
 
     @TaskAction
     fun distribute() {
-        synchronize({ sync ->
+        synchronizeInstances({ sync ->
             val packagePath = uploadPackage(determineLocalPackage(), sync).path
 
             installPackage(packagePath, sync)

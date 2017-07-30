@@ -7,6 +7,7 @@ import com.cognifide.gradle.aem.internal.PropertyParser
 import org.gradle.api.Project
 import java.io.Serializable
 import java.net.URL
+import kotlin.reflect.KClass
 
 interface AemInstance : Serializable {
 
@@ -71,6 +72,21 @@ interface AemInstance : Serializable {
             return instances.filter { instance ->
                 PropertyParser(project).filter(instance.name, "aem.deploy.instance.name", instanceFilter)
             }
+        }
+
+        @Suppress("unchecked_cast")
+        fun <T : AemInstance> filter(project: Project, type: KClass<T>): List<T> {
+            return filter(project, AemInstance.FILTER_LOCAL).fold(mutableListOf<T>(), { result, instance ->
+                if (type.isInstance(instance)) result += (instance as T); result
+            })
+        }
+
+        fun locals(project: Project): List<AemLocalInstance> {
+            return filter(project, AemLocalInstance::class)
+        }
+
+        fun remotes(project: Project): List<AemRemoteInstance> {
+            return filter(project, AemRemoteInstance::class)
         }
 
         fun portOfUrl(url: String): Int {

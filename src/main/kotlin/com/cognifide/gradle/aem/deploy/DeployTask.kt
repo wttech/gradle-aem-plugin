@@ -16,7 +16,7 @@ open class DeployTask : SyncTask() {
 
     @TaskAction
     fun deploy() {
-        synchronize({ sync ->
+        synchronizeInstances({ sync ->
             val packagePath = uploadPackage(determineLocalPackage(), sync).path
 
             installPackage(packagePath, sync)

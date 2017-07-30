@@ -1,8 +1,6 @@
 package com.cognifide.gradle.aem.deploy
 
 import com.cognifide.gradle.aem.AemTask
-import com.cognifide.gradle.aem.instance.AemInstance
-import com.cognifide.gradle.aem.instance.AemLocalHandler
 import com.cognifide.gradle.aem.internal.FileResolver
 import groovy.lang.Closure
 import org.gradle.api.tasks.Internal
@@ -59,7 +57,7 @@ open class CreateTask : SyncTask() {
         val files = instanceFileResolver.resolveFiles()
 
         logger.info("Creating instances")
-        synchronize({ AemLocalHandler(project, it.instance).create(files) }, AemInstance.filter(project, AemInstance.FILTER_LOCAL))
+        synchronizeLocalInstances({ it.create(files) })
     }
 
 }

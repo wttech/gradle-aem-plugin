@@ -32,7 +32,7 @@ open class SatisfyTask : SyncTask() {
 
     @TaskAction
     fun satisfy() {
-        synchronize({ sync ->
+        synchronizeInstances({ sync ->
             logger.info("Providing packages from local and remote sources.")
 
             val filterProp = "aem.deploy.satisfy.group"

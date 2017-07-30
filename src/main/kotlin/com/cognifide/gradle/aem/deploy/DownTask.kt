@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem.deploy
 
 import com.cognifide.gradle.aem.AemTask
-import com.cognifide.gradle.aem.instance.AemLocalHandler
 import org.gradle.api.tasks.TaskAction
 
 open class DownTask : SyncTask() {
@@ -17,7 +16,7 @@ open class DownTask : SyncTask() {
 
     @TaskAction
     fun down() {
-        synchronize({ AemLocalHandler(project, it.instance).down() })
+        synchronizeLocalInstances { it.down() }
     }
 
 }

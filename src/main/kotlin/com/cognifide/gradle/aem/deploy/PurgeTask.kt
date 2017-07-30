@@ -16,7 +16,7 @@ open class PurgeTask : SyncTask() {
 
     @TaskAction
     fun purge() {
-        synchronize({ sync ->
+        synchronizeInstances({ sync ->
             propertyParser.checkForce()
 
             try {
