@@ -56,8 +56,7 @@ open class CreateTask : SyncTask() {
 
     @TaskAction
     fun create() {
-        if (!instanceFileResolver.configured) {
-            logger.warn("Skipping creation, because no instance files are configured.")
+        if (!AemLocalHandler.configured(project)) {
             return
         }
 

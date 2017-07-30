@@ -17,6 +17,10 @@ open class UpTask : SyncTask() {
 
     @TaskAction
     fun up() {
+        if (!AemLocalHandler.configured(project)) {
+            return
+        }
+
         synchronize({ AemLocalHandler(project, it.instance).up() })
     }
 

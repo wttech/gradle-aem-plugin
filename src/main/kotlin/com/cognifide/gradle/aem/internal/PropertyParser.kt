@@ -33,7 +33,7 @@ class PropertyParser(val project: Project) {
 
             return template.toString()
         } catch (e: Throwable) {
-            throw AemException("Cannot expand properly all properties. Probably used non-existing field name. Source: '$source'", e)
+            throw AemException("Cannot expand properly all properties. Probably used non-existing field name or unescaped char detected. Source: '$source'", e)
         }
     }
 

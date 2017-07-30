@@ -2,6 +2,8 @@ package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.AemConfig
 import com.cognifide.gradle.aem.AemException
+import com.cognifide.gradle.aem.AemPlugin
+import com.cognifide.gradle.aem.deploy.CreateTask
 import com.cognifide.gradle.aem.internal.FileOperations
 import com.cognifide.gradle.aem.internal.PropertyParser
 import org.apache.commons.io.FileUtils
@@ -11,7 +13,6 @@ import org.gradle.api.logging.Logger
 import org.gradle.util.GFileUtils
 import org.zeroturnaround.zip.ZipUtil
 import java.io.File
-import java.io.Serializable
 
 /**
  * TODO accept only AemLocalInstance here
@@ -21,7 +22,9 @@ class AemLocalHandler(val project: Project, val base: AemInstance) {
     companion object {
         val JAR_STATIC_FILES_PATH = "static/"
 
-        val QUICKSTART_BIN = "crx-quickstart/bin"
+        fun configured(project: Project): Boolean {
+            return (project.tasks.getByName(CreateTask.NAME) as CreateTask).instanceFileResolver.configured
+        }
     }
 
     class Script(val script: File, val command: List<String>) {
@@ -46,18 +49,18 @@ class AemLocalHandler(val project: Project, val base: AemInstance) {
     val startScript: Script
         get() {
             return if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-                Script(File(dir, "$QUICKSTART_BIN/start.bat"), listOf("cmd", "/c"))
+                Script(File(dir, "start.bat"), listOf("cmd", "/C"))
             } else {
-                Script(File(dir, "$QUICKSTART_BIN/bin/start"), listOf("sh"))
+                Script(File(dir, "start.sh"), listOf("sh"))
             }
         }
 
     val stopScript: Script
         get() {
             return if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-                Script(File(dir, "$QUICKSTART_BIN/stop.bat"), listOf("cmd", "/c", "start"))
+                Script(File(dir, "stop.bat"), listOf("cmd", "/C"))
             } else {
-                Script(File(dir, "$QUICKSTART_BIN/stop"), listOf("sh"))
+                Script(File(dir, "stop.sh"), listOf("sh"))
             }
         }
 
@@ -73,9 +76,12 @@ class AemLocalHandler(val project: Project, val base: AemInstance) {
         logger.info("Extracting static files from JAR")
         extract()
 
+        logger.info("Creating default instance files")
+        FileOperations.copyResources(AemPlugin.INSTANCE_FILES_PATH, dir, true)
+
         val filesDir = File(config.instanceFilesPath)
 
-        logger.info("Overriding instance files using dir: ${filesDir.absolutePath}")
+        logger.info("Overriding instance files using project dir: ${filesDir.absolutePath}")
         if (filesDir.exists()) {
             FileUtils.copyDirectory(filesDir, dir)
         }
@@ -119,19 +125,23 @@ class AemLocalHandler(val project: Project, val base: AemInstance) {
     }
 
     fun up() {
-        Runtime.getRuntime().exec(startScript.commandLine.toTypedArray())
+        ProcessBuilder(*startScript.commandLine.toTypedArray())
+                .directory(dir)
+                .start()
     }
 
     fun down() {
-        Runtime.getRuntime().exec(stopScript.commandLine.toTypedArray())
+        ProcessBuilder(*stopScript.commandLine.toTypedArray())
+                .directory(dir)
+                .start()
     }
 
-    val properties: Map<String, Serializable>
+    val properties: Map<String, Any>
         get() {
             return mapOf(
                     "instance" to base,
-                    "jar" to jar,
-                    "license" to license
+                    "instancePath" to dir.absolutePath,
+                    "handler" to this
             )
         }
 
@@ -144,7 +154,7 @@ class AemLocalHandler(val project: Project, val base: AemInstance) {
     }
 
     override fun toString(): String {
-        return "AemLocalHandler(dir=${dir.absolutePath})"
+        return "AemLocalHandler(dir=${dir.absolutePath}, base=$base)"
     }
 
 }

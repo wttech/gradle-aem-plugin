@@ -213,6 +213,8 @@ data class AemConfig(
         /**
          * Path from which extra files for local AEM instances will be copied.
          * Useful for overriding default startup scripts ('start.bat' or 'start.sh') or providing some files inside 'crx-quickstart'.
+         *
+         * Default: "{rootProject}/src/main/resources/local-instance"
          */
         @Input
         var instanceFilesPath: String = "",

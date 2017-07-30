@@ -74,6 +74,17 @@ class AemPlugin : Plugin<Project> {
             jar.dependsOn(updateManifest)
         })
 
+        val create = project.tasks.create(CreateTask.NAME, CreateTask::class.java)
+        val destroy = project.tasks.create(DestroyTask.NAME, DestroyTask::class.java)
+        val up = project.tasks.create(UpTask.NAME, UpTask::class.java)
+        val down = project.tasks.create(DownTask.NAME, DownTask::class.java)
+        project.tasks.create(SatisfyTask.NAME, SatisfyTask::class.java)
+
+        create.mustRunAfter(clean)
+        up.mustRunAfter(clean)
+        up.dependsOn(create)
+        destroy.mustRunAfter(down)
+
         val prepare = project.tasks.create(PrepareTask.NAME, PrepareTask::class.java)
         val compose = project.tasks.create(ComposeTask.NAME, ComposeTask::class.java)
         val upload = project.tasks.create(UploadTask.NAME, UploadTask::class.java)
@@ -94,18 +105,6 @@ class AemPlugin : Plugin<Project> {
         assemble.mustRunAfter(clean)
         check.mustRunAfter(clean)
         build.dependsOn(compose)
-
-        if (project == project.rootProject) {
-            val create = project.tasks.create(CreateTask.NAME, CreateTask::class.java)
-            val destroy = project.tasks.create(DestroyTask.NAME, DestroyTask::class.java)
-            val up = project.tasks.create(UpTask.NAME, UpTask::class.java)
-            val down = project.tasks.create(DownTask.NAME, DownTask::class.java)
-            project.tasks.create(SatisfyTask.NAME, SatisfyTask::class.java)
-
-            create.mustRunAfter(clean)
-            up.mustRunAfter(clean, create)
-            destroy.mustRunAfter(down)
-        }
 
         prepare.mustRunAfter(clean)
 
