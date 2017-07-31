@@ -3,9 +3,11 @@ package com.cognifide.gradle.aem.deploy
 import com.cognifide.gradle.aem.AemConfig
 import com.cognifide.gradle.aem.instance.AemInstance
 import org.apache.commons.httpclient.HttpClient
+import org.apache.commons.httpclient.HttpMethod
 import org.apache.commons.httpclient.HttpStatus
 import org.apache.commons.httpclient.UsernamePasswordCredentials
 import org.apache.commons.httpclient.auth.AuthScope
+import org.apache.commons.httpclient.methods.GetMethod
 import org.apache.commons.httpclient.methods.PostMethod
 import org.apache.commons.httpclient.methods.multipart.*
 import org.apache.commons.io.IOUtils
@@ -19,23 +21,36 @@ class DeploySynchronizer(val instance: AemInstance, val config: AemConfig) {
     companion object {
         private val LOG = LoggerFactory.getLogger(DeploySynchronizer::class.java)
 
-        private val PACKAGE_MAMAGER_SERVICE_SUFFIX = "/crx/packmgr/service"
+        private val PACKAGE_MANAGER_SERVICE_SUFFIX = "/crx/packmgr/service"
 
         private val PACKAGE_MANAGER_LIST_SUFFIX = "/crx/packmgr/list.jsp"
     }
 
-    val jsonTargetUrl = instance.httpUrl + PACKAGE_MAMAGER_SERVICE_SUFFIX + "/.json"
+    val jsonTargetUrl = instance.httpUrl + PACKAGE_MANAGER_SERVICE_SUFFIX + "/.json"
 
-    val htmlTargetUrl = instance.httpUrl + PACKAGE_MAMAGER_SERVICE_SUFFIX + "/.html"
+    val htmlTargetUrl = instance.httpUrl + PACKAGE_MANAGER_SERVICE_SUFFIX + "/.html"
 
     val listPackagesUrl = instance.httpUrl + PACKAGE_MANAGER_LIST_SUFFIX
 
+    val bundlesUrl = "${instance.httpUrl}/system/console/bundles.json"
+
+    fun get(url: String): String {
+        val method = GetMethod(url)
+
+        return execute(method)
+    }
+
+    fun post(url: String, params: Map<String, Any>) = post(url, createParts(params))
+
     fun post(url: String, parts: List<Part> = listOf()): String {
         val method = PostMethod(url)
+        method.requestEntity = MultipartRequestEntity(parts.toTypedArray(), method.params)
 
+        return execute(method)
+    }
+
+    private fun execute(method: HttpMethod): String {
         try {
-            method.requestEntity = MultipartRequestEntity(parts.toTypedArray(), method.params)
-
             val status = createHttpClient(instance.user, instance.password).executeMethod(method)
             if (status == HttpStatus.SC_OK) {
                 return IOUtils.toString(method.responseBodyAsStream)
@@ -51,8 +66,6 @@ class DeploySynchronizer(val instance: AemInstance, val config: AemConfig) {
             method.releaseConnection()
         }
     }
-
-    fun post(url: String, params: Map<String, Any>) = post(url, createParts(params))
 
     private fun createHttpClient(user: String, password: String): HttpClient {
         val client = HttpClient()
