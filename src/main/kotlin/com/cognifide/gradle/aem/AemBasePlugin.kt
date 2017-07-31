@@ -10,6 +10,8 @@ import org.gradle.api.plugins.BasePlugin
 class AemBasePlugin : Plugin<Project> {
 
     companion object {
+        val PKG = "com.cognifide.gradle.aem"
+
         val ID = "com.cognifide.aem.base"
     }
 

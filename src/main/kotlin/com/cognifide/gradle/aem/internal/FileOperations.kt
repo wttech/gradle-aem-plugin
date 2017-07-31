@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.internal
 
+import com.cognifide.gradle.aem.AemBasePlugin
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
 import org.apache.commons.io.filefilter.FalseFileFilter
@@ -11,8 +12,12 @@ import java.io.FileOutputStream
 
 object FileOperations {
 
+    fun getResources(path: String): List<String> {
+        return Reflections("${AemBasePlugin.PKG}.$path".replace("/", "."), ResourcesScanner()).getResources { true; }.toList()
+    }
+
     fun eachResource(resourceRoot: String, targetDir: File, callback: (String, File) -> Unit) {
-        for (resourcePath in Reflections(resourceRoot, ResourcesScanner()).getResources { true }) {
+        for (resourcePath in getResources(resourceRoot)) {
             val outputFile = File(targetDir, resourcePath.substringAfterLast("$resourceRoot/"))
 
             callback(resourcePath, outputFile)

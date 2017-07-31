@@ -27,7 +27,7 @@ open class PrepareTask : DefaultTask(), AemTask {
         group = AemTask.GROUP
 
         project.afterEvaluate {
-            config.vaultFilesDirs.forEach { inputs.dir(it) }
+            config.vaultFilesDirs.forEach { dir -> inputs.dir(dir) }
         }
     }
 

@@ -124,6 +124,7 @@ class AemPackagePlugin : Plugin<Project> {
 
                     val task = project.tasks.create(taskName)
                     task.dependsOn(build, deploy)
+                    task.doLast { project.logger.info("Building project '${project.name}' at path '${project.path}' ended with success.") }
                 }
             }
         })
