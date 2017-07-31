@@ -87,6 +87,7 @@ class FileResolver(val project: Project, val downloadDir: File) {
 
             downloader.username = username ?: project.properties["aem.sftp.username"] as String?
             downloader.password = password ?: project.properties["aem.sftp.password"] as String?
+            downloader.knownHost = password ?: project.properties["aem.sftp.knownHost"] as String?
 
             downloader.download(url, file)
 
