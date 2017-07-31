@@ -33,6 +33,7 @@ dependencies {
     compile group: 'org.zeroturnaround', name: 'zt-zip', version: '1.11'
     compile group: 'com.jcraft', name: 'jsch', version: '0.1.54'
     compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.3'
+    compile group: 'org.osgi', name: 'org.osgi.core', version: '6.0.0'
 }
 
 gradlePlugin {

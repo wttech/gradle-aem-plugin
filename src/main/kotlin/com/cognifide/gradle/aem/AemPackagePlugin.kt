@@ -36,10 +36,7 @@ class AemPackagePlugin : Plugin<Project> {
 
         val JCR_ROOT = "jcr_root"
 
-        val BUILD_TASK_ROOT = "aemBuild"
-
         val BUILD_TASK_RULE = "Pattern: aem<ProjectPath>Build: Build CRX package and deploy it to AEM instance(s)."
-
     }
 
     override fun apply(project: Project) {
@@ -109,22 +106,17 @@ class AemPackagePlugin : Plugin<Project> {
         vltCheckout.mustRunAfter(clean)
         vltSync.mustRunAfter(clean)
 
+        project.tasks.create(BuildTask.NAME, BuildTask::class.java).dependsOn(build, deploy)
         project.tasks.addRule(BUILD_TASK_RULE, { taskName ->
             val desiredTaskName = if (project == project.rootProject) {
-                BUILD_TASK_ROOT
+                BuildTask.NAME
             } else {
                 "aem${CaseFormat.LOWER_HYPHEN.to(CaseFormat.UPPER_CAMEL, project.path.replace(":", "-"))}Build"
             }
 
             if (taskName == desiredTaskName) {
-                if (project.tasks.findByName(taskName) != null) {
-                    project.logger.info("Build rule task '$taskName' already exists, so it will be not created.")
-                } else {
-                    project.logger.info("Creating build rule task named '$taskName'.")
-
-                    val task = project.tasks.create(taskName)
-                    task.dependsOn(build, deploy)
-                    task.doLast { project.logger.info("Building project '${project.name}' at path '${project.path}' ended with success.") }
+                if (project.tasks.findByName(taskName) == null) {
+                    project.tasks.create(taskName, BuildTask::class.java).dependsOn(build, deploy)
                 }
             }
         })

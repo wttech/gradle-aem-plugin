@@ -22,7 +22,7 @@ abstract class SyncTask : DefaultTask(), AemTask {
     protected val propertyParser = PropertyParser(project)
 
     protected fun synchronizeInstances(deployer: (DeploySynchronizer) -> Unit) {
-        synchronizeInstances(deployer, AemInstance.filter(project, AemInstance.FILTER_LOCAL))
+        synchronizeInstances(deployer, filterInstances())
     }
 
     protected fun <T : AemInstance> synchronizeInstances(deployer: (DeploySynchronizer) -> Unit, instances: List<T>) {

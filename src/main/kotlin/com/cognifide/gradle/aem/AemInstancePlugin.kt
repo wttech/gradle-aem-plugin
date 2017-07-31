@@ -1,16 +1,16 @@
 package com.cognifide.gradle.aem
 
-import com.cognifide.gradle.aem.deploy.CreateTask
-import com.cognifide.gradle.aem.deploy.DestroyTask
-import com.cognifide.gradle.aem.deploy.DownTask
-import com.cognifide.gradle.aem.deploy.UpTask
+import com.cognifide.gradle.aem.deploy.BuildTask
+import com.cognifide.gradle.aem.deploy.SatisfyTask
+import com.cognifide.gradle.aem.instance.*
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 
 /**
  * Separate plugin which provides tasks for managing local instances.
- * Can be applied only to one project in build.
+ * Most often should be applied only to one project in build.
+ * Applying it multiple times to same configuration could case confusing errors like AEM started multiple times.
  */
 class AemInstancePlugin : Plugin<Project> {
 
@@ -21,17 +21,8 @@ class AemInstancePlugin : Plugin<Project> {
     }
 
     override fun apply(project: Project) {
-        preventAppliedMultiple(project)
         setupDependentPlugins(project)
         setupTasks(project)
-    }
-
-    private fun preventAppliedMultiple(project: Project) {
-        project.allprojects.forEach { subproject ->
-            if (subproject.plugins.hasPlugin(ID)) {
-                throw AemException("AEM instance plugin cannot be applied to more than one project.")
-            }
-        }
     }
 
     private fun setupDependentPlugins(project: Project) {
@@ -45,11 +36,24 @@ class AemInstancePlugin : Plugin<Project> {
         val destroy = project.tasks.create(DestroyTask.NAME, DestroyTask::class.java)
         val up = project.tasks.create(UpTask.NAME, UpTask::class.java)
         val down = project.tasks.create(DownTask.NAME, DownTask::class.java)
+        val setup = project.tasks.create(SetupTask.NAME, SetupTask::class.java)
 
         create.mustRunAfter(clean)
         up.mustRunAfter(clean)
         up.dependsOn(create)
         destroy.mustRunAfter(down)
+
+        val setupAwaitUp = project.tasks.create("aemSetupAwaitUp", AwaitTask::class.java)
+        val satisfy = project.tasks.getByName(SatisfyTask.NAME)
+        val setupAwaitSatisfied = project.tasks.create("aemSetupAwaitSatisfied", AwaitTask::class.java)
+        val build = project.tasks.getByName(BuildTask.NAME)
+        val setupAwaitBuilt = project.tasks.create("aemSetupAwaitBuilt", AwaitTask::class.java)
+
+        setupAwaitUp.dependsOn(up)
+        satisfy.dependsOn(setupAwaitUp)
+        setupAwaitSatisfied.dependsOn(satisfy)
+        setupAwaitBuilt.dependsOn(build)
+        setup.dependsOn(setupAwaitBuilt)
     }
 
 }
