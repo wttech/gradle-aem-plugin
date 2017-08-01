@@ -31,8 +31,13 @@ object Formats {
         }
     }
 
+    fun percent(current: Int, total: Int): String {
+        return percent(current.toLong(), total.toLong())
+    }
+
     fun percent(current: Long, total: Long): String {
-        return "${"%.2f".format(current.toDouble() / total.toDouble() * 100.0)}%"
+        val value: Double = if (total == 0L) 0.0 else current.toDouble() / total.toDouble()
+        return "${"%.2f".format(value * 100.0)}%"
     }
 
 }

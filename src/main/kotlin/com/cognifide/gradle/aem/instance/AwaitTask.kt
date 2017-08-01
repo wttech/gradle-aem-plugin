@@ -4,46 +4,36 @@ import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.deploy.DeploySynchronizer
 import com.cognifide.gradle.aem.deploy.SyncTask
 import com.cognifide.gradle.aem.internal.Behaviors
-import com.cognifide.gradle.aem.internal.BundleRepository
+import com.cognifide.gradle.aem.internal.ProgressLogger
 import org.gradle.api.tasks.TaskAction
 
-// TODO use progressLogger instead of messing logs ;)
 open class AwaitTask : SyncTask() {
-
-    enum class TimeoutStrategy {
-        SINCE_START,
-        SINCE_STATE_UNCHANGED,
-        NEVER
-    }
 
     init {
         group = AemTask.GROUP
-        description = "Waits until all OSGi bundles deployed on local AEM instance(s) be active."
+        description = "Waits until all local AEM instance(s) will be stable."
     }
 
     @TaskAction
     fun await() {
-        logger.info("Awaiting all OSGi bundles active")
+        val progressLogger = ProgressLogger(project, "Awaiting stable instance(s)")
+        val instances = filterInstances()
+
+        progressLogger.started()
+
         Behaviors.waitUntil({ attempt, attempts ->
-            logger.debug("Attempt [$attempt/$attempts]")
+            logger.debug("Await attempt [$attempt/$attempts]")
 
-            filterInstances().any { instance ->
-                val state = BundleRepository(project, DeploySynchronizer(instance, config)).ask()
-                if (state == null) {
-                    logger.info("Cannot check bundles state on $instance")
-                    return@any true
-                }
+            val instanceStates = instances.map { AemInstanceState(it, BundleRepository(project, DeploySynchronizer(it, config)).ask()) }
+            val progress = instanceStates.map { "${it.instance.name}: ${it.bundleState.counts} [${it.bundleState.stablePercent}]" }.joinToString(" | ")
 
-                if (!state.stable) {
-                    logger.info("Unstable state detected on $instance: ${state.status}")
-                    return@any true
-                }
-
-                false
-            }
+            progressLogger.progress(progress)
+            instanceStates.any { !it.stable }
         }, {
             logger.error("Unstable instance(s) state, but timeout occurred.")
         }, config.instanceAwaitInterval)
+
+        progressLogger.completed()
     }
 
 }

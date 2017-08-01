@@ -1,9 +1,6 @@
 package com.cognifide.gradle.aem
 
-import com.cognifide.gradle.aem.instance.AemInstance
-import com.cognifide.gradle.aem.instance.AemLocalInstance
-import com.cognifide.gradle.aem.instance.AemRemoteInstance
-import com.cognifide.gradle.aem.instance.AwaitTask
+import com.cognifide.gradle.aem.instance.*
 import com.cognifide.gradle.aem.pkg.ComposeTask
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.gradle.api.DefaultTask
@@ -226,11 +223,30 @@ data class AemConfig(
         @Input
         var instanceFilesExpanded: MutableList<String> = mutableListOf("**/*.properties", "**/*.sh", "**/*.bat", "**/*.xml"),
 
+        /**
+         * Time in milliseconds to postpone instance stability checks to avoid race condition related with previous operation.
+         */
+        @Input
+        var instanceAwaitDelay: Long = 1000,
+
+        /**
+         * Time in milliseconds used as interval between next instance stability checks being performed.
+         * Optimization could be necessary only when instance is heavily loaded.
+         */
         @Input
         var instanceAwaitInterval: Long = 1000,
 
+        /**
+         * Time in milliseconds used as interval between next instance stability checks being performed.
+         */
         @Input
-        var instanceAwaitTimeoutStrategy: String = AwaitTask.TimeoutStrategy.SINCE_STATE_UNCHANGED.name
+        var instanceAwaitTimeout:Long = 1000 * 60 * 15,
+
+        /**
+         * Strategy used to cancel instance stability checks to avoid running them endless.
+         */
+        @Input
+        var instanceAwaitTimeoutStrategy: String = AwaitTimeoutStrategy.SINCE_UNCHANGED.name
 
 ) : Serializable {
     companion object {
