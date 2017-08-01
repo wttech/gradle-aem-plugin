@@ -2,19 +2,19 @@ package com.cognifide.gradle.aem.instance
 
 import java.io.Serializable
 
-class AemLocalInstance(
+class LocalInstance(
         override val httpUrl: String,
         override val user: String,
         override val password: String,
         override val typeName: String,
         val debugPort: Int
-) : AemInstance, Serializable {
+) : Instance, Serializable {
 
     companion object {
         val ENVIRONMENT = "local"
 
         fun debugPortByUrl(url: String): Int {
-            return "1${AemInstance.portOfUrl(url)}".toInt()
+            return "1${Instance.portOfUrl(url)}".toInt()
         }
     }
 
@@ -22,15 +22,15 @@ class AemLocalInstance(
             httpUrl,
             user,
             password,
-            AemInstanceType.byUrl(httpUrl).name,
+            InstanceType.byUrl(httpUrl).name,
             debugPortByUrl(httpUrl)
     )
 
     constructor(httpUrl: String) : this(
             httpUrl,
-            AemInstance.USER_DEFAULT,
-            AemInstance.PASSWORD_DEFAULT,
-            AemInstanceType.nameByUrl(httpUrl),
+            Instance.USER_DEFAULT,
+            Instance.PASSWORD_DEFAULT,
+            InstanceType.nameByUrl(httpUrl),
             debugPortByUrl(httpUrl)
     )
 

@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.deploy
 
 import com.cognifide.gradle.aem.AemConfig
-import com.cognifide.gradle.aem.instance.AemInstance
+import com.cognifide.gradle.aem.instance.Instance
 import org.apache.commons.httpclient.HttpClient
 import org.apache.commons.httpclient.HttpMethod
 import org.apache.commons.httpclient.HttpStatus
@@ -10,13 +10,14 @@ import org.apache.commons.httpclient.auth.AuthScope
 import org.apache.commons.httpclient.methods.GetMethod
 import org.apache.commons.httpclient.methods.PostMethod
 import org.apache.commons.httpclient.methods.multipart.*
+import org.apache.commons.httpclient.params.HttpConnectionParams
 import org.apache.commons.io.IOUtils
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.IOException
 
-class DeploySynchronizer(val instance: AemInstance, val config: AemConfig) {
+class DeploySynchronizer(val instance: Instance, val config: AemConfig) {
 
     companion object {
         private val LOG = LoggerFactory.getLogger(DeploySynchronizer::class.java)
@@ -34,44 +35,46 @@ class DeploySynchronizer(val instance: AemInstance, val config: AemConfig) {
 
     val bundlesUrl = "${instance.httpUrl}/system/console/bundles.json"
 
-    fun get(url: String): String {
+    fun get(url: String, parametrizer: (HttpConnectionParams) -> Unit = {}): String {
         val method = GetMethod(url)
 
-        return execute(method)
+        return execute(method, parametrizer)
     }
 
-    fun post(url: String, params: Map<String, Any>) = post(url, createParts(params))
-
-    fun post(url: String, parts: List<Part> = listOf()): String {
+    fun post(url: String, params: Map<String, Any> = mapOf(), parametrizer: (HttpConnectionParams) -> Unit = {}): String {
         val method = PostMethod(url)
-        method.requestEntity = MultipartRequestEntity(parts.toTypedArray(), method.params)
+        method.requestEntity = MultipartRequestEntity(createParts(params).toTypedArray(), method.params)
 
-        return execute(method)
+        return execute(method, parametrizer)
     }
 
-    private fun execute(method: HttpMethod): String {
+    fun execute(method: HttpMethod, parametrizer: (HttpConnectionParams) -> Unit = {}): String {
         try {
-            val status = createHttpClient(instance.user, instance.password).executeMethod(method)
+            val client = createHttpClient()
+            parametrizer(client.httpConnectionManager.params)
+
+            val status = client.executeMethod(method)
             if (status == HttpStatus.SC_OK) {
                 return IOUtils.toString(method.responseBodyAsStream)
             } else {
                 LOG.warn(method.responseBodyAsString)
-                throw DeployException("Request to the repository failed, cause: "
+                throw DeployException("Request to the instance failed, cause: "
                         + HttpStatus.getStatusText(status) + " (check URL, user and password)")
             }
 
         } catch (e: IOException) {
-            throw DeployException("Request to the repository failed, cause: " + e.message, e)
+            throw DeployException("Request to the instance failed, cause: " + e.message, e)
         } finally {
             method.releaseConnection()
         }
     }
 
-    private fun createHttpClient(user: String, password: String): HttpClient {
+    fun createHttpClient(): HttpClient {
         val client = HttpClient()
         client.httpConnectionManager.params.connectionTimeout = config.deployConnectionTimeout
+        client.httpConnectionManager.params.soTimeout = config.deployConnectionTimeout
         client.params.isAuthenticationPreemptive = true
-        client.state.setCredentials(AuthScope.ANY, UsernamePasswordCredentials(user, password))
+        client.state.setCredentials(AuthScope.ANY, UsernamePasswordCredentials(instance.user, instance.password))
 
         return client
     }

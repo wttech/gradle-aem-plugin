@@ -9,7 +9,7 @@ import java.io.Serializable
 import java.net.URL
 import kotlin.reflect.KClass
 
-interface AemInstance : Serializable {
+interface Instance : Serializable {
 
     companion object {
 
@@ -29,18 +29,18 @@ interface AemInstance : Serializable {
 
         val PASSWORD_DEFAULT = "admin"
 
-        fun parse(str: String): List<AemInstance> {
+        fun parse(str: String): List<Instance> {
             return str.split(";").map { line ->
                 val parts = line.split(",")
 
                 when (parts.size) {
                     4 -> {
                         val (url, type, user, password) = parts
-                        AemRemoteInstance(url, user, password, ENVIRONMENT_CMD, type)
+                        RemoteInstance(url, user, password, ENVIRONMENT_CMD, type)
                     }
                     3 -> {
                         val (url, user, password) = parts
-                        AemRemoteInstance(url, user, password, ENVIRONMENT_CMD, AemInstanceType.byUrl(url).name)
+                        RemoteInstance(url, user, password, ENVIRONMENT_CMD, InstanceType.byUrl(url).name)
                     }
                     else -> {
                         throw AemException("Cannot parse instance string: '$str'")
@@ -49,14 +49,14 @@ interface AemInstance : Serializable {
             }
         }
 
-        fun defaults(): List<AemInstance> {
+        fun defaults(): List<Instance> {
             return listOf(
-                    AemLocalInstance(URL_AUTHOR_DEFAULT),
-                    AemLocalInstance(URL_PUBLISH_DEFAULT)
+                    LocalInstance(URL_AUTHOR_DEFAULT),
+                    LocalInstance(URL_PUBLISH_DEFAULT)
             )
         }
 
-        fun filter(project: Project, instanceFilter: String = FILTER_LOCAL): List<AemInstance> {
+        fun filter(project: Project, instanceFilter: String = FILTER_LOCAL): List<Instance> {
             val config = AemConfig.of(project)
             val instanceValues = project.properties["aem.deploy.instance.list"] as String?
             if (!instanceValues.isNullOrBlank()) {
@@ -75,18 +75,18 @@ interface AemInstance : Serializable {
         }
 
         @Suppress("unchecked_cast")
-        fun <T : AemInstance> filter(project: Project, type: KClass<T>): List<T> {
-            return filter(project, AemInstance.FILTER_LOCAL).fold(mutableListOf<T>(), { result, instance ->
+        fun <T : Instance> filter(project: Project, type: KClass<T>): List<T> {
+            return filter(project, Instance.FILTER_LOCAL).fold(mutableListOf<T>(), { result, instance ->
                 if (type.isInstance(instance)) result += (instance as T); result
             })
         }
 
-        fun locals(project: Project): List<AemLocalInstance> {
-            return filter(project, AemLocalInstance::class)
+        fun locals(project: Project): List<LocalInstance> {
+            return filter(project, LocalInstance::class)
         }
 
-        fun remotes(project: Project): List<AemRemoteInstance> {
-            return filter(project, AemRemoteInstance::class)
+        fun remotes(project: Project): List<RemoteInstance> {
+            return filter(project, RemoteInstance::class)
         }
 
         fun portOfUrl(url: String): Int {
@@ -111,8 +111,8 @@ interface AemInstance : Serializable {
 
     val typeName: String
 
-    val type: AemInstanceType
-        get() = AemInstanceType.byName(typeName)
+    val type: InstanceType
+        get() = InstanceType.byName(typeName)
 
     val credentials: String
         get() = "$user:$password"

@@ -14,7 +14,7 @@ import org.gradle.util.GFileUtils
 import org.zeroturnaround.zip.ZipUtil
 import java.io.File
 
-class AemLocalHandle(val project: Project, val sync: DeploySynchronizer) {
+class LocalHandle(val project: Project, val sync: DeploySynchronizer) {
 
     companion object {
         val JAR_STATIC_FILES_PATH = "static/"

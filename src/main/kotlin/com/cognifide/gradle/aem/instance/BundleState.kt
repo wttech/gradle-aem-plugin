@@ -17,7 +17,7 @@ class BundleState private constructor() {
             val response = BundleState()
             response.bundles = listOf()
             response.status = e.message ?: "Unknown"
-            response.counts = listOf(0, 0, 0, 0, 0)
+            response.stats = listOf(0, 0, 0, 0, 0)
 
             return response
         }
@@ -29,7 +29,7 @@ class BundleState private constructor() {
     lateinit var status: String
 
     @JsonProperty("s")
-    lateinit var counts: List<Int>
+    lateinit var stats: List<Int>
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     class Bundle {
@@ -51,19 +51,19 @@ class BundleState private constructor() {
         get() = status.endsWith("- all ${bundles.size} bundles active.")
 
     val total: Int
-        get() = counts[0]
+        get() = stats[0]
 
     val activeBundles: Int
-        get() = counts[1]
+        get() = stats[1]
 
     val activeFragments: Int
-        get() = counts[2]
+        get() = stats[2]
 
     val resolvedBundles: Int
-        get() = counts[3]
+        get() = stats[3]
 
     val installedBundles: Int
-        get() = counts[4]
+        get() = stats[4]
 
     val stablePercent: String
         get() = Formats.percent(total - (resolvedBundles + installedBundles), total)

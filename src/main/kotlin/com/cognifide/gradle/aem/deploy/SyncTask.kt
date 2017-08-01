@@ -2,8 +2,8 @@ package com.cognifide.gradle.aem.deploy
 
 import com.cognifide.gradle.aem.AemConfig
 import com.cognifide.gradle.aem.AemTask
-import com.cognifide.gradle.aem.instance.AemInstance
-import com.cognifide.gradle.aem.instance.AemLocalHandle
+import com.cognifide.gradle.aem.instance.Instance
+import com.cognifide.gradle.aem.instance.LocalHandle
 import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.pkg.ComposeTask
 import org.gradle.api.DefaultTask
@@ -25,7 +25,7 @@ abstract class SyncTask : DefaultTask(), AemTask {
         synchronizeInstances(deployer, filterInstances())
     }
 
-    protected fun <T : AemInstance> synchronizeInstances(deployer: (DeploySynchronizer) -> Unit, instances: List<T>) {
+    protected fun <T : Instance> synchronizeInstances(deployer: (DeploySynchronizer) -> Unit, instances: List<T>) {
         val callback = { instance: T -> synchronizeInstances(deployer, instance) }
         if (config.deployParallel) {
             instances.parallelStream().forEach(callback)
@@ -34,20 +34,20 @@ abstract class SyncTask : DefaultTask(), AemTask {
         }
     }
 
-    protected fun <T : AemInstance> synchronizeInstances(deployer: (DeploySynchronizer) -> Unit, instance: T) {
+    protected fun <T : Instance> synchronizeInstances(deployer: (DeploySynchronizer) -> Unit, instance: T) {
         logger.info("Synchronizing with: $instance")
 
         deployer(DeploySynchronizer(instance, config))
     }
 
-    protected fun synchronizeLocalInstances(handler: (AemLocalHandle) -> Unit) {
-        AemInstance.locals(project).forEach { instance ->
-            handler(AemLocalHandle(project, DeploySynchronizer(instance, config)))
+    protected fun synchronizeLocalInstances(handler: (LocalHandle) -> Unit) {
+        Instance.locals(project).forEach { instance ->
+            handler(LocalHandle(project, DeploySynchronizer(instance, config)))
         }
     }
 
-    protected fun filterInstances(instanceGroup: String = AemInstance.FILTER_LOCAL): List<AemInstance> {
-        return AemInstance.filter(project, instanceGroup)
+    protected fun filterInstances(instanceGroup: String = Instance.FILTER_LOCAL): List<Instance> {
+        return Instance.filter(project, instanceGroup)
     }
 
     protected fun determineLocalPackage(): File {

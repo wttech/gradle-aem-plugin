@@ -1,6 +1,8 @@
 package com.cognifide.gradle.aem
 
-import com.cognifide.gradle.aem.instance.*
+import com.cognifide.gradle.aem.instance.Instance
+import com.cognifide.gradle.aem.instance.LocalInstance
+import com.cognifide.gradle.aem.instance.RemoteInstance
 import com.cognifide.gradle.aem.pkg.ComposeTask
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.gradle.api.DefaultTask
@@ -28,7 +30,7 @@ data class AemConfig(
          * List of AEM instances on which packages could be deployed.
          */
         @Input
-        var instances: MutableList<AemInstance> = mutableListOf(),
+        var instances: MutableList<Instance> = mutableListOf(),
 
         /**
          * Defines maximum time after which initializing connection to AEM will be aborted (e.g on upload, install).
@@ -224,29 +226,24 @@ data class AemConfig(
         var instanceFilesExpanded: MutableList<String> = mutableListOf("**/*.properties", "**/*.sh", "**/*.bat", "**/*.xml"),
 
         /**
-         * Time in milliseconds to postpone instance stability checks to avoid race condition related with previous operation.
+         * Time in milliseconds to postpone instance stability checks to avoid race condition related with
+         * actual operation being performed on AEM like starting JCR package installation.
          */
         @Input
-        var instanceAwaitDelay: Long = 1000,
+        var instanceAwaitDelay: Int = 200,
 
         /**
          * Time in milliseconds used as interval between next instance stability checks being performed.
          * Optimization could be necessary only when instance is heavily loaded.
          */
         @Input
-        var instanceAwaitInterval: Long = 1000,
+        var instanceAwaitInterval: Int = 1000,
 
         /**
-         * Time in milliseconds used as interval between next instance stability checks being performed.
+         * Time in milliseconds used as maximum after which instance stability checks will be skipped.
          */
         @Input
-        var instanceAwaitTimeout:Long = 1000 * 60 * 15,
-
-        /**
-         * Strategy used to cancel instance stability checks to avoid running them endless.
-         */
-        @Input
-        var instanceAwaitTimeoutStrategy: String = AwaitTimeoutStrategy.SINCE_UNCHANGED.name
+        var instanceAwaitTimeout: Int = 1000 * 60 * 15
 
 ) : Serializable {
     companion object {
@@ -289,23 +286,23 @@ data class AemConfig(
      */
 
     fun localInstance(httpUrl: String) {
-        instances.add(AemLocalInstance(httpUrl))
+        instances.add(LocalInstance(httpUrl))
     }
 
     fun localInstance(httpUrl: String, user: String, password: String) {
-        instances.add(AemLocalInstance(httpUrl, user, password))
+        instances.add(LocalInstance(httpUrl, user, password))
     }
 
     fun localInstance(httpUrl: String, user: String, password: String, type: String, debugPort: Int) {
-        instances.add(AemLocalInstance(httpUrl, user, password, type, debugPort))
+        instances.add(LocalInstance(httpUrl, user, password, type, debugPort))
     }
 
     fun remoteInstance(httpUrl: String, environment: String) {
-        instances.add(AemRemoteInstance(httpUrl, environment))
+        instances.add(RemoteInstance(httpUrl, environment))
     }
 
     fun remoteInstance(httpUrl: String, user: String, password: String, type: String, environment: String) {
-        instances.add(AemRemoteInstance(httpUrl, user, password, type, environment))
+        instances.add(RemoteInstance(httpUrl, user, password, type, environment))
     }
 
     /**
@@ -345,8 +342,8 @@ data class AemConfig(
 
     @get:Internal
     @get:JsonIgnore
-    val instancesByName: Map<String, AemInstance>
-        get() = instances.fold(mutableMapOf<String, AemInstance>(), { map, instance ->
+    val instancesByName: Map<String, Instance>
+        get() = instances.fold(mutableMapOf<String, Instance>(), { map, instance ->
             map.put(instance.name, instance); map
         })
 

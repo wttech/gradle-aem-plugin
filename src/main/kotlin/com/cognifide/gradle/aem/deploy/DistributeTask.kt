@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.deploy
 
 import com.cognifide.gradle.aem.AemTask
-import com.cognifide.gradle.aem.instance.AemInstance
+import com.cognifide.gradle.aem.instance.Instance
 import org.gradle.api.tasks.TaskAction
 
 open class DistributeTask : SyncTask() {
@@ -12,7 +12,7 @@ open class DistributeTask : SyncTask() {
 
     init {
         group = AemTask.GROUP
-        description = "Distributes CRX package to instance(s). Upload, install then activate only for instances with group '${AemInstance.FILTER_AUTHOR}'."
+        description = "Distributes CRX package to instance(s). Upload, install then activate only for instances with group '${Instance.FILTER_AUTHOR}'."
     }
 
     @TaskAction
@@ -22,7 +22,7 @@ open class DistributeTask : SyncTask() {
 
             installPackage(packagePath, sync)
             activatePackage(packagePath, sync)
-        }, filterInstances(AemInstance.FILTER_AUTHOR))
+        }, filterInstances(Instance.FILTER_AUTHOR))
     }
 
 }

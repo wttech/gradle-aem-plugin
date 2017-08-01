@@ -32,15 +32,15 @@ open class SatisfyTask : SyncTask() {
 
     @TaskAction
     fun satisfy() {
+        logger.info("Providing packages from local and remote sources.")
+
+        val packageFiles = packageProvider.resolveFiles({ resolver ->
+            PropertyParser(project).filter(resolver.group, "aem.deploy.satisfy.group")
+        })
+
+        logger.info("Packages provided (${packageFiles.size})")
+
         synchronizeInstances({ sync ->
-            logger.info("Providing packages from local and remote sources.")
-
-            val filterProp = "aem.deploy.satisfy.group"
-            val packageFiles = packageProvider.resolveFiles({ resolver ->
-                PropertyParser(project).filter(resolver.group, filterProp)
-            })
-
-            logger.info("Packages provided (${packageFiles.size})")
             logger.info("Satisfying (uploading & installing)")
 
             packageFiles.onEach { packageFile ->
