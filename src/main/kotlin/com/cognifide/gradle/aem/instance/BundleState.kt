@@ -1,17 +1,19 @@
 package com.cognifide.gradle.aem.deploy
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.ObjectMapper
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-class BundleResponse private constructor() {
+class BundleState private constructor() {
 
     companion object {
-        fun fromJson(json: String): BundleResponse {
-            return ObjectMapper().readValue(json, BundleResponse::class.java)
+        fun fromJson(json: String): BundleState {
+            return ObjectMapper().readValue(json, BundleState::class.java)
         }
     }
 
+    @JsonProperty("data")
     lateinit var bundles: List<Bundle>
 
     lateinit var status: String
@@ -31,5 +33,8 @@ class BundleResponse private constructor() {
 
         lateinit var version: String
     }
+
+    val stable: Boolean
+        get() = status.endsWith("- all ${bundles.size} bundles active.")
 
 }

@@ -120,13 +120,15 @@ class AemLocalHandle(val project: Project, val sync: DeploySynchronizer) {
     }
 
     fun up() {
-        ProcessBuilder(*startScript.commandLine.toTypedArray())
-                .directory(dir)
-                .start()
+        execute(startScript)
     }
 
     fun down() {
-        ProcessBuilder(*stopScript.commandLine.toTypedArray())
+        execute(stopScript)
+    }
+
+    private fun execute(script: Script) {
+        ProcessBuilder(*script.commandLine.toTypedArray())
                 .directory(dir)
                 .start()
     }

@@ -6,8 +6,8 @@ import com.cognifide.gradle.aem.deploy.SyncTask
 import com.cognifide.gradle.aem.internal.Behaviors
 import com.cognifide.gradle.aem.internal.BundleRepository
 import org.gradle.api.tasks.TaskAction
-import org.osgi.framework.Bundle
 
+// TODO use progressLogger instead of messing logs ;)
 open class AwaitTask : SyncTask() {
 
     init {
@@ -19,25 +19,21 @@ open class AwaitTask : SyncTask() {
     fun await() {
         logger.info("Awaiting all OSGi bundles active")
         Behaviors.waitUntil({ attempt, attempts ->
-            logger.info("Attempt [$attempt/$attempts]")
+            logger.debug("Attempt [$attempt/$attempts]")
 
             filterInstances().any { instance ->
-                try {
-                    val response = BundleRepository(project, DeploySynchronizer(instance, config)).ask()
-                    val inactiveBundles = response.bundles.filter { it.state != Bundle.ACTIVE }
-                    val wait = inactiveBundles.isNotEmpty()
-                    if (wait) {
-                        logger.info("Inactive bundles found (${inactiveBundles.size}) on $instance")
-                    }
-
-                    wait
-                } catch (e: Exception) {
-                    logger.warn("Cannot check bundles on $instance")
-                    logger.debug("Reason", e)
-
-                    false
+                val state = BundleRepository(project, DeploySynchronizer(instance, config)).ask()
+                if (state == null) {
+                    logger.info("Cannot check bundles state on $instance")
+                    return@any true
                 }
 
+                if (!state.stable) {
+                    logger.info("Unstable state detected on $instance: ${state.status}")
+                    return@any true
+                }
+
+                false
             }
         })
     }
