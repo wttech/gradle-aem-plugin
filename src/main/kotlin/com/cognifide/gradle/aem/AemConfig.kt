@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem
 import com.cognifide.gradle.aem.instance.AemInstance
 import com.cognifide.gradle.aem.instance.AemLocalInstance
 import com.cognifide.gradle.aem.instance.AemRemoteInstance
+import com.cognifide.gradle.aem.instance.AwaitTask
 import com.cognifide.gradle.aem.pkg.ComposeTask
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.gradle.api.DefaultTask
@@ -223,7 +224,13 @@ data class AemConfig(
          * Wildcard file name filter expression that is used to filter in which instance files properties can be injected.
          */
         @Input
-        var instanceFilesExpanded: MutableList<String> = mutableListOf("**/*.properties", "**/*.sh", "**/*.bat", "**/*.xml")
+        var instanceFilesExpanded: MutableList<String> = mutableListOf("**/*.properties", "**/*.sh", "**/*.bat", "**/*.xml"),
+
+        @Input
+        var instanceAwaitInterval: Long = 1000,
+
+        @Input
+        var instanceAwaitTimeoutStrategy: String = AwaitTask.TimeoutStrategy.SINCE_STATE_UNCHANGED.name
 
 ) : Serializable {
     companion object {

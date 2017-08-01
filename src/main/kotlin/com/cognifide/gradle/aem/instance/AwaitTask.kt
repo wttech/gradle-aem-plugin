@@ -10,6 +10,12 @@ import org.gradle.api.tasks.TaskAction
 // TODO use progressLogger instead of messing logs ;)
 open class AwaitTask : SyncTask() {
 
+    enum class TimeoutStrategy {
+        SINCE_START,
+        SINCE_STATE_UNCHANGED,
+        NEVER
+    }
+
     init {
         group = AemTask.GROUP
         description = "Waits until all OSGi bundles deployed on local AEM instance(s) be active."
@@ -35,7 +41,9 @@ open class AwaitTask : SyncTask() {
 
                 false
             }
-        })
+        }, {
+            logger.error("Unstable instance(s) state, but timeout occurred.")
+        }, config.instanceAwaitInterval)
     }
 
 }
