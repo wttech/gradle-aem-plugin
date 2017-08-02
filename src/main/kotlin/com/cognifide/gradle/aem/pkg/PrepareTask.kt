@@ -64,7 +64,7 @@ open class PrepareTask : DefaultTask(), AemTask {
             return
         }
 
-        for (resourcePath in Reflections(AemPlugin.VLT_PATH, ResourcesScanner()).getResources { true }) {
+        for (resourcePath in Reflections("${AemPlugin.PKG}.${AemPlugin.VLT_PATH}".replace("/", "."), ResourcesScanner()).getResources { true; }) {
             val outputFile = File(vaultDir, resourcePath.substringAfterLast("${AemPlugin.VLT_PATH}/"))
             if (!outputFile.exists()) {
                 val input = javaClass.getResourceAsStream("/" + resourcePath)

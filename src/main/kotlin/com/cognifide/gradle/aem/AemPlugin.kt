@@ -30,6 +30,8 @@ class AemPlugin : Plugin<Project> {
     companion object {
         val ID = "com.cognifide.aem"
 
+        val PKG = "com.cognifide.gradle.aem"
+
         val CONFIG_INSTALL = "aemInstall"
 
         val CONFIG_EMBED = "aemEmbed"
