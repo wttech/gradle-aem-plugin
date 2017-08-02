@@ -84,7 +84,7 @@ class PropertyParser(val project: Project) {
         if (!project.properties.containsKey(FORCE_PROP) || !BooleanUtils.toBoolean(project.properties[FORCE_PROP] as String?)) {
             throw DeployException(
                     "Warning! This task execution must be confirmed by specyfing explicitly parameter '-P$FORCE_PROP=true'. " +
-                            "Before continuing it is recommended to protect against potential data loss by checking out JCR content using '${SyncTask.NAME}' task."
+                            "Before continuing it is recommended to protect against potential data loss by checking out JCR content using '${SyncTask.NAME}' task then saving it in VCS."
             )
         }
     }

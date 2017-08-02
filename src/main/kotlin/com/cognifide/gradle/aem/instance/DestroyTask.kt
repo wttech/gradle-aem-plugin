@@ -17,6 +17,8 @@ open class DestroyTask : SyncTask() {
 
     @TaskAction
     fun destroy() {
+        propertyParser.checkForce()
+
         synchronizeLocalInstances { it.destroy() }
     }
 

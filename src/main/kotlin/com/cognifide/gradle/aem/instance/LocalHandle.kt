@@ -97,7 +97,7 @@ class LocalHandle(val project: Project, val sync: DeploySynchronizer) {
 
     private fun correctStaticFiles() {
         if (OperatingSystem.current().isWindows) {
-            FileOperations.amendFile(startScript.bin, { it.replace("start \"CQ\" cmd.exe /K", "start \"CQ\" cmd.exe /C") })
+            FileOperations.amendFile(startScript.bin, { it.replace("start \"CQ\" cmd.exe /K", "start /min \"$instance\" cmd.exe /C") })
         }
     }
 

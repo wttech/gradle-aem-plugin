@@ -16,9 +16,9 @@ open class PurgeTask : SyncTask() {
 
     @TaskAction
     fun purge() {
-        synchronizeInstances({ sync ->
-            propertyParser.checkForce()
+        propertyParser.checkForce()
 
+        synchronizeInstances({ sync ->
             try {
                 val packagePath = determineRemotePackagePath(sync)
 
