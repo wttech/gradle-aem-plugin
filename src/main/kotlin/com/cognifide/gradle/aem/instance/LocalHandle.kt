@@ -22,9 +22,9 @@ class LocalHandle(val project: Project, val sync: DeploySynchronizer) {
         val JAR_STATIC_FILES_PATH = "static/"
     }
 
-    class Script(val file: File, val command: List<String>) {
+    class Script(val wrapper: File, val bin: File, val command: List<String>) {
         val commandLine: List<String>
-            get() = command + listOf(file.absolutePath)
+            get() = command + listOf(wrapper.absolutePath)
     }
 
     val instance = sync.instance
@@ -46,22 +46,18 @@ class LocalHandle(val project: Project, val sync: DeploySynchronizer) {
     val license = File(dir, "license.properties")
 
     val startScript: Script
-        get() {
-            return if (OperatingSystem.current().isWindows) {
-                Script(File(dir, "start.bat"), listOf("cmd", "/C"))
-            } else {
-                Script(File(dir, "start.sh"), listOf("sh"))
-            }
-        }
+        get() = binScript("start")
 
     val stopScript: Script
-        get() {
-            return if (OperatingSystem.current().isWindows) {
-                Script(File(dir, "stop.bat"), listOf("cmd", "/C"))
-            } else {
-                Script(File(dir, "stop.sh"), listOf("sh"))
-            }
+        get() = binScript("stop")
+
+    private fun binScript(name: String): Script {
+        return if (OperatingSystem.current().isWindows) {
+            Script(File(dir, "$name.bat"), File(staticDir, "bin/$name.bat"), listOf("cmd", "/C"))
+        } else {
+            Script(File(dir, "$name.sh"), File(staticDir, "bin/$name"), listOf("sh"))
         }
+    }
 
     fun create(files: List<File>) {
         cleanDir(true)
@@ -101,16 +97,11 @@ class LocalHandle(val project: Project, val sync: DeploySynchronizer) {
 
     private fun correctStaticFiles() {
         if (OperatingSystem.current().isWindows) {
-            FileOperations.amendFile(startScript.file, { source ->
-                source.replace(
-                        "start \"CQ\" cmd.exe /C java %CQ_JVM_OPTS% -jar %CurrDirName%\\%CQ_JARFILE% %START_OPTS%",
-                        "start \"CQ\" cmd.exe /K java %CQ_JVM_OPTS% -jar %CurrDirName%\\%CQ_JARFILE% %START_OPTS%"
-                )
-            })
+            FileOperations.amendFile(startScript.bin, { it.replace("start \"CQ\" cmd.exe /K", "start \"CQ\" cmd.exe /C") })
         }
     }
 
-    fun extractStaticFiles() {
+    private fun extractStaticFiles() {
         val progressLogger = ProgressLogger(project, "Extracting static files from JAR: ${jar.absolutePath}")
         progressLogger.started()
 
@@ -124,7 +115,7 @@ class LocalHandle(val project: Project, val sync: DeploySynchronizer) {
         var processed: Int = 0
         ZipUtil.unpack(jar, staticDir, { name ->
             if (name.startsWith(JAR_STATIC_FILES_PATH)) {
-                progressLogger.progress("Extracting $processed/$total [${Formats.percent(processed, total)}]")
+                progressLogger.progress("Extracting file $processed/$total [${Formats.percent(processed, total)}]")
                 processed++
                 name.substring(JAR_STATIC_FILES_PATH.length)
             } else {
