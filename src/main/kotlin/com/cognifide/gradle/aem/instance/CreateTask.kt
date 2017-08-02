@@ -29,8 +29,9 @@ open class CreateTask : SyncTask() {
 
         instanceFileResolver.attach(this)
         instanceFileFromProperties()
+
         project.afterEvaluate {
-            outputs.dir(config.instancesPath)
+            synchronizeLocalInstances { outputs.file(it.lock) }
         }
     }
 

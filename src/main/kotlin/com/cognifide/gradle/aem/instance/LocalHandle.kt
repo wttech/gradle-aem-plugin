@@ -5,6 +5,8 @@ import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.AemInstancePlugin
 import com.cognifide.gradle.aem.deploy.DeploySynchronizer
 import com.cognifide.gradle.aem.internal.FileOperations
+import com.cognifide.gradle.aem.internal.Formats
+import com.cognifide.gradle.aem.internal.ProgressLogger
 import com.cognifide.gradle.aem.internal.PropertyParser
 import org.apache.commons.io.FileUtils
 import org.gradle.api.Project
@@ -20,9 +22,9 @@ class LocalHandle(val project: Project, val sync: DeploySynchronizer) {
         val JAR_STATIC_FILES_PATH = "static/"
     }
 
-    class Script(val script: File, val command: List<String>) {
+    class Script(val file: File, val command: List<String>) {
         val commandLine: List<String>
-            get() = command + listOf(script.absolutePath)
+            get() = command + listOf(file.absolutePath)
     }
 
     val instance = sync.instance
@@ -36,6 +38,8 @@ class LocalHandle(val project: Project, val sync: DeploySynchronizer) {
     val jar: File by lazy {
         FileOperations.find(dir, listOf("cq-quickstart*.jar")) ?: File(dir, "cq-quickstart.jar")
     }
+
+    val lock = File(dir, "local-handle.lock")
 
     val staticDir = File(dir, "crx-quickstart")
 
@@ -68,15 +72,18 @@ class LocalHandle(val project: Project, val sync: DeploySynchronizer) {
         GFileUtils.mkdirs(dir)
         files.forEach { FileUtils.copyFileToDirectory(it, dir) }
 
-        logger.info("Extracting static files from JAR")
-        extract()
+        logger.info("Extracting AEM static files from JAR")
+        extractStaticFiles()
+
+        logger.info("Correcting AEM static files")
+        correctStaticFiles()
 
         logger.info("Creating default instance files")
         FileOperations.copyResources(AemInstancePlugin.FILES_PATH, dir, true)
 
         val filesDir = File(config.instanceFilesPath)
 
-        logger.info("Overriding instance files using project dir: ${filesDir.absolutePath}")
+        logger.info("Overriding instance files using: ${filesDir.absolutePath}")
         if (filesDir.exists()) {
             FileUtils.copyDirectory(filesDir, dir)
         }
@@ -86,18 +93,46 @@ class LocalHandle(val project: Project, val sync: DeploySynchronizer) {
             PropertyParser(project).expand(source, properties)
         })
 
+        logger.info("Creating lock file")
+        lock()
+
         logger.info("Created instance with success")
     }
 
-    // TODO maybe introduce progress bar here somehow
-    fun extract() {
-        ZipUtil.unpack(jar, staticDir) { name ->
+    private fun correctStaticFiles() {
+        if (OperatingSystem.current().isWindows) {
+            FileOperations.amendFile(startScript.file, { source ->
+                source.replace(
+                        "start \"CQ\" cmd.exe /C java %CQ_JVM_OPTS% -jar %CurrDirName%\\%CQ_JARFILE% %START_OPTS%",
+                        "start \"CQ\" cmd.exe /K java %CQ_JVM_OPTS% -jar %CurrDirName%\\%CQ_JARFILE% %START_OPTS%"
+                )
+            })
+        }
+    }
+
+    fun extractStaticFiles() {
+        val progressLogger = ProgressLogger(project, "Extracting static files from JAR: ${jar.absolutePath}")
+        progressLogger.started()
+
+        var total = 0
+        ZipUtil.iterate(jar, { entry ->
+            if (entry.name.startsWith(JAR_STATIC_FILES_PATH)) {
+                total++
+            }
+        })
+
+        var processed: Int = 0
+        ZipUtil.unpack(jar, staticDir, { name ->
             if (name.startsWith(JAR_STATIC_FILES_PATH)) {
+                progressLogger.progress("Extracting $processed/$total [${Formats.percent(processed, total)}]")
+                processed++
                 name.substring(JAR_STATIC_FILES_PATH.length)
             } else {
                 name
             }
-        }
+        })
+
+        progressLogger.completed()
     }
 
     private fun cleanDir(create: Boolean) {
@@ -148,6 +183,11 @@ class LocalHandle(val project: Project, val sync: DeploySynchronizer) {
         cleanDir(false)
 
         logger.info("Destroyed instance with success")
+    }
+
+    fun lock() {
+        val metaJson = Formats.toJson(mapOf("locked" to Formats.dateISO8601()))
+        lock.printWriter().use { it.print(metaJson) }
     }
 
     override fun toString(): String {

@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.internal
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
+import com.fasterxml.jackson.databind.util.ISO8601Utils
 import org.apache.commons.validator.routines.UrlValidator
 import java.util.*
 
@@ -38,6 +39,10 @@ object Formats {
     fun percent(current: Long, total: Long): String {
         val value: Double = if (total == 0L) 0.0 else current.toDouble() / total.toDouble()
         return "${"%.2f".format(value * 100.0)}%"
+    }
+
+    fun dateISO8601(date: Date = Date()): String {
+        return ISO8601Utils.format(date)
     }
 
 }

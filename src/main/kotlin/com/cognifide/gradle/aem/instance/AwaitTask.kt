@@ -15,10 +15,10 @@ open class AwaitTask : SyncTask() {
 
     @TaskAction
     fun await() {
-        awaitStableInstances(filterInstances())
+        waitUntilStableInstances(Instance.locals(project))
     }
 
-    private fun awaitStableInstances(instances: List<Instance>) {
+    private fun waitUntilStableInstances(instances: List<Instance>) {
         if (config.instanceAwaitDelay > 0) {
             logger.info("Delaying instance stability checking")
             Behaviors.waitFor(config.instanceAwaitDelay)

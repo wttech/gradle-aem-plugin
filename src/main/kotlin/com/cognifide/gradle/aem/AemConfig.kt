@@ -227,7 +227,7 @@ data class AemConfig(
 
         /**
          * Time in milliseconds to postpone instance stability checks to avoid race condition related with
-         * actual operation being performed on AEM like starting JCR package installation.
+         * actual operation being performed on AEM like starting JCR package installation or even creating launchpad.
          */
         @Input
         var instanceAwaitDelay: Int = 200,

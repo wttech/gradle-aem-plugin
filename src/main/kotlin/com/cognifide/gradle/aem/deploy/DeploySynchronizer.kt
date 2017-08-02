@@ -57,7 +57,7 @@ class DeploySynchronizer(val instance: Instance, val config: AemConfig) {
             if (status == HttpStatus.SC_OK) {
                 return IOUtils.toString(method.responseBodyAsStream)
             } else {
-                LOG.warn(method.responseBodyAsString)
+                LOG.debug(method.responseBodyAsString)
                 throw DeployException("Request to the instance failed, cause: "
                         + HttpStatus.getStatusText(status) + " (check URL, user and password)")
             }
