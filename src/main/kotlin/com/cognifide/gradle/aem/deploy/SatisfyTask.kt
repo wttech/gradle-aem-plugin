@@ -40,6 +40,7 @@ open class SatisfyTask : SyncTask() {
 
         logger.info("Packages provided (${packageFiles.size})")
 
+        // TODO await instance up after each group
         synchronizeInstances({ sync ->
             logger.info("Satisfying (uploading & installing)")
 
