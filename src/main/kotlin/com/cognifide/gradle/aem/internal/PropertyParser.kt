@@ -4,7 +4,6 @@ import com.cognifide.gradle.aem.AemConfig
 import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.deploy.DeployException
 import com.cognifide.gradle.aem.vlt.SyncTask
-import com.fasterxml.jackson.databind.util.ISO8601Utils
 import groovy.text.SimpleTemplateEngine
 import org.apache.commons.lang3.BooleanUtils
 import org.apache.commons.lang3.text.StrSubstitutor
@@ -17,6 +16,19 @@ class PropertyParser(val project: Project) {
         const val FILTER_DEFAULT = "*"
 
         const val FORCE_PROP = "aem.force"
+    }
+
+    fun prop(name: String): String? {
+        var value = project.properties[name] as String?
+        if (value == null) {
+            value = systemProperties[name]
+        }
+
+        return value
+    }
+
+    fun prop(name: String, defaultValue: () -> String): String {
+        return prop(name) ?: defaultValue()
     }
 
     fun filter(value: String, propName: String, propDefault: String = FILTER_DEFAULT): Boolean {

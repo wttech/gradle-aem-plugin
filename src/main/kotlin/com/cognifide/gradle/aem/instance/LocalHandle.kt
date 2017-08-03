@@ -55,7 +55,7 @@ class LocalHandle(val project: Project, val sync: DeploySynchronizer) {
         return if (OperatingSystem.current().isWindows) {
             Script(File(dir, "$name.bat"), File(staticDir, "bin/$name.bat"), listOf("cmd", "/C"))
         } else {
-            Script(File(dir, "$name.sh"), File(staticDir, "bin/$name"), listOf("sh"))
+            Script(File(dir, name), File(staticDir, "bin/$name"), listOf("sh"))
         }
     }
 
@@ -67,6 +67,9 @@ class LocalHandle(val project: Project, val sync: DeploySynchronizer) {
         logger.info("Copying resolved instance files: ${files.map { it.absolutePath }}")
         GFileUtils.mkdirs(dir)
         files.forEach { FileUtils.copyFileToDirectory(it, dir) }
+
+        logger.info("Validating instance files")
+        validateFiles()
 
         logger.info("Extracting AEM static files from JAR")
         extractStaticFiles()
@@ -93,6 +96,16 @@ class LocalHandle(val project: Project, val sync: DeploySynchronizer) {
         lock()
 
         logger.info("Created instance with success")
+    }
+
+    fun validateFiles() {
+        if (!jar.exists()) {
+            throw AemException("Instance JAR file not found at path: ${jar.absolutePath}. Is instance JAR URL configured?")
+        }
+
+        if (!license.exists()) {
+            throw AemException("License file not found at path: ${license.absolutePath}. Is instance license URL configured?" )
+        }
     }
 
     private fun correctStaticFiles() {
@@ -132,16 +145,6 @@ class LocalHandle(val project: Project, val sync: DeploySynchronizer) {
         }
         if (create) {
             dir.mkdirs()
-        }
-    }
-
-    fun validate() {
-        if (!jar.exists()) {
-            throw AemException("Instance JAR file not found at path: ${jar.absolutePath}")
-        }
-
-        if (!license.exists()) {
-            throw AemException("License file not found at path: ${license.absolutePath}")
         }
     }
 

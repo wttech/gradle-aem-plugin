@@ -30,7 +30,7 @@ class SmbFileDownloader(val project: Project) {
     }
 
     private fun fileFor(url: String): SmbFile {
-        if (username.isNullOrBlank() && !password.isNullOrBlank()) {
+        if (!username.isNullOrBlank() && !password.isNullOrBlank()) {
             return SmbFile(url, NtlmPasswordAuthentication(domain, username, password))
         }
 
