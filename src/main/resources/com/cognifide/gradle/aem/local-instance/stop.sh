@@ -1,0 +1,1 @@
+sh crx-quickstart/bin/stop

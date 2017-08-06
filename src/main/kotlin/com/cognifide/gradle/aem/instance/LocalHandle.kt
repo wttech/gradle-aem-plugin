@@ -55,7 +55,7 @@ class LocalHandle(val project: Project, val sync: DeploySynchronizer) {
         return if (OperatingSystem.current().isWindows) {
             Script(File(dir, "$name.bat"), File(staticDir, "bin/$name.bat"), listOf("cmd", "/C"))
         } else {
-            Script(File(dir, name), File(staticDir, "bin/$name"), listOf("sh"))
+            Script(File(dir, "$name.sh"), File(staticDir, "bin/$name.sh"), listOf("sh"))
         }
     }
 
@@ -112,6 +112,8 @@ class LocalHandle(val project: Project, val sync: DeploySynchronizer) {
         if (OperatingSystem.current().isWindows) {
             FileOperations.amendFile(startScript.bin, { it.replace("start \"CQ\" cmd.exe /K", "start /min \"$instance\" cmd.exe /C") })
         }
+
+        GFileUtils.mkdirs(File(staticDir, "logs"))
     }
 
     private fun extractStaticFiles() {
@@ -185,7 +187,7 @@ class LocalHandle(val project: Project, val sync: DeploySynchronizer) {
     }
 
     override fun toString(): String {
-        return "AemLocalHandler(dir=${dir.absolutePath}, instance=$instance)"
+        return "LocalHandle(dir=${dir.absolutePath}, instance=$instance)"
     }
 
 }

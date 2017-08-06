@@ -19,7 +19,7 @@ class RemoteInstance(
     )
 
     override fun toString(): String {
-        return "AemRemoteInstance(httpUrl='$httpUrl', user='$user', password='$hiddenPassword', typeName='$typeName', environment='$environment')"
+        return "RemoteInstance(httpUrl='$httpUrl', user='$user', password='$hiddenPassword', typeName='$typeName', environment='$environment')"
     }
 
 }

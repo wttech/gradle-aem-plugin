@@ -22,8 +22,6 @@ open class SatisfyTask : SyncTask() {
     init {
         group = AemTask.GROUP
         description = "Satisfies AEM by uploading & installing dependent packages on instance(s)."
-
-        packageProvider.attach(this)
     }
 
     fun packages(closure: Closure<*>) {
