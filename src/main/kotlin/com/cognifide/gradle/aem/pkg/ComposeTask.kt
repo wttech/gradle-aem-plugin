@@ -80,6 +80,7 @@ open class ComposeTask : Zip(), AemTask {
     }
 
     // TODO Preserve order of inclusion in 'settings.xml' (does filter root order matter?)
+    // TODO Merge filter roots in assembly project when no filter.xml is provided in subproject
     private fun parseVaultFilterRoots(): String {
         val tags = vaultFilters.filter { it.exists() }.fold(mutableListOf<String>(), { tags, filter ->
             val doc = Jsoup.parse(filter.bufferedReader().use { it.readText() }, "", Parser.xmlParser())

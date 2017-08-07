@@ -130,7 +130,9 @@ class LocalHandle(val project: Project, val sync: DeploySynchronizer) {
         var processed: Int = 0
         ZipUtil.unpack(jar, staticDir, { name ->
             if (name.startsWith(JAR_STATIC_FILES_PATH)) {
-                progressLogger.progress("Extracting file $processed/$total [${Formats.percent(processed, total)}]")
+                val fileName = name.substringAfterLast("/")
+
+                progressLogger.progress("Extracting: $fileName [${Formats.percent(processed, total)}]")
                 processed++
                 name.substring(JAR_STATIC_FILES_PATH.length)
             } else {
