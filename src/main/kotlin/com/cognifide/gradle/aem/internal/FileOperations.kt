@@ -5,6 +5,7 @@ import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
 import org.apache.commons.io.filefilter.FalseFileFilter
 import org.apache.commons.io.filefilter.TrueFileFilter
+import org.gradle.util.GFileUtils
 import org.reflections.Reflections
 import org.reflections.scanners.ResourcesScanner
 import java.io.File
@@ -33,6 +34,8 @@ object FileOperations {
     }
 
     fun copyResource(resourcePath: String, outputFile: File) {
+        GFileUtils.mkdirs(outputFile.parentFile)
+
         val input = javaClass.getResourceAsStream("/" + resourcePath)
         val output = FileOutputStream(outputFile)
 
