@@ -165,7 +165,7 @@ gradle :content:aemCheckout -Paem.vlt.filter=src/main/content/META-INF/vault/cus
 * Executing any Vault command at custom working directory (for subproject *content*):
 
 ```
-gradle :content:aemVlt -Paem.vlt.command='checkout --force -f ${filter} ${instance.url}' 
+gradle :content:aemVlt -Paem.vlt.command='checkout --force --filter ${filter} ${instance.httpUrl}/crx/server/crx.default' 
 ```
 
 Task `aemCheckout` is just an straightforward alias for above command. 

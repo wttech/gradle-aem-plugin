@@ -33,7 +33,7 @@ class VltCommand(val project: Project) {
             logger.info("JCR content directory to be checked out does not exist: ${contentDir.absolutePath}")
         }
 
-        raw("checkout --force --filter \${filter} \${instance.url}")
+        raw("checkout --force --filter \${filter} \${instance.httpUrl}/crx/server/crx.default")
     }
 
     fun raw(command: String) {

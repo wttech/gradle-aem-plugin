@@ -140,7 +140,7 @@ data class AemConfig(
          * Useful to share same files for all packages, like package thumbnail.
          * Must be absolute or relative to current working directory.
          *
-         * Default: "{rootProject}/src/main/resources/META-INF/vault"
+         * Default: "${project.rootProject.projectDir.path}/src/main/resources/META-INF/vault"
          */
         @Input
         var vaultFilesPath: String = "",
@@ -156,14 +156,6 @@ data class AemConfig(
                 "cq:lastReplicat*",
                 "jcr:uuid"
         ),
-
-        /**
-         * Filter file used when Vault files are being checked out from running AEM instance.
-         *
-         * Default: "src/main/content/META-INF/vault/filter.xml"
-         */
-        @Input
-        var vaultFilterPath: String = "",
 
         /**
          * Global options which are being applied to any Vault related command like 'aemVault' or 'aemCheckout'.
@@ -274,7 +266,6 @@ data class AemConfig(
 
         contentPath = "${project.projectDir.path}/src/main/content"
         vaultFilesPath = "${project.rootProject.projectDir.path}/src/main/resources/${AemPackagePlugin.VLT_PATH}"
-        vaultFilterPath = "${project.projectDir.path}/src/main/content/${AemPackagePlugin.VLT_PATH}/filter.xml"
         instancesPath = "${System.getProperty("user.home")}/.gradle/aem/${project.rootProject.name}"
         instanceFilesPath = "${project.rootProject.projectDir.path}/src/main/resources/${AemInstancePlugin.FILES_PATH}"
 
@@ -346,5 +337,15 @@ data class AemConfig(
         get() = instances.fold(mutableMapOf<String, Instance>(), { map, instance ->
             map.put(instance.name, instance); map
         })
+
+    /**
+     * CRX package Vault filter path.
+     * Also used by VLT tool as default filter for files being checked out from running AEM instance.
+     *
+     * @see <http://jackrabbit.apache.org/filevault/filter.html>
+     */
+    @get:Internal
+    val vaultFilterPath: String
+        get() = "$contentPath/${AemPackagePlugin.VLT_PATH}/filter.xml"
 
 }
