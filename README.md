@@ -23,6 +23,7 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
 
 ## Features
 
+* Fully automated, tied to project, local AEM instance(s) setup allowing to start development within few minutes.
 * Composing CRX package from multiple JCR content roots, bundles.
 * Automated all-in-one CRX packages generation (assemblies).
 * Easy multi-deployment with instance groups.
@@ -100,6 +101,11 @@ For multi project build configuration, see [example project](https://github.com/
 
 ### Tasks
 
+* `aemSetup` - Perform initial setup of local AEM instance(s). Automated version of `aemCreate aemUp aemSatisfy aemBuild`.
+* `aemUp` - Turn on local AEM instance(s).
+* `aemDown` - Turn off local AEM instance(s).
+* `aemCreate` - Create local AEM instance(s).
+* `aemDestroy` - Destroy local AEM instance(s).
 * `aemCompose` - Compose CRX package from JCR content and bundles. Available methods:
     * `includeProject(projectPath: String)`, includes both bundles and JCR content from another project, example: `includeProject ':core'`.
     * `includeContent(projectPath: String)`, includes only JCR content, example: `includeContent ':design'`.
@@ -204,6 +210,7 @@ Predefined properties:
 * `buildDate` - date when CRX package composing started.
 * `buildCount` - number to be used as CRX package build count (`buildDate` in format `yDDmmssSSS`).
 * `created` - current date in *ISO8601* format.
+* `name` - text used as CRX package name. Considers multi-project structure (names of subpackages are prefixed with root project name).
 
 Task specific:
 * `aemCompose` - properties which are being dynamically calculated basing on content actually included into package.
