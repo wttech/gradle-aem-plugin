@@ -36,13 +36,16 @@ open class ComposeTask : Zip(), AemTask {
     val vaultDir = AemTask.temporaryDir(project, PrepareTask.NAME, AemPackagePlugin.VLT_PATH)
 
     @Internal
-    var bundleCollectors: List<() -> Unit> = mutableListOf()
+    private var bundleCollectors: List<() -> Unit> = mutableListOf()
 
     @Internal
-    var contentCollectors: List<() -> Unit> = mutableListOf()
+    private var contentCollectors: List<() -> Unit> = mutableListOf()
 
     @Internal
-    val propertyParser = PropertyParser(project)
+    private val filterRoots = mutableSetOf<String>()
+
+    @Internal
+    private val propertyParser = PropertyParser(project)
 
     private var archiveName: String? = null
 
@@ -55,6 +58,10 @@ open class ComposeTask : Zip(), AemTask {
             }
         })
     }
+
+    @get:Internal
+    val fileProperties
+        get() = mapOf("filterRoots" to filterRoots.joinToString(config.vaultLineSeparator))
 
     init {
         description = "Composes CRX package from JCR content and built OSGi bundles"
@@ -77,26 +84,6 @@ open class ComposeTask : Zip(), AemTask {
 
     private fun fromBundles() {
         bundleCollectors.onEach { it() }
-    }
-
-    // TODO Preserve order of inclusion in 'settings.xml' (does filter root order matter?)
-    // TODO Merge filter roots in assembly project when no filter.xml is provided in subproject
-    private fun parseVaultFilterRoots(): String {
-        val tags = vaultFilters.filter { it.exists() }.fold(mutableListOf<String>(), { tags, filter ->
-            val doc = Jsoup.parse(filter.bufferedReader().use { it.readText() }, "", Parser.xmlParser())
-            tags.addAll(doc.select("filter[root]").map { it.toString() }.toList()); tags
-        })
-
-        if (tags.isEmpty()) {
-            tags.add("<filter root=\"${config.bundlePath}\"/>")
-        }
-
-        return tags.joinToString(config.vaultLineSeparator)
-    }
-
-    @get:Internal
-    val fileProperties by lazy {
-        mapOf("filterRoots" to parseVaultFilterRoots())
     }
 
     private fun fromContents() {
@@ -184,10 +171,7 @@ open class ComposeTask : Zip(), AemTask {
         val config = AemConfig.of(project)
 
         dependProject(project, config.dependContentTaskNames)
-
-        if (this.project != project && !config.vaultFilterPath.isNullOrBlank()) {
-            vaultFilters.add(File(config.vaultFilterPath))
-        }
+        extractVaultFilters(config)
 
         contentCollectors += {
             val contentDir = File("${config.contentPath}/${AemPackagePlugin.JCR_ROOT}")
@@ -221,6 +205,20 @@ open class ComposeTask : Zip(), AemTask {
         effectiveTaskNames.forEach { taskName ->
             dependsOn("${project.path}:$taskName")
         }
+    }
+
+    private fun extractVaultFilters(config: AemConfig) {
+        if (!config.vaultFilterPath.isNullOrBlank() && File(config.vaultFilterPath).exists()) {
+            filterRoots.addAll(extractVaultFilters(File(config.vaultFilterPath)))
+        } else {
+            filterRoots.add("<filter root=\"${config.bundlePath}\"/>")
+        }
+    }
+
+    private fun extractVaultFilters(filter: File): Set<String> {
+        val doc = Jsoup.parse(filter.bufferedReader().use { it.readText() }, "", Parser.xmlParser())
+
+        return doc.select("filter[root]").map { it.toString() }.toSet()
     }
 
     fun includeVault(vltPath: Any) {
