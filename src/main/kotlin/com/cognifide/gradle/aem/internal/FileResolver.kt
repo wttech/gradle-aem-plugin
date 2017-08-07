@@ -63,83 +63,79 @@ class FileResolver(val project: Project, val downloadDir: File) {
         }
     }
 
-    private fun downloadFileFor(targetDir: File, sourceUrl: String): File {
-        GFileUtils.mkdirs(targetDir)
-
-        return File(targetDir, FilenameUtils.getName(sourceUrl))
-    }
-
     fun downloadSftp(url: String) {
         resolve(url, { dir ->
-            val file = downloadFileFor(dir, url)
-            val downloader = SftpFileDownloader(project)
-
-            downloader.download(url, file)
-
-            file
+            download(url, dir, { file ->
+                SftpFileDownloader(project).download(url, file)
+            })
         })
+    }
+
+    private fun download(url: String, targetDir: File, downloader: (File) -> Unit): File {
+        GFileUtils.mkdirs(targetDir)
+
+        val file = File(targetDir, FilenameUtils.getName(url))
+        if (!file.exists()) {
+            downloader(file)
+        }
+
+        return file
     }
 
     fun downloadSftpAuth(url: String, username: String? = null, password: String? = null) {
         resolve(url, { dir ->
-            val file = downloadFileFor(dir, url)
-            val downloader = SftpFileDownloader(project)
+            download(url, dir, { file ->
+                val downloader = SftpFileDownloader(project)
 
-            downloader.username = username ?: project.properties["aem.sftp.username"] as String?
-            downloader.password = password ?: project.properties["aem.sftp.password"] as String?
-            downloader.knownHost = password ?: project.properties["aem.sftp.knownHost"] as String?
+                downloader.username = username ?: project.properties["aem.sftp.username"] as String?
+                downloader.password = password ?: project.properties["aem.sftp.password"] as String?
+                downloader.knownHost = password ?: project.properties["aem.sftp.knownHost"] as String?
 
-            downloader.download(url, file)
-
-            file
+                downloader.download(url, file)
+            })
         })
     }
 
     fun downloadSmb(url: String) {
         resolve(url, { dir ->
-            val file = downloadFileFor(dir, url)
-            val downloader = SmbFileDownloader(project)
-
-            downloader.download(url, file)
-
-            file
+            download(url, dir, { file ->
+                SmbFileDownloader(project).download(url, file)
+            })
         })
     }
 
     fun downloadSmbAuth(url: String, domain: String? = null, username: String? = null, password: String? = null) {
         resolve(url, { dir ->
-            val file = downloadFileFor(dir, url)
-            val downloader = SmbFileDownloader(project)
+            download(url, dir, { file ->
+                val downloader = SmbFileDownloader(project)
 
-            downloader.domain = domain ?: project.properties["aem.smb.domain"] as String?
-            downloader.username = username ?: project.properties["aem.smb.username"] as String?
-            downloader.password = password ?: project.properties["aem.smb.password"] as String?
+                downloader.domain = domain ?: project.properties["aem.smb.domain"] as String?
+                downloader.username = username ?: project.properties["aem.smb.username"] as String?
+                downloader.password = password ?: project.properties["aem.smb.password"] as String?
 
-            downloader.download(url, file)
-
-            file
+                downloader.download(url, file)
+            })
         })
     }
 
     fun downloadHttp(url: String) {
         resolve(url, { dir ->
-            val file = downloadFileFor(dir, url)
-            UrlFileDownloader(project).download(url, file)
-            file
+            download(url, dir, { file ->
+                UrlFileDownloader(project).download(url, file)
+            })
         })
     }
 
     fun downloadHttpAuth(url: String, user: String? = null, password: String? = null) {
         resolve(arrayOf(url, user, password), { dir ->
-            val file = downloadFileFor(dir, url)
-            val downloader = UrlFileDownloader(project)
+            download(url, dir, { file ->
+                val downloader = UrlFileDownloader(project)
 
-            downloader.user = user ?: project.properties["aem.http.user"] as String?
-            downloader.password = password ?: project.properties["aem.http.password"] as String?
+                downloader.user = user ?: project.properties["aem.http.user"] as String?
+                downloader.password = password ?: project.properties["aem.http.password"] as String?
 
-            downloader.download(url, file)
-
-            file
+                downloader.download(url, file)
+            })
         })
     }
 
