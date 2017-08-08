@@ -101,21 +101,4 @@ class PropertyParser(val project: Project) {
         }
     }
 
-    @Synchronized
-    fun withSystemProperties(props: Map<String, String>, action: () -> Unit) {
-        val origins = mutableMapOf<String, String?>()
-        for ((key, value) in props) {
-            origins.put(key, System.getProperty(key))
-            System.setProperty(key, value)
-        }
-
-        action()
-
-        for ((key, value) in origins) {
-            if (value != null) {
-                System.setProperty(key, value)
-            }
-        }
-    }
-
 }
