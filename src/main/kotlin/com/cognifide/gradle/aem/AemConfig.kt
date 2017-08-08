@@ -222,7 +222,7 @@ data class AemConfig(
          * actual operation being performed on AEM like starting JCR package installation or even creating launchpad.
          */
         @Input
-        var instanceAwaitDelay: Int = 200,
+        var instanceAwaitDelay: Int = 3000,
 
         /**
          * Time in milliseconds used as interval between next instance stability checks being performed.
