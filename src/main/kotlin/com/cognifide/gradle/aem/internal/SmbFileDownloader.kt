@@ -20,13 +20,15 @@ class SmbFileDownloader(val project: Project) {
     var password: String? = null
 
     fun download(sourceUrl: String, targetFile: File) {
-        val smbFile = fileFor(sourceUrl)
+        PropertyParser(project).withSystemProperties(systemProperties, {
+            val smbFile = fileFor(sourceUrl)
 
-        val downloader = ProgressFileDownloader(project)
-        downloader.headerSourceTarget(sourceUrl, targetFile)
-        downloader.size = smbFile.length()
+            val downloader = ProgressFileDownloader(project)
+            downloader.headerSourceTarget(sourceUrl, targetFile)
+            downloader.size = smbFile.length()
 
-        downloader.download(smbFile.inputStream, targetFile)
+            downloader.download(smbFile.inputStream, targetFile)
+        })
     }
 
     private fun fileFor(url: String): SmbFile {
@@ -36,5 +38,10 @@ class SmbFileDownloader(val project: Project) {
 
         return SmbFile(url)
     }
+
+    private val systemProperties = mapOf(
+            "jcifs.resolveOrder" to "DNS",
+            "jcifs.smb.client.dfs.disabled" to "true"
+    )
 
 }
