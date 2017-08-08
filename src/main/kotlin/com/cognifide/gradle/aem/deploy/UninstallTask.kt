@@ -18,9 +18,7 @@ open class UninstallTask : SyncTask() {
     fun uninstall() {
         propertyParser.checkForce()
 
-        synchronizeInstances({ sync ->
-            uninstallPackage(determineRemotePackagePath(sync), sync)
-        })
+        synchronizeInstances({ it.uninstallPackage() })
     }
 
 }

@@ -42,9 +42,7 @@ open class SatisfyTask : SyncTask() {
         synchronizeInstances({ sync ->
             logger.info("Satisfying (uploading & installing)")
 
-            packageFiles.onEach { packageFile ->
-                installPackage(uploadPackage(packageFile, sync).path, sync)
-            }
+            packageFiles.onEach { sync.deployPackage(it) }
         })
     }
 

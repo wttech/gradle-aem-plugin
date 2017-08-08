@@ -18,9 +18,7 @@ open class DeleteTask : SyncTask() {
     fun delete() {
         propertyParser.checkForce()
 
-        synchronizeInstances({ sync ->
-            deletePackage(determineRemotePackagePath(sync), sync)
-        })
+        synchronizeInstances({ it.deletePackage() })
     }
 
 }

@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.deploy
 
 import com.cognifide.gradle.aem.AemTask
+import com.cognifide.gradle.aem.instance.InstanceSync
 import org.gradle.api.tasks.TaskAction
 
 open class PurgeTask : SyncTask() {
@@ -20,7 +21,7 @@ open class PurgeTask : SyncTask() {
 
         synchronizeInstances({ sync ->
             try {
-                val packagePath = determineRemotePackagePath(sync)
+                val packagePath = sync.determineRemotePackagePath()
 
                 uninstall(packagePath, sync)
                 delete(packagePath, sync)
@@ -31,18 +32,18 @@ open class PurgeTask : SyncTask() {
         })
     }
 
-    private fun uninstall(packagePath: String, sync: DeploySynchronizer) {
+    private fun uninstall(packagePath: String, sync: InstanceSync) {
         try {
-            uninstallPackage(packagePath, sync)
+            sync.uninstallPackage(packagePath)
         } catch(e: DeployException) {
             logger.info("${e.message} Is it installed already?")
             logger.debug("Cannot uninstall package.", e)
         }
     }
 
-    private fun delete(packagePath: String, sync: DeploySynchronizer) {
+    private fun delete(packagePath: String, sync: InstanceSync) {
         try {
-            deletePackage(packagePath, sync)
+            sync.deletePackage(packagePath)
         } catch (e: DeployException) {
             logger.info(e.message)
             logger.debug("Cannot delete package.", e)

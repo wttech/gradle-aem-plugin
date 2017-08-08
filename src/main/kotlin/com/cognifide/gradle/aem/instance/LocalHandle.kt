@@ -3,7 +3,6 @@ package com.cognifide.gradle.aem.instance
 import com.cognifide.gradle.aem.AemConfig
 import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.AemInstancePlugin
-import com.cognifide.gradle.aem.deploy.DeploySynchronizer
 import com.cognifide.gradle.aem.internal.FileOperations
 import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.internal.ProgressLogger
@@ -16,7 +15,7 @@ import org.gradle.util.GFileUtils
 import org.zeroturnaround.zip.ZipUtil
 import java.io.File
 
-class LocalHandle(val project: Project, val sync: DeploySynchronizer) {
+class LocalHandle(val project: Project, val sync: InstanceSync) {
 
     companion object {
         val JAR_STATIC_FILES_PATH = "static/"

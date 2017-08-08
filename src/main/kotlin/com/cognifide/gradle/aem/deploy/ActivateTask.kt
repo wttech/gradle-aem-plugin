@@ -16,9 +16,7 @@ open class ActivateTask : SyncTask() {
 
     @TaskAction
     fun activate() {
-        synchronizeInstances({ sync ->
-            activatePackage(determineRemotePackagePath(sync), sync)
-        })
+        synchronizeInstances({ it.activatePackage() })
     }
 
 }

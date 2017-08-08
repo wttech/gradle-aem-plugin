@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.AemConfig
-import com.cognifide.gradle.aem.deploy.DeploySynchronizer
 import com.cognifide.gradle.aem.internal.Behaviors
 import com.cognifide.gradle.aem.internal.ProgressLogger
 import org.apache.commons.httpclient.params.HttpConnectionParams
@@ -63,20 +62,15 @@ class InstanceState(val project: Project, val instance: Instance, val timeout: I
 
     val config = AemConfig.of(project)
 
-    val sync = DeploySynchronizer(instance, config)
+    val sync = InstanceSync(project, instance)
 
-    var syncParametrizer: (HttpConnectionParams) -> Unit = { params ->
+    var bundleStateParametrizer: (HttpConnectionParams) -> Unit = { params ->
         params.connectionTimeout = timeout
         params.soTimeout = timeout
     }
 
     val bundleState by lazy {
-        try {
-            BundleState.fromJson(sync.get(sync.bundlesUrl, syncParametrizer))
-        } catch (e: Exception) {
-            logger.debug("Instance bundles asking error", e)
-            BundleState.unknown(e)
-        }
+        sync.determineBundleState(bundleStateParametrizer)
     }
 
     val stable: Boolean

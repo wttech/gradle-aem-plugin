@@ -17,12 +17,7 @@ open class DistributeTask : SyncTask() {
 
     @TaskAction
     fun distribute() {
-        synchronizeInstances({ sync ->
-            val packagePath = uploadPackage(determineLocalPackage(), sync).path
-
-            installPackage(packagePath, sync)
-            activatePackage(packagePath, sync)
-        }, filterInstances(Instance.FILTER_AUTHOR))
+        synchronizeInstances({ it.distributePackage() }, filterInstances(Instance.FILTER_AUTHOR))
     }
 
 }

@@ -16,9 +16,7 @@ open class InstallTask : SyncTask() {
 
     @TaskAction
     fun install() {
-        synchronizeInstances({ sync ->
-            installPackage(determineRemotePackagePath(sync), sync)
-        })
+        synchronizeInstances({ it.installPackage() })
     }
 
 }
