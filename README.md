@@ -63,7 +63,7 @@ buildscript {
     }
 }
 
-apply plugin: 'com.cognifide.aem'
+apply plugin: 'com.cognifide.aem.package'
 ```
 
 Building and deploying to AEM via command: `gradle aemBuild`.
@@ -71,6 +71,7 @@ Building and deploying to AEM via command: `gradle aemBuild`.
 #### Extra:
 
 ```
+apply plugin: 'com.cognifide.aem.instance'
 apply plugin: 'kotlin' // 'java' or whatever you like to compile bundle
 
 defaultTasks = ['aemBuild']
