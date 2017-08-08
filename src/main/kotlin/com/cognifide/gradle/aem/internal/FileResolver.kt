@@ -15,6 +15,8 @@ class FileResolver(val project: Project, val downloadDir: File) {
 
     companion object {
         val GROUP_DEFAULT = "default"
+
+        val DOWNLOAD_LOCK = "download.lock"
     }
 
     val logger: Logger = project.logger
@@ -75,8 +77,19 @@ class FileResolver(val project: Project, val downloadDir: File) {
         GFileUtils.mkdirs(targetDir)
 
         val file = File(targetDir, FilenameUtils.getName(url))
+        val lock = File(targetDir, DOWNLOAD_LOCK)
+        if (!lock.exists() && file.exists()) {
+            file.delete()
+        }
+
         if (!file.exists()) {
             downloader(file)
+
+            lock.printWriter().use {
+                it.print(Formats.toJson(mapOf(
+                        "downloaded" to Formats.dateISO8601()
+                )))
+            }
         }
 
         return file

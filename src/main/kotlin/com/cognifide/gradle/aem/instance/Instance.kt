@@ -4,6 +4,7 @@ import com.cognifide.gradle.aem.AemConfig
 import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.internal.PropertyParser
+import com.fasterxml.jackson.annotation.JsonIgnore
 import org.gradle.api.Project
 import java.io.Serializable
 import java.net.URL
@@ -104,6 +105,7 @@ interface Instance : Serializable {
 
     val password: String
 
+    @get:JsonIgnore
     val hiddenPassword: String
         get() = "*".repeat(password.length)
 
