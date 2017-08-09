@@ -16,7 +16,6 @@ import org.apache.commons.io.IOUtils
 import org.gradle.api.Project
 import java.io.File
 import java.io.FileNotFoundException
-import java.io.IOException
 
 class InstanceSync(val project: Project, val instance: Instance) {
 
@@ -65,7 +64,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
                         + HttpStatus.getStatusText(status) + " (check URL, user and password)")
             }
 
-        } catch (e: IOException) {
+        } catch (e: Exception) {
             throw DeployException("Request to the instance failed, cause: " + e.message, e)
         } finally {
             method.releaseConnection()
@@ -228,13 +227,13 @@ class InstanceSync(val project: Project, val instance: Instance) {
         val json: String
         try {
             json = post(url)
-        } catch (e: DeployException) {
+        } catch (e: Exception) {
             throw DeployException("Cannot activate package", e)
         }
 
-        val response: UploadResponse = try {
+        val response = try {
             UploadResponse.fromJson(json)
-        } catch (e: IOException) {
+        } catch (e: Exception) {
             logger.error("Malformed JSON response", e)
             throw DeployException("Package activation failed", e)
         }

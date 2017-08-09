@@ -23,15 +23,19 @@ class SftpFileDownloader(val project: Project) {
     var knownHost: String? = null
 
     fun download(sourceUrl: String, targetFile: File) {
-        val url = URIBuilder(sourceUrl)
+        try {
+            val url = URIBuilder(sourceUrl)
 
-        val downloader = ProgressFileDownloader(project)
-        downloader.headerSourceTarget(sourceUrl, targetFile)
+            val downloader = ProgressFileDownloader(project)
+            downloader.headerSourceTarget(sourceUrl, targetFile)
 
-        connect(url, { _, channel ->
-            downloader.size = channel.lstat(url.path).size
-            downloader.download(channel.get(url.path), targetFile)
-        })
+            connect(url, { _, channel ->
+                downloader.size = channel.lstat(url.path).size
+                downloader.download(channel.get(url.path), targetFile)
+            })
+        } catch (e: Exception) {
+            throw DownloadException("Cannot download URL '$sourceUrl' to file '$targetFile' using SFTP. Check connection.", e)
+        }
     }
 
     private fun connect(url: URIBuilder, action: (session: Session, channel: ChannelSftp) -> Unit) {

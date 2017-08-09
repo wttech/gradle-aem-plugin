@@ -3,10 +3,10 @@ package com.cognifide.gradle.aem.internal
 import com.google.common.hash.HashCode
 import groovy.lang.Closure
 import org.apache.commons.io.FilenameUtils
+import org.apache.commons.lang3.BooleanUtils
 import org.apache.commons.lang3.builder.HashCodeBuilder
 import org.gradle.api.DefaultTask
 import org.gradle.api.Project
-import org.gradle.api.logging.Logger
 import org.gradle.util.ConfigureUtil
 import org.gradle.util.GFileUtils
 import java.io.File
@@ -19,9 +19,9 @@ class FileResolver(val project: Project, val downloadDir: File) {
         val DOWNLOAD_LOCK = "download.lock"
     }
 
-    val logger: Logger = project.logger
+    private data class Resolver(val id: String, val group: String, val callback: (File) -> File)
 
-    data class Resolver(val id: String, val group: String, val callback: (File) -> File)
+    private data class Resolution(val resolver: Resolver, val file: File)
 
     private val resolvers = mutableListOf<Resolver>()
 
@@ -45,12 +45,18 @@ class FileResolver(val project: Project, val downloadDir: File) {
         }
     }
 
-    fun resolveFiles(): List<File> {
-        return resolveFiles { true }
+    fun allFiles(filter: (String) -> Boolean = { true }): List<File> {
+        return resolveFiles(filter).map { it.file }
     }
 
-    fun resolveFiles(filter: (Resolver) -> Boolean): List<File> {
-        return resolvers.filter(filter).map { it.callback(File("$downloadDir/${it.id}")) }
+    fun groupedFiles(filter: (String) -> Boolean = { true }): Map<String, List<File>> {
+        return resolveFiles(filter).fold(mutableMapOf<String, MutableList<File>>(), { files, (resolver, file) ->
+            files.getOrPut(resolver.group, { mutableListOf<File>() }).add(file); files
+        })
+    }
+
+    private fun resolveFiles(filter: (String) -> Boolean): List<Resolution> {
+        return resolvers.filter { filter(it.group) }.map { Resolution(it, it.callback(File("$downloadDir/${it.id}"))) }
     }
 
     fun url(url: String) {
@@ -58,8 +64,10 @@ class FileResolver(val project: Project, val downloadDir: File) {
             downloadSftpAuth(url)
         } else if (SmbFileDownloader.handles(url)) {
             downloadSmbAuth(url)
+        } else if (HttpFileDownloader.handles(url)) {
+            downloadHttpAuth(url)
         } else if (UrlFileDownloader.handles(url)) {
-            downloadHttp(url)
+            downloadUrl(url)
         } else {
             local(url)
         }
@@ -134,20 +142,29 @@ class FileResolver(val project: Project, val downloadDir: File) {
     fun downloadHttp(url: String) {
         resolve(url, { dir ->
             download(url, dir, { file ->
-                UrlFileDownloader(project).download(url, file)
+                HttpFileDownloader(project).download(url, file)
             })
         })
     }
 
-    fun downloadHttpAuth(url: String, user: String? = null, password: String? = null) {
+    fun downloadHttpAuth(url: String, user: String? = null, password: String? = null, ignoreSSL: Boolean? = null) {
         resolve(arrayOf(url, user, password), { dir ->
             download(url, dir, { file ->
-                val downloader = UrlFileDownloader(project)
+                val downloader = HttpFileDownloader(project)
 
-                downloader.user = user ?: project.properties["aem.http.user"] as String?
+                downloader.username = user ?: project.properties["aem.http.user"] as String?
                 downloader.password = password ?: project.properties["aem.http.password"] as String?
+                downloader.ignoreSSLErrors = ignoreSSL ?: BooleanUtils.toBoolean(project.properties["aem.http.ignoreSSL"] as String? ?: "true")
 
                 downloader.download(url, file)
+            })
+        })
+    }
+
+    fun downloadUrl(url: String) {
+        resolve(url, { dir ->
+            download(url, dir, { file ->
+                UrlFileDownloader(project).download(url, file)
             })
         })
     }

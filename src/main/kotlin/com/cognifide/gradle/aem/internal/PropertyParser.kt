@@ -2,7 +2,6 @@ package com.cognifide.gradle.aem.internal
 
 import com.cognifide.gradle.aem.AemConfig
 import com.cognifide.gradle.aem.AemException
-import com.cognifide.gradle.aem.deploy.DeployException
 import com.cognifide.gradle.aem.vlt.SyncTask
 import groovy.text.SimpleTemplateEngine
 import org.apache.commons.lang3.BooleanUtils
@@ -16,6 +15,8 @@ class PropertyParser(val project: Project) {
         const val FILTER_DEFAULT = "*"
 
         const val FORCE_PROP = "aem.force"
+
+        val FORCE_MESSAGE = "Before continuing it is recommended to protect against potential data loss by checking out JCR content using '${SyncTask.NAME}' task then saving it in VCS."
     }
 
     fun prop(name: String): String? {
@@ -92,12 +93,9 @@ class PropertyParser(val project: Project) {
 
     private fun isUniqueProjectName() = project == project.rootProject || project.name == project.rootProject.name
 
-    fun checkForce() {
+    fun checkForce(message: String = FORCE_MESSAGE) {
         if (!project.properties.containsKey(FORCE_PROP) || !BooleanUtils.toBoolean(project.properties[FORCE_PROP] as String?)) {
-            throw DeployException(
-                    "Warning! This task execution must be confirmed by specyfing explicitly parameter '-P$FORCE_PROP=true'. " +
-                            "Before continuing it is recommended to protect against potential data loss by checking out JCR content using '${SyncTask.NAME}' task then saving it in VCS."
-            )
+            throw AemException("Warning! This task execution must be confirmed by specifying explicitly parameter '-P$FORCE_PROP=true'. $message")
         }
     }
 

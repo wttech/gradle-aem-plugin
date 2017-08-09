@@ -74,7 +74,6 @@ class AemPackagePlugin : Plugin<Project> {
         val activate = project.tasks.create(ActivateTask.NAME, ActivateTask::class.java)
         val deploy = project.tasks.create(DeployTask.NAME, DeployTask::class.java)
         val distribute = project.tasks.create(DistributeTask.NAME, DistributeTask::class.java)
-        val satisfy = project.tasks.create(SatisfyTask.NAME, SatisfyTask::class.java)
 
         project.tasks.create(DebugTask.NAME, DebugTask::class.java)
 
@@ -91,12 +90,12 @@ class AemPackagePlugin : Plugin<Project> {
         compose.dependsOn(prepare, assemble, check)
         compose.mustRunAfter(clean)
 
-        upload.mustRunAfter(satisfy, compose)
-        install.mustRunAfter(satisfy, compose, upload)
-        activate.mustRunAfter(satisfy, compose, upload, install)
+        upload.mustRunAfter(compose)
+        install.mustRunAfter(compose, upload)
+        activate.mustRunAfter(compose, upload, install)
 
-        deploy.mustRunAfter(satisfy, compose)
-        distribute.mustRunAfter(satisfy, compose)
+        deploy.mustRunAfter(compose)
+        distribute.mustRunAfter(compose)
 
         val vltClean = project.tasks.create(CleanTask.NAME, CleanTask::class.java)
         val vltRaw = project.tasks.create(VltTask.NAME, VltTask::class.java)

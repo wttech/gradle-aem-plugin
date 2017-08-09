@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.deploy
 import com.cognifide.gradle.aem.AemConfig
 import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.instance.Instance
+import com.cognifide.gradle.aem.instance.InstanceState
 import com.cognifide.gradle.aem.instance.InstanceSync
 import com.cognifide.gradle.aem.instance.LocalHandle
 import com.cognifide.gradle.aem.internal.PropertyParser
@@ -45,6 +46,14 @@ abstract class SyncTask : DefaultTask(), AemTask {
 
     protected fun filterInstances(instanceGroup: String = Instance.FILTER_LOCAL): List<Instance> {
         return Instance.filter(project, instanceGroup)
+    }
+
+    protected fun awaitStableInstances() {
+        InstanceState.awaitStable(project, filterInstances())
+    }
+
+    protected fun awaitStableLocalInstances() {
+        InstanceState.awaitStable(project, Instance.locals(project))
     }
 
 }

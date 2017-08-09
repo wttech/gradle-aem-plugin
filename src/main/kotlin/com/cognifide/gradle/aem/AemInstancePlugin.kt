@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem
 
 import com.cognifide.gradle.aem.deploy.BuildTask
-import com.cognifide.gradle.aem.deploy.SatisfyTask
 import com.cognifide.gradle.aem.instance.*
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -36,28 +35,24 @@ class AemInstancePlugin : Plugin<Project> {
         val destroy = project.tasks.create(DestroyTask.NAME, DestroyTask::class.java)
         val up = project.tasks.create(UpTask.NAME, UpTask::class.java)
         val down = project.tasks.create(DownTask.NAME, DownTask::class.java)
+        val satisfy = project.tasks.create(SatisfyTask.NAME, SatisfyTask::class.java)
+        val await = project.tasks.create(AwaitTask.NAME, AwaitTask::class.java)
 
         create.mustRunAfter(clean)
         up.mustRunAfter(clean)
         up.dependsOn(create)
         destroy.mustRunAfter(down)
+        satisfy.mustRunAfter(create, up)
 
         project.plugins.withId(AemPackagePlugin.ID, {
             val setup = project.tasks.create(SetupTask.NAME, SetupTask::class.java)
-            val setupAwaitUp = project.tasks.create("aemSetupAwaitUp", AwaitTask::class.java)
-            val satisfy = project.tasks.getByName(SatisfyTask.NAME)
-            val setupAwaitSatisfied = project.tasks.create("aemSetupAwaitSatisfied", AwaitTask::class.java)
             val build = project.tasks.getByName(BuildTask.NAME)
-            val setupAwaitBuilt = project.tasks.create("aemSetupAwaitBuilt", AwaitTask::class.java)
 
-            setupAwaitUp.dependsOn(up)
-            satisfy.mustRunAfter(setupAwaitUp)
-            setupAwaitSatisfied.dependsOn(setupAwaitUp, satisfy)
-            build.mustRunAfter(setupAwaitSatisfied)
-            setupAwaitBuilt.dependsOn(setupAwaitSatisfied, build)
-            setup.dependsOn(setupAwaitBuilt)
+            setup.dependsOn(create, up, satisfy, build, await)
+
+            build.mustRunAfter(create, up, satisfy)
+            await.mustRunAfter(build)
         })
-
     }
 
 }

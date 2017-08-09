@@ -18,6 +18,7 @@ open class UpTask : SyncTask() {
     @TaskAction
     fun up() {
         synchronizeLocalInstances { it.up() }
+        awaitStableLocalInstances()
     }
 
 }

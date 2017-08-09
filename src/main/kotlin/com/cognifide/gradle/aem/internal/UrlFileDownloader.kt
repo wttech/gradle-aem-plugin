@@ -7,10 +7,6 @@ import java.net.URL
 
 class UrlFileDownloader(val project: Project) {
 
-    var user: String? = null
-
-    var password: String? = null
-
     val logger: Logger = project.logger
 
     companion object {
@@ -19,18 +15,19 @@ class UrlFileDownloader(val project: Project) {
         }
     }
 
-    fun download(url: String, file: File) {
-        val connection = URL(url).openConnection()
-        if (!user.isNullOrBlank() && !password.isNullOrBlank()) {
-            connection.setRequestProperty("Authorization", "Basic ${Formats.toBase64("$user:$password")}")
+    fun download(sourceUrl: String, targetFile: File) {
+        try {
+            val connection = URL(sourceUrl).openConnection()
+            connection.useCaches = false
+
+            val downloader = ProgressFileDownloader(project)
+            downloader.headerSourceTarget(sourceUrl, targetFile)
+            downloader.size = connection.contentLengthLong
+
+            downloader.download(connection.getInputStream(), targetFile)
+        } catch (e: Exception) {
+            throw DownloadException("Cannot download URL '$sourceUrl' to file '$targetFile'.", e)
         }
-        connection.useCaches = false
-
-        val downloader = ProgressFileDownloader(project)
-        downloader.headerSourceTarget(url, file)
-        downloader.size = connection.contentLengthLong
-
-        downloader.download(connection.getInputStream(), file)
     }
 
 }

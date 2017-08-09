@@ -1,6 +1,7 @@
-package com.cognifide.gradle.aem.deploy
+package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.AemTask
+import com.cognifide.gradle.aem.deploy.SyncTask
 import com.cognifide.gradle.aem.internal.FileResolver
 import com.cognifide.gradle.aem.internal.PropertyParser
 import groovy.lang.Closure
@@ -32,18 +33,18 @@ open class SatisfyTask : SyncTask() {
     fun satisfy() {
         logger.info("Providing packages from local and remote sources.")
 
-        val packageFiles = packageProvider.resolveFiles({ resolver ->
-            PropertyParser(project).filter(resolver.group, "aem.deploy.satisfy.group")
+        val groupedFiles = packageProvider.groupedFiles({ fileGroup ->
+            PropertyParser(project).filter(fileGroup, "aem.deploy.satisfy.group")
         })
 
-        logger.info("Packages provided (${packageFiles.size})")
+        logger.info("Packages provided (${groupedFiles.map { it.value.size }.sum()})")
 
-        // TODO await instance up after each group
-        synchronizeInstances({ sync ->
-            logger.info("Satisfying (uploading & installing)")
+        for ((group, files) in groupedFiles) {
+            logger.info("Satisfying group of packages '$group'")
 
-            packageFiles.onEach { sync.deployPackage(it) }
-        })
+            synchronizeInstances({ sync -> files.onEach { sync.deployPackage(it) } })
+            awaitStableInstances()
+        }
     }
 
 }

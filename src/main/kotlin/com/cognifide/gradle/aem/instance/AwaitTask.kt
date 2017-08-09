@@ -6,6 +6,10 @@ import org.gradle.api.tasks.TaskAction
 
 open class AwaitTask : SyncTask() {
 
+    companion object {
+        val NAME = "aemAwait"
+    }
+
     init {
         group = AemTask.GROUP
         description = "Waits until all local AEM instance(s) be stable."
