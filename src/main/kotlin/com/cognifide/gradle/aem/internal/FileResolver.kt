@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.internal
 
+import com.cognifide.gradle.aem.AemException
 import com.google.common.hash.HashCode
 import groovy.lang.Closure
 import org.apache.commons.io.FilenameUtils
@@ -56,7 +57,9 @@ class FileResolver(val project: Project, val downloadDir: File) {
     }
 
     private fun resolveFiles(filter: (String) -> Boolean): List<Resolution> {
-        return resolvers.filter { filter(it.group) }.map { Resolution(it, it.callback(File("$downloadDir/${it.id}"))) }
+        return resolvers.filter { filter(it.group) }
+                .map { Resolution(it, it.callback(File("$downloadDir/${it.id}"))) }
+                .onEach { if (!it.file.exists()) throw AemException("Cannot resolve file from group '${it.resolver.group}': ${it.file.name}") }
     }
 
     fun url(url: String) {
@@ -103,14 +106,14 @@ class FileResolver(val project: Project, val downloadDir: File) {
         return file
     }
 
-    fun downloadSftpAuth(url: String, username: String? = null, password: String? = null) {
+    fun downloadSftpAuth(url: String, username: String? = null, password: String? = null, hostChecking: Boolean? = null) {
         resolve(url, { dir ->
             download(url, dir, { file ->
                 val downloader = SftpFileDownloader(project)
 
                 downloader.username = username ?: project.properties["aem.sftp.username"] as String?
                 downloader.password = password ?: project.properties["aem.sftp.password"] as String?
-                downloader.knownHost = password ?: project.properties["aem.sftp.knownHost"] as String?
+                downloader.hostChecking = hostChecking ?: BooleanUtils.toBoolean(project.properties["aem.sftp.hostChecking"] as String? ?: "true")
 
                 downloader.download(url, file)
             })
