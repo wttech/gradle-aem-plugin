@@ -1,6 +1,7 @@
-package com.cognifide.gradle.aem.internal
+package com.cognifide.gradle.aem.internal.file
 
 import com.cognifide.gradle.aem.AemBasePlugin
+import com.cognifide.gradle.aem.internal.Patterns
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
 import org.apache.commons.io.filefilter.FalseFileFilter

@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.internal
+package com.cognifide.gradle.aem.internal.file
 
 import org.apache.http.auth.AuthScope
 import org.apache.http.auth.UsernamePasswordCredentials

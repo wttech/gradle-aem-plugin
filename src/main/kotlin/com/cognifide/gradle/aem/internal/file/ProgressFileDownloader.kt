@@ -1,5 +1,7 @@
-package com.cognifide.gradle.aem.internal
+package com.cognifide.gradle.aem.internal.file
 
+import com.cognifide.gradle.aem.internal.Formats
+import com.cognifide.gradle.aem.internal.ProgressLogger
 import org.gradle.api.Project
 import java.io.File
 import java.io.FileOutputStream

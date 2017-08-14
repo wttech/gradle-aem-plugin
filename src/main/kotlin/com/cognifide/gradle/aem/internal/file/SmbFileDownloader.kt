@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.internal
+package com.cognifide.gradle.aem.internal.file
 
 import jcifs.smb.NtlmPasswordAuthentication
 import jcifs.smb.SmbFile

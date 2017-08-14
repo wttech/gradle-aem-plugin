@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.internal
+package com.cognifide.gradle.aem.internal.file
 
 import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.sftp.OpenMode
@@ -45,10 +45,10 @@ class SftpFileDownloader(val project: Project) {
 
     private fun connect(url: URIBuilder, action: (SFTPClient) -> Unit) {
         val ssh = SSHClient()
+        ssh.loadKnownHosts()
         if (!hostChecking) {
             ssh.addHostKeyVerifier({ _, _, _ -> true })
         }
-        ssh.loadKnownHosts()
 
         val user = if (!username.isNullOrBlank()) username else url.userInfo
         val port = if (url.port >= 0) url.port else 22

@@ -1,6 +1,7 @@
-package com.cognifide.gradle.aem.internal
+package com.cognifide.gradle.aem.internal.file
 
 import com.cognifide.gradle.aem.AemException
+import com.cognifide.gradle.aem.internal.Formats
 import com.google.common.hash.HashCode
 import groovy.lang.Closure
 import org.apache.commons.io.FilenameUtils
@@ -12,6 +13,9 @@ import org.gradle.util.ConfigureUtil
 import org.gradle.util.GFileUtils
 import java.io.File
 
+/**
+ * Generic file downloader with groups supporting files from local and remote sources (SFTP, SMB, HTTP).
+ */
 class FileResolver(val project: Project, val downloadDir: File) {
 
     companion object {
@@ -113,7 +117,7 @@ class FileResolver(val project: Project, val downloadDir: File) {
 
                 downloader.username = username ?: project.properties["aem.sftp.username"] as String?
                 downloader.password = password ?: project.properties["aem.sftp.password"] as String?
-                downloader.hostChecking = hostChecking ?: BooleanUtils.toBoolean(project.properties["aem.sftp.hostChecking"] as String? ?: "true")
+                downloader.hostChecking = hostChecking ?: BooleanUtils.toBoolean(project.properties["aem.sftp.hostChecking"] as String? ?: "false")
 
                 downloader.download(url, file)
             })
