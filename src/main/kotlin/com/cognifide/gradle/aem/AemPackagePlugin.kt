@@ -36,6 +36,8 @@ class AemPackagePlugin : Plugin<Project> {
 
         val VLT_PATH = "META-INF/vault"
 
+        val VLT_PROPERTIES = "$VLT_PATH/properties.xml"
+
         val JCR_ROOT = "jcr_root"
 
         val BUILD_TASK_RULE = "Pattern: aem<ProjectPath>Build: Build CRX package and deploy it to AEM instance(s)."

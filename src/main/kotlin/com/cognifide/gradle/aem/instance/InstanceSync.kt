@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.AemConfig
+import com.cognifide.gradle.aem.AemPackagePlugin
 import com.cognifide.gradle.aem.deploy.*
 import com.cognifide.gradle.aem.pkg.ComposeTask
 import org.apache.commons.httpclient.HttpClient
@@ -14,6 +15,9 @@ import org.apache.commons.httpclient.methods.multipart.*
 import org.apache.commons.httpclient.params.HttpConnectionParams
 import org.apache.commons.io.IOUtils
 import org.gradle.api.Project
+import org.jsoup.Jsoup
+import org.jsoup.parser.Parser
+import org.zeroturnaround.zip.ZipUtil
 import java.io.File
 import java.io.FileNotFoundException
 
@@ -123,6 +127,29 @@ class InstanceSync(val project: Project, val instance: Instance) {
             return config.remotePackagePath
         }
 
+        val pkg = resolveRemotePackage({ response ->
+            response.resolvePackage(project, ListResponse.Package(project))
+        }) ?: throw DeployException("Package is not uploaded on AEM instance.")
+
+        logger.info("Package found on AEM at path: '${pkg.path}'")
+
+        return pkg.path
+    }
+
+    fun determineRemotePackage(file: File): ListResponse.Package? {
+        val xml = ZipUtil.unpackEntry(file, AemPackagePlugin.VLT_PROPERTIES).toString(Charsets.UTF_8)
+        val doc = Jsoup.parse(xml, "", Parser.xmlParser())
+
+        val group = doc.select("entry[key=group]").`val`()
+        val name = doc.select("entry[key=name]").`val`()
+        val version = doc.select("entry[key=version]").`val`()
+
+        return resolveRemotePackage({ response ->
+            response.resolvePackage(project, ListResponse.Package(group, name, version))
+        })
+    }
+
+    private fun resolveRemotePackage(resolver: (ListResponse) -> ListResponse.Package?): ListResponse.Package? {
         logger.info("Asking AEM for uploaded packages using URL: '$listPackagesUrl'")
 
         val json = post(listPackagesUrl)
@@ -132,14 +159,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
             throw DeployException("Cannot ask AEM for uploaded packages!")
         }
 
-        val path = response.resolvePath(project)
-        if (path.isNullOrBlank()) {
-            throw DeployException("Package is not uploaded on AEM instance.")
-        }
-
-        logger.info("Package found on AEM at path: '$path'")
-
-        return path!!
+        return resolver(response)
     }
 
     fun uploadPackage(file: File = determineLocalPackage()): UploadResponse {
@@ -205,6 +225,14 @@ class InstanceSync(val project: Project, val instance: Instance) {
             return response
         } catch (e: Exception) {
             throw DeployException("Cannot install package.", e)
+        }
+    }
+
+    // TODO logs here
+    fun satisfyPackage(file: File) {
+        val pkg = determineRemotePackage(file)
+        if (pkg == null || !pkg.installed) {
+            deployPackage(file)
         }
     }
 
