@@ -1,15 +1,12 @@
 package com.cognifide.gradle.aem.internal
 
-import net.schmizz.sshj.DefaultConfig
 import net.schmizz.sshj.SSHClient
-import net.schmizz.sshj.common.LoggerFactory
 import net.schmizz.sshj.sftp.OpenMode
 import net.schmizz.sshj.sftp.SFTPClient
 import org.apache.http.client.utils.URIBuilder
 import org.gradle.api.Project
 import org.gradle.api.logging.Logger
 import java.io.File
-
 
 class SftpFileDownloader(val project: Project) {
 
@@ -35,8 +32,10 @@ class SftpFileDownloader(val project: Project) {
             downloader.headerSourceTarget(sourceUrl, targetFile)
 
             connect(url, { sftp ->
+                val size = sftp.stat(url.path).size
                 val input = sftp.open(url.path, setOf(OpenMode.READ)).RemoteFileInputStream()
 
+                downloader.size = size
                 downloader.download(input, targetFile)
             })
         } catch (e: Exception) {
@@ -44,19 +43,8 @@ class SftpFileDownloader(val project: Project) {
         }
     }
 
-    private fun connect(url: URIBuilder, callback: (SFTPClient) -> Unit) {
-        val config = DefaultConfig()
-        config.loggerFactory = object : LoggerFactory {
-            override fun getLogger(name: String?): Logger {
-                return logger
-            }
-
-            override fun getLogger(clazz: Class<*>?): Logger {
-                return logger
-            }
-        }
-
-        val ssh = SSHClient(config)
+    private fun connect(url: URIBuilder, action: (SFTPClient) -> Unit) {
+        val ssh = SSHClient()
         if (!hostChecking) {
             ssh.addHostKeyVerifier({ _, _, _ -> true })
         }
@@ -67,22 +55,25 @@ class SftpFileDownloader(val project: Project) {
 
         ssh.connect(url.host, port)
         try {
-            try {
-                ssh.authPublickey(user)
-            } catch (e: Exception) {
-                logger.debug("Cannot authenticate using public key", e)
-
-                try {
-                    ssh.authPassword(user, password)
-                } catch (e: Exception) {
-                    logger.debug("Cannot authenticate using password", e)
-                }
-            }
-
-            val sftp = ssh.newSFTPClient()
-            sftp.use(callback)
+            authenticate(mapOf(
+                    "public key" to { ssh.authPublickey(user) },
+                    "password" to { ssh.authPassword(user, password) }
+            ))
+            ssh.newSFTPClient().use(action)
         } finally {
             ssh.disconnect()
+        }
+    }
+
+    private fun authenticate(methods: Map<String, () -> Unit>) {
+        for ((name, method) in methods) {
+            try {
+                method()
+                logger.info("Authenticated using method: $name")
+                return
+            } catch (e: Exception) {
+                logger.debug("Cannot authenticate using method: $name", e)
+            }
         }
     }
 
