@@ -42,6 +42,7 @@ open class SatisfyTask : SyncTask() {
         for ((group, files) in groupedFiles) {
             logger.info("Satisfying group of packages '$group'")
 
+            // TODO implement lazy deployPackage (install only when not installed)
             synchronizeInstances({ sync -> files.onEach { sync.deployPackage(it) } })
             awaitStableInstances()
         }

@@ -23,6 +23,7 @@ class InstanceState(val project: Project, val instance: Instance, val timeout: I
 
             progressLogger.started()
 
+            // TODO wait timeouts after BundleState unchanged
             Behaviors.waitUntil(config.instanceAwaitInterval, { elapsed, attempt ->
                 if (config.instanceAwaitTimeout > 0 && elapsed > config.instanceAwaitTimeout) {
                     logger.warn("Timeout reached while awaiting stable instance(s)")
