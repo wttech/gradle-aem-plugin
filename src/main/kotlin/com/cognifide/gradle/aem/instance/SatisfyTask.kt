@@ -2,8 +2,8 @@ package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.deploy.SyncTask
-import com.cognifide.gradle.aem.internal.file.FileResolver
 import com.cognifide.gradle.aem.internal.PropertyParser
+import com.cognifide.gradle.aem.internal.file.FileResolver
 import groovy.lang.Closure
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
@@ -42,8 +42,18 @@ open class SatisfyTask : SyncTask() {
         for ((group, files) in groupedFiles) {
             logger.info("Satisfying group of packages '$group'")
 
-            synchronizeInstances({ sync -> files.onEach { sync.satisfyPackage(it) } })
-            awaitStableInstances()
+            var shouldAwait = false
+            synchronizeInstances({ sync ->
+                files.onEach {
+                    if (sync.satisfyPackage(it)) {
+                        shouldAwait = true
+                    }
+                }
+            })
+
+            if (shouldAwait) {
+                awaitStableInstances()
+            }
         }
     }
 

@@ -252,6 +252,10 @@ data class AemConfig(
             return of(task.project)
         }
 
+        fun archiveName(project: Project): String {
+            return (project.tasks.getByName(ComposeTask.NAME) as ComposeTask).archiveName
+        }
+
     }
 
     /**

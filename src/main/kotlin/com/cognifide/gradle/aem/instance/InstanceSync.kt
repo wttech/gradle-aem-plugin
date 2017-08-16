@@ -140,9 +140,9 @@ class InstanceSync(val project: Project, val instance: Instance) {
         val xml = ZipUtil.unpackEntry(file, AemPackagePlugin.VLT_PROPERTIES).toString(Charsets.UTF_8)
         val doc = Jsoup.parse(xml, "", Parser.xmlParser())
 
-        val group = doc.select("entry[key=group]").`val`()
-        val name = doc.select("entry[key=name]").`val`()
-        val version = doc.select("entry[key=version]").`val`()
+        val group = doc.select("entry[key=group]").text()
+        val name = doc.select("entry[key=name]").text()
+        val version = doc.select("entry[key=version]").text()
 
         return resolveRemotePackage({ response ->
             response.resolvePackage(project, ListResponse.Package(group, name, version))
@@ -156,7 +156,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         val response = try {
             ListResponse.fromJson(json)
         } catch (e: Exception) {
-            throw DeployException("Cannot ask AEM for uploaded packages!")
+            throw DeployException("Cannot ask AEM for uploaded packages!", e)
         }
 
         return resolver(response)
@@ -228,11 +228,19 @@ class InstanceSync(val project: Project, val instance: Instance) {
         }
     }
 
-    // TODO logs here
-    fun satisfyPackage(file: File) {
+    fun satisfyPackage(file: File): Boolean {
         val pkg = determineRemotePackage(file)
-        if (pkg == null || !pkg.installed) {
+
+        return if (pkg == null) {
             deployPackage(file)
+            true
+        } else {
+            if (pkg.installed) {
+                false
+            } else {
+                deployPackage(file)
+                true
+            }
         }
     }
 
