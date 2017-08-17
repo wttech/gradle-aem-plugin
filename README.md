@@ -27,7 +27,7 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
 * Composing CRX package from multiple JCR content roots, bundles.
 * Automated all-in-one CRX packages generation (assemblies).
 * Easy multi-deployment with instance groups.
-* Automated dependent packages installation from local and remote sources.
+* Automated dependent packages installation from local and remote sources (SMB, SSH, HTTP(s)).
 * Smart Vault files generation (combining defaults with overiddables).
 * Embedded Vault tool for checking out and cleaning JCR content from running AEM instance.
 * OSGi Manifest customization by official [osgi](https://docs.gradle.org/current/userguide/osgi_plugin.html) plugin or feature rich [org.dm.bundle](https://github.com/TomDmitriev/gradle-bundle-plugin) plugin.
@@ -59,7 +59,7 @@ buildscript {
     }
     
     dependencies {
-        classpath 'com.cognifide.gradle:aem-plugin:1.4.+'
+        classpath 'com.cognifide.gradle:aem-plugin:2.0.0'
     }
 }
 
@@ -103,9 +103,14 @@ For multi project build configuration, see [example project](https://github.com/
 ### Tasks
 
 * `aemSetup` - Perform initial setup of local AEM instance(s). Automated version of `aemCreate aemUp aemSatisfy aemBuild`.
+* `aemCreate` - Create local AEM instance(s). To use it specify required properties in ignored file *gradle.properties* at project root (protocols supported: SMB, SSH, HTTP(s) or local path, SMB as example):
+    * `aem.instance.local.jarUrl=smb://[host]/[path]/cq-quickstart.jar`
+    * `aem.instance.local.licenseUrl=smb://[host]/[path]/license.properties`
+    * `aem.smb.domain=MYDOMAIN`
+    * `aem.smb.username=MYUSER`
+    * `aem.smb.password=MYPASSWORD`
 * `aemUp` - Turn on local AEM instance(s).
 * `aemDown` - Turn off local AEM instance(s).
-* `aemCreate` - Create local AEM instance(s).
 * `aemDestroy` - Destroy local AEM instance(s).
 * `aemCompose` - Compose CRX package from JCR content and bundles. Available methods:
     * `includeProject(projectPath: String)`, includes both bundles and JCR content from another project, example: `includeProject ':core'`.
@@ -231,6 +236,11 @@ because such usages will effectively forbid caching `aemCompose` task and it wil
 
 Vault tool current working directory cannot be easily configured, because of its API. AEM plugin is temporarily changing current working directory for Vault, then returning it back to original value.
 In case of that workaround, Vault tasks should not be run in parallel (by separated daemon processed / JVM synchronization bypassed), because of potential unpredictable behavior.
+
+### Files from SSH for `aemCreate` and `aemSatisfy`
+
+Local instance JAR file can be provided using SSH, but SSHJ client used in implementation has an [integration issue](https://github.com/hierynomus/sshj/issues/347) related with JDK and Crypto Policy.
+As a workaround, just run build without daemon (`--no-daemon`).
 
 ## License
 
