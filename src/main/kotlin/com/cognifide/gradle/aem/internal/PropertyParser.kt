@@ -71,7 +71,7 @@ class PropertyParser(val project: Project) {
                     "config" to config,
                     "instances" to config.instancesByName,
                     "buildCount" to SimpleDateFormat("yDDmmssSSS").format(config.buildDate),
-                    "created" to Formats.dateISO8601(config.buildDate)
+                    "created" to Formats.date(config.buildDate)
             )
         }
 
@@ -81,7 +81,10 @@ class PropertyParser(val project: Project) {
     val namePrefix: String = if (isUniqueProjectName()) {
         project.name
     } else {
-        "${project.rootProject.name}${project.path}".replace(":", "-").substringBeforeLast("-")
+        "${project.rootProject.name}${project.path}"
+                .replace(":", "-")
+                .replace(".", "-")
+                .substringBeforeLast("-")
     }
 
     val name: String

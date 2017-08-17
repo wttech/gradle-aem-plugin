@@ -106,8 +106,8 @@ open class ComposeTask : Zip(), AemTask {
     fun includeProjects(pathFilter: String) {
         project.gradle.afterProject { subproject ->
             if (subproject != project
-                    && subproject.plugins.hasPlugin(AemBasePlugin.ID)
-                    && (pathFilter.isNullOrBlank() || Patterns.wildcard(subproject.path, pathFilter))) {
+                    && subproject.plugins.hasPlugin(AemPackagePlugin.ID)
+                    && (pathFilter.isBlank() || Patterns.wildcard(subproject.path, pathFilter))) {
                 includeProject(subproject)
             }
         }

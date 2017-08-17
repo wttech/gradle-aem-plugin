@@ -48,7 +48,7 @@ class ListResponse private constructor() {
 
             this.downloadName = "$name-${project.version}.zip"
             this.conventionPaths = listOf(
-                    "/etc/packages/$group/${AemConfig.archiveName(project)}",
+                    "/etc/packages/$group/${AemConfig.pkg(project).archiveName}",
                     "/etc/packages/$group/$name-$version.zip"
             )
         }

@@ -107,14 +107,14 @@ class InstanceSync(val project: Project, val instance: Instance) {
     }
 
     fun determineLocalPackage(): File {
-        if (!config.localPackagePath.isNullOrBlank()) {
+        if (!config.localPackagePath.isBlank()) {
             val configFile = File(config.localPackagePath)
             if (configFile.exists()) {
                 return configFile
             }
         }
 
-        val archiveFile = (project.tasks.getByName(ComposeTask.NAME) as ComposeTask).archivePath
+        val archiveFile = AemConfig.pkg(project).archivePath
         if (archiveFile.exists()) {
             return archiveFile
         }
@@ -123,7 +123,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
     }
 
     fun determineRemotePackagePath(): String {
-        if (!config.remotePackagePath.isNullOrBlank()) {
+        if (!config.remotePackagePath.isBlank()) {
             return config.remotePackagePath
         }
 

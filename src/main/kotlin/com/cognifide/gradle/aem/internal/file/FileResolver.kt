@@ -102,7 +102,7 @@ class FileResolver(val project: Project, val downloadDir: File) {
 
             lock.printWriter().use {
                 it.print(Formats.toJson(mapOf(
-                        "downloaded" to Formats.dateISO8601()
+                        "downloaded" to Formats.date()
                 )))
             }
         }

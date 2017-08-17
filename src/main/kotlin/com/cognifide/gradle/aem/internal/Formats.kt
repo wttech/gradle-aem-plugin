@@ -42,7 +42,7 @@ object Formats {
         return "${"%.2f".format(value * 100.0)}%"
     }
 
-    fun dateISO8601(date: Date = Date()): String {
+    fun date(date: Date = Date()): String {
         return ISO8601Utils.format(date)
     }
 

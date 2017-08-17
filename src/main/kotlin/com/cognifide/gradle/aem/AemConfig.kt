@@ -253,15 +253,23 @@ data class AemConfig(
          * Especially useful when including one project in another (composing assembly packages).
          */
         fun of(project: Project): AemConfig {
-            return project.extensions.getByType(AemExtension::class.java).config
+            val extension = project.extensions.findByType(AemExtension::class.java)
+                    ?: throw AemException("${project.toString().capitalize()}"
+                    + " has neither ${AemPackagePlugin.ID} nor ${AemInstancePlugin.ID} plugin applied.")
+
+            return extension.config
         }
 
         fun of(task: DefaultTask): AemConfig {
             return of(task.project)
         }
 
-        fun archiveName(project: Project): String {
-            return (project.tasks.getByName(ComposeTask.NAME) as ComposeTask).archiveName
+        fun pkg(project: Project): ComposeTask {
+            val task = project.tasks.findByName(ComposeTask.NAME)
+                    ?: throw AemException("${project.toString().capitalize()} has no task named"
+                    + " '${ComposeTask.NAME}' defined.")
+
+            return task as ComposeTask
         }
 
     }

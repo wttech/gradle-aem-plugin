@@ -183,7 +183,7 @@ class LocalHandle(val project: Project, val sync: InstanceSync) {
     }
 
     fun lock() {
-        val metaJson = Formats.toJson(mapOf("locked" to Formats.dateISO8601()))
+        val metaJson = Formats.toJson(mapOf("locked" to Formats.date()))
         lock.printWriter().use { it.print(metaJson) }
     }
 

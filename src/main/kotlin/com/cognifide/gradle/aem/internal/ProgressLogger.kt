@@ -33,7 +33,7 @@ class ProgressLogger(val project: Project, header: String) {
         return m.invoke(obj, *args)
     }
 
-    private fun invokeIgnoreExceptions(obj: Any, method: String, vararg args: Any) {
+    private fun invokeQuietly(obj: Any, method: String, vararg args: Any) {
         try {
             invoke(obj, method, *args)
         } catch (e: Exception) {
@@ -42,15 +42,15 @@ class ProgressLogger(val project: Project, header: String) {
     }
 
     fun started() {
-        invokeIgnoreExceptions(progressLogger, "started")
-    }
-
-    fun completed() {
-        invokeIgnoreExceptions(progressLogger, "completed")
+        invokeQuietly(progressLogger, "started")
     }
 
     fun progress(msg: String) {
-        invokeIgnoreExceptions(progressLogger, "progress", msg)
+        invokeQuietly(progressLogger, "progress", msg)
+    }
+
+    fun completed() {
+        invokeQuietly(progressLogger, "completed")
     }
 
 }
