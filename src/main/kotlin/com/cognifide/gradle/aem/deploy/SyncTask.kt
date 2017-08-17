@@ -2,10 +2,7 @@ package com.cognifide.gradle.aem.deploy
 
 import com.cognifide.gradle.aem.AemConfig
 import com.cognifide.gradle.aem.AemTask
-import com.cognifide.gradle.aem.instance.Instance
-import com.cognifide.gradle.aem.instance.InstanceState
-import com.cognifide.gradle.aem.instance.InstanceSync
-import com.cognifide.gradle.aem.instance.LocalHandle
+import com.cognifide.gradle.aem.instance.*
 import com.cognifide.gradle.aem.internal.PropertyParser
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Internal
@@ -49,11 +46,11 @@ abstract class SyncTask : DefaultTask(), AemTask {
     }
 
     protected fun awaitStableInstances() {
-        InstanceState.awaitStable(project, filterInstances())
+        InstanceActions.awaitStable(project, filterInstances())
     }
 
     protected fun awaitStableLocalInstances() {
-        InstanceState.awaitStable(project, Instance.locals(project))
+        InstanceActions.awaitStable(project, Instance.locals(project))
     }
 
 }

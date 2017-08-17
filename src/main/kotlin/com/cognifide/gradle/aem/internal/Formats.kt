@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.internal
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.databind.util.ISO8601Utils
+import org.apache.commons.lang3.time.DurationFormatUtils
 import org.apache.commons.validator.routines.UrlValidator
 import java.util.*
 
@@ -43,6 +44,10 @@ object Formats {
 
     fun dateISO8601(date: Date = Date()): String {
         return ISO8601Utils.format(date)
+    }
+
+    fun duration(millis: Long): String {
+        return DurationFormatUtils.formatDurationHMS(millis)
     }
 
 }

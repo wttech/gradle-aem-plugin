@@ -17,7 +17,7 @@ open class AwaitTask : SyncTask() {
 
     @TaskAction
     fun await() {
-        InstanceState.awaitStable(project)
+        InstanceActions.awaitStable(project)
     }
 
 }

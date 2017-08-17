@@ -232,10 +232,18 @@ data class AemConfig(
         var instanceAwaitInterval: Int = 1000,
 
         /**
-         * Time in milliseconds used as maximum after which instance stability checks will be skipped.
+         * After each await interval, instance stability check is being performed.
+         * This value is a HTTP connection timeout (in millis) which must be smaller than interval to avoid race condition.
          */
         @Input
-        var instanceAwaitTimeout: Int = 1000 * 60 * 15
+        var instanceAwaitTimeout: Int = (0.9 * instanceAwaitInterval).toInt(),
+
+        /**
+         * Maximum intervals after which instance stability checks will
+         * be skipped if there is still some unstable instance left.
+         */
+        @Input
+        var instanceAwaitTimes: Long = 60 * 5
 
 ) : Serializable {
     companion object {
@@ -314,6 +322,10 @@ data class AemConfig(
 
         if (instances.size != instancesByName.size) {
             throw AemException("Instance names must be unique")
+        }
+
+        if (instanceAwaitTimeout >= instanceAwaitInterval) {
+            throw AemException("Instance await timeout should be less than interval ($instanceAwaitTimeout < $instanceAwaitInterval)")
         }
 
         instances.forEach { it.validate() }
