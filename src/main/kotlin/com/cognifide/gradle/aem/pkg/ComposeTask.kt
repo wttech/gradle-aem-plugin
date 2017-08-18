@@ -1,7 +1,8 @@
 package com.cognifide.gradle.aem.pkg
 
+import com.cognifide.gradle.aem.AemBasePlugin
 import com.cognifide.gradle.aem.AemConfig
-import com.cognifide.gradle.aem.AemPlugin
+import com.cognifide.gradle.aem.AemPackagePlugin
 import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.PropertyParser
@@ -32,16 +33,19 @@ open class ComposeTask : Zip(), AemTask {
     val vaultFilters = mutableListOf<File>()
 
     @InputDirectory
-    val vaultDir = AemTask.temporaryDir(project, PrepareTask.NAME, AemPlugin.VLT_PATH)
+    val vaultDir = AemTask.temporaryDir(project, PrepareTask.NAME, AemPackagePlugin.VLT_PATH)
 
     @Internal
-    var bundleCollectors: List<() -> Unit> = mutableListOf()
+    private var bundleCollectors: List<() -> Unit> = mutableListOf()
 
     @Internal
-    var contentCollectors: List<() -> Unit> = mutableListOf()
+    private var contentCollectors: List<() -> Unit> = mutableListOf()
 
     @Internal
-    val propertyParser = PropertyParser(project)
+    private val filterRoots = mutableSetOf<String>()
+
+    @Internal
+    private val propertyParser = PropertyParser(project)
 
     private var archiveName: String? = null
 
@@ -54,6 +58,10 @@ open class ComposeTask : Zip(), AemTask {
             }
         })
     }
+
+    @get:Internal
+    val fileProperties
+        get() = mapOf("filterRoots" to filterRoots.joinToString(config.vaultLineSeparator))
 
     init {
         description = "Composes CRX package from JCR content and built OSGi bundles"
@@ -78,25 +86,6 @@ open class ComposeTask : Zip(), AemTask {
         bundleCollectors.onEach { it() }
     }
 
-    // TODO Preserve order of inclusion in 'settings.xml' (does filter root order matter?)
-    private fun parseVaultFilterRoots(): String {
-        val tags = vaultFilters.filter { it.exists() }.fold(mutableListOf<String>(), { tags, filter ->
-            val doc = Jsoup.parse(filter.bufferedReader().use { it.readText() }, "", Parser.xmlParser())
-            tags.addAll(doc.select("filter[root]").map { it.toString() }.toList()); tags
-        })
-
-        if (tags.isEmpty()) {
-            tags.add("<filter root=\"${config.bundlePath}\"/>")
-        }
-
-        return tags.joinToString(config.vaultLineSeparator)
-    }
-
-    @get:Internal
-    val fileProperties by lazy {
-        mapOf("filterRoots" to parseVaultFilterRoots())
-    }
-
     private fun fromContents() {
         contentCollectors.onEach { it() }
     }
@@ -117,8 +106,8 @@ open class ComposeTask : Zip(), AemTask {
     fun includeProjects(pathFilter: String) {
         project.gradle.afterProject { subproject ->
             if (subproject != project
-                    && subproject.plugins.hasPlugin(AemPlugin.ID)
-                    && (pathFilter.isNullOrBlank() || Patterns.wildcard(subproject.path, pathFilter))) {
+                    && subproject.plugins.hasPlugin(AemPackagePlugin.ID)
+                    && (pathFilter.isBlank() || Patterns.wildcard(subproject.path, pathFilter))) {
                 includeProject(subproject)
             }
         }
@@ -166,7 +155,7 @@ open class ComposeTask : Zip(), AemTask {
             val jars = JarCollector(project).all.toSet()
 
             if (jars.isNotEmpty()) {
-                into("${AemPlugin.JCR_ROOT}/$installPath") { spec ->
+                into("${AemPackagePlugin.JCR_ROOT}/$installPath") { spec ->
                     spec.from(jars)
                     fileFilter(spec)
                 }
@@ -182,15 +171,12 @@ open class ComposeTask : Zip(), AemTask {
         val config = AemConfig.of(project)
 
         dependProject(project, config.dependContentTaskNames)
-
-        if (this.project != project && !config.vaultFilterPath.isNullOrBlank()) {
-            vaultFilters.add(File(config.vaultFilterPath))
-        }
+        extractVaultFilters(config)
 
         contentCollectors += {
-            val contentDir = File("${config.contentPath}/${AemPlugin.JCR_ROOT}")
+            val contentDir = File("${config.contentPath}/${AemPackagePlugin.JCR_ROOT}")
             if (contentDir.exists()) {
-                into(AemPlugin.JCR_ROOT) { spec ->
+                into(AemPackagePlugin.JCR_ROOT) { spec ->
                     spec.from(contentDir)
                     fileFilter(spec)
                 }
@@ -221,9 +207,23 @@ open class ComposeTask : Zip(), AemTask {
         }
     }
 
+    private fun extractVaultFilters(config: AemConfig) {
+        if (!config.vaultFilterPath.isNullOrBlank() && File(config.vaultFilterPath).exists()) {
+            filterRoots.addAll(extractVaultFilters(File(config.vaultFilterPath)))
+        } else {
+            filterRoots.add("<filter root=\"${config.bundlePath}\"/>")
+        }
+    }
+
+    private fun extractVaultFilters(filter: File): Set<String> {
+        val doc = Jsoup.parse(filter.bufferedReader().use { it.readText() }, "", Parser.xmlParser())
+
+        return doc.select("filter[root]").map { it.toString() }.toSet()
+    }
+
     fun includeVault(vltPath: Any) {
         contentCollectors += {
-            into(AemPlugin.VLT_PATH, { spec ->
+            into(AemPackagePlugin.VLT_PATH, { spec ->
                 spec.from(vltPath)
                 fileFilter(spec)
             })

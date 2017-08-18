@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem.deploy
 
-import com.cognifide.gradle.aem.AemPlugin
 import com.cognifide.gradle.aem.AemTask
 import org.gradle.api.tasks.TaskAction
 
@@ -17,9 +16,7 @@ open class ActivateTask : SyncTask() {
 
     @TaskAction
     fun activate() {
-        synchronize({ sync ->
-            activatePackage(determineRemotePackagePath(sync), sync)
-        })
+        synchronizeInstances({ it.activatePackage() })
     }
 
 }

@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.vlt
 
 import com.cognifide.gradle.aem.AemConfig
-import com.cognifide.gradle.aem.AemPlugin
+import com.cognifide.gradle.aem.AemPackagePlugin
 import org.apache.commons.cli2.CommandLine
 import org.apache.jackrabbit.vault.cli.VaultFsApp
 import org.gradle.api.Project
@@ -34,7 +34,7 @@ class VltApp(val project: Project) : VaultFsApp() {
 
     val workingDir: File
         get() {
-            var path = "${config.contentPath}/${AemPlugin.JCR_ROOT}"
+            var path = "${config.contentPath}/${AemPackagePlugin.JCR_ROOT}"
 
             val relativePath = project.properties["aem.vlt.path"] as String?
             if (!relativePath.isNullOrBlank()) {

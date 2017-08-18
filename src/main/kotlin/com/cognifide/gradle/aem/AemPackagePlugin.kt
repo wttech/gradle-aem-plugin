@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem
 
-import com.cognifide.gradle.aem.deploy.*
 import com.cognifide.gradle.aem.debug.DebugTask
+import com.cognifide.gradle.aem.deploy.*
 import com.cognifide.gradle.aem.jar.UpdateManifestTask
 import com.cognifide.gradle.aem.pkg.ComposeTask
 import com.cognifide.gradle.aem.pkg.PrepareTask
@@ -10,25 +10,23 @@ import com.cognifide.gradle.aem.vlt.CleanTask
 import com.cognifide.gradle.aem.vlt.SyncTask
 import com.cognifide.gradle.aem.vlt.VltTask
 import com.google.common.base.CaseFormat
-import org.gradle.api.DefaultTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
-import org.gradle.api.plugins.BasePlugin
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 
 /**
  * Plugin assumptions:
  *
- * JVM based languages like Groovy or Kotlin have implicitly applied 'java' plugin.
- * Projects can have only 'com.cognifide.aem' plugin applied intentionally to generate packages with content only.
+ * JVM based languages like Groovy or Kotlin must have implicitly applied 'java' plugin.
+ * Projects can have only 'com.cognifide.aem.package' plugin applied intentionally to generate packages with content only.
  * Projects can have applied official 'osgi' or 'org.dm.bundle' plugins to customize OSGi manifest.
  */
-class AemPlugin : Plugin<Project> {
+class AemPackagePlugin : Plugin<Project> {
 
     companion object {
-        val ID = "com.cognifide.aem"
+        val ID = "com.cognifide.aem.package"
 
         val PKG = "com.cognifide.gradle.aem"
 
@@ -38,27 +36,21 @@ class AemPlugin : Plugin<Project> {
 
         val VLT_PATH = "META-INF/vault"
 
+        val VLT_PROPERTIES = "$VLT_PATH/properties.xml"
+
         val JCR_ROOT = "jcr_root"
 
-        val DEPLOY_TASK_ROOT = "aemRootDeploy"
-
-        val DEPLOY_TASK_RULE = "Pattern: aem<ProjectPath>Deploy: Build CRX package and deploy it to AEM instance(s). Use preemptive '$DEPLOY_TASK_ROOT' for root project."
+        val BUILD_TASK_RULE = "Pattern: aem<ProjectPath>Build: Build CRX package and deploy it to AEM instance(s)."
     }
 
     override fun apply(project: Project) {
         setupDependentPlugins(project)
-        setupExtensions(project)
         setupTasks(project)
         setupConfigurations(project)
-        setupConfig(project)
     }
 
     private fun setupDependentPlugins(project: Project) {
-        project.plugins.apply(BasePlugin::class.java)
-    }
-
-    private fun setupExtensions(project: Project) {
-        project.extensions.create(AemExtension.NAME, AemExtension::class.java)
+        project.plugins.apply(AemBasePlugin::class.java)
     }
 
     private fun setupTasks(project: Project) {
@@ -77,15 +69,14 @@ class AemPlugin : Plugin<Project> {
         val prepare = project.tasks.create(PrepareTask.NAME, PrepareTask::class.java)
         val compose = project.tasks.create(ComposeTask.NAME, ComposeTask::class.java)
         val upload = project.tasks.create(UploadTask.NAME, UploadTask::class.java)
+        project.tasks.create(DeleteTask.NAME, DeleteTask::class.java)
+        project.tasks.create(PurgeTask.NAME, PurgeTask::class.java)
         val install = project.tasks.create(InstallTask.NAME, InstallTask::class.java)
+        project.tasks.create(UninstallTask.NAME, UninstallTask::class.java)
         val activate = project.tasks.create(ActivateTask.NAME, ActivateTask::class.java)
         val deploy = project.tasks.create(DeployTask.NAME, DeployTask::class.java)
         val distribute = project.tasks.create(DistributeTask.NAME, DistributeTask::class.java)
-        val satisfy = project.tasks.create(SatisfyTask.NAME, SatisfyTask::class.java)
 
-        project.tasks.create(UninstallTask.NAME, UninstallTask::class.java)
-        project.tasks.create(DeleteTask.NAME, DeleteTask::class.java)
-        project.tasks.create(PurgeTask.NAME, PurgeTask::class.java)
         project.tasks.create(DebugTask.NAME, DebugTask::class.java)
 
         val assemble = project.tasks.getByName(LifecycleBasePlugin.ASSEMBLE_TASK_NAME)
@@ -101,12 +92,12 @@ class AemPlugin : Plugin<Project> {
         compose.dependsOn(prepare, assemble, check)
         compose.mustRunAfter(clean)
 
-        upload.mustRunAfter(satisfy, compose)
-        install.mustRunAfter(satisfy, compose, upload)
-        activate.mustRunAfter(satisfy, compose, upload, install)
+        upload.mustRunAfter(compose)
+        install.mustRunAfter(compose, upload)
+        activate.mustRunAfter(compose, upload, install)
 
-        deploy.mustRunAfter(satisfy, compose)
-        distribute.mustRunAfter(satisfy, compose)
+        deploy.mustRunAfter(compose)
+        distribute.mustRunAfter(compose)
 
         val vltClean = project.tasks.create(CleanTask.NAME, CleanTask::class.java)
         val vltRaw = project.tasks.create(VltTask.NAME, VltTask::class.java)
@@ -118,21 +109,17 @@ class AemPlugin : Plugin<Project> {
         vltCheckout.mustRunAfter(clean)
         vltSync.mustRunAfter(clean)
 
-        project.tasks.addRule(DEPLOY_TASK_RULE, { taskName ->
+        project.tasks.create(BuildTask.NAME, BuildTask::class.java).dependsOn(build, deploy)
+        project.tasks.addRule(BUILD_TASK_RULE, { taskName ->
             val desiredTaskName = if (project == project.rootProject) {
-                DEPLOY_TASK_ROOT
+                BuildTask.NAME
             } else {
-                "aem${CaseFormat.LOWER_HYPHEN.to(CaseFormat.UPPER_CAMEL, project.path.replace(":", "-"))}Deploy"
+                "aem${CaseFormat.LOWER_HYPHEN.to(CaseFormat.UPPER_CAMEL, project.path.replace(":", "-"))}Build"
             }
 
             if (taskName == desiredTaskName) {
-                if (project.tasks.findByName(taskName) != null) {
-                    project.logger.info("Deploy rule task '$taskName' already exists, so it will be not created.")
-                } else {
-                    project.logger.info("Creating deploy rule task named '$taskName'.")
-
-                    val task = project.tasks.create(taskName)
-                    task.dependsOn(build, deploy)
+                if (project.tasks.findByName(taskName) == null) {
+                    project.tasks.create(taskName, BuildTask::class.java).dependsOn(build, deploy)
                 }
             }
         })
@@ -148,23 +135,6 @@ class AemPlugin : Plugin<Project> {
 
             project.configurations.create(CONFIG_EMBED, configurer)
             project.configurations.create(CONFIG_INSTALL, configurer)
-        })
-    }
-
-    private fun setupConfig(project: Project) {
-        project.tasks.forEach { task ->
-            if (task is AemTask && task is DefaultTask) {
-                task.config.configure(task)
-            }
-        }
-
-        project.afterEvaluate({
-            project.tasks.forEach { task ->
-                if (task is AemTask && task is DefaultTask) {
-                    task.config.validate()
-                    task.config.attach(task)
-                }
-            }
         })
     }
 

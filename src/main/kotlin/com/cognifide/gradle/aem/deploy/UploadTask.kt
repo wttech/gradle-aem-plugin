@@ -16,9 +16,7 @@ open class UploadTask : SyncTask() {
 
     @TaskAction
     fun upload() {
-        synchronize({ sync ->
-            uploadPackage(determineLocalPackage(), sync)
-        })
+        synchronizeInstances({ it.uploadPackage() })
     }
 
 }

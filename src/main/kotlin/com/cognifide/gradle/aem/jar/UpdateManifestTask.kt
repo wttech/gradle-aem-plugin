@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.jar
 
 import com.cognifide.gradle.aem.AemConfig
-import com.cognifide.gradle.aem.AemPlugin
+import com.cognifide.gradle.aem.AemPackagePlugin
 import com.cognifide.gradle.aem.AemTask
 import org.dm.gradle.plugins.bundle.BundleExtension
 import org.gradle.api.DefaultTask
@@ -46,7 +46,7 @@ open class UpdateManifestTask : DefaultTask(), AemTask {
     val embeddableJars: List<File>
         @InputFiles
         get() {
-            return project.configurations.getByName(AemPlugin.CONFIG_EMBED).files.sortedBy { it.name }
+            return project.configurations.getByName(AemPackagePlugin.CONFIG_EMBED).files.sortedBy { it.name }
         }
 
     init {

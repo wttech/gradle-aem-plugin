@@ -1,5 +1,8 @@
 package com.cognifide.gradle.aem
 
+import com.cognifide.gradle.aem.instance.Instance
+import com.cognifide.gradle.aem.instance.LocalInstance
+import com.cognifide.gradle.aem.instance.RemoteInstance
 import com.cognifide.gradle.aem.pkg.ComposeTask
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.gradle.api.DefaultTask
@@ -25,9 +28,10 @@ data class AemConfig(
 
         /**
          * List of AEM instances on which packages could be deployed.
+         * Instance stored in map ensures name uniqueness and allows to be referenced in expanded properties.
          */
         @Input
-        var instances: MutableList<AemInstance> = mutableListOf(),
+        var instances: MutableMap<String, Instance> = mutableMapOf(),
 
         /**
          * Defines maximum time after which initializing connection to AEM will be aborted (e.g on upload, install).
@@ -112,10 +116,9 @@ data class AemConfig(
 
         /**
          * Wildcard file name filter expression that is used to filter in which Vault files properties can be injected.
-         * This also could be done 'by fileFilter', but due to performance optimization it is done separately.
          */
         @Input
-        var filesExpanded: MutableList<String> = mutableListOf("**/${AemPlugin.VLT_PATH}/*.xml"),
+        var filesExpanded: MutableList<String> = mutableListOf("**/${AemPackagePlugin.VLT_PATH}/*.xml"),
 
         /**
          * Define here custom properties that can be used in CRX package files like 'META-INF/vault/properties.xml'.
@@ -137,6 +140,8 @@ data class AemConfig(
          * Custom path to Vault files that will be used to build CRX package.
          * Useful to share same files for all packages, like package thumbnail.
          * Must be absolute or relative to current working directory.
+         *
+         * Default: "${project.rootProject.projectDir.path}/src/main/resources/META-INF/vault"
          */
         @Input
         var vaultFilesPath: String = "",
@@ -152,14 +157,6 @@ data class AemConfig(
                 "cq:lastReplicat*",
                 "jcr:uuid"
         ),
-
-        /**
-         * Filter file used when Vault files are being checked out from running AEM instance.
-         *
-         * Default: "src/main/content/META-INF/vault/filter.xml"
-         */
-        @Input
-        var vaultFilterPath: String = "",
 
         /**
          * Global options which are being applied to any Vault related command like 'aemVault' or 'aemCheckout'.
@@ -196,7 +193,58 @@ data class AemConfig(
          * Build date used as base for calculating 'created' and 'buildCount' package properties.
          */
         @Internal
-        var buildDate: Date = Date()
+        var buildDate: Date = Date(),
+
+        /**
+         * Path in which local AEM instances will be stored.
+         *
+         * Default: "${System.getProperty("user.home")}/.gradle/aem/${project.rootProject.name}"
+         */
+        @Input
+        var instancesPath: String = "",
+
+        /**
+         * Path from which extra files for local AEM instances will be copied.
+         * Useful for overriding default startup scripts ('start.bat' or 'start.sh') or providing some files inside 'crx-quickstart'.
+         *
+         * Default: "{rootProject}/src/main/resources/local-instance"
+         */
+        @Input
+        var instanceFilesPath: String = "",
+
+        /**
+         * Wildcard file name filter expression that is used to filter in which instance files properties can be injected.
+         */
+        @Input
+        var instanceFilesExpanded: MutableList<String> = mutableListOf("**/*.properties", "**/*.sh", "**/*.bat", "**/*.xml"),
+
+        /**
+         * Time in milliseconds to postpone instance stability checks to avoid race condition related with
+         * actual operation being performed on AEM like starting JCR package installation or even creating launchpad.
+         */
+        @Input
+        var awaitDelay: Int = 3000,
+
+        /**
+         * Time in milliseconds used as interval between next instance stability checks being performed.
+         * Optimization could be necessary only when instance is heavily loaded.
+         */
+        @Input
+        var awaitInterval: Int = 1000,
+
+        /**
+         * After each await interval, instance stability check is being performed.
+         * This value is a HTTP connection timeout (in millis) which must be smaller than interval to avoid race condition.
+         */
+        @Input
+        var awaitTimeout: Int = (0.9 * awaitInterval.toDouble()).toInt(),
+
+        /**
+         * Maximum intervals after which instance stability checks will
+         * be skipped if there is still some unstable instance left.
+         */
+        @Input
+        var awaitTimes: Long = 60 * 5
 
 ) : Serializable {
     companion object {
@@ -206,11 +254,23 @@ data class AemConfig(
          * Especially useful when including one project in another (composing assembly packages).
          */
         fun of(project: Project): AemConfig {
-            return project.extensions.getByType(AemExtension::class.java).config
+            val extension = project.extensions.findByType(AemExtension::class.java)
+                    ?: throw AemException(project.toString().capitalize()
+                    + " has neither ${AemPackagePlugin.ID} nor ${AemInstancePlugin.ID} plugin applied.")
+
+            return extension.config
         }
 
         fun of(task: DefaultTask): AemConfig {
             return of(task.project)
+        }
+
+        fun pkg(project: Project): ComposeTask {
+            val task = project.tasks.findByName(ComposeTask.NAME)
+                    ?: throw AemException("${project.toString().capitalize()} has no task named"
+                    + " '${ComposeTask.NAME}' defined.")
+
+            return task as ComposeTask
         }
 
     }
@@ -218,9 +278,7 @@ data class AemConfig(
     /**
      * Initialize defaults that depends on concrete type of project.
      */
-    fun configure(task: DefaultTask) {
-        val project = task.project
-
+    fun configure(project: Project) {
         if (project == project.rootProject) {
             bundlePath = "/apps/${project.name}/install"
         } else {
@@ -228,21 +286,38 @@ data class AemConfig(
         }
 
         contentPath = "${project.projectDir.path}/src/main/content"
-        vaultFilesPath = "${project.rootProject.projectDir.path}/src/main/resources/${AemPlugin.VLT_PATH}"
-        vaultFilterPath = "${project.projectDir.path}/src/main/content/${AemPlugin.VLT_PATH}/filter.xml"
-    }
+        vaultFilesPath = "${project.rootProject.projectDir.path}/src/main/resources/${AemPackagePlugin.VLT_PATH}"
+        instancesPath = "${System.getProperty("user.home")}/.gradle/aem/${project.rootProject.name}"
+        instanceFilesPath = "${project.rootProject.projectDir.path}/src/main/resources/${AemInstancePlugin.FILES_PATH}"
 
-    fun attach(task: DefaultTask) {
-        val inputs = task.inputs
-
-        vaultFilesDirs.forEach { inputs.dir(it) }
+        project.afterEvaluate { validate() }
     }
 
     /**
      * Declare new deployment target (AEM instance).
      */
-    fun instance(url: String, user: String = "admin", password: String = "admin", type: String = "default") {
-        instances.add(AemInstance(url, user, password, type))
+    fun localInstance(httpUrl: String) {
+        instance(LocalInstance(httpUrl))
+    }
+
+    fun localInstance(httpUrl: String, user: String, password: String) {
+        instance(LocalInstance(httpUrl, user, password))
+    }
+
+    fun localInstance(httpUrl: String, user: String, password: String, type: String, debugPort: Int) {
+        instance(LocalInstance(httpUrl, user, password, type, debugPort))
+    }
+
+    fun remoteInstance(httpUrl: String, environment: String) {
+        instance(RemoteInstance(httpUrl, environment))
+    }
+
+    fun remoteInstance(httpUrl: String, user: String, password: String, type: String, environment: String) {
+        instance(RemoteInstance(httpUrl, user, password, type, environment))
+    }
+
+    private fun instance(instance: Instance) {
+        instances.put(instance.name, instance)
     }
 
     /**
@@ -257,11 +332,11 @@ data class AemConfig(
             throw AemException("Content path cannot be blank")
         }
 
-        if (instances.size != instancesByName.size) {
-            throw AemException("Instance names must be unique")
+        if (awaitTimeout >= awaitInterval) {
+            throw AemException("Await timeout should be less than interval ($awaitTimeout < $awaitInterval)")
         }
 
-        instances.forEach { it.validate() }
+        instances.values.forEach { it.validate() }
     }
 
     /**
@@ -274,17 +349,21 @@ data class AemConfig(
         get() {
             val paths = listOf(
                     vaultFilesPath,
-                    "$contentPath/${AemPlugin.VLT_PATH}"
+                    "$contentPath/${AemPackagePlugin.VLT_PATH}"
             )
 
-            return paths.filter { !it.isNullOrBlank() }.map { File(it) }
+            return paths.filter { !it.isBlank() }.map { File(it) }
         }
 
+    /**
+     * CRX package Vault filter path.
+     * Also used by VLT tool as default filter for files being checked out from running AEM instance.
+     *
+     * @see <http://jackrabbit.apache.org/filevault/filter.html>
+     */
     @get:Internal
     @get:JsonIgnore
-    val instancesByName: Map<String, AemInstance>
-        get() = instances.fold(mutableMapOf<String, AemInstance>(), { map, instance ->
-            map.put(instance.name, instance); map
-        })
+    val vaultFilterPath: String
+        get() = "$contentPath/${AemPackagePlugin.VLT_PATH}/filter.xml"
 
 }

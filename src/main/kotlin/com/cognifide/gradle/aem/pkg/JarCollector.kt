@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.pkg
 
-import com.cognifide.gradle.aem.AemPlugin
+import com.cognifide.gradle.aem.AemPackagePlugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Dependency
 import java.io.File
@@ -32,7 +32,7 @@ class JarCollector(val project: Project) {
             val jars = TreeSet<File>()
 
             jars += projectArtifacts
-            jars += dependencies(AemPlugin.CONFIG_INSTALL)
+            jars += dependencies(AemPackagePlugin.CONFIG_INSTALL)
 
             return jars
         }

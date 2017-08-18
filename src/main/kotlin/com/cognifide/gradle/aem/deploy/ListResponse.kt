@@ -1,7 +1,8 @@
 package com.cognifide.gradle.aem.deploy
 
+import com.cognifide.gradle.aem.AemConfig
 import com.cognifide.gradle.aem.internal.PropertyParser
-import com.cognifide.gradle.aem.pkg.ComposeTask
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.apache.commons.lang3.BooleanUtils
@@ -16,106 +17,135 @@ class ListResponse private constructor() {
         }
     }
 
-    lateinit var results: List<ListResult>
+    lateinit var results: List<Package>
 
-    fun resolvePath(project: Project): String? {
-        return PathResolver.values()
+    fun resolvePackage(project: Project, expected: Package): Package? {
+        return PackageResolver.values()
                 .asSequence()
-                .map { it.resolve(project, this) }
+                .map { it.resolve(project, this, expected) }
                 .firstOrNull { it != null }
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    class ListResult {
-        lateinit var path: String
-
-        lateinit var downloadName: String
-
+    class Package private constructor() {
         lateinit var group: String
 
         lateinit var name: String
 
         lateinit var version: String
+
+        lateinit var path: String
+
+        lateinit var downloadName: String
+
+        @get:JsonIgnore
+        var conventionPaths = listOf<String>()
+
+        var lastUnpacked: Long? = null
+
+        constructor(project: Project) : this() {
+            this.group = project.group.toString()
+            this.name = PropertyParser(project).name
+            this.version = project.version.toString()
+
+            this.downloadName = "$name-${project.version}.zip"
+            this.conventionPaths = listOf(
+                    "/etc/packages/$group/${AemConfig.pkg(project).archiveName}",
+                    "/etc/packages/$group/$name-$version.zip"
+            )
+        }
+
+        constructor(group: String, name: String, version: String) : this() {
+            this.group = group
+            this.name = name
+            this.version = version
+
+            this.path = ""
+            this.downloadName = ""
+            this.conventionPaths = listOf("/etc/packages/$group/$name-$version.zip")
+        }
+
+        @get:JsonIgnore
+        val props: String
+            get() = "[group=$group][name=$name][version=$version]"
+
+        val installed: Boolean
+            get() = lastUnpacked != null && lastUnpacked!! > 0
+
     }
 
-    enum class PathResolver {
+    enum class PackageResolver {
 
         BY_PROJECT_PROPS() {
-            override fun resolve(project: Project, response: ListResponse): String? {
-                var path: String? = null
+            override fun resolve(project: Project, response: ListResponse, expected: Package): Package? {
+                if (expected.group.isBlank() && expected.name.isBlank()) {
+                    project.logger.info("Cannot find package, because expected group and name are blank.")
+                    return null
+                }
 
-                val projectName = PropertyParser(project).name
-                val props = "[group=${project.group}][name=$projectName][version=${project.version}]"
-
-                project.logger.info("Trying to find package by project properties: $props")
+                project.logger.info("Trying to find package by project properties: ${expected.props}")
 
                 val result = response.results.find { result ->
-                    (result.group == project.group) && (result.name == projectName) && (result.version == project.version)
+                    (result.group == expected.group) && (result.name == expected.name) && (result.version == expected.version)
                 }
 
                 if (result != null) {
-                    path = result.path
-                    project.logger.info("Package found by project properties: $props")
+                    project.logger.info("Package found by project properties: ${expected.props}")
+                    return result
                 } else {
-                    project.logger.info("Package cannot be found by project properties: $props")
+                    project.logger.info("Package cannot be found by project properties: ${expected.props}")
                 }
 
-                return path
+                return null
             }
 
         },
         BY_CONVENTION_PATH() {
-            override fun resolve(project: Project, response: ListResponse): String? {
-                var path: String? = null
-
-                val projectName = PropertyParser(project).name
-                val conventionPaths = listOf(
-                        "/etc/packages/${project.group}/${(project.tasks.getByName(ComposeTask.NAME) as ComposeTask).archiveName}",
-                        "/etc/packages/${project.group}/$projectName-${project.version}.zip"
-                )
-
-                for (conventionPath in conventionPaths) {
+            override fun resolve(project: Project, response: ListResponse, expected: Package): Package? {
+                for (conventionPath in expected.conventionPaths) {
                     project.logger.info("Trying to find package by convention path '$conventionPath'.")
 
                     val result = response.results.find { result -> result.path == conventionPath }
                     if (result != null) {
-                        path = result.path
                         project.logger.info("Package found by convention path.")
-                        break
+
+                        return result
                     } else {
                         project.logger.info("Package cannot be found by convention path.")
                     }
                 }
 
-                return path
+                return null
             }
         },
         BY_DOWNLOAD_NAME() {
-            override fun resolve(project: Project, response: ListResponse): String? {
-                var path: String? = null
-
-                val projectName = PropertyParser(project).name
-                val downloadName = "$projectName-${project.version}.zip"
-
+            override fun resolve(project: Project, response: ListResponse, expected: Package): Package? {
                 if (BooleanUtils.toBoolean(project.properties.getOrElse("aem.deploy.skipDownloadName", { "true" }) as String?)) {
-                    project.logger.info("Finding package by download name '$downloadName' is skipped.")
-                } else {
-                    project.logger.warn("Trying to find package by download name '$downloadName' which can collide with other packages.")
-
-                    val result = response.results.find { result -> result.downloadName == downloadName }
-                    if (result != null) {
-                        path = result.path
-                        project.logger.info("Package found by download name.")
-                    } else {
-                        project.logger.info("Package cannot be found by download name.")
-                    }
+                    project.logger.info("Finding package by download name '${expected.downloadName}' is skipped.")
+                    return null
                 }
 
-                return path
+                if (expected.downloadName.isBlank()) {
+                    project.logger.info("Cannot find package, because expected download name is blank.")
+                    return null
+                }
+
+                project.logger.warn("Trying to find package by download name '${expected.downloadName}' which can collide with other packages.")
+
+                val result = response.results.find { result -> result.downloadName == expected.downloadName }
+                if (result != null) {
+                    project.logger.info("Package found by download name.")
+
+                    return result
+                } else {
+                    project.logger.info("Package cannot be found by download name.")
+                }
+
+                return null
             }
         };
 
-        abstract fun resolve(project: Project, response: ListResponse): String?
+        abstract fun resolve(project: Project, response: ListResponse, expected: Package): Package?
 
     }
 

@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.vlt
 
 import com.cognifide.gradle.aem.AemConfig
-import com.cognifide.gradle.aem.AemInstance
+import com.cognifide.gradle.aem.instance.Instance
 import com.cognifide.gradle.aem.internal.PropertyParser
 import org.gradle.api.Project
 import org.gradle.api.logging.Logger
@@ -33,7 +33,7 @@ class VltCommand(val project: Project) {
             logger.info("JCR content directory to be checked out does not exist: ${contentDir.absolutePath}")
         }
 
-        raw("checkout --force --filter \${filter} \${instance.url}")
+        raw("checkout --force --filter \${filter} \${instance.httpUrl}/crx/server/crx.default")
     }
 
     fun raw(command: String) {
@@ -65,25 +65,25 @@ class VltCommand(val project: Project) {
         return filter
     }
 
-    fun determineInstance(): AemInstance {
+    fun determineInstance(): Instance {
         val cmdInstanceArg = project.properties["aem.vlt.instance"] as String?
         if (!cmdInstanceArg.isNullOrBlank()) {
-            val cmdInstance = AemInstance.parse(cmdInstanceArg!!).first()
+            val cmdInstance = Instance.parse(cmdInstanceArg!!).first()
             cmdInstance.validate()
 
             logger.info("Using instance specified by command line parameter: $cmdInstance")
             return cmdInstance
         }
 
-        val authorInstance = AemInstance.filter(project, AemInstance.FILTER_AUTHOR).firstOrNull()
+        val authorInstance = Instance.filter(project, Instance.FILTER_AUTHOR).firstOrNull()
         if (authorInstance != null) {
-            logger.info("Using first instance matching filter '${AemInstance.FILTER_AUTHOR}': $authorInstance")
+            logger.info("Using first instance matching filter '${Instance.FILTER_AUTHOR}': $authorInstance")
             return authorInstance
         }
 
-        val anyInstance = AemInstance.filter(project, AemInstance.FILTER_ANY).firstOrNull()
+        val anyInstance = Instance.filter(project, Instance.FILTER_ANY).firstOrNull()
         if (anyInstance != null) {
-            logger.info("Using first instance matching filter '${AemInstance.FILTER_ANY}': $anyInstance")
+            logger.info("Using first instance matching filter '${Instance.FILTER_ANY}': $anyInstance")
             return anyInstance
         }
 
