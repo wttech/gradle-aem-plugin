@@ -28,9 +28,10 @@ data class AemConfig(
 
         /**
          * List of AEM instances on which packages could be deployed.
+         * Instance stored in map ensures name uniqueness and allows to be referenced in expanded properties.
          */
         @Input
-        var instances: MutableList<Instance> = mutableListOf(),
+        var instances: MutableMap<String, Instance> = mutableMapOf(),
 
         /**
          * Defines maximum time after which initializing connection to AEM will be aborted (e.g on upload, install).
@@ -295,25 +296,28 @@ data class AemConfig(
     /**
      * Declare new deployment target (AEM instance).
      */
-
     fun localInstance(httpUrl: String) {
-        instances.add(LocalInstance(httpUrl))
+        instance(LocalInstance(httpUrl))
     }
 
     fun localInstance(httpUrl: String, user: String, password: String) {
-        instances.add(LocalInstance(httpUrl, user, password))
+        instance(LocalInstance(httpUrl, user, password))
     }
 
     fun localInstance(httpUrl: String, user: String, password: String, type: String, debugPort: Int) {
-        instances.add(LocalInstance(httpUrl, user, password, type, debugPort))
+        instance(LocalInstance(httpUrl, user, password, type, debugPort))
     }
 
     fun remoteInstance(httpUrl: String, environment: String) {
-        instances.add(RemoteInstance(httpUrl, environment))
+        instance(RemoteInstance(httpUrl, environment))
     }
 
     fun remoteInstance(httpUrl: String, user: String, password: String, type: String, environment: String) {
-        instances.add(RemoteInstance(httpUrl, user, password, type, environment))
+        instance(RemoteInstance(httpUrl, user, password, type, environment))
+    }
+
+    private fun instance(instance: Instance) {
+        instances.put(instance.name, instance)
     }
 
     /**
@@ -328,15 +332,11 @@ data class AemConfig(
             throw AemException("Content path cannot be blank")
         }
 
-        if (instances.size != instancesByName.size) {
-            throw AemException("Instance names must be unique")
-        }
-
         if (awaitTimeout >= awaitInterval) {
             throw AemException("Await timeout should be less than interval ($awaitTimeout < $awaitInterval)")
         }
 
-        instances.forEach { it.validate() }
+        instances.values.forEach { it.validate() }
     }
 
     /**
@@ -352,15 +352,8 @@ data class AemConfig(
                     "$contentPath/${AemPackagePlugin.VLT_PATH}"
             )
 
-            return paths.filter { !it.isNullOrBlank() }.map { File(it) }
+            return paths.filter { !it.isBlank() }.map { File(it) }
         }
-
-    @get:Internal
-    @get:JsonIgnore
-    val instancesByName: Map<String, Instance>
-        get() = instances.fold(mutableMapOf<String, Instance>(), { map, instance ->
-            map.put(instance.name, instance); map
-        })
 
     /**
      * CRX package Vault filter path.

@@ -9,6 +9,7 @@ class ProjectDumper(@Transient val project: Project) {
         get() {
             return mapOf(
                     "project" to mapOf(
+                            "displayName" to project.displayName,
                             "path" to project.path,
                             "name" to project.name,
                             "dir" to project.projectDir.absolutePath

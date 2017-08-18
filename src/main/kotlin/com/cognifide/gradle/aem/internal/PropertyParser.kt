@@ -68,10 +68,9 @@ class PropertyParser(val project: Project) {
 
             return mapOf(
                     "name" to name,
-                    "config" to config,
-                    "instances" to config.instancesByName,
                     "buildCount" to SimpleDateFormat("yDDmmssSSS").format(config.buildDate),
-                    "created" to Formats.date(config.buildDate)
+                    "created" to Formats.date(config.buildDate),
+                    "config" to config
             )
         }
 

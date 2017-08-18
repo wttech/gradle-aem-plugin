@@ -30,6 +30,10 @@ interface Instance : Serializable {
 
         val PASSWORD_DEFAULT = "admin"
 
+        val LIST_PROP = "aem.deploy.instance.list"
+
+        val NAME_PROP = "aem.deploy.instance.name"
+
         fun parse(str: String): List<Instance> {
             return str.split(";").map { line ->
                 val parts = line.split(",")
@@ -59,19 +63,19 @@ interface Instance : Serializable {
 
         fun filter(project: Project, instanceFilter: String = FILTER_LOCAL): List<Instance> {
             val config = AemConfig.of(project)
-            val instanceValues = project.properties["aem.deploy.instance.list"] as String?
+            val instanceValues = project.properties[LIST_PROP] as String?
             if (!instanceValues.isNullOrBlank()) {
                 return parse(instanceValues!!)
             }
 
-            val instances = if (config.instances.isEmpty()) {
+            val instances = if (config.instances.values.isEmpty()) {
                 return defaults()
             } else {
                 config.instances
             }
 
-            return instances.filter { instance ->
-                PropertyParser(project).filter(instance.name, "aem.deploy.instance.name", instanceFilter)
+            return instances.values.filter { instance ->
+                PropertyParser(project).filter(instance.name, NAME_PROP, instanceFilter)
             }
         }
 
