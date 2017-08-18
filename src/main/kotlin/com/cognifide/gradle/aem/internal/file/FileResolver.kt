@@ -159,7 +159,7 @@ class FileResolver(val project: Project, val downloadDir: File) {
             download(url, dir, { file ->
                 val downloader = HttpFileDownloader(project)
 
-                downloader.username = user ?: project.properties["aem.http.user"] as String?
+                downloader.username = user ?: project.properties["aem.http.username"] as String?
                 downloader.password = password ?: project.properties["aem.http.password"] as String?
                 downloader.ignoreSSLErrors = ignoreSSL ?: BooleanUtils.toBoolean(project.properties["aem.http.ignoreSSL"] as String? ?: "true")
 
