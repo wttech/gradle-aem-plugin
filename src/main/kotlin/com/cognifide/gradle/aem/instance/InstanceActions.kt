@@ -12,9 +12,9 @@ object InstanceActions {
         val config = AemConfig.of(project)
         val logger = project.logger
 
-        if (config.instanceAwaitDelay > 0) {
+        if (config.awaitDelay > 0) {
             logger.info("Delaying instance stability checking")
-            Behaviors.waitFor(config.instanceAwaitDelay)
+            Behaviors.waitFor(config.awaitDelay)
         }
 
         val progressLogger = ProgressLogger(project, "Awaiting stable instance(s)")
@@ -22,8 +22,8 @@ object InstanceActions {
         progressLogger.started()
 
         var lastInstanceStates = -1
-        Behaviors.waitUntil(config.instanceAwaitInterval, { timer ->
-            if (config.instanceAwaitTimes > 0 && timer.ticks > config.instanceAwaitTimes) {
+        Behaviors.waitUntil(config.awaitInterval, { timer ->
+            if (config.awaitTimes > 0 && timer.ticks > config.awaitTimes) {
                 logger.warn("Instance(s) are not stable. Timeout reached after ${Formats.duration(timer.elapsed)}")
                 return@waitUntil false
             }
@@ -34,7 +34,7 @@ object InstanceActions {
                 timer.reset()
             }
 
-            val instanceProgress = instanceStates.joinToString(" | ") { progressFor(it, timer.ticks, config.instanceAwaitTimes) }
+            val instanceProgress = instanceStates.joinToString(" | ") { progressFor(it, timer.ticks, config.awaitTimes) }
             progressLogger.progress(instanceProgress)
 
             if (instanceStates.all { it.stable }) {

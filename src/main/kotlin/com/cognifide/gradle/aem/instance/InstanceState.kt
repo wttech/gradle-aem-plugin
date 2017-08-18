@@ -11,8 +11,8 @@ class InstanceState(val project: Project, val instance: Instance) {
     val config = AemConfig.of(project)
 
     var bundleStateParametrizer: (HttpConnectionParams) -> Unit = { params ->
-        params.connectionTimeout = config.instanceAwaitTimeout
-        params.soTimeout = config.instanceAwaitTimeout
+        params.connectionTimeout = config.awaitTimeout
+        params.soTimeout = config.awaitTimeout
     }
 
     val bundleState by lazy {

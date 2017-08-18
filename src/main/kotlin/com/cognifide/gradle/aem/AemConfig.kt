@@ -222,28 +222,28 @@ data class AemConfig(
          * actual operation being performed on AEM like starting JCR package installation or even creating launchpad.
          */
         @Input
-        var instanceAwaitDelay: Int = 3000,
+        var awaitDelay: Int = 3000,
 
         /**
          * Time in milliseconds used as interval between next instance stability checks being performed.
          * Optimization could be necessary only when instance is heavily loaded.
          */
         @Input
-        var instanceAwaitInterval: Int = 1000,
+        var awaitInterval: Int = 1000,
 
         /**
          * After each await interval, instance stability check is being performed.
          * This value is a HTTP connection timeout (in millis) which must be smaller than interval to avoid race condition.
          */
         @Input
-        var instanceAwaitTimeout: Int = (0.9 * instanceAwaitInterval).toInt(),
+        var awaitTimeout: Int = (0.9 * awaitInterval.toDouble()).toInt(),
 
         /**
          * Maximum intervals after which instance stability checks will
          * be skipped if there is still some unstable instance left.
          */
         @Input
-        var instanceAwaitTimes: Long = 60 * 5
+        var awaitTimes: Long = 60 * 5
 
 ) : Serializable {
     companion object {
@@ -254,7 +254,7 @@ data class AemConfig(
          */
         fun of(project: Project): AemConfig {
             val extension = project.extensions.findByType(AemExtension::class.java)
-                    ?: throw AemException("${project.toString().capitalize()}"
+                    ?: throw AemException(project.toString().capitalize()
                     + " has neither ${AemPackagePlugin.ID} nor ${AemInstancePlugin.ID} plugin applied.")
 
             return extension.config
@@ -332,8 +332,8 @@ data class AemConfig(
             throw AemException("Instance names must be unique")
         }
 
-        if (instanceAwaitTimeout >= instanceAwaitInterval) {
-            throw AemException("Instance await timeout should be less than interval ($instanceAwaitTimeout < $instanceAwaitInterval)")
+        if (awaitTimeout >= awaitInterval) {
+            throw AemException("Await timeout should be less than interval ($awaitTimeout < $awaitInterval)")
         }
 
         instances.forEach { it.validate() }
