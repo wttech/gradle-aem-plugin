@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.deploy
 
 import com.cognifide.gradle.aem.AemConfig
 import com.cognifide.gradle.aem.internal.PropertyParser
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.apache.commons.lang3.BooleanUtils
@@ -37,6 +38,7 @@ class ListResponse private constructor() {
 
         lateinit var downloadName: String
 
+        @get:JsonIgnore
         var conventionPaths = listOf<String>()
 
         var lastUnpacked: Long? = null
@@ -63,6 +65,7 @@ class ListResponse private constructor() {
             this.conventionPaths = listOf("/etc/packages/$group/$name-$version.zip")
         }
 
+        @get:JsonIgnore
         val props: String
             get() = "[group=$group][name=$name][version=$version]"
 

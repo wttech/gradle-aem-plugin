@@ -362,6 +362,7 @@ data class AemConfig(
      * @see <http://jackrabbit.apache.org/filevault/filter.html>
      */
     @get:Internal
+    @get:JsonIgnore
     val vaultFilterPath: String
         get() = "$contentPath/${AemPackagePlugin.VLT_PATH}/filter.xml"
 

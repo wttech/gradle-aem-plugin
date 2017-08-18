@@ -68,9 +68,9 @@ class PropertyParser(val project: Project) {
 
             return mapOf(
                     "name" to name,
+                    "config" to config,
                     "buildCount" to SimpleDateFormat("yDDmmssSSS").format(config.buildDate),
-                    "created" to Formats.date(config.buildDate),
-                    "config" to config
+                    "created" to Formats.date(config.buildDate)
             )
         }
 
@@ -99,6 +99,10 @@ class PropertyParser(val project: Project) {
         if (!project.properties.containsKey(FORCE_PROP) || !BooleanUtils.toBoolean(project.properties[FORCE_PROP] as String?)) {
             throw AemException("Warning! This task execution must be confirmed by specifying explicitly parameter '-P$FORCE_PROP=true'. $message")
         }
+    }
+
+    fun checkOffline(): Boolean {
+        return project.gradle.startParameter.isOffline
     }
 
 }

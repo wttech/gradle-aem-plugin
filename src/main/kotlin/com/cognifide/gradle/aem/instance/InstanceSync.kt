@@ -3,7 +3,6 @@ package com.cognifide.gradle.aem.instance
 import com.cognifide.gradle.aem.AemConfig
 import com.cognifide.gradle.aem.AemPackagePlugin
 import com.cognifide.gradle.aem.deploy.*
-import com.cognifide.gradle.aem.pkg.ComposeTask
 import org.apache.commons.httpclient.HttpClient
 import org.apache.commons.httpclient.HttpMethod
 import org.apache.commons.httpclient.HttpStatus
@@ -122,16 +121,19 @@ class InstanceSync(val project: Project, val instance: Instance) {
         throw DeployException("Local package not found under path: '${archiveFile.absolutePath}'. Is it built already?")
     }
 
+    fun determineRemotePackage(): ListResponse.Package? {
+        return resolveRemotePackage({ response ->
+            response.resolvePackage(project, ListResponse.Package(project))
+        })
+    }
+
     fun determineRemotePackagePath(): String {
         if (!config.remotePackagePath.isBlank()) {
             return config.remotePackagePath
         }
 
-        val pkg = resolveRemotePackage({ response ->
-            response.resolvePackage(project, ListResponse.Package(project))
-        }) ?: throw DeployException("Package is not uploaded on AEM instance.")
-
-        logger.info("Package found on AEM at path: '${pkg.path}'")
+        val pkg = determineRemotePackage()
+                ?: throw DeployException("Package is not uploaded on AEM instance.")
 
         return pkg.path
     }
