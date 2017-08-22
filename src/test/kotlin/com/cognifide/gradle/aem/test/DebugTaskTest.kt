@@ -6,14 +6,14 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
 
-class DebugTaskTest : RunnerTest() {
+class DebugTaskTest : BuildTest() {
 
     @Test
     fun shouldGenerateValidJsonFile() {
         buildScript("debug", { configurer, projectDir ->
-            val buildResult = configurer.withArguments("aemDebug").build()
+            val build = configurer.withArguments("aemDebug", "-i", "-S").build()
 
-            assertEquals(TaskOutcome.SUCCESS, buildResult.task(":aemDebug").outcome)
+            assertEquals(TaskOutcome.SUCCESS, build.task(":aemDebug").outcome)
             assertTrue("Debug output file does not exist.", File(projectDir, "build/aem/aemDebug/debug.json").exists())
         })
     }
