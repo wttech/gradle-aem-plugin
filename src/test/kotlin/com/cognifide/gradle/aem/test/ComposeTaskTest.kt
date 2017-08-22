@@ -18,6 +18,7 @@ class ComposeTaskTest : BuildTest() {
             assertTrue("Composed CRX package does not exist.", pkg.exists())
 
             assertPackageVaultFiles(pkg)
+            assertPackageFile(pkg, "jcr_root/apps/example/.content.xml")
             assertPackageFile(pkg, "jcr_root/apps/example/install/example-1.0.0-SNAPSHOT.jar")
         })
     }
