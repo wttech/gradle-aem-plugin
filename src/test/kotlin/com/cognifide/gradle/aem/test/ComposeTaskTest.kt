@@ -28,15 +28,14 @@ class ComposeTaskTest : BuildTest() {
 
             val assemblyPkg = assertPackage(projectDir, "build/distributions/example-1.0.0-SNAPSHOT.zip")
 
-            // TODO investigate why content is not included
-          //  assertPackageFile(assemblyPkg, "jcr_root/apps/example/core/.content.xml")
+            assertPackageFile(assemblyPkg, "jcr_root/apps/example/core/.content.xml")
             assertPackageFile(assemblyPkg, "jcr_root/apps/example/core/install/core-1.0.0-SNAPSHOT.jar")
 
-           // assertPackageFile(assemblyPkg, "jcr_root/apps/example/common/.content.xml")
+            assertPackageFile(assemblyPkg, "jcr_root/apps/example/common/.content.xml")
             assertPackageFile(assemblyPkg, "jcr_root/apps/example/common/install/common-1.0.0-SNAPSHOT.jar")
             assertPackageFile(assemblyPkg, "jcr_root/apps/example/common/install/kotlin-osgi-bundle-1.1.4.jar")
 
-           // assertPackageFile(assemblyPkg, "jcr_root/etc/designs/example/.content.xml")
+            assertPackageFile(assemblyPkg, "jcr_root/etc/designs/example/.content.xml")
         })
     }
 
