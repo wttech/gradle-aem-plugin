@@ -38,7 +38,8 @@ class PropertyParser(val project: Project) {
         return filters.split(",").any { group -> Patterns.wildcard(value, group) }
     }
 
-    fun expand(source: String, properties: Map<String, Any> = mapOf()): String {
+    // TODO interpolate here also all config properties values which are raw types, to be able to overrride project.groupId
+    fun expand(source: String, properties: Map<String, Any> = mapOf(), context: String? = null): String {
         try {
             val interpolated = StrSubstitutor.replace(source, systemProperties)
             val allProperties = projectProperties + aemProperties + configProperties + properties
@@ -46,7 +47,9 @@ class PropertyParser(val project: Project) {
 
             return template.toString()
         } catch (e: Throwable) {
-            throw AemException("Cannot expand properly all properties. Probably used non-existing field name or unescaped char detected. Source: '$source'", e)
+            var msg = "Cannot expand properly all properties. Probably used non-existing field name or unescaped char detected. Source: '$source'."
+            if (!context.isNullOrBlank()) msg += " Context: $context"
+            throw AemException(msg, e)
         }
     }
 

@@ -53,7 +53,7 @@ open class ComposeTask : Zip(), AemTask {
         spec.exclude(config.filesExcluded)
         spec.eachFile({ fileDetail ->
             if (Patterns.wildcard(fileDetail.file, config.filesExpanded)) {
-                fileDetail.filter({ line -> propertyParser.expand(line, fileProperties) })
+                fileDetail.filter({ line -> propertyParser.expand(line, fileProperties, fileDetail.file.absolutePath) })
             }
         })
     }
@@ -67,6 +67,7 @@ open class ComposeTask : Zip(), AemTask {
         group = AemTask.GROUP
 
         duplicatesStrategy = DuplicatesStrategy.WARN
+        isZip64 = true
 
         // After this project configured
         includeProject(project)

@@ -87,8 +87,8 @@ class LocalHandle(val project: Project, val sync: InstanceSync) {
         }
 
         logger.info("Expanding instance files")
-        FileOperations.amendFiles(dir, config.instanceFilesExpanded, { source ->
-            PropertyParser(project).expand(source, properties)
+        FileOperations.amendFiles(dir, config.instanceFilesExpanded, { file, source ->
+            PropertyParser(project).expand(source, properties, file.absolutePath)
         })
 
         logger.info("Creating lock file")

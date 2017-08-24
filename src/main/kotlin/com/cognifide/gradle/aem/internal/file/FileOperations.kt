@@ -48,9 +48,12 @@ object FileOperations {
         }
     }
 
-    fun amendFiles(dir: File, wildcardFilters: List<String>, amender: (String) -> String) {
+    fun amendFiles(dir: File, wildcardFilters: List<String>, amender: (File, String) -> String) {
         val files = FileUtils.listFiles(dir, TrueFileFilter.INSTANCE, FalseFileFilter.INSTANCE)
-        files?.filter { Patterns.wildcard(it, wildcardFilters) }?.forEach { amendFile(it, amender) }
+        files?.filter { Patterns.wildcard(it, wildcardFilters) }?.forEach { file ->
+            val source = amender(file, file.inputStream().bufferedReader().use { it.readText() })
+            file.printWriter().use { it.print(source) }
+        }
     }
 
     fun amendFile(file: File, amender: (String) -> String) {
