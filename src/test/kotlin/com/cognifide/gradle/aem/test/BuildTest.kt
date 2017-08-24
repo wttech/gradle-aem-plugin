@@ -34,6 +34,15 @@ abstract class BuildTest {
         configurer(runner, projectDir)
     }
 
+    fun assertPackage(projectDir: File, path: String): File {
+        val pkg = File(projectDir, path)
+
+        assertTrue("Composed CRX package does not exist.", pkg.exists())
+        assertPackageVaultFiles(pkg)
+
+        return pkg
+    }
+
     fun assertPackageFile(pkg: File, entry: String) {
         assertPackageFile("Required file '$entry' is not included in CRX package '$pkg'", pkg, entry)
     }

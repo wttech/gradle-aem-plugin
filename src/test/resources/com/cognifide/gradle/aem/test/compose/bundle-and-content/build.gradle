@@ -1,12 +1,13 @@
 buildscript {
     repositories {
         jcenter()
+        mavenLocal()
         mavenCentral()
         maven { url  "http://dl.bintray.com/cognifide/maven-public" }
     }
 
     dependencies {
-        classpath 'com.cognifide.gradle:aem-plugin:2.0.0-beta'
+        classpath 'com.cognifide.gradle:aem-plugin:2.0.0-SNAPSHOT'
         classpath 'org.dm.gradle:gradle-bundle-plugin:0.10.0'
     }
 }
@@ -20,6 +21,7 @@ apply plugin: 'java'
 apply plugin: 'org.dm.bundle'
 
 repositories {
+    mavenLocal()
     maven { url "https://repo.adobe.com/nexus/content/groups/public" }
     maven { url "https://repo1.maven.org/maven2" }
     jcenter()

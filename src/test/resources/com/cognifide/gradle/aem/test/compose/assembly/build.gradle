@@ -1,0 +1,65 @@
+buildscript {
+    apply from: "$rootProject.projectDir/gradle/buildscript.gradle", to: buildscript
+}
+
+description = 'Example'
+defaultTasks = [':aemSatisfy', ':aemBuild']
+
+apply plugin: 'com.cognifide.aem.package'
+apply plugin: 'com.cognifide.aem.instance'
+
+allprojects { subproject ->
+    group = 'com.company.aem'
+    version = '1.0.0-SNAPSHOT'
+
+    apply plugin: "eclipse"
+    apply plugin: "idea"
+
+    repositories {
+        maven { url "https://repo.adobe.com/nexus/content/groups/public" }
+        maven { url "https://repo1.maven.org/maven2" }
+        jcenter()
+        mavenCentral()
+        mavenLocal()
+    }
+
+    plugins.withId 'com.cognifide.aem.base', {
+        aem {
+            config {
+                localInstance "http://localhost:4502"
+                localInstance "http://localhost:4503"
+            }
+        }
+    }
+
+    plugins.withId 'org.dm.bundle', {
+        bundle {
+            instruction 'Bundle-Name', subproject.description
+            instruction 'Bundle-Category', 'example'
+            instruction 'Bundle-Vendor', 'Company'
+        }
+        dependencies {
+            compile group: 'org.slf4j', name: 'slf4j-api', version: '1.5.10'
+            compile group: 'org.osgi', name: 'osgi.cmpn', version: '6.0.0'
+        }
+    }
+}
+
+aemSatisfy {
+    packages {
+        group 'dependencies', {
+            // local("pkg/vanityurls-components-1.0.2.zip")
+        }
+
+        group 'tools', {
+            url('https://github.com/OlsonDigital/aem-groovy-console/releases/download/9.0.1/aem-groovy-console-9.0.1.zip')
+            url("https://github.com/Cognifide/APM/releases/download/cqsm-2.0.0/apm-2.0.0.zip")
+        }
+    }
+}
+
+aemCompose {
+    includeProject(':common')
+    includeProject(':core')
+    includeProject(':design')
+}

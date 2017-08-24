@@ -256,7 +256,7 @@ data class AemConfig(
         fun of(project: Project): AemConfig {
             val extension = project.extensions.findByType(AemExtension::class.java)
                     ?: throw AemException(project.toString().capitalize()
-                    + " has neither ${AemPackagePlugin.ID} nor ${AemInstancePlugin.ID} plugin applied.")
+                    + " has neither '${AemPackagePlugin.ID}' nor '${AemInstancePlugin.ID}' plugin applied.")
 
             return extension.config
         }
