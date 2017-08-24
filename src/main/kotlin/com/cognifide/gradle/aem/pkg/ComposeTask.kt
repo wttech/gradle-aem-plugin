@@ -70,11 +70,11 @@ open class ComposeTask : Zip(), AemTask {
         duplicatesStrategy = DuplicatesStrategy.WARN
         isZip64 = true
 
-        // After this project configured
+        // Include itself by default
         includeProject(project)
         includeVault(vaultDir)
 
-        // After all projects configured
+        // Evaluate inclusion above and other cross project inclusions
         project.gradle.projectsEvaluated({
             fromBundles()
             fromContents()
