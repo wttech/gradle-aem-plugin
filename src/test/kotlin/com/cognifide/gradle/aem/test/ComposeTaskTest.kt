@@ -36,6 +36,10 @@ class ComposeTaskTest : BuildTest() {
             assertPackageFile(assemblyPkg, "jcr_root/apps/example/common/install/kotlin-osgi-bundle-1.1.4.jar")
 
             assertPackageFile(assemblyPkg, "jcr_root/etc/designs/example/.content.xml")
+
+            val corePkg = assertPackage(projectDir, "core/build/distributions/example-core-1.0.0-SNAPSHOT.zip")
+            val commonPkg = assertPackage(projectDir, "common/build/distributions/example-common-1.0.0-SNAPSHOT.zip")
+            val designPkg = assertPackage(projectDir, "design/build/distributions/example-design-1.0.0-SNAPSHOT.zip")
         })
     }
 
