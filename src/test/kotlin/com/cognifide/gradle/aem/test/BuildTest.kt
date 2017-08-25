@@ -1,8 +1,11 @@
 package com.cognifide.gradle.aem.test
 
 import com.cognifide.gradle.aem.internal.file.FileOperations
+import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
+import org.gradle.testkit.runner.TaskOutcome
 import org.gradle.util.GFileUtils
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
@@ -32,6 +35,14 @@ abstract class BuildTest {
         val runner = GradleRunner.create().withProjectDir(projectDir)
 
         configurer(runner, projectDir)
+    }
+
+    fun assertTaskOutcomes(build: BuildResult, taskName: String, outcome: TaskOutcome = TaskOutcome.SUCCESS) {
+        build.tasks.filter { it.path.endsWith(taskName) }.forEach { assertTaskOutcome(build, it.path, outcome) }
+    }
+
+    fun assertTaskOutcome(build: BuildResult, taskName: String, outcome: TaskOutcome = TaskOutcome.SUCCESS) {
+        assertEquals(outcome, build.task(taskName).outcome)
     }
 
     fun assertPackage(projectDir: File, path: String): File {
