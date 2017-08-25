@@ -64,6 +64,9 @@ publishing {
     }
 }
 
+test.dependsOn publishToMavenLocal
+check.dependsOn publishToMavenLocal
+
 bintray {
     user = project.properties.get('bintrayUser') ?: System.getenv('BINTRAY_USER')
     key = project.properties.get('bintrayKey') ?: System.getenv('BINTRAY_KEY')
