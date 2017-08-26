@@ -8,6 +8,7 @@ import groovy.lang.Closure
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 import org.gradle.util.ConfigureUtil
+import java.io.File
 
 open class SatisfyTask : SyncTask() {
 
@@ -17,8 +18,14 @@ open class SatisfyTask : SyncTask() {
         val DOWNLOAD_DIR = "download"
     }
 
-    @Internal
+    @get:Internal
     val packageProvider = FileResolver(project, AemTask.temporaryDir(project, NAME, DOWNLOAD_DIR))
+
+
+    @get:Internal
+    val groupFilter: (String) -> Boolean = { fileGroup ->
+        PropertyParser(project).filter(fileGroup, "aem.satisfy.group")
+    }
 
     init {
         group = AemTask.GROUP
@@ -31,16 +38,23 @@ open class SatisfyTask : SyncTask() {
 
     @TaskAction
     fun satisfy() {
+        val packages = provideGroupedPackages()
+        satisfyPackagesOnInstances(packages)
+    }
+
+    private fun provideGroupedPackages(): Map<String, List<File>> {
         logger.info("Providing packages from local and remote sources.")
 
-        val groupedFiles = packageProvider.groupedFiles({ fileGroup ->
-            PropertyParser(project).filter(fileGroup, "aem.deploy.satisfy.group")
-        })
+        val groupedPackages = packageProvider.groupedFiles(groupFilter)
 
-        logger.info("Packages provided (${groupedFiles.map { it.value.size }.sum()})")
+        logger.info("Packages provided (${groupedPackages.map { it.value.size }.sum()}).")
 
-        for ((group, files) in groupedFiles) {
-            logger.info("Satisfying group of packages '$group'")
+        return groupedPackages
+    }
+
+    private fun satisfyPackagesOnInstances(groupedPackages: Map<String, List<File>>) {
+        for ((group, files) in groupedPackages) {
+            logger.info("Satisfying group of packages '$group'.")
 
             var shouldAwait = false
             synchronizeInstances({ sync ->

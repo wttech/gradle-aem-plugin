@@ -273,6 +273,14 @@ data class AemConfig(
             return task as ComposeTask
         }
 
+        fun pkgs(project: Project): List<ComposeTask> {
+            return project.allprojects.mapNotNull {
+                if (it.plugins.hasPlugin(AemPackagePlugin.ID)) {
+                    (it.tasks.getByName(ComposeTask.NAME) as ComposeTask)
+                } else null
+            }
+        }
+
     }
 
     /**

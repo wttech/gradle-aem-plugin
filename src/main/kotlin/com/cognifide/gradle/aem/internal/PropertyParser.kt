@@ -5,6 +5,7 @@ import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.vlt.SyncTask
 import groovy.text.SimpleTemplateEngine
 import org.apache.commons.lang3.BooleanUtils
+import org.apache.commons.lang3.ClassUtils
 import org.apache.commons.lang3.text.StrSubstitutor
 import org.gradle.api.Project
 import java.text.SimpleDateFormat
@@ -38,12 +39,15 @@ class PropertyParser(val project: Project) {
         return filters.split(",").any { group -> Patterns.wildcard(value, group) }
     }
 
-    // TODO interpolate here also all config properties values which are raw types, to be able to overrride project.groupId
     fun expand(source: String, properties: Map<String, Any> = mapOf(), context: String? = null): String {
         try {
-            val interpolated = StrSubstitutor.replace(source, systemProperties)
-            val allProperties = projectProperties + aemProperties + configProperties + properties
-            val template = SimpleTemplateEngine().createTemplate(interpolated).make(allProperties)
+            val interpolableProperties = systemProperties + configProperties.filterValues {
+                ClassUtils.isPrimitiveOrWrapper(it.javaClass)
+            }
+            val interpolated = StrSubstitutor.replace(source, interpolableProperties)
+
+            val templateProperties = projectProperties + aemProperties + configProperties + properties
+            val template = SimpleTemplateEngine().createTemplate(interpolated).make(templateProperties)
 
             return template.toString()
         } catch (e: Throwable) {

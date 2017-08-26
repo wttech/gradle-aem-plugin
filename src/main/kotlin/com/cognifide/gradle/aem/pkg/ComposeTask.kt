@@ -177,7 +177,6 @@ open class ComposeTask : Zip(), AemTask {
         contentCollectors += {
             val config = AemConfig.of(project)
 
-            // TODO
             dependProject(project, config.dependContentTaskNames)
             extractVaultFilters(config)
 

@@ -12,9 +12,6 @@ allprojects { subproject ->
     group = 'com.company.aem'
     version = '1.0.0-SNAPSHOT'
 
-    apply plugin: "eclipse"
-    apply plugin: "idea"
-
     repositories {
         maven { url "https://repo.adobe.com/nexus/content/groups/public" }
         maven { url "https://repo1.maven.org/maven2" }
