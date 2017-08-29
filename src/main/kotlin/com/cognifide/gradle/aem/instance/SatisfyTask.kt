@@ -23,7 +23,7 @@ open class SatisfyTask : SyncTask() {
 
 
     @get:Internal
-    val groupFilter: (String) -> Boolean = { fileGroup ->
+    var groupFilter: (String) -> Boolean = { fileGroup ->
         PropertyParser(project).filter(fileGroup, "aem.satisfy.group")
     }
 
