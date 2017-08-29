@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem
 
 import com.cognifide.gradle.aem.deploy.BuildTask
 import com.cognifide.gradle.aem.instance.*
+import com.cognifide.gradle.aem.pkg.ComposeTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.language.base.plugins.LifecycleBasePlugin
@@ -37,12 +38,14 @@ class AemInstancePlugin : Plugin<Project> {
         val down = project.tasks.create(DownTask.NAME, DownTask::class.java)
         val satisfy = project.tasks.create(SatisfyTask.NAME, SatisfyTask::class.java)
         val await = project.tasks.create(AwaitTask.NAME, AwaitTask::class.java)
+        val collect = project.tasks.create(CollectTask.NAME, CollectTask::class.java)
 
         create.mustRunAfter(clean)
         up.mustRunAfter(clean)
         up.dependsOn(create)
         destroy.mustRunAfter(down)
         satisfy.mustRunAfter(create, up)
+        collect.mustRunAfter(satisfy)
 
         project.plugins.withId(AemPackagePlugin.ID, {
             val setup = project.tasks.create(SetupTask.NAME, SetupTask::class.java)
@@ -53,6 +56,12 @@ class AemInstancePlugin : Plugin<Project> {
             build.mustRunAfter(create, up, satisfy)
             await.mustRunAfter(build)
         })
+
+        project.gradle.afterProject { subproject ->
+            if (subproject.plugins.hasPlugin(AemPackagePlugin.ID)) {
+                collect.dependsOn(subproject.tasks.getByName(ComposeTask.NAME))
+            }
+        }
     }
 
 }

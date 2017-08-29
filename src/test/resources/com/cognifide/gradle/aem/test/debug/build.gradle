@@ -1,0 +1,14 @@
+buildscript {
+    repositories {
+        jcenter()
+        mavenLocal()
+        mavenCentral()
+        maven { url  "http://dl.bintray.com/cognifide/maven-public" }
+    }
+
+    dependencies {
+        classpath 'com.cognifide.gradle:aem-plugin:2.0.0-SNAPSHOT'
+    }
+}
+
+apply plugin: 'com.cognifide.aem.package'

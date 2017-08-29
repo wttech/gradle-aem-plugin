@@ -11,6 +11,9 @@ import org.reflections.Reflections
 import org.reflections.scanners.ResourcesScanner
 import java.io.File
 import java.io.FileOutputStream
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 
 object FileOperations {
 
@@ -48,9 +51,12 @@ object FileOperations {
         }
     }
 
-    fun amendFiles(dir: File, wildcardFilters: List<String>, amender: (String) -> String) {
+    fun amendFiles(dir: File, wildcardFilters: List<String>, amender: (File, String) -> String) {
         val files = FileUtils.listFiles(dir, TrueFileFilter.INSTANCE, FalseFileFilter.INSTANCE)
-        files?.filter { Patterns.wildcard(it, wildcardFilters) }?.forEach { amendFile(it, amender) }
+        files?.filter { Patterns.wildcard(it, wildcardFilters) }?.forEach { file ->
+            val source = amender(file, file.inputStream().bufferedReader().use { it.readText() })
+            file.printWriter().use { it.print(source) }
+        }
     }
 
     fun amendFile(file: File, amender: (String) -> String) {
@@ -65,6 +71,14 @@ object FileOperations {
             result = files.firstOrNull()
         }
         return result
+    }
+
+    fun isDirEmpty(dir: File): Boolean {
+        return dir.exists() && isDirEmpty(Paths.get(dir.absolutePath))
+    }
+
+    fun isDirEmpty(dir: Path): Boolean {
+        Files.newDirectoryStream(dir).use({ dirStream -> return !dirStream.iterator().hasNext() })
     }
 
 }

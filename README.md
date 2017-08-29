@@ -54,6 +54,7 @@ so that this repository need to be included in *buildscript* section.
 ```
 buildscript {
     repositories {
+        jcenter()
         mavenCentral() 
         maven { url  "http://dl.bintray.com/cognifide/maven-public" }
     }
@@ -80,7 +81,7 @@ aem {
     config {
         contentPath = project.file("src/main/content")
         localInstance "http://localhost:4502"
-        // localInstance "http://localhost:4503"
+        localInstance "http://localhost:4503"
     }
 }
 
@@ -137,6 +138,8 @@ For multi project build configuration, see [example project](https://github.com/
     * `download(url: String)`, use CRX package that will be downloaded from specified URL to local temporary directory.
     * `downloadBasicAuth(url: String, user = "admin", password = "admin")`, as above, but with Basic Auth support.
     * `group(name: String, configurer: () -> Unit)`, useful for declaring group of packages to be installed only on demand (just use methods above in closure).
+* `aemCollect` - Composes ZIP package from all CRX packages being satisfied and built. Available methods:
+    * all inherited from [ZIP task](https://docs.gradle.org/3.5/dsl/org.gradle.api.tasks.bundling.Zip.html).
 * `aemCheckout` - Check out JCR content from running AEM author instance to local content path.
 * `aemClean` - Clean checked out JCR content.
 * `aemSync` - Check out then clean JCR content.
@@ -165,7 +168,7 @@ gradle aemDeploy -Paem.deploy.instance.list=http://localhost:4502,admin,admin;ht
 * Satisfying only filtered group of packages (filters with wildcards, comma delimited):
 
 ```
-gradle aemSatisfy -Paem.deploy.satisfy.group=hotfix-*,groovy-console
+gradle aemSatisfy -Paem.satisfy.group=hotfix-*,groovy-console
 ```
 
 * Checking out JCR content using filter at custom path (for subproject *content*):

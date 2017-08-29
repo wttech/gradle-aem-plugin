@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem.pkg
 
-import com.cognifide.gradle.aem.AemBasePlugin
 import com.cognifide.gradle.aem.AemConfig
 import com.cognifide.gradle.aem.AemPackagePlugin
 import com.cognifide.gradle.aem.AemTask
@@ -53,8 +52,9 @@ open class ComposeTask : Zip(), AemTask {
     var fileFilter: ((CopySpec) -> Unit) = { spec ->
         spec.exclude(config.filesExcluded)
         spec.eachFile({ fileDetail ->
-            if (Patterns.wildcard(fileDetail.file, config.filesExpanded)) {
-                fileDetail.filter({ line -> propertyParser.expand(line, fileProperties) })
+            val file = fileDetail.file
+            if (Patterns.wildcard(file, config.filesExpanded)) {
+                fileDetail.filter({ line -> propertyParser.expand(line, fileProperties, file.absolutePath) })
             }
         })
     }
@@ -68,14 +68,13 @@ open class ComposeTask : Zip(), AemTask {
         group = AemTask.GROUP
 
         duplicatesStrategy = DuplicatesStrategy.WARN
+        isZip64 = true
 
-        // After this project configured
-        project.afterEvaluate({
-            includeProject(project)
-            includeVault(vaultDir)
-        })
+        // Include itself by default
+        includeProject(project)
+        includeVault(vaultDir)
 
-        // After all projects configured
+        // Evaluate inclusion above and other cross project inclusions
         project.gradle.projectsEvaluated({
             fromBundles()
             fromContents()
@@ -120,42 +119,49 @@ open class ComposeTask : Zip(), AemTask {
     fun includeBundles(projectPath: String) {
         val project = project.findProject(projectPath)
 
-        includeBundlesAtPath(project, AemConfig.of(project).bundlePath)
+        includeBundlesAtPath(project)
     }
 
     fun includeBundles(project: Project) {
-        includeBundlesAtPath(project, AemConfig.of(project).bundlePath)
+        includeBundlesAtPath(project)
     }
 
     fun includeBundles(projectPath: String, runMode: String) {
-        val project = project.findProject(projectPath)
-        val bundlePath = AemConfig.of(project).bundlePath
-
-        includeBundlesAtPath(project, "$bundlePath.$runMode")
+        includeBundlesAtPath(project.findProject(projectPath), runMode = runMode)
     }
 
     fun mergeBundles(projectPath: String) {
-        includeBundlesAtPath(project.findProject(projectPath), config.bundlePath)
+        includeBundlesAtPath(project.findProject(projectPath))
     }
 
     fun mergeBundles(projectPath: String, runMode: String) {
-        includeBundlesAtPath(project.findProject(projectPath), "${config.bundlePath}.$runMode")
+        includeBundlesAtPath(project.findProject(projectPath), runMode = runMode)
     }
 
     fun includeBundlesAtPath(projectPath: String, installPath: String) {
         includeBundlesAtPath(project.findProject(projectPath), installPath)
     }
 
-    fun includeBundlesAtPath(project: Project, installPath: String) {
-        val config = AemConfig.of(project)
-
-        dependProject(project, config.dependBundlesTaskNames)
-
+    fun includeBundlesAtPath(project: Project, installPath: String? = null, runMode: String? = null) {
         bundleCollectors += {
+            val config = AemConfig.of(project)
+
+            dependProject(project, config.dependBundlesTaskNames)
+
+            var effectiveInstallPath = if (!installPath.isNullOrBlank()) {
+                installPath
+            } else {
+                AemConfig.of(project).bundlePath
+            }
+
+            if (!runMode.isNullOrBlank()) {
+                effectiveInstallPath = "$effectiveInstallPath.$runMode"
+            }
+
             val jars = JarCollector(project).all.toSet()
 
             if (jars.isNotEmpty()) {
-                into("${AemPackagePlugin.JCR_ROOT}/$installPath") { spec ->
+                into("${AemPackagePlugin.JCR_ROOT}/$effectiveInstallPath") { spec ->
                     spec.from(jars)
                     fileFilter(spec)
                 }
@@ -168,12 +174,12 @@ open class ComposeTask : Zip(), AemTask {
     }
 
     fun includeContent(project: Project) {
-        val config = AemConfig.of(project)
-
-        dependProject(project, config.dependContentTaskNames)
-        extractVaultFilters(config)
-
         contentCollectors += {
+            val config = AemConfig.of(project)
+
+            dependProject(project, config.dependContentTaskNames)
+            extractVaultFilters(config)
+
             val contentDir = File("${config.contentPath}/${AemPackagePlugin.JCR_ROOT}")
             if (contentDir.exists()) {
                 into(AemPackagePlugin.JCR_ROOT) { spec ->
@@ -184,11 +190,11 @@ open class ComposeTask : Zip(), AemTask {
         }
     }
 
-    fun dependProject(projectPath: String, taskNames: Collection<String>) {
+    private fun dependProject(projectPath: String, taskNames: Collection<String>) {
         dependProject(project.findProject(projectPath), taskNames)
     }
 
-    fun dependProject(project: Project, taskNames: Collection<String>) {
+    private fun dependProject(project: Project, taskNames: Collection<String>) {
         val effectiveTaskNames = taskNames.fold(mutableListOf<String>(), { names, name ->
             if (name.endsWith(DEPENDENCIES_SUFFIX)) {
                 val task = project.tasks.getByName(name.substringBeforeLast(DEPENDENCIES_SUFFIX))

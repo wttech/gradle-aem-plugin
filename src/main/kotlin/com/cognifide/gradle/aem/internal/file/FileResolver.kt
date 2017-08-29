@@ -24,9 +24,9 @@ class FileResolver(val project: Project, val downloadDir: File) {
         val DOWNLOAD_LOCK = "download.lock"
     }
 
-    private data class Resolver(val id: String, val group: String, val callback: (File) -> File)
-
-    private data class Resolution(val resolver: Resolver, val file: File)
+    private inner class Resolver(val id: String, val group: String, val action: (Resolver) -> Unit) {
+        val dir = File("$downloadDir/$id")
+    }
 
     private val resolvers = mutableListOf<Resolver>()
 
@@ -50,39 +50,45 @@ class FileResolver(val project: Project, val downloadDir: File) {
         }
     }
 
-    fun allFiles(filter: (String) -> Boolean = { true }): List<File> {
-        return resolveFiles(filter).map { it.file }
+    fun allFiles(filter: (String) -> Boolean = { true }, resolve: Boolean = true): List<File> {
+        return resolveFiles(filter, resolve).map { it.dir }
     }
 
-    fun groupedFiles(filter: (String) -> Boolean = { true }): Map<String, List<File>> {
-        return resolveFiles(filter).fold(mutableMapOf<String, MutableList<File>>(), { files, (resolver, file) ->
-            files.getOrPut(resolver.group, { mutableListOf<File>() }).add(file); files
+    fun groupedFiles(filter: (String) -> Boolean = { true }, resolve: Boolean = true): Map<String, List<File>> {
+        return resolveFiles(filter, resolve).fold(mutableMapOf<String, MutableList<File>>(), { files, resolver ->
+            files.getOrPut(resolver.group, { mutableListOf() }).add(resolver.dir); files
         })
     }
 
-    private fun resolveFiles(filter: (String) -> Boolean): List<Resolution> {
-        return resolvers.filter { filter(it.group) }
-                .map { Resolution(it, it.callback(File("$downloadDir/${it.id}"))) }
-                .onEach { if (!it.file.exists()) throw AemException("Cannot resolve file from group '${it.resolver.group}': ${it.file.name}") }
+    private fun resolveFiles(filter: (String) -> Boolean, resolve: Boolean): List<Resolver> {
+        val resolvers = resolvers.filter { filter(it.group) }
+        if (resolve) {
+            resolvers.onEach(this::resolveFile)
+        }
+
+        return resolvers
+    }
+
+    private fun resolveFile(resolver: Resolver) {
+        resolver.action(resolver)
+        if (FileOperations.isDirEmpty(resolver.dir)) {
+            throw AemException("Cannot resolve file(s) from group '${resolver.group}' to path: ${resolver.dir}")
+        }
     }
 
     fun url(url: String) {
-        if (SftpFileDownloader.handles(url)) {
-            downloadSftpAuth(url)
-        } else if (SmbFileDownloader.handles(url)) {
-            downloadSmbAuth(url)
-        } else if (HttpFileDownloader.handles(url)) {
-            downloadHttpAuth(url)
-        } else if (UrlFileDownloader.handles(url)) {
-            downloadUrl(url)
-        } else {
-            local(url)
+        when {
+            SftpFileDownloader.handles(url) -> downloadSftpAuth(url)
+            SmbFileDownloader.handles(url) -> downloadSmbAuth(url)
+            HttpFileDownloader.handles(url) -> downloadHttpAuth(url)
+            UrlFileDownloader.handles(url) -> downloadUrl(url)
+            else -> local(url)
         }
     }
 
     fun downloadSftp(url: String) {
-        resolve(url, { dir ->
-            download(url, dir, { file ->
+        resolve(url, {
+            download(url, it.dir, { file ->
                 SftpFileDownloader(project).download(url, file)
             })
         })
@@ -111,8 +117,8 @@ class FileResolver(val project: Project, val downloadDir: File) {
     }
 
     fun downloadSftpAuth(url: String, username: String? = null, password: String? = null, hostChecking: Boolean? = null) {
-        resolve(url, { dir ->
-            download(url, dir, { file ->
+        resolve(url, {
+            download(url, it.dir, { file ->
                 val downloader = SftpFileDownloader(project)
 
                 downloader.username = username ?: project.properties["aem.sftp.username"] as String?
@@ -125,16 +131,16 @@ class FileResolver(val project: Project, val downloadDir: File) {
     }
 
     fun downloadSmb(url: String) {
-        resolve(url, { dir ->
-            download(url, dir, { file ->
+        resolve(url, {
+            download(url, it.dir, { file ->
                 SmbFileDownloader(project).download(url, file)
             })
         })
     }
 
     fun downloadSmbAuth(url: String, domain: String? = null, username: String? = null, password: String? = null) {
-        resolve(url, { dir ->
-            download(url, dir, { file ->
+        resolve(url, {
+            download(url, it.dir, { file ->
                 val downloader = SmbFileDownloader(project)
 
                 downloader.domain = domain ?: project.properties["aem.smb.domain"] as String?
@@ -147,16 +153,16 @@ class FileResolver(val project: Project, val downloadDir: File) {
     }
 
     fun downloadHttp(url: String) {
-        resolve(url, { dir ->
-            download(url, dir, { file ->
+        resolve(url, {
+            download(url, it.dir, { file ->
                 HttpFileDownloader(project).download(url, file)
             })
         })
     }
 
     fun downloadHttpAuth(url: String, user: String? = null, password: String? = null, ignoreSSL: Boolean? = null) {
-        resolve(arrayOf(url, user, password), { dir ->
-            download(url, dir, { file ->
+        resolve(arrayOf(url, user, password), {
+            download(url, it.dir, { file ->
                 val downloader = HttpFileDownloader(project)
 
                 downloader.username = user ?: project.properties["aem.http.username"] as String?
@@ -169,8 +175,8 @@ class FileResolver(val project: Project, val downloadDir: File) {
     }
 
     fun downloadUrl(url: String) {
-        resolve(url, { dir ->
-            download(url, dir, { file ->
+        resolve(url, {
+            download(url, it.dir, { file ->
                 UrlFileDownloader(project).download(url, file)
             })
         })
@@ -180,11 +186,11 @@ class FileResolver(val project: Project, val downloadDir: File) {
         local(project.file(path))
     }
 
-    fun local(sourceFile: File): Unit {
-        resolve(sourceFile.absolutePath, { sourceFile })
+    fun local(sourceFile: File) {
+        resolve(sourceFile.absolutePath, { })
     }
 
-    fun resolve(hash: Any, resolver: (File) -> File): Unit {
+    private fun resolve(hash: Any, resolver: (Resolver) -> Unit) {
         val id = HashCode.fromInt(HashCodeBuilder().append(hash).toHashCode()).toString()
         resolvers += Resolver(id, group, resolver)
     }

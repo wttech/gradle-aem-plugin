@@ -125,9 +125,7 @@ data class AemConfig(
          * Could override predefined properties provided by plugin itself.
          */
         @Input
-        var fileProperties: MutableMap<String, Any> = mutableMapOf(
-                "requiresRoot" to "false"
-        ),
+        var fileProperties: MutableMap<String, Any> = mutableMapOf(),
 
         /**
          * Ensures that for directory 'META-INF/vault' default files will be generated when missing:
@@ -256,7 +254,7 @@ data class AemConfig(
         fun of(project: Project): AemConfig {
             val extension = project.extensions.findByType(AemExtension::class.java)
                     ?: throw AemException(project.toString().capitalize()
-                    + " has neither ${AemPackagePlugin.ID} nor ${AemInstancePlugin.ID} plugin applied.")
+                    + " has neither '${AemPackagePlugin.ID}' nor '${AemInstancePlugin.ID}' plugin applied.")
 
             return extension.config
         }
@@ -271,6 +269,14 @@ data class AemConfig(
                     + " '${ComposeTask.NAME}' defined.")
 
             return task as ComposeTask
+        }
+
+        fun pkgs(project: Project): List<ComposeTask> {
+            return project.allprojects.mapNotNull {
+                if (it.plugins.hasPlugin(AemPackagePlugin.ID)) {
+                    (it.tasks.getByName(ComposeTask.NAME) as ComposeTask)
+                } else null
+            }
         }
 
     }

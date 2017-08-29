@@ -1,0 +1,8 @@
+buildscript {
+    apply from: "$rootProject.projectDir/gradle/buildscript.gradle", to: buildscript
+}
+
+description = 'Example - Design'
+defaultTasks = ['aemBuild']
+
+apply plugin: 'com.cognifide.aem.package'

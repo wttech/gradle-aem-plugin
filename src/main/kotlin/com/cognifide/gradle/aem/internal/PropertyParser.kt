@@ -5,6 +5,7 @@ import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.vlt.SyncTask
 import groovy.text.SimpleTemplateEngine
 import org.apache.commons.lang3.BooleanUtils
+import org.apache.commons.lang3.ClassUtils
 import org.apache.commons.lang3.text.StrSubstitutor
 import org.gradle.api.Project
 import java.text.SimpleDateFormat
@@ -38,15 +39,21 @@ class PropertyParser(val project: Project) {
         return filters.split(",").any { group -> Patterns.wildcard(value, group) }
     }
 
-    fun expand(source: String, properties: Map<String, Any> = mapOf()): String {
+    fun expand(source: String, properties: Map<String, Any> = mapOf(), context: String? = null): String {
         try {
-            val interpolated = StrSubstitutor.replace(source, systemProperties)
-            val allProperties = projectProperties + aemProperties + configProperties + properties
-            val template = SimpleTemplateEngine().createTemplate(interpolated).make(allProperties)
+            val interpolableProperties = systemProperties + mvnProperties + configProperties.filterValues {
+                it is String || ClassUtils.isPrimitiveOrWrapper(it.javaClass)
+            }
+            val interpolated = StrSubstitutor.replace(source, interpolableProperties)
+
+            val templateProperties = projectProperties + aemProperties + configProperties + properties
+            val template = SimpleTemplateEngine().createTemplate(interpolated).make(templateProperties)
 
             return template.toString()
         } catch (e: Throwable) {
-            throw AemException("Cannot expand properly all properties. Probably used non-existing field name or unescaped char detected. Source: '$source'", e)
+            var msg = "Cannot expand properly all properties. Probably used non-existing field name or unescaped char detected. Source: '${source.trim()}'."
+            if (!context.isNullOrBlank()) msg += " Context: $context"
+            throw AemException(msg, e)
         }
     }
 
@@ -69,6 +76,7 @@ class PropertyParser(val project: Project) {
             return mapOf(
                     "name" to name,
                     "config" to config,
+                    "requiresRoot" to "false",
                     "buildCount" to SimpleDateFormat("yDDmmssSSS").format(config.buildDate),
                     "created" to Formats.date(config.buildDate)
             )
@@ -76,6 +84,13 @@ class PropertyParser(val project: Project) {
 
     val configProperties: Map<String, Any>
         get() = AemConfig.of(project).fileProperties
+
+    val mvnProperties: Map<String, Any>
+        get() = mapOf(
+                "project.groupId" to project.group,
+                "project.artifactId" to project.name,
+                "project.build.finalName" to "${project.name}-${project.version}"
+        )
 
     val namePrefix: String = if (isUniqueProjectName()) {
         project.name
