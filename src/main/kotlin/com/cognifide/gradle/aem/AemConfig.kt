@@ -125,9 +125,7 @@ data class AemConfig(
          * Could override predefined properties provided by plugin itself.
          */
         @Input
-        var fileProperties: MutableMap<String, Any> = mutableMapOf(
-                "requiresRoot" to "false"
-        ),
+        var fileProperties: MutableMap<String, Any> = mutableMapOf(),
 
         /**
          * Ensures that for directory 'META-INF/vault' default files will be generated when missing:

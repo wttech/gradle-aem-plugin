@@ -41,8 +41,8 @@ class PropertyParser(val project: Project) {
 
     fun expand(source: String, properties: Map<String, Any> = mapOf(), context: String? = null): String {
         try {
-            val interpolableProperties = systemProperties + configProperties.filterValues {
-                ClassUtils.isPrimitiveOrWrapper(it.javaClass)
+            val interpolableProperties = systemProperties + mvnProperties + configProperties.filterValues {
+                it is String || ClassUtils.isPrimitiveOrWrapper(it.javaClass)
             }
             val interpolated = StrSubstitutor.replace(source, interpolableProperties)
 
@@ -51,7 +51,7 @@ class PropertyParser(val project: Project) {
 
             return template.toString()
         } catch (e: Throwable) {
-            var msg = "Cannot expand properly all properties. Probably used non-existing field name or unescaped char detected. Source: '$source'."
+            var msg = "Cannot expand properly all properties. Probably used non-existing field name or unescaped char detected. Source: '${source.trim()}'."
             if (!context.isNullOrBlank()) msg += " Context: $context"
             throw AemException(msg, e)
         }
@@ -76,6 +76,7 @@ class PropertyParser(val project: Project) {
             return mapOf(
                     "name" to name,
                     "config" to config,
+                    "requiresRoot" to "false",
                     "buildCount" to SimpleDateFormat("yDDmmssSSS").format(config.buildDate),
                     "created" to Formats.date(config.buildDate)
             )
@@ -83,6 +84,13 @@ class PropertyParser(val project: Project) {
 
     val configProperties: Map<String, Any>
         get() = AemConfig.of(project).fileProperties
+
+    val mvnProperties: Map<String, Any>
+        get() = mapOf(
+                "project.groupId" to project.group,
+                "project.artifactId" to project.name,
+                "project.build.finalName" to "${project.name}-${project.version}"
+        )
 
     val namePrefix: String = if (isUniqueProjectName()) {
         project.name
