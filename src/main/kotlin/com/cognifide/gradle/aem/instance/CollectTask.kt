@@ -40,7 +40,7 @@ open class CollectTask : Zip() {
 
     @get:Internal
     val satisfiedPackages: List<File>
-        get() = satisfy.packageProvider.allFiles(satisfy.groupFilter, false)
+        get() = satisfy.packageProvider.outputDirs(satisfy.groupFilter)
 
     @get:Internal
     val builtPackages: List<File>
@@ -52,7 +52,7 @@ open class CollectTask : Zip() {
     }
 
     private fun resolvePackages() {
-        satisfy.packageProvider.allFiles(satisfy.groupFilter, true)
+        satisfy.packageProvider.allFiles(satisfy.groupFilter)
     }
 
 }

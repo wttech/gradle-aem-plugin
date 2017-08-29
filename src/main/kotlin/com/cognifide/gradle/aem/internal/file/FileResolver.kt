@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem.internal.file
 
-import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.internal.Formats
 import com.google.common.hash.HashCode
 import groovy.lang.Closure
@@ -24,8 +23,10 @@ class FileResolver(val project: Project, val downloadDir: File) {
         val DOWNLOAD_LOCK = "download.lock"
     }
 
-    private inner class Resolver(val id: String, val group: String, val action: (Resolver) -> Unit) {
+    private inner class Resolver(val id: String, val group: String, val action: (Resolver) -> File) {
         val dir = File("$downloadDir/$id")
+
+        val file: File by lazy { action(this) }
     }
 
     private val resolvers = mutableListOf<Resolver>()
@@ -50,30 +51,22 @@ class FileResolver(val project: Project, val downloadDir: File) {
         }
     }
 
-    fun allFiles(filter: (String) -> Boolean = { true }, resolve: Boolean = true): List<File> {
-        return resolveFiles(filter, resolve).map { it.dir }
+    fun outputDirs(filter: (String) -> Boolean = { true }): List<File> {
+        return filterResolvers(filter).map { it.dir }
     }
 
-    fun groupedFiles(filter: (String) -> Boolean = { true }, resolve: Boolean = true): Map<String, List<File>> {
-        return resolveFiles(filter, resolve).fold(mutableMapOf<String, MutableList<File>>(), { files, resolver ->
-            files.getOrPut(resolver.group, { mutableListOf() }).add(resolver.dir); files
+    fun allFiles(filter: (String) -> Boolean = { true }): List<File> {
+        return filterResolvers(filter).map { it.file }
+    }
+
+    fun groupedFiles(filter: (String) -> Boolean = { true }): Map<String, List<File>> {
+        return filterResolvers(filter).fold(mutableMapOf<String, MutableList<File>>(), { files, resolver ->
+            files.getOrPut(resolver.group, { mutableListOf() }).add(resolver.file); files
         })
     }
 
-    private fun resolveFiles(filter: (String) -> Boolean, resolve: Boolean): List<Resolver> {
-        val resolvers = resolvers.filter { filter(it.group) }
-        if (resolve) {
-            resolvers.onEach(this::resolveFile)
-        }
-
-        return resolvers
-    }
-
-    private fun resolveFile(resolver: Resolver) {
-        resolver.action(resolver)
-        if (FileOperations.isDirEmpty(resolver.dir)) {
-            throw AemException("Cannot resolve file(s) from group '${resolver.group}' to path: ${resolver.dir}")
-        }
+    private fun filterResolvers(filter: (String) -> Boolean): List<Resolver> {
+        return resolvers.filter { filter(it.group) }
     }
 
     fun url(url: String) {
@@ -187,10 +180,10 @@ class FileResolver(val project: Project, val downloadDir: File) {
     }
 
     fun local(sourceFile: File) {
-        resolve(sourceFile.absolutePath, { })
+        resolve(sourceFile.absolutePath, { sourceFile })
     }
 
-    private fun resolve(hash: Any, resolver: (Resolver) -> Unit) {
+    private fun resolve(hash: Any, resolver: (Resolver) -> File) {
         val id = HashCode.fromInt(HashCodeBuilder().append(hash).toHashCode()).toString()
         resolvers += Resolver(id, group, resolver)
     }
