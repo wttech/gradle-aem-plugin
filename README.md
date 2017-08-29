@@ -60,7 +60,7 @@ buildscript {
     }
     
     dependencies {
-        classpath 'com.cognifide.gradle:aem-plugin:2.0.0-beta'
+        classpath 'com.cognifide.gradle:aem-plugin:2.0.0'
     }
 }
 
@@ -81,7 +81,7 @@ aem {
     config {
         contentPath = project.file("src/main/content")
         localInstance "http://localhost:4502"
-        // localInstance "http://localhost:4503"
+        localInstance "http://localhost:4503"
     }
 }
 
