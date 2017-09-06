@@ -116,7 +116,7 @@ class LocalHandle(val project: Project, val sync: InstanceSync) {
     }
 
     private fun extractStaticFiles() {
-        val progressLogger = ProgressLogger(project, "Extracting static files from JAR: ${jar.absolutePath}")
+        val progressLogger = ProgressLogger(project, "Extracting static files from JAR  '${jar.absolutePath}' to directory: $staticDir")
         progressLogger.started()
 
         var total = 0
@@ -126,7 +126,7 @@ class LocalHandle(val project: Project, val sync: InstanceSync) {
             }
         })
 
-        var processed: Int = 0
+        var processed = 0
         ZipUtil.unpack(jar, staticDir, { name ->
             if (name.startsWith(JAR_STATIC_FILES_PATH)) {
                 val fileName = name.substringAfterLast("/")
