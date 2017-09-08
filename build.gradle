@@ -34,6 +34,7 @@ dependencies {
     compile group: 'com.hierynomus', name: 'sshj', version: '0.21.1'
     compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.3'
     compile group: 'org.osgi', name: 'org.osgi.core', version: '6.0.0'
+    compile group: 'com.mitchellbosecke', name: 'pebble', version: '2.4.0'
 
     testCompile gradleTestKit()
     testCompile 'junit:junit:4.12'

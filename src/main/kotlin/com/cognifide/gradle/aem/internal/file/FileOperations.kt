@@ -4,13 +4,13 @@ import com.cognifide.gradle.aem.AemBasePlugin
 import com.cognifide.gradle.aem.internal.Patterns
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
-import org.apache.commons.io.filefilter.FalseFileFilter
 import org.apache.commons.io.filefilter.TrueFileFilter
 import org.gradle.util.GFileUtils
 import org.reflections.Reflections
 import org.reflections.scanners.ResourcesScanner
 import java.io.File
 import java.io.FileOutputStream
+import java.io.StringWriter
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -52,10 +52,13 @@ object FileOperations {
     }
 
     fun amendFiles(dir: File, wildcardFilters: List<String>, amender: (File, String) -> String) {
-        val files = FileUtils.listFiles(dir, TrueFileFilter.INSTANCE, FalseFileFilter.INSTANCE)
+        val files = FileUtils.listFiles(dir, TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE)
         files?.filter { Patterns.wildcard(it, wildcardFilters) }?.forEach { file ->
-            val source = amender(file, file.inputStream().bufferedReader().use { it.readText() })
-            file.printWriter().use { it.print(source) }
+            val buffer = StringWriter()
+            file.inputStream().bufferedReader().use { it.forEachLine { line ->
+                buffer.write(amender(file, line) + System.lineSeparator())
+            }}
+            file.printWriter().use { it.print(buffer.toString()) }
         }
     }
 

@@ -3,6 +3,8 @@ package com.cognifide.gradle.aem.internal.file
 import org.apache.http.auth.AuthScope
 import org.apache.http.auth.UsernamePasswordCredentials
 import org.apache.http.client.HttpClient
+import org.apache.http.client.config.CookieSpecs
+import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.conn.ssl.NoopHostnameVerifier
 import org.apache.http.impl.client.BasicCredentialsProvider
@@ -52,7 +54,11 @@ class HttpFileDownloader(val project: Project) {
     }
 
     private fun createClient(): HttpClient {
-        val builder = HttpClients.custom().useSystemProperties()
+        val builder = HttpClients.custom()
+                .useSystemProperties()
+                .setDefaultRequestConfig(
+                        RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build()
+                )
 
         if (!username.isNullOrBlank() && !password.isNullOrBlank()) {
             val provider = BasicCredentialsProvider()

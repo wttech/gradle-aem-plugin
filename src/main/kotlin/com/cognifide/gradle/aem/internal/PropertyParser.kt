@@ -1,13 +1,16 @@
 package com.cognifide.gradle.aem.internal
 
+import com.mitchellbosecke.pebble.PebbleEngine
+import com.mitchellbosecke.pebble.lexer.Syntax
+import com.mitchellbosecke.pebble.loader.StringLoader
 import com.cognifide.gradle.aem.AemConfig
 import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.vlt.SyncTask
-import groovy.text.SimpleTemplateEngine
 import org.apache.commons.lang3.BooleanUtils
 import org.apache.commons.lang3.ClassUtils
 import org.apache.commons.lang3.text.StrSubstitutor
 import org.gradle.api.Project
+import java.io.StringWriter
 import java.text.SimpleDateFormat
 
 class PropertyParser(val project: Project) {
@@ -18,6 +21,27 @@ class PropertyParser(val project: Project) {
         const val FORCE_PROP = "aem.force"
 
         val FORCE_MESSAGE = "Before continuing it is recommended to protect against potential data loss by checking out JCR content using '${SyncTask.NAME}' task then saving it in VCS."
+
+        private val TEMPLATE_VAR_PREFIX = "{{"
+
+        private val TEMPLATE_VAR_SUFFIX = "}}"
+
+        private val TEMPLATE_ENGINE = PebbleEngine.Builder()
+                .autoEscaping(false)
+                .cacheActive(false)
+                .strictVariables(true)
+                .newLineTrimming(false)
+                .loader(StringLoader())
+                .syntax(Syntax.Builder()
+                        .setPrintOpenDelimiter(TEMPLATE_VAR_PREFIX)
+                        .setPrintCloseDelimiter(TEMPLATE_VAR_SUFFIX)
+                        .build()
+                )
+                .build()
+
+        private val TEMPLATE_INTERPOLATOR: (String, Map<String, Any>) -> String = { source, props ->
+            StrSubstitutor.replace(source, props, TEMPLATE_VAR_PREFIX, TEMPLATE_VAR_SUFFIX)
+        }
     }
 
     fun prop(name: String): String? {
@@ -44,12 +68,14 @@ class PropertyParser(val project: Project) {
             val interpolableProperties = systemProperties + mvnProperties + configProperties.filterValues {
                 it is String || ClassUtils.isPrimitiveOrWrapper(it.javaClass)
             }
-            val interpolated = StrSubstitutor.replace(source, interpolableProperties)
+            val interpolated = TEMPLATE_INTERPOLATOR(source, interpolableProperties)
 
             val templateProperties = projectProperties + aemProperties + configProperties + properties
-            val template = SimpleTemplateEngine().createTemplate(interpolated).make(templateProperties)
+            val expanded = StringWriter()
 
-            return template.toString()
+            TEMPLATE_ENGINE.getTemplate(interpolated).evaluate(expanded, templateProperties)
+
+            return expanded.toString()
         } catch (e: Throwable) {
             var msg = "Cannot expand properly all properties. Probably used non-existing field name or unescaped char detected. Source: '${source.trim()}'."
             if (!context.isNullOrBlank()) msg += " Context: $context"

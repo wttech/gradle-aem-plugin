@@ -109,8 +109,20 @@ class FileResolver(val project: Project, val downloadDir: File) {
         return file
     }
 
-    fun downloadSftpAuth(url: String, username: String? = null, password: String? = null, hostChecking: Boolean? = null) {
-        resolve(url, {
+    fun downloadSftpAuth(url: String) {
+        downloadSftpAuth(url, null, null)
+    }
+
+    fun downloadSftpAuth(url: String, hostChecking: Boolean?) {
+        downloadSftpAuth(url, null, null, hostChecking)
+    }
+
+    fun downloadSftpAuth(url: String, username: String?, password: String?) {
+        downloadSftpAuth(url, username, password, null)
+    }
+
+    fun downloadSftpAuth(url: String, username: String?, password: String?, hostChecking: Boolean?) {
+        resolve(arrayOf(url, username, password, hostChecking), {
             download(url, it.dir, { file ->
                 val downloader = SftpFileDownloader(project)
 
@@ -131,8 +143,12 @@ class FileResolver(val project: Project, val downloadDir: File) {
         })
     }
 
-    fun downloadSmbAuth(url: String, domain: String? = null, username: String? = null, password: String? = null) {
-        resolve(url, {
+    fun downloadSmbAuth(url: String) {
+        downloadSmbAuth(url, null, null, null)
+    }
+
+    fun downloadSmbAuth(url: String, domain: String?, username: String?, password: String?) {
+        resolve(arrayOf(url, domain, username, password), {
             download(url, it.dir, { file ->
                 val downloader = SmbFileDownloader(project)
 
@@ -153,8 +169,20 @@ class FileResolver(val project: Project, val downloadDir: File) {
         })
     }
 
-    fun downloadHttpAuth(url: String, user: String? = null, password: String? = null, ignoreSSL: Boolean? = null) {
-        resolve(arrayOf(url, user, password), {
+    fun downloadHttpAuth(url: String) {
+        downloadHttpAuth(url, null, null)
+    }
+
+    fun downloadHttpAuth(url: String, ignoreSSL: Boolean?) {
+        downloadHttpAuth(url, null, null, ignoreSSL)
+    }
+
+    fun downloadHttpAuth(url: String, user: String?, password: String?) {
+        downloadHttpAuth(url, user, password, null)
+    }
+
+    fun downloadHttpAuth(url: String, user: String?, password: String?, ignoreSSL: Boolean?) {
+        resolve(arrayOf(url, user, password, ignoreSSL), {
             download(url, it.dir, { file ->
                 val downloader = HttpFileDownloader(project)
 
