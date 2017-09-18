@@ -86,8 +86,11 @@ aem {
 }
 
 aemSatisfy {
-    // local("pkg/vanityurls-components-1.0.2.zip")
-    download("https://github.com/Cognifide/APM/releases/download/cqsm-3.0.0/apm-3.0.0.zip")
+    local("pkg/vanityurls-components-1.0.2.zip")
+    url("https://github.com/Cognifide/APM/releases/download/cqsm-3.0.0/apm-3.0.0.zip")
+    url("smb://company-share/aem/packages/my-lib.zip")
+    url("sftp://company-share/aem/packages/other-lib.zip")
+    url("file:///C:/Libraries/aem/package/extra-lib.zip")
 }
 
 ```
