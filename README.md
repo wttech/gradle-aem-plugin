@@ -135,9 +135,15 @@ For multi project build configuration, see [example project](https://github.com/
 * `aemSatisfy` - Upload & install dependent CRX package(s) before deployment. Available methods:
     * `local(path: String)`, use CRX package from local file system.
     * `local(file: File)`, same as above, but file can be even located outside the project.
-    * `download(url: String)`, use CRX package that will be downloaded from specified URL to local temporary directory.
-    * `downloadBasicAuth(url: String, user = "admin", password = "admin")`, as above, but with Basic Auth support.
-    * `group(name: String, configurer: () -> Unit)`, useful for declaring group of packages to be installed only on demand (just use methods above in closure).
+    * `url(url: String)`, use CRX package that will be downloaded from specified URL to local temporary directory.
+    * `downloadHttp(url: String)`, download package using HTTP with no auth.
+    * `downloadHttpAuth(url: String, username: String, password: String)`, download package using HTTP with Basic Auth support.
+    * `downloadHttpAuth(url: String)`, as above, but credentials must be specified in variables: `aem.http.username`, `aem.http.password`. Optionally enable SSL errors checking by setting property `aem.http.ignoreSSL` to `false`.
+    * `downloadSmbAuth(url: String, domain: String, username: String, password: String)`, download package using SMB protocol.
+    * `downloadSmbAuth(url: String)`, as above, but credentials must be specified in variables: `aem.smb.domain`, `aem.smb.username`, `aem.smb.password`.
+    * `downloadSftpAuth(url: String, username: String, password: String)`, download package using SFTP protocol.
+    * `downloadSftpAuth(url: String)`, as above, but credentials must be specified in variables: `aem.sftp.username`, `aem.sftp.password`. Optionally enable strict host checking by setting property `aem.sftp.hostChecking` to `true`.
+    * `group(name: String, configurer: Closure)`, useful for declaring group of packages (or just naming single package) to be installed only on demand. For instance: `group 'tools', { url('http://example.com/package.zip'); url('smb://internal-nt/package2.zip')  }`. Then to install only packages in group `tools`, use command: `gradle aemSatisfy -Paem.satisfy.group=tools`.
 * `aemCollect` - Composes ZIP package from all CRX packages being satisfied and built. Available methods:
     * all inherited from [ZIP task](https://docs.gradle.org/3.5/dsl/org.gradle.api.tasks.bundling.Zip.html).
 * `aemCheckout` - Check out JCR content from running AEM author instance to local content path.
@@ -221,12 +227,18 @@ Predefined properties:
 * `created` - current date in *ISO8601* format.
 * `name` - text used as CRX package name. Considers multi-project structure (names of subpackages are prefixed with root project name).
 
+Maven fallback properties (useful when migrating project):
+
+* `project.groupId` - alias for `project.group`.
+* `project.artifactId` - alias for `project.name`.
+* `project.build.finalName` - alias for `${project.name}-${project.version}`.
+
 Task specific:
 * `aemCompose` - properties which are being dynamically calculated basing on content actually included into package.
    * `filterRoots` - after using method `includeContent` of `aemCompose` task, all Vault filter roots are being gathered. This property contains all these XML tags concatenated especially useful for building assemblies. If no projects will be included, then this variable will contain a single filter root with bundle path to be able to deploy auto-generated package with JAR file only.
 * `aemVlt` - properties are being injected to command specified in `aem.vlt.command` property. Following properties are being used internally also by `aemCheckout`.
    * `instance` - instance used to communicate with while performing Vault commands. Determined by (order take precedence): properties `aem.vlt.instance`, `aem.deploy.instance.list`, `aem.deploy.instance.name` and as fallback first instance which name matches filter `*-author`.
-   * `filter` - path to Vault workspace filter file  *META-INF/vault/filter.xml*. Determined by (order take precedence): property: `aem.vlt.filter`, configuration `vaultFilterPath`.
+   * `filter` - path to Vault workspace filter file  *META-INF/vault/filter.xml*. Determined by (order take precedence): property: `aem.vlt.filter`, configuration `contentPath` property suffixed with `META-INF/vault/filter.xml`.
 
 ## Known issues
 

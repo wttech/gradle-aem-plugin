@@ -1,7 +1,8 @@
 package com.cognifide.gradle.aem.internal
 
+import com.fasterxml.jackson.core.util.DefaultIndenter
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.databind.util.ISO8601Utils
 import org.apache.commons.lang3.time.DurationFormatUtils
 import org.apache.commons.validator.routines.UrlValidator
@@ -11,10 +12,19 @@ object Formats {
 
     val URL_VALIDATOR = UrlValidator(arrayOf("http", "https"), UrlValidator.ALLOW_LOCAL_URLS)
 
+    val JSON_MAPPER = {
+        val printer = DefaultPrettyPrinter()
+        printer.indentArraysWith(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE)
+
+        ObjectMapper().writer(printer)
+    }()
+
     fun toJson(value: Any): String? {
-        return ObjectMapper()
-                .enable(SerializationFeature.INDENT_OUTPUT)
-                .writeValueAsString(value)
+        return JSON_MAPPER.writeValueAsString(value)
+    }
+
+    fun <T> fromJson(json: String, clazz: Class<T>): T {
+        return ObjectMapper().readValue(json, clazz)
     }
 
     fun toBase64(value: String): String {
