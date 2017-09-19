@@ -42,7 +42,7 @@ abstract class BuildTest {
     }
 
     fun assertTaskOutcome(build: BuildResult, taskName: String, outcome: TaskOutcome = TaskOutcome.SUCCESS) {
-        assertEquals(outcome, build.task(taskName).outcome)
+        assertEquals(outcome, build.task(taskName)?.outcome)
     }
 
     fun assertPackage(projectDir: File, path: String): File {

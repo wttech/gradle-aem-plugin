@@ -13,7 +13,7 @@ class DebugTaskTest : BuildTest() {
         buildScript("debug", { configurer, projectDir ->
             val build = configurer.withArguments("aemDebug", "-i", "-S").build()
 
-            assertEquals(TaskOutcome.SUCCESS, build.task(":aemDebug").outcome)
+            assertEquals(TaskOutcome.SUCCESS, build.task(":aemDebug")?.outcome)
             assertTrue("Debug output file does not exist.", File(projectDir, "build/aem/aemDebug/debug.json").exists())
         })
     }

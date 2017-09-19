@@ -10,6 +10,8 @@ class RemoteInstance(
         override val environment: String
 ) : Instance, Serializable {
 
+    constructor(httpUrl: String) : this(httpUrl, LocalInstance.ENVIRONMENT)
+
     constructor(httpUrl: String, environment: String) : this(
             httpUrl,
             Instance.USER_DEFAULT,
@@ -19,7 +21,7 @@ class RemoteInstance(
     )
 
     override fun toString(): String {
-        return "RemoteInstance(httpUrl='$httpUrl', user='$user', password='$hiddenPassword', typeName='$typeName', environment='$environment')"
+        return "RemoteInstance(httpUrl='$httpUrl', user='$user', password='$hiddenPassword', type='$typeName', environment='$environment')"
     }
 
 }

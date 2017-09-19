@@ -38,7 +38,7 @@ class LocalInstance(
         get() = ENVIRONMENT
 
     override fun toString(): String {
-        return "LocalInstance(httpUrl='$httpUrl', user='$user', password='$hiddenPassword', typeName='$typeName', debugPort=$debugPort)"
+        return "LocalInstance(httpUrl='$httpUrl', user='$user', password='$hiddenPassword', type='$typeName', debugPort=$debugPort)"
     }
 
 }

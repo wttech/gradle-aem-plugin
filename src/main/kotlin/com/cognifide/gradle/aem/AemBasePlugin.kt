@@ -18,7 +18,6 @@ class AemBasePlugin : Plugin<Project> {
     override fun apply(project: Project) {
         setupDependentPlugins(project)
         setupExtensions(project)
-        setupConfig(project)
     }
 
     private fun setupDependentPlugins(project: Project) {
@@ -26,11 +25,7 @@ class AemBasePlugin : Plugin<Project> {
     }
 
     private fun setupExtensions(project: Project) {
-        project.extensions.create(AemExtension.NAME, AemExtension::class.java)
-    }
-
-    private fun setupConfig(project: Project) {
-        AemConfig.of(project).configure(project)
+        project.extensions.create(AemConfig.EXTENSION, AemConfig::class.java, project)
     }
 
 }
