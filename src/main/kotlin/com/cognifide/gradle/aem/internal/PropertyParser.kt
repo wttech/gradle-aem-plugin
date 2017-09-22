@@ -1,11 +1,11 @@
 package com.cognifide.gradle.aem.internal
 
-import com.mitchellbosecke.pebble.PebbleEngine
-import com.mitchellbosecke.pebble.lexer.Syntax
-import com.mitchellbosecke.pebble.loader.StringLoader
 import com.cognifide.gradle.aem.AemConfig
 import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.vlt.SyncTask
+import com.mitchellbosecke.pebble.PebbleEngine
+import com.mitchellbosecke.pebble.lexer.Syntax
+import com.mitchellbosecke.pebble.loader.StringLoader
 import org.apache.commons.lang3.BooleanUtils
 import org.apache.commons.lang3.ClassUtils
 import org.apache.commons.lang3.text.StrSubstitutor
@@ -51,6 +51,10 @@ class PropertyParser(val project: Project) {
         }
 
         return value
+    }
+
+    fun flag(name: String) : Boolean {
+        return project.properties.containsKey(name) && BooleanUtils.toBoolean(project.properties[name] as String?)
     }
 
     fun prop(name: String, defaultValue: () -> String): String {
@@ -136,8 +140,12 @@ class PropertyParser(val project: Project) {
 
     private fun isUniqueProjectName() = project == project.rootProject || project.name == project.rootProject.name
 
+    fun isForce(): Boolean {
+        return flag(FORCE_PROP)
+    }
+
     fun checkForce(message: String = FORCE_MESSAGE) {
-        if (!project.properties.containsKey(FORCE_PROP) || !BooleanUtils.toBoolean(project.properties[FORCE_PROP] as String?)) {
+        if (!isForce()) {
             throw AemException("Warning! This task execution must be confirmed by specifying explicitly parameter '-P$FORCE_PROP=true'. $message")
         }
     }

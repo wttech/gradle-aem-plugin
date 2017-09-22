@@ -85,6 +85,13 @@ open class AemConfig(project: Project) : Serializable {
     var deployParallel: Boolean = false
 
     /**
+     * CRX package name conventions indicating that package can change over time while having
+     * same version specified.
+     */
+    @Input
+    var deploySnapshots: List<String> = mutableListOf("**/*-SNAPSHOT.zip")
+
+    /**
      * Force upload CRX package regardless if it was previously uploaded.
      */
     @Input
@@ -256,7 +263,7 @@ open class AemConfig(project: Project) : Serializable {
      * actual operation being performed on AEM like starting JCR package installation or even creating launchpad.
      */
     @Input
-    var awaitDelay: Int = 3000
+    var awaitDelay: Int = 5000
 
     /**
      * Time in milliseconds used as interval between next instance stability checks being performed.

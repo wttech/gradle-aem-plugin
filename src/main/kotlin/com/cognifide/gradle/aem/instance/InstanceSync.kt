@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.instance
 import com.cognifide.gradle.aem.AemConfig
 import com.cognifide.gradle.aem.AemPackagePlugin
 import com.cognifide.gradle.aem.deploy.*
+import com.cognifide.gradle.aem.internal.Patterns
 import org.apache.commons.httpclient.HttpClient
 import org.apache.commons.httpclient.HttpMethod
 import org.apache.commons.httpclient.HttpStatus
@@ -173,7 +174,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         try {
             val json = sync.post(url, mapOf(
                     "package" to file,
-                    "force" to config.uploadForce
+                    "force" to (config.uploadForce || isSnapshot(file))
             ))
             val response = UploadResponse.fromJson(json)
 
@@ -181,7 +182,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
                 logger.info(response.msg)
             } else {
                 logger.error(response.msg)
-                throw DeployException(response.msg.orEmpty())
+                throw DeployException(response.msg)
             }
 
             return response
@@ -237,13 +238,17 @@ class InstanceSync(val project: Project, val instance: Instance) {
             deployPackage(file)
             true
         } else {
-            if (pkg.installed) {
-                false
-            } else {
+            if (!pkg.installed || isSnapshot(file)) {
                 deployPackage(file)
                 true
+            } else {
+               false
             }
         }
+    }
+
+    fun isSnapshot(file: File): Boolean {
+        return Patterns.wildcard(file, config.deploySnapshots)
     }
 
     fun deployPackage(file: File = determineLocalPackage()): InstallResponse {
