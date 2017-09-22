@@ -42,16 +42,24 @@ class InstanceSync(val project: Project, val instance: Instance) {
     val bundlesUrl = "${instance.httpUrl}/system/console/bundles.json"
 
     fun get(url: String, parametrizer: (HttpConnectionParams) -> Unit = {}): String {
-        val method = GetMethod(url)
+        val method = GetMethod(normalizeUrl(url))
 
         return execute(method, parametrizer)
     }
 
     fun post(url: String, params: Map<String, Any> = mapOf(), parametrizer: (HttpConnectionParams) -> Unit = {}): String {
-        val method = PostMethod(url)
+        val method = PostMethod(normalizeUrl(url))
         method.requestEntity = MultipartRequestEntity(createParts(params).toTypedArray(), method.params)
 
         return execute(method, parametrizer)
+    }
+
+    /**
+     * Fix for HttpClient's: 'escaped absolute path not valid'
+     * https://stackoverflow.com/questions/13652681/httpclient-invalid-uri-escaped-absolute-path-not-valid
+     */
+    private fun normalizeUrl(url: String): String {
+        return url.replace(" ", "%20")
     }
 
     fun execute(method: HttpMethod, parametrizer: (HttpConnectionParams) -> Unit = {}): String {
@@ -80,6 +88,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         client.httpConnectionManager.params.connectionTimeout = config.deployConnectionTimeout
         client.httpConnectionManager.params.soTimeout = config.deployConnectionTimeout
         client.params.isAuthenticationPreemptive = true
+
         client.state.setCredentials(AuthScope.ANY, UsernamePasswordCredentials(instance.user, instance.password))
 
         return client
