@@ -60,7 +60,7 @@ buildscript {
     }
     
     dependencies {
-        classpath 'com.cognifide.gradle:aem-plugin:2.0.1'
+        classpath 'com.cognifide.gradle:aem-plugin:2.0.2'
     }
 }
 
@@ -75,7 +75,7 @@ Building and deploying to AEM via command: `gradle aemBuild`.
 apply plugin: 'com.cognifide.aem.instance'
 apply plugin: 'kotlin' // 'java' or whatever you like to compile bundle
 
-defaultTasks = ['aemBuild']
+defaultTasks = [':aemSatisfy', ':aemBuild', ':aemAwait']
 
 aem {
     config {
@@ -116,6 +116,7 @@ For multi project build configuration, see [example project](https://github.com/
 * `aemUp` - Turn on local AEM instance(s).
 * `aemDown` - Turn off local AEM instance(s).
 * `aemDestroy` - Destroy local AEM instance(s).
+* `aemAwait` - Wait until all local AEM instance(s) be stable.
 * `aemCompose` - Compose CRX package from JCR content and bundles. Available methods:
     * `includeProject(projectPath: String)`, includes both bundles and JCR content from another project, example: `includeProject ':core'`.
     * `includeContent(projectPath: String)`, includes only JCR content, example: `includeContent ':design'`.
