@@ -88,7 +88,6 @@ class InstanceSync(val project: Project, val instance: Instance) {
         client.httpConnectionManager.params.connectionTimeout = config.deployConnectionTimeout
         client.httpConnectionManager.params.soTimeout = config.deployConnectionTimeout
         client.params.isAuthenticationPreemptive = true
-
         client.state.setCredentials(AuthScope.ANY, UsernamePasswordCredentials(instance.user, instance.password))
 
         return client
