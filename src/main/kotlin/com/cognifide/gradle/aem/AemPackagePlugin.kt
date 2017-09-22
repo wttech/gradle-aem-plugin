@@ -114,7 +114,10 @@ class AemPackagePlugin : Plugin<Project> {
             val desiredTaskName = if (project == project.rootProject) {
                 BuildTask.NAME
             } else {
-                "aem${CaseFormat.LOWER_HYPHEN.to(CaseFormat.UPPER_CAMEL, project.path.replace(":", "-"))}Build"
+                val projectPath = project.path
+                        .replace(":", "-")
+                        .replace(".", "-")
+                "aem${CaseFormat.LOWER_HYPHEN.to(CaseFormat.UPPER_CAMEL, projectPath)}Build"
             }
 
             if (taskName == desiredTaskName) {

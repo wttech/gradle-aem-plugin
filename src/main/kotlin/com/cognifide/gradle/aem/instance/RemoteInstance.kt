@@ -16,7 +16,7 @@ class RemoteInstance(
             httpUrl,
             Instance.USER_DEFAULT,
             Instance.PASSWORD_DEFAULT,
-            InstanceType.byUrl(httpUrl).name,
+            InstanceType.byUrl(httpUrl).name.toLowerCase(),
             environment
     )
 
