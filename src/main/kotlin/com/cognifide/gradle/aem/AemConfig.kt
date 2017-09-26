@@ -16,6 +16,7 @@ import org.gradle.util.ConfigureUtil
 import java.io.File
 import java.io.Serializable
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 /**
  * Aggregated collection of AEM related configuration.
@@ -263,14 +264,14 @@ open class AemConfig(project: Project) : Serializable {
      * actual operation being performed on AEM like starting JCR package installation or even creating launchpad.
      */
     @Input
-    var awaitDelay: Int = 5000
+    var awaitDelay: Long = TimeUnit.SECONDS.toMillis(3)
 
     /**
      * Time in milliseconds used as interval between next instance stability checks being performed.
      * Optimization could be necessary only when instance is heavily loaded.
      */
     @Input
-    var awaitInterval: Int = 1000
+    var awaitInterval: Long = TimeUnit.SECONDS.toMillis(1)
 
     /**
      * After each await interval, instance stability check is being performed.

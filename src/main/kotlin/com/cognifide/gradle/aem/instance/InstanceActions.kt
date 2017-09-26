@@ -18,10 +18,16 @@ object InstanceActions {
 
         if (config.awaitDelay > 0) {
             logger.info("Delaying due to pending operations on instance(s).")
+
             Behaviors.waitUntil(config.awaitInterval, { timer ->
+                val instanceStates = instances.map { InstanceState(project, it) }
+                progressLogger.progress(progressFor(instanceStates, timer))
+
                 return@waitUntil (timer.elapsed < config.awaitDelay)
             })
         }
+
+        logger.info("Checking stability of instance(s).")
 
         var lastInstanceStates = -1
         Behaviors.waitUntil(config.awaitInterval, { timer ->
@@ -31,8 +37,7 @@ object InstanceActions {
                 timer.reset()
             }
 
-            val instanceProgress = instanceStates.joinToString(" | ") { progressFor(it, timer.ticks, config.awaitTimes) }
-            progressLogger.progress(instanceProgress)
+            progressLogger.progress(progressFor(instanceStates, config, timer))
 
             if (config.awaitTimes > 0 && timer.ticks > config.awaitTimes) {
                 logger.warn("Instance(s) are not stable. Timeout reached after ${Formats.duration(timer.elapsed)}")
@@ -50,6 +55,12 @@ object InstanceActions {
         progressLogger.completed()
     }
 
+    private fun progressFor(instanceStates: List<InstanceState>, timer: Behaviors.Timer) =
+            instanceStates.joinToString(" | ") { progressFor(it, timer.ticks, 0) }
+
+    private fun progressFor(instanceStates: List<InstanceState>, config: AemConfig, timer: Behaviors.Timer) =
+            instanceStates.joinToString(" | ") { progressFor(it, timer.ticks, config.awaitTimes) }
+
     private fun progressFor(it: InstanceState, tick: Long, maxTicks: Long): String {
         return "${it.instance.name}: ${progressIndicator(it, tick, maxTicks)} ${it.bundleState.statsWithLabels} [${it.bundleState.stablePercent}]"
     }
@@ -61,7 +72,7 @@ object InstanceActions {
             " "
         }
 
-        if (tick.toDouble() / maxTicks.toDouble() > 0.1) {
+        if (maxTicks > 0 && (tick.toDouble() / maxTicks.toDouble() > 0.1)) {
             indicator += " [$tick/$maxTicks tt]"
         }
 
