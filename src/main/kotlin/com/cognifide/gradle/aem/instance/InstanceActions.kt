@@ -16,6 +16,13 @@ object InstanceActions {
 
         progressLogger.started()
 
+        if (config.awaitDelay > 0) {
+            logger.info("Delaying due to pending operations on instance(s).")
+            Behaviors.waitUntil(config.awaitInterval, { timer ->
+                return@waitUntil (timer.elapsed < config.awaitDelay)
+            })
+        }
+
         var lastInstanceStates = -1
         Behaviors.waitUntil(config.awaitInterval, { timer ->
             val instanceStates = instances.map { InstanceState(project, it) }
@@ -26,10 +33,6 @@ object InstanceActions {
 
             val instanceProgress = instanceStates.joinToString(" | ") { progressFor(it, timer.ticks, config.awaitTimes) }
             progressLogger.progress(instanceProgress)
-
-            if (config.awaitDelay > 0 && timer.elapsed < config.awaitDelay) {
-                return@waitUntil true
-            }
 
             if (config.awaitTimes > 0 && timer.ticks > config.awaitTimes) {
                 logger.warn("Instance(s) are not stable. Timeout reached after ${Formats.duration(timer.elapsed)}")
