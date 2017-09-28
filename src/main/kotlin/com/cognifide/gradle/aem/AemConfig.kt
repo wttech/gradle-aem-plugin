@@ -361,6 +361,14 @@ open class AemConfig(project: Project) : Serializable {
         }
 
     /**
+     * CRX package Vault files path.
+     */
+    @get:Internal
+    @get:JsonIgnore
+    val vaultPath: String
+        get() = "$contentPath/${AemPackagePlugin.VLT_PATH}"
+
+    /**
      * CRX package Vault filter path.
      * Also used by VLT tool as default filter for files being checked out from running AEM instance.
      *
@@ -369,12 +377,12 @@ open class AemConfig(project: Project) : Serializable {
     @get:Internal
     @get:JsonIgnore
     val vaultFilterPath: String
-        get() = "$contentPath/${AemPackagePlugin.VLT_PATH}/filter.xml"
+        get() = "$vaultPath/filter.xml"
 
     /**
      * Fallback for older form of configuration. Inner closure 'config' could be skipped.
      *
-     * @Deprecated
+     * @deprecated
      * @since 2.0.2
      */
     fun config(closure: Closure<*>) {

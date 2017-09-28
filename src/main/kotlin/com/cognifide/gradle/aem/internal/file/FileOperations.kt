@@ -5,6 +5,7 @@ import com.cognifide.gradle.aem.internal.Patterns
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
 import org.apache.commons.io.filefilter.TrueFileFilter
+import org.gradle.api.Project
 import org.gradle.util.GFileUtils
 import org.reflections.Reflections
 import org.reflections.scanners.ResourcesScanner
@@ -65,6 +66,13 @@ object FileOperations {
     fun amendFile(file: File, amender: (String) -> String) {
         val source = amender(file.inputStream().bufferedReader().use { it.readText() })
         file.printWriter().use { it.print(source) }
+    }
+
+    fun find(project: Project, dirIfFileName: String, pathOrFileName: String): File? {
+        return mutableListOf<(String) -> File>(
+                { project.file(pathOrFileName) },
+                { File(File(dirIfFileName), pathOrFileName) }
+        ).map { it(pathOrFileName) }.firstOrNull { it.exists() }
     }
 
     fun find(dir: File, patterns: List<String>): File? {
