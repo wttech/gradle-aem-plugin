@@ -205,7 +205,7 @@ open class AemConfig(project: Project) : Serializable {
      * Global options which are being applied to any Vault related command like 'aemVault' or 'aemCheckout'.
      */
     @Input
-    var vaultGlobalOptions: String = "--credentials \${instance.credentials}"
+    var vaultGlobalOptions: String = "--credentials {{instance.credentials}}"
 
     /**
      * Specify characters to be used as line endings when cleaning up checked out JCR content.
