@@ -43,6 +43,9 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
 Recommended way to start using Gradle AEM Plugin is to clone and customize [example project](https://github.com/Cognifide/gradle-aem-example).
 General configuration options are listed [here](src/main/kotlin/com/cognifide/gradle/aem/AemConfig.kt).
 
+In all docs there is used shorter version of command for launching Gradle which assumes installed tool on local machine.
+But it is recommended to use Gradle Wrapper for which command is a little bit different: `gradlew` instead of `gradle`. 
+
 ### Plugin setup
 
 Released versions of plugin are available on [Bintray](https://bintray.com/cognifide/maven-public/gradle-aem-plugin), 
@@ -95,14 +98,21 @@ aemSatisfy {
 
 ```
 
-Preinstalling dependent packages on AEM via command: `gradle aemSatisfy`.
-
-Building and deploying to AEM via most simple command: `gradle`.
-
 Instances configuration can be omitted, then *http://localhost:4502* and *http://localhost:4503* will be used by default.
 Content path can also be skipped, because value above is also default. This is only an example how to customize particular [values](src/main/kotlin/com/cognifide/gradle/aem/AemConfig.kt).
 
 For multi project build configuration, see [example project](https://github.com/Cognifide/gradle-aem-example).
+
+### Workflow
+
+Initially, to create fully configured local AEM instances simply run command `gradle aemSetup`.
+
+Later during development process, building and deploying to AEM should be done using most simple command: `gradle`.
+Above configuration uses default tasks, so that alternatively it is possible to build same using explicitly specified command `gradle aemSatisfy aemBuild aemAwait`.
+
+* Firstly dependent packages (like AEM hotfixes, Vanity URL Components etc) will be installed lazily (only when they are not installed yet).
+* In next step application is being built and deployed to all configured AEM instances.
+* Finally build awaits till all AEM instances be stable.
 
 ### Tasks
 
@@ -242,7 +252,7 @@ Task specific:
    * `filterRoots` - after using method `includeContent` of `aemCompose` task, all Vault filter roots are being gathered. This property contains all these XML tags concatenated especially useful for building assemblies. If no projects will be included, then this variable will contain a single filter root with bundle path to be able to deploy auto-generated package with JAR file only.
 * `aemVlt` - properties are being injected to command specified in `aem.vlt.command` property. Following properties are being used internally also by `aemCheckout`.
    * `instance` - instance used to communicate with while performing Vault commands. Determined by (order take precedence): properties `aem.vlt.instance`, `aem.deploy.instance.list`, `aem.deploy.instance.name` and as fallback first instance which name matches filter `*-author`.
-   * `filter` - path to Vault workspace filter file  *META-INF/vault/filter.xml*. Determined by (order take precedence): property: `aem.vlt.filter`, configuration `contentPath` property suffixed with `META-INF/vault/filter.xml`.
+   * `filter` - file name or path to Vault workspace filter file  *META-INF/vault/filter.xml*. Determined by (order take precedence): property: `aem.vlt.filter`, configuration `contentPath` property suffixed with `META-INF/vault/filter.xml`. 
 
 ## Known issues
 
@@ -264,5 +274,3 @@ As a workaround, just run build without daemon (`--no-daemon`).
 ## License
 
 **Gradle AEM Plugin** is licensed under the [Apache License, Version 2.0 (the "License")](https://www.apache.org/licenses/LICENSE-2.0.txt)
-
-
