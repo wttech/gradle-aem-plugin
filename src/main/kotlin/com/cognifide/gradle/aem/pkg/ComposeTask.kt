@@ -8,8 +8,8 @@ import com.cognifide.gradle.aem.internal.PropertyParser
 import org.gradle.api.Project
 import org.gradle.api.file.CopySpec
 import org.gradle.api.file.DuplicatesStrategy
+import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
-import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.bundling.Zip
@@ -28,11 +28,19 @@ open class ComposeTask : Zip(), AemTask {
     @Nested
     final override val config = AemConfig.of(project)
 
-    @InputFiles
-    val vaultFilters = mutableListOf<File>()
-
     @InputDirectory
     val vaultDir = AemTask.temporaryDir(project, PrepareTask.NAME, AemPackagePlugin.VLT_PATH)
+
+    @Input
+    val filterRoots = mutableSetOf<String>()
+
+    @Internal
+    val filterRootDefault = { subproject: Project, subconfig: AemConfig ->
+        "<filter root=\"${subconfig.bundlePath}\"/>"
+    }
+
+    @Internal
+    val propertyParser = PropertyParser(project)
 
     @Internal
     private var bundleCollectors: List<() -> Unit> = mutableListOf()
@@ -41,11 +49,6 @@ open class ComposeTask : Zip(), AemTask {
     private var contentCollectors: List<() -> Unit> = mutableListOf()
 
     @Internal
-    private val filterRoots = mutableSetOf<String>()
-
-    @Internal
-    private val propertyParser = PropertyParser(project)
-
     private var archiveName: String? = null
 
     @Internal
@@ -178,7 +181,7 @@ open class ComposeTask : Zip(), AemTask {
             val config = AemConfig.of(project)
 
             dependProject(project, config.dependContentTaskNames)
-            extractVaultFilters(config)
+            extractVaultFilters(project, config)
 
             val contentDir = File("${config.contentPath}/${AemPackagePlugin.JCR_ROOT}")
             if (contentDir.exists()) {
@@ -213,11 +216,11 @@ open class ComposeTask : Zip(), AemTask {
         }
     }
 
-    private fun extractVaultFilters(config: AemConfig) {
+    private fun extractVaultFilters(project: Project, config: AemConfig) {
         if (!config.vaultFilterPath.isNullOrBlank() && File(config.vaultFilterPath).exists()) {
             filterRoots.addAll(extractVaultFilters(File(config.vaultFilterPath)))
         } else {
-            filterRoots.add("<filter root=\"${config.bundlePath}\"/>")
+            filterRoots.add(filterRootDefault(project, config))
         }
     }
 
