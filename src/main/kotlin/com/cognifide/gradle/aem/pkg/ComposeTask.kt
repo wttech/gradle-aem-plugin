@@ -35,8 +35,8 @@ open class ComposeTask : Zip(), AemTask {
     val filterRoots = mutableSetOf<String>()
 
     @Internal
-    val filterRootDefault = { subproject: Project, config: AemConfig ->
-        "<filter root=\"${config.bundlePath}\"/>"
+    val filterRootDefault = { subproject: Project, subconfig: AemConfig ->
+        "<filter root=\"${subconfig.bundlePath}\"/>"
     }
 
     @Internal
