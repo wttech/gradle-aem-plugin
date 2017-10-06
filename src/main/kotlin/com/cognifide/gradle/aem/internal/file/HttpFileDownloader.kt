@@ -49,7 +49,7 @@ class HttpFileDownloader(val project: Project) {
 
             downloader.download(response.entity.content, targetFile)
         } catch (e: Exception) {
-            throw DownloadException("Cannot download URL '$sourceUrl' to file '$targetFile' using HTTP(s). Check connection.", e)
+            throw FileException("Cannot download URL '$sourceUrl' to file '$targetFile' using HTTP(s). Check connection.", e)
         }
     }
 

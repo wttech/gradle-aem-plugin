@@ -29,7 +29,7 @@ class SmbFileDownloader(val project: Project) {
 
             downloader.download(smbFile.inputStream, targetFile)
         } catch (e: Exception) {
-            throw DownloadException("Cannot download URL '$sourceUrl' to file '$targetFile' using SMB. Check connection.", e)
+            throw FileException("Cannot download URL '$sourceUrl' to file '$targetFile' using SMB. Check connection.", e)
         }
     }
 

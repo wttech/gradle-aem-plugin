@@ -8,7 +8,6 @@ import org.apache.commons.lang3.StringUtils
 import org.gradle.api.logging.Logger
 import java.io.File
 import java.io.IOException
-import java.util.*
 
 class VltCleaner(val root: File, val logger: Logger) {
 
@@ -30,29 +29,36 @@ class VltCleaner(val root: File, val logger: Logger) {
             try {
                 logger.info("Cleaning up {}", file.path)
 
-                val lines = ArrayList<String>()
-                for (line in FileUtils.readLines(file, CharEncoding.UTF_8)) {
-                    val cleanLine = StringUtils.trimToEmpty(line)
-                    val lineContains = lineContainsProperty(cleanLine, contentProperties)
-                    if (lineContains) {
-                        if (!cleanLine.endsWith(">")) {
-                        } else {
-                            val lastLine = lines.removeAt(lines.size - 1)
-                            lines.add(lastLine + ">")
-                        }
+                val inputLines = FileUtils.readLines(file, CharEncoding.UTF_8)
+                val filteredLines = filterLines(inputLines, contentProperties)
 
-                    } else {
-                        lines.add(line)
-                    }
-
-                }
-
-                FileUtils.writeLines(file, CharEncoding.UTF_8, lines, lineEnding)
+                FileUtils.writeLines(file, CharEncoding.UTF_8, filteredLines, lineEnding)
             } catch (e: IOException) {
                 throw VltException(String.format("Error opening %s", file.path), e)
             }
 
         }
+    }
+
+    private fun filterLines(lines: List<String>, contentProperties: List<String>): List<String> {
+        val result = mutableListOf<String>()
+        for (line in lines) {
+            val cleanLine = StringUtils.trimToEmpty(line)
+            val lineContains = lineContainsProperty(cleanLine, contentProperties)
+            if (lineContains) {
+                if (!cleanLine.endsWith(">")) {
+                } else {
+                    val lastLine = result.removeAt(result.size - 1)
+                    result.add(lastLine + ">")
+                }
+
+            } else {
+                result.add(line)
+            }
+
+        }
+
+        return result
     }
 
     private fun lineContainsProperty(cleanLine: String, contentProperties: List<String>): Boolean {

@@ -86,11 +86,11 @@ open class AemConfig(project: Project) : Serializable {
     var deployParallel: Boolean = false
 
     /**
-     * CRX package name conventions indicating that package can change over time while having
-     * same version specified.
+     * CRX package name conventions (with wildcard) indicating that package can change over time
+     * while having same version specified.
      */
     @Input
-    var deploySnapshots: List<String> = mutableListOf("**/*-SNAPSHOT.zip")
+    var deploySnapshots: List<String> = mutableListOf()
 
     /**
      * Force upload CRX package regardless if it was previously uploaded.
