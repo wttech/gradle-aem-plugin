@@ -4,5 +4,5 @@
   <jcr:content
     jcr:primaryType="cq:PageContent"
     jcr:title="Sample Page"
-    sling:resourceType="zg/commons/renderers/base/contentSnippetRenderer"/>
+    sling:resourceType="example/core/components/page"/>
 </jcr:root>

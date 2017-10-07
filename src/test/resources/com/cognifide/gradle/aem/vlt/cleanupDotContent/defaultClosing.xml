@@ -5,7 +5,7 @@
     jcr:primaryType="cq:PageContent"
     jcr:uuid="123e4567-e89b-12d3-a456-426655440000"
     jcr:title="Sample Page"
-    sling:resourceType="zg/commons/renderers/base/contentSnippetRenderer"
+    sling:resourceType="example/core/components/page"
     cq:lastModifiedBy="foo">
   </jcr:content>
 </jcr:root>
