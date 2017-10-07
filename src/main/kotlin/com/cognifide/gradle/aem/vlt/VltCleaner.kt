@@ -44,14 +44,13 @@ class VltCleaner(val root: File, val logger: Logger) {
         val result = mutableListOf<String>()
         for (line in lines) {
             val cleanLine = StringUtils.trimToEmpty(line)
-            val lineContains = lineContainsProperty(cleanLine, contentProperties)
-            if (lineContains) {
-                if (!cleanLine.endsWith(">")) {
-                } else {
+            if (contentProperties.any { cleanLine.startsWith(it) }) {
+                if (cleanLine.endsWith(">")) {
                     val lastLine = result.removeAt(result.size - 1)
                     result.add(lastLine + ">")
+                } else {
+                    // skip line with property
                 }
-
             } else {
                 result.add(line)
             }
@@ -59,10 +58,6 @@ class VltCleaner(val root: File, val logger: Logger) {
         }
 
         return result
-    }
-
-    private fun lineContainsProperty(cleanLine: String, contentProperties: List<String>): Boolean {
-        return contentProperties.any { cleanLine.startsWith(it) }
     }
 
 }

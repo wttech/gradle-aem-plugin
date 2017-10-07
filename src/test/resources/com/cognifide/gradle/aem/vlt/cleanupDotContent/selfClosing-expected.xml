@@ -4,7 +4,5 @@
   <jcr:content
     jcr:primaryType="cq:PageContent"
     jcr:title="Sample Page"
-    sling:resourceType="zg/commons/renderers/base/contentSnippetRenderer"
-    cq:lastModifiedBy="foo">
-  </jcr:content>
+    sling:resourceType="zg/commons/renderers/base/contentSnippetRenderer"/>
 </jcr:root>
