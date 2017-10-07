@@ -64,17 +64,16 @@ interface Instance : Serializable {
         fun filter(project: Project, instanceFilter: String = FILTER_LOCAL): List<Instance> {
             val config = AemConfig.of(project)
             val instanceValues = project.properties[LIST_PROP] as String?
-            if (!instanceValues.isNullOrBlank()) {
-                return parse(instanceValues!!)
-            }
 
-            val instances = if (config.instances.values.isEmpty()) {
-                return defaults()
+            val instances = if (!instanceValues.isNullOrBlank()) {
+                parse(instanceValues!!)
+            } else if (!config.instances.values.isEmpty()) {
+                config.instances.values
             } else {
-                config.instances
+                defaults()
             }
 
-            return instances.values.filter { instance ->
+            return instances.filter { instance ->
                 PropertyParser(project).filter(instance.name, NAME_PROP, instanceFilter)
             }
         }

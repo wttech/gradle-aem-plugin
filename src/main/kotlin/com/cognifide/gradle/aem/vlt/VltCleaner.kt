@@ -8,7 +8,6 @@ import org.apache.commons.lang3.StringUtils
 import org.gradle.api.logging.Logger
 import java.io.File
 import java.io.IOException
-import java.util.*
 
 class VltCleaner(val root: File, val logger: Logger) {
 
@@ -25,38 +24,45 @@ class VltCleaner(val root: File, val logger: Logger) {
         }
     }
 
-    fun cleanupDotContent(contentProperties: List<String>, lineEnding : String) {
+    fun cleanupDotContent(contentProperties: List<String>, lineEnding: String) {
         for (file in FileUtils.listFiles(root, NameFileFilter(JCR_CONTENT_FILE), TrueFileFilter.INSTANCE)) {
             try {
                 logger.info("Cleaning up {}", file.path)
 
-                val lines = ArrayList<String>()
-                for (line in FileUtils.readLines(file, CharEncoding.UTF_8)) {
-                    val cleanLine = StringUtils.trimToEmpty(line)
-                    val lineContains = lineContainsProperty(cleanLine, contentProperties)
-                    if (lineContains) {
-                        if (!cleanLine.endsWith(">")) {
-                        } else {
-                            val lastLine = lines.removeAt(lines.size - 1)
-                            lines.add(lastLine + ">")
-                        }
+                val inputLines = FileUtils.readLines(file, CharEncoding.UTF_8)
+                val filteredLines = filterLines(inputLines, contentProperties)
 
-                    } else {
-                        lines.add(line)
-                    }
-
-                }
-
-                FileUtils.writeLines(file, CharEncoding.UTF_8, lines, lineEnding)
+                FileUtils.writeLines(file, CharEncoding.UTF_8, filteredLines, lineEnding)
             } catch (e: IOException) {
                 throw VltException(String.format("Error opening %s", file.path), e)
             }
-
         }
     }
 
-    private fun lineContainsProperty(cleanLine: String, contentProperties: List<String>): Boolean {
-        return contentProperties.any { cleanLine.startsWith(it) }
+    private fun filterLines(lines: List<String>, contentProperties: List<String>): List<String> {
+        val result = mutableListOf<String>()
+
+        for (line in lines) {
+            val cleanLine = StringUtils.trimToEmpty(line)
+            if (contentProperties.any { cleanLine.startsWith(it) }) {
+                when {
+                    cleanLine.endsWith("/>") -> {
+                        result.add(result.removeAt(result.size - 1) + "/>")
+                    }
+                    cleanLine.endsWith(">") -> {
+                        result.add(result.removeAt(result.size - 1) + ">")
+                    }
+                    else -> {
+                        // skip line with property
+                    }
+                }
+            } else {
+                result.add(line)
+            }
+
+        }
+
+        return result
     }
 
 }

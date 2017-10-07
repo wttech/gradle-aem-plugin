@@ -27,7 +27,7 @@ class UrlFileDownloader(val project: Project) {
 
             downloader.download(connection.getInputStream(), targetFile)
         } catch (e: Exception) {
-            throw DownloadException("Cannot download URL '$sourceUrl' to file '$targetFile'.", e)
+            throw FileException("Cannot download URL '$sourceUrl' to file '$targetFile'.", e)
         }
     }
 

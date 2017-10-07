@@ -39,7 +39,7 @@ class SftpFileDownloader(val project: Project) {
                 downloader.download(input, targetFile)
             })
         } catch (e: Exception) {
-            throw DownloadException("Cannot download URL '$sourceUrl' to file '$targetFile' using SFTP. Check connection.", e)
+            throw FileException("Cannot download URL '$sourceUrl' to file '$targetFile' using SFTP. Check connection.", e)
         }
     }
 

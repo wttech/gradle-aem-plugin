@@ -218,6 +218,10 @@ class FileResolver(val project: Project, val downloadDir: File) {
 
     @Synchronized
     fun group(name: String, configurer: Closure<*>) {
+        if (resolvers.any { it.group == name }) {
+            throw FileException("File group to be resolved named '$name' is already defined for download dir: $downloadDir")
+        }
+
         group = name
         ConfigureUtil.configureSelf(configurer, this)
         group = GROUP_DEFAULT
