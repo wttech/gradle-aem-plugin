@@ -35,7 +35,7 @@ class VltCleanerTest {
                 "cq:lastModified",
                 "cq:lastReplicat*",
                 "jcr:uuid"
-        ), "\n")
+        ), "\r\n")
 
         val testedFileText = testedFile.bufferedReader().use { it.readText() }
         val expectedFileText = expectedFile.bufferedReader().use { it.readText() }
