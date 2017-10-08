@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.vlt
 
+import com.cognifide.gradle.aem.internal.Patterns
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.filefilter.NameFileFilter
 import org.apache.commons.io.filefilter.TrueFileFilter
@@ -8,6 +9,7 @@ import org.apache.commons.lang3.StringUtils
 import org.gradle.api.logging.Logger
 import java.io.File
 import java.io.IOException
+import java.util.regex.Pattern
 
 class VltCleaner(val root: File, val logger: Logger) {
 
@@ -15,6 +17,8 @@ class VltCleaner(val root: File, val logger: Logger) {
         val VLT_FILE = ".vlt"
 
         val JCR_CONTENT_FILE = ".content.xml"
+
+        val CONTENT_PROP_PATTERN = Pattern.compile("([^=]+)=\"([^\"]+)\"")
     }
 
     fun removeVltFiles() {
@@ -44,7 +48,7 @@ class VltCleaner(val root: File, val logger: Logger) {
 
         for (line in lines) {
             val cleanLine = StringUtils.trimToEmpty(line)
-            if (contentProperties.any { cleanLine.startsWith(it) }) {
+            if (lineContainsProperty(line, contentProperties)) {
                 when {
                     cleanLine.endsWith("/>") -> {
                         result.add(result.removeAt(result.size - 1) + "/>")
@@ -63,6 +67,16 @@ class VltCleaner(val root: File, val logger: Logger) {
         }
 
         return result
+    }
+
+    private fun lineContainsProperty(line: String, props: List<String>): Boolean {
+        val normalizedLine = line.trim().removeSuffix("/>").removeSuffix(">")
+        val matcher = CONTENT_PROP_PATTERN.matcher(normalizedLine)
+        if (matcher.matches()) {
+            return Patterns.wildcard(matcher.group(1), props)
+        }
+
+        return false
     }
 
 }

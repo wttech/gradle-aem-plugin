@@ -15,15 +15,15 @@ class VltCleanerTest {
 
     @Test
     fun shouldCleanupDotContentWithDefaultClosing() {
-        cleanUpDotContent("cleanupDotContent/defaultClosing")
+        cleanupDotContent("cleanupDotContent/defaultClosing")
     }
 
     @Test
     fun shouldCleanupDotContentWithSelfClosing() {
-        cleanUpDotContent("cleanupDotContent/selfClosing")
+        cleanupDotContent("cleanupDotContent/selfClosing")
     }
 
-    private fun cleanUpDotContent(case: String) {
+    private fun cleanupDotContent(case: String) {
         val expectedFile = File(javaClass.getResource("$case-expected.xml").toURI())
         val sourceFile = File(javaClass.getResource("$case.xml").toURI())
         val testedFile = File(tmpDir.newFolder(), ".content.xml")
@@ -32,7 +32,7 @@ class VltCleanerTest {
         VltCleaner(testedFile.parentFile, NopLogger()).cleanupDotContent(listOf(
                 "jcr:lastModified",
                 "jcr:created",
-                "cq:lastModified",
+                "cq:lastModified*",
                 "cq:lastReplicat*",
                 "jcr:uuid"
         ), "\r\n")
