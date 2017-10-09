@@ -194,11 +194,13 @@ open class AemConfig(project: Project) : Serializable {
      */
     @Input
     var vaultSkipProperties: MutableList<String> = mutableListOf(
+            "jcr:uuid",
             "jcr:lastModified",
             "jcr:created",
             "cq:lastModified*",
             "cq:lastReplicat*",
-            "jcr:uuid"
+            "*_x0040_Delete",
+            "*_x0040_TypeHint"
     )
 
     /**

@@ -7,5 +7,7 @@
     jcr:title="Sample Page"
     sling:resourceType="example/core/components/page"
     cq:lastReplicatedBy="foo"
-    cq:lastModifiedBy="foo"/>
+    cq:lastModifiedBy="foo"
+    hideInNav_x0040_Delete="true"
+    offTime_x0040_TypeHint="Long"/>
 </jcr:root>
