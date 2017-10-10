@@ -31,16 +31,16 @@ open class AemConfig(project: Project) : Serializable {
 
     companion object {
 
-        val EXTENSION = "aem"
-
         /**
          * Shorthand getter for configuration related with specified project.
          * Especially useful when including one project in another (composing assembly packages).
          */
         fun of(project: Project): AemConfig {
-            return project.extensions.findByType(AemConfig::class.java)
+            val extension = project.extensions.findByType(AemExtension::class.java)
                     ?: throw AemException(project.toString().capitalize()
                     + " has neither '${AemPackagePlugin.ID}' nor '${AemInstancePlugin.ID}' plugin applied.")
+
+            return extension.config
         }
 
         fun of(task: DefaultTask): AemConfig {
@@ -84,6 +84,17 @@ open class AemConfig(project: Project) : Serializable {
     @Incubating
     @Input
     var deployParallel: Boolean = false
+
+    /**
+     * Determines if packages to be installed by e.g satisfy or deploy task, could contain subpackages.
+     * If packages are exclusive then asking for installed packages will be done only once.
+     *
+     * Exclusive means that particular package installation cannot be a cause of that next package
+     * to be installed will be already installed.
+     */
+    @Incubating
+    @Input
+    var deployExclusive: Boolean = true
 
     /**
      * CRX package name conventions (with wildcard) indicating that package can change over time
@@ -380,15 +391,5 @@ open class AemConfig(project: Project) : Serializable {
     @get:JsonIgnore
     val vaultFilterPath: String
         get() = "$vaultPath/filter.xml"
-
-    /**
-     * Fallback for older form of configuration. Inner closure 'config' could be skipped.
-     *
-     * @deprecated
-     * @since 2.0.2
-     */
-    fun config(closure: Closure<*>) {
-        ConfigureUtil.configure(closure, this)
-    }
 
 }

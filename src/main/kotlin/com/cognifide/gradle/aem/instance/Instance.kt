@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.AemConfig
 import com.cognifide.gradle.aem.AemException
+import com.cognifide.gradle.aem.deploy.ListResponse
 import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.internal.PropertyParser
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -146,5 +147,8 @@ interface Instance : Serializable {
             throw AemException("Type cannot be blank in $this")
         }
     }
+
+    @get:JsonIgnore
+    var packages : ListResponse?
 
 }

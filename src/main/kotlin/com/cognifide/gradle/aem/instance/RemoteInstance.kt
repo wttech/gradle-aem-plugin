@@ -1,5 +1,7 @@
 package com.cognifide.gradle.aem.instance
 
+import com.cognifide.gradle.aem.deploy.ListResponse
+import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.Serializable
 
 class RemoteInstance(
@@ -23,5 +25,9 @@ class RemoteInstance(
     override fun toString(): String {
         return "RemoteInstance(httpUrl='$httpUrl', user='$user', password='$hiddenPassword', type='$typeName', environment='$environment')"
     }
+
+    @Transient
+    @get:JsonIgnore
+    override var packages: ListResponse? = null
 
 }

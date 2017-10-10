@@ -163,14 +163,16 @@ class InstanceSync(val project: Project, val instance: Instance) {
     private fun resolveRemotePackage(resolver: (ListResponse) -> ListResponse.Package?): ListResponse.Package? {
         logger.info("Asking AEM for uploaded packages using URL: '$listPackagesUrl'")
 
-        val json = post(listPackagesUrl)
-        val response = try {
-            ListResponse.fromJson(json)
-        } catch (e: Exception) {
-            throw DeployException("Cannot ask AEM for uploaded packages!", e)
+        if (instance.packages == null || !config.deployExclusive) {
+            val json = post(listPackagesUrl)
+            instance.packages = try {
+                ListResponse.fromJson(json)
+            } catch (e: Exception) {
+                throw DeployException("Cannot ask AEM for uploaded packages!", e)
+            }
         }
 
-        return resolver(response)
+        return resolver(instance.packages!!)
     }
 
     fun uploadPackage(file: File = determineLocalPackage()): UploadResponse {
