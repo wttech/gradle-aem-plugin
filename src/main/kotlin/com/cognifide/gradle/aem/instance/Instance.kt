@@ -49,7 +49,7 @@ interface Instance : Serializable {
                         RemoteInstance(url, user, password, ENVIRONMENT_CMD, InstanceType.byUrl(url).name)
                     }
                     else -> {
-                        throw AemException("Cannot parse instance string: '$str'")
+                        throw AemException("Cannot parse instance string: '$line'")
                     }
                 }
             }
@@ -81,9 +81,7 @@ interface Instance : Serializable {
 
         @Suppress("unchecked_cast")
         fun <T : Instance> filter(project: Project, type: KClass<T>): List<T> {
-            return filter(project, Instance.FILTER_LOCAL).fold(mutableListOf<T>(), { result, instance ->
-                if (type.isInstance(instance)) result += (instance as T); result
-            })
+            return filter(project, Instance.FILTER_LOCAL).filterIsInstance(type.java)
         }
 
         fun locals(project: Project): List<LocalInstance> {

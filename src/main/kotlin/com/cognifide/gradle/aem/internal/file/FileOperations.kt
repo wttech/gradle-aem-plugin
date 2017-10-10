@@ -24,7 +24,7 @@ object FileOperations {
     }
 
     fun getResources(path: String): List<String> {
-        return Reflections("${AemBasePlugin.PKG.replace("/", ".")}.$path", ResourcesScanner()).getResources { true; }.toList()
+        return Reflections("${AemBasePlugin.PKG}.$path".replace("/", "."), ResourcesScanner()).getResources { true; }.toList()
     }
 
     fun eachResource(resourceRoot: String, targetDir: File, callback: (String, File) -> Unit) {

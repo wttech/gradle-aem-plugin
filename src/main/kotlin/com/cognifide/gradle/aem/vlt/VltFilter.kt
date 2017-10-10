@@ -14,7 +14,7 @@ class VltFilter(val file: File, private val temporary: Boolean = false) {
             val template = FileOperations.readResource("vlt/path.xml")!!
                     .bufferedReader().use { it.readText() }
             val content = PropertyParser(project).expand(template, mapOf("paths" to paths))
-            val file = AemTask.temporaryFile(project, "filter.xml", VltTask.NAME)
+            val file = AemTask.temporaryFile(project, VltTask.NAME, "filter.xml")
 
             file.printWriter().use { it.print(content) }
 

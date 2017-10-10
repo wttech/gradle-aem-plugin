@@ -4,7 +4,6 @@ import com.cognifide.gradle.aem.AemConfig
 import com.cognifide.gradle.aem.instance.Instance
 import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.internal.file.FileOperations
-import org.apache.commons.lang3.StringUtils
 import org.gradle.api.Project
 import org.gradle.api.logging.Logger
 import java.io.File
@@ -12,6 +11,8 @@ import java.io.File
 class VltCommand(val project: Project) {
 
     val logger: Logger = project.logger
+
+    val propertyParser = PropertyParser(project)
 
     fun clean() {
         val config = AemConfig.of(project)
@@ -58,7 +59,7 @@ class VltCommand(val project: Project) {
     fun determineFilter(): VltFilter {
         val config = AemConfig.of(project)
         var filter = VltFilter(File(config.vaultFilterPath))
-        val cmdFilterPath = project.properties["aem.vlt.filter"] as String?
+        val cmdFilterPath = propertyParser.prop("aem.vlt.filter")
 
         if (!cmdFilterPath.isNullOrBlank()) {
             val cmdFilter = FileOperations.find(project, config.vaultPath, cmdFilterPath!!)
@@ -67,17 +68,16 @@ class VltCommand(val project: Project) {
             filter = VltFilter(cmdFilter)
         }
 
-        val cmdFilterRoots = project.properties["aem.vlt.filterRoots"] as String?
-        if (!cmdFilterRoots.isNullOrBlank()) {
-            val filterRoots = StringUtils.substringBetween(cmdFilterRoots!!, "[", "]").split(",")
-            filter = VltFilter.temporary(project, filterRoots)
+        val cmdFilterRoots = PropertyParser(project).list("aem.vlt.filterRoots")
+        if (cmdFilterRoots.isNotEmpty()) {
+            filter = VltFilter.temporary(project, cmdFilterRoots)
         }
 
         return filter
     }
 
     fun determineInstance(): Instance {
-        val cmdInstanceArg = project.properties["aem.vlt.instance"] as String?
+        val cmdInstanceArg = propertyParser.prop("aem.vlt.instance")
         if (!cmdInstanceArg.isNullOrBlank()) {
             val cmdInstance = Instance.parse(cmdInstanceArg!!).first()
             cmdInstance.validate()
