@@ -5,14 +5,12 @@ import com.cognifide.gradle.aem.instance.LocalInstance
 import com.cognifide.gradle.aem.instance.RemoteInstance
 import com.cognifide.gradle.aem.pkg.ComposeTask
 import com.fasterxml.jackson.annotation.JsonIgnore
-import groovy.lang.Closure
 import org.gradle.api.DefaultTask
 import org.gradle.api.Incubating
 import org.gradle.api.Project
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.language.base.plugins.LifecycleBasePlugin
-import org.gradle.util.ConfigureUtil
 import java.io.File
 import java.io.Serializable
 import java.util.*
@@ -84,17 +82,6 @@ open class AemConfig(project: Project) : Serializable {
     @Incubating
     @Input
     var deployParallel: Boolean = false
-
-    /**
-     * Determines if packages to be installed by e.g satisfy or deploy task, could contain subpackages.
-     * If packages are exclusive then asking for installed packages will be done only once.
-     *
-     * Exclusive means that particular package installation cannot be a cause of that next package
-     * to be installed will be already installed.
-     */
-    @Incubating
-    @Input
-    var deployExclusive: Boolean = true
 
     /**
      * CRX package name conventions (with wildcard) indicating that package can change over time
@@ -299,6 +286,16 @@ open class AemConfig(project: Project) : Serializable {
      */
     @Input
     var awaitTimes: Long = 60 * 5
+
+    /**
+     * Satisfy is a lazy task, which means that it will not install package that is already installed.
+     * By default, information about currently installed packages is being retrieved from AEM only once.
+     *
+     * This flag can change that behavior, so that information will be refreshed after each package installation.
+     */
+    @Incubating
+    @Input
+    var satisfyRefreshing: Boolean = false
 
     /**
      * Initialize defaults that depends on concrete type of project.

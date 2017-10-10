@@ -133,7 +133,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
     fun determineRemotePackage(): ListResponse.Package? {
         return resolveRemotePackage({ response ->
             response.resolvePackage(project, ListResponse.Package(project))
-        })
+        }, true)
     }
 
     fun determineRemotePackagePath(): String {
@@ -147,7 +147,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         return pkg.path
     }
 
-    fun determineRemotePackage(file: File): ListResponse.Package? {
+    fun determineRemotePackage(file: File, refresh: Boolean = true): ListResponse.Package? {
         val xml = ZipUtil.unpackEntry(file, AemPackagePlugin.VLT_PROPERTIES).toString(Charsets.UTF_8)
         val doc = Jsoup.parse(xml, "", Parser.xmlParser())
 
@@ -157,13 +157,13 @@ class InstanceSync(val project: Project, val instance: Instance) {
 
         return resolveRemotePackage({ response ->
             response.resolvePackage(project, ListResponse.Package(group, name, version))
-        })
+        }, refresh)
     }
 
-    private fun resolveRemotePackage(resolver: (ListResponse) -> ListResponse.Package?): ListResponse.Package? {
+    private fun resolveRemotePackage(resolver: (ListResponse) -> ListResponse.Package?, refresh: Boolean): ListResponse.Package? {
         logger.info("Asking AEM for uploaded packages using URL: '$listPackagesUrl'")
 
-        if (instance.packages == null || !config.deployExclusive) {
+        if (instance.packages == null || refresh) {
             val json = post(listPackagesUrl)
             instance.packages = try {
                 ListResponse.fromJson(json)
@@ -242,7 +242,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
     }
 
     fun satisfyPackage(file: File): Boolean {
-        val pkg = determineRemotePackage(file)
+        val pkg = determineRemotePackage(file, config.satisfyRefreshing)
 
         return if (pkg == null) {
             deployPackage(file)
