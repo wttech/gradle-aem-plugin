@@ -4,6 +4,7 @@ import com.cognifide.gradle.aem.AemConfig
 import com.cognifide.gradle.aem.instance.Instance
 import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.internal.file.FileOperations
+import org.apache.commons.lang3.StringUtils
 import org.gradle.api.Project
 import org.gradle.api.logging.Logger
 import java.io.File
@@ -40,25 +41,36 @@ class VltCommand(val project: Project) {
     fun raw(command: String) {
         val app = VltApp(project)
         val config = AemConfig.of(project)
+
+        val filter = determineFilter()
+        val instance = determineInstance()
+
         val specificProps = mapOf(
-                "instance" to determineInstance(),
-                "filter" to determineFilter().absolutePath
+                "instance" to instance,
+                "filter" to filter.file.absolutePath
         )
         val fullCommand = PropertyParser(project).expand("${config.vaultGlobalOptions} $command".trim(), specificProps)
 
         app.execute(fullCommand)
+        filter.clean()
     }
 
-    fun determineFilter(): File {
+    fun determineFilter(): VltFilter {
         val config = AemConfig.of(project)
-        var filter = File(config.vaultFilterPath)
+        var filter = VltFilter(File(config.vaultFilterPath))
         val cmdFilterPath = project.properties["aem.vlt.filter"] as String?
 
         if (!cmdFilterPath.isNullOrBlank()) {
             val cmdFilter = FileOperations.find(project, config.vaultPath, cmdFilterPath!!)
                     ?: throw VltException("Vault check out filter file does not exist at path: $cmdFilterPath")
 
-            filter = cmdFilter
+            filter = VltFilter(cmdFilter)
+        }
+
+        val cmdFilterRoots = project.properties["aem.vlt.filterRoots"] as String?
+        if (!cmdFilterRoots.isNullOrBlank()) {
+            val filterRoots = StringUtils.substringBetween(cmdFilterRoots!!, "[", "]").split(",")
+            filter = VltFilter.temporary(project, filterRoots)
         }
 
         return filter

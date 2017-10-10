@@ -11,6 +11,7 @@ import org.reflections.Reflections
 import org.reflections.scanners.ResourcesScanner
 import java.io.File
 import java.io.FileOutputStream
+import java.io.InputStream
 import java.io.StringWriter
 import java.nio.file.Files
 import java.nio.file.Path
@@ -18,8 +19,12 @@ import java.nio.file.Paths
 
 object FileOperations {
 
+    fun readResource(path: String): InputStream? {
+        return javaClass.getResourceAsStream("/${AemBasePlugin.PKG.replace(".", "/")}/$path")
+    }
+
     fun getResources(path: String): List<String> {
-        return Reflections("${AemBasePlugin.PKG}.$path".replace("/", "."), ResourcesScanner()).getResources { true; }.toList()
+        return Reflections("${AemBasePlugin.PKG.replace("/", ".")}.$path", ResourcesScanner()).getResources { true; }.toList()
     }
 
     fun eachResource(resourceRoot: String, targetDir: File, callback: (String, File) -> Unit) {
