@@ -11,10 +11,10 @@ class VltFilter(val file: File, private val temporary: Boolean = false) {
     companion object {
 
         fun temporary(project: Project, paths: List<String>): VltFilter {
-            val template = FileOperations.readResource("vlt/path.xml")!!
+            val template = FileOperations.readResource("vlt/temporaryFilter.xml")!!
                     .bufferedReader().use { it.readText() }
             val content = PropertyParser(project).expand(template, mapOf("paths" to paths))
-            val file = AemTask.temporaryFile(project, VltTask.NAME, "filter.xml")
+            val file = AemTask.temporaryFile(project, VltTask.NAME, "temporaryFilter.xml")
 
             file.printWriter().use { it.print(content) }
 
