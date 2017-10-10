@@ -12,6 +12,8 @@ class VltCommand(val project: Project) {
 
     val logger: Logger = project.logger
 
+    val propertyParser = PropertyParser(project)
+
     fun clean() {
         val config = AemConfig.of(project)
         val contentDir = File(config.contentPath)
@@ -40,32 +42,42 @@ class VltCommand(val project: Project) {
     fun raw(command: String) {
         val app = VltApp(project)
         val config = AemConfig.of(project)
+
+        val filter = determineFilter()
+        val instance = determineInstance()
+
         val specificProps = mapOf(
-                "instance" to determineInstance(),
-                "filter" to determineFilter().absolutePath
+                "instance" to instance,
+                "filter" to filter.file.absolutePath
         )
         val fullCommand = PropertyParser(project).expand("${config.vaultGlobalOptions} $command".trim(), specificProps)
 
         app.execute(fullCommand)
+        filter.clean()
     }
 
-    fun determineFilter(): File {
+    fun determineFilter(): VltFilter {
         val config = AemConfig.of(project)
-        var filter = File(config.vaultFilterPath)
-        val cmdFilterPath = project.properties["aem.vlt.filter"] as String?
+        var filter = VltFilter(File(config.vaultFilterPath))
+        val cmdFilterPath = propertyParser.prop("aem.vlt.filter")
 
         if (!cmdFilterPath.isNullOrBlank()) {
             val cmdFilter = FileOperations.find(project, config.vaultPath, cmdFilterPath!!)
                     ?: throw VltException("Vault check out filter file does not exist at path: $cmdFilterPath")
 
-            filter = cmdFilter
+            filter = VltFilter(cmdFilter)
+        }
+
+        val cmdFilterRoots = PropertyParser(project).list("aem.vlt.filterRoots")
+        if (cmdFilterRoots.isNotEmpty()) {
+            filter = VltFilter.temporary(project, cmdFilterRoots)
         }
 
         return filter
     }
 
     fun determineInstance(): Instance {
-        val cmdInstanceArg = project.properties["aem.vlt.instance"] as String?
+        val cmdInstanceArg = propertyParser.prop("aem.vlt.instance")
         if (!cmdInstanceArg.isNullOrBlank()) {
             val cmdInstance = Instance.parse(cmdInstanceArg!!).first()
             cmdInstance.validate()

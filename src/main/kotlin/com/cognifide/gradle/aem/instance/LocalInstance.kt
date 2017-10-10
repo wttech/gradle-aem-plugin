@@ -1,5 +1,7 @@
 package com.cognifide.gradle.aem.instance
 
+import com.cognifide.gradle.aem.deploy.ListResponse
+import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.Serializable
 
 class LocalInstance(
@@ -40,5 +42,9 @@ class LocalInstance(
     override fun toString(): String {
         return "LocalInstance(httpUrl='$httpUrl', user='$user', password='$hiddenPassword', type='$typeName', debugPort=$debugPort)"
     }
+
+    @Transient
+    @get:JsonIgnore
+    override var packages: ListResponse? = null
 
 }

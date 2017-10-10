@@ -8,6 +8,7 @@ import com.mitchellbosecke.pebble.lexer.Syntax
 import com.mitchellbosecke.pebble.loader.StringLoader
 import org.apache.commons.lang3.BooleanUtils
 import org.apache.commons.lang3.ClassUtils
+import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.text.StrSubstitutor
 import org.gradle.api.Project
 import java.io.StringWriter
@@ -55,6 +56,13 @@ class PropertyParser(val project: Project) {
 
     fun flag(name: String) : Boolean {
         return project.properties.containsKey(name) && BooleanUtils.toBoolean(project.properties[name] as String?)
+    }
+
+    fun list(name: String, delimiter : String = ",") : List<String> {
+        val raw = prop(name) ?: return emptyList()
+        val between = StringUtils.substringBetween(raw, "[", "]") ?: raw
+
+        return between.split(delimiter)
     }
 
     fun prop(name: String, defaultValue: () -> String): String {

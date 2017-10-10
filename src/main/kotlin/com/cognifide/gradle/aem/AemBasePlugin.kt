@@ -25,7 +25,7 @@ class AemBasePlugin : Plugin<Project> {
     }
 
     private fun setupExtensions(project: Project) {
-        project.extensions.create(AemConfig.EXTENSION, AemConfig::class.java, project)
+        project.extensions.create(AemExtension.NAME, AemExtension::class.java, project)
     }
 
 }

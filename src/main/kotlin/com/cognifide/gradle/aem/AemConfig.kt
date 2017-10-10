@@ -5,14 +5,12 @@ import com.cognifide.gradle.aem.instance.LocalInstance
 import com.cognifide.gradle.aem.instance.RemoteInstance
 import com.cognifide.gradle.aem.pkg.ComposeTask
 import com.fasterxml.jackson.annotation.JsonIgnore
-import groovy.lang.Closure
 import org.gradle.api.DefaultTask
 import org.gradle.api.Incubating
 import org.gradle.api.Project
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.language.base.plugins.LifecycleBasePlugin
-import org.gradle.util.ConfigureUtil
 import java.io.File
 import java.io.Serializable
 import java.util.*
@@ -31,16 +29,16 @@ open class AemConfig(project: Project) : Serializable {
 
     companion object {
 
-        val EXTENSION = "aem"
-
         /**
          * Shorthand getter for configuration related with specified project.
          * Especially useful when including one project in another (composing assembly packages).
          */
         fun of(project: Project): AemConfig {
-            return project.extensions.findByType(AemConfig::class.java)
+            val extension = project.extensions.findByType(AemExtension::class.java)
                     ?: throw AemException(project.toString().capitalize()
                     + " has neither '${AemPackagePlugin.ID}' nor '${AemInstancePlugin.ID}' plugin applied.")
+
+            return extension.config
         }
 
         fun of(task: DefaultTask): AemConfig {
@@ -290,6 +288,16 @@ open class AemConfig(project: Project) : Serializable {
     var awaitTimes: Long = 60 * 5
 
     /**
+     * Satisfy is a lazy task, which means that it will not install package that is already installed.
+     * By default, information about currently installed packages is being retrieved from AEM only once.
+     *
+     * This flag can change that behavior, so that information will be refreshed after each package installation.
+     */
+    @Incubating
+    @Input
+    var satisfyRefreshing: Boolean = false
+
+    /**
      * Initialize defaults that depends on concrete type of project.
      */
     init {
@@ -380,15 +388,5 @@ open class AemConfig(project: Project) : Serializable {
     @get:JsonIgnore
     val vaultFilterPath: String
         get() = "$vaultPath/filter.xml"
-
-    /**
-     * Fallback for older form of configuration. Inner closure 'config' could be skipped.
-     *
-     * @deprecated
-     * @since 2.0.2
-     */
-    fun config(closure: Closure<*>) {
-        ConfigureUtil.configure(closure, this)
-    }
 
 }
