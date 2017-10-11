@@ -66,9 +66,13 @@ interface Instance : Serializable {
             val config = AemConfig.of(project)
             val instanceValues = project.properties[LIST_PROP] as String?
 
-            val instances = if (!instanceValues.isNullOrBlank()) {
-                parse(instanceValues!!)
-            } else if (!config.instances.values.isEmpty()) {
+            // Specified directly should not be filtered
+            if (!instanceValues.isNullOrBlank()) {
+                return parse(instanceValues!!)
+            }
+
+            // Predefined and defaults are filterable
+            val instances = if (!config.instances.values.isEmpty()) {
                 config.instances.values
             } else {
                 defaults()

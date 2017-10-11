@@ -63,7 +63,7 @@ buildscript {
     }
     
     dependencies {
-        classpath 'com.cognifide.gradle:aem-plugin:2.0.9'
+        classpath 'com.cognifide.gradle:aem-plugin:2.0.11'
     }
 }
 
@@ -221,12 +221,15 @@ Related configuration:
 
 ```
 aem {
-    fileProperties = [
-        "organization": "My Company"
-    ]
-    filesExpanded = [
-        "**/META-INF/vault/*.xml"
-    ]
+    config {
+    
+        fileProperties = [
+            "organization": "My Company"
+        ]
+        filesExpanded = [
+            "**/META-INF/vault/*.xml"
+        ]
+    }
 }
 ```
 
