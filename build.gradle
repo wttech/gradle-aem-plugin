@@ -1,12 +1,12 @@
 plugins {
     id 'java-gradle-plugin'
     id 'maven-publish'
-    id "org.jetbrains.kotlin.jvm" version "1.1.4"
+    id "org.jetbrains.kotlin.jvm" version "1.1.60"
     id "com.jfrog.bintray" version "1.7.3"
 }
 
 group 'com.cognifide.gradle'
-version '2.0.11'
+version '2.0.12'
 description = 'Gradle AEM Plugin'
 defaultTasks = ['clean', 'publishToMavenLocal']
 
@@ -19,7 +19,7 @@ dependencies {
     compile gradleApi()
     compile localGroovy()
 
-    compile "org.jetbrains.kotlin:kotlin-stdlib:1.1.4"
+    compile "org.jetbrains.kotlin:kotlin-stdlib:1.1.60"
     compile 'org.apache.commons:commons-lang3:3.4'
     compile 'commons-io:commons-io:2.4'
     compile 'commons-httpclient:commons-httpclient:3.1'

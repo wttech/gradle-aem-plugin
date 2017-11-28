@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.pkg
 
 import com.cognifide.gradle.aem.AemConfig
+import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.AemPackagePlugin
 import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.internal.Patterns
@@ -93,7 +94,7 @@ open class ComposeTask : Zip(), AemTask {
     }
 
     fun includeProject(projectPath: String) {
-        includeProject(project.findProject(projectPath))
+        includeProject(findProject(projectPath))
     }
 
     fun includeProject(project: Project) {
@@ -120,9 +121,7 @@ open class ComposeTask : Zip(), AemTask {
     }
 
     fun includeBundles(projectPath: String) {
-        val project = project.findProject(projectPath)
-
-        includeBundlesAtPath(project)
+        includeBundlesAtPath(findProject(projectPath))
     }
 
     fun includeBundles(project: Project) {
@@ -130,19 +129,19 @@ open class ComposeTask : Zip(), AemTask {
     }
 
     fun includeBundles(projectPath: String, runMode: String) {
-        includeBundlesAtPath(project.findProject(projectPath), runMode = runMode)
+        includeBundlesAtPath(findProject(projectPath), runMode = runMode)
     }
 
     fun mergeBundles(projectPath: String) {
-        includeBundlesAtPath(project.findProject(projectPath))
+        includeBundlesAtPath(findProject(projectPath))
     }
 
     fun mergeBundles(projectPath: String, runMode: String) {
-        includeBundlesAtPath(project.findProject(projectPath), runMode = runMode)
+        includeBundlesAtPath(findProject(projectPath), runMode = runMode)
     }
 
     fun includeBundlesAtPath(projectPath: String, installPath: String) {
-        includeBundlesAtPath(project.findProject(projectPath), installPath)
+        includeBundlesAtPath(findProject(projectPath), installPath)
     }
 
     fun includeBundlesAtPath(project: Project, installPath: String? = null, runMode: String? = null) {
@@ -173,7 +172,7 @@ open class ComposeTask : Zip(), AemTask {
     }
 
     fun includeContent(projectPath: String) {
-        includeContent(project.findProject(projectPath))
+        includeContent(findProject(projectPath))
     }
 
     fun includeContent(project: Project) {
@@ -193,8 +192,13 @@ open class ComposeTask : Zip(), AemTask {
         }
     }
 
+    private fun findProject(projectPath: String) : Project {
+        return project.findProject(projectPath)
+                ?: throw AemException("Project cannot be found by path '$projectPath'")
+    }
+
     private fun dependProject(projectPath: String, taskNames: Collection<String>) {
-        dependProject(project.findProject(projectPath), taskNames)
+        dependProject(findProject(projectPath), taskNames)
     }
 
     private fun dependProject(project: Project, taskNames: Collection<String>) {

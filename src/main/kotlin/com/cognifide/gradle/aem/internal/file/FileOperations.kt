@@ -76,7 +76,8 @@ object FileOperations {
     fun find(project: Project, dirIfFileName: String, pathOrFileName: String): File? {
         return mutableListOf<(String) -> File>(
                 { project.file(pathOrFileName) },
-                { File(File(dirIfFileName), pathOrFileName) }
+                { File(File(dirIfFileName), pathOrFileName) },
+                { File(pathOrFileName) }
         ).map { it(pathOrFileName) }.firstOrNull { it.exists() }
     }
 
