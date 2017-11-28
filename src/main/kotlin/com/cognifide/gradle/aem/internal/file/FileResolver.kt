@@ -47,7 +47,7 @@ class FileResolver(val project: Project, val downloadDir: File) {
     fun attach(task: DefaultTask, prop: String = "fileResolver") {
         task.outputs.dir(downloadDir)
         project.afterEvaluate {
-            task.inputs.property(prop, configurationHash)
+            task.inputs.properties(mapOf(prop to configurationHash))
         }
     }
 

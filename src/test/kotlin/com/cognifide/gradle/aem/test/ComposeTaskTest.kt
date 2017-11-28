@@ -32,7 +32,7 @@ class ComposeTaskTest : BuildTest() {
 
             assertPackageFile(assemblyPkg, "jcr_root/apps/example/common/.content.xml")
             assertPackageFile(assemblyPkg, "jcr_root/apps/example/common/install/common-1.0.0-SNAPSHOT.jar")
-            assertPackageFile(assemblyPkg, "jcr_root/apps/example/common/install/kotlin-osgi-bundle-1.1.4.jar")
+            assertPackageFile(assemblyPkg, "jcr_root/apps/example/common/install/kotlin-osgi-bundle-1.1.60.jar")
 
             assertPackageFile(assemblyPkg, "jcr_root/etc/designs/example/.content.xml")
 
@@ -43,7 +43,7 @@ class ComposeTaskTest : BuildTest() {
             val commonPkg = assertPackage(projectDir, "common/build/distributions/example-common-1.0.0-SNAPSHOT.zip")
             assertPackageFile(commonPkg, "jcr_root/apps/example/common/.content.xml")
             assertPackageFile(commonPkg, "jcr_root/apps/example/common/install/common-1.0.0-SNAPSHOT.jar")
-            assertPackageFile(commonPkg, "jcr_root/apps/example/common/install/kotlin-osgi-bundle-1.1.4.jar")
+            assertPackageFile(commonPkg, "jcr_root/apps/example/common/install/kotlin-osgi-bundle-1.1.60.jar")
 
             val designPkg = assertPackage(projectDir, "design/build/distributions/example-design-1.0.0-SNAPSHOT.zip")
             assertPackageFile(designPkg, "jcr_root/etc/designs/example/.content.xml")

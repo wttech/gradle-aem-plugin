@@ -19,6 +19,6 @@ bundle {
 }
 
 dependencies {
-    aemInstall group: 'org.jetbrains.kotlin', name: 'kotlin-osgi-bundle', version: '1.1.4'
+    aemInstall group: 'org.jetbrains.kotlin', name: 'kotlin-osgi-bundle', version: '1.1.60'
     aemEmbed group: 'org.hashids', name: 'hashids', version: '1.0.1'
 }
