@@ -27,42 +27,6 @@ import java.util.concurrent.TimeUnit
  */
 open class AemConfig(project: Project) : Serializable {
 
-    companion object {
-
-        /**
-         * Shorthand getter for configuration related with specified project.
-         * Especially useful when including one project in another (composing assembly packages).
-         */
-        fun of(project: Project): AemConfig {
-            val extension = project.extensions.findByType(AemExtension::class.java)
-                    ?: throw AemException(project.toString().capitalize()
-                    + " has neither '${AemPackagePlugin.ID}' nor '${AemInstancePlugin.ID}' plugin applied.")
-
-            return extension.config
-        }
-
-        fun of(task: DefaultTask): AemConfig {
-            return of(task.project)
-        }
-
-        fun pkg(project: Project): ComposeTask {
-            val task = project.tasks.findByName(ComposeTask.NAME)
-                    ?: throw AemException("${project.toString().capitalize()} has no task named"
-                    + " '${ComposeTask.NAME}' defined.")
-
-            return task as ComposeTask
-        }
-
-        fun pkgs(project: Project): List<ComposeTask> {
-            return project.allprojects.mapNotNull {
-                if (it.plugins.hasPlugin(AemPackagePlugin.ID)) {
-                    (it.tasks.getByName(ComposeTask.NAME) as ComposeTask)
-                } else null
-            }
-        }
-
-    }
-
     /**
      * List of AEM instances on which packages could be deployed.
      * Instance stored in map ensures name uniqueness and allows to be referenced in expanded properties.
@@ -192,7 +156,7 @@ open class AemConfig(project: Project) : Serializable {
      */
     @Input
     var vaultSkipProperties: MutableList<String> = mutableListOf(
-            "jcr:uuid",
+            "jcr:uuid!**/home/users/*,**/home/groups/*",
             "jcr:lastModified",
             "jcr:created",
             "cq:lastModified*",
@@ -388,5 +352,41 @@ open class AemConfig(project: Project) : Serializable {
     @get:JsonIgnore
     val vaultFilterPath: String
         get() = "$vaultPath/filter.xml"
+
+    companion object {
+
+        /**
+         * Shorthand getter for configuration related with specified project.
+         * Especially useful when including one project in another (composing assembly packages).
+         */
+        fun of(project: Project): AemConfig {
+            val extension = project.extensions.findByType(AemExtension::class.java)
+                    ?: throw AemException(project.toString().capitalize()
+                    + " has neither '${AemPackagePlugin.ID}' nor '${AemInstancePlugin.ID}' plugin applied.")
+
+            return extension.config
+        }
+
+        fun of(task: DefaultTask): AemConfig {
+            return of(task.project)
+        }
+
+        fun pkg(project: Project): ComposeTask {
+            val task = project.tasks.findByName(ComposeTask.NAME)
+                    ?: throw AemException("${project.toString().capitalize()} has no task named"
+                    + " '${ComposeTask.NAME}' defined.")
+
+            return task as ComposeTask
+        }
+
+        fun pkgs(project: Project): List<ComposeTask> {
+            return project.allprojects.mapNotNull {
+                if (it.plugins.hasPlugin(AemPackagePlugin.ID)) {
+                    (it.tasks.getByName(ComposeTask.NAME) as ComposeTask)
+                } else null
+            }
+        }
+
+    }
 
 }

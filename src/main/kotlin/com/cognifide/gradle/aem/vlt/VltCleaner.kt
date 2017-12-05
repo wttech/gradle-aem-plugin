@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem.vlt
 
-import com.cognifide.gradle.aem.internal.Patterns
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.filefilter.NameFileFilter
 import org.apache.commons.io.filefilter.TrueFileFilter
@@ -28,13 +27,15 @@ class VltCleaner(val root: File, val logger: Logger) {
         }
     }
 
-    fun cleanupDotContent(contentProperties: List<String>, lineEnding: String) {
+    fun cleanupDotContent(props: List<String>, lineEnding: String) {
+        val contentProperties = VltContentProperty.manyFrom(props)
+
         for (file in FileUtils.listFiles(root, NameFileFilter(JCR_CONTENT_FILE), TrueFileFilter.INSTANCE)) {
             try {
                 logger.info("Cleaning up {}", file.path)
 
                 val inputLines = FileUtils.readLines(file, CharEncoding.UTF_8)
-                val filteredLines = filterLines(inputLines, contentProperties)
+                val filteredLines = filterLines(file, inputLines, contentProperties)
 
                 FileUtils.writeLines(file, CharEncoding.UTF_8, filteredLines, lineEnding)
             } catch (e: IOException) {
@@ -43,12 +44,12 @@ class VltCleaner(val root: File, val logger: Logger) {
         }
     }
 
-    private fun filterLines(lines: List<String>, contentProperties: List<String>): List<String> {
+    private fun filterLines(file: File, lines: List<String>, props: List<VltContentProperty>): List<String> {
         val result = mutableListOf<String>()
 
         for (line in lines) {
             val cleanLine = StringUtils.trimToEmpty(line)
-            if (lineContainsProperty(line, contentProperties)) {
+            if (lineContainsProperty(file, line, props)) {
                 when {
                     cleanLine.endsWith("/>") -> {
                         result.add(result.removeAt(result.size - 1) + "/>")
@@ -63,21 +64,21 @@ class VltCleaner(val root: File, val logger: Logger) {
             } else {
                 result.add(line)
             }
-
         }
 
         return result
     }
 
-    private fun lineContainsProperty(line: String, props: List<String>): Boolean {
+    private fun lineContainsProperty(file: File, line: String, props: List<VltContentProperty>): Boolean {
         val normalizedLine = line.trim().removeSuffix("/>").removeSuffix(">")
         val matcher = CONTENT_PROP_PATTERN.matcher(normalizedLine)
         if (matcher.matches()) {
-            return Patterns.wildcard(matcher.group(1), props)
+            val propOccurence = matcher.group(1)
+
+            return props.any { it.match(file, propOccurence) }
         }
 
         return false
     }
-
 }
 
