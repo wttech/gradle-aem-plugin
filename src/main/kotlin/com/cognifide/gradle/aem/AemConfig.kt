@@ -153,6 +153,9 @@ open class AemConfig(project: Project) : Serializable {
 
     /**
      * Define here properties that will be skipped when pulling JCR content from AEM instance.
+     *
+     * After special delimiter '!' there could be specified one or many path patterns
+     * (ANT style, delimited with ',') in which property shouldn't be removed.
      */
     @Input
     var vaultSkipProperties: MutableList<String> = mutableListOf(
