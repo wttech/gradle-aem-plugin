@@ -75,7 +75,7 @@ class VltCleaner(val root: File, val logger: Logger) {
         if (matcher.matches()) {
             val propOccurence = matcher.group(1)
 
-            props.any { it.match(file, propOccurence) }
+            return props.any { it.match(file, propOccurence) }
         }
 
         return false

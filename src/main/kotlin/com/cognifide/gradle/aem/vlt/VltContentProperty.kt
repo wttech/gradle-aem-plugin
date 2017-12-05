@@ -28,12 +28,14 @@ class VltContentProperty(value: String) {
     val excludedPaths: List<String>
         get() = _excludePaths
 
+    fun isExcluded(file: File) = Patterns.wildcard(file, excludedPaths)
+
     fun match(file: File, propValue: String): Boolean {
         return Patterns.wildcard(propValue, name) && match(file)
     }
 
     fun match(file: File): Boolean {
-        return excludedPaths.isEmpty() || !Patterns.wildcard(file, excludedPaths)
+        return excludedPaths.isEmpty() || !isExcluded(file)
     }
 
     companion object {
