@@ -43,7 +43,7 @@ open class PrepareTask : DefaultTask(), AemTask {
         }
         vaultDir.mkdirs()
 
-        val dirs = config.vaultFilesDirs.filter { it.exists() }
+        val dirs = config.vaultFilesDirs
 
         if (dirs.isEmpty()) {
             logger.info("None of Vault files directories exist: $dirs. Only generated defaults will be used.")
