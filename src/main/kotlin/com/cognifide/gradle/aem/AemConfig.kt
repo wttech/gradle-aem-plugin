@@ -334,7 +334,7 @@ open class AemConfig(project: Project) : Serializable {
                     "$contentPath/${AemPackagePlugin.VLT_PATH}"
             )
 
-            return paths.filter { !it.isBlank() }.map { File(it) }
+            return paths.filter { !it.isBlank() }.map { File(it) }.filter { it.exists() }
         }
 
     /**
