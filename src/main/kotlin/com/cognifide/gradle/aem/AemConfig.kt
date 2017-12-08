@@ -278,12 +278,20 @@ open class AemConfig(project: Project) : Serializable {
         instance(LocalInstance(httpUrl))
     }
 
+    fun localInstance(httpUrl: String, password: String) {
+        instance(LocalInstance(httpUrl, password))
+    }
+
     fun localInstance(httpUrl: String, user: String, password: String) {
         instance(LocalInstance(httpUrl, user, password))
     }
 
     fun localInstance(httpUrl: String, user: String, password: String, type: String, debugPort: Int) {
         instance(LocalInstance(httpUrl, user, password, type, debugPort))
+    }
+
+    fun localInstance(httpUrl: String, user: String, password: String, type: String, debugPort: Int, jvmOpts: List<String>, startOpts: List<String>) {
+        instance(LocalInstance(httpUrl, user, password, type, debugPort, jvmOpts, startOpts))
     }
 
     fun remoteInstance(httpUrl: String) {

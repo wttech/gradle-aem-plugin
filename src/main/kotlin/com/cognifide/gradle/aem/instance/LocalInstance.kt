@@ -9,7 +9,9 @@ class LocalInstance(
         override val user: String,
         override val password: String,
         override val typeName: String,
-        val debugPort: Int
+        val debugPort: Int,
+        val jvmOpts: List<String>,
+        val startOpts: List<String>
 ) : Instance, Serializable {
 
     companion object {
@@ -20,12 +22,30 @@ class LocalInstance(
         }
     }
 
+    constructor(httpUrl: String, user: String, password: String, type: String, debugPort: Int) : this(
+            httpUrl,
+            user,
+            password,
+            type,
+            debugPort,
+            listOf(),
+            listOf()
+    )
+
     constructor(httpUrl: String, user: String, password: String) : this(
             httpUrl,
             user,
             password,
             InstanceType.byUrl(httpUrl).name,
-            debugPortByUrl(httpUrl)
+            debugPortByUrl(httpUrl),
+            listOf(),
+            listOf()
+    )
+
+    constructor(httpUrl: String, password: String) : this(
+            httpUrl,
+            Instance.USER_DEFAULT,
+            password
     )
 
     constructor(httpUrl: String) : this(
@@ -33,8 +53,18 @@ class LocalInstance(
             Instance.USER_DEFAULT,
             Instance.PASSWORD_DEFAULT,
             InstanceType.nameByUrl(httpUrl),
-            debugPortByUrl(httpUrl)
+            debugPortByUrl(httpUrl),
+            listOf(),
+            listOf()
     )
+
+    @get:JsonIgnore
+    val jvmOpt: String
+        get() = jvmOpts.joinToString(" ")
+
+    @get:JsonIgnore
+    val startOpt: String
+        get() = startOpts.joinToString(" ")
 
     override val environment: String
         get() = ENVIRONMENT
