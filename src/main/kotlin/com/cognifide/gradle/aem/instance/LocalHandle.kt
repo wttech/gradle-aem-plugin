@@ -3,22 +3,27 @@ package com.cognifide.gradle.aem.instance
 import com.cognifide.gradle.aem.AemConfig
 import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.AemInstancePlugin
-import com.cognifide.gradle.aem.internal.file.FileOperations
 import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.internal.ProgressLogger
 import com.cognifide.gradle.aem.internal.PropertyParser
+import com.cognifide.gradle.aem.internal.file.FileOperations
 import org.apache.commons.io.FileUtils
 import org.gradle.api.Project
 import org.gradle.api.logging.Logger
 import org.gradle.internal.os.OperatingSystem
 import org.gradle.util.GFileUtils
+import org.gradle.util.VersionNumber
 import org.zeroturnaround.zip.ZipUtil
 import java.io.File
+import java.io.FileInputStream
+import java.util.*
 
 class LocalHandle(val project: Project, val sync: InstanceSync) {
 
     companion object {
         val JAR_STATIC_FILES_PATH = "static/"
+
+        val INTERACTIVE_VERSION = VersionNumber.parse("6.3.0")
     }
 
     class Script(val wrapper: File, val bin: File, val command: List<String>) {
@@ -26,11 +31,13 @@ class LocalHandle(val project: Project, val sync: InstanceSync) {
             get() = command + listOf(wrapper.absolutePath)
     }
 
-    val instance = sync.instance
+    val propertyParser = PropertyParser(project)
 
     val logger: Logger = project.logger
 
     val config = AemConfig.of(project)
+
+    val instance = sync.instance
 
     val dir = File("${config.instancesPath}/${instance.name}")
 
@@ -43,6 +50,26 @@ class LocalHandle(val project: Project, val sync: InstanceSync) {
     val staticDir = File(dir, "crx-quickstart")
 
     val license = File(dir, "license.properties")
+
+    val licenseProps : Properties by lazy {
+        val result = Properties()
+        result.load(FileInputStream(license))
+
+        result
+    }
+
+    val version : VersionNumber by lazy {
+        val value = licenseProps.getProperty("license.product.version", "6.3.0")
+        VersionNumber.parse(value)
+    }
+
+    val defaultFilesPath by lazy {
+        AemInstancePlugin.FILES_PATH + "/" + if (version >= INTERACTIVE_VERSION) {
+            "interactive"
+        } else {
+            "nointeractive"
+        }
+    }
 
     val startScript: Script
         get() = binScript("start")
@@ -77,7 +104,7 @@ class LocalHandle(val project: Project, val sync: InstanceSync) {
         correctStaticFiles()
 
         logger.info("Creating default instance files")
-        FileOperations.copyResources(AemInstancePlugin.FILES_PATH, dir, true)
+        FileOperations.copyResources(defaultFilesPath, dir, true)
 
         val filesDir = File(config.instanceFilesPath)
 
@@ -88,7 +115,7 @@ class LocalHandle(val project: Project, val sync: InstanceSync) {
 
         logger.info("Expanding instance files")
         FileOperations.amendFiles(dir, config.instanceFilesExpanded, { file, source ->
-            PropertyParser(project).expand(source, properties, file.absolutePath)
+            propertyParser.expand(source, properties, file.absolutePath)
         })
 
         logger.info("Creating lock file")
@@ -107,9 +134,26 @@ class LocalHandle(val project: Project, val sync: InstanceSync) {
         }
     }
 
+    // TODO This is dirty, but needed to have nice defaults automatically configured.
     private fun correctStaticFiles() {
         if (OperatingSystem.current().isWindows) {
-            FileOperations.amendFile(startScript.bin, { it.replace("start \"CQ\" cmd.exe /K", "start /min \"$instance\" cmd.exe /C") })
+            FileOperations.amendFile(startScript.bin, {
+                // Force CMD to be launched in closable window mode. Inject nice title.
+                it.replace("start \"CQ\" cmd.exe /K", "start /min \"$instance\" cmd.exe /C") // AEM <= 6.2
+                it.replace("start \"CQ\" cmd.exe /C", "start /min \"$instance\" cmd.exe /C") // AEM 6.3
+
+                // Make START_OPTS be extendable by parent script.
+                it.replace("set START_OPTS=start -c %CurrDirName% -i launchpad", "if not defined START_OPTS set START_OPTS=start -c %CurrDirName% -i launchpad")
+            })
+        } else {
+            FileOperations.amendFile(startScript.bin, {
+                // Make START_OPTS be extendable by parent script.
+                it.replace("START_OPTS=\"start -c ${'$'}{CURR_DIR} -i launchpad\"", """
+                    if [ -z "${'$'}START_OPTS" ]; then
+	                    START_OPTS="start -c ${'$'}{CURR_DIR} -i launchpad"
+                    fi
+                """.trimIndent())
+            })
         }
 
         GFileUtils.mkdirs(File(staticDir, "logs"))

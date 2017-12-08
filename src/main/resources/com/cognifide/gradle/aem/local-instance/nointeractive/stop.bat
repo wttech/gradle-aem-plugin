@@ -1,0 +1,1 @@
+call crx-quickstart/bin/stop.bat
