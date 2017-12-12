@@ -58,22 +58,18 @@ class VltCommand(val project: Project) {
 
     fun determineFilter(): VltFilter {
         val config = AemConfig.of(project)
-        var filter = VltFilter(File(config.vaultFilterPath))
         val cmdFilterPath = propertyParser.prop("aem.vlt.filter")
+        val cmdFilterRoots = PropertyParser(project).list("aem.vlt.filterRoots")
 
-        if (!cmdFilterPath.isNullOrBlank()) {
+        return if (!cmdFilterPath.isNullOrBlank()) {
             val cmdFilter = FileOperations.find(project, config.vaultPath, cmdFilterPath!!)
                     ?: throw VltException("Vault check out filter file does not exist at path: $cmdFilterPath")
-
-            filter = VltFilter(cmdFilter)
+            VltFilter(cmdFilter)
+        } else if (cmdFilterRoots.isNotEmpty()) {
+            VltFilter.temporary(project, cmdFilterRoots)
+        } else {
+            VltFilter(File(config.vaultFilterPath))
         }
-
-        val cmdFilterRoots = PropertyParser(project).list("aem.vlt.filterRoots")
-        if (cmdFilterRoots.isNotEmpty()) {
-            filter = VltFilter.temporary(project, cmdFilterRoots)
-        }
-
-        return filter
     }
 
     fun determineInstance(): Instance {
