@@ -64,10 +64,14 @@ class VltCommand(val project: Project) {
         return if (!cmdFilterPath.isNullOrBlank()) {
             val cmdFilter = FileOperations.find(project, config.vaultPath, cmdFilterPath!!)
                     ?: throw VltException("Vault check out filter file does not exist at path: $cmdFilterPath")
+
+            logger.debug("Using VLT filter specified as command line property")
             VltFilter(cmdFilter)
         } else if (cmdFilterRoots.isNotEmpty()) {
+            logger.debug("Using VLT filter roots specified as command line property")
             VltFilter.temporary(project, cmdFilterRoots)
         } else {
+            logger.debug("Using VLT filter specified in AEM build configuration")
             VltFilter(File(config.vaultFilterPath))
         }
     }
@@ -78,19 +82,19 @@ class VltCommand(val project: Project) {
             val cmdInstance = Instance.parse(cmdInstanceArg!!).first()
             cmdInstance.validate()
 
-            logger.info("Using instance specified by command line parameter: $cmdInstance")
+            logger.debug("Using instance specified by command line parameter: $cmdInstance")
             return cmdInstance
         }
 
         val authorInstance = Instance.filter(project, Instance.FILTER_AUTHOR).firstOrNull()
         if (authorInstance != null) {
-            logger.info("Using first instance matching filter '${Instance.FILTER_AUTHOR}': $authorInstance")
+            logger.debug("Using first instance matching filter '${Instance.FILTER_AUTHOR}': $authorInstance")
             return authorInstance
         }
 
         val anyInstance = Instance.filter(project, Instance.FILTER_ANY).firstOrNull()
         if (anyInstance != null) {
-            logger.info("Using first instance matching filter '${Instance.FILTER_ANY}': $anyInstance")
+            logger.debug("Using first instance matching filter '${Instance.FILTER_ANY}': $anyInstance")
             return anyInstance
         }
 
