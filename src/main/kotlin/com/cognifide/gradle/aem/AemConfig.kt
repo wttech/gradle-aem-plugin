@@ -224,7 +224,7 @@ open class AemConfig(project: Project) : Serializable {
      * Wildcard file name filter expression that is used to filter in which instance files properties can be injected.
      */
     @Input
-    var instanceFilesExpanded: MutableList<String> = mutableListOf("**/*.properties", "**/*.sh", "**/*.bat", "**/*.xml")
+    var instanceFilesExpanded: MutableList<String> = mutableListOf("**/*.properties", "**/*.sh", "**/*.bat", "**/*.xml", "**/start", "**/stop")
 
     /**
      * Time in milliseconds to postpone instance stability checks to avoid race condition related with
