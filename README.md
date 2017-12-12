@@ -54,7 +54,7 @@ so that this repository need to be included in *buildscript* section.
 
 #### Minimal:
 
-```
+```groovy
 buildscript {
     repositories {
         jcenter()
@@ -69,11 +69,11 @@ buildscript {
 apply plugin: 'com.cognifide.aem.package'
 ```
 
-Building and deploying to AEM via command: `gradle aemBuild`.
+Building and deploying to AEM via command: `gradlew aemBuild`.
 
 #### Extra:
 
-```
+```groovy
 apply plugin: 'com.cognifide.aem.instance'
 apply plugin: 'kotlin' // 'java' or whatever you like to compile bundle
 
@@ -104,10 +104,10 @@ For multi project build configuration, see [example project](https://github.com/
 
 ### Workflow
 
-Initially, to create fully configured local AEM instances simply run command `gradle aemSetup`.
+Initially, to create fully configured local AEM instances simply run command `gradlew aemSetup`.
 
 Later during development process, building and deploying to AEM should be done using most simple command: `gradle`.
-Above configuration uses default tasks, so that alternatively it is possible to build same using explicitly specified command `gradle aemSatisfy aemBuild aemAwait`.
+Above configuration uses default tasks, so that alternatively it is possible to build same using explicitly specified command `gradlew aemSatisfy aemBuild aemAwait`.
 
 * Firstly dependent packages (like AEM hotfixes, Vanity URL Components etc) will be installed lazily (only when they are not installed yet).
 * In next step application is being built and deployed to all configured AEM instances.
@@ -156,7 +156,7 @@ Above configuration uses default tasks, so that alternatively it is possible to 
     * `downloadSmbAuth(url: String)`, as above, but credentials must be specified in variables: `aem.smb.domain`, `aem.smb.username`, `aem.smb.password`.
     * `downloadSftpAuth(url: String, username: String, password: String)`, download package using SFTP protocol.
     * `downloadSftpAuth(url: String)`, as above, but credentials must be specified in variables: `aem.sftp.username`, `aem.sftp.password`. Optionally enable strict host checking by setting property `aem.sftp.hostChecking` to `true`.
-    * `group(name: String, configurer: Closure)`, useful for declaring group of packages (or just naming single package) to be installed only on demand. For instance: `group 'tools', { url('http://example.com/package.zip'); url('smb://internal-nt/package2.zip')  }`. Then to install only packages in group `tools`, use command: `gradle aemSatisfy -Paem.satisfy.group=tools`.
+    * `group(name: String, configurer: Closure)`, useful for declaring group of packages (or just naming single package) to be installed only on demand. For instance: `group 'tools', { url('http://example.com/package.zip'); url('smb://internal-nt/package2.zip')  }`. Then to install only packages in group `tools`, use command: `gradlew aemSatisfy -Paem.satisfy.group=tools`.
 * `aemCollect` - Composes ZIP package from all CRX packages being satisfied and built. Available methods:
     * all inherited from [ZIP task](https://docs.gradle.org/3.5/dsl/org.gradle.api.tasks.bundling.Zip.html).
 * `aemCheckout` - Check out JCR content from running AEM author instance to local content path.
@@ -169,59 +169,15 @@ Above configuration uses default tasks, so that alternatively it is possible to 
 
 * `aem<ProjectPath>Build` - Build CRX package and deploy it to AEM instance(s). It is recommended to include appropriate deploy task name in [default tasks](https://docs.gradle.org/current/userguide/tutorial_using_tasks.html#sec:default_tasks) of project. For instance, to deploy project at path `:app:design` use task named `aemAppDesignBuild`.
 
-### Parameters
-
-* Deploying only to filtered group of instances (filters with wildcards, comma delimited):
-
-```
-gradle aemDeploy -Paem.deploy.instance.name=integration-*
-gradle aemDeploy -Paem.deploy.instance.name=*-author
-```
-   
-* Deploying only to instances specified explicitly: 
-
-```
-gradle aemDeploy -Paem.deploy.instance.list=http://localhost:4502,admin,admin;http://localhost:4503,admin,admin
-```
-
-* Satisfying only filtered group of packages (filters with wildcards, comma delimited):
-
-```
-gradle aemSatisfy -Paem.satisfy.group=hotfix-*,groovy-console
-```
-
-* Checking out JCR content using filter at custom path (for subproject *content*):
-
-```
-gradle :content:aemCheckout -Paem.vlt.filter=src/main/content/META-INF/vault/custom-filter.xml
-```
-
-* Executing any Vault command at custom working directory (for subproject *content*):
-
-```
-gradle :content:aemVlt -Paem.vlt.command='checkout --force --filter ${filter} ${instance.httpUrl}/crx/server/crx.default' 
-```
-
-Task `aemCheckout` is just an straightforward alias for above command. 
-It is allowed to execute any command listed in [VLT Tool documentation](https://docs.adobe.com/docs/en/aem/6-2/develop/dev-tools/ht-vlttool.html).
-Gradle requires to have working directory with file *build.gradle* in it, but Vault tool can work at any directory under *jcr_root*. To change working directory for Vault, use property `aem.vlt.path` which is relative path to be appended to *jcr_root* for project task being currently executed.
-
-* Skipping installed package resolution by download name (eliminating conflicts / only matters when Vault properties file is customized): 
-
-```
-gradle aemInstall -Paem.deploy.skipDownloadName=true
-```
-
 ### Expandable properties
 
 By default, plugin is configured that in all XML files located under path *META-INF/vault* properties can be injected using syntax: `${property}`.
 
 Related configuration:
 
-```
+```groovy
 aem {
     config {
-    
         fileProperties = [
             "organization": "My Company"
         ]
@@ -255,6 +211,146 @@ Task specific:
 * `aemVlt` - properties are being injected to command specified in `aem.vlt.command` property. Following properties are being used internally also by `aemCheckout`.
    * `instance` - instance used to communicate with while performing Vault commands. Determined by (order take precedence): properties `aem.vlt.instance`, `aem.deploy.instance.list`, `aem.deploy.instance.name` and as fallback first instance which name matches filter `*-author`.
    * `filter` - file name or path to Vault workspace filter file  *META-INF/vault/filter.xml*. Determined by (order take precedence): property: `aem.vlt.filter`, configuration `contentPath` property suffixed with `META-INF/vault/filter.xml`. 
+
+### How to
+
+#### Set AEM configuration properly for all / concrete project(s)
+
+Global configuration like AEM instances should be defined in root *build.gradle* file:
+
+```groovy
+allprojects { subproject ->
+  plugins.withId 'com.cognifide.aem.base', {
+    aem {
+        config {
+          localInstance("http://localhost:4502")
+          localInstance("http://localhost:4503")
+          remoteInstance("http://192.168.10.1:4502", "integration")
+          remoteInstance("http://192.168.10.2:4503", "integration")
+        }
+    }
+  }
+}
+```
+
+Project `:app` specific configuration like CRX package options should be defined in `app/build.gradle`:
+
+```groovy
+aemCompose {
+    archiveName = 'company-example'
+    duplicatesStrategy = "EXCLUDE"
+    includeProject ':app:core'
+}
+```
+
+Warning! Very often plugin users mistake is to configure `aemSatisfy` task in `allprojects` closure. 
+As an effect there will be same dependent CRX package defined multiple times.
+
+#### Deploy CRX package(s) only to filtered group of instances:
+
+When there are defined named AEM instances: `local-author`, `local-publish`, `integration-author` and `integration-publish`.
+Then it is available to deploy packages with taking into account: 
+
+ * type of environment (local, integration)
+ * type of AEM instance (author / publish)
+
+```bash
+gradlew aemDeploy -Paem.deploy.instance.name=integration-*
+gradlew aemDeploy -Paem.deploy.instance.name=*-author
+```
+   
+#### Deploy CRX package(s) only to instances specified explicitly: 
+
+```bash
+gradlew aemDeploy -Paem.deploy.instance.list=http://localhost:4502,admin,admin;http://localhost:4503,admin,admin
+```
+
+#### Deploy only filtered dependent CRX package(s) (filters with wildcards, comma delimited):
+
+```bash
+gradlew aemSatisfy -Paem.satisfy.group=hotfix-*,groovy-console
+```
+
+#### Check out and clean JCR content using filter at custom path (e.g for subproject *content*):
+   
+```bash
+gradlew :content:aemSync -Paem.vlt.filter=custom-filter.xml
+gradlew :content:aemSync -Paem.vlt.filter=src/main/content/META-INF/vault/custom-filter.xml
+ gradlew :content:aemSync -Paem.vlt.filter=C:/aem/custom-filter.xml
+```
+
+#### Check out and clean JCR content using filter roots specified explicitly:
+   
+```bash
+gradlew :content:aemSync -Paem.vlt.filterRoots=[/etc/tags/example,/content/dam/example]
+```
+
+#### Execute any Vault command (e.g copy nodes from one remote instance to another):
+
+```bash
+gradlew :content:aemVlt -Paem.vlt.command='rcp -b 100 -r -u -n http://admin:admin@localhost:4502/crx/-/jcr:root/content/dam/example http://admin:admin@localhost:4503/crx/-/jcr:root/content/dam/example' 
+```
+
+See [VLT Tool documentation](https://docs.adobe.com/docs/en/aem/6-2/develop/dev-tools/ht-vlttool.html).
+Gradle requires to have working directory with file *build.gradle* in it, but Vault tool can work at any directory under *jcr_root*. To change working directory for Vault, use property `aem.vlt.path` which is relative path to be appended to *jcr_root* for project task being currently executed.
+
+#### Assemble all-in-one CRX package(s)
+
+Let's assume following project structure (with build file contents):
+
+* build.gradle (project `:`)
+
+```groovy
+apply plugin: 'com.cognifide.aem.package'
+
+aemCompose {
+    includeProjects(':app:*')
+    includeProjects(':content:*')
+    includeProject(':migration')
+}
+
+```
+
+When building via command `gradlew :build`, then the effect will be a CRX package with assembled JCR content and OSGi bundles from projects: `:app:core`, `:app:common`, `:content:init`, `:content:demo`.
+
+* app/build.gradle  (project `:app`)
+
+```groovy
+apply plugin: 'com.cognifide.aem.package'
+
+aemCompose {
+    includeSubprojects()
+}
+
+```
+
+When building via command `gradlew :app:build`, then the effect will be a CRX package with assembled JCR content and OSGi bundles from projects: `:app:core`, `:app:common` only.
+
+* *app/core/build.gradle* (project `:app:core`, JCR content and OSGi bundle)
+* *app/common/build.gradle* (project `:app:common`, JCR content and OSGi bundle)
+* *content/init/build.gradle* (project `:content:init`, JCR content only)
+* *content/demo/build.gradle* (project `:content:demo`, JCR content only)
+* *migration/build.gradle* (project `:content:demo`, JCR content only)
+* *test/integration/build.gradle* (project `:test:integration`, any source code)
+* *test/functional/build.gradle* (project `:test:functional`, any source code)
+
+Gradle AEM Plugin is configured in that way that project can have:
+ 
+* JCR content and source code to compile OSGi bundle
+* source code to compile OSGi bundle
+* both
+
+By distinguishing `includeProject`, `includeBundle` or `includeContent` there is ability to create any assembly CRX package with content of any type without restructuring the project.
+Only one must have rule to be kept while developing a multi-module project is that **all Vault filter roots of all projects must to be exclusive**.
+In general, they are most often exclusive, to avoid strange JCR installer behaviors, but sometimes exceptional [workspace filter](http://jackrabbit.apache.org/filevault/filter.html) rules are being applied like `mode="merge"` etc.
+
+#### Skip installed package resolution by download name. 
+
+```
+gradlew aemInstall -Paem.deploy.skipDownloadName=true
+```
+
+Only matters when Vault properties file is customized then that property could be used to eliminate conflicts.
 
 ## Known issues
 
