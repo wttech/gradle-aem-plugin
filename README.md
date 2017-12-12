@@ -36,21 +36,17 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
 ## Requirements
 
 * Java >= 8, but target software can be compiled to older Java.
-* Gradle  >= 3.5.
 
 ## Configuration
 
-Recommended way to start using Gradle AEM Plugin is to clone and customize [example project](https://github.com/Cognifide/gradle-aem-example).
-General configuration options are listed [here](src/main/kotlin/com/cognifide/gradle/aem/AemConfig.kt).
-
-In all docs there is used shorter version of command for launching Gradle which assumes installed tool on local machine.
-But it is recommended to use Gradle Wrapper for which command is a little bit different: `gradlew` instead of `gradle`. 
+* Recommended way to start using Gradle AEM Plugin is to clone and customize [example project](https://github.com/Cognifide/gradle-aem-example).
+* It is recommended to use Gradle Wrapper (command `gradlew`) instead of using locally installed Gradle (command `gradle`) to easily have same version of Gradle used to build application on all environments. Only at first building time, wrapper will be automatically downloaded and installed on local machine.
+* General AEM configuration options are listed [here](src/main/kotlin/com/cognifide/gradle/aem/AemConfig.kt).
 
 ### Plugin setup
 
 Released versions of plugin are available on [Bintray](https://bintray.com/cognifide/maven-public/gradle-aem-plugin), 
 so that this repository need to be included in *buildscript* section.
-
 
 #### Minimal:
 
@@ -248,8 +244,8 @@ As an effect there will be same dependent CRX package defined multiple times.
 
 #### Deploy CRX package(s) only to filtered group of instances:
 
-When there are defined named AEM instances: `local-author`, `local-publish`, `integration-author` and `integration-publish`.
-Then it is available to deploy packages with taking into account: 
+When there are defined named AEM instances: `local-author`, `local-publish`, `integration-author` and `integration-publish`,
+then it is available to deploy packages with taking into account: 
 
  * type of environment (local, integration)
  * type of AEM instance (author / publish)
@@ -259,19 +255,25 @@ gradlew aemDeploy -Paem.deploy.instance.name=integration-*
 gradlew aemDeploy -Paem.deploy.instance.name=*-author
 ```
    
-#### Deploy CRX package(s) only to instances specified explicitly: 
+#### Deploy CRX package(s) only to instances specified explicitly
+
+List delimited: instances by semicolon, instance properties by comma.
 
 ```bash
 gradlew aemDeploy -Paem.deploy.instance.list=http://localhost:4502,admin,admin;http://localhost:4503,admin,admin
 ```
 
-#### Deploy only filtered dependent CRX package(s) (filters with wildcards, comma delimited):
+#### Deploy only filtered dependent CRX package(s)
+
+Filters with wildcards, comma delimited.
 
 ```bash
 gradlew aemSatisfy -Paem.satisfy.group=hotfix-*,groovy-console
 ```
 
-#### Check out and clean JCR content using filter at custom path (e.g for subproject *content*):
+#### Check out and clean JCR content using filter at custom path
+   
+E.g for subproject `:content`:
    
 ```bash
 gradlew :content:aemSync -Paem.vlt.filter=custom-filter.xml
@@ -279,13 +281,15 @@ gradlew :content:aemSync -Paem.vlt.filter=src/main/content/META-INF/vault/custom
  gradlew :content:aemSync -Paem.vlt.filter=C:/aem/custom-filter.xml
 ```
 
-#### Check out and clean JCR content using filter roots specified explicitly:
+#### Check out and clean JCR content using filter roots specified explicitly
    
 ```bash
 gradlew :content:aemSync -Paem.vlt.filterRoots=[/etc/tags/example,/content/dam/example]
 ```
 
-#### Execute any Vault command (e.g copy nodes from one remote instance to another):
+#### Execute any Vault command 
+
+E.g copy nodes from one remote AEM instance to another.
 
 ```bash
 gradlew :content:aemVlt -Paem.vlt.command='rcp -b 100 -r -u -n http://admin:admin@localhost:4502/crx/-/jcr:root/content/dam/example http://admin:admin@localhost:4503/crx/-/jcr:root/content/dam/example' 
@@ -311,7 +315,7 @@ aemCompose {
 
 ```
 
-When building via command `gradlew :build`, then the effect will be a CRX package with assembled JCR content and OSGi bundles from projects: `:app:core`, `:app:common`, `:content:init`, `:content:demo`.
+When building via command `gradlew :build`, then the effect will be a CRX package with assembled JCR content and OSGi bundles from projects: `:app:core`, `:app:common`, `:content:init`, `:content:demo` and `:migration`.
 
 * app/build.gradle  (project `:app`)
 
@@ -346,7 +350,7 @@ In general, they are most often exclusive, to avoid strange JCR installer behavi
 
 #### Skip installed package resolution by download name. 
 
-```
+```bash
 gradlew aemInstall -Paem.deploy.skipDownloadName=true
 ```
 
