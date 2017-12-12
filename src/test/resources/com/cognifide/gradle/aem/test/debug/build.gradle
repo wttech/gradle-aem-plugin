@@ -2,7 +2,6 @@ buildscript {
     repositories {
         jcenter()
         mavenLocal()
-        mavenCentral()
         maven { url  "http://dl.bintray.com/cognifide/maven-public" }
     }
 

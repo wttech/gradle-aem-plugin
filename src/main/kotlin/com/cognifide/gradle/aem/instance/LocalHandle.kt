@@ -50,11 +50,11 @@ class LocalHandle(val project: Project, val sync: InstanceSync) {
     val stopScript: Script
         get() = binScript("stop")
 
-    private fun binScript(name: String): Script {
-        return if (OperatingSystem.current().isWindows) {
+    private fun binScript(name: String, os: OperatingSystem = OperatingSystem.current()): Script {
+        return if (os.isWindows) {
             Script(File(dir, "$name.bat"), File(staticDir, "bin/$name.bat"), listOf("cmd", "/C"))
         } else {
-            Script(File(dir, "$name.sh"), File(staticDir, "bin/$name.sh"), listOf("sh"))
+            Script(File(dir, name), File(staticDir, "bin/$name"), listOf("sh"))
         }
     }
 
@@ -108,13 +108,15 @@ class LocalHandle(val project: Project, val sync: InstanceSync) {
     }
 
     private fun correctStaticFiles() {
-        if (OperatingSystem.current().isWindows) {
-            FileOperations.amendFile(startScript.bin, { it.replace("start \"CQ\" cmd.exe /K", "start /min \"$instance\" cmd.exe /C") })
-        }
+        // Force CMD to be launched in closable window mode. Inject nice title.
+        FileOperations.amendFile(binScript("start", OperatingSystem.forName("windows")).bin, {
+            it.replace("start \"CQ\" cmd.exe /K", "start /min \"$instance\" cmd.exe /C") // AEM <= 6.2
+            it.replace("start \"CQ\" cmd.exe /C", "start /min \"$instance\" cmd.exe /C") // AEM 6.3
+        })
 
+        // Ensure that 'logs' directory exists
         GFileUtils.mkdirs(File(staticDir, "logs"))
     }
-
     private fun extractStaticFiles() {
         val progressLogger = ProgressLogger(project, "Extracting static files from JAR  '${jar.absolutePath}' to directory: $staticDir")
         progressLogger.started()
