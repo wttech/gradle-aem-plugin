@@ -159,6 +159,7 @@ aemSatisfy {
 Building and deploying to AEM via command: `gradlew` (default tasks will be used).
 
 More detailed and always up-to-date information about configuration options is available [here](src/main/kotlin/com/cognifide/gradle/aem/AemConfig.kt).
+
 For multi project build configuration, please investigate [example project](https://github.com/Cognifide/gradle-aem-example).
 
 ### Workflow
