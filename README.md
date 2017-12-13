@@ -39,8 +39,9 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
 
 ## Configuration
 
+### Quick start
+
 * Recommended way to start using Gradle AEM Plugin is to clone and customize [example project](https://github.com/Cognifide/gradle-aem-example).
-* General AEM configuration options are listed [here](src/main/kotlin/com/cognifide/gradle/aem/AemConfig.kt).
 * As a build command, it is recommended to use Gradle Wrapper (`gradlew`) instead of locally installed Gradle (`gradle`) to easily have same version of build tool installed on all environments. At first time, wrapper will be automatically downloaded and installed.
 
 ### Plugin setup
@@ -155,10 +156,8 @@ aemSatisfy {
 
 Building and deploying to AEM via command: `gradlew` (default tasks will be used).
 
-Instances configuration can be omitted, then *http://localhost:4502* and *http://localhost:4503* will be used by default.
-Content path can also be skipped, because value above is also default. This is only an example how to customize particular [values](src/main/kotlin/com/cognifide/gradle/aem/AemConfig.kt).
-
-For multi project build configuration, see [example project](https://github.com/Cognifide/gradle-aem-example).
+More detailed and always up-to-date information about configuration options is available [here](src/main/kotlin/com/cognifide/gradle/aem/AemConfig.kt).
+For multi project build configuration, please investigate [example project](https://github.com/Cognifide/gradle-aem-example).
 
 ### Workflow
 
