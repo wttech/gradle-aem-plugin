@@ -333,6 +333,19 @@ Rules:
 * Only instances being defined as *local* are being considered in command `aemSetup`, `aemCreate`, `aemUp` etc (that comes from `com.cognifide.aem.instance` plugin).
 * All instances being defined as *local* or *remote* are being considered in commands CRX package deployment related like `aemBuild`, `aemDeploy` etc.
 
+#### Understand why there are one or two plugins to be applied in build script
+
+Gradle AEM plugin architecture is splitted into 3 plugins to properly fit into Gradle tasks structure correctly.
+
+* base (`com.cognifide.aem.base`), applied transparently by instance or package plugin, provides AEM config section to build script,
+* instance (`com.cognifide.aem.instance`), should be applied only at root project (once), provides instance related tasks: `aemAwait`, `aemSetup`, `aemCreate` etc,
+* package (`com.cognifide.aem.package`), could be applied to all projects that are composing CRX packages, provides CRX package related tasks: `aemCompose`, `aemDeploy` etc.
+
+Most often, Gradle commands are being launched from project root and tasks are being run by their name e.g `aemSatisfy` (are not fully qualified `:aemSatisfy` of root project).
+Let's imagine if task `aemSatisfy` will come from package plugin, then Gradle will execute more than one `aemSatisfy` (for all projects that have plugin applied), so that this is unintended behavior.
+Currently used plugin architecture solves that problem.
+
+
 #### Deploy CRX package(s) only to filtered group of instances:
 
 When there are defined named AEM instances: `local-author`, `local-publish`, `integration-author` and `integration-publish`,
