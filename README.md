@@ -40,8 +40,8 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
 ## Configuration
 
 * Recommended way to start using Gradle AEM Plugin is to clone and customize [example project](https://github.com/Cognifide/gradle-aem-example).
-* It is recommended to use Gradle Wrapper (command `gradlew`) instead of using locally installed Gradle (command `gradle`) to easily have same version of Gradle used to build application on all environments. Only at first building time, wrapper will be automatically downloaded and installed on local machine.
 * General AEM configuration options are listed [here](src/main/kotlin/com/cognifide/gradle/aem/AemConfig.kt).
+* As a build command, it is recommended to use Gradle Wrapper (`gradlew`) instead of locally installed Gradle (`gradle`) to easily have same version of build tool installed on all environments. At first time, wrapper will be automatically downloaded and installed.
 
 ### Plugin setup
 
@@ -67,7 +67,7 @@ apply plugin: 'com.cognifide.aem.package'
 
 Building and deploying to AEM via command: `gradlew aemBuild`.
 
-#### Extra:
+#### Full (defaults):
 
 ```groovy
 apply plugin: 'com.cognifide.aem.instance'
@@ -77,9 +77,69 @@ defaultTasks = [':aemSatisfy', ':aemBuild', ':aemAwait']
 
 aem {
     config {
-        contentPath = project.file("src/main/content")
         localInstance "http://localhost:4502"
         localInstance "http://localhost:4503"
+        
+        deployConnectionTimeout = 5000
+        deployParallel = true
+        deploySnapshots = []
+        uploadForce = true
+        recursiveInstall = true
+        acHandling = "merge_preserve"
+        contentPath = project.file("src/main/content")
+        if (project == project.rootProject) {
+            bundlePath = "/apps/${project.name}/install"
+        } else {
+            bundlePath = "/apps/${project.rootProject.name}/${project.name}/install"
+        }
+        localPackagePath = ""
+        remotePackagePath = ""
+        filesExcluded = [
+          "**/.gradle",
+          "**/.git",
+          "**/.git/**",
+          "**/.gitattributes",
+          "**/.gitignore",
+          "**/.gitmodules",
+          "**/.vlt",
+          "**/node_modules/**",
+          "jcr_root/.vlt-sync-config.properties"
+        ]
+        filesExpanded = [
+          "**/META-INF/vault/*.xml"
+        ]
+        fileProperties = []
+        vaultCopyMissingFiles = true
+        vaultFilesPath = project.rootProject.file("src/main/resources/META-INF/vault")
+        vaultSkipProperties = [
+          "jcr:uuid!**/home/users/*,**/home/groups/*",
+          "jcr:lastModified",
+          "jcr:created",
+          "cq:lastModified*",
+          "cq:lastReplicat*",
+          "*_x0040_Delete",
+          "*_x0040_TypeHint"
+        ]
+        vaultGlobalOptions = "--credentials {{instance.credentials}}"
+        vaultLineSeparator = System.lineSeparator()
+        dependBundlesTaskNames = ["assemble", "check"]
+        dependContentTaskNames = ["aemCompose.dependencies"]
+        buildDate = Date()
+        instancesPath = "${System.getProperty("user.home")}/.aem/${project.rootProject.name}"
+        instanceFilesPath = project.rootProject.file("src/main/resources/${AemInstancePlugin.FILES_PATH}")
+        instanceFilesExpanded = [
+          "**/*.properties", 
+          "**/*.sh", 
+          "**/*.bat", 
+          "**/*.xml",
+          "**/start",
+          "**/stop"
+        ]
+        awaitDelay = 3000
+        awaitInterval = 1000
+        awaitTimeout = 900
+        awaitTimes = 300
+        satisfyRefreshing = false
     }
 }
 
@@ -92,6 +152,8 @@ aemSatisfy {
 }
 
 ```
+
+Building and deploying to AEM via command: `gradlew` (default tasks will be used).
 
 Instances configuration can be omitted, then *http://localhost:4502* and *http://localhost:4503* will be used by default.
 Content path can also be skipped, because value above is also default. This is only an example how to customize particular [values](src/main/kotlin/com/cognifide/gradle/aem/AemConfig.kt).
@@ -219,10 +281,8 @@ allprojects { subproject ->
   plugins.withId 'com.cognifide.aem.base', {
     aem {
         config {
-          localInstance("http://localhost:4502")
-          localInstance("http://localhost:4503")
-          remoteInstance("http://192.168.10.1:4502", "integration")
-          remoteInstance("http://192.168.10.2:4503", "integration")
+          localInstance("http://localhost:6502")
+          contentPath = subproject.file("src/main/aem")
         }
     }
   }
@@ -242,6 +302,35 @@ aemCompose {
 Warning! Very often plugin users mistake is to configure `aemSatisfy` task in `allprojects` closure. 
 As an effect there will be same dependent CRX package defined multiple times.
 
+#### Work with local and / or remote AEM instances
+
+In AEM configuration section, there is possibility to use `localInstance` or `remoteInstance` methods to define AEM instances to be used to:
+ 
+* install CRX packages being built via commands: `aemBuild`, `aemDeploy` and more detailed `aemUpload`, `aemInstall` etc,
+* communicate with while using Vault tool in commands `aemSync`, `aemCheckout`, `aemVlt`,
+* install dependent packages while using `aemSatisfy` command.
+
+```groovy
+aem {
+    config {
+      localInstance("http://localhost:4502") // local-author
+      localInstance("http://localhost:4502", "admin", "admin", "author", 14502) // local-author
+      
+      localInstance("http://localhost:4503") // local-publish
+      localInstance("http://localhost:4503", "admin", "admin", "publish", 14502) // local-publish
+      
+      remoteInstance("http://192.168.10.1:4502", "user1", "password2", "integration") // integration-author
+      remoteInstance("http://192.168.10.2:4503", "user2", "password2", "integration") // integration-publish
+    }
+}
+```
+
+Rules:
+
+* Instance name is a combination of `${environment}-${type}` e.g *local-author*, *integration-publish* etc.
+* Only instances being defined as *local* are being considered in command `aemSetup`, `aemCreate`, `aemUp` etc (that comes from `com.cognifide.aem.instance` plugin).
+* All instances being defined as *local* or *remote* are being considered in commands CRX package deployment related like `aemBuild`, `aemDeploy` etc.
+
 #### Deploy CRX package(s) only to filtered group of instances:
 
 When there are defined named AEM instances: `local-author`, `local-publish`, `integration-author` and `integration-publish`,
@@ -254,6 +343,8 @@ then it is available to deploy packages with taking into account:
 gradlew aemDeploy -Paem.deploy.instance.name=integration-*
 gradlew aemDeploy -Paem.deploy.instance.name=*-author
 ```
+
+Default value of that instance name filter is `local-*`.
    
 #### Deploy CRX package(s) only to instances specified explicitly
 
@@ -278,7 +369,7 @@ E.g for subproject `:content`:
 ```bash
 gradlew :content:aemSync -Paem.vlt.filter=custom-filter.xml
 gradlew :content:aemSync -Paem.vlt.filter=src/main/content/META-INF/vault/custom-filter.xml
- gradlew :content:aemSync -Paem.vlt.filter=C:/aem/custom-filter.xml
+gradlew :content:aemSync -Paem.vlt.filter=C:/aem/custom-filter.xml
 ```
 
 #### Check out and clean JCR content using filter roots specified explicitly

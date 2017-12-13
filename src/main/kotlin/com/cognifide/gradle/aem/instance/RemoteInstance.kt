@@ -22,6 +22,14 @@ class RemoteInstance(
             environment
     )
 
+    constructor(httpUrl: String, user: String, password: String, environment: String) : this(
+            httpUrl,
+            user,
+            password,
+            InstanceType.byUrl(httpUrl).name.toLowerCase(),
+            environment
+    )
+
     override fun toString(): String {
         return "RemoteInstance(httpUrl='$httpUrl', user='$user', password='$hiddenPassword', type='$typeName', environment='$environment')"
     }
