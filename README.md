@@ -68,7 +68,9 @@ apply plugin: 'com.cognifide.aem.package'
 
 Building and deploying to AEM via command: `gradlew aemBuild`.
 
-#### Full (defaults):
+#### Full
+
+AEM configuration section contains all default values for demonstrative purpose.
 
 ```groovy
 apply plugin: 'com.cognifide.aem.instance'
