@@ -304,7 +304,7 @@ aemCompose {
 Warning! Very often plugin users mistake is to configure `aemSatisfy` task in `allprojects` closure. 
 As an effect there will be same dependent CRX package defined multiple times.
 
-#### Work with local and / or remote AEM instances
+#### Work with local and/or remote AEM instances
 
 In AEM configuration section, there is possibility to use `localInstance` or `remoteInstance` methods to define AEM instances to be used to:
  
@@ -347,6 +347,8 @@ gradlew aemDeploy -Paem.deploy.instance.name=*-author
 ```
 
 Default value of that instance name filter is `local-*`.
+
+Deployment could be performed in parallel mode when configuration option `deployParallel` is set to `true`.
    
 #### Deploy CRX package(s) only to instances specified explicitly
 
