@@ -45,7 +45,7 @@ open class AemConfig(project: Project) : Serializable {
      */
     @Incubating
     @Input
-    var deployParallel: Boolean = false
+    var deployParallel: Boolean = true
 
     /**
      * CRX package name conventions (with wildcard) indicating that package can change over time
@@ -149,7 +149,7 @@ open class AemConfig(project: Project) : Serializable {
      * Must be absolute or relative to current working directory.
      */
     @Input
-    var vaultFilesPath: String = "${project.rootProject.projectDir.path}/src/main/resources/${AemPackagePlugin.VLT_PATH}"
+    var vaultFilesPath: String = project.rootProject.file("src/main/resources/${AemPackagePlugin.VLT_PATH}").toString()
 
     /**
      * Define here properties that will be skipped when pulling JCR content from AEM instance.
@@ -218,7 +218,7 @@ open class AemConfig(project: Project) : Serializable {
      * Useful for overriding default startup scripts ('start.bat' or 'start.sh') or providing some files inside 'crx-quickstart'.
      */
     @Input
-    var instanceFilesPath: String = "${project.rootProject.projectDir.path}/src/main/resources/${AemInstancePlugin.FILES_PATH}"
+    var instanceFilesPath: String = project.rootProject.file("src/main/resources/${AemInstancePlugin.FILES_PATH}").toString()
 
     /**
      * Wildcard file name filter expression that is used to filter in which instance files properties can be injected.
@@ -278,8 +278,16 @@ open class AemConfig(project: Project) : Serializable {
         instance(LocalInstance(httpUrl))
     }
 
+    fun localInstance(httpUrl: String, type: String) {
+        instance(LocalInstance(httpUrl, type))
+    }
+
     fun localInstance(httpUrl: String, user: String, password: String) {
         instance(LocalInstance(httpUrl, user, password))
+    }
+
+    fun localInstance(httpUrl: String, user: String, password: String, type: String) {
+        instance(LocalInstance(httpUrl, user, password, type))
     }
 
     fun localInstance(httpUrl: String, user: String, password: String, type: String, debugPort: Int) {
@@ -292,6 +300,10 @@ open class AemConfig(project: Project) : Serializable {
 
     fun remoteInstance(httpUrl: String, environment: String) {
         instance(RemoteInstance(httpUrl, environment))
+    }
+
+    fun remoteInstance(httpUrl: String, user: String, password: String, environment: String) {
+        instance(RemoteInstance(httpUrl, user, password, environment))
     }
 
     fun remoteInstance(httpUrl: String, user: String, password: String, type: String, environment: String) {
