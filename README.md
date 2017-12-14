@@ -21,6 +21,59 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
 </p>
 <br>
 
+## Table of contents
+
+* [Features](#features)
+* [Requirements](#requirements)
+* [Configuration](#configuration)
+   * [Quick start](#quick-start)
+   * [Plugin setup](#plugin-setup)
+      * [Minimal:](#minimal)
+      * [Full](#full)
+   * [Workflow](#workflow)
+   * [Tasks](#tasks)
+      * [Task aemSetup](#task-aemsetup)
+      * [Task aemCreate](#task-aemcreate)
+      * [Task aemUp](#task-aemup)
+      * [Task aemDown](#task-aemdown)
+      * [Task aemDestroy](#task-aemdestroy)
+      * [Task aemAwait](#task-aemawait)
+      * [Task aemCompose](#task-aemcompose)
+      * [Task aemUpload](#task-aemupload)
+      * [Task aemDelete](#task-aemdelete)
+      * [Task aemInstall](#task-aeminstall)
+      * [Task aemUninstall](#task-aemuninstall)
+      * [Task aemPurge](#task-aempurge)
+      * [Task aemActivate](#task-aemactivate)
+      * [Task aemDeploy](#task-aemdeploy)
+      * [Task aemDistribute](#task-aemdistribute)
+      * [Task aemSatisfy](#task-aemsatisfy)
+      * [Task aemCollect](#task-aemcollect)
+      * [Task aemCheckout](#task-aemcheckout)
+      * [Task aemClean](#task-aemclean)
+      * [Task  aemSync](#task--aemsync)
+      * [Task aemVlt](#task-aemvlt)
+      * [Task aemDebug](#task-aemdebug)
+      * [Task rule aem&lt;ProjectPath&gt;Build](#task-rule-aemprojectpathbuild)
+   * [Expandable properties](#expandable-properties)
+   * [How to](#how-to)
+      * [Set AEM configuration properly for all / concrete project(s)](#set-aem-configuration-properly-for-all--concrete-projects)
+      * [Work with local and/or remote AEM instances](#work-with-local-andor-remote-aem-instances)
+      * [Understand why there are one or two plugins to be applied in build script](#understand-why-there-are-one-or-two-plugins-to-be-applied-in-build-script)
+      * [Deploy CRX package(s) only to filtered group of instances:](#deploy-crx-packages-only-to-filtered-group-of-instances)
+      * [Deploy CRX package(s) only to instances specified explicitly](#deploy-crx-packages-only-to-instances-specified-explicitly)
+      * [Deploy only filtered dependent CRX package(s)](#deploy-only-filtered-dependent-crx-packages)
+      * [Check out and clean JCR content using filter at custom path](#check-out-and-clean-jcr-content-using-filter-at-custom-path)
+      * [Check out and clean JCR content using filter roots specified explicitly](#check-out-and-clean-jcr-content-using-filter-roots-specified-explicitly)
+      * [Execute any Vault command](#execute-any-vault-command)
+      * [Assemble all-in-one CRX package(s)](#assemble-all-in-one-crx-packages)
+      * [Skip installed package resolution by download name.](#skip-installed-package-resolution-by-download-name)
+* [Known issues](#known-issues)
+   * [Caching task aemCompose](#caching-task-aemcompose)
+   * [Vault tasks parallelism](#vault-tasks-parallelism)
+   * [Files from SSH for aemCreate and <code>aemSatisfy</code>](#files-from-ssh-for-aemcreate-and-aemsatisfy)
+* [License](#license)
+
 ## Features
 
 * Fully automated, tied to project, local AEM instance(s) setup allowing to start development within few minutes.
@@ -175,59 +228,129 @@ Above configuration uses default tasks, so that alternatively it is possible to 
 
 ### Tasks
 
-* `aemSetup` - Perform initial setup of local AEM instance(s). Automated version of `aemCreate aemUp aemSatisfy aemBuild`.
-* `aemCreate` - Create local AEM instance(s). To use it specify required properties in ignored file *gradle.properties* at project root (protocols supported: SMB, SSH, HTTP(s) or local path, SMB as example):
-    * `aem.instance.local.jarUrl=smb://[host]/[path]/cq-quickstart.jar`
-    * `aem.instance.local.licenseUrl=smb://[host]/[path]/license.properties`
-    * `aem.smb.domain=MYDOMAIN`
-    * `aem.smb.username=MYUSER`
-    * `aem.smb.password=MYPASSWORD`
-* `aemUp` - Turn on local AEM instance(s).
-* `aemDown` - Turn off local AEM instance(s).
-* `aemDestroy` - Destroy local AEM instance(s).
-* `aemAwait` - Wait until all local AEM instance(s) be stable.
-* `aemCompose` - Compose CRX package from JCR content and bundles. Available methods:
-    * `includeProject(projectPath: String)`, includes both bundles and JCR content from another project, example: `includeProject ':core'`.
-    * `includeContent(projectPath: String)`, includes only JCR content, example: `includeContent ':design'`.
-    * `includeBundles(projectPath: String)`, includes only bundles, example: `includeBundles ':common'`.
-    * `includeBundlesAtPath(projectPath: String, installPath: String)`, includes only bundles at custom install path, example: `includeBundles(':common', '/apps/my-app/install')`.
-    * `includeBundles(projectPath: String, runMode: String)`, as above, useful when bundles need to be installed only on specific type of instance.
-    * `mergeBundles(projectPath: String)`, includes only bundles at same install path.
-    * `mergeBundles(projectPath: String, runMode: String)`, as above, useful when bundles need to be installed only on specific type of instance.
-    * `includeProjects(pathPrefix: String)`, includes both bundles and JCR content from all AEM projects (excluding itself) in which project path is matching specified filter. Vault filter roots will be automatically merged and available in property `${filterRoots}` in *filter.xml* file. Useful for building assemblies (all-in-one packages).
-    * `includeSubprojects()`, alias for method above: `includeProjects("${project.path}:*")`.
-    * all inherited from [ZIP task](https://docs.gradle.org/3.5/dsl/org.gradle.api.tasks.bundling.Zip.html).
-* `aemUpload` - Upload composed CRX package into AEM instance(s).
-* `aemDelete` - Delete uploaded CRX package from AEM instance(s).
-* `aemInstall` - Install uploaded CRX package on AEM instance(s).
-* `aemUninstall` - Uninstall uploaded CRX package on AEM instance(s).
-* `aemPurge` - Fail-safe combination of `aemUninstall` and `aemDelete`.
-* `aemActivate` - Replicate installed CRX package to other AEM instance(s).
-* `aemDeploy` - Upload & install CRX package into AEM instance(s). Primary, recommended form of deployment. Optimized version of `aemUpload aemInstall`.
-* `aemDistribute` - Upload, install & activate CRX package into AEM instances(s). Secondary form of deployment. Optimized version of `aemUpload aemInstall aemActivate -Paem.deploy.instance.name=*-author`.
-* `aemSatisfy` - Upload & install dependent CRX package(s) before deployment. Available methods:
-    * `local(path: String)`, use CRX package from local file system.
-    * `local(file: File)`, same as above, but file can be even located outside the project.
-    * `url(url: String)`, use CRX package that will be downloaded from specified URL to local temporary directory.
-    * `downloadHttp(url: String)`, download package using HTTP with no auth.
-    * `downloadHttpAuth(url: String, username: String, password: String)`, download package using HTTP with Basic Auth support.
-    * `downloadHttpAuth(url: String)`, as above, but credentials must be specified in variables: `aem.http.username`, `aem.http.password`. Optionally enable SSL errors checking by setting property `aem.http.ignoreSSL` to `false`.
-    * `downloadSmbAuth(url: String, domain: String, username: String, password: String)`, download package using SMB protocol.
-    * `downloadSmbAuth(url: String)`, as above, but credentials must be specified in variables: `aem.smb.domain`, `aem.smb.username`, `aem.smb.password`.
-    * `downloadSftpAuth(url: String, username: String, password: String)`, download package using SFTP protocol.
-    * `downloadSftpAuth(url: String)`, as above, but credentials must be specified in variables: `aem.sftp.username`, `aem.sftp.password`. Optionally enable strict host checking by setting property `aem.sftp.hostChecking` to `true`.
-    * `group(name: String, configurer: Closure)`, useful for declaring group of packages (or just naming single package) to be installed only on demand. For instance: `group 'tools', { url('http://example.com/package.zip'); url('smb://internal-nt/package2.zip')  }`. Then to install only packages in group `tools`, use command: `gradlew aemSatisfy -Paem.satisfy.group=tools`.
-* `aemCollect` - Composes ZIP package from all CRX packages being satisfied and built. Available methods:
-    * all inherited from [ZIP task](https://docs.gradle.org/3.5/dsl/org.gradle.api.tasks.bundling.Zip.html).
-* `aemCheckout` - Check out JCR content from running AEM author instance to local content path.
-* `aemClean` - Clean checked out JCR content.
-* `aemSync` - Check out then clean JCR content.
-* `aemVlt` - Execute any Vault command. See parameters section for more details.
-* `aemDebug` - Dumps effective AEM build configuration of project to JSON file.
+#### Task `aemSetup`
 
-### Task rules
+Perform initial setup of local AEM instance(s). Automated version of `aemCreate aemUp aemSatisfy aemBuild`.
 
-* `aem<ProjectPath>Build` - Build CRX package and deploy it to AEM instance(s). It is recommended to include appropriate deploy task name in [default tasks](https://docs.gradle.org/current/userguide/tutorial_using_tasks.html#sec:default_tasks) of project. For instance, to deploy project at path `:app:design` use task named `aemAppDesignBuild`.
+#### Task `aemCreate`
+ 
+Create local AEM instance(s). To use it specify required properties in ignored file *gradle.properties* at project root (protocols supported: SMB, SSH, HTTP(s) or local path, SMB as example):
+
+* `aem.instance.local.jarUrl=smb://[host]/[path]/cq-quickstart.jar`
+* `aem.instance.local.licenseUrl=smb://[host]/[path]/license.properties`
+* `aem.smb.domain=MYDOMAIN`
+* `aem.smb.username=MYUSER`
+* `aem.smb.password=MYPASSWORD`
+    
+#### Task `aemUp`
+
+Turn on local AEM instance(s).
+
+#### Task `aemDown`
+
+Turn off local AEM instance(s).
+
+#### Task `aemDestroy` 
+
+Destroy local AEM instance(s).
+
+
+#### Task `aemAwait`
+
+Wait until all local AEM instance(s) be stable.
+
+#### Task `aemCompose`
+
+Compose CRX package from JCR content and bundles. Available methods:
+
+* `includeProject(projectPath: String)`, includes both bundles and JCR content from another project, example: `includeProject ':core'`.
+* `includeContent(projectPath: String)`, includes only JCR content, example: `includeContent ':design'`.
+* `includeBundles(projectPath: String)`, includes only bundles, example: `includeBundles ':common'`.
+* `includeBundlesAtPath(projectPath: String, installPath: String)`, includes only bundles at custom install path, example: `includeBundles(':common', '/apps/my-app/install')`.
+* `includeBundles(projectPath: String, runMode: String)`, as above, useful when bundles need to be installed only on specific type of instance.
+* `mergeBundles(projectPath: String)`, includes only bundles at same install path.
+* `mergeBundles(projectPath: String, runMode: String)`, as above, useful when bundles need to be installed only on specific type of instance.
+* `includeProjects(pathPrefix: String)`, includes both bundles and JCR content from all AEM projects (excluding itself) in which project path is matching specified filter. Vault filter roots will be automatically merged and available in property `${filterRoots}` in *filter.xml* file. Useful for building assemblies (all-in-one packages).
+* `includeSubprojects()`, alias for method above: `includeProjects("${project.path}:*")`.
+* all inherited from [ZIP task](https://docs.gradle.org/3.5/dsl/org.gradle.api.tasks.bundling.Zip.html).
+
+#### Task `aemUpload`
+
+Upload composed CRX package into AEM instance(s).
+
+#### Task `aemDelete`
+
+Delete uploaded CRX package from AEM instance(s).
+
+#### Task `aemInstall`
+
+Install uploaded CRX package on AEM instance(s).
+
+#### Task `aemUninstall`
+
+Uninstall uploaded CRX package on AEM instance(s).
+
+#### Task `aemPurge` 
+
+Fail-safe combination of `aemUninstall` and `aemDelete`.
+
+#### Task `aemActivate` 
+
+Replicate installed CRX package to other AEM instance(s).
+
+#### Task `aemDeploy` 
+
+Upload & install CRX package into AEM instance(s). Primary, recommended form of deployment. Optimized version of `aemUpload aemInstall`.
+
+#### Task `aemDistribute` 
+
+Upload, install & activate CRX package into AEM instances(s). Secondary form of deployment. Optimized version of `aemUpload aemInstall aemActivate -Paem.deploy.instance.name=*-author`.
+
+#### Task `aemSatisfy` 
+
+Upload & install dependent CRX package(s) before deployment. Available methods:
+
+* `local(path: String)`, use CRX package from local file system.
+* `local(file: File)`, same as above, but file can be even located outside the project.
+* `url(url: String)`, use CRX package that will be downloaded from specified URL to local temporary directory.
+* `downloadHttp(url: String)`, download package using HTTP with no auth.
+* `downloadHttpAuth(url: String, username: String, password: String)`, download package using HTTP with Basic Auth support.
+* `downloadHttpAuth(url: String)`, as above, but credentials must be specified in variables: `aem.http.username`, `aem.http.password`. Optionally enable SSL errors checking by setting property `aem.http.ignoreSSL` to `false`.
+* `downloadSmbAuth(url: String, domain: String, username: String, password: String)`, download package using SMB protocol.
+* `downloadSmbAuth(url: String)`, as above, but credentials must be specified in variables: `aem.smb.domain`, `aem.smb.username`, `aem.smb.password`.
+* `downloadSftpAuth(url: String, username: String, password: String)`, download package using SFTP protocol.
+* `downloadSftpAuth(url: String)`, as above, but credentials must be specified in variables: `aem.sftp.username`, `aem.sftp.password`. Optionally enable strict host checking by setting property `aem.sftp.hostChecking` to `true`.
+* `group(name: String, configurer: Closure)`, useful for declaring group of packages (or just naming single package) to be installed only on demand. For instance: `group 'tools', { url('http://example.com/package.zip'); url('smb://internal-nt/package2.zip')  }`. Then to install only packages in group `tools`, use command: `gradlew aemSatisfy -Paem.satisfy.group=tools`.
+
+#### Task `aemCollect`
+
+Composes ZIP package from all CRX packages being satisfied and built. Available methods:
+
+* all inherited from [ZIP task](https://docs.gradle.org/3.5/dsl/org.gradle.api.tasks.bundling.Zip.html).
+
+#### Task `aemCheckout`
+
+Check out JCR content from running AEM author instance to local content path.
+
+#### Task `aemClean`
+
+Clean checked out JCR content.
+
+#### Task  `aemSync`
+
+Check out then clean JCR content.
+
+#### Task `aemVlt`
+
+Execute any Vault command. See how to's section for more details.
+
+#### Task `aemDebug` 
+
+Dumps effective AEM build configuration of project to JSON file.
+
+#### Task rule `aem<ProjectPath>Build`
+
+Build CRX package and deploy it to AEM instance(s). It is recommended to include appropriate deploy task name in [default tasks](https://docs.gradle.org/current/userguide/tutorial_using_tasks.html#sec:default_tasks) of project. For instance, to deploy project at path `:app:design` use task named `aemAppDesignBuild`.
 
 ### Expandable properties
 
@@ -341,7 +464,7 @@ Gradle AEM plugin architecture is splitted into 3 plugins to properly fit into G
 * instance (`com.cognifide.aem.instance`), should be applied only at root project (once), provides instance related tasks: `aemAwait`, `aemSetup`, `aemCreate` etc,
 * package (`com.cognifide.aem.package`), could be applied to all projects that are composing CRX packages, provides CRX package related tasks: `aemCompose`, `aemDeploy` etc.
 
-Most often, Gradle commands are being launched from project root and tasks are being run by their name e.g `aemSatisfy` (are not fully qualified `:aemSatisfy` of root project).
+Most often, Gradle commands are being launched from project root and tasks are being run by their name e.g `aemSatisfy` (which is not fully qualified, better if it will be `:aemSatisfy` of root project).
 Let's imagine if task `aemSatisfy` will come from package plugin, then Gradle will execute more than one `aemSatisfy` (for all projects that have plugin applied), so that this is unintended behavior.
 Currently used plugin architecture solves that problem.
 
@@ -448,7 +571,7 @@ When building via command `gradlew :app:build`, then the effect will be a CRX pa
 
 Gradle AEM Plugin is configured in that way that project can have:
  
-* JCR content and source code to compile OSGi bundle
+* JCR content
 * source code to compile OSGi bundle
 * both
 
