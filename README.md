@@ -9,6 +9,8 @@
   <img src="docs/logo.png" alt="Gradle AEM Plugin Logo"/>
 </p>
 
+## Description
+
 Currently there is no popular way to build applications for AEM using Gradle build system. This project contains brand new Gradle plugin to assemble CRX package and deploy it on instance(s).
 
 Incremental build which takes seconds, not minutes. Developer who does not loose focus between build time gaps. Extend freely your build system directly in project. 
@@ -21,16 +23,25 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
 </p>
 <br>
 
+**Features:**
+
+* Fully automated, tied to project, local AEM instance(s) setup allowing to start development within few minutes.
+* Composing CRX package from multiple JCR content roots, bundles.
+* Automated all-in-one CRX packages generation (assemblies).
+* Easy multi-deployment with instance groups.
+* Automated dependent packages installation from local and remote sources (SMB, SSH, HTTP(s)).
+* Smart Vault files generation (combining defaults with overiddables).
+* Embedded Vault tool for checking out and cleaning JCR content from running AEM instance.
+* OSGi Manifest customization by official [osgi](https://docs.gradle.org/current/userguide/osgi_plugin.html) plugin or feature rich [org.dm.bundle](https://github.com/TomDmitriev/gradle-bundle-plugin) plugin.
+* OSGi Declarative Services annotations support (instead of SCR, [see docs](http://blogs.adobe.com/experiencedelivers/experience-management/osgi/using-osgi-annotations-aem6-2/)).
+
 ## Table of contents
 
-* [Features](#features)
-* [Requirements](#requirements)
+* [Installation](#installation)
 * [Configuration](#configuration)
-   * [Quick start](#quick-start)
    * [Plugin setup](#plugin-setup)
       * [Minimal:](#minimal)
       * [Full](#full)
-   * [Workflow](#workflow)
    * [Tasks](#tasks)
       * [Task aemSetup](#task-aemsetup)
       * [Task aemCreate](#task-aemcreate)
@@ -51,51 +62,37 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
       * [Task aemCollect](#task-aemcollect)
       * [Task aemCheckout](#task-aemcheckout)
       * [Task aemClean](#task-aemclean)
-      * [Task  aemSync](#task--aemsync)
+      * [Task aemSync](#task-aemsync)
       * [Task aemVlt](#task-aemvlt)
       * [Task aemDebug](#task-aemdebug)
       * [Task rule aem&lt;ProjectPath&gt;Build](#task-rule-aemprojectpathbuild)
    * [Expandable properties](#expandable-properties)
-   * [How to](#how-to)
-      * [Set AEM configuration properly for all / concrete project(s)](#set-aem-configuration-properly-for-all--concrete-projects)
-      * [Work with local and/or remote AEM instances](#work-with-local-andor-remote-aem-instances)
-      * [Understand why there are one or two plugins to be applied in build script](#understand-why-there-are-one-or-two-plugins-to-be-applied-in-build-script)
-      * [Deploy CRX package(s) only to filtered group of instances:](#deploy-crx-packages-only-to-filtered-group-of-instances)
-      * [Deploy CRX package(s) only to instances specified explicitly](#deploy-crx-packages-only-to-instances-specified-explicitly)
-      * [Deploy only filtered dependent CRX package(s)](#deploy-only-filtered-dependent-crx-packages)
-      * [Check out and clean JCR content using filter at custom path](#check-out-and-clean-jcr-content-using-filter-at-custom-path)
-      * [Check out and clean JCR content using filter roots specified explicitly](#check-out-and-clean-jcr-content-using-filter-roots-specified-explicitly)
-      * [Execute any Vault command](#execute-any-vault-command)
-      * [Assemble all-in-one CRX package(s)](#assemble-all-in-one-crx-packages)
-      * [Skip installed package resolution by download name.](#skip-installed-package-resolution-by-download-name)
+* [How to's](#how-tos)
+   * [Set AEM configuration properly for all / concrete project(s)](#set-aem-configuration-properly-for-all--concrete-projects)
+   * [Work with local and/or remote AEM instances](#work-with-local-andor-remote-aem-instances)
+   * [Understand why there are one or two plugins to be applied in build script](#understand-why-there-are-one-or-two-plugins-to-be-applied-in-build-script)
+   * [Work effectively on start and daily basis](#work-effectively-on-start-and-daily-basis)
+   * [Deploy CRX package(s) only to filtered group of instances:](#deploy-crx-packages-only-to-filtered-group-of-instances)
+   * [Deploy CRX package(s) only to instances specified explicitly](#deploy-crx-packages-only-to-instances-specified-explicitly)
+   * [Deploy only filtered dependent CRX package(s)](#deploy-only-filtered-dependent-crx-packages)
+   * [Check out and clean JCR content using filter at custom path](#check-out-and-clean-jcr-content-using-filter-at-custom-path)
+   * [Check out and clean JCR content using filter roots specified explicitly](#check-out-and-clean-jcr-content-using-filter-roots-specified-explicitly)
+   * [Execute any Vault command](#execute-any-vault-command)
+   * [Assemble all-in-one CRX package(s)](#assemble-all-in-one-crx-packages)
+   * [Skip installed package resolution by download name.](#skip-installed-package-resolution-by-download-name)
 * [Known issues](#known-issues)
    * [Caching task aemCompose](#caching-task-aemcompose)
    * [Vault tasks parallelism](#vault-tasks-parallelism)
    * [Files from SSH for aemCreate and <code>aemSatisfy</code>](#files-from-ssh-for-aemcreate-and-aemsatisfy)
 * [License](#license)
 
-## Features
+## Installation
 
-* Fully automated, tied to project, local AEM instance(s) setup allowing to start development within few minutes.
-* Composing CRX package from multiple JCR content roots, bundles.
-* Automated all-in-one CRX packages generation (assemblies).
-* Easy multi-deployment with instance groups.
-* Automated dependent packages installation from local and remote sources (SMB, SSH, HTTP(s)).
-* Smart Vault files generation (combining defaults with overiddables).
-* Embedded Vault tool for checking out and cleaning JCR content from running AEM instance.
-* OSGi Manifest customization by official [osgi](https://docs.gradle.org/current/userguide/osgi_plugin.html) plugin or feature rich [org.dm.bundle](https://github.com/TomDmitriev/gradle-bundle-plugin) plugin.
-* OSGi Declarative Services annotations support (instead of SCR, [see docs](http://blogs.adobe.com/experiencedelivers/experience-management/osgi/using-osgi-annotations-aem6-2/)).
-
-## Requirements
-
-* Java >= 8, but target software can be compiled to older Java.
+* The only needed software to start using plugin is to have installed on machine Java 8.
+* Most effective way to experience Gradle AEM Plugin is to clone and customize [example project](https://github.com/Cognifide/gradle-aem-example).
+* As a build command, it is recommended to use Gradle Wrapper (`gradlew`) instead of locally installed Gradle (`gradle`) to easily have same version of build tool installed on all environments. Only at first build time, wrapper will be automatically downloaded and installed, then reused.
 
 ## Configuration
-
-### Quick start
-
-* Recommended way to start using Gradle AEM Plugin is to clone and customize [example project](https://github.com/Cognifide/gradle-aem-example).
-* As a build command, it is recommended to use Gradle Wrapper (`gradlew`) instead of locally installed Gradle (`gradle`) to easily have same version of build tool installed on all environments. At first time, wrapper will be automatically downloaded and installed.
 
 ### Plugin setup
 
@@ -215,17 +212,6 @@ More detailed and always up-to-date information about configuration options is a
 
 For multi project build configuration, please investigate [example project](https://github.com/Cognifide/gradle-aem-example).
 
-### Workflow
-
-Initially, to create fully configured local AEM instances simply run command `gradlew aemSetup`.
-
-Later during development process, building and deploying to AEM should be done using most simple command: `gradle`.
-Above configuration uses default tasks, so that alternatively it is possible to build same using explicitly specified command `gradlew aemSatisfy aemBuild aemAwait`.
-
-* Firstly dependent packages (like AEM hotfixes, Vanity URL Components etc) will be installed lazily (only when they are not installed yet).
-* In next step application is being built and deployed to all configured AEM instances.
-* Finally build awaits till all AEM instances be stable.
-
 ### Tasks
 
 #### Task `aemSetup`
@@ -336,7 +322,7 @@ Check out JCR content from running AEM author instance to local content path.
 
 Clean checked out JCR content.
 
-#### Task  `aemSync`
+#### Task `aemSync`
 
 Check out then clean JCR content.
 
@@ -395,9 +381,9 @@ Task specific:
    * `instance` - instance used to communicate with while performing Vault commands. Determined by (order take precedence): properties `aem.vlt.instance`, `aem.deploy.instance.list`, `aem.deploy.instance.name` and as fallback first instance which name matches filter `*-author`.
    * `filter` - file name or path to Vault workspace filter file  *META-INF/vault/filter.xml*. Determined by (order take precedence): property: `aem.vlt.filter`, configuration `contentPath` property suffixed with `META-INF/vault/filter.xml`. 
 
-### How to
+## How to's
 
-#### Set AEM configuration properly for all / concrete project(s)
+### Set AEM configuration properly for all / concrete project(s)
 
 Global configuration like AEM instances should be defined in root *build.gradle* file:
 
@@ -427,7 +413,7 @@ aemCompose {
 Warning! Very often plugin users mistake is to configure `aemSatisfy` task in `allprojects` closure. 
 As an effect there will be same dependent CRX package defined multiple times.
 
-#### Work with local and/or remote AEM instances
+### Work with local and/or remote AEM instances
 
 In AEM configuration section, there is possibility to use `localInstance` or `remoteInstance` methods to define AEM instances to be used to:
  
@@ -456,7 +442,7 @@ Rules:
 * Only instances being defined as *local* are being considered in command `aemSetup`, `aemCreate`, `aemUp` etc (that comes from `com.cognifide.aem.instance` plugin).
 * All instances being defined as *local* or *remote* are being considered in commands CRX package deployment related like `aemBuild`, `aemDeploy` etc.
 
-#### Understand why there are one or two plugins to be applied in build script
+### Understand why there are one or two plugins to be applied in build script
 
 Gradle AEM plugin architecture is splitted into 3 plugins to properly fit into Gradle tasks structure correctly.
 
@@ -468,8 +454,18 @@ Most often, Gradle commands are being launched from project root and tasks are b
 Let's imagine if task `aemSatisfy` will come from package plugin, then Gradle will execute more than one `aemSatisfy` (for all projects that have plugin applied), so that this is unintended behavior.
 Currently used plugin architecture solves that problem.
 
+### Work effectively on start and daily basis
 
-#### Deploy CRX package(s) only to filtered group of instances:
+Initially, to create fully configured local AEM instances simply run command `gradlew aemSetup`.
+
+Later during development process, building and deploying to AEM should be done using most simple command: `gradle`.
+Above configuration uses default tasks, so that alternatively it is possible to build same using explicitly specified command `gradlew aemSatisfy aemBuild aemAwait`.
+
+* Firstly dependent packages (like AEM hotfixes, Vanity URL Components etc) will be installed lazily (only when they are not installed yet).
+* In next step application is being built and deployed to all configured AEM instances.
+* Finally build awaits till all AEM instances be stable.
+
+### Deploy CRX package(s) only to filtered group of instances:
 
 When there are defined named AEM instances: `local-author`, `local-publish`, `integration-author` and `integration-publish`,
 then it is available to deploy packages with taking into account: 
@@ -486,7 +482,7 @@ Default value of that instance name filter is `local-*`.
 
 Deployment could be performed in parallel mode when configuration option `deployParallel` is set to `true`.
    
-#### Deploy CRX package(s) only to instances specified explicitly
+### Deploy CRX package(s) only to instances specified explicitly
 
 List delimited: instances by semicolon, instance properties by comma.
 
@@ -494,7 +490,7 @@ List delimited: instances by semicolon, instance properties by comma.
 gradlew aemDeploy -Paem.deploy.instance.list=http://localhost:4502,admin,admin;http://localhost:4503,admin,admin
 ```
 
-#### Deploy only filtered dependent CRX package(s)
+### Deploy only filtered dependent CRX package(s)
 
 Filters with wildcards, comma delimited.
 
@@ -502,7 +498,7 @@ Filters with wildcards, comma delimited.
 gradlew aemSatisfy -Paem.satisfy.group=hotfix-*,groovy-console
 ```
 
-#### Check out and clean JCR content using filter at custom path
+### Check out and clean JCR content using filter at custom path
    
 E.g for subproject `:content`:
    
@@ -512,13 +508,13 @@ gradlew :content:aemSync -Paem.vlt.filter=src/main/content/META-INF/vault/custom
 gradlew :content:aemSync -Paem.vlt.filter=C:/aem/custom-filter.xml
 ```
 
-#### Check out and clean JCR content using filter roots specified explicitly
+### Check out and clean JCR content using filter roots specified explicitly
    
 ```bash
 gradlew :content:aemSync -Paem.vlt.filterRoots=[/etc/tags/example,/content/dam/example]
 ```
 
-#### Execute any Vault command 
+### Execute any Vault command 
 
 E.g copy nodes from one remote AEM instance to another.
 
@@ -529,7 +525,7 @@ gradlew :content:aemVlt -Paem.vlt.command='rcp -b 100 -r -u -n http://admin:admi
 See [VLT Tool documentation](https://docs.adobe.com/docs/en/aem/6-2/develop/dev-tools/ht-vlttool.html).
 Gradle requires to have working directory with file *build.gradle* in it, but Vault tool can work at any directory under *jcr_root*. To change working directory for Vault, use property `aem.vlt.path` which is relative path to be appended to *jcr_root* for project task being currently executed.
 
-#### Assemble all-in-one CRX package(s)
+### Assemble all-in-one CRX package(s)
 
 Let's assume following project structure (with build file contents):
 
@@ -579,12 +575,11 @@ By distinguishing `includeProject`, `includeBundle` or `includeContent` there is
 Only one must have rule to be kept while developing a multi-module project is that **all Vault filter roots of all projects must to be exclusive**.
 In general, they are most often exclusive, to avoid strange JCR installer behaviors, but sometimes exceptional [workspace filter](http://jackrabbit.apache.org/filevault/filter.html) rules are being applied like `mode="merge"` etc.
 
-#### Skip installed package resolution by download name. 
+### Skip installed package resolution by download name. 
 
 ```bash
 gradlew aemInstall -Paem.deploy.skipDownloadName=true
 ```
-
 Only matters when Vault properties file is customized then that property could be used to eliminate conflicts.
 
 ## Known issues
