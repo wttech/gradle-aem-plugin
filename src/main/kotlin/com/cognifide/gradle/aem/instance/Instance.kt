@@ -122,6 +122,7 @@ interface Instance : Serializable {
     val type: InstanceType
         get() = InstanceType.byName(typeName)
 
+    @get:JsonIgnore
     val credentials: String
         get() = "$user:$password"
 
