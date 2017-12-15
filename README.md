@@ -50,7 +50,7 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
       * [Task aemUp](#task-aemup)
       * [Task aemDown](#task-aemdown)
       * [Task aemAwait](#task-aemawait)
-   * [CRX package plugin tasks](#crx-package-plugin-tasks)
+   * [Package plugin tasks](#package-plugin-tasks)
       * [Task aemSatisfy](#task-aemsatisfy)
       * [Task aemCompose](#task-aemcompose)
       * [Task aemDeploy](#task-aemdeploy)
@@ -249,7 +249,7 @@ Turn off local AEM instance(s).
 
 Wait until all local AEM instance(s) be stable.
 
-### CRX package plugin tasks
+### Package plugin tasks
 
 #### Task `aemSatisfy` 
 
