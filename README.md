@@ -37,19 +37,20 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
 
 ## Table of contents
 
+* [Table of contents](#table-of-contents)
 * [Installation](#installation)
 * [Configuration](#configuration)
    * [Plugin setup](#plugin-setup)
       * [Minimal:](#minimal)
       * [Full](#full)
-   * [Local AEM instance related tasks](#local-aem-instance-related-tasks)
+   * [Instance plugin tasks](#instance-plugin-tasks)
       * [Task aemSetup](#task-aemsetup)
       * [Task aemCreate](#task-aemcreate)
       * [Task aemDestroy](#task-aemdestroy)
       * [Task aemUp](#task-aemup)
       * [Task aemDown](#task-aemdown)
       * [Task aemAwait](#task-aemawait)
-   * [CRX package deployment related tasks](#crx-package-deployment-related-tasks)
+   * [CRX package plugin tasks](#crx-package-plugin-tasks)
       * [Task aemSatisfy](#task-aemsatisfy)
       * [Task aemCompose](#task-aemcompose)
       * [Task aemDeploy](#task-aemdeploy)
@@ -87,6 +88,7 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
    * [Vault tasks parallelism](#vault-tasks-parallelism)
    * [Files from SSH for aemCreate and <code>aemSatisfy</code>](#files-from-ssh-for-aemcreate-and-aemsatisfy)
 * [License](#license)
+
 
 ## Installation
 
@@ -214,7 +216,7 @@ More detailed and always up-to-date information about configuration options is a
 
 For multi project build configuration, please investigate [example project](https://github.com/Cognifide/gradle-aem-example).
 
-### Local AEM instance related tasks
+### Instance plugin tasks
 
 #### Task `aemSetup`
 
@@ -247,7 +249,7 @@ Turn off local AEM instance(s).
 
 Wait until all local AEM instance(s) be stable.
 
-### CRX package deployment related tasks
+### CRX package plugin tasks
 
 #### Task `aemSatisfy` 
 
