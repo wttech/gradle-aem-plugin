@@ -354,7 +354,7 @@ gradlew :aemDebug
 
 Then file at path *build/aem/aemDebug/debug.json* with content below is being generated:
 
-```json
+```javascript
 {
   "projectInfo" : {
     "displayName" : "root project 'example'",
@@ -377,14 +377,14 @@ Then file at path *build/aem/aemDebug/debug.json* with content below is being ge
           "httpPort" : 4502,
           "environment" : "local"
         }
-        ...
+        // ...
       },
       "deployConnectionTimeout" : 5000,
       "deployParallel" : true,
       "deploySnapshots" : [ ],
       "uploadForce" : true,
       "recursiveInstall" : true
-      ...
+      // ...
     },
     "requiresRoot" : "false",
     "buildCount" : "20173491654283",
@@ -400,7 +400,7 @@ Then file at path *build/aem/aemDebug/debug.json* with content below is being ge
       "lastUnpacked" : 1513321701062,
       "installed" : true
     }
-    ...
+    // ...
   }
 }
 ```
