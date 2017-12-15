@@ -344,7 +344,66 @@ Execute any Vault command. See how to's section for more details.
 
 #### Task `aemDebug` 
 
-Dumps effective AEM build configuration of project to JSON file.
+Dumps effective AEM build configuration of concrete project to JSON file.
+
+When command below is being run (for root project `:`):
+
+```bash
+gradlew :aemDebug
+```
+
+Then file at path *build/aem/aemDebug/debug.json* with content below is being generated:
+
+```json
+{
+  "projectInfo" : {
+    "displayName" : "root project 'example'",
+    "path" : ":",
+    "name" : "example",
+    "dir" : "C:\\Users\\krystian.panek\\Projects\\gradle-aem-example"
+  },
+  "packageProperties" : {
+    "name" : "example",
+    "config" : {
+      "instances" : {
+        "local-author" : {
+          "httpUrl" : "http://localhost:4502",
+          "user" : "admin",
+          "password" : "admin",
+          "typeName" : "author",
+          "debugPort" : 14502,
+          "name" : "local-author",
+          "type" : "AUTHOR",
+          "httpPort" : 4502,
+          "environment" : "local"
+        }
+        /* ... */
+      },
+      "deployConnectionTimeout" : 5000,
+      "deployParallel" : true,
+      "deploySnapshots" : [ ],
+      "uploadForce" : true,
+      "recursiveInstall" : true
+      /* ... */
+    },
+    "requiresRoot" : "false",
+    "buildCount" : "20173491654283",
+    "created" : "2017-12-15T07:16:54Z"
+  },
+  "packageDeployed" : {
+    "local-author" : {
+      "group" : "com.company.aem",
+      "name" : "example",
+      "version" : "1.0.0-SNAPSHOT",
+      "path" : "/etc/packages/com.company.aem/example-1.0.0-SNAPSHOT.zip",
+      "downloadName" : "example-1.0.0-SNAPSHOT.zip",
+      "lastUnpacked" : 1513321701062,
+      "installed" : true
+    }
+    /* ... */
+  }
+}
+```
 
 ### Expandable properties
 
