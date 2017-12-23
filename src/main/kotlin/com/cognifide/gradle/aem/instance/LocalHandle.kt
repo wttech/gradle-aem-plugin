@@ -3,10 +3,10 @@ package com.cognifide.gradle.aem.instance
 import com.cognifide.gradle.aem.AemConfig
 import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.AemInstancePlugin
-import com.cognifide.gradle.aem.internal.file.FileOperations
 import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.internal.ProgressLogger
 import com.cognifide.gradle.aem.internal.PropertyParser
+import com.cognifide.gradle.aem.internal.file.FileOperations
 import org.apache.commons.io.FileUtils
 import org.gradle.api.Project
 import org.gradle.api.logging.Logger
@@ -35,7 +35,9 @@ class LocalHandle(val project: Project, val sync: InstanceSync) {
     val dir = File("${config.instancesPath}/${instance.name}")
 
     val jar: File by lazy {
-        FileOperations.find(dir, listOf("cq-quickstart*.jar")) ?: File(dir, "cq-quickstart.jar")
+        FileOperations.find(dir, "cq-quickstart*.jar")
+                ?: FileOperations.find(dir, "*.jar")
+                ?: File(dir, "cq-quickstart.jar")
     }
 
     val lock = File(dir, "local-handle.lock")
@@ -103,7 +105,7 @@ class LocalHandle(val project: Project, val sync: InstanceSync) {
         }
 
         if (!license.exists()) {
-            throw AemException("License file not found at path: ${license.absolutePath}. Is instance license URL configured?" )
+            throw AemException("License file not found at path: ${license.absolutePath}. Is instance license URL configured?")
         }
     }
 
@@ -117,6 +119,7 @@ class LocalHandle(val project: Project, val sync: InstanceSync) {
         // Ensure that 'logs' directory exists
         GFileUtils.mkdirs(File(staticDir, "logs"))
     }
+
     private fun extractStaticFiles() {
         val progressLogger = ProgressLogger(project, "Extracting static files from JAR  '${jar.absolutePath}' to directory: $staticDir")
         progressLogger.started()
