@@ -35,7 +35,8 @@ class LocalHandle(val project: Project, val sync: InstanceSync) {
     val dir = File("${config.instancesPath}/${instance.name}")
 
     val jar: File by lazy {
-        FileOperations.find(dir, "cq-quickstart*.jar")
+        FileOperations.find(dir, "*cq-quickstart*.jar")
+                ?: FileOperations.find(dir, "*quickstart*.jar")
                 ?: FileOperations.find(dir, "*.jar")
                 ?: File(dir, "cq-quickstart.jar")
     }

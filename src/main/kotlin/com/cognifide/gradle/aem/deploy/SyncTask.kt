@@ -46,11 +46,11 @@ abstract class SyncTask : DefaultTask(), AemTask {
     }
 
     protected fun awaitStableInstances() {
-        InstanceActions.awaitStable(project, filterInstances())
+        InstanceActions(project).awaitStable(filterInstances())
     }
 
     protected fun awaitStableLocalInstances() {
-        InstanceActions.awaitStable(project, Instance.locals(project))
+        InstanceActions(project).awaitStable(Instance.locals(project))
     }
 
 }
