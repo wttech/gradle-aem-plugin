@@ -4,6 +4,7 @@ import com.cognifide.gradle.aem.AemConfig
 import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.AemInstancePlugin
 import com.cognifide.gradle.aem.internal.Formats
+import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.ProgressLogger
 import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.internal.file.FileOperations
@@ -19,6 +20,13 @@ class LocalHandle(val project: Project, val sync: InstanceSync) {
 
     companion object {
         val JAR_STATIC_FILES_PATH = "static/"
+
+        val JAR_NAME_PATTERNS = listOf(
+                "*aem-quickstart*.jar",
+                "*cq-quickstart*.jar",
+                "*quickstart*.jar",
+                "*.jar"
+        )
     }
 
     class Script(val wrapper: File, val bin: File, val command: List<String>) {
@@ -34,12 +42,7 @@ class LocalHandle(val project: Project, val sync: InstanceSync) {
 
     val dir = File("${config.instancesPath}/${instance.name}")
 
-    val jar: File by lazy {
-        FileOperations.find(dir, "*cq-quickstart*.jar")
-                ?: FileOperations.find(dir, "*quickstart*.jar")
-                ?: FileOperations.find(dir, "*.jar")
-                ?: File(dir, "cq-quickstart.jar")
-    }
+    val jar = File(dir, "aem-quickstart.jar")
 
     val lock = File(dir, "local-handle.lock")
 
@@ -61,14 +64,13 @@ class LocalHandle(val project: Project, val sync: InstanceSync) {
         }
     }
 
-    fun create(files: List<File>) {
+    fun create(resolvedFiles: List<File>) {
         cleanDir(true)
 
         logger.info("Creating instance at path '${dir.absolutePath}'")
 
-        logger.info("Copying resolved instance files: ${files.map { it.absolutePath }}")
-        GFileUtils.mkdirs(dir)
-        files.forEach { FileUtils.copyFileToDirectory(it, dir) }
+        logger.info("Copying resolved instance files: $resolvedFiles")
+        copyFiles(resolvedFiles)
 
         logger.info("Validating instance files")
         validateFiles()
@@ -100,7 +102,26 @@ class LocalHandle(val project: Project, val sync: InstanceSync) {
         logger.info("Created instance with success")
     }
 
-    fun validateFiles() {
+    private fun copyFiles(resolvedFiles: List<File>) {
+        GFileUtils.mkdirs(dir)
+        val files = resolvedFiles.map {
+            FileUtils.copyFileToDirectory(it, dir)
+            File(dir, it.name)
+        }
+        findJar(files)?.let { FileUtils.moveFile(findJar(files), jar) }
+    }
+
+    private fun findJar(files: List<File>): File? {
+        JAR_NAME_PATTERNS.forEach { pattern ->
+            files.asSequence()
+                    .filter { Patterns.wildcard(it.name, pattern) }
+                    .forEach { return it }
+        }
+
+        return null
+    }
+
+    private fun validateFiles() {
         if (!jar.exists()) {
             throw AemException("Instance JAR file not found at path: ${jar.absolutePath}. Is instance JAR URL configured?")
         }
