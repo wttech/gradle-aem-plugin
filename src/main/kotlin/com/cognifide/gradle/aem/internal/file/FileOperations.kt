@@ -81,6 +81,10 @@ object FileOperations {
         ).map { it(pathOrFileName) }.firstOrNull { it.exists() }
     }
 
+    fun find(dir: File, pattern: String): File? {
+        return find(dir, listOf(pattern))
+    }
+
     fun find(dir: File, patterns: List<String>): File? {
         var result: File? = null
         val files = dir.listFiles({ _, name -> Patterns.wildcard(name, patterns) })
