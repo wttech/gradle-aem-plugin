@@ -108,7 +108,7 @@ class LocalHandle(val project: Project, val sync: InstanceSync) {
             FileUtils.copyFileToDirectory(it, dir)
             File(dir, it.name)
         }
-        findJar(files)?.let { FileUtils.moveFile(findJar(files), jar) }
+        findJar(files)?.let { FileUtils.moveFile(it, jar) }
     }
 
     private fun findJar(files: List<File>): File? {
