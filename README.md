@@ -478,6 +478,12 @@ allprojects { subproject ->
 Project `:app` specific configuration like CRX package options should be defined in `app/build.gradle`:
 
 ```groovy
+aem {
+    config {
+        contentPath = project.file("src/main/aem")
+    }
+}
+
 aemCompose {
     archiveName = 'company-example'
     duplicatesStrategy = "EXCLUDE"
