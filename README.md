@@ -79,7 +79,6 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
    * [Deploy only filtered dependent CRX package(s)](#deploy-only-filtered-dependent-crx-packages)
    * [Check out and clean JCR content using filter at custom path](#check-out-and-clean-jcr-content-using-filter-at-custom-path)
    * [Check out and clean JCR content using filter roots specified explicitly](#check-out-and-clean-jcr-content-using-filter-roots-specified-explicitly)
-   * [Execute any Vault command](#execute-any-vault-command)
    * [Assemble all-in-one CRX package(s)](#assemble-all-in-one-crx-packages)
    * [Skip installed package resolution by download name.](#skip-installed-package-resolution-by-download-name)
 * [Known issues](#known-issues)
@@ -233,7 +232,17 @@ Clean checked out JCR content.
 
 #### Task `aemVlt`
 
-Execute any Vault command. See how to's section for more details.
+Execute any JCR File Vault command. 
+
+For instance, to copy nodes from one remote AEM instance to another, there might be used command below:
+
+```bash
+gradlew :content:aemVlt -Paem.vlt.command='rcp -b 100 -r -u -n http://admin:admin@localhost:4502/crx/-/jcr:root/content/dam/example http://admin:admin@localhost:4503/crx/-/jcr:root/content/dam/example' 
+```
+
+For more details about available parameters, please visit [VLT Tool documentation](https://docs.adobe.com/docs/en/aem/6-2/develop/dev-tools/ht-vlttool.html).
+
+While using task `aemVlt` be aware that Gradle requires to have working directory with file *build.gradle* in it, but Vault tool can work at any directory under *jcr_root*. To change working directory for Vault, use property `aem.vlt.path` which is relative path to be appended to *jcr_root* for project task being currently executed.
 
 #### Task `aemDebug` 
 
@@ -579,17 +588,6 @@ gradlew :content:aemSync -Paem.vlt.filter=C:/aem/custom-filter.xml
 ```bash
 gradlew :content:aemSync -Paem.vlt.filterRoots=[/etc/tags/example,/content/dam/example]
 ```
-
-### Execute any Vault command 
-
-E.g copy nodes from one remote AEM instance to another.
-
-```bash
-gradlew :content:aemVlt -Paem.vlt.command='rcp -b 100 -r -u -n http://admin:admin@localhost:4502/crx/-/jcr:root/content/dam/example http://admin:admin@localhost:4503/crx/-/jcr:root/content/dam/example' 
-```
-
-See [VLT Tool documentation](https://docs.adobe.com/docs/en/aem/6-2/develop/dev-tools/ht-vlttool.html).
-Gradle requires to have working directory with file *build.gradle* in it, but Vault tool can work at any directory under *jcr_root*. To change working directory for Vault, use property `aem.vlt.path` which is relative path to be appended to *jcr_root* for project task being currently executed.
 
 ### Assemble all-in-one CRX package(s)
 
