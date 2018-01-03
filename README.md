@@ -87,9 +87,6 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
    * [Files from SSH for aemCreate and <code>aemSatisfy</code>](#files-from-ssh-for-aemcreate-and-aemsatisfy)
 * [License](#license)
 
-Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
-
-
 ## Installation
 
 * The only needed software to start using plugin is to have installed on machine Java 8.
