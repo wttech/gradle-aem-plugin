@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.base
 
 import com.cognifide.gradle.aem.base.api.AemExtension
+import com.cognifide.gradle.aem.base.debug.DebugTask
 import com.cognifide.gradle.aem.base.vlt.CheckoutTask
 import com.cognifide.gradle.aem.base.vlt.CleanTask
 import com.cognifide.gradle.aem.base.vlt.SyncTask
@@ -36,6 +37,8 @@ class BasePlugin : Plugin<Project> {
     }
 
     private fun setupTasks(project: Project) {
+        project.tasks.create(DebugTask.NAME, DebugTask::class.java)
+
         val clean = project.tasks.create(CleanTask.NAME, CleanTask::class.java)
         val vlt = project.tasks.create(VltTask.NAME, VltTask::class.java)
         val checkout = project.tasks.create(CheckoutTask.NAME, CheckoutTask::class.java)

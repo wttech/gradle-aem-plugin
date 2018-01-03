@@ -10,4 +10,4 @@ buildscript {
     }
 }
 
-apply plugin: 'com.cognifide.aem.package'
+apply plugin: 'com.cognifide.aem.base'

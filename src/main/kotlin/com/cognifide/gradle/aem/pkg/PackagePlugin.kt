@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem.pkg
 
 import com.cognifide.gradle.aem.base.BasePlugin
-import com.cognifide.gradle.aem.base.debug.DebugTask
 import com.cognifide.gradle.aem.pkg.deploy.*
 import com.cognifide.gradle.aem.pkg.jar.UpdateManifestTask
 import com.google.common.base.CaseFormat
@@ -71,8 +70,6 @@ class PackagePlugin : Plugin<Project> {
         val activate = project.tasks.create(ActivateTask.NAME, ActivateTask::class.java)
         val deploy = project.tasks.create(DeployTask.NAME, DeployTask::class.java)
         val distribute = project.tasks.create(DistributeTask.NAME, DistributeTask::class.java)
-
-        project.tasks.create(DebugTask.NAME, DebugTask::class.java)
 
         val assemble = project.tasks.getByName(LifecycleBasePlugin.ASSEMBLE_TASK_NAME)
         val check = project.tasks.getByName(LifecycleBasePlugin.CHECK_TASK_NAME)
