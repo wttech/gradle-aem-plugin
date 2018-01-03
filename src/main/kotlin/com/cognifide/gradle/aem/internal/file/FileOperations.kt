@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.internal.file
 
-import com.cognifide.gradle.aem.AemBasePlugin
+import com.cognifide.gradle.aem.base.BasePlugin
 import com.cognifide.gradle.aem.internal.Patterns
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
@@ -20,11 +20,11 @@ import java.nio.file.Paths
 object FileOperations {
 
     fun readResource(path: String): InputStream? {
-        return javaClass.getResourceAsStream("/${AemBasePlugin.PKG.replace(".", "/")}/$path")
+        return javaClass.getResourceAsStream("/${BasePlugin.PKG.replace(".", "/")}/$path")
     }
 
     fun getResources(path: String): List<String> {
-        return Reflections("${AemBasePlugin.PKG}.$path".replace("/", "."), ResourcesScanner()).getResources { true; }.toList()
+        return Reflections("${BasePlugin.PKG}.$path".replace("/", "."), ResourcesScanner()).getResources { true; }.toList()
     }
 
     fun eachResource(resourceRoot: String, targetDir: File, callback: (String, File) -> Unit) {
@@ -61,9 +61,11 @@ object FileOperations {
         val files = FileUtils.listFiles(dir, TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE)
         files?.filter { Patterns.wildcard(it, wildcardFilters) }?.forEach { file ->
             val buffer = StringWriter()
-            file.inputStream().bufferedReader().use { it.forEachLine { line ->
-                buffer.write(amender(file, line) + System.lineSeparator())
-            }}
+            file.inputStream().bufferedReader().use {
+                it.forEachLine { line ->
+                    buffer.write(amender(file, line) + System.lineSeparator())
+                }
+            }
             file.printWriter().use { it.print(buffer.toString()) }
         }
     }

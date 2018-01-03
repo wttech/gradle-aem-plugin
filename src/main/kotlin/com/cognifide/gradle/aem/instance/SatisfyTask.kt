@@ -1,9 +1,9 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.AemTask
-import com.cognifide.gradle.aem.deploy.SyncTask
+import com.cognifide.gradle.aem.base.api.AemTask
 import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.internal.file.FileResolver
+import com.cognifide.gradle.aem.pkg.deploy.SyncTask
 import groovy.lang.Closure
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction

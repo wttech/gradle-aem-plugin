@@ -37,19 +37,17 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
 
 ## Table of contents
 
-* [Table of contents](#table-of-contents)
 * [Installation](#installation)
 * [Configuration](#configuration)
    * [Plugin setup](#plugin-setup)
       * [Minimal:](#minimal)
       * [Full](#full)
-   * [Instance plugin tasks](#instance-plugin-tasks)
-      * [Task aemSetup](#task-aemsetup)
-      * [Task aemCreate](#task-aemcreate)
-      * [Task aemDestroy](#task-aemdestroy)
-      * [Task aemUp](#task-aemup)
-      * [Task aemDown](#task-aemdown)
-      * [Task aemAwait](#task-aemawait)
+   * [Base plugin tasks](#base-plugin-tasks)
+      * [Task aemSync](#task-aemsync)
+      * [Task aemCheckout](#task-aemcheckout)
+      * [Task aemClean](#task-aemclean)
+      * [Task aemVlt](#task-aemvlt)
+      * [Task aemDebug](#task-aemdebug)
    * [Package plugin tasks](#package-plugin-tasks)
       * [Task aemSatisfy](#task-aemsatisfy)
       * [Task aemCompose](#task-aemcompose)
@@ -61,14 +59,15 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
       * [Task aemPurge](#task-aempurge)
       * [Task aemActivate](#task-aemactivate)
       * [Task aemDistribute](#task-aemdistribute)
-      * [Task rule aem&lt;ProjectPath&gt;Build](#task-rule-aemprojectpathbuild)
-   * [Tooling tasks](#tooling-tasks)
       * [Task aemCollect](#task-aemcollect)
-      * [Task aemCheckout](#task-aemcheckout)
-      * [Task aemClean](#task-aemclean)
-      * [Task aemSync](#task-aemsync)
-      * [Task aemVlt](#task-aemvlt)
-      * [Task aemDebug](#task-aemdebug)
+      * [Task rule aem&lt;ProjectPath&gt;Build](#task-rule-aemprojectpathbuild)
+   * [Instance plugin tasks](#instance-plugin-tasks)
+      * [Task aemSetup](#task-aemsetup)
+      * [Task aemCreate](#task-aemcreate)
+      * [Task aemDestroy](#task-aemdestroy)
+      * [Task aemUp](#task-aemup)
+      * [Task aemDown](#task-aemdown)
+      * [Task aemAwait](#task-aemawait)
    * [Expandable properties](#expandable-properties)
 * [How to's](#how-tos)
    * [Set AEM configuration properly for all / concrete project(s)](#set-aem-configuration-properly-for-all--concrete-projects)
@@ -80,7 +79,6 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
    * [Deploy only filtered dependent CRX package(s)](#deploy-only-filtered-dependent-crx-packages)
    * [Check out and clean JCR content using filter at custom path](#check-out-and-clean-jcr-content-using-filter-at-custom-path)
    * [Check out and clean JCR content using filter roots specified explicitly](#check-out-and-clean-jcr-content-using-filter-roots-specified-explicitly)
-   * [Execute any Vault command](#execute-any-vault-command)
    * [Assemble all-in-one CRX package(s)](#assemble-all-in-one-crx-packages)
    * [Skip installed package resolution by download name.](#skip-installed-package-resolution-by-download-name)
 * [Known issues](#known-issues)
@@ -88,6 +86,8 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
    * [Vault tasks parallelism](#vault-tasks-parallelism)
    * [Files from SSH for aemCreate and <code>aemSatisfy</code>](#files-from-ssh-for-aemcreate-and-aemsatisfy)
 * [License](#license)
+
+Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
 
 
 ## Installation
@@ -216,39 +216,96 @@ More detailed and always up-to-date information about configuration options is a
 
 For multi project build configuration, please investigate [example project](https://github.com/Cognifide/gradle-aem-example).
 
-### Instance plugin tasks
+### Base plugin tasks
 
-#### Task `aemSetup`
+#### Task `aemSync`
 
-Perform initial setup of local AEM instance(s). Automated version of `aemCreate aemUp aemSatisfy aemBuild`.
+Check out then clean JCR content.
 
-#### Task `aemCreate`
- 
-Create local AEM instance(s). To use it specify required properties in ignored file *gradle.properties* at project root (protocols supported: SMB, SSH, HTTP(s) or local path, SMB as example):
+#### Task `aemCheckout`
 
-* `aem.instance.local.jarUrl=smb://[host]/[path]/cq-quickstart.jar`
-* `aem.instance.local.licenseUrl=smb://[host]/[path]/license.properties`
-* `aem.smb.domain=MYDOMAIN`
-* `aem.smb.username=MYUSER`
-* `aem.smb.password=MYPASSWORD`
-  
-#### Task `aemDestroy` 
+Check out JCR content from running AEM author instance to local content path.
 
-Destroy local AEM instance(s).
-    
-#### Task `aemUp`
+#### Task `aemClean`
 
-Turn on local AEM instance(s).
+Clean checked out JCR content.
 
-#### Task `aemDown`
+#### Task `aemVlt`
 
-Turn off local AEM instance(s).
+Execute any JCR File Vault command. 
 
+For instance, to copy nodes from one remote AEM instance to another, there might be used command below:
 
-#### Task `aemAwait`
+```bash
+gradlew :content:aemVlt -Paem.vlt.command='rcp -b 100 -r -u -n http://admin:admin@localhost:4502/crx/-/jcr:root/content/dam/example http://admin:admin@localhost:4503/crx/-/jcr:root/content/dam/example' 
+```
 
-Wait until all local AEM instance(s) be stable.
+For more details about available parameters, please visit [VLT Tool documentation](https://docs.adobe.com/docs/en/aem/6-2/develop/dev-tools/ht-vlttool.html).
 
+While using task `aemVlt` be aware that Gradle requires to have working directory with file *build.gradle* in it, but Vault tool can work at any directory under *jcr_root*. To change working directory for Vault, use property `aem.vlt.path` which is relative path to be appended to *jcr_root* for project task being currently executed.
+
+#### Task `aemDebug` 
+
+Dumps effective AEM build configuration of concrete project to JSON file.
+
+When command below is being run (for root project `:`):
+
+```bash
+gradlew :aemDebug
+```
+
+Then file at path *build/aem/aemDebug/debug.json* with content below is being generated:
+
+```javascript
+{
+  "projectInfo" : {
+    "displayName" : "root project 'example'",
+    "path" : ":",
+    "name" : "example",
+    "dir" : "C:\\Users\\krystian.panek\\Projects\\gradle-aem-example"
+  },
+  "packageProperties" : {
+    "name" : "example",
+    "config" : {
+      "instances" : {
+        "local-author" : {
+          "httpUrl" : "http://localhost:4502",
+          "user" : "admin",
+          "password" : "admin",
+          "typeName" : "author",
+          "debugPort" : 14502,
+          "name" : "local-author",
+          "type" : "AUTHOR",
+          "httpPort" : 4502,
+          "environment" : "local"
+        }
+        // ...
+      },
+      "deployConnectionTimeout" : 5000,
+      "deployParallel" : true,
+      "deploySnapshots" : [ ],
+      "uploadForce" : true,
+      "recursiveInstall" : true
+      // ...
+    },
+    "requiresRoot" : "false",
+    "buildCount" : "20173491654283",
+    "created" : "2017-12-15T07:16:54Z"
+  },
+  "packageDeployed" : {
+    "local-author" : {
+      "group" : "com.company.aem",
+      "name" : "example",
+      "version" : "1.0.0-SNAPSHOT",
+      "path" : "/etc/packages/com.company.aem/example-1.0.0-SNAPSHOT.zip",
+      "downloadName" : "example-1.0.0-SNAPSHOT.zip",
+      "lastUnpacked" : 1513321701062,
+      "installed" : true
+    }
+    // ...
+  }
+}
+```
 ### Package plugin tasks
 
 #### Task `aemSatisfy` 
@@ -314,96 +371,47 @@ Replicate installed CRX package to other AEM instance(s).
 
 Upload, install & activate CRX package into AEM instances(s). Secondary form of deployment. Optimized version of `aemUpload aemInstall aemActivate -Paem.deploy.instance.name=*-author`.
 
-#### Task rule `aem<ProjectPath>Build`
-
-Build CRX package and deploy it to AEM instance(s). It is recommended to include appropriate deploy task name in [default tasks](https://docs.gradle.org/current/userguide/tutorial_using_tasks.html#sec:default_tasks) of project. For instance, to deploy project at path `:app:design` use task named `aemAppDesignBuild`.
-
-### Tooling tasks
-
 #### Task `aemCollect`
 
 Composes ZIP package from all CRX packages being satisfied and built. Available methods:
 
 * all inherited from [ZIP task](https://docs.gradle.org/3.5/dsl/org.gradle.api.tasks.bundling.Zip.html).
 
-#### Task `aemCheckout`
+#### Task rule `aem<ProjectPath>Build`
 
-Check out JCR content from running AEM author instance to local content path.
+Build CRX package and deploy it to AEM instance(s). It is recommended to include appropriate deploy task name in [default tasks](https://docs.gradle.org/current/userguide/tutorial_using_tasks.html#sec:default_tasks) of project. For instance, to deploy project at path `:app:design` use task named `aemAppDesignBuild`.
 
-#### Task `aemClean`
+### Instance plugin tasks
 
-Clean checked out JCR content.
+#### Task `aemSetup`
 
-#### Task `aemSync`
+Perform initial setup of local AEM instance(s). Automated version of `aemCreate aemUp aemSatisfy aemBuild`.
 
-Check out then clean JCR content.
+#### Task `aemCreate`
+ 
+Create local AEM instance(s). To use it specify required properties in ignored file *gradle.properties* at project root (protocols supported: SMB, SSH, HTTP(s) or local path, SMB as example):
 
-#### Task `aemVlt`
+* `aem.instance.local.jarUrl=smb://[host]/[path]/cq-quickstart.jar`
+* `aem.instance.local.licenseUrl=smb://[host]/[path]/license.properties`
+* `aem.smb.domain=MYDOMAIN`
+* `aem.smb.username=MYUSER`
+* `aem.smb.password=MYPASSWORD`
+  
+#### Task `aemDestroy` 
 
-Execute any Vault command. See how to's section for more details.
+Destroy local AEM instance(s).
+    
+#### Task `aemUp`
 
-#### Task `aemDebug` 
+Turn on local AEM instance(s).
 
-Dumps effective AEM build configuration of concrete project to JSON file.
+#### Task `aemDown`
 
-When command below is being run (for root project `:`):
+Turn off local AEM instance(s).
 
-```bash
-gradlew :aemDebug
-```
+#### Task `aemAwait`
 
-Then file at path *build/aem/aemDebug/debug.json* with content below is being generated:
-
-```javascript
-{
-  "projectInfo" : {
-    "displayName" : "root project 'example'",
-    "path" : ":",
-    "name" : "example",
-    "dir" : "C:\\Users\\krystian.panek\\Projects\\gradle-aem-example"
-  },
-  "packageProperties" : {
-    "name" : "example",
-    "config" : {
-      "instances" : {
-        "local-author" : {
-          "httpUrl" : "http://localhost:4502",
-          "user" : "admin",
-          "password" : "admin",
-          "typeName" : "author",
-          "debugPort" : 14502,
-          "name" : "local-author",
-          "type" : "AUTHOR",
-          "httpPort" : 4502,
-          "environment" : "local"
-        }
-        // ...
-      },
-      "deployConnectionTimeout" : 5000,
-      "deployParallel" : true,
-      "deploySnapshots" : [ ],
-      "uploadForce" : true,
-      "recursiveInstall" : true
-      // ...
-    },
-    "requiresRoot" : "false",
-    "buildCount" : "20173491654283",
-    "created" : "2017-12-15T07:16:54Z"
-  },
-  "packageDeployed" : {
-    "local-author" : {
-      "group" : "com.company.aem",
-      "name" : "example",
-      "version" : "1.0.0-SNAPSHOT",
-      "path" : "/etc/packages/com.company.aem/example-1.0.0-SNAPSHOT.zip",
-      "downloadName" : "example-1.0.0-SNAPSHOT.zip",
-      "lastUnpacked" : 1513321701062,
-      "installed" : true
-    }
-    // ...
-  }
-}
-```
+Wait until all local AEM instance(s) be stable.
 
 ### Expandable properties
 
@@ -470,6 +478,12 @@ allprojects { subproject ->
 Project `:app` specific configuration like CRX package options should be defined in `app/build.gradle`:
 
 ```groovy
+aem {
+    config {
+        contentPath = project.file("src/main/aem")
+    }
+}
+
 aemCompose {
     archiveName = 'company-example'
     duplicatesStrategy = "EXCLUDE"
@@ -580,17 +594,6 @@ gradlew :content:aemSync -Paem.vlt.filter=C:/aem/custom-filter.xml
 ```bash
 gradlew :content:aemSync -Paem.vlt.filterRoots=[/etc/tags/example,/content/dam/example]
 ```
-
-### Execute any Vault command 
-
-E.g copy nodes from one remote AEM instance to another.
-
-```bash
-gradlew :content:aemVlt -Paem.vlt.command='rcp -b 100 -r -u -n http://admin:admin@localhost:4502/crx/-/jcr:root/content/dam/example http://admin:admin@localhost:4503/crx/-/jcr:root/content/dam/example' 
-```
-
-See [VLT Tool documentation](https://docs.adobe.com/docs/en/aem/6-2/develop/dev-tools/ht-vlttool.html).
-Gradle requires to have working directory with file *build.gradle* in it, but Vault tool can work at any directory under *jcr_root*. To change working directory for Vault, use property `aem.vlt.path` which is relative path to be appended to *jcr_root* for project task being currently executed.
 
 ### Assemble all-in-one CRX package(s)
 

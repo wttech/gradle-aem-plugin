@@ -1,9 +1,8 @@
 package com.cognifide.gradle.aem.pkg
 
-import com.cognifide.gradle.aem.AemConfig
-import com.cognifide.gradle.aem.AemException
-import com.cognifide.gradle.aem.AemPackagePlugin
-import com.cognifide.gradle.aem.AemTask
+import com.cognifide.gradle.aem.base.api.AemConfig
+import com.cognifide.gradle.aem.base.api.AemException
+import com.cognifide.gradle.aem.base.api.AemTask
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.PropertyParser
 import org.gradle.api.Project
@@ -30,13 +29,13 @@ open class ComposeTask : Zip(), AemTask {
     final override val config = AemConfig.of(project)
 
     @InputDirectory
-    val vaultDir = AemTask.temporaryDir(project, PrepareTask.NAME, AemPackagePlugin.VLT_PATH)
+    val vaultDir = AemTask.temporaryDir(project, PrepareTask.NAME, PackagePlugin.VLT_PATH)
 
     @Input
     val filterRoots = mutableSetOf<String>()
 
     @Internal
-    val filterRootDefault = { subproject: Project, subconfig: AemConfig ->
+    var filterRootDefault = { subproject: Project, subconfig: AemConfig ->
         "<filter root=\"${subconfig.bundlePath}\"/>"
     }
 
@@ -109,7 +108,7 @@ open class ComposeTask : Zip(), AemTask {
     fun includeProjects(pathFilter: String) {
         project.gradle.afterProject { subproject ->
             if (subproject != project
-                    && subproject.plugins.hasPlugin(AemPackagePlugin.ID)
+                    && subproject.plugins.hasPlugin(PackagePlugin.ID)
                     && (pathFilter.isBlank() || Patterns.wildcard(subproject.path, pathFilter))) {
                 includeProject(subproject)
             }
@@ -163,7 +162,7 @@ open class ComposeTask : Zip(), AemTask {
             val jars = JarCollector(project).all.toSet()
 
             if (jars.isNotEmpty()) {
-                into("${AemPackagePlugin.JCR_ROOT}/$effectiveInstallPath") { spec ->
+                into("${PackagePlugin.JCR_ROOT}/$effectiveInstallPath") { spec ->
                     spec.from(jars)
                     fileFilter(spec)
                 }
@@ -182,9 +181,9 @@ open class ComposeTask : Zip(), AemTask {
             dependProject(project, config.dependContentTaskNames)
             extractVaultFilters(project, config)
 
-            val contentDir = File("${config.contentPath}/${AemPackagePlugin.JCR_ROOT}")
+            val contentDir = File("${config.contentPath}/${PackagePlugin.JCR_ROOT}")
             if (contentDir.exists()) {
-                into(AemPackagePlugin.JCR_ROOT) { spec ->
+                into(PackagePlugin.JCR_ROOT) { spec ->
                     spec.from(contentDir)
                     fileFilter(spec)
                 }
@@ -192,7 +191,7 @@ open class ComposeTask : Zip(), AemTask {
         }
     }
 
-    private fun findProject(projectPath: String) : Project {
+    private fun findProject(projectPath: String): Project {
         return project.findProject(projectPath)
                 ?: throw AemException("Project cannot be found by path '$projectPath'")
     }
@@ -236,7 +235,7 @@ open class ComposeTask : Zip(), AemTask {
 
     fun includeVault(vltPath: Any) {
         contentCollectors += {
-            into(AemPackagePlugin.VLT_PATH, { spec ->
+            into(PackagePlugin.VLT_PATH, { spec ->
                 spec.from(vltPath)
                 fileFilter(spec)
             })

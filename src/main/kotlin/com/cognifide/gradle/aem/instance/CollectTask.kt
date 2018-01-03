@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.AemConfig
-import com.cognifide.gradle.aem.AemTask
+import com.cognifide.gradle.aem.base.api.AemConfig
+import com.cognifide.gradle.aem.base.api.AemTask
 import org.gradle.api.file.CopySpec
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.tasks.Internal

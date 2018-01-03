@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.AemTask
-import com.cognifide.gradle.aem.deploy.SyncTask
+import com.cognifide.gradle.aem.base.api.AemTask
+import com.cognifide.gradle.aem.pkg.deploy.SyncTask
 import org.gradle.api.tasks.TaskAction
 
 open class DownTask : SyncTask() {

@@ -1,9 +1,9 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.AemConfig
-import com.cognifide.gradle.aem.AemPackagePlugin
-import com.cognifide.gradle.aem.deploy.*
+import com.cognifide.gradle.aem.base.api.AemConfig
 import com.cognifide.gradle.aem.internal.Patterns
+import com.cognifide.gradle.aem.pkg.PackagePlugin
+import com.cognifide.gradle.aem.pkg.deploy.*
 import org.apache.commons.httpclient.HttpClient
 import org.apache.commons.httpclient.HttpMethod
 import org.apache.commons.httpclient.HttpStatus
@@ -148,7 +148,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
     }
 
     fun determineRemotePackage(file: File, refresh: Boolean = true): ListResponse.Package? {
-        val xml = ZipUtil.unpackEntry(file, AemPackagePlugin.VLT_PROPERTIES).toString(Charsets.UTF_8)
+        val xml = ZipUtil.unpackEntry(file, PackagePlugin.VLT_PROPERTIES).toString(Charsets.UTF_8)
         val doc = Jsoup.parse(xml, "", Parser.xmlParser())
 
         val group = doc.select("entry[key=group]").text()
@@ -252,7 +252,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
                 deployPackage(file)
                 true
             } else {
-               false
+                false
             }
         }
     }

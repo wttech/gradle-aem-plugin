@@ -1,10 +1,10 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.AemConfig
-import com.cognifide.gradle.aem.AemException
-import com.cognifide.gradle.aem.deploy.ListResponse
+import com.cognifide.gradle.aem.base.api.AemConfig
+import com.cognifide.gradle.aem.base.api.AemException
 import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.internal.PropertyParser
+import com.cognifide.gradle.aem.pkg.deploy.ListResponse
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.gradle.api.Project
 import java.io.Serializable
@@ -152,6 +152,6 @@ interface Instance : Serializable {
     }
 
     @get:JsonIgnore
-    var packages : ListResponse?
+    var packages: ListResponse?
 
 }

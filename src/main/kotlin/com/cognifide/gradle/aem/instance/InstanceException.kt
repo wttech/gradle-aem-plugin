@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.AemException
+import com.cognifide.gradle.aem.base.api.AemException
 
 class InstanceException : AemException {
 
