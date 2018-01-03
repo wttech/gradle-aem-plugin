@@ -119,7 +119,7 @@ apply plugin: 'com.cognifide.aem.package'
 
 Building and deploying to AEM via command: `gradlew aemBuild`.
 
-#### Full
+#### Additional
 
 AEM configuration section contains all default values for demonstrative purpose.
 
