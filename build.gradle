@@ -6,7 +6,7 @@ plugins {
 }
 
 group 'com.cognifide.gradle'
-version '2.0.16'
+version '2.0.17'
 description = 'Gradle AEM Plugin'
 defaultTasks = ['clean', 'publishToMavenLocal']
 
@@ -43,15 +43,15 @@ gradlePlugin {
     plugins {
         base {
             id = "com.cognifide.aem.base"
-            implementationClass = "com.cognifide.gradle.aem.AemBasePlugin"
+            implementationClass = "com.cognifide.gradle.aem.base.BasePlugin"
         }
         pkg {
             id = "com.cognifide.aem.package"
-            implementationClass = "com.cognifide.gradle.aem.AemPackagePlugin"
+            implementationClass = "com.cognifide.gradle.aem.pkg.PackagePlugin"
         }
         instance {
             id = "com.cognifide.aem.instance"
-            implementationClass = "com.cognifide.gradle.aem.AemInstancePlugin"
+            implementationClass = "com.cognifide.gradle.aem.instance.InstancePlugin"
         }
     }
 }

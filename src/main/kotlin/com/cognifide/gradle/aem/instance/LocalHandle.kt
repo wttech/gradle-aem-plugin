@@ -1,8 +1,7 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.AemConfig
-import com.cognifide.gradle.aem.AemException
-import com.cognifide.gradle.aem.AemInstancePlugin
+import com.cognifide.gradle.aem.base.api.AemConfig
+import com.cognifide.gradle.aem.base.api.AemException
 import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.ProgressLogger
@@ -82,7 +81,7 @@ class LocalHandle(val project: Project, val sync: InstanceSync) {
         correctStaticFiles()
 
         logger.info("Creating default instance files")
-        FileOperations.copyResources(AemInstancePlugin.FILES_PATH, dir, true)
+        FileOperations.copyResources(InstancePlugin.FILES_PATH, dir, true)
 
         val filesDir = File(config.instanceFilesPath)
 

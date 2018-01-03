@@ -1,8 +1,8 @@
 package com.cognifide.gradle.aem.internal
 
-import com.cognifide.gradle.aem.AemConfig
-import com.cognifide.gradle.aem.AemException
-import com.cognifide.gradle.aem.vlt.SyncTask
+import com.cognifide.gradle.aem.base.api.AemConfig
+import com.cognifide.gradle.aem.base.api.AemException
+import com.cognifide.gradle.aem.base.vlt.SyncTask
 import com.mitchellbosecke.pebble.PebbleEngine
 import com.mitchellbosecke.pebble.lexer.Syntax
 import com.mitchellbosecke.pebble.loader.StringLoader
@@ -54,11 +54,11 @@ class PropertyParser(val project: Project) {
         return value
     }
 
-    fun flag(name: String) : Boolean {
+    fun flag(name: String): Boolean {
         return project.properties.containsKey(name) && BooleanUtils.toBoolean(project.properties[name] as String?)
     }
 
-    fun list(name: String, delimiter : String = ",") : List<String> {
+    fun list(name: String, delimiter: String = ","): List<String> {
         val raw = prop(name) ?: return emptyList()
         val between = StringUtils.substringBetween(raw, "[", "]") ?: raw
 

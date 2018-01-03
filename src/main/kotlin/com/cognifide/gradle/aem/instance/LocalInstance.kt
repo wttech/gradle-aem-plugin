@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.deploy.ListResponse
+import com.cognifide.gradle.aem.pkg.deploy.ListResponse
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.Serializable
 
@@ -21,35 +21,35 @@ class LocalInstance(
     }
 
     constructor(httpUrl: String, user: String, password: String, type: String) : this(
-        httpUrl,
-        user,
-        password,
-        type,
-        debugPortByUrl(httpUrl)
+            httpUrl,
+            user,
+            password,
+            type,
+            debugPortByUrl(httpUrl)
     )
 
     constructor(httpUrl: String, user: String, password: String) : this(
-        httpUrl,
-        user,
-        password,
-        InstanceType.byUrl(httpUrl).name,
-        debugPortByUrl(httpUrl)
+            httpUrl,
+            user,
+            password,
+            InstanceType.byUrl(httpUrl).name,
+            debugPortByUrl(httpUrl)
     )
 
     constructor(httpUrl: String, type: String) : this(
-        httpUrl,
-        Instance.USER_DEFAULT,
-        Instance.PASSWORD_DEFAULT,
-        type,
-        debugPortByUrl(httpUrl)
+            httpUrl,
+            Instance.USER_DEFAULT,
+            Instance.PASSWORD_DEFAULT,
+            type,
+            debugPortByUrl(httpUrl)
     )
 
     constructor(httpUrl: String) : this(
-        httpUrl,
-        Instance.USER_DEFAULT,
-        Instance.PASSWORD_DEFAULT,
-        InstanceType.nameByUrl(httpUrl),
-        debugPortByUrl(httpUrl)
+            httpUrl,
+            Instance.USER_DEFAULT,
+            Instance.PASSWORD_DEFAULT,
+            InstanceType.nameByUrl(httpUrl),
+            debugPortByUrl(httpUrl)
     )
 
     override val environment: String
@@ -62,7 +62,6 @@ class LocalInstance(
     @Transient
     @get:JsonIgnore
     override var packages: ListResponse? = null
-
 
 
 }

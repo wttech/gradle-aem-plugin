@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.AemConfig
+import com.cognifide.gradle.aem.base.api.AemConfig
 import org.apache.commons.httpclient.params.HttpConnectionParams
 import org.apache.commons.lang3.builder.EqualsBuilder
 import org.apache.commons.lang3.builder.HashCodeBuilder

@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.vlt
 
+import com.cognifide.gradle.aem.base.vlt.VltCleaner
 import org.apache.commons.io.FileUtils
 import org.junit.Assert.assertEquals
 import org.junit.Rule
