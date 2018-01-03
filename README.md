@@ -41,7 +41,7 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
 * [Configuration](#configuration)
    * [Plugin setup](#plugin-setup)
       * [Minimal:](#minimal)
-      * [Full](#full)
+      * [Additional](#additional)
    * [Base plugin tasks](#base-plugin-tasks)
       * [Task aemSync](#task-aemsync)
       * [Task aemCheckout](#task-aemcheckout)
