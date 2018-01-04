@@ -9,6 +9,7 @@ import org.gradle.api.plugins.osgi.OsgiManifest
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.testing.Test
 import org.gradle.jvm.tasks.Jar
 import java.io.File
 
@@ -37,6 +38,9 @@ open class UpdateManifestTask : AemDefaultTask() {
     @Internal
     val jar = project.tasks.getByName(JavaPlugin.JAR_TASK_NAME) as Jar
 
+    @Internal
+    val test = project.tasks.getByName(Test.TASK_NAME) as Test
+
     val embeddableJars: List<File>
         @InputFiles
         get() {
@@ -45,7 +49,14 @@ open class UpdateManifestTask : AemDefaultTask() {
 
     init {
         project.afterEvaluate {
+            configureTest()
             embedJars()
+        }
+    }
+
+    private fun configureTest() {
+        if (config.testClasspathArchive) {
+            test.classpath += project.files(jar.archivePath)
         }
     }
 

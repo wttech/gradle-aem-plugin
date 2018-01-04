@@ -263,6 +263,10 @@ open class AemConfig(project: Project) : Serializable {
     @Input
     var satisfyRefreshing: Boolean = false
 
+    @Incubating
+    @Input
+    var testClasspathArchive: Boolean = true
+
     /**
      * Initialize defaults that depends on concrete type of project.
      */
