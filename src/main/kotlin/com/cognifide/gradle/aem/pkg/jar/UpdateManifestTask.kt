@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.pkg.jar
 import com.cognifide.gradle.aem.base.api.AemDefaultTask
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import org.dm.gradle.plugins.bundle.BundleExtension
+import org.gradle.api.java.archives.Manifest
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.osgi.OsgiManifest
 import org.gradle.api.tasks.InputFiles
@@ -69,12 +70,11 @@ open class UpdateManifestTask : AemDefaultTask() {
         } else if (project.plugins.hasPlugin(BUNDLE_PLUGIN_ID)) {
             addInstruction(project.extensions.getByType(BundleExtension::class.java), name, valueProvider())
         } else {
-            project.logger.warn("Cannot apply specific OSGi instruction to JAR manifest, because neither "
-                    + "'$OSGI_PLUGIN_ID' nor '$BUNDLE_PLUGIN_ID' are applied to project '${project.name}'.")
+            addInstruction(jar.manifest, name, valueProvider())
         }
     }
 
-    private fun addInstruction(manifest: OsgiManifest, name: String, value: String) {
+    private fun addInstruction(manifest: OsgiManifest, name: String, value: String?) {
         if (!manifest.instructions.containsKey(name)) {
             if (!value.isNullOrBlank()) {
                 manifest.instruction(name, value)
@@ -83,11 +83,19 @@ open class UpdateManifestTask : AemDefaultTask() {
     }
 
     @Suppress("unchecked_cast")
-    private fun addInstruction(config: BundleExtension, name: String, value: String) {
+    private fun addInstruction(config: BundleExtension, name: String, value: String?) {
         val instructions = config.instructions as Map<String, Any>
         if (!instructions.contains(name)) {
             if (!value.isNullOrBlank()) {
                 config.instruction(name, value)
+            }
+        }
+    }
+
+    private fun addInstruction(manifest: Manifest, name: String, value: String?) {
+        if (!manifest.attributes.containsKey(name)) {
+            if (!value.isNullOrBlank()) {
+                manifest.attributes(mapOf(name to value))
             }
         }
     }
