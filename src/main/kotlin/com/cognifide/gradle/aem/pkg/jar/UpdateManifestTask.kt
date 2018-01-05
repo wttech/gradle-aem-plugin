@@ -54,7 +54,7 @@ open class UpdateManifestTask : AemDefaultTask() {
     }
 
     private fun configureTest() {
-        if (config.testClasspathArchive) {
+        if (config.testClasspathJarIncluded) {
             test.classpath += project.files(jar.archivePath)
         }
     }

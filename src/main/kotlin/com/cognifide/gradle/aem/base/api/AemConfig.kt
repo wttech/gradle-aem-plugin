@@ -1,9 +1,6 @@
 package com.cognifide.gradle.aem.base.api
 
-import com.cognifide.gradle.aem.instance.Instance
-import com.cognifide.gradle.aem.instance.InstancePlugin
-import com.cognifide.gradle.aem.instance.LocalInstance
-import com.cognifide.gradle.aem.instance.RemoteInstance
+import com.cognifide.gradle.aem.instance.*
 import com.cognifide.gradle.aem.pkg.ComposeTask
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -254,6 +251,13 @@ open class AemConfig(project: Project) : Serializable {
     var awaitTimes: Long = 60 * 5
 
     /**
+     * Hook for customizing condition being an instance stability check.
+     */
+    @Internal
+    @get:JsonIgnore
+    var awaitCondition: (InstanceState) -> Boolean = { it.stable }
+
+    /**
      * Satisfy is a lazy task, which means that it will not install package that is already installed.
      * By default, information about currently installed packages is being retrieved from AEM only once.
      *
@@ -263,9 +267,12 @@ open class AemConfig(project: Project) : Serializable {
     @Input
     var satisfyRefreshing: Boolean = false
 
+    /**
+     * @see <https://github.com/Cognifide/gradle-aem-plugin/issues/95>
+     */
     @Incubating
     @Input
-    var testClasspathArchive: Boolean = true
+    var testClasspathJarIncluded: Boolean = true
 
     /**
      * Initialize defaults that depends on concrete type of project.

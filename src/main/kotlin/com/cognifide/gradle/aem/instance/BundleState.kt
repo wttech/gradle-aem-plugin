@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.internal.Formats
+import com.cognifide.gradle.aem.internal.Patterns
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -34,7 +35,7 @@ class BundleState private constructor() {
     lateinit var stats: List<Int>
 
     val stable: Boolean
-        get() = status.endsWith("- all ${bundles.size} bundles active.")
+        get() = bundles.all { it.active }
 
     val total: Int
         get() = stats[0]
@@ -56,6 +57,10 @@ class BundleState private constructor() {
 
     val stablePercent: String
         get() = Formats.percent(total - (resolvedBundles + installedBundles), total)
+
+    fun stableIgnoring(symbolicNames: List<String>): Boolean {
+        return bundles.filter { !Patterns.wildcard(it.symbolicName, symbolicNames) }.all { it.active }
+    }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -82,14 +87,20 @@ class BundleState private constructor() {
 
         lateinit var name: String
 
-        lateinit var stateRaw: String
-
-        val state: Int
-            get() = stateRaw.toInt()
+        var stateRaw: Int = 0
 
         lateinit var symbolicName: String
 
         lateinit var version: String
+
+        var fragment: Boolean = false
+
+        val active: Boolean
+            get() = if (fragment) {
+                stateRaw == 4
+            } else {
+                stateRaw == 32
+            }
 
         override fun equals(other: Any?): Boolean {
             if (this === other) return true

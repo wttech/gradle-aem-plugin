@@ -45,7 +45,7 @@ class InstanceActions(val project: Project) {
                 return@waitUntil false
             }
 
-            if (instanceStates.all { it.stable }) {
+            if (instanceStates.all(config.awaitCondition)) {
                 logger.info("Instance(s) are stable after ${Formats.duration(timer.elapsed)}")
                 return@waitUntil false
             }
