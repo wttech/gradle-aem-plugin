@@ -32,7 +32,7 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
 * Automated dependent packages installation from local and remote sources (SMB, SSH, HTTP(s)).
 * Smart Vault files generation (combining defaults with overiddables).
 * Embedded Vault tool for checking out and cleaning JCR content from running AEM instance.
-* OSGi Manifest customization by official [osgi](https://docs.gradle.org/current/userguide/osgi_plugin.html) plugin or feature rich [org.dm.bundle](https://github.com/TomDmitriev/gradle-bundle-plugin) plugin.
+* OSGi Manifest customization by official [OSGi plugin](https://docs.gradle.org/current/userguide/osgi_plugin.html) or feature rich [BND plugin](https://github.com/bndtools/bnd/tree/master/biz.aQute.bnd.gradle).
 * OSGi Declarative Services annotations support (instead of SCR, [see docs](http://blogs.adobe.com/experiencedelivers/experience-management/osgi/using-osgi-annotations-aem6-2/)).
 
 ## Table of contents
@@ -110,7 +110,7 @@ buildscript {
     }
     
     dependencies {
-        classpath 'com.cognifide.gradle:aem-plugin:2.0.17'
+        classpath 'com.cognifide.gradle:aem-plugin:2.0.18'
     }
 }
 

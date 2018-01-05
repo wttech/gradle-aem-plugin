@@ -7,15 +7,19 @@ defaultTasks = ['aemBuild']
 
 apply plugin: 'java'
 apply plugin: "kotlin"
-apply plugin: 'org.dm.bundle'
+apply plugin: 'biz.aQute.bnd.builder'
 apply plugin: 'com.cognifide.aem.package'
 
-bundle {
-    def pkg = 'com.company.aem.example.core'
+jar {
+    manifest {
+        def pkg = 'com.company.aem.example.core'
 
-    instruction 'Bundle-SymbolicName', pkg
-    instruction 'Sling-Model-Packages', pkg
-    instruction 'Export-Package', "$pkg.*;-split-package:=merge-first"
+        attributes([
+                'Bundle-SymbolicName': pkg,
+                'Sling-Model-Packages': pkg,
+                'Export-Package': "$pkg.*;-split-package:=merge-first"
+        ])
+    }
 }
 
 dependencies {

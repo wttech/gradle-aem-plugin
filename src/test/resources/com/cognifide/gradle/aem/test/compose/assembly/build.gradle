@@ -28,12 +28,17 @@ allprojects { subproject ->
         }
     }
 
-    plugins.withId 'org.dm.bundle', {
-        bundle {
-            instruction 'Bundle-Name', subproject.description
-            instruction 'Bundle-Category', 'example'
-            instruction 'Bundle-Vendor', 'Company'
+    plugins.withId 'biz.aQute.bnd.builder', {
+        jar {
+            manifest {
+                attributes([
+                        'Bundle-Name': subproject.description,
+                        'Bundle-Category': 'example',
+                        'Bundle-Vendor': 'Company'
+                ])
+            }
         }
+
         dependencies {
             compile group: 'org.slf4j', name: 'slf4j-api', version: '1.5.10'
             compile group: 'org.osgi', name: 'osgi.cmpn', version: '6.0.0'

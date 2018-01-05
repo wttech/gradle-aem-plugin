@@ -3,20 +3,21 @@ package com.cognifide.gradle.aem.pkg.jar
 import com.cognifide.gradle.aem.base.api.AemDefaultTask
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import org.dm.gradle.plugins.bundle.BundleExtension
+import org.gradle.api.java.archives.Manifest
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.osgi.OsgiManifest
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.testing.Test
 import org.gradle.jvm.tasks.Jar
 import java.io.File
 
 /**
  * Update manifest being used by 'jar' task of Java Plugin.
+ * Supported OSGi related plugins are: 'osgi', 'biz.aQute.bnd.builder', 'org.dm.bundle' and others.
  *
- * Both plugins 'osgi' and 'org.dm.bundle' are supported.
- *
- * @see <https://issues.gradle.org/browse/GRADLE-1107>
+ * @see <https://github.com/bndtools/bnd/tree/master/biz.aQute.bnd.gradle>
  * @see <https://github.com/TomDmitriev/gradle-bundle-plugin>
  */
 open class UpdateManifestTask : AemDefaultTask() {
@@ -36,6 +37,9 @@ open class UpdateManifestTask : AemDefaultTask() {
     @Internal
     val jar = project.tasks.getByName(JavaPlugin.JAR_TASK_NAME) as Jar
 
+    @Internal
+    val test = project.tasks.getByName(JavaPlugin.TEST_TASK_NAME) as Test
+
     val embeddableJars: List<File>
         @InputFiles
         get() {
@@ -44,7 +48,14 @@ open class UpdateManifestTask : AemDefaultTask() {
 
     init {
         project.afterEvaluate {
+            configureTest()
             embedJars()
+        }
+    }
+
+    private fun configureTest() {
+        if (config.testClasspathArchive) {
+            test.classpath += project.files(jar.archivePath)
         }
     }
 
@@ -69,12 +80,11 @@ open class UpdateManifestTask : AemDefaultTask() {
         } else if (project.plugins.hasPlugin(BUNDLE_PLUGIN_ID)) {
             addInstruction(project.extensions.getByType(BundleExtension::class.java), name, valueProvider())
         } else {
-            project.logger.warn("Cannot apply specific OSGi instruction to JAR manifest, because neither "
-                    + "'$OSGI_PLUGIN_ID' nor '$BUNDLE_PLUGIN_ID' are applied to project '${project.name}'.")
+            addInstruction(jar.manifest, name, valueProvider())
         }
     }
 
-    private fun addInstruction(manifest: OsgiManifest, name: String, value: String) {
+    private fun addInstruction(manifest: OsgiManifest, name: String, value: String?) {
         if (!manifest.instructions.containsKey(name)) {
             if (!value.isNullOrBlank()) {
                 manifest.instruction(name, value)
@@ -83,11 +93,19 @@ open class UpdateManifestTask : AemDefaultTask() {
     }
 
     @Suppress("unchecked_cast")
-    private fun addInstruction(config: BundleExtension, name: String, value: String) {
+    private fun addInstruction(config: BundleExtension, name: String, value: String?) {
         val instructions = config.instructions as Map<String, Any>
         if (!instructions.contains(name)) {
             if (!value.isNullOrBlank()) {
                 config.instruction(name, value)
+            }
+        }
+    }
+
+    private fun addInstruction(manifest: Manifest, name: String, value: String?) {
+        if (!manifest.attributes.containsKey(name)) {
+            if (!value.isNullOrBlank()) {
+                manifest.attributes(mapOf(name to value))
             }
         }
     }
