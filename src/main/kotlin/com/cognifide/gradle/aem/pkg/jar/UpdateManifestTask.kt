@@ -39,7 +39,7 @@ open class UpdateManifestTask : AemDefaultTask() {
     val jar = project.tasks.getByName(JavaPlugin.JAR_TASK_NAME) as Jar
 
     @Internal
-    val test = project.tasks.getByName(Test.TASK_NAME) as Test
+    val test = project.tasks.getByName(JavaPlugin.TEST_TASK_NAME) as Test
 
     val embeddableJars: List<File>
         @InputFiles
