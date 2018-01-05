@@ -15,7 +15,7 @@ import org.gradle.language.base.plugins.LifecycleBasePlugin
  *
  * JVM based languages like Groovy or Kotlin must have implicitly applied 'java' plugin.
  * Projects can have only 'com.cognifide.aem.package' plugin applied intentionally to generate packages with content only.
- * Projects can have applied official 'osgi' or 'org.dm.bundle' plugins to customize OSGi manifest.
+ * Projects can have applied official almost any type of OSGi plugin to customize manifest ('osgi', 'biz.aQute.bnd.builder', 'org.dm.bundle').
  */
 class PackagePlugin : Plugin<Project> {
 
@@ -30,7 +30,7 @@ class PackagePlugin : Plugin<Project> {
 
         val VLT_PATH = "META-INF/vault"
 
-        val VLT_PROPERTIES = "${VLT_PATH}/properties.xml"
+        val VLT_PROPERTIES = "$VLT_PATH/properties.xml"
 
         val JCR_ROOT = "jcr_root"
 

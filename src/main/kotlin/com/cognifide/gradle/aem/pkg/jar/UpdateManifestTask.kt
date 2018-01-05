@@ -15,10 +15,9 @@ import java.io.File
 
 /**
  * Update manifest being used by 'jar' task of Java Plugin.
+ * Supported OSGi related plugins are: 'osgi', 'biz.aQute.bnd.builder', 'org.dm.bundle' and others.
  *
- * Both plugins 'osgi' and 'org.dm.bundle' are supported.
- *
- * @see <https://issues.gradle.org/browse/GRADLE-1107>
+ * @see <https://github.com/bndtools/bnd/tree/master/biz.aQute.bnd.gradle>
  * @see <https://github.com/TomDmitriev/gradle-bundle-plugin>
  */
 open class UpdateManifestTask : AemDefaultTask() {
