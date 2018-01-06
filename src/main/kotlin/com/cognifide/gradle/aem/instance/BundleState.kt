@@ -58,8 +58,26 @@ class BundleState private constructor() {
     val stablePercent: String
         get() = Formats.percent(total - (resolvedBundles + installedBundles), total)
 
-    fun stableIgnoring(symbolicNames: List<String>): Boolean {
+    /**
+     * Checks if all bundles of matching symbolic name pattern are active.
+     */
+    fun active(symbolicNames: List<String>): Boolean {
+        return bundles.filter { Patterns.wildcard(it.symbolicName, symbolicNames) }.all { it.active }
+    }
+
+    fun active(symbolicName: String): Boolean {
+        return active(listOf(symbolicName))
+    }
+
+    /**
+     * Checks if all bundles except these matching symbolic name pattern are active.
+     */
+    fun activeIgnoring(symbolicNames: List<String>): Boolean {
         return bundles.filter { !Patterns.wildcard(it.symbolicName, symbolicNames) }.all { it.active }
+    }
+
+    fun activeIgnoring(symbolicName: String): Boolean {
+        return activeIgnoring(listOf(symbolicName))
     }
 
     override fun equals(other: Any?): Boolean {
