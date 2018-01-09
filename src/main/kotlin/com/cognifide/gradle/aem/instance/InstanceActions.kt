@@ -31,6 +31,9 @@ class InstanceActions(val project: Project) {
         logger.info("Checking stability of instance(s).")
 
         var lastInstanceStates = -1
+        var sinceStableTicks = -1L
+        var sinceStableElapsed = 0L
+
         Behaviors.waitUntil(config.awaitInterval, { timer ->
             val instanceStates = instances.map { InstanceState(project, it) }
             if (instanceStates.hashCode() != lastInstanceStates) {
@@ -41,13 +44,23 @@ class InstanceActions(val project: Project) {
             progressLogger.progress(progressFor(instanceStates, config, timer))
 
             if (config.awaitTimes > 0 && timer.ticks > config.awaitTimes) {
-                logger.warn("Instance(s) are not stable. Timeout reached after ${Formats.duration(timer.elapsed)}")
+                logger.warn("Instance(s) are not stable. Timeout reached after ${Formats.duration(timer.elapsed)}.")
                 return@waitUntil false
             }
 
             if (instanceStates.all(config.awaitCondition)) {
-                logger.info("Instance(s) are stable after ${Formats.duration(timer.elapsed)}")
-                return@waitUntil false
+                if (config.awaitAssurances > 0 && sinceStableTicks == -1L) {
+                    logger.info("Instance(s) seems to be stable. Assuring.")
+                    sinceStableTicks = timer.ticks
+                    sinceStableElapsed = timer.elapsed
+                }
+
+                if (config.awaitAssurances <= 0 || (sinceStableTicks >= 0 && (timer.ticks - sinceStableTicks) >= config.awaitAssurances)) {
+                    logger.info("Instance(s) are stable after ${Formats.duration(sinceStableElapsed)}.")
+                    return@waitUntil false
+                }
+            } else {
+                sinceStableTicks = -1L
             }
 
             true
@@ -56,19 +69,23 @@ class InstanceActions(val project: Project) {
         progressLogger.completed()
     }
 
-    private fun progressFor(instanceStates: List<InstanceState>, timer: Behaviors.Timer) =
-            instanceStates.joinToString(" | ") { progressFor(it, timer.ticks, 0) }
+    private fun progressFor(states: List<InstanceState>, timer: Behaviors.Timer) =
+            states.joinToString(" | ") { progressFor(it, timer.ticks, 0) }
 
-    private fun progressFor(instanceStates: List<InstanceState>, config: AemConfig, timer: Behaviors.Timer) =
-            instanceStates.joinToString(" | ") { progressFor(it, timer.ticks, config.awaitTimes) }
+    private fun progressFor(states: List<InstanceState>, config: AemConfig, timer: Behaviors.Timer) =
+            states.joinToString(" | ") { progressFor(it, timer.ticks, config.awaitTimes) }
 
-    private fun progressFor(it: InstanceState, tick: Long, maxTicks: Long): String {
-        return "${it.instance.name}: ${progressIndicator(it, tick, maxTicks)} ${it.bundleState.statsWithLabels} [${it.bundleState.stablePercent}]"
+    private fun progressFor(state: InstanceState, tick: Long, maxTicks: Long): String {
+        return "${state.instance.name}: ${progressIndicator(state, tick, maxTicks)} ${state.bundleState.statsWithLabels} [${state.bundleState.stablePercent}]"
     }
 
     private fun progressIndicator(state: InstanceState, tick: Long, maxTicks: Long): String {
-        var indicator = if (state.stable || tick.rem(2) == 0L) {
-            "*"
+        var indicator = if (tick.rem(2) == 0L) {
+            if (state.config.awaitCondition(state)) {
+                "+"
+            } else {
+                "-"
+            }
         } else {
             " "
         }

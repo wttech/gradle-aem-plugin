@@ -46,7 +46,8 @@ interface Instance : Serializable {
                     }
                     3 -> {
                         val (url, user, password) = parts
-                        RemoteInstance(url, user, password, ENVIRONMENT_CMD, InstanceType.byUrl(url).name)
+                        val type = InstanceType.byUrl(url).name.toLowerCase()
+                        RemoteInstance(url, user, password, ENVIRONMENT_CMD, type)
                     }
                     else -> {
                         throw AemException("Cannot parse instance string: '$line'")

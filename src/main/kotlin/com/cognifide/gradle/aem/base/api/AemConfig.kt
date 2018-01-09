@@ -251,6 +251,12 @@ open class AemConfig(project: Project) : Serializable {
     var awaitTimes: Long = 60 * 5
 
     /**
+     * Number of intervals / additional instance stability checks to assure all stable instances.
+     */
+    @Input
+    var awaitAssurances: Long = 1
+
+    /**
      * Hook for customizing condition being an instance stability check.
      */
     @Internal
