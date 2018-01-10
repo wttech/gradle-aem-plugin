@@ -17,6 +17,7 @@ class InstanceActions(val project: Project) {
 
         progressLogger.started()
 
+        // Check if delay is configured
         if (config.awaitDelay > 0) {
             logger.info("Delaying due to pending operations on instance(s).")
 
@@ -31,7 +32,11 @@ class InstanceActions(val project: Project) {
         logger.info("Checking stability of instance(s).")
 
         var lastInstanceStates = -1
+        var sinceStableTicks = -1L
+        var sinceStableElapsed = 0L
+
         Behaviors.waitUntil(config.awaitInterval, { timer ->
+            // Gather all instance states and update checksum on any particular state change
             val instanceStates = instances.map { InstanceState(project, it) }
             if (instanceStates.hashCode() != lastInstanceStates) {
                 lastInstanceStates = instanceStates.hashCode()
@@ -40,14 +45,35 @@ class InstanceActions(val project: Project) {
 
             progressLogger.progress(progressFor(instanceStates, config, timer))
 
+            // Detect timeout when same checksum is not being updated so long
             if (config.awaitTimes > 0 && timer.ticks > config.awaitTimes) {
-                logger.warn("Instance(s) are not stable. Timeout reached after ${Formats.duration(timer.elapsed)}")
-                return@waitUntil false
+                val message = "Instance(s) are not stable. Timeout reached after ${Formats.duration(timer.elapsed)}."
+                if (config.awaitFail) {
+                    throw InstanceException(message)
+                } else {
+                    logger.warn(message)
+                    return@waitUntil false
+                }
             }
 
-            if (instanceStates.all { it.stable }) {
-                logger.info("Instance(s) are stable after ${Formats.duration(timer.elapsed)}")
-                return@waitUntil false
+            // Verify gathered instance states
+            if (instanceStates.all(config.awaitCondition)) {
+                // Assure that expected moment is not accidental, remember it
+                if (config.awaitAssurances > 0 && sinceStableTicks == -1L) {
+                    logger.info("Instance(s) seems to be stable. Assuring.")
+                    sinceStableTicks = timer.ticks
+                    sinceStableElapsed = timer.elapsed
+                }
+
+                // End if assurance is not configured or this moment remains a little longer
+                if (config.awaitAssurances <= 0 || (sinceStableTicks >= 0 && (timer.ticks - sinceStableTicks) >= config.awaitAssurances)) {
+                    logger.info("Instance(s) are stable after ${Formats.duration(sinceStableElapsed)}.")
+                    return@waitUntil false
+                }
+            } else {
+                // Reset assurance, because no longer verified
+                sinceStableTicks = -1L
+                sinceStableElapsed = 0L
             }
 
             true
@@ -56,26 +82,36 @@ class InstanceActions(val project: Project) {
         progressLogger.completed()
     }
 
-    private fun progressFor(instanceStates: List<InstanceState>, timer: Behaviors.Timer) =
-            instanceStates.joinToString(" | ") { progressFor(it, timer.ticks, 0) }
+    private fun progressFor(states: List<InstanceState>, timer: Behaviors.Timer) =
+            (progressTicks(timer.ticks, 0) + " " + states.joinToString(" | ") { progressFor(it, timer.ticks) }).trim()
 
-    private fun progressFor(instanceStates: List<InstanceState>, config: AemConfig, timer: Behaviors.Timer) =
-            instanceStates.joinToString(" | ") { progressFor(it, timer.ticks, config.awaitTimes) }
+    private fun progressFor(states: List<InstanceState>, config: AemConfig, timer: Behaviors.Timer) =
+            (progressTicks(timer.ticks, config.awaitTimes) + " " + states.joinToString(" | ") { progressFor(it, timer.ticks) }).trim()
 
-    private fun progressFor(it: InstanceState, tick: Long, maxTicks: Long): String {
-        return "${it.instance.name}: ${progressIndicator(it, tick, maxTicks)} ${it.bundleState.statsWithLabels} [${it.bundleState.stablePercent}]"
+    private fun progressFor(state: InstanceState, tick: Long): String {
+        return "${state.instance.name}: ${progressIndicator(state, tick)} ${state.bundleState.statsWithLabels} [${state.bundleState.stablePercent}]"
     }
 
-    private fun progressIndicator(state: InstanceState, tick: Long, maxTicks: Long): String {
-        var indicator = if (state.stable || tick.rem(2) == 0L) {
-            "*"
+    private fun progressTicks(tick: Long, maxTicks: Long): String {
+        return if (maxTicks > 0 && (tick.toDouble() / maxTicks.toDouble() > 0.1)) {
+            "[$tick/$maxTicks tt]"
+        } else {
+            ""
+        }
+    }
+
+    private fun progressIndicator(state: InstanceState, tick: Long): String {
+        var indicator = if (tick.rem(2) == 0L) {
+            if (state.config.awaitCondition(state)) {
+                "+"
+            } else {
+                "-"
+            }
         } else {
             " "
         }
 
-        if (maxTicks > 0 && (tick.toDouble() / maxTicks.toDouble() > 0.1)) {
-            indicator += " [$tick/$maxTicks tt]"
-        }
+
 
         return indicator
     }

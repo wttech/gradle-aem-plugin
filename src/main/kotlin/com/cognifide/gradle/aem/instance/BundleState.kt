@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.internal.Formats
+import com.cognifide.gradle.aem.internal.Patterns
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -34,7 +35,7 @@ class BundleState private constructor() {
     lateinit var stats: List<Int>
 
     val stable: Boolean
-        get() = status.endsWith("- all ${bundles.size} bundles active.")
+        get() = !unknown && bundles.all { it.active }
 
     val total: Int
         get() = stats[0]
@@ -51,11 +52,36 @@ class BundleState private constructor() {
     val installedBundles: Int
         get() = stats[4]
 
+    val unknown : Boolean
+        get() = bundles.isEmpty()
+
     val statsWithLabels
         get() = "[$total bt, $activeBundles ba, $activeFragments fa, $resolvedBundles br]"
 
     val stablePercent: String
         get() = Formats.percent(total - (resolvedBundles + installedBundles), total)
+
+    /**
+     * Checks if all bundles of matching symbolic name pattern are active.
+     */
+    fun active(symbolicNames: List<String>): Boolean {
+        return !unknown && bundles.filter { Patterns.wildcard(it.symbolicName, symbolicNames) }.all { it.active }
+    }
+
+    fun active(symbolicName: String): Boolean {
+        return active(listOf(symbolicName))
+    }
+
+    /**
+     * Checks if all bundles except these matching symbolic name pattern are active.
+     */
+    fun activeIgnoring(symbolicNames: List<String>): Boolean {
+        return !unknown && bundles.filter { !Patterns.wildcard(it.symbolicName, symbolicNames) }.all { it.active }
+    }
+
+    fun activeIgnoring(symbolicName: String): Boolean {
+        return activeIgnoring(listOf(symbolicName))
+    }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -82,14 +108,20 @@ class BundleState private constructor() {
 
         lateinit var name: String
 
-        lateinit var stateRaw: String
-
-        val state: Int
-            get() = stateRaw.toInt()
+        var stateRaw: Int = 0
 
         lateinit var symbolicName: String
 
         lateinit var version: String
+
+        var fragment: Boolean = false
+
+        val active: Boolean
+            get() = if (fragment) {
+                stateRaw == FRAGMENT_ACTIVE_STATE
+            } else {
+                stateRaw == BUNDLE_ACTIVE_STATE
+            }
 
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
@@ -114,6 +146,12 @@ class BundleState private constructor() {
                     .append(symbolicName)
                     .append(version)
                     .toHashCode()
+        }
+
+        companion object {
+            val FRAGMENT_ACTIVE_STATE = 4
+
+            val BUNDLE_ACTIVE_STATE = 32
         }
     }
 
