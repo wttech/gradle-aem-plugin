@@ -47,8 +47,13 @@ class InstanceActions(val project: Project) {
 
             // Detect timeout when same checksum is not being updated so long
             if (config.awaitTimes > 0 && timer.ticks > config.awaitTimes) {
-                logger.warn("Instance(s) are not stable. Timeout reached after ${Formats.duration(timer.elapsed)}.")
-                return@waitUntil false
+                val message = "Instance(s) are not stable. Timeout reached after ${Formats.duration(timer.elapsed)}."
+                if (config.awaitFail) {
+                    throw InstanceException(message)
+                } else {
+                    logger.warn(message)
+                    return@waitUntil false
+                }
             }
 
             // Verify gathered instance states
@@ -78,16 +83,24 @@ class InstanceActions(val project: Project) {
     }
 
     private fun progressFor(states: List<InstanceState>, timer: Behaviors.Timer) =
-            states.joinToString(" | ") { progressFor(it, timer.ticks, 0) }
+            (progressTicks(timer.ticks, 0) + " " + states.joinToString(" | ") { progressFor(it, timer.ticks) }).trim()
 
     private fun progressFor(states: List<InstanceState>, config: AemConfig, timer: Behaviors.Timer) =
-            states.joinToString(" | ") { progressFor(it, timer.ticks, config.awaitTimes) }
+            (progressTicks(timer.ticks, config.awaitTimes) + " " + states.joinToString(" | ") { progressFor(it, timer.ticks) }).trim()
 
-    private fun progressFor(state: InstanceState, tick: Long, maxTicks: Long): String {
-        return "${state.instance.name}: ${progressIndicator(state, tick, maxTicks)} ${state.bundleState.statsWithLabels} [${state.bundleState.stablePercent}]"
+    private fun progressFor(state: InstanceState, tick: Long): String {
+        return "${state.instance.name}: ${progressIndicator(state, tick)} ${state.bundleState.statsWithLabels} [${state.bundleState.stablePercent}]"
     }
 
-    private fun progressIndicator(state: InstanceState, tick: Long, maxTicks: Long): String {
+    private fun progressTicks(tick: Long, maxTicks: Long): String {
+        return if (maxTicks > 0 && (tick.toDouble() / maxTicks.toDouble() > 0.1)) {
+            "[$tick/$maxTicks tt]"
+        } else {
+            ""
+        }
+    }
+
+    private fun progressIndicator(state: InstanceState, tick: Long): String {
         var indicator = if (tick.rem(2) == 0L) {
             if (state.config.awaitCondition(state)) {
                 "+"
@@ -98,9 +111,7 @@ class InstanceActions(val project: Project) {
             " "
         }
 
-        if (maxTicks > 0 && (tick.toDouble() / maxTicks.toDouble() > 0.1)) {
-            indicator += " [$tick/$maxTicks tt]"
-        }
+
 
         return indicator
     }

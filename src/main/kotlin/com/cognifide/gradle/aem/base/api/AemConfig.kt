@@ -251,6 +251,12 @@ open class AemConfig(project: Project) : Serializable {
     var awaitTimes: Long = 60 * 5
 
     /**
+     * If there is still some unstable instance left, then fail build except just logging warning.
+     */
+    @Input
+    var awaitFail: Boolean = true
+
+    /**
      * Number of intervals / additional instance stability checks to assure all stable instances.
      */
     @Input
