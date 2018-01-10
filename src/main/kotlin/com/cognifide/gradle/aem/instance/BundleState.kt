@@ -35,7 +35,7 @@ class BundleState private constructor() {
     lateinit var stats: List<Int>
 
     val stable: Boolean
-        get() = bundles.all { it.active }
+        get() = !unknown && bundles.all { it.active }
 
     val total: Int
         get() = stats[0]
@@ -52,6 +52,9 @@ class BundleState private constructor() {
     val installedBundles: Int
         get() = stats[4]
 
+    val unknown : Boolean
+        get() = bundles.isEmpty()
+
     val statsWithLabels
         get() = "[$total bt, $activeBundles ba, $activeFragments fa, $resolvedBundles br]"
 
@@ -62,7 +65,7 @@ class BundleState private constructor() {
      * Checks if all bundles of matching symbolic name pattern are active.
      */
     fun active(symbolicNames: List<String>): Boolean {
-        return bundles.filter { Patterns.wildcard(it.symbolicName, symbolicNames) }.all { it.active }
+        return !unknown && bundles.filter { Patterns.wildcard(it.symbolicName, symbolicNames) }.all { it.active }
     }
 
     fun active(symbolicName: String): Boolean {
@@ -73,7 +76,7 @@ class BundleState private constructor() {
      * Checks if all bundles except these matching symbolic name pattern are active.
      */
     fun activeIgnoring(symbolicNames: List<String>): Boolean {
-        return bundles.filter { !Patterns.wildcard(it.symbolicName, symbolicNames) }.all { it.active }
+        return !unknown && bundles.filter { !Patterns.wildcard(it.symbolicName, symbolicNames) }.all { it.active }
     }
 
     fun activeIgnoring(symbolicName: String): Boolean {
@@ -115,9 +118,9 @@ class BundleState private constructor() {
 
         val active: Boolean
             get() = if (fragment) {
-                stateRaw == 4
+                stateRaw == FRAGMENT_ACTIVE_STATE
             } else {
-                stateRaw == 32
+                stateRaw == BUNDLE_ACTIVE_STATE
             }
 
         override fun equals(other: Any?): Boolean {
@@ -143,6 +146,12 @@ class BundleState private constructor() {
                     .append(symbolicName)
                     .append(version)
                     .toHashCode()
+        }
+
+        companion object {
+            val FRAGMENT_ACTIVE_STATE = 4
+
+            val BUNDLE_ACTIVE_STATE = 32
         }
     }
 

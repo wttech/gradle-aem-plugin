@@ -17,6 +17,7 @@ class InstanceActions(val project: Project) {
 
         progressLogger.started()
 
+        // Check if delay is configured
         if (config.awaitDelay > 0) {
             logger.info("Delaying due to pending operations on instance(s).")
 
@@ -35,6 +36,7 @@ class InstanceActions(val project: Project) {
         var sinceStableElapsed = 0L
 
         Behaviors.waitUntil(config.awaitInterval, { timer ->
+            // Gather all instance states and update checksum on any particular state change
             val instanceStates = instances.map { InstanceState(project, it) }
             if (instanceStates.hashCode() != lastInstanceStates) {
                 lastInstanceStates = instanceStates.hashCode()
@@ -43,24 +45,30 @@ class InstanceActions(val project: Project) {
 
             progressLogger.progress(progressFor(instanceStates, config, timer))
 
+            // Detect timeout when same checksum is not being updated so long
             if (config.awaitTimes > 0 && timer.ticks > config.awaitTimes) {
                 logger.warn("Instance(s) are not stable. Timeout reached after ${Formats.duration(timer.elapsed)}.")
                 return@waitUntil false
             }
 
+            // Verify gathered instance states
             if (instanceStates.all(config.awaitCondition)) {
+                // Assure that expected moment is not accidental, remember it
                 if (config.awaitAssurances > 0 && sinceStableTicks == -1L) {
                     logger.info("Instance(s) seems to be stable. Assuring.")
                     sinceStableTicks = timer.ticks
                     sinceStableElapsed = timer.elapsed
                 }
 
+                // End if assurance is not configured or this moment remains a little longer
                 if (config.awaitAssurances <= 0 || (sinceStableTicks >= 0 && (timer.ticks - sinceStableTicks) >= config.awaitAssurances)) {
                     logger.info("Instance(s) are stable after ${Formats.duration(sinceStableElapsed)}.")
                     return@waitUntil false
                 }
             } else {
+                // Reset assurance, because no longer verified
                 sinceStableTicks = -1L
+                sinceStableElapsed = 0L
             }
 
             true
