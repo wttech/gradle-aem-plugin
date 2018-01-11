@@ -8,6 +8,7 @@ import com.cognifide.gradle.aem.pkg.deploy.ListResponse
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.gradle.api.Project
 import java.io.Serializable
+import java.net.MalformedURLException
 import java.net.URL
 import kotlin.reflect.KClass
 
@@ -35,9 +36,11 @@ interface Instance : Serializable {
 
         val NAME_PROP = "aem.deploy.instance.name"
 
+        val URL_SYNTAX = Regex("")
+
         fun parse(str: String): List<Instance> {
-            return str.split(";").map { line ->
-                val parts = line.split(",")
+            return str.split(";").map { urlRaw ->
+                val parts = urlRaw.split(",")
 
                 when (parts.size) {
                     4 -> {
@@ -50,7 +53,20 @@ interface Instance : Serializable {
                         RemoteInstance(url, user, password, ENVIRONMENT_CMD, type)
                     }
                     else -> {
-                        throw AemException("Cannot parse instance string: '$line'")
+                        try {
+                            val urlObj = URL(urlRaw)
+                            val userParts = urlObj.userInfo.split(":")
+                            val (user, password) = when (userParts.size) {
+                                2 -> userParts
+                                else -> throw AemException("Instance URL '$urlRaw' must have both user and password specified.")
+                            }
+                            val url = "${urlObj.protocol}://${urlObj.host}:${urlObj.port}"
+                            val type = InstanceType.byUrl(url).name.toLowerCase()
+
+                            RemoteInstance(url, user, password, type)
+                        } catch (e: MalformedURLException) {
+                            throw AemException("Cannot parse instance string: '$urlRaw'")
+                        }
                     }
                 }
             }

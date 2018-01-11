@@ -265,6 +265,7 @@ open class AemConfig(project: Project) : Serializable {
     /**
      * Hook for customizing condition being an instance stability check.
      */
+
     @Internal
     @get:JsonIgnore
     var awaitCondition: (InstanceState) -> Boolean = { it.stable }

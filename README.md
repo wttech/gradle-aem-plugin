@@ -110,7 +110,7 @@ buildscript {
     }
     
     dependencies {
-        classpath 'com.cognifide.gradle:aem-plugin:2.0.18'
+        classpath 'com.cognifide.gradle:aem-plugin:2.0.20'
     }
 }
 
@@ -193,7 +193,11 @@ aem {
         awaitInterval = 1000
         awaitTimeout = 900
         awaitTimes = 300
+        awaitFail = true
+        awaitAssurances = 1
+        awaitCondition = { instanceState -> instanceState.stable }
         satisfyRefreshing = false
+        testClasspathJarIncluded = true
     }
 }
 
