@@ -36,36 +36,37 @@ interface Instance : Serializable {
 
         val NAME_PROP = "aem.deploy.instance.name"
 
-        val URL_SYNTAX = Regex("")
-
         fun parse(str: String): List<Instance> {
             return str.split(";").map { urlRaw ->
                 val parts = urlRaw.split(",")
 
                 when (parts.size) {
                     4 -> {
-                        val (url, type, user, password) = parts
-                        RemoteInstance(url, user, password, ENVIRONMENT_CMD, type)
+                        val (httpUrl, type, user, password) = parts
+
+                        RemoteInstance(httpUrl, user, password, type, ENVIRONMENT_CMD)
                     }
                     3 -> {
-                        val (url, user, password) = parts
-                        val type = InstanceType.byUrl(url).name.toLowerCase()
-                        RemoteInstance(url, user, password, ENVIRONMENT_CMD, type)
+                        val (httpUrl, user, password) = parts
+                        val type = InstanceType.byUrl(httpUrl).name.toLowerCase()
+
+                        RemoteInstance(httpUrl, user, password, type, ENVIRONMENT_CMD)
                     }
                     else -> {
                         try {
                             val urlObj = URL(urlRaw)
-                            val userParts = urlObj.userInfo.split(":")
+                            val userInfo = urlObj.userInfo ?: "$USER_DEFAULT:$PASSWORD_DEFAULT"
+                            val userParts = userInfo.split(":")
                             val (user, password) = when (userParts.size) {
                                 2 -> userParts
                                 else -> throw AemException("Instance URL '$urlRaw' must have both user and password specified.")
                             }
-                            val url = "${urlObj.protocol}://${urlObj.host}:${urlObj.port}"
-                            val type = InstanceType.byUrl(url).name.toLowerCase()
+                            val httpUrl = "${urlObj.protocol}://${urlObj.host}:${urlObj.port}"
+                            val type = InstanceType.byUrl(httpUrl).name.toLowerCase()
 
-                            RemoteInstance(url, user, password, type)
+                            RemoteInstance(httpUrl, user, password, type, ENVIRONMENT_CMD)
                         } catch (e: MalformedURLException) {
-                            throw AemException("Cannot parse instance string: '$urlRaw'")
+                            throw AemException("Cannot parse instance URL: '$urlRaw'", e)
                         }
                     }
                 }
