@@ -8,6 +8,7 @@ import com.cognifide.gradle.aem.pkg.deploy.ListResponse
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.gradle.api.Project
 import java.io.Serializable
+import java.net.MalformedURLException
 import java.net.URL
 import kotlin.reflect.KClass
 
@@ -36,21 +37,37 @@ interface Instance : Serializable {
         val NAME_PROP = "aem.deploy.instance.name"
 
         fun parse(str: String): List<Instance> {
-            return str.split(";").map { line ->
-                val parts = line.split(",")
+            return str.split(";").map { urlRaw ->
+                val parts = urlRaw.split(",")
 
                 when (parts.size) {
                     4 -> {
-                        val (url, type, user, password) = parts
-                        RemoteInstance(url, user, password, ENVIRONMENT_CMD, type)
+                        val (httpUrl, type, user, password) = parts
+
+                        RemoteInstance(httpUrl, user, password, type, ENVIRONMENT_CMD)
                     }
                     3 -> {
-                        val (url, user, password) = parts
-                        val type = InstanceType.byUrl(url).name.toLowerCase()
-                        RemoteInstance(url, user, password, ENVIRONMENT_CMD, type)
+                        val (httpUrl, user, password) = parts
+                        val type = InstanceType.byUrl(httpUrl).name.toLowerCase()
+
+                        RemoteInstance(httpUrl, user, password, type, ENVIRONMENT_CMD)
                     }
                     else -> {
-                        throw AemException("Cannot parse instance string: '$line'")
+                        try {
+                            val urlObj = URL(urlRaw)
+                            val userInfo = urlObj.userInfo ?: "$USER_DEFAULT:$PASSWORD_DEFAULT"
+                            val userParts = userInfo.split(":")
+                            val (user, password) = when (userParts.size) {
+                                2 -> userParts
+                                else -> throw AemException("Instance URL '$urlRaw' must have both user and password specified.")
+                            }
+                            val httpUrl = "${urlObj.protocol}://${urlObj.host}:${urlObj.port}"
+                            val type = InstanceType.byUrl(httpUrl).name.toLowerCase()
+
+                            RemoteInstance(httpUrl, user, password, type, ENVIRONMENT_CMD)
+                        } catch (e: MalformedURLException) {
+                            throw AemException("Cannot parse instance URL: '$urlRaw'", e)
+                        }
                     }
                 }
             }
