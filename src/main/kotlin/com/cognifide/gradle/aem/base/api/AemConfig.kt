@@ -28,7 +28,7 @@ open class AemConfig(project: Project) : Serializable {
      * Allows to read project property specified in command line and system property as a fallback.
      */
     @Internal
-    private val propParser = PropertyParser(project)
+    val propParser = PropertyParser(project)
 
     /**
      * List of AEM instances on which packages could be deployed.
