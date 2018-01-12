@@ -45,7 +45,7 @@ interface Instance : Serializable {
                     }
                     3 -> {
                         val (httpUrl, user, password) = parts
-                        val type = InstanceType.byUrl(httpUrl).name.toLowerCase()
+                        val type = InstanceType.nameByUrl(httpUrl)
 
                         RemoteInstance(httpUrl, user, password, type, ENVIRONMENT_CMD)
                     }

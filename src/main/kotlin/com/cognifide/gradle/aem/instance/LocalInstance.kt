@@ -24,7 +24,7 @@ class LocalInstance(
                     httpUrl,
                     user,
                     password,
-                    InstanceType.byUrl(httpUrl).name,
+                    InstanceType.nameByUrl(httpUrl),
                     debugPortByUrl(httpUrl)
             )
         }

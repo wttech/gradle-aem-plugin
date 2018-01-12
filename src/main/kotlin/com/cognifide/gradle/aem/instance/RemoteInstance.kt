@@ -24,7 +24,7 @@ class RemoteInstance(
                     instanceUrl.httpUrl,
                     instanceUrl.user,
                     instanceUrl.password,
-                    InstanceType.byUrl(httpUrl).name.toLowerCase(),
+                    instanceUrl.type,
                     environment
             )
         }
@@ -34,7 +34,7 @@ class RemoteInstance(
                     httpUrl,
                     user,
                     password,
-                    InstanceType.byUrl(httpUrl).name.toLowerCase(),
+                    InstanceType.nameByUrl(httpUrl),
                     environment
             )
         }
