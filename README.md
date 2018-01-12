@@ -138,7 +138,7 @@ aem {
         deployParallel = true
         deploySnapshots = []
         uploadForce = true
-        recursiveInstall = true
+        installRecursive = true
         acHandling = "merge_preserve"
         contentPath = project.file("src/main/content")
         if (project == project.rootProject) {
@@ -286,7 +286,7 @@ Then file at path *build/aem/aemDebug/debug.json* with content below is being ge
       "deployParallel" : true,
       "deploySnapshots" : [ ],
       "uploadForce" : true,
-      "recursiveInstall" : true
+      "installRecursive" : true
       // ...
     },
     "requiresRoot" : "false",

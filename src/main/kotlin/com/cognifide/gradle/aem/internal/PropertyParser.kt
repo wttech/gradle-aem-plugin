@@ -13,6 +13,7 @@ import org.apache.commons.lang3.text.StrSubstitutor
 import org.gradle.api.Project
 import java.io.StringWriter
 import java.text.SimpleDateFormat
+import java.util.*
 
 class PropertyParser(val project: Project) {
 
@@ -45,7 +46,7 @@ class PropertyParser(val project: Project) {
         }
     }
 
-    fun prop(name: String): String? {
+    private fun prop(name: String): String? {
         var value = project.properties[name] as String?
         if (value == null) {
             value = systemProperties[name]
@@ -65,7 +66,33 @@ class PropertyParser(val project: Project) {
         return between.split(delimiter)
     }
 
-    fun prop(name: String, defaultValue: () -> String): String {
+    fun date(name: String, defaultValue: Date): Date {
+        val timestamp = prop(name)
+
+        return if (timestamp.isNullOrBlank()) {
+            defaultValue
+        } else {
+            Date(timestamp!!.toLong())
+        }
+    }
+
+    fun boolean(name: String, defaultValue: Boolean): Boolean {
+        return prop(name)?.toBoolean() ?: defaultValue
+    }
+
+    fun long(name: String, defaultValue: Long): Long {
+        return prop(name)?.toLong() ?: defaultValue
+    }
+
+    fun int(name: String, defaultValue: Int): Int {
+        return prop(name)?.toInt() ?: defaultValue
+    }
+
+    fun string(name: String, defaultValue: String): String {
+        return prop(name) ?: defaultValue
+    }
+
+    fun string(name: String, defaultValue: () -> String): String {
         return prop(name) ?: defaultValue()
     }
 

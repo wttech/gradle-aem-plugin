@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.base.api
 
 import com.cognifide.gradle.aem.instance.*
+import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.pkg.ComposeTask
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -24,6 +25,12 @@ import java.util.concurrent.TimeUnit
 open class AemConfig(project: Project) : Serializable {
 
     /**
+     * Allows to read project property specified in command line and system property as a fallback.
+     */
+    @Internal
+    private val propParser = PropertyParser(project)
+
+    /**
      * List of AEM instances on which packages could be deployed.
      * Instance stored in map ensures name uniqueness and allows to be referenced in expanded properties.
      */
@@ -31,36 +38,47 @@ open class AemConfig(project: Project) : Serializable {
     var instances: MutableMap<String, Instance> = mutableMapOf()
 
     /**
+     * Determines current environment to be used in deployment.
+     */
+    @Input
+    val deployEnvironment : String = propParser.string("aem.env", { System.getenv("AEM_ENV") ?: "local" })
+
+    /**
+     * Determines instances involved in CRX package deployment.
+     */
+    @Input
+    var deployInstanceName : String = propParser.string("aem.deploy.instance.name", "*-$deployEnvironment")
+
+    /**
      * Defines maximum time after which initializing connection to AEM will be aborted (e.g on upload, install).
      */
     @Input
-    var deployConnectionTimeout: Int = 5000
+    var deployConnectionTimeout: Int = propParser.int("aem.deploy.connectionTimeout", 5000)
 
     /**
      * Perform deploy action (upload, install or activate) in parallel to multiple instances at once.
      */
-    @Incubating
     @Input
-    var deployParallel: Boolean = true
+    var deployParallel: Boolean = propParser.boolean("aem.deploy.parallel", true)
 
     /**
      * CRX package name conventions (with wildcard) indicating that package can change over time
      * while having same version specified.
      */
     @Input
-    var deploySnapshots: List<String> = mutableListOf()
+    var deploySnapshots: List<String> = propParser.list("aem.deploy.snapshots")
 
     /**
      * Force upload CRX package regardless if it was previously uploaded.
      */
     @Input
-    var uploadForce: Boolean = true
+    var uploadForce: Boolean = propParser.boolean("aem.upload.force", true)
 
     /**
      * Determines if when on package install, sub-packages included in CRX package content should be also installed.
      */
     @Input
-    var recursiveInstall: Boolean = true
+    var installRecursive: Boolean = propParser.boolean("aem.install.recursive", true)
 
     /**
      * Defines behavior for access control handling included in rep:policy nodes being a part of CRX package content.
@@ -174,7 +192,7 @@ open class AemConfig(project: Project) : Serializable {
      * Specify characters to be used as line endings when cleaning up checked out JCR content.
      */
     @Input
-    var vaultLineSeparator: String = System.lineSeparator()
+    var vaultLineSeparator: String = propParser.string("aem.vlt.lineSeparator", System.lineSeparator())
 
     /**
      * Configure default task dependency assignments while including dependant project bundles.
@@ -199,7 +217,7 @@ open class AemConfig(project: Project) : Serializable {
      * Build date used as base for calculating 'created' and 'buildCount' package properties.
      */
     @Internal
-    var buildDate: Date = Date()
+    var buildDate: Date = propParser.date("aem.buildDate", Date())
 
     /**
      * Path in which local AEM instances will be stored.
@@ -227,40 +245,40 @@ open class AemConfig(project: Project) : Serializable {
      * actual operation being performed on AEM like starting JCR package installation or even creating launchpad.
      */
     @Input
-    var awaitDelay: Long = TimeUnit.SECONDS.toMillis(3)
+    var awaitDelay: Long = propParser.long("aem.await.delay", TimeUnit.SECONDS.toMillis(3))
 
     /**
      * Time in milliseconds used as interval between next instance stability checks being performed.
      * Optimization could be necessary only when instance is heavily loaded.
      */
     @Input
-    var awaitInterval: Long = TimeUnit.SECONDS.toMillis(1)
+    var awaitInterval: Long = propParser.long("aem.await.interval", TimeUnit.SECONDS.toMillis(1))
 
     /**
      * After each await interval, instance stability check is being performed.
      * This value is a HTTP connection timeout (in millis) which must be smaller than interval to avoid race condition.
      */
     @Input
-    var awaitTimeout: Int = (0.9 * awaitInterval.toDouble()).toInt()
+    var awaitTimeout: Int = propParser.int ("aem.await.timeout", (0.9 * awaitInterval.toDouble()).toInt())
 
     /**
      * Maximum intervals after which instance stability checks will
      * be skipped if there is still some unstable instance left.
      */
     @Input
-    var awaitTimes: Long = 60 * 5
+    var awaitTimes: Long = propParser.long("aem.await.times", 60 * 5)
 
     /**
      * If there is still some unstable instance left, then fail build except just logging warning.
      */
     @Input
-    var awaitFail: Boolean = true
+    var awaitFail: Boolean = propParser.boolean("aem.await.fail", true)
 
     /**
      * Number of intervals / additional instance stability checks to assure all stable instances.
      */
     @Input
-    var awaitAssurances: Long = 1
+    var awaitAssurances: Long = propParser.long("aem.await.assurances", 1L)
 
     /**
      * Hook for customizing condition being an instance stability check.
@@ -276,14 +294,15 @@ open class AemConfig(project: Project) : Serializable {
      *
      * This flag can change that behavior, so that information will be refreshed after each package installation.
      */
-    @Incubating
     @Input
-    var satisfyRefreshing: Boolean = false
+    var satisfyRefreshing: Boolean = propParser.boolean("aem.satisfy.refreshing", false)
+
+    @Input
+    var satisfyGroupName = propParser.string("aem.satisfy.group.name", "app-*,lib-*,hotfix-*,cfp-*,sp-*")
 
     /**
      * @see <https://github.com/Cognifide/gradle-aem-plugin/issues/95>
      */
-    @Incubating
     @Input
     var testClasspathJarIncluded: Boolean = true
 

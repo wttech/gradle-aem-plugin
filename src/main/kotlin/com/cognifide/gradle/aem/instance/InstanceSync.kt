@@ -210,7 +210,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
 
         try {
             val json = post(url, mapOf(
-                    "recursive" to config.recursiveInstall,
+                    "recursive" to config.installRecursive,
                     "acHandling" to config.acHandling
             ))
             val response = InstallResponse(json)
@@ -338,7 +338,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
 
         try {
             val rawHtml = post(url, mapOf(
-                    "recursive" to config.recursiveInstall,
+                    "recursive" to config.installRecursive,
                     "acHandling" to config.acHandling
             ))
             val response = UninstallResponse(rawHtml)
