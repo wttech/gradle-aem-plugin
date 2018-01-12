@@ -12,23 +12,33 @@ class RemoteInstance(
         override val environment: String
 ) : Instance, Serializable {
 
-    constructor(httpUrl: String) : this(httpUrl, LocalInstance.ENVIRONMENT)
+    companion object {
+        fun create(httpUrl: String): RemoteInstance {
+            return create(httpUrl, LocalInstance.ENVIRONMENT)
+        }
 
-    constructor(httpUrl: String, environment: String) : this(
-            httpUrl,
-            Instance.USER_DEFAULT,
-            Instance.PASSWORD_DEFAULT,
-            InstanceType.byUrl(httpUrl).name.toLowerCase(),
-            environment
-    )
+        fun create(httpUrl: String, environment: String): RemoteInstance {
+            val instanceUrl = InstanceUrl.parse(httpUrl)
 
-    constructor(httpUrl: String, user: String, password: String, environment: String) : this(
-            httpUrl,
-            user,
-            password,
-            InstanceType.byUrl(httpUrl).name.toLowerCase(),
-            environment
-    )
+            return RemoteInstance(
+                    instanceUrl.httpUrl,
+                    instanceUrl.user,
+                    instanceUrl.password,
+                    InstanceType.byUrl(httpUrl).name.toLowerCase(),
+                    environment
+            )
+        }
+
+        fun create(httpUrl: String, user: String, password: String, environment: String): RemoteInstance {
+            return RemoteInstance(
+                    httpUrl,
+                    user,
+                    password,
+                    InstanceType.byUrl(httpUrl).name.toLowerCase(),
+                    environment
+            )
+        }
+    }
 
     override fun toString(): String {
         return "RemoteInstance(httpUrl='$httpUrl', user='$user', password='$hiddenPassword', type='$typeName', environment='$environment')"

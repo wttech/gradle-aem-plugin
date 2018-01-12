@@ -1,12 +1,12 @@
 package com.cognifide.gradle.aem.base.api
 
 import com.cognifide.gradle.aem.instance.*
+import com.cognifide.gradle.aem.internal.LineSeparator
 import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.pkg.ComposeTask
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.gradle.api.DefaultTask
-import org.gradle.api.Incubating
 import org.gradle.api.Project
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
@@ -186,13 +186,13 @@ open class AemConfig(project: Project) : Serializable {
      * Global options which are being applied to any Vault related command like 'aemVault' or 'aemCheckout'.
      */
     @Input
-    var vaultGlobalOptions: String = "--credentials {{instance.credentials}}"
+    var vaultGlobalOptions: String = propParser.string("aem.vlt.globalOptions", "--credentials {{instance.credentials}}")
 
     /**
      * Specify characters to be used as line endings when cleaning up checked out JCR content.
      */
     @Input
-    var vaultLineSeparator: String = propParser.string("aem.vlt.lineSeparator", System.lineSeparator())
+    var vaultLineSeparator: String = propParser.string("aem.vlt.lineSeparator", "LF")
 
     /**
      * Configure default task dependency assignments while including dependant project bundles.
@@ -317,19 +317,19 @@ open class AemConfig(project: Project) : Serializable {
      * Declare new deployment target (AEM instance).
      */
     fun localInstance(httpUrl: String) {
-        instance(LocalInstance(httpUrl))
+        instance(LocalInstance.create(httpUrl))
     }
 
     fun localInstance(httpUrl: String, type: String) {
-        instance(LocalInstance(httpUrl, type))
+        instance(LocalInstance.create(httpUrl, type))
     }
 
     fun localInstance(httpUrl: String, user: String, password: String) {
-        instance(LocalInstance(httpUrl, user, password))
+        instance(LocalInstance.create(httpUrl, user, password))
     }
 
     fun localInstance(httpUrl: String, user: String, password: String, type: String) {
-        instance(LocalInstance(httpUrl, user, password, type))
+        instance(LocalInstance.create(httpUrl, user, password, type))
     }
 
     fun localInstance(httpUrl: String, user: String, password: String, type: String, debugPort: Int) {
@@ -337,15 +337,15 @@ open class AemConfig(project: Project) : Serializable {
     }
 
     fun remoteInstance(httpUrl: String) {
-        instance(RemoteInstance(httpUrl))
+        instance(RemoteInstance.create(httpUrl))
     }
 
     fun remoteInstance(httpUrl: String, environment: String) {
-        instance(RemoteInstance(httpUrl, environment))
+        instance(RemoteInstance.create(httpUrl, environment))
     }
 
     fun remoteInstance(httpUrl: String, user: String, password: String, environment: String) {
-        instance(RemoteInstance(httpUrl, user, password, environment))
+        instance(RemoteInstance.create(httpUrl, user, password, environment))
     }
 
     fun remoteInstance(httpUrl: String, user: String, password: String, type: String, environment: String) {
@@ -409,6 +409,10 @@ open class AemConfig(project: Project) : Serializable {
     @get:JsonIgnore
     val vaultFilterPath: String
         get() = "$vaultPath/filter.xml"
+
+    @get:Internal
+    @get:JsonIgnore
+    val vaultLineSeparatorString: String = LineSeparator.string(vaultLineSeparator)
 
     companion object {
 

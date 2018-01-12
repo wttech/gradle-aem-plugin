@@ -36,12 +36,12 @@ open class CreateTask : SyncTask() {
     }
 
     private fun instanceFileFromProperties() {
-        val jarUrl = propertyParser.prop(JAR_URL_PROP)
+        val jarUrl = propertyParser.string(JAR_URL_PROP)
         if (!jarUrl.isNullOrBlank()) {
             instanceFileResolver.url(jarUrl!!)
         }
 
-        val licenseUrl = propertyParser.prop(LICENSE_URL_PROP)
+        val licenseUrl = propertyParser.string(LICENSE_URL_PROP)
         if (!licenseUrl.isNullOrBlank()) {
             instanceFileResolver.url(licenseUrl!!)
         }

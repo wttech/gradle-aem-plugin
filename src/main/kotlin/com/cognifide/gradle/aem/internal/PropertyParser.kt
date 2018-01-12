@@ -88,6 +88,8 @@ class PropertyParser(val project: Project) {
         return prop(name)?.toInt() ?: defaultValue
     }
 
+    fun string(name: String) = prop(name)
+
     fun string(name: String, defaultValue: String): String {
         return prop(name) ?: defaultValue
     }

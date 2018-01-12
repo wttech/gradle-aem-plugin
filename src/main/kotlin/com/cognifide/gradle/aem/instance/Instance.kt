@@ -8,7 +8,6 @@ import com.cognifide.gradle.aem.pkg.deploy.ListResponse
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.gradle.api.Project
 import java.io.Serializable
-import java.net.MalformedURLException
 import java.net.URL
 import kotlin.reflect.KClass
 
@@ -17,8 +16,6 @@ interface Instance : Serializable {
     companion object {
 
         val FILTER_ANY = PropertyParser.FILTER_DEFAULT
-
-        val FILTER_LOCAL = "local-*"
 
         val FILTER_AUTHOR = "*-author"
 
@@ -53,21 +50,7 @@ interface Instance : Serializable {
                         RemoteInstance(httpUrl, user, password, type, ENVIRONMENT_CMD)
                     }
                     else -> {
-                        try {
-                            val urlObj = URL(urlRaw)
-                            val userInfo = urlObj.userInfo ?: "$USER_DEFAULT:$PASSWORD_DEFAULT"
-                            val userParts = userInfo.split(":")
-                            val (user, password) = when (userParts.size) {
-                                2 -> userParts
-                                else -> throw AemException("Instance URL '$urlRaw' must have both user and password specified.")
-                            }
-                            val httpUrl = "${urlObj.protocol}://${urlObj.host}:${urlObj.port}"
-                            val type = InstanceType.byUrl(httpUrl).name.toLowerCase()
-
-                            RemoteInstance(httpUrl, user, password, type, ENVIRONMENT_CMD)
-                        } catch (e: MalformedURLException) {
-                            throw AemException("Cannot parse instance URL: '$urlRaw'", e)
-                        }
+                        RemoteInstance.create(urlRaw, ENVIRONMENT_CMD)
                     }
                 }
             }
@@ -75,12 +58,16 @@ interface Instance : Serializable {
 
         fun defaults(): List<Instance> {
             return listOf(
-                    LocalInstance(URL_AUTHOR_DEFAULT),
-                    LocalInstance(URL_PUBLISH_DEFAULT)
+                    LocalInstance.create(URL_AUTHOR_DEFAULT),
+                    LocalInstance.create(URL_PUBLISH_DEFAULT)
             )
         }
 
-        fun filter(project: Project, instanceFilter: String = FILTER_LOCAL): List<Instance> {
+        fun filter(project: Project): List<Instance> {
+            return filter(project, AemConfig.of(project).deployInstanceName)
+        }
+
+        fun filter(project: Project, instanceFilter: String): List<Instance> {
             val config = AemConfig.of(project)
             val instanceValues = project.properties[LIST_PROP] as String?
 
@@ -101,9 +88,8 @@ interface Instance : Serializable {
             }
         }
 
-        @Suppress("unchecked_cast")
         fun <T : Instance> filter(project: Project, type: KClass<T>): List<T> {
-            return filter(project, Instance.FILTER_LOCAL).filterIsInstance(type.java)
+            return filter(project).filterIsInstance(type.java)
         }
 
         fun locals(project: Project): List<LocalInstance> {
