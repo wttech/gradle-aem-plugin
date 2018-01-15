@@ -41,6 +41,8 @@ class InstanceSync(val project: Project, val instance: Instance) {
 
     val bundlesUrl = "${instance.httpUrl}/system/console/bundles.json"
 
+    val vmStatUrl = "${instance.httpUrl}/system/console/vmstat"
+
     fun get(url: String, parametrizer: (HttpConnectionParams) -> Unit = {}): String {
         val method = GetMethod(normalizeUrl(url))
 
@@ -370,6 +372,20 @@ class InstanceSync(val project: Project, val instance: Instance) {
         } catch (e: Exception) {
             logger.debug("Cannot determine bundle state on $instance", e)
             BundleState.unknown(e)
+        }
+    }
+
+    /**
+     * TODO maybe we could skip shutdown_timer and do it immediately
+     */
+    fun reload() {
+        try {
+            post(vmStatUrl, mapOf(
+                    "shutdown_timer" to "shutdown_timer",
+                    "shutdown_type" to "Restart"
+            ))
+        } catch (e: DeployException) {
+            throw InstanceException("Cannot reload instance $instance", e)
         }
     }
 

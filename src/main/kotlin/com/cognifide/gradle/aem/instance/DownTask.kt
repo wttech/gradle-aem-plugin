@@ -11,7 +11,6 @@ open class DownTask : SyncTask() {
     }
 
     init {
-        group = AemTask.GROUP
         description = "Turns off local AEM instance(s)."
     }
 

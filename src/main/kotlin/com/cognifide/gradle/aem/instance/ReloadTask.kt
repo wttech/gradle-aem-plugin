@@ -3,18 +3,19 @@ package com.cognifide.gradle.aem.instance
 import com.cognifide.gradle.aem.pkg.deploy.SyncTask
 import org.gradle.api.tasks.TaskAction
 
-open class AwaitTask : SyncTask() {
+open class ReloadTask : SyncTask() {
 
     companion object {
-        val NAME = "aemAwait"
+        val NAME = "aemReload"
     }
 
     init {
-        description = "Waits until all local AEM instance(s) be stable."
+        description = "Reloads all AEM instance(s)."
     }
 
     @TaskAction
-    fun await() {
+    fun reload() {
+        synchronizeInstances { it.reload() }
         awaitStableInstances()
     }
 

@@ -24,7 +24,6 @@ open class CreateTask : SyncTask() {
     val instanceFileResolver = FileResolver(project, AemTask.temporaryDir(project, NAME, DOWNLOAD_DIR))
 
     init {
-        group = AemTask.GROUP
         description = "Creates local AEM instance(s)."
 
         instanceFileResolver.attach(this)
