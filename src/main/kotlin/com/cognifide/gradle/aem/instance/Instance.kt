@@ -17,8 +17,6 @@ interface Instance : Serializable {
 
         val FILTER_ANY = PropertyParser.FILTER_DEFAULT
 
-        val FILTER_LOCAL = "local-*"
-
         val FILTER_AUTHOR = "*-author"
 
         val ENVIRONMENT_CMD = "cmd"
@@ -36,21 +34,23 @@ interface Instance : Serializable {
         val NAME_PROP = "aem.deploy.instance.name"
 
         fun parse(str: String): List<Instance> {
-            return str.split(";").map { line ->
-                val parts = line.split(",")
+            return str.split(";").map { urlRaw ->
+                val parts = urlRaw.split(",")
 
                 when (parts.size) {
                     4 -> {
-                        val (url, type, user, password) = parts
-                        RemoteInstance(url, user, password, ENVIRONMENT_CMD, type)
+                        val (httpUrl, type, user, password) = parts
+
+                        RemoteInstance(httpUrl, user, password, type, ENVIRONMENT_CMD)
                     }
                     3 -> {
-                        val (url, user, password) = parts
-                        val type = InstanceType.byUrl(url).name.toLowerCase()
-                        RemoteInstance(url, user, password, ENVIRONMENT_CMD, type)
+                        val (httpUrl, user, password) = parts
+                        val type = InstanceType.nameByUrl(httpUrl)
+
+                        RemoteInstance(httpUrl, user, password, type, ENVIRONMENT_CMD)
                     }
                     else -> {
-                        throw AemException("Cannot parse instance string: '$line'")
+                        RemoteInstance.create(urlRaw, ENVIRONMENT_CMD)
                     }
                 }
             }
@@ -58,12 +58,16 @@ interface Instance : Serializable {
 
         fun defaults(): List<Instance> {
             return listOf(
-                    LocalInstance(URL_AUTHOR_DEFAULT),
-                    LocalInstance(URL_PUBLISH_DEFAULT)
+                    LocalInstance.create(URL_AUTHOR_DEFAULT),
+                    LocalInstance.create(URL_PUBLISH_DEFAULT)
             )
         }
 
-        fun filter(project: Project, instanceFilter: String = FILTER_LOCAL): List<Instance> {
+        fun filter(project: Project): List<Instance> {
+            return filter(project, AemConfig.of(project).deployInstanceName)
+        }
+
+        fun filter(project: Project, instanceFilter: String): List<Instance> {
             val config = AemConfig.of(project)
             val instanceValues = project.properties[LIST_PROP] as String?
 
@@ -84,9 +88,8 @@ interface Instance : Serializable {
             }
         }
 
-        @Suppress("unchecked_cast")
         fun <T : Instance> filter(project: Project, type: KClass<T>): List<T> {
-            return filter(project, Instance.FILTER_LOCAL).filterIsInstance(type.java)
+            return filter(project).filterIsInstance(type.java)
         }
 
         fun locals(project: Project): List<LocalInstance> {

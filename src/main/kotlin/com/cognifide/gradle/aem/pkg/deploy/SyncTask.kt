@@ -38,7 +38,11 @@ abstract class SyncTask : AemDefaultTask() {
         }
     }
 
-    protected fun filterInstances(instanceGroup: String = Instance.FILTER_LOCAL): List<Instance> {
+    protected fun filterInstances(): List<Instance> {
+        return Instance.filter(project)
+    }
+
+    protected fun filterInstances(instanceGroup: String): List<Instance> {
         return Instance.filter(project, instanceGroup)
     }
 

@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.pkg
 import com.cognifide.gradle.aem.base.api.AemConfig
 import com.cognifide.gradle.aem.base.api.AemException
 import com.cognifide.gradle.aem.base.api.AemTask
+import com.cognifide.gradle.aem.internal.LineSeparator
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.PropertyParser
 import org.gradle.api.Project
@@ -64,7 +65,7 @@ open class ComposeTask : Zip(), AemTask {
 
     @get:Internal
     val fileProperties
-        get() = mapOf("filterRoots" to filterRoots.joinToString(config.vaultLineSeparator))
+        get() = mapOf("filterRoots" to filterRoots.joinToString(LineSeparator.string(config.vaultLineSeparator)))
 
     init {
         description = "Composes CRX package from JCR content and built OSGi bundles"
