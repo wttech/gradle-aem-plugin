@@ -10,12 +10,16 @@ apply plugin: "kotlin"
 apply plugin: 'biz.aQute.bnd.builder'
 apply plugin: 'com.cognifide.aem.package'
 
-bundle {
-    def pkg = 'com.company.aem.example.common'
+jar {
+    manifest {
+        def pkg = 'com.company.aem.example.common'
 
-    instruction 'Bundle-SymbolicName', pkg
-    instruction 'Sling-Model-Packages', pkg
-    instruction 'Export-Package', "$pkg.*;-split-package:=merge-first,org.hashids.*"
+        attributes([
+                'Bundle-SymbolicName': pkg,
+                'Sling-Model-Packages': pkg,
+                'Export-Package': "$pkg.*;-split-package:=merge-first,org.hashids.*"
+        ])
+    }
 }
 
 dependencies {

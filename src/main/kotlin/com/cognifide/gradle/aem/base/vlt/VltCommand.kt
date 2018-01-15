@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.base.vlt
 
 import com.cognifide.gradle.aem.base.api.AemConfig
 import com.cognifide.gradle.aem.instance.Instance
+import com.cognifide.gradle.aem.internal.LineSeparator
 import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.internal.file.FileOperations
 import org.gradle.api.Project
@@ -25,7 +26,7 @@ class VltCommand(val project: Project) {
 
         val cleaner = VltCleaner(contentDir, logger)
         cleaner.removeVltFiles()
-        cleaner.cleanupDotContent(config.vaultSkipProperties, config.vaultLineSeparator)
+        cleaner.cleanupDotContent(config.vaultSkipProperties, LineSeparator.string(config.vaultLineSeparator))
     }
 
     fun checkout() {
@@ -58,7 +59,7 @@ class VltCommand(val project: Project) {
 
     fun determineFilter(): VltFilter {
         val config = AemConfig.of(project)
-        val cmdFilterPath = propertyParser.prop("aem.vlt.filter")
+        val cmdFilterPath = propertyParser.string("aem.vlt.filter")
         val cmdFilterRoots = PropertyParser(project).list("aem.vlt.filterRoots")
 
         return if (!cmdFilterPath.isNullOrBlank()) {
@@ -77,7 +78,7 @@ class VltCommand(val project: Project) {
     }
 
     fun determineInstance(): Instance {
-        val cmdInstanceArg = propertyParser.prop("aem.vlt.instance")
+        val cmdInstanceArg = propertyParser.string("aem.vlt.instance")
         if (!cmdInstanceArg.isNullOrBlank()) {
             val cmdInstance = Instance.parse(cmdInstanceArg!!).first()
             cmdInstance.validate()
