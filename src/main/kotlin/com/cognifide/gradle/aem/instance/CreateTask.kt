@@ -52,11 +52,8 @@ open class CreateTask : SyncTask() {
 
     @TaskAction
     fun create() {
-        logger.info("Resolving instance files")
-        val files = instanceFileResolver.allFiles()
-
         logger.info("Creating instances")
-        synchronizeLocalInstances({ it.create(files) })
+        synchronizeLocalInstances({ it.create(instanceFileResolver) })
     }
 
 }

@@ -7,6 +7,7 @@ import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.ProgressLogger
 import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.internal.file.FileOperations
+import com.cognifide.gradle.aem.internal.file.FileResolver
 import org.apache.commons.io.FileUtils
 import org.gradle.api.Project
 import org.gradle.api.logging.Logger
@@ -63,11 +64,17 @@ class LocalHandle(val project: Project, val sync: InstanceSync) {
         }
     }
 
-    fun create(resolvedFiles: List<File>) {
+    fun create(fileResolver: FileResolver) {
+        if (lock.exists()) {
+            logger.info(("Instance already created"))
+            return
+        }
+
         cleanDir(true)
 
         logger.info("Creating instance at path '${dir.absolutePath}'")
 
+        val resolvedFiles = fileResolver.allFiles()
         logger.info("Copying resolved instance files: $resolvedFiles")
         copyFiles(resolvedFiles)
 

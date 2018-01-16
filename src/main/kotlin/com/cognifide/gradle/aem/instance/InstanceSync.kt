@@ -1,25 +1,30 @@
 package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.base.api.AemConfig
+import com.cognifide.gradle.aem.internal.Behaviors
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.deploy.*
-import org.apache.commons.httpclient.HttpClient
-import org.apache.commons.httpclient.HttpMethod
-import org.apache.commons.httpclient.HttpStatus
-import org.apache.commons.httpclient.UsernamePasswordCredentials
-import org.apache.commons.httpclient.auth.AuthScope
-import org.apache.commons.httpclient.methods.GetMethod
-import org.apache.commons.httpclient.methods.PostMethod
-import org.apache.commons.httpclient.methods.multipart.*
-import org.apache.commons.httpclient.params.HttpConnectionParams
 import org.apache.commons.io.IOUtils
+import org.apache.http.HttpEntity
+import org.apache.http.HttpStatus
+import org.apache.http.auth.AuthScope
+import org.apache.http.auth.UsernamePasswordCredentials
+import org.apache.http.client.HttpClient
+import org.apache.http.client.config.RequestConfig
+import org.apache.http.client.methods.HttpGet
+import org.apache.http.client.methods.HttpPost
+import org.apache.http.client.methods.HttpRequestBase
+import org.apache.http.entity.mime.MultipartEntityBuilder
+import org.apache.http.impl.client.BasicCredentialsProvider
+import org.apache.http.impl.client.HttpClientBuilder
 import org.gradle.api.Project
 import org.jsoup.Jsoup
 import org.jsoup.parser.Parser
 import org.zeroturnaround.zip.ZipUtil
 import java.io.File
 import java.io.FileNotFoundException
+import java.util.concurrent.TimeUnit
 
 class InstanceSync(val project: Project, val instance: Instance) {
 
@@ -43,15 +48,15 @@ class InstanceSync(val project: Project, val instance: Instance) {
 
     val vmStatUrl = "${instance.httpUrl}/system/console/vmstat"
 
-    fun get(url: String, parametrizer: (HttpConnectionParams) -> Unit = {}): String {
-        val method = GetMethod(normalizeUrl(url))
+    fun get(url: String, parametrizer: (RequestConfig) -> Unit = {}): String {
+        val method = HttpGet(normalizeUrl(url))
 
         return execute(method, parametrizer)
     }
 
-    fun post(url: String, params: Map<String, Any> = mapOf(), parametrizer: (HttpConnectionParams) -> Unit = {}): String {
-        val method = PostMethod(normalizeUrl(url))
-        method.requestEntity = MultipartRequestEntity(createParts(params).toTypedArray(), method.params)
+    fun post(url: String, params: Map<String, Any> = mapOf(), parametrizer: (RequestConfig) -> Unit = {}): String {
+        val method = HttpPost(normalizeUrl(url))
+        method.entity = createEntity(params)
 
         return execute(method, parametrizer)
     }
@@ -64,20 +69,21 @@ class InstanceSync(val project: Project, val instance: Instance) {
         return url.replace(" ", "%20")
     }
 
-    fun execute(method: HttpMethod, parametrizer: (HttpConnectionParams) -> Unit = {}): String {
+    fun execute(method: HttpRequestBase, parametrizer: (RequestConfig) -> Unit = {}): String {
         try {
+            parametrizer(method.config)
+
             val client = createHttpClient()
-            parametrizer(client.httpConnectionManager.params)
+            val response = client.execute(method)
 
-            val status = client.executeMethod(method)
+            val status = response.statusLine.statusCode
             if (status == HttpStatus.SC_OK) {
-                return IOUtils.toString(method.responseBodyAsStream)
+                return IOUtils.toString(response.entity.content)
             } else {
-                logger.debug(method.responseBodyAsString)
+                logger.debug(IOUtils.toString(response.entity.content))
                 throw DeployException("Request to the instance failed, cause: "
-                        + HttpStatus.getStatusText(status) + " (check URL, user and password)")
+                        + response.statusLine.toString() + " (check URL, user and password)")
             }
-
         } catch (e: Exception) {
             throw DeployException("Request to the instance failed, cause: " + e.message, e)
         } finally {
@@ -86,34 +92,35 @@ class InstanceSync(val project: Project, val instance: Instance) {
     }
 
     fun createHttpClient(): HttpClient {
-        val client = HttpClient()
-        client.httpConnectionManager.params.connectionTimeout = config.deployConnectionTimeout
-        client.httpConnectionManager.params.soTimeout = config.deployConnectionTimeout
-        client.params.isAuthenticationPreemptive = true
-        client.state.setCredentials(AuthScope.ANY, UsernamePasswordCredentials(instance.user, instance.password))
-
-        return client
+        return HttpClientBuilder.create()
+                .setDefaultRequestConfig(RequestConfig.custom()
+                        .setConnectTimeout(config.deployConnectionTimeout)
+                        .setConnectionRequestTimeout(config.deployConnectionTimeout)
+                        .build()
+                )
+                .setDefaultCredentialsProvider(BasicCredentialsProvider().apply {
+                    setCredentials(AuthScope.ANY, UsernamePasswordCredentials(instance.user, instance.password))
+                    // TODO isAuthenticationPreemptive = true
+                })
+                .build()
     }
 
-    private fun createParts(params: Map<String, Any>): List<Part> {
-        val partList = mutableListOf<Part>()
+    private fun createEntity(params: Map<String, Any>): HttpEntity {
+        val builder = MultipartEntityBuilder.create()
         for ((key, value) in params) {
             if (value is File) {
-                val file = value
-                try {
-                    partList.add(FilePart(key, FilePartSource(file.name, file)))
-                } catch (e: FileNotFoundException) {
-                    throw DeployException(String.format("Upload param '%s' has invalid file specified.", key), e)
+                if (value.exists()) {
+                    builder.addBinaryBody(value.name, value)
                 }
             } else {
                 val str = value.toString()
-                if (!str.isNullOrBlank()) {
-                    partList.add(StringPart(key, str))
+                if (str.isNotBlank()) {
+                    builder.addTextBody(key, str)
                 }
             }
         }
 
-        return partList
+        return builder.build()
     }
 
     fun determineLocalPackage(): File {
@@ -366,7 +373,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         }
     }
 
-    fun determineBundleState(parametrizer: (HttpConnectionParams) -> Unit): BundleState {
+    fun determineBundleState(parametrizer: (RequestConfig) -> Unit): BundleState {
         return try {
             BundleState.fromJson(get(bundlesUrl, parametrizer))
         } catch (e: Exception) {
@@ -380,10 +387,20 @@ class InstanceSync(val project: Project, val instance: Instance) {
      */
     fun reload() {
         try {
-            post(vmStatUrl, mapOf(
-                    "shutdown_timer" to "shutdown_timer",
-                    "shutdown_type" to "Restart"
-            ))
+            val entity = MultipartEntityBuilder.create()
+                    .addTextBody("shutdown_timer", "shutdown_timer")
+                    .addTextBody("shutdown_type", "Restart")
+                    .build()
+
+            val httpPost = HttpPost(vmStatUrl)
+            httpPost.entity = entity
+            val response = createHttpClient().execute(httpPost)
+            if (response.statusLine.statusCode != HttpStatus.SC_OK) {
+                throw InstanceException("Cannot reload instance $instance. Invalid response")
+            }
+
+            logger.info("Waiting for shutdown")
+            Behaviors.waitFor(TimeUnit.SECONDS.toMillis(30))
         } catch (e: DeployException) {
             throw InstanceException("Cannot reload instance $instance", e)
         }

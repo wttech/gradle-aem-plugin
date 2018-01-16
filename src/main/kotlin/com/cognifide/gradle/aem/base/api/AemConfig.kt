@@ -47,7 +47,7 @@ open class AemConfig(project: Project) : Serializable {
      * Determines instances involved in CRX package deployment.
      */
     @Input
-    var deployInstanceName : String = propParser.string("aem.deploy.instance.name", "*-$deployEnvironment")
+    var deployInstanceName : String = propParser.string("aem.deploy.instance.name", "$deployEnvironment-*")
 
     /**
      * Defines maximum time after which initializing connection to AEM will be aborted (e.g on upload, install).
