@@ -41,13 +41,13 @@ open class AemConfig(project: Project) : Serializable {
      * Determines current environment to be used in deployment.
      */
     @Input
-    val deployEnvironment : String = propParser.string("aem.env", { System.getenv("AEM_ENV") ?: "local" })
+    val deployEnvironment: String = propParser.string("aem.env", { System.getenv("AEM_ENV") ?: "local" })
 
     /**
      * Determines instances involved in CRX package deployment.
      */
     @Input
-    var deployInstanceName : String = propParser.string("aem.deploy.instance.name", "$deployEnvironment-*")
+    var deployInstanceName: String = propParser.string("aem.deploy.instance.name", "$deployEnvironment-*")
 
     /**
      * Defines maximum time after which initializing connection to AEM will be aborted (e.g on upload, install).
@@ -259,7 +259,7 @@ open class AemConfig(project: Project) : Serializable {
      * This value is a HTTP connection timeout (in millis) which must be smaller than interval to avoid race condition.
      */
     @Input
-    var awaitTimeout: Int = propParser.int ("aem.await.timeout", (0.9 * awaitInterval.toDouble()).toInt())
+    var awaitTimeout: Int = propParser.int("aem.await.timeout", (0.9 * awaitInterval.toDouble()).toInt())
 
     /**
      * Maximum intervals after which instance stability checks will
@@ -287,6 +287,12 @@ open class AemConfig(project: Project) : Serializable {
     @Internal
     @get:JsonIgnore
     var awaitCondition: (InstanceState) -> Boolean = { it.stable }
+
+    /**
+     * Time in milliseconds to postpone instance stability checks after triggering instances restart.
+     */
+    @Input
+    var reloadDelay: Long = propParser.long("aem.reload.delay", TimeUnit.SECONDS.toMillis(10))
 
     /**
      * Satisfy is a lazy task, which means that it will not install package that is already installed.

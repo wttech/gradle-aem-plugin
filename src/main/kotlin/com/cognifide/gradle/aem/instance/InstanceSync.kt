@@ -28,8 +28,7 @@ import org.jsoup.parser.Parser
 import org.zeroturnaround.zip.ZipUtil
 import java.io.File
 import java.io.FileNotFoundException
-import java.util.concurrent.TimeUnit
-import java.util.ArrayList
+import java.util.*
 
 class InstanceSync(val project: Project, val instance: Instance) {
 
@@ -60,9 +59,17 @@ class InstanceSync(val project: Project, val instance: Instance) {
         return fetch(method)
     }
 
-    fun post(url: String, params: Map<String, Any> = mapOf(), configurer: (HttpRequestBase) -> Unit = { _ -> }): String {
+    fun postUrlencoded(url: String, params: Map<String, Any> = mapOf(), configurer: (HttpRequestBase) -> Unit = { _ -> }): String {
+        return post(url, createEntityUrlencoded(params), configurer)
+    }
+
+    fun postMultipart(url: String, params: Map<String, Any> = mapOf(), configurer: (HttpRequestBase) -> Unit = { _ -> }): String {
+        return post(url, createEntityMultipart(params), configurer)
+    }
+
+    private fun post(url: String, entity: HttpEntity, configurer: (HttpRequestBase) -> Unit = { _ -> }): String {
         val method = HttpPost(normalizeUrl(url))
-        method.entity = createEntity(params)
+        method.entity = entity
         configurer(method)
 
         return fetch(method)
@@ -116,7 +123,13 @@ class InstanceSync(val project: Project, val instance: Instance) {
                 .build()
     }
 
-    private fun createEntity(params: Map<String, Any>): HttpEntity {
+    private fun createEntityUrlencoded(params: Map<String, Any>): HttpEntity {
+        return UrlEncodedFormEntity(params.entries.fold(ArrayList<NameValuePair>(), { result, e ->
+            result.add(BasicNameValuePair(e.key, e.value.toString())); result
+        }))
+    }
+
+    private fun createEntityMultipart(params: Map<String, Any>): HttpEntity {
         val builder = MultipartEntityBuilder.create()
         for ((key, value) in params) {
             if (value is File) {
@@ -184,7 +197,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         logger.info("Asking AEM for uploaded packages using URL: '$listPackagesUrl'")
 
         if (instance.packages == null || refresh) {
-            val json = post(listPackagesUrl)
+            val json = postMultipart(listPackagesUrl)
             instance.packages = try {
                 ListResponse.fromJson(json)
             } catch (e: Exception) {
@@ -202,7 +215,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         logger.info("Uploading package at path '{}' to URL '{}'", file.path, url)
 
         try {
-            val json = sync.post(url, mapOf(
+            val json = sync.postMultipart(url, mapOf(
                     "package" to file,
                     "force" to (config.uploadForce || isSnapshot(file))
             ))
@@ -229,7 +242,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         logger.info("Installing package using command: " + url)
 
         try {
-            val json = post(url, mapOf(
+            val json = postMultipart(url, mapOf(
                     "recursive" to config.installRecursive,
                     "acHandling" to config.acHandling
             ))
@@ -299,7 +312,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
 
         val json: String
         try {
-            json = post(url)
+            json = postMultipart(url)
         } catch (e: Exception) {
             throw DeployException("Cannot activate package", e)
         }
@@ -327,7 +340,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         logger.info("Deleting package using command: " + url)
 
         try {
-            val rawHtml = post(url)
+            val rawHtml = postMultipart(url)
             val response = DeleteResponse(rawHtml)
 
             when (response.status) {
@@ -357,7 +370,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         logger.info("Uninstalling package using command: " + url)
 
         try {
-            val rawHtml = post(url, mapOf(
+            val rawHtml = postMultipart(url, mapOf(
                     "recursive" to config.installRecursive,
                     "acHandling" to config.acHandling
             ))
@@ -395,19 +408,11 @@ class InstanceSync(val project: Project, val instance: Instance) {
 
     fun reload() {
         try {
-            val httpPost = HttpPost(vmStatUrl)
+            logger.info("Triggering instance(s) shutdown")
+            postUrlencoded(vmStatUrl, mapOf("shutdown_type" to "Restart"))
 
-            val params = ArrayList<NameValuePair>()
-            params.add(BasicNameValuePair("shutdown_type", "Restart"))
-            httpPost.entity = UrlEncodedFormEntity(params)
-
-            val response = createHttpClient().execute(httpPost)
-            if (response.statusLine.statusCode != HttpStatus.SC_OK) {
-                throw InstanceException("Cannot reload instance $instance. Invalid response")
-            }
-
-            logger.info("Waiting for shutdown")
-            Behaviors.waitFor(TimeUnit.SECONDS.toMillis(30))
+            logger.info("Awaiting instance(s) shutdown")
+            Behaviors.waitFor(config.reloadDelay)
         } catch (e: DeployException) {
             throw InstanceException("Cannot reload instance $instance", e)
         }

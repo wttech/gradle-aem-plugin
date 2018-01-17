@@ -32,9 +32,9 @@ allprojects { subproject ->
         jar {
             manifest {
                 attributes([
-                        'Bundle-Name': subproject.description,
+                        'Bundle-Name'    : subproject.description,
                         'Bundle-Category': 'example',
-                        'Bundle-Vendor': 'Company'
+                        'Bundle-Vendor'  : 'Company'
                 ])
             }
         }

@@ -2,7 +2,7 @@ buildscript {
     repositories {
         jcenter()
         mavenLocal()
-        maven { url  "http://dl.bintray.com/cognifide/maven-public" }
+        maven { url "http://dl.bintray.com/cognifide/maven-public" }
     }
 
     dependencies {
@@ -34,9 +34,9 @@ dependencies {
 jar {
     manifest {
         attributes([
-                'Bundle-Name': description,
+                'Bundle-Name'    : description,
                 'Bundle-Category': 'example',
-                'Bundle-Vendor': 'Company'
+                'Bundle-Vendor'  : 'Company'
         ])
     }
 }
