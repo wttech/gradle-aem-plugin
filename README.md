@@ -67,6 +67,7 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
       * [Task aemDestroy](#task-aemdestroy)
       * [Task aemUp](#task-aemup)
       * [Task aemDown](#task-aemdown)
+      * [Task aemReload](#task-aemreload)
       * [Task aemAwait](#task-aemawait)
    * [Expandable properties](#expandable-properties)
 * [How to's](#how-tos)
@@ -409,6 +410,10 @@ Turn on local AEM instance(s).
 #### Task `aemDown`
 
 Turn off local AEM instance(s).
+
+#### Task `aemReload`
+
+Turn off then on both local and remote AEM instance(s).
 
 #### Task `aemAwait`
 
