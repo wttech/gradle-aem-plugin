@@ -7,17 +7,21 @@ import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.deploy.*
 import org.apache.commons.io.IOUtils
 import org.apache.http.HttpEntity
+import org.apache.http.HttpResponse
 import org.apache.http.HttpStatus
+import org.apache.http.NameValuePair
 import org.apache.http.auth.AuthScope
 import org.apache.http.auth.UsernamePasswordCredentials
 import org.apache.http.client.HttpClient
 import org.apache.http.client.config.RequestConfig
+import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.client.methods.HttpPost
 import org.apache.http.client.methods.HttpRequestBase
 import org.apache.http.entity.mime.MultipartEntityBuilder
 import org.apache.http.impl.client.BasicCredentialsProvider
 import org.apache.http.impl.client.HttpClientBuilder
+import org.apache.http.message.BasicNameValuePair
 import org.gradle.api.Project
 import org.jsoup.Jsoup
 import org.jsoup.parser.Parser
@@ -25,6 +29,7 @@ import org.zeroturnaround.zip.ZipUtil
 import java.io.File
 import java.io.FileNotFoundException
 import java.util.concurrent.TimeUnit
+import java.util.ArrayList
 
 class InstanceSync(val project: Project, val instance: Instance) {
 
@@ -48,17 +53,19 @@ class InstanceSync(val project: Project, val instance: Instance) {
 
     val vmStatUrl = "${instance.httpUrl}/system/console/vmstat"
 
-    fun get(url: String, parametrizer: (RequestConfig) -> Unit = {}): String {
+    fun get(url: String, configurer: (HttpRequestBase) -> Unit = { _ -> }): String {
         val method = HttpGet(normalizeUrl(url))
+        configurer(method)
 
-        return execute(method, parametrizer)
+        return fetch(method)
     }
 
-    fun post(url: String, params: Map<String, Any> = mapOf(), parametrizer: (RequestConfig) -> Unit = {}): String {
+    fun post(url: String, params: Map<String, Any> = mapOf(), configurer: (HttpRequestBase) -> Unit = { _ -> }): String {
         val method = HttpPost(normalizeUrl(url))
         method.entity = createEntity(params)
+        configurer(method)
 
-        return execute(method, parametrizer)
+        return fetch(method)
     }
 
     /**
@@ -69,16 +76,18 @@ class InstanceSync(val project: Project, val instance: Instance) {
         return url.replace(" ", "%20")
     }
 
-    fun execute(method: HttpRequestBase, parametrizer: (RequestConfig) -> Unit = {}): String {
-        try {
-            parametrizer(method.config)
+    fun fetch(method: HttpRequestBase, expectedStatus: Int = HttpStatus.SC_OK): String {
+        return execute(method, expectedStatus, { IOUtils.toString(it.entity.content) })
+    }
 
+    fun <T> execute(method: HttpRequestBase, expectedStatus: Int = HttpStatus.SC_OK, onSuccess: (HttpResponse) -> T): T {
+        try {
             val client = createHttpClient()
             val response = client.execute(method)
 
             val status = response.statusLine.statusCode
-            if (status == HttpStatus.SC_OK) {
-                return IOUtils.toString(response.entity.content)
+            if (status == expectedStatus) {
+                return onSuccess(response)
             } else {
                 logger.debug(IOUtils.toString(response.entity.content))
                 throw DeployException("Request to the instance failed, cause: "
@@ -91,6 +100,9 @@ class InstanceSync(val project: Project, val instance: Instance) {
         }
     }
 
+    /**
+     * @see <https://hc.apache.org/httpcomponents-client-ga/tutorial/html/authentication.html>
+     */
     fun createHttpClient(): HttpClient {
         return HttpClientBuilder.create()
                 .setDefaultRequestConfig(RequestConfig.custom()
@@ -100,7 +112,6 @@ class InstanceSync(val project: Project, val instance: Instance) {
                 )
                 .setDefaultCredentialsProvider(BasicCredentialsProvider().apply {
                     setCredentials(AuthScope.ANY, UsernamePasswordCredentials(instance.user, instance.password))
-                    // TODO isAuthenticationPreemptive = true
                 })
                 .build()
     }
@@ -373,27 +384,23 @@ class InstanceSync(val project: Project, val instance: Instance) {
         }
     }
 
-    fun determineBundleState(parametrizer: (RequestConfig) -> Unit): BundleState {
+    fun determineBundleState(configurer: (HttpRequestBase) -> Unit): BundleState {
         return try {
-            BundleState.fromJson(get(bundlesUrl, parametrizer))
+            BundleState.fromJson(get(bundlesUrl, configurer))
         } catch (e: Exception) {
             logger.debug("Cannot determine bundle state on $instance", e)
             BundleState.unknown(e)
         }
     }
 
-    /**
-     * TODO maybe we could skip shutdown_timer and do it immediately
-     */
     fun reload() {
         try {
-            val entity = MultipartEntityBuilder.create()
-                    .addTextBody("shutdown_timer", "shutdown_timer")
-                    .addTextBody("shutdown_type", "Restart")
-                    .build()
-
             val httpPost = HttpPost(vmStatUrl)
-            httpPost.entity = entity
+
+            val params = ArrayList<NameValuePair>()
+            params.add(BasicNameValuePair("shutdown_type", "Restart"))
+            httpPost.entity = UrlEncodedFormEntity(params)
+
             val response = createHttpClient().execute(httpPost)
             if (response.statusLine.statusCode != HttpStatus.SC_OK) {
                 throw InstanceException("Cannot reload instance $instance. Invalid response")
