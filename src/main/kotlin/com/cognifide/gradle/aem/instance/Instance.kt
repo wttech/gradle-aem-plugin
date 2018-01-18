@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.instance
 import com.cognifide.gradle.aem.base.api.AemConfig
 import com.cognifide.gradle.aem.base.api.AemException
 import com.cognifide.gradle.aem.internal.Formats
+import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.pkg.deploy.ListResponse
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -32,6 +33,10 @@ interface Instance : Serializable {
         val LIST_PROP = "aem.deploy.instance.list"
 
         val NAME_PROP = "aem.deploy.instance.name"
+
+        val AUTHORS_PROP = "aem.authors"
+
+        val PUBLISHERS_PROP = "aem.publishers"
 
         fun parse(str: String): List<Instance> {
             return str.split(";").map { urlRaw ->
@@ -83,8 +88,17 @@ interface Instance : Serializable {
                 defaults()
             }
 
+            // Handle name pattern filtering
             return instances.filter { instance ->
-                PropertyParser(project).filter(instance.name, NAME_PROP, instanceFilter)
+                when {
+                    config.propParser.flag(AUTHORS_PROP) -> {
+                        Patterns.wildcard(instance.name, "${config.deployEnvironment}-${InstanceType.AUTHOR}")
+                    }
+                    config.propParser.flag(PUBLISHERS_PROP) -> {
+                        Patterns.wildcard(instance.name, "${config.deployEnvironment}-${InstanceType.PUBLISH}")
+                    }
+                    else -> config.propParser.filter(instance.name, NAME_PROP, instanceFilter)
+                }
             }
         }
 
