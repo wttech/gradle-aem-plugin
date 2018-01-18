@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.instance
 import com.cognifide.gradle.aem.base.api.AemConfig
 import com.cognifide.gradle.aem.internal.Behaviors
 import com.cognifide.gradle.aem.internal.Patterns
+import com.cognifide.gradle.aem.internal.http.PreemptiveAuthInterceptor
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.deploy.*
 import org.apache.commons.io.IOUtils
@@ -107,11 +108,9 @@ class InstanceSync(val project: Project, val instance: Instance) {
         }
     }
 
-    /**
-     * @see <https://hc.apache.org/httpcomponents-client-ga/tutorial/html/authentication.html>
-     */
     fun createHttpClient(): HttpClient {
         return HttpClientBuilder.create()
+                .addInterceptorFirst(PreemptiveAuthInterceptor())
                 .setDefaultRequestConfig(RequestConfig.custom()
                         .setConnectTimeout(config.deployConnectionTimeout)
                         .setConnectionRequestTimeout(config.deployConnectionTimeout)
