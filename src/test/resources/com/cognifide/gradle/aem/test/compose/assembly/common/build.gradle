@@ -15,9 +15,9 @@ jar {
         def pkg = 'com.company.aem.example.common'
 
         attributes([
-                'Bundle-SymbolicName': pkg,
+                'Bundle-SymbolicName' : pkg,
                 'Sling-Model-Packages': pkg,
-                'Export-Package': "$pkg.*;-split-package:=merge-first,org.hashids.*"
+                'Export-Package'      : "$pkg.*;-split-package:=merge-first,org.hashids.*"
         ])
     }
 }
