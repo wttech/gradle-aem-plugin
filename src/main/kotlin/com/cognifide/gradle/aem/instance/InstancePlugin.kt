@@ -37,6 +37,7 @@ class InstancePlugin : Plugin<Project> {
         val destroy = project.tasks.create(DestroyTask.NAME, DestroyTask::class.java)
         val up = project.tasks.create(UpTask.NAME, UpTask::class.java)
         val down = project.tasks.create(DownTask.NAME, DownTask::class.java)
+        val reload = project.tasks.create(ReloadTask.NAME, ReloadTask::class.java)
         val satisfy = project.tasks.create(SatisfyTask.NAME, SatisfyTask::class.java)
         val await = project.tasks.create(AwaitTask.NAME, AwaitTask::class.java)
         val collect = project.tasks.create(CollectTask.NAME, CollectTask::class.java)
@@ -55,6 +56,7 @@ class InstancePlugin : Plugin<Project> {
             setup.dependsOn(create, up, satisfy, build, await)
 
             build.mustRunAfter(create, up, satisfy)
+            reload.mustRunAfter(build, satisfy)
             await.mustRunAfter(build)
         })
 

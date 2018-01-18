@@ -12,7 +12,7 @@ class InstanceActions(val project: Project) {
 
     val logger = project.logger
 
-    fun awaitStable(instances: List<Instance> = Instance.locals(project)) {
+    fun awaitStable(instances: List<Instance>) {
         val progressLogger = ProgressLogger(project, "Awaiting stable instance(s)")
 
         progressLogger.started()

@@ -52,7 +52,7 @@ class BundleState private constructor() {
     val installedBundles: Int
         get() = stats[4]
 
-    val unknown : Boolean
+    val unknown: Boolean
         get() = bundles.isEmpty()
 
     val statsWithLabels
