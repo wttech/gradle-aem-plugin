@@ -559,7 +559,7 @@ Above configuration uses default tasks, so that alternatively it is possible to 
 When there are defined named AEM instances: `local-author`, `local-publish`, `integration-author` and `integration-publish`,
 then it is available to deploy packages with taking into account: 
 
- * type of environment (local, integration)
+ * type of environment (local, integration, staging, etc)
  * type of AEM instance (author / publish)
 
 ```bash
