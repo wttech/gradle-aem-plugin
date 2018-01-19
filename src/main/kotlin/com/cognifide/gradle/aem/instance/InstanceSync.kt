@@ -6,6 +6,7 @@ import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.http.PreemptiveAuthInterceptor
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.deploy.*
+import org.apache.commons.io.FilenameUtils
 import org.apache.commons.io.IOUtils
 import org.apache.http.HttpEntity
 import org.apache.http.HttpResponse
@@ -180,6 +181,10 @@ class InstanceSync(val project: Project, val instance: Instance) {
     }
 
     fun determineRemotePackage(file: File, refresh: Boolean = true): ListResponse.Package? {
+        if (!ZipUtil.containsEntry(file, PackagePlugin.VLT_PROPERTIES)) {
+            throw DeployException("File is not a valid CRX package: $file")
+        }
+
         val xml = ZipUtil.unpackEntry(file, PackagePlugin.VLT_PROPERTIES).toString(Charsets.UTF_8)
         val doc = Jsoup.parse(xml, "", Parser.xmlParser())
 
@@ -271,6 +276,19 @@ class InstanceSync(val project: Project, val instance: Instance) {
         } catch (e: Exception) {
             throw DeployException("Cannot install package.", e)
         }
+    }
+
+    fun satisfyFile(file: File): Boolean {
+        return when (FilenameUtils.getExtension(file.absolutePath)) {
+            "jar" -> satisfyBundle(file)
+            "zip" -> satisfyPackage(file)
+            else -> throw DeployException("Unsupported file to be satisfied: $file")
+        }
+    }
+
+    // TODO implement this
+    fun satisfyBundle(file: File): Boolean {
+        return true
     }
 
     fun satisfyPackage(file: File): Boolean {

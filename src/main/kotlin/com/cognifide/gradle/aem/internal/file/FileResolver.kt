@@ -8,6 +8,7 @@ import org.apache.commons.lang3.BooleanUtils
 import org.apache.commons.lang3.builder.HashCodeBuilder
 import org.gradle.api.DefaultTask
 import org.gradle.api.Project
+import org.gradle.api.artifacts.Configuration
 import org.gradle.util.ConfigureUtil
 import org.gradle.util.GFileUtils
 import java.io.File
@@ -67,6 +68,17 @@ class FileResolver(val project: Project, val downloadDir: File) {
 
     private fun filterResolvers(filter: (String) -> Boolean): List<Resolver> {
         return resolvers.filter { filter(it.group) }
+    }
+
+    fun dependency(notation: Any) {
+        resolve(notation, {
+            val configName = "fileResolver_dependency_${"${downloadDir.path}_$notation".hashCode()}}"
+            val configOptions: (Configuration) -> Unit = { it.isTransitive = false }
+            val config = project.configurations.create(configName, configOptions)
+
+            project.dependencies.add(config.name, notation)
+            config.singleFile
+        })
     }
 
     fun url(url: String) {

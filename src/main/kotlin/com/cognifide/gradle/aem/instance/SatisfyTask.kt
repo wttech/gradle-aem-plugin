@@ -10,6 +10,8 @@ import org.gradle.api.tasks.TaskAction
 import org.gradle.util.ConfigureUtil
 import java.io.File
 
+// TODO nested groups
+// TODO group instanceName via method()
 open class SatisfyTask : SyncTask() {
 
     companion object {
@@ -29,7 +31,7 @@ open class SatisfyTask : SyncTask() {
 
     init {
         group = AemTask.GROUP
-        description = "Satisfies AEM by uploading & installing dependent packages on instance(s)."
+        description = "Satisfies AEM by uploading & installing dependent packages or bundles on instance(s)."
     }
 
     fun packages(closure: Closure<*>) {
@@ -38,28 +40,28 @@ open class SatisfyTask : SyncTask() {
 
     @TaskAction
     fun satisfy() {
-        val packages = provideGroupedPackages()
-        satisfyPackagesOnInstances(packages)
+        val packages = provideGroupedFiles()
+        satisfyFilesOnInstances(packages)
     }
 
-    private fun provideGroupedPackages(): Map<String, List<File>> {
-        logger.info("Providing packages from local and remote sources.")
+    private fun provideGroupedFiles(): Map<String, List<File>> {
+        logger.info("Providing files from local and remote sources.")
 
-        val groupedPackages = packageProvider.groupedFiles(groupFilter)
+        val groupedFiles = packageProvider.groupedFiles(groupFilter)
 
-        logger.info("Packages provided (${groupedPackages.map { it.value.size }.sum()}).")
+        logger.info("Files provided (${groupedFiles.map { it.value.size }.sum()}).")
 
-        return groupedPackages
+        return groupedFiles
     }
 
-    private fun satisfyPackagesOnInstances(groupedPackages: Map<String, List<File>>) {
+    private fun satisfyFilesOnInstances(groupedPackages: Map<String, List<File>>) {
         for ((group, files) in groupedPackages) {
-            logger.info("Satisfying group of packages '$group'.")
+            logger.info("Satisfying group of files '$group'.")
 
             var shouldAwait = false
             synchronizeInstances({ sync ->
                 files.onEach {
-                    if (sync.satisfyPackage(it)) {
+                    if (sync.satisfyFile(it)) {
                         shouldAwait = true
                     }
                 }
