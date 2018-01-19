@@ -21,7 +21,7 @@ open class SatisfyTask : SyncTask() {
     }
 
     @get:Internal
-    val packageProvider = FileResolver(project, AemTask.temporaryDir(project, NAME, DOWNLOAD_DIR))
+    val filesProvider = FileResolver(project, AemTask.temporaryDir(project, NAME, DOWNLOAD_DIR))
 
 
     @get:Internal
@@ -34,20 +34,20 @@ open class SatisfyTask : SyncTask() {
         description = "Satisfies AEM by uploading & installing dependent packages or bundles on instance(s)."
     }
 
-    fun packages(closure: Closure<*>) {
-        ConfigureUtil.configure(closure, packageProvider)
+    fun files(closure: Closure<*>) {
+        ConfigureUtil.configure(closure, filesProvider)
     }
 
     @TaskAction
     fun satisfy() {
-        val packages = provideGroupedFiles()
-        satisfyFilesOnInstances(packages)
+        val files = provideGroupedFiles()
+        satisfyFilesOnInstances(files)
     }
 
     private fun provideGroupedFiles(): Map<String, List<File>> {
         logger.info("Providing files from local and remote sources.")
 
-        val groupedFiles = packageProvider.groupedFiles(groupFilter)
+        val groupedFiles = filesProvider.groupedFiles(groupFilter)
 
         logger.info("Files provided (${groupedFiles.map { it.value.size }.sum()}).")
 

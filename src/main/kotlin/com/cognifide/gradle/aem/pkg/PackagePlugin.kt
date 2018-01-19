@@ -34,6 +34,8 @@ class PackagePlugin : Plugin<Project> {
 
         val JCR_ROOT = "jcr_root"
 
+        val JAR_MANIFEST = "META-INF/MANIFEST.MF"
+
         val BUILD_TASK_RULE = "Pattern: aem<ProjectPath>Build: Build CRX package and deploy it to AEM instance(s)."
     }
 

@@ -59,7 +59,6 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
       * [Task aemPurge](#task-aempurge)
       * [Task aemActivate](#task-aemactivate)
       * [Task aemDistribute](#task-aemdistribute)
-      * [Task aemCollect](#task-aemcollect)
       * [Task rule aem&lt;ProjectPath&gt;Build](#task-rule-aemprojectpathbuild)
    * [Instance plugin tasks](#instance-plugin-tasks)
       * [Task aemSetup](#task-aemsetup)
@@ -69,6 +68,7 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
       * [Task aemDown](#task-aemdown)
       * [Task aemReload](#task-aemreload)
       * [Task aemAwait](#task-aemawait)
+      * [Task aemCollect](#task-aemcollect)
    * [Expandable properties](#expandable-properties)
 * [How to's](#how-tos)
    * [Set AEM configuration properly for all / concrete project(s)](#set-aem-configuration-properly-for-all--concrete-projects)
@@ -78,6 +78,7 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
    * [Deploy CRX package(s) only to filtered group of instances:](#deploy-crx-packages-only-to-filtered-group-of-instances)
    * [Deploy CRX package(s) only to instances specified explicitly](#deploy-crx-packages-only-to-instances-specified-explicitly)
    * [Deploy only filtered dependent CRX package(s)](#deploy-only-filtered-dependent-crx-packages)
+   * [Customize local AEM instances configuration](#customize-local-aem-instances-configuration)
    * [Check out and clean JCR content using filter at custom path](#check-out-and-clean-jcr-content-using-filter-at-custom-path)
    * [Check out and clean JCR content using filter roots specified explicitly](#check-out-and-clean-jcr-content-using-filter-roots-specified-explicitly)
    * [Assemble all-in-one CRX package(s)](#assemble-all-in-one-crx-packages)
@@ -373,12 +374,6 @@ Replicate installed CRX package to other AEM instance(s).
 
 Upload, install & activate CRX package into AEM instances(s). Secondary form of deployment. Optimized version of `aemUpload aemInstall aemActivate -Paem.deploy.instance.name=*-author`.
 
-#### Task `aemCollect`
-
-Composes ZIP package from all CRX packages being satisfied and built. Available methods:
-
-* all inherited from [ZIP task](https://docs.gradle.org/3.5/dsl/org.gradle.api.tasks.bundling.Zip.html).
-
 #### Task rule `aem<ProjectPath>Build`
 
 Build CRX package and deploy it to AEM instance(s). It is recommended to include appropriate deploy task name in [default tasks](https://docs.gradle.org/current/userguide/tutorial_using_tasks.html#sec:default_tasks) of project. For instance, to deploy project at path `:app:design` use task named `aemAppDesignBuild`.
@@ -420,6 +415,12 @@ Turn off then on both local and remote AEM instance(s).
 #### Task `aemAwait`
 
 Wait until all local AEM instance(s) be stable.
+
+#### Task `aemCollect`
+
+Composes ZIP package from all CRX packages being satisfied and built. Available methods:
+
+* all inherited from [ZIP task](https://docs.gradle.org/3.5/dsl/org.gradle.api.tasks.bundling.Zip.html).
 
 ### Expandable properties
 

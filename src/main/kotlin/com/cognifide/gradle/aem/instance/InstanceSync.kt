@@ -280,15 +280,10 @@ class InstanceSync(val project: Project, val instance: Instance) {
 
     fun satisfyFile(file: File): Boolean {
         return when (FilenameUtils.getExtension(file.absolutePath)) {
-            "jar" -> satisfyBundle(file)
             "zip" -> satisfyPackage(file)
-            else -> throw DeployException("Unsupported file to be satisfied: $file")
+            "jar" -> satisfyBundle(file)
+            else -> throw DeployException("Cannot satisfy file: $file. Supported extension types: are [*.zip, *.jar].")
         }
-    }
-
-    // TODO implement this
-    fun satisfyBundle(file: File): Boolean {
-        return true
     }
 
     fun satisfyPackage(file: File): Boolean {
@@ -414,7 +409,39 @@ class InstanceSync(val project: Project, val instance: Instance) {
         }
     }
 
-    fun determineBundleState(configurer: (HttpRequestBase) -> Unit): BundleState {
+    fun satisfyBundle(file: File): Boolean {
+        val bundle = determineRemoteBundle(file, config.satisfyRefreshing)
+
+        return if (bundle == null) {
+            deployBundle(file)
+            true
+        } else {
+            if (!bundle.active || isSnapshot(file)) {
+                deployBundle(file)
+                true
+            } else {
+                false
+            }
+        }
+    }
+
+    fun determineRemoteBundle(file: File, refresh: Boolean = true): BundleState.Bundle? {
+        if (!ZipUtil.containsEntry(file, PackagePlugin.JAR_MANIFEST)) {
+            throw DeployException("File is not a valid JAR: $file")
+        }
+
+        val symbolicName = "" // from JAR 'Bundle-SymbolicName'
+        val version : String? = null // from JAR 'Bundle-Version' (optionally, if it specified)
+        val state = determineBundleState()
+
+        return state.bundles.find { it.symbolicName == symbolicName && (version == null || version == it.version)}
+    }
+
+    fun deployBundle(file: File) {
+        // TODO ..
+    }
+
+    fun determineBundleState(configurer: (HttpRequestBase) -> Unit = { _ -> }): BundleState {
         return try {
             BundleState.fromJson(get(bundlesUrl, configurer))
         } catch (e: Exception) {

@@ -17,7 +17,7 @@ open class CollectTask : Zip() {
 
     init {
         group = AemTask.GROUP
-        description = "Composes CRX package from all CRX packages being satisfied and built."
+        description = "Composes CRX package from all CRX packages being built and satisfied files."
 
         classifier = "packages"
         isZip64 = true
@@ -25,7 +25,7 @@ open class CollectTask : Zip() {
         entryCompression = ZipEntryCompression.STORED
 
         project.gradle.projectsEvaluated({
-            from(satisfiedPackages, packageFilter)
+            from(satisfiedFiles, packageFilter)
             from(builtPackages, packageFilter)
         })
     }
@@ -39,20 +39,20 @@ open class CollectTask : Zip() {
     private val satisfy = (project.tasks.getByName(SatisfyTask.NAME) as SatisfyTask)
 
     @get:Internal
-    val satisfiedPackages: List<File>
-        get() = satisfy.packageProvider.outputDirs(satisfy.groupFilter)
+    val satisfiedFiles: List<File>
+        get() = satisfy.filesProvider.outputDirs(satisfy.groupFilter)
 
     @get:Internal
     val builtPackages: List<File>
         get() = AemConfig.pkgs(project).map { it.archivePath }
 
     override fun copy() {
-        resolvePackages()
+        resolveFiles()
         super.copy()
     }
 
-    private fun resolvePackages() {
-        satisfy.packageProvider.allFiles(satisfy.groupFilter)
+    private fun resolveFiles() {
+        satisfy.filesProvider.allFiles(satisfy.groupFilter)
     }
 
 }
