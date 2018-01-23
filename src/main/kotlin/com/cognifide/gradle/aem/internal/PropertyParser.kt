@@ -6,7 +6,6 @@ import com.cognifide.gradle.aem.base.vlt.SyncTask
 import com.mitchellbosecke.pebble.PebbleEngine
 import com.mitchellbosecke.pebble.lexer.Syntax
 import com.mitchellbosecke.pebble.loader.StringLoader
-import org.apache.commons.lang3.BooleanUtils
 import org.apache.commons.lang3.ClassUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.text.StrSubstitutor
@@ -35,6 +34,7 @@ class PropertyParser(val project: Project) {
                 .newLineTrimming(false)
                 .loader(StringLoader())
                 .syntax(Syntax.Builder()
+                        .setEnableNewLineTrimming(false)
                         .setPrintOpenDelimiter(TEMPLATE_VAR_PREFIX)
                         .setPrintCloseDelimiter(TEMPLATE_VAR_SUFFIX)
                         .build()
