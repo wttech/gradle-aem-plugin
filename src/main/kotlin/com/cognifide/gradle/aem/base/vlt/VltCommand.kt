@@ -26,7 +26,7 @@ class VltCommand(val project: Project) {
 
         val cleaner = VltCleaner(contentDir, logger)
         cleaner.removeVltFiles()
-        cleaner.cleanupDotContent(config.vaultSkipProperties, LineSeparator.string(config.vaultLineSeparator))
+        cleaner.cleanupDotContent(config.vaultSkipProperties, config.vaultLineSeparatorString)
     }
 
     fun checkout() {

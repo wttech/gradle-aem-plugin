@@ -30,13 +30,24 @@ interface Instance : Serializable {
 
         val PASSWORD_DEFAULT = "admin"
 
-        val LIST_PROP = "aem.deploy.instance.list"
+        val LIST_PROP = "aem.instance.list"
 
-        val NAME_PROP = "aem.deploy.instance.name"
+        val NAME_PROP = "aem.instance.name"
 
-        val AUTHORS_PROP = "aem.authors"
+        val AUTHOR_URL_PROP = "aem.instance.author.httpUrl"
 
-        val PUBLISHERS_PROP = "aem.publishers"
+        val PUBLISH_URL_PROP = "aem.instance.publish.httpUrl"
+
+        val AUTHORS_FILTER_PROP = "aem.instance.authors"
+
+        val PUBLISHERS_PROP = "aem.instance.publishers"
+
+        val LOCAL_URLS = listOf(
+                "http://localhost",
+                "https://localhost",
+                "http://127.0.0.1",
+                "https://127.0.0.1"
+        )
 
         fun parse(str: String): List<Instance> {
             return str.split(";").map { urlRaw ->
@@ -61,10 +72,14 @@ interface Instance : Serializable {
             }
         }
 
-        fun defaults(): List<Instance> {
+        fun defaults(project: Project): List<Instance> {
+            val config = AemConfig.of(project)
+            val authorUrl = project.properties.getOrElse(AUTHOR_URL_PROP, { URL_AUTHOR_DEFAULT }) as String
+            val publishUrl = project.properties.getOrElse(PUBLISH_URL_PROP, { URL_PUBLISH_DEFAULT }) as String
+
             return listOf(
-                    LocalInstance.create(URL_AUTHOR_DEFAULT),
-                    LocalInstance.create(URL_PUBLISH_DEFAULT)
+                    RemoteInstance.create(authorUrl, config.deployEnvironment),
+                    RemoteInstance.create(publishUrl, config.deployEnvironment)
             )
         }
 
@@ -85,13 +100,13 @@ interface Instance : Serializable {
             val instances = if (!config.instances.values.isEmpty()) {
                 config.instances.values
             } else {
-                defaults()
+                defaults(project)
             }
 
             // Handle name pattern filtering
             return instances.filter { instance ->
                 when {
-                    config.propParser.flag(AUTHORS_PROP) -> {
+                    config.propParser.flag(AUTHORS_FILTER_PROP) -> {
                         Patterns.wildcard(instance.name, "${config.deployEnvironment}-${InstanceType.AUTHOR}")
                     }
                     config.propParser.flag(PUBLISHERS_PROP) -> {

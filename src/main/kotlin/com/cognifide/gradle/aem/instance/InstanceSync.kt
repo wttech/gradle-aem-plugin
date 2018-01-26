@@ -134,7 +134,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         for ((key, value) in params) {
             if (value is File) {
                 if (value.exists()) {
-                    builder.addBinaryBody(value.name, value)
+                    builder.addBinaryBody(key, value)
                 }
             } else {
                 val str = value.toString()

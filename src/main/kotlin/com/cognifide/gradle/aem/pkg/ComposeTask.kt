@@ -65,7 +65,7 @@ open class ComposeTask : Zip(), AemTask {
 
     @get:Internal
     val fileProperties
-        get() = mapOf("filterRoots" to filterRoots.joinToString(LineSeparator.string(config.vaultLineSeparator)))
+        get() = mapOf("filterRoots" to filterRoots.joinToString(config.vaultLineSeparatorString))
 
     init {
         description = "Composes CRX package from JCR content and built OSGi bundles"

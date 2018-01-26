@@ -22,12 +22,17 @@ import java.util.concurrent.TimeUnit
  * Content paths which are used to compose a CRX package are being processed by copy task,
  * which automatically mark them as inputs so package is being rebuild on any JCR content or Vault files change.
  */
-open class AemConfig(project: Project) : Serializable {
+class AemConfig(
+        @Transient
+        @get:JsonIgnore
+        private val project: Project
+) : Serializable {
 
     /**
      * Allows to read project property specified in command line and system property as a fallback.
      */
     @Internal
+    @get:JsonIgnore
     val propParser = PropertyParser(project)
 
     /**
@@ -41,7 +46,9 @@ open class AemConfig(project: Project) : Serializable {
      * Determines current environment to be used in deployment.
      */
     @Input
-    val deployEnvironment: String = propParser.string("aem.env", { System.getenv("AEM_ENV") ?: "local" })
+    val deployEnvironment: String = propParser.string("aem.env", {
+        System.getenv("AEM_ENV") ?: "local"
+    })
 
     /**
      * Determines instances involved in CRX package deployment.
@@ -342,8 +349,18 @@ open class AemConfig(project: Project) : Serializable {
         instance(LocalInstance(httpUrl, user, password, type, debugPort))
     }
 
+    fun localAuthorInstance() {
+        val url = project.properties.getOrElse(Instance.AUTHOR_URL_PROP, { Instance.URL_AUTHOR_DEFAULT }) as String
+        instance(LocalInstance.create(url))
+    }
+
+    fun localPublishInstance() {
+        val url = project.properties.getOrElse(Instance.PUBLISH_URL_PROP, { Instance.URL_PUBLISH_DEFAULT }) as String
+        instance(LocalInstance.create(url))
+    }
+
     fun remoteInstance(httpUrl: String) {
-        instance(RemoteInstance.create(httpUrl))
+        instance(RemoteInstance.create(httpUrl, deployEnvironment))
     }
 
     fun remoteInstance(httpUrl: String, environment: String) {
@@ -358,8 +375,18 @@ open class AemConfig(project: Project) : Serializable {
         instance(RemoteInstance(httpUrl, user, password, type, environment))
     }
 
+    fun remoteAuthorInstance() {
+        val httpUrl = project.properties.getOrElse(Instance.AUTHOR_URL_PROP, { Instance.URL_AUTHOR_DEFAULT }) as String
+        instance(RemoteInstance.create(httpUrl, deployEnvironment))
+    }
+
+    fun remotePublishInstance() {
+        val httpUrl = project.properties.getOrElse(Instance.PUBLISH_URL_PROP, { Instance.URL_PUBLISH_DEFAULT }) as String
+        instance(RemoteInstance.create(httpUrl, deployEnvironment))
+    }
+
     private fun instance(instance: Instance) {
-        instances.put(instance.name, instance)
+        instances[instance.name] = instance
     }
 
     /**
@@ -429,7 +456,7 @@ open class AemConfig(project: Project) : Serializable {
         fun of(project: Project): AemConfig {
             val extension = project.extensions.findByType(AemExtension::class.java)
                     ?: throw AemException(project.toString().capitalize()
-                    + " has neither '${PackagePlugin.ID}' nor '${InstancePlugin.ID}' plugin applied.")
+                            + " has neither '${PackagePlugin.ID}' nor '${InstancePlugin.ID}' plugin applied.")
 
             return extension.config
         }
@@ -441,7 +468,7 @@ open class AemConfig(project: Project) : Serializable {
         fun pkg(project: Project): ComposeTask {
             val task = project.tasks.findByName(ComposeTask.NAME)
                     ?: throw AemException("${project.toString().capitalize()} has no task named"
-                    + " '${ComposeTask.NAME}' defined.")
+                            + " '${ComposeTask.NAME}' defined.")
 
             return task as ComposeTask
         }
