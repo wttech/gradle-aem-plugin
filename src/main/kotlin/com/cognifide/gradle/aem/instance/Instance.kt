@@ -187,4 +187,7 @@ interface Instance : Serializable {
     @get:JsonIgnore
     var packages: ListResponse?
 
+    @get:JsonIgnore
+    var bundles: BundleState?
+
 }

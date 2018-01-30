@@ -28,9 +28,11 @@ import org.gradle.api.Project
 import org.jsoup.Jsoup
 import org.jsoup.parser.Parser
 import org.zeroturnaround.zip.ZipUtil
+import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.FileNotFoundException
 import java.util.*
+import java.util.jar.Manifest
 
 class InstanceSync(val project: Project, val instance: Instance) {
 
@@ -430,15 +432,47 @@ class InstanceSync(val project: Project, val instance: Instance) {
             throw DeployException("File is not a valid JAR: $file")
         }
 
-        val symbolicName = "" // from JAR 'Bundle-SymbolicName'
-        val version : String? = null // from JAR 'Bundle-Version' (optionally, if it specified)
-        val state = determineBundleState()
+        val manifest = Manifest(ByteArrayInputStream(ZipUtil.unpackEntry(file, PackagePlugin.JAR_MANIFEST)))
 
-        return state.bundles.find { it.symbolicName == symbolicName && (version == null || version == it.version)}
+        // TODO ... refactor to use above
+
+        val entries = readManifestEntries(file)
+        val symbolicName = findManifestEntry(entries, "Bundle-SymbolicName")
+        if (symbolicName.isBlank()) {
+            throw DeployException("File is not a valid OSGi bundle: $file ('Bundle-SymbolicName' not found in manifest).")
+        }
+
+        val version = findManifestEntry(entries, "Bundle-Version")
+        if (symbolicName.isBlank()) {
+            throw DeployException("File is not a valid OSGi bundle: $file ('Bundle-Version' not found in manifest).")
+        }
+
+        val state = if (instance.bundles == null || refresh) {
+            determineBundleState()
+        } else {
+            instance.bundles!!
+        }
+
+        return state.bundles.find { (it.symbolicName == symbolicName) && (version == it.version) }
     }
 
+    private fun readManifestEntries(file: File): List<String> {
+        return String(ZipUtil.unpackEntry(file, PackagePlugin.JAR_MANIFEST))
+                .split("\n")
+                .map { it.trim() }
+    }
+
+    private fun findManifestEntry(lines: List<String>, entry: String): String {
+        return lines.find { it.startsWith("$entry:") }
+                ?.split(":")
+                ?.get(1)
+                ?.trim()
+                ?: ""
+    }
+
+    // TODO ...
     fun deployBundle(file: File) {
-        // TODO ..
+        logger.info("Deploying bundle: $file")
     }
 
     fun determineBundleState(configurer: (HttpRequestBase) -> Unit = { _ -> }): BundleState {

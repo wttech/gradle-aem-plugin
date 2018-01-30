@@ -45,4 +45,8 @@ class RemoteInstance(
     @get:JsonIgnore
     override var packages: ListResponse? = null
 
+    @Transient
+    @get:JsonIgnore
+    override var bundles: BundleState? = null
+
 }

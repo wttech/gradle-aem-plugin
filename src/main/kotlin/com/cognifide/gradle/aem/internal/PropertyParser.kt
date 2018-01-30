@@ -51,6 +51,9 @@ class PropertyParser(val project: Project) {
         if (value == null) {
             value = systemProperties[name]
         }
+        if (value == null) {
+            value = envProperties[name]
+        }
 
         return value
     }
@@ -108,7 +111,7 @@ class PropertyParser(val project: Project) {
 
     fun expand(source: String, properties: Map<String, Any> = mapOf(), context: String? = null): String {
         try {
-            val interpolableProperties = systemProperties + mvnProperties + configProperties.filterValues {
+            val interpolableProperties = envProperties + systemProperties + mvnProperties + configProperties.filterValues {
                 it is String || ClassUtils.isPrimitiveOrWrapper(it.javaClass)
             }
             val interpolated = TEMPLATE_INTERPOLATOR(source, interpolableProperties)
@@ -124,6 +127,10 @@ class PropertyParser(val project: Project) {
             if (!context.isNullOrBlank()) msg += " Context: $context"
             throw AemException(msg, e)
         }
+    }
+
+    val envProperties by lazy {
+        System.getenv()
     }
 
     val systemProperties: Map<String, String> by lazy {
