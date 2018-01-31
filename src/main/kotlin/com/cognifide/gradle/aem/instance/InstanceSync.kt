@@ -63,20 +63,25 @@ class InstanceSync(val project: Project, val instance: Instance) {
         return fetch(method)
     }
 
-    fun postUrlencoded(url: String, params: Map<String, Any> = mapOf(), configurer: (HttpRequestBase) -> Unit = { _ -> }): String {
-        return post(url, createEntityUrlencoded(params), configurer)
+    fun postUrlencoded(url: String, params: Map<String, Any> = mapOf(),
+                       configurer: (HttpRequestBase) -> Unit = { _ -> },
+                       statuses: List<Int> = listOf(HttpStatus.SC_OK)): String {
+        return post(url, createEntityUrlencoded(params), configurer, statuses)
     }
 
-    fun postMultipart(url: String, params: Map<String, Any> = mapOf(), configurer: (HttpRequestBase) -> Unit = { _ -> }): String {
-        return post(url, createEntityMultipart(params), configurer)
+    fun postMultipart(url: String, params: Map<String, Any> = mapOf(),
+                      configurer: (HttpRequestBase) -> Unit = { _ -> },
+                      statuses: List<Int> = listOf(HttpStatus.SC_OK)): String {
+        return post(url, createEntityMultipart(params), configurer, statuses)
     }
 
-    private fun post(url: String, entity: HttpEntity, configurer: (HttpRequestBase) -> Unit = { _ -> }): String {
+    private fun post(url: String, entity: HttpEntity, configurer: (HttpRequestBase) -> Unit = { _ -> },
+                     statuses: List<Int> = listOf(HttpStatus.SC_OK)): String {
         val method = HttpPost(normalizeUrl(url))
         method.entity = entity
         configurer(method)
 
-        return fetch(method)
+        return fetch(method, statuses)
     }
 
     /**
@@ -87,25 +92,23 @@ class InstanceSync(val project: Project, val instance: Instance) {
         return url.replace(" ", "%20")
     }
 
-    fun fetch(method: HttpRequestBase, expectedStatus: Int = HttpStatus.SC_OK): String {
-        return execute(method, expectedStatus, { IOUtils.toString(it.entity.content) })
+    fun fetch(method: HttpRequestBase, statuses: List<Int> = listOf(HttpStatus.SC_OK)): String {
+        return execute(method, statuses, { IOUtils.toString(it.entity.content) })
     }
 
-    fun <T> execute(method: HttpRequestBase, expectedStatus: Int = HttpStatus.SC_OK, onSuccess: (HttpResponse) -> T): T {
+    fun <T> execute(method: HttpRequestBase, statuses: List<Int>, success: (HttpResponse) -> T): T {
         try {
             val client = createHttpClient()
             val response = client.execute(method)
 
-            val status = response.statusLine.statusCode
-            if (status == expectedStatus) {
-                return onSuccess(response)
+            if (statuses.contains(response.statusLine.statusCode)) {
+                return success(response)
             } else {
                 logger.debug(IOUtils.toString(response.entity.content))
-                throw DeployException("Request to the instance failed, cause: "
-                        + response.statusLine.toString() + " (check URL, user and password)")
+                throw DeployException("Unexpected instance response: ${response.statusLine}")
             }
         } catch (e: Exception) {
-            throw DeployException("Request to the instance failed, cause: " + e.message, e)
+            throw DeployException("Failed instance request: ${e.message}", e)
         } finally {
             method.releaseConnection()
         }
@@ -434,48 +437,53 @@ class InstanceSync(val project: Project, val instance: Instance) {
 
         val manifest = Manifest(ByteArrayInputStream(ZipUtil.unpackEntry(file, PackagePlugin.JAR_MANIFEST)))
 
-        // TODO ... refactor to use above
-
-        val entries = readManifestEntries(file)
-        val symbolicName = findManifestEntry(entries, "Bundle-SymbolicName")
+        val symbolicName = manifest.mainAttributes.getValue("Bundle-SymbolicName")
         if (symbolicName.isBlank()) {
             throw DeployException("File is not a valid OSGi bundle: $file ('Bundle-SymbolicName' not found in manifest).")
         }
 
-        val version = findManifestEntry(entries, "Bundle-Version")
+        val version = manifest.mainAttributes.getValue("Bundle-Version")
         if (symbolicName.isBlank()) {
             throw DeployException("File is not a valid OSGi bundle: $file ('Bundle-Version' not found in manifest).")
         }
 
         val state = if (instance.bundles == null || refresh) {
-            determineBundleState()
+            val freshState = determineBundleState()
+            instance.bundles = freshState
+            freshState
         } else {
             instance.bundles!!
         }
 
-        return state.bundles.find { (it.symbolicName == symbolicName) && (version == it.version) }
+        logger.info("Trying to find bundle by attributes: [symbolicName=$symbolicName][version=$version]")
+        val bundle = state.bundles.find { (it.symbolicName == symbolicName) && (version == it.version) }
+        if (bundle == null) {
+            logger.info("Bundle not found")
+        } else {
+            logger.info("Bundle found")
+        }
+
+        return bundle
     }
 
-    private fun readManifestEntries(file: File): List<String> {
-        return String(ZipUtil.unpackEntry(file, PackagePlugin.JAR_MANIFEST))
-                .split("\n")
-                .map { it.trim() }
-    }
-
-    private fun findManifestEntry(lines: List<String>, entry: String): String {
-        return lines.find { it.startsWith("$entry:") }
-                ?.split(":")
-                ?.get(1)
-                ?.trim()
-                ?: ""
-    }
-
-    // TODO ...
     fun deployBundle(file: File) {
-        logger.info("Deploying bundle: $file")
+        logger.info("Deploying bundle $file")
+
+        postMultipart(bundlesUrl, mapOf(
+                "action" to "install",
+                "refreshPackages" to "refresh",
+                "bundlestart" to "start",
+                "bundlestartlevel" to 20,
+                "bundlefile" to file
+
+        ), {}, listOf(HttpStatus.SC_MOVED_PERMANENTLY, HttpStatus.SC_OK))
+
+        logger.info("Bundle deployed successfully")
     }
 
     fun determineBundleState(configurer: (HttpRequestBase) -> Unit = { _ -> }): BundleState {
+        logger.info("Asking AEM for bundles using URL: '$bundlesUrl'")
+
         return try {
             BundleState.fromJson(get(bundlesUrl, configurer))
         } catch (e: Exception) {

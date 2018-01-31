@@ -59,6 +59,7 @@ open class UpdateManifestTask : AemDefaultTask() {
         }
     }
 
+    // TODO files should not be resolved in configuration phase (performance decrease)
     private fun embedJars() {
         if (embeddableJars.isEmpty()) {
             return
