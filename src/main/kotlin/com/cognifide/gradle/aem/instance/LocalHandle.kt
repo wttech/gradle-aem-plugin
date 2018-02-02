@@ -7,7 +7,7 @@ import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.ProgressLogger
 import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.internal.file.FileOperations
-import com.cognifide.gradle.aem.internal.file.FileResolver
+import com.cognifide.gradle.aem.internal.file.resolver.FileResolver
 import org.apache.commons.io.FileUtils
 import org.gradle.api.Project
 import org.gradle.api.logging.Logger

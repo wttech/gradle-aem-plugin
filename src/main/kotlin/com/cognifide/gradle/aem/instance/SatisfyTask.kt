@@ -2,16 +2,14 @@ package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.base.api.AemTask
 import com.cognifide.gradle.aem.internal.PropertyParser
-import com.cognifide.gradle.aem.internal.file.FileResolver
+import com.cognifide.gradle.aem.internal.file.resolver.FileGroup
+import com.cognifide.gradle.aem.internal.file.resolver.FileResolver
 import com.cognifide.gradle.aem.pkg.deploy.SyncTask
 import groovy.lang.Closure
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 import org.gradle.util.ConfigureUtil
-import java.io.File
 
-// TODO nested groups
-// TODO group instanceName via method()
 open class SatisfyTask : SyncTask() {
 
     companion object {
@@ -21,7 +19,7 @@ open class SatisfyTask : SyncTask() {
     }
 
     @get:Internal
-    val filesProvider = FileResolver(project, AemTask.temporaryDir(project, NAME, DOWNLOAD_DIR))
+    val packageProvider = FileResolver(project, AemTask.temporaryDir(project, NAME, DOWNLOAD_DIR))
 
 
     @get:Internal
@@ -31,37 +29,39 @@ open class SatisfyTask : SyncTask() {
 
     init {
         group = AemTask.GROUP
-        description = "Satisfies AEM by uploading & installing dependent packages or bundles on instance(s)."
+        description = "Satisfies AEM by uploading & installing dependent packages on instance(s)."
     }
 
-    fun files(closure: Closure<*>) {
-        ConfigureUtil.configure(closure, filesProvider)
+    fun packages(closure: Closure<*>) {
+        ConfigureUtil.configure(closure, packageProvider)
     }
 
     @TaskAction
     fun satisfy() {
-        val files = provideGroupedFiles()
-        satisfyFilesOnInstances(files)
+        val packageGroups = providePackageGroups()
+        satisfyPackagesOnInstances(packageGroups)
     }
 
-    private fun provideGroupedFiles(): Map<String, List<File>> {
-        logger.info("Providing files from local and remote sources.")
+    private fun providePackageGroups(): List<FileGroup> {
+        logger.info("Providing packages from local and remote sources.")
 
-        val groupedFiles = filesProvider.groupedFiles(groupFilter)
+        // TODO use here overridden file resolver which will wrap jars into CRX packages with support for restarting instance after satisfying
+        val fileGroups = packageProvider.filterGroups(groupFilter)
+        val files = fileGroups.flatMap { it.files }
 
-        logger.info("Files provided (${groupedFiles.map { it.value.size }.sum()}).")
+        logger.info("Packages provided (${files.size}).")
 
-        return groupedFiles
+        return fileGroups
     }
 
-    private fun satisfyFilesOnInstances(groupedPackages: Map<String, List<File>>) {
-        for ((group, files) in groupedPackages) {
-            logger.info("Satisfying group of files '$group'.")
+    private fun satisfyPackagesOnInstances(packageGroups: List<FileGroup>) {
+        for (packageGroup in packageGroups) {
+            logger.info("Satisfying group of packages '$group'.")
 
             var shouldAwait = false
             synchronizeInstances({ sync ->
-                files.onEach {
-                    if (sync.satisfyFile(it)) {
+                packageGroup.files.onEach {
+                    if (sync.satisfyPackage(it)) {
                         shouldAwait = true
                     }
                 }

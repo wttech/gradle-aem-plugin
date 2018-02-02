@@ -283,14 +283,6 @@ class InstanceSync(val project: Project, val instance: Instance) {
         }
     }
 
-    fun satisfyFile(file: File): Boolean {
-        return when (FilenameUtils.getExtension(file.absolutePath)) {
-            "zip" -> satisfyPackage(file)
-            "jar" -> satisfyBundle(file)
-            else -> throw DeployException("Cannot satisfy file: $file. Supported extension types: are [*.zip, *.jar].")
-        }
-    }
-
     fun satisfyPackage(file: File): Boolean {
         val pkg = determineRemotePackage(file, config.satisfyRefreshing)
 
@@ -412,73 +404,6 @@ class InstanceSync(val project: Project, val instance: Instance) {
         } catch (e: Exception) {
             throw DeployException("Cannot uninstall package.", e)
         }
-    }
-
-    fun satisfyBundle(file: File): Boolean {
-        val bundle = determineRemoteBundle(file, config.satisfyRefreshing)
-
-        return if (bundle == null) {
-            deployBundle(file)
-            true
-        } else {
-            if (!bundle.active || isSnapshot(file)) {
-                deployBundle(file)
-                true
-            } else {
-                false
-            }
-        }
-    }
-
-    fun determineRemoteBundle(file: File, refresh: Boolean = true): BundleState.Bundle? {
-        if (!ZipUtil.containsEntry(file, PackagePlugin.JAR_MANIFEST)) {
-            throw DeployException("File is not a valid JAR: $file")
-        }
-
-        val manifest = Manifest(ByteArrayInputStream(ZipUtil.unpackEntry(file, PackagePlugin.JAR_MANIFEST)))
-
-        val symbolicName = manifest.mainAttributes.getValue("Bundle-SymbolicName")
-        if (symbolicName.isBlank()) {
-            throw DeployException("File is not a valid OSGi bundle: $file ('Bundle-SymbolicName' not found in manifest).")
-        }
-
-        val version = manifest.mainAttributes.getValue("Bundle-Version")
-        if (symbolicName.isBlank()) {
-            throw DeployException("File is not a valid OSGi bundle: $file ('Bundle-Version' not found in manifest).")
-        }
-
-        val state = if (instance.bundles == null || refresh) {
-            val freshState = determineBundleState()
-            instance.bundles = freshState
-            freshState
-        } else {
-            instance.bundles!!
-        }
-
-        logger.info("Trying to find bundle by attributes: [symbolicName=$symbolicName][version=$version]")
-        val bundle = state.bundles.find { (it.symbolicName == symbolicName) && (version == it.version) }
-        if (bundle == null) {
-            logger.info("Bundle not found")
-        } else {
-            logger.info("Bundle found")
-        }
-
-        return bundle
-    }
-
-    fun deployBundle(file: File) {
-        logger.info("Deploying bundle $file")
-
-        postMultipart(bundlesUrl, mapOf(
-                "action" to "install",
-                "refreshPackages" to "refresh",
-                "bundlestart" to "start",
-                "bundlestartlevel" to 20,
-                "bundlefile" to file
-
-        ), {}, listOf(HttpStatus.SC_MOVED_PERMANENTLY, HttpStatus.SC_OK))
-
-        logger.info("Bundle deployed successfully")
     }
 
     fun determineBundleState(configurer: (HttpRequestBase) -> Unit = { _ -> }): BundleState {
