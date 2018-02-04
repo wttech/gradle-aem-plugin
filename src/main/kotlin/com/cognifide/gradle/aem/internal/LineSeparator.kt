@@ -8,7 +8,8 @@ enum class LineSeparator(val value: String) {
     LF("\n"),
     CRLF("\r\n"),
     CR("\r"),
-    LFCR("\n\r");
+    LFCR("\n\r"),
+    SYSTEM(System.lineSeparator());
 
     companion object {
 

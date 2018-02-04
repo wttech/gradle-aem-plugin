@@ -1,7 +1,7 @@
 plugins {
     id 'java-gradle-plugin'
     id 'maven-publish'
-    id "org.jetbrains.kotlin.jvm" version "1.1.60"
+    id "org.jetbrains.kotlin.jvm" version "1.2.20"
     id "com.jfrog.bintray" version "1.7.3"
 }
 
@@ -18,10 +18,9 @@ dependencies {
     compile gradleApi()
     compile localGroovy()
 
-    compile "org.jetbrains.kotlin:kotlin-stdlib:1.1.60"
+    compile "org.jetbrains.kotlin:kotlin-stdlib:1.2.20"
     compile 'org.apache.commons:commons-lang3:3.4'
     compile 'commons-io:commons-io:2.4'
-    compile 'commons-httpclient:commons-httpclient:3.1'
     compile 'commons-validator:commons-validator:1.6'
     compile 'com.fasterxml.jackson.module:jackson-module-kotlin:2.8.8'
     compile 'org.reflections:reflections:0.9.9'
@@ -31,7 +30,8 @@ dependencies {
     compile 'org.samba.jcifs:jcifs:1.3.18-kohsuke-1'
     compile group: 'org.zeroturnaround', name: 'zt-zip', version: '1.11'
     compile group: 'com.hierynomus', name: 'sshj', version: '0.21.1'
-    compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.3'
+    compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.4'
+    compile group: 'org.apache.httpcomponents', name: 'httpmime', version: '4.5.4'
     compile group: 'org.osgi', name: 'org.osgi.core', version: '6.0.0'
     compile group: 'com.mitchellbosecke', name: 'pebble', version: '2.4.0'
 

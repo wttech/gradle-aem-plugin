@@ -67,6 +67,7 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
       * [Task aemDestroy](#task-aemdestroy)
       * [Task aemUp](#task-aemup)
       * [Task aemDown](#task-aemdown)
+      * [Task aemReload](#task-aemreload)
       * [Task aemAwait](#task-aemawait)
    * [Expandable properties](#expandable-properties)
 * [How to's](#how-tos)
@@ -110,7 +111,7 @@ buildscript {
     }
     
     dependencies {
-        classpath 'com.cognifide.gradle:aem-plugin:2.0.19'
+        classpath 'com.cognifide.gradle:aem-plugin:3.0.0'
     }
 }
 
@@ -175,12 +176,12 @@ aem {
           "*_x0040_TypeHint"
         ]
         vaultGlobalOptions = "--credentials {{instance.credentials}}"
-        vaultLineSeparator = System.lineSeparator()
+        vaultLineSeparator = "LF"
         dependBundlesTaskNames = ["assemble", "check"]
         dependContentTaskNames = ["aemCompose.dependencies"]
         buildDate = Date()
         instancesPath = "${System.getProperty("user.home")}/.aem/${project.rootProject.name}"
-        instanceFilesPath = project.rootProject.file("src/main/resources/${AemInstancePlugin.FILES_PATH}")
+        instanceFilesPath = project.rootProject.file("src/main/resources/local-instance")
         instanceFilesExpanded = [
           "**/*.properties", 
           "**/*.sh", 
@@ -388,6 +389,8 @@ Build CRX package and deploy it to AEM instance(s). It is recommended to include
 
 Perform initial setup of local AEM instance(s). Automated version of `aemCreate aemUp aemSatisfy aemBuild`.
 
+![Setup task](docs/setup-task.png)
+
 #### Task `aemCreate`
  
 Create local AEM instance(s). To use it specify required properties in ignored file *gradle.properties* at project root (protocols supported: SMB, SSH, HTTP(s) or local path, SMB as example):
@@ -409,6 +412,10 @@ Turn on local AEM instance(s).
 #### Task `aemDown`
 
 Turn off local AEM instance(s).
+
+#### Task `aemReload`
+
+Turn off then on both local and remote AEM instance(s).
 
 #### Task `aemAwait`
 
@@ -552,7 +559,7 @@ Above configuration uses default tasks, so that alternatively it is possible to 
 When there are defined named AEM instances: `local-author`, `local-publish`, `integration-author` and `integration-publish`,
 then it is available to deploy packages with taking into account: 
 
- * type of environment (local, integration)
+ * type of environment (local, integration, staging, etc)
  * type of AEM instance (author / publish)
 
 ```bash
@@ -579,6 +586,40 @@ Filters with wildcards, comma delimited.
 ```bash
 gradlew aemSatisfy -Paem.satisfy.group=hotfix-*,groovy-console
 ```
+
+### Customize local AEM instances configuration
+
+Plugin allows to override or provide extra files to local AEM instance installations.
+This behavior is controlled by:
+
+```groovy
+aem {
+    config {
+        instancesPath = "${System.getProperty("user.home")}/.aem/${project.rootProject.name}"
+        instanceFilesPath = project.rootProject.file("src/main/resources/local-instance")
+        instanceFilesExpanded = [
+          "**/*.properties", 
+          "**/*.sh", 
+          "**/*.bat", 
+          "**/*.xml",
+          "**/start",
+          "**/stop"
+      ]
+    }
+}
+```
+
+* Property *instancesPath* determines where AEM instance files will be extracted on local file system.
+* Property *instanceFilesPath* determines project location that holds extra instance files that will override plugin defaults (start / stop scripts) and / or extracted AEM files.
+* Property *instanceFilesExpandable* specifies which AEM instance files have an ability to use [expandable properties](#expandable-properties) inside.
+
+To e.g set additional **run mode** named *nosamplecontent*:
+
+* Copy [default start / stop scripts](https://github.com/Cognifide/gradle-aem-plugin/tree/master/src/main/resources/com/cognifide/gradle/aem/local-instance) to project path controlled by *instanceFilesPath*
+* Customize scripts and / or provide AEM files that need to be added or overridden,
+    * file *start*: `export CQ_RUNMODE='{{instance.typeName}},local'` update to `export CQ_RUNMODE='{{instance.typeName}},local,nosamplecontent'`
+    * file *start.bat*: `set CQ_RUNMODE={{instance.typeName}},local` update to `set CQ_RUNMODE={{instance.typeName}},local,nosamplecontent`
+* Recreate instances, because run modes should not be changed after instance being launched first time.
 
 ### Check out and clean JCR content using filter at custom path
    

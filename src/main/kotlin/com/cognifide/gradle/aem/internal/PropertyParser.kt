@@ -56,7 +56,13 @@ class PropertyParser(val project: Project) {
     }
 
     fun flag(name: String): Boolean {
-        return project.properties.containsKey(name) && BooleanUtils.toBoolean(project.properties[name] as String?)
+        if (!project.properties.containsKey(name)) {
+            return false
+        }
+
+        val value = project.properties[name] as String?
+
+        return if (!value.isNullOrBlank()) value!!.toBoolean() else true
     }
 
     fun list(name: String, delimiter: String = ","): List<String> {
