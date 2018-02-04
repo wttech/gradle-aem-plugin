@@ -58,7 +58,6 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
       * [Task aemUninstall](#task-aemuninstall)
       * [Task aemPurge](#task-aempurge)
       * [Task aemActivate](#task-aemactivate)
-      * [Task aemDistribute](#task-aemdistribute)
       * [Task rule aem&lt;ProjectPath&gt;Build](#task-rule-aemprojectpathbuild)
    * [Instance plugin tasks](#instance-plugin-tasks)
       * [Task aemSetup](#task-aemsetup)
@@ -133,12 +132,16 @@ defaultTasks = [':aemSatisfy', ':aemBuild', ':aemAwait']
 
 aem {
     config {
-        localInstance "http://localhost:4502"
-        localInstance "http://localhost:4503"
+        remoteAuthorInstance()
+        remotePublishInstance()
         
+        deployEnvironment = "local" // -Paem.env or environment variable: AEM_ENV
+        deployInstanceName = "${config.deployEnvironment}-*"
+        deployAuthorInstanceName = 
         deployConnectionTimeout = 5000
         deployParallel = true
         deploySnapshots = []
+        deployDistributed = false
         uploadForce = true
         installRecursive = true
         acHandling = "merge_preserve"
@@ -369,10 +372,6 @@ Fail-safe combination of `aemUninstall` and `aemDelete`.
 #### Task `aemActivate` 
 
 Replicate installed CRX package to other AEM instance(s).
-
-#### Task `aemDistribute` 
-
-Upload, install & activate CRX package into AEM instances(s). Secondary form of deployment. Optimized version of `aemUpload aemInstall aemActivate -Paem.deploy.instance.name=*-author`.
 
 #### Task rule `aem<ProjectPath>Build`
 

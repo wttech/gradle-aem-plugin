@@ -18,8 +18,6 @@ interface Instance : Serializable {
 
         val FILTER_ANY = PropertyParser.FILTER_DEFAULT
 
-        val FILTER_AUTHOR = "*-author"
-
         val ENVIRONMENT_CMD = "cmd"
 
         val URL_AUTHOR_DEFAULT = "http://localhost:4502"
@@ -41,13 +39,6 @@ interface Instance : Serializable {
         val AUTHORS_FILTER_PROP = "aem.instance.authors"
 
         val PUBLISHERS_PROP = "aem.instance.publishers"
-
-        val LOCAL_URLS = listOf(
-                "http://localhost",
-                "https://localhost",
-                "http://127.0.0.1",
-                "https://127.0.0.1"
-        )
 
         fun parse(str: String): List<Instance> {
             return str.split(";").map { urlRaw ->

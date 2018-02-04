@@ -11,12 +11,16 @@ open class DeployTask : SyncTask() {
 
     init {
         group = AemTask.GROUP
-        description = "Deploys CRX package on instance(s). Upload then install."
+        description = "Deploys CRX package on instance(s). Upload then install (and optionally activate)."
     }
 
     @TaskAction
     fun deploy() {
-        synchronizeInstances({ it.deployPackage() })
+        if (config.deployDistributed) {
+            synchronizeInstances({ it.distributePackage() }, filterInstances(config.deployInstanceAuthorName))
+        } else {
+            synchronizeInstances({ it.deployPackage() })
+        }
     }
 
 }

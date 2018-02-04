@@ -57,6 +57,15 @@ class AemConfig(
     var deployInstanceName: String = propParser.string("aem.deploy.instance.name", "$deployEnvironment-*")
 
     /**
+     * Determines instance which will be used when:
+     *
+     * - CRX package activation from author to publishers will be performed (only if distributed deploy is enabled).
+     * - Task 'aemCheckout' or 'aemSync' will be executed.
+     */
+    @Input
+    var deployInstanceAuthorName : String = "$deployEnvironment-${InstanceType.AUTHOR.type}"
+
+    /**
      * Defines maximum time after which initializing connection to AEM will be aborted (e.g on upload, install).
      */
     @Input
@@ -74,6 +83,12 @@ class AemConfig(
      */
     @Input
     var deploySnapshots: List<String> = propParser.list("aem.deploy.snapshots")
+
+    /**
+     * Enables deployment via CRX package activation from author to publishers when e.g they are not accessible.
+     */
+    @Input
+    var deployDistributed: Boolean = propParser.boolean("aem.deploy.distributed", false)
 
     /**
      * Force upload CRX package regardless if it was previously uploaded.
@@ -350,13 +365,13 @@ class AemConfig(
     }
 
     fun localAuthorInstance() {
-        val url = project.properties.getOrElse(Instance.AUTHOR_URL_PROP, { Instance.URL_AUTHOR_DEFAULT }) as String
-        instance(LocalInstance.create(url))
+        val httpUrl = propParser.string(Instance.AUTHOR_URL_PROP, Instance.URL_AUTHOR_DEFAULT)
+        instance(LocalInstance.create(httpUrl))
     }
 
     fun localPublishInstance() {
-        val url = project.properties.getOrElse(Instance.PUBLISH_URL_PROP, { Instance.URL_PUBLISH_DEFAULT }) as String
-        instance(LocalInstance.create(url))
+        val httpUrl = propParser.string(Instance.PUBLISH_URL_PROP, Instance.URL_PUBLISH_DEFAULT)
+        instance(LocalInstance.create(httpUrl))
     }
 
     fun remoteInstance(httpUrl: String) {
@@ -376,12 +391,12 @@ class AemConfig(
     }
 
     fun remoteAuthorInstance() {
-        val httpUrl = project.properties.getOrElse(Instance.AUTHOR_URL_PROP, { Instance.URL_AUTHOR_DEFAULT }) as String
+        val httpUrl = propParser.string(Instance.AUTHOR_URL_PROP, Instance.URL_AUTHOR_DEFAULT)
         instance(RemoteInstance.create(httpUrl, deployEnvironment))
     }
 
     fun remotePublishInstance() {
-        val httpUrl = project.properties.getOrElse(Instance.PUBLISH_URL_PROP, { Instance.URL_PUBLISH_DEFAULT }) as String
+        val httpUrl = propParser.string(Instance.PUBLISH_URL_PROP, Instance.URL_PUBLISH_DEFAULT)
         instance(RemoteInstance.create(httpUrl, deployEnvironment))
     }
 
