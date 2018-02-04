@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.pkg.jar
 
-import com.cognifide.gradle.aem.base.api.AemDefaultTask
+import com.cognifide.gradle.aem.api.AemDefaultTask
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import org.dm.gradle.plugins.bundle.BundleExtension
 import org.gradle.api.java.archives.Manifest

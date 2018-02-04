@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.internal
 
-import com.cognifide.gradle.aem.base.api.AemConfig
-import com.cognifide.gradle.aem.base.api.AemException
+import com.cognifide.gradle.aem.api.AemConfig
+import com.cognifide.gradle.aem.api.AemException
 import com.cognifide.gradle.aem.base.vlt.SyncTask
 import com.mitchellbosecke.pebble.PebbleEngine
 import com.mitchellbosecke.pebble.lexer.Syntax
@@ -17,7 +17,6 @@ import java.util.*
 class PropertyParser(val project: Project) {
 
     companion object {
-        const val FILTER_DEFAULT = "*"
 
         const val FORCE_PROP = "aem.force"
 
@@ -101,12 +100,6 @@ class PropertyParser(val project: Project) {
 
     fun string(name: String, defaultValue: () -> String): String {
         return prop(name) ?: defaultValue()
-    }
-
-    fun filter(value: String, propName: String, propDefault: String = FILTER_DEFAULT): Boolean {
-        val filters = project.properties.getOrElse(propName, { propDefault }) as String
-
-        return filters.split(",").any { group -> Patterns.wildcard(value, group) }
     }
 
     fun expand(source: String, properties: Map<String, Any> = mapOf(), context: String? = null): String {

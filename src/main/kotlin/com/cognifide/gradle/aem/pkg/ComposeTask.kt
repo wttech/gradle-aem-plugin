@@ -1,9 +1,8 @@
 package com.cognifide.gradle.aem.pkg
 
-import com.cognifide.gradle.aem.base.api.AemConfig
-import com.cognifide.gradle.aem.base.api.AemException
-import com.cognifide.gradle.aem.base.api.AemTask
-import com.cognifide.gradle.aem.internal.LineSeparator
+import com.cognifide.gradle.aem.api.AemConfig
+import com.cognifide.gradle.aem.api.AemException
+import com.cognifide.gradle.aem.api.AemTask
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.PropertyParser
 import org.gradle.api.Project

@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.base.vlt
 
-import com.cognifide.gradle.aem.base.api.AemConfig
+import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.instance.Instance
 import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.internal.file.FileOperations
@@ -88,10 +88,10 @@ class VltCommand(val project: Project) {
             return cmdInstance
         }
 
-        val authorInstance = Instance.filter(project, config.deployInstanceAuthorName).firstOrNull()
-        if (authorInstance != null) {
-            logger.debug("Using first instance matching filter '${config.deployInstanceAuthorName}': $authorInstance")
-            return authorInstance
+        val namedInstance = Instance.filter(project, config.deployInstanceName).firstOrNull()
+        if (namedInstance != null) {
+            logger.debug("Using first instance matching filter '${config.deployInstanceName}': $namedInstance")
+            return namedInstance
         }
 
         val anyInstance = Instance.filter(project, Instance.FILTER_ANY).firstOrNull()

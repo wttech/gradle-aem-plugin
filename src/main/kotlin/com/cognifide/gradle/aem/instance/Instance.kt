@@ -1,10 +1,9 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.base.api.AemConfig
-import com.cognifide.gradle.aem.base.api.AemException
+import com.cognifide.gradle.aem.api.AemConfig
+import com.cognifide.gradle.aem.api.AemException
 import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.internal.Patterns
-import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.pkg.deploy.ListResponse
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.gradle.api.Project
@@ -16,7 +15,7 @@ interface Instance : Serializable {
 
     companion object {
 
-        val FILTER_ANY = PropertyParser.FILTER_DEFAULT
+        val FILTER_ANY = "*"
 
         val ENVIRONMENT_CMD = "cmd"
 
@@ -28,15 +27,11 @@ interface Instance : Serializable {
 
         val PASSWORD_DEFAULT = "admin"
 
-        val LIST_PROP = "aem.instance.list"
-
-        val NAME_PROP = "aem.instance.name"
-
         val AUTHOR_URL_PROP = "aem.instance.author.httpUrl"
 
         val PUBLISH_URL_PROP = "aem.instance.publish.httpUrl"
 
-        val AUTHORS_FILTER_PROP = "aem.instance.authors"
+        val AUTHORS_PROP = "aem.instance.authors"
 
         val PUBLISHERS_PROP = "aem.instance.publishers"
 
@@ -80,11 +75,10 @@ interface Instance : Serializable {
 
         fun filter(project: Project, instanceFilter: String): List<Instance> {
             val config = AemConfig.of(project)
-            val instanceValues = project.properties[LIST_PROP] as String?
 
             // Specified directly should not be filtered
-            if (!instanceValues.isNullOrBlank()) {
-                return parse(instanceValues!!)
+            if (config.deployInstanceList.isNotBlank()) {
+                return parse(config.deployInstanceList)
             }
 
             // Predefined and defaults are filterable
@@ -97,13 +91,13 @@ interface Instance : Serializable {
             // Handle name pattern filtering
             return instances.filter { instance ->
                 when {
-                    config.propParser.flag(AUTHORS_FILTER_PROP) -> {
+                    config.propParser.flag(AUTHORS_PROP) -> {
                         Patterns.wildcard(instance.name, "${config.deployEnvironment}-${InstanceType.AUTHOR}")
                     }
                     config.propParser.flag(PUBLISHERS_PROP) -> {
                         Patterns.wildcard(instance.name, "${config.deployEnvironment}-${InstanceType.PUBLISH}")
                     }
-                    else -> config.propParser.filter(instance.name, NAME_PROP, instanceFilter)
+                    else -> Patterns.wildcards(instance.name, instanceFilter)
                 }
             }
         }

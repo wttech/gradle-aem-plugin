@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.base.debug
 
-import com.cognifide.gradle.aem.base.api.AemConfig
+import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.instance.InstanceSync
 import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.pkg.deploy.ListResponse

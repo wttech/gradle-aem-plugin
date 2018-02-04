@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.base.api.AemConfig
-import com.cognifide.gradle.aem.base.api.AemTask
+import com.cognifide.gradle.aem.api.AemConfig
+import com.cognifide.gradle.aem.api.AemTask
 import org.gradle.api.file.CopySpec
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.tasks.Internal
@@ -40,7 +40,7 @@ open class CollectTask : Zip() {
 
     @get:Internal
     val satisfiedPackages: List<File>
-        get() = satisfy.packageProvider.outputDirs(satisfy.groupFilter)
+        get() = satisfy.outputDirs
 
     @get:Internal
     val builtPackages: List<File>
@@ -52,7 +52,7 @@ open class CollectTask : Zip() {
     }
 
     private fun resolvePackages() {
-        satisfy.packageProvider.allFiles(satisfy.groupFilter)
+        satisfy.allFiles
     }
 
 }

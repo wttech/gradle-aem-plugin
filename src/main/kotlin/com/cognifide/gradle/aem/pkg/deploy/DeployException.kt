@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.pkg.deploy
 
-import com.cognifide.gradle.aem.base.api.AemException
+import com.cognifide.gradle.aem.api.AemException
 
 class DeployException : AemException {
 

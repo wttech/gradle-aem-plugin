@@ -1,12 +1,11 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.base.api.AemConfig
+import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.internal.Behaviors
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.http.PreemptiveAuthInterceptor
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.deploy.*
-import org.apache.commons.io.FilenameUtils
 import org.apache.commons.io.IOUtils
 import org.apache.http.HttpEntity
 import org.apache.http.HttpResponse
@@ -28,11 +27,9 @@ import org.gradle.api.Project
 import org.jsoup.Jsoup
 import org.jsoup.parser.Parser
 import org.zeroturnaround.zip.ZipUtil
-import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.FileNotFoundException
 import java.util.*
-import java.util.jar.Manifest
 
 class InstanceSync(val project: Project, val instance: Instance) {
 
@@ -283,15 +280,15 @@ class InstanceSync(val project: Project, val instance: Instance) {
         }
     }
 
-    fun satisfyPackage(file: File): Boolean {
+    fun satisfyPackage(file: File, action: () -> Unit): Boolean {
         val pkg = determineRemotePackage(file, config.satisfyRefreshing)
 
         return if (pkg == null) {
-            deployPackage(file)
+            action()
             true
         } else {
             if (!pkg.installed || isSnapshot(file)) {
-                deployPackage(file)
+                action()
                 true
             } else {
                 false

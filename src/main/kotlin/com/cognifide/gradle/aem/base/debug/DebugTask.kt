@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.base.debug
 
-import com.cognifide.gradle.aem.base.api.AemDefaultTask
-import com.cognifide.gradle.aem.base.api.AemTask
+import com.cognifide.gradle.aem.api.AemDefaultTask
+import com.cognifide.gradle.aem.api.AemTask
 import com.cognifide.gradle.aem.internal.Formats
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
