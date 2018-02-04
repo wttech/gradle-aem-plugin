@@ -8,6 +8,6 @@ open class FileResolution(val group: FileGroup, val id: String, private val acti
 
     val file: File by lazy { process(action(this)) }
 
-    protected fun process(file: File): File = file
+    protected open fun process(file: File): File = file
 
 }
