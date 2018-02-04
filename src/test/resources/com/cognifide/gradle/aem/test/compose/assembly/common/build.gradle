@@ -3,7 +3,7 @@ buildscript {
 }
 
 description = 'Example - Common'
-defaultTasks = ['aemBuild']
+defaultTasks = [':aemDeploy']
 
 apply plugin: 'java'
 apply plugin: "kotlin"
