@@ -111,7 +111,7 @@ buildscript {
     }
     
     dependencies {
-        classpath 'com.cognifide.gradle:aem-plugin:2.1.0'
+        classpath 'com.cognifide.gradle:aem-plugin:3.0.0'
     }
 }
 
@@ -176,7 +176,7 @@ aem {
           "*_x0040_TypeHint"
         ]
         vaultGlobalOptions = "--credentials {{instance.credentials}}"
-        vaultLineSeparator = "SYSTEM"
+        vaultLineSeparator = "LF"
         dependBundlesTaskNames = ["assemble", "check"]
         dependContentTaskNames = ["aemCompose.dependencies"]
         buildDate = Date()
@@ -214,7 +214,7 @@ aemSatisfy {
 
 Building and deploying to AEM via command: `gradlew` (default tasks will be used).
 
-More detailed and always up-to-date information about configuration options is available [here](src/main/kotlin/com/cognifide/gradle/aem/AemConfig.kt).
+More detailed and always up-to-date information about configuration options is available [here](src/main/kotlin/com/cognifide/gradle/aem/base/api/AemConfig.kt).
 
 For multi project build configuration, please investigate [example project](https://github.com/Cognifide/gradle-aem-example).
 
@@ -445,7 +445,7 @@ This feature is specially useful to generate valid *META-INF/properties.xml* fil
 Predefined properties:
 * `rootProject` - project with directory in which *settings.gradle* is located.
 * `project` - current project.
-* `config` - [AEM configuration](src/main/kotlin/com/cognifide/gradle/aem/AemConfig.kt).
+* `config` - [AEM configuration](src/main/kotlin/com/cognifide/gradle/aem/base/api/AemConfig.kt).
 * `buildDate` - date when CRX package composing started.
 * `buildCount` - number to be used as CRX package build count (`buildDate` in format `yDDmmssSSS`).
 * `created` - current date in *ISO8601* format.
