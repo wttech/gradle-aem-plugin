@@ -3,7 +3,6 @@ package com.cognifide.gradle.aem.pkg
 import com.cognifide.gradle.aem.base.BasePlugin
 import com.cognifide.gradle.aem.pkg.deploy.*
 import com.cognifide.gradle.aem.pkg.jar.UpdateManifestTask
-import com.google.common.base.CaseFormat
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
@@ -86,30 +85,12 @@ class PackagePlugin : Plugin<Project> {
         compose.dependsOn(prepare, assemble, check)
         compose.mustRunAfter(clean)
 
-        upload.mustRunAfter(compose)
+        upload.dependsOn(compose)
         install.mustRunAfter(compose, upload)
         activate.mustRunAfter(compose, upload, install)
 
-        deploy.mustRunAfter(compose)
-        distribute.mustRunAfter(compose)
-
-        project.tasks.create(BuildTask.NAME, BuildTask::class.java).dependsOn(build, deploy)
-        project.tasks.addRule(BUILD_TASK_RULE, { taskName ->
-            val desiredTaskName = if (project == project.rootProject) {
-                BuildTask.NAME
-            } else {
-                val projectPath = project.path
-                        .replace(":", "-")
-                        .replace(".", "-")
-                "aem${CaseFormat.LOWER_HYPHEN.to(CaseFormat.UPPER_CAMEL, projectPath)}Build"
-            }
-
-            if (taskName == desiredTaskName) {
-                if (project.tasks.findByName(taskName) == null) {
-                    project.tasks.create(taskName, BuildTask::class.java).dependsOn(build, deploy)
-                }
-            }
-        })
+        deploy.dependsOn(compose)
+        distribute.dependsOn(compose)
     }
 
     private fun setupConfigurations(project: Project) {

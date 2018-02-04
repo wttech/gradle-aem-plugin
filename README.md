@@ -112,7 +112,7 @@ buildscript {
     }
     
     dependencies {
-        classpath 'com.cognifide.gradle:aem-plugin:2.1.0'
+        classpath 'com.cognifide.gradle:aem-plugin:3.0.0'
     }
 }
 
@@ -177,7 +177,7 @@ aem {
           "*_x0040_TypeHint"
         ]
         vaultGlobalOptions = "--credentials {{instance.credentials}}"
-        vaultLineSeparator = "SYSTEM"
+        vaultLineSeparator = "LF"
         dependBundlesTaskNames = ["assemble", "check"]
         dependContentTaskNames = ["aemCompose.dependencies"]
         buildDate = Date()
