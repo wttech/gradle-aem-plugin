@@ -55,7 +55,7 @@ class PackageResolution(group: PackageGroup, id: String, action: (FileResolution
         ) + config.fileProperties
 
         FileOperations.amendFiles(vaultDir, config.filesExpanded, { file, line ->
-            config.propParser.expand(line, props, file.absolutePath)
+            config.propParser.expandEnv(line, props, file.absolutePath)
         })
 
         // Copy bundle to install path
