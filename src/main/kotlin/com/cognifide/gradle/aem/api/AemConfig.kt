@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.api
 
 import com.cognifide.gradle.aem.instance.*
+import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.internal.LineSeparator
 import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.pkg.ComposeTask
@@ -13,6 +14,7 @@ import org.gradle.api.tasks.Internal
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 import java.io.File
 import java.io.Serializable
+import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -69,7 +71,7 @@ class AemConfig(
      * - Task 'aemCheckout' or 'aemSync' will be executed.
      */
     @Input
-    var deployInstanceAuthorName : String = "$deployEnvironment-${InstanceType.AUTHOR.type}"
+    var deployInstanceAuthorName: String = "$deployEnvironment-${InstanceType.AUTHOR.type}"
 
     /**
      * Defines maximum time after which initializing connection to AEM will be aborted (e.g on upload, install).
@@ -134,6 +136,16 @@ class AemConfig(
     }
 
     /**
+     * Determines built CRX package name (visible in package manager).
+     */
+    @Input
+    var packageName: String = if (isUniqueProjectName()) {
+        project.name
+    } else {
+        "${namePrefix()}-${project.name}"
+    }
+
+    /**
      * Custom path to composed CRX package being uploaded.
      *
      * Default: [automatically determined]
@@ -172,11 +184,21 @@ class AemConfig(
     var filesExpanded: MutableList<String> = mutableListOf("**/${PackagePlugin.VLT_PATH}/*.xml")
 
     /**
+     * Build date used as base for calculating 'created' and 'buildCount' package properties.
+     */
+    @Internal
+    var buildDate: Date = propParser.date("aem.buildDate", Date())
+
+    /**
      * Define here custom properties that can be used in CRX package files like 'META-INF/vault/properties.xml'.
      * Could override predefined properties provided by plugin itself.
      */
     @Input
-    var fileProperties: MutableMap<String, Any> = mutableMapOf()
+    var fileProperties: MutableMap<String, Any> = mutableMapOf(
+            "requiresRoot" to "false",
+            "buildCount" to SimpleDateFormat("yDDmmssSSS").format(buildDate),
+            "created" to Formats.date(buildDate)
+    )
 
     /**
      * Ensures that for directory 'META-INF/vault' default files will be generated when missing:
@@ -240,12 +262,6 @@ class AemConfig(
     var dependContentTaskNames: List<String> = mutableListOf(
             ComposeTask.NAME + ComposeTask.DEPENDENCIES_SUFFIX
     )
-
-    /**
-     * Build date used as base for calculating 'created' and 'buildCount' package properties.
-     */
-    @Internal
-    var buildDate: Date = propParser.date("aem.buildDate", Date())
 
     /**
      * Path in which local AEM instances will be stored.
@@ -470,6 +486,17 @@ class AemConfig(
     @get:Internal
     @get:JsonIgnore
     val vaultLineSeparatorString: String = LineSeparator.string(vaultLineSeparator)
+
+    fun namePrefix(): String = if (isUniqueProjectName()) {
+        project.name
+    } else {
+        "${project.rootProject.name}${project.path}"
+                .replace(":", "-")
+                .replace(".", "-")
+                .substringBeforeLast("-")
+    }
+
+    fun isUniqueProjectName() = project == project.rootProject || project.name == project.rootProject.name
 
     companion object {
 

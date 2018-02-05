@@ -102,17 +102,30 @@ class PropertyParser(val project: Project) {
         return prop(name) ?: defaultValue()
     }
 
-    fun expand(source: String, properties: Map<String, Any> = mapOf(), context: String? = null): String {
-        try {
-            val interpolableProperties = envProperties + systemProperties + mvnProperties + configProperties.filterValues {
-                it is String || ClassUtils.isPrimitiveOrWrapper(it.javaClass)
-            }
-            val interpolated = TEMPLATE_INTERPOLATOR(source, interpolableProperties)
+    fun expand(source: String, props: Map<String, Any>, context: String? = null): String {
+        val interpolableProps = envProperties + systemProperties + filterInterpolableProps(props)
 
-            val templateProperties = projectProperties + aemProperties + configProperties + properties
+        return expand(source, interpolableProps, props, context)
+    }
+
+    // TODO move it to compose task
+    fun expandPackage(source: String, overrideProps: Map<String, Any>, context: String? = null): String {
+        val interpolableProps = envProperties + systemProperties + mvnProperties + filterInterpolableProps(configProperties + overrideProps)
+        val templateProps = projectProperties + configProperties + overrideProps
+
+        return expand(source, interpolableProps, templateProps, context)
+    }
+
+    private fun filterInterpolableProps(props: Map<String, Any>): Map<String, Any> {
+        return props.filterValues { it is String || ClassUtils.isPrimitiveOrWrapper(it.javaClass) }
+    }
+
+    private fun expand(source: String, interpolableProps: Map<String, Any>, templateProps: Map<String, Any>, context: String? = null): String {
+        try {
+            val interpolated = TEMPLATE_INTERPOLATOR(source, interpolableProps)
             val expanded = StringWriter()
 
-            TEMPLATE_ENGINE.getTemplate(interpolated).evaluate(expanded, templateProperties)
+            TEMPLATE_ENGINE.getTemplate(interpolated).evaluate(expanded, templateProps)
 
             return expanded.toString()
         } catch (e: Throwable) {
@@ -138,21 +151,12 @@ class PropertyParser(val project: Project) {
                 "project" to project
         )
 
-    val aemProperties: Map<String, Any>
+    val configProperties: Map<String, Any>
         get() {
             val config = AemConfig.of(project)
 
-            return mapOf(
-                    "name" to name,
-                    "config" to config,
-                    "requiresRoot" to "false",
-                    "buildCount" to SimpleDateFormat("yDDmmssSSS").format(config.buildDate),
-                    "created" to Formats.date(config.buildDate)
-            )
+            return mapOf("config" to config) + config.fileProperties
         }
-
-    val configProperties: Map<String, Any>
-        get() = AemConfig.of(project).fileProperties
 
     val mvnProperties: Map<String, Any>
         get() = mapOf(
@@ -160,24 +164,6 @@ class PropertyParser(val project: Project) {
                 "project.artifactId" to project.name,
                 "project.build.finalName" to "${project.name}-${project.version}"
         )
-
-    val namePrefix: String = if (isUniqueProjectName()) {
-        project.name
-    } else {
-        "${project.rootProject.name}${project.path}"
-                .replace(":", "-")
-                .replace(".", "-")
-                .substringBeforeLast("-")
-    }
-
-    val name: String
-        get() = if (isUniqueProjectName()) {
-            project.name
-        } else {
-            "$namePrefix-${project.name}"
-        }
-
-    private fun isUniqueProjectName() = project == project.rootProject || project.name == project.rootProject.name
 
     fun isForce(): Boolean {
         return flag(FORCE_PROP)

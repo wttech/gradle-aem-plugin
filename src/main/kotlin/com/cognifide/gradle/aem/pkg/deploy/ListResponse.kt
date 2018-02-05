@@ -45,7 +45,7 @@ class ListResponse private constructor() {
 
         constructor(project: Project) : this() {
             this.group = project.group.toString()
-            this.name = PropertyParser(project).name
+            this.name = AemConfig.of(project).packageName
             this.version = project.version.toString()
 
             this.downloadName = "$name-${project.version}.zip"

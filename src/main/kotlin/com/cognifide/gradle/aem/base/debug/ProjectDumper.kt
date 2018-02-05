@@ -15,7 +15,7 @@ class ProjectDumper(@Transient val project: Project) {
         get() {
             return mapOf(
                     "projectInfo" to projectProperties,
-                    "packageProperties" to PropertyParser(project).aemProperties,
+                    "packageProperties" to PropertyParser(project).configProperties,
                     "packageDeployed" to packageProperties
             )
         }

@@ -1,9 +1,9 @@
 package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.api.AemTask
+import com.cognifide.gradle.aem.instance.satisfy.PackageResolver
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.file.resolver.FileGroup
-import com.cognifide.gradle.aem.internal.file.resolver.FileResolver
 import com.cognifide.gradle.aem.pkg.deploy.SyncTask
 import groovy.lang.Closure
 import org.gradle.api.tasks.Internal
@@ -20,7 +20,7 @@ open class SatisfyTask : SyncTask() {
     }
 
     @get:Internal
-    val packageProvider = FileResolver(project, AemTask.temporaryDir(project, NAME, DOWNLOAD_DIR))
+    val packageProvider = PackageResolver(project, AemTask.temporaryDir(project, NAME, DOWNLOAD_DIR))
 
     @get:Internal
     var groupFilter: (String) -> Boolean = { fileGroup ->
@@ -53,8 +53,6 @@ open class SatisfyTask : SyncTask() {
     private fun providePackageGroups(): List<FileGroup> {
         logger.info("Providing packages from local and remote sources.")
 
-        // TODO use here overridden file resolver which will wrap jars into CRX packages
-        // TODO with support for restarting instance after satisfying
         val fileGroups = packageProvider.filterGroups(groupFilter)
         val files = fileGroups.flatMap { it.files }
 
@@ -63,6 +61,7 @@ open class SatisfyTask : SyncTask() {
         return fileGroups
     }
 
+    // TODO shouldAwait should be controllable by each PackageGroup.awaitAfter
     private fun satisfyPackagesOnInstances(packageGroups: List<FileGroup>) {
         for (packageGroup in packageGroups) {
             logger.info("Satisfying group of packages '$group'.")

@@ -16,7 +16,7 @@ open class FileGroup(val resolver: FileResolver, val name: String) {
     val dirs: List<File>
         get() = _resolutions.map { it.dir }
 
-    protected fun createResolution(id: String, resolver: (FileResolution) -> File) = FileResolution(this, id, resolver)
+    protected open fun createResolution(id: String, resolver: (FileResolution) -> File) = FileResolution(this, id, resolver)
 
     fun resolve(id: String, resolver: (FileResolution) -> File) {
         _resolutions += createResolution(id, resolver)
