@@ -32,8 +32,12 @@ open class ComposeTask : Zip(), AemTask {
     @InputDirectory
     val vaultDir = AemTask.temporaryDir(project, PrepareTask.NAME, PackagePlugin.VLT_PATH)
 
-    @Input
+    @Internal
     val filterRoots = mutableSetOf<Element>()
+
+    @get:Input
+    val filterRootsProp: String
+        get() = filterRoots.joinToString(config.vaultLineSeparatorString) { it.toString() }
 
     @Internal
     var filterRootDefault = { subproject: Project, subconfig: AemConfig ->
@@ -67,7 +71,7 @@ open class ComposeTask : Zip(), AemTask {
     val fileProperties
         get() = mapOf(
                 "filters" to filterRoots,
-                "filterRoots" to filterRoots.joinToString(config.vaultLineSeparatorString) { it.toString() }
+                "filterRoots" to filterRootsProp
         )
 
     init {
