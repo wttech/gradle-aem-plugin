@@ -90,10 +90,10 @@ class ListResponse private constructor() {
                 }
 
                 if (result != null) {
-                    project.logger.info("Package found by project properties: ${expected.props}")
+                    project.logger.info("Package found by project properties.")
                     return result
                 } else {
-                    project.logger.info("Package cannot be found by project properties: ${expected.props}")
+                    project.logger.info("Package cannot be found by project properties.")
                 }
 
                 return null
