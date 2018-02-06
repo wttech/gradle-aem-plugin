@@ -8,7 +8,7 @@
     <entry key="groupId">{{project.group}}</entry>
     <entry key="artifactId">{{project.name}}</entry>
     <entry key="description">{{project.description}}</entry>
-    <entry key="createdBy">{{env['user.name']}}</entry>
+    <entry key="createdBy">{{user.name}}</entry>
     <entry key="acHandling">{{config.acHandling}}</entry>
     <entry key="requiresRoot">{{requiresRoot}}</entry>
 </properties>

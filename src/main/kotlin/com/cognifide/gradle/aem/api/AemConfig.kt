@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.api
 
+import aQute.bnd.osgi.Jar
 import com.cognifide.gradle.aem.instance.*
 import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.internal.LineSeparator
@@ -346,6 +347,20 @@ class AemConfig(
      */
     @Input
     var satisfyRefreshing: Boolean = propParser.boolean("aem.satisfy.refreshing", false)
+
+    /**
+     * Satisfy handles plain OSGi bundle JAR's deployment by automatic wrapping to CRX package.
+     * This path determines a path in JCR repository in which such bundles will be deployed on AEM.
+     */
+    @Input
+    var satisfyBundlePath: String = propParser.string("aem.satisfy.bundlePath", "/apps/gradle-aem-plugin/satisfy/install")
+
+    /**
+     * A hook which could be used to override default properties used to generate a CRX package from OSGi bundle.
+     */
+    @Internal
+    @get:JsonIgnore
+    var satisfyBundleProperties: (Jar) -> Map<String, Any> = { mapOf() }
 
     /**
      * Determines which packages should be installed by default when satisfy task is being executed.

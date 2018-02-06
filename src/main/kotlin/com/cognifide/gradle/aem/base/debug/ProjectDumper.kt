@@ -11,11 +11,13 @@ class ProjectDumper(@Transient val project: Project) {
 
     val logger: Logger = project.logger
 
+    val propParser = PropertyParser(project)
+
     val properties: Map<String, Any>
         get() {
             return mapOf(
                     "projectInfo" to projectProperties,
-                    "packageProperties" to PropertyParser(project).configProperties,
+                    "packageProperties" to propParser.packageProps,
                     "packageDeployed" to packageProperties
             )
         }

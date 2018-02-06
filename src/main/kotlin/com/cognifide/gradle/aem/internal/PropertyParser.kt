@@ -7,6 +7,7 @@ import com.mitchellbosecke.pebble.PebbleEngine
 import com.mitchellbosecke.pebble.lexer.Syntax
 import com.mitchellbosecke.pebble.loader.StringLoader
 import org.apache.commons.lang3.StringUtils
+import org.apache.commons.lang3.text.StrSubstitutor
 import org.gradle.api.Project
 import java.io.StringWriter
 import java.util.*
@@ -19,6 +20,10 @@ class PropertyParser(val project: Project) {
 
         val FORCE_MESSAGE = "Before continuing it is recommended to protect against potential data loss by checking out JCR content using '${SyncTask.NAME}' task then saving it in VCS."
 
+        private const val TEMPLATE_VAR_PREFIX = "{{"
+
+        private const val TEMPLATE_VAR_SUFFIX = "}}"
+
         private val TEMPLATE_ENGINE = PebbleEngine.Builder()
                 .autoEscaping(false)
                 .cacheActive(false)
@@ -27,20 +32,24 @@ class PropertyParser(val project: Project) {
                 .loader(StringLoader())
                 .syntax(Syntax.Builder()
                         .setEnableNewLineTrimming(false)
-                        .setPrintOpenDelimiter("{{")
-                        .setPrintCloseDelimiter("}}")
+                        .setPrintOpenDelimiter(TEMPLATE_VAR_PREFIX)
+                        .setPrintCloseDelimiter(TEMPLATE_VAR_SUFFIX)
                         .build()
                 )
                 .build()
+
+        private val TEMPLATE_INTERPOLATOR: (String, Map<String, Any>) -> String = { source, props ->
+            StrSubstitutor.replace(source, props, TEMPLATE_VAR_PREFIX, TEMPLATE_VAR_SUFFIX)
+        }
     }
 
     private fun prop(name: String): String? {
         var value = project.properties[name] as String?
         if (value == null) {
-            value = systemProperties["system"]?.get(name)
+            value = systemProps[name]
         }
         if (value == null) {
-            value = envProperties["env"]?.get(name)
+            value = envProps[name]
         }
 
         return value
@@ -91,23 +100,23 @@ class PropertyParser(val project: Project) {
         return prop(name) ?: defaultValue()
     }
 
-    fun expandEnv(source: String, overrideProps: Map<String, Any>, context: String? = null): String {
-        val props = envProperties + systemProperties + overrideProps
-
-        return expand(source, props, context)
+    fun expand(source: String, props: Map<String, Any>, context: String? = null): String {
+        return expand(source, envProps + systemProps + props, props, context)
     }
 
     fun expandPackage(source: String, overrideProps: Map<String, Any>, context: String? = null): String {
-        val props = envProperties + systemProperties + projectProperties + configProperties + overrideProps
+        val interpolableProps = envProps + systemProps + mvnProperties + configOverrideProps + overrideProps
+        val templateProps = projectProps + configProps + overrideProps
 
-        return expand(source, props, context)
+        return expand(source, interpolableProps, templateProps, context)
     }
 
-    private fun expand(source: String, templateProps: Map<String, Any>, context: String? = null): String {
+    private fun expand(source: String, interpolableProps: Map<String, Any>, templateProps: Map<String, Any>, context: String? = null): String {
         try {
+            val interpolated = TEMPLATE_INTERPOLATOR(source, interpolableProps)
             val expanded = StringWriter()
 
-            TEMPLATE_ENGINE.getTemplate(source).evaluate(expanded, templateProps)
+            TEMPLATE_ENGINE.getTemplate(interpolated).evaluate(expanded, templateProps)
 
             return expanded.toString()
         } catch (e: Throwable) {
@@ -117,28 +126,37 @@ class PropertyParser(val project: Project) {
         }
     }
 
-    val envProperties: Map<String, Map<String, String?>> by lazy {
-        mapOf("env" to System.getenv())
+    val envProps by lazy {
+        System.getenv()
     }
 
-    val systemProperties: Map<String, Map<String, String?>> by lazy {
-        mapOf("system" to System.getProperties().entries.fold(mutableMapOf<String, String>(), { props, prop ->
-            props[prop.key.toString()] = prop.value.toString(); props
-        }))
+    val systemProps: Map<String, String> by lazy {
+        System.getProperties().entries.fold(mutableMapOf<String, String>(), { props, prop ->
+            props.put(prop.key.toString(), prop.value.toString()); props
+        })
     }
 
-    val projectProperties: Map<String, Any>
+    val projectProps: Map<String, Any>
         get() = mapOf(
                 "rootProject" to project.rootProject,
                 "project" to project
         )
 
-    val configProperties: Map<String, Any>
-        get() {
-            val config = AemConfig.of(project)
+    val configProps: Map<String, Any>
+        get() = mapOf("config" to AemConfig.of(project))
 
-            return mapOf("config" to config) + config.fileProperties
-        }
+    val configOverrideProps: Map<String, Any>
+        get() = AemConfig.of(project).fileProperties
+
+    val packageProps: Map<String, Any>
+        get() = configProps + configOverrideProps
+
+    val mvnProperties: Map<String, Any>
+        get() = mapOf(
+                "project.groupId" to project.group,
+                "project.artifactId" to project.name,
+                "project.build.finalName" to "${project.name}-${project.version}"
+        )
 
     fun isForce(): Boolean {
         return flag(FORCE_PROP)
