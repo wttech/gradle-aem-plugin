@@ -8,7 +8,8 @@ import com.cognifide.gradle.aem.pkg.PackagePlugin
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.FilenameUtils
 import org.gradle.util.GFileUtils
-import org.jsoup.nodes.Element
+import org.jsoup.Jsoup
+import org.jsoup.parser.Parser
 import org.zeroturnaround.zip.ZipUtil
 import java.io.File
 
@@ -52,7 +53,8 @@ class PackageResolution(group: PackageGroup, id: String, action: (FileResolution
         val symbolicName = bundle.manifest.mainAttributes.getValue("Bundle-SymbolicName")
         val group = symbolicName.substringBeforeLast(".")
         val version = bundle.manifest.mainAttributes.getValue("Bundle-Version")
-
+        val filters = listOf(Jsoup.parse("<filter root=\"$pkgPath\"/>", "",
+                Parser.xmlParser()).select("filter").first())
         val defaultProps = mapOf<String, Any>(
                 "project.group" to group,
                 "project.name" to symbolicName,
@@ -60,7 +62,8 @@ class PackageResolution(group: PackageGroup, id: String, action: (FileResolution
                 "project.description" to description,
                 "config.packageName" to symbolicName,
                 "config.acHandling" to config.acHandling,
-                "filters" to listOf(Element("<filter root=\"$pkgPath\"/>"))
+                "filters" to filters,
+                "filterRoots" to filters.joinToString(config.vaultLineSeparatorString) { it.toString() }
         )
         val commonProps = config.fileProperties
         val overrideProps = config.satisfyBundleProperties(bundle)
@@ -71,14 +74,14 @@ class PackageResolution(group: PackageGroup, id: String, action: (FileResolution
         })
 
         // Copy bundle to install path
-        val pkgJar = File(pkgRoot,"jcr_root$pkgPath")
+        val pkgJar = File(pkgRoot, "jcr_root$pkgPath")
 
         GFileUtils.mkdirs(pkgJar.parentFile)
         FileUtils.copyFile(jar, pkgJar)
 
         // ZIP all to CRX package
         ZipUtil.pack(pkgRoot, pkg)
-        pkgRoot.delete()
+        pkgRoot.deleteRecursively()
 
         return pkg
     }
