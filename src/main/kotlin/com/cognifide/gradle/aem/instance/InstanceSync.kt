@@ -200,7 +200,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
     }
 
     private fun resolveRemotePackage(resolver: (ListResponse) -> ListResponse.Package?, refresh: Boolean): ListResponse.Package? {
-        logger.info("Asking AEM for uploaded packages using URL: '$listPackagesUrl'")
+        logger.debug("Asking AEM for uploaded packages using URL: '$listPackagesUrl'")
 
         if (instance.packages == null || refresh) {
             val json = postMultipart(listPackagesUrl)
@@ -404,7 +404,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
     }
 
     fun determineBundleState(configurer: (HttpRequestBase) -> Unit = { _ -> }): BundleState {
-        logger.info("Asking AEM for bundles using URL: '$bundlesUrl'")
+        logger.debug("Asking AEM for bundles using URL: '$bundlesUrl'")
 
         return try {
             BundleState.fromJson(get(bundlesUrl, configurer))
