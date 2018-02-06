@@ -136,7 +136,7 @@ aem {
         remoteAuthorInstance()
         remotePublishInstance()
         deployInstanceName = "${config.deployEnvironment}-*"
-        deployAuthorInstanceName = 
+        deployAuthorInstanceName = "$deployEnvironment-author"
         deployConnectionTimeout = 5000
         deployParallel = true
         deploySnapshots = []
@@ -149,6 +149,11 @@ aem {
             bundlePath = "/apps/${project.name}/install"
         } else {
             bundlePath = "/apps/${project.rootProject.name}/${project.name}/install"
+        }
+        if (isUniqueProjectName()) {
+            packageName = project.name
+        } else {
+            packageName = "${namePrefix()}-${project.name}"
         }
         localPackagePath = ""
         remotePackagePath = ""
@@ -200,7 +205,11 @@ aem {
         awaitFail = true
         awaitAssurances = 1
         awaitCondition = { instanceState -> instanceState.stable }
+        reloadDelay = 10000
         satisfyRefreshing = false
+        satisfyBundlePath = 
+        satisfyBundleProperties = { bundle -> [:] }
+        satisfyGroupName = "*"
         testClasspathJarIncluded = true
     }
 }
