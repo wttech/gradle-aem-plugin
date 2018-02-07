@@ -5,13 +5,11 @@ import com.cognifide.gradle.aem.api.AemException
 import com.cognifide.gradle.aem.api.AemTask
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.PropertyParser
+import org.apache.commons.io.FileUtils
 import org.gradle.api.Project
 import org.gradle.api.file.CopySpec
 import org.gradle.api.file.DuplicatesStrategy
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.InputDirectory
-import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.Nested
+import org.gradle.api.tasks.*
 import org.gradle.api.tasks.bundling.Zip
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
@@ -55,6 +53,12 @@ open class ComposeTask : Zip(), AemTask {
 
     @Internal
     private var archiveName: String? = null
+
+    @Input
+    val bundleDependencies = mutableMapOf<String, List<String>>()
+
+    @Internal
+    private val bundleResolvers = mutableMapOf<String, () -> Unit>()
 
     @Internal
     var fileFilter: ((CopySpec) -> Unit) = { spec ->
@@ -167,12 +171,17 @@ open class ComposeTask : Zip(), AemTask {
                 effectiveInstallPath = "$effectiveInstallPath.$runMode"
             }
 
-            // TODO do same trick as in updatemanifesttask to avoid resolving files in configuration phase
-            val jars = JarCollector(project).all.toSet()
+            val collector = BundleCollector(project)
+            val dependencies = collector.allDependencies
+            val resolutionDir = AemTask.temporaryDir(this.project, NAME, "${project.name.hashCode()}") // TODO use project path normalized
+            val resolver = { collector.allJars.forEach { FileUtils.copyFileToDirectory(it, resolutionDir) } }
 
-            if (jars.isNotEmpty()) {
+            this.bundleDependencies[project.name] = dependencies
+            this.bundleResolvers[project.name] = resolver
+
+            if (dependencies.isNotEmpty()) {
                 into("${PackagePlugin.JCR_ROOT}/$effectiveInstallPath") { spec ->
-                    spec.from(jars)
+                    spec.from(resolutionDir)
                     fileFilter(spec)
                 }
             }
@@ -275,5 +284,16 @@ open class ComposeTask : Zip(), AemTask {
         }
 
         return extendedArchiveName
+    }
+
+    // TODO maybe move it to prepare task with output jars and then here threat it as input
+    private fun resolveBundles() {
+        bundleResolvers.forEach { it.value() }
+    }
+
+    @TaskAction
+    override fun copy() {
+        resolveBundles()
+        super.copy()
     }
 }
