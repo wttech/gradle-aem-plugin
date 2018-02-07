@@ -175,7 +175,7 @@ open class ComposeTask : Zip(), AemTask {
             val includes = collector.all
 
             if (includes.isNotEmpty()) {
-                val resolutionPath = project.path.replace(":", "/").removeSurrounding("/")
+                val resolutionPath = "bundles/${project.path.replace(":", "/").removeSurrounding("/")}"
                 val resolutionDir = AemTask.temporaryDir(this.project, NAME, resolutionPath)
                 val resolver = { collector.allJars.forEach { FileUtils.copyFileToDirectory(it, resolutionDir) } }
 
