@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.pkg
 import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.api.AemException
 import com.cognifide.gradle.aem.api.AemTask
+import com.cognifide.gradle.aem.bundle.BundleCollector
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.PropertyParser
 import org.apache.commons.io.FileUtils
@@ -64,7 +65,7 @@ open class ComposeTask : Zip(), AemTask {
     var fileFilter: ((CopySpec) -> Unit) = { spec ->
         spec.exclude(config.filesExcluded)
         spec.eachFile({ fileDetail ->
-            val path = fileDetail.relativeSourcePath.pathString
+            val path = fileDetail.relativePath.pathString
             if (Patterns.wildcard(path, config.filesExpanded)) {
                 fileDetail.filter({ line -> propertyParser.expandPackage(line, fileProperties, path) })
             }

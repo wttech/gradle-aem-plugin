@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.pkg
+package com.cognifide.gradle.aem.bundle
 
 import aQute.bnd.osgi.Jar
 import org.gradle.api.Project
@@ -13,7 +13,7 @@ class BundleCollector(val project: Project) {
         get() = project.configurations.findByName(Dependency.ARCHIVES_CONFIGURATION)
 
     val installConfig: Configuration?
-        get() = project.configurations.findByName(PackagePlugin.CONFIG_INSTALL)
+        get() = project.configurations.findByName(BundlePlugin.CONFIG_INSTALL)
 
     val archiveArtifacts: List<String>
         get() = archiveConfig?.run { allArtifacts.map { it.toString() } } ?: listOf()
@@ -39,6 +39,5 @@ class BundleCollector(val project: Project) {
         } catch (e: Exception) {
             false
         }
-
     }
 }

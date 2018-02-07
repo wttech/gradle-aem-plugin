@@ -182,7 +182,7 @@ class AemConfig(
      * Wildcard file name filter expression that is used to filter in which Vault files properties can be injected.
      */
     @Input
-    var filesExpanded: MutableList<String> = mutableListOf("**/${PackagePlugin.VLT_PATH}/*.xml")
+    var filesExpanded: MutableList<String> = mutableListOf("${PackagePlugin.VLT_PATH}/*.xml")
 
     /**
      * Build date used as base for calculating 'created' and 'buildCount' package properties.
@@ -195,11 +195,7 @@ class AemConfig(
      * Could override predefined properties provided by plugin itself.
      */
     @Input
-    var fileProperties: MutableMap<String, Any> = mutableMapOf(
-            "requiresRoot" to "false",
-            "buildCount" to SimpleDateFormat("yDDmmssSSS").format(buildDate),
-            "created" to Formats.date(buildDate)
-    )
+    var fileProperties: MutableMap<String, Any> = mutableMapOf()
 
     /**
      * Ensures that for directory 'META-INF/vault' default files will be generated when missing:
@@ -283,7 +279,7 @@ class AemConfig(
      * Wildcard file name filter expression that is used to filter in which instance files properties can be injected.
      */
     @Input
-    var instanceFilesExpanded: MutableList<String> = mutableListOf("**/*.properties", "**/*.sh", "**/*.bat", "**/*.xml", "**/start", "**/stop")
+    var instanceFilesExpanded: MutableList<String> = mutableListOf("*.properties", "*.sh", "*.bat", "*.xml", "**/start", "**/stop")
 
     /**
      * Time in milliseconds to postpone instance stability checks to avoid race condition related with
