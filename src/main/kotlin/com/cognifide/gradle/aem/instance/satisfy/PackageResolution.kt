@@ -53,22 +53,21 @@ class PackageResolution(group: PackageGroup, id: String, action: (FileResolution
         val group = symbolicName.substringBeforeLast(".")
         val version = bundle.manifest.mainAttributes.getValue("Bundle-Version")
         val filters = listOf(JsoupUtil.selfClosingTag("<filter root=\"$pkgPath\"/>", "filter"))
-        val defaultProps = mapOf<String, Any>(
+        val bundleProps = mapOf<String, Any>(
                 "project.group" to group,
                 "project.name" to symbolicName,
                 "project.version" to version,
                 "project.description" to description,
                 "config.packageName" to symbolicName,
-                "config.acHandling" to config.acHandling,
                 "filters" to filters,
                 "filterRoots" to filters.joinToString(config.vaultLineSeparatorString) { it.toString() }
         )
-        val commonProps = config.fileProperties
+        val generalProps = config.propParser.packageProps
         val overrideProps = config.satisfyBundleProperties(bundle)
-        val effectiveProps = defaultProps + commonProps + overrideProps
+        val effectiveProps = generalProps + bundleProps + overrideProps
 
-        FileOperations.amendFiles(vaultDir, config.filesExpanded, { file, line ->
-            config.propParser.expand(line, effectiveProps, file.absolutePath)
+        FileOperations.amendFiles(vaultDir, config.filesExpanded, { file, content ->
+            config.propParser.expand(content, effectiveProps, file.absolutePath)
         })
 
         // Copy bundle to install path

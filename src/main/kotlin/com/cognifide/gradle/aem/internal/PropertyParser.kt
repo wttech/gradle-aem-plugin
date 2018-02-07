@@ -106,7 +106,7 @@ class PropertyParser(val project: Project) {
     }
 
     fun expandPackage(source: String, props: Map<String, Any>, context: String? = null): String {
-        val interpolableProps = envProps + systemProps + customProps + props
+        val interpolableProps = envProps + systemProps + packageProps + props
         val templateProps = projectProps + configProps + props
 
         return expand(source, interpolableProps, templateProps, context)
@@ -139,36 +139,33 @@ class PropertyParser(val project: Project) {
 
     val projectProps: Map<String, Any>
         get() = mapOf(
+                // Gradle objects
                 "rootProject" to project.rootProject,
-                "project" to project
+                "project" to project,
+
+                // Maven fallbacks
+                "project.groupId" to project.group,
+                "project.artifactId" to project.name,
+                "project.build.finalName" to "${project.name}-${project.version}"
         )
 
     val configProps: Map<String, Any>
         get() = mapOf("config" to AemConfig.of(project))
 
-    val customProps: Map<String, Any>
+    val packageProps: Map<String, Any>
         get() {
             val config = AemConfig.of(project)
-            val defaultProps = mapOf(
-                    // Maven fallback
-                    "project.groupId" to project.group,
-                    "project.artifactId" to project.name,
-                    "project.build.finalName" to "${project.name}-${project.version}",
-
-                    // CRX defaults
+            val defaults = mapOf(
+                    // Simple defaults
                     "requiresRoot" to "false",
 
-                    // Dynamic valules
+                    // Dynamic values
                     "buildCount" to SimpleDateFormat("yDDmmssSSS").format(config.buildDate),
                     "created" to Formats.date(config.buildDate)
             )
-            val customProps = config.fileProperties
 
-            return defaultProps + customProps
+            return defaults + config.fileProperties + configProps
         }
-
-    val packageProps: Map<String, Any>
-        get() = configProps + customProps
 
     fun isForce(): Boolean {
         return flag(FORCE_PROP)

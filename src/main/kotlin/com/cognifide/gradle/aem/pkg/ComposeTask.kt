@@ -67,7 +67,7 @@ open class ComposeTask : Zip(), AemTask {
     var fileFilter: ((CopySpec) -> Unit) = { spec ->
         spec.exclude(config.filesExcluded)
         spec.eachFile({ fileDetail ->
-            val path = fileDetail.relativePath.pathString
+            val path = "/${fileDetail.relativePath.pathString.removePrefix("/")}"
             if (Patterns.wildcard(path, config.filesExpanded)) {
                 FileContentReader.filter(fileDetail, { propertyParser.expandPackage(it, fileProperties, path) })
             }

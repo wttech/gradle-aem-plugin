@@ -2,7 +2,6 @@ package com.cognifide.gradle.aem.api
 
 import aQute.bnd.osgi.Jar
 import com.cognifide.gradle.aem.instance.*
-import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.internal.LineSeparator
 import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.pkg.ComposeTask
@@ -15,7 +14,6 @@ import org.gradle.api.tasks.Internal
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 import java.io.File
 import java.io.Serializable
-import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -182,7 +180,7 @@ class AemConfig(
      * Wildcard file name filter expression that is used to filter in which Vault files properties can be injected.
      */
     @Input
-    var filesExpanded: MutableList<String> = mutableListOf("${PackagePlugin.VLT_PATH}/*.xml")
+    var filesExpanded: MutableList<String> = mutableListOf("**/${PackagePlugin.VLT_PATH}/*.xml")
 
     /**
      * Build date used as base for calculating 'created' and 'buildCount' package properties.
@@ -279,7 +277,7 @@ class AemConfig(
      * Wildcard file name filter expression that is used to filter in which instance files properties can be injected.
      */
     @Input
-    var instanceFilesExpanded: MutableList<String> = mutableListOf("*.properties", "*.sh", "*.bat", "*.xml", "**/start", "**/stop")
+    var instanceFilesExpanded: MutableList<String> = mutableListOf("**/*.properties", "**/*.sh", "**/*.bat", "**/*.xml", "**/start", "**/stop")
 
     /**
      * Time in milliseconds to postpone instance stability checks to avoid race condition related with
