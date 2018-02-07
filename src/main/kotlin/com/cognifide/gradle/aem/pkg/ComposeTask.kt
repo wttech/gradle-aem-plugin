@@ -4,9 +4,9 @@ import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.api.AemException
 import com.cognifide.gradle.aem.api.AemTask
 import com.cognifide.gradle.aem.bundle.BundleCollector
-import com.cognifide.gradle.aem.internal.file.FileContentReader
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.PropertyParser
+import com.cognifide.gradle.aem.internal.file.FileContentReader
 import com.cognifide.gradle.aem.internal.jsoup.JsoupUtil
 import org.apache.commons.io.FileUtils
 import org.gradle.api.Project
@@ -42,7 +42,7 @@ open class ComposeTask : Zip(), AemTask {
 
     @Internal
     var filterRootDefault = { subproject: Project, subconfig: AemConfig ->
-        JsoupUtil.selfClosingTag("<filter root=\"${subconfig.bundlePath}\"/>", "filter")
+        "<filter root=\"${subconfig.bundlePath}\"/>"
     }
 
     @Internal
@@ -251,7 +251,7 @@ open class ComposeTask : Zip(), AemTask {
         if (!config.vaultFilterPath.isBlank() && File(config.vaultFilterPath).exists()) {
             filterRoots.addAll(extractVaultFilters(File(config.vaultFilterPath)))
         } else {
-            filterRoots.add(filterRootDefault(project, config))
+            filterRoots.add(JsoupUtil.selfClosingTag(filterRootDefault(project, config), "filter"))
         }
     }
 

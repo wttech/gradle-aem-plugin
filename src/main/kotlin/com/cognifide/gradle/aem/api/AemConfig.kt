@@ -365,12 +365,6 @@ class AemConfig(
     var satisfyGroupName = propParser.string("aem.satisfy.group.name", "*")
 
     /**
-     * @see <https://github.com/Cognifide/gradle-aem-plugin/issues/95>
-     */
-    @Input
-    var testClasspathJarIncluded: Boolean = true
-
-    /**
      * Initialize defaults that depends on concrete type of project.
      */
     init {
@@ -498,6 +492,7 @@ class AemConfig(
     @get:JsonIgnore
     val vaultLineSeparatorString: String = LineSeparator.string(vaultLineSeparator)
 
+    @Internal
     fun namePrefix(): String = if (isUniqueProjectName()) {
         project.name
     } else {
@@ -507,6 +502,7 @@ class AemConfig(
                 .substringBeforeLast("-")
     }
 
+    @Internal
     fun isUniqueProjectName() = project == project.rootProject || project.name == project.rootProject.name
 
     companion object {

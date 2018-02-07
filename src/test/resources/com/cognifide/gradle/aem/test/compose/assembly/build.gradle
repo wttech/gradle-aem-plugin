@@ -28,7 +28,7 @@ allprojects { subproject ->
         }
     }
 
-    plugins.withId 'biz.aQute.bnd.builder', {
+    plugins.withId 'com.cognifide.aem.bundle', {
         jar {
             manifest {
                 attributes([
