@@ -1,14 +1,16 @@
 package com.cognifide.gradle.aem.pkg.jar
 
 import com.cognifide.gradle.aem.api.AemDefaultTask
+import com.cognifide.gradle.aem.api.AemTask
 import com.cognifide.gradle.aem.pkg.PackagePlugin
+import org.apache.commons.io.FileUtils
+import org.apache.commons.io.FilenameUtils
 import org.dm.gradle.plugins.bundle.BundleExtension
+import org.gradle.api.artifacts.Configuration
 import org.gradle.api.java.archives.Manifest
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.osgi.OsgiManifest
-import org.gradle.api.tasks.InputFiles
-import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.*
 import org.gradle.api.tasks.testing.Test
 import org.gradle.jvm.tasks.Jar
 import java.io.File
@@ -23,33 +25,48 @@ import java.io.File
 open class UpdateManifestTask : AemDefaultTask() {
 
     companion object {
-        val NAME = "aemUpdateManifest"
+        const val NAME = "aemUpdateManifest"
 
-        val OSGI_PLUGIN_ID = "osgi"
+        const val OSGI_PLUGIN_ID = "osgi"
 
-        val BUNDLE_PLUGIN_ID = "org.dm.bundle"
+        const val BUNDLE_PLUGIN_ID = "org.dm.bundle"
     }
 
     init {
         description = "Update OSGi manifest instructions"
     }
 
-    @Internal
-    val jar = project.tasks.getByName(JavaPlugin.JAR_TASK_NAME) as Jar
+    @get:Internal
+    val jar: Jar
+        get() = project.tasks.getByName(JavaPlugin.JAR_TASK_NAME) as Jar
 
-    @Internal
-    val test = project.tasks.getByName(JavaPlugin.TEST_TASK_NAME) as Test
+    @get:Internal
+    val test: Test
+        get() = project.tasks.getByName(JavaPlugin.TEST_TASK_NAME) as Test
 
-    val embeddableJars: List<File>
-        @InputFiles
-        get() {
-            return project.configurations.getByName(PackagePlugin.CONFIG_EMBED).files.sortedBy { it.name }
-        }
+    @get:Internal
+    val embedConfig: Configuration
+        get() = project.configurations.getByName(PackagePlugin.CONFIG_EMBED)
+
+    @get:Input
+    val embedDependencies
+        get() = embedConfig.allDependencies.map { it.toString() }
+
+    @get:Internal
+    val embedJars: List<File>
+        get() = embedConfig.files.sortedBy { it.name }
+
+    @OutputDirectory
+    val embedDownloadDir = AemTask.temporaryDir(project, NAME, "embedJars")
+
+    @get:Internal
+    val embedDownloadJars
+        get() = embedDownloadDir.listFiles({ _: File, name: String? -> FilenameUtils.getExtension(name) == "jar" })
 
     init {
         project.afterEvaluate {
             configureTest()
-            embedJars()
+            configureEmbeddingJars()
         }
     }
 
@@ -59,20 +76,21 @@ open class UpdateManifestTask : AemDefaultTask() {
         }
     }
 
-    // TODO files should not be resolved in configuration phase (performance decrease)
-    private fun embedJars() {
-        if (embeddableJars.isEmpty()) {
+    private fun configureEmbeddingJars() {
+        if (embedDependencies.isEmpty()) {
             return
         }
 
-        project.logger.info("Embedding jar files: ${embeddableJars.map { it.name }}")
+        project.logger.info("Embedding dependencies: $embedDependencies")
 
-        jar.from(embeddableJars)
-        addInstruction("Bundle-ClassPath", {
-            val list = mutableListOf(".")
-            embeddableJars.onEach { jar -> list.add(jar.name) }
-            list.joinToString(",")
-        })
+        jar.from(embedDownloadDir)
+        jar.doFirst {
+            addInstruction("Bundle-ClassPath", {
+                val list = mutableListOf(".")
+                embedDownloadJars.forEach { jar -> list.add(jar.name) }
+                list.joinToString(",")
+            })
+        }
     }
 
     private fun addInstruction(name: String, valueProvider: () -> String) {
@@ -113,7 +131,7 @@ open class UpdateManifestTask : AemDefaultTask() {
 
     @TaskAction
     fun updateManifest() {
-        // nothing to do in execution phase right now, hook for later ;)
+        embedJars.forEach { FileUtils.copyFileToDirectory(it, embedDownloadDir) }
     }
 
 }

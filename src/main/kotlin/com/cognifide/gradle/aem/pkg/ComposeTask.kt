@@ -167,6 +167,7 @@ open class ComposeTask : Zip(), AemTask {
                 effectiveInstallPath = "$effectiveInstallPath.$runMode"
             }
 
+            // TODO do same trick as in updatemanifesttask to avoid resolving files in configuration phase
             val jars = JarCollector(project).all.toSet()
 
             if (jars.isNotEmpty()) {
