@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.pkg
 
-import com.cognifide.gradle.aem.base.api.AemDefaultTask
-import com.cognifide.gradle.aem.base.api.AemTask
+import com.cognifide.gradle.aem.api.AemDefaultTask
+import com.cognifide.gradle.aem.api.AemTask
 import com.cognifide.gradle.aem.internal.file.FileOperations
 import org.apache.commons.io.FileUtils
 import org.gradle.api.tasks.OutputDirectory

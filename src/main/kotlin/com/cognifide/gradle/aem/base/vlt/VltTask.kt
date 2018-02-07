@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.base.vlt
 
-import com.cognifide.gradle.aem.base.api.AemDefaultTask
+import com.cognifide.gradle.aem.api.AemDefaultTask
 import org.gradle.api.tasks.TaskAction
 
 open class VltTask : AemDefaultTask() {

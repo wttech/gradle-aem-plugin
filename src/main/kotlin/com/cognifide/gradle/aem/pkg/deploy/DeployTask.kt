@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.pkg.deploy
 
-import com.cognifide.gradle.aem.base.api.AemTask
+import com.cognifide.gradle.aem.api.AemTask
 import org.gradle.api.tasks.TaskAction
 
 open class DeployTask : SyncTask() {
@@ -11,12 +11,16 @@ open class DeployTask : SyncTask() {
 
     init {
         group = AemTask.GROUP
-        description = "Deploys CRX package on instance(s). Upload then install."
+        description = "Deploys CRX package on instance(s). Upload then install (and optionally activate)."
     }
 
     @TaskAction
     fun deploy() {
-        synchronizeInstances({ it.deployPackage() })
+        if (config.deployDistributed) {
+            synchronizeInstances({ it.distributePackage() }, filterInstances(config.deployInstanceAuthorName))
+        } else {
+            synchronizeInstances({ it.deployPackage() })
+        }
     }
 
 }

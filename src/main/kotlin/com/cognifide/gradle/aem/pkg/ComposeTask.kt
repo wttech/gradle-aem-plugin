@@ -1,9 +1,8 @@
 package com.cognifide.gradle.aem.pkg
 
-import com.cognifide.gradle.aem.base.api.AemConfig
-import com.cognifide.gradle.aem.base.api.AemException
-import com.cognifide.gradle.aem.base.api.AemTask
-import com.cognifide.gradle.aem.internal.LineSeparator
+import com.cognifide.gradle.aem.api.AemConfig
+import com.cognifide.gradle.aem.api.AemException
+import com.cognifide.gradle.aem.api.AemTask
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.PropertyParser
 import org.gradle.api.Project
@@ -15,6 +14,7 @@ import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.bundling.Zip
 import org.jsoup.Jsoup
+import org.jsoup.nodes.Element
 import org.jsoup.parser.Parser
 import java.io.File
 
@@ -32,12 +32,16 @@ open class ComposeTask : Zip(), AemTask {
     @InputDirectory
     val vaultDir = AemTask.temporaryDir(project, PrepareTask.NAME, PackagePlugin.VLT_PATH)
 
-    @Input
-    val filterRoots = mutableSetOf<String>()
+    @Internal
+    val filterRoots = mutableSetOf<Element>()
+
+    @get:Input
+    val filterRootsProp: String
+        get() = filterRoots.joinToString(config.vaultLineSeparatorString) { it.toString() }
 
     @Internal
     var filterRootDefault = { subproject: Project, subconfig: AemConfig ->
-        "<filter root=\"${subconfig.bundlePath}\"/>"
+        Element("<filter root=\"${subconfig.bundlePath}\"/>")
     }
 
     @Internal
@@ -58,14 +62,17 @@ open class ComposeTask : Zip(), AemTask {
         spec.eachFile({ fileDetail ->
             val path = fileDetail.relativeSourcePath.pathString
             if (Patterns.wildcard(path, config.filesExpanded)) {
-                fileDetail.filter({ line -> propertyParser.expand(line, fileProperties, path) })
+                fileDetail.filter({ line -> propertyParser.expandPackage(line, fileProperties, path) })
             }
         })
     }
 
     @get:Internal
     val fileProperties
-        get() = mapOf("filterRoots" to filterRoots.joinToString(LineSeparator.string(config.vaultLineSeparator)))
+        get() = mapOf(
+                "filters" to filterRoots,
+                "filterRoots" to filterRootsProp
+        )
 
     init {
         description = "Composes CRX package from JCR content and built OSGi bundles"
@@ -221,17 +228,17 @@ open class ComposeTask : Zip(), AemTask {
     }
 
     private fun extractVaultFilters(project: Project, config: AemConfig) {
-        if (!config.vaultFilterPath.isNullOrBlank() && File(config.vaultFilterPath).exists()) {
+        if (!config.vaultFilterPath.isBlank() && File(config.vaultFilterPath).exists()) {
             filterRoots.addAll(extractVaultFilters(File(config.vaultFilterPath)))
         } else {
             filterRoots.add(filterRootDefault(project, config))
         }
     }
 
-    private fun extractVaultFilters(filter: File): Set<String> {
+    private fun extractVaultFilters(filter: File): Set<Element> {
         val doc = Jsoup.parse(filter.bufferedReader().use { it.readText() }, "", Parser.xmlParser())
 
-        return doc.select("filter[root]").map { it.toString() }.toSet()
+        return doc.select("filter[root]").toSet()
     }
 
     fun includeVault(vltPath: Any) {
@@ -253,7 +260,7 @@ open class ComposeTask : Zip(), AemTask {
             return if (project == project.rootProject || project.name == project.rootProject.name) {
                 defaultArchiveName
             } else {
-                "${propertyParser.namePrefix}-$defaultArchiveName"
+                "${config.namePrefix()}-$defaultArchiveName"
             }
         }
 

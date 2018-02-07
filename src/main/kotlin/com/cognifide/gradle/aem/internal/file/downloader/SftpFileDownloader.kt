@@ -1,5 +1,6 @@
-package com.cognifide.gradle.aem.internal.file
+package com.cognifide.gradle.aem.internal.file.downloader
 
+import com.cognifide.gradle.aem.internal.file.FileException
 import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.sftp.OpenMode
 import net.schmizz.sshj.sftp.SFTPClient

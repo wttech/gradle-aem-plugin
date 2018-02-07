@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.base.vlt
 
-import com.cognifide.gradle.aem.base.api.AemConfig
+import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import org.apache.commons.cli2.CommandLine
 import org.apache.jackrabbit.vault.cli.VaultFsApp
@@ -36,11 +36,11 @@ class VltApp(val project: Project) : VaultFsApp() {
         super.prepare(command)
     }
 
-    fun execute(command: String): Unit {
+    fun execute(command: String) {
         execute(command.split(" "))
     }
 
-    fun execute(args: List<String>): Unit {
+    fun execute(args: List<String>) {
         execute(args, workingDir.absolutePath)
     }
 

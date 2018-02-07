@@ -13,9 +13,6 @@ class RemoteInstance(
 ) : Instance, Serializable {
 
     companion object {
-        fun create(httpUrl: String): RemoteInstance {
-            return create(httpUrl, LocalInstance.ENVIRONMENT)
-        }
 
         fun create(httpUrl: String, environment: String): RemoteInstance {
             val instanceUrl = InstanceUrl.parse(httpUrl)

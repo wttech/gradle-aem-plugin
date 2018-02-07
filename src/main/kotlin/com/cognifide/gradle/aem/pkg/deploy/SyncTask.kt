@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.pkg.deploy
 
-import com.cognifide.gradle.aem.base.api.AemDefaultTask
+import com.cognifide.gradle.aem.api.AemDefaultTask
 import com.cognifide.gradle.aem.instance.*
 import com.cognifide.gradle.aem.internal.PropertyParser
 import org.gradle.api.tasks.Internal

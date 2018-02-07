@@ -32,6 +32,10 @@ class PackagePlugin : Plugin<Project> {
         val VLT_PROPERTIES = "$VLT_PATH/properties.xml"
 
         val JCR_ROOT = "jcr_root"
+
+        val JAR_MANIFEST = "META-INF/MANIFEST.MF"
+
+        val BUILD_TASK_RULE = "Pattern: aem<ProjectPath>Build: Build CRX package and deploy it to AEM instance(s)."
     }
 
     override fun apply(project: Project) {
@@ -66,7 +70,6 @@ class PackagePlugin : Plugin<Project> {
         project.tasks.create(UninstallTask.NAME, UninstallTask::class.java)
         val activate = project.tasks.create(ActivateTask.NAME, ActivateTask::class.java)
         val deploy = project.tasks.create(DeployTask.NAME, DeployTask::class.java)
-        val distribute = project.tasks.create(DistributeTask.NAME, DistributeTask::class.java)
 
         val assemble = project.tasks.getByName(LifecycleBasePlugin.ASSEMBLE_TASK_NAME)
         val check = project.tasks.getByName(LifecycleBasePlugin.CHECK_TASK_NAME)
@@ -86,7 +89,6 @@ class PackagePlugin : Plugin<Project> {
         activate.mustRunAfter(compose, upload, install)
 
         deploy.dependsOn(compose)
-        distribute.dependsOn(compose)
     }
 
     private fun setupConfigurations(project: Project) {

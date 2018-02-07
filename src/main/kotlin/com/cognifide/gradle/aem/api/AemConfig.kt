@@ -1,6 +1,8 @@
-package com.cognifide.gradle.aem.base.api
+package com.cognifide.gradle.aem.api
 
+import aQute.bnd.osgi.Jar
 import com.cognifide.gradle.aem.instance.*
+import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.internal.LineSeparator
 import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.pkg.ComposeTask
@@ -13,6 +15,7 @@ import org.gradle.api.tasks.Internal
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 import java.io.File
 import java.io.Serializable
+import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -22,12 +25,17 @@ import java.util.concurrent.TimeUnit
  * Content paths which are used to compose a CRX package are being processed by copy task,
  * which automatically mark them as inputs so package is being rebuild on any JCR content or Vault files change.
  */
-open class AemConfig(project: Project) : Serializable {
+class AemConfig(
+        @Transient
+        @get:JsonIgnore
+        private val project: Project
+) : Serializable {
 
     /**
      * Allows to read project property specified in command line and system property as a fallback.
      */
     @Internal
+    @get:JsonIgnore
     val propParser = PropertyParser(project)
 
     /**
@@ -41,13 +49,30 @@ open class AemConfig(project: Project) : Serializable {
      * Determines current environment to be used in deployment.
      */
     @Input
-    val deployEnvironment: String = propParser.string("aem.env", { System.getenv("AEM_ENV") ?: "local" })
+    val deployEnvironment: String = propParser.string("aem.env", {
+        System.getenv("AEM_ENV") ?: "local"
+    })
 
     /**
-     * Determines instances involved in CRX package deployment.
+     * Determines instances involved in CRX package deployment (filters preconfigured instances).
      */
     @Input
     var deployInstanceName: String = propParser.string("aem.deploy.instance.name", "$deployEnvironment-*")
+
+    /**
+     * Forces instances involved in CRX package deployment (uses explicit instances configuration).
+     */
+    @Input
+    var deployInstanceList: String = propParser.string("aem.deploy.instance.list", "")
+
+    /**
+     * Determines instance which will be used when:
+     *
+     * - CRX package activation from author to publishers will be performed (only if distributed deploy is enabled).
+     * - Task 'aemCheckout' or 'aemSync' will be executed.
+     */
+    @Input
+    var deployInstanceAuthorName: String = "$deployEnvironment-${InstanceType.AUTHOR.type}"
 
     /**
      * Defines maximum time after which initializing connection to AEM will be aborted (e.g on upload, install).
@@ -67,6 +92,12 @@ open class AemConfig(project: Project) : Serializable {
      */
     @Input
     var deploySnapshots: List<String> = propParser.list("aem.deploy.snapshots")
+
+    /**
+     * Enables deployment via CRX package activation from author to publishers when e.g they are not accessible.
+     */
+    @Input
+    var deployDistributed: Boolean = propParser.boolean("aem.deploy.distributed", false)
 
     /**
      * Force upload CRX package regardless if it was previously uploaded.
@@ -103,6 +134,16 @@ open class AemConfig(project: Project) : Serializable {
         "/apps/${project.name}/install"
     } else {
         "/apps/${project.rootProject.name}/${project.name}/install"
+    }
+
+    /**
+     * Determines built CRX package name (visible in package manager).
+     */
+    @Input
+    var packageName: String = if (isUniqueProjectName()) {
+        project.name
+    } else {
+        "${namePrefix()}-${project.name}"
     }
 
     /**
@@ -144,11 +185,21 @@ open class AemConfig(project: Project) : Serializable {
     var filesExpanded: MutableList<String> = mutableListOf("**/${PackagePlugin.VLT_PATH}/*.xml")
 
     /**
+     * Build date used as base for calculating 'created' and 'buildCount' package properties.
+     */
+    @Internal
+    var buildDate: Date = propParser.date("aem.buildDate", Date())
+
+    /**
      * Define here custom properties that can be used in CRX package files like 'META-INF/vault/properties.xml'.
      * Could override predefined properties provided by plugin itself.
      */
     @Input
-    var fileProperties: MutableMap<String, Any> = mutableMapOf()
+    var fileProperties: MutableMap<String, Any> = mutableMapOf(
+            "requiresRoot" to "false",
+            "buildCount" to SimpleDateFormat("yDDmmssSSS").format(buildDate),
+            "created" to Formats.date(buildDate)
+    )
 
     /**
      * Ensures that for directory 'META-INF/vault' default files will be generated when missing:
@@ -212,12 +263,6 @@ open class AemConfig(project: Project) : Serializable {
     var dependContentTaskNames: List<String> = mutableListOf(
             ComposeTask.NAME + ComposeTask.DEPENDENCIES_SUFFIX
     )
-
-    /**
-     * Build date used as base for calculating 'created' and 'buildCount' package properties.
-     */
-    @Internal
-    var buildDate: Date = propParser.date("aem.buildDate", Date())
 
     /**
      * Path in which local AEM instances will be stored.
@@ -303,8 +348,25 @@ open class AemConfig(project: Project) : Serializable {
     @Input
     var satisfyRefreshing: Boolean = propParser.boolean("aem.satisfy.refreshing", false)
 
+    /**
+     * Satisfy handles plain OSGi bundle JAR's deployment by automatic wrapping to CRX package.
+     * This path determines a path in JCR repository in which such bundles will be deployed on AEM.
+     */
     @Input
-    var satisfyGroupName = propParser.string("aem.satisfy.group.name", "app-*,lib-*,hotfix-*,cfp-*,sp-*")
+    var satisfyBundlePath: String = propParser.string("aem.satisfy.bundlePath", "/apps/gradle-aem-plugin/satisfy/install")
+
+    /**
+     * A hook which could be used to override default properties used to generate a CRX package from OSGi bundle.
+     */
+    @Internal
+    @get:JsonIgnore
+    var satisfyBundleProperties: (Jar) -> Map<String, Any> = { mapOf() }
+
+    /**
+     * Determines which packages should be installed by default when satisfy task is being executed.
+     */
+    @Input
+    var satisfyGroupName = propParser.string("aem.satisfy.group.name", "*")
 
     /**
      * @see <https://github.com/Cognifide/gradle-aem-plugin/issues/95>
@@ -342,8 +404,18 @@ open class AemConfig(project: Project) : Serializable {
         instance(LocalInstance(httpUrl, user, password, type, debugPort))
     }
 
+    fun localAuthorInstance() {
+        val httpUrl = propParser.string(Instance.AUTHOR_URL_PROP, Instance.URL_AUTHOR_DEFAULT)
+        instance(LocalInstance.create(httpUrl))
+    }
+
+    fun localPublishInstance() {
+        val httpUrl = propParser.string(Instance.PUBLISH_URL_PROP, Instance.URL_PUBLISH_DEFAULT)
+        instance(LocalInstance.create(httpUrl))
+    }
+
     fun remoteInstance(httpUrl: String) {
-        instance(RemoteInstance.create(httpUrl))
+        instance(RemoteInstance.create(httpUrl, deployEnvironment))
     }
 
     fun remoteInstance(httpUrl: String, environment: String) {
@@ -358,8 +430,18 @@ open class AemConfig(project: Project) : Serializable {
         instance(RemoteInstance(httpUrl, user, password, type, environment))
     }
 
+    fun remoteAuthorInstance() {
+        val httpUrl = propParser.string(Instance.AUTHOR_URL_PROP, Instance.URL_AUTHOR_DEFAULT)
+        instance(RemoteInstance.create(httpUrl, deployEnvironment))
+    }
+
+    fun remotePublishInstance() {
+        val httpUrl = propParser.string(Instance.PUBLISH_URL_PROP, Instance.URL_PUBLISH_DEFAULT)
+        instance(RemoteInstance.create(httpUrl, deployEnvironment))
+    }
+
     private fun instance(instance: Instance) {
-        instances.put(instance.name, instance)
+        instances[instance.name] = instance
     }
 
     /**
@@ -420,6 +502,17 @@ open class AemConfig(project: Project) : Serializable {
     @get:JsonIgnore
     val vaultLineSeparatorString: String = LineSeparator.string(vaultLineSeparator)
 
+    fun namePrefix(): String = if (isUniqueProjectName()) {
+        project.name
+    } else {
+        "${project.rootProject.name}${project.path}"
+                .replace(":", "-")
+                .replace(".", "-")
+                .substringBeforeLast("-")
+    }
+
+    fun isUniqueProjectName() = project == project.rootProject || project.name == project.rootProject.name
+
     companion object {
 
         /**
@@ -429,7 +522,7 @@ open class AemConfig(project: Project) : Serializable {
         fun of(project: Project): AemConfig {
             val extension = project.extensions.findByType(AemExtension::class.java)
                     ?: throw AemException(project.toString().capitalize()
-                    + " has neither '${PackagePlugin.ID}' nor '${InstancePlugin.ID}' plugin applied.")
+                            + " has neither '${PackagePlugin.ID}' nor '${InstancePlugin.ID}' plugin applied.")
 
             return extension.config
         }
@@ -441,7 +534,7 @@ open class AemConfig(project: Project) : Serializable {
         fun pkg(project: Project): ComposeTask {
             val task = project.tasks.findByName(ComposeTask.NAME)
                     ?: throw AemException("${project.toString().capitalize()} has no task named"
-                    + " '${ComposeTask.NAME}' defined.")
+                            + " '${ComposeTask.NAME}' defined.")
 
             return task as ComposeTask
         }

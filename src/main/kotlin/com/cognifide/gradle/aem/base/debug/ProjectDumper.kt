@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.base.debug
 
-import com.cognifide.gradle.aem.base.api.AemConfig
+import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.instance.InstanceSync
 import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.pkg.deploy.ListResponse
@@ -11,11 +11,13 @@ class ProjectDumper(@Transient val project: Project) {
 
     val logger: Logger = project.logger
 
+    val propParser = PropertyParser(project)
+
     val properties: Map<String, Any>
         get() {
             return mapOf(
                     "projectInfo" to projectProperties,
-                    "packageProperties" to PropertyParser(project).aemProperties,
+                    "packageProperties" to propParser.packageProps,
                     "packageDeployed" to packageProperties
             )
         }

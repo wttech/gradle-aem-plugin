@@ -3,7 +3,7 @@ package com.cognifide.gradle.aem.instance
 import com.cognifide.gradle.aem.base.BasePlugin
 import com.cognifide.gradle.aem.pkg.ComposeTask
 import com.cognifide.gradle.aem.pkg.PackagePlugin
-import com.cognifide.gradle.aem.pkg.deploy.BuildTask
+import com.cognifide.gradle.aem.pkg.deploy.DeployTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.language.base.plugins.LifecycleBasePlugin
@@ -51,13 +51,13 @@ class InstancePlugin : Plugin<Project> {
 
         project.plugins.withId(PackagePlugin.ID, {
             val setup = project.tasks.create(SetupTask.NAME, SetupTask::class.java)
-            val build = project.tasks.getByName(BuildTask.NAME)
+            val deploy = project.tasks.getByName(DeployTask.NAME)
 
-            setup.dependsOn(create, up, satisfy, build, await)
+            setup.dependsOn(create, up, satisfy, deploy, await)
 
-            build.mustRunAfter(create, up, satisfy)
-            reload.mustRunAfter(build, satisfy)
-            await.mustRunAfter(build)
+            deploy.mustRunAfter(create, up, satisfy)
+            reload.mustRunAfter(deploy, satisfy)
+            await.mustRunAfter(deploy)
         })
 
         project.gradle.afterProject { subproject ->

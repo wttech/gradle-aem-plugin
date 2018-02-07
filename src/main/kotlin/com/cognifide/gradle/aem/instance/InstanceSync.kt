@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.base.api.AemConfig
+import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.internal.Behaviors
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.http.PreemptiveAuthInterceptor
@@ -60,20 +60,25 @@ class InstanceSync(val project: Project, val instance: Instance) {
         return fetch(method)
     }
 
-    fun postUrlencoded(url: String, params: Map<String, Any> = mapOf(), configurer: (HttpRequestBase) -> Unit = { _ -> }): String {
-        return post(url, createEntityUrlencoded(params), configurer)
+    fun postUrlencoded(url: String, params: Map<String, Any> = mapOf(),
+                       configurer: (HttpRequestBase) -> Unit = { _ -> },
+                       statuses: List<Int> = listOf(HttpStatus.SC_OK)): String {
+        return post(url, createEntityUrlencoded(params), configurer, statuses)
     }
 
-    fun postMultipart(url: String, params: Map<String, Any> = mapOf(), configurer: (HttpRequestBase) -> Unit = { _ -> }): String {
-        return post(url, createEntityMultipart(params), configurer)
+    fun postMultipart(url: String, params: Map<String, Any> = mapOf(),
+                      configurer: (HttpRequestBase) -> Unit = { _ -> },
+                      statuses: List<Int> = listOf(HttpStatus.SC_OK)): String {
+        return post(url, createEntityMultipart(params), configurer, statuses)
     }
 
-    private fun post(url: String, entity: HttpEntity, configurer: (HttpRequestBase) -> Unit = { _ -> }): String {
+    private fun post(url: String, entity: HttpEntity, configurer: (HttpRequestBase) -> Unit = { _ -> },
+                     statuses: List<Int> = listOf(HttpStatus.SC_OK)): String {
         val method = HttpPost(normalizeUrl(url))
         method.entity = entity
         configurer(method)
 
-        return fetch(method)
+        return fetch(method, statuses)
     }
 
     /**
@@ -84,25 +89,23 @@ class InstanceSync(val project: Project, val instance: Instance) {
         return url.replace(" ", "%20")
     }
 
-    fun fetch(method: HttpRequestBase, expectedStatus: Int = HttpStatus.SC_OK): String {
-        return execute(method, expectedStatus, { IOUtils.toString(it.entity.content) })
+    fun fetch(method: HttpRequestBase, statuses: List<Int> = listOf(HttpStatus.SC_OK)): String {
+        return execute(method, statuses, { IOUtils.toString(it.entity.content) })
     }
 
-    fun <T> execute(method: HttpRequestBase, expectedStatus: Int = HttpStatus.SC_OK, onSuccess: (HttpResponse) -> T): T {
+    fun <T> execute(method: HttpRequestBase, statuses: List<Int>, success: (HttpResponse) -> T): T {
         try {
             val client = createHttpClient()
             val response = client.execute(method)
 
-            val status = response.statusLine.statusCode
-            if (status == expectedStatus) {
-                return onSuccess(response)
+            if (statuses.contains(response.statusLine.statusCode)) {
+                return success(response)
             } else {
                 logger.debug(IOUtils.toString(response.entity.content))
-                throw DeployException("Request to the instance failed, cause: "
-                        + response.statusLine.toString() + " (check URL, user and password)")
+                throw DeployException("Unexpected instance response: ${response.statusLine}")
             }
         } catch (e: Exception) {
-            throw DeployException("Request to the instance failed, cause: " + e.message, e)
+            throw DeployException("Failed instance request: ${e.message}", e)
         } finally {
             method.releaseConnection()
         }
@@ -133,7 +136,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         for ((key, value) in params) {
             if (value is File) {
                 if (value.exists()) {
-                    builder.addBinaryBody(value.name, value)
+                    builder.addBinaryBody(key, value)
                 }
             } else {
                 val str = value.toString()
@@ -180,6 +183,10 @@ class InstanceSync(val project: Project, val instance: Instance) {
     }
 
     fun determineRemotePackage(file: File, refresh: Boolean = true): ListResponse.Package? {
+        if (!ZipUtil.containsEntry(file, PackagePlugin.VLT_PROPERTIES)) {
+            throw DeployException("File is not a valid CRX package: $file")
+        }
+
         val xml = ZipUtil.unpackEntry(file, PackagePlugin.VLT_PROPERTIES).toString(Charsets.UTF_8)
         val doc = Jsoup.parse(xml, "", Parser.xmlParser())
 
@@ -193,7 +200,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
     }
 
     private fun resolveRemotePackage(resolver: (ListResponse) -> ListResponse.Package?, refresh: Boolean): ListResponse.Package? {
-        logger.info("Asking AEM for uploaded packages using URL: '$listPackagesUrl'")
+        logger.debug("Asking AEM for uploaded packages using URL: '$listPackagesUrl'")
 
         if (instance.packages == null || refresh) {
             val json = postMultipart(listPackagesUrl)
@@ -273,15 +280,15 @@ class InstanceSync(val project: Project, val instance: Instance) {
         }
     }
 
-    fun satisfyPackage(file: File): Boolean {
+    fun satisfyPackage(file: File, action: () -> Unit): Boolean {
         val pkg = determineRemotePackage(file, config.satisfyRefreshing)
 
         return if (pkg == null) {
-            deployPackage(file)
+            action()
             true
         } else {
             if (!pkg.installed || isSnapshot(file)) {
-                deployPackage(file)
+                action()
                 true
             } else {
                 false
@@ -396,7 +403,9 @@ class InstanceSync(val project: Project, val instance: Instance) {
         }
     }
 
-    fun determineBundleState(configurer: (HttpRequestBase) -> Unit): BundleState {
+    fun determineBundleState(configurer: (HttpRequestBase) -> Unit = { _ -> }): BundleState {
+        logger.debug("Asking AEM for bundles using URL: '$bundlesUrl'")
+
         return try {
             BundleState.fromJson(get(bundlesUrl, configurer))
         } catch (e: Exception) {

@@ -1,8 +1,8 @@
-package com.cognifide.gradle.aem.internal.file
+package com.cognifide.gradle.aem.instance.satisfy
 
 import com.cognifide.gradle.aem.api.AemException
 
-class FileException : AemException {
+class PackageException : AemException {
 
     constructor(message: String, cause: Throwable) : super(message, cause)
 
