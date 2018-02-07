@@ -173,19 +173,20 @@ open class ComposeTask : Zip(), AemTask {
 
             val collector = BundleCollector(project)
             val includes = collector.all
-            val resolutionPath = project.path.replace(":", "/").removeSurrounding("/")
-            val resolutionDir = AemTask.temporaryDir(this.project, NAME, resolutionPath)
-
-            // TODO maybe copying is not needed
-            val resolver = { collector.allJars.forEach { FileUtils.copyFileToDirectory(it, resolutionDir) } }
-
-            bundleIncludes[project.name] = includes
-            bundleResolvers[project.name] = resolver
 
             if (includes.isNotEmpty()) {
-                into("${PackagePlugin.JCR_ROOT}/$effectiveInstallPath") { spec ->
-                    spec.from(resolutionDir)
-                    fileFilter(spec)
+                val resolutionPath = project.path.replace(":", "/").removeSurrounding("/")
+                val resolutionDir = AemTask.temporaryDir(this.project, NAME, resolutionPath)
+                val resolver = { collector.allJars.forEach { FileUtils.copyFileToDirectory(it, resolutionDir) } }
+
+                bundleIncludes[project.name] = includes
+                bundleResolvers[project.name] = resolver
+
+                if (includes.isNotEmpty()) {
+                    into("${PackagePlugin.JCR_ROOT}/$effectiveInstallPath") { spec ->
+                        spec.from(resolutionDir)
+                        fileFilter(spec)
+                    }
                 }
             }
         }
