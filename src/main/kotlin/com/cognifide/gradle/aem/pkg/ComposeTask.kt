@@ -4,8 +4,10 @@ import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.api.AemException
 import com.cognifide.gradle.aem.api.AemTask
 import com.cognifide.gradle.aem.bundle.BundleCollector
+import com.cognifide.gradle.aem.internal.file.FileContentReader
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.PropertyParser
+import com.cognifide.gradle.aem.internal.jsoup.JsoupUtil
 import org.apache.commons.io.FileUtils
 import org.gradle.api.Project
 import org.gradle.api.file.CopySpec
@@ -40,7 +42,7 @@ open class ComposeTask : Zip(), AemTask {
 
     @Internal
     var filterRootDefault = { subproject: Project, subconfig: AemConfig ->
-        Element("<filter root=\"${subconfig.bundlePath}\"/>")
+        JsoupUtil.selfClosingTag("<filter root=\"${subconfig.bundlePath}\"/>", "filter")
     }
 
     @Internal
@@ -67,7 +69,7 @@ open class ComposeTask : Zip(), AemTask {
         spec.eachFile({ fileDetail ->
             val path = fileDetail.relativePath.pathString
             if (Patterns.wildcard(path, config.filesExpanded)) {
-                fileDetail.filter({ line -> propertyParser.expandPackage(line, fileProperties, path) })
+                FileContentReader.filter(fileDetail, { propertyParser.expandPackage(it, fileProperties, path) })
             }
         })
     }
