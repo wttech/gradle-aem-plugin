@@ -177,7 +177,10 @@ open class ComposeTask : Zip(), AemTask {
             if (includes.isNotEmpty()) {
                 val resolutionPath = "bundles/${project.path.replace(":", "/").removeSurrounding("/")}"
                 val resolutionDir = AemTask.temporaryDir(this.project, NAME, resolutionPath)
-                val resolver = { collector.allJars.forEach { FileUtils.copyFileToDirectory(it, resolutionDir) } }
+                val resolver = {
+                    resolutionDir.listFiles()?.forEach { it.delete() }
+                    collector.allJars.forEach { FileUtils.copyFileToDirectory(it, resolutionDir) }
+                }
 
                 bundleIncludes[project.name] = includes
                 bundleResolvers[project.name] = resolver

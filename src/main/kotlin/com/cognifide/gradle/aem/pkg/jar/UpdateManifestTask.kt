@@ -10,7 +10,10 @@ import org.gradle.api.artifacts.Configuration
 import org.gradle.api.java.archives.Manifest
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.osgi.OsgiManifest
-import org.gradle.api.tasks.*
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.testing.Test
 import org.gradle.jvm.tasks.Jar
 import java.io.File
@@ -59,14 +62,10 @@ open class UpdateManifestTask : AemDefaultTask() {
     @OutputDirectory
     val embedDownloadDir = AemTask.temporaryDir(project, NAME, "embedJars")
 
-    @get:Internal
-    val embedDownloadJars
-        get() = embedDownloadDir.listFiles({ _: File, name: String? -> FilenameUtils.getExtension(name) == "jar" })
-
     init {
         project.afterEvaluate {
             configureTest()
-            configureEmbeddingJars()
+            configureEmbedJars()
         }
     }
 
@@ -76,7 +75,7 @@ open class UpdateManifestTask : AemDefaultTask() {
         }
     }
 
-    private fun configureEmbeddingJars() {
+    private fun configureEmbedJars() {
         if (embedDependencies.isEmpty()) {
             return
         }
@@ -85,12 +84,18 @@ open class UpdateManifestTask : AemDefaultTask() {
 
         jar.from(embedDownloadDir)
         jar.doFirst {
-            addInstruction("Bundle-ClassPath", {
-                val list = mutableListOf(".")
-                embedDownloadJars.forEach { jar -> list.add(jar.name) }
-                list.joinToString(",")
-            })
+            configureEmbedClasspath()
         }
+    }
+
+    private fun configureEmbedClasspath() {
+        addInstruction("Bundle-ClassPath", {
+            val list = mutableListOf(".")
+            val jars = embedDownloadDir.listFiles({ _, name -> FilenameUtils.getExtension(name) == "jar" })
+
+            jars.forEach { jar -> list.add(jar.name) }
+            list.joinToString(",")
+        })
     }
 
     private fun addInstruction(name: String, valueProvider: () -> String) {
@@ -129,9 +134,14 @@ open class UpdateManifestTask : AemDefaultTask() {
         }
     }
 
+    private fun resolveEmbedJars() {
+        embedDownloadDir.listFiles()?.forEach { it.delete() }
+        embedJars.forEach { FileUtils.copyFileToDirectory(it, embedDownloadDir) }
+    }
+
     @TaskAction
     fun updateManifest() {
-        embedJars.forEach { FileUtils.copyFileToDirectory(it, embedDownloadDir) }
+        resolveEmbedJars()
     }
 
 }
