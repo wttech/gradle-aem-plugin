@@ -55,7 +55,7 @@ open class ComposeTask : Zip(), AemTask {
     private var archiveName: String? = null
 
     @Input
-    val bundleDependencies = mutableMapOf<String, List<String>>()
+    val bundleIncludes = mutableMapOf<String, List<String>>()
 
     @Internal
     private val bundleResolvers = mutableMapOf<String, () -> Unit>()
@@ -172,14 +172,17 @@ open class ComposeTask : Zip(), AemTask {
             }
 
             val collector = BundleCollector(project)
-            val dependencies = collector.allDependencies
-            val resolutionDir = AemTask.temporaryDir(this.project, NAME, "${project.name.hashCode()}") // TODO use project path normalized
+            val includes = collector.all
+            val resolutionPath = project.path.replace(":", "/").removeSurrounding("/")
+            val resolutionDir = AemTask.temporaryDir(this.project, NAME, resolutionPath)
+
+            // TODO maybe copying is not needed
             val resolver = { collector.allJars.forEach { FileUtils.copyFileToDirectory(it, resolutionDir) } }
 
-            this.bundleDependencies[project.name] = dependencies
-            this.bundleResolvers[project.name] = resolver
+            bundleIncludes[project.name] = includes
+            bundleResolvers[project.name] = resolver
 
-            if (dependencies.isNotEmpty()) {
+            if (includes.isNotEmpty()) {
                 into("${PackagePlugin.JCR_ROOT}/$effectiveInstallPath") { spec ->
                     spec.from(resolutionDir)
                     fileFilter(spec)
@@ -286,7 +289,6 @@ open class ComposeTask : Zip(), AemTask {
         return extendedArchiveName
     }
 
-    // TODO maybe move it to prepare task with output jars and then here threat it as input
     private fun resolveBundles() {
         bundleResolvers.forEach { it.value() }
     }

@@ -2,31 +2,33 @@ package com.cognifide.gradle.aem.pkg
 
 import aQute.bnd.osgi.Jar
 import org.gradle.api.Project
+import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.Dependency
 import java.io.File
 import java.util.*
 
-// TODO archives config returns no jars, still configuration is being resolved
 class BundleCollector(val project: Project) {
 
-    val archiveConfig = project.configurations.findByName(Dependency.ARCHIVES_CONFIGURATION)
+    val archiveConfig: Configuration?
+        get() = project.configurations.findByName(Dependency.ARCHIVES_CONFIGURATION)
 
-    val installConfig = project.configurations.findByName(PackagePlugin.CONFIG_INSTALL)
+    val installConfig: Configuration?
+        get() = project.configurations.findByName(PackagePlugin.CONFIG_INSTALL)
 
-    val archiveDependencies
-        get() = archiveConfig?.map { it.toString() } ?: listOf()
+    val archiveArtifacts: List<String>
+        get() = archiveConfig?.run { allArtifacts.map { it.toString() } } ?: listOf()
 
     val installDependencies
-        get() = installConfig?.map { it.toString() } ?: listOf()
+        get() = installConfig?.run { allDependencies.map { it.toString() } } ?: listOf()
 
-    val allDependencies: List<String>
-        get() = archiveDependencies + installDependencies
+    val all: List<String>
+        get() = archiveArtifacts + installDependencies
 
     val allJars: Collection<File>
         get() {
             val jars = TreeSet<File>()
-            jars += archiveConfig?.resolve() ?: listOf()
-            jars += installConfig?.resolve() ?: listOf()
+            archiveConfig?.apply { jars += allArtifacts.files.files }
+            installConfig?.apply { jars += resolve().toList() }
 
             return jars.filter { isOsgiBundle(it) }
         }
@@ -37,5 +39,6 @@ class BundleCollector(val project: Project) {
         } catch (e: Exception) {
             false
         }
+
     }
 }
