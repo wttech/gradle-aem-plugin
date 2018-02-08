@@ -219,6 +219,7 @@ aemSatisfy {
     url("smb://company-share/aem/packages/my-lib.zip")
     url("sftp://company-share/aem/packages/other-lib.zip")
     url("file:///C:/Libraries/aem/package/extra-lib.zip")
+    dependency('com.neva.felix:search-webconsole-plugin:1.2.0')
 }
 
 ```
@@ -335,6 +336,7 @@ Upload & install dependent CRX package(s) before deployment. Available methods:
 * `downloadSmbAuth(url: String)`, as above, but credentials must be specified in variables: `aem.smb.domain`, `aem.smb.username`, `aem.smb.password`.
 * `downloadSftpAuth(url: String, username: String, password: String)`, download package using SFTP protocol.
 * `downloadSftpAuth(url: String)`, as above, but credentials must be specified in variables: `aem.sftp.username`, `aem.sftp.password`. Optionally enable strict host checking by setting property `aem.sftp.hostChecking` to `true`.
+* `dependency(notation: String)`, use OSGi bundle that will be resolved from defined repositories (for instance from Maven) then wrapped to CRX package: `dependency('com.neva.felix:search-webconsole-plugin:1.2.0')`.
 * `group(name: String, configurer: Closure)`, useful for declaring group of packages (or just naming single package) to be installed only on demand. For instance: `group 'tools', { url('http://example.com/package.zip'); url('smb://internal-nt/package2.zip')  }`. Then to install only packages in group `tools`, use command: `gradlew aemSatisfy -Paem.satisfy.group=tools`.
 
 #### Task `aemCompose`
