@@ -58,7 +58,6 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
       * [Task aemUninstall](#task-aemuninstall)
       * [Task aemPurge](#task-aempurge)
       * [Task aemActivate](#task-aemactivate)
-      * [Task rule aem&lt;ProjectPath&gt;Build](#task-rule-aemprojectpathbuild)
    * [Instance plugin tasks](#instance-plugin-tasks)
       * [Task aemSetup](#task-aemsetup)
       * [Task aemCreate](#task-aemcreate)
@@ -90,8 +89,8 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
 
 ## Installation
 
+* Most effective way to experience Gradle AEM Plugin is to use [Quickstart](https://github.com/Cognifide/gradle-aem-example#quickstart) located in [example project](https://github.com/Cognifide/gradle-aem-example).
 * The only needed software to start using plugin is to have installed on machine Java 8.
-* Most effective way to experience Gradle AEM Plugin is to clone and customize [example project](https://github.com/Cognifide/gradle-aem-example).
 * As a build command, it is recommended to use Gradle Wrapper (`gradlew`) instead of locally installed Gradle (`gradle`) to easily have same version of build tool installed on all environments. Only at first build time, wrapper will be automatically downloaded and installed, then reused.
 
 ## Configuration
@@ -380,10 +379,6 @@ Fail-safe combination of `aemUninstall` and `aemDelete`.
 #### Task `aemActivate` 
 
 Replicate installed CRX package to other AEM instance(s).
-
-#### Task rule `aem<ProjectPath>Build`
-
-Build CRX package and deploy it to AEM instance(s). It is recommended to include appropriate deploy task name in [default tasks](https://docs.gradle.org/current/userguide/tutorial_using_tasks.html#sec:default_tasks) of project. For instance, to deploy project at path `:app:design` use task named `aemAppDesignBuild`.
 
 ### Instance plugin tasks
 
