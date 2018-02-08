@@ -10,6 +10,7 @@ import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.text.StrSubstitutor
 import org.gradle.api.Project
 import java.io.StringWriter
+import java.text.SimpleDateFormat
 import java.util.*
 
 class PropertyParser(val project: Project) {
@@ -104,9 +105,9 @@ class PropertyParser(val project: Project) {
         return expand(source, envProps + systemProps + props, props, context)
     }
 
-    fun expandPackage(source: String, overrideProps: Map<String, Any>, context: String? = null): String {
-        val interpolableProps = envProps + systemProps + mvnProperties + configOverrideProps + overrideProps
-        val templateProps = projectProps + configProps + overrideProps
+    fun expandPackage(source: String, props: Map<String, Any>, context: String? = null): String {
+        val interpolableProps = envProps + systemProps + packageProps + props
+        val templateProps = projectProps + configProps + props
 
         return expand(source, interpolableProps, templateProps, context)
     }
@@ -138,25 +139,33 @@ class PropertyParser(val project: Project) {
 
     val projectProps: Map<String, Any>
         get() = mapOf(
+                // Gradle objects
                 "rootProject" to project.rootProject,
-                "project" to project
+                "project" to project,
+
+                // Maven fallbacks
+                "project.groupId" to project.group,
+                "project.artifactId" to project.name,
+                "project.build.finalName" to "${project.name}-${project.version}"
         )
 
     val configProps: Map<String, Any>
         get() = mapOf("config" to AemConfig.of(project))
 
-    val configOverrideProps: Map<String, Any>
-        get() = AemConfig.of(project).fileProperties
-
     val packageProps: Map<String, Any>
-        get() = configProps + configOverrideProps
+        get() {
+            val config = AemConfig.of(project)
+            val defaults = mapOf(
+                    // Simple defaults
+                    "requiresRoot" to "false",
 
-    val mvnProperties: Map<String, Any>
-        get() = mapOf(
-                "project.groupId" to project.group,
-                "project.artifactId" to project.name,
-                "project.build.finalName" to "${project.name}-${project.version}"
-        )
+                    // Dynamic values
+                    "buildCount" to SimpleDateFormat("yDDmmssSSS").format(config.buildDate),
+                    "created" to Formats.date(config.buildDate)
+            )
+
+            return defaults + config.fileProperties + configProps
+        }
 
     fun isForce(): Boolean {
         return flag(FORCE_PROP)

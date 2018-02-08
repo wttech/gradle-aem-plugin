@@ -3,16 +3,18 @@ package com.cognifide.gradle.aem.pkg
 import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.api.AemException
 import com.cognifide.gradle.aem.api.AemTask
+import com.cognifide.gradle.aem.bundle.BundleCollector
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.PropertyParser
+import com.cognifide.gradle.aem.internal.file.FileContentReader
+import com.cognifide.gradle.aem.internal.jsoup.JsoupUtil
+import org.apache.commons.io.FileUtils
 import org.gradle.api.Project
 import org.gradle.api.file.CopySpec
 import org.gradle.api.file.DuplicatesStrategy
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.InputDirectory
-import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.Nested
+import org.gradle.api.tasks.*
 import org.gradle.api.tasks.bundling.Zip
+import org.gradle.util.GFileUtils
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import org.jsoup.parser.Parser
@@ -41,7 +43,7 @@ open class ComposeTask : Zip(), AemTask {
 
     @Internal
     var filterRootDefault = { subproject: Project, subconfig: AemConfig ->
-        Element("<filter root=\"${subconfig.bundlePath}\"/>")
+        "<filter root=\"${subconfig.bundlePath}\"/>"
     }
 
     @Internal
@@ -56,13 +58,19 @@ open class ComposeTask : Zip(), AemTask {
     @Internal
     private var archiveName: String? = null
 
+    @Input
+    val bundleIncludes = mutableMapOf<String, List<String>>()
+
+    @Internal
+    private val bundleResolvers = mutableMapOf<String, () -> Unit>()
+
     @Internal
     var fileFilter: ((CopySpec) -> Unit) = { spec ->
         spec.exclude(config.filesExcluded)
         spec.eachFile({ fileDetail ->
-            val path = fileDetail.relativeSourcePath.pathString
+            val path = "/${fileDetail.relativePath.pathString.removePrefix("/")}"
             if (Patterns.wildcard(path, config.filesExpanded)) {
-                fileDetail.filter({ line -> propertyParser.expandPackage(line, fileProperties, path) })
+                FileContentReader.filter(fileDetail, { propertyParser.expandPackage(it, fileProperties, path) })
             }
         })
     }
@@ -167,12 +175,27 @@ open class ComposeTask : Zip(), AemTask {
                 effectiveInstallPath = "$effectiveInstallPath.$runMode"
             }
 
-            val jars = JarCollector(project).all.toSet()
+            val collector = BundleCollector(project)
+            val includes = collector.all
 
-            if (jars.isNotEmpty()) {
-                into("${PackagePlugin.JCR_ROOT}/$effectiveInstallPath") { spec ->
-                    spec.from(jars)
-                    fileFilter(spec)
+            if (includes.isNotEmpty()) {
+                val resolutionPath = "bundles/${project.path.replace(":", "/").removeSurrounding("/")}"
+                val resolutionDir = AemTask.temporaryDir(this.project, NAME, resolutionPath)
+                val resolver = {
+                    resolutionDir.deleteRecursively()
+                    GFileUtils.mkdirs(resolutionDir)
+
+                    collector.allJars.forEach { FileUtils.copyFileToDirectory(it, resolutionDir) }
+                }
+
+                bundleIncludes[project.name] = includes
+                bundleResolvers[project.name] = resolver
+
+                if (includes.isNotEmpty()) {
+                    into("${PackagePlugin.JCR_ROOT}/$effectiveInstallPath") { spec ->
+                        spec.from(resolutionDir)
+                        fileFilter(spec)
+                    }
                 }
             }
         }
@@ -231,7 +254,7 @@ open class ComposeTask : Zip(), AemTask {
         if (!config.vaultFilterPath.isBlank() && File(config.vaultFilterPath).exists()) {
             filterRoots.addAll(extractVaultFilters(File(config.vaultFilterPath)))
         } else {
-            filterRoots.add(filterRootDefault(project, config))
+            filterRoots.add(JsoupUtil.selfClosingTag(filterRootDefault(project, config), "filter"))
         }
     }
 
@@ -274,5 +297,15 @@ open class ComposeTask : Zip(), AemTask {
         }
 
         return extendedArchiveName
+    }
+
+    private fun resolveBundles() {
+        bundleResolvers.forEach { it.value() }
+    }
+
+    @TaskAction
+    override fun copy() {
+        resolveBundles()
+        super.copy()
     }
 }

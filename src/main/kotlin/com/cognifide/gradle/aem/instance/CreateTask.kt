@@ -15,9 +15,9 @@ open class CreateTask : SyncTask() {
 
         val DOWNLOAD_DIR = "download"
 
-        val LICENSE_URL_PROP = "aem.instance.local.jarUrl"
+        val LICENSE_URL_PROP = "aem.instance.local.licenseUrl"
 
-        val JAR_URL_PROP = "aem.instance.local.licenseUrl"
+        val JAR_URL_PROP = "aem.instance.local.jarUrl"
     }
 
     @Internal

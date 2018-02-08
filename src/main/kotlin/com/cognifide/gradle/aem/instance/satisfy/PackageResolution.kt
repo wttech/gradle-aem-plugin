@@ -4,12 +4,11 @@ import aQute.bnd.osgi.Jar
 import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.internal.file.FileOperations
 import com.cognifide.gradle.aem.internal.file.resolver.FileResolution
+import com.cognifide.gradle.aem.internal.jsoup.JsoupUtil
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.FilenameUtils
 import org.gradle.util.GFileUtils
-import org.jsoup.Jsoup
-import org.jsoup.parser.Parser
 import org.zeroturnaround.zip.ZipUtil
 import java.io.File
 
@@ -53,24 +52,22 @@ class PackageResolution(group: PackageGroup, id: String, action: (FileResolution
         val symbolicName = bundle.manifest.mainAttributes.getValue("Bundle-SymbolicName")
         val group = symbolicName.substringBeforeLast(".")
         val version = bundle.manifest.mainAttributes.getValue("Bundle-Version")
-        val filters = listOf(Jsoup.parse("<filter root=\"$pkgPath\"/>", "",
-                Parser.xmlParser()).select("filter").first())
-        val defaultProps = mapOf<String, Any>(
+        val filters = listOf(JsoupUtil.selfClosingTag("<filter root=\"$pkgPath\"/>", "filter"))
+        val bundleProps = mapOf<String, Any>(
                 "project.group" to group,
                 "project.name" to symbolicName,
                 "project.version" to version,
                 "project.description" to description,
                 "config.packageName" to symbolicName,
-                "config.acHandling" to config.acHandling,
                 "filters" to filters,
                 "filterRoots" to filters.joinToString(config.vaultLineSeparatorString) { it.toString() }
         )
-        val commonProps = config.fileProperties
+        val generalProps = config.propParser.packageProps
         val overrideProps = config.satisfyBundleProperties(bundle)
-        val effectiveProps = defaultProps + commonProps + overrideProps
+        val effectiveProps = generalProps + bundleProps + overrideProps
 
-        FileOperations.amendFiles(vaultDir, config.filesExpanded, { file, line ->
-            config.propParser.expand(line, effectiveProps, file.absolutePath)
+        FileOperations.amendFiles(vaultDir, config.filesExpanded, { file, content ->
+            config.propParser.expand(content, effectiveProps, file.absolutePath)
         })
 
         // Copy bundle to install path

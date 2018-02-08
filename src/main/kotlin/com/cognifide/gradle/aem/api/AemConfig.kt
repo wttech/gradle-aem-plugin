@@ -2,7 +2,6 @@ package com.cognifide.gradle.aem.api
 
 import aQute.bnd.osgi.Jar
 import com.cognifide.gradle.aem.instance.*
-import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.internal.LineSeparator
 import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.pkg.ComposeTask
@@ -15,7 +14,6 @@ import org.gradle.api.tasks.Internal
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 import java.io.File
 import java.io.Serializable
-import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -195,11 +193,7 @@ class AemConfig(
      * Could override predefined properties provided by plugin itself.
      */
     @Input
-    var fileProperties: MutableMap<String, Any> = mutableMapOf(
-            "requiresRoot" to "false",
-            "buildCount" to SimpleDateFormat("yDDmmssSSS").format(buildDate),
-            "created" to Formats.date(buildDate)
-    )
+    var fileProperties: MutableMap<String, Any> = mutableMapOf()
 
     /**
      * Ensures that for directory 'META-INF/vault' default files will be generated when missing:
@@ -369,12 +363,6 @@ class AemConfig(
     var satisfyGroupName = propParser.string("aem.satisfy.group.name", "*")
 
     /**
-     * @see <https://github.com/Cognifide/gradle-aem-plugin/issues/95>
-     */
-    @Input
-    var testClasspathJarIncluded: Boolean = true
-
-    /**
      * Initialize defaults that depends on concrete type of project.
      */
     init {
@@ -502,6 +490,7 @@ class AemConfig(
     @get:JsonIgnore
     val vaultLineSeparatorString: String = LineSeparator.string(vaultLineSeparator)
 
+    @Internal
     fun namePrefix(): String = if (isUniqueProjectName()) {
         project.name
     } else {
@@ -511,6 +500,7 @@ class AemConfig(
                 .substringBeforeLast("-")
     }
 
+    @Internal
     fun isUniqueProjectName() = project == project.rootProject || project.name == project.rootProject.name
 
     companion object {

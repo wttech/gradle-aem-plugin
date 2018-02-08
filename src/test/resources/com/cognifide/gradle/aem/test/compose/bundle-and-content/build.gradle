@@ -15,9 +15,7 @@ group = 'com.company.aem'
 version = '1.0.0-SNAPSHOT'
 description = 'Example'
 
-apply plugin: 'java'
-apply plugin: 'biz.aQute.bnd.builder'
-apply plugin: 'com.cognifide.aem.package'
+apply plugin: 'com.cognifide.aem.bundle'
 
 repositories {
     mavenLocal()

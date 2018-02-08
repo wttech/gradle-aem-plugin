@@ -52,7 +52,7 @@ class VltCommand(val project: Project) {
                 "instance" to instance,
                 "filter" to filter.file.absolutePath
         )
-        val fullCommand = PropertyParser(project).expand("${config.vaultGlobalOptions} $command".trim(), specificProps)
+        val fullCommand = propertyParser.expand("${config.vaultGlobalOptions} $command".trim(), specificProps)
 
         app.execute(fullCommand)
         filter.clean()
