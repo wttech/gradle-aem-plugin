@@ -7,6 +7,7 @@ import com.cognifide.gradle.aem.internal.file.downloader.SmbFileDownloader
 import com.cognifide.gradle.aem.internal.file.downloader.UrlFileDownloader
 import com.google.common.hash.HashCode
 import groovy.lang.Closure
+import org.apache.commons.codec.digest.DigestUtils
 import org.apache.commons.io.FilenameUtils
 import org.apache.commons.lang3.BooleanUtils
 import org.apache.commons.lang3.builder.HashCodeBuilder
@@ -73,7 +74,7 @@ open class FileResolver(val project: Project, val downloadDir: File) {
 
     fun dependency(notation: Any) {
         resolve(notation, {
-            val configName = "fileResolver_dependency_${"${downloadDir.path}_$notation".hashCode()}}"
+            val configName = "fileResolver_dependency_${DigestUtils.md5Hex(downloadDir.path +  notation)}"
             val configOptions: (Configuration) -> Unit = { it.isTransitive = false }
             val config = project.configurations.create(configName, configOptions)
 
