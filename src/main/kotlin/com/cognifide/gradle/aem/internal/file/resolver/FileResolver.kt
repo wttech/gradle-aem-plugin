@@ -32,7 +32,7 @@ open class FileResolver(val project: Project, val downloadDir: File) {
 
     private var groupCurrent = groupDefault
 
-    private val groups = mutableListOf<FileGroup>()
+    private val groups = mutableListOf<FileGroup>().apply { add(groupDefault) }
 
     private val configurationHash: Int
         get() {
