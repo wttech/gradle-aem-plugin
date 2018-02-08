@@ -11,6 +11,7 @@ import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.testing.Test
 import org.gradle.jvm.tasks.Jar
+import org.gradle.util.GFileUtils
 import java.io.File
 import java.io.FileFilter
 
@@ -83,7 +84,9 @@ open class BundleTask : AemDefaultTask() {
     }
 
     private fun resolveEmbedJars() {
-        embedJarsDir.listFiles()?.forEach { it.delete() }
+        embedJarsDir.deleteRecursively()
+        GFileUtils.mkdirs(embedJarsDir)
+
         embedJars.forEach { FileUtils.copyFileToDirectory(it, embedJarsDir) }
     }
 

@@ -14,6 +14,7 @@ import org.gradle.api.file.CopySpec
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.tasks.*
 import org.gradle.api.tasks.bundling.Zip
+import org.gradle.util.GFileUtils
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import org.jsoup.parser.Parser
@@ -181,7 +182,9 @@ open class ComposeTask : Zip(), AemTask {
                 val resolutionPath = "bundles/${project.path.replace(":", "/").removeSurrounding("/")}"
                 val resolutionDir = AemTask.temporaryDir(this.project, NAME, resolutionPath)
                 val resolver = {
-                    resolutionDir.listFiles()?.forEach { it.delete() }
+                    resolutionDir.deleteRecursively()
+                    GFileUtils.mkdirs(resolutionDir)
+
                     collector.allJars.forEach { FileUtils.copyFileToDirectory(it, resolutionDir) }
                 }
 
