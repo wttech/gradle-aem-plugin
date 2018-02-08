@@ -1,12 +1,13 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.base.api.AemConfig
-import com.cognifide.gradle.aem.base.api.AemException
+import com.cognifide.gradle.aem.api.AemConfig
+import com.cognifide.gradle.aem.api.AemException
 import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.ProgressLogger
 import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.internal.file.FileOperations
+import com.cognifide.gradle.aem.internal.file.resolver.FileResolver
 import org.apache.commons.io.FileUtils
 import org.gradle.api.Project
 import org.gradle.api.logging.Logger
@@ -31,6 +32,10 @@ class LocalHandle(val project: Project, val sync: InstanceSync) {
     class Script(val wrapper: File, val bin: File, val command: List<String>) {
         val commandLine: List<String>
             get() = command + listOf(wrapper.absolutePath)
+
+        override fun toString(): String {
+            return "Script(commandLine=$commandLine)"
+        }
     }
 
     val instance = sync.instance
@@ -63,11 +68,17 @@ class LocalHandle(val project: Project, val sync: InstanceSync) {
         }
     }
 
-    fun create(resolvedFiles: List<File>) {
+    fun create(fileResolver: FileResolver) {
+        if (lock.exists()) {
+            logger.info(("Instance already created"))
+            return
+        }
+
         cleanDir(true)
 
         logger.info("Creating instance at path '${dir.absolutePath}'")
 
+        val resolvedFiles = fileResolver.allFiles()
         logger.info("Copying resolved instance files: $resolvedFiles")
         copyFiles(resolvedFiles)
 
@@ -178,10 +189,12 @@ class LocalHandle(val project: Project, val sync: InstanceSync) {
     }
 
     fun up() {
+        logger.info("Executing start script: $startScript")
         execute(startScript)
     }
 
     fun down() {
+        logger.info("Executing stop script: $stopScript")
         execute(stopScript)
     }
 
@@ -201,11 +214,11 @@ class LocalHandle(val project: Project, val sync: InstanceSync) {
         }
 
     fun destroy() {
-        logger.info("Destroying instance at path '${dir.absolutePath}'")
+        logger.info("Destroying at path '${dir.absolutePath}'")
 
         cleanDir(false)
 
-        logger.info("Destroyed instance with success")
+        logger.info("Destroyed with success")
     }
 
     fun lock() {

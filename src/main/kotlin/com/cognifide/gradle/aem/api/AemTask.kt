@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.base.api
+package com.cognifide.gradle.aem.api
 
 import org.gradle.api.Project
 import org.gradle.util.GFileUtils

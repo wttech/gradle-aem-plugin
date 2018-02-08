@@ -60,13 +60,8 @@ object FileOperations {
     fun amendFiles(dir: File, wildcardFilters: List<String>, amender: (File, String) -> String) {
         val files = FileUtils.listFiles(dir, TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE)
         files?.filter { Patterns.wildcard(it, wildcardFilters) }?.forEach { file ->
-            val buffer = StringWriter()
-            file.inputStream().bufferedReader().use {
-                it.forEachLine { line ->
-                    buffer.write(amender(file, line) + System.lineSeparator())
-                }
-            }
-            file.printWriter().use { it.print(buffer.toString()) }
+            val source = amender(file, file.inputStream().bufferedReader().use { it.readText() })
+            file.printWriter().use { it.print(source) }
         }
     }
 

@@ -1,8 +1,7 @@
 package com.cognifide.gradle.aem.base.vlt
 
-import com.cognifide.gradle.aem.base.api.AemConfig
+import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.instance.Instance
-import com.cognifide.gradle.aem.internal.LineSeparator
 import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.internal.file.FileOperations
 import org.gradle.api.Project
@@ -15,6 +14,8 @@ class VltCommand(val project: Project) {
 
     val propertyParser = PropertyParser(project)
 
+    val config = AemConfig.of(project)
+
     fun clean() {
         val config = AemConfig.of(project)
         val contentDir = File(config.contentPath)
@@ -26,7 +27,7 @@ class VltCommand(val project: Project) {
 
         val cleaner = VltCleaner(contentDir, logger)
         cleaner.removeVltFiles()
-        cleaner.cleanupDotContent(config.vaultSkipProperties, LineSeparator.string(config.vaultLineSeparator))
+        cleaner.cleanupDotContent(config.vaultSkipProperties, config.vaultLineSeparatorString)
     }
 
     fun checkout() {
@@ -51,7 +52,7 @@ class VltCommand(val project: Project) {
                 "instance" to instance,
                 "filter" to filter.file.absolutePath
         )
-        val fullCommand = PropertyParser(project).expand("${config.vaultGlobalOptions} $command".trim(), specificProps)
+        val fullCommand = propertyParser.expand("${config.vaultGlobalOptions} $command".trim(), specificProps)
 
         app.execute(fullCommand)
         filter.clean()
@@ -87,10 +88,10 @@ class VltCommand(val project: Project) {
             return cmdInstance
         }
 
-        val authorInstance = Instance.filter(project, Instance.FILTER_AUTHOR).firstOrNull()
-        if (authorInstance != null) {
-            logger.debug("Using first instance matching filter '${Instance.FILTER_AUTHOR}': $authorInstance")
-            return authorInstance
+        val namedInstance = Instance.filter(project, config.deployInstanceName).firstOrNull()
+        if (namedInstance != null) {
+            logger.debug("Using first instance matching filter '${config.deployInstanceName}': $namedInstance")
+            return namedInstance
         }
 
         val anyInstance = Instance.filter(project, Instance.FILTER_ANY).firstOrNull()

@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.internal.file
+package com.cognifide.gradle.aem.internal.file.downloader
 
 import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.internal.ProgressLogger

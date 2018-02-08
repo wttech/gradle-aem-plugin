@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.base
 
-import com.cognifide.gradle.aem.base.api.AemExtension
+import com.cognifide.gradle.aem.api.AemExtension
 import com.cognifide.gradle.aem.base.debug.DebugTask
 import com.cognifide.gradle.aem.base.vlt.CheckoutTask
 import com.cognifide.gradle.aem.base.vlt.CleanTask

@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.base.api.AemException
+import com.cognifide.gradle.aem.api.AemException
 import java.net.MalformedURLException
 import java.net.URL
 

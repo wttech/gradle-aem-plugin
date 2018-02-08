@@ -58,8 +58,6 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
       * [Task aemUninstall](#task-aemuninstall)
       * [Task aemPurge](#task-aempurge)
       * [Task aemActivate](#task-aemactivate)
-      * [Task aemDistribute](#task-aemdistribute)
-      * [Task aemCollect](#task-aemcollect)
       * [Task rule aem&lt;ProjectPath&gt;Build](#task-rule-aemprojectpathbuild)
    * [Instance plugin tasks](#instance-plugin-tasks)
       * [Task aemSetup](#task-aemsetup)
@@ -67,7 +65,9 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
       * [Task aemDestroy](#task-aemdestroy)
       * [Task aemUp](#task-aemup)
       * [Task aemDown](#task-aemdown)
+      * [Task aemReload](#task-aemreload)
       * [Task aemAwait](#task-aemawait)
+      * [Task aemCollect](#task-aemcollect)
    * [Expandable properties](#expandable-properties)
 * [How to's](#how-tos)
    * [Set AEM configuration properly for all / concrete project(s)](#set-aem-configuration-properly-for-all--concrete-projects)
@@ -77,6 +77,7 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
    * [Deploy CRX package(s) only to filtered group of instances:](#deploy-crx-packages-only-to-filtered-group-of-instances)
    * [Deploy CRX package(s) only to instances specified explicitly](#deploy-crx-packages-only-to-instances-specified-explicitly)
    * [Deploy only filtered dependent CRX package(s)](#deploy-only-filtered-dependent-crx-packages)
+   * [Customize local AEM instances configuration](#customize-local-aem-instances-configuration)
    * [Check out and clean JCR content using filter at custom path](#check-out-and-clean-jcr-content-using-filter-at-custom-path)
    * [Check out and clean JCR content using filter roots specified explicitly](#check-out-and-clean-jcr-content-using-filter-roots-specified-explicitly)
    * [Assemble all-in-one CRX package(s)](#assemble-all-in-one-crx-packages)
@@ -110,7 +111,7 @@ buildscript {
     }
     
     dependencies {
-        classpath 'com.cognifide.gradle:aem-plugin:2.0.19'
+        classpath 'com.cognifide.gradle:aem-plugin:3.0.0'
     }
 }
 
@@ -131,12 +132,15 @@ defaultTasks = [':aemSatisfy', ':aemBuild', ':aemAwait']
 
 aem {
     config {
-        localInstance "http://localhost:4502"
-        localInstance "http://localhost:4503"
-        
+        deployEnvironment = "local" // -Paem.env or environment variable: AEM_ENV
+        remoteAuthorInstance()
+        remotePublishInstance()
+        deployInstanceName = "${config.deployEnvironment}-*"
+        deployAuthorInstanceName = "$deployEnvironment-author"
         deployConnectionTimeout = 5000
         deployParallel = true
         deploySnapshots = []
+        deployDistributed = false
         uploadForce = true
         installRecursive = true
         acHandling = "merge_preserve"
@@ -145,6 +149,11 @@ aem {
             bundlePath = "/apps/${project.name}/install"
         } else {
             bundlePath = "/apps/${project.rootProject.name}/${project.name}/install"
+        }
+        if (isUniqueProjectName()) {
+            packageName = project.name
+        } else {
+            packageName = "${namePrefix()}-${project.name}"
         }
         localPackagePath = ""
         remotePackagePath = ""
@@ -175,12 +184,12 @@ aem {
           "*_x0040_TypeHint"
         ]
         vaultGlobalOptions = "--credentials {{instance.credentials}}"
-        vaultLineSeparator = System.lineSeparator()
+        vaultLineSeparator = "LF"
         dependBundlesTaskNames = ["assemble", "check"]
         dependContentTaskNames = ["aemCompose.dependencies"]
         buildDate = Date()
         instancesPath = "${System.getProperty("user.home")}/.aem/${project.rootProject.name}"
-        instanceFilesPath = project.rootProject.file("src/main/resources/${AemInstancePlugin.FILES_PATH}")
+        instanceFilesPath = project.rootProject.file("src/main/resources/local-instance")
         instanceFilesExpanded = [
           "**/*.properties", 
           "**/*.sh", 
@@ -196,7 +205,11 @@ aem {
         awaitFail = true
         awaitAssurances = 1
         awaitCondition = { instanceState -> instanceState.stable }
+        reloadDelay = 10000
         satisfyRefreshing = false
+        satisfyBundlePath = 
+        satisfyBundleProperties = { bundle -> [:] }
+        satisfyGroupName = "*"
         testClasspathJarIncluded = true
     }
 }
@@ -368,16 +381,6 @@ Fail-safe combination of `aemUninstall` and `aemDelete`.
 
 Replicate installed CRX package to other AEM instance(s).
 
-#### Task `aemDistribute` 
-
-Upload, install & activate CRX package into AEM instances(s). Secondary form of deployment. Optimized version of `aemUpload aemInstall aemActivate -Paem.deploy.instance.name=*-author`.
-
-#### Task `aemCollect`
-
-Composes ZIP package from all CRX packages being satisfied and built. Available methods:
-
-* all inherited from [ZIP task](https://docs.gradle.org/3.5/dsl/org.gradle.api.tasks.bundling.Zip.html).
-
 #### Task rule `aem<ProjectPath>Build`
 
 Build CRX package and deploy it to AEM instance(s). It is recommended to include appropriate deploy task name in [default tasks](https://docs.gradle.org/current/userguide/tutorial_using_tasks.html#sec:default_tasks) of project. For instance, to deploy project at path `:app:design` use task named `aemAppDesignBuild`.
@@ -387,6 +390,8 @@ Build CRX package and deploy it to AEM instance(s). It is recommended to include
 #### Task `aemSetup`
 
 Perform initial setup of local AEM instance(s). Automated version of `aemCreate aemUp aemSatisfy aemBuild`.
+
+![Setup task](docs/setup-task.png)
 
 #### Task `aemCreate`
  
@@ -410,9 +415,19 @@ Turn on local AEM instance(s).
 
 Turn off local AEM instance(s).
 
+#### Task `aemReload`
+
+Turn off then on both local and remote AEM instance(s).
+
 #### Task `aemAwait`
 
 Wait until all local AEM instance(s) be stable.
+
+#### Task `aemCollect`
+
+Composes ZIP package from all CRX packages being satisfied and built. Available methods:
+
+* all inherited from [ZIP task](https://docs.gradle.org/3.5/dsl/org.gradle.api.tasks.bundling.Zip.html).
 
 ### Expandable properties
 
@@ -552,7 +567,7 @@ Above configuration uses default tasks, so that alternatively it is possible to 
 When there are defined named AEM instances: `local-author`, `local-publish`, `integration-author` and `integration-publish`,
 then it is available to deploy packages with taking into account: 
 
- * type of environment (local, integration)
+ * type of environment (local, integration, staging, etc)
  * type of AEM instance (author / publish)
 
 ```bash
@@ -579,6 +594,40 @@ Filters with wildcards, comma delimited.
 ```bash
 gradlew aemSatisfy -Paem.satisfy.group=hotfix-*,groovy-console
 ```
+
+### Customize local AEM instances configuration
+
+Plugin allows to override or provide extra files to local AEM instance installations.
+This behavior is controlled by:
+
+```groovy
+aem {
+    config {
+        instancesPath = "${System.getProperty("user.home")}/.aem/${project.rootProject.name}"
+        instanceFilesPath = project.rootProject.file("src/main/resources/local-instance")
+        instanceFilesExpanded = [
+          "**/*.properties", 
+          "**/*.sh", 
+          "**/*.bat", 
+          "**/*.xml",
+          "**/start",
+          "**/stop"
+      ]
+    }
+}
+```
+
+* Property *instancesPath* determines where AEM instance files will be extracted on local file system.
+* Property *instanceFilesPath* determines project location that holds extra instance files that will override plugin defaults (start / stop scripts) and / or extracted AEM files.
+* Property *instanceFilesExpandable* specifies which AEM instance files have an ability to use [expandable properties](#expandable-properties) inside.
+
+To e.g set additional **run mode** named *nosamplecontent*:
+
+* Copy [default start / stop scripts](https://github.com/Cognifide/gradle-aem-plugin/tree/master/src/main/resources/com/cognifide/gradle/aem/local-instance) to project path controlled by *instanceFilesPath*
+* Customize scripts and / or provide AEM files that need to be added or overridden,
+    * file *start*: `export CQ_RUNMODE='{{instance.typeName}},local'` update to `export CQ_RUNMODE='{{instance.typeName}},local,nosamplecontent'`
+    * file *start.bat*: `set CQ_RUNMODE={{instance.typeName}},local` update to `set CQ_RUNMODE={{instance.typeName}},local,nosamplecontent`
+* Recreate instances, because run modes should not be changed after instance being launched first time.
 
 ### Check out and clean JCR content using filter at custom path
    

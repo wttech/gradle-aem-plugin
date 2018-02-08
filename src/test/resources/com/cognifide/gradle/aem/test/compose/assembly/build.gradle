@@ -3,7 +3,7 @@ buildscript {
 }
 
 description = 'Example'
-defaultTasks = [':aemSatisfy', ':aemBuild']
+defaultTasks = [':aemSatisfy', ':aemDeploy']
 
 apply plugin: 'com.cognifide.aem.package'
 apply plugin: 'com.cognifide.aem.instance'
@@ -28,13 +28,13 @@ allprojects { subproject ->
         }
     }
 
-    plugins.withId 'biz.aQute.bnd.builder', {
+    plugins.withId 'com.cognifide.aem.bundle', {
         jar {
             manifest {
                 attributes([
-                        'Bundle-Name': subproject.description,
+                        'Bundle-Name'    : subproject.description,
                         'Bundle-Category': 'example',
-                        'Bundle-Vendor': 'Company'
+                        'Bundle-Vendor'  : 'Company'
                 ])
             }
         }

@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.pkg.deploy
 
-import com.cognifide.gradle.aem.base.api.AemConfig
+import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.internal.PropertyParser
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
@@ -45,7 +45,7 @@ class ListResponse private constructor() {
 
         constructor(project: Project) : this() {
             this.group = project.group.toString()
-            this.name = PropertyParser(project).name
+            this.name = AemConfig.of(project).packageName
             this.version = project.version.toString()
 
             this.downloadName = "$name-${project.version}.zip"
@@ -90,10 +90,10 @@ class ListResponse private constructor() {
                 }
 
                 if (result != null) {
-                    project.logger.info("Package found by project properties: ${expected.props}")
+                    project.logger.info("Package found by project properties.")
                     return result
                 } else {
-                    project.logger.info("Package cannot be found by project properties: ${expected.props}")
+                    project.logger.info("Package cannot be found by project properties.")
                 }
 
                 return null

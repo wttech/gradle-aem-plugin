@@ -1,13 +1,19 @@
-package com.cognifide.gradle.aem.internal.file
+package com.cognifide.gradle.aem.internal.file.resolver
 
 import com.cognifide.gradle.aem.internal.Formats
+import com.cognifide.gradle.aem.internal.file.downloader.HttpFileDownloader
+import com.cognifide.gradle.aem.internal.file.downloader.SftpFileDownloader
+import com.cognifide.gradle.aem.internal.file.downloader.SmbFileDownloader
+import com.cognifide.gradle.aem.internal.file.downloader.UrlFileDownloader
 import com.google.common.hash.HashCode
 import groovy.lang.Closure
+import org.apache.commons.codec.digest.DigestUtils
 import org.apache.commons.io.FilenameUtils
 import org.apache.commons.lang3.BooleanUtils
 import org.apache.commons.lang3.builder.HashCodeBuilder
 import org.gradle.api.DefaultTask
 import org.gradle.api.Project
+import org.gradle.api.artifacts.Configuration
 import org.gradle.util.ConfigureUtil
 import org.gradle.util.GFileUtils
 import java.io.File
@@ -15,34 +21,37 @@ import java.io.File
 /**
  * Generic file downloader with groups supporting files from local and remote sources (SFTP, SMB, HTTP).
  */
-class FileResolver(val project: Project, val downloadDir: File) {
+open class FileResolver(val project: Project, val downloadDir: File) {
 
     companion object {
-        val GROUP_DEFAULT = "default"
+        const val GROUP_DEFAULT = "default"
 
-        val DOWNLOAD_LOCK = "download.lock"
+        const val DOWNLOAD_LOCK = "download.lock"
     }
 
-    private inner class Resolver(val id: String, val group: String, val action: (Resolver) -> File) {
-        val dir = File("$downloadDir/$id")
+    private val groupDefault = createGroup(GROUP_DEFAULT)
 
-        val file: File by lazy { action(this) }
-    }
+    private var groupCurrent = groupDefault
 
-    private val resolvers = mutableListOf<Resolver>()
+    private val groups = mutableListOf<FileGroup>().apply { add(groupDefault) }
 
-    private var group: String = GROUP_DEFAULT
-
-    val configured: Boolean
-        get() = resolvers.isNotEmpty()
-
-    val configurationHash: Int
+    private val configurationHash: Int
         get() {
             val builder = HashCodeBuilder()
-            resolvers.forEach { builder.append(it.id) }
+            groups.flatMap { it.resolutions }.forEach { builder.append(it.id) }
 
             return builder.toHashCode()
         }
+
+    protected open fun resolve(hash: Any, resolver: (FileResolution) -> File) {
+        val id = HashCode.fromInt(HashCodeBuilder().append(hash).toHashCode()).toString()
+
+        groupCurrent.resolve(id, resolver)
+    }
+
+    protected open fun createGroup(name: String): FileGroup {
+        return FileGroup(this, name)
+    }
 
     fun attach(task: DefaultTask, prop: String = "fileResolver") {
         task.outputs.dir(downloadDir)
@@ -52,21 +61,26 @@ class FileResolver(val project: Project, val downloadDir: File) {
     }
 
     fun outputDirs(filter: (String) -> Boolean = { true }): List<File> {
-        return filterResolvers(filter).map { it.dir }
+        return filterGroups(filter).flatMap { it.dirs }
     }
 
     fun allFiles(filter: (String) -> Boolean = { true }): List<File> {
-        return filterResolvers(filter).map { it.file }
+        return filterGroups(filter).flatMap { it.files }
     }
 
-    fun groupedFiles(filter: (String) -> Boolean = { true }): Map<String, List<File>> {
-        return filterResolvers(filter).fold(mutableMapOf<String, MutableList<File>>(), { files, resolver ->
-            files.getOrPut(resolver.group, { mutableListOf() }).add(resolver.file); files
+    fun filterGroups(filter: (String) -> Boolean): List<FileGroup> {
+        return groups.filter { filter(it.name) }
+    }
+
+    fun dependency(notation: Any) {
+        resolve(notation, {
+            val configName = "fileResolver_dependency_${DigestUtils.md5Hex(downloadDir.path +  notation)}"
+            val configOptions: (Configuration) -> Unit = { it.isTransitive = false }
+            val config = project.configurations.create(configName, configOptions)
+
+            project.dependencies.add(config.name, notation)
+            config.singleFile
         })
-    }
-
-    private fun filterResolvers(filter: (String) -> Boolean): List<Resolver> {
-        return resolvers.filter { filter(it.group) }
     }
 
     fun url(url: String) {
@@ -128,7 +142,8 @@ class FileResolver(val project: Project, val downloadDir: File) {
 
                 downloader.username = username ?: project.properties["aem.sftp.username"] as String?
                 downloader.password = password ?: project.properties["aem.sftp.password"] as String?
-                downloader.hostChecking = hostChecking ?: BooleanUtils.toBoolean(project.properties["aem.sftp.hostChecking"] as String? ?: "false")
+                downloader.hostChecking = hostChecking ?: BooleanUtils.toBoolean(project.properties["aem.sftp.hostChecking"] as String?
+                        ?: "false")
 
                 downloader.download(url, file)
             })
@@ -188,7 +203,8 @@ class FileResolver(val project: Project, val downloadDir: File) {
 
                 downloader.username = user ?: project.properties["aem.http.username"] as String?
                 downloader.password = password ?: project.properties["aem.http.password"] as String?
-                downloader.ignoreSSLErrors = ignoreSSL ?: BooleanUtils.toBoolean(project.properties["aem.http.ignoreSSL"] as String? ?: "true")
+                downloader.ignoreSSLErrors = ignoreSSL ?: BooleanUtils.toBoolean(project.properties["aem.http.ignoreSSL"] as String?
+                        ?: "true")
 
                 downloader.download(url, file)
             })
@@ -211,20 +227,11 @@ class FileResolver(val project: Project, val downloadDir: File) {
         resolve(sourceFile.absolutePath, { sourceFile })
     }
 
-    private fun resolve(hash: Any, resolver: (Resolver) -> File) {
-        val id = HashCode.fromInt(HashCodeBuilder().append(hash).toHashCode()).toString()
-        resolvers += Resolver(id, group, resolver)
-    }
-
     @Synchronized
     fun group(name: String, configurer: Closure<*>) {
-        if (resolvers.any { it.group == name }) {
-            throw FileException("File group to be resolved named '$name' is already defined for download dir: $downloadDir")
-        }
-
-        group = name
+        groupCurrent = groups.find { it.name == name } ?: createGroup(name).apply { groups.add(this) }
         ConfigureUtil.configureSelf(configurer, this)
-        group = GROUP_DEFAULT
+        groupCurrent = groupDefault
     }
 
 }

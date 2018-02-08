@@ -1,6 +1,7 @@
-package com.cognifide.gradle.aem.internal.file
+package com.cognifide.gradle.aem.internal.file.downloader
 
 import com.cognifide.gradle.aem.internal.Patterns
+import com.cognifide.gradle.aem.internal.file.FileException
 import org.gradle.api.Project
 import org.gradle.api.logging.Logger
 import java.io.File

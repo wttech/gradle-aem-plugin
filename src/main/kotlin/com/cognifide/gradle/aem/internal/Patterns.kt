@@ -6,6 +6,10 @@ import java.io.File
 
 object Patterns {
 
+    fun wildcards(path: String, filters: String) : Boolean {
+        return filters.split(",").any { filter -> wildcard(path, filter) }
+    }
+
     fun wildcard(file: File, matchers: Iterable<String>): Boolean {
         return matchers.any { wildcard(file, it) }
     }

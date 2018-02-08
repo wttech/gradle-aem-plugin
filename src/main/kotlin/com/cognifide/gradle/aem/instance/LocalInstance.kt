@@ -75,5 +75,4 @@ class LocalInstance(
     @get:JsonIgnore
     override var packages: ListResponse? = null
 
-
 }

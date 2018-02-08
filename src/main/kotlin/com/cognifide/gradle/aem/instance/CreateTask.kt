@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.base.api.AemTask
-import com.cognifide.gradle.aem.internal.file.FileResolver
+import com.cognifide.gradle.aem.api.AemTask
+import com.cognifide.gradle.aem.internal.file.resolver.FileResolver
 import com.cognifide.gradle.aem.pkg.deploy.SyncTask
 import groovy.lang.Closure
 import org.gradle.api.tasks.Internal
@@ -15,16 +15,15 @@ open class CreateTask : SyncTask() {
 
         val DOWNLOAD_DIR = "download"
 
-        val LICENSE_URL_PROP = "aem.instance.local.jarUrl"
+        val LICENSE_URL_PROP = "aem.instance.local.licenseUrl"
 
-        val JAR_URL_PROP = "aem.instance.local.licenseUrl"
+        val JAR_URL_PROP = "aem.instance.local.jarUrl"
     }
 
     @Internal
     val instanceFileResolver = FileResolver(project, AemTask.temporaryDir(project, NAME, DOWNLOAD_DIR))
 
     init {
-        group = AemTask.GROUP
         description = "Creates local AEM instance(s)."
 
         instanceFileResolver.attach(this)
@@ -53,11 +52,8 @@ open class CreateTask : SyncTask() {
 
     @TaskAction
     fun create() {
-        logger.info("Resolving instance files")
-        val files = instanceFileResolver.allFiles()
-
         logger.info("Creating instances")
-        synchronizeLocalInstances({ it.create(files) })
+        synchronizeLocalInstances({ it.create(instanceFileResolver) })
     }
 
 }

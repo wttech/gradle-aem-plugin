@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.base.api.AemConfig
+import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.internal.Behaviors
 import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.internal.ProgressLogger
@@ -12,7 +12,7 @@ class InstanceActions(val project: Project) {
 
     val logger = project.logger
 
-    fun awaitStable(instances: List<Instance> = Instance.locals(project)) {
+    fun awaitStable(instances: List<Instance>) {
         val progressLogger = ProgressLogger(project, "Awaiting stable instance(s)")
 
         progressLogger.started()

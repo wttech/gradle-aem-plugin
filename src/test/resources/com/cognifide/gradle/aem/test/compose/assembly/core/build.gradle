@@ -3,21 +3,19 @@ buildscript {
 }
 
 description = 'Example - Core'
-defaultTasks = ['aemBuild']
+defaultTasks = ['aemDeploy']
 
-apply plugin: 'java'
+apply plugin: 'com.cognifide.aem.bundle'
 apply plugin: "kotlin"
-apply plugin: 'biz.aQute.bnd.builder'
-apply plugin: 'com.cognifide.aem.package'
 
 jar {
     manifest {
         def pkg = 'com.company.aem.example.core'
 
         attributes([
-                'Bundle-SymbolicName': pkg,
+                'Bundle-SymbolicName' : pkg,
                 'Sling-Model-Packages': pkg,
-                'Export-Package': "$pkg.*;-split-package:=merge-first"
+                'Export-Package'      : "$pkg.*;-split-package:=merge-first"
         ])
     }
 }

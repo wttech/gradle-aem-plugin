@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.base.api
+package com.cognifide.gradle.aem.api
 
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Nested
