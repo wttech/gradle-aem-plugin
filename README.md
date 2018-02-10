@@ -682,7 +682,7 @@ When building via command `gradlew :app:build`, then the effect will be a CRX pa
 * *app/common/build.gradle* (project `:app:common`, JCR content and OSGi bundle)
 * *content/init/build.gradle* (project `:content:init`, JCR content only)
 * *content/demo/build.gradle* (project `:content:demo`, JCR content only)
-* *migration/build.gradle* (project `:content:demo`, JCR content only)
+* *migration/build.gradle* (project `:migration`, JCR content only)
 * *test/integration/build.gradle* (project `:test:integration`, any source code)
 * *test/functional/build.gradle* (project `:test:functional`, any source code)
 
