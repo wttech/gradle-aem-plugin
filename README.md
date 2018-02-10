@@ -209,7 +209,6 @@ aem {
         satisfyBundlePath = 
         satisfyBundleProperties = { bundle -> [:] }
         satisfyGroupName = "*"
-        testClasspathJarIncluded = true
     }
 }
 
