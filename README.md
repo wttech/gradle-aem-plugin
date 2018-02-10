@@ -117,7 +117,7 @@ buildscript {
 apply plugin: 'com.cognifide.aem.package'
 ```
 
-Building and deploying to AEM via command: `gradlew aemBuild`.
+Building and deploying to AEM via command: `gradlew aemDeploy`.
 
 #### Additional
 
@@ -127,7 +127,7 @@ AEM configuration section contains all default values for demonstrative purpose.
 apply plugin: 'com.cognifide.aem.instance'
 apply plugin: 'kotlin' // 'java' or whatever you like to compile bundle
 
-defaultTasks = [':aemSatisfy', ':aemBuild', ':aemAwait']
+defaultTasks = [':aemSatisfy', ':aemDeploy', ':aemAwait']
 
 aem {
     config {
@@ -226,7 +226,7 @@ aemSatisfy {
 
 Building and deploying to AEM via command: `gradlew` (default tasks will be used).
 
-More detailed and always up-to-date information about configuration options is available [here](src/main/kotlin/com/cognifide/gradle/aem/base/api/AemConfig.kt).
+More detailed and always up-to-date information about configuration options is available [here](src/main/kotlin/com/cognifide/gradle/aem/api/AemConfig.kt).
 
 For multi project build configuration, please investigate [example project](https://github.com/Cognifide/gradle-aem-example).
 
@@ -386,7 +386,7 @@ Replicate installed CRX package to other AEM instance(s).
 
 #### Task `aemSetup`
 
-Perform initial setup of local AEM instance(s). Automated version of `aemCreate aemUp aemSatisfy aemBuild`.
+Perform initial setup of local AEM instance(s). Automated version of `aemCreate aemUp aemSatisfy aemDeploy`.
 
 ![Setup task](docs/setup-task.png)
 
@@ -448,13 +448,11 @@ aem {
 This feature is specially useful to generate valid *META-INF/properties.xml* file.
 
 Predefined properties:
+* `config` - [AEM configuration](src/main/kotlin/com/cognifide/gradle/aem/api/AemConfig.kt).
 * `rootProject` - project with directory in which *settings.gradle* is located.
 * `project` - current project.
-* `config` - [AEM configuration](src/main/kotlin/com/cognifide/gradle/aem/base/api/AemConfig.kt).
-* `buildDate` - date when CRX package composing started.
 * `buildCount` - number to be used as CRX package build count (`buildDate` in format `yDDmmssSSS`).
 * `created` - current date in *ISO8601* format.
-* `name` - text used as CRX package name. Considers multi-project structure (names of subpackages are prefixed with root project name).
 
 Maven fallback properties (useful when migrating project):
 
@@ -511,18 +509,24 @@ As an effect there will be same dependent CRX package defined multiple times.
 
 In AEM configuration section, there is possibility to use `localInstance` or `remoteInstance` methods to define AEM instances to be used to:
  
-* install CRX packages being built via commands: `aemBuild`, `aemDeploy` and more detailed `aemUpload`, `aemInstall` etc,
+* install CRX packages being built via command `aemDeploy` or combination of more detailed `aemUpload`, `aemInstall` and optionally `aemActivate`,
 * communicate with while using Vault tool in commands `aemSync`, `aemCheckout`, `aemVlt`,
 * install dependent packages while using `aemSatisfy` command.
 
 ```groovy
 aem {
     config {
+      localAuthorInstance() // property: aem.instance.author.httpUrl or default 'http://localhost:4502' ; local-author
+      localPublishInstance() // property: aem.instance.author.httpUrl or default 'http://localhost:4502' ; local-publish
+    
       localInstance("http://localhost:4502") // local-author
       localInstance("http://localhost:4502", "admin", "admin", "author", 14502) // local-author
       
       localInstance("http://localhost:4503") // local-publish
       localInstance("http://localhost:4503", "admin", "admin", "publish", 14502) // local-publish
+      
+      remoteAuthorInstance() // property: aem.instance.author.httpUrl or default 'http://localhost:4502' ; local-author
+      remotePublishInstance() // property: aem.instance.author.httpUrl or default 'http://localhost:4502' ; local-publish
       
       remoteInstance("http://192.168.10.1:4502", "user1", "password2", "integration") // integration-author
       remoteInstance("http://192.168.10.2:4503", "user2", "password2", "integration") // integration-publish
@@ -534,7 +538,7 @@ Rules:
 
 * Instance name is a combination of `${environment}-${type}` e.g *local-author*, *integration-publish* etc.
 * Only instances being defined as *local* are being considered in command `aemSetup`, `aemCreate`, `aemUp` etc (that comes from `com.cognifide.aem.instance` plugin).
-* All instances being defined as *local* or *remote* are being considered in commands CRX package deployment related like `aemBuild`, `aemDeploy` etc.
+* All instances being defined as *local* or *remote* are being considered in commands CRX package deployment related like `aemDeploy`, `aemUpload`, `aemInstall` etc.
 
 ### Understand why there are one or two plugins to be applied in build script
 
@@ -552,8 +556,8 @@ Currently used plugin architecture solves that problem.
 
 Initially, to create fully configured local AEM instances simply run command `gradlew aemSetup`.
 
-Later during development process, building and deploying to AEM should be done using most simple command: `gradle`.
-Above configuration uses default tasks, so that alternatively it is possible to build same using explicitly specified command `gradlew aemSatisfy aemBuild aemAwait`.
+Later during development process, building and deploying to AEM should be done using most simple command: `gradlew`.
+Above configuration uses [default tasks](https://docs.gradle.org/current/userguide/tutorial_using_tasks.html#sec:default_tasks), so that alternatively it is possible to build same using explicitly specified command `gradlew aemSatisfy aemDeploy aemAwait`.
 
 * Firstly dependent packages (like AEM hotfixes, Vanity URL Components etc) will be installed lazily (only when they are not installed yet).
 * In next step application is being built and deployed to all configured AEM instances.
