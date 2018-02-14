@@ -64,13 +64,11 @@ class AemConfig(
     var deployInstanceList: String = propParser.string("aem.deploy.instance.list", "")
 
     /**
-     * Determines instance which will be used when:
-     *
-     * - CRX package activation from author to publishers will be performed (only if distributed deploy is enabled).
-     * - Task 'aemCheckout' or 'aemSync' will be executed.
+     * Determines instance which will be used when CRX package activation from author to publishers
+     * will be performed (only if distributed deploy is enabled).
      */
     @Input
-    var deployInstanceAuthorName: String = "$deployEnvironment-${InstanceType.AUTHOR.type}"
+    var deployInstanceAuthorName: String = propParser.string("aem.deploy.instance.author.name","$deployEnvironment-${InstanceType.AUTHOR.type}")
 
     /**
      * Defines maximum time after which initializing connection to AEM will be aborted (e.g on upload, install).
