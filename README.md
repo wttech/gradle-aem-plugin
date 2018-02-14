@@ -29,10 +29,10 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
 * Composing CRX package from multiple JCR content roots, bundles.
 * Automated all-in-one CRX packages generation (assemblies).
 * Easy multi-deployment with instance groups.
-* Automated dependent packages installation from local and remote sources (SMB, SSH, HTTP(s)).
+* Automated dependent CRX packages and OSGi bundles installation from local and remote sources (SMB, SSH, HTTP(s)).
 * Smart Vault files generation (combining defaults with overiddables).
 * Embedded Vault tool for checking out and cleaning JCR content from running AEM instance.
-* OSGi Manifest customization by official [OSGi plugin](https://docs.gradle.org/current/userguide/osgi_plugin.html) or feature rich [BND plugin](https://github.com/bndtools/bnd/tree/master/biz.aQute.bnd.gradle).
+* OSGi Manifest customization by embedded [BND plugin](https://github.com/bndtools/bnd/tree/master/biz.aQute.bnd.gradle).
 * OSGi Declarative Services annotations support (instead of SCR, [see docs](http://blogs.adobe.com/experiencedelivers/experience-management/osgi/using-osgi-annotations-aem6-2/)).
 
 ## Table of contents
@@ -58,7 +58,6 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
       * [Task aemUninstall](#task-aemuninstall)
       * [Task aemPurge](#task-aempurge)
       * [Task aemActivate](#task-aemactivate)
-      * [Task rule aem&lt;ProjectPath&gt;Build](#task-rule-aemprojectpathbuild)
    * [Instance plugin tasks](#instance-plugin-tasks)
       * [Task aemSetup](#task-aemsetup)
       * [Task aemCreate](#task-aemcreate)
@@ -90,8 +89,8 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
 
 ## Installation
 
+* Most effective way to experience Gradle AEM Plugin is to use [Quickstart](https://github.com/Cognifide/gradle-aem-example#quickstart) located in [example project](https://github.com/Cognifide/gradle-aem-example).
 * The only needed software to start using plugin is to have installed on machine Java 8.
-* Most effective way to experience Gradle AEM Plugin is to clone and customize [example project](https://github.com/Cognifide/gradle-aem-example).
 * As a build command, it is recommended to use Gradle Wrapper (`gradlew`) instead of locally installed Gradle (`gradle`) to easily have same version of build tool installed on all environments. Only at first build time, wrapper will be automatically downloaded and installed, then reused.
 
 ## Configuration
@@ -118,7 +117,7 @@ buildscript {
 apply plugin: 'com.cognifide.aem.package'
 ```
 
-Building and deploying to AEM via command: `gradlew aemBuild`.
+Building and deploying to AEM via command: `gradlew aemDeploy`.
 
 #### Additional
 
@@ -128,7 +127,7 @@ AEM configuration section contains all default values for demonstrative purpose.
 apply plugin: 'com.cognifide.aem.instance'
 apply plugin: 'kotlin' // 'java' or whatever you like to compile bundle
 
-defaultTasks = [':aemSatisfy', ':aemBuild', ':aemAwait']
+defaultTasks = [':aemSatisfy', ':aemDeploy', ':aemAwait']
 
 aem {
     config {
@@ -210,7 +209,6 @@ aem {
         satisfyBundlePath = 
         satisfyBundleProperties = { bundle -> [:] }
         satisfyGroupName = "*"
-        testClasspathJarIncluded = true
     }
 }
 
@@ -220,13 +218,14 @@ aemSatisfy {
     url("smb://company-share/aem/packages/my-lib.zip")
     url("sftp://company-share/aem/packages/other-lib.zip")
     url("file:///C:/Libraries/aem/package/extra-lib.zip")
+    dependency('com.neva.felix:search-webconsole-plugin:1.2.0')
 }
 
 ```
 
 Building and deploying to AEM via command: `gradlew` (default tasks will be used).
 
-More detailed and always up-to-date information about configuration options is available [here](src/main/kotlin/com/cognifide/gradle/aem/base/api/AemConfig.kt).
+More detailed and always up-to-date information about configuration options is available [here](src/main/kotlin/com/cognifide/gradle/aem/api/AemConfig.kt).
 
 For multi project build configuration, please investigate [example project](https://github.com/Cognifide/gradle-aem-example).
 
@@ -336,6 +335,7 @@ Upload & install dependent CRX package(s) before deployment. Available methods:
 * `downloadSmbAuth(url: String)`, as above, but credentials must be specified in variables: `aem.smb.domain`, `aem.smb.username`, `aem.smb.password`.
 * `downloadSftpAuth(url: String, username: String, password: String)`, download package using SFTP protocol.
 * `downloadSftpAuth(url: String)`, as above, but credentials must be specified in variables: `aem.sftp.username`, `aem.sftp.password`. Optionally enable strict host checking by setting property `aem.sftp.hostChecking` to `true`.
+* `dependency(notation: String)`, use OSGi bundle that will be resolved from defined repositories (for instance from Maven) then wrapped to CRX package: `dependency('com.neva.felix:search-webconsole-plugin:1.2.0')`.
 * `group(name: String, configurer: Closure)`, useful for declaring group of packages (or just naming single package) to be installed only on demand. For instance: `group 'tools', { url('http://example.com/package.zip'); url('smb://internal-nt/package2.zip')  }`. Then to install only packages in group `tools`, use command: `gradlew aemSatisfy -Paem.satisfy.group=tools`.
 
 #### Task `aemCompose`
@@ -381,15 +381,11 @@ Fail-safe combination of `aemUninstall` and `aemDelete`.
 
 Replicate installed CRX package to other AEM instance(s).
 
-#### Task rule `aem<ProjectPath>Build`
-
-Build CRX package and deploy it to AEM instance(s). It is recommended to include appropriate deploy task name in [default tasks](https://docs.gradle.org/current/userguide/tutorial_using_tasks.html#sec:default_tasks) of project. For instance, to deploy project at path `:app:design` use task named `aemAppDesignBuild`.
-
 ### Instance plugin tasks
 
 #### Task `aemSetup`
 
-Perform initial setup of local AEM instance(s). Automated version of `aemCreate aemUp aemSatisfy aemBuild`.
+Perform initial setup of local AEM instance(s). Automated version of `aemCreate aemUp aemSatisfy aemDeploy`.
 
 ![Setup task](docs/setup-task.png)
 
@@ -451,13 +447,11 @@ aem {
 This feature is specially useful to generate valid *META-INF/properties.xml* file.
 
 Predefined properties:
+* `config` - [AEM configuration](src/main/kotlin/com/cognifide/gradle/aem/api/AemConfig.kt).
 * `rootProject` - project with directory in which *settings.gradle* is located.
 * `project` - current project.
-* `config` - [AEM configuration](src/main/kotlin/com/cognifide/gradle/aem/base/api/AemConfig.kt).
-* `buildDate` - date when CRX package composing started.
 * `buildCount` - number to be used as CRX package build count (`buildDate` in format `yDDmmssSSS`).
 * `created` - current date in *ISO8601* format.
-* `name` - text used as CRX package name. Considers multi-project structure (names of subpackages are prefixed with root project name).
 
 Maven fallback properties (useful when migrating project):
 
@@ -514,18 +508,24 @@ As an effect there will be same dependent CRX package defined multiple times.
 
 In AEM configuration section, there is possibility to use `localInstance` or `remoteInstance` methods to define AEM instances to be used to:
  
-* install CRX packages being built via commands: `aemBuild`, `aemDeploy` and more detailed `aemUpload`, `aemInstall` etc,
+* install CRX packages being built via command `aemDeploy` or combination of more detailed `aemUpload`, `aemInstall` and optionally `aemActivate`,
 * communicate with while using Vault tool in commands `aemSync`, `aemCheckout`, `aemVlt`,
 * install dependent packages while using `aemSatisfy` command.
 
 ```groovy
 aem {
     config {
+      localAuthorInstance() // property: aem.instance.author.httpUrl or default 'http://localhost:4502' ; local-author
+      localPublishInstance() // property: aem.instance.author.httpUrl or default 'http://localhost:4502' ; local-publish
+    
       localInstance("http://localhost:4502") // local-author
       localInstance("http://localhost:4502", "admin", "admin", "author", 14502) // local-author
       
       localInstance("http://localhost:4503") // local-publish
       localInstance("http://localhost:4503", "admin", "admin", "publish", 14502) // local-publish
+      
+      remoteAuthorInstance() // property: aem.instance.author.httpUrl or default 'http://localhost:4502' ; local-author
+      remotePublishInstance() // property: aem.instance.author.httpUrl or default 'http://localhost:4502' ; local-publish
       
       remoteInstance("http://192.168.10.1:4502", "user1", "password2", "integration") // integration-author
       remoteInstance("http://192.168.10.2:4503", "user2", "password2", "integration") // integration-publish
@@ -537,7 +537,7 @@ Rules:
 
 * Instance name is a combination of `${environment}-${type}` e.g *local-author*, *integration-publish* etc.
 * Only instances being defined as *local* are being considered in command `aemSetup`, `aemCreate`, `aemUp` etc (that comes from `com.cognifide.aem.instance` plugin).
-* All instances being defined as *local* or *remote* are being considered in commands CRX package deployment related like `aemBuild`, `aemDeploy` etc.
+* All instances being defined as *local* or *remote* are being considered in commands CRX package deployment related like `aemDeploy`, `aemUpload`, `aemInstall` etc.
 
 ### Understand why there are one or two plugins to be applied in build script
 
@@ -555,8 +555,8 @@ Currently used plugin architecture solves that problem.
 
 Initially, to create fully configured local AEM instances simply run command `gradlew aemSetup`.
 
-Later during development process, building and deploying to AEM should be done using most simple command: `gradle`.
-Above configuration uses default tasks, so that alternatively it is possible to build same using explicitly specified command `gradlew aemSatisfy aemBuild aemAwait`.
+Later during development process, building and deploying to AEM should be done using most simple command: `gradlew`.
+Above configuration uses [default tasks](https://docs.gradle.org/current/userguide/tutorial_using_tasks.html#sec:default_tasks), so that alternatively it is possible to build same using explicitly specified command `gradlew aemSatisfy aemDeploy aemAwait`.
 
 * Firstly dependent packages (like AEM hotfixes, Vanity URL Components etc) will be installed lazily (only when they are not installed yet).
 * In next step application is being built and deployed to all configured AEM instances.
@@ -681,7 +681,7 @@ When building via command `gradlew :app:build`, then the effect will be a CRX pa
 * *app/common/build.gradle* (project `:app:common`, JCR content and OSGi bundle)
 * *content/init/build.gradle* (project `:content:init`, JCR content only)
 * *content/demo/build.gradle* (project `:content:demo`, JCR content only)
-* *migration/build.gradle* (project `:content:demo`, JCR content only)
+* *migration/build.gradle* (project `:migration`, JCR content only)
 * *test/integration/build.gradle* (project `:test:integration`, any source code)
 * *test/functional/build.gradle* (project `:test:functional`, any source code)
 
