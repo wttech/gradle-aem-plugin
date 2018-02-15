@@ -102,11 +102,35 @@ class AemConfig(
     var uploadForce: Boolean = propParser.boolean("aem.upload.force", true)
 
     /**
+     * Repeat upload when failed (brute-forcing).
+     */
+    @Input
+    var uploadRetryTimes: Int = propParser.int("aem.upload.retry.times", 6)
+
+    /**
+     * Time to wait after repeating failed upload.
+     */
+    @Input
+    var uploadRetryDelay: Long = propParser.long("aem.upload.retry.delay", TimeUnit.SECONDS.toMillis(30))
+    
+    /**
      * Determines if when on package install, sub-packages included in CRX package content should be also installed.
      */
     @Input
     var installRecursive: Boolean = propParser.boolean("aem.install.recursive", true)
 
+    /**
+     * Repeat install when failed (brute-forcing).
+     */
+    @Input
+    var installRetryTimes: Int = propParser.int("aem.install.retry.times", 0)
+
+    /**
+     * Time to wait after repeating failed install.
+     */
+    @Input
+    var installRetryDelay: Long = propParser.long("aem.install.retry.delay", TimeUnit.SECONDS.toMillis(30))
+    
     /**
      * Defines behavior for access control handling included in rep:policy nodes being a part of CRX package content.
      *
@@ -282,7 +306,7 @@ class AemConfig(
      * actual operation being performed on AEM like starting JCR package installation or even creating launchpad.
      */
     @Input
-    var awaitDelay: Long = propParser.long("aem.await.delay", TimeUnit.SECONDS.toMillis(3))
+    var awaitDelay: Long = propParser.long("aem.await.delay", TimeUnit.SECONDS.toMillis(1))
 
     /**
      * Time in milliseconds used as interval between next instance stability checks being performed.
@@ -315,7 +339,7 @@ class AemConfig(
      * Number of intervals / additional instance stability checks to assure all stable instances.
      */
     @Input
-    var awaitAssurances: Long = propParser.long("aem.await.assurances", 1L)
+    var awaitAssurances: Long = propParser.long("aem.await.assurances", 3L)
 
     /**
      * Hook for customizing condition being an instance stability check.

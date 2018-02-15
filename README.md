@@ -110,7 +110,7 @@ buildscript {
     }
     
     dependencies {
-        classpath 'com.cognifide.gradle:aem-plugin:3.0.1-SNAPSHOT'
+        classpath 'com.cognifide.gradle:aem-plugin:3.0.3-SNAPSHOT'
     }
 }
 
@@ -141,7 +141,11 @@ aem {
         deploySnapshots = []
         deployDistributed = false
         uploadForce = true
+        uploadRetryTimes = 6
+        uploadRetryDelay = 30000
         installRecursive = true
+        installRetryTimes = 0
+        installRetryDelay = 30000
         acHandling = "merge_preserve"
         contentPath = project.file("src/main/content")
         if (project == project.rootProject) {
