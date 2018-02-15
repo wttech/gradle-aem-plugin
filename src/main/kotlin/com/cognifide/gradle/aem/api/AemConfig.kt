@@ -107,13 +107,13 @@ class AemConfig(
      * Repeat upload when failed (brute-forcing).
      */
     @Input
-    var uploadRetryTimes: Int = propParser.int("aem.upload.retry.times", 3)
+    var uploadRetryTimes: Int = propParser.int("aem.upload.retry.times", 6)
 
     /**
      * Time to wait after repeating failed upload.
      */
     @Input
-    var uploadRetryDelay: Long = propParser.long("aem.upload.retry.delay", TimeUnit.SECONDS.toMillis(15))
+    var uploadRetryDelay: Long = propParser.long("aem.upload.retry.delay", TimeUnit.SECONDS.toMillis(30))
     
     /**
      * Determines if when on package install, sub-packages included in CRX package content should be also installed.
@@ -131,7 +131,7 @@ class AemConfig(
      * Time to wait after repeating failed install.
      */
     @Input
-    var installRetryDelay: Long = propParser.long("aem.install.retry.delay", TimeUnit.SECONDS.toMillis(15))
+    var installRetryDelay: Long = propParser.long("aem.install.retry.delay", TimeUnit.SECONDS.toMillis(30))
     
     /**
      * Defines behavior for access control handling included in rep:policy nodes being a part of CRX package content.
