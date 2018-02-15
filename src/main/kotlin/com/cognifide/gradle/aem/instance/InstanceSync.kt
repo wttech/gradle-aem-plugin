@@ -215,6 +215,21 @@ class InstanceSync(val project: Project, val instance: Instance) {
     }
 
     fun uploadPackage(file: File = determineLocalPackage()): UploadResponse {
+        lateinit var exception: DeployException
+        for (i in 0..config.uploadRetryTimes) {
+            try {
+                return uploadPackageOnce(file)
+            } catch (e: DeployException) {
+                logger.info("Package upload failed. Retrying (${i+1}/${config.uploadRetryTimes}) after delay.")
+                exception = e
+                Behaviors.waitFor(config.uploadRetryDelay)
+            }
+        }
+
+        throw exception
+    }
+
+    private fun uploadPackageOnce(file: File = determineLocalPackage()): UploadResponse {
         val sync = InstanceSync(project, instance)
         val url = sync.jsonTargetUrl + "/?cmd=upload"
 
@@ -243,6 +258,21 @@ class InstanceSync(val project: Project, val instance: Instance) {
     }
 
     fun installPackage(uploadedPackagePath: String = determineRemotePackagePath()): InstallResponse {
+        lateinit var exception: DeployException
+        for (i in 0..config.installRetryTimes) {
+            try {
+                return installPackageOnce(uploadedPackagePath)
+            } catch (e: DeployException) {
+                logger.info("Package installation failed. Retrying (${i+1}/${config.installRetryTimes}) after delay.")
+                exception = e
+                Behaviors.waitFor(config.installRetryDelay)
+            }
+        }
+
+        throw exception
+    }
+
+    private fun installPackageOnce(uploadedPackagePath: String): InstallResponse {
         val url = htmlTargetUrl + uploadedPackagePath + "/?cmd=install"
 
         logger.info("Installing package using command: " + url)
