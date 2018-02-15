@@ -1,9 +1,9 @@
 package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.api.AemTask
+import com.cognifide.gradle.aem.instance.satisfy.PackageGroup
 import com.cognifide.gradle.aem.instance.satisfy.PackageResolver
 import com.cognifide.gradle.aem.internal.Patterns
-import com.cognifide.gradle.aem.internal.file.resolver.FileGroup
 import com.cognifide.gradle.aem.pkg.deploy.SyncTask
 import groovy.lang.Closure
 import org.gradle.api.tasks.Internal
@@ -50,7 +50,7 @@ open class SatisfyTask : SyncTask() {
         satisfyPackagesOnInstances(packageGroups)
     }
 
-    private fun providePackageGroups(): List<FileGroup> {
+    private fun providePackageGroups(): List<PackageGroup> {
         logger.info("Providing packages from local and remote sources.")
 
         val fileGroups = packageProvider.filterGroups(groupFilter)
@@ -58,36 +58,32 @@ open class SatisfyTask : SyncTask() {
 
         logger.info("Packages provided (${files.size}).")
 
-        return fileGroups
+        // TODO It is possible to avoid this by introducing parametrized type e.g FileResolver<PackageGroup>
+        @Suppress("unchecked_cast")
+        return fileGroups as List<PackageGroup>
     }
 
-    // TODO shouldAwait should be controllable by each PackageGroup.awaitAfter
-    private fun satisfyPackagesOnInstances(packageGroups: List<FileGroup>) {
+    private fun satisfyPackagesOnInstances(packageGroups: List<PackageGroup>) {
         for (packageGroup in packageGroups) {
             logger.info("Satisfying group of packages '$group'.")
 
-            var shouldAwait = false
-
-            if (config.deployDistributed) {
-                synchronizeInstances({ sync ->
-                    packageGroup.files.onEach {
-                        if (sync.satisfyPackage(it, { sync.distributePackage(it) })) {
-                            shouldAwait = true
-                        }
-                    }
-                }, Instance.filter(project, config.deployInstanceAuthorName))
+            val instances = if (config.deployDistributed) {
+                Instance.filter(project, config.deployInstanceAuthorName)
             } else {
-                synchronizeInstances({ sync ->
-                    packageGroup.files.onEach {
-                        if (sync.satisfyPackage(it, { sync.deployPackage(it) })) {
-                            shouldAwait = true
-                        }
-                    }
-                })
-            }
+                filterInstances()
+            }.filter { Patterns.wildcard(it.name, packageGroup.instance) }
 
-            if (shouldAwait) {
-                awaitStableInstances()
+            var satisfied = false
+            synchronizeInstances({ sync ->
+                packageGroup.files.onEach {
+                    if (sync.satisfyPackage(it)) {
+                        satisfied = true
+                    }
+                }
+            }, instances)
+
+            if (satisfied) {
+                packageGroup.afterSatisfy(instances)
             }
         }
     }

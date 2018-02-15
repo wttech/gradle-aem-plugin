@@ -278,13 +278,6 @@ class AemConfig(
     var instanceFilesExpanded: MutableList<String> = mutableListOf("**/*.properties", "**/*.sh", "**/*.bat", "**/*.xml", "**/start", "**/stop")
 
     /**
-     * Time in milliseconds to postpone instance stability checks to avoid race condition related with
-     * actual operation being performed on AEM like starting JCR package installation or even creating launchpad.
-     */
-    @Input
-    var awaitDelay: Long = propParser.long("aem.await.delay", TimeUnit.SECONDS.toMillis(3))
-
-    /**
      * Time in milliseconds used as interval between next instance stability checks being performed.
      * Optimization could be necessary only when instance is heavily loaded.
      */
@@ -313,9 +306,10 @@ class AemConfig(
 
     /**
      * Number of intervals / additional instance stability checks to assure all stable instances.
+     * This mechanism protect against temporary stable states.
      */
     @Input
-    var awaitAssurances: Long = propParser.long("aem.await.assurances", 1L)
+    var awaitAssurances: Long = propParser.long("aem.await.assurances", 5L)
 
     /**
      * Hook for customizing condition being an instance stability check.
