@@ -308,7 +308,7 @@ class AemConfig(
      * actual operation being performed on AEM like starting JCR package installation or even creating launchpad.
      */
     @Input
-    var awaitDelay: Long = propParser.long("aem.await.delay", TimeUnit.SECONDS.toMillis(3))
+    var awaitDelay: Long = propParser.long("aem.await.delay", TimeUnit.SECONDS.toMillis(1))
 
     /**
      * Time in milliseconds used as interval between next instance stability checks being performed.
@@ -341,7 +341,7 @@ class AemConfig(
      * Number of intervals / additional instance stability checks to assure all stable instances.
      */
     @Input
-    var awaitAssurances: Long = propParser.long("aem.await.assurances", 1L)
+    var awaitAssurances: Long = propParser.long("aem.await.assurances", 3L)
 
     /**
      * Hook for customizing condition being an instance stability check.
