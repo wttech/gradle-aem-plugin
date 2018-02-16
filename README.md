@@ -144,7 +144,7 @@ aem {
         uploadRetryTimes = 6
         uploadRetryDelay = 30000
         installRecursive = true
-        installRetryTimes = 0
+        installRetryTimes = 3
         installRetryDelay = 30000
         acHandling = "merge_preserve"
         contentPath = project.file("src/main/content")
