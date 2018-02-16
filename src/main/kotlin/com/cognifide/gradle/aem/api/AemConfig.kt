@@ -68,7 +68,7 @@ class AemConfig(
      * will be performed (only if distributed deploy is enabled).
      */
     @Input
-    var deployInstanceAuthorName: String = propParser.string("aem.deploy.instance.author.name","$deployEnvironment-${InstanceType.AUTHOR.type}")
+    var deployInstanceAuthorName: String = propParser.string("aem.deploy.instance.author.name", "$deployEnvironment-${InstanceType.AUTHOR.type}")
 
     /**
      * Defines maximum time after which initializing connection to AEM will be aborted (e.g on upload, install).
