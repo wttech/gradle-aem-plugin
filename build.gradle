@@ -3,11 +3,10 @@ plugins {
     id 'maven-publish'
     id "org.jetbrains.kotlin.jvm" version "1.2.21"
     id "com.jfrog.bintray" version "1.7.3"
-    id 'pl.allegro.tech.build.axion-release' version '1.8.3'
 }
 
 group 'com.cognifide.gradle'
-version = scmVersion.version
+version '3.0.3'
 description = 'Gradle AEM Plugin'
 defaultTasks = ['clean', 'build', 'publishToMavenLocal']
 

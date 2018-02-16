@@ -68,7 +68,7 @@ class AemConfig(
      * will be performed (only if distributed deploy is enabled).
      */
     @Input
-    var deployInstanceAuthorName: String = propParser.string("aem.deploy.instance.author.name","$deployEnvironment-${InstanceType.AUTHOR.type}")
+    var deployInstanceAuthorName: String = propParser.string("aem.deploy.instance.author.name", "$deployEnvironment-${InstanceType.AUTHOR.type}")
 
     /**
      * Defines maximum time after which initializing connection to AEM will be aborted (e.g on upload, install).
@@ -123,7 +123,7 @@ class AemConfig(
      * Repeat install when failed (brute-forcing).
      */
     @Input
-    var installRetryTimes: Int = propParser.int("aem.install.retry.times", 0)
+    var installRetryTimes: Int = propParser.int("aem.install.retry.times", 3)
 
     /**
      * Time to wait after repeating failed install.
