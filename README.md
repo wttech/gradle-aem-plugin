@@ -144,7 +144,7 @@ aem {
         uploadRetryTimes = 6
         uploadRetryDelay = 30000
         installRecursive = true
-        installRetryTimes = 0
+        installRetryTimes = 3
         installRetryDelay = 30000
         acHandling = "merge_preserve"
         contentPath = project.file("src/main/content")
@@ -421,13 +421,27 @@ Turn off then on both local and remote AEM instance(s).
 
 #### Task `aemAwait`
 
-Wait until all local AEM instance(s) be stable.
+Wait until all local or remote AEM instance(s) be stable.
+
+AEM Config Param | CMD Property | Default Value | Purpose
+--- | --- | --- | ---
+`awaitDelay` | *aem.await.delay* | `1000` | Time in milliseconds to postpone instance stability checks to avoid race condition related with actual operation being performed on AEM like starting JCR package installation or even creating launchpad.
+`awaitInterval` | *aem.await.interval* | `1000` | Time in milliseconds used as interval between next instance stability checks being performed. Optimization could be necessary only when instance is heavily loaded.
+`awaitTimeout` | *aem.await.timeout* | `900` | After each await interval, instance stability check is being performed. This value is a HTTP connection timeout (in millis) which must be smaller than interval to avoid race condition.
+`awaitTimes` | *aem.await.times* | `300` | Maximum intervals after which instance stability checks will be skipped if there is still some unstable instance left.
+`awaitFail` | *aem.await.fail* | `true` | If there is still some unstable instance left, then fail build except just logging warning.
+`awaitAssurances` | *aem.await.assurances* | `3L` | Number of intervals / additional instance stability checks to assure all stable instances.
+`awaitCondition` | *aem.await.condition* | `{ it.stable }` | Hook for customizing condition being an instance stability check. Scope of lambda is class: [InstanceState](src/main/kotlin/com/cognifide/gradle/aem/instance/InstanceState.kt). Use one of its method and / or from [BundleState](src/main/kotlin/com/cognifide/gradle/aem/instance/BundleState.kt) to get customized behavior.
 
 #### Task `aemCollect`
 
 Composes ZIP package from all CRX packages being satisfied and built. Available methods:
 
 * all inherited from [ZIP task](https://docs.gradle.org/3.5/dsl/org.gradle.api.tasks.bundling.Zip.html).
+
+Screenshot below presents generated ZIP package which is a result of running `gradlew :aemCollect` for [example project](https://github.com/Cognifide/gradle-aem-example).
+
+![Collect task - ZIP Overview](docs/collect-zip-overview.png)
 
 ### Expandable properties
 
@@ -547,9 +561,10 @@ Rules:
 
 Gradle AEM plugin architecture is splitted into 3 plugins to properly fit into Gradle tasks structure correctly.
 
-* base (`com.cognifide.aem.base`), applied transparently by instance or package plugin, provides AEM config section to build script,
+* base (`com.cognifide.aem.base`), applied transparently by other plugins, provides AEM config section to build script and general tasks: `aemDebug`, `aemVlt` etc.
 * instance (`com.cognifide.aem.instance`), should be applied only at root project (once), provides instance related tasks: `aemAwait`, `aemSetup`, `aemCreate` etc,
-* package (`com.cognifide.aem.package`), could be applied to all projects that are composing CRX packages, provides CRX package related tasks: `aemCompose`, `aemDeploy` etc.
+* package (`com.cognifide.aem.package`), should be applied to all projects that are composing CRX packages from *JCR content only*, provides CRX package related tasks: `aemCompose`, `aemDeploy` etc.
+* bundle (`com.cognifide.aem.bundle`), should be applied to all projects that are composing CRX packages from both *OSGi bundle* being built and optionally *JCR content*, extends package plugin.
 
 Most often, Gradle commands are being launched from project root and tasks are being run by their name e.g `aemSatisfy` (which is not fully qualified, better if it will be `:aemSatisfy` of root project).
 Let's imagine if task `aemSatisfy` will come from package plugin, then Gradle will execute more than one `aemSatisfy` (for all projects that have plugin applied), so that this is unintended behavior.
