@@ -216,11 +216,13 @@ class InstanceSync(val project: Project, val instance: Instance) {
 
     fun uploadPackage(file: File = determineLocalPackage()): UploadResponse {
         lateinit var exception: DeployException
+        var retry = 0
         for (i in 0..config.uploadRetryTimes) {
             try {
                 return uploadPackageOnce(file)
             } catch (e: DeployException) {
-                logger.info("Package upload failed. Retrying (${i+1}/${config.uploadRetryTimes}) after delay.")
+                retry++
+                logger.warn("Cannot upload package. Retrying ($retry/${config.uploadRetryTimes}) after delay.")
                 exception = e
                 Behaviors.waitFor(config.uploadRetryDelay)
             }
@@ -259,11 +261,13 @@ class InstanceSync(val project: Project, val instance: Instance) {
 
     fun installPackage(uploadedPackagePath: String = determineRemotePackagePath()): InstallResponse {
         lateinit var exception: DeployException
+        var retry = 0
         for (i in 0..config.installRetryTimes) {
             try {
                 return installPackageOnce(uploadedPackagePath)
             } catch (e: DeployException) {
-                logger.info("Package installation failed. Retrying (${i+1}/${config.installRetryTimes}) after delay.")
+                retry++
+                logger.warn("Cannot install package. Retrying ($retry/${config.installRetryTimes}) after delay.")
                 exception = e
                 Behaviors.waitFor(config.installRetryDelay)
             }
