@@ -222,9 +222,10 @@ class InstanceSync(val project: Project, val instance: Instance) {
             } catch (e: DeployException) {
                 exception = e
 
-                val retry = i + 1
-                if (retry <= config.uploadRetryTimes) {
-                    logger.warn("Cannot upload package. Retrying ($retry/${config.uploadRetryTimes}) after delay.")
+                if (i > 0 && i < config.uploadRetryTimes) {
+                    logger.warn("Cannot upload package. Retrying (${i+1}/${config.uploadRetryTimes}) after delay.")
+                }
+                if (i < config.uploadRetryTimes) {
                     Behaviors.waitFor(config.uploadRetryDelay)
                 }
             }
@@ -269,9 +270,10 @@ class InstanceSync(val project: Project, val instance: Instance) {
             } catch (e: DeployException) {
                 exception = e
 
-                val retry = i + 1
-                if (retry <= config.installRetryTimes) {
-                    logger.warn("Cannot install package. Retrying ($retry/${config.installRetryTimes}) after delay.")
+                if (i > 0 && i < config.installRetryTimes) {
+                    logger.warn("Cannot install package. Retrying (${i+1}/${config.installRetryTimes}) after delay.")
+                }
+                if (i < config.installRetryTimes) {
                     Behaviors.waitFor(config.installRetryDelay)
                 }
             }
