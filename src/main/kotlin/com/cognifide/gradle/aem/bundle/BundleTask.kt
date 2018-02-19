@@ -9,7 +9,6 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
-import org.gradle.api.tasks.testing.Test
 import org.gradle.jvm.tasks.Jar
 import org.gradle.util.GFileUtils
 import java.io.File
@@ -30,10 +29,6 @@ open class BundleTask : AemDefaultTask() {
         get() = project.tasks.getByName(JavaPlugin.JAR_TASK_NAME) as Jar
 
     @get:Internal
-    val test: Test
-        get() = project.tasks.getByName(JavaPlugin.TEST_TASK_NAME) as Test
-
-    @get:Internal
     val embedConfig: Configuration
         get() = project.configurations.getByName(BundlePlugin.CONFIG_EMBED)
 
@@ -49,10 +44,7 @@ open class BundleTask : AemDefaultTask() {
     val embedJarsDir = AemTask.temporaryDir(project, NAME, "embedJars")
 
     init {
-        project.afterEvaluate {
-            configureEmbedJars()
-            configureTest()
-        }
+        project.afterEvaluate { configureEmbedJars() }
     }
 
     private fun configureEmbedJars() {
@@ -88,13 +80,6 @@ open class BundleTask : AemDefaultTask() {
         GFileUtils.mkdirs(embedJarsDir)
 
         embedJars.forEach { FileUtils.copyFileToDirectory(it, embedJarsDir) }
-    }
-
-    /**
-     * @see <https://github.com/Cognifide/gradle-aem-plugin/issues/95>
-     */
-    private fun configureTest() {
-        test.classpath += project.files(jar.archivePath)
     }
 
     @TaskAction
