@@ -423,7 +423,7 @@ Turn off then on both local and remote AEM instance(s).
 
 Wait until all local or remote AEM instance(s) be stable.
 
-Config Param | CMD Property | Default Value | Purpose
+AEM Config Param | CMD Property | Default Value | Purpose
 --- | --- | --- | ---
 `awaitDelay` | *aem.await.delay* | `1000` | Time in milliseconds to postpone instance stability checks to avoid race condition related with actual operation being performed on AEM like starting JCR package installation or even creating launchpad.
 `awaitInterval` | *aem.await.interval* | `1000` | Time in milliseconds used as interval between next instance stability checks being performed. Optimization could be necessary only when instance is heavily loaded.
