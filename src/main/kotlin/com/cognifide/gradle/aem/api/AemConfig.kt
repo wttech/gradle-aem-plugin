@@ -105,7 +105,7 @@ class AemConfig(
      * Repeat upload when failed (brute-forcing).
      */
     @Input
-    var uploadRetryTimes: Int = propParser.int("aem.upload.retry.times", 6)
+    var uploadRetryTimes: Int = propParser.int("aem.upload.retry.times", 3)
 
     /**
      * Time to wait after repeating failed upload.
@@ -123,7 +123,7 @@ class AemConfig(
      * Repeat install when failed (brute-forcing).
      */
     @Input
-    var installRetryTimes: Int = propParser.int("aem.install.retry.times", 3)
+    var installRetryTimes: Int = propParser.int("aem.install.retry.times", 1)
 
     /**
      * Time to wait after repeating failed install.
