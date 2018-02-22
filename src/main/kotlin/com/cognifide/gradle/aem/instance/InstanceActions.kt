@@ -83,37 +83,31 @@ class InstanceActions(val project: Project) {
     }
 
     private fun progressFor(states: List<InstanceState>, timer: Behaviors.Timer) =
-            (progressTicks(timer.ticks, 0) + " " + states.joinToString(" | ") { progressFor(it, timer.ticks) }).trim()
+            (progressTicks(timer.ticks, 0) + " " + states.joinToString(" | ") { progressFor(it) }).trim()
 
     private fun progressFor(states: List<InstanceState>, config: AemConfig, timer: Behaviors.Timer) =
-            (progressTicks(timer.ticks, config.awaitTimes) + " " + states.joinToString(" | ") { progressFor(it, timer.ticks) }).trim()
+            (progressTicks(timer.ticks, config.awaitTimes) + " " + states.joinToString(" | ") { progressFor(it) }).trim()
 
-    private fun progressFor(state: InstanceState, tick: Long): String {
-        return "${state.instance.name}: ${progressIndicator(state, tick)} ${state.bundleState.statsWithLabels} [${state.bundleState.stablePercent}]"
+    private fun progressFor(state: InstanceState): String {
+        return "${state.instance.name}: ${progressIndicator(state)} ${state.bundleState.statsWithLabels} [${state.bundleState.stablePercent}]"
     }
 
     private fun progressTicks(tick: Long, maxTicks: Long): String {
         return if (maxTicks > 0 && (tick.toDouble() / maxTicks.toDouble() > 0.1)) {
             "[$tick/$maxTicks tt]"
+        } else if (tick.rem(2) == 0L) {
+            "[*]"
         } else {
-            ""
+            "[ ]"
         }
     }
 
-    private fun progressIndicator(state: InstanceState, tick: Long): String {
-        var indicator = if (tick.rem(2) == 0L) {
-            if (state.config.awaitCondition(state)) {
-                "+"
-            } else {
-                "-"
-            }
+    private fun progressIndicator(state: InstanceState): String {
+        return if (state.config.awaitCondition(state)) {
+            "+"
         } else {
-            " "
+            "-"
         }
-
-
-
-        return indicator
     }
 
 }
