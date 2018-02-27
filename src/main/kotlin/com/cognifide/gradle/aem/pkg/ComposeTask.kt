@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.pkg
 
+import aQute.bnd.osgi.Jar
 import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.api.AemException
 import com.cognifide.gradle.aem.api.AemTask
@@ -8,25 +9,22 @@ import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.internal.file.FileContentReader
 import com.cognifide.gradle.aem.internal.jsoup.JsoupUtil
-import org.apache.commons.io.FileUtils
+import groovy.lang.Closure
 import org.gradle.api.Project
 import org.gradle.api.file.CopySpec
 import org.gradle.api.file.DuplicatesStrategy
-import org.gradle.api.tasks.*
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.bundling.Zip
-import org.gradle.util.GFileUtils
+import org.gradle.util.ConfigureUtil
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import org.jsoup.parser.Parser
 import java.io.File
 
 open class ComposeTask : Zip(), AemTask {
-
-    companion object {
-        val NAME = "aemCompose"
-
-        val DEPENDENCIES_SUFFIX = ".dependencies"
-    }
 
     @Nested
     final override val config = AemConfig.of(project)
@@ -58,19 +56,39 @@ open class ComposeTask : Zip(), AemTask {
     @Internal
     private var archiveName: String? = null
 
-    @Input
-    val bundleIncludes = mutableMapOf<String, List<String>>()
-
-    @Internal
-    private val bundleResolvers = mutableMapOf<String, () -> Unit>()
+    @Nested
+    val fileFilterOptions = FileFilterOptions()
 
     @Internal
     var fileFilter: ((CopySpec) -> Unit) = { spec ->
-        spec.exclude(config.filesExcluded)
+        if (fileFilterOptions.excluding) {
+            spec.exclude(config.filesExcluded)
+        }
+
         spec.eachFile({ fileDetail ->
             val path = "/${fileDetail.relativePath.pathString.removePrefix("/")}"
-            if (Patterns.wildcard(path, config.filesExpanded)) {
-                FileContentReader.filter(fileDetail, { propertyParser.expandPackage(it, fileProperties, path) })
+
+            if (fileFilterOptions.expanding) {
+                if (Patterns.wildcard(path, config.filesExpanded)) {
+                    FileContentReader.filter(fileDetail, { propertyParser.expandPackage(it, fileProperties, path) })
+                }
+            }
+
+            if (fileFilterOptions.bundleChecking) {
+                if (Patterns.wildcard(path, "**/install/*.jar")) {
+                    val bundle = fileDetail.file
+                    val isBundle = try {
+                        val manifest = Jar(bundle).manifest.mainAttributes
+                        !manifest.getValue("Bundle-SymbolicName").isNullOrBlank()
+                    } catch (e: Exception) {
+                        false
+                    }
+
+                    if (!isBundle) {
+                        logger.warn("Jar being a part of composed CRX package is not a valid OSGi bundle: $bundle")
+                        fileDetail.exclude()
+                    }
+                }
             }
         })
     }
@@ -175,27 +193,11 @@ open class ComposeTask : Zip(), AemTask {
                 effectiveInstallPath = "$effectiveInstallPath.$runMode"
             }
 
-            val collector = BundleCollector(project)
-            val includes = collector.all
-
-            if (includes.isNotEmpty()) {
-                val resolutionPath = "bundles/${project.path.replace(":", "/").removeSurrounding("/")}"
-                val resolutionDir = AemTask.temporaryDir(this.project, NAME, resolutionPath)
-                val resolver = {
-                    resolutionDir.deleteRecursively()
-                    GFileUtils.mkdirs(resolutionDir)
-
-                    collector.allJars.forEach { FileUtils.copyFileToDirectory(it, resolutionDir) }
-                }
-
-                bundleIncludes[project.name] = includes
-                bundleResolvers[project.name] = resolver
-
-                if (includes.isNotEmpty()) {
-                    into("${PackagePlugin.JCR_ROOT}/$effectiveInstallPath") { spec ->
-                        spec.from(resolutionDir)
-                        fileFilter(spec)
-                    }
+            val bundles = BundleCollector(project).allJars
+            if (bundles.isNotEmpty()) {
+                into("${PackagePlugin.JCR_ROOT}/$effectiveInstallPath") { spec ->
+                    spec.from(bundles)
+                    fileFilter(spec)
                 }
             }
         }
@@ -299,13 +301,23 @@ open class ComposeTask : Zip(), AemTask {
         return extendedArchiveName
     }
 
-    private fun resolveBundles() {
-        bundleResolvers.forEach { it.value() }
+    fun fileFilterOptions(closure: Closure<*>) {
+        ConfigureUtil.configure(closure, fileFilterOptions)
     }
 
-    @TaskAction
-    override fun copy() {
-        resolveBundles()
-        super.copy()
+    class FileFilterOptions {
+
+        var excluding: Boolean = true
+
+        var expanding: Boolean = true
+
+        var bundleChecking: Boolean = true
+
+    }
+
+    companion object {
+        const val NAME = "aemCompose"
+
+        const val DEPENDENCIES_SUFFIX = ".dependencies"
     }
 }
