@@ -1,18 +1,12 @@
 package com.cognifide.gradle.aem.bundle
 
 import com.cognifide.gradle.aem.api.AemDefaultTask
-import com.cognifide.gradle.aem.api.AemTask
-import org.apache.commons.io.FileUtils
-import org.gradle.api.artifacts.Configuration
 import org.gradle.api.plugins.JavaPlugin
-import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 import org.gradle.jvm.tasks.Jar
-import org.gradle.util.GFileUtils
 import java.io.File
-import java.io.FileFilter
 
 open class BundleTask : AemDefaultTask() {
 
@@ -21,46 +15,33 @@ open class BundleTask : AemDefaultTask() {
     }
 
     init {
-        description = "Prepare JAR before running BND tool"
+        description = "Prepare resources before composing a JAR and running BND tool."
     }
 
     @get:Internal
     val jar: Jar
         get() = project.tasks.getByName(JavaPlugin.JAR_TASK_NAME) as Jar
 
-    @get:Internal
-    val embedConfig: Configuration
-        get() = project.configurations.getByName(BundlePlugin.CONFIG_EMBED)
-
-    @get:Input
-    val embedDependencies
-        get() = embedConfig.allDependencies.map { it.toString() }
-
-    @get:Internal
-    val embedJars: List<File>
-        get() = embedConfig.files.sortedBy { it.name }
-
-    @OutputDirectory
-    val embedJarsDir = AemTask.temporaryDir(project, NAME, "embedJars")
+    val embeddableJars: List<File>
+        @InputFiles
+        get() {
+            return project.configurations.getByName(BundlePlugin.CONFIG_EMBED).files.sortedBy { it.name }
+        }
 
     init {
         project.afterEvaluate { configureEmbedJars() }
     }
 
     private fun configureEmbedJars() {
-        if (embedDependencies.isEmpty()) {
+        if (embeddableJars.isEmpty()) {
             return
         }
 
-        project.logger.info("Embedding dependencies: $embedDependencies")
+        project.logger.info("Embedding jar files: ${embeddableJars.map { it.name }}")
 
-        jar.from(embedJarsDir)
+        jar.from(embeddableJars)
         jar.doFirst {
-            val list = mutableListOf(".").apply {
-                val jars = embedJarsDir.listFiles(FileFilter { it.extension == "jar" })
-                        ?: arrayOf()
-                jars.sortedBy { it.name }.forEach { jar -> add(jar.name) }
-            }
+            val list = mutableListOf(".").apply { embeddableJars.forEach { jar -> add(jar.name) } }
             val classPath = list.joinToString(",")
 
             setManifestAttribute("Bundle-ClassPath", classPath)
@@ -75,16 +56,9 @@ open class BundleTask : AemDefaultTask() {
         }
     }
 
-    private fun resolveEmbedJars() {
-        embedJarsDir.deleteRecursively()
-        GFileUtils.mkdirs(embedJarsDir)
-
-        embedJars.forEach { FileUtils.copyFileToDirectory(it, embedJarsDir) }
-    }
-
     @TaskAction
     fun bundle() {
-        resolveEmbedJars()
+        // nothing to do in execution phase right now, hook for later ;)
     }
 
 }
