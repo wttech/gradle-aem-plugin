@@ -111,7 +111,7 @@ buildscript {
     }
     
     dependencies {
-        classpath 'com.cognifide.gradle:aem-plugin:3.0.6-SNAPSHOT'
+        classpath 'com.cognifide.gradle:aem-plugin:3.0.6'
     }
 }
 
