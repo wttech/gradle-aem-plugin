@@ -110,7 +110,7 @@ buildscript {
     }
     
     dependencies {
-        classpath 'com.cognifide.gradle:aem-plugin:3.0.6'
+        classpath 'com.cognifide.gradle:aem-plugin:3.0.7-SNAPSHOT'
     }
 }
 
@@ -559,7 +559,7 @@ Rules:
 
 ### Understand why there are one or two plugins to be applied in build script
 
-Gradle AEM plugin architecture is splitted into 3 plugins to properly fit into Gradle tasks structure correctly.
+Gradle AEM plugin architecture is splitted into 4 plugins to properly fit into Gradle tasks structure correctly.
 
 * base (`com.cognifide.aem.base`), applied transparently by other plugins, provides AEM config section to build script and general tasks: `aemDebug`, `aemVlt` etc.
 * instance (`com.cognifide.aem.instance`), should be applied only at root project (once), provides instance related tasks: `aemAwait`, `aemSetup`, `aemCreate` etc,

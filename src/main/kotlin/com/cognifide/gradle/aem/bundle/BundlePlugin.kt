@@ -84,7 +84,7 @@ class BundlePlugin : Plugin<Project> {
         val test = project.tasks.getByName(JavaPlugin.TEST_TASK_NAME) as Test
         val jar = project.tasks.getByName(JavaPlugin.JAR_TASK_NAME) as Jar
 
-        test.classpath += project.files(jar.archivePath)
+        project.gradle.projectsEvaluated { test.classpath += project.files(jar.archivePath) }
     }
 
     private fun setupConfigurations(project: Project) {
