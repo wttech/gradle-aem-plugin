@@ -82,6 +82,7 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
    * [Assemble all-in-one CRX package(s)](#assemble-all-in-one-crx-packages)
    * [Skip installed package resolution by download name.](#skip-installed-package-resolution-by-download-name)
 * [Known issues](#known-issues)
+   * [No OSGi services / components are registered](#no-osgi-services--components-are-registered)
    * [Caching task aemCompose](#caching-task-aemcompose)
    * [Vault tasks parallelism](#vault-tasks-parallelism)
    * [Files from SSH for aemCreate and <code>aemSatisfy</code>](#files-from-ssh-for-aemcreate-and-aemsatisfy)
@@ -722,6 +723,28 @@ gradlew aemInstall -Paem.deploy.skipDownloadName=true
 Only matters when Vault properties file is customized then that property could be used to eliminate conflicts.
 
 ## Known issues
+
+### No OSGi services / components are registered
+
+Since AEM 6.2 it is recommended to use new OSGi service component annotations to register OSGi components instead SCR annotations (still supported, but not by Gradle AEM Plugin).
+
+For the reference, please read post on official [Adobe Blog](http://blogs.adobe.com/experiencedelivers/experience-management/using-osgi-annotations-aem6-2/).
+
+Basically, Gradle AEM Plugin is designed to be used while implementing new projects on AEM in version greater than 6.2.
+Because, of that fact, there is no direct possibility to reuse code written for older AEM's which is using SCR annotations.
+However it is very easy to migrate these annotations to new ones and generally speaking it is not much expensive task to do.
+
+```java
+import org.apache.felix.scr.annotations.Component;
+```
+
+->
+
+```java
+import org.osgi.service.component.annotations.Component;
+```
+
+New API fully covers functionality of old one, so nothing to worry about while migrating.
 
 ### Caching task `aemCompose`
 
