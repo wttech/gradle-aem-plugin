@@ -90,7 +90,7 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
 
 ## Installation
 
-* Most effective way to experience Gradle AEM Plugin is to use [Quickstart](https://github.com/Cognifide/gradle-aem-example#quickstart) located in [example project](https://github.com/Cognifide/gradle-aem-example).
+* Most effective way to experience Gradle AEM Plugin is to use [Quickstart](https://github.com/Cognifide/gradle-aem-multi#quickstart) located in [multi-module project](https://github.com/Cognifide/gradle-aem-multi).
 * The only needed software to start using plugin is to have installed on machine Java 8.
 * As a build command, it is recommended to use Gradle Wrapper (`gradlew`) instead of locally installed Gradle (`gradle`) to easily have same version of build tool installed on all environments. Only at first build time, wrapper will be automatically downloaded and installed, then reused.
 
@@ -232,7 +232,7 @@ Building and deploying to AEM via command: `gradlew` (default tasks will be used
 
 More detailed and always up-to-date information about configuration options is available [here](src/main/kotlin/com/cognifide/gradle/aem/api/AemConfig.kt).
 
-For multi project build configuration, please investigate [example project](https://github.com/Cognifide/gradle-aem-example).
+For multi project build configuration, please investigate [multi-module project](https://github.com/Cognifide/gradle-aem-multi).
 
 ### Base plugin tasks
 
@@ -280,7 +280,7 @@ Then file at path *build/aem/aemDebug/debug.json* with content below is being ge
     "displayName" : "root project 'example'",
     "path" : ":",
     "name" : "example",
-    "dir" : "C:\\Users\\krystian.panek\\Projects\\gradle-aem-example"
+    "dir" : "C:\\Users\\krystian.panek\\Projects\\gradle-aem-multi"
   },
   "packageProperties" : {
     "name" : "example",
@@ -440,7 +440,7 @@ Composes ZIP package from all CRX packages being satisfied and built. Available 
 
 * all inherited from [ZIP task](https://docs.gradle.org/3.5/dsl/org.gradle.api.tasks.bundling.Zip.html).
 
-Screenshot below presents generated ZIP package which is a result of running `gradlew :aemCollect` for [example project](https://github.com/Cognifide/gradle-aem-example).
+Screenshot below presents generated ZIP package which is a result of running `gradlew :aemCollect` for [multi-module project](https://github.com/Cognifide/gradle-aem-multi).
 
 ![Collect task - ZIP Overview](docs/collect-zip-overview.png)
 
