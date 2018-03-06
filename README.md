@@ -90,7 +90,9 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
 
 ## Installation
 
-* Most effective way to experience Gradle AEM Plugin is to use [Quickstart](https://github.com/Cognifide/gradle-aem-multi#quickstart) located in [multi-module project](https://github.com/Cognifide/gradle-aem-multi).
+* Most effective way to experience Gradle AEM Plugin is to use Quickstart located in:
+  * [AEM Single-Project Example](https://github.com/Cognifide/gradle-aem-single#quickstart),
+  * [AEM Multi-Project Example](https://github.com/Cognifide/gradle-aem-multi#quickstart).
 * The only needed software to start using plugin is to have installed on machine Java 8.
 * As a build command, it is recommended to use Gradle Wrapper (`gradlew`) instead of locally installed Gradle (`gradle`) to easily have same version of build tool installed on all environments. Only at first build time, wrapper will be automatically downloaded and installed, then reused.
 
