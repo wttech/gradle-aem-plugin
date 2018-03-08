@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.base.vlt
 
+import com.cognifide.gradle.aem.internal.Patterns
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.filefilter.NameFileFilter
 import org.apache.commons.io.filefilter.TrueFileFilter
@@ -13,17 +14,17 @@ import java.util.regex.Pattern
 class VltCleaner(val root: File, val logger: Logger) {
 
     companion object {
-        val VLT_FILE = ".vlt"
-
-        val JCR_CONTENT_FILE = ".content.xml"
+        const val JCR_CONTENT_FILE = ".content.xml"
 
         val CONTENT_PROP_PATTERN = Pattern.compile("([^=]+)=\"([^\"]+)\"")
     }
 
-    fun removeVltFiles() {
-        for (file in FileUtils.listFiles(root, NameFileFilter(VLT_FILE), TrueFileFilter.INSTANCE)) {
-            logger.info("Deleting {}", file.path)
-            FileUtils.deleteQuietly(file)
+    fun removeFiles(patterns: List<String>) {
+        for (file in FileUtils.listFiles(root, TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE)) {
+            if (Patterns.wildcard(file, patterns)) {
+                logger.info("Deleting {}", file.path)
+                FileUtils.deleteQuietly(file)
+            }
         }
     }
 

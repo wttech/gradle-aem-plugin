@@ -22,6 +22,8 @@ import java.util.concurrent.TimeUnit
  *
  * Content paths which are used to compose a CRX package are being processed by copy task,
  * which automatically mark them as inputs so package is being rebuild on any JCR content or Vault files change.
+ *
+ * TODO https://docs.gradle.org/4.6/userguide/custom_tasks.html#sec:declaring_and_using_command_line_options
  */
 class AemConfig(
         @Transient
@@ -383,6 +385,24 @@ class AemConfig(
      */
     @Input
     var satisfyGroupName = propParser.string("aem.satisfy.group.name", "*")
+
+    /**
+     * Determines a Vault filter used to checkout JCR content from running AEM instance.
+     *
+     * By default it points to same filter being used to build CRX package,
+     * but could be customized to filter out files being checked out.
+     */
+    @Input
+    var checkoutFilterPath: String = propParser.string("aem.checkout.filterPath", vaultPath)
+
+    /**
+     * Determines which files will be deleted within running cleaning
+     * (e.g after checking out JCR content).
+     */
+    @Input
+    var cleanFilesDeleted: MutableList<String> = mutableListOf(
+            "**/.vlt"
+    )
 
     /**
      * Initialize defaults that depends on concrete type of project.
