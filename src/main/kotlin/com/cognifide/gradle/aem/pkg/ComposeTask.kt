@@ -23,6 +23,7 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import org.jsoup.parser.Parser
 import java.io.File
+import java.io.Serializable
 
 open class ComposeTask : Zip(), AemTask {
 
@@ -40,7 +41,7 @@ open class ComposeTask : Zip(), AemTask {
         get() = filterRoots.joinToString(config.vaultLineSeparatorString) { it.toString() }
 
     @Internal
-    var filterRootDefault = { subproject: Project, subconfig: AemConfig ->
+    var filterRootDefault = { _: Project, subconfig: AemConfig ->
         "<filter root=\"${subconfig.bundlePath}\"/>"
     }
 
@@ -305,12 +306,15 @@ open class ComposeTask : Zip(), AemTask {
         ConfigureUtil.configure(closure, fileFilterOptions)
     }
 
-    class FileFilterOptions {
+    class FileFilterOptions : Serializable {
 
+        @Input
         var excluding: Boolean = true
 
+        @Input
         var expanding: Boolean = true
 
+        @Input
         var bundleChecking: Boolean = true
 
     }
