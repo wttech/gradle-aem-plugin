@@ -4,9 +4,10 @@ import com.cognifide.gradle.aem.api.AemTask
 import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.internal.file.FileOperations
 import org.gradle.api.Project
+import java.io.Closeable
 import java.io.File
 
-class VltFilter(val file: File, private val temporary: Boolean = false) {
+class VltFilter(val file: File, private val temporary: Boolean = false) : Closeable {
 
     companion object {
 
@@ -23,7 +24,7 @@ class VltFilter(val file: File, private val temporary: Boolean = false) {
 
     }
 
-    fun clean() {
+    override fun close() {
         if (temporary) {
             file.delete()
         }
