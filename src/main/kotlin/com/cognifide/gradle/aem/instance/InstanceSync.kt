@@ -34,9 +34,9 @@ import java.util.*
 class InstanceSync(val project: Project, val instance: Instance) {
 
     companion object {
-        private val PACKAGE_MANAGER_SERVICE_SUFFIX = "/crx/packmgr/service"
+        private const val PACKAGE_MANAGER_SERVICE_SUFFIX = "/crx/packmgr/service"
 
-        private val PACKAGE_MANAGER_LIST_SUFFIX = "/crx/packmgr/list.jsp"
+        private const val PACKAGE_MANAGER_LIST_SUFFIX = "/crx/packmgr/list.jsp"
     }
 
     val config = AemConfig.of(project)
@@ -234,7 +234,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
     }
 
     private fun uploadPackageOnce(file: File = determineLocalPackage()): UploadResponse {
-        val url = jsonTargetUrl + "/?cmd=upload"
+        val url = "$jsonTargetUrl/?cmd=upload"
 
         logger.info("Uploading package at path '{}' to URL '{}'", file.path, url)
 
@@ -279,9 +279,9 @@ class InstanceSync(val project: Project, val instance: Instance) {
     }
 
     private fun installPackageOnce(uploadedPackagePath: String): InstallResponse {
-        val url = htmlTargetUrl + uploadedPackagePath + "/?cmd=install"
+        val url = "$htmlTargetUrl$uploadedPackagePath/?cmd=install"
 
-        logger.info("Installing package using command: " + url)
+        logger.info("Installing package using command: $url")
 
         try {
             val json = postMultipart(url, mapOf(
@@ -350,7 +350,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
     fun activatePackage(path: String = determineRemotePackagePath()): UploadResponse {
         val url = jsonTargetUrl + path + "/?cmd=replicate"
 
-        logger.info("Activating package using command: " + url)
+        logger.info("Activating package using command: $url")
 
         val json: String
         try {
