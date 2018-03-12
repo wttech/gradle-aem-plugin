@@ -196,6 +196,7 @@ class AemConfig(
             "**/.gitignore",
             "**/.gitmodules",
             "**/.vlt",
+            "**/.vlt*.tmp",
             "**/node_modules/**",
             "jcr_root/.vlt-sync-config.properties"
     )
@@ -401,7 +402,8 @@ class AemConfig(
      */
     @Input
     var cleanFilesDeleted: MutableList<String> = mutableListOf(
-            "**/.vlt"
+            "**/.vlt",
+            "**/.vlt*.tmp"
     )
 
     /**
