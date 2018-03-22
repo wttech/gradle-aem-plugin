@@ -44,7 +44,7 @@ class LocalHandle(val project: Project, val sync: InstanceSync) {
 
     val config = AemConfig.of(project)
 
-    val dir = File("${config.instancesPath}/${instance.name}")
+    val dir = File("${config.instancesPath}/${instance.typeName}")
 
     val jar = File(dir, "aem-quickstart.jar")
 
