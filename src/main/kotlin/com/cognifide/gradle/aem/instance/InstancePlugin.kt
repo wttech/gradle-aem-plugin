@@ -38,25 +38,27 @@ class InstancePlugin : Plugin<Project> {
         val up = project.tasks.create(UpTask.NAME, UpTask::class.java)
         val down = project.tasks.create(DownTask.NAME, DownTask::class.java)
         val reload = project.tasks.create(ReloadTask.NAME, ReloadTask::class.java)
+        val preSatisfy = project.tasks.create(PreSatisfyTask.NAME, PreSatisfyTask::class.java)
         val satisfy = project.tasks.create(SatisfyTask.NAME, SatisfyTask::class.java)
         val await = project.tasks.create(AwaitTask.NAME, AwaitTask::class.java)
         val collect = project.tasks.create(CollectTask.NAME, CollectTask::class.java)
+        val setup = project.tasks.create(SetupTask.NAME, SetupTask::class.java)
 
         create.mustRunAfter(clean)
-        up.mustRunAfter(clean)
-        up.dependsOn(create)
+        up.dependsOn(create).mustRunAfter(clean)
+        reload.mustRunAfter(satisfy)
         destroy.mustRunAfter(down)
-        satisfy.mustRunAfter(create, up)
+        preSatisfy.shouldRunAfter(create)
+        satisfy.dependsOn(preSatisfy).mustRunAfter(create, up)
         collect.mustRunAfter(satisfy)
+        setup.dependsOn(create, up, satisfy, await)
 
         project.plugins.withId(PackagePlugin.ID, {
-            val setup = project.tasks.create(SetupTask.NAME, SetupTask::class.java)
             val deploy = project.tasks.getByName(DeployTask.NAME)
-
-            setup.dependsOn(create, up, satisfy, deploy, await)
+            setup.dependsOn(deploy)
 
             deploy.mustRunAfter(create, up, satisfy)
-            reload.mustRunAfter(deploy, satisfy)
+            reload.mustRunAfter(deploy)
             await.mustRunAfter(deploy)
         })
 

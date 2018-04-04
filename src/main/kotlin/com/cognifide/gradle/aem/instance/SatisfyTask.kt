@@ -35,6 +35,20 @@ open class SatisfyTask : SyncTask() {
     val allFiles: List<File>
         get() = packageProvider.allFiles(groupFilter)
 
+    @get:Internal
+    val packageGroups by lazy {
+        logger.info("Providing packages from local and remote sources.")
+
+        val fileGroups = packageProvider.filterGroups(groupFilter)
+        val files = fileGroups.flatMap { it.files }
+
+        logger.info("Packages provided (${files.size}).")
+
+        // TODO It is possible to avoid this by introducing parametrized type e.g FileResolver<PackageGroup>
+        @Suppress("unchecked_cast")
+        fileGroups as List<PackageGroup>
+    }
+
     init {
         group = AemTask.GROUP
         description = "Satisfies AEM by uploading & installing dependent packages on instance(s)."
@@ -46,24 +60,6 @@ open class SatisfyTask : SyncTask() {
 
     @TaskAction
     fun satisfy() {
-        val packageGroups = providePackageGroups()
-        satisfyPackagesOnInstances(packageGroups)
-    }
-
-    private fun providePackageGroups(): List<PackageGroup> {
-        logger.info("Providing packages from local and remote sources.")
-
-        val fileGroups = packageProvider.filterGroups(groupFilter)
-        val files = fileGroups.flatMap { it.files }
-
-        logger.info("Packages provided (${files.size}).")
-
-        // TODO It is possible to avoid this by introducing parametrized type e.g FileResolver<PackageGroup>
-        @Suppress("unchecked_cast")
-        return fileGroups as List<PackageGroup>
-    }
-
-    private fun satisfyPackagesOnInstances(packageGroups: List<PackageGroup>) {
         for (packageGroup in packageGroups) {
             logger.info("Satisfying group of packages '$group'.")
 
