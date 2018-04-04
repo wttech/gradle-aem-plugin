@@ -64,7 +64,7 @@ open class SatisfyTask : SyncTask() {
     // TODO shouldAwait should be controllable by each PackageGroup.awaitAfter
     private fun satisfyPackagesOnInstances(packageGroups: List<FileGroup>) {
         for (packageGroup in packageGroups) {
-            logger.info("Satisfying group of packages '$group'.")
+            logger.info("Satisfying group of packages '${packageGroup.name}'.")
 
             var shouldAwait = false
 
