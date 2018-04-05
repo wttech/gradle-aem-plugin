@@ -1,14 +1,22 @@
 package com.cognifide.gradle.aem.internal
 
+import org.apache.commons.lang3.time.StopWatch
 import org.gradle.api.Project
 import org.gradle.api.logging.Logger
 import org.gradle.internal.logging.progress.ProgressLoggerFactory
+import java.util.concurrent.TimeUnit
 
-class ProgressLogger(val project: Project, header: String) {
+class ProgressLogger(val project: Project, val header: String) {
 
-    val logger: Logger = project.logger
+    private val logger: Logger = project.logger
 
-    val progressLogger = create(header)
+    private val progressLogger = create(header)
+
+    private var stopWatch = StopWatch()
+
+    var progressEach: (String) -> Unit = { message -> logger.debug("$header: $message") }
+
+    var progressWindow = TimeUnit.SECONDS.toMillis(1)
 
     private fun create(header: String): Any {
         val progressLoggerFactoryClass: Class<*> = ProgressLoggerFactory::class.java
@@ -42,15 +50,22 @@ class ProgressLogger(val project: Project, header: String) {
     }
 
     fun started() {
+        stopWatch.start()
         invokeQuietly(progressLogger, "started")
     }
 
-    fun progress(msg: String) {
-        invokeQuietly(progressLogger, "progress", msg)
+    fun progress(message: String) {
+        invokeQuietly(progressLogger, "progress", message)
+
+        if (stopWatch.time >= progressWindow) {
+            stopWatch.run { reset(); start() }
+            progressEach(message)
+        }
     }
 
     fun completed() {
         invokeQuietly(progressLogger, "completed")
+        stopWatch.stop()
     }
 
 }

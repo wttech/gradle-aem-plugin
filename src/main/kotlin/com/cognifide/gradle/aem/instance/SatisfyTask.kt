@@ -61,7 +61,7 @@ open class SatisfyTask : SyncTask() {
     @TaskAction
     fun satisfy() {
         for (packageGroup in packageGroups) {
-            logger.info("Satisfying group of packages '$group'.")
+            logger.info("Satisfying group of packages '${packageGroup.name}'.")
 
             val instances = if (config.deployDistributed) {
                 Instance.filter(project, config.deployInstanceAuthorName)

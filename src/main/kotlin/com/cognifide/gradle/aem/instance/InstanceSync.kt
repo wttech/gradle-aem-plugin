@@ -34,9 +34,9 @@ import java.util.*
 class InstanceSync(val project: Project, val instance: Instance) {
 
     companion object {
-        private val PACKAGE_MANAGER_SERVICE_SUFFIX = "/crx/packmgr/service"
+        private const val PACKAGE_MANAGER_SERVICE_SUFFIX = "/crx/packmgr/service"
 
-        private val PACKAGE_MANAGER_LIST_SUFFIX = "/crx/packmgr/list.jsp"
+        private const val PACKAGE_MANAGER_LIST_SUFFIX = "/crx/packmgr/list.jsp"
     }
 
     val config = AemConfig.of(project)
@@ -215,13 +215,31 @@ class InstanceSync(val project: Project, val instance: Instance) {
     }
 
     fun uploadPackage(file: File = determineLocalPackage()): UploadResponse {
-        val sync = InstanceSync(project, instance)
-        val url = sync.jsonTargetUrl + "/?cmd=upload"
+        lateinit var exception: DeployException
+        for (i in 0..config.uploadRetryTimes) {
+            try {
+                return uploadPackageOnce(file)
+            } catch (e: DeployException) {
+                exception = e
+
+                if (i < config.uploadRetryTimes) {
+                    logger.warn("Cannot upload package to $instance.")
+                    logger.warn("Retrying (${i+1}/${config.uploadRetryTimes}) after delay.")
+                    Behaviors.waitFor(config.uploadRetryDelay)
+                }
+            }
+        }
+
+        throw exception
+    }
+
+    private fun uploadPackageOnce(file: File = determineLocalPackage()): UploadResponse {
+        val url = "$jsonTargetUrl/?cmd=upload"
 
         logger.info("Uploading package at path '{}' to URL '{}'", file.path, url)
 
         try {
-            val json = sync.postMultipart(url, mapOf(
+            val json = postMultipart(url, mapOf(
                     "package" to file,
                     "force" to (config.uploadForce || isSnapshot(file))
             ))
@@ -243,9 +261,27 @@ class InstanceSync(val project: Project, val instance: Instance) {
     }
 
     fun installPackage(uploadedPackagePath: String = determineRemotePackagePath()): InstallResponse {
-        val url = htmlTargetUrl + uploadedPackagePath + "/?cmd=install"
+        lateinit var exception: DeployException
+        for (i in 0..config.installRetryTimes) {
+            try {
+                return installPackageOnce(uploadedPackagePath)
+            } catch (e: DeployException) {
+                exception = e
+                if (i < config.installRetryTimes) {
+                    logger.warn("Cannot install package on $instance.")
+                    logger.warn("Retrying (${i+1}/${config.installRetryTimes}) after delay.")
+                    Behaviors.waitFor(config.installRetryDelay)
+                }
+            }
+        }
 
-        logger.info("Installing package using command: " + url)
+        throw exception
+    }
+
+    private fun installPackageOnce(uploadedPackagePath: String): InstallResponse {
+        val url = "$htmlTargetUrl$uploadedPackagePath/?cmd=install"
+
+        logger.info("Installing package using command: $url")
 
         try {
             val json = postMultipart(url, mapOf(
@@ -322,7 +358,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
     fun activatePackage(path: String = determineRemotePackagePath()): UploadResponse {
         val url = jsonTargetUrl + path + "/?cmd=replicate"
 
-        logger.info("Activating package using command: " + url)
+        logger.info("Activating package using command: $url")
 
         val json: String
         try {

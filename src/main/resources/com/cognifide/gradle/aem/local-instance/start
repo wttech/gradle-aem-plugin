@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 export CQ_PORT={{instance.httpPort}}
 export CQ_RUNMODE='{{instance.typeName}},local'

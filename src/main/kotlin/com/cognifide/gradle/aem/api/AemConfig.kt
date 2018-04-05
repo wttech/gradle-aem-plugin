@@ -22,6 +22,8 @@ import java.util.concurrent.TimeUnit
  *
  * Content paths which are used to compose a CRX package are being processed by copy task,
  * which automatically mark them as inputs so package is being rebuild on any JCR content or Vault files change.
+ *
+ * TODO https://docs.gradle.org/4.6/userguide/custom_tasks.html#sec:declaring_and_using_command_line_options
  */
 class AemConfig(
         @Transient
@@ -68,7 +70,7 @@ class AemConfig(
      * will be performed (only if distributed deploy is enabled).
      */
     @Input
-    var deployInstanceAuthorName: String = propParser.string("aem.deploy.instance.author.name","$deployEnvironment-${InstanceType.AUTHOR.type}")
+    var deployInstanceAuthorName: String = propParser.string("aem.deploy.instance.author.name", "$deployEnvironment-${InstanceType.AUTHOR.type}")
 
     /**
      * Defines maximum time after which initializing connection to AEM will be aborted (e.g on upload, install).
@@ -102,10 +104,34 @@ class AemConfig(
     var uploadForce: Boolean = propParser.boolean("aem.upload.force", true)
 
     /**
+     * Repeat upload when failed (brute-forcing).
+     */
+    @Input
+    var uploadRetryTimes: Int = propParser.int("aem.upload.retry.times", 3)
+
+    /**
+     * Time to wait after repeating failed upload.
+     */
+    @Input
+    var uploadRetryDelay: Long = propParser.long("aem.upload.retry.delay", TimeUnit.SECONDS.toMillis(30))
+
+    /**
      * Determines if when on package install, sub-packages included in CRX package content should be also installed.
      */
     @Input
     var installRecursive: Boolean = propParser.boolean("aem.install.recursive", true)
+
+    /**
+     * Repeat install when failed (brute-forcing).
+     */
+    @Input
+    var installRetryTimes: Int = propParser.int("aem.install.retry.times", 1)
+
+    /**
+     * Time to wait after repeating failed install.
+     */
+    @Input
+    var installRetryDelay: Long = propParser.long("aem.install.retry.delay", TimeUnit.SECONDS.toMillis(30))
 
     /**
      * Defines behavior for access control handling included in rep:policy nodes being a part of CRX package content.
@@ -355,6 +381,24 @@ class AemConfig(
     var satisfyGroupName = propParser.string("aem.satisfy.group.name", "*")
 
     /**
+     * Determines a Vault filter used to checkout JCR content from running AEM instance.
+     *
+     * By default it points to same filter being used to build CRX package,
+     * but could be customized to filter out files being checked out.
+     */
+    @Input
+    var checkoutFilterPath: String = propParser.string("aem.checkout.filterPath", vaultPath)
+
+    /**
+     * Determines which files will be deleted within running cleaning
+     * (e.g after checking out JCR content).
+     */
+    @Input
+    var cleanFilesDeleted: MutableList<String> = mutableListOf(
+            "**/.vlt"
+    )
+
+    /**
      * Initialize defaults that depends on concrete type of project.
      */
     init {
@@ -400,6 +444,10 @@ class AemConfig(
 
     fun remoteInstance(httpUrl: String, environment: String) {
         instance(RemoteInstance.create(httpUrl, environment))
+    }
+
+    fun remoteInstance(httpUrl: String, user: String, password: String) {
+        instance(RemoteInstance.create(httpUrl, user, password, deployEnvironment))
     }
 
     fun remoteInstance(httpUrl: String, user: String, password: String, environment: String) {

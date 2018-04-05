@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem.bundle
 
-import aQute.bnd.osgi.Jar
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.Dependency
@@ -27,17 +26,10 @@ class BundleCollector(val project: Project) {
     val allJars: Collection<File>
         get() {
             val jars = TreeSet<File>()
+
             archiveConfig?.apply { jars += allArtifacts.files.files }
-            installConfig?.apply { jars += resolve().toList() }
+            installConfig?.apply { jars += resolve() }
 
-            return jars.filter { isOsgiBundle(it) }
+            return jars.filter { it.extension == "jar" }
         }
-
-    private fun isOsgiBundle(it: File): Boolean {
-        return try {
-            !Jar(it).manifest.mainAttributes.getValue("Bundle-SymbolicName").isNullOrBlank()
-        } catch (e: Exception) {
-            false
-        }
-    }
 }

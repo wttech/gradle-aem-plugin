@@ -6,9 +6,9 @@ plugins {
 }
 
 group 'com.cognifide.gradle'
-version '3.0.1-SNAPSHOT'
+version '3.1.0'
 description = 'Gradle AEM Plugin'
-defaultTasks = ['clean', 'publishToMavenLocal']
+defaultTasks = ['clean', 'build', 'publishToMavenLocal']
 
 repositories {
     jcenter()

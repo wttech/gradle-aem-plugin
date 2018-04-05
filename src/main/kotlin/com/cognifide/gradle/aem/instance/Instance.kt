@@ -92,10 +92,10 @@ interface Instance : Serializable {
             return instances.filter { instance ->
                 when {
                     config.propParser.flag(AUTHORS_PROP) -> {
-                        Patterns.wildcard(instance.name, "${config.deployEnvironment}-${InstanceType.AUTHOR}")
+                        Patterns.wildcard(instance.name, "${config.deployEnvironment}-${InstanceType.AUTHOR}*")
                     }
                     config.propParser.flag(PUBLISHERS_PROP) -> {
-                        Patterns.wildcard(instance.name, "${config.deployEnvironment}-${InstanceType.PUBLISH}")
+                        Patterns.wildcard(instance.name, "${config.deployEnvironment}-${InstanceType.PUBLISH}*")
                     }
                     else -> Patterns.wildcards(instance.name, instanceFilter)
                 }
@@ -108,6 +108,10 @@ interface Instance : Serializable {
 
         fun locals(project: Project): List<LocalInstance> {
             return filter(project, LocalInstance::class)
+        }
+
+        fun handles(project: Project): List<LocalHandle> {
+            return Instance.locals(project).map { LocalHandle(project, it) }
         }
 
         fun remotes(project: Project): List<RemoteInstance> {

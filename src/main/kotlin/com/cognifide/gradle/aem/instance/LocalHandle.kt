@@ -16,7 +16,7 @@ import org.gradle.util.GFileUtils
 import org.zeroturnaround.zip.ZipUtil
 import java.io.File
 
-class LocalHandle(val project: Project, val sync: InstanceSync) {
+class LocalHandle(val project: Project, val instance: Instance) {
 
     companion object {
         val JAR_STATIC_FILES_PATH = "static/"
@@ -38,13 +38,11 @@ class LocalHandle(val project: Project, val sync: InstanceSync) {
         }
     }
 
-    val instance = sync.instance
-
     val logger: Logger = project.logger
 
     val config = AemConfig.of(project)
 
-    val dir = File("${config.instancesPath}/${instance.name}")
+    val dir = File("${config.instancesPath}/${instance.typeName}")
 
     val jar = File(dir, "aem-quickstart.jar")
 
@@ -207,7 +205,7 @@ class LocalHandle(val project: Project, val sync: InstanceSync) {
     val properties: Map<String, Any>
         get() {
             return mapOf(
-                    "instance" to sync.instance,
+                    "instance" to instance,
                     "instancePath" to dir.absolutePath,
                     "handle" to this
             )

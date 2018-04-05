@@ -82,6 +82,7 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
    * [Assemble all-in-one CRX package(s)](#assemble-all-in-one-crx-packages)
    * [Skip installed package resolution by download name.](#skip-installed-package-resolution-by-download-name)
 * [Known issues](#known-issues)
+   * [No OSGi services / components are registered](#no-osgi-services--components-are-registered)
    * [Caching task aemCompose](#caching-task-aemcompose)
    * [Vault tasks parallelism](#vault-tasks-parallelism)
    * [Files from SSH for aemCreate and <code>aemSatisfy</code>](#files-from-ssh-for-aemcreate-and-aemsatisfy)
@@ -89,7 +90,9 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
 
 ## Installation
 
-* Most effective way to experience Gradle AEM Plugin is to use [Quickstart](https://github.com/Cognifide/gradle-aem-example#quickstart) located in [example project](https://github.com/Cognifide/gradle-aem-example).
+* Most effective way to experience Gradle AEM Plugin is to use Quickstart located in:
+  * [AEM Single-Project Example](https://github.com/Cognifide/gradle-aem-single#quickstart),
+  * [AEM Multi-Project Example](https://github.com/Cognifide/gradle-aem-multi#quickstart).
 * The only needed software to start using plugin is to have installed on machine Java 8.
 * As a build command, it is recommended to use Gradle Wrapper (`gradlew`) instead of locally installed Gradle (`gradle`) to easily have same version of build tool installed on all environments. Only at first build time, wrapper will be automatically downloaded and installed, then reused.
 
@@ -110,7 +113,7 @@ buildscript {
     }
     
     dependencies {
-        classpath 'com.cognifide.gradle:aem-plugin:3.0.1-SNAPSHOT'
+        classpath 'com.cognifide.gradle:aem-plugin:3.1.0'
     }
 }
 
@@ -141,7 +144,11 @@ aem {
         deploySnapshots = []
         deployDistributed = false
         uploadForce = true
+        uploadRetryTimes = 6
+        uploadRetryDelay = 30000
         installRecursive = true
+        installRetryTimes = 3
+        installRetryDelay = 30000
         acHandling = "merge_preserve"
         contentPath = project.file("src/main/content")
         if (project == project.rootProject) {
@@ -227,7 +234,7 @@ Building and deploying to AEM via command: `gradlew` (default tasks will be used
 
 More detailed and always up-to-date information about configuration options is available [here](src/main/kotlin/com/cognifide/gradle/aem/api/AemConfig.kt).
 
-For multi project build configuration, please investigate [example project](https://github.com/Cognifide/gradle-aem-example).
+For multi project build configuration, please investigate [multi-module project](https://github.com/Cognifide/gradle-aem-multi).
 
 ### Base plugin tasks
 
@@ -275,7 +282,7 @@ Then file at path *build/aem/aemDebug/debug.json* with content below is being ge
     "displayName" : "root project 'example'",
     "path" : ":",
     "name" : "example",
-    "dir" : "C:\\Users\\krystian.panek\\Projects\\gradle-aem-example"
+    "dir" : "C:\\Users\\krystian.panek\\Projects\\gradle-aem-multi"
   },
   "packageProperties" : {
     "name" : "example",
@@ -417,13 +424,27 @@ Turn off then on both local and remote AEM instance(s).
 
 #### Task `aemAwait`
 
-Wait until all local AEM instance(s) be stable.
+Wait until all local or remote AEM instance(s) be stable.
+
+AEM Config Param | CMD Property | Default Value | Purpose
+--- | --- | --- | ---
+`awaitDelay` | *aem.await.delay* | `1000` | Time in milliseconds to postpone instance stability checks to avoid race condition related with actual operation being performed on AEM like starting JCR package installation or even creating launchpad.
+`awaitInterval` | *aem.await.interval* | `1000` | Time in milliseconds used as interval between next instance stability checks being performed. Optimization could be necessary only when instance is heavily loaded.
+`awaitTimeout` | *aem.await.timeout* | `900` | After each await interval, instance stability check is being performed. This value is a HTTP connection timeout (in millis) which must be smaller than interval to avoid race condition.
+`awaitTimes` | *aem.await.times* | `300` | Maximum intervals after which instance stability checks will be skipped if there is still some unstable instance left.
+`awaitFail` | *aem.await.fail* | `true` | If there is still some unstable instance left, then fail build except just logging warning.
+`awaitAssurances` | *aem.await.assurances* | `3L` | Number of intervals / additional instance stability checks to assure all stable instances.
+`awaitCondition` | *aem.await.condition* | `{ it.stable }` | Hook for customizing condition being an instance stability check. Scope of lambda is class: [InstanceState](src/main/kotlin/com/cognifide/gradle/aem/instance/InstanceState.kt). Use one of its method and / or from [BundleState](src/main/kotlin/com/cognifide/gradle/aem/instance/BundleState.kt) to get customized behavior.
 
 #### Task `aemCollect`
 
 Composes ZIP package from all CRX packages being satisfied and built. Available methods:
 
 * all inherited from [ZIP task](https://docs.gradle.org/3.5/dsl/org.gradle.api.tasks.bundling.Zip.html).
+
+Screenshot below presents generated ZIP package which is a result of running `gradlew :aemCollect` for [multi-module project](https://github.com/Cognifide/gradle-aem-multi).
+
+![Collect task - ZIP Overview](docs/collect-zip-overview.png)
 
 ### Expandable properties
 
@@ -541,11 +562,12 @@ Rules:
 
 ### Understand why there are one or two plugins to be applied in build script
 
-Gradle AEM plugin architecture is splitted into 3 plugins to properly fit into Gradle tasks structure correctly.
+Gradle AEM plugin architecture is splitted into 4 plugins to properly fit into Gradle tasks structure correctly.
 
-* base (`com.cognifide.aem.base`), applied transparently by instance or package plugin, provides AEM config section to build script,
+* base (`com.cognifide.aem.base`), applied transparently by other plugins, provides AEM config section to build script and general tasks: `aemDebug`, `aemVlt` etc.
 * instance (`com.cognifide.aem.instance`), should be applied only at root project (once), provides instance related tasks: `aemAwait`, `aemSetup`, `aemCreate` etc,
-* package (`com.cognifide.aem.package`), could be applied to all projects that are composing CRX packages, provides CRX package related tasks: `aemCompose`, `aemDeploy` etc.
+* package (`com.cognifide.aem.package`), should be applied to all projects that are composing CRX packages from *JCR content only*, provides CRX package related tasks: `aemCompose`, `aemDeploy` etc.
+* bundle (`com.cognifide.aem.bundle`), should be applied to all projects that are composing CRX packages from both *OSGi bundle* being built and optionally *JCR content*, extends package plugin.
 
 Most often, Gradle commands are being launched from project root and tasks are being run by their name e.g `aemSatisfy` (which is not fully qualified, better if it will be `:aemSatisfy` of root project).
 Let's imagine if task `aemSatisfy` will come from package plugin, then Gradle will execute more than one `aemSatisfy` (for all projects that have plugin applied), so that this is unintended behavior.
@@ -703,6 +725,28 @@ gradlew aemInstall -Paem.deploy.skipDownloadName=true
 Only matters when Vault properties file is customized then that property could be used to eliminate conflicts.
 
 ## Known issues
+
+### No OSGi services / components are registered
+
+Since AEM 6.2 it is recommended to use new OSGi service component annotations to register OSGi components instead SCR annotations (still supported, but not by Gradle AEM Plugin).
+
+For the reference, please read post on official [Adobe Blog](http://blogs.adobe.com/experiencedelivers/experience-management/using-osgi-annotations-aem6-2/).
+
+Basically, Gradle AEM Plugin is designed to be used while implementing new projects on AEM in version greater than 6.2.
+Because, of that fact, there is no direct possibility to reuse code written for older AEM's which is using SCR annotations.
+However it is very easy to migrate these annotations to new ones and generally speaking it is not much expensive task to do.
+
+```java
+import org.apache.felix.scr.annotations.Component;
+```
+
+->
+
+```java
+import org.osgi.service.component.annotations.Component;
+```
+
+New API fully covers functionality of old one, so nothing to worry about while migrating.
 
 ### Caching task `aemCompose`
 
