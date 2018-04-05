@@ -218,6 +218,7 @@ aem {
         satisfyBundlePath = 
         satisfyBundleProperties = { bundle -> [:] }
         satisfyGroupName = "*"
+        trustAllCertificates = false
     }
 }
 

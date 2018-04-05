@@ -407,6 +407,13 @@ class AemConfig(
     )
 
     /**
+     * Determines if connection to untrusted (e.g. self-signed) SSL certificates should be allowed.
+     * By default allow only tursted ssl connections.
+     */
+    @Input
+    var trustAllCertificates: Boolean = false
+
+    /**
      * Initialize defaults that depends on concrete type of project.
      */
     init {

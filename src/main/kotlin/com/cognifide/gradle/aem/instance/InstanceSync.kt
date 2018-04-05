@@ -19,10 +19,13 @@ import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.client.methods.HttpPost
 import org.apache.http.client.methods.HttpRequestBase
+import org.apache.http.conn.ssl.NoopHostnameVerifier
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory
 import org.apache.http.entity.mime.MultipartEntityBuilder
 import org.apache.http.impl.client.BasicCredentialsProvider
 import org.apache.http.impl.client.HttpClientBuilder
 import org.apache.http.message.BasicNameValuePair
+import org.apache.http.ssl.SSLContextBuilder
 import org.gradle.api.Project
 import org.jsoup.Jsoup
 import org.jsoup.parser.Parser
@@ -112,7 +115,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
     }
 
     fun createHttpClient(): HttpClient {
-        return HttpClientBuilder.create()
+        val httpClientBuilder = HttpClientBuilder.create()
                 .addInterceptorFirst(PreemptiveAuthInterceptor())
                 .setDefaultRequestConfig(RequestConfig.custom()
                         .setConnectTimeout(config.deployConnectionTimeout)
@@ -122,7 +125,18 @@ class InstanceSync(val project: Project, val instance: Instance) {
                 .setDefaultCredentialsProvider(BasicCredentialsProvider().apply {
                     setCredentials(AuthScope.ANY, UsernamePasswordCredentials(instance.user, instance.password))
                 })
+        if (config.trustAllCertificates) {
+            httpClientBuilder.setSSLSocketFactory(createSslConnectionSocketFactory())
+        }
+
+        return httpClientBuilder.build()
+    }
+
+    private fun createSslConnectionSocketFactory(): SSLConnectionSocketFactory {
+        val sslContext = SSLContextBuilder()
+                .loadTrustMaterial(null, { _, _ -> true })
                 .build()
+        return SSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE)
     }
 
     private fun createEntityUrlencoded(params: Map<String, Any>): HttpEntity {
