@@ -39,14 +39,13 @@ open class SatisfyTask : SyncTask() {
     val packageGroups by lazy {
         logger.info("Providing packages from local and remote sources.")
 
-        val fileGroups = packageProvider.filterGroups(groupFilter)
-        val files = fileGroups.flatMap { it.files }
+        val packageGroups = packageProvider.filterGroups(groupFilter)
+        val packageFiles = packageGroups.flatMap { it.files }
 
-        logger.info("Packages provided (${files.size}).")
+        logger.info("Packages provided (${packageFiles.size}).")
 
-        // TODO It is possible to avoid this by introducing parametrized type e.g FileResolver<PackageGroup>
         @Suppress("unchecked_cast")
-        fileGroups as List<PackageGroup>
+        packageGroups as List<PackageGroup>
     }
 
     init {
@@ -66,7 +65,7 @@ open class SatisfyTask : SyncTask() {
             val instances = if (config.deployDistributed) {
                 Instance.filter(project, config.deployInstanceAuthorName)
             } else {
-                filterInstances()
+                Instance.filter(project)
             }.filter { Patterns.wildcard(it.name, packageGroup.instance) }
 
             var satisfied = false

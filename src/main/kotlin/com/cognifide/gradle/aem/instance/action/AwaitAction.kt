@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.instance.action
 
+import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.instance.Instance
 import com.cognifide.gradle.aem.instance.InstanceException
 import com.cognifide.gradle.aem.instance.InstanceState
@@ -41,7 +42,7 @@ class AwaitAction(project: Project, val instances: List<Instance>) : AbstractAct
                 timer.reset()
             }
 
-            progressLogger.progress(progressFor(instanceStates, timer))
+            progressLogger.progress(progressFor(instanceStates, config, timer))
 
             // Detect timeout when same checksum is not being updated so long
             if (times > 0 && timer.ticks > times) {
@@ -80,12 +81,9 @@ class AwaitAction(project: Project, val instances: List<Instance>) : AbstractAct
         progressLogger.completed()
     }
 
-    private fun progressFor(states: List<InstanceState>, timer: Behaviors.Timer) =
-            (progressTicks(timer.ticks, times) + " " + states.joinToString(" | ") { progressFor(it, timer.ticks) }).trim()
-            (progressTicks(timer.ticks, 0) + " " + states.joinToString(" | ") { progressFor(it) }).trim()
-
-    private fun progressFor(states: List<InstanceState>, config: AemConfig, timer: Behaviors.Timer) =
-            (progressTicks(timer.ticks, config.awaitTimes) + " " + states.joinToString(" | ") { progressFor(it) }).trim()
+    private fun progressFor(states: List<InstanceState>, config: AemConfig, timer: Behaviors.Timer): String {
+        return (progressTicks(timer.ticks, config.awaitTimes) + " " + states.joinToString(" | ") { progressFor(it) }).trim()
+    }
 
     private fun progressFor(state: InstanceState): String {
         return "${state.instance.name}: ${progressIndicator(state)} ${state.bundleState.statsWithLabels} [${state.bundleState.stablePercent}]"
