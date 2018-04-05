@@ -15,13 +15,26 @@ class PackageGroup(resolver: FileResolver, name: String) : FileGroup(resolver, n
 
     private val project = resolver.project
 
+    /**
+     * Instance name filter for excluding group from deployment.
+     */
     var instance = "*"
 
-    var doInitialize: (InstanceSync) -> Unit = {}
+    /**
+     * Hook for preparing instance before deploying packages
+     */
+    var initializer: (InstanceSync) -> Unit = {}
 
-    var doFinalize: (InstanceSync) -> Unit = {}
+    /**
+     * Hook for cleaning instance after deploying packages
+     */
+    var finalizer: (InstanceSync) -> Unit = {}
 
-    var doSatisfied: (List<Instance>) -> Unit = { await() }
+    /**
+     * Hook after deploying all packages to all instances called only when
+     * at least one package was deployed on any instance.
+     */
+    var completer: (List<Instance>) -> Unit = { await() }
 
     private fun performAction(action: AbstractAction, closure: Closure<*>) {
         action.configure(closure).perform()

@@ -9,6 +9,9 @@ import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.internal.ProgressLogger
 import org.gradle.api.Project
 
+/**
+ * Wait until all instances be stable.
+ */
 open class AwaitAction(project: Project, val instances: List<Instance>) : AbstractAction(project) {
 
     var times = config.awaitTimes

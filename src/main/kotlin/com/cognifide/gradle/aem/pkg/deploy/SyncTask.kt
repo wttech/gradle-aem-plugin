@@ -6,6 +6,7 @@ import com.cognifide.gradle.aem.instance.InstanceSync
 import com.cognifide.gradle.aem.instance.LocalHandle
 import com.cognifide.gradle.aem.instance.LocalInstance
 import com.cognifide.gradle.aem.instance.action.AwaitAction
+import com.cognifide.gradle.aem.instance.action.ReloadAction
 
 abstract class SyncTask : AemDefaultTask() {
 
@@ -53,6 +54,10 @@ abstract class SyncTask : AemDefaultTask() {
 
     protected fun awaitStableLocalInstances() {
         AwaitAction(project, Instance.locals(project)).perform()
+    }
+
+    protected fun reloadInstances() {
+        ReloadAction(project, Instance.filter(project)).perform()
     }
 
 }

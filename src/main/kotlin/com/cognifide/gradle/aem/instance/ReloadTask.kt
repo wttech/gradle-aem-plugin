@@ -15,8 +15,7 @@ open class ReloadTask : SyncTask() {
 
     @TaskAction
     fun reload() {
-        synchronizeInstances { it.reload() }
-        awaitStableInstances()
+        reloadInstances()
     }
 
 }

@@ -316,30 +316,27 @@ class InstanceSync(val project: Project, val instance: Instance) {
         }
     }
 
-    fun satisfyPackage(file: File, initializer: (InstanceSync) -> Unit = {}, finalizer: (InstanceSync) -> Unit = {}): Boolean {
-        val pkg = determineRemotePackage(file, config.satisfyRefreshing)
-
-        return if (pkg == null) {
-            satisfyPackageForced(file, initializer, finalizer)
-            true
-        } else {
-            if (!pkg.installed || isSnapshot(file)) {
-                satisfyPackageForced(file, initializer, finalizer)
-                true
-            } else {
-                false
-            }
-        }
-    }
-
-    fun satisfyPackageForced(file: File, initializer: (InstanceSync) -> Unit = {}, finalizer: (InstanceSync) -> Unit = {}) {
-        initializer(this)
-        deployPackage(file, config.deployDistributed)
-        finalizer(this)
-    }
-
     fun isSnapshot(file: File): Boolean {
         return Patterns.wildcard(file, config.deploySnapshots)
+    }
+
+    fun isSatisfiablePackage(file: File): Boolean {
+        if (isSnapshot(file)) {
+            return true
+        }
+
+        val pkg = determineRemotePackage(file, config.satisfyRefreshing)
+
+        return pkg == null || !pkg.installed
+    }
+
+    fun satisfyPackage(file: File, force: Boolean = false): Boolean {
+        if (force || isSatisfiablePackage(file)) {
+            deployPackage(file, config.deployDistributed)
+            return true
+        }
+
+        return false
     }
 
     fun deployPackage(file: File = determineLocalPackage(), distributed: Boolean) {

@@ -68,17 +68,24 @@ open class SatisfyTask : SyncTask() {
                 Instance.filter(project)
             }.filter { Patterns.wildcard(it.name, packageGroup.instance) }
 
-            var satisfied = false
+            var anyPackageSatisfied = false
             synchronizeInstances({ sync ->
-                packageGroup.files.onEach {
-                    if (sync.satisfyPackage(it, packageGroup.doInitialize, packageGroup.doFinalize)) {
-                        satisfied = true
+                val packages = packageGroup.files.filter { sync.isSatisfiablePackage(it) }
+                if (packages.isEmpty()) {
+                    logger.info("No packages to satisfy.")
+                } else {
+                    packageGroup.initializer(sync)
+                    packages.forEach { pkg ->
+                        if (sync.satisfyPackage(pkg, true)) {
+                            anyPackageSatisfied = true
+                        }
                     }
+                    packageGroup.finalizer(sync)
                 }
             }, instances)
 
-            if (satisfied) {
-                packageGroup.doSatisfied(instances)
+            if (anyPackageSatisfied) {
+                packageGroup.completer(instances)
             }
         }
     }
