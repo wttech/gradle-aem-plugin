@@ -316,20 +316,26 @@ class InstanceSync(val project: Project, val instance: Instance) {
         }
     }
 
-    fun satisfyPackage(file: File): Boolean {
+    fun satisfyPackage(file: File, initializer: (InstanceSync) -> Unit = {}, finalizer: (InstanceSync) -> Unit = {}): Boolean {
         val pkg = determineRemotePackage(file, config.satisfyRefreshing)
 
         return if (pkg == null) {
-            deployPackage(file, config.deployDistributed)
+            satisfyPackageForced(file, initializer, finalizer)
             true
         } else {
             if (!pkg.installed || isSnapshot(file)) {
-                deployPackage(file, config.deployDistributed)
+                satisfyPackageForced(file, initializer, finalizer)
                 true
             } else {
                 false
             }
         }
+    }
+
+    fun satisfyPackageForced(file: File, initializer: (InstanceSync) -> Unit = {}, finalizer: (InstanceSync) -> Unit = {}) {
+        initializer(this)
+        deployPackage(file, config.deployDistributed)
+        finalizer(this)
     }
 
     fun isSnapshot(file: File): Boolean {
@@ -458,13 +464,13 @@ class InstanceSync(val project: Project, val instance: Instance) {
         }
     }
 
-    fun reload() {
+    fun reload(delay: Long = config.reloadDelay) {
         try {
             logger.info("Triggering instance(s) shutdown")
             postUrlencoded(vmStatUrl, mapOf("shutdown_type" to "Restart"))
 
             logger.info("Awaiting instance(s) shutdown")
-            Behaviors.waitFor(config.reloadDelay)
+            Behaviors.waitFor(delay)
         } catch (e: DeployException) {
             throw InstanceException("Cannot reload instance $instance", e)
         }

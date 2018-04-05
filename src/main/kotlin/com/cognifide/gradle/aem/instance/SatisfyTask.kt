@@ -71,14 +71,14 @@ open class SatisfyTask : SyncTask() {
             var satisfied = false
             synchronizeInstances({ sync ->
                 packageGroup.files.onEach {
-                    if (sync.satisfyPackage(it)) {
+                    if (sync.satisfyPackage(it, packageGroup.doInitialize, packageGroup.doFinalize)) {
                         satisfied = true
                     }
                 }
             }, instances)
 
             if (satisfied) {
-                packageGroup.afterSatisfy(instances)
+                packageGroup.doSatisfied(instances)
             }
         }
     }

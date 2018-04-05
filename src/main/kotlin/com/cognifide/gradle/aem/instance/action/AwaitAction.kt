@@ -9,7 +9,7 @@ import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.internal.ProgressLogger
 import org.gradle.api.Project
 
-class AwaitAction(project: Project, val instances: List<Instance>) : AbstractAction(project) {
+open class AwaitAction(project: Project, val instances: List<Instance>) : AbstractAction(project) {
 
     var times = config.awaitTimes
 

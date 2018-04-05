@@ -1,15 +1,13 @@
 package com.cognifide.gradle.aem.pkg.deploy
 
 import com.cognifide.gradle.aem.api.AemDefaultTask
-import com.cognifide.gradle.aem.instance.*
+import com.cognifide.gradle.aem.instance.Instance
+import com.cognifide.gradle.aem.instance.InstanceSync
+import com.cognifide.gradle.aem.instance.LocalHandle
+import com.cognifide.gradle.aem.instance.LocalInstance
 import com.cognifide.gradle.aem.instance.action.AwaitAction
-import com.cognifide.gradle.aem.internal.PropertyParser
-import org.gradle.api.tasks.Internal
 
 abstract class SyncTask : AemDefaultTask() {
-
-    @Internal
-    protected val propertyParser = PropertyParser(project)
 
     protected fun synchronizeInstances(synchronizer: (InstanceSync) -> Unit) {
         synchronizeInstances(synchronizer, Instance.filter(project))

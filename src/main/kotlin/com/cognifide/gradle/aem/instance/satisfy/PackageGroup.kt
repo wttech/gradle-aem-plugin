@@ -2,7 +2,9 @@ package com.cognifide.gradle.aem.instance.satisfy
 
 import com.cognifide.gradle.aem.instance.Instance
 import com.cognifide.gradle.aem.instance.InstanceSync
+import com.cognifide.gradle.aem.instance.action.AbstractAction
 import com.cognifide.gradle.aem.instance.action.AwaitAction
+import com.cognifide.gradle.aem.instance.action.ReloadAction
 import com.cognifide.gradle.aem.internal.file.resolver.FileGroup
 import com.cognifide.gradle.aem.internal.file.resolver.FileResolution
 import com.cognifide.gradle.aem.internal.file.resolver.FileResolver
@@ -11,51 +13,26 @@ import java.io.File
 
 class PackageGroup(resolver: FileResolver, name: String) : FileGroup(resolver, name) {
 
+    private val project = resolver.project
+
     var instance = "*"
 
-    var await = true
+    var doInitialize: (InstanceSync) -> Unit = {}
 
-    var reload = false
+    var doFinalize: (InstanceSync) -> Unit = {}
 
-    private val firsts = mutableListOf<() -> Unit>()
+    var doSatisfied: (List<Instance>) -> Unit = { await() }
 
-    private val lasts = mutableListOf<() -> Unit>()
-
-    private var awaitAction: (List<Instance>) -> Unit = await()
-
-    private var reloadAction: (List<Instance>) -> Unit = reload()
-
-    fun doFirst(action: () -> Unit) {
-        firsts.add(action)
-    }
-
-    fun doLast(action: () -> Unit) {
-        lasts.add(action)
+    private fun performAction(action: AbstractAction, closure: Closure<*>) {
+        action.configure(closure).perform()
     }
 
     fun await(closure: Closure<*> = Closure.IDENTITY): (List<Instance>) -> Unit {
-        await = true
-        awaitAction = { instances -> AwaitAction(resolver.project, instances).configure(closure) }
-
-        return awaitAction
+        return { performAction(AwaitAction(project, it), closure) }
     }
 
-    fun reload(): (List<Instance>) -> Unit {
-        reload = true
-        reloadAction = { instances -> instances.forEach { InstanceSync(resolver.project, it).reload() } }
-
-        return reloadAction
-    }
-
-    fun afterSatisfy(instances: List<Instance>) {
-        firsts.forEach { it() }
-        if (await) {
-            awaitAction(instances)
-        }
-        if (reload) {
-            reloadAction(instances)
-        }
-        lasts.forEach { it() }
+    fun reload(closure: Closure<*> = Closure.IDENTITY): (List<Instance>) -> Unit {
+        return { performAction(ReloadAction(project, it), closure) }
     }
 
     override fun createResolution(id: String, resolver: (FileResolution) -> File): FileResolution {
