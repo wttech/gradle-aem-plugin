@@ -16,7 +16,7 @@ import org.gradle.util.GFileUtils
 import org.zeroturnaround.zip.ZipUtil
 import java.io.File
 
-class LocalHandle(val project: Project, val sync: InstanceSync) {
+class LocalHandle(val project: Project, val instance: Instance) {
 
     companion object {
         val JAR_STATIC_FILES_PATH = "static/"
@@ -37,8 +37,6 @@ class LocalHandle(val project: Project, val sync: InstanceSync) {
             return "Script(commandLine=$commandLine)"
         }
     }
-
-    val instance = sync.instance
 
     val logger: Logger = project.logger
 
@@ -207,7 +205,7 @@ class LocalHandle(val project: Project, val sync: InstanceSync) {
     val properties: Map<String, Any>
         get() {
             return mapOf(
-                    "instance" to sync.instance,
+                    "instance" to instance,
                     "instancePath" to dir.absolutePath,
                     "handle" to this
             )

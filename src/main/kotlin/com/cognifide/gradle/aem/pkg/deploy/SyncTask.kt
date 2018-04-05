@@ -45,7 +45,7 @@ abstract class SyncTask : AemDefaultTask() {
     protected fun synchronizeLocalInstance(handler: (LocalHandle) -> Unit, instance: LocalInstance) {
         logger.info("Synchronizing with: $instance")
 
-        handler(LocalHandle(project, InstanceSync(project, instance)))
+        handler(LocalHandle(project, instance))
     }
 
     protected fun awaitStableInstances() {
