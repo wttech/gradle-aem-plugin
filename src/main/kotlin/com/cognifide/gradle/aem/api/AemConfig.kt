@@ -454,6 +454,10 @@ class AemConfig(
         instance(RemoteInstance.create(httpUrl, environment))
     }
 
+    fun remoteInstance(httpUrl: String, user: String, password: String) {
+        instance(RemoteInstance.create(httpUrl, user, password, deployEnvironment))
+    }
+
     fun remoteInstance(httpUrl: String, user: String, password: String, environment: String) {
         instance(RemoteInstance.create(httpUrl, user, password, environment))
     }
