@@ -487,7 +487,7 @@ Task specific:
    * `filterRoots` - after using method `includeContent` of `aemCompose` task, all Vault filter roots are being gathered. This property contains all these XML tags concatenated especially useful for building assemblies. If no projects will be included, then this variable will contain a single filter root with bundle path to be able to deploy auto-generated package with JAR file only.
 * `aemVlt` - properties are being injected to command specified in `aem.vlt.command` property. Following properties are being used internally also by `aemCheckout`.
    * `instance` - instance used to communicate with while performing Vault commands. Determined by (order take precedence): properties `aem.vlt.instance`, `aem.deploy.instance.list`, `aem.deploy.instance.name` and as fallback first instance which name matches filter `*-author`.
-   * `filter` - file name or path to Vault workspace filter file  *META-INF/vault/filter.xml*. Determined by (order take precedence): property: `aem.vlt.filter`, configuration `contentPath` property suffixed with `META-INF/vault/filter.xml`. 
+   * `filter` - file name or path to Vault workspace filter file  *META-INF/vault/filter.xml*. Determined by (order take precedence): property: `aem.checkout.filterPath`, configuration `contentPath` property suffixed with `META-INF/vault/filter.xml`. 
 
 ## How to's
 
@@ -664,15 +664,15 @@ To e.g set additional **run mode** named *nosamplecontent*:
 E.g for subproject `:content`:
    
 ```bash
-gradlew :content:aemSync -Paem.vlt.filter=custom-filter.xml
-gradlew :content:aemSync -Paem.vlt.filter=src/main/content/META-INF/vault/custom-filter.xml
-gradlew :content:aemSync -Paem.vlt.filter=C:/aem/custom-filter.xml
+gradlew :content:aemSync -Paem.checkout.filterPath=custom-filter.xml
+gradlew :content:aemSync -Paem.checkout.filterPath=src/main/content/META-INF/vault/custom-filter.xml
+gradlew :content:aemSync -Paem.checkout.filterPath=C:/aem/custom-filter.xml
 ```
 
 ### Check out and clean JCR content using filter roots specified explicitly
    
 ```bash
-gradlew :content:aemSync -Paem.vlt.filterRoots=[/etc/tags/example,/content/dam/example]
+gradlew :content:aemSync -Paem.checkout.filterRoots=[/etc/tags/example,/content/dam/example]
 ```
 
 ### Assemble all-in-one CRX package(s)
