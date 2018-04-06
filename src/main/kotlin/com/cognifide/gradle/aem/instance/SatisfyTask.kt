@@ -67,7 +67,7 @@ open class SatisfyTask : SyncTask() {
 
             synchronizeInstances({ sync ->
                 val packageStates = packageGroup.files.fold(mutableMapOf<File, ListResponse.Package?>(), { states, pkg ->
-                    states[pkg] = sync.determineRemotePackage(pkg); states
+                    states[pkg] = sync.determineRemotePackage(pkg, config.satisfyRefreshing); states
                 })
                 val anyPackageSatisfiable = packageStates.any {
                     sync.isSnapshot(it.key) || it.value == null || !it.value!!.installed
