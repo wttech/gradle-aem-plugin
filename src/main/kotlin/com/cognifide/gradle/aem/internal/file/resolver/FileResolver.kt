@@ -69,7 +69,7 @@ open class FileResolver(val project: Project, val downloadDir: File) {
     }
 
     fun filterGroups(filter: (String) -> Boolean): List<FileGroup> {
-        return groups.filter { filter(it.name) }
+        return groups.filter { filter(it.name) }.filter { it.resolutions.isNotEmpty() }
     }
 
     fun dependency(notation: Any) {

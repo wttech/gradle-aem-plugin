@@ -320,25 +320,6 @@ class InstanceSync(val project: Project, val instance: Instance) {
         return Patterns.wildcard(file, config.deploySnapshots)
     }
 
-    fun isSatisfiablePackage(file: File): Boolean {
-        if (isSnapshot(file)) {
-            return true
-        }
-
-        val pkg = determineRemotePackage(file, config.satisfyRefreshing)
-
-        return pkg == null || !pkg.installed
-    }
-
-    fun satisfyPackage(file: File, force: Boolean = false): Boolean {
-        if (force || isSatisfiablePackage(file)) {
-            deployPackage(file, config.deployDistributed)
-            return true
-        }
-
-        return false
-    }
-
     fun deployPackage(file: File = determineLocalPackage(), distributed: Boolean) {
         if (distributed) {
             distributePackage(file)

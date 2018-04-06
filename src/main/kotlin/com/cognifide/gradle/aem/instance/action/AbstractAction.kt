@@ -13,7 +13,7 @@ abstract class AbstractAction(val project: Project) : InstanceAction {
     val logger = project.logger
 
     fun configure(closure: Closure<*>): AbstractAction {
-        ConfigureUtil.configure(closure, this)
+        ConfigureUtil.configureSelf(closure, this)
 
         return this
     }
