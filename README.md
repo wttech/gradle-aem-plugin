@@ -145,6 +145,7 @@ aem {
         deployParallel = true
         deploySnapshots = []
         deployDistributed = false
+        deployTrustingAllSSLCertificates = true
         uploadForce = true
         uploadRetryTimes = 6
         uploadRetryDelay = 30000
@@ -218,7 +219,6 @@ aem {
         satisfyBundlePath = 
         satisfyBundleProperties = { bundle -> [:] }
         satisfyGroupName = "*"
-        trustAllCertificates = false
     }
 }
 

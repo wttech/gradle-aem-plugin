@@ -125,7 +125,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
                 .setDefaultCredentialsProvider(BasicCredentialsProvider().apply {
                     setCredentials(AuthScope.ANY, UsernamePasswordCredentials(instance.user, instance.password))
                 })
-        if (config.trustAllCertificates) {
+        if (config.deployTrustingAllSSLCertificates) {
             httpClientBuilder.setSSLSocketFactory(createSslConnectionSocketFactory())
         }
 
