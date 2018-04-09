@@ -70,13 +70,20 @@ class AemConfig(
      * will be performed (only if distributed deploy is enabled).
      */
     @Input
-    var deployInstanceAuthorName: String = propParser.string("aem.deploy.instance.author.name", "$deployEnvironment-${InstanceType.AUTHOR.type}")
+    var deployInstanceAuthorName: String = propParser.string("aem.deploy.instance.author.name", "$deployEnvironment-${InstanceType.AUTHOR}*")
 
     /**
      * Defines maximum time after which initializing connection to AEM will be aborted (e.g on upload, install).
      */
     @Input
     var deployConnectionTimeout: Int = propParser.int("aem.deploy.connectionTimeout", 5000)
+
+    /**
+     * Determines if connection to untrusted (e.g. self-signed) SSL certificates should be allowed.
+     * By default allows all SSL connections.
+     */
+    @Input
+    var deployConnectionUntrustedSsl: Boolean = propParser.boolean("aem.deploy.connectionUntrustedSsl", true)
 
     /**
      * Perform deploy action (upload, install or activate) in parallel to multiple instances at once.
@@ -96,13 +103,6 @@ class AemConfig(
      */
     @Input
     var deployDistributed: Boolean = propParser.boolean("aem.deploy.distributed", false)
-
-    /**
-     * Determines if connection to untrusted (e.g. self-signed) SSL certificates should be allowed.
-     * By default allows all ssl connections.
-     */
-    @Input
-    var deployTrustingAllSSLCertificates: Boolean = propParser.boolean("aem.deploy.trustingAllSSLCertificates", true)
 
     /**
      * Force upload CRX package regardless if it was previously uploaded.
