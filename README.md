@@ -49,7 +49,6 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
       * [Task aemVlt](#task-aemvlt)
       * [Task aemDebug](#task-aemdebug)
    * [Package plugin tasks](#package-plugin-tasks)
-      * [Task aemSatisfy](#task-aemsatisfy)
       * [Task aemCompose](#task-aemcompose)
       * [Task aemDeploy](#task-aemdeploy)
       * [Task aemUpload](#task-aemupload)
@@ -65,6 +64,7 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
       * [Task aemUp](#task-aemup)
       * [Task aemDown](#task-aemdown)
       * [Task aemReload](#task-aemreload)
+      * [Task aemSatisfy](#task-aemsatisfy)
       * [Task aemAwait](#task-aemawait)
       * [Task aemCollect](#task-aemcollect)
    * [Expandable properties](#expandable-properties)
@@ -80,6 +80,8 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
    * [Check out and clean JCR content using filter at custom path](#check-out-and-clean-jcr-content-using-filter-at-custom-path)
    * [Check out and clean JCR content using filter roots specified explicitly](#check-out-and-clean-jcr-content-using-filter-roots-specified-explicitly)
    * [Assemble all-in-one CRX package(s)](#assemble-all-in-one-crx-packages)
+   * [Include additional OSGi bundle into CRX package](#include-additional-osgi-bundle-into-crx-package)
+   * [Embed JAR file into built OSGi bundle](#embed-jar-file-into-built-osgi-bundle)
    * [Skip installed package resolution by download name.](#skip-installed-package-resolution-by-download-name)
 * [Known issues](#known-issues)
    * [No OSGi services / components are registered](#no-osgi-services--components-are-registered)
@@ -91,8 +93,8 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
 ## Installation
 
 * Most effective way to experience Gradle AEM Plugin is to use Quickstart located in:
-  * [AEM Single-Project Example](https://github.com/Cognifide/gradle-aem-single#quickstart),
-  * [AEM Multi-Project Example](https://github.com/Cognifide/gradle-aem-multi#quickstart).
+  * [AEM Single-Project Example](https://github.com/Cognifide/gradle-aem-single#quickstart) - recommended for **application** development,
+  * [AEM Multi-Project Example](https://github.com/Cognifide/gradle-aem-multi#quickstart) - recommended for **project** development,
 * The only needed software to start using plugin is to have installed on machine Java 8.
 * As a build command, it is recommended to use Gradle Wrapper (`gradlew`) instead of locally installed Gradle (`gradle`) to easily have same version of build tool installed on all environments. Only at first build time, wrapper will be automatically downloaded and installed, then reused.
 
@@ -143,6 +145,7 @@ aem {
         deployParallel = true
         deploySnapshots = []
         deployDistributed = false
+        deployTrustingAllSSLCertificates = true
         uploadForce = true
         uploadRetryTimes = 6
         uploadRetryDelay = 30000
@@ -328,23 +331,6 @@ Then file at path *build/aem/aemDebug/debug.json* with content below is being ge
 ```
 ### Package plugin tasks
 
-#### Task `aemSatisfy` 
-
-Upload & install dependent CRX package(s) before deployment. Available methods:
-
-* `local(path: String)`, use CRX package from local file system.
-* `local(file: File)`, same as above, but file can be even located outside the project.
-* `url(url: String)`, use CRX package that will be downloaded from specified URL to local temporary directory.
-* `downloadHttp(url: String)`, download package using HTTP with no auth.
-* `downloadHttpAuth(url: String, username: String, password: String)`, download package using HTTP with Basic Auth support.
-* `downloadHttpAuth(url: String)`, as above, but credentials must be specified in variables: `aem.http.username`, `aem.http.password`. Optionally enable SSL errors checking by setting property `aem.http.ignoreSSL` to `false`.
-* `downloadSmbAuth(url: String, domain: String, username: String, password: String)`, download package using SMB protocol.
-* `downloadSmbAuth(url: String)`, as above, but credentials must be specified in variables: `aem.smb.domain`, `aem.smb.username`, `aem.smb.password`.
-* `downloadSftpAuth(url: String, username: String, password: String)`, download package using SFTP protocol.
-* `downloadSftpAuth(url: String)`, as above, but credentials must be specified in variables: `aem.sftp.username`, `aem.sftp.password`. Optionally enable strict host checking by setting property `aem.sftp.hostChecking` to `true`.
-* `dependency(notation: String)`, use OSGi bundle that will be resolved from defined repositories (for instance from Maven) then wrapped to CRX package: `dependency('com.neva.felix:search-webconsole-plugin:1.2.0')`.
-* `group(name: String, configurer: Closure)`, useful for declaring group of packages (or just naming single package) to be installed only on demand. For instance: `group 'tools', { url('http://example.com/package.zip'); url('smb://internal-nt/package2.zip')  }`. Then to install only packages in group `tools`, use command: `gradlew aemSatisfy -Paem.satisfy.group=tools`.
-
 #### Task `aemCompose`
 
 Compose CRX package from JCR content and bundles. Available methods:
@@ -422,6 +408,23 @@ Turn off local AEM instance(s).
 
 Turn off then on both local and remote AEM instance(s).
 
+#### Task `aemSatisfy` 
+
+Upload & install dependent CRX package(s) before deployment. Available methods:
+
+* `local(path: String)`, use CRX package from local file system.
+* `local(file: File)`, same as above, but file can be even located outside the project.
+* `url(url: String)`, use CRX package that will be downloaded from specified URL to local temporary directory.
+* `downloadHttp(url: String)`, download package using HTTP with no auth.
+* `downloadHttpAuth(url: String, username: String, password: String)`, download package using HTTP with Basic Auth support.
+* `downloadHttpAuth(url: String)`, as above, but credentials must be specified in variables: `aem.http.username`, `aem.http.password`. Optionally enable SSL errors checking by setting property `aem.http.ignoreSSL` to `false`.
+* `downloadSmbAuth(url: String, domain: String, username: String, password: String)`, download package using SMB protocol.
+* `downloadSmbAuth(url: String)`, as above, but credentials must be specified in variables: `aem.smb.domain`, `aem.smb.username`, `aem.smb.password`.
+* `downloadSftpAuth(url: String, username: String, password: String)`, download package using SFTP protocol.
+* `downloadSftpAuth(url: String)`, as above, but credentials must be specified in variables: `aem.sftp.username`, `aem.sftp.password`. Optionally enable strict host checking by setting property `aem.sftp.hostChecking` to `true`.
+* `dependency(notation: String)`, use OSGi bundle that will be resolved from defined repositories (for instance from Maven) then wrapped to CRX package: `dependency('com.neva.felix:search-webconsole-plugin:1.2.0')`.
+* `group(name: String, configurer: Closure)`, useful for declaring group of packages (or just naming single package) to be installed only on demand. For instance: `group 'tools', { url('http://example.com/package.zip'); url('smb://internal-nt/package2.zip')  }`. Then to install only packages in group `tools`, use command: `gradlew aemSatisfy -Paem.satisfy.group=tools`.
+
 #### Task `aemAwait`
 
 Wait until all local or remote AEM instance(s) be stable.
@@ -485,7 +488,7 @@ Task specific:
    * `filterRoots` - after using method `includeContent` of `aemCompose` task, all Vault filter roots are being gathered. This property contains all these XML tags concatenated especially useful for building assemblies. If no projects will be included, then this variable will contain a single filter root with bundle path to be able to deploy auto-generated package with JAR file only.
 * `aemVlt` - properties are being injected to command specified in `aem.vlt.command` property. Following properties are being used internally also by `aemCheckout`.
    * `instance` - instance used to communicate with while performing Vault commands. Determined by (order take precedence): properties `aem.vlt.instance`, `aem.deploy.instance.list`, `aem.deploy.instance.name` and as fallback first instance which name matches filter `*-author`.
-   * `filter` - file name or path to Vault workspace filter file  *META-INF/vault/filter.xml*. Determined by (order take precedence): property: `aem.vlt.filter`, configuration `contentPath` property suffixed with `META-INF/vault/filter.xml`. 
+   * `filter` - file name or path to Vault workspace filter file  *META-INF/vault/filter.xml*. Determined by (order take precedence): property: `aem.checkout.filterPath`, configuration `contentPath` property suffixed with `META-INF/vault/filter.xml`. 
 
 ## How to's
 
@@ -603,7 +606,13 @@ Deployment could be performed in parallel mode when configuration option `deploy
    
 ### Deploy CRX package(s) only to instances specified explicitly
 
-List delimited: instances by semicolon, instance properties by comma.
+Instance urls delimited by semicolon:
+
+```bash
+gradlew aemDeploy -Paem.deploy.instance.list=http://admin:admin@localhost:4502;http://admin:admin@localhost:4503
+```
+
+Alternative syntax - list delimited: instances by semicolon, instance properties by comma.
 
 ```bash
 gradlew aemDeploy -Paem.deploy.instance.list=http://localhost:4502,admin,admin;http://localhost:4503,admin,admin
@@ -656,15 +665,15 @@ To e.g set additional **run mode** named *nosamplecontent*:
 E.g for subproject `:content`:
    
 ```bash
-gradlew :content:aemSync -Paem.vlt.filter=custom-filter.xml
-gradlew :content:aemSync -Paem.vlt.filter=src/main/content/META-INF/vault/custom-filter.xml
-gradlew :content:aemSync -Paem.vlt.filter=C:/aem/custom-filter.xml
+gradlew :content:aemSync -Paem.checkout.filterPath=custom-filter.xml
+gradlew :content:aemSync -Paem.checkout.filterPath=src/main/content/META-INF/vault/custom-filter.xml
+gradlew :content:aemSync -Paem.checkout.filterPath=C:/aem/custom-filter.xml
 ```
 
 ### Check out and clean JCR content using filter roots specified explicitly
    
 ```bash
-gradlew :content:aemSync -Paem.vlt.filterRoots=[/etc/tags/example,/content/dam/example]
+gradlew :content:aemSync -Paem.checkout.filterRoots=[/etc/tags/example,/content/dam/example]
 ```
 
 ### Assemble all-in-one CRX package(s)
@@ -716,6 +725,24 @@ Gradle AEM Plugin is configured in that way that project can have:
 By distinguishing `includeProject`, `includeBundle` or `includeContent` there is ability to create any assembly CRX package with content of any type without restructuring the project.
 Only one must have rule to be kept while developing a multi-module project is that **all Vault filter roots of all projects must be exclusive**.
 In general, they are most often exclusive, to avoid strange JCR installer behaviors, but sometimes exceptional [workspace filter](http://jackrabbit.apache.org/filevault/filter.html) rules are being applied like `mode="merge"` etc.
+
+### Include additional OSGi bundle into CRX package
+
+Simply use custom [configuration](https://docs.gradle.org/current/dsl/org.gradle.api.artifacts.Configuration.html) named `aemInstall` in `dependencies` section.
+
+In build script, instead using `compile 'group:name:version'` use `aemInstall 'group:name:version'`. As a result, artifact will be copied into CRX package being composed at path determined by property `config.bundlePath`.
+
+For the reference, see [usage in AEM Multi-Project Example](https://github.com/Cognifide/gradle-aem-multi/blob/master/app/common/build.gradle).
+
+### Embed JAR file into built OSGi bundle
+
+Simply use custom [configuration](https://docs.gradle.org/current/dsl/org.gradle.api.artifacts.Configuration.html) named `aemEmbed` in `dependencies` section.
+
+In build script, instead using `compile 'group:name:version'` use `aemEmbed 'group:name:version'`. As a result, artifact will become a part of OSGi bundle being built. 
+
+To be able to use classes provided by that dependency, it is recommended to specify packages in bundle manifest attribute named `Private-Package` or optionally `Export-Package`. 
+For the reference, see [usage in AEM Multi-Project Example](https://github.com/Cognifide/gradle-aem-multi/blob/master/app/common/build.gradle).
+
 
 ### Skip installed package resolution by download name. 
 

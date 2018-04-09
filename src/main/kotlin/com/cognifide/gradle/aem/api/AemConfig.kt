@@ -98,6 +98,13 @@ class AemConfig(
     var deployDistributed: Boolean = propParser.boolean("aem.deploy.distributed", false)
 
     /**
+     * Determines if connection to untrusted (e.g. self-signed) SSL certificates should be allowed.
+     * By default allows all ssl connections.
+     */
+    @Input
+    var deployTrustingAllSSLCertificates: Boolean = propParser.boolean("aem.deploy.trustingAllSSLCertificates", true)
+
+    /**
      * Force upload CRX package regardless if it was previously uploaded.
      */
     @Input
@@ -196,6 +203,7 @@ class AemConfig(
             "**/.gitignore",
             "**/.gitmodules",
             "**/.vlt",
+            "**/.vlt*.tmp",
             "**/node_modules/**",
             "jcr_root/.vlt-sync-config.properties"
     )
@@ -395,7 +403,8 @@ class AemConfig(
      */
     @Input
     var cleanFilesDeleted: MutableList<String> = mutableListOf(
-            "**/.vlt"
+            "**/.vlt",
+            "**/.vlt*.tmp"
     )
 
     /**
