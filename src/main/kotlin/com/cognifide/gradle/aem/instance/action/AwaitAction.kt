@@ -1,33 +1,35 @@
-package com.cognifide.gradle.aem.instance
+package com.cognifide.gradle.aem.instance.action
 
 import com.cognifide.gradle.aem.api.AemConfig
+import com.cognifide.gradle.aem.instance.Instance
+import com.cognifide.gradle.aem.instance.InstanceException
+import com.cognifide.gradle.aem.instance.InstanceState
 import com.cognifide.gradle.aem.internal.Behaviors
 import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.internal.ProgressLogger
 import org.gradle.api.Project
 
-class InstanceActions(val project: Project) {
+/**
+ * Wait until all instances be stable.
+ */
+open class AwaitAction(project: Project, val instances: List<Instance>) : AbstractAction(project) {
 
-    val config = AemConfig.of(project)
+    var times = config.awaitTimes
 
-    val logger = project.logger
+    var interval = config.awaitInterval
 
-    fun awaitStable(instances: List<Instance>) {
+    var fail = config.awaitFail
+
+    var condition = config.awaitCondition
+
+    var timeout = config.awaitTimeout
+
+    var assurances = config.awaitAssurances
+
+    override fun perform() {
         val progressLogger = ProgressLogger(project, "Awaiting stable instance(s)")
 
         progressLogger.started()
-
-        // Check if delay is configured
-        if (config.awaitDelay > 0) {
-            logger.info("Delaying due to pending operations on instance(s).")
-
-            Behaviors.waitUntil(config.awaitInterval, { timer ->
-                val instanceStates = instances.map { InstanceState(project, it) }
-                progressLogger.progress(progressFor(instanceStates, timer))
-
-                return@waitUntil (timer.elapsed < config.awaitDelay)
-            })
-        }
 
         logger.info("Checking stability of instance(s).")
 
@@ -35,9 +37,9 @@ class InstanceActions(val project: Project) {
         var sinceStableTicks = -1L
         var sinceStableElapsed = 0L
 
-        Behaviors.waitUntil(config.awaitInterval, { timer ->
+        Behaviors.waitUntil(interval, { timer ->
             // Gather all instance states and update checksum on any particular state change
-            val instanceStates = instances.map { InstanceState(project, it) }
+            val instanceStates = instances.map { InstanceState(project, it, timeout) }
             if (instanceStates.hashCode() != lastInstanceStates) {
                 lastInstanceStates = instanceStates.hashCode()
                 timer.reset()
@@ -46,9 +48,9 @@ class InstanceActions(val project: Project) {
             progressLogger.progress(progressFor(instanceStates, config, timer))
 
             // Detect timeout when same checksum is not being updated so long
-            if (config.awaitTimes > 0 && timer.ticks > config.awaitTimes) {
+            if (times > 0 && timer.ticks > times) {
                 val message = "Instance(s) are not stable. Timeout reached after ${Formats.duration(timer.elapsed)}."
-                if (config.awaitFail) {
+                if (fail) {
                     throw InstanceException(message)
                 } else {
                     logger.warn(message)
@@ -57,16 +59,16 @@ class InstanceActions(val project: Project) {
             }
 
             // Verify gathered instance states
-            if (instanceStates.all(config.awaitCondition)) {
+            if (instanceStates.all(condition)) {
                 // Assure that expected moment is not accidental, remember it
-                if (config.awaitAssurances > 0 && sinceStableTicks == -1L) {
+                if (assurances > 0 && sinceStableTicks == -1L) {
                     logger.info("Instance(s) seems to be stable. Assuring.")
                     sinceStableTicks = timer.ticks
                     sinceStableElapsed = timer.elapsed
                 }
 
                 // End if assurance is not configured or this moment remains a little longer
-                if (config.awaitAssurances <= 0 || (sinceStableTicks >= 0 && (timer.ticks - sinceStableTicks) >= config.awaitAssurances)) {
+                if (assurances <= 0 || (sinceStableTicks >= 0 && (timer.ticks - sinceStableTicks) >= assurances)) {
                     logger.info("Instance(s) are stable after ${Formats.duration(sinceStableElapsed)}.")
                     return@waitUntil false
                 }
@@ -82,11 +84,9 @@ class InstanceActions(val project: Project) {
         progressLogger.completed()
     }
 
-    private fun progressFor(states: List<InstanceState>, timer: Behaviors.Timer) =
-            (progressTicks(timer.ticks, 0) + " " + states.joinToString(" | ") { progressFor(it) }).trim()
-
-    private fun progressFor(states: List<InstanceState>, config: AemConfig, timer: Behaviors.Timer) =
-            (progressTicks(timer.ticks, config.awaitTimes) + " " + states.joinToString(" | ") { progressFor(it) }).trim()
+    private fun progressFor(states: List<InstanceState>, config: AemConfig, timer: Behaviors.Timer): String {
+        return (progressTicks(timer.ticks, config.awaitTimes) + " " + states.joinToString(" | ") { progressFor(it) }).trim()
+    }
 
     private fun progressFor(state: InstanceState): String {
         return "${state.instance.name}: ${progressIndicator(state)} ${state.bundleState.statsWithLabels} [${state.bundleState.stablePercent}]"
@@ -94,7 +94,7 @@ class InstanceActions(val project: Project) {
 
     private fun progressTicks(tick: Long, maxTicks: Long): String {
         return if (maxTicks > 0 && (tick.toDouble() / maxTicks.toDouble() > 0.1)) {
-            "[$tick/$maxTicks tt]"
+            "[$tick/$maxTicks]"
         } else if (tick.rem(2) == 0L) {
             "[*]"
         } else {

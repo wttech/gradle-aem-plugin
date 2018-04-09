@@ -6,15 +6,15 @@ import org.apache.commons.lang3.builder.HashCodeBuilder
 import org.apache.http.client.config.RequestConfig
 import org.gradle.api.Project
 
-class InstanceState(val project: Project, val instance: Instance) {
+class InstanceState(val project: Project, val instance: Instance, val timeout: Int) {
 
     val config = AemConfig.of(project)
 
     val bundleState by lazy {
         InstanceSync(project, instance).determineBundleState({ method ->
             method.config = RequestConfig.custom()
-                    .setConnectTimeout(config.awaitTimeout)
-                    .setSocketTimeout(config.awaitTimeout)
+                    .setConnectTimeout(timeout)
+                    .setSocketTimeout(timeout)
                     .build()
         })
     }

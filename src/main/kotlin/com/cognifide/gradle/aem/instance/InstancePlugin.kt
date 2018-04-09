@@ -33,6 +33,7 @@ class InstancePlugin : Plugin<Project> {
     private fun setupTasks(project: Project) {
         val clean = project.tasks.getByName(LifecycleBasePlugin.CLEAN_TASK_NAME)
 
+        val resolve = project.tasks.create(ResolveTask.NAME, ResolveTask::class.java)
         val create = project.tasks.create(CreateTask.NAME, CreateTask::class.java)
         val destroy = project.tasks.create(DestroyTask.NAME, DestroyTask::class.java)
         val up = project.tasks.create(UpTask.NAME, UpTask::class.java)
@@ -41,22 +42,23 @@ class InstancePlugin : Plugin<Project> {
         val satisfy = project.tasks.create(SatisfyTask.NAME, SatisfyTask::class.java)
         val await = project.tasks.create(AwaitTask.NAME, AwaitTask::class.java)
         val collect = project.tasks.create(CollectTask.NAME, CollectTask::class.java)
+        val setup = project.tasks.create(SetupTask.NAME, SetupTask::class.java)
 
         create.mustRunAfter(clean)
-        up.mustRunAfter(clean)
-        up.dependsOn(create)
+        up.dependsOn(create).mustRunAfter(clean)
+        reload.mustRunAfter(satisfy)
         destroy.mustRunAfter(down)
-        satisfy.mustRunAfter(create, up)
+        resolve.mustRunAfter(clean).shouldRunAfter(create)
+        satisfy.dependsOn(resolve).mustRunAfter(create, up)
         collect.mustRunAfter(satisfy)
+        setup.dependsOn(create, up, satisfy, await)
 
         project.plugins.withId(PackagePlugin.ID, {
-            val setup = project.tasks.create(SetupTask.NAME, SetupTask::class.java)
             val deploy = project.tasks.getByName(DeployTask.NAME)
 
-            setup.dependsOn(create, up, satisfy, deploy, await)
-
+            setup.dependsOn(deploy)
             deploy.mustRunAfter(create, up, satisfy)
-            reload.mustRunAfter(deploy, satisfy)
+            reload.mustRunAfter(deploy)
             await.mustRunAfter(deploy)
         })
 
