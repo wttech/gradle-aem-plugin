@@ -70,13 +70,20 @@ class AemConfig(
      * will be performed (only if distributed deploy is enabled).
      */
     @Input
-    var deployInstanceAuthorName: String = propParser.string("aem.deploy.instance.author.name", "$deployEnvironment-${InstanceType.AUTHOR.type}")
+    var deployInstanceAuthorName: String = propParser.string("aem.deploy.instance.author.name", "$deployEnvironment-${InstanceType.AUTHOR}*")
 
     /**
      * Defines maximum time after which initializing connection to AEM will be aborted (e.g on upload, install).
      */
     @Input
     var deployConnectionTimeout: Int = propParser.int("aem.deploy.connectionTimeout", 5000)
+
+    /**
+     * Determines if connection to untrusted (e.g. self-signed) SSL certificates should be allowed.
+     * By default allows all SSL connections.
+     */
+    @Input
+    var deployConnectionUntrustedSsl: Boolean = propParser.boolean("aem.deploy.connectionUntrustedSsl", true)
 
     /**
      * Perform deploy action (upload, install or activate) in parallel to multiple instances at once.
@@ -114,7 +121,7 @@ class AemConfig(
      */
     @Input
     var uploadRetryDelay: Long = propParser.long("aem.upload.retry.delay", TimeUnit.SECONDS.toMillis(30))
-    
+
     /**
      * Determines if when on package install, sub-packages included in CRX package content should be also installed.
      */
@@ -132,7 +139,7 @@ class AemConfig(
      */
     @Input
     var installRetryDelay: Long = propParser.long("aem.install.retry.delay", TimeUnit.SECONDS.toMillis(30))
-    
+
     /**
      * Defines behavior for access control handling included in rep:policy nodes being a part of CRX package content.
      *
@@ -305,13 +312,6 @@ class AemConfig(
     var instanceFilesExpanded: MutableList<String> = mutableListOf("**/*.properties", "**/*.sh", "**/*.bat", "**/*.xml", "**/start", "**/stop")
 
     /**
-     * Time in milliseconds to postpone instance stability checks to avoid race condition related with
-     * actual operation being performed on AEM like starting JCR package installation or even creating launchpad.
-     */
-    @Input
-    var awaitDelay: Long = propParser.long("aem.await.delay", TimeUnit.SECONDS.toMillis(1))
-
-    /**
      * Time in milliseconds used as interval between next instance stability checks being performed.
      * Optimization could be necessary only when instance is heavily loaded.
      */
@@ -340,9 +340,10 @@ class AemConfig(
 
     /**
      * Number of intervals / additional instance stability checks to assure all stable instances.
+     * This mechanism protect against temporary stable states.
      */
     @Input
-    var awaitAssurances: Long = propParser.long("aem.await.assurances", 3L)
+    var awaitAssurances: Long = propParser.long("aem.await.assurances", 5L)
 
     /**
      * Hook for customizing condition being an instance stability check.

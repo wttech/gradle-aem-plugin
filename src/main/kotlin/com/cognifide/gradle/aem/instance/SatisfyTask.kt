@@ -1,9 +1,10 @@
 package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.api.AemTask
+import com.cognifide.gradle.aem.instance.satisfy.PackageGroup
 import com.cognifide.gradle.aem.instance.satisfy.PackageResolver
 import com.cognifide.gradle.aem.internal.Patterns
-import com.cognifide.gradle.aem.internal.file.resolver.FileGroup
+import com.cognifide.gradle.aem.pkg.deploy.ListResponse
 import com.cognifide.gradle.aem.pkg.deploy.SyncTask
 import groovy.lang.Closure
 import org.gradle.api.tasks.Internal
@@ -35,6 +36,19 @@ open class SatisfyTask : SyncTask() {
     val allFiles: List<File>
         get() = packageProvider.allFiles(groupFilter)
 
+    @get:Internal
+    val packageGroups by lazy {
+        logger.info("Providing packages from local and remote sources.")
+
+        val packageGroups = packageProvider.filterGroups(groupFilter)
+        val packageFiles = packageGroups.flatMap { it.files }
+
+        logger.info("Packages provided (${packageFiles.size}).")
+
+        @Suppress("unchecked_cast")
+        packageGroups as List<PackageGroup>
+    }
+
     init {
         group = AemTask.GROUP
         description = "Satisfies AEM by uploading & installing dependent packages on instance(s)."
@@ -46,48 +60,53 @@ open class SatisfyTask : SyncTask() {
 
     @TaskAction
     fun satisfy() {
-        val packageGroups = providePackageGroups()
-        satisfyPackagesOnInstances(packageGroups)
-    }
-
-    private fun providePackageGroups(): List<FileGroup> {
-        logger.info("Providing packages from local and remote sources.")
-
-        val fileGroups = packageProvider.filterGroups(groupFilter)
-        val files = fileGroups.flatMap { it.files }
-
-        logger.info("Packages provided (${files.size}).")
-
-        return fileGroups
-    }
-
-    // TODO shouldAwait should be controllable by each PackageGroup.awaitAfter
-    private fun satisfyPackagesOnInstances(packageGroups: List<FileGroup>) {
         for (packageGroup in packageGroups) {
             logger.info("Satisfying group of packages '${packageGroup.name}'.")
 
-            var shouldAwait = false
+            var anyPackageSatisfied = false
 
-            if (config.deployDistributed) {
-                synchronizeInstances({ sync ->
-                    packageGroup.files.onEach {
-                        if (sync.satisfyPackage(it, { sync.distributePackage(it) })) {
-                            shouldAwait = true
-                        }
-                    }
-                }, Instance.filter(project, config.deployInstanceAuthorName))
-            } else {
-                synchronizeInstances({ sync ->
-                    packageGroup.files.onEach {
-                        if (sync.satisfyPackage(it, { sync.deployPackage(it) })) {
-                            shouldAwait = true
-                        }
-                    }
+            synchronizeInstances({ sync ->
+                val packageStates = packageGroup.files.fold(mutableMapOf<File, ListResponse.Package?>(), { states, pkg ->
+                    states[pkg] = sync.determineRemotePackage(pkg, config.satisfyRefreshing); states
                 })
-            }
+                val anyPackageSatisfiable = packageStates.any {
+                    sync.isSnapshot(it.key) || it.value == null || !it.value!!.installed
+                }
 
-            if (shouldAwait) {
-                awaitStableInstances()
+                if (anyPackageSatisfiable) {
+                    packageGroup.initializer(sync)
+                }
+
+                packageStates.forEach { (pkg, state) ->
+                    when {
+                        sync.isSnapshot(pkg) -> {
+                            logger.info("Satisfying package: $pkg (snapshot).")
+                            sync.deployPackage(pkg)
+                            anyPackageSatisfied = true
+                        }
+                        state == null -> {
+                            logger.info("Satisfying package: $pkg (not uploaded).")
+                            sync.deployPackage(pkg)
+                            anyPackageSatisfied = true
+                        }
+                        !state.installed -> {
+                            logger.info("Satisfying package: $pkg (not installed).")
+                            sync.installPackage(state.path)
+                            anyPackageSatisfied = true
+                        }
+                        else -> {
+                            logger.info("Not satisfying package: $pkg (already installed).")
+                        }
+                    }
+                }
+
+                if (anyPackageSatisfiable) {
+                    packageGroup.finalizer(sync)
+                }
+            }, packageGroup.instances)
+
+            if (anyPackageSatisfied) {
+                packageGroup.completer()
             }
         }
     }

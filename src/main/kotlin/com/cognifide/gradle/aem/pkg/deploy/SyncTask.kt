@@ -1,14 +1,14 @@
 package com.cognifide.gradle.aem.pkg.deploy
 
 import com.cognifide.gradle.aem.api.AemDefaultTask
-import com.cognifide.gradle.aem.instance.*
-import com.cognifide.gradle.aem.internal.PropertyParser
-import org.gradle.api.tasks.Internal
+import com.cognifide.gradle.aem.instance.Instance
+import com.cognifide.gradle.aem.instance.InstanceSync
+import com.cognifide.gradle.aem.instance.LocalHandle
+import com.cognifide.gradle.aem.instance.LocalInstance
+import com.cognifide.gradle.aem.instance.action.AwaitAction
+import com.cognifide.gradle.aem.instance.action.ReloadAction
 
 abstract class SyncTask : AemDefaultTask() {
-
-    @Internal
-    protected val propertyParser = PropertyParser(project)
 
     protected fun synchronizeInstances(synchronizer: (InstanceSync) -> Unit) {
         synchronizeInstances(synchronizer, Instance.filter(project))
@@ -45,15 +45,19 @@ abstract class SyncTask : AemDefaultTask() {
     protected fun synchronizeLocalInstance(handler: (LocalHandle) -> Unit, instance: LocalInstance) {
         logger.info("Synchronizing with: $instance")
 
-        handler(LocalHandle(project, InstanceSync(project, instance)))
+        handler(LocalHandle(project, instance))
     }
 
     protected fun awaitStableInstances() {
-        InstanceActions(project).awaitStable(Instance.filter(project))
+        AwaitAction(project, Instance.filter(project)).perform()
     }
 
     protected fun awaitStableLocalInstances() {
-        InstanceActions(project).awaitStable(Instance.locals(project))
+        AwaitAction(project, Instance.locals(project)).perform()
+    }
+
+    protected fun reloadInstances() {
+        ReloadAction(project, Instance.filter(project)).perform()
     }
 
 }

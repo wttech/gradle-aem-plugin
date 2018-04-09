@@ -6,7 +6,7 @@ repositories {
 }
 
 dependencies {
-    classpath 'com.cognifide.gradle:aem-plugin:3.0.9'
+    classpath 'com.cognifide.gradle:aem-plugin:3.1.0'
     classpath 'biz.aQute.bnd:biz.aQute.bnd.gradle:3.5.0'
     classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.2.21"
 }

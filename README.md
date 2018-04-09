@@ -115,7 +115,7 @@ buildscript {
     }
     
     dependencies {
-        classpath 'com.cognifide.gradle:aem-plugin:3.0.9'
+        classpath 'com.cognifide.gradle:aem-plugin:3.1.0'
     }
 }
 
@@ -145,6 +145,7 @@ aem {
         deployParallel = true
         deploySnapshots = []
         deployDistributed = false
+        deployTrustingAllSSLCertificates = true
         uploadForce = true
         uploadRetryTimes = 6
         uploadRetryDelay = 30000

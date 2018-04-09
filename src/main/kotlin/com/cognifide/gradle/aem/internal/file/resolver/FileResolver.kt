@@ -69,7 +69,7 @@ open class FileResolver(val project: Project, val downloadDir: File) {
     }
 
     fun filterGroups(filter: (String) -> Boolean): List<FileGroup> {
-        return groups.filter { filter(it.name) }
+        return groups.filter { filter(it.name) }.filter { it.resolutions.isNotEmpty() }
     }
 
     fun dependency(notation: Any) {
@@ -227,11 +227,14 @@ open class FileResolver(val project: Project, val downloadDir: File) {
         resolve(sourceFile.absolutePath, { sourceFile })
     }
 
-    @Synchronized
     fun group(name: String, configurer: Closure<*>) {
         groupCurrent = groups.find { it.name == name } ?: createGroup(name).apply { groups.add(this) }
         ConfigureUtil.configureSelf(configurer, this)
         groupCurrent = groupDefault
+    }
+
+    fun config(configurer: Closure<*>) {
+        ConfigureUtil.configureSelf(configurer, groupCurrent)
     }
 
 }

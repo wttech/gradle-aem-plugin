@@ -110,6 +110,10 @@ interface Instance : Serializable {
             return filter(project, LocalInstance::class)
         }
 
+        fun handles(project: Project): List<LocalHandle> {
+            return Instance.locals(project).map { LocalHandle(project, it) }
+        }
+
         fun remotes(project: Project): List<RemoteInstance> {
             return filter(project, RemoteInstance::class)
         }
