@@ -455,6 +455,10 @@ class AemConfig(
     }
 
     private fun instance(instance: Instance) {
+        if (instances.containsKey(instance.name)) {
+            throw AemException("Instance named '${instance.name}' is already defined. Enumerate instance types (for instance 'author1', 'author2') or distinguish environments.")
+        }
+
         instances[instance.name] = instance
     }
 
