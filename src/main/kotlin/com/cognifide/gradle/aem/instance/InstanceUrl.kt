@@ -17,8 +17,14 @@ class InstanceUrl(raw: String) {
     val httpUrl: String
         get() = "${config.protocol}://${config.host}:${config.port}"
 
-    val type: String
+    val typeName: String
         get() = InstanceType.nameByUrl(httpUrl)
+
+    val type: InstanceType
+        get() = InstanceType.byUrl(httpUrl)
+
+    val debugPort: Int
+        get() = "1${Instance.portOfUrl(httpUrl)}".toInt()
 
     private fun userPart(index: Int): String? {
         return config.userInfo?.split(":")

@@ -421,20 +421,8 @@ class AemConfig(
         instance(LocalInstance.create(httpUrl))
     }
 
-    fun localInstance(httpUrl: String, type: String) {
-        instance(LocalInstance.create(httpUrl, type))
-    }
-
-    fun localInstance(httpUrl: String, user: String, password: String) {
-        instance(LocalInstance.create(httpUrl, user, password))
-    }
-
-    fun localInstance(httpUrl: String, user: String, password: String, type: String) {
-        instance(LocalInstance.create(httpUrl, user, password, type))
-    }
-
-    fun localInstance(httpUrl: String, user: String, password: String, type: String, debugPort: Int) {
-        instance(LocalInstance(httpUrl, user, password, type, debugPort))
+    fun localInstance(httpUrl: String, configurer: LocalInstance.() -> Unit) {
+        instance(LocalInstance.create(httpUrl, configurer))
     }
 
     fun localAuthorInstance() {
@@ -448,23 +436,16 @@ class AemConfig(
     }
 
     fun remoteInstance(httpUrl: String) {
-        instance(RemoteInstance.create(httpUrl, deployEnvironment))
+        instance(RemoteInstance.create(httpUrl, {
+            this.environment = deployEnvironment
+        }))
     }
 
-    fun remoteInstance(httpUrl: String, environment: String) {
-        instance(RemoteInstance.create(httpUrl, environment))
-    }
-
-    fun remoteInstance(httpUrl: String, user: String, password: String) {
-        instance(RemoteInstance.create(httpUrl, user, password, deployEnvironment))
-    }
-
-    fun remoteInstance(httpUrl: String, user: String, password: String, environment: String) {
-        instance(RemoteInstance.create(httpUrl, user, password, environment))
-    }
-
-    fun remoteInstance(httpUrl: String, user: String, password: String, type: String, environment: String) {
-        instance(RemoteInstance(httpUrl, user, password, type, environment))
+    fun remoteInstance(httpUrl: String, configurer: RemoteInstance.() -> Unit) {
+        instance(RemoteInstance.create(httpUrl, {
+            this.environment = deployEnvironment
+            configurer(this)
+        }))
     }
 
     fun remoteAuthorInstance() {
