@@ -426,13 +426,11 @@ class AemConfig(
     }
 
     fun localAuthorInstance() {
-        val httpUrl = propParser.string(Instance.AUTHOR_URL_PROP, Instance.URL_AUTHOR_DEFAULT)
-        instance(LocalInstance.create(httpUrl))
+        localInstance(propParser.string(Instance.AUTHOR_URL_PROP, Instance.URL_AUTHOR_DEFAULT)))
     }
 
     fun localPublishInstance() {
-        val httpUrl = propParser.string(Instance.PUBLISH_URL_PROP, Instance.URL_PUBLISH_DEFAULT)
-        instance(LocalInstance.create(httpUrl))
+        localInstance(propParser.string(Instance.PUBLISH_URL_PROP, Instance.URL_PUBLISH_DEFAULT))
     }
 
     fun remoteInstance(httpUrl: String) {
@@ -444,18 +442,16 @@ class AemConfig(
     fun remoteInstance(httpUrl: String, configurer: RemoteInstance.() -> Unit) {
         instance(RemoteInstance.create(httpUrl, {
             this.environment = deployEnvironment
-            configurer(this)
+            this.apply(configurer)
         }))
     }
 
     fun remoteAuthorInstance() {
-        val httpUrl = propParser.string(Instance.AUTHOR_URL_PROP, Instance.URL_AUTHOR_DEFAULT)
-        instance(RemoteInstance.create(httpUrl, deployEnvironment))
+        remoteInstance(propParser.string(Instance.AUTHOR_URL_PROP, Instance.URL_AUTHOR_DEFAULT))
     }
 
     fun remotePublishInstance() {
-        val httpUrl = propParser.string(Instance.PUBLISH_URL_PROP, Instance.URL_PUBLISH_DEFAULT)
-        instance(RemoteInstance.create(httpUrl, deployEnvironment))
+        remoteInstance(propParser.string(Instance.PUBLISH_URL_PROP, Instance.URL_PUBLISH_DEFAULT))
     }
 
     private fun instance(instance: Instance) {
