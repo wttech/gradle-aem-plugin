@@ -561,15 +561,31 @@ aem {
         remoteAuthorInstance() // property: aem.instance.author.httpUrl or default 'http://localhost:4502' ; local-author
         remotePublishInstance() // property: aem.instance.author.httpUrl or default 'http://localhost:4502' ; local-publish
       
-        remoteInstance "http://192.168.10.1:4502", { // integration-author
+        remoteInstance "http://192.168.10.1:4502", { // integration-author1
             user = "user1" 
             password = "password2"
             environment = "integration"
+            typeName = "author1"
+            
+        } 
+        remoteInstance "http://192.168.10.1:8080", { // integration-author2
+            user = "user1" 
+            password = "password2"
+            environment = "integration"
+            typeName = "author2
+            
         } 
         remoteInstance "http://192.168.10.2:4503", { // integration-publish
             user = "user2"
             password = "password2"
             environment = "integration"
+            typeName = "publish1"
+        } 
+        remoteInstance "http://192.168.10.2:8080", { // integration-publish
+            user = "user2"
+            password = "password2"
+            environment = "integration"
+            typeName = "publish2"
         } 
     }
 }
