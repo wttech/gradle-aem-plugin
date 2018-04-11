@@ -501,7 +501,7 @@ allprojects { subproject ->
   plugins.withId 'com.cognifide.aem.base', {
     aem {
         config {
-          localInstance("http://localhost:6502")
+          localInstance "http://localhost:6502"
           contentPath = subproject.file("src/main/aem")
         }
     }
@@ -575,13 +575,13 @@ aem {
             typeName = "author2
             
         } 
-        remoteInstance "http://192.168.10.2:4503", { // integration-publish
+        remoteInstance "http://192.168.10.2:4503", { // integration-publish1
             user = "user2"
             password = "password2"
             environment = "integration"
             typeName = "publish1"
         } 
-        remoteInstance "http://192.168.10.2:8080", { // integration-publish
+        remoteInstance "http://192.168.10.2:8080", { // integration-publish2
             user = "user2"
             password = "password2"
             environment = "integration"
