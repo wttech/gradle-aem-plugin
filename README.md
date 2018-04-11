@@ -596,7 +596,7 @@ aem {
 * Instance name is a combination of *${environment}-${typeName}* e.g *local-author*, *integration-publish* etc.
 * Instance type name must start with prefix *author* or *publish*. Sample valid names: *author*, *author1*, *author2*, *author-master* and *publish*, *publish1* *publish2* etc.
 * Only instances being defined as *local* are being considered in command `aemSetup`, `aemCreate`, `aemUp` etc (that comes from `com.cognifide.aem.instance` plugin).
-* All instances being defined as *local* or *remote* are being considered in commands CRX package deployment related like `aemDeploy`, `aemUpload`, `aemInstall` etc.
+* All instances being defined as *local* or *remote* are being considered in commands CRX package deployment related like `aemSatisfy`, `aemDeploy`, `aemUpload`, `aemInstall` etc.
 
 ### Understand why there are one or two plugins to be applied in build script
 
