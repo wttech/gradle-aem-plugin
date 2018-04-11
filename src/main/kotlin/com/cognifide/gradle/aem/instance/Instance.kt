@@ -70,8 +70,8 @@ interface Instance : Serializable {
             val publishUrl = project.properties.getOrElse(PUBLISH_URL_PROP, { URL_PUBLISH_DEFAULT }) as String
 
             return listOf(
-                    RemoteInstance.create(authorUrl, config.deployEnvironment),
-                    RemoteInstance.create(publishUrl, config.deployEnvironment)
+                    RemoteInstance.create(authorUrl, { environment = config.deployEnvironment }),
+                    RemoteInstance.create(publishUrl, { environment = config.deployEnvironment })
             )
         }
 
