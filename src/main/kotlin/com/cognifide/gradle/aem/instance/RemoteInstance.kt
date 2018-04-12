@@ -27,7 +27,7 @@ class RemoteInstance private constructor() : Instance, Serializable {
     companion object {
 
         fun create(httpUrl: String, configurer: RemoteInstance.() -> Unit): RemoteInstance {
-            return RemoteInstance().apply({
+            return RemoteInstance().apply {
                 val instanceUrl = InstanceUrl.parse(httpUrl)
 
                 this.httpUrl = instanceUrl.httpUrl
@@ -37,7 +37,7 @@ class RemoteInstance private constructor() : Instance, Serializable {
                 this.environment = Instance.ENVIRONMENT_CMD
 
                 this.apply(configurer)
-            })
+            }
         }
 
         fun create(httpUrl: String): RemoteInstance {

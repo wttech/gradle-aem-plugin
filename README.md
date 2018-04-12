@@ -566,14 +566,12 @@ aem {
             password = "password2"
             environment = "integration"
             typeName = "author1"
-            
         } 
         remoteInstance "http://192.168.10.1:8080", { // integration-author2
             user = "user1" 
             password = "password2"
             environment = "integration"
             typeName = "author2
-            
         } 
         remoteInstance "http://192.168.10.2:4503", { // integration-publish1
             user = "user2"
