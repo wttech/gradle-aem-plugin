@@ -426,11 +426,19 @@ class AemConfig(
     }
 
     fun localAuthorInstance() {
-        localInstance(propParser.string(Instance.AUTHOR_URL_PROP, Instance.URL_AUTHOR_DEFAULT))
+        localAuthorInstance({})
+    }
+
+    fun localAuthorInstance(configurer: LocalInstance.() -> Unit) {
+        localInstance(propParser.string(Instance.AUTHOR_URL_PROP, Instance.URL_AUTHOR_DEFAULT), configurer)
     }
 
     fun localPublishInstance() {
-        localInstance(propParser.string(Instance.PUBLISH_URL_PROP, Instance.URL_PUBLISH_DEFAULT))
+        localPublishInstance({})
+    }
+
+    fun localPublishInstance(configurer: LocalInstance.() -> Unit) {
+        localInstance(propParser.string(Instance.PUBLISH_URL_PROP, Instance.URL_PUBLISH_DEFAULT), configurer)
     }
 
     fun remoteInstance(httpUrl: String) {
@@ -447,11 +455,19 @@ class AemConfig(
     }
 
     fun remoteAuthorInstance() {
-        remoteInstance(propParser.string(Instance.AUTHOR_URL_PROP, Instance.URL_AUTHOR_DEFAULT))
+        remoteAuthorInstance({})
+    }
+
+    fun remoteAuthorInstance(configurer: RemoteInstance.() -> Unit) {
+        remoteInstance(propParser.string(Instance.AUTHOR_URL_PROP, Instance.URL_AUTHOR_DEFAULT), configurer)
     }
 
     fun remotePublishInstance() {
-        remoteInstance(propParser.string(Instance.PUBLISH_URL_PROP, Instance.URL_PUBLISH_DEFAULT))
+        remotePublishInstance({})
+    }
+
+    fun remotePublishInstance(configurer: RemoteInstance.() -> Unit) {
+        remoteInstance(propParser.string(Instance.PUBLISH_URL_PROP, Instance.URL_PUBLISH_DEFAULT), configurer)
     }
 
     private fun instance(instance: Instance) {
