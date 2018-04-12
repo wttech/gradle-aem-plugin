@@ -12,7 +12,7 @@ enum class InstanceType {
         private val AUTHOR_RULES = listOf("*02")
 
         fun byName(type: String): InstanceType {
-            return values().find { it.name.startsWith(type, true) }
+            return values().find { type.startsWith(it.name, ignoreCase = true)  }
                     ?: throw AemException("Invalid instance type: $type")
         }
 

@@ -7,11 +7,13 @@ import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.pkg.ComposeTask
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.fasterxml.jackson.annotation.JsonIgnore
+import groovy.lang.Closure
 import org.gradle.api.DefaultTask
 import org.gradle.api.Project
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.language.base.plugins.LifecycleBasePlugin
+import org.gradle.util.ConfigureUtil
 import java.io.File
 import java.io.Serializable
 import java.util.*
@@ -425,12 +427,20 @@ class AemConfig(
         instance(LocalInstance.create(httpUrl, configurer))
     }
 
+    fun localInstance(httpUrl: String, configurer: Closure<*>) {
+        localInstance(httpUrl, { ConfigureUtil.configure(configurer, this) })
+    }
+
     fun localAuthorInstance() {
         localAuthorInstance({})
     }
 
     fun localAuthorInstance(configurer: LocalInstance.() -> Unit) {
         localInstance(propParser.string(Instance.AUTHOR_URL_PROP, Instance.URL_AUTHOR_DEFAULT), configurer)
+    }
+
+    fun localAuthorInstance(configurer: Closure<*>) {
+        localAuthorInstance({ ConfigureUtil.configure(configurer, this) })
     }
 
     fun localPublishInstance() {
@@ -441,10 +451,12 @@ class AemConfig(
         localInstance(propParser.string(Instance.PUBLISH_URL_PROP, Instance.URL_PUBLISH_DEFAULT), configurer)
     }
 
+    fun localPublishInstance(configurer: Closure<*>) {
+        localPublishInstance({ ConfigureUtil.configure(configurer, this) })
+    }
+
     fun remoteInstance(httpUrl: String) {
-        instance(RemoteInstance.create(httpUrl, {
-            this.environment = deployEnvironment
-        }))
+        instance(RemoteInstance.create(httpUrl))
     }
 
     fun remoteInstance(httpUrl: String, configurer: RemoteInstance.() -> Unit) {
@@ -452,6 +464,10 @@ class AemConfig(
             this.environment = deployEnvironment
             this.apply(configurer)
         }))
+    }
+
+    fun remoteInstance(httpUrl: String, configurer: Closure<*>) {
+        remoteInstance(httpUrl, { ConfigureUtil.configure(configurer, this) })
     }
 
     fun remoteAuthorInstance() {
@@ -462,12 +478,20 @@ class AemConfig(
         remoteInstance(propParser.string(Instance.AUTHOR_URL_PROP, Instance.URL_AUTHOR_DEFAULT), configurer)
     }
 
+    fun remoteAuthorInstance(configurer: Closure<*>) {
+        remoteAuthorInstance({ ConfigureUtil.configure(configurer, this) })
+    }
+
     fun remotePublishInstance() {
         remotePublishInstance({})
     }
 
     fun remotePublishInstance(configurer: RemoteInstance.() -> Unit) {
         remoteInstance(propParser.string(Instance.PUBLISH_URL_PROP, Instance.URL_PUBLISH_DEFAULT), configurer)
+    }
+
+    fun remotePublishInstance(configurer: Closure<*>) {
+        remotePublishInstance({ ConfigureUtil.configure(configurer, this) })
     }
 
     private fun instance(instance: Instance) {
