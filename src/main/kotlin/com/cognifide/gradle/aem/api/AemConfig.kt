@@ -7,11 +7,13 @@ import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.pkg.ComposeTask
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.fasterxml.jackson.annotation.JsonIgnore
+import groovy.lang.Closure
 import org.gradle.api.DefaultTask
 import org.gradle.api.Project
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.language.base.plugins.LifecycleBasePlugin
+import org.gradle.util.ConfigureUtil
 import java.io.File
 import java.io.Serializable
 import java.util.*
@@ -421,63 +423,82 @@ class AemConfig(
         instance(LocalInstance.create(httpUrl))
     }
 
-    fun localInstance(httpUrl: String, type: String) {
-        instance(LocalInstance.create(httpUrl, type))
+    fun localInstance(httpUrl: String, configurer: LocalInstance.() -> Unit) {
+        instance(LocalInstance.create(httpUrl, configurer))
     }
 
-    fun localInstance(httpUrl: String, user: String, password: String) {
-        instance(LocalInstance.create(httpUrl, user, password))
-    }
-
-    fun localInstance(httpUrl: String, user: String, password: String, type: String) {
-        instance(LocalInstance.create(httpUrl, user, password, type))
-    }
-
-    fun localInstance(httpUrl: String, user: String, password: String, type: String, debugPort: Int) {
-        instance(LocalInstance(httpUrl, user, password, type, debugPort))
+    fun localInstance(httpUrl: String, configurer: Closure<*>) {
+        localInstance(httpUrl, { ConfigureUtil.configure(configurer, this) })
     }
 
     fun localAuthorInstance() {
-        val httpUrl = propParser.string(Instance.AUTHOR_URL_PROP, Instance.URL_AUTHOR_DEFAULT)
-        instance(LocalInstance.create(httpUrl))
+        localAuthorInstance({})
+    }
+
+    fun localAuthorInstance(configurer: LocalInstance.() -> Unit) {
+        localInstance(propParser.string(Instance.AUTHOR_URL_PROP, Instance.URL_AUTHOR_DEFAULT), configurer)
+    }
+
+    fun localAuthorInstance(configurer: Closure<*>) {
+        localAuthorInstance({ ConfigureUtil.configure(configurer, this) })
     }
 
     fun localPublishInstance() {
-        val httpUrl = propParser.string(Instance.PUBLISH_URL_PROP, Instance.URL_PUBLISH_DEFAULT)
-        instance(LocalInstance.create(httpUrl))
+        localPublishInstance({})
+    }
+
+    fun localPublishInstance(configurer: LocalInstance.() -> Unit) {
+        localInstance(propParser.string(Instance.PUBLISH_URL_PROP, Instance.URL_PUBLISH_DEFAULT), configurer)
+    }
+
+    fun localPublishInstance(configurer: Closure<*>) {
+        localPublishInstance({ ConfigureUtil.configure(configurer, this) })
     }
 
     fun remoteInstance(httpUrl: String) {
-        instance(RemoteInstance.create(httpUrl, deployEnvironment))
+        instance(RemoteInstance.create(httpUrl))
     }
 
-    fun remoteInstance(httpUrl: String, environment: String) {
-        instance(RemoteInstance.create(httpUrl, environment))
+    fun remoteInstance(httpUrl: String, configurer: RemoteInstance.() -> Unit) {
+        instance(RemoteInstance.create(httpUrl, {
+            this.environment = deployEnvironment
+            this.apply(configurer)
+        }))
     }
 
-    fun remoteInstance(httpUrl: String, user: String, password: String) {
-        instance(RemoteInstance.create(httpUrl, user, password, deployEnvironment))
-    }
-
-    fun remoteInstance(httpUrl: String, user: String, password: String, environment: String) {
-        instance(RemoteInstance.create(httpUrl, user, password, environment))
-    }
-
-    fun remoteInstance(httpUrl: String, user: String, password: String, type: String, environment: String) {
-        instance(RemoteInstance(httpUrl, user, password, type, environment))
+    fun remoteInstance(httpUrl: String, configurer: Closure<*>) {
+        remoteInstance(httpUrl, { ConfigureUtil.configure(configurer, this) })
     }
 
     fun remoteAuthorInstance() {
-        val httpUrl = propParser.string(Instance.AUTHOR_URL_PROP, Instance.URL_AUTHOR_DEFAULT)
-        instance(RemoteInstance.create(httpUrl, deployEnvironment))
+        remoteAuthorInstance({})
+    }
+
+    fun remoteAuthorInstance(configurer: RemoteInstance.() -> Unit) {
+        remoteInstance(propParser.string(Instance.AUTHOR_URL_PROP, Instance.URL_AUTHOR_DEFAULT), configurer)
+    }
+
+    fun remoteAuthorInstance(configurer: Closure<*>) {
+        remoteAuthorInstance({ ConfigureUtil.configure(configurer, this) })
     }
 
     fun remotePublishInstance() {
-        val httpUrl = propParser.string(Instance.PUBLISH_URL_PROP, Instance.URL_PUBLISH_DEFAULT)
-        instance(RemoteInstance.create(httpUrl, deployEnvironment))
+        remotePublishInstance({})
+    }
+
+    fun remotePublishInstance(configurer: RemoteInstance.() -> Unit) {
+        remoteInstance(propParser.string(Instance.PUBLISH_URL_PROP, Instance.URL_PUBLISH_DEFAULT), configurer)
+    }
+
+    fun remotePublishInstance(configurer: Closure<*>) {
+        remotePublishInstance({ ConfigureUtil.configure(configurer, this) })
     }
 
     private fun instance(instance: Instance) {
+        if (instances.containsKey(instance.name)) {
+            throw AemException("Instance named '${instance.name}' is already defined. Enumerate instance types (for instance 'author1', 'author2') or distinguish environments.")
+        }
+
         instances[instance.name] = instance
     }
 
@@ -551,6 +572,90 @@ class AemConfig(
 
     @Internal
     fun isUniqueProjectName() = project == project.rootProject || project.name == project.rootProject.name
+
+    /**
+     * @Deprecated Will be removed in 4.0.0
+     */
+    fun localInstance(httpUrl: String, typeName: String) {
+        localInstance(httpUrl, {
+            this.typeName = typeName
+        })
+    }
+
+    /**
+     * @Deprecated Will be removed in 4.0.0
+     */
+    fun localInstance(httpUrl: String, user: String, password: String) {
+        localInstance(httpUrl, {
+            this.user = user
+            this.password = password
+        })
+    }
+
+    /**
+     * @Deprecated Will be removed in 4.0.0
+     */
+    fun localInstance(httpUrl: String, user: String, password: String, typeName: String) {
+        localInstance(httpUrl, {
+            this.user = user
+            this.password = password
+            this.typeName = typeName
+        })
+    }
+
+    /**
+     * @Deprecated Will be removed in 4.0.0
+     */
+    fun localInstance(httpUrl: String, user: String, password: String, type: String, debugPort: Int) {
+        localInstance(httpUrl, {
+            this.user = user
+            this.password = password
+            this.typeName = type
+            this.debugPort = debugPort
+        })
+    }
+
+    /**
+     * @Deprecated Will be removed in 4.0.0
+     */
+    fun remoteInstance(httpUrl: String, environment: String) {
+        remoteInstance(httpUrl, {
+            this.environment = environment
+        })
+    }
+
+    /**
+     * @Deprecated Will be removed in 4.0.0
+     */
+    fun remoteInstance(httpUrl: String, user: String, password: String) {
+        remoteInstance(httpUrl, {
+            this.user = user
+            this.password = password
+        })
+    }
+
+    /**
+     * @Deprecated Will be removed in 4.0.0
+     */
+    fun remoteInstance(httpUrl: String, user: String, password: String, environment: String) {
+        remoteInstance(httpUrl, {
+            this.user = user
+            this.password = password
+            this.environment = environment
+        })
+    }
+
+    /**
+     * @Deprecated Will be removed in 4.0.0
+     */
+    fun remoteInstance(httpUrl: String, user: String, password: String, typeName: String, environment: String) {
+        remoteInstance(httpUrl, {
+            this.user = user
+            this.password = password
+            this.typeName = typeName
+            this.environment = environment
+        })
+    }
 
     companion object {
 

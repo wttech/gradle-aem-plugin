@@ -4,45 +4,46 @@ import com.cognifide.gradle.aem.pkg.deploy.ListResponse
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.Serializable
 
-class RemoteInstance(
-        override val httpUrl: String,
-        override val user: String,
-        override val password: String,
-        override val typeName: String,
-        override val environment: String
-) : Instance, Serializable {
+class RemoteInstance private constructor() : Instance, Serializable {
 
-    companion object {
+    override lateinit var httpUrl: String
 
-        fun create(httpUrl: String, environment: String): RemoteInstance {
-            val instanceUrl = InstanceUrl.parse(httpUrl)
+    override lateinit var user: String
 
-            return RemoteInstance(
-                    instanceUrl.httpUrl,
-                    instanceUrl.user,
-                    instanceUrl.password,
-                    instanceUrl.type,
-                    environment
-            )
-        }
+    override lateinit var password: String
 
-        fun create(httpUrl: String, user: String, password: String, environment: String): RemoteInstance {
-            return RemoteInstance(
-                    httpUrl,
-                    user,
-                    password,
-                    InstanceType.nameByUrl(httpUrl),
-                    environment
-            )
-        }
-    }
+    override lateinit var typeName: String
+
+    override lateinit var environment: String
+
+    @Transient
+    @get:JsonIgnore
+    override var packages: ListResponse? = null
 
     override fun toString(): String {
         return "RemoteInstance(httpUrl='$httpUrl', user='$user', password='$hiddenPassword', typeName='$typeName', environment='$environment')"
     }
 
-    @Transient
-    @get:JsonIgnore
-    override var packages: ListResponse? = null
+    companion object {
+
+        fun create(httpUrl: String, configurer: RemoteInstance.() -> Unit): RemoteInstance {
+            return RemoteInstance().apply {
+                val instanceUrl = InstanceUrl.parse(httpUrl)
+
+                this.httpUrl = instanceUrl.httpUrl
+                this.user = instanceUrl.user
+                this.password = instanceUrl.password
+                this.typeName = instanceUrl.typeName
+                this.environment = Instance.ENVIRONMENT_CMD
+
+                this.apply(configurer)
+            }
+        }
+
+        fun create(httpUrl: String): RemoteInstance {
+            return create(httpUrl, {})
+        }
+
+    }
 
 }

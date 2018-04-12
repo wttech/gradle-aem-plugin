@@ -43,16 +43,22 @@ interface Instance : Serializable {
                     4 -> {
                         val (httpUrl, type, user, password) = parts
 
-                        RemoteInstance(httpUrl, user, password, type, ENVIRONMENT_CMD)
+                        RemoteInstance.create(httpUrl, {
+                            this.user = user
+                            this.password = password
+                            this.typeName = type
+                        })
                     }
                     3 -> {
                         val (httpUrl, user, password) = parts
-                        val type = InstanceType.nameByUrl(httpUrl)
 
-                        RemoteInstance(httpUrl, user, password, type, ENVIRONMENT_CMD)
+                        RemoteInstance.create(httpUrl, {
+                            this.user = user
+                            this.password = password
+                        })
                     }
                     else -> {
-                        RemoteInstance.create(urlRaw, ENVIRONMENT_CMD)
+                        RemoteInstance.create(urlRaw)
                     }
                 }
             }
@@ -64,8 +70,8 @@ interface Instance : Serializable {
             val publishUrl = project.properties.getOrElse(PUBLISH_URL_PROP, { URL_PUBLISH_DEFAULT }) as String
 
             return listOf(
-                    RemoteInstance.create(authorUrl, config.deployEnvironment),
-                    RemoteInstance.create(publishUrl, config.deployEnvironment)
+                    RemoteInstance.create(authorUrl, { environment = config.deployEnvironment }),
+                    RemoteInstance.create(publishUrl, { environment = config.deployEnvironment })
             )
         }
 

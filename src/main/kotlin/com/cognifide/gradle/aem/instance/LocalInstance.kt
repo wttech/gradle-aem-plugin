@@ -4,75 +4,51 @@ import com.cognifide.gradle.aem.pkg.deploy.ListResponse
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.Serializable
 
-class LocalInstance(
-        override val httpUrl: String,
-        override val user: String,
-        override val password: String,
-        override val typeName: String,
-        val debugPort: Int
-) : Instance, Serializable {
+class LocalInstance private constructor() : Instance, Serializable {
 
-    companion object {
-        val ENVIRONMENT = "local"
+    override lateinit var httpUrl: String
 
-        fun debugPortByUrl(url: String): Int {
-            return "1${Instance.portOfUrl(url)}".toInt()
-        }
+    override lateinit var user: String
 
-        fun create(httpUrl: String, user: String, password: String): Instance {
-            return LocalInstance(
-                    httpUrl,
-                    user,
-                    password,
-                    InstanceType.nameByUrl(httpUrl),
-                    debugPortByUrl(httpUrl)
-            )
-        }
+    override lateinit var password: String
 
-        fun create(httpUrl: String, type: String): Instance {
-            val instanceUrl = InstanceUrl.parse(httpUrl)
+    override lateinit var typeName: String
 
-            return LocalInstance(
-                    instanceUrl.httpUrl,
-                    instanceUrl.user,
-                    instanceUrl.password,
-                    type,
-                    debugPortByUrl(httpUrl)
-            )
-        }
-
-        fun create(httpUrl: String): LocalInstance {
-            val instanceUrl = InstanceUrl.parse(httpUrl)
-
-            return LocalInstance(
-                    instanceUrl.httpUrl,
-                    instanceUrl.user,
-                    instanceUrl.password,
-                    InstanceType.nameByUrl(httpUrl),
-                    debugPortByUrl(httpUrl)
-            )
-        }
-
-        fun create(httpUrl: String, user: String, password: String, type: String): LocalInstance {
-            return LocalInstance(
-                    httpUrl,
-                    user,
-                    password,
-                    type,
-                    debugPortByUrl(httpUrl)
-            )
-        }
-    }
+    var debugPort: Int = 5005
 
     override val environment: String
         get() = ENVIRONMENT
+
+    @Transient
+    @get:JsonIgnore
+    override var packages: ListResponse? = null
 
     override fun toString(): String {
         return "LocalInstance(httpUrl='$httpUrl', user='$user', password='$hiddenPassword', typeName='$typeName', debugPort=$debugPort)"
     }
 
-    @Transient
-    @get:JsonIgnore
-    override var packages: ListResponse? = null
+    companion object {
+
+        const val ENVIRONMENT = "local"
+
+        fun create(httpUrl: String, configurer: LocalInstance.() -> Unit): LocalInstance {
+            return LocalInstance().apply {
+                val instanceUrl = InstanceUrl.parse(httpUrl)
+
+                this.httpUrl = instanceUrl.httpUrl
+                this.user = instanceUrl.user
+                this.password = instanceUrl.password
+                this.typeName = instanceUrl.typeName
+                this.debugPort = instanceUrl.debugPort
+
+                this.apply(configurer)
+            }
+        }
+
+        fun create(httpUrl: String): LocalInstance {
+            return create(httpUrl, {})
+        }
+
+    }
 
 }

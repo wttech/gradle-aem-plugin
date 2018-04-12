@@ -115,7 +115,7 @@ buildscript {
     }
     
     dependencies {
-        classpath 'com.cognifide.gradle:aem-plugin:3.1.0'
+        classpath 'com.cognifide.gradle:aem-plugin:3.1.1'
     }
 }
 
@@ -501,7 +501,7 @@ allprojects { subproject ->
   plugins.withId 'com.cognifide.aem.base', {
     aem {
         config {
-          localInstance("http://localhost:6502")
+          localInstance "http://localhost:6502"
           contentPath = subproject.file("src/main/aem")
         }
     }
@@ -539,29 +539,62 @@ In AEM configuration section, there is possibility to use `localInstance` or `re
 ```groovy
 aem {
     config {
-      localAuthorInstance() // property: aem.instance.author.httpUrl or default 'http://localhost:4502' ; local-author
-      localPublishInstance() // property: aem.instance.author.httpUrl or default 'http://localhost:4502' ; local-publish
+        localAuthorInstance() // property: aem.instance.author.httpUrl or default 'http://localhost:4502' ; local-author
+        localPublishInstance() // property: aem.instance.author.httpUrl or default 'http://localhost:4502' ; local-publish
     
-      localInstance("http://localhost:4502") // local-author
-      localInstance("http://localhost:4502", "admin", "admin", "author", 14502) // local-author
+        localInstance "http://localhost:4502" // local-author
+        localInstance "http://localhost:4502", { // local-author
+            user = "admin"
+            password = "admin"
+            typeName = "author"
+            debugPort = 14502 
+        }
       
-      localInstance("http://localhost:4503") // local-publish
-      localInstance("http://localhost:4503", "admin", "admin", "publish", 14502) // local-publish
+        localInstance "http://localhost:4503" // local-publish
+        localInstance "http://localhost:4503", { // local-publish
+            user = "admin"
+            password = "admin"
+            typeName = "publish"
+            debugPort = 14502
+        } 
       
-      remoteAuthorInstance() // property: aem.instance.author.httpUrl or default 'http://localhost:4502' ; local-author
-      remotePublishInstance() // property: aem.instance.author.httpUrl or default 'http://localhost:4502' ; local-publish
+        remoteAuthorInstance() // property: aem.instance.author.httpUrl or default 'http://localhost:4502' ; local-author
+        remotePublishInstance() // property: aem.instance.author.httpUrl or default 'http://localhost:4502' ; local-publish
       
-      remoteInstance("http://192.168.10.1:4502", "user1", "password2", "integration") // integration-author
-      remoteInstance("http://192.168.10.2:4503", "user2", "password2", "integration") // integration-publish
+        remoteInstance "http://192.168.10.1:4502", { // integration-author1
+            user = "user1" 
+            password = "password2"
+            environment = "integration"
+            typeName = "author1"
+        } 
+        remoteInstance "http://192.168.10.1:8080", { // integration-author2
+            user = "user1" 
+            password = "password2"
+            environment = "integration"
+            typeName = "author2
+        } 
+        remoteInstance "http://192.168.10.2:4503", { // integration-publish1
+            user = "user2"
+            password = "password2"
+            environment = "integration"
+            typeName = "publish1"
+        } 
+        remoteInstance "http://192.168.10.2:8080", { // integration-publish2
+            user = "user2"
+            password = "password2"
+            environment = "integration"
+            typeName = "publish2"
+        } 
     }
 }
 ```
 
-Rules:
+**Rules:**
 
-* Instance name is a combination of `${environment}-${type}` e.g *local-author*, *integration-publish* etc.
+* Instance name is a combination of *${environment}-${typeName}* e.g *local-author*, *integration-publish* etc.
+* Instance type name must start with prefix *author* or *publish*. Sample valid names: *author*, *author1*, *author2*, *author-master* and *publish*, *publish1* *publish2* etc.
 * Only instances being defined as *local* are being considered in command `aemSetup`, `aemCreate`, `aemUp` etc (that comes from `com.cognifide.aem.instance` plugin).
-* All instances being defined as *local* or *remote* are being considered in commands CRX package deployment related like `aemDeploy`, `aemUpload`, `aemInstall` etc.
+* All instances being defined as *local* or *remote* are being considered in commands CRX package deployment related like `aemSatisfy`, `aemDeploy`, `aemUpload`, `aemInstall` etc.
 
 ### Understand why there are one or two plugins to be applied in build script
 
