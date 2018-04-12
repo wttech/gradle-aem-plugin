@@ -555,7 +555,7 @@ aem {
             user = "admin"
             password = "admin"
             typeName = "publish"
-            debugPort = 14502
+            debugPort = 14503
         } 
       
         remoteAuthorInstance() // property: aem.instance.author.httpUrl or default 'http://localhost:4502' ; local-author
