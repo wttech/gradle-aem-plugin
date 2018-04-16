@@ -21,7 +21,7 @@ enum class InstanceType {
         }
 
         fun byUrl(url: String): InstanceType {
-            return byPort(Instance.portOfUrl(url))
+            return byPort(InstanceUrl.parse(url).httpPort)
         }
 
         fun byPort(port: Int): InstanceType {

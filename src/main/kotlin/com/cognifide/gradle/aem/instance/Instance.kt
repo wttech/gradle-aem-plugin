@@ -124,16 +124,12 @@ interface Instance : Serializable {
             return filter(project, RemoteInstance::class)
         }
 
-        fun portOfUrl(url: String): Int {
-            return URL(url).port
-        }
-
     }
 
     val httpUrl: String
 
     val httpPort: Int
-        get() = portOfUrl(httpUrl)
+        get() = InstanceUrl.parse(httpUrl).httpPort
 
     val user: String
 
