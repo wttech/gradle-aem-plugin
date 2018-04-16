@@ -420,7 +420,7 @@ class AemConfig(
      * Declare new deployment target (AEM instance).
      */
     fun localInstance(httpUrl: String) {
-        instance(LocalInstance.create(httpUrl))
+        localInstance(httpUrl, {})
     }
 
     fun localInstance(httpUrl: String, configurer: LocalInstance.() -> Unit) {
@@ -456,7 +456,7 @@ class AemConfig(
     }
 
     fun remoteInstance(httpUrl: String) {
-        instance(RemoteInstance.create(httpUrl))
+        remoteInstance(httpUrl, {})
     }
 
     fun remoteInstance(httpUrl: String, configurer: RemoteInstance.() -> Unit) {
