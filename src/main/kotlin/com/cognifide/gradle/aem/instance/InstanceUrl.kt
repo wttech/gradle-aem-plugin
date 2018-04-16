@@ -15,7 +15,22 @@ class InstanceUrl(raw: String) {
         get() = userPart(1) ?: Instance.PASSWORD_DEFAULT
 
     val httpUrl: String
-        get() = "${config.protocol}://${config.host}:${config.port}"
+        get() = if (config.port != -1) {
+            "${config.protocol}://${config.host}:${config.port}"
+        } else {
+            "${config.protocol}://${config.host}"
+        }
+
+    val httpPort: Int
+        get() = if (config.port != -1) {
+            config.port
+        } else {
+            if (config.protocol == "https") {
+                443
+            } else {
+                80
+            }
+        }
 
     val typeName: String
         get() = InstanceType.nameByUrl(httpUrl)
@@ -24,7 +39,15 @@ class InstanceUrl(raw: String) {
         get() = InstanceType.byUrl(httpUrl)
 
     val debugPort: Int
-        get() = "1${Instance.portOfUrl(httpUrl)}".toInt()
+        get() = if (config.port != -1) {
+            "1$httpPort".toInt()
+        } else {
+            if (config.protocol == "https") {
+                50443
+            } else {
+                50080
+            }
+        }
 
     private fun userPart(index: Int): String? {
         return config.userInfo?.split(":")
