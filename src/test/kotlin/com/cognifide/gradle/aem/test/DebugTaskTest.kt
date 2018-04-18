@@ -8,6 +8,8 @@ class DebugTaskTest : AemTest() {
     fun shouldGenerateValidJsonFileForDefaults() {
         buildTask("debug/defaults", ":aemDebug", {
             assertFileExists("Debug output file does not exist.", "build/aem/aemDebug/debug.json")
+
+            // TODO compare json with template, ignore dynamic values like 'buildCount' etc
         })
     }
 
@@ -15,6 +17,8 @@ class DebugTaskTest : AemTest() {
     fun shouldGenerateValidJsonFileForOverrides() {
         buildTask("debug/overrides", ":aemDebug", {
             assertFileExists("Debug output file does not exist.", "build/aem/aemDebug/debug.json")
+
+            // TODO compare json with template, ignore dynamic values like 'buildCount' etc
         })
     }
 

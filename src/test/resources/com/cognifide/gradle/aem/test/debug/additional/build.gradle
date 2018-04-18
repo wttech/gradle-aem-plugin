@@ -1,0 +1,49 @@
+buildscript {
+    repositories {
+        jcenter()
+        mavenLocal()
+        maven { url "http://dl.bintray.com/cognifide/maven-public" }
+    }
+
+    dependencies {
+        classpath 'com.cognifide.gradle:aem-plugin:3.2.0'
+    }
+}
+
+apply plugin: 'com.cognifide.aem.base'
+
+aem {
+    config {
+        remoteAuthorInstance()
+        remotePublishInstance()
+
+        remoteInstance "http://author.example.com", {
+            typeName = "author"
+        }
+        remoteInstance "http://example.com", {
+            typeName = "publish"
+        }
+
+        remoteInstance "http://192.168.1.1", {
+            typeName = "author"
+        }
+        remoteInstance "http://192.168.1.2", {
+            typeName = "publish"
+        }
+
+        remoteInstance "http://192.168.2.1:4502"
+        remoteInstance "http://192.168.2.2:4503"
+
+        remoteInstance "https://192.168.3.1", {
+            typeName = "author"
+            environment = "int"
+        }
+        remoteInstance "https://192.168.3.2", {
+            typeName = "publish"
+            environment = "int"
+        }
+
+        remoteInstance "https://192.168.4.1:4502"
+        remoteInstance "https://192.168.4.2:4503"
+    }
+}
