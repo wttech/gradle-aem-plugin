@@ -1,3 +1,5 @@
+package com.cognifide.gradle.aem.test.debug.overrides
+
 buildscript {
     repositories {
         jcenter()
