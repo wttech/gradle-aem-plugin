@@ -1,13 +1,12 @@
 package com.cognifide.gradle.aem.test
 
-import org.gradle.testkit.runner.TaskOutcome
 import org.junit.Test
 
 class ComposeTaskTest : AemTest() {
 
     @Test
     fun shouldComposePackageWithBundleAndContent() {
-        buildScript("compose/bundle-and-content", "aemCompose", {
+        buildTask("compose/bundle-and-content", ":aemCompose", {
             val pkg = file("build/distributions/example-1.0.0-SNAPSHOT.zip")
 
             assertPackage(pkg)
@@ -18,9 +17,7 @@ class ComposeTaskTest : AemTest() {
 
     @Test
     fun shouldComposePackageAssemblyAndSingles() {
-        buildScript("compose/assembly", "aemCompose", {
-            assertTaskOutcomes(":aemCompose", TaskOutcome.SUCCESS)
-
+        buildTasks("compose/assembly","aemCompose", {
             val assemblyPkg = file("build/distributions/example-1.0.0-SNAPSHOT.zip")
             assertPackage(assemblyPkg)
             assertPackageFile(assemblyPkg, "jcr_root/apps/example/core/.content.xml")

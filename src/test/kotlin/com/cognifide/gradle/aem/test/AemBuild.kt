@@ -24,7 +24,7 @@ class AemBuild(val result: BuildResult, val projectDir: File) {
     }
 
     fun assertTaskOutcomes(taskName: String, outcome: TaskOutcome = TaskOutcome.SUCCESS) {
-        result.tasks.filter { it.path.endsWith(taskName) }.forEach { assertTaskOutcome(it.path, outcome) }
+        result.tasks.filter { it.path.endsWith(":$taskName") }.forEach { assertTaskOutcome(it.path, outcome) }
     }
 
     fun assertPackage(path: String) {

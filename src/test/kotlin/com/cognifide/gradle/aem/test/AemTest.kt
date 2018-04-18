@@ -13,18 +13,25 @@ abstract class AemTest {
     @JvmField
     var tmpDir = TemporaryFolder()
 
-    fun buildScript(scriptDir: String, taskName: String, callback: AemBuild.() -> Unit) {
-        buildScript(scriptDir, { it.withArguments(taskName, "-i", "-S") }, {
+    fun buildTask(rootProjectDir: String, taskName: String, callback: AemBuild.() -> Unit) {
+        build(rootProjectDir, { it.withArguments(taskName, "-i", "-S") }, {
             assertTaskOutcome(taskName)
             callback()
         })
     }
 
-    fun buildScript(scriptDir: String, configurer: (GradleRunner) -> Unit, callback: AemBuild.() -> Unit) {
-        val projectDir = File(tmpDir.newFolder(), scriptDir)
+    fun buildTasks(rootProjectDir: String, taskName: String, callback: AemBuild.() -> Unit) {
+        build(rootProjectDir, { it.withArguments(taskName, "-i", "-S") }, {
+            assertTaskOutcomes(taskName)
+            callback()
+        })
+    }
+
+    fun build(rootProjectDir: String, configurer: (GradleRunner) -> Unit, callback: AemBuild.() -> Unit) {
+        val projectDir = File(tmpDir.newFolder(), rootProjectDir)
 
         GFileUtils.mkdirs(projectDir)
-        FileOperations.copyResources("test/$scriptDir", projectDir)
+        FileOperations.copyResources("test/$rootProjectDir", projectDir)
 
         val runner = GradleRunner.create()
                 .withProjectDir(projectDir)
