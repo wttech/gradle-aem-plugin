@@ -38,6 +38,7 @@ dependencies {
 
     testCompile gradleTestKit()
     testCompile 'junit:junit:4.12'
+    testCompile  'org.skyscreamer:jsonassert:1.5.0'
 }
 
 gradlePlugin {
