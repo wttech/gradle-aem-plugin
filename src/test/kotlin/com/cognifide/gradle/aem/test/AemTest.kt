@@ -54,11 +54,16 @@ abstract class AemTest {
     }
 
     fun assertJson(expected: String, actual: String) {
-        assertJson(expected, actual, listOf())
+        assertJsonIgnored(expected, actual, listOf())
     }
 
-    fun assertJson(expected: String, actual: String, ignoredFields: List<String>) {
+    fun assertJsonIgnored(expected: String, actual: String, ignoredFields: List<String>) {
         val customizations = ignoredFields.map { Customization(it, { _, _ -> true }) }
+
+        assertJsonCustomized(expected, actual, customizations)
+    }
+
+    fun assertJsonCustomized(expected: String, actual: String, customizations: List<Customization>) {
         val comparator = CustomComparator(JSONCompareMode.STRICT, *customizations.toTypedArray())
 
         JSONAssert.assertEquals(expected, actual, comparator)

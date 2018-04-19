@@ -1,21 +1,24 @@
 package com.cognifide.gradle.aem.test
 
 import org.junit.Test
+import org.skyscreamer.jsonassert.Customization
 
 class DebugTaskTest : AemTest() {
 
     companion object {
-        val IGNORED_FIELDS = listOf(
-                "projectInfo.dir", // TODO apply rule for checking paths
-                "packageProperties.buildCount", // TODO apply rule for checking type
-                "packageProperties.created", // TODO apply rule for checking type
-                "packageProperties.config.contentPath", // TODO apply rule for checking paths
-                "packageProperties.config.vaultFilesPath", // TODO apply rule for checking paths
-                "packageProperties.config.instanceFilesPath", // TODO apply rule for checking paths
-                "packageProperties.config.checkoutFilterPath", // TODO apply rule for checking paths
-                "packageProperties.config.buildDate" // TODO apply rule for checking type
-
-        )
+        val JSON_CUSTOMIZATIONS by lazy {
+            mutableListOf<Customization>().apply {
+                add(Customization("projectInfo.dir", { _, _ -> true}))
+                add(Customization("packageProperties.buildCount", {_, _ -> true}))
+                add(Customization("packageProperties.created", {_, _ -> true}))
+                add(Customization("packageProperties.config.contentPath", {_, _ -> true}))
+                add(Customization("packageProperties.config.vaultFilesPath", {_, _ -> true}))
+                add(Customization("packageProperties.config.instanceFilesPath", {_, _ -> true}))
+                add(Customization("packageProperties.config.checkoutFilterPath", {_, _ -> true}))
+                add(Customization("packageProperties.config.buildDate", {_, _ -> true}))
+                add(Customization("", {_, _ -> true}))
+            }
+        }
     }
 
     @Test
@@ -23,10 +26,10 @@ class DebugTaskTest : AemTest() {
         build("debug/minimal", {
             it.withArguments(":aemDebug", "-S", "-i", "--offline")
         }, {
-            assertJson(
+            assertJsonCustomized(
                     readFile("debug/minimal/debug.json"),
                     readFile(file("build/aem/aemDebug/debug.json")),
-                    IGNORED_FIELDS
+                    JSON_CUSTOMIZATIONS
 
             )
         })
@@ -37,10 +40,10 @@ class DebugTaskTest : AemTest() {
         build("debug/additional", {
             it.withArguments(":aemDebug", "-S", "-i", "--offline")
         }, {
-            assertJson(
+            assertJsonCustomized(
                     readFile("debug/additional/debug.json"),
                     readFile(file("build/aem/aemDebug/debug.json")),
-                    IGNORED_FIELDS
+                    JSON_CUSTOMIZATIONS
             )
         })
     }
