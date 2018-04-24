@@ -11,7 +11,7 @@ class InstanceState(val project: Project, val instance: Instance, val timeout: I
     val config = AemConfig.of(project)
 
     val bundleState by lazy {
-        InstanceSync(project, instance).determineBundleState({ method ->
+        InstanceSync.create(project, instance).determineBundleState({ method ->
             method.config = RequestConfig.custom()
                     .setConnectTimeout(timeout)
                     .setSocketTimeout(timeout)

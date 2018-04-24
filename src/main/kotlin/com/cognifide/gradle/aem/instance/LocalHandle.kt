@@ -200,7 +200,7 @@ class LocalHandle(val project: Project, val instance: Instance) {
 
     fun init() {
         if (!initialized) {
-            InstanceSync.defaultBasicAuth(project, instance).changePassword()
+            InstanceSync.create(project, instance).changePassword()
             lock(LOCK_INIT)
         }
     }

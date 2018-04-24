@@ -38,7 +38,7 @@ class ProjectDumper(@Transient val project: Project) {
             AemConfig.of(project).instances.mapValues {
                 val instance = it.value
                 try {
-                    InstanceSync(project, instance).determineRemotePackage()
+                    InstanceSync.create(project, instance).determineRemotePackage()
                 } catch (e: Exception) {
                     logger.info("Cannot determine remote package, because instance is not available: $instance")
                     logger.debug("Detailed error", e)

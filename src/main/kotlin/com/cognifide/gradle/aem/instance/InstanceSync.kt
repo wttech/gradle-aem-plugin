@@ -36,17 +36,21 @@ import java.io.File
 import java.io.FileNotFoundException
 import java.util.*
 
-class InstanceSync(val project: Project, val instance: Instance) {
+class InstanceSync private constructor(val project: Project, val instance: Instance) {
 
     companion object {
         private const val PACKAGE_MANAGER_SERVICE_SUFFIX = "/crx/packmgr/service"
 
         private const val PACKAGE_MANAGER_LIST_SUFFIX = "/crx/packmgr/list.jsp"
 
-        fun defaultBasicAuth(project: Project, instance: Instance): InstanceSync {
-            return InstanceSync(project, instance).apply {
-                basicUser = Instance.USER_DEFAULT
-                basicPassword = Instance.PASSWORD_DEFAULT
+        fun create(project: Project, instance: Instance): InstanceSync {
+            return if ((instance is LocalInstance) && (!LocalHandle(project, instance).initialized)) {
+                InstanceSync(project, instance).apply {
+                    basicUser = Instance.USER_DEFAULT
+                    basicPassword = Instance.PASSWORD_DEFAULT
+                }
+            } else {
+                InstanceSync(project, instance)
             }
         }
     }
