@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.test
 
 import org.junit.Test
 import org.skyscreamer.jsonassert.Customization
+import org.skyscreamer.jsonassert.ValueMatcher
 
 class DebugTaskTest : AemTest() {
 
@@ -16,9 +17,27 @@ class DebugTaskTest : AemTest() {
                 add(Customization("packageProperties.config.instanceFilesPath", {_, _ -> true}))
                 add(Customization("packageProperties.config.checkoutFilterPath", {_, _ -> true}))
                 add(Customization("packageProperties.config.buildDate", {_, _ -> true}))
-                add(Customization("", {_, _ -> true}))
             }
         }
+    }
+
+    class PathValueMatcher(val prefix: String) : ValueMatcher<String> {
+        override fun equal(p1: String?, p2: String?): Boolean {
+            if (p1 == p2) {
+                return true
+            }
+
+            return if (p1 != null && p2 != null) {
+                normalizePath(p1) == normalizePath(p2)
+            } else {
+                false
+            }
+        }
+
+        private fun normalizePath(path: String): String {
+            return path.replace("\\", "/").substringAfter(prefix)
+        }
+
     }
 
     @Test
