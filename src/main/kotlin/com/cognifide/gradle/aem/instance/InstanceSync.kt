@@ -483,6 +483,9 @@ class InstanceSync(val project: Project, val instance: Instance) {
         }
     }
 
+    /**
+     * Based on: https://www.danklco.com/posts/2015/06/changing-user-passwords-aem-61-curl.html
+     */
     fun changePassword() {
         val userPath = try {
             ObjectMapper().readValue(get(userPathUrl), ObjectNode::class.java)
