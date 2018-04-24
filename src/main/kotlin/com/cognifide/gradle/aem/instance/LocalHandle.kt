@@ -27,6 +27,10 @@ class LocalHandle(val project: Project, val instance: Instance) {
                 "*quickstart*.jar",
                 "*.jar"
         )
+
+        const val LOCK_CREATE = "create"
+
+        const val LOCK_INIT = "init"
     }
 
     class Script(val wrapper: File, val bin: File, val command: List<String>) {
@@ -45,8 +49,6 @@ class LocalHandle(val project: Project, val instance: Instance) {
     val dir = File("${config.instancesPath}/${instance.typeName}")
 
     val jar = File(dir, "aem-quickstart.jar")
-
-    val lock = File(dir, "local-handle.lock")
 
     val staticDir = File(dir, "crx-quickstart")
 
@@ -67,7 +69,7 @@ class LocalHandle(val project: Project, val instance: Instance) {
     }
 
     fun create(fileResolver: FileResolver) {
-        if (lock.exists()) {
+        if (created) {
             logger.info(("Instance already created"))
             return
         }
@@ -105,7 +107,7 @@ class LocalHandle(val project: Project, val instance: Instance) {
         })
 
         logger.info("Creating lock file")
-        lock()
+        lock(LOCK_CREATE)
 
         logger.info("Created instance with success")
     }
@@ -196,6 +198,13 @@ class LocalHandle(val project: Project, val instance: Instance) {
         execute(stopScript)
     }
 
+    fun init() {
+        if (!initialized) {
+            InstanceSync.defaultBasicAuth(project, instance).changePassword()
+            lock(LOCK_INIT)
+        }
+    }
+
     private fun execute(script: Script) {
         ProcessBuilder(*script.commandLine.toTypedArray())
                 .directory(dir)
@@ -219,10 +228,23 @@ class LocalHandle(val project: Project, val instance: Instance) {
         logger.info("Destroyed with success")
     }
 
-    fun lock() {
+    val created: Boolean
+        get() = locked(LOCK_CREATE)
+
+    val initialized: Boolean
+        get() = locked(LOCK_INIT)
+
+    val createLock: File
+        get() = lockFile(LOCK_CREATE)
+
+    private fun lockFile(name: String): File = File(dir, "$name.lock")
+
+    fun lock(name: String) {
         val metaJson = Formats.toJson(mapOf("locked" to Formats.date()))
-        lock.printWriter().use { it.print(metaJson) }
+        lockFile(name).printWriter().use { it.print(metaJson) }
     }
+
+    fun locked(name: String): Boolean = lockFile(name).exists()
 
     override fun toString(): String {
         return "LocalHandle(dir=${dir.absolutePath}, instance=$instance)"

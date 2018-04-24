@@ -6,6 +6,8 @@ import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.http.PreemptiveAuthInterceptor
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.deploy.*
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.node.ObjectNode
 import org.apache.commons.io.IOUtils
 import org.apache.http.HttpEntity
 import org.apache.http.HttpResponse
@@ -40,7 +42,18 @@ class InstanceSync(val project: Project, val instance: Instance) {
         private const val PACKAGE_MANAGER_SERVICE_SUFFIX = "/crx/packmgr/service"
 
         private const val PACKAGE_MANAGER_LIST_SUFFIX = "/crx/packmgr/list.jsp"
+
+        fun defaultBasicAuth(project: Project, instance: Instance): InstanceSync {
+            return InstanceSync(project, instance).apply {
+                basicUser = Instance.USER_DEFAULT
+                basicPassword = Instance.PASSWORD_DEFAULT
+            }
+        }
     }
+
+    private var basicUser = instance.user
+
+    private var basicPassword = instance.password
 
     val config = AemConfig.of(project)
 
@@ -55,6 +68,8 @@ class InstanceSync(val project: Project, val instance: Instance) {
     val bundlesUrl = "${instance.httpUrl}/system/console/bundles.json"
 
     val vmStatUrl = "${instance.httpUrl}/system/console/vmstat"
+
+    val userPathUrl = "${instance.httpUrl}/bin/querybuilder.json?path=/home/users&1_property=rep:authorizableId&1_property.value=${instance.user}&p.limit=-1"
 
     fun get(url: String, configurer: (HttpRequestBase) -> Unit = { _ -> }): String {
         val method = HttpGet(normalizeUrl(url))
@@ -123,7 +138,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
                         .build()
                 )
                 .setDefaultCredentialsProvider(BasicCredentialsProvider().apply {
-                    setCredentials(AuthScope.ANY, UsernamePasswordCredentials(instance.user, instance.password))
+                    setCredentials(AuthScope.ANY, UsernamePasswordCredentials(basicUser, basicPassword))
                 })
         if (config.deployConnectionUntrustedSsl) {
             httpClientBuilder.setSSLSocketFactory(createSslConnectionSocketFactory())
@@ -238,7 +253,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
 
                 if (i < config.uploadRetryTimes) {
                     logger.warn("Cannot upload package to $instance.")
-                    logger.warn("Retrying (${i+1}/${config.uploadRetryTimes}) after delay.")
+                    logger.warn("Retrying (${i + 1}/${config.uploadRetryTimes}) after delay.")
                     Behaviors.waitFor(config.uploadRetryDelay)
                 }
             }
@@ -283,7 +298,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
                 exception = e
                 if (i < config.installRetryTimes) {
                     logger.warn("Cannot install package on $instance.")
-                    logger.warn("Retrying (${i+1}/${config.installRetryTimes}) after delay.")
+                    logger.warn("Retrying (${i + 1}/${config.installRetryTimes}) after delay.")
                     Behaviors.waitFor(config.installRetryDelay)
                 }
             }
@@ -465,6 +480,27 @@ class InstanceSync(val project: Project, val instance: Instance) {
             Behaviors.waitFor(delay)
         } catch (e: DeployException) {
             throw InstanceException("Cannot reload instance $instance", e)
+        }
+    }
+
+    fun changePassword() {
+        val userPath = try {
+            ObjectMapper().readValue(get(userPathUrl), ObjectNode::class.java)
+                    ?.withArray("hits")?.get(0)?.get("path")
+                    ?: throw DeployException("Cannot determine user '${instance.user}' path at instance: $instance")
+        } catch (e: DeployException) {
+            throw InstanceException("Cannot query for user '${instance.user}' path at instance: $instance", e)
+        }
+
+        try {
+            postMultipart("${instance.httpUrl}/crx/explorer/ui/setpassword.jsp", mapOf(
+                    "old" to Instance.USER_DEFAULT,
+                    "Path" to userPath,
+                    "plain" to instance.password,
+                    "verify" to instance.password
+            ))
+        } catch (e: DeployException) {
+            throw InstanceException("Cannot set password for user '${instance.user}' at instance: $instance", e)
         }
     }
 
