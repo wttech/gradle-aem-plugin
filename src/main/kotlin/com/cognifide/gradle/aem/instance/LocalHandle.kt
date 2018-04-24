@@ -200,6 +200,7 @@ class LocalHandle(val project: Project, val instance: Instance) {
 
     fun init() {
         if (!initialized) {
+            logger.info("Initializing running instance")
             InstanceSync.create(project, instance).changePassword()
             lock(LOCK_INIT)
         }
