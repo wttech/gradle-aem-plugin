@@ -397,7 +397,7 @@ class AemConfig(
      * but could be customized to filter out files being checked out.
      */
     @Input
-    var checkoutFilterPath: String = propParser.string("aem.checkout.filterPath", vaultPath)
+    var checkoutFilterPath: String = propParser.string("aem.checkout.filterPath", vaultFilterPath)
 
     /**
      * Determines which files will be deleted within running cleaning
