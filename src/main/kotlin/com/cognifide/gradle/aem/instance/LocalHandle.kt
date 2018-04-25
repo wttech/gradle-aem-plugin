@@ -19,7 +19,7 @@ import java.io.File
 class LocalHandle(val project: Project, val instance: Instance) {
 
     companion object {
-        val JAR_STATIC_FILES_PATH = "static/"
+        const val JAR_STATIC_FILES_PATH = "static/"
 
         val JAR_NAME_PATTERNS = listOf(
                 "*aem-quickstart*.jar",
@@ -142,10 +142,30 @@ class LocalHandle(val project: Project, val instance: Instance) {
     }
 
     private fun correctStaticFiles() {
-        // Force CMD to be launched in closable window mode. Inject nice title.
         FileOperations.amendFile(binScript("start", OperatingSystem.forName("windows")).bin, {
-            it.replace("start \"CQ\" cmd.exe /K", "start /min \"$instance\" cmd.exe /C") // AEM <= 6.2
-            it.replace("start \"CQ\" cmd.exe /C", "start /min \"$instance\" cmd.exe /C") // AEM 6.3
+            var result = it
+
+            // Force CMD to be launched in closable window mode. Inject nice title.
+            result = result.replace("start \"CQ\" cmd.exe /K", "start /min \"$instance\" cmd.exe /C") // AEM <= 6.2
+            result = result.replace("start \"CQ\" cmd.exe /C", "start /min \"$instance\" cmd.exe /C") // AEM 6.3
+
+            // Make START_OPTS be extendable by parent script.
+            result = result.replace("set START_OPTS=start -c %CurrDirName% -i launchpad", "if not defined START_OPTS set START_OPTS=start -c %CurrDirName% -i launchpad")
+
+            result
+        })
+
+        FileOperations.amendFile(binScript("start", OperatingSystem.forName("unix")).bin, {
+            var result = it
+
+            // Make START_OPTS be extendable by parent script.
+            result = result.replace("START_OPTS=\"start -c ${'$'}{CURR_DIR} -i launchpad\"", """
+                    if [ -z "${'$'}START_OPTS" ]; then
+	                    START_OPTS="start -c ${'$'}{CURR_DIR} -i launchpad"
+                    fi
+            """.trimIndent())
+
+            result
         })
 
         // Ensure that 'logs' directory exists

@@ -373,7 +373,7 @@ class InstanceSync private constructor(val project: Project, val instance: Insta
     }
 
     fun activatePackage(path: String = determineRemotePackagePath()): UploadResponse {
-        val url = jsonTargetUrl + path + "/?cmd=replicate"
+        val url = "$jsonTargetUrl$path/?cmd=replicate"
 
         logger.info("Activating package using command: $url")
 
@@ -395,16 +395,16 @@ class InstanceSync private constructor(val project: Project, val instance: Insta
             logger.info("Package activated")
         } else {
             logger.error("Package activation failed: + " + response.msg)
-            throw DeployException(response.msg.orEmpty())
+            throw DeployException(response.msg)
         }
 
         return response
     }
 
     fun deletePackage(path: String = determineRemotePackagePath()) {
-        val url = htmlTargetUrl + path + "/?cmd=delete"
+        val url = "$htmlTargetUrl$path/?cmd=delete"
 
-        logger.info("Deleting package using command: " + url)
+        logger.info("Deleting package using command: $url")
 
         try {
             val rawHtml = postMultipart(url)
@@ -434,7 +434,7 @@ class InstanceSync private constructor(val project: Project, val instance: Insta
     fun uninstallPackage(installedPackagePath: String = determineRemotePackagePath()) {
         val url = htmlTargetUrl + installedPackagePath + "/?cmd=uninstall"
 
-        logger.info("Uninstalling package using command: " + url)
+        logger.info("Uninstalling package using command: $url")
 
         try {
             val rawHtml = postMultipart(url, mapOf(
