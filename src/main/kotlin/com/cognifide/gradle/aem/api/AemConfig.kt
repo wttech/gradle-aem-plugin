@@ -295,23 +295,29 @@ class AemConfig(
     /**
      * Path in which local AEM instances will be stored.
      *
-     * Default: "${System.getProperty("user.home")}/.gradle/aem/${project.rootProject.name}"
+     * Default: "${System.getProperty("user.home")}/.aem/${project.rootProject.name}"
      */
     @Input
-    var instancesPath: String = "${System.getProperty("user.home")}/.aem/${project.rootProject.name}"
+    var createPath: String = "${System.getProperty("user.home")}/.aem/${project.rootProject.name}"
 
     /**
      * Path from which extra files for local AEM instances will be copied.
      * Useful for overriding default startup scripts ('start.bat' or 'start.sh') or providing some files inside 'crx-quickstart'.
      */
     @Input
-    var instanceFilesPath: String = project.rootProject.file("src/main/resources/${InstancePlugin.FILES_PATH}").toString()
+    var createFilesPath: String = project.rootProject.file("src/main/resources/${InstancePlugin.FILES_PATH}").toString()
 
     /**
      * Wildcard file name filter expression that is used to filter in which instance files properties can be injected.
      */
     @Input
-    var instanceFilesExpanded: MutableList<String> = mutableListOf("**/*.properties", "**/*.sh", "**/*.bat", "**/*.xml", "**/start", "**/stop")
+    var createFilesExpanded: MutableList<String> = mutableListOf("**/*.properties", "**/*.sh", "**/*.bat", "**/*.xml", "**/start", "**/stop")
+
+    /**
+     * Hook called only when instance is up first time.
+     */
+    @Internal
+    var upInitializer: (LocalHandle, InstanceSync) -> Unit = { _, _ -> }
 
     /**
      * Time in milliseconds used as interval between next instance stability checks being performed.

@@ -6,8 +6,6 @@ import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.http.PreemptiveAuthInterceptor
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.deploy.*
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.node.ObjectNode
 import org.apache.commons.io.IOUtils
 import org.apache.http.HttpEntity
 import org.apache.http.HttpResponse
@@ -36,28 +34,13 @@ import java.io.File
 import java.io.FileNotFoundException
 import java.util.*
 
-class InstanceSync private constructor(val project: Project, val instance: Instance) {
+class InstanceSync(val project: Project, val instance: Instance) {
 
     companion object {
         private const val PACKAGE_MANAGER_SERVICE_SUFFIX = "/crx/packmgr/service"
 
         private const val PACKAGE_MANAGER_LIST_SUFFIX = "/crx/packmgr/list.jsp"
-
-        fun create(project: Project, instance: Instance): InstanceSync {
-            return if ((instance is LocalInstance) && (!LocalHandle(project, instance).initialized)) {
-                InstanceSync(project, instance).apply {
-                    basicUser = Instance.USER_DEFAULT
-                    basicPassword = Instance.PASSWORD_DEFAULT
-                }
-            } else {
-                InstanceSync(project, instance)
-            }
-        }
     }
-
-    private var basicUser = instance.user
-
-    private var basicPassword = instance.password
 
     val config = AemConfig.of(project)
 
@@ -73,34 +56,35 @@ class InstanceSync private constructor(val project: Project, val instance: Insta
 
     val vmStatUrl = "${instance.httpUrl}/system/console/vmstat"
 
-    val userPathUrl = "${instance.httpUrl}/bin/querybuilder.json?path=/home/users&1_property=rep:authorizableId&1_property.value=${instance.user}&p.limit=-1"
+    var basicUser = instance.user
 
-    fun get(url: String, configurer: (HttpRequestBase) -> Unit = { _ -> }): String {
+    var basicPassword = instance.password
+
+    var requestConfigurer: (HttpRequestBase) -> Unit = { _ -> }
+
+    var responseHandler: (HttpResponse) -> Unit = { _ -> }
+
+    fun get(url: String): String {
         val method = HttpGet(normalizeUrl(url))
-        configurer(method)
+        requestConfigurer(method)
 
         return fetch(method)
     }
 
-    fun postUrlencoded(url: String, params: Map<String, Any> = mapOf(),
-                       configurer: (HttpRequestBase) -> Unit = { _ -> },
-                       statuses: List<Int> = listOf(HttpStatus.SC_OK)): String {
-        return post(url, createEntityUrlencoded(params), configurer, statuses)
+    fun postUrlencoded(url: String, params: Map<String, Any> = mapOf()): String {
+        return post(url, createEntityUrlencoded(params))
     }
 
-    fun postMultipart(url: String, params: Map<String, Any> = mapOf(),
-                      configurer: (HttpRequestBase) -> Unit = { _ -> },
-                      statuses: List<Int> = listOf(HttpStatus.SC_OK)): String {
-        return post(url, createEntityMultipart(params), configurer, statuses)
+    fun postMultipart(url: String, params: Map<String, Any> = mapOf()): String {
+        return post(url, createEntityMultipart(params))
     }
 
-    private fun post(url: String, entity: HttpEntity, configurer: (HttpRequestBase) -> Unit = { _ -> },
-                     statuses: List<Int> = listOf(HttpStatus.SC_OK)): String {
+    private fun post(url: String, entity: HttpEntity): String {
         val method = HttpPost(normalizeUrl(url))
         method.entity = entity
-        configurer(method)
+        requestConfigurer(method)
 
-        return fetch(method, statuses)
+        return fetch(method)
     }
 
     /**
@@ -111,21 +95,27 @@ class InstanceSync private constructor(val project: Project, val instance: Insta
         return url.replace(" ", "%20")
     }
 
-    fun fetch(method: HttpRequestBase, statuses: List<Int> = listOf(HttpStatus.SC_OK)): String {
-        return execute(method, statuses, { IOUtils.toString(it.entity.content) })
+    fun fetch(method: HttpRequestBase): String {
+        return execute(method, { response ->
+            val body = IOUtils.toString(response.entity.content) ?: ""
+
+            if (response.statusLine.statusCode == HttpStatus.SC_OK) {
+                return@execute body
+            } else {
+                logger.debug(body)
+                throw DeployException("Unexpected instance response: ${response.statusLine}")
+            }
+        })
     }
 
-    fun <T> execute(method: HttpRequestBase, statuses: List<Int>, success: (HttpResponse) -> T): T {
+    fun <T> execute(method: HttpRequestBase, success: (HttpResponse) -> T): T {
         try {
             val client = createHttpClient()
             val response = client.execute(method)
 
-            if (statuses.contains(response.statusLine.statusCode)) {
-                return success(response)
-            } else {
-                logger.debug(IOUtils.toString(response.entity.content))
-                throw DeployException("Unexpected instance response: ${response.statusLine}")
-            }
+            responseHandler(response)
+
+            return success(response)
         } catch (e: Exception) {
             throw DeployException("Failed instance request: ${e.message}", e)
         } finally {
@@ -432,7 +422,7 @@ class InstanceSync private constructor(val project: Project, val instance: Insta
     }
 
     fun uninstallPackage(installedPackagePath: String = determineRemotePackagePath()) {
-        val url = htmlTargetUrl + installedPackagePath + "/?cmd=uninstall"
+        val url = "$htmlTargetUrl$installedPackagePath/?cmd=uninstall"
 
         logger.info("Uninstalling package using command: $url")
 
@@ -464,11 +454,15 @@ class InstanceSync private constructor(val project: Project, val instance: Insta
         }
     }
 
-    fun determineBundleState(configurer: (HttpRequestBase) -> Unit = { _ -> }): BundleState {
+    fun determineInstanceState(): InstanceState {
+        return InstanceState(instance, determineBundleState())
+    }
+
+    fun determineBundleState(): BundleState {
         logger.debug("Asking AEM for bundles using URL: '$bundlesUrl'")
 
         return try {
-            BundleState.fromJson(get(bundlesUrl, configurer))
+            BundleState.fromJson(get(bundlesUrl))
         } catch (e: Exception) {
             logger.debug("Cannot determine bundle state on $instance", e)
             BundleState.unknown(e)
@@ -486,29 +480,4 @@ class InstanceSync private constructor(val project: Project, val instance: Insta
             throw InstanceException("Cannot reload instance $instance", e)
         }
     }
-
-    /**
-     * Based on: https://www.danklco.com/posts/2015/06/changing-user-passwords-aem-61-curl.html
-     */
-    fun changePassword() {
-        val userPath = try {
-            ObjectMapper().readValue(get(userPathUrl), ObjectNode::class.java)
-                    ?.withArray("hits")?.get(0)?.get("path")
-                    ?: throw DeployException("Cannot determine user '${instance.user}' path at instance: $instance")
-        } catch (e: DeployException) {
-            throw InstanceException("Cannot query for user '${instance.user}' path at instance: $instance", e)
-        }
-
-        try {
-            postMultipart("${instance.httpUrl}/crx/explorer/ui/setpassword.jsp", mapOf(
-                    "old" to Instance.USER_DEFAULT,
-                    "Path" to userPath,
-                    "plain" to instance.password,
-                    "verify" to instance.password
-            ))
-        } catch (e: DeployException) {
-            throw InstanceException("Cannot set password for user '${instance.user}' at instance: $instance", e)
-        }
-    }
-
 }

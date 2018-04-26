@@ -12,7 +12,7 @@ class ReloadAction(project: Project, instances: List<Instance>) : AwaitAction(pr
     var delay = config.reloadDelay
 
     private fun reload() {
-        instances.parallelStream().forEach { InstanceSync.create(project, it).reload(delay) }
+        instances.parallelStream().forEach { InstanceSync(project, it).reload(delay) }
     }
 
     override fun perform() {

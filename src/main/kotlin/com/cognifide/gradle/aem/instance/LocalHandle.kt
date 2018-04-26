@@ -46,7 +46,7 @@ class LocalHandle(val project: Project, val instance: Instance) {
 
     val config = AemConfig.of(project)
 
-    val dir = File("${config.instancesPath}/${instance.typeName}")
+    val dir = File("${config.createPath}/${instance.typeName}")
 
     val jar = File(dir, "aem-quickstart.jar")
 
@@ -94,7 +94,7 @@ class LocalHandle(val project: Project, val instance: Instance) {
         logger.info("Creating default instance files")
         FileOperations.copyResources(InstancePlugin.FILES_PATH, dir, true)
 
-        val filesDir = File(config.instanceFilesPath)
+        val filesDir = File(config.createFilesPath)
 
         logger.info("Overriding instance files using: ${filesDir.absolutePath}")
         if (filesDir.exists()) {
@@ -102,7 +102,7 @@ class LocalHandle(val project: Project, val instance: Instance) {
         }
 
         logger.info("Expanding instance files")
-        FileOperations.amendFiles(dir, config.instanceFilesExpanded, { file, source ->
+        FileOperations.amendFiles(dir, config.createFilesExpanded, { file, source ->
             PropertyParser(project).expand(source, properties, file.absolutePath)
         })
 
@@ -149,8 +149,8 @@ class LocalHandle(val project: Project, val instance: Instance) {
             result = result.replace("start \"CQ\" cmd.exe /K", "start /min \"$instance\" cmd.exe /C") // AEM <= 6.2
             result = result.replace("start \"CQ\" cmd.exe /C", "start /min \"$instance\" cmd.exe /C") // AEM 6.3
 
-            // Make START_OPTS be extendable by parent script.
-            result = result.replace("set START_OPTS=start -c %CurrDirName% -i launchpad", "if not defined START_OPTS set START_OPTS=start -c %CurrDirName% -i launchpad")
+            // Introduce missing CQ_START_OPTS injectable by parent script.
+            result = result.replace("set START_OPTS=start -c %CurrDirName% -i launchpad", "set START_OPTS=start -c %CurrDirName% -i launchpad %CQ_START_OPTS%")
 
             result
         })
@@ -158,12 +158,8 @@ class LocalHandle(val project: Project, val instance: Instance) {
         FileOperations.amendFile(binScript("start", OperatingSystem.forName("unix")).bin, {
             var result = it
 
-            // Make START_OPTS be extendable by parent script.
-            result = result.replace("START_OPTS=\"start -c ${'$'}{CURR_DIR} -i launchpad\"", """
-                    if [ -z "${'$'}START_OPTS" ]; then
-	                    START_OPTS="start -c ${'$'}{CURR_DIR} -i launchpad"
-                    fi
-            """.trimIndent())
+            // Introduce missing CQ_START_OPTS injectable by parent script.
+            result = result.replace("START_OPTS=\"start -c ${'$'}{CURR_DIR} -i launchpad\"", "START_OPTS=\"start -c ${'$'}{CURR_DIR} -i launchpad ${'$'}{CQ_START_OPTS}\"")
 
             result
         })
@@ -219,11 +215,14 @@ class LocalHandle(val project: Project, val instance: Instance) {
     }
 
     fun init() {
-        if (!initialized) {
-            logger.info("Initializing running instance")
-            InstanceSync.create(project, instance).changePassword()
-            lock(LOCK_INIT)
+        if (initialized) {
+            logger.debug("Instance already initialized")
+            return
         }
+
+        logger.info("Initializing running instance")
+        config.upInitializer(this, sync)
+        lock(LOCK_INIT)
     }
 
     private fun execute(script: Script) {
@@ -247,6 +246,10 @@ class LocalHandle(val project: Project, val instance: Instance) {
         cleanDir(false)
 
         logger.info("Destroyed with success")
+    }
+
+    val sync by lazy {
+        InstanceSync(project, instance)
     }
 
     val created: Boolean

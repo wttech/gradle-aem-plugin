@@ -35,7 +35,7 @@ abstract class SyncTask : AemDefaultTask() {
     protected fun <T : Instance> synchronizeInstance(synchronizer: (InstanceSync) -> Unit, instance: T) {
         logger.info("Synchronizing with: $instance")
 
-        synchronizer(InstanceSync.create(project, instance))
+        synchronizer(InstanceSync(project, instance))
     }
 
     protected fun synchronizeLocalInstances(handler: (LocalHandle) -> Unit) {
