@@ -88,15 +88,10 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
 
     private fun prepareSynchronizers(): List<InstanceSync> {
         return instances.map { instance ->
-            val initialized = instance is LocalInstance && !LocalHandle(project, instance).initialized
+            val init = instance is LocalInstance && !LocalHandle(project, instance).initialized
 
             InstanceSync(project, instance).apply {
                 val sync = this
-
-                if (!initialized) {
-                    sync.basicUser = Instance.USER_DEFAULT
-                    sync.basicPassword = Instance.PASSWORD_DEFAULT
-                }
 
                 requestConfigurer = { request ->
                     request.config = RequestConfig.custom()
@@ -104,8 +99,14 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
                             .setSocketTimeout(timeout)
                             .build()
                 }
+
+                if (init) {
+                    sync.basicUser = Instance.USER_DEFAULT
+                    sync.basicPassword = Instance.PASSWORD_DEFAULT
+                }
+
                 responseHandler = { response ->
-                    if (!initialized) {
+                    if (init) {
                         if (response.statusLine.statusCode == HttpStatus.SC_UNAUTHORIZED) {
                             if (sync.basicUser == Instance.USER_DEFAULT) {
                                 sync.basicUser = instance.user
