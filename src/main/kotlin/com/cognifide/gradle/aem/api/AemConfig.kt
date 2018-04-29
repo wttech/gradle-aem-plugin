@@ -317,6 +317,7 @@ class AemConfig(
      * Hook called only when instance is up first time.
      */
     @Internal
+    @get:JsonIgnore
     var upInitializer: (LocalHandle, InstanceSync) -> Unit = { _, _ -> }
 
     /**
@@ -577,6 +578,7 @@ class AemConfig(
     }
 
     @Internal
+    @JsonIgnore
     fun isUniqueProjectName() = project == project.rootProject || project.name == project.rootProject.name
 
     companion object {
