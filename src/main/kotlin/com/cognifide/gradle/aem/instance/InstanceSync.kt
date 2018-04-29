@@ -65,10 +65,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
     var responseHandler: (HttpResponse) -> Unit = { _ -> }
 
     fun get(url: String): String {
-        val method = HttpGet(normalizeUrl(url))
-        requestConfigurer(method)
-
-        return fetch(method)
+        return fetch(HttpGet(normalizeUrl(url)))
     }
 
     fun postUrlencoded(url: String, params: Map<String, Any> = mapOf()): String {
@@ -80,11 +77,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
     }
 
     private fun post(url: String, entity: HttpEntity): String {
-        val method = HttpPost(normalizeUrl(url))
-        method.entity = entity
-        requestConfigurer(method)
-
-        return fetch(method)
+        return fetch(HttpPost(normalizeUrl(url)).apply { this.entity = entity })
     }
 
     /**
@@ -110,6 +103,8 @@ class InstanceSync(val project: Project, val instance: Instance) {
 
     fun <T> execute(method: HttpRequestBase, success: (HttpResponse) -> T): T {
         try {
+            requestConfigurer(method)
+
             val client = createHttpClient()
             val response = client.execute(method)
 
@@ -256,7 +251,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         throw exception
     }
 
-    private fun uploadPackageOnce(file: File = determineLocalPackage()): UploadResponse {
+    fun uploadPackageOnce(file: File = determineLocalPackage()): UploadResponse {
         val url = "$jsonTargetUrl/?cmd=upload"
 
         logger.info("Uploading package at path '{}' to URL '{}'", file.path, url)
@@ -301,7 +296,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         throw exception
     }
 
-    private fun installPackageOnce(uploadedPackagePath: String): InstallResponse {
+    fun installPackageOnce(uploadedPackagePath: String): InstallResponse {
         val url = "$htmlTargetUrl$uploadedPackagePath/?cmd=install"
 
         logger.info("Installing package using command: $url")
