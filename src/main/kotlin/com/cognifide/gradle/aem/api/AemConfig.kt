@@ -155,7 +155,7 @@ class AemConfig(
      * Must be absolute or relative to current working directory.
      */
     @Input
-    var contentPath: String = "${project.projectDir.path}/src/main/content"
+    var contentPath: String = "${project.file("src/main/content")}"
 
     /**
      * Content path for bundle jars being placed in CRX package.

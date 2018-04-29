@@ -32,7 +32,7 @@ class LocalInstance private constructor() : Instance, Serializable {
         }
 
     @get:JsonIgnore
-    var jvmOpts: List<String> = mutableListOf(
+    var jvmOpts = mutableListOf(
             "-server", "-Xmx1024m", "-XX:MaxPermSize=256M", "-Djava.awt.headless=true"
     )
 
@@ -41,7 +41,7 @@ class LocalInstance private constructor() : Instance, Serializable {
         get() = (jvmOptsDefaults + jvmOpts).joinToString(" ")
 
     @get:JsonIgnore
-    var startOpts: List<String> = mutableListOf()
+    var startOpts = mutableListOf<String>()
 
     @get:JsonProperty("startOpts")
     val startOptsString: String
@@ -49,15 +49,16 @@ class LocalInstance private constructor() : Instance, Serializable {
 
     @get:JsonIgnore
     val runModesDefault
-        get() = listOf(typeName, ENVIRONMENT)
+        get() = listOf(typeName)
 
     @get:JsonIgnore
-    var runModes: List<String> = listOf()
+    var runModes = mutableListOf(ENVIRONMENT)
 
     @get:JsonProperty("runModes")
     val runModesString: String
         get() = (runModesDefault + runModes).joinToString(",")
 
+    // TODO caching should be scoped per build, not per instance
     @Transient
     @get:JsonIgnore
     override var packages: ListResponse? = null
