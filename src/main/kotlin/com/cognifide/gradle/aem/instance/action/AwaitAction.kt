@@ -1,12 +1,12 @@
 package com.cognifide.gradle.aem.instance.action
 
 import com.cognifide.gradle.aem.api.AemConfig
-import com.cognifide.gradle.aem.instance.Instance
-import com.cognifide.gradle.aem.instance.InstanceException
-import com.cognifide.gradle.aem.instance.InstanceState
+import com.cognifide.gradle.aem.instance.*
 import com.cognifide.gradle.aem.internal.Behaviors
 import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.internal.ProgressLogger
+import org.apache.http.HttpStatus
+import org.apache.http.client.config.RequestConfig
 import org.gradle.api.Project
 
 /**
@@ -37,9 +37,11 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
         var sinceStableTicks = -1L
         var sinceStableElapsed = 0L
 
+        val synchronizers = prepareSynchronizers()
+
         Behaviors.waitUntil(interval, { timer ->
             // Gather all instance states and update checksum on any particular state change
-            val instanceStates = instances.map { InstanceState(project, it, timeout) }
+            val instanceStates = synchronizers.map { it.determineInstanceState() }
             if (instanceStates.hashCode() != lastInstanceStates) {
                 lastInstanceStates = instanceStates.hashCode()
                 timer.reset()
@@ -84,6 +86,45 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
         progressLogger.completed()
     }
 
+    private fun prepareSynchronizers(): List<InstanceSync> {
+        return instances.map { instance ->
+            val init = instance is LocalInstance && !LocalHandle(project, instance).initialized
+
+            InstanceSync(project, instance).apply {
+                val sync = this
+
+                requestConfigurer = { request ->
+                    request.config = RequestConfig.custom()
+                            .setConnectTimeout(timeout)
+                            .setSocketTimeout(timeout)
+                            .build()
+                }
+
+                if (init) {
+                    logger.info("Initializing instance using default credentials.")
+                    sync.basicUser = Instance.USER_DEFAULT
+                    sync.basicPassword = Instance.PASSWORD_DEFAULT
+                }
+
+                responseHandler = { response ->
+                    if (init) {
+                        if (response.statusLine.statusCode == HttpStatus.SC_UNAUTHORIZED) {
+                            if (sync.basicUser == Instance.USER_DEFAULT) {
+                                logger.info("Switching instance credentials from defaults to customized.")
+                                sync.basicUser = instance.user
+                                sync.basicPassword = instance.password
+                            } else {
+                                logger.info("Switching instance credentials from customized to defaults.")
+                                sync.basicUser = Instance.USER_DEFAULT
+                                sync.basicPassword = Instance.PASSWORD_DEFAULT
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     private fun progressFor(states: List<InstanceState>, config: AemConfig, timer: Behaviors.Timer): String {
         return (progressTicks(timer.ticks, config.awaitTimes) + " " + states.joinToString(" | ") { progressFor(it) }).trim()
     }
@@ -103,7 +144,7 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
     }
 
     private fun progressIndicator(state: InstanceState): String {
-        return if (state.config.awaitCondition(state)) {
+        return if (condition(state)) {
             "+"
         } else {
             "-"

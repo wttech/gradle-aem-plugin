@@ -17,6 +17,7 @@ open class UpTask : SyncTask() {
     fun up() {
         synchronizeLocalInstances { it.up() }
         awaitStableLocalInstances()
+        synchronizeLocalInstances { it.init() }
     }
 
 }

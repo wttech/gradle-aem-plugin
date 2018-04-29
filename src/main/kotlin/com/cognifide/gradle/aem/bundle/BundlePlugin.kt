@@ -89,7 +89,7 @@ class BundlePlugin : Plugin<Project> {
 
     private fun setupConfigurations(project: Project) {
         project.plugins.withType(JavaPlugin::class.java, {
-            val baseConfig = project.configurations.getByName(JavaPlugin.COMPILE_CONFIGURATION_NAME)
+            val baseConfig = project.configurations.getByName(JavaPlugin.IMPLEMENTATION_CONFIGURATION_NAME)
             val configurer: (Configuration) -> Unit = {
                 it.isTransitive = false
                 baseConfig.extendsFrom(it)

@@ -155,7 +155,7 @@ class AemConfig(
      * Must be absolute or relative to current working directory.
      */
     @Input
-    var contentPath: String = "${project.projectDir.path}/src/main/content"
+    var contentPath: String = "${project.file("src/main/content")}"
 
     /**
      * Content path for bundle jars being placed in CRX package.
@@ -295,23 +295,30 @@ class AemConfig(
     /**
      * Path in which local AEM instances will be stored.
      *
-     * Default: "${System.getProperty("user.home")}/.gradle/aem/${project.rootProject.name}"
+     * Default: "${System.getProperty("user.home")}/.aem/${project.rootProject.name}"
      */
     @Input
-    var instancesPath: String = "${System.getProperty("user.home")}/.aem/${project.rootProject.name}"
+    var createPath: String = "${System.getProperty("user.home")}/.aem/${project.rootProject.name}"
 
     /**
      * Path from which extra files for local AEM instances will be copied.
      * Useful for overriding default startup scripts ('start.bat' or 'start.sh') or providing some files inside 'crx-quickstart'.
      */
     @Input
-    var instanceFilesPath: String = project.rootProject.file("src/main/resources/${InstancePlugin.FILES_PATH}").toString()
+    var createFilesPath: String = project.rootProject.file("src/main/resources/${InstancePlugin.FILES_PATH}").toString()
 
     /**
      * Wildcard file name filter expression that is used to filter in which instance files properties can be injected.
      */
     @Input
-    var instanceFilesExpanded: MutableList<String> = mutableListOf("**/*.properties", "**/*.sh", "**/*.bat", "**/*.xml", "**/start", "**/stop")
+    var createFilesExpanded: MutableList<String> = mutableListOf("**/*.properties", "**/*.sh", "**/*.bat", "**/*.xml", "**/start", "**/stop")
+
+    /**
+     * Hook called only when instance is up first time.
+     */
+    @Internal
+    @get:JsonIgnore
+    var upInitializer: (LocalHandle, InstanceSync) -> Unit = { _, _ -> }
 
     /**
      * Time in milliseconds used as interval between next instance stability checks being performed.
@@ -397,7 +404,7 @@ class AemConfig(
      * but could be customized to filter out files being checked out.
      */
     @Input
-    var checkoutFilterPath: String = propParser.string("aem.checkout.filterPath", vaultPath)
+    var checkoutFilterPath: String = propParser.string("aem.checkout.filterPath", vaultFilterPath)
 
     /**
      * Determines which files will be deleted within running cleaning
@@ -571,91 +578,8 @@ class AemConfig(
     }
 
     @Internal
+    @JsonIgnore
     fun isUniqueProjectName() = project == project.rootProject || project.name == project.rootProject.name
-
-    /**
-     * @Deprecated Will be removed in 4.0.0
-     */
-    fun localInstance(httpUrl: String, typeName: String) {
-        localInstance(httpUrl, {
-            this.typeName = typeName
-        })
-    }
-
-    /**
-     * @Deprecated Will be removed in 4.0.0
-     */
-    fun localInstance(httpUrl: String, user: String, password: String) {
-        localInstance(httpUrl, {
-            this.user = user
-            this.password = password
-        })
-    }
-
-    /**
-     * @Deprecated Will be removed in 4.0.0
-     */
-    fun localInstance(httpUrl: String, user: String, password: String, typeName: String) {
-        localInstance(httpUrl, {
-            this.user = user
-            this.password = password
-            this.typeName = typeName
-        })
-    }
-
-    /**
-     * @Deprecated Will be removed in 4.0.0
-     */
-    fun localInstance(httpUrl: String, user: String, password: String, type: String, debugPort: Int) {
-        localInstance(httpUrl, {
-            this.user = user
-            this.password = password
-            this.typeName = type
-            this.debugPort = debugPort
-        })
-    }
-
-    /**
-     * @Deprecated Will be removed in 4.0.0
-     */
-    fun remoteInstance(httpUrl: String, environment: String) {
-        remoteInstance(httpUrl, {
-            this.environment = environment
-        })
-    }
-
-    /**
-     * @Deprecated Will be removed in 4.0.0
-     */
-    fun remoteInstance(httpUrl: String, user: String, password: String) {
-        remoteInstance(httpUrl, {
-            this.user = user
-            this.password = password
-        })
-    }
-
-    /**
-     * @Deprecated Will be removed in 4.0.0
-     */
-    fun remoteInstance(httpUrl: String, user: String, password: String, environment: String) {
-        remoteInstance(httpUrl, {
-            this.user = user
-            this.password = password
-            this.environment = environment
-        })
-    }
-
-    /**
-     * @Deprecated Will be removed in 4.0.0
-     */
-    fun remoteInstance(httpUrl: String, user: String, password: String, typeName: String, environment: String) {
-        remoteInstance(httpUrl, {
-            this.user = user
-            this.password = password
-            this.typeName = typeName
-            this.environment = environment
-        })
-    }
 
     companion object {
 
