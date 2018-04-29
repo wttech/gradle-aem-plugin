@@ -101,6 +101,7 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
                 }
 
                 if (init) {
+                    logger.info("Initializing instance using default credentials.")
                     sync.basicUser = Instance.USER_DEFAULT
                     sync.basicPassword = Instance.PASSWORD_DEFAULT
                 }
@@ -109,9 +110,11 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
                     if (init) {
                         if (response.statusLine.statusCode == HttpStatus.SC_UNAUTHORIZED) {
                             if (sync.basicUser == Instance.USER_DEFAULT) {
+                                logger.info("Switching instance credentials from defaults to customized.")
                                 sync.basicUser = instance.user
                                 sync.basicPassword = instance.password
                             } else {
+                                logger.info("Switching instance credentials from customized to defaults.")
                                 sync.basicUser = Instance.USER_DEFAULT
                                 sync.basicPassword = Instance.PASSWORD_DEFAULT
                             }
