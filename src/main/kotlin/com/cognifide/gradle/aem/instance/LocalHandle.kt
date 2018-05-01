@@ -19,7 +19,7 @@ import java.io.File
 class LocalHandle(val project: Project, val instance: Instance) {
 
     companion object {
-        val JAR_STATIC_FILES_PATH = "static/"
+        const val JAR_STATIC_FILES_PATH = "static/"
 
         val JAR_NAME_PATTERNS = listOf(
                 "*aem-quickstart*.jar",
@@ -27,6 +27,10 @@ class LocalHandle(val project: Project, val instance: Instance) {
                 "*quickstart*.jar",
                 "*.jar"
         )
+
+        const val LOCK_CREATE = "create"
+
+        const val LOCK_INIT = "init"
     }
 
     class Script(val wrapper: File, val bin: File, val command: List<String>) {
@@ -42,11 +46,9 @@ class LocalHandle(val project: Project, val instance: Instance) {
 
     val config = AemConfig.of(project)
 
-    val dir = File("${config.instancesPath}/${instance.typeName}")
+    val dir = File("${config.createPath}/${instance.typeName}")
 
     val jar = File(dir, "aem-quickstart.jar")
-
-    val lock = File(dir, "local-handle.lock")
 
     val staticDir = File(dir, "crx-quickstart")
 
@@ -67,7 +69,7 @@ class LocalHandle(val project: Project, val instance: Instance) {
     }
 
     fun create(fileResolver: FileResolver) {
-        if (lock.exists()) {
+        if (created) {
             logger.info(("Instance already created"))
             return
         }
@@ -92,7 +94,7 @@ class LocalHandle(val project: Project, val instance: Instance) {
         logger.info("Creating default instance files")
         FileOperations.copyResources(InstancePlugin.FILES_PATH, dir, true)
 
-        val filesDir = File(config.instanceFilesPath)
+        val filesDir = File(config.createFilesPath)
 
         logger.info("Overriding instance files using: ${filesDir.absolutePath}")
         if (filesDir.exists()) {
@@ -100,12 +102,12 @@ class LocalHandle(val project: Project, val instance: Instance) {
         }
 
         logger.info("Expanding instance files")
-        FileOperations.amendFiles(dir, config.instanceFilesExpanded, { file, source ->
+        FileOperations.amendFiles(dir, config.createFilesExpanded, { file, source ->
             PropertyParser(project).expand(source, properties, file.absolutePath)
         })
 
         logger.info("Creating lock file")
-        lock()
+        lock(LOCK_CREATE)
 
         logger.info("Created instance with success")
     }
@@ -140,10 +142,26 @@ class LocalHandle(val project: Project, val instance: Instance) {
     }
 
     private fun correctStaticFiles() {
-        // Force CMD to be launched in closable window mode. Inject nice title.
         FileOperations.amendFile(binScript("start", OperatingSystem.forName("windows")).bin, {
-            it.replace("start \"CQ\" cmd.exe /K", "start /min \"$instance\" cmd.exe /C") // AEM <= 6.2
-            it.replace("start \"CQ\" cmd.exe /C", "start /min \"$instance\" cmd.exe /C") // AEM 6.3
+            var result = it
+
+            // Force CMD to be launched in closable window mode. Inject nice title.
+            result = result.replace("start \"CQ\" cmd.exe /K", "start /min \"$instance\" cmd.exe /C") // AEM <= 6.2
+            result = result.replace("start \"CQ\" cmd.exe /C", "start /min \"$instance\" cmd.exe /C") // AEM 6.3
+
+            // Introduce missing CQ_START_OPTS injectable by parent script.
+            result = result.replace("set START_OPTS=start -c %CurrDirName% -i launchpad", "set START_OPTS=start -c %CurrDirName% -i launchpad %CQ_START_OPTS%")
+
+            result
+        })
+
+        FileOperations.amendFile(binScript("start", OperatingSystem.forName("unix")).bin, {
+            var result = it
+
+            // Introduce missing CQ_START_OPTS injectable by parent script.
+            result = result.replace("START_OPTS=\"start -c ${'$'}{CURR_DIR} -i launchpad\"", "START_OPTS=\"start -c ${'$'}{CURR_DIR} -i launchpad ${'$'}{CQ_START_OPTS}\"")
+
+            result
         })
 
         // Ensure that 'logs' directory exists
@@ -196,6 +214,17 @@ class LocalHandle(val project: Project, val instance: Instance) {
         execute(stopScript)
     }
 
+    fun init() {
+        if (initialized) {
+            logger.debug("Instance already initialized")
+            return
+        }
+
+        logger.info("Initializing running instance")
+        config.upInitializer(this, sync)
+        lock(LOCK_INIT)
+    }
+
     private fun execute(script: Script) {
         ProcessBuilder(*script.commandLine.toTypedArray())
                 .directory(dir)
@@ -219,10 +248,27 @@ class LocalHandle(val project: Project, val instance: Instance) {
         logger.info("Destroyed with success")
     }
 
-    fun lock() {
-        val metaJson = Formats.toJson(mapOf("locked" to Formats.date()))
-        lock.printWriter().use { it.print(metaJson) }
+    val sync by lazy {
+        InstanceSync(project, instance)
     }
+
+    val created: Boolean
+        get() = locked(LOCK_CREATE)
+
+    val initialized: Boolean
+        get() = locked(LOCK_INIT)
+
+    val createLock: File
+        get() = lockFile(LOCK_CREATE)
+
+    private fun lockFile(name: String): File = File(dir, "$name.lock")
+
+    fun lock(name: String) {
+        val metaJson = Formats.toJson(mapOf("locked" to Formats.date()))
+        lockFile(name).printWriter().use { it.print(metaJson) }
+    }
+
+    fun locked(name: String): Boolean = lockFile(name).exists()
 
     override fun toString(): String {
         return "LocalHandle(dir=${dir.absolutePath}, instance=$instance)"

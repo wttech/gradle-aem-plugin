@@ -56,32 +56,28 @@ class InstanceSync(val project: Project, val instance: Instance) {
 
     val vmStatUrl = "${instance.httpUrl}/system/console/vmstat"
 
-    fun get(url: String, configurer: (HttpRequestBase) -> Unit = { _ -> }): String {
-        val method = HttpGet(normalizeUrl(url))
-        configurer(method)
+    var basicUser = instance.user
 
-        return fetch(method)
+    var basicPassword = instance.password
+
+    var requestConfigurer: (HttpRequestBase) -> Unit = { _ -> }
+
+    var responseHandler: (HttpResponse) -> Unit = { _ -> }
+
+    fun get(url: String): String {
+        return fetch(HttpGet(normalizeUrl(url)))
     }
 
-    fun postUrlencoded(url: String, params: Map<String, Any> = mapOf(),
-                       configurer: (HttpRequestBase) -> Unit = { _ -> },
-                       statuses: List<Int> = listOf(HttpStatus.SC_OK)): String {
-        return post(url, createEntityUrlencoded(params), configurer, statuses)
+    fun postUrlencoded(url: String, params: Map<String, Any> = mapOf()): String {
+        return post(url, createEntityUrlencoded(params))
     }
 
-    fun postMultipart(url: String, params: Map<String, Any> = mapOf(),
-                      configurer: (HttpRequestBase) -> Unit = { _ -> },
-                      statuses: List<Int> = listOf(HttpStatus.SC_OK)): String {
-        return post(url, createEntityMultipart(params), configurer, statuses)
+    fun postMultipart(url: String, params: Map<String, Any> = mapOf()): String {
+        return post(url, createEntityMultipart(params))
     }
 
-    private fun post(url: String, entity: HttpEntity, configurer: (HttpRequestBase) -> Unit = { _ -> },
-                     statuses: List<Int> = listOf(HttpStatus.SC_OK)): String {
-        val method = HttpPost(normalizeUrl(url))
-        method.entity = entity
-        configurer(method)
-
-        return fetch(method, statuses)
+    private fun post(url: String, entity: HttpEntity): String {
+        return fetch(HttpPost(normalizeUrl(url)).apply { this.entity = entity })
     }
 
     /**
@@ -92,21 +88,29 @@ class InstanceSync(val project: Project, val instance: Instance) {
         return url.replace(" ", "%20")
     }
 
-    fun fetch(method: HttpRequestBase, statuses: List<Int> = listOf(HttpStatus.SC_OK)): String {
-        return execute(method, statuses, { IOUtils.toString(it.entity.content) })
+    fun fetch(method: HttpRequestBase): String {
+        return execute(method, { response ->
+            val body = IOUtils.toString(response.entity.content) ?: ""
+
+            if (response.statusLine.statusCode == HttpStatus.SC_OK) {
+                return@execute body
+            } else {
+                logger.debug(body)
+                throw DeployException("Unexpected instance response: ${response.statusLine}")
+            }
+        })
     }
 
-    fun <T> execute(method: HttpRequestBase, statuses: List<Int>, success: (HttpResponse) -> T): T {
+    fun <T> execute(method: HttpRequestBase, success: (HttpResponse) -> T): T {
         try {
+            requestConfigurer(method)
+
             val client = createHttpClient()
             val response = client.execute(method)
 
-            if (statuses.contains(response.statusLine.statusCode)) {
-                return success(response)
-            } else {
-                logger.debug(IOUtils.toString(response.entity.content))
-                throw DeployException("Unexpected instance response: ${response.statusLine}")
-            }
+            responseHandler(response)
+
+            return success(response)
         } catch (e: Exception) {
             throw DeployException("Failed instance request: ${e.message}", e)
         } finally {
@@ -123,7 +127,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
                         .build()
                 )
                 .setDefaultCredentialsProvider(BasicCredentialsProvider().apply {
-                    setCredentials(AuthScope.ANY, UsernamePasswordCredentials(instance.user, instance.password))
+                    setCredentials(AuthScope.ANY, UsernamePasswordCredentials(basicUser, basicPassword))
                 })
         if (config.deployConnectionUntrustedSsl) {
             httpClientBuilder.setSSLSocketFactory(createSslConnectionSocketFactory())
@@ -238,7 +242,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
 
                 if (i < config.uploadRetryTimes) {
                     logger.warn("Cannot upload package to $instance.")
-                    logger.warn("Retrying (${i+1}/${config.uploadRetryTimes}) after delay.")
+                    logger.warn("Retrying (${i + 1}/${config.uploadRetryTimes}) after delay.")
                     Behaviors.waitFor(config.uploadRetryDelay)
                 }
             }
@@ -247,7 +251,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         throw exception
     }
 
-    private fun uploadPackageOnce(file: File = determineLocalPackage()): UploadResponse {
+    fun uploadPackageOnce(file: File = determineLocalPackage()): UploadResponse {
         val url = "$jsonTargetUrl/?cmd=upload"
 
         logger.info("Uploading package at path '{}' to URL '{}'", file.path, url)
@@ -283,7 +287,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
                 exception = e
                 if (i < config.installRetryTimes) {
                     logger.warn("Cannot install package on $instance.")
-                    logger.warn("Retrying (${i+1}/${config.installRetryTimes}) after delay.")
+                    logger.warn("Retrying (${i + 1}/${config.installRetryTimes}) after delay.")
                     Behaviors.waitFor(config.installRetryDelay)
                 }
             }
@@ -292,7 +296,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         throw exception
     }
 
-    private fun installPackageOnce(uploadedPackagePath: String): InstallResponse {
+    fun installPackageOnce(uploadedPackagePath: String): InstallResponse {
         val url = "$htmlTargetUrl$uploadedPackagePath/?cmd=install"
 
         logger.info("Installing package using command: $url")
@@ -354,7 +358,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
     }
 
     fun activatePackage(path: String = determineRemotePackagePath()): UploadResponse {
-        val url = jsonTargetUrl + path + "/?cmd=replicate"
+        val url = "$jsonTargetUrl$path/?cmd=replicate"
 
         logger.info("Activating package using command: $url")
 
@@ -376,16 +380,16 @@ class InstanceSync(val project: Project, val instance: Instance) {
             logger.info("Package activated")
         } else {
             logger.error("Package activation failed: + " + response.msg)
-            throw DeployException(response.msg.orEmpty())
+            throw DeployException(response.msg)
         }
 
         return response
     }
 
     fun deletePackage(path: String = determineRemotePackagePath()) {
-        val url = htmlTargetUrl + path + "/?cmd=delete"
+        val url = "$htmlTargetUrl$path/?cmd=delete"
 
-        logger.info("Deleting package using command: " + url)
+        logger.info("Deleting package using command: $url")
 
         try {
             val rawHtml = postMultipart(url)
@@ -413,9 +417,9 @@ class InstanceSync(val project: Project, val instance: Instance) {
     }
 
     fun uninstallPackage(installedPackagePath: String = determineRemotePackagePath()) {
-        val url = htmlTargetUrl + installedPackagePath + "/?cmd=uninstall"
+        val url = "$htmlTargetUrl$installedPackagePath/?cmd=uninstall"
 
-        logger.info("Uninstalling package using command: " + url)
+        logger.info("Uninstalling package using command: $url")
 
         try {
             val rawHtml = postMultipart(url, mapOf(
@@ -445,11 +449,15 @@ class InstanceSync(val project: Project, val instance: Instance) {
         }
     }
 
-    fun determineBundleState(configurer: (HttpRequestBase) -> Unit = { _ -> }): BundleState {
+    fun determineInstanceState(): InstanceState {
+        return InstanceState(instance, determineBundleState())
+    }
+
+    fun determineBundleState(): BundleState {
         logger.debug("Asking AEM for bundles using URL: '$bundlesUrl'")
 
         return try {
-            BundleState.fromJson(get(bundlesUrl, configurer))
+            BundleState.fromJson(get(bundlesUrl))
         } catch (e: Exception) {
             logger.debug("Cannot determine bundle state on $instance", e)
             BundleState.unknown(e)
@@ -467,5 +475,4 @@ class InstanceSync(val project: Project, val instance: Instance) {
             throw InstanceException("Cannot reload instance $instance", e)
         }
     }
-
 }

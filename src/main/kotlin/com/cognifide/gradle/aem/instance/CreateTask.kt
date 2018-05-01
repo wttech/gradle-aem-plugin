@@ -28,7 +28,7 @@ open class CreateTask : SyncTask() {
 
         instanceFileResolver.attach(this)
         instanceFileFromProperties()
-        project.afterEvaluate { Instance.handles(project).forEach { outputs.file(it.lock) } }
+        project.afterEvaluate { Instance.handles(project).forEach { outputs.file(it.createLock) } }
     }
 
     private fun instanceFileFromProperties() {
