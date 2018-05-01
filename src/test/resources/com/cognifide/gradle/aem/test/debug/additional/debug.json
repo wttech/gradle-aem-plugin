@@ -190,9 +190,9 @@
       "dependContentTaskNames": [
         "aemCompose.dependencies"
       ],
-      "instancesPath": ".aem/additional",
-      "instanceFilesPath": "debug/additional/src/main/resources/local-instance",
-      "instanceFilesExpanded": [
+      "createPath": ".aem/additional",
+      "createFilesPath": "debug/additional/src/main/resources/local-instance",
+      "createFilesExpanded": [
         "**/*.properties",
         "**/*.sh",
         "**/*.bat",
@@ -213,8 +213,7 @@
       "cleanFilesDeleted": [
         "**/.vlt",
         "**/.vlt*.tmp"
-      ],
-      "uniqueProjectName": true
+      ]
     }
   },
   "packageDeployed": {}

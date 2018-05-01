@@ -69,9 +69,9 @@
       "dependContentTaskNames": [
         "aemCompose.dependencies"
       ],
-      "instancesPath": "C:\\Users\\krystian.panek/.aem/minimal",
-      "instanceFilesPath": "C:\\Users\\krystian.panek\\AppData\\Local\\Temp\\junit3469494447055019159\\junit384394802434556002\\debug\\minimal\\src\\main\\resources\\local-instance",
-      "instanceFilesExpanded": [
+      "createPath": "C:\\Users\\krystian.panek/.aem/minimal",
+      "createFilesPath": "C:\\Users\\krystian.panek\\AppData\\Local\\Temp\\junit3469494447055019159\\junit384394802434556002\\debug\\minimal\\src\\main\\resources\\local-instance",
+      "createFilesExpanded": [
         "**/*.properties",
         "**/*.sh",
         "**/*.bat",
@@ -92,8 +92,7 @@
       "cleanFilesDeleted": [
         "**/.vlt",
         "**/.vlt*.tmp"
-      ],
-      "uniqueProjectName": true
+      ]
     }
   },
   "packageDeployed": {}
