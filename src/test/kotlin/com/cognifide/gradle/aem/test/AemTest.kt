@@ -18,20 +18,20 @@ abstract class AemTest {
     var tmpDir = TemporaryFolder()
 
     fun buildTask(rootProjectDir: String, taskName: String, callback: AemBuild.() -> Unit) {
-        build(rootProjectDir, { it.withArguments(taskName, "-i", "-S") }, {
+        build(rootProjectDir, { withArguments(taskName, "-i", "-S") }, {
             assertTaskOutcome(taskName)
             callback()
         })
     }
 
     fun buildTasks(rootProjectDir: String, taskName: String, callback: AemBuild.() -> Unit) {
-        build(rootProjectDir, { it.withArguments(taskName, "-i", "-S") }, {
+        build(rootProjectDir, { withArguments(taskName, "-i", "-S") }, {
             assertTaskOutcomes(taskName)
             callback()
         })
     }
 
-    fun build(rootProjectDir: String, configurer: (GradleRunner) -> Unit, callback: AemBuild.() -> Unit) {
+    fun build(rootProjectDir: String, configurer: GradleRunner.() -> Unit, callback: AemBuild.() -> Unit) {
         val projectDir = File(tmpDir.newFolder(), rootProjectDir)
 
         GFileUtils.mkdirs(projectDir)

@@ -3,7 +3,7 @@
     "displayName": "root project 'minimal'",
     "path": ":",
     "name": "minimal",
-    "dir": "C:\\Users\\krystian.panek\\AppData\\Local\\Temp\\junit3469494447055019159\\junit384394802434556002\\debug\\minimal"
+    "dir": "debug/minimal"
   },
   "packageProperties": {
     "requiresRoot": "false",
@@ -27,7 +27,7 @@
       "installRetryTimes": 1,
       "installRetryDelay": 30000,
       "acHandling": "merge_preserve",
-      "contentPath": "C:\\Users\\krystian.panek\\AppData\\Local\\Temp\\junit3469494447055019159\\junit384394802434556002\\debug\\minimal/src/main/content",
+      "contentPath": "debug/minimal/src/main/content",
       "bundlePath": "/apps/minimal/install",
       "packageName": "minimal",
       "localPackagePath": "",
@@ -50,7 +50,7 @@
       "buildDate": 1524116243133,
       "fileProperties": {},
       "vaultCopyMissingFiles": true,
-      "vaultFilesPath": "C:\\Users\\krystian.panek\\AppData\\Local\\Temp\\junit3469494447055019159\\junit384394802434556002\\debug\\minimal\\src\\main\\resources\\META-INF\\vault",
+      "vaultFilesPath": "debug/minimal/src/main/resources/META-INF/vault",
       "vaultSkipProperties": [
         "jcr:uuid!**/home/users/*,**/home/groups/*",
         "jcr:lastModified",
@@ -69,8 +69,8 @@
       "dependContentTaskNames": [
         "aemCompose.dependencies"
       ],
-      "createPath": "C:\\Users\\krystian.panek/.aem/minimal",
-      "createFilesPath": "C:\\Users\\krystian.panek\\AppData\\Local\\Temp\\junit3469494447055019159\\junit384394802434556002\\debug\\minimal\\src\\main\\resources\\local-instance",
+      "createPath": ".aem/minimal",
+      "createFilesPath": "debug/minimal/src/main/resources/local-instance",
       "createFilesExpanded": [
         "**/*.properties",
         "**/*.sh",
@@ -88,7 +88,7 @@
       "satisfyRefreshing": false,
       "satisfyBundlePath": "/apps/gradle-aem-plugin/satisfy/install",
       "satisfyGroupName": "*",
-      "checkoutFilterPath": "C:\\Users\\krystian.panek\\AppData\\Local\\Temp\\junit3469494447055019159\\junit384394802434556002\\debug\\minimal/src/main/content/META-INF/vault",
+      "checkoutFilterPath": "debug/minimal/src/main/content/META-INF/vault/filter.xml",
       "cleanFilesDeleted": [
         "**/.vlt",
         "**/.vlt*.tmp"

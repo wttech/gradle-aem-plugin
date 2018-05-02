@@ -209,7 +209,7 @@
       "satisfyRefreshing": false,
       "satisfyBundlePath": "/apps/gradle-aem-plugin/satisfy/install",
       "satisfyGroupName": "*",
-      "checkoutFilterPath": "debug/additional/src/main/content/META-INF/vault",
+      "checkoutFilterPath": "debug/additional/src/main/content/META-INF/vault/filter.xml",
       "cleanFilesDeleted": [
         "**/.vlt",
         "**/.vlt*.tmp"
