@@ -1,20 +1,54 @@
 package com.cognifide.gradle.aem.test
 
-import org.gradle.testkit.runner.TaskOutcome
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
+import com.cognifide.gradle.aem.test.AemAssert.assertJsonCustomized
+import com.cognifide.gradle.aem.test.json.DateValueMatcher
+import com.cognifide.gradle.aem.test.json.PathValueMatcher
 import org.junit.Test
-import java.io.File
+import org.skyscreamer.jsonassert.Customization
+import org.skyscreamer.jsonassert.RegularExpressionValueMatcher
 
-class DebugTaskTest : BuildTest() {
+class DebugTaskTest : AemTest() {
+
+    companion object {
+        val JSON_CUSTOMIZATIONS by lazy {
+            mutableListOf<Customization>().apply {
+                add(Customization("projectInfo.dir", PathValueMatcher()))
+                add(Customization("packageProperties.buildCount", RegularExpressionValueMatcher("\\d{14}")))
+                add(Customization("packageProperties.created", DateValueMatcher()))
+                add(Customization("packageProperties.config.buildDate", RegularExpressionValueMatcher("\\d{13}")))
+                add(Customization("packageProperties.config.contentPath", PathValueMatcher()))
+                add(Customization("packageProperties.config.vaultFilesPath", PathValueMatcher()))
+                add(Customization("packageProperties.config.createFilesPath", PathValueMatcher()))
+                add(Customization("packageProperties.config.createPath", PathValueMatcher()))
+                add(Customization("packageProperties.config.checkoutFilterPath", PathValueMatcher()))
+            }
+        }
+    }
 
     @Test
-    fun shouldGenerateValidJsonFile() {
-        buildScript("debug", { configurer, projectDir ->
-            val build = configurer.withArguments("aemDebug", "-i", "-S").build()
+    fun shouldGenerateValidJsonFileForMinimal() {
+        build("debug/minimal", {
+            withArguments(":aemDebug", "-S", "-i", "--offline")
+        }, {
+            assertJsonCustomized(
+                    readFile("debug/minimal/debug.json"),
+                    readFile(file("build/aem/aemDebug/debug.json")),
+                    JSON_CUSTOMIZATIONS
 
-            assertEquals(TaskOutcome.SUCCESS, build.task(":aemDebug")?.outcome)
-            assertTrue("Debug output file does not exist.", File(projectDir, "build/aem/aemDebug/debug.json").exists())
+            )
+        })
+    }
+
+    @Test
+    fun shouldGenerateValidJsonFileForAdditional() {
+        build("debug/additional", {
+            withArguments(":aemDebug", "-S", "-i", "--offline")
+        }, {
+            assertJsonCustomized(
+                    readFile("debug/additional/debug.json"),
+                    readFile(file("build/aem/aemDebug/debug.json")),
+                    JSON_CUSTOMIZATIONS
+            )
         })
     }
 

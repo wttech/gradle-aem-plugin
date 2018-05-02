@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.vlt
+package com.cognifide.gradle.aem.test.vlt
 
 import org.gradle.api.logging.LogLevel
 import org.gradle.api.logging.Logger

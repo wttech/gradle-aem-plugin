@@ -3,9 +3,9 @@ package com.cognifide.gradle.aem.internal
 import com.fasterxml.jackson.core.util.DefaultIndenter
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.util.ISO8601Utils
 import org.apache.commons.lang3.time.DurationFormatUtils
 import org.apache.commons.validator.routines.UrlValidator
+import org.apache.jackrabbit.util.ISO8601
 import java.util.*
 
 object Formats {
@@ -53,7 +53,7 @@ object Formats {
     }
 
     fun date(date: Date = Date()): String {
-        return ISO8601Utils.format(date)
+        return ISO8601.format(Calendar.getInstance().apply { time = date })
     }
 
     fun duration(millis: Long): String {

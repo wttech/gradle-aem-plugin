@@ -1,0 +1,220 @@
+{
+  "projectInfo": {
+    "displayName": "root project 'additional'",
+    "path": ":",
+    "name": "additional",
+    "dir": "debug/additional"
+  },
+  "packageProperties": {
+    "requiresRoot": "false",
+    "buildCount": "20181091542609",
+    "created": "2017-12-19T21:39:38.058+0000",
+    "config": {
+      "instances": {
+        "local-author": {
+          "httpUrl": "http://192.168.0.1:4502",
+          "user": "admin",
+          "password": "admin",
+          "typeName": "author",
+          "environment": "local",
+          "name": "local-author",
+          "type": "AUTHOR",
+          "httpPort": 4502
+        },
+        "local-publish": {
+          "httpUrl": "http://192.168.0.1:4503",
+          "user": "admin",
+          "password": "admin",
+          "typeName": "publish",
+          "environment": "local",
+          "name": "local-publish",
+          "type": "PUBLISH",
+          "httpPort": 4503
+        },
+        "prod-author": {
+          "httpUrl": "http://author.example.com",
+          "user": "admin",
+          "password": "admin",
+          "typeName": "author",
+          "environment": "prod",
+          "name": "prod-author",
+          "type": "AUTHOR",
+          "httpPort": 80
+        },
+        "prod-publish": {
+          "httpUrl": "http://example.com",
+          "user": "admin",
+          "password": "admin",
+          "typeName": "publish",
+          "environment": "prod",
+          "name": "prod-publish",
+          "type": "PUBLISH",
+          "httpPort": 80
+        },
+        "int-author": {
+          "httpUrl": "http://192.168.1.1",
+          "user": "admin",
+          "password": "admin",
+          "typeName": "author",
+          "environment": "int",
+          "name": "int-author",
+          "type": "AUTHOR",
+          "httpPort": 80
+        },
+        "int-publish": {
+          "httpUrl": "http://192.168.1.2",
+          "user": "admin",
+          "password": "admin",
+          "typeName": "publish",
+          "environment": "int",
+          "name": "int-publish",
+          "type": "PUBLISH",
+          "httpPort": 80
+        },
+        "stg-author": {
+          "httpUrl": "https://192.168.3.1:8082",
+          "user": "user1",
+          "password": "password1",
+          "typeName": "author",
+          "environment": "stg",
+          "name": "stg-author",
+          "type": "AUTHOR",
+          "httpPort": 8082
+        },
+        "stg-publish": {
+          "httpUrl": "https://192.168.3.2:8083",
+          "user": "user2",
+          "password": "password2",
+          "typeName": "publish",
+          "environment": "stg",
+          "name": "stg-publish",
+          "type": "PUBLISH",
+          "httpPort": 8083
+        },
+        "perf-author-1": {
+          "httpUrl": "http://192.168.2.1:4502",
+          "user": "admin",
+          "password": "admin",
+          "typeName": "author-1",
+          "environment": "perf",
+          "name": "perf-author-1",
+          "type": "AUTHOR",
+          "httpPort": 4502
+        },
+        "perf-author-2": {
+          "httpUrl": "http://192.168.2.1:5502",
+          "user": "admin",
+          "password": "admin",
+          "typeName": "author-2",
+          "environment": "perf",
+          "name": "perf-author-2",
+          "type": "AUTHOR",
+          "httpPort": 5502
+        },
+        "perf-publish-1": {
+          "httpUrl": "http://192.168.2.2:4503",
+          "user": "admin",
+          "password": "admin",
+          "typeName": "publish-1",
+          "environment": "perf",
+          "name": "perf-publish-1",
+          "type": "PUBLISH",
+          "httpPort": 4503
+        },
+        "perf-publish-2": {
+          "httpUrl": "http://192.168.2.2:5503",
+          "user": "admin",
+          "password": "admin",
+          "typeName": "publish-2",
+          "environment": "perf",
+          "name": "perf-publish-2",
+          "type": "PUBLISH",
+          "httpPort": 5503
+        }
+      },
+      "deployEnvironment": "local",
+      "deployInstanceName": "local-*",
+      "deployInstanceList": "",
+      "deployInstanceAuthorName": "local-AUTHOR*",
+      "deployConnectionTimeout": 5000,
+      "deployConnectionUntrustedSsl": true,
+      "deployParallel": true,
+      "deploySnapshots": [],
+      "deployDistributed": false,
+      "uploadForce": true,
+      "uploadRetryTimes": 3,
+      "uploadRetryDelay": 30000,
+      "installRecursive": true,
+      "installRetryTimes": 1,
+      "installRetryDelay": 30000,
+      "acHandling": "merge_preserve",
+      "contentPath": "debug/additional/src/main/content",
+      "bundlePath": "/apps/additional/install",
+      "packageName": "additional",
+      "localPackagePath": "",
+      "remotePackagePath": "",
+      "filesExcluded": [
+        "**/.gradle",
+        "**/.git",
+        "**/.git/**",
+        "**/.gitattributes",
+        "**/.gitignore",
+        "**/.gitmodules",
+        "**/.vlt",
+        "**/.vlt*.tmp",
+        "**/node_modules/**",
+        "jcr_root/.vlt-sync-config.properties"
+      ],
+      "filesExpanded": [
+        "**/META-INF/vault/*.xml"
+      ],
+      "buildDate": 1524118542609,
+      "fileProperties": {},
+      "vaultCopyMissingFiles": true,
+      "vaultFilesPath": "debug/additional/src/main/resources/META-INF/vault",
+      "vaultSkipProperties": [
+        "jcr:uuid!**/home/users/*,**/home/groups/*",
+        "jcr:lastModified",
+        "jcr:created",
+        "cq:lastModified*",
+        "cq:lastReplicat*",
+        "*_x0040_Delete",
+        "*_x0040_TypeHint"
+      ],
+      "vaultGlobalOptions": "--credentials {{instance.credentials}}",
+      "vaultLineSeparator": "LF",
+      "dependBundlesTaskNames": [
+        "assemble",
+        "check"
+      ],
+      "dependContentTaskNames": [
+        "aemCompose.dependencies"
+      ],
+      "createPath": ".aem/additional",
+      "createFilesPath": "debug/additional/src/main/resources/local-instance",
+      "createFilesExpanded": [
+        "**/*.properties",
+        "**/*.sh",
+        "**/*.bat",
+        "**/*.xml",
+        "**/start",
+        "**/stop"
+      ],
+      "awaitInterval": 1000,
+      "awaitTimeout": 900,
+      "awaitTimes": 300,
+      "awaitFail": true,
+      "awaitAssurances": 5,
+      "reloadDelay": 10000,
+      "satisfyRefreshing": false,
+      "satisfyBundlePath": "/apps/gradle-aem-plugin/satisfy/install",
+      "satisfyGroupName": "*",
+      "checkoutFilterPath": "debug/additional/src/main/content/META-INF/vault/filter.xml",
+      "cleanFilesDeleted": [
+        "**/.vlt",
+        "**/.vlt*.tmp"
+      ]
+    }
+  },
+  "packageDeployed": {}
+}

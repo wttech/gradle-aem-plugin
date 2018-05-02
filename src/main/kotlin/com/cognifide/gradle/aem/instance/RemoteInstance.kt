@@ -21,7 +21,7 @@ class RemoteInstance private constructor() : Instance, Serializable {
     override var packages: ListResponse? = null
 
     override fun toString(): String {
-        return "RemoteInstance(httpUrl='$httpUrl', user='$user', password='$hiddenPassword', typeName='$typeName', environment='$environment')"
+        return "RemoteInstance(httpUrl='$httpUrl', user='$user', password='$hiddenPassword', environment='$environment', typeName='$typeName')"
     }
 
     companion object {
