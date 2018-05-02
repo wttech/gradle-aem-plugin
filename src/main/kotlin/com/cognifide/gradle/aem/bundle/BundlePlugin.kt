@@ -39,6 +39,9 @@ class BundlePlugin : Plugin<Project> {
             it.options.compilerArgs = it.options.compilerArgs + "-Xlint:deprecation"
             it.options.isIncremental = true
         })
+
+        val jar = project.tasks.getByName(JavaPlugin.JAR_TASK_NAME) as Jar
+        jar.baseName = "${project.group}.${project.name}"
     }
 
     /**

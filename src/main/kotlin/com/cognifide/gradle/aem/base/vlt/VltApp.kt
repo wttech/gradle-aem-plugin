@@ -30,8 +30,8 @@ class VltApp(val project: Project) : VaultFsApp() {
     }
 
     override fun prepare(command: CommandLine) {
-        logger.info("Working directory: $workingDir")
-        logger.info("Executing: vlt $command")
+        logger.lifecycle("Working directory: $workingDir")
+        logger.lifecycle("Executing: vlt $command")
 
         super.prepare(command)
     }
