@@ -1,8 +1,8 @@
-package com.cognifide.gradle.aem.vlt
+package com.cognifide.gradle.aem.test.vlt
 
 import com.cognifide.gradle.aem.base.vlt.VltCleaner
+import com.cognifide.gradle.aem.test.AemAssert.assertEqualsIgnoringLineEndings
 import org.apache.commons.io.FileUtils
-import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -43,7 +43,7 @@ class VltCleanerTest {
         val testedFileText = testedFile.bufferedReader().use { it.readText() }
         val expectedFileText = expectedFile.bufferedReader().use { it.readText() }
 
-        assertEquals(expectedFileText, testedFileText)
+        assertEqualsIgnoringLineEndings(expectedFileText, testedFileText)
     }
 
 }
