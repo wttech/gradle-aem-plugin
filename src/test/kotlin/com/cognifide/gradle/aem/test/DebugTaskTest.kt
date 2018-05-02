@@ -1,8 +1,10 @@
 package com.cognifide.gradle.aem.test
 
+import com.cognifide.gradle.aem.test.json.DateValueMatcher
 import com.cognifide.gradle.aem.test.json.PathValueMatcher
 import org.junit.Test
 import org.skyscreamer.jsonassert.Customization
+import org.skyscreamer.jsonassert.RegularExpressionValueMatcher
 
 class DebugTaskTest : AemTest() {
 
@@ -10,9 +12,9 @@ class DebugTaskTest : AemTest() {
         val JSON_CUSTOMIZATIONS by lazy {
             mutableListOf<Customization>().apply {
                 add(Customization("projectInfo.dir", PathValueMatcher()))
-                add(Customization("packageProperties.buildCount", {_, _ -> true}))
-                add(Customization("packageProperties.created", {_, _ -> true}))
-                add(Customization("packageProperties.config.buildDate", {_, _ -> true}))
+                add(Customization("packageProperties.buildCount", RegularExpressionValueMatcher("\\d{14}")))
+                add(Customization("packageProperties.created", DateValueMatcher()))
+                add(Customization("packageProperties.config.buildDate", RegularExpressionValueMatcher("\\d{13}")))
                 add(Customization("packageProperties.config.contentPath", PathValueMatcher()))
                 add(Customization("packageProperties.config.vaultFilesPath", PathValueMatcher()))
                 add(Customization("packageProperties.config.createFilesPath", PathValueMatcher()))
