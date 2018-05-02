@@ -70,6 +70,13 @@ publishing {
     }
 }
 
+test {
+    testLogging {
+        events "failed"
+        exceptionFormat "short"
+    }
+}
+
 test.dependsOn publishToMavenLocal
 check.dependsOn publishToMavenLocal
 
