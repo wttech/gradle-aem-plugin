@@ -1,10 +1,11 @@
 package com.cognifide.gradle.aem.test
 
+import aQute.bnd.osgi.Jar
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.TaskOutcome
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
+import org.junit.Assert.*
 import org.zeroturnaround.zip.ZipUtil
+import java.io.ByteArrayInputStream
 import java.io.File
 
 class AemBuild(val result: BuildResult, val projectDir: File) {
@@ -31,17 +32,28 @@ class AemBuild(val result: BuildResult, val projectDir: File) {
         assertPackage(file(path))
     }
 
-    fun assertPackage(file: File) {
-        assertTrue("Composed CRX package does not exist: $file", file.exists())
-        assertPackageVaultFiles(file)
+    fun assertPackage(pkg: File) {
+        assertTrue("Package does not exist: $pkg", pkg.exists())
+        assertPackageVaultFiles(pkg)
     }
 
     fun assertPackageFile(pkg: File, entry: String) {
-        assertPackageFile("Required file '$entry' is not included in CRX package '$pkg'", pkg, entry)
+        assertTrue("File '$entry' is not included in package '$pkg'.", ZipUtil.containsEntry(pkg, entry))
+        assertTrue("File '$entry' included in package '$pkg' cannot be empty.", ZipUtil.unpackEntry(pkg, entry).isNotEmpty())
     }
 
-    fun assertPackageFile(message: String, pkg: File, entry: String) {
-        assertTrue(message, ZipUtil.containsEntry(pkg, entry))
+    fun assertPackageBundle(pkg: File, entry: String, tests: Jar.() -> Unit = {}) {
+        assertPackageFile(pkg, entry)
+
+        val jar = Jar(pkg.name, ByteArrayInputStream(ZipUtil.unpackEntry(pkg, entry)))
+        val attributes = jar.manifest.mainAttributes
+
+        assertFalse(
+                "File '$entry' included in package '$pkg' is not a valid OSGi bundle.",
+                attributes.getValue("Bundle-SymbolicName").isNullOrBlank()
+        )
+
+        jar.apply(tests)
     }
 
     fun assertPackageVaultFiles(pkg: File) {
