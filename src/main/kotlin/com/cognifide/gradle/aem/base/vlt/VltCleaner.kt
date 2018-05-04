@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.base.vlt
 
 import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.internal.Patterns
+import com.cognifide.gradle.aem.pkg.PackagePlugin
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.filefilter.NameFileFilter
 import org.apache.commons.io.filefilter.TrueFileFilter
@@ -31,29 +32,38 @@ class VltCleaner(val project: Project, val root: File) {
                 ?: listOf()
 
     fun clean() {
-        if (root.isDirectory) {
-            for (file in allFiles) {
-                removeFile(file)
-            }
+        removeFiles()
+        cleanDotContent()
+        cleanParentsDotContent()
+    }
 
-            for (file in dotContentFiles) {
-                cleanDotContent(file)
-            }
+    private fun cleanDotContent() {
+        if (root.isDirectory) {
+            dotContentFiles.forEach { cleanDotContent(it) }
         } else {
-            removeFile(root)
             cleanDotContent(root)
         }
     }
 
-    private fun removeFile(file: File) {
-        if (Patterns.wildcard(file, config.cleanFilesDeleted)) {
-            logger.info("Deleting file {}", file.path)
-            FileUtils.deleteQuietly(file)
+    private fun removeFiles() {
+        if (root.isDirectory) {
+            allFiles.forEach { removeFile(it) }
+        } else {
+            removeFile(root)
         }
     }
 
+    private fun removeFile(file: File) {
+        if (!Patterns.wildcard(file, config.cleanFilesDeleted) || !file.exists()) {
+            return
+        }
+
+        logger.info("Deleting file {}", file.path)
+        FileUtils.deleteQuietly(file)
+    }
+
     private fun cleanDotContent(file: File) {
-        if (file.name != JCR_CONTENT_FILE) {
+        if (file.name != JCR_CONTENT_FILE || !file.exists()) {
             return
         }
 
@@ -104,6 +114,21 @@ class VltCleaner(val project: Project, val root: File) {
         }
 
         return false
+    }
+
+    private fun cleanParentsDotContent() {
+        var parent = root.parentFile
+        while (parent != null) {
+            if (parent.name == PackagePlugin.JCR_ROOT) {
+                break
+            }
+
+            val dotContent = File(parent, JCR_CONTENT_FILE)
+            removeFile(dotContent)
+            cleanDotContent(dotContent)
+
+            parent = parent.parentFile
+        }
     }
 
     companion object {

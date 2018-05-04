@@ -1,8 +1,8 @@
 package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.api.AemConfig
-import com.cognifide.gradle.aem.internal.Behaviors
 import com.cognifide.gradle.aem.internal.Patterns
+import com.cognifide.gradle.aem.internal.ProgressCountdown
 import com.cognifide.gradle.aem.internal.http.PreemptiveAuthInterceptor
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.deploy.*
@@ -242,8 +242,10 @@ class InstanceSync(val project: Project, val instance: Instance) {
 
                 if (i < config.uploadRetryTimes) {
                     logger.warn("Cannot upload package to $instance.")
-                    logger.warn("Retrying (${i + 1}/${config.uploadRetryTimes}) after delay.")
-                    Behaviors.waitFor(config.uploadRetryDelay)
+
+                    val header = "Retrying upload (${i + 1}/${config.uploadRetryTimes}) after delay."
+                    val countdown = ProgressCountdown(project, header, config.uploadRetryDelay)
+                    countdown.run()
                 }
             }
         }
@@ -287,8 +289,10 @@ class InstanceSync(val project: Project, val instance: Instance) {
                 exception = e
                 if (i < config.installRetryTimes) {
                     logger.warn("Cannot install package on $instance.")
-                    logger.warn("Retrying (${i + 1}/${config.installRetryTimes}) after delay.")
-                    Behaviors.waitFor(config.installRetryDelay)
+
+                    val header = "Retrying install (${i + 1}/${config.installRetryTimes}) after delay."
+                    val countdown = ProgressCountdown(project, header, config.installRetryDelay)
+                    countdown.run()
                 }
             }
         }
@@ -464,15 +468,12 @@ class InstanceSync(val project: Project, val instance: Instance) {
         }
     }
 
-    fun reload(delay: Long = config.reloadDelay) {
+    fun reload() {
         try {
             logger.info("Triggering instance(s) shutdown")
             postUrlencoded(vmStatUrl, mapOf("shutdown_type" to "Restart"))
-
-            logger.info("Awaiting instance(s) shutdown")
-            Behaviors.waitFor(delay)
         } catch (e: DeployException) {
-            throw InstanceException("Cannot reload instance $instance", e)
+            throw InstanceException("Cannot trigger shutdown for instance $instance", e)
         }
     }
 }

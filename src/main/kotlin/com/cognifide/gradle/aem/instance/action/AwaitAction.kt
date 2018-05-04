@@ -27,6 +27,11 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
     var assurances = config.awaitAssurances
 
     override fun perform() {
+        if (instances.isEmpty()) {
+            logger.info("No instances to check for stability.")
+            return
+        }
+
         val progressLogger = ProgressLogger(project, "Awaiting stable instance(s)")
 
         progressLogger.started()
