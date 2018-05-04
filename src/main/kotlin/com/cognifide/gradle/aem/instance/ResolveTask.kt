@@ -17,7 +17,7 @@ open class ResolveTask : DefaultTask() {
     }
 
     @get:Internal
-    private val satisfyTask
+    val satisfyTask
         get() = project.tasks.getByName(SatisfyTask.NAME) as SatisfyTask
 
     @TaskAction

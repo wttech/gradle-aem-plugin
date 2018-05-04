@@ -4,6 +4,7 @@ import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.instance.Instance
 import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.internal.file.FileOperations
+import com.cognifide.gradle.aem.pkg.PackagePlugin
 import org.gradle.api.Project
 import org.gradle.api.logging.Logger
 import java.io.File
@@ -89,9 +90,22 @@ class VltCommand(val project: Project) {
             return
         }
 
-        val cleaner = VltCleaner(contentDir, logger)
-        cleaner.removeFiles(config.cleanFilesDeleted)
-        cleaner.cleanupDotContent(config.vaultSkipProperties, config.vaultLineSeparatorString)
+        val filter = determineFilter()
+
+        logger.info("Cleaning using $filter")
+
+        val roots = filter.rootPaths
+                .map { File(contentDir, "${PackagePlugin.JCR_ROOT}/${it.removeSurrounding("/")}") }
+                .filter { it.exists() }
+        if (roots.isEmpty()) {
+            logger.warn("For given filter there is no existing roots to be cleaned.")
+            return
+        }
+
+        roots.forEach { root ->
+            logger.info("Cleaning root: $root")
+            VltCleaner(project, root).clean()
+        }
     }
 
 }

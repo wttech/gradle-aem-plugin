@@ -46,10 +46,10 @@ class BasePlugin : Plugin<Project> {
 
         val baseClean = project.tasks.getByName(LifecycleBasePlugin.CLEAN_TASK_NAME)
 
-        clean.mustRunAfter(baseClean)
+        clean.mustRunAfter(baseClean, checkout)
         vlt.mustRunAfter(baseClean)
         checkout.mustRunAfter(baseClean)
-        sync.mustRunAfter(baseClean)
+        sync.dependsOn(checkout, clean).mustRunAfter(baseClean)
     }
 
 }

@@ -245,23 +245,6 @@ class AemConfig(
     var vaultFilesPath: String = project.rootProject.file("src/main/resources/${PackagePlugin.VLT_PATH}").toString()
 
     /**
-     * Define here properties that will be skipped when pulling JCR content from AEM instance.
-     *
-     * After special delimiter '!' there could be specified one or many path patterns
-     * (ANT style, delimited with ',') in which property shouldn't be removed.
-     */
-    @Input
-    var vaultSkipProperties: MutableList<String> = mutableListOf(
-            "jcr:uuid!**/home/users/*,**/home/groups/*",
-            "jcr:lastModified",
-            "jcr:created",
-            "cq:lastModified*",
-            "cq:lastReplicat*",
-            "*_x0040_Delete",
-            "*_x0040_TypeHint"
-    )
-
-    /**
      * Global options which are being applied to any Vault related command like 'aemVault' or 'aemCheckout'.
      */
     @Input
@@ -414,6 +397,23 @@ class AemConfig(
     var cleanFilesDeleted: MutableList<String> = mutableListOf(
             "**/.vlt",
             "**/.vlt*.tmp"
+    )
+
+    /**
+     * Define here properties that will be skipped when pulling JCR content from AEM instance.
+     *
+     * After special delimiter '!' there could be specified one or many path patterns
+     * (ANT style, delimited with ',') in which property shouldn't be removed.
+     */
+    @Input
+    var cleanSkipProperties: MutableList<String> = mutableListOf(
+            "jcr:uuid!**/home/users/*,**/home/groups/*",
+            "jcr:lastModified",
+            "jcr:created",
+            "cq:lastModified*",
+            "cq:lastReplicat*",
+            "*_x0040_Delete",
+            "*_x0040_TypeHint"
     )
 
     /**

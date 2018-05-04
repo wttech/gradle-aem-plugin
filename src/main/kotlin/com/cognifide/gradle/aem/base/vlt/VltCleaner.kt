@@ -1,47 +1,71 @@
 package com.cognifide.gradle.aem.base.vlt
 
+import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.internal.Patterns
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.filefilter.NameFileFilter
 import org.apache.commons.io.filefilter.TrueFileFilter
 import org.apache.commons.lang3.CharEncoding
 import org.apache.commons.lang3.StringUtils
-import org.gradle.api.logging.Logger
+import org.gradle.api.Project
 import java.io.File
 import java.io.IOException
 import java.util.regex.Pattern
 
-class VltCleaner(val root: File, val logger: Logger) {
+class VltCleaner(val project: Project, val root: File) {
 
-    companion object {
-        const val JCR_CONTENT_FILE = ".content.xml"
+    private val logger = project.logger
 
-        val CONTENT_PROP_PATTERN = Pattern.compile("([^=]+)=\"([^\"]+)\"")
+    private val config = AemConfig.of(project)
+
+    val dotContentProperties by lazy {
+        VltContentProperty.manyFrom(config.cleanSkipProperties)
     }
 
-    fun removeFiles(patterns: List<String>) {
-        for (file in FileUtils.listFiles(root, TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE)) {
-            if (Patterns.wildcard(file, patterns)) {
-                logger.info("Deleting {}", file.path)
-                FileUtils.deleteQuietly(file)
+    val dotContentFiles: Collection<File>
+        get() = FileUtils.listFiles(root, NameFileFilter(JCR_CONTENT_FILE), TrueFileFilter.INSTANCE)
+                ?: listOf()
+
+    val allFiles: Collection<File>
+        get() = FileUtils.listFiles(root, TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE)
+                ?: listOf()
+
+    fun clean() {
+        if (root.isDirectory) {
+            for (file in allFiles) {
+                removeFile(file)
             }
+
+            for (file in dotContentFiles) {
+                cleanDotContent(file)
+            }
+        } else {
+            removeFile(root)
+            cleanDotContent(root)
         }
     }
 
-    fun cleanupDotContent(props: List<String>, lineEnding: String) {
-        val contentProperties = VltContentProperty.manyFrom(props)
+    private fun removeFile(file: File) {
+        if (Patterns.wildcard(file, config.cleanFilesDeleted)) {
+            logger.info("Deleting file {}", file.path)
+            FileUtils.deleteQuietly(file)
+        }
+    }
 
-        for (file in FileUtils.listFiles(root, NameFileFilter(JCR_CONTENT_FILE), TrueFileFilter.INSTANCE)) {
-            try {
-                logger.info("Cleaning up {}", file.path)
+    private fun cleanDotContent(file: File) {
+        if (file.name != JCR_CONTENT_FILE) {
+            return
+        }
 
-                val inputLines = FileUtils.readLines(file, CharEncoding.UTF_8)
-                val filteredLines = filterLines(file, inputLines, contentProperties)
+        try {
+            logger.info("Cleaning file {}", file.path)
 
-                FileUtils.writeLines(file, CharEncoding.UTF_8, filteredLines, lineEnding)
-            } catch (e: IOException) {
-                throw VltException(String.format("Error opening %s", file.path), e)
-            }
+            val inputLines = FileUtils.readLines(file, CharEncoding.UTF_8)
+            val filteredLines = filterLines(file, inputLines, dotContentProperties)
+
+            FileUtils.writeLines(file, CharEncoding.UTF_8, filteredLines, config.vaultLineSeparatorString)
+        } catch (e: IOException) {
+            throw VltException(String.format("Error opening %s", file.path), e)
         }
     }
 
@@ -80,6 +104,12 @@ class VltCleaner(val root: File, val logger: Logger) {
         }
 
         return false
+    }
+
+    companion object {
+        const val JCR_CONTENT_FILE = ".content.xml"
+
+        val CONTENT_PROP_PATTERN: Pattern = Pattern.compile("([^=]+)=\"([^\"]+)\"")
     }
 }
 

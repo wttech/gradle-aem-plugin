@@ -51,15 +51,6 @@
       "fileProperties": {},
       "vaultCopyMissingFiles": true,
       "vaultFilesPath": "debug/minimal/src/main/resources/META-INF/vault",
-      "vaultSkipProperties": [
-        "jcr:uuid!**/home/users/*,**/home/groups/*",
-        "jcr:lastModified",
-        "jcr:created",
-        "cq:lastModified*",
-        "cq:lastReplicat*",
-        "*_x0040_Delete",
-        "*_x0040_TypeHint"
-      ],
       "vaultGlobalOptions": "--credentials {{instance.credentials}}",
       "vaultLineSeparator": "LF",
       "dependBundlesTaskNames": [
@@ -92,6 +83,15 @@
       "cleanFilesDeleted": [
         "**/.vlt",
         "**/.vlt*.tmp"
+      ],
+      "cleanSkipProperties": [
+        "jcr:uuid!**/home/users/*,**/home/groups/*",
+        "jcr:lastModified",
+        "jcr:created",
+        "cq:lastModified*",
+        "cq:lastReplicat*",
+        "*_x0040_Delete",
+        "*_x0040_TypeHint"
       ]
     }
   },

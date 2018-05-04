@@ -4,21 +4,22 @@ import aQute.bnd.osgi.Jar
 import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.api.AemException
 import com.cognifide.gradle.aem.api.AemTask
+import com.cognifide.gradle.aem.base.vlt.VltFilter
 import com.cognifide.gradle.aem.bundle.BundleCollector
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.internal.file.FileContentReader
-import com.cognifide.gradle.aem.internal.jsoup.JsoupUtil
 import groovy.lang.Closure
 import org.gradle.api.Project
 import org.gradle.api.file.CopySpec
 import org.gradle.api.file.DuplicatesStrategy
-import org.gradle.api.tasks.*
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.bundling.Zip
 import org.gradle.util.ConfigureUtil
-import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
-import org.jsoup.parser.Parser
 import java.io.File
 import java.io.Serializable
 
@@ -252,16 +253,10 @@ open class ComposeTask : Zip(), AemTask {
 
     private fun extractVaultFilters(project: Project, config: AemConfig) {
         if (!config.vaultFilterPath.isBlank() && File(config.vaultFilterPath).exists()) {
-            filterRoots.addAll(extractVaultFilters(File(config.vaultFilterPath)))
+            filterRoots.addAll(VltFilter(File(config.vaultFilterPath)).rootElements)
         } else {
-            filterRoots.add(JsoupUtil.selfClosingTag(filterRootDefault(project, config), "filter"))
+            filterRoots.add(VltFilter.rootElement(filterRootDefault(project, config)))
         }
-    }
-
-    private fun extractVaultFilters(filter: File): Set<Element> {
-        val doc = Jsoup.parse(filter.bufferedReader().use { it.readText() }, "", Parser.xmlParser())
-
-        return doc.select("filter[root]").toSet()
     }
 
     fun includeVault(vltPath: Any) {

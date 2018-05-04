@@ -15,10 +15,6 @@ open class SyncTask : AemDefaultTask() {
 
     @TaskAction
     fun sync() {
-        logger.info("Checking out content from AEM")
-        VltCommand(project).checkout()
-
-        logger.info("Cleaning checked out JCR content")
-        VltCommand(project).clean()
+        logger.info("Syncing JCR content with AEM instance ended with success.")
     }
 }
