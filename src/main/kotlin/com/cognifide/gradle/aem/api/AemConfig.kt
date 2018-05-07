@@ -395,8 +395,13 @@ class AemConfig(
      */
     @Input
     var cleanFilesDeleted: MutableList<String> = mutableListOf(
+            // VLT tool internal files
             "**/.vlt",
-            "**/.vlt*.tmp"
+            "**/.vlt*.tmp",
+
+            // Top level nodes should remain untouched
+            "**/jcr_root/.content.xml",
+            "**/jcr_root/*/.content.xml"
     )
 
     /**

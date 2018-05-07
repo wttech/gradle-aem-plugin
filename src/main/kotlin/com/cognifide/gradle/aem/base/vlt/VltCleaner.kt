@@ -19,22 +19,22 @@ class VltCleaner(val project: Project, val root: File) {
 
     private val config = AemConfig.of(project)
 
-    val dotContentProperties by lazy {
+    private val dotContentProperties by lazy {
         VltContentProperty.manyFrom(config.cleanSkipProperties)
     }
 
-    val dotContentFiles: Collection<File>
+    private val dotContentFiles: Collection<File>
         get() = FileUtils.listFiles(root, NameFileFilter(JCR_CONTENT_FILE), TrueFileFilter.INSTANCE)
                 ?: listOf()
 
-    val allFiles: Collection<File>
+    private val allFiles: Collection<File>
         get() = FileUtils.listFiles(root, TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE)
                 ?: listOf()
 
     fun clean() {
         removeFiles()
         cleanDotContent()
-        cleanParentsDotContent()
+        cleanParents()
     }
 
     private fun cleanDotContent() {
@@ -116,16 +116,16 @@ class VltCleaner(val project: Project, val root: File) {
         return false
     }
 
-    private fun cleanParentsDotContent() {
+    private fun cleanParents() {
         var parent = root.parentFile
         while (parent != null) {
+            val siblingFiles = parent.listFiles { file: File -> file.isFile } ?: arrayOf<File>()
+            siblingFiles.forEach { removeFile(it) }
+            siblingFiles.forEach { cleanDotContent(it) }
+
             if (parent.name == PackagePlugin.JCR_ROOT) {
                 break
             }
-
-            val dotContent = File(parent, JCR_CONTENT_FILE)
-            removeFile(dotContent)
-            cleanDotContent(dotContent)
 
             parent = parent.parentFile
         }

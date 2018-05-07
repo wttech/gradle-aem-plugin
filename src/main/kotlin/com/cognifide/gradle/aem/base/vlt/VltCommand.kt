@@ -103,7 +103,7 @@ class VltCommand(val project: Project) {
         }
 
         roots.forEach { root ->
-            logger.info("Cleaning root: $root")
+            logger.lifecycle("Cleaning root: $root")
             VltCleaner(project, root).clean()
         }
     }

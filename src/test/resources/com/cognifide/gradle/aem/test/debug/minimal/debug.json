@@ -82,7 +82,9 @@
       "checkoutFilterPath": "debug/minimal/src/main/content/META-INF/vault/filter.xml",
       "cleanFilesDeleted": [
         "**/.vlt",
-        "**/.vlt*.tmp"
+        "**/.vlt*.tmp",
+        "**/jcr_root/.content.xml",
+        "**/jcr_root/*/.content.xml"
       ],
       "cleanSkipProperties": [
         "jcr:uuid!**/home/users/*,**/home/groups/*",
