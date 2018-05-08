@@ -16,33 +16,35 @@ import org.gradle.language.base.plugins.LifecycleBasePlugin
 class InstancePlugin : Plugin<Project> {
 
     companion object {
-        val ID = "com.cognifide.aem.instance"
+        const val ID = "com.cognifide.aem.instance"
 
-        val FILES_PATH = "local-instance"
+        const val FILES_PATH = "local-instance"
     }
 
     override fun apply(project: Project) {
-        setupDependentPlugins(project)
-        setupTasks(project)
+        with(project, {
+            setupDependentPlugins()
+            setupTasks()
+        })
     }
 
-    private fun setupDependentPlugins(project: Project) {
-        project.plugins.apply(BasePlugin::class.java)
+    private fun Project.setupDependentPlugins() {
+        plugins.apply(BasePlugin::class.java)
     }
 
-    private fun setupTasks(project: Project) {
-        val clean = project.tasks.getByName(LifecycleBasePlugin.CLEAN_TASK_NAME)
+    private fun Project.setupTasks() {
+        val clean = tasks.getByName(LifecycleBasePlugin.CLEAN_TASK_NAME)
 
-        val resolve = project.tasks.create(ResolveTask.NAME, ResolveTask::class.java)
-        val create = project.tasks.create(CreateTask.NAME, CreateTask::class.java)
-        val destroy = project.tasks.create(DestroyTask.NAME, DestroyTask::class.java)
-        val up = project.tasks.create(UpTask.NAME, UpTask::class.java)
-        val down = project.tasks.create(DownTask.NAME, DownTask::class.java)
-        val reload = project.tasks.create(ReloadTask.NAME, ReloadTask::class.java)
-        val satisfy = project.tasks.create(SatisfyTask.NAME, SatisfyTask::class.java)
-        val await = project.tasks.create(AwaitTask.NAME, AwaitTask::class.java)
-        val collect = project.tasks.create(CollectTask.NAME, CollectTask::class.java)
-        val setup = project.tasks.create(SetupTask.NAME, SetupTask::class.java)
+        val resolve = tasks.create(ResolveTask.NAME, ResolveTask::class.java)
+        val create = tasks.create(CreateTask.NAME, CreateTask::class.java)
+        val destroy = tasks.create(DestroyTask.NAME, DestroyTask::class.java)
+        val up = tasks.create(UpTask.NAME, UpTask::class.java)
+        val down = tasks.create(DownTask.NAME, DownTask::class.java)
+        val reload = tasks.create(ReloadTask.NAME, ReloadTask::class.java)
+        val satisfy = tasks.create(SatisfyTask.NAME, SatisfyTask::class.java)
+        val await = tasks.create(AwaitTask.NAME, AwaitTask::class.java)
+        val collect = tasks.create(CollectTask.NAME, CollectTask::class.java)
+        val setup = tasks.create(SetupTask.NAME, SetupTask::class.java)
 
         create.mustRunAfter(clean)
         up.dependsOn(create).mustRunAfter(clean)
@@ -53,8 +55,8 @@ class InstancePlugin : Plugin<Project> {
         collect.mustRunAfter(satisfy)
         setup.dependsOn(create, up, satisfy, await)
 
-        project.plugins.withId(PackagePlugin.ID, {
-            val deploy = project.tasks.getByName(DeployTask.NAME)
+        plugins.withId(PackagePlugin.ID, {
+            val deploy = tasks.getByName(DeployTask.NAME)
 
             setup.dependsOn(deploy)
             deploy.mustRunAfter(create, up, satisfy)
@@ -62,7 +64,7 @@ class InstancePlugin : Plugin<Project> {
             await.mustRunAfter(deploy)
         })
 
-        project.gradle.afterProject { subproject ->
+        gradle.afterProject { subproject ->
             if (subproject.plugins.hasPlugin(PackagePlugin.ID)) {
                 collect.dependsOn(subproject.tasks.getByName(ComposeTask.NAME))
             }

@@ -29,6 +29,7 @@
       "acHandling": "merge_preserve",
       "contentPath": "debug/minimal/src/main/content",
       "bundlePath": "/apps/minimal/install",
+      "bundlePackage": "",
       "packageName": "minimal",
       "localPackagePath": "",
       "remotePackagePath": "",

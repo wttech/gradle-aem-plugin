@@ -168,6 +168,43 @@ class AemConfig(
     }
 
     /**
+     * Set of dependency notations determining extra JARs which will be copied into package bundle path.
+     */
+    @Input
+    var bundleInstalls = mutableSetOf<String>()
+
+    /**
+     * Determines package in which OSGi bundle being built contains its classes.
+     * Basing on that value, there will be:
+     *
+     * - generated OSGi specific manifest instructions like 'Bundle-SymbolicName', 'Export-Package'.
+     * - generated AEM specific manifest instructions like 'Sling-Model-Packages'.
+     * - performed additional component stability checks during 'aemAwait'
+     */
+    @Input
+    var bundlePackage: String = ""
+
+    /**
+     * Determines how conflicts will be resolved when coincidental classes will be detected when embedding.
+     *
+     * @see <http://bnd.bndtools.org/heads/private_package.html>
+     */
+    @Input
+    var bundlePackageOptions: String = "-split-package:=merge-first"
+
+    /**
+     * Set of packages from which classes will be copied into OSGi bundle being built.
+     */
+    @Input
+    var bundleEmbedPrivate = mutableSetOf<String>()
+
+    /**
+     * Set of packages from which classes will be copied into OSGi bundle being built.
+     */
+    @Input
+    var bundleEmbedExport = mutableSetOf<String>()
+
+    /**
      * Determines built CRX package name (visible in package manager).
      */
     @Input
@@ -540,6 +577,22 @@ class AemConfig(
         }
 
         instances[instance.name] = instance
+    }
+
+    fun bundleInstall(dependencyNotation: String) {
+        bundleInstalls.add(dependencyNotation)
+    }
+
+    fun bundleEmbed(packageName: String) {
+        bundleEmbed(packageName, true)
+    }
+
+    fun bundleEmbed(packageName: String, private: Boolean) {
+        if (private) {
+            bundleEmbedPrivate.add(packageName)
+        } else {
+            bundleEmbedExport.add(packageName)
+        }
     }
 
     /**

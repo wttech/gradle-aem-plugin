@@ -23,7 +23,7 @@ open class DebugTask : AemDefaultTask() {
 
     @TaskAction
     fun debug() {
-        logger.info("Dumping AEM build configuration of project '${project.name}' at path '${project.path}' to file: ${file.absolutePath}")
+        logger.lifecycle("Dumping AEM build configuration of project '${project.name}' at path '${project.path}' to file: ${file.absolutePath}")
 
         val props = ProjectDumper(project).properties
         val json = Formats.toJson(props)

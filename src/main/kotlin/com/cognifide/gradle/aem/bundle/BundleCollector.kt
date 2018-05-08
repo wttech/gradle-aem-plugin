@@ -11,24 +11,17 @@ class BundleCollector(val project: Project) {
     val archiveConfig: Configuration?
         get() = project.configurations.findByName(Dependency.ARCHIVES_CONFIGURATION)
 
-    val installConfig: Configuration?
-        get() = project.configurations.findByName(BundlePlugin.CONFIG_INSTALL)
-
     val archiveArtifacts: List<String>
         get() = archiveConfig?.run { allArtifacts.map { it.toString() } } ?: listOf()
 
-    val installDependencies
-        get() = installConfig?.run { allDependencies.map { it.toString() } } ?: listOf()
-
     val all: List<String>
-        get() = archiveArtifacts + installDependencies
+        get() = archiveArtifacts
 
     val allJars: Collection<File>
         get() {
             val jars = TreeSet<File>()
 
             archiveConfig?.apply { jars += allArtifacts.files.files }
-            installConfig?.apply { jars += resolve() }
 
             return jars.filter { it.extension == "jar" }
         }

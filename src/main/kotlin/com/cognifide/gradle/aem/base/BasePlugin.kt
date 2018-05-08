@@ -17,34 +17,36 @@ import org.gradle.language.base.plugins.LifecycleBasePlugin
 class BasePlugin : Plugin<Project> {
 
     companion object {
-        val PKG = "com.cognifide.gradle.aem"
+        const val PKG = "com.cognifide.gradle.aem"
 
-        val ID = "com.cognifide.aem.base"
+        const val ID = "com.cognifide.aem.base"
     }
 
     override fun apply(project: Project) {
-        setupDependentPlugins(project)
-        setupExtensions(project)
-        setupTasks(project)
+        with(project, {
+            setupDependentPlugins()
+            setupExtensions()
+            setupTasks()
+        })
     }
 
-    private fun setupDependentPlugins(project: Project) {
-        project.plugins.apply(BasePlugin::class.java)
+    private fun Project.setupDependentPlugins() {
+        plugins.apply(BasePlugin::class.java)
     }
 
-    private fun setupExtensions(project: Project) {
-        project.extensions.create(AemExtension.NAME, AemExtension::class.java, project)
+    private fun Project.setupExtensions() {
+        extensions.create(AemExtension.NAME, AemExtension::class.java, this)
     }
 
-    private fun setupTasks(project: Project) {
-        project.tasks.create(DebugTask.NAME, DebugTask::class.java)
+    private fun Project.setupTasks() {
+        tasks.create(DebugTask.NAME, DebugTask::class.java)
 
-        val clean = project.tasks.create(CleanTask.NAME, CleanTask::class.java)
-        val vlt = project.tasks.create(VltTask.NAME, VltTask::class.java)
-        val checkout = project.tasks.create(CheckoutTask.NAME, CheckoutTask::class.java)
-        val sync = project.tasks.create(SyncTask.NAME, SyncTask::class.java)
+        val clean = tasks.create(CleanTask.NAME, CleanTask::class.java)
+        val vlt = tasks.create(VltTask.NAME, VltTask::class.java)
+        val checkout = tasks.create(CheckoutTask.NAME, CheckoutTask::class.java)
+        val sync = tasks.create(SyncTask.NAME, SyncTask::class.java)
 
-        val baseClean = project.tasks.getByName(LifecycleBasePlugin.CLEAN_TASK_NAME)
+        val baseClean = tasks.getByName(LifecycleBasePlugin.CLEAN_TASK_NAME)
 
         clean.mustRunAfter(baseClean, checkout)
         vlt.mustRunAfter(baseClean)

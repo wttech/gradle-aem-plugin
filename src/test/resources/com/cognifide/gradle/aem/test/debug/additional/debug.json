@@ -150,6 +150,7 @@
       "acHandling": "merge_preserve",
       "contentPath": "debug/additional/src/main/content",
       "bundlePath": "/apps/additional/install",
+      "bundlePackage": "",
       "packageName": "additional",
       "localPackagePath": "",
       "remotePackagePath": "",
