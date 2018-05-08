@@ -70,6 +70,17 @@ object FileOperations {
         file.printWriter().use { it.print(source) }
     }
 
+    fun find(project: Project, dirIfFileName: String, pathOrFileNames: List<String>): File? {
+        for (pathOrFileName in pathOrFileNames) {
+            val file = find(project, dirIfFileName, pathOrFileName)
+            if (file != null) {
+                return file
+            }
+        }
+
+        return null
+    }
+
     fun find(project: Project, dirIfFileName: String, pathOrFileName: String): File? {
         return mutableListOf<(String) -> File>(
                 { project.file(pathOrFileName) },

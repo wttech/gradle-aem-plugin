@@ -51,10 +51,15 @@ class VltCommand(val project: Project) {
             logger.info("Using Vault filter roots specified as command line property: $cmdFilterRoots")
             VltFilter.temporary(project, cmdFilterRoots)
         } else {
-            val configFilter = FileOperations.find(project, config.vaultPath, config.checkoutFilterPath)
-                    ?: throw VltException("Vault check out filter file does not exist at path: ${config.checkoutFilterPath} (or under directory: ${config.vaultPath}).")
-            logger.info("Using Vault filter specified in configuration: ${config.checkoutFilterPath}")
-            VltFilter(configFilter)
+            if (config.checkoutFilterPath.isNotBlank()) {
+                val configFilter = FileOperations.find(project, config.vaultPath, config.checkoutFilterPath)
+                        ?: throw VltException("Vault check out filter file does not exist at path: ${config.checkoutFilterPath} (or under directory: ${config.vaultPath}).")
+                VltFilter(configFilter)
+            } else {
+                val conventionFilter = FileOperations.find(project, config.vaultPath, config.checkoutFilterPaths)
+                        ?: throw VltException("None of Vault check out filter file does not exist at one of convention paths: ${config.checkoutFilterPaths}.")
+                VltFilter(conventionFilter)
+            }
         }
     }
 

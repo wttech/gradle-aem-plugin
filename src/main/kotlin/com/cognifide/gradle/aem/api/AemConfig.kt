@@ -383,11 +383,27 @@ class AemConfig(
     /**
      * Determines a Vault filter used to checkout JCR content from running AEM instance.
      *
-     * By default it points to same filter being used to build CRX package,
-     * but could be customized to filter out files being checked out.
+     * @see <http://jackrabbit.apache.org/filevault/filter.html>
+     *
+     * Default: [automatically determined]
      */
     @Input
-    var checkoutFilterPath: String = propParser.string("aem.checkout.filterPath", vaultFilterPath)
+    var checkoutFilterPath: String = propParser.string("aem.checkout.filterPath", "")
+
+    /**
+     * Convention paths used to determine Vault checkout filter if it is not specified explicitly.
+     *
+     * Firstly there will be checked existence of 'checkout.xml' file.
+     * By design, it should be customized version of 'filter.xml' with reduced count of filter roots
+     * to avoid checking out too much content.
+     *
+     * As a fallback there will be used 'filter.xml' file. In that case same file will be used
+     * to build CRX package and checkout JCR content from running instance.
+     */
+    @get:Internal
+    @get:JsonIgnore
+    val checkoutFilterPaths: List<String>
+        get() = listOf("$vaultPath/checkout.xml", "$vaultPath/filter.xml")
 
     /**
      * Determines which files will be deleted within running cleaning
@@ -401,7 +417,19 @@ class AemConfig(
 
             // Top level nodes should remain untouched
             "**/jcr_root/.content.xml",
-            "**/jcr_root/*/.content.xml"
+            "**/jcr_root/apps/.content.xml",
+            "**/jcr_root/conf/.content.xml",
+            "**/jcr_root/content/.content.xml",
+            "**/jcr_root/content/dam/.content.xml",
+            "**/jcr_root/etc/.content.xml",
+            "**/jcr_root/etc/designs/.content.xml",
+            "**/jcr_root/home/.content.xml",
+            "**/jcr_root/home/groups/.content.xml",
+            "**/jcr_root/home/users/.content.xml",
+            "**/jcr_root/libs/.content.xml",
+            "**/jcr_root/system/.content.xml",
+            "**/jcr_root/tmp/.content.xml",
+            "**/jcr_root/var/.content.xml"
     )
 
     /**
@@ -559,9 +587,6 @@ class AemConfig(
 
     /**
      * CRX package Vault filter path.
-     * Also used by VLT tool as default filter for files being checked out from running AEM instance.
-     *
-     * @see <http://jackrabbit.apache.org/filevault/filter.html>
      */
     @get:Internal
     @get:JsonIgnore
