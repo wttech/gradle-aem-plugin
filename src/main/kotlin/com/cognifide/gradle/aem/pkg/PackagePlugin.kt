@@ -8,16 +8,6 @@ import org.gradle.language.base.plugins.LifecycleBasePlugin
 
 class PackagePlugin : Plugin<Project> {
 
-    companion object {
-        const val ID = "com.cognifide.aem.package"
-
-        const val VLT_PATH = "META-INF/vault"
-
-        const val VLT_PROPERTIES = "$VLT_PATH/properties.xml"
-
-        const val JCR_ROOT = "jcr_root"
-    }
-
     override fun apply(project: Project) {
         with(project, {
             setupDependentPlugins()
@@ -60,6 +50,16 @@ class PackagePlugin : Plugin<Project> {
         activate.mustRunAfter(compose, upload, install)
 
         deploy.dependsOn(compose)
+    }
+
+    companion object {
+        const val ID = "com.cognifide.aem.package"
+
+        const val VLT_PATH = "META-INF/vault"
+
+        const val VLT_PROPERTIES = "$VLT_PATH/properties.xml"
+
+        const val JCR_ROOT = "jcr_root"
     }
 
 }

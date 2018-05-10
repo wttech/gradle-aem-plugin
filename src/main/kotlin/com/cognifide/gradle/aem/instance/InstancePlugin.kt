@@ -15,12 +15,6 @@ import org.gradle.language.base.plugins.LifecycleBasePlugin
  */
 class InstancePlugin : Plugin<Project> {
 
-    companion object {
-        const val ID = "com.cognifide.aem.instance"
-
-        const val FILES_PATH = "local-instance"
-    }
-
     override fun apply(project: Project) {
         with(project, {
             setupDependentPlugins()
@@ -69,6 +63,12 @@ class InstancePlugin : Plugin<Project> {
                 collect.dependsOn(subproject.tasks.getByName(ComposeTask.NAME))
             }
         }
+    }
+
+    companion object {
+        const val ID = "com.cognifide.aem.instance"
+
+        const val FILES_PATH = "local-instance"
     }
 
 }

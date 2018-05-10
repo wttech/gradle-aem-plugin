@@ -131,6 +131,8 @@ class BundlePlugin : Plugin<Project> {
     }
 
     companion object {
+        const val ID = "com.cognifide.aem.bundle"
+
         const val CONFIG_INSTALL = "aemInstall"
 
         const val CONFIG_EMBED = "aemEmbed"

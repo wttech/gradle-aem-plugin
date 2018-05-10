@@ -16,12 +16,6 @@ import org.gradle.language.base.plugins.LifecycleBasePlugin
  */
 class BasePlugin : Plugin<Project> {
 
-    companion object {
-        const val PKG = "com.cognifide.gradle.aem"
-
-        const val ID = "com.cognifide.aem.base"
-    }
-
     override fun apply(project: Project) {
         with(project, {
             setupDependentPlugins()
@@ -52,6 +46,12 @@ class BasePlugin : Plugin<Project> {
         vlt.mustRunAfter(baseClean)
         checkout.mustRunAfter(baseClean)
         sync.dependsOn(checkout, clean).mustRunAfter(baseClean)
+    }
+
+    companion object {
+        const val PKG = "com.cognifide.gradle.aem"
+
+        const val ID = "com.cognifide.aem.base"
     }
 
 }
