@@ -74,7 +74,7 @@
         "**/stop"
       ],
       "awaitInterval": 1000,
-      "awaitTimeout": 900,
+      "awaitTimeout": 750,
       "awaitTimes": 300,
       "awaitFail": true,
       "awaitAssurances": 5,

@@ -3,10 +3,14 @@ package com.cognifide.gradle.aem.instance
 import org.apache.commons.lang3.builder.EqualsBuilder
 import org.apache.commons.lang3.builder.HashCodeBuilder
 
-class InstanceState(val instance: Instance, val bundleState: BundleState) {
+class InstanceState(val sync: InstanceSync, val instance: Instance) {
 
     val stable: Boolean
-        get() = bundleState.stable
+        get() = bundleState.stable && componentState.stable
+
+    val bundleState by lazy { sync.determineBundleState() }
+
+    val componentState by lazy { sync.determineComponentState() }
 
     override fun hashCode(): Int {
         return HashCodeBuilder()

@@ -54,6 +54,8 @@ class InstanceSync(val project: Project, val instance: Instance) {
 
     val bundlesUrl = "${instance.httpUrl}/system/console/bundles.json"
 
+    val componentsUrl = "${instance.httpUrl}/system/console/components.json"
+
     val vmStatUrl = "${instance.httpUrl}/system/console/vmstat"
 
     var basicUser = instance.user
@@ -454,19 +456,31 @@ class InstanceSync(val project: Project, val instance: Instance) {
     }
 
     fun determineInstanceState(): InstanceState {
-        return InstanceState(instance, determineBundleState())
+        return InstanceState(this, instance)
     }
 
     fun determineBundleState(): BundleState {
-        logger.debug("Asking AEM for bundles using URL: '$bundlesUrl'")
+        logger.debug("Asking AEM for OSGi bundles using URL: '$bundlesUrl'")
 
         return try {
             BundleState.fromJson(get(bundlesUrl))
         } catch (e: Exception) {
-            logger.debug("Cannot determine bundle state on $instance", e)
+            logger.debug("Cannot determine OSGi bundles state on $instance", e)
             BundleState.unknown(e)
         }
     }
+
+    fun determineComponentState(): ComponentState {
+        logger.debug("Asking AEM for OSGi components using URL: '$bundlesUrl'")
+
+        return try {
+            ComponentState.fromJson(get(componentsUrl))
+        } catch (e: Exception) {
+            logger.debug("Cannot determine OSGi components state on $instance", e)
+            ComponentState.unknown()
+        }
+    }
+
 
     fun reload() {
         try {

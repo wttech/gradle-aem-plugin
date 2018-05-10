@@ -343,7 +343,7 @@ class AemConfig(
      * This value is a HTTP connection timeout (in millis) which must be smaller than interval to avoid race condition.
      */
     @Input
-    var awaitTimeout: Int = propParser.int("aem.await.timeout", (0.9 * awaitInterval.toDouble()).toInt())
+    var awaitTimeout: Int = propParser.int("aem.await.timeout", (0.75 * awaitInterval.toDouble()).toInt())
 
     /**
      * Maximum intervals after which instance stability checks will
@@ -368,10 +368,15 @@ class AemConfig(
     /**
      * Hook for customizing condition being an instance stability check.
      */
-
     @Internal
     @get:JsonIgnore
-    var awaitCondition: (InstanceState) -> Boolean = { it.stable }
+    var awaitCondition: (InstanceState) -> Boolean = {
+        if (bundlePackage.isNotBlank()) {
+            it.bundleState.stable && it.componentState.stable("$bundlePackage.*")
+        } else {
+            it.stable
+        }
+    }
 
     /**
      * Time in milliseconds to postpone instance stability checks after triggering instances restart.
