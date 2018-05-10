@@ -21,6 +21,7 @@ class BundlePlugin : Plugin<Project> {
             setupJavaDefaults()
             setupJavaBndTool()
             setupTestTask()
+            setupConfigurations()
         })
     }
 
@@ -43,42 +44,46 @@ class BundlePlugin : Plugin<Project> {
         val jar = tasks.getByName(JavaPlugin.JAR_TASK_NAME) as Jar
         jar.baseName = "$group.$name"
 
-        gradle.projectsEvaluated {
-            if (!description.isNullOrBlank()) {
-                defaultJarManifestAttribute(jar, "Bundle-Name", this.description!!)
-            }
-
+        afterEvaluate {
             val config = AemConfig.of(project)
-            if (config.bundlePackage.isNotBlank()) {
-                defaultJarManifestAttribute(jar, "Bundle-SymbolicName", config.bundlePackage)
-                defaultJarManifestAttribute(jar, "Sling-Model-Packages", config.bundlePackage)
-
-                val exportPackage = (listOf(config.bundlePackage) + config.bundleEmbedExport).joinToString(",") {
-                    packageWithBundleEmbedOptions(config, it)
-                }
-                defaultJarManifestAttribute(jar, "Export-Package", exportPackage)
+            if (!config.bundleManifestAttributes) {
+                logger.debug("Bundle manifest dynamic attributes support is disabled.")
+                return@afterEvaluate
             }
 
-            if (config.bundleEmbedPrivate.isNotEmpty()) {
-                val privatePackage = config.bundleEmbedPrivate.joinToString(",") {
-                    packageWithBundleEmbedOptions(config, it)
-                }
-                defaultJarManifestAttribute(jar, "Private-Package", privatePackage)
+            val attributes = mutableMapOf<String, Any>().apply { putAll(jar.manifest.attributes) }
+
+            if (!attributes.contains("Bundle-Name") && !description.isNullOrBlank()) {
+                attributes["Bundle-Name"] = description!!
             }
-        }
-    }
 
-    private fun packageWithBundleEmbedOptions(config: AemConfig, pkg: String): String {
-        return if (config.bundlePackageOptions.isNotBlank()) {
-            "$pkg.*;${config.bundlePackageOptions}"
-        } else {
-            "$pkg.*"
-        }
-    }
+            if (!attributes.contains("Bundle-SymbolicName") && config.bundlePackage.isNotBlank()) {
+                attributes["Bundle-SymbolicName"] = config.bundlePackage
+            }
 
-    private fun defaultJarManifestAttribute(jar: Jar, key: String, value: String) {
-        if (jar.manifest.attributes[key] == null) {
-            jar.manifest.attributes(mapOf(key to value))
+            attributes["Bundle-ClassPath"] = mutableSetOf<String>().apply {
+                add(".")
+                addAll(configurations.getByName(BundlePlugin.CONFIG_EMBED).files.sortedBy { it.name }.map { it.name })
+                addAll((attributes["Bundle-ClassPath"]?.toString() ?: "").split(",").map { it.trim() })
+            }.joinToString(",")
+
+            attributes["Export-Package"] = mutableSetOf<String>().apply {
+                if (config.bundlePackage.isNotBlank()) {
+                    add(if (config.bundlePackageOptions.isNotBlank()) {
+                        "${config.bundlePackage}.*;${config.bundlePackageOptions}"
+                    } else {
+                        "${config.bundlePackage}.*"
+                    })
+                }
+
+                addAll((attributes["Export-Package"]?.toString() ?: "").split(",").map { it.trim() })
+            }.joinToString(",")
+
+            if (!attributes.contains("Sling-Model-Packages") && config.bundlePackage.isNotBlank()) {
+                attributes["Sling-Model-Packages"] = config.bundlePackage
+            }
+
+            jar.manifest.attributes(attributes)
         }
     }
 
@@ -115,7 +120,21 @@ class BundlePlugin : Plugin<Project> {
         gradle.projectsEvaluated { test.classpath += files(jar.archivePath) }
     }
 
+    private fun Project.setupConfigurations() {
+        plugins.withType(JavaPlugin::class.java, {
+            val embedConfig = configurations.create(CONFIG_EMBED, { it.isTransitive = false })
+            val installConfig = configurations.create(CONFIG_INSTALL, { it.isTransitive = false })
+            val implConfig = configurations.getByName(JavaPlugin.IMPLEMENTATION_CONFIGURATION_NAME)
+
+            implConfig.extendsFrom(installConfig, embedConfig)
+        })
+    }
+
     companion object {
+        const val CONFIG_INSTALL = "aemInstall"
+
+        const val CONFIG_EMBED = "aemEmbed"
+
         const val BND_FILE = "bnd.bnd"
 
         const val BND_CONVENTION_PLUGIN = "bundle"

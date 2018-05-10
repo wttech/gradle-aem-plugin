@@ -30,6 +30,8 @@
       "contentPath": "debug/minimal/src/main/content",
       "bundlePath": "/apps/minimal/install",
       "bundlePackage": "",
+      "bundlePackageOptions": "-split-package:=merge-first",
+      "bundleManifestAttributes": true,
       "packageName": "minimal",
       "localPackagePath": "",
       "remotePackagePath": "",

@@ -168,12 +168,6 @@ class AemConfig(
     }
 
     /**
-     * Set of dependency notations determining extra JARs which will be copied into package bundle path.
-     */
-    @Input
-    var bundleInstalls = mutableSetOf<String>()
-
-    /**
      * Determines package in which OSGi bundle being built contains its classes.
      * Basing on that value, there will be:
      *
@@ -185,7 +179,8 @@ class AemConfig(
     var bundlePackage: String = ""
 
     /**
-     * Determines how conflicts will be resolved when coincidental classes will be detected when embedding.
+     * Determines how conflicts will be resolved when coincidental classes will be detected.
+     * Useful to combine Java sources with Kotlin, Scala etc.
      *
      * @see <http://bnd.bndtools.org/heads/private_package.html>
      */
@@ -193,16 +188,12 @@ class AemConfig(
     var bundlePackageOptions: String = "-split-package:=merge-first"
 
     /**
-     * Set of packages from which classes will be copied into OSGi bundle being built.
+     * Enable or disable support for auto-generating OSGi specific JAR manifest attributes
+     * like 'Bundle-SymbolicName', 'Export-Package' or AEM specific like 'Sling-Model-Packages'
+     * using 'bundlePackage' property.
      */
     @Input
-    var bundleEmbedPrivate = mutableSetOf<String>()
-
-    /**
-     * Set of packages from which classes will be copied into OSGi bundle being built.
-     */
-    @Input
-    var bundleEmbedExport = mutableSetOf<String>()
+    var bundleManifestAttributes: Boolean = true
 
     /**
      * Determines built CRX package name (visible in package manager).
@@ -577,22 +568,6 @@ class AemConfig(
         }
 
         instances[instance.name] = instance
-    }
-
-    fun bundleInstall(dependencyNotation: String) {
-        bundleInstalls.add(dependencyNotation)
-    }
-
-    fun bundleEmbed(packageName: String) {
-        bundleEmbed(packageName, true)
-    }
-
-    fun bundleEmbed(packageName: String, private: Boolean) {
-        if (private) {
-            bundleEmbedPrivate.add(packageName)
-        } else {
-            bundleEmbedExport.add(packageName)
-        }
     }
 
     /**

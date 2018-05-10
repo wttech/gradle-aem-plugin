@@ -151,6 +151,8 @@
       "contentPath": "debug/additional/src/main/content",
       "bundlePath": "/apps/additional/install",
       "bundlePackage": "",
+      "bundlePackageOptions": "-split-package:=merge-first",
+      "bundleManifestAttributes": true,
       "packageName": "additional",
       "localPackagePath": "",
       "remotePackagePath": "",
