@@ -61,6 +61,14 @@ gradlePlugin {
     }
 }
 
+processResources {
+    doLast {
+        file("$buildDir/resources/main/build.json") << groovy.json.JsonOutput.toJson([
+                version: project.version
+        ])
+    }
+}
+
 publishing {
     publications {
         mavenJava(MavenPublication) {

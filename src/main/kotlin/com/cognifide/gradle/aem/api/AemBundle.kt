@@ -3,7 +3,8 @@ package com.cognifide.gradle.aem.api
 import com.cognifide.gradle.aem.bundle.BundlePlugin
 import org.apache.commons.lang3.StringUtils
 import org.gradle.api.Project
-import org.gradle.jvm.tasks.Jar
+import org.gradle.api.plugins.JavaPlugin
+import org.gradle.api.tasks.bundling.Jar
 
 /**
  * DSL for easier manipulation of OSGi bundle JAR manifest attributes.
@@ -11,7 +12,7 @@ import org.gradle.jvm.tasks.Jar
 class AemBundle(@Transient private val project: Project) {
 
     private val jar by lazy {
-        (project.tasks.findByName(Jar.TASK_NAME)
+        (project.tasks.findByName(JavaPlugin.JAR_TASK_NAME)
                 ?: throw AemException("Plugin '${BundlePlugin.ID}' is not applied.")) as Jar
     }
 

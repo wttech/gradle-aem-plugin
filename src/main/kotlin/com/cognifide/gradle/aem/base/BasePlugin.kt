@@ -6,6 +6,7 @@ import com.cognifide.gradle.aem.base.vlt.CheckoutTask
 import com.cognifide.gradle.aem.base.vlt.CleanTask
 import com.cognifide.gradle.aem.base.vlt.SyncTask
 import com.cognifide.gradle.aem.base.vlt.VltTask
+import com.cognifide.gradle.aem.internal.Build
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.BasePlugin
@@ -18,10 +19,15 @@ class BasePlugin : Plugin<Project> {
 
     override fun apply(project: Project) {
         with(project, {
+            setupGreet()
             setupDependentPlugins()
             setupExtensions()
             setupTasks()
         })
+    }
+
+    private fun Project.setupGreet() {
+        Build.greetOnce { logger.info("Using: Gradle AEM Plugin ${it.version}") }
     }
 
     private fun Project.setupDependentPlugins() {
