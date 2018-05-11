@@ -1,12 +1,12 @@
 package com.cognifide.gradle.aem.base
 
 import com.cognifide.gradle.aem.api.AemExtension
+import com.cognifide.gradle.aem.api.AemPlugin
 import com.cognifide.gradle.aem.base.debug.DebugTask
 import com.cognifide.gradle.aem.base.vlt.CheckoutTask
 import com.cognifide.gradle.aem.base.vlt.CleanTask
 import com.cognifide.gradle.aem.base.vlt.SyncTask
 import com.cognifide.gradle.aem.base.vlt.VltTask
-import com.cognifide.gradle.aem.internal.Build
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.BasePlugin
@@ -27,7 +27,7 @@ class BasePlugin : Plugin<Project> {
     }
 
     private fun Project.setupGreet() {
-        Build.greetOnce { logger.info("Using: Gradle AEM Plugin ${it.version}") }
+        AemPlugin.once { logger.info("Using: ${AemPlugin.NAME_WITH_VERSION}") }
     }
 
     private fun Project.setupDependentPlugins() {

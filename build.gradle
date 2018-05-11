@@ -33,7 +33,7 @@ dependencies {
     implementation 'org.apache.httpcomponents:httpmime:4.5.4'
     implementation 'org.osgi:org.osgi.core:6.0.0'
     implementation 'com.mitchellbosecke:pebble:2.4.0'
-
+    implementation 'com.dorkbox:Notify:3.7'
 
     testImplementation gradleTestKit()
     testImplementation 'junit:junit:4.12'

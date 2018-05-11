@@ -483,6 +483,12 @@ class AemConfig(
     )
 
     /**
+     * Turn on/off default system notifications.
+     */
+    @Internal
+    var notifications: Boolean = propParser.boolean("aem.notifications", false)
+
+    /**
      * Initialize defaults that depends on concrete type of project.
      */
     init {

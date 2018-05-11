@@ -6,6 +6,7 @@ import com.cognifide.gradle.aem.api.AemException
 import com.cognifide.gradle.aem.api.AemTask
 import com.cognifide.gradle.aem.base.vlt.VltFilter
 import com.cognifide.gradle.aem.bundle.BundleCollector
+import com.cognifide.gradle.aem.api.AemNotifier
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.internal.file.FileContentReader
@@ -115,6 +116,8 @@ open class ComposeTask : Zip(), AemTask {
             fromBundles()
             fromContents()
         })
+
+        doLast { AemNotifier.of(project).default("Package composed", getArchiveName()) }
     }
 
     private fun fromBundles() {

@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.instance
 import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.ProgressCountdown
+import com.cognifide.gradle.aem.api.AemNotifier
 import com.cognifide.gradle.aem.internal.http.PreemptiveAuthInterceptor
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.deploy.*
@@ -352,8 +353,11 @@ class InstanceSync(val project: Project, val instance: Instance) {
         }
     }
 
-    fun deployPackage(file: File = determineLocalPackage()): InstallResponse {
-        return installPackage(uploadPackage(file).path)
+    fun deployPackage(file: File = determineLocalPackage()) {
+        installPackage(uploadPackage(file).path)
+
+        // TODO move it to the task level, to protect against to many notifications displayed unintentionally
+        AemNotifier.of(project).default("Package deployed", "${file.name} on ${instance.name}")
     }
 
     fun distributePackage(file: File = determineLocalPackage()) {
@@ -361,6 +365,9 @@ class InstanceSync(val project: Project, val instance: Instance) {
 
         installPackage(packagePath)
         activatePackage(packagePath)
+
+        // TODO move it to the task level, to protect against to many notifications displayed unintentionally
+        AemNotifier.of(project).default("Package distributed", "${file.name} on ${instance.name}")
     }
 
     fun activatePackage(path: String = determineRemotePackagePath()): UploadResponse {
