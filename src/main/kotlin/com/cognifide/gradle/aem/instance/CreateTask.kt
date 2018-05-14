@@ -49,8 +49,12 @@ open class CreateTask : SyncTask() {
 
     @TaskAction
     fun create() {
+        val instances = Instance.locals(project)
+
         logger.info("Creating instances")
-        synchronizeLocalInstances({ it.create(instanceFileResolver) })
+        synchronizeLocalInstances(instances, { it.create(instanceFileResolver) })
+
+        notifier.default("Instance(s) created", instances.joinToString(", ") { it.name })
     }
 
 }

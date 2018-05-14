@@ -17,11 +17,20 @@ open class DeployTask : SyncTask() {
 
     @TaskAction
     fun deploy() {
-        if (config.deployDistributed) {
-            synchronizeInstances({ it.distributePackage() }, Instance.filter(project, config.deployInstanceAuthorName))
+        val pkg = config.packageFile
+        val instances = if (config.deployDistributed) {
+            Instance.filter(project, config.instanceAuthorName)
         } else {
-            synchronizeInstances({ it.deployPackage() })
+            Instance.filter(project)
         }
+
+        if (config.deployDistributed) {
+            synchronizeInstances(instances, { it.distributePackage(pkg) })
+        } else {
+            synchronizeInstances(instances, { it.deployPackage(pkg) })
+        }
+
+        notifier.default("Package deployed", "${pkg.name} on ${instances.joinToString(", ") { it.name }}")
     }
 
 }

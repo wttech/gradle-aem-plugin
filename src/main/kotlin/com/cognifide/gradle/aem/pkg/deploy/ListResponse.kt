@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem.pkg.deploy
 
 import com.cognifide.gradle.aem.api.AemConfig
-import com.cognifide.gradle.aem.internal.PropertyParser
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.databind.ObjectMapper

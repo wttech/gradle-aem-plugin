@@ -24,7 +24,7 @@ class PackageGroup(resolver: FileResolver, name: String) : FileGroup(resolver, n
      */
     val instances by lazy {
         if (config.deployDistributed) {
-            Instance.filter(project, config.deployInstanceAuthorName)
+            Instance.filter(project, config.instanceAuthorName)
         } else {
             Instance.filter(project)
         }.filter { Patterns.wildcard(it.name, instanceName) }

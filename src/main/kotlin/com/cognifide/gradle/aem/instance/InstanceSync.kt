@@ -3,7 +3,6 @@ package com.cognifide.gradle.aem.instance
 import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.ProgressCountdown
-import com.cognifide.gradle.aem.api.AemNotifier
 import com.cognifide.gradle.aem.internal.http.PreemptiveAuthInterceptor
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.deploy.*
@@ -125,14 +124,14 @@ class InstanceSync(val project: Project, val instance: Instance) {
         val httpClientBuilder = HttpClientBuilder.create()
                 .addInterceptorFirst(PreemptiveAuthInterceptor())
                 .setDefaultRequestConfig(RequestConfig.custom()
-                        .setConnectTimeout(config.deployConnectionTimeout)
-                        .setConnectionRequestTimeout(config.deployConnectionTimeout)
+                        .setConnectTimeout(config.instanceConnectionTimeout)
+                        .setConnectionRequestTimeout(config.instanceConnectionTimeout)
                         .build()
                 )
                 .setDefaultCredentialsProvider(BasicCredentialsProvider().apply {
                     setCredentials(AuthScope.ANY, UsernamePasswordCredentials(basicUser, basicPassword))
                 })
-        if (config.deployConnectionUntrustedSsl) {
+        if (config.instanceConnectionUntrustedSsl) {
             httpClientBuilder.setSSLSocketFactory(createSslConnectionSocketFactory())
         }
 
@@ -168,22 +167,6 @@ class InstanceSync(val project: Project, val instance: Instance) {
         }
 
         return builder.build()
-    }
-
-    fun determineLocalPackage(): File {
-        if (!config.localPackagePath.isBlank()) {
-            val configFile = File(config.localPackagePath)
-            if (configFile.exists()) {
-                return configFile
-            }
-        }
-
-        val archiveFile = AemConfig.pkg(project).archivePath
-        if (archiveFile.exists()) {
-            return archiveFile
-        }
-
-        throw DeployException("Local package not found under path: '${archiveFile.absolutePath}'. Is it built already?")
     }
 
     fun determineRemotePackage(): ListResponse.Package? {
@@ -235,7 +218,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         return resolver(instance.packages!!)
     }
 
-    fun uploadPackage(file: File = determineLocalPackage()): UploadResponse {
+    fun uploadPackage(file: File): UploadResponse {
         lateinit var exception: DeployException
         for (i in 0..config.uploadRetryTimes) {
             try {
@@ -256,7 +239,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         throw exception
     }
 
-    fun uploadPackageOnce(file: File = determineLocalPackage()): UploadResponse {
+    fun uploadPackageOnce(file: File): UploadResponse {
         val url = "$jsonTargetUrl/?cmd=upload"
 
         logger.info("Uploading package at path '{}' to URL '{}'", file.path, url)
@@ -345,7 +328,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         return Patterns.wildcard(file, config.deploySnapshots)
     }
 
-    fun deployPackage(file: File = determineLocalPackage(), distributed: Boolean) {
+    fun deployPackage(file: File, distributed: Boolean) {
         if (distributed) {
             distributePackage(file)
         } else {
@@ -353,24 +336,19 @@ class InstanceSync(val project: Project, val instance: Instance) {
         }
     }
 
-    fun deployPackage(file: File = determineLocalPackage()) {
+    fun deployPackage(file: File) {
         installPackage(uploadPackage(file).path)
 
-        // TODO move it to the task level, to protect against to many notifications displayed unintentionally
-        AemNotifier.of(project).default("Package deployed", "${file.name} on ${instance.name}")
     }
 
-    fun distributePackage(file: File = determineLocalPackage()) {
+    fun distributePackage(file: File) {
         val packagePath = uploadPackage(file).path
 
         installPackage(packagePath)
         activatePackage(packagePath)
-
-        // TODO move it to the task level, to protect against to many notifications displayed unintentionally
-        AemNotifier.of(project).default("Package distributed", "${file.name} on ${instance.name}")
     }
 
-    fun activatePackage(path: String = determineRemotePackagePath()): UploadResponse {
+    fun activatePackage(path: String): UploadResponse {
         val url = "$jsonTargetUrl$path/?cmd=replicate"
 
         logger.info("Activating package using command: $url")
@@ -399,7 +377,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         return response
     }
 
-    fun deletePackage(path: String = determineRemotePackagePath()) {
+    fun deletePackage(path: String) {
         val url = "$htmlTargetUrl$path/?cmd=delete"
 
         logger.info("Deleting package using command: $url")
@@ -429,7 +407,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         }
     }
 
-    fun uninstallPackage(installedPackagePath: String = determineRemotePackagePath()) {
+    fun uninstallPackage(installedPackagePath: String) {
         val url = "$htmlTargetUrl$installedPackagePath/?cmd=uninstall"
 
         logger.info("Uninstalling package using command: $url")

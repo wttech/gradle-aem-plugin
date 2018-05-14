@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.pkg.deploy
 
 import com.cognifide.gradle.aem.api.AemTask
+import com.cognifide.gradle.aem.instance.Instance
 import org.gradle.api.tasks.TaskAction
 
 open class UninstallTask : SyncTask() {
@@ -18,7 +19,12 @@ open class UninstallTask : SyncTask() {
     fun uninstall() {
         propertyParser.checkForce()
 
-        synchronizeInstances({ it.uninstallPackage() })
+        val instances = Instance.filter(project)
+        val pkg = config.packageFileName
+
+        synchronizeInstances(instances, { it.uninstallPackage(it.determineRemotePackagePath()) })
+
+        notifier.default("Package deleted", "$pkg on ${instances.joinToString(", ") { it.name }}")
     }
 
 }

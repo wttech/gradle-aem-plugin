@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.pkg.deploy
 
 import com.cognifide.gradle.aem.api.AemTask
+import com.cognifide.gradle.aem.instance.Instance
 import org.gradle.api.tasks.TaskAction
 
 open class UploadTask : SyncTask() {
@@ -16,7 +17,12 @@ open class UploadTask : SyncTask() {
 
     @TaskAction
     fun upload() {
-        synchronizeInstances({ it.uploadPackage() })
+        val pkg = config.packageFile
+        val instances = Instance.filter(project)
+
+        synchronizeInstances(instances, { it.uploadPackage(pkg) })
+
+        notifier.default("Package uploaded", "${pkg.name} on ${instances.joinToString(", ") { it.name }}")
     }
 
 }

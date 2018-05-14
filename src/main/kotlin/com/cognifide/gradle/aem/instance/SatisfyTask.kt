@@ -65,7 +65,7 @@ open class SatisfyTask : SyncTask() {
 
             var anyPackageSatisfied = false
 
-            synchronizeInstances({ sync ->
+            synchronizeInstances(packageGroup.instances, { sync:InstanceSync ->
                 val packageStates = packageGroup.files.fold(mutableMapOf<File, ListResponse.Package?>(), { states, pkg ->
                     states[pkg] = sync.determineRemotePackage(pkg, config.satisfyRefreshing); states
                 })
@@ -103,7 +103,7 @@ open class SatisfyTask : SyncTask() {
                 if (anyPackageSatisfiable) {
                     packageGroup.finalizer(sync)
                 }
-            }, packageGroup.instances)
+            })
 
             if (anyPackageSatisfied) {
                 packageGroup.completer()

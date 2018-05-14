@@ -10,14 +10,14 @@ class AemNotifier private constructor(private val project: Project) {
 
     private val config by lazy {AemConfig.of(project) }
 
-    fun default(title: String, message: String) {
+    fun default(title: String, message: String = "") {
         if (config.notifications) {
             now(title, message)
         }
     }
 
     // TODO allow to customize color of plugin logo (warn, info, error etc)
-    fun now(title: String, text: String) {
+    fun now(title: String, text: String = "") {
         now {
             title(title)
             text(StringUtils.replace(text, "\n", "<br>"))
@@ -61,7 +61,7 @@ class AemNotifier private constructor(private val project: Project) {
                 if (it.failure != null) {
                     val exception = ExceptionUtils.getRootCause(it.failure)
                     val message = exception?.message ?: "no message available"
-                    notifier.now("Build failure",  "$message\nplugin version: ${AemPlugin.BUILD.version}")
+                    notifier.default("Build failure",  "$message\nplugin version: ${AemPlugin.BUILD.version}")
                 }
             }
 

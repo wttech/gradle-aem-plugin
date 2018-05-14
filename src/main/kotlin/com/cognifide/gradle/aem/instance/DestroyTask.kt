@@ -17,7 +17,10 @@ open class DestroyTask : SyncTask() {
     fun destroy() {
         propertyParser.checkForce()
 
-        synchronizeLocalInstances { it.destroy() }
+        val instances = Instance.locals(project)
+        synchronizeLocalInstances(instances, { it.destroy() })
+
+        notifier.default("Instance(s) destroyed", instances.joinToString(", ") { it.name })
     }
 
 }

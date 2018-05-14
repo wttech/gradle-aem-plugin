@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.pkg.deploy
 
 import com.cognifide.gradle.aem.api.AemTask
+import com.cognifide.gradle.aem.instance.Instance
 import org.gradle.api.tasks.TaskAction
 
 open class DeleteTask : SyncTask() {
@@ -18,7 +19,10 @@ open class DeleteTask : SyncTask() {
     fun delete() {
         propertyParser.checkForce()
 
-        synchronizeInstances({ it.deletePackage() })
+        val instances = Instance.filter(project)
+        val pkg = config.packageFileName
+
+        notifier.default("Package deleted", "$pkg on ${instances.joinToString(", ") { it.name }}")
     }
 
 }

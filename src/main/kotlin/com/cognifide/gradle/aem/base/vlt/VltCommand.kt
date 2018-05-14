@@ -73,9 +73,9 @@ class VltCommand(val project: Project) {
             return cmdInstance
         }
 
-        val namedInstance = Instance.filter(project, config.deployInstanceName).firstOrNull()
+        val namedInstance = Instance.filter(project, config.instanceName).firstOrNull()
         if (namedInstance != null) {
-            logger.info("Using first instance matching filter '${config.deployInstanceName}': $namedInstance")
+            logger.info("Using first instance matching filter '${config.instanceName}': $namedInstance")
             return namedInstance
         }
 

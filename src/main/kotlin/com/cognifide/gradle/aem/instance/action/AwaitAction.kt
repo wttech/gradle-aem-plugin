@@ -8,23 +8,28 @@ import com.cognifide.gradle.aem.internal.ProgressLogger
 import org.apache.http.HttpStatus
 import org.apache.http.client.config.RequestConfig
 import org.gradle.api.Project
+import java.util.stream.Collectors
 
 /**
  * Wait until all instances be stable.
  */
 open class AwaitAction(project: Project, val instances: List<Instance>) : AbstractAction(project) {
 
-    var times = config.awaitTimes
+    var times = config.awaitStableTimes
 
-    var interval = config.awaitInterval
+    var interval = config.awaitStableInterval
 
     var fail = config.awaitFail
 
-    var condition = config.awaitCondition
+    var stableState = config.awaitStableState
 
-    var timeout = config.awaitTimeout
+    var stableCheck = config.awaitStableCheck
 
-    var assurances = config.awaitAssurances
+    var stableAssurances = config.awaitStableAssurances
+
+    val healthCheck = config.awaitHealthcheck
+
+    var timeout = config.awaitStableTimeout
 
     override fun perform() {
         if (instances.isEmpty()) {
@@ -38,25 +43,34 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
 
         logger.info("Checking stability of instance(s).")
 
-        var lastInstanceStates = -1
+        var lastStableChecksum = -1
         var sinceStableTicks = -1L
         var sinceStableElapsed = 0L
 
         val synchronizers = prepareSynchronizers()
 
         Behaviors.waitUntil(interval, { timer ->
-            // Gather all instance states and update checksum on any particular state change
+            // Gather all instance states
             val instanceStates = synchronizers.map { it.determineInstanceState() }
-            if (instanceStates.hashCode() != lastInstanceStates) {
-                lastInstanceStates = instanceStates.hashCode()
+
+            // Update checksum on any particular state change
+            val stableChecksum = instanceStates.flatMap { listOf(it.instance, stableState(it)) }.hashCode()
+            if (stableChecksum != lastStableChecksum) {
+                lastStableChecksum = stableChecksum
                 timer.reset()
             }
 
             progressLogger.progress(progressFor(instanceStates, config, timer))
 
+            // Detect unstable instances
+            val unstableInstances = instanceStates.parallelStream()
+                    .filter { !stableCheck(it) }
+                    .map { it.instance }
+                    .collect(Collectors.toList())
+
             // Detect timeout when same checksum is not being updated so long
             if (times > 0 && timer.ticks > times) {
-                val message = "Instance(s) are not stable. Timeout reached after ${Formats.duration(timer.elapsed)}."
+                val message = "Unstable instance(s) detected: ${unstableInstances.joinToString(", ") { it.name }}. Timeout reached after ${Formats.duration(timer.elapsed)}."
                 if (fail) {
                     throw InstanceException(message)
                 } else {
@@ -65,22 +79,37 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
                 }
             }
 
-            // Verify gathered instance states
-            if (instanceStates.all(condition)) {
+            if (unstableInstances.isEmpty()) {
                 // Assure that expected moment is not accidental, remember it
-                if (assurances > 0 && sinceStableTicks == -1L) {
+                if (stableAssurances > 0 && sinceStableTicks == -1L) {
                     logger.info("Instance(s) seems to be stable. Assuring.")
                     sinceStableTicks = timer.ticks
                     sinceStableElapsed = timer.elapsed
                 }
 
                 // End if assurance is not configured or this moment remains a little longer
-                if (assurances <= 0 || (sinceStableTicks >= 0 && (timer.ticks - sinceStableTicks) >= assurances)) {
+                if (stableAssurances <= 0 || (sinceStableTicks >= 0 && (timer.ticks - sinceStableTicks) >= stableAssurances)) {
                     logger.info("Instance(s) are stable after ${Formats.duration(sinceStableElapsed)}.")
-                    return@waitUntil false
+
+                    // Detect unhealthy instances
+                    val unhealthyInstances = instanceStates.parallelStream()
+                            .filter { !healthCheck(it) }
+                            .map { it.instance }
+                            .collect(Collectors.toList())
+
+                    if (unhealthyInstances.isEmpty()) {
+                        return@waitUntil false
+                    } else { // TODO introduce config.awaitHealthAssurances
+                        val message = "Unhealthy instance(s) detected: ${unhealthyInstances.joinToString(", ") { it.name }}"
+                        if (fail) {
+                            throw InstanceException(message)
+                        } else {
+                            logger.warn(message)
+                        }
+                    }
                 }
             } else {
-                // Reset assurance, because no longer verified
+                // Reset assurance, because no longer stable
                 sinceStableTicks = -1L
                 sinceStableElapsed = 0L
             }
@@ -131,7 +160,7 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
     }
 
     private fun progressFor(states: List<InstanceState>, config: AemConfig, timer: Behaviors.Timer): String {
-        return (progressTicks(timer.ticks, config.awaitTimes) + " " + states.joinToString(" | ") { progressFor(it) }).trim()
+        return (progressTicks(timer.ticks, config.awaitStableTimes) + " " + states.joinToString(" | ") { progressFor(it) }).trim()
     }
 
     private fun progressFor(state: InstanceState): String {
@@ -149,7 +178,7 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
     }
 
     private fun progressIndicator(state: InstanceState): String {
-        return if (condition(state)) {
+        return if (stableCheck(state)) {
             "+"
         } else {
             "-"

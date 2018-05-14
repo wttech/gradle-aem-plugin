@@ -8,7 +8,6 @@ import com.cognifide.gradle.aem.pkg.deploy.ListResponse
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.gradle.api.Project
 import java.io.Serializable
-import java.net.URL
 import kotlin.reflect.KClass
 
 interface Instance : Serializable {
@@ -70,21 +69,21 @@ interface Instance : Serializable {
             val publishUrl = project.properties.getOrElse(PUBLISH_URL_PROP, { URL_PUBLISH_DEFAULT }) as String
 
             return listOf(
-                    RemoteInstance.create(authorUrl, { environment = config.deployEnvironment }),
-                    RemoteInstance.create(publishUrl, { environment = config.deployEnvironment })
+                    RemoteInstance.create(authorUrl, { environment = config.environment }),
+                    RemoteInstance.create(publishUrl, { environment = config.environment })
             )
         }
 
         fun filter(project: Project): List<Instance> {
-            return filter(project, AemConfig.of(project).deployInstanceName)
+            return filter(project, AemConfig.of(project).instanceName)
         }
 
         fun filter(project: Project, instanceFilter: String): List<Instance> {
             val config = AemConfig.of(project)
 
             // Specified directly should not be filtered
-            if (config.deployInstanceList.isNotBlank()) {
-                return parse(config.deployInstanceList)
+            if (config.instanceList.isNotBlank()) {
+                return parse(config.instanceList)
             }
 
             // Predefined and defaults are filterable
@@ -98,10 +97,10 @@ interface Instance : Serializable {
             return instances.filter { instance ->
                 when {
                     config.propParser.flag(AUTHORS_PROP) -> {
-                        Patterns.wildcard(instance.name, "${config.deployEnvironment}-${InstanceType.AUTHOR}*")
+                        Patterns.wildcard(instance.name, "${config.environment}-${InstanceType.AUTHOR}*")
                     }
                     config.propParser.flag(PUBLISHERS_PROP) -> {
-                        Patterns.wildcard(instance.name, "${config.deployEnvironment}-${InstanceType.PUBLISH}*")
+                        Patterns.wildcard(instance.name, "${config.environment}-${InstanceType.PUBLISH}*")
                     }
                     else -> Patterns.wildcards(instance.name, instanceFilter)
                 }

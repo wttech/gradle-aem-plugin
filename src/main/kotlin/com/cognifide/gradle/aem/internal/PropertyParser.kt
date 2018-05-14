@@ -171,9 +171,9 @@ class PropertyParser(val project: Project) {
         return flag(FORCE_PROP)
     }
 
-    fun checkForce(message: String = FORCE_MESSAGE) {
+    fun checkForce() {
         if (!isForce()) {
-            throw AemException("Warning! This task execution must be confirmed by specifying explicitly parameter '-P$FORCE_PROP=true'. $message")
+            throw AemException("Unable to perform unsafe operation without parameter '-P$FORCE_PROP'")
         }
     }
 

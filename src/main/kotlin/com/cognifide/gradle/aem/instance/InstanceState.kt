@@ -16,6 +16,7 @@ class InstanceState(val sync: InstanceSync, val instance: Instance) {
         return HashCodeBuilder()
                 .append(instance)
                 .append(bundleState)
+                .append(componentState)
                 .toHashCode()
     }
 
@@ -28,6 +29,7 @@ class InstanceState(val sync: InstanceSync, val instance: Instance) {
         return EqualsBuilder()
                 .append(instance, other.instance)
                 .append(bundleState, other.bundleState)
+                .append(componentState, other.componentState)
                 .isEquals
     }
 

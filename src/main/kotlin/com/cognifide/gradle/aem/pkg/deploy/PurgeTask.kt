@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.pkg.deploy
 
 import com.cognifide.gradle.aem.api.AemTask
+import com.cognifide.gradle.aem.instance.Instance
 import com.cognifide.gradle.aem.instance.InstanceSync
 import org.gradle.api.tasks.TaskAction
 
@@ -19,7 +20,10 @@ open class PurgeTask : SyncTask() {
     fun purge() {
         propertyParser.checkForce()
 
-        synchronizeInstances({ sync ->
+        val pkg = config.packageFileName
+        val instances = Instance.filter(project)
+
+        synchronizeInstances(instances, { sync ->
             try {
                 val packagePath = sync.determineRemotePackagePath()
 
@@ -30,6 +34,8 @@ open class PurgeTask : SyncTask() {
                 logger.debug("Nothing to purge.", e)
             }
         })
+
+        notifier.default("Package purged", "$pkg on ${instances.joinToString(", ") { it.name }}")
     }
 
     private fun uninstall(packagePath: String, sync: InstanceSync) {

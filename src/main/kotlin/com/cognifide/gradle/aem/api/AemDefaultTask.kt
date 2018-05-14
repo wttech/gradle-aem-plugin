@@ -11,6 +11,9 @@ abstract class AemDefaultTask : DefaultTask(), AemTask {
     final override val config = AemConfig.of(project)
 
     @Internal
+    protected val notifier = AemNotifier.of(project)
+
+    @Internal
     protected val propertyParser = PropertyParser(project)
 
     init {

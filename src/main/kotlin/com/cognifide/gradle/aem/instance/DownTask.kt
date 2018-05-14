@@ -15,7 +15,10 @@ open class DownTask : SyncTask() {
 
     @TaskAction
     fun down() {
-        synchronizeLocalInstances { it.down() }
+        val instances = Instance.locals(project)
+        synchronizeLocalInstances(instances, { it.down() })
+
+        notifier.default("Instance(s) down", instances.joinToString(", ") { it.name })
     }
 
 }
