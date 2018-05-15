@@ -6,7 +6,6 @@ import com.cognifide.gradle.aem.internal.Behaviors
 import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.internal.ProgressLogger
 import org.apache.http.HttpStatus
-import org.apache.http.client.config.RequestConfig
 import org.gradle.api.Project
 import java.util.stream.Collectors
 
@@ -15,11 +14,13 @@ import java.util.stream.Collectors
  */
 open class AwaitAction(project: Project, val instances: List<Instance>) : AbstractAction(project) {
 
-    var times = config.awaitStableTimes
-
-    var interval = config.awaitStableInterval
-
     var fail = config.awaitFail
+
+    var availableCheck = config.awaitAvailableCheck
+
+    var stableTimes = config.awaitStableTimes
+
+    var stableInterval = config.awaitStableInterval
 
     var stableState = config.awaitStableState
 
@@ -27,9 +28,7 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
 
     var stableAssurances = config.awaitStableAssurances
 
-    val healthCheck = config.awaitHealthcheck
-
-    var timeout = config.awaitStableTimeout
+    var healthCheck = config.awaitHealthcheck
 
     override fun perform() {
         if (instances.isEmpty()) {
@@ -48,8 +47,10 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
         var sinceStableElapsed = 0L
 
         val synchronizers = prepareSynchronizers()
+        var unavailableInstances = synchronizers.map { it.instance }
+        var unavailableNotification = false
 
-        Behaviors.waitUntil(interval, { timer ->
+        Behaviors.waitUntil(stableInterval, { timer ->
             // Gather all instance states
             val instanceStates = synchronizers.map { it.determineInstanceState() }
 
@@ -68,13 +69,24 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
                     .map { it.instance }
                     .collect(Collectors.toList())
 
+            // Detect never available instances
+            val availableInstances = instanceStates.parallelStream()
+                    .filter { availableCheck(it) }
+                    .map { it.instance }
+                    .collect(Collectors.toList())
+            unavailableInstances -= availableInstances
+
+            if (!unavailableNotification && (timer.ticks.toDouble() / stableTimes.toDouble() > 0.1) && unavailableInstances.isNotEmpty()) {
+                notifier.default("Instances not available", "Instances: ${unavailableInstances.names}")
+                unavailableNotification = true
+            }
+
             // Detect timeout when same checksum is not being updated so long
-            if (times > 0 && timer.ticks > times) {
-                val message = "Unstable instance(s) detected: ${unstableInstances.joinToString(", ") { it.name }}. Timeout reached after ${Formats.duration(timer.elapsed)}."
+            if (stableTimes > 0 && timer.ticks > stableTimes) {
                 if (fail) {
-                    throw InstanceException(message)
+                    throw InstanceException("Instances not stable: ${unstableInstances.names}. Timeout reached: ${Formats.duration(timer.elapsed)}.")
                 } else {
-                    logger.warn(message)
+                    notifier.default("Instances not stable", "Problem with: ${unstableInstances.names}. Timeout reached: ${Formats.duration(timer.elapsed)}.")
                     return@waitUntil false
                 }
             }
@@ -82,14 +94,14 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
             if (unstableInstances.isEmpty()) {
                 // Assure that expected moment is not accidental, remember it
                 if (stableAssurances > 0 && sinceStableTicks == -1L) {
-                    logger.info("Instance(s) seems to be stable. Assuring.")
+                    progressLogger.progress("Instance(s) seems to be stable. Assuring.")
                     sinceStableTicks = timer.ticks
                     sinceStableElapsed = timer.elapsed
                 }
 
                 // End if assurance is not configured or this moment remains a little longer
                 if (stableAssurances <= 0 || (sinceStableTicks >= 0 && (timer.ticks - sinceStableTicks) >= stableAssurances)) {
-                    logger.info("Instance(s) are stable after ${Formats.duration(sinceStableElapsed)}.")
+                    progressLogger.progress("Instance(s) are stable after ${Formats.duration(sinceStableElapsed)}. Checking health.")
 
                     // Detect unhealthy instances
                     val unhealthyInstances = instanceStates.parallelStream()
@@ -100,11 +112,10 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
                     if (unhealthyInstances.isEmpty()) {
                         return@waitUntil false
                     } else { // TODO introduce config.awaitHealthAssurances
-                        val message = "Unhealthy instance(s) detected: ${unhealthyInstances.joinToString(", ") { it.name }}"
                         if (fail) {
-                            throw InstanceException(message)
+                            throw InstanceException("Instances not healthy: ${unhealthyInstances.names}.")
                         } else {
-                            logger.warn(message)
+                            notifier.default("Instances not healthy", "Problem with: ${unhealthyInstances.names}.")
                         }
                     }
                 }
@@ -126,13 +137,6 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
 
             InstanceSync(project, instance).apply {
                 val sync = this
-
-                requestConfigurer = { request ->
-                    request.config = RequestConfig.custom()
-                            .setConnectTimeout(timeout)
-                            .setSocketTimeout(timeout)
-                            .build()
-                }
 
                 if (init) {
                     logger.info("Initializing instance using default credentials.")

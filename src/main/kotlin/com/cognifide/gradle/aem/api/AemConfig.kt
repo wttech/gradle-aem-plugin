@@ -39,13 +39,13 @@ class AemConfig(
      */
     @Internal
     @get:JsonIgnore
-    val propParser = PropertyParser(project)
+    val props = PropertyParser(project)
 
     /**
      * Determines current environment to be used in e.g package deployment.
      */
     @Input
-    val environment: String = propParser.string("aem.env", {
+    val environment: String = props.string("aem.env", {
         System.getenv("AEM_ENV") ?: "local"
     })
 
@@ -60,88 +60,82 @@ class AemConfig(
      * Determines instances involved in CRX package deployment (filters preconfigured instances).
      */
     @Input
-    var instanceName: String = propParser.string("aem.instance.name", "$environment-*")
+    var instanceName: String = props.string("aem.instance.name", "$environment-*")
 
     /**
      * Forces instances involved in e.g CRX package deployment (uses explicit instances configuration).
      */
     @Input
-    var instanceList: String = propParser.string("aem.instance.list", "")
+    var instanceList: String = props.string("aem.instance.list", "")
 
     /**
      * Determines instance which will be used when CRX package activation from author to publishers
      * will be performed (only if distributed deploy is enabled).
      */
     @Input
-    var instanceAuthorName: String = propParser.string("aem.instance.author.name", "$environment-${InstanceType.AUTHOR}*")
+    var instanceAuthorName: String = props.string("aem.instance.author.name", "$environment-${InstanceType.AUTHOR}*")
 
     /**
      * Defines maximum time after which initializing connection to AEM will be aborted (e.g on upload, install).
      */
     @Input
-    var instanceConnectionTimeout: Int = propParser.int("aem.instance.connectionTimeout", 5000)
+    var instanceConnectionTimeout: Int = props.int("aem.instance.connectionTimeout", 5000)
 
     /**
      * Determines if connection to untrusted (e.g. self-signed) SSL certificates should be allowed.
      * By default allows all SSL connections.
      */
     @Input
-    var instanceConnectionUntrustedSsl: Boolean = propParser.boolean("aem.instance.connectionUntrustedSsl", true)
-
-    /**
-     * Perform deploy action (upload, install or activate) in parallel to multiple instances at once.
-     */
-    @Input
-    var deployParallel: Boolean = propParser.boolean("aem.deploy.parallel", true)
+    var instanceConnectionUntrustedSsl: Boolean = props.boolean("aem.instance.connectionUntrustedSsl", true)
 
     /**
      * CRX package name conventions (with wildcard) indicating that package can change over time
      * while having same version specified.
      */
     @Input
-    var deploySnapshots: List<String> = propParser.list("aem.deploy.snapshots")
+    var deploySnapshots: List<String> = props.list("aem.deploy.snapshots")
 
     /**
      * Enables deployment via CRX package activation from author to publishers when e.g they are not accessible.
      */
     @Input
-    var deployDistributed: Boolean = propParser.boolean("aem.deploy.distributed", false)
+    var deployDistributed: Boolean = props.boolean("aem.deploy.distributed", false)
 
     /**
      * Force upload CRX package regardless if it was previously uploaded.
      */
     @Input
-    var uploadForce: Boolean = propParser.boolean("aem.upload.force", true)
+    var uploadForce: Boolean = props.boolean("aem.upload.force", true)
 
     /**
      * Repeat upload when failed (brute-forcing).
      */
     @Input
-    var uploadRetryTimes: Int = propParser.int("aem.upload.retry.times", 3)
+    var uploadRetryTimes: Int = props.int("aem.upload.retry.times", 3)
 
     /**
      * Time to wait after repeating failed upload.
      */
     @Input
-    var uploadRetryDelay: Long = propParser.long("aem.upload.retry.delay", TimeUnit.SECONDS.toMillis(30))
+    var uploadRetryDelay: Long = props.long("aem.upload.retry.delay", TimeUnit.SECONDS.toMillis(30))
 
     /**
      * Determines if when on package install, sub-packages included in CRX package content should be also installed.
      */
     @Input
-    var installRecursive: Boolean = propParser.boolean("aem.install.recursive", true)
+    var installRecursive: Boolean = props.boolean("aem.install.recursive", true)
 
     /**
      * Repeat install when failed (brute-forcing).
      */
     @Input
-    var installRetryTimes: Int = propParser.int("aem.install.retry.times", 1)
+    var installRetryTimes: Int = props.int("aem.install.retry.times", 1)
 
     /**
      * Time to wait after repeating failed install.
      */
     @Input
-    var installRetryDelay: Long = propParser.long("aem.install.retry.delay", TimeUnit.SECONDS.toMillis(30))
+    var installRetryDelay: Long = props.long("aem.install.retry.delay", TimeUnit.SECONDS.toMillis(30))
 
     /**
      * Defines behavior for access control handling included in rep:policy nodes being a part of CRX package content.
@@ -276,7 +270,7 @@ class AemConfig(
      * Build date used as base for calculating 'created' and 'buildCount' package properties.
      */
     @Internal
-    var buildDate: Date = propParser.date("aem.buildDate", Date())
+    var buildDate: Date = props.date("aem.buildDate", Date())
 
     /**
      * Define here custom properties that can be used in CRX package files like 'META-INF/vault/properties.xml'.
@@ -304,13 +298,13 @@ class AemConfig(
      * Global options which are being applied to any Vault related command like 'aemVault' or 'aemCheckout'.
      */
     @Input
-    var vaultGlobalOptions: String = propParser.string("aem.vlt.globalOptions", "--credentials {{instance.credentials}}")
+    var vaultGlobalOptions: String = props.string("aem.vlt.globalOptions", "--credentials {{instance.credentials}}")
 
     /**
      * Specify characters to be used as line endings when cleaning up checked out JCR content.
      */
     @Input
-    var vaultLineSeparator: String = propParser.string("aem.vlt.lineSeparator", "LF")
+    var vaultLineSeparator: String = props.string("aem.vlt.lineSeparator", "LF")
 
     /**
      * Configure default task dependency assignments while including dependant project bundles.
@@ -360,24 +354,37 @@ class AemConfig(
     var upInitializer: (LocalHandle, InstanceSync) -> Unit = { _, _ -> }
 
     /**
+     * If there is still some unstable instance left, then fail build except just logging warning.
+     */
+    @Input
+    var awaitFail: Boolean = props.boolean("aem.await.fail", true)
+
+    /**
+     * Hook for customizing instance availability check.
+     */
+    @Internal
+    @get:JsonIgnore
+    var awaitAvailableCheck: (InstanceState) -> Boolean = {
+        it.check({
+            it.connectionTimeout = (0.9 * awaitStableInterval.toDouble()).toInt()
+        }, {
+            !it.bundleState.unknown
+        })
+    }
+
+    /**
      * Time in milliseconds used as interval between next instance stability checks being performed.
      * Optimization could be necessary only when instance is heavily loaded.
      */
     @Input
-    var awaitStableInterval: Long = propParser.long("aem.await.interval", TimeUnit.SECONDS.toMillis(1))
+    var awaitStableInterval: Long = props.long("aem.await.stable.interval", TimeUnit.SECONDS.toMillis(1))
 
     /**
      * Maximum intervals after which instance stability checks will
      * be skipped if there is still some unstable instance left.
      */
     @Input
-    var awaitStableTimes: Long = propParser.long("aem.await.times", 60 * 5)
-
-    /**
-     * If there is still some unstable instance left, then fail build except just logging warning.
-     */
-    @Input
-    var awaitFail: Boolean = propParser.boolean("aem.await.fail", true)
+    var awaitStableTimes: Long = props.long("aem.await.stable.times", 60 * 5)
 
     /**
      * Hook for customizing instance state provider used within stable checking.
@@ -387,25 +394,24 @@ class AemConfig(
     var awaitStableState: (InstanceState) -> Int = { it.bundleState.hashCode() }
 
     /**
-     * After each await interval, instance stability check is being performed.
-     * This value is a HTTP connection timeout (in millis) which must be smaller than interval to avoid race condition.
-     */
-    @Input
-    var awaitStableTimeout: Int = propParser.int("aem.await.stable.timeout", (0.9 * awaitStableInterval.toDouble()).toInt())
-
-    /**
      * Hook for customizing instance stability check.
      */
     @Internal
     @get:JsonIgnore
-    var awaitStableCheck: (InstanceState) -> Boolean = { it.bundleState.stable }
+    var awaitStableCheck: (InstanceState) -> Boolean = {
+        it.check({
+            it.connectionTimeout = (0.9 * awaitStableInterval.toDouble()).toInt()
+        }, {
+            it.bundleState.stable
+        })
+    }
 
     /**
      * Number of intervals / additional instance stability checks to assure all stable instances.
      * This mechanism protect against temporary stable states.
      */
     @Input
-    var awaitStableAssurances: Long = propParser.long("aem.await.stable.assurances", 5L)
+    var awaitStableAssurances: Long = props.long("aem.await.stable.assurances", 5L)
 
     /**
      * Hook for customizing instance health check.h
@@ -413,26 +419,22 @@ class AemConfig(
     @Internal
     @get:JsonIgnore
     var awaitHealthcheck: (InstanceState) -> Boolean = {
-        if (bundlePackage.isNotBlank()) {
-            it.componentState.stable("$bundlePackage.*")
-        } else {
-            it.componentState.stable
-        }
+        it.check({
+            it.connectionTimeout = 10000
+        }, {
+            if (bundlePackage.isNotBlank()) {
+                it.componentState.stable("$bundlePackage.*")
+            } else {
+                it.componentState.stable
+            }
+        })
     }
-
-    /**
-     * After each await interval, instance stability check is being performed.
-     * This value is a HTTP connection timeout (in millis) which must be smaller than interval to avoid race condition.
-     */
-    @Input
-    var awaitHealthTimeout: Int = propParser.int("aem.await.health.timeout", 10000)
-
 
     /**
      * Time in milliseconds to postpone instance stability checks after triggering instances restart.
      */
     @Input
-    var reloadDelay: Long = propParser.long("aem.reload.delay", TimeUnit.SECONDS.toMillis(10))
+    var reloadDelay: Long = props.long("aem.reload.delay", TimeUnit.SECONDS.toMillis(10))
 
     /**
      * Satisfy is a lazy task, which means that it will not install package that is already installed.
@@ -441,14 +443,14 @@ class AemConfig(
      * This flag can change that behavior, so that information will be refreshed after each package installation.
      */
     @Input
-    var satisfyRefreshing: Boolean = propParser.boolean("aem.satisfy.refreshing", false)
+    var satisfyRefreshing: Boolean = props.boolean("aem.satisfy.refreshing", false)
 
     /**
      * Satisfy handles plain OSGi bundle JAR's deployment by automatic wrapping to CRX package.
      * This path determines a path in JCR repository in which such bundles will be deployed on AEM.
      */
     @Input
-    var satisfyBundlePath: String = propParser.string("aem.satisfy.bundlePath", "/apps/gradle-aem-plugin/satisfy/install")
+    var satisfyBundlePath: String = props.string("aem.satisfy.bundlePath", "/apps/gradle-aem-plugin/satisfy/install")
 
     /**
      * A hook which could be used to override default properties used to generate a CRX package from OSGi bundle.
@@ -461,7 +463,7 @@ class AemConfig(
      * Determines which packages should be installed by default when satisfy task is being executed.
      */
     @Input
-    var satisfyGroupName = propParser.string("aem.satisfy.group.name", "*")
+    var satisfyGroupName = props.string("aem.satisfy.group.name", "*")
 
     /**
      * Determines a Vault filter used to checkout JCR content from running AEM instance.
@@ -471,7 +473,7 @@ class AemConfig(
      * Default: [automatically determined]
      */
     @Input
-    var checkoutFilterPath: String = propParser.string("aem.checkout.filterPath", "")
+    var checkoutFilterPath: String = props.string("aem.checkout.filterPath", "")
 
     /**
      * Convention paths used to determine Vault checkout filter if it is not specified explicitly.
@@ -536,7 +538,7 @@ class AemConfig(
      * Turn on/off default system notifications.
      */
     @Internal
-    var notifications: Boolean = propParser.boolean("aem.notifications", false)
+    var notifications: Boolean = props.boolean("aem.notifications", false)
 
     /**
      * Initialize defaults that depends on concrete type of project.
@@ -565,7 +567,7 @@ class AemConfig(
     }
 
     fun localAuthorInstance(configurer: LocalInstance.() -> Unit) {
-        localInstance(propParser.string(Instance.AUTHOR_URL_PROP, Instance.URL_AUTHOR_DEFAULT), configurer)
+        localInstance(props.string(Instance.AUTHOR_URL_PROP, Instance.URL_AUTHOR_DEFAULT), configurer)
     }
 
     fun localAuthorInstance(configurer: Closure<*>) {
@@ -577,7 +579,7 @@ class AemConfig(
     }
 
     fun localPublishInstance(configurer: LocalInstance.() -> Unit) {
-        localInstance(propParser.string(Instance.PUBLISH_URL_PROP, Instance.URL_PUBLISH_DEFAULT), configurer)
+        localInstance(props.string(Instance.PUBLISH_URL_PROP, Instance.URL_PUBLISH_DEFAULT), configurer)
     }
 
     fun localPublishInstance(configurer: Closure<*>) {
@@ -604,7 +606,7 @@ class AemConfig(
     }
 
     fun remoteAuthorInstance(configurer: RemoteInstance.() -> Unit) {
-        remoteInstance(propParser.string(Instance.AUTHOR_URL_PROP, Instance.URL_AUTHOR_DEFAULT), configurer)
+        remoteInstance(props.string(Instance.AUTHOR_URL_PROP, Instance.URL_AUTHOR_DEFAULT), configurer)
     }
 
     fun remoteAuthorInstance(configurer: Closure<*>) {
@@ -616,7 +618,7 @@ class AemConfig(
     }
 
     fun remotePublishInstance(configurer: RemoteInstance.() -> Unit) {
-        remoteInstance(propParser.string(Instance.PUBLISH_URL_PROP, Instance.URL_PUBLISH_DEFAULT), configurer)
+        remoteInstance(props.string(Instance.PUBLISH_URL_PROP, Instance.URL_PUBLISH_DEFAULT), configurer)
     }
 
     fun remotePublishInstance(configurer: Closure<*>) {
@@ -641,10 +643,6 @@ class AemConfig(
 
         if (contentPath.isBlank()) {
             throw AemException("Content path cannot be blank")
-        }
-
-        if (awaitStableTimeout >= awaitStableInterval) {
-            throw AemException("Await timeout should be less than interval ($awaitStableTimeout < $awaitStableInterval)")
         }
 
         instances.values.forEach { it.validate() }

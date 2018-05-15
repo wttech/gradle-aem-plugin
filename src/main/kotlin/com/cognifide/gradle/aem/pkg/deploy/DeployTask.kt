@@ -1,17 +1,18 @@
 package com.cognifide.gradle.aem.pkg.deploy
 
-import com.cognifide.gradle.aem.api.AemTask
+import com.cognifide.gradle.aem.api.AemDefaultTask
 import com.cognifide.gradle.aem.instance.Instance
+import com.cognifide.gradle.aem.instance.names
+import com.cognifide.gradle.aem.instance.sync
 import org.gradle.api.tasks.TaskAction
 
-open class DeployTask : SyncTask() {
+open class DeployTask : AemDefaultTask() {
 
     companion object {
         val NAME = "aemDeploy"
     }
 
     init {
-        group = AemTask.GROUP
         description = "Deploys CRX package on instance(s). Upload then install (and optionally activate)."
     }
 
@@ -25,12 +26,12 @@ open class DeployTask : SyncTask() {
         }
 
         if (config.deployDistributed) {
-            synchronizeInstances(instances, { it.distributePackage(pkg) })
+            instances.sync(project, { it.distributePackage(pkg) })
         } else {
-            synchronizeInstances(instances, { it.deployPackage(pkg) })
+            instances.sync(project, { it.deployPackage(pkg) })
         }
 
-        notifier.default("Package deployed", "${pkg.name} on ${instances.joinToString(", ") { it.name }}")
+        notifier.default("Package deployed", "${pkg.name} on ${instances.names}")
     }
 
 }

@@ -1,23 +1,23 @@
 package com.cognifide.gradle.aem.instance
 
+import com.cognifide.gradle.aem.api.AemDefaultTask
 import com.cognifide.gradle.aem.api.AemTask
 import com.cognifide.gradle.aem.instance.satisfy.PackageGroup
 import com.cognifide.gradle.aem.instance.satisfy.PackageResolver
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.pkg.deploy.ListResponse
-import com.cognifide.gradle.aem.pkg.deploy.SyncTask
 import groovy.lang.Closure
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 import org.gradle.util.ConfigureUtil
 import java.io.File
 
-open class SatisfyTask : SyncTask() {
+open class SatisfyTask : AemDefaultTask() {
 
     companion object {
-        val NAME = "aemSatisfy"
+        const val NAME = "aemSatisfy"
 
-        val DOWNLOAD_DIR = "download"
+        const val DOWNLOAD_DIR = "download"
     }
 
     @get:Internal
@@ -65,7 +65,7 @@ open class SatisfyTask : SyncTask() {
 
             var anyPackageSatisfied = false
 
-            synchronizeInstances(packageGroup.instances, { sync:InstanceSync ->
+            packageGroup.instances.sync(project, { sync ->
                 val packageStates = packageGroup.files.fold(mutableMapOf<File, ListResponse.Package?>(), { states, pkg ->
                     states[pkg] = sync.determineRemotePackage(pkg, config.satisfyRefreshing); states
                 })

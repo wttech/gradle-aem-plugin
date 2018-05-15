@@ -14,6 +14,12 @@ class AemNotifier private constructor(private val project: Project) {
         if (config.notifications) {
             now(title, message)
         }
+
+        project.logger.info(if (message.isNotBlank()) {
+            "${title.removeSuffix(".")}. $message"
+        } else {
+            title
+        })
     }
 
     // TODO allow to customize color of plugin logo (warn, info, error etc)

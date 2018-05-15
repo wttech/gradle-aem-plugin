@@ -96,10 +96,10 @@ interface Instance : Serializable {
             // Handle name pattern filtering
             return instances.filter { instance ->
                 when {
-                    config.propParser.flag(AUTHORS_PROP) -> {
+                    config.props.flag(AUTHORS_PROP) -> {
                         Patterns.wildcard(instance.name, "${config.environment}-${InstanceType.AUTHOR}*")
                     }
-                    config.propParser.flag(PUBLISHERS_PROP) -> {
+                    config.props.flag(PUBLISHERS_PROP) -> {
                         Patterns.wildcard(instance.name, "${config.environment}-${InstanceType.PUBLISH}*")
                     }
                     else -> Patterns.wildcards(instance.name, instanceFilter)
@@ -178,3 +178,6 @@ interface Instance : Serializable {
     var packages: ListResponse?
 
 }
+
+val List<Instance>.names: String
+    get() = joinToString(", ") { it.name }

@@ -1,13 +1,13 @@
 package com.cognifide.gradle.aem.instance
 
+import com.cognifide.gradle.aem.api.AemDefaultTask
 import com.cognifide.gradle.aem.instance.action.AwaitAction
-import com.cognifide.gradle.aem.pkg.deploy.SyncTask
 import org.gradle.api.tasks.TaskAction
 
-open class AwaitTask : SyncTask() {
+open class AwaitTask : AemDefaultTask() {
 
     companion object {
-        val NAME = "aemAwait"
+        const val NAME = "aemAwait"
     }
 
     init {
@@ -17,12 +17,10 @@ open class AwaitTask : SyncTask() {
     @TaskAction
     fun await() {
         val instances = Instance.filter(project)
-        AwaitAction(project, instances).perform()
 
-        notifier.default(
-                "Instance(s) stable and healthy",
-                instances.joinToString(", ") { it.name }
-        )
+        notifier.default("Instance(s) awaiting", "Which: ${instances.names}")
+        AwaitAction(project, instances).perform()
+        notifier.default("Instance(s) stable and healthy", instances.names)
     }
 
 }

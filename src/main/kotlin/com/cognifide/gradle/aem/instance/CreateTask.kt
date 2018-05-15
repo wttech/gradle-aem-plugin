@@ -1,23 +1,23 @@
 package com.cognifide.gradle.aem.instance
 
+import com.cognifide.gradle.aem.api.AemDefaultTask
 import com.cognifide.gradle.aem.api.AemTask
 import com.cognifide.gradle.aem.internal.file.resolver.FileResolver
-import com.cognifide.gradle.aem.pkg.deploy.SyncTask
 import groovy.lang.Closure
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 import org.gradle.util.ConfigureUtil
 
-open class CreateTask : SyncTask() {
+open class CreateTask : AemDefaultTask() {
 
     companion object {
-        val NAME = "aemCreate"
+        const val NAME = "aemCreate"
 
-        val DOWNLOAD_DIR = "download"
+        const val DOWNLOAD_DIR = "download"
 
-        val LICENSE_URL_PROP = "aem.instance.local.licenseUrl"
+        const val LICENSE_URL_PROP = "aem.instance.local.licenseUrl"
 
-        val JAR_URL_PROP = "aem.instance.local.jarUrl"
+        const val JAR_URL_PROP = "aem.instance.local.jarUrl"
     }
 
     @Internal
@@ -26,9 +26,7 @@ open class CreateTask : SyncTask() {
     init {
         description = "Creates local AEM instance(s)."
 
-        instanceFileResolver.attach(this)
         instanceFileFromProperties()
-        project.afterEvaluate { Instance.handles(project).forEach { outputs.file(it.createLock) } }
     }
 
     private fun instanceFileFromProperties() {
@@ -49,12 +47,16 @@ open class CreateTask : SyncTask() {
 
     @TaskAction
     fun create() {
-        val instances = Instance.locals(project)
+        val handles = Instance.handles(project).filter { !it.created }
+        if (handles.isEmpty()) {
+            logger.info("No instances to create")
+            return
+        }
 
         logger.info("Creating instances")
-        synchronizeLocalInstances(instances, { it.create(instanceFileResolver) })
+        handles.parallelStream().forEach { it.create(instanceFileResolver) }
 
-        notifier.default("Instance(s) created", instances.joinToString(", ") { it.name })
+        notifier.default("Instance(s) created", handles.names)
     }
 
 }

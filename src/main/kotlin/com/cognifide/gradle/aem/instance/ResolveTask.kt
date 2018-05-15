@@ -1,18 +1,16 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.api.AemTask
-import org.gradle.api.DefaultTask
+import com.cognifide.gradle.aem.api.AemDefaultTask
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
-open class ResolveTask : DefaultTask() {
+open class ResolveTask : AemDefaultTask() {
 
     companion object {
         val NAME = "aemResolve"
     }
 
     init {
-        group = AemTask.GROUP
         description = "Resolve files from remote sources before running other tasks to optimize build performance."
     }
 
@@ -22,7 +20,7 @@ open class ResolveTask : DefaultTask() {
 
     @TaskAction
     fun resolve() {
-        logger.info("Resolving packages to be satisfied")
+        notifier.default("Resolving files", "Collecting instance files and CRX packages.")
         satisfyTask.packageGroups
     }
 

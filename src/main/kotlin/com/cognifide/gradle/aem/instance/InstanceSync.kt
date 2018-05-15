@@ -62,6 +62,10 @@ class InstanceSync(val project: Project, val instance: Instance) {
 
     var basicPassword = instance.password
 
+    var connectionTimeout = config.instanceConnectionTimeout
+
+    var connectionUntrustedSsl = config.instanceConnectionUntrustedSsl
+
     var requestConfigurer: (HttpRequestBase) -> Unit = { _ -> }
 
     var responseHandler: (HttpResponse) -> Unit = { _ -> }
@@ -124,14 +128,14 @@ class InstanceSync(val project: Project, val instance: Instance) {
         val httpClientBuilder = HttpClientBuilder.create()
                 .addInterceptorFirst(PreemptiveAuthInterceptor())
                 .setDefaultRequestConfig(RequestConfig.custom()
-                        .setConnectTimeout(config.instanceConnectionTimeout)
-                        .setConnectionRequestTimeout(config.instanceConnectionTimeout)
+                        .setConnectTimeout(connectionTimeout)
+                        .setConnectionRequestTimeout(connectionTimeout)
                         .build()
                 )
                 .setDefaultCredentialsProvider(BasicCredentialsProvider().apply {
                     setCredentials(AuthScope.ANY, UsernamePasswordCredentials(basicUser, basicPassword))
                 })
-        if (config.instanceConnectionUntrustedSsl) {
+        if (connectionUntrustedSsl) {
             httpClientBuilder.setSSLSocketFactory(createSslConnectionSocketFactory())
         }
 
@@ -266,7 +270,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         }
     }
 
-    fun installPackage(uploadedPackagePath: String = determineRemotePackagePath()): InstallResponse {
+    fun installPackage(uploadedPackagePath: String): InstallResponse {
         lateinit var exception: DeployException
         for (i in 0..config.installRetryTimes) {
             try {
@@ -328,17 +332,8 @@ class InstanceSync(val project: Project, val instance: Instance) {
         return Patterns.wildcard(file, config.deploySnapshots)
     }
 
-    fun deployPackage(file: File, distributed: Boolean) {
-        if (distributed) {
-            distributePackage(file)
-        } else {
-            deployPackage(file)
-        }
-    }
-
     fun deployPackage(file: File) {
         installPackage(uploadPackage(file).path)
-
     }
 
     fun distributePackage(file: File) {
@@ -466,7 +461,6 @@ class InstanceSync(val project: Project, val instance: Instance) {
         }
     }
 
-
     fun reload() {
         try {
             logger.info("Triggering instance(s) shutdown")
@@ -475,4 +469,9 @@ class InstanceSync(val project: Project, val instance: Instance) {
             throw InstanceException("Cannot trigger shutdown for instance $instance", e)
         }
     }
+
+}
+
+fun List<Instance>.sync(project: Project, callback: (InstanceSync) -> Unit) {
+    return map { InstanceSync(project, it) }.parallelStream().forEach(callback)
 }

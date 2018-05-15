@@ -6,7 +6,7 @@ import org.gradle.api.tasks.TaskAction
 open class VltTask : AemDefaultTask() {
 
     companion object {
-        val NAME = "aemVlt"
+        const val NAME = "aemVlt"
     }
 
     init {
@@ -20,7 +20,9 @@ open class VltTask : AemDefaultTask() {
             throw VltException("Vault command cannot be blank.")
         }
 
-        VltCommand(project).raw(command!!)
+        notifier.default("Executing Vault command", "Command: '$command' started.")
+        VltRunner(project).raw(command!!)
+        notifier.default("Executing Vault command", "Command '$command' finished.")
     }
 
 }

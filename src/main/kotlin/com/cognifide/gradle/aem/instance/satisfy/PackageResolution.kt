@@ -62,12 +62,12 @@ class PackageResolution(group: PackageGroup, id: String, action: (FileResolution
                 "filters" to filters,
                 "filterRoots" to filters.joinToString(config.vaultLineSeparatorString) { it.toString() }
         )
-        val generalProps = config.propParser.packageProps
+        val generalProps = config.props.packageProps
         val overrideProps = config.satisfyBundleProperties(bundle)
         val effectiveProps = generalProps + bundleProps + overrideProps
 
         FileOperations.amendFiles(vaultDir, config.filesExpanded, { file, content ->
-            config.propParser.expand(content, effectiveProps, file.absolutePath)
+            config.props.expand(content, effectiveProps, file.absolutePath)
         })
 
         // Copy bundle to install path

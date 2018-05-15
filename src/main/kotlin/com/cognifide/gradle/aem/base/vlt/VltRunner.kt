@@ -10,7 +10,7 @@ import org.gradle.api.logging.Logger
 import java.io.File
 
 // TODO https://github.com/Cognifide/gradle-aem-plugin/issues/135
-class VltCommand(val project: Project) {
+class VltRunner(val project: Project) {
 
     val logger: Logger = project.logger
 

@@ -275,3 +275,6 @@ class LocalHandle(val project: Project, val instance: Instance) {
     }
 
 }
+
+val List<LocalHandle>.names: String
+    get() = joinToString(", ") { it.instance.name }
