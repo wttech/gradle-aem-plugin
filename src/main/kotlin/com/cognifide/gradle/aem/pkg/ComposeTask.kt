@@ -281,7 +281,7 @@ open class ComposeTask : Zip(), AemTask {
             return if (project == project.rootProject || project.name == project.rootProject.name) {
                 defaultArchiveName
             } else {
-                "${config.namePrefix()}-$defaultArchiveName"
+                "${config.projectNamePrefix}-$defaultArchiveName"
             }
         }
 

@@ -31,7 +31,7 @@ class ComponentState private constructor() {
     /**
      * Checks if only components of matching PID pattern are active.
      */
-    fun stableOnly(pids: List<String>): Boolean {
+    fun stableOnly(pids: Collection<String>): Boolean {
         return !unknown && components.filter { Patterns.wildcard(it.pid, pids) }.all { it.stable }
     }
 
@@ -42,7 +42,7 @@ class ComponentState private constructor() {
     /**
      * Checks if platform components and these matching PID pattern are active.
      */
-    fun stable(pids: List<String>): Boolean {
+    fun stable(pids: Collection<String>): Boolean {
         return stable && components.filter { Patterns.wildcard(it.pid, pids) }.all { it.stable }
     }
 

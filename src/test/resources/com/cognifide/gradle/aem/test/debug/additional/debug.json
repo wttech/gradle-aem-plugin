@@ -197,6 +197,7 @@
       "awaitStableInterval": 1000,
       "awaitStableTimes": 300,
       "awaitStableAssurances": 5,
+      "awaitHealthBundlePackages": [],
       "reloadDelay": 10000,
       "satisfyRefreshing": false,
       "satisfyBundlePath": "/apps/gradle-aem-plugin/satisfy/install",

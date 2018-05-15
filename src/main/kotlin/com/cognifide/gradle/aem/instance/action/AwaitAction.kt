@@ -28,7 +28,7 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
 
     var stableAssurances = config.awaitStableAssurances
 
-    var healthCheck = config.awaitHealthcheck
+    var healthCheck = config.awaitHealthCheck
 
     override fun perform() {
         if (instances.isEmpty()) {

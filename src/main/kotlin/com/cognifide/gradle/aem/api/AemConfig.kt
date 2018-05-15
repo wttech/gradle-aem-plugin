@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.api
 
 import aQute.bnd.osgi.Jar
+import com.cognifide.gradle.aem.base.BasePlugin
 import com.cognifide.gradle.aem.instance.*
 import com.cognifide.gradle.aem.internal.LineSeparator
 import com.cognifide.gradle.aem.internal.PropertyParser
@@ -221,10 +222,10 @@ class AemConfig(
      * Determines built CRX package name (visible in package manager).
      */
     @Input
-    var packageName: String = if (isUniqueProjectName()) {
+    var packageName: String = if (projectNameUnique) {
         project.name
     } else {
-        "${namePrefix()}-${project.name}"
+        "$projectNamePrefix-${project.name}"
     }
 
     /**
@@ -418,17 +419,23 @@ class AemConfig(
      */
     @Internal
     @get:JsonIgnore
-    var awaitHealthcheck: (InstanceState) -> Boolean = {
+    var awaitHealthCheck: (InstanceState) -> Boolean = {
         it.check({
             it.connectionTimeout = 10000
         }, {
             if (bundlePackage.isNotBlank()) {
-                it.componentState.stable("$bundlePackage.*")
+                it.componentState.stable(wildcardPackage(bundlePackages + awaitHealthBundlePackages))
             } else {
                 it.componentState.stable
             }
         })
     }
+
+    /**
+     * Extra bundle packages to be verified within default health checking.
+     */
+    @Input
+    var awaitHealthBundlePackages: MutableSet<String> = mutableSetOf()
 
     /**
      * Time in milliseconds to postpone instance stability checks after triggering instances restart.
@@ -684,19 +691,54 @@ class AemConfig(
     @get:JsonIgnore
     val vaultLineSeparatorString: String = LineSeparator.string(vaultLineSeparator)
 
+    /**
+     * All bundle packages configured in projects using bundle plugin.
+     *
+     * TODO verify it
+     */
+    @get:Internal
+    @get:JsonIgnore
+    val bundlePackages: Set<String>
+        get() {
+            return project.allprojects.filter { it.plugins.hasPlugin(BasePlugin.ID) }
+                    .map { of(it).bundlePackage }
+                    .filter { it.isNotBlank() }
+                    .toSet()
+        }
+
+    /**
+     * Append wildcard to packages specified.
+     */
     @Internal
-    fun namePrefix(): String = if (isUniqueProjectName()) {
-        project.name
-    } else {
-        "${project.rootProject.name}${project.path}"
-                .replace(":", "-")
-                .replace(".", "-")
-                .substringBeforeLast("-")
+    @JsonIgnore
+    fun wildcardPackage(pkg: String): Collection<String> {
+        return wildcardPackage(listOf(pkg))
     }
 
     @Internal
     @JsonIgnore
-    fun isUniqueProjectName() = project == project.rootProject || project.name == project.rootProject.name
+    fun wildcardPackage(packages: Collection<String>): Collection<String> {
+        return packages.map { "${it.removeSuffix("*")}*" }.toSet()
+    }
+
+    @get:Internal
+    @get:JsonIgnore
+    val projectNamePrefix: String
+        get() {
+            return if (projectNameUnique) {
+                project.name
+            } else {
+                "${project.rootProject.name}${project.path}"
+                        .replace(":", "-")
+                        .replace(".", "-")
+                        .substringBeforeLast("-")
+            }
+        }
+
+    @get:Internal
+    @get:JsonIgnore
+    val projectNameUnique: Boolean
+        get() = project == project.rootProject || project.name == project.rootProject.name
 
     companion object {
 
