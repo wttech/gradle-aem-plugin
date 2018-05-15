@@ -11,7 +11,7 @@ class AemNotifier private constructor(private val project: Project) {
     private val config by lazy {AemConfig.of(project) }
 
     fun default(title: String, message: String = "") {
-        if (config.notifications) {
+        if (config.notificationEnabled) {
             now(title, message)
         }
 
@@ -33,10 +33,8 @@ class AemNotifier private constructor(private val project: Project) {
     fun now(configurer: Notify.() -> Unit) {
         try {
             Notify.create()
-                    .title(AemPlugin.NAME_WITH_VERSION)
                     .image(ImageIO.read(javaClass.getResourceAsStream(IMAGE_PATH)))
-                    .darkStyle()
-                    .hideAfter(5000)
+                    .apply(config.notificationConfig)
                     .apply(configurer)
                     .show()
         } catch (e: Exception) {
@@ -48,17 +46,15 @@ class AemNotifier private constructor(private val project: Project) {
 
         const val IMAGE_PATH = "/com/cognifide/gradle/aem/META-INF/vault/definition/thumbnail.png"
 
+        const val EXT_PROP = "aemNotifier"
+
         fun of(project: Project): AemNotifier {
-            val rootProject = project.rootProject
-            val name = AemNotifier::class.java.canonicalName
-
-            val props = rootProject.extensions.extraProperties
-            if (!props.has(name)) {
-                props.set(name, setup(rootProject))
-
+            val props = project.extensions.extraProperties
+            if (!props.has(EXT_PROP)) {
+                props.set(EXT_PROP, setup(project))
             }
 
-            return props.get(name) as AemNotifier
+            return props.get(EXT_PROP) as AemNotifier
         }
 
         private fun setup(rootProject: Project): AemNotifier {

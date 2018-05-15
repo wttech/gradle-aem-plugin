@@ -7,6 +7,7 @@ import groovy.lang.Closure
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 import org.gradle.util.ConfigureUtil
+import java.io.File
 
 open class CreateTask : AemDefaultTask() {
 
@@ -23,13 +24,17 @@ open class CreateTask : AemDefaultTask() {
     @Internal
     val instanceFileResolver = FileResolver(project, AemTask.temporaryDir(project, NAME, DOWNLOAD_DIR))
 
+    @get:Internal
+    val instanceFiles: List<File>
+        get() = instanceFileResolver.allFiles()
+
     init {
         description = "Creates local AEM instance(s)."
 
-        instanceFileFromProperties()
+        instanceFilesByProperties()
     }
 
-    private fun instanceFileFromProperties() {
+    private fun instanceFilesByProperties() {
         val jarUrl = propertyParser.string(JAR_URL_PROP)
         if (!jarUrl.isNullOrBlank()) {
             instanceFileResolver.url(jarUrl!!)
@@ -54,7 +59,7 @@ open class CreateTask : AemDefaultTask() {
         }
 
         logger.info("Creating instances")
-        handles.parallelStream().forEach { it.create(instanceFileResolver) }
+        handles.parallelStream().forEach { it.create(instanceFiles) }
 
         notifier.default("Instance(s) created", handles.names)
     }

@@ -40,11 +40,11 @@ class InstancePlugin : Plugin<Project> {
         val collect = tasks.create(CollectTask.NAME, CollectTask::class.java)
         val setup = tasks.create(SetupTask.NAME, SetupTask::class.java)
 
-        create.mustRunAfter(clean)
+        create.dependsOn(resolve).mustRunAfter(clean)
         up.dependsOn(create).mustRunAfter(clean)
         reload.mustRunAfter(satisfy)
         destroy.mustRunAfter(down)
-        resolve.mustRunAfter(clean).shouldRunAfter(create)
+        resolve.mustRunAfter(clean)
         satisfy.dependsOn(resolve).mustRunAfter(create, up)
         collect.mustRunAfter(satisfy)
         setup.dependsOn(create, up, satisfy, await)

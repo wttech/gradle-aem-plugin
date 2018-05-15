@@ -109,7 +109,7 @@
         "*_x0040_Delete",
         "*_x0040_TypeHint"
       ],
-      "notifications": false
+      "notificationEnabled": false
     }
   },
   "packageDeployed": {}
