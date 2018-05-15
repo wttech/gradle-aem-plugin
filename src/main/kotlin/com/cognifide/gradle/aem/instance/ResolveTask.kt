@@ -20,7 +20,6 @@ open class ResolveTask : AemDefaultTask() {
 
     @TaskAction
     fun resolve() {
-        notifier.default("Resolving files", "Collecting instance files and CRX packages.")
         satisfyTask.packageGroups
     }
 
