@@ -19,6 +19,7 @@ import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.bundling.Zip
+import org.gradle.language.base.plugins.LifecycleBasePlugin
 import org.gradle.util.ConfigureUtil
 import org.jsoup.nodes.Element
 import java.io.File
@@ -62,14 +63,14 @@ open class ComposeTask : Zip(), AemTask {
     @Internal
     var fileFilter: ((CopySpec) -> Unit) = { spec ->
         if (fileFilterOptions.excluding) {
-            spec.exclude(config.filesExcluded)
+            spec.exclude(config.packageFilesExcluded)
         }
 
         spec.eachFile({ fileDetail ->
             val path = "/${fileDetail.relativePath.pathString.removePrefix("/")}"
 
             if (fileFilterOptions.expanding) {
-                if (Patterns.wildcard(path, config.filesExpanded)) {
+                if (Patterns.wildcard(path, config.packageFilesExpanded)) {
                     FileContentReader.filter(fileDetail, { propertyParser.expandPackage(it, fileProperties, path) })
                 }
             }
@@ -99,6 +100,25 @@ open class ComposeTask : Zip(), AemTask {
                 "filters" to filterRoots,
                 "filterRoots" to filterRootsProp
         )
+
+    /**
+     * Configure default task dependency assignments while including dependant project bundles.
+     * Simplifies multi-module project configuration.
+     */
+    @Input
+    var dependBundlesTaskNames: List<String> = mutableListOf(
+            LifecycleBasePlugin.ASSEMBLE_TASK_NAME,
+            LifecycleBasePlugin.CHECK_TASK_NAME
+    )
+
+    /**
+     * Configure default task dependency assignments while including dependant project content.
+     * Simplifies multi-module project configuration.
+     */
+    @Input
+    var dependContentTaskNames: List<String> = mutableListOf(
+            ComposeTask.NAME + DEPENDENCIES_SUFFIX
+    )
 
     init {
         description = "Composes CRX package from JCR content and built OSGi bundles"
@@ -183,12 +203,12 @@ open class ComposeTask : Zip(), AemTask {
         bundleCollectors += {
             val config = AemConfig.of(project)
 
-            dependProject(project, config.dependBundlesTaskNames)
+            dependProject(project, dependBundlesTaskNames)
 
             var effectiveInstallPath = if (!installPath.isNullOrBlank()) {
                 installPath
             } else {
-                AemConfig.of(project).bundlePath
+                config.bundlePath
             }
 
             if (!runMode.isNullOrBlank()) {
@@ -213,7 +233,7 @@ open class ComposeTask : Zip(), AemTask {
         contentCollectors += {
             val config = AemConfig.of(project)
 
-            dependProject(project, config.dependContentTaskNames)
+            dependProject(project, dependContentTaskNames)
             extractVaultFilters(project, config)
 
             val contentDir = File("${config.contentPath}/${PackagePlugin.JCR_ROOT}")

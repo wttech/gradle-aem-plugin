@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem.api
 
 import aQute.bnd.osgi.Jar
-import com.cognifide.gradle.aem.base.BasePlugin
 import com.cognifide.gradle.aem.instance.*
 import com.cognifide.gradle.aem.internal.LineSeparator
 import com.cognifide.gradle.aem.internal.PropertyParser
@@ -15,7 +14,6 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.Project
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
-import org.gradle.language.base.plugins.LifecycleBasePlugin
 import org.gradle.util.ConfigureUtil
 import java.io.File
 import java.io.Serializable
@@ -91,63 +89,6 @@ class AemConfig(
     var instanceConnectionUntrustedSsl: Boolean = props.boolean("aem.instance.connectionUntrustedSsl", true)
 
     /**
-     * CRX package name conventions (with wildcard) indicating that package can change over time
-     * while having same version specified.
-     */
-    @Input
-    var deploySnapshots: List<String> = props.list("aem.deploy.snapshots")
-
-    /**
-     * Enables deployment via CRX package activation from author to publishers when e.g they are not accessible.
-     */
-    @Input
-    var deployDistributed: Boolean = props.boolean("aem.deploy.distributed", false)
-
-    /**
-     * Force upload CRX package regardless if it was previously uploaded.
-     */
-    @Input
-    var uploadForce: Boolean = props.boolean("aem.upload.force", true)
-
-    /**
-     * Repeat upload when failed (brute-forcing).
-     */
-    @Input
-    var uploadRetryTimes: Int = props.int("aem.upload.retry.times", 3)
-
-    /**
-     * Time to wait after repeating failed upload.
-     */
-    @Input
-    var uploadRetryDelay: Long = props.long("aem.upload.retry.delay", TimeUnit.SECONDS.toMillis(30))
-
-    /**
-     * Determines if when on package install, sub-packages included in CRX package content should be also installed.
-     */
-    @Input
-    var installRecursive: Boolean = props.boolean("aem.install.recursive", true)
-
-    /**
-     * Repeat install when failed (brute-forcing).
-     */
-    @Input
-    var installRetryTimes: Int = props.int("aem.install.retry.times", 1)
-
-    /**
-     * Time to wait after repeating failed install.
-     */
-    @Input
-    var installRetryDelay: Long = props.long("aem.install.retry.delay", TimeUnit.SECONDS.toMillis(30))
-
-    /**
-     * Defines behavior for access control handling included in rep:policy nodes being a part of CRX package content.
-     *
-     * @see <https://jackrabbit.apache.org/filevault/apidocs/org/apache/jackrabbit/vault/fs/io/AccessControlHandling.html>
-     */
-    @Input
-    var acHandling: String = "merge_preserve"
-
-    /**
      * Absolute path to JCR content to be included in CRX package.
      * Must be absolute or relative to current working directory.
      */
@@ -199,8 +140,8 @@ class AemConfig(
     @get:JsonIgnore
     val packageFile: File
         get() {
-            if (!localPackagePath.isBlank()) {
-                val configFile = File(localPackagePath)
+            if (!packageLocalPath.isBlank()) {
+                val configFile = File(packageLocalPath)
                 if (configFile.exists()) {
                     return configFile
                 }
@@ -230,12 +171,27 @@ class AemConfig(
     }
 
     /**
+     * CRX package name conventions (with wildcard) indicating that package can change over time
+     * while having same version specified. Affects CRX packages composed  and satisfied.
+     */
+    @Input
+    var packageSnapshots: List<String> = props.list("aem.package.snapshots")
+
+    /**
+     * Defines behavior for access control handling included in rep:policy nodes being a part of CRX package content.
+     *
+     * @see <https://jackrabbit.apache.org/filevault/apidocs/org/apache/jackrabbit/vault/fs/io/AccessControlHandling.html>
+     */
+    @Input
+    var packageAcHandling: String = props.string("aem.package.acHandling", "merge_preserve")
+
+    /**
      * Custom path to composed CRX package being uploaded.
      *
      * Default: [automatically determined]
      */
     @Input
-    var localPackagePath: String = ""
+    var packageLocalPath: String = ""
 
     /**
      * Custom path to CRX package that is uploaded on AEM instance.
@@ -243,13 +199,26 @@ class AemConfig(
      * Default: [automatically determined]
      */
     @Input
-    var remotePackagePath: String = ""
+    var packageRemotePath: String = ""
+
+    /**
+     * Wildcard file name filter expression that is used to filter in which Vault files properties can be injected.
+     */
+    @Input
+    var packageFilesExpanded: MutableList<String> = mutableListOf("**/${PackagePlugin.VLT_PATH}/*.xml")
+
+    /**
+     * Define here custom properties that can be used in CRX package files like 'META-INF/vault/properties.xml'.
+     * Could override predefined properties provided by plugin itself.
+     */
+    @Input
+    var packageFileProperties: MutableMap<String, Any> = mutableMapOf()
 
     /**
      * Exclude files being a part of CRX package.
      */
     @Input
-    var filesExcluded: MutableList<String> = mutableListOf(
+    var packageFilesExcluded: MutableList<String> = mutableListOf(
             "**/.gradle",
             "**/.git",
             "**/.git/**",
@@ -263,23 +232,52 @@ class AemConfig(
     )
 
     /**
-     * Wildcard file name filter expression that is used to filter in which Vault files properties can be injected.
-     */
-    @Input
-    var filesExpanded: MutableList<String> = mutableListOf("**/${PackagePlugin.VLT_PATH}/*.xml")
-
-    /**
      * Build date used as base for calculating 'created' and 'buildCount' package properties.
      */
     @Internal
-    var buildDate: Date = props.date("aem.buildDate", Date())
+    var packageBuildDate: Date = props.date("aem.package.buildDate", Date())
 
     /**
-     * Define here custom properties that can be used in CRX package files like 'META-INF/vault/properties.xml'.
-     * Could override predefined properties provided by plugin itself.
+     * Enables deployment via CRX package activation from author to publishers when e.g they are not accessible.
      */
     @Input
-    var fileProperties: MutableMap<String, Any> = mutableMapOf()
+    var deployDistributed: Boolean = props.boolean("aem.deploy.distributed", false)
+
+    /**
+     * Force upload CRX package regardless if it was previously uploaded.
+     */
+    @Input
+    var uploadForce: Boolean = props.boolean("aem.upload.force", true)
+
+    /**
+     * Repeat upload when failed (brute-forcing).
+     */
+    @Input
+    var uploadRetryTimes: Int = props.int("aem.upload.retry.times", 3)
+
+    /**
+     * Time to wait after repeating failed upload.
+     */
+    @Input
+    var uploadRetryDelay: Long = props.long("aem.upload.retry.delay", TimeUnit.SECONDS.toMillis(30))
+
+    /**
+     * Determines if when on package install, sub-packages included in CRX package content should be also installed.
+     */
+    @Input
+    var installRecursive: Boolean = props.boolean("aem.install.recursive", true)
+
+    /**
+     * Repeat install when failed (brute-forcing).
+     */
+    @Input
+    var installRetryTimes: Int = props.int("aem.install.retry.times", 1)
+
+    /**
+     * Time to wait after repeating failed install.
+     */
+    @Input
+    var installRetryDelay: Long = props.long("aem.install.retry.delay", TimeUnit.SECONDS.toMillis(30))
 
     /**
      * Ensures that for directory 'META-INF/vault' default files will be generated when missing:
@@ -307,25 +305,6 @@ class AemConfig(
      */
     @Input
     var vaultLineSeparator: String = props.string("aem.vlt.lineSeparator", "LF")
-
-    /**
-     * Configure default task dependency assignments while including dependant project bundles.
-     * Simplifies multi-module project configuration.
-     */
-    @Input
-    var dependBundlesTaskNames: List<String> = mutableListOf(
-            LifecycleBasePlugin.ASSEMBLE_TASK_NAME,
-            LifecycleBasePlugin.CHECK_TASK_NAME
-    )
-
-    /**
-     * Configure default task dependency assignments while including dependant project content.
-     * Simplifies multi-module project configuration.
-     */
-    @Input
-    var dependContentTaskNames: List<String> = mutableListOf(
-            ComposeTask.NAME + ComposeTask.DEPENDENCIES_SUFFIX
-    )
 
     /**
      * Path in which local AEM instances will be stored.
@@ -416,7 +395,7 @@ class AemConfig(
     var awaitStableAssurances: Long = props.long("aem.await.stable.assurances", 5L)
 
     /**
-     * Hook for customizing instance health check.h
+     * Hook for customizing instance health check.
      */
     @Internal
     @get:JsonIgnore
@@ -424,19 +403,19 @@ class AemConfig(
         it.check({
             it.connectionTimeout = 10000
         }, {
-            if (bundlePackage.isNotBlank()) {
-                it.componentState.stable(wildcardPackage(bundlePackages + awaitHealthBundlePackages))
-            } else {
-                it.componentState.stable
-            }
+            it.componentState.check(awaitHealthComponentsActive, { it.active })
         })
     }
 
     /**
-     * Extra bundle packages to be verified within default health checking.
+     * OSGi component PID patterns used to check particular component state
+     * (ensuring that it is active).
      */
     @Input
-    var awaitHealthBundlePackages: MutableSet<String> = mutableSetOf()
+    var awaitHealthComponentsActive: MutableSet<String> = mutableSetOf(
+            "com.day.crx.packaging.*",
+            "org.apache.sling.installer.*"
+    )
 
     /**
      * Time in milliseconds to postpone instance stability checks after triggering instances restart.
@@ -580,14 +559,6 @@ class AemConfig(
         localInstance(httpUrl, { ConfigureUtil.configure(configurer, this) })
     }
 
-    fun localAuthorInstance(configurer: Closure<*>) {
-        localInstance(Instance.URL_AUTHOR_DEFAULT, { ConfigureUtil.configure(configurer, this) })
-    }
-
-    fun localPublishInstance(configurer: Closure<*>) {
-        localInstance(Instance.URL_PUBLISH_DEFAULT, { ConfigureUtil.configure(configurer, this) })
-    }
-
     fun remoteInstance(httpUrl: String) {
         remoteInstance(httpUrl, {})
     }
@@ -665,21 +636,6 @@ class AemConfig(
     @get:Internal
     @get:JsonIgnore
     val vaultLineSeparatorString: String = LineSeparator.string(vaultLineSeparator)
-
-    /**
-     * All bundle packages configured in projects using bundle plugin.
-     *
-     * TODO verify it
-     */
-    @get:Internal
-    @get:JsonIgnore
-    val bundlePackages: Set<String>
-        get() {
-            return project.allprojects.filter { it.plugins.hasPlugin(BasePlugin.ID) }
-                    .map { of(it).bundlePackage }
-                    .filter { it.isNotBlank() }
-                    .toSet()
-        }
 
     /**
      * Append wildcard to packages specified.

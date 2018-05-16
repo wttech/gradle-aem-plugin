@@ -160,11 +160,11 @@ class PropertyParser(val project: Project) {
                     "requiresRoot" to "false",
 
                     // Dynamic values
-                    "buildCount" to SimpleDateFormat("yDDmmssSSS").format(config.buildDate),
-                    "created" to Formats.date(config.buildDate)
+                    "buildCount" to SimpleDateFormat("yDDmmssSSS").format(config.packageBuildDate),
+                    "created" to Formats.date(config.packageBuildDate)
             )
 
-            return defaults + config.fileProperties + configProps
+            return defaults + config.packageFileProperties + configProps
         }
 
     fun isForce(): Boolean {

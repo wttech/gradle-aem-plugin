@@ -137,35 +137,28 @@ defaultTasks = [':aemSatisfy', ':aemDeploy', ':aemAwait']
 
 aem {
     config {
-        deployEnvironment = "local" // -Paem.env or environment variable: AEM_ENV
-        deployInstanceName = "${config.deployEnvironment}-*"
-        deployAuthorInstanceName = "$deployEnvironment-author"
-        deployConnectionTimeout = 5000
-        deployParallel = true
-        deploySnapshots = []
-        deployDistributed = false
-        deployTrustingAllSSLCertificates = true
-        uploadForce = true
-        uploadRetryTimes = 6
-        uploadRetryDelay = 30000
-        installRecursive = true
-        installRetryTimes = 3
-        installRetryDelay = 30000
-        acHandling = "merge_preserve"
+        environment = "local" // -Paem.env or environment variable: AEM_ENV
+    
+        instanceName = "${config.deployEnvironment}-*"
+        instanceAuthorName = "$deployEnvironment-author"
+        instanceConnectionTimeout = 5000
+        instanceConnectionUntrustedSsl = true
+    
         contentPath = project.file("src/main/content")
         if (project == project.rootProject) {
             bundlePath = "/apps/${project.name}/install"
         } else {
             bundlePath = "/apps/${project.rootProject.name}/${project.name}/install"
         }
-        if (isUniqueProjectName()) {
+    
+        if (projectUniqueName) {
             packageName = project.name
         } else {
-            packageName = "${namePrefix()}-${project.name}"
+            packageName = "${projectNamePrefix}-${project.name}"
         }
-        localPackagePath = ""
-        remotePackagePath = ""
-        filesExcluded = [
+        packageLocalPath = ""
+        packageRemotePath = ""
+        packageFilesExcluded = [
           "**/.gradle",
           "**/.git",
           "**/.git/**",
@@ -176,10 +169,14 @@ aem {
           "**/node_modules/**",
           "jcr_root/.vlt-sync-config.properties"
         ]
-        filesExpanded = [
+        packageFilesExpanded = [
           "**/META-INF/vault/*.xml"
         ]
-        fileProperties = []
+        packageFileProperties = []
+        packageBuildDate = Date()
+        packageAcHandling = "merge_preserve"
+        packageSnapshots = []
+    
         vaultCopyMissingFiles = true
         vaultFilesPath = project.rootProject.file("src/main/resources/META-INF/vault")
         vaultSkipProperties = [
@@ -193,12 +190,17 @@ aem {
         ]
         vaultGlobalOptions = "--credentials {{instance.credentials}}"
         vaultLineSeparator = "LF"
-        dependBundlesTaskNames = ["assemble", "check"]
-        dependContentTaskNames = ["aemCompose.dependencies"]
-        buildDate = Date()
-        instancesPath = "${System.getProperty("user.home")}/.aem/${project.rootProject.name}"
-        instanceFilesPath = project.rootProject.file("src/main/resources/local-instance")
-        instanceFilesExpanded = [
+    
+        deployDistributed = false
+        uploadForce = true
+        uploadRetryTimes = 6
+        uploadRetryDelay = 30000
+        installRecursive = true
+        installRetryTimes = 3
+        installRetryDelay = 30000
+        createPath = "${System.getProperty("user.home")}/.aem/${project.rootProject.name}"
+        createFilesPath = project.rootProject.file("src/main/resources/local-instance")
+        createFilesExpanded = [
           "**/*.properties", 
           "**/*.sh", 
           "**/*.bat", 
@@ -206,18 +208,47 @@ aem {
           "**/start",
           "**/stop"
         ]
-        awaitDelay = 3000
-        awaitInterval = 1000
-        awaitTimeout = 900
-        awaitTimes = 300
+        awaitStableDelay = 3000
+        awaitStableInterval = 1000
+        awaitStableTimeout = 900
+        awaitStableTimes = 300
         awaitFail = true
-        awaitAssurances = 1
-        awaitCondition = { instanceState -> instanceState.stable }
+        awaitStableAssurances = 5
+        awaitStableConditionCheck = { instanceState -> instanceState.stable }
         reloadDelay = 10000
         satisfyRefreshing = false
-        satisfyBundlePath = 
+        satisfyBundlePath = "/apps/gradle-aem-plugin/satisfy/install"
         satisfyBundleProperties = { bundle -> [:] }
         satisfyGroupName = "*"
+		    checkoutFilterPath = ""
+        cleanFilesDeleted = [
+            "**/.vlt",
+            "**/.vlt*.tmp",
+            "**/jcr_root/.content.xml",
+            "**/jcr_root/apps/.content.xml",
+            "**/jcr_root/conf/.content.xml",
+            "**/jcr_root/content/.content.xml",
+            "**/jcr_root/content/dam/.content.xml",
+            "**/jcr_root/etc/.content.xml",
+            "**/jcr_root/etc/designs/.content.xml",
+            "**/jcr_root/home/.content.xml",
+            "**/jcr_root/home/groups/.content.xml",
+            "**/jcr_root/home/users/.content.xml",
+            "**/jcr_root/libs/.content.xml",
+            "**/jcr_root/system/.content.xml",
+            "**/jcr_root/tmp/.content.xml",
+            "**/jcr_root/var/.content.xml"
+      ]
+      cleanSkipProperties = [
+        "jcr:uuid!**/home/users/*,**/home/groups/*",
+        "jcr:lastModified",
+        "jcr:created",
+        "cq:lastModified*",
+        "cq:lastReplicat*",
+        "*_x0040_Delete",
+        "*_x0040_TypeHint"
+      ]
+      notificationEnabled = false
     }
 }
 
@@ -476,18 +507,12 @@ Predefined properties:
 * `buildCount` - number to be used as CRX package build count (`buildDate` in format `yDDmmssSSS`).
 * `created` - current date in *ISO8601* format.
 
-Maven fallback properties (useful when migrating project):
-
-* `project.groupId` - alias for `project.group`.
-* `project.artifactId` - alias for `project.name`.
-* `project.build.finalName` - alias for `${project.name}-${project.version}`.
-
 Task specific:
 * `aemCompose` - properties which are being dynamically calculated basing on content actually included into package.
    * `filterRoots` - after using method `includeContent` of `aemCompose` task, all Vault filter roots are being gathered. This property contains all these XML tags concatenated especially useful for building assemblies. If no projects will be included, then this variable will contain a single filter root with bundle path to be able to deploy auto-generated package with JAR file only.
+   * `filters` - same as above, but instead it is a collection of XML elements that could be traversed and rendered in a customized way.
 * `aemVlt` - properties are being injected to command specified in `aem.vlt.command` property. Following properties are being used internally also by `aemCheckout`.
-   * `instance` - instance used to communicate with while performing Vault commands. Determined by (order take precedence): properties `aem.vlt.instance`, `aem.deploy.instance.list`, `aem.deploy.instance.name` and as fallback first instance which name matches filter `*-author`.
-   * `filter` - file name or path to Vault workspace filter file  *META-INF/vault/filter.xml*. Determined by (order take precedence): property: `aem.checkout.filterPath`, configuration `contentPath` property suffixed with `META-INF/vault/filter.xml`. 
+   * `instances` - map of defined instances with names as keys. 
 
 ## How to's
 

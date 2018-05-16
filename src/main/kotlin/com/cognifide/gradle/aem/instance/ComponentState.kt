@@ -18,36 +18,25 @@ class ComponentState private constructor() {
     var total: Int = 0
 
     @get:JsonIgnore
-    val platformComponents: List<Component>
-        get() = components.filter { Patterns.wildcard(it.pid, PLATFORM_COMPONENTS) }
-
-    @get:JsonIgnore
     val unknown: Boolean
         get() = components.isEmpty()
 
-    val stable: Boolean
-        get() = !unknown && platformComponents.all { it.stable }
-
-    /**
-     * Checks if only components of matching PID pattern are active.
-     */
-    fun stableOnly(pids: Collection<String>): Boolean {
-        return !unknown && components.filter { Patterns.wildcard(it.pid, pids) }.all { it.stable }
+    fun check(pids: Collection<String>, predicate: (Component) -> Boolean): Boolean {
+        return !unknown && find(pids, listOf()).all(predicate)
     }
 
-    fun stableOnly(pid: String): Boolean {
-        return stableOnly(listOf(pid))
+    fun check(pids: Collection<String>, ignoredPids: Collection<String>, predicate: (Component) -> Boolean): Boolean {
+        return !unknown && find(pids, ignoredPids).all(predicate)
     }
 
-    /**
-     * Checks if platform components and these matching PID pattern are active.
-     */
-    fun stable(pids: Collection<String>): Boolean {
-        return stable && components.filter { Patterns.wildcard(it.pid, pids) }.all { it.stable }
+    fun find(pids: Collection<String>): List<Component> {
+        return find(pids, listOf())
     }
 
-    fun stable(pid: String): Boolean {
-        return stable(listOf(pid))
+    fun find(pids: Collection<String>, ignoredPids: Collection<String>): List<Component> {
+        return components.filter {
+            Patterns.wildcard(it.pid, pids) && !Patterns.wildcard(it.pid, ignoredPids)
+        }
     }
 
     override fun equals(other: Any?): Boolean {
@@ -83,8 +72,20 @@ class ComponentState private constructor() {
 
         lateinit var pid: String
 
-        val stable: Boolean
-            get() = stateRaw != STATE_RAW_UNSATISFIED
+        val active: Boolean
+            get() = stateRaw == STATE_RAW_ACTIVE
+
+        val satisfied: Boolean
+            get() = stateRaw == STATE_RAW_SATISTIED
+
+        val unsatisfied: Boolean
+            get() = stateRaw == STATE_RAW_UNSATISFIED
+
+        val noConfig: Boolean
+            get() = state == STATE_NO_CONFIG
+
+        val disabled: Boolean
+            get() = state == STATE_DISABLED
 
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
@@ -132,10 +133,6 @@ class ComponentState private constructor() {
     }
 
     companion object {
-
-        val PLATFORM_COMPONENTS = listOf(
-                "com.day.crx.packaging.*"
-        )
 
         fun fromJson(json: String): ComponentState {
             return ObjectMapper().readValue(json, ComponentState::class.java)

@@ -9,7 +9,7 @@ class InstanceState(private var _sync: InstanceSync, val instance: Instance) {
         get() = _sync
 
     val stable: Boolean
-        get() = bundleState.stable && componentState.stable
+        get() = bundleState.stable && !componentState.unknown
 
     val bundleState by lazy { sync.determineBundleState() }
 

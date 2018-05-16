@@ -180,8 +180,8 @@ class InstanceSync(val project: Project, val instance: Instance) {
     }
 
     fun determineRemotePackagePath(): String {
-        if (!config.remotePackagePath.isBlank()) {
-            return config.remotePackagePath
+        if (!config.packageRemotePath.isBlank()) {
+            return config.packageRemotePath
         }
 
         val pkg = determineRemotePackage()
@@ -296,10 +296,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         logger.info("Installing package using command: $url")
 
         try {
-            val json = postMultipart(url, mapOf(
-                    "recursive" to config.installRecursive,
-                    "acHandling" to config.acHandling
-            ))
+            val json = postMultipart(url, mapOf("recursive" to config.installRecursive))
             val response = InstallResponse(json)
 
             when (response.status) {
@@ -329,7 +326,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
     }
 
     fun isSnapshot(file: File): Boolean {
-        return Patterns.wildcard(file, config.deploySnapshots)
+        return Patterns.wildcard(file, config.packageSnapshots)
     }
 
     fun deployPackage(file: File) {
@@ -408,10 +405,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         logger.info("Uninstalling package using command: $url")
 
         try {
-            val rawHtml = postMultipart(url, mapOf(
-                    "recursive" to config.installRecursive,
-                    "acHandling" to config.acHandling
-            ))
+            val rawHtml = postMultipart(url, mapOf("recursive" to config.installRecursive))
             val response = UninstallResponse(rawHtml)
 
             when (response.status) {

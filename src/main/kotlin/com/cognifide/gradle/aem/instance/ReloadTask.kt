@@ -18,9 +18,8 @@ open class ReloadTask : AemDefaultTask() {
     fun reload() {
         val instances = Instance.filter(project)
 
-        notifier.default("Instance(s) reloading", "Which: ${instances.names}")
         ReloadAction(project, instances).perform()
-        notifier.default("Instance(s) reloaded","Which: ${instances.names}")
+        notifier.default("Instance(s) reloaded", "Which: ${instances.names}")
     }
 
 }

@@ -14,18 +14,18 @@ class VltRunner(val project: Project) {
 
     val logger: Logger = project.logger
 
-    val propertyParser = PropertyParser(project)
+    val props = PropertyParser(project)
 
     val config = AemConfig.of(project)
 
     fun raw(command: String, props: Map<String, Any> = mapOf()) {
         val app = VltApp(project)
-        val instance = determineInstance()
+        val instance = determineCheckoutInstance()
         val allProps = mapOf(
                 "instance" to instance,
                 "instances" to config.instances
         ) + props
-        val fullCommand = propertyParser.expand("${config.vaultGlobalOptions} $command".trim(), allProps)
+        val fullCommand = this.props.expand("${config.vaultGlobalOptions} $command".trim(), allProps)
 
         app.execute(fullCommand)
     }
@@ -36,7 +36,7 @@ class VltRunner(val project: Project) {
             logger.info("JCR content directory to be checked out does not exist: ${contentDir.absolutePath}")
         }
 
-        val filter = determineFilter()
+        val filter = determineCheckoutFilter()
         val props = mapOf("filter" to filter.file.absolutePath)
 
         filter.use {
@@ -44,8 +44,8 @@ class VltRunner(val project: Project) {
         }
     }
 
-    fun determineFilter(): VltFilter {
-        val cmdFilterRoots = propertyParser.list("aem.checkout.filterRoots")
+    fun determineCheckoutFilter(): VltFilter {
+        val cmdFilterRoots = props.list("aem.checkout.filterRoots")
 
         return if (cmdFilterRoots.isNotEmpty()) {
             logger.info("Using Vault filter roots specified as command line property: $cmdFilterRoots")
@@ -63,8 +63,8 @@ class VltRunner(val project: Project) {
         }
     }
 
-    fun determineInstance(): Instance {
-        val cmdInstanceArg = propertyParser.string("aem.vlt.instance")
+    fun determineCheckoutInstance(): Instance {
+        val cmdInstanceArg = props.string("aem.checkout.instance")
         if (!cmdInstanceArg.isNullOrBlank()) {
             val cmdInstance = Instance.parse(cmdInstanceArg!!).first()
             cmdInstance.validate()
@@ -95,7 +95,7 @@ class VltRunner(val project: Project) {
             return
         }
 
-        val filter = determineFilter()
+        val filter = determineCheckoutFilter()
 
         logger.info("Cleaning using $filter")
 
