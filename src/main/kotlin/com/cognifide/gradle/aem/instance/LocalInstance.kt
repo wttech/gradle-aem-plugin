@@ -15,7 +15,7 @@ class LocalInstance private constructor() : Instance, Serializable {
 
     override lateinit var typeName: String
 
-    override val environment: String = ENVIRONMENT
+    override lateinit var environment: String
 
     var debugPort: Int = 5005
 
@@ -84,6 +84,7 @@ class LocalInstance private constructor() : Instance, Serializable {
                 this.password = instanceUrl.password
                 this.typeName = instanceUrl.typeName
                 this.debugPort = instanceUrl.debugPort
+                this.environment = ENVIRONMENT
 
                 this.apply(configurer)
             }

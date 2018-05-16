@@ -6,6 +6,7 @@ import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.pkg.deploy.ListResponse
 import com.fasterxml.jackson.annotation.JsonIgnore
+import org.apache.commons.lang3.StringUtils
 import org.gradle.api.Project
 import java.io.Serializable
 import kotlin.reflect.KClass
@@ -26,15 +27,13 @@ interface Instance : Serializable {
 
         val PASSWORD_DEFAULT = "admin"
 
-        val AUTHOR_URL_PROP = "aem.instance.author.httpUrl"
-
-        val PUBLISH_URL_PROP = "aem.instance.publish.httpUrl"
-
         val AUTHORS_PROP = "aem.instance.authors"
 
         val PUBLISHERS_PROP = "aem.instance.publishers"
 
-        fun parse(str: String): List<Instance> {
+        val REMOTE_PROP_PATTERN = "aem.instance.remote.*.httpUrl"
+
+        fun parse(str: String): List<RemoteInstance> {
             return str.split(";").map { urlRaw ->
                 val parts = urlRaw.split(",")
 
@@ -63,14 +62,32 @@ interface Instance : Serializable {
             }
         }
 
-        fun defaults(project: Project): List<Instance> {
+        fun properties(project: Project): List<RemoteInstance> {
+            return project.properties.filterKeys { Patterns.wildcard(it, REMOTE_PROP_PATTERN) }.map {
+                val nameParts = StringUtils.substringBetween(it.key, ".remote.", ".httpUrl")!!.split("-")
+                if (nameParts.size != 2) {
+                    throw InstanceException("Instance list property '${it.key}' does not have valid name part.")
+                }
+
+                val (environment, typeName) = nameParts
+                val httpUrl = it.value as String?
+                if (httpUrl.isNullOrBlank()) {
+                    throw InstanceException("Instance list property '${it.key}' value cannot be blank.")
+                }
+
+                RemoteInstance.create(httpUrl!!, {
+                    this.environment = environment
+                    this.typeName = typeName
+                })
+            }
+        }
+
+        fun defaults(project: Project): List<RemoteInstance> {
             val config = AemConfig.of(project)
-            val authorUrl = project.properties.getOrElse(AUTHOR_URL_PROP, { URL_AUTHOR_DEFAULT }) as String
-            val publishUrl = project.properties.getOrElse(PUBLISH_URL_PROP, { URL_PUBLISH_DEFAULT }) as String
 
             return listOf(
-                    RemoteInstance.create(authorUrl, { environment = config.environment }),
-                    RemoteInstance.create(publishUrl, { environment = config.environment })
+                    RemoteInstance.create(URL_AUTHOR_DEFAULT, { environment = config.environment }),
+                    RemoteInstance.create(URL_PUBLISH_DEFAULT, { environment = config.environment })
             )
         }
 
@@ -80,21 +97,16 @@ interface Instance : Serializable {
 
         fun filter(project: Project, instanceFilter: String): List<Instance> {
             val config = AemConfig.of(project)
+            val all = config.instances.values
 
-            // Specified directly should not be filtered
-            if (config.instanceList.isNotBlank()) {
-                return parse(config.instanceList)
+            // Specified by command line should not be filtered
+            val cmd = all.filter { it.environment == Instance.ENVIRONMENT_CMD }
+            if (cmd.isNotEmpty()) {
+                return cmd
             }
 
-            // Predefined and defaults are filterable
-            val instances = if (!config.instances.values.isEmpty()) {
-                config.instances.values
-            } else {
-                defaults(project)
-            }
-
-            // Handle name pattern filtering
-            return instances.filter { instance ->
+            // Defined by build script, via properties or defaults are filterable by name
+            return all.filter { instance ->
                 when {
                     config.props.flag(AUTHORS_PROP) -> {
                         Patterns.wildcard(instance.name, "${config.environment}-${InstanceType.AUTHOR}*")

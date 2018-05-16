@@ -10,7 +10,28 @@
     "buildCount": "20181093723133",
     "created": "2017-12-19T21:39:38.058+0000",
     "config": {
-      "instances": {},
+      "instances": {
+        "local-author": {
+          "httpUrl": "http://localhost:4502",
+          "user": "admin",
+          "password": "admin",
+          "typeName": "author",
+          "environment": "local",
+          "name": "local-author",
+          "type": "AUTHOR",
+          "httpPort": 4502
+        },
+        "local-publish": {
+          "httpUrl": "http://localhost:4503",
+          "user": "admin",
+          "password": "admin",
+          "typeName": "publish",
+          "environment": "local",
+          "name": "local-publish",
+          "type": "PUBLISH",
+          "httpPort": 4503
+        }
+      },
       "environment": "local",
       "instanceName": "local-*",
       "instanceList": "",

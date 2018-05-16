@@ -570,35 +570,22 @@ class AemConfig(
     }
 
     fun localInstance(httpUrl: String, configurer: LocalInstance.() -> Unit) {
-        instance(LocalInstance.create(httpUrl, configurer))
+        instance(LocalInstance.create(httpUrl, {
+            this.environment = this@AemConfig.environment
+            this.apply(configurer)
+        }))
     }
 
     fun localInstance(httpUrl: String, configurer: Closure<*>) {
         localInstance(httpUrl, { ConfigureUtil.configure(configurer, this) })
     }
 
-    fun localAuthorInstance() {
-        localAuthorInstance({})
-    }
-
-    fun localAuthorInstance(configurer: LocalInstance.() -> Unit) {
-        localInstance(props.string(Instance.AUTHOR_URL_PROP, Instance.URL_AUTHOR_DEFAULT), configurer)
-    }
-
     fun localAuthorInstance(configurer: Closure<*>) {
-        localAuthorInstance({ ConfigureUtil.configure(configurer, this) })
-    }
-
-    fun localPublishInstance() {
-        localPublishInstance({})
-    }
-
-    fun localPublishInstance(configurer: LocalInstance.() -> Unit) {
-        localInstance(props.string(Instance.PUBLISH_URL_PROP, Instance.URL_PUBLISH_DEFAULT), configurer)
+        localInstance(Instance.URL_AUTHOR_DEFAULT, { ConfigureUtil.configure(configurer, this) })
     }
 
     fun localPublishInstance(configurer: Closure<*>) {
-        localPublishInstance({ ConfigureUtil.configure(configurer, this) })
+        localInstance(Instance.URL_PUBLISH_DEFAULT, { ConfigureUtil.configure(configurer, this) })
     }
 
     fun remoteInstance(httpUrl: String) {
@@ -616,28 +603,8 @@ class AemConfig(
         remoteInstance(httpUrl, { ConfigureUtil.configure(configurer, this) })
     }
 
-    fun remoteAuthorInstance() {
-        remoteAuthorInstance({})
-    }
-
-    fun remoteAuthorInstance(configurer: RemoteInstance.() -> Unit) {
-        remoteInstance(props.string(Instance.AUTHOR_URL_PROP, Instance.URL_AUTHOR_DEFAULT), configurer)
-    }
-
-    fun remoteAuthorInstance(configurer: Closure<*>) {
-        remoteAuthorInstance({ ConfigureUtil.configure(configurer, this) })
-    }
-
-    fun remotePublishInstance() {
-        remotePublishInstance({})
-    }
-
-    fun remotePublishInstance(configurer: RemoteInstance.() -> Unit) {
-        remoteInstance(props.string(Instance.PUBLISH_URL_PROP, Instance.URL_PUBLISH_DEFAULT), configurer)
-    }
-
-    fun remotePublishInstance(configurer: Closure<*>) {
-        remotePublishInstance({ ConfigureUtil.configure(configurer, this) })
+    private fun instances(instances: Collection<Instance>) {
+        instances.forEach { instance(it) }
     }
 
     private fun instance(instance: Instance) {
@@ -747,6 +714,25 @@ class AemConfig(
     @get:JsonIgnore
     val projectNameUnique: Boolean
         get() = project == project.rootProject || project.name == project.rootProject.name
+
+    init {
+        project.afterEvaluate { ensureInstances() }
+    }
+
+    private fun ensureInstances() {
+        // Define through command line (forced instances)
+        if (instanceList.isNotBlank()) {
+            instances(Instance.parse(instanceList))
+        }
+
+        // Define through properties (remote instances)
+        instances(Instance.properties(project))
+
+        // Define defaults if still no instances defined at all
+        if (instances.isEmpty()) {
+            instances(Instance.defaults(project))
+        }
+    }
 
     companion object {
 

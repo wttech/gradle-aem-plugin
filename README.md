@@ -138,8 +138,6 @@ defaultTasks = [':aemSatisfy', ':aemDeploy', ':aemAwait']
 aem {
     config {
         deployEnvironment = "local" // -Paem.env or environment variable: AEM_ENV
-        remoteAuthorInstance()
-        remotePublishInstance()
         deployInstanceName = "${config.deployEnvironment}-*"
         deployAuthorInstanceName = "$deployEnvironment-author"
         deployConnectionTimeout = 5000
