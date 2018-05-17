@@ -466,6 +466,6 @@ class InstanceSync(val project: Project, val instance: Instance) {
 
 }
 
-fun List<Instance>.sync(project: Project, callback: (InstanceSync) -> Unit) {
+fun Collection<Instance>.sync(project: Project, callback: (InstanceSync) -> Unit) {
     return map { InstanceSync(project, it) }.parallelStream().forEach(callback)
 }

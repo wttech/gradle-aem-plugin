@@ -191,5 +191,5 @@ interface Instance : Serializable {
 
 }
 
-val List<Instance>.names: String
+val Collection<Instance>.names: String
     get() = joinToString(", ") { it.name }

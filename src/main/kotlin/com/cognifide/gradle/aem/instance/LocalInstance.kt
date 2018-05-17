@@ -3,6 +3,8 @@ package com.cognifide.gradle.aem.instance
 import com.cognifide.gradle.aem.pkg.deploy.ListResponse
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
+import org.apache.commons.lang3.builder.EqualsBuilder
+import org.apache.commons.lang3.builder.HashCodeBuilder
 import java.io.Serializable
 
 class LocalInstance private constructor() : Instance, Serializable {
@@ -65,6 +67,25 @@ class LocalInstance private constructor() : Instance, Serializable {
 
     override fun toString(): String {
         return "LocalInstance(httpUrl='$httpUrl', user='$user', password='$hiddenPassword', typeName='$typeName', debugPort=$debugPort)"
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as LocalInstance
+
+        return EqualsBuilder()
+                .append(name, other.name)
+                .append(httpUrl, other.httpUrl)
+                .isEquals
+    }
+
+    override fun hashCode(): Int {
+        return HashCodeBuilder()
+                .append(name)
+                .append(httpUrl)
+                .toHashCode()
     }
 
     companion object {

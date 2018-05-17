@@ -20,11 +20,7 @@ class VltRunner(val project: Project) {
 
     fun raw(command: String, props: Map<String, Any> = mapOf()) {
         val app = VltApp(project)
-        val instance = determineCheckoutInstance()
-        val allProps = mapOf(
-                "instance" to instance,
-                "instances" to config.instances
-        ) + props
+        val allProps = mapOf("instances" to config.instances) + props
         val fullCommand = this.props.expand("${config.vaultGlobalOptions} $command".trim(), allProps)
 
         app.execute(fullCommand)
@@ -36,18 +32,20 @@ class VltRunner(val project: Project) {
             logger.info("JCR content directory to be checked out does not exist: ${contentDir.absolutePath}")
         }
 
-        val filter = determineCheckoutFilter()
-        val props = mapOf("filter" to filter.file.absolutePath)
+        val props = mapOf<String, Any>(
+                "instance" to checkoutInstance,
+                "filter" to checkoutFilter.file.absolutePath
+        )
 
-        filter.use {
+        checkoutFilter.use {
             raw("checkout --force --filter {{filter}} {{instance.httpUrl}}/crx/server/crx.default", props)
         }
     }
 
-    fun determineCheckoutFilter(): VltFilter {
+    val checkoutFilter by lazy {
         val cmdFilterRoots = props.list("aem.checkout.filterRoots")
 
-        return if (cmdFilterRoots.isNotEmpty()) {
+        if (cmdFilterRoots.isNotEmpty()) {
             logger.info("Using Vault filter roots specified as command line property: $cmdFilterRoots")
             VltFilter.temporary(project, cmdFilterRoots)
         } else {
@@ -63,26 +61,26 @@ class VltRunner(val project: Project) {
         }
     }
 
-    fun determineCheckoutInstance(): Instance {
+    val checkoutInstance: Instance by lazy {
         val cmdInstanceArg = props.string("aem.checkout.instance")
         if (!cmdInstanceArg.isNullOrBlank()) {
             val cmdInstance = Instance.parse(cmdInstanceArg!!).first()
             cmdInstance.validate()
 
             logger.info("Using instance specified by command line parameter: $cmdInstance")
-            return cmdInstance
+            return@lazy cmdInstance!!
         }
 
         val namedInstance = Instance.filter(project, config.instanceName).firstOrNull()
         if (namedInstance != null) {
             logger.info("Using first instance matching filter '${config.instanceName}': $namedInstance")
-            return namedInstance
+            return@lazy namedInstance!!
         }
 
         val anyInstance = Instance.filter(project, Instance.FILTER_ANY).firstOrNull()
         if (anyInstance != null) {
             logger.info("Using first instance matching filter '${Instance.FILTER_ANY}': $anyInstance")
-            return anyInstance
+            return@lazy anyInstance!!
         }
 
         throw VltException("Vault instance cannot be determined neither by command line parameter nor AEM config.")
@@ -95,11 +93,9 @@ class VltRunner(val project: Project) {
             return
         }
 
-        val filter = determineCheckoutFilter()
+        logger.info("Cleaning using $checkoutFilter")
 
-        logger.info("Cleaning using $filter")
-
-        val roots = filter.rootPaths
+        val roots = checkoutFilter.rootPaths
                 .map { File(contentDir, "${PackagePlugin.JCR_ROOT}/${it.removeSurrounding("/")}") }
                 .filter { it.exists() }
         if (roots.isEmpty()) {

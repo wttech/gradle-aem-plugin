@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import org.apache.commons.lang3.time.DurationFormatUtils
 import org.apache.commons.validator.routines.UrlValidator
 import org.apache.jackrabbit.util.ISO8601
+import org.gradle.api.Project
+import java.nio.file.Paths
 import java.util.*
 
 object Formats {
@@ -58,6 +60,13 @@ object Formats {
 
     fun duration(millis: Long): String {
         return DurationFormatUtils.formatDurationHMS(millis)
+    }
+
+    fun projectPath(path: String, project: Project): String {
+        val source = Paths.get(path)
+        val base = Paths.get(project.rootProject.projectDir.toURI())
+
+        return base.relativize(source).toString()
     }
 
 }

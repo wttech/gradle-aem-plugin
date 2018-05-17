@@ -14,12 +14,6 @@ import java.io.File
 
 open class SatisfyTask : AemDefaultTask() {
 
-    companion object {
-        const val NAME = "aemSatisfy"
-
-        const val DOWNLOAD_DIR = "download"
-    }
-
     @get:Internal
     val packageProvider = PackageResolver(project, AemTask.temporaryDir(project, NAME, DOWNLOAD_DIR))
 
@@ -60,6 +54,8 @@ open class SatisfyTask : AemDefaultTask() {
 
     @TaskAction
     fun satisfy() {
+        val actions = mutableListOf<Action>()
+
         for (packageGroup in packageGroups) {
             logger.info("Satisfying group of packages '${packageGroup.name}'.")
 
@@ -82,17 +78,23 @@ open class SatisfyTask : AemDefaultTask() {
                         sync.isSnapshot(pkg) -> {
                             logger.info("Satisfying package: $pkg (snapshot).")
                             sync.deployPackage(pkg)
+
                             anyPackageSatisfied = true
+                            actions.add(Action(pkg, sync.instance))
                         }
                         state == null -> {
                             logger.info("Satisfying package: $pkg (not uploaded).")
                             sync.deployPackage(pkg)
+
                             anyPackageSatisfied = true
+                            actions.add(Action(pkg, sync.instance))
                         }
                         !state.installed -> {
                             logger.info("Satisfying package: $pkg (not installed).")
                             sync.installPackage(state.path)
+
                             anyPackageSatisfied = true
+                            actions.add(Action(pkg, sync.instance))
                         }
                         else -> {
                             logger.info("Not satisfying package: $pkg (already installed).")
@@ -109,6 +111,25 @@ open class SatisfyTask : AemDefaultTask() {
                 packageGroup.completer()
             }
         }
+
+        if (actions.isNotEmpty()) {
+            val packages = actions.map { it.pkg }.toSet()
+            val instances = actions.map { it.instance }.toSet()
+
+            if (packages.size == 1) {
+                notifier.default("Package satisfied", "${packages.first().name} on ${instances.names}")
+            } else {
+                notifier.default("Packages satisfied", "Performed ${actions.size} action(s) for ${packages.size} package(s) on ${instances.size} instance(s).")
+            }
+        }
+    }
+
+    class Action(val pkg: File, val instance: Instance)
+
+    companion object {
+        const val NAME = "aemSatisfy"
+
+        const val DOWNLOAD_DIR = "download"
     }
 
 }

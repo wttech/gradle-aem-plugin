@@ -8,7 +8,7 @@ import javax.imageio.ImageIO
 
 class AemNotifier private constructor(private val project: Project) {
 
-    private val config by lazy {AemConfig.of(project) }
+    private val config by lazy { AemConfig.of(project) }
 
     fun default(title: String, message: String = "") {
         if (config.notificationEnabled) {
@@ -46,24 +46,34 @@ class AemNotifier private constructor(private val project: Project) {
 
         const val IMAGE_PATH = "/com/cognifide/gradle/aem/META-INF/vault/definition/thumbnail.png"
 
-        const val EXT_PROP = "aemNotifier"
+        const val EXT_INSTANCE_PROP = "aemNotifier"
 
+        /**
+         * Get project specific notifier (config can vary)
+         */
         fun of(project: Project): AemNotifier {
             val props = project.extensions.extraProperties
-            if (!props.has(EXT_PROP)) {
-                props.set(EXT_PROP, setup(project))
+            if (!props.has(EXT_INSTANCE_PROP)) {
+                props.set(EXT_INSTANCE_PROP, setup(project))
             }
 
-            return props.get(EXT_PROP) as AemNotifier
+            return props.get(EXT_INSTANCE_PROP) as AemNotifier
         }
 
-        private fun setup(rootProject: Project): AemNotifier {
-            val notifier = AemNotifier(rootProject)
-            rootProject.gradle.buildFinished {
-                if (it.failure != null) {
-                    val exception = ExceptionUtils.getRootCause(it.failure)
-                    val message = exception?.message ?: "no message available"
-                    notifier.default("Build failure",  "$message\nplugin version: ${AemPlugin.BUILD.version}")
+        /**
+         *
+         */
+        private fun setup(project: Project): AemNotifier {
+            val notifier = AemNotifier(project)
+
+            if (project == project.rootProject) {
+                project.gradle.buildFinished {
+                    if (it.failure != null) {
+                        val exception = ExceptionUtils.getRootCause(it.failure)
+                        val message = exception?.message ?: "no error message"
+
+                        notifier.default("Build failure", message)
+                    }
                 }
             }
 
