@@ -7,6 +7,7 @@ import org.apache.commons.lang3.time.DurationFormatUtils
 import org.apache.commons.validator.routines.UrlValidator
 import org.apache.jackrabbit.util.ISO8601
 import org.gradle.api.Project
+import java.io.File
 import java.nio.file.Paths
 import java.util.*
 
@@ -62,9 +63,25 @@ object Formats {
         return DurationFormatUtils.formatDurationHMS(millis)
     }
 
+    fun rootProjectPath(file: File, project: Project): String {
+        return rootProjectPath(file.absolutePath, project)
+    }
+
+    fun rootProjectPath(path: String, project: Project): String {
+        return projectPath(path, project.rootProject)
+    }
+
+    fun projectPath(file: File, project: Project): String {
+        return projectPath(file.absolutePath, project)
+    }
+
     fun projectPath(path: String, project: Project): String {
+        return relativePath(path, project.projectDir.absolutePath)
+    }
+
+    fun relativePath(path: String, basePath: String): String {
         val source = Paths.get(path)
-        val base = Paths.get(project.rootProject.projectDir.toURI())
+        val base = Paths.get(basePath)
 
         return base.relativize(source).toString()
     }

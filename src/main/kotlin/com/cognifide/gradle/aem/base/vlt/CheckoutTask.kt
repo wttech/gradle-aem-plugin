@@ -18,9 +18,8 @@ open class CheckoutTask : AemDefaultTask() {
     @TaskAction
     fun checkout() {
         val runner = VltRunner(project)
-
         runner.checkout()
-        notifier.default("Checked out JCR content", "Instance: ${runner.checkoutInstance.name}. Directory: ${Formats.projectPath(config.contentPath, project)}")
+        notifier.default("Checked out JCR content", "Instance: ${runner.checkoutInstance.name}. Directory: ${Formats.rootProjectPath(config.contentPath, project)}")
     }
 
 }

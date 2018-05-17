@@ -23,12 +23,14 @@ open class DebugTask : AemDefaultTask() {
 
     @TaskAction
     fun debug() {
-        logger.lifecycle("Dumping AEM build configuration of project '${project.name}' at path '${project.path}' to file: ${file.absolutePath}")
+        logger.lifecycle("Dumping AEM build configuration of $project to file: $file")
 
         val props = ProjectDumper(project).properties
         val json = Formats.toJson(props)
 
         file.bufferedWriter().use { it.write(json) }
+
+        notifier.default("Configuration dumped", "For $project to file: ${Formats.projectPath(file, project)}")
     }
 
 }
