@@ -79,7 +79,7 @@ interface Instance : Serializable {
                     this.environment = environment
                     this.typeName = typeName
                 })
-            }
+            }.sortedBy { it.name }
         }
 
         fun defaults(project: Project): List<RemoteInstance> {

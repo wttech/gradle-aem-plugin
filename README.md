@@ -543,7 +543,7 @@ aem {
 }
 
 aemCompose {
-    archiveName = 'company-example'
+    baseName = 'company-example'
     duplicatesStrategy = "EXCLUDE"
     includeProject ':app:core'
 }
@@ -563,9 +563,6 @@ In AEM configuration section, there is possibility to use `localInstance` or `re
 ```groovy
 aem {
     config {
-        localAuthorInstance() // property: aem.instance.author.httpUrl or default 'http://localhost:4502' ; local-author
-        localPublishInstance() // property: aem.instance.author.httpUrl or default 'http://localhost:4502' ; local-publish
-    
         localInstance "http://localhost:4502" // local-author
         localInstance "http://localhost:4502", { // local-author
             user = "admin"
@@ -581,9 +578,6 @@ aem {
             typeName = "publish"
             debugPort = 14503
         } 
-      
-        remoteAuthorInstance() // property: aem.instance.author.httpUrl or default 'http://localhost:4502' ; local-author
-        remotePublishInstance() // property: aem.instance.author.httpUrl or default 'http://localhost:4502' ; local-publish
       
         remoteInstance "http://192.168.10.1:4502", { // integration-author1
             user = "user1" 
@@ -653,8 +647,8 @@ then it is available to deploy packages with taking into account:
  * type of AEM instance (author / publish)
 
 ```bash
-gradlew aemDeploy -Paem.deploy.instance.name=integration-*
-gradlew aemDeploy -Paem.deploy.instance.name=*-author
+gradlew aemDeploy -Paem.instance.name=integration-*
+gradlew aemDeploy -Paem.instance.name=*-author
 ```
 
 Default value of that instance name filter is `local-*`.
@@ -666,13 +660,13 @@ Deployment could be performed in parallel mode when configuration option `deploy
 Instance urls delimited by semicolon:
 
 ```bash
-gradlew aemDeploy -Paem.deploy.instance.list=http://admin:admin@localhost:4502;http://admin:admin@localhost:4503
+gradlew aemDeploy -Paem.instance.list=http://admin:admin@localhost:4502;http://admin:admin@localhost:4503
 ```
 
 Alternative syntax - list delimited: instances by semicolon, instance properties by comma.
 
 ```bash
-gradlew aemDeploy -Paem.deploy.instance.list=http://localhost:4502,admin,admin;http://localhost:4503,admin,admin
+gradlew aemDeploy -Paem.instance.list=http://localhost:4502,admin,admin;http://localhost:4503,admin,admin
 ```
 
 ### Deploy only filtered dependent CRX package(s)
@@ -804,7 +798,7 @@ For the reference, see [usage in AEM Multi-Project Example](https://github.com/C
 ### Skip installed package resolution by download name. 
 
 ```bash
-gradlew aemInstall -Paem.deploy.skipDownloadName=true
+gradlew aemInstall -Paem.package.skipDownloadName=true
 ```
 Only matters when Vault properties file is customized then that property could be used to eliminate conflicts.
 

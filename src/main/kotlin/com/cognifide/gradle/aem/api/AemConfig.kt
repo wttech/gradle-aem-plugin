@@ -238,6 +238,16 @@ class AemConfig(
     var packageBuildDate: Date = props.date("aem.package.buildDate", Date())
 
     /**
+     * Disable remote package by resolution by download name.
+     *
+     * That type of resolution could be unsafe, because that value may be not unique.
+     * However this switch could be useful if some package has non-standard package properties
+     * (name, group, version) which are not matching built project properties.
+     */
+    @Input
+    var packageSkipDownloadName = props.boolean("aem.package.skipDownloadName", true)
+
+    /**
      * Enables deployment via CRX package activation from author to publishers when e.g they are not accessible.
      */
     @Input
