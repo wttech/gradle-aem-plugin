@@ -6,76 +6,121 @@ import com.cognifide.gradle.aem.internal.Behaviors
 import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.internal.ProgressLogger
 import org.apache.http.HttpStatus
-import org.apache.http.client.config.RequestConfig
 import org.gradle.api.Project
+import java.util.stream.Collectors
 
 /**
  * Wait until all instances be stable.
  */
 open class AwaitAction(project: Project, val instances: List<Instance>) : AbstractAction(project) {
 
-    var times = config.awaitTimes
-
-    var interval = config.awaitInterval
-
     var fail = config.awaitFail
 
-    var condition = config.awaitCondition
+    var availableCheck = config.awaitAvailableCheck
 
-    var timeout = config.awaitTimeout
+    var stableTimes = config.awaitStableTimes
 
-    var assurances = config.awaitAssurances
+    var stableInterval = config.awaitStableInterval
+
+    var stableState = config.awaitStableState
+
+    var stableCheck = config.awaitStableCheck
+
+    var stableAssurances = config.awaitStableAssurances
+
+    var healthCheck = config.awaitHealthCheck
 
     override fun perform() {
+        if (instances.isEmpty()) {
+            logger.info("No instances to check for stability.")
+            return
+        }
+
         val progressLogger = ProgressLogger(project, "Awaiting stable instance(s)")
 
         progressLogger.started()
 
         logger.info("Checking stability of instance(s).")
 
-        var lastInstanceStates = -1
+        var lastStableChecksum = -1
         var sinceStableTicks = -1L
         var sinceStableElapsed = 0L
 
         val synchronizers = prepareSynchronizers()
+        var unavailableInstances = synchronizers.map { it.instance }
+        var unavailableNotification = false
 
-        Behaviors.waitUntil(interval, { timer ->
-            // Gather all instance states and update checksum on any particular state change
+        Behaviors.waitUntil(stableInterval, { timer ->
+            // Gather all instance states
             val instanceStates = synchronizers.map { it.determineInstanceState() }
-            if (instanceStates.hashCode() != lastInstanceStates) {
-                lastInstanceStates = instanceStates.hashCode()
+
+            // Update checksum on any particular state change
+            val stableChecksum = instanceStates.flatMap { listOf(it.instance, stableState(it)) }.hashCode()
+            if (stableChecksum != lastStableChecksum) {
+                lastStableChecksum = stableChecksum
                 timer.reset()
             }
 
             progressLogger.progress(progressFor(instanceStates, config, timer))
 
+            // Detect unstable instances
+            val unstableInstances = instanceStates.parallelStream()
+                    .filter { !stableCheck(it) }
+                    .map { it.instance }
+                    .collect(Collectors.toList())
+
+            // Detect never available instances
+            val availableInstances = instanceStates.parallelStream()
+                    .filter { availableCheck(it) }
+                    .map { it.instance }
+                    .collect(Collectors.toList())
+            unavailableInstances -= availableInstances
+
+            if (!unavailableNotification && (timer.ticks.toDouble() / stableTimes.toDouble() > INSTANCE_UNAVAILABLE_RATIO) && unavailableInstances.isNotEmpty()) {
+                notifier.default("Instances not available", "Instances: ${unavailableInstances.names}")
+                unavailableNotification = true
+            }
+
             // Detect timeout when same checksum is not being updated so long
-            if (times > 0 && timer.ticks > times) {
-                val message = "Instance(s) are not stable. Timeout reached after ${Formats.duration(timer.elapsed)}."
+            if (stableTimes > 0 && timer.ticks > stableTimes) {
                 if (fail) {
-                    throw InstanceException(message)
+                    throw InstanceException("Instances not stable: ${unstableInstances.names}. Timeout reached: ${Formats.duration(timer.elapsed)}.")
                 } else {
-                    logger.warn(message)
+                    notifier.default("Instances not stable", "Problem with: ${unstableInstances.names}. Timeout reached: ${Formats.duration(timer.elapsed)}.")
                     return@waitUntil false
                 }
             }
 
-            // Verify gathered instance states
-            if (instanceStates.all(condition)) {
+            if (unstableInstances.isEmpty()) {
                 // Assure that expected moment is not accidental, remember it
-                if (assurances > 0 && sinceStableTicks == -1L) {
-                    logger.info("Instance(s) seems to be stable. Assuring.")
+                if (stableAssurances > 0 && sinceStableTicks == -1L) {
+                    progressLogger.progress("Instance(s) seems to be stable. Assuring.")
                     sinceStableTicks = timer.ticks
                     sinceStableElapsed = timer.elapsed
                 }
 
                 // End if assurance is not configured or this moment remains a little longer
-                if (assurances <= 0 || (sinceStableTicks >= 0 && (timer.ticks - sinceStableTicks) >= assurances)) {
-                    logger.info("Instance(s) are stable after ${Formats.duration(sinceStableElapsed)}.")
-                    return@waitUntil false
+                if (stableAssurances <= 0 || (sinceStableTicks >= 0 && (timer.ticks - sinceStableTicks) >= stableAssurances)) {
+                    progressLogger.progress("Instance(s) are stable after ${Formats.duration(sinceStableElapsed)}. Checking health.")
+
+                    // Detect unhealthy instances
+                    val unhealthyInstances = instanceStates.parallelStream()
+                            .filter { !healthCheck(it) }
+                            .map { it.instance }
+                            .collect(Collectors.toList())
+
+                    if (unhealthyInstances.isEmpty()) {
+                        return@waitUntil false
+                    } else { // TODO introduce config.awaitHealthAssurances
+                        if (fail) {
+                            throw InstanceException("Instances not healthy: ${unhealthyInstances.names}.")
+                        } else {
+                            notifier.default("Instances not healthy", "Problem with: ${unhealthyInstances.names}.")
+                        }
+                    }
                 }
             } else {
-                // Reset assurance, because no longer verified
+                // Reset assurance, because no longer stable
                 sinceStableTicks = -1L
                 sinceStableElapsed = 0L
             }
@@ -92,13 +137,6 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
 
             InstanceSync(project, instance).apply {
                 val sync = this
-
-                requestConfigurer = { request ->
-                    request.config = RequestConfig.custom()
-                            .setConnectTimeout(timeout)
-                            .setSocketTimeout(timeout)
-                            .build()
-                }
 
                 if (init) {
                     logger.info("Initializing instance using default credentials.")
@@ -126,7 +164,7 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
     }
 
     private fun progressFor(states: List<InstanceState>, config: AemConfig, timer: Behaviors.Timer): String {
-        return (progressTicks(timer.ticks, config.awaitTimes) + " " + states.joinToString(" | ") { progressFor(it) }).trim()
+        return (progressTicks(timer.ticks, config.awaitStableTimes) + " " + states.joinToString(" | ") { progressFor(it) }).trim()
     }
 
     private fun progressFor(state: InstanceState): String {
@@ -134,7 +172,7 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
     }
 
     private fun progressTicks(tick: Long, maxTicks: Long): String {
-        return if (maxTicks > 0 && (tick.toDouble() / maxTicks.toDouble() > 0.1)) {
+        return if (maxTicks > 0 && (tick.toDouble() / maxTicks.toDouble() > PROGRESS_COUNTING_RATIO)) {
             "[$tick/$maxTicks]"
         } else if (tick.rem(2) == 0L) {
             "[*]"
@@ -144,11 +182,17 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
     }
 
     private fun progressIndicator(state: InstanceState): String {
-        return if (condition(state)) {
+        return if (stableCheck(state)) {
             "+"
         } else {
             "-"
         }
+    }
+
+    companion object {
+        const val PROGRESS_COUNTING_RATIO: Double = 0.1
+
+        const val INSTANCE_UNAVAILABLE_RATIO: Double = 0.5
     }
 
 }

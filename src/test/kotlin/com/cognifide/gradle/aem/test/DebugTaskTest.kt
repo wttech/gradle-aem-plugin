@@ -15,12 +15,11 @@ class DebugTaskTest : AemTest() {
                 add(Customization("projectInfo.dir", PathValueMatcher()))
                 add(Customization("packageProperties.buildCount", RegularExpressionValueMatcher("\\d{14}")))
                 add(Customization("packageProperties.created", DateValueMatcher()))
-                add(Customization("packageProperties.config.buildDate", RegularExpressionValueMatcher("\\d{13}")))
+                add(Customization("packageProperties.config.packageBuildDate", RegularExpressionValueMatcher("\\d{13}")))
                 add(Customization("packageProperties.config.contentPath", PathValueMatcher()))
                 add(Customization("packageProperties.config.vaultFilesPath", PathValueMatcher()))
                 add(Customization("packageProperties.config.createFilesPath", PathValueMatcher()))
                 add(Customization("packageProperties.config.createPath", PathValueMatcher()))
-                add(Customization("packageProperties.config.checkoutFilterPath", PathValueMatcher()))
             }
         }
     }

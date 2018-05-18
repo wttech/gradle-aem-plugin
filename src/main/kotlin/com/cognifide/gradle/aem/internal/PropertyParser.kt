@@ -160,20 +160,20 @@ class PropertyParser(val project: Project) {
                     "requiresRoot" to "false",
 
                     // Dynamic values
-                    "buildCount" to SimpleDateFormat("yDDmmssSSS").format(config.buildDate),
-                    "created" to Formats.date(config.buildDate)
+                    "buildCount" to SimpleDateFormat("yDDmmssSSS").format(config.packageBuildDate),
+                    "created" to Formats.date(config.packageBuildDate)
             )
 
-            return defaults + config.fileProperties + configProps
+            return defaults + config.packageFileProperties + configProps
         }
 
     fun isForce(): Boolean {
         return flag(FORCE_PROP)
     }
 
-    fun checkForce(message: String = FORCE_MESSAGE) {
+    fun checkForce() {
         if (!isForce()) {
-            throw AemException("Warning! This task execution must be confirmed by specifying explicitly parameter '-P$FORCE_PROP=true'. $message")
+            throw AemException("Unable to perform unsafe operation without parameter '-P$FORCE_PROP'")
         }
     }
 

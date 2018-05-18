@@ -1,9 +1,10 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.pkg.deploy.SyncTask
+import com.cognifide.gradle.aem.api.AemDefaultTask
+import com.cognifide.gradle.aem.instance.action.ReloadAction
 import org.gradle.api.tasks.TaskAction
 
-open class ReloadTask : SyncTask() {
+open class ReloadTask : AemDefaultTask() {
 
     companion object {
         val NAME = "aemReload"
@@ -15,7 +16,10 @@ open class ReloadTask : SyncTask() {
 
     @TaskAction
     fun reload() {
-        reloadInstances()
+        val instances = Instance.filter(project)
+
+        ReloadAction(project, instances).perform()
+        notifier.default("Instance(s) reloaded", "Which: ${instances.names}")
     }
 
 }

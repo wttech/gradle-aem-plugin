@@ -2,9 +2,9 @@ package com.cognifide.gradle.aem.instance.satisfy
 
 import aQute.bnd.osgi.Jar
 import com.cognifide.gradle.aem.api.AemConfig
+import com.cognifide.gradle.aem.base.vlt.VltFilter
 import com.cognifide.gradle.aem.internal.file.FileOperations
 import com.cognifide.gradle.aem.internal.file.resolver.FileResolution
-import com.cognifide.gradle.aem.internal.jsoup.JsoupUtil
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.FilenameUtils
@@ -52,7 +52,7 @@ class PackageResolution(group: PackageGroup, id: String, action: (FileResolution
         val symbolicName = bundle.manifest.mainAttributes.getValue("Bundle-SymbolicName")
         val group = symbolicName.substringBeforeLast(".")
         val version = bundle.manifest.mainAttributes.getValue("Bundle-Version")
-        val filters = listOf(JsoupUtil.selfClosingTag("<filter root=\"$pkgPath\"/>", "filter"))
+        val filters = listOf(VltFilter.rootElementForPath(pkgPath))
         val bundleProps = mapOf<String, Any>(
                 "project.group" to group,
                 "project.name" to symbolicName,
@@ -62,12 +62,12 @@ class PackageResolution(group: PackageGroup, id: String, action: (FileResolution
                 "filters" to filters,
                 "filterRoots" to filters.joinToString(config.vaultLineSeparatorString) { it.toString() }
         )
-        val generalProps = config.propParser.packageProps
+        val generalProps = config.props.packageProps
         val overrideProps = config.satisfyBundleProperties(bundle)
         val effectiveProps = generalProps + bundleProps + overrideProps
 
-        FileOperations.amendFiles(vaultDir, config.filesExpanded, { file, content ->
-            config.propParser.expand(content, effectiveProps, file.absolutePath)
+        FileOperations.amendFiles(vaultDir, listOf("**/${PackagePlugin.VLT_PATH}/*.xml"), { file, content ->
+            config.props.expand(content, effectiveProps, file.absolutePath)
         })
 
         // Copy bundle to install path

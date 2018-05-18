@@ -1,12 +1,12 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.pkg.deploy.SyncTask
+import com.cognifide.gradle.aem.api.AemDefaultTask
 import org.gradle.api.tasks.TaskAction
 
-open class DestroyTask : SyncTask() {
+open class DestroyTask : AemDefaultTask() {
 
     companion object {
-        val NAME = "aemDestroy"
+        const val NAME = "aemDestroy"
     }
 
     init {
@@ -17,7 +17,10 @@ open class DestroyTask : SyncTask() {
     fun destroy() {
         propertyParser.checkForce()
 
-        synchronizeLocalInstances { it.destroy() }
+        val handles = Instance.handles(project)
+        handles.parallelStream().forEach { it.destroy() }
+
+        notifier.default("Instance(s) destroyed", "Which: ${handles.names}")
     }
 
 }

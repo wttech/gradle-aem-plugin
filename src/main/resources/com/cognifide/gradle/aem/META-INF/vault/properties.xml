@@ -9,6 +9,6 @@
     <entry key="artifactId">{{project.name}}</entry>
     <entry key="description">{{project.description}}</entry>
     <entry key="createdBy">{{user.name}}</entry>
-    <entry key="acHandling">{{config.acHandling}}</entry>
+    <entry key="acHandling">{{config.packageAcHandling}}</entry>
     <entry key="requiresRoot">{{requiresRoot}}</entry>
 </properties>

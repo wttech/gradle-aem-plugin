@@ -14,10 +14,6 @@ apply plugin: 'com.cognifide.aem.base'
 
 aem {
     config {
-        // via properties
-        remoteAuthorInstance()
-        remotePublishInstance()
-
         // custom env, no ports, by domain name
         remoteInstance "http://author.example.com", {
             environment = "prod"

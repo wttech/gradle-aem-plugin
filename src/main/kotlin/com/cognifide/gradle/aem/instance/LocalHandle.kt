@@ -7,7 +7,6 @@ import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.ProgressLogger
 import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.internal.file.FileOperations
-import com.cognifide.gradle.aem.internal.file.resolver.FileResolver
 import org.apache.commons.io.FileUtils
 import org.gradle.api.Project
 import org.gradle.api.logging.Logger
@@ -68,7 +67,7 @@ class LocalHandle(val project: Project, val instance: Instance) {
         }
     }
 
-    fun create(fileResolver: FileResolver) {
+    fun create(instanceFiles: List<File>) {
         if (created) {
             logger.info(("Instance already created"))
             return
@@ -78,9 +77,8 @@ class LocalHandle(val project: Project, val instance: Instance) {
 
         logger.info("Creating instance at path '${dir.absolutePath}'")
 
-        val resolvedFiles = fileResolver.allFiles()
-        logger.info("Copying resolved instance files: $resolvedFiles")
-        copyFiles(resolvedFiles)
+        logger.info("Copying resolved instance files: $instanceFiles")
+        copyFiles(instanceFiles)
 
         logger.info("Validating instance files")
         validateFiles()
@@ -258,9 +256,6 @@ class LocalHandle(val project: Project, val instance: Instance) {
     val initialized: Boolean
         get() = locked(LOCK_INIT)
 
-    val createLock: File
-        get() = lockFile(LOCK_CREATE)
-
     private fun lockFile(name: String): File = File(dir, "$name.lock")
 
     fun lock(name: String) {
@@ -275,3 +270,6 @@ class LocalHandle(val project: Project, val instance: Instance) {
     }
 
 }
+
+val List<LocalHandle>.names: String
+    get() = joinToString(", ") { it.instance.name }

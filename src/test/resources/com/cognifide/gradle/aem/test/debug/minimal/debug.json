@@ -10,29 +10,46 @@
     "buildCount": "20181093723133",
     "created": "2017-12-19T21:39:38.058+0000",
     "config": {
-      "instances": {},
-      "deployEnvironment": "local",
-      "deployInstanceName": "local-*",
-      "deployInstanceList": "",
-      "deployInstanceAuthorName": "local-AUTHOR*",
-      "deployConnectionTimeout": 5000,
-      "deployConnectionUntrustedSsl": true,
-      "deployParallel": true,
-      "deploySnapshots": [],
-      "deployDistributed": false,
-      "uploadForce": true,
-      "uploadRetryTimes": 3,
-      "uploadRetryDelay": 30000,
-      "installRecursive": true,
-      "installRetryTimes": 1,
-      "installRetryDelay": 30000,
-      "acHandling": "merge_preserve",
+      "instances": {
+        "local-author": {
+          "httpUrl": "http://localhost:4502",
+          "user": "admin",
+          "password": "admin",
+          "typeName": "author",
+          "environment": "local",
+          "name": "local-author",
+          "type": "AUTHOR",
+          "httpPort": 4502
+        },
+        "local-publish": {
+          "httpUrl": "http://localhost:4503",
+          "user": "admin",
+          "password": "admin",
+          "typeName": "publish",
+          "environment": "local",
+          "name": "local-publish",
+          "type": "PUBLISH",
+          "httpPort": 4503
+        }
+      },
+      "environment": "local",
+
+      "instanceName": "local-*",
+      "instanceList": "",
+      "instanceAuthorName": "local-AUTHOR*",
+      "instanceConnectionTimeout": 5000,
+      "instanceConnectionUntrustedSsl": true,
+
       "contentPath": "debug/minimal/src/main/content",
       "bundlePath": "/apps/minimal/install",
+      "bundlePackage": "",
+      "bundlePackageOptions": "-split-package:=merge-first",
+      "bundleManifestAttributes": true,
+
       "packageName": "minimal",
-      "localPackagePath": "",
-      "remotePackagePath": "",
-      "filesExcluded": [
+      "packageLocalPath": "",
+      "packageRemotePath": "",
+      "packageFilesExcluded": [
         "**/.gradle",
         "**/.git",
         "**/.git/**",
@@ -44,31 +61,29 @@
         "**/node_modules/**",
         "jcr_root/.vlt-sync-config.properties"
       ],
-      "filesExpanded": [
+      "packageFilesExpanded": [
         "**/META-INF/vault/*.xml"
       ],
-      "buildDate": 1524116243133,
-      "fileProperties": {},
+      "packageBuildDate": 1524116243133,
+      "packageFileProperties": {},
+      "packageSnapshots": [],
+      "packageAcHandling": "merge_preserve",
+      "packageSkipDownloadName": true,
+
       "vaultCopyMissingFiles": true,
       "vaultFilesPath": "debug/minimal/src/main/resources/META-INF/vault",
-      "vaultSkipProperties": [
-        "jcr:uuid!**/home/users/*,**/home/groups/*",
-        "jcr:lastModified",
-        "jcr:created",
-        "cq:lastModified*",
-        "cq:lastReplicat*",
-        "*_x0040_Delete",
-        "*_x0040_TypeHint"
-      ],
       "vaultGlobalOptions": "--credentials {{instance.credentials}}",
       "vaultLineSeparator": "LF",
-      "dependBundlesTaskNames": [
-        "assemble",
-        "check"
-      ],
-      "dependContentTaskNames": [
-        "aemCompose.dependencies"
-      ],
+
+      "notificationEnabled": false,
+
+      "deployDistributed": false,
+      "uploadForce": true,
+      "uploadRetryTimes": 3,
+      "uploadRetryDelay": 30000,
+      "installRecursive": true,
+      "installRetryTimes": 1,
+      "installRetryDelay": 30000,
       "createPath": ".aem/minimal",
       "createFilesPath": "debug/minimal/src/main/resources/local-instance",
       "createFilesExpanded": [
@@ -79,19 +94,45 @@
         "**/start",
         "**/stop"
       ],
-      "awaitInterval": 1000,
-      "awaitTimeout": 900,
-      "awaitTimes": 300,
       "awaitFail": true,
-      "awaitAssurances": 5,
+      "awaitStableInterval": 1000,
+      "awaitStableTimes": 300,
+      "awaitStableAssurances": 5,
+      "awaitHealthComponentsActive": [
+        "com.day.crx.packaging.*",
+        "org.apache.sling.installer.*"
+      ],
       "reloadDelay": 10000,
       "satisfyRefreshing": false,
       "satisfyBundlePath": "/apps/gradle-aem-plugin/satisfy/install",
       "satisfyGroupName": "*",
-      "checkoutFilterPath": "debug/minimal/src/main/content/META-INF/vault/filter.xml",
+      "checkoutFilterPath": "",
       "cleanFilesDeleted": [
         "**/.vlt",
-        "**/.vlt*.tmp"
+        "**/.vlt*.tmp",
+        "**/jcr_root/.content.xml",
+        "**/jcr_root/apps/.content.xml",
+        "**/jcr_root/conf/.content.xml",
+        "**/jcr_root/content/.content.xml",
+        "**/jcr_root/content/dam/.content.xml",
+        "**/jcr_root/etc/.content.xml",
+        "**/jcr_root/etc/designs/.content.xml",
+        "**/jcr_root/home/.content.xml",
+        "**/jcr_root/home/groups/.content.xml",
+        "**/jcr_root/home/users/.content.xml",
+        "**/jcr_root/libs/.content.xml",
+        "**/jcr_root/system/.content.xml",
+        "**/jcr_root/tmp/.content.xml",
+        "**/jcr_root/var/.content.xml"
+      ],
+      "cleanSkipProperties": [
+        "jcr:uuid!**/home/users/*,**/home/groups/*",
+        "jcr:lastModified",
+        "jcr:created",
+        "cq:lastModified*",
+        "cq:lastReplicat*",
+        "*_x0040_Delete",
+        "*_x0040_TypeHint"
       ]
     }
   },

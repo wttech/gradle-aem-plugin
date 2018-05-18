@@ -6,13 +6,14 @@ import com.cognifide.gradle.aem.internal.LineSeparator
 import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.pkg.ComposeTask
 import com.cognifide.gradle.aem.pkg.PackagePlugin
+import com.cognifide.gradle.aem.pkg.deploy.DeployException
 import com.fasterxml.jackson.annotation.JsonIgnore
+import dorkbox.notify.Notify
 import groovy.lang.Closure
 import org.gradle.api.DefaultTask
 import org.gradle.api.Project
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
-import org.gradle.language.base.plugins.LifecycleBasePlugin
 import org.gradle.util.ConfigureUtil
 import java.io.File
 import java.io.Serializable
@@ -38,7 +39,15 @@ class AemConfig(
      */
     @Internal
     @get:JsonIgnore
-    val propParser = PropertyParser(project)
+    val props = PropertyParser(project)
+
+    /**
+     * Determines current environment to be used in e.g package deployment.
+     */
+    @Input
+    val environment: String = props.string("aem.env", {
+        System.getenv("AEM_ENV") ?: "local"
+    })
 
     /**
      * List of AEM instances on which packages could be deployed.
@@ -48,107 +57,36 @@ class AemConfig(
     var instances: MutableMap<String, Instance> = mutableMapOf()
 
     /**
-     * Determines current environment to be used in deployment.
-     */
-    @Input
-    val deployEnvironment: String = propParser.string("aem.env", {
-        System.getenv("AEM_ENV") ?: "local"
-    })
-
-    /**
      * Determines instances involved in CRX package deployment (filters preconfigured instances).
      */
     @Input
-    var deployInstanceName: String = propParser.string("aem.deploy.instance.name", "$deployEnvironment-*")
+    var instanceName: String = props.string("aem.instance.name", "$environment-*")
 
     /**
-     * Forces instances involved in CRX package deployment (uses explicit instances configuration).
+     * Forces instances involved in e.g CRX package deployment (uses explicit instances configuration).
      */
     @Input
-    var deployInstanceList: String = propParser.string("aem.deploy.instance.list", "")
+    var instanceList: String = props.string("aem.instance.list", "")
 
     /**
      * Determines instance which will be used when CRX package activation from author to publishers
      * will be performed (only if distributed deploy is enabled).
      */
     @Input
-    var deployInstanceAuthorName: String = propParser.string("aem.deploy.instance.author.name", "$deployEnvironment-${InstanceType.AUTHOR}*")
+    var instanceAuthorName: String = props.string("aem.instance.author.name", "$environment-${InstanceType.AUTHOR}*")
 
     /**
      * Defines maximum time after which initializing connection to AEM will be aborted (e.g on upload, install).
      */
     @Input
-    var deployConnectionTimeout: Int = propParser.int("aem.deploy.connectionTimeout", 5000)
+    var instanceConnectionTimeout: Int = props.int("aem.instance.connectionTimeout", 5000)
 
     /**
      * Determines if connection to untrusted (e.g. self-signed) SSL certificates should be allowed.
      * By default allows all SSL connections.
      */
     @Input
-    var deployConnectionUntrustedSsl: Boolean = propParser.boolean("aem.deploy.connectionUntrustedSsl", true)
-
-    /**
-     * Perform deploy action (upload, install or activate) in parallel to multiple instances at once.
-     */
-    @Input
-    var deployParallel: Boolean = propParser.boolean("aem.deploy.parallel", true)
-
-    /**
-     * CRX package name conventions (with wildcard) indicating that package can change over time
-     * while having same version specified.
-     */
-    @Input
-    var deploySnapshots: List<String> = propParser.list("aem.deploy.snapshots")
-
-    /**
-     * Enables deployment via CRX package activation from author to publishers when e.g they are not accessible.
-     */
-    @Input
-    var deployDistributed: Boolean = propParser.boolean("aem.deploy.distributed", false)
-
-    /**
-     * Force upload CRX package regardless if it was previously uploaded.
-     */
-    @Input
-    var uploadForce: Boolean = propParser.boolean("aem.upload.force", true)
-
-    /**
-     * Repeat upload when failed (brute-forcing).
-     */
-    @Input
-    var uploadRetryTimes: Int = propParser.int("aem.upload.retry.times", 3)
-
-    /**
-     * Time to wait after repeating failed upload.
-     */
-    @Input
-    var uploadRetryDelay: Long = propParser.long("aem.upload.retry.delay", TimeUnit.SECONDS.toMillis(30))
-
-    /**
-     * Determines if when on package install, sub-packages included in CRX package content should be also installed.
-     */
-    @Input
-    var installRecursive: Boolean = propParser.boolean("aem.install.recursive", true)
-
-    /**
-     * Repeat install when failed (brute-forcing).
-     */
-    @Input
-    var installRetryTimes: Int = propParser.int("aem.install.retry.times", 1)
-
-    /**
-     * Time to wait after repeating failed install.
-     */
-    @Input
-    var installRetryDelay: Long = propParser.long("aem.install.retry.delay", TimeUnit.SECONDS.toMillis(30))
-
-    /**
-     * Defines behavior for access control handling included in rep:policy nodes being a part of CRX package content.
-     *
-     * @see <https://jackrabbit.apache.org/filevault/apidocs/org/apache/jackrabbit/vault/fs/io/AccessControlHandling.html>
-     */
-    @Input
-    var acHandling: String = "merge_preserve"
+    var instanceConnectionUntrustedSsl: Boolean = props.boolean("aem.instance.connectionUntrustedSsl", true)
 
     /**
      * Absolute path to JCR content to be included in CRX package.
@@ -168,14 +106,84 @@ class AemConfig(
     }
 
     /**
+     * Determines package in which OSGi bundle being built contains its classes.
+     * Basing on that value, there will be:
+     *
+     * - generated OSGi specific manifest instructions like 'Bundle-SymbolicName', 'Export-Package'.
+     * - generated AEM specific manifest instructions like 'Sling-Model-Packages'.
+     * - performed additional component stability checks during 'aemAwait'
+     */
+    @Input
+    var bundlePackage: String = ""
+
+    /**
+     * Determines how conflicts will be resolved when coincidental classes will be detected.
+     * Useful to combine Java sources with Kotlin, Scala etc.
+     *
+     * @see <http://bnd.bndtools.org/heads/private_package.html>
+     */
+    @Input
+    var bundlePackageOptions: String = "-split-package:=merge-first"
+
+    /**
+     * Enable or disable support for auto-generating OSGi specific JAR manifest attributes
+     * like 'Bundle-SymbolicName', 'Export-Package' or AEM specific like 'Sling-Model-Packages'
+     * using 'bundlePackage' property.
+     */
+    @Input
+    var bundleManifestAttributes: Boolean = true
+
+    /**
+     * Automatically determine local package to be uploaded.
+     */
+    @get:Internal
+    @get:JsonIgnore
+    val packageFile: File
+        get() {
+            if (!packageLocalPath.isBlank()) {
+                val configFile = File(packageLocalPath)
+                if (configFile.exists()) {
+                    return configFile
+                }
+            }
+
+            val archiveFile = pkg(project).archivePath
+            if (archiveFile.exists()) {
+                return archiveFile
+            }
+
+            throw DeployException("Local package not found under path: '${archiveFile.absolutePath}'. Is it built already?")
+        }
+
+    @get:Internal
+    @get:JsonIgnore
+    val packageFileName: String
+        get() = pkg(project).archiveName
+
+    /**
      * Determines built CRX package name (visible in package manager).
      */
     @Input
-    var packageName: String = if (isUniqueProjectName()) {
+    var packageName: String = if (projectNameUnique) {
         project.name
     } else {
-        "${namePrefix()}-${project.name}"
+        "$projectNamePrefix-${project.name}"
     }
+
+    /**
+     * CRX package name conventions (with wildcard) indicating that package can change over time
+     * while having same version specified. Affects CRX packages composed  and satisfied.
+     */
+    @Input
+    var packageSnapshots: List<String> = props.list("aem.package.snapshots")
+
+    /**
+     * Defines behavior for access control handling included in rep:policy nodes being a part of CRX package content.
+     *
+     * @see <https://jackrabbit.apache.org/filevault/apidocs/org/apache/jackrabbit/vault/fs/io/AccessControlHandling.html>
+     */
+    @Input
+    var packageAcHandling: String = props.string("aem.package.acHandling", "merge_preserve")
 
     /**
      * Custom path to composed CRX package being uploaded.
@@ -183,7 +191,7 @@ class AemConfig(
      * Default: [automatically determined]
      */
     @Input
-    var localPackagePath: String = ""
+    var packageLocalPath: String = ""
 
     /**
      * Custom path to CRX package that is uploaded on AEM instance.
@@ -191,13 +199,26 @@ class AemConfig(
      * Default: [automatically determined]
      */
     @Input
-    var remotePackagePath: String = ""
+    var packageRemotePath: String = ""
+
+    /**
+     * Wildcard file name filter expression that is used to filter in which Vault files properties can be injected.
+     */
+    @Input
+    var packageFilesExpanded: MutableList<String> = mutableListOf("**/${PackagePlugin.VLT_PATH}/*.xml")
+
+    /**
+     * Define here custom properties that can be used in CRX package files like 'META-INF/vault/properties.xml'.
+     * Could override predefined properties provided by plugin itself.
+     */
+    @Input
+    var packageFileProperties: MutableMap<String, Any> = mutableMapOf()
 
     /**
      * Exclude files being a part of CRX package.
      */
     @Input
-    var filesExcluded: MutableList<String> = mutableListOf(
+    var packageFilesExcluded: MutableList<String> = mutableListOf(
             "**/.gradle",
             "**/.git",
             "**/.git/**",
@@ -211,23 +232,62 @@ class AemConfig(
     )
 
     /**
-     * Wildcard file name filter expression that is used to filter in which Vault files properties can be injected.
-     */
-    @Input
-    var filesExpanded: MutableList<String> = mutableListOf("**/${PackagePlugin.VLT_PATH}/*.xml")
-
-    /**
      * Build date used as base for calculating 'created' and 'buildCount' package properties.
      */
     @Internal
-    var buildDate: Date = propParser.date("aem.buildDate", Date())
+    var packageBuildDate: Date = props.date("aem.package.buildDate", Date())
 
     /**
-     * Define here custom properties that can be used in CRX package files like 'META-INF/vault/properties.xml'.
-     * Could override predefined properties provided by plugin itself.
+     * Disable remote package by resolution by download name.
+     *
+     * That type of resolution could be unsafe, because that value may be not unique.
+     * However this switch could be useful if some package has non-standard package properties
+     * (name, group, version) which are not matching built project properties.
      */
     @Input
-    var fileProperties: MutableMap<String, Any> = mutableMapOf()
+    var packageSkipDownloadName = props.boolean("aem.package.skipDownloadName", true)
+
+    /**
+     * Enables deployment via CRX package activation from author to publishers when e.g they are not accessible.
+     */
+    @Input
+    var deployDistributed: Boolean = props.boolean("aem.deploy.distributed", false)
+
+    /**
+     * Force upload CRX package regardless if it was previously uploaded.
+     */
+    @Input
+    var uploadForce: Boolean = props.boolean("aem.upload.force", true)
+
+    /**
+     * Repeat upload when failed (brute-forcing).
+     */
+    @Input
+    var uploadRetryTimes: Int = props.int("aem.upload.retry.times", 3)
+
+    /**
+     * Time to wait after repeating failed upload.
+     */
+    @Input
+    var uploadRetryDelay: Long = props.long("aem.upload.retry.delay", TimeUnit.SECONDS.toMillis(30))
+
+    /**
+     * Determines if when on package install, sub-packages included in CRX package content should be also installed.
+     */
+    @Input
+    var installRecursive: Boolean = props.boolean("aem.install.recursive", true)
+
+    /**
+     * Repeat install when failed (brute-forcing).
+     */
+    @Input
+    var installRetryTimes: Int = props.int("aem.install.retry.times", 1)
+
+    /**
+     * Time to wait after repeating failed install.
+     */
+    @Input
+    var installRetryDelay: Long = props.long("aem.install.retry.delay", TimeUnit.SECONDS.toMillis(30))
 
     /**
      * Ensures that for directory 'META-INF/vault' default files will be generated when missing:
@@ -245,52 +305,16 @@ class AemConfig(
     var vaultFilesPath: String = project.rootProject.file("src/main/resources/${PackagePlugin.VLT_PATH}").toString()
 
     /**
-     * Define here properties that will be skipped when pulling JCR content from AEM instance.
-     *
-     * After special delimiter '!' there could be specified one or many path patterns
-     * (ANT style, delimited with ',') in which property shouldn't be removed.
-     */
-    @Input
-    var vaultSkipProperties: MutableList<String> = mutableListOf(
-            "jcr:uuid!**/home/users/*,**/home/groups/*",
-            "jcr:lastModified",
-            "jcr:created",
-            "cq:lastModified*",
-            "cq:lastReplicat*",
-            "*_x0040_Delete",
-            "*_x0040_TypeHint"
-    )
-
-    /**
      * Global options which are being applied to any Vault related command like 'aemVault' or 'aemCheckout'.
      */
     @Input
-    var vaultGlobalOptions: String = propParser.string("aem.vlt.globalOptions", "--credentials {{instance.credentials}}")
+    var vaultGlobalOptions: String = props.string("aem.vlt.globalOptions", "--credentials {{instance.credentials}}")
 
     /**
      * Specify characters to be used as line endings when cleaning up checked out JCR content.
      */
     @Input
-    var vaultLineSeparator: String = propParser.string("aem.vlt.lineSeparator", "LF")
-
-    /**
-     * Configure default task dependency assignments while including dependant project bundles.
-     * Simplifies multi-module project configuration.
-     */
-    @Input
-    var dependBundlesTaskNames: List<String> = mutableListOf(
-            LifecycleBasePlugin.ASSEMBLE_TASK_NAME,
-            LifecycleBasePlugin.CHECK_TASK_NAME
-    )
-
-    /**
-     * Configure default task dependency assignments while including dependant project content.
-     * Simplifies multi-module project configuration.
-     */
-    @Input
-    var dependContentTaskNames: List<String> = mutableListOf(
-            ComposeTask.NAME + ComposeTask.DEPENDENCIES_SUFFIX
-    )
+    var vaultLineSeparator: String = props.string("aem.vlt.lineSeparator", "LF")
 
     /**
      * Path in which local AEM instances will be stored.
@@ -321,52 +345,93 @@ class AemConfig(
     var upInitializer: (LocalHandle, InstanceSync) -> Unit = { _, _ -> }
 
     /**
+     * If there is still some unstable instance left, then fail build except just logging warning.
+     */
+    @Input
+    var awaitFail: Boolean = props.boolean("aem.await.fail", true)
+
+    /**
+     * Hook for customizing instance availability check.
+     */
+    @Internal
+    @get:JsonIgnore
+    var awaitAvailableCheck: (InstanceState) -> Boolean = {
+        it.check({
+            it.connectionTimeout = (0.9 * awaitStableInterval.toDouble()).toInt()
+        }, {
+            !it.bundleState.unknown
+        })
+    }
+
+    /**
      * Time in milliseconds used as interval between next instance stability checks being performed.
      * Optimization could be necessary only when instance is heavily loaded.
      */
     @Input
-    var awaitInterval: Long = propParser.long("aem.await.interval", TimeUnit.SECONDS.toMillis(1))
-
-    /**
-     * After each await interval, instance stability check is being performed.
-     * This value is a HTTP connection timeout (in millis) which must be smaller than interval to avoid race condition.
-     */
-    @Input
-    var awaitTimeout: Int = propParser.int("aem.await.timeout", (0.9 * awaitInterval.toDouble()).toInt())
+    var awaitStableInterval: Long = props.long("aem.await.stable.interval", TimeUnit.SECONDS.toMillis(1))
 
     /**
      * Maximum intervals after which instance stability checks will
      * be skipped if there is still some unstable instance left.
      */
     @Input
-    var awaitTimes: Long = propParser.long("aem.await.times", 60 * 5)
+    var awaitStableTimes: Long = props.long("aem.await.stable.times", 60 * 5)
 
     /**
-     * If there is still some unstable instance left, then fail build except just logging warning.
+     * Hook for customizing instance state provider used within stable checking.
      */
-    @Input
-    var awaitFail: Boolean = propParser.boolean("aem.await.fail", true)
+    @Internal
+    @get:JsonIgnore
+    var awaitStableState: (InstanceState) -> Int = { it.bundleState.hashCode() }
+
+    /**
+     * Hook for customizing instance stability check.
+     */
+    @Internal
+    @get:JsonIgnore
+    var awaitStableCheck: (InstanceState) -> Boolean = {
+        it.check({
+            it.connectionTimeout = (0.9 * awaitStableInterval.toDouble()).toInt()
+        }, {
+            it.bundleState.stable
+        })
+    }
 
     /**
      * Number of intervals / additional instance stability checks to assure all stable instances.
      * This mechanism protect against temporary stable states.
      */
     @Input
-    var awaitAssurances: Long = propParser.long("aem.await.assurances", 5L)
+    var awaitStableAssurances: Long = props.long("aem.await.stable.assurances", 5L)
 
     /**
-     * Hook for customizing condition being an instance stability check.
+     * Hook for customizing instance health check.
      */
-
     @Internal
     @get:JsonIgnore
-    var awaitCondition: (InstanceState) -> Boolean = { it.stable }
+    var awaitHealthCheck: (InstanceState) -> Boolean = {
+        it.check({
+            it.connectionTimeout = 10000
+        }, {
+            it.componentState.check(awaitHealthComponentsActive, { it.active })
+        })
+    }
+
+    /**
+     * OSGi component PID patterns used to check particular component state
+     * (ensuring that it is active).
+     */
+    @Input
+    var awaitHealthComponentsActive: MutableSet<String> = mutableSetOf(
+            "com.day.crx.packaging.*",
+            "org.apache.sling.installer.*"
+    )
 
     /**
      * Time in milliseconds to postpone instance stability checks after triggering instances restart.
      */
     @Input
-    var reloadDelay: Long = propParser.long("aem.reload.delay", TimeUnit.SECONDS.toMillis(10))
+    var reloadDelay: Long = props.long("aem.reload.delay", TimeUnit.SECONDS.toMillis(10))
 
     /**
      * Satisfy is a lazy task, which means that it will not install package that is already installed.
@@ -375,14 +440,14 @@ class AemConfig(
      * This flag can change that behavior, so that information will be refreshed after each package installation.
      */
     @Input
-    var satisfyRefreshing: Boolean = propParser.boolean("aem.satisfy.refreshing", false)
+    var satisfyRefreshing: Boolean = props.boolean("aem.satisfy.refreshing", false)
 
     /**
      * Satisfy handles plain OSGi bundle JAR's deployment by automatic wrapping to CRX package.
      * This path determines a path in JCR repository in which such bundles will be deployed on AEM.
      */
     @Input
-    var satisfyBundlePath: String = propParser.string("aem.satisfy.bundlePath", "/apps/gradle-aem-plugin/satisfy/install")
+    var satisfyBundlePath: String = props.string("aem.satisfy.bundlePath", "/apps/gradle-aem-plugin/satisfy/install")
 
     /**
      * A hook which could be used to override default properties used to generate a CRX package from OSGi bundle.
@@ -395,16 +460,32 @@ class AemConfig(
      * Determines which packages should be installed by default when satisfy task is being executed.
      */
     @Input
-    var satisfyGroupName = propParser.string("aem.satisfy.group.name", "*")
+    var satisfyGroupName = props.string("aem.satisfy.group.name", "*")
 
     /**
      * Determines a Vault filter used to checkout JCR content from running AEM instance.
      *
-     * By default it points to same filter being used to build CRX package,
-     * but could be customized to filter out files being checked out.
+     * @see <http://jackrabbit.apache.org/filevault/filter.html>
+     *
+     * Default: [automatically determined]
      */
     @Input
-    var checkoutFilterPath: String = propParser.string("aem.checkout.filterPath", vaultFilterPath)
+    var checkoutFilterPath: String = props.string("aem.checkout.filterPath", "")
+
+    /**
+     * Convention paths used to determine Vault checkout filter if it is not specified explicitly.
+     *
+     * Firstly there will be checked existence of 'checkout.xml' file.
+     * By design, it should be customized version of 'filter.xml' with reduced count of filter roots
+     * to avoid checking out too much content.
+     *
+     * As a fallback there will be used 'filter.xml' file. In that case same file will be used
+     * to build CRX package and checkout JCR content from running instance.
+     */
+    @get:Internal
+    @get:JsonIgnore
+    val checkoutFilterPaths: List<String>
+        get() = listOf("$vaultPath/checkout.xml", "$vaultPath/filter.xml")
 
     /**
      * Determines which files will be deleted within running cleaning
@@ -412,9 +493,56 @@ class AemConfig(
      */
     @Input
     var cleanFilesDeleted: MutableList<String> = mutableListOf(
+            // VLT tool internal files
             "**/.vlt",
-            "**/.vlt*.tmp"
+            "**/.vlt*.tmp",
+
+            // Top level nodes should remain untouched
+            "**/jcr_root/.content.xml",
+            "**/jcr_root/apps/.content.xml",
+            "**/jcr_root/conf/.content.xml",
+            "**/jcr_root/content/.content.xml",
+            "**/jcr_root/content/dam/.content.xml",
+            "**/jcr_root/etc/.content.xml",
+            "**/jcr_root/etc/designs/.content.xml",
+            "**/jcr_root/home/.content.xml",
+            "**/jcr_root/home/groups/.content.xml",
+            "**/jcr_root/home/users/.content.xml",
+            "**/jcr_root/libs/.content.xml",
+            "**/jcr_root/system/.content.xml",
+            "**/jcr_root/tmp/.content.xml",
+            "**/jcr_root/var/.content.xml"
     )
+
+    /**
+     * Define here properties that will be skipped when pulling JCR content from AEM instance.
+     *
+     * After special delimiter '!' there could be specified one or many path patterns
+     * (ANT style, delimited with ',') in which property shouldn't be removed.
+     */
+    @Input
+    var cleanSkipProperties: MutableList<String> = mutableListOf(
+            "jcr:uuid!**/home/users/*,**/home/groups/*",
+            "jcr:lastModified",
+            "jcr:created",
+            "cq:lastModified*",
+            "cq:lastReplicat*",
+            "*_x0040_Delete",
+            "*_x0040_TypeHint"
+    )
+
+    /**
+     * Turn on/off default system notifications.
+     */
+    @Internal
+    var notificationEnabled: Boolean = props.boolean("aem.notification.enabled", false)
+
+    /**
+     * Hook for customizing notifications being displayed.
+     */
+    @Internal
+    @JsonIgnore
+    var notificationConfig: (Notify) -> Unit = { it.darkStyle().hideAfter(5000) }
 
     /**
      * Initialize defaults that depends on concrete type of project.
@@ -431,35 +559,14 @@ class AemConfig(
     }
 
     fun localInstance(httpUrl: String, configurer: LocalInstance.() -> Unit) {
-        instance(LocalInstance.create(httpUrl, configurer))
+        instance(LocalInstance.create(httpUrl, {
+            this.environment = this@AemConfig.environment
+            this.apply(configurer)
+        }))
     }
 
     fun localInstance(httpUrl: String, configurer: Closure<*>) {
         localInstance(httpUrl, { ConfigureUtil.configure(configurer, this) })
-    }
-
-    fun localAuthorInstance() {
-        localAuthorInstance({})
-    }
-
-    fun localAuthorInstance(configurer: LocalInstance.() -> Unit) {
-        localInstance(propParser.string(Instance.AUTHOR_URL_PROP, Instance.URL_AUTHOR_DEFAULT), configurer)
-    }
-
-    fun localAuthorInstance(configurer: Closure<*>) {
-        localAuthorInstance({ ConfigureUtil.configure(configurer, this) })
-    }
-
-    fun localPublishInstance() {
-        localPublishInstance({})
-    }
-
-    fun localPublishInstance(configurer: LocalInstance.() -> Unit) {
-        localInstance(propParser.string(Instance.PUBLISH_URL_PROP, Instance.URL_PUBLISH_DEFAULT), configurer)
-    }
-
-    fun localPublishInstance(configurer: Closure<*>) {
-        localPublishInstance({ ConfigureUtil.configure(configurer, this) })
     }
 
     fun remoteInstance(httpUrl: String) {
@@ -468,7 +575,7 @@ class AemConfig(
 
     fun remoteInstance(httpUrl: String, configurer: RemoteInstance.() -> Unit) {
         instance(RemoteInstance.create(httpUrl, {
-            this.environment = deployEnvironment
+            this.environment = this@AemConfig.environment
             this.apply(configurer)
         }))
     }
@@ -477,28 +584,8 @@ class AemConfig(
         remoteInstance(httpUrl, { ConfigureUtil.configure(configurer, this) })
     }
 
-    fun remoteAuthorInstance() {
-        remoteAuthorInstance({})
-    }
-
-    fun remoteAuthorInstance(configurer: RemoteInstance.() -> Unit) {
-        remoteInstance(propParser.string(Instance.AUTHOR_URL_PROP, Instance.URL_AUTHOR_DEFAULT), configurer)
-    }
-
-    fun remoteAuthorInstance(configurer: Closure<*>) {
-        remoteAuthorInstance({ ConfigureUtil.configure(configurer, this) })
-    }
-
-    fun remotePublishInstance() {
-        remotePublishInstance({})
-    }
-
-    fun remotePublishInstance(configurer: RemoteInstance.() -> Unit) {
-        remoteInstance(propParser.string(Instance.PUBLISH_URL_PROP, Instance.URL_PUBLISH_DEFAULT), configurer)
-    }
-
-    fun remotePublishInstance(configurer: Closure<*>) {
-        remotePublishInstance({ ConfigureUtil.configure(configurer, this) })
+    private fun instances(instances: Collection<Instance>) {
+        instances.forEach { instance(it) }
     }
 
     private fun instance(instance: Instance) {
@@ -519,10 +606,6 @@ class AemConfig(
 
         if (contentPath.isBlank()) {
             throw AemException("Content path cannot be blank")
-        }
-
-        if (awaitTimeout >= awaitInterval) {
-            throw AemException("Await timeout should be less than interval ($awaitTimeout < $awaitInterval)")
         }
 
         instances.values.forEach { it.validate() }
@@ -554,9 +637,6 @@ class AemConfig(
 
     /**
      * CRX package Vault filter path.
-     * Also used by VLT tool as default filter for files being checked out from running AEM instance.
-     *
-     * @see <http://jackrabbit.apache.org/filevault/filter.html>
      */
     @get:Internal
     @get:JsonIgnore
@@ -567,19 +647,58 @@ class AemConfig(
     @get:JsonIgnore
     val vaultLineSeparatorString: String = LineSeparator.string(vaultLineSeparator)
 
+    /**
+     * Append wildcard to packages specified.
+     */
     @Internal
-    fun namePrefix(): String = if (isUniqueProjectName()) {
-        project.name
-    } else {
-        "${project.rootProject.name}${project.path}"
-                .replace(":", "-")
-                .replace(".", "-")
-                .substringBeforeLast("-")
+    @JsonIgnore
+    fun wildcardPackage(pkg: String): Collection<String> {
+        return wildcardPackage(listOf(pkg))
     }
 
     @Internal
     @JsonIgnore
-    fun isUniqueProjectName() = project == project.rootProject || project.name == project.rootProject.name
+    fun wildcardPackage(packages: Collection<String>): Collection<String> {
+        return packages.map { "${it.removeSuffix("*")}*" }.toSet()
+    }
+
+    @get:Internal
+    @get:JsonIgnore
+    val projectNamePrefix: String
+        get() {
+            return if (projectNameUnique) {
+                project.name
+            } else {
+                "${project.rootProject.name}${project.path}"
+                        .replace(":", "-")
+                        .replace(".", "-")
+                        .substringBeforeLast("-")
+            }
+        }
+
+    @get:Internal
+    @get:JsonIgnore
+    val projectNameUnique: Boolean
+        get() = project == project.rootProject || project.name == project.rootProject.name
+
+    init {
+        project.afterEvaluate { ensureInstances() }
+    }
+
+    private fun ensureInstances() {
+        // Define through command line (forced instances)
+        if (instanceList.isNotBlank()) {
+            instances(Instance.parse(instanceList))
+        }
+
+        // Define through properties (remote instances)
+        instances(Instance.properties(project))
+
+        // Define defaults if still no instances defined at all
+        if (instances.isEmpty()) {
+            instances(Instance.defaults(project))
+        }
+    }
 
     companion object {
 

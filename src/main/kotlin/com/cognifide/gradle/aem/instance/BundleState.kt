@@ -11,21 +11,6 @@ import org.apache.commons.lang3.builder.HashCodeBuilder
 @JsonIgnoreProperties(ignoreUnknown = true)
 class BundleState private constructor() {
 
-    companion object {
-        fun fromJson(json: String): BundleState {
-            return ObjectMapper().readValue(json, BundleState::class.java)
-        }
-
-        fun unknown(e: Exception): BundleState {
-            val response = BundleState()
-            response.bundles = listOf()
-            response.status = e.message ?: "Unknown"
-            response.stats = listOf(0, 0, 0, 0, 0)
-
-            return response
-        }
-    }
-
     @JsonProperty("data")
     lateinit var bundles: List<Bundle>
 
@@ -35,7 +20,7 @@ class BundleState private constructor() {
     lateinit var stats: List<Int>
 
     val stable: Boolean
-        get() = !unknown && bundles.all { it.active }
+        get() = !unknown && bundles.all { it.stable }
 
     val total: Int
         get() = stats[0]
@@ -62,25 +47,25 @@ class BundleState private constructor() {
         get() = Formats.percent(total - (resolvedBundles + installedBundles), total)
 
     /**
-     * Checks if all bundles of matching symbolic name pattern are active.
+     * Checks if all bundles of matching symbolic name pattern are stable.
      */
-    fun active(symbolicNames: List<String>): Boolean {
-        return !unknown && bundles.filter { Patterns.wildcard(it.symbolicName, symbolicNames) }.all { it.active }
+    fun stable(symbolicNames: Collection<String>): Boolean {
+        return !unknown && bundles.filter { Patterns.wildcard(it.symbolicName, symbolicNames) }.all { it.stable }
     }
 
-    fun active(symbolicName: String): Boolean {
-        return active(listOf(symbolicName))
+    fun stable(symbolicName: String): Boolean {
+        return stable(listOf(symbolicName))
     }
 
     /**
      * Checks if all bundles except these matching symbolic name pattern are active.
      */
-    fun activeIgnoring(symbolicNames: List<String>): Boolean {
-        return !unknown && bundles.filter { !Patterns.wildcard(it.symbolicName, symbolicNames) }.all { it.active }
+    fun stableExcept(symbolicNames: Collection<String>): Boolean {
+        return !unknown && bundles.filter { !Patterns.wildcard(it.symbolicName, symbolicNames) }.all { it.stable }
     }
 
-    fun activeIgnoring(symbolicName: String): Boolean {
-        return activeIgnoring(listOf(symbolicName))
+    fun stableExcept(symbolicName: String): Boolean {
+        return stableExcept(listOf(symbolicName))
     }
 
     override fun equals(other: Any?): Boolean {
@@ -116,7 +101,7 @@ class BundleState private constructor() {
 
         var fragment: Boolean = false
 
-        val active: Boolean
+        val stable: Boolean
             get() = if (fragment) {
                 stateRaw == FRAGMENT_ACTIVE_STATE
             } else {
@@ -149,9 +134,24 @@ class BundleState private constructor() {
         }
 
         companion object {
-            val FRAGMENT_ACTIVE_STATE = 4
+            const val FRAGMENT_ACTIVE_STATE = 4
 
-            val BUNDLE_ACTIVE_STATE = 32
+            const val BUNDLE_ACTIVE_STATE = 32
+        }
+    }
+
+    companion object {
+        fun fromJson(json: String): BundleState {
+            return ObjectMapper().readValue(json, BundleState::class.java)
+        }
+
+        fun unknown(e: Exception): BundleState {
+            val response = BundleState()
+            response.bundles = listOf()
+            response.status = e.message ?: "Unknown"
+            response.stats = listOf(0, 0, 0, 0, 0)
+
+            return response
         }
     }
 

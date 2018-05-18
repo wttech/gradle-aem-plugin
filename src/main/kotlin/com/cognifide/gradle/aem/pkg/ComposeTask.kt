@@ -4,11 +4,12 @@ import aQute.bnd.osgi.Jar
 import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.api.AemException
 import com.cognifide.gradle.aem.api.AemTask
+import com.cognifide.gradle.aem.base.vlt.VltFilter
 import com.cognifide.gradle.aem.bundle.BundleCollector
+import com.cognifide.gradle.aem.api.AemNotifier
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.internal.file.FileContentReader
-import com.cognifide.gradle.aem.internal.jsoup.JsoupUtil
 import groovy.lang.Closure
 import org.gradle.api.Project
 import org.gradle.api.file.CopySpec
@@ -18,10 +19,9 @@ import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.bundling.Zip
+import org.gradle.language.base.plugins.LifecycleBasePlugin
 import org.gradle.util.ConfigureUtil
-import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
-import org.jsoup.parser.Parser
 import java.io.File
 import java.io.Serializable
 
@@ -63,14 +63,14 @@ open class ComposeTask : Zip(), AemTask {
     @Internal
     var fileFilter: ((CopySpec) -> Unit) = { spec ->
         if (fileFilterOptions.excluding) {
-            spec.exclude(config.filesExcluded)
+            spec.exclude(config.packageFilesExcluded)
         }
 
         spec.eachFile({ fileDetail ->
             val path = "/${fileDetail.relativePath.pathString.removePrefix("/")}"
 
             if (fileFilterOptions.expanding) {
-                if (Patterns.wildcard(path, config.filesExpanded)) {
+                if (Patterns.wildcard(path, config.packageFilesExpanded)) {
                     FileContentReader.filter(fileDetail, { propertyParser.expandPackage(it, fileProperties, path) })
                 }
             }
@@ -101,6 +101,25 @@ open class ComposeTask : Zip(), AemTask {
                 "filterRoots" to filterRootsProp
         )
 
+    /**
+     * Configure default task dependency assignments while including dependant project bundles.
+     * Simplifies multi-module project configuration.
+     */
+    @Input
+    var dependBundlesTaskNames: List<String> = mutableListOf(
+            LifecycleBasePlugin.ASSEMBLE_TASK_NAME,
+            LifecycleBasePlugin.CHECK_TASK_NAME
+    )
+
+    /**
+     * Configure default task dependency assignments while including dependant project content.
+     * Simplifies multi-module project configuration.
+     */
+    @Input
+    var dependContentTaskNames: List<String> = mutableListOf(
+            ComposeTask.NAME + DEPENDENCIES_SUFFIX
+    )
+
     init {
         description = "Composes CRX package from JCR content and built OSGi bundles"
         group = AemTask.GROUP
@@ -117,6 +136,8 @@ open class ComposeTask : Zip(), AemTask {
             fromBundles()
             fromContents()
         })
+
+        doLast { AemNotifier.of(project).default("Package composed", getArchiveName()) }
     }
 
     private fun fromBundles() {
@@ -182,12 +203,12 @@ open class ComposeTask : Zip(), AemTask {
         bundleCollectors += {
             val config = AemConfig.of(project)
 
-            dependProject(project, config.dependBundlesTaskNames)
+            dependProject(project, dependBundlesTaskNames)
 
             var effectiveInstallPath = if (!installPath.isNullOrBlank()) {
                 installPath
             } else {
-                AemConfig.of(project).bundlePath
+                config.bundlePath
             }
 
             if (!runMode.isNullOrBlank()) {
@@ -212,7 +233,7 @@ open class ComposeTask : Zip(), AemTask {
         contentCollectors += {
             val config = AemConfig.of(project)
 
-            dependProject(project, config.dependContentTaskNames)
+            dependProject(project, dependContentTaskNames)
             extractVaultFilters(project, config)
 
             val contentDir = File("${config.contentPath}/${PackagePlugin.JCR_ROOT}")
@@ -255,16 +276,10 @@ open class ComposeTask : Zip(), AemTask {
 
     private fun extractVaultFilters(project: Project, config: AemConfig) {
         if (!config.vaultFilterPath.isBlank() && File(config.vaultFilterPath).exists()) {
-            filterRoots.addAll(extractVaultFilters(File(config.vaultFilterPath)))
+            filterRoots.addAll(VltFilter(File(config.vaultFilterPath)).rootElements)
         } else {
-            filterRoots.add(JsoupUtil.selfClosingTag(filterRootDefault(project, config), "filter"))
+            filterRoots.add(VltFilter.rootElement(filterRootDefault(project, config)))
         }
-    }
-
-    private fun extractVaultFilters(filter: File): Set<Element> {
-        val doc = Jsoup.parse(filter.bufferedReader().use { it.readText() }, "", Parser.xmlParser())
-
-        return doc.select("filter[root]").toSet()
     }
 
     fun includeVault(vltPath: Any) {
@@ -286,7 +301,7 @@ open class ComposeTask : Zip(), AemTask {
             return if (project == project.rootProject || project.name == project.rootProject.name) {
                 defaultArchiveName
             } else {
-                "${config.namePrefix()}-$defaultArchiveName"
+                "${config.projectNamePrefix}-$defaultArchiveName"
             }
         }
 

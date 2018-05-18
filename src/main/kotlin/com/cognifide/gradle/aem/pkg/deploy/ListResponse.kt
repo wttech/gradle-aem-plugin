@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem.pkg.deploy
 
 import com.cognifide.gradle.aem.api.AemConfig
-import com.cognifide.gradle.aem.internal.PropertyParser
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -120,7 +119,9 @@ class ListResponse private constructor() {
         },
         BY_DOWNLOAD_NAME() {
             override fun resolve(project: Project, response: ListResponse, expected: Package): Package? {
-                if (BooleanUtils.toBoolean(project.properties.getOrElse("aem.deploy.skipDownloadName", { "true" }) as String?)) {
+                val config = AemConfig.of(project)
+
+                if (config.packageSkipDownloadName) {
                     project.logger.debug("Finding package by download name '${expected.downloadName}' is skipped.")
                     return null
                 }

@@ -8,19 +8,21 @@ defaultTasks = [':aemDeploy']
 apply plugin: 'com.cognifide.aem.bundle'
 apply plugin: "kotlin"
 
-jar {
-    manifest {
-        def pkg = 'com.company.aem.example.common'
-
-        attributes([
-                'Bundle-SymbolicName' : pkg,
-                'Sling-Model-Packages': pkg,
-                'Export-Package'      : "$pkg.*;-split-package:=merge-first,org.hashids.*"
-        ])
-    }
-}
-
 dependencies {
     aemInstall group: 'org.jetbrains.kotlin', name: 'kotlin-osgi-bundle', version: '1.2.21'
     aemEmbed group: 'org.hashids', name: 'hashids', version: '1.0.1'
+}
+
+aem {
+    config {
+        bundlePackage = "com.company.aem.example.common"
+    }
+}
+
+jar {
+    manifest {
+        attributes([
+                'Export-Package': "org.hashids.*"
+        ])
+    }
 }
