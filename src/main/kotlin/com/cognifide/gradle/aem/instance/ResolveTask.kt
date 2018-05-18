@@ -24,11 +24,13 @@ open class ResolveTask : AemDefaultTask() {
 
     @TaskAction
     fun resolve() {
-        if (isTaskExecuted(CreateTask.NAME)) {
+        val premature = !isTaskExecuted(CreateTask.NAME) && !isTaskExecuted(SatisfyTask.NAME)
+
+        if (premature || isTaskExecuted(CreateTask.NAME)) {
             logger.info("Resolving instance files for creating instances.")
             logger.info("Resolved instance files: ${createTask.instanceFiles}")
         }
-        if (isTaskExecuted(SatisfyTask.NAME)) {
+        if (premature || isTaskExecuted(SatisfyTask.NAME)) {
             logger.info("Resolving CRX packages for satisfying instances.")
             logger.info("Resolved CRX packages: ${satisfyTask.packageGroups}")
         }
