@@ -68,6 +68,7 @@
       "packageFileProperties": {},
       "packageSnapshots": [],
       "packageAcHandling": "merge_preserve",
+      "packageSkipDownloadName": true,
 
       "vaultCopyMissingFiles": true,
       "vaultFilesPath": "debug/minimal/src/main/resources/META-INF/vault",

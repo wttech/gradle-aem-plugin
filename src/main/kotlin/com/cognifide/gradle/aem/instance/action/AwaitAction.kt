@@ -76,7 +76,7 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
                     .collect(Collectors.toList())
             unavailableInstances -= availableInstances
 
-            if (!unavailableNotification && (timer.ticks.toDouble() / stableTimes.toDouble() > 0.1) && unavailableInstances.isNotEmpty()) {
+            if (!unavailableNotification && (timer.ticks.toDouble() / stableTimes.toDouble() > INSTANCE_UNAVAILABLE_RATIO) && unavailableInstances.isNotEmpty()) {
                 notifier.default("Instances not available", "Instances: ${unavailableInstances.names}")
                 unavailableNotification = true
             }
@@ -172,7 +172,7 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
     }
 
     private fun progressTicks(tick: Long, maxTicks: Long): String {
-        return if (maxTicks > 0 && (tick.toDouble() / maxTicks.toDouble() > 0.1)) {
+        return if (maxTicks > 0 && (tick.toDouble() / maxTicks.toDouble() > PROGRESS_COUNTING_RATIO)) {
             "[$tick/$maxTicks]"
         } else if (tick.rem(2) == 0L) {
             "[*]"
@@ -187,6 +187,12 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
         } else {
             "-"
         }
+    }
+
+    companion object {
+        const val PROGRESS_COUNTING_RATIO: Double = 0.1
+
+        const val INSTANCE_UNAVAILABLE_RATIO: Double = 0.5
     }
 
 }
