@@ -32,7 +32,7 @@ open class ResolveTask : AemDefaultTask() {
         }
         if (premature || isTaskExecuted(SatisfyTask.NAME)) {
             logger.info("Resolving CRX packages for satisfying instances.")
-            logger.info("Resolved CRX packages: ${satisfyTask.packageGroups}")
+            logger.info("Resolved CRX packages: ${satisfyTask.allFiles}")
         }
     }
 
