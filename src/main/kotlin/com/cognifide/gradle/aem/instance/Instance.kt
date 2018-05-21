@@ -6,7 +6,6 @@ import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.pkg.deploy.ListResponse
 import com.fasterxml.jackson.annotation.JsonIgnore
-import org.apache.commons.lang3.StringUtils
 import org.gradle.api.Project
 import java.io.Serializable
 import kotlin.reflect.KClass
@@ -30,8 +29,6 @@ interface Instance : Serializable {
         val AUTHORS_PROP = "aem.instance.authors"
 
         val PUBLISHERS_PROP = "aem.instance.publishers"
-
-        val REMOTE_PROP_PATTERN = "aem.instance.remote.*.httpUrl"
 
         fun parse(str: String): List<RemoteInstance> {
             return str.split(";").map { urlRaw ->
@@ -62,24 +59,65 @@ interface Instance : Serializable {
             }
         }
 
-        fun properties(project: Project): List<RemoteInstance> {
-            return project.properties.filterKeys { Patterns.wildcard(it, REMOTE_PROP_PATTERN) }.map {
-                val nameParts = StringUtils.substringBetween(it.key, ".remote.", ".httpUrl")!!.split("-")
+        fun properties(project: Project): List<Instance> {
+            val localInstances = collectProperties(project, "local").map {
+                val (name, props) = it
+                val nameParts = name.split("-")
                 if (nameParts.size != 2) {
-                    throw InstanceException("Instance list property '${it.key}' does not have valid name part.")
+                    throw InstanceException("Local instance name has invalid format: '$name'.")
                 }
-
                 val (environment, typeName) = nameParts
-                val httpUrl = it.value as String?
-                if (httpUrl.isNullOrBlank()) {
-                    throw InstanceException("Instance list property '${it.key}' value cannot be blank.")
-                }
+                val httpUrl = props["httpUrl"]
+                        ?: throw InstanceException("Local instance named '$name' must have property 'httpUrl' defined.")
 
-                RemoteInstance.create(httpUrl!!, {
+                LocalInstance.create(httpUrl, {
                     this.environment = environment
                     this.typeName = typeName
+
+                    props["password"]?.let { this.password = it }
+                    props["jvmOpts"]?.let { this.jvmOpts = it.split(" ") }
+                    props["startOpts"]?.let { this.startOpts = it.split(" ") }
+                    props["runModes"]?.let { this.runModes = it.split(",") }
+                    props["debugPort"]?.let { this.debugPort = it.toInt() }
                 })
             }.sortedBy { it.name }
+
+            val remoteInstances = collectProperties(project, "remote").map {
+                val (name, props) = it
+                val nameParts = name.split("-")
+                if (nameParts.size != 2) {
+                    throw InstanceException("Remote instance name has invalid format: '$name'.")
+                }
+                val (environment, typeName) = nameParts
+                val httpUrl = props["httpUrl"]
+                        ?: throw InstanceException("Remote instance named '$name' must have property 'httpUrl' defined.")
+
+                RemoteInstance.create(httpUrl, {
+                    this.environment = environment
+                    this.typeName = typeName
+
+                    props["user"]?.let { this.user = it }
+                    props["password"]?.let { this.password = it }
+
+                })
+            }.sortedBy { it.name }
+
+            return localInstances + remoteInstances
+        }
+
+        private fun collectProperties(project: Project, type: String): MutableMap<String, MutableMap<String, String>> {
+            return project.properties.filterKeys { Patterns.wildcard(it, "aem.instance.$type.*.*") }.entries.fold(mutableMapOf(), { result, e ->
+                val (key, value) = e
+                val parts = key.substringAfter(".$type.").split(".")
+                if (parts.size != 2) {
+                    throw InstanceException("Instance list property '$key' has invalid format.")
+                }
+
+                val (name, prop) = parts
+
+                result.getOrPut(name, { mutableMapOf() })[prop] = value as String
+                result
+            })
         }
 
         fun defaults(project: Project): List<RemoteInstance> {

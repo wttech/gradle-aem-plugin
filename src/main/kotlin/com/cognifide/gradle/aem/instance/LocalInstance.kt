@@ -34,7 +34,7 @@ class LocalInstance private constructor() : Instance, Serializable {
         }
 
     @get:JsonIgnore
-    var jvmOpts = mutableListOf(
+    var jvmOpts: List<String> = mutableListOf(
             "-server", "-Xmx1024m", "-XX:MaxPermSize=256M", "-Djava.awt.headless=true"
     )
 
@@ -43,7 +43,7 @@ class LocalInstance private constructor() : Instance, Serializable {
         get() = (jvmOptsDefaults + jvmOpts).joinToString(" ")
 
     @get:JsonIgnore
-    var startOpts = mutableListOf<String>()
+    var startOpts: List<String> = mutableListOf()
 
     @get:JsonProperty("startOpts")
     val startOptsString: String
@@ -51,10 +51,10 @@ class LocalInstance private constructor() : Instance, Serializable {
 
     @get:JsonIgnore
     val runModesDefault
-        get() = listOf(typeName)
+        get() = listOf(type.name.toLowerCase())
 
     @get:JsonIgnore
-    var runModes = mutableListOf(ENVIRONMENT)
+    var runModes: List<String> = mutableListOf(ENVIRONMENT)
 
     @get:JsonProperty("runModes")
     val runModesString: String
