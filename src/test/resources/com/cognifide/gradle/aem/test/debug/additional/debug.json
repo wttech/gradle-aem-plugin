@@ -193,7 +193,7 @@
         "**/start",
         "**/stop"
       ],
-      "awaitFail": true,
+      "awaitResume": false,
       "awaitFast": false,
       "awaitFastDelay": 1000,
       "awaitStableInterval": 1000,
