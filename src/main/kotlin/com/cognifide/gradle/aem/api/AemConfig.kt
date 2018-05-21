@@ -351,6 +351,13 @@ class AemConfig(
     var awaitFast: Boolean = props.flag("aem.await.fast")
 
     /**
+     * Time to wait e.g after deployment before checking instance stability.
+     * Considered only when fast mode is enabled.
+     */
+    @Input
+    var awaitFastDelay: Long = props.long("aem.await.fast.delay", TimeUnit.SECONDS.toMillis(1))
+
+    /**
      * Do not fail build but log warning when there is still some unstable or unhealthy instance.
      */
     @Input

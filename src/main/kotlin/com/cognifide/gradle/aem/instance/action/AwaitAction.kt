@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.instance.action
 import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.instance.*
 import com.cognifide.gradle.aem.internal.Behaviors
+import com.cognifide.gradle.aem.internal.ProgressCountdown
 import com.cognifide.gradle.aem.internal.ProgressLogger
 import org.apache.http.HttpStatus
 import org.gradle.api.Project
@@ -14,6 +15,8 @@ import java.util.stream.Collectors
 open class AwaitAction(project: Project, val instances: List<Instance>) : AbstractAction(project) {
 
     var fast = config.awaitFast
+
+    var fastDelay = config.awaitFastDelay
 
     var resume = config.awaitResume
 
@@ -38,6 +41,10 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
         }
 
         logger.info("Awaiting instance(s): ${instances.names}")
+
+        if (fast) {
+            ProgressCountdown(project, "Awaiting instance(s)", fastDelay).run()
+        }
 
         val progressLogger = ProgressLogger(project, "Awaiting instance(s)")
         progressLogger.started()

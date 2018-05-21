@@ -96,6 +96,7 @@
       ],
       "awaitFail": true,
       "awaitFast": false,
+      "awaitFastDelay": 1000,
       "awaitStableInterval": 1000,
       "awaitStableTimes": 300,
       "awaitStableAssurances": 3,
