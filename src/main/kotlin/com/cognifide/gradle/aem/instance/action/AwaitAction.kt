@@ -40,13 +40,11 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
             return
         }
 
-        logger.info("Awaiting instance(s): ${instances.names}")
-
         if (fast) {
-            ProgressCountdown(project, "Awaiting instance(s)", fastDelay).run()
+            ProgressCountdown(project, "Waiting for instance(s): ${instances.names}", fastDelay).run()
         }
 
-        val progressLogger = ProgressLogger(project, "Awaiting instance(s)")
+        val progressLogger = ProgressLogger(project, "Awaiting stable instance(s): ${instances.names}")
         progressLogger.started()
 
         var lastStableChecksum = -1
