@@ -23,7 +23,7 @@
           "httpPort" : 4502,
           "startOpts" : "",
           "runModes" : "author,nosamplecontent,mongo",
-          "jvmOpts" : "-Xdebug -Xrunjdwp:transport=dt_socket,address=24502,server=y,suspend=n \"-server\", \"-Xmx2048m\", \"-XX:MaxPermSize=512M\", \"-Djava.awt.headless=true\""
+          "jvmOpts" : "-Xdebug -Xrunjdwp:transport=dt_socket,address=24502,server=y,suspend=n -server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true"
         },
         "local-publish1" : {
           "httpUrl" : "http://localhost:4503",
