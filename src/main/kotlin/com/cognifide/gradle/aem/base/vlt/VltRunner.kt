@@ -7,6 +7,7 @@ import com.cognifide.gradle.aem.internal.file.FileOperations
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import org.gradle.api.Project
 import org.gradle.api.logging.Logger
+import org.gradle.api.tasks.Internal
 import java.io.File
 
 // TODO https://github.com/Cognifide/gradle-aem-plugin/issues/135
@@ -32,13 +33,8 @@ class VltRunner(val project: Project) {
             logger.info("JCR content directory to be checked out does not exist: ${contentDir.absolutePath}")
         }
 
-        val props = mapOf<String, Any>(
-                "instance" to checkoutInstance,
-                "filter" to checkoutFilter.file.absolutePath
-        )
-
         checkoutFilter.use {
-            raw("checkout --force --filter {{filter}} {{instance.httpUrl}}/crx/server/crx.default", props)
+            raw("checkout --force --filter ${checkoutFilter.file.absolutePath} ${checkoutInstance.httpUrl}/crx/server/crx.default")
         }
     }
 
@@ -112,5 +108,26 @@ class VltRunner(val project: Project) {
             VltCleaner(project, root).clean()
         }
     }
+
+    fun rcp() {
+        val sourcePath = project.properties["aem.rcp.source.path"]
+                ?: throw VltException("RCP source path is not specified.")
+        val targetPath = project.properties["aem.rcp.target.path"] as String?
+                ?: throw VltException("RCP target path is not specified.")
+
+        val opts = project.properties["aem.rcp.target.path"] as String? ?: "-b 100 -r -u"
+
+        raw("rcp $opts ${sourceInstance.httpBasicAuthUrl}/crx/-/jcr:root$sourcePath ${targetInstance.httpBasicAuthUrl}/crx/-/jcr:root$targetPath")
+    }
+
+    @get:Internal
+    private val sourceInstance: Instance
+        get() = config.parseInstance(project.properties["aem.rcp.source.instance"] as String?
+                ?: throw VltException("RCP source instance is not specified."))
+
+    @get:Internal
+    private val targetInstance: Instance
+        get() = config.parseInstance(project.properties["aem.rcp.target.instance"] as String?
+                ?: throw VltException("RCP target instance is not specified."))
 
 }

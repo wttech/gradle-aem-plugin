@@ -608,6 +608,10 @@ class AemConfig(
         remoteInstance(httpUrl, { ConfigureUtil.configure(configurer, this) })
     }
 
+    fun parseInstance(urlOrName: String): Instance {
+        TODO("Implement this!")
+    }
+
     private fun instances(instances: Collection<Instance>) {
         instances.forEach { instance(it) }
     }
