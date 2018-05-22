@@ -345,10 +345,23 @@ class AemConfig(
     var upInitializer: (LocalHandle, InstanceSync) -> Unit = { _, _ -> }
 
     /**
-     * If there is still some unstable instance left, then fail build except just logging warning.
+     * Skip stable check assurances and health checking.
      */
     @Input
-    var awaitFail: Boolean = props.boolean("aem.await.fail", true)
+    var awaitFast: Boolean = props.flag("aem.await.fast")
+
+    /**
+     * Time to wait e.g after deployment before checking instance stability.
+     * Considered only when fast mode is enabled.
+     */
+    @Input
+    var awaitFastDelay: Long = props.long("aem.await.fast.delay", TimeUnit.SECONDS.toMillis(1))
+
+    /**
+     * Do not fail build but log warning when there is still some unstable or unhealthy instance.
+     */
+    @Input
+    var awaitResume: Boolean = props.flag("aem.await.resume")
 
     /**
      * Hook for customizing instance availability check.
@@ -357,7 +370,8 @@ class AemConfig(
     @get:JsonIgnore
     var awaitAvailableCheck: (InstanceState) -> Boolean = {
         it.check({
-            it.connectionTimeout = (0.9 * awaitStableInterval.toDouble()).toInt()
+            it.connectionTimeout = (0.5 * awaitStableInterval.toDouble()).toInt()
+            it.connectionRetries = false
         }, {
             !it.bundleState.unknown
         })
@@ -379,19 +393,29 @@ class AemConfig(
 
     /**
      * Hook for customizing instance state provider used within stable checking.
+     * State change cancels actual assurance.
      */
     @Internal
     @get:JsonIgnore
-    var awaitStableState: (InstanceState) -> Int = { it.bundleState.hashCode() }
+    var awaitStableState: (InstanceState) -> Int = {
+        it.check({
+            it.connectionTimeout = (0.5 * awaitStableInterval.toDouble()).toInt()
+            it.connectionRetries = false
+        }, {
+            it.bundleState.hashCode()
+        })
+    }
 
     /**
      * Hook for customizing instance stability check.
+     * Check will be repeated if assurance is configured.
      */
     @Internal
     @get:JsonIgnore
     var awaitStableCheck: (InstanceState) -> Boolean = {
         it.check({
-            it.connectionTimeout = (0.9 * awaitStableInterval.toDouble()).toInt()
+            it.connectionTimeout = (0.5 * awaitStableInterval.toDouble()).toInt()
+            it.connectionRetries = false
         }, {
             it.bundleState.stable
         })
@@ -402,7 +426,7 @@ class AemConfig(
      * This mechanism protect against temporary stable states.
      */
     @Input
-    var awaitStableAssurances: Long = props.long("aem.await.stable.assurances", 5L)
+    var awaitStableAssurances: Long = props.long("aem.await.stable.assurances", 3L)
 
     /**
      * Hook for customizing instance health check.

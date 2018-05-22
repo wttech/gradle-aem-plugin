@@ -42,10 +42,12 @@ class VltRunner(val project: Project) {
         }
     }
 
-    val checkoutFilter by lazy {
+    val checkoutFilter by lazy { determineCheckoutFilter() }
+
+    private fun determineCheckoutFilter(): VltFilter {
         val cmdFilterRoots = props.list("aem.checkout.filterRoots")
 
-        if (cmdFilterRoots.isNotEmpty()) {
+        return if (cmdFilterRoots.isNotEmpty()) {
             logger.info("Using Vault filter roots specified as command line property: $cmdFilterRoots")
             VltFilter.temporary(project, cmdFilterRoots)
         } else {
@@ -61,26 +63,28 @@ class VltRunner(val project: Project) {
         }
     }
 
-    val checkoutInstance: Instance by lazy {
+    val checkoutInstance: Instance by lazy { determineCheckoutInstance() }
+
+    private fun determineCheckoutInstance(): Instance {
         val cmdInstanceArg = props.string("aem.checkout.instance")
         if (!cmdInstanceArg.isNullOrBlank()) {
             val cmdInstance = Instance.parse(cmdInstanceArg!!).first()
             cmdInstance.validate()
 
             logger.info("Using instance specified by command line parameter: $cmdInstance")
-            return@lazy cmdInstance!!
+            return cmdInstance
         }
 
         val namedInstance = Instance.filter(project, config.instanceName).firstOrNull()
         if (namedInstance != null) {
             logger.info("Using first instance matching filter '${config.instanceName}': $namedInstance")
-            return@lazy namedInstance!!
+            return namedInstance
         }
 
         val anyInstance = Instance.filter(project, Instance.FILTER_ANY).firstOrNull()
         if (anyInstance != null) {
             logger.info("Using first instance matching filter '${Instance.FILTER_ANY}': $anyInstance")
-            return@lazy anyInstance!!
+            return anyInstance
         }
 
         throw VltException("Vault instance cannot be determined neither by command line parameter nor AEM config.")

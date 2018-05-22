@@ -193,3 +193,11 @@ interface Instance : Serializable {
 
 val Collection<Instance>.names: String
     get() = joinToString(", ") { it.name }
+
+fun Instance.isInitialized(project: Project): Boolean {
+    return this !is LocalInstance || LocalHandle(project, this).initialized
+}
+
+fun Instance.isBeingInitialized(project: Project): Boolean {
+    return this is LocalInstance && !LocalHandle(project, this).initialized
+}

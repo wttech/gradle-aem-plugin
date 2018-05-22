@@ -94,10 +94,12 @@
         "**/start",
         "**/stop"
       ],
-      "awaitFail": true,
+      "awaitResume": false,
+      "awaitFast": false,
+      "awaitFastDelay": 1000,
       "awaitStableInterval": 1000,
       "awaitStableTimes": 300,
-      "awaitStableAssurances": 5,
+      "awaitStableAssurances": 3,
       "awaitHealthComponentsActive": [
         "com.day.crx.packaging.*",
         "org.apache.sling.installer.*"

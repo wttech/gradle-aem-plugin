@@ -66,6 +66,8 @@ class InstanceSync(val project: Project, val instance: Instance) {
 
     var connectionUntrustedSsl = config.instanceConnectionUntrustedSsl
 
+    var connectionRetries = true
+
     var requestConfigurer: (HttpRequestBase) -> Unit = { _ -> }
 
     var responseHandler: (HttpResponse) -> Unit = { _ -> }
@@ -125,7 +127,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
     }
 
     fun createHttpClient(): HttpClient {
-        val httpClientBuilder = HttpClientBuilder.create()
+        val builder = HttpClientBuilder.create()
                 .addInterceptorFirst(PreemptiveAuthInterceptor())
                 .setDefaultRequestConfig(RequestConfig.custom()
                         .setConnectTimeout(connectionTimeout)
@@ -136,10 +138,13 @@ class InstanceSync(val project: Project, val instance: Instance) {
                     setCredentials(AuthScope.ANY, UsernamePasswordCredentials(basicUser, basicPassword))
                 })
         if (connectionUntrustedSsl) {
-            httpClientBuilder.setSSLSocketFactory(createSslConnectionSocketFactory())
+            builder.setSSLSocketFactory(createSslConnectionSocketFactory())
+        }
+        if (!connectionRetries) {
+            builder.disableAutomaticRetries()
         }
 
-        return httpClientBuilder.build()
+        return builder.build()
     }
 
     private fun createSslConnectionSocketFactory(): SSLConnectionSocketFactory {
