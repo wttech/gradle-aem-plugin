@@ -180,6 +180,7 @@ interface Instance : Serializable {
     val httpPort: Int
         get() = InstanceUrl.parse(httpUrl).httpPort
 
+    @get:JsonIgnore
     val httpBasicAuthUrl: String
         get() = httpUrl // TODO inject user and password, encode password special characters
 
