@@ -188,7 +188,6 @@ aem {
           "*_x0040_Delete",
           "*_x0040_TypeHint"
         ]
-        vaultGlobalOptions = "--credentials {{instance.credentials}}"
         vaultLineSeparator = "LF"
     
         deployDistributed = false

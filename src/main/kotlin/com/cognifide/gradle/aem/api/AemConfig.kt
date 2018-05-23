@@ -2,7 +2,6 @@ package com.cognifide.gradle.aem.api
 
 import aQute.bnd.osgi.Jar
 import com.cognifide.gradle.aem.instance.*
-import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.internal.LineSeparator
 import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.pkg.ComposeTask
@@ -304,12 +303,6 @@ class AemConfig(
      */
     @Input
     var vaultFilesPath: String = project.rootProject.file("src/main/resources/${PackagePlugin.VLT_PATH}").toString()
-
-    /**
-     * Global options which are being applied to any Vault related command like 'aemVault' or 'aemCheckout'.
-     */
-    @Input
-    var vaultGlobalOptions: String = props.string("aem.vlt.globalOptions", "--credentials {{instance.credentials}}")
 
     /**
      * Specify characters to be used as line endings when cleaning up checked out JCR content.
