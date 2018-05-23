@@ -14,9 +14,6 @@ import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.api.tasks.testing.Test
-import org.gradle.internal.impldep.org.eclipse.jgit.lib.ObjectChecker.`object`
-
-
 
 class BundlePlugin : Plugin<Project> {
 
