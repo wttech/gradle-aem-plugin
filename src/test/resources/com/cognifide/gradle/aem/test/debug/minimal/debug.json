@@ -72,7 +72,6 @@
 
       "vaultCopyMissingFiles": true,
       "vaultFilesPath": "debug/minimal/src/main/resources/META-INF/vault",
-      "vaultGlobalOptions": "--credentials {{instance.credentials}}",
       "vaultLineSeparator": "LF",
 
       "notificationEnabled": false,

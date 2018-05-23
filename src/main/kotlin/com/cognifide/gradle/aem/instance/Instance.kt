@@ -182,7 +182,7 @@ interface Instance : Serializable {
 
     @get:JsonIgnore
     val httpBasicAuthUrl: String
-        get() = httpUrl // TODO inject user and password, encode password special characters
+        get() = InstanceUrl.parse(httpUrl).httpBasicAuthUrl(user, password)
 
     val user: String
 

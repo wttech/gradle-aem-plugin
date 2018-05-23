@@ -7,7 +7,6 @@ import com.cognifide.gradle.aem.internal.file.FileOperations
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import org.gradle.api.Project
 import org.gradle.api.logging.Logger
-import org.gradle.api.tasks.Internal
 import java.io.File
 
 // TODO https://github.com/Cognifide/gradle-aem-plugin/issues/135
@@ -19,12 +18,28 @@ class VltRunner(val project: Project) {
 
     val config = AemConfig.of(project)
 
+    val workingDir: File
+        get() {
+            var path = "${config.contentPath}/${PackagePlugin.JCR_ROOT}"
+
+            val relativePath = project.properties["aem.vlt.path"] as String?
+            if (!relativePath.isNullOrBlank()) {
+                path = "$path/$relativePath"
+            }
+
+            return File(path)
+        }
+
     fun raw(command: String, props: Map<String, Any> = mapOf()) {
         val app = VltApp(project)
-        val allProps = mapOf("instances" to config.instances) + props
-        val fullCommand = this.props.expand("${config.vaultGlobalOptions} $command".trim(), allProps)
 
-        app.execute(fullCommand)
+        val allProps = mapOf("instances" to config.instances) + props
+        val fullCommand = this.props.expand(command, allProps)
+
+        logger.lifecycle("Working directory: $workingDir")
+        logger.lifecycle("Executing command: vlt $command")
+
+        app.execute(fullCommand, workingDir.absolutePath)
     }
 
     fun checkout() {
@@ -34,7 +49,7 @@ class VltRunner(val project: Project) {
         }
 
         checkoutFilter.use {
-            raw("checkout --force --filter ${checkoutFilter.file.absolutePath} ${checkoutInstance.httpUrl}/crx/server/crx.default")
+            raw("checkout --credentials ${checkoutInstance.credentials} --force --filter ${checkoutFilter.file.absolutePath} ${checkoutInstance.httpUrl}/crx/server/crx.default")
         }
     }
 
@@ -64,8 +79,7 @@ class VltRunner(val project: Project) {
     private fun determineCheckoutInstance(): Instance {
         val cmdInstanceArg = props.string("aem.checkout.instance")
         if (!cmdInstanceArg.isNullOrBlank()) {
-            val cmdInstance = Instance.parse(cmdInstanceArg!!).first()
-            cmdInstance.validate()
+            val cmdInstance = config.parseInstance(cmdInstanceArg!!)
 
             logger.info("Using instance specified by command line parameter: $cmdInstance")
             return cmdInstance
@@ -110,23 +124,37 @@ class VltRunner(val project: Project) {
     }
 
     fun rcp() {
-        val sourcePath = project.properties["aem.rcp.source.path"]
-                ?: throw VltException("RCP source path is not specified.")
-        val targetPath = project.properties["aem.rcp.target.path"] as String?
-                ?: throw VltException("RCP target path is not specified.")
-
-        val opts = project.properties["aem.rcp.target.path"] as String? ?: "-b 100 -r -u"
-
-        raw("rcp $opts ${sourceInstance.httpBasicAuthUrl}/crx/-/jcr:root$sourcePath ${targetInstance.httpBasicAuthUrl}/crx/-/jcr:root$targetPath")
+        rcpPaths.forEach { sourcePath, targetPath ->
+            raw("rcp $rcpOpts ${rcpSourceInstance.httpBasicAuthUrl}/crx/-/jcr:root$sourcePath ${rcpTargetInstance.httpBasicAuthUrl}/crx/-/jcr:root$targetPath")
+        }
     }
 
-    @get:Internal
-    private val sourceInstance: Instance
+    private val rcpPaths: Map<String, String>
+        get() {
+            val paths = props.list("aem.rcp.paths")
+            if (paths.isEmpty()) {
+                throw VltException("RCP paths are not specified.")
+            }
+
+            return paths.fold(mutableMapOf(), { r, p ->
+                val parts = p.split("=").map { it.trim() }
+                when (parts.size) {
+                    1 -> r[p] = p
+                    2 -> r[parts[0]] = parts[1]
+                    else -> throw VltException("RCP paths has invalid format: $rcpPaths")
+                }
+                r
+            })
+        }
+
+    private val rcpOpts: String
+        get() = project.properties["aem.rcp.opts"] as String? ?: "-b 100 -r -u"
+
+    private val rcpSourceInstance: Instance
         get() = config.parseInstance(project.properties["aem.rcp.source.instance"] as String?
                 ?: throw VltException("RCP source instance is not specified."))
 
-    @get:Internal
-    private val targetInstance: Instance
+    private val rcpTargetInstance: Instance
         get() = config.parseInstance(project.properties["aem.rcp.target.instance"] as String?
                 ?: throw VltException("RCP target instance is not specified."))
 

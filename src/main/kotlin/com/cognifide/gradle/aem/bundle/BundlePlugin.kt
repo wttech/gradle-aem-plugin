@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.bundle
 import aQute.bnd.gradle.BundleTaskConvention
 import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.pkg.PackagePlugin
+import org.apache.commons.lang3.exception.ExceptionUtils
 import org.gradle.api.JavaVersion
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -42,7 +43,9 @@ class BundlePlugin : Plugin<Project> {
         })
 
         val jar = tasks.getByName(JavaPlugin.JAR_TASK_NAME) as Jar
-        jar.baseName = "$group.$name"
+        if (!(group as String?).isNullOrBlank() && !name.isNullOrBlank()) {
+            jar.baseName = "$group.$name"
+        }
 
         afterEvaluate {
             val config = AemConfig.of(project)
@@ -99,7 +102,12 @@ class BundlePlugin : Plugin<Project> {
         }
 
         jar.doLast {
-            bundleConvention.buildBundle()
+            try {
+                bundleConvention.buildBundle()
+            } catch (e: Exception) {
+                logger.error("BND tool error: https://bnd.bndtools.org", ExceptionUtils.getRootCause(e))
+                throw BundleException("Bundle cannot be built properly.", e)
+            }
         }
     }
 

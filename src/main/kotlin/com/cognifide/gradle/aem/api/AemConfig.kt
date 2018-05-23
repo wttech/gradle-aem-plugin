@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.api
 
 import aQute.bnd.osgi.Jar
 import com.cognifide.gradle.aem.instance.*
+import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.internal.LineSeparator
 import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.pkg.ComposeTask
@@ -609,7 +610,7 @@ class AemConfig(
     }
 
     fun parseInstance(urlOrName: String): Instance {
-        TODO("Implement this!")
+        return instances[urlOrName] ?: Instance.parse(urlOrName).single().apply { validate() }
     }
 
     private fun instances(instances: Collection<Instance>) {
