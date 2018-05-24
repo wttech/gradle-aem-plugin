@@ -481,7 +481,8 @@ Screenshot below presents generated ZIP package which is a result of running `gr
 
 ### Expandable properties
 
-By default, plugin is configured that in all XML files located under path *META-INF/vault* properties can be injected using syntax: `${property}`.
+By default, plugin is configured that in all XML files located under path *META-INF/vault* properties can be injected using syntax: `{{property}}`.
+The properties syntax comes from [Pebble Template Engine](http://www.mitchellbosecke.com/pebble) which means that all its features (if statements, for loops, filters etc) can be used inside files being expanded.
 
 Related configuration:
 
