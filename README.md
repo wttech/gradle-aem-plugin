@@ -315,10 +315,13 @@ Using predefined instances with multiple same source and target nodes:
 gradlew :aemRcp -Paem.rcp.source.instance=int-author -Paem.rcp.target.instance=local-publish -Paem.rcp.paths=[/content/example,/content/example2]
 ```
 
-Using using instances defined dynamically:
+Using dynamically defined instances:
 ```
 gradlew :aemRcp -Paem.rcp.source.instance=http://user:pass@192.168.66.66:4502 -Paem.rcp.target.instance=http://user:pass@192.168.33.33:4502 -Paem.rcp.paths=[/content/example-demo=/content/example]
 ```
+
+Keep in mind, that copying JCR content between instances, could be a trigger for running AEM workflows like *DAM Update Asset* which could cause heavy load on instance.
+Consider disabling AEM workflow launchers before running this task and re-enabling after.
 
 #### Task `aemDebug` 
 
