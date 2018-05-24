@@ -48,6 +48,7 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
       * [Task aemCheckout](#task-aemcheckout)
       * [Task aemClean](#task-aemclean)
       * [Task aemVlt](#task-aemvlt)
+      * [Task aemRcp](#task-aemrcp)
       * [Task aemDebug](#task-aemdebug)
    * [Package plugin tasks](#package-plugin-tasks)
       * [Task aemCompose](#task-aemcompose)
@@ -139,8 +140,8 @@ aem {
     config {
         environment = "local" // -Paem.env or environment variable: AEM_ENV
     
-        instanceName = "${config.deployEnvironment}-*"
-        instanceAuthorName = "$deployEnvironment-author"
+        instanceName = "${environment}-*"
+        instanceAuthorName = "${environment}-author"
         instanceConnectionTimeout = 5000
         instanceConnectionUntrustedSsl = true
     
@@ -207,13 +208,17 @@ aem {
           "**/start",
           "**/stop"
         ]
+        upInitializer = { handle -> }
         awaitStableDelay = 3000
         awaitStableInterval = 1000
-        awaitStableTimeout = 900
         awaitStableTimes = 300
-        awaitFail = true
-        awaitStableAssurances = 5
-        awaitStableConditionCheck = { instanceState -> instanceState.stable }
+        awaitStableAssurances = 3
+        awiatStableState = { it.checkBundleState(500) }
+        awaitStableCheck = { it.checkBundleStable(500) }
+        awaitHealthCheck = { it.checkComponentState(["com.day.crx.packaging.*", "org.apache.sling.installer.*"], 10000) }
+        awaitFast = false
+        awaitFastDelay = 1000
+        awaitResume = false
         reloadDelay = 10000
         satisfyRefreshing = false
         satisfyBundlePath = "/apps/gradle-aem-plugin/satisfy/install"
@@ -295,6 +300,25 @@ gradlew :content:aemVlt -Paem.vlt.command='rcp -b 100 -r -u -n http://admin:admi
 For more details about available parameters, please visit [VLT Tool documentation](https://docs.adobe.com/docs/en/aem/6-2/develop/dev-tools/ht-vlttool.html).
 
 While using task `aemVlt` be aware that Gradle requires to have working directory with file *build.gradle* in it, but Vault tool can work at any directory under *jcr_root*. To change working directory for Vault, use property `aem.vlt.path` which is relative path to be appended to *jcr_root* for project task being currently executed.
+
+#### Task `aemRcp`
+
+Copy JCR content from one instance to another. Sample usages below.
+
+Using predefined instances with multiple different source and target nodes:
+```
+gradlew :aemRcp -Paem.rcp.source.instance=int-author -Paem.rcp.target.instance=local-publish -Paem.rcp.paths=[/content/example-demo=/content/example,/content/dam/example-demo=/content/dam/example]
+```
+
+Using predefined instances with multiple same source and target nodes:
+```
+gradlew :aemRcp -Paem.rcp.source.instance=int-author -Paem.rcp.target.instance=local-publish -Paem.rcp.paths=[/content/example,/content/example2]
+```
+
+Using using instances defined dynamically:
+```
+gradlew :aemRcp -Paem.rcp.source.instance=http://user:pass@192.168.66.66:4502 -Paem.rcp.target.instance=http://user:pass@192.168.33.33:4502 -Paem.rcp.paths=[/content/example-demo=/content/example]
+```
 
 #### Task `aemDebug` 
 
@@ -460,13 +484,17 @@ Wait until all local or remote AEM instance(s) be stable.
 
 AEM Config Param | CMD Property | Default Value | Purpose
 --- | --- | --- | ---
-`awaitDelay` | *aem.await.delay* | `1000` | Time in milliseconds to postpone instance stability checks to avoid race condition related with actual operation being performed on AEM like starting JCR package installation or even creating launchpad.
-`awaitInterval` | *aem.await.interval* | `1000` | Time in milliseconds used as interval between next instance stability checks being performed. Optimization could be necessary only when instance is heavily loaded.
-`awaitTimeout` | *aem.await.timeout* | `900` | After each await interval, instance stability check is being performed. This value is a HTTP connection timeout (in millis) which must be smaller than interval to avoid race condition.
-`awaitTimes` | *aem.await.times* | `300` | Maximum intervals after which instance stability checks will be skipped if there is still some unstable instance left.
-`awaitFail` | *aem.await.fail* | `true` | If there is still some unstable instance left, then fail build except just logging warning.
-`awaitAssurances` | *aem.await.assurances* | `3L` | Number of intervals / additional instance stability checks to assure all stable instances.
-`awaitCondition` | *aem.await.condition* | `{ it.stable }` | Hook for customizing condition being an instance stability check. Scope of lambda is class: [InstanceState](src/main/kotlin/com/cognifide/gradle/aem/instance/InstanceState.kt). Use one of its method and / or from [BundleState](src/main/kotlin/com/cognifide/gradle/aem/instance/BundleState.kt) to get customized behavior.
+`awaitStableInterval` | *aem.await.interval* | `1000` | Time in milliseconds used as interval between next instance stability checks being performed. Optimization could be necessary only when instance is heavily loaded.
+`awaitStableTimeout` | *aem.await.stable.timeout* | `900` | After each await interval, instance stability check is being performed. This value is a HTTP connection timeout (in millis) which must be smaller than interval to avoid race condition.
+`awaitStableTimes` | *aem.await.stable.times* | `300` | Maximum intervals after which instance stability checks will be skipped if there is still some unstable instance left.
+`awaitStableAssurances` | *aem.await.stable.assurances* | `3L` | Number of intervals / additional instance stability checks to assure all stable instances.
+`awaitStableCheck` | n/a | `{ it.checkBundleStable(500) }` | Hook for customizing instance stability check. Check will be repeated if assurance is configured. 
+`awaitHealthCheck` | n/a | { `it.checkComponentState(awaitHealthComponentsActive) }` | Hook for customizing instance health check.
+`awaitFast` | *aem.await.fast* | `false` | Skip stable check assurances and health checking. Alternative, quicker type of awaiting stable instances.
+`awaitFastDelay` | *aem.await.fast.delay* | `1000` | Time in milliseconds to postpone instance stability checks to avoid race condition related with actual operation being performed on AEM like starting JCR package installation or even creating launchpad.
+`awaitResume` | *aem.await.resume* | `false` | Do not fail build but log warning when there is still some unstable or unhealthy instance.
+
+Instance state, stable check, health check lambdas are using: [InstanceState](src/main/kotlin/com/cognifide/gradle/aem/instance/InstanceState.kt). Use its methods to achieve expected customized behavior.
 
 #### Task `aemCollect`
 

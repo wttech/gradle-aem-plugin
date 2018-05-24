@@ -194,6 +194,10 @@ interface Instance : Serializable {
 
     val environment: String
 
+    @get:JsonIgnore
+    val cmd: Boolean
+        get() = environment == ENVIRONMENT_CMD
+
     val typeName: String
 
     val type: InstanceType

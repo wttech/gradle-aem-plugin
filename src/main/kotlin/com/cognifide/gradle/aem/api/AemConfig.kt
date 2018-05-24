@@ -336,7 +336,7 @@ class AemConfig(
      */
     @Internal
     @get:JsonIgnore
-    var upInitializer: (LocalHandle, InstanceSync) -> Unit = { _, _ -> }
+    var upInitializer: (LocalHandle) -> Unit = { _ -> }
 
     /**
      * Skip stable check assurances and health checking.
@@ -391,14 +391,7 @@ class AemConfig(
      */
     @Internal
     @get:JsonIgnore
-    var awaitStableState: (InstanceState) -> Int = {
-        it.check({
-            it.connectionTimeout = (0.5 * awaitStableInterval.toDouble()).toInt()
-            it.connectionRetries = false
-        }, {
-            it.bundleState.hashCode()
-        })
-    }
+    var awaitStableState: (InstanceState) -> Int = { it.checkBundleState((0.5 * awaitStableInterval.toDouble()).toInt()) }
 
     /**
      * Hook for customizing instance stability check.
@@ -406,14 +399,7 @@ class AemConfig(
      */
     @Internal
     @get:JsonIgnore
-    var awaitStableCheck: (InstanceState) -> Boolean = {
-        it.check({
-            it.connectionTimeout = (0.5 * awaitStableInterval.toDouble()).toInt()
-            it.connectionRetries = false
-        }, {
-            it.bundleState.stable
-        })
-    }
+    var awaitStableCheck: (InstanceState) -> Boolean = { it.checkBundleStable((0.5 * awaitStableInterval.toDouble()).toInt()) }
 
     /**
      * Number of intervals / additional instance stability checks to assure all stable instances.
@@ -427,23 +413,7 @@ class AemConfig(
      */
     @Internal
     @get:JsonIgnore
-    var awaitHealthCheck: (InstanceState) -> Boolean = {
-        it.check({
-            it.connectionTimeout = 10000
-        }, {
-            it.componentState.check(awaitHealthComponentsActive, { it.active })
-        })
-    }
-
-    /**
-     * OSGi component PID patterns used to check particular component state
-     * (ensuring that it is active).
-     */
-    @Input
-    var awaitHealthComponentsActive: MutableSet<String> = mutableSetOf(
-            "com.day.crx.packaging.*",
-            "org.apache.sling.installer.*"
-    )
+    var awaitHealthCheck: (InstanceState) -> Boolean = { it.checkComponentState( setOf("com.day.crx.packaging.*", "org.apache.sling.installer.*"), 10000) }
 
     /**
      * Time in milliseconds to postpone instance stability checks after triggering instances restart.

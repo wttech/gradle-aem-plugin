@@ -129,33 +129,33 @@ class VltRunner(val project: Project) {
         }
     }
 
-    private val rcpPaths: Map<String, String>
-        get() {
-            val paths = props.list("aem.rcp.paths")
-            if (paths.isEmpty()) {
-                throw VltException("RCP paths are not specified.")
-            }
-
-            return paths.fold(mutableMapOf(), { r, p ->
-                val parts = p.split("=").map { it.trim() }
-                when (parts.size) {
-                    1 -> r[p] = p
-                    2 -> r[parts[0]] = parts[1]
-                    else -> throw VltException("RCP paths has invalid format: $rcpPaths")
-                }
-                r
-            })
+    val rcpPaths: Map<String, String> by lazy {
+        val paths = props.list("aem.rcp.paths")
+        if (paths.isEmpty()) {
+            throw VltException("RCP param '-Paem.rcp.paths' is not specified.")
         }
 
-    private val rcpOpts: String
-        get() = project.properties["aem.rcp.opts"] as String? ?: "-b 100 -r -u"
+        paths.fold(mutableMapOf<String, String>(), { r, path ->
+            val parts = path.split("=").map { it.trim() }
+            when (parts.size) {
+                1 -> r[path] = path
+                2 -> r[parts[0]] = parts[1]
+                else -> throw VltException("RCP path has invalid format: $path")
+            }
+            r
+        })
+    }
 
-    private val rcpSourceInstance: Instance
-        get() = config.parseInstance(project.properties["aem.rcp.source.instance"] as String?
-                ?: throw VltException("RCP source instance is not specified."))
+    val rcpOpts: String by lazy { project.properties["aem.rcp.opts"] as String? ?: "-b 100 -r -u" }
 
-    private val rcpTargetInstance: Instance
-        get() = config.parseInstance(project.properties["aem.rcp.target.instance"] as String?
-                ?: throw VltException("RCP target instance is not specified."))
+    val rcpSourceInstance: Instance by lazy {
+        config.parseInstance(project.properties["aem.rcp.source.instance"] as String?
+                ?: throw VltException("RCP param '-Paem.rcp.source.instance' is not specified."))
+    }
+
+    val rcpTargetInstance: Instance by lazy {
+        config.parseInstance(project.properties["aem.rcp.target.instance"] as String?
+                ?: throw VltException("RCP param '-Paem.rcp.target.instance' is not specified."))
+    }
 
 }

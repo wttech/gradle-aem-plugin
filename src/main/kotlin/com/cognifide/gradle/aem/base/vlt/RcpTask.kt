@@ -10,14 +10,19 @@ open class RcpTask : AemDefaultTask() {
     }
 
     init {
-        description = "Copy JCR content from one remote instance to another."
+        description = "Copy JCR content from instance to another."
     }
 
     @TaskAction
     fun rcp() {
         val runner = VltRunner(project)
         runner.rcp()
-        notifier.default("Copied JCR content") // TODO better message including args
+
+        if (!runner.rcpSourceInstance.cmd && !runner.rcpTargetInstance.cmd) {
+            notifier.default("RCP finished", "Copied ${runner.rcpPaths.size} JCR root(s) from instance ${runner.rcpSourceInstance.name} to ${runner.rcpTargetInstance.name}.")
+        } else {
+            notifier.default("RCP finished", "Copied ${runner.rcpPaths.size} JCR root(s) between instances.")
+        }
     }
 
 }
