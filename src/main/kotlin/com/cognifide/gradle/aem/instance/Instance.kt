@@ -180,6 +180,10 @@ interface Instance : Serializable {
     val httpPort: Int
         get() = InstanceUrl.parse(httpUrl).httpPort
 
+    @get:JsonIgnore
+    val httpBasicAuthUrl: String
+        get() = InstanceUrl.parse(httpUrl).httpBasicAuthUrl(user, password)
+
     val user: String
 
     val password: String
@@ -189,6 +193,10 @@ interface Instance : Serializable {
         get() = "*".repeat(password.length)
 
     val environment: String
+
+    @get:JsonIgnore
+    val cmd: Boolean
+        get() = environment == ENVIRONMENT_CMD
 
     val typeName: String
 

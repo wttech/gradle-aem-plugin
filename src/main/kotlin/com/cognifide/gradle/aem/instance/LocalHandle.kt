@@ -219,7 +219,7 @@ class LocalHandle(val project: Project, val instance: Instance) {
         }
 
         logger.info("Initializing running instance")
-        config.upInitializer(this, sync)
+        config.upInitializer(this)
         lock(LOCK_INIT)
     }
 

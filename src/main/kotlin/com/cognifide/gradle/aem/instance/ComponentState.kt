@@ -78,6 +78,9 @@ class ComponentState private constructor() {
         val satisfied: Boolean
             get() = stateRaw == STATE_RAW_SATISTIED
 
+        val notUnsatisfied: Boolean
+            get() = stateRaw != STATE_RAW_UNSATISFIED
+
         val unsatisfied: Boolean
             get() = stateRaw == STATE_RAW_UNSATISFIED
 

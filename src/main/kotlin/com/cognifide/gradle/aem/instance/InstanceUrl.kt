@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.instance
 import com.cognifide.gradle.aem.api.AemException
 import java.net.MalformedURLException
 import java.net.URL
+import java.net.URLEncoder
 
 class InstanceUrl(raw: String) {
 
@@ -20,6 +21,19 @@ class InstanceUrl(raw: String) {
         } else {
             "${config.protocol}://${config.host}"
         }
+
+    val httpBasicAuthUrl: String
+        get() = httpBasicAuthUrl(user, password)
+
+    fun httpBasicAuthUrl(user: String, password: String): String {
+        val userInfo = "${encode(user)}:${encode(password)}"
+
+        return if (config.port != -1) {
+            "${config.protocol}://$userInfo@${config.host}:${config.port}"
+        } else {
+            "${config.protocol}://$userInfo@${config.host}"
+        }
+    }
 
     val httpPort: Int
         get() = if (config.port != -1) {
@@ -56,6 +70,10 @@ class InstanceUrl(raw: String) {
     }
 
     companion object {
+
+        fun encode(text: String): String {
+            return URLEncoder.encode(text, Charsets.UTF_8.name()) ?: text
+        }
 
         fun parse(raw: String): InstanceUrl {
             return try {

@@ -173,7 +173,7 @@ class PropertyParser(val project: Project) {
 
     fun checkForce() {
         if (!isForce()) {
-            throw AemException("Unable to perform unsafe operation without parameter '-P$FORCE_PROP'")
+            throw AemException("Unable to perform unsafe operation without param '-P$FORCE_PROP'")
         }
     }
 

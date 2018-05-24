@@ -18,12 +18,28 @@ class VltRunner(val project: Project) {
 
     val config = AemConfig.of(project)
 
+    val workingDir: File
+        get() {
+            var path = "${config.contentPath}/${PackagePlugin.JCR_ROOT}"
+
+            val relativePath = project.properties["aem.vlt.path"] as String?
+            if (!relativePath.isNullOrBlank()) {
+                path = "$path/$relativePath"
+            }
+
+            return File(path)
+        }
+
     fun raw(command: String, props: Map<String, Any> = mapOf()) {
         val app = VltApp(project)
-        val allProps = mapOf("instances" to config.instances) + props
-        val fullCommand = this.props.expand("${config.vaultGlobalOptions} $command".trim(), allProps)
 
-        app.execute(fullCommand)
+        val allProps = mapOf("instances" to config.instances) + props
+        val fullCommand = this.props.expand(command, allProps)
+
+        logger.lifecycle("Working directory: $workingDir")
+        logger.lifecycle("Executing command: vlt $command")
+
+        app.execute(fullCommand, workingDir.absolutePath)
     }
 
     fun checkout() {
@@ -32,13 +48,8 @@ class VltRunner(val project: Project) {
             logger.info("JCR content directory to be checked out does not exist: ${contentDir.absolutePath}")
         }
 
-        val props = mapOf<String, Any>(
-                "instance" to checkoutInstance,
-                "filter" to checkoutFilter.file.absolutePath
-        )
-
         checkoutFilter.use {
-            raw("checkout --force --filter {{filter}} {{instance.httpUrl}}/crx/server/crx.default", props)
+            raw("checkout --credentials ${checkoutInstance.credentials} --force --filter ${checkoutFilter.file.absolutePath} ${checkoutInstance.httpUrl}/crx/server/crx.default")
         }
     }
 
@@ -68,8 +79,7 @@ class VltRunner(val project: Project) {
     private fun determineCheckoutInstance(): Instance {
         val cmdInstanceArg = props.string("aem.checkout.instance")
         if (!cmdInstanceArg.isNullOrBlank()) {
-            val cmdInstance = Instance.parse(cmdInstanceArg!!).first()
-            cmdInstance.validate()
+            val cmdInstance = config.parseInstance(cmdInstanceArg!!)
 
             logger.info("Using instance specified by command line parameter: $cmdInstance")
             return cmdInstance
@@ -111,6 +121,41 @@ class VltRunner(val project: Project) {
             logger.lifecycle("Cleaning root: $root")
             VltCleaner(project, root).clean()
         }
+    }
+
+    fun rcp() {
+        rcpPaths.forEach { sourcePath, targetPath ->
+            raw("rcp $rcpOpts ${rcpSourceInstance.httpBasicAuthUrl}/crx/-/jcr:root$sourcePath ${rcpTargetInstance.httpBasicAuthUrl}/crx/-/jcr:root$targetPath")
+        }
+    }
+
+    val rcpPaths: Map<String, String> by lazy {
+        val paths = props.list("aem.rcp.paths")
+        if (paths.isEmpty()) {
+            throw VltException("RCP param '-Paem.rcp.paths' is not specified.")
+        }
+
+        paths.fold(mutableMapOf<String, String>(), { r, path ->
+            val parts = path.split("=").map { it.trim() }
+            when (parts.size) {
+                1 -> r[path] = path
+                2 -> r[parts[0]] = parts[1]
+                else -> throw VltException("RCP path has invalid format: $path")
+            }
+            r
+        })
+    }
+
+    val rcpOpts: String by lazy { project.properties["aem.rcp.opts"] as String? ?: "-b 100 -r -u" }
+
+    val rcpSourceInstance: Instance by lazy {
+        config.parseInstance(project.properties["aem.rcp.source.instance"] as String?
+                ?: throw VltException("RCP param '-Paem.rcp.source.instance' is not specified."))
+    }
+
+    val rcpTargetInstance: Instance by lazy {
+        config.parseInstance(project.properties["aem.rcp.target.instance"] as String?
+                ?: throw VltException("RCP param '-Paem.rcp.target.instance' is not specified."))
     }
 
 }

@@ -27,6 +27,32 @@ class InstanceState(private var _sync: InstanceSync, val instance: Instance) {
         return result
     }
 
+    fun checkBundleStable(connectionTimeout: Int = 100): Boolean {
+        return check({
+            it.connectionTimeout = connectionTimeout
+            it.connectionRetries = false
+        }, {
+            it.bundleState.stable
+        })
+    }
+
+    fun checkBundleState(connectionTimeout: Int = 100): Int {
+        return check({
+            it.connectionTimeout = connectionTimeout
+            it.connectionRetries = false
+        }, {
+            it.bundleState.hashCode()
+        })
+    }
+
+    fun checkComponentState(packagesActive: Collection<String>, connectionTimeout: Int = 10000): Boolean {
+        return check({
+            it.connectionTimeout = connectionTimeout
+        }, {
+            it.componentState.check(packagesActive, { it.active })
+        })
+    }
+
     override fun hashCode(): Int {
         return HashCodeBuilder()
                 .append(instance)

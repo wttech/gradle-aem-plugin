@@ -72,7 +72,6 @@
 
       "vaultCopyMissingFiles": true,
       "vaultFilesPath": "debug/minimal/src/main/resources/META-INF/vault",
-      "vaultGlobalOptions": "--credentials {{instance.credentials}}",
       "vaultLineSeparator": "LF",
 
       "notificationEnabled": false,
@@ -100,10 +99,6 @@
       "awaitStableInterval": 1000,
       "awaitStableTimes": 300,
       "awaitStableAssurances": 3,
-      "awaitHealthComponentsActive": [
-        "com.day.crx.packaging.*",
-        "org.apache.sling.installer.*"
-      ],
       "reloadDelay": 10000,
       "satisfyRefreshing": false,
       "satisfyBundlePath": "/apps/gradle-aem-plugin/satisfy/install",

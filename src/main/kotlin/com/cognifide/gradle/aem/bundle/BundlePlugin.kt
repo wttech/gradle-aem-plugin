@@ -3,6 +3,8 @@ package com.cognifide.gradle.aem.bundle
 import aQute.bnd.gradle.BundleTaskConvention
 import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.pkg.PackagePlugin
+import org.apache.commons.lang3.exception.ExceptionUtils
+import org.apache.commons.lang3.reflect.FieldUtils
 import org.gradle.api.JavaVersion
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -41,50 +43,71 @@ class BundlePlugin : Plugin<Project> {
             it.options.isIncremental = true
         })
 
-        val jar = tasks.getByName(JavaPlugin.JAR_TASK_NAME) as Jar
-        jar.baseName = "$group.$name"
-
         afterEvaluate {
-            val config = AemConfig.of(project)
-            if (!config.bundleManifestAttributes) {
-                logger.debug("Bundle manifest dynamic attributes support is disabled.")
-                return@afterEvaluate
-            }
+            val jar = tasks.getByName(JavaPlugin.JAR_TASK_NAME) as Jar
 
-            val attributes = mutableMapOf<String, Any>().apply { putAll(jar.manifest.attributes) }
-
-            if (!attributes.contains("Bundle-Name") && !description.isNullOrBlank()) {
-                attributes["Bundle-Name"] = description!!
-            }
-
-            if (!attributes.contains("Bundle-SymbolicName") && config.bundlePackage.isNotBlank()) {
-                attributes["Bundle-SymbolicName"] = config.bundlePackage
-            }
-
-            attributes["Bundle-ClassPath"] = mutableSetOf<String>().apply {
-                add(".")
-                addAll(configurations.getByName(BundlePlugin.CONFIG_EMBED).files.sortedBy { it.name }.map { it.name })
-                addAll((attributes["Bundle-ClassPath"]?.toString() ?: "").split(",").map { it.trim() })
-            }.joinToString(",")
-
-            attributes["Export-Package"] = mutableSetOf<String>().apply {
-                if (config.bundlePackage.isNotBlank()) {
-                    add(if (config.bundlePackageOptions.isNotBlank()) {
-                        "${config.bundlePackage}.*;${config.bundlePackageOptions}"
-                    } else {
-                        "${config.bundlePackage}.*"
-                    })
-                }
-
-                addAll((attributes["Export-Package"]?.toString() ?: "").split(",").map { it.trim() })
-            }.joinToString(",")
-
-            if (!attributes.contains("Sling-Model-Packages") && config.bundlePackage.isNotBlank()) {
-                attributes["Sling-Model-Packages"] = config.bundlePackage
-            }
-
-            jar.manifest.attributes(attributes)
+            ensureJarBaseNameIfNotCustomized(jar)
+            ensureJarManifestAttributes(jar)
         }
+    }
+
+    /**
+     * Reflection is used, because in other way, default convention will provide value.
+     * It is only way to know, if base name was previously customized by build script.
+     */
+    private fun Project.ensureJarBaseNameIfNotCustomized(jar: Jar) {
+        val baseName = FieldUtils.readField(jar, "baseName", true) as String?
+        if (baseName.isNullOrBlank()) {
+            val groupValue = group as String?
+            if (!name.isNullOrBlank() && !groupValue.isNullOrBlank()) {
+                jar.baseName = "$group.$name"
+            }
+        }
+    }
+
+    /**
+     * Set (if not set) or update OSGi or AEM specific jar manifest attributes.
+     */
+    private fun Project.ensureJarManifestAttributes(jar: Jar) {
+        val config = AemConfig.of(project)
+        if (!config.bundleManifestAttributes) {
+            logger.debug("Bundle manifest dynamic attributes support is disabled.")
+            return
+        }
+
+        val attributes = mutableMapOf<String, Any>().apply { putAll(jar.manifest.attributes) }
+
+        if (!attributes.contains("Bundle-Name") && !description.isNullOrBlank()) {
+            attributes["Bundle-Name"] = description!!
+        }
+
+        if (!attributes.contains("Bundle-SymbolicName") && config.bundlePackage.isNotBlank()) {
+            attributes["Bundle-SymbolicName"] = config.bundlePackage
+        }
+
+        attributes["Bundle-ClassPath"] = mutableSetOf<String>().apply {
+            add(".")
+            addAll(configurations.getByName(CONFIG_EMBED).files.sortedBy { it.name }.map { it.name })
+            addAll((attributes["Bundle-ClassPath"]?.toString() ?: "").split(",").map { it.trim() })
+        }.joinToString(",")
+
+        attributes["Export-Package"] = mutableSetOf<String>().apply {
+            if (config.bundlePackage.isNotBlank()) {
+                add(if (config.bundlePackageOptions.isNotBlank()) {
+                    "${config.bundlePackage}.*;${config.bundlePackageOptions}"
+                } else {
+                    "${config.bundlePackage}.*"
+                })
+            }
+
+            addAll((attributes["Export-Package"]?.toString() ?: "").split(",").map { it.trim() })
+        }.joinToString(",")
+
+        if (!attributes.contains("Sling-Model-Packages") && config.bundlePackage.isNotBlank()) {
+            attributes["Sling-Model-Packages"] = config.bundlePackage
+        }
+
+        jar.manifest.attributes(attributes)
     }
 
     private fun Project.setupJavaBndTool() {
@@ -99,7 +122,12 @@ class BundlePlugin : Plugin<Project> {
         }
 
         jar.doLast {
-            bundleConvention.buildBundle()
+            try {
+                bundleConvention.buildBundle()
+            } catch (e: Exception) {
+                logger.error("BND tool error: https://bnd.bndtools.org", ExceptionUtils.getRootCause(e))
+                throw BundleException("Bundle cannot be built properly.", e)
+            }
         }
     }
 

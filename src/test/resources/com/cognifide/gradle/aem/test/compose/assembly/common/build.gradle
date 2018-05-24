@@ -17,12 +17,7 @@ aem {
     config {
         bundlePackage = "com.company.aem.example.common"
     }
-}
-
-jar {
-    manifest {
-        attributes([
-                'Export-Package': "org.hashids.*"
-        ])
+    bundle {
+        exportPackage "org.hashids"
     }
 }
