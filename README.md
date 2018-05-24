@@ -307,12 +307,12 @@ Copy JCR content from one instance to another. Sample usages below.
 
 Using predefined instances with multiple different source and target nodes:
 ```
-gradlew :aemRcp -Paem.rcp.source.instance=int-author -Paem.rcp.target.instance=local-publish -Paem.rcp.paths=[/content/example-demo=/content/example,/content/dam/example-demo=/content/dam/example]
+gradlew :aemRcp -Paem.rcp.source.instance=int-author -Paem.rcp.target.instance=local-author -Paem.rcp.paths=[/content/example-demo=/content/example,/content/dam/example-demo=/content/dam/example]
 ```
 
 Using predefined instances with multiple same source and target nodes:
 ```
-gradlew :aemRcp -Paem.rcp.source.instance=int-author -Paem.rcp.target.instance=local-publish -Paem.rcp.paths=[/content/example,/content/example2]
+gradlew :aemRcp -Paem.rcp.source.instance=stg-author -Paem.rcp.target.instance=int-author -Paem.rcp.paths=[/content/example,/content/example2]
 ```
 
 Using dynamically defined instances:
