@@ -323,6 +323,8 @@ gradlew :aemRcp -Paem.rcp.source.instance=http://user:pass@192.168.66.66:4502 -P
 Keep in mind, that copying JCR content between instances, could be a trigger for running AEM workflows like *DAM Update Asset* which could cause heavy load on instance.
 Consider disabling AEM workflow launchers before running this task and re-enabling after.
 
+RCP task is internally using [Vault Remote Copy](http://jackrabbit.apache.org/filevault/rcp.html) which requires to having bundle *Apache Sling Simple WebDAV Access to repositories (org.apache.sling.jcr.webdav)* " in active state on instance.
+
 #### Task `aemDebug` 
 
 Dumps effective AEM build configuration of concrete project to JSON file.
