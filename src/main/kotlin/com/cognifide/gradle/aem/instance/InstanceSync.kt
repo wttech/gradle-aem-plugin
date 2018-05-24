@@ -1,8 +1,8 @@
 package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.api.AemConfig
-import com.cognifide.gradle.aem.internal.Behaviors
 import com.cognifide.gradle.aem.internal.Patterns
+import com.cognifide.gradle.aem.internal.ProgressCountdown
 import com.cognifide.gradle.aem.internal.http.PreemptiveAuthInterceptor
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.deploy.*
@@ -54,34 +54,38 @@ class InstanceSync(val project: Project, val instance: Instance) {
 
     val bundlesUrl = "${instance.httpUrl}/system/console/bundles.json"
 
+    val componentsUrl = "${instance.httpUrl}/system/console/components.json"
+
     val vmStatUrl = "${instance.httpUrl}/system/console/vmstat"
 
-    fun get(url: String, configurer: (HttpRequestBase) -> Unit = { _ -> }): String {
-        val method = HttpGet(normalizeUrl(url))
-        configurer(method)
+    var basicUser = instance.user
 
-        return fetch(method)
+    var basicPassword = instance.password
+
+    var connectionTimeout = config.instanceConnectionTimeout
+
+    var connectionUntrustedSsl = config.instanceConnectionUntrustedSsl
+
+    var connectionRetries = true
+
+    var requestConfigurer: (HttpRequestBase) -> Unit = { _ -> }
+
+    var responseHandler: (HttpResponse) -> Unit = { _ -> }
+
+    fun get(url: String): String {
+        return fetch(HttpGet(normalizeUrl(url)))
     }
 
-    fun postUrlencoded(url: String, params: Map<String, Any> = mapOf(),
-                       configurer: (HttpRequestBase) -> Unit = { _ -> },
-                       statuses: List<Int> = listOf(HttpStatus.SC_OK)): String {
-        return post(url, createEntityUrlencoded(params), configurer, statuses)
+    fun postUrlencoded(url: String, params: Map<String, Any> = mapOf()): String {
+        return post(url, createEntityUrlencoded(params))
     }
 
-    fun postMultipart(url: String, params: Map<String, Any> = mapOf(),
-                      configurer: (HttpRequestBase) -> Unit = { _ -> },
-                      statuses: List<Int> = listOf(HttpStatus.SC_OK)): String {
-        return post(url, createEntityMultipart(params), configurer, statuses)
+    fun postMultipart(url: String, params: Map<String, Any> = mapOf()): String {
+        return post(url, createEntityMultipart(params))
     }
 
-    private fun post(url: String, entity: HttpEntity, configurer: (HttpRequestBase) -> Unit = { _ -> },
-                     statuses: List<Int> = listOf(HttpStatus.SC_OK)): String {
-        val method = HttpPost(normalizeUrl(url))
-        method.entity = entity
-        configurer(method)
-
-        return fetch(method, statuses)
+    private fun post(url: String, entity: HttpEntity): String {
+        return fetch(HttpPost(normalizeUrl(url)).apply { this.entity = entity })
     }
 
     /**
@@ -92,21 +96,29 @@ class InstanceSync(val project: Project, val instance: Instance) {
         return url.replace(" ", "%20")
     }
 
-    fun fetch(method: HttpRequestBase, statuses: List<Int> = listOf(HttpStatus.SC_OK)): String {
-        return execute(method, statuses, { IOUtils.toString(it.entity.content) })
+    fun fetch(method: HttpRequestBase): String {
+        return execute(method, { response ->
+            val body = IOUtils.toString(response.entity.content) ?: ""
+
+            if (response.statusLine.statusCode == HttpStatus.SC_OK) {
+                return@execute body
+            } else {
+                logger.debug(body)
+                throw DeployException("Unexpected instance response: ${response.statusLine}")
+            }
+        })
     }
 
-    fun <T> execute(method: HttpRequestBase, statuses: List<Int>, success: (HttpResponse) -> T): T {
+    fun <T> execute(method: HttpRequestBase, success: (HttpResponse) -> T): T {
         try {
+            requestConfigurer(method)
+
             val client = createHttpClient()
             val response = client.execute(method)
 
-            if (statuses.contains(response.statusLine.statusCode)) {
-                return success(response)
-            } else {
-                logger.debug(IOUtils.toString(response.entity.content))
-                throw DeployException("Unexpected instance response: ${response.statusLine}")
-            }
+            responseHandler(response)
+
+            return success(response)
         } catch (e: Exception) {
             throw DeployException("Failed instance request: ${e.message}", e)
         } finally {
@@ -115,21 +127,24 @@ class InstanceSync(val project: Project, val instance: Instance) {
     }
 
     fun createHttpClient(): HttpClient {
-        val httpClientBuilder = HttpClientBuilder.create()
+        val builder = HttpClientBuilder.create()
                 .addInterceptorFirst(PreemptiveAuthInterceptor())
                 .setDefaultRequestConfig(RequestConfig.custom()
-                        .setConnectTimeout(config.deployConnectionTimeout)
-                        .setConnectionRequestTimeout(config.deployConnectionTimeout)
+                        .setConnectTimeout(connectionTimeout)
+                        .setConnectionRequestTimeout(connectionTimeout)
                         .build()
                 )
                 .setDefaultCredentialsProvider(BasicCredentialsProvider().apply {
-                    setCredentials(AuthScope.ANY, UsernamePasswordCredentials(instance.user, instance.password))
+                    setCredentials(AuthScope.ANY, UsernamePasswordCredentials(basicUser, basicPassword))
                 })
-        if (config.deployConnectionUntrustedSsl) {
-            httpClientBuilder.setSSLSocketFactory(createSslConnectionSocketFactory())
+        if (connectionUntrustedSsl) {
+            builder.setSSLSocketFactory(createSslConnectionSocketFactory())
+        }
+        if (!connectionRetries) {
+            builder.disableAutomaticRetries()
         }
 
-        return httpClientBuilder.build()
+        return builder.build()
     }
 
     private fun createSslConnectionSocketFactory(): SSLConnectionSocketFactory {
@@ -163,22 +178,6 @@ class InstanceSync(val project: Project, val instance: Instance) {
         return builder.build()
     }
 
-    fun determineLocalPackage(): File {
-        if (!config.localPackagePath.isBlank()) {
-            val configFile = File(config.localPackagePath)
-            if (configFile.exists()) {
-                return configFile
-            }
-        }
-
-        val archiveFile = AemConfig.pkg(project).archivePath
-        if (archiveFile.exists()) {
-            return archiveFile
-        }
-
-        throw DeployException("Local package not found under path: '${archiveFile.absolutePath}'. Is it built already?")
-    }
-
     fun determineRemotePackage(): ListResponse.Package? {
         return resolveRemotePackage({ response ->
             response.resolvePackage(project, ListResponse.Package(project))
@@ -186,8 +185,8 @@ class InstanceSync(val project: Project, val instance: Instance) {
     }
 
     fun determineRemotePackagePath(): String {
-        if (!config.remotePackagePath.isBlank()) {
-            return config.remotePackagePath
+        if (!config.packageRemotePath.isBlank()) {
+            return config.packageRemotePath
         }
 
         val pkg = determineRemotePackage()
@@ -228,7 +227,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         return resolver(instance.packages!!)
     }
 
-    fun uploadPackage(file: File = determineLocalPackage()): UploadResponse {
+    fun uploadPackage(file: File): UploadResponse {
         lateinit var exception: DeployException
         for (i in 0..config.uploadRetryTimes) {
             try {
@@ -238,8 +237,10 @@ class InstanceSync(val project: Project, val instance: Instance) {
 
                 if (i < config.uploadRetryTimes) {
                     logger.warn("Cannot upload package to $instance.")
-                    logger.warn("Retrying (${i+1}/${config.uploadRetryTimes}) after delay.")
-                    Behaviors.waitFor(config.uploadRetryDelay)
+
+                    val header = "Retrying upload (${i + 1}/${config.uploadRetryTimes}) after delay."
+                    val countdown = ProgressCountdown(project, header, config.uploadRetryDelay)
+                    countdown.run()
                 }
             }
         }
@@ -247,7 +248,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         throw exception
     }
 
-    private fun uploadPackageOnce(file: File = determineLocalPackage()): UploadResponse {
+    fun uploadPackageOnce(file: File): UploadResponse {
         val url = "$jsonTargetUrl/?cmd=upload"
 
         logger.info("Uploading package at path '{}' to URL '{}'", file.path, url)
@@ -274,7 +275,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         }
     }
 
-    fun installPackage(uploadedPackagePath: String = determineRemotePackagePath()): InstallResponse {
+    fun installPackage(uploadedPackagePath: String): InstallResponse {
         lateinit var exception: DeployException
         for (i in 0..config.installRetryTimes) {
             try {
@@ -283,8 +284,10 @@ class InstanceSync(val project: Project, val instance: Instance) {
                 exception = e
                 if (i < config.installRetryTimes) {
                     logger.warn("Cannot install package on $instance.")
-                    logger.warn("Retrying (${i+1}/${config.installRetryTimes}) after delay.")
-                    Behaviors.waitFor(config.installRetryDelay)
+
+                    val header = "Retrying install (${i + 1}/${config.installRetryTimes}) after delay."
+                    val countdown = ProgressCountdown(project, header, config.installRetryDelay)
+                    countdown.run()
                 }
             }
         }
@@ -292,16 +295,13 @@ class InstanceSync(val project: Project, val instance: Instance) {
         throw exception
     }
 
-    private fun installPackageOnce(uploadedPackagePath: String): InstallResponse {
+    fun installPackageOnce(uploadedPackagePath: String): InstallResponse {
         val url = "$htmlTargetUrl$uploadedPackagePath/?cmd=install"
 
         logger.info("Installing package using command: $url")
 
         try {
-            val json = postMultipart(url, mapOf(
-                    "recursive" to config.installRecursive,
-                    "acHandling" to config.acHandling
-            ))
+            val json = postMultipart(url, mapOf("recursive" to config.installRecursive))
             val response = InstallResponse(json)
 
             when (response.status) {
@@ -331,30 +331,22 @@ class InstanceSync(val project: Project, val instance: Instance) {
     }
 
     fun isSnapshot(file: File): Boolean {
-        return Patterns.wildcard(file, config.deploySnapshots)
+        return Patterns.wildcard(file, config.packageSnapshots)
     }
 
-    fun deployPackage(file: File = determineLocalPackage(), distributed: Boolean) {
-        if (distributed) {
-            distributePackage(file)
-        } else {
-            deployPackage(file)
-        }
+    fun deployPackage(file: File) {
+        installPackage(uploadPackage(file).path)
     }
 
-    fun deployPackage(file: File = determineLocalPackage()): InstallResponse {
-        return installPackage(uploadPackage(file).path)
-    }
-
-    fun distributePackage(file: File = determineLocalPackage()) {
+    fun distributePackage(file: File) {
         val packagePath = uploadPackage(file).path
 
         installPackage(packagePath)
         activatePackage(packagePath)
     }
 
-    fun activatePackage(path: String = determineRemotePackagePath()): UploadResponse {
-        val url = jsonTargetUrl + path + "/?cmd=replicate"
+    fun activatePackage(path: String): UploadResponse {
+        val url = "$jsonTargetUrl$path/?cmd=replicate"
 
         logger.info("Activating package using command: $url")
 
@@ -376,16 +368,16 @@ class InstanceSync(val project: Project, val instance: Instance) {
             logger.info("Package activated")
         } else {
             logger.error("Package activation failed: + " + response.msg)
-            throw DeployException(response.msg.orEmpty())
+            throw DeployException(response.msg)
         }
 
         return response
     }
 
-    fun deletePackage(path: String = determineRemotePackagePath()) {
-        val url = htmlTargetUrl + path + "/?cmd=delete"
+    fun deletePackage(path: String) {
+        val url = "$htmlTargetUrl$path/?cmd=delete"
 
-        logger.info("Deleting package using command: " + url)
+        logger.info("Deleting package using command: $url")
 
         try {
             val rawHtml = postMultipart(url)
@@ -412,16 +404,13 @@ class InstanceSync(val project: Project, val instance: Instance) {
         }
     }
 
-    fun uninstallPackage(installedPackagePath: String = determineRemotePackagePath()) {
-        val url = htmlTargetUrl + installedPackagePath + "/?cmd=uninstall"
+    fun uninstallPackage(installedPackagePath: String) {
+        val url = "$htmlTargetUrl$installedPackagePath/?cmd=uninstall"
 
-        logger.info("Uninstalling package using command: " + url)
+        logger.info("Uninstalling package using command: $url")
 
         try {
-            val rawHtml = postMultipart(url, mapOf(
-                    "recursive" to config.installRecursive,
-                    "acHandling" to config.acHandling
-            ))
+            val rawHtml = postMultipart(url, mapOf("recursive" to config.installRecursive))
             val response = UninstallResponse(rawHtml)
 
             when (response.status) {
@@ -445,27 +434,43 @@ class InstanceSync(val project: Project, val instance: Instance) {
         }
     }
 
-    fun determineBundleState(configurer: (HttpRequestBase) -> Unit = { _ -> }): BundleState {
-        logger.debug("Asking AEM for bundles using URL: '$bundlesUrl'")
+    fun determineInstanceState(): InstanceState {
+        return InstanceState(this, instance)
+    }
+
+    fun determineBundleState(): BundleState {
+        logger.debug("Asking AEM for OSGi bundles using URL: '$bundlesUrl'")
 
         return try {
-            BundleState.fromJson(get(bundlesUrl, configurer))
+            BundleState.fromJson(get(bundlesUrl))
         } catch (e: Exception) {
-            logger.debug("Cannot determine bundle state on $instance", e)
+            logger.debug("Cannot determine OSGi bundles state on $instance", e)
             BundleState.unknown(e)
         }
     }
 
-    fun reload(delay: Long = config.reloadDelay) {
-        try {
-            logger.info("Triggering instance(s) shutdown")
-            postUrlencoded(vmStatUrl, mapOf("shutdown_type" to "Restart"))
+    fun determineComponentState(): ComponentState {
+        logger.debug("Asking AEM for OSGi components using URL: '$bundlesUrl'")
 
-            logger.info("Awaiting instance(s) shutdown")
-            Behaviors.waitFor(delay)
-        } catch (e: DeployException) {
-            throw InstanceException("Cannot reload instance $instance", e)
+        return try {
+            ComponentState.fromJson(get(componentsUrl))
+        } catch (e: Exception) {
+            logger.debug("Cannot determine OSGi components state on $instance", e)
+            ComponentState.unknown()
         }
     }
 
+    fun reload() {
+        try {
+            logger.info("Triggering instance(s) shutdown")
+            postUrlencoded(vmStatUrl, mapOf("shutdown_type" to "Restart"))
+        } catch (e: DeployException) {
+            throw InstanceException("Cannot trigger shutdown for instance $instance", e)
+        }
+    }
+
+}
+
+fun Collection<Instance>.sync(project: Project, callback: (InstanceSync) -> Unit) {
+    return map { InstanceSync(project, it) }.parallelStream().forEach(callback)
 }

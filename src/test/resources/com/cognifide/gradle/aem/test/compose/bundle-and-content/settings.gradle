@@ -1,1 +1,17 @@
+// Plugins configuration
+
+pluginManagement {
+	repositories {
+		mavenLocal()
+		jcenter()
+	}
+	resolutionStrategy {
+		eachPlugin {
+			if (requested.id.namespace == 'com.cognifide.aem') {
+				useModule('com.cognifide.gradle:aem-plugin:4.0.0-beta')
+			}
+		}
+	}
+}
+
 rootProject.name = 'example'

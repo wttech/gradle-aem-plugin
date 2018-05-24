@@ -2,6 +2,8 @@ package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.pkg.deploy.ListResponse
 import com.fasterxml.jackson.annotation.JsonIgnore
+import org.apache.commons.lang3.builder.EqualsBuilder
+import org.apache.commons.lang3.builder.HashCodeBuilder
 import java.io.Serializable
 
 class RemoteInstance private constructor() : Instance, Serializable {
@@ -21,7 +23,26 @@ class RemoteInstance private constructor() : Instance, Serializable {
     override var packages: ListResponse? = null
 
     override fun toString(): String {
-        return "RemoteInstance(httpUrl='$httpUrl', user='$user', password='$hiddenPassword', typeName='$typeName', environment='$environment')"
+        return "RemoteInstance(httpUrl='$httpUrl', user='$user', password='$hiddenPassword', environment='$environment', typeName='$typeName')"
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as RemoteInstance
+
+        return EqualsBuilder()
+                .append(name, other.name)
+                .append(httpUrl, other.httpUrl)
+                .isEquals
+    }
+
+    override fun hashCode(): Int {
+        return HashCodeBuilder()
+                .append(name)
+                .append(httpUrl)
+                .toHashCode()
     }
 
     companion object {

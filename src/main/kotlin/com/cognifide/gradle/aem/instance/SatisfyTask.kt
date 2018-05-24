@@ -1,24 +1,18 @@
 package com.cognifide.gradle.aem.instance
 
+import com.cognifide.gradle.aem.api.AemDefaultTask
 import com.cognifide.gradle.aem.api.AemTask
 import com.cognifide.gradle.aem.instance.satisfy.PackageGroup
 import com.cognifide.gradle.aem.instance.satisfy.PackageResolver
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.pkg.deploy.ListResponse
-import com.cognifide.gradle.aem.pkg.deploy.SyncTask
 import groovy.lang.Closure
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 import org.gradle.util.ConfigureUtil
 import java.io.File
 
-open class SatisfyTask : SyncTask() {
-
-    companion object {
-        val NAME = "aemSatisfy"
-
-        val DOWNLOAD_DIR = "download"
-    }
+open class SatisfyTask : AemDefaultTask() {
 
     @get:Internal
     val packageProvider = PackageResolver(project, AemTask.temporaryDir(project, NAME, DOWNLOAD_DIR))
@@ -60,12 +54,14 @@ open class SatisfyTask : SyncTask() {
 
     @TaskAction
     fun satisfy() {
+        val actions = mutableListOf<Action>()
+
         for (packageGroup in packageGroups) {
             logger.info("Satisfying group of packages '${packageGroup.name}'.")
 
             var anyPackageSatisfied = false
 
-            synchronizeInstances({ sync ->
+            packageGroup.instances.sync(project, { sync ->
                 val packageStates = packageGroup.files.fold(mutableMapOf<File, ListResponse.Package?>(), { states, pkg ->
                     states[pkg] = sync.determineRemotePackage(pkg, config.satisfyRefreshing); states
                 })
@@ -82,17 +78,23 @@ open class SatisfyTask : SyncTask() {
                         sync.isSnapshot(pkg) -> {
                             logger.info("Satisfying package: $pkg (snapshot).")
                             sync.deployPackage(pkg)
+
                             anyPackageSatisfied = true
+                            actions.add(Action(pkg, sync.instance))
                         }
                         state == null -> {
                             logger.info("Satisfying package: $pkg (not uploaded).")
                             sync.deployPackage(pkg)
+
                             anyPackageSatisfied = true
+                            actions.add(Action(pkg, sync.instance))
                         }
                         !state.installed -> {
                             logger.info("Satisfying package: $pkg (not installed).")
                             sync.installPackage(state.path)
+
                             anyPackageSatisfied = true
+                            actions.add(Action(pkg, sync.instance))
                         }
                         else -> {
                             logger.info("Not satisfying package: $pkg (already installed).")
@@ -103,12 +105,31 @@ open class SatisfyTask : SyncTask() {
                 if (anyPackageSatisfiable) {
                     packageGroup.finalizer(sync)
                 }
-            }, packageGroup.instances)
+            })
 
             if (anyPackageSatisfied) {
                 packageGroup.completer()
             }
         }
+
+        if (actions.isNotEmpty()) {
+            val packages = actions.map { it.pkg }.toSet()
+            val instances = actions.map { it.instance }.toSet()
+
+            if (packages.size == 1) {
+                notifier.default("Package satisfied", "${packages.first().name} on ${instances.names}")
+            } else {
+                notifier.default("Packages satisfied", "Performed ${actions.size} action(s) for ${packages.size} package(s) on ${instances.size} instance(s).")
+            }
+        }
+    }
+
+    class Action(val pkg: File, val instance: Instance)
+
+    companion object {
+        const val NAME = "aemSatisfy"
+
+        const val DOWNLOAD_DIR = "download"
     }
 
 }

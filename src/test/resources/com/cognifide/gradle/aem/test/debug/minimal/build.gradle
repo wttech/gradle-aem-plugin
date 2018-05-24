@@ -1,0 +1,3 @@
+plugins {
+    id 'com.cognifide.aem.base' version '4.0.0-beta'
+}

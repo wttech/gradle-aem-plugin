@@ -1,9 +1,9 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.pkg.deploy.SyncTask
+import com.cognifide.gradle.aem.api.AemDefaultTask
 import org.gradle.api.tasks.TaskAction
 
-open class DownTask : SyncTask() {
+open class DownTask : AemDefaultTask() {
 
     companion object {
         val NAME = "aemDown"
@@ -15,7 +15,10 @@ open class DownTask : SyncTask() {
 
     @TaskAction
     fun down() {
-        synchronizeLocalInstances { it.down() }
+        val handles = Instance.handles(project)
+        handles.parallelStream().forEach { it.down() }
+
+        notifier.default("Instance(s) down", "Which: ${handles.names}")
     }
 
 }

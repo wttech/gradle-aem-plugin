@@ -2,6 +2,7 @@
 
 [![Gradle Status](https://gradleupdate.appspot.com/Cognifide/gradle-aem-plugin/status.svg)](https://gradleupdate.appspot.com/Cognifide/gradle-aem-plugin/status)
 [![Apache License, Version 2.0, January 2004](docs/apache-license-badge.svg)](http://www.apache.org/licenses/)
+![Travis Build](https://travis-ci.org/Cognifide/gradle-aem-plugin.svg?branch=develop)
 
 # Gradle AEM Plugin
 
@@ -47,6 +48,7 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
       * [Task aemCheckout](#task-aemcheckout)
       * [Task aemClean](#task-aemclean)
       * [Task aemVlt](#task-aemvlt)
+      * [Task aemRcp](#task-aemrcp)
       * [Task aemDebug](#task-aemdebug)
    * [Package plugin tasks](#package-plugin-tasks)
       * [Task aemCompose](#task-aemcompose)
@@ -115,7 +117,7 @@ buildscript {
     }
     
     dependencies {
-        classpath 'com.cognifide.gradle:aem-plugin:3.1.2'
+        classpath 'com.cognifide.gradle:aem-plugin:4.0.0-beta'
     }
 }
 
@@ -136,37 +138,28 @@ defaultTasks = [':aemSatisfy', ':aemDeploy', ':aemAwait']
 
 aem {
     config {
-        deployEnvironment = "local" // -Paem.env or environment variable: AEM_ENV
-        remoteAuthorInstance()
-        remotePublishInstance()
-        deployInstanceName = "${config.deployEnvironment}-*"
-        deployAuthorInstanceName = "$deployEnvironment-author"
-        deployConnectionTimeout = 5000
-        deployParallel = true
-        deploySnapshots = []
-        deployDistributed = false
-        deployTrustingAllSSLCertificates = true
-        uploadForce = true
-        uploadRetryTimes = 6
-        uploadRetryDelay = 30000
-        installRecursive = true
-        installRetryTimes = 3
-        installRetryDelay = 30000
-        acHandling = "merge_preserve"
+        environment = "local" // -Paem.env or environment variable: AEM_ENV
+    
+        instanceName = "${environment}-*"
+        instanceAuthorName = "${environment}-author"
+        instanceConnectionTimeout = 5000
+        instanceConnectionUntrustedSsl = true
+    
         contentPath = project.file("src/main/content")
         if (project == project.rootProject) {
             bundlePath = "/apps/${project.name}/install"
         } else {
             bundlePath = "/apps/${project.rootProject.name}/${project.name}/install"
         }
-        if (isUniqueProjectName()) {
+    
+        if (projectUniqueName) {
             packageName = project.name
         } else {
-            packageName = "${namePrefix()}-${project.name}"
+            packageName = "${projectNamePrefix}-${project.name}"
         }
-        localPackagePath = ""
-        remotePackagePath = ""
-        filesExcluded = [
+        packageLocalPath = ""
+        packageRemotePath = ""
+        packageFilesExcluded = [
           "**/.gradle",
           "**/.git",
           "**/.git/**",
@@ -177,10 +170,14 @@ aem {
           "**/node_modules/**",
           "jcr_root/.vlt-sync-config.properties"
         ]
-        filesExpanded = [
+        packageFilesExpanded = [
           "**/META-INF/vault/*.xml"
         ]
-        fileProperties = []
+        packageFileProperties = []
+        packageBuildDate = Date()
+        packageAcHandling = "merge_preserve"
+        packageSnapshots = []
+    
         vaultCopyMissingFiles = true
         vaultFilesPath = project.rootProject.file("src/main/resources/META-INF/vault")
         vaultSkipProperties = [
@@ -192,14 +189,18 @@ aem {
           "*_x0040_Delete",
           "*_x0040_TypeHint"
         ]
-        vaultGlobalOptions = "--credentials {{instance.credentials}}"
         vaultLineSeparator = "LF"
-        dependBundlesTaskNames = ["assemble", "check"]
-        dependContentTaskNames = ["aemCompose.dependencies"]
-        buildDate = Date()
-        instancesPath = "${System.getProperty("user.home")}/.aem/${project.rootProject.name}"
-        instanceFilesPath = project.rootProject.file("src/main/resources/local-instance")
-        instanceFilesExpanded = [
+    
+        deployDistributed = false
+        uploadForce = true
+        uploadRetryTimes = 6
+        uploadRetryDelay = 30000
+        installRecursive = true
+        installRetryTimes = 3
+        installRetryDelay = 30000
+        createPath = "${System.getProperty("user.home")}/.aem/${project.rootProject.name}"
+        createFilesPath = project.rootProject.file("src/main/resources/local-instance")
+        createFilesExpanded = [
           "**/*.properties", 
           "**/*.sh", 
           "**/*.bat", 
@@ -207,18 +208,51 @@ aem {
           "**/start",
           "**/stop"
         ]
-        awaitDelay = 3000
-        awaitInterval = 1000
-        awaitTimeout = 900
-        awaitTimes = 300
-        awaitFail = true
-        awaitAssurances = 1
-        awaitCondition = { instanceState -> instanceState.stable }
+        upInitializer = { handle -> }
+        awaitStableDelay = 3000
+        awaitStableInterval = 1000
+        awaitStableTimes = 300
+        awaitStableAssurances = 3
+        awiatStableState = { it.checkBundleState(500) }
+        awaitStableCheck = { it.checkBundleStable(500) }
+        awaitHealthCheck = { it.checkComponentState(["com.day.crx.packaging.*", "org.apache.sling.installer.*"], 10000) }
+        awaitFast = false
+        awaitFastDelay = 1000
+        awaitResume = false
         reloadDelay = 10000
         satisfyRefreshing = false
-        satisfyBundlePath = 
+        satisfyBundlePath = "/apps/gradle-aem-plugin/satisfy/install"
         satisfyBundleProperties = { bundle -> [:] }
         satisfyGroupName = "*"
+		    checkoutFilterPath = ""
+        cleanFilesDeleted = [
+            "**/.vlt",
+            "**/.vlt*.tmp",
+            "**/jcr_root/.content.xml",
+            "**/jcr_root/apps/.content.xml",
+            "**/jcr_root/conf/.content.xml",
+            "**/jcr_root/content/.content.xml",
+            "**/jcr_root/content/dam/.content.xml",
+            "**/jcr_root/etc/.content.xml",
+            "**/jcr_root/etc/designs/.content.xml",
+            "**/jcr_root/home/.content.xml",
+            "**/jcr_root/home/groups/.content.xml",
+            "**/jcr_root/home/users/.content.xml",
+            "**/jcr_root/libs/.content.xml",
+            "**/jcr_root/system/.content.xml",
+            "**/jcr_root/tmp/.content.xml",
+            "**/jcr_root/var/.content.xml"
+      ]
+      cleanSkipProperties = [
+        "jcr:uuid!**/home/users/*,**/home/groups/*",
+        "jcr:lastModified",
+        "jcr:created",
+        "cq:lastModified*",
+        "cq:lastReplicat*",
+        "*_x0040_Delete",
+        "*_x0040_TypeHint"
+      ]
+      notificationEnabled = false
     }
 }
 
@@ -266,6 +300,30 @@ gradlew :content:aemVlt -Paem.vlt.command='rcp -b 100 -r -u -n http://admin:admi
 For more details about available parameters, please visit [VLT Tool documentation](https://docs.adobe.com/docs/en/aem/6-2/develop/dev-tools/ht-vlttool.html).
 
 While using task `aemVlt` be aware that Gradle requires to have working directory with file *build.gradle* in it, but Vault tool can work at any directory under *jcr_root*. To change working directory for Vault, use property `aem.vlt.path` which is relative path to be appended to *jcr_root* for project task being currently executed.
+
+#### Task `aemRcp`
+
+Copy JCR content from one instance to another. Sample usages below.
+
+Using predefined instances with multiple different source and target nodes:
+```
+gradlew :aemRcp -Paem.rcp.source.instance=int-author -Paem.rcp.target.instance=local-publish -Paem.rcp.paths=[/content/example-demo=/content/example,/content/dam/example-demo=/content/dam/example]
+```
+
+Using predefined instances with multiple same source and target nodes:
+```
+gradlew :aemRcp -Paem.rcp.source.instance=int-author -Paem.rcp.target.instance=local-publish -Paem.rcp.paths=[/content/example,/content/example2]
+```
+
+Using dynamically defined instances:
+```
+gradlew :aemRcp -Paem.rcp.source.instance=http://user:pass@192.168.66.66:4502 -Paem.rcp.target.instance=http://user:pass@192.168.33.33:4502 -Paem.rcp.paths=[/content/example-demo=/content/example]
+```
+
+Keep in mind, that copying JCR content between instances, could be a trigger for running AEM workflows like *DAM Update Asset* which could cause heavy load on instance.
+Consider disabling AEM workflow launchers before running this task and re-enabling after.
+
+RCP task is internally using [Vault Remote Copy](http://jackrabbit.apache.org/filevault/rcp.html) which requires to having bundle *Apache Sling Simple WebDAV Access to repositories (org.apache.sling.jcr.webdav)* " in active state on instance.
 
 #### Task `aemDebug` 
 
@@ -431,13 +489,17 @@ Wait until all local or remote AEM instance(s) be stable.
 
 AEM Config Param | CMD Property | Default Value | Purpose
 --- | --- | --- | ---
-`awaitDelay` | *aem.await.delay* | `1000` | Time in milliseconds to postpone instance stability checks to avoid race condition related with actual operation being performed on AEM like starting JCR package installation or even creating launchpad.
-`awaitInterval` | *aem.await.interval* | `1000` | Time in milliseconds used as interval between next instance stability checks being performed. Optimization could be necessary only when instance is heavily loaded.
-`awaitTimeout` | *aem.await.timeout* | `900` | After each await interval, instance stability check is being performed. This value is a HTTP connection timeout (in millis) which must be smaller than interval to avoid race condition.
-`awaitTimes` | *aem.await.times* | `300` | Maximum intervals after which instance stability checks will be skipped if there is still some unstable instance left.
-`awaitFail` | *aem.await.fail* | `true` | If there is still some unstable instance left, then fail build except just logging warning.
-`awaitAssurances` | *aem.await.assurances* | `3L` | Number of intervals / additional instance stability checks to assure all stable instances.
-`awaitCondition` | *aem.await.condition* | `{ it.stable }` | Hook for customizing condition being an instance stability check. Scope of lambda is class: [InstanceState](src/main/kotlin/com/cognifide/gradle/aem/instance/InstanceState.kt). Use one of its method and / or from [BundleState](src/main/kotlin/com/cognifide/gradle/aem/instance/BundleState.kt) to get customized behavior.
+`awaitStableInterval` | *aem.await.interval* | `1000` | Time in milliseconds used as interval between next instance stability checks being performed. Optimization could be necessary only when instance is heavily loaded.
+`awaitStableTimeout` | *aem.await.stable.timeout* | `900` | After each await interval, instance stability check is being performed. This value is a HTTP connection timeout (in millis) which must be smaller than interval to avoid race condition.
+`awaitStableTimes` | *aem.await.stable.times* | `300` | Maximum intervals after which instance stability checks will be skipped if there is still some unstable instance left.
+`awaitStableAssurances` | *aem.await.stable.assurances* | `3L` | Number of intervals / additional instance stability checks to assure all stable instances.
+`awaitStableCheck` | n/a | `{ it.checkBundleStable(500) }` | Hook for customizing instance stability check. Check will be repeated if assurance is configured. 
+`awaitHealthCheck` | n/a | { `it.checkComponentState(awaitHealthComponentsActive) }` | Hook for customizing instance health check.
+`awaitFast` | *aem.await.fast* | `false` | Skip stable check assurances and health checking. Alternative, quicker type of awaiting stable instances.
+`awaitFastDelay` | *aem.await.fast.delay* | `1000` | Time in milliseconds to postpone instance stability checks to avoid race condition related with actual operation being performed on AEM like starting JCR package installation or even creating launchpad.
+`awaitResume` | *aem.await.resume* | `false` | Do not fail build but log warning when there is still some unstable or unhealthy instance.
+
+Instance state, stable check, health check lambdas are using: [InstanceState](src/main/kotlin/com/cognifide/gradle/aem/instance/InstanceState.kt). Use its methods to achieve expected customized behavior.
 
 #### Task `aemCollect`
 
@@ -451,7 +513,8 @@ Screenshot below presents generated ZIP package which is a result of running `gr
 
 ### Expandable properties
 
-By default, plugin is configured that in all XML files located under path *META-INF/vault* properties can be injected using syntax: `${property}`.
+By default, plugin is configured that in all XML files located under path *META-INF/vault* properties can be injected using syntax: `{{property}}`.
+The properties syntax comes from [Pebble Template Engine](http://www.mitchellbosecke.com/pebble) which means that all its features (if statements, for loops, filters etc) can be used inside files being expanded.
 
 Related configuration:
 
@@ -477,18 +540,12 @@ Predefined properties:
 * `buildCount` - number to be used as CRX package build count (`buildDate` in format `yDDmmssSSS`).
 * `created` - current date in *ISO8601* format.
 
-Maven fallback properties (useful when migrating project):
-
-* `project.groupId` - alias for `project.group`.
-* `project.artifactId` - alias for `project.name`.
-* `project.build.finalName` - alias for `${project.name}-${project.version}`.
-
 Task specific:
 * `aemCompose` - properties which are being dynamically calculated basing on content actually included into package.
    * `filterRoots` - after using method `includeContent` of `aemCompose` task, all Vault filter roots are being gathered. This property contains all these XML tags concatenated especially useful for building assemblies. If no projects will be included, then this variable will contain a single filter root with bundle path to be able to deploy auto-generated package with JAR file only.
+   * `filters` - same as above, but instead it is a collection of XML elements that could be traversed and rendered in a customized way.
 * `aemVlt` - properties are being injected to command specified in `aem.vlt.command` property. Following properties are being used internally also by `aemCheckout`.
-   * `instance` - instance used to communicate with while performing Vault commands. Determined by (order take precedence): properties `aem.vlt.instance`, `aem.deploy.instance.list`, `aem.deploy.instance.name` and as fallback first instance which name matches filter `*-author`.
-   * `filter` - file name or path to Vault workspace filter file  *META-INF/vault/filter.xml*. Determined by (order take precedence): property: `aem.checkout.filterPath`, configuration `contentPath` property suffixed with `META-INF/vault/filter.xml`. 
+   * `instances` - map of defined instances with names as keys. 
 
 ## How to's
 
@@ -519,7 +576,7 @@ aem {
 }
 
 aemCompose {
-    archiveName = 'company-example'
+    baseName = 'company-example'
     duplicatesStrategy = "EXCLUDE"
     includeProject ':app:core'
 }
@@ -539,9 +596,6 @@ In AEM configuration section, there is possibility to use `localInstance` or `re
 ```groovy
 aem {
     config {
-        localAuthorInstance() // property: aem.instance.author.httpUrl or default 'http://localhost:4502' ; local-author
-        localPublishInstance() // property: aem.instance.author.httpUrl or default 'http://localhost:4502' ; local-publish
-    
         localInstance "http://localhost:4502" // local-author
         localInstance "http://localhost:4502", { // local-author
             user = "admin"
@@ -557,9 +611,6 @@ aem {
             typeName = "publish"
             debugPort = 14503
         } 
-      
-        remoteAuthorInstance() // property: aem.instance.author.httpUrl or default 'http://localhost:4502' ; local-author
-        remotePublishInstance() // property: aem.instance.author.httpUrl or default 'http://localhost:4502' ; local-publish
       
         remoteInstance "http://192.168.10.1:4502", { // integration-author1
             user = "user1" 
@@ -629,8 +680,8 @@ then it is available to deploy packages with taking into account:
  * type of AEM instance (author / publish)
 
 ```bash
-gradlew aemDeploy -Paem.deploy.instance.name=integration-*
-gradlew aemDeploy -Paem.deploy.instance.name=*-author
+gradlew aemDeploy -Paem.instance.name=integration-*
+gradlew aemDeploy -Paem.instance.name=*-author
 ```
 
 Default value of that instance name filter is `local-*`.
@@ -642,13 +693,13 @@ Deployment could be performed in parallel mode when configuration option `deploy
 Instance urls delimited by semicolon:
 
 ```bash
-gradlew aemDeploy -Paem.deploy.instance.list=http://admin:admin@localhost:4502;http://admin:admin@localhost:4503
+gradlew aemDeploy -Paem.instance.list=http://admin:admin@localhost:4502;http://admin:admin@localhost:4503
 ```
 
 Alternative syntax - list delimited: instances by semicolon, instance properties by comma.
 
 ```bash
-gradlew aemDeploy -Paem.deploy.instance.list=http://localhost:4502,admin,admin;http://localhost:4503,admin,admin
+gradlew aemDeploy -Paem.instance.list=http://localhost:4502,admin,admin;http://localhost:4503,admin,admin
 ```
 
 ### Deploy only filtered dependent CRX package(s)
@@ -780,7 +831,7 @@ For the reference, see [usage in AEM Multi-Project Example](https://github.com/C
 ### Skip installed package resolution by download name. 
 
 ```bash
-gradlew aemInstall -Paem.deploy.skipDownloadName=true
+gradlew aemInstall -Paem.package.skipDownloadName=true
 ```
 Only matters when Vault properties file is customized then that property could be used to eliminate conflicts.
 

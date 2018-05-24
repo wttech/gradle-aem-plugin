@@ -29,39 +29,16 @@ class VltApp(val project: Project) : VaultFsApp() {
         return executionContext
     }
 
-    override fun prepare(command: CommandLine) {
-        logger.info("Working directory: $workingDir")
-        logger.info("Executing: vlt $command")
-
-        super.prepare(command)
+    fun execute(command: String, workingPath: String) {
+        execute(command.split(" "), workingPath)
     }
-
-    fun execute(command: String) {
-        execute(command.split(" "))
-    }
-
-    fun execute(args: List<String>) {
-        execute(args, workingDir.absolutePath)
-    }
-
-    val workingDir: File
-        get() {
-            var path = "${config.contentPath}/${PackagePlugin.JCR_ROOT}"
-
-            val relativePath = project.properties["aem.vlt.path"] as String?
-            if (!relativePath.isNullOrBlank()) {
-                path = "$path/$relativePath"
-            }
-
-            return File(path)
-        }
 
     /**
      * TODO This could be potentially improved by overriding few methods of base class
      * @see VaultFsApp.init
      */
     @Synchronized
-    private fun execute(args: List<String>, workingPath: String) {
+    fun execute(args: List<String>, workingPath: String) {
         val cwd = System.getProperty(CURRENT_WORKING_DIR)
 
         System.setProperty(CURRENT_WORKING_DIR, workingPath)

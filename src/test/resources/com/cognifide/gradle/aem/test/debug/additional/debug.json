@@ -1,0 +1,278 @@
+{
+  "projectInfo": {
+    "displayName": "root project 'additional'",
+    "path": ":",
+    "name": "additional",
+    "dir": "debug/additional"
+  },
+  "packageProperties": {
+    "requiresRoot": "false",
+    "buildCount": "20181091542609",
+    "created": "2017-12-19T21:39:38.058+0000",
+    "config": {
+      "instances": {
+        "local-author" : {
+          "httpUrl" : "http://localhost:4502",
+          "user" : "admin",
+          "password" : "admin",
+          "typeName" : "author",
+          "environment" : "local",
+          "debugPort" : 24502,
+          "name" : "local-author",
+          "type" : "AUTHOR",
+          "httpPort" : 4502,
+          "startOpts" : "",
+          "runModes" : "author,nosamplecontent,mongo",
+          "jvmOpts" : "-Xdebug -Xrunjdwp:transport=dt_socket,address=24502,server=y,suspend=n -server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true"
+        },
+        "local-publish1" : {
+          "httpUrl" : "http://localhost:4503",
+          "user" : "admin",
+          "password" : "admin",
+          "typeName" : "publish1",
+          "environment" : "local",
+          "debugPort" : 14503,
+          "name" : "local-publish1",
+          "type" : "PUBLISH",
+          "httpPort" : 4503,
+          "startOpts" : "",
+          "runModes" : "publish,local",
+          "jvmOpts" : "-Xdebug -Xrunjdwp:transport=dt_socket,address=14503,server=y,suspend=n -server -Xmx1024m -XX:MaxPermSize=256M -Djava.awt.headless=true"
+        },
+        "local-publish2" : {
+          "httpUrl" : "http://localhost:4504",
+          "user" : "admin",
+          "password" : "admin",
+          "typeName" : "publish2",
+          "environment" : "local",
+          "debugPort" : 14504,
+          "name" : "local-publish2",
+          "type" : "PUBLISH",
+          "httpPort" : 4504,
+          "startOpts" : "",
+          "runModes" : "publish,local",
+          "jvmOpts" : "-Xdebug -Xrunjdwp:transport=dt_socket,address=14504,server=y,suspend=n -server -Xmx1024m -XX:MaxPermSize=256M -Djava.awt.headless=true"
+        },
+        "prod-author": {
+          "httpUrl": "http://author.example.com",
+          "user": "admin",
+          "password": "admin",
+          "typeName": "author",
+          "environment": "prod",
+          "name": "prod-author",
+          "type": "AUTHOR",
+          "httpPort": 80
+        },
+        "prod-publish": {
+          "httpUrl": "http://example.com",
+          "user": "admin",
+          "password": "admin",
+          "typeName": "publish",
+          "environment": "prod",
+          "name": "prod-publish",
+          "type": "PUBLISH",
+          "httpPort": 80
+        },
+        "int-author": {
+          "httpUrl": "http://192.168.1.1",
+          "user": "admin",
+          "password": "admin",
+          "typeName": "author",
+          "environment": "int",
+          "name": "int-author",
+          "type": "AUTHOR",
+          "httpPort": 80
+        },
+        "int-publish": {
+          "httpUrl": "http://192.168.1.2",
+          "user": "admin",
+          "password": "admin",
+          "typeName": "publish",
+          "environment": "int",
+          "name": "int-publish",
+          "type": "PUBLISH",
+          "httpPort": 80
+        },
+        "stg-author": {
+          "httpUrl": "https://192.168.3.1:8082",
+          "user": "user1",
+          "password": "password1",
+          "typeName": "author",
+          "environment": "stg",
+          "name": "stg-author",
+          "type": "AUTHOR",
+          "httpPort": 8082
+        },
+        "stg-publish": {
+          "httpUrl": "https://192.168.3.2:8083",
+          "user": "user2",
+          "password": "password2",
+          "typeName": "publish",
+          "environment": "stg",
+          "name": "stg-publish",
+          "type": "PUBLISH",
+          "httpPort": 8083
+        },
+        "perf-author-1": {
+          "httpUrl": "http://192.168.2.1:4502",
+          "user": "admin",
+          "password": "admin",
+          "typeName": "author-1",
+          "environment": "perf",
+          "name": "perf-author-1",
+          "type": "AUTHOR",
+          "httpPort": 4502
+        },
+        "perf-author-2": {
+          "httpUrl": "http://192.168.2.1:5502",
+          "user": "admin",
+          "password": "admin",
+          "typeName": "author-2",
+          "environment": "perf",
+          "name": "perf-author-2",
+          "type": "AUTHOR",
+          "httpPort": 5502
+        },
+        "perf-publish-1": {
+          "httpUrl": "http://192.168.2.2:4503",
+          "user": "admin",
+          "password": "admin",
+          "typeName": "publish-1",
+          "environment": "perf",
+          "name": "perf-publish-1",
+          "type": "PUBLISH",
+          "httpPort": 4503
+        },
+        "perf-publish-2": {
+          "httpUrl": "http://192.168.2.2:5503",
+          "user": "admin",
+          "password": "admin",
+          "typeName": "publish-2",
+          "environment": "perf",
+          "name": "perf-publish-2",
+          "type": "PUBLISH",
+          "httpPort": 5503
+        },
+        "test-author": {
+          "httpUrl": "http://192.168.6.6:4502",
+          "user": "admin",
+          "password": "admin",
+          "typeName": "author",
+          "environment": "test",
+          "name": "test-author",
+          "type": "AUTHOR",
+          "httpPort": 4502
+        },
+        "test-publish": {
+          "httpUrl": "http://192.168.6.6:4503",
+          "user": "admin",
+          "password": "admin",
+          "typeName": "publish",
+          "environment": "test",
+          "name": "test-publish",
+          "type": "PUBLISH",
+          "httpPort": 4503
+        }
+      },
+      "environment": "local",
+      "instanceName": "local-*",
+      "instanceList": "",
+      "instanceAuthorName": "local-AUTHOR*",
+      "instanceConnectionTimeout": 5000,
+      "instanceConnectionUntrustedSsl": true,
+
+      "contentPath": "debug/additional/src/main/content",
+      "bundlePath": "/apps/additional/install",
+      "bundlePackage": "",
+      "bundlePackageOptions": "-split-package:=merge-first",
+      "bundleManifestAttributes": true,
+
+      "packageName": "additional",
+      "packageLocalPath": "",
+      "packageRemotePath": "",
+      "packageFilesExcluded": [
+        "**/.gradle",
+        "**/.git",
+        "**/.git/**",
+        "**/.gitattributes",
+        "**/.gitignore",
+        "**/.gitmodules",
+        "**/.vlt",
+        "**/.vlt*.tmp",
+        "**/node_modules/**",
+        "jcr_root/.vlt-sync-config.properties"
+      ],
+      "packageFilesExpanded": [
+        "**/META-INF/vault/*.xml"
+      ],
+      "packageBuildDate": 1524118542609,
+      "packageFileProperties": {},
+      "packageSnapshots": [],
+      "packageAcHandling": "merge_preserve",
+      "packageSkipDownloadName": true,
+
+      "vaultCopyMissingFiles": true,
+      "vaultFilesPath": "debug/additional/src/main/resources/META-INF/vault",
+      "vaultLineSeparator": "LF",
+
+      "notificationEnabled": false,
+
+      "deployDistributed": false,
+      "uploadForce": true,
+      "uploadRetryTimes": 3,
+      "uploadRetryDelay": 30000,
+      "installRecursive": true,
+      "installRetryTimes": 1,
+      "installRetryDelay": 30000,
+      "createPath": ".aem/additional",
+      "createFilesPath": "debug/additional/src/main/resources/local-instance",
+      "createFilesExpanded": [
+        "**/*.properties",
+        "**/*.sh",
+        "**/*.bat",
+        "**/*.xml",
+        "**/start",
+        "**/stop"
+      ],
+      "awaitResume": false,
+      "awaitFast": false,
+      "awaitFastDelay": 1000,
+      "awaitStableInterval": 1000,
+      "awaitStableTimes": 300,
+      "awaitStableAssurances": 3,
+      "reloadDelay": 10000,
+      "satisfyRefreshing": false,
+      "satisfyBundlePath": "/apps/gradle-aem-plugin/satisfy/install",
+      "satisfyGroupName": "*",
+      "checkoutFilterPath": "",
+      "cleanFilesDeleted": [
+        "**/.vlt",
+        "**/.vlt*.tmp",
+        "**/jcr_root/.content.xml",
+        "**/jcr_root/apps/.content.xml",
+        "**/jcr_root/conf/.content.xml",
+        "**/jcr_root/content/.content.xml",
+        "**/jcr_root/content/dam/.content.xml",
+        "**/jcr_root/etc/.content.xml",
+        "**/jcr_root/etc/designs/.content.xml",
+        "**/jcr_root/home/.content.xml",
+        "**/jcr_root/home/groups/.content.xml",
+        "**/jcr_root/home/users/.content.xml",
+        "**/jcr_root/libs/.content.xml",
+        "**/jcr_root/system/.content.xml",
+        "**/jcr_root/tmp/.content.xml",
+        "**/jcr_root/var/.content.xml"
+      ],
+      "cleanSkipProperties": [
+        "jcr:uuid!**/home/users/*,**/home/groups/*",
+        "jcr:lastModified",
+        "jcr:created",
+        "cq:lastModified*",
+        "cq:lastReplicat*",
+        "*_x0040_Delete",
+        "*_x0040_TypeHint"
+      ]
+    }
+  },
+  "packageDeployed": {}
+}

@@ -1,9 +1,10 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.pkg.deploy.SyncTask
+import com.cognifide.gradle.aem.api.AemDefaultTask
+import com.cognifide.gradle.aem.instance.action.AwaitAction
 import org.gradle.api.tasks.TaskAction
 
-open class UpTask : SyncTask() {
+open class UpTask : AemDefaultTask() {
 
     companion object {
         val NAME = "aemUp"
@@ -15,8 +16,13 @@ open class UpTask : SyncTask() {
 
     @TaskAction
     fun up() {
-        synchronizeLocalInstances { it.up() }
-        awaitStableLocalInstances()
+        val handles = Instance.handles(project)
+
+        handles.parallelStream().forEach { it.up() }
+        AwaitAction(project, handles.map { it.instance }).perform()
+        handles.parallelStream().forEach { it.init() }
+
+        notifier.default("Instance(s) up and ready", "Which: ${handles.names}")
     }
 
 }

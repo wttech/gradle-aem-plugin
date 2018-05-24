@@ -1,22 +1,29 @@
 package com.cognifide.gradle.aem.pkg.deploy
 
-import com.cognifide.gradle.aem.api.AemTask
+import com.cognifide.gradle.aem.api.AemDefaultTask
+import com.cognifide.gradle.aem.instance.Instance
+import com.cognifide.gradle.aem.instance.names
+import com.cognifide.gradle.aem.instance.sync
 import org.gradle.api.tasks.TaskAction
 
-open class InstallTask : SyncTask() {
+open class InstallTask : AemDefaultTask() {
 
     companion object {
         val NAME = "aemInstall"
     }
 
     init {
-        group = AemTask.GROUP
         description = "Installs CRX package on instance(s)."
     }
 
     @TaskAction
     fun install() {
-        synchronizeInstances({ it.installPackage() })
+        val instances = Instance.filter(project)
+        val pkg = config.packageFileName
+
+        instances.sync(project, { it.installPackage(it.determineRemotePackagePath()) })
+
+        notifier.default("Package installed", "$pkg on ${instances.names}")
     }
 
 }

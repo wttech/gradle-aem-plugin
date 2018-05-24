@@ -8,7 +8,6 @@ import com.cognifide.gradle.aem.pkg.deploy.ListResponse
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.gradle.api.Project
 import java.io.Serializable
-import java.net.URL
 import kotlin.reflect.KClass
 
 interface Instance : Serializable {
@@ -27,15 +26,11 @@ interface Instance : Serializable {
 
         val PASSWORD_DEFAULT = "admin"
 
-        val AUTHOR_URL_PROP = "aem.instance.author.httpUrl"
-
-        val PUBLISH_URL_PROP = "aem.instance.publish.httpUrl"
-
         val AUTHORS_PROP = "aem.instance.authors"
 
         val PUBLISHERS_PROP = "aem.instance.publishers"
 
-        fun parse(str: String): List<Instance> {
+        fun parse(str: String): List<RemoteInstance> {
             return str.split(";").map { urlRaw ->
                 val parts = urlRaw.split(",")
 
@@ -64,44 +59,98 @@ interface Instance : Serializable {
             }
         }
 
-        fun defaults(project: Project): List<Instance> {
+        fun properties(project: Project): List<Instance> {
+            val localInstances = collectProperties(project, "local").map {
+                val (name, props) = it
+                val nameParts = name.split("-")
+                if (nameParts.size != 2) {
+                    throw InstanceException("Local instance name has invalid format: '$name'.")
+                }
+                val (environment, typeName) = nameParts
+                val httpUrl = props["httpUrl"]
+                        ?: throw InstanceException("Local instance named '$name' must have property 'httpUrl' defined.")
+
+                LocalInstance.create(httpUrl, {
+                    this.environment = environment
+                    this.typeName = typeName
+
+                    props["password"]?.let { this.password = it }
+                    props["jvmOpts"]?.let { this.jvmOpts = it.split(" ") }
+                    props["startOpts"]?.let { this.startOpts = it.split(" ") }
+                    props["runModes"]?.let { this.runModes = it.split(",") }
+                    props["debugPort"]?.let { this.debugPort = it.toInt() }
+                })
+            }.sortedBy { it.name }
+
+            val remoteInstances = collectProperties(project, "remote").map {
+                val (name, props) = it
+                val nameParts = name.split("-")
+                if (nameParts.size != 2) {
+                    throw InstanceException("Remote instance name has invalid format: '$name'.")
+                }
+                val (environment, typeName) = nameParts
+                val httpUrl = props["httpUrl"]
+                        ?: throw InstanceException("Remote instance named '$name' must have property 'httpUrl' defined.")
+
+                RemoteInstance.create(httpUrl, {
+                    this.environment = environment
+                    this.typeName = typeName
+
+                    props["user"]?.let { this.user = it }
+                    props["password"]?.let { this.password = it }
+
+                })
+            }.sortedBy { it.name }
+
+            return localInstances + remoteInstances
+        }
+
+        private fun collectProperties(project: Project, type: String): MutableMap<String, MutableMap<String, String>> {
+            return project.properties.filterKeys { Patterns.wildcard(it, "aem.instance.$type.*.*") }.entries.fold(mutableMapOf(), { result, e ->
+                val (key, value) = e
+                val parts = key.substringAfter(".$type.").split(".")
+                if (parts.size != 2) {
+                    throw InstanceException("Instance list property '$key' has invalid format.")
+                }
+
+                val (name, prop) = parts
+
+                result.getOrPut(name, { mutableMapOf() })[prop] = value as String
+                result
+            })
+        }
+
+        fun defaults(project: Project): List<RemoteInstance> {
             val config = AemConfig.of(project)
-            val authorUrl = project.properties.getOrElse(AUTHOR_URL_PROP, { URL_AUTHOR_DEFAULT }) as String
-            val publishUrl = project.properties.getOrElse(PUBLISH_URL_PROP, { URL_PUBLISH_DEFAULT }) as String
 
             return listOf(
-                    RemoteInstance.create(authorUrl, { environment = config.deployEnvironment }),
-                    RemoteInstance.create(publishUrl, { environment = config.deployEnvironment })
+                    RemoteInstance.create(URL_AUTHOR_DEFAULT, { environment = config.environment }),
+                    RemoteInstance.create(URL_PUBLISH_DEFAULT, { environment = config.environment })
             )
         }
 
         fun filter(project: Project): List<Instance> {
-            return filter(project, AemConfig.of(project).deployInstanceName)
+            return filter(project, AemConfig.of(project).instanceName)
         }
 
         fun filter(project: Project, instanceFilter: String): List<Instance> {
             val config = AemConfig.of(project)
+            val all = config.instances.values
 
-            // Specified directly should not be filtered
-            if (config.deployInstanceList.isNotBlank()) {
-                return parse(config.deployInstanceList)
+            // Specified by command line should not be filtered
+            val cmd = all.filter { it.environment == Instance.ENVIRONMENT_CMD }
+            if (cmd.isNotEmpty()) {
+                return cmd
             }
 
-            // Predefined and defaults are filterable
-            val instances = if (!config.instances.values.isEmpty()) {
-                config.instances.values
-            } else {
-                defaults(project)
-            }
-
-            // Handle name pattern filtering
-            return instances.filter { instance ->
+            // Defined by build script, via properties or defaults are filterable by name
+            return all.filter { instance ->
                 when {
-                    config.propParser.flag(AUTHORS_PROP) -> {
-                        Patterns.wildcard(instance.name, "${config.deployEnvironment}-${InstanceType.AUTHOR}*")
+                    config.props.flag(AUTHORS_PROP) -> {
+                        Patterns.wildcard(instance.name, "${config.environment}-${InstanceType.AUTHOR}*")
                     }
-                    config.propParser.flag(PUBLISHERS_PROP) -> {
-                        Patterns.wildcard(instance.name, "${config.deployEnvironment}-${InstanceType.PUBLISH}*")
+                    config.props.flag(PUBLISHERS_PROP) -> {
+                        Patterns.wildcard(instance.name, "${config.environment}-${InstanceType.PUBLISH}*")
                     }
                     else -> Patterns.wildcards(instance.name, instanceFilter)
                 }
@@ -131,6 +180,10 @@ interface Instance : Serializable {
     val httpPort: Int
         get() = InstanceUrl.parse(httpUrl).httpPort
 
+    @get:JsonIgnore
+    val httpBasicAuthUrl: String
+        get() = InstanceUrl.parse(httpUrl).httpBasicAuthUrl(user, password)
+
     val user: String
 
     val password: String
@@ -140,6 +193,10 @@ interface Instance : Serializable {
         get() = "*".repeat(password.length)
 
     val environment: String
+
+    @get:JsonIgnore
+    val cmd: Boolean
+        get() = environment == ENVIRONMENT_CMD
 
     val typeName: String
 
@@ -178,4 +235,15 @@ interface Instance : Serializable {
     @get:JsonIgnore
     var packages: ListResponse?
 
+}
+
+val Collection<Instance>.names: String
+    get() = joinToString(", ") { it.name }
+
+fun Instance.isInitialized(project: Project): Boolean {
+    return this !is LocalInstance || LocalHandle(project, this).initialized
+}
+
+fun Instance.isBeingInitialized(project: Project): Boolean {
+    return this is LocalInstance && !LocalHandle(project, this).initialized
 }
