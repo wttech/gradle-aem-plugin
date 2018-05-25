@@ -32,21 +32,20 @@ open class SatisfyTask : AemDefaultTask() {
 
     @get:Internal
     val packageGroups by lazy {
-        val packageGroups = if (cmdGroups) {
+        val result = if (cmdGroups) {
             logger.info("Providing packages defined via command line.")
-
             packageProvider.filterGroups("cmd.*")
         } else {
-            logger.info("Providing packages from local and remote sources.")
+            logger.info("Providing packages defined in build script.")
             packageProvider.filterGroups(groupFilter)
         }
 
-        val packageFiles = packageGroups.flatMap { it.files }
+        val files = result.flatMap { it.files }
 
-        logger.info("Packages provided (${packageFiles.size}).")
+        logger.info("Packages provided (${files.size}).")
 
         @Suppress("unchecked_cast")
-        packageGroups as List<PackageGroup>
+        result as List<PackageGroup>
     }
 
     @get:Internal
