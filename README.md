@@ -483,7 +483,7 @@ Upload & install dependent CRX package(s) before deployment. Available methods:
 * `dependency(notation: String)`, use OSGi bundle that will be resolved from defined repositories (for instance from Maven) then wrapped to CRX package: `dependency('com.neva.felix:search-webconsole-plugin:1.2.0')`.
 * `group(name: String, configurer: Closure)`, useful for declaring group of packages (or just optionally naming single package) to be installed only on demand. For instance: `group 'tools', { url('http://example.com/package.zip'); url('smb://internal-nt/package2.zip')  }`. Then to install only packages in group `tools`, use command: `gradlew aemSatisfy -Paem.satisfy.group=tools`.
 
-It is also possible to specify packages to be deployed only once via command line parameter.
+It is also possible to specify packages to be deployed only once via command line parameter. Also for local files at any file system paths.
 
 ```bash
 gradlew aemSatisfy -Paem.satisfy.urls=[url1,url2]
