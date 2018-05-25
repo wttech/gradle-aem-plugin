@@ -18,7 +18,7 @@ open class DeleteTask : AemDefaultTask() {
 
     @TaskAction
     fun delete() {
-        propertyParser.checkForce()
+        props.checkForce()
 
         val instances = Instance.filter(project)
         val pkg = config.packageFileName

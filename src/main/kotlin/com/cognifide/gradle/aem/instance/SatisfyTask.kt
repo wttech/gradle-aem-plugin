@@ -32,9 +32,15 @@ open class SatisfyTask : AemDefaultTask() {
 
     @get:Internal
     val packageGroups by lazy {
-        logger.info("Providing packages from local and remote sources.")
+        val packageGroups = if (cmdGroups) {
+            logger.info("Providing packages defined via command line.")
 
-        val packageGroups = packageProvider.filterGroups(groupFilter)
+            packageProvider.filterGroups("cmd.*")
+        } else {
+            logger.info("Providing packages from local and remote sources.")
+            packageProvider.filterGroups(groupFilter)
+        }
+
         val packageFiles = packageGroups.flatMap { it.files }
 
         logger.info("Packages provided (${packageFiles.size}).")
@@ -43,9 +49,23 @@ open class SatisfyTask : AemDefaultTask() {
         packageGroups as List<PackageGroup>
     }
 
+    @get:Internal
+    val cmdGroups: Boolean
+        get() = project.properties["aem.satisfy.urls"] != null
+
     init {
         group = AemTask.GROUP
         description = "Satisfies AEM by uploading & installing dependent packages on instance(s)."
+
+        defineCmdGroups()
+    }
+
+    fun defineCmdGroups() {
+        if (cmdGroups) {
+            props.list("aem.satisfy.urls").forEachIndexed { index, url ->
+                packageProvider.group("cmd.${index + 1}", { url(url) })
+            }
+        }
     }
 
     fun packages(closure: Closure<*>) {
