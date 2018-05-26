@@ -117,7 +117,7 @@ buildscript {
     }
     
     dependencies {
-        classpath 'com.cognifide.gradle:aem-plugin:4.0.0-beta'
+        classpath 'com.cognifide.gradle:aem-plugin:4.0.0'
     }
 }
 
@@ -481,7 +481,19 @@ Upload & install dependent CRX package(s) before deployment. Available methods:
 * `downloadSftpAuth(url: String, username: String, password: String)`, download package using SFTP protocol.
 * `downloadSftpAuth(url: String)`, as above, but credentials must be specified in variables: `aem.sftp.username`, `aem.sftp.password`. Optionally enable strict host checking by setting property `aem.sftp.hostChecking` to `true`.
 * `dependency(notation: String)`, use OSGi bundle that will be resolved from defined repositories (for instance from Maven) then wrapped to CRX package: `dependency('com.neva.felix:search-webconsole-plugin:1.2.0')`.
-* `group(name: String, configurer: Closure)`, useful for declaring group of packages (or just naming single package) to be installed only on demand. For instance: `group 'tools', { url('http://example.com/package.zip'); url('smb://internal-nt/package2.zip')  }`. Then to install only packages in group `tools`, use command: `gradlew aemSatisfy -Paem.satisfy.group=tools`.
+* `group(name: String, configurer: Closure)`, useful for declaring group of packages (or just optionally naming single package) to be installed only on demand. For instance: `group 'tools', { url('http://example.com/package.zip'); url('smb://internal-nt/package2.zip')  }`. Then to install only packages in group `tools`, use command: `gradlew aemSatisfy -Paem.satisfy.group=tools`.
+
+It is also possible to specify packages to be deployed only once via command line parameter. Also for local files at any file system paths.
+
+```bash
+gradlew aemSatisfy -Paem.satisfy.urls=[url1,url2]
+```
+
+For instance:
+
+```bash
+gradlew aemSatisfy -Paem.satisfy.urls=[https://github.com/OlsonDigital/aem-groovy-console/releases/download/11.0.0/aem-groovy-console-11.0.0.zip,https://github.com/neva-dev/felix-search-webconsole-plugin/releases/download/search-webconsole-plugin-1.2.0/search-webconsole-plugin-1.2.0.jar]
+```
 
 #### Task `aemAwait`
 
@@ -489,7 +501,7 @@ Wait until all local or remote AEM instance(s) be stable.
 
 AEM Config Param | CMD Property | Default Value | Purpose
 --- | --- | --- | ---
-`awaitStableInterval` | *aem.await.interval* | `1000` | Time in milliseconds used as interval between next instance stability checks being performed. Optimization could be necessary only when instance is heavily loaded.
+`awaitStableInterval` | *aem.await.stable.interval* | `1000` | Time in milliseconds used as interval between next instance stability checks being performed. Optimization could be necessary only when instance is heavily loaded.
 `awaitStableTimeout` | *aem.await.stable.timeout* | `900` | After each await interval, instance stability check is being performed. This value is a HTTP connection timeout (in millis) which must be smaller than interval to avoid race condition.
 `awaitStableTimes` | *aem.await.stable.times* | `300` | Maximum intervals after which instance stability checks will be skipped if there is still some unstable instance left.
 `awaitStableAssurances` | *aem.await.stable.assurances* | `3L` | Number of intervals / additional instance stability checks to assure all stable instances.

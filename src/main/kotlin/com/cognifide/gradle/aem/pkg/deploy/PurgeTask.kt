@@ -19,7 +19,7 @@ open class PurgeTask : AemDefaultTask() {
 
     @TaskAction
     fun purge() {
-        propertyParser.checkForce()
+        props.checkForce()
 
         val pkg = config.packageFileName
         val instances = Instance.filter(project)
