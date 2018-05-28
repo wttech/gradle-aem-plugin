@@ -1,6 +1,8 @@
 package com.cognifide.gradle.aem.internal.file.resolver
 
 import com.cognifide.gradle.aem.internal.Formats
+import com.cognifide.gradle.aem.internal.Patterns
+import com.cognifide.gradle.aem.internal.file.FileException
 import com.cognifide.gradle.aem.internal.file.downloader.HttpFileDownloader
 import com.cognifide.gradle.aem.internal.file.downloader.SftpFileDownloader
 import com.cognifide.gradle.aem.internal.file.downloader.SmbFileDownloader
@@ -68,13 +70,21 @@ open class FileResolver(val project: Project, val downloadDir: File) {
         return filterGroups(filter).flatMap { it.files }
     }
 
+    fun group(name: String): FileGroup {
+        return groups.find { it.name == name } ?: throw FileException("File group '$name' is not defined.")
+    }
+
+    fun filterGroups(filter: String): List<FileGroup> {
+        return filterGroups { Patterns.wildcard(it, filter) }
+    }
+
     fun filterGroups(filter: (String) -> Boolean): List<FileGroup> {
         return groups.filter { filter(it.name) }.filter { it.resolutions.isNotEmpty() }
     }
 
     fun dependency(notation: Any) {
         resolve(notation, {
-            val configName = "fileResolver_dependency_${DigestUtils.md5Hex(downloadDir.path +  notation)}"
+            val configName = "fileResolver_dependency_${DigestUtils.md5Hex(downloadDir.path + notation)}"
             val configOptions: (Configuration) -> Unit = { it.isTransitive = false }
             val config = project.configurations.create(configName, configOptions)
 
@@ -227,14 +237,22 @@ open class FileResolver(val project: Project, val downloadDir: File) {
         resolve(sourceFile.absolutePath, { sourceFile })
     }
 
-    fun group(name: String, configurer: Closure<*>) {
+    fun group(name: String, configurer: FileResolver.() -> Unit) {
         groupCurrent = groups.find { it.name == name } ?: createGroup(name).apply { groups.add(this) }
-        ConfigureUtil.configureSelf(configurer, this)
+        apply(configurer)
         groupCurrent = groupDefault
     }
 
+    fun group(name: String, configurer: Closure<*>) {
+        group(name, { ConfigureUtil.configure(configurer, this) })
+    }
+
+    fun config(configurer: FileGroup.() -> Unit) {
+        groupCurrent.apply(configurer)
+    }
+
     fun config(configurer: Closure<*>) {
-        ConfigureUtil.configureSelf(configurer, groupCurrent)
+        config { ConfigureUtil.configure(configurer, this) }
     }
 
 }

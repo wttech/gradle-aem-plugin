@@ -14,7 +14,7 @@ abstract class AemDefaultTask : DefaultTask(), AemTask {
     protected val notifier = AemNotifier.of(project)
 
     @Internal
-    protected val propertyParser = PropertyParser(project)
+    protected val props = PropertyParser(project)
 
     init {
         group = AemTask.GROUP
