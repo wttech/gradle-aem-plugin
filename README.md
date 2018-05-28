@@ -109,19 +109,29 @@ so that this repository need to be included in *buildscript* section.
 
 #### Minimal:
 
+File *settings.gradle*:
 ```groovy
-buildscript {
-    repositories {
-        jcenter()
-        maven { url  "http://dl.bintray.com/cognifide/maven-public" }
-    }
-    
-    dependencies {
-        classpath 'com.cognifide.gradle:aem-plugin:4.0.0'
-    }
+pluginManagement {
+	repositories {
+		jcenter()
+		maven { url  "http://dl.bintray.com/cognifide/maven-public" }
+	}
+	resolutionStrategy {
+		eachPlugin {
+			if (requested.id.namespace == 'com.cognifide.aem') {
+				useModule('com.cognifide.gradle:aem-plugin:4.0.0-beta')
+			}
+		}
+	}
 }
+```
 
-apply plugin: 'com.cognifide.aem.package'
+File *build.gradle*:
+```groovy
+plugins {
+	id 'com.cognifide.aem.bundle' // or 'package' for JCR content only
+	
+}
 ```
 
 Building and deploying to AEM via command: `gradlew aemDeploy`.
@@ -131,8 +141,11 @@ Building and deploying to AEM via command: `gradlew aemDeploy`.
 AEM configuration section contains all default values for demonstrative purpose.
 
 ```groovy
-apply plugin: 'com.cognifide.aem.instance'
-apply plugin: 'kotlin' // 'java' or whatever you like to compile bundle
+plugins {
+	id 'com.cognifide.aem.bundle'
+	id 'com.cognifide.aem.instance'
+	id 'org.jetbrains.kotlin.jvm' // or any other like 'java' to compile OSGi bundle
+}
 
 defaultTasks = [':aemSatisfy', ':aemDeploy', ':aemAwait']
 
@@ -570,7 +583,7 @@ allprojects { subproject ->
   plugins.withId 'com.cognifide.aem.base', {
     aem {
         config {
-          localInstance "http://localhost:6502"
+          remoteInstance "http://localhost:6502"
           contentPath = subproject.file("src/main/aem")
         }
     }
@@ -578,19 +591,19 @@ allprojects { subproject ->
 }
 ```
 
-Project `:app` specific configuration like CRX package options should be defined in `app/build.gradle`:
+For instance, project `:app:core` specific configuration like OSGi bundle or CRX package options should be defined in `app/core/build.gradle`:
 
 ```groovy
 aem {
     config {
-        contentPath = project.file("src/main/aem")
+        bundlePackage = 'com.company.aem.example.core'
     }
 }
 
 aemCompose {
-    baseName = 'company-example'
+    includeProjects ':content:*'
+    baseName = 'example-core'
     duplicatesStrategy = "EXCLUDE"
-    includeProject ':app:core'
 }
 ```
 
@@ -651,6 +664,17 @@ aem {
     }
 }
 ```
+
+The above configuration can be also specified through *gradle.properties* file using dedicated syntax.
+
+`aem.instance.$TYPE.$ENVIRONMENT-$TYPE_NAME.$PROP_NAME=$PROP_VALUE`
+
+Part | Possible values | Description |
+--- | --- | --- |
+`$TYPE` | `local` or `remote` (only) |  Type of instance. Local means that for each one there will be set up AEM Quickstart at local file system. | 
+`$ENVIRONMENT` | `local`, `int`, `stg` etc | Environment name. |
+`$TYPE_NAME` | `author`, `publish`, `publish2`, etc | Combination of AEM instance type and semantic suffix useful when more than one of instance of same type is being configured. |
+`$PROP_NAME=$PROP_VALUE` | Local instances: `httpUrl=http://admin:admin@localhost:4502`, `password=foo`, `runModes=nosamplecontent`, `jvmOpts=-server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true`, `startOpts=...`, `debugPort=24502`. Remote instances: `httpUrl`, `user`, `password`. | Run modes, JVM opts and start opts should be comma delimited. |
 
 **Rules:**
 
