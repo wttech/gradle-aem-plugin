@@ -413,7 +413,7 @@ class AemConfig(
      */
     @Internal
     @get:JsonIgnore
-    var awaitHealthCheck: (InstanceState) -> Boolean = { it.checkComponentState(), 10000) }
+    var awaitHealthCheck: (InstanceState) -> Boolean = { it.checkComponentState(10000) }
 
     /**
      * Time in milliseconds to postpone instance stability checks after triggering instances restart.
