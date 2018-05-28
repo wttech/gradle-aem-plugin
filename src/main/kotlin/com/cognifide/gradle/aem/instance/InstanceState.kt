@@ -45,6 +45,10 @@ class InstanceState(private var _sync: InstanceSync, val instance: Instance) {
         })
     }
 
+    fun checkComponentState(connectionTimeout: Int = 10000): Boolean {
+        return checkComponentState(PLATFORM_COMPONENTS, connectionTimeout)
+    }
+
     fun checkComponentState(packagesActive: Collection<String>, connectionTimeout: Int = 10000): Boolean {
         return check({
             it.connectionTimeout = connectionTimeout
@@ -72,6 +76,13 @@ class InstanceState(private var _sync: InstanceSync, val instance: Instance) {
                 .append(bundleState, other.bundleState)
                 .append(componentState, other.componentState)
                 .isEquals
+    }
+
+    companion object {
+        val PLATFORM_COMPONENTS = setOf(
+                "com.day.crx.packaging.*",
+                "org.apache.sling.installer.*"
+        )
     }
 
 }

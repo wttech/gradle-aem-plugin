@@ -35,12 +35,12 @@ open class CreateTask : AemDefaultTask() {
     }
 
     private fun instanceFilesByProperties() {
-        val jarUrl = propertyParser.string(JAR_URL_PROP)
+        val jarUrl = props.string(JAR_URL_PROP)
         if (!jarUrl.isNullOrBlank()) {
             instanceFileResolver.url(jarUrl!!)
         }
 
-        val licenseUrl = propertyParser.string(LICENSE_URL_PROP)
+        val licenseUrl = props.string(LICENSE_URL_PROP)
         if (!licenseUrl.isNullOrBlank()) {
             instanceFileResolver.url(licenseUrl!!)
         }

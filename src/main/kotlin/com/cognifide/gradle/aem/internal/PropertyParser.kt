@@ -45,15 +45,21 @@ class PropertyParser(val project: Project) {
     }
 
     private fun prop(name: String): String? {
-        var value = project.properties[name] as String?
-        if (value == null) {
-            value = systemProps[name]
-        }
-        if (value == null) {
-            value = envProps[name]
+        if (project.hasProperty(name)) {
+            return project.property(name).toString()
         }
 
-        return value
+        var systemValue = System.getProperty(name)
+        if (systemValue != null) {
+            return systemValue
+        }
+
+        var envValue = System.getenv(name)
+        if (envValue != null) {
+            return envValue
+        }
+
+        return null
     }
 
     fun flag(name: String): Boolean {

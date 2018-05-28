@@ -109,19 +109,29 @@ so that this repository need to be included in *buildscript* section.
 
 #### Minimal:
 
+File *settings.gradle*:
 ```groovy
-buildscript {
-    repositories {
-        jcenter()
-        maven { url  "http://dl.bintray.com/cognifide/maven-public" }
-    }
-    
-    dependencies {
-        classpath 'com.cognifide.gradle:aem-plugin:4.0.0-beta'
-    }
+pluginManagement {
+	repositories {
+		jcenter()
+		maven { url  "http://dl.bintray.com/cognifide/maven-public" }
+	}
+	resolutionStrategy {
+		eachPlugin {
+			if (requested.id.namespace == 'com.cognifide.aem') {
+				useModule('com.cognifide.gradle:aem-plugin:4.0.0-beta2')
+			}
+		}
+	}
 }
+```
 
-apply plugin: 'com.cognifide.aem.package'
+File *build.gradle*:
+```groovy
+plugins {
+	id 'com.cognifide.aem.bundle' // or 'package' for JCR content only
+	
+}
 ```
 
 Building and deploying to AEM via command: `gradlew aemDeploy`.
@@ -131,8 +141,11 @@ Building and deploying to AEM via command: `gradlew aemDeploy`.
 AEM configuration section contains all default values for demonstrative purpose.
 
 ```groovy
-apply plugin: 'com.cognifide.aem.instance'
-apply plugin: 'kotlin' // 'java' or whatever you like to compile bundle
+plugins {
+	id 'com.cognifide.aem.bundle'
+	id 'com.cognifide.aem.instance'
+	id 'org.jetbrains.kotlin.jvm' // or any other like 'java' to compile OSGi bundle
+}
 
 defaultTasks = [':aemSatisfy', ':aemDeploy', ':aemAwait']
 
@@ -481,7 +494,19 @@ Upload & install dependent CRX package(s) before deployment. Available methods:
 * `downloadSftpAuth(url: String, username: String, password: String)`, download package using SFTP protocol.
 * `downloadSftpAuth(url: String)`, as above, but credentials must be specified in variables: `aem.sftp.username`, `aem.sftp.password`. Optionally enable strict host checking by setting property `aem.sftp.hostChecking` to `true`.
 * `dependency(notation: String)`, use OSGi bundle that will be resolved from defined repositories (for instance from Maven) then wrapped to CRX package: `dependency('com.neva.felix:search-webconsole-plugin:1.2.0')`.
-* `group(name: String, configurer: Closure)`, useful for declaring group of packages (or just naming single package) to be installed only on demand. For instance: `group 'tools', { url('http://example.com/package.zip'); url('smb://internal-nt/package2.zip')  }`. Then to install only packages in group `tools`, use command: `gradlew aemSatisfy -Paem.satisfy.group=tools`.
+* `group(name: String, configurer: Closure)`, useful for declaring group of packages (or just optionally naming single package) to be installed only on demand. For instance: `group 'tools', { url('http://example.com/package.zip'); url('smb://internal-nt/package2.zip')  }`. Then to install only packages in group `tools`, use command: `gradlew aemSatisfy -Paem.satisfy.group=tools`.
+
+It is also possible to specify packages to be deployed only once via command line parameter. Also for local files at any file system paths.
+
+```bash
+gradlew aemSatisfy -Paem.satisfy.urls=[url1,url2]
+```
+
+For instance:
+
+```bash
+gradlew aemSatisfy -Paem.satisfy.urls=[https://github.com/OlsonDigital/aem-groovy-console/releases/download/11.0.0/aem-groovy-console-11.0.0.zip,https://github.com/neva-dev/felix-search-webconsole-plugin/releases/download/search-webconsole-plugin-1.2.0/search-webconsole-plugin-1.2.0.jar]
+```
 
 #### Task `aemAwait`
 
@@ -489,12 +514,12 @@ Wait until all local or remote AEM instance(s) be stable.
 
 AEM Config Param | CMD Property | Default Value | Purpose
 --- | --- | --- | ---
-`awaitStableInterval` | *aem.await.interval* | `1000` | Time in milliseconds used as interval between next instance stability checks being performed. Optimization could be necessary only when instance is heavily loaded.
+`awaitStableInterval` | *aem.await.stable.interval* | `1000` | Time in milliseconds used as interval between next instance stability checks being performed. Optimization could be necessary only when instance is heavily loaded.
 `awaitStableTimeout` | *aem.await.stable.timeout* | `900` | After each await interval, instance stability check is being performed. This value is a HTTP connection timeout (in millis) which must be smaller than interval to avoid race condition.
 `awaitStableTimes` | *aem.await.stable.times* | `300` | Maximum intervals after which instance stability checks will be skipped if there is still some unstable instance left.
 `awaitStableAssurances` | *aem.await.stable.assurances* | `3L` | Number of intervals / additional instance stability checks to assure all stable instances.
 `awaitStableCheck` | n/a | `{ it.checkBundleStable(500) }` | Hook for customizing instance stability check. Check will be repeated if assurance is configured. 
-`awaitHealthCheck` | n/a | { `it.checkComponentState(awaitHealthComponentsActive) }` | Hook for customizing instance health check.
+`awaitHealthCheck` | n/a | { `it.checkComponentState(10000) }` | Hook for customizing instance health check.
 `awaitFast` | *aem.await.fast* | `false` | Skip stable check assurances and health checking. Alternative, quicker type of awaiting stable instances.
 `awaitFastDelay` | *aem.await.fast.delay* | `1000` | Time in milliseconds to postpone instance stability checks to avoid race condition related with actual operation being performed on AEM like starting JCR package installation or even creating launchpad.
 `awaitResume` | *aem.await.resume* | `false` | Do not fail build but log warning when there is still some unstable or unhealthy instance.
@@ -558,7 +583,7 @@ allprojects { subproject ->
   plugins.withId 'com.cognifide.aem.base', {
     aem {
         config {
-          localInstance "http://localhost:6502"
+          remoteInstance "http://localhost:6502"
           contentPath = subproject.file("src/main/aem")
         }
     }
@@ -566,19 +591,19 @@ allprojects { subproject ->
 }
 ```
 
-Project `:app` specific configuration like CRX package options should be defined in `app/build.gradle`:
+For instance, project `:app:core` specific configuration like OSGi bundle or CRX package options should be defined in `app/core/build.gradle`:
 
 ```groovy
 aem {
     config {
-        contentPath = project.file("src/main/aem")
+        bundlePackage = 'com.company.aem.example.core'
     }
 }
 
 aemCompose {
-    baseName = 'company-example'
+    includeProjects ':content:*'
+    baseName = 'example-core'
     duplicatesStrategy = "EXCLUDE"
-    includeProject ':app:core'
 }
 ```
 
@@ -639,6 +664,17 @@ aem {
     }
 }
 ```
+
+The above configuration can be also specified through *gradle.properties* file using dedicated syntax.
+
+`aem.instance.$TYPE.$ENVIRONMENT-$TYPE_NAME.$PROP_NAME=$PROP_VALUE`
+
+Part | Possible values | Description |
+--- | --- | --- |
+`$TYPE` | `local` or `remote` (only) |  Type of instance. Local means that for each one there will be set up AEM Quickstart at local file system. | 
+`$ENVIRONMENT` | `local`, `int`, `stg` etc | Environment name. |
+`$TYPE_NAME` | `author`, `publish`, `publish2`, etc | Combination of AEM instance type and semantic suffix useful when more than one of instance of same type is being configured. |
+`$PROP_NAME=$PROP_VALUE` | Local instances: `httpUrl=http://admin:admin@localhost:4502`, `password=foo`, `runModes=nosamplecontent`, `jvmOpts=-server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true`, `startOpts=...`, `debugPort=24502`. Remote instances: `httpUrl`, `user`, `password`. | Run modes, JVM opts and start opts should be comma delimited. |
 
 **Rules:**
 

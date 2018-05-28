@@ -18,7 +18,7 @@ open class UninstallTask : AemDefaultTask() {
 
     @TaskAction
     fun uninstall() {
-        propertyParser.checkForce()
+        props.checkForce()
 
         val instances = Instance.filter(project)
         val pkg = config.packageFileName

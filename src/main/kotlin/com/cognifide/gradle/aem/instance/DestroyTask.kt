@@ -15,7 +15,7 @@ open class DestroyTask : AemDefaultTask() {
 
     @TaskAction
     fun destroy() {
-        propertyParser.checkForce()
+        props.checkForce()
 
         val handles = Instance.handles(project)
         handles.parallelStream().forEach { it.destroy() }
