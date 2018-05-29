@@ -19,7 +19,6 @@ open class AwaitTask : AemDefaultTask() {
         val instances = Instance.filter(project)
 
         AwaitAction(project, instances).perform()
-        notifier.default("Instance(s) stable and healthy", "Which: ${instances.names}")
     }
 
 }

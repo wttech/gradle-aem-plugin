@@ -41,9 +41,21 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
         }
 
         if (fast) {
-            ProgressCountdown(project, "Waiting for instance(s): ${instances.names}", fastDelay).run()
+            awaitDelay()
         }
 
+        awaitStable()
+
+        if (!fast) {
+            awaitHealthy()
+        }
+    }
+
+    private fun awaitDelay() {
+        ProgressCountdown(project, "Waiting for instance(s): ${instances.names}", fastDelay).run()
+    }
+
+    private fun awaitStable() {
         val progressLogger = ProgressLogger(project, "Awaiting stable instance(s): ${instances.names}")
         progressLogger.started()
 
@@ -100,36 +112,16 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
             }
 
             if (unstableInstances.isEmpty()) {
-                // Skip assurance and health checking.
-                if (fast) {
-                    return@waitUntil false
-                }
-
                 // Assure that expected moment is not accidental, remember it
-                if (stableAssurances > 0 && sinceStableTicks == -1L) {
+                if (!fast && stableAssurances > 0 && sinceStableTicks == -1L) {
                     progressLogger.progress("Instance(s) seems to be stable. Assuring.")
                     sinceStableTicks = timer.ticks
                 }
 
                 // End if assurance is not configured or this moment remains a little longer
-                if (stableAssurances <= 0 || (sinceStableTicks >= 0 && (timer.ticks - sinceStableTicks) >= stableAssurances)) {
-                    progressLogger.progress("Instance(s) are stable. Checking health.")
-
-                    // Detect unhealthy instances
-                    val unhealthyInstances = instanceStates.parallelStream()
-                            .filter { !healthCheck(it) }
-                            .map { it.instance }
-                            .collect(Collectors.toList())
-
-                    if (unhealthyInstances.isEmpty()) {
-                        return@waitUntil false
-                    } else {
-                        if (!resume) {
-                            throw InstanceException("Instances not healthy: ${unhealthyInstances.names}.")
-                        } else {
-                            notifier.default("Instances not healthy", "Problem with: ${unhealthyInstances.names}.")
-                        }
-                    }
+                if (fast || (stableAssurances <= 0) || (sinceStableTicks >= 0 && (timer.ticks - sinceStableTicks) >= stableAssurances)) {
+                    notifier.default("Instance(s) stable", "Which: ${instances.names}")
+                    return@waitUntil false
                 }
             } else {
                 // Reset assurance, because no longer stable
@@ -140,6 +132,38 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
         })
 
         progressLogger.completed()
+    }
+
+    private fun awaitHealthy() {
+        logger.lifecycle("Checking health of instance(s): ${instances.names}")
+
+        val synchronizers = prepareSynchronizers()
+        for (i in 0..config.awaitHealthRetryTimes) {
+            val unhealthyInstances = synchronizers.parallelStream()
+                    .map { it.determineInstanceState() }
+                    .filter { !healthCheck(it) }
+                    .map { it.instance }
+                    .collect(Collectors.toList())
+
+            if (unhealthyInstances.isEmpty()) {
+                notifier.default("Instance(s) healthy", "Which: ${instances.names}")
+                return
+            }
+
+            if (i < config.awaitHealthRetryTimes) {
+                logger.warn("Unhealthy instances detected: ${unhealthyInstances.names}")
+
+                val header = "Retrying health check (${i + 1}/${config.awaitHealthRetryTimes}) after delay."
+                val countdown = ProgressCountdown(project, header, config.awaitHealthRetryDelay)
+                countdown.run()
+            } else if (i == config.awaitHealthRetryTimes) {
+                if (!resume) {
+                    throw InstanceException("Instances not healthy: ${unhealthyInstances.names}.")
+                } else {
+                    notifier.default("Instances not healthy", "Problem with: ${unhealthyInstances.names}.")
+                }
+            }
+        }
     }
 
     private fun prepareSynchronizers(): List<InstanceSync> {
