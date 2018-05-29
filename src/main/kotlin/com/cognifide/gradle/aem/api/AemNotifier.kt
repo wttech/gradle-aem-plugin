@@ -15,7 +15,7 @@ class AemNotifier private constructor(private val project: Project) {
             now(title, message)
         }
 
-        project.logger.info(if (message.isNotBlank()) {
+        project.logger.lifecycle(if (message.isNotBlank()) {
             "${title.removeSuffix(".")}. $message"
         } else {
             title

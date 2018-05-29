@@ -119,7 +119,7 @@ pluginManagement {
 	resolutionStrategy {
 		eachPlugin {
 			if (requested.id.namespace == 'com.cognifide.aem') {
-				useModule('com.cognifide.gradle:aem-plugin:4.0.0-beta2')
+				useModule('com.cognifide.gradle:aem-plugin:4.0.0-beta3')
 			}
 		}
 	}
@@ -164,6 +164,10 @@ aem {
         } else {
             bundlePath = "/apps/${project.rootProject.name}/${project.name}/install"
         }
+        bundlePackage = ""
+        bundlePackageOptions = "-split-package:=merge-first"
+        bundleManifestAttributes = true
+        bundleBndPath = "${project.file('bnd.bnd')}"
     
         if (projectUniqueName) {
             packageName = project.name
@@ -226,9 +230,11 @@ aem {
         awaitStableInterval = 1000
         awaitStableTimes = 300
         awaitStableAssurances = 3
-        awiatStableState = { it.checkBundleState(500) }
+        awaitStableState = { it.checkBundleState(500) }
         awaitStableCheck = { it.checkBundleStable(500) }
         awaitHealthCheck = { it.checkComponentState(["com.day.crx.packaging.*", "org.apache.sling.installer.*"], 10000) }
+        awaitHealthRetryTimes = 3L
+        awaitHealthRetryDelay = 30000
         awaitFast = false
         awaitFastDelay = 1000
         awaitResume = false
@@ -477,7 +483,7 @@ Turn off local AEM instance(s).
 
 #### Task `aemReload`
 
-Turn off then on both local and remote AEM instance(s).
+Reload OSGi Framework (Apache Felix) on local and remote AEM instance(s).
 
 #### Task `aemSatisfy` 
 
@@ -754,9 +760,9 @@ This behavior is controlled by:
 ```groovy
 aem {
     config {
-        instancesPath = "${System.getProperty("user.home")}/.aem/${project.rootProject.name}"
-        instanceFilesPath = project.rootProject.file("src/main/resources/local-instance")
-        instanceFilesExpanded = [
+        createPath = "${System.getProperty("user.home")}/.aem/${project.rootProject.name}"
+        createFilesPath = project.rootProject.file("src/main/resources/local-instance")
+        createFilesExpanded = [
           "**/*.properties", 
           "**/*.sh", 
           "**/*.bat", 
@@ -768,17 +774,15 @@ aem {
 }
 ```
 
-* Property *instancesPath* determines where AEM instance files will be extracted on local file system.
-* Property *instanceFilesPath* determines project location that holds extra instance files that will override plugin defaults (start / stop scripts) and / or extracted AEM files.
-* Property *instanceFilesExpandable* specifies which AEM instance files have an ability to use [expandable properties](#expandable-properties) inside.
+* Property *createPath* determines where AEM instance files will be extracted on local file system.
+* Property *createFilesPath* determines project location that holds extra instance files that will override plugin defaults (start / stop scripts) and / or extracted AEM files.
+* Property *createFilesExpandable* specifies which AEM instance files have an ability to use [expandable properties](#expandable-properties) inside.
 
-To e.g set additional **run mode** named *nosamplecontent*:
+In other words, to customize instance files just:
 
-* Copy [default start / stop scripts](https://github.com/Cognifide/gradle-aem-plugin/tree/master/src/main/resources/com/cognifide/gradle/aem/local-instance) to project path controlled by *instanceFilesPath*
-* Customize scripts and / or provide AEM files that need to be added or overridden,
-    * file *start*: `export CQ_RUNMODE='{{instance.typeName}},local'` update to `export CQ_RUNMODE='{{instance.typeName}},local,nosamplecontent'`
-    * file *start.bat*: `set CQ_RUNMODE={{instance.typeName}},local` update to `set CQ_RUNMODE={{instance.typeName}},local,nosamplecontent`
-* Recreate instances, because run modes should not be changed after instance being launched first time.
+* Copy [default start / stop scripts](https://github.com/Cognifide/gradle-aem-plugin/tree/master/src/main/resources/com/cognifide/gradle/aem/local-instance) to project path controlled by *createFilesPath*
+* Customize copied scripts.
+* Provide other AEM files that need to be added or overridden.
 
 ### Check out and clean JCR content using filter at custom path
    
@@ -867,7 +871,7 @@ For the reference, see [usage in AEM Multi-Project Example](https://github.com/C
 ### Skip installed package resolution by download name. 
 
 ```bash
-gradlew aemInstall -Paem.package.skipDownloadName=true
+gradlew aemInstall -Paem.package.skipDownloadName=false
 ```
 Only matters when Vault properties file is customized then that property could be used to eliminate conflicts.
 
