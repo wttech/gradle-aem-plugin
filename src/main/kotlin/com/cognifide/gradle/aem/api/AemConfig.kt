@@ -540,6 +540,12 @@ class AemConfig(
     )
 
     /**
+     * Dump package states on defined instances.
+     */
+    @Input
+    var debugPackageDeployed: Boolean = props.boolean("aem.debug.packageDeployed", !project.gradle.startParameter.isOffline)
+
+    /**
      * Turn on/off default system notifications.
      */
     @Internal

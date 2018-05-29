@@ -6,7 +6,7 @@ plugins {
 }
 
 group 'com.cognifide.gradle'
-version '4.0.0-beta3'
+version '4.0.0'
 description = 'Gradle AEM Plugin'
 defaultTasks = ['clean', 'build', 'publishToMavenLocal']
 
@@ -64,7 +64,8 @@ gradlePlugin {
 processResources {
     doLast {
         file("$buildDir/resources/main/build.json") << groovy.json.JsonOutput.toJson([
-                version: project.version
+                pluginVersion: project.version,
+                gradleVersion: project.gradle.gradleVersion
         ])
     }
 }

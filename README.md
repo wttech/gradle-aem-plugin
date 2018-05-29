@@ -119,7 +119,7 @@ pluginManagement {
 	resolutionStrategy {
 		eachPlugin {
 			if (requested.id.namespace == 'com.cognifide.aem') {
-				useModule('com.cognifide.gradle:aem-plugin:4.0.0-beta3')
+				useModule('com.cognifide.gradle:aem-plugin:4.0.0')
 			}
 		}
 	}
@@ -533,7 +533,7 @@ AEM Config Param | CMD Property | Default Value | Purpose
 `awaitResume` | *aem.await.resume* | `false` | Do not fail build but log warning when there is still some unstable or unhealthy instance.
 
 Instance state, stable check, health check lambdas are using: [InstanceState](src/main/kotlin/com/cognifide/gradle/aem/instance/InstanceState.kt). Use its methods to achieve expected customized behavior.
-
+gr
 #### Task `aemCollect`
 
 Composes ZIP package from all CRX packages being satisfied and built. Available methods:

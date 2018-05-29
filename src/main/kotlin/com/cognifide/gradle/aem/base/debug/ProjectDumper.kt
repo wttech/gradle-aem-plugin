@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.base.debug
 
 import com.cognifide.gradle.aem.api.AemConfig
+import com.cognifide.gradle.aem.api.AemPlugin
 import com.cognifide.gradle.aem.instance.InstanceSync
 import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.pkg.deploy.ListResponse
@@ -11,16 +12,32 @@ class ProjectDumper(@Transient val project: Project) {
 
     val logger: Logger = project.logger
 
-    val propParser = PropertyParser(project)
+    val props = PropertyParser(project)
+
+    val config = AemConfig.of(project)
 
     val properties: Map<String, Any>
         get() {
             return mapOf(
+                    "buildInfo" to buildProperties,
                     "projectInfo" to projectProperties,
-                    "packageProperties" to propParser.packageProps,
+                    "packageProperties" to props.packageProps,
                     "packageDeployed" to packageProperties
             )
         }
+
+    val buildProperties: Map<String, Any>
+        get() = mapOf(
+                "plugin" to AemPlugin.BUILD,
+                "gradle" to mapOf(
+                        "version" to project.gradle.gradleVersion,
+                        "homeDir" to project.gradle.gradleHomeDir
+                ),
+                "java" to mapOf(
+                        "version" to System.getProperty("java.specification.version"),
+                        "homeDir" to System.getProperty("java.home")
+                )
+        )
 
     val projectProperties: Map<String, String>
         get() = mapOf(
@@ -31,8 +48,8 @@ class ProjectDumper(@Transient val project: Project) {
         )
 
     val packageProperties: Map<String, ListResponse.Package?>
-        get() = if (PropertyParser(project).checkOffline()) {
-            logger.info("Skipping determining deployed packages due to offline mode.")
+        get() = if (!config.debugPackageDeployed) {
+            logger.info("Skipping determining deployed packages.")
             mapOf()
         } else {
             AemConfig.of(project).instances.mapValues {

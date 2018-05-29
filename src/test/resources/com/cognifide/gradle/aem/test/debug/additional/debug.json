@@ -1,4 +1,10 @@
 {
+  "buildInfo" : {
+    "plugin" : {
+      "pluginVersion" : "x.y.z",
+      "gradleVersion" : "x.y.z"
+    }
+  },
   "projectInfo": {
     "displayName": "root project 'additional'",
     "path": ":",
@@ -274,7 +280,8 @@
         "cq:lastReplicat*",
         "*_x0040_Delete",
         "*_x0040_TypeHint"
-      ]
+      ],
+      "debugPackageDeployed": false
     }
   },
   "packageDeployed": {}
