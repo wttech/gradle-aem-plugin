@@ -186,6 +186,7 @@
       "bundlePackage": "",
       "bundlePackageOptions": "-split-package:=merge-first",
       "bundleManifestAttributes": true,
+      "bundleBndPath": "bnd.bnd",
 
       "packageName": "additional",
       "packageLocalPath": "",

@@ -134,6 +134,14 @@ class AemConfig(
     var bundleManifestAttributes: Boolean = true
 
     /**
+     * Bundle configuration file location consumed by BND tool.
+     *
+     * @see <https://bnd.bndtools.org>
+     */
+    @Input
+    var bundleBndPath: String = "${project.file("bnd.bnd")}"
+
+    /**
      * Automatically determine local package to be uploaded.
      */
     @get:Internal

@@ -14,6 +14,7 @@ import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.api.tasks.testing.Test
+import java.io.File
 
 class BundlePlugin : Plugin<Project> {
 
@@ -48,6 +49,15 @@ class BundlePlugin : Plugin<Project> {
 
             ensureJarBaseNameIfNotCustomized(jar)
             ensureJarManifestAttributes(jar)
+            ensureJarEmbedded(jar)
+        }
+    }
+
+    private fun Project.ensureJarEmbedded(jar: Jar) {
+        val embedJars = configurations.getByName(CONFIG_EMBED).files.map { it.name }.sorted()
+        if (embedJars.isNotEmpty()) {
+            logger.info("Bundle '${jar.archiveName}' has configured embedded jars: $embedJars.")
+            logger.info("For each one, ensure to have its packages exported by JAR manifest attribute 'Export-Package' or 'Private-Package' using DSL: 'aem { bundle { exportPackage('x.y.z') } }'.")
         }
     }
 
@@ -85,12 +95,6 @@ class BundlePlugin : Plugin<Project> {
             attributes["Bundle-SymbolicName"] = config.bundlePackage
         }
 
-        attributes["Bundle-ClassPath"] = mutableSetOf<String>().apply {
-            add(".")
-            addAll(configurations.getByName(CONFIG_EMBED).files.sortedBy { it.name }.map { it.name })
-            addAll((attributes["Bundle-ClassPath"]?.toString() ?: "").split(",").map { it.trim() })
-        }.joinToString(",")
-
         attributes["Export-Package"] = mutableSetOf<String>().apply {
             if (config.bundlePackage.isNotBlank()) {
                 add(if (config.bundlePackageOptions.isNotBlank()) {
@@ -116,7 +120,7 @@ class BundlePlugin : Plugin<Project> {
 
         convention.plugins[BND_CONVENTION_PLUGIN] = bundleConvention
 
-        val bndFile = file(BND_FILE)
+        val bndFile = File(AemConfig.of(project).bundleBndPath)
         if (bndFile.isFile) {
             bundleConvention.setBndfile(bndFile)
         }
@@ -164,8 +168,6 @@ class BundlePlugin : Plugin<Project> {
         const val CONFIG_INSTALL = "aemInstall"
 
         const val CONFIG_EMBED = "aemEmbed"
-
-        const val BND_FILE = "bnd.bnd"
 
         const val BND_CONVENTION_PLUGIN = "bundle"
     }
