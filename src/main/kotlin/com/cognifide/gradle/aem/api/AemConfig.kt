@@ -134,6 +134,14 @@ class AemConfig(
     var bundleManifestAttributes: Boolean = true
 
     /**
+     * Bundle configuration file location consumed by BND tool.
+     *
+     * @see <https://bnd.bndtools.org>
+     */
+    @Input
+    var bundleBndPath: String = "${project.file("bnd.bnd")}"
+
+    /**
      * Automatically determine local package to be uploaded.
      */
     @get:Internal
@@ -414,6 +422,18 @@ class AemConfig(
     @Internal
     @get:JsonIgnore
     var awaitHealthCheck: (InstanceState) -> Boolean = { it.checkComponentState(10000) }
+
+    /**
+     * Repeat health check when failed (brute-forcing).
+     */
+    @Input
+    var awaitHealthRetryTimes = props.long("aem.await.health.retry.times", 3L)
+
+    /**
+     * Time to wait after repeating failed health check.
+     */
+    @Input
+    var awaitHealthRetryDelay =  props.long("aem.await.health.retry.delay", TimeUnit.SECONDS.toMillis(30))
 
     /**
      * Time in milliseconds to postpone instance stability checks after triggering instances restart.

@@ -20,6 +20,7 @@ class DebugTaskTest : AemTest() {
                 add(Customization("packageProperties.config.vaultFilesPath", PathValueMatcher()))
                 add(Customization("packageProperties.config.createFilesPath", PathValueMatcher()))
                 add(Customization("packageProperties.config.createPath", PathValueMatcher()))
+                add(Customization("packageProperties.config.bundleBndPath", PathValueMatcher()))
             }
         }
     }
