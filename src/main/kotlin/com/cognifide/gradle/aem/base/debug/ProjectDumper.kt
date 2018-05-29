@@ -5,6 +5,7 @@ import com.cognifide.gradle.aem.api.AemPlugin
 import com.cognifide.gradle.aem.instance.InstanceSync
 import com.cognifide.gradle.aem.instance.names
 import com.cognifide.gradle.aem.internal.PropertyParser
+import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.deploy.ListResponse
 import org.gradle.api.Project
 import org.gradle.api.logging.Logger
@@ -49,7 +50,7 @@ class ProjectDumper(@Transient val project: Project) {
         )
 
     val packageProperties: Map<String, ListResponse.Package?>
-        get() = if (config.debugPackageDeployed || config.instances.isEmpty()) {
+        get() = if (!project.plugins.hasPlugin(PackagePlugin.ID) || !config.debugPackageDeployed || config.instances.isEmpty()) {
             mapOf()
         } else {
             logger.info("Determining package states on instances: ${config.instances.values.names}")
