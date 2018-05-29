@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.base.debug
 import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.api.AemPlugin
 import com.cognifide.gradle.aem.instance.InstanceSync
+import com.cognifide.gradle.aem.instance.names
 import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.pkg.deploy.ListResponse
 import org.gradle.api.Project
@@ -48,18 +49,19 @@ class ProjectDumper(@Transient val project: Project) {
         )
 
     val packageProperties: Map<String, ListResponse.Package?>
-        get() = if (!config.debugPackageDeployed) {
-            logger.info("Skipping determining deployed packages.")
+        get() = if (config.debugPackageDeployed || config.instances.isEmpty()) {
             mapOf()
         } else {
-            AemConfig.of(project).instances.mapValues {
-                val instance = it.value
-                try {
-                    InstanceSync(project, instance).determineRemotePackage()
-                } catch (e: Exception) {
-                    logger.info("Cannot determine remote package, because instance is not available: $instance")
-                    logger.debug("Detailed error", e)
-                    null
+            logger.info("Determining package states on instances: ${config.instances.values.names}")
+
+            mutableMapOf<String, ListResponse.Package?>().apply {
+                config.instances.entries.parallelStream().forEach { (name, instance) ->
+                    try {
+                        put(name, InstanceSync(project, instance).determineRemotePackage())
+                    } catch (e: Exception) {
+                        logger.info("Cannot determine remote package, because instance is not available: $instance")
+                        logger.debug("Detailed error", e)
+                    }
                 }
             }
         }

@@ -259,7 +259,7 @@ class AemConfig(
      * Enables deployment via CRX package activation from author to publishers when e.g they are not accessible.
      */
     @Input
-    var deployDistributed: Boolean = props.boolean("aem.deploy.distributed", false)
+    var deployDistributed: Boolean = props.flag("aem.deploy.distributed")
 
     /**
      * Force upload CRX package regardless if it was previously uploaded.
@@ -549,7 +549,7 @@ class AemConfig(
      * Turn on/off default system notifications.
      */
     @Internal
-    var notificationEnabled: Boolean = props.boolean("aem.notification.enabled", false)
+    var notificationEnabled: Boolean = props.flag("aem.notification.enabled")
 
     /**
      * Hook for customizing notifications being displayed.
