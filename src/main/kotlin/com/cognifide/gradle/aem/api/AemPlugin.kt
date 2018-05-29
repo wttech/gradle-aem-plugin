@@ -5,7 +5,7 @@ import java.io.Serializable
 
 class AemPlugin private constructor() {
 
-    class Build: Serializable {
+    class Build : Serializable {
 
         lateinit var pluginVersion: String
 
@@ -22,7 +22,7 @@ class AemPlugin private constructor() {
 
         val NAME = "Gradle AEM Plugin"
 
-        val NAME_WITH_VERSION : String
+        val NAME_WITH_VERSION: String
             get() = "$NAME ${BUILD.pluginVersion}"
 
         private fun fromJson(json: String): Build {

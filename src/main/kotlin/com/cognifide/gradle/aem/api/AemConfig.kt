@@ -433,7 +433,7 @@ class AemConfig(
      * Time to wait after repeating failed health check.
      */
     @Input
-    var awaitHealthRetryDelay =  props.long("aem.await.health.retry.delay", TimeUnit.SECONDS.toMillis(30))
+    var awaitHealthRetryDelay = props.long("aem.await.health.retry.delay", TimeUnit.SECONDS.toMillis(30))
 
     /**
      * Time in milliseconds to postpone instance stability checks after triggering instances restart.

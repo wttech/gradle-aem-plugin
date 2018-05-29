@@ -3,10 +3,10 @@ package com.cognifide.gradle.aem.pkg
 import aQute.bnd.osgi.Jar
 import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.api.AemException
+import com.cognifide.gradle.aem.api.AemNotifier
 import com.cognifide.gradle.aem.api.AemTask
 import com.cognifide.gradle.aem.base.vlt.VltFilter
 import com.cognifide.gradle.aem.bundle.BundleCollector
-import com.cognifide.gradle.aem.api.AemNotifier
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.internal.file.FileContentReader

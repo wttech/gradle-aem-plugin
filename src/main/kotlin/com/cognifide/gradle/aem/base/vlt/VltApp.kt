@@ -1,23 +1,15 @@
 package com.cognifide.gradle.aem.base.vlt
 
-import com.cognifide.gradle.aem.api.AemConfig
-import com.cognifide.gradle.aem.pkg.PackagePlugin
-import org.apache.commons.cli2.CommandLine
 import org.apache.jackrabbit.vault.cli.VaultFsApp
 import org.apache.jackrabbit.vault.util.console.ExecutionContext
 import org.apache.jackrabbit.vault.util.console.commands.CmdConsole
 import org.gradle.api.Project
-import java.io.File
 
 class VltApp(val project: Project) : VaultFsApp() {
 
     companion object {
         const val CURRENT_WORKING_DIR = "user.dir"
     }
-
-    private val logger = project.logger
-
-    private val config = AemConfig.of(project)
 
     private val executionContext by lazy {
         val result = VltExecutionContext(this)
