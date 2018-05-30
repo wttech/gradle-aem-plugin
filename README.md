@@ -119,7 +119,7 @@ pluginManagement {
 	resolutionStrategy {
 		eachPlugin {
 			if (requested.id.namespace == 'com.cognifide.aem') {
-				useModule('com.cognifide.gradle:aem-plugin:4.0.0-beta3')
+				useModule('com.cognifide.gradle:aem-plugin:4.0.0')
 			}
 		}
 	}
@@ -326,12 +326,12 @@ Copy JCR content from one instance to another. Sample usages below.
 
 Using predefined instances with multiple different source and target nodes:
 ```
-gradlew :aemRcp -Paem.rcp.source.instance=int-author -Paem.rcp.target.instance=local-publish -Paem.rcp.paths=[/content/example-demo=/content/example,/content/dam/example-demo=/content/dam/example]
+gradlew :aemRcp -Paem.rcp.source.instance=int-author -Paem.rcp.target.instance=local-author -Paem.rcp.paths=[/content/example-demo=/content/example,/content/dam/example-demo=/content/dam/example]
 ```
 
 Using predefined instances with multiple same source and target nodes:
 ```
-gradlew :aemRcp -Paem.rcp.source.instance=int-author -Paem.rcp.target.instance=local-publish -Paem.rcp.paths=[/content/example,/content/example2]
+gradlew :aemRcp -Paem.rcp.source.instance=stg-author -Paem.rcp.target.instance=int-author -Paem.rcp.paths=[/content/example,/content/example2]
 ```
 
 Using dynamically defined instances:
@@ -358,6 +358,12 @@ Then file at path *build/aem/aemDebug/debug.json* with content below is being ge
 
 ```javascript
 {
+  "buildInfo" : {
+    "plugin" : {
+      "pluginVersion" : "x.y.z",
+      "gradleVersion" : "x.y.z"
+    }
+  },
   "projectInfo" : {
     "displayName" : "root project 'example'",
     "path" : ":",
@@ -381,9 +387,6 @@ Then file at path *build/aem/aemDebug/debug.json* with content below is being ge
         }
         // ...
       },
-      "deployConnectionTimeout" : 5000,
-      "deployParallel" : true,
-      "deploySnapshots" : [ ],
       "uploadForce" : true,
       "installRecursive" : true
       // ...
@@ -523,9 +526,11 @@ AEM Config Param | CMD Property | Default Value | Purpose
 `awaitStableInterval` | *aem.await.stable.interval* | `1000` | Time in milliseconds used as interval between next instance stability checks being performed. Optimization could be necessary only when instance is heavily loaded.
 `awaitStableTimeout` | *aem.await.stable.timeout* | `900` | After each await interval, instance stability check is being performed. This value is a HTTP connection timeout (in millis) which must be smaller than interval to avoid race condition.
 `awaitStableTimes` | *aem.await.stable.times* | `300` | Maximum intervals after which instance stability checks will be skipped if there is still some unstable instance left.
-`awaitStableAssurances` | *aem.await.stable.assurances* | `3L` | Number of intervals / additional instance stability checks to assure all stable instances.
+`awaitStableAssurances` | *aem.await.stable.assurances* | `3` | Number of intervals / additional instance stability checks to assure all stable instances.
 `awaitStableCheck` | n/a | `{ it.checkBundleStable(500) }` | Hook for customizing instance stability check. Check will be repeated if assurance is configured. 
 `awaitHealthCheck` | n/a | { `it.checkComponentState(10000) }` | Hook for customizing instance health check.
+`awaitHealthRetryTimes` | *aem.await.health.retry.times* | `3` | Repeat health check when failed (brute-forcing).
+`awaitHealthRetryDelay` | *aem.await.health.retry.delay* | `30000` | Time to wait after repeating failed health check.
 `awaitFast` | *aem.await.fast* | `false` | Skip stable check assurances and health checking. Alternative, quicker type of awaiting stable instances.
 `awaitFastDelay` | *aem.await.fast.delay* | `1000` | Time in milliseconds to postpone instance stability checks to avoid race condition related with actual operation being performed on AEM like starting JCR package installation or even creating launchpad.
 `awaitResume` | *aem.await.resume* | `false` | Do not fail build but log warning when there is still some unstable or unhealthy instance.
@@ -728,8 +733,6 @@ gradlew aemDeploy -Paem.instance.name=*-author
 
 Default value of that instance name filter is `local-*`.
 
-Deployment could be performed in parallel mode when configuration option `deployParallel` is set to `true`.
-   
 ### Deploy CRX package(s) only to instances specified explicitly
 
 Instance urls delimited by semicolon:

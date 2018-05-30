@@ -1,12 +1,15 @@
 package com.cognifide.gradle.aem.api
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import java.io.Serializable
 
 class AemPlugin private constructor() {
 
-    class Build {
+    class Build : Serializable {
 
-        lateinit var version: String
+        lateinit var pluginVersion: String
+
+        lateinit var gradleVersion: String
 
     }
 
@@ -19,8 +22,8 @@ class AemPlugin private constructor() {
 
         val NAME = "Gradle AEM Plugin"
 
-        val NAME_WITH_VERSION : String
-            get() = "$NAME ${BUILD.version}"
+        val NAME_WITH_VERSION: String
+            get() = "$NAME ${BUILD.pluginVersion}"
 
         private fun fromJson(json: String): Build {
             return ObjectMapper().readValue(json, Build::class.java)
