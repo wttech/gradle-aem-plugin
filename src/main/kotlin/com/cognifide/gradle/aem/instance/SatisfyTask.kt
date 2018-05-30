@@ -95,28 +95,28 @@ open class SatisfyTask : AemDefaultTask() {
                 packageStates.forEach { (pkg, state) ->
                     when {
                         sync.isSnapshot(pkg) -> {
-                            logger.info("Satisfying package: $pkg (snapshot).")
+                            logger.lifecycle("Satisfying package ${pkg.name} on ${sync.instance.name} (snapshot).")
                             sync.deployPackage(pkg)
 
                             anyPackageSatisfied = true
                             actions.add(Action(pkg, sync.instance))
                         }
                         state == null -> {
-                            logger.info("Satisfying package: $pkg (not uploaded).")
+                            logger.lifecycle("Satisfying package ${pkg.name} on ${sync.instance.name} (not uploaded).")
                             sync.deployPackage(pkg)
 
                             anyPackageSatisfied = true
                             actions.add(Action(pkg, sync.instance))
                         }
                         !state.installed -> {
-                            logger.info("Satisfying package: $pkg (not installed).")
+                            logger.lifecycle("Satisfying package ${pkg.name} on ${sync.instance.name} (not installed).")
                             sync.installPackage(state.path)
 
                             anyPackageSatisfied = true
                             actions.add(Action(pkg, sync.instance))
                         }
                         else -> {
-                            logger.info("Not satisfying package: $pkg (already installed).")
+                            logger.lifecycle("Not satisfying package: ${pkg.name} on ${sync.instance.name} (already installed).")
                         }
                     }
                 }

@@ -6,7 +6,7 @@ import java.io.File
 
 object Patterns {
 
-    fun wildcards(path: String, filters: String) : Boolean {
+    fun wildcards(path: String, filters: String): Boolean {
         return filters.split(",").any { filter -> wildcard(path, filter) }
     }
 

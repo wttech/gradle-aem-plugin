@@ -183,8 +183,4 @@ class PropertyParser(val project: Project) {
         }
     }
 
-    fun checkOffline(): Boolean {
-        return project.gradle.startParameter.isOffline
-    }
-
 }

@@ -17,7 +17,7 @@ class ComposeTaskTest : AemTest() {
 
     @Test
     fun shouldComposePackageAssemblyAndSingles() {
-        buildTasks("compose/assembly","aemCompose", {
+        buildTasks("compose/assembly", "aemCompose", {
             val assemblyPkg = file("build/distributions/example-1.0.0-SNAPSHOT.zip")
             assertPackage(assemblyPkg)
             assertPackageFile(assemblyPkg, "jcr_root/apps/example/core/.content.xml")

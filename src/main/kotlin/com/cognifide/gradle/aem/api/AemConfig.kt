@@ -259,7 +259,7 @@ class AemConfig(
      * Enables deployment via CRX package activation from author to publishers when e.g they are not accessible.
      */
     @Input
-    var deployDistributed: Boolean = props.boolean("aem.deploy.distributed", false)
+    var deployDistributed: Boolean = props.flag("aem.deploy.distributed")
 
     /**
      * Force upload CRX package regardless if it was previously uploaded.
@@ -433,7 +433,7 @@ class AemConfig(
      * Time to wait after repeating failed health check.
      */
     @Input
-    var awaitHealthRetryDelay =  props.long("aem.await.health.retry.delay", TimeUnit.SECONDS.toMillis(30))
+    var awaitHealthRetryDelay = props.long("aem.await.health.retry.delay", TimeUnit.SECONDS.toMillis(30))
 
     /**
      * Time in milliseconds to postpone instance stability checks after triggering instances restart.
@@ -540,10 +540,16 @@ class AemConfig(
     )
 
     /**
+     * Dump package states on defined instances.
+     */
+    @Input
+    var debugPackageDeployed: Boolean = props.boolean("aem.debug.packageDeployed", !project.gradle.startParameter.isOffline)
+
+    /**
      * Turn on/off default system notifications.
      */
     @Internal
-    var notificationEnabled: Boolean = props.boolean("aem.notification.enabled", false)
+    var notificationEnabled: Boolean = props.flag("aem.notification.enabled")
 
     /**
      * Hook for customizing notifications being displayed.

@@ -4,7 +4,6 @@ import com.cognifide.gradle.aem.api.AemConfig
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.apache.commons.lang3.BooleanUtils
 import org.gradle.api.Project
 
 @JsonIgnoreProperties(ignoreUnknown = true)

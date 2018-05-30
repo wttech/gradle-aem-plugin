@@ -119,7 +119,7 @@ pluginManagement {
 	resolutionStrategy {
 		eachPlugin {
 			if (requested.id.namespace == 'com.cognifide.aem') {
-				useModule('com.cognifide.gradle:aem-plugin:4.0.0-beta3')
+				useModule('com.cognifide.gradle:aem-plugin:4.0.0')
 			}
 		}
 	}
@@ -358,6 +358,12 @@ Then file at path *build/aem/aemDebug/debug.json* with content below is being ge
 
 ```javascript
 {
+  "buildInfo" : {
+    "plugin" : {
+      "pluginVersion" : "x.y.z",
+      "gradleVersion" : "x.y.z"
+    }
+  },
   "projectInfo" : {
     "displayName" : "root project 'example'",
     "path" : ":",
@@ -381,9 +387,6 @@ Then file at path *build/aem/aemDebug/debug.json* with content below is being ge
         }
         // ...
       },
-      "deployConnectionTimeout" : 5000,
-      "deployParallel" : true,
-      "deploySnapshots" : [ ],
       "uploadForce" : true,
       "installRecursive" : true
       // ...
@@ -730,8 +733,6 @@ gradlew aemDeploy -Paem.instance.name=*-author
 
 Default value of that instance name filter is `local-*`.
 
-Deployment could be performed in parallel mode when configuration option `deployParallel` is set to `true`.
-   
 ### Deploy CRX package(s) only to instances specified explicitly
 
 Instance urls delimited by semicolon:

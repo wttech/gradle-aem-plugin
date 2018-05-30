@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.test
 
 import com.cognifide.gradle.aem.test.AemAssert.assertJsonCustomized
+import com.cognifide.gradle.aem.test.json.AnyValueMatcher
 import com.cognifide.gradle.aem.test.json.DateValueMatcher
 import com.cognifide.gradle.aem.test.json.PathValueMatcher
 import org.junit.Test
@@ -12,6 +13,7 @@ class DebugTaskTest : AemTest() {
     companion object {
         val JSON_CUSTOMIZATIONS by lazy {
             mutableListOf<Customization>().apply {
+                add(Customization("buildInfo", AnyValueMatcher()))
                 add(Customization("projectInfo.dir", PathValueMatcher()))
                 add(Customization("packageProperties.buildCount", RegularExpressionValueMatcher("\\d{14}")))
                 add(Customization("packageProperties.created", DateValueMatcher()))
