@@ -97,7 +97,7 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
 
             val initializedUnavailableInstances = unavailableInstances.filter { it.isInitialized(project) }
             if (!unavailableNotification && (timer.ticks.toDouble() / stableTimes.toDouble() > INSTANCE_UNAVAILABLE_RATIO) && initializedUnavailableInstances.isNotEmpty()) {
-                notifier.default("Instances not available", "Which: ${initializedUnavailableInstances.names}")
+                notify("Instances not available", "Which: ${initializedUnavailableInstances.names}")
                 unavailableNotification = true
             }
 
@@ -106,7 +106,7 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
                 if (!resume) {
                     throw InstanceException("Instances not stable: ${unstableInstances.names}. Timeout reached.")
                 } else {
-                    notifier.default("Instances not stable", "Problem with: ${unstableInstances.names}. Timeout reached.")
+                    notify("Instances not stable", "Problem with: ${unstableInstances.names}. Timeout reached.")
                     return@waitUntil false
                 }
             }
@@ -120,7 +120,7 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
 
                 // End if assurance is not configured or this moment remains a little longer
                 if (fast || (stableAssurances <= 0) || (sinceStableTicks >= 0 && (timer.ticks - sinceStableTicks) >= stableAssurances)) {
-                    notifier.default("Instance(s) stable", "Which: ${instances.names}")
+                    notify("Instance(s) stable", "Which: ${instances.names}")
                     return@waitUntil false
                 }
             } else {
@@ -146,7 +146,7 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
                     .collect(Collectors.toList())
 
             if (unhealthyInstances.isEmpty()) {
-                notifier.default("Instance(s) healthy", "Which: ${instances.names}")
+                notify("Instance(s) healthy", "Which: ${instances.names}")
                 return
             }
 
@@ -160,7 +160,7 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
                 if (!resume) {
                     throw InstanceException("Instances not healthy: ${unhealthyInstances.names}.")
                 } else {
-                    notifier.default("Instances not healthy", "Problem with: ${unhealthyInstances.names}.")
+                    notify("Instances not healthy", "Problem with: ${unhealthyInstances.names}.")
                 }
             }
         }

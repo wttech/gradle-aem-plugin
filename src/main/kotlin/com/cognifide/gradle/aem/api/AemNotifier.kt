@@ -10,16 +10,20 @@ class AemNotifier private constructor(private val project: Project) {
 
     private val config by lazy { AemConfig.of(project) }
 
-    fun default(title: String, message: String = "") {
-        if (config.notificationEnabled) {
-            now(title, message)
-        }
-
+    fun log(title: String, message: String) {
         project.logger.lifecycle(if (message.isNotBlank()) {
             "${title.removeSuffix(".")}. $message"
         } else {
             title
         })
+    }
+
+    fun default(title: String, message: String = "") {
+        if (config.notificationEnabled) {
+            now(title, message)
+        }
+
+        log(title, message)
     }
 
     // TODO allow to customize color of plugin logo (warn, info, error etc)
