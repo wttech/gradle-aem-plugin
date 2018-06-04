@@ -3,9 +3,7 @@ package com.cognifide.gradle.aem.instance.action
 import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.api.AemNotifier
 import com.cognifide.gradle.aem.instance.InstanceAction
-import groovy.lang.Closure
 import org.gradle.api.Project
-import org.gradle.util.ConfigureUtil
 
 abstract class AbstractAction(val project: Project) : InstanceAction {
 
@@ -15,10 +13,14 @@ abstract class AbstractAction(val project: Project) : InstanceAction {
 
     val logger = project.logger
 
-    fun configure(closure: Closure<*>): AbstractAction {
-        ConfigureUtil.configureSelf(closure, this)
+    var notify = true
 
-        return this
+    fun notify(title: String, text: String) {
+        if (notify) {
+            notifier.default(title, text)
+        } else {
+            notifier.log(title, text)
+        }
     }
 
 }

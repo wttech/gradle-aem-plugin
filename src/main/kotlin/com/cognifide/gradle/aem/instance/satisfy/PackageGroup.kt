@@ -11,6 +11,7 @@ import com.cognifide.gradle.aem.internal.file.resolver.FileGroup
 import com.cognifide.gradle.aem.internal.file.resolver.FileResolution
 import com.cognifide.gradle.aem.internal.file.resolver.FileResolver
 import groovy.lang.Closure
+import org.gradle.util.ConfigureUtil
 import java.io.File
 
 class PackageGroup(resolver: FileResolver, name: String) : FileGroup(resolver, name) {
@@ -51,24 +52,32 @@ class PackageGroup(resolver: FileResolver, name: String) : FileGroup(resolver, n
      */
     var completer: () -> Unit = { await() }
 
-    private fun performAction(action: AbstractAction, closure: Closure<*>) {
-        action.configure(closure).perform()
-    }
-
-    fun await(closure: Closure<*>) {
-        AwaitAction(project, instances).configure(closure).perform()
-    }
-
     fun await() {
-        AwaitAction(project, instances).perform()
+        await({})
     }
 
-    fun reload(closure: Closure<*>) {
-        ReloadAction(project, instances).configure(closure).perform()
+    fun await(configurer: Closure<*>) {
+        await({ ConfigureUtil.configure(configurer, this) })
+    }
+
+    fun await(configurer: AwaitAction.() -> Unit) {
+        action(AwaitAction(project, instances), configurer)
     }
 
     fun reload() {
-        ReloadAction(project, instances).perform()
+        reload({})
+    }
+
+    fun reload(configurer: Closure<*>) {
+        reload({ ConfigureUtil.configure(configurer, this) })
+    }
+
+    fun reload(configurer: ReloadAction.() -> Unit) {
+        action(ReloadAction(project, instances), configurer)
+    }
+
+    private fun <T : AbstractAction> action(action: T, configurer: T.() -> Unit) {
+        action.apply { notify = false }.apply(configurer).perform()
     }
 
     override fun createResolution(id: String, resolver: (FileResolution) -> File): FileResolution {
