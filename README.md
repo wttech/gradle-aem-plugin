@@ -197,7 +197,7 @@ aem {
     
         vaultCopyMissingFiles = true
         vaultFilesPath = project.rootProject.file("src/main/resources/META-INF/vault")
-        vaultSkipProperties = [
+        cleanSkipProperties = [
           "jcr:uuid!**/home/users/*,**/home/groups/*",
           "jcr:lastModified",
           "jcr:created",
