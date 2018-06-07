@@ -158,7 +158,11 @@ open class ComposeTask : Zip(), AemTask {
     }
 
     fun includeSubprojects() {
-        includeProjects("${project.path}:*")
+        if (project == project.rootProject) {
+            includeProjects(":*")
+        } else {
+            includeProjects("${project.path}:*")
+        }
     }
 
     fun includeProjects(pathFilter: String) {

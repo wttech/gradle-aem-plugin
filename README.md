@@ -119,7 +119,7 @@ pluginManagement {
 	resolutionStrategy {
 		eachPlugin {
 			if (requested.id.namespace == 'com.cognifide.aem') {
-				useModule('com.cognifide.gradle:aem-plugin:4.0.1')
+				useModule('com.cognifide.gradle:aem-plugin:4.0.2')
 			}
 		}
 	}
@@ -567,7 +567,24 @@ aem {
 }
 ```
 
-This feature is specially useful to generate valid *META-INF/properties.xml* file.
+This feature is specially useful to generate valid *META-INF/properties.xml* file, below is used by plugin by default:
+
+```xml
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<properties>
+    <comment>{{project.description}}</comment>
+    <entry key="group">{{project.group}}</entry>
+    <entry key="name">{{config.packageName}}</entry>
+    <entry key="version">{{project.version}}</entry>
+    <entry key="groupId">{{project.group}}</entry>
+    <entry key="artifactId">{{project.name}}</entry>
+    <entry key="description">{{project.description}}</entry>
+    <entry key="createdBy">{{user.name}}</entry>
+    <entry key="acHandling">{{config.packageAcHandling}}</entry>
+    <entry key="requiresRoot">{{requiresRoot}}</entry>
+</properties>
+```
 
 Predefined properties:
 * `config` - [AEM configuration](src/main/kotlin/com/cognifide/gradle/aem/api/AemConfig.kt).
