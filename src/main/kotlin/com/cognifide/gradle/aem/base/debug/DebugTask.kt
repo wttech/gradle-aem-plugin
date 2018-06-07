@@ -29,6 +29,7 @@ open class DebugTask : AemDefaultTask() {
         val json = Formats.toJson(props)
 
         file.bufferedWriter().use { it.write(json) }
+        logger.info(json)
 
         notifier.default("Configuration dumped", "For $project to file: ${Formats.projectPath(file, project)}")
     }
