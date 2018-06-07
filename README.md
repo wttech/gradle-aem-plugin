@@ -194,18 +194,9 @@ aem {
         packageBuildDate = Date()
         packageAcHandling = "merge_preserve"
         packageSnapshots = []
-    
+        
         vaultCopyMissingFiles = true
         vaultFilesPath = project.rootProject.file("src/main/resources/META-INF/vault")
-        cleanSkipProperties = [
-          "jcr:uuid!**/home/users/*,**/home/groups/*",
-          "jcr:lastModified",
-          "jcr:created",
-          "cq:lastModified*",
-          "cq:lastReplicat*",
-          "*_x0040_Delete",
-          "*_x0040_TypeHint"
-        ]
         vaultLineSeparator = "LF"
     
         deployDistributed = false
@@ -243,7 +234,7 @@ aem {
         satisfyBundlePath = "/apps/gradle-aem-plugin/satisfy/install"
         satisfyBundleProperties = { bundle -> [:] }
         satisfyGroupName = "*"
-		    checkoutFilterPath = ""
+		checkoutFilterPath = ""
         cleanFilesDeleted = [
             "**/.vlt",
             "**/.vlt*.tmp",
