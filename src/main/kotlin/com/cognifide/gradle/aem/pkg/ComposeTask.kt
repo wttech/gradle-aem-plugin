@@ -54,9 +54,6 @@ open class ComposeTask : Zip(), AemTask {
     @Internal
     private var contentCollectors: List<() -> Unit> = mutableListOf()
 
-    @Internal
-    private var archiveName: String? = null
-
     @Nested
     val fileFilterOptions = FileFilterOptions()
 
@@ -124,6 +121,7 @@ open class ComposeTask : Zip(), AemTask {
         description = "Composes CRX package from JCR content and built OSGi bundles"
         group = AemTask.GROUP
 
+        baseName = config.packageName
         duplicatesStrategy = DuplicatesStrategy.WARN
         isZip64 = true
 
@@ -293,32 +291,6 @@ open class ComposeTask : Zip(), AemTask {
                 fileFilter(spec)
             })
         }
-    }
-
-    @get:Internal
-    val defaultArchiveName: String
-        get() = super.getArchiveName()
-
-    @get:Internal
-    val extendedArchiveName: String
-        get() {
-            return if (project == project.rootProject || project.name == project.rootProject.name) {
-                defaultArchiveName
-            } else {
-                "${config.projectNamePrefix}-$defaultArchiveName"
-            }
-        }
-
-    override fun setArchiveName(name: String?) {
-        this.archiveName = name
-    }
-
-    override fun getArchiveName(): String {
-        if (archiveName != null) {
-            return archiveName!!
-        }
-
-        return extendedArchiveName
     }
 
     fun fileFilterOptions(closure: Closure<*>) {
