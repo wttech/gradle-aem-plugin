@@ -15,8 +15,8 @@ abstract class AbstractAction(val project: Project) : InstanceAction {
 
     var notify = true
 
-    fun notify(title: String, text: String) {
-        if (notify) {
+    fun notify(title: String, text: String, enabled: Boolean = this.notify) {
+        if (enabled) {
             notifier.default(title, text)
         } else {
             notifier.log(title, text)

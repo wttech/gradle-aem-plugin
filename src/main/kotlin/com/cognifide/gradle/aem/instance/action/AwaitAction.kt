@@ -120,7 +120,7 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
 
                 // End if assurance is not configured or this moment remains a little longer
                 if (fast || (stableAssurances <= 0) || (sinceStableTicks >= 0 && (timer.ticks - sinceStableTicks) >= stableAssurances)) {
-                    notify("Instance(s) stable", "Which: ${instances.names}")
+                    notify("Instance(s) stable", "Which: ${instances.names}", fast)
                     return@waitUntil false
                 }
             } else {

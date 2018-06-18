@@ -112,6 +112,8 @@ so that this repository need to be included in *buildscript* section.
 
 #### Minimal:
 
+Configuration below assumes building and deploying on AEM instance(s) via command: `gradlew aemDeploy`.
+
 File *settings.gradle*:
 ```groovy
 pluginManagement {
@@ -122,7 +124,7 @@ pluginManagement {
 	resolutionStrategy {
 		eachPlugin {
 			if (requested.id.namespace == 'com.cognifide.aem') {
-				useModule('com.cognifide.gradle:aem-plugin:4.0.3')
+				useModule('com.cognifide.gradle:aem-plugin:4.0.4')
 			}
 		}
 	}
@@ -137,11 +139,13 @@ plugins {
 }
 ```
 
-Building and deploying to AEM via command: `gradlew aemDeploy`.
-
 #### Additional
 
 AEM configuration section contains all default values for demonstrative purpose.
+
+**More detailed and always up-to-date information about all configuration options is available [here](src/main/kotlin/com/cognifide/gradle/aem/api/AemConfig.kt).**
+
+Configuration below assumes building and deploying on AEM instance(s) via command: `gradlew` (default tasks will be used).
 
 ```groovy
 plugins {
@@ -203,12 +207,15 @@ aem {
         vaultLineSeparator = "LF"
     
         deployDistributed = false
+        
         uploadForce = true
         uploadRetryTimes = 6
         uploadRetryDelay = 30000
+        
         installRecursive = true
         installRetryTimes = 3
         installRetryDelay = 30000
+        
         createPath = "${System.getProperty("user.home")}/.aem/${project.rootProject.name}"
         createFilesPath = project.rootProject.file("src/main/resources/local-instance")
         createFilesExpanded = [
@@ -219,7 +226,9 @@ aem {
           "**/start",
           "**/stop"
         ]
+        
         upInitializer = { handle -> }
+        
         awaitStableDelay = 3000
         awaitStableInterval = 1000
         awaitStableTimes = 300
@@ -232,12 +241,16 @@ aem {
         awaitFast = false
         awaitFastDelay = 1000
         awaitResume = false
+        
         reloadDelay = 10000
+        
         satisfyRefreshing = false
         satisfyBundlePath = "/apps/gradle-aem-plugin/satisfy/install"
         satisfyBundleProperties = { bundle -> [:] }
         satisfyGroupName = "*"
+        
         checkoutFilterPath = ""
+        
         cleanFilesDeleted = [
             "**/.vlt",
             "**/.vlt*.tmp",
@@ -265,26 +278,11 @@ aem {
         "*_x0040_Delete",
         "*_x0040_TypeHint"
       ]
+      
       notificationEnabled = false
     }
 }
-
-aemSatisfy {
-    local("pkg/vanityurls-components-1.0.2.zip")
-    url("https://github.com/Cognifide/APM/releases/download/cqsm-3.0.0/apm-3.0.0.zip")
-    url("smb://company-share/aem/packages/my-lib.zip")
-    url("sftp://company-share/aem/packages/other-lib.zip")
-    url("file:///C:/Libraries/aem/package/extra-lib.zip")
-    dependency('com.neva.felix:search-webconsole-plugin:1.2.0')
-}
-
 ```
-
-Building and deploying to AEM via command: `gradlew` (default tasks will be used).
-
-More detailed and always up-to-date information about configuration options is available [here](src/main/kotlin/com/cognifide/gradle/aem/api/AemConfig.kt).
-
-For multi project build configuration, please investigate [multi-module project](https://github.com/Cognifide/gradle-aem-multi).
 
 ### Base plugin tasks
 
@@ -499,6 +497,19 @@ Upload & install dependent CRX package(s) before deployment. Available methods:
 * `dependency(notation: String)`, use OSGi bundle that will be resolved from defined repositories (for instance from Maven) then wrapped to CRX package: `dependency('com.neva.felix:search-webconsole-plugin:1.2.0')`.
 * `group(name: String, configurer: Closure)`, useful for declaring group of packages (or just optionally naming single package) to be installed only on demand. For instance: `group 'tools', { url('http://example.com/package.zip'); url('smb://internal-nt/package2.zip')  }`. Then to install only packages in group `tools`, use command: `gradlew aemSatisfy -Paem.satisfy.group=tools`.
 
+Example configuration:
+
+```groovy
+aemSatisfy {
+    local "pkg/vanityurls-components-1.0.2.zip"
+    url "https://github.com/Cognifide/APM/releases/download/cqsm-3.0.0/apm-3.0.0.zip"
+    url "smb://company-share/aem/packages/my-lib.zip"
+    url "sftp://company-share/aem/packages/other-lib.zip"
+    url "file:///C:/Libraries/aem/package/extra-lib.zip"
+    dependency 'com.neva.felix:search-webconsole-plugin:1.2.0'
+}
+```
+
 It is also possible to specify packages to be deployed only once via command line parameter. Also for local files at any file system paths.
 
 ```bash
@@ -518,7 +529,6 @@ Wait until all local or remote AEM instance(s) be stable.
 AEM Config Param | CMD Property | Default Value | Purpose
 --- | --- | --- | ---
 `awaitStableInterval` | *aem.await.stable.interval* | `1000` | Time in milliseconds used as interval between next instance stability checks being performed. Optimization could be necessary only when instance is heavily loaded.
-`awaitStableTimeout` | *aem.await.stable.timeout* | `900` | After each await interval, instance stability check is being performed. This value is a HTTP connection timeout (in millis) which must be smaller than interval to avoid race condition.
 `awaitStableTimes` | *aem.await.stable.times* | `300` | Maximum intervals after which instance stability checks will be skipped if there is still some unstable instance left.
 `awaitStableAssurances` | *aem.await.stable.assurances* | `3` | Number of intervals / additional instance stability checks to assure all stable instances.
 `awaitStableCheck` | n/a | `{ it.checkBundleStable(500) }` | Hook for customizing instance stability check. Check will be repeated if assurance is configured. 
