@@ -6,7 +6,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.cognifide.gradle:aem-plugin:4.0.3'
+        classpath 'com.cognifide.gradle:aem-plugin:4.0.4'
     }
 }
 
