@@ -279,16 +279,17 @@ class InstanceSync(val project: Project, val instance: Instance) {
             throw DeployException("Cannot upload package $file to instance $instance. Reason: request failed.", e)
         }
 
-        try {
-            val response = UploadResponse.fromJson(json)
-            if (!response.isSuccess) {
-                throw DeployException("Cannot upload package $file to instance $instance. Reason: ${response.msg}.")
-            }
-
-            return response
+        val response = try {
+            UploadResponse.fromJson(json)
         } catch (e: Exception) {
             throw DeployException("Malformed response after uploading package $file to instance $instance.", e)
         }
+
+        if (!response.isSuccess) {
+            throw DeployException("Cannot upload package $file to instance $instance. Reason: ${response.msg}.")
+        }
+
+        return response
     }
 
     fun installPackage(remotePath: String): InstallResponse {
@@ -323,16 +324,17 @@ class InstanceSync(val project: Project, val instance: Instance) {
             throw DeployException("Cannot install package $remotePath on instance $instance. Reason: request failed.", e)
         }
 
-        try {
-            val response = InstallResponse(json)
-            if (!response.success) {
-                throw DeployException("Cannot install package $remotePath on instance $instance. Status: ${response.status}. Errors: ${response.errors}.")
-            }
-
-            return response
+        val response = try {
+            InstallResponse(json)
         } catch (e: Exception) {
             throw DeployException("Malformed install response after installing package $remotePath on instance $instance.", e)
         }
+
+        if (!response.success) {
+            throw DeployException("Cannot install package $remotePath on instance $instance. Status: ${response.status}. Errors: ${response.errors}.")
+        }
+
+        return response
     }
 
     fun isSnapshot(file: File): Boolean {
@@ -361,19 +363,20 @@ class InstanceSync(val project: Project, val instance: Instance) {
             throw DeployException("Cannot activate package $remotePath on instance $instance. Reason: request failed.", e)
         }
 
-        try {
-            val response = UploadResponse.fromJson(json)
-            if (!response.isSuccess) {
-                throw DeployException("Cannot activate package $remotePath on instance $instance. Reason: ${response.msg}.")
-            }
-
-            return response
+        val response = try {
+            UploadResponse.fromJson(json)
         } catch (e: Exception) {
             throw DeployException("Malformed response after activating package $remotePath on instance $instance.", e)
         }
+
+        if (!response.isSuccess) {
+            throw DeployException("Cannot activate package $remotePath on instance $instance. Reason: ${response.msg}.")
+        }
+
+        return response
     }
 
-    fun deletePackage(remotePath: String) {
+    fun deletePackage(remotePath: String): DeleteResponse {
         val url = "$htmlTargetUrl$remotePath/?cmd=delete"
 
         logger.info("Deleting package using command: $url")
@@ -384,17 +387,20 @@ class InstanceSync(val project: Project, val instance: Instance) {
             throw DeployException("Cannot delete package $remotePath from instance $instance. Reason: request failed.", e)
         }
 
-        try {
-            val response = DeleteResponse(rawHtml)
-            if (!response.success) {
-                throw DeployException("Cannot delete package $remotePath from instance $instance. Status: ${response.status}. Errors: ${response.errors}.")
-            }
+        val response = try {
+            DeleteResponse(rawHtml)
         } catch (e: Exception) {
             throw DeployException("Malformed response after deleting package $remotePath from instance $instance.", e)
         }
+
+        if (!response.success) {
+            throw DeployException("Cannot delete package $remotePath from instance $instance. Status: ${response.status}. Errors: ${response.errors}.")
+        }
+
+        return response
     }
 
-    fun uninstallPackage(remotePath: String) {
+    fun uninstallPackage(remotePath: String): UninstallResponse {
         val url = "$htmlTargetUrl$remotePath/?cmd=uninstall"
 
         logger.info("Uninstalling package using command: $url")
@@ -405,14 +411,17 @@ class InstanceSync(val project: Project, val instance: Instance) {
             throw DeployException("Cannot uninstall package $remotePath on instance $instance. Reason: request failed.", e)
         }
 
-        try {
-            val response = UninstallResponse(rawHtml)
-            if (!response.success) {
-                throw DeployException("Cannot uninstall package $remotePath from $instance. Status: ${response.status}. Errors: ${response.errors}.")
-            }
+        val response = try {
+            UninstallResponse(rawHtml)
         } catch (e: Exception) {
             throw DeployException("Malformed response after uninstalling package $remotePath from instance $instance.", e)
         }
+
+        if (!response.success) {
+            throw DeployException("Cannot uninstall package $remotePath from $instance. Status: ${response.status}. Errors: ${response.errors}.")
+        }
+
+        return response
     }
 
     fun determineInstanceState(): InstanceState {
