@@ -236,7 +236,8 @@ class InstanceSync(val project: Project, val instance: Instance) {
                 exception = e
 
                 if (i < config.uploadRetryTimes) {
-                    logger.warn("Cannot upload package to $instance.")
+                    logger.warn("Cannot upload package $file to $instance.")
+                    logger.debug("Upload error", e)
 
                     val header = "Retrying upload (${i + 1}/${config.uploadRetryTimes}) after delay."
                     val countdown = ProgressCountdown(project, header, config.uploadRetryDelay)
@@ -261,7 +262,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         } catch (e: FileNotFoundException) {
             throw DeployException("Package file $file to be uploaded not found!", e)
         } catch (e: Exception) {
-            throw DeployException("Cannot upload package $file to instance $instance.", e)
+            throw DeployException("Cannot upload package $file to instance $instance. Reason: request failed.", e)
         }
 
         try {
@@ -276,15 +277,16 @@ class InstanceSync(val project: Project, val instance: Instance) {
         }
     }
 
-    fun installPackage(uploadedPackagePath: String): InstallResponse {
+    fun installPackage(remotePath: String): InstallResponse {
         lateinit var exception: DeployException
         for (i in 0..config.installRetryTimes) {
             try {
-                return installPackageOnce(uploadedPackagePath)
+                return installPackageOnce(remotePath)
             } catch (e: DeployException) {
                 exception = e
                 if (i < config.installRetryTimes) {
-                    logger.warn("Cannot install package on $instance.")
+                    logger.warn("Cannot install package $remotePath on $instance.")
+                    logger.debug("Install error", e)
 
                     val header = "Retrying install (${i + 1}/${config.installRetryTimes}) after delay."
                     val countdown = ProgressCountdown(project, header, config.installRetryDelay)
@@ -304,7 +306,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         val json = try {
             postMultipart(url, mapOf("recursive" to config.installRecursive))
         } catch (e: Exception) {
-            throw DeployException("Cannot install package $remotePath on instance $instance.", e)
+            throw DeployException("Cannot install package $remotePath on instance $instance. Reason: request failed.", e)
         }
 
         try {
@@ -342,7 +344,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         val json = try {
             postMultipart(url)
         } catch (e: Exception) {
-            throw DeployException("Cannot activate package $remotePath on instance $instance.", e)
+            throw DeployException("Cannot activate package $remotePath on instance $instance. Reason: request failed.", e)
         }
 
         try {
@@ -365,7 +367,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         val rawHtml = try {
            postMultipart(url)
         } catch (e: Exception) {
-            throw DeployException("Cannot delete package $remotePath from instance $instance.", e)
+            throw DeployException("Cannot delete package $remotePath from instance $instance. Reason: request failed.", e)
         }
 
         try {
@@ -386,7 +388,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         val rawHtml = try {
             postMultipart(url, mapOf("recursive" to config.installRecursive))
         } catch (e: Exception) {
-            throw DeployException("Cannot uninstall package $remotePath on instance $instance.", e)
+            throw DeployException("Cannot uninstall package $remotePath on instance $instance. Reason: request failed.", e)
         }
 
         try {
