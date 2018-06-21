@@ -16,9 +16,7 @@ import org.apache.http.auth.UsernamePasswordCredentials
 import org.apache.http.client.HttpClient
 import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.entity.UrlEncodedFormEntity
-import org.apache.http.client.methods.HttpGet
-import org.apache.http.client.methods.HttpPost
-import org.apache.http.client.methods.HttpRequestBase
+import org.apache.http.client.methods.*
 import org.apache.http.conn.ssl.NoopHostnameVerifier
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory
 import org.apache.http.entity.mime.MultipartEntityBuilder
@@ -76,6 +74,22 @@ class InstanceSync(val project: Project, val instance: Instance) {
         return fetch(HttpGet(normalizeUrl(url)))
     }
 
+    fun head(url: String): String {
+        return fetch(HttpHead(normalizeUrl(url)))
+    }
+
+    fun delete(url: String): String {
+        return fetch(HttpDelete(normalizeUrl(url)))
+    }
+
+    fun put(url: String): String {
+        return fetch(HttpPut(normalizeUrl(url)))
+    }
+
+    fun patch(url: String): String {
+        return fetch(HttpPatch(normalizeUrl(url)))
+    }
+
     fun postUrlencoded(url: String, params: Map<String, Any> = mapOf()): String {
         return post(url, createEntityUrlencoded(params))
     }
@@ -104,7 +118,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
                 return@execute body
             } else {
                 logger.debug(body)
-                throw DeployException("Unexpected instance response: ${response.statusLine}")
+                throw DeployException("Unexpected response from $instance: ${response.statusLine}")
             }
         })
     }
@@ -120,7 +134,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
 
             return success(response)
         } catch (e: Exception) {
-            throw DeployException("Failed instance request: ${e.message}", e)
+            throw DeployException("Failed request to $instance: ${e.message}", e)
         } finally {
             method.releaseConnection()
         }
@@ -213,14 +227,14 @@ class InstanceSync(val project: Project, val instance: Instance) {
     }
 
     private fun resolveRemotePackage(resolver: (ListResponse) -> ListResponse.Package?, refresh: Boolean): ListResponse.Package? {
-        logger.debug("Asking AEM for uploaded packages using URL: '$listPackagesUrl'")
+        logger.debug("Asking for uploaded packages using URL: '$listPackagesUrl'")
 
         if (instance.packages == null || refresh) {
             val json = postMultipart(listPackagesUrl)
             instance.packages = try {
                 ListResponse.fromJson(json)
             } catch (e: Exception) {
-                throw DeployException("Cannot ask AEM for uploaded packages!", e)
+                throw DeployException("Cannot ask for uploaded packages on $instance.", e)
             }
         }
 
@@ -406,7 +420,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
     }
 
     fun determineBundleState(): BundleState {
-        logger.debug("Asking AEM for OSGi bundles using URL: '$bundlesUrl'")
+        logger.debug("Asking for OSGi bundles using URL: '$bundlesUrl'")
 
         return try {
             BundleState.fromJson(get(bundlesUrl))
@@ -417,7 +431,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
     }
 
     fun determineComponentState(): ComponentState {
-        logger.debug("Asking AEM for OSGi components using URL: '$bundlesUrl'")
+        logger.debug("Asking for OSGi components using URL: '$bundlesUrl'")
 
         return try {
             ComponentState.fromJson(get(componentsUrl))
@@ -429,10 +443,10 @@ class InstanceSync(val project: Project, val instance: Instance) {
 
     fun reload() {
         try {
-            logger.info("Triggering instance(s) shutdown")
+            logger.info("Triggering shutdown of $instance.")
             postUrlencoded(vmStatUrl, mapOf("shutdown_type" to "Restart"))
         } catch (e: DeployException) {
-            throw InstanceException("Cannot trigger shutdown for instance $instance", e)
+            throw InstanceException("Cannot trigger shutdown of $instance.", e)
         }
     }
 

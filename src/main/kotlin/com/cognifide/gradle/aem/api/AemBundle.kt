@@ -24,20 +24,40 @@ class AemBundle(@Transient private val project: Project) {
         exportPackage(listOf(pkg))
     }
 
+    fun exportPackage(vararg pkgs: String) {
+        exportPackage(pkgs.toList())
+    }
+
     fun exportPackage(pkgs: Collection<String>) {
-        attribute("Export-Package", mergePackages(pkgs))
+        attribute("Export-Package", wildcardPackages(pkgs))
     }
 
     fun privatePackage(pkg: String) {
         privatePackage(listOf(pkg))
     }
 
-    fun privatePackage(pkgs: Collection<String>) {
-        attribute("Private-Package", mergePackages(pkgs))
+    fun privatePackage(vararg pkgs: String) {
+        privatePackage(pkgs.toList())
     }
 
-    private fun mergePackages(pkgs: Collection<String>): String {
+    fun privatePackage(pkgs: Collection<String>) {
+        attribute("Private-Package", wildcardPackages(pkgs))
+    }
+
+    fun excludePackage(vararg pkgs: String) {
+        excludePackage(pkgs.toList())
+    }
+
+    fun excludePackage(pkgs: Collection<String>) {
+        attribute("Import-Package", mergePackages(pkgs.map { "!$it" } + "*"))
+    }
+
+    fun wildcardPackages(pkgs: Collection<String>): String {
         return pkgs.joinToString(",") { StringUtils.appendIfMissing(it, ".*") }
+    }
+
+    fun mergePackages(pkgs: Collection<String>): String {
+        return pkgs.joinToString(",")
     }
 
 }
