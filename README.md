@@ -754,6 +754,13 @@ gradlew aemDeploy -Paem.instance.name=*-author
 
 Default value of that instance name filter is `local-*`.
 
+To deploy only to author instance(s) or publish instance(s):
+
+```bash
+gradlew aemDeploy -Paem.instance.authors
+gradlew aemDeploy -Paem.instance.publishers
+```
+
 ### Deploy CRX package(s) only to instances specified explicitly
 
 Instance urls delimited by semicolon:
