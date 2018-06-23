@@ -46,5 +46,8 @@ abstract class HtmlResponse(private val rawHtml: String) {
     }
 
     val errors: List<String> = _errors.toList()
+
+    val success: Boolean
+        get() = status == Status.SUCCESS
 }
 
