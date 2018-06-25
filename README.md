@@ -613,8 +613,7 @@ allprojects { subproject ->
   plugins.withId 'com.cognifide.aem.base', {
     aem {
         config {
-          remoteInstance "http://localhost:6502"
-          contentPath = subproject.file("src/main/aem")
+          contentPath = subproject.file("src/main/aem") // overrides default dir named 'content'
         }
     }
   }
@@ -695,13 +694,13 @@ aem {
 }
 ```
 
-The above configuration can be also specified through *gradle.properties* file using dedicated syntax.
+The above configuration can be also specified through *gradle.properties* file using dedicated syntax (recommended approach).
 
 `aem.instance.$TYPE.$ENVIRONMENT-$TYPE_NAME.$PROP_NAME=$PROP_VALUE`
 
 Part | Possible values | Description |
 --- | --- | --- |
-`$TYPE` | `local` or `remote` (only) |  Type of instance. Local means that for each one there will be set up AEM Quickstart at local file system. | 
+`$TYPE` | `local` or `remote` (only) | Type of instance. Local means that for each one there will be set up AEM Quickstart at local file system. | 
 `$ENVIRONMENT` | `local`, `int`, `stg` etc | Environment name. |
 `$TYPE_NAME` | `author`, `publish`, `publish2`, etc | Combination of AEM instance type and semantic suffix useful when more than one of instance of same type is being configured. |
 `$PROP_NAME=$PROP_VALUE` | Local instances: `httpUrl=http://admin:admin@localhost:4502`, `password=foo`, `runModes=nosamplecontent`, `jvmOpts=-server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true`, `startOpts=...`, `debugPort=24502`. Remote instances: `httpUrl`, `user`, `password`. | Run modes, JVM opts and start opts should be comma delimited. |
