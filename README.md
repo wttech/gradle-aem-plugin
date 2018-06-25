@@ -84,6 +84,7 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
    * [Assemble all-in-one CRX package(s)](#assemble-all-in-one-crx-packages)
    * [Include additional OSGi bundle into CRX package](#include-additional-osgi-bundle-into-crx-package)
    * [Embed JAR file into built OSGi bundle](#embed-jar-file-into-built-osgi-bundle)
+   * [Exclude packages being incidentally imported by OSGi bundle](#exclude-packages-being-incidentally-imported-by-osgi-bundle)
    * [Skip installed package resolution by download name.](#skip-installed-package-resolution-by-download-name)
 * [Known issues](#known-issues)
    * [No OSGi services / components are registered](#no-osgi-services--components-are-registered)
@@ -890,11 +891,41 @@ For the reference, see [usage in AEM Multi-Project Example](https://github.com/C
 
 Simply use custom [configuration](https://docs.gradle.org/current/dsl/org.gradle.api.artifacts.Configuration.html) named `aemEmbed` in `dependencies` section.
 
-In build script, instead using `compile 'group:name:version'` use `aemEmbed 'group:name:version'`. As a result, artifact will become a part of OSGi bundle being built. 
+In build script, instead using `compile 'group:name:version'` use `aemEmbed 'group:name:version'`. As a result, artifact classes will be copied and become a part of OSGi bundle being built. 
 
-To be able to use classes provided by that dependency, it is recommended to specify packages in bundle manifest attribute named `Private-Package` or optionally `Export-Package`. 
+To be able to use classes provided by that dependency, there is needed to specify its packages to be available at bundle class path by using bundle DSL:
+
+```groovy
+aem {
+    bundle {
+        exportPackage 'com.group.name' // package located in jar
+        attribute 'Export-Package', 'com.group.name.*' // alternatively
+        
+        // or even with better encapsulation
+        privatePackage 'com.group.name'
+        attribute 'Private-Package', 'com.group.name.*' // alternatively
+    }
+}
+```
+ 
 For the reference, see [usage in AEM Multi-Project Example](https://github.com/Cognifide/gradle-aem-multi/blob/master/app/common/build.gradle).
 
+### Exclude packages being incidentally imported by OSGi bundle
+
+Sometimes BND tool could generate *Import-Package* directive that will import too many OSGi classes to be available on bundle class path. Especially when we are migrating non-OSGi dependency to OSGi bundle (because of transitive class dependencies).
+ 
+To prevent that we could generate own manifest entry that will prevent importing optional classes.
+
+For instance: 
+
+```groovy
+aem {
+    bundle {
+        excludePackage 'org.junit', 'org.mockito'
+        attribute 'Import-Package', '!org.junit,!org.mockito,*' // alternatively
+    } 
+}
+```
 
 ### Skip installed package resolution by download name. 
 
