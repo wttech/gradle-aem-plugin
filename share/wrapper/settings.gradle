@@ -1,0 +1,13 @@
+pluginManagement {
+	repositories {
+		jcenter()
+		maven { url  "http://dl.bintray.com/cognifide/maven-public" }
+	}
+	resolutionStrategy {
+		eachPlugin {
+			if (requested.id.namespace == 'com.cognifide.aem') {
+				useModule('com.cognifide.gradle:aem-plugin:4.0.6')
+			}
+		}
+	}
+}
