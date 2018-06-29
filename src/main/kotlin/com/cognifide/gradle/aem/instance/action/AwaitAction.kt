@@ -199,7 +199,7 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
     }
 
     private fun progressFor(states: List<InstanceState>, config: AemConfig, timer: Behaviors.Timer): String {
-        return (progressTicks(timer.ticks, config.awaitStableTimes) + " " + states.joinToString(" | ") { progressFor(it, states.size > 1) }).trim()
+        return (progressTicks(timer.ticks, config.awaitStableTimes) + " " + states.joinToString(" | ") { progressFor(it, states.size > 2) }).trim()
     }
 
     private fun progressFor(state: InstanceState, shortInfo: Boolean): String {
