@@ -3,8 +3,8 @@ package com.cognifide.gradle.aem.instance.action
 import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.instance.*
 import com.cognifide.gradle.aem.internal.Behaviors
+import com.cognifide.gradle.aem.internal.InstanceStateLogger
 import com.cognifide.gradle.aem.internal.ProgressCountdown
-import com.cognifide.gradle.aem.internal.ProgressLogger
 import org.apache.http.HttpStatus
 import org.gradle.api.Project
 import java.util.stream.Collectors
@@ -56,7 +56,7 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
     }
 
     private fun awaitStable() {
-        val progressLogger = ProgressLogger(project, "Awaiting stable instance(s): ${instances.names}")
+        val progressLogger = InstanceStateLogger(project, "Awaiting stable instance(s): ${instances.names}")
         progressLogger.started()
 
         var lastStableChecksum = -1
@@ -80,7 +80,7 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
                 timer.reset()
             }
 
-            progressLogger.progress(progressFor(instanceStates, config, timer))
+            progressLogger.progressState(instanceStates, stableCheck, config.awaitStableTimes, timer, AwaitAction.PROGRESS_COUNTING_RATIO)
 
             // Detect unstable instances
             val unstableInstances = instanceStates.parallelStream()
