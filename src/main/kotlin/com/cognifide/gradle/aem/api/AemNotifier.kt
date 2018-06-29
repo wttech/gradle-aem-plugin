@@ -1,48 +1,69 @@
 package com.cognifide.gradle.aem.api
 
-import dorkbox.notify.Notify
-import org.apache.commons.lang3.StringUtils
+import fr.jcgay.notification.*
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.gradle.api.Project
-import javax.imageio.ImageIO
+import org.gradle.api.logging.LogLevel
+import java.util.concurrent.TimeUnit
 
 class AemNotifier private constructor(private val project: Project) {
 
-    private val config by lazy { AemConfig.of(project) }
+    enum class Level {
+        ERROR, WARNING, INFO
+    }
 
-    fun log(title: String, message: String) {
-        project.logger.lifecycle(if (message.isNotBlank()) {
+    private val config by lazy { AemConfig.of(project) }
+    private val icon by lazy { Icon.create(javaClass.getResource(IMAGE_PATH), "default") }
+    private val application by lazy {
+        Application.builder()
+                .id("gradle-aem-plugin")
+                .name("Gradle AEM Plugin")
+                .icon(icon)
+                .timeout(TimeUnit.SECONDS.toMillis(5))
+                .build()
+    }
+    private val levelToLog: HashMap<Level, LogLevel> = hashMapOf(
+            Level.ERROR to LogLevel.ERROR,
+            Level.WARNING to LogLevel.WARN,
+            Level.INFO to LogLevel.LIFECYCLE)
+    private val levelToNotify: HashMap<Level, Notification.Level> = hashMapOf(
+            Level.ERROR to Notification.Level.ERROR,
+            Level.WARNING to Notification.Level.WARNING,
+            Level.INFO to Notification.Level.INFO)
+
+    fun log(title: String, message: String, level: Level = Level.INFO) {
+        val logLevel = levelToLog.getOrDefault(level, LogLevel.LIFECYCLE)
+        project.logger.log(logLevel, if (message.isNotBlank()) {
             "${title.removeSuffix(".")}. $message"
         } else {
             title
         })
     }
 
-    fun default(title: String, message: String = "") {
+    fun default(title: String, message: String = "", level: Level = Level.INFO) {
         if (config.notificationEnabled) {
-            now(title, message)
+            notify(title, message, level)
         }
 
-        log(title, message)
+        log(title, message, level)
     }
 
-    // TODO allow to customize color of plugin logo (warn, info, error etc)
-    fun now(title: String, text: String = "") {
-        now {
-            title(title)
-            text(StringUtils.replace(text, "\n", "<br>"))
-        }
-    }
-
-    fun now(configurer: Notify.() -> Unit) {
+    fun notify(title: String, text: String = "", level: Level = Level.INFO) {
+        val notifier = SendNotification()
+                .setApplication(application)
+                .initNotifier()
+        val notification = Notification.builder()
+                .title(title)
+                .message(text)
+                .icon(icon)
+                .level(levelToNotify.getOrDefault(level, Notification.Level.INFO))
+                .build()
         try {
-            Notify.create()
-                    .image(ImageIO.read(javaClass.getResourceAsStream(IMAGE_PATH)))
-                    .apply(config.notificationConfig)
-                    .apply(configurer)
-                    .show()
+            notifier.send(notification)
         } catch (e: Exception) {
             project.logger.debug("Cannot show system notification", e)
+        } finally {
+            notifier.close()
         }
     }
 
@@ -76,7 +97,7 @@ class AemNotifier private constructor(private val project: Project) {
                         val exception = ExceptionUtils.getRootCause(it.failure)
                         val message = exception?.message ?: "no error message"
 
-                        notifier.default("Build failure", message)
+                        notifier.default("Build failure", "${message}\n${exception}", Level.ERROR)
                     }
                 }
             }
