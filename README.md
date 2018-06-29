@@ -935,6 +935,7 @@ pluginManagement {
         maven { url  "http://dl.bintray.com/cognifide/maven-public" }
         maven { url  "https://dl.bintray.com/neva-dev/maven-public" }
     }
+    ...
 }
 ```
 
@@ -944,7 +945,9 @@ Change version of *com.cognifide.gradle:aem-plugin* in **build.gradle** file:
 pluginManagement {
        resolutionStrategy {
         eachPlugin {
+        ...
                 useModule('com.cognifide.gradle:aem-plugin:4.0.x')
+        ...
         }
     }
 }
