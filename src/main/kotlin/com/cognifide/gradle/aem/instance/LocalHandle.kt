@@ -56,6 +56,12 @@ class LocalHandle(val project: Project, val instance: Instance) {
     val startScript: Script
         get() = binScript("start")
 
+    val pid: File
+        get() = File("${staticDir}/conf/cq.pid")
+
+    val controlPort: File
+        get() = File("${staticDir}/conf/controlport")
+
     val stopScript: Script
         get() = binScript("stop")
 

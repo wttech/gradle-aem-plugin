@@ -43,6 +43,7 @@ class InstancePlugin : Plugin<Project> {
         create.dependsOn(resolve).mustRunAfter(clean)
         up.dependsOn(create).mustRunAfter(clean)
         reload.mustRunAfter(satisfy)
+        destroy.dependsOn(down)
         destroy.mustRunAfter(down)
         resolve.mustRunAfter(clean)
         satisfy.dependsOn(resolve).mustRunAfter(create, up)
