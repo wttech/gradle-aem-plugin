@@ -199,11 +199,13 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
     }
 
     private fun progressFor(states: List<InstanceState>, config: AemConfig, timer: Behaviors.Timer): String {
-        return (progressTicks(timer.ticks, config.awaitStableTimes) + " " + states.joinToString(" | ") { progressFor(it) }).trim()
+        return (progressTicks(timer.ticks, config.awaitStableTimes) + " " + states.joinToString(" | ") { progressFor(it, states.size > 1) }).trim()
     }
 
-    private fun progressFor(state: InstanceState): String {
-        return "${state.instance.name}: ${progressIndicator(state)} ${state.bundleState.statsWithLabels} [${state.bundleState.stablePercent}]"
+    private fun progressFor(state: InstanceState, shortInfo: Boolean): String {
+        return "${state.instance.name}: ${progressIndicator(state)}" +
+                (if (shortInfo) "" else " " + state.bundleState.statsWithLabels) +
+                "[${state.bundleState.stablePercent}]"
     }
 
     private fun progressTicks(tick: Long, maxTicks: Long): String {
