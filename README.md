@@ -88,6 +88,11 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
         - [Include additional OSGi bundle into CRX package](#include-additional-osgi-bundle-into-crx-package)
         - [Embed JAR file into built OSGi bundle](#embed-jar-file-into-built-osgi-bundle)
         - [Skip installed package resolution by download name.](#skip-installed-package-resolution-by-download-name)
+    - [Contributing](#contributing)
+        - [Basics](#basics)
+         - [Testing local version of plugin](#testing-local-version-of-plugin)
+         - [Vault tasks parallelism](#vault-tasks-parallelism)
+            
     - [Known issues](#known-issues)
         - [No OSGi services / components are registered](#no-osgi-services---components-are-registered)
         - [Caching task `aemCompose`](#caching-task-aemcompose)
@@ -679,7 +684,7 @@ aem {
             user = "user1" 
             password = "password2"
             environment = "integration"
-            typeName = "author2
+            typeName = "author2"
         } 
         remoteInstance "http://192.168.10.2:4503", { // integration-publish1
             user = "user2"
@@ -898,6 +903,84 @@ For the reference, see [usage in AEM Multi-Project Example](https://github.com/C
 gradlew aemInstall -Paem.package.skipDownloadName=false
 ```
 Only matters when Vault properties file is customized then that property could be used to eliminate conflicts.
+
+## Contributing
+
+### Basics
+
+* Work on fork of this repository - In the top-right corner of this page, click Fork.
+* All your changes should be created from and merged into **develop** branch.
+* If you want your changes to be included in upstream release Create Pull Request from your fork **develop** branch into upstream **develop** branch
+    * Before you create Pull Request make sure that plugin is working with **AEM [Single|Multi]-Project Example** projects
+
+### Testing local version of plugin
+
+After you have done some changes make sure that local version plugin works with one of **AEM Project Example**:
+* [AEM Single-Project Example](https://github.com/Cognifide/gradle-aem-single#quickstart) 
+* [AEM Multi-Project Example](https://github.com/Cognifide/gradle-aem-multi#quickstart) 
+
+by publishing your developed version of **Gradle AEM Plugin** to a local maven.
+
+
+Clone into one of **AEM Project Example** projects.
+
+Add local maven *mavenLocal()* on top of repositories in **build.gradle** file:
+
+```groovy
+pluginManagement {
+    repositories {
+        mavenLocal()
+        jcenter()
+        maven { url "https://plugins.gradle.org/m2/" }
+        maven { url  "http://dl.bintray.com/cognifide/maven-public" }
+        maven { url  "https://dl.bintray.com/neva-dev/maven-public" }
+    }
+}
+```
+
+Change version of *com.cognifide.gradle:aem-plugin* in **build.gradle** file:
+
+```groovy
+pluginManagement {
+       resolutionStrategy {
+        eachPlugin {
+                useModule('com.cognifide.gradle:aem-plugin:4.0.x')
+        }
+    }
+}
+```
+Go back into **Gradle AEM Plugin** project.
+
+Update plugin version in build.gradle to the one you have configured in **AEM Project Example**.
+
+```groovy
+group 'com.cognifide.gradle'
+version '4.0.x'
+description = 'Gradle AEM Plugin'
+defaultTasks = ['clean', 'build', 'publishToMavenLocal']
+``` 
+
+Build **Gradle AEM Plugin**
+
+```bash
+sh gradlew
+```
+
+by default it will run publish to local maven task.
+
+Now **AEM Project Example** will use your local version of **Gradle AEM Plugin**.
+
+### Debug
+
+Execute **AEM Project Example** build with debug options (make sure it is using **local** version of **Gradle AEM Plugin**), it will suspend.
+
+```bash
+sh grdlew -Dorg.gradle.debug=true --no-daemon
+```
+
+Attach **Gradle AEM Plugin** debugger on port 5005.
+
+Suspension will be released and build should stop at breakpoint.
 
 ## Known issues
 
