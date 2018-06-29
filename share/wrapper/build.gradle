@@ -1,3 +1,0 @@
-plugins {
-	id 'com.cognifide.aem.instance' // or 'package' for JCR content only	
-}
