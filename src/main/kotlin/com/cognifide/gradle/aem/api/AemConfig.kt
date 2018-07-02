@@ -169,16 +169,6 @@ class AemConfig(
         get() = pkg(project).archiveName
 
     /**
-     * Determines built CRX package name (visible in package manager).
-     */
-    @Input
-    var packageName: String = if (projectNameUnique) {
-        project.name
-    } else {
-        "$projectNamePrefix-${project.name}"
-    }
-
-    /**
      * CRX package name conventions (with wildcard) indicating that package can change over time
      * while having same version specified. Affects CRX packages composed  and satisfied.
      */
@@ -456,6 +446,10 @@ class AemConfig(
      */
     @Input
     var satisfyBundlePath: String = props.string("aem.satisfy.bundlePath", "/apps/gradle-aem-plugin/satisfy/install")
+
+    // TODO add comment
+    @Input
+    var downloadPackagePath: String = props.string("aem.download.packagePath", "/etc/gradle-aem-plugin/download")
 
     /**
      * A hook which could be used to override default properties used to generate a CRX package from OSGi bundle.

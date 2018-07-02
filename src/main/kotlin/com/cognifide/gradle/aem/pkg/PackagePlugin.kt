@@ -50,6 +50,9 @@ class PackagePlugin : Plugin<Project> {
         activate.mustRunAfter(compose, upload, install)
 
         deploy.dependsOn(compose)
+
+        val download = tasks.create(DownloadTask.NAME, DownloadTask::class.java)
+        download.dependsOn(prepare)
     }
 
     companion object {

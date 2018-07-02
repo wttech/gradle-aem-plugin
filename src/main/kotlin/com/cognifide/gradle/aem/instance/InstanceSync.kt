@@ -248,6 +248,17 @@ class InstanceSync(val project: Project, val instance: Instance) {
         throw exception
     }
 
+    fun buildPackage(name: String) {
+        //         curl -u admin:admin -X POST http://localhost:4505:/crx/packmgr/service/.json/etc/packages/name_of_package.zip?cmd=build
+
+        val url = "$jsonTargetUrl/etc/packages/$name?cmd=build"
+        logger.info("Building package {}, url: {}", name, url)
+        val json = post(url, createEntityMultipart(mapOf(
+                "AA" to "FF"
+        )))
+        logger.info(json)
+    }
+
     fun uploadPackageOnce(file: File): UploadResponse {
         val url = "$jsonTargetUrl/?cmd=upload"
 

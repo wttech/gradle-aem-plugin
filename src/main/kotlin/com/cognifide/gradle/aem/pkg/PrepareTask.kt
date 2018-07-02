@@ -6,6 +6,7 @@ import com.cognifide.gradle.aem.internal.file.FileOperations
 import org.apache.commons.io.FileUtils
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
+import org.gradle.util.GFileUtils
 
 open class PrepareTask : AemDefaultTask() {
 
@@ -15,6 +16,9 @@ open class PrepareTask : AemDefaultTask() {
 
     @OutputDirectory
     val vaultDir = AemTask.temporaryDir(project, NAME, PackagePlugin.VLT_PATH)
+
+    @OutputDirectory
+    val jcrRoot = AemTask.temporaryDir(project, NAME, PackagePlugin.JCR_ROOT)
 
     init {
         description = "Prepare Vault files before composing CRX package"
@@ -28,6 +32,11 @@ open class PrepareTask : AemDefaultTask() {
     fun prepare() {
         copyContentVaultFiles()
         copyMissingVaultFiles()
+        createEmptyJcrRoot()
+    }
+
+    private fun createEmptyJcrRoot() {
+        GFileUtils.mkdirs(jcrRoot)
     }
 
     private fun copyContentVaultFiles() {

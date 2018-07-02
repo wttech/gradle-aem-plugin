@@ -48,6 +48,9 @@ open class ComposeTask : Zip(), AemTask {
     @Internal
     val propertyParser = PropertyParser(project)
 
+    @get:Input
+    val baseNameDefault = basePackageName(config)
+
     @Internal
     private var bundleCollectors: List<() -> Unit> = mutableListOf()
 
@@ -95,8 +98,10 @@ open class ComposeTask : Zip(), AemTask {
     val fileProperties
         get() = mapOf(
                 "filters" to filterRoots,
-                "filterRoots" to filterRootsProp
+                "filterRoots" to filterRootsProp,
+                "packageName" to baseNameDefault
         )
+
 
     /**
      * Configure default task dependency assignments while including dependant project bundles.
@@ -121,7 +126,7 @@ open class ComposeTask : Zip(), AemTask {
         description = "Composes CRX package from JCR content and built OSGi bundles"
         group = AemTask.GROUP
 
-        baseName = config.packageName
+        baseName = baseNameDefault
         duplicatesStrategy = DuplicatesStrategy.WARN
         isZip64 = true
 

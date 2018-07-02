@@ -124,7 +124,7 @@ pluginManagement {
 	resolutionStrategy {
 		eachPlugin {
 			if (requested.id.namespace == 'com.cognifide.aem') {
-				useModule('com.cognifide.gradle:aem-plugin:4.0.4')
+				useModule('com.cognifide.gradle:aem-plugin:4.0.6')
 			}
 		}
 	}
