@@ -62,6 +62,10 @@ class Component {
                 .toHashCode()
     }
 
+    override fun toString(): String {
+        return "Component(pid='$pid',state='$state',id='$id',bundleId='$bundleId')"
+    }
+
     companion object {
         val STATE_RAW_DISABLED_OR_NO_CONFIG = -1
 

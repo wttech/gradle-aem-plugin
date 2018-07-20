@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import org.apache.commons.lang3.builder.EqualsBuilder
 import org.apache.commons.lang3.builder.HashCodeBuilder
 
+import org.osgi.framework.Bundle as Base
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 class Bundle {
     lateinit var id: String
@@ -20,9 +22,20 @@ class Bundle {
 
     val stable: Boolean
         get() = if (fragment) {
-            stateRaw == FRAGMENT_ACTIVE_STATE
+            stateRaw == Base.RESOLVED
         } else {
-            stateRaw == BUNDLE_ACTIVE_STATE
+            stateRaw == Base.ACTIVE
+        }
+
+    val state: String
+        get() = when (stateRaw) {
+            Base.UNINSTALLED -> "uninstalled"
+            Base.INSTALLED -> "installed"
+            Base.RESOLVED -> "resolved"
+            Base.STARTING -> "starting"
+            Base.STOPPING -> "stopping"
+            Base.ACTIVE -> "active"
+            else -> "unknown"
         }
 
     override fun equals(other: Any?): Boolean {
@@ -50,9 +63,7 @@ class Bundle {
                 .toHashCode()
     }
 
-    companion object {
-        const val FRAGMENT_ACTIVE_STATE = 4
-
-        const val BUNDLE_ACTIVE_STATE = 32
+    override fun toString(): String {
+        return "Bundle(symbolicName='$symbolicName',state='$state',id='$id')"
     }
 }
