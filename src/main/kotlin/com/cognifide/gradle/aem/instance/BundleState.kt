@@ -57,11 +57,15 @@ class BundleState private constructor() {
         return stable(listOf(symbolicName))
     }
 
+    fun bundlesExcept(symbolicNames: Collection<String>): List<Bundle> {
+        return bundles.filter { !Patterns.wildcard(it.symbolicName, symbolicNames) }
+    }
+
     /**
      * Checks if all bundles except these matching symbolic name pattern are active.
      */
     fun stableExcept(symbolicNames: Collection<String>): Boolean {
-        return !unknown && bundles.filter { !Patterns.wildcard(it.symbolicName, symbolicNames) }.all { it.stable }
+        return !unknown && bundlesExcept(symbolicNames).all { it.stable }
     }
 
     fun stableExcept(symbolicName: String): Boolean {
