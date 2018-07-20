@@ -8,8 +8,7 @@ class InstanceState(private var _sync: InstanceSync, val instance: Instance) {
     val sync: InstanceSync
         get() = _sync
 
-    val stable: Boolean
-        get() = bundleState.stable && !componentState.unknown
+    val status = InstanceStatus()
 
     val bundleState by lazy { sync.determineBundleState() }
 
@@ -32,7 +31,18 @@ class InstanceState(private var _sync: InstanceSync, val instance: Instance) {
             it.connectionTimeout = connectionTimeout
             it.connectionRetries = false
         }, {
-            it.bundleState.stable
+            if (it.bundleState.unknown) {
+                it.status.error("Unknown bundle state on ${it.instance}")
+                return@check false
+            }
+
+            val unstableBundles = it.bundleState.bundles.filter { it.stable }
+            if (unstableBundles.isNotEmpty()) {
+                it.status.error("Unstable bundles detected on ${it.instance}: $unstableBundles")
+                return@check false
+            }
+
+            return@check true
         })
     }
 
@@ -53,7 +63,18 @@ class InstanceState(private var _sync: InstanceSync, val instance: Instance) {
         return check({
             it.connectionTimeout = connectionTimeout
         }, {
-            it.componentState.check(packagesActive, { it.active })
+            if (it.componentState.unknown) {
+                it.status.error("Unknown component state on ${it.instance}")
+                return@check false
+            }
+
+            val inactiveComponents = it.componentState.find(packagesActive, listOf()).filter { it.active }
+            if (inactiveComponents.isNotEmpty()) {
+                it.status.error("Inactive components detected on $instance: $inactiveComponents")
+                return@check false
+            }
+
+            return@check true
         })
     }
 

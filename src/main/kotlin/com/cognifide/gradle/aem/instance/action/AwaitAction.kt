@@ -103,6 +103,8 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
 
             // Detect timeout when same checksum is not being updated so long
             if (stableTimes > 0 && timer.ticks > stableTimes) {
+                instanceStates.forEach { it.status.logTo(logger) }
+
                 if (!resume) {
                     throw InstanceException("Instances not stable: ${unstableInstances.names}. Timeout reached.")
                 } else {
@@ -139,9 +141,9 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
 
         val synchronizers = prepareSynchronizers()
         for (i in 0..config.awaitHealthRetryTimes) {
-            val unhealthyInstances = synchronizers.parallelStream()
+            val instanceStates = synchronizers.parallelStream()
                     .map { it.determineInstanceState() }
-                    .filter { !healthCheck(it) }
+            val unhealthyInstances = instanceStates.filter { !healthCheck(it) }
                     .map { it.instance }
                     .collect(Collectors.toList())
 
@@ -157,6 +159,8 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
                 val countdown = ProgressCountdown(project, header, config.awaitHealthRetryDelay)
                 countdown.run()
             } else if (i == config.awaitHealthRetryTimes) {
+                instanceStates.forEach { it.status.logTo(logger) }
+
                 if (!resume) {
                     throw InstanceException("Instances not healthy: ${unhealthyInstances.names}.")
                 } else {
