@@ -66,7 +66,7 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
         var unavailableInstances = synchronizers.map { it.instance }
         var unavailableNotification = false
 
-        Behaviors.waitUntil(stableInterval, { timer ->
+        Behaviors.waitUntil(stableInterval) { timer ->
             // Gather all instance states (lazy)
             val instanceStates = synchronizers.map { it.determineInstanceState() }
 
@@ -129,7 +129,7 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
             }
 
             true
-        })
+        }
 
         progressLogger.completed()
     }
@@ -195,32 +195,6 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
                     }
                 }
             }
-        }
-    }
-
-    private fun progressFor(states: List<InstanceState>, config: AemConfig, timer: Behaviors.Timer): String {
-        return (progressTicks(timer.ticks, config.awaitStableTimes) + " " + states.joinToString(" | ") { progressFor(it) }).trim()
-    }
-
-    private fun progressFor(state: InstanceState): String {
-        return "${state.instance.name}: ${progressIndicator(state)} ${state.bundleState.statsWithLabels} [${state.bundleState.stablePercent}]"
-    }
-
-    private fun progressTicks(tick: Long, maxTicks: Long): String {
-        return if (maxTicks > 0 && (tick.toDouble() / maxTicks.toDouble() > PROGRESS_COUNTING_RATIO)) {
-            "[$tick/$maxTicks]"
-        } else if (tick.rem(2) == 0L) {
-            "[*]"
-        } else {
-            "[ ]"
-        }
-    }
-
-    private fun progressIndicator(state: InstanceState): String {
-        return if (stableCheck(state)) {
-            "+"
-        } else {
-            "-"
         }
     }
 
