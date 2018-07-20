@@ -141,9 +141,8 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
 
         val synchronizers = prepareSynchronizers()
         for (i in 0..config.awaitHealthRetryTimes) {
-            val instanceStates = synchronizers.parallelStream()
-                    .map { it.determineInstanceState() }
-            val unhealthyInstances = instanceStates.filter { !healthCheck(it) }
+            val instanceStates = synchronizers.map { it.determineInstanceState() }
+            val unhealthyInstances = instanceStates.parallelStream().filter { !healthCheck(it) }
                     .map { it.instance }
                     .collect(Collectors.toList())
 

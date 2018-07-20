@@ -1,9 +1,9 @@
-package com.cognifide.gradle.aem.instance
+package com.cognifide.gradle.aem.internal
 
 import org.gradle.api.logging.LogLevel
 import org.gradle.api.logging.Logger
 
-class InstanceStatus {
+class CollectingLogger {
 
     private val _logEntries = mutableListOf<LogEntry>()
 

@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.instance
 
+import com.cognifide.gradle.aem.internal.CollectingLogger
 import org.apache.commons.lang3.builder.EqualsBuilder
 import org.apache.commons.lang3.builder.HashCodeBuilder
 
@@ -8,7 +9,7 @@ class InstanceState(private var _sync: InstanceSync, val instance: Instance) {
     val sync: InstanceSync
         get() = _sync
 
-    val status = InstanceStatus()
+    val status = CollectingLogger()
 
     val bundleState by lazy { sync.determineBundleState() }
 
@@ -92,7 +93,7 @@ class InstanceState(private var _sync: InstanceSync, val instance: Instance) {
                 return@check false
             }
 
-            val inactiveComponents = it.componentState.find(packagesActive, listOf()).filter { it.active }
+            val inactiveComponents = it.componentState.find(packagesActive, listOf()).filter { !it.active }
             if (inactiveComponents.isNotEmpty()) {
                 it.status.error("Inactive components detected on $instance:\n${inactiveComponents.joinToString("\n")}")
                 return@check false
