@@ -29,7 +29,7 @@ open class DownTask : AemDefaultTask() {
         handles.parallelStream().forEach { it.down() }
 
         Behaviors.waitUntil(config.awaitStableInterval, { timer ->
-            val instancesStates = handles.map { getSynchronize(it.instance) }.map { it.determineInstanceState() }
+            val instancesStates = handles.map { InstanceSync(project, it.instance) }.map { it.determineInstanceState() }
             progressLogger.progressState(instancesStates, stableState, config.awaitStableTimes, timer, AwaitAction.PROGRESS_COUNTING_RATIO)
 
             handles.map { isAemProcessRunning(it) }
@@ -40,34 +40,4 @@ open class DownTask : AemDefaultTask() {
     }
 
     private fun isAemProcessRunning(it: LocalHandle): Boolean = it.pid.exists() && it.controlPort.exists()
-
-    private fun getSynchronize(instance: Instance): InstanceSync {
-        val init = instance.isBeingInitialized(project)
-
-        return InstanceSync(project, instance).apply {
-            val sync = this
-
-            if (init) {
-                logger.debug("Initializing instance using default credentials.")
-                sync.basicUser = Instance.USER_DEFAULT
-                sync.basicPassword = Instance.PASSWORD_DEFAULT
-            }
-
-            responseHandler = { response ->
-                if (init) {
-                    if (response.statusLine.statusCode == HttpStatus.SC_UNAUTHORIZED) {
-                        if (sync.basicUser == Instance.USER_DEFAULT) {
-                            logger.debug("Switching instance credentials from defaults to customized.")
-                            sync.basicUser = instance.user
-                            sync.basicPassword = instance.password
-                        } else {
-                            logger.debug("Switching instance credentials from customized to defaults.")
-                            sync.basicUser = Instance.USER_DEFAULT
-                            sync.basicPassword = Instance.PASSWORD_DEFAULT
-                        }
-                    }
-                }
-            }
-        }
-    }
 }
