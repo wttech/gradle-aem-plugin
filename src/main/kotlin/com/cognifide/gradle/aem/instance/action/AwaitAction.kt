@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem.instance.action
 
-import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.instance.*
 import com.cognifide.gradle.aem.internal.Behaviors
 import com.cognifide.gradle.aem.internal.ProgressCountdown
@@ -80,7 +79,6 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
                 timer.reset()
             }
 
-            progressLogger.progress(progressFor(instanceStates, config, timer))
 
             // Detect unstable instances
             val unstableInstances = instanceStates.parallelStream()
@@ -101,8 +99,12 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
                 unavailableNotification = true
             }
 
+            progressLogger.progress(progressFor(instanceStates, unavailableInstances, unstableInstances, timer))
+
             // Detect timeout when same checksum is not being updated so long
             if (stableTimes > 0 && timer.ticks > stableTimes) {
+                instanceStates.forEach { it.status.logTo(logger) }
+
                 if (!resume) {
                     throw InstanceException("Instances not stable: ${unstableInstances.names}. Timeout reached.")
                 } else {
@@ -139,9 +141,8 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
 
         val synchronizers = prepareSynchronizers()
         for (i in 0..config.awaitHealthRetryTimes) {
-            val unhealthyInstances = synchronizers.parallelStream()
-                    .map { it.determineInstanceState() }
-                    .filter { !healthCheck(it) }
+            val instanceStates = synchronizers.map { it.determineInstanceState() }
+            val unhealthyInstances = instanceStates.parallelStream().filter { !healthCheck(it) }
                     .map { it.instance }
                     .collect(Collectors.toList())
 
@@ -157,6 +158,8 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
                 val countdown = ProgressCountdown(project, header, config.awaitHealthRetryDelay)
                 countdown.run()
             } else if (i == config.awaitHealthRetryTimes) {
+                instanceStates.forEach { it.status.logTo(logger) }
+
                 if (!resume) {
                     throw InstanceException("Instances not healthy: ${unhealthyInstances.names}.")
                 } else {
@@ -198,12 +201,14 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
         }
     }
 
-    private fun progressFor(states: List<InstanceState>, config: AemConfig, timer: Behaviors.Timer): String {
-        return (progressTicks(timer.ticks, config.awaitStableTimes) + " " + states.joinToString(" | ") { progressFor(it, states.size > 2) }).trim()
+    private fun progressFor(states: List<InstanceState>, unavailableInstances: List<Instance>, unstableInstances: List<Instance>, timer: Behaviors.Timer): String {
+        return (progressTicks(timer.ticks, stableTimes) + " " + states.joinToString(" | ") {
+            progressFor(it, states.size > 2, unavailableInstances, unstableInstances)
+        }).trim()
     }
 
-    private fun progressFor(state: InstanceState, shortInfo: Boolean): String {
-        return "${state.instance.name}: ${progressIndicator(state)}" +
+    private fun progressFor(state: InstanceState, shortInfo: Boolean, unavailableInstances: List<Instance>, unstableInstances: List<Instance>): String {
+        return "${state.instance.name}: ${progressIndicator(state, unavailableInstances, unstableInstances)}" +
                 (if (shortInfo) "" else " " + state.bundleState.statsWithLabels) +
                 "[${state.bundleState.stablePercent}]"
     }
@@ -218,11 +223,11 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
         }
     }
 
-    private fun progressIndicator(state: InstanceState): String {
-        return if (stableCheck(state)) {
-            "+"
-        } else {
-            "-"
+    private fun progressIndicator(state: InstanceState, unavailableInstances: List<Instance>, unstableInstances: List<Instance>): String {
+        return when {
+            unavailableInstances.contains(state.instance) -> "-"
+            unstableInstances.contains(state.instance) -> "~"
+            else -> "+"
         }
     }
 

@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.instance
 
+import com.cognifide.gradle.aem.internal.CollectingLogger
 import org.apache.commons.lang3.builder.EqualsBuilder
 import org.apache.commons.lang3.builder.HashCodeBuilder
 
@@ -8,8 +9,7 @@ class InstanceState(private var _sync: InstanceSync, val instance: Instance) {
     val sync: InstanceSync
         get() = _sync
 
-    val stable: Boolean
-        get() = bundleState.stable && !componentState.unknown
+    val status = CollectingLogger()
 
     val bundleState by lazy { sync.determineBundleState() }
 
@@ -27,16 +27,43 @@ class InstanceState(private var _sync: InstanceSync, val instance: Instance) {
         return result
     }
 
-    fun checkBundleStable(connectionTimeout: Int = 100): Boolean {
+    fun checkBundleStable(): Boolean {
+        return checkBundleStable(BUNDLE_STATE_CONNECTION_TIMEOUT)
+    }
+
+    fun checkBundleStable(connectionTimeout: Int): Boolean {
+        return checkBundleStableExcept(listOf(), connectionTimeout)
+    }
+
+    fun checkBundleStableExcept(symbolicNamesIgnored: List<String>): Boolean {
+        return checkBundleStableExcept(symbolicNamesIgnored, BUNDLE_STATE_CONNECTION_TIMEOUT)
+    }
+
+    fun checkBundleStableExcept(symbolicNamesIgnored: List<String>, connectionTimeout: Int): Boolean {
         return check({
             it.connectionTimeout = connectionTimeout
             it.connectionRetries = false
         }, {
-            it.bundleState.stable
+            if (it.bundleState.unknown) {
+                it.status.error("Unknown bundle state on ${it.instance}")
+                return@check false
+            }
+
+            val unstableBundles = it.bundleState.bundlesExcept(symbolicNamesIgnored).filter { !it.stable }
+            if (unstableBundles.isNotEmpty()) {
+                it.status.error("Unstable bundles detected on ${it.instance}:\n${unstableBundles.joinToString("\n")}")
+                return@check false
+            }
+
+            return@check true
         })
     }
 
-    fun checkBundleState(connectionTimeout: Int = 100): Int {
+    fun checkBundleState(): Int {
+        return checkBundleState(BUNDLE_STATE_CONNECTION_TIMEOUT)
+    }
+
+    fun checkBundleState(connectionTimeout: Int): Int {
         return check({
             it.connectionTimeout = connectionTimeout
             it.connectionRetries = false
@@ -45,15 +72,34 @@ class InstanceState(private var _sync: InstanceSync, val instance: Instance) {
         })
     }
 
-    fun checkComponentState(connectionTimeout: Int = 10000): Boolean {
+    fun checkComponentState(): Boolean {
+        return checkComponentState(COMPONENT_STATE_CONNECTION_TIMEOUT)
+    }
+
+    fun checkComponentState(connectionTimeout: Int): Boolean {
         return checkComponentState(PLATFORM_COMPONENTS, connectionTimeout)
     }
 
-    fun checkComponentState(packagesActive: Collection<String>, connectionTimeout: Int = 10000): Boolean {
+    fun checkComponentState(packagesActive: Collection<String>): Boolean {
+        return checkComponentState(packagesActive, COMPONENT_STATE_CONNECTION_TIMEOUT)
+    }
+
+    fun checkComponentState(packagesActive: Collection<String>, connectionTimeout: Int): Boolean {
         return check({
             it.connectionTimeout = connectionTimeout
         }, {
-            it.componentState.check(packagesActive, { it.active })
+            if (it.componentState.unknown) {
+                it.status.error("Unknown component state on ${it.instance}")
+                return@check false
+            }
+
+            val inactiveComponents = it.componentState.find(packagesActive, listOf()).filter { !it.active }
+            if (inactiveComponents.isNotEmpty()) {
+                it.status.error("Inactive components detected on $instance:\n${inactiveComponents.joinToString("\n")}")
+                return@check false
+            }
+
+            return@check true
         })
     }
 
@@ -79,6 +125,11 @@ class InstanceState(private var _sync: InstanceSync, val instance: Instance) {
     }
 
     companion object {
+
+        const val BUNDLE_STATE_CONNECTION_TIMEOUT = 100
+
+        const val COMPONENT_STATE_CONNECTION_TIMEOUT = 10000
+
         val PLATFORM_COMPONENTS = setOf(
                 "com.day.crx.packaging.*",
                 "org.apache.sling.installer.*"
