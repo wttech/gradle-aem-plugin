@@ -2,8 +2,8 @@ package com.cognifide.gradle.aem.instance.action
 
 import com.cognifide.gradle.aem.instance.*
 import com.cognifide.gradle.aem.internal.Behaviors
-import com.cognifide.gradle.aem.internal.InstanceStateLogger
 import com.cognifide.gradle.aem.internal.ProgressCountdown
+import com.cognifide.gradle.aem.internal.ProgressLogger
 import org.apache.http.HttpStatus
 import org.gradle.api.Project
 import java.util.stream.Collectors
@@ -55,7 +55,7 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
     }
 
     private fun awaitStable() {
-        val progressLogger = InstanceStateLogger(project, "Awaiting stable instance(s): ${instances.names}")
+        val progressLogger = ProgressLogger(project, "Awaiting stable instance(s): ${instances.names}")
         progressLogger.started()
 
         var lastStableChecksum = -1
@@ -79,7 +79,6 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
                 timer.reset()
             }
 
-            progressLogger.progressState(instanceStates, stableCheck, config.awaitStableTimes, timer, AwaitAction.PROGRESS_COUNTING_RATIO)
 
             // Detect unstable instances
             val unstableInstances = instanceStates.parallelStream()
@@ -199,6 +198,36 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
                     }
                 }
             }
+        }
+    }
+
+    private fun progressFor(states: List<InstanceState>, unavailableInstances: List<Instance>, unstableInstances: List<Instance>, timer: Behaviors.Timer): String {
+        return (progressTicks(timer.ticks, stableTimes) + " " + states.joinToString(" | ") {
+            progressFor(it, states.size > 2, unavailableInstances, unstableInstances)
+        }).trim()
+    }
+
+    private fun progressFor(state: InstanceState, shortInfo: Boolean, unavailableInstances: List<Instance>, unstableInstances: List<Instance>): String {
+        return "${state.instance.name}: ${progressIndicator(state, unavailableInstances, unstableInstances)}" +
+                (if (shortInfo) "" else " " + state.bundleState.statsWithLabels) +
+                "[${state.bundleState.stablePercent}]"
+    }
+
+    private fun progressTicks(tick: Long, maxTicks: Long): String {
+        return if (maxTicks > 0 && (tick.toDouble() / maxTicks.toDouble() > PROGRESS_COUNTING_RATIO)) {
+            "[$tick/$maxTicks]"
+        } else if (tick.rem(2) == 0L) {
+            "[*]"
+        } else {
+            "[ ]"
+        }
+    }
+
+    private fun progressIndicator(state: InstanceState, unavailableInstances: List<Instance>, unstableInstances: List<Instance>): String {
+        return when {
+            unavailableInstances.contains(state.instance) -> "-"
+            unstableInstances.contains(state.instance) -> "~"
+            else -> "+"
         }
     }
 
