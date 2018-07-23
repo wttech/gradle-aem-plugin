@@ -134,7 +134,6 @@ File *build.gradle*:
 ```groovy
 plugins {
 	id 'com.cognifide.aem.bundle' // or 'package' for JCR content only
-	
 }
 ```
 
@@ -570,7 +569,7 @@ aem {
 }
 ```
 
-This feature is specially useful to generate valid *META-INF/properties.xml* file, below is used by plugin by default:
+This feature is especially useful to generate valid *META-INF/properties.xml* file, below is used by plugin by default:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
