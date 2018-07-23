@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem.instance.action
 
-import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.instance.*
 import com.cognifide.gradle.aem.internal.Behaviors
 import com.cognifide.gradle.aem.internal.InstanceStateLogger
@@ -101,8 +100,12 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
                 unavailableNotification = true
             }
 
+            progressLogger.progress(progressFor(instanceStates, unavailableInstances, unstableInstances, timer))
+
             // Detect timeout when same checksum is not being updated so long
             if (stableTimes > 0 && timer.ticks > stableTimes) {
+                instanceStates.forEach { it.status.logTo(logger) }
+
                 if (!resume) {
                     throw InstanceException("Instances not stable: ${unstableInstances.names}. Timeout reached.")
                 } else {
@@ -139,9 +142,8 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
 
         val synchronizers = prepareSynchronizers()
         for (i in 0..config.awaitHealthRetryTimes) {
-            val unhealthyInstances = synchronizers.parallelStream()
-                    .map { it.determineInstanceState() }
-                    .filter { !healthCheck(it) }
+            val instanceStates = synchronizers.map { it.determineInstanceState() }
+            val unhealthyInstances = instanceStates.parallelStream().filter { !healthCheck(it) }
                     .map { it.instance }
                     .collect(Collectors.toList())
 
@@ -157,6 +159,8 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
                 val countdown = ProgressCountdown(project, header, config.awaitHealthRetryDelay)
                 countdown.run()
             } else if (i == config.awaitHealthRetryTimes) {
+                instanceStates.forEach { it.status.logTo(logger) }
+
                 if (!resume) {
                     throw InstanceException("Instances not healthy: ${unhealthyInstances.names}.")
                 } else {
