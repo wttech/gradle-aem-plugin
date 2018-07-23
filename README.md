@@ -28,6 +28,7 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
 
 * Fully automated, tied to project, local AEM instance(s) setup allowing to start development within few minutes.
 * Composing CRX package from multiple JCR content roots, bundles.
+* Advanced AEM instance(s) stability & health checking after CRX package deployment.
 * Automated all-in-one CRX packages generation (assemblies).
 * Easy multi-deployment with instance groups.
 * Automated dependent CRX packages and OSGi bundles installation from local and remote sources (SMB, SSH, HTTP(s)).
@@ -122,7 +123,7 @@ pluginManagement {
 	resolutionStrategy {
 		eachPlugin {
 			if (requested.id.namespace == 'com.cognifide.aem') {
-				useModule('com.cognifide.gradle:aem-plugin:4.0.5')
+				useModule('com.cognifide.gradle:aem-plugin:4.0.6')
 			}
 		}
 	}
