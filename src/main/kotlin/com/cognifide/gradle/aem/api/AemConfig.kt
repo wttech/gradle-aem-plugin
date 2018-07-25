@@ -134,12 +134,28 @@ class AemConfig(
     var bundleManifestAttributes: Boolean = true
 
     /**
-     * Bundle configuration file location consumed by BND tool.
+     * Bundle instructions file location consumed by BND tool.
+     *
+     * If file exists, instructions will be taken from it instead of directly specified
+     * in dedicated property.
      *
      * @see <https://bnd.bndtools.org>
      */
     @Input
     var bundleBndPath: String = "${project.file("bnd.bnd")}"
+
+    /**
+     * Bundle instructions consumed by BND tool (still file has precedence).
+     *
+     * By default, plugin is increasing an importance of some warning so that it will
+     * fail a build instead just log it.
+     *
+     * @see <https://bnd.bndtools.org/chapters/825-instructions-ref.html>
+     */
+    @Input
+    var bundleBndInstructions: MutableMap<String, Any> = mutableMapOf(
+            "-fixupmessages.bundleActivator" to "Bundle-Activator * is being imported *;is:=error"
+    )
 
     /**
      * Automatically determine local package to be uploaded.

@@ -123,7 +123,7 @@ pluginManagement {
 	resolutionStrategy {
 		eachPlugin {
 			if (requested.id.namespace == 'com.cognifide.aem') {
-				useModule('com.cognifide.gradle:aem-plugin:4.0.7')
+				useModule('com.cognifide.gradle:aem-plugin:4.0.8')
 			}
 		}
 	}
@@ -173,6 +173,9 @@ aem {
         bundlePackageOptions = "-split-package:=merge-first"
         bundleManifestAttributes = true
         bundleBndPath = "${project.file('bnd.bnd')}"
+        bundleBndInstructions = [
+          "-fixupmessages.bundleActivator": "Bundle-Activator * is being imported *;is:=error"
+        ]
     
         if (projectUniqueName) {
             packageName = project.name
