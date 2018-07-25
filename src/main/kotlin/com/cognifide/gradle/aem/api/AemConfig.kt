@@ -148,7 +148,7 @@ class AemConfig(
      * Bundle instructions consumed by BND tool (still file has precedence).
      *
      * By default, plugin is increasing an importance of some warning so that it will
-     * fail a build instead just log it.
+     * fail a build instead just logging it.
      *
      * @see <https://bnd.bndtools.org/chapters/825-instructions-ref.html>
      */
