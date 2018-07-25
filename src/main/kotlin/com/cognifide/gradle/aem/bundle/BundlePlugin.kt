@@ -120,13 +120,19 @@ class BundlePlugin : Plugin<Project> {
 
         convention.plugins[BND_CONVENTION_PLUGIN] = bundleConvention
 
-        val bndFile = File(AemConfig.of(project).bundleBndPath)
-        if (bndFile.isFile) {
-            bundleConvention.setBndfile(bndFile)
-        }
-
         jar.doLast {
             try {
+                val config = AemConfig.of(project)
+                val instructionFile = File(config.bundleBndPath)
+                if (instructionFile.isFile) {
+                    bundleConvention.setBndfile(instructionFile)
+                }
+
+                val instructions = config.bundleBndInstructions
+                if (instructions.isNotEmpty()) {
+                    bundleConvention.bnd(instructions)
+                }
+
                 bundleConvention.buildBundle()
             } catch (e: Exception) {
                 logger.error("BND tool error: https://bnd.bndtools.org", ExceptionUtils.getRootCause(e))
