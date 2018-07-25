@@ -193,6 +193,9 @@
       "bundlePackageOptions": "-split-package:=merge-first",
       "bundleManifestAttributes": true,
       "bundleBndPath": "bnd.bnd",
+      "bundleBndInstructions" : {
+        "-fixupmessages.bundleActivator" : "Bundle-Activator * is being imported *;is:=error"
+      },
 
       "packageName": "additional",
       "packageLocalPath": "",
