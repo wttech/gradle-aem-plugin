@@ -1,13 +1,23 @@
 package com.cognifide.gradle.aem.instance.action
 
-import com.cognifide.gradle.aem.instance.*
+import com.cognifide.gradle.aem.instance.Instance
+import com.cognifide.gradle.aem.instance.InstanceSync
+import com.cognifide.gradle.aem.instance.LocalHandle
+import com.cognifide.gradle.aem.instance.names
 import com.cognifide.gradle.aem.internal.Behaviors
-import com.cognifide.gradle.aem.internal.ProgressLogger
+import com.cognifide.gradle.aem.internal.InstanceStateLogger
 import org.gradle.api.Project
+import java.util.stream.Collectors
 
 class DownAction(project: Project, val instances: List<Instance>) : AbstractAction(project) {
 
-    var stableState = config.awaitStableCheck
+    var stableTimes = config.awaitStableTimes
+
+    var stableCheck = config.awaitStableCheck
+
+    var availableCheck = config.awaitAvailableCheck
+
+    val handles = instances.map { LocalHandle(project, it) }
 
     override fun perform() {
         if (instances.isEmpty()) {
@@ -19,53 +29,40 @@ class DownAction(project: Project, val instances: List<Instance>) : AbstractActi
     }
 
     private fun shutDownInstances() {
-        val handles = Instance.handles(project)
+        val stateLogger = InstanceStateLogger(project, "Awaiting instance(s) termination: ${instances.names}", stableTimes)
+        stateLogger.started()
 
-        val progressLogger = ProgressLogger(project, "Awaiting instance(s) termination: ${instances.names}")
-        progressLogger.started()
+        val sync = instances.map { InstanceSync(project, it) }
+        val instanceStates = sync.map { it.determineInstanceState() }
+        var unavailableInstances = sync.map { it.instance }
 
-        handles.parallelStream().forEach { it.down() }
+        sendTerminateSignal()
 
         Behaviors.waitUntil(config.awaitStableInterval) { timer ->
-            val instancesStates = handles.map { InstanceSync(project, it.instance) }.map { it.determineInstanceState() }
-            progressLogger.progress(progressFor(instancesStates, stableState, config.awaitStableTimes, timer, PROGRESS_COUNTING_RATIO))
 
-            handles.map { isAemProcessRunning(it) }
+
+            val unstableInstances = instanceStates.parallelStream()
+                    .filter { !stableCheck(it) }
+                    .map { it.instance }
+                    .collect(Collectors.toList())
+
+            val availableInstances = instanceStates.parallelStream()
+                    .filter { availableCheck(it) }
+                    .map { it.instance }
+                    .collect(Collectors.toList())
+            unavailableInstances -= availableInstances
+
+            stateLogger.showState(instanceStates, unavailableInstances, unstableInstances, timer)
+
+            handles.map { isProcessRunning(it) }
                     .reduce { sum, element -> sum && element }
         }
 
         notifier.default("Instance(s) down", "Which: ${handles.names}")
     }
 
-    private fun isAemProcessRunning(it: LocalHandle): Boolean = it.pidFile.exists() && it.controlPortFile.exists()
+    private fun sendTerminateSignal() = handles.parallelStream().forEach { it.down() }
 
-    private fun progressFor(states: List<InstanceState>, stableCheck: (InstanceState) -> Boolean, stableTimes: Long, timer: Behaviors.Timer, progressCounting: Double): String {
-        return (progressTicks(timer.ticks, stableTimes, progressCounting) + " " + states.joinToString(" | ") { progressFor(it, stableCheck) }).trim()
-    }
+    private fun isProcessRunning(it: LocalHandle): Boolean = it.pidFile.exists() && it.controlPortFile.exists()
 
-    private fun progressFor(state: InstanceState, stableCheck: (InstanceState) -> Boolean): String {
-        return "${state.instance.name}: ${progressIndicator(stableCheck(state))} ${state.bundleState.statsWithLabels} [${state.bundleState.stablePercent}]"
-    }
-
-    private fun progressTicks(tick: Long, maxTicks: Long, progressCounting: Double): String {
-        return if (maxTicks > 0 && (tick.toDouble() / maxTicks.toDouble() > progressCounting)) {
-            "[$tick/$maxTicks]"
-        } else if (tick.rem(2) == 0L) {
-            "[*]"
-        } else {
-            "[ ]"
-        }
-    }
-
-    private fun progressIndicator(state: Boolean): String {
-        return if (state) {
-            "+"
-        } else {
-            "-"
-        }
-    }
-
-    companion object {
-        const val PROGRESS_COUNTING_RATIO: Double = 0.1
-    }
 }

@@ -2,8 +2,8 @@ package com.cognifide.gradle.aem.instance.action
 
 import com.cognifide.gradle.aem.instance.*
 import com.cognifide.gradle.aem.internal.Behaviors
+import com.cognifide.gradle.aem.internal.InstanceStateLogger
 import com.cognifide.gradle.aem.internal.ProgressCountdown
-import com.cognifide.gradle.aem.internal.ProgressLogger
 import org.apache.http.HttpStatus
 import org.gradle.api.Project
 import java.util.stream.Collectors
@@ -55,8 +55,8 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
     }
 
     private fun awaitStable() {
-        val progressLogger = ProgressLogger(project, "Awaiting stable instance(s): ${instances.names}")
-        progressLogger.started()
+        val stateLogger = InstanceStateLogger(project, "Awaiting instance(s) termination: ${instances.names}", stableTimes)
+        stateLogger.started()
 
         var lastStableChecksum = -1
         var sinceStableTicks = -1L
@@ -99,7 +99,7 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
                 unavailableNotification = true
             }
 
-            progressLogger.progress(progressFor(instanceStates, unavailableInstances, unstableInstances, timer))
+            stateLogger.showState(instanceStates, unavailableInstances, unstableInstances, timer)
 
             // Detect timeout when same checksum is not being updated so long
             if (stableTimes > 0 && timer.ticks > stableTimes) {
@@ -116,7 +116,7 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
             if (unstableInstances.isEmpty()) {
                 // Assure that expected moment is not accidental, remember it
                 if (!fast && stableAssurances > 0 && sinceStableTicks == -1L) {
-                    progressLogger.progress("Instance(s) seems to be stable. Assuring.")
+                    stateLogger.progress("Instance(s) seems to be stable. Assuring.")
                     sinceStableTicks = timer.ticks
                 }
 
@@ -133,7 +133,7 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
             true
         }
 
-        progressLogger.completed()
+        stateLogger.completed()
     }
 
     private fun awaitHealthy() {
@@ -201,39 +201,7 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
         }
     }
 
-    private fun progressFor(states: List<InstanceState>, unavailableInstances: List<Instance>, unstableInstances: List<Instance>, timer: Behaviors.Timer): String {
-        return (progressTicks(timer.ticks, stableTimes) + " " + states.joinToString(" | ") {
-            progressFor(it, states.size > 2, unavailableInstances, unstableInstances)
-        }).trim()
-    }
-
-    private fun progressFor(state: InstanceState, shortInfo: Boolean, unavailableInstances: List<Instance>, unstableInstances: List<Instance>): String {
-        return "${state.instance.name}: ${progressIndicator(state, unavailableInstances, unstableInstances)}" +
-                (if (shortInfo) "" else " " + state.bundleState.statsWithLabels) +
-                "[${state.bundleState.stablePercent}]"
-    }
-
-    private fun progressTicks(tick: Long, maxTicks: Long): String {
-        return if (maxTicks > 0 && (tick.toDouble() / maxTicks.toDouble() > PROGRESS_COUNTING_RATIO)) {
-            "[$tick/$maxTicks]"
-        } else if (tick.rem(2) == 0L) {
-            "[*]"
-        } else {
-            "[ ]"
-        }
-    }
-
-    private fun progressIndicator(state: InstanceState, unavailableInstances: List<Instance>, unstableInstances: List<Instance>): String {
-        return when {
-            unavailableInstances.contains(state.instance) -> "-"
-            unstableInstances.contains(state.instance) -> "~"
-            else -> "+"
-        }
-    }
-
     companion object {
-        const val PROGRESS_COUNTING_RATIO: Double = 0.1
-
         const val INSTANCE_UNAVAILABLE_RATIO: Double = 0.1
     }
 

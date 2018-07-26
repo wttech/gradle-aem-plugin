@@ -6,7 +6,7 @@ import org.gradle.api.logging.Logger
 import org.gradle.internal.logging.progress.ProgressLoggerFactory
 import java.util.concurrent.TimeUnit
 
-class ProgressLogger(val project: Project, val header: String) {
+open class ProgressLogger(val project: Project, val header: String) {
 
     private val logger: Logger = project.logger
 
