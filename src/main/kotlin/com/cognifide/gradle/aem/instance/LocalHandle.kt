@@ -227,6 +227,12 @@ class LocalHandle(val project: Project, val instance: Instance) {
         ensureCreated()
         logger.info("Executing stop script: $stopScript")
         execute(stopScript)
+
+        try {
+            sync.stop()
+        } catch (e: InstanceException) {
+            // ignore, fallback when script failed
+        }
     }
 
     fun init() {
