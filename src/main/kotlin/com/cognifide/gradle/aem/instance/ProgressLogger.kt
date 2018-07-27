@@ -1,12 +1,12 @@
-package com.cognifide.gradle.aem.internal
+package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.instance.Instance
-import com.cognifide.gradle.aem.instance.InstanceState
+import com.cognifide.gradle.aem.internal.Behaviors
 import org.gradle.api.Project
+import com.cognifide.gradle.aem.internal.ProgressLogger as BaseLogger
 
-class InstanceStateLogger(project: Project, header: String, private val stableTimes: Long) : ProgressLogger(project, header) {
+class ProgressLogger(project: Project, header: String, private val stableTimes: Long) : BaseLogger(project, header) {
 
-    fun showState(states: List<InstanceState>, unavailableInstances: List<Instance>, unstableInstances: List<Instance>, timer: Behaviors.Timer) {
+    fun progress(states: List<InstanceState>, unavailableInstances: List<Instance>, unstableInstances: List<Instance>, timer: Behaviors.Timer) {
         progress(progressFor(states, unavailableInstances, unstableInstances, timer))
     }
 
@@ -16,19 +16,17 @@ class InstanceStateLogger(project: Project, header: String, private val stableTi
         }).trim()
     }
 
-    private fun progressFor(state: InstanceState, shortInfo: Boolean, unavailableInstances: List<Instance>, unstableInstances: List<Instance>): String {
-        return "${state.instance.name}: ${progressIndicator(state, unavailableInstances, unstableInstances)}" +
-                (if (shortInfo) "" else " " + state.bundleState.statsWithLabels) +
-                "[${state.bundleState.stablePercent}]"
+    private fun progressFor(state: InstanceState, shortProgress: Boolean, unavailableInstances: List<Instance>, unstableInstances: List<Instance>): String {
+        return "${state.instance.name} ${progressIndicator(state, unavailableInstances, unstableInstances)}|${progressState(state, shortProgress)}"
     }
 
     private fun progressTicks(tick: Long, maxTicks: Long): String {
         return if (maxTicks > 0 && (tick.toDouble() / maxTicks.toDouble() > PROGRESS_COUNTING_RATIO)) {
-            "[$tick/$maxTicks]"
+            "$tick/$maxTicks"
         } else if (tick.rem(2) == 0L) {
-            "[*]"
+            "/"
         } else {
-            "[ ]"
+            "\\"
         }
     }
 
@@ -37,6 +35,14 @@ class InstanceStateLogger(project: Project, header: String, private val stableTi
             unavailableInstances.contains(state.instance) -> "-"
             unstableInstances.contains(state.instance) -> "~"
             else -> "+"
+        }
+    }
+
+    private fun progressState(state: InstanceState, shortInfo: Boolean): String {
+        return if (shortInfo) {
+            state.bundleState.stablePercent
+        } else {
+            "${state.bundleState.stablePercent}|${state.bundleState.statsWithLabels}"
         }
     }
 

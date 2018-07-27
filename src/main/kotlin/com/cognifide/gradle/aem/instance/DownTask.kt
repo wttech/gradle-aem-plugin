@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.api.AemDefaultTask
-import com.cognifide.gradle.aem.instance.action.DownAction
+import com.cognifide.gradle.aem.instance.action.ShutdownAction
 import org.gradle.api.tasks.TaskAction
 
 open class DownTask : AemDefaultTask() {
@@ -18,7 +18,7 @@ open class DownTask : AemDefaultTask() {
     fun down() {
         val instances = Instance.filter(project)
 
-        DownAction(project, instances).perform()
+        ShutdownAction(project, instances).perform()
     }
 
 }

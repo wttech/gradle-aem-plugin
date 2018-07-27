@@ -474,6 +474,10 @@ Turn on local AEM instance(s).
 
 Turn off local AEM instance(s).
 
+#### Task `aemRestart`
+
+Turn off then on local AEM instance(s).
+
 #### Task `aemReload`
 
 Reload OSGi Framework (Apache Felix) on local and remote AEM instance(s).

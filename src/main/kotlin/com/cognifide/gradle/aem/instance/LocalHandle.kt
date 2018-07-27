@@ -62,6 +62,9 @@ class LocalHandle(val project: Project, val instance: Instance) {
     val controlPortFile: File
         get() = File("${staticDir}/conf/controlport")
 
+    val running: Boolean
+        get() = pidFile.exists() && controlPortFile.exists()
+
     val stopScript: Script
         get() = binScript("stop")
 
@@ -173,7 +176,7 @@ class LocalHandle(val project: Project, val instance: Instance) {
     }
 
     private fun extractStaticFiles() {
-        val progressLogger = ProgressLogger(project, "Extracting static files from JAR  '${jar.absolutePath}' to directory: $staticDir")
+        val progressLogger = ProgressLogger(project, "Extracting static files from JAR '${jar.absolutePath}' to directory: $staticDir")
         progressLogger.started()
 
         var total = 0
@@ -208,12 +211,20 @@ class LocalHandle(val project: Project, val instance: Instance) {
         }
     }
 
+    fun ensureCreated() {
+        if (!dir.exists()) {
+            throw InstanceException("Local instance does not exist at path: $dir. Possible reasons: accidentally deleted, not yet created or configuration changed.")
+        }
+    }
+
     fun up() {
+        ensureCreated()
         logger.info("Executing start script: $startScript")
         execute(startScript)
     }
 
     fun down() {
+        ensureCreated()
         logger.info("Executing stop script: $stopScript")
         execute(stopScript)
     }
@@ -277,5 +288,5 @@ class LocalHandle(val project: Project, val instance: Instance) {
 
 }
 
-val List<LocalHandle>.names: String
-    get() = joinToString(", ") { it.instance.name }
+val List<LocalHandle>.names: String?
+    get() = if (isNotEmpty()) joinToString(", ") { it.instance.name } else "none"

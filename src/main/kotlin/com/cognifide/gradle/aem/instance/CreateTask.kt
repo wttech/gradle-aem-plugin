@@ -61,7 +61,7 @@ open class CreateTask : AemDefaultTask() {
         logger.info("Creating instances")
         handles.parallelStream().forEach { it.create(instanceFiles) }
 
-        notifier.default("Instance(s) created", handles.names)
+        notifier.default("Instance(s) created", "Which: ${handles.names}")
     }
 
 }

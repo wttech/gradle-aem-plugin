@@ -34,6 +34,7 @@ class InstancePlugin : Plugin<Project> {
         val destroy = tasks.create(DestroyTask.NAME, DestroyTask::class.java)
         val up = tasks.create(UpTask.NAME, UpTask::class.java)
         val down = tasks.create(DownTask.NAME, DownTask::class.java)
+        val restart = tasks.create(RestartTask.NAME, RestartTask::class.java)
         val reload = tasks.create(ReloadTask.NAME, ReloadTask::class.java)
         val satisfy = tasks.create(SatisfyTask.NAME, SatisfyTask::class.java)
         val await = tasks.create(AwaitTask.NAME, AwaitTask::class.java)
@@ -41,8 +42,9 @@ class InstancePlugin : Plugin<Project> {
         val setup = tasks.create(SetupTask.NAME, SetupTask::class.java)
 
         create.dependsOn(resolve).mustRunAfter(clean)
-        up.dependsOn(create).mustRunAfter(clean)
+        up.dependsOn(create).mustRunAfter(clean, down)
         reload.mustRunAfter(satisfy)
+        restart.dependsOn(down, up)
         destroy.dependsOn(down)
         destroy.mustRunAfter(down)
         resolve.mustRunAfter(clean)

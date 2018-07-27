@@ -2,7 +2,7 @@ package com.cognifide.gradle.aem.instance.action
 
 import com.cognifide.gradle.aem.instance.*
 import com.cognifide.gradle.aem.internal.Behaviors
-import com.cognifide.gradle.aem.internal.InstanceStateLogger
+import com.cognifide.gradle.aem.instance.ProgressLogger
 import com.cognifide.gradle.aem.internal.ProgressCountdown
 import org.apache.http.HttpStatus
 import org.gradle.api.Project
@@ -55,14 +55,13 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
     }
 
     private fun awaitStable() {
-        val stateLogger = InstanceStateLogger(project, "Awaiting instance(s) termination: ${instances.names}", stableTimes)
-        stateLogger.started()
+        val progressLogger = ProgressLogger(project, "Awaiting stable instance(s): ${instances.names}", stableTimes)
+        progressLogger.started()
 
         var lastStableChecksum = -1
         var sinceStableTicks = -1L
 
         val synchronizers = prepareSynchronizers()
-        var unavailableInstances = synchronizers.map { it.instance }
         var unavailableNotification = false
 
         Behaviors.waitUntil(stableInterval) { timer ->
@@ -79,19 +78,16 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
                 timer.reset()
             }
 
-
-            // Detect unstable instances
+            // Examine instances
             val unstableInstances = instanceStates.parallelStream()
                     .filter { !stableCheck(it) }
                     .map { it.instance }
                     .collect(Collectors.toList())
-
-            // Detect unavailable instances
             val availableInstances = instanceStates.parallelStream()
                     .filter { availableCheck(it) }
                     .map { it.instance }
                     .collect(Collectors.toList())
-            unavailableInstances -= availableInstances
+            val unavailableInstances = synchronizers.map { it.instance } - availableInstances
 
             val initializedUnavailableInstances = unavailableInstances.filter { it.isInitialized(project) }
             if (!unavailableNotification && (timer.ticks.toDouble() / stableTimes.toDouble() > INSTANCE_UNAVAILABLE_RATIO) && initializedUnavailableInstances.isNotEmpty()) {
@@ -99,7 +95,7 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
                 unavailableNotification = true
             }
 
-            stateLogger.showState(instanceStates, unavailableInstances, unstableInstances, timer)
+            progressLogger.progress(instanceStates, unavailableInstances, unstableInstances, timer)
 
             // Detect timeout when same checksum is not being updated so long
             if (stableTimes > 0 && timer.ticks > stableTimes) {
@@ -116,7 +112,7 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
             if (unstableInstances.isEmpty()) {
                 // Assure that expected moment is not accidental, remember it
                 if (!fast && stableAssurances > 0 && sinceStableTicks == -1L) {
-                    stateLogger.progress("Instance(s) seems to be stable. Assuring.")
+                    progressLogger.progress("Instance(s) seems to be stable. Assuring.")
                     sinceStableTicks = timer.ticks
                 }
 
@@ -133,7 +129,7 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
             true
         }
 
-        stateLogger.completed()
+        progressLogger.completed()
     }
 
     private fun awaitHealthy() {
