@@ -48,8 +48,8 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
       * [Task aemSync](#task-aemsync)
       * [Task aemCheckout](#task-aemcheckout)
       * [Task aemClean](#task-aemclean)
-      * [Task aemVlt](#task-aemvlt)
       * [Task aemRcp](#task-aemrcp)
+      * [Task aemVlt](#task-aemvlt)
       * [Task aemDebug](#task-aemdebug)
    * [Package plugin tasks](#package-plugin-tasks)
       * [Task aemCompose](#task-aemcompose)
@@ -298,20 +298,6 @@ Check out JCR content from running AEM author instance to local content path.
 
 Clean checked out JCR content.
 
-#### Task `aemVlt`
-
-Execute any JCR File Vault command. 
-
-For instance, to copy nodes from one remote AEM instance to another, there might be used command below:
-
-```bash
-gradlew :content:aemVlt -Paem.vlt.command='rcp -b 100 -r -u -n http://admin:admin@localhost:4502/crx/-/jcr:root/content/dam/example http://admin:admin@localhost:4503/crx/-/jcr:root/content/dam/example' 
-```
-
-For more details about available parameters, please visit [VLT Tool documentation](https://docs.adobe.com/docs/en/aem/6-2/develop/dev-tools/ht-vlttool.html).
-
-While using task `aemVlt` be aware that Gradle requires to have working directory with file *build.gradle* in it, but Vault tool can work at any directory under *jcr_root*. To change working directory for Vault, use property `aem.vlt.path` which is relative path to be appended to *jcr_root* for project task being currently executed.
-
 #### Task `aemRcp`
 
 Copy JCR content from one instance to another. Sample usages below.
@@ -335,6 +321,20 @@ Keep in mind, that copying JCR content between instances, could be a trigger for
 Consider disabling AEM workflow launchers before running this task and re-enabling after.
 
 RCP task is internally using [Vault Remote Copy](http://jackrabbit.apache.org/filevault/rcp.html) which requires to having bundle *Apache Sling Simple WebDAV Access to repositories (org.apache.sling.jcr.webdav)* " in active state on instance.
+
+#### Task `aemVlt`
+
+Execute any JCR File Vault command. 
+
+For instance, to reflect `aemRcp` functionality, command below could be executed:
+
+```bash
+gradlew :content:aemVlt -Paem.vlt.command='rcp -b 100 -r -u -n http://admin:admin@localhost:4502/crx/-/jcr:root/content/dam/example http://admin:admin@localhost:4503/crx/-/jcr:root/content/dam/example' 
+```
+
+For more details about available parameters, please visit [VLT Tool documentation](https://docs.adobe.com/docs/en/aem/6-2/develop/dev-tools/ht-vlttool.html).
+
+While using task `aemVlt` be aware that Gradle requires to have working directory with file *build.gradle* in it, but Vault tool can work at any directory under *jcr_root*. To change working directory for Vault, use property `aem.vlt.path` which is relative path to be appended to *jcr_root* for project task being currently executed.
 
 #### Task `aemDebug` 
 
@@ -528,6 +528,34 @@ For instance:
 
 ```bash
 gradlew aemSatisfy -Paem.satisfy.urls=[https://github.com/OlsonDigital/aem-groovy-console/releases/download/11.0.0/aem-groovy-console-11.0.0.zip,https://github.com/neva-dev/felix-search-webconsole-plugin/releases/download/search-webconsole-plugin-1.2.0/search-webconsole-plugin-1.2.0.jar]
+```
+
+Task supports hooks for preparing (and finalizing) instance before (after) deploying packages in group on each instance. 
+Also there is a hook called when satisfying each package group on all instances completed (for instance for awaiting stable instances which is a default behavior).
+In other words, for instance, there is ability to run groovy console script before/after deploying some CRX package and then restarting instance(s) if it is exceptionally required.
+
+```groovy
+aemSatisfy {
+    packages {
+        group 'tool.groovy-console', { 
+            url 'https://github.com/OlsonDigital/aem-groovy-console/releases/download/11.0.0/aem-groovy-console-11.0.0.zip'
+            config {
+                instanceName = "*-author" // additional filter intersecting 'deployInstanceName'
+                initializer = { sync ->
+                    logger.info("Installing Groovy Console on ${sync.instance}")
+                }
+                finalizer = { sync ->
+                    logger.info("Installed Groovy Console on ${sync.instance}")
+                }
+                completer = {
+                    logger.info("Reloading instance(s) after installing Groovy Console")
+                    reload {
+                        delay = 3
+                    }
+                }
+            }
+    }
+}
 ```
 
 #### Task `aemAwait`

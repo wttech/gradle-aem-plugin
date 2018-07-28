@@ -22,7 +22,7 @@ class ProgressLogger(project: Project, header: String, private val stableTimes: 
 
     private fun progressTicks(tick: Long, maxTicks: Long): String {
         return if (maxTicks > 0 && (tick.toDouble() / maxTicks.toDouble() > PROGRESS_COUNTING_RATIO)) {
-            "$tick/$maxTicks"
+            "!${maxTicks - tick}"
         } else if (tick.rem(2) == 0L) {
             "/"
         } else {
