@@ -441,9 +441,13 @@ Install uploaded CRX package on AEM instance(s).
 
 Uninstall uploaded CRX package on AEM instance(s).
 
+To prevent data loss, this unsafe task execution must be confirmed by parameter `-Paem.force`.
+
 #### Task `aemPurge` 
 
 Fail-safe combination of `aemUninstall` and `aemDelete`.
+
+To prevent data loss, this unsafe task execution must be confirmed by parameter `-Paem.force`.
 
 #### Task `aemActivate` 
 
@@ -461,6 +465,8 @@ Perform initial setup of local AEM instance(s). Automated version of `aemCreate 
 
 Combination of `aemDown aemDestroy aemSetup`. Allows to quickly back to initial state of local AEM instance(s).
 
+To prevent data loss, this unsafe task execution must be confirmed by parameter `-Paem.force`.
+
 #### Task `aemCreate`
  
 Create local AEM instance(s). To use it specify required properties in ignored file *gradle.properties* at project root (protocols supported: SMB, SSH, HTTP(s) or local path, SMB as example):
@@ -474,6 +480,8 @@ Create local AEM instance(s). To use it specify required properties in ignored f
 #### Task `aemDestroy` 
 
 Destroy local AEM instance(s).
+
+To prevent data loss, this unsafe task execution must be confirmed by parameter `-Paem.force`.
     
 #### Task `aemUp`
 
