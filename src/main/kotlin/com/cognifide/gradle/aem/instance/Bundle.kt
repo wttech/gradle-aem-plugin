@@ -64,6 +64,6 @@ class Bundle {
     }
 
     override fun toString(): String {
-        return "Bundle(symbolicName='$symbolicName',state='$state',id='$id')"
+        return "Bundle(symbolicName='$symbolicName', state='$state', id='$id')"
     }
 }

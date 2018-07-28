@@ -2,10 +2,10 @@ package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.api.AemDefaultTask
 
-open class RebornTask : AemDefaultTask() {
+open class ResetupTask : AemDefaultTask() {
 
     companion object {
-        val NAME = "aemReborn"
+        val NAME = "aemResetup"
     }
 
     init {

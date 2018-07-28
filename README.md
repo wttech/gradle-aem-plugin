@@ -62,10 +62,12 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
       * [Task aemActivate](#task-aemactivate)
    * [Instance plugin tasks](#instance-plugin-tasks)
       * [Task aemSetup](#task-aemsetup)
+      * [Task aemResetup](#task-aemresetup)
       * [Task aemCreate](#task-aemcreate)
       * [Task aemDestroy](#task-aemdestroy)
       * [Task aemUp](#task-aemup)
       * [Task aemDown](#task-aemdown)
+      * [Task aemRestart](#task-aemrestart)
       * [Task aemReload](#task-aemreload)
       * [Task aemSatisfy](#task-aemsatisfy)
       * [Task aemAwait](#task-aemawait)
@@ -451,6 +453,10 @@ Replicate installed CRX package to other AEM instance(s).
 Perform initial setup of local AEM instance(s). Automated version of `aemCreate aemUp aemSatisfy aemDeploy`.
 
 ![Setup task](docs/setup-task.png)
+
+#### Task `aemResetup`
+
+Combination of `aemDown aemDestroy aemSetup`. Allows to quickly back to initial state of local AEM instance(s).
 
 #### Task `aemCreate`
  

@@ -40,7 +40,7 @@ class InstancePlugin : Plugin<Project> {
         val await = tasks.create(AwaitTask.NAME, AwaitTask::class.java)
         val collect = tasks.create(CollectTask.NAME, CollectTask::class.java)
         val setup = tasks.create(SetupTask.NAME, SetupTask::class.java)
-        val reborn = tasks.create(RebornTask.NAME, RebornTask::class.java)
+        val resetup = tasks.create(ResetupTask.NAME, ResetupTask::class.java)
 
         create.dependsOn(resolve).mustRunAfter(clean)
         up.dependsOn(create).mustRunAfter(clean, down)
@@ -51,7 +51,7 @@ class InstancePlugin : Plugin<Project> {
         satisfy.dependsOn(resolve).mustRunAfter(create, up)
         collect.mustRunAfter(satisfy)
         setup.dependsOn(create, up, satisfy, await).mustRunAfter(destroy)
-        reborn.dependsOn(destroy, setup)
+        resetup.dependsOn(destroy, setup)
 
         plugins.withId(PackagePlugin.ID, {
             val deploy = tasks.getByName(DeployTask.NAME)

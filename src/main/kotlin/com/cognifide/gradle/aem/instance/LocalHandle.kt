@@ -78,7 +78,7 @@ class LocalHandle(val project: Project, val instance: Instance) {
 
     fun create(instanceFiles: List<File>) {
         if (created) {
-            logger.info(("Instance already created"))
+            logger.info(("Instance already created: $this"))
             return
         }
 
@@ -211,20 +211,23 @@ class LocalHandle(val project: Project, val instance: Instance) {
         }
     }
 
-    fun ensureCreated() {
-        if (!dir.exists()) {
-            throw InstanceException("Local instance does not exist at path: $dir. Possible reasons: accidentally deleted, not yet created or configuration changed.")
-        }
-    }
-
     fun up() {
-        ensureCreated()
+        if (!created) {
+            logger.warn("Instance not created, so it could not be up: $this")
+            return
+        }
+
+
         logger.info("Executing start script: $startScript")
         execute(startScript)
     }
 
     fun down() {
-        ensureCreated()
+        if (!created) {
+            logger.warn("Instance not created, so it could not be down: $this")
+            return
+        }
+
         logger.info("Executing stop script: $stopScript")
         execute(stopScript)
 
@@ -237,7 +240,7 @@ class LocalHandle(val project: Project, val instance: Instance) {
 
     fun init() {
         if (initialized) {
-            logger.debug("Instance already initialized")
+            logger.debug("Instance already initialized: $this")
             return
         }
 

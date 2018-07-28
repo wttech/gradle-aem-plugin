@@ -72,8 +72,6 @@ class ShutdownAction(project: Project, val instances: List<Instance>) : Abstract
         }
 
         progressLogger.completed()
-
-        notifier.default("Instance(s) down", "Which: ${handles.names}")
     }
 
 }
