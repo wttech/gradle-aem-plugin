@@ -1,46 +1,49 @@
 package com.cognifide.gradle.aem.api
 
-import fr.jcgay.notification.*
+import com.cognifide.gradle.aem.internal.notifier.DorkboxNotifier
+import com.cognifide.gradle.aem.internal.notifier.JcGayNotifier
+import com.cognifide.gradle.aem.internal.notifier.Notifier
+import dorkbox.notify.Notify
+import fr.jcgay.notification.Notification
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.gradle.api.Project
 import org.gradle.api.logging.LogLevel
-import java.util.concurrent.TimeUnit
 
 class AemNotifier private constructor(private val project: Project) {
 
-    enum class Level {
-        ERROR, WARNING, INFO
-    }
-
     private val config by lazy { AemConfig.of(project) }
-    private val icon by lazy { Icon.create(javaClass.getResource(IMAGE_PATH), "default") }
-    private val application by lazy {
-        Application.builder()
-                .id("gradle-aem-plugin")
-                .name("Gradle AEM Plugin")
-                .icon(icon)
-                .timeout(TimeUnit.SECONDS.toMillis(5))
-                .build()
-    }
-    private val levelToLog: HashMap<Level, LogLevel> = hashMapOf(
-            Level.ERROR to LogLevel.ERROR,
-            Level.WARNING to LogLevel.WARN,
-            Level.INFO to LogLevel.LIFECYCLE)
-    private val levelToNotify: HashMap<Level, Notification.Level> = hashMapOf(
-            Level.ERROR to Notification.Level.ERROR,
-            Level.WARNING to Notification.Level.WARNING,
-            Level.INFO to Notification.Level.INFO)
 
-    fun log(title: String, message: String, level: Level = Level.INFO) {
-        val logLevel = levelToLog.getOrDefault(level, LogLevel.LIFECYCLE)
-        project.logger.log(logLevel, if (message.isNotBlank()) {
+    private lateinit var notifier: Notifier
+
+    init {
+        dorkbox()
+    }
+
+    fun log(title: String) {
+        log(title, "")
+    }
+
+    fun log(title: String, message: String) {
+        log(title, message, LogLevel.INFO)
+    }
+
+    fun log(title: String, message: String, level: LogLevel) {
+        project.logger.log(level, if (message.isNotBlank()) {
             "${title.removeSuffix(".")}. $message"
         } else {
             title
         })
     }
 
-    fun default(title: String, message: String = "", level: Level = Level.INFO) {
+    fun default(title: String) {
+        default(title, "")
+    }
+
+    fun default(title: String, message: String) {
+        default(title, message, LogLevel.INFO)
+    }
+
+    fun default(title: String, message: String, level: LogLevel) {
         if (config.notificationEnabled) {
             notify(title, message, level)
         }
@@ -48,23 +51,32 @@ class AemNotifier private constructor(private val project: Project) {
         log(title, message, level)
     }
 
-    fun notify(title: String, text: String = "", level: Level = Level.INFO) {
-        val notifier = SendNotification()
-                .setApplication(application)
-                .initNotifier()
-        val notification = Notification.builder()
-                .title(title)
-                .message(text)
-                .icon(icon)
-                .level(levelToNotify.getOrDefault(level, Notification.Level.INFO))
-                .build()
-        try {
-            notifier.send(notification)
-        } catch (e: Exception) {
-            project.logger.debug("Cannot show system notification", e)
-        } finally {
-            notifier.close()
-        }
+    fun notify(title: String) {
+        notify(title, "")
+    }
+
+    fun notify(title: String, text: String) {
+        notify(title, text, LogLevel.INFO)
+    }
+
+    fun notify(title: String, text: String, level: LogLevel) {
+        notifier.notify(title, text, level)
+    }
+
+    fun dorkbox() {
+        dorkbox { darkStyle().hideAfter(5000) }
+    }
+
+    fun dorkbox(configurer: Notify.() -> Unit) {
+        notifier = DorkboxNotifier(project, configurer)
+    }
+
+    fun jcgay() {
+        jcgay {}
+    }
+
+    fun jcgay(configurer: Notification.Builder.() -> Unit) {
+        notifier = JcGayNotifier(project, configurer)
     }
 
     companion object {
@@ -72,6 +84,11 @@ class AemNotifier private constructor(private val project: Project) {
         const val IMAGE_PATH = "/com/cognifide/gradle/aem/META-INF/vault/definition/thumbnail.png"
 
         const val EXT_INSTANCE_PROP = "aemNotifier"
+
+        val LOG_LEVEL_NOTIFY_MAP: HashMap<LogLevel, Notification.Level> = hashMapOf(
+                LogLevel.ERROR to Notification.Level.ERROR,
+                LogLevel.WARN to Notification.Level.WARNING
+        )
 
         /**
          * Get project specific notifier (config can vary)
@@ -97,7 +114,7 @@ class AemNotifier private constructor(private val project: Project) {
                         val exception = ExceptionUtils.getRootCause(it.failure)
                         val message = exception?.message ?: "no error message"
 
-                        notifier.default("Build failure", "${message}\n${exception}", Level.ERROR)
+                        notifier.default("Build failure", "$message\n$exception", LogLevel.ERROR)
                     }
                 }
             }
