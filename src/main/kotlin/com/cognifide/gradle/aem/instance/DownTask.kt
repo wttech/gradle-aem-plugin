@@ -19,6 +19,8 @@ open class DownTask : AemDefaultTask() {
         val instances = Instance.filter(project)
 
         ShutdownAction(project, instances).perform()
+
+        notifier.default("Instance(s) down", "Which: ${instances.names}")
     }
 
 }
