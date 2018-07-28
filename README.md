@@ -175,6 +175,9 @@ aem {
         bundlePackageOptions = "-split-package:=merge-first"
         bundleManifestAttributes = true
         bundleBndPath = "${project.file('bnd.bnd')}"
+        bundleBndInstructions = [
+          "-fixupmessages.bundleActivator": "Bundle-Activator * is being imported *;is:=error"
+        ]
     
         if (projectUniqueName) {
             packageName = project.name
