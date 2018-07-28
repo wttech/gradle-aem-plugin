@@ -11,12 +11,12 @@ open class DestroyTask : AemDefaultTask() {
 
     init {
         description = "Destroys local AEM instance(s)."
+
+        beforeExecuted { props.checkForce() }
     }
 
     @TaskAction
     fun destroy() {
-        props.checkForce()
-
         val handles = Instance.handles(project)
         handles.parallelStream().forEach { it.destroy() }
 

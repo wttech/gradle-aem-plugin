@@ -22,7 +22,7 @@ open class UpTask : AemDefaultTask() {
         AwaitAction(project, handles.map { it.instance }).perform()
         handles.parallelStream().forEach { it.init() }
 
-        notifier.default("Instance(s) up and ready", "Which: ${handles.names}")
+        notifier.default("Instance(s) up", "Which: ${handles.names}")
     }
 
 }

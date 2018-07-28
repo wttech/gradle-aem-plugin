@@ -2,8 +2,8 @@ package com.cognifide.gradle.aem.instance.action
 
 import com.cognifide.gradle.aem.instance.*
 import com.cognifide.gradle.aem.internal.Behaviors
+import com.cognifide.gradle.aem.instance.ProgressLogger
 import com.cognifide.gradle.aem.internal.ProgressCountdown
-import com.cognifide.gradle.aem.internal.ProgressLogger
 import org.apache.http.HttpStatus
 import org.gradle.api.Project
 import java.util.stream.Collectors
@@ -55,17 +55,16 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
     }
 
     private fun awaitStable() {
-        val progressLogger = ProgressLogger(project, "Awaiting stable instance(s): ${instances.names}")
+        val progressLogger = ProgressLogger(project, "Awaiting stable instance(s): ${instances.names}", stableTimes)
         progressLogger.started()
 
         var lastStableChecksum = -1
         var sinceStableTicks = -1L
 
         val synchronizers = prepareSynchronizers()
-        var unavailableInstances = synchronizers.map { it.instance }
         var unavailableNotification = false
 
-        Behaviors.waitUntil(stableInterval, { timer ->
+        Behaviors.waitUntil(stableInterval) { timer ->
             // Gather all instance states (lazy)
             val instanceStates = synchronizers.map { it.determineInstanceState() }
 
@@ -79,19 +78,16 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
                 timer.reset()
             }
 
-
-            // Detect unstable instances
+            // Examine instances
             val unstableInstances = instanceStates.parallelStream()
                     .filter { !stableCheck(it) }
                     .map { it.instance }
                     .collect(Collectors.toList())
-
-            // Detect unavailable instances
             val availableInstances = instanceStates.parallelStream()
                     .filter { availableCheck(it) }
                     .map { it.instance }
                     .collect(Collectors.toList())
-            unavailableInstances -= availableInstances
+            val unavailableInstances = synchronizers.map { it.instance } - availableInstances
 
             val initializedUnavailableInstances = unavailableInstances.filter { it.isInitialized(project) }
             if (!unavailableNotification && (timer.ticks.toDouble() / stableTimes.toDouble() > INSTANCE_UNAVAILABLE_RATIO) && initializedUnavailableInstances.isNotEmpty()) {
@@ -99,7 +95,7 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
                 unavailableNotification = true
             }
 
-            progressLogger.progress(progressFor(instanceStates, unavailableInstances, unstableInstances, timer))
+            progressLogger.progress(instanceStates, unavailableInstances, unstableInstances, timer)
 
             // Detect timeout when same checksum is not being updated so long
             if (stableTimes > 0 && timer.ticks > stableTimes) {
@@ -131,7 +127,7 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
             }
 
             true
-        })
+        }
 
         progressLogger.completed()
     }
@@ -201,39 +197,7 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
         }
     }
 
-    private fun progressFor(states: List<InstanceState>, unavailableInstances: List<Instance>, unstableInstances: List<Instance>, timer: Behaviors.Timer): String {
-        return (progressTicks(timer.ticks, stableTimes) + " " + states.joinToString(" | ") {
-            progressFor(it, states.size > 2, unavailableInstances, unstableInstances)
-        }).trim()
-    }
-
-    private fun progressFor(state: InstanceState, shortInfo: Boolean, unavailableInstances: List<Instance>, unstableInstances: List<Instance>): String {
-        return "${state.instance.name}: ${progressIndicator(state, unavailableInstances, unstableInstances)}" +
-                (if (shortInfo) "" else " " + state.bundleState.statsWithLabels) +
-                "[${state.bundleState.stablePercent}]"
-    }
-
-    private fun progressTicks(tick: Long, maxTicks: Long): String {
-        return if (maxTicks > 0 && (tick.toDouble() / maxTicks.toDouble() > PROGRESS_COUNTING_RATIO)) {
-            "[$tick/$maxTicks]"
-        } else if (tick.rem(2) == 0L) {
-            "[*]"
-        } else {
-            "[ ]"
-        }
-    }
-
-    private fun progressIndicator(state: InstanceState, unavailableInstances: List<Instance>, unstableInstances: List<Instance>): String {
-        return when {
-            unavailableInstances.contains(state.instance) -> "-"
-            unstableInstances.contains(state.instance) -> "~"
-            else -> "+"
-        }
-    }
-
     companion object {
-        const val PROGRESS_COUNTING_RATIO: Double = 0.1
-
         const val INSTANCE_UNAVAILABLE_RATIO: Double = 0.1
     }
 

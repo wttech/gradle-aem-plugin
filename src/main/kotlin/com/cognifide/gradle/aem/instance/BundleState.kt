@@ -41,7 +41,7 @@ class BundleState private constructor() {
         get() = bundles.isEmpty()
 
     val statsWithLabels
-        get() = "[$total bt, $activeBundles ba, $activeFragments fa, $resolvedBundles br]"
+        get() = "${total}t|${activeBundles}ba|${activeFragments}fa|${resolvedBundles}br"
 
     val stablePercent: String
         get() = Formats.percent(total - (resolvedBundles + installedBundles), total)

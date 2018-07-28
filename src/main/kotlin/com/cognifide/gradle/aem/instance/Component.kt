@@ -63,7 +63,7 @@ class Component {
     }
 
     override fun toString(): String {
-        return "Component(pid='$pid',state='$state',id='$id',bundleId='$bundleId')"
+        return "Component(pid='$pid', state='$state', id='$id', bundleId='$bundleId')"
     }
 
     companion object {

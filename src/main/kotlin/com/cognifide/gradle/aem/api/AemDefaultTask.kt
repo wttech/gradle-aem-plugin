@@ -20,4 +20,12 @@ abstract class AemDefaultTask : DefaultTask(), AemTask {
         group = AemTask.GROUP
     }
 
+    fun beforeExecuted(callback: AemDefaultTask.() -> Unit) {
+        project.gradle.taskGraph.whenReady {
+            if (it.hasTask(this@AemDefaultTask)) {
+                callback()
+            }
+        }
+    }
+
 }
