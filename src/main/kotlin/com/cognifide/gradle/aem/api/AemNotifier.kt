@@ -119,7 +119,7 @@ class AemNotifier private constructor(private val project: Project) {
                         val exception = ExceptionUtils.getRootCause(it.failure)
                         val message = exception?.message ?: "no error message"
 
-                        notifier.default("Build failure", "$message\n$exception", LogLevel.ERROR)
+                        notifier.default("Build failure", message, LogLevel.ERROR)
                     }
                 }
             }
