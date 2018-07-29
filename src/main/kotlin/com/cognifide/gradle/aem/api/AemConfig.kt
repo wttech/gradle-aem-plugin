@@ -4,11 +4,11 @@ import aQute.bnd.osgi.Jar
 import com.cognifide.gradle.aem.instance.*
 import com.cognifide.gradle.aem.internal.LineSeparator
 import com.cognifide.gradle.aem.internal.PropertyParser
+import com.cognifide.gradle.aem.internal.notifier.Notifier
 import com.cognifide.gradle.aem.pkg.ComposeTask
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.deploy.DeployException
 import com.fasterxml.jackson.annotation.JsonIgnore
-import dorkbox.notify.Notify
 import groovy.lang.Closure
 import org.gradle.api.DefaultTask
 import org.gradle.api.Project
@@ -572,7 +572,7 @@ class AemConfig(
      */
     @Internal
     @JsonIgnore
-    var notificationConfig: (Notify) -> Unit = { it.darkStyle().hideAfter(5000) }
+    var notificationConfig: (AemNotifier) -> Notifier = { it.dorkbox() }
 
     /**
      * Initialize defaults that depends on concrete type of project.
