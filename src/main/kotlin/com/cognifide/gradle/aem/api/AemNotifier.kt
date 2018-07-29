@@ -108,7 +108,7 @@ class AemNotifier private constructor(private val project: Project) {
         }
 
         /**
-         *
+         * Register once (for root project only) listener for notifying about build errors.
          */
         private fun setup(project: Project): AemNotifier {
             val notifier = AemNotifier(project)
