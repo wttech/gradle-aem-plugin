@@ -4,16 +4,18 @@ import com.cognifide.gradle.aem.internal.notifier.DorkboxNotifier
 import com.cognifide.gradle.aem.internal.notifier.JcGayNotifier
 import com.cognifide.gradle.aem.internal.notifier.Notifier
 import dorkbox.notify.Notify
+import fr.jcgay.notification.Application
 import fr.jcgay.notification.Notification
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.gradle.api.Project
 import org.gradle.api.logging.LogLevel
+import java.util.concurrent.TimeUnit
 
 class AemNotifier private constructor(private val project: Project) {
 
     private val config by lazy { AemConfig.of(project) }
 
-    private lateinit var notifier: Notifier
+    private val notifier: Notifier by lazy { config.notificationConfig(this@AemNotifier) }
 
     init {
         dorkbox()
@@ -63,20 +65,28 @@ class AemNotifier private constructor(private val project: Project) {
         notifier.notify(title, text, level)
     }
 
-    fun dorkbox() {
-        dorkbox { darkStyle().hideAfter(5000) }
+    fun dorkbox(): Notifier {
+        return dorkbox { darkStyle().hideAfter(TimeUnit.SECONDS.toMillis(5).toInt()) }
     }
 
-    fun dorkbox(configurer: Notify.() -> Unit) {
-        notifier = DorkboxNotifier(project, configurer)
+    fun dorkbox(configurer: Notify.() -> Unit): Notifier {
+        return DorkboxNotifier(project, configurer)
     }
 
-    fun jcgay() {
-        jcgay {}
+    fun jcgay(): JcGayNotifier {
+        return jcgay({ timeout(TimeUnit.SECONDS.toMillis(5)) }, {})
     }
 
-    fun jcgay(configurer: Notification.Builder.() -> Unit) {
-        notifier = JcGayNotifier(project, configurer)
+    fun jcgay(appBuilder: Application.Builder.() -> Unit, messageBuilder: Notification.Builder.() -> Unit): JcGayNotifier {
+        return JcGayNotifier(project, appBuilder, messageBuilder)
+    }
+
+    fun custom(notifier: (title: String, text: String, level: LogLevel) -> Unit): Notifier {
+        return object: Notifier {
+            override fun notify(title: String, text: String, level: LogLevel) {
+                notifier(title, text, level)
+            }
+        }
     }
 
     companion object {
@@ -84,11 +94,6 @@ class AemNotifier private constructor(private val project: Project) {
         const val IMAGE_PATH = "/com/cognifide/gradle/aem/META-INF/vault/definition/thumbnail.png"
 
         const val EXT_INSTANCE_PROP = "aemNotifier"
-
-        val LOG_LEVEL_NOTIFY_MAP: HashMap<LogLevel, Notification.Level> = hashMapOf(
-                LogLevel.ERROR to Notification.Level.ERROR,
-                LogLevel.WARN to Notification.Level.WARNING
-        )
 
         /**
          * Get project specific notifier (config can vary)

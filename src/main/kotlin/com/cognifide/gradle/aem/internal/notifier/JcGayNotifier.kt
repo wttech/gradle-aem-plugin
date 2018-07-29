@@ -8,38 +8,49 @@ import fr.jcgay.notification.Notification
 import fr.jcgay.notification.SendNotification
 import org.gradle.api.Project
 import org.gradle.api.logging.LogLevel
-import java.util.concurrent.TimeUnit
 
-class JcGayNotifier(val project: Project, val configurer: Notification.Builder.() -> Unit) : Notifier {
+class JcGayNotifier(
+        val project: Project,
+        val appBuilder: Application.Builder.() -> Unit,
+        val messageBuilder: Notification.Builder.() -> Unit
+) : Notifier {
 
-    private val icon by lazy { Icon.create(javaClass.getResource(AemNotifier.IMAGE_PATH), "default") }
+    private val icon by lazy {
+        Icon.create(javaClass.getResource(AemNotifier.IMAGE_PATH), "default")
+    }
 
-    private val application by lazy {
-        Application.builder()
-                .id(AemPlugin.ID)
-                .name(AemPlugin.NAME)
-                .icon(icon)
-                .timeout(TimeUnit.SECONDS.toMillis(5))
-                .build()
+    private val notifier by lazy {
+        SendNotification()
+                .setApplication(Application.builder()
+                        .id(AemPlugin.ID)
+                        .name(AemPlugin.NAME)
+                        .icon(icon)
+                        .apply(appBuilder)
+                        .build())
+                .initNotifier()
     }
 
     override fun notify(title: String, text: String, level: LogLevel) {
-        val notifier = SendNotification()
-                .setApplication(application)
-                .initNotifier()
-        val notification = Notification.builder()
-                .icon(icon)
-                .apply(configurer)
-                .title(title)
-                .message(text)
-                .level(AemNotifier.LOG_LEVEL_NOTIFY_MAP[level] ?: Notification.Level.INFO)
-                .build()
         try {
+            val notification = Notification.builder()
+                    .icon(icon)
+                    .apply(messageBuilder)
+                    .title(title)
+                    .message(text)
+                    .level(LOG_LEVEL_NOTIFY_MAP[level] ?: Notification.Level.INFO)
+                    .build()
             notifier.send(notification)
         } catch (e: Exception) {
             project.logger.debug("Cannot show system notification", e)
-        } finally {
-            notifier.close()
         }
+    }
+
+    companion object {
+
+        val LOG_LEVEL_NOTIFY_MAP = mapOf(
+                LogLevel.ERROR to Notification.Level.ERROR,
+                LogLevel.WARN to Notification.Level.WARNING
+        )
+
     }
 }
