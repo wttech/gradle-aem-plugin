@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.internal.notifier
 
-import com.cognifide.gradle.aem.api.AemNotifier.Companion.IMAGE_PATH
+import com.cognifide.gradle.aem.api.AemNotifier
 import dorkbox.notify.Notify
 import org.apache.commons.lang3.StringUtils
 import org.gradle.api.Project
@@ -12,7 +12,7 @@ class DorkboxNotifier(val project: Project, val configurer: Notify.() -> Unit) :
     override fun notify(title: String, text: String, level: LogLevel) {
         try {
             Notify.create()
-                    .image(ImageIO.read(javaClass.getResourceAsStream(IMAGE_PATH)))
+                    .image(ImageIO.read(javaClass.getResourceAsStream(AemNotifier.IMAGE_PATH)))
                     .apply(configurer)
                     .apply {
                         title(title)
