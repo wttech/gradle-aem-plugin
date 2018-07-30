@@ -569,6 +569,9 @@ class AemConfig(
 
     /**
      * Hook for customizing notifications being displayed.
+     *
+     * To customize notification use one of concrete provider methods: 'dorkbox' or 'jcgay' (and optionally pass configuration lambda(s)).
+     * Also it is possible to implement own notifier directly in build script by using provider method 'custom'.
      */
     @Internal
     @JsonIgnore

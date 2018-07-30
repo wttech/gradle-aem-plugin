@@ -17,10 +17,6 @@ class AemNotifier private constructor(private val project: Project) {
 
     private val notifier: Notifier by lazy { config.notificationConfig(this@AemNotifier) }
 
-    init {
-        dorkbox()
-    }
-
     fun log(title: String) {
         log(title, "")
     }
