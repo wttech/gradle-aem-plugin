@@ -111,13 +111,15 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
 
             if (unstableInstances.isEmpty()) {
                 // Assure that expected moment is not accidental, remember it
-                if (!fast && stableAssurances > 0 && sinceStableTicks == -1L) {
-                    progressLogger.progress("Instance(s) seems to be stable. Assuring.")
+                val assurable = (stableAssurances > 0) && (sinceStableTicks == -1L)
+                if (!fast && assurable) {
+                    logger.info("Instance(s) stable: ${instances.names}. Assuring...")
                     sinceStableTicks = timer.ticks
                 }
 
                 // End if assurance is not configured or this moment remains a little longer
-                if (fast || (stableAssurances <= 0) || (sinceStableTicks >= 0 && (timer.ticks - sinceStableTicks) >= stableAssurances)) {
+                val assured = (stableAssurances <= 0) || (sinceStableTicks >= 0 && (timer.ticks - sinceStableTicks) >= stableAssurances)
+                if (fast || assured) {
                     notify("Instance(s) stable", "Which: ${instances.names}", fast)
                     return@waitUntil false
                 }
