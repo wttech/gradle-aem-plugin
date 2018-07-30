@@ -113,7 +113,7 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
                 // Assure that expected moment is not accidental, remember it
                 val assurable = (stableAssurances > 0) && (sinceStableTicks == -1L)
                 if (!fast && assurable) {
-                    logger.info("Instance(s) stable: ${instances.names}. Assuring...")
+                    logger.info("Instance(s) stable: ${instances.names}. Assuring.")
                     sinceStableTicks = timer.ticks
                 }
 
