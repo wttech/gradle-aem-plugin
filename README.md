@@ -283,7 +283,7 @@ aem {
       ]
       
       notificationEnabled = false
-      notificationConfig = { it.dorkbox() }
+      notificationConfig = { it.factory() }
     }
 }
 ```
