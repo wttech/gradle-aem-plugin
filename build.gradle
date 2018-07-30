@@ -1,12 +1,12 @@
 plugins {
     id 'java-gradle-plugin'
     id 'maven-publish'
-    id 'org.jetbrains.kotlin.jvm' version '1.2.41'
+    id 'org.jetbrains.kotlin.jvm' version '1.2.51'
     id 'com.jfrog.bintray' version '1.8.0'
 }
 
 group 'com.cognifide.gradle'
-version '4.0.8'
+version '4.1.0'
 description = 'Gradle AEM Plugin'
 defaultTasks = ['clean', 'build', 'publishToMavenLocal']
 
@@ -16,8 +16,8 @@ repositories {
 
 dependencies {
     implementation gradleApi()
-    implementation "org.jetbrains.kotlin:kotlin-stdlib:1.2.41"
-    implementation 'org.jetbrains.kotlin:kotlin-reflect:1.2.21'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:1.2.51"
+    implementation 'org.jetbrains.kotlin:kotlin-reflect:1.2.51'
     implementation 'org.apache.commons:commons-lang3:3.4'
     implementation 'commons-io:commons-io:2.4'
     implementation 'commons-validator:commons-validator:1.6'
@@ -33,7 +33,7 @@ dependencies {
     implementation 'org.apache.httpcomponents:httpmime:4.5.4'
     implementation 'org.osgi:org.osgi.core:6.0.0'
     implementation 'com.mitchellbosecke:pebble:2.4.0'
-    implementation 'com.dorkbox:Notify:3.7'
+    implementation 'fr.jcgay.send-notification:send-notification:0.14.0'
 
     testImplementation gradleTestKit()
     testImplementation 'junit:junit:4.12'

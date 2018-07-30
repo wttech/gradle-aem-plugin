@@ -20,6 +20,8 @@ class AemPlugin private constructor() {
                     .bufferedReader().use { it.readText() })
         }
 
+        val ID = "gradle-aem-plugin"
+
         val NAME = "Gradle AEM Plugin"
 
         val NAME_WITH_VERSION: String

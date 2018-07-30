@@ -15,12 +15,12 @@ open class PurgeTask : AemDefaultTask() {
 
     init {
         description = "Uninstalls and then deletes CRX package on AEM instance(s)."
+
+        beforeExecuted { props.checkForce() }
     }
 
     @TaskAction
     fun purge() {
-        props.checkForce()
-
         val pkg = config.packageFileName
         val instances = Instance.filter(project)
 

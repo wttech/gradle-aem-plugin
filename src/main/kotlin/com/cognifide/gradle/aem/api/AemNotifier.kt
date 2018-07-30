@@ -1,48 +1,97 @@
 package com.cognifide.gradle.aem.api
 
+import com.cognifide.gradle.aem.internal.notifier.DorkboxNotifier
+import com.cognifide.gradle.aem.internal.notifier.JcGayNotifier
+import com.cognifide.gradle.aem.internal.notifier.Notifier
 import dorkbox.notify.Notify
-import org.apache.commons.lang3.StringUtils
+import fr.jcgay.notification.Application
+import fr.jcgay.notification.Notification
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.gradle.api.Project
-import javax.imageio.ImageIO
+import org.gradle.api.logging.LogLevel
+import java.util.concurrent.TimeUnit
 
 class AemNotifier private constructor(private val project: Project) {
 
     private val config by lazy { AemConfig.of(project) }
 
+    private val notifier: Notifier by lazy { config.notificationConfig(this@AemNotifier) }
+
+    fun log(title: String) {
+        log(title, "")
+    }
+
     fun log(title: String, message: String) {
-        project.logger.lifecycle(if (message.isNotBlank()) {
+        log(title, message, LogLevel.INFO)
+    }
+
+    fun log(title: String, message: String, level: LogLevel) {
+        project.logger.log(level, if (message.isNotBlank()) {
             "${title.removeSuffix(".")}. $message"
         } else {
             title
         })
     }
 
-    fun default(title: String, message: String = "") {
+    fun default(title: String) {
+        default(title, "")
+    }
+
+    fun default(title: String, message: String) {
+        default(title, message, LogLevel.INFO)
+    }
+
+    fun default(title: String, message: String, level: LogLevel) {
         if (config.notificationEnabled) {
-            now(title, message)
+            notify(title, message, level)
         }
 
-        log(title, message)
+        log(title, message, level)
     }
 
-    // TODO allow to customize color of plugin logo (warn, info, error etc)
-    fun now(title: String, text: String = "") {
-        now {
-            title(title)
-            text(StringUtils.replace(text, "\n", "<br>"))
+    fun notify(title: String) {
+        notify(title, "")
+    }
+
+    fun notify(title: String, text: String) {
+        notify(title, text, LogLevel.INFO)
+    }
+
+    fun notify(title: String, text: String, level: LogLevel) {
+        notifier.notify(title, text, level)
+    }
+
+    fun dorkbox(): Notifier {
+        return dorkbox { darkStyle().hideAfter(TimeUnit.SECONDS.toMillis(5).toInt()) }
+    }
+
+    fun dorkbox(configurer: Notify.() -> Unit): Notifier {
+        return DorkboxNotifier(project, configurer)
+    }
+
+    fun jcgay(): JcGayNotifier {
+        return jcgay({ timeout(TimeUnit.SECONDS.toMillis(5)) }, {})
+    }
+
+    fun jcgay(appBuilder: Application.Builder.() -> Unit, messageBuilder: Notification.Builder.() -> Unit): JcGayNotifier {
+        return JcGayNotifier(project, appBuilder, messageBuilder)
+    }
+
+    fun custom(notifier: (title: String, text: String, level: LogLevel) -> Unit): Notifier {
+        return object : Notifier {
+            override fun notify(title: String, text: String, level: LogLevel) {
+                notifier(title, text, level)
+            }
         }
     }
 
-    fun now(configurer: Notify.() -> Unit) {
-        try {
-            Notify.create()
-                    .image(ImageIO.read(javaClass.getResourceAsStream(IMAGE_PATH)))
-                    .apply(config.notificationConfig)
-                    .apply(configurer)
-                    .show()
-        } catch (e: Exception) {
-            project.logger.debug("Cannot show system notification", e)
+    fun factory(): Notifier {
+        val name = project.properties["aem.notification.config"] ?: "dorkbox"
+
+        return when (name) {
+            "dorkbox" -> dorkbox()
+            "jcgay" -> jcgay()
+            else -> throw AemException("Unsupported notifier: '$name'")
         }
     }
 
@@ -65,7 +114,7 @@ class AemNotifier private constructor(private val project: Project) {
         }
 
         /**
-         *
+         * Register once (for root project only) listener for notifying about build errors.
          */
         private fun setup(project: Project): AemNotifier {
             val notifier = AemNotifier(project)
@@ -76,7 +125,7 @@ class AemNotifier private constructor(private val project: Project) {
                         val exception = ExceptionUtils.getRootCause(it.failure)
                         val message = exception?.message ?: "no error message"
 
-                        notifier.default("Build failure", message)
+                        notifier.default("Build failure", message, LogLevel.ERROR)
                     }
                 }
             }

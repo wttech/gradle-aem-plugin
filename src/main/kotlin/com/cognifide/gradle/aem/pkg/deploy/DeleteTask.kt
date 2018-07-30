@@ -14,12 +14,12 @@ open class DeleteTask : AemDefaultTask() {
 
     init {
         description = "Deletes AEM package on instance(s)."
+
+        beforeExecuted { props.checkForce() }
     }
 
     @TaskAction
     fun delete() {
-        props.checkForce()
-
         val instances = Instance.filter(project)
         val pkg = config.packageFileName
 

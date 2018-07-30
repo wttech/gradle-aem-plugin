@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.api.AemDefaultTask
+import com.cognifide.gradle.aem.instance.action.ShutdownAction
 import org.gradle.api.tasks.TaskAction
 
 open class DownTask : AemDefaultTask() {
@@ -15,10 +16,11 @@ open class DownTask : AemDefaultTask() {
 
     @TaskAction
     fun down() {
-        val handles = Instance.handles(project)
-        handles.parallelStream().forEach { it.down() }
+        val instances = Instance.filter(project)
 
-        notifier.default("Instance(s) down", "Which: ${handles.names}")
+        ShutdownAction(project, instances).perform()
+
+        notifier.default("Instance(s) down", "Which: ${instances.names}")
     }
 
 }

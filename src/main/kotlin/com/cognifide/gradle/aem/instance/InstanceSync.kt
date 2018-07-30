@@ -38,6 +38,10 @@ class InstanceSync(val project: Project, val instance: Instance) {
         private const val PACKAGE_MANAGER_SERVICE_SUFFIX = "/crx/packmgr/service"
 
         private const val PACKAGE_MANAGER_LIST_SUFFIX = "/crx/packmgr/list.jsp"
+
+        private const val VMSTAT_SHUTDOWN_STOP = "Stop"
+
+        private const val VMSTAT_SHUTDOWN_RESTART = "Restart"
     }
 
     val config = AemConfig.of(project)
@@ -451,9 +455,17 @@ class InstanceSync(val project: Project, val instance: Instance) {
     }
 
     fun reload() {
+        shutdown(VMSTAT_SHUTDOWN_RESTART)
+    }
+
+    fun stop() {
+        shutdown(VMSTAT_SHUTDOWN_STOP)
+    }
+
+    private fun shutdown(type: String) {
         try {
             logger.info("Triggering shutdown of $instance.")
-            postUrlencoded(vmStatUrl, mapOf("shutdown_type" to "Restart"))
+            postUrlencoded(vmStatUrl, mapOf("shutdown_type" to type))
         } catch (e: DeployException) {
             throw InstanceException("Cannot trigger shutdown of $instance.", e)
         }
