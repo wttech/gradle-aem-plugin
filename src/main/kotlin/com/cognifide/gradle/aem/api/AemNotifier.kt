@@ -78,10 +78,20 @@ class AemNotifier private constructor(private val project: Project) {
     }
 
     fun custom(notifier: (title: String, text: String, level: LogLevel) -> Unit): Notifier {
-        return object: Notifier {
+        return object : Notifier {
             override fun notify(title: String, text: String, level: LogLevel) {
                 notifier(title, text, level)
             }
+        }
+    }
+
+    fun factory(): Notifier {
+        val name = project.properties["aem.notification.config"] ?: "dorkbox"
+
+        return when (name) {
+            "dorkbox" -> dorkbox()
+            "jcgay" -> jcgay()
+            else -> throw AemException("Unsupported notifier: '$name'")
         }
     }
 

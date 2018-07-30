@@ -575,7 +575,7 @@ class AemConfig(
      */
     @Internal
     @JsonIgnore
-    var notificationConfig: (AemNotifier) -> Notifier = { it.dorkbox() }
+    var notificationConfig: (AemNotifier) -> Notifier = { it.factory() }
 
     /**
      * Initialize defaults that depends on concrete type of project.
