@@ -1027,7 +1027,7 @@ As a workaround, just run build without daemon (`--no-daemon`).
 ## Building
 
 1. Clone this project using command `git clone https://github.com/Cognifide/gradle-aem-plugin.git`
-2. Enter cloned directory and simply run command: `sh gradlew`
+2. Enter cloned directory and simply run command: `gradle`
 3. To use built plugin, add `mavenLocal()` to `repositories` section inside `pluginManagement` of *settings.gradle* file.
 
 ## Contributing
