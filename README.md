@@ -1028,7 +1028,13 @@ As a workaround, just run build without daemon (`--no-daemon`).
 
 1. Clone this project using command `git clone https://github.com/Cognifide/gradle-aem-plugin.git`
 2. Enter cloned directory and simply run command: `gradle`
-3. To use built plugin, add `mavenLocal()` to `repositories` section inside `pluginManagement` of *settings.gradle* file.
+3. To use built plugin:
+    * Add `mavenLocal()` to `repositories` section inside `pluginManagement` of *settings.gradle* file.
+    * Ensuring having correct version of plugin specified in *settings.gradle* file.
+4. To debug built plugin:
+    * Append to build command parameters `--no-daemon -Dorg.gradle.debug=true`
+    * Run build, it will suspend, then connect remote at port 5005 by using IDE
+    * Build will proceed and stop at previously set up breakpoint.
 
 ## Contributing
 
