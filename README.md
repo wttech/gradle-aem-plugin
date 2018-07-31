@@ -3,6 +3,7 @@
 [![Gradle Status](https://gradleupdate.appspot.com/Cognifide/gradle-aem-plugin/status.svg)](https://gradleupdate.appspot.com/Cognifide/gradle-aem-plugin/status)
 [![Apache License, Version 2.0, January 2004](docs/apache-license-badge.svg)](http://www.apache.org/licenses/)
 ![Travis Build](https://travis-ci.org/Cognifide/gradle-aem-plugin.svg?branch=develop)
+[![Semantic Release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg)](https://github.com/semantic-release/semantic-release)
 
 # Gradle AEM Plugin
 
@@ -39,7 +40,7 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
 
 ## Table of contents
 
-* [Installation](#installation)
+* [Getting started](#getting-started)
 * [Configuration](#configuration)
    * [Plugin setup](#plugin-setup)
       * [Minimal:](#minimal)
@@ -94,11 +95,13 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
    * [Caching task aemCompose](#caching-task-aemcompose)
    * [Vault tasks parallelism](#vault-tasks-parallelism)
    * [Files from SSH for aemCreate and <code>aemSatisfy</code>](#files-from-ssh-for-aemcreate-and-aemsatisfy)
+* [Building](#building)
+* [Contributing](#contributing)
 * [License](#license)
 
-## Installation
+## Getting started
 
-* Most effective way to experience Gradle AEM Plugin is to use Quickstart located in:
+* Most effective way to experience Gradle AEM Plugin is to use *Quickstart* located in:
   * [AEM Single-Project Example](https://github.com/Cognifide/gradle-aem-single#quickstart) - recommended for **application** development,
   * [AEM Multi-Project Example](https://github.com/Cognifide/gradle-aem-multi#quickstart) - recommended for **project** development,
 * The only needed software to start using plugin is to have installed on machine Java 8.
@@ -1021,6 +1024,20 @@ In case of that workaround, Vault tasks should not be run in parallel (by separa
 
 Local instance JAR file can be provided using SSH, but SSHJ client used in implementation has an [integration issue](https://github.com/hierynomus/sshj/issues/347) related with JDK and Crypto Policy.
 As a workaround, just run build without daemon (`--no-daemon`).
+
+## Building
+
+1. Clone this project using command `git clone https://github.com/Cognifide/gradle-aem-plugin.git`
+2. Enter cloned directory and simply run command: `sh gradlew`
+3. To use built plugin, add `mavenLocal()` to `repositories` section inside `pluginManagement` of *settings.gradle* file.
+
+## Contributing
+
+Issues reported or pull requests created will be very appreciated. 
+
+1. Fork plugin source code using a dedicated GitHub button.
+2. Do code changes on a feature branch created from *develop* branch.
+3. Create a pull request with a base of *develop* branch.
 
 ## License
 
