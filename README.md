@@ -89,6 +89,7 @@ Looking for dedicated version of plugin for [**Apache Sling**](https://sling.apa
    * [Assemble all-in-one CRX package(s)](#assemble-all-in-one-crx-packages)
    * [Include additional OSGi bundle into CRX package](#include-additional-osgi-bundle-into-crx-package)
    * [Embed JAR file into built OSGi bundle](#embed-jar-file-into-built-osgi-bundle)
+   * [Configure OSGi bundle manifest attributes](#configure-osgi-bundle-manifest-attributes)
    * [Exclude packages being incidentally imported by OSGi bundle](#exclude-packages-being-incidentally-imported-by-osgi-bundle)
    * [Skip installed package resolution by download name.](#skip-installed-package-resolution-by-download-name)
 * [Known issues](#known-issues)
@@ -962,6 +963,56 @@ aem {
 ```
  
 For the reference, see [usage in AEM Multi-Project Example](https://github.com/Cognifide/gradle-aem-multi/blob/master/app/common/build.gradle).
+
+### Configure OSGi bundle manifest attributes
+
+Since 4.0.0 version, there is available new bundle DSL for easy OSGi specific JAR manifest attributes customization.
+
+Now it is available to replace section:
+
+```groovy
+jar {
+    def pkg = 'com.company.aem.example.common'
+
+    manifest {
+        attributes([
+           'Bundle-Name': project.description,
+           'Bundle-SymbolicName': pkg,
+           'Sling-Model-Packages': pkg,
+           'Export-Package': "$pkg.*,org.hashids.*"
+       ])
+    }
+}
+```
+
+To:
+
+```groovy
+aem {
+    config {
+        bundlePackage = "com.company.aem.example.common"
+    }
+    bundle {
+        exportPackage "org.hashids"
+     }
+}
+```
+
+* `Bundle-Name` will grab value from `project.description`
+* `Bundle-SymbolicName` will grab value from `aem.config.bundlePackage`
+* `Sling-Model-Packages` will grab value from `aem.config.bundlePackage`
+* `Export-Package` will grab value from `aem.config.bundlePackage`.
+
+This values population behavior could be optionally disabled by config parameter `aem.config.bundleManifestAttributes = false`.
+Still when this behavior is enabled, all of values are overiddable e.g:
+
+```
+aem {
+    bundle {
+        attribute 'Sling-Model-Packages', "com.company.aem.example.common.models"
+    }
+}
+```
 
 ### Exclude packages being incidentally imported by OSGi bundle
 
