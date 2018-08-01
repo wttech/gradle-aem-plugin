@@ -18,13 +18,15 @@ Incremental build which takes seconds, not minutes. Developer who does not loose
 
 AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget to **star this project** on GitHub :)
 
+Looking for dedicated version of plugin for [**Apache Sling**](https://sling.apache.org)? Check out [Gradle Sling Plugin](https://github.com/Cognifide/gradle-sling-plugin)!
+
+**Screenshot**
+
 <br>
 <p align="center">
   <img src="docs/example-build.gif" alt="Example Project Build"/>
 </p>
 <br>
-
-Looking for dedicated version of plugin for [**Apache Sling**](https://sling.apache.org)? Check out [Gradle Sling Plugin](https://github.com/Cognifide/gradle-sling-plugin)!
 
 **Features:**
 
