@@ -24,6 +24,13 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
 </p>
 <br>
 
+---
+**NOTICE**
+
+Looking for pure Apache Sling version of plugin? Check out [Gradle Sling Plugin](https://github.com/Cognifide/gradle-sling-plugin)!
+
+---
+
 **Features:**
 
 * Fully automated, tied to project, local AEM instance(s) setup allowing to start development within few minutes.
