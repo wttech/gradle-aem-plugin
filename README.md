@@ -994,7 +994,7 @@ aem {
     }
     bundle {
         exportPackage "org.hashids"
-     }
+    }
 }
 ```
 
