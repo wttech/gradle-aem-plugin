@@ -22,7 +22,6 @@ Looking for dedicated version of plugin for [**Apache Sling**](https://sling.apa
 
 ### Screenshot
 
-<br>
 <p align="center">
   <img src="docs/example-build.gif" alt="Example Project Build"/>
 </p>
