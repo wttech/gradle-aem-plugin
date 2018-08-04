@@ -23,6 +23,8 @@ class VltCleaner(val project: Project, val root: File) {
         VltContentProperty.manyFrom(config.cleanSkipProperties)
     }
 
+    private val cleanSkipMixinTypes = config.cleanSkipMixinTypes + ""
+
     private val dotContentFiles: Collection<File>
         get() = FileUtils.listFiles(root, NameFileFilter(JCR_CONTENT_FILE), TrueFileFilter.INSTANCE)
                 ?: listOf()
@@ -71,7 +73,7 @@ class VltCleaner(val project: Project, val root: File) {
             logger.info("Cleaning file {}", file.path)
 
             val inputLines = FileUtils.readLines(file, CharEncoding.UTF_8)
-            val filteredLines = filterLines(file, inputLines, dotContentProperties)
+            val filteredLines = filterLines(file, inputLines)
 
             FileUtils.writeLines(file, CharEncoding.UTF_8, filteredLines, config.vaultLineSeparatorString)
         } catch (e: IOException) {
@@ -79,13 +81,16 @@ class VltCleaner(val project: Project, val root: File) {
         }
     }
 
-    private fun filterLines(file: File, lines: List<String>, props: List<VltContentProperty>): List<String> {
+    private fun filterLines(file: File, lines: List<String>): List<String> {
         val result = mutableListOf<String>()
-
         for (line in lines) {
             val cleanLine = StringUtils.trimToEmpty(line)
-            if (lineContainsProperty(file, line, props)) {
+            val filterLine = config.cleanLineProcess(this, file, line)
+            if (filterLine.isEmpty()) {
                 when {
+                    result.last().endsWith(">") -> {
+                        // skip line
+                    }
                     cleanLine.endsWith("/>") -> {
                         result.add(result.removeAt(result.size - 1) + "/>")
                     }
@@ -93,27 +98,84 @@ class VltCleaner(val project: Project, val root: File) {
                         result.add(result.removeAt(result.size - 1) + ">")
                     }
                     else -> {
-                        // skip line with property
+                        // skip line
                     }
                 }
             } else {
-                result.add(line)
+                result.add(filterLine)
             }
         }
-
+        cleanNamespaces(result)
         return result
     }
 
-    private fun lineContainsProperty(file: File, line: String, props: List<VltContentProperty>): Boolean {
-        val normalizedLine = line.trim().removeSuffix("/>").removeSuffix(">")
-        val matcher = CONTENT_PROP_PATTERN.matcher(normalizedLine)
-        if (matcher.matches()) {
-            val propOccurence = matcher.group(1)
-
-            return props.any { it.match(file, propOccurence) }
+    private fun cleanNamespaces(result: MutableList<String>) {
+        if (!config.cleanNamespaces) {
+            return
         }
 
-        return false
+        val namespacesLine = result[1]
+        if (namespacesLine.startsWith("<jcr:root ")) {
+            val namespaces = namespacesLine.trim().removePrefix("<jcr:root ").split(" ")
+            val properNamespaces = namespaces.filter { namespace -> isNamespaceUsed(namespace, result) }
+            val properNamespacesLine = "<jcr:root " + properNamespaces.joinToString(" ")
+            result.removeAt(1)
+            result.add(1, properNamespacesLine)
+        }
+    }
+
+    private fun isNamespaceUsed(namespace: String, lines: List<String>): Boolean {
+        val namespaceName = namespace.substringBefore("=").substringAfter(":")
+        return lines.any { it.contains("$namespaceName:") }
+    }
+
+    fun normalizeLine(file: File, line: String): String {
+        return normalizeMixins(skipProperties(file, line))
+    }
+
+    fun skipProperties(file: File, line: String): String {
+        if (config.cleanSkipProperties.isEmpty()) {
+            return line
+        }
+
+        return eachProp(line) { propOccurrence, _ ->
+            var result = line
+            if (dotContentProperties.any { it.match(file, propOccurrence) }) {
+                result = ""
+            }
+            result
+        }
+    }
+
+    fun normalizeMixins(line: String): String {
+        if (config.cleanSkipMixinTypes.isEmpty()) {
+            return line
+        }
+
+        return eachProp(line) { propName, propValue ->
+            var result = line
+            if (propName == JCR_MIXIN_TYPES_PROP) {
+                val normalizedValue = propValue.removePrefix("[").removeSuffix("]")
+                val resultValues = normalizedValue.split(",") - cleanSkipMixinTypes
+                val resultValue = resultValues.joinToString(",")
+                result = if (resultValues.isEmpty()) {
+                    ""
+                } else {
+                    line.replace(normalizedValue, resultValue)
+                }
+            }
+            result
+        }
+    }
+
+    private fun eachProp(line: String, processProp: (String, String) -> String): String {
+        val normalizedLine = line.trim().removeSuffix("/>").removeSuffix(">")
+        val matcher = CONTENT_PROP_PATTERN.matcher(normalizedLine)
+        return if (matcher.matches()) {
+            processProp(matcher.group(1), matcher.group(2))
+        } else {
+            line
+        }
     }
 
     private fun cleanParents() {
@@ -134,7 +196,8 @@ class VltCleaner(val project: Project, val root: File) {
     companion object {
         const val JCR_CONTENT_FILE = ".content.xml"
 
+        const val JCR_MIXIN_TYPES_PROP = "jcr:mixinTypes"
+
         val CONTENT_PROP_PATTERN: Pattern = Pattern.compile("([^=]+)=\"([^\"]+)\"")
     }
 }
-

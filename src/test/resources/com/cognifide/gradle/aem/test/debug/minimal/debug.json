@@ -143,6 +143,11 @@
         "*_x0040_Delete",
         "*_x0040_TypeHint"
       ],
+      "cleanSkipMixinTypes": [
+        "cq:ReplicationStatus",
+        "mix:versionable"
+      ],
+      "cleanNamespaces": true,
       "debugPackageDeployed": false
     }
   },

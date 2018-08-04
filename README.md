@@ -283,6 +283,12 @@ aem {
         "*_x0040_Delete",
         "*_x0040_TypeHint"
       ]
+      cleanSkipMixinTypes = [
+        "cq:ReplicationStatus",
+        "mix:versionable"
+      ]
+      cleanLineProcess = { vltCleaner, file, line -> vltCleaner.normalizeLine(file, line) }
+      cleanNamespaces = true
       
       notificationEnabled = false
       notificationConfig = { it.factory() }

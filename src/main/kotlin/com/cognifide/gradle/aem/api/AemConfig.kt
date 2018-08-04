@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.api
 
 import aQute.bnd.osgi.Jar
+import com.cognifide.gradle.aem.base.vlt.VltCleaner
 import com.cognifide.gradle.aem.instance.*
 import com.cognifide.gradle.aem.internal.LineSeparator
 import com.cognifide.gradle.aem.internal.PropertyParser
@@ -554,6 +555,28 @@ class AemConfig(
             "*_x0040_Delete",
             "*_x0040_TypeHint"
     )
+
+    /**
+     * Define here mixin types that will be skipped when pulling JCR content from AEM instance.
+     */
+    @Input
+    var cleanSkipMixinTypes: MutableList<String> = mutableListOf(
+            "cq:ReplicationStatus",
+            "mix:versionable"
+    )
+
+    /**
+     * Define hook method for customizing properties clean up.
+     */
+    @Internal
+    @get:JsonIgnore
+    var cleanLineProcess: (VltCleaner, File, String) -> String = { vltCleaner, file, line -> vltCleaner.normalizeLine(file, line) }
+
+    /**
+     * Turn on/off namespace normalization after properties clean up.
+     */
+    @Input
+    var cleanNamespaces: Boolean = true
 
     /**
      * Dump package states on defined instances.
