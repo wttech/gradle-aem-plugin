@@ -9,6 +9,7 @@ import org.apache.commons.io.filefilter.TrueFileFilter
 import org.apache.commons.lang3.CharEncoding
 import org.apache.commons.lang3.StringUtils
 import org.gradle.api.Project
+import org.gradle.util.ConfigureUtil
 import java.io.File
 import java.io.IOException
 import java.util.regex.Pattern
@@ -20,10 +21,8 @@ class VltCleaner(val project: Project, val root: File) {
     private val config = AemConfig.of(project)
 
     private val dotContentProperties by lazy {
-        VltContentProperty.manyFrom(config.cleanSkipProperties)
+        VltContentProperty.manyFrom(skipProperties)
     }
-
-    private val cleanSkipMixinTypes = config.cleanSkipMixinTypes + ""
 
     private val dotContentFiles: Collection<File>
         get() = FileUtils.listFiles(root, NameFileFilter(JCR_CONTENT_FILE), TrueFileFilter.INSTANCE)
@@ -32,6 +31,70 @@ class VltCleaner(val project: Project, val root: File) {
     private val allFiles: Collection<File>
         get() = FileUtils.listFiles(root, TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE)
                 ?: listOf()
+
+    /**
+     * Determines which files will be deleted within running cleaning
+     * (e.g after checking out JCR content).
+     */
+    var filesDeleted: MutableList<String> = mutableListOf(
+            // VLT tool internal files
+            "**/.vlt",
+            "**/.vlt*.tmp",
+
+            // Top level nodes should remain untouched
+            "**/jcr_root/.content.xml",
+            "**/jcr_root/apps/.content.xml",
+            "**/jcr_root/conf/.content.xml",
+            "**/jcr_root/content/.content.xml",
+            "**/jcr_root/content/dam/.content.xml",
+            "**/jcr_root/etc/.content.xml",
+            "**/jcr_root/etc/designs/.content.xml",
+            "**/jcr_root/home/.content.xml",
+            "**/jcr_root/home/groups/.content.xml",
+            "**/jcr_root/home/users/.content.xml",
+            "**/jcr_root/libs/.content.xml",
+            "**/jcr_root/system/.content.xml",
+            "**/jcr_root/tmp/.content.xml",
+            "**/jcr_root/var/.content.xml"
+    )
+
+    /**
+     * Define here properties that will be skipped when pulling JCR content from AEM instance.
+     *
+     * After special delimiter '!' there could be specified one or many path patterns
+     * (ANT style, delimited with ',') in which property shouldn't be removed.
+     */
+    var skipProperties: MutableList<String> = mutableListOf(
+            "jcr:uuid!**/home/users/*,**/home/groups/*",
+            "jcr:lastModified",
+            "jcr:created",
+            "cq:lastModified*",
+            "cq:lastReplicat*",
+            "*_x0040_Delete",
+            "*_x0040_TypeHint"
+    )
+
+    /**
+     * Define here mixin types that will be skipped when pulling JCR content from AEM instance.
+     */
+    var skipMixinTypes: MutableList<String> = mutableListOf(
+            "cq:ReplicationStatus",
+            "mix:versionable"
+    )
+
+    /**
+     * Turn on/off namespace normalization after properties clean up.
+     */
+    var skipNamespaces: Boolean = true
+
+    /**
+     * Define hook method for customizing properties clean up.
+     */
+    var lineProcess: (File, String) -> String = { file, line -> normalizeLine(file, line) }
+
+    init {
+        ConfigureUtil.configure(config.cleanConfig, this)
+    }
 
     fun clean() {
         removeFiles()
@@ -56,7 +119,7 @@ class VltCleaner(val project: Project, val root: File) {
     }
 
     private fun removeFile(file: File) {
-        if (!Patterns.wildcard(file, config.cleanFilesDeleted) || !file.exists()) {
+        if (!Patterns.wildcard(file, filesDeleted) || !file.exists()) {
             return
         }
 
@@ -85,7 +148,7 @@ class VltCleaner(val project: Project, val root: File) {
         val result = mutableListOf<String>()
         for (line in lines) {
             val cleanLine = StringUtils.trimToEmpty(line)
-            val filterLine = config.cleanLineProcess(this, file, line)
+            val filterLine = lineProcess(file, line)
             if (filterLine.isEmpty()) {
                 when {
                     result.last().endsWith(">") -> {
@@ -110,7 +173,7 @@ class VltCleaner(val project: Project, val root: File) {
     }
 
     private fun cleanNamespaces(result: MutableList<String>) {
-        if (!config.cleanNamespaces) {
+        if (!skipNamespaces) {
             return
         }
 
@@ -134,7 +197,7 @@ class VltCleaner(val project: Project, val root: File) {
     }
 
     fun skipProperties(file: File, line: String): String {
-        if (config.cleanSkipProperties.isEmpty()) {
+        if (skipProperties.isEmpty()) {
             return line
         }
 
@@ -148,7 +211,7 @@ class VltCleaner(val project: Project, val root: File) {
     }
 
     fun normalizeMixins(line: String): String {
-        if (config.cleanSkipMixinTypes.isEmpty()) {
+        if (skipMixinTypes.isEmpty()) {
             return line
         }
 
@@ -156,9 +219,9 @@ class VltCleaner(val project: Project, val root: File) {
             var result = line
             if (propName == JCR_MIXIN_TYPES_PROP) {
                 val normalizedValue = propValue.removePrefix("[").removeSuffix("]")
-                val resultValues = normalizedValue.split(",") - cleanSkipMixinTypes
+                val resultValues = normalizedValue.split(",") - skipMixinTypes
                 val resultValue = resultValues.joinToString(",")
-                result = if (resultValues.isEmpty()) {
+                result = if (resultValues.isEmpty() || normalizedValue == "") {
                     ""
                 } else {
                     line.replace(normalizedValue, resultValue)

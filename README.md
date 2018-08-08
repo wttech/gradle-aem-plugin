@@ -256,42 +256,44 @@ aem {
         
         checkoutFilterPath = ""
         
-        cleanFilesDeleted = [
-            "**/.vlt",
-            "**/.vlt*.tmp",
-            "**/jcr_root/.content.xml",
-            "**/jcr_root/apps/.content.xml",
-            "**/jcr_root/conf/.content.xml",
-            "**/jcr_root/content/.content.xml",
-            "**/jcr_root/content/dam/.content.xml",
-            "**/jcr_root/etc/.content.xml",
-            "**/jcr_root/etc/designs/.content.xml",
-            "**/jcr_root/home/.content.xml",
-            "**/jcr_root/home/groups/.content.xml",
-            "**/jcr_root/home/users/.content.xml",
-            "**/jcr_root/libs/.content.xml",
-            "**/jcr_root/system/.content.xml",
-            "**/jcr_root/tmp/.content.xml",
-            "**/jcr_root/var/.content.xml"
-      ]
-      cleanSkipProperties = [
-        "jcr:uuid!**/home/users/*,**/home/groups/*",
-        "jcr:lastModified",
-        "jcr:created",
-        "cq:lastModified*",
-        "cq:lastReplicat*",
-        "*_x0040_Delete",
-        "*_x0040_TypeHint"
-      ]
-      cleanSkipMixinTypes = [
-        "cq:ReplicationStatus",
-        "mix:versionable"
-      ]
-      cleanLineProcess = { vltCleaner, file, line -> vltCleaner.normalizeLine(file, line) }
-      cleanNamespaces = true
+        cleanConfig = {
+            filesDeleted = [
+                "**/.vlt",
+                "**/.vlt*.tmp",
+                 "**/jcr_root/.content.xml",
+                "**/jcr_root/apps/.content.xml",
+                "**/jcr_root/conf/.content.xml",
+                "**/jcr_root/content/.content.xml",
+                "**/jcr_root/content/dam/.content.xml",
+                "**/jcr_root/etc/.content.xml",
+                "**/jcr_root/etc/designs/.content.xml",
+                "**/jcr_root/home/.content.xml",
+                "**/jcr_root/home/groups/.content.xml",
+                "**/jcr_root/home/users/.content.xml",
+                "**/jcr_root/libs/.content.xml",
+                "**/jcr_root/system/.content.xml",
+                "**/jcr_root/tmp/.content.xml",
+                "**/jcr_root/var/.content.xml"
+            ]
+            skipProperties = [
+                "jcr:uuid!**/home/users/*,**/home/groups/*",
+                "jcr:lastModified",
+                "jcr:created",
+                "cq:lastModified*",
+                "cq:lastReplicat*",
+                "*_x0040_Delete",
+                "*_x0040_TypeHint"
+            ]
+            skipMixinTypes = [
+                "cq:ReplicationStatus",
+                "mix:versionable"
+            ]
+            skipNamespaces = true
+            lineProcess = { file, line -> normalizeLine(file, line) }
+        }
       
-      notificationEnabled = false
-      notificationConfig = { it.factory() }
+        notificationEnabled = false
+        notificationConfig = { it.factory() }
     }
 }
 ```

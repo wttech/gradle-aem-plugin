@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem.api
 
 import aQute.bnd.osgi.Jar
-import com.cognifide.gradle.aem.base.vlt.VltCleaner
 import com.cognifide.gradle.aem.instance.*
 import com.cognifide.gradle.aem.internal.LineSeparator
 import com.cognifide.gradle.aem.internal.PropertyParser
@@ -513,70 +512,11 @@ class AemConfig(
         get() = listOf("$vaultPath/checkout.xml", "$vaultPath/filter.xml")
 
     /**
-     * Determines which files will be deleted within running cleaning
-     * (e.g after checking out JCR content).
-     */
-    @Input
-    var cleanFilesDeleted: MutableList<String> = mutableListOf(
-            // VLT tool internal files
-            "**/.vlt",
-            "**/.vlt*.tmp",
-
-            // Top level nodes should remain untouched
-            "**/jcr_root/.content.xml",
-            "**/jcr_root/apps/.content.xml",
-            "**/jcr_root/conf/.content.xml",
-            "**/jcr_root/content/.content.xml",
-            "**/jcr_root/content/dam/.content.xml",
-            "**/jcr_root/etc/.content.xml",
-            "**/jcr_root/etc/designs/.content.xml",
-            "**/jcr_root/home/.content.xml",
-            "**/jcr_root/home/groups/.content.xml",
-            "**/jcr_root/home/users/.content.xml",
-            "**/jcr_root/libs/.content.xml",
-            "**/jcr_root/system/.content.xml",
-            "**/jcr_root/tmp/.content.xml",
-            "**/jcr_root/var/.content.xml"
-    )
-
-    /**
-     * Define here properties that will be skipped when pulling JCR content from AEM instance.
-     *
-     * After special delimiter '!' there could be specified one or many path patterns
-     * (ANT style, delimited with ',') in which property shouldn't be removed.
-     */
-    @Input
-    var cleanSkipProperties: MutableList<String> = mutableListOf(
-            "jcr:uuid!**/home/users/*,**/home/groups/*",
-            "jcr:lastModified",
-            "jcr:created",
-            "cq:lastModified*",
-            "cq:lastReplicat*",
-            "*_x0040_Delete",
-            "*_x0040_TypeHint"
-    )
-
-    /**
-     * Define here mixin types that will be skipped when pulling JCR content from AEM instance.
-     */
-    @Input
-    var cleanSkipMixinTypes: MutableList<String> = mutableListOf(
-            "cq:ReplicationStatus",
-            "mix:versionable"
-    )
-
-    /**
-     * Define hook method for customizing properties clean up.
+     * Define config method for customizing properties clean up.
      */
     @Internal
     @get:JsonIgnore
-    var cleanLineProcess: (VltCleaner, File, String) -> String = { vltCleaner, file, line -> vltCleaner.normalizeLine(file, line) }
-
-    /**
-     * Turn on/off namespace normalization after properties clean up.
-     */
-    @Input
-    var cleanNamespaces: Boolean = true
+    var cleanConfig: Closure<*>? = null
 
     /**
      * Dump package states on defined instances.
