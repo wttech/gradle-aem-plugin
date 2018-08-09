@@ -566,11 +566,11 @@ class AemConfig(
     )
 
     /**
-     * Define hook method for customizing properties clean up.
+     * Define hook method for normalizing lines.
      */
     @Internal
     @get:JsonIgnore
-    var cleanLineProcess: (VltCleaner, File, String) -> String = { vltCleaner, file, line -> vltCleaner.normalizeLine(file, line) }
+    var cleanLineProcess: (VltCleaner) -> (File, String) -> String = { { file, line -> it.normalizeLine(file, line) } }
 
     /**
      * Turn on/off namespace normalization after properties clean up.
