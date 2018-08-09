@@ -148,8 +148,8 @@ class VltCleaner(val project: Project, val root: File) {
         val result = mutableListOf<String>()
         for (line in lines) {
             val cleanLine = StringUtils.trimToEmpty(line)
-            val filterLine = lineProcess(file, line)
-            if (filterLine.isEmpty()) {
+            val processedLine = lineProcess(file, line)
+            if (processedLine.isEmpty()) {
                 when {
                     result.last().endsWith(">") -> {
                         // skip line
@@ -165,7 +165,7 @@ class VltCleaner(val project: Project, val root: File) {
                     }
                 }
             } else {
-                result.add(filterLine)
+                result.add(processedLine)
             }
         }
         cleanNamespaces(result)
