@@ -512,7 +512,7 @@ class AemConfig(
         get() = listOf("$vaultPath/checkout.xml", "$vaultPath/filter.xml")
 
     /**
-     * Define config method for customizing properties clean up.
+     * Define configuration for properties clean up.
      */
     @Internal
     @get:JsonIgnore
