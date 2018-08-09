@@ -85,8 +85,7 @@ class VltCleaner(val project: Project, val root: File) {
         val result = mutableListOf<String>()
         for (line in lines) {
             val cleanLine = StringUtils.trimToEmpty(line)
-            val lineProcessor = config.cleanLineProcess(this)
-            val processedLine = lineProcessor(file, cleanLine)
+            val processedLine = config.cleanLineProcess(this, file, cleanLine)
             if (processedLine.isEmpty()) {
                 when {
                     result.last().endsWith(">") -> {

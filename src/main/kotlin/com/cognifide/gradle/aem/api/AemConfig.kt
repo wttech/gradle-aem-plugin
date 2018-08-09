@@ -570,7 +570,7 @@ class AemConfig(
      */
     @Internal
     @get:JsonIgnore
-    var cleanLineProcess: (VltCleaner) -> (File, String) -> String = { { file, line -> it.normalizeLine(file, line) } }
+    var cleanLineProcess: (VltCleaner, File, String) -> String = { cleaner, file, line -> cleaner.normalizeLine(file, line) }
 
     /**
      * Turn on/off namespace normalization after properties clean up.
