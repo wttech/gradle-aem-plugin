@@ -259,24 +259,10 @@ aem {
         cleanConfig = {
             filesDeleted = [
                 "**/.vlt",
-                "**/.vlt*.tmp",
-                 "**/jcr_root/.content.xml",
-                "**/jcr_root/apps/.content.xml",
-                "**/jcr_root/conf/.content.xml",
-                "**/jcr_root/content/.content.xml",
-                "**/jcr_root/content/dam/.content.xml",
-                "**/jcr_root/etc/.content.xml",
-                "**/jcr_root/etc/designs/.content.xml",
-                "**/jcr_root/home/.content.xml",
-                "**/jcr_root/home/groups/.content.xml",
-                "**/jcr_root/home/users/.content.xml",
-                "**/jcr_root/libs/.content.xml",
-                "**/jcr_root/system/.content.xml",
-                "**/jcr_root/tmp/.content.xml",
-                "**/jcr_root/var/.content.xml"
+                "**/.vlt*.tmp"
             ]
             skipProperties = [
-                "jcr:uuid!**/home/users/*,**/home/groups/*",
+                "jcr:uuid|!**/home/users/*,!**/home/groups/*",
                 "jcr:lastModified",
                 "jcr:created",
                 "cq:lastModified*",

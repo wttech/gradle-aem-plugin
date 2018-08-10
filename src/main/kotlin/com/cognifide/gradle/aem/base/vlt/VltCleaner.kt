@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem.base.vlt
 
 import com.cognifide.gradle.aem.api.AemConfig
-import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.filefilter.NameFileFilter
@@ -20,8 +19,16 @@ class VltCleaner(val project: Project, val root: File) {
 
     private val config = AemConfig.of(project)
 
-    private val dotContentProperties by lazy {
-        VltContentProperty.manyFrom(skipProperties)
+    private val filesDeletedRules by lazy {
+        VltCleanRule.manyFrom(filesDeleted)
+    }
+
+    private val skipPropertiesRules by lazy {
+        VltCleanRule.manyFrom(skipProperties)
+    }
+
+    private val skipMixinTypesRules by lazy {
+        VltCleanRule.manyFrom(skipMixinTypes)
     }
 
     private val dotContentFiles: Collection<File>
@@ -37,25 +44,8 @@ class VltCleaner(val project: Project, val root: File) {
      * (e.g after checking out JCR content).
      */
     var filesDeleted: MutableList<String> = mutableListOf(
-            // VLT tool internal files
             "**/.vlt",
-            "**/.vlt*.tmp",
-
-            // Top level nodes should remain untouched
-            "**/jcr_root/.content.xml",
-            "**/jcr_root/apps/.content.xml",
-            "**/jcr_root/conf/.content.xml",
-            "**/jcr_root/content/.content.xml",
-            "**/jcr_root/content/dam/.content.xml",
-            "**/jcr_root/etc/.content.xml",
-            "**/jcr_root/etc/designs/.content.xml",
-            "**/jcr_root/home/.content.xml",
-            "**/jcr_root/home/groups/.content.xml",
-            "**/jcr_root/home/users/.content.xml",
-            "**/jcr_root/libs/.content.xml",
-            "**/jcr_root/system/.content.xml",
-            "**/jcr_root/tmp/.content.xml",
-            "**/jcr_root/var/.content.xml"
+            "**/.vlt*.tmp"
     )
 
     /**
@@ -119,7 +109,7 @@ class VltCleaner(val project: Project, val root: File) {
     }
 
     private fun removeFile(file: File) {
-        if (!Patterns.wildcard(file, filesDeleted) || !file.exists()) {
+        if (!matchAnyRule(file.path, file, filesDeletedRules) || !file.exists()) {
             return
         }
 
@@ -177,23 +167,26 @@ class VltCleaner(val project: Project, val root: File) {
             return
         }
 
-        val namespacesLine = result[1]
-        if (namespacesLine.startsWith("<jcr:root ")) {
-            val namespaces = namespacesLine.trim().removePrefix("<jcr:root ").split(" ")
-            val properNamespaces = namespaces.filter { namespace -> isNamespaceUsed(namespace, result) }
-            val properNamespacesLine = "<jcr:root " + properNamespaces.joinToString(" ")
-            result.removeAt(1)
-            result.add(1, properNamespacesLine)
+        val index = result.indexOfFirst { it.startsWith(JCR_ROOT_PREFIX) }
+        if (index != -1) {
+            val namespacesLine = result[1]
+            val properNamespaces = namespacesLine.removePrefix(JCR_ROOT_PREFIX).split(" ").filter { isNamespaceUsed(it, result) }
+            result.removeAt(index)
+            result.add(index, JCR_ROOT_PREFIX + " " + properNamespaces.joinToString(" "))
         }
     }
 
     private fun isNamespaceUsed(namespace: String, lines: List<String>): Boolean {
-        val namespaceName = namespace.substringBefore("=").substringAfter(":")
-        return lines.any { it.contains("$namespaceName:") }
+        val matcher = NAMESPACE_PATTERN.matcher(namespace)
+        return if (matcher.matches()) {
+            lines.any { it.contains(matcher.group(1) + ":") }
+        } else {
+            false
+        }
     }
 
     fun normalizeLine(file: File, line: String): String {
-        return normalizeMixins(skipProperties(file, line))
+        return normalizeMixins(file, skipProperties(file, line))
     }
 
     fun skipProperties(file: File, line: String): String {
@@ -203,14 +196,14 @@ class VltCleaner(val project: Project, val root: File) {
 
         return eachProp(line) { propOccurrence, _ ->
             var result = line
-            if (dotContentProperties.any { it.match(file, propOccurrence) }) {
+            if (matchAnyRule(propOccurrence, file, skipPropertiesRules)) {
                 result = ""
             }
             result
         }
     }
 
-    fun normalizeMixins(line: String): String {
+    fun normalizeMixins(file: File, line: String): String {
         if (skipMixinTypes.isEmpty()) {
             return line
         }
@@ -219,11 +212,11 @@ class VltCleaner(val project: Project, val root: File) {
             var result = line
             if (propName == JCR_MIXIN_TYPES_PROP) {
                 val normalizedValue = propValue.removePrefix("[").removeSuffix("]")
-                val resultValues = normalizedValue.split(",") - skipMixinTypes
-                val resultValue = resultValues.joinToString(",")
+                val resultValues = normalizedValue.split(",").filter { !matchAnyRule(it, file, skipMixinTypesRules) }
                 result = if (resultValues.isEmpty() || normalizedValue == "") {
                     ""
                 } else {
+                    val resultValue = resultValues.joinToString(",")
                     line.replace(normalizedValue, resultValue)
                 }
             }
@@ -245,8 +238,10 @@ class VltCleaner(val project: Project, val root: File) {
         var parent = root.parentFile
         while (parent != null) {
             val siblingFiles = parent.listFiles { file: File -> file.isFile } ?: arrayOf<File>()
-            siblingFiles.forEach { removeFile(it) }
-            siblingFiles.forEach { cleanDotContent(it) }
+            if (siblingFiles.any { it.name.equals(".vltcpy") }) {
+                siblingFiles.filter { !it.name.equals(".cpy") }.forEach { it.delete() }
+                siblingFiles.filter { it.name.endsWith(".cpy") }.forEach { it.renameTo(File(it.path.removeSuffix(".cpy"))) }
+            }
 
             if (parent.name == PackagePlugin.JCR_ROOT) {
                 break
@@ -256,11 +251,19 @@ class VltCleaner(val project: Project, val root: File) {
         }
     }
 
+    private fun matchAnyRule(value: String, file: File, rules: List<VltCleanRule>): Boolean {
+        return rules.any { it.match(file, value) }
+    }
+
     companion object {
         const val JCR_CONTENT_FILE = ".content.xml"
 
         const val JCR_MIXIN_TYPES_PROP = "jcr:mixinTypes"
 
+        const val JCR_ROOT_PREFIX = "<jcr:root"
+
         val CONTENT_PROP_PATTERN: Pattern = Pattern.compile("([^=]+)=\"([^\"]+)\"")
+
+        val NAMESPACE_PATTERN: Pattern = Pattern.compile(".*:(.+)=.*")
     }
 }
