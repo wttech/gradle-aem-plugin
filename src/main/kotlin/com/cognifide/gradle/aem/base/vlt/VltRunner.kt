@@ -48,26 +48,26 @@ class VltRunner(val project: Project) {
             logger.info("JCR content directory to be checked out does not exist: ${contentDir.absolutePath}")
         }
 
-        checkoutFilter.rootPaths.forEach { createSiblingCpyFiles(File(workingDir, it)) }
-
         checkoutFilter.use {
             raw("--credentials ${checkoutInstance.credentials} checkout --force --filter ${checkoutFilter.file.absolutePath} ${checkoutInstance.httpUrl}/crx/server/crx.default")
         }
     }
 
-    private fun createSiblingCpyFiles(root: File) {
-        var parent = root.parentFile
-        parent.mkdirs()
-        while (parent != null) {
-            val siblingFiles = parent.listFiles { file -> file.isFile }
-            if (File(parent, ".vltcpy").createNewFile()) {
-                siblingFiles.forEach { it.copyTo(File(parent, it.name + ".cpy"), true) }
-            }
+    fun createSiblingCpyFiles() {
+        checkoutFilter.rootPaths.forEach { rootPath ->
+            var parent = File(workingDir, rootPath).parentFile
+            parent.mkdirs()
+            while (parent != null) {
+                val siblingFiles = parent.listFiles { file -> file.isFile }
+                if (File(parent, ".vltcpy").createNewFile()) {
+                    siblingFiles.forEach { it.copyTo(File(parent, it.name + ".cpy"), true) }
+                }
 
-            if (parent.name == PackagePlugin.JCR_ROOT) {
-                break
+                if (parent.name == PackagePlugin.JCR_ROOT) {
+                    break
+                }
+                parent = parent.parentFile
             }
-            parent = parent.parentFile
         }
     }
 

@@ -13,6 +13,10 @@ open class CheckoutTask : AemDefaultTask() {
 
     init {
         description = "Check out JCR content from running AEM instance."
+
+        beforeExecuted {
+            VltRunner(project).createSiblingCpyFiles()
+        }
     }
 
     @TaskAction
