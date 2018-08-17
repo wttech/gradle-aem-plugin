@@ -262,9 +262,10 @@ aem {
                 "**/.vlt*.tmp"
             ]
             skipProperties = [
-                "jcr:uuid|!**/home/users/*,!**/home/groups/*",
+                rule("jcr:uuid", ["**/home/users/*", "**/home/groups/*"], []),
                 "jcr:lastModified",
                 "jcr:created",
+                "jcr:isCheckedOut",
                 "cq:lastModified*",
                 "cq:lastReplicat*",
                 "*_x0040_Delete",
@@ -276,6 +277,7 @@ aem {
             ]
             skipNamespaces = true
             lineProcess = { file, line -> normalizeLine(file, line) }
+            contentProcess = { lines -> cleanNamespaces(lines) }
         }
       
         notificationEnabled = false

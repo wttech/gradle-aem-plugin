@@ -55,9 +55,10 @@ class VltCleaner(val project: Project, val root: File) {
      * (ANT style, delimited with ',') in which property shouldn't be removed.
      */
     var skipProperties: MutableList<String> = mutableListOf(
-            "jcr:uuid!**/home/users/*,**/home/groups/*",
+            rule("jcr:uuid", listOf("**/home/users/*", "**/home/groups/*"), listOf()),
             "jcr:lastModified",
             "jcr:created",
+            "jcr:isCheckedOut",
             "cq:lastModified*",
             "cq:lastReplicat*",
             "*_x0040_Delete",
@@ -81,6 +82,11 @@ class VltCleaner(val project: Project, val root: File) {
      * Define hook method for customizing properties clean up.
      */
     var lineProcess: (File, String) -> String = { file, line -> normalizeLine(file, line) }
+
+    /**
+     * Define hook method for customizing content clean up.
+     */
+    var contentProcess: (List<String>) -> List<String> = { lines -> cleanNamespaces(lines) }
 
     init {
         ConfigureUtil.configure(config.cleanConfig, this)
@@ -158,21 +164,22 @@ class VltCleaner(val project: Project, val root: File) {
                 result.add(processedLine)
             }
         }
-        cleanNamespaces(result)
-        return result
+        return contentProcess(result)
     }
 
-    private fun cleanNamespaces(result: MutableList<String>) {
+    fun cleanNamespaces(lines: List<String>): List<String> {
         if (!skipNamespaces) {
-            return
+            return lines
         }
 
-        val index = result.indexOfFirst { it.startsWith(JCR_ROOT_PREFIX) }
-        if (index != -1) {
-            val namespacesLine = result[1]
-            val properNamespaces = namespacesLine.removePrefix(JCR_ROOT_PREFIX).split(" ").filter { isNamespaceUsed(it, result) }
-            result.removeAt(index)
-            result.add(index, JCR_ROOT_PREFIX + " " + properNamespaces.joinToString(" "))
+        return lines.map { line ->
+            if (!line.startsWith(JCR_ROOT_PREFIX)) {
+                line
+            } else {
+                line.split(" ")
+                        .filter { it == JCR_ROOT_PREFIX || isNamespaceUsed(it, lines) }
+                        .joinToString(" ")
+            }
         }
     }
 
@@ -211,9 +218,9 @@ class VltCleaner(val project: Project, val root: File) {
         return eachProp(line) { propName, propValue ->
             var result = line
             if (propName == JCR_MIXIN_TYPES_PROP) {
-                val normalizedValue = propValue.removePrefix("[").removeSuffix("]")
+                val normalizedValue = StringUtils.substringBetween(propValue, "[", "]")
                 val resultValues = normalizedValue.split(",").filter { !matchAnyRule(it, file, skipMixinTypesRules) }
-                result = if (resultValues.isEmpty() || normalizedValue == "") {
+                result = if (resultValues.isEmpty() || normalizedValue.isEmpty()) {
                     ""
                 } else {
                     val resultValue = resultValues.joinToString(",")
@@ -253,6 +260,15 @@ class VltCleaner(val project: Project, val root: File) {
 
     private fun matchAnyRule(value: String, file: File, rules: List<VltCleanRule>): Boolean {
         return rules.any { it.match(file, value) }
+    }
+
+    fun rule(pattern: String, excludedPaths: List<String>, includedPaths: List<String>): String {
+        val paths = excludedPaths.map { "!$it" } + includedPaths
+        return if (paths.isEmpty()) {
+            pattern
+        } else {
+            pattern + "|" + paths.joinToString(",")
+        }
     }
 
     companion object {
