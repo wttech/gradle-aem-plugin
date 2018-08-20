@@ -53,24 +53,6 @@ class VltRunner(val project: Project) {
         }
     }
 
-    fun createSiblingCpyFiles() {
-        checkoutFilter.rootPaths.forEach { rootPath ->
-            var parent = File(workingDir, rootPath).parentFile
-            parent.mkdirs()
-            while (parent != null) {
-                val siblingFiles = parent.listFiles { file -> file.isFile }
-                if (File(parent, ".vltcpy").createNewFile()) {
-                    siblingFiles.forEach { it.copyTo(File(parent, it.name + ".cpy"), true) }
-                }
-
-                if (parent.name == PackagePlugin.JCR_ROOT) {
-                    break
-                }
-                parent = parent.parentFile
-            }
-        }
-    }
-
     val checkoutFilter by lazy { determineCheckoutFilter() }
 
     private fun determineCheckoutFilter(): VltFilter {
@@ -118,7 +100,28 @@ class VltRunner(val project: Project) {
         throw VltException("Vault instance cannot be determined neither by command line parameter nor AEM config.")
     }
 
-    fun clean() {
+    fun cleanBeforeCheckout() {
+        logger.info("Preparing files to be cleaned up (before checking out new ones) using filter: $checkoutFilter")
+
+        checkoutFilter.rootPaths.forEach { rootPath ->
+            var parent = File(workingDir, rootPath).parentFile
+            parent.mkdirs()
+            while (parent != null) {
+                val siblingFiles = parent.listFiles { file -> file.isFile }
+                if (File(parent, ".vltcpy").createNewFile()) {
+                    siblingFiles.forEach { it.copyTo(File(parent, it.name + ".cpy"), true) }
+                }
+
+                if (parent.name == PackagePlugin.JCR_ROOT) {
+                    break
+                }
+
+                parent = parent.parentFile
+            }
+        }
+    }
+
+    fun cleanAfterCheckout() {
         val contentDir = File(config.contentPath)
         if (!contentDir.exists()) {
             logger.warn("JCR content directory to be cleaned does not exist: ${contentDir.absolutePath}")
@@ -153,7 +156,7 @@ class VltRunner(val project: Project) {
             throw VltException("RCP param '-Paem.rcp.paths' is not specified.")
         }
 
-        paths.fold(mutableMapOf<String, String>(), { r, path ->
+        paths.fold(mutableMapOf<String, String>()) { r, path ->
             val parts = path.split("=").map { it.trim() }
             when (parts.size) {
                 1 -> r[path] = path
@@ -161,7 +164,7 @@ class VltRunner(val project: Project) {
                 else -> throw VltException("RCP path has invalid format: $path")
             }
             r
-        })
+        }
     }
 
     val rcpOpts: String by lazy { project.properties["aem.rcp.opts"] as String? ?: "-b 100 -r -u" }

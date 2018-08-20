@@ -19,18 +19,6 @@ class VltCleaner(val project: Project, val root: File) {
 
     private val config = AemConfig.of(project)
 
-    private val filesDeletedRules by lazy {
-        VltCleanRule.manyFrom(filesDeleted)
-    }
-
-    private val skipPropertiesRules by lazy {
-        VltCleanRule.manyFrom(skipProperties)
-    }
-
-    private val skipMixinTypesRules by lazy {
-        VltCleanRule.manyFrom(skipMixinTypes)
-    }
-
     private val dotContentFiles: Collection<File>
         get() = FileUtils.listFiles(root, NameFileFilter(JCR_CONTENT_FILE), TrueFileFilter.INSTANCE)
                 ?: listOf()
@@ -48,13 +36,17 @@ class VltCleaner(val project: Project, val root: File) {
             "**/.vlt*.tmp"
     )
 
+    private val filesDeletedRules by lazy {
+        VltCleanRule.manyFrom(filesDeleted)
+    }
+
     /**
      * Define here properties that will be skipped when pulling JCR content from AEM instance.
      *
      * After special delimiter '!' there could be specified one or many path patterns
      * (ANT style, delimited with ',') in which property shouldn't be removed.
      */
-    var skipProperties: MutableList<String> = mutableListOf(
+    var propertiesSkipped: MutableList<String> = mutableListOf(
             rule("jcr:uuid", listOf("**/home/users/*", "**/home/groups/*"), listOf()),
             "jcr:lastModified",
             "jcr:created",
@@ -65,18 +57,26 @@ class VltCleaner(val project: Project, val root: File) {
             "*_x0040_TypeHint"
     )
 
+    private val propertiesSkippedRules by lazy {
+        VltCleanRule.manyFrom(propertiesSkipped)
+    }
+
     /**
      * Define here mixin types that will be skipped when pulling JCR content from AEM instance.
      */
-    var skipMixinTypes: MutableList<String> = mutableListOf(
+    var mixinTypesSkipped: MutableList<String> = mutableListOf(
             "cq:ReplicationStatus",
             "mix:versionable"
     )
 
+    private val mixinTypesSkippedRules by lazy {
+        VltCleanRule.manyFrom(mixinTypesSkipped)
+    }
+
     /**
      * Turn on/off namespace normalization after properties clean up.
      */
-    var skipNamespaces: Boolean = true
+    var namespacesSkipped: Boolean = true
 
     /**
      * Define hook method for customizing properties clean up.
@@ -168,7 +168,7 @@ class VltCleaner(val project: Project, val root: File) {
     }
 
     fun cleanNamespaces(lines: List<String>): List<String> {
-        if (!skipNamespaces) {
+        if (!namespacesSkipped) {
             return lines
         }
 
@@ -197,13 +197,13 @@ class VltCleaner(val project: Project, val root: File) {
     }
 
     fun skipProperties(file: File, line: String): String {
-        if (skipProperties.isEmpty()) {
+        if (propertiesSkipped.isEmpty()) {
             return line
         }
 
         return eachProp(line) { propOccurrence, _ ->
             var result = line
-            if (matchAnyRule(propOccurrence, file, skipPropertiesRules)) {
+            if (matchAnyRule(propOccurrence, file, propertiesSkippedRules)) {
                 result = ""
             }
             result
@@ -211,7 +211,7 @@ class VltCleaner(val project: Project, val root: File) {
     }
 
     fun normalizeMixins(file: File, line: String): String {
-        if (skipMixinTypes.isEmpty()) {
+        if (mixinTypesSkipped.isEmpty()) {
             return line
         }
 
@@ -219,7 +219,7 @@ class VltCleaner(val project: Project, val root: File) {
             var result = line
             if (propName == JCR_MIXIN_TYPES_PROP) {
                 val normalizedValue = StringUtils.substringBetween(propValue, "[", "]")
-                val resultValues = normalizedValue.split(",").filter { !matchAnyRule(it, file, skipMixinTypesRules) }
+                val resultValues = normalizedValue.split(",").filter { !matchAnyRule(it, file, mixinTypesSkippedRules) }
                 result = if (resultValues.isEmpty() || normalizedValue.isEmpty()) {
                     ""
                 } else {
@@ -260,6 +260,10 @@ class VltCleaner(val project: Project, val root: File) {
 
     private fun matchAnyRule(value: String, file: File, rules: List<VltCleanRule>): Boolean {
         return rules.any { it.match(file, value) }
+    }
+
+    fun rule(pattern: String, excludedPaths: List<String>): String {
+        return rule(pattern, excludedPaths, listOf())
     }
 
     fun rule(pattern: String, excludedPaths: List<String>, includedPaths: List<String>): String {
