@@ -109,7 +109,7 @@ class VltRunner(val project: Project) {
             while (parent != null) {
                 val siblingFiles = parent.listFiles { file -> file.isFile }
                 if (File(parent, ".vltcpy").createNewFile()) {
-                    siblingFiles.forEach { it.copyTo(File(parent, it.name + ".cpy"), true) }
+                    siblingFiles.filter { !it.name.endsWith(".cpy") }.forEach { it.copyTo(File(parent, it.name + ".cpy"), true) }
                 }
 
                 if (parent.name == PackagePlugin.JCR_ROOT) {

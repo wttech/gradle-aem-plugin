@@ -261,7 +261,7 @@ aem {
                 "**/.vlt",
                 "**/.vlt*.tmp"
             ]
-            skipProperties = [
+            propertiesSkipped = [
                 rule("jcr:uuid", ["**/home/users/*", "**/home/groups/*"], []),
                 "jcr:lastModified",
                 "jcr:created",
@@ -271,11 +271,11 @@ aem {
                 "*_x0040_Delete",
                 "*_x0040_TypeHint"
             ]
-            skipMixinTypes = [
+            mixinTypesSkipped = [
                 "cq:ReplicationStatus",
                 "mix:versionable"
             ]
-            skipNamespaces = true
+            namespacesSkipped = true
             lineProcess = { file, line -> normalizeLine(file, line) }
             contentProcess = { lines -> cleanNamespaces(lines) }
         }

@@ -173,12 +173,12 @@ class VltCleaner(val project: Project, val root: File) {
         }
 
         return lines.map { line ->
-            if (!line.startsWith(JCR_ROOT_PREFIX)) {
-                line
-            } else {
+            if (line.startsWith(JCR_ROOT_PREFIX)) {
                 line.split(" ")
                         .filter { it == JCR_ROOT_PREFIX || isNamespaceUsed(it, lines) }
                         .joinToString(" ")
+            } else {
+                line
             }
         }
     }
@@ -202,11 +202,11 @@ class VltCleaner(val project: Project, val root: File) {
         }
 
         return eachProp(line) { propOccurrence, _ ->
-            var result = line
             if (matchAnyRule(propOccurrence, file, propertiesSkippedRules)) {
-                result = ""
+                ""
+            } else {
+                line
             }
-            result
         }
     }
 
@@ -216,18 +216,18 @@ class VltCleaner(val project: Project, val root: File) {
         }
 
         return eachProp(line) { propName, propValue ->
-            var result = line
             if (propName == JCR_MIXIN_TYPES_PROP) {
                 val normalizedValue = StringUtils.substringBetween(propValue, "[", "]")
                 val resultValues = normalizedValue.split(",").filter { !matchAnyRule(it, file, mixinTypesSkippedRules) }
-                result = if (resultValues.isEmpty() || normalizedValue.isEmpty()) {
+                if (resultValues.isEmpty() || normalizedValue.isEmpty()) {
                     ""
                 } else {
                     val resultValue = resultValues.joinToString(",")
                     line.replace(normalizedValue, resultValue)
                 }
+            } else {
+                line
             }
-            result
         }
     }
 
@@ -245,8 +245,8 @@ class VltCleaner(val project: Project, val root: File) {
         var parent = root.parentFile
         while (parent != null) {
             val siblingFiles = parent.listFiles { file: File -> file.isFile } ?: arrayOf<File>()
-            if (siblingFiles.any { it.name.equals(".vltcpy") }) {
-                siblingFiles.filter { !it.name.equals(".cpy") }.forEach { it.delete() }
+            if (siblingFiles.any { it.name == ".vltcpy" }) {
+                siblingFiles.filter { !it.name.endsWith(".cpy") }.forEach { it.delete() }
                 siblingFiles.filter { it.name.endsWith(".cpy") }.forEach { it.renameTo(File(it.path.removeSuffix(".cpy"))) }
             }
 
