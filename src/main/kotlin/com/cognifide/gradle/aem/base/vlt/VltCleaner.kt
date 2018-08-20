@@ -143,17 +143,16 @@ class VltCleaner(val project: Project, val root: File) {
     private fun filterLines(file: File, lines: List<String>): List<String> {
         val result = mutableListOf<String>()
         for (line in lines) {
-            val cleanLine = StringUtils.trimToEmpty(line)
             val processedLine = lineProcess(file, line)
             if (processedLine.isEmpty()) {
                 when {
                     result.last().endsWith(">") -> {
                         // skip line
                     }
-                    cleanLine.endsWith("/>") -> {
+                    line.trim().endsWith("/>") -> {
                         result.add(result.removeAt(result.size - 1) + "/>")
                     }
-                    cleanLine.endsWith(">") -> {
+                    line.trim().endsWith(">") -> {
                         result.add(result.removeAt(result.size - 1) + ">")
                     }
                     else -> {
@@ -173,7 +172,7 @@ class VltCleaner(val project: Project, val root: File) {
         }
 
         return lines.map { line ->
-            if (line.startsWith(JCR_ROOT_PREFIX)) {
+            if (line.trim().startsWith(JCR_ROOT_PREFIX)) {
                 line.split(" ")
                         .filter { it == JCR_ROOT_PREFIX || isNamespaceUsed(it, lines) }
                         .joinToString(" ")
