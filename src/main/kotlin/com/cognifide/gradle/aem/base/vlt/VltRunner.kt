@@ -18,7 +18,9 @@ class VltRunner(val project: Project) {
 
     val config = AemConfig.of(project)
 
-    val cleaner = VltCleaner(project)
+    val cleaner by lazy {
+        VltCleaner(project)
+    }
 
     val workingDir: File
         get() {
