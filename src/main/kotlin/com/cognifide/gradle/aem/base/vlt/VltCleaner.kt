@@ -106,7 +106,6 @@ class VltCleaner(val project: Project) {
         removeFiles(root)
         cleanDotContents(root)
         cleanParents(root)
-        removeCopies(root)
     }
 
     fun dotContentFiles(root: File): Collection<File> {
@@ -142,20 +141,6 @@ class VltCleaner(val project: Project) {
 
         logger.info("Deleting file {}", file.path)
         FileUtils.deleteQuietly(file)
-    }
-
-    private fun removeCopies(root: File) {
-        if (root.isDirectory) {
-            allFiles(root).forEach { removeCopy(it) }
-        } else {
-            removeCopy(root)
-        }
-    }
-
-    private fun removeCopy(file: File) {
-        if (Patterns.wildcard(file, COPY_FILES)) {
-            FileUtils.deleteQuietly(file)
-        }
     }
 
     private fun cleanDotContentFile(file: File) {
