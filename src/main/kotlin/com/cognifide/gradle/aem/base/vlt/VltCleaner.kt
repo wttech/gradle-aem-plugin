@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.base.vlt
 import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import org.apache.commons.io.FileUtils
+import org.apache.commons.io.filefilter.EmptyFileFilter
 import org.apache.commons.io.filefilter.NameFileFilter
 import org.apache.commons.io.filefilter.TrueFileFilter
 import org.apache.commons.lang3.CharEncoding
@@ -90,7 +91,8 @@ class VltCleaner(val project: Project) {
         while (parent != null) {
             val siblingFiles = parent.listFiles { file -> file.isFile }
             if (File(parent, COPY_ROOT_INDICATOR).createNewFile()) {
-                siblingFiles.filter { !it.name.endsWith(COPY_FILE_EXT) }.forEach { it.copyTo(File(parent, it.name + COPY_FILE_EXT), true) }
+                siblingFiles.filter { !it.name.endsWith(COPY_FILE_EXT) && !matchAnyRule(it.path, it, filesDeletedRules) }
+                        .forEach { it.copyTo(File(parent, it.name + COPY_FILE_EXT), true) }
             }
 
             if (parent.name == PackagePlugin.JCR_ROOT) {
@@ -103,16 +105,17 @@ class VltCleaner(val project: Project) {
 
     fun clean(root: File) {
         removeFiles(root)
+        removeEmptyDirs(root)
         cleanDotContents(root)
         cleanParents(root)
     }
 
-    fun dotContentFiles(root: File): Collection<File> {
+    private fun dotContentFiles(root: File): Collection<File> {
         return FileUtils.listFiles(root, NameFileFilter(JCR_CONTENT_FILE), TrueFileFilter.INSTANCE)
                 ?: listOf()
     }
 
-    fun allFiles(root: File): Collection<File> {
+    private fun allFiles(root: File): Collection<File> {
         return FileUtils.listFiles(root, TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE)
                 ?: listOf()
     }
@@ -140,6 +143,19 @@ class VltCleaner(val project: Project) {
 
         logger.info("Deleting file {}", file.path)
         FileUtils.deleteQuietly(file)
+    }
+
+    private fun removeEmptyDirs(root: File) {
+        root.listFiles().filter { it.isDirectory() }.forEach {
+            if (EmptyFileFilter.EMPTY.accept(it)) {
+                FileUtils.deleteQuietly(it)
+            } else {
+                removeEmptyDirs(it)
+            }
+        }
+        if (EmptyFileFilter.EMPTY.accept(root)) {
+            FileUtils.deleteQuietly(root)
+        }
     }
 
     private fun cleanDotContentFile(file: File) {
@@ -214,7 +230,7 @@ class VltCleaner(val project: Project) {
         return normalizeMixins(file, skipProperties(file, line))
     }
 
-    fun skipProperties(file: File, line: String): String {
+    private fun skipProperties(file: File, line: String): String {
         if (propertiesSkipped.isEmpty()) {
             return line
         }
@@ -228,7 +244,7 @@ class VltCleaner(val project: Project) {
         }
     }
 
-    fun normalizeMixins(file: File, line: String): String {
+    private fun normalizeMixins(file: File, line: String): String {
         if (mixinTypesSkipped.isEmpty()) {
             return line
         }
