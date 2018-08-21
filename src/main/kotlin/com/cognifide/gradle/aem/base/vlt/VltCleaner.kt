@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem.base.vlt
 
 import com.cognifide.gradle.aem.api.AemConfig
-import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.filefilter.NameFileFilter
@@ -30,7 +29,7 @@ class VltCleaner(val project: Project) {
     )
 
     private val filesDeletedRules by lazy {
-        VltCleanRule.manyFrom(filesDeleted)
+        VltCleanRule.manyFrom(filesDeleted + COPY_FILES)
     }
 
     /**
@@ -106,7 +105,6 @@ class VltCleaner(val project: Project) {
         removeFiles(root)
         cleanDotContents(root)
         cleanParents(root)
-        removeCopies(root)
     }
 
     fun dotContentFiles(root: File): Collection<File> {
@@ -144,22 +142,8 @@ class VltCleaner(val project: Project) {
         FileUtils.deleteQuietly(file)
     }
 
-    private fun removeCopies(root: File) {
-        if (root.isDirectory) {
-            allFiles(root).forEach { removeCopy(it) }
-        } else {
-            removeCopy(root)
-        }
-    }
-
-    private fun removeCopy(file: File) {
-        if (Patterns.wildcard(file, COPY_FILES)) {
-            FileUtils.deleteQuietly(file)
-        }
-    }
-
     private fun cleanDotContentFile(file: File) {
-        if (file.name != JCR_CONTENT_FILE || !file.exists()) {
+        if (!file.exists() || file.name != JCR_CONTENT_FILE) {
             return
         }
 
@@ -280,7 +264,7 @@ class VltCleaner(val project: Project) {
         while (parent != null) {
             val siblingFiles = parent.listFiles { file: File -> file.isFile } ?: arrayOf<File>()
             if (siblingFiles.any { it.name == COPY_ROOT_INDICATOR }) {
-                siblingFiles.filter { !it.name.endsWith(COPY_FILE_EXT) }.forEach { it.delete() }
+                siblingFiles.filter { !it.name.endsWith(COPY_FILE_EXT) }.forEach { FileUtils.deleteQuietly(it) }
                 siblingFiles.filter { it.name.endsWith(COPY_FILE_EXT) }.forEach { it.renameTo(File(it.path.removeSuffix(COPY_FILE_EXT))) }
             }
 
