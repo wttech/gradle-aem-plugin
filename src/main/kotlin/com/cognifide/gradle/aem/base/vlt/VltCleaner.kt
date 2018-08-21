@@ -29,7 +29,7 @@ class VltCleaner(val project: Project) {
     )
 
     private val filesDeletedRules by lazy {
-        VltCleanRule.manyFrom(filesDeleted + COPY_FILES)
+        VltCleanRule.manyFrom(filesDeleted)
     }
 
     /**
@@ -303,11 +303,6 @@ class VltCleaner(val project: Project) {
         const val COPY_FILE_EXT = ".cpy"
 
         const val COPY_ROOT_INDICATOR = ".cpydir"
-
-        val COPY_FILES = listOf(
-                "**/*$COPY_FILE_EXT",
-                "**/$COPY_ROOT_INDICATOR"
-        )
 
         val CONTENT_PROP_PATTERN: Pattern = Pattern.compile("([^=]+)=\"([^\"]+)\"")
 
