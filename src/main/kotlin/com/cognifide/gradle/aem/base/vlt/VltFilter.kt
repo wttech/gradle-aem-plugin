@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.base.vlt
 import com.cognifide.gradle.aem.api.AemTask
 import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.internal.file.FileOperations
+import com.cognifide.gradle.aem.pkg.PackagePlugin
 import org.gradle.api.Project
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
@@ -47,6 +48,11 @@ class VltFilter(val file: File, private val temporary: Boolean = false) : Closea
         get() {
             return rootElements.map { it.attr("root") }.toSet()
         }
+
+    fun rootDirs(contentDir: File): List<File> {
+        return rootPaths.map { File(contentDir, "${PackagePlugin.JCR_ROOT}/${it.removeSurrounding("/")}") }
+                .filter { it.exists() }
+    }
 
     override fun close() {
         if (temporary) {

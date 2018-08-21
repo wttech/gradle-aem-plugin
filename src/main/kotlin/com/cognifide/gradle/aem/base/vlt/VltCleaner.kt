@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.base.vlt
 
 import com.cognifide.gradle.aem.api.AemConfig
+import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.filefilter.NameFileFilter
@@ -13,19 +14,11 @@ import java.io.File
 import java.io.IOException
 import java.util.regex.Pattern
 
-class VltCleaner(val project: Project, val root: File) {
+class VltCleaner(val project: Project) {
 
     private val logger = project.logger
 
     private val config = AemConfig.of(project)
-
-    private val dotContentFiles: Collection<File>
-        get() = FileUtils.listFiles(root, NameFileFilter(JCR_CONTENT_FILE), TrueFileFilter.INSTANCE)
-                ?: listOf()
-
-    private val allFiles: Collection<File>
-        get() = FileUtils.listFiles(root, TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE)
-                ?: listOf()
 
     /**
      * Determines which files will be deleted within running cleaning
@@ -92,30 +85,58 @@ class VltCleaner(val project: Project, val root: File) {
         ConfigureUtil.configure(config.cleanConfig, this)
     }
 
-    fun clean() {
-        removeFiles()
-        cleanDotContent()
-        cleanParents()
-    }
+    fun prepare(root: File) {
+        var parent = root.parentFile
+        parent.mkdirs()
+        while (parent != null) {
+            val siblingFiles = parent.listFiles { file -> file.isFile }
+            if (File(parent, COPY_ROOT_INDICATOR).createNewFile()) {
+                siblingFiles.filter { !it.name.endsWith(COPY_FILE_EXT) }.forEach { it.copyTo(File(parent, it.name + COPY_FILE_EXT), true) }
+            }
 
-    private fun cleanDotContent() {
-        if (root.isDirectory) {
-            dotContentFiles.forEach { cleanDotContent(it) }
-        } else {
-            cleanDotContent(root)
+            if (parent.name == PackagePlugin.JCR_ROOT) {
+                break
+            }
+
+            parent = parent.parentFile
         }
     }
 
-    private fun removeFiles() {
+    fun clean(root: File) {
+        removeFiles(root)
+        cleanDotContents(root)
+        cleanParents(root)
+        removeCopies(root)
+    }
+
+    fun dotContentFiles(root: File): Collection<File> {
+        return FileUtils.listFiles(root, NameFileFilter(JCR_CONTENT_FILE), TrueFileFilter.INSTANCE)
+                ?: listOf()
+    }
+
+    fun allFiles(root: File): Collection<File> {
+        return FileUtils.listFiles(root, TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE)
+                ?: listOf()
+    }
+
+    private fun cleanDotContents(root: File) {
         if (root.isDirectory) {
-            allFiles.forEach { removeFile(it) }
+            dotContentFiles(root).forEach { cleanDotContentFile(it) }
+        } else {
+            cleanDotContentFile(root)
+        }
+    }
+
+    private fun removeFiles(root: File) {
+        if (root.isDirectory) {
+            allFiles(root).forEach { removeFile(it) }
         } else {
             removeFile(root)
         }
     }
 
     private fun removeFile(file: File) {
-        if (!matchAnyRule(file.path, file, filesDeletedRules) || !file.exists()) {
+        if (!file.exists() || !matchAnyRule(file.path, file, filesDeletedRules)) {
             return
         }
 
@@ -123,7 +144,21 @@ class VltCleaner(val project: Project, val root: File) {
         FileUtils.deleteQuietly(file)
     }
 
-    private fun cleanDotContent(file: File) {
+    private fun removeCopies(root: File) {
+        if (root.isDirectory) {
+            allFiles(root).forEach { removeCopy(it) }
+        } else {
+            removeCopy(root)
+        }
+    }
+
+    private fun removeCopy(file: File) {
+        if (Patterns.wildcard(file, COPY_FILES)) {
+            FileUtils.deleteQuietly(file)
+        }
+    }
+
+    private fun cleanDotContentFile(file: File) {
         if (file.name != JCR_CONTENT_FILE || !file.exists()) {
             return
         }
@@ -240,13 +275,13 @@ class VltCleaner(val project: Project, val root: File) {
         }
     }
 
-    private fun cleanParents() {
+    private fun cleanParents(root: File) {
         var parent = root.parentFile
         while (parent != null) {
             val siblingFiles = parent.listFiles { file: File -> file.isFile } ?: arrayOf<File>()
-            if (siblingFiles.any { it.name == ".vltcpy" }) {
-                siblingFiles.filter { !it.name.endsWith(".cpy") }.forEach { it.delete() }
-                siblingFiles.filter { it.name.endsWith(".cpy") }.forEach { it.renameTo(File(it.path.removeSuffix(".cpy"))) }
+            if (siblingFiles.any { it.name == COPY_ROOT_INDICATOR }) {
+                siblingFiles.filter { !it.name.endsWith(COPY_FILE_EXT) }.forEach { it.delete() }
+                siblingFiles.filter { it.name.endsWith(COPY_FILE_EXT) }.forEach { it.renameTo(File(it.path.removeSuffix(COPY_FILE_EXT))) }
             }
 
             if (parent.name == PackagePlugin.JCR_ROOT) {
@@ -280,6 +315,15 @@ class VltCleaner(val project: Project, val root: File) {
         const val JCR_MIXIN_TYPES_PROP = "jcr:mixinTypes"
 
         const val JCR_ROOT_PREFIX = "<jcr:root"
+
+        const val COPY_FILE_EXT = ".cpy"
+
+        const val COPY_ROOT_INDICATOR = ".cpydir"
+
+        val COPY_FILES = listOf(
+                "**/*$COPY_FILE_EXT",
+                "**/$COPY_ROOT_INDICATOR"
+        )
 
         val CONTENT_PROP_PATTERN: Pattern = Pattern.compile("([^=]+)=\"([^\"]+)\"")
 

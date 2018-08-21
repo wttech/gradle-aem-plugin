@@ -29,7 +29,7 @@ abstract class AemDefaultTask : DefaultTask(), AemTask {
         project.gradle.taskGraph.whenReady {
             val task = project.tasks.getByName(taskName)
             if (it.hasTask(task)) {
-                callback()
+                task.apply(callback)
             }
         }
     }
@@ -37,21 +37,18 @@ abstract class AemDefaultTask : DefaultTask(), AemTask {
     fun afterConfigured(task: Task, callback: Task.() -> Unit) {
         project.gradle.taskGraph.whenReady {
             if (it.hasTask(task)) {
-                callback()
+                task.apply(callback)
             }
         }
     }
 
-    fun beforeExecuted(callback: Task.() -> Unit) {
-        afterConfigured(this) { doFirst(callback) }
-    }
-
     fun beforeExecuted(taskName: String, callback: Task.() -> Unit) {
-        afterConfigured(taskName) { doFirst(callback) }
-    }
-
-    fun beforeExecuted(task: Task, callback: Task.() -> Unit) {
-        afterConfigured(task) { doFirst(callback) }
+        project.gradle.taskGraph.whenReady {
+            val task = project.tasks.getByName(taskName)
+            if (it.hasTask(task)) {
+                task.doFirst(callback)
+            }
+        }
     }
 
 }

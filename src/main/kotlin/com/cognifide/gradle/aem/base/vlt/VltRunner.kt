@@ -18,6 +18,8 @@ class VltRunner(val project: Project) {
 
     val config = AemConfig.of(project)
 
+    val cleaner = VltCleaner(project)
+
     val workingDir: File
         get() {
             var path = "${config.contentPath}/${PackagePlugin.JCR_ROOT}"
@@ -28,6 +30,25 @@ class VltRunner(val project: Project) {
             }
 
             return File(path)
+        }
+
+    val contentDir: File
+        get() = File(config.contentPath)
+
+    val checkoutFilterRootDirs: List<File>
+        get() {
+            if (!contentDir.exists()) {
+                logger.warn("JCR content directory does not exist: ${contentDir.absolutePath}")
+                return listOf()
+            }
+
+            val roots = checkoutFilter.rootDirs(contentDir)
+            if (roots.isEmpty()) {
+                logger.warn("For given filter there is no existing root directories.")
+                return listOf()
+            }
+
+            return roots
         }
 
     fun raw(command: String, props: Map<String, Any> = mapOf()) {
@@ -103,44 +124,18 @@ class VltRunner(val project: Project) {
     fun cleanBeforeCheckout() {
         logger.info("Preparing files to be cleaned up (before checking out new ones) using filter: $checkoutFilter")
 
-        checkoutFilter.rootPaths.forEach { rootPath ->
-            var parent = File(workingDir, rootPath).parentFile
-            parent.mkdirs()
-            while (parent != null) {
-                val siblingFiles = parent.listFiles { file -> file.isFile }
-                if (File(parent, ".vltcpy").createNewFile()) {
-                    siblingFiles.filter { !it.name.endsWith(".cpy") }.forEach { it.copyTo(File(parent, it.name + ".cpy"), true) }
-                }
-
-                if (parent.name == PackagePlugin.JCR_ROOT) {
-                    break
-                }
-
-                parent = parent.parentFile
-            }
+        checkoutFilterRootDirs.forEach { root ->
+            logger.lifecycle("Preparing root: $root")
+            cleaner.prepare(root)
         }
     }
 
     fun cleanAfterCheckout() {
-        val contentDir = File(config.contentPath)
-        if (!contentDir.exists()) {
-            logger.warn("JCR content directory to be cleaned does not exist: ${contentDir.absolutePath}")
-            return
-        }
-
         logger.info("Cleaning using $checkoutFilter")
 
-        val roots = checkoutFilter.rootPaths
-                .map { File(contentDir, "${PackagePlugin.JCR_ROOT}/${it.removeSurrounding("/")}") }
-                .filter { it.exists() }
-        if (roots.isEmpty()) {
-            logger.warn("For given filter there is no existing roots to be cleaned.")
-            return
-        }
-
-        roots.forEach { root ->
+        checkoutFilterRootDirs.forEach { root ->
             logger.lifecycle("Cleaning root: $root")
-            VltCleaner(project, root).clean()
+            cleaner.clean(root)
         }
     }
 
