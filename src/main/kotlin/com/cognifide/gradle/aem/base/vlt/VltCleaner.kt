@@ -105,14 +105,21 @@ class VltCleaner(val project: Project) {
     }
 
     fun prepare(root: File) {
-        doParentsBackup(root)
+        if (parentsBackupEnabled) {
+            doParentsBackup(root)
+        }
     }
 
     fun clean(root: File) {
         removeFiles(root)
         removeEmptyDirs(root)
         cleanDotContents(root)
-        cleanParents(root)
+
+        if (parentsBackupEnabled) {
+            undoParentsBackup(root)
+        } else {
+            cleanParents(root)
+        }
     }
 
     private fun dotContentFiles(root: File): Collection<File> {
@@ -272,10 +279,6 @@ class VltCleaner(val project: Project) {
     }
 
     private fun doParentsBackup(root: File) {
-        if (!parentsBackupEnabled) {
-            return
-        }
-
         var parent = root.parentFile
         parent.mkdirs()
         while (parent != null) {
@@ -297,24 +300,33 @@ class VltCleaner(val project: Project) {
         }
     }
 
+    private fun undoParentsBackup(root: File) {
+        var parent = root.parentFile
+        while (parent != null) {
+            val siblingFiles = parent.listFiles { file -> file.isFile } ?: arrayOf()
+            if (siblingFiles.any { it.name == parentsBackupDirIndicator }) {
+                siblingFiles.filter { !it.name.endsWith(parentsBackupSuffix) }.forEach { FileUtils.deleteQuietly(it) }
+                siblingFiles.filter { it.name.endsWith(parentsBackupSuffix) }.forEach { backup ->
+                    val origin = File(backup.path.removeSuffix(parentsBackupSuffix))
+                    logger.info("Undoing backup of parent file: $backup")
+                    backup.renameTo(origin)
+                }
+            }
+
+            if (parent.name == PackagePlugin.JCR_ROOT) {
+                break
+            }
+
+            parent = parent.parentFile
+        }
+    }
+
     private fun cleanParents(root: File) {
         var parent = root.parentFile
         while (parent != null) {
             val siblingFiles = parent.listFiles { file -> file.isFile } ?: arrayOf()
-            when {
-                parentsBackupEnabled && siblingFiles.any { it.name == parentsBackupDirIndicator } -> {
-                    siblingFiles.filter { !it.name.endsWith(parentsBackupSuffix) }.forEach { FileUtils.deleteQuietly(it) }
-                    siblingFiles.filter { it.name.endsWith(parentsBackupSuffix) }.forEach { backup ->
-                        val origin = File(backup.path.removeSuffix(parentsBackupSuffix))
-                        logger.info("Undoing backup of parent file: $backup")
-                        backup.renameTo(origin)
-                    }
-                }
-                !parentsBackupEnabled -> {
-                    siblingFiles.forEach { removeFile(it) }
-                    siblingFiles.forEach { cleanDotContentFile(it) }
-                }
-            }
+            siblingFiles.forEach { removeFile(it) }
+            siblingFiles.forEach { cleanDotContentFile(it) }
 
             if (parent.name == PackagePlugin.JCR_ROOT) {
                 break
