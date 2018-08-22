@@ -159,6 +159,7 @@ class VltCleaner(val project: Project) {
         val siblingDirs = root.listFiles { file -> file.isDirectory } ?: arrayOf()
         siblingDirs.forEach { removeEmptyDirs(it) }
         if (EmptyFileFilter.EMPTY.accept(root)) {
+            logger.info("Removing empty directory {}", root.path)
             FileUtils.deleteQuietly(root)
         }
     }
