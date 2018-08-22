@@ -96,9 +96,9 @@ class VltCleaner(val project: Project) {
     var lineProcess: (File, String) -> String = { file, line -> normalizeLine(file, line) }
 
     /**
-     * Hook for post-processing content for '.content.xml' files.
+     * Hook for additional all lines processing for '.content.xml' files.
      */
-    var contentProcess: (List<String>) -> List<String> = { lines -> cleanNamespaces(lines) }
+    var contentProcess: (File, List<String>) -> List<String> = { file, lines -> normalizeContent(file, lines) }
 
     init {
         project.afterEvaluate { ConfigureUtil.configure(config.cleanConfig, this) }
@@ -123,11 +123,13 @@ class VltCleaner(val project: Project) {
     }
 
     private fun dotContentFiles(root: File): Collection<File> {
-        return FileUtils.listFiles(root, NameFileFilter(JCR_CONTENT_FILE), TrueFileFilter.INSTANCE) ?: listOf()
+        return FileUtils.listFiles(root, NameFileFilter(JCR_CONTENT_FILE), TrueFileFilter.INSTANCE)
+                ?: listOf()
     }
 
     private fun allFiles(root: File): Collection<File> {
-        return FileUtils.listFiles(root, TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE) ?: listOf()
+        return FileUtils.listFiles(root, TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE)
+                ?: listOf()
     }
 
     private fun cleanDotContents(root: File) {
@@ -204,7 +206,12 @@ class VltCleaner(val project: Project) {
                 result.add(processedLine)
             }
         }
-        return contentProcess(result)
+
+        return contentProcess(file, result)
+    }
+
+    fun normalizeContent(file: File, lines: List<String>): List<String> {
+        return cleanNamespaces(lines)
     }
 
     fun cleanNamespaces(lines: List<String>): List<String> {

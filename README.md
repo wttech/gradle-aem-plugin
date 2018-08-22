@@ -281,7 +281,7 @@ aem {
             parentsBackupEnabled = true
             parentsBackupSuffix = ".bak"
             lineProcess = { file, line -> normalizeLine(file, line) }
-            contentProcess = { lines -> cleanNamespaces(lines) }
+            contentProcess = { file, lines -> normalizeContent(file, lines) }
         }
       
         notificationEnabled = false
