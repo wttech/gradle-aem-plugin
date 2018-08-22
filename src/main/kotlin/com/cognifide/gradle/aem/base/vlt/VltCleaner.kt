@@ -112,17 +112,15 @@ class VltCleaner(val project: Project) {
         removeFiles(root)
         removeEmptyDirs(root)
         cleanDotContents(root)
-        undoParentsBackup(root)
+        cleanParents(root)
     }
 
     private fun dotContentFiles(root: File): Collection<File> {
-        return FileUtils.listFiles(root, NameFileFilter(JCR_CONTENT_FILE), TrueFileFilter.INSTANCE)
-                ?: listOf()
+        return FileUtils.listFiles(root, NameFileFilter(JCR_CONTENT_FILE), TrueFileFilter.INSTANCE) ?: listOf()
     }
 
     private fun allFiles(root: File): Collection<File> {
-        return FileUtils.listFiles(root, TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE)
-                ?: listOf()
+        return FileUtils.listFiles(root, TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE) ?: listOf()
     }
 
     private fun cleanDotContents(root: File) {
@@ -151,13 +149,8 @@ class VltCleaner(val project: Project) {
     }
 
     private fun removeEmptyDirs(root: File) {
-        root.listFiles().filter { it.isDirectory }.forEach {
-            if (EmptyFileFilter.EMPTY.accept(it)) {
-                FileUtils.deleteQuietly(it)
-            } else {
-                removeEmptyDirs(it)
-            }
-        }
+        val siblingDirs = root.listFiles { file -> file.isDirectory } ?: arrayOf()
+        siblingDirs.forEach { removeEmptyDirs(it) }
         if (EmptyFileFilter.EMPTY.accept(root)) {
             FileUtils.deleteQuietly(root)
         }
@@ -288,7 +281,7 @@ class VltCleaner(val project: Project) {
         var parent = root.parentFile
         parent.mkdirs()
         while (parent != null) {
-            val siblingFiles = parent.listFiles { file -> file.isFile }
+            val siblingFiles = parent.listFiles { file -> file.isFile } ?: arrayOf()
             if (File(parent, parentsBackupDirIndicator).createNewFile()) {
                 siblingFiles.filter { !it.name.endsWith(parentsBackupSuffix) && !matchAnyRule(it.path, it, filesDeletedRules) }
                         .forEach { origin ->
@@ -306,20 +299,22 @@ class VltCleaner(val project: Project) {
         }
     }
 
-    private fun undoParentsBackup(root: File) {
-        if (!parentsBackupEnabled) {
-            return
-        }
-
+    private fun cleanParents(root: File) {
         var parent = root.parentFile
         while (parent != null) {
-            val siblingFiles = parent.listFiles { file: File -> file.isFile } ?: arrayOf<File>()
-            if (siblingFiles.any { it.name == parentsBackupDirIndicator }) {
-                siblingFiles.filter { !it.name.endsWith(parentsBackupSuffix) }.forEach { FileUtils.deleteQuietly(it) }
-                siblingFiles.filter { it.name.endsWith(parentsBackupSuffix) }.forEach { backup ->
-                    val origin = File(backup.path.removeSuffix(parentsBackupSuffix))
-                    logger.info("Undoing backup of parent file: $backup")
-                    backup.renameTo(origin)
+            val siblingFiles = parent.listFiles { file -> file.isFile } ?: arrayOf()
+            when {
+                parentsBackupEnabled && siblingFiles.any { it.name == parentsBackupDirIndicator } -> {
+                    siblingFiles.filter { !it.name.endsWith(parentsBackupSuffix) }.forEach { FileUtils.deleteQuietly(it) }
+                    siblingFiles.filter { it.name.endsWith(parentsBackupSuffix) }.forEach { backup ->
+                        val origin = File(backup.path.removeSuffix(parentsBackupSuffix))
+                        logger.info("Undoing backup of parent file: $backup")
+                        backup.renameTo(origin)
+                    }
+                }
+                !parentsBackupEnabled -> {
+                    siblingFiles.forEach { removeFile(it) }
+                    siblingFiles.forEach { cleanDotContentFile(it) }
                 }
             }
 
@@ -355,7 +350,7 @@ class VltCleaner(val project: Project) {
 
         const val JCR_ROOT_PREFIX = "<jcr:root"
 
-        val CONTENT_PROP_PATTERN: Pattern = Pattern.compile("([^=]+)=\"([^\"]+)\"")
+        val CONTENT_PROP_PATTERN: Pattern = Pattern.compile("([^ =]+)=\"([^\"]+)\"")
 
         val NAMESPACE_PATTERN: Pattern = Pattern.compile(".*:(.+)=.*")
     }
