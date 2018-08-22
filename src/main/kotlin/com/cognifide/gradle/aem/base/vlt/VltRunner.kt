@@ -18,6 +18,8 @@ class VltRunner(val project: Project) {
 
     val config = AemConfig.of(project)
 
+    val cleaner = VltCleaner(project)
+
     val workingDir: File
         get() {
             var path = "${config.contentPath}/${PackagePlugin.JCR_ROOT}"
@@ -28,6 +30,19 @@ class VltRunner(val project: Project) {
             }
 
             return File(path)
+        }
+
+    val contentDir: File
+        get() = File(config.contentPath)
+
+    val checkoutFilterRootDirs: List<File>
+        get() {
+            if (!contentDir.exists()) {
+                logger.warn("JCR content directory does not exist: ${contentDir.absolutePath}")
+                return listOf()
+            }
+
+            return checkoutFilter.rootDirs(contentDir)
         }
 
     fun raw(command: String, props: Map<String, Any> = mapOf()) {
@@ -48,9 +63,7 @@ class VltRunner(val project: Project) {
             logger.info("JCR content directory to be checked out does not exist: ${contentDir.absolutePath}")
         }
 
-        checkoutFilter.use {
-            raw("--credentials ${checkoutInstance.credentials} checkout --force --filter ${checkoutFilter.file.absolutePath} ${checkoutInstance.httpUrl}/crx/server/crx.default")
-        }
+        raw("--credentials ${checkoutInstance.credentials} checkout --force --filter ${checkoutFilter.file.absolutePath} ${checkoutInstance.httpUrl}/crx/server/crx.default")
     }
 
     val checkoutFilter by lazy { determineCheckoutFilter() }
@@ -100,26 +113,21 @@ class VltRunner(val project: Project) {
         throw VltException("Vault instance cannot be determined neither by command line parameter nor AEM config.")
     }
 
-    fun clean() {
-        val contentDir = File(config.contentPath)
-        if (!contentDir.exists()) {
-            logger.warn("JCR content directory to be cleaned does not exist: ${contentDir.absolutePath}")
-            return
-        }
+    fun cleanBeforeCheckout() {
+        logger.info("Preparing files to be cleaned up (before checking out new ones) using filter: $checkoutFilter")
 
+        checkoutFilterRootDirs.forEach { root ->
+            logger.lifecycle("Preparing root: $root")
+            cleaner.prepare(root)
+        }
+    }
+
+    fun cleanAfterCheckout() {
         logger.info("Cleaning using $checkoutFilter")
 
-        val roots = checkoutFilter.rootPaths
-                .map { File(contentDir, "${PackagePlugin.JCR_ROOT}/${it.removeSurrounding("/")}") }
-                .filter { it.exists() }
-        if (roots.isEmpty()) {
-            logger.warn("For given filter there is no existing roots to be cleaned.")
-            return
-        }
-
-        roots.forEach { root ->
+        checkoutFilterRootDirs.forEach { root ->
             logger.lifecycle("Cleaning root: $root")
-            VltCleaner(project, root).clean()
+            cleaner.clean(root)
         }
     }
 
@@ -135,7 +143,7 @@ class VltRunner(val project: Project) {
             throw VltException("RCP param '-Paem.rcp.paths' is not specified.")
         }
 
-        paths.fold(mutableMapOf<String, String>(), { r, path ->
+        paths.fold(mutableMapOf<String, String>()) { r, path ->
             val parts = path.split("=").map { it.trim() }
             when (parts.size) {
                 1 -> r[path] = path
@@ -143,7 +151,7 @@ class VltRunner(val project: Project) {
                 else -> throw VltException("RCP path has invalid format: $path")
             }
             r
-        })
+        }
     }
 
     val rcpOpts: String by lazy { project.properties["aem.rcp.opts"] as String? ?: "-b 100 -r -u" }

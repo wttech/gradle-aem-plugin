@@ -3,7 +3,6 @@
 [![Gradle Status](https://gradleupdate.appspot.com/Cognifide/gradle-aem-plugin/status.svg)](https://gradleupdate.appspot.com/Cognifide/gradle-aem-plugin/status)
 [![Apache License, Version 2.0, January 2004](docs/apache-license-badge.svg)](http://www.apache.org/licenses/)
 ![Travis Build](https://travis-ci.org/Cognifide/gradle-aem-plugin.svg?branch=develop)
-[![Semantic Release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg)](https://github.com/semantic-release/semantic-release)
 
 # Gradle AEM Plugin
 
@@ -128,7 +127,7 @@ pluginManagement {
 	resolutionStrategy {
 		eachPlugin {
 			if (requested.id.namespace == 'com.cognifide.aem') {
-				useModule('com.cognifide.gradle:aem-plugin:4.1.1')
+				useModule('com.cognifide.gradle:aem-plugin:5.0.0')
 			}
 		}
 	}
@@ -257,36 +256,36 @@ aem {
         
         checkoutFilterPath = ""
         
-        cleanFilesDeleted = [
-            "**/.vlt",
-            "**/.vlt*.tmp",
-            "**/jcr_root/.content.xml",
-            "**/jcr_root/apps/.content.xml",
-            "**/jcr_root/conf/.content.xml",
-            "**/jcr_root/content/.content.xml",
-            "**/jcr_root/content/dam/.content.xml",
-            "**/jcr_root/etc/.content.xml",
-            "**/jcr_root/etc/designs/.content.xml",
-            "**/jcr_root/home/.content.xml",
-            "**/jcr_root/home/groups/.content.xml",
-            "**/jcr_root/home/users/.content.xml",
-            "**/jcr_root/libs/.content.xml",
-            "**/jcr_root/system/.content.xml",
-            "**/jcr_root/tmp/.content.xml",
-            "**/jcr_root/var/.content.xml"
-      ]
-      cleanSkipProperties = [
-        "jcr:uuid!**/home/users/*,**/home/groups/*",
-        "jcr:lastModified",
-        "jcr:created",
-        "cq:lastModified*",
-        "cq:lastReplicat*",
-        "*_x0040_Delete",
-        "*_x0040_TypeHint"
-      ]
+        cleanConfig = {
+            filesDeleted = [
+                "**/.vlt",
+                "**/.vlt*.tmp"
+            ]
+            propertiesSkipped = [
+                pathRule("jcr:uuid", ["**/home/users/*", "**/home/groups/*"]),
+                "jcr:lastModified*",
+                "jcr:created*",
+                "jcr:isCheckedOut",
+                "cq:lastModified*",
+                "cq:lastReplicat*",
+                "dam:extracted",
+                "dam:assetState",
+                "dc:modified",
+                "*_x0040_*"
+            ]
+            mixinTypesSkipped = [
+                "cq:ReplicationStatus",
+                "mix:versionable"
+            ]
+            namespacesSkipped = true
+            parentsBackupEnabled = true
+            parentsBackupSuffix = ".bak"
+            lineProcess = { file, line -> normalizeLine(file, line) }
+            contentProcess = { file, lines -> normalizeContent(file, lines) }
+        }
       
-      notificationEnabled = false
-      notificationConfig = { it.factory() }
+        notificationEnabled = false
+        notificationConfig = { it.factory() }
     }
 }
 ```
@@ -1028,8 +1027,14 @@ As a workaround, just run build without daemon (`--no-daemon`).
 ## Building
 
 1. Clone this project using command `git clone https://github.com/Cognifide/gradle-aem-plugin.git`
-2. Enter cloned directory and simply run command: `sh gradlew`
-3. To use built plugin, add `mavenLocal()` to `repositories` section inside `pluginManagement` of *settings.gradle* file.
+2. Enter cloned directory and simply run command: `gradlew`
+3. To use built plugin:
+    * Add `mavenLocal()` to `repositories` section inside `pluginManagement` of *settings.gradle* file.
+    * Ensuring having correct version of plugin specified in *settings.gradle* file.
+4. To debug built plugin:
+    * Append to build command parameters `--no-daemon -Dorg.gradle.debug=true`
+    * Run build, it will suspend, then connect remote at port 5005 by using IDE
+    * Build will proceed and stop at previously set up breakpoint.
 
 ## Contributing
 

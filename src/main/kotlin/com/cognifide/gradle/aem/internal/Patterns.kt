@@ -15,7 +15,7 @@ object Patterns {
     }
 
     fun wildcard(file: File, matcher: String): Boolean {
-        return wildcard(normalizePath(file.absolutePath), matcher)
+        return wildcard(file.absolutePath, matcher)
     }
 
     fun wildcard(path: String, matcher: String): Boolean {
@@ -23,7 +23,7 @@ object Patterns {
     }
 
     fun wildcard(path: String, matchers: Iterable<String>): Boolean {
-        return matchers.any { matcher -> FilenameUtils.wildcardMatch(path, matcher, IOCase.INSENSITIVE) }
+        return matchers.any { matcher -> FilenameUtils.wildcardMatch(normalizePath(path), matcher, IOCase.INSENSITIVE) }
     }
 
     private fun normalizePath(path: String): String {
