@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.base.vlt
 
 import com.cognifide.gradle.aem.api.AemConfig
+import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.filefilter.EmptyFileFilter
@@ -20,6 +21,8 @@ class VltCleaner(val project: Project) {
 
     private val config = AemConfig.of(project)
 
+    private val props = PropertyParser(project)
+
     /**
      * Determines which files will be deleted within running cleaning
      * (e.g after checking out JCR content).
@@ -34,7 +37,7 @@ class VltCleaner(val project: Project) {
     }
 
     /**
-     * Define here properties that will be skipped when pulling JCR content from AEM instance.
+     * Properties that will be skipped when pulling JCR content from AEM instance.
      *
      * After special delimiter '!' there could be specified one or many path patterns
      * (ANT style, delimited with ',') in which property shouldn't be removed.
@@ -55,7 +58,7 @@ class VltCleaner(val project: Project) {
     }
 
     /**
-     * Define here mixin types that will be skipped when pulling JCR content from AEM instance.
+     * Mixin types that will be skipped when pulling JCR content from AEM instance.
      */
     var mixinTypesSkipped: MutableList<String> = mutableListOf(
             "cq:ReplicationStatus",
@@ -67,47 +70,47 @@ class VltCleaner(val project: Project) {
     }
 
     /**
-     * Turn on/off namespace normalization after properties clean up.
+     * Controls unused namespaces skipping.
      */
-    var namespacesSkipped: Boolean = true
+    var namespacesSkipped: Boolean = props.boolean("aem.clean.namespacesSkipped", true)
 
     /**
-     * Define hook method for customizing properties clean up.
+     * Controls backups for parent nodes of filter roots for keeping them untouched.
+     */
+    var parentsBackupEnabled: Boolean = props.boolean("aem.clean.parentsBackup", true)
+
+    /**
+     * File suffix being added to parent node back up files.
+     * Customize it only if really needed to resolve conflict with file being checked out.
+     */
+    var parentsBackupSuffix = ".bak"
+
+    private val parentsBackupDirIndicator
+        get() = "${parentsBackupSuffix}dir"
+
+    /**
+     * Hook for customizing particular line processing for '.content.xml' files.
      */
     var lineProcess: (File, String) -> String = { file, line -> normalizeLine(file, line) }
 
     /**
-     * Define hook method for customizing content clean up.
+     * Hook for post-processing content for '.content.xml' files.
      */
     var contentProcess: (List<String>) -> List<String> = { lines -> cleanNamespaces(lines) }
 
     init {
-        ConfigureUtil.configure(config.cleanConfig, this)
+        project.afterEvaluate { ConfigureUtil.configure(config.cleanConfig, this) }
     }
 
     fun prepare(root: File) {
-        var parent = root.parentFile
-        parent.mkdirs()
-        while (parent != null) {
-            val siblingFiles = parent.listFiles { file -> file.isFile }
-            if (File(parent, COPY_ROOT_INDICATOR).createNewFile()) {
-                siblingFiles.filter { !it.name.endsWith(COPY_FILE_EXT) && !matchAnyRule(it.path, it, filesDeletedRules) }
-                        .forEach { it.copyTo(File(parent, it.name + COPY_FILE_EXT), true) }
-            }
-
-            if (parent.name == PackagePlugin.JCR_ROOT) {
-                break
-            }
-
-            parent = parent.parentFile
-        }
+        doParentsBackup(root)
     }
 
     fun clean(root: File) {
         removeFiles(root)
         removeEmptyDirs(root)
         cleanDotContents(root)
-        cleanParents(root)
+        undoParentsBackup(root)
     }
 
     private fun dotContentFiles(root: File): Collection<File> {
@@ -146,7 +149,7 @@ class VltCleaner(val project: Project) {
     }
 
     private fun removeEmptyDirs(root: File) {
-        root.listFiles().filter { it.isDirectory() }.forEach {
+        root.listFiles().filter { it.isDirectory }.forEach {
             if (EmptyFileFilter.EMPTY.accept(it)) {
                 FileUtils.deleteQuietly(it)
             } else {
@@ -230,7 +233,7 @@ class VltCleaner(val project: Project) {
         return normalizeMixins(file, skipProperties(file, line))
     }
 
-    private fun skipProperties(file: File, line: String): String {
+    fun skipProperties(file: File, line: String): String {
         if (propertiesSkipped.isEmpty()) {
             return line
         }
@@ -244,7 +247,7 @@ class VltCleaner(val project: Project) {
         }
     }
 
-    private fun normalizeMixins(file: File, line: String): String {
+    fun normalizeMixins(file: File, line: String): String {
         if (mixinTypesSkipped.isEmpty()) {
             return line
         }
@@ -275,13 +278,47 @@ class VltCleaner(val project: Project) {
         }
     }
 
-    private fun cleanParents(root: File) {
+    private fun doParentsBackup(root: File) {
+        if (!parentsBackupEnabled) {
+            return
+        }
+
+        var parent = root.parentFile
+        parent.mkdirs()
+        while (parent != null) {
+            val siblingFiles = parent.listFiles { file -> file.isFile }
+            if (File(parent, parentsBackupDirIndicator).createNewFile()) {
+                siblingFiles.filter { !it.name.endsWith(parentsBackupSuffix) && !matchAnyRule(it.path, it, filesDeletedRules) }
+                        .forEach { origin ->
+                            val backup = File(parent, origin.name + parentsBackupSuffix)
+                            logger.info("Doing back up of parent file: $origin")
+                            origin.copyTo(backup, true)
+                        }
+            }
+
+            if (parent.name == PackagePlugin.JCR_ROOT) {
+                break
+            }
+
+            parent = parent.parentFile
+        }
+    }
+
+    private fun undoParentsBackup(root: File) {
+        if (!parentsBackupEnabled) {
+            return
+        }
+
         var parent = root.parentFile
         while (parent != null) {
             val siblingFiles = parent.listFiles { file: File -> file.isFile } ?: arrayOf<File>()
-            if (siblingFiles.any { it.name == COPY_ROOT_INDICATOR }) {
-                siblingFiles.filter { !it.name.endsWith(COPY_FILE_EXT) }.forEach { FileUtils.deleteQuietly(it) }
-                siblingFiles.filter { it.name.endsWith(COPY_FILE_EXT) }.forEach { it.renameTo(File(it.path.removeSuffix(COPY_FILE_EXT))) }
+            if (siblingFiles.any { it.name == parentsBackupDirIndicator }) {
+                siblingFiles.filter { !it.name.endsWith(parentsBackupSuffix) }.forEach { FileUtils.deleteQuietly(it) }
+                siblingFiles.filter { it.name.endsWith(parentsBackupSuffix) }.forEach { backup ->
+                    val origin = File(backup.path.removeSuffix(parentsBackupSuffix))
+                    logger.info("Undoing back up of parent file: $backup")
+                    backup.renameTo(origin)
+                }
             }
 
             if (parent.name == PackagePlugin.JCR_ROOT) {
@@ -315,10 +352,6 @@ class VltCleaner(val project: Project) {
         const val JCR_MIXIN_TYPES_PROP = "jcr:mixinTypes"
 
         const val JCR_ROOT_PREFIX = "<jcr:root"
-
-        const val COPY_FILE_EXT = ".cpy"
-
-        const val COPY_ROOT_INDICATOR = ".cpydir"
 
         val CONTENT_PROP_PATTERN: Pattern = Pattern.compile("([^=]+)=\"([^\"]+)\"")
 
