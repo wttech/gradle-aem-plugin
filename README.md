@@ -262,20 +262,24 @@ aem {
                 "**/.vlt*.tmp"
             ]
             propertiesSkipped = [
-                pathRule("jcr:uuid", ["**/home/users/*", "**/home/groups/*"], []),
-                "jcr:lastModified",
-                "jcr:created",
+                pathRule("jcr:uuid", listOf("**/home/users/*", "**/home/groups/*"), listOf()),
+                "jcr:lastModified*",
+                "jcr:created*",
                 "jcr:isCheckedOut",
                 "cq:lastModified*",
                 "cq:lastReplicat*",
-                "*_x0040_Delete",
-                "*_x0040_TypeHint"
+                "dam:extracted",
+                "dam:assetState",
+                "dc:modified",
+                "*_x0040_*"
             ]
             mixinTypesSkipped = [
                 "cq:ReplicationStatus",
                 "mix:versionable"
             ]
             namespacesSkipped = true
+            parentsBackupEnabled = true
+            parentsBackupSuffix = ".bak"
             lineProcess = { file, line -> normalizeLine(file, line) }
             contentProcess = { lines -> cleanNamespaces(lines) }
         }
