@@ -43,7 +43,7 @@ class VltCleaner(val project: Project) {
      * (ANT style, delimited with ',') in which property shouldn't be removed.
      */
     var propertiesSkipped: MutableList<String> = mutableListOf(
-            pathRule("jcr:uuid", listOf("**/home/users/*", "**/home/groups/*"), listOf()),
+            pathRule("jcr:uuid", listOf("**/home/users/*", "**/home/groups/*")),
             "jcr:lastModified*",
             "jcr:created*",
             "jcr:isCheckedOut",
