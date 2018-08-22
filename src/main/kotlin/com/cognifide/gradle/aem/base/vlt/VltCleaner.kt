@@ -210,6 +210,7 @@ class VltCleaner(val project: Project) {
         return contentProcess(file, result)
     }
 
+    @Suppress("UNUSED_PARAMETER")
     fun normalizeContent(file: File, lines: List<String>): List<String> {
         return cleanNamespaces(lines)
     }
