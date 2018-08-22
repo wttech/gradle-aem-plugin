@@ -53,7 +53,6 @@ class VltFilter(val file: File, private val temporary: Boolean = false) : Closea
 
     fun rootDirs(contentDir: File): List<File> {
         return rootPaths.map { File(contentDir, "${PackagePlugin.JCR_ROOT}/${it.removeSurrounding("/")}") }
-                .filter { it.exists() }
     }
 
     override fun close() {

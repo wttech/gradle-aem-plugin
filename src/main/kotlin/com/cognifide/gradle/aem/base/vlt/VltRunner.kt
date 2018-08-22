@@ -42,13 +42,8 @@ class VltRunner(val project: Project) {
                 return listOf()
             }
 
-            val roots = checkoutFilter.rootDirs(contentDir)
-            if (roots.isEmpty()) {
-                logger.warn("For given filter there is no existing root directories.")
-                return listOf()
-            }
+            return checkoutFilter.rootDirs(contentDir)
 
-            return roots
         }
 
     fun raw(command: String, props: Map<String, Any> = mapOf()) {
