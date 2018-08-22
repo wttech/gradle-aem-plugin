@@ -130,7 +130,7 @@ pluginManagement {
 	resolutionStrategy {
 		eachPlugin {
 			if (requested.id.namespace == 'com.cognifide.aem') {
-				useModule('com.cognifide.gradle:aem-plugin:4.1.1')
+				useModule('com.cognifide.gradle:aem-plugin:5.0.0')
 			}
 		}
 	}
@@ -259,36 +259,36 @@ aem {
         
         checkoutFilterPath = ""
         
-        cleanFilesDeleted = [
-            "**/.vlt",
-            "**/.vlt*.tmp",
-            "**/jcr_root/.content.xml",
-            "**/jcr_root/apps/.content.xml",
-            "**/jcr_root/conf/.content.xml",
-            "**/jcr_root/content/.content.xml",
-            "**/jcr_root/content/dam/.content.xml",
-            "**/jcr_root/etc/.content.xml",
-            "**/jcr_root/etc/designs/.content.xml",
-            "**/jcr_root/home/.content.xml",
-            "**/jcr_root/home/groups/.content.xml",
-            "**/jcr_root/home/users/.content.xml",
-            "**/jcr_root/libs/.content.xml",
-            "**/jcr_root/system/.content.xml",
-            "**/jcr_root/tmp/.content.xml",
-            "**/jcr_root/var/.content.xml"
-      ]
-      cleanSkipProperties = [
-        "jcr:uuid!**/home/users/*,**/home/groups/*",
-        "jcr:lastModified",
-        "jcr:created",
-        "cq:lastModified*",
-        "cq:lastReplicat*",
-        "*_x0040_Delete",
-        "*_x0040_TypeHint"
-      ]
+        cleanConfig = {
+            filesDeleted = [
+                "**/.vlt",
+                "**/.vlt*.tmp"
+            ]
+            propertiesSkipped = [
+                pathRule("jcr:uuid", ["**/home/users/*", "**/home/groups/*"]),
+                "jcr:lastModified*",
+                "jcr:created*",
+                "jcr:isCheckedOut",
+                "cq:lastModified*",
+                "cq:lastReplicat*",
+                "dam:extracted",
+                "dam:assetState",
+                "dc:modified",
+                "*_x0040_*"
+            ]
+            mixinTypesSkipped = [
+                "cq:ReplicationStatus",
+                "mix:versionable"
+            ]
+            namespacesSkipped = true
+            parentsBackupEnabled = true
+            parentsBackupSuffix = ".bak"
+            lineProcess = { file, line -> normalizeLine(file, line) }
+            contentProcess = { file, lines -> normalizeContent(file, lines) }
+        }
       
-      notificationEnabled = false
-      notificationConfig = { it.factory() }
+        notificationEnabled = false
+        notificationConfig = { it.factory() }
     }
 }
 ```

@@ -15,7 +15,7 @@ open class UninstallTask : AemDefaultTask() {
     init {
         description = "Uninstalls AEM package on instance(s)."
 
-        beforeExecuted { props.checkForce() }
+        afterConfigured { props.checkForce() }
     }
 
     @TaskAction

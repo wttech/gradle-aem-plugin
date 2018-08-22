@@ -15,7 +15,7 @@ open class DeleteTask : AemDefaultTask() {
     init {
         description = "Deletes AEM package on instance(s)."
 
-        beforeExecuted { props.checkForce() }
+        afterConfigured { props.checkForce() }
     }
 
     @TaskAction

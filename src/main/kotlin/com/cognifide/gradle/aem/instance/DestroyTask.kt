@@ -12,7 +12,7 @@ open class DestroyTask : AemDefaultTask() {
     init {
         description = "Destroys local AEM instance(s)."
 
-        beforeExecuted { props.checkForce() }
+        afterConfigured { props.checkForce() }
     }
 
     @TaskAction
