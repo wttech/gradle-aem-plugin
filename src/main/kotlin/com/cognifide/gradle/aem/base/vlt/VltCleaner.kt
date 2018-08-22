@@ -44,8 +44,8 @@ class VltCleaner(val project: Project) {
      */
     var propertiesSkipped: MutableList<String> = mutableListOf(
             pathRule("jcr:uuid", listOf("**/home/users/*", "**/home/groups/*"), listOf()),
-            "jcr:lastModified",
-            "jcr:created",
+            "jcr:lastModified*",
+            "jcr:created*",
             "jcr:isCheckedOut",
             "cq:lastModified*",
             "cq:lastReplicat*",
