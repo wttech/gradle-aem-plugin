@@ -49,8 +49,10 @@ class VltCleaner(val project: Project) {
             "jcr:isCheckedOut",
             "cq:lastModified*",
             "cq:lastReplicat*",
-            "*_x0040_Delete",
-            "*_x0040_TypeHint"
+            "dam:extracted",
+            "dam:assetState",
+            "dc:modified",
+            "*_x0040_*"
     )
 
     private val propertiesSkippedRules by lazy {
