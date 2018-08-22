@@ -207,20 +207,18 @@ class VltCleaner(val project: Project) {
         return lines.map { line ->
             if (line.trim().startsWith(JCR_ROOT_PREFIX)) {
                 line.split(" ")
-                        .filter { it == JCR_ROOT_PREFIX || isNamespaceUsed(it, lines) }
+                        .filter { part ->
+                            val matcher = NAMESPACE_PATTERN.matcher(part)
+                            if (matcher.matches()) {
+                                lines.any { it.contains(matcher.group(1) + ":") }
+                            } else {
+                                true
+                            }
+                        }
                         .joinToString(" ")
             } else {
                 line
             }
-        }
-    }
-
-    private fun isNamespaceUsed(namespace: String, lines: List<String>): Boolean {
-        val matcher = NAMESPACE_PATTERN.matcher(namespace)
-        return if (matcher.matches()) {
-            lines.any { it.contains(matcher.group(1) + ":") }
-        } else {
-            false
         }
     }
 
@@ -352,6 +350,6 @@ class VltCleaner(val project: Project) {
 
         val CONTENT_PROP_PATTERN: Pattern = Pattern.compile("([^ =]+)=\"([^\"]+)\"")
 
-        val NAMESPACE_PATTERN: Pattern = Pattern.compile(".*:(.+)=.*")
+        val NAMESPACE_PATTERN: Pattern = Pattern.compile("\\w+:(\\w+)=\"[^\"]+\"")
     }
 }
