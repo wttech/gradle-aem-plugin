@@ -43,7 +43,6 @@ class VltRunner(val project: Project) {
             }
 
             return checkoutFilter.rootDirs(contentDir)
-
         }
 
     fun raw(command: String, props: Map<String, Any> = mapOf()) {
