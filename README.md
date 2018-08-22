@@ -262,7 +262,7 @@ aem {
                 "**/.vlt*.tmp"
             ]
             propertiesSkipped = [
-                rule("jcr:uuid", ["**/home/users/*", "**/home/groups/*"], []),
+                pathRule("jcr:uuid", ["**/home/users/*", "**/home/groups/*"], []),
                 "jcr:lastModified",
                 "jcr:created",
                 "jcr:isCheckedOut",

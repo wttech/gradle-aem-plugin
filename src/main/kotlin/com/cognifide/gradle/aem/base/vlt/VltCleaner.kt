@@ -43,7 +43,7 @@ class VltCleaner(val project: Project) {
      * (ANT style, delimited with ',') in which property shouldn't be removed.
      */
     var propertiesSkipped: MutableList<String> = mutableListOf(
-            rule("jcr:uuid", listOf("**/home/users/*", "**/home/groups/*"), listOf()),
+            pathRule("jcr:uuid", listOf("**/home/users/*", "**/home/groups/*"), listOf()),
             "jcr:lastModified",
             "jcr:created",
             "jcr:isCheckedOut",
@@ -291,7 +291,7 @@ class VltCleaner(val project: Project) {
                 siblingFiles.filter { !it.name.endsWith(parentsBackupSuffix) && !matchAnyRule(it.path, it, filesDeletedRules) }
                         .forEach { origin ->
                             val backup = File(parent, origin.name + parentsBackupSuffix)
-                            logger.info("Doing back up of parent file: $origin")
+                            logger.info("Doing backup of parent file: $origin")
                             origin.copyTo(backup, true)
                         }
             }
@@ -316,7 +316,7 @@ class VltCleaner(val project: Project) {
                 siblingFiles.filter { !it.name.endsWith(parentsBackupSuffix) }.forEach { FileUtils.deleteQuietly(it) }
                 siblingFiles.filter { it.name.endsWith(parentsBackupSuffix) }.forEach { backup ->
                     val origin = File(backup.path.removeSuffix(parentsBackupSuffix))
-                    logger.info("Undoing back up of parent file: $backup")
+                    logger.info("Undoing backup of parent file: $backup")
                     backup.renameTo(origin)
                 }
             }
@@ -333,11 +333,11 @@ class VltCleaner(val project: Project) {
         return rules.any { it.match(file, value) }
     }
 
-    fun rule(pattern: String, excludedPaths: List<String>): String {
-        return rule(pattern, excludedPaths, listOf())
+    fun pathRule(pattern: String, excludedPaths: List<String>): String {
+        return pathRule(pattern, excludedPaths, listOf())
     }
 
-    fun rule(pattern: String, excludedPaths: List<String>, includedPaths: List<String>): String {
+    fun pathRule(pattern: String, excludedPaths: List<String>, includedPaths: List<String>): String {
         val paths = excludedPaths.map { "!$it" } + includedPaths
         return if (paths.isEmpty()) {
             pattern
