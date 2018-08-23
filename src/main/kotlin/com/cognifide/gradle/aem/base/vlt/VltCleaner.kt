@@ -288,10 +288,8 @@ class VltCleaner(val project: Project) {
     }
 
     private fun doParentsBackup(root: File) {
-        var parent = root.parentFile
-        parent.mkdirs()
-        while (parent != null) {
-            val siblingFiles = parent.listFiles { file -> file.isFile } ?: arrayOf()
+        root.parentFile.mkdirs()
+        eachParentFiles(root) { parent, siblingFiles ->
             if (File(parent, parentsBackupDirIndicator).createNewFile()) {
                 siblingFiles.filter { !it.name.endsWith(parentsBackupSuffix) && !matchAnyRule(it.path, it, filesDeletedRules) }
                         .forEach { origin ->
@@ -300,19 +298,11 @@ class VltCleaner(val project: Project) {
                             origin.copyTo(backup, true)
                         }
             }
-
-            if (parent.name == PackagePlugin.JCR_ROOT) {
-                break
-            }
-
-            parent = parent.parentFile
         }
     }
 
     private fun undoParentsBackup(root: File) {
-        var parent = root.parentFile
-        while (parent != null) {
-            val siblingFiles = parent.listFiles { file -> file.isFile } ?: arrayOf()
+        eachParentFiles(root) { _, siblingFiles ->
             if (siblingFiles.any { it.name == parentsBackupDirIndicator }) {
                 siblingFiles.filter { !it.name.endsWith(parentsBackupSuffix) }.forEach { FileUtils.deleteQuietly(it) }
                 siblingFiles.filter { it.name.endsWith(parentsBackupSuffix) }.forEach { backup ->
@@ -321,21 +311,21 @@ class VltCleaner(val project: Project) {
                     backup.renameTo(origin)
                 }
             }
-
-            if (parent.name == PackagePlugin.JCR_ROOT) {
-                break
-            }
-
-            parent = parent.parentFile
         }
     }
 
     private fun cleanParents(root: File) {
+        eachParentFiles(root) { _, siblingFiles ->
+            siblingFiles.forEach { removeFile(it) }
+            siblingFiles.forEach { cleanDotContentFile(it) }
+        }
+    }
+
+    private fun eachParentFiles(root: File, processFiles: (File, Array<File>) -> Unit) {
         var parent = root.parentFile
         while (parent != null) {
             val siblingFiles = parent.listFiles { file -> file.isFile } ?: arrayOf()
-            siblingFiles.forEach { removeFile(it) }
-            siblingFiles.forEach { cleanDotContentFile(it) }
+            processFiles(parent, siblingFiles)
 
             if (parent.name == PackagePlugin.JCR_ROOT) {
                 break
