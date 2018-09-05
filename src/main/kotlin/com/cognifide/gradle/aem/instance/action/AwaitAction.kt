@@ -21,15 +21,13 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
 
     var availableCheck = config.awaitAvailableCheck
 
-    var stableTimes = config.awaitStableTimes
-
-    var stableInterval = config.awaitStableInterval
+    var stableRetry = config.awaitStableRetry
 
     var stableState = config.awaitStableState
 
     var stableCheck = config.awaitStableCheck
 
-    var stableAssurances = config.awaitStableAssurances
+    var stableAssurance = config.awaitStableAssurance
 
     var healthCheck = config.awaitHealthCheck
 
@@ -55,7 +53,7 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
     }
 
     private fun awaitStable() {
-        val progressLogger = ProgressLogger(project, "Awaiting stable instance(s): ${instances.names}", stableTimes)
+        val progressLogger = ProgressLogger(project, "Awaiting stable instance(s): ${instances.names}", stableRetry.times)
         progressLogger.started()
 
         var lastStableChecksum = -1
@@ -64,7 +62,7 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
         val synchronizers = prepareSynchronizers()
         var unavailableNotification = false
 
-        Behaviors.waitUntil(stableInterval) { timer ->
+        Behaviors.waitUntil(stableRetry.delay) { timer ->
             // Gather all instance states (lazy)
             val instanceStates = synchronizers.map { it.determineInstanceState() }
 
@@ -90,7 +88,7 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
             val unavailableInstances = synchronizers.map { it.instance } - availableInstances
 
             val initializedUnavailableInstances = unavailableInstances.filter { it.isInitialized(project) }
-            if (!unavailableNotification && (timer.ticks.toDouble() / stableTimes.toDouble() > INSTANCE_UNAVAILABLE_RATIO) && initializedUnavailableInstances.isNotEmpty()) {
+            if (!unavailableNotification && (timer.ticks.toDouble() / stableRetry.times.toDouble() > INSTANCE_UNAVAILABLE_RATIO) && initializedUnavailableInstances.isNotEmpty()) {
                 notify("Instances not available", "Which: ${initializedUnavailableInstances.names}")
                 unavailableNotification = true
             }
@@ -98,7 +96,7 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
             progressLogger.progress(instanceStates, unavailableInstances, unstableInstances, timer)
 
             // Detect timeout when same checksum is not being updated so long
-            if (stableTimes > 0 && timer.ticks > stableTimes) {
+            if (stableRetry.times > 0 && timer.ticks > stableRetry.times) {
                 instanceStates.forEach { it.status.logTo(logger) }
 
                 if (!resume) {
@@ -111,14 +109,14 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
 
             if (unstableInstances.isEmpty()) {
                 // Assure that expected moment is not accidental, remember it
-                val assurable = (stableAssurances > 0) && (sinceStableTicks == -1L)
+                val assurable = (stableAssurance > 0) && (sinceStableTicks == -1L)
                 if (!fast && assurable) {
                     logger.info("Instance(s) stable: ${instances.names}. Assuring.")
                     sinceStableTicks = timer.ticks
                 }
 
                 // End if assurance is not configured or this moment remains a little longer
-                val assured = (stableAssurances <= 0) || (sinceStableTicks >= 0 && (timer.ticks - sinceStableTicks) >= stableAssurances)
+                val assured = (stableAssurance <= 0) || (sinceStableTicks >= 0 && (timer.ticks - sinceStableTicks) >= stableAssurance)
                 if (fast || assured) {
                     notify("Instance(s) stable", "Which: ${instances.names}", fast)
                     return@waitUntil false
@@ -138,7 +136,7 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
         logger.lifecycle("Checking health of instance(s): ${instances.names}")
 
         val synchronizers = prepareSynchronizers()
-        for (i in 0..config.awaitHealthRetryTimes) {
+        for (i in 0..config.awaitHealthRetry.times) {
             val instanceStates = synchronizers.map { it.determineInstanceState() }
             val unhealthyInstances = instanceStates.parallelStream().filter { !healthCheck(it) }
                     .map { it.instance }
@@ -149,13 +147,13 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
                 return
             }
 
-            if (i < config.awaitHealthRetryTimes) {
+            if (i < config.awaitHealthRetry.times) {
                 logger.warn("Unhealthy instances detected: ${unhealthyInstances.names}")
 
-                val header = "Retrying health check (${i + 1}/${config.awaitHealthRetryTimes}) after delay."
-                val countdown = ProgressCountdown(project, header, config.awaitHealthRetryDelay)
+                val header = "Retrying health check (${i + 1}/${config.awaitHealthRetry.times}) after delay."
+                val countdown = ProgressCountdown(project, header, config.awaitHealthRetry.delay(i + 1))
                 countdown.run()
-            } else if (i == config.awaitHealthRetryTimes) {
+            } else if (i == config.awaitHealthRetry.times) {
                 instanceStates.forEach { it.status.logTo(logger) }
 
                 if (!resume) {

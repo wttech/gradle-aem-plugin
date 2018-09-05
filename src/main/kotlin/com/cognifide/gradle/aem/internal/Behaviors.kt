@@ -15,9 +15,13 @@ object Behaviors {
     }
 
     fun waitUntil(interval: Long, condition: (Timer) -> Boolean) {
+        waitUntil({ interval }, condition)
+    }
+
+    fun waitUntil(interval: (Long) -> (Long), condition: (Timer) -> Boolean) {
         val timer = Timer()
         while (condition(timer)) {
-            waitFor(interval)
+            waitFor(interval(timer.ticks + 1))
             timer.tick()
         }
     }

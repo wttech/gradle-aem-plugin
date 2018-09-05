@@ -7,7 +7,7 @@ import java.util.stream.Collectors
 
 class ShutdownAction(project: Project, val instances: List<Instance>) : AbstractAction(project) {
 
-    var stableTimes = config.awaitStableTimes
+    var stableRetry = config.awaitStableRetry
 
     var stableState = config.awaitStableState
 
@@ -27,7 +27,7 @@ class ShutdownAction(project: Project, val instances: List<Instance>) : Abstract
     }
 
     private fun shutdown() {
-        val progressLogger = ProgressLogger(project, "Awaiting instance(s) shutdown: ${instances.names}", stableTimes)
+        val progressLogger = ProgressLogger(project, "Awaiting instance(s) shutdown: ${instances.names}", stableRetry.times)
         progressLogger.started()
 
         var lastStableChecksum = -1
@@ -35,7 +35,7 @@ class ShutdownAction(project: Project, val instances: List<Instance>) : Abstract
 
         handles.parallelStream().forEach { it.down() }
 
-        Behaviors.waitUntil(config.awaitStableInterval) { timer ->
+        Behaviors.waitUntil(config.awaitStableRetry.delay) { timer ->
             // Update checksum on any particular state change
             val instanceStates = instanceSynchronizers.map { it.determineInstanceState() }
             val stableChecksum = instanceStates.parallelStream()
@@ -62,7 +62,7 @@ class ShutdownAction(project: Project, val instances: List<Instance>) : Abstract
             progressLogger.progress(instanceStates, unavailableInstances, unstableInstances, timer)
 
             // Detect timeout when same checksum is not being updated so long
-            if (stableTimes > 0 && timer.ticks > stableTimes) {
+            if (stableRetry.times > 0 && timer.ticks > stableRetry.times) {
                 instanceStates.forEach { it.status.logTo(logger) }
 
                 throw InstanceException("Instances cannot shutdown: ${upInstances.names}. Timeout reached.")
