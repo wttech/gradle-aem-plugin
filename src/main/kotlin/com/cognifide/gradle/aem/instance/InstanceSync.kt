@@ -3,9 +3,12 @@ package com.cognifide.gradle.aem.instance
 import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.ProgressCountdown
+import com.cognifide.gradle.aem.internal.file.downloader.HttpFileDownloader
+import com.cognifide.gradle.aem.internal.file.resolver.FileResolver
 import com.cognifide.gradle.aem.internal.http.PreemptiveAuthInterceptor
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.deploy.*
+import org.apache.commons.io.FilenameUtils
 import org.apache.commons.io.IOUtils
 import org.apache.http.HttpEntity
 import org.apache.http.HttpResponse
@@ -293,6 +296,37 @@ class InstanceSync(val project: Project, val instance: Instance) {
             throw DeployException("Cannot upload package $file to instance $instance. Reason: ${response.msg}.")
         }
 
+        return response
+    }
+
+    fun downloadPackage(remotePath: String, targetDir: File): File {
+        val url = instance.httpUrl + remotePath
+        val file = File(targetDir, FilenameUtils.getName(url))
+        val downloader = HttpFileDownloader(project)
+        downloader.username = basicUser
+        downloader.password = basicPassword
+        downloader.download(url, file)
+        return file
+    }
+
+    fun buildPackage(remotePath: String): PackageBuildResponse {
+        val url = "$jsonTargetUrl$remotePath/?cmd=build"
+
+        val json = try {
+            postMultipart(url, mapOf())
+        }  catch (e: Exception) {
+            throw DeployException("Cannot build package $remotePath on instance $instance. Reason: request failed.", e)
+        }
+
+        val response = try {
+            PackageBuildResponse.fromJson(json)
+        } catch (e: Exception) {
+            throw DeployException("Malformed response after building package $remotePath on $instance.", e)
+        }
+
+        if (!response.isSuccess) {
+            throw DeployException("Cannot build package $remotePath to instance $instance. Reason: ${response.msg}.")
+        }
         return response
     }
 

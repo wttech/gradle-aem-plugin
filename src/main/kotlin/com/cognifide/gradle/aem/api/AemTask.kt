@@ -15,6 +15,14 @@ interface AemTask {
     companion object {
         val GROUP = "AEM"
 
+        fun taskDir(project: Project, taskName: String): File {
+            val dir = File(project.buildDir, "aem/$taskName")
+
+            GFileUtils.mkdirs(dir)
+
+            return dir
+        }
+
         fun temporaryDir(project: Project, taskName: String, path: String): File {
             val dir = File(project.buildDir, "aem/$taskName/$path")
 
