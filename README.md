@@ -130,7 +130,7 @@ pluginManagement {
 	resolutionStrategy {
 		eachPlugin {
 			if (requested.id.namespace == 'com.cognifide.aem') {
-				useModule('com.cognifide.gradle:aem-plugin:5.0.0')
+				useModule('com.cognifide.gradle:aem-plugin:5.0.1')
 			}
 		}
 	}
@@ -240,7 +240,7 @@ aem {
         awaitStableDelay = 3000
         awaitStableInterval = 1000
         awaitStableTimes = 300
-        awaitStableAssurances = 3
+        awaitStableAssurance = 3
         awaitStableState = { it.checkBundleState(500) }
         awaitStableCheck = { it.checkBundleStable(500) }
         awaitHealthCheck = { it.checkComponentState(["com.day.crx.packaging.*", "org.apache.sling.installer.*"], 10000) }
@@ -259,34 +259,6 @@ aem {
         
         checkoutFilterPath = ""
         
-        cleanConfig = {
-            filesDeleted = [
-                "**/.vlt",
-                "**/.vlt*.tmp"
-            ]
-            propertiesSkipped = [
-                pathRule("jcr:uuid", ["**/home/users/*", "**/home/groups/*"]),
-                "jcr:lastModified*",
-                "jcr:created*",
-                "jcr:isCheckedOut",
-                "cq:lastModified*",
-                "cq:lastReplicat*",
-                "dam:extracted",
-                "dam:assetState",
-                "dc:modified",
-                "*_x0040_*"
-            ]
-            mixinTypesSkipped = [
-                "cq:ReplicationStatus",
-                "mix:versionable"
-            ]
-            namespacesSkipped = true
-            parentsBackupEnabled = true
-            parentsBackupSuffix = ".bak"
-            lineProcess = { file, line -> normalizeLine(file, line) }
-            contentProcess = { file, lines -> normalizeContent(file, lines) }
-        }
-      
         notificationEnabled = false
         notificationConfig = { it.factory() }
     }
@@ -305,7 +277,41 @@ Check out JCR content from running AEM author instance to local content path.
 
 #### Task `aemClean`
 
-Clean checked out JCR content.
+Clean checked out JCR content. 
+
+Default configuration:
+
+```groovy
+aemClean {
+    settings {
+        filesDeleted = [
+            "**/.vlt",
+            "**/.vlt*.tmp"
+        ]
+        propertiesSkipped = [
+            pathRule("jcr:uuid", ["**/home/users/*", "**/home/groups/*"]),
+            "jcr:lastModified*",
+            "jcr:created*",
+            "jcr:isCheckedOut",
+            "cq:lastModified*",
+            "cq:lastReplicat*",
+            "dam:extracted",
+            "dam:assetState",
+            "dc:modified",
+            "*_x0040_*"
+        ]
+        mixinTypesSkipped = [
+            "cq:ReplicationStatus",
+            "mix:versionable"
+        ]
+        namespacesSkipped = true
+        parentsBackupEnabled = true
+        parentsBackupSuffix = ".bak"
+        lineProcess = { file, line -> normalizeLine(file, line) }
+        contentProcess = { file, lines -> normalizeContent(file, lines) }
+    }
+}
+```
 
 #### Task `aemRcp`
 
@@ -581,13 +587,11 @@ Wait until all local or remote AEM instance(s) be stable.
 
 AEM Config Param | CMD Property | Default Value | Purpose
 --- | --- | --- | ---
-`awaitStableInterval` | *aem.await.stable.interval* | `1000` | Time in milliseconds used as interval between next instance stability checks being performed. Optimization could be necessary only when instance is heavily loaded.
-`awaitStableTimes` | *aem.await.stable.times* | `300` | Maximum intervals after which instance stability checks will be skipped if there is still some unstable instance left.
-`awaitStableAssurances` | *aem.await.stable.assurances* | `3` | Number of intervals / additional instance stability checks to assure all stable instances.
+`awaitStableRetry` | *aem.await.stable.retry* | `300` | Hook for customizing how often and how many stability checks will be performed. Corresponding CMD param controls maximum count of retries if default hook is active.
+`awaitStableAssurance` | *aem.await.stable.assurance* | `3` | Number of intervals / additional instance stability checks to assure all stable instances.
 `awaitStableCheck` | n/a | `{ it.checkBundleStable(500) }` | Hook for customizing instance stability check. Check will be repeated if assurance is configured. 
 `awaitHealthCheck` | n/a | { `it.checkComponentState(10000) }` | Hook for customizing instance health check.
-`awaitHealthRetryTimes` | *aem.await.health.retry.times* | `3` | Repeat health check when failed (brute-forcing).
-`awaitHealthRetryDelay` | *aem.await.health.retry.delay* | `30000` | Time to wait after repeating failed health check.
+`awaitHealthRetry` | *aem.await.health.retry* | `6` | Hook for customizing how often and how many health checks will be performed.
 `awaitFast` | *aem.await.fast* | `false` | Skip stable check assurances and health checking. Alternative, quicker type of awaiting stable instances.
 `awaitFastDelay` | *aem.await.fast.delay* | `1000` | Time in milliseconds to postpone instance stability checks to avoid race condition related with actual operation being performed on AEM like starting JCR package installation or even creating launchpad.
 `awaitResume` | *aem.await.resume* | `false` | Do not fail build but log warning when there is still some unstable or unhealthy instance.

@@ -10,7 +10,6 @@ import org.apache.commons.io.filefilter.TrueFileFilter
 import org.apache.commons.lang3.CharEncoding
 import org.apache.commons.lang3.StringUtils
 import org.gradle.api.Project
-import org.gradle.util.ConfigureUtil
 import java.io.File
 import java.io.IOException
 import java.util.regex.Pattern
@@ -99,10 +98,6 @@ class VltCleaner(val project: Project) {
      * Hook for additional all lines processing for '.content.xml' files.
      */
     var contentProcess: (File, List<String>) -> List<String> = { file, lines -> normalizeContent(file, lines) }
-
-    init {
-        project.afterEvaluate { ConfigureUtil.configure(config.cleanConfig, this) }
-    }
 
     fun prepare(root: File) {
         if (parentsBackupEnabled) {
@@ -288,10 +283,8 @@ class VltCleaner(val project: Project) {
     }
 
     private fun doParentsBackup(root: File) {
-        var parent = root.parentFile
-        parent.mkdirs()
-        while (parent != null) {
-            val siblingFiles = parent.listFiles { file -> file.isFile } ?: arrayOf()
+        root.parentFile.mkdirs()
+        eachParentFiles(root) { parent, siblingFiles ->
             if (File(parent, parentsBackupDirIndicator).createNewFile()) {
                 siblingFiles.filter { !it.name.endsWith(parentsBackupSuffix) && !matchAnyRule(it.path, it, filesDeletedRules) }
                         .forEach { origin ->
@@ -300,19 +293,11 @@ class VltCleaner(val project: Project) {
                             origin.copyTo(backup, true)
                         }
             }
-
-            if (parent.name == PackagePlugin.JCR_ROOT) {
-                break
-            }
-
-            parent = parent.parentFile
         }
     }
 
     private fun undoParentsBackup(root: File) {
-        var parent = root.parentFile
-        while (parent != null) {
-            val siblingFiles = parent.listFiles { file -> file.isFile } ?: arrayOf()
+        eachParentFiles(root) { _, siblingFiles ->
             if (siblingFiles.any { it.name == parentsBackupDirIndicator }) {
                 siblingFiles.filter { !it.name.endsWith(parentsBackupSuffix) }.forEach { FileUtils.deleteQuietly(it) }
                 siblingFiles.filter { it.name.endsWith(parentsBackupSuffix) }.forEach { backup ->
@@ -321,21 +306,21 @@ class VltCleaner(val project: Project) {
                     backup.renameTo(origin)
                 }
             }
-
-            if (parent.name == PackagePlugin.JCR_ROOT) {
-                break
-            }
-
-            parent = parent.parentFile
         }
     }
 
     private fun cleanParents(root: File) {
+        eachParentFiles(root) { _, siblingFiles ->
+            siblingFiles.forEach { removeFile(it) }
+            siblingFiles.forEach { cleanDotContentFile(it) }
+        }
+    }
+
+    private fun eachParentFiles(root: File, processFiles: (File, Array<File>) -> Unit) {
         var parent = root.parentFile
         while (parent != null) {
             val siblingFiles = parent.listFiles { file -> file.isFile } ?: arrayOf()
-            siblingFiles.forEach { removeFile(it) }
-            siblingFiles.forEach { cleanDotContentFile(it) }
+            processFiles(parent, siblingFiles)
 
             if (parent.name == PackagePlugin.JCR_ROOT) {
                 break
