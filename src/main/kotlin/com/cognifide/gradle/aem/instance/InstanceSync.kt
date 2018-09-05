@@ -325,7 +325,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         }
 
         if (!response.isSuccess) {
-            throw DeployException("Cannot build package $remotePath to instance $instance. Reason: ${response.msg}.")
+            throw DeployException("Cannot build package $remotePath on instance $instance. Reason: ${response.msg}.")
         }
         return response
     }

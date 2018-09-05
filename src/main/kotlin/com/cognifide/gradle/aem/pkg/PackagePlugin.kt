@@ -32,10 +32,12 @@ class PackagePlugin : Plugin<Project> {
         val activate = tasks.create(ActivateTask.NAME, ActivateTask::class.java)
         val deploy = tasks.create(DeployTask.NAME, DeployTask::class.java)
         val download = tasks.create(DownloadTask.NAME, DownloadTask::class.java)
+        val extractPackage = tasks.create(ExtractPackageTask.NAME, ExtractPackageTask::class.java)
 
         val assemble = tasks.getByName(LifecycleBasePlugin.ASSEMBLE_TASK_NAME)
         val check = tasks.getByName(LifecycleBasePlugin.CHECK_TASK_NAME)
         val build = tasks.getByName(LifecycleBasePlugin.BUILD_TASK_NAME)
+
 
         assemble.mustRunAfter(clean)
         check.mustRunAfter(clean)
@@ -52,8 +54,9 @@ class PackagePlugin : Plugin<Project> {
 
         deploy.dependsOn(compose)
 
-        download.dependsOn(clean)
         download.dependsOn(prepare)
+
+        extractPackage.dependsOn(download)
     }
 
     companion object {

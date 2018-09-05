@@ -35,7 +35,7 @@ open class PrepareTask : AemDefaultTask() {
     }
 
     private fun createEmptyJcrRoot() {
-        if(jcrRoot.exists()){
+        if (jcrRoot.exists()) {
             jcrRoot.deleteRecursively()
         }
         jcrRoot.mkdir()
