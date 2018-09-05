@@ -10,7 +10,6 @@ import org.apache.commons.io.filefilter.TrueFileFilter
 import org.apache.commons.lang3.CharEncoding
 import org.apache.commons.lang3.StringUtils
 import org.gradle.api.Project
-import org.gradle.util.ConfigureUtil
 import java.io.File
 import java.io.IOException
 import java.util.regex.Pattern
@@ -99,10 +98,6 @@ class VltCleaner(val project: Project) {
      * Hook for additional all lines processing for '.content.xml' files.
      */
     var contentProcess: (File, List<String>) -> List<String> = { file, lines -> normalizeContent(file, lines) }
-
-    init {
-        project.afterEvaluate { ConfigureUtil.configure(config.cleanConfig, this) }
-    }
 
     fun prepare(root: File) {
         if (parentsBackupEnabled) {

@@ -42,7 +42,7 @@
 
       "instanceName": "local-*",
       "instanceList": "",
-      "instanceAuthorName": "local-AUTHOR*",
+      "instanceAuthorName": "local-author*",
       "instanceConnectionTimeout": 5000,
       "instanceConnectionUntrustedSsl": true,
 

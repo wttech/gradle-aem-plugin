@@ -73,7 +73,7 @@ class AemConfig(
      * will be performed (only if distributed deploy is enabled).
      */
     @Input
-    var instanceAuthorName: String = props.string("aem.instance.author.name", "$environment-${InstanceType.AUTHOR}*")
+    var instanceAuthorName: String = props.string("aem.instance.author.name", "$environment-${InstanceType.AUTHOR.type}*")
 
     /**
      * Defines maximum time after which initializing connection to AEM will be aborted (e.g on upload, install).
@@ -489,13 +489,6 @@ class AemConfig(
     @get:JsonIgnore
     val checkoutFilterPaths: List<String>
         get() = listOf("$vaultPath/checkout.xml", "$vaultPath/filter.xml")
-
-    /**
-     * JCR content cleaning configuration.
-     */
-    @Internal
-    @get:JsonIgnore
-    var cleanConfig: Closure<*>? = null
 
     /**
      * Dump package states on defined instances.
