@@ -414,7 +414,7 @@ class AemConfig(
      * This mechanism protect against temporary stable states.
      */
     @Input
-    var awaitStableAssurances: Long = props.long("aem.await.stable.assurances", 3L)
+    var awaitStableAssurance: Long = props.long("aem.await.stable.assurance", 3L)
 
     /**
      * Hook for customizing instance health check.

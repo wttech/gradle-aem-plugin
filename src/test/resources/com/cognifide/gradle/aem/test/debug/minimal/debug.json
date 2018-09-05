@@ -102,7 +102,7 @@
       "awaitResume": false,
       "awaitFast": false,
       "awaitFastDelay": 1000,
-      "awaitStableAssurances": 3,
+      "awaitStableAssurance": 3,
       "reloadDelay": 10000,
       "satisfyRefreshing": false,
       "satisfyBundlePath": "/apps/gradle-aem-plugin/satisfy/install",

@@ -27,7 +27,7 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
 
     var stableCheck = config.awaitStableCheck
 
-    var stableAssurances = config.awaitStableAssurances
+    var stableAssurance = config.awaitStableAssurance
 
     var healthCheck = config.awaitHealthCheck
 
@@ -109,14 +109,14 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
 
             if (unstableInstances.isEmpty()) {
                 // Assure that expected moment is not accidental, remember it
-                val assurable = (stableAssurances > 0) && (sinceStableTicks == -1L)
+                val assurable = (stableAssurance > 0) && (sinceStableTicks == -1L)
                 if (!fast && assurable) {
                     logger.info("Instance(s) stable: ${instances.names}. Assuring.")
                     sinceStableTicks = timer.ticks
                 }
 
                 // End if assurance is not configured or this moment remains a little longer
-                val assured = (stableAssurances <= 0) || (sinceStableTicks >= 0 && (timer.ticks - sinceStableTicks) >= stableAssurances)
+                val assured = (stableAssurance <= 0) || (sinceStableTicks >= 0 && (timer.ticks - sinceStableTicks) >= stableAssurance)
                 if (fast || assured) {
                     notify("Instance(s) stable", "Which: ${instances.names}", fast)
                     return@waitUntil false
