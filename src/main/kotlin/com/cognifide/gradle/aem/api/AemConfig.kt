@@ -391,7 +391,7 @@ class AemConfig(
      */
     @Internal
     @get:JsonIgnore
-    var awaitStableRetry = retry { afterSecond(300) }
+    var awaitStableRetry = retry { afterSecond(props.long("aem.await.stable.retry", 300)) }
 
     /**
      * Hook for customizing instance state provider used within stable checking.

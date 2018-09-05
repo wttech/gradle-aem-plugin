@@ -217,12 +217,10 @@ aem {
         deployDistributed = false
         
         uploadForce = true
-        uploadRetryTimes = 6
-        uploadRetryDelay = 30000
+        uploadRetry = retry { afterSquaredSecond(props.long("aem.upload.retry", 6)) }
         
         installRecursive = true
-        installRetryTimes = 3
-        installRetryDelay = 30000
+        installRetry = retry { afterSquaredSecond(props.long("aem.install.retry", 4)) }
         
         createPath = "${System.getProperty("user.home")}/.aem/${project.rootProject.name}"
         createFilesPath = project.rootProject.file("src/main/resources/local-instance")
@@ -237,15 +235,12 @@ aem {
         
         upInitializer = { handle -> }
         
-        awaitStableDelay = 3000
-        awaitStableInterval = 1000
-        awaitStableTimes = 300
+        awaitStableRetry = retry { afterSecond(props.long("aem.await.stable.retry", 300)) }
         awaitStableAssurance = 3
         awaitStableState = { it.checkBundleState(500) }
         awaitStableCheck = { it.checkBundleStable(500) }
         awaitHealthCheck = { it.checkComponentState(["com.day.crx.packaging.*", "org.apache.sling.installer.*"], 10000) }
-        awaitHealthRetryTimes = 3L
-        awaitHealthRetryDelay = 30000
+        awaitHealthRetry = retry { afterSquaredSecond(props.long("aem.await.health.retry", 6)) }
         awaitFast = false
         awaitFastDelay = 1000
         awaitResume = false
