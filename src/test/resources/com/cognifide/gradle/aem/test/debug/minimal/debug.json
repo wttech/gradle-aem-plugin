@@ -88,11 +88,7 @@
 
       "deployDistributed": false,
       "uploadForce": true,
-      "uploadRetryTimes": 3,
-      "uploadRetryDelay": 30000,
       "installRecursive": true,
-      "installRetryTimes": 1,
-      "installRetryDelay": 30000,
       "createPath": ".aem/minimal",
       "createFilesPath": "debug/minimal/src/main/resources/local-instance",
       "createFilesExpanded": [
@@ -106,11 +102,7 @@
       "awaitResume": false,
       "awaitFast": false,
       "awaitFastDelay": 1000,
-      "awaitStableInterval": 1000,
-      "awaitStableTimes": 300,
       "awaitStableAssurances": 3,
-      "awaitHealthRetryTimes": 3,
-      "awaitHealthRetryDelay": 30000,
       "reloadDelay": 10000,
       "satisfyRefreshing": false,
       "satisfyBundlePath": "/apps/gradle-aem-plugin/satisfy/install",
