@@ -256,34 +256,6 @@ aem {
         
         checkoutFilterPath = ""
         
-        cleanConfig = {
-            filesDeleted = [
-                "**/.vlt",
-                "**/.vlt*.tmp"
-            ]
-            propertiesSkipped = [
-                pathRule("jcr:uuid", ["**/home/users/*", "**/home/groups/*"]),
-                "jcr:lastModified*",
-                "jcr:created*",
-                "jcr:isCheckedOut",
-                "cq:lastModified*",
-                "cq:lastReplicat*",
-                "dam:extracted",
-                "dam:assetState",
-                "dc:modified",
-                "*_x0040_*"
-            ]
-            mixinTypesSkipped = [
-                "cq:ReplicationStatus",
-                "mix:versionable"
-            ]
-            namespacesSkipped = true
-            parentsBackupEnabled = true
-            parentsBackupSuffix = ".bak"
-            lineProcess = { file, line -> normalizeLine(file, line) }
-            contentProcess = { file, lines -> normalizeContent(file, lines) }
-        }
-      
         notificationEnabled = false
         notificationConfig = { it.factory() }
     }
@@ -302,7 +274,41 @@ Check out JCR content from running AEM author instance to local content path.
 
 #### Task `aemClean`
 
-Clean checked out JCR content.
+Clean checked out JCR content. 
+
+Default configuration:
+
+```groovy
+aemClean {
+    settings {
+        filesDeleted = [
+            "**/.vlt",
+            "**/.vlt*.tmp"
+        ]
+        propertiesSkipped = [
+            pathRule("jcr:uuid", ["**/home/users/*", "**/home/groups/*"]),
+            "jcr:lastModified*",
+            "jcr:created*",
+            "jcr:isCheckedOut",
+            "cq:lastModified*",
+            "cq:lastReplicat*",
+            "dam:extracted",
+            "dam:assetState",
+            "dc:modified",
+            "*_x0040_*"
+        ]
+        mixinTypesSkipped = [
+            "cq:ReplicationStatus",
+            "mix:versionable"
+        ]
+        namespacesSkipped = true
+        parentsBackupEnabled = true
+        parentsBackupSuffix = ".bak"
+        lineProcess = { file, line -> normalizeLine(file, line) }
+        contentProcess = { file, lines -> normalizeContent(file, lines) }
+    }
+}
+```
 
 #### Task `aemRcp`
 
