@@ -118,7 +118,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
     }
 
     fun fetch(method: HttpRequestBase): String {
-        return execute(method, { response ->
+        return execute(method) { response ->
             val body = IOUtils.toString(response.entity.content) ?: ""
 
             if (response.statusLine.statusCode == HttpStatus.SC_OK) {
@@ -127,7 +127,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
                 logger.debug(body)
                 throw DeployException("Unexpected response from $instance: ${response.statusLine}")
             }
-        })
+        }
     }
 
     fun <T> execute(method: HttpRequestBase, success: (HttpResponse) -> T): T {
@@ -151,6 +151,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         val builder = HttpClientBuilder.create()
                 .addInterceptorFirst(PreemptiveAuthInterceptor())
                 .setDefaultRequestConfig(RequestConfig.custom()
+                        .setSocketTimeout(connectionTimeout)
                         .setConnectTimeout(connectionTimeout)
                         .setConnectionRequestTimeout(connectionTimeout)
                         .build()
@@ -176,9 +177,9 @@ class InstanceSync(val project: Project, val instance: Instance) {
     }
 
     private fun createEntityUrlencoded(params: Map<String, Any>): HttpEntity {
-        return UrlEncodedFormEntity(params.entries.fold(ArrayList<NameValuePair>(), { result, e ->
+        return UrlEncodedFormEntity(params.entries.fold(ArrayList<NameValuePair>()) { result, e ->
             result.add(BasicNameValuePair(e.key, e.value.toString())); result
-        }))
+        })
     }
 
     private fun createEntityMultipart(params: Map<String, Any>): HttpEntity {
@@ -250,18 +251,18 @@ class InstanceSync(val project: Project, val instance: Instance) {
 
     fun uploadPackage(file: File): UploadResponse {
         lateinit var exception: DeployException
-        for (i in 0..config.uploadRetryTimes) {
+        for (i in 0..config.uploadRetry.times) {
             try {
                 return uploadPackageOnce(file)
             } catch (e: DeployException) {
                 exception = e
 
-                if (i < config.uploadRetryTimes) {
+                if (i < config.uploadRetry.times) {
                     logger.warn("Cannot upload package $file to $instance.")
                     logger.debug("Upload error", e)
 
-                    val header = "Retrying upload (${i + 1}/${config.uploadRetryTimes}) after delay."
-                    val countdown = ProgressCountdown(project, header, config.uploadRetryDelay)
+                    val header = "Retrying upload (${i + 1}/${config.uploadRetry.times}) after delay."
+                    val countdown = ProgressCountdown(project, header, config.uploadRetry.delay(i + 1))
                     countdown.run()
                 }
             }
@@ -354,17 +355,17 @@ class InstanceSync(val project: Project, val instance: Instance) {
 
     fun installPackage(remotePath: String): InstallResponse {
         lateinit var exception: DeployException
-        for (i in 0..config.installRetryTimes) {
+        for (i in 0..config.installRetry.times) {
             try {
                 return installPackageOnce(remotePath)
             } catch (e: DeployException) {
                 exception = e
-                if (i < config.installRetryTimes) {
+                if (i < config.installRetry.times) {
                     logger.warn("Cannot install package $remotePath on $instance.")
                     logger.debug("Install error", e)
 
-                    val header = "Retrying install (${i + 1}/${config.installRetryTimes}) after delay."
-                    val countdown = ProgressCountdown(project, header, config.installRetryDelay)
+                    val header = "Retrying install (${i + 1}/${config.installRetry.times}) after delay."
+                    val countdown = ProgressCountdown(project, header, config.installRetry.delay(i + 1))
                     countdown.run()
                 }
             }

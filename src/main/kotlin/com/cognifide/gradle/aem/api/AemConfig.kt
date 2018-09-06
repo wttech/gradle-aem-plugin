@@ -45,9 +45,9 @@ class AemConfig(
      * Determines current environment to be used in e.g package deployment.
      */
     @Input
-    val environment: String = props.string("aem.env", {
+    val environment: String = props.string("aem.env") {
         System.getenv("AEM_ENV") ?: "local"
-    })
+    }
 
     /**
      * List of AEM instances on which packages could be deployed.
@@ -73,7 +73,7 @@ class AemConfig(
      * will be performed (only if distributed deploy is enabled).
      */
     @Input
-    var instanceAuthorName: String = props.string("aem.instance.author.name", "$environment-${InstanceType.AUTHOR}*")
+    var instanceAuthorName: String = props.string("aem.instance.author.name", "$environment-${InstanceType.AUTHOR.type}*")
 
     /**
      * Defines maximum time after which initializing connection to AEM will be aborted (e.g on upload, install).
@@ -286,14 +286,9 @@ class AemConfig(
     /**
      * Repeat upload when failed (brute-forcing).
      */
-    @Input
-    var uploadRetryTimes: Int = props.int("aem.upload.retry.times", 3)
-
-    /**
-     * Time to wait after repeating failed upload.
-     */
-    @Input
-    var uploadRetryDelay: Long = props.long("aem.upload.retry.delay", TimeUnit.SECONDS.toMillis(30))
+    @Internal
+    @get:JsonIgnore
+    var uploadRetry = retry { afterSquaredSecond(props.long("aem.upload.retry", 6)) }
 
 
     /**
@@ -317,14 +312,9 @@ class AemConfig(
     /**
      * Repeat install when failed (brute-forcing).
      */
-    @Input
-    var installRetryTimes: Int = props.int("aem.install.retry.times", 1)
-
-    /**
-     * Time to wait after repeating failed install.
-     */
-    @Input
-    var installRetryDelay: Long = props.long("aem.install.retry.delay", TimeUnit.SECONDS.toMillis(30))
+    @Internal
+    @get:JsonIgnore
+    var installRetry = retry { afterSquaredSecond(props.long("aem.install.retry", 4)) }
 
     /**
      * Ensures that for directory 'META-INF/vault' default files will be generated when missing:
@@ -401,7 +391,7 @@ class AemConfig(
     @get:JsonIgnore
     var awaitAvailableCheck: (InstanceState) -> Boolean = {
         it.check({
-            it.connectionTimeout = (0.5 * awaitStableInterval.toDouble()).toInt()
+            it.connectionTimeout = 500
             it.connectionRetries = false
         }, {
             !it.bundleState.unknown
@@ -409,18 +399,12 @@ class AemConfig(
     }
 
     /**
-     * Time in milliseconds used as interval between next instance stability checks being performed.
-     * Optimization could be necessary only when instance is heavily loaded.
-     */
-    @Input
-    var awaitStableInterval: Long = props.long("aem.await.stable.interval", TimeUnit.SECONDS.toMillis(1))
-
-    /**
      * Maximum intervals after which instance stability checks will
      * be skipped if there is still some unstable instance left.
      */
-    @Input
-    var awaitStableTimes: Long = props.long("aem.await.stable.times", 60 * 5)
+    @Internal
+    @get:JsonIgnore
+    var awaitStableRetry = retry { afterSecond(props.long("aem.await.stable.retry", 300)) }
 
     /**
      * Hook for customizing instance state provider used within stable checking.
@@ -428,7 +412,7 @@ class AemConfig(
      */
     @Internal
     @get:JsonIgnore
-    var awaitStableState: (InstanceState) -> Int = { it.checkBundleState((0.5 * awaitStableInterval.toDouble()).toInt()) }
+    var awaitStableState: (InstanceState) -> Int = { it.checkBundleState(500) }
 
     /**
      * Hook for customizing instance stability check.
@@ -436,14 +420,14 @@ class AemConfig(
      */
     @Internal
     @get:JsonIgnore
-    var awaitStableCheck: (InstanceState) -> Boolean = { it.checkBundleStable((0.5 * awaitStableInterval.toDouble()).toInt()) }
+    var awaitStableCheck: (InstanceState) -> Boolean = { it.checkBundleStable(500) }
 
     /**
      * Number of intervals / additional instance stability checks to assure all stable instances.
      * This mechanism protect against temporary stable states.
      */
     @Input
-    var awaitStableAssurances: Long = props.long("aem.await.stable.assurances", 3L)
+    var awaitStableAssurance: Long = props.long("aem.await.stable.assurance", 3L)
 
     /**
      * Hook for customizing instance health check.
@@ -455,14 +439,9 @@ class AemConfig(
     /**
      * Repeat health check when failed (brute-forcing).
      */
-    @Input
-    var awaitHealthRetryTimes = props.long("aem.await.health.retry.times", 3L)
-
-    /**
-     * Time to wait after repeating failed health check.
-     */
-    @Input
-    var awaitHealthRetryDelay = props.long("aem.await.health.retry.delay", TimeUnit.SECONDS.toMillis(30))
+    @Internal
+    @get:JsonIgnore
+    var awaitHealthRetry = retry { afterSquaredSecond(props.long("aem.await.health.retry", 6)) }
 
     /**
      * Time in milliseconds to postpone instance stability checks after triggering instances restart.
@@ -525,13 +504,6 @@ class AemConfig(
         get() = listOf("$vaultPath/checkout.xml", "$vaultPath/filter.xml")
 
     /**
-     * JCR content cleaning configuration.
-     */
-    @Internal
-    @get:JsonIgnore
-    var cleanConfig: Closure<*>? = null
-
-    /**
      * Dump package states on defined instances.
      */
     @Input
@@ -568,14 +540,14 @@ class AemConfig(
     }
 
     fun localInstance(httpUrl: String, configurer: LocalInstance.() -> Unit) {
-        instance(LocalInstance.create(httpUrl, {
+        instance(LocalInstance.create(httpUrl) {
             this.environment = this@AemConfig.environment
             this.apply(configurer)
-        }))
+        })
     }
 
     fun localInstance(httpUrl: String, configurer: Closure<*>) {
-        localInstance(httpUrl, { ConfigureUtil.configure(configurer, this) })
+        localInstance(httpUrl) { ConfigureUtil.configure(configurer, this) }
     }
 
     fun remoteInstance(httpUrl: String) {
@@ -583,14 +555,14 @@ class AemConfig(
     }
 
     fun remoteInstance(httpUrl: String, configurer: RemoteInstance.() -> Unit) {
-        instance(RemoteInstance.create(httpUrl, {
+        instance(RemoteInstance.create(httpUrl) {
             this.environment = this@AemConfig.environment
             this.apply(configurer)
-        }))
+        })
     }
 
     fun remoteInstance(httpUrl: String, configurer: Closure<*>) {
-        remoteInstance(httpUrl, { ConfigureUtil.configure(configurer, this) })
+        remoteInstance(httpUrl) { ConfigureUtil.configure(configurer, this) }
     }
 
     fun parseInstance(urlOrName: String): Instance {
@@ -675,6 +647,24 @@ class AemConfig(
         return packages.map { "${it.removeSuffix("*")}*" }.toSet()
     }
 
+    @Internal
+    @JsonIgnore
+    fun retry(configurer: Closure<*>): Retry {
+        return retry { ConfigureUtil.configure(configurer, this) }
+    }
+
+    @Internal
+    @JsonIgnore
+    fun retry(configurer: Retry.() -> Unit): Retry {
+        return retry().apply(configurer)
+    }
+
+    @Internal
+    @JsonIgnore
+    fun retry(): Retry {
+        return Retry()
+    }
+
     @get:Internal
     @get:JsonIgnore
     val projectNamePrefix: String
@@ -711,6 +701,27 @@ class AemConfig(
         if (instances.isEmpty()) {
             instances(Instance.defaults(project))
         }
+    }
+
+    class Retry {
+
+        var times = 0L
+
+        var delay: (Long) -> Long = { 0L }
+
+        fun repeat(delay: (Long) -> Long, times: Long) {
+            this.delay = delay
+            this.times = times
+        }
+
+        fun afterSecond(times: Long) {
+            repeat({ 1000L }, times)
+        }
+
+        fun afterSquaredSecond(times: Long) {
+            repeat({ n -> n * n * 1000L }, times)
+        }
+
     }
 
     companion object {
