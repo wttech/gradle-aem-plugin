@@ -3,8 +3,8 @@ package com.cognifide.gradle.aem.instance
 import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.ProgressCountdown
+import com.cognifide.gradle.aem.internal.file.FileException
 import com.cognifide.gradle.aem.internal.file.downloader.HttpFileDownloader
-import com.cognifide.gradle.aem.internal.file.resolver.FileResolver
 import com.cognifide.gradle.aem.internal.http.PreemptiveAuthInterceptor
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.deploy.*
@@ -300,6 +300,28 @@ class InstanceSync(val project: Project, val instance: Instance) {
     }
 
     fun downloadPackage(remotePath: String, targetDir: File): File {
+        lateinit var exception: FileException
+        for (i in 0..config.downloadRetryTimes) {
+            try {
+                return downloadPackageOnce(remotePath, targetDir)
+            } catch (e: FileException) {
+                exception = e
+
+                if (i < config.downloadRetryTimes) {
+                    logger.warn("Cannot download package $remotePath from $instance.")
+                    logger.debug("Download error", e)
+
+                    val header = "Retrying download (${i + 1}/${config.downloadRetryTimes}) after delay."
+                    val countdown = ProgressCountdown(project, header, config.downloadRetryDelay)
+                    countdown.run()
+                }
+            }
+        }
+
+        throw exception
+    }
+
+    fun downloadPackageOnce(remotePath: String, targetDir: File): File {
         val url = instance.httpUrl + remotePath
         val file = File(targetDir, FilenameUtils.getName(url))
         val downloader = HttpFileDownloader(project)
@@ -314,7 +336,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
 
         val json = try {
             postMultipart(url, mapOf())
-        }  catch (e: Exception) {
+        } catch (e: Exception) {
             throw DeployException("Cannot build package $remotePath on instance $instance. Reason: request failed.", e)
         }
 
@@ -420,7 +442,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         logger.info("Deleting package using command: $url")
 
         val rawHtml = try {
-           postMultipart(url)
+            postMultipart(url)
         } catch (e: Exception) {
             throw DeployException("Cannot delete package $remotePath from instance $instance. Reason: request failed.", e)
         }

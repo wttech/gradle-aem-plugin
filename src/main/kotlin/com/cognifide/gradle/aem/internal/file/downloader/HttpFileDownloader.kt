@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.internal.file.downloader
 
 import com.cognifide.gradle.aem.internal.file.FileException
+import com.cognifide.gradle.aem.internal.http.PreemptiveAuthInterceptor
 import org.apache.http.auth.AuthScope
 import org.apache.http.auth.UsernamePasswordCredentials
 import org.apache.http.client.HttpClient
@@ -56,6 +57,7 @@ class HttpFileDownloader(val project: Project) {
 
     private fun createClient(): HttpClient {
         val builder = HttpClients.custom()
+                .addInterceptorFirst(PreemptiveAuthInterceptor())
                 .useSystemProperties()
                 .setDefaultRequestConfig(
                         RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build()

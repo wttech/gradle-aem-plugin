@@ -90,6 +90,8 @@
       "uploadForce": true,
       "uploadRetryTimes": 3,
       "uploadRetryDelay": 30000,
+      "downloadRetryTimes": 3,
+      "downloadRetryDelay": 10000,
       "installRecursive": true,
       "installRetryTimes": 1,
       "installRetryDelay": 30000,

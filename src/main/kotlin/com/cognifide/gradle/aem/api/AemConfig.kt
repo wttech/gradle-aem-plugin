@@ -295,6 +295,19 @@ class AemConfig(
     @Input
     var uploadRetryDelay: Long = props.long("aem.upload.retry.delay", TimeUnit.SECONDS.toMillis(30))
 
+
+    /**
+     * Repeat download when failed (brute-forcing).
+     */
+    @Input
+    var downloadRetryTimes: Int = props.int("aem.download.retry.times", 3)
+
+    /**
+     * Time to wait after repeating failed download.
+     */
+    @Input
+    var downloadRetryDelay: Long = props.long("aem.download.retry.delay", TimeUnit.SECONDS.toMillis(10))
+
     /**
      * Determines if when on package install, sub-packages included in CRX package content should be also installed.
      */
