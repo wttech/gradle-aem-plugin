@@ -62,6 +62,7 @@ Looking for dedicated version of plugin for [**Apache Sling**](https://sling.apa
       * [Task aemUninstall](#task-aemuninstall)
       * [Task aemPurge](#task-aempurge)
       * [Task aemActivate](#task-aemactivate)
+      * [Task aemDownload](#task-aemdownload)
    * [Instance plugin tasks](#instance-plugin-tasks)
       * [Task aemSetup](#task-aemsetup)
       * [Task aemResetup](#task-aemresetup)
@@ -459,6 +460,19 @@ To prevent data loss, this unsafe task execution must be confirmed by parameter 
 #### Task `aemActivate` 
 
 Replicate installed CRX package to other AEM instance(s).
+
+#### Task 'aemDownload'
+
+Builds and downloads CRX package from AEM instance. Similar to [aemCheckout](#task-aemcheckout) but using CRX package as an export method.
+ 
+Runtime parameters:
+* `gradlew :aemDownload -Paem.download.extract` - Extracts the package to project jcr_root directory
+* `gradlew :aemDownload -Paem.download.extract -Daem.download.extract.force.new` - Deletes content of jcr_root directory before extracting
+* `gradlew :aemDownload -Paem.download.filterPath=src/main/content/META-INF/vault/custom-filter.xml` - Specifying the filter file instead default filter.xml for a project
+* `gradlew :aemDownload -Paem.download.filterRoots=[/etc/tags/example,/content/dam/example]` - Specifying explicitly the filters instead default filter.xml for a project
+
+The contents of extracted package can be cleaned up using configured VLT rules by chaining [aemClean](#task-aemclean) task 
+`gradlew :aemDownload -Paem.download.extract :aemClean`
 
 ### Instance plugin tasks
 

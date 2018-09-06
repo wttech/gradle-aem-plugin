@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.pkg
 import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.api.AemTask
 import com.cognifide.gradle.aem.base.vlt.CheckoutConfig
+import com.cognifide.gradle.aem.instance.Instance
 import com.cognifide.gradle.aem.instance.InstanceSync
 import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.internal.file.FileContentReader
@@ -37,11 +38,20 @@ open class DownloadTask : Zip(), AemTask {
     @Input
     val extractFlag = props.flag(EXTRACT_FLAG)
 
-    private val checkoutConfig = CheckoutConfig(project, props, config)
+    private val checkoutConfig = CheckoutConfig(project, config)
 
-    private val checkoutFilter by lazy { checkoutConfig.determineCheckoutFilter()}
+    @Input
+    var filterPathProp: String = props.string("aem.download.filterPath", "")
 
-    private val instance by lazy { checkoutConfig.determineCheckoutInstance()}
+    @Input
+    var filterRootsProp = props.list("aem.download.filterRoots")
+
+    private val checkoutFilter by lazy { checkoutConfig.determineFilter(filterRootsProp, filterPathProp) }
+
+    @Input
+    val instanceProp = props.string("aem.download.instance", "")
+
+    private val instance: Instance by lazy { checkoutConfig.determineInstance(instanceProp) }
 
     init {
         description = "Builds and downloads CRX package from remote instance"

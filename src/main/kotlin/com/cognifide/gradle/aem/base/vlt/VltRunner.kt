@@ -7,6 +7,7 @@ import com.cognifide.gradle.aem.internal.file.FileOperations
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import org.gradle.api.Project
 import org.gradle.api.logging.Logger
+import org.gradle.api.tasks.Input
 import java.io.File
 
 // TODO https://github.com/Cognifide/gradle-aem-plugin/issues/135
@@ -18,9 +19,17 @@ class VltRunner(val project: Project) {
 
     val config = AemConfig.of(project)
 
-    val checkoutConfig = CheckoutConfig(project, props, config)
+    val checkoutConfig = CheckoutConfig(project, config)
 
     val cleaner = VltCleaner(project)
+
+    var filterRootsProp = props.list("aem.checkout.filterRoots")
+
+    val checkoutFilter by lazy { checkoutConfig.determineFilter(filterRootsProp, config.checkoutFilterPath) }
+
+    val instanceProp = props.string("aem.checkout.instance", "")
+
+    val checkoutInstance: Instance by lazy { checkoutConfig.determineInstance(instanceProp) }
 
     val workingDir: File
         get() {
@@ -67,11 +76,6 @@ class VltRunner(val project: Project) {
 
         raw("--credentials ${checkoutInstance.credentials} checkout --force --filter ${checkoutFilter.file.absolutePath} ${checkoutInstance.httpUrl}/crx/server/crx.default")
     }
-
-    val checkoutFilter by lazy { checkoutConfig.determineCheckoutFilter() }
-
-    val checkoutInstance: Instance by lazy { checkoutConfig.determineCheckoutInstance() }
-
 
     fun cleanBeforeCheckout() {
         logger.info("Preparing files to be cleaned up (before checking out new ones) using filter: $checkoutFilter")

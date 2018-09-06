@@ -2,19 +2,17 @@ package com.cognifide.gradle.aem.base.vlt
 
 import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.instance.Instance
-import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.internal.file.FileOperations
 import org.gradle.api.Project
 import org.gradle.api.logging.Logger
 
-open class CheckoutConfig (private val project: Project, private val props: PropertyParser, private val config: AemConfig) {
+open class CheckoutConfig (private val project: Project, private val config: AemConfig) {
 
     private val logger: Logger = project.logger
 
-    fun determineCheckoutInstance(): Instance {
-        val cmdInstanceArg = props.string("aem.checkout.instance")
-        if (!cmdInstanceArg.isNullOrBlank()) {
-            val cmdInstance = config.parseInstance(cmdInstanceArg!!)
+    fun determineInstance(instanceConfig: String?): Instance {
+        if (!instanceConfig.isNullOrBlank()) {
+            val cmdInstance = config.parseInstance(instanceConfig!!)
 
             logger.info("Using instance specified by command line parameter: $cmdInstance")
             return cmdInstance
@@ -35,16 +33,14 @@ open class CheckoutConfig (private val project: Project, private val props: Prop
         throw VltException("Vault instance cannot be determined neither by command line parameter nor AEM config.")
     }
 
-    fun determineCheckoutFilter(): VltFilter {
-        val cmdFilterRoots = props.list("aem.checkout.filterRoots")
-
-        return if (cmdFilterRoots.isNotEmpty()) {
-            logger.info("Using Vault filter roots specified as command line property: $cmdFilterRoots")
-            VltFilter.temporary(project, cmdFilterRoots)
+    fun determineFilter(filterRoots: List<String>, checkoutFilterPath: String): VltFilter {
+        return if (filterRoots.isNotEmpty()) {
+            logger.info("Using Vault filter roots specified as command line property: $filterRoots")
+            VltFilter.temporary(project, filterRoots)
         } else {
-            if (config.checkoutFilterPath.isNotBlank()) {
-                val configFilter = FileOperations.find(project, config.vaultPath, config.checkoutFilterPath)
-                        ?: throw VltException("Vault check out filter file does not exist at path: ${config.checkoutFilterPath} (or under directory: ${config.vaultPath}).")
+            if (checkoutFilterPath.isNotBlank()) {
+                val configFilter = FileOperations.find(project, config.vaultPath, checkoutFilterPath)
+                        ?: throw VltException("Vault check out filter file does not exist at path: $checkoutFilterPath (or under directory: ${config.vaultPath}).")
                 VltFilter(configFilter)
             } else {
                 val conventionFilter = FileOperations.find(project, config.vaultPath, config.checkoutFilterPaths)
