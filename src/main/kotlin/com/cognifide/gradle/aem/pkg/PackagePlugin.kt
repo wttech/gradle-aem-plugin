@@ -9,10 +9,10 @@ import org.gradle.language.base.plugins.LifecycleBasePlugin
 class PackagePlugin : Plugin<Project> {
 
     override fun apply(project: Project) {
-        with(project, {
+        with(project) {
             setupDependentPlugins()
             setupTasks()
-        })
+        }
     }
 
     private fun Project.setupDependentPlugins() {

@@ -23,7 +23,7 @@ open class UninstallTask : AemDefaultTask() {
         val instances = Instance.filter(project)
         val pkg = config.packageFileName
 
-        instances.sync(project, { it.uninstallPackage(it.determineRemotePackagePath()) })
+        instances.sync(project) { it.uninstallPackage(it.determineRemotePackagePath()) }
 
         notifier.default("Package uninstalled", "$pkg from ${instances.names}")
     }

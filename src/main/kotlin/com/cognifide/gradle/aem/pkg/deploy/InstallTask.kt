@@ -21,7 +21,7 @@ open class InstallTask : AemDefaultTask() {
         val instances = Instance.filter(project)
         val pkg = config.packageFileName
 
-        instances.sync(project, { it.installPackage(it.determineRemotePackagePath()) })
+        instances.sync(project) { it.installPackage(it.determineRemotePackagePath()) }
 
         notifier.default("Package installed", "$pkg on ${instances.names}")
     }

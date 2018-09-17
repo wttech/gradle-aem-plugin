@@ -21,7 +21,7 @@ open class ActivateTask : AemDefaultTask() {
         val pkg = config.packageFileName
         val instances = Instance.filter(project)
 
-        instances.sync(project, { it.activatePackage(it.determineRemotePackagePath()) })
+        instances.sync(project) { it.activatePackage(it.determineRemotePackagePath()) }
 
         notifier.default("Package activated", "$pkg on ${instances.names}")
     }

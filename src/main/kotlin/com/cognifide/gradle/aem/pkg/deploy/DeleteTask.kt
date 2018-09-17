@@ -23,7 +23,7 @@ open class DeleteTask : AemDefaultTask() {
         val instances = Instance.filter(project)
         val pkg = config.packageFileName
 
-        instances.sync(project, { it.deletePackage(it.determineRemotePackagePath()) })
+        instances.sync(project) { it.deletePackage(it.determineRemotePackagePath()) }
 
         notifier.default("Package deleted", "$pkg on ${instances.names}")
     }

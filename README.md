@@ -127,7 +127,7 @@ pluginManagement {
 	resolutionStrategy {
 		eachPlugin {
 			if (requested.id.namespace == 'com.cognifide.aem') {
-				useModule('com.cognifide.gradle:aem-plugin:5.0.1')
+				useModule('com.cognifide.gradle:aem-plugin:6.0.0')
 			}
 		}
 	}
@@ -181,11 +181,6 @@ aem {
           "-fixupmessages.bundleActivator": "Bundle-Activator * is being imported *;is:=error"
         ]
     
-        if (projectUniqueName) {
-            packageName = project.name
-        } else {
-            packageName = "${projectNamePrefix}-${project.name}"
-        }
         packageLocalPath = ""
         packageRemotePath = ""
         packageFilesExcluded = [
@@ -633,7 +628,7 @@ This feature is especially useful to generate valid *META-INF/properties.xml* fi
 <properties>
     <comment>{{project.description}}</comment>
     <entry key="group">{{project.group}}</entry>
-    <entry key="name">{{config.packageName}}</entry>
+    <entry key="name">{{zip.baseName}}</entry>
     <entry key="version">{{project.version}}</entry>
     <entry key="groupId">{{project.group}}</entry>
     <entry key="artifactId">{{project.name}}</entry>

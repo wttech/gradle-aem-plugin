@@ -58,7 +58,7 @@ class PackageResolution(group: PackageGroup, id: String, action: (FileResolution
                 "project.name" to symbolicName,
                 "project.version" to version,
                 "project.description" to description,
-                "config.packageName" to symbolicName,
+                "zip.baseName" to symbolicName,
                 "filters" to filters,
                 "filterRoots" to filters.joinToString(config.vaultLineSeparatorString) { it.toString() }
         )
@@ -66,9 +66,9 @@ class PackageResolution(group: PackageGroup, id: String, action: (FileResolution
         val overrideProps = config.satisfyBundleProperties(bundle)
         val effectiveProps = generalProps + bundleProps + overrideProps
 
-        FileOperations.amendFiles(vaultDir, listOf("**/${PackagePlugin.VLT_PATH}/*.xml"), { file, content ->
+        FileOperations.amendFiles(vaultDir, listOf("**/${PackagePlugin.VLT_PATH}/*.xml")) { file, content ->
             config.props.expand(content, effectiveProps, file.absolutePath)
-        })
+        }
 
         // Copy bundle to install path
         val pkgJar = File(pkgRoot, "jcr_root$pkgPath")

@@ -6,18 +6,18 @@ class ComposeTaskTest : AemTest() {
 
     @Test
     fun shouldComposePackageWithBundleAndContent() {
-        buildTask("compose/bundle-and-content", ":aemCompose", {
+        buildTask("compose/bundle-and-content", ":aemCompose") {
             val pkg = file("build/distributions/example-1.0.0-SNAPSHOT.zip")
 
             assertPackage(pkg)
             assertPackageFile(pkg, "jcr_root/apps/example/.content.xml")
             assertPackageFile(pkg, "jcr_root/apps/example/install/com.company.aem.example-1.0.0-SNAPSHOT.jar")
-        })
+        }
     }
 
     @Test
     fun shouldComposePackageAssemblyAndSingles() {
-        buildTasks("compose/assembly", "aemCompose", {
+        buildTasks("compose/assembly", "aemCompose") {
             val assemblyPkg = file("build/distributions/example-1.0.0-SNAPSHOT.zip")
             assertPackage(assemblyPkg)
             assertPackageFile(assemblyPkg, "jcr_root/apps/example/core/.content.xml")
@@ -41,7 +41,7 @@ class ComposeTaskTest : AemTest() {
             val designPkg = file("design/build/distributions/example-design-1.0.0-SNAPSHOT.zip")
             assertPackage(designPkg)
             assertPackageFile(designPkg, "jcr_root/etc/designs/example/.content.xml")
-        })
+        }
     }
 
 }

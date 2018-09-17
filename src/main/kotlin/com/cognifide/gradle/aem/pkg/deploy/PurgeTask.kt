@@ -24,7 +24,7 @@ open class PurgeTask : AemDefaultTask() {
         val pkg = config.packageFileName
         val instances = Instance.filter(project)
 
-        instances.sync(project, { sync ->
+        instances.sync(project) { sync ->
             try {
                 val packagePath = sync.determineRemotePackagePath()
 
@@ -34,7 +34,7 @@ open class PurgeTask : AemDefaultTask() {
                 logger.info(e.message)
                 logger.debug("Nothing to purge.", e)
             }
-        })
+        }
 
         notifier.default("Package purged", "$pkg from ${instances.names}")
     }

@@ -95,6 +95,7 @@ open class ComposeTask : Zip(), AemTask {
     @get:Internal
     val fileProperties
         get() = mapOf(
+                "zip" to this,
                 "filters" to filterRoots,
                 "filterRoots" to filterRootsProp
         )
@@ -122,7 +123,7 @@ open class ComposeTask : Zip(), AemTask {
         description = "Composes CRX package from JCR content and built OSGi bundles"
         group = AemTask.GROUP
 
-        baseName = config.packageName
+        baseName = AemConfig.pkgVaultName(project)
         duplicatesStrategy = DuplicatesStrategy.WARN
         isZip64 = true
 
@@ -149,6 +150,11 @@ open class ComposeTask : Zip(), AemTask {
 
     fun includeProject(projectPath: String) {
         includeProject(findProject(projectPath))
+    }
+
+    fun includeProject(projectPath: String, runMode: String) {
+        includeContent(findProject(projectPath))
+        includeBundles(projectPath, runMode)
     }
 
     fun includeProject(project: Project) {

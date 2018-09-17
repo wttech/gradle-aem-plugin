@@ -114,7 +114,7 @@ class AemConfig(
      * - performed additional component stability checks during 'aemAwait'
      */
     @Input
-    var bundlePackage: String = ""
+    var bundlePackage: String = AUTO_DETERMINED
 
     /**
      * Determines how conflicts will be resolved when coincidental classes will be detected.
@@ -183,16 +183,6 @@ class AemConfig(
     @get:JsonIgnore
     val packageFileName: String
         get() = pkg(project).archiveName
-
-    /**
-     * Determines built CRX package name (visible in package manager).
-     */
-    @Input
-    var packageName: String = if (projectNameUnique) {
-        project.name
-    } else {
-        "$projectNamePrefix-${project.name}"
-    }
 
     /**
      * CRX package name conventions (with wildcard) indicating that package can change over time
@@ -473,7 +463,7 @@ class AemConfig(
      * Default: [automatically determined]
      */
     @Input
-    var checkoutFilterPath: String = props.string("aem.checkout.filterPath", "")
+    var checkoutFilterPath: String = props.string("aem.checkout.filterPath", AUTO_DETERMINED)
 
     /**
      * Convention paths used to determine Vault checkout filter if it is not specified explicitly.
@@ -513,17 +503,20 @@ class AemConfig(
     var notificationConfig: (AemNotifier) -> Notifier = { it.factory() }
 
     /**
-     * Initialize defaults that depends on concrete type of project.
+     * Initialize defaults that depends on concrete type of project then validation configuration.
      */
     init {
-        project.afterEvaluate { validate() }
+        project.afterEvaluate {
+            defaults()
+            validate()
+        }
     }
 
     /**
      * Declare new deployment target (AEM instance).
      */
     fun localInstance(httpUrl: String) {
-        localInstance(httpUrl, {})
+        localInstance(httpUrl) {}
     }
 
     fun localInstance(httpUrl: String, configurer: LocalInstance.() -> Unit) {
@@ -538,7 +531,7 @@ class AemConfig(
     }
 
     fun remoteInstance(httpUrl: String) {
-        remoteInstance(httpUrl, {})
+        remoteInstance(httpUrl) {}
     }
 
     fun remoteInstance(httpUrl: String, configurer: RemoteInstance.() -> Unit) {
@@ -652,30 +645,7 @@ class AemConfig(
         return Retry()
     }
 
-    @get:Internal
-    @get:JsonIgnore
-    val projectNamePrefix: String
-        get() {
-            return if (projectNameUnique) {
-                project.name
-            } else {
-                "${project.rootProject.name}${project.path}"
-                        .replace(":", "-")
-                        .replace(".", "-")
-                        .substringBeforeLast("-")
-            }
-        }
-
-    @get:Internal
-    @get:JsonIgnore
-    val projectNameUnique: Boolean
-        get() = project == project.rootProject || project.name == project.rootProject.name
-
-    init {
-        project.afterEvaluate { ensureInstances() }
-    }
-
-    private fun ensureInstances() {
+    private fun defaults() {
         // Define through command line (forced instances)
         if (instanceList.isNotBlank()) {
             instances(Instance.parse(instanceList))
@@ -687,6 +657,10 @@ class AemConfig(
         // Define defaults if still no instances defined at all
         if (instances.isEmpty()) {
             instances(Instance.defaults(project))
+        }
+
+        if (bundlePackage == AUTO_DETERMINED) {
+            bundlePackage = pkgJavaName(project)
         }
     }
 
@@ -714,6 +688,11 @@ class AemConfig(
     companion object {
 
         /**
+         * Token indicating that value need to be corrected later by more advanced logic / convention.
+         */
+        const val AUTO_DETERMINED = "<auto_determined>"
+
+        /**
          * Shorthand getter for configuration related with specified project.
          * Especially useful when including one project in another (composing assembly packages).
          */
@@ -727,6 +706,16 @@ class AemConfig(
 
         fun of(task: DefaultTask): AemConfig {
             return of(task.project)
+        }
+
+        fun pkgJavaName(project: Project): String {
+            return "${project.group}.${project.name}".replace("-", ".")
+        }
+
+        fun pkgVaultName(project: Project): String {
+            return "${project.rootProject.name}${project.path}"
+                    .replace(":", ".")
+                    .replace("-", ".")
         }
 
         fun pkg(project: Project): ComposeTask {

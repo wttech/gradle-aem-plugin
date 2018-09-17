@@ -81,6 +81,10 @@ object FileOperations {
     }
 
     fun find(project: Project, dirIfFileName: String, pathOrFileName: String): File? {
+        if (pathOrFileName.isBlank()) {
+            return null
+        }
+
         return mutableListOf<(String) -> File>(
                 { project.file(pathOrFileName) },
                 { File(File(dirIfFileName), pathOrFileName) },
@@ -94,7 +98,7 @@ object FileOperations {
 
     fun find(dir: File, patterns: List<String>): File? {
         var result: File? = null
-        val files = dir.listFiles({ _, name -> Patterns.wildcard(name, patterns) })
+        val files = dir.listFiles { _, name -> Patterns.wildcard(name, patterns) }
         if (files != null) {
             result = files.firstOrNull()
         }
@@ -106,7 +110,7 @@ object FileOperations {
     }
 
     fun isDirEmpty(dir: Path): Boolean {
-        Files.newDirectoryStream(dir).use({ dirStream -> return !dirStream.iterator().hasNext() })
+        Files.newDirectoryStream(dir).use { dirStream -> return !dirStream.iterator().hasNext() }
     }
 
 }

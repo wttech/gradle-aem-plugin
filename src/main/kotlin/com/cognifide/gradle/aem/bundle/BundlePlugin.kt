@@ -19,13 +19,13 @@ import java.io.File
 class BundlePlugin : Plugin<Project> {
 
     override fun apply(project: Project) {
-        with(project, {
+        with(project) {
             setupDependentPlugins()
             setupJavaDefaults()
             setupJavaBndTool()
             setupTestTask()
             setupConfigurations()
-        })
+        }
     }
 
     private fun Project.setupDependentPlugins() {
@@ -38,11 +38,11 @@ class BundlePlugin : Plugin<Project> {
         convention.sourceCompatibility = JavaVersion.VERSION_1_8
         convention.targetCompatibility = JavaVersion.VERSION_1_8
 
-        tasks.withType(JavaCompile::class.java, {
+        tasks.withType(JavaCompile::class.java) {
             it.options.encoding = "UTF-8"
             it.options.compilerArgs = it.options.compilerArgs + "-Xlint:deprecation"
             it.options.isIncremental = true
-        })
+        }
 
         afterEvaluate {
             val jar = tasks.getByName(JavaPlugin.JAR_TASK_NAME) as Jar
@@ -70,7 +70,7 @@ class BundlePlugin : Plugin<Project> {
         if (baseName.isNullOrBlank()) {
             val groupValue = group as String?
             if (!name.isNullOrBlank() && !groupValue.isNullOrBlank()) {
-                jar.baseName = "$group.$name"
+                jar.baseName = AemConfig.pkgJavaName(this)
             }
         }
     }
@@ -159,13 +159,13 @@ class BundlePlugin : Plugin<Project> {
     }
 
     private fun Project.setupConfigurations() {
-        plugins.withType(JavaPlugin::class.java, {
-            val embedConfig = configurations.create(CONFIG_EMBED, { it.isTransitive = false })
-            val installConfig = configurations.create(CONFIG_INSTALL, { it.isTransitive = false })
+        plugins.withType(JavaPlugin::class.java) {
+            val embedConfig = configurations.create(CONFIG_EMBED) { it.isTransitive = false }
+            val installConfig = configurations.create(CONFIG_INSTALL) { it.isTransitive = false }
             val implConfig = configurations.getByName(JavaPlugin.IMPLEMENTATION_CONFIGURATION_NAME)
 
             implConfig.extendsFrom(installConfig, embedConfig)
-        })
+        }
     }
 
     companion object {
