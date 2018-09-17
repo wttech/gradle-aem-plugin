@@ -16,10 +16,10 @@ import org.gradle.language.base.plugins.LifecycleBasePlugin
 class InstancePlugin : Plugin<Project> {
 
     override fun apply(project: Project) {
-        with(project, {
+        with(project) {
             setupDependentPlugins()
             setupTasks()
-        })
+        }
     }
 
     private fun Project.setupDependentPlugins() {
@@ -49,18 +49,19 @@ class InstancePlugin : Plugin<Project> {
         destroy.dependsOn(down)
         resolve.mustRunAfter(clean)
         satisfy.dependsOn(resolve).mustRunAfter(create, up)
+        await.mustRunAfter(create, up, satisfy)
         collect.mustRunAfter(satisfy)
         setup.dependsOn(create, up, satisfy, await).mustRunAfter(destroy)
         resetup.dependsOn(destroy, setup)
 
-        plugins.withId(PackagePlugin.ID, {
+        plugins.withId(PackagePlugin.ID) {
             val deploy = tasks.getByName(DeployTask.NAME)
 
             setup.dependsOn(deploy)
             deploy.mustRunAfter(create, up, satisfy)
             reload.mustRunAfter(deploy)
             await.mustRunAfter(deploy)
-        })
+        }
 
         gradle.afterProject { subproject ->
             if (subproject.plugins.hasPlugin(PackagePlugin.ID)) {

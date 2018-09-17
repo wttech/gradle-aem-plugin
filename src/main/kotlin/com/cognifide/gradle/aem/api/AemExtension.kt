@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem.api
 
-import com.cognifide.gradle.aem.instance.AwaitTask
 import groovy.lang.Closure
 import org.gradle.api.Project
 import org.gradle.util.ConfigureUtil
@@ -22,6 +21,8 @@ open class AemExtension(@Transient private val project: Project) {
 
     val notifier = AemNotifier.of(project)
 
+    val tasks = AemTaskFactory(project)
+
     fun config(closure: Closure<*>) {
         ConfigureUtil.configure(closure, config)
     }
@@ -34,10 +35,8 @@ open class AemExtension(@Transient private val project: Project) {
         ConfigureUtil.configure(closure, notifier)
     }
 
-    // TODO to it better
-    fun await(): AwaitTask {
-        val count = project.tasks.filter { it is AwaitTask }.count()
-        return project.tasks.create("${AwaitTask.NAME}$count", AwaitTask::class.java)
+    fun tasks(closure: Closure<*>) {
+        ConfigureUtil.configure(closure, tasks)
     }
 
 }
