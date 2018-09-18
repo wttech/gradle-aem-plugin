@@ -8,7 +8,6 @@ import com.cognifide.gradle.aem.internal.file.downloader.HttpFileDownloader
 import com.cognifide.gradle.aem.internal.http.PreemptiveAuthInterceptor
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.deploy.*
-import org.apache.commons.io.FilenameUtils
 import org.apache.commons.io.IOUtils
 import org.apache.http.HttpEntity
 import org.apache.http.HttpResponse
@@ -300,20 +299,23 @@ class InstanceSync(val project: Project, val instance: Instance) {
         return response
     }
 
-    fun downloadPackage(remotePath: String, targetDir: File): File {
+    fun downloadPackage(remotePath: String, targetFile: File): Unit {
         lateinit var exception: FileException
-        for (i in 0..config.downloadRetryTimes) {
+        val url = instance.httpUrl + remotePath
+
+        for (i in 0..config.downloadRetry.times) {
             try {
-                return downloadPackageOnce(remotePath, targetDir)
+                downloadPackageOnce(url, targetFile)
+                return
             } catch (e: FileException) {
                 exception = e
 
-                if (i < config.downloadRetryTimes) {
+                if (i < config.downloadRetry.times) {
                     logger.warn("Cannot download package $remotePath from $instance.")
                     logger.debug("Download error", e)
 
-                    val header = "Retrying download (${i + 1}/${config.downloadRetryTimes}) after delay."
-                    val countdown = ProgressCountdown(project, header, config.downloadRetryDelay)
+                    val header = "Retrying download (${i + 1}/${config.downloadRetry.times}) after delay."
+                    val countdown = ProgressCountdown(project, header, config.downloadRetry.delay(i + 1))
                     countdown.run()
                 }
             }
@@ -322,14 +324,14 @@ class InstanceSync(val project: Project, val instance: Instance) {
         throw exception
     }
 
-    fun downloadPackageOnce(remotePath: String, targetDir: File): File {
-        val url = instance.httpUrl + remotePath
-        val file = File(targetDir, FilenameUtils.getName(url))
+    fun downloadPackageOnce(url: String, targetFile: File): Unit {
         val downloader = HttpFileDownloader(project)
         downloader.username = basicUser
         downloader.password = basicPassword
-        downloader.download(url, file)
-        return file
+        downloader.download(url, targetFile)
+        if (!targetFile.exists()) {
+            throw FileException("Downloaded package missing: ${targetFile.path}")
+        }
     }
 
     fun buildPackage(remotePath: String): PackageBuildResponse {

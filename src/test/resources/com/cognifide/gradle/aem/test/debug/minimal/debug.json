@@ -88,8 +88,6 @@
 
       "deployDistributed": false,
       "uploadForce": true,
-      "downloadRetryTimes": 3,
-      "downloadRetryDelay": 10000,
       "installRecursive": true,
       "createPath": ".aem/minimal",
       "createFilesPath": "debug/minimal/src/main/resources/local-instance",
@@ -110,6 +108,7 @@
       "satisfyBundlePath": "/apps/gradle-aem-plugin/satisfy/install",
       "satisfyGroupName": "*",
       "checkoutFilterPath": "",
+      "extractDownloadedPackage": true,
       "debugPackageDeployed": false
     }
   },

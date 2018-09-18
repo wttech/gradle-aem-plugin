@@ -19,17 +19,11 @@ class VltRunner(val project: Project) {
 
     val config = AemConfig.of(project)
 
-    val checkoutConfig = CheckoutConfig(project, config)
-
     val cleaner = VltCleaner(project)
 
-    var filterRootsProp = props.list("aem.checkout.filterRoots")
+    val checkoutFilter by lazy { VltFilter.of(project) }
 
-    val checkoutFilter by lazy { checkoutConfig.determineFilter(filterRootsProp, config.checkoutFilterPath) }
-
-    val instanceProp = props.string("aem.checkout.instance", "")
-
-    val checkoutInstance: Instance by lazy { checkoutConfig.determineInstance(instanceProp) }
+    val checkoutInstance: Instance by lazy { Instance.single(project) }
 
     val workingDir: File
         get() {

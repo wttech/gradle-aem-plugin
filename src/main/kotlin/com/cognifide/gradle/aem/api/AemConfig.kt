@@ -6,6 +6,7 @@ import com.cognifide.gradle.aem.internal.LineSeparator
 import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.internal.notifier.Notifier
 import com.cognifide.gradle.aem.pkg.ComposeTask
+import com.cognifide.gradle.aem.pkg.DownloadTask
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.deploy.DeployException
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -294,14 +295,10 @@ class AemConfig(
     /**
      * Repeat download when failed (brute-forcing).
      */
-    @Input
-    var downloadRetryTimes: Int = props.int("aem.download.retry.times", 3)
+    @Internal
+    @get:JsonIgnore
+    var downloadRetry = retry { afterSquaredSecond(props.long("aem.download.retry", 3)) }
 
-    /**
-     * Time to wait after repeating failed download.
-     */
-    @Input
-    var downloadRetryDelay: Long = props.long("aem.download.retry.delay", TimeUnit.SECONDS.toMillis(10))
 
     /**
      * Determines if when on package install, sub-packages included in CRX package content should be also installed.
@@ -487,6 +484,14 @@ class AemConfig(
      */
     @Input
     var checkoutFilterPath: String = props.string("aem.checkout.filterPath", "")
+
+    /**
+     * Extract the contents of package downloaded using aemDownload task to current project jcr_root directory
+     * This operation can be modified using -Paem.force command line to replace the contents of jcr_root directory with
+     * package content
+     */
+    @Input
+    val extractDownloadedPackage = props.boolean("aem.download.extract", true)
 
     /**
      * Convention paths used to determine Vault checkout filter if it is not specified explicitly.

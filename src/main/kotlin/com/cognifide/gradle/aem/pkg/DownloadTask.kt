@@ -2,14 +2,17 @@ package com.cognifide.gradle.aem.pkg
 
 import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.api.AemTask
-import com.cognifide.gradle.aem.base.vlt.CheckoutConfig
+import com.cognifide.gradle.aem.base.vlt.VltFilter
 import com.cognifide.gradle.aem.instance.Instance
 import com.cognifide.gradle.aem.instance.InstanceSync
 import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.internal.file.FileContentReader
-import com.cognifide.gradle.aem.internal.file.FileException
+import org.apache.commons.io.FilenameUtils
 import org.gradle.api.file.DuplicatesStrategy
-import org.gradle.api.tasks.*
+import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.Nested
+import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.bundling.Zip
 import java.io.File
 
@@ -18,9 +21,7 @@ open class DownloadTask : Zip(), AemTask {
     companion object {
         const val NAME = "aemDownload"
         const val CLASSIFIER_DOWNLOAD = "download"
-        const val CLASSIFIER_SHELL = "shell"
-        const val EXTRACT_FLAG = "aem.download.extract"
-        const val FORCE_NEW_FLAG = "aem.download.extract.force.new"
+        const val CLASSIFIER_SHELL = "downloadShell"
     }
 
     @Nested
@@ -32,26 +33,9 @@ open class DownloadTask : Zip(), AemTask {
     @Internal
     val props = PropertyParser(project)
 
-    @Input
-    val forceNewFlag = props.flag(FORCE_NEW_FLAG)
+    private val checkoutFilter by lazy { VltFilter.of(project)}
 
-    @Input
-    val extractFlag = props.flag(EXTRACT_FLAG)
-
-    private val checkoutConfig = CheckoutConfig(project, config)
-
-    @Input
-    var filterPathProp: String = props.string("aem.download.filterPath", "")
-
-    @Input
-    var filterRootsProp = props.list("aem.download.filterRoots")
-
-    private val checkoutFilter by lazy { checkoutConfig.determineFilter(filterRootsProp, filterPathProp) }
-
-    @Input
-    val instanceProp = props.string("aem.download.instance", "")
-
-    private val instance: Instance by lazy { checkoutConfig.determineInstance(instanceProp) }
+    private val instance: Instance by lazy { Instance.single(project) }
 
     init {
         description = "Builds and downloads CRX package from remote instance"
@@ -87,18 +71,14 @@ open class DownloadTask : Zip(), AemTask {
         val packagePath = sync.uploadPackage(archivePath).path
         logger.lifecycle("Building remote package $packagePath")
         sync.buildPackage(packagePath)
-        logger.lifecycle("Downloading remote package $packagePath")
-        val downloaded = sync.downloadPackage(packagePath, destinationDir)
+        val packageFile = File(destinationDir, FilenameUtils.getName(packagePath))
+        logger.lifecycle("Downloading remote package $packagePath to ${packageFile.path}")
+        sync.downloadPackage(packagePath, packageFile)
 
-        if(downloaded.exists()) {
-            if(extractFlag){
-                val jcrRoot = prepareJcrRoot()
-                extractContents(downloaded, jcrRoot)
-            }
-        } else {
-            throw FileException("Downloaded package missing: ${downloaded.path}")
+        if(config.extractDownloadedPackage){
+            val jcrRoot = prepareJcrRoot()
+            extractContents(packageFile, jcrRoot)
         }
-
     }
 
     private fun specShellPackage() {
@@ -130,7 +110,7 @@ open class DownloadTask : Zip(), AemTask {
         val content = File(config.contentPath)
         val jcrRoot = File(content, PackagePlugin.JCR_ROOT)
 
-        if (jcrRoot.exists() && forceNewFlag) {
+        if (jcrRoot.exists() && props.isForce()) {
             logger.lifecycle("Deleting contents of ${jcrRoot.path}")
             jcrRoot.deleteRecursively()
         }
