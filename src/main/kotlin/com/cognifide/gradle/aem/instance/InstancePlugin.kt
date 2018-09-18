@@ -51,13 +51,12 @@ class InstancePlugin : Plugin<Project> {
         satisfy.dependsOn(resolve).mustRunAfter(create, up)
         await.mustRunAfter(create, up, satisfy)
         collect.mustRunAfter(satisfy)
-        setup.dependsOn(create, up, satisfy, await).mustRunAfter(destroy)
+        setup.dependsOn(create, up, satisfy).mustRunAfter(destroy)
         resetup.dependsOn(destroy, setup)
 
         plugins.withId(PackagePlugin.ID) {
             val deploy = tasks.getByName(DeployTask.NAME)
 
-            setup.dependsOn(deploy)
             deploy.mustRunAfter(create, up, satisfy)
             reload.mustRunAfter(deploy)
             await.mustRunAfter(deploy)

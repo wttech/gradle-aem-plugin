@@ -200,6 +200,12 @@ class AemConfig(
     var packageAcHandling: String = props.string("aem.package.acHandling", "merge_preserve")
 
     /**
+     * Additional entries added to file 'META-INF/vault/properties.xml'.
+     */
+    @Input
+    var packageEntries: MutableMap<String, Any> = mutableMapOf()
+
+    /**
      * Custom path to composed CRX package being uploaded.
      *
      * Default: [automatically determined]
