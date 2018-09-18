@@ -75,7 +75,7 @@ open class DownloadTask : Zip(), AemTask {
         sync.buildPackage(packagePath)
 
         val packageFile = File(destinationDir, FilenameUtils.getName(packagePath))
-        logger.lifecycle("Downloading remote package $packagePath to ${packageFile.path}")
+        logger.lifecycle("Downloading remote package $packagePath to $packageFile")
         sync.downloadPackage(packagePath, packageFile)
 
         if (config.downloadExtract) {
@@ -101,7 +101,7 @@ open class DownloadTask : Zip(), AemTask {
     }
 
     private fun extractContents(downloadedPackage: File, jcrRoot: File) {
-        logger.lifecycle("Extracting contents of ${downloadedPackage.path} into ${jcrRoot.path}")
+        logger.lifecycle("Extracting contents of $downloadedPackage into $jcrRoot")
         project.copy { spec ->
             spec.into(jcrRoot.parentFile.path)
                     .from(project.zipTree(downloadedPackage.path))
@@ -114,7 +114,7 @@ open class DownloadTask : Zip(), AemTask {
         val jcrRoot = File(content, PackagePlugin.JCR_ROOT)
 
         if (jcrRoot.exists() && props.isForce()) {
-            logger.lifecycle("Deleting contents of ${jcrRoot.path}")
+            logger.lifecycle("Deleting contents of $jcrRoot")
             jcrRoot.deleteRecursively()
         }
 
