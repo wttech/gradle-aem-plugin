@@ -33,7 +33,7 @@ open class DownloadTask : Zip(), AemTask {
     @Internal
     val props = PropertyParser(project)
 
-    private val checkoutFilter by lazy { VltFilter.of(project)}
+    private val checkoutFilter by lazy { VltFilter.of(project) }
 
     private val instance: Instance by lazy { Instance.single(project) }
 
@@ -44,10 +44,10 @@ open class DownloadTask : Zip(), AemTask {
         baseName = config.packageName
         isZip64 = true
 
-        //Empty package uploaded to aem will have 'shell' suffix
+        // Empty package uploaded to aem will have 'shell' suffix
         classifier = CLASSIFIER_SHELL
 
-        //Take only first filter.xml file from definition
+        // Take only first filter.xml file from definition
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
         //Load zip configuration only when the task is in the graph
@@ -63,19 +63,22 @@ open class DownloadTask : Zip(), AemTask {
 
     @TaskAction
     override fun copy() {
-        //Prepare shell package
+        // Prepare shell package
         super.copy()
 
         val sync = InstanceSync(project, instance)
+
         logger.lifecycle("Uploading package $archivePath")
         val packagePath = sync.uploadPackage(archivePath).path
+
         logger.lifecycle("Building remote package $packagePath")
         sync.buildPackage(packagePath)
+
         val packageFile = File(destinationDir, FilenameUtils.getName(packagePath))
         logger.lifecycle("Downloading remote package $packagePath to ${packageFile.path}")
         sync.downloadPackage(packagePath, packageFile)
 
-        if(config.extractDownloadedPackage){
+        if (config.downloadExtract) {
             val jcrRoot = prepareJcrRoot()
             extractContents(packageFile, jcrRoot)
         }
@@ -90,7 +93,7 @@ open class DownloadTask : Zip(), AemTask {
             spec.from(prepareDir)
             spec.eachFile {
                 FileContentReader.filter(it) {
-                    //Updating version string for package to contain '-download' suffix
+                    // Updating version string for package to contain '-download' suffix
                     props.expandPackage(it, mapOf("project.version" to "${project.version}-$CLASSIFIER_DOWNLOAD"), path)
                 }
             }

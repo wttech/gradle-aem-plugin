@@ -491,7 +491,7 @@ class AemConfig(
      * package content
      */
     @Input
-    val extractDownloadedPackage = props.boolean("aem.download.extract", true)
+    val downloadExtract = props.boolean("aem.download.extract", true)
 
     /**
      * Convention paths used to determine Vault checkout filter if it is not specified explicitly.
