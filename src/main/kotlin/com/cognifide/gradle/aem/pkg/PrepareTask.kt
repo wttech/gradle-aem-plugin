@@ -16,9 +16,6 @@ open class PrepareTask : AemDefaultTask() {
     @OutputDirectory
     val vaultDir = AemTask.temporaryDir(project, NAME, PackagePlugin.VLT_PATH)
 
-    @OutputDirectory
-    val jcrRoot = AemTask.temporaryDir(project, NAME, PackagePlugin.JCR_ROOT)
-
     init {
         description = "Prepare Vault files before composing CRX package"
 
@@ -31,16 +28,7 @@ open class PrepareTask : AemDefaultTask() {
     fun prepare() {
         copyContentVaultFiles()
         copyMissingVaultFiles()
-        createEmptyJcrRoot();
     }
-
-    private fun createEmptyJcrRoot() {
-        if (jcrRoot.exists()) {
-            jcrRoot.deleteRecursively()
-        }
-        jcrRoot.mkdir()
-    }
-
 
     private fun copyContentVaultFiles() {
         if (vaultDir.exists()) {

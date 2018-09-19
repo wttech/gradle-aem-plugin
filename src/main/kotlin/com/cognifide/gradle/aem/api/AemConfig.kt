@@ -6,7 +6,6 @@ import com.cognifide.gradle.aem.internal.LineSeparator
 import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.internal.notifier.Notifier
 import com.cognifide.gradle.aem.pkg.ComposeTask
-import com.cognifide.gradle.aem.pkg.DownloadTask
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.deploy.DeployException
 import com.fasterxml.jackson.annotation.JsonIgnore

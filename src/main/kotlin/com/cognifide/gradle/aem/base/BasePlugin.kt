@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.base
 import com.cognifide.gradle.aem.api.AemExtension
 import com.cognifide.gradle.aem.api.AemPlugin
 import com.cognifide.gradle.aem.base.debug.DebugTask
+import com.cognifide.gradle.aem.base.download.DownloadTask
 import com.cognifide.gradle.aem.base.vlt.*
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -43,6 +44,7 @@ class BasePlugin : Plugin<Project> {
         val vlt = tasks.create(VltTask.NAME, VltTask::class.java)
         val checkout = tasks.create(CheckoutTask.NAME, CheckoutTask::class.java)
         val sync = tasks.create(SyncTask.NAME, SyncTask::class.java)
+        val download = tasks.create(DownloadTask.NAME, DownloadTask::class.java)
 
         val baseClean = tasks.getByName(LifecycleBasePlugin.CLEAN_TASK_NAME)
 

@@ -1,23 +1,20 @@
-package com.cognifide.gradle.aem.pkg
+package com.cognifide.gradle.aem.base.download
 
-import com.cognifide.gradle.aem.api.AemConfig
+import com.cognifide.gradle.aem.api.AemDefaultTask
 import com.cognifide.gradle.aem.api.AemNotifier
 import com.cognifide.gradle.aem.api.AemTask
 import com.cognifide.gradle.aem.base.vlt.VltFilter
 import com.cognifide.gradle.aem.instance.Instance
 import com.cognifide.gradle.aem.instance.InstanceSync
-import com.cognifide.gradle.aem.internal.PropertyParser
-import com.cognifide.gradle.aem.internal.file.FileContentReader
+import com.cognifide.gradle.aem.internal.file.FileOperations
+import com.cognifide.gradle.aem.pkg.PackagePlugin
 import org.apache.commons.io.FilenameUtils
-import org.gradle.api.file.DuplicatesStrategy
-import org.gradle.api.tasks.InputDirectory
-import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
-import org.gradle.api.tasks.bundling.Zip
+import org.gradle.util.GFileUtils
+import org.zeroturnaround.zip.ZipUtil
 import java.io.File
 
-open class DownloadTask : Zip(), AemTask {
+open class DownloadTask : AemDefaultTask() {
 
     companion object {
         const val NAME = "aemDownload"
@@ -25,14 +22,9 @@ open class DownloadTask : Zip(), AemTask {
         const val CLASSIFIER_SHELL = "downloadShell"
     }
 
-    @Nested
-    final override val config = AemConfig.of(project)
+    private val taskDir = AemTask.taskDir(project, NAME)
 
-    @InputDirectory
-    private val prepareDir = AemTask.taskDir(project, PrepareTask.NAME)
-
-    @Internal
-    val props = PropertyParser(project)
+    private val shellDir = AemTask.temporaryDir(project, NAME, CLASSIFIER_SHELL)
 
     private val checkoutFilter by lazy { VltFilter.of(project) }
 
@@ -42,40 +34,25 @@ open class DownloadTask : Zip(), AemTask {
         description = "Builds and downloads CRX package from remote instance"
         group = AemTask.GROUP
 
-        baseName = config.packageName
-        isZip64 = true
-
-        // Empty package uploaded to aem will have 'shell' suffix
-        classifier = CLASSIFIER_SHELL
-
-        // Take only first filter.xml file from definition
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-
-        //Load zip configuration only when the task is in the graph
-        project.gradle.taskGraph.whenReady {
-            if (it.hasTask(this)) {
-                this.specShellPackage()
-            }
-        }
 
         // Task is always executed when in the graph
         outputs.upToDateWhen { false }
     }
 
     @TaskAction
-    override fun copy() {
-        // Prepare shell package
-        super.copy()
+    fun download() {
+        clean()
+        val shell = prepareShellPackage()
 
         val sync = InstanceSync(project, instance)
 
-        logger.lifecycle("Uploading package $archivePath")
-        val packagePath = sync.uploadPackage(archivePath).path
+        logger.lifecycle("Uploading package $shell")
+        val packagePath = sync.uploadPackage(shell).path
 
         logger.lifecycle("Building remote package $packagePath")
         sync.buildPackage(packagePath)
 
-        val packageFile = File(destinationDir, FilenameUtils.getName(packagePath))
+        val packageFile = File(taskDir, FilenameUtils.getName(packagePath))
         logger.lifecycle("Downloading remote package $packagePath to $packageFile")
         sync.downloadPackage(packagePath, packageFile)
 
@@ -90,20 +67,26 @@ open class DownloadTask : Zip(), AemTask {
         AemNotifier.of(project).default("Package downloaded", packageFile.name)
     }
 
-    private fun specShellPackage() {
-        into(PackagePlugin.VLT_PATH) { spec ->
-            spec.from(checkoutFilter.file)
-            rename(checkoutFilter.file.name, "filter.xml")
+    private fun clean() {
+        GFileUtils.cleanDirectory(taskDir)
+    }
+
+    private fun prepareShellPackage(): File {
+        val zipResult = File(taskDir, "$CLASSIFIER_SHELL.zip")
+        val vltDir = File(shellDir, PackagePlugin.VLT_PATH)
+        val jcrRoot = File(shellDir, PackagePlugin.JCR_ROOT)
+        vltDir.mkdirs()
+        jcrRoot.mkdirs()
+
+        checkoutFilter.file.copyTo(File(vltDir, "filter.xml"))
+        FileOperations.copyResources(PackagePlugin.VLT_PATH, vltDir, true)
+
+        FileOperations.amendFiles(vltDir, listOf("**/*.xml")) { file, content ->
+            props.expandPackage(content, mapOf("project.version" to "${project.version}-$CLASSIFIER_DOWNLOAD"), file.absolutePath)
         }
-        into("") { spec ->
-            spec.from(prepareDir)
-            spec.eachFile {
-                FileContentReader.filter(it) {
-                    // Updating version string for package to contain '-download' suffix
-                    props.expandPackage(it, mapOf("project.version" to "${project.version}-$CLASSIFIER_DOWNLOAD"), path)
-                }
-            }
-        }
+
+        ZipUtil.pack(shellDir, zipResult)
+        return zipResult
     }
 
     private fun extractContents(downloadedPackage: File, jcrRoot: File) {
