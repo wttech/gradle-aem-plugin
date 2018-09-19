@@ -79,7 +79,7 @@ class AemConfig(
      * Defines maximum time after which initializing connection to AEM will be aborted (e.g on upload, install).
      */
     @Input
-    var instanceConnectionTimeout: Int = props.int("aem.instance.connectionTimeout", 5000)
+    var instanceConnectionTimeout: Int = props.int("aem.instance.connectionTimeout", 20000)
 
     /**
      * Determines if connection to untrusted (e.g. self-signed) SSL certificates should be allowed.

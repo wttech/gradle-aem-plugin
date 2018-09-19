@@ -44,7 +44,7 @@ class BasePlugin : Plugin<Project> {
         val vlt = tasks.create(VltTask.NAME, VltTask::class.java)
         val checkout = tasks.create(CheckoutTask.NAME, CheckoutTask::class.java)
         val sync = tasks.create(SyncTask.NAME, SyncTask::class.java)
-        val download = tasks.create(DownloadTask.NAME, DownloadTask::class.java)
+        tasks.create(DownloadTask.NAME, DownloadTask::class.java)
 
         val baseClean = tasks.getByName(LifecycleBasePlugin.CLEAN_TASK_NAME)
 
