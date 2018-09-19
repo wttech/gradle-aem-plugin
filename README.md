@@ -488,7 +488,7 @@ Replicate installed CRX package to other AEM instance(s).
 Builds and downloads CRX package from AEM instance. Similar to [aemCheckout](#task-aemcheckout) but produces CRX package that is automatically extracted into current project's *jcr_root* directory.
  
 CMD parameters:
-* `gradlew :aemDownload -Paem.download.extract=false` - Do not extract the package. Downloaded package is located under `build/distribution` folder for a project
+* `gradlew :aemDownload -Paem.download.extract=false` - Do not extract the package. Downloaded package is located under `build/aemDownload` folder for a project
 * `gradlew :aemDownload -Paem.force` - Deletes content of *jcr_root* directory before extracting the package contents
 * `gradlew :aemDownload -Paem.checkout.filterPath=src/main/content/META-INF/vault/custom-filter.xml` - Specifying the filter file instead default filter.xml for a project
 * `gradlew :aemDownload -Paem.checkout.filterRoots=[/etc/tags/example,/content/dam/example]` - Specifying explicitly the filters instead default filter.xml for a project
