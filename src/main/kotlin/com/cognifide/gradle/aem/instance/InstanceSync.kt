@@ -34,31 +34,9 @@ import java.util.*
 
 class InstanceSync(val project: Project, val instance: Instance) {
 
-    companion object {
-        private const val PACKAGE_MANAGER_SERVICE_SUFFIX = "/crx/packmgr/service"
-
-        private const val PACKAGE_MANAGER_LIST_SUFFIX = "/crx/packmgr/list.jsp"
-
-        private const val VMSTAT_SHUTDOWN_STOP = "Stop"
-
-        private const val VMSTAT_SHUTDOWN_RESTART = "Restart"
-    }
-
     val config = AemConfig.of(project)
 
     val logger = project.logger
-
-    val jsonTargetUrl = instance.httpUrl + PACKAGE_MANAGER_SERVICE_SUFFIX + "/.json"
-
-    val htmlTargetUrl = instance.httpUrl + PACKAGE_MANAGER_SERVICE_SUFFIX + "/.html"
-
-    val listPackagesUrl = instance.httpUrl + PACKAGE_MANAGER_LIST_SUFFIX
-
-    val bundlesUrl = "${instance.httpUrl}/system/console/bundles.json"
-
-    val componentsUrl = "${instance.httpUrl}/system/console/components.json"
-
-    val vmStatUrl = "${instance.httpUrl}/system/console/vmstat"
 
     var basicUser = instance.user
 
@@ -74,24 +52,24 @@ class InstanceSync(val project: Project, val instance: Instance) {
 
     var responseHandler: (HttpResponse) -> Unit = { _ -> }
 
-    fun get(url: String): String {
-        return fetch(HttpGet(normalizeUrl(url)))
+    fun get(path: String): String {
+        return fetch(HttpGet(composeUrl(path)))
     }
 
-    fun head(url: String): String {
-        return fetch(HttpHead(normalizeUrl(url)))
+    fun head(path: String): String {
+        return fetch(HttpHead(composeUrl(path)))
     }
 
-    fun delete(url: String): String {
-        return fetch(HttpDelete(normalizeUrl(url)))
+    fun delete(path: String): String {
+        return fetch(HttpDelete(composeUrl(path)))
     }
 
-    fun put(url: String): String {
-        return fetch(HttpPut(normalizeUrl(url)))
+    fun put(path: String): String {
+        return fetch(HttpPut(composeUrl(path)))
     }
 
-    fun patch(url: String): String {
-        return fetch(HttpPatch(normalizeUrl(url)))
+    fun patch(path: String): String {
+        return fetch(HttpPatch(composeUrl(path)))
     }
 
     fun postUrlencoded(url: String, params: Map<String, Any> = mapOf()): String {
@@ -103,18 +81,18 @@ class InstanceSync(val project: Project, val instance: Instance) {
     }
 
     private fun post(url: String, entity: HttpEntity): String {
-        return fetch(HttpPost(normalizeUrl(url)).apply { this.entity = entity })
+        return fetch(HttpPost(composeUrl(url)).apply { this.entity = entity })
     }
 
     /**
      * Fix for HttpClient's: 'escaped absolute path not valid'
      * https://stackoverflow.com/questions/13652681/httpclient-invalid-uri-escaped-absolute-path-not-valid
      */
-    private fun normalizeUrl(url: String): String {
-        return url.replace(" ", "%20")
+    private fun composeUrl(url: String): String {
+        return "${instance.httpUrl}${url.replace(" ", "%20")}"
     }
 
-    fun fetch(method: HttpRequestBase): String {
+    private fun fetch(method: HttpRequestBase): String {
         return execute(method) { response ->
             val body = IOUtils.toString(response.entity.content) ?: ""
 
@@ -127,7 +105,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         }
     }
 
-    fun <T> execute(method: HttpRequestBase, success: (HttpResponse) -> T): T {
+    private fun <T> execute(method: HttpRequestBase, success: (HttpResponse) -> T): T {
         try {
             requestConfigurer(method)
 
@@ -232,10 +210,10 @@ class InstanceSync(val project: Project, val instance: Instance) {
     }
 
     private fun resolveRemotePackage(resolver: (ListResponse) -> ListResponse.Package?, refresh: Boolean): ListResponse.Package? {
-        logger.debug("Asking for uploaded packages using URL: '$listPackagesUrl'")
+        logger.debug("Asking for uploaded packages using URL: '$PKG_MANAGER_LIST_JSON'")
 
         if (instance.packages == null || refresh) {
-            val json = postMultipart(listPackagesUrl)
+            val json = postMultipart(PKG_MANAGER_LIST_JSON)
             instance.packages = try {
                 ListResponse.fromJson(json)
             } catch (e: Exception) {
@@ -269,7 +247,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
     }
 
     fun uploadPackageOnce(file: File): UploadResponse {
-        val url = "$jsonTargetUrl/?cmd=upload"
+        val url = "$PKG_MANAGER_JSON_PATH/?cmd=upload"
 
         logger.info("Uploading package at path '{}' using URL '{}'", file.path, url)
 
@@ -319,7 +297,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
     }
 
     fun installPackageOnce(remotePath: String): InstallResponse {
-        val url = "$htmlTargetUrl$remotePath/?cmd=install"
+        val url = "$PKG_MANAGER_HTML_PATH$remotePath/?cmd=install"
 
         logger.info("Installing package using command: $url")
 
@@ -358,7 +336,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
     }
 
     fun activatePackage(remotePath: String): UploadResponse {
-        val url = "$jsonTargetUrl$remotePath/?cmd=replicate"
+        val url = "$PKG_MANAGER_JSON_PATH$remotePath/?cmd=replicate"
 
         logger.info("Activating package using command: $url")
 
@@ -382,7 +360,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
     }
 
     fun deletePackage(remotePath: String): DeleteResponse {
-        val url = "$htmlTargetUrl$remotePath/?cmd=delete"
+        val url = "$PKG_MANAGER_HTML_PATH$remotePath/?cmd=delete"
 
         logger.info("Deleting package using command: $url")
 
@@ -406,7 +384,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
     }
 
     fun uninstallPackage(remotePath: String): UninstallResponse {
-        val url = "$htmlTargetUrl$remotePath/?cmd=uninstall"
+        val url = "$PKG_MANAGER_HTML_PATH$remotePath/?cmd=uninstall"
 
         logger.info("Uninstalling package using command: $url")
 
@@ -434,10 +412,10 @@ class InstanceSync(val project: Project, val instance: Instance) {
     }
 
     fun determineBundleState(): BundleState {
-        logger.debug("Asking for OSGi bundles using URL: '$bundlesUrl'")
+        logger.debug("Asking for OSGi bundles using URL: '$OSGI_BUNDLES_PATH'")
 
         return try {
-            BundleState.fromJson(get(bundlesUrl))
+            BundleState.fromJson(get(OSGI_BUNDLES_PATH))
         } catch (e: Exception) {
             logger.debug("Cannot determine OSGi bundles state on $instance", e)
             BundleState.unknown(e)
@@ -445,10 +423,10 @@ class InstanceSync(val project: Project, val instance: Instance) {
     }
 
     fun determineComponentState(): ComponentState {
-        logger.debug("Asking for OSGi components using URL: '$bundlesUrl'")
+        logger.debug("Asking for OSGi components using URL: '$OSGI_BUNDLES_PATH'")
 
         return try {
-            ComponentState.fromJson(get(componentsUrl))
+            ComponentState.fromJson(get(OSGI_COMPONENTS_PATH))
         } catch (e: Exception) {
             logger.debug("Cannot determine OSGi components state on $instance", e)
             ComponentState.unknown()
@@ -456,20 +434,40 @@ class InstanceSync(val project: Project, val instance: Instance) {
     }
 
     fun reload() {
-        shutdown(VMSTAT_SHUTDOWN_RESTART)
+        shutdown(OSGI_VMSTAT_SHUTDOWN_RESTART)
     }
 
     fun stop() {
-        shutdown(VMSTAT_SHUTDOWN_STOP)
+        shutdown(OSGI_VMSTAT_SHUTDOWN_STOP)
     }
 
     private fun shutdown(type: String) {
         try {
             logger.info("Triggering shutdown of $instance.")
-            postUrlencoded(vmStatUrl, mapOf("shutdown_type" to type))
+            postUrlencoded(OSGI_VMSTAT_PATH, mapOf("shutdown_type" to type))
         } catch (e: DeployException) {
             throw InstanceException("Cannot trigger shutdown of $instance.", e)
         }
+    }
+
+    companion object {
+        const val PKG_MANAGER_PATH = "/crx/packmgr/service"
+
+        const val PKG_MANAGER_JSON_PATH = "$PKG_MANAGER_PATH/.json"
+
+        const val PKG_MANAGER_HTML_PATH = "$PKG_MANAGER_PATH/.html"
+
+        const val PKG_MANAGER_LIST_JSON = "/crx/packmgr/list.jsp"
+
+        const val OSGI_BUNDLES_PATH = "/system/console/bundles.json"
+
+        const val OSGI_COMPONENTS_PATH = "/system/console/components.json"
+
+        const val OSGI_VMSTAT_PATH = "/system/console/vmstat"
+
+        const val OSGI_VMSTAT_SHUTDOWN_STOP = "Stop"
+
+        const val OSGI_VMSTAT_SHUTDOWN_RESTART = "Restart"
     }
 
 }
