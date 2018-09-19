@@ -102,7 +102,7 @@ class AemConfig(
     var bundlePath: String = if (project == project.rootProject) {
         "/apps/${project.name}/install"
     } else {
-        "/apps/${project.rootProject.name}/${project.name}/install"
+        "/apps/${project.rootProject.name}/${project.name.substringAfterLast(".")}/install" // TODO not sure about this
     }
 
     /**

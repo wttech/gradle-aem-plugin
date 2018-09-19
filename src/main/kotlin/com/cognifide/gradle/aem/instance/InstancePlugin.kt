@@ -54,14 +54,17 @@ class InstancePlugin : Plugin<Project> {
         setup.dependsOn(create, up, satisfy).mustRunAfter(destroy)
         resetup.dependsOn(destroy, setup)
 
+        // Preconfigure tasks setup and deploy within same project (for assembly package)
         plugins.withId(PackagePlugin.ID) {
             val deploy = tasks.getByName(DeployTask.NAME)
 
+            setup.dependsOn(deploy)
             deploy.mustRunAfter(create, up, satisfy)
             reload.mustRunAfter(deploy)
             await.mustRunAfter(deploy)
         }
 
+        // Aggregate all packages being composed by collect task
         gradle.afterProject { subproject ->
             if (subproject.plugins.hasPlugin(PackagePlugin.ID)) {
                 collect.dependsOn(subproject.tasks.getByName(ComposeTask.NAME))

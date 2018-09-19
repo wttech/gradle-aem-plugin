@@ -628,7 +628,7 @@ This feature is especially useful to generate valid *META-INF/properties.xml* fi
 <properties>
     <comment>{{project.description}}</comment>
     <entry key="group">{{project.group}}</entry>
-    <entry key="name">{{zip.baseName}}</entry>
+    <entry key="name">{{project.name}}</entry>
     <entry key="version">{{project.version}}</entry>
     <entry key="groupId">{{project.group}}</entry>
     <entry key="artifactId">{{project.name}}</entry>

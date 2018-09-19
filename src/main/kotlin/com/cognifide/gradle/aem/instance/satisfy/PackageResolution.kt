@@ -58,7 +58,6 @@ class PackageResolution(group: PackageGroup, id: String, action: (FileResolution
                 "project.name" to symbolicName,
                 "project.version" to version,
                 "project.description" to description,
-                "zip.baseName" to symbolicName,
                 "filters" to filters,
                 "filterRoots" to filters.joinToString(config.vaultLineSeparatorString) { it.toString() }
         )
