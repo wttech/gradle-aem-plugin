@@ -24,6 +24,8 @@ class HttpFileDownloader(val project: Project) {
 
     var ignoreSSLErrors: Boolean = true
 
+    var preemptiveAuthentication: Boolean = false
+
     val logger: Logger = project.logger
 
     companion object {
@@ -57,7 +59,6 @@ class HttpFileDownloader(val project: Project) {
 
     private fun createClient(): HttpClient {
         val builder = HttpClients.custom()
-                .addInterceptorFirst(PreemptiveAuthInterceptor())
                 .useSystemProperties()
                 .setDefaultRequestConfig(
                         RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build()
@@ -67,6 +68,9 @@ class HttpFileDownloader(val project: Project) {
             val provider = BasicCredentialsProvider()
             provider.setCredentials(AuthScope.ANY, UsernamePasswordCredentials(username, password))
             builder.setDefaultCredentialsProvider(provider)
+            if(preemptiveAuthentication) {
+                builder.addInterceptorFirst(PreemptiveAuthInterceptor())
+            }
         }
 
         if (ignoreSSLErrors) {

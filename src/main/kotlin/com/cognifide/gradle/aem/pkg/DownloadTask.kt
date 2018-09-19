@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.pkg
 
 import com.cognifide.gradle.aem.api.AemConfig
+import com.cognifide.gradle.aem.api.AemNotifier
 import com.cognifide.gradle.aem.api.AemTask
 import com.cognifide.gradle.aem.base.vlt.VltFilter
 import com.cognifide.gradle.aem.instance.Instance
@@ -78,10 +79,15 @@ open class DownloadTask : Zip(), AemTask {
         logger.lifecycle("Downloading remote package $packagePath to $packageFile")
         sync.downloadPackage(packagePath, packageFile)
 
+        //Cleanup of download package
+        sync.deletePackage(packagePath)
+
         if (config.downloadExtract) {
             val jcrRoot = prepareJcrRoot()
             extractContents(packageFile, jcrRoot)
         }
+
+        AemNotifier.of(project).default("Package downloaded", packageFile.name)
     }
 
     private fun specShellPackage() {

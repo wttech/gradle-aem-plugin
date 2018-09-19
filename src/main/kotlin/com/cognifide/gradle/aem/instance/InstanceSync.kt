@@ -328,6 +328,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         val downloader = HttpFileDownloader(project)
         downloader.username = basicUser
         downloader.password = basicPassword
+        downloader.preemptiveAuthentication = true
         downloader.download(url, targetFile)
         if (!targetFile.exists()) {
             throw FileException("Downloaded package missing: ${targetFile.path}")
