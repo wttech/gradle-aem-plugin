@@ -82,7 +82,7 @@ class AemConfig(
      * Defines maximum time after which initializing connection to AEM will be aborted (e.g on upload, install).
      */
     @Input
-    var instanceConnectionTimeout: Int = props.int("aem.instance.connectionTimeout", 20000)
+    var instanceConnectionTimeout: Int = props.int("aem.instance.connectionTimeout", 5000)
 
     /**
      * Determines if connection to untrusted (e.g. self-signed) SSL certificates should be allowed.
@@ -496,6 +496,13 @@ class AemConfig(
     var downloadExtract = props.boolean("aem.download.extract", true)
 
     /**
+     * In case of downloading big CRX packages, AEM could respond much slower so that special
+     * timeout is covering such edge case.
+     */
+    @Input
+    var downloadConnectionTimeout = props.int("aem.download.connectionTimeout", 60000)
+
+    /**
      * Determines method of synchronizing JCR content from running AEM instance.
      *
      * By default 'checkout' method using VLT tool is being used.
@@ -511,7 +518,7 @@ class AemConfig(
         get() = when (syncTransfer) {
             "download" -> DownloadTask.NAME
             "checkout" -> CheckoutTask.NAME
-            else -> throw AemException("Unsupported sync transfer method '$syncTransfer'. Supported only: 'checkout' and 'download'.")
+            else -> throw AemException("Unsupported sync transfer method '$syncTransfer'. Supported methods: 'checkout' and 'download'.")
         }
 
     /**

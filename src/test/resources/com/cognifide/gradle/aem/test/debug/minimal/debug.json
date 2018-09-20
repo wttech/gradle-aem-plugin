@@ -43,7 +43,7 @@
       "instanceName": "local-*",
       "instanceList": "",
       "instanceAuthorName": "local-author*",
-      "instanceConnectionTimeout": 20000,
+      "instanceConnectionTimeout": 5000,
       "instanceConnectionUntrustedSsl": true,
 
       "contentPath": "debug/minimal/src/main/content",
@@ -109,6 +109,7 @@
       "satisfyGroupName": "*",
       "checkoutFilterPath": "",
       "downloadExtract": true,
+      "downloadConnectionTimeout": 60000,
       "debugPackageDeployed": false
     }
   },

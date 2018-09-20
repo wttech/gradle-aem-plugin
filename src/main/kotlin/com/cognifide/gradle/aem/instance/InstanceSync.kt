@@ -128,9 +128,9 @@ class InstanceSync(val project: Project, val instance: Instance) {
         val builder = HttpClientBuilder.create()
                 .addInterceptorFirst(PreemptiveAuthInterceptor())
                 .setDefaultRequestConfig(RequestConfig.custom()
-                        .setSocketTimeout(connectionTimeout)
-                        .setConnectTimeout(connectionTimeout)
-                        .setConnectionRequestTimeout(connectionTimeout)
+                        .setSocketTimeout(connectionTimeout.toInt())
+                        .setConnectTimeout(connectionTimeout.toInt())
+                        .setConnectionRequestTimeout(connectionTimeout.toInt())
                         .build()
                 )
                 .setDefaultCredentialsProvider(BasicCredentialsProvider().apply {

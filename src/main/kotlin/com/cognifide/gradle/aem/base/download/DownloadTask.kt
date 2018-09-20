@@ -44,7 +44,9 @@ open class DownloadTask : AemDefaultTask() {
         clean()
 
         val shell = prepareShellPackage()
-        val sync = InstanceSync(project, instance)
+        val sync = InstanceSync(project, instance).apply {
+            connectionTimeout = config.downloadConnectionTimeout
+        }
 
         val packagePath = sync.uploadPackage(shell).path
 
