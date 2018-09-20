@@ -212,7 +212,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
     }
 
     private fun resolveRemotePackage(resolver: (ListResponse) -> ListResponse.Package?, refresh: Boolean): ListResponse.Package? {
-        logger.debug("Asking for uploaded packages using URL: '$PKG_MANAGER_LIST_JSON'")
+        logger.debug("Asking for uploaded packages on $instance")
 
         if (instance.packages == null || refresh) {
             val json = postMultipart(PKG_MANAGER_LIST_JSON)
@@ -251,7 +251,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
     fun uploadPackageOnce(file: File): UploadResponse {
         val url = "$PKG_MANAGER_JSON_PATH/?cmd=upload"
 
-        logger.info("Uploading package at path '{}' using URL '{}'", file.path, url)
+        logger.info("Uploading package $file to $instance'")
 
         val json = try {
             postMultipart(url, mapOf(
@@ -261,17 +261,17 @@ class InstanceSync(val project: Project, val instance: Instance) {
         } catch (e: FileNotFoundException) {
             throw DeployException("Package file $file to be uploaded not found!", e)
         } catch (e: Exception) {
-            throw DeployException("Cannot upload package $file to instance $instance. Reason: request failed.", e)
+            throw DeployException("Cannot upload package $file to $instance. Reason: request failed.", e)
         }
 
         val response = try {
             UploadResponse.fromJson(json)
         } catch (e: Exception) {
-            throw DeployException("Malformed response after uploading package $file to instance $instance.", e)
+            throw DeployException("Malformed response after uploading package $file to $instance.", e)
         }
 
         if (!response.isSuccess) {
-            throw DeployException("Cannot upload package $file to instance $instance. Reason: ${response.msg}.")
+            throw DeployException("Cannot upload package $file to $instance. Reason: ${response.msg}.")
         }
 
         return response
@@ -303,7 +303,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
     }
 
     fun downloadPackageOnce(url: String, targetFile: File) {
-        logger.info("Downloading package using URL '{}' to file $targetFile", url)
+        logger.info("Downloading package from $url to file $targetFile")
 
         with(HttpFileDownloader(project)) {
             username = basicUser
@@ -321,12 +321,12 @@ class InstanceSync(val project: Project, val instance: Instance) {
     fun buildPackage(remotePath: String): PackageBuildResponse {
         val url = "$PKG_MANAGER_JSON_PATH$remotePath/?cmd=build"
 
-        logger.info("Building package using URL '{}'", url)
+        logger.info("Building package $remotePath on $instance")
 
         val json = try {
             postMultipart(url, mapOf())
         } catch (e: Exception) {
-            throw DeployException("Cannot build package $remotePath on instance $instance. Reason: request failed.", e)
+            throw DeployException("Cannot build package $remotePath on $instance. Reason: request failed.", e)
         }
 
         val response = try {
@@ -336,7 +336,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         }
 
         if (!response.isSuccess) {
-            throw DeployException("Cannot build package $remotePath on instance $instance. Reason: ${response.msg}.")
+            throw DeployException("Cannot build package $remotePath on $instance. Reason: ${response.msg}.")
         }
         return response
     }
@@ -365,22 +365,22 @@ class InstanceSync(val project: Project, val instance: Instance) {
     fun installPackageOnce(remotePath: String): InstallResponse {
         val url = "$PKG_MANAGER_HTML_PATH$remotePath/?cmd=install"
 
-        logger.info("Installing package using command: $url")
+        logger.info("Installing package $remotePath on $instance")
 
         val json = try {
             postMultipart(url, mapOf("recursive" to config.installRecursive))
         } catch (e: Exception) {
-            throw DeployException("Cannot install package $remotePath on instance $instance. Reason: request failed.", e)
+            throw DeployException("Cannot install package $remotePath on $instance. Reason: request failed.", e)
         }
 
         val response = try {
             InstallResponse(json)
         } catch (e: Exception) {
-            throw DeployException("Malformed install response after installing package $remotePath on instance $instance.", e)
+            throw DeployException("Malformed install response after installing package $remotePath on $instance.", e)
         }
 
         if (!response.success) {
-            throw DeployException("Cannot install package $remotePath on instance $instance. Status: ${response.status}. Errors: ${response.errors}.")
+            throw DeployException("Cannot install package $remotePath on $instance. Status: ${response.status}. Errors: ${response.errors}.")
         }
 
         return response
@@ -404,22 +404,22 @@ class InstanceSync(val project: Project, val instance: Instance) {
     fun activatePackage(remotePath: String): UploadResponse {
         val url = "$PKG_MANAGER_JSON_PATH$remotePath/?cmd=replicate"
 
-        logger.info("Activating package using command: $url")
+        logger.info("Activating package $remotePath on $instance")
 
         val json = try {
             postMultipart(url)
         } catch (e: Exception) {
-            throw DeployException("Cannot activate package $remotePath on instance $instance. Reason: request failed.", e)
+            throw DeployException("Cannot activate package $remotePath on $instance. Reason: request failed.", e)
         }
 
         val response = try {
             UploadResponse.fromJson(json)
         } catch (e: Exception) {
-            throw DeployException("Malformed response after activating package $remotePath on instance $instance.", e)
+            throw DeployException("Malformed response after activating package $remotePath on $instance.", e)
         }
 
         if (!response.isSuccess) {
-            throw DeployException("Cannot activate package $remotePath on instance $instance. Reason: ${response.msg}.")
+            throw DeployException("Cannot activate package $remotePath on $instance. Reason: ${response.msg}.")
         }
 
         return response
@@ -428,22 +428,22 @@ class InstanceSync(val project: Project, val instance: Instance) {
     fun deletePackage(remotePath: String): DeleteResponse {
         val url = "$PKG_MANAGER_HTML_PATH$remotePath/?cmd=delete"
 
-        logger.info("Deleting package using command: $url")
+        logger.info("Deleting package $remotePath on $instance")
 
         val rawHtml = try {
             postMultipart(url)
         } catch (e: Exception) {
-            throw DeployException("Cannot delete package $remotePath from instance $instance. Reason: request failed.", e)
+            throw DeployException("Cannot delete package $remotePath from $instance. Reason: request failed.", e)
         }
 
         val response = try {
             DeleteResponse(rawHtml)
         } catch (e: Exception) {
-            throw DeployException("Malformed response after deleting package $remotePath from instance $instance.", e)
+            throw DeployException("Malformed response after deleting package $remotePath from $instance.", e)
         }
 
         if (!response.success) {
-            throw DeployException("Cannot delete package $remotePath from instance $instance. Status: ${response.status}. Errors: ${response.errors}.")
+            throw DeployException("Cannot delete package $remotePath from $instance. Status: ${response.status}. Errors: ${response.errors}.")
         }
 
         return response
@@ -457,13 +457,13 @@ class InstanceSync(val project: Project, val instance: Instance) {
         val rawHtml = try {
             postMultipart(url, mapOf("recursive" to config.installRecursive))
         } catch (e: Exception) {
-            throw DeployException("Cannot uninstall package $remotePath on instance $instance. Reason: request failed.", e)
+            throw DeployException("Cannot uninstall package $remotePath on $instance. Reason: request failed.", e)
         }
 
         val response = try {
             UninstallResponse(rawHtml)
         } catch (e: Exception) {
-            throw DeployException("Malformed response after uninstalling package $remotePath from instance $instance.", e)
+            throw DeployException("Malformed response after uninstalling package $remotePath from $instance.", e)
         }
 
         if (!response.success) {
@@ -478,7 +478,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
     }
 
     fun determineBundleState(): BundleState {
-        logger.debug("Asking for OSGi bundles using URL: '$OSGI_BUNDLES_PATH'")
+        logger.debug("Asking for OSGi bundles on $instance")
 
         return try {
             BundleState.fromJson(get(OSGI_BUNDLES_PATH))
@@ -489,7 +489,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
     }
 
     fun determineComponentState(): ComponentState {
-        logger.debug("Asking for OSGi components using URL: '$OSGI_BUNDLES_PATH'")
+        logger.debug("Asking for OSGi components on $instance")
 
         return try {
             ComponentState.fromJson(get(OSGI_COMPONENTS_PATH))
