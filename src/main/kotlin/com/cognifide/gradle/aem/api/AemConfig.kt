@@ -391,7 +391,7 @@ class AemConfig(
      */
     @Internal
     @get:JsonIgnore
-    var awaitStableRetry = retry { afterSecond(300) }
+    var awaitStableRetry = retry { afterSecond(props.long("aem.await.stable.retry", 300)) }
 
     /**
      * Hook for customizing instance state provider used within stable checking.
@@ -523,11 +523,11 @@ class AemConfig(
      * Declare new deployment target (AEM instance).
      */
     fun localInstance(httpUrl: String) {
-        localInstance(httpUrl, {})
+        localInstance(httpUrl) {}
     }
 
     fun localInstance(httpUrl: String, configurer: LocalInstance.() -> Unit) {
-        instance(LocalInstance.create(httpUrl) {
+        instance(LocalInstance.create(project, httpUrl) {
             this.environment = this@AemConfig.environment
             this.apply(configurer)
         })
@@ -538,11 +538,11 @@ class AemConfig(
     }
 
     fun remoteInstance(httpUrl: String) {
-        remoteInstance(httpUrl, {})
+        remoteInstance(httpUrl) {}
     }
 
     fun remoteInstance(httpUrl: String, configurer: RemoteInstance.() -> Unit) {
-        instance(RemoteInstance.create(httpUrl) {
+        instance(RemoteInstance.create(project, httpUrl) {
             this.environment = this@AemConfig.environment
             this.apply(configurer)
         })
@@ -553,7 +553,7 @@ class AemConfig(
     }
 
     fun parseInstance(urlOrName: String): Instance {
-        return instances[urlOrName] ?: Instance.parse(urlOrName).single().apply { validate() }
+        return instances[urlOrName] ?: Instance.parse(project, urlOrName).single().apply { validate() }
     }
 
     private fun instances(instances: Collection<Instance>) {
@@ -678,7 +678,7 @@ class AemConfig(
     private fun ensureInstances() {
         // Define through command line (forced instances)
         if (instanceList.isNotBlank()) {
-            instances(Instance.parse(instanceList))
+            instances(Instance.parse(project, instanceList))
         }
 
         // Define through properties (remote instances)

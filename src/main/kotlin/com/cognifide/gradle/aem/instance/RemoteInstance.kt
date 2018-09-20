@@ -4,9 +4,12 @@ import com.cognifide.gradle.aem.pkg.deploy.ListResponse
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.apache.commons.lang3.builder.EqualsBuilder
 import org.apache.commons.lang3.builder.HashCodeBuilder
+import org.gradle.api.Project
 import java.io.Serializable
 
-class RemoteInstance private constructor() : Instance, Serializable {
+class RemoteInstance private constructor(@Transient
+                                         @get:JsonIgnore
+                                         private val project: Project) : Instance, Serializable {
 
     override lateinit var httpUrl: String
 
@@ -21,6 +24,10 @@ class RemoteInstance private constructor() : Instance, Serializable {
     @Transient
     @get:JsonIgnore
     override var packages: ListResponse? = null
+
+    override fun sync(synchronizer: (InstanceSync) -> Unit) {
+        synchronizer(InstanceSync(project, this))
+    }
 
     override fun toString(): String {
         return "RemoteInstance(httpUrl='$httpUrl', user='$user', password='$hiddenPassword', environment='$environment', typeName='$typeName')"
@@ -47,8 +54,8 @@ class RemoteInstance private constructor() : Instance, Serializable {
 
     companion object {
 
-        fun create(httpUrl: String, configurer: RemoteInstance.() -> Unit): RemoteInstance {
-            return RemoteInstance().apply {
+        fun create(project: Project, httpUrl: String, configurer: RemoteInstance.() -> Unit): RemoteInstance {
+            return RemoteInstance(project).apply {
                 val instanceUrl = InstanceUrl.parse(httpUrl)
 
                 this.httpUrl = instanceUrl.httpUrl
@@ -61,8 +68,8 @@ class RemoteInstance private constructor() : Instance, Serializable {
             }
         }
 
-        fun create(httpUrl: String): RemoteInstance {
-            return create(httpUrl, {})
+        fun create(project: Project, httpUrl: String): RemoteInstance {
+            return create(project, httpUrl) {}
         }
 
     }
