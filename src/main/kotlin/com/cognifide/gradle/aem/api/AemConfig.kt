@@ -1,6 +1,8 @@
 package com.cognifide.gradle.aem.api
 
 import aQute.bnd.osgi.Jar
+import com.cognifide.gradle.aem.base.download.DownloadTask
+import com.cognifide.gradle.aem.base.vlt.CheckoutTask
 import com.cognifide.gradle.aem.instance.*
 import com.cognifide.gradle.aem.internal.LineSeparator
 import com.cognifide.gradle.aem.internal.PropertyParser
@@ -12,6 +14,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.lang.Closure
 import org.gradle.api.DefaultTask
 import org.gradle.api.Project
+import org.gradle.api.Task
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.util.ConfigureUtil
@@ -501,6 +504,15 @@ class AemConfig(
     @get:Internal
     @get:JsonIgnore
     var syncTransfer = props.string("aem.sync.transfer", "checkout")
+
+    @get:Internal
+    @get:JsonIgnore
+    val syncTransferTaskName: String
+        get() = when (syncTransfer) {
+            "download" -> DownloadTask.NAME
+            "checkout" -> CheckoutTask.NAME
+            else -> throw AemException("Unsupported sync transfer method '$syncTransfer'. Supported only: 'checkout' and 'download'.")
+        }
 
     /**
      * Convention paths used to determine Vault checkout filter if it is not specified explicitly.

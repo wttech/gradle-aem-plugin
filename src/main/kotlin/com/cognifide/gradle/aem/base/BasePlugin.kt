@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem.base
 
 import com.cognifide.gradle.aem.api.AemConfig
-import com.cognifide.gradle.aem.api.AemException
 import com.cognifide.gradle.aem.api.AemExtension
 import com.cognifide.gradle.aem.api.AemPlugin
 import com.cognifide.gradle.aem.base.debug.DebugTask
@@ -56,12 +55,9 @@ class BasePlugin : Plugin<Project> {
         download.mustRunAfter(baseClean)
 
         afterEvaluate {
-            val config = AemConfig.of(this)
-            val transfer = when (config.syncTransfer) {
-                "download" -> download
-                "checkout" -> checkout
-                else -> throw AemException("Unsupported sync transfer method '${config.syncTransfer}'. Supported only: 'checkout' and 'download'.")
-            }
+            val config = AemConfig.of(project)
+            val transfer = project.tasks.getByName(config.syncTransferTaskName)
+
             sync.dependsOn(transfer, clean).mustRunAfter(baseClean)
         }
 
