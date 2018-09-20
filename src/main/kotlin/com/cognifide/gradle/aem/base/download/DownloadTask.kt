@@ -43,12 +43,14 @@ open class DownloadTask : AemDefaultTask() {
     fun download() {
         clean()
 
-        val shell = prepareShellPackage()
+        val shellPackageFile = prepareShellPackage()
         val sync = InstanceSync(project, instance).apply {
             connectionTimeout = config.downloadConnectionTimeout
         }
 
-        val packagePath = sync.uploadPackage(shell).path
+        logger.lifecycle("Preparing shell package to be downloaded: $shellPackageFile")
+
+        val packagePath = sync.uploadPackage(shellPackageFile).path
 
         try {
             sync.buildPackage(packagePath)
@@ -57,12 +59,16 @@ open class DownloadTask : AemDefaultTask() {
             sync.downloadPackage(packagePath, packageFile)
 
             if (config.downloadExtract) {
+                logger.lifecycle("Extracting downloaded package: $packageFile")
+
                 val jcrRoot = prepareJcrRoot()
                 extractContents(packageFile, jcrRoot)
             }
 
             AemNotifier.of(project).default("Package downloaded", packageFile.name)
         } finally {
+            logger.lifecycle("Cleaning downloaded package")
+
             sync.deletePackage(packagePath)
         }
     }
