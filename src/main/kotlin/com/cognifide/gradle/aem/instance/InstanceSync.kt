@@ -3,6 +3,8 @@ package com.cognifide.gradle.aem.instance
 import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.ProgressCountdown
+import com.cognifide.gradle.aem.internal.file.FileException
+import com.cognifide.gradle.aem.internal.file.downloader.HttpFileDownloader
 import com.cognifide.gradle.aem.internal.http.PreemptiveAuthInterceptor
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.deploy.*
@@ -272,6 +274,63 @@ class InstanceSync(val project: Project, val instance: Instance) {
             throw DeployException("Cannot upload package $file to instance $instance. Reason: ${response.msg}.")
         }
 
+        return response
+    }
+
+    fun downloadPackage(remotePath: String, targetFile: File): Unit {
+        lateinit var exception: FileException
+        val url = instance.httpUrl + remotePath
+
+        for (i in 0..config.downloadRetry.times) {
+            try {
+                downloadPackageOnce(url, targetFile)
+                return
+            } catch (e: FileException) {
+                exception = e
+
+                if (i < config.downloadRetry.times) {
+                    logger.warn("Cannot download package $remotePath from $instance.")
+                    logger.debug("Download error", e)
+
+                    val header = "Retrying download (${i + 1}/${config.downloadRetry.times}) after delay."
+                    val countdown = ProgressCountdown(project, header, config.downloadRetry.delay(i + 1))
+                    countdown.run()
+                }
+            }
+        }
+
+        throw exception
+    }
+
+    fun downloadPackageOnce(url: String, targetFile: File): Unit {
+        val downloader = HttpFileDownloader(project)
+        downloader.username = basicUser
+        downloader.password = basicPassword
+        downloader.preemptiveAuthentication = true
+        downloader.download(url, targetFile)
+        if (!targetFile.exists()) {
+            throw FileException("Downloaded package missing: ${targetFile.path}")
+        }
+    }
+
+    fun buildPackage(remotePath: String): PackageBuildResponse {
+        val url = "$jsonTargetUrl$remotePath/?cmd=build"
+
+        val json = try {
+            postMultipart(url, mapOf())
+        } catch (e: Exception) {
+            throw DeployException("Cannot build package $remotePath on instance $instance. Reason: request failed.", e)
+        }
+
+        val response = try {
+            PackageBuildResponse.fromJson(json)
+        } catch (e: Exception) {
+            throw DeployException("Malformed response after building package $remotePath on $instance.", e)
+        }
+
+        if (!response.isSuccess) {
+            throw DeployException("Cannot build package $remotePath on instance $instance. Reason: ${response.msg}.")
+        }
         return response
     }
 

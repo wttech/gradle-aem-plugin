@@ -43,7 +43,7 @@
       "instanceName": "local-*",
       "instanceList": "",
       "instanceAuthorName": "local-author*",
-      "instanceConnectionTimeout": 5000,
+      "instanceConnectionTimeout": 20000,
       "instanceConnectionUntrustedSsl": true,
 
       "contentPath": "debug/minimal/src/main/content",
@@ -108,6 +108,7 @@
       "satisfyBundlePath": "/apps/gradle-aem-plugin/satisfy/install",
       "satisfyGroupName": "*",
       "checkoutFilterPath": "",
+      "downloadExtract": true,
       "debugPackageDeployed": false
     }
   },

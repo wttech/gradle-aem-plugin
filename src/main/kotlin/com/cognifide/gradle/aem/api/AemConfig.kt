@@ -79,7 +79,7 @@ class AemConfig(
      * Defines maximum time after which initializing connection to AEM will be aborted (e.g on upload, install).
      */
     @Input
-    var instanceConnectionTimeout: Int = props.int("aem.instance.connectionTimeout", 5000)
+    var instanceConnectionTimeout: Int = props.int("aem.instance.connectionTimeout", 20000)
 
     /**
      * Determines if connection to untrusted (e.g. self-signed) SSL certificates should be allowed.
@@ -290,6 +290,15 @@ class AemConfig(
     @get:JsonIgnore
     var uploadRetry = retry { afterSquaredSecond(props.long("aem.upload.retry", 6)) }
 
+
+    /**
+     * Repeat download when failed (brute-forcing).
+     */
+    @Internal
+    @get:JsonIgnore
+    var downloadRetry = retry { afterSquaredSecond(props.long("aem.download.retry", 3)) }
+
+
     /**
      * Determines if when on package install, sub-packages included in CRX package content should be also installed.
      */
@@ -474,6 +483,14 @@ class AemConfig(
      */
     @Input
     var checkoutFilterPath: String = props.string("aem.checkout.filterPath", "")
+
+    /**
+     * Extract the contents of package downloaded using aemDownload task to current project jcr_root directory
+     * This operation can be modified using -Paem.force command line to replace the contents of jcr_root directory with
+     * package content
+     */
+    @Input
+    val downloadExtract = props.boolean("aem.download.extract", true)
 
     /**
      * Convention paths used to determine Vault checkout filter if it is not specified explicitly.
