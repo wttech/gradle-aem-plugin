@@ -490,7 +490,17 @@ class AemConfig(
      * package content
      */
     @Input
-    val downloadExtract = props.boolean("aem.download.extract", true)
+    var downloadExtract = props.boolean("aem.download.extract", true)
+
+    /**
+     * Determines method of synchronizing JCR content from running AEM instance.
+     *
+     * By default 'checkout' method using VLT tool is being used.
+     * Other possible method is 'download' which transfers JCR content using temporary CRX package.
+     */
+    @get:Internal
+    @get:JsonIgnore
+    var syncTransfer = props.string("aem.sync.transfer", "checkout")
 
     /**
      * Convention paths used to determine Vault checkout filter if it is not specified explicitly.

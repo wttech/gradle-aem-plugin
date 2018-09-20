@@ -277,7 +277,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         return response
     }
 
-    fun downloadPackage(remotePath: String, targetFile: File): Unit {
+    fun downloadPackage(remotePath: String, targetFile: File) {
         lateinit var exception: FileException
         val url = instance.httpUrl + remotePath
 
@@ -302,19 +302,26 @@ class InstanceSync(val project: Project, val instance: Instance) {
         throw exception
     }
 
-    fun downloadPackageOnce(url: String, targetFile: File): Unit {
-        val downloader = HttpFileDownloader(project)
-        downloader.username = basicUser
-        downloader.password = basicPassword
-        downloader.preemptiveAuthentication = true
-        downloader.download(url, targetFile)
+    fun downloadPackageOnce(url: String, targetFile: File) {
+        logger.info("Downloading package using URL '{}' to file $targetFile", url)
+
+        with(HttpFileDownloader(project)) {
+            username = basicUser
+            password = basicPassword
+            preemptiveAuthentication = true
+
+            download(url, targetFile)
+        }
+
         if (!targetFile.exists()) {
             throw FileException("Downloaded package missing: ${targetFile.path}")
         }
     }
 
     fun buildPackage(remotePath: String): PackageBuildResponse {
-        val url = "$jsonTargetUrl$remotePath/?cmd=build"
+        val url = "$PKG_MANAGER_JSON_PATH$remotePath/?cmd=build"
+
+        logger.info("Building package using URL '{}'", url)
 
         val json = try {
             postMultipart(url, mapOf())

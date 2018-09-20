@@ -42,29 +42,27 @@ open class DownloadTask : AemDefaultTask() {
     @TaskAction
     fun download() {
         clean()
-        val shell = prepareShellPackage()
 
+        val shell = prepareShellPackage()
         val sync = InstanceSync(project, instance)
 
-        logger.lifecycle("Uploading package $shell")
         val packagePath = sync.uploadPackage(shell).path
 
-        logger.lifecycle("Building remote package $packagePath")
-        sync.buildPackage(packagePath)
+        try {
+            sync.buildPackage(packagePath)
 
-        val packageFile = File(taskDir, FilenameUtils.getName(packagePath))
-        logger.lifecycle("Downloading remote package $packagePath to $packageFile")
-        sync.downloadPackage(packagePath, packageFile)
+            val packageFile = File(taskDir, FilenameUtils.getName(packagePath))
+            sync.downloadPackage(packagePath, packageFile)
 
-        //Cleanup of download package
-        sync.deletePackage(packagePath)
+            if (config.downloadExtract) {
+                val jcrRoot = prepareJcrRoot()
+                extractContents(packageFile, jcrRoot)
+            }
 
-        if (config.downloadExtract) {
-            val jcrRoot = prepareJcrRoot()
-            extractContents(packageFile, jcrRoot)
+            AemNotifier.of(project).default("Package downloaded", packageFile.name)
+        } finally {
+            sync.deletePackage(packagePath)
         }
-
-        AemNotifier.of(project).default("Package downloaded", packageFile.name)
     }
 
     private fun clean() {
@@ -90,7 +88,7 @@ open class DownloadTask : AemDefaultTask() {
     }
 
     private fun extractContents(downloadedPackage: File, jcrRoot: File) {
-        logger.lifecycle("Extracting contents of $downloadedPackage into $jcrRoot")
+        logger.info("Extracting contents of $downloadedPackage into $jcrRoot")
         project.copy { spec ->
             spec.into(jcrRoot.parentFile.path)
                     .from(project.zipTree(downloadedPackage.path))
@@ -103,7 +101,7 @@ open class DownloadTask : AemDefaultTask() {
         val jcrRoot = File(content, PackagePlugin.JCR_ROOT)
 
         if (jcrRoot.exists() && props.isForce()) {
-            logger.lifecycle("Deleting contents of $jcrRoot")
+            logger.info("Deleting contents of $jcrRoot")
             jcrRoot.deleteRecursively()
         }
 

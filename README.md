@@ -483,7 +483,7 @@ To prevent data loss, this unsafe task execution must be confirmed by parameter 
 
 Replicate installed CRX package to other AEM instance(s).
 
-#### Task 'aemDownload'
+#### Task `aemDownload`
 
 Builds and downloads CRX package from AEM instance. Similar to [aemCheckout](#task-aemcheckout) but produces CRX package that is automatically extracted into current project's *jcr_root* directory.
  
