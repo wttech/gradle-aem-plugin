@@ -130,7 +130,7 @@ pluginManagement {
 	resolutionStrategy {
 		eachPlugin {
 			if (requested.id.namespace == 'com.cognifide.aem') {
-				useModule('com.cognifide.gradle:aem-plugin:5.0.1')
+				useModule('com.cognifide.gradle:aem-plugin:5.1.0')
 			}
 		}
 	}
@@ -483,7 +483,7 @@ To prevent data loss, this unsafe task execution must be confirmed by parameter 
 
 Replicate installed CRX package to other AEM instance(s).
 
-#### Task 'aemDownload'
+#### Task `aemDownload`
 
 Builds and downloads CRX package from AEM instance. Similar to [aemCheckout](#task-aemcheckout) but produces CRX package that is automatically extracted into current project's *jcr_root* directory.
  
@@ -654,7 +654,7 @@ Screenshot below presents generated ZIP package which is a result of running `gr
 ### Expandable properties
 
 By default, plugin is configured that in all XML files located under path *META-INF/vault* properties can be injected using syntax: `{{property}}`.
-The properties syntax comes from [Pebble Template Engine](http://www.mitchellbosecke.com/pebble) which means that all its features (if statements, for loops, filters etc) can be used inside files being expanded.
+The properties syntax comes from [Pebble Template Engine](https://github.com/PebbleTemplates/pebble) which means that all its features (if statements, for loops, filters etc) can be used inside files being expanded.
 
 Related configuration:
 

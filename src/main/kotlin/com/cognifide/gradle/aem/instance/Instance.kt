@@ -13,6 +13,68 @@ import kotlin.reflect.KClass
 
 interface Instance : Serializable {
 
+    val httpUrl: String
+
+    val httpPort: Int
+        get() = InstanceUrl.parse(httpUrl).httpPort
+
+    @get:JsonIgnore
+    val httpBasicAuthUrl: String
+        get() = InstanceUrl.parse(httpUrl).httpBasicAuthUrl(user, password)
+
+    val user: String
+
+    val password: String
+
+    @get:JsonIgnore
+    val hiddenPassword: String
+        get() = "*".repeat(password.length)
+
+    val environment: String
+
+    @get:JsonIgnore
+    val cmd: Boolean
+        get() = environment == ENVIRONMENT_CMD
+
+    val typeName: String
+
+    val type: InstanceType
+        get() = InstanceType.byName(typeName)
+
+    @get:JsonIgnore
+    val credentials: String
+        get() = "$user:$password"
+
+    val name: String
+        get() = "$environment-$typeName"
+
+    fun sync(synchronizer: (InstanceSync) -> Unit)
+
+    fun validate() {
+        if (!Formats.URL_VALIDATOR.isValid(httpUrl)) {
+            throw AemException("Malformed URL address detected in $this")
+        }
+
+        if (user.isBlank()) {
+            throw AemException("User cannot be blank in $this")
+        }
+
+        if (password.isBlank()) {
+            throw AemException("Password cannot be blank in $this")
+        }
+
+        if (environment.isBlank()) {
+            throw AemException("Environment cannot be blank in $this")
+        }
+
+        if (typeName.isBlank()) {
+            throw AemException("Type cannot be blank in $this")
+        }
+    }
+
+    @get:JsonIgnore
+    var packages: ListResponse?
+
     companion object {
 
         val FILTER_ANY = "*"
@@ -31,7 +93,7 @@ interface Instance : Serializable {
 
         val PUBLISHERS_PROP = "aem.instance.publishers"
 
-        fun parse(str: String): List<RemoteInstance> {
+        fun parse(project: Project, str: String): List<RemoteInstance> {
             return str.split(";").map { urlRaw ->
                 val parts = urlRaw.split(",")
 
@@ -39,22 +101,22 @@ interface Instance : Serializable {
                     4 -> {
                         val (httpUrl, type, user, password) = parts
 
-                        RemoteInstance.create(httpUrl, {
+                        RemoteInstance.create(project, httpUrl) {
                             this.user = user
                             this.password = password
                             this.typeName = type
-                        })
+                        }
                     }
                     3 -> {
                         val (httpUrl, user, password) = parts
 
-                        RemoteInstance.create(httpUrl, {
+                        RemoteInstance.create(project, httpUrl) {
                             this.user = user
                             this.password = password
-                        })
+                        }
                     }
                     else -> {
-                        RemoteInstance.create(urlRaw)
+                        RemoteInstance.create(project, urlRaw)
                     }
                 }
             }
@@ -71,7 +133,7 @@ interface Instance : Serializable {
                 val httpUrl = props["httpUrl"]
                         ?: throw InstanceException("Local instance named '$name' must have property 'httpUrl' defined.")
 
-                LocalInstance.create(httpUrl, {
+                LocalInstance.create(project, httpUrl) {
                     this.environment = environment
                     this.typeName = typeName
 
@@ -80,7 +142,7 @@ interface Instance : Serializable {
                     props["startOpts"]?.let { this.startOpts = it.split(" ") }
                     props["runModes"]?.let { this.runModes = it.split(",") }
                     props["debugPort"]?.let { this.debugPort = it.toInt() }
-                })
+                }
             }.sortedBy { it.name }
 
             val remoteInstances = collectProperties(project, "remote").map {
@@ -93,21 +155,21 @@ interface Instance : Serializable {
                 val httpUrl = props["httpUrl"]
                         ?: throw InstanceException("Remote instance named '$name' must have property 'httpUrl' defined.")
 
-                RemoteInstance.create(httpUrl, {
+                RemoteInstance.create(project, httpUrl) {
                     this.environment = environment
                     this.typeName = typeName
 
                     props["user"]?.let { this.user = it }
                     props["password"]?.let { this.password = it }
 
-                })
+                }
             }.sortedBy { it.name }
 
             return localInstances + remoteInstances
         }
 
         private fun collectProperties(project: Project, type: String): MutableMap<String, MutableMap<String, String>> {
-            return project.properties.filterKeys { Patterns.wildcard(it, "aem.instance.$type.*.*") }.entries.fold(mutableMapOf(), { result, e ->
+            return project.properties.filterKeys { Patterns.wildcard(it, "aem.instance.$type.*.*") }.entries.fold(mutableMapOf()) { result, e ->
                 val (key, value) = e
                 val parts = key.substringAfter(".$type.").split(".")
                 if (parts.size != 2) {
@@ -118,15 +180,15 @@ interface Instance : Serializable {
 
                 result.getOrPut(name, { mutableMapOf() })[prop] = value as String
                 result
-            })
+            }
         }
 
         fun defaults(project: Project): List<RemoteInstance> {
             val config = AemConfig.of(project)
 
             return listOf(
-                    RemoteInstance.create(URL_AUTHOR_DEFAULT, { environment = config.environment }),
-                    RemoteInstance.create(URL_PUBLISH_DEFAULT, { environment = config.environment })
+                    RemoteInstance.create(project, URL_AUTHOR_DEFAULT) { environment = config.environment },
+                    RemoteInstance.create(project, URL_PUBLISH_DEFAULT) { environment = config.environment }
             )
         }
 
@@ -203,66 +265,6 @@ interface Instance : Serializable {
         }
 
     }
-
-    val httpUrl: String
-
-    val httpPort: Int
-        get() = InstanceUrl.parse(httpUrl).httpPort
-
-    @get:JsonIgnore
-    val httpBasicAuthUrl: String
-        get() = InstanceUrl.parse(httpUrl).httpBasicAuthUrl(user, password)
-
-    val user: String
-
-    val password: String
-
-    @get:JsonIgnore
-    val hiddenPassword: String
-        get() = "*".repeat(password.length)
-
-    val environment: String
-
-    @get:JsonIgnore
-    val cmd: Boolean
-        get() = environment == ENVIRONMENT_CMD
-
-    val typeName: String
-
-    val type: InstanceType
-        get() = InstanceType.byName(typeName)
-
-    @get:JsonIgnore
-    val credentials: String
-        get() = "$user:$password"
-
-    val name: String
-        get() = "$environment-$typeName"
-
-    fun validate() {
-        if (!Formats.URL_VALIDATOR.isValid(httpUrl)) {
-            throw AemException("Malformed URL address detected in $this")
-        }
-
-        if (user.isBlank()) {
-            throw AemException("User cannot be blank in $this")
-        }
-
-        if (password.isBlank()) {
-            throw AemException("Password cannot be blank in $this")
-        }
-
-        if (environment.isBlank()) {
-            throw AemException("Environment cannot be blank in $this")
-        }
-
-        if (typeName.isBlank()) {
-            throw AemException("Type cannot be blank in $this")
-        }
-    }
-
-    @get:JsonIgnore
-    var packages: ListResponse?
 
 }
 

@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.base
 
+import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.api.AemExtension
 import com.cognifide.gradle.aem.api.AemPlugin
 import com.cognifide.gradle.aem.base.debug.DebugTask
@@ -16,12 +17,12 @@ import org.gradle.language.base.plugins.LifecycleBasePlugin
 class BasePlugin : Plugin<Project> {
 
     override fun apply(project: Project) {
-        with(project, {
+        with(project) {
             setupGreet()
             setupDependentPlugins()
             setupExtensions()
             setupTasks()
-        })
+        }
     }
 
     private fun Project.setupGreet() {
@@ -44,14 +45,22 @@ class BasePlugin : Plugin<Project> {
         val vlt = tasks.create(VltTask.NAME, VltTask::class.java)
         val checkout = tasks.create(CheckoutTask.NAME, CheckoutTask::class.java)
         val sync = tasks.create(SyncTask.NAME, SyncTask::class.java)
-        tasks.create(DownloadTask.NAME, DownloadTask::class.java)
+        val download = tasks.create(DownloadTask.NAME, DownloadTask::class.java)
 
         val baseClean = tasks.getByName(LifecycleBasePlugin.CLEAN_TASK_NAME)
 
-        clean.mustRunAfter(baseClean, checkout)
+        clean.mustRunAfter(baseClean, checkout, download)
         vlt.mustRunAfter(baseClean)
         checkout.mustRunAfter(baseClean)
-        sync.dependsOn(checkout, clean).mustRunAfter(baseClean)
+        download.mustRunAfter(baseClean)
+
+        afterEvaluate {
+            val config = AemConfig.of(project)
+            val transfer = project.tasks.getByName(config.syncTransferTaskName)
+
+            sync.dependsOn(transfer, clean).mustRunAfter(baseClean)
+        }
+
     }
 
     companion object {

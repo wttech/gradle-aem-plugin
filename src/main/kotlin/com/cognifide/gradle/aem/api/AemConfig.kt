@@ -1,6 +1,8 @@
 package com.cognifide.gradle.aem.api
 
 import aQute.bnd.osgi.Jar
+import com.cognifide.gradle.aem.base.download.DownloadTask
+import com.cognifide.gradle.aem.base.vlt.CheckoutTask
 import com.cognifide.gradle.aem.instance.*
 import com.cognifide.gradle.aem.internal.LineSeparator
 import com.cognifide.gradle.aem.internal.PropertyParser
@@ -12,6 +14,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.lang.Closure
 import org.gradle.api.DefaultTask
 import org.gradle.api.Project
+import org.gradle.api.Task
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.util.ConfigureUtil
@@ -79,7 +82,7 @@ class AemConfig(
      * Defines maximum time after which initializing connection to AEM will be aborted (e.g on upload, install).
      */
     @Input
-    var instanceConnectionTimeout: Int = props.int("aem.instance.connectionTimeout", 20000)
+    var instanceConnectionTimeout: Int = props.int("aem.instance.connectionTimeout", 5000)
 
     /**
      * Determines if connection to untrusted (e.g. self-signed) SSL certificates should be allowed.
@@ -490,7 +493,33 @@ class AemConfig(
      * package content
      */
     @Input
-    val downloadExtract = props.boolean("aem.download.extract", true)
+    var downloadExtract = props.boolean("aem.download.extract", true)
+
+    /**
+     * In case of downloading big CRX packages, AEM could respond much slower so that special
+     * timeout is covering such edge case.
+     */
+    @Input
+    var downloadConnectionTimeout = props.int("aem.download.connectionTimeout", 60000)
+
+    /**
+     * Determines method of synchronizing JCR content from running AEM instance.
+     *
+     * By default 'checkout' method using VLT tool is being used.
+     * Other possible method is 'download' which transfers JCR content using temporary CRX package.
+     */
+    @get:Internal
+    @get:JsonIgnore
+    var syncTransfer = props.string("aem.sync.transfer", "checkout")
+
+    @get:Internal
+    @get:JsonIgnore
+    val syncTransferTaskName: String
+        get() = when (syncTransfer) {
+            "download" -> DownloadTask.NAME
+            "checkout" -> CheckoutTask.NAME
+            else -> throw AemException("Unsupported sync transfer method '$syncTransfer'. Supported methods: 'checkout' and 'download'.")
+        }
 
     /**
      * Convention paths used to determine Vault checkout filter if it is not specified explicitly.
@@ -540,11 +569,11 @@ class AemConfig(
      * Declare new deployment target (AEM instance).
      */
     fun localInstance(httpUrl: String) {
-        localInstance(httpUrl, {})
+        localInstance(httpUrl) {}
     }
 
     fun localInstance(httpUrl: String, configurer: LocalInstance.() -> Unit) {
-        instance(LocalInstance.create(httpUrl) {
+        instance(LocalInstance.create(project, httpUrl) {
             this.environment = this@AemConfig.environment
             this.apply(configurer)
         })
@@ -555,11 +584,11 @@ class AemConfig(
     }
 
     fun remoteInstance(httpUrl: String) {
-        remoteInstance(httpUrl, {})
+        remoteInstance(httpUrl) {}
     }
 
     fun remoteInstance(httpUrl: String, configurer: RemoteInstance.() -> Unit) {
-        instance(RemoteInstance.create(httpUrl) {
+        instance(RemoteInstance.create(project, httpUrl) {
             this.environment = this@AemConfig.environment
             this.apply(configurer)
         })
@@ -570,7 +599,7 @@ class AemConfig(
     }
 
     fun parseInstance(urlOrName: String): Instance {
-        return instances[urlOrName] ?: Instance.parse(urlOrName).single().apply { validate() }
+        return instances[urlOrName] ?: Instance.parse(project, urlOrName).single().apply { validate() }
     }
 
     private fun instances(instances: Collection<Instance>) {
@@ -695,7 +724,7 @@ class AemConfig(
     private fun ensureInstances() {
         // Define through command line (forced instances)
         if (instanceList.isNotBlank()) {
-            instances(Instance.parse(instanceList))
+            instances(Instance.parse(project, instanceList))
         }
 
         // Define through properties (remote instances)
