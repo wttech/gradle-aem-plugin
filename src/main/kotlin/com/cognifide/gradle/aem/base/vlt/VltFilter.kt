@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.base.vlt
 
+import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.api.AemTask
 import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.internal.file.FileOperations
@@ -13,6 +14,7 @@ import java.io.Closeable
 import java.io.File
 
 class VltFilter(val file: File, private val temporary: Boolean = false) : Closeable {
+
 
     companion object {
 
@@ -34,6 +36,29 @@ class VltFilter(val file: File, private val temporary: Boolean = false) : Closea
 
         fun rootElementForPath(path: String): Element {
             return rootElement("<filter root=\"$path\"/>")
+        }
+
+        fun of(project: Project): VltFilter {
+            val logger = project.logger
+            val props = PropertyParser(project)
+            var config = AemConfig.of(project)
+            // TODO: next major version -> refactor the property names to be more general (not aem.checkout)
+            val cmdFilterRoots = props.list("aem.checkout.filterRoots")
+
+            return if (cmdFilterRoots.isNotEmpty()) {
+                logger.info("Using Vault filter roots specified as command line property: $cmdFilterRoots")
+                VltFilter.temporary(project, cmdFilterRoots)
+            } else {
+                if (config.checkoutFilterPath.isNotBlank()) {
+                    val configFilter = FileOperations.find(project, config.vaultPath, config.checkoutFilterPath)
+                            ?: throw VltException("Vault check out filter file does not exist at path: ${config.checkoutFilterPath} (or under directory: ${config.vaultPath}).")
+                    VltFilter(configFilter)
+                } else {
+                    val conventionFilter = FileOperations.find(project, config.vaultPath, config.checkoutFilterPaths)
+                            ?: throw VltException("None of Vault check out filter file does not exist at one of convention paths: ${config.checkoutFilterPaths}.")
+                    VltFilter(conventionFilter)
+                }
+            }
         }
 
     }

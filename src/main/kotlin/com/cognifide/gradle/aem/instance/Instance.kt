@@ -4,6 +4,7 @@ import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.api.AemException
 import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.internal.Patterns
+import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.pkg.deploy.ListResponse
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.gradle.api.Project
@@ -171,6 +172,34 @@ interface Instance : Serializable {
 
         fun remotes(project: Project): List<RemoteInstance> {
             return filter(project, RemoteInstance::class)
+        }
+
+        fun single(project: Project): Instance {
+            val logger = project.logger
+            val props = PropertyParser(project)
+            val config = AemConfig.of(project)
+            // TODO: next major version -> refactor the property names to be more general (not aem.checkout)
+            val cmdInstanceArg = props.string("aem.checkout.instance")
+            if (!cmdInstanceArg.isNullOrBlank()) {
+                val cmdInstance = config.parseInstance(cmdInstanceArg!!)
+
+                logger.info("Using instance specified by command line parameter: $cmdInstance")
+                return cmdInstance
+            }
+
+            val namedInstance = Instance.filter(project, config.instanceName).firstOrNull()
+            if (namedInstance != null) {
+                logger.info("Using first instance matching filter '${config.instanceName}': $namedInstance")
+                return namedInstance
+            }
+
+            val anyInstance = Instance.filter(project, Instance.FILTER_ANY).firstOrNull()
+            if (anyInstance != null) {
+                logger.info("Using first instance matching filter '${Instance.FILTER_ANY}': $anyInstance")
+                return anyInstance
+            }
+
+            throw InstanceException("Single instance cannot be determined neither by command line parameter nor AEM config.")
         }
 
     }

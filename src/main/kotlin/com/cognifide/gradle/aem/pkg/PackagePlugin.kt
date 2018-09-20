@@ -32,9 +32,11 @@ class PackagePlugin : Plugin<Project> {
         val activate = tasks.create(ActivateTask.NAME, ActivateTask::class.java)
         val deploy = tasks.create(DeployTask.NAME, DeployTask::class.java)
 
+
         val assemble = tasks.getByName(LifecycleBasePlugin.ASSEMBLE_TASK_NAME)
         val check = tasks.getByName(LifecycleBasePlugin.CHECK_TASK_NAME)
         val build = tasks.getByName(LifecycleBasePlugin.BUILD_TASK_NAME)
+
 
         assemble.mustRunAfter(clean)
         check.mustRunAfter(clean)

@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.internal.file.downloader
 
 import com.cognifide.gradle.aem.internal.file.FileException
+import com.cognifide.gradle.aem.internal.http.PreemptiveAuthInterceptor
 import org.apache.http.auth.AuthScope
 import org.apache.http.auth.UsernamePasswordCredentials
 import org.apache.http.client.HttpClient
@@ -22,6 +23,8 @@ class HttpFileDownloader(val project: Project) {
     var password: String? = null
 
     var ignoreSSLErrors: Boolean = true
+
+    var preemptiveAuthentication: Boolean = false
 
     val logger: Logger = project.logger
 
@@ -65,6 +68,9 @@ class HttpFileDownloader(val project: Project) {
             val provider = BasicCredentialsProvider()
             provider.setCredentials(AuthScope.ANY, UsernamePasswordCredentials(username, password))
             builder.setDefaultCredentialsProvider(provider)
+            if(preemptiveAuthentication) {
+                builder.addInterceptorFirst(PreemptiveAuthInterceptor())
+            }
         }
 
         if (ignoreSSLErrors) {
