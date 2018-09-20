@@ -18,13 +18,15 @@ Incremental build which takes seconds, not minutes. Developer who does not loose
 
 AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget to **star this project** on GitHub :)
 
-<br>
+Looking for dedicated version of plugin for [**Apache Sling**](https://sling.apache.org)? Check out [Gradle Sling Plugin](https://github.com/Cognifide/gradle-sling-plugin)!
+
+### Screenshot
+
 <p align="center">
   <img src="docs/example-build.gif" alt="Example Project Build"/>
 </p>
-<br>
 
-**Features:**
+### Features
 
 * Fully automated, tied to project, local AEM instance(s) setup allowing to start development within few minutes.
 * Composing CRX package from multiple JCR content roots, bundles.
@@ -80,13 +82,13 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
    * [Work effectively on start and daily basis](#work-effectively-on-start-and-daily-basis)
    * [Deploy CRX package(s) only to filtered group of instances:](#deploy-crx-packages-only-to-filtered-group-of-instances)
    * [Deploy CRX package(s) only to instances specified explicitly](#deploy-crx-packages-only-to-instances-specified-explicitly)
-   * [Deploy only filtered dependent CRX package(s)](#deploy-only-filtered-dependent-crx-packages)
    * [Customize local AEM instances configuration](#customize-local-aem-instances-configuration)
    * [Check out and clean JCR content using filter at custom path](#check-out-and-clean-jcr-content-using-filter-at-custom-path)
    * [Check out and clean JCR content using filter roots specified explicitly](#check-out-and-clean-jcr-content-using-filter-roots-specified-explicitly)
    * [Assemble all-in-one CRX package(s)](#assemble-all-in-one-crx-packages)
    * [Include additional OSGi bundle into CRX package](#include-additional-osgi-bundle-into-crx-package)
    * [Embed JAR file into built OSGi bundle](#embed-jar-file-into-built-osgi-bundle)
+   * [Configure OSGi bundle manifest attributes](#configure-osgi-bundle-manifest-attributes)
    * [Exclude packages being incidentally imported by OSGi bundle](#exclude-packages-being-incidentally-imported-by-osgi-bundle)
    * [Skip installed package resolution by download name.](#skip-installed-package-resolution-by-download-name)
 * [Known issues](#known-issues)
@@ -127,7 +129,7 @@ pluginManagement {
 	resolutionStrategy {
 		eachPlugin {
 			if (requested.id.namespace == 'com.cognifide.aem') {
-				useModule('com.cognifide.gradle:aem-plugin:5.0.1')
+				useModule('com.cognifide.gradle:aem-plugin:5.0.2')
 			}
 		}
 	}
@@ -214,12 +216,10 @@ aem {
         deployDistributed = false
         
         uploadForce = true
-        uploadRetryTimes = 6
-        uploadRetryDelay = 30000
+        uploadRetry = retry { afterSquaredSecond(props.long("aem.upload.retry", 6)) }
         
         installRecursive = true
-        installRetryTimes = 3
-        installRetryDelay = 30000
+        installRetry = retry { afterSquaredSecond(props.long("aem.install.retry", 4)) }
         
         createPath = "${System.getProperty("user.home")}/.aem/${project.rootProject.name}"
         createFilesPath = project.rootProject.file("src/main/resources/local-instance")
@@ -234,15 +234,12 @@ aem {
         
         upInitializer = { handle -> }
         
-        awaitStableDelay = 3000
-        awaitStableInterval = 1000
-        awaitStableTimes = 300
+        awaitStableRetry = retry { afterSecond(props.long("aem.await.stable.retry", 300)) }
         awaitStableAssurance = 3
         awaitStableState = { it.checkBundleState(500) }
         awaitStableCheck = { it.checkBundleStable(500) }
         awaitHealthCheck = { it.checkComponentState(["com.day.crx.packaging.*", "org.apache.sling.installer.*"], 10000) }
-        awaitHealthRetryTimes = 3L
-        awaitHealthRetryDelay = 30000
+        awaitHealthRetry = retry { afterSquaredSecond(props.long("aem.await.health.retry", 6)) }
         awaitFast = false
         awaitFastDelay = 1000
         awaitResume = false
@@ -306,6 +303,29 @@ aemClean {
         parentsBackupSuffix = ".bak"
         lineProcess = { file, line -> normalizeLine(file, line) }
         contentProcess = { file, lines -> normalizeContent(file, lines) }
+    }
+}
+```
+
+Cleaning could also ensure that AEM renditions will be never saved in VCS. Also any additional properties could be cleaned.
+For such cases, see configuration below:
+
+```groovy
+aemClean {
+    settings {
+        propertiesSkipped += [
+                pathRule("dam:sha1", [], ["**/content/dam/*.svg/*"]),
+                pathRule("dam:size", [], ["**/content/dam/*.svg/*"]),
+                "cq:name",
+                "cq:parentPath",
+                "dam:copiedAt",
+                "dam:parentAssetID",
+                "dam:relativePath"
+        ]
+        filesDeleted += [
+                pathRule("**/_jcr_content/folderThumbnail*", [], ["**/content/dam/*"]),
+                pathRule("**/_jcr_content/renditions/*", ["**/_jcr_content/renditions/original*"], ["**/content/dam/*"])
+        ]
     }
 }
 ```
@@ -529,26 +549,26 @@ Example configuration:
 
 ```groovy
 aemSatisfy {
+    // 'default' group
     local "pkg/vanityurls-components-1.0.2.zip"
-    url "https://github.com/Cognifide/APM/releases/download/cqsm-3.0.0/apm-3.0.0.zip"
     url "smb://company-share/aem/packages/my-lib.zip"
     url "sftp://company-share/aem/packages/other-lib.zip"
     url "file:///C:/Libraries/aem/package/extra-lib.zip"
-    dependency 'com.neva.felix:search-webconsole-plugin:1.2.0'
+    
+    group 'tools', {
+        dependency 'com.neva.felix:search-webconsole-plugin:1.2.0'
+        url "https://github.com/Cognifide/APM/releases/download/cqsm-3.0.0/apm-3.0.0.zip"
+        url 'https://github.com/Adobe-Consulting-Services/acs-aem-tools/releases/download/acs-aem-tools-1.0.0/acs-aem-tools-content-1.0.0-min.zip'
+    }
+
 }
 ```
 
-It is also possible to specify packages to be deployed only once via command line parameter. Also for local files at any file system paths.
+By default, all packages will be deployed when running task `aemSatisfy`.
+Although, by grouping packages, there are available new options:
 
-```bash
-gradlew aemSatisfy -Paem.satisfy.urls=[url1,url2]
-```
-
-For instance:
-
-```bash
-gradlew aemSatisfy -Paem.satisfy.urls=[https://github.com/OlsonDigital/aem-groovy-console/releases/download/11.0.0/aem-groovy-console-11.0.0.zip,https://github.com/neva-dev/felix-search-webconsole-plugin/releases/download/search-webconsole-plugin-1.2.0/search-webconsole-plugin-1.2.0.jar]
-```
+* group name could be used to filter out packages that will be deployed (`-Paem.satisfy.group=tools`, wildcards supported, comma delimited).
+* after satisfying particular group, there are being run instance stability checks automatically (this behavior could be customized).
 
 Task supports hooks for preparing (and finalizing) instance before (after) deploying packages in group on each instance. 
 Also there is a hook called when satisfying each package group on all instances completed (for instance for awaiting stable instances which is a default behavior).
@@ -576,6 +596,18 @@ aemSatisfy {
             }
     }
 }
+```
+
+It is also possible to specify packages to be deployed only once via command line parameter, without a need to specify them in build script. Also for local files at any file system paths.
+
+```bash
+gradlew aemSatisfy -Paem.satisfy.urls=[url1,url2]
+```
+
+For instance:
+
+```bash
+gradlew aemSatisfy -Paem.satisfy.urls=[https://github.com/OlsonDigital/aem-groovy-console/releases/download/11.0.0/aem-groovy-console-11.0.0.zip,https://github.com/neva-dev/felix-search-webconsole-plugin/releases/download/search-webconsole-plugin-1.2.0/search-webconsole-plugin-1.2.0.jar]
 ```
 
 #### Task `aemAwait`
@@ -608,7 +640,7 @@ Screenshot below presents generated ZIP package which is a result of running `gr
 ### Expandable properties
 
 By default, plugin is configured that in all XML files located under path *META-INF/vault* properties can be injected using syntax: `{{property}}`.
-The properties syntax comes from [Pebble Template Engine](http://www.mitchellbosecke.com/pebble) which means that all its features (if statements, for loops, filters etc) can be used inside files being expanded.
+The properties syntax comes from [Pebble Template Engine](https://github.com/PebbleTemplates/pebble) which means that all its features (if statements, for loops, filters etc) can be used inside files being expanded.
 
 Related configuration:
 
@@ -828,14 +860,6 @@ Alternative syntax - list delimited: instances by semicolon, instance properties
 gradlew aemDeploy -Paem.instance.list=http://localhost:4502,admin,admin;http://localhost:4503,admin,admin
 ```
 
-### Deploy only filtered dependent CRX package(s)
-
-Filters with wildcards, comma delimited.
-
-```bash
-gradlew aemSatisfy -Paem.satisfy.group=hotfix-*,groovy-console
-```
-
 ### Customize local AEM instances configuration
 
 Plugin allows to override or provide extra files to local AEM instance installations.
@@ -964,6 +988,56 @@ aem {
 ```
  
 For the reference, see [usage in AEM Multi-Project Example](https://github.com/Cognifide/gradle-aem-multi/blob/master/app/common/build.gradle).
+
+### Configure OSGi bundle manifest attributes
+
+Since 4.0.0 version, there is available new bundle DSL for easy OSGi specific JAR manifest attributes customization.
+
+Now it is available to replace section:
+
+```groovy
+jar {
+    def pkg = 'com.company.aem.example.common'
+
+    manifest {
+        attributes([
+           'Bundle-Name': project.description,
+           'Bundle-SymbolicName': pkg,
+           'Sling-Model-Packages': pkg,
+           'Export-Package': "$pkg.*,org.hashids.*"
+       ])
+    }
+}
+```
+
+To:
+
+```groovy
+aem {
+    config {
+        bundlePackage = "com.company.aem.example.common"
+    }
+    bundle {
+        exportPackage "org.hashids"
+    }
+}
+```
+
+* `Bundle-Name` will grab value from `project.description`
+* `Bundle-SymbolicName` will grab value from `aem.config.bundlePackage`
+* `Sling-Model-Packages` will grab value from `aem.config.bundlePackage`
+* `Export-Package` will grab value from `aem.config.bundlePackage`.
+
+This values population behavior could be optionally disabled by config parameter `aem.config.bundleManifestAttributes = false`.
+Still when this behavior is enabled, all of values are overiddable e.g:
+
+```
+aem {
+    bundle {
+        attribute 'Sling-Model-Packages', "com.company.aem.example.common.models"
+    }
+}
+```
 
 ### Exclude packages being incidentally imported by OSGi bundle
 
