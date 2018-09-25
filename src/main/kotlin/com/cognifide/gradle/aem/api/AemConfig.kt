@@ -14,7 +14,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.lang.Closure
 import org.gradle.api.DefaultTask
 import org.gradle.api.Project
-import org.gradle.api.Task
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.util.ConfigureUtil
@@ -108,11 +107,28 @@ class AemConfig(
      * Sometimes default convention may just require little correction then construct own rule like below in 'subprojects' lambda.
      */
     @Input
-    var bundlePath: String = if (project == project.rootProject) {
-        "/apps/${project.name}/install"
-    } else {
-        "/apps/${project.rootProject.name}/${project.name.run { var n = this; BUNDLE_PATH_PREFIXES.forEach { n = n.removePrefix(it) }; n }}/install"
-    }
+    var bundlePath: String = bundlePathDefault
+
+    /**
+     * Default convention used to generate bundle path basing on project names (root and subproject).
+     *
+     * // TODO consider prefixes skipping in pkgFileName
+     */
+    @get:JsonIgnore
+    @get:Internal
+    val bundlePathDefault: String
+        get() {
+            val mainDir = project.rootProject.name
+            val subDir = project.name.run {
+                var s = this; BUNDLE_PATH_PREFIXES.forEach { s = s.removePrefix(it) }; s
+            }
+
+            return if (project == project.rootProject) {
+                "/apps/$mainDir/install"
+            } else {
+                "/apps/$mainDir/$subDir/install"
+            }
+        }
 
     /**
      * Determines package in which OSGi bundle being built contains its classes.
@@ -604,7 +620,8 @@ class AemConfig(
     }
 
     fun parseInstance(urlOrName: String): Instance {
-        return instances[urlOrName] ?: Instance.parse(project, urlOrName).single().apply { validate() }
+        return instances[urlOrName]
+                ?: Instance.parse(project, urlOrName).single().apply { validate() }
     }
 
     private fun instances(instances: Collection<Instance>) {
@@ -718,7 +735,7 @@ class AemConfig(
         }
 
         if (bundlePackage == AUTO_DETERMINED) {
-            bundlePackage = pkgJavaName(project)
+            bundlePackage = pkgBundlePackage(project)
         }
     }
 
@@ -753,7 +770,7 @@ class AemConfig(
         /**
          * Subproject name prefixes that will skipped in determining bundle path for sub package.
          */
-        val BUNDLE_PATH_PREFIXES = listOf("aem.app.", "aem.", "aem-app", "aem-")
+        val BUNDLE_PATH_PREFIXES = listOf("aem.app.", "aem.", "aem-app-", "aem-")
 
         /**
          * Shorthand getter for configuration related with specified project.
@@ -761,7 +778,7 @@ class AemConfig(
          */
         fun of(project: Project): AemConfig {
             val extension = project.extensions.findByType(AemExtension::class.java)
-                    ?: throw AemException(project.toString().capitalize()
+                    ?: throw AemException(project.displayName.capitalize()
                             + " has neither '${PackagePlugin.ID}' nor '${InstancePlugin.ID}' plugin applied.")
 
             return extension.config
@@ -771,14 +788,25 @@ class AemConfig(
             return of(task.project)
         }
 
-        fun pkgJavaName(project: Project): String {
-            return "${project.group}.${project.name}".replace("-", ".")
+        fun pkgBundlePackage(project: Project): String {
+            if ("${project.group}".isBlank()) {
+                throw AemException("${project.displayName.capitalize()} must has group property defined to determine bundle package.")
+            }
+
+            return normalizeName("${project.group}.${project.name}", ".")
         }
 
-        fun pkgVaultName(project: Project): String {
-            return "${project.rootProject.name}${project.path}"
-                    .replace(":", ".")
-                    .replace("-", ".")
+        fun pkgFileName(project: Project): String {
+            return normalizeName(if (project == project.rootProject) {
+                project.rootProject.name
+            } else {
+                "${project.rootProject.name}.${project.name}"
+            }, ".")
+        }
+
+        private fun normalizeName(name: String, separator: String): String {
+            return name.replace(":", separator).replace("-", separator).replace(".", separator)
+                    .removePrefix(separator).removeSuffix(separator)
         }
 
         fun pkg(project: Project): ComposeTask {

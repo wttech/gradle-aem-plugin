@@ -48,7 +48,7 @@
 
       "contentPath": "debug/minimal/src/main/content",
       "bundlePath": "/apps/minimal/install",
-      "bundlePackage": "",
+      "bundlePackage": "com.company.aem.minimal",
       "bundlePackageOptions": "-split-package:=merge-first",
       "bundleManifestAttributes": true,
       "bundleBndPath": "bnd.bnd",
@@ -56,7 +56,6 @@
         "-fixupmessages.bundleActivator" : "Bundle-Activator * is being imported *;is:=error"
       },
 
-      "packageName": "minimal",
       "packageLocalPath": "",
       "packageRemotePath": "",
       "packageFilesExcluded": [
@@ -77,6 +76,7 @@
       "packageBuildDate": 1524116243133,
       "packageFileProperties": {},
       "packageSnapshots": [],
+      "packageEntries": {},
       "packageAcHandling": "merge_preserve",
       "packageSkipDownloadName": true,
 
@@ -107,7 +107,7 @@
       "satisfyRefreshing": false,
       "satisfyBundlePath": "/apps/gradle-aem-plugin/satisfy/install",
       "satisfyGroupName": "*",
-      "checkoutFilterPath": "",
+      "checkoutFilterPath": "<auto_determined>",
       "downloadExtract": true,
       "downloadConnectionTimeout": 60000,
       "debugPackageDeployed": false

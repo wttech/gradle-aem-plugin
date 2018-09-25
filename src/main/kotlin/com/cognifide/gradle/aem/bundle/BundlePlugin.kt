@@ -70,7 +70,7 @@ class BundlePlugin : Plugin<Project> {
         if (baseName.isNullOrBlank()) {
             val groupValue = group as String?
             if (!name.isNullOrBlank() && !groupValue.isNullOrBlank()) {
-                jar.baseName = AemConfig.pkgJavaName(this)
+                jar.baseName = AemConfig.pkgFileName(this)
             }
         }
     }

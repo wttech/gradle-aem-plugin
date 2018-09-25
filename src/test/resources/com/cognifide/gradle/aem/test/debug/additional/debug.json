@@ -189,7 +189,7 @@
 
       "contentPath": "debug/additional/src/main/content",
       "bundlePath": "/apps/additional/install",
-      "bundlePackage": "",
+      "bundlePackage": "com.company.aem.additional",
       "bundlePackageOptions": "-split-package:=merge-first",
       "bundleManifestAttributes": true,
       "bundleBndPath": "bnd.bnd",
@@ -197,7 +197,6 @@
         "-fixupmessages.bundleActivator" : "Bundle-Activator * is being imported *;is:=error"
       },
 
-      "packageName": "additional",
       "packageLocalPath": "",
       "packageRemotePath": "",
       "packageFilesExcluded": [
@@ -218,6 +217,7 @@
       "packageBuildDate": 1524118542609,
       "packageFileProperties": {},
       "packageSnapshots": [],
+      "packageEntries": {},
       "packageAcHandling": "merge_preserve",
       "packageSkipDownloadName": true,
 
@@ -248,7 +248,7 @@
       "satisfyRefreshing": false,
       "satisfyBundlePath": "/apps/gradle-aem-plugin/satisfy/install",
       "satisfyGroupName": "*",
-      "checkoutFilterPath": "",
+      "checkoutFilterPath": "<auto_determined>",
       "downloadExtract": true,
       "downloadConnectionTimeout": 60000,
       "debugPackageDeployed": false

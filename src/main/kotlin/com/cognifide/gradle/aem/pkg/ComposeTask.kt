@@ -123,7 +123,7 @@ open class ComposeTask : Zip(), AemTask {
         description = "Composes CRX package from JCR content and built OSGi bundles"
         group = AemTask.GROUP
 
-        baseName = AemConfig.pkgVaultName(project)
+        baseName = AemConfig.pkgFileName(project)
         duplicatesStrategy = DuplicatesStrategy.WARN
         isZip64 = true
 

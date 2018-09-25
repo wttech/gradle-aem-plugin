@@ -12,6 +12,8 @@ buildscript {
 
 apply plugin: 'com.cognifide.aem.base'
 
+group = 'com.company.aem'
+
 aem {
     config {
         // custom env, no ports, by domain name

@@ -19,7 +19,7 @@ open class CollectTask : Zip(), AemTask {
         group = AemTask.GROUP
         description = "Composes CRX package from all CRX packages being satisfied and built."
 
-        baseName = AemConfig.pkgVaultName(project)
+        baseName = AemConfig.pkgFileName(project)
         classifier = "packages"
         isZip64 = true
         duplicatesStrategy = DuplicatesStrategy.FAIL
