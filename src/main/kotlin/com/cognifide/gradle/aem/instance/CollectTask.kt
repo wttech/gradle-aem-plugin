@@ -5,29 +5,30 @@ import com.cognifide.gradle.aem.api.AemTask
 import org.gradle.api.file.CopySpec
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.bundling.Zip
 import org.gradle.api.tasks.bundling.ZipEntryCompression
 import java.io.File
 
-open class CollectTask : Zip() {
+open class CollectTask : Zip(), AemTask {
 
-    companion object {
-        val NAME = "aemCollect"
-    }
+    @Nested
+    final override val config = AemConfig.of(project)
 
     init {
         group = AemTask.GROUP
         description = "Composes CRX package from all CRX packages being satisfied and built."
 
+        baseName = AemConfig.pkgVaultName(project)
         classifier = "packages"
         isZip64 = true
         duplicatesStrategy = DuplicatesStrategy.FAIL
         entryCompression = ZipEntryCompression.STORED
 
-        project.gradle.projectsEvaluated({
+        project.gradle.projectsEvaluated {
             from(satisfiedPackages, packageFilter)
             from(builtPackages, packageFilter)
-        })
+        }
     }
 
     @Internal
@@ -35,7 +36,7 @@ open class CollectTask : Zip() {
         spec.exclude("**/*.lock")
     }
 
-    @get:Internal
+    @Internal
     private val satisfy = (project.tasks.getByName(SatisfyTask.NAME) as SatisfyTask)
 
     @get:Internal
@@ -53,6 +54,10 @@ open class CollectTask : Zip() {
 
     private fun resolvePackages() {
         satisfy.allFiles
+    }
+
+    companion object {
+        const val NAME = "aemCollect"
     }
 
 }

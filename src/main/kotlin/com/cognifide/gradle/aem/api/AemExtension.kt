@@ -1,19 +1,15 @@
 package com.cognifide.gradle.aem.api
 
+import com.cognifide.gradle.aem.instance.Instance
+import com.cognifide.gradle.aem.instance.InstanceSync
 import groovy.lang.Closure
 import org.gradle.api.Project
 import org.gradle.util.ConfigureUtil
 
 /**
- * Extension holding collection of AEM configuration properties.
- * Provides also nice DSL for configuring OSGi bundles and configuring custom interactive
- * build notifications.
+ * Main place for providing build script DSL capabilities in case of AEM.
  */
 open class AemExtension(@Transient private val project: Project) {
-
-    companion object {
-        val NAME = "aem"
-    }
 
     val config = AemConfig(project)
 
@@ -22,6 +18,17 @@ open class AemExtension(@Transient private val project: Project) {
     val notifier = AemNotifier.of(project)
 
     val tasks = AemTaskFactory(project)
+
+    val instances: List<Instance>
+        get() = Instance.filter(project)
+
+    fun instances(filter: String): List<Instance> {
+        return Instance.filter(project, filter)
+    }
+
+    fun sync(synchronizer: (InstanceSync) -> Unit) {
+        instances.parallelStream().forEach { it.sync(synchronizer) }
+    }
 
     fun config(configurer: AemConfig.() -> Unit) {
         config.apply(configurer)
@@ -53,6 +60,10 @@ open class AemExtension(@Transient private val project: Project) {
 
     fun tasks(closure: Closure<*>) {
         tasks { ConfigureUtil.configure(closure, this) }
+    }
+
+    companion object {
+        const val NAME = "aem"
     }
 
 }

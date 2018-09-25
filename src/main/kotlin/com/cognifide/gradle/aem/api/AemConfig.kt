@@ -1,6 +1,8 @@
 package com.cognifide.gradle.aem.api
 
 import aQute.bnd.osgi.Jar
+import com.cognifide.gradle.aem.base.download.DownloadTask
+import com.cognifide.gradle.aem.base.vlt.CheckoutTask
 import com.cognifide.gradle.aem.instance.*
 import com.cognifide.gradle.aem.internal.LineSeparator
 import com.cognifide.gradle.aem.internal.PropertyParser
@@ -12,6 +14,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.lang.Closure
 import org.gradle.api.DefaultTask
 import org.gradle.api.Project
+import org.gradle.api.Task
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.util.ConfigureUtil
@@ -30,7 +33,7 @@ import java.util.concurrent.TimeUnit
  */
 class AemConfig(
         @Transient
-        @get:JsonIgnore
+        @JsonIgnore
         private val project: Project
 ) : Serializable {
 
@@ -292,6 +295,15 @@ class AemConfig(
     @get:JsonIgnore
     var uploadRetry = retry { afterSquaredSecond(props.long("aem.upload.retry", 6)) }
 
+
+    /**
+     * Repeat download when failed (brute-forcing).
+     */
+    @Internal
+    @get:JsonIgnore
+    var downloadRetry = retry { afterSquaredSecond(props.long("aem.download.retry", 3)) }
+
+
     /**
      * Determines if when on package install, sub-packages included in CRX package content should be also installed.
      */
@@ -393,7 +405,7 @@ class AemConfig(
      */
     @Internal
     @get:JsonIgnore
-    var awaitStableRetry = retry { afterSecond(300) }
+    var awaitStableRetry = retry { afterSecond(props.long("aem.await.stable.retry", 300)) }
 
     /**
      * Hook for customizing instance state provider used within stable checking.
@@ -478,6 +490,40 @@ class AemConfig(
     var checkoutFilterPath: String = props.string("aem.checkout.filterPath", AUTO_DETERMINED)
 
     /**
+     * Extract the contents of package downloaded using aemDownload task to current project jcr_root directory
+     * This operation can be modified using -Paem.force command line to replace the contents of jcr_root directory with
+     * package content
+     */
+    @Input
+    var downloadExtract = props.boolean("aem.download.extract", true)
+
+    /**
+     * In case of downloading big CRX packages, AEM could respond much slower so that special
+     * timeout is covering such edge case.
+     */
+    @Input
+    var downloadConnectionTimeout = props.int("aem.download.connectionTimeout", 60000)
+
+    /**
+     * Determines method of synchronizing JCR content from running AEM instance.
+     *
+     * By default 'checkout' method using VLT tool is being used.
+     * Other possible method is 'download' which transfers JCR content using temporary CRX package.
+     */
+    @get:Internal
+    @get:JsonIgnore
+    var syncTransfer = props.string("aem.sync.transfer", "checkout")
+
+    @get:Internal
+    @get:JsonIgnore
+    val syncTransferTaskName: String
+        get() = when (syncTransfer) {
+            "download" -> DownloadTask.NAME
+            "checkout" -> CheckoutTask.NAME
+            else -> throw AemException("Unsupported sync transfer method '$syncTransfer'. Supported methods: 'checkout' and 'download'.")
+        }
+
+    /**
      * Convention paths used to determine Vault checkout filter if it is not specified explicitly.
      *
      * Firstly there will be checked existence of 'checkout.xml' file.
@@ -532,7 +578,7 @@ class AemConfig(
     }
 
     fun localInstance(httpUrl: String, configurer: LocalInstance.() -> Unit) {
-        instance(LocalInstance.create(httpUrl) {
+        instance(LocalInstance.create(project, httpUrl) {
             this.environment = this@AemConfig.environment
             this.apply(configurer)
         })
@@ -547,7 +593,7 @@ class AemConfig(
     }
 
     fun remoteInstance(httpUrl: String, configurer: RemoteInstance.() -> Unit) {
-        instance(RemoteInstance.create(httpUrl) {
+        instance(RemoteInstance.create(project, httpUrl) {
             this.environment = this@AemConfig.environment
             this.apply(configurer)
         })
@@ -558,7 +604,7 @@ class AemConfig(
     }
 
     fun parseInstance(urlOrName: String): Instance {
-        return instances[urlOrName] ?: Instance.parse(urlOrName).single().apply { validate() }
+        return instances[urlOrName] ?: Instance.parse(project, urlOrName).single().apply { validate() }
     }
 
     private fun instances(instances: Collection<Instance>) {
@@ -660,7 +706,7 @@ class AemConfig(
     private fun defaults() {
         // Define through command line (forced instances)
         if (instanceList.isNotBlank()) {
-            instances(Instance.parse(instanceList))
+            instances(Instance.parse(project, instanceList))
         }
 
         // Define through properties (remote instances)

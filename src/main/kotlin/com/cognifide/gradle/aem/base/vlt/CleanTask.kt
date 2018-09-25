@@ -9,17 +9,13 @@ import org.gradle.util.ConfigureUtil
 
 open class CleanTask : AemDefaultTask() {
 
-    companion object {
-        val NAME = "aemClean"
-    }
-
     @Internal
     private val runner = VltRunner(project)
 
     init {
         description = "Clean checked out JCR content."
 
-        beforeExecuted(CheckoutTask.NAME) { runner.cleanBeforeCheckout() }
+        beforeExecuted(config.syncTransferTaskName) { runner.cleanBeforeCheckout() }
     }
 
     @TaskAction
@@ -30,6 +26,10 @@ open class CleanTask : AemDefaultTask() {
 
     fun settings(configurer: Closure<*>) {
         ConfigureUtil.configure(configurer, runner.cleaner)
+    }
+
+    companion object {
+        const val NAME = "aemClean"
     }
 
 }

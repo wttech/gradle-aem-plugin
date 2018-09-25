@@ -108,6 +108,8 @@
       "satisfyBundlePath": "/apps/gradle-aem-plugin/satisfy/install",
       "satisfyGroupName": "*",
       "checkoutFilterPath": "",
+      "downloadExtract": true,
+      "downloadConnectionTimeout": 60000,
       "debugPackageDeployed": false
     }
   },

@@ -5,9 +5,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.commons.lang3.builder.EqualsBuilder
 import org.apache.commons.lang3.builder.HashCodeBuilder
+import org.gradle.api.Project
 import java.io.Serializable
 
-class LocalInstance private constructor() : Instance, Serializable {
+class LocalInstance private constructor(@Transient
+                                        @get:JsonIgnore
+                                        private val project: Project) : Instance, Serializable {
 
     override lateinit var httpUrl: String
 
@@ -65,6 +68,10 @@ class LocalInstance private constructor() : Instance, Serializable {
     @get:JsonIgnore
     override var packages: ListResponse? = null
 
+    override fun sync(synchronizer: (InstanceSync) -> Unit) {
+        synchronizer(InstanceSync(project, this))
+    }
+
     override fun toString(): String {
         return "LocalInstance(httpUrl='$httpUrl', user='$user', password='$hiddenPassword', typeName='$typeName', debugPort=$debugPort)"
     }
@@ -94,8 +101,8 @@ class LocalInstance private constructor() : Instance, Serializable {
 
         const val USER = "admin"
 
-        fun create(httpUrl: String, configurer: LocalInstance.() -> Unit): LocalInstance {
-            return LocalInstance().apply {
+        fun create(project: Project, httpUrl: String, configurer: LocalInstance.() -> Unit): LocalInstance {
+            return LocalInstance(project).apply {
                 val instanceUrl = InstanceUrl.parse(httpUrl)
                 if (instanceUrl.user != LocalInstance.USER) {
                     throw InstanceException("User '${instanceUrl.user}' (other than 'admin') is not allowed while using local instance(s).")
@@ -111,8 +118,8 @@ class LocalInstance private constructor() : Instance, Serializable {
             }
         }
 
-        fun create(httpUrl: String): LocalInstance {
-            return create(httpUrl, {})
+        fun create(project: Project, httpUrl: String): LocalInstance {
+            return create(project, httpUrl) {}
         }
 
     }
