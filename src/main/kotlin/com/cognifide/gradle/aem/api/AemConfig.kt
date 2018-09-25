@@ -83,6 +83,7 @@ class AemConfig(
 
     /**
      * Determines if connection to untrusted (e.g. self-signed) SSL certificates should be allowed.
+     *
      * By default allows all SSL connections.
      */
     @Input
@@ -90,6 +91,7 @@ class AemConfig(
 
     /**
      * Absolute path to JCR content to be included in CRX package.
+     *
      * Must be absolute or relative to current working directory.
      */
     @Input
@@ -97,12 +99,16 @@ class AemConfig(
 
     /**
      * Content path for bundle jars being placed in CRX package.
+     *
+     * Default convention assumes that subprojects have separate bundle paths, because of potential re-installation of subpackages.
+     * When all subprojects will have same bundle path, reinstalling one subpackage may end with deletion of other bundles coming from another subpackage.
+     * Sometimes default convention may just require little correction then construct own rule like below in 'subprojects' lambda.
      */
     @Input
     var bundlePath: String = if (project == project.rootProject) {
         "/apps/${project.name}/install"
     } else {
-        "/apps/${project.rootProject.name}/${project.name.substringAfterLast(".")}/install" // TODO not sure about this
+        "/apps/${project.rootProject.name}/${project.name.run { var n = this; BUNDLE_PATH_PREFIXES.forEach { n = n.removePrefix(it) }; n }}/install"
     }
 
     /**
@@ -697,6 +703,11 @@ class AemConfig(
          * Token indicating that value need to be corrected later by more advanced logic / convention.
          */
         const val AUTO_DETERMINED = "<auto_determined>"
+
+        /**
+         * Subproject name prefixes that will skipped in determining bundle path for sub package.
+         */
+        val BUNDLE_PATH_PREFIXES = listOf("aem.app.", "aem.", "aem-app", "aem-")
 
         /**
          * Shorthand getter for configuration related with specified project.

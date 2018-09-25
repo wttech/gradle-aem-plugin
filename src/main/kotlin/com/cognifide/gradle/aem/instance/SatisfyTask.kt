@@ -62,13 +62,17 @@ open class SatisfyTask : AemDefaultTask() {
     fun defineCmdGroups() {
         if (cmdGroups) {
             props.list("aem.satisfy.urls").forEachIndexed { index, url ->
-                packageProvider.group("cmd.${index + 1}", { url(url) })
+                packageProvider.group("cmd.${index + 1}") { url(url) }
             }
         }
     }
 
     fun packages(closure: Closure<*>) {
-        ConfigureUtil.configure(closure, packageProvider)
+        packages { ConfigureUtil.configure(closure, this) }
+    }
+
+    fun packages(configurer: PackageResolver.() -> Unit) {
+        packageProvider.apply(configurer)
     }
 
     @TaskAction
@@ -80,10 +84,10 @@ open class SatisfyTask : AemDefaultTask() {
 
             var anyPackageSatisfied = false
 
-            packageGroup.instances.sync(project, { sync ->
-                val packageStates = packageGroup.files.fold(mutableMapOf<File, ListResponse.Package?>(), { states, pkg ->
+            packageGroup.instances.sync(project) { sync ->
+                val packageStates = packageGroup.files.fold(mutableMapOf<File, ListResponse.Package?>()) { states, pkg ->
                     states[pkg] = sync.determineRemotePackage(pkg, config.satisfyRefreshing); states
-                })
+                }
                 val anyPackageSatisfiable = packageStates.any {
                     sync.isSnapshot(it.key) || it.value == null || !it.value!!.installed
                 }
@@ -124,7 +128,7 @@ open class SatisfyTask : AemDefaultTask() {
                 if (anyPackageSatisfiable) {
                     packageGroup.finalizer(sync)
                 }
-            })
+            }
 
             if (anyPackageSatisfied) {
                 packageGroup.completer()

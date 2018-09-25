@@ -23,20 +23,36 @@ open class AemExtension(@Transient private val project: Project) {
 
     val tasks = AemTaskFactory(project)
 
+    fun config(configurer: AemConfig.() -> Unit) {
+        config.apply(configurer)
+    }
+
     fun config(closure: Closure<*>) {
-        ConfigureUtil.configure(closure, config)
+        config { ConfigureUtil.configure(closure, this) }
+    }
+
+    fun bundle(configurer: AemBundle.() -> Unit) {
+        bundle.apply(configurer)
     }
 
     fun bundle(closure: Closure<*>) {
-        ConfigureUtil.configure(closure, bundle)
+        bundle { ConfigureUtil.configure(closure, this) }
+    }
+
+    fun notifier(configurer: AemNotifier.() -> Unit) {
+        notifier.apply(configurer)
     }
 
     fun notifier(closure: Closure<*>) {
-        ConfigureUtil.configure(closure, notifier)
+        notifier { ConfigureUtil.configure(closure, this) }
+    }
+
+    fun tasks(configurer: AemTaskFactory.() -> Unit) {
+        tasks.apply(configurer)
     }
 
     fun tasks(closure: Closure<*>) {
-        ConfigureUtil.configure(closure, tasks)
+        tasks { ConfigureUtil.configure(closure, this) }
     }
 
 }
