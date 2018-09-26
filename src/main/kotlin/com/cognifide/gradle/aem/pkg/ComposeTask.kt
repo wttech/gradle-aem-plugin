@@ -123,7 +123,7 @@ open class ComposeTask : Zip(), AemTask {
         description = "Composes CRX package from JCR content and built OSGi bundles"
         group = AemTask.GROUP
 
-        baseName = AemConfig.pkgFileName(project)
+        baseName = config.baseName
         duplicatesStrategy = DuplicatesStrategy.WARN
         isZip64 = true
 
@@ -137,7 +137,7 @@ open class ComposeTask : Zip(), AemTask {
             fromContents()
         }
 
-        doLast { AemNotifier.of(project).default("Package composed", getArchiveName()) }
+        doLast { AemNotifier.of(project).default("Package composed", archiveName) }
     }
 
     private fun fromBundles() {

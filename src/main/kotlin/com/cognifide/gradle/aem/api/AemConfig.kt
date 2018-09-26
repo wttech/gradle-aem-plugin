@@ -39,9 +39,45 @@ class AemConfig(
     /**
      * Allows to read project property specified in command line and system property as a fallback.
      */
-    @Internal
+    @get:Internal
     @get:JsonIgnore
     val props = PropertyParser(project)
+
+    /**
+     * Project name convention prefixes used to determine default:
+     *
+     * - bundle install subdirectory
+     * - CRX package base name
+     * - OSGi bundle JAR base name
+     *
+     * in case of multi-project build and assembly packages.
+     */
+    @get:Internal
+    @get:JsonIgnore
+    val projectPrefixes: MutableList<String> = mutableListOf("aem.", "aem-", "aem_")
+
+    /**
+     * Project name with skipped convention prefixes.
+     */
+    @get:Internal
+    @get:JsonIgnore
+    val projectName: String
+        get() = project.name.run {
+            var n = this; projectPrefixes.forEach { n = n.removePrefix(it) }; n
+        }
+
+    /**
+     * Base name used as default for CRX packages being created by compose or collect task
+     * and also for OSGi bundle JARs.
+     */
+    @get:Internal
+    @get:JsonIgnore
+    val baseName: String
+        get() = normalizeSeparators(if (project == project.rootProject) {
+            project.rootProject.name
+        } else {
+            "${ project.rootProject.name}.$projectName"
+        }, ".")
 
     /**
      * Determines current environment to be used in e.g package deployment.
@@ -104,31 +140,13 @@ class AemConfig(
      *
      * Default convention assumes that subprojects have separate bundle paths, because of potential re-installation of subpackages.
      * When all subprojects will have same bundle path, reinstalling one subpackage may end with deletion of other bundles coming from another subpackage.
-     * Sometimes default convention may just require little correction then construct own rule like below in 'subprojects' lambda.
      */
     @Input
-    var bundlePath: String = bundlePathDefault
-
-    /**
-     * Default convention used to generate bundle path basing on project names (root and subproject).
-     *
-     * // TODO consider prefixes skipping in pkgFileName
-     */
-    @get:JsonIgnore
-    @get:Internal
-    val bundlePathDefault: String
-        get() {
-            val mainDir = project.rootProject.name
-            val subDir = project.name.run {
-                var s = this; BUNDLE_PATH_PREFIXES.forEach { s = s.removePrefix(it) }; s
-            }
-
-            return if (project == project.rootProject) {
-                "/apps/$mainDir/install"
-            } else {
-                "/apps/$mainDir/$subDir/install"
-            }
-        }
+    var bundlePath: String = if (project == project.rootProject) {
+        "/apps/${project.rootProject.name}/install"
+    } else {
+        "/apps/${project.rootProject.name}/$projectName/install"
+    }
 
     /**
      * Determines package in which OSGi bundle being built contains its classes.
@@ -137,9 +155,22 @@ class AemConfig(
      * - generated OSGi specific manifest instructions like 'Bundle-SymbolicName', 'Export-Package'.
      * - generated AEM specific manifest instructions like 'Sling-Model-Packages'.
      * - performed additional component stability checks during 'aemAwait'
+     *
+     * Default convention: '${project.group}.${project.name}'
      */
     @Input
     var bundlePackage: String = AUTO_DETERMINED
+
+    @get:Internal
+    @get:JsonIgnore
+    val bundlePackageDefault: String
+        get() {
+            if ("${project.group}".isBlank()) {
+                throw AemException("${project.displayName.capitalize()} must has property 'group' defined to determine bundle package default.")
+            }
+
+            return normalizeSeparators("${project.group}.${project.name}", ".")
+        }
 
     /**
      * Determines how conflicts will be resolved when coincidental classes will be detected.
@@ -664,7 +695,11 @@ class AemConfig(
                     "$contentPath/${PackagePlugin.VLT_PATH}"
             )
 
-            return paths.filter { !it.isBlank() }.map { File(it) }.filter { it.exists() }
+            return paths.asSequence()
+                    .filter { !it.isBlank() }
+                    .map { File(it) }
+                    .filter { it.exists() }
+                    .toList()
         }
 
     /**
@@ -735,8 +770,16 @@ class AemConfig(
         }
 
         if (bundlePackage == AUTO_DETERMINED) {
-            bundlePackage = pkgBundlePackage(project)
+            bundlePackage = bundlePackageDefault
         }
+    }
+
+    fun normalizeSeparators(name: String, separator: String): String {
+        return name.replace(":", separator)
+                .replace("-", separator)
+                .replace(".", separator)
+                .removePrefix(separator)
+                .removeSuffix(separator)
     }
 
     class Retry {
@@ -765,12 +808,7 @@ class AemConfig(
         /**
          * Token indicating that value need to be corrected later by more advanced logic / convention.
          */
-        const val AUTO_DETERMINED = "<auto_determined>"
-
-        /**
-         * Subproject name prefixes that will skipped in determining bundle path for sub package.
-         */
-        val BUNDLE_PATH_PREFIXES = listOf("aem.app.", "aem.", "aem-app-", "aem-")
+        const val AUTO_DETERMINED = "<auto>"
 
         /**
          * Shorthand getter for configuration related with specified project.
@@ -786,27 +824,6 @@ class AemConfig(
 
         fun of(task: DefaultTask): AemConfig {
             return of(task.project)
-        }
-
-        fun pkgBundlePackage(project: Project): String {
-            if ("${project.group}".isBlank()) {
-                throw AemException("${project.displayName.capitalize()} must has group property defined to determine bundle package.")
-            }
-
-            return normalizeName("${project.group}.${project.name}", ".")
-        }
-
-        fun pkgFileName(project: Project): String {
-            return normalizeName(if (project == project.rootProject) {
-                project.rootProject.name
-            } else {
-                "${project.rootProject.name}.${project.name}"
-            }, ".")
-        }
-
-        private fun normalizeName(name: String, separator: String): String {
-            return name.replace(":", separator).replace("-", separator).replace(".", separator)
-                    .removePrefix(separator).removeSuffix(separator)
         }
 
         fun pkg(project: Project): ComposeTask {

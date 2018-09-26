@@ -1,0 +1,2 @@
+rootProject.name = "aem-plugin"
+enableFeaturePreview("STABLE_PUBLISHING")
