@@ -184,7 +184,7 @@
       "instanceName": "local-*",
       "instanceList": "",
       "instanceAuthorName": "local-author*",
-      "instanceConnectionTimeout": 5000,
+      "instanceConnectionTimeout": 30000,
       "instanceConnectionUntrustedSsl": true,
 
       "contentPath": "debug/additional/src/main/content",

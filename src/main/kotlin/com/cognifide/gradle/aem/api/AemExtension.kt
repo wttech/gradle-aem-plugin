@@ -1,7 +1,9 @@
 package com.cognifide.gradle.aem.api
 
 import com.cognifide.gradle.aem.instance.Instance
+import com.cognifide.gradle.aem.instance.InstancePlugin
 import com.cognifide.gradle.aem.instance.InstanceSync
+import com.cognifide.gradle.aem.pkg.PackagePlugin
 import groovy.lang.Closure
 import org.gradle.api.Project
 import org.gradle.util.ConfigureUtil
@@ -64,6 +66,12 @@ open class AemExtension(@Transient private val project: Project) {
 
     companion object {
         const val NAME = "aem"
+
+        fun of(project: Project): AemExtension {
+            return project.extensions.findByType(AemExtension::class.java)
+                    ?: throw AemException(project.displayName.capitalize()
+                            + " has neither '${PackagePlugin.ID}' nor '${InstancePlugin.ID}' plugin applied.")
+        }
     }
 
 }

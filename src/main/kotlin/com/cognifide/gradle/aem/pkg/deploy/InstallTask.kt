@@ -8,10 +8,6 @@ import org.gradle.api.tasks.TaskAction
 
 open class InstallTask : AemDefaultTask() {
 
-    companion object {
-        val NAME = "aemInstall"
-    }
-
     init {
         description = "Installs CRX package on instance(s)."
     }
@@ -24,6 +20,10 @@ open class InstallTask : AemDefaultTask() {
         instances.sync(project) { it.installPackage(it.determineRemotePackagePath()) }
 
         notifier.default("Package installed", "$pkg on ${instances.names}")
+    }
+
+    companion object {
+        const val NAME = "aemInstall"
     }
 
 }

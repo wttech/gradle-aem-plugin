@@ -8,10 +8,6 @@ import org.gradle.api.tasks.TaskAction
 
 open class ActivateTask : AemDefaultTask() {
 
-    companion object {
-        val NAME = "aemActivate"
-    }
-
     init {
         description = "Activates CRX package on instance(s)."
     }
@@ -24,6 +20,10 @@ open class ActivateTask : AemDefaultTask() {
         instances.sync(project) { it.activatePackage(it.determineRemotePackagePath()) }
 
         notifier.default("Package activated", "$pkg on ${instances.names}")
+    }
+
+    companion object {
+        const val NAME = "aemActivate"
     }
 
 }

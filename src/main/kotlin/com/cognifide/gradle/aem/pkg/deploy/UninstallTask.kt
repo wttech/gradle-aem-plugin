@@ -8,10 +8,6 @@ import org.gradle.api.tasks.TaskAction
 
 open class UninstallTask : AemDefaultTask() {
 
-    companion object {
-        val NAME = "aemUninstall"
-    }
-
     init {
         description = "Uninstalls AEM package on instance(s)."
 
@@ -26,6 +22,10 @@ open class UninstallTask : AemDefaultTask() {
         instances.sync(project) { it.uninstallPackage(it.determineRemotePackagePath()) }
 
         notifier.default("Package uninstalled", "$pkg from ${instances.names}")
+    }
+
+    companion object {
+        const val NAME = "aemUninstall"
     }
 
 }

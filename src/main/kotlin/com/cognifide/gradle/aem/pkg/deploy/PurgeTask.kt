@@ -9,10 +9,6 @@ import org.gradle.api.tasks.TaskAction
 
 open class PurgeTask : AemDefaultTask() {
 
-    companion object {
-        val NAME = "aemPurge"
-    }
-
     init {
         description = "Uninstalls and then deletes CRX package on AEM instance(s)."
 
@@ -55,6 +51,10 @@ open class PurgeTask : AemDefaultTask() {
             logger.info(e.message)
             logger.debug("Cannot delete package.", e)
         }
+    }
+
+    companion object {
+        const val NAME = "aemPurge"
     }
 
 }

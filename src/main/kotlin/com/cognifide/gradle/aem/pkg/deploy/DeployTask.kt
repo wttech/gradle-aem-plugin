@@ -8,10 +8,6 @@ import org.gradle.api.tasks.TaskAction
 
 open class DeployTask : AemDefaultTask() {
 
-    companion object {
-        val NAME = "aemDeploy"
-    }
-
     init {
         description = "Deploys CRX package on instance(s). Upload then install (and optionally activate)."
     }
@@ -26,12 +22,16 @@ open class DeployTask : AemDefaultTask() {
         }
 
         if (config.deployDistributed) {
-            instances.sync(project, { it.distributePackage(pkg) })
+            instances.sync(project) { it.distributePackage(pkg) }
         } else {
-            instances.sync(project, { it.deployPackage(pkg) })
+            instances.sync(project) { it.deployPackage(pkg) }
         }
 
         notifier.default("Package deployed", "${pkg.name} on ${instances.names}")
+    }
+
+    companion object {
+        const val NAME = "aemDeploy"
     }
 
 }

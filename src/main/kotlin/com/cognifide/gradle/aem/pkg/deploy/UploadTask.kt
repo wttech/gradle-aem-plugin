@@ -8,10 +8,6 @@ import org.gradle.api.tasks.TaskAction
 
 open class UploadTask : AemDefaultTask() {
 
-    companion object {
-        val NAME = "aemUpload"
-    }
-
     init {
         description = "Uploads CRX package to instance(s)."
     }
@@ -21,9 +17,13 @@ open class UploadTask : AemDefaultTask() {
         val pkg = config.packageFile
         val instances = Instance.filter(project)
 
-        instances.sync(project, { it.uploadPackage(pkg) })
+        instances.sync(project) { it.uploadPackage(pkg) }
 
         notifier.default("Package uploaded", "${pkg.name} on ${instances.names}")
+    }
+
+    companion object {
+        const val NAME = "aemUpload"
     }
 
 }

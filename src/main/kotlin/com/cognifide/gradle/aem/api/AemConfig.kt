@@ -115,9 +115,11 @@ class AemConfig(
 
     /**
      * Defines maximum time after which initializing connection to AEM will be aborted (e.g on upload, install).
+     *
+     * Default value may look quite big, but it is just very fail-safe.
      */
     @Input
-    var instanceConnectionTimeout: Int = props.int("aem.instance.connectionTimeout", 5000)
+    var instanceConnectionTimeout: Int = props.int("aem.instance.connectionTimeout", 30000)
 
     /**
      * Determines if connection to untrusted (e.g. self-signed) SSL certificates should be allowed.
@@ -342,14 +344,12 @@ class AemConfig(
     @get:JsonIgnore
     var uploadRetry = retry { afterSquaredSecond(props.long("aem.upload.retry", 6)) }
 
-
     /**
      * Repeat download when failed (brute-forcing).
      */
     @Internal
     @get:JsonIgnore
     var downloadRetry = retry { afterSquaredSecond(props.long("aem.download.retry", 3)) }
-
 
     /**
      * Determines if when on package install, sub-packages included in CRX package content should be also installed.
@@ -437,12 +437,12 @@ class AemConfig(
      */
     @Internal
     @get:JsonIgnore
-    var awaitAvailableCheck: (InstanceState) -> Boolean = {
-        it.check({
-            it.connectionTimeout = 500
-            it.connectionRetries = false
+    var awaitAvailableCheck: (InstanceState) -> Boolean = { state ->
+        state.check({ sync ->
+            sync.connectionTimeout = 750
+            sync.connectionRetries = false
         }, {
-            !it.bundleState.unknown
+            !state.bundleState.unknown
         })
     }
 
@@ -608,7 +608,7 @@ class AemConfig(
     var notificationConfig: (AemNotifier) -> Notifier = { it.factory() }
 
     /**
-     * Initialize defaults that depends on concrete type of project then validation configuration.
+     * Initialize defaults that depends on concrete type of project then validate configuration.
      */
     init {
         project.afterEvaluate {
@@ -739,20 +739,20 @@ class AemConfig(
 
     @Internal
     @JsonIgnore
-    fun retry(configurer: Closure<*>): Retry {
+    fun retry(configurer: Closure<*>): AemRetry {
         return retry { ConfigureUtil.configure(configurer, this) }
     }
 
     @Internal
     @JsonIgnore
-    fun retry(configurer: Retry.() -> Unit): Retry {
+    fun retry(configurer: AemRetry.() -> Unit): AemRetry {
         return retry().apply(configurer)
     }
 
     @Internal
     @JsonIgnore
-    fun retry(): Retry {
-        return Retry()
+    fun retry(): AemRetry {
+        return AemRetry()
     }
 
     private fun defaults() {
@@ -782,27 +782,6 @@ class AemConfig(
                 .removeSuffix(separator)
     }
 
-    class Retry {
-
-        var times = 0L
-
-        var delay: (Long) -> Long = { 0L }
-
-        fun repeat(delay: (Long) -> Long, times: Long) {
-            this.delay = delay
-            this.times = times
-        }
-
-        fun afterSecond(times: Long) {
-            repeat({ 1000L }, times)
-        }
-
-        fun afterSquaredSecond(times: Long) {
-            repeat({ n -> n * n * 1000L }, times)
-        }
-
-    }
-
     companion object {
 
         /**
@@ -815,11 +794,7 @@ class AemConfig(
          * Especially useful when including one project in another (composing assembly packages).
          */
         fun of(project: Project): AemConfig {
-            val extension = project.extensions.findByType(AemExtension::class.java)
-                    ?: throw AemException(project.displayName.capitalize()
-                            + " has neither '${PackagePlugin.ID}' nor '${InstancePlugin.ID}' plugin applied.")
-
-            return extension.config
+            return AemExtension.of(project).config
         }
 
         fun of(task: DefaultTask): AemConfig {

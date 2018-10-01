@@ -14,9 +14,13 @@ class AemTaskFactory(@Transient private val project: Project) {
         }
     }
 
+    fun get(tasks: Collection<Any>): List<Task> {
+        return tasks.map { get(it) }
+    }
+
     fun sequence(tasks: Collection<Any>, afterTasks: Collection<Any>): Collection<Task> {
-        val taskList = tasks.map { get(it) }
-        val afterList = afterTasks.map { get(it) }
+        val taskList = get(tasks)
+        val afterList = get(afterTasks)
 
         if (taskList.size > 1) {
             for (i in 1 until taskList.size) {

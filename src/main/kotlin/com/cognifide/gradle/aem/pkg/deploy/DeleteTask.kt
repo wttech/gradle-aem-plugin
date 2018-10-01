@@ -8,10 +8,6 @@ import org.gradle.api.tasks.TaskAction
 
 open class DeleteTask : AemDefaultTask() {
 
-    companion object {
-        val NAME = "aemDelete"
-    }
-
     init {
         description = "Deletes AEM package on instance(s)."
 
@@ -26,6 +22,10 @@ open class DeleteTask : AemDefaultTask() {
         instances.sync(project) { it.deletePackage(it.determineRemotePackagePath()) }
 
         notifier.default("Package deleted", "$pkg on ${instances.names}")
+    }
+
+    companion object {
+        const val NAME = "aemDelete"
     }
 
 }
