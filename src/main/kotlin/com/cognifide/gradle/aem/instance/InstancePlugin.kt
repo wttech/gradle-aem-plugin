@@ -27,48 +27,47 @@ class InstancePlugin : Plugin<Project> {
     }
 
     private fun Project.setupTasks() {
-        val clean = tasks.getByName(LifecycleBasePlugin.CLEAN_TASK_NAME)
-
-        val resolve = tasks.create(ResolveTask.NAME, ResolveTask::class.java)
-        val create = tasks.create(CreateTask.NAME, CreateTask::class.java)
-        val destroy = tasks.create(DestroyTask.NAME, DestroyTask::class.java)
-        val up = tasks.create(UpTask.NAME, UpTask::class.java)
-        val down = tasks.create(DownTask.NAME, DownTask::class.java)
-        val restart = tasks.create(RestartTask.NAME, RestartTask::class.java)
-        val reload = tasks.create(ReloadTask.NAME, ReloadTask::class.java)
-        val satisfy = tasks.create(SatisfyTask.NAME, SatisfyTask::class.java)
-        val await = tasks.create(AwaitTask.NAME, AwaitTask::class.java)
-        val collect = tasks.create(CollectTask.NAME, CollectTask::class.java)
-        val setup = tasks.create(SetupTask.NAME, SetupTask::class.java)
-        val resetup = tasks.create(ResetupTask.NAME, ResetupTask::class.java)
-
-        create.dependsOn(resolve).mustRunAfter(clean)
-        up.dependsOn(create).mustRunAfter(clean, down)
-        reload.mustRunAfter(satisfy)
-        restart.dependsOn(down, up)
-        destroy.dependsOn(down)
-        resolve.mustRunAfter(clean)
-        satisfy.dependsOn(resolve).mustRunAfter(create, up)
-        await.mustRunAfter(create, up, satisfy)
-        collect.mustRunAfter(satisfy)
-        setup.dependsOn(create, up, satisfy).mustRunAfter(destroy)
-        resetup.dependsOn(destroy, setup)
-
-        // Preconfigure tasks setup and deploy within same project (for assembly package)
-        plugins.withId(PackagePlugin.ID) {
-            val deploy = tasks.getByName(DeployTask.NAME)
-
-            setup.dependsOn(deploy)
-            deploy.mustRunAfter(create, up, satisfy)
-            reload.mustRunAfter(deploy)
-            await.mustRunAfter(deploy)
+        tasks.register(ResolveTask.NAME, ResolveTask::class.java) {
+            it.mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
         }
-
-        // Aggregate all packages being composed by collect task
-        gradle.afterProject { subproject ->
-            if (subproject.plugins.hasPlugin(PackagePlugin.ID)) {
-                collect.dependsOn(subproject.tasks.getByName(ComposeTask.NAME))
+        tasks.register(DownTask.NAME, DownTask::class.java)
+        tasks.register(UpTask.NAME, UpTask::class.java) {
+            it.dependsOn(CreateTask.NAME).mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME, DownTask.NAME)
+        }
+        tasks.register(RestartTask.NAME, RestartTask::class.java) {
+            it.dependsOn(DownTask.NAME, UpTask.NAME)
+        }
+        tasks.register(CreateTask.NAME, CreateTask::class.java) {
+            it.dependsOn(ResolveTask.NAME).mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
+        }
+        tasks.register(DestroyTask.NAME, DestroyTask::class.java) {
+            it.dependsOn(DownTask.NAME)
+        }
+        tasks.register(SatisfyTask.NAME, SatisfyTask::class.java) {
+            it.dependsOn(ResolveTask.NAME).mustRunAfter(CreateTask.NAME, UpTask.NAME)
+        }
+        tasks.register(ReloadTask.NAME, ReloadTask::class.java) {
+            it.mustRunAfter(SatisfyTask.NAME, DeployTask.NAME)
+        }
+        tasks.register(AwaitTask.NAME, AwaitTask::class.java) {
+            it.mustRunAfter(CreateTask.NAME, UpTask.NAME, SatisfyTask.NAME, DeployTask.NAME)
+        }
+        tasks.register(CollectTask.NAME, CollectTask::class.java) { task ->
+            task.mustRunAfter(SatisfyTask.NAME)
+            gradle.projectsEvaluated { // TODO ?
+                allprojects.forEach { subproject ->
+                    if (subproject.plugins.hasPlugin(PackagePlugin.ID)) {
+                        task.dependsOn(ComposeTask.NAME)
+                    }
+                }
             }
+        }
+        tasks.register(SetupTask.NAME, SetupTask::class.java) { task ->
+            task.dependsOn(CreateTask.NAME, UpTask.NAME, SatisfyTask.NAME).mustRunAfter(DestroyTask.NAME)
+            plugins.withId(PackagePlugin.ID) { task.dependsOn(DeployTask.NAME) }
+        }
+        tasks.register(ResetupTask.NAME, ResetupTask::class.java) {
+            it.dependsOn(DestroyTask.NAME, SetupTask.NAME)
         }
     }
 

@@ -38,29 +38,24 @@ class BasePlugin : Plugin<Project> {
     }
 
     private fun Project.setupTasks() {
-        tasks.create(DebugTask.NAME, DebugTask::class.java)
-        tasks.create(RcpTask.NAME, RcpTask::class.java)
-
-        val clean = tasks.create(CleanTask.NAME, CleanTask::class.java)
-        val vlt = tasks.create(VltTask.NAME, VltTask::class.java)
-        val checkout = tasks.create(CheckoutTask.NAME, CheckoutTask::class.java)
-        val sync = tasks.create(SyncTask.NAME, SyncTask::class.java)
-        val download = tasks.create(DownloadTask.NAME, DownloadTask::class.java)
-
-        val baseClean = tasks.getByName(LifecycleBasePlugin.CLEAN_TASK_NAME)
-
-        clean.mustRunAfter(baseClean, checkout, download)
-        vlt.mustRunAfter(baseClean)
-        checkout.mustRunAfter(baseClean)
-        download.mustRunAfter(baseClean)
-
-        afterEvaluate {
-            val config = AemConfig.of(project)
-            val transfer = project.tasks.getByName(config.syncTransferTaskName)
-
-            sync.dependsOn(transfer, clean).mustRunAfter(baseClean)
+        tasks.register(DebugTask.NAME, DebugTask::class.java)
+        tasks.register(RcpTask.NAME, RcpTask::class.java)
+        tasks.register(CleanTask.NAME, CleanTask::class.java) {
+            it.mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME, CheckoutTask.NAME, DownloadTask.NAME)
         }
-
+        tasks.register(VltTask.NAME, VltTask::class.java) {
+            it.mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
+        }
+        tasks.register(CheckoutTask.NAME, CheckoutTask::class.java) {
+            it.mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
+        }
+        tasks.register(SyncTask.NAME, SyncTask::class.java) {
+            it.dependsOn(LifecycleBasePlugin.CLEAN_TASK_NAME, CleanTask.NAME)
+            it.dependsOn(AemConfig.of(project).syncTransferTaskName)
+        }
+        tasks.register(DownloadTask.NAME, DownloadTask::class.java) {
+            it.mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
+        }
     }
 
     companion object {
