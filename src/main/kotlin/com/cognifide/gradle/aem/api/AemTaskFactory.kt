@@ -17,36 +17,33 @@ class AemTaskFactory(@Transient private val project: Project) {
         }
     }
 
-    fun sequence(tasks: Collection<Any>, afterTasks: Collection<Any>): List<TaskProvider<out Task>> {
-        val taskList = get(tasks)
-        val afterList = get(afterTasks)
+    fun sequence(name: String, configurer: SequenceOptions.() -> Unit): TaskProvider<Task> {
+        return project.tasks.register(name) { sequence ->
+            sequence.group = GROUP
 
-        if (taskList.size > 1) {
-            for (i in 1 until taskList.size) {
-                val previous = taskList[i - 1]
-                val current = taskList[i]
+            val options = SequenceOptions().apply(configurer)
+            val taskList = get(options.dependentTasks)
+            val afterList = get(options.afterTasks)
 
-                current.configure { it.mustRunAfter(previous) }
+            if (taskList.size > 1) {
+                for (i in 1 until taskList.size) {
+                    val previous = taskList[i - 1]
+                    val current = taskList[i]
+
+                    current.configure { it.mustRunAfter(previous) }
+                }
             }
-        }
-        taskList.forEach { it.configure { task -> task.mustRunAfter(afterList) } }
 
-        return taskList
-    }
-
-    fun sequence(name: String, tasks: Collection<Any>, afterTasks: Collection<Any>): TaskProvider<Task> {
-        return project.tasks.register(name) {
-            it.group = "${AemTask.GROUP} (custom)"
-            it.dependsOn(sequence(tasks, afterTasks))
+            taskList.forEach { it.configure { task -> task.mustRunAfter(afterList) } }
+            sequence.dependsOn(taskList).mustRunAfter(afterList)
         }
     }
 
-    fun setupSequence(name: String, tasks: Collection<Any>): TaskProvider<Task> {
+    fun setupSequence(name: String, configurer: SequenceOptions.() -> Unit): TaskProvider<Task> {
         val afterTasks = listOf(CreateTask.NAME, UpTask.NAME, SatisfyTask.NAME)
-        val sequence = sequence(name, tasks, afterTasks)
+        val sequence = sequence(name) { apply(configurer); this.afterTasks = afterTasks }
 
         project.tasks.named(SetupTask.NAME).configure { it.dependsOn(sequence) }
-        sequence.configure { it.mustRunAfter(afterTasks) }
 
         return sequence
     }
@@ -56,6 +53,28 @@ class AemTaskFactory(@Transient private val project: Project) {
         task.configure { it.group = GROUP }
 
         return task
+    }
+
+    class SequenceOptions {
+        var dependentTasks: Collection<Any> = listOf()
+
+        var afterTasks: Collection<Any> = listOf()
+
+        fun dependsOn(vararg tasks: Any) {
+            dependsOn(tasks.toList())
+        }
+
+        fun dependsOn(tasks: Collection<Any>) {
+            dependentTasks = tasks
+        }
+
+        fun mustRunAfter(vararg tasks: Any) {
+            mustRunAfter(tasks.toList())
+        }
+
+        fun mustRunAfter(tasks: Collection<Any>) {
+            afterTasks = tasks
+        }
     }
 
     companion object {
