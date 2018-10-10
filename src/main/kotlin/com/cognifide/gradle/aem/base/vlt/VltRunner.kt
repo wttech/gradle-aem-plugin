@@ -4,6 +4,7 @@ import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.instance.Instance
 import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.pkg.PackagePlugin
+import org.apache.commons.lang3.time.StopWatch
 import org.gradle.api.Project
 import org.gradle.api.logging.Logger
 import java.io.File
@@ -87,10 +88,18 @@ class VltRunner(val project: Project) {
         }
     }
 
-    fun rcp() {
+    fun rcp(): VltRcpSummary {
+        var copiedPaths = 0L
+        val stopWatch = StopWatch()
+
+        stopWatch.start()
         rcpPaths.forEach { (sourcePath, targetPath) ->
             raw("rcp $rcpOpts ${rcpSourceInstance.httpBasicAuthUrl}/crx/-/jcr:root$sourcePath ${rcpTargetInstance.httpBasicAuthUrl}/crx/-/jcr:root$targetPath")
+            copiedPaths++
         }
+        stopWatch.stop()
+
+        return VltRcpSummary(rcpSourceInstance, rcpTargetInstance, copiedPaths, stopWatch.time)
     }
 
     val rcpPaths: Sequence<Pair<String, String>>
