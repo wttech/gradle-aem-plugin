@@ -18,7 +18,7 @@ open class RcpTask : AemDefaultTask() {
         val runner = VltRunner(project)
         val result = runner.rcp()
 
-        logger.info("RCP summary: $result")
+        logger.info("Details: $result")
 
         if (!runner.rcpSourceInstance.cmd && !runner.rcpTargetInstance.cmd) {
             notifier.default("RCP finished", "Copied ${result.copiedPaths} JCR root(s) from instance ${runner.rcpSourceInstance.name} to ${runner.rcpTargetInstance.name}.")

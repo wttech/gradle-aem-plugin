@@ -9,7 +9,7 @@ data class VltRcpSummary(val source: Instance, val target: Instance, val copiedP
         get() = Formats.duration(duration)
 
     override fun toString(): String {
-        return "VltRcpSummary(source=$source, target=$target, copiedPaths=$copiedPaths, duration=$durationString)"
+        return "VltRcpSummary(copiedPaths=$copiedPaths, duration=$durationString, source=$source, target=$target)"
     }
 
 }

@@ -93,36 +93,36 @@ class VltRunner(val project: Project) {
         val stopWatch = StopWatch()
 
         stopWatch.start()
-        rcpPaths.forEach { (sourcePath, targetPath) ->
+        rcpPaths { (sourcePath, targetPath) ->
             raw("rcp $rcpOpts ${rcpSourceInstance.httpBasicAuthUrl}/crx/-/jcr:root$sourcePath ${rcpTargetInstance.httpBasicAuthUrl}/crx/-/jcr:root$targetPath")
             copiedPaths++
         }
+
         stopWatch.stop()
 
         return VltRcpSummary(rcpSourceInstance, rcpTargetInstance, copiedPaths, stopWatch.time)
     }
 
-    val rcpPaths: Sequence<Pair<String, String>>
-        get() {
-            val paths = props.list("aem.rcp.paths")
-            if (paths.isNotEmpty()) {
-                return paths.asSequence().map { path ->
-                    rcpPathMapping(path)
-                }
-            }
-
-            val pathsFilePath = props.string("aem.rcp.pathsFile")
-            if (!pathsFilePath.isNullOrBlank()) {
-                val pathsFile = File(pathsFilePath)
-                if (!pathsFile.exists()) {
-                    throw VltException("RCP paths file does not exist: $pathsFile")
-                }
-
-                return pathsFile.useLines { line -> line.map { rcpPathMapping(it) } }
-            }
-
-            throw VltException("RCP param '-Paem.rcp.paths' or '-Paem.rcp.pathsFile' must be specified.")
+    fun rcpPaths(action: (Pair<String, String>) -> Unit) {
+        val paths = props.list("aem.rcp.paths")
+        if (paths.isNotEmpty()) {
+            paths.asSequence().map { path ->
+                rcpPathMapping(path)
+            }.forEach(action)
         }
+
+        val pathsFilePath = props.string("aem.rcp.pathsFile")
+        if (!pathsFilePath.isNullOrBlank()) {
+            val pathsFile = File(pathsFilePath)
+            if (!pathsFile.exists()) {
+                throw VltException("RCP paths file does not exist: $pathsFile")
+            }
+
+            return pathsFile.useLines { line -> line.map { rcpPathMapping(it) }.forEach(action) }
+        }
+
+        throw VltException("RCP param '-Paem.rcp.paths' or '-Paem.rcp.pathsFile' must be specified.")
+    }
 
     private fun rcpPathMapping(path: String): Pair<String, String> {
         val parts = path.trim().split("=").map { it.trim() }
