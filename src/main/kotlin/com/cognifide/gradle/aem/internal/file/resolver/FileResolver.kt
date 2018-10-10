@@ -37,14 +37,6 @@ open class FileResolver(val project: Project, val downloadDir: File) {
 
     private val groups = mutableListOf<FileGroup>().apply { add(groupDefault) }
 
-    private val configurationHash: Int
-        get() {
-            val builder = HashCodeBuilder()
-            groups.flatMap { it.resolutions }.forEach { builder.append(it.id) }
-
-            return builder.toHashCode()
-        }
-
     protected open fun resolve(hash: Any, resolver: (FileResolution) -> File) {
         val id = HashCode.fromInt(HashCodeBuilder().append(hash).toHashCode()).toString()
 
@@ -53,13 +45,6 @@ open class FileResolver(val project: Project, val downloadDir: File) {
 
     protected open fun createGroup(name: String): FileGroup {
         return FileGroup(this, name)
-    }
-
-    fun attach(task: DefaultTask, prop: String = "fileResolver") {
-        task.outputs.dir(downloadDir)
-        project.afterEvaluate {
-            task.inputs.properties(mapOf(prop to configurationHash))
-        }
     }
 
     fun outputDirs(filter: (String) -> Boolean = { true }): List<File> {

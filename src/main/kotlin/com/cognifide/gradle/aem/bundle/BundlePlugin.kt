@@ -38,14 +38,14 @@ class BundlePlugin : Plugin<Project> {
         convention.sourceCompatibility = JavaVersion.VERSION_1_8
         convention.targetCompatibility = JavaVersion.VERSION_1_8
 
-        tasks.withType(JavaCompile::class.java) {
+        tasks.withType(JavaCompile::class.java) { // TODO make it lazy
             it.options.encoding = "UTF-8"
             it.options.compilerArgs = it.options.compilerArgs + "-Xlint:deprecation"
             it.options.isIncremental = true
         }
 
-        afterEvaluate {
-            val jar = tasks.getByName(JavaPlugin.JAR_TASK_NAME) as Jar
+        tasks.named(JavaPlugin.JAR_TASK_NAME).configure {
+            val jar = it as Jar // TODO type erasure in named()
 
             ensureJarBaseNameIfNotCustomized(jar)
             ensureJarManifestAttributes(jar)

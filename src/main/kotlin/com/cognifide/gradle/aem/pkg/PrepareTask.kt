@@ -19,7 +19,7 @@ open class PrepareTask : AemDefaultTask() {
     init {
         description = "Prepare Vault files before composing CRX package"
 
-        project.afterEvaluate {
+        project.afterEvaluate { // TODO make it lazy / task config avoidance
             config.vaultFilesDirs.forEach { dir -> inputs.dir(dir) }
         }
     }
