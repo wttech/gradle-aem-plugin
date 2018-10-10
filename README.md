@@ -356,8 +356,9 @@ Copy JCR content from one instance to another. Sample usages below.
   File format:
  
   ```
-   sourcePath=targetPath
+   sourcePath1=targetPath1
    sameSourceAndTargetPath1
+   sourcePath2=targetPath2
    sameSourceAndTargetPath2
   ```
 
