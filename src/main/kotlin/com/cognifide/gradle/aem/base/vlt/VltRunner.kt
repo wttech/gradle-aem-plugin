@@ -3,11 +3,9 @@ package com.cognifide.gradle.aem.base.vlt
 import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.instance.Instance
 import com.cognifide.gradle.aem.internal.PropertyParser
-import com.cognifide.gradle.aem.internal.file.FileOperations
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import org.gradle.api.Project
 import org.gradle.api.logging.Logger
-import org.gradle.api.tasks.Input
 import java.io.File
 
 // TODO https://github.com/Cognifide/gradle-aem-plugin/issues/135
@@ -90,25 +88,40 @@ class VltRunner(val project: Project) {
     }
 
     fun rcp() {
-        rcpPaths.forEach { sourcePath, targetPath ->
+        rcpPaths.forEach { (sourcePath, targetPath) ->
             raw("rcp $rcpOpts ${rcpSourceInstance.httpBasicAuthUrl}/crx/-/jcr:root$sourcePath ${rcpTargetInstance.httpBasicAuthUrl}/crx/-/jcr:root$targetPath")
         }
     }
 
-    val rcpPaths: Map<String, String> by lazy {
-        val paths = props.list("aem.rcp.paths")
-        if (paths.isEmpty()) {
-            throw VltException("RCP param '-Paem.rcp.paths' is not specified.")
+    val rcpPaths: Sequence<Pair<String, String>>
+        get() {
+            val paths = props.list("aem.rcp.paths")
+            if (paths.isNotEmpty()) {
+                return paths.asSequence().map { path ->
+                    rcpPathMapping(path)
+                }
+            }
+
+            val pathsFilePath = props.string("aem.rcp.pathsFile")
+            if (!pathsFilePath.isNullOrBlank()) {
+                val pathsFile = File(pathsFilePath)
+                if (!pathsFile.exists()) {
+                    throw VltException("RCP paths file does not exist: $pathsFile")
+                }
+
+                return pathsFile.useLines { line -> line.map { rcpPathMapping(it) } }
+            }
+
+            throw VltException("RCP param '-Paem.rcp.paths' or '-Paem.rcp.pathsFile' must be specified.")
         }
 
-        paths.fold(mutableMapOf<String, String>()) { r, path ->
-            val parts = path.split("=").map { it.trim() }
-            when (parts.size) {
-                1 -> r[path] = path
-                2 -> r[parts[0]] = parts[1]
-                else -> throw VltException("RCP path has invalid format: $path")
-            }
-            r
+    private fun rcpPathMapping(path: String): Pair<String, String> {
+        val parts = path.trim().split("=").map { it.trim() }
+
+        return when (parts.size) {
+            1 -> Pair(path, path)
+            2 -> Pair(parts[0], parts[1])
+            else -> throw VltException("RCP path has invalid format: $path")
         }
     }
 
