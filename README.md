@@ -485,8 +485,8 @@ Builds and downloads CRX package from AEM instance. Similar to [aemCheckout](#ta
 CMD parameters:
 * `gradlew :aemDownload -Paem.download.extract=false` - Do not extract the package. Downloaded package is located under `build/aemDownload` folder for a project
 * `gradlew :aemDownload -Paem.force` - Deletes content of *jcr_root* directory before extracting the package contents
-* `gradlew :aemDownload -Paem.checkout.filterPath=src/main/content/META-INF/vault/custom-filter.xml` - Specifying the filter file instead default filter.xml for a project
-* `gradlew :aemDownload -Paem.checkout.filterRoots=[/etc/tags/example,/content/dam/example]` - Specifying explicitly the filters instead default filter.xml for a project
+* `gradlew :aemDownload -Paem.filter.path=src/main/content/META-INF/vault/custom-filter.xml` - Specifying the filter file instead default filter.xml for a project
+* `gradlew :aemDownload -Paem.filter.roots=[/etc/tags/example,/content/dam/example]` - Specifying explicitly the filters instead default filter.xml for a project
 
 The contents of extracted package can be cleaned up using configured VLT rules by chaining [aemClean](#task-aemclean) task 
 `gradlew :aemDownload :aemClean`
@@ -906,15 +906,15 @@ In other words, to customize instance files just:
 E.g for subproject `:content`:
    
 ```bash
-gradlew :content:aemSync -Paem.checkout.filterPath=custom-filter.xml
-gradlew :content:aemSync -Paem.checkout.filterPath=src/main/content/META-INF/vault/custom-filter.xml
-gradlew :content:aemSync -Paem.checkout.filterPath=C:/aem/custom-filter.xml
+gradlew :content:aemSync -Paem.filter.path=custom-filter.xml
+gradlew :content:aemSync -Paem.filter.path=src/main/content/META-INF/vault/custom-filter.xml
+gradlew :content:aemSync -Paem.filter.path=C:/aem/custom-filter.xml
 ```
 
 ### Check out and clean JCR content using filter roots specified explicitly
    
 ```bash
-gradlew :content:aemSync -Paem.checkout.filterRoots=[/etc/tags/example,/content/dam/example]
+gradlew :content:aemSync -Paem.filter.roots=[/etc/tags/example,/content/dam/example]
 ```
 
 ### Assemble all-in-one CRX package(s)

@@ -28,6 +28,10 @@ open class AemExtension(@Transient private val project: Project) {
         return Instance.filter(project, filter)
     }
 
+    fun instance(urlOrName: String): Instance {
+        return config.parseInstance(urlOrName)
+    }
+
     fun sync(synchronizer: (InstanceSync) -> Unit) {
         instances.parallelStream().forEach { it.sync(synchronizer) }
     }

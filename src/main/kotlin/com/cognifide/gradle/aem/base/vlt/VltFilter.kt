@@ -38,13 +38,12 @@ class VltFilter(val file: File, private val temporary: Boolean = false) : Closea
             return rootElement("<filter root=\"$path\"/>")
         }
 
-        // TODO: next major version -> refactor the property names to be more general (not aem.checkout)
         fun of(project: Project): VltFilter {
             val logger = project.logger
             val props = PropertyParser(project)
             val config = AemConfig.of(project)
 
-            val cmdFilterRoots = props.list("aem.checkout.filterRoots")
+            val cmdFilterRoots = props.list("aem.filter.roots")
 
             return if (cmdFilterRoots.isNotEmpty()) {
                 logger.info("Using Vault filter roots specified as command line property: $cmdFilterRoots")

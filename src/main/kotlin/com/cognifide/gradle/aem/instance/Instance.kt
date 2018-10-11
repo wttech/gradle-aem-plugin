@@ -5,7 +5,6 @@ import com.cognifide.gradle.aem.api.AemException
 import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.PropertyParser
-import com.cognifide.gradle.aem.pkg.deploy.ListResponse
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.gradle.api.Project
 import java.io.Serializable
@@ -72,26 +71,23 @@ interface Instance : Serializable {
         }
     }
 
-    @get:JsonIgnore
-    var packages: ListResponse?
-
     companion object {
 
-        val FILTER_ANY = "*"
+        const val FILTER_ANY = "*"
 
-        val ENVIRONMENT_CMD = "cmd"
+        const val ENVIRONMENT_CMD = "cmd"
 
-        val URL_AUTHOR_DEFAULT = "http://localhost:4502"
+        const val URL_AUTHOR_DEFAULT = "http://localhost:4502"
 
-        val URL_PUBLISH_DEFAULT = "http://localhost:4503"
+        const val URL_PUBLISH_DEFAULT = "http://localhost:4503"
 
-        val USER_DEFAULT = "admin"
+        const val USER_DEFAULT = "admin"
 
-        val PASSWORD_DEFAULT = "admin"
+        const val PASSWORD_DEFAULT = "admin"
 
-        val AUTHORS_PROP = "aem.instance.authors"
+        const val AUTHORS_PROP = "aem.instance.authors"
 
-        val PUBLISHERS_PROP = "aem.instance.publishers"
+        const val PUBLISHERS_PROP = "aem.instance.publishers"
 
         fun parse(project: Project, str: String): List<RemoteInstance> {
             return str.split(";").map { urlRaw ->
@@ -123,8 +119,8 @@ interface Instance : Serializable {
         }
 
         fun properties(project: Project): List<Instance> {
-            val localInstances = collectProperties(project, "local").map {
-                val (name, props) = it
+            val localInstances = collectProperties(project, "local").map { e ->
+                val (name, props) = e
                 val nameParts = name.split("-")
                 if (nameParts.size != 2) {
                     throw InstanceException("Local instance name has invalid format: '$name'.")
@@ -145,8 +141,8 @@ interface Instance : Serializable {
                 }
             }.sortedBy { it.name }
 
-            val remoteInstances = collectProperties(project, "remote").map {
-                val (name, props) = it
+            val remoteInstances = collectProperties(project, "remote").map { e ->
+                val (name, props) = e
                 val nameParts = name.split("-")
                 if (nameParts.size != 2) {
                     throw InstanceException("Remote instance name has invalid format: '$name'.")
@@ -236,13 +232,12 @@ interface Instance : Serializable {
             return filter(project, RemoteInstance::class)
         }
 
-        // TODO: next major version -> refactor the property names to be more general (not aem.checkout)
         fun single(project: Project): Instance {
             val logger = project.logger
             val props = PropertyParser(project)
             val config = AemConfig.of(project)
 
-            val cmdInstanceArg = props.string("aem.checkout.instance")
+            val cmdInstanceArg = props.string("aem.instance")
             if (!cmdInstanceArg.isNullOrBlank()) {
                 val cmdInstance = config.parseInstance(cmdInstanceArg!!)
 
@@ -264,9 +259,7 @@ interface Instance : Serializable {
 
             throw InstanceException("Single instance cannot be determined neither by command line parameter nor AEM config.")
         }
-
     }
-
 }
 
 val Collection<Instance>.names: String

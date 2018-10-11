@@ -142,6 +142,8 @@ class AemConfig(
      *
      * Default convention assumes that subprojects have separate bundle paths, because of potential re-installation of subpackages.
      * When all subprojects will have same bundle path, reinstalling one subpackage may end with deletion of other bundles coming from another subpackage.
+     *
+     * Beware that more nested bundle install directories are not supported by AEM by default.
      */
     @Input
     var bundlePath: String = if (project == project.rootProject) {
@@ -534,7 +536,7 @@ class AemConfig(
      * Default: [automatically determined]
      */
     @Input
-    var checkoutFilterPath: String = props.string("aem.checkout.filterPath", AUTO_DETERMINED)
+    var checkoutFilterPath: String = props.string("aem.filter.path", AUTO_DETERMINED)
 
     /**
      * Extract the contents of package downloaded using aemDownload task to current project jcr_root directory

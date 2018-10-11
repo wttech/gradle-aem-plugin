@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.pkg.deploy.ListResponse
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.commons.lang3.builder.EqualsBuilder
@@ -9,7 +8,7 @@ import org.gradle.api.Project
 import java.io.Serializable
 
 class LocalInstance private constructor(@Transient
-                                        @get:JsonIgnore
+                                        @JsonIgnore
                                         private val project: Project) : Instance, Serializable {
 
     override lateinit var httpUrl: String
@@ -62,11 +61,6 @@ class LocalInstance private constructor(@Transient
     @get:JsonProperty("runModes")
     val runModesString: String
         get() = (runModesDefault + runModes).joinToString(",")
-
-    // TODO caching should be scoped per build, not per instance
-    @Transient
-    @get:JsonIgnore
-    override var packages: ListResponse? = null
 
     override fun sync(synchronizer: (InstanceSync) -> Unit) {
         synchronizer(InstanceSync(project, this))

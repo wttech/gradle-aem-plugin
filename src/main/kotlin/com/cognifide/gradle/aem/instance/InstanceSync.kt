@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.api.AemConfig
+import com.cognifide.gradle.aem.internal.MemoryCache
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.ProgressCountdown
 import com.cognifide.gradle.aem.internal.file.FileException
@@ -214,16 +215,17 @@ class InstanceSync(val project: Project, val instance: Instance) {
     private fun resolveRemotePackage(resolver: (ListResponse) -> ListResponse.Package?, refresh: Boolean): ListResponse.Package? {
         logger.debug("Asking for uploaded packages on $instance")
 
-        if (instance.packages == null || refresh) {
+        val packages = MemoryCache.of(project).getOrPut("instance.${instance.name}.packages", {
             val json = postMultipart(PKG_MANAGER_LIST_JSON)
-            instance.packages = try {
+
+            try {
                 ListResponse.fromJson(json)
             } catch (e: Exception) {
                 throw DeployException("Cannot ask for uploaded packages on $instance.", e)
             }
-        }
+        }, refresh)
 
-        return resolver(instance.packages!!)
+        return resolver(packages)
     }
 
     fun uploadPackage(file: File): UploadResponse {

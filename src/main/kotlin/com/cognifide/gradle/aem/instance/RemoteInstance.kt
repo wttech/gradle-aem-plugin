@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.pkg.deploy.ListResponse
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.apache.commons.lang3.builder.EqualsBuilder
 import org.apache.commons.lang3.builder.HashCodeBuilder
@@ -8,7 +7,7 @@ import org.gradle.api.Project
 import java.io.Serializable
 
 class RemoteInstance private constructor(@Transient
-                                         @get:JsonIgnore
+                                         @JsonIgnore
                                          private val project: Project) : Instance, Serializable {
 
     override lateinit var httpUrl: String
@@ -20,10 +19,6 @@ class RemoteInstance private constructor(@Transient
     override lateinit var typeName: String
 
     override lateinit var environment: String
-
-    @Transient
-    @get:JsonIgnore
-    override var packages: ListResponse? = null
 
     override fun sync(synchronizer: (InstanceSync) -> Unit) {
         synchronizer(InstanceSync(project, this))
