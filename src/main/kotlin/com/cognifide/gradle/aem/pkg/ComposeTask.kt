@@ -11,14 +11,13 @@ import com.cognifide.gradle.aem.bundle.BundlePlugin
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.internal.file.FileContentReader
+import com.cognifide.gradle.aem.internal.file.FileOperations
 import groovy.lang.Closure
+import org.apache.commons.io.FileUtils
 import org.gradle.api.Project
 import org.gradle.api.file.CopySpec
 import org.gradle.api.file.DuplicatesStrategy
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.InputDirectory
-import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.Nested
+import org.gradle.api.tasks.*
 import org.gradle.api.tasks.bundling.Zip
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 import org.gradle.util.ConfigureUtil
@@ -31,8 +30,8 @@ open class ComposeTask : Zip(), AemTask {
     @Nested
     final override val config = AemConfig.of(project)
 
-    @InputDirectory
-    val vaultDir = AemTask.temporaryDir(project, PrepareTask.NAME, PackagePlugin.VLT_PATH)
+    @Internal
+    val vaultDir = AemTask.temporaryDir(project, NAME, PackagePlugin.VLT_PATH)
 
     @Internal
     val filterRoots = mutableSetOf<Element>()
@@ -69,7 +68,7 @@ open class ComposeTask : Zip(), AemTask {
 
             if (fileFilterOptions.expanding) {
                 if (Patterns.wildcard(path, config.packageFilesExpanded)) {
-                    FileContentReader.filter(fileDetail, { propertyParser.expandPackage(it, fileProperties, path) })
+                    FileContentReader.filter(fileDetail) { propertyParser.expandPackage(it, fileProperties, path) }
                 }
             }
 
@@ -131,21 +130,47 @@ open class ComposeTask : Zip(), AemTask {
         includeProject(project)
         includeVault(vaultDir)
 
-        // Evaluate inclusion above and other cross project inclusions
-        project.gradle.projectsEvaluated {
-            fromBundles()
-            fromContents()
-        }
-
         doLast { AemNotifier.of(project).default("Package composed", archiveName) }
     }
 
-    private fun fromBundles() {
+    override fun projectsEvaluated() {
+        config.vaultFilesDirs.forEach { dir -> inputs.dir(dir) }
         bundleCollectors.onEach { it() }
+        contentCollectors.onEach { it() }
     }
 
-    private fun fromContents() {
-        contentCollectors.onEach { it() }
+    @TaskAction
+    override fun copy() {
+        copyContentVaultFiles()
+        copyMissingVaultFiles()
+        super.copy()
+    }
+
+    private fun copyContentVaultFiles() {
+        if (vaultDir.exists()) {
+            vaultDir.deleteRecursively()
+        }
+        vaultDir.mkdirs()
+
+        val dirs = config.vaultFilesDirs
+
+        if (dirs.isEmpty()) {
+            logger.info("None of Vault files directories exist: $dirs. Only generated defaults will be used.")
+        } else {
+            dirs.onEach { dir ->
+                logger.info("Copying Vault files from path: '${dir.absolutePath}'")
+
+                FileUtils.copyDirectory(dir, vaultDir)
+            }
+        }
+    }
+
+    private fun copyMissingVaultFiles() {
+        if (!config.vaultCopyMissingFiles) {
+            return
+        }
+
+        FileOperations.copyResources(PackagePlugin.VLT_PATH, vaultDir, true)
     }
 
     fun includeProject(projectPath: String) {
@@ -267,10 +292,13 @@ open class ComposeTask : Zip(), AemTask {
     private fun dependProject(project: Project, taskNames: Collection<String>) {
         val effectiveTaskNames = taskNames.fold(mutableListOf<String>()) { names, name ->
             if (name.endsWith(DEPENDENCIES_SUFFIX)) {
-                val task = project.tasks.getByName(name.substringBeforeLast(DEPENDENCIES_SUFFIX))
-                val dependencies = task.taskDependencies.getDependencies(task).map { it.name }
+                val taskName = name.substringBeforeLast(DEPENDENCIES_SUFFIX)
+                if (taskName != this.name && project != this.project) {
+                    val task = project.tasks.getByName(taskName)
+                    val dependencies = task.taskDependencies.getDependencies(task).map { it.name }
 
-                names.addAll(dependencies)
+                    names.addAll(dependencies)
+                }
             } else {
                 names.add(name)
             }

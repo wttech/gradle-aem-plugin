@@ -2,6 +2,8 @@ package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.api.AemTask
+import com.cognifide.gradle.aem.pkg.ComposeTask
+import com.cognifide.gradle.aem.pkg.PackagePlugin
 import org.gradle.api.file.CopySpec
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.tasks.Internal
@@ -46,6 +48,14 @@ open class CollectTask : Zip(), AemTask {
     @get:Internal
     val builtPackages: List<File>
         get() = AemConfig.pkgs(project).map { it.archivePath }
+
+    override fun projectsEvaluated() {
+        project.allprojects.forEach { subproject ->
+            if (subproject.plugins.hasPlugin(PackagePlugin.ID)) {
+                dependsOn(ComposeTask.NAME)
+            }
+        }
+    }
 
     override fun copy() {
         resolvePackages()

@@ -20,7 +20,7 @@ open class VltTask : AemDefaultTask() {
             throw VltException("Vault command cannot be blank.")
         }
 
-        VltRunner(project).raw(command!!)
+        VltRunner(project).raw(command)
         notifier.default("Executing Vault command", "Command '$command' finished.")
     }
 

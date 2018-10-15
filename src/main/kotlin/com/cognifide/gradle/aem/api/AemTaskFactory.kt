@@ -7,10 +7,17 @@ import org.gradle.api.tasks.TaskProvider
 
 class AemTaskFactory(@Transient private val project: Project) {
 
-    fun get(tasks: Collection<Any>): List<TaskProvider<out Task>> {
-        return tasks.map {
+    fun path(path: String): TaskProvider<Task> {
+        val projectPath = path.substringBeforeLast(":", project.path)
+        val taskName = path.substringAfterLast(":")
+
+        return project.project(projectPath).tasks.named(taskName)
+    }
+
+    fun path(paths: Collection<Any>): List<TaskProvider<out Task>> {
+        return paths.map {
             when (it) {
-                is String -> project.tasks.named(it)
+                is String -> path(it)
                 is TaskProvider<*> -> it
                 else -> throw IllegalArgumentException("Illegal task argument: $it")
             }
@@ -22,8 +29,8 @@ class AemTaskFactory(@Transient private val project: Project) {
             sequence.group = GROUP
 
             val options = SequenceOptions().apply(configurer)
-            val taskList = get(options.dependentTasks)
-            val afterList = get(options.afterTasks)
+            val taskList = path(options.dependentTasks)
+            val afterList = path(options.afterTasks)
 
             if (taskList.size > 1) {
                 for (i in 1 until taskList.size) {
@@ -79,7 +86,7 @@ class AemTaskFactory(@Transient private val project: Project) {
 
     companion object {
 
-        val GROUP = "${AemTask.GROUP} (custom)"
+        const val GROUP = "${AemTask.GROUP} (custom)"
 
     }
 

@@ -1,13 +1,28 @@
 package com.cognifide.gradle.aem.api
 
 import org.gradle.api.Project
+import org.gradle.api.Task
 import org.gradle.util.GFileUtils
 import java.io.File
 
-interface AemTask {
+interface AemTask : Task {
+
+    val config: AemConfig
+
+    fun projectEvaluated() {
+        // intentionally empty
+    }
+
+    fun projectsEvaluated() {
+        // intentionally empty
+    }
+
+    fun taskGraphReady() {
+        // intentionally empty
+    }
 
     companion object {
-        val GROUP = "AEM"
+        const val GROUP = "AEM"
 
         fun taskDir(project: Project, taskName: String): File {
             val dir = File(project.buildDir, "aem/$taskName")
@@ -33,7 +48,5 @@ interface AemTask {
             return File(dir, name)
         }
     }
-
-    val config: AemConfig
 
 }

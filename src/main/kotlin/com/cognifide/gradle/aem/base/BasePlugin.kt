@@ -6,7 +6,6 @@ import com.cognifide.gradle.aem.api.AemPlugin
 import com.cognifide.gradle.aem.base.debug.DebugTask
 import com.cognifide.gradle.aem.base.download.DownloadTask
 import com.cognifide.gradle.aem.base.vlt.*
-import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.BasePlugin
 import org.gradle.language.base.plugins.LifecycleBasePlugin
@@ -14,15 +13,13 @@ import org.gradle.language.base.plugins.LifecycleBasePlugin
 /**
  * Provides configuration used by both package and instance plugins.
  */
-class BasePlugin : Plugin<Project> {
+class BasePlugin : AemPlugin() {
 
-    override fun apply(project: Project) {
-        with(project) {
-            setupGreet()
-            setupDependentPlugins()
-            setupExtensions()
-            setupTasks()
-        }
+    override fun Project.configure() {
+        setupGreet()
+        setupDependentPlugins()
+        setupExtensions()
+        setupTasks()
     }
 
     private fun Project.setupGreet() {
@@ -38,22 +35,22 @@ class BasePlugin : Plugin<Project> {
     }
 
     private fun Project.setupTasks() {
-        tasks.register(DebugTask.NAME, DebugTask::class.java)
-        tasks.register(RcpTask.NAME, RcpTask::class.java)
-        tasks.register(CleanTask.NAME, CleanTask::class.java) {
+        registerTask(DebugTask.NAME, DebugTask::class.java)
+        registerTask(RcpTask.NAME, RcpTask::class.java)
+        registerTask(CleanTask.NAME, CleanTask::class.java) {
             it.mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME, CheckoutTask.NAME, DownloadTask.NAME)
         }
-        tasks.register(VltTask.NAME, VltTask::class.java) {
+        registerTask(VltTask.NAME, VltTask::class.java) {
             it.mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
         }
-        tasks.register(CheckoutTask.NAME, CheckoutTask::class.java) {
+        registerTask(CheckoutTask.NAME, CheckoutTask::class.java) {
             it.mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
         }
-        tasks.register(SyncTask.NAME, SyncTask::class.java) {
+        registerTask(SyncTask.NAME, SyncTask::class.java) {
             it.dependsOn(LifecycleBasePlugin.CLEAN_TASK_NAME, CleanTask.NAME)
             it.dependsOn(AemConfig.of(project).syncTransferTaskName)
         }
-        tasks.register(DownloadTask.NAME, DownloadTask::class.java) {
+        registerTask(DownloadTask.NAME, DownloadTask::class.java) {
             it.mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
         }
     }

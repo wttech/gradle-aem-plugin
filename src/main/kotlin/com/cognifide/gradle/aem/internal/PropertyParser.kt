@@ -81,7 +81,7 @@ class PropertyParser(val project: Project) {
         return if (timestamp.isNullOrBlank()) {
             defaultValue
         } else {
-            Date(timestamp!!.toLong())
+            Date(timestamp.toLong())
         }
     }
 

@@ -239,7 +239,7 @@ interface Instance : Serializable {
 
             val cmdInstanceArg = props.string("aem.instance")
             if (!cmdInstanceArg.isNullOrBlank()) {
-                val cmdInstance = config.parseInstance(cmdInstanceArg!!)
+                val cmdInstance = config.parseInstance(cmdInstanceArg)
 
                 logger.info("Using instance specified by command line parameter: $cmdInstance")
                 return cmdInstance
