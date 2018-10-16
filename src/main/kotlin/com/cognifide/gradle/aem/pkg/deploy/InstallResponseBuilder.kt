@@ -28,11 +28,11 @@ object InstallResponseBuilder {
         return if (size <= maxBytesToReadAtOnce) {
             InstallResponse(IOUtils.toString(stream))
         } else {
-            readStreamPartial(stream)
+            readStreamPartially(stream)
         }
     }
 
-    private fun readStreamPartial(stream: InputStream): InstallResponse {
+    fun readStreamPartially(stream: InputStream): InstallResponse {
         val buf = IOUtils.toBufferedInputStream(stream)
         val reader = buf.bufferedReader()
 
@@ -51,30 +51,29 @@ object InstallResponseBuilder {
             }
             if (lines % numberOfLinesPerPart == 0) {
 
-                extractSignificantData(lineBuilder.toString(),resultBuilder)
+                extractSignificantData(lineBuilder.toString(), resultBuilder)
                 lineBuilder = StringBuilder()
                 lines++
             }
 
 
-
         } while (nextCharacter != -1)
-        extractSignificantData(lineBuilder.toString(),resultBuilder)
+        extractSignificantData(lineBuilder.toString(), resultBuilder)
 
         val result = InstallResponse(resultBuilder.toString())
 
         return result
     }
 
-    private fun extractSignificantData(text: String, builder: StringBuilder) {
+    private fun extractSignificantData(line: String, builder: StringBuilder) {
         InstallResponseBuilder.errors.forEach {
-            val matcher = it.pattern.matcher(text)
+            val matcher = it.pattern.matcher(line)
             while (matcher.find()) {
-                builder.append(matcher.group()+"\n\n")
+                builder.append(matcher.group() + "\n\n")
             }
             when {
-                text.contains(INSTALL_SUCCESS) -> builder.append(INSTALL_SUCCESS)
-                text.contains(INSTALL_SUCCESS_WITH_ERRORS) -> builder.append(INSTALL_SUCCESS_WITH_ERRORS)
+                line.contains(INSTALL_SUCCESS) -> builder.append(INSTALL_SUCCESS)
+                line.contains(INSTALL_SUCCESS_WITH_ERRORS) -> builder.append(INSTALL_SUCCESS_WITH_ERRORS)
             }
         }
     }

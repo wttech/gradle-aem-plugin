@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.test
 
+import com.cognifide.gradle.aem.pkg.deploy.CriticalInstallationError
 import com.cognifide.gradle.aem.pkg.deploy.InstallResponse
 import com.cognifide.gradle.aem.pkg.deploy.InstallResponseBuilder
 import org.apache.commons.io.IOUtils
@@ -8,19 +9,27 @@ import org.junit.BeforeClass
 import org.junit.Test
 import java.io.File
 import java.io.FileInputStream
-import java.util.*
+import kotlin.collections.HashMap
 
 class InstallResponseReaderTest {
 
     companion object {
-        val files = ArrayList<File>()
+        private val filenames = mapOf(
+                "success-sk-1" to "success-starterkit-1.txt",
+                "success-sk-2" to "success-starterkit-2.txt",
+                "fail-sk-1" to "failure-starterkit-1.txt",
+                "fail-sk-2" to "failure-starterkit-2.txt",
+                "dependencyEx" to "failure-dependency-exception.txt"
+        )
+        val files = HashMap<String, File>()
+
         private const val resourcePath = "src/test/resources/com/cognifide/gradle/aem/test/response/"
 
         @BeforeClass
+        @JvmStatic
         fun init() {
-            val filenames = listOf("responseExampleLarge.txt", "responseExampleSmall.txt")
-            for (filename in filenames) {
-                files.add(File("${resourcePath}${filename}"))
+            for ((key, filename) in filenames) {
+                files[key] = File("$resourcePath$filename")
             }
         }
 
@@ -32,10 +41,10 @@ class InstallResponseReaderTest {
 
         fun compareResponses(createdByOldMethod: InstallResponse,
                              createdByNewMethod: InstallResponse): Boolean {
-            if (createdByOldMethod.errors.size == createdByNewMethod.errors.size) {
-                if (createdByNewMethod.errors.containsAll(createdByOldMethod.errors)) {
-                    return true
-                }
+            if (createdByOldMethod.errors.size == createdByNewMethod.errors.size &&
+                    createdByOldMethod.success == createdByNewMethod.success &&
+                    createdByNewMethod.errors.containsAll(createdByOldMethod.errors)) {
+                return true
             }
             return false
         }
@@ -47,22 +56,59 @@ class InstallResponseReaderTest {
     }
 
     @Test
-    fun shouldReceiveSameResponsesFromLargeResponseFile() {
-        val stream = FileInputStream(files[0])
+    fun shouldReceiveSameResponsesFromSuccessResponse1() {
+        val file = files.get("success-sk-1")!!
+        val stream = FileInputStream(file)
 
-        val oldWayResponse = readOldWay(files[0])
+        val oldWayResponse = readOldWay(file)
         val newWayResponse = InstallResponseBuilder.buildFromStream(stream)
 
         assert(compareResponses(oldWayResponse, newWayResponse))
     }
 
     @Test
-    fun shouldReceiveSameResponsesFromSmallResponseFile() {
-        val stream = FileInputStream(files[1])
+    fun shouldReceiveSameResponsesFromSuccessResponse2() {
+        val file = files.get("success-sk-2")!!
+        val stream = FileInputStream(file)
 
-        val oldWayResponse = readOldWay(files[1])
+        val oldWayResponse = readOldWay(file)
         val newWayResponse = InstallResponseBuilder.buildFromStream(stream)
 
         assert(compareResponses(oldWayResponse, newWayResponse))
     }
+
+    @Test
+    fun shouldReceiveSameResponsesFromFailureResponse1() {
+        val file = files.get("fail-sk-1")!!
+        val stream = FileInputStream(file)
+
+        val oldWayResponse = readOldWay(file)
+        val newWayResponse = InstallResponseBuilder.buildFromStream(stream)
+
+        assert(compareResponses(oldWayResponse, newWayResponse))
+    }
+
+    @Test
+    fun shouldReceiveSameResponsesFromFailureResponse2() {
+        val file = files.get("fail-sk-2")!!
+        val stream = FileInputStream(file)
+
+        val oldWayResponse = readOldWay(file)
+        val newWayResponse = InstallResponseBuilder.buildFromStream(stream)
+
+        assert(compareResponses(oldWayResponse, newWayResponse))
+    }
+
+    @Test
+    fun shouldFindCriticalInstallationError() {
+        val file = files.get("dependencyEx")!!
+        val stream = FileInputStream(file)
+
+        val oldWayResponse = readOldWay(file)
+        val newWayResponse = InstallResponseBuilder.buildFromStream(stream)
+
+        assert(CriticalInstallationError.isCriticalErrorPresentAt(oldWayResponse.errors))
+        assert(CriticalInstallationError.isCriticalErrorPresentAt(newWayResponse.errors))
+    }
+
 }

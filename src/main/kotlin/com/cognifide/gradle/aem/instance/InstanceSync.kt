@@ -82,8 +82,16 @@ class InstanceSync(val project: Project, val instance: Instance) {
         return post(url, createEntityMultipart(params))
     }
 
+    fun postMultipartInstall(url: String, params: Map<String, Any> = mapOf()): InstallResponse {
+        return postInstall(url, createEntityMultipart(params))
+    }
+
     private fun post(url: String, entity: HttpEntity): String {
         return fetch(HttpPost(composeUrl(url)).apply { this.entity = entity })
+    }
+
+    private fun postInstall(url: String, entity: HttpEntity): InstallResponse {
+        return fetchInstallBody(HttpPost(composeUrl(url)).apply { this.entity = entity })
     }
 
     /**
@@ -102,6 +110,16 @@ class InstanceSync(val project: Project, val instance: Instance) {
                 return@execute body
             } else {
                 logger.debug(body)
+                throw DeployException("Unexpected response from $instance: ${response.statusLine}")
+            }
+        }
+    }
+
+    private fun fetchInstallBody(method: HttpRequestBase): InstallResponse {
+        return execute(method) { response ->
+            if (response.statusLine.statusCode == HttpStatus.SC_OK) {
+                return@execute InstallResponseBuilder.buildFromStream(response.entity.content)
+            } else {
                 throw DeployException("Unexpected response from $instance: ${response.statusLine}")
             }
         }
@@ -348,7 +366,15 @@ class InstanceSync(val project: Project, val instance: Instance) {
                 return installPackageOnce(remotePath)
             } catch (e: DeployException) {
                 exception = e
-                if (i < config.installRetry.times) {
+
+                if(CriticalInstallationError.isCriticalErrorPresentAt(exception.errors)){
+                    logger.warn("Installation encountered critical error -" +
+                            " skipping retrying to install the package")
+
+                    //TODO OGAR LOGI
+
+                }
+                else if (i < config.installRetry.times) {
                     logger.warn("Cannot install package $remotePath on $instance.")
                     logger.debug("Install error", e)
 
@@ -367,20 +393,13 @@ class InstanceSync(val project: Project, val instance: Instance) {
 
         logger.info("Installing package $remotePath on $instance")
 
-        val json = try {
-            postMultipart(url, mapOf("recursive" to config.installRecursive))
+        val response = try {
+            postMultipartInstall(url, mapOf("recursive" to config.installRecursive))
         } catch (e: Exception) {
             throw DeployException("Cannot install package $remotePath on $instance. Reason: request failed.", e)
         }
-
-        val response = try {
-            InstallResponse(json)
-        } catch (e: Exception) {
-            throw DeployException("Malformed install response after installing package $remotePath on $instance.", e)
-        }
-
         if (!response.success) {
-            throw DeployException("Cannot install package $remotePath on $instance. Status: ${response.status}. Errors: ${response.errors}.")
+            throw DeployException("Cannot install package $remotePath on $instance. Status: ${response.status}. Errors: ${response.errors}.",response.errors)
         }
 
         return response
