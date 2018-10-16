@@ -7,15 +7,16 @@ enum class CriticalInstallationError(var className: String) {
     EX("org.apache.jackrabbit.vault.packaging.DependencyException");
 
     companion object {
-        fun isCriticalErrorPresentAt(errors: List<String>): Boolean {
+        fun findCriticalErrorsIn(errors: List<String>): List<String> {
+            val result = ArrayList<String>()
             for (error in errors) {
                 for (critical in values()) {
                     if (error.contains(critical.className)) {
-                        return true
+                        result.add(critical.className)
                     }
                 }
             }
-            return false
+            return result
         }
     }
 

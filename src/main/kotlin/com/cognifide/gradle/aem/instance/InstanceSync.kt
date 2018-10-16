@@ -82,7 +82,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         return post(url, createEntityMultipart(params))
     }
 
-    fun postMultipartInstall(url: String, params: Map<String, Any> = mapOf()): InstallResponse {
+    private fun postMultipartInstall(url: String, params: Map<String, Any> = mapOf()): InstallResponse {
         return postInstall(url, createEntityMultipart(params))
     }
 
@@ -366,10 +366,12 @@ class InstanceSync(val project: Project, val instance: Instance) {
                 return installPackageOnce(remotePath)
             } catch (e: DeployException) {
                 exception = e
+                val encounteredCriticalErrors =
+                        CriticalInstallationError.findCriticalErrorsIn(exception.errors)
 
-                if(CriticalInstallationError.isCriticalErrorPresentAt(exception.errors)){
-                    logger.warn("Installation encountered critical error -" +
-                            " skipping retrying to install the package")
+                if(encounteredCriticalErrors.isNotEmpty()){
+                    logger.warn("Installation encountered critical error(s): " +
+                            "$encounteredCriticalErrors. Skipping retrying to install the package.")
 
                     //TODO OGAR LOGI
 

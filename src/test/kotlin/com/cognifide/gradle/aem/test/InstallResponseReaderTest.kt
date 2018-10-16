@@ -56,45 +56,45 @@ class InstallResponseReaderTest {
     }
 
     @Test
-    fun shouldReceiveSameResponsesFromSuccessResponse1() {
+    fun shouldReceiveSameResponsesFromSuccessReport1() {
         val file = files.get("success-sk-1")!!
         val stream = FileInputStream(file)
 
         val oldWayResponse = readOldWay(file)
-        val newWayResponse = InstallResponseBuilder.buildFromStream(stream)
+        val newWayResponse = InstallResponseBuilder.readStreamPartially(stream)
 
         assert(compareResponses(oldWayResponse, newWayResponse))
     }
 
     @Test
-    fun shouldReceiveSameResponsesFromSuccessResponse2() {
+    fun shouldReceiveSameResponsesFromSuccessReport2() {
         val file = files.get("success-sk-2")!!
         val stream = FileInputStream(file)
 
         val oldWayResponse = readOldWay(file)
-        val newWayResponse = InstallResponseBuilder.buildFromStream(stream)
+        val newWayResponse = InstallResponseBuilder.readStreamPartially(stream)
 
         assert(compareResponses(oldWayResponse, newWayResponse))
     }
 
     @Test
-    fun shouldReceiveSameResponsesFromFailureResponse1() {
+    fun shouldReceiveSameResponsesFromFailureReport1() {
         val file = files.get("fail-sk-1")!!
         val stream = FileInputStream(file)
 
         val oldWayResponse = readOldWay(file)
-        val newWayResponse = InstallResponseBuilder.buildFromStream(stream)
+        val newWayResponse = InstallResponseBuilder.readStreamPartially(stream)
 
         assert(compareResponses(oldWayResponse, newWayResponse))
     }
 
     @Test
-    fun shouldReceiveSameResponsesFromFailureResponse2() {
+    fun shouldReceiveSameResponsesFromFailureReport2() {
         val file = files.get("fail-sk-2")!!
         val stream = FileInputStream(file)
 
         val oldWayResponse = readOldWay(file)
-        val newWayResponse = InstallResponseBuilder.buildFromStream(stream)
+        val newWayResponse = InstallResponseBuilder.readStreamPartially(stream)
 
         assert(compareResponses(oldWayResponse, newWayResponse))
     }
@@ -105,10 +105,10 @@ class InstallResponseReaderTest {
         val stream = FileInputStream(file)
 
         val oldWayResponse = readOldWay(file)
-        val newWayResponse = InstallResponseBuilder.buildFromStream(stream)
+        val newWayResponse = InstallResponseBuilder.readStreamPartially(stream)
 
-        assert(CriticalInstallationError.isCriticalErrorPresentAt(oldWayResponse.errors))
-        assert(CriticalInstallationError.isCriticalErrorPresentAt(newWayResponse.errors))
+        assert(CriticalInstallationError.findCriticalErrorsIn(oldWayResponse.errors).isNotEmpty())
+        assert(CriticalInstallationError.findCriticalErrorsIn(newWayResponse.errors).isNotEmpty())
     }
 
 }
