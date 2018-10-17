@@ -16,12 +16,14 @@ open class RcpTask : AemDefaultTask() {
     @TaskAction
     fun rcp() {
         val runner = VltRunner(project)
-        runner.rcp()
+        val summary = runner.rcp()
+
+        logger.info("RCP details: $summary")
 
         if (!runner.rcpSourceInstance.cmd && !runner.rcpTargetInstance.cmd) {
-            notifier.default("RCP finished", "Copied ${runner.rcpPaths.size} JCR root(s) from instance ${runner.rcpSourceInstance.name} to ${runner.rcpTargetInstance.name}.")
+            notifier.default("RCP finished", "Copied ${summary.copiedPaths} JCR root(s) from instance ${runner.rcpSourceInstance.name} to ${runner.rcpTargetInstance.name}.")
         } else {
-            notifier.default("RCP finished", "Copied ${runner.rcpPaths.size} JCR root(s) between instances.")
+            notifier.default("RCP finished", "Copied ${summary.copiedPaths} JCR root(s) between instances.")
         }
     }
 
