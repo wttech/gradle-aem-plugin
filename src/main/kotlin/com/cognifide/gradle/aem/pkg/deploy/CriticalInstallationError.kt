@@ -1,10 +1,8 @@
 package com.cognifide.gradle.aem.pkg.deploy
 
-import javax.jcr.nodetype.ConstraintViolationException
-
-enum class CriticalInstallationError(var className: String) {
-    CONSTRAINT_VIOLATION_EXCEPTION(ConstraintViolationException().toString()),
-    EX("org.apache.jackrabbit.vault.packaging.DependencyException");
+enum class CriticalInstallationError(val className: String) {
+    CONSTRAINT_VIOLATION_EXCEPTION("javax.jcr.nodetype.ConstraintViolationException"),
+    DEPENDENCY_EXCEPTION("org.apache.jackrabbit.vault.packaging.DependencyException");
 
     companion object {
         fun findCriticalErrorsIn(errors: List<String>): List<String> {
@@ -24,6 +22,7 @@ enum class CriticalInstallationError(var className: String) {
 
 
 /* TODO !
+ - deploy exception without ERRORS ?
  - try to refactor Builder class
  -
  pod root
