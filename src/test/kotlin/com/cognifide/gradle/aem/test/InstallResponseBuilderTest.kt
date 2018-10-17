@@ -39,12 +39,9 @@ class InstallResponseBuilderTest(filename: String, private val expectedError: Cr
 
         fun compareResponses(readAtOnce: InstallResponse,
                              readPartially: InstallResponse): Boolean {
-            if (readAtOnce.errors.size == readPartially.errors.size &&
+            return (readAtOnce.errors.size == readPartially.errors.size &&
                     readAtOnce.success == readPartially.success &&
-                    readPartially.errors.containsAll(readAtOnce.errors)) {
-                return true
-            }
-            return false
+                    readPartially.errors.containsAll(readAtOnce.errors))
         }
     }
 
