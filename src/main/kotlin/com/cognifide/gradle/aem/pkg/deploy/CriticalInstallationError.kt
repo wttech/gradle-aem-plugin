@@ -19,14 +19,3 @@ enum class CriticalInstallationError(val className: String) {
     }
 
 }
-
-
-/* TODO !
- - deploy exception without ERRORS ?
- - try to refactor Builder class
- -
- pod root
- formaty
- nazwa paczki
- uszkodzic paczke
- ogromny obrazek */
