@@ -3,7 +3,13 @@ package com.cognifide.gradle.aem.api
 import aQute.bnd.osgi.Jar
 import com.cognifide.gradle.aem.base.download.DownloadTask
 import com.cognifide.gradle.aem.base.vlt.CheckoutTask
-import com.cognifide.gradle.aem.instance.*
+import com.cognifide.gradle.aem.instance.Instance
+import com.cognifide.gradle.aem.instance.InstancePlugin
+import com.cognifide.gradle.aem.instance.InstanceState
+import com.cognifide.gradle.aem.instance.InstanceType
+import com.cognifide.gradle.aem.instance.LocalHandle
+import com.cognifide.gradle.aem.instance.LocalInstance
+import com.cognifide.gradle.aem.instance.RemoteInstance
 import com.cognifide.gradle.aem.internal.LineSeparator
 import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.internal.notifier.Notifier
@@ -14,7 +20,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.lang.Closure
 import org.gradle.api.DefaultTask
 import org.gradle.api.Project
-import org.gradle.api.Task
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.util.ConfigureUtil
@@ -232,7 +237,10 @@ class AemConfig(
      * Wildcard file name filter expression that is used to filter in which Vault files properties can be injected.
      */
     @Input
-    var packageFilesExpanded: MutableList<String> = mutableListOf("**/${PackagePlugin.VLT_PATH}/*.xml")
+    var packageFilesExpanded: MutableList<String> = mutableListOf(
+            "**/${PackagePlugin.VLT_PATH}/*.xml",
+            "**/${PackagePlugin.VLT_PATH}/nodetypes.cnd"
+    )
 
     /**
      * Define here custom properties that can be used in CRX package files like 'META-INF/vault/properties.xml'.

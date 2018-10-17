@@ -1,7 +1,13 @@
 package com.cognifide.gradle.aem.pkg
 
 import com.cognifide.gradle.aem.base.BasePlugin
-import com.cognifide.gradle.aem.pkg.deploy.*
+import com.cognifide.gradle.aem.pkg.deploy.ActivateTask
+import com.cognifide.gradle.aem.pkg.deploy.DeleteTask
+import com.cognifide.gradle.aem.pkg.deploy.DeployTask
+import com.cognifide.gradle.aem.pkg.deploy.InstallTask
+import com.cognifide.gradle.aem.pkg.deploy.PurgeTask
+import com.cognifide.gradle.aem.pkg.deploy.UninstallTask
+import com.cognifide.gradle.aem.pkg.deploy.UploadTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.language.base.plugins.LifecycleBasePlugin
@@ -58,6 +64,8 @@ class PackagePlugin : Plugin<Project> {
         const val ID = "com.cognifide.aem.package"
 
         const val VLT_PATH = "META-INF/vault"
+
+        const val HOOKS_PATH = "META-INF/vault/hooks"
 
         const val VLT_PROPERTIES = "$VLT_PATH/properties.xml"
 

@@ -130,7 +130,7 @@ pluginManagement {
 	resolutionStrategy {
 		eachPlugin {
 			if (requested.id.namespace == 'com.cognifide.aem') {
-				useModule('com.cognifide.gradle:aem-plugin:5.1.1')
+				useModule('com.cognifide.gradle:aem-plugin:5.1.2')
 			}
 		}
 	}
@@ -203,7 +203,8 @@ aem {
           "jcr_root/.vlt-sync-config.properties"
         ]
         packageFilesExpanded = [
-          "**/META-INF/vault/*.xml"
+          "**/META-INF/vault/*.xml",
+          "**/META-INF/vault/nodetypes.cnd"
         ]
         packageFileProperties = []
         packageBuildDate = Date()

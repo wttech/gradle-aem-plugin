@@ -246,6 +246,14 @@ open class ComposeTask : Zip(), AemTask {
                     fileFilter(spec)
                 }
             }
+
+            val hooksDir = File("${config.contentPath}/${PackagePlugin.HOOKS_PATH}")
+            if (hooksDir.exists()) {
+                into(PackagePlugin.HOOKS_PATH) { spec ->
+                    spec.from(hooksDir)
+                    fileFilter(spec)
+                }
+            }
         }
     }
 
