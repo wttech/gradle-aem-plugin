@@ -9,12 +9,10 @@ import com.cognifide.gradle.aem.instance.action.ReloadAction
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.file.resolver.FileGroup
 import com.cognifide.gradle.aem.internal.file.resolver.FileResolution
-import com.cognifide.gradle.aem.internal.file.resolver.FileResolver
-import groovy.lang.Closure
-import org.gradle.util.ConfigureUtil
+import org.gradle.api.Action
 import java.io.File
 
-class PackageGroup(resolver: FileResolver, name: String) : FileGroup(resolver, name) {
+class PackageGroup(resolver: PackageResolver, name: String) : FileGroup(resolver, name) {
 
     private val project = resolver.project
 
@@ -53,11 +51,11 @@ class PackageGroup(resolver: FileResolver, name: String) : FileGroup(resolver, n
     var completer: () -> Unit = { await() }
 
     fun await() {
-        await({})
+        await {}
     }
 
-    fun await(configurer: Closure<*>) {
-        await({ ConfigureUtil.configure(configurer, this) })
+    fun await(configurer: Action<AwaitAction>) {
+        await { configurer.execute(this) }
     }
 
     fun await(configurer: AwaitAction.() -> Unit) {
@@ -65,11 +63,11 @@ class PackageGroup(resolver: FileResolver, name: String) : FileGroup(resolver, n
     }
 
     fun reload() {
-        reload({})
+        reload {}
     }
 
-    fun reload(configurer: Closure<*>) {
-        reload({ ConfigureUtil.configure(configurer, this) })
+    fun reload(configurer: Action<ReloadAction>) {
+        reload { configurer.execute(this) }
     }
 
     fun reload(configurer: ReloadAction.() -> Unit) {

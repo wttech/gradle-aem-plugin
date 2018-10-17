@@ -11,12 +11,11 @@ import com.cognifide.gradle.aem.pkg.ComposeTask
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.deploy.DeployException
 import com.fasterxml.jackson.annotation.JsonIgnore
-import groovy.lang.Closure
+import org.gradle.api.Action
 import org.gradle.api.DefaultTask
 import org.gradle.api.Project
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
-import org.gradle.util.ConfigureUtil
 import java.io.File
 import java.io.Serializable
 import java.util.*
@@ -27,8 +26,6 @@ import java.util.concurrent.TimeUnit
  *
  * Content paths which are used to compose a CRX package are being processed by copy task,
  * which automatically mark them as inputs so package is being rebuild on any JCR content or Vault files change.
- *
- * TODO https://docs.gradle.org/4.6/userguide/custom_tasks.html#sec:declaring_and_using_command_line_options
  */
 class AemConfig(
         @Transient
@@ -76,7 +73,7 @@ class AemConfig(
         get() = normalizeSeparators(if (project == project.rootProject) {
             project.rootProject.name
         } else {
-            "${ project.rootProject.name}.$projectName"
+            "${project.rootProject.name}.$projectName"
         }, ".")
 
     /**
@@ -623,33 +620,25 @@ class AemConfig(
      * Declare new deployment target (AEM instance).
      */
     fun localInstance(httpUrl: String) {
-        localInstance(httpUrl) {}
+        localInstance(httpUrl, Action {})
     }
 
-    fun localInstance(httpUrl: String, configurer: LocalInstance.() -> Unit) {
+    fun localInstance(httpUrl: String, configurer: Action<LocalInstance>) {
         instance(LocalInstance.create(project, httpUrl) {
             this.environment = this@AemConfig.environment
-            this.apply(configurer)
+            configurer.execute(this)
         })
-    }
-
-    fun localInstance(httpUrl: String, configurer: Closure<*>) {
-        localInstance(httpUrl) { ConfigureUtil.configure(configurer, this) }
     }
 
     fun remoteInstance(httpUrl: String) {
-        remoteInstance(httpUrl) {}
+        remoteInstance(httpUrl, Action {})
     }
 
-    fun remoteInstance(httpUrl: String, configurer: RemoteInstance.() -> Unit) {
+    fun remoteInstance(httpUrl: String, configurer: Action<RemoteInstance>) {
         instance(RemoteInstance.create(project, httpUrl) {
             this.environment = this@AemConfig.environment
-            this.apply(configurer)
+            configurer.execute(this)
         })
-    }
-
-    fun remoteInstance(httpUrl: String, configurer: Closure<*>) {
-        remoteInstance(httpUrl) { ConfigureUtil.configure(configurer, this) }
     }
 
     fun parseInstance(urlOrName: String): Instance {
@@ -741,8 +730,8 @@ class AemConfig(
 
     @Internal
     @JsonIgnore
-    fun retry(configurer: Closure<*>): AemRetry {
-        return retry { ConfigureUtil.configure(configurer, this) }
+    fun retry(configurer: Action<AemRetry>): AemRetry {
+        return retry { configurer.execute(this) }
     }
 
     @Internal

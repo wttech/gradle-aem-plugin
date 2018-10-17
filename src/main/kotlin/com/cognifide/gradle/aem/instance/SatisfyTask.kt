@@ -2,14 +2,12 @@ package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.api.AemDefaultTask
 import com.cognifide.gradle.aem.api.AemTask
-import com.cognifide.gradle.aem.instance.satisfy.PackageGroup
 import com.cognifide.gradle.aem.instance.satisfy.PackageResolver
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.pkg.deploy.ListResponse
-import groovy.lang.Closure
+import org.gradle.api.Action
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
-import org.gradle.util.ConfigureUtil
 import java.io.File
 
 open class SatisfyTask : AemDefaultTask() {
@@ -44,8 +42,7 @@ open class SatisfyTask : AemDefaultTask() {
 
         logger.info("Packages provided (${files.size}).")
 
-        @Suppress("unchecked_cast")
-        result as List<PackageGroup>
+        result
     }
 
     @get:Internal
@@ -59,25 +56,21 @@ open class SatisfyTask : AemDefaultTask() {
         defineCmdGroups()
     }
 
-    fun defineCmdGroups() {
+    private fun defineCmdGroups() {
         if (cmdGroups) {
             props.list("aem.satisfy.urls").forEachIndexed { index, url ->
-                packageProvider.group("cmd.${index + 1}") { url(url) }
+                packageProvider.group("cmd.${index + 1}", Action { it.url(url) })
             }
         }
     }
 
-    fun packages(closure: Closure<*>) {
-        packages { ConfigureUtil.configure(closure, this) }
-    }
-
-    fun packages(configurer: PackageResolver.() -> Unit) {
-        packageProvider.apply(configurer)
+    fun packages(configurer: Action<PackageResolver>) {
+        configurer.execute(packageProvider)
     }
 
     @TaskAction
     fun satisfy() {
-        val actions = mutableListOf<Action>()
+        val actions = mutableListOf<PackageAction>()
 
         for (packageGroup in packageGroups) {
             logger.info("Satisfying group of packages '${packageGroup.name}'.")
@@ -103,21 +96,21 @@ open class SatisfyTask : AemDefaultTask() {
                             sync.deployPackage(pkg)
 
                             anyPackageSatisfied = true
-                            actions.add(Action(pkg, sync.instance))
+                            actions.add(PackageAction(pkg, sync.instance))
                         }
                         state == null -> {
                             logger.lifecycle("Satisfying package ${pkg.name} on ${sync.instance.name} (not uploaded).")
                             sync.deployPackage(pkg)
 
                             anyPackageSatisfied = true
-                            actions.add(Action(pkg, sync.instance))
+                            actions.add(PackageAction(pkg, sync.instance))
                         }
                         !state.installed -> {
                             logger.lifecycle("Satisfying package ${pkg.name} on ${sync.instance.name} (not installed).")
                             sync.installPackage(state.path)
 
                             anyPackageSatisfied = true
-                            actions.add(Action(pkg, sync.instance))
+                            actions.add(PackageAction(pkg, sync.instance))
                         }
                         else -> {
                             logger.lifecycle("Not satisfying package: ${pkg.name} on ${sync.instance.name} (already installed).")
@@ -147,7 +140,7 @@ open class SatisfyTask : AemDefaultTask() {
         }
     }
 
-    class Action(val pkg: File, val instance: Instance)
+    class PackageAction(val pkg: File, val instance: Instance)
 
     companion object {
         const val NAME = "aemSatisfy"

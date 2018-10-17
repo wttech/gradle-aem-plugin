@@ -3,10 +3,9 @@ package com.cognifide.gradle.aem.instance
 import com.cognifide.gradle.aem.api.AemDefaultTask
 import com.cognifide.gradle.aem.api.AemTask
 import com.cognifide.gradle.aem.internal.file.resolver.FileResolver
-import groovy.lang.Closure
+import org.gradle.api.Action
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
-import org.gradle.util.ConfigureUtil
 import java.io.File
 
 open class CreateTask : AemDefaultTask() {
@@ -46,8 +45,8 @@ open class CreateTask : AemDefaultTask() {
         }
     }
 
-    fun instanceFiles(closure: Closure<*>) {
-        ConfigureUtil.configure(closure, instanceFileResolver)
+    fun instanceFiles(configurer: Action<FileResolver>) {
+        configurer.execute(instanceFileResolver)
     }
 
     @TaskAction
