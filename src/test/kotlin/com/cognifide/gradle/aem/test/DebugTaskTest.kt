@@ -29,25 +29,25 @@ class DebugTaskTest : AemTest() {
 
     @Test
     fun shouldGenerateValidJsonFileForMinimal() {
-        build("debug/minimal", {
-            withArguments(":aemDebug", "-S", "-i", "--offline")
-        }, {
-            assertJsonCustomized(
-                    readFile("debug/minimal/debug.json"),
-                    readFile(file("build/aem/aemDebug/debug.json")),
-                    JSON_CUSTOMIZATIONS
-
-            )
-        })
+        buildDebugJsonFile("minimal")
     }
 
     @Test
     fun shouldGenerateValidJsonFileForAdditional() {
-        build("debug/additional", {
+        buildDebugJsonFile("additional")
+    }
+
+    @Test
+    fun shouldGenerateValidJsonFileForKotlinDsl() {
+        buildDebugJsonFile("kotlin-dsl")
+    }
+
+    private fun buildDebugJsonFile(buildName: String) {
+        build("debug/$buildName", {
             withArguments(":aemDebug", "-S", "-i", "--offline")
         }, {
             assertJsonCustomized(
-                    readFile("debug/additional/debug.json"),
+                    readFile("debug/$buildName/debug.json"),
                     readFile(file("build/aem/aemDebug/debug.json")),
                     JSON_CUSTOMIZATIONS
             )

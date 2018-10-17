@@ -1,0 +1,101 @@
+{
+  "buildInfo" : {
+    "plugin" : {
+      "pluginVersion" : "x.y.z",
+      "gradleVersion" : "x.y.z"
+    }
+  },
+  "projectInfo": {
+    "displayName": "root project 'kotlin-dsl'",
+    "path": ":",
+    "name": "kotlin-dsl",
+    "dir": "debug/kotlin-dsl"
+  },
+  "packageProperties" : {
+    "requiresRoot" : "false",
+    "buildCount" : "20182902134502",
+    "created" : "2018-10-17T09:21:34.502+02:00",
+    "config" : {
+      "environment" : "local",
+      "instances" : {
+        "prod-author" : {
+          "httpUrl" : "http://author.example.com",
+          "user" : "admin",
+          "password" : "admin",
+          "typeName" : "author",
+          "environment" : "prod",
+          "name" : "prod-author",
+          "type" : "AUTHOR",
+          "httpPort" : 80
+        }
+      },
+      "instanceName" : "local-*",
+      "instanceList" : "",
+      "instanceAuthorName" : "local-author*",
+      "instanceConnectionTimeout" : 30000,
+      "instanceConnectionUntrustedSsl" : true,
+      "contentPath" : "debug/kotlin-dsl/src/main/content",
+      "bundlePath" : "/apps/kotlin-dsl/install",
+      "bundlePackage" : "com.company.aem.kotlin.dsl",
+      "bundlePackageOptions" : "-split-package:=merge-first",
+      "bundleManifestAttributes" : true,
+      "bundleBndPath" : "bnd.bnd",
+      "bundleBndInstructions" : {
+        "-fixupmessages.bundleActivator" : "Bundle-Activator * is being imported *;is:=error"
+      },
+      "packageSnapshots" : [ ],
+      "packageAcHandling" : "merge_preserve",
+      "packageEntries" : { },
+      "packageLocalPath" : "",
+      "packageRemotePath" : "",
+      "packageFilesExpanded" : [
+        "**/META-INF/vault/*.xml"
+      ],
+      "packageFileProperties" : { },
+      "packageFilesExcluded" : [
+        "**/.gradle",
+        "**/.git",
+        "**/.git/**",
+        "**/.gitattributes",
+        "**/.gitignore",
+        "**/.gitmodules",
+        "**/.vlt",
+        "**/.vlt*.tmp",
+        "**/node_modules/**",
+        "jcr_root/.vlt-sync-config.properties"
+      ],
+      "packageBuildDate" : 1539760894502,
+      "packageSkipDownloadName" : true,
+      "deployDistributed" : false,
+      "uploadForce" : true,
+      "installRecursive" : true,
+      "vaultCopyMissingFiles" : true,
+      "vaultFilesPath" : "debug/kotlin-dsl/src/main/resources/META-INF/vault",
+      "vaultLineSeparator" : "LF",
+      "createPath" : ".aem/kotlin-dsl",
+      "createFilesPath" : "debug/kotlin-dsl/src/main/resources/local-instance",
+      "createFilesExpanded" : [
+        "**/*.properties",
+        "**/*.sh",
+        "**/*.bat",
+        "**/*.xml",
+        "**/start",
+        "**/stop"
+      ],
+      "awaitFast" : false,
+      "awaitFastDelay" : 1000,
+      "awaitResume" : false,
+      "awaitStableAssurance" : 3,
+      "reloadDelay" : 10000,
+      "satisfyRefreshing" : false,
+      "satisfyBundlePath" : "/apps/gradle-aem-plugin/satisfy/install",
+      "satisfyGroupName" : "*",
+      "checkoutFilterPath" : "<auto>",
+      "downloadExtract" : true,
+      "downloadConnectionTimeout" : 60000,
+      "debugPackageDeployed" : false,
+      "notificationEnabled" : false
+    }
+  },
+  "packageDeployed" : { }
+}
