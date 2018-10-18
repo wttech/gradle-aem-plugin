@@ -15,7 +15,7 @@ import java.io.FileInputStream
 
 @RunWith(Parameterized::class)
 class InstallResponseBuilderTest(filename: String, private val expectedError: CriticalInstallationError?) {
-    var file: File =  File("$RESOURCE_PATH$filename")
+    var file: File = File("$RESOURCE_PATH$filename")
 
     companion object {
         private const val RESOURCE_PATH = "src/test/resources/com/cognifide/gradle/aem/test/response/"
@@ -64,7 +64,7 @@ class InstallResponseBuilderTest(filename: String, private val expectedError: Cr
         val stream = FileInputStream(file)
         val newWayResponse = InstallResponseBuilder.buildFromStream(stream)
         val criticalErrors = CriticalInstallationError.findCriticalErrorsIn(newWayResponse.errors)
-        expectedError?.let{
+        expectedError?.let {
             assertTrue(criticalErrors.contains(expectedError.className))
         } ?: assertTrue(criticalErrors.isEmpty())
 

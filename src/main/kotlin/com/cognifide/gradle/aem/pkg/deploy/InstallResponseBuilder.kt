@@ -37,7 +37,7 @@ object InstallResponseBuilder {
         return InstallResponse(result)
     }
 
-    private fun readByLines(source: BufferedReader): String{
+    private fun readByLines(source: BufferedReader): String {
         val lineBuilder = StringBuilder()
         val resultBuilder = StringBuilder()
         var currentLine = 0

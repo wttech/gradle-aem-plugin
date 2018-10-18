@@ -367,10 +367,9 @@ class InstanceSync(val project: Project, val instance: Instance) {
             } catch (e: DeployException) {
                 exception = e
                 val criticalErrors = exception.criticalInstallationErrors
-                if(criticalErrors.isNotEmpty()){
+                if (criticalErrors.isNotEmpty()) {
                     throw exception
-                }
-                else if (i < config.installRetry.times) {
+                } else if (i < config.installRetry.times) {
                     logger.warn("Cannot install package $remotePath on $instance.")
                     logger.debug("Install error", e)
 
@@ -395,7 +394,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
             throw DeployException("Cannot install package $remotePath on $instance. Reason: request failed.", e)
         }
         if (!response.success) {
-            throw DeployException("Cannot install package $remotePath on $instance. Status: ${response.status}. Errors: ${response.errors}.",response.errors)
+            throw DeployException("Cannot install package $remotePath on $instance. Status: ${response.status}. Errors: ${response.errors}.", response.errors)
         }
 
         return response
