@@ -5,9 +5,10 @@ import com.cognifide.gradle.aem.api.AemTask
 import com.cognifide.gradle.aem.instance.satisfy.PackageResolver
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.pkg.deploy.ListResponse
-import org.gradle.api.Action
+import groovy.lang.Closure
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
+import org.gradle.util.ConfigureUtil
 import java.io.File
 
 open class SatisfyTask : AemDefaultTask() {
@@ -59,13 +60,17 @@ open class SatisfyTask : AemDefaultTask() {
     private fun defineCmdGroups() {
         if (cmdGroups) {
             props.list("aem.satisfy.urls").forEachIndexed { index, url ->
-                packageProvider.group("cmd.${index + 1}", Action { it.url(url) })
+                packageProvider.group("cmd.${index + 1}") { url(url) }
             }
         }
     }
 
-    fun packages(configurer: Action<PackageResolver>) {
-        configurer.execute(packageProvider)
+    fun packages(configurer: Closure<PackageResolver>) {
+        ConfigureUtil.configure(configurer, packageProvider)
+    }
+
+    fun packages(configurer: PackageResolver.() -> Unit) {
+        packageProvider.apply(configurer)
     }
 
     @TaskAction

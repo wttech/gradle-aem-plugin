@@ -8,13 +8,14 @@ import com.cognifide.gradle.aem.internal.file.downloader.SftpFileDownloader
 import com.cognifide.gradle.aem.internal.file.downloader.SmbFileDownloader
 import com.cognifide.gradle.aem.internal.file.downloader.UrlFileDownloader
 import com.google.common.hash.HashCode
+import groovy.lang.Closure
 import org.apache.commons.codec.digest.DigestUtils
 import org.apache.commons.io.FilenameUtils
 import org.apache.commons.lang3.BooleanUtils
 import org.apache.commons.lang3.builder.HashCodeBuilder
-import org.gradle.api.Action
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
+import org.gradle.util.ConfigureUtil
 import org.gradle.util.GFileUtils
 import java.io.File
 
@@ -211,14 +212,22 @@ abstract class Resolver<G : FileGroup>(val project: Project, val downloadDir: Fi
         resolve(sourceFile.absolutePath) { sourceFile }
     }
 
-    fun config(configurer: Action<G>) {
-        configurer.execute(groupCurrent)
+    fun config(configurer: Closure<G>) {
+        ConfigureUtil.configure(configurer, groupCurrent)
+    }
+
+    fun config(configurer: G.() -> Unit) {
+        groupCurrent.apply(configurer)
+    }
+
+    fun group(name: String, configurer: Closure<Resolver<G>>) {
+        group(name) { ConfigureUtil.configure(configurer, this) }
     }
 
     @Synchronized
-    fun group(name: String, configurer: Action<Resolver<G>>) {
+    fun group(name: String, configurer: Resolver<G>.() -> Unit) {
         groupCurrent = groups.find { it.name == name } ?: createGroup(name).apply { groups.add(this) }
-        configurer.execute(this)
+        this.apply(configurer)
         groupCurrent = groupDefault
     }
 

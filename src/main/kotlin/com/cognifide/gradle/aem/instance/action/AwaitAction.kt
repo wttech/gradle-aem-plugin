@@ -2,7 +2,6 @@ package com.cognifide.gradle.aem.instance.action
 
 import com.cognifide.gradle.aem.instance.*
 import com.cognifide.gradle.aem.internal.Behaviors
-import com.cognifide.gradle.aem.instance.ProgressLogger
 import com.cognifide.gradle.aem.internal.ProgressCountdown
 import org.apache.http.HttpStatus
 import org.gradle.api.Project

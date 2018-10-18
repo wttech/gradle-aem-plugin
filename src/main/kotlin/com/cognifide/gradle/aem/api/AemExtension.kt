@@ -4,8 +4,9 @@ import com.cognifide.gradle.aem.instance.Instance
 import com.cognifide.gradle.aem.instance.InstancePlugin
 import com.cognifide.gradle.aem.instance.InstanceSync
 import com.cognifide.gradle.aem.pkg.PackagePlugin
-import org.gradle.api.Action
+import groovy.lang.Closure
 import org.gradle.api.Project
+import org.gradle.util.ConfigureUtil
 
 /**
  * Main place for providing build script DSL capabilities in case of AEM.
@@ -35,20 +36,36 @@ open class AemExtension(@Transient private val project: Project) {
         instances.parallelStream().forEach { it.sync(synchronizer) }
     }
 
-    fun config(configurer: Action<AemConfig>) {
-        configurer.execute(config)
+    fun config(configurer: Closure<AemConfig>) {
+        ConfigureUtil.configure(configurer, config)
     }
 
-    fun bundle(configurer: Action<AemBundle>) {
-        configurer.execute(bundle)
+    fun config(configurer: AemConfig.() -> Unit) {
+        config.apply(configurer)
     }
 
-    fun notifier(configurer: Action<AemNotifier>) {
-        configurer.execute(notifier)
+    fun bundle(configurer: Closure<AemBundle>) {
+        ConfigureUtil.configure(configurer, bundle)
     }
 
-    fun tasks(configurer: Action<AemTaskFactory>) {
-        configurer.execute(tasks)
+    fun bundle(configurer: AemBundle.() -> Unit) {
+        bundle.apply(configurer)
+    }
+
+    fun notifier(configurer: Closure<AemNotifier>) {
+        ConfigureUtil.configure(configurer, notifier)
+    }
+
+    fun notifier(configurer: AemNotifier.() -> Unit) {
+        notifier.apply(configurer)
+    }
+
+    fun tasks(configurer: Closure<AemTaskFactory>) {
+        ConfigureUtil.configure(configurer, tasks)
+    }
+
+    fun tasks(configurer: AemTaskFactory.() -> Unit) {
+        tasks.apply(configurer)
     }
 
     companion object {

@@ -17,7 +17,10 @@ import org.apache.commons.io.FileUtils
 import org.gradle.api.Project
 import org.gradle.api.file.CopySpec
 import org.gradle.api.file.DuplicatesStrategy
-import org.gradle.api.tasks.*
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.Nested
+import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.bundling.Zip
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 import org.gradle.util.ConfigureUtil

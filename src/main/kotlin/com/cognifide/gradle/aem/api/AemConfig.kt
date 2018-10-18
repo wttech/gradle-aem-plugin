@@ -11,11 +11,12 @@ import com.cognifide.gradle.aem.pkg.ComposeTask
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.deploy.DeployException
 import com.fasterxml.jackson.annotation.JsonIgnore
-import org.gradle.api.Action
+import groovy.lang.Closure
 import org.gradle.api.DefaultTask
 import org.gradle.api.Project
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
+import org.gradle.util.ConfigureUtil
 import java.io.File
 import java.io.Serializable
 import java.util.*
@@ -620,24 +621,32 @@ class AemConfig(
      * Declare new deployment target (AEM instance).
      */
     fun localInstance(httpUrl: String) {
-        localInstance(httpUrl, Action {})
+        localInstance(httpUrl) {}
     }
 
-    fun localInstance(httpUrl: String, configurer: Action<LocalInstance>) {
+    fun localInstance(httpUrl: String, configurer: Closure<*>) {
+        localInstance(httpUrl) { ConfigureUtil.configure(configurer, this) }
+    }
+
+    fun localInstance(httpUrl: String, configurer: LocalInstance.() -> Unit) {
         instance(LocalInstance.create(project, httpUrl) {
             this.environment = this@AemConfig.environment
-            configurer.execute(this)
+            this.apply(configurer)
         })
     }
 
     fun remoteInstance(httpUrl: String) {
-        remoteInstance(httpUrl, Action {})
+        remoteInstance(httpUrl) {}
     }
 
-    fun remoteInstance(httpUrl: String, configurer: Action<RemoteInstance>) {
+    fun remoteInstance(httpUrl: String, configurer: Closure<*>) {
+        remoteInstance(httpUrl) { ConfigureUtil.configure(configurer, this) }
+    }
+
+    fun remoteInstance(httpUrl: String, configurer: RemoteInstance.() -> Unit) {
         instance(RemoteInstance.create(project, httpUrl) {
             this.environment = this@AemConfig.environment
-            configurer.execute(this)
+            this.apply(configurer)
         })
     }
 
@@ -730,8 +739,8 @@ class AemConfig(
 
     @Internal
     @JsonIgnore
-    fun retry(configurer: Action<AemRetry>): AemRetry {
-        return retry { configurer.execute(this) }
+    fun retry(configurer: Closure<*>): AemRetry {
+        return retry { ConfigureUtil.configure(configurer, this) }
     }
 
     @Internal

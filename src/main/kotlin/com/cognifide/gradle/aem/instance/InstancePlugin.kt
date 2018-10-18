@@ -13,7 +13,7 @@ import org.gradle.language.base.plugins.LifecycleBasePlugin
  * Applying it multiple times to same configuration could case confusing errors like AEM started multiple times.
  */
 class InstancePlugin : AemPlugin() {
-    
+
     override fun Project.configure() {
         setupDependentPlugins()
         setupTasks()
