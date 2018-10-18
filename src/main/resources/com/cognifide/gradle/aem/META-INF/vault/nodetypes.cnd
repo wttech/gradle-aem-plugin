@@ -1,0 +1,7 @@
+{% for nodeTypesLib in nodeTypesLibs %}
+  {{nodeTypesLib}}
+{% endfor %}
+
+{% for nodeTypesLine in nodeTypesLines %}
+  {{nodeTypesLine}}
+{% endfor %}

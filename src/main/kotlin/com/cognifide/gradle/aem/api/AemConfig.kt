@@ -669,6 +669,14 @@ class AemConfig(
     val vaultFilterPath: String
         get() = "$vaultPath/filter.xml"
 
+    /**
+     * CRX package node types path.
+     */
+    @get:Internal
+    @get:JsonIgnore
+    val nodeTypesPath: String
+        get() = "$vaultPath/nodetypes.cnd"
+
     @get:Internal
     @get:JsonIgnore
     val vaultLineSeparatorString: String = LineSeparator.string(vaultLineSeparator)
