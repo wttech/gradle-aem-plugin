@@ -86,4 +86,12 @@ object Formats {
         return base.relativize(source).toString()
     }
 
+    fun normalizeSeparators(name: String, separator: String): String {
+        return name.replace(":", separator)
+                .replace("-", separator)
+                .replace(".", separator)
+                .removePrefix(separator)
+                .removeSuffix(separator)
+    }
+
 }

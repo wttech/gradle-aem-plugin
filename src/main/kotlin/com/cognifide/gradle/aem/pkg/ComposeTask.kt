@@ -1,10 +1,7 @@
 package com.cognifide.gradle.aem.pkg
 
 import aQute.bnd.osgi.Jar
-import com.cognifide.gradle.aem.api.AemConfig
-import com.cognifide.gradle.aem.api.AemException
-import com.cognifide.gradle.aem.api.AemNotifier
-import com.cognifide.gradle.aem.api.AemTask
+import com.cognifide.gradle.aem.api.*
 import com.cognifide.gradle.aem.base.vlt.VltFilter
 import com.cognifide.gradle.aem.bundle.BundleCollector
 import com.cognifide.gradle.aem.bundle.BundlePlugin
@@ -44,8 +41,8 @@ open class ComposeTask : Zip(), AemTask {
         get() = filterRoots.joinToString(config.vaultLineSeparatorString) { it.toString() }
 
     @Internal
-    var filterRootDefault = { _: Project, subconfig: AemConfig ->
-        "<filter root=\"${subconfig.bundlePath}\"/>"
+    var filterRootDefault = { _: Project, ext: AemExtension ->
+        "<filter root=\"${ext.bundle.installPath}\"/>"
     }
 
     @Internal
@@ -238,14 +235,14 @@ open class ComposeTask : Zip(), AemTask {
 
     fun includeBundlesAtPath(project: Project, installPath: String? = null, runMode: String? = null) {
         bundleCollectors += {
-            val config = AemConfig.of(project)
+            val ext = AemExtension.of(project)
 
             dependProject(project, dependBundlesTaskNames)
 
             var effectiveInstallPath = if (!installPath.isNullOrBlank()) {
                 installPath
             } else {
-                config.bundlePath
+                ext.bundle.installPath
             }
 
             if (!runMode.isNullOrBlank()) {
@@ -268,12 +265,12 @@ open class ComposeTask : Zip(), AemTask {
 
     fun includeContent(project: Project) {
         contentCollectors += {
-            val config = AemConfig.of(project)
+            val ext = AemExtension.of(project)
 
             dependProject(project, dependContentTaskNames)
-            extractVaultFilters(project, config)
+            extractVaultFilters(project, ext)
 
-            val contentDir = File("${config.contentPath}/${PackagePlugin.JCR_ROOT}")
+            val contentDir = File("${ext.config.contentPath}/${PackagePlugin.JCR_ROOT}")
             if (contentDir.exists()) {
                 into(PackagePlugin.JCR_ROOT) { spec ->
                     spec.from(contentDir)
@@ -314,11 +311,11 @@ open class ComposeTask : Zip(), AemTask {
         }
     }
 
-    private fun extractVaultFilters(project: Project, config: AemConfig) {
-        if (!config.vaultFilterPath.isBlank() && File(config.vaultFilterPath).exists()) {
-            filterRoots.addAll(VltFilter(File(config.vaultFilterPath)).rootElements)
+    private fun extractVaultFilters(project: Project, ext: AemExtension) {
+        if (!ext.config.vaultFilterPath.isBlank() && File(ext.config.vaultFilterPath).exists()) {
+            filterRoots.addAll(VltFilter(File(ext.config.vaultFilterPath)).rootElements)
         } else if (project.plugins.hasPlugin(BundlePlugin.ID)) {
-            filterRoots.add(VltFilter.rootElement(filterRootDefault(project, config)))
+            filterRoots.add(VltFilter.rootElement(filterRootDefault(project, ext)))
         }
     }
 

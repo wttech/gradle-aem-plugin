@@ -4,6 +4,7 @@ import aQute.bnd.osgi.Jar
 import com.cognifide.gradle.aem.base.download.DownloadTask
 import com.cognifide.gradle.aem.base.vlt.CheckoutTask
 import com.cognifide.gradle.aem.instance.*
+import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.internal.LineSeparator
 import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.internal.notifier.Notifier
@@ -71,7 +72,7 @@ class AemConfig(
     @get:Internal
     @get:JsonIgnore
     val baseName: String
-        get() = normalizeSeparators(if (project == project.rootProject) {
+        get() = Formats.normalizeSeparators(if (project == project.rootProject) {
             project.rootProject.name
         } else {
             "${project.rootProject.name}.$projectName"
@@ -134,86 +135,6 @@ class AemConfig(
      */
     @Input
     var contentPath: String = "${project.file("src/main/content")}"
-
-    /**
-     * Content path for bundle jars being placed in CRX package.
-     *
-     * Default convention assumes that subprojects have separate bundle paths, because of potential re-installation of subpackages.
-     * When all subprojects will have same bundle path, reinstalling one subpackage may end with deletion of other bundles coming from another subpackage.
-     *
-     * Beware that more nested bundle install directories are not supported by AEM by default.
-     */
-    @Input
-    var bundlePath: String = if (project == project.rootProject) {
-        "/apps/${project.rootProject.name}/install"
-    } else {
-        "/apps/${project.rootProject.name}/$projectName/install"
-    }
-
-    /**
-     * Determines package in which OSGi bundle being built contains its classes.
-     * Basing on that value, there will be:
-     *
-     * - generated OSGi specific manifest instructions like 'Bundle-SymbolicName', 'Export-Package'.
-     * - generated AEM specific manifest instructions like 'Sling-Model-Packages'.
-     * - performed additional component stability checks during 'aemAwait'
-     *
-     * Default convention: '${project.group}.${project.name}'
-     */
-    @Input
-    var bundlePackage: String = AUTO_DETERMINED
-
-    @get:Internal
-    @get:JsonIgnore
-    val bundlePackageDefault: String
-        get() {
-            if ("${project.group}".isBlank()) {
-                throw AemException("${project.displayName.capitalize()} must has property 'group' defined to determine bundle package default.")
-            }
-
-            return normalizeSeparators("${project.group}.${project.name}", ".")
-        }
-
-    /**
-     * Determines how conflicts will be resolved when coincidental classes will be detected.
-     * Useful to combine Java sources with Kotlin, Scala etc.
-     *
-     * @see <http://bnd.bndtools.org/heads/private_package.html>
-     */
-    @Input
-    var bundlePackageOptions: String = "-split-package:=merge-first"
-
-    /**
-     * Enable or disable support for auto-generating OSGi specific JAR manifest attributes
-     * like 'Bundle-SymbolicName', 'Export-Package' or AEM specific like 'Sling-Model-Packages'
-     * using 'bundlePackage' property.
-     */
-    @Input
-    var bundleManifestAttributes: Boolean = true
-
-    /**
-     * Bundle instructions file location consumed by BND tool.
-     *
-     * If file exists, instructions will be taken from it instead of directly specified
-     * in dedicated property.
-     *
-     * @see <https://bnd.bndtools.org>
-     */
-    @Input
-    var bundleBndPath: String = "${project.file("bnd.bnd")}"
-
-    /**
-     * Bundle instructions consumed by BND tool (still file has precedence).
-     *
-     * By default, plugin is increasing an importance of some warning so that it will
-     * fail a build instead just logging it.
-     *
-     * @see <https://bnd.bndtools.org/chapters/825-instructions-ref.html>
-     */
-    @Input
-    var bundleBndInstructions: MutableMap<String, Any> = mutableMapOf(
-            "-fixupmessages.bundleActivator" to "Bundle-Activator * is being imported *;is:=error"
-    )
 
     /**
      * Automatically determine local package to be uploaded.
@@ -671,10 +592,6 @@ class AemConfig(
      * Following checks will be performed during configuration phase.
      */
     fun validate() {
-        if (bundlePath.isBlank()) {
-            throw AemException("Bundle path cannot be blank")
-        }
-
         if (contentPath.isBlank()) {
             throw AemException("Content path cannot be blank")
         }
@@ -768,18 +685,6 @@ class AemConfig(
         if (instances.isEmpty()) {
             instances(Instance.defaults(project))
         }
-
-        if (bundlePackage == AUTO_DETERMINED) {
-            bundlePackage = bundlePackageDefault
-        }
-    }
-
-    fun normalizeSeparators(name: String, separator: String): String {
-        return name.replace(":", separator)
-                .replace("-", separator)
-                .replace(".", separator)
-                .removePrefix(separator)
-                .removeSuffix(separator)
     }
 
     companion object {

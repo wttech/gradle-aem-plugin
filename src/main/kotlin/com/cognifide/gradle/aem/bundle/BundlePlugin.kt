@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.bundle
 
 import aQute.bnd.gradle.BundleTaskConvention
+import com.cognifide.gradle.aem.api.AemBundle
 import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.api.AemPlugin
 import com.cognifide.gradle.aem.pkg.PackagePlugin
@@ -87,8 +88,8 @@ class BundlePlugin : AemPlugin() {
      * Set (if not set) or update OSGi or AEM specific jar manifest attributes.
      */
     private fun Project.ensureJarManifestAttributes(jar: Jar) {
-        val config = AemConfig.of(project)
-        if (!config.bundleManifestAttributes) {
+        val bundle = AemBundle.of(project)
+        if (!bundle.manifestAttributes) {
             logger.debug("Bundle manifest dynamic attributes support is disabled.")
             return
         }
@@ -99,24 +100,24 @@ class BundlePlugin : AemPlugin() {
             attributes["Bundle-Name"] = description!!
         }
 
-        if (!attributes.contains("Bundle-SymbolicName") && config.bundlePackage.isNotBlank()) {
-            attributes["Bundle-SymbolicName"] = config.bundlePackage
+        if (!attributes.contains("Bundle-SymbolicName") && bundle.javaPackage.isNotBlank()) {
+            attributes["Bundle-SymbolicName"] = bundle.javaPackage
         }
 
         attributes["Export-Package"] = mutableSetOf<String>().apply {
-            if (config.bundlePackage.isNotBlank()) {
-                add(if (config.bundlePackageOptions.isNotBlank()) {
-                    "${config.bundlePackage}.*;${config.bundlePackageOptions}"
+            if (bundle.javaPackage.isNotBlank()) {
+                add(if (bundle.javaPackageOptions.isNotBlank()) {
+                    "${bundle.javaPackage}.*;${bundle.javaPackageOptions}"
                 } else {
-                    "${config.bundlePackage}.*"
+                    "${bundle.javaPackage}.*"
                 })
             }
 
             addAll((attributes["Export-Package"]?.toString() ?: "").split(",").map { it.trim() })
         }.joinToString(",")
 
-        if (!attributes.contains("Sling-Model-Packages") && config.bundlePackage.isNotBlank()) {
-            attributes["Sling-Model-Packages"] = config.bundlePackage
+        if (!attributes.contains("Sling-Model-Packages") && bundle.javaPackage.isNotBlank()) {
+            attributes["Sling-Model-Packages"] = bundle.javaPackage
         }
 
         jar.manifest.attributes(attributes)
@@ -130,13 +131,13 @@ class BundlePlugin : AemPlugin() {
 
         jar.doLast {
             try {
-                val config = AemConfig.of(project)
-                val instructionFile = File(config.bundleBndPath)
+                val bundle = AemBundle.of(project)
+                val instructionFile = File(bundle.bndPath)
                 if (instructionFile.isFile) {
                     bundleConvention.setBndfile(instructionFile)
                 }
 
-                val instructions = config.bundleBndInstructions
+                val instructions = bundle.bndInstructions
                 if (instructions.isNotEmpty()) {
                     bundleConvention.bnd(instructions)
                 }
