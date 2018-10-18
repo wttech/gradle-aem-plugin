@@ -9,8 +9,8 @@ class DeployException : AemException {
     constructor(message: String) : super(message)
 
     constructor(message: String, errors: List<String>) : super(message){
-        this.errors = errors
+        this.criticalInstallationErrors = CriticalInstallationError.findCriticalErrorsIn(errors)
     }
 
-    lateinit var errors:List<String>
+    var criticalInstallationErrors = emptySet<String>()
 }

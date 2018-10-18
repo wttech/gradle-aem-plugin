@@ -366,12 +366,9 @@ class InstanceSync(val project: Project, val instance: Instance) {
                 return installPackageOnce(remotePath)
             } catch (e: DeployException) {
                 exception = e
-                val encounteredCriticalErrors =
-                        CriticalInstallationError.findCriticalErrorsIn(exception.errors)
-
-                if(encounteredCriticalErrors.isNotEmpty()){
-                    logger.warn("Installation encountered critical error(s): " +
-                            "$encounteredCriticalErrors. Skipping retrying to install the package.")
+                val criticalErrors = exception.criticalInstallationErrors
+                if(criticalErrors.isNotEmpty()){
+                    throw exception
                 }
                 else if (i < config.installRetry.times) {
                     logger.warn("Cannot install package $remotePath on $instance.")

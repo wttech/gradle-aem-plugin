@@ -31,15 +31,6 @@ object InstallResponseBuilder {
 
 
     fun buildFromStream(stream: InputStream): InstallResponse {
-        val size = stream.available()
-        return if (size <= MAX_BYTES_TO_READ_AT_ONCE) {
-            InstallResponse(IOUtils.toString(stream))
-        } else {
-            readStreamPartially(stream)
-        }
-    }
-
-    fun readStreamPartially(stream: InputStream): InstallResponse {
         val buf = IOUtils.toBufferedInputStream(stream)
         val reader = buf.bufferedReader()
         val result = readByLines(reader)

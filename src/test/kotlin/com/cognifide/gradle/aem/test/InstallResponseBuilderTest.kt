@@ -55,14 +55,14 @@ class InstallResponseBuilderTest(filename: String, private val expectedError: Cr
     fun shouldReceiveSameResponses() {
         val stream = FileInputStream(file)
         val oldWayResponse = readAtOnce(file)
-        val newWayResponse = InstallResponseBuilder.readStreamPartially(stream)
+        val newWayResponse = InstallResponseBuilder.buildFromStream(stream)
         assertTrue(compareResponses(oldWayResponse, newWayResponse))
     }
 
     @Test
     fun shouldFindExpectedCriticalErrorIfDefined() {
         val stream = FileInputStream(file)
-        val newWayResponse = InstallResponseBuilder.readStreamPartially(stream)
+        val newWayResponse = InstallResponseBuilder.buildFromStream(stream)
         val criticalErrors = CriticalInstallationError.findCriticalErrorsIn(newWayResponse.errors)
         expectedError?.let{
             assertTrue(criticalErrors.contains(expectedError.className))
