@@ -54,44 +54,49 @@ class InstanceSync(val project: Project, val instance: Instance) {
 
     var responseHandler: (HttpResponse) -> Unit = { _ -> }
 
-    fun get(path: String): String {
-        return fetch(HttpGet(composeUrl(path)))
+    fun get(path: String): HttpResponse {
+        return execute(HttpGet(composeUrl(path)))
     }
 
-    fun head(path: String): String {
-        return fetch(HttpHead(composeUrl(path)))
+    fun head(path: String): HttpResponse {
+        return execute(HttpHead(composeUrl(path)))
     }
 
-    fun delete(path: String): String {
-        return fetch(HttpDelete(composeUrl(path)))
+    fun delete(path: String): HttpResponse {
+        return execute(HttpDelete(composeUrl(path)))
     }
 
-    fun put(path: String): String {
-        return fetch(HttpPut(composeUrl(path)))
+    fun put(path: String): HttpResponse {
+        return execute(HttpPut(composeUrl(path)))
     }
 
-    fun patch(path: String): String {
-        return fetch(HttpPatch(composeUrl(path)))
+    fun patch(path: String): HttpResponse {
+        return execute(HttpPatch(composeUrl(path)))
     }
 
-    fun postUrlencoded(url: String, params: Map<String, Any> = mapOf()): String {
+    fun post(url: String, params: Map<String, Any> = mapOf()) = postUrlencoded(url, params)
+
+    fun postUrlencoded(url: String, params: Map<String, Any> = mapOf()): HttpResponse {
         return post(url, createEntityUrlencoded(params))
     }
 
-    fun postMultipart(url: String, params: Map<String, Any> = mapOf()): String {
+    fun postMultipart(url: String, params: Map<String, Any> = mapOf()): HttpResponse {
         return post(url, createEntityMultipart(params))
     }
 
-    private fun postMultipartInstall(url: String, params: Map<String, Any> = mapOf()): InstallResponse {
-        return postInstall(url, createEntityMultipart(params))
+    fun ok(response: HttpResponse): String {
+        val body by lazy { IOUtils.toString(response.entity.content) ?: "" }
+
+        if (response.statusLine.statusCode == HttpStatus.SC_OK) {
+            return body
+        } else {
+            logger.debug(body)
+            throw DeployException("Unexpected response from $instance: ${response.statusLine}")
+        }
     }
 
-    private fun post(url: String, entity: HttpEntity): String {
-        return fetch(HttpPost(composeUrl(url)).apply { this.entity = entity })
-    }
-
-    private fun postInstall(url: String, entity: HttpEntity): InstallResponse {
-        return fetchInstallBody(HttpPost(composeUrl(url)).apply { this.entity = entity })
+    private fun post(url: String, entity: HttpEntity): HttpResponse {
+        return execute(HttpPost(composeUrl(url)).apply { this.entity = entity })
     }
 
     /**
@@ -102,30 +107,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         return "${instance.httpUrl}${url.replace(" ", "%20")}"
     }
 
-    private fun fetch(method: HttpRequestBase): String {
-        return execute(method) { response ->
-            val body = IOUtils.toString(response.entity.content) ?: ""
-
-            if (response.statusLine.statusCode == HttpStatus.SC_OK) {
-                return@execute body
-            } else {
-                logger.debug(body)
-                throw DeployException("Unexpected response from $instance: ${response.statusLine}")
-            }
-        }
-    }
-
-    private fun fetchInstallBody(method: HttpRequestBase): InstallResponse {
-        return execute(method) { response ->
-            if (response.statusLine.statusCode == HttpStatus.SC_OK) {
-                return@execute InstallResponseBuilder.buildFromStream(response.entity.content)
-            } else {
-                throw DeployException("Unexpected response from $instance: ${response.statusLine}")
-            }
-        }
-    }
-
-    private fun <T> execute(method: HttpRequestBase, success: (HttpResponse) -> T): T {
+    private fun execute(method: HttpRequestBase): HttpResponse {
         try {
             requestConfigurer(method)
 
@@ -134,7 +116,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
 
             responseHandler(response)
 
-            return success(response)
+            return response
         } catch (e: Exception) {
             throw DeployException("Failed request to $instance: ${e.message}", e)
         } finally {
@@ -146,9 +128,9 @@ class InstanceSync(val project: Project, val instance: Instance) {
         val builder = HttpClientBuilder.create()
                 .addInterceptorFirst(PreemptiveAuthInterceptor())
                 .setDefaultRequestConfig(RequestConfig.custom()
-                        .setSocketTimeout(connectionTimeout.toInt())
-                        .setConnectTimeout(connectionTimeout.toInt())
-                        .setConnectionRequestTimeout(connectionTimeout.toInt())
+                        .setSocketTimeout(connectionTimeout)
+                        .setConnectTimeout(connectionTimeout)
+                        .setConnectionRequestTimeout(connectionTimeout)
                         .build()
                 )
                 .setDefaultCredentialsProvider(BasicCredentialsProvider().apply {
@@ -166,7 +148,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
 
     private fun createSslConnectionSocketFactory(): SSLConnectionSocketFactory {
         val sslContext = SSLContextBuilder()
-                .loadTrustMaterial(null, { _, _ -> true })
+                .loadTrustMaterial(null) { _, _ -> true }
                 .build()
         return SSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE)
     }
@@ -233,7 +215,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         logger.debug("Asking for uploaded packages on $instance")
 
         if (instance.packages == null || refresh) {
-            val json = postMultipart(PKG_MANAGER_LIST_JSON)
+            val json = ok(postMultipart(PKG_MANAGER_LIST_JSON))
             instance.packages = try {
                 ListResponse.fromJson(json)
             } catch (e: Exception) {
@@ -272,10 +254,10 @@ class InstanceSync(val project: Project, val instance: Instance) {
         logger.info("Uploading package $file to $instance'")
 
         val json = try {
-            postMultipart(url, mapOf(
+            ok(postMultipart(url, mapOf(
                     "package" to file,
                     "force" to (config.uploadForce || isSnapshot(file))
-            ))
+            )))
         } catch (e: FileNotFoundException) {
             throw DeployException("Package file $file to be uploaded not found!", e)
         } catch (e: Exception) {
@@ -342,7 +324,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         logger.info("Building package $remotePath on $instance")
 
         val json = try {
-            postMultipart(url, mapOf())
+            ok(postMultipart(url))
         } catch (e: Exception) {
             throw DeployException("Cannot build package $remotePath on $instance. Reason: request failed.", e)
         }
@@ -389,7 +371,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         logger.info("Installing package $remotePath on $instance")
 
         val response = try {
-            postMultipartInstall(url, mapOf("recursive" to config.installRecursive))
+            InstallResponseBuilder.buildFromStream(postMultipart(url, mapOf("recursive" to config.installRecursive)).entity.content)
         } catch (e: Exception) {
             throw DeployException("Cannot install package $remotePath on $instance. Reason: request failed.", e)
         }
@@ -421,7 +403,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         logger.info("Activating package $remotePath on $instance")
 
         val json = try {
-            postMultipart(url)
+            ok(postMultipart(url))
         } catch (e: Exception) {
             throw DeployException("Cannot activate package $remotePath on $instance. Reason: request failed.", e)
         }
@@ -445,7 +427,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         logger.info("Deleting package $remotePath on $instance")
 
         val rawHtml = try {
-            postMultipart(url)
+            ok(postMultipart(url))
         } catch (e: Exception) {
             throw DeployException("Cannot delete package $remotePath from $instance. Reason: request failed.", e)
         }
@@ -469,7 +451,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         logger.info("Uninstalling package using command: $url")
 
         val rawHtml = try {
-            postMultipart(url, mapOf("recursive" to config.installRecursive))
+            ok(postMultipart(url, mapOf("recursive" to config.installRecursive)))
         } catch (e: Exception) {
             throw DeployException("Cannot uninstall package $remotePath on $instance. Reason: request failed.", e)
         }
@@ -495,7 +477,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         logger.debug("Asking for OSGi bundles on $instance")
 
         return try {
-            BundleState.fromJson(get(OSGI_BUNDLES_PATH))
+            BundleState.fromJson(ok(get(OSGI_BUNDLES_PATH)))
         } catch (e: Exception) {
             logger.debug("Cannot determine OSGi bundles state on $instance", e)
             BundleState.unknown(e)
@@ -506,7 +488,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         logger.debug("Asking for OSGi components on $instance")
 
         return try {
-            ComponentState.fromJson(get(OSGI_COMPONENTS_PATH))
+            ComponentState.fromJson(ok(get(OSGI_COMPONENTS_PATH)))
         } catch (e: Exception) {
             logger.debug("Cannot determine OSGi components state on $instance", e)
             ComponentState.unknown()
