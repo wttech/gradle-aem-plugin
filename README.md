@@ -203,7 +203,8 @@ aem {
           "jcr_root/.vlt-sync-config.properties"
         ]
         packageFilesExpanded = [
-          "**/META-INF/vault/*.xml"
+          "**/META-INF/vault/*.xml",
+          "**/META-INF/vault/nodetypes.cnd"
         ]
         packageFileProperties = []
         packageBuildDate = Date()
