@@ -25,6 +25,7 @@ import org.gradle.util.ConfigureUtil
 import org.jsoup.nodes.Element
 import java.io.File
 import java.io.Serializable
+import java.util.regex.Pattern
 
 open class ComposeTask : Zip(), AemTask {
 
@@ -36,6 +37,12 @@ open class ComposeTask : Zip(), AemTask {
 
     @Internal
     val filterRoots = mutableSetOf<Element>()
+
+    @Internal
+    val nodeTypesLibs = mutableSetOf<String>()
+
+    @Internal
+    val nodeTypesLines = mutableListOf<String>()
 
     @get:Input
     val filterRootsProp: String
@@ -96,7 +103,9 @@ open class ComposeTask : Zip(), AemTask {
     val fileProperties
         get() = mapOf(
                 "filters" to filterRoots,
-                "filterRoots" to filterRootsProp
+                "filterRoots" to filterRootsProp,
+                "nodeTypesLibs" to nodeTypesLibs.joinToString("\n"),
+                "nodeTypesLines" to nodeTypesLines.joinToString("\n")
         )
 
     /**
@@ -238,11 +247,20 @@ open class ComposeTask : Zip(), AemTask {
 
             dependProject(project, dependContentTaskNames)
             extractVaultFilters(project, config)
+            extractNodeTypes(config)
 
             val contentDir = File("${config.contentPath}/${PackagePlugin.JCR_ROOT}")
             if (contentDir.exists()) {
                 into(PackagePlugin.JCR_ROOT) { spec ->
                     spec.from(contentDir)
+                    fileFilter(spec)
+                }
+            }
+
+            val hooksDir = File("${config.contentPath}/${PackagePlugin.HOOKS_PATH}")
+            if (hooksDir.exists()) {
+                into(PackagePlugin.HOOKS_PATH) { spec ->
+                    spec.from(hooksDir)
                     fileFilter(spec)
                 }
             }
@@ -285,6 +303,21 @@ open class ComposeTask : Zip(), AemTask {
         }
     }
 
+    private fun extractNodeTypes(config: AemConfig) {
+        if (config.nodeTypesPath.isNotBlank()) {
+            val file = File(config.nodeTypesPath)
+            if (file.exists()) {
+                file.forEachLine {
+                    if (NODE_TYPES_LIB.matcher(it.trim()).matches()) {
+                        nodeTypesLibs += it
+                    } else {
+                        nodeTypesLines += it
+                    }
+                }
+            }
+        }
+    }
+
     fun includeVault(vltPath: Any) {
         contentCollectors += {
             into(PackagePlugin.VLT_PATH) { spec ->
@@ -315,5 +348,7 @@ open class ComposeTask : Zip(), AemTask {
         const val NAME = "aemCompose"
 
         const val DEPENDENCIES_SUFFIX = ".dependencies"
+
+        private val NODE_TYPES_LIB: Pattern = Pattern.compile("<.+>")
     }
 }
