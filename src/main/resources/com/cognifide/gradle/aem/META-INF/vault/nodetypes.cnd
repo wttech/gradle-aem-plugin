@@ -1,5 +1,2 @@
-{% for nodeTypesLib in nodeTypesLibs %}{{nodeTypesLib | raw}}
-{% endfor %}
-
-{% for nodeTypesLine in nodeTypesLines %}{{nodeTypesLine | raw}}
-{% endfor %}
+{{nodeTypesLibs | raw}}
+{{nodeTypesLines | raw}}

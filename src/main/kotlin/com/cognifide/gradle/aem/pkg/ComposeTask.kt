@@ -104,8 +104,8 @@ open class ComposeTask : Zip(), AemTask {
         get() = mapOf(
                 "filters" to filterRoots,
                 "filterRoots" to filterRootsProp,
-                "nodeTypesLibs" to nodeTypesLibs,
-                "nodeTypesLines" to nodeTypesLines
+                "nodeTypesLibs" to nodeTypesLibs.joinToString("\n"),
+                "nodeTypesLines" to nodeTypesLines.joinToString("\n")
         )
 
     /**
@@ -304,12 +304,15 @@ open class ComposeTask : Zip(), AemTask {
     }
 
     private fun extractNodeTypes(config: AemConfig) {
-        if (!config.nodeTypesPath.isBlank() && File(config.nodeTypesPath).exists()) {
-            File(config.nodeTypesPath).forEachLine {
-                if (NODE_TYPES_LIB.matcher(it.trim()).matches()) {
-                    nodeTypesLibs += it
-                } else {
-                    nodeTypesLines += it
+        if (config.nodeTypesPath.isNotBlank()) {
+            val file = File(config.nodeTypesPath)
+            if (file.exists()) {
+                file.forEachLine {
+                    if (NODE_TYPES_LIB.matcher(it.trim()).matches()) {
+                        nodeTypesLibs += it
+                    } else {
+                        nodeTypesLines += it
+                    }
                 }
             }
         }
