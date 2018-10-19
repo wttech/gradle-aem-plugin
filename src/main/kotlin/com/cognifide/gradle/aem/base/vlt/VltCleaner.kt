@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.base.vlt
 
 import com.cognifide.gradle.aem.api.AemConfig
+import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import org.apache.commons.io.FileUtils
@@ -283,8 +284,11 @@ class VltCleaner(val project: Project) {
     }
 
     private fun doParentsBackup(root: File) {
-        root.parentFile.mkdirs()
-        eachParentFiles(root) { parent, siblingFiles ->
+        val normalizedRoot = normalizeParentRoot(root)
+
+        normalizedRoot.parentFile.mkdirs()
+        eachParentFiles(normalizedRoot) { parent, siblingFiles ->
+            parent.mkdirs()
             if (File(parent, parentsBackupDirIndicator).createNewFile()) {
                 siblingFiles.filter { !it.name.endsWith(parentsBackupSuffix) && !matchAnyRule(it.path, it, filesDeletedRules) }
                         .forEach { origin ->
@@ -297,7 +301,9 @@ class VltCleaner(val project: Project) {
     }
 
     private fun undoParentsBackup(root: File) {
-        eachParentFiles(root) { _, siblingFiles ->
+        val normalizedRoot = normalizeParentRoot(root)
+
+        eachParentFiles(normalizedRoot) { _, siblingFiles ->
             if (siblingFiles.any { it.name == parentsBackupDirIndicator }) {
                 siblingFiles.filter { !it.name.endsWith(parentsBackupSuffix) }.forEach { FileUtils.deleteQuietly(it) }
                 siblingFiles.filter { it.name.endsWith(parentsBackupSuffix) }.forEach { backup ->
@@ -307,6 +313,10 @@ class VltCleaner(val project: Project) {
                 }
             }
         }
+    }
+
+    private fun normalizeParentRoot(root: File): File {
+        return File(Patterns.normalizePath(root.path).substringBefore("/$JCR_CONTENT_NODE"))
     }
 
     private fun cleanParents(root: File) {
@@ -349,6 +359,8 @@ class VltCleaner(val project: Project) {
 
     companion object {
         const val JCR_CONTENT_FILE = ".content.xml"
+
+        const val JCR_CONTENT_NODE = "jcr:content"
 
         const val JCR_MIXIN_TYPES_PROP = "jcr:mixinTypes"
 
