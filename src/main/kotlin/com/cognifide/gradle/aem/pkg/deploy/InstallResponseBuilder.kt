@@ -23,7 +23,7 @@ object InstallResponseBuilder {
     val PROCESSING_ERROR_PATTERN: Pattern =
             Pattern.compile("<span class=\"error\">(.+)</span><br><code><pre>([\\s\\S]+)</pre>")
 
-    val errors = mutableListOf(
+    val errors = listOf(
             ErrorPattern(InstallResponseBuilder.PROCESSING_ERROR_PATTERN, true),
             ErrorPattern(InstallResponseBuilder.ERROR_PATTERN, false))
 
