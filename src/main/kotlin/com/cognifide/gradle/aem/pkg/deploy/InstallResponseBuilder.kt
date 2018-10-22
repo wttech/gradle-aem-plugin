@@ -28,11 +28,16 @@ object InstallResponseBuilder {
             ErrorPattern(InstallResponseBuilder.ERROR_PATTERN, false))
 
 
-    fun buildFromStream(stream: InputStream): InstallResponse {
+    fun buildFrom(stream: InputStream): InstallResponse {
         val buf = IOUtils.toBufferedInputStream(stream)
         val reader = buf.bufferedReader()
         val result = readByLines(reader)
-        return InstallResponse(result)
+        val response = InstallResponse(result)
+        val packageErrors = PackageError.findPackageErrorsIn(response.errors)
+        if (packageErrors.isNotEmpty()){
+            throw PackageException.of(packageErrors)
+        }
+        else return response
     }
 
     private fun readByLines(source: BufferedReader): String {

@@ -346,12 +346,12 @@ class InstanceSync(val project: Project, val instance: Instance) {
         for (i in 0..config.installRetry.times) {
             try {
                 return installPackageOnce(remotePath)
-            } catch (e: DeployException) {
+            }catch (e: PackageException){
+                //TODO add logic
+            }
+            catch (e: DeployException) {
                 exception = e
-                val criticalErrors = exception.criticalInstallationErrors
-                if (criticalErrors.isNotEmpty()) {
-                    throw exception
-                } else if (i < config.installRetry.times) {
+                if (i < config.installRetry.times) {
                     logger.warn("Cannot install package $remotePath on $instance.")
                     logger.debug("Install error", e)
 
@@ -371,12 +371,12 @@ class InstanceSync(val project: Project, val instance: Instance) {
         logger.info("Installing package $remotePath on $instance")
 
         val response = try {
-            InstallResponseBuilder.buildFromStream(postMultipart(url, mapOf("recursive" to config.installRecursive)).entity.content)
+            InstallResponseBuilder.buildFrom(postMultipart(url, mapOf("recursive" to config.installRecursive)).entity.content)
         } catch (e: Exception) {
             throw DeployException("Cannot install package $remotePath on $instance. Reason: request failed.", e)
         }
         if (!response.success) {
-            throw DeployException("Cannot install package $remotePath on $instance. Status: ${response.status}. Errors: ${response.errors}.", response.errors)
+            throw DeployException("Cannot install package $remotePath on $instance. Status: ${response.status}. Errors: ${response.errors}.")
         }
 
         return response
