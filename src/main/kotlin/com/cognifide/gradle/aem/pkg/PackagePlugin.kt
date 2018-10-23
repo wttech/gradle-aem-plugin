@@ -1,7 +1,11 @@
 package com.cognifide.gradle.aem.pkg
 
 import com.cognifide.gradle.aem.base.BasePlugin
-import com.cognifide.gradle.aem.pkg.deploy.*
+import com.cognifide.gradle.aem.pkg.deploy.ActivateTask
+import com.cognifide.gradle.aem.pkg.deploy.DeleteTask
+import com.cognifide.gradle.aem.pkg.deploy.DeployTask
+import com.cognifide.gradle.aem.pkg.deploy.PurgeTask
+import com.cognifide.gradle.aem.pkg.deploy.UninstallTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.language.base.plugins.LifecycleBasePlugin
@@ -24,14 +28,11 @@ class PackagePlugin : Plugin<Project> {
 
         val prepare = tasks.create(PrepareTask.NAME, PrepareTask::class.java)
         val compose = tasks.create(ComposeTask.NAME, ComposeTask::class.java)
-        val upload = tasks.create(UploadTask.NAME, UploadTask::class.java)
         tasks.create(DeleteTask.NAME, DeleteTask::class.java)
         tasks.create(PurgeTask.NAME, PurgeTask::class.java)
-        val install = tasks.create(InstallTask.NAME, InstallTask::class.java)
         tasks.create(UninstallTask.NAME, UninstallTask::class.java)
-        val activate = tasks.create(ActivateTask.NAME, ActivateTask::class.java)
+        tasks.create(ActivateTask.NAME, ActivateTask::class.java)
         val deploy = tasks.create(DeployTask.NAME, DeployTask::class.java)
-
 
         val assemble = tasks.getByName(LifecycleBasePlugin.ASSEMBLE_TASK_NAME)
         val check = tasks.getByName(LifecycleBasePlugin.CHECK_TASK_NAME)
@@ -46,10 +47,6 @@ class PackagePlugin : Plugin<Project> {
 
         compose.dependsOn(prepare, assemble, check)
         compose.mustRunAfter(clean)
-
-        upload.dependsOn(compose)
-        install.mustRunAfter(compose, upload)
-        activate.mustRunAfter(compose, upload, install)
 
         deploy.dependsOn(compose)
     }
