@@ -1,181 +1,19 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.ProgressCountdown
 import com.cognifide.gradle.aem.internal.file.FileException
 import com.cognifide.gradle.aem.internal.file.downloader.HttpFileDownloader
-import com.cognifide.gradle.aem.internal.http.PreemptiveAuthInterceptor
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.deploy.*
-import org.apache.commons.io.IOUtils
-import org.apache.http.HttpEntity
-import org.apache.http.HttpResponse
-import org.apache.http.HttpStatus
-import org.apache.http.NameValuePair
-import org.apache.http.auth.AuthScope
-import org.apache.http.auth.UsernamePasswordCredentials
-import org.apache.http.client.HttpClient
-import org.apache.http.client.config.RequestConfig
-import org.apache.http.client.entity.UrlEncodedFormEntity
-import org.apache.http.client.methods.*
-import org.apache.http.conn.ssl.NoopHostnameVerifier
-import org.apache.http.conn.ssl.SSLConnectionSocketFactory
-import org.apache.http.entity.mime.MultipartEntityBuilder
-import org.apache.http.impl.client.BasicCredentialsProvider
-import org.apache.http.impl.client.HttpClientBuilder
-import org.apache.http.message.BasicNameValuePair
-import org.apache.http.ssl.SSLContextBuilder
 import org.gradle.api.Project
 import org.jsoup.Jsoup
 import org.jsoup.parser.Parser
 import org.zeroturnaround.zip.ZipUtil
 import java.io.File
 import java.io.FileNotFoundException
-import java.util.*
 
-class InstanceSync(val project: Project, val instance: Instance) {
-
-    val config = AemConfig.of(project)
-
-    val logger = project.logger
-
-    var basicUser = instance.user
-
-    var basicPassword = instance.password
-
-    var connectionTimeout = config.instanceConnectionTimeout
-
-    var connectionUntrustedSsl = config.instanceConnectionUntrustedSsl
-
-    var connectionRetries = true
-
-    var requestConfigurer: (HttpRequestBase) -> Unit = { _ -> }
-
-    var responseHandler: (HttpResponse) -> Unit = { _ -> }
-
-    fun get(path: String): HttpResponse {
-        return execute(HttpGet(composeUrl(path)))
-    }
-
-    fun head(path: String): HttpResponse {
-        return execute(HttpHead(composeUrl(path)))
-    }
-
-    fun delete(path: String): HttpResponse {
-        return execute(HttpDelete(composeUrl(path)))
-    }
-
-    fun put(path: String): HttpResponse {
-        return execute(HttpPut(composeUrl(path)))
-    }
-
-    fun patch(path: String): HttpResponse {
-        return execute(HttpPatch(composeUrl(path)))
-    }
-
-    fun post(url: String, params: Map<String, Any> = mapOf()) = postUrlencoded(url, params)
-
-    fun postUrlencoded(url: String, params: Map<String, Any> = mapOf()): HttpResponse {
-        return post(url, createEntityUrlencoded(params))
-    }
-
-    fun postMultipart(url: String, params: Map<String, Any> = mapOf()): HttpResponse {
-        return post(url, createEntityMultipart(params))
-    }
-
-    fun ok(response: HttpResponse): String {
-        val body by lazy { IOUtils.toString(response.entity.content) ?: "" }
-
-        if (response.statusLine.statusCode == HttpStatus.SC_OK) {
-            return body
-        } else {
-            logger.debug(body)
-            throw DeployException("Unexpected response from $instance: ${response.statusLine}")
-        }
-    }
-
-    private fun post(url: String, entity: HttpEntity): HttpResponse {
-        return execute(HttpPost(composeUrl(url)).apply { this.entity = entity })
-    }
-
-    /**
-     * Fix for HttpClient's: 'escaped absolute path not valid'
-     * https://stackoverflow.com/questions/13652681/httpclient-invalid-uri-escaped-absolute-path-not-valid
-     */
-    private fun composeUrl(url: String): String {
-        return "${instance.httpUrl}${url.replace(" ", "%20")}"
-    }
-
-    private fun execute(method: HttpRequestBase): HttpResponse {
-        try {
-            requestConfigurer(method)
-
-            val client = createHttpClient()
-            val response = client.execute(method)
-
-            responseHandler(response)
-
-            return response
-        } catch (e: Exception) {
-            throw DeployException("Failed request to $instance: ${e.message}", e)
-        } finally {
-            method.releaseConnection()
-        }
-    }
-
-    fun createHttpClient(): HttpClient {
-        val builder = HttpClientBuilder.create()
-                .addInterceptorFirst(PreemptiveAuthInterceptor())
-                .setDefaultRequestConfig(RequestConfig.custom()
-                        .setSocketTimeout(connectionTimeout)
-                        .setConnectTimeout(connectionTimeout)
-                        .setConnectionRequestTimeout(connectionTimeout)
-                        .build()
-                )
-                .setDefaultCredentialsProvider(BasicCredentialsProvider().apply {
-                    setCredentials(AuthScope.ANY, UsernamePasswordCredentials(basicUser, basicPassword))
-                })
-        if (connectionUntrustedSsl) {
-            builder.setSSLSocketFactory(createSslConnectionSocketFactory())
-        }
-        if (!connectionRetries) {
-            builder.disableAutomaticRetries()
-        }
-
-        return builder.build()
-    }
-
-    private fun createSslConnectionSocketFactory(): SSLConnectionSocketFactory {
-        val sslContext = SSLContextBuilder()
-                .loadTrustMaterial(null) { _, _ -> true }
-                .build()
-        return SSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE)
-    }
-
-    private fun createEntityUrlencoded(params: Map<String, Any>): HttpEntity {
-        return UrlEncodedFormEntity(params.entries.fold(ArrayList<NameValuePair>()) { result, e ->
-            result.add(BasicNameValuePair(e.key, e.value.toString())); result
-        })
-    }
-
-    private fun createEntityMultipart(params: Map<String, Any>): HttpEntity {
-        val builder = MultipartEntityBuilder.create()
-        for ((key, value) in params) {
-            if (value is File) {
-                if (value.exists()) {
-                    builder.addBinaryBody(key, value)
-                }
-            } else {
-                val str = value.toString()
-                if (str.isNotBlank()) {
-                    builder.addTextBody(key, str)
-                }
-            }
-        }
-
-        return builder.build()
-    }
+class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(project, instance) {
 
     fun determineRemotePackage(): ListResponse.Package? {
         return resolveRemotePackage({ response ->
@@ -215,9 +53,8 @@ class InstanceSync(val project: Project, val instance: Instance) {
         logger.debug("Asking for uploaded packages on $instance")
 
         if (instance.packages == null || refresh) {
-            val json = ok(postMultipart(PKG_MANAGER_LIST_JSON))
             instance.packages = try {
-                ListResponse.fromJson(json)
+                postMultipart(PKG_MANAGER_LIST_JSON) { ListResponse.fromJson(asStream(it)) }
             } catch (e: Exception) {
                 throw DeployException("Cannot ask for uploaded packages on $instance.", e)
             }
@@ -253,20 +90,16 @@ class InstanceSync(val project: Project, val instance: Instance) {
 
         logger.info("Uploading package $file to $instance'")
 
-        val json = try {
-            ok(postMultipart(url, mapOf(
+        val response = try {
+            postMultipart(url, mapOf(
                     "package" to file,
                     "force" to (config.uploadForce || isSnapshot(file))
-            )))
+            )) { UploadResponse.fromJson(asStream(it)) }
         } catch (e: FileNotFoundException) {
             throw DeployException("Package file $file to be uploaded not found!", e)
-        } catch (e: Exception) {
+        } catch (e: RequestException) {
             throw DeployException("Cannot upload package $file to $instance. Reason: request failed.", e)
-        }
-
-        val response = try {
-            UploadResponse.fromJson(json)
-        } catch (e: Exception) {
+        } catch (e: ResponseException) {
             throw DeployException("Malformed response after uploading package $file to $instance.", e)
         }
 
@@ -323,15 +156,11 @@ class InstanceSync(val project: Project, val instance: Instance) {
 
         logger.info("Building package $remotePath on $instance")
 
-        val json = try {
-            ok(postMultipart(url))
-        } catch (e: Exception) {
-            throw DeployException("Cannot build package $remotePath on $instance. Reason: request failed.", e)
-        }
-
         val response = try {
-            PackageBuildResponse.fromJson(json)
-        } catch (e: Exception) {
+            postMultipart(url) { PackageBuildResponse.fromJson(asStream(it)) }
+        } catch (e: RequestException) {
+            throw DeployException("Cannot build package $remotePath on $instance. Reason: request failed.", e)
+        } catch (e: ResponseException) {
             throw DeployException("Malformed response after building package $remotePath on $instance.", e)
         }
 
@@ -371,10 +200,14 @@ class InstanceSync(val project: Project, val instance: Instance) {
         logger.info("Installing package $remotePath on $instance")
 
         val response = try {
-            InstallResponseBuilder.buildFrom(postMultipart(url, mapOf("recursive" to config.installRecursive)).entity.content)
-        } catch (e: Exception) {
+            postMultipart(url, mapOf("recursive" to config.installRecursive)) { InstallResponseBuilder.buildFrom(asStream(it)) }
+        } catch (e: RequestException) {
+
             throw DeployException("Cannot install package $remotePath on $instance. Reason: request failed.", e)
+        } catch (e: ResponseException) {
+            throw DeployException("Malformed response after installing package $remotePath on $instance.")
         }
+
         if (!response.success) {
             throw DeployException("Cannot install package $remotePath on $instance. Status: ${response.status}. Errors: ${response.errors}.")
         }
@@ -402,15 +235,11 @@ class InstanceSync(val project: Project, val instance: Instance) {
 
         logger.info("Activating package $remotePath on $instance")
 
-        val json = try {
-            ok(postMultipart(url))
-        } catch (e: Exception) {
-            throw DeployException("Cannot activate package $remotePath on $instance. Reason: request failed.", e)
-        }
-
         val response = try {
-            UploadResponse.fromJson(json)
-        } catch (e: Exception) {
+            postMultipart(url) { UploadResponse.fromJson(asStream(it)) }
+        } catch (e: RequestException) {
+            throw DeployException("Cannot activate package $remotePath on $instance. Reason: request failed.", e)
+        } catch (e: ResponseException) {
             throw DeployException("Malformed response after activating package $remotePath on $instance.", e)
         }
 
@@ -426,15 +255,11 @@ class InstanceSync(val project: Project, val instance: Instance) {
 
         logger.info("Deleting package $remotePath on $instance")
 
-        val rawHtml = try {
-            ok(postMultipart(url))
-        } catch (e: Exception) {
-            throw DeployException("Cannot delete package $remotePath from $instance. Reason: request failed.", e)
-        }
-
         val response = try {
-            DeleteResponse(rawHtml)
-        } catch (e: Exception) {
+            postMultipart(url) { DeleteResponse.from(asString(it)) }
+        } catch (e: RequestException) {
+            throw DeployException("Cannot delete package $remotePath from $instance. Reason: request failed.", e)
+        } catch (e: ResponseException) {
             throw DeployException("Malformed response after deleting package $remotePath from $instance.", e)
         }
 
@@ -450,15 +275,11 @@ class InstanceSync(val project: Project, val instance: Instance) {
 
         logger.info("Uninstalling package using command: $url")
 
-        val rawHtml = try {
-            ok(postMultipart(url, mapOf("recursive" to config.installRecursive)))
-        } catch (e: Exception) {
-            throw DeployException("Cannot uninstall package $remotePath on $instance. Reason: request failed.", e)
-        }
-
         val response = try {
-            UninstallResponse(rawHtml)
-        } catch (e: Exception) {
+            postMultipart(url, mapOf("recursive" to config.installRecursive)) { UninstallResponse.from(asString(it)) }
+        } catch (e: RequestException) {
+            throw DeployException("Cannot uninstall package $remotePath on $instance. Reason: request failed.", e)
+        } catch (e: ResponseException) {
             throw DeployException("Malformed response after uninstalling package $remotePath from $instance.", e)
         }
 
@@ -477,7 +298,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         logger.debug("Asking for OSGi bundles on $instance")
 
         return try {
-            BundleState.fromJson(ok(get(OSGI_BUNDLES_PATH)))
+            get(OSGI_BUNDLES_PATH) { BundleState.fromJson(asString(it)) }
         } catch (e: Exception) {
             logger.debug("Cannot determine OSGi bundles state on $instance", e)
             BundleState.unknown(e)
@@ -488,7 +309,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         logger.debug("Asking for OSGi components on $instance")
 
         return try {
-            ComponentState.fromJson(ok(get(OSGI_COMPONENTS_PATH)))
+            ComponentState.fromJson(get(OSGI_COMPONENTS_PATH) { asString(it) })
         } catch (e: Exception) {
             logger.debug("Cannot determine OSGi components state on $instance", e)
             ComponentState.unknown()

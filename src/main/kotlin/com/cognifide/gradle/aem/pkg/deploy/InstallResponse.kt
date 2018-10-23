@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.pkg.deploy
 
-class InstallResponse(private val rawHtml: String) : HtmlResponse(rawHtml) {
+class InstallResponse private constructor(private val rawHtml: String) : HtmlResponse(rawHtml) {
 
     override fun getErrorPatterns(): List<ErrorPattern> {
         return mutableListOf(
@@ -17,4 +17,17 @@ class InstallResponse(private val rawHtml: String) : HtmlResponse(rawHtml) {
                 else -> Status.FAIL
             }
         }
+
+    companion object {
+
+        fun from(html: String): InstallResponse {
+            return try {
+                InstallResponse(html)
+            } catch (e: Exception) {
+                throw ResponseException("Malformed install package response.")
+            }
+        }
+
+    }
+
 }

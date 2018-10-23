@@ -34,7 +34,7 @@ class InstallResponseBuilderTest(filename: String, private val expectedError: Pa
         fun readAtOnce(file: File): InstallResponse {
             val stream = FileInputStream(file)
             val body = IOUtils.toString(stream)
-            return InstallResponse(body)
+            return InstallResponse.from(body)
         }
 
         fun compareResponses(readAtOnce: InstallResponse,

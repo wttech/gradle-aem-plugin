@@ -32,12 +32,13 @@ object InstallResponseBuilder {
         val buf = IOUtils.toBufferedInputStream(stream)
         val reader = buf.bufferedReader()
         val result = readByLines(reader)
-        val response = InstallResponse(result)
+        val response = InstallResponse.from(result)
         val packageErrors = PackageError.findPackageErrorsIn(response.errors)
         if (packageErrors.isNotEmpty()){
             throw PackageException.of(packageErrors)
         }
         else return response
+        return InstallResponse.from(result)
     }
 
     private fun readByLines(source: BufferedReader): String {
