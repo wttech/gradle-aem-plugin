@@ -15,9 +15,9 @@ abstract class HtmlResponse(private val rawHtml: String) {
     protected abstract fun getErrorPatterns(): List<ErrorPattern>
 
     init {
-        getErrorPatterns().forEach({
+        this.getErrorPatterns().forEach {
             findErrorsByPattern(it.pattern, it.printStackTrace, it.message)
-        })
+        }
     }
 
     private fun findErrorsByPattern(pattern: Pattern, printStacktrace: Boolean, message: String) {
@@ -25,7 +25,7 @@ abstract class HtmlResponse(private val rawHtml: String) {
 
         while (matcher.find()) {
 
-            if (!message.isNullOrBlank()) {
+            if (!message.isBlank()) {
                 _errors.add(message)
             }
 
@@ -49,5 +49,6 @@ abstract class HtmlResponse(private val rawHtml: String) {
 
     val success: Boolean
         get() = status == Status.SUCCESS
+
 }
 

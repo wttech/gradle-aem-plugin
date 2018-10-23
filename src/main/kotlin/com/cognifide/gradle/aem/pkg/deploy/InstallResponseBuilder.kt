@@ -7,8 +7,6 @@ import java.util.regex.Pattern
 
 object InstallResponseBuilder {
 
-    private const val MAX_BYTES_TO_READ_AT_ONCE = 2 * 1000000
-
     private const val NUMBER_OF_LINES_TO_READ = 5000
 
     private const val ERROR_SEPARATOR = "\n\n"
@@ -34,7 +32,8 @@ object InstallResponseBuilder {
         val buf = IOUtils.toBufferedInputStream(stream)
         val reader = buf.bufferedReader()
         val result = readByLines(reader)
-        return InstallResponse(result)
+
+        return InstallResponse.from(result)
     }
 
     private fun readByLines(source: BufferedReader): String {
