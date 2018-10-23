@@ -56,27 +56,21 @@ class InstallResponseBuilderTest(filename: String, private val expectedError: Pa
 
     }
 
-//    @Test()
-//    fun shouldReceiveSameResponses() {
-//        val stream = FileInputStream(file)
-//        val oldWayResponse = readAtOnce(file)
-//        val newWayResponse = InstallResponseBuilder.buildFrom(stream)
-//        assertTrue(compareResponses(oldWayResponse, newWayResponse))
-//    }
+    @Test()
+    fun shouldReceiveSameResponses() {
+        val stream = FileInputStream(file)
+        val oldWayResponse = readAtOnce(file)
+        val newWayResponse = InstallResponseBuilder.buildFrom(stream)
+        assertTrue(compareResponses(oldWayResponse, newWayResponse))
+    }
 
-//    @Test
-//    fun shouldFindExpectedCriticalErrorIfDefined() {
-//        try {
-//            val stream = FileInputStream(file)
-//            val newWayResponse = InstallResponseBuilder.buildFrom(stream)
-//            val criticalErrors = PackageError.findPackageErrorsIn(newWayResponse.errors)
-//            expectedError?.let {
-//                assertTrue(criticalErrors.contains(expectedError))
-//            } ?: assertTrue(criticalErrors.isEmpty())
-//        }
-//        catch (e: Exception){
-//           assert(e.)
-//        }
-//
-//    }
+    @Test
+    fun shouldFindExpectedCriticalErrorIfDefined() {
+            val stream = FileInputStream(file)
+            val newWayResponse = InstallResponseBuilder.buildFrom(stream)
+            val criticalErrors = PackageError.findPackageErrorsIn(newWayResponse.errors)
+            expectedError?.let {
+                assertTrue(criticalErrors.contains(expectedError))
+            } ?: assertTrue(criticalErrors.isEmpty())
+    }
 }

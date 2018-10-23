@@ -11,7 +11,7 @@ object InstallResponseBuilder {
 
     private const val ERROR_SEPARATOR = "\n\n"
 
-    private const val LINE_FEED = 10
+    private const val LINE_FEED = 10.toChar()
 
     const val INSTALL_SUCCESS = "<span class=\"Package imported.\">"
 
@@ -32,35 +32,26 @@ object InstallResponseBuilder {
         val buf = IOUtils.toBufferedInputStream(stream)
         val reader = buf.bufferedReader()
         val result = readByLines(reader)
-        val response = InstallResponse.from(result)
-        val packageErrors = PackageError.findPackageErrorsIn(response.errors)
-        if (packageErrors.isNotEmpty()){
-            throw PackageException.of(packageErrors)
-        }
-        else return response
         return InstallResponse.from(result)
     }
 
-    private fun readByLines(source: BufferedReader): String {
-        val lineBuilder = StringBuilder()
+    private fun readByLines(input: BufferedReader): String {
         val resultBuilder = StringBuilder()
+        val chunk = StringBuilder()
         var currentLine = 0
-        do {
-            val nextCharacter = source.read()
-            lineBuilder.append(nextCharacter.toChar())
-            if (nextCharacter == LINE_FEED) {
-                currentLine++
-                if (currentLine % NUMBER_OF_LINES_TO_READ == 0) {
-                    extractSignificantData(lineBuilder.toString(), resultBuilder)
-                    lineBuilder.setLength(0)
-                }
+        input.forEachLine {
+            chunk.append(it + LINE_FEED)
+            currentLine++
+            if (currentLine % NUMBER_OF_LINES_TO_READ == 0) {
+                extractErrors(chunk.toString(), resultBuilder)
+                chunk.setLength(0)
             }
-        } while (nextCharacter != -1)
-        extractSignificantData(lineBuilder.toString(), resultBuilder)
+        }
+        extractErrors(chunk.toString(), resultBuilder)
         return resultBuilder.toString()
     }
 
-    private fun extractSignificantData(line: String, builder: StringBuilder) {
+    private fun extractErrors(line: String, builder: StringBuilder) {
         InstallResponseBuilder.errors.forEach {
             val matcher = it.pattern.matcher(line)
             while (matcher.find()) {
@@ -73,3 +64,20 @@ object InstallResponseBuilder {
         }
     }
 }
+
+/*
+TODO
+- Proper throwing Package Exception
+        - where to throw new?
+        - create message
+- Builder as companion object
+- Refactor builder reading method - try to forEach line
+- Txt resource files with proper name
+- No longer required gc
+- Refactor test:
+        - same responses?
+        - package errors?
+        - replace @Parametrized with junit5 features
+- Remove large txt resource files
+-PackageErrors should be available to be manually extended via AemConfig.packageErrorExceptions
+ */
