@@ -43,24 +43,24 @@ object InstallResponseBuilder {
             chunk.append(it + LINE_FEED)
             currentLine++
             if (currentLine % NUMBER_OF_LINES_TO_READ == 0) {
-                extractErrors(chunk.toString(), resultBuilder)
+                extractErrors(chunk, resultBuilder)
                 chunk.setLength(0)
             }
         }
-        extractErrors(chunk.toString(), resultBuilder)
+        extractErrors(chunk, resultBuilder)
         return resultBuilder.toString()
     }
 
-    private fun extractErrors(line: String, builder: StringBuilder) {
+    private fun extractErrors(chunk: StringBuilder, builder: StringBuilder) {
         InstallResponseBuilder.errors.forEach {
-            val matcher = it.pattern.matcher(line)
+            val matcher = it.pattern.matcher(chunk)
             while (matcher.find()) {
                 builder.append("${matcher.group()}$ERROR_SEPARATOR")
             }
-            when {
-                line.contains(INSTALL_SUCCESS) -> builder.append(INSTALL_SUCCESS)
-                line.contains(INSTALL_SUCCESS_WITH_ERRORS) -> builder.append(INSTALL_SUCCESS_WITH_ERRORS)
-            }
+        }
+        when {
+            chunk.contains(INSTALL_SUCCESS) -> builder.append(INSTALL_SUCCESS)
+            chunk.contains(INSTALL_SUCCESS_WITH_ERRORS) -> builder.append(INSTALL_SUCCESS_WITH_ERRORS)
         }
     }
 }
