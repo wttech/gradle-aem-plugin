@@ -51,11 +51,6 @@ class InstallResponseBuilderTest(filename: String, private val expectedError: Pa
         System.gc()
     }
 
-    @Test
-    fun a(){
-
-    }
-
     @Test()
     fun shouldReceiveSameResponses() {
         val stream = FileInputStream(file)

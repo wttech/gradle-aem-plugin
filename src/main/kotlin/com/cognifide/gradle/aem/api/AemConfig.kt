@@ -10,6 +10,7 @@ import com.cognifide.gradle.aem.internal.notifier.Notifier
 import com.cognifide.gradle.aem.pkg.ComposeTask
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.deploy.DeployException
+import com.cognifide.gradle.aem.pkg.deploy.PackageError
 import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.lang.Closure
 import org.gradle.api.DefaultTask
@@ -314,6 +315,14 @@ class AemConfig(
     @Internal
     @get:JsonIgnore
     var installRetry = retry { afterSquaredSecond(props.long("aem.install.retry", 4)) }
+
+    /**
+     * Define known exceptions which thrown during package installation
+     * make it impossible to succeed. When declared exception will be
+     * encountered at package installation process, no more retrying will be applied.
+     */
+    @Input
+    var packageErrors = PackageError.getClassNames()
 
     /**
      * Ensures that for directory 'META-INF/vault' default files will be generated when missing:

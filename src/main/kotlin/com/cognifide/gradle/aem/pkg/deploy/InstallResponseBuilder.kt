@@ -71,7 +71,7 @@ TODO
         - where to throw new?
         - create message
 - Builder as companion object
-- Refactor builder reading method - try to forEach line
++ Refactor builder reading method - try to forEach line
 - Txt resource files with proper name
 - No longer required gc
 - Refactor test:
@@ -79,5 +79,5 @@ TODO
         - package errors?
         - replace @Parametrized with junit5 features
 - Remove large txt resource files
--PackageErrors should be available to be manually extended via AemConfig.packageErrorExceptions
++ PackageErrors should be available to be manually extended via AemConfig.packageErrorExceptions
  */

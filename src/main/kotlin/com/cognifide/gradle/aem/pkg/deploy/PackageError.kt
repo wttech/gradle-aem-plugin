@@ -9,7 +9,14 @@ enum class PackageError(val className: String) {
         fun findPackageErrorsIn(errors: List<String>): Set<PackageError> {
             return errors.fold(mutableSetOf()) { results, error ->
                 values().forEach { exception ->
-                    if (error.contains(exception.className)) results.add(exception) } ; results
+                    if (error.contains(exception.className)) results.add(exception)
+                }; results
+            }
+        }
+
+        fun getClassNames(): List<String> {
+            return values().fold(mutableListOf()) { results, error ->
+                results.add(error.className); results
             }
         }
     }
