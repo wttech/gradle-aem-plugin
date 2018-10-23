@@ -2,7 +2,8 @@ package com.cognifide.gradle.aem.pkg.deploy
 
 enum class CriticalInstallationError(val className: String) {
     CONSTRAINT_VIOLATION_EXCEPTION("javax.jcr.nodetype.ConstraintViolationException"),
-    DEPENDENCY_EXCEPTION("org.apache.jackrabbit.vault.packaging.DependencyException");
+    DEPENDENCY_EXCEPTION("org.apache.jackrabbit.vault.packaging.DependencyException"),
+    SAX_EXCEPTION("org.xml.sax.SAXException");
 
     companion object {
         fun findCriticalErrorsIn(errors: List<String>): Set<String> {
