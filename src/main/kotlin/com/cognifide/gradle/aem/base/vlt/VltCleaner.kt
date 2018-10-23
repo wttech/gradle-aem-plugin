@@ -71,6 +71,19 @@ class VltCleaner(val project: Project) {
     }
 
     /**
+     * Determines which files will be flattened
+     * (e.g /_cq_dialog/.content.xml will be replaced by _cq_dialog.xml).
+     */
+    var filesFlattened: MutableList<String> = mutableListOf(
+            "**/_cq_dialog/.content.xml",
+            "**/_cq_htmlTag/.content.xml"
+    )
+
+    private val filesFlattenedRules by lazy {
+        VltCleanRule.manyFrom(filesFlattened)
+    }
+
+    /**
      * Controls unused namespaces skipping.
      */
     var namespacesSkipped: Boolean = props.boolean("aem.clean.namespacesSkipped", true)
@@ -106,6 +119,7 @@ class VltCleaner(val project: Project) {
     }
 
     fun clean(root: File) {
+        flattenFiles(root)
         removeFiles(root)
         removeEmptyDirs(root)
         cleanDotContents(root)
@@ -133,6 +147,24 @@ class VltCleaner(val project: Project) {
         } else {
             cleanDotContentFile(root)
         }
+    }
+
+    private fun flattenFiles(root: File) {
+        if (root.isDirectory) {
+            allFiles(root).forEach { flattenFile(it) }
+        } else {
+            flattenFile(root)
+        }
+    }
+
+    private fun flattenFile(file: File) {
+        if (!file.exists() || !matchAnyRule(file.path, file, filesFlattenedRules)) {
+            return
+        }
+
+        logger.info("Flattening file {}", file.path)
+        val dest = File(file.parentFile.path + ".xml")
+        file.renameTo(dest)
     }
 
     private fun removeFiles(root: File) {
