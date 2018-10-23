@@ -56,13 +56,14 @@ Looking for dedicated version of plugin for [**Apache Sling**](https://sling.apa
    * [Package plugin tasks](#package-plugin-tasks)
       * [Task aemCompose](#task-aemcompose)
       * [Task aemDeploy](#task-aemdeploy)
-      * [Task aemUpload](#task-aemupload)
       * [Task aemDelete](#task-aemdelete)
-      * [Task aemInstall](#task-aeminstall)
       * [Task aemUninstall](#task-aemuninstall)
       * [Task aemPurge](#task-aempurge)
       * [Task aemActivate](#task-aemactivate)
       * [Task aemDownload](#task-aemdownload)
+   * [Deleted package plugin tasks](#deleted-package-plugin-tasks)
+      * [Task aemUpload](#task-aemupload)
+      * [Task aemInstall](#task-aeminstall)
    * [Instance plugin tasks](#instance-plugin-tasks)
       * [Task aemSetup](#task-aemsetup)
       * [Task aemResetup](#task-aemresetup)
@@ -472,19 +473,11 @@ Compose CRX package from JCR content and bundles. Available methods:
 
 #### Task `aemDeploy` 
 
-Upload & install CRX package into AEM instance(s). Primary, recommended form of deployment. Optimized version of `aemUpload aemInstall`.
-
-#### Task `aemUpload`
-
-Upload composed CRX package into AEM instance(s).
+Upload & install CRX package into AEM instance(s).
 
 #### Task `aemDelete`
 
 Delete uploaded CRX package from AEM instance(s).
-
-#### Task `aemInstall`
-
-Install uploaded CRX package on AEM instance(s).
 
 #### Task `aemUninstall`
 
@@ -514,6 +507,36 @@ CMD parameters:
 
 The contents of extracted package can be cleaned up using configured VLT rules by chaining [aemClean](#task-aemclean) task 
 `gradlew :aemDownload :aemClean`
+
+### Deleted package plugin tasks
+
+#### Task `aemUpload`
+
+Upload composed CRX package into AEM instance(s). This task is longer available. 
+
+#### Task `aemInstall`
+
+Install uploaded CRX package on AEM instance(s). This task is longer available.
+
+For edge cases, still the fallback will be available to redefine them manually:
+
+```groovy
+task aemUpload {
+   dependsOn aemCompose
+
+  doLast {
+      aem.sync { it.uploadPackage(aemCompose.archivePath) }
+   }
+}
+
+task aemInstall {
+   dependsOn aemUpload
+
+  doLast {
+      aem.sync { it.installPackage(aemCompose.archivePath) }  
+   }
+}
+``` 
 
 ### Instance plugin tasks
 
@@ -764,7 +787,7 @@ As an effect there will be same dependent CRX package defined multiple times.
 
 In AEM configuration section, there is possibility to use `localInstance` or `remoteInstance` methods to define AEM instances to be used to:
  
-* install CRX packages being built via command `aemDeploy` or combination of more detailed `aemUpload`, `aemInstall` and optionally `aemActivate`,
+* install CRX packages being built via command `aemDeploy`,
 * communicate with while using Vault tool in commands `aemSync`, `aemCheckout`, `aemVlt`,
 * install dependent packages while using `aemSatisfy` command.
 
@@ -831,7 +854,7 @@ Part | Possible values | Description |
 * Instance name is a combination of *${environment}-${typeName}* e.g *local-author*, *integration-publish* etc.
 * Instance type name must start with prefix *author* or *publish*. Sample valid names: *author*, *author1*, *author2*, *author-master* and *publish*, *publish1* *publish2* etc.
 * Only instances being defined as *local* are being considered in command `aemSetup`, `aemCreate`, `aemUp` etc (that comes from `com.cognifide.aem.instance` plugin).
-* All instances being defined as *local* or *remote* are being considered in commands CRX package deployment related like `aemSatisfy`, `aemDeploy`, `aemUpload`, `aemInstall` etc.
+* All instances being defined as *local* or *remote* are being considered in commands CRX package deployment related like `aemSatisfy`, `aemDeploy` etc.
 
 ### Understand why there are one or two plugins to be applied in build script
 
@@ -1088,13 +1111,6 @@ aem {
     } 
 }
 ```
-
-### Skip installed package resolution by download name. 
-
-```bash
-gradlew aemInstall -Paem.package.skipDownloadName=false
-```
-Only matters when Vault properties file is customized then that property could be used to eliminate conflicts.
 
 ## Known issues
 
