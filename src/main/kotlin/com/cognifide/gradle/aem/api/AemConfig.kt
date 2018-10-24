@@ -316,10 +316,10 @@ class AemConfig(
 
     /**
      * Define known exceptions which thrown during package installation
-     * make it impossible to succeed. When declared exception will be
-     * encountered at package installation process, no more retrying will be applied.
+     * make it impossible to succeed. When declared exception is encountered
+     * during package installation process, no more retries will be applied.
      */
-    @Input
+    @Internal
     @get:JsonIgnore
     var packageErrors = mutableListOf(
             "javax.jcr.nodetype.ConstraintViolationException",

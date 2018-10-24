@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.pkg.deploy
 
+import java.io.InputStream
 import java.util.regex.Pattern
 
 class UninstallResponse private constructor(private val rawHtml: String) : HtmlResponse(rawHtml) {
@@ -22,9 +23,11 @@ class UninstallResponse private constructor(private val rawHtml: String) : HtmlR
 
         val PACKAGE_MISSING: Pattern = Pattern.compile("<span class=\"Unable to revert package content. Snapshot missing")
 
-        fun from(html: String): UninstallResponse {
+        fun from(input: InputStream): UninstallResponse {
             return try {
-                UninstallResponse(html)
+                //TODO empty
+                val empty = UninstallResponse("")
+                UninstallResponse(readFrom(input,empty.getErrorPatterns(), listOf(UNINSTALL_SUCCESS)))
             } catch (e: Exception) {
                 throw ResponseException("Malformed uninstall package response.")
             }

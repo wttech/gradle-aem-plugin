@@ -1,5 +1,7 @@
 package com.cognifide.gradle.aem.pkg.deploy
 
+import java.io.InputStream
+
 class DeleteResponse private constructor(private val rawHtml: String) : HtmlResponse(rawHtml) {
 
     override fun getErrorPatterns(): List<ErrorPattern> {
@@ -19,9 +21,11 @@ class DeleteResponse private constructor(private val rawHtml: String) : HtmlResp
 
         const val DELETE_SUCCESS = "Package deleted in"
 
-        fun from(html: String): DeleteResponse {
+        fun from(input: InputStream): DeleteResponse {
             return try {
-                DeleteResponse(html)
+                //TODO empty
+                val empty = DeleteResponse("")
+                DeleteResponse(readFrom(input, empty.getErrorPatterns(), listOf(DELETE_SUCCESS)))
             } catch (e: Exception) {
                 throw ResponseException("Malformed delete package response.")
             }
