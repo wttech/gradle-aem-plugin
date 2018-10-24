@@ -175,8 +175,8 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
         for (i in 0..config.installRetry.times) {
             try {
                 return installPackageOnce(remotePath)
-            }catch (e: PackageException){
-                //TODO add logic
+//                //TODO catch critical installation here
+//            }catch (e: PackageException){
             }
             catch (e: DeployException) {
                 exception = e
@@ -200,7 +200,7 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
         logger.info("Installing package $remotePath on $instance")
 
         val response = try {
-            postMultipart(url, mapOf("recursive" to config.installRecursive)) { InstallResponseBuilder.buildFrom(asStream(it)) }
+            postMultipart(url, mapOf("recursive" to config.installRecursive)) { InstallResponse.from(asStream(it)) }
         } catch (e: RequestException) {
 
             throw DeployException("Cannot install package $remotePath on $instance. Reason: request failed.", e)

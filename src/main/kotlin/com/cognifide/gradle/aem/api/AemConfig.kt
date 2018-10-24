@@ -10,12 +10,10 @@ import com.cognifide.gradle.aem.internal.notifier.Notifier
 import com.cognifide.gradle.aem.pkg.ComposeTask
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.deploy.DeployException
-import com.cognifide.gradle.aem.pkg.deploy.PackageError
 import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.lang.Closure
 import org.gradle.api.DefaultTask
 import org.gradle.api.Project
-import org.gradle.api.Task
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.util.ConfigureUtil
@@ -322,7 +320,12 @@ class AemConfig(
      * encountered at package installation process, no more retrying will be applied.
      */
     @Input
-    var packageErrors = PackageError.getClassNames()
+    @get:JsonIgnore
+    var packageErrors = mutableListOf(
+            "javax.jcr.nodetype.ConstraintViolationException",
+            "org.apache.jackrabbit.vault.packaging.DependencyException",
+            "org.xml.sax.SAXException"
+    )
 
     /**
      * Ensures that for directory 'META-INF/vault' default files will be generated when missing:
