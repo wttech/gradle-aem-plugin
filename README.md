@@ -61,9 +61,6 @@ Looking for dedicated version of plugin for [**Apache Sling**](https://sling.apa
       * [Task aemPurge](#task-aempurge)
       * [Task aemActivate](#task-aemactivate)
       * [Task aemDownload](#task-aemdownload)
-   * [Deleted package plugin tasks](#deleted-package-plugin-tasks)
-      * [Task aemUpload](#task-aemupload)
-      * [Task aemInstall](#task-aeminstall)
    * [Instance plugin tasks](#instance-plugin-tasks)
       * [Task aemSetup](#task-aemsetup)
       * [Task aemResetup](#task-aemresetup)
@@ -507,36 +504,6 @@ CMD parameters:
 
 The contents of extracted package can be cleaned up using configured VLT rules by chaining [aemClean](#task-aemclean) task 
 `gradlew :aemDownload :aemClean`
-
-### Deleted package plugin tasks
-
-#### Task `aemUpload`
-
-Upload composed CRX package into AEM instance(s). This task is longer available. 
-
-#### Task `aemInstall`
-
-Install uploaded CRX package on AEM instance(s). This task is longer available.
-
-For edge cases, still the fallback will be available to redefine them manually:
-
-```groovy
-task aemUpload {
-   dependsOn aemCompose
-
-  doLast {
-      aem.sync { it.uploadPackage(aemCompose.archivePath) }
-   }
-}
-
-task aemInstall {
-   dependsOn aemUpload
-
-  doLast {
-      aem.sync { it.installPackage(aemCompose.archivePath) }  
-   }
-}
-``` 
 
 ### Instance plugin tasks
 
