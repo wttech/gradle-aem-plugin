@@ -119,10 +119,10 @@ class VltCleaner(val project: Project) {
     }
 
     fun clean(root: File) {
+        cleanDotContents(root)
         flattenFiles(root)
         removeFiles(root)
         removeEmptyDirs(root)
-        cleanDotContents(root)
 
         if (parentsBackupEnabled) {
             undoParentsBackup(root)
