@@ -206,9 +206,7 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
         }
         if (response.hasPackageErrors) {
             throw MalformedPackageException.of(response, "Encountered critical installation error(s) in package $remotePath:")
-        }
-
-        if (!response.success) {
+        } else if (!response.success) {
             throw DeployException("Cannot install package $remotePath on $instance. Status: ${response.status}. Errors: ${response.errors}.")
         }
 

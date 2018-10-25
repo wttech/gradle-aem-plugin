@@ -5,7 +5,7 @@ import java.io.InputStream
 class DeleteResponse private constructor(private val rawHtml: String) : HtmlResponse(rawHtml) {
 
     override fun getErrorPatterns(): List<ErrorPattern> {
-        return emptyList()
+        return ERROR_PATTERNS
     }
 
     override val status: Status
@@ -19,13 +19,14 @@ class DeleteResponse private constructor(private val rawHtml: String) : HtmlResp
 
     companion object {
 
-        const val DELETE_SUCCESS = "Package deleted in"
+        private const val DELETE_SUCCESS = "Package deleted in"
+
+        private val ERROR_PATTERNS = emptyList<ErrorPattern>()
 
         fun from(input: InputStream): DeleteResponse {
             return try {
-                //TODO empty
-                val empty = DeleteResponse("")
-                DeleteResponse(readFrom(input, empty.getErrorPatterns(), listOf(DELETE_SUCCESS)))
+                val statusTags = listOf(DELETE_SUCCESS)
+                DeleteResponse(readFrom(input, ERROR_PATTERNS, statusTags))
             } catch (e: Exception) {
                 throw ResponseException("Malformed delete package response.")
             }

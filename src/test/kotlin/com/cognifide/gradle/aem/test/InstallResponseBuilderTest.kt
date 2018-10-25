@@ -17,7 +17,7 @@ class InstallResponseBuilderTest(filename: String, private val expectedError: St
     companion object {
         private const val RESOURCE_PATH = "src/test/resources/com/cognifide/gradle/aem/test/response/"
 
-        private val PACKAGE_ERRORS = mutableListOf(
+        private val PACKAGE_ERRORS = mutableSetOf(
 
                 "javax.jcr.nodetype.ConstraintViolationException",
                 "org.apache.jackrabbit.vault.packaging.DependencyException",

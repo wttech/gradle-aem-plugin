@@ -1,0 +1,82 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN">
+<html><head>
+    <style type="text/css">
+        body {
+            background-color: white;
+            font-family: verdana, arial, sans-serif;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+        div {
+            font-family: courier, monospace;
+            font-size: 11px;
+        }
+    </style>
+    <script type="text/javascript">
+        function onStatus(pid, stat, p, max, msg) {
+            window.parent.cqPackageShareClient.onStatus(pid, stat, p, max, msg);
+            window.scrollTo(0, 1000000);
+        }
+    </script></head>
+<body><h2>Uninstalling content</h2><div><span class="Uninstalling package from snapshot com.company.aem/.snapshot:example-app:1.0.0-SNAPSHOT"><b>Uninstalling package from snapshot com.company.aem/.snapshot:example-app:1.0.0-SNAPSHOT</b>&nbsp;</span><br>
+<script>
+window.scrollTo(0, 1000000);
+</script>
+<br><span class="error">Error during processing.</span><br><code><pre>
+java.lang.IllegalStateException: Package not valid.
+	at org.apache.jackrabbit.vault.packaging.impl.ZipVaultPackage.prepareExtract(ZipVaultPackage.java:175)
+	at org.apache.jackrabbit.vault.packaging.impl.JcrPackageImpl.extract(JcrPackageImpl.java:390)
+	at org.apache.jackrabbit.vault.packaging.impl.JcrPackageImpl.extract(JcrPackageImpl.java:357)
+	at org.apache.jackrabbit.vault.packaging.impl.JcrPackageImpl.extract(JcrPackageImpl.java:343)
+	at org.apache.jackrabbit.vault.packaging.impl.JcrPackageImpl.uninstall(JcrPackageImpl.java:1009)
+	at org.apache.jackrabbit.vault.packaging.impl.JcrPackageImpl.uninstall(JcrPackageImpl.java:958)
+	at com.day.crx.packaging.impl.J2EEPackageManager.consoleUninstall(J2EEPackageManager.java:468)
+	at com.day.crx.packaging.impl.J2EEPackageManager.doPost(J2EEPackageManager.java:206)
+	at com.day.crx.packaging.impl.PackageManagerServlet.doPost(PackageManagerServlet.java:127)
+	at javax.servlet.http.HttpServlet.service(HttpServlet.java:644)
+	at javax.servlet.http.HttpServlet.service(HttpServlet.java:725)
+	at org.apache.felix.http.base.internal.handler.ServletHandler.handle(ServletHandler.java:120)
+	at org.apache.felix.http.base.internal.dispatch.InvocationChain.doFilter(InvocationChain.java:86)
+	at org.apache.sling.security.impl.ReferrerFilter.doFilter(ReferrerFilter.java:328)
+	at org.apache.felix.http.base.internal.handler.FilterHandler.handle(FilterHandler.java:135)
+	at org.apache.felix.http.base.internal.dispatch.InvocationChain.doFilter(InvocationChain.java:81)
+	at com.adobe.granite.license.impl.LicenseCheckFilter.doFilter(LicenseCheckFilter.java:308)
+	at org.apache.felix.http.base.internal.handler.FilterHandler.handle(FilterHandler.java:135)
+	at org.apache.felix.http.base.internal.dispatch.InvocationChain.doFilter(InvocationChain.java:81)
+	at org.apache.felix.http.sslfilter.internal.SslFilter.doFilter(SslFilter.java:96)
+	at org.apache.felix.http.base.internal.handler.FilterHandler.handle(FilterHandler.java:135)
+	at org.apache.felix.http.base.internal.dispatch.InvocationChain.doFilter(InvocationChain.java:81)
+	at org.apache.sling.i18n.impl.I18NFilter.doFilter(I18NFilter.java:131)
+	at org.apache.felix.http.base.internal.handler.FilterHandler.handle(FilterHandler.java:135)
+	at org.apache.felix.http.base.internal.dispatch.InvocationChain.doFilter(InvocationChain.java:81)
+	at org.apache.felix.http.base.internal.dispatch.Dispatcher$1.doFilter(Dispatcher.java:147)
+	at org.apache.felix.http.base.internal.whiteboard.WhiteboardManager.invokePreprocessors(WhiteboardManager.java:1000)
+	at org.apache.felix.http.base.internal.dispatch.Dispatcher.dispatch(Dispatcher.java:91)
+	at org.apache.felix.http.base.internal.dispatch.DispatcherServlet.service(DispatcherServlet.java:49)
+	at javax.servlet.http.HttpServlet.service(HttpServlet.java:725)
+	at org.eclipse.jetty.servlet.ServletHolder.handle(ServletHolder.java:848)
+	at org.eclipse.jetty.servlet.ServletHandler.doHandle(ServletHandler.java:584)
+	at org.eclipse.jetty.server.session.SessionHandler.doHandle(SessionHandler.java:224)
+	at org.eclipse.jetty.server.handler.ContextHandler.doHandle(ContextHandler.java:1180)
+	at org.eclipse.jetty.servlet.ServletHandler.doScope(ServletHandler.java:512)
+	at org.eclipse.jetty.server.session.SessionHandler.doScope(SessionHandler.java:185)
+	at org.eclipse.jetty.server.handler.ContextHandler.doScope(ContextHandler.java:1112)
+	at org.eclipse.jetty.server.handler.ScopedHandler.handle(ScopedHandler.java:141)
+	at org.eclipse.jetty.server.handler.ContextHandlerCollection.handle(ContextHandlerCollection.java:213)
+	at org.eclipse.jetty.server.handler.HandlerWrapper.handle(HandlerWrapper.java:134)
+	at org.eclipse.jetty.server.Server.handle(Server.java:534)
+	at org.eclipse.jetty.server.HttpChannel.handle(HttpChannel.java:333)
+	at org.eclipse.jetty.server.HttpConnection.onFillable(HttpConnection.java:251)
+	at org.eclipse.jetty.io.AbstractConnection$ReadCallback.succeeded(AbstractConnection.java:283)
+	at org.eclipse.jetty.io.FillInterest.fillable(FillInterest.java:108)
+	at org.eclipse.jetty.io.SelectChannelEndPoint$2.run(SelectChannelEndPoint.java:93)
+	at org.eclipse.jetty.util.thread.strategy.ExecuteProduceConsume.executeProduceConsume(ExecuteProduceConsume.java:303)
+	at org.eclipse.jetty.util.thread.strategy.ExecuteProduceConsume.produceConsume(ExecuteProduceConsume.java:148)
+	at org.eclipse.jetty.util.thread.strategy.ExecuteProduceConsume.run(ExecuteProduceConsume.java:136)
+	at org.eclipse.jetty.util.thread.QueuedThreadPool.runJob(QueuedThreadPool.java:671)
+	at org.eclipse.jetty.util.thread.QueuedThreadPool$2.run(QueuedThreadPool.java:589)
+	at java.lang.Thread.run(Thread.java:748)
+</pre></code><script type="text/javascript">
+window.scrollTo(0, 1000000);
+</script>
+</body></html>

@@ -321,7 +321,7 @@ class AemConfig(
      */
     @Internal
     @get:JsonIgnore
-    var packageErrors = mutableListOf(
+    var packageErrors = mutableSetOf(
             "javax.jcr.nodetype.ConstraintViolationException",
             "org.apache.jackrabbit.vault.packaging.DependencyException",
             "org.xml.sax.SAXException"

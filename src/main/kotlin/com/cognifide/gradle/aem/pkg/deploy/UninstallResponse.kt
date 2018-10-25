@@ -3,10 +3,10 @@ package com.cognifide.gradle.aem.pkg.deploy
 import java.io.InputStream
 import java.util.regex.Pattern
 
-class UninstallResponse private constructor(private val rawHtml: String) : HtmlResponse(rawHtml) {
+class UninstallResponse constructor(private val rawHtml: String) : HtmlResponse(rawHtml) {
 
     override fun getErrorPatterns(): List<ErrorPattern> {
-        return mutableListOf(ErrorPattern(PACKAGE_MISSING, false, "Package is not installed."))
+        return ERROR_PATTERNS
     }
 
     override val status: Status
@@ -19,15 +19,16 @@ class UninstallResponse private constructor(private val rawHtml: String) : HtmlR
         }
 
     companion object {
-        const val UNINSTALL_SUCCESS = "<span class=\"Uninstalling package from"
+        private const val UNINSTALL_SUCCESS = "<span class=\"Uninstalling package from"
 
-        val PACKAGE_MISSING: Pattern = Pattern.compile("<span class=\"Unable to revert package content. Snapshot missing")
+        private val PACKAGE_MISSING: Pattern = Pattern.compile("<span class=\"Unable to revert package content. Snapshot missing")
+
+        private val ERROR_PATTERNS = listOf(ErrorPattern(PACKAGE_MISSING, false, "Package is not installed."))
 
         fun from(input: InputStream): UninstallResponse {
             return try {
-                //TODO empty
-                val empty = UninstallResponse("")
-                UninstallResponse(readFrom(input,empty.getErrorPatterns(), listOf(UNINSTALL_SUCCESS)))
+                val statusTags = listOf(UNINSTALL_SUCCESS)
+                UninstallResponse(readFrom(input, ERROR_PATTERNS, statusTags))
             } catch (e: Exception) {
                 throw ResponseException("Malformed uninstall package response.")
             }
