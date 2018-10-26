@@ -16,9 +16,11 @@ open class CleanTask : AemDefaultTask() {
         description = "Clean checked out JCR content."
 
         project.run {
-            afterEvaluate {
-                tasks.getByName(config.syncTransferTaskName).doFirst {
-                    runner.cleanBeforeCheckout()
+            gradle.taskGraph.whenReady {
+                if (it.hasTask(tasks.getByName(NAME))) {
+                    tasks.getByName(config.syncTransferTaskName).doFirst {
+                        runner.cleanBeforeCheckout()
+                    }
                 }
             }
         }

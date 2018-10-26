@@ -127,12 +127,13 @@ class InstanceSync(val project: Project, val instance: Instance) {
     fun createHttpClient(): HttpClient {
         val builder = HttpClientBuilder.create()
                 .addInterceptorFirst(PreemptiveAuthInterceptor())
-                .setDefaultRequestConfig(RequestConfig.custom()
-                        .setSocketTimeout(connectionTimeout.toInt())
-                        .setConnectTimeout(connectionTimeout.toInt())
-                        .setConnectionRequestTimeout(connectionTimeout.toInt())
-                        .build()
-                )
+                .setDefaultRequestConfig(RequestConfig.custom().apply {
+                    if (!connectionRetries) {
+                        setSocketTimeout(connectionTimeout)
+                    }
+                    setConnectTimeout(connectionTimeout)
+                    setConnectionRequestTimeout(connectionTimeout)
+                }.build())
                 .setDefaultCredentialsProvider(BasicCredentialsProvider().apply {
                     setCredentials(AuthScope.ANY, UsernamePasswordCredentials(basicUser, basicPassword))
                 })
@@ -148,7 +149,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
 
     private fun createSslConnectionSocketFactory(): SSLConnectionSocketFactory {
         val sslContext = SSLContextBuilder()
-                .loadTrustMaterial(null, { _, _ -> true })
+                .loadTrustMaterial(null) { _, _ -> true }
                 .build()
         return SSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE)
     }

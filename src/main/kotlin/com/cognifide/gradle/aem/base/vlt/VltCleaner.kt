@@ -163,8 +163,14 @@ class VltCleaner(val project: Project) {
             return
         }
 
-        logger.info("Flattening file {}", file.path)
         val dest = File(file.parentFile.path + ".xml")
+        if (dest.exists()) {
+            logger.info("Overriding file by flattening $file")
+            FileUtils.deleteQuietly(dest)
+        } else {
+            logger.info("Flattening file $file")
+        }
+
         file.renameTo(dest)
     }
 
