@@ -300,6 +300,10 @@ aemClean {
             "cq:ReplicationStatus",
             "mix:versionable"
         ]
+        filesFlattened = [
+            "**/_cq_dialog/.content.xml",
+            "**/_cq_htmlTag/.content.xml"
+        ]
         namespacesSkipped = true
         parentsBackupEnabled = true
         parentsBackupSuffix = ".bak"
