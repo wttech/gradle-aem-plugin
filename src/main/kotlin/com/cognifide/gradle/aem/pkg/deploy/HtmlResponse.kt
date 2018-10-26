@@ -75,7 +75,6 @@ abstract class HtmlResponse(private val rawHtml: String) {
                 currentLine++
                 if (currentLine % NUMBER_OF_LINES_TO_READ == 0) {
                     extractErrors(chunk, resultBuilder, errorPatterns, statusTags)
-                    chunk.setLength(0)
                 }
             }
             extractErrors(chunk, resultBuilder, errorPatterns, statusTags)
@@ -92,6 +91,7 @@ abstract class HtmlResponse(private val rawHtml: String) {
             statusTags.forEach {
                 if (chunk.contains(it)) builder.append(it)
             }
+            chunk.setLength(0)
         }
     }
 

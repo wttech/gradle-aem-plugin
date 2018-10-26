@@ -5,9 +5,8 @@ import com.cognifide.gradle.aem.api.AemException
 class MalformedPackageException(message: String) : AemException(message) {
 
     companion object {
-        //TODO build proper message
         fun of(response: InstallResponse, messagePrefix: String): MalformedPackageException{
-            return MalformedPackageException("$messagePrefix ${response.encounteredPackageErrors}")
+            return MalformedPackageException("$messagePrefix ${response.encounteredPackageErrors} \n Errors: ${response.errors}")
         }
     }
 }

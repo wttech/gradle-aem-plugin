@@ -3,7 +3,7 @@ package com.cognifide.gradle.aem.pkg.deploy
 import java.io.InputStream
 import java.util.regex.Pattern
 
-class UninstallResponse constructor(private val rawHtml: String) : HtmlResponse(rawHtml) {
+class UninstallResponse private constructor(private val rawHtml: String) : HtmlResponse(rawHtml) {
 
     override fun getErrorPatterns(): List<ErrorPattern> {
         return ERROR_PATTERNS
@@ -25,10 +25,11 @@ class UninstallResponse constructor(private val rawHtml: String) : HtmlResponse(
 
         private val ERROR_PATTERNS = listOf(ErrorPattern(PACKAGE_MISSING, false, "Package is not installed."))
 
+        private val STATUS_TAGS = listOf(UNINSTALL_SUCCESS)
+
         fun from(input: InputStream): UninstallResponse {
             return try {
-                val statusTags = listOf(UNINSTALL_SUCCESS)
-                UninstallResponse(readFrom(input, ERROR_PATTERNS, statusTags))
+                UninstallResponse(readFrom(input, ERROR_PATTERNS, STATUS_TAGS))
             } catch (e: Exception) {
                 throw ResponseException("Malformed uninstall package response.")
             }

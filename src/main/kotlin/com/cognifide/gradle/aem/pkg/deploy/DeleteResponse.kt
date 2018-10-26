@@ -23,10 +23,11 @@ class DeleteResponse private constructor(private val rawHtml: String) : HtmlResp
 
         private val ERROR_PATTERNS = emptyList<ErrorPattern>()
 
+        private val STATUS_TAGS = listOf(DELETE_SUCCESS)
+
         fun from(input: InputStream): DeleteResponse {
             return try {
-                val statusTags = listOf(DELETE_SUCCESS)
-                DeleteResponse(readFrom(input, ERROR_PATTERNS, statusTags))
+                DeleteResponse(readFrom(input, ERROR_PATTERNS, STATUS_TAGS))
             } catch (e: Exception) {
                 throw ResponseException("Malformed delete package response.")
             }
