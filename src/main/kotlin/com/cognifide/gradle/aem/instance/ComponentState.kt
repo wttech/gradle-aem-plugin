@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.apache.commons.lang3.builder.EqualsBuilder
 import org.apache.commons.lang3.builder.HashCodeBuilder
+import java.io.InputStream
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 class ComponentState private constructor() {
@@ -61,9 +62,9 @@ class ComponentState private constructor() {
 
     companion object {
 
-        fun fromJson(json: String): ComponentState {
+        fun from(input: InputStream): ComponentState {
             return try {
-                ObjectMapper().readValue(json, ComponentState::class.java)
+                ObjectMapper().readValue(input, ComponentState::class.java)
             } catch(e: Exception) {
                 throw ResponseException("Malformed component state response.")
             }

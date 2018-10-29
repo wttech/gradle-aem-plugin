@@ -298,7 +298,7 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
         logger.debug("Asking for OSGi bundles on $instance")
 
         return try {
-            get(OSGI_BUNDLES_PATH) { BundleState.fromJson(asString(it)) }
+            get(OSGI_BUNDLES_PATH) { BundleState.from(asStream(it)) }
         } catch (e: Exception) {
             logger.debug("Cannot determine OSGi bundles state on $instance", e)
             BundleState.unknown(e)
@@ -309,7 +309,7 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
         logger.debug("Asking for OSGi components on $instance")
 
         return try {
-            ComponentState.fromJson(get(OSGI_COMPONENTS_PATH) { asString(it) })
+            get(OSGI_COMPONENTS_PATH) {ComponentState.from(asStream(it))}
         } catch (e: Exception) {
             logger.debug("Cannot determine OSGi components state on $instance", e)
             ComponentState.unknown()

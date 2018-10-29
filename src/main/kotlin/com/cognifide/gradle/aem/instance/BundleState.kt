@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.apache.commons.lang3.builder.EqualsBuilder
 import org.apache.commons.lang3.builder.HashCodeBuilder
+import java.io.InputStream
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 class BundleState private constructor() {
@@ -93,9 +94,9 @@ class BundleState private constructor() {
     }
 
     companion object {
-        fun fromJson(json: String): BundleState {
+        fun from(input: InputStream): BundleState {
             return try {
-                ObjectMapper().readValue(json, BundleState::class.java)
+                ObjectMapper().readValue(input, BundleState::class.java)
             } catch (e: Exception) {
                 throw ResponseException("Malformed bundle state response.")
             }
