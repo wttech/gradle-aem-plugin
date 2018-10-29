@@ -27,9 +27,9 @@ class UninstallResponse private constructor(private val rawHtml: String) : HtmlR
 
         private val STATUS_TAGS = listOf(UNINSTALL_SUCCESS)
 
-        fun from(input: InputStream): UninstallResponse {
+        fun from(input: InputStream, bufferSize: Int): UninstallResponse {
             return try {
-                UninstallResponse(readFrom(input, ERROR_PATTERNS, STATUS_TAGS))
+                UninstallResponse(readFrom(input, ERROR_PATTERNS, STATUS_TAGS, bufferSize))
             } catch (e: Exception) {
                 throw ResponseException("Malformed uninstall package response.")
             }

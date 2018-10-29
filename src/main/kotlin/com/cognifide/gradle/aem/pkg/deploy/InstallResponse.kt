@@ -3,12 +3,7 @@ package com.cognifide.gradle.aem.pkg.deploy
 import java.io.InputStream
 import java.util.regex.Pattern
 
-class InstallResponse private constructor(private val rawHtml: String, private val packageErrors: Set<String>) : HtmlResponse(rawHtml) {
-
-    val encounteredPackageErrors = findPackageErrors()
-
-    val hasPackageErrors: Boolean
-        get() = encounteredPackageErrors.isNotEmpty()
+class InstallResponse private constructor(private val rawHtml: String) : HtmlResponse(rawHtml) {
 
     override fun getErrorPatterns(): List<ErrorPattern> {
         return ERROR_PATTERNS
@@ -23,7 +18,7 @@ class InstallResponse private constructor(private val rawHtml: String, private v
             }
         }
 
-    private fun findPackageErrors(): Set<String> {
+    fun findPackageErrors(packageErrors:Collection<String>): Set<String> {
         return errors.fold(mutableSetOf())
             { results, error ->
                 packageErrors.forEach { packageError ->
@@ -49,9 +44,9 @@ class InstallResponse private constructor(private val rawHtml: String, private v
 
         private val STATUS_TAGS = listOf(INSTALL_SUCCESS, INSTALL_SUCCESS_WITH_ERRORS)
 
-        fun from(input: InputStream, packageErrors: Set<String>): InstallResponse {
+        fun from(input: InputStream, bufferSize: Int): InstallResponse {
             return try {
-                InstallResponse(readFrom(input, ERROR_PATTERNS, STATUS_TAGS), packageErrors)
+                InstallResponse(readFrom(input, ERROR_PATTERNS, STATUS_TAGS,bufferSize))
             } catch (e: Exception) {
                 throw ResponseException("Malformed install package response.")
             }

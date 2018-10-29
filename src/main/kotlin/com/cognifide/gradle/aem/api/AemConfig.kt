@@ -197,6 +197,28 @@ class AemConfig(
     }
 
     /**
+     * Define known exceptions which thrown during package installation
+     * make it impossible to succeed. When declared exception is encountered
+     * during package installation process, no more retries will be applied.
+     */
+    @Internal
+    @get:JsonIgnore
+    var packageErrors = mutableSetOf(
+            "javax.jcr.nodetype.ConstraintViolationException",
+            "org.apache.jackrabbit.vault.packaging.DependencyException",
+            "org.xml.sax.SAXException"
+    )
+
+    /**
+     * Determines number of lines to process at once during reading html responses.
+     * The higher the value, the bigger consumption of memory but shorter execution time.
+     * It was introduced to avoid Java heap space exceptions.
+     *
+     */
+    @Input
+    var packageResponseBuffer = props.int("aem.package.responseBuffer", 5000)
+
+    /**
      * CRX package name conventions (with wildcard) indicating that package can change over time
      * while having same version specified. Affects CRX packages composed  and satisfied.
      */
@@ -313,19 +335,6 @@ class AemConfig(
     @Internal
     @get:JsonIgnore
     var installRetry = retry { afterSquaredSecond(props.long("aem.install.retry", 4)) }
-
-    /**
-     * Define known exceptions which thrown during package installation
-     * make it impossible to succeed. When declared exception is encountered
-     * during package installation process, no more retries will be applied.
-     */
-    @Internal
-    @get:JsonIgnore
-    var packageErrors = mutableSetOf(
-            "javax.jcr.nodetype.ConstraintViolationException",
-            "org.apache.jackrabbit.vault.packaging.DependencyException",
-            "org.xml.sax.SAXException"
-    )
 
     /**
      * Ensures that for directory 'META-INF/vault' default files will be generated when missing:

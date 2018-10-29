@@ -198,6 +198,7 @@
       },
 
       "packageName": "additional",
+      "packageResponseBuffer" : 5000,
       "packageLocalPath": "",
       "packageRemotePath": "",
       "packageFilesExcluded": [

@@ -57,6 +57,7 @@
       },
 
       "packageName": "minimal",
+      "packageResponseBuffer" : 5000,
       "packageLocalPath": "",
       "packageRemotePath": "",
       "packageFilesExcluded": [

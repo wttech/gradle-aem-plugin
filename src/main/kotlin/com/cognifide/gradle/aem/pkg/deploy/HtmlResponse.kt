@@ -54,26 +54,17 @@ abstract class HtmlResponse(private val rawHtml: String) {
         get() = status == Status.SUCCESS
 
     companion object {
-        private const val NUMBER_OF_LINES_TO_READ = 5000
 
         private const val ERROR_SEPARATOR = "\n\n"
 
-        private const val LINE_FEED = 10.toChar()
-
-        fun readFrom(stream: InputStream, errorPatterns: List<ErrorPattern>, statusTags: List<String>): String {
-            val buf = IOUtils.toBufferedInputStream(stream)
-            val reader = buf.bufferedReader()
-            return readByLines(reader,errorPatterns,statusTags)
-        }
-
-        private fun readByLines(input: BufferedReader, errorPatterns: List<ErrorPattern>, statusTags: List<String>): String {
+        fun readFrom(input: InputStream, errorPatterns: List<ErrorPattern>, statusTags: List<String>, bufferSize: Int): String {
             val resultBuilder = StringBuilder()
             val chunk = StringBuilder()
             var currentLine = 0
-            input.forEachLine {
-                chunk.append(it + LINE_FEED)
+            input.bufferedReader().forEachLine {
+                chunk.appendln(it)
                 currentLine++
-                if (currentLine % NUMBER_OF_LINES_TO_READ == 0) {
+                if (currentLine % bufferSize == 0) {
                     extractErrors(chunk, resultBuilder, errorPatterns, statusTags)
                 }
             }
@@ -89,7 +80,9 @@ abstract class HtmlResponse(private val rawHtml: String) {
                 }
             }
             statusTags.forEach {
-                if (chunk.contains(it)) builder.append(it)
+                if (chunk.contains(it)) {
+                    builder.append(it)
+                }
             }
             chunk.setLength(0)
         }
