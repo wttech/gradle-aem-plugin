@@ -1,7 +1,5 @@
 package com.cognifide.gradle.aem.pkg.deploy
 
-import org.apache.commons.io.IOUtils
-import java.io.BufferedReader
 import java.io.InputStream
 import java.util.regex.Pattern
 
