@@ -256,7 +256,7 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
         logger.info("Deleting package $remotePath on $instance")
 
         val response = try {
-            postMultipart(url) { DeleteResponse.from(asStream(it),config.packageResponseBuffer) }
+            postMultipart(url) { DeleteResponse.from(asStream(it), config.packageResponseBuffer) }
         } catch (e: RequestException) {
             throw DeployException("Cannot delete package $remotePath from $instance. Reason: request failed.", e)
         } catch (e: ResponseException) {
@@ -276,7 +276,7 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
         logger.info("Uninstalling package using command: $url")
 
         val response = try {
-            postMultipart(url, mapOf("recursive" to config.installRecursive)) { UninstallResponse.from(asStream(it),config.packageResponseBuffer) }
+            postMultipart(url, mapOf("recursive" to config.installRecursive)) { UninstallResponse.from(asStream(it), config.packageResponseBuffer) }
         } catch (e: RequestException) {
             throw DeployException("Cannot uninstall package $remotePath on $instance. Reason: request failed.", e)
         } catch (e: ResponseException) {

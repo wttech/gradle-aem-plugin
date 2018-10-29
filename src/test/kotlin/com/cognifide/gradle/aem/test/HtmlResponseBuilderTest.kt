@@ -23,13 +23,13 @@ class HtmlResponseBuilderTest {
 
     @Test
     fun shouldContainDependencyPackageException() {
-        val response = InstallResponse.from(importFileAsStream("failure-dependency-exception.txt"), 5000)
+        val response = InstallResponse.from(importFileAsStream("failure-dependency-exception.txt"), 4096)
         assertTrue(response.findPackageErrors(setOf(DEPENDENCY_EXCEPTION)).contains(DEPENDENCY_EXCEPTION))
     }
 
     @Test
     fun shouldFinishWithSuccessStatus() {
-        val response = DeleteResponse.from(importFileAsStream("example-delete.txt"), 5000)
+        val response = DeleteResponse.from(importFileAsStream("example-delete.txt"), 4096)
         assertEquals(response.status, HtmlResponse.Status.SUCCESS)
     }
 }

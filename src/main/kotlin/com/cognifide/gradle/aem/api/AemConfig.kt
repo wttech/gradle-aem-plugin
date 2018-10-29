@@ -216,7 +216,7 @@ class AemConfig(
      *
      */
     @Input
-    var packageResponseBuffer = props.int("aem.package.responseBuffer", 5000)
+    var packageResponseBuffer = props.int("aem.package.responseBuffer", 4096)
 
     /**
      * CRX package name conventions (with wildcard) indicating that package can change over time

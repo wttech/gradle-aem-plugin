@@ -18,13 +18,13 @@ class InstallResponse private constructor(private val rawHtml: String) : HtmlRes
             }
         }
 
-    fun findPackageErrors(packageErrors:Collection<String>): Set<String> {
+    fun findPackageErrors(packageErrors: Collection<String>): Set<String> {
         return errors.fold(mutableSetOf())
-            { results, error ->
-                packageErrors.forEach { packageError ->
-                    if (error.contains(packageError)) results.add(packageError)
-                }; results
-            }
+        { results, error ->
+            packageErrors.forEach { packageError ->
+                if (error.contains(packageError)) results.add(packageError)
+            }; results
+        }
     }
 
     companion object {
@@ -46,7 +46,7 @@ class InstallResponse private constructor(private val rawHtml: String) : HtmlRes
 
         fun from(input: InputStream, bufferSize: Int): InstallResponse {
             return try {
-                InstallResponse(readFrom(input, ERROR_PATTERNS, STATUS_TAGS,bufferSize))
+                InstallResponse(readFrom(input, ERROR_PATTERNS, STATUS_TAGS, bufferSize))
             } catch (e: Exception) {
                 throw ResponseException("Malformed install package response.")
             }
