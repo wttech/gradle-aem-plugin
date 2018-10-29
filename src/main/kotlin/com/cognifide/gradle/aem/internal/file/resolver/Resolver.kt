@@ -212,16 +212,8 @@ abstract class Resolver<G : FileGroup>(val project: Project, val downloadDir: Fi
         resolve(sourceFile.absolutePath) { sourceFile }
     }
 
-    fun config(configurer: Closure<G>) {
-        ConfigureUtil.configure(configurer, groupCurrent)
-    }
-
     fun config(configurer: G.() -> Unit) {
         groupCurrent.apply(configurer)
-    }
-
-    fun group(name: String, configurer: Closure<Resolver<G>>) {
-        group(name) { ConfigureUtil.configure(configurer, this) }
     }
 
     @Synchronized

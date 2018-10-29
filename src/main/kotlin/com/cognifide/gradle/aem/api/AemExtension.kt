@@ -3,19 +3,27 @@ package com.cognifide.gradle.aem.api
 import com.cognifide.gradle.aem.instance.Instance
 import com.cognifide.gradle.aem.instance.InstancePlugin
 import com.cognifide.gradle.aem.instance.InstanceSync
+import com.cognifide.gradle.aem.instance.LocalHandle
+import com.cognifide.gradle.aem.internal.PropertyParser
+import com.cognifide.gradle.aem.pkg.ComposeTask
 import com.cognifide.gradle.aem.pkg.PackagePlugin
-import groovy.lang.Closure
 import org.gradle.api.Project
-import org.gradle.util.ConfigureUtil
+import org.gradle.api.Task
+import java.io.File
 
 /**
  * Main place for providing build script DSL capabilities in case of AEM.
  */
 open class AemExtension(@Transient private val project: Project) {
 
-    val config = AemConfig(project)
+    /**
+     * Allows to read project property specified in command line and system property as a fallback.
+     */
+    val props = PropertyParser(project)
 
-    val bundle = AemBundle(project)
+    val config = AemConfig(this, project)
+
+    val bundle = AemBundle(this, project)
 
     val notifier = AemNotifier.of(project)
 
@@ -28,44 +36,89 @@ open class AemExtension(@Transient private val project: Project) {
         return Instance.filter(project, filter)
     }
 
+    fun instances(consumer: (Instance) -> Unit) {
+        instances.parallelStream().forEach(consumer)
+    }
+
+    fun instances(filter: String, consumer: (Instance) -> Unit) {
+        instances(filter).parallelStream().forEach(consumer)
+    }
+
     fun instance(urlOrName: String): Instance {
         return config.parseInstance(urlOrName)
     }
 
-    fun sync(synchronizer: (InstanceSync) -> Unit) {
+    val handles: List<LocalHandle>
+        get() = Instance.handles(project)
+
+    fun handles(consumer: LocalHandle.() -> Unit) {
+        handles.parallelStream().forEach(consumer)
+    }
+
+    fun handles(handles: Collection<LocalHandle>, consumer: LocalHandle.() -> Unit) {
+        handles.parallelStream().forEach(consumer)
+    }
+
+    fun packages(consumer: (File) -> Unit) {
+        project.tasks.withType(ComposeTask::class.java)
+                .map { it.archivePath }
+                .parallelStream()
+                .forEach(consumer)
+    }
+
+    val packages: List<File>
+        get() = project.tasks.withType(ComposeTask::class.java)
+                .map { it.archivePath }
+
+    fun packages(task: Task): List<File> {
+        return task.taskDependencies.getDependencies(task)
+                .filterIsInstance(ComposeTask::class.java)
+                .map { it.archivePath }
+    }
+
+    val packageDefault: File
+        get() = compose.archivePath
+
+    val compose: ComposeTask = compose(project)
+
+    fun compose(project: Project) = project.tasks.getByName(ComposeTask.NAME) as ComposeTask
+
+    fun sync(synchronizer: InstanceSync.() -> Unit) = sync(instances, synchronizer)
+
+    fun sync(instances: Collection<Instance>, synchronizer: InstanceSync.() -> Unit) {
         instances.parallelStream().forEach { it.sync(synchronizer) }
     }
 
-    fun config(configurer: Closure<AemConfig>) {
-        ConfigureUtil.configure(configurer, config)
+    fun syncPackages(synchronizer: InstanceSync.(File) -> Unit) = syncPackages(instances, packages, synchronizer)
+
+    fun syncPackages(instances: Collection<Instance>, packages: Collection<File>, synchronizer: InstanceSync.(File) -> Unit) {
+        val pairs = mutableListOf<Pair<Instance, File>>()
+        instances.forEach { i -> packages.forEach { p -> Pair(i, p) } }
+        pairs.parallelStream().forEach { (i, p) -> synchronizer(InstanceSync(project, i), p) }
     }
 
     fun config(configurer: AemConfig.() -> Unit) {
         config.apply(configurer)
     }
 
-    fun bundle(configurer: Closure<AemBundle>) {
-        ConfigureUtil.configure(configurer, bundle)
-    }
-
     fun bundle(configurer: AemBundle.() -> Unit) {
         bundle.apply(configurer)
-    }
-
-    fun notifier(configurer: Closure<AemNotifier>) {
-        ConfigureUtil.configure(configurer, notifier)
     }
 
     fun notifier(configurer: AemNotifier.() -> Unit) {
         notifier.apply(configurer)
     }
 
-    fun tasks(configurer: Closure<AemTaskFactory>) {
-        ConfigureUtil.configure(configurer, tasks)
-    }
-
     fun tasks(configurer: AemTaskFactory.() -> Unit) {
         tasks.apply(configurer)
+    }
+
+    fun retry(configurer: AemRetry.() -> Unit): AemRetry {
+        return retry().apply(configurer)
+    }
+
+    fun retry(): AemRetry {
+        return AemRetry()
     }
 
     companion object {

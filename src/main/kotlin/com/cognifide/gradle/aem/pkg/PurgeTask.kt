@@ -1,41 +1,36 @@
-package com.cognifide.gradle.aem.pkg.deploy
+package com.cognifide.gradle.aem.pkg
 
-import com.cognifide.gradle.aem.api.AemDefaultTask
-import com.cognifide.gradle.aem.instance.Instance
 import com.cognifide.gradle.aem.instance.InstanceSync
 import com.cognifide.gradle.aem.instance.names
-import com.cognifide.gradle.aem.instance.sync
+import com.cognifide.gradle.aem.internal.fileNames
 import org.gradle.api.tasks.TaskAction
 
-open class PurgeTask : AemDefaultTask() {
+open class PurgeTask : SyncTask() {
 
     init {
         description = "Uninstalls and then deletes CRX package on AEM instance(s)."
 
-        afterConfigured { props.checkForce() }
+        afterConfigured { aem.props.checkForce() }
     }
 
     @TaskAction
     fun purge() {
-        val pkg = config.packageFileName
-        val instances = Instance.filter(project)
-
-        instances.sync(project) { sync ->
+        aem.syncPackages(instances, packages) { pkg ->
             try {
-                val packagePath = sync.determineRemotePackagePath()
+                val packagePath = determineRemotePackagePath(pkg)
 
-                uninstall(packagePath, sync)
-                delete(packagePath, sync)
+                uninstall(this, packagePath)
+                delete(this, packagePath)
             } catch (e: DeployException) {
                 logger.info(e.message)
                 logger.debug("Nothing to purge.", e)
             }
         }
 
-        notifier.default("Package purged", "$pkg from ${instances.names}")
+        aem.notifier.default("Package purged", "${packages.fileNames} from ${instances.names}")
     }
 
-    private fun uninstall(packagePath: String, sync: InstanceSync) {
+    private fun uninstall(sync: InstanceSync, packagePath: String) {
         try {
             sync.uninstallPackage(packagePath)
         } catch (e: DeployException) {
@@ -44,7 +39,7 @@ open class PurgeTask : AemDefaultTask() {
         }
     }
 
-    private fun delete(packagePath: String, sync: InstanceSync) {
+    private fun delete(sync: InstanceSync, packagePath: String) {
         try {
             sync.deletePackage(packagePath)
         } catch (e: DeployException) {

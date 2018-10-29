@@ -2,7 +2,6 @@ package com.cognifide.gradle.aem.internal
 
 import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.api.AemException
-import com.cognifide.gradle.aem.base.vlt.SyncTask
 import com.mitchellbosecke.pebble.PebbleEngine
 import com.mitchellbosecke.pebble.lexer.Syntax
 import com.mitchellbosecke.pebble.loader.StringLoader
@@ -18,8 +17,6 @@ class PropertyParser(val project: Project) {
     companion object {
 
         const val FORCE_PROP = "aem.force"
-
-        val FORCE_MESSAGE = "Before continuing it is recommended to protect against potential data loss by checking out JCR content using '${SyncTask.NAME}' task then saving it in VCS."
 
         private const val TEMPLATE_VAR_PREFIX = "{{"
 
@@ -49,12 +46,12 @@ class PropertyParser(val project: Project) {
             return project.property(name).toString()
         }
 
-        var systemValue = System.getProperty(name)
+        val systemValue = System.getProperty(name)
         if (systemValue != null) {
             return systemValue
         }
 
-        var envValue = System.getenv(name)
+        val envValue = System.getenv(name)
         if (envValue != null) {
             return envValue
         }
@@ -112,7 +109,7 @@ class PropertyParser(val project: Project) {
     }
 
     fun expandPackage(source: String, props: Map<String, Any>, context: String? = null): String {
-        val interpolableProps = envProps + systemProps + packageProps + props
+        val interpolableProps = envProps + systemProps + props
         val templateProps = projectProps + configProps + props
 
         return expand(source, interpolableProps, templateProps, context)
@@ -138,9 +135,9 @@ class PropertyParser(val project: Project) {
     }
 
     val systemProps: Map<String, String> by lazy {
-        System.getProperties().entries.fold(mutableMapOf<String, String>(), { props, prop ->
+        System.getProperties().entries.fold(mutableMapOf<String, String>()) { props, prop ->
             props.put(prop.key.toString(), prop.value.toString()); props
-        })
+        }
     }
 
     val projectProps: Map<String, Any>
@@ -157,21 +154,6 @@ class PropertyParser(val project: Project) {
 
     val configProps: Map<String, Any>
         get() = mapOf("config" to AemConfig.of(project))
-
-    val packageProps: Map<String, Any>
-        get() {
-            val config = AemConfig.of(project)
-            val defaults = mapOf(
-                    // Simple defaults
-                    "requiresRoot" to "false",
-
-                    // Dynamic values
-                    "buildCount" to SimpleDateFormat("yDDmmssSSS").format(config.packageBuildDate),
-                    "created" to Formats.date(config.packageBuildDate)
-            )
-
-            return defaults + config.packageFileProperties + configProps
-        }
 
     fun isForce(): Boolean {
         return flag(FORCE_PROP)

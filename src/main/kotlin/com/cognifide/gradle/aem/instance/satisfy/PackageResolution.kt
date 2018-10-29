@@ -61,9 +61,8 @@ class PackageResolution(group: PackageGroup, id: String, action: (FileResolution
                 "filters" to filters,
                 "filterRoots" to filters.joinToString(config.vaultLineSeparatorString) { it.toString() }
         )
-        val generalProps = config.props.packageProps
         val overrideProps = config.satisfyBundleProperties(bundle)
-        val effectiveProps = generalProps + bundleProps + overrideProps
+        val effectiveProps = bundleProps + overrideProps
 
         FileOperations.amendFiles(vaultDir, listOf("**/${PackagePlugin.VLT_PATH}/*.xml")) { file, content ->
             config.props.expand(content, effectiveProps, file.absolutePath)

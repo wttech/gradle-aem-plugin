@@ -265,6 +265,10 @@ interface Instance : Serializable {
 val Collection<Instance>.names: String
     get() = joinToString(", ") { it.name }
 
+fun Collection<Instance>.toLocalHandles(project: Project): List<LocalHandle> {
+    return filterIsInstance(LocalInstance::class.java).map { LocalHandle(project, it) }
+}
+
 fun Instance.isInitialized(project: Project): Boolean {
     return this !is LocalInstance || LocalHandle(project, this).initialized
 }

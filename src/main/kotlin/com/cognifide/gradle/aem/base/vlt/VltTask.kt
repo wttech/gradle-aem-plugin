@@ -5,10 +5,6 @@ import org.gradle.api.tasks.TaskAction
 
 open class VltTask : AemDefaultTask() {
 
-    companion object {
-        const val NAME = "aemVlt"
-    }
-
     init {
         description = "Execute any Vault command."
     }
@@ -21,7 +17,11 @@ open class VltTask : AemDefaultTask() {
         }
 
         VltRunner(project).raw(command)
-        notifier.default("Executing Vault command", "Command '$command' finished.")
+        aem.notifier.default("Executing Vault command", "Command '$command' finished.")
+    }
+
+    companion object {
+        const val NAME = "aemVlt"
     }
 
 }

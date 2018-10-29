@@ -95,3 +95,6 @@ object Formats {
     }
 
 }
+
+val Collection<File>.fileNames
+    get() = joinToString(", ") { it.name }

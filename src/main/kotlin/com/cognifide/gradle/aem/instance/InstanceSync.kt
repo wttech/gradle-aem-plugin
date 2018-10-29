@@ -7,8 +7,7 @@ import com.cognifide.gradle.aem.internal.ProgressCountdown
 import com.cognifide.gradle.aem.internal.file.FileException
 import com.cognifide.gradle.aem.internal.file.downloader.HttpFileDownloader
 import com.cognifide.gradle.aem.internal.http.PreemptiveAuthInterceptor
-import com.cognifide.gradle.aem.pkg.PackagePlugin
-import com.cognifide.gradle.aem.pkg.deploy.*
+import com.cognifide.gradle.aem.pkg.*
 import org.apache.commons.io.IOUtils
 import org.apache.http.HttpEntity
 import org.apache.http.HttpResponse
@@ -51,9 +50,9 @@ class InstanceSync(val project: Project, val instance: Instance) {
 
     var connectionRetries = true
 
-    var requestConfigurer: (HttpRequestBase) -> Unit = { _ -> }
+    var requestConfigurer: (HttpRequestBase) -> Unit = { }
 
-    var responseHandler: (HttpResponse) -> Unit = { _ -> }
+    var responseHandler: (HttpResponse) -> Unit = { }
 
     fun get(path: String): String {
         return fetch(HttpGet(composeUrl(path)))
@@ -178,18 +177,8 @@ class InstanceSync(val project: Project, val instance: Instance) {
         return builder.build()
     }
 
-    fun determineRemotePackage(): ListResponse.Package? {
-        return resolveRemotePackage({ response ->
-            response.resolvePackage(project, ListResponse.Package(project))
-        }, true)
-    }
-
-    fun determineRemotePackagePath(): String {
-        if (!config.packageRemotePath.isBlank()) {
-            return config.packageRemotePath
-        }
-
-        val pkg = determineRemotePackage()
+    fun determineRemotePackagePath(file: File): String {
+        val pkg = determineRemotePackage(file)
                 ?: throw DeployException("Package is not uploaded on AEM instance.")
 
         return pkg.path

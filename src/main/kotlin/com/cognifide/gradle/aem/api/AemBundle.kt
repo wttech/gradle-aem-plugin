@@ -17,28 +17,19 @@ import org.gradle.api.tasks.bundling.Jar
  * OSGi bundle related properties, because it is not possible to add properties to existing tasks
  * like 'jar' directly.
  */
-class AemBundle(@Transient private val project: Project) {
+class AemBundle(
+        @Transient
+        @JsonIgnore
+        private val aem: AemExtension,
+
+        @Transient
+        @JsonIgnore
+        private val project: Project
+) {
 
     private val jar by lazy {
         (project.tasks.findByName(JavaPlugin.JAR_TASK_NAME)
                 ?: throw AemException("Plugin '${BundlePlugin.ID}' is not applied.")) as Jar
-    }
-
-    private val config = AemConfig.of(project)
-
-    /**
-     * Content path for bundle jars being placed in CRX package.
-     *
-     * Default convention assumes that subprojects have separate bundle paths, because of potential re-installation of subpackages.
-     * When all subprojects will have same bundle path, reinstalling one subpackage may end with deletion of other bundles coming from another subpackage.
-     *
-     * Beware that more nested bundle install directories are not supported by AEM by default.
-     */
-    @Input
-    var installPath: String = if (project == project.rootProject) {
-        "/apps/${project.rootProject.name}/install"
-    } else {
-        "/apps/${project.rootProject.name}/${config.projectName}/install"
     }
 
     /**
@@ -111,15 +102,15 @@ class AemBundle(@Transient private val project: Project) {
             if (javaPackage == AemConfig.AUTO_DETERMINED) {
                 javaPackage = javaPackageDefault
             }
-
-            if (installPath.isBlank()) {
-                throw AemException("Bundle path cannot be blank")
-            }
         }
     }
 
     fun attribute(name: String, value: String) {
         jar.manifest.attributes(mapOf(name to value))
+    }
+
+    fun activator(className: String) {
+        attribute("Bundle-Activator", className)
     }
 
     fun exportPackage(pkg: String) {

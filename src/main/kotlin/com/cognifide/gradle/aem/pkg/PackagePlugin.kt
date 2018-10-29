@@ -6,7 +6,6 @@ import com.cognifide.gradle.aem.instance.CreateTask
 import com.cognifide.gradle.aem.instance.InstancePlugin
 import com.cognifide.gradle.aem.instance.SatisfyTask
 import com.cognifide.gradle.aem.instance.UpTask
-import com.cognifide.gradle.aem.pkg.deploy.*
 import org.gradle.api.Project
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 
@@ -26,17 +25,11 @@ class PackagePlugin : AemPlugin() {
             it.dependsOn(LifecycleBasePlugin.ASSEMBLE_TASK_NAME, LifecycleBasePlugin.CHECK_TASK_NAME)
             it.mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
         }
-        registerTask(UploadTask.NAME, UploadTask::class.java) {
-            it.dependsOn(ComposeTask.NAME)
-        }
         registerTask(DeleteTask.NAME, DeleteTask::class.java)
         registerTask(PurgeTask.NAME, PurgeTask::class.java)
-        registerTask(InstallTask.NAME, InstallTask::class.java) {
-            it.mustRunAfter(ComposeTask.NAME, UploadTask.NAME)
-        }
         registerTask(UninstallTask.NAME, UninstallTask::class.java)
         registerTask(ActivateTask.NAME, ActivateTask::class.java) {
-            it.mustRunAfter(ComposeTask.NAME, UploadTask.NAME, InstallTask.NAME)
+            it.mustRunAfter(ComposeTask.NAME)
         }
         registerTask(DeployTask.NAME, DeployTask::class.java) {
             it.dependsOn(ComposeTask.NAME)

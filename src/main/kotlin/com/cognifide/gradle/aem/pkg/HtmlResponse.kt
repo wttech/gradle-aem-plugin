@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.pkg.deploy
+package com.cognifide.gradle.aem.pkg
 
 import java.util.regex.Pattern
 

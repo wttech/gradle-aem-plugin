@@ -22,7 +22,7 @@ open class CheckoutTask : AemDefaultTask() {
     @TaskAction
     fun checkout() {
         runner.checkout()
-        notifier.default("Checked out JCR content", "Instance: ${runner.checkoutInstance.name}. Directory: ${Formats.rootProjectPath(config.contentPath, project)}")
+        aem.notifier.default("Checked out JCR content", "Instance: ${runner.checkoutInstance.name}. Directory: ${Formats.rootProjectPath(aem.compose.contentPath, project)}")
     }
 
 }

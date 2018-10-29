@@ -4,12 +4,12 @@ import com.cognifide.gradle.aem.api.AemDefaultTask
 
 open class RestartTask : AemDefaultTask() {
 
-    companion object {
-        val NAME = "aemRestart"
-    }
-
     init {
         description = "Turns off then on local AEM instance(s)."
+    }
+
+    companion object {
+        const val NAME = "aemRestart"
     }
 
 }

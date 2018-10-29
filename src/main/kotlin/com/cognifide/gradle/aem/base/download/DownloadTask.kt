@@ -58,7 +58,7 @@ open class DownloadTask : AemDefaultTask() {
             sync.downloadPackage(packagePath, packageFile)
 
             if (config.downloadExtract) {
-                val jcrRoot = File("${config.contentPath}/${PackagePlugin.JCR_ROOT}")
+                val jcrRoot = File("${aem.compose.contentPath}/${PackagePlugin.JCR_ROOT}")
                 logger.lifecycle("Extracting package $packageFile to $jcrRoot")
 
                 extractDownloadedPackage(packageFile, jcrRoot)
@@ -87,7 +87,7 @@ open class DownloadTask : AemDefaultTask() {
         FileOperations.copyResources(PackagePlugin.VLT_PATH, vltDir, true)
 
         FileOperations.amendFiles(vltDir, listOf("**/*.xml")) { file, content ->
-            props.expandPackage(content, mapOf("project.version" to "${project.version}-$CLASSIFIER_DOWNLOAD"), file.absolutePath)
+            aem.props.expandPackage(content, mapOf("project.version" to "${project.version}-$CLASSIFIER_DOWNLOAD"), file.absolutePath)
         }
 
         ZipUtil.pack(shellDir, zipResult)
@@ -95,7 +95,7 @@ open class DownloadTask : AemDefaultTask() {
     }
 
     private fun extractDownloadedPackage(downloadedPackage: File, jcrRoot: File) {
-        if (jcrRoot.exists() && props.isForce()) {
+        if (jcrRoot.exists() && aem.props.isForce()) {
             jcrRoot.deleteRecursively()
         }
 

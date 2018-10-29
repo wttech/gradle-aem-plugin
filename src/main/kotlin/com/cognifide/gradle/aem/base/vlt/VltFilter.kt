@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.base.vlt
 
 import com.cognifide.gradle.aem.api.AemConfig
+import com.cognifide.gradle.aem.api.AemExtension
 import com.cognifide.gradle.aem.api.AemTask
 import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.internal.file.FileOperations
@@ -38,29 +39,29 @@ class VltFilter(val file: File, private val temporary: Boolean = false) : Closea
             return rootElement("<filter root=\"$path\"/>")
         }
 
+        // TODO remove direct dependencies from here and move it task checkout (two actions, download and checkout)
         fun of(project: Project): VltFilter {
             val logger = project.logger
-            val props = PropertyParser(project)
-            val config = AemConfig.of(project)
+            val aem = AemExtension.of(project)
+            val compose = aem.compose
 
-            val cmdFilterRoots = props.list("aem.filter.roots")
+            val cmdFilterRoots = aem.config.props.list("aem.filter.roots")
 
             return if (cmdFilterRoots.isNotEmpty()) {
                 logger.info("Using Vault filter roots specified as command line property: $cmdFilterRoots")
                 VltFilter.temporary(project, cmdFilterRoots)
             } else {
-                if (config.checkoutFilterPath == AemConfig.AUTO_DETERMINED) {
-                    val conventionFilter = FileOperations.find(project, config.vaultPath, config.checkoutFilterPaths)
-                            ?: throw VltException("None of Vault check out filter file does not exist at one of convention paths: ${config.checkoutFilterPaths}.")
+                if (compose.checkoutFilterPath == AemConfig.AUTO_DETERMINED) {
+                    val conventionFilter = FileOperations.find(project, compose.vaultPath, compose.checkoutFilterPaths)
+                            ?: throw VltException("None of Vault check out filter file does not exist at one of convention paths: ${compose.checkoutFilterPaths}.")
                     VltFilter(conventionFilter)
                 } else {
-                    val configFilter = FileOperations.find(project, config.vaultPath, config.checkoutFilterPath)
-                            ?: throw VltException("Vault check out filter file does not exist at path: ${config.checkoutFilterPath} (or under directory: ${config.vaultPath}).")
+                    val configFilter = FileOperations.find(project, compose.vaultPath, compose.checkoutFilterPath)
+                            ?: throw VltException("Vault check out filter file does not exist at path: ${compose.checkoutFilterPath} (or under directory: ${compose.vaultPath}).")
                     VltFilter(configFilter)
                 }
             }
         }
-
     }
 
     val rootElements: Set<Element>

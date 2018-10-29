@@ -23,7 +23,7 @@ class PackageGroup(resolver: PackageResolver, name: String) : FileGroup(resolver
      * Instances involved in packages deployment.
      */
     val instances by lazy {
-        if (config.deployDistributed) {
+        if (false) { // TODO config.deployDistributed (include in SatisfyAction)
             Instance.filter(project, config.instanceAuthorName)
         } else {
             Instance.filter(project)
@@ -55,28 +55,24 @@ class PackageGroup(resolver: PackageResolver, name: String) : FileGroup(resolver
         await {}
     }
 
-    fun await(configurer: Closure<AwaitAction>) {
-        await { ConfigureUtil.configure(configurer, this) }
-    }
-
     fun await(configurer: AwaitAction.() -> Unit) {
-        action(AwaitAction(project, instances), configurer)
+        action(AwaitAction(project), configurer)
     }
 
     fun reload() {
         reload {}
     }
 
-    fun reload(configurer: Closure<ReloadAction>) {
-        reload { ConfigureUtil.configure(configurer, this) }
-    }
 
     fun reload(configurer: ReloadAction.() -> Unit) {
-        action(ReloadAction(project, instances), configurer)
+        action(ReloadAction(project), configurer)
     }
 
     private fun <T : AbstractAction> action(action: T, configurer: T.() -> Unit) {
-        action.apply { notify = false }.apply(configurer).perform()
+        action.apply {
+            instances = this@PackageGroup.instances
+            notify = false
+        }.apply(configurer).perform()
     }
 
     override fun createResolution(id: String, resolver: (FileResolution) -> File): FileResolution {

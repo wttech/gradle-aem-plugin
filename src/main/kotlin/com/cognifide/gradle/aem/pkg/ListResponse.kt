@@ -1,6 +1,5 @@
-package com.cognifide.gradle.aem.pkg.deploy
+package com.cognifide.gradle.aem.pkg
 
-import com.cognifide.gradle.aem.api.AemConfig
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -41,14 +40,16 @@ class ListResponse private constructor() {
 
         var lastUnpacked: Long? = null
 
-        constructor(project: Project) : this() {
+        constructor(task: ComposeTask) : this() {
+            val project = task.project
+
             this.group = project.group.toString()
-            this.name = AemConfig.pkg(project).baseName
+            this.name = task.baseName
             this.version = project.version.toString()
 
             this.downloadName = "$name-${project.version}.zip"
             this.conventionPaths = listOf(
-                    "/etc/packages/$group/${AemConfig.pkg(project).archiveName}",
+                    "/etc/packages/$group/${task.archiveName}",
                     "/etc/packages/$group/$name-$version.zip"
             )
         }
@@ -111,34 +112,6 @@ class ListResponse private constructor() {
                     } else {
                         project.logger.info("Package cannot be found by convention path.")
                     }
-                }
-
-                return null
-            }
-        },
-        BY_DOWNLOAD_NAME() {
-            override fun resolve(project: Project, response: ListResponse, expected: Package): Package? {
-                val config = AemConfig.of(project)
-
-                if (config.packageSkipDownloadName) {
-                    project.logger.debug("Finding package by download name '${expected.downloadName}' is skipped.")
-                    return null
-                }
-
-                if (expected.downloadName.isBlank()) {
-                    project.logger.info("Cannot find package, because expected download name is blank.")
-                    return null
-                }
-
-                project.logger.warn("Trying to find package by download name '${expected.downloadName}' which can collide with other packages.")
-
-                val result = response.results.find { result -> result.downloadName == expected.downloadName }
-                if (result != null) {
-                    project.logger.info("Package found by download name.")
-
-                    return result
-                } else {
-                    project.logger.info("Package cannot be found by download name.")
                 }
 
                 return null

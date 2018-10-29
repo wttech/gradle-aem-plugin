@@ -4,12 +4,12 @@ import com.cognifide.gradle.aem.api.AemDefaultTask
 
 open class ResetupTask : AemDefaultTask() {
 
-    companion object {
-        val NAME = "aemResetup"
-    }
-
     init {
         description = "Destroys then sets up local AEM instance(s)."
+    }
+
+    companion object {
+        const val NAME = "aemResetup"
     }
 
 }

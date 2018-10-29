@@ -3,32 +3,96 @@ package com.cognifide.gradle.aem.instance.action
 import com.cognifide.gradle.aem.instance.*
 import com.cognifide.gradle.aem.internal.Behaviors
 import com.cognifide.gradle.aem.internal.ProgressCountdown
+import com.fasterxml.jackson.annotation.JsonIgnore
 import org.apache.http.HttpStatus
 import org.gradle.api.Project
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Internal
+import java.util.concurrent.TimeUnit
 import java.util.stream.Collectors
 
 /**
  * Wait until all instances be stable.
  */
-open class AwaitAction(project: Project, val instances: List<Instance>) : AbstractAction(project) {
+open class AwaitAction(project: Project) : AbstractAction(project) {
 
-    var fast = config.awaitFast
+    /**
+     * Skip stable check assurances and health checking.
+     */
+    @Input
+    var fast = aem.props.flag("aem.await.fast")
 
-    var fastDelay = config.awaitFastDelay
+    /**
+     * Time to wait e.g after deployment before checking instance stability.
+     * Considered only when fast mode is enabled.
+     */
+    @Input
+    var fastDelay = aem.props.long("aem.await.fast.delay", TimeUnit.SECONDS.toMillis(1))
 
-    var resume = config.awaitResume
+    /**
+     * Do not fail build but log warning when there is still some unstable or unhealthy instance.
+     */
+    @Input
+    var resume: Boolean = aem.props.flag("aem.await.resume")
 
-    var availableCheck = config.awaitAvailableCheck
+    /**
+     * Hook for customizing instance availability check.
+     */
+    @Internal
+    @get:JsonIgnore
+    var availableCheck: (InstanceState) -> Boolean = { state ->
+        state.check({ sync ->
+            sync.connectionTimeout = 750
+            sync.connectionRetries = false
+        }, {
+            !state.bundleState.unknown
+        })
+    }
 
-    var stableRetry = config.awaitStableRetry
+    /**
+     * Maximum intervals after which instance stability checks will
+     * be skipped if there is still some unstable instance left.
+     */
+    @Internal
+    @get:JsonIgnore
+    var stableRetry = aem.retry { afterSecond(aem.props.long("aem.await.stable.retry", 300)) }
 
-    var stableState = config.awaitStableState
+    /**
+     * Hook for customizing instance state provider used within stable checking.
+     * State change cancels actual assurance.
+     */
+    @Internal
+    @get:JsonIgnore
+    var stableState: (InstanceState) -> Int = { it.checkBundleState(500) }
 
-    var stableCheck = config.awaitStableCheck
+    /**
+     * Hook for customizing instance stability check.
+     * Check will be repeated if assurance is configured.
+     */
+    @Internal
+    @get:JsonIgnore
+    var stableCheck: (InstanceState) -> Boolean = { it.checkBundleStable(500) }
 
-    var stableAssurance = config.awaitStableAssurance
+    /**
+     * Number of intervals / additional instance stability checks to assure all stable instances.
+     * This mechanism protect against temporary stable states.
+     */
+    @Input
+    var stableAssurance: Long = aem.props.long("aem.await.stable.assurance", 3L)
 
-    var healthCheck = config.awaitHealthCheck
+    /**
+     * Hook for customizing instance health check.
+     */
+    @Internal
+    @get:JsonIgnore
+    var healthCheck: (InstanceState) -> Boolean = { it.checkComponentState(10000) }
+
+    /**
+     * Repeat health check when failed (brute-forcing).
+     */
+    @Internal
+    @get:JsonIgnore
+    var healthRetry = aem.retry { afterSquaredSecond(aem.props.long("aem.await.health.retry", 6)) }
 
     override fun perform() {
         if (instances.isEmpty()) {
@@ -135,7 +199,7 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
         logger.lifecycle("Checking health of instance(s): ${instances.names}")
 
         val synchronizers = prepareSynchronizers()
-        for (i in 0..config.awaitHealthRetry.times) {
+        for (i in 0..healthRetry.times) {
             val instanceStates = synchronizers.map { it.determineInstanceState() }
             val unhealthyInstances = instanceStates.parallelStream().filter { !healthCheck(it) }
                     .map { it.instance }
@@ -146,13 +210,13 @@ open class AwaitAction(project: Project, val instances: List<Instance>) : Abstra
                 return
             }
 
-            if (i < config.awaitHealthRetry.times) {
+            if (i < healthRetry.times) {
                 logger.warn("Unhealthy instances detected: ${unhealthyInstances.names}")
 
-                val header = "Retrying health check (${i + 1}/${config.awaitHealthRetry.times}) after delay."
-                val countdown = ProgressCountdown(project, header, config.awaitHealthRetry.delay(i + 1))
+                val header = "Retrying health check (${i + 1}/${healthRetry.times}) after delay."
+                val countdown = ProgressCountdown(project, header, healthRetry.delay(i + 1))
                 countdown.run()
-            } else if (i == config.awaitHealthRetry.times) {
+            } else if (i == healthRetry.times) {
                 instanceStates.forEach { it.status.logTo(logger) }
 
                 if (!resume) {

@@ -15,7 +15,7 @@ import org.gradle.util.GFileUtils
 import org.zeroturnaround.zip.ZipUtil
 import java.io.File
 
-class LocalHandle(val project: Project, val instance: Instance) {
+class LocalHandle(val project: Project, val instance: LocalInstance) {
 
     companion object {
         const val JAR_STATIC_FILES_PATH = "static/"
@@ -45,7 +45,7 @@ class LocalHandle(val project: Project, val instance: Instance) {
 
     val config = AemConfig.of(project)
 
-    val dir = File("${config.createPath}/${instance.typeName}")
+    val dir = File("${config.instancesPath}/${instance.typeName}")
 
     val jar = File(dir, "aem-quickstart.jar")
 
@@ -76,7 +76,7 @@ class LocalHandle(val project: Project, val instance: Instance) {
         }
     }
 
-    fun create(instanceFiles: List<File>) {
+    fun create(options: LocalHandleOptions, instanceFiles: List<File>) {
         if (created) {
             logger.info(("Instance already created: $this"))
             return
@@ -101,17 +101,17 @@ class LocalHandle(val project: Project, val instance: Instance) {
         logger.info("Creating default instance files")
         FileOperations.copyResources(InstancePlugin.FILES_PATH, dir, true)
 
-        val filesDir = File(config.createFilesPath)
+        val overridesDir = File(options.overridesPath)
 
-        logger.info("Overriding instance files using: ${filesDir.absolutePath}")
-        if (filesDir.exists()) {
-            FileUtils.copyDirectory(filesDir, dir)
+        logger.info("Overriding instance files using: ${overridesDir.absolutePath}")
+        if (overridesDir.exists()) {
+            FileUtils.copyDirectory(overridesDir, dir)
         }
 
         logger.info("Expanding instance files")
-        FileOperations.amendFiles(dir, config.createFilesExpanded, { file, source ->
+        FileOperations.amendFiles(dir, options.filesExpanded) { file, source ->
             PropertyParser(project).expand(source, properties, file.absolutePath)
-        })
+        }
 
         logger.info("Creating lock file")
         lock(LOCK_CREATE)
@@ -149,7 +149,7 @@ class LocalHandle(val project: Project, val instance: Instance) {
     }
 
     private fun correctStaticFiles() {
-        FileOperations.amendFile(binScript("start", OperatingSystem.forName("windows")).bin, {
+        FileOperations.amendFile(binScript("start", OperatingSystem.forName("windows")).bin) {
             var result = it
 
             // Force CMD to be launched in closable window mode. Inject nice title.
@@ -160,16 +160,16 @@ class LocalHandle(val project: Project, val instance: Instance) {
             result = result.replace("set START_OPTS=start -c %CurrDirName% -i launchpad", "set START_OPTS=start -c %CurrDirName% -i launchpad %CQ_START_OPTS%")
 
             result
-        })
+        }
 
-        FileOperations.amendFile(binScript("start", OperatingSystem.forName("unix")).bin, {
+        FileOperations.amendFile(binScript("start", OperatingSystem.forName("unix")).bin) {
             var result = it
 
             // Introduce missing CQ_START_OPTS injectable by parent script.
             result = result.replace("START_OPTS=\"start -c ${'$'}{CURR_DIR} -i launchpad\"", "START_OPTS=\"start -c ${'$'}{CURR_DIR} -i launchpad ${'$'}{CQ_START_OPTS}\"")
 
             result
-        })
+        }
 
         // Ensure that 'logs' directory exists
         GFileUtils.mkdirs(File(staticDir, "logs"))
@@ -180,14 +180,14 @@ class LocalHandle(val project: Project, val instance: Instance) {
         progressLogger.started()
 
         var total = 0
-        ZipUtil.iterate(jar, { entry ->
+        ZipUtil.iterate(jar) { entry ->
             if (entry.name.startsWith(JAR_STATIC_FILES_PATH)) {
                 total++
             }
-        })
+        }
 
         var processed = 0
-        ZipUtil.unpack(jar, staticDir, { name ->
+        ZipUtil.unpack(jar, staticDir) { name ->
             if (name.startsWith(JAR_STATIC_FILES_PATH)) {
                 val fileName = name.substringAfterLast("/")
 
@@ -197,7 +197,7 @@ class LocalHandle(val project: Project, val instance: Instance) {
             } else {
                 name
             }
-        })
+        }
 
         progressLogger.completed()
     }
@@ -238,14 +238,14 @@ class LocalHandle(val project: Project, val instance: Instance) {
         }
     }
 
-    fun init() {
+    fun init(callback: LocalHandle.() -> Unit) {
         if (initialized) {
             logger.debug("Instance already initialized: $this")
             return
         }
 
         logger.info("Initializing running instance")
-        config.upInitializer(this)
+        callback(this)
         lock(LOCK_INIT)
     }
 

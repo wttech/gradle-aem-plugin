@@ -5,11 +5,11 @@ import com.cognifide.gradle.aem.api.*
 import com.cognifide.gradle.aem.base.vlt.VltFilter
 import com.cognifide.gradle.aem.bundle.BundleCollector
 import com.cognifide.gradle.aem.bundle.BundlePlugin
+import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.internal.Patterns
-import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.internal.file.FileContentReader
 import com.cognifide.gradle.aem.internal.file.FileOperations
-import groovy.lang.Closure
+import com.fasterxml.jackson.annotation.JsonIgnore
 import org.apache.commons.io.FileUtils
 import org.gradle.api.Project
 import org.gradle.api.file.CopySpec
@@ -20,18 +20,55 @@ import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.bundling.Zip
 import org.gradle.language.base.plugins.LifecycleBasePlugin
-import org.gradle.util.ConfigureUtil
 import org.jsoup.nodes.Element
 import java.io.File
 import java.io.Serializable
+import java.text.SimpleDateFormat
+import java.util.*
 
 open class ComposeTask : Zip(), AemTask {
 
+    @Internal
+    val aem = AemExtension.of(project)
+
     @Nested
-    final override val config = AemConfig.of(project)
+    final override val config = aem.config
 
     @Internal
     val vaultDir = AemTask.temporaryDir(project, NAME, PackagePlugin.VLT_PATH)
+
+    /**
+     * Ensures that for directory 'META-INF/vault' default files will be generated when missing:
+     * 'config.xml', 'filter.xml', 'properties.xml' and 'settings.xml'.
+     */
+    @Input
+    var vaultCopyMissingFiles: Boolean = true
+
+    /**
+     * Convention paths used to determine Vault checkout filter if it is not specified explicitly.
+     *
+     * Firstly there will be checked existence of 'checkout.xml' file.
+     * By design, it should be customized version of 'filter.xml' with reduced count of filter roots
+     * to avoid checking out too much content.
+     *
+     * As a fallback there will be used 'filter.xml' file. In that case same file will be used
+     * to build CRX package and checkout JCR content from running instance.
+     */
+    @get:Internal
+    @get:JsonIgnore
+    val checkoutFilterPaths: List<String>
+        get() = listOf("$vaultPath/checkout.xml", "$vaultPath/filter.xml")
+
+    /**
+     * Determines a Vault filter used to checkout JCR content from running AEM instance.
+     *
+     * @see <http://jackrabbit.apache.org/filevault/filter.html>
+     *
+     * Default: [automatically determined]
+     */
+    @Input
+    var checkoutFilterPath: String = aem.props.string("aem.filter.path", AemConfig.AUTO_DETERMINED)
+
 
     @Internal
     val filterRoots = mutableSetOf<Element>()
@@ -41,12 +78,7 @@ open class ComposeTask : Zip(), AemTask {
         get() = filterRoots.joinToString(config.vaultLineSeparatorString) { it.toString() }
 
     @Internal
-    var filterRootDefault = { _: Project, ext: AemExtension ->
-        "<filter root=\"${ext.bundle.installPath}\"/>"
-    }
-
-    @Internal
-    val propertyParser = PropertyParser(project)
+    var filterRootDefault = { other: ComposeTask -> "<filter root=\"${other.bundlePath}\"/>" }
 
     @Internal
     private var bundleCollectors: List<() -> Unit> = mutableListOf()
@@ -60,15 +92,15 @@ open class ComposeTask : Zip(), AemTask {
     @Internal
     var fileFilter: ((CopySpec) -> Unit) = { spec ->
         if (fileFilterOptions.excluding) {
-            spec.exclude(config.packageFilesExcluded)
+            spec.exclude(packageFilesExcluded)
         }
 
         spec.eachFile { fileDetail ->
             val path = "/${fileDetail.relativePath.pathString.removePrefix("/")}"
 
             if (fileFilterOptions.expanding) {
-                if (Patterns.wildcard(path, config.packageFilesExpanded)) {
-                    FileContentReader.filter(fileDetail) { propertyParser.expandPackage(it, fileProperties, path) }
+                if (Patterns.wildcard(path, packageFilesExpanded)) {
+                    FileContentReader.filter(fileDetail) { aem.props.expandPackage(it, fileProperties, path) }
                 }
             }
 
@@ -96,7 +128,9 @@ open class ComposeTask : Zip(), AemTask {
         get() = mapOf(
                 "zip" to this,
                 "filters" to filterRoots,
-                "filterRoots" to filterRootsProp
+                "filterRoots" to filterRootsProp,
+                "buildCount" to SimpleDateFormat("yDDmmssSSS").format(packageBuildDate),
+                "created" to Formats.date(packageBuildDate)
         )
 
     /**
@@ -108,6 +142,111 @@ open class ComposeTask : Zip(), AemTask {
             LifecycleBasePlugin.ASSEMBLE_TASK_NAME,
             LifecycleBasePlugin.CHECK_TASK_NAME
     )
+
+    /**
+     * Absolute path to JCR content to be included in CRX package.
+     *
+     * Must be absolute or relative to current working directory.
+     */
+    @Input
+    var contentPath: String = "${project.file("src/main/content")}"
+
+    /**
+     * Content path for bundle jars being placed in CRX package.
+     *
+     * Default convention assumes that subprojects have separate bundle paths, because of potential re-installation of subpackages.
+     * When all subprojects will have same bundle path, reinstalling one subpackage may end with deletion of other bundles coming from another subpackage.
+     *
+     * Beware that more nested bundle install directories are not supported by AEM by default.
+     */
+    @Input
+    var bundlePath: String = if (project == project.rootProject) {
+        "/apps/${project.rootProject.name}/install"
+    } else {
+        "/apps/${project.rootProject.name}/${config.projectName}/install"
+    }
+
+    /**
+     * Additional entries added to file 'META-INF/vault/properties.xml'.
+     */
+    @Input
+    var packageEntries: MutableMap<String, Any> = mutableMapOf(
+            "acHandling" to "merge_preserve",
+            "requiresRoot" to false
+    )
+
+    /**
+     * Wildcard file name filter expression that is used to filter in which Vault files properties can be injected.
+     */
+    @Input
+    var packageFilesExpanded: MutableList<String> = mutableListOf("**/${PackagePlugin.VLT_PATH}/*.xml")
+
+    /**
+     * Define here custom properties that can be used in CRX package files like 'META-INF/vault/properties.xml'.
+     * Could override predefined properties provided by plugin itself.
+     */
+    @Input
+    var packageFileProperties: MutableMap<String, Any> = mutableMapOf()
+
+    /**
+     * Exclude files being a part of CRX package.
+     */
+    @Input
+    var packageFilesExcluded: MutableList<String> = mutableListOf(
+            "**/.gradle",
+            "**/.git",
+            "**/.git/**",
+            "**/.gitattributes",
+            "**/.gitignore",
+            "**/.gitmodules",
+            "**/.vlt",
+            "**/.vlt*.tmp",
+            "**/node_modules/**",
+            "jcr_root/.vlt-sync-config.properties"
+    )
+
+    /**
+     * Build date used as base for calculating 'created' and 'buildCount' package properties.
+     */
+    @Internal
+    var packageBuildDate: Date = aem.props.date("aem.package.buildDate", Date())
+
+
+    /**
+     * CRX package Vault files will be composed from given sources.
+     * Missing files required by package within installation will be auto-generated if 'vaultCopyMissingFiles' is enabled.
+     */
+    @get:Internal
+    @get:JsonIgnore
+    val vaultFilesDirs: List<File>
+        get() {
+            val paths = listOf(
+                    config.vaultFilesPath,
+                    "$contentPath/${PackagePlugin.VLT_PATH}"
+            )
+
+            return paths.asSequence()
+                    .filter { !it.isBlank() }
+                    .map { File(it) }
+                    .filter { it.exists() }
+                    .toList()
+        }
+
+    /**
+     * CRX package Vault files path.
+     */
+    @get:Internal
+    @get:JsonIgnore
+    val vaultPath: String
+        get() = "$contentPath/${PackagePlugin.VLT_PATH}"
+
+    /**
+     * CRX package Vault filter path.
+     */
+    @get:Internal
+    @get:JsonIgnore
+    val vaultFilterPath: String
+        get() = "$vaultPath/filter.xml"
 
     /**
      * Configure default task dependency assignments while including dependant project content.
@@ -133,8 +272,18 @@ open class ComposeTask : Zip(), AemTask {
         doLast { AemNotifier.of(project).default("Package composed", archiveName) }
     }
 
+    override fun projectEvaluated() {
+        if (contentPath.isBlank()) {
+            throw AemException("Content path cannot be blank")
+        }
+
+        if (bundlePath.isBlank()) {
+            throw AemException("Bundle path cannot be blank")
+        }
+    }
+
     override fun projectsEvaluated() {
-        config.vaultFilesDirs.forEach { dir -> inputs.dir(dir) }
+        vaultFilesDirs.forEach { dir -> inputs.dir(dir) }
         bundleCollectors.onEach { it() }
         contentCollectors.onEach { it() }
     }
@@ -152,7 +301,7 @@ open class ComposeTask : Zip(), AemTask {
         }
         vaultDir.mkdirs()
 
-        val dirs = config.vaultFilesDirs
+        val dirs = vaultFilesDirs
 
         if (dirs.isEmpty()) {
             logger.info("None of Vault files directories exist: $dirs. Only generated defaults will be used.")
@@ -166,7 +315,7 @@ open class ComposeTask : Zip(), AemTask {
     }
 
     private fun copyMissingVaultFiles() {
-        if (!config.vaultCopyMissingFiles) {
+        if (!vaultCopyMissingFiles) {
             return
         }
 
@@ -233,23 +382,28 @@ open class ComposeTask : Zip(), AemTask {
         includeBundlesAtPath(findProject(projectPath), installPath)
     }
 
+    fun composeOfProject(project: Project): ComposeTask {
+        return project.tasks.getByName(ComposeTask.NAME) as ComposeTask
+    }
+
+
     fun includeBundlesAtPath(project: Project, installPath: String? = null, runMode: String? = null) {
         bundleCollectors += {
-            val ext = AemExtension.of(project)
+            val other = aem.compose(project)
 
             dependProject(project, dependBundlesTaskNames)
 
             var effectiveInstallPath = if (!installPath.isNullOrBlank()) {
                 installPath
             } else {
-                ext.bundle.installPath
+                other.bundlePath
             }
 
             if (!runMode.isNullOrBlank()) {
                 effectiveInstallPath = "$effectiveInstallPath.$runMode"
             }
 
-            val bundles = BundleCollector(project).allJars
+            val bundles = BundleCollector(project).allJars  // TODO include jar task ; or File/Configuration
             if (bundles.isNotEmpty()) {
                 into("${PackagePlugin.JCR_ROOT}/$effectiveInstallPath") { spec ->
                     spec.from(bundles)
@@ -265,12 +419,12 @@ open class ComposeTask : Zip(), AemTask {
 
     fun includeContent(project: Project) {
         contentCollectors += {
-            val ext = AemExtension.of(project)
+            val other = composeOfProject(project)
 
             dependProject(project, dependContentTaskNames)
-            extractVaultFilters(project, ext)
+            extractVaultFilters(other)
 
-            val contentDir = File("${ext.config.contentPath}/${PackagePlugin.JCR_ROOT}")
+            val contentDir = File("${other.contentPath}/${PackagePlugin.JCR_ROOT}")
             if (contentDir.exists()) {
                 into(PackagePlugin.JCR_ROOT) { spec ->
                     spec.from(contentDir)
@@ -311,11 +465,11 @@ open class ComposeTask : Zip(), AemTask {
         }
     }
 
-    private fun extractVaultFilters(project: Project, ext: AemExtension) {
-        if (!ext.config.vaultFilterPath.isBlank() && File(ext.config.vaultFilterPath).exists()) {
-            filterRoots.addAll(VltFilter(File(ext.config.vaultFilterPath)).rootElements)
+    private fun extractVaultFilters(other: ComposeTask) {
+        if (!other.vaultFilterPath.isBlank() && File(other.vaultFilterPath).exists()) {
+            filterRoots.addAll(VltFilter(File(other.vaultFilterPath)).rootElements)
         } else if (project.plugins.hasPlugin(BundlePlugin.ID)) {
-            filterRoots.add(VltFilter.rootElement(filterRootDefault(project, ext)))
+            filterRoots.add(VltFilter.rootElement(filterRootDefault(other)))
         }
     }
 
@@ -328,8 +482,8 @@ open class ComposeTask : Zip(), AemTask {
         }
     }
 
-    fun fileFilterOptions(closure: Closure<*>) {
-        ConfigureUtil.configure(closure, fileFilterOptions)
+    fun fileFilterOptions(configurer: FileFilterOptions.() -> Unit) {
+        fileFilterOptions.apply(configurer)
     }
 
     class FileFilterOptions : Serializable {

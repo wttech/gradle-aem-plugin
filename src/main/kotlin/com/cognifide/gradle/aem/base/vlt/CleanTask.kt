@@ -2,10 +2,8 @@ package com.cognifide.gradle.aem.base.vlt
 
 import com.cognifide.gradle.aem.api.AemDefaultTask
 import com.cognifide.gradle.aem.internal.Formats
-import groovy.lang.Closure
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
-import org.gradle.util.ConfigureUtil
 
 open class CleanTask : AemDefaultTask() {
 
@@ -21,11 +19,7 @@ open class CleanTask : AemDefaultTask() {
     @TaskAction
     fun clean() {
         runner.cleanAfterCheckout()
-        notifier.default("Cleaned JCR content", "Directory: ${Formats.rootProjectPath(config.contentPath, project)}")
-    }
-
-    fun settings(configurer: Closure<VltCleaner>) {
-        ConfigureUtil.configure(configurer, runner.cleaner)
+        aem.notifier.default("Cleaned JCR content", "Directory: ${Formats.rootProjectPath(aem.compose.contentPath, project)}")
     }
 
     fun settings(configurer: VltCleaner.() -> Unit) {

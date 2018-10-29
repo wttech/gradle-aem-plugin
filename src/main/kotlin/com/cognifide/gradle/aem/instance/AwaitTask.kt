@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.api.AemDefaultTask
 import com.cognifide.gradle.aem.instance.action.AwaitAction
+import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
 
 open class AwaitTask : AemDefaultTask() {
@@ -14,11 +15,16 @@ open class AwaitTask : AemDefaultTask() {
         description = "Waits until all local AEM instance(s) be stable."
     }
 
+    @Nested
+    var await = AwaitAction(project)
+
+    fun await(configurer: (AwaitAction) -> Unit) {
+        await.apply(configurer)
+    }
+
     @TaskAction
     fun await() {
-        val instances = Instance.filter(project)
-
-        AwaitAction(project, instances).perform()
+        await.perform()
     }
 
 }

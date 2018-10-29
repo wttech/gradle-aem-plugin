@@ -4,13 +4,12 @@ import com.cognifide.gradle.aem.api.AemDefaultTask
 import com.cognifide.gradle.aem.api.AemTask
 import com.cognifide.gradle.aem.instance.satisfy.PackageResolver
 import com.cognifide.gradle.aem.internal.Patterns
-import com.cognifide.gradle.aem.pkg.deploy.ListResponse
-import groovy.lang.Closure
+import com.cognifide.gradle.aem.pkg.ListResponse
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
-import org.gradle.util.ConfigureUtil
 import java.io.File
 
+// TODO extract logic to reusable SatisfyAction
 open class SatisfyTask : AemDefaultTask() {
 
     @get:Internal
@@ -59,14 +58,10 @@ open class SatisfyTask : AemDefaultTask() {
 
     private fun defineCmdGroups() {
         if (cmdGroups) {
-            props.list("aem.satisfy.urls").forEachIndexed { index, url ->
+            aem.props.list("aem.satisfy.urls").forEachIndexed { index, url ->
                 packageProvider.group("cmd.${index + 1}") { url(url) }
             }
         }
-    }
-
-    fun packages(configurer: Closure<PackageResolver>) {
-        ConfigureUtil.configure(configurer, packageProvider)
     }
 
     fun packages(configurer: PackageResolver.() -> Unit) {
@@ -138,9 +133,9 @@ open class SatisfyTask : AemDefaultTask() {
             val instances = actions.map { it.instance }.toSet()
 
             if (packages.size == 1) {
-                notifier.default("Package satisfied", "${packages.first().name} on ${instances.names}")
+                aem.notifier.default("Package satisfied", "${packages.first().name} on ${instances.names}")
             } else {
-                notifier.default("Packages satisfied", "Performed ${actions.size} action(s) for ${packages.size} package(s) on ${instances.size} instance(s).")
+                aem.notifier.default("Packages satisfied", "Performed ${actions.size} action(s) for ${packages.size} package(s) on ${instances.size} instance(s).")
             }
         }
     }

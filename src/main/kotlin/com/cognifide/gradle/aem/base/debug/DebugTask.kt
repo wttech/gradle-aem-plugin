@@ -31,7 +31,7 @@ open class DebugTask : AemDefaultTask() {
         file.bufferedWriter().use { it.write(json) }
         logger.info(json)
 
-        notifier.default("Configuration dumped", "For $project to file: ${Formats.projectPath(file, project)}")
+        aem.notifier.default("Configuration dumped", "For $project to file: ${Formats.projectPath(file, project)}")
     }
 
 }

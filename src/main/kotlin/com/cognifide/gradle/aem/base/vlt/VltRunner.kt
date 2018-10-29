@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.base.vlt
 
 import com.cognifide.gradle.aem.api.AemConfig
+import com.cognifide.gradle.aem.api.AemExtension
 import com.cognifide.gradle.aem.instance.Instance
 import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.pkg.PackagePlugin
@@ -15,7 +16,7 @@ class VltRunner(val project: Project) {
 
     val props = PropertyParser(project)
 
-    val config = AemConfig.of(project)
+    val aem = AemExtension.of(project)
 
     val cleaner = VltCleaner(project)
 
@@ -25,7 +26,7 @@ class VltRunner(val project: Project) {
 
     val workingDir: File
         get() {
-            var path = "${config.contentPath}/${PackagePlugin.JCR_ROOT}"
+            var path = "${aem.compose.contentPath}/${PackagePlugin.JCR_ROOT}"
 
             val relativePath = project.properties["aem.vlt.path"] as String?
             if (!relativePath.isNullOrBlank()) {
@@ -36,7 +37,7 @@ class VltRunner(val project: Project) {
         }
 
     val contentDir: File
-        get() = File(config.contentPath)
+        get() = File(aem.compose.contentPath)
 
     val checkoutFilterRootDirs: List<File>
         get() {
@@ -51,7 +52,7 @@ class VltRunner(val project: Project) {
     fun raw(command: String, props: Map<String, Any> = mapOf()) {
         val app = VltApp(project)
 
-        val allProps = mapOf("instances" to config.instances) + props
+        val allProps = mapOf("instances" to aem.config.instances) + props
         val fullCommand = this.props.expand(command, allProps)
 
         logger.lifecycle("Working directory: $workingDir")
@@ -61,7 +62,7 @@ class VltRunner(val project: Project) {
     }
 
     fun checkout() {
-        val contentDir = File(config.contentPath)
+        val contentDir = File(aem.compose.contentPath)
         if (!contentDir.exists()) {
             logger.info("JCR content directory to be checked out does not exist: ${contentDir.absolutePath}")
         }
@@ -110,15 +111,15 @@ class VltRunner(val project: Project) {
         }
     }
 
-    val rcpOpts: String by lazy { project.properties["aem.rcp.opts"] as String? ?: "-b 100 -r -u" }
+    val rcpOpts: String by lazy { aem.props.string("aem.rcp.opts") ?: "-b 100 -r -u" }
 
     val rcpSourceInstance: Instance by lazy {
-        config.parseInstance(project.properties["aem.rcp.source.instance"] as String?
+        aem.instance(aem.props.string("aem.rcp.source.instance")
                 ?: throw VltException("RCP param '-Paem.rcp.source.instance' is not specified."))
     }
 
     val rcpTargetInstance: Instance by lazy {
-        config.parseInstance(project.properties["aem.rcp.target.instance"] as String?
+        aem.instance(aem.props.string("aem.rcp.target.instance")
                 ?: throw VltException("RCP param '-Paem.rcp.target.instance' is not specified."))
     }
 

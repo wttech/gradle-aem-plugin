@@ -20,8 +20,6 @@ class DebugTaskTest : AemTest() {
                 add(Customization("packageProperties.config.packageBuildDate", RegularExpressionValueMatcher("\\d{13}")))
                 add(Customization("packageProperties.config.contentPath", PathValueMatcher()))
                 add(Customization("packageProperties.config.vaultFilesPath", PathValueMatcher()))
-                add(Customization("packageProperties.config.createFilesPath", PathValueMatcher()))
-                add(Customization("packageProperties.config.createPath", PathValueMatcher()))
                 add(Customization("packageProperties.config.bundleBndPath", PathValueMatcher()))
             }
         }

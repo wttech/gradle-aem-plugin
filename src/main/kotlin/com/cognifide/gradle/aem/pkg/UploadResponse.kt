@@ -1,10 +1,10 @@
-package com.cognifide.gradle.aem.pkg.deploy
+package com.cognifide.gradle.aem.pkg
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.databind.ObjectMapper
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-class PackageBuildResponse private constructor() {
+class UploadResponse private constructor() {
 
     var isSuccess: Boolean = false
 
@@ -14,8 +14,8 @@ class PackageBuildResponse private constructor() {
 
     companion object {
 
-        fun fromJson(json: String): PackageBuildResponse {
-            return ObjectMapper().readValue(json, PackageBuildResponse::class.java)
+        fun fromJson(json: String): UploadResponse {
+            return ObjectMapper().readValue(json, UploadResponse::class.java)
         }
     }
 
