@@ -77,49 +77,49 @@ open class SatisfyTask : AemDefaultTask() {
 
             var anyPackageSatisfied = false
 
-            packageGroup.instances.sync(project) { sync ->
+            aem.sync(packageGroup.instances) {
                 val packageStates = packageGroup.files.fold(mutableMapOf<File, ListResponse.Package?>()) { states, pkg ->
-                    states[pkg] = sync.determineRemotePackage(pkg, config.satisfyRefreshing); states
+                    states[pkg] = determineRemotePackage(pkg, config.satisfyRefreshing); states
                 }
                 val anyPackageSatisfiable = packageStates.any {
-                    sync.isSnapshot(it.key) || it.value == null || !it.value!!.installed
+                    isSnapshot(it.key) || it.value == null || !it.value!!.installed
                 }
 
                 if (anyPackageSatisfiable) {
-                    packageGroup.initializer(sync)
+                    packageGroup.initializer(this)
                 }
 
                 packageStates.forEach { (pkg, state) ->
                     when {
-                        sync.isSnapshot(pkg) -> {
-                            logger.lifecycle("Satisfying package ${pkg.name} on ${sync.instance.name} (snapshot).")
-                            sync.deployPackage(pkg)
+                        isSnapshot(pkg) -> {
+                            logger.lifecycle("Satisfying package ${pkg.name} on ${instance.name} (snapshot).")
+                            deployPackage(pkg)
 
                             anyPackageSatisfied = true
-                            actions.add(PackageAction(pkg, sync.instance))
+                            actions.add(PackageAction(pkg, instance))
                         }
                         state == null -> {
-                            logger.lifecycle("Satisfying package ${pkg.name} on ${sync.instance.name} (not uploaded).")
-                            sync.deployPackage(pkg)
+                            logger.lifecycle("Satisfying package ${pkg.name} on ${instance.name} (not uploaded).")
+                            deployPackage(pkg)
 
                             anyPackageSatisfied = true
-                            actions.add(PackageAction(pkg, sync.instance))
+                            actions.add(PackageAction(pkg, instance))
                         }
                         !state.installed -> {
-                            logger.lifecycle("Satisfying package ${pkg.name} on ${sync.instance.name} (not installed).")
-                            sync.installPackage(state.path)
+                            logger.lifecycle("Satisfying package ${pkg.name} on ${instance.name} (not installed).")
+                            installPackage(state.path)
 
                             anyPackageSatisfied = true
-                            actions.add(PackageAction(pkg, sync.instance))
+                            actions.add(PackageAction(pkg, instance))
                         }
                         else -> {
-                            logger.lifecycle("Not satisfying package: ${pkg.name} on ${sync.instance.name} (already installed).")
+                            logger.lifecycle("Not satisfying package: ${pkg.name} on ${instance.name} (already installed).")
                         }
                     }
                 }
 
                 if (anyPackageSatisfiable) {
-                    packageGroup.finalizer(sync)
+                    packageGroup.finalizer(this)
                 }
             }
 
@@ -133,9 +133,9 @@ open class SatisfyTask : AemDefaultTask() {
             val instances = actions.map { it.instance }.toSet()
 
             if (packages.size == 1) {
-                aem.notifier.default("Package satisfied", "${packages.first().name} on ${instances.names}")
+                aem.notifier.notify("Package satisfied", "${packages.first().name} on ${instances.names}")
             } else {
-                aem.notifier.default("Packages satisfied", "Performed ${actions.size} action(s) for ${packages.size} package(s) on ${instances.size} instance(s).")
+                aem.notifier.notify("Packages satisfied", "Performed ${actions.size} action(s) for ${packages.size} package(s) on ${instances.size} instance(s).")
             }
         }
     }

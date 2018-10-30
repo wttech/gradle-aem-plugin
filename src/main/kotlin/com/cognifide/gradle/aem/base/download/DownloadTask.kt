@@ -64,7 +64,7 @@ open class DownloadTask : AemDefaultTask() {
                 extractDownloadedPackage(packageFile, jcrRoot)
             }
 
-            AemNotifier.of(project).default("Package downloaded", packageFile.name)
+            aem.notifier.notify("Package downloaded", packageFile.name)
         } finally {
             logger.lifecycle("Cleaning downloaded package: $packageFile")
 

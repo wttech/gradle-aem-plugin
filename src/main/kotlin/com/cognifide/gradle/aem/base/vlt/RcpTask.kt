@@ -19,9 +19,9 @@ open class RcpTask : AemDefaultTask() {
         runner.rcp()
 
         if (!runner.rcpSourceInstance.cmd && !runner.rcpTargetInstance.cmd) {
-            aem.notifier.default("RCP finished", "Copied ${runner.rcpPaths.size} JCR root(s) from instance ${runner.rcpSourceInstance.name} to ${runner.rcpTargetInstance.name}.")
+            aem.notifier.notify("RCP finished", "Copied ${runner.rcpPaths.size} JCR root(s) from instance ${runner.rcpSourceInstance.name} to ${runner.rcpTargetInstance.name}.")
         } else {
-            aem.notifier.default("RCP finished", "Copied ${runner.rcpPaths.size} JCR root(s) between instances.")
+            aem.notifier.notify("RCP finished", "Copied ${runner.rcpPaths.size} JCR root(s) between instances.")
         }
     }
 

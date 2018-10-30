@@ -1,12 +1,18 @@
 package com.cognifide.gradle.aem.instance.action
 
 import com.cognifide.gradle.aem.api.AemExtension
-import com.cognifide.gradle.aem.instance.*
+import com.cognifide.gradle.aem.instance.Instance
+import com.cognifide.gradle.aem.instance.InstanceAction
+import com.cognifide.gradle.aem.instance.toLocalHandles
 import org.gradle.api.Project
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 
-abstract class AbstractAction(val project: Project) : InstanceAction {
+abstract class AbstractAction(
+        @Internal
+        @Transient
+        val project: Project
+) : InstanceAction {
 
     @Internal
     @Transient
@@ -27,7 +33,7 @@ abstract class AbstractAction(val project: Project) : InstanceAction {
 
     fun notify(title: String, text: String, enabled: Boolean = this.notify) {
         if (enabled) {
-            aem.notifier.default(title, text)
+            aem.notifier.notify(title, text)
         } else {
             aem.notifier.log(title, text)
         }

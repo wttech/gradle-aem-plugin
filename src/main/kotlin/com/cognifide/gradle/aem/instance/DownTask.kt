@@ -20,7 +20,7 @@ open class DownTask : InstanceTask() {
     @TaskAction
     fun down() {
         shutdown.apply { instances = this@DownTask.instances }.perform()
-        aem.notifier.default("Instance(s) down", "Which: ${instances.names}")
+        aem.notifier.notify("Instance(s) down", "Which: ${instances.names}")
     }
 
     companion object {

@@ -17,7 +17,7 @@ open class VltTask : AemDefaultTask() {
         }
 
         VltRunner(project).raw(command)
-        aem.notifier.default("Executing Vault command", "Command '$command' finished.")
+        aem.notifier.notify("Executing Vault command", "Command '$command' finished.")
     }
 
     companion object {

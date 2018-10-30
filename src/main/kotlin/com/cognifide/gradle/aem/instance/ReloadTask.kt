@@ -6,10 +6,6 @@ import org.gradle.api.tasks.TaskAction
 
 open class ReloadTask : InstanceTask() {
 
-    companion object {
-        val NAME = "aemReload"
-    }
-
     init {
         description = "Reloads all AEM instance(s)."
     }
@@ -24,7 +20,11 @@ open class ReloadTask : InstanceTask() {
     @TaskAction
     fun reload() {
         reload.apply { instances = this@ReloadTask.instances }.perform()
-        aem.notifier.default("Instance(s) reloaded", "Which: ${instances.names}")
+        aem.notifier.notify("Instance(s) reloaded", "Which: ${instances.names}")
+    }
+
+    companion object {
+        const val NAME = "aemReload"
     }
 
 }

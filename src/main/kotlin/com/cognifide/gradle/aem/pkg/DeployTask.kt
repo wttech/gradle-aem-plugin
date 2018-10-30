@@ -2,7 +2,6 @@ package com.cognifide.gradle.aem.pkg
 
 import com.cognifide.gradle.aem.instance.Instance
 import com.cognifide.gradle.aem.instance.names
-import com.cognifide.gradle.aem.instance.sync
 import com.cognifide.gradle.aem.internal.fileNames
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.TaskAction
@@ -33,13 +32,13 @@ open class DeployTask : SyncTask() {
     fun deploy() {
         aem.syncPackages(instances, packages) { pkg ->
             if (distributed) {
-                instances.sync(project) { distributePackage(pkg) }
+                distributePackage(pkg)
             } else {
-                instances.sync(project) { deployPackage(pkg) }
+                deployPackage(pkg)
             }
         }
 
-        aem.notifier.default("Package deployed", "${packages.fileNames} on ${instances.names}")
+        aem.notifier.notify("Package deployed", "${packages.fileNames} on ${instances.names}")
     }
 
     companion object {

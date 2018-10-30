@@ -16,7 +16,7 @@ open class DeleteTask : SyncTask() {
     fun delete() {
         aem.syncPackages(instances, packages) { deletePackage(determineRemotePackagePath(it)) }
 
-        aem.notifier.default("Package deleted", "${packages.fileNames} on ${instances.names}")
+        aem.notifier.notify("Package deleted", "${packages.fileNames} on ${instances.names}")
     }
 
     companion object {

@@ -131,7 +131,7 @@ open class ComposeTask : Zip(), AemTask {
                 "filterRoots" to filterRootsProp,
                 "buildCount" to SimpleDateFormat("yDDmmssSSS").format(packageBuildDate),
                 "created" to Formats.date(packageBuildDate)
-        )
+        ) + packageFileProperties
 
     /**
      * Configure default task dependency assignments while including dependant project bundles.
@@ -269,7 +269,7 @@ open class ComposeTask : Zip(), AemTask {
         includeProject(project)
         includeVault(vaultDir)
 
-        doLast { AemNotifier.of(project).default("Package composed", archiveName) }
+        doLast { aem.notifier.notify("Package composed", archiveName) }
     }
 
     override fun projectEvaluated() {

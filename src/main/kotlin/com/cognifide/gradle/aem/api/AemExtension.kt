@@ -52,7 +52,7 @@ open class AemExtension(@Transient private val project: Project) {
         get() = Instance.handles(project)
 
     fun handles(consumer: LocalHandle.() -> Unit) {
-        handles.parallelStream().forEach(consumer)
+        handles(handles, consumer)
     }
 
     fun handles(handles: Collection<LocalHandle>, consumer: LocalHandle.() -> Unit) {
@@ -79,7 +79,9 @@ open class AemExtension(@Transient private val project: Project) {
     val packageDefault: File
         get() = compose.archivePath
 
-    val compose: ComposeTask = compose(project)
+    // TODO remove most of dependencies of that
+    val compose: ComposeTask
+        get() = compose(project)
 
     fun compose(project: Project) = project.tasks.getByName(ComposeTask.NAME) as ComposeTask
 
@@ -128,6 +130,10 @@ open class AemExtension(@Transient private val project: Project) {
             return project.extensions.findByType(AemExtension::class.java)
                     ?: throw AemException(project.displayName.capitalize()
                             + " has neither '${PackagePlugin.ID}' nor '${InstancePlugin.ID}' plugin applied.")
+        }
+
+        fun available(project: Project): Boolean {
+            return project.extensions.findByType(AemExtension::class.java) != null
         }
     }
 

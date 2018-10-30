@@ -32,7 +32,7 @@ open class UpTask : InstanceTask() {
         await.apply { instances = this@UpTask.instances }.perform()
         aem.handles(handles) { init(init) }
 
-        aem.notifier.default("Instance(s) up", "Which: ${handles.names}")
+        aem.notifier.notify("Instance(s) up", "Which: ${handles.names}")
     }
 
     companion object {

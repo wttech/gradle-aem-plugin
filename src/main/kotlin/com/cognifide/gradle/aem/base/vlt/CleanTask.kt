@@ -19,7 +19,7 @@ open class CleanTask : AemDefaultTask() {
     @TaskAction
     fun clean() {
         runner.cleanAfterCheckout()
-        aem.notifier.default("Cleaned JCR content", "Directory: ${Formats.rootProjectPath(aem.compose.contentPath, project)}")
+        aem.notifier.notify("Cleaned JCR content", "Directory: ${Formats.rootProjectPath(aem.compose.contentPath, project)}")
     }
 
     fun settings(configurer: VltCleaner.() -> Unit) {

@@ -27,7 +27,7 @@ open class PurgeTask : SyncTask() {
             }
         }
 
-        aem.notifier.default("Package purged", "${packages.fileNames} from ${instances.names}")
+        aem.notifier.notify("Package purged", "${packages.fileNames} from ${instances.names}")
     }
 
     private fun uninstall(sync: InstanceSync, packagePath: String) {

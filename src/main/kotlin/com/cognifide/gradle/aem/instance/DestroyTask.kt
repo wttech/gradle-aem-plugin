@@ -14,7 +14,7 @@ open class DestroyTask : InstanceTask() {
     fun destroy() {
         aem.handles(handles) { destroy() }
 
-        aem.notifier.default("Instance(s) destroyed", "Which: ${handles.names}")
+        aem.notifier.notify("Instance(s) destroyed", "Which: ${handles.names}")
     }
 
     companion object {

@@ -52,7 +52,7 @@ open class CreateTask : InstanceTask() {
         logger.info("Creating instances")
         aem.handles(handles) { create(options, instanceFiles) }
 
-        aem.notifier.default("Instance(s) created", "Which: ${handles.names}")
+        aem.notifier.notify("Instance(s) created", "Which: ${handles.names}")
     }
 
     companion object {

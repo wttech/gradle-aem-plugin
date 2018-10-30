@@ -16,7 +16,7 @@ open class UninstallTask : SyncTask() {
     fun uninstall() {
         aem.syncPackages(instances, packages) { uninstallPackage(determineRemotePackagePath(it)) }
 
-        aem.notifier.default("Package uninstalled", "${packages.fileNames} from ${instances.names}")
+        aem.notifier.notify("Package uninstalled", "${packages.fileNames} from ${instances.names}")
     }
 
     companion object {

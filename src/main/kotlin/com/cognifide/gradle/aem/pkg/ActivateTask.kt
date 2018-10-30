@@ -14,7 +14,7 @@ open class ActivateTask : SyncTask() {
     fun activate() {
         aem.syncPackages(instances, packages) { activatePackage(determineRemotePackagePath(it)) }
 
-        aem.notifier.default("Package activated", "${packages.fileNames} on ${instances.names}")
+        aem.notifier.notify("Package activated", "${packages.fileNames} on ${instances.names}")
     }
 
     companion object {

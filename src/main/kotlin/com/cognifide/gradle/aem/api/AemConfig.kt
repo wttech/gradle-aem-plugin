@@ -338,20 +338,18 @@ class AemConfig(
     @get:JsonIgnore
     val vaultLineSeparatorString: String = LineSeparator.string(vaultLineSeparator)
 
-
-
     private fun defaults() {
         // Define through command line (forced instances)
         if (instanceList.isNotBlank()) {
             instances(Instance.parse(project, instanceList))
         }
 
-        // Define through properties (remote instances)
+        // Define through properties
         instances(Instance.properties(project))
 
         // Define defaults if still no instances defined at all
         if (instances.isEmpty()) {
-            instances(Instance.defaults(project, environment))
+            instances(Instance.defaults(project))
         }
     }
 

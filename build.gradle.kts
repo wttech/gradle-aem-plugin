@@ -4,7 +4,7 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent
 plugins {
     id("java-gradle-plugin")
     id("maven-publish")
-    id("org.jetbrains.kotlin.jvm") version "1.3.0-rc-131"
+    id("org.jetbrains.kotlin.jvm") version "1.3.0"
     id("com.jfrog.bintray") version "1.8.4"
 }
 
@@ -15,13 +15,12 @@ defaultTasks = listOf("clean", "build", "publishToMavenLocal")
 
 repositories {
     jcenter()
-    maven {url = uri("https://dl.bintray.com/kotlin/kotlin-eap") }
 }
 
 dependencies {
     implementation(gradleApi())
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.3.0-rc-131")
-    implementation("org.jetbrains.kotlin:kotlin-reflect:1.3.0-rc-131")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.3.0")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:1.3.0")
     implementation("org.apache.commons:commons-lang3:3.4")
     implementation("commons-io:commons-io:2.4")
     implementation("commons-validator:commons-validator:1.6")
