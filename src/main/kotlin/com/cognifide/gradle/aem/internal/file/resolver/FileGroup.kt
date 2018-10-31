@@ -2,7 +2,7 @@ package com.cognifide.gradle.aem.internal.file.resolver
 
 import java.io.File
 
-open class FileGroup(val resolver: Resolver<out FileGroup>, val name: String) {
+open class FileGroup(val downloadDir: File, val name: String) {
 
     private val _resolutions = mutableListOf<FileResolution>()
 

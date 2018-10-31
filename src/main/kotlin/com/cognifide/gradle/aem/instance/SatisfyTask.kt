@@ -1,24 +1,44 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.api.AemDefaultTask
 import com.cognifide.gradle.aem.api.AemTask
 import com.cognifide.gradle.aem.instance.satisfy.PackageResolver
 import com.cognifide.gradle.aem.internal.Patterns
+import com.cognifide.gradle.aem.pkg.DeployTask
 import com.cognifide.gradle.aem.pkg.ListResponse
+import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
 import java.io.File
 
-// TODO extract logic to reusable SatisfyAction
-open class SatisfyTask : AemDefaultTask() {
+open class SatisfyTask : DeployTask() {
 
-    @get:Internal
-    val packageProvider = PackageResolver(project, AemTask.temporaryDir(project, NAME, DOWNLOAD_DIR))
+    /**
+     * Determines which packages should be installed by default when satisfy task is being executed.
+     */
+    @Input
+    var groupName = aem.props.string("aem.satisfy.group.name", "*")
 
     @get:Internal
     var groupFilter: (String) -> Boolean = { fileGroup ->
-        Patterns.wildcards(fileGroup, config.satisfyGroupName)
+        Patterns.wildcards(fileGroup, groupName)
     }
+
+    /**
+     * Satisfy is a lazy task, which means that it will not install package that is already installed.
+     * By default, information about currently installed packages is being retrieved from AEM only once.
+     *
+     * This flag can change that behavior, so that information will be refreshed after each package installation.
+     */
+    @Input
+    var packageRefreshing: Boolean = aem.props.boolean("aem.satisfy.packageRefreshing", false)
+
+    /**
+     * Provides a packages from local and remote sources.
+     * Handles automatic wrapping OSGi bundles to CRX packages.
+     */
+    @Nested
+    val packageProvider = PackageResolver(project, AemTask.temporaryDir(project, name, DOWNLOAD_DIR))
 
     @get:Internal
     val outputDirs: List<File>
@@ -75,11 +95,12 @@ open class SatisfyTask : AemDefaultTask() {
         for (packageGroup in packageGroups) {
             logger.info("Satisfying group of packages '${packageGroup.name}'.")
 
-            var anyPackageSatisfied = false
+            var packageSatisfiedAny = false
+            val packageInstances = instances.filter { Patterns.wildcard(it.name, packageGroup.instanceName) }
 
-            aem.sync(packageGroup.instances) {
+            aem.sync(packageInstances) {
                 val packageStates = packageGroup.files.fold(mutableMapOf<File, ListResponse.Package?>()) { states, pkg ->
-                    states[pkg] = determineRemotePackage(pkg, config.satisfyRefreshing); states
+                    states[pkg] = determineRemotePackage(pkg, packageRefreshing); states
                 }
                 val anyPackageSatisfiable = packageStates.any {
                     isSnapshot(it.key) || it.value == null || !it.value!!.installed
@@ -95,21 +116,21 @@ open class SatisfyTask : AemDefaultTask() {
                             logger.lifecycle("Satisfying package ${pkg.name} on ${instance.name} (snapshot).")
                             deployPackage(pkg)
 
-                            anyPackageSatisfied = true
+                            packageSatisfiedAny = true
                             actions.add(PackageAction(pkg, instance))
                         }
                         state == null -> {
                             logger.lifecycle("Satisfying package ${pkg.name} on ${instance.name} (not uploaded).")
                             deployPackage(pkg)
 
-                            anyPackageSatisfied = true
+                            packageSatisfiedAny = true
                             actions.add(PackageAction(pkg, instance))
                         }
                         !state.installed -> {
                             logger.lifecycle("Satisfying package ${pkg.name} on ${instance.name} (not installed).")
-                            installPackage(state.path)
+                            installPackage(state.path, installRecursive, installRetry)
 
-                            anyPackageSatisfied = true
+                            packageSatisfiedAny = true
                             actions.add(PackageAction(pkg, instance))
                         }
                         else -> {
@@ -123,7 +144,7 @@ open class SatisfyTask : AemDefaultTask() {
                 }
             }
 
-            if (anyPackageSatisfied) {
+            if (packageSatisfiedAny) {
                 packageGroup.completer()
             }
         }

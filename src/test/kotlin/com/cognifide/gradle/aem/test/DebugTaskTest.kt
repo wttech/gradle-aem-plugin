@@ -2,11 +2,9 @@ package com.cognifide.gradle.aem.test
 
 import com.cognifide.gradle.aem.test.AemAssert.assertJsonCustomized
 import com.cognifide.gradle.aem.test.json.AnyValueMatcher
-import com.cognifide.gradle.aem.test.json.DateValueMatcher
 import com.cognifide.gradle.aem.test.json.PathValueMatcher
 import org.junit.jupiter.api.Test
 import org.skyscreamer.jsonassert.Customization
-import org.skyscreamer.jsonassert.RegularExpressionValueMatcher
 
 class DebugTaskTest : AemTest() {
 
@@ -15,12 +13,6 @@ class DebugTaskTest : AemTest() {
             mutableListOf<Customization>().apply {
                 add(Customization("buildInfo", AnyValueMatcher()))
                 add(Customization("projectInfo.dir", PathValueMatcher()))
-                add(Customization("packageProperties.buildCount", RegularExpressionValueMatcher("\\d{14}")))
-                add(Customization("packageProperties.created", DateValueMatcher()))
-                add(Customization("packageProperties.config.packageBuildDate", RegularExpressionValueMatcher("\\d{13}")))
-                add(Customization("packageProperties.config.contentPath", PathValueMatcher()))
-                add(Customization("packageProperties.config.vaultFilesPath", PathValueMatcher()))
-                add(Customization("packageProperties.config.bundleBndPath", PathValueMatcher()))
             }
         }
     }

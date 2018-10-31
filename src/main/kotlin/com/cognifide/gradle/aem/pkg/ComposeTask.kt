@@ -35,7 +35,7 @@ open class ComposeTask : Zip(), AemTask {
     final override val config = aem.config
 
     @Internal
-    val vaultDir = AemTask.temporaryDir(project, NAME, PackagePlugin.VLT_PATH)
+    val vaultDir = AemTask.temporaryDir(project, name, PackagePlugin.VLT_PATH)
 
     /**
      * Ensures that for directory 'META-INF/vault' default files will be generated when missing:

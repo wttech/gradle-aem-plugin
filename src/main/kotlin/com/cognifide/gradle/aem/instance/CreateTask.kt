@@ -13,7 +13,7 @@ open class CreateTask : InstanceTask() {
     val options = LocalHandleOptions(project)
 
     @Internal
-    val instanceFileResolver = FileResolver(project, AemTask.temporaryDir(project, NAME, DOWNLOAD_DIR))
+    val instanceFileResolver = FileResolver(project, AemTask.temporaryDir(project, name, DOWNLOAD_DIR))
 
     @get:Internal
     val instanceFiles: List<File>

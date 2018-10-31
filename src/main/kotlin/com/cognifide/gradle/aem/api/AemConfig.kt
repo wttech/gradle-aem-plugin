@@ -1,8 +1,5 @@
 package com.cognifide.gradle.aem.api
 
-import aQute.bnd.osgi.Jar
-import com.cognifide.gradle.aem.base.download.DownloadTask
-import com.cognifide.gradle.aem.base.vlt.CheckoutTask
 import com.cognifide.gradle.aem.instance.Instance
 import com.cognifide.gradle.aem.instance.InstanceType
 import com.cognifide.gradle.aem.instance.LocalInstance
@@ -139,42 +136,10 @@ class AemConfig(
 
     /**
      * CRX package name conventions (with wildcard) indicating that package can change over time
-     * while having same version specified. Affects CRX packages composed  and satisfied.
+     * while having same version specified. Affects CRX packages composed and satisfied.
      */
     @Input
     var packageSnapshots: List<String> = aem.props.list("aem.package.snapshots")
-    /**
-     * Force upload CRX package regardless if it was previously uploaded.
-     */
-    @Input
-    var uploadForce: Boolean = aem.props.boolean("aem.upload.force", true)
-
-    /**
-     * Repeat upload when failed (brute-forcing).
-     */
-    @Internal
-    @get:JsonIgnore
-    var uploadRetry = aem.retry { afterSquaredSecond(aem.props.long("aem.upload.retry", 6)) }
-
-    /**
-     * Repeat download when failed (brute-forcing).
-     */
-    @Internal
-    @get:JsonIgnore
-    var downloadRetry = aem.retry { afterSquaredSecond(aem.props.long("aem.download.retry", 3)) }
-
-    /**
-     * Determines if when on package install, sub-packages included in CRX package content should be also installed.
-     */
-    @Input
-    var installRecursive: Boolean = aem.props.boolean("aem.install.recursive", true)
-
-    /**
-     * Repeat install when failed (brute-forcing).
-     */
-    @Internal
-    @get:JsonIgnore
-    var installRetry = aem.retry { afterSquaredSecond(aem.props.long("aem.install.retry", 4)) }
 
     /**
      * Custom path to Vault files that will be used to build CRX package.
@@ -190,74 +155,26 @@ class AemConfig(
     @Input
     var vaultLineSeparator: String = aem.props.string("aem.vlt.lineSeparator", "LF")
 
-    /**
-     * Satisfy is a lazy task, which means that it will not install package that is already installed.
-     * By default, information about currently installed packages is being retrieved from AEM only once.
-     *
-     * This flag can change that behavior, so that information will be refreshed after each package installation.
-     */
-    @Input
-    var satisfyRefreshing: Boolean = aem.props.boolean("aem.satisfy.refreshing", false)
+    // TODO remove it
+//    /**
+//     * Determines method of synchronizing JCR content from running AEM instance.
+//     *
+//     * By default 'checkout' method using VLT tool is being used.
+//     * Other possible method is 'download' which transfers JCR content using temporary CRX package.
+//     */
+//    @get:Internal
+//    @get:JsonIgnore
+//    var syncTransfer = aem.props.string("aem.sync.transfer", "checkout")
+//
+//    @get:Internal
+//    @get:JsonIgnore
+//    val syncTransferTaskName: String
+//        get() = when (syncTransfer) {
+//            "download" -> DownloadTask.NAME
+//            "checkout" -> CheckoutTask.NAME
+//            else -> throw AemException("Unsupported sync transfer method '$syncTransfer'. Supported methods: 'checkout' and 'download'.")
+//        }
 
-    /**
-     * Satisfy handles plain OSGi bundle JAR's deployment by automatic wrapping to CRX package.
-     * This path determines a path in JCR repository in which such bundles will be deployed on AEM.
-     */
-    @Input
-    var satisfyBundlePath: String = aem.props.string("aem.satisfy.bundlePath", "/apps/gradle-aem-plugin/satisfy/install")
-
-    /**
-     * A hook which could be used to override default properties used to generate a CRX package from OSGi bundle.
-     */
-    @Internal
-    @get:JsonIgnore
-    var satisfyBundleProperties: (Jar) -> Map<String, Any> = { mapOf() }
-
-    /**
-     * Determines which packages should be installed by default when satisfy task is being executed.
-     */
-    @Input
-    var satisfyGroupName = aem.props.string("aem.satisfy.group.name", "*")
-
-    /**
-     * Extract the contents of package downloaded using aemDownload task to current project jcr_root directory
-     * This operation can be modified using -Paem.force command line to replace the contents of jcr_root directory with
-     * package content
-     */
-    @Input
-    var downloadExtract = aem.props.boolean("aem.download.extract", true)
-
-    /**
-     * In case of downloading big CRX packages, AEM could respond much slower so that special
-     * timeout is covering such edge case.
-     */
-    @Input
-    var downloadConnectionTimeout = aem.props.int("aem.download.connectionTimeout", 60000)
-
-    /**
-     * Determines method of synchronizing JCR content from running AEM instance.
-     *
-     * By default 'checkout' method using VLT tool is being used.
-     * Other possible method is 'download' which transfers JCR content using temporary CRX package.
-     */
-    @get:Internal
-    @get:JsonIgnore
-    var syncTransfer = aem.props.string("aem.sync.transfer", "checkout")
-
-    @get:Internal
-    @get:JsonIgnore
-    val syncTransferTaskName: String
-        get() = when (syncTransfer) {
-            "download" -> DownloadTask.NAME
-            "checkout" -> CheckoutTask.NAME
-            else -> throw AemException("Unsupported sync transfer method '$syncTransfer'. Supported methods: 'checkout' and 'download'.")
-        }
-
-    /**
-     * Dump package states on defined instances.
-     */
-    @Input
-    var debugPackageDeployed: Boolean = aem.props.boolean("aem.debug.packageDeployed", !project.gradle.startParameter.isOffline)
 
     /**
      * Turn on/off default system notifications.
@@ -372,6 +289,7 @@ class AemConfig(
             return of(task.project)
         }
 
+        // TODO to be removed
         fun pkg(project: Project): ComposeTask {
             val task = project.tasks.findByName(ComposeTask.NAME)
                     ?: throw AemException("${project.toString().capitalize()} has no task named"
@@ -380,6 +298,7 @@ class AemConfig(
             return task as ComposeTask
         }
 
+        // TODO to be removed
         fun pkgs(project: Project): List<ComposeTask> {
             return project.allprojects.mapNotNull {
                 if (it.plugins.hasPlugin(PackagePlugin.ID)) {

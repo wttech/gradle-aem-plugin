@@ -1,10 +1,14 @@
 package com.cognifide.gradle.aem.pkg
 
 import com.cognifide.gradle.aem.instance.Instance
+import com.cognifide.gradle.aem.instance.InstanceSync
 import com.cognifide.gradle.aem.instance.names
 import com.cognifide.gradle.aem.internal.fileNames
+import com.fasterxml.jackson.annotation.JsonIgnore
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
+import java.io.File
 
 open class DeployTask : SyncTask() {
 
@@ -18,6 +22,32 @@ open class DeployTask : SyncTask() {
     @Input
     var distributed: Boolean = aem.props.flag("aem.deploy.distributed")
 
+    /**
+     * Force upload CRX package regardless if it was previously uploaded.
+     */
+    @Input
+    var uploadForce: Boolean = aem.props.boolean("aem.deploy.uploadForce", true)
+
+    /**
+     * Repeat upload when failed (brute-forcing).
+     */
+    @Internal
+    @get:JsonIgnore
+    var uploadRetry = aem.retry { afterSquaredSecond(aem.props.long("aem.upload.retry", 6)) }
+
+    /**
+     * Repeat install when failed (brute-forcing).
+     */
+    @Internal
+    @get:JsonIgnore
+    var installRetry = aem.retry { afterSquaredSecond(aem.props.long("aem.install.retry", 4)) }
+
+    /**
+     * Determines if when on package install, sub-packages included in CRX package content should be also installed.
+     */
+    @Input
+    var installRecursive: Boolean = aem.props.boolean("aem.install.recursive", true)
+
     override fun projectsEvaluated() {
         super.projectsEvaluated()
 
@@ -30,15 +60,17 @@ open class DeployTask : SyncTask() {
 
     @TaskAction
     fun deploy() {
-        aem.syncPackages(instances, packages) { pkg ->
-            if (distributed) {
-                distributePackage(pkg)
-            } else {
-                deployPackage(pkg)
-            }
-        }
+        aem.syncPackages(instances, packages) { deployPackage(it) }
 
         aem.notifier.notify("Package deployed", "${packages.fileNames} on ${instances.names}")
+    }
+
+    protected fun InstanceSync.deployPackage(pkg: File) {
+        if (distributed) {
+            distributePackage(pkg, uploadForce, uploadRetry, installRecursive, installRetry)
+        } else {
+            deployPackage(pkg, uploadForce, uploadRetry, installRecursive, installRetry)
+        }
     }
 
     companion object {

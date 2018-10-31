@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.api.AemConfig
+import com.cognifide.gradle.aem.api.AemRetry
 import com.cognifide.gradle.aem.internal.MemoryCache
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.ProgressCountdown
@@ -217,20 +218,20 @@ class InstanceSync(val project: Project, val instance: Instance) {
         return resolver(packages)
     }
 
-    fun uploadPackage(file: File): UploadResponse {
+    fun uploadPackage(file: File, force: Boolean, retry: AemRetry): UploadResponse {
         lateinit var exception: DeployException
-        for (i in 0..config.uploadRetry.times) {
+        for (i in 0..retry.times) {
             try {
-                return uploadPackageOnce(file)
+                return uploadPackageOnce(file, force)
             } catch (e: DeployException) {
                 exception = e
 
-                if (i < config.uploadRetry.times) {
+                if (i < retry.times) {
                     logger.warn("Cannot upload package $file to $instance.")
                     logger.debug("Upload error", e)
 
-                    val header = "Retrying upload (${i + 1}/${config.uploadRetry.times}) after delay."
-                    val countdown = ProgressCountdown(project, header, config.uploadRetry.delay(i + 1))
+                    val header = "Retrying upload (${i + 1}/${retry.times}) after delay."
+                    val countdown = ProgressCountdown(project, header, retry.delay(i + 1))
                     countdown.run()
                 }
             }
@@ -239,7 +240,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         throw exception
     }
 
-    fun uploadPackageOnce(file: File): UploadResponse {
+    fun uploadPackageOnce(file: File, force: Boolean): UploadResponse {
         val url = "$PKG_MANAGER_JSON_PATH/?cmd=upload"
 
         logger.info("Uploading package $file to $instance'")
@@ -247,7 +248,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         val json = try {
             postMultipart(url, mapOf(
                     "package" to file,
-                    "force" to (config.uploadForce || isSnapshot(file))
+                    "force" to (force || isSnapshot(file))
             ))
         } catch (e: FileNotFoundException) {
             throw DeployException("Package file $file to be uploaded not found!", e)
@@ -268,23 +269,23 @@ class InstanceSync(val project: Project, val instance: Instance) {
         return response
     }
 
-    fun downloadPackage(remotePath: String, targetFile: File) {
+    fun downloadPackage(remotePath: String, targetFile: File, retry: AemRetry) {
         lateinit var exception: FileException
         val url = instance.httpUrl + remotePath
 
-        for (i in 0..config.downloadRetry.times) {
+        for (i in 0..retry.times) {
             try {
                 downloadPackageOnce(url, targetFile)
                 return
             } catch (e: FileException) {
                 exception = e
 
-                if (i < config.downloadRetry.times) {
+                if (i < retry.times) {
                     logger.warn("Cannot download package $remotePath from $instance.")
                     logger.debug("Download error", e)
 
-                    val header = "Retrying download (${i + 1}/${config.downloadRetry.times}) after delay."
-                    val countdown = ProgressCountdown(project, header, config.downloadRetry.delay(i + 1))
+                    val header = "Retrying download (${i + 1}/${retry.times}) after delay."
+                    val countdown = ProgressCountdown(project, header, retry.delay(i + 1))
                     countdown.run()
                 }
             }
@@ -332,19 +333,19 @@ class InstanceSync(val project: Project, val instance: Instance) {
         return response
     }
 
-    fun installPackage(remotePath: String): InstallResponse {
+    fun installPackage(remotePath: String, recursive: Boolean, retry: AemRetry): InstallResponse {
         lateinit var exception: DeployException
-        for (i in 0..config.installRetry.times) {
+        for (i in 0..retry.times) {
             try {
-                return installPackageOnce(remotePath)
+                return installPackageOnce(remotePath, recursive)
             } catch (e: DeployException) {
                 exception = e
-                if (i < config.installRetry.times) {
+                if (i < retry.times) {
                     logger.warn("Cannot install package $remotePath on $instance.")
                     logger.debug("Install error", e)
 
-                    val header = "Retrying install (${i + 1}/${config.installRetry.times}) after delay."
-                    val countdown = ProgressCountdown(project, header, config.installRetry.delay(i + 1))
+                    val header = "Retrying install (${i + 1}/${retry.times}) after delay."
+                    val countdown = ProgressCountdown(project, header, retry.delay(i + 1))
                     countdown.run()
                 }
             }
@@ -353,13 +354,13 @@ class InstanceSync(val project: Project, val instance: Instance) {
         throw exception
     }
 
-    fun installPackageOnce(remotePath: String): InstallResponse {
+    fun installPackageOnce(remotePath: String, recursive: Boolean): InstallResponse {
         val url = "$PKG_MANAGER_HTML_PATH$remotePath/?cmd=install"
 
         logger.info("Installing package $remotePath on $instance")
 
         val json = try {
-            postMultipart(url, mapOf("recursive" to config.installRecursive))
+            postMultipart(url, mapOf("recursive" to recursive))
         } catch (e: Exception) {
             throw DeployException("Cannot install package $remotePath on $instance. Reason: request failed.", e)
         }
@@ -381,14 +382,16 @@ class InstanceSync(val project: Project, val instance: Instance) {
         return Patterns.wildcard(file, config.packageSnapshots)
     }
 
-    fun deployPackage(file: File) {
-        installPackage(uploadPackage(file).path)
+    fun deployPackage(file: File, uploadForce: Boolean, uploadRetry: AemRetry, installRecursive: Boolean, installRetry: AemRetry) {
+        val uploadResponse = uploadPackage(file, uploadForce, uploadRetry)
+        installPackage(uploadResponse.path, installRecursive, installRetry)
     }
 
-    fun distributePackage(file: File) {
-        val packagePath = uploadPackage(file).path
+    fun distributePackage(file: File, uploadForce: Boolean, uploadRetry: AemRetry, installRecursive: Boolean, installRetry: AemRetry) {
+        val uploadResponse = uploadPackage(file, uploadForce, uploadRetry)
+        val packagePath = uploadResponse.path
 
-        installPackage(packagePath)
+        installPackage(packagePath, installRecursive, installRetry)
         activatePackage(packagePath)
     }
 
@@ -446,7 +449,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         logger.info("Uninstalling package using command: $url")
 
         val rawHtml = try {
-            postMultipart(url, mapOf("recursive" to config.installRecursive))
+            postMultipart(url)
         } catch (e: Exception) {
             throw DeployException("Cannot uninstall package $remotePath on $instance. Reason: request failed.", e)
         }

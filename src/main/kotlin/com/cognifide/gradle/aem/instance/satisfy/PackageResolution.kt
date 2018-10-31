@@ -14,9 +14,11 @@ import java.io.File
 
 class PackageResolution(group: PackageGroup, id: String, action: (FileResolution) -> File) : FileResolution(group, id, action) {
 
-    val config = AemConfig.of(group.resolver.project)
+    private val resolver = group.resolver
 
-    val logger = group.resolver.project.logger
+    private val config = AemConfig.of(resolver.project)
+
+    private val logger = group.resolver.project.logger
 
     override fun process(file: File): File {
         val origin = super.process(file)
@@ -39,7 +41,7 @@ class PackageResolution(group: PackageGroup, id: String, action: (FileResolution
         logger.info("Wrapping OSGi bundle to CRX package: $jar")
 
         val pkgRoot = File(dir, pkgName)
-        val pkgPath = "${config.satisfyBundlePath}/${jar.name}"
+        val pkgPath = "${resolver.bundlePath}/${jar.name}"
         val vaultDir = File(pkgRoot, PackagePlugin.VLT_PATH)
 
         // Copy package template files
@@ -61,7 +63,7 @@ class PackageResolution(group: PackageGroup, id: String, action: (FileResolution
                 "filters" to filters,
                 "filterRoots" to filters.joinToString(config.vaultLineSeparatorString) { it.toString() }
         )
-        val overrideProps = config.satisfyBundleProperties(bundle)
+        val overrideProps = resolver.bundleProperties(bundle)
         val effectiveProps = bundleProps + overrideProps
 
         FileOperations.amendFiles(vaultDir, listOf("**/${PackagePlugin.VLT_PATH}/*.xml")) { file, content ->
