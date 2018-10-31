@@ -23,7 +23,7 @@ open class AemExtension(@Transient private val project: Project) {
 
     val config = AemConfig(this, project)
 
-    val bundle = AemBundle(this, project)
+    val bundle = AemBundle(project)
 
     val notifier = AemNotifier.of(project)
 

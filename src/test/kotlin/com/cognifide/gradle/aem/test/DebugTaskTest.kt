@@ -4,7 +4,7 @@ import com.cognifide.gradle.aem.test.AemAssert.assertJsonCustomized
 import com.cognifide.gradle.aem.test.json.AnyValueMatcher
 import com.cognifide.gradle.aem.test.json.DateValueMatcher
 import com.cognifide.gradle.aem.test.json.PathValueMatcher
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import org.skyscreamer.jsonassert.Customization
 import org.skyscreamer.jsonassert.RegularExpressionValueMatcher
 
@@ -33,11 +33,6 @@ class DebugTaskTest : AemTest() {
     @Test
     fun shouldGenerateValidJsonFileForAdditional() {
         buildDebugJsonFile("additional")
-    }
-
-    @Test
-    fun shouldGenerateValidJsonFileForKotlinDsl() {
-        buildDebugJsonFile("kotlin-dsl")
     }
 
     private fun buildDebugJsonFile(buildName: String) {

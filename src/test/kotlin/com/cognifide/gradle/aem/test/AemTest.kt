@@ -1,17 +1,30 @@
 package com.cognifide.gradle.aem.test
 
 import com.cognifide.gradle.aem.internal.file.FileOperations
+import org.apache.commons.io.FileUtils
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.util.GFileUtils
-import org.junit.Rule
-import org.junit.rules.TemporaryFolder
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.TestInfo
+import org.junit.jupiter.api.TestInstance
 import java.io.File
+import java.nio.file.Files
 
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 abstract class AemTest {
 
-    @Rule
-    @JvmField
-    var tmpDir = TemporaryFolder()
+    lateinit var tmpDir: File
+
+    @BeforeAll
+    fun prepare(info: TestInfo) {
+        this.tmpDir = Files.createTempDirectory("aemTest").toFile()
+    }
+
+    @AfterAll
+    fun clean() {
+        FileUtils.deleteQuietly(tmpDir)
+    }
 
     fun buildTask(rootProjectDir: String, taskName: String, callback: AemBuild.() -> Unit) {
         build(rootProjectDir, { withArguments(taskName, "-i", "-S") }, {
@@ -28,7 +41,7 @@ abstract class AemTest {
     }
 
     fun build(rootProjectDir: String, configurer: GradleRunner.() -> Unit, callback: AemBuild.() -> Unit) {
-        val projectDir = File(tmpDir.newFolder(), rootProjectDir)
+        val projectDir = File(tmpDir, rootProjectDir)
 
         GFileUtils.mkdirs(projectDir)
         FileOperations.copyResources("test/$rootProjectDir", projectDir)
@@ -39,6 +52,7 @@ abstract class AemTest {
         val result = runner.build()
 
         callback(AemBuild(result, projectDir))
+        Thread.sleep(1000)
     }
 
     fun readFile(fileName: String): String {

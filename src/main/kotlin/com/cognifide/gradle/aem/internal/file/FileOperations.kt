@@ -35,17 +35,17 @@ object FileOperations {
     }
 
     fun copyResources(resourceRoot: String, targetDir: File, skipExisting: Boolean = false) {
-        eachResource(resourceRoot, targetDir, { resourcePath, outputFile ->
+        eachResource(resourceRoot, targetDir) { resourcePath, outputFile ->
             if (!skipExisting || !outputFile.exists()) {
                 copyResource(resourcePath, outputFile)
             }
-        })
+        }
     }
 
     fun copyResource(resourcePath: String, outputFile: File) {
         GFileUtils.mkdirs(outputFile.parentFile)
 
-        val input = javaClass.getResourceAsStream("/" + resourcePath)
+        val input = javaClass.getResourceAsStream("/$resourcePath")
         val output = FileOutputStream(outputFile)
 
         try {

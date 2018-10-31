@@ -3,7 +3,7 @@ package com.cognifide.gradle.aem.test
 import aQute.bnd.osgi.Jar
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.TaskOutcome
-import org.junit.Assert.*
+import org.junit.jupiter.api.Assertions.*
 import org.zeroturnaround.zip.ZipUtil
 import java.io.ByteArrayInputStream
 import java.io.File
@@ -17,7 +17,7 @@ class AemBuild(val result: BuildResult, val projectDir: File) {
     }
 
     fun assertFileExists(message: String, file: File) {
-        assertTrue(message, file.exists())
+        assertTrue({ file.exists() }, message)
     }
 
     fun assertTaskOutcome(taskName: String, outcome: TaskOutcome = TaskOutcome.SUCCESS) {
@@ -33,13 +33,13 @@ class AemBuild(val result: BuildResult, val projectDir: File) {
     }
 
     fun assertPackage(pkg: File) {
-        assertTrue("Package does not exist: $pkg", pkg.exists())
+        assertTrue({ pkg.exists() }, "Package does not exist: $pkg")
         assertPackageVaultFiles(pkg)
     }
 
     fun assertPackageFile(pkg: File, entry: String) {
-        assertTrue("File '$entry' is not included in package '$pkg'.", ZipUtil.containsEntry(pkg, entry))
-        assertTrue("File '$entry' included in package '$pkg' cannot be empty.", ZipUtil.unpackEntry(pkg, entry).isNotEmpty())
+        assertTrue({ ZipUtil.containsEntry(pkg, entry) }, "File '$entry' is not included in package '$pkg'.")
+        assertTrue({ ZipUtil.unpackEntry(pkg, entry).isNotEmpty() }, "File '$entry' included in package '$pkg' cannot be empty.")
     }
 
     fun assertPackageBundle(pkg: File, entry: String, tests: Jar.() -> Unit = {}) {
@@ -49,8 +49,8 @@ class AemBuild(val result: BuildResult, val projectDir: File) {
         val attributes = jar.manifest.mainAttributes
 
         assertFalse(
-                "File '$entry' included in package '$pkg' is not a valid OSGi bundle.",
-                attributes.getValue("Bundle-SymbolicName").isNullOrBlank()
+                { attributes.getValue("Bundle-SymbolicName").isNullOrBlank() },
+                "File '$entry' included in package '$pkg' is not a valid OSGi bundle."
         )
 
         jar.apply(tests)

@@ -11,7 +11,7 @@ plugins {
 group = "com.cognifide.gradle"
 version = "6.0.0"
 description = "Gradle AEM Plugin"
-defaultTasks = listOf("clean", "build", "publishToMavenLocal")
+defaultTasks = listOf("build", "publishToMavenLocal")
 
 repositories {
     jcenter()
@@ -38,9 +38,12 @@ dependencies {
     implementation("io.pebbletemplates:pebble:3.0.4")
     implementation("fr.jcgay.send-notification:send-notification:0.14.0")
 
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.3.1")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:5.3.1")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.3.1")
     testImplementation(gradleTestKit())
-    testImplementation("junit:junit:4.12")
     testImplementation("org.skyscreamer:jsonassert:1.5.0")
+    testImplementation("org.junit-pioneer:junit-pioneer:0.2.2")
 }
 
 gradlePlugin {
@@ -89,6 +92,7 @@ tasks.named<Test>("test") {
         exceptionFormat = TestExceptionFormat.SHORT
     }
 
+    useJUnitPlatform()
     dependsOn("publishToMavenLocal")
 }
 

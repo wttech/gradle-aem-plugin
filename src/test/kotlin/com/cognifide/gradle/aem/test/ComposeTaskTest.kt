@@ -1,7 +1,10 @@
 package com.cognifide.gradle.aem.test
 
-import org.junit.Test
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
+import org.junitpioneer.jupiter.TempDirectory
 
+@ExtendWith(TempDirectory::class)
 class ComposeTaskTest : AemTest() {
 
     @Test

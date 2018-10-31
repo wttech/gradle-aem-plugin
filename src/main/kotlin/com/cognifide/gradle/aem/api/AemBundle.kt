@@ -20,10 +20,6 @@ import org.gradle.api.tasks.bundling.Jar
 class AemBundle(
         @Transient
         @JsonIgnore
-        private val aem: AemExtension,
-
-        @Transient
-        @JsonIgnore
         private val project: Project
 ) {
 
@@ -105,33 +101,31 @@ class AemBundle(
         }
     }
 
-    fun attribute(name: String, value: String) {
-        jar.manifest.attributes(mapOf(name to value))
-    }
+    fun attribute(name: String, value: String) = jar.manifest.attributes(mapOf(name to value))
 
-    fun activator(className: String) {
-        attribute("Bundle-Activator", className)
-    }
+    fun name(name: String) = attribute("Bundle-Name", name)
 
-    fun exportPackage(pkg: String) {
-        exportPackage(listOf(pkg))
-    }
+    fun symbolicName(name: String) = attribute("Bundle-SymbolicName", name)
 
-    fun exportPackage(vararg pkgs: String) {
-        exportPackage(pkgs.toList())
-    }
+    fun manifestVersion(num: Int) = attribute("Bundle-ManifestVersion", num.toString())
+
+    fun activator(className: String) = attribute("Bundle-Activator", className)
+
+    fun category(name: String) = attribute("Bundle-Category", name)
+
+    fun vendor(name: String) = attribute("Bundle-Vendor", name)
+
+    fun exportPackage(pkg: String) = exportPackage(listOf(pkg))
+
+    fun exportPackage(vararg pkgs: String) = exportPackage(pkgs.toList())
 
     fun exportPackage(pkgs: Collection<String>) {
         attribute("Export-Package", wildcardPackages(pkgs))
     }
 
-    fun privatePackage(pkg: String) {
-        privatePackage(listOf(pkg))
-    }
+    fun privatePackage(pkg: String) = privatePackage(listOf(pkg))
 
-    fun privatePackage(vararg pkgs: String) {
-        privatePackage(pkgs.toList())
-    }
+    fun privatePackage(vararg pkgs: String) = privatePackage(pkgs.toList())
 
     fun privatePackage(pkgs: Collection<String>) {
         attribute("Private-Package", wildcardPackages(pkgs))

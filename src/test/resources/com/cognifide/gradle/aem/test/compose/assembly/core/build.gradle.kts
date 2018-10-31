@@ -1,14 +1,14 @@
 plugins {
     id("com.cognifide.aem.bundle")
-    id("kotlin")
+    kotlin("jvm")
 }
 
 description = "Example - Core"
 
 
 aem {
-    config {
-        bundlePackage = "com.company.aem.example.core"
+    bundle {
+        javaPackage = "com.company.aem.example.core"
     }
 }
 

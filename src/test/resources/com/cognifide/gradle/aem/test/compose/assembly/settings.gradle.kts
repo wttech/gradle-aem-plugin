@@ -5,10 +5,12 @@ pluginManagement {
         mavenLocal()
         jcenter()
     }
+
     resolutionStrategy {
         eachPlugin {
-            if (requested.id.namespace == "com.cognifide.aem") {
-                useModule("com.cognifide.gradle:aem-plugin:6.0.0")
+            when {
+                requested.id.namespace == "com.cognifide.aem" -> useModule("com.cognifide.gradle:aem-plugin:6.0.0")
+                requested.id.id == "org.jetbrains.kotlin.jvm" -> useModule("org.jetbrains.kotlin:kotlin-gradle-plugin:1.3.0")
             }
         }
     }
