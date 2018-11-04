@@ -7,7 +7,7 @@ import java.io.File
 
 interface AemTask : Task {
 
-    val config: AemConfig
+    val aem: AemExtension
 
     fun projectEvaluated() {
         // intentionally empty

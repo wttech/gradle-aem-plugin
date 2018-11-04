@@ -52,7 +52,7 @@ open class DeployTask : SyncTask() {
         super.projectsEvaluated()
 
         instances = if (distributed) {
-            Instance.filter(project, config.instanceAuthorName)
+            Instance.filter(project, aem.config.instanceAuthorName)
         } else {
             Instance.filter(project)
         }

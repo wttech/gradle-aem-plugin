@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem.base
 
-import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.api.AemExtension
 import com.cognifide.gradle.aem.api.AemPlugin
 import com.cognifide.gradle.aem.base.debug.DebugTask
@@ -48,7 +47,7 @@ class BasePlugin : AemPlugin() {
         }
         registerTask(SyncTask.NAME, SyncTask::class.java) {
             it.dependsOn(LifecycleBasePlugin.CLEAN_TASK_NAME, CleanTask.NAME)
-            it.dependsOn(AemConfig.of(project).syncTransferTaskName)
+            it.dependsOn(CheckoutTask.NAME)
         }
         registerTask(DownloadTask.NAME, DownloadTask::class.java) {
             it.mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)

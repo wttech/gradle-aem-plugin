@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.internal
 import com.fasterxml.jackson.core.util.DefaultIndenter
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.time.DurationFormatUtils
 import org.apache.commons.validator.routines.UrlValidator
 import org.apache.jackrabbit.util.ISO8601
@@ -28,6 +29,16 @@ object Formats {
 
     fun <T> fromJson(json: String, clazz: Class<T>): T {
         return ObjectMapper().readValue(json, clazz)
+    }
+
+    fun toList(value: String?, delimiter: String = ","): List<String> {
+        if (value.isNullOrBlank()) {
+            return emptyList()
+        }
+
+        val between = StringUtils.substringBetween(value, "[", "]") ?: value
+
+        return between.split(delimiter)
     }
 
     fun toBase64(value: String): String {

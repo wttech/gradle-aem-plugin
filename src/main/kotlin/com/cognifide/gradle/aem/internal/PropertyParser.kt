@@ -1,47 +1,21 @@
 package com.cognifide.gradle.aem.internal
 
-import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.api.AemException
+import com.cognifide.gradle.aem.api.AemExtension
 import com.mitchellbosecke.pebble.PebbleEngine
 import com.mitchellbosecke.pebble.lexer.Syntax
 import com.mitchellbosecke.pebble.loader.StringLoader
-import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.text.StrSubstitutor
 import org.gradle.api.Project
 import java.io.StringWriter
-import java.text.SimpleDateFormat
 import java.util.*
 
-class PropertyParser(val project: Project) {
+class PropertyParser(
+        private val aem: AemExtension,
+        private val project: Project
+) {
 
-    companion object {
-
-        const val FORCE_PROP = "aem.force"
-
-        private const val TEMPLATE_VAR_PREFIX = "{{"
-
-        private const val TEMPLATE_VAR_SUFFIX = "}}"
-
-        private val TEMPLATE_ENGINE = PebbleEngine.Builder()
-                .autoEscaping(false)
-                .cacheActive(false)
-                .strictVariables(true)
-                .newLineTrimming(false)
-                .loader(StringLoader())
-                .syntax(Syntax.Builder()
-                        .setEnableNewLineTrimming(false)
-                        .setPrintOpenDelimiter(TEMPLATE_VAR_PREFIX)
-                        .setPrintCloseDelimiter(TEMPLATE_VAR_SUFFIX)
-                        .build()
-                )
-                .build()
-
-        private val TEMPLATE_INTERPOLATOR: (String, Map<String, Any>) -> String = { source, props ->
-            StrSubstitutor.replace(source, props, TEMPLATE_VAR_PREFIX, TEMPLATE_VAR_SUFFIX)
-        }
-    }
-
-    private fun prop(name: String): String? {
+    fun prop(name: String): String? {
         if (project.hasProperty(name)) {
             return project.property(name).toString()
         }
@@ -66,10 +40,7 @@ class PropertyParser(val project: Project) {
     }
 
     fun list(name: String, delimiter: String = ","): List<String> {
-        val raw = prop(name) ?: return emptyList()
-        val between = StringUtils.substringBetween(raw, "[", "]") ?: raw
-
-        return between.split(delimiter)
+        return Formats.toList(prop(name), delimiter)
     }
 
     fun date(name: String, defaultValue: Date): Date {
@@ -153,7 +124,7 @@ class PropertyParser(val project: Project) {
         )
 
     val configProps: Map<String, Any>
-        get() = mapOf("config" to AemConfig.of(project))
+        get() = mapOf("config" to aem.config)
 
     fun isForce(): Boolean {
         return flag(FORCE_PROP)
@@ -162,6 +133,33 @@ class PropertyParser(val project: Project) {
     fun checkForce() {
         if (!isForce()) {
             throw AemException("Unable to perform unsafe operation without param '-P$FORCE_PROP'")
+        }
+    }
+
+    companion object {
+
+        const val FORCE_PROP = "aem.force"
+
+        private const val TEMPLATE_VAR_PREFIX = "{{"
+
+        private const val TEMPLATE_VAR_SUFFIX = "}}"
+
+        private val TEMPLATE_ENGINE = PebbleEngine.Builder()
+                .autoEscaping(false)
+                .cacheActive(false)
+                .strictVariables(true)
+                .newLineTrimming(false)
+                .loader(StringLoader())
+                .syntax(Syntax.Builder()
+                        .setEnableNewLineTrimming(false)
+                        .setPrintOpenDelimiter(TEMPLATE_VAR_PREFIX)
+                        .setPrintCloseDelimiter(TEMPLATE_VAR_SUFFIX)
+                        .build()
+                )
+                .build()
+
+        private val TEMPLATE_INTERPOLATOR: (String, Map<String, Any>) -> String = { source, props ->
+            StrSubstitutor.replace(source, props, TEMPLATE_VAR_PREFIX, TEMPLATE_VAR_SUFFIX)
         }
     }
 

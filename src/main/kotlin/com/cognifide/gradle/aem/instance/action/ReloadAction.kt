@@ -26,7 +26,7 @@ class ReloadAction(project: Project) : AwaitAction(project) {
                 InstanceSync(project, instance).reload()
                 reloaded += instance
             } catch (e: InstanceException) { // still await timeout will fail
-                logger.error("Instance is unavailable: $instance", e)
+                aem.logger.error("Instance is unavailable: $instance", e)
             }
         }
 
@@ -42,7 +42,7 @@ class ReloadAction(project: Project) : AwaitAction(project) {
 
     override fun perform() {
         if (instances.isEmpty()) {
-            logger.info("No instances to reload.")
+            aem.logger.info("No instances to reload.")
             return
         }
 

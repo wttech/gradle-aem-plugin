@@ -26,7 +26,7 @@ open class DownloadTask : AemDefaultTask() {
 
     private val checkoutFilter by lazy { VltFilter.of(project) }
 
-    private val instance: Instance by lazy { Instance.single(project) }
+    private val instance: Instance by lazy { Instance.any(project) }
 
     /**
      * Repeat download when failed (brute-forcing).

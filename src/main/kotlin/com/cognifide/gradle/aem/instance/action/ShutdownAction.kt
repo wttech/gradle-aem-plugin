@@ -52,7 +52,7 @@ class ShutdownAction(project: Project) : AbstractAction(project) {
 
     override fun perform() {
         if (instances.isEmpty()) {
-            logger.info("No instances to shutdown.")
+            aem.logger.info("No instances to shutdown.")
             return
         }
 
@@ -96,7 +96,7 @@ class ShutdownAction(project: Project) : AbstractAction(project) {
 
             // Detect timeout when same checksum is not being updated so long
             if (stableRetry.times > 0 && timer.ticks > stableRetry.times) {
-                instanceStates.forEach { it.status.logTo(logger) }
+                instanceStates.forEach { it.status.logTo(aem.logger) }
 
                 throw InstanceException("Instances cannot shutdown: ${upInstances.names}. Timeout reached.")
             }

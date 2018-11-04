@@ -6,12 +6,10 @@ import com.cognifide.gradle.aem.instance.LocalInstance
 import com.cognifide.gradle.aem.instance.RemoteInstance
 import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.internal.LineSeparator
-import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.internal.notifier.Notifier
 import com.cognifide.gradle.aem.pkg.ComposeTask
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.fasterxml.jackson.annotation.JsonIgnore
-import org.gradle.api.DefaultTask
 import org.gradle.api.Project
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
@@ -32,13 +30,6 @@ class AemConfig(
         @JsonIgnore
         private val project: Project
 ) : Serializable {
-
-    /**
-     * Allows to read project property specified in command line and system property as a fallback.
-     */
-    @get:Internal
-    @get:JsonIgnore
-    val props = PropertyParser(project)
 
     /**
      * Project name convention prefixes used to determine default:
@@ -155,27 +146,6 @@ class AemConfig(
     @Input
     var vaultLineSeparator: String = aem.props.string("aem.vlt.lineSeparator", "LF")
 
-    // TODO remove it
-//    /**
-//     * Determines method of synchronizing JCR content from running AEM instance.
-//     *
-//     * By default 'checkout' method using VLT tool is being used.
-//     * Other possible method is 'download' which transfers JCR content using temporary CRX package.
-//     */
-//    @get:Internal
-//    @get:JsonIgnore
-//    var syncTransfer = aem.props.string("aem.sync.transfer", "checkout")
-//
-//    @get:Internal
-//    @get:JsonIgnore
-//    val syncTransferTaskName: String
-//        get() = when (syncTransfer) {
-//            "download" -> DownloadTask.NAME
-//            "checkout" -> CheckoutTask.NAME
-//            else -> throw AemException("Unsupported sync transfer method '$syncTransfer'. Supported methods: 'checkout' and 'download'.")
-//        }
-
-
     /**
      * Turn on/off default system notifications.
      */
@@ -276,18 +246,6 @@ class AemConfig(
          * Token indicating that value need to be corrected later by more advanced logic / convention.
          */
         const val AUTO_DETERMINED = "<auto>"
-
-        /**
-         * Shorthand getter for configuration related with specified project.
-         * Especially useful when including one project in another (composing assembly packages).
-         */
-        fun of(project: Project): AemConfig {
-            return AemExtension.of(project).config
-        }
-
-        fun of(task: DefaultTask): AemConfig {
-            return of(task.project)
-        }
 
         // TODO to be removed
         fun pkg(project: Project): ComposeTask {

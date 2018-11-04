@@ -1,10 +1,9 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.api.AemException
+import com.cognifide.gradle.aem.api.AemExtension
 import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.internal.Patterns
-import com.cognifide.gradle.aem.internal.PropertyParser
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.gradle.api.Project
 import java.io.Serializable
@@ -90,32 +89,7 @@ interface Instance : Serializable {
         const val PUBLISHERS_PROP = "aem.instance.publishers"
 
         fun parse(project: Project, str: String): List<RemoteInstance> {
-            return str.split(";").map { urlRaw ->
-                val parts = urlRaw.split(",")
-
-                when (parts.size) {
-                    4 -> {
-                        val (httpUrl, type, user, password) = parts
-
-                        RemoteInstance.create(project, httpUrl) {
-                            this.user = user
-                            this.password = password
-                            this.typeName = type
-                        }
-                    }
-                    3 -> {
-                        val (httpUrl, user, password) = parts
-
-                        RemoteInstance.create(project, httpUrl) {
-                            this.user = user
-                            this.password = password
-                        }
-                    }
-                    else -> {
-                        RemoteInstance.create(project, urlRaw)
-                    }
-                }
-            }
+            return Formats.toList(str).map { RemoteInstance.create(project, it) }
         }
 
         fun properties(project: Project): List<Instance> {
@@ -180,7 +154,7 @@ interface Instance : Serializable {
         }
 
         fun defaults(project: Project): List<RemoteInstance> {
-            val config = AemConfig.of(project)
+            val config = AemExtension.of(project).config
 
             return listOf(
                     RemoteInstance.create(project, URL_AUTHOR_DEFAULT) { environment = config.environment },
@@ -189,12 +163,12 @@ interface Instance : Serializable {
         }
 
         fun filter(project: Project): List<Instance> {
-            return filter(project, AemConfig.of(project).instanceName)
+            return filter(project, AemExtension.of(project).config.instanceName)
         }
 
         fun filter(project: Project, instanceFilter: String): List<Instance> {
-            val config = AemConfig.of(project)
-            val all = config.instances.values
+            val aem = AemExtension.of(project)
+            val all = aem.config.instances.values
 
             // Specified by command line should not be filtered
             val cmd = all.filter { it.environment == Instance.ENVIRONMENT_CMD }
@@ -205,11 +179,11 @@ interface Instance : Serializable {
             // Defined by build script, via properties or defaults are filterable by name
             return all.filter { instance ->
                 when {
-                    config.props.flag(AUTHORS_PROP) -> {
-                        Patterns.wildcard(instance.name, "${config.environment}-${InstanceType.AUTHOR}*")
+                    aem.props.flag(AUTHORS_PROP) -> {
+                        Patterns.wildcard(instance.name, "${aem.config.environment}-${InstanceType.AUTHOR}*")
                     }
-                    config.props.flag(PUBLISHERS_PROP) -> {
-                        Patterns.wildcard(instance.name, "${config.environment}-${InstanceType.PUBLISH}*")
+                    aem.props.flag(PUBLISHERS_PROP) -> {
+                        Patterns.wildcard(instance.name, "${aem.config.environment}-${InstanceType.PUBLISH}*")
                     }
                     else -> Patterns.wildcards(instance.name, instanceFilter)
                 }
@@ -232,32 +206,38 @@ interface Instance : Serializable {
             return filter(project, RemoteInstance::class)
         }
 
-        fun single(project: Project): Instance {
-            val logger = project.logger
-            val props = PropertyParser(project)
-            val config = AemConfig.of(project)
+        fun any(project: Project): Instance {
+            val aem = AemExtension.of(project)
 
-            val cmdInstanceArg = props.string("aem.instance")
+            val cmdInstanceArg = aem.props.string("aem.instance")
             if (!cmdInstanceArg.isNullOrBlank()) {
-                val cmdInstance = config.parseInstance(cmdInstanceArg)
+                val cmdInstance = aem.config.parseInstance(cmdInstanceArg)
 
-                logger.info("Using instance specified by command line parameter: $cmdInstance")
+                aem.logger.info("Using instance specified by command line parameter: $cmdInstance")
                 return cmdInstance
             }
 
-            val namedInstance = Instance.filter(project, config.instanceName).firstOrNull()
+            val namedInstance = Instance.filter(project, aem.config.instanceName).firstOrNull()
             if (namedInstance != null) {
-                logger.info("Using first instance matching filter '${config.instanceName}': $namedInstance")
+                aem.logger.info("Using first instance matching filter '${aem.config.instanceName}': $namedInstance")
                 return namedInstance
             }
 
-            val anyInstance = Instance.filter(project, Instance.FILTER_ANY).firstOrNull()
+            val anyInstance = Instance.filter(project, FILTER_ANY).firstOrNull()
             if (anyInstance != null) {
-                logger.info("Using first instance matching filter '${Instance.FILTER_ANY}': $anyInstance")
+                aem.logger.info("Using first instance matching filter '$FILTER_ANY': $anyInstance")
                 return anyInstance
             }
 
             throw InstanceException("Single instance cannot be determined neither by command line parameter nor AEM config.")
+        }
+
+        fun concrete(project: Project, type: String): Instance? {
+            val aem = AemExtension.of(project)
+
+            return aem.props.prop("aem.instance.$type")?.run {
+                aem.config.parseInstance(this)
+            }
         }
     }
 }

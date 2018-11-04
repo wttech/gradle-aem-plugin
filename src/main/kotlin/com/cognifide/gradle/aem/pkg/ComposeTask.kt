@@ -28,11 +28,8 @@ import java.util.*
 
 open class ComposeTask : Zip(), AemTask {
 
-    @Internal
-    val aem = AemExtension.of(project)
-
     @Nested
-    final override val config = aem.config
+    final override val aem = AemExtension.of(project)
 
     @Internal
     val vaultDir = AemTask.temporaryDir(project, name, PackagePlugin.VLT_PATH)
@@ -75,7 +72,7 @@ open class ComposeTask : Zip(), AemTask {
 
     @get:Input
     val filterRootsProp: String
-        get() = filterRoots.joinToString(config.vaultLineSeparatorString) { it.toString() }
+        get() = filterRoots.joinToString(aem.config.vaultLineSeparatorString) { it.toString() }
 
     @Internal
     var filterRootDefault = { other: ComposeTask -> "<filter root=\"${other.bundlePath}\"/>" }
@@ -163,7 +160,7 @@ open class ComposeTask : Zip(), AemTask {
     var bundlePath: String = if (project == project.rootProject) {
         "/apps/${project.rootProject.name}/install"
     } else {
-        "/apps/${project.rootProject.name}/${config.projectName}/install"
+        "/apps/${project.rootProject.name}/${aem.config.projectName}/install"
     }
 
     /**
@@ -221,7 +218,7 @@ open class ComposeTask : Zip(), AemTask {
     val vaultFilesDirs: List<File>
         get() {
             val paths = listOf(
-                    config.vaultFilesPath,
+                    aem.config.vaultFilesPath,
                     "$contentPath/${PackagePlugin.VLT_PATH}"
             )
 
@@ -261,7 +258,7 @@ open class ComposeTask : Zip(), AemTask {
         description = "Composes CRX package from JCR content and built OSGi bundles"
         group = AemTask.GROUP
 
-        baseName = config.baseName
+        baseName = aem.config.baseName
         duplicatesStrategy = DuplicatesStrategy.WARN
         isZip64 = true
 

@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.base.vlt
 
 import com.cognifide.gradle.aem.api.AemDefaultTask
+import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
 
 open class VltTask : AemDefaultTask() {
@@ -9,15 +10,17 @@ open class VltTask : AemDefaultTask() {
         description = "Execute any Vault command."
     }
 
-    @TaskAction
-    fun perform() {
-        val command = project.properties["aem.vlt.command"] as String?
-        if (command.isNullOrBlank()) {
-            throw VltException("Vault command cannot be blank.")
-        }
+    @Nested
+    val vlt = VltRunner(project)
 
-        VltRunner(project).raw(command)
-        aem.notifier.notify("Executing Vault command", "Command '$command' finished.")
+    fun vlt(configurer: VltRunner.() -> Unit) {
+        vlt.apply(configurer)
+    }
+
+    @TaskAction
+    open fun perform() {
+        vlt.run()
+        aem.notifier.notify("Executing Vault command", "Command '${vlt.commandEffective}' finished.")
     }
 
     companion object {

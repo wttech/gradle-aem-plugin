@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.bundle
 import aQute.bnd.gradle.BundleTaskConvention
 import com.cognifide.gradle.aem.api.AemBundle
 import com.cognifide.gradle.aem.api.AemConfig
+import com.cognifide.gradle.aem.api.AemExtension
 import com.cognifide.gradle.aem.api.AemPlugin
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import org.apache.commons.lang3.exception.ExceptionUtils
@@ -79,7 +80,7 @@ class BundlePlugin : AemPlugin() {
         if (baseName.isNullOrBlank()) {
             val groupValue = group as String?
             if (!name.isNullOrBlank() && !groupValue.isNullOrBlank()) {
-                jar.baseName = AemConfig.of(project).baseName
+                jar.baseName = AemExtension.of(project).config.baseName
             }
         }
     }
@@ -88,7 +89,7 @@ class BundlePlugin : AemPlugin() {
      * Set (if not set) or update OSGi or AEM specific jar manifest attributes.
      */
     private fun Project.ensureJarManifestAttributes(jar: Jar) {
-        val bundle = AemBundle.of(project)
+        val bundle = AemExtension.of(project).bundle
         if (!bundle.manifestAttributes) {
             logger.debug("Bundle manifest dynamic attributes support is disabled.")
             return
@@ -131,7 +132,7 @@ class BundlePlugin : AemPlugin() {
 
         jar.doLast {
             try {
-                val bundle = AemBundle.of(project)
+                val bundle = AemExtension.of(project).bundle
                 val instructionFile = File(bundle.bndPath)
                 if (instructionFile.isFile) {
                     bundleConvention.setBndfile(instructionFile)

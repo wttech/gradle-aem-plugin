@@ -8,6 +8,7 @@ import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.pkg.ListResponse
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 
@@ -28,15 +29,19 @@ open class DebugTask : AemDefaultTask() {
         outputs.upToDateWhen { false }
     }
 
+    @get:Internal
     val properties: Map<String, Any>
         get() {
             return mapOf(
                     "buildInfo" to buildProperties,
                     "projectInfo" to projectProperties,
+                    "baseConfig" to aem.config,
+                    "bundleConfig" to aem.bundle,
                     "packageDeployed" to packageProperties
             )
         }
 
+    @get:Internal
     val buildProperties: Map<String, Any>
         get() = mapOf(
                 "plugin" to AemPlugin.BUILD,
@@ -50,6 +55,7 @@ open class DebugTask : AemDefaultTask() {
                 )
         )
 
+    @get:Internal
     val projectProperties: Map<String, String>
         get() = mapOf(
                 "displayName" to project.displayName,
@@ -58,6 +64,7 @@ open class DebugTask : AemDefaultTask() {
                 "dir" to project.projectDir.absolutePath
         )
 
+    @get:Internal
     val packageProperties: Map<String, ListResponse.Package?>
         get() = if (!project.plugins.hasPlugin(PackagePlugin.ID) || !packageDeployed || aem.instances.isEmpty()) {
             mapOf()

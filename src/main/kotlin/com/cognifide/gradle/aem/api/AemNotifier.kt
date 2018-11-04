@@ -13,9 +13,9 @@ import java.util.concurrent.TimeUnit
 
 class AemNotifier private constructor(private val project: Project) {
 
-    private val notifier: Notifier by lazy { config.notificationConfig(this@AemNotifier) }
+    private val aem by lazy { AemExtension.of(project) }
 
-    private val config by lazy { AemConfig.of(project) }
+    private val notifier: Notifier by lazy { aem.config.notificationConfig(this@AemNotifier) }
 
     fun log(title: String) {
         log(title, "")
@@ -45,7 +45,7 @@ class AemNotifier private constructor(private val project: Project) {
         log(title, text, level)
 
         try {
-            if (config.notificationEnabled) {
+            if (aem.config.notificationEnabled) {
                 notifier.notify(title, text, level)
             }
         } catch (e: Throwable) {

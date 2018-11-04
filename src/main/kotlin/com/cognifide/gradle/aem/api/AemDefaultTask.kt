@@ -2,16 +2,12 @@ package com.cognifide.gradle.aem.api
 
 import org.gradle.api.DefaultTask
 import org.gradle.api.Task
-import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
 
 abstract class AemDefaultTask : DefaultTask(), AemTask {
 
-    @Internal
-    protected val aem = AemExtension.of(project)
-
     @Nested
-    final override val config = aem.config
+    final override val aem = AemExtension.of(project)
 
     init {
         group = AemTask.GROUP

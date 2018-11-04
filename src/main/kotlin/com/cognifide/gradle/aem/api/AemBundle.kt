@@ -147,12 +147,4 @@ class AemBundle(
         return pkgs.joinToString(",")
     }
 
-    companion object {
-
-        fun of(project: Project): AemBundle {
-            return AemExtension.of(project).bundle
-        }
-
-    }
-
 }

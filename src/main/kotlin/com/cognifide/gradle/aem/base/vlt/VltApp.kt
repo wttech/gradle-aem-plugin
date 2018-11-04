@@ -4,6 +4,7 @@ import org.apache.jackrabbit.vault.cli.VaultFsApp
 import org.apache.jackrabbit.vault.util.console.ExecutionContext
 import org.apache.jackrabbit.vault.util.console.commands.CmdConsole
 import org.gradle.api.Project
+import java.io.File
 
 class VltApp(val project: Project) : VaultFsApp() {
 
@@ -21,9 +22,11 @@ class VltApp(val project: Project) : VaultFsApp() {
         return executionContext
     }
 
-    fun execute(command: String, workingPath: String) {
-        execute(command.split(" "), workingPath)
-    }
+    fun execute(command: String, workingPath: String) = execute(command.split(" "), workingPath)
+
+    fun execute(command: String, workingDir: File) = execute(command, workingDir.absolutePath)
+
+    fun execute(args: List<String>, workingDir: File) = execute(args, workingDir.absolutePath)
 
     /**
      * TODO This could be potentially improved by overriding few methods of base class

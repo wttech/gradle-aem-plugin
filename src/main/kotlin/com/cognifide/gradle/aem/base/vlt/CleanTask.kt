@@ -2,28 +2,75 @@ package com.cognifide.gradle.aem.base.vlt
 
 import com.cognifide.gradle.aem.api.AemDefaultTask
 import com.cognifide.gradle.aem.internal.Formats
-import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.*
+import java.io.File
 
 open class CleanTask : AemDefaultTask() {
-
-    @Internal
-    private val runner = VltRunner(project)
 
     init {
         description = "Clean checked out JCR content."
 
-        beforeExecuted(config.syncTransferTaskName) { runner.cleanBeforeCheckout() }
+        project.run {
+            gradle.taskGraph.whenReady {
+                if (it.hasTask(tasks.getByName(CheckoutTask.NAME))) {
+                    beforeCheckout()
+                }
+            }
+        }
     }
 
+    @InputDirectory
+    var contentDir = project.file("src/main/content")
+
+    @Nested
+    val filter = VltFilter.of(project)
+
+    @get:Internal
+    val filterRootDirs: List<File>
+        get() {
+            if (!contentDir.exists()) {
+                logger.warn("JCR content directory does not exist: ${contentDir.absolutePath}")
+                return listOf()
+            }
+
+            return filter.rootDirs(contentDir)
+        }
+
+    @Internal
+    var filterRootPrepare: (File) -> Unit = { cleaner.prepare(it) }
+
+    @Internal
+    var filterRootClean: (File) -> Unit = { cleaner.clean(it) }
+
+    @Nested
+    val cleaner = VltCleaner(project)
+
     @TaskAction
-    fun clean() {
-        runner.cleanAfterCheckout()
+    fun perform() {
+        afterCheckout()
         aem.notifier.notify("Cleaned JCR content", "Directory: ${Formats.rootProjectPath(aem.compose.contentPath, project)}")
     }
 
-    fun settings(configurer: VltCleaner.() -> Unit) {
-        runner.cleaner.apply(configurer)
+    fun cleaner(configurer: VltCleaner.() -> Unit) {
+        cleaner.apply(configurer)
+    }
+
+    private fun beforeCheckout() {
+        logger.info("Preparing files to be cleaned up (before checking out new ones) using filter: $filter")
+
+        filterRootDirs.forEach { root ->
+            logger.lifecycle("Preparing root: $root")
+            filterRootPrepare(root)
+        }
+    }
+
+    private fun afterCheckout() {
+        logger.info("Cleaning using $filter")
+
+        filterRootDirs.forEach { root ->
+            logger.lifecycle("Cleaning root: $root")
+            filterRootClean(root)
+        }
     }
 
     companion object {

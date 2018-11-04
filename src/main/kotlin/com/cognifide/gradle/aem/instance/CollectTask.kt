@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.api.AemConfig
+import com.cognifide.gradle.aem.api.AemExtension
 import com.cognifide.gradle.aem.api.AemTask
 import com.cognifide.gradle.aem.pkg.ComposeTask
 import com.cognifide.gradle.aem.pkg.PackagePlugin
@@ -15,13 +16,13 @@ import java.io.File
 open class CollectTask : Zip(), AemTask {
 
     @Nested
-    final override val config = AemConfig.of(project)
+    final override val aem = AemExtension.of(project)
 
     init {
         group = AemTask.GROUP
         description = "Composes CRX package from all CRX packages being satisfied and built."
 
-        baseName = config.baseName
+        baseName = aem.config.baseName
         classifier = "packages"
         isZip64 = true
         duplicatesStrategy = DuplicatesStrategy.FAIL

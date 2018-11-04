@@ -15,6 +15,7 @@ import org.apache.commons.lang3.BooleanUtils
 import org.apache.commons.lang3.builder.HashCodeBuilder
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
+import org.gradle.api.tasks.Internal
 import org.gradle.util.ConfigureUtil
 import org.gradle.util.GFileUtils
 import java.io.File
@@ -22,7 +23,13 @@ import java.io.File
 /**
  * File downloader with groups supporting files from multiple sources: local and remote (SFTP, SMB, HTTP).
  */
-abstract class Resolver<G : FileGroup>(val project: Project, val downloadDir: File) {
+abstract class Resolver<G : FileGroup>(
+        @get:Internal
+        val project: Project,
+
+        @get:Internal
+        val downloadDir: File
+) {
 
     private val groupDefault = this.createGroup(GROUP_DEFAULT)
 

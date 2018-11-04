@@ -18,10 +18,6 @@ abstract class AbstractAction(
     @Transient
     val aem = AemExtension.of(project)
 
-    @Internal
-    @Transient
-    val logger = project.logger
-
     @Input
     var instances: List<Instance> = Instance.filter(project)
 

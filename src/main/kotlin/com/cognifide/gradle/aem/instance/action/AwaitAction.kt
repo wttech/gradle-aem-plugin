@@ -96,7 +96,7 @@ open class AwaitAction(project: Project) : AbstractAction(project) {
 
     override fun perform() {
         if (instances.isEmpty()) {
-            logger.info("No instances to await.")
+            aem.logger.info("No instances to await.")
             return
         }
 
@@ -160,7 +160,7 @@ open class AwaitAction(project: Project) : AbstractAction(project) {
 
             // Detect timeout when same checksum is not being updated so long
             if (stableRetry.times > 0 && timer.ticks > stableRetry.times) {
-                instanceStates.forEach { it.status.logTo(logger) }
+                instanceStates.forEach { it.status.logTo(aem.logger) }
 
                 if (!resume) {
                     throw InstanceException("Instances not stable: ${unstableInstances.names}. Timeout reached.")
@@ -174,7 +174,7 @@ open class AwaitAction(project: Project) : AbstractAction(project) {
                 // Assure that expected moment is not accidental, remember it
                 val assurable = (stableAssurance > 0) && (sinceStableTicks == -1L)
                 if (!fast && assurable) {
-                    logger.info("Instance(s) stable: ${instances.names}. Assuring.")
+                    aem.logger.info("Instance(s) stable: ${instances.names}. Assuring.")
                     sinceStableTicks = timer.ticks
                 }
 
@@ -196,7 +196,7 @@ open class AwaitAction(project: Project) : AbstractAction(project) {
     }
 
     private fun awaitHealthy() {
-        logger.lifecycle("Checking health of instance(s): ${instances.names}")
+        aem.logger.lifecycle("Checking health of instance(s): ${instances.names}")
 
         val synchronizers = prepareSynchronizers()
         for (i in 0..healthRetry.times) {
@@ -211,13 +211,13 @@ open class AwaitAction(project: Project) : AbstractAction(project) {
             }
 
             if (i < healthRetry.times) {
-                logger.warn("Unhealthy instances detected: ${unhealthyInstances.names}")
+                aem.logger.warn("Unhealthy instances detected: ${unhealthyInstances.names}")
 
                 val header = "Retrying health check (${i + 1}/${healthRetry.times}) after delay."
                 val countdown = ProgressCountdown(project, header, healthRetry.delay(i + 1))
                 countdown.run()
             } else if (i == healthRetry.times) {
-                instanceStates.forEach { it.status.logTo(logger) }
+                instanceStates.forEach { it.status.logTo(aem.logger) }
 
                 if (!resume) {
                     throw InstanceException("Instances not healthy: ${unhealthyInstances.names}.")
@@ -236,7 +236,7 @@ open class AwaitAction(project: Project) : AbstractAction(project) {
                 val sync = this
 
                 if (init) {
-                    logger.debug("Initializing instance using default credentials.")
+                    aem.logger.debug("Initializing instance using default credentials.")
                     sync.basicUser = Instance.USER_DEFAULT
                     sync.basicPassword = Instance.PASSWORD_DEFAULT
                 }
@@ -245,11 +245,11 @@ open class AwaitAction(project: Project) : AbstractAction(project) {
                     if (init) {
                         if (response.statusLine.statusCode == HttpStatus.SC_UNAUTHORIZED) {
                             if (sync.basicUser == Instance.USER_DEFAULT) {
-                                logger.debug("Switching instance credentials from defaults to customized.")
+                                aem.logger.debug("Switching instance credentials from defaults to customized.")
                                 sync.basicUser = instance.user
                                 sync.basicPassword = instance.password
                             } else {
-                                logger.debug("Switching instance credentials from customized to defaults.")
+                                aem.logger.debug("Switching instance credentials from customized to defaults.")
                                 sync.basicUser = Instance.USER_DEFAULT
                                 sync.basicPassword = Instance.PASSWORD_DEFAULT
                             }

@@ -6,7 +6,6 @@ import org.gradle.testkit.runner.GradleRunner
 import org.gradle.util.GFileUtils
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.TestInfo
 import org.junit.jupiter.api.TestInstance
 import java.io.File
 import java.nio.file.Files
@@ -17,7 +16,7 @@ abstract class AemTest {
     lateinit var tmpDir: File
 
     @BeforeAll
-    fun prepare(info: TestInfo) {
+    fun prepare() {
         this.tmpDir = Files.createTempDirectory("aemTest").toFile()
     }
 
