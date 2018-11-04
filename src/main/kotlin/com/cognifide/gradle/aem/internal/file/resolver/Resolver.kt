@@ -8,7 +8,6 @@ import com.cognifide.gradle.aem.internal.file.downloader.SftpFileDownloader
 import com.cognifide.gradle.aem.internal.file.downloader.SmbFileDownloader
 import com.cognifide.gradle.aem.internal.file.downloader.UrlFileDownloader
 import com.google.common.hash.HashCode
-import groovy.lang.Closure
 import org.apache.commons.codec.digest.DigestUtils
 import org.apache.commons.io.FilenameUtils
 import org.apache.commons.lang3.BooleanUtils
@@ -16,7 +15,6 @@ import org.apache.commons.lang3.builder.HashCodeBuilder
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.tasks.Internal
-import org.gradle.util.ConfigureUtil
 import org.gradle.util.GFileUtils
 import java.io.File
 

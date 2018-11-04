@@ -6,20 +6,17 @@ import org.gradle.api.Project
 import org.gradle.api.logging.Logger
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
-import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Internal
 import java.io.File
 
 class VltRunner(project: Project) {
-
-    private val logger: Logger = project.logger
 
     private val aem = AemExtension.of(project)
 
     private val app = VltApp(project)
 
     @Input
-    var command: String = project.findProperty("aem.vlt.command") as String? ?: ""
+    var command: String = aem.props.string("aem.vlt.command", "")
 
     @Input
     var commandProperties: Map<String, Any> = mapOf("config" to aem.config)
@@ -32,7 +29,7 @@ class VltRunner(project: Project) {
     var contentDir: File = project.file("src/main/content")
 
     @Input
-    var contentRelativePath: String = project.findProperty("aem.vlt.path") as String? ?: ""
+    var contentRelativePath: String = aem.props.string("aem.vlt.path", "")
 
     @get:Internal
     val contentDirEffective: File
@@ -50,8 +47,8 @@ class VltRunner(project: Project) {
             throw VltException("Vault command cannot be blank.")
         }
 
-        logger.lifecycle("Working directory: $contentDirEffective")
-        logger.lifecycle("Executing command: vlt $commandEffective")
+        aem.logger.lifecycle("Working directory: $contentDirEffective")
+        aem.logger.lifecycle("Executing command: vlt $commandEffective")
 
         app.execute(commandEffective, contentDirEffective)
     }

@@ -1,7 +1,10 @@
 package com.cognifide.gradle.aem.pkg
 
 import aQute.bnd.osgi.Jar
-import com.cognifide.gradle.aem.api.*
+import com.cognifide.gradle.aem.api.AemConfig
+import com.cognifide.gradle.aem.api.AemException
+import com.cognifide.gradle.aem.api.AemExtension
+import com.cognifide.gradle.aem.api.AemTask
 import com.cognifide.gradle.aem.base.vlt.VltFilter
 import com.cognifide.gradle.aem.bundle.BundleCollector
 import com.cognifide.gradle.aem.bundle.BundlePlugin

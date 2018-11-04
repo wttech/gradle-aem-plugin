@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem.instance.satisfy
 
 import aQute.bnd.osgi.Jar
-import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.api.AemExtension
 import com.cognifide.gradle.aem.base.vlt.VltFilter
 import com.cognifide.gradle.aem.internal.file.FileOperations

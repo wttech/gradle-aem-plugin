@@ -5,7 +5,6 @@ import com.cognifide.gradle.aem.api.AemExtension
 import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.ProgressLogger
-import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.internal.file.FileOperations
 import org.apache.commons.io.FileUtils
 import org.gradle.api.Project
@@ -83,7 +82,7 @@ class LocalHandle(val project: Project, val instance: LocalInstance) {
 
         aem.logger.info("Expanding instance files")
         FileOperations.amendFiles(dir, options.filesExpanded) { file, source ->
-           aem.props.expand(source, properties, file.absolutePath)
+            aem.props.expand(source, properties, file.absolutePath)
         }
 
         aem.logger.info("Creating lock file")
