@@ -45,8 +45,8 @@ class BasePlugin : AemPlugin() {
             it.mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
         }
         registerTask(SyncTask.NAME, SyncTask::class.java) {
-            it.dependsOn(LifecycleBasePlugin.CLEAN_TASK_NAME, CleanTask.NAME)
-            it.dependsOn(CheckoutTask.NAME)
+            it.mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
+            it.dependsOn(CleanTask.NAME, CheckoutTask.NAME)
         }
     }
 
