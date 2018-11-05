@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.instance
 
+import com.cognifide.gradle.aem.instance.satisfy.PackageException
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.ProgressCountdown
 import com.cognifide.gradle.aem.internal.file.FileException
@@ -177,10 +178,7 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
                 return installPackageOnce(remotePath)
             } catch (e: DeployException) {
                 exception = e
-                val criticalErrors = exception.criticalInstallationErrors
-                if (criticalErrors.isNotEmpty()) {
-                    throw exception
-                } else if (i < config.installRetry.times) {
+                if (i < config.installRetry.times) {
                     logger.warn("Cannot install package $remotePath on $instance.")
                     logger.debug("Install error", e)
 
@@ -200,15 +198,18 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
         logger.info("Installing package $remotePath on $instance")
 
         val response = try {
-            postMultipart(url, mapOf("recursive" to config.installRecursive)) { InstallResponseBuilder.buildFromStream(asStream(it)) }
+            postMultipart(url, mapOf("recursive" to config.installRecursive)) { InstallResponse.from(asStream(it), config.packageResponseBuffer) }
         } catch (e: RequestException) {
+
             throw DeployException("Cannot install package $remotePath on $instance. Reason: request failed.", e)
         } catch (e: ResponseException) {
             throw DeployException("Malformed response after installing package $remotePath on $instance.")
         }
-
-        if (!response.success) {
-            throw DeployException("Cannot install package $remotePath on $instance. Status: ${response.status}. Errors: ${response.errors}.", response.errors)
+        val packageErrors = response.findPackageErrors(config.packageErrors)
+        if (packageErrors.isNotEmpty()) {
+            throw PackageException("Cannot install package $remotePath on $instance because it is malformed by:\n$packageErrors \nErrors: ${response.errors}")
+        } else if (!response.success) {
+            throw DeployException("Cannot install package $remotePath on $instance. Status: ${response.status}. Errors: ${response.errors}.")
         }
 
         return response
@@ -255,7 +256,7 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
         logger.info("Deleting package $remotePath on $instance")
 
         val response = try {
-            postMultipart(url) { DeleteResponse.from(asString(it)) }
+            postMultipart(url) { DeleteResponse.from(asStream(it), config.packageResponseBuffer) }
         } catch (e: RequestException) {
             throw DeployException("Cannot delete package $remotePath from $instance. Reason: request failed.", e)
         } catch (e: ResponseException) {
@@ -275,7 +276,7 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
         logger.info("Uninstalling package using command: $url")
 
         val response = try {
-            postMultipart(url, mapOf("recursive" to config.installRecursive)) { UninstallResponse.from(asString(it)) }
+            postMultipart(url, mapOf("recursive" to config.installRecursive)) { UninstallResponse.from(asStream(it), config.packageResponseBuffer) }
         } catch (e: RequestException) {
             throw DeployException("Cannot uninstall package $remotePath on $instance. Reason: request failed.", e)
         } catch (e: ResponseException) {
@@ -297,7 +298,7 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
         logger.debug("Asking for OSGi bundles on $instance")
 
         return try {
-            get(OSGI_BUNDLES_PATH) { BundleState.fromJson(asString(it)) }
+            get(OSGI_BUNDLES_PATH) { BundleState.from(asStream(it)) }
         } catch (e: Exception) {
             logger.debug("Cannot determine OSGi bundles state on $instance", e)
             BundleState.unknown(e)
@@ -308,7 +309,7 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
         logger.debug("Asking for OSGi components on $instance")
 
         return try {
-            ComponentState.fromJson(get(OSGI_COMPONENTS_PATH) { asString(it) })
+            get(OSGI_COMPONENTS_PATH) {ComponentState.from(asStream(it))}
         } catch (e: Exception) {
             logger.debug("Cannot determine OSGi components state on $instance", e)
             ComponentState.unknown()
