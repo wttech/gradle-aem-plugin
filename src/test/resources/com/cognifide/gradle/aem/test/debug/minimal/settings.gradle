@@ -1,7 +1,0 @@
-pluginManagement {
-    repositories {
-        jcenter()
-        mavenLocal()
-        maven { url "http://dl.bintray.com/cognifide/maven-public" }
-    }
-}

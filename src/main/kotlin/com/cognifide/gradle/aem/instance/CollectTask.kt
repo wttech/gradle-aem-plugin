@@ -1,7 +1,10 @@
 package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.api.AemConfig
+import com.cognifide.gradle.aem.api.AemExtension
 import com.cognifide.gradle.aem.api.AemTask
+import com.cognifide.gradle.aem.pkg.ComposeTask
+import com.cognifide.gradle.aem.pkg.PackagePlugin
 import org.gradle.api.file.CopySpec
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.tasks.Internal
@@ -13,13 +16,13 @@ import java.io.File
 open class CollectTask : Zip(), AemTask {
 
     @Nested
-    final override val config = AemConfig.of(project)
+    final override val aem = AemExtension.of(project)
 
     init {
         group = AemTask.GROUP
         description = "Composes CRX package from all CRX packages being satisfied and built."
 
-        baseName = config.packageName
+        baseName = aem.config.baseName
         classifier = "packages"
         isZip64 = true
         duplicatesStrategy = DuplicatesStrategy.FAIL
@@ -36,7 +39,7 @@ open class CollectTask : Zip(), AemTask {
         spec.exclude("**/*.lock")
     }
 
-    @get:Internal
+    @Internal
     private val satisfy = (project.tasks.getByName(SatisfyTask.NAME) as SatisfyTask)
 
     @get:Internal
@@ -46,6 +49,14 @@ open class CollectTask : Zip(), AemTask {
     @get:Internal
     val builtPackages: List<File>
         get() = AemConfig.pkgs(project).map { it.archivePath }
+
+    override fun projectsEvaluated() {
+        project.allprojects.forEach { subproject ->
+            if (subproject.plugins.hasPlugin(PackagePlugin.ID)) {
+                dependsOn(ComposeTask.NAME)
+            }
+        }
+    }
 
     override fun copy() {
         resolvePackages()
@@ -57,7 +68,7 @@ open class CollectTask : Zip(), AemTask {
     }
 
     companion object {
-        val NAME = "aemCollect"
+        const val NAME = "aemCollect"
     }
 
 }

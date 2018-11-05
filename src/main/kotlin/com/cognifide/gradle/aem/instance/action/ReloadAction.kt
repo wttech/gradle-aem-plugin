@@ -5,13 +5,19 @@ import com.cognifide.gradle.aem.instance.InstanceException
 import com.cognifide.gradle.aem.instance.InstanceSync
 import com.cognifide.gradle.aem.internal.ProgressCountdown
 import org.gradle.api.Project
+import org.gradle.api.tasks.Input
+import java.util.concurrent.TimeUnit
 
 /**
  * Reloads all instances and waits until all be stable.
  */
-class ReloadAction(project: Project, instances: List<Instance>) : AwaitAction(project, instances) {
+class ReloadAction(project: Project) : AwaitAction(project) {
 
-    var delay = config.reloadDelay
+    /**
+     * Time in milliseconds to postpone instance stability checks after triggering instances restart.
+     */
+    @Input
+    var delay: Long = aem.props.long("aem.reload.delay", TimeUnit.SECONDS.toMillis(10))
 
     private fun reload() {
         val reloaded = mutableListOf<Instance>()
@@ -20,7 +26,7 @@ class ReloadAction(project: Project, instances: List<Instance>) : AwaitAction(pr
                 InstanceSync(project, instance).reload()
                 reloaded += instance
             } catch (e: InstanceException) { // still await timeout will fail
-                logger.error("Instance is unavailable: $instance", e)
+                aem.logger.error("Instance is unavailable: $instance", e)
             }
         }
 
@@ -36,7 +42,7 @@ class ReloadAction(project: Project, instances: List<Instance>) : AwaitAction(pr
 
     override fun perform() {
         if (instances.isEmpty()) {
-            logger.info("No instances to reload.")
+            aem.logger.info("No instances to reload.")
             return
         }
 

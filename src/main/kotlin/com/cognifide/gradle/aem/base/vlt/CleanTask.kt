@@ -2,38 +2,80 @@ package com.cognifide.gradle.aem.base.vlt
 
 import com.cognifide.gradle.aem.api.AemDefaultTask
 import com.cognifide.gradle.aem.internal.Formats
-import groovy.lang.Closure
+import org.gradle.api.execution.TaskExecutionGraph
+import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
-import org.gradle.util.ConfigureUtil
+import java.io.File
 
 open class CleanTask : AemDefaultTask() {
 
-    @Internal
-    private val runner = VltRunner(project)
-
     init {
         description = "Clean checked out JCR content."
+    }
 
-        project.run {
-            gradle.taskGraph.whenReady {
-                if (it.hasTask(tasks.getByName(NAME))) {
-                    tasks.getByName(config.syncTransferTaskName).doFirst {
-                        runner.cleanBeforeCheckout()
-                    }
-                }
+    @Input
+    var contentPath = aem.config.packageRoot
+
+    @Nested
+    val filter = aem.filter()
+
+    @get:Internal
+    val filterRootDirs: List<File>
+        get() {
+            val contentDir = project.file(contentPath)
+            if (!contentDir.exists()) {
+                logger.warn("JCR content directory does not exist: $contentPath")
+                return listOf()
+            }
+
+            return filter.rootDirs(contentDir)
+        }
+
+    @Internal
+    var filterRootPrepare: (File) -> Unit = { cleaner.prepare(it) }
+
+    @Internal
+    var filterRootClean: (File) -> Unit = { cleaner.clean(it) }
+
+    @Nested
+    val cleaner = VltCleaner(project)
+
+    @TaskAction
+    fun perform() {
+        afterCheckout()
+        aem.notifier.notify("Cleaned JCR content", "Directory: ${Formats.rootProjectPath(contentPath, project)}")
+    }
+
+    fun cleaner(configurer: VltCleaner.() -> Unit) {
+        cleaner.apply(configurer)
+    }
+
+    override fun taskGraphReady(graph: TaskExecutionGraph) {
+        if (graph.hasTask(this@CleanTask)) {
+            project.tasks.named(CheckoutTask.NAME).configure {
+                doFirst { beforeCheckout() }
             }
         }
     }
 
-    @TaskAction
-    fun clean() {
-        runner.cleanAfterCheckout()
-        notifier.default("Cleaned JCR content", "Directory: ${Formats.rootProjectPath(config.contentPath, project)}")
+    private fun beforeCheckout() {
+        logger.info("Preparing files to be cleaned up (before checking out new ones) using filter: $filter")
+
+        filterRootDirs.forEach { root ->
+            logger.lifecycle("Preparing root: $root")
+            filterRootPrepare(root)
+        }
     }
 
-    fun settings(configurer: Closure<*>) {
-        ConfigureUtil.configure(configurer, runner.cleaner)
+    private fun afterCheckout() {
+        logger.info("Cleaning using $filter")
+
+        filterRootDirs.forEach { root ->
+            logger.lifecycle("Cleaning root: $root")
+            filterRootClean(root)
+        }
     }
 
     companion object {

@@ -1,24 +1,19 @@
 package com.cognifide.gradle.aem.pkg
 
+import com.cognifide.gradle.aem.api.AemPlugin
 import com.cognifide.gradle.aem.base.BasePlugin
-import com.cognifide.gradle.aem.pkg.deploy.ActivateTask
-import com.cognifide.gradle.aem.pkg.deploy.DeleteTask
-import com.cognifide.gradle.aem.pkg.deploy.DeployTask
-import com.cognifide.gradle.aem.pkg.deploy.InstallTask
-import com.cognifide.gradle.aem.pkg.deploy.PurgeTask
-import com.cognifide.gradle.aem.pkg.deploy.UninstallTask
-import com.cognifide.gradle.aem.pkg.deploy.UploadTask
-import org.gradle.api.Plugin
+import com.cognifide.gradle.aem.instance.CreateTask
+import com.cognifide.gradle.aem.instance.InstancePlugin
+import com.cognifide.gradle.aem.instance.SatisfyTask
+import com.cognifide.gradle.aem.instance.UpTask
 import org.gradle.api.Project
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 
-class PackagePlugin : Plugin<Project> {
+class PackagePlugin : AemPlugin() {
 
-    override fun apply(project: Project) {
-        with(project, {
-            setupDependentPlugins()
-            setupTasks()
-        })
+    override fun Project.configure() {
+        setupDependentPlugins()
+        setupTasks()
     }
 
     private fun Project.setupDependentPlugins() {
@@ -26,38 +21,27 @@ class PackagePlugin : Plugin<Project> {
     }
 
     private fun Project.setupTasks() {
-        val clean = tasks.getByName(LifecycleBasePlugin.CLEAN_TASK_NAME)
+        registerTask(ComposeTask.NAME, ComposeTask::class.java) {
+            it.dependsOn(LifecycleBasePlugin.ASSEMBLE_TASK_NAME, LifecycleBasePlugin.CHECK_TASK_NAME)
+            it.mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
+        }
+        registerTask(DeleteTask.NAME, DeleteTask::class.java)
+        registerTask(PurgeTask.NAME, PurgeTask::class.java)
+        registerTask(UninstallTask.NAME, UninstallTask::class.java)
+        registerTask(ActivateTask.NAME, ActivateTask::class.java) {
+            it.mustRunAfter(ComposeTask.NAME)
+        }
+        registerTask(DeployTask.NAME, DeployTask::class.java) {
+            it.dependsOn(ComposeTask.NAME)
+        }
 
-        val prepare = tasks.create(PrepareTask.NAME, PrepareTask::class.java)
-        val compose = tasks.create(ComposeTask.NAME, ComposeTask::class.java)
-        val upload = tasks.create(UploadTask.NAME, UploadTask::class.java)
-        tasks.create(DeleteTask.NAME, DeleteTask::class.java)
-        tasks.create(PurgeTask.NAME, PurgeTask::class.java)
-        val install = tasks.create(InstallTask.NAME, InstallTask::class.java)
-        tasks.create(UninstallTask.NAME, UninstallTask::class.java)
-        val activate = tasks.create(ActivateTask.NAME, ActivateTask::class.java)
-        val deploy = tasks.create(DeployTask.NAME, DeployTask::class.java)
+        tasks.named(LifecycleBasePlugin.BUILD_TASK_NAME).configure { it.dependsOn(ComposeTask.NAME) }
 
-
-        val assemble = tasks.getByName(LifecycleBasePlugin.ASSEMBLE_TASK_NAME)
-        val check = tasks.getByName(LifecycleBasePlugin.CHECK_TASK_NAME)
-        val build = tasks.getByName(LifecycleBasePlugin.BUILD_TASK_NAME)
-
-
-        assemble.mustRunAfter(clean)
-        check.mustRunAfter(clean)
-        build.dependsOn(compose)
-
-        prepare.mustRunAfter(clean)
-
-        compose.dependsOn(prepare, assemble, check)
-        compose.mustRunAfter(clean)
-
-        upload.dependsOn(compose)
-        install.mustRunAfter(compose, upload)
-        activate.mustRunAfter(compose, upload, install)
-
-        deploy.dependsOn(compose)
+        plugins.withId(InstancePlugin.ID) {
+            tasks.named(DeployTask.NAME).configure { task ->
+                task.mustRunAfter(CreateTask.NAME, UpTask.NAME, SatisfyTask.NAME)
+            }
+        }
     }
 
     companion object {
@@ -65,7 +49,7 @@ class PackagePlugin : Plugin<Project> {
 
         const val VLT_PATH = "META-INF/vault"
 
-        const val HOOKS_PATH = "META-INF/vault/hooks"
+        const val VLT_HOOKS_PATH = "META-INF/vault/hooks"
 
         const val VLT_PROPERTIES = "$VLT_PATH/properties.xml"
 

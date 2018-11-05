@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.instance.satisfy
 
 import aQute.bnd.osgi.Jar
-import com.cognifide.gradle.aem.api.AemConfig
+import com.cognifide.gradle.aem.api.AemExtension
 import com.cognifide.gradle.aem.base.vlt.VltFilter
 import com.cognifide.gradle.aem.internal.file.FileOperations
 import com.cognifide.gradle.aem.internal.file.resolver.FileResolution
@@ -14,9 +14,9 @@ import java.io.File
 
 class PackageResolution(group: PackageGroup, id: String, action: (FileResolution) -> File) : FileResolution(group, id, action) {
 
-    val config = AemConfig.of(group.resolver.project)
+    private val resolver = group.resolver
 
-    val logger = group.resolver.project.logger
+    private val aem = AemExtension.of(resolver.project)
 
     override fun process(file: File): File {
         val origin = super.process(file)
@@ -32,14 +32,14 @@ class PackageResolution(group: PackageGroup, id: String, action: (FileResolution
         val pkgName = jar.nameWithoutExtension
         val pkg = File(dir, "$pkgName.zip")
         if (pkg.exists()) {
-            logger.info("CRX package wrapping OSGi bundle already exists: $pkg")
+            aem.logger.info("CRX package wrapping OSGi bundle already exists: $pkg")
             return pkg
         }
 
-        logger.info("Wrapping OSGi bundle to CRX package: $jar")
+        aem.logger.info("Wrapping OSGi bundle to CRX package: $jar")
 
         val pkgRoot = File(dir, pkgName)
-        val pkgPath = "${config.satisfyBundlePath}/${jar.name}"
+        val pkgPath = "${resolver.bundlePath}/${jar.name}"
         val vaultDir = File(pkgRoot, PackagePlugin.VLT_PATH)
 
         // Copy package template files
@@ -58,17 +58,15 @@ class PackageResolution(group: PackageGroup, id: String, action: (FileResolution
                 "project.name" to symbolicName,
                 "project.version" to version,
                 "project.description" to description,
-                "config.packageName" to symbolicName,
                 "filters" to filters,
-                "filterRoots" to filters.joinToString(config.vaultLineSeparatorString) { it.toString() }
+                "filterRoots" to filters.joinToString(aem.config.vaultLineSeparatorString) { it.toString() }
         )
-        val generalProps = config.props.packageProps
-        val overrideProps = config.satisfyBundleProperties(bundle)
-        val effectiveProps = generalProps + bundleProps + overrideProps
+        val overrideProps = resolver.bundleProperties(bundle)
+        val effectiveProps = bundleProps + overrideProps
 
-        FileOperations.amendFiles(vaultDir, listOf("**/${PackagePlugin.VLT_PATH}/*.xml"), { file, content ->
-            config.props.expand(content, effectiveProps, file.absolutePath)
-        })
+        FileOperations.amendFiles(vaultDir, listOf("**/${PackagePlugin.VLT_PATH}/*.xml")) { file, content ->
+            aem.props.expand(content, effectiveProps, file.absolutePath)
+        }
 
         // Copy bundle to install path
         val pkgJar = File(pkgRoot, "jcr_root$pkgPath")

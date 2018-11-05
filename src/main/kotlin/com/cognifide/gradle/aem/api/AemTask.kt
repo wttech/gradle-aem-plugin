@@ -1,19 +1,29 @@
 package com.cognifide.gradle.aem.api
 
 import org.gradle.api.Project
+import org.gradle.api.Task
+import org.gradle.api.execution.TaskExecutionGraph
 import org.gradle.util.GFileUtils
 import java.io.File
 
-/**
- * @since 1.3 Task configuration should not be directly modified, because it is confusing for plugin users.
- *
- * Instead: aemCompose { config { /* ... */ } }
- * Simply write: aem { config { /* ... */ } }
- */
-interface AemTask {
+interface AemTask : Task {
+
+    val aem: AemExtension
+
+    fun projectEvaluated() {
+        // intentionally empty
+    }
+
+    fun projectsEvaluated() {
+        // intentionally empty
+    }
+
+    fun taskGraphReady(graph: TaskExecutionGraph) {
+        // intentionally empty
+    }
 
     companion object {
-        val GROUP = "AEM"
+        const val GROUP = "AEM"
 
         fun taskDir(project: Project, taskName: String): File {
             val dir = File(project.buildDir, "aem/$taskName")
@@ -39,7 +49,5 @@ interface AemTask {
             return File(dir, name)
         }
     }
-
-    val config: AemConfig
 
 }

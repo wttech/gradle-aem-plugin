@@ -1,60 +1,60 @@
 package com.cognifide.gradle.aem.pkg
 
 import aQute.bnd.osgi.Jar
-import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.api.AemException
-import com.cognifide.gradle.aem.api.AemNotifier
+import com.cognifide.gradle.aem.api.AemExtension
 import com.cognifide.gradle.aem.api.AemTask
 import com.cognifide.gradle.aem.base.vlt.VltFilter
 import com.cognifide.gradle.aem.bundle.BundleCollector
 import com.cognifide.gradle.aem.bundle.BundlePlugin
+import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.internal.Patterns
-import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.internal.file.FileContentReader
-import groovy.lang.Closure
+import com.cognifide.gradle.aem.internal.file.FileOperations
+import com.fasterxml.jackson.annotation.JsonIgnore
+import org.apache.commons.io.FileUtils
 import org.gradle.api.Project
 import org.gradle.api.file.CopySpec
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
+import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.bundling.Zip
 import org.gradle.language.base.plugins.LifecycleBasePlugin
-import org.gradle.util.ConfigureUtil
 import org.jsoup.nodes.Element
 import java.io.File
 import java.io.Serializable
+import java.text.SimpleDateFormat
+import java.util.*
 import java.util.regex.Pattern
 
 open class ComposeTask : Zip(), AemTask {
 
     @Nested
-    final override val config = AemConfig.of(project)
+    final override val aem = AemExtension.of(project)
 
-    @InputDirectory
-    val vaultDir = AemTask.temporaryDir(project, PrepareTask.NAME, PackagePlugin.VLT_PATH)
+    @Internal
+    val vaultDir = AemTask.temporaryDir(project, name, PackagePlugin.VLT_PATH)
+
+    /**
+     * Ensures that for directory 'META-INF/vault' default files will be generated when missing:
+     * 'config.xml', 'filter.xml', 'properties.xml' and 'settings.xml'.
+     */
+    @Input
+    var vaultCopyMissingFiles: Boolean = true
 
     @Internal
     val filterRoots = mutableSetOf<Element>()
+
+    @Internal
+    var filterRootDefault = { other: ComposeTask -> "<filter root=\"${other.bundlePath}\"/>" }
 
     @Internal
     val nodeTypesLibs = mutableSetOf<String>()
 
     @Internal
     val nodeTypesLines = mutableListOf<String>()
-
-    @get:Input
-    val filterRootsProp: String
-        get() = filterRoots.joinToString(config.vaultLineSeparatorString) { it.toString() }
-
-    @Internal
-    var filterRootDefault = { _: Project, subconfig: AemConfig ->
-        "<filter root=\"${subconfig.bundlePath}\"/>"
-    }
-
-    @Internal
-    val propertyParser = PropertyParser(project)
 
     @Internal
     private var bundleCollectors: List<() -> Unit> = mutableListOf()
@@ -68,15 +68,15 @@ open class ComposeTask : Zip(), AemTask {
     @Internal
     var fileFilter: ((CopySpec) -> Unit) = { spec ->
         if (fileFilterOptions.excluding) {
-            spec.exclude(config.packageFilesExcluded)
+            spec.exclude(packageFilesExcluded)
         }
 
         spec.eachFile { fileDetail ->
             val path = "/${fileDetail.relativePath.pathString.removePrefix("/")}"
 
             if (fileFilterOptions.expanding) {
-                if (Patterns.wildcard(path, config.packageFilesExpanded)) {
-                    FileContentReader.filter(fileDetail, { propertyParser.expandPackage(it, fileProperties, path) })
+                if (Patterns.wildcard(path, packageFilesExpanded)) {
+                    FileContentReader.filter(fileDetail) { aem.props.expandPackage(it, fileProperties, path) }
                 }
             }
 
@@ -102,11 +102,13 @@ open class ComposeTask : Zip(), AemTask {
     @get:Internal
     val fileProperties
         get() = mapOf(
+                "zip" to this,
                 "filters" to filterRoots,
-                "filterRoots" to filterRootsProp,
-                "nodeTypesLibs" to nodeTypesLibs.joinToString("\n"),
-                "nodeTypesLines" to nodeTypesLines.joinToString("\n")
-        )
+                "nodeTypesLibs" to nodeTypesLibs,
+                "nodeTypesLines" to nodeTypesLines,
+                "buildCount" to SimpleDateFormat("yDDmmssSSS").format(packageBuildDate),
+                "created" to Formats.date(packageBuildDate)
+        ) + packageFileProperties
 
     /**
      * Configure default task dependency assignments while including dependant project bundles.
@@ -117,6 +119,122 @@ open class ComposeTask : Zip(), AemTask {
             LifecycleBasePlugin.ASSEMBLE_TASK_NAME,
             LifecycleBasePlugin.CHECK_TASK_NAME
     )
+
+    /**
+     * Absolute path to JCR content to be included in CRX package.
+     *
+     * Must be absolute or relative to current working directory.
+     */
+    @Input
+    var contentPath: String = "${project.file("src/main/content")}"
+
+    /**
+     * Content path for bundle jars being placed in CRX package.
+     *
+     * Default convention assumes that subprojects have separate bundle paths, because of potential re-installation of subpackages.
+     * When all subprojects will have same bundle path, reinstalling one subpackage may end with deletion of other bundles coming from another subpackage.
+     *
+     * Beware that more nested bundle install directories are not supported by AEM by default.
+     */
+    @Input
+    var bundlePath: String = if (project == project.rootProject) {
+        "/apps/${project.rootProject.name}/install"
+    } else {
+        "/apps/${project.rootProject.name}/${aem.config.projectName}/install"
+    }
+
+    /**
+     * Additional entries added to file 'META-INF/vault/properties.xml'.
+     */
+    @Input
+    var packageEntries: MutableMap<String, Any> = mutableMapOf(
+            "acHandling" to "merge_preserve",
+            "requiresRoot" to false
+    )
+
+    /**
+     * Wildcard file name filter expression that is used to filter in which Vault files properties can be injected.
+     */
+    @Input
+    var packageFilesExpanded: MutableList<String> = mutableListOf(
+            "**/${PackagePlugin.VLT_PATH}/*.xml",
+            "**/${PackagePlugin.VLT_PATH}/nodetypes.cnd"
+    )
+
+    /**
+     * Define here custom properties that can be used in CRX package files like 'META-INF/vault/properties.xml'.
+     * Could override predefined properties provided by plugin itself.
+     */
+    @Input
+    var packageFileProperties: MutableMap<String, Any> = mutableMapOf()
+
+    /**
+     * Exclude files being a part of CRX package.
+     */
+    @Input
+    var packageFilesExcluded: MutableList<String> = mutableListOf(
+            "**/.gradle",
+            "**/.git",
+            "**/.git/**",
+            "**/.gitattributes",
+            "**/.gitignore",
+            "**/.gitmodules",
+            "**/.vlt",
+            "**/.vlt*.tmp",
+            "**/node_modules/**",
+            "jcr_root/.vlt-sync-config.properties"
+    )
+
+    /**
+     * Build date used as base for calculating 'created' and 'buildCount' package properties.
+     */
+    @Internal
+    var packageBuildDate: Date = aem.props.date("aem.package.buildDate", Date())
+
+
+    /**
+     * CRX package Vault files will be composed from given sources.
+     * Missing files required by package within installation will be auto-generated if 'vaultCopyMissingFiles' is enabled.
+     */
+    @get:Internal
+    @get:JsonIgnore
+    val vaultFilesDirs: List<File>
+        get() {
+            val paths = listOf(
+                    aem.config.vaultFilesPath,
+                    "$contentPath/${PackagePlugin.VLT_PATH}"
+            )
+
+            return paths.asSequence()
+                    .filter { !it.isBlank() }
+                    .map { File(it) }
+                    .filter { it.exists() }
+                    .toList()
+        }
+
+    /**
+     * CRX package Vault files path.
+     */
+    @get:Internal
+    @get:JsonIgnore
+    val vaultPath: String
+        get() = "$contentPath/${PackagePlugin.VLT_PATH}"
+
+    /**
+     * CRX package Vault filter path.
+     */
+    @get:Internal
+    @get:JsonIgnore
+    val vaultFilterPath: String
+        get() = "$vaultPath/filter.xml"
+
+    /**
+     * CRX package Vault node types path.
+     */
+    @get:Internal
+    @get:JsonIgnore
+    val vaultNodeTypesPath: String
+        get() = "$vaultPath/nodetypes.cnd"
 
     /**
      * Configure default task dependency assignments while including dependant project content.
@@ -131,7 +249,7 @@ open class ComposeTask : Zip(), AemTask {
         description = "Composes CRX package from JCR content and built OSGi bundles"
         group = AemTask.GROUP
 
-        baseName = config.packageName
+        baseName = aem.config.baseName
         duplicatesStrategy = DuplicatesStrategy.WARN
         isZip64 = true
 
@@ -139,25 +257,66 @@ open class ComposeTask : Zip(), AemTask {
         includeProject(project)
         includeVault(vaultDir)
 
-        // Evaluate inclusion above and other cross project inclusions
-        project.gradle.projectsEvaluated {
-            fromBundles()
-            fromContents()
+        doLast { aem.notifier.notify("Package composed", archiveName) }
+    }
+
+    override fun projectEvaluated() {
+        if (contentPath.isBlank()) {
+            throw AemException("Content path cannot be blank")
         }
 
-        doLast { AemNotifier.of(project).default("Package composed", getArchiveName()) }
+        if (bundlePath.isBlank()) {
+            throw AemException("Bundle path cannot be blank")
+        }
     }
 
-    private fun fromBundles() {
+    override fun projectsEvaluated() {
+        vaultFilesDirs.forEach { dir -> inputs.dir(dir) }
         bundleCollectors.onEach { it() }
+        contentCollectors.onEach { it() }
     }
 
-    private fun fromContents() {
-        contentCollectors.onEach { it() }
+    @TaskAction
+    override fun copy() {
+        copyContentVaultFiles()
+        copyMissingVaultFiles()
+        super.copy()
+    }
+
+    private fun copyContentVaultFiles() {
+        if (vaultDir.exists()) {
+            vaultDir.deleteRecursively()
+        }
+        vaultDir.mkdirs()
+
+        val dirs = vaultFilesDirs
+
+        if (dirs.isEmpty()) {
+            logger.info("None of Vault files directories exist: $dirs. Only generated defaults will be used.")
+        } else {
+            dirs.onEach { dir ->
+                logger.info("Copying Vault files from path: '${dir.absolutePath}'")
+
+                FileUtils.copyDirectory(dir, vaultDir)
+            }
+        }
+    }
+
+    private fun copyMissingVaultFiles() {
+        if (!vaultCopyMissingFiles) {
+            return
+        }
+
+        FileOperations.copyResources(PackagePlugin.VLT_PATH, vaultDir, true)
     }
 
     fun includeProject(projectPath: String) {
         includeProject(findProject(projectPath))
+    }
+
+    fun includeProject(projectPath: String, runMode: String) {
+        includeContent(findProject(projectPath))
+        includeBundles(projectPath, runMode)
     }
 
     fun includeProject(project: Project) {
@@ -211,23 +370,28 @@ open class ComposeTask : Zip(), AemTask {
         includeBundlesAtPath(findProject(projectPath), installPath)
     }
 
+    fun composeOfProject(project: Project): ComposeTask {
+        return project.tasks.getByName(ComposeTask.NAME) as ComposeTask
+    }
+
+
     fun includeBundlesAtPath(project: Project, installPath: String? = null, runMode: String? = null) {
         bundleCollectors += {
-            val config = AemConfig.of(project)
+            val other = project.tasks.getByName(ComposeTask.NAME) as ComposeTask // TODO more explicit
 
             dependProject(project, dependBundlesTaskNames)
 
             var effectiveInstallPath = if (!installPath.isNullOrBlank()) {
                 installPath
             } else {
-                config.bundlePath
+                other.bundlePath
             }
 
             if (!runMode.isNullOrBlank()) {
                 effectiveInstallPath = "$effectiveInstallPath.$runMode"
             }
 
-            val bundles = BundleCollector(project).allJars
+            val bundles = BundleCollector(project).allJars  // TODO include jar task ; or File/Configuration
             if (bundles.isNotEmpty()) {
                 into("${PackagePlugin.JCR_ROOT}/$effectiveInstallPath") { spec ->
                     spec.from(bundles)
@@ -243,13 +407,13 @@ open class ComposeTask : Zip(), AemTask {
 
     fun includeContent(project: Project) {
         contentCollectors += {
-            val config = AemConfig.of(project)
+            val other = composeOfProject(project)
 
             dependProject(project, dependContentTaskNames)
-            extractVaultFilters(project, config)
-            extractNodeTypes(config)
+            extractVaultFilters(other)
+            extractNodeTypes(other)
 
-            val contentDir = File("${config.contentPath}/${PackagePlugin.JCR_ROOT}")
+            val contentDir = File("${other.contentPath}/${PackagePlugin.JCR_ROOT}")
             if (contentDir.exists()) {
                 into(PackagePlugin.JCR_ROOT) { spec ->
                     spec.from(contentDir)
@@ -257,9 +421,9 @@ open class ComposeTask : Zip(), AemTask {
                 }
             }
 
-            val hooksDir = File("${config.contentPath}/${PackagePlugin.HOOKS_PATH}")
+            val hooksDir = File("${other.contentPath}/${PackagePlugin.VLT_HOOKS_PATH}")
             if (hooksDir.exists()) {
-                into(PackagePlugin.HOOKS_PATH) { spec ->
+                into(PackagePlugin.VLT_HOOKS_PATH) { spec ->
                     spec.from(hooksDir)
                     fileFilter(spec)
                 }
@@ -279,10 +443,13 @@ open class ComposeTask : Zip(), AemTask {
     private fun dependProject(project: Project, taskNames: Collection<String>) {
         val effectiveTaskNames = taskNames.fold(mutableListOf<String>()) { names, name ->
             if (name.endsWith(DEPENDENCIES_SUFFIX)) {
-                val task = project.tasks.getByName(name.substringBeforeLast(DEPENDENCIES_SUFFIX))
-                val dependencies = task.taskDependencies.getDependencies(task).map { it.name }
+                val taskName = name.substringBeforeLast(DEPENDENCIES_SUFFIX)
+                if (taskName != this.name && project != this.project) {
+                    val task = project.tasks.getByName(taskName)
+                    val dependencies = task.taskDependencies.getDependencies(task).map { it.name }
 
-                names.addAll(dependencies)
+                    names.addAll(dependencies)
+                }
             } else {
                 names.add(name)
             }
@@ -295,17 +462,17 @@ open class ComposeTask : Zip(), AemTask {
         }
     }
 
-    private fun extractVaultFilters(project: Project, config: AemConfig) {
-        if (!config.vaultFilterPath.isBlank() && File(config.vaultFilterPath).exists()) {
-            filterRoots.addAll(VltFilter(File(config.vaultFilterPath)).rootElements)
+    private fun extractVaultFilters(other: ComposeTask) {
+        if (!other.vaultFilterPath.isBlank() && File(other.vaultFilterPath).exists()) {
+            filterRoots.addAll(VltFilter(File(other.vaultFilterPath)).rootElements)
         } else if (project.plugins.hasPlugin(BundlePlugin.ID)) {
-            filterRoots.add(VltFilter.rootElement(filterRootDefault(project, config)))
+            filterRoots.add(VltFilter.rootElement(filterRootDefault(other)))
         }
     }
 
-    private fun extractNodeTypes(config: AemConfig) {
-        if (config.nodeTypesPath.isNotBlank()) {
-            val file = File(config.nodeTypesPath)
+    private fun extractNodeTypes(other: ComposeTask) {
+        if (other.vaultNodeTypesPath.isNotBlank()) {
+            val file = File(other.vaultNodeTypesPath)
             if (file.exists()) {
                 file.forEachLine {
                     if (NODE_TYPES_LIB.matcher(it.trim()).matches()) {
@@ -327,8 +494,8 @@ open class ComposeTask : Zip(), AemTask {
         }
     }
 
-    fun fileFilterOptions(closure: Closure<*>) {
-        ConfigureUtil.configure(closure, fileFilterOptions)
+    fun fileFilterOptions(configurer: FileFilterOptions.() -> Unit) {
+        fileFilterOptions.apply(configurer)
     }
 
     class FileFilterOptions : Serializable {

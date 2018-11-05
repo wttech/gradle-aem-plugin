@@ -13,9 +13,9 @@ import java.util.concurrent.TimeUnit
 
 class AemNotifier private constructor(private val project: Project) {
 
-    private val config by lazy { AemConfig.of(project) }
+    private val aem by lazy { AemExtension.of(project) }
 
-    private val notifier: Notifier by lazy { config.notificationConfig(this@AemNotifier) }
+    private val notifier: Notifier by lazy { aem.config.notificationConfig(this@AemNotifier) }
 
     fun log(title: String) {
         log(title, "")
@@ -33,22 +33,6 @@ class AemNotifier private constructor(private val project: Project) {
         })
     }
 
-    fun default(title: String) {
-        default(title, "")
-    }
-
-    fun default(title: String, message: String) {
-        default(title, message, LogLevel.INFO)
-    }
-
-    fun default(title: String, message: String, level: LogLevel) {
-        if (config.notificationEnabled) {
-            notify(title, message, level)
-        }
-
-        log(title, message, level)
-    }
-
     fun notify(title: String) {
         notify(title, "")
     }
@@ -58,7 +42,15 @@ class AemNotifier private constructor(private val project: Project) {
     }
 
     fun notify(title: String, text: String, level: LogLevel) {
-        notifier.notify(title, text, level)
+        log(title, text, level)
+
+        try {
+            if (aem.config.notificationEnabled) {
+                notifier.notify(title, text, level)
+            }
+        } catch (e: Throwable) {
+            project.logger.debug("AEM notifier is not available.", e)
+        }
     }
 
     fun dorkbox(): Notifier {
@@ -125,7 +117,7 @@ class AemNotifier private constructor(private val project: Project) {
                         val exception = ExceptionUtils.getRootCause(it.failure)
                         val message = exception?.message ?: "no error message"
 
-                        notifier.default("Build failure", message, LogLevel.ERROR)
+                        notifier.notify("Build failure", message, LogLevel.ERROR)
                     }
                 }
             }

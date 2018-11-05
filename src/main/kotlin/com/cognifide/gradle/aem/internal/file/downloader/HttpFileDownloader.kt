@@ -68,7 +68,7 @@ class HttpFileDownloader(val project: Project) {
             val provider = BasicCredentialsProvider()
             provider.setCredentials(AuthScope.ANY, UsernamePasswordCredentials(username, password))
             builder.setDefaultCredentialsProvider(provider)
-            if(preemptiveAuthentication) {
+            if (preemptiveAuthentication) {
                 builder.addInterceptorFirst(PreemptiveAuthInterceptor())
             }
         }

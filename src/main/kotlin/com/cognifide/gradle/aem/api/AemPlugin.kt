@@ -1,9 +1,38 @@
 package com.cognifide.gradle.aem.api
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.gradle.api.Action
+import org.gradle.api.Plugin
+import org.gradle.api.Project
+import org.gradle.api.Task
+import org.gradle.api.tasks.TaskProvider
 import java.io.Serializable
 
-class AemPlugin private constructor() {
+abstract class AemPlugin : Plugin<Project> {
+
+    fun <T : Task> Project.registerTask(name: String, clazz: Class<T>): TaskProvider<T> {
+        return registerTask(name, clazz, Action {})
+    }
+
+    fun <T : Task> Project.registerTask(name: String, clazz: Class<T>, configurer: (T) -> Unit): TaskProvider<T> {
+        return registerTask(name, clazz, Action { configurer(it) })
+    }
+
+    fun <T : Task> Project.registerTask(name: String, clazz: Class<T>, configurer: Action<T>): TaskProvider<T> {
+        val provider = tasks.register(name, clazz, configurer)
+
+        afterEvaluate { provider.configure { if (it is AemTask) it.projectEvaluated() } }
+        gradle.projectsEvaluated { provider.configure { if (it is AemTask) it.projectsEvaluated() } }
+        gradle.taskGraph.whenReady { graph -> provider.configure { if (it is AemTask) it.taskGraphReady(graph) } }
+
+        return provider
+    }
+
+    override fun apply(project: Project) {
+        with(project) { configure() }
+    }
+
+    abstract fun Project.configure()
 
     class Build : Serializable {
 

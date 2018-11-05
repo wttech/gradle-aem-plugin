@@ -1,12 +1,13 @@
 package com.cognifide.gradle.aem.instance
 
+import com.cognifide.gradle.aem.api.AemRetry
 import com.cognifide.gradle.aem.instance.satisfy.PackageException
+import com.cognifide.gradle.aem.internal.MemoryCache
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.ProgressCountdown
 import com.cognifide.gradle.aem.internal.file.FileException
 import com.cognifide.gradle.aem.internal.file.downloader.HttpFileDownloader
-import com.cognifide.gradle.aem.pkg.PackagePlugin
-import com.cognifide.gradle.aem.pkg.deploy.*
+import com.cognifide.gradle.aem.pkg.*
 import org.gradle.api.Project
 import org.jsoup.Jsoup
 import org.jsoup.parser.Parser
@@ -16,18 +17,8 @@ import java.io.FileNotFoundException
 
 class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(project, instance) {
 
-    fun determineRemotePackage(): ListResponse.Package? {
-        return resolveRemotePackage({ response ->
-            response.resolvePackage(project, ListResponse.Package(project))
-        }, true)
-    }
-
-    fun determineRemotePackagePath(): String {
-        if (!config.packageRemotePath.isBlank()) {
-            return config.packageRemotePath
-        }
-
-        val pkg = determineRemotePackage()
+    fun determineRemotePackagePath(file: File): String {
+        val pkg = determineRemotePackage(file)
                 ?: throw DeployException("Package is not uploaded on AEM instance.")
 
         return pkg.path
@@ -51,33 +42,35 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
     }
 
     private fun resolveRemotePackage(resolver: (ListResponse) -> ListResponse.Package?, refresh: Boolean): ListResponse.Package? {
-        logger.debug("Asking for uploaded packages on $instance")
+        aem.logger.debug("Asking for uploaded packages on $instance")
 
-        if (instance.packages == null || refresh) {
-            instance.packages = try {
+        val packages = MemoryCache.of(project).getOrPut("instance.${instance.name}.packages", {
+            try {
                 postMultipart(PKG_MANAGER_LIST_JSON) { ListResponse.fromJson(asStream(it)) }
             } catch (e: Exception) {
                 throw DeployException("Cannot ask for uploaded packages on $instance.", e)
             }
-        }
+        }, refresh)
 
-        return resolver(instance.packages!!)
+        return resolver(packages)
     }
 
-    fun uploadPackage(file: File): UploadResponse {
+    fun uploadPackage(file: File) = uploadPackage(file, true, AemRetry.once())
+
+    fun uploadPackage(file: File, force: Boolean, retry: AemRetry): UploadResponse {
         lateinit var exception: DeployException
-        for (i in 0..config.uploadRetry.times) {
+        for (i in 0..retry.times) {
             try {
-                return uploadPackageOnce(file)
+                return uploadPackageOnce(file, force)
             } catch (e: DeployException) {
                 exception = e
 
-                if (i < config.uploadRetry.times) {
-                    logger.warn("Cannot upload package $file to $instance.")
-                    logger.debug("Upload error", e)
+                if (i < retry.times) {
+                    aem.logger.warn("Cannot upload package $file to $instance.")
+                    aem.logger.debug("Upload error", e)
 
-                    val header = "Retrying upload (${i + 1}/${config.uploadRetry.times}) after delay."
-                    val countdown = ProgressCountdown(project, header, config.uploadRetry.delay(i + 1))
+                    val header = "Retrying upload (${i + 1}/${retry.times}) after delay."
+                    val countdown = ProgressCountdown(project, header, retry.delay(i + 1))
                     countdown.run()
                 }
             }
@@ -86,15 +79,15 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
         throw exception
     }
 
-    fun uploadPackageOnce(file: File): UploadResponse {
+    fun uploadPackageOnce(file: File, force: Boolean): UploadResponse {
         val url = "$PKG_MANAGER_JSON_PATH/?cmd=upload"
 
-        logger.info("Uploading package $file to $instance'")
+        aem.logger.info("Uploading package $file to $instance'")
 
         val response = try {
             postMultipart(url, mapOf(
                     "package" to file,
-                    "force" to (config.uploadForce || isSnapshot(file))
+                    "force" to (force || isSnapshot(file))
             )) { UploadResponse.fromJson(asStream(it)) }
         } catch (e: FileNotFoundException) {
             throw DeployException("Package file $file to be uploaded not found!", e)
@@ -111,23 +104,23 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
         return response
     }
 
-    fun downloadPackage(remotePath: String, targetFile: File) {
+    fun downloadPackage(remotePath: String, targetFile: File, retry: AemRetry = AemRetry.once()) {
         lateinit var exception: FileException
         val url = instance.httpUrl + remotePath
 
-        for (i in 0..config.downloadRetry.times) {
+        for (i in 0..retry.times) {
             try {
                 downloadPackageOnce(url, targetFile)
                 return
             } catch (e: FileException) {
                 exception = e
 
-                if (i < config.downloadRetry.times) {
-                    logger.warn("Cannot download package $remotePath from $instance.")
-                    logger.debug("Download error", e)
+                if (i < retry.times) {
+                    aem.logger.warn("Cannot download package $remotePath from $instance.")
+                    aem.logger.debug("Download error", e)
 
-                    val header = "Retrying download (${i + 1}/${config.downloadRetry.times}) after delay."
-                    val countdown = ProgressCountdown(project, header, config.downloadRetry.delay(i + 1))
+                    val header = "Retrying download (${i + 1}/${retry.times}) after delay."
+                    val countdown = ProgressCountdown(project, header, retry.delay(i + 1))
                     countdown.run()
                 }
             }
@@ -137,7 +130,7 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
     }
 
     fun downloadPackageOnce(url: String, targetFile: File) {
-        logger.info("Downloading package from $url to file $targetFile")
+        aem.logger.info("Downloading package from $url to file $targetFile")
 
         with(HttpFileDownloader(project)) {
             username = basicUser
@@ -155,7 +148,7 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
     fun buildPackage(remotePath: String): PackageBuildResponse {
         val url = "$PKG_MANAGER_JSON_PATH$remotePath/?cmd=build"
 
-        logger.info("Building package $remotePath on $instance")
+        aem.logger.info("Building package $remotePath on $instance")
 
         val response = try {
             postMultipart(url) { PackageBuildResponse.fromJson(asStream(it)) }
@@ -171,19 +164,19 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
         return response
     }
 
-    fun installPackage(remotePath: String): InstallResponse {
+    fun installPackage(remotePath: String, recursive: Boolean = true, retry: AemRetry = AemRetry.once()): InstallResponse {
         lateinit var exception: DeployException
-        for (i in 0..config.installRetry.times) {
+        for (i in 0..retry.times) {
             try {
-                return installPackageOnce(remotePath)
+                return installPackageOnce(remotePath, recursive)
             } catch (e: DeployException) {
                 exception = e
-                if (i < config.installRetry.times) {
-                    logger.warn("Cannot install package $remotePath on $instance.")
-                    logger.debug("Install error", e)
+                if (i < retry.times) {
+                    aem.logger.warn("Cannot install package $remotePath on $instance.")
+                    aem.logger.debug("Install error", e)
 
-                    val header = "Retrying install (${i + 1}/${config.installRetry.times}) after delay."
-                    val countdown = ProgressCountdown(project, header, config.installRetry.delay(i + 1))
+                    val header = "Retrying install (${i + 1}/${retry.times}) after delay."
+                    val countdown = ProgressCountdown(project, header, retry.delay(i + 1))
                     countdown.run()
                 }
             }
@@ -192,20 +185,20 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
         throw exception
     }
 
-    fun installPackageOnce(remotePath: String): InstallResponse {
+    fun installPackageOnce(remotePath: String, recursive: Boolean = true): InstallResponse {
         val url = "$PKG_MANAGER_HTML_PATH$remotePath/?cmd=install"
 
-        logger.info("Installing package $remotePath on $instance")
+        aem.logger.info("Installing package $remotePath on $instance")
 
         val response = try {
-            postMultipart(url, mapOf("recursive" to config.installRecursive)) { InstallResponse.from(asStream(it), config.packageResponseBuffer) }
+            postMultipart(url, mapOf("recursive" to recursive)) { InstallResponse.from(asStream(it), aem.config.packageResponseBuffer) }
         } catch (e: RequestException) {
-
             throw DeployException("Cannot install package $remotePath on $instance. Reason: request failed.", e)
         } catch (e: ResponseException) {
             throw DeployException("Malformed response after installing package $remotePath on $instance.")
         }
-        val packageErrors = response.findPackageErrors(config.packageErrors)
+
+        val packageErrors = response.findPackageErrors(aem.config.packageErrors)
         if (packageErrors.isNotEmpty()) {
             throw PackageException("Cannot install package $remotePath on $instance because it is malformed by:\n$packageErrors \nErrors: ${response.errors}")
         } else if (!response.success) {
@@ -216,24 +209,26 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
     }
 
     fun isSnapshot(file: File): Boolean {
-        return Patterns.wildcard(file, config.packageSnapshots)
+        return Patterns.wildcard(file, aem.config.packageSnapshots)
     }
 
-    fun deployPackage(file: File) {
-        installPackage(uploadPackage(file).path)
+    fun deployPackage(file: File, uploadForce: Boolean = true, uploadRetry: AemRetry = AemRetry.once(), installRecursive: Boolean = true, installRetry: AemRetry = AemRetry.once()) {
+        val uploadResponse = uploadPackage(file, uploadForce, uploadRetry)
+        installPackage(uploadResponse.path, installRecursive, installRetry)
     }
 
-    fun distributePackage(file: File) {
-        val packagePath = uploadPackage(file).path
+    fun distributePackage(file: File, uploadForce: Boolean = true, uploadRetry: AemRetry = AemRetry.once(), installRecursive: Boolean = true, installRetry: AemRetry = AemRetry.once()) {
+        val uploadResponse = uploadPackage(file, uploadForce, uploadRetry)
+        val packagePath = uploadResponse.path
 
-        installPackage(packagePath)
+        installPackage(packagePath, installRecursive, installRetry)
         activatePackage(packagePath)
     }
 
     fun activatePackage(remotePath: String): UploadResponse {
         val url = "$PKG_MANAGER_JSON_PATH$remotePath/?cmd=replicate"
 
-        logger.info("Activating package $remotePath on $instance")
+        aem.logger.info("Activating package $remotePath on $instance")
 
         val response = try {
             postMultipart(url) { UploadResponse.fromJson(asStream(it)) }
@@ -253,10 +248,10 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
     fun deletePackage(remotePath: String): DeleteResponse {
         val url = "$PKG_MANAGER_HTML_PATH$remotePath/?cmd=delete"
 
-        logger.info("Deleting package $remotePath on $instance")
+        aem.logger.info("Deleting package $remotePath on $instance")
 
         val response = try {
-            postMultipart(url) { DeleteResponse.from(asStream(it), config.packageResponseBuffer) }
+            postMultipart(url) { DeleteResponse.from(asStream(it), aem.config.packageResponseBuffer) }
         } catch (e: RequestException) {
             throw DeployException("Cannot delete package $remotePath from $instance. Reason: request failed.", e)
         } catch (e: ResponseException) {
@@ -273,10 +268,10 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
     fun uninstallPackage(remotePath: String): UninstallResponse {
         val url = "$PKG_MANAGER_HTML_PATH$remotePath/?cmd=uninstall"
 
-        logger.info("Uninstalling package using command: $url")
+        aem.logger.info("Uninstalling package using command: $url")
 
         val response = try {
-            postMultipart(url, mapOf("recursive" to config.installRecursive)) { UninstallResponse.from(asStream(it), config.packageResponseBuffer) }
+            postMultipart(url) { UninstallResponse.from(asStream(it), aem.config.packageResponseBuffer) }
         } catch (e: RequestException) {
             throw DeployException("Cannot uninstall package $remotePath on $instance. Reason: request failed.", e)
         } catch (e: ResponseException) {
@@ -295,23 +290,23 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
     }
 
     fun determineBundleState(): BundleState {
-        logger.debug("Asking for OSGi bundles on $instance")
+        aem.logger.debug("Asking for OSGi bundles on $instance")
 
         return try {
             get(OSGI_BUNDLES_PATH) { BundleState.from(asStream(it)) }
         } catch (e: Exception) {
-            logger.debug("Cannot determine OSGi bundles state on $instance", e)
+            aem.logger.debug("Cannot determine OSGi bundles state on $instance", e)
             BundleState.unknown(e)
         }
     }
 
     fun determineComponentState(): ComponentState {
-        logger.debug("Asking for OSGi components on $instance")
+        aem.logger.debug("Asking for OSGi components on $instance")
 
         return try {
-            get(OSGI_COMPONENTS_PATH) {ComponentState.from(asStream(it))}
+            get(OSGI_COMPONENTS_PATH) { ComponentState.from(asStream(it)) }
         } catch (e: Exception) {
-            logger.debug("Cannot determine OSGi components state on $instance", e)
+            aem.logger.debug("Cannot determine OSGi components state on $instance", e)
             ComponentState.unknown()
         }
     }
@@ -326,7 +321,7 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
 
     private fun shutdown(type: String) {
         try {
-            logger.info("Triggering shutdown of $instance.")
+            aem.logger.info("Triggering shutdown of $instance.")
             postUrlencoded(OSGI_VMSTAT_PATH, mapOf("shutdown_type" to type))
         } catch (e: DeployException) {
             throw InstanceException("Cannot trigger shutdown of $instance.", e)

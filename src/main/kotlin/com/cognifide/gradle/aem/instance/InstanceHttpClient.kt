@@ -1,9 +1,9 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.api.AemConfig
+import com.cognifide.gradle.aem.api.AemExtension
 import com.cognifide.gradle.aem.internal.http.PreemptiveAuthInterceptor
-import com.cognifide.gradle.aem.pkg.deploy.DeployException
-import com.cognifide.gradle.aem.pkg.deploy.RequestException
+import com.cognifide.gradle.aem.pkg.DeployException
+import com.cognifide.gradle.aem.pkg.RequestException
 import org.apache.commons.io.IOUtils
 import org.apache.http.HttpEntity
 import org.apache.http.HttpResponse
@@ -29,17 +29,15 @@ import java.util.*
 
 open class InstanceHttpClient(val project: Project, val instance: Instance) {
 
-    val config = AemConfig.of(project)
-
-    val logger = project.logger
+    val aem = AemExtension.of(project)
 
     var basicUser = instance.user
 
     var basicPassword = instance.password
 
-    var connectionTimeout = config.instanceConnectionTimeout
+    var connectionTimeout = aem.config.instanceConnectionTimeout
 
-    var connectionUntrustedSsl = config.instanceConnectionUntrustedSsl
+    var connectionUntrustedSsl = aem.config.instanceConnectionUntrustedSsl
 
     var connectionRetries = true
 

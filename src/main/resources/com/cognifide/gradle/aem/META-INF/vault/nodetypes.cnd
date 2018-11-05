@@ -1,2 +1,2 @@
-{{nodeTypesLibs | raw}}
-{{nodeTypesLines | raw}}
+{{nodeTypesLibs | join('\n')}}
+{{nodeTypesLines | join('\n')}}

@@ -1,17 +1,18 @@
 package com.cognifide.gradle.aem.test.json
 
+import org.apache.commons.io.FilenameUtils
 import org.skyscreamer.jsonassert.ValueMatcher
 
 class PathValueMatcher : ValueMatcher<Any> {
-    override fun equal(p1: Any?, p2: Any?): Boolean {
-        if (p1 !is String || p2 !is String) {
+    override fun equal(value: Any?, wildcardMatcher: Any?): Boolean {
+        if (value !is String || wildcardMatcher !is String) {
             return false
         }
 
-        if (p1 == p2) {
+        if (value == wildcardMatcher) {
             return true
         }
 
-        return p1.replace("\\", "/").endsWith(p2)
+        return FilenameUtils.wildcardMatch(value.replace("\\", "/"), wildcardMatcher)
     }
 }

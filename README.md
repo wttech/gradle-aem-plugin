@@ -62,7 +62,6 @@ Looking for dedicated version of plugin for [**Apache Sling**](https://sling.apa
       * [Task aemUninstall](#task-aemuninstall)
       * [Task aemPurge](#task-aempurge)
       * [Task aemActivate](#task-aemactivate)
-      * [Task aemDownload](#task-aemdownload)
    * [Instance plugin tasks](#instance-plugin-tasks)
       * [Task aemSetup](#task-aemsetup)
       * [Task aemResetup](#task-aemresetup)
@@ -130,7 +129,7 @@ pluginManagement {
 	resolutionStrategy {
 		eachPlugin {
 			if (requested.id.namespace == 'com.cognifide.aem') {
-				useModule('com.cognifide.gradle:aem-plugin:5.1.2')
+				useModule('com.cognifide.gradle:aem-plugin:6.0.0')
 			}
 		}
 	}
@@ -184,11 +183,6 @@ aem {
           "-fixupmessages.bundleActivator": "Bundle-Activator * is being imported *;is:=error"
         ]
     
-        if (projectUniqueName) {
-            packageName = project.name
-        } else {
-            packageName = "${projectNamePrefix}-${project.name}"
-        }
         packageLocalPath = ""
         packageRemotePath = ""
         packageFilesExcluded = [
@@ -507,19 +501,6 @@ To prevent data loss, this unsafe task execution must be confirmed by parameter 
 
 Replicate installed CRX package to other AEM instance(s).
 
-#### Task `aemDownload`
-
-Builds and downloads CRX package from AEM instance. Similar to [aemCheckout](#task-aemcheckout) but produces CRX package that is automatically extracted into current project's *jcr_root* directory.
- 
-CMD parameters:
-* `gradlew :aemDownload -Paem.download.extract=false` - Do not extract the package. Downloaded package is located under `build/aemDownload` folder for a project
-* `gradlew :aemDownload -Paem.force` - Deletes content of *jcr_root* directory before extracting the package contents
-* `gradlew :aemDownload -Paem.checkout.filterPath=src/main/content/META-INF/vault/custom-filter.xml` - Specifying the filter file instead default filter.xml for a project
-* `gradlew :aemDownload -Paem.checkout.filterRoots=[/etc/tags/example,/content/dam/example]` - Specifying explicitly the filters instead default filter.xml for a project
-
-The contents of extracted package can be cleaned up using configured VLT rules by chaining [aemClean](#task-aemclean) task 
-`gradlew :aemDownload :aemClean`
-
 ### Instance plugin tasks
 
 #### Task `aemSetup`
@@ -703,7 +684,7 @@ This feature is especially useful to generate valid *META-INF/properties.xml* fi
 <properties>
     <comment>{{project.description}}</comment>
     <entry key="group">{{project.group}}</entry>
-    <entry key="name">{{config.packageName}}</entry>
+    <entry key="name">{{project.name}}</entry>
     <entry key="version">{{project.version}}</entry>
     <entry key="groupId">{{project.group}}</entry>
     <entry key="artifactId">{{project.name}}</entry>
@@ -935,15 +916,15 @@ In other words, to customize instance files just:
 E.g for subproject `:content`:
    
 ```bash
-gradlew :content:aemSync -Paem.checkout.filterPath=custom-filter.xml
-gradlew :content:aemSync -Paem.checkout.filterPath=src/main/content/META-INF/vault/custom-filter.xml
-gradlew :content:aemSync -Paem.checkout.filterPath=C:/aem/custom-filter.xml
+gradlew :content:aemSync -Paem.filter.path=custom-filter.xml
+gradlew :content:aemSync -Paem.filter.path=src/main/content/META-INF/vault/custom-filter.xml
+gradlew :content:aemSync -Paem.filter.path=C:/aem/custom-filter.xml
 ```
 
 ### Check out and clean JCR content using filter roots specified explicitly
    
 ```bash
-gradlew :content:aemSync -Paem.checkout.filterRoots=[/etc/tags/example,/content/dam/example]
+gradlew :content:aemSync -Paem.filter.roots=[/etc/tags/example,/content/dam/example]
 ```
 
 ### Assemble all-in-one CRX package(s)

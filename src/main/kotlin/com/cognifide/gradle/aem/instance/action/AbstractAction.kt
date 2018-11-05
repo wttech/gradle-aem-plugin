@@ -1,25 +1,37 @@
 package com.cognifide.gradle.aem.instance.action
 
-import com.cognifide.gradle.aem.api.AemConfig
-import com.cognifide.gradle.aem.api.AemNotifier
+import com.cognifide.gradle.aem.api.AemExtension
+import com.cognifide.gradle.aem.instance.Instance
 import com.cognifide.gradle.aem.instance.InstanceAction
+import com.cognifide.gradle.aem.instance.toLocalHandles
 import org.gradle.api.Project
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Internal
 
-abstract class AbstractAction(val project: Project) : InstanceAction {
+abstract class AbstractAction(
+        @Internal
+        @Transient
+        val project: Project
+) : InstanceAction {
 
-    val config = AemConfig.of(project)
+    @Internal
+    @Transient
+    val aem = AemExtension.of(project)
 
-    val notifier = AemNotifier.of(project)
+    @Input
+    var instances: List<Instance> = Instance.filter(project)
 
-    val logger = project.logger
-
+    @Internal
     var notify = true
+
+    @get:Internal
+    val handles = instances.toLocalHandles(project)
 
     fun notify(title: String, text: String, enabled: Boolean = this.notify) {
         if (enabled) {
-            notifier.default(title, text)
+            aem.notifier.notify(title, text)
         } else {
-            notifier.log(title, text)
+            aem.notifier.log(title, text)
         }
     }
 

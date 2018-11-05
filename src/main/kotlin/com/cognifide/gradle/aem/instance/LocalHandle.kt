@@ -1,51 +1,23 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.api.AemException
+import com.cognifide.gradle.aem.api.AemExtension
 import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.ProgressLogger
-import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.internal.file.FileOperations
 import org.apache.commons.io.FileUtils
 import org.gradle.api.Project
-import org.gradle.api.logging.Logger
 import org.gradle.internal.os.OperatingSystem
 import org.gradle.util.GFileUtils
 import org.zeroturnaround.zip.ZipUtil
 import java.io.File
 
-class LocalHandle(val project: Project, val instance: Instance) {
+class LocalHandle(val project: Project, val instance: LocalInstance) {
 
-    companion object {
-        const val JAR_STATIC_FILES_PATH = "static/"
+    val aem = AemExtension.of(project)
 
-        val JAR_NAME_PATTERNS = listOf(
-                "*aem-quickstart*.jar",
-                "*cq-quickstart*.jar",
-                "*quickstart*.jar",
-                "*.jar"
-        )
-
-        const val LOCK_CREATE = "create"
-
-        const val LOCK_INIT = "init"
-    }
-
-    class Script(val wrapper: File, val bin: File, val command: List<String>) {
-        val commandLine: List<String>
-            get() = command + listOf(wrapper.absolutePath)
-
-        override fun toString(): String {
-            return "Script(commandLine=$commandLine)"
-        }
-    }
-
-    val logger: Logger = project.logger
-
-    val config = AemConfig.of(project)
-
-    val dir = File("${config.createPath}/${instance.typeName}")
+    val dir = File("${aem.config.instanceRoot}/${instance.typeName}")
 
     val jar = File(dir, "aem-quickstart.jar")
 
@@ -57,10 +29,10 @@ class LocalHandle(val project: Project, val instance: Instance) {
         get() = binScript("start")
 
     val pidFile: File
-        get() = File("${staticDir}/conf/cq.pid")
+        get() = File("$staticDir/conf/cq.pid")
 
     val controlPortFile: File
-        get() = File("${staticDir}/conf/controlport")
+        get() = File("$staticDir/conf/controlport")
 
     val running: Boolean
         get() = pidFile.exists() && controlPortFile.exists()
@@ -76,47 +48,47 @@ class LocalHandle(val project: Project, val instance: Instance) {
         }
     }
 
-    fun create(instanceFiles: List<File>) {
+    fun create(options: LocalHandleOptions, instanceFiles: List<File>) {
         if (created) {
-            logger.info(("Instance already created: $this"))
+            aem.logger.info(("Instance already created: $this"))
             return
         }
 
         cleanDir(true)
 
-        logger.info("Creating instance at path '${dir.absolutePath}'")
+        aem.logger.info("Creating instance at path '${dir.absolutePath}'")
 
-        logger.info("Copying resolved instance files: $instanceFiles")
+        aem.logger.info("Copying resolved instance files: $instanceFiles")
         copyFiles(instanceFiles)
 
-        logger.info("Validating instance files")
+        aem.logger.info("Validating instance files")
         validateFiles()
 
-        logger.info("Extracting AEM static files from JAR")
+        aem.logger.info("Extracting AEM static files from JAR")
         extractStaticFiles()
 
-        logger.info("Correcting AEM static files")
+        aem.logger.info("Correcting AEM static files")
         correctStaticFiles()
 
-        logger.info("Creating default instance files")
+        aem.logger.info("Creating default instance files")
         FileOperations.copyResources(InstancePlugin.FILES_PATH, dir, true)
 
-        val filesDir = File(config.createFilesPath)
+        val overridesDir = File(options.overridesPath)
 
-        logger.info("Overriding instance files using: ${filesDir.absolutePath}")
-        if (filesDir.exists()) {
-            FileUtils.copyDirectory(filesDir, dir)
+        aem.logger.info("Overriding instance files using: ${overridesDir.absolutePath}")
+        if (overridesDir.exists()) {
+            FileUtils.copyDirectory(overridesDir, dir)
         }
 
-        logger.info("Expanding instance files")
-        FileOperations.amendFiles(dir, config.createFilesExpanded, { file, source ->
-            PropertyParser(project).expand(source, properties, file.absolutePath)
-        })
+        aem.logger.info("Expanding instance files")
+        FileOperations.amendFiles(dir, options.filesExpanded) { file, source ->
+            aem.props.expand(source, properties, file.absolutePath)
+        }
 
-        logger.info("Creating lock file")
+        aem.logger.info("Creating lock file")
         lock(LOCK_CREATE)
 
-        logger.info("Created instance with success")
+        aem.logger.info("Created instance with success")
     }
 
     private fun copyFiles(resolvedFiles: List<File>) {
@@ -149,7 +121,7 @@ class LocalHandle(val project: Project, val instance: Instance) {
     }
 
     private fun correctStaticFiles() {
-        FileOperations.amendFile(binScript("start", OperatingSystem.forName("windows")).bin, {
+        FileOperations.amendFile(binScript("start", OperatingSystem.forName("windows")).bin) {
             var result = it
 
             // Force CMD to be launched in closable window mode. Inject nice title.
@@ -160,16 +132,16 @@ class LocalHandle(val project: Project, val instance: Instance) {
             result = result.replace("set START_OPTS=start -c %CurrDirName% -i launchpad", "set START_OPTS=start -c %CurrDirName% -i launchpad %CQ_START_OPTS%")
 
             result
-        })
+        }
 
-        FileOperations.amendFile(binScript("start", OperatingSystem.forName("unix")).bin, {
+        FileOperations.amendFile(binScript("start", OperatingSystem.forName("unix")).bin) {
             var result = it
 
             // Introduce missing CQ_START_OPTS injectable by parent script.
             result = result.replace("START_OPTS=\"start -c ${'$'}{CURR_DIR} -i launchpad\"", "START_OPTS=\"start -c ${'$'}{CURR_DIR} -i launchpad ${'$'}{CQ_START_OPTS}\"")
 
             result
-        })
+        }
 
         // Ensure that 'logs' directory exists
         GFileUtils.mkdirs(File(staticDir, "logs"))
@@ -180,14 +152,14 @@ class LocalHandle(val project: Project, val instance: Instance) {
         progressLogger.started()
 
         var total = 0
-        ZipUtil.iterate(jar, { entry ->
+        ZipUtil.iterate(jar) { entry ->
             if (entry.name.startsWith(JAR_STATIC_FILES_PATH)) {
                 total++
             }
-        })
+        }
 
         var processed = 0
-        ZipUtil.unpack(jar, staticDir, { name ->
+        ZipUtil.unpack(jar, staticDir) { name ->
             if (name.startsWith(JAR_STATIC_FILES_PATH)) {
                 val fileName = name.substringAfterLast("/")
 
@@ -197,7 +169,7 @@ class LocalHandle(val project: Project, val instance: Instance) {
             } else {
                 name
             }
-        })
+        }
 
         progressLogger.completed()
     }
@@ -213,22 +185,22 @@ class LocalHandle(val project: Project, val instance: Instance) {
 
     fun up() {
         if (!created) {
-            logger.warn("Instance not created, so it could not be up: $this")
+            aem.logger.warn("Instance not created, so it could not be up: $this")
             return
         }
 
 
-        logger.info("Executing start script: $startScript")
+        aem.logger.info("Executing start script: $startScript")
         execute(startScript)
     }
 
     fun down() {
         if (!created) {
-            logger.warn("Instance not created, so it could not be down: $this")
+            aem.logger.warn("Instance not created, so it could not be down: $this")
             return
         }
 
-        logger.info("Executing stop script: $stopScript")
+        aem.logger.info("Executing stop script: $stopScript")
         execute(stopScript)
 
         try {
@@ -238,14 +210,14 @@ class LocalHandle(val project: Project, val instance: Instance) {
         }
     }
 
-    fun init() {
+    fun init(callback: LocalHandle.() -> Unit) {
         if (initialized) {
-            logger.debug("Instance already initialized: $this")
+            aem.logger.debug("Instance already initialized: $this")
             return
         }
 
-        logger.info("Initializing running instance")
-        config.upInitializer(this)
+        aem.logger.info("Initializing running instance")
+        callback(this)
         lock(LOCK_INIT)
     }
 
@@ -265,11 +237,11 @@ class LocalHandle(val project: Project, val instance: Instance) {
         }
 
     fun destroy() {
-        logger.info("Destroying at path '${dir.absolutePath}'")
+        aem.logger.info("Destroying at path '${dir.absolutePath}'")
 
         cleanDir(false)
 
-        logger.info("Destroyed with success")
+        aem.logger.info("Destroyed with success")
     }
 
     val sync by lazy {
@@ -293,6 +265,30 @@ class LocalHandle(val project: Project, val instance: Instance) {
 
     override fun toString(): String {
         return "LocalHandle(dir=${dir.absolutePath}, instance=$instance)"
+    }
+
+    companion object {
+        const val JAR_STATIC_FILES_PATH = "static/"
+
+        val JAR_NAME_PATTERNS = listOf(
+                "*aem-quickstart*.jar",
+                "*cq-quickstart*.jar",
+                "*quickstart*.jar",
+                "*.jar"
+        )
+
+        const val LOCK_CREATE = "create"
+
+        const val LOCK_INIT = "init"
+    }
+
+    class Script(val wrapper: File, val bin: File, val command: List<String>) {
+        val commandLine: List<String>
+            get() = command + listOf(wrapper.absolutePath)
+
+        override fun toString(): String {
+            return "Script(commandLine=$commandLine)"
+        }
     }
 
 }

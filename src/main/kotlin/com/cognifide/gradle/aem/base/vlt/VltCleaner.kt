@@ -1,8 +1,7 @@
 package com.cognifide.gradle.aem.base.vlt
 
-import com.cognifide.gradle.aem.api.AemConfig
+import com.cognifide.gradle.aem.api.AemExtension
 import com.cognifide.gradle.aem.internal.Patterns
-import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.filefilter.EmptyFileFilter
@@ -11,30 +10,28 @@ import org.apache.commons.io.filefilter.TrueFileFilter
 import org.apache.commons.lang3.CharEncoding
 import org.apache.commons.lang3.StringUtils
 import org.gradle.api.Project
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Internal
 import java.io.File
 import java.io.IOException
 import java.util.regex.Pattern
 
-class VltCleaner(val project: Project) {
+class VltCleaner(project: Project) {
 
-    private val logger = project.logger
-
-    private val config = AemConfig.of(project)
-
-    private val props = PropertyParser(project)
+    @Internal
+    private val aem = AemExtension.of(project)
 
     /**
      * Determines which files will be deleted within running cleaning
      * (e.g after checking out JCR content).
      */
+    @Input
     var filesDeleted: MutableList<String> = mutableListOf(
             "**/.vlt",
             "**/.vlt*.tmp"
     )
 
-    private val filesDeletedRules by lazy {
-        VltCleanRule.manyFrom(filesDeleted)
-    }
+    private val filesDeletedRules by lazy { VltCleanRule.manyFrom(filesDeleted) }
 
     /**
      * Properties that will be skipped when pulling JCR content from AEM instance.
@@ -42,6 +39,7 @@ class VltCleaner(val project: Project) {
      * After special delimiter '!' there could be specified one or many path patterns
      * (ANT style, delimited with ',') in which property shouldn't be removed.
      */
+    @Input
     var propertiesSkipped: MutableList<String> = mutableListOf(
             pathRule("jcr:uuid", listOf("**/home/users/*", "**/home/groups/*")),
             "jcr:lastModified*",
@@ -55,49 +53,48 @@ class VltCleaner(val project: Project) {
             "*_x0040_*"
     )
 
-    private val propertiesSkippedRules by lazy {
-        VltCleanRule.manyFrom(propertiesSkipped)
-    }
+    private val propertiesSkippedRules by lazy { VltCleanRule.manyFrom(propertiesSkipped) }
 
     /**
      * Mixin types that will be skipped when pulling JCR content from AEM instance.
      */
+    @Input
     var mixinTypesSkipped: MutableList<String> = mutableListOf(
             "cq:ReplicationStatus",
             "mix:versionable"
     )
 
-    private val mixinTypesSkippedRules by lazy {
-        VltCleanRule.manyFrom(mixinTypesSkipped)
-    }
+    private val mixinTypesSkippedRules by lazy { VltCleanRule.manyFrom(mixinTypesSkipped) }
 
     /**
      * Determines which files will be flattened
      * (e.g /_cq_dialog/.content.xml will be replaced by _cq_dialog.xml).
      */
+    @Input
     var filesFlattened: MutableList<String> = mutableListOf(
             "**/_cq_dialog/.content.xml",
             "**/_cq_htmlTag/.content.xml"
     )
 
-    private val filesFlattenedRules by lazy {
-        VltCleanRule.manyFrom(filesFlattened)
-    }
+    private val filesFlattenedRules by lazy { VltCleanRule.manyFrom(filesFlattened) }
 
     /**
      * Controls unused namespaces skipping.
      */
-    var namespacesSkipped: Boolean = props.boolean("aem.clean.namespacesSkipped", true)
+    @Input
+    var namespacesSkipped: Boolean = aem.props.boolean("aem.clean.namespacesSkipped", true)
 
     /**
      * Controls backups for parent nodes of filter roots for keeping them untouched.
      */
-    var parentsBackupEnabled: Boolean = props.boolean("aem.clean.parentsBackup", true)
+    @Input
+    var parentsBackupEnabled: Boolean = aem.props.boolean("aem.clean.parentsBackup", true)
 
     /**
      * File suffix being added to parent node back up files.
      * Customize it only if really needed to resolve conflict with file being checked out.
      */
+    @Internal
     var parentsBackupSuffix = ".bak"
 
     private val parentsBackupDirIndicator
@@ -106,11 +103,13 @@ class VltCleaner(val project: Project) {
     /**
      * Hook for customizing particular line processing for '.content.xml' files.
      */
+    @Internal
     var lineProcess: (File, String) -> String = { file, line -> normalizeLine(file, line) }
 
     /**
      * Hook for additional all lines processing for '.content.xml' files.
      */
+    @Internal
     var contentProcess: (File, List<String>) -> List<String> = { file, lines -> normalizeContent(file, lines) }
 
     fun prepare(root: File) {
@@ -165,10 +164,10 @@ class VltCleaner(val project: Project) {
 
         val dest = File(file.parentFile.path + ".xml")
         if (dest.exists()) {
-            logger.info("Overriding file by flattening $file")
+            aem.logger.info("Overriding file by flattening $file")
             FileUtils.deleteQuietly(dest)
         } else {
-            logger.info("Flattening file $file")
+            aem.logger.info("Flattening file $file")
         }
 
         file.renameTo(dest)
@@ -187,7 +186,7 @@ class VltCleaner(val project: Project) {
             return
         }
 
-        logger.info("Deleting file {}", file.path)
+        aem.logger.info("Deleting file {}", file.path)
         FileUtils.deleteQuietly(file)
     }
 
@@ -195,7 +194,7 @@ class VltCleaner(val project: Project) {
         val siblingDirs = root.listFiles { file -> file.isDirectory } ?: arrayOf()
         siblingDirs.forEach { removeEmptyDirs(it) }
         if (EmptyFileFilter.EMPTY.accept(root)) {
-            logger.info("Removing empty directory {}", root.path)
+            aem.logger.info("Removing empty directory {}", root.path)
             FileUtils.deleteQuietly(root)
         }
     }
@@ -206,12 +205,12 @@ class VltCleaner(val project: Project) {
         }
 
         try {
-            logger.info("Cleaning file {}", file.path)
+            aem.logger.info("Cleaning file {}", file.path)
 
             val inputLines = FileUtils.readLines(file, CharEncoding.UTF_8)
             val filteredLines = filterLines(file, inputLines)
 
-            FileUtils.writeLines(file, CharEncoding.UTF_8, filteredLines, config.vaultLineSeparatorString)
+            FileUtils.writeLines(file, CharEncoding.UTF_8, filteredLines, aem.config.vaultLineSeparatorString)
         } catch (e: IOException) {
             throw VltException(String.format("Error opening %s", file.path), e)
         }
@@ -331,7 +330,7 @@ class VltCleaner(val project: Project) {
                 siblingFiles.filter { !it.name.endsWith(parentsBackupSuffix) && !matchAnyRule(it.path, it, filesDeletedRules) }
                         .forEach { origin ->
                             val backup = File(parent, origin.name + parentsBackupSuffix)
-                            logger.info("Doing backup of parent file: $origin")
+                            aem.logger.info("Doing backup of parent file: $origin")
                             origin.copyTo(backup, true)
                         }
             }
@@ -346,7 +345,7 @@ class VltCleaner(val project: Project) {
                 siblingFiles.filter { !it.name.endsWith(parentsBackupSuffix) }.forEach { FileUtils.deleteQuietly(it) }
                 siblingFiles.filter { it.name.endsWith(parentsBackupSuffix) }.forEach { backup ->
                     val origin = File(backup.path.removeSuffix(parentsBackupSuffix))
-                    logger.info("Undoing backup of parent file: $backup")
+                    aem.logger.info("Undoing backup of parent file: $backup")
                     backup.renameTo(origin)
                 }
             }

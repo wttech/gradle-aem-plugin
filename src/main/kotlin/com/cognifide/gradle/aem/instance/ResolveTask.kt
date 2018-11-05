@@ -6,10 +6,6 @@ import org.gradle.api.tasks.TaskAction
 
 open class ResolveTask : AemDefaultTask() {
 
-    companion object {
-        const val NAME = "aemResolve"
-    }
-
     init {
         description = "Resolve files from remote sources before running other tasks to optimize build performance."
     }
@@ -24,20 +20,20 @@ open class ResolveTask : AemDefaultTask() {
 
     @TaskAction
     fun resolve() {
-        val premature = !isTaskExecuted(CreateTask.NAME) && !isTaskExecuted(SatisfyTask.NAME)
+        val premature = !willBeExecuted(CreateTask.NAME) && !willBeExecuted(SatisfyTask.NAME)
 
-        if (premature || isTaskExecuted(CreateTask.NAME)) {
+        if (premature || willBeExecuted(CreateTask.NAME)) {
             logger.info("Resolving instance files for creating instances.")
             logger.info("Resolved instance files: ${createTask.instanceFiles}")
         }
-        if (premature || isTaskExecuted(SatisfyTask.NAME)) {
+        if (premature || willBeExecuted(SatisfyTask.NAME)) {
             logger.info("Resolving CRX packages for satisfying instances.")
             logger.info("Resolved CRX packages: ${satisfyTask.allFiles}")
         }
     }
 
-    private fun isTaskExecuted(taskName: String): Boolean {
-        return project.gradle.taskGraph.allTasks.any { it.name == taskName }
+    companion object {
+        const val NAME = "aemResolve"
     }
 
 }

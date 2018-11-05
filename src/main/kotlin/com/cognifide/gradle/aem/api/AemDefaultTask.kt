@@ -1,24 +1,20 @@
 package com.cognifide.gradle.aem.api
 
-import com.cognifide.gradle.aem.internal.PropertyParser
 import org.gradle.api.DefaultTask
 import org.gradle.api.Task
-import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
 
 abstract class AemDefaultTask : DefaultTask(), AemTask {
 
     @Nested
-    final override val config = AemConfig.of(project)
-
-    @Internal
-    protected val notifier = AemNotifier.of(project)
-
-    @Internal
-    protected val props = PropertyParser(project)
+    final override val aem = AemExtension.of(project)
 
     init {
         group = AemTask.GROUP
+    }
+
+    fun willBeExecuted(taskName: String): Boolean {
+        return project.gradle.taskGraph.allTasks.any { it.name == taskName }
     }
 
     fun afterConfigured(callback: Task.() -> Unit) {

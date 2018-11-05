@@ -1,60 +1,31 @@
 package com.cognifide.gradle.aem.internal
 
-import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.api.AemException
-import com.cognifide.gradle.aem.base.vlt.SyncTask
+import com.cognifide.gradle.aem.api.AemExtension
 import com.mitchellbosecke.pebble.PebbleEngine
 import com.mitchellbosecke.pebble.lexer.Syntax
 import com.mitchellbosecke.pebble.loader.StringLoader
-import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.text.StrSubstitutor
 import org.gradle.api.Project
 import java.io.StringWriter
-import java.text.SimpleDateFormat
 import java.util.*
 
-class PropertyParser(val project: Project) {
+class PropertyParser(
+        private val aem: AemExtension,
+        private val project: Project
+) {
 
-    companion object {
-
-        const val FORCE_PROP = "aem.force"
-
-        val FORCE_MESSAGE = "Before continuing it is recommended to protect against potential data loss by checking out JCR content using '${SyncTask.NAME}' task then saving it in VCS."
-
-        private const val TEMPLATE_VAR_PREFIX = "{{"
-
-        private const val TEMPLATE_VAR_SUFFIX = "}}"
-
-        private val TEMPLATE_ENGINE = PebbleEngine.Builder()
-                .autoEscaping(false)
-                .cacheActive(false)
-                .strictVariables(true)
-                .newLineTrimming(false)
-                .loader(StringLoader())
-                .syntax(Syntax.Builder()
-                        .setEnableNewLineTrimming(false)
-                        .setPrintOpenDelimiter(TEMPLATE_VAR_PREFIX)
-                        .setPrintCloseDelimiter(TEMPLATE_VAR_SUFFIX)
-                        .build()
-                )
-                .build()
-
-        private val TEMPLATE_INTERPOLATOR: (String, Map<String, Any>) -> String = { source, props ->
-            StrSubstitutor.replace(source, props, TEMPLATE_VAR_PREFIX, TEMPLATE_VAR_SUFFIX)
-        }
-    }
-
-    private fun prop(name: String): String? {
+    fun prop(name: String): String? {
         if (project.hasProperty(name)) {
             return project.property(name).toString()
         }
 
-        var systemValue = System.getProperty(name)
+        val systemValue = System.getProperty(name)
         if (systemValue != null) {
             return systemValue
         }
 
-        var envValue = System.getenv(name)
+        val envValue = System.getenv(name)
         if (envValue != null) {
             return envValue
         }
@@ -68,11 +39,10 @@ class PropertyParser(val project: Project) {
         return if (!value.isBlank()) value.toBoolean() else true
     }
 
-    fun list(name: String, delimiter: String = ","): List<String> {
-        val raw = prop(name) ?: return emptyList()
-        val between = StringUtils.substringBetween(raw, "[", "]") ?: raw
+    fun list(name: String, delimiter: String = ",", defaultValue: List<String> = listOf()): List<String> {
+        val value = prop(name) ?: return defaultValue
 
-        return between.split(delimiter)
+        return Formats.toList(value, delimiter)
     }
 
     fun date(name: String, defaultValue: Date): Date {
@@ -81,7 +51,7 @@ class PropertyParser(val project: Project) {
         return if (timestamp.isNullOrBlank()) {
             defaultValue
         } else {
-            Date(timestamp!!.toLong())
+            Date(timestamp.toLong())
         }
     }
 
@@ -112,7 +82,7 @@ class PropertyParser(val project: Project) {
     }
 
     fun expandPackage(source: String, props: Map<String, Any>, context: String? = null): String {
-        val interpolableProps = envProps + systemProps + packageProps + props
+        val interpolableProps = envProps + systemProps + props
         val templateProps = projectProps + configProps + props
 
         return expand(source, interpolableProps, templateProps, context)
@@ -138,9 +108,9 @@ class PropertyParser(val project: Project) {
     }
 
     val systemProps: Map<String, String> by lazy {
-        System.getProperties().entries.fold(mutableMapOf<String, String>(), { props, prop ->
+        System.getProperties().entries.fold(mutableMapOf<String, String>()) { props, prop ->
             props.put(prop.key.toString(), prop.value.toString()); props
-        })
+        }
     }
 
     val projectProps: Map<String, Any>
@@ -156,22 +126,7 @@ class PropertyParser(val project: Project) {
         )
 
     val configProps: Map<String, Any>
-        get() = mapOf("config" to AemConfig.of(project))
-
-    val packageProps: Map<String, Any>
-        get() {
-            val config = AemConfig.of(project)
-            val defaults = mapOf(
-                    // Simple defaults
-                    "requiresRoot" to "false",
-
-                    // Dynamic values
-                    "buildCount" to SimpleDateFormat("yDDmmssSSS").format(config.packageBuildDate),
-                    "created" to Formats.date(config.packageBuildDate)
-            )
-
-            return defaults + config.packageFileProperties + configProps
-        }
+        get() = mapOf("config" to aem.config)
 
     fun isForce(): Boolean {
         return flag(FORCE_PROP)
@@ -180,6 +135,33 @@ class PropertyParser(val project: Project) {
     fun checkForce() {
         if (!isForce()) {
             throw AemException("Unable to perform unsafe operation without param '-P$FORCE_PROP'")
+        }
+    }
+
+    companion object {
+
+        const val FORCE_PROP = "aem.force"
+
+        private const val TEMPLATE_VAR_PREFIX = "{{"
+
+        private const val TEMPLATE_VAR_SUFFIX = "}}"
+
+        private val TEMPLATE_ENGINE = PebbleEngine.Builder()
+                .autoEscaping(false)
+                .cacheActive(false)
+                .strictVariables(true)
+                .newLineTrimming(false)
+                .loader(StringLoader())
+                .syntax(Syntax.Builder()
+                        .setEnableNewLineTrimming(false)
+                        .setPrintOpenDelimiter(TEMPLATE_VAR_PREFIX)
+                        .setPrintCloseDelimiter(TEMPLATE_VAR_SUFFIX)
+                        .build()
+                )
+                .build()
+
+        private val TEMPLATE_INTERPOLATOR: (String, Map<String, Any>) -> String = { source, props ->
+            StrSubstitutor.replace(source, props, TEMPLATE_VAR_PREFIX, TEMPLATE_VAR_SUFFIX)
         }
     }
 
