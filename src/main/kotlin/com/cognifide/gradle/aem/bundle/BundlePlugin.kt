@@ -164,6 +164,7 @@ class BundlePlugin : AemPlugin() {
         val jar = tasks.getByName(JavaPlugin.JAR_TASK_NAME) as Jar
 
         gradle.projectsEvaluated { test.classpath += files(jar.archivePath) }
+        test.dependsOn(jar)
     }
 
     private fun Project.setupConfigurations() {

@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.api
 
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.execution.TaskExecutionGraph
 import org.gradle.util.GFileUtils
 import java.io.File
 
@@ -17,7 +18,7 @@ interface AemTask : Task {
         // intentionally empty
     }
 
-    fun taskGraphReady() {
+    fun taskGraphReady(graph: TaskExecutionGraph) {
         // intentionally empty
     }
 

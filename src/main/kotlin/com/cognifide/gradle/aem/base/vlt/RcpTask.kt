@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.base.vlt
 import com.cognifide.gradle.aem.instance.Instance
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.TaskAction
+import java.io.File
 
 open class RcpTask : VltTask() {
 
@@ -17,27 +18,27 @@ open class RcpTask : VltTask() {
     var targetInstance: Instance? = aem.instanceConcrete("target")
 
     @Input
-    var paths: MutableMap<String, String> = run {
-        aem.props.list("aem.rcp.paths").fold(mutableMapOf()) { r, path ->
-            val parts = path.split("=").map { it.trim() }
-            when (parts.size) {
-                1 -> r[path] = path
-                2 -> r[parts[0]] = parts[1]
-                else -> throw VltException("RCP path has invalid format: $path")
-            }
-            r
-        }
-    }
+    var paths: MutableMap<String, String> = mutableMapOf()
 
     @Input
-    var opts: String = run { aem.props.string("aem.rcp.opts") ?: "-b 100 -r -u" }
+    var opts: String = aem.props.string("aem.rcp.opts") ?: "-b 100 -r -u"
 
     @TaskAction
     override fun perform() {
-        if (paths.isEmpty()) {
-            throw VltException("No paths to copy using RCP. Ensure specified param '-Paem.rcp.paths")
-        }
+        val client = createClient()
+        eachPathMapping { (sourcePath, targetPath) -> client.copy(sourcePath, targetPath) }
+        val summary = client.summary
 
+        logger.info("RCP details: $summary")
+
+        if (!summary.source.cmd && !summary.target.cmd) {
+            aem.notifier.notify("RCP finished", "Copied ${summary.copiedPaths} JCR root(s) from instance ${summary.source.name} to ${summary.target.name}.")
+        } else {
+            aem.notifier.notify("RCP finished", "Copied ${summary.copiedPaths} JCR root(s) between instances.")
+        }
+    }
+
+    private fun createClient(): VltRcpClient {
         if (sourceInstance == null) {
             throw VltException("Source RCP instance is not defined. Ensure specified param '-Paem.instance.left'")
         }
@@ -46,17 +47,44 @@ open class RcpTask : VltTask() {
             throw VltException("Target RCP instance is not defined. Ensure specified param '-Paem.instance.right'")
         }
 
-        paths.forEach { sourcePath, targetPath ->
-            vlt.apply {
-                command = "rcp $opts ${sourceInstance!!.httpBasicAuthUrl}/crx/-/jcr:root$sourcePath ${targetInstance!!.httpBasicAuthUrl}/crx/-/jcr:root$targetPath"
-                run()
-            }
+        return VltRcpClient(vlt, sourceInstance!!, targetInstance!!).apply {
+            this@apply.opts = this@RcpTask.opts
+        }
+    }
+
+    private fun eachPathMapping(action: (Pair<String, String>) -> Unit) {
+        if (paths.isNotEmpty()) {
+            paths.map { Pair(it.key, it.value) }.forEach(action)
+            return
         }
 
-        if (!sourceInstance!!.cmd && !targetInstance!!.cmd) {
-            aem.notifier.notify("RCP finished", "Copied ${paths.size} JCR root(s) from instance ${sourceInstance!!.name} to ${targetInstance!!.name}.")
-        } else {
-            aem.notifier.notify("RCP finished", "Copied ${paths.size} JCR root(s) between instances.")
+        val cmdPaths = aem.props.list("aem.rcp.paths")
+        if (cmdPaths.isNotEmpty()) {
+            cmdPaths.asSequence().map { pathMapping(it) }.forEach(action)
+            return
+        }
+
+        val cmdFilePath = aem.props.string("aem.rcp.pathsFile")
+        if (!cmdFilePath.isNullOrBlank()) {
+            val cmdFile = File(cmdFilePath)
+            if (!cmdFile.exists()) {
+                throw VltException("RCP paths file does not exist: $cmdFile")
+            }
+
+            cmdFile.useLines { line -> line.map { pathMapping(it) }.forEach(action) }
+            return
+        }
+
+        throw VltException("RCP param '-Paem.rcp.paths' or '-Paem.rcp.pathsFile' must be specified.")
+    }
+
+    private fun pathMapping(path: String): Pair<String, String> {
+        val parts = path.trim().split("=").map { it.trim() }
+
+        return when (parts.size) {
+            1 -> Pair(path, path)
+            2 -> Pair(parts[0], parts[1])
+            else -> throw VltException("RCP path has invalid format: $path")
         }
     }
 

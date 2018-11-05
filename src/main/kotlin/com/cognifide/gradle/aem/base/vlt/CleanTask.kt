@@ -2,21 +2,17 @@ package com.cognifide.gradle.aem.base.vlt
 
 import com.cognifide.gradle.aem.api.AemDefaultTask
 import com.cognifide.gradle.aem.internal.Formats
-import org.gradle.api.tasks.*
+import org.gradle.api.execution.TaskExecutionGraph
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.Nested
+import org.gradle.api.tasks.TaskAction
 import java.io.File
 
 open class CleanTask : AemDefaultTask() {
 
     init {
         description = "Clean checked out JCR content."
-
-        project.run {
-            gradle.taskGraph.whenReady {
-                if (it.hasTask(tasks.getByName(CheckoutTask.NAME))) {
-                    beforeCheckout()
-                }
-            }
-        }
     }
 
     @Input
@@ -54,6 +50,14 @@ open class CleanTask : AemDefaultTask() {
 
     fun cleaner(configurer: VltCleaner.() -> Unit) {
         cleaner.apply(configurer)
+    }
+
+    override fun taskGraphReady(graph: TaskExecutionGraph) {
+        if (graph.hasTask(this@CleanTask)) {
+            project.tasks.named(CheckoutTask.NAME).configure {
+                doFirst { beforeCheckout() }
+            }
+        }
     }
 
     private fun beforeCheckout() {

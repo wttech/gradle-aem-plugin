@@ -1,13 +1,11 @@
 package com.cognifide.gradle.aem.pkg
 
-class DeleteResponse(private val rawHtml: String) : HtmlResponse(rawHtml) {
+import java.io.InputStream
 
-    companion object {
-        val DELETE_SUCCESS = "Package deleted in"
-    }
+class DeleteResponse private constructor(private val rawHtml: String) : HtmlResponse(rawHtml) {
 
     override fun getErrorPatterns(): List<ErrorPattern> {
-        return emptyList()
+        return ERROR_PATTERNS
     }
 
     override val status: Status
@@ -18,4 +16,22 @@ class DeleteResponse(private val rawHtml: String) : HtmlResponse(rawHtml) {
                 Status.FAIL
             }
         }
+
+    companion object {
+
+        private const val DELETE_SUCCESS = "Package deleted in"
+
+        private val ERROR_PATTERNS = emptyList<ErrorPattern>()
+
+        private val STATUS_TAGS = listOf(DELETE_SUCCESS)
+
+        fun from(input: InputStream, bufferSize: Int): DeleteResponse {
+            return try {
+                DeleteResponse(readFrom(input, ERROR_PATTERNS, STATUS_TAGS, bufferSize))
+            } catch (e: Exception) {
+                throw ResponseException("Malformed delete package response.")
+            }
+        }
+
+    }
 }

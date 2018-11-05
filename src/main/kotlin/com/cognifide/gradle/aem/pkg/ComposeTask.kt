@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem.pkg
 
 import aQute.bnd.osgi.Jar
-import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.api.AemException
 import com.cognifide.gradle.aem.api.AemExtension
 import com.cognifide.gradle.aem.api.AemTask
@@ -28,6 +27,7 @@ import java.io.File
 import java.io.Serializable
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.regex.Pattern
 
 open class ComposeTask : Zip(), AemTask {
 
@@ -47,12 +47,14 @@ open class ComposeTask : Zip(), AemTask {
     @Internal
     val filterRoots = mutableSetOf<Element>()
 
-    @get:Input
-    val filterRootsProp: String
-        get() = filterRoots.joinToString(aem.config.vaultLineSeparatorString) { it.toString() }
-
     @Internal
     var filterRootDefault = { other: ComposeTask -> "<filter root=\"${other.bundlePath}\"/>" }
+
+    @Internal
+    val nodeTypesLibs = mutableSetOf<String>()
+
+    @Internal
+    val nodeTypesLines = mutableListOf<String>()
 
     @Internal
     private var bundleCollectors: List<() -> Unit> = mutableListOf()
@@ -102,7 +104,8 @@ open class ComposeTask : Zip(), AemTask {
         get() = mapOf(
                 "zip" to this,
                 "filters" to filterRoots,
-                "filterRoots" to filterRootsProp,
+                "nodeTypesLibs" to nodeTypesLibs,
+                "nodeTypesLines" to nodeTypesLines,
                 "buildCount" to SimpleDateFormat("yDDmmssSSS").format(packageBuildDate),
                 "created" to Formats.date(packageBuildDate)
         ) + packageFileProperties
@@ -153,7 +156,10 @@ open class ComposeTask : Zip(), AemTask {
      * Wildcard file name filter expression that is used to filter in which Vault files properties can be injected.
      */
     @Input
-    var packageFilesExpanded: MutableList<String> = mutableListOf("**/${PackagePlugin.VLT_PATH}/*.xml")
+    var packageFilesExpanded: MutableList<String> = mutableListOf(
+            "**/${PackagePlugin.VLT_PATH}/*.xml",
+            "**/${PackagePlugin.VLT_PATH}/nodetypes.cnd"
+    )
 
     /**
      * Define here custom properties that can be used in CRX package files like 'META-INF/vault/properties.xml'.
@@ -221,6 +227,14 @@ open class ComposeTask : Zip(), AemTask {
     @get:JsonIgnore
     val vaultFilterPath: String
         get() = "$vaultPath/filter.xml"
+
+    /**
+     * CRX package Vault node types path.
+     */
+    @get:Internal
+    @get:JsonIgnore
+    val vaultNodeTypesPath: String
+        get() = "$vaultPath/nodetypes.cnd"
 
     /**
      * Configure default task dependency assignments while including dependant project content.
@@ -397,11 +411,20 @@ open class ComposeTask : Zip(), AemTask {
 
             dependProject(project, dependContentTaskNames)
             extractVaultFilters(other)
+            extractNodeTypes(other)
 
             val contentDir = File("${other.contentPath}/${PackagePlugin.JCR_ROOT}")
             if (contentDir.exists()) {
                 into(PackagePlugin.JCR_ROOT) { spec ->
                     spec.from(contentDir)
+                    fileFilter(spec)
+                }
+            }
+
+            val hooksDir = File("${other.contentPath}/${PackagePlugin.VLT_HOOKS_PATH}")
+            if (hooksDir.exists()) {
+                into(PackagePlugin.VLT_HOOKS_PATH) { spec ->
+                    spec.from(hooksDir)
                     fileFilter(spec)
                 }
             }
@@ -447,6 +470,21 @@ open class ComposeTask : Zip(), AemTask {
         }
     }
 
+    private fun extractNodeTypes(other: ComposeTask) {
+        if (other.vaultNodeTypesPath.isNotBlank()) {
+            val file = File(other.vaultNodeTypesPath)
+            if (file.exists()) {
+                file.forEachLine {
+                    if (NODE_TYPES_LIB.matcher(it.trim()).matches()) {
+                        nodeTypesLibs += it
+                    } else {
+                        nodeTypesLines += it
+                    }
+                }
+            }
+        }
+    }
+
     fun includeVault(vltPath: Any) {
         contentCollectors += {
             into(PackagePlugin.VLT_PATH) { spec ->
@@ -477,5 +515,7 @@ open class ComposeTask : Zip(), AemTask {
         const val NAME = "aemCompose"
 
         const val DEPENDENCIES_SUFFIX = ".dependencies"
+
+        private val NODE_TYPES_LIB: Pattern = Pattern.compile("<.+>")
     }
 }

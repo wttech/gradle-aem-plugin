@@ -1,0 +1,2 @@
+{{nodeTypesLibs | join('\n')}}
+{{nodeTypesLines | join('\n')}}

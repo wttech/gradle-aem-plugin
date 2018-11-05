@@ -197,7 +197,8 @@ aem {
           "jcr_root/.vlt-sync-config.properties"
         ]
         packageFilesExpanded = [
-          "**/META-INF/vault/*.xml"
+          "**/META-INF/vault/*.xml",
+          "**/META-INF/vault/nodetypes.cnd"
         ]
         packageFileProperties = []
         packageBuildDate = Date()
@@ -293,6 +294,10 @@ aemClean {
             "cq:ReplicationStatus",
             "mix:versionable"
         ]
+        filesFlattened = [
+            "**/_cq_dialog/.content.xml",
+            "**/_cq_htmlTag/.content.xml"
+        ]
         namespacesSkipped = true
         parentsBackupEnabled = true
         parentsBackupSuffix = ".bak"
@@ -329,20 +334,39 @@ aemClean {
 
 Copy JCR content from one instance to another. Sample usages below.
 
-Using predefined instances with multiple different source and target nodes:
-```
-gradlew :aemRcp -Paem.rcp.source.instance=int-author -Paem.rcp.target.instance=local-author -Paem.rcp.paths=[/content/example-demo=/content/example,/content/dam/example-demo=/content/dam/example]
-```
+* Using predefined instances with multiple different source and target nodes:
 
-Using predefined instances with multiple same source and target nodes:
-```
-gradlew :aemRcp -Paem.rcp.source.instance=stg-author -Paem.rcp.target.instance=int-author -Paem.rcp.paths=[/content/example,/content/example2]
-```
+  ```
+  gradlew :aemRcp -Paem.rcp.source.instance=int-author -Paem.rcp.target.instance=local-author -Paem.rcp.paths=[/content/example-demo=/content/example,/content/dam/example-demo=/content/dam/example]
+  ```
 
-Using dynamically defined instances:
-```
-gradlew :aemRcp -Paem.rcp.source.instance=http://user:pass@192.168.66.66:4502 -Paem.rcp.target.instance=http://user:pass@192.168.33.33:4502 -Paem.rcp.paths=[/content/example-demo=/content/example]
-```
+* Using predefined instances with multiple same source and target nodes:
+
+  ```
+  gradlew :aemRcp -Paem.rcp.source.instance=stg-author -Paem.rcp.target.instance=int-author -Paem.rcp.paths=[/content/example,/content/example2]
+  ```
+
+* Using predefined instances with source and target nodes specified in file:
+
+  ```
+  gradlew :aemRcp -Paem.rcp.source.instance=int-author -Paem.rcp.target.instance=local-author -Paem.rcp.pathsFile=paths.txt
+  ```
+
+  File format:
+ 
+  ```
+   sourcePath1=targetPath1
+   sameSourceAndTargetPath1
+   sourcePath2=targetPath2
+   sameSourceAndTargetPath2
+  ```
+
+
+* Using dynamically defined instances:
+
+  ```
+  gradlew :aemRcp -Paem.rcp.source.instance=http://user:pass@192.168.66.66:4502 -Paem.rcp.target.instance=http://user:pass@192.168.33.33:4502 -Paem.rcp.paths=[/content/example-demo=/content/example]
+  ```
 
 Keep in mind, that copying JCR content between instances, could be a trigger for running AEM workflows like *DAM Update Asset* which could cause heavy load on instance.
 Consider disabling AEM workflow launchers before running this task and re-enabling after.

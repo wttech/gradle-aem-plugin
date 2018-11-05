@@ -23,7 +23,7 @@ abstract class AemPlugin : Plugin<Project> {
 
         afterEvaluate { provider.configure { if (it is AemTask) it.projectEvaluated() } }
         gradle.projectsEvaluated { provider.configure { if (it is AemTask) it.projectsEvaluated() } }
-        gradle.taskGraph.whenReady { provider.configure { if (it is AemTask) it.taskGraphReady() } }
+        gradle.taskGraph.whenReady { graph -> provider.configure { if (it is AemTask) it.taskGraphReady(graph) } }
 
         return provider
     }

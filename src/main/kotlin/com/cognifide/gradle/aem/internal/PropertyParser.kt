@@ -39,8 +39,10 @@ class PropertyParser(
         return if (!value.isBlank()) value.toBoolean() else true
     }
 
-    fun list(name: String, delimiter: String = ","): List<String> {
-        return Formats.toList(prop(name), delimiter)
+    fun list(name: String, delimiter: String = ",", defaultValue: List<String> = listOf()): List<String> {
+        val value = prop(name) ?: return defaultValue
+
+        return Formats.toList(value, delimiter)
     }
 
     fun date(name: String, defaultValue: Date): Date {

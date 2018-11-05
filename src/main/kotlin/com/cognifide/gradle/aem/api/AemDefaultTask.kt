@@ -29,13 +29,4 @@ abstract class AemDefaultTask : DefaultTask(), AemTask {
         }
     }
 
-    fun beforeExecuted(taskName: String, callback: Task.() -> Unit) {
-        project.gradle.taskGraph.whenReady {
-            val task = project.tasks.getByName(taskName)
-            if (it.hasTask(task)) {
-                task.doFirst(callback)
-            }
-        }
-    }
-
 }

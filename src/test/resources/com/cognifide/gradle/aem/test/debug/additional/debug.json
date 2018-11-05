@@ -192,6 +192,12 @@
     "instanceConnectionTimeout" : 30000,
     "instanceConnectionUntrustedSsl" : true,
     "packageRoot": "*/src/main/content",
+    "packageErrors" : [
+      "javax.jcr.nodetype.ConstraintViolationException",
+      "org.apache.jackrabbit.vault.packaging.DependencyException",
+      "org.xml.sax.SAXException"
+    ],
+    "packageResponseBuffer" : 4096,
     "packageSnapshots" : [ ],
     "vaultFilesPath" : "*/src/main/resources/META-INF/vault",
     "vaultLineSeparator" : "LF",

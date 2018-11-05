@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.pkg
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.databind.ObjectMapper
+import java.io.InputStream
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 class UploadResponse private constructor() {
@@ -14,7 +15,7 @@ class UploadResponse private constructor() {
 
     companion object {
 
-        fun fromJson(json: String): UploadResponse {
+        fun fromJson(json: InputStream): UploadResponse {
             return ObjectMapper().readValue(json, UploadResponse::class.java)
         }
     }

@@ -4,15 +4,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.gradle.api.Project
+import java.io.InputStream
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 class ListResponse private constructor() {
-
-    companion object {
-        fun fromJson(json: String): ListResponse {
-            return ObjectMapper().readValue(json, ListResponse::class.java)
-        }
-    }
 
     lateinit var results: List<Package>
 
@@ -120,6 +115,16 @@ class ListResponse private constructor() {
 
         abstract fun resolve(project: Project, response: ListResponse, expected: Package): Package?
 
+    }
+
+    companion object {
+        fun fromJson(json: InputStream): ListResponse {
+            return try {
+                ObjectMapper().readValue(json, ListResponse::class.java)
+            } catch (e: Exception) {
+                throw ResponseException("Malformed package list response.")
+            }
+        }
     }
 
 }

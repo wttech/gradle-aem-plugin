@@ -124,7 +124,6 @@ class AemConfig(
      */
     @Input
     var instanceConnectionUntrustedSsl: Boolean = aem.props.boolean("aem.instance.connectionUntrustedSsl", true)
-
     /**
      * CRX package name conventions (with wildcard) indicating that package can change over time
      * while having same version specified. Affects CRX packages composed and satisfied.
@@ -144,6 +143,29 @@ class AemConfig(
     @get:JsonIgnore
     val packageVltRoot: String
         get() = "$packageRoot/${PackagePlugin.VLT_PATH}"
+
+    /**
+     * Define known exceptions which could be thrown during package installation
+     * making it impossible to succeed.
+     *
+     * When declared exception is encountered during package installation process, no more
+     * retries will be applied.
+     */
+    @Input
+    var packageErrors = aem.props.list("aem.package.errors", defaultValue = listOf(
+            "javax.jcr.nodetype.ConstraintViolationException",
+            "org.apache.jackrabbit.vault.packaging.DependencyException",
+            "org.xml.sax.SAXException"
+    ))
+
+    /**
+     * Determines number of lines to process at once during reading html responses.
+     *
+     * The higher the value, the bigger consumption of memory but shorter execution time.
+     * It is a protection against exceeding max Java heap size.
+     */
+    @Input
+    var packageResponseBuffer = aem.props.int("aem.package.responseBuffer", 4096)
 
     /**
      * Custom path to Vault files that will be used to build CRX package.

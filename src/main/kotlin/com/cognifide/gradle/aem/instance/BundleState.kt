@@ -2,11 +2,13 @@ package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.internal.Patterns
+import com.cognifide.gradle.aem.pkg.ResponseException
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.apache.commons.lang3.builder.EqualsBuilder
 import org.apache.commons.lang3.builder.HashCodeBuilder
+import java.io.InputStream
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 class BundleState private constructor() {
@@ -92,8 +94,12 @@ class BundleState private constructor() {
     }
 
     companion object {
-        fun fromJson(json: String): BundleState {
-            return ObjectMapper().readValue(json, BundleState::class.java)
+        fun from(input: InputStream): BundleState {
+            return try {
+                ObjectMapper().readValue(input, BundleState::class.java)
+            } catch (e: Exception) {
+                throw ResponseException("Malformed bundle state response.")
+            }
         }
 
         fun unknown(e: Exception): BundleState {
