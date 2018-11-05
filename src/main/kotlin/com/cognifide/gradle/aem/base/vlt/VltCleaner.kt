@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.base.vlt
 
 import com.cognifide.gradle.aem.api.AemConfig
+import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import org.apache.commons.io.FileUtils
@@ -71,6 +72,19 @@ class VltCleaner(val project: Project) {
     }
 
     /**
+     * Determines which files will be flattened
+     * (e.g /_cq_dialog/.content.xml will be replaced by _cq_dialog.xml).
+     */
+    var filesFlattened: MutableList<String> = mutableListOf(
+            "**/_cq_dialog/.content.xml",
+            "**/_cq_htmlTag/.content.xml"
+    )
+
+    private val filesFlattenedRules by lazy {
+        VltCleanRule.manyFrom(filesFlattened)
+    }
+
+    /**
      * Controls unused namespaces skipping.
      */
     var namespacesSkipped: Boolean = props.boolean("aem.clean.namespacesSkipped", true)
@@ -106,9 +120,10 @@ class VltCleaner(val project: Project) {
     }
 
     fun clean(root: File) {
+        cleanDotContents(root)
+        flattenFiles(root)
         removeFiles(root)
         removeEmptyDirs(root)
-        cleanDotContents(root)
 
         if (parentsBackupEnabled) {
             undoParentsBackup(root)
@@ -133,6 +148,30 @@ class VltCleaner(val project: Project) {
         } else {
             cleanDotContentFile(root)
         }
+    }
+
+    private fun flattenFiles(root: File) {
+        if (root.isDirectory) {
+            allFiles(root).forEach { flattenFile(it) }
+        } else {
+            flattenFile(root)
+        }
+    }
+
+    private fun flattenFile(file: File) {
+        if (!file.exists() || !matchAnyRule(file.path, file, filesFlattenedRules)) {
+            return
+        }
+
+        val dest = File(file.parentFile.path + ".xml")
+        if (dest.exists()) {
+            logger.info("Overriding file by flattening $file")
+            FileUtils.deleteQuietly(dest)
+        } else {
+            logger.info("Flattening file $file")
+        }
+
+        file.renameTo(dest)
     }
 
     private fun removeFiles(root: File) {
@@ -283,8 +322,11 @@ class VltCleaner(val project: Project) {
     }
 
     private fun doParentsBackup(root: File) {
-        root.parentFile.mkdirs()
-        eachParentFiles(root) { parent, siblingFiles ->
+        val normalizedRoot = normalizeParentRoot(root)
+
+        normalizedRoot.parentFile.mkdirs()
+        eachParentFiles(normalizedRoot) { parent, siblingFiles ->
+            parent.mkdirs()
             if (File(parent, parentsBackupDirIndicator).createNewFile()) {
                 siblingFiles.filter { !it.name.endsWith(parentsBackupSuffix) && !matchAnyRule(it.path, it, filesDeletedRules) }
                         .forEach { origin ->
@@ -297,7 +339,9 @@ class VltCleaner(val project: Project) {
     }
 
     private fun undoParentsBackup(root: File) {
-        eachParentFiles(root) { _, siblingFiles ->
+        val normalizedRoot = normalizeParentRoot(root)
+
+        eachParentFiles(normalizedRoot) { _, siblingFiles ->
             if (siblingFiles.any { it.name == parentsBackupDirIndicator }) {
                 siblingFiles.filter { !it.name.endsWith(parentsBackupSuffix) }.forEach { FileUtils.deleteQuietly(it) }
                 siblingFiles.filter { it.name.endsWith(parentsBackupSuffix) }.forEach { backup ->
@@ -307,6 +351,10 @@ class VltCleaner(val project: Project) {
                 }
             }
         }
+    }
+
+    private fun normalizeParentRoot(root: File): File {
+        return File(Patterns.normalizePath(root.path).substringBefore("/$JCR_CONTENT_NODE"))
     }
 
     private fun cleanParents(root: File) {
@@ -349,6 +397,8 @@ class VltCleaner(val project: Project) {
 
     companion object {
         const val JCR_CONTENT_FILE = ".content.xml"
+
+        const val JCR_CONTENT_NODE = "jcr:content"
 
         const val JCR_MIXIN_TYPES_PROP = "jcr:mixinTypes"
 

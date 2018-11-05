@@ -11,6 +11,7 @@ import com.cognifide.gradle.aem.pkg.PackagePlugin
 import org.apache.commons.io.FilenameUtils
 import org.gradle.api.tasks.TaskAction
 import org.gradle.util.GFileUtils
+import org.jsoup.nodes.Element
 import org.zeroturnaround.zip.ZipUtil
 import java.io.File
 
@@ -86,8 +87,15 @@ open class DownloadTask : AemDefaultTask() {
         checkoutFilter.file.copyTo(File(vltDir, "filter.xml"))
         FileOperations.copyResources(PackagePlugin.VLT_PATH, vltDir, true)
 
-        FileOperations.amendFiles(vltDir, listOf("**/*.xml")) { file, content ->
-            props.expandPackage(content, mapOf("project.version" to "${project.version}-$CLASSIFIER_DOWNLOAD"), file.absolutePath)
+        FileOperations.amendFiles(vltDir, config.packageFilesExpanded) { file, content ->
+            val fileProperties = mapOf(
+                    "project.version" to "${project.version}-$CLASSIFIER_DOWNLOAD",
+                    "filters" to listOf<Element>(),
+                    "filterRoots" to "",
+                    "nodeTypesLibs" to "",
+                    "nodeTypesLines" to ""
+            )
+            props.expandPackage(content, fileProperties, file.absolutePath)
         }
 
         ZipUtil.pack(shellDir, zipResult)

@@ -25,7 +25,7 @@ import org.apache.http.ssl.SSLContextBuilder
 import org.gradle.api.Project
 import java.io.File
 import java.io.InputStream
-import java.util.ArrayList
+import java.util.*
 
 open class InstanceHttpClient(val project: Project, val instance: Instance) {
 
@@ -145,30 +145,26 @@ open class InstanceHttpClient(val project: Project, val instance: Instance) {
     fun createHttpClient(): HttpClient {
         val builder = HttpClientBuilder.create()
                 .addInterceptorFirst(PreemptiveAuthInterceptor())
-                .setDefaultRequestConfig(RequestConfig.custom()
-                        .setSocketTimeout(connectionTimeout)
-                        .setConnectTimeout(connectionTimeout)
-                        .setConnectionRequestTimeout(connectionTimeout)
-                        .build()
-                )
+                .setDefaultRequestConfig(RequestConfig.custom().apply {
+                    if (!connectionRetries) {
+                        setSocketTimeout(connectionTimeout)
+                    }
+                    setConnectTimeout(connectionTimeout)
+                    setConnectionRequestTimeout(connectionTimeout)
+                }.build())
                 .setDefaultCredentialsProvider(BasicCredentialsProvider().apply {
                     setCredentials(AuthScope.ANY, UsernamePasswordCredentials(basicUser, basicPassword))
                 })
         if (connectionUntrustedSsl) {
-            builder.setSSLSocketFactory(createSslConnectionSocketFactory())
+            builder.setSSLSocketFactory(SSLConnectionSocketFactory(SSLContextBuilder()
+                    .loadTrustMaterial(null) { _, _ -> true }
+                    .build(), NoopHostnameVerifier.INSTANCE))
         }
         if (!connectionRetries) {
             builder.disableAutomaticRetries()
         }
 
         return builder.build()
-    }
-
-    private fun createSslConnectionSocketFactory(): SSLConnectionSocketFactory {
-        val sslContext = SSLContextBuilder()
-                .loadTrustMaterial(null) { _, _ -> true }
-                .build()
-        return SSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE)
     }
 
     private fun createEntityUrlencoded(params: Map<String, Any>): HttpEntity {

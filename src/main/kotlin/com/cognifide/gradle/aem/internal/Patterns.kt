@@ -26,7 +26,7 @@ object Patterns {
         return matchers.any { matcher -> FilenameUtils.wildcardMatch(normalizePath(path), matcher, IOCase.INSENSITIVE) }
     }
 
-    private fun normalizePath(path: String): String {
+    fun normalizePath(path: String): String {
         return path.replace("\\", "/")
     }
 
