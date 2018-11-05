@@ -88,7 +88,7 @@ class AemConfig(
      * Default: "${System.getProperty("user.home")}/.aem/${project.rootProject.name}"
      */
     @Input
-    var instancesPath: String = "${System.getProperty("user.home")}/.aem/${project.rootProject.name}"
+    var instanceRoot: String = "${System.getProperty("user.home")}/.aem/${project.rootProject.name}"
 
     /**
      * Determines instances involved in CRX package deployment (filters preconfigured instances).
@@ -131,6 +131,19 @@ class AemConfig(
      */
     @Input
     var packageSnapshots: List<String> = aem.props.list("aem.package.snapshots")
+
+    @Input
+    var packageRoot: String = "${project.file("src/main/content")}"
+
+    @get:Internal
+    @get:JsonIgnore
+    val packageJcrRoot: String
+        get() = "$packageRoot/${PackagePlugin.JCR_ROOT}"
+
+    @get:Internal
+    @get:JsonIgnore
+    val packageVltRoot: String
+        get() = "$packageRoot/${PackagePlugin.VLT_PATH}"
 
     /**
      * Custom path to Vault files that will be used to build CRX package.
@@ -241,20 +254,6 @@ class AemConfig(
     }
 
     companion object {
-
-        /**
-         * Token indicating that value need to be corrected later by more advanced logic / convention.
-         */
-        const val AUTO_DETERMINED = "<auto>"
-
-        // TODO to be removed
-        fun pkg(project: Project): ComposeTask {
-            val task = project.tasks.findByName(ComposeTask.NAME)
-                    ?: throw AemException("${project.toString().capitalize()} has no task named"
-                            + " '${ComposeTask.NAME}' defined.")
-
-            return task as ComposeTask
-        }
 
         // TODO to be removed
         fun pkgs(project: Project): List<ComposeTask> {

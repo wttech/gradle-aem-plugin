@@ -17,7 +17,7 @@ class LocalHandle(val project: Project, val instance: LocalInstance) {
 
     val aem = AemExtension.of(project)
 
-    val dir = File("${aem.config.instancesPath}/${instance.typeName}")
+    val dir = File("${aem.config.instanceRoot}/${instance.typeName}")
 
     val jar = File(dir, "aem-quickstart.jar")
 

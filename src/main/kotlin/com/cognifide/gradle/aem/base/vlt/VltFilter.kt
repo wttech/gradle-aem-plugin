@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem.base.vlt
 
-import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.api.AemExtension
 import com.cognifide.gradle.aem.api.AemTask
 import com.cognifide.gradle.aem.internal.file.FileOperations
@@ -73,28 +72,28 @@ class VltFilter(
             return rootElement("<filter root=\"$path\"/>")
         }
 
-        // TODO remove direct dependencies from here and move it task checkout (two actions, download and checkout)
-        fun of(project: Project): VltFilter {
+        fun determine(project: Project): VltFilter {
             val aem = AemExtension.of(project)
-            val compose = aem.compose
 
             val cmdFilterRoots = aem.props.list("aem.filter.roots")
-
-            return if (cmdFilterRoots.isNotEmpty()) {
+            if (cmdFilterRoots.isNotEmpty()) {
                 aem.logger.info("Using Vault filter roots specified as command line property: $cmdFilterRoots")
-                VltFilter.temporary(project, cmdFilterRoots)
-            } else {
-                if (compose.checkoutFilterPath == AemConfig.AUTO_DETERMINED) {
-                    val conventionFilter = FileOperations.find(project, compose.vaultPath, compose.checkoutFilterPaths)
-                            ?: throw VltException("None of Vault check out filter file does not exist at one of convention paths: ${compose.checkoutFilterPaths}.")
-                    VltFilter(conventionFilter)
-                } else {
-                    val configFilter = FileOperations.find(project, compose.vaultPath, compose.checkoutFilterPath)
-                            ?: throw VltException("Vault check out filter file does not exist at path: ${compose.checkoutFilterPath} (or under directory: ${compose.vaultPath}).")
-                    VltFilter(configFilter)
-                }
+                return VltFilter.temporary(project, cmdFilterRoots)
             }
+
+            val cmdFilterPath = aem.props.string("aem.filter.path", "")
+            if (cmdFilterPath.isNotEmpty()) {
+                val cmdFilter = FileOperations.find(project, aem.config.packageVltRoot, cmdFilterPath)
+                        ?: throw VltException("Vault check out filter file does not exist at path: $cmdFilterPath (or under directory: ${aem.config.packageVltRoot}).")
+                return VltFilter(cmdFilter)
+            }
+
+            val conventionFilterFiles = listOf("${aem.config.packageVltRoot}/checkout.xml", "${aem.config.packageVltRoot}/filter.xml")
+            val conventionFilterFile = FileOperations.find(project, aem.config.packageVltRoot, conventionFilterFiles)
+                    ?: throw VltException("None of Vault check out filter file does not exist at one of convention paths: $conventionFilterFiles.")
+            return VltFilter(conventionFilterFile)
         }
+
     }
 
 }

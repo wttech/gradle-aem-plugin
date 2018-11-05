@@ -94,17 +94,6 @@ open class AemExtension(@Transient private val project: Project) {
                 .map { it.archivePath }
     }
 
-    @get:Internal
-    val packageDefault: File
-        get() = compose.archivePath
-
-    // TODO remove most of dependencies of that
-    @get:Internal
-    val compose: ComposeTask
-        get() = compose(project)
-
-    fun compose(project: Project) = project.tasks.getByName(ComposeTask.NAME) as ComposeTask
-
     fun sync(synchronizer: InstanceSync.() -> Unit) = sync(instances, synchronizer)
 
     fun sync(instances: Collection<Instance>, synchronizer: InstanceSync.() -> Unit) {
@@ -139,22 +128,27 @@ open class AemExtension(@Transient private val project: Project) {
         return retry().apply(configurer)
     }
 
-    fun retry(): AemRetry = AemRetry()
+    fun retry(): AemRetry = AemRetry.once()
 
-    fun filter(): VltFilter = VltFilter.of(project)
+    fun filter(): VltFilter = VltFilter.determine(project)
+
+    fun filter(file: File) = VltFilter(file)
+
+    fun filter(path: String) = filter(project.file(path))
 
     companion object {
         const val NAME = "aem"
 
+        /**
+         * Token indicating that value need to be corrected later by more advanced logic / convention.
+         */
+        const val AUTO_DETERMINED = "<auto>"
+
         fun of(project: Project): AemExtension {
             return project.extensions.findByType(AemExtension::class.java)
-                    ?: throw AemException(project.displayName.capitalize()
-                            + " has neither '${PackagePlugin.ID}' nor '${InstancePlugin.ID}' plugin applied.")
+                    ?: throw AemException("${project.displayName.capitalize()} has neither '${PackagePlugin.ID}' nor '${InstancePlugin.ID}' plugin applied.")
         }
 
-        fun available(project: Project): Boolean {
-            return project.extensions.findByType(AemExtension::class.java) != null
-        }
     }
 
 }

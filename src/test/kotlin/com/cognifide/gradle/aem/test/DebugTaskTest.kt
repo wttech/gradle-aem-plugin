@@ -14,7 +14,8 @@ class DebugTaskTest : AemTest() {
                 add(Customization("buildInfo", AnyValueMatcher()))
                 add(Customization("projectInfo.dir", PathValueMatcher()))
                 add(Customization("projectInfo.dir", PathValueMatcher()))
-                add(Customization("baseConfig.instancesPath", PathValueMatcher()))
+                add(Customization("baseConfig.instanceRoot", PathValueMatcher()))
+                add(Customization("baseConfig.packageRoot", PathValueMatcher()))
                 add(Customization("baseConfig.vaultFilesPath", PathValueMatcher()))
                 add(Customization("bundleConfig.bndPath", PathValueMatcher()))
             }

@@ -39,7 +39,7 @@ class AemBundle(
      * Default convention: '${project.group}.${project.name}'
      */
     @Input
-    var javaPackage: String = AemConfig.AUTO_DETERMINED
+    var javaPackage: String = AemExtension.AUTO_DETERMINED
 
     @get:Internal
     @get:JsonIgnore
@@ -95,7 +95,7 @@ class AemBundle(
 
     init {
         project.afterEvaluate {
-            if (javaPackage == AemConfig.AUTO_DETERMINED) {
+            if (javaPackage == AemExtension.AUTO_DETERMINED) {
                 javaPackage = javaPackageDefault
             }
         }

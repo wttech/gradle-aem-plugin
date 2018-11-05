@@ -1,22 +1,26 @@
 package com.cognifide.gradle.aem.api
 
-class AemRetry {
+class AemRetry private constructor() {
 
-    var times = 0L
+    var times = 1L
 
     var delay: (Long) -> Long = { 0L }
 
-    fun repeat(delay: (Long) -> Long, times: Long) {
+    fun retry(times: Long, delay: (Long) -> Long) {
         this.delay = delay
         this.times = times
     }
 
     fun afterSecond(times: Long) {
-        repeat({ 1000L }, times)
+        retry(times) { 1000L }
     }
 
     fun afterSquaredSecond(times: Long) {
-        repeat({ n -> n * n * 1000L }, times)
+        retry(times) { n -> n * n * 1000L }
+    }
+
+    companion object {
+        fun once() = AemRetry()
     }
 
 }

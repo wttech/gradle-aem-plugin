@@ -216,6 +216,8 @@ class InstanceSync(val project: Project, val instance: Instance) {
         return resolver(packages)
     }
 
+    fun uploadPackage(file: File) = uploadPackage(file, true, AemRetry.once())
+
     fun uploadPackage(file: File, force: Boolean, retry: AemRetry): UploadResponse {
         lateinit var exception: DeployException
         for (i in 0..retry.times) {
@@ -267,7 +269,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         return response
     }
 
-    fun downloadPackage(remotePath: String, targetFile: File, retry: AemRetry) {
+    fun downloadPackage(remotePath: String, targetFile: File, retry: AemRetry = AemRetry.once()) {
         lateinit var exception: FileException
         val url = instance.httpUrl + remotePath
 
@@ -331,7 +333,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         return response
     }
 
-    fun installPackage(remotePath: String, recursive: Boolean, retry: AemRetry): InstallResponse {
+    fun installPackage(remotePath: String, recursive: Boolean = true, retry: AemRetry = AemRetry.once()): InstallResponse {
         lateinit var exception: DeployException
         for (i in 0..retry.times) {
             try {
@@ -352,7 +354,7 @@ class InstanceSync(val project: Project, val instance: Instance) {
         throw exception
     }
 
-    fun installPackageOnce(remotePath: String, recursive: Boolean): InstallResponse {
+    fun installPackageOnce(remotePath: String, recursive: Boolean = true): InstallResponse {
         val url = "$PKG_MANAGER_HTML_PATH$remotePath/?cmd=install"
 
         aem.logger.info("Installing package $remotePath on $instance")
@@ -380,12 +382,12 @@ class InstanceSync(val project: Project, val instance: Instance) {
         return Patterns.wildcard(file, aem.config.packageSnapshots)
     }
 
-    fun deployPackage(file: File, uploadForce: Boolean, uploadRetry: AemRetry, installRecursive: Boolean, installRetry: AemRetry) {
+    fun deployPackage(file: File, uploadForce: Boolean = true, uploadRetry: AemRetry = AemRetry.once(), installRecursive: Boolean = true, installRetry: AemRetry = AemRetry.once()) {
         val uploadResponse = uploadPackage(file, uploadForce, uploadRetry)
         installPackage(uploadResponse.path, installRecursive, installRetry)
     }
 
-    fun distributePackage(file: File, uploadForce: Boolean, uploadRetry: AemRetry, installRecursive: Boolean, installRetry: AemRetry) {
+    fun distributePackage(file: File, uploadForce: Boolean = true, uploadRetry: AemRetry = AemRetry.once(), installRecursive: Boolean = true, installRetry: AemRetry = AemRetry.once()) {
         val uploadResponse = uploadPackage(file, uploadForce, uploadRetry)
         val packagePath = uploadResponse.path
 

@@ -3,9 +3,7 @@ package com.cognifide.gradle.aem.base.vlt
 import com.cognifide.gradle.aem.api.AemExtension
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import org.gradle.api.Project
-import org.gradle.api.logging.Logger
 import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.Internal
 import java.io.File
 
@@ -25,8 +23,8 @@ class VltRunner(project: Project) {
     val commandEffective: String
         get() = aem.props.expand(command, commandProperties)
 
-    @InputDirectory
-    var contentDir: File = project.file("src/main/content")
+    @Input
+    var contentPath: String = aem.config.packageRoot
 
     @Input
     var contentRelativePath: String = aem.props.string("aem.vlt.path", "")
@@ -34,7 +32,7 @@ class VltRunner(project: Project) {
     @get:Internal
     val contentDirEffective: File
         get() {
-            var workingPath = "$contentDir/${PackagePlugin.JCR_ROOT}"
+            var workingPath = "$contentPath/${PackagePlugin.JCR_ROOT}"
             if (contentRelativePath.isNotBlank()) {
                 workingPath = "$workingPath/$contentRelativePath"
             }

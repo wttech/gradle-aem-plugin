@@ -185,12 +185,13 @@
         "httpPort" : 4503
       }
     },
-    "instancesPath" : "*/.aem/additional",
+    "instanceRoot" : "*/.aem/additional",
     "instanceName" : "local-*",
     "instanceList" : "",
     "instanceAuthorName" : "local-author*",
     "instanceConnectionTimeout" : 30000,
     "instanceConnectionUntrustedSsl" : true,
+    "packageRoot": "*/src/main/content",
     "packageSnapshots" : [ ],
     "vaultFilesPath" : "*/src/main/resources/META-INF/vault",
     "vaultLineSeparator" : "LF",

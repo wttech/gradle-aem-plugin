@@ -2,10 +2,7 @@ package com.cognifide.gradle.aem.base.vlt
 
 import com.cognifide.gradle.aem.api.AemDefaultTask
 import com.cognifide.gradle.aem.internal.Formats
-import org.gradle.api.tasks.InputDirectory
-import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.Nested
-import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.*
 import java.io.File
 
 open class CleanTask : AemDefaultTask() {
@@ -22,17 +19,18 @@ open class CleanTask : AemDefaultTask() {
         }
     }
 
-    @InputDirectory
-    var contentDir = project.file("src/main/content")
+    @Input
+    var contentPath = aem.config.packageRoot
 
     @Nested
-    val filter = VltFilter.of(project)
+    val filter = aem.filter()
 
     @get:Internal
     val filterRootDirs: List<File>
         get() {
+            val contentDir = project.file(contentPath)
             if (!contentDir.exists()) {
-                logger.warn("JCR content directory does not exist: ${contentDir.absolutePath}")
+                logger.warn("JCR content directory does not exist: $contentPath")
                 return listOf()
             }
 
@@ -51,7 +49,7 @@ open class CleanTask : AemDefaultTask() {
     @TaskAction
     fun perform() {
         afterCheckout()
-        aem.notifier.notify("Cleaned JCR content", "Directory: ${Formats.rootProjectPath(aem.compose.contentPath, project)}")
+        aem.notifier.notify("Cleaned JCR content", "Directory: ${Formats.rootProjectPath(contentPath, project)}")
     }
 
     fun cleaner(configurer: VltCleaner.() -> Unit) {

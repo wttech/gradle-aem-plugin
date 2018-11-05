@@ -44,32 +44,6 @@ open class ComposeTask : Zip(), AemTask {
     @Input
     var vaultCopyMissingFiles: Boolean = true
 
-    /**
-     * Convention paths used to determine Vault checkout filter if it is not specified explicitly.
-     *
-     * Firstly there will be checked existence of 'checkout.xml' file.
-     * By design, it should be customized version of 'filter.xml' with reduced count of filter roots
-     * to avoid checking out too much content.
-     *
-     * As a fallback there will be used 'filter.xml' file. In that case same file will be used
-     * to build CRX package and checkout JCR content from running instance.
-     */
-    @get:Internal
-    @get:JsonIgnore
-    val checkoutFilterPaths: List<String>
-        get() = listOf("$vaultPath/checkout.xml", "$vaultPath/filter.xml")
-
-    /**
-     * Determines a Vault filter used to checkout JCR content from running AEM instance.
-     *
-     * @see <http://jackrabbit.apache.org/filevault/filter.html>
-     *
-     * Default: [automatically determined]
-     */
-    @Input
-    var checkoutFilterPath: String = aem.props.string("aem.filter.path", AemConfig.AUTO_DETERMINED)
-
-
     @Internal
     val filterRoots = mutableSetOf<Element>()
 
@@ -389,7 +363,7 @@ open class ComposeTask : Zip(), AemTask {
 
     fun includeBundlesAtPath(project: Project, installPath: String? = null, runMode: String? = null) {
         bundleCollectors += {
-            val other = aem.compose(project)
+            val other = project.tasks.getByName(ComposeTask.NAME) as ComposeTask // TODO more explicit
 
             dependProject(project, dependBundlesTaskNames)
 

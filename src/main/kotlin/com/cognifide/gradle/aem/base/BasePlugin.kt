@@ -3,7 +3,6 @@ package com.cognifide.gradle.aem.base
 import com.cognifide.gradle.aem.api.AemExtension
 import com.cognifide.gradle.aem.api.AemPlugin
 import com.cognifide.gradle.aem.base.debug.DebugTask
-import com.cognifide.gradle.aem.base.download.DownloadTask
 import com.cognifide.gradle.aem.base.vlt.*
 import org.gradle.api.Project
 import org.gradle.api.plugins.BasePlugin
@@ -37,7 +36,7 @@ class BasePlugin : AemPlugin() {
         registerTask(DebugTask.NAME, DebugTask::class.java)
         registerTask(RcpTask.NAME, RcpTask::class.java)
         registerTask(CleanTask.NAME, CleanTask::class.java) {
-            it.mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME, CheckoutTask.NAME, DownloadTask.NAME)
+            it.mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME, CheckoutTask.NAME)
         }
         registerTask(VltTask.NAME, VltTask::class.java) {
             it.mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
@@ -48,9 +47,6 @@ class BasePlugin : AemPlugin() {
         registerTask(SyncTask.NAME, SyncTask::class.java) {
             it.dependsOn(LifecycleBasePlugin.CLEAN_TASK_NAME, CleanTask.NAME)
             it.dependsOn(CheckoutTask.NAME)
-        }
-        registerTask(DownloadTask.NAME, DownloadTask::class.java) {
-            it.mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
         }
     }
 
