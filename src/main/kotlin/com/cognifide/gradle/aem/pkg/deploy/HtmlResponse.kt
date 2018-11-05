@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.pkg.deploy
 
+import java.io.InputStream
 import java.util.regex.Pattern
 
 abstract class HtmlResponse(private val rawHtml: String) {
@@ -15,9 +16,9 @@ abstract class HtmlResponse(private val rawHtml: String) {
     protected abstract fun getErrorPatterns(): List<ErrorPattern>
 
     init {
-        getErrorPatterns().forEach({
+        this.getErrorPatterns().forEach {
             findErrorsByPattern(it.pattern, it.printStackTrace, it.message)
-        })
+        }
     }
 
     private fun findErrorsByPattern(pattern: Pattern, printStacktrace: Boolean, message: String) {
@@ -25,7 +26,7 @@ abstract class HtmlResponse(private val rawHtml: String) {
 
         while (matcher.find()) {
 
-            if (!message.isNullOrBlank()) {
+            if (!message.isBlank()) {
                 _errors.add(message)
             }
 
@@ -49,5 +50,41 @@ abstract class HtmlResponse(private val rawHtml: String) {
 
     val success: Boolean
         get() = status == Status.SUCCESS
+
+    companion object {
+
+        private const val ERROR_SEPARATOR = "\n\n"
+
+        fun readFrom(input: InputStream, errorPatterns: List<ErrorPattern>, statusTags: List<String>, bufferSize: Int): String {
+            val resultBuilder = StringBuilder()
+            val chunk = StringBuilder()
+            var currentLine = 0
+            input.bufferedReader().forEachLine {
+                chunk.appendln(it)
+                currentLine++
+                if (currentLine % bufferSize == 0) {
+                    extractErrors(chunk, resultBuilder, errorPatterns, statusTags)
+                }
+            }
+            extractErrors(chunk, resultBuilder, errorPatterns, statusTags)
+            return resultBuilder.toString()
+        }
+
+        private fun extractErrors(chunk: StringBuilder, builder: StringBuilder, errorPatterns: List<ErrorPattern>, statusTags: List<String>) {
+            errorPatterns.forEach {
+                val matcher = it.pattern.matcher(chunk)
+                while (matcher.find()) {
+                    builder.append("${matcher.group()}$ERROR_SEPARATOR")
+                }
+            }
+            statusTags.forEach {
+                if (chunk.contains(it)) {
+                    builder.append(it)
+                }
+            }
+            chunk.setLength(0)
+        }
+    }
+
 }
 

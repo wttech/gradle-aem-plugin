@@ -1,12 +1,14 @@
 package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.internal.Patterns
+import com.cognifide.gradle.aem.pkg.deploy.ResponseException
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.apache.commons.lang3.builder.EqualsBuilder
 import org.apache.commons.lang3.builder.HashCodeBuilder
+import java.io.InputStream
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 class ComponentState private constructor() {
@@ -60,8 +62,12 @@ class ComponentState private constructor() {
 
     companion object {
 
-        fun fromJson(json: String): ComponentState {
-            return ObjectMapper().readValue(json, ComponentState::class.java)
+        fun from(input: InputStream): ComponentState {
+            return try {
+                ObjectMapper().readValue(input, ComponentState::class.java)
+            } catch(e: Exception) {
+                throw ResponseException("Malformed component state response.")
+            }
         }
 
         fun unknown(): ComponentState {

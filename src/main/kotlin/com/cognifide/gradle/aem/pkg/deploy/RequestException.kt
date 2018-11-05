@@ -1,10 +1,9 @@
 package com.cognifide.gradle.aem.pkg.deploy
 
-import com.cognifide.gradle.aem.api.AemException
-
-open class DeployException : AemException {
+class RequestException : DeployException {
 
     constructor(message: String, cause: Throwable) : super(message, cause)
 
     constructor(message: String) : super(message)
+
 }

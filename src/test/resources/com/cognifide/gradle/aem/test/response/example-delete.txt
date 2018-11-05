@@ -1,0 +1,24 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN">
+<html><head>
+    <style type="text/css">
+        body {
+            background-color: white;
+            font-family: verdana, arial, sans-serif;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+        div {
+            font-family: courier, monospace;
+            font-size: 11px;
+        }
+    </style>
+    <script type="text/javascript">
+        function onStatus(pid, stat, p, max, msg) {
+            window.parent.cqPackageShareClient.onStatus(pid, stat, p, max, msg);
+            window.scrollTo(0, 1000000);
+        }
+    </script></head>
+<body><h2>Deleting package</h2><div></div><br>Package deleted in 87ms.<br><script type="text/javascript">
+window.scrollTo(0, 1000000);
+</script>
+</body></html>
