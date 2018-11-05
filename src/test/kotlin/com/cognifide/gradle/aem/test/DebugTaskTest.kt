@@ -3,24 +3,10 @@ package com.cognifide.gradle.aem.test
 import com.cognifide.gradle.aem.test.AemAssert.assertJsonCustomized
 import com.cognifide.gradle.aem.test.json.AnyValueMatcher
 import com.cognifide.gradle.aem.test.json.PathValueMatcher
+import com.cognifide.gradle.aem.test.json.ValueMatcher
 import org.junit.jupiter.api.Test
-import org.skyscreamer.jsonassert.Customization
 
 class DebugTaskTest : AemTest() {
-
-    companion object {
-        val JSON_CUSTOMIZATIONS by lazy {
-            mutableListOf<Customization>().apply {
-                add(Customization("buildInfo", AnyValueMatcher()))
-                add(Customization("projectInfo.dir", PathValueMatcher()))
-                add(Customization("projectInfo.dir", PathValueMatcher()))
-                add(Customization("baseConfig.instanceRoot", PathValueMatcher()))
-                add(Customization("baseConfig.packageRoot", PathValueMatcher()))
-                add(Customization("baseConfig.vaultFilesPath", PathValueMatcher()))
-                add(Customization("bundleConfig.bndPath", PathValueMatcher()))
-            }
-        }
-    }
 
     @Test
     fun shouldGenerateValidJsonFileForMinimal() {
@@ -42,6 +28,18 @@ class DebugTaskTest : AemTest() {
                     JSON_CUSTOMIZATIONS
             )
         })
+    }
+
+    companion object {
+        val JSON_CUSTOMIZATIONS = ValueMatcher.customizationsOf(mapOf(
+                "buildInfo" to AnyValueMatcher(),
+                "projectInfo.dir" to PathValueMatcher(),
+                "projectInfo.dir" to PathValueMatcher(),
+                "baseConfig.instanceRoot" to PathValueMatcher(),
+                "baseConfig.packageRoot" to PathValueMatcher(),
+                "baseConfig.vaultFilesPath" to PathValueMatcher(),
+                "bundleConfig.bndPath" to PathValueMatcher()
+        ))
     }
 
 }
