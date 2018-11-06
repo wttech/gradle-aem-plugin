@@ -4,7 +4,7 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent
 plugins {
     id("java-gradle-plugin")
     id("maven-publish")
-    id("org.jetbrains.kotlin.jvm") version "1.3.0"
+    kotlin("jvm") version "1.3.0"
     id("com.jfrog.bintray") version "1.8.4"
 }
 

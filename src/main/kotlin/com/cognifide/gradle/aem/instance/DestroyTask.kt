@@ -1,13 +1,18 @@
 package com.cognifide.gradle.aem.instance
 
+import org.gradle.api.execution.TaskExecutionGraph
 import org.gradle.api.tasks.TaskAction
 
 open class DestroyTask : InstanceTask() {
 
     init {
         description = "Destroys local AEM instance(s)."
+    }
 
-        afterConfigured { aem.props.checkForce() }
+    override fun taskGraphReady(graph: TaskExecutionGraph) {
+        if (graph.hasTask(this)) {
+            aem.props.checkForce()
+        }
     }
 
     @TaskAction

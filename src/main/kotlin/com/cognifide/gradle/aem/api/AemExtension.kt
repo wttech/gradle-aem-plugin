@@ -6,6 +6,7 @@ import com.cognifide.gradle.aem.instance.InstancePlugin
 import com.cognifide.gradle.aem.instance.InstanceSync
 import com.cognifide.gradle.aem.instance.LocalHandle
 import com.cognifide.gradle.aem.internal.PropertyParser
+import com.cognifide.gradle.aem.internal.http.HttpClient
 import com.cognifide.gradle.aem.pkg.ComposeTask
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import org.gradle.api.Project
@@ -106,6 +107,14 @@ open class AemExtension(@Transient private val project: Project) {
         val pairs = mutableListOf<Pair<Instance, File>>()
         instances.forEach { i -> packages.forEach { p -> Pair(i, p) } }
         pairs.parallelStream().forEach { (i, p) -> synchronizer(InstanceSync(project, i), p) }
+    }
+
+    fun <T> http(consumer: HttpClient.() -> T): T {
+        return HttpClient(project).run(consumer)
+    }
+
+    fun http(consumer: HttpClient.() -> Unit) {
+        HttpClient(project).run(consumer)
     }
 
     fun config(configurer: AemConfig.() -> Unit) {

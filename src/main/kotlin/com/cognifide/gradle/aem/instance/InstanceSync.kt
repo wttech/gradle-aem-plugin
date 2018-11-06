@@ -7,6 +7,8 @@ import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.ProgressCountdown
 import com.cognifide.gradle.aem.internal.file.FileException
 import com.cognifide.gradle.aem.internal.file.downloader.HttpFileDownloader
+import com.cognifide.gradle.aem.internal.http.RequestException
+import com.cognifide.gradle.aem.internal.http.ResponseException
 import com.cognifide.gradle.aem.pkg.*
 import org.gradle.api.Project
 import org.jsoup.Jsoup

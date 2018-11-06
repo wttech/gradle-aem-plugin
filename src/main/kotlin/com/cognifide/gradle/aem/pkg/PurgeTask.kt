@@ -3,14 +3,19 @@ package com.cognifide.gradle.aem.pkg
 import com.cognifide.gradle.aem.instance.InstanceSync
 import com.cognifide.gradle.aem.instance.names
 import com.cognifide.gradle.aem.internal.fileNames
+import org.gradle.api.execution.TaskExecutionGraph
 import org.gradle.api.tasks.TaskAction
 
 open class PurgeTask : SyncTask() {
 
     init {
         description = "Uninstalls and then deletes CRX package on AEM instance(s)."
+    }
 
-        afterConfigured { aem.props.checkForce() }
+    override fun taskGraphReady(graph: TaskExecutionGraph) {
+        if (graph.hasTask(this)) {
+            aem.props.checkForce()
+        }
     }
 
     @TaskAction
