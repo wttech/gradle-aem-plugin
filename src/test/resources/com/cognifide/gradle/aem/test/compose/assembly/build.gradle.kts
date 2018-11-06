@@ -61,7 +61,7 @@ tasks.named<SatisfyTask>("aemSatisfy") {
 }
 
 tasks.named<ComposeTask>("aemCompose") {
-    includeProject(":common")
-    includeProject(":core")
-    includeProject(":design")
+    fromProject(":common")
+    fromProject(":core")
+    fromProject(":design")
 }

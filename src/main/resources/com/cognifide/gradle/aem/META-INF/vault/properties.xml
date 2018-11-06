@@ -9,7 +9,7 @@
     <entry key="artifactId">{{project.name}}</entry>
     <entry key="description">{{project.description}}</entry>
     <entry key="createdBy">{{user.name}}</entry>
-    {% for e in zip.packageEntries %}
+    {% for e in compose.vaultProperties %}
     <entry key="{{e.key}}">{{e.value | raw}}</entry>
     {% endfor %}
 </properties>

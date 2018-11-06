@@ -96,11 +96,6 @@ tasks.named<Test>("test") {
     dependsOn("publishToMavenLocal")
 }
 
-
-tasks.named<Task>("check") {
-    dependsOn("publishToMavenLocal")
-}
-
 bintray {
     user = (project.properties["bintray.user"] ?: System.getenv("BINTRAY_USER")).toString()
     key = (project.properties["bintray.key"] ?: System.getenv("BINTRAY_KEY")).toString()
