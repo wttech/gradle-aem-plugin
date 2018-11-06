@@ -210,7 +210,7 @@ class VltCleaner(project: Project) {
             val inputLines = FileUtils.readLines(file, CharEncoding.UTF_8)
             val filteredLines = filterLines(file, inputLines)
 
-            FileUtils.writeLines(file, CharEncoding.UTF_8, filteredLines, aem.config.vaultLineSeparatorString)
+            FileUtils.writeLines(file, CharEncoding.UTF_8, filteredLines, aem.config.lineSeparatorString)
         } catch (e: IOException) {
             throw VltException(String.format("Error opening %s", file.path), e)
         }

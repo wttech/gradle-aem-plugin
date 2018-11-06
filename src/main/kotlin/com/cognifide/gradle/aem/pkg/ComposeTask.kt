@@ -51,7 +51,7 @@ open class ComposeTask : Zip(), AemTask {
     var bundlePath: String = if (project == project.rootProject) {
         "/apps/${project.rootProject.name}/install"
     } else {
-        "/apps/${project.rootProject.name}/${aem.config.projectName}/install"
+        "/apps/${project.rootProject.name}/${aem.projectName}/install"
     }
 
     /**
@@ -71,6 +71,10 @@ open class ComposeTask : Zip(), AemTask {
             "jcr_root/.vlt-sync-config.properties"
     )
 
+    fun packageExcludeFiles(files: List<String>) = packageExcludeFiles.addAll(files)
+
+    fun packageExcludeFile(file: String) = packageExcludeFiles.add(file)
+
     /**
      * Wildcard file name filter expression that is used to filter in which Vault files properties can be injected.
      */
@@ -80,12 +84,20 @@ open class ComposeTask : Zip(), AemTask {
             "**/${PackagePlugin.VLT_PATH}/nodetypes.cnd"
     )
 
+    fun packageExpandFiles(files: List<String>) = packageExpandFiles.addAll(files)
+
+    fun packageExpandFile(file: String) = packageExpandFiles.add(file)
+
     /**
      * Define here custom properties that can be used in CRX package files like 'META-INF/vault/properties.xml'.
      * Could override predefined properties provided by plugin itself.
      */
     @Input
     var packageExpandProperties: MutableMap<String, Any> = mutableMapOf()
+
+    fun packageExpandProperties(properties: Map<String, Any>) = packageExpandProperties.putAll(properties)
+
+    fun packageExpandProperty(name: String, value: String) = packageExpandProperties(mapOf(name to value))
 
     /**
      * Ensures that for directory 'META-INF/vault' default files will be generated when missing:
@@ -103,6 +115,18 @@ open class ComposeTask : Zip(), AemTask {
             "requiresRoot" to false
     )
 
+    fun vaultProperties(properties: Map<String, Any>) = vaultProperties.putAll(properties)
+
+    fun vaultProperty(name: String, value: String) = vaultProperties(mapOf(name to value))
+
+    /**
+     * Custom path to Vault files that will be used to build CRX package.
+     * Useful to share same files for all packages, like package thumbnail.
+     * Must be absolute or relative to current working directory.
+     */
+    @Input
+    var vaultExtraPath: String = project.rootProject.file("aem/${PackagePlugin.VLT_PATH}").toString()
+
     /**
      * CRX package Vault files will be composed from given sources.
      * Missing files required by package within installation will be auto-generated if 'vaultCopyMissingFiles' is enabled.
@@ -111,10 +135,7 @@ open class ComposeTask : Zip(), AemTask {
     @get:JsonIgnore
     val vaultFilesDirs: List<File>
         get() {
-            val paths = listOf(
-                    aem.config.vaultFilesPath,
-                    "$contentPath/${PackagePlugin.VLT_PATH}"
-            )
+            val paths = listOf(vaultExtraPath, "$contentPath/${PackagePlugin.VLT_PATH}")
 
             return paths.asSequence()
                     .filter { !it.isBlank() }
@@ -187,20 +208,16 @@ open class ComposeTask : Zip(), AemTask {
         }
     }
 
-    @Internal
-    val filters = mutableSetOf<Element>()
+    private val filters = mutableSetOf<Element>()
 
     @Internal
     var filterDefault = { other: ComposeTask -> "<filter root=\"${other.bundlePath}\"/>" }
 
-    @Internal
-    val nodeTypesLibs = mutableSetOf<String>()
+    private val nodeTypesLibs = mutableSetOf<String>()
 
-    @Internal
-    val nodeTypesLines = mutableListOf<String>()
+    private val nodeTypesLines = mutableListOf<String>()
 
-    @get:Internal
-    val fileProperties
+    private val fileProperties
         get() = mapOf(
                 "compose" to this,
                 "filters" to filters,
@@ -211,17 +228,15 @@ open class ComposeTask : Zip(), AemTask {
     @Internal
     var fromConvention = true
 
-    @Internal
     private var fromProjects = mutableListOf<() -> Unit>()
 
-    @Internal
     private var fromTasks = mutableListOf<() -> Unit>()
 
     init {
         description = "Composes CRX package from JCR content and built OSGi bundles"
         group = AemTask.GROUP
 
-        baseName = aem.config.baseName
+        baseName = aem.baseName
         duplicatesStrategy = DuplicatesStrategy.WARN
         isZip64 = true
 
@@ -337,7 +352,7 @@ open class ComposeTask : Zip(), AemTask {
             }
 
             extractVaultFilters(other)
-            extractNodeTypes(other)
+            extractVaultNodeTypes(other)
 
             val contentDir = File("${other.contentPath}/${PackagePlugin.JCR_ROOT}")
             if (contentDir.exists()) {
@@ -387,7 +402,7 @@ open class ComposeTask : Zip(), AemTask {
         }
     }
 
-    private fun extractNodeTypes(other: ComposeTask) {
+    private fun extractVaultNodeTypes(other: ComposeTask) {
         if (other.vaultNodeTypesPath.isBlank()) {
             return
         }

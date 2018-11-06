@@ -199,8 +199,7 @@
     ],
     "packageResponseBuffer" : 4096,
     "packageSnapshots" : [ ],
-    "vaultFilesPath" : "*/src/main/resources/META-INF/vault",
-    "vaultLineSeparator" : "LF",
+    "lineSeparator" : "LF",
     "notificationEnabled" : false
   },
   "bundleConfig" : {

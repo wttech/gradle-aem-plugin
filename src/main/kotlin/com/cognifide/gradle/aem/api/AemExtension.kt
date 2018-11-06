@@ -5,12 +5,15 @@ import com.cognifide.gradle.aem.instance.Instance
 import com.cognifide.gradle.aem.instance.InstancePlugin
 import com.cognifide.gradle.aem.instance.InstanceSync
 import com.cognifide.gradle.aem.instance.LocalHandle
+import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.internal.http.HttpClient
 import com.cognifide.gradle.aem.pkg.ComposeTask
 import com.cognifide.gradle.aem.pkg.PackagePlugin
+import com.fasterxml.jackson.annotation.JsonIgnore
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
 import java.io.File
@@ -28,6 +31,50 @@ open class AemExtension(@Transient private val project: Project) {
      */
     @Internal
     val props = PropertyParser(this, project)
+
+    /**
+     * Project name convention prefixes used to determine default:
+     *
+     * - bundle install subdirectory
+     * - CRX package base name
+     * - OSGi bundle JAR base name
+     *
+     * in case of multi-project build and assembly packages.
+     */
+    @get:Internal
+    @get:JsonIgnore
+    val projectPrefixes: List<String> = listOf("aem.", "aem-", "aem_")
+
+    /**
+     * Project name with skipped convention prefixes.
+     */
+    @get:Internal
+    @get:JsonIgnore
+    val projectName: String
+        get() = project.name.run {
+            var n = this; projectPrefixes.forEach { n = n.removePrefix(it) }; n
+        }
+
+    /**
+     * Base name used as default for CRX packages being created by compose or collect task
+     * and also for OSGi bundle JARs.
+     */
+    @get:Internal
+    @get:JsonIgnore
+    val baseName: String
+        get() = Formats.normalizeSeparators(if (project == project.rootProject) {
+            project.rootProject.name
+        } else {
+            "${project.rootProject.name}.$projectName"
+        }, ".")
+
+    /**
+     * Determines current environment to be used in e.g package deployment.
+     */
+    @Input
+    val environment: String = props.string("aem.env") {
+        System.getenv("AEM_ENV") ?: "local"
+    }
 
     @Nested
     val config = AemConfig(this, project)
@@ -146,6 +193,7 @@ open class AemExtension(@Transient private val project: Project) {
     fun filter(path: String) = filter(project.file(path))
 
     companion object {
+
         const val NAME = "aem"
 
         /**

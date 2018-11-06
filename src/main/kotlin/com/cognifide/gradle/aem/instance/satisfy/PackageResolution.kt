@@ -59,7 +59,10 @@ class PackageResolution(group: PackageGroup, id: String, action: (FileResolution
                 "project.version" to version,
                 "project.description" to description,
                 "filters" to filters,
-                "filterRoots" to filters.joinToString(aem.config.vaultLineSeparatorString) { it.toString() }
+                "compose.vaultProperties" to mapOf<String, String>(),
+                "nodeTypesLibs" to listOf<String>(),
+                "nodeTypesLines" to listOf<String>()
+
         )
         val overrideProps = resolver.bundleProperties(bundle)
         val effectiveProps = bundleProps + overrideProps

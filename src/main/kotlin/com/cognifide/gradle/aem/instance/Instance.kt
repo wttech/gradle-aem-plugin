@@ -153,12 +153,10 @@ interface Instance : Serializable {
             }
         }
 
-        fun defaults(project: Project): List<RemoteInstance> {
-            val config = AemExtension.of(project).config
-
+        fun defaults(project: Project, environment: String): List<RemoteInstance> {
             return listOf(
-                    RemoteInstance.create(project, URL_AUTHOR_DEFAULT) { environment = config.environment },
-                    RemoteInstance.create(project, URL_PUBLISH_DEFAULT) { environment = config.environment }
+                    RemoteInstance.create(project, URL_AUTHOR_DEFAULT) { this.environment = environment },
+                    RemoteInstance.create(project, URL_PUBLISH_DEFAULT) { this.environment = environment }
             )
         }
 
@@ -180,10 +178,10 @@ interface Instance : Serializable {
             return all.filter { instance ->
                 when {
                     aem.props.flag(AUTHORS_PROP) -> {
-                        Patterns.wildcard(instance.name, "${aem.config.environment}-${InstanceType.AUTHOR}*")
+                        Patterns.wildcard(instance.name, "${aem.environment}-${InstanceType.AUTHOR}*")
                     }
                     aem.props.flag(PUBLISHERS_PROP) -> {
-                        Patterns.wildcard(instance.name, "${aem.config.environment}-${InstanceType.PUBLISH}*")
+                        Patterns.wildcard(instance.name, "${aem.environment}-${InstanceType.PUBLISH}*")
                     }
                     else -> Patterns.wildcards(instance.name, instanceFilter)
                 }
@@ -229,7 +227,7 @@ interface Instance : Serializable {
                 return anyInstance
             }
 
-            throw InstanceException("Single instance cannot be determined neither by command line parameter nor AEM config.")
+            throw InstanceException("Instance cannot be determined neither by command line parameter nor AEM config.")
         }
 
         fun concrete(project: Project, type: String): Instance? {

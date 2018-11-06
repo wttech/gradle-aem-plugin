@@ -78,7 +78,7 @@ class BundlePlugin : AemPlugin() {
         if (baseName.isNullOrBlank()) {
             val groupValue = group as String?
             if (!name.isNullOrBlank() && !groupValue.isNullOrBlank()) {
-                jar.baseName = AemExtension.of(project).config.baseName
+                jar.baseName = AemExtension.of(project).baseName
             }
         }
     }

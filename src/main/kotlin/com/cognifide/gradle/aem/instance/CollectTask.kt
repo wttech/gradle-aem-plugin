@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.api.AemConfig
 import com.cognifide.gradle.aem.api.AemExtension
 import com.cognifide.gradle.aem.api.AemTask
 import com.cognifide.gradle.aem.pkg.ComposeTask
@@ -22,7 +21,7 @@ open class CollectTask : Zip(), AemTask {
         group = AemTask.GROUP
         description = "Composes CRX package from all CRX packages being satisfied and built."
 
-        baseName = aem.config.baseName
+        baseName = aem.baseName
         classifier = "packages"
         isZip64 = true
         duplicatesStrategy = DuplicatesStrategy.FAIL
@@ -48,7 +47,7 @@ open class CollectTask : Zip(), AemTask {
 
     @get:Internal
     val builtPackages: List<File>
-        get() = AemConfig.pkgs(project).map { it.archivePath }
+        get() = listOf() // TODO AemConfig.pkgs(project).map { it.archivePath }
 
     override fun projectsEvaluated() {
         project.allprojects.forEach { subproject ->
