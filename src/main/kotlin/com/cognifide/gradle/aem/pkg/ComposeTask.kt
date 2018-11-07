@@ -324,7 +324,7 @@ open class ComposeTask : Zip(), AemTask {
         }
     }
 
-    fun fromProject(project: Project) {
+    fun fromProject(project: Project) { // TODO options closure (bundleRunMode, bundlePath, content = true, bundles = false etc)
         fromProjects.add {
             if (!project.plugins.hasPlugin(PackagePlugin.ID)) {
                 return@add
@@ -370,6 +370,10 @@ open class ComposeTask : Zip(), AemTask {
                 }
             }
         }
+    }
+
+    fun fromJar(dependencyNotation: String) {
+        // TODO ... ; instead of 'aemInstall' ; 'aemEmbed' to be removed
     }
 
     fun fromJar(bundle: Jar, bundlePath: String? = null) {

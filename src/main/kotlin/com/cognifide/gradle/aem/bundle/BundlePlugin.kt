@@ -180,8 +180,10 @@ class BundlePlugin : AemPlugin() {
     companion object {
         const val ID = "com.cognifide.aem.bundle"
 
+        // TODO to be removed
         const val CONFIG_INSTALL = "aemInstall"
 
+        // TODO to be removed
         const val CONFIG_EMBED = "aemEmbed"
 
         const val BND_CONVENTION_PLUGIN = "bundle"
