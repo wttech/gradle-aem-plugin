@@ -264,12 +264,12 @@ open class ComposeTask : Zip(), AemTask {
                 return@add
             }
 
-            project.tasks.findByName(NAME)?.apply {
-                fromCompose(this as ComposeTask)
-            }
+            val composeDefault = project.tasks.getByName(NAME) as ComposeTask
+            fromCompose(composeDefault)
 
-            project.tasks.findByName(JavaPlugin.JAR_TASK_NAME)?.apply {
-                fromJar(this as Jar, bundlePath)
+            if (project.plugins.hasPlugin(BundlePlugin.ID)) {
+                val jarDefault = project.tasks.getByName(JavaPlugin.JAR_TASK_NAME) as Jar
+                fromJar(jarDefault, composeDefault.bundlePath)
             }
         }
     }
@@ -284,7 +284,7 @@ open class ComposeTask : Zip(), AemTask {
                 dependsOn(other.dependsOn)
             }
 
-            fromJarsInternal(other.bundleConfiguration.resolve())
+            fromJarsInternal(other.bundleConfiguration.resolve(), other.bundlePath)
 
             extractVaultFilters(other)
             extractVaultNodeTypes(other)
