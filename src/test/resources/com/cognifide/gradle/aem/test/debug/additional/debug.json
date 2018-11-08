@@ -20,7 +20,6 @@
     "dir" : "*/additional"
   },
   "baseConfig" : {
-    "environment" : "local",
     "instances" : {
       "prod-author" : {
         "httpUrl" : "http://author.example.com",

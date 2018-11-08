@@ -5,8 +5,8 @@ import com.cognifide.gradle.aem.api.AemExtension
 import com.cognifide.gradle.aem.api.AemTask
 import com.cognifide.gradle.aem.base.vlt.VltFilter
 import com.cognifide.gradle.aem.bundle.BundlePlugin
+import com.cognifide.gradle.aem.internal.DependencyOperations
 import com.cognifide.gradle.aem.internal.Patterns
-import com.cognifide.gradle.aem.internal.file.FileContentReader
 import com.cognifide.gradle.aem.internal.file.FileOperations
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.apache.commons.io.FileUtils
@@ -22,7 +22,6 @@ import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.bundling.Zip
 import org.jsoup.nodes.Element
 import java.io.File
-import java.io.Serializable
 import java.util.regex.Pattern
 import aQute.bnd.osgi.Jar as OsgiJar
 
@@ -40,7 +39,7 @@ open class ComposeTask : Zip(), AemTask {
     var contentPath: String = aem.config.packageRoot
 
     /**
-     * Content path for bundle jars being placed in CRX package.
+     * Content path for OSGi bundle jars being placed in CRX package.
      *
      * Default convention assumes that subprojects have separate bundle paths, because of potential re-installation of subpackages.
      * When all subprojects will have same bundle path, reinstalling one subpackage may end with deletion of other bundles coming from another subpackage.
@@ -55,49 +54,10 @@ open class ComposeTask : Zip(), AemTask {
     }
 
     /**
-     * Exclude files being a part of CRX package.
+     * Dependent OSGi bundles to be resolved from repositories and put into CRX package being built.
      */
     @Input
-    var packageExcludeFiles: MutableList<String> = mutableListOf(
-            "**/.gradle",
-            "**/.git",
-            "**/.git/**",
-            "**/.gitattributes",
-            "**/.gitignore",
-            "**/.gitmodules",
-            "**/.vlt",
-            "**/.vlt*.tmp",
-            "**/node_modules/**",
-            "jcr_root/.vlt-sync-config.properties"
-    )
-
-    fun packageExcludeFiles(files: List<String>) = packageExcludeFiles.addAll(files)
-
-    fun packageExcludeFile(file: String) = packageExcludeFiles.add(file)
-
-    /**
-     * Wildcard file name filter expression that is used to filter in which Vault files properties can be injected.
-     */
-    @Input
-    var packageExpandFiles: MutableList<String> = mutableListOf(
-            "**/${PackagePlugin.VLT_PATH}/*.xml",
-            "**/${PackagePlugin.VLT_PATH}/nodetypes.cnd"
-    )
-
-    fun packageExpandFiles(files: List<String>) = packageExpandFiles.addAll(files)
-
-    fun packageExpandFile(file: String) = packageExpandFiles.add(file)
-
-    /**
-     * Define here custom properties that can be used in CRX package files like 'META-INF/vault/properties.xml'.
-     * Could override predefined properties provided by plugin itself.
-     */
-    @Input
-    var packageExpandProperties: MutableMap<String, Any> = mutableMapOf()
-
-    fun packageExpandProperties(properties: Map<String, Any>) = packageExpandProperties.putAll(properties)
-
-    fun packageExpandProperty(name: String, value: String) = packageExpandProperties(mapOf(name to value))
+    val bundleConfiguration = project.configurations.create(BUNDLE_CONFIGURATION) { it.isTransitive = false }
 
     /**
      * Ensures that for directory 'META-INF/vault' default files will be generated when missing:
@@ -172,41 +132,23 @@ open class ComposeTask : Zip(), AemTask {
     val vaultDir = AemTask.temporaryDir(project, name, PackagePlugin.VLT_PATH)
 
     @Nested
-    val fileFilterOptions = FileFilterOptions()
+    val fileFilter = ComposeFileFilter(project)
+
+    fun fileFilter(configurer: ComposeFileFilter.() -> Unit) {
+        fileFilter.apply(configurer)
+    }
 
     @Internal
-    var fileFilter: ((CopySpec) -> Unit) = { spec ->
-        if (fileFilterOptions.excluding) {
-            spec.exclude(packageExcludeFiles)
-        }
+    var fileFilterDelegate: ((CopySpec) -> Unit) = { fileFilter.filter(it, fileProperties) }
 
-        spec.eachFile { fileDetail ->
-            val path = "/${fileDetail.relativePath.pathString.removePrefix("/")}"
-
-            if (fileFilterOptions.expanding) {
-                if (Patterns.wildcard(path, packageExpandFiles)) {
-                    FileContentReader.filter(fileDetail) { aem.props.expandPackage(it, fileProperties, path) }
-                }
-            }
-
-            if (fileFilterOptions.bundleChecking) {
-                if (Patterns.wildcard(path, "**/install/*.jar")) {
-                    val bundle = fileDetail.file
-                    val isBundle = try {
-                        val manifest = OsgiJar(bundle).manifest.mainAttributes
-                        !manifest.getValue("Bundle-SymbolicName").isNullOrBlank()
-                    } catch (e: Exception) {
-                        false
-                    }
-
-                    if (!isBundle) {
-                        logger.warn("Jar being a part of composed CRX package is not a valid OSGi bundle: $bundle")
-                        fileDetail.exclude()
-                    }
-                }
-            }
-        }
-    }
+    @get:Internal
+    val fileProperties
+        get() = mapOf(
+                "compose" to this,
+                "filters" to filters,
+                "nodeTypesLibs" to nodeTypesLibs,
+                "nodeTypesLines" to nodeTypesLines
+        )
 
     private val filters = mutableSetOf<Element>()
 
@@ -216,14 +158,6 @@ open class ComposeTask : Zip(), AemTask {
     private val nodeTypesLibs = mutableSetOf<String>()
 
     private val nodeTypesLines = mutableListOf<String>()
-
-    private val fileProperties
-        get() = mapOf(
-                "compose" to this,
-                "filters" to filters,
-                "nodeTypesLibs" to nodeTypesLibs,
-                "nodeTypesLines" to nodeTypesLines
-        ) + packageExpandProperties
 
     @Internal
     var fromConvention = true
@@ -320,7 +254,7 @@ open class ComposeTask : Zip(), AemTask {
     fun fromVault(vaultDir: File) {
         into(PackagePlugin.VLT_PATH) { spec ->
             spec.from(vaultDir)
-            fileFilter(spec)
+            fileFilterDelegate(spec)
         }
     }
 
@@ -336,7 +270,6 @@ open class ComposeTask : Zip(), AemTask {
 
             project.tasks.findByName(JavaPlugin.JAR_TASK_NAME)?.apply {
                 fromJar(this as Jar, bundlePath)
-                fromJars(project.configurations.getByName(BundlePlugin.CONFIG_INSTALL).resolve(), bundlePath)
             }
         }
     }
@@ -348,8 +281,10 @@ open class ComposeTask : Zip(), AemTask {
     fun fromCompose(other: ComposeTask) {
         fromTasks.add {
             if (this@ComposeTask != other) {
-                dependsOn(other)
+                dependsOn(other.dependsOn)
             }
+
+            fromJarsInternal(other.bundleConfiguration.resolve())
 
             extractVaultFilters(other)
             extractVaultNodeTypes(other)
@@ -358,7 +293,7 @@ open class ComposeTask : Zip(), AemTask {
             if (contentDir.exists()) {
                 into(PackagePlugin.JCR_ROOT) { spec ->
                     spec.from(contentDir)
-                    fileFilter(spec)
+                    fileFilterDelegate(spec)
                 }
             }
 
@@ -366,14 +301,19 @@ open class ComposeTask : Zip(), AemTask {
             if (hooksDir.exists()) {
                 into(PackagePlugin.VLT_HOOKS_PATH) { spec ->
                     spec.from(hooksDir)
-                    fileFilter(spec)
+                    fileFilterDelegate(spec)
                 }
             }
         }
     }
 
-    fun fromJar(dependencyNotation: String) {
-        // TODO ... ; instead of 'aemInstall' ; 'aemEmbed' to be removed
+    fun fromJar(dependencyNotation: Any) {
+        project.dependencies.add(BUNDLE_CONFIGURATION, dependencyNotation)
+    }
+
+    fun fromJar(group: String, name: String, version: String? = null, configuration: String? = null, classifier: String? = null, ext: String? = null
+    ) {
+        fromJar(DependencyOperations.create(project.dependencies, group, name, version, configuration, classifier, ext))
     }
 
     fun fromJar(bundle: Jar, bundlePath: String? = null) {
@@ -389,11 +329,11 @@ open class ComposeTask : Zip(), AemTask {
         fromTasks.add { fromJarsInternal(bundles, bundlePath) }
     }
 
-    private fun fromJarsInternal(bundles: Collection<File>, bundlePath: String?) {
+    private fun fromJarsInternal(bundles: Collection<File>, bundlePath: String? = null) {
         if (bundles.isNotEmpty()) {
             into("${PackagePlugin.JCR_ROOT}/${bundlePath ?: this.bundlePath}") { spec ->
                 spec.from(bundles)
-                fileFilter(spec)
+                fileFilterDelegate(spec)
             }
         }
     }
@@ -423,25 +363,10 @@ open class ComposeTask : Zip(), AemTask {
         }
     }
 
-    fun fileFilterOptions(configurer: FileFilterOptions.() -> Unit) {
-        fileFilterOptions.apply(configurer)
-    }
-
-    class FileFilterOptions : Serializable {
-
-        @Input
-        var excluding: Boolean = true
-
-        @Input
-        var expanding: Boolean = true
-
-        @Input
-        var bundleChecking: Boolean = true
-
-    }
-
     companion object {
         const val NAME = "aemCompose"
+
+        const val BUNDLE_CONFIGURATION = "bundleConfiguration"
 
         private val NODE_TYPES_LIB: Pattern = Pattern.compile("<.+>")
     }

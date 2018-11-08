@@ -1,3 +1,5 @@
+import com.cognifide.gradle.aem.pkg.ComposeTask
+
 plugins {
     id("com.cognifide.aem.bundle")
     kotlin("jvm")
@@ -5,9 +7,9 @@ plugins {
 
 description = "Example - Common"
 
-dependencies {
-    "aemInstall"(group = "org.jetbrains.kotlin", name = "kotlin-osgi-bundle", version = "1.2.21")
-    "aemEmbed"(group = "org.hashids", name = "hashids", version = "1.0.1")
+tasks.named<ComposeTask>("aemCompose") {
+    fromJar(group = "org.jetbrains.kotlin", name = "kotlin-osgi-bundle", version = "1.2.21")
+    fromJar(group = "org.hashids", name = "hashids", version = "1.0.1")
 }
 
 aem {

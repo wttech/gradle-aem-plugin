@@ -20,7 +20,6 @@
     "dir" : "*/minimal"
   },
   "baseConfig" : {
-    "environment" : "local",
     "instances" : {
       "local-author" : {
         "httpUrl" : "http://localhost:4502",

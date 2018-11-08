@@ -90,7 +90,7 @@ class AemBundle(
      */
     @Input
     var bndInstructions: MutableMap<String, Any> = mutableMapOf(
-            "-fixupmessages.bundleActivator" to "Bundle-Activator * is being imported *;is:=error"
+            "-fixupmessages.bundleActivator" to "$ATTRIBUTE_ACTIVATOR * is being imported *;is:=error"
     )
 
     init {
@@ -103,24 +103,24 @@ class AemBundle(
 
     fun attribute(name: String, value: String) = jar.manifest.attributes(mapOf(name to value))
 
-    fun name(name: String) = attribute("Bundle-Name", name)
+    fun name(name: String) = attribute(ATTRIBUTE_NAME, name)
 
-    fun symbolicName(name: String) = attribute("Bundle-SymbolicName", name)
+    fun symbolicName(name: String) = attribute(ATTRIBUTE_SYMBOLIC_NAME, name)
 
-    fun manifestVersion(num: Int) = attribute("Bundle-ManifestVersion", num.toString())
+    fun manifestVersion(num: Int) = attribute(ATTRIBUTE_MANIFEST_VERSION, num.toString())
 
-    fun activator(className: String) = attribute("Bundle-Activator", className)
+    fun activator(className: String) = attribute(ATTRIBUTE_ACTIVATOR, className)
 
-    fun category(name: String) = attribute("Bundle-Category", name)
+    fun category(name: String) = attribute(ATTRIBUTE_CATEGORY, name)
 
-    fun vendor(name: String) = attribute("Bundle-Vendor", name)
+    fun vendor(name: String) = attribute(ATTRIBUTE_VENDOR, name)
 
     fun exportPackage(pkg: String) = exportPackage(listOf(pkg))
 
     fun exportPackage(vararg pkgs: String) = exportPackage(pkgs.toList())
 
     fun exportPackage(pkgs: Collection<String>) {
-        attribute("Export-Package", wildcardPackages(pkgs))
+        attribute(ATTRIBUTE_EXPORT_PACKAGE, wildcardPackages(pkgs))
     }
 
     fun privatePackage(pkg: String) = privatePackage(listOf(pkg))
@@ -128,7 +128,7 @@ class AemBundle(
     fun privatePackage(vararg pkgs: String) = privatePackage(pkgs.toList())
 
     fun privatePackage(pkgs: Collection<String>) {
-        attribute("Private-Package", wildcardPackages(pkgs))
+        attribute(ATTRIBUTE_PRIVATE_PACKAGE, wildcardPackages(pkgs))
     }
 
     fun excludePackage(vararg pkgs: String) {
@@ -136,7 +136,7 @@ class AemBundle(
     }
 
     fun excludePackage(pkgs: Collection<String>) {
-        attribute("Import-Package", mergePackages(pkgs.map { "!$it" } + "*"))
+        attribute(ATTRIBUTE_IMPORT_PACKAGE, mergePackages(pkgs.map { "!$it" } + "*"))
     }
 
     fun wildcardPackages(pkgs: Collection<String>): String {
@@ -146,5 +146,29 @@ class AemBundle(
     fun mergePackages(pkgs: Collection<String>): String {
         return pkgs.joinToString(",")
     }
+
+    companion object {
+
+        const val ATTRIBUTE_NAME = "Bundle-Name"
+
+        const val ATTRIBUTE_SYMBOLIC_NAME = "Bundle-SymbolicName"
+
+        const val ATTRIBUTE_MANIFEST_VERSION = "Bundle-ManifestVersion"
+
+        const val ATTRIBUTE_ACTIVATOR = "Bundle-Activator"
+
+        const val ATTRIBUTE_CATEGORY = "Bundle-Category"
+
+        const val ATTRIBUTE_VENDOR = "Bundle-Vendor"
+
+        const val ATTRIBUTE_EXPORT_PACKAGE = "Export-Package"
+
+        const val ATTRIBUTE_PRIVATE_PACKAGE = "Private-Package"
+
+        const val ATTRIBUTE_IMPORT_PACKAGE = "Import-Package"
+
+        const val ATTRIBUTE_SLING_MODEL_PACKAGES = "Sling-Model-Packages"
+
+     }
 
 }
