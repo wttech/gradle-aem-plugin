@@ -67,7 +67,7 @@ open class SatisfyTask : DeployTask() {
 
     @get:Internal
     val cmdGroups: Boolean
-        get() = project.properties["aem.satisfy.urls"] != null
+        get() = project.findProperty("aem.satisfy.urls") != null
 
     init {
         group = AemTask.GROUP

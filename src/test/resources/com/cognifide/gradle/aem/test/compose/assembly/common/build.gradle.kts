@@ -8,11 +8,11 @@ plugins {
 description = "Example - Common"
 
 tasks.named<ComposeTask>("aemCompose") {
-    fromJar(group = "org.jetbrains.kotlin", name = "kotlin-osgi-bundle", version = "1.2.21")
+    fromJar("org.jetbrains.kotlin:kotlin-osgi-bundle:1.2.21")
 }
 
 dependencies {
-    compileOnly(group = "org.hashids", name = "hashids", version = "1.0.1")
+    compileOnly("org.hashids:hashids:1.0.1")
 }
 
 aem {

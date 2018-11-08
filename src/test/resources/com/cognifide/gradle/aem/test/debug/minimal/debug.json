@@ -49,6 +49,7 @@
     "instanceConnectionTimeout" : 30000,
     "instanceConnectionUntrustedSsl" : true,
     "packageRoot": "*/src/main/content",
+    "packageInstallPath" : "/apps/minimal/install",
     "packageErrors" : [
       "javax.jcr.nodetype.ConstraintViolationException",
       "org.apache.jackrabbit.vault.packaging.DependencyException",
@@ -59,14 +60,6 @@
     "lineSeparator" : "LF",
     "notificationEnabled" : false
   },
-  "bundleConfig" : {
-    "javaPackage" : "com.company.aem.minimal",
-    "javaPackageOptions" : "-split-package:=merge-first",
-    "manifestAttributes" : true,
-    "bndPath" : "*/bnd.bnd",
-    "bndInstructions" : {
-      "-fixupmessages.bundleActivator" : "Bundle-Activator * is being imported *;is:=error"
-    }
-  },
+  "bundleConfig" : { },
   "packageDeployed" : { }
 }

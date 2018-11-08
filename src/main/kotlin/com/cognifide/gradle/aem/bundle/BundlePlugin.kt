@@ -43,69 +43,6 @@ class BundlePlugin : AemPlugin() {
                 options.isIncremental = true
             }
         }
-
-        afterEvaluate {
-            tasks.named(JavaPlugin.JAR_TASK_NAME).configure { task ->
-                val jar = task as Jar
-
-                ensureJarBaseNameIfNotCustomized(jar)
-                ensureJarManifestAttributes(jar)
-            }
-        }
-    }
-
-    /**
-     * Reflection is used, because in other way, default convention will provide value.
-     * It is only way to know, if base name was previously customized by build script.
-     */
-    private fun Project.ensureJarBaseNameIfNotCustomized(jar: Jar) {
-        val baseName = FieldUtils.readField(jar, "baseName", true) as String?
-        if (baseName.isNullOrBlank()) {
-            val groupValue = group as String?
-            if (!name.isNullOrBlank() && !groupValue.isNullOrBlank()) {
-                jar.baseName = AemExtension.of(project).baseName
-            }
-        }
-    }
-
-    /**
-     * Set (if not set) or update OSGi or AEM specific jar manifest attributes.
-     */
-    private fun Project.ensureJarManifestAttributes(jar: Jar) {
-        val bundle = AemExtension.of(project).bundle
-        if (!bundle.manifestAttributes) {
-            logger.debug("Bundle manifest dynamic attributes support is disabled.")
-            return
-        }
-
-        val attributes = mutableMapOf<String, Any>().apply { putAll(jar.manifest.attributes) }
-
-        if (!attributes.contains(AemBundle.ATTRIBUTE_NAME) && !description.isNullOrBlank()) {
-            attributes[AemBundle.ATTRIBUTE_NAME] = description!!
-        }
-
-        if (!attributes.contains(AemBundle.ATTRIBUTE_SYMBOLIC_NAME) && bundle.javaPackage.isNotBlank()) {
-            attributes[AemBundle.ATTRIBUTE_SYMBOLIC_NAME] = bundle.javaPackage
-        }
-
-        attributes[AemBundle.ATTRIBUTE_EXPORT_PACKAGE] = mutableSetOf<String>().apply {
-            if (bundle.javaPackage.isNotBlank()) {
-                add(if (bundle.javaPackageOptions.isNotBlank()) {
-                    "${bundle.javaPackage}.*;${bundle.javaPackageOptions}"
-                } else {
-                    "${bundle.javaPackage}.*"
-                })
-            }
-
-            addAll((attributes[AemBundle.ATTRIBUTE_EXPORT_PACKAGE]?.toString()
-                    ?: "").split(",").map { it.trim() })
-        }.joinToString(",")
-
-        if (!attributes.contains(AemBundle.ATTRIBUTE_SLING_MODEL_PACKAGES) && bundle.javaPackage.isNotBlank()) {
-            attributes[AemBundle.ATTRIBUTE_SLING_MODEL_PACKAGES] = bundle.javaPackage
-        }
-
-        jar.manifest.attributes(attributes)
     }
 
     private fun Project.setupJavaBndTool() {

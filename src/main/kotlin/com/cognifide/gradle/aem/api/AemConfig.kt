@@ -8,7 +8,6 @@ import com.cognifide.gradle.aem.internal.LineSeparator
 import com.cognifide.gradle.aem.internal.notifier.Notifier
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.fasterxml.jackson.annotation.JsonIgnore
-import org.gradle.api.Project
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import java.io.Serializable
@@ -19,11 +18,7 @@ import java.io.Serializable
 class AemConfig(
         @Transient
         @JsonIgnore
-        private val aem: AemExtension,
-
-        @Transient
-        @JsonIgnore
-        private val project: Project
+        private val aem: AemExtension
 ) : Serializable {
 
     /**
@@ -39,7 +34,7 @@ class AemConfig(
      * Default: "${System.getProperty("user.home")}/.aem/${project.rootProject.name}"
      */
     @Input
-    var instanceRoot: String = "${System.getProperty("user.home")}/.aem/${project.rootProject.name}"
+    var instanceRoot: String = "${System.getProperty("user.home")}/.aem/${aem.project.rootProject.name}"
 
     /**
      * Determines instances involved in CRX package deployment (filters preconfigured instances).
@@ -89,7 +84,7 @@ class AemConfig(
     var packageSnapshots: List<String> = aem.props.list("aem.package.snapshots")
 
     @Input
-    var packageRoot: String = "${project.file("src/main/content")}"
+    var packageRoot: String = "${aem.project.file("src/main/content")}"
 
     @get:Internal
     @get:JsonIgnore
@@ -100,6 +95,21 @@ class AemConfig(
     @get:JsonIgnore
     val packageVltRoot: String
         get() = "$packageRoot/${PackagePlugin.VLT_PATH}"
+
+    /**
+     * Content path for OSGi bundle jars being placed in CRX package.
+     *
+     * Default convention assumes that subprojects have separate bundle paths, because of potential re-installation of subpackages.
+     * When all subprojects will have same bundle path, reinstalling one subpackage may end with deletion of other bundles coming from another subpackage.
+     *
+     * Beware that more nested bundle install directories are not supported by AEM by default.
+     */
+    @Input
+    var packageInstallPath: String = if (aem.project == aem.project.rootProject) {
+        "/apps/${aem.project.rootProject.name}/install"
+    } else {
+        "/apps/${aem.project.rootProject.name}/${aem.projectName}/install"
+    }
 
     /**
      * Define known exceptions which could be thrown during package installation
@@ -150,16 +160,16 @@ class AemConfig(
     init {
         // Define through command line (forced instances)
         if (instanceList.isNotBlank()) {
-            instances(Instance.parse(project, instanceList))
+            instances(Instance.parse(aem.project, instanceList))
         }
 
         // Define through properties
-        instances(Instance.properties(project))
+        instances(Instance.properties(aem.project))
 
-        project.afterEvaluate { _ ->
+        aem.project.afterEvaluate { _ ->
             // Ensure defaults if still no instances defined at all
             if (instances.isEmpty()) {
-                instances(Instance.defaults(project, aem.environment))
+                instances(Instance.defaults(aem.project, aem.environment))
             }
 
             // Validate all
@@ -175,7 +185,7 @@ class AemConfig(
     }
 
     fun localInstance(httpUrl: String, configurer: LocalInstance.() -> Unit) {
-        instance(LocalInstance.create(project, httpUrl) {
+        instance(LocalInstance.create(aem.project, httpUrl) {
             this.environment = aem.environment
             this.apply(configurer)
         })
@@ -186,7 +196,7 @@ class AemConfig(
     }
 
     fun remoteInstance(httpUrl: String, configurer: RemoteInstance.() -> Unit) {
-        instance(RemoteInstance.create(project, httpUrl) {
+        instance(RemoteInstance.create(aem.project, httpUrl) {
             this.environment = aem.environment
             this.apply(configurer)
         })
@@ -194,7 +204,7 @@ class AemConfig(
 
     fun parseInstance(urlOrName: String): Instance {
         return instances[urlOrName]
-                ?: Instance.parse(project, urlOrName).single().apply { validate() }
+                ?: Instance.parse(aem.project, urlOrName).single().apply { validate() }
     }
 
     private fun instances(instances: Collection<Instance>) {

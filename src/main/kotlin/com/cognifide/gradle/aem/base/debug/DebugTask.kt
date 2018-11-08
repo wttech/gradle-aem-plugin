@@ -36,7 +36,7 @@ open class DebugTask : AemDefaultTask() {
                     "buildInfo" to buildProperties,
                     "projectInfo" to projectProperties,
                     "baseConfig" to aem.config,
-                    "bundleConfig" to aem.bundle,
+                    "bundleConfig" to aem.bundles,
                     "packageDeployed" to packageProperties
             )
         }

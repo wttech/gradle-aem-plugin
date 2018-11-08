@@ -13,15 +13,18 @@ import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
+import org.gradle.api.tasks.bundling.Jar
 import java.io.File
 
 /**
  * Main place for providing build script DSL capabilities in case of AEM.
  */
-open class AemExtension(@Transient private val project: Project) {
+open class AemExtension(@Internal val project: Project
+) {
 
     @Internal
     val logger = project.logger
@@ -77,13 +80,13 @@ open class AemExtension(@Transient private val project: Project) {
     }
 
     @Nested
-    val config = AemConfig(this, project)
+    val config = AemConfig(this)
 
-    @Nested
-    val bundle = AemBundle(project)
+    @Input
+    val bundles = mutableMapOf<String, AemBundle>()
 
     @Internal
-    val notifier = AemNotifier.of(project)
+    val notifier = AemNotifier.of(this)
 
     @Internal
     val tasks = AemTaskFactory(project)
@@ -168,8 +171,32 @@ open class AemExtension(@Transient private val project: Project) {
         config.apply(configurer)
     }
 
+    @get:Internal
+    val compose: ComposeTask
+        get() = compose(ComposeTask.NAME)
+
+    fun compose(taskName: String): ComposeTask {
+        return project.tasks.getByName(taskName) as ComposeTask
+    }
+
     fun bundle(configurer: AemBundle.() -> Unit) {
-        bundle.apply(configurer)
+        bundle(JavaPlugin.JAR_TASK_NAME, configurer)
+    }
+
+    fun bundle(jarTaskName: String, configurer: AemBundle.() -> Unit) {
+        project.tasks.withType(Jar::class.java)
+                .named(jarTaskName)
+                .configure { bundle(it, configurer) }
+    }
+
+    @get:Internal
+    val bundle: AemBundle
+        get() = bundle(JavaPlugin.JAR_TASK_NAME)
+
+    fun bundle(jarTaskName: String) = bundle(project.tasks.getByName(jarTaskName) as Jar)
+
+    fun bundle(jar: Jar, configurer: AemBundle.() -> Unit = {}): AemBundle {
+        return bundles.getOrPut(jar.name) { AemBundle(this, jar).apply(configurer) }
     }
 
     fun notifier(configurer: AemNotifier.() -> Unit) {
@@ -191,6 +218,12 @@ open class AemExtension(@Transient private val project: Project) {
     fun filter(file: File) = VltFilter(file)
 
     fun filter(path: String) = filter(project.file(path))
+
+    init {
+        project.gradle.projectsEvaluated {
+            bundles.values.forEach { it.projectsEvaluated() }
+        }
+    }
 
     companion object {
 

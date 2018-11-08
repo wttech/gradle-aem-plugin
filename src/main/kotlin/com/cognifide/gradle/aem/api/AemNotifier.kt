@@ -7,13 +7,10 @@ import dorkbox.notify.Notify
 import fr.jcgay.notification.Application
 import fr.jcgay.notification.Notification
 import org.apache.commons.lang3.exception.ExceptionUtils
-import org.gradle.api.Project
 import org.gradle.api.logging.LogLevel
 import java.util.concurrent.TimeUnit
 
-class AemNotifier private constructor(private val project: Project) {
-
-    private val aem by lazy { AemExtension.of(project) }
+class AemNotifier private constructor(private val aem: AemExtension) {
 
     private val notifier: Notifier by lazy { aem.config.notificationConfig(this@AemNotifier) }
 
@@ -26,7 +23,7 @@ class AemNotifier private constructor(private val project: Project) {
     }
 
     fun log(title: String, message: String, level: LogLevel) {
-        project.logger.log(level, if (message.isNotBlank()) {
+        aem.logger.log(level, if (message.isNotBlank()) {
             "${title.removeSuffix(".")}. $message"
         } else {
             title
@@ -49,7 +46,7 @@ class AemNotifier private constructor(private val project: Project) {
                 notifier.notify(title, text, level)
             }
         } catch (e: Throwable) {
-            project.logger.debug("AEM notifier is not available.", e)
+            aem.logger.debug("AEM notifier is not available.", e)
         }
     }
 
@@ -58,7 +55,7 @@ class AemNotifier private constructor(private val project: Project) {
     }
 
     fun dorkbox(configurer: Notify.() -> Unit): Notifier {
-        return DorkboxNotifier(project, configurer)
+        return DorkboxNotifier(aem.project, configurer)
     }
 
     fun jcgay(): JcGayNotifier {
@@ -66,7 +63,7 @@ class AemNotifier private constructor(private val project: Project) {
     }
 
     fun jcgay(appBuilder: Application.Builder.() -> Unit, messageBuilder: Notification.Builder.() -> Unit): JcGayNotifier {
-        return JcGayNotifier(project, appBuilder, messageBuilder)
+        return JcGayNotifier(aem.project, appBuilder, messageBuilder)
     }
 
     fun custom(notifier: (title: String, text: String, level: LogLevel) -> Unit): Notifier {
@@ -78,7 +75,7 @@ class AemNotifier private constructor(private val project: Project) {
     }
 
     fun factory(): Notifier {
-        val name = project.properties["aem.notification.config"] ?: "dorkbox"
+        val name = aem.props.string("aem.notification.config","dorkbox")
 
         return when (name) {
             "dorkbox" -> dorkbox()
@@ -91,15 +88,15 @@ class AemNotifier private constructor(private val project: Project) {
 
         const val IMAGE_PATH = "/com/cognifide/gradle/aem/META-INF/vault/definition/thumbnail.png"
 
-        const val EXT_INSTANCE_PROP = "aemNotifier"
+        val EXT_INSTANCE_PROP = AemNotifier::class.java.canonicalName
 
         /**
          * Get project specific notifier (config can vary)
          */
-        fun of(project: Project): AemNotifier {
-            val props = project.extensions.extraProperties
+        fun of(aem: AemExtension): AemNotifier {
+            val props = aem.project.extensions.extraProperties
             if (!props.has(EXT_INSTANCE_PROP)) {
-                props.set(EXT_INSTANCE_PROP, setup(project))
+                props.set(EXT_INSTANCE_PROP, setup(aem))
             }
 
             return props.get(EXT_INSTANCE_PROP) as AemNotifier
@@ -108,11 +105,11 @@ class AemNotifier private constructor(private val project: Project) {
         /**
          * Register once (for root project only) listener for notifying about build errors.
          */
-        private fun setup(project: Project): AemNotifier {
-            val notifier = AemNotifier(project)
+        private fun setup(aem: AemExtension): AemNotifier {
+            val notifier = AemNotifier(aem)
 
-            if (project == project.rootProject) {
-                project.gradle.buildFinished {
+            if (aem.project == aem.project.rootProject) {
+                aem.project.gradle.buildFinished {
                     if (it.failure != null) {
                         val exception = ExceptionUtils.getRootCause(it.failure)
                         val message = exception?.message ?: "no error message"

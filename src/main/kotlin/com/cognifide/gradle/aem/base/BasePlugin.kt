@@ -33,7 +33,9 @@ class BasePlugin : AemPlugin() {
     }
 
     private fun Project.setupTasks() {
-        registerTask(DebugTask.NAME, DebugTask::class.java)
+        registerTask(DebugTask.NAME, DebugTask::class.java) {
+            it.dependsOn(LifecycleBasePlugin.BUILD_TASK_NAME)
+        }
         registerTask(RcpTask.NAME, RcpTask::class.java)
         registerTask(CleanTask.NAME, CleanTask::class.java) {
             it.mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME, CheckoutTask.NAME)

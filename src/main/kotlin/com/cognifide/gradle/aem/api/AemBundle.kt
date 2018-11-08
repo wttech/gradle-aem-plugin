@@ -1,14 +1,15 @@
 package com.cognifide.gradle.aem.api
 
-import com.cognifide.gradle.aem.bundle.BundlePlugin
+import com.cognifide.gradle.aem.internal.DependencyOptions
 import com.cognifide.gradle.aem.internal.Formats
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.apache.commons.lang3.StringUtils
-import org.gradle.api.Project
+import org.apache.commons.lang3.reflect.FieldUtils
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.bundling.Jar
+import java.io.Serializable
 
 /**
  * DSL for easier manipulation of OSGi bundle JAR manifest attributes.
@@ -20,13 +21,23 @@ import org.gradle.api.tasks.bundling.Jar
 class AemBundle(
         @Transient
         @JsonIgnore
-        private val project: Project
-) {
+        private val aem: AemExtension,
 
-    private val jar by lazy {
-        (project.tasks.findByName(JavaPlugin.JAR_TASK_NAME)
-                ?: throw AemException("Plugin '${BundlePlugin.ID}' is not applied.")) as Jar
-    }
+        @Transient
+        @JsonIgnore
+        val jar: Jar
+) : Serializable {
+
+    /**
+     * Content path for OSGi bundle jars being placed in CRX package.
+     *
+     * Default convention assumes that subprojects have separate bundle paths, because of potential re-installation of subpackages.
+     * When all subprojects will have same bundle path, reinstalling one subpackage may end with deletion of other bundles coming from another subpackage.
+     *
+     * Beware that more nested bundle install directories are not supported by AEM by default.
+     */
+    @Input
+    var installPath: String = aem.config.packageInstallPath
 
     /**
      * Determines package in which OSGi bundle being built contains its classes.
@@ -45,11 +56,11 @@ class AemBundle(
     @get:JsonIgnore
     val javaPackageDefault: String
         get() {
-            if ("${project.group}".isBlank()) {
-                throw AemException("${project.displayName.capitalize()} must has property 'group' defined to determine bundle package default.")
+            if ("${aem.project.group}".isBlank()) {
+                throw AemException("${aem.project.displayName.capitalize()} must has property 'group' defined to determine bundle package default.")
             }
 
-            return Formats.normalizeSeparators("${project.group}.${project.name}", ".")
+            return Formats.normalizeSeparators("${aem.project.group}.${aem.project.name}", ".")
         }
 
     /**
@@ -78,7 +89,7 @@ class AemBundle(
      * @see <https://bnd.bndtools.org>
      */
     @Input
-    var bndPath: String = "${project.file("bnd.bnd")}"
+    var bndPath: String = "${aem.project.file("bnd.bnd")}"
 
     /**
      * Bundle instructions consumed by BND tool (still file has precedence).
@@ -93,50 +104,161 @@ class AemBundle(
             "-fixupmessages.bundleActivator" to "$ATTRIBUTE_ACTIVATOR * is being imported *;is:=error"
     )
 
-    init {
-        project.afterEvaluate {
-            if (javaPackage == AemExtension.AUTO_DETERMINED) {
-                javaPackage = javaPackageDefault
+    @Input
+    var importPackages: MutableList<String> = mutableListOf("*")
+
+    @Input
+    var exportPackages: MutableList<String> = mutableListOf()
+
+    @Input
+    var privatePackages: MutableList<String> = mutableListOf()
+
+    fun projectsEvaluated() {
+        if (javaPackage == AemExtension.AUTO_DETERMINED) {
+            javaPackage = javaPackageDefault
+        }
+
+        if (!attribute(ATTRIBUTE_IMPORT_PACKAGE).isNullOrBlank()) {
+            attribute(ATTRIBUTE_IMPORT_PACKAGE, mergePackages(importPackages))
+        }
+
+        if (!attribute(ATTRIBUTE_EXPORT_PACKAGE).isNullOrBlank()) {
+            attribute(ATTRIBUTE_EXPORT_PACKAGE, mergePackages(exportPackages))
+        }
+
+        if (!attribute(ATTRIBUTE_PRIVATE_PACKAGE).isNullOrBlank()) {
+            attribute(ATTRIBUTE_PRIVATE_PACKAGE, mergePackages(privatePackages))
+        }
+
+        ensureBaseNameIfNotCustomized()
+        ensureManifestAttributes()
+    }
+
+    /**
+     * Reflection is used, because in other way, default convention will provide value.
+     * It is only way to know, if base name was previously customized by build script.
+     */
+    private fun ensureBaseNameIfNotCustomized() {
+        val baseName = FieldUtils.readField(jar, "baseName", true) as String?
+        if (baseName.isNullOrBlank()) {
+            val groupValue = aem.project.group as String?
+            if (!aem.project.name.isNullOrBlank() && !groupValue.isNullOrBlank()) {
+                jar.baseName = aem.baseName
             }
         }
     }
 
-    fun attribute(name: String, value: String) = jar.manifest.attributes(mapOf(name to value))
+    /**
+     * Set (if not set) or update OSGi or AEM specific jar manifest attributes.
+     */
+    private fun ensureManifestAttributes() {
+        if (!manifestAttributes) {
+            aem.logger.debug("Bundle manifest dynamic attributes support is disabled.")
+            return
+        }
 
-    fun name(name: String) = attribute(ATTRIBUTE_NAME, name)
+        val attributes = mutableMapOf<String, Any>().apply { putAll(jar.manifest.attributes) }
 
-    fun symbolicName(name: String) = attribute(ATTRIBUTE_SYMBOLIC_NAME, name)
+        if (!attributes.contains(ATTRIBUTE_NAME) && !aem.project.description.isNullOrBlank()) {
+            attributes[ATTRIBUTE_NAME] = aem.project.description!!
+        }
 
-    fun manifestVersion(num: Int) = attribute(ATTRIBUTE_MANIFEST_VERSION, num.toString())
+        if (!attributes.contains(ATTRIBUTE_SYMBOLIC_NAME) && javaPackage.isNotBlank()) {
+            attributes[ATTRIBUTE_SYMBOLIC_NAME] = javaPackage
+        }
 
-    fun activator(className: String) = attribute(ATTRIBUTE_ACTIVATOR, className)
+        attributes[ATTRIBUTE_EXPORT_PACKAGE] = mutableSetOf<String>().apply {
+            if (javaPackage.isNotBlank()) {
+                add(if (javaPackageOptions.isNotBlank()) {
+                    "$javaPackage.*;$javaPackageOptions"
+                } else {
+                    "$javaPackage.*"
+                })
+            }
 
-    fun category(name: String) = attribute(ATTRIBUTE_CATEGORY, name)
+            addAll((attributes[ATTRIBUTE_EXPORT_PACKAGE]?.toString()
+                    ?: "").split(",").map { it.trim() })
+        }.joinToString(",")
 
-    fun vendor(name: String) = attribute(ATTRIBUTE_VENDOR, name)
+        if (!attributes.contains(ATTRIBUTE_SLING_MODEL_PACKAGES) && javaPackage.isNotBlank()) {
+            attributes[ATTRIBUTE_SLING_MODEL_PACKAGES] = javaPackage
+        }
 
-    fun exportPackage(pkg: String) = exportPackage(listOf(pkg))
-
-    fun exportPackage(vararg pkgs: String) = exportPackage(pkgs.toList())
-
-    fun exportPackage(pkgs: Collection<String>) {
-        attribute(ATTRIBUTE_EXPORT_PACKAGE, wildcardPackages(pkgs))
+        jar.manifest.attributes(attributes)
     }
 
-    fun privatePackage(pkg: String) = privatePackage(listOf(pkg))
+    var attributes: MutableMap<String, String?>
+        get() = jar.manifest.attributes.mapValues { it.toString() }.toMutableMap()
+        set(value) {
+            jar.manifest.attributes(value)
+        }
 
-    fun privatePackage(vararg pkgs: String) = privatePackage(pkgs.toList())
+    fun attribute(name: String, value: String?) = jar.manifest.attributes(mapOf(name to value))
 
-    fun privatePackage(pkgs: Collection<String>) {
-        attribute(ATTRIBUTE_PRIVATE_PACKAGE, wildcardPackages(pkgs))
+    fun attribute(name: String): String? = jar.manifest.attributes[name] as String?
+
+    var name: String?
+        get() = attribute(ATTRIBUTE_NAME)
+        set(value) {
+            attribute(ATTRIBUTE_NAME, value)
+        }
+
+    var symbolicName: String?
+        get() = attribute(ATTRIBUTE_SYMBOLIC_NAME)
+        set(value) {
+            attribute(ATTRIBUTE_SYMBOLIC_NAME, value)
+        }
+
+    var manifestVersion: String?
+        get() = attribute(ATTRIBUTE_MANIFEST_VERSION)
+        set(value) {
+            attribute(ATTRIBUTE_MANIFEST_VERSION, value)
+        }
+
+    var activator: String?
+        get() = attributes[ATTRIBUTE_ACTIVATOR]
+        set(value) {
+            attributes[ATTRIBUTE_ACTIVATOR] = value
+        }
+
+    var category: String?
+        get() = attribute(ATTRIBUTE_CATEGORY)
+        set(value) {
+            attribute(ATTRIBUTE_CATEGORY, value)
+        }
+
+    var vendor: String?
+        get() = attribute(ATTRIBUTE_VENDOR)
+        set(value) {
+            attribute(ATTRIBUTE_VENDOR, value)
+        }
+
+    fun exportPackage(pkg: String) = exportPackages.add(pkg)
+
+    fun exportPackages(pkgs: Collection<String>) = exportPackages.addAll(pkgs)
+
+    fun privatePackage(pkg: String) = privatePackages.add(pkg)
+
+    fun privatePackages(pkgs: Collection<String>) = privatePackages.addAll(pkgs)
+
+    fun excludePackages(pkgs: Collection<String>) = importPackages.addAll(pkgs.map { "!$it" })
+
+    fun embedPackage(pkg: String, export: Boolean, dependencyOptions: DependencyOptions.() -> Unit) {
+        embedPackage(pkg, export, DependencyOptions.of(aem.project.dependencies, dependencyOptions))
     }
 
-    fun excludePackage(vararg pkgs: String) {
-        excludePackage(pkgs.toList())
+    fun embedPackage(pkg: String, export: Boolean, dependencyNotation: Any) {
+        embedPackages(listOf(pkg), export, dependencyNotation)
     }
 
-    fun excludePackage(pkgs: Collection<String>) {
-        attribute(ATTRIBUTE_IMPORT_PACKAGE, mergePackages(pkgs.map { "!$it" } + "*"))
+    fun embedPackages(pkgs: Collection<String>, export: Boolean, dependencyNotation: Any) {
+        aem.project.dependencies.add(JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME, dependencyNotation)
+
+        if (export) {
+            exportPackages(pkgs)
+        } else {
+            privatePackages(pkgs)
+        }
     }
 
     fun wildcardPackages(pkgs: Collection<String>): String {
@@ -169,6 +291,6 @@ class AemBundle(
 
         const val ATTRIBUTE_SLING_MODEL_PACKAGES = "Sling-Model-Packages"
 
-     }
+    }
 
 }

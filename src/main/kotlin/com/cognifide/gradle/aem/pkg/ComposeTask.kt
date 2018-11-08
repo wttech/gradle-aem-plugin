@@ -1,11 +1,12 @@
 package com.cognifide.gradle.aem.pkg
 
+import com.cognifide.gradle.aem.api.AemBundle
 import com.cognifide.gradle.aem.api.AemException
 import com.cognifide.gradle.aem.api.AemExtension
 import com.cognifide.gradle.aem.api.AemTask
 import com.cognifide.gradle.aem.base.vlt.VltFilter
 import com.cognifide.gradle.aem.bundle.BundlePlugin
-import com.cognifide.gradle.aem.internal.DependencyOperations
+import com.cognifide.gradle.aem.internal.DependencyOptions
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.file.FileOperations
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -13,7 +14,6 @@ import org.apache.commons.io.FileUtils
 import org.gradle.api.Project
 import org.gradle.api.file.CopySpec
 import org.gradle.api.file.DuplicatesStrategy
-import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
@@ -47,17 +47,13 @@ open class ComposeTask : Zip(), AemTask {
      * Beware that more nested bundle install directories are not supported by AEM by default.
      */
     @Input
-    var bundlePath: String = if (project == project.rootProject) {
-        "/apps/${project.rootProject.name}/install"
-    } else {
-        "/apps/${project.rootProject.name}/${aem.projectName}/install"
-    }
+    var bundlePath: String = aem.config.packageInstallPath
 
     /**
      * Dependent OSGi bundles to be resolved from repositories and put into CRX package being built.
      */
     @Input
-    val bundleConfiguration = project.configurations.create(BUNDLE_CONFIGURATION) { it.isTransitive = false }
+    val bundleFiles = project.configurations.create(BUNDLE_FILES_CONFIGURATION) { it.isTransitive = false }
 
     /**
      * Ensures that for directory 'META-INF/vault' default files will be generated when missing:
@@ -260,16 +256,14 @@ open class ComposeTask : Zip(), AemTask {
 
     fun fromProject(project: Project) { // TODO options closure (bundleRunMode, bundlePath, content = true, bundles = false etc)
         fromProjects.add {
-            if (!project.plugins.hasPlugin(PackagePlugin.ID)) {
-                return@add
+            val other by lazy { AemExtension.of(project) }
+
+            if (project.plugins.hasPlugin(PackagePlugin.ID)) {
+                fromCompose(other.compose)
             }
 
-            val composeDefault = project.tasks.getByName(NAME) as ComposeTask
-            fromCompose(composeDefault)
-
             if (project.plugins.hasPlugin(BundlePlugin.ID)) {
-                val jarDefault = project.tasks.getByName(JavaPlugin.JAR_TASK_NAME) as Jar
-                fromJar(jarDefault, composeDefault.bundlePath)
+                fromBundle(other.bundle)
             }
         }
     }
@@ -284,7 +278,7 @@ open class ComposeTask : Zip(), AemTask {
                 dependsOn(other.dependsOn)
             }
 
-            fromJarsInternal(other.bundleConfiguration.resolve(), other.bundlePath)
+            fromJarsInternal(other.bundleFiles.resolve(), other.bundlePath)
 
             extractVaultFilters(other)
             extractVaultNodeTypes(other)
@@ -307,13 +301,14 @@ open class ComposeTask : Zip(), AemTask {
         }
     }
 
+    fun fromBundle(bundle: AemBundle) = fromJar(bundle.jar, bundle.installPath)
+
     fun fromJar(dependencyNotation: Any) {
-        project.dependencies.add(BUNDLE_CONFIGURATION, dependencyNotation)
+        project.dependencies.add(BUNDLE_FILES_CONFIGURATION, dependencyNotation)
     }
 
-    fun fromJar(group: String, name: String, version: String? = null, configuration: String? = null, classifier: String? = null, ext: String? = null
-    ) {
-        fromJar(DependencyOperations.create(project.dependencies, group, name, version, configuration, classifier, ext))
+    fun fromJar(dependencyOptions: DependencyOptions.() -> Unit) {
+        fromJar(DependencyOptions.of(project.dependencies, dependencyOptions))
     }
 
     fun fromJar(bundle: Jar, bundlePath: String? = null) {
@@ -366,7 +361,7 @@ open class ComposeTask : Zip(), AemTask {
     companion object {
         const val NAME = "aemCompose"
 
-        const val BUNDLE_CONFIGURATION = "bundleConfiguration"
+        const val BUNDLE_FILES_CONFIGURATION = "bundleConfiguration"
 
         private val NODE_TYPES_LIB: Pattern = Pattern.compile("<.+>")
     }
