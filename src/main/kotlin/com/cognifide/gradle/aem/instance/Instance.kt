@@ -160,6 +160,7 @@ interface Instance : Serializable {
             )
         }
 
+        // TODO move filter methods to extension
         fun filter(project: Project): List<Instance> {
             return filter(project, AemExtension.of(project).config.instanceName)
         }

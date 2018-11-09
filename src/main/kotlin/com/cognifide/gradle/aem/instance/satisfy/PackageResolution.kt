@@ -5,6 +5,7 @@ import com.cognifide.gradle.aem.api.AemExtension
 import com.cognifide.gradle.aem.base.vlt.VltFilter
 import com.cognifide.gradle.aem.internal.file.FileOperations
 import com.cognifide.gradle.aem.internal.file.resolver.FileResolution
+import com.cognifide.gradle.aem.pkg.PackageFileFilter
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.FilenameUtils
@@ -53,16 +54,12 @@ class PackageResolution(group: PackageGroup, id: String, action: (FileResolution
         val group = symbolicName.substringBeforeLast(".")
         val version = bundle.manifest.mainAttributes.getValue("Bundle-Version")
         val filters = listOf(VltFilter.rootElementForPath(pkgPath))
-        val bundleProps = mapOf<String, Any>(
+        val bundleProps = PackageFileFilter.FILE_PROPERTIES + mapOf<String, Any>(
+                "compose.vaultFilters" to filters,
                 "project.group" to group,
                 "project.name" to symbolicName,
                 "project.version" to version,
-                "project.description" to description,
-                "filters" to filters,
-                "compose.vaultProperties" to mapOf<String, String>(),
-                "nodeTypesLibs" to listOf<String>(),
-                "nodeTypesLines" to listOf<String>()
-
+                "project.description" to description
         )
         val overrideProps = resolver.bundleProperties(bundle)
         val effectiveProps = bundleProps + overrideProps

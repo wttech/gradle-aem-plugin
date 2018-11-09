@@ -9,7 +9,7 @@ import org.gradle.api.file.CopySpec
 import org.gradle.api.tasks.Input
 import java.io.Serializable
 
-class ComposeFileFilter(project: Project) : Serializable {
+class PackageFileFilter(project: Project) : Serializable {
 
     private val aem = AemExtension.of(project)
 
@@ -20,18 +20,7 @@ class ComposeFileFilter(project: Project) : Serializable {
      * Exclude files being a part of CRX package.
      */
     @Input
-    var excludeFiles: MutableList<String> = mutableListOf(
-            "**/.gradle",
-            "**/.git",
-            "**/.git/**",
-            "**/.gitattributes",
-            "**/.gitignore",
-            "**/.gitmodules",
-            "**/.vlt",
-            "**/.vlt*.tmp",
-            "**/node_modules/**",
-            "jcr_root/.vlt-sync-config.properties"
-    )
+    var excludeFiles: MutableList<String> = EXCLUDE_FILES_DEFAULT.toMutableList()
 
     fun excludeFiles(files: List<String>) = excludeFiles.addAll(files)
 
@@ -44,10 +33,7 @@ class ComposeFileFilter(project: Project) : Serializable {
      * Wildcard file name filter expression that is used to filter in which Vault files properties can be injected.
      */
     @Input
-    var expandFiles: MutableList<String> = mutableListOf(
-            "**/${PackagePlugin.VLT_PATH}/*.xml",
-            "**/${PackagePlugin.VLT_PATH}/nodetypes.cnd"
-    )
+    var expandFiles: MutableList<String> = EXPAND_FILES_DEFAULT.toMutableList()
 
     fun expandFiles(files: List<String>) = expandFiles.addAll(files)
 
@@ -101,6 +87,33 @@ class ComposeFileFilter(project: Project) : Serializable {
                 }
             }
         }
+    }
+
+    companion object {
+        val EXPAND_FILES_DEFAULT = listOf(
+                "**/${PackagePlugin.VLT_PATH}/*.xml",
+                "**/${PackagePlugin.VLT_PATH}/nodetypes.cnd"
+        )
+
+        val EXCLUDE_FILES_DEFAULT = listOf(
+                "**/.gradle",
+                "**/.git",
+                "**/.git/**",
+                "**/.gitattributes",
+                "**/.gitignore",
+                "**/.gitmodules",
+                "**/.vlt",
+                "**/.vlt*.tmp",
+                "**/node_modules/**",
+                "jcr_root/.vlt-sync-config.properties"
+        )
+
+        val FILE_PROPERTIES = mapOf(
+                "compose.vaultFilters" to mapOf<String, String>(),
+                "compose.vaultNodeTypesLibs" to listOf<String>(),
+                "compose.vaultNodeTypesLines" to listOf<String>()
+
+        )
     }
 
 }

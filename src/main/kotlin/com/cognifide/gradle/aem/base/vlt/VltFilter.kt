@@ -52,11 +52,17 @@ class VltFilter(
 
     companion object {
 
+        const val BUILD_NAME = "filter.xml"
+
+        const val CHECKOUT_NAME = "checkout.xml"
+
+        const val TEMPORARY_NAME = "temporaryFilter.xml"
+
         fun temporary(project: Project, paths: List<String>): VltFilter {
-            val template = FileOperations.readResource("vlt/temporaryFilter.xml")!!
+            val template = FileOperations.readResource("vlt/$TEMPORARY_NAME")!!
                     .bufferedReader().use { it.readText() }
             val content = AemExtension.of(project).props.expand(template, mapOf("paths" to paths))
-            val file = AemTask.temporaryFile(project, VltTask.NAME, "temporaryFilter.xml")
+            val file = AemTask.temporaryFile(project, VltTask.NAME, TEMPORARY_NAME)
 
             FileUtils.deleteQuietly(file)
             file.printWriter().use { it.print(content) }
@@ -89,7 +95,7 @@ class VltFilter(
                 return VltFilter(cmdFilter)
             }
 
-            val conventionFilterFiles = listOf("${aem.config.packageVltRoot}/checkout.xml", "${aem.config.packageVltRoot}/filter.xml")
+            val conventionFilterFiles = listOf("${aem.config.packageVltRoot}/$CHECKOUT_NAME", "${aem.config.packageVltRoot}/$BUILD_NAME")
             val conventionFilterFile = FileOperations.find(project, aem.config.packageVltRoot, conventionFilterFiles)
             if (conventionFilterFile != null) {
                 aem.logger.debug("Using Vault filter file found by convention: $conventionFilterFile")

@@ -52,7 +52,7 @@ open class ComposeTask : Zip(), AemTask {
     /**
      * Dependent OSGi bundles to be resolved from repositories and put into CRX package being built.
      */
-    @Input
+    @Internal
     val bundleFiles = project.configurations.create(BUNDLE_FILES_CONFIGURATION) { it.isTransitive = false }
 
     /**
@@ -128,9 +128,9 @@ open class ComposeTask : Zip(), AemTask {
     val vaultDir = AemTask.temporaryDir(project, name, PackagePlugin.VLT_PATH)
 
     @Nested
-    val fileFilter = ComposeFileFilter(project)
+    val fileFilter = PackageFileFilter(project)
 
-    fun fileFilter(configurer: ComposeFileFilter.() -> Unit) {
+    fun fileFilter(configurer: PackageFileFilter.() -> Unit) {
         fileFilter.apply(configurer)
     }
 
@@ -139,21 +139,19 @@ open class ComposeTask : Zip(), AemTask {
 
     @get:Internal
     val fileProperties
-        get() = mapOf(
-                "compose" to this,
-                "filters" to filters,
-                "nodeTypesLibs" to nodeTypesLibs,
-                "nodeTypesLines" to nodeTypesLines
-        )
+        get() = mapOf("compose" to this)
 
-    private val filters = mutableSetOf<Element>()
+    @get:Internal
+    val vaultFilters = mutableSetOf<Element>()
 
     @Internal
-    var filterDefault = { other: ComposeTask -> "<filter root=\"${other.bundlePath}\"/>" }
+    var vaultFilterDefault = { other: ComposeTask -> "<filter root=\"${other.bundlePath}\"/>" }
 
-    private val nodeTypesLibs = mutableSetOf<String>()
+    @Internal
+    val vaultNodeTypesLibs = mutableSetOf<String>()
 
-    private val nodeTypesLines = mutableListOf<String>()
+    @Internal
+    val vaultNodeTypesLines = mutableListOf<String>()
 
     @Internal
     var fromConvention = true
@@ -188,6 +186,7 @@ open class ComposeTask : Zip(), AemTask {
     }
 
     override fun projectsEvaluated() {
+        inputs.files(bundleFiles)
         vaultFilesDirs.forEach { dir -> inputs.dir(dir) }
         fromProjects.forEach { it() }
         fromTasks.forEach { it() }
@@ -335,9 +334,9 @@ open class ComposeTask : Zip(), AemTask {
 
     private fun extractVaultFilters(other: ComposeTask) {
         if (!other.vaultFilterPath.isBlank() && File(other.vaultFilterPath).exists()) {
-            filters.addAll(VltFilter(File(other.vaultFilterPath)).rootElements)
+            vaultFilters.addAll(VltFilter(File(other.vaultFilterPath)).rootElements)
         } else if (project.plugins.hasPlugin(BundlePlugin.ID)) {
-            filters.add(VltFilter.rootElement(filterDefault(other)))
+            vaultFilters.add(VltFilter.rootElement(vaultFilterDefault(other)))
         }
     }
 
@@ -350,9 +349,9 @@ open class ComposeTask : Zip(), AemTask {
         if (file.exists()) {
             file.forEachLine {
                 if (NODE_TYPES_LIB.matcher(it.trim()).matches()) {
-                    nodeTypesLibs += it
+                    vaultNodeTypesLibs += it
                 } else {
-                    nodeTypesLines += it
+                    vaultNodeTypesLines += it
                 }
             }
         }

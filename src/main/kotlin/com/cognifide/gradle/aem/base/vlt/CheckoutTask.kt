@@ -4,6 +4,7 @@ import com.cognifide.gradle.aem.api.AemTask
 import com.cognifide.gradle.aem.instance.InstanceSync
 import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.internal.file.FileOperations
+import com.cognifide.gradle.aem.pkg.PackageFileFilter
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.apache.commons.io.FilenameUtils
@@ -129,8 +130,11 @@ open class CheckoutTask : VltTask() {
         filter.file.copyTo(File(vltDir, "filter.xml"))
         FileOperations.copyResources(PackagePlugin.VLT_PATH, vltDir, true)
 
-        FileOperations.amendFiles(vltDir, listOf("**/*.xml")) { file, content ->
-            aem.props.expandPackage(content, mapOf("project.version" to "${project.version}-$DOWNLOAD_CLASSIFIER"), file.absolutePath)
+        val fileProperties = PackageFileFilter.FILE_PROPERTIES + mapOf(
+                "project.version" to "${project.version}-$DOWNLOAD_CLASSIFIER"
+        )
+        FileOperations.amendFiles(vltDir, PackageFileFilter.EXPAND_FILES_DEFAULT) { file, content ->
+            aem.props.expandPackage(content, fileProperties, file.absolutePath)
         }
 
         ZipUtil.pack(downloadShellDir, zipResult)
