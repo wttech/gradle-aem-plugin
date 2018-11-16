@@ -154,9 +154,11 @@ open class AemExtension(@Internal val project: Project
     fun syncPackages(synchronizer: InstanceSync.(File) -> Unit) = syncPackages(instances, packages, synchronizer)
 
     fun syncPackages(instances: Collection<Instance>, packages: Collection<File>, synchronizer: InstanceSync.(File) -> Unit) {
-        val pairs = mutableListOf<Pair<Instance, File>>()
-        instances.forEach { i -> packages.forEach { p -> Pair(i, p) } }
-        pairs.parallelStream().forEach { (i, p) -> synchronizer(InstanceSync(project, i), p) }
+        packages.forEach { p -> // single AEM instance dislikes parallel package installation
+            instances.parallelStream().forEach { i ->
+                InstanceSync(project, i).apply { synchronizer(p) }
+            }
+        }
     }
 
     fun <T> http(consumer: HttpClient.() -> T): T {

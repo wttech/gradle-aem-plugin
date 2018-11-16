@@ -1,5 +1,7 @@
 package com.cognifide.gradle.aem.internal.http
 
+import com.jayway.jsonpath.DocumentContext
+import com.jayway.jsonpath.JsonPath
 import org.apache.commons.io.IOUtils
 import org.apache.http.HttpEntity
 import org.apache.http.HttpResponse
@@ -37,8 +39,6 @@ open class HttpClient(val project: Project) {
 
     var requestConfigurer: (HttpRequestBase) -> Unit = { }
 
-    var responseHandler: (HttpResponse) -> Unit = { }
-
     var clientBuilder: ((HttpClientBuilder) -> HttpClient) = {
         it.run {
             addInterceptorFirst(PreemptiveAuthInterceptor())
@@ -69,6 +69,12 @@ open class HttpClient(val project: Project) {
             build()
         }
     }
+
+    var responseHandler: (HttpResponse) -> Unit = { }
+
+    var responseChecks: Boolean = true
+
+    var responseChecker: (HttpResponse) -> Unit = { checkStatus(it) }
 
     fun get(path: String) = get(path) {}
 
@@ -120,24 +126,26 @@ open class HttpClient(val project: Project) {
         return execute(HttpPost(baseUrl(url)).apply { this.entity = entity }, handler)
     }
 
-    open fun checkStatus(response: HttpResponse, status: Int = HttpStatus.SC_OK) = checkStatus(response, listOf(status))
-
-    open fun checkStatus(response: HttpResponse, statuses: Collection<Int>) {
-        if (!statuses.contains(response.statusLine.statusCode)) {
-            throw ResponseException("Unexpected response: ${response.statusLine}")
+    fun asStream(response: HttpResponse): InputStream {
+        if (responseChecks) {
+            responseChecker(response)
         }
+
+        return response.entity.content
+    }
+
+    fun asJson(response: HttpResponse): DocumentContext {
+        return JsonPath.parse(asStream(response))
     }
 
     fun asString(response: HttpResponse): String {
-        checkStatus(response)
-
-        return IOUtils.toString(response.entity.content) ?: ""
+        return IOUtils.toString(asStream(response)) ?: ""
     }
 
-    fun asStream(response: HttpResponse): InputStream {
-        checkStatus(response)
-
-        return response.entity.content
+    open fun checkStatus(response: HttpResponse, statuses: Collection<Int> = listOf(HttpStatus.SC_OK)) {
+        if (!statuses.contains(response.statusLine.statusCode)) {
+            throw ResponseException("Unexpected response: ${response.statusLine}")
+        }
     }
 
     /**
