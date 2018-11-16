@@ -26,7 +26,7 @@ dependencies {
     implementation("commons-validator:commons-validator:1.6")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.8.8")
     implementation("org.reflections:reflections:0.9.9")
-    implementation("org.apache.jackrabbit.vault:vault-cli:3.1.24")
+    implementation("org.apache.jackrabbit.vault:vault-cli:3.2.4")
     implementation("org.jsoup:jsoup:1.10.3")
     implementation("org.samba.jcifs:jcifs:1.3.18-kohsuke-1")
     implementation("biz.aQute.bnd:biz.aQute.bnd.gradle:4.0.0")
