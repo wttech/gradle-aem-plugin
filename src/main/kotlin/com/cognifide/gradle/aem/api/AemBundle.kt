@@ -273,7 +273,11 @@ class AemBundle(
 
         const val ATTRIBUTE_NAME = "Bundle-Name"
 
+        const val ATTRIBUTE_DESCRIPTION = "Bundle-Description"
+
         const val ATTRIBUTE_SYMBOLIC_NAME = "Bundle-SymbolicName"
+
+        const val ATTRIBUTE_VERSION = "Bundle-Version"
 
         const val ATTRIBUTE_MANIFEST_VERSION = "Bundle-ManifestVersion"
 

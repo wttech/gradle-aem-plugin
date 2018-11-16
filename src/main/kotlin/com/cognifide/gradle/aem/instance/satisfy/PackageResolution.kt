@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.instance.satisfy
 
 import aQute.bnd.osgi.Jar
+import com.cognifide.gradle.aem.api.AemBundle
 import com.cognifide.gradle.aem.api.AemExtension
 import com.cognifide.gradle.aem.base.vlt.VltFilter
 import com.cognifide.gradle.aem.internal.file.FileOperations
@@ -49,10 +50,10 @@ class PackageResolution(group: PackageGroup, id: String, action: (FileResolution
 
         // Expand package properties
         val bundle = Jar(jar)
-        val description = bundle.manifest.mainAttributes.getValue("Bundle-Description") ?: ""
-        val symbolicName = bundle.manifest.mainAttributes.getValue("Bundle-SymbolicName")
+        val description = bundle.manifest.mainAttributes.getValue(AemBundle.ATTRIBUTE_DESCRIPTION) ?: ""
+        val symbolicName = bundle.manifest.mainAttributes.getValue(AemBundle.ATTRIBUTE_SYMBOLIC_NAME)
         val group = symbolicName.substringBeforeLast(".")
-        val version = bundle.manifest.mainAttributes.getValue("Bundle-Version")
+        val version = bundle.manifest.mainAttributes.getValue(AemBundle.ATTRIBUTE_VERSION)
         val filters = listOf(VltFilter.rootElementForPath(pkgPath))
         val bundleProps = PackageFileFilter.FILE_PROPERTIES + mapOf<String, Any>(
                 "compose.vaultName" to symbolicName,
