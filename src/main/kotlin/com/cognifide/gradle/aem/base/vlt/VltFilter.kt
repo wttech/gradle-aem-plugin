@@ -1,7 +1,8 @@
 package com.cognifide.gradle.aem.base.vlt
 
-import com.cognifide.gradle.aem.api.AemExtension
+import com.cognifide.gradle.aem.base.BaseExtension
 import com.cognifide.gradle.aem.api.AemTask
+import com.cognifide.gradle.aem.base.tasks.Vlt
 import com.cognifide.gradle.aem.internal.file.FileOperations
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import org.apache.commons.io.FileUtils
@@ -61,8 +62,8 @@ class VltFilter(
         fun temporary(project: Project, paths: List<String>): VltFilter {
             val template = FileOperations.readResource("vlt/$TEMPORARY_NAME")!!
                     .bufferedReader().use { it.readText() }
-            val content = AemExtension.of(project).props.expand(template, mapOf("paths" to paths))
-            val file = AemTask.temporaryFile(project, VltTask.NAME, TEMPORARY_NAME)
+            val content = BaseExtension.of(project).props.expand(template, mapOf("paths" to paths))
+            val file = AemTask.temporaryFile(project, Vlt.NAME, TEMPORARY_NAME)
 
             FileUtils.deleteQuietly(file)
             file.printWriter().use { it.print(content) }
@@ -79,7 +80,7 @@ class VltFilter(
         }
 
         fun determine(project: Project): VltFilter {
-            val aem = AemExtension.of(project)
+            val aem = BaseExtension.of(project)
 
             val cmdFilterRoots = aem.props.list("aem.filter.roots")
             if (cmdFilterRoots.isNotEmpty()) {

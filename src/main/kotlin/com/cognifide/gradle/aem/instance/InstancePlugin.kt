@@ -2,7 +2,8 @@ package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.api.AemPlugin
 import com.cognifide.gradle.aem.base.BasePlugin
-import com.cognifide.gradle.aem.pkg.DeployTask
+import com.cognifide.gradle.aem.instance.tasks.*
+import com.cognifide.gradle.aem.pkg.tasks.Deploy
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import org.gradle.api.Project
 import org.gradle.language.base.plugins.LifecycleBasePlugin
@@ -24,40 +25,40 @@ class InstancePlugin : AemPlugin() {
     }
 
     private fun Project.setupTasks() {
-        registerTask(ResolveTask.NAME, ResolveTask::class.java) {
+        registerTask(Resolve.NAME, Resolve::class.java) {
             it.mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
         }
-        registerTask(DownTask.NAME, DownTask::class.java)
-        registerTask(UpTask.NAME, UpTask::class.java) {
-            it.dependsOn(CreateTask.NAME).mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME, DownTask.NAME)
+        registerTask(Down.NAME, Down::class.java)
+        registerTask(Up.NAME, Up::class.java) {
+            it.dependsOn(Create.NAME).mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME, Down.NAME)
         }
-        registerTask(RestartTask.NAME, RestartTask::class.java) {
-            it.dependsOn(DownTask.NAME, UpTask.NAME)
+        registerTask(Restart.NAME, Restart::class.java) {
+            it.dependsOn(Down.NAME, Up.NAME)
         }
-        registerTask(CreateTask.NAME, CreateTask::class.java) {
-            it.dependsOn(ResolveTask.NAME).mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
+        registerTask(Create.NAME, Create::class.java) {
+            it.dependsOn(Resolve.NAME).mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
         }
-        registerTask(DestroyTask.NAME, DestroyTask::class.java) {
-            it.dependsOn(DownTask.NAME)
+        registerTask(Destroy.NAME, Destroy::class.java) {
+            it.dependsOn(Down.NAME)
         }
-        registerTask(SatisfyTask.NAME, SatisfyTask::class.java) {
-            it.dependsOn(ResolveTask.NAME).mustRunAfter(CreateTask.NAME, UpTask.NAME)
+        registerTask(Satisfy.NAME, Satisfy::class.java) {
+            it.dependsOn(Resolve.NAME).mustRunAfter(Create.NAME, Up.NAME)
         }
-        registerTask(ReloadTask.NAME, ReloadTask::class.java) {
-            it.mustRunAfter(SatisfyTask.NAME, DeployTask.NAME)
+        registerTask(Reload.NAME, Reload::class.java) {
+            it.mustRunAfter(Satisfy.NAME, Deploy.NAME)
         }
-        registerTask(AwaitTask.NAME, AwaitTask::class.java) {
-            it.mustRunAfter(CreateTask.NAME, UpTask.NAME, SatisfyTask.NAME, DeployTask.NAME)
+        registerTask(Await.NAME, Await::class.java) {
+            it.mustRunAfter(Create.NAME, Up.NAME, Satisfy.NAME, Deploy.NAME)
         }
-        registerTask(CollectTask.NAME, CollectTask::class.java) { task ->
-            task.mustRunAfter(SatisfyTask.NAME)
+        registerTask(Collect.NAME, Collect::class.java) { task ->
+            task.mustRunAfter(Satisfy.NAME)
         }
-        registerTask(SetupTask.NAME, SetupTask::class.java) { task ->
-            task.dependsOn(CreateTask.NAME, UpTask.NAME, SatisfyTask.NAME).mustRunAfter(DestroyTask.NAME)
-            plugins.withId(PackagePlugin.ID) { task.dependsOn(DeployTask.NAME) }
+        registerTask(Setup.NAME, Setup::class.java) { task ->
+            task.dependsOn(Create.NAME, Up.NAME, Satisfy.NAME).mustRunAfter(Destroy.NAME)
+            plugins.withId(PackagePlugin.ID) { task.dependsOn(Deploy.NAME) }
         }
-        registerTask(ResetupTask.NAME, ResetupTask::class.java) {
-            it.dependsOn(DestroyTask.NAME, SetupTask.NAME)
+        registerTask(Resetup.NAME, Resetup::class.java) {
+            it.dependsOn(Destroy.NAME, Setup.NAME)
         }
     }
 

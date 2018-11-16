@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.internal.notifier
 
-import com.cognifide.gradle.aem.api.AemNotifier
+import com.cognifide.gradle.aem.base.Notifier
 import com.cognifide.gradle.aem.api.AemPlugin
 import fr.jcgay.notification.Application
 import fr.jcgay.notification.Icon
@@ -15,7 +15,7 @@ class JcGayNotifier(
         val project: Project,
         val appBuilder: Application.Builder.() -> Unit,
         val messageBuilder: Notification.Builder.() -> Unit
-) : Notifier {
+) : com.cognifide.gradle.aem.internal.notifier.Notifier {
 
     private val notifier by lazy {
         val props = project.rootProject.extensions.extraProperties
@@ -45,7 +45,7 @@ class JcGayNotifier(
     }
 
     private val icon by lazy {
-        Icon.create(javaClass.getResource(AemNotifier.IMAGE_PATH), "default")
+        Icon.create(javaClass.getResource(Notifier.IMAGE_PATH), "default")
     }
 
     override fun notify(title: String, text: String, level: LogLevel) {

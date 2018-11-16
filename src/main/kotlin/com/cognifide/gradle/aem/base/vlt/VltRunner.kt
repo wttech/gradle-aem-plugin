@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.base.vlt
 
-import com.cognifide.gradle.aem.api.AemExtension
+import com.cognifide.gradle.aem.base.BaseExtension
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import org.gradle.api.Project
 import org.gradle.api.tasks.Input
@@ -9,7 +9,7 @@ import java.io.File
 
 class VltRunner(project: Project) {
 
-    private val aem = AemExtension.of(project)
+    private val aem = BaseExtension.of(project)
 
     private val app = VltApp(project)
 

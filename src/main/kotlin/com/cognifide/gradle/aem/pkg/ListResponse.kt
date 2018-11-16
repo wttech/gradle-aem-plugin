@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.pkg
 
 import com.cognifide.gradle.aem.internal.http.ResponseException
+import com.cognifide.gradle.aem.pkg.tasks.Compose
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -36,7 +37,7 @@ class ListResponse private constructor() {
 
         var lastUnpacked: Long? = null
 
-        constructor(task: ComposeTask) : this() {
+        constructor(task: Compose) : this() {
             val project = task.project
 
             this.group = project.group.toString()

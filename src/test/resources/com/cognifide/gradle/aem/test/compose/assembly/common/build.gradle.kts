@@ -1,4 +1,4 @@
-import com.cognifide.gradle.aem.pkg.ComposeTask
+import com.cognifide.gradle.aem.pkg.tasks.Compose
 
 plugins {
     id("com.cognifide.aem.bundle")
@@ -7,7 +7,7 @@ plugins {
 
 description = "Example - Common"
 
-tasks.named<ComposeTask>("aemCompose") {
+tasks.named<Compose>("aemCompose") {
     fromJar("org.jetbrains.kotlin:kotlin-osgi-bundle:1.2.21")
 }
 

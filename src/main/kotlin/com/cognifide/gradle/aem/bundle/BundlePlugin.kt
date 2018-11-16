@@ -1,12 +1,10 @@
 package com.cognifide.gradle.aem.bundle
 
 import aQute.bnd.gradle.BundleTaskConvention
-import com.cognifide.gradle.aem.api.AemBundle
-import com.cognifide.gradle.aem.api.AemExtension
+import com.cognifide.gradle.aem.base.BaseExtension
 import com.cognifide.gradle.aem.api.AemPlugin
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import org.apache.commons.lang3.exception.ExceptionUtils
-import org.apache.commons.lang3.reflect.FieldUtils
 import org.gradle.api.JavaVersion
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPlugin
@@ -53,7 +51,7 @@ class BundlePlugin : AemPlugin() {
 
         jar.doLast {
             try {
-                val bundle = AemExtension.of(project).bundle
+                val bundle = BaseExtension.of(project).bundle
                 val instructionFile = File(bundle.bndPath)
                 if (instructionFile.isFile) {
                     bundleConvention.setBndfile(instructionFile)

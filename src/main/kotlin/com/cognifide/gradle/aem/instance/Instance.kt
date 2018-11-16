@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.api.AemException
-import com.cognifide.gradle.aem.api.AemExtension
+import com.cognifide.gradle.aem.base.BaseExtension
 import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.internal.Patterns
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -162,11 +162,11 @@ interface Instance : Serializable {
 
         // TODO move filter methods to extension
         fun filter(project: Project): List<Instance> {
-            return filter(project, AemExtension.of(project).config.instanceName)
+            return filter(project, BaseExtension.of(project).config.instanceName)
         }
 
         fun filter(project: Project, instanceFilter: String): List<Instance> {
-            val aem = AemExtension.of(project)
+            val aem = BaseExtension.of(project)
             val all = aem.config.instances.values
 
             // Specified by command line should not be filtered
@@ -206,7 +206,7 @@ interface Instance : Serializable {
         }
 
         fun any(project: Project): Instance {
-            val aem = AemExtension.of(project)
+            val aem = BaseExtension.of(project)
 
             val cmdInstanceArg = aem.props.string("aem.instance")
             if (!cmdInstanceArg.isNullOrBlank()) {
@@ -232,7 +232,7 @@ interface Instance : Serializable {
         }
 
         fun concrete(project: Project, type: String): Instance? {
-            val aem = AemExtension.of(project)
+            val aem = BaseExtension.of(project)
 
             return aem.props.prop("aem.instance.$type")?.run {
                 aem.config.parseInstance(this)

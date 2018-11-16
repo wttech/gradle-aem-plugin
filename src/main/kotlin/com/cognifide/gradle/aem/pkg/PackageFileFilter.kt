@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.pkg
 
 import aQute.bnd.osgi.Jar
-import com.cognifide.gradle.aem.api.AemExtension
+import com.cognifide.gradle.aem.base.BaseExtension
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.file.FileContentReader
 import org.gradle.api.Project
@@ -11,7 +11,7 @@ import java.io.Serializable
 
 class PackageFileFilter(project: Project) : Serializable {
 
-    private val aem = AemExtension.of(project)
+    private val aem = BaseExtension.of(project)
 
     @Input
     var excluding: Boolean = true

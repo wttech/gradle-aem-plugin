@@ -1,9 +1,8 @@
 package com.cognifide.gradle.aem.base
 
-import com.cognifide.gradle.aem.api.AemExtension
 import com.cognifide.gradle.aem.api.AemPlugin
-import com.cognifide.gradle.aem.base.debug.DebugTask
-import com.cognifide.gradle.aem.base.vlt.*
+import com.cognifide.gradle.aem.base.tasks.Debug
+import com.cognifide.gradle.aem.base.tasks.*
 import org.gradle.api.Project
 import org.gradle.api.plugins.BasePlugin
 import org.gradle.language.base.plugins.LifecycleBasePlugin
@@ -29,26 +28,26 @@ class BasePlugin : AemPlugin() {
     }
 
     private fun Project.setupExtensions() {
-        extensions.create(AemExtension.NAME, AemExtension::class.java, this)
+        extensions.create(BaseExtension.NAME, BaseExtension::class.java, this)
     }
 
     private fun Project.setupTasks() {
-        registerTask(DebugTask.NAME, DebugTask::class.java) {
+        registerTask(Debug.NAME, Debug::class.java) {
             it.dependsOn(LifecycleBasePlugin.BUILD_TASK_NAME)
         }
-        registerTask(RcpTask.NAME, RcpTask::class.java)
-        registerTask(CleanTask.NAME, CleanTask::class.java) {
-            it.mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME, CheckoutTask.NAME)
+        registerTask(Rcp.NAME, Rcp::class.java)
+        registerTask(Clean.NAME, Clean::class.java) {
+            it.mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME, Checkout.NAME)
         }
-        registerTask(VltTask.NAME, VltTask::class.java) {
+        registerTask(Vlt.NAME, Vlt::class.java) {
             it.mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
         }
-        registerTask(CheckoutTask.NAME, CheckoutTask::class.java) {
+        registerTask(Checkout.NAME, Checkout::class.java) {
             it.mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
         }
-        registerTask(SyncTask.NAME, SyncTask::class.java) {
+        registerTask(Sync.NAME, Sync::class.java) {
             it.mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
-            it.dependsOn(CleanTask.NAME, CheckoutTask.NAME)
+            it.dependsOn(Clean.NAME, Checkout.NAME)
         }
     }
 
