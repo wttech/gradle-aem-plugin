@@ -100,25 +100,16 @@ open class ComposeTask : Zip(), AemTask {
                     .toList()
         }
 
-    /**
-     * CRX package Vault files path.
-     */
     @get:Internal
     @get:JsonIgnore
     val vaultPath: String
         get() = "$contentPath/${PackagePlugin.VLT_PATH}"
 
-    /**
-     * CRX package Vault filter path.
-     */
     @get:Internal
     @get:JsonIgnore
     val vaultFilterPath: String
         get() = "$vaultPath/filter.xml"
 
-    /**
-     * CRX package Vault node types path.
-     */
     @get:Internal
     @get:JsonIgnore
     val vaultNodeTypesPath: String
@@ -140,6 +131,18 @@ open class ComposeTask : Zip(), AemTask {
     @get:Internal
     val fileProperties
         get() = mapOf("compose" to this)
+
+    /**
+     * Name visible in CRX package manager
+     */
+    @Input
+    var vaultName: String = ""
+
+    /**
+     * Group for categorizing in CRX package manager
+     */
+    @Input
+    var vaultGroup: String = ""
 
     @get:Internal
     val vaultFilters = mutableSetOf<Element>()
@@ -172,6 +175,18 @@ open class ComposeTask : Zip(), AemTask {
     }
 
     override fun projectEvaluated() {
+        if (vaultGroup.isBlank()) {
+            vaultGroup = if (project == project.rootProject) {
+                project.group.toString()
+            } else {
+                project.rootProject.name
+            }
+        }
+
+        if (vaultName.isBlank()) {
+            vaultName = baseName
+        }
+
         if (contentPath.isBlank()) {
             throw AemException("Content path cannot be blank")
         }

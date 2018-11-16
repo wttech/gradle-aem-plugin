@@ -2,12 +2,12 @@
 <!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
 <properties>
     <comment>{{project.description}}</comment>
-    <entry key="group">{{project.group}}</entry>
-    <entry key="name">{{project.name}}</entry>
+    <entry key="group">{{compose.vaultGroup}}</entry>
+    <entry key="name">{{compose.vaultName}}</entry>
     <entry key="version">{{project.version}}</entry>
+    <entry key="description">{{project.description}}</entry>
     <entry key="groupId">{{project.group}}</entry>
     <entry key="artifactId">{{project.name}}</entry>
-    <entry key="description">{{project.description}}</entry>
     <entry key="createdBy">{{user.name}}</entry>
     {% for e in compose.vaultProperties %}
     <entry key="{{e.key}}">{{e.value | raw}}</entry>

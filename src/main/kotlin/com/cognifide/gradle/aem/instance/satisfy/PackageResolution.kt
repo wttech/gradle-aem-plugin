@@ -55,6 +55,8 @@ class PackageResolution(group: PackageGroup, id: String, action: (FileResolution
         val version = bundle.manifest.mainAttributes.getValue("Bundle-Version")
         val filters = listOf(VltFilter.rootElementForPath(pkgPath))
         val bundleProps = PackageFileFilter.FILE_PROPERTIES + mapOf<String, Any>(
+                "compose.vaultName" to symbolicName,
+                "compose.vaultGroup" to group,
                 "compose.vaultFilters" to filters,
                 "project.group" to group,
                 "project.name" to symbolicName,
