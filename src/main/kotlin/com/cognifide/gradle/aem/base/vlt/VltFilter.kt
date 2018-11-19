@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.base.vlt
 
-import com.cognifide.gradle.aem.base.BaseExtension
 import com.cognifide.gradle.aem.api.AemTask
+import com.cognifide.gradle.aem.base.BaseExtension
 import com.cognifide.gradle.aem.base.tasks.Vlt
 import com.cognifide.gradle.aem.internal.file.FileOperations
 import com.cognifide.gradle.aem.pkg.PackagePlugin

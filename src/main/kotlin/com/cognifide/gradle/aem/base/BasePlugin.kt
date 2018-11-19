@@ -1,8 +1,8 @@
 package com.cognifide.gradle.aem.base
 
 import com.cognifide.gradle.aem.api.AemPlugin
-import com.cognifide.gradle.aem.base.tasks.Debug
 import com.cognifide.gradle.aem.base.tasks.*
+import com.cognifide.gradle.aem.base.tasks.Debug
 import org.gradle.api.Project
 import org.gradle.api.plugins.BasePlugin
 import org.gradle.language.base.plugins.LifecycleBasePlugin

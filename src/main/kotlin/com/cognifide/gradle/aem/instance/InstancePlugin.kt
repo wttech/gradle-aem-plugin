@@ -3,8 +3,8 @@ package com.cognifide.gradle.aem.instance
 import com.cognifide.gradle.aem.api.AemPlugin
 import com.cognifide.gradle.aem.base.BasePlugin
 import com.cognifide.gradle.aem.instance.tasks.*
-import com.cognifide.gradle.aem.pkg.tasks.Deploy
 import com.cognifide.gradle.aem.pkg.PackagePlugin
+import com.cognifide.gradle.aem.pkg.tasks.Deploy
 import org.gradle.api.Project
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 

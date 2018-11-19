@@ -2,8 +2,8 @@ package com.cognifide.gradle.aem.pkg
 
 import com.cognifide.gradle.aem.api.AemPlugin
 import com.cognifide.gradle.aem.base.BasePlugin
-import com.cognifide.gradle.aem.instance.tasks.Create
 import com.cognifide.gradle.aem.instance.InstancePlugin
+import com.cognifide.gradle.aem.instance.tasks.Create
 import com.cognifide.gradle.aem.instance.tasks.Satisfy
 import com.cognifide.gradle.aem.instance.tasks.Up
 import com.cognifide.gradle.aem.pkg.tasks.*

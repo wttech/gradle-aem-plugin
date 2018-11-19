@@ -65,7 +65,7 @@ class ComponentState private constructor() {
         fun from(input: InputStream): ComponentState {
             return try {
                 ObjectMapper().readValue(input, ComponentState::class.java)
-            } catch(e: Exception) {
+            } catch (e: Exception) {
                 throw ResponseException("Malformed component state response.")
             }
         }

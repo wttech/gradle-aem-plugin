@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.base.Retry
-import com.cognifide.gradle.aem.pkg.resolver.PackageException
 import com.cognifide.gradle.aem.internal.MemoryCache
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.ProgressCountdown
@@ -10,6 +9,7 @@ import com.cognifide.gradle.aem.internal.file.downloader.HttpFileDownloader
 import com.cognifide.gradle.aem.internal.http.RequestException
 import com.cognifide.gradle.aem.internal.http.ResponseException
 import com.cognifide.gradle.aem.pkg.*
+import com.cognifide.gradle.aem.pkg.resolver.PackageException
 import org.gradle.api.Project
 import org.jsoup.Jsoup
 import org.jsoup.parser.Parser

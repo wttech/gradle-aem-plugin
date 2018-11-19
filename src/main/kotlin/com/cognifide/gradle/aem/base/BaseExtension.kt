@@ -156,7 +156,8 @@ open class BaseExtension(@Internal val project: Project
     fun syncPackages(synchronizer: InstanceSync.(File) -> Unit) = syncPackages(instances, packages, synchronizer)
 
     fun syncPackages(instances: Collection<Instance>, packages: Collection<File>, synchronizer: InstanceSync.(File) -> Unit) {
-        packages.forEach { p -> // single AEM instance dislikes parallel package installation
+        packages.forEach { p ->
+            // single AEM instance dislikes parallel package installation
             instances.parallelStream().forEach { i ->
                 InstanceSync(project, i).apply { synchronizer(p) }
             }

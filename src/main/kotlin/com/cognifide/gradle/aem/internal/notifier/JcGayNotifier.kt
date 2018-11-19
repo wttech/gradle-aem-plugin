@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.internal.notifier
 
-import com.cognifide.gradle.aem.base.Notifier
 import com.cognifide.gradle.aem.api.AemPlugin
+import com.cognifide.gradle.aem.base.Notifier
 import fr.jcgay.notification.Application
 import fr.jcgay.notification.Icon
 import fr.jcgay.notification.Notification

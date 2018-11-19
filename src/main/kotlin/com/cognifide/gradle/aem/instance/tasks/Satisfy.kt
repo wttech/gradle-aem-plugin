@@ -3,10 +3,10 @@ package com.cognifide.gradle.aem.instance.tasks
 import com.cognifide.gradle.aem.api.AemTask
 import com.cognifide.gradle.aem.instance.Instance
 import com.cognifide.gradle.aem.instance.names
-import com.cognifide.gradle.aem.pkg.resolver.PackageResolver
 import com.cognifide.gradle.aem.internal.Patterns
-import com.cognifide.gradle.aem.pkg.tasks.Deploy
 import com.cognifide.gradle.aem.pkg.ListResponse
+import com.cognifide.gradle.aem.pkg.resolver.PackageResolver
+import com.cognifide.gradle.aem.pkg.tasks.Deploy
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
