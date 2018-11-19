@@ -102,8 +102,8 @@ tasks.named<Task>("check") {
 }
 
 bintray {
-    user = (project.properties["bintray.user"] ?: System.getenv("BINTRAY_USER")).toString()
-    key = (project.properties["bintray.key"] ?: System.getenv("BINTRAY_KEY")).toString()
+    user = (project.properties["bintray.user"] ?: System.getenv("BINTRAY_USER"))?.toString()
+    key = (project.properties["bintray.key"] ?: System.getenv("BINTRAY_KEY"))?.toString()
     setPublications("mavenJava")
     with(pkg) {
         repo = "maven-public"
