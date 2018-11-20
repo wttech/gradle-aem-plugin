@@ -4,7 +4,7 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent
 plugins {
     id("java-gradle-plugin")
     id("maven-publish")
-    id("org.jetbrains.kotlin.jvm") version "1.3.0"
+    kotlin("jvm") version "1.3.0"
     id("com.jfrog.bintray") version "1.8.4"
 }
 
@@ -26,7 +26,7 @@ dependencies {
     implementation("commons-validator:commons-validator:1.6")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.8.8")
     implementation("org.reflections:reflections:0.9.9")
-    implementation("org.apache.jackrabbit.vault:vault-cli:3.1.24")
+    implementation("org.apache.jackrabbit.vault:vault-cli:3.2.4")
     implementation("org.jsoup:jsoup:1.10.3")
     implementation("org.samba.jcifs:jcifs:1.3.18-kohsuke-1")
     implementation("biz.aQute.bnd:biz.aQute.bnd.gradle:4.0.0")
@@ -36,7 +36,8 @@ dependencies {
     implementation("org.apache.httpcomponents:httpmime:4.5.4")
     implementation("org.osgi:org.osgi.core:6.0.0")
     implementation("io.pebbletemplates:pebble:3.0.4")
-    implementation("fr.jcgay.send-notification:send-notification:0.14.0")
+    implementation("fr.jcgay.send-notification:send-notification:0.15.0")
+    implementation("com.jayway.jsonpath:json-path:2.4.0")
 
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.3.1")
     testImplementation("org.junit.jupiter:junit-jupiter-params:5.3.1")
@@ -93,11 +94,6 @@ tasks.named<Test>("test") {
     }
 
     useJUnitPlatform()
-    dependsOn("publishToMavenLocal")
-}
-
-
-tasks.named<Task>("check") {
     dependsOn("publishToMavenLocal")
 }
 

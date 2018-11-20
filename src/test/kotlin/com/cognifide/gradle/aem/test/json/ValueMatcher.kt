@@ -5,7 +5,7 @@ import org.skyscreamer.jsonassert.ValueMatcher
 
 object ValueMatcher {
 
-    fun customizationsOf(customizations : Map<String, ValueMatcher<Any>>): List<Customization> {
+    fun customizationsOf(customizations: Map<String, ValueMatcher<Any>>): List<Customization> {
         return customizations.map { Customization(it.key, it.value) }
     }
 

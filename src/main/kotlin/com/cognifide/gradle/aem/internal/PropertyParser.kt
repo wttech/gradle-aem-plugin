@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.internal
 
 import com.cognifide.gradle.aem.api.AemException
-import com.cognifide.gradle.aem.api.AemExtension
+import com.cognifide.gradle.aem.base.BaseExtension
 import com.mitchellbosecke.pebble.PebbleEngine
 import com.mitchellbosecke.pebble.lexer.Syntax
 import com.mitchellbosecke.pebble.loader.StringLoader
@@ -11,7 +11,7 @@ import java.io.StringWriter
 import java.util.*
 
 class PropertyParser(
-        private val aem: AemExtension,
+        private val aem: BaseExtension,
         private val project: Project
 ) {
 

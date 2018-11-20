@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.internal.Patterns
-import com.cognifide.gradle.aem.pkg.ResponseException
+import com.cognifide.gradle.aem.internal.http.ResponseException
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -65,7 +65,7 @@ class ComponentState private constructor() {
         fun from(input: InputStream): ComponentState {
             return try {
                 ObjectMapper().readValue(input, ComponentState::class.java)
-            } catch(e: Exception) {
+            } catch (e: Exception) {
                 throw ResponseException("Malformed component state response.")
             }
         }

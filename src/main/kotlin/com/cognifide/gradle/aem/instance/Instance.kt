@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.api.AemException
-import com.cognifide.gradle.aem.api.AemExtension
+import com.cognifide.gradle.aem.base.BaseExtension
 import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.internal.Patterns
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -46,7 +46,8 @@ interface Instance : Serializable {
     val name: String
         get() = "$environment-$typeName"
 
-    fun sync(synchronizer: (InstanceSync) -> Unit)
+    @get:JsonIgnore
+    val sync: InstanceSync
 
     fun validate() {
         if (!Formats.URL_VALIDATOR.isValid(httpUrl)) {
@@ -153,91 +154,11 @@ interface Instance : Serializable {
             }
         }
 
-        fun defaults(project: Project): List<RemoteInstance> {
-            val config = AemExtension.of(project).config
-
+        fun defaults(project: Project, environment: String): List<RemoteInstance> {
             return listOf(
-                    RemoteInstance.create(project, URL_AUTHOR_DEFAULT) { environment = config.environment },
-                    RemoteInstance.create(project, URL_PUBLISH_DEFAULT) { environment = config.environment }
+                    RemoteInstance.create(project, URL_AUTHOR_DEFAULT) { this.environment = environment },
+                    RemoteInstance.create(project, URL_PUBLISH_DEFAULT) { this.environment = environment }
             )
-        }
-
-        fun filter(project: Project): List<Instance> {
-            return filter(project, AemExtension.of(project).config.instanceName)
-        }
-
-        fun filter(project: Project, instanceFilter: String): List<Instance> {
-            val aem = AemExtension.of(project)
-            val all = aem.config.instances.values
-
-            // Specified by command line should not be filtered
-            val cmd = all.filter { it.environment == Instance.ENVIRONMENT_CMD }
-            if (cmd.isNotEmpty()) {
-                return cmd
-            }
-
-            // Defined by build script, via properties or defaults are filterable by name
-            return all.filter { instance ->
-                when {
-                    aem.props.flag(AUTHORS_PROP) -> {
-                        Patterns.wildcard(instance.name, "${aem.config.environment}-${InstanceType.AUTHOR}*")
-                    }
-                    aem.props.flag(PUBLISHERS_PROP) -> {
-                        Patterns.wildcard(instance.name, "${aem.config.environment}-${InstanceType.PUBLISH}*")
-                    }
-                    else -> Patterns.wildcards(instance.name, instanceFilter)
-                }
-            }
-        }
-
-        fun <T : Instance> filter(project: Project, type: KClass<T>): List<T> {
-            return filter(project).filterIsInstance(type.java)
-        }
-
-        fun locals(project: Project): List<LocalInstance> {
-            return filter(project, LocalInstance::class)
-        }
-
-        fun handles(project: Project): List<LocalHandle> {
-            return Instance.locals(project).map { LocalHandle(project, it) }
-        }
-
-        fun remotes(project: Project): List<RemoteInstance> {
-            return filter(project, RemoteInstance::class)
-        }
-
-        fun any(project: Project): Instance {
-            val aem = AemExtension.of(project)
-
-            val cmdInstanceArg = aem.props.string("aem.instance")
-            if (!cmdInstanceArg.isNullOrBlank()) {
-                val cmdInstance = aem.config.parseInstance(cmdInstanceArg)
-
-                aem.logger.info("Using instance specified by command line parameter: $cmdInstance")
-                return cmdInstance
-            }
-
-            val namedInstance = Instance.filter(project, aem.config.instanceName).firstOrNull()
-            if (namedInstance != null) {
-                aem.logger.info("Using first instance matching filter '${aem.config.instanceName}': $namedInstance")
-                return namedInstance
-            }
-
-            val anyInstance = Instance.filter(project, FILTER_ANY).firstOrNull()
-            if (anyInstance != null) {
-                aem.logger.info("Using first instance matching filter '$FILTER_ANY': $anyInstance")
-                return anyInstance
-            }
-
-            throw InstanceException("Single instance cannot be determined neither by command line parameter nor AEM config.")
-        }
-
-        fun concrete(project: Project, type: String): Instance? {
-            val aem = AemExtension.of(project)
-
-            return aem.props.prop("aem.instance.$type")?.run {
-                aem.config.parseInstance(this)
-            }
         }
     }
 }

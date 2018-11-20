@@ -16,6 +16,7 @@ import org.gradle.api.Project
 import org.gradle.api.logging.Logger
 import java.io.File
 
+// TODO reuse internal HttpClient
 class HttpFileDownloader(val project: Project) {
 
     var username: String? = null

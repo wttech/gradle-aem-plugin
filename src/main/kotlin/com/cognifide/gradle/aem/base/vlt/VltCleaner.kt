@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.base.vlt
 
-import com.cognifide.gradle.aem.api.AemExtension
+import com.cognifide.gradle.aem.base.BaseExtension
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import org.apache.commons.io.FileUtils
@@ -19,7 +19,7 @@ import java.util.regex.Pattern
 class VltCleaner(project: Project) {
 
     @Internal
-    private val aem = AemExtension.of(project)
+    private val aem = BaseExtension.of(project)
 
     /**
      * Determines which files will be deleted within running cleaning
@@ -210,7 +210,7 @@ class VltCleaner(project: Project) {
             val inputLines = FileUtils.readLines(file, CharEncoding.UTF_8)
             val filteredLines = filterLines(file, inputLines)
 
-            FileUtils.writeLines(file, CharEncoding.UTF_8, filteredLines, aem.config.vaultLineSeparatorString)
+            FileUtils.writeLines(file, CharEncoding.UTF_8, filteredLines, aem.config.lineSeparatorString)
         } catch (e: IOException) {
             throw VltException(String.format("Error opening %s", file.path), e)
         }

@@ -1,5 +1,5 @@
 plugins {
-    id("com.cognifide.aem.base")
+    id("com.cognifide.aem.bundle")
 }
 
 group = "com.company.aem"

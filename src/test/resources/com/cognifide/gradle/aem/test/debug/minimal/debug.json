@@ -20,7 +20,6 @@
     "dir" : "*/minimal"
   },
   "baseConfig" : {
-    "environment" : "local",
     "instances" : {
       "local-author" : {
         "httpUrl" : "http://localhost:4502",
@@ -44,12 +43,8 @@
       }
     },
     "instanceRoot" : "*/.aem/minimal",
-    "instanceName" : "local-*",
-    "instanceList" : "",
-    "instanceAuthorName" : "local-author*",
-    "instanceConnectionTimeout" : 30000,
-    "instanceConnectionUntrustedSsl" : true,
     "packageRoot": "*/src/main/content",
+    "packageInstallPath" : "/apps/minimal/install",
     "packageErrors" : [
       "javax.jcr.nodetype.ConstraintViolationException",
       "org.apache.jackrabbit.vault.packaging.DependencyException",
@@ -57,18 +52,9 @@
     ],
     "packageResponseBuffer" : 4096,
     "packageSnapshots" : [ ],
-    "vaultFilesPath" : "*/src/main/resources/META-INF/vault",
-    "vaultLineSeparator" : "LF",
+    "lineSeparator" : "LF",
     "notificationEnabled" : false
   },
-  "bundleConfig" : {
-    "javaPackage" : "com.company.aem.minimal",
-    "javaPackageOptions" : "-split-package:=merge-first",
-    "manifestAttributes" : true,
-    "bndPath" : "*/bnd.bnd",
-    "bndInstructions" : {
-      "-fixupmessages.bundleActivator" : "Bundle-Activator * is being imported *;is:=error"
-    }
-  },
+  "bundleConfig" : { },
   "packageDeployed" : { }
 }

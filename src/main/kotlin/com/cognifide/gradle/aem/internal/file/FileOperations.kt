@@ -45,14 +45,10 @@ object FileOperations {
     fun copyResource(resourcePath: String, outputFile: File) {
         GFileUtils.mkdirs(outputFile.parentFile)
 
-        val input = javaClass.getResourceAsStream("/$resourcePath")
-        val output = FileOutputStream(outputFile)
-
-        try {
-            IOUtils.copy(input, output)
-        } finally {
-            IOUtils.closeQuietly(input)
-            IOUtils.closeQuietly(output)
+        javaClass.getResourceAsStream("/$resourcePath").use { input ->
+            FileOutputStream(outputFile).use { output ->
+                IOUtils.copy(input, output)
+            }
         }
     }
 

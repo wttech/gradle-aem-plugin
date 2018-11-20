@@ -1,5 +1,7 @@
 package com.cognifide.gradle.aem.internal.file.resolver
 
+import com.cognifide.gradle.aem.base.BaseExtension
+import com.cognifide.gradle.aem.internal.DependencyOptions
 import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.file.FileException
@@ -8,9 +10,7 @@ import com.cognifide.gradle.aem.internal.file.downloader.SftpFileDownloader
 import com.cognifide.gradle.aem.internal.file.downloader.SmbFileDownloader
 import com.cognifide.gradle.aem.internal.file.downloader.UrlFileDownloader
 import com.google.common.hash.HashCode
-import org.apache.commons.codec.digest.DigestUtils
 import org.apache.commons.io.FilenameUtils
-import org.apache.commons.lang3.BooleanUtils
 import org.apache.commons.lang3.builder.HashCodeBuilder
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
@@ -28,6 +28,8 @@ abstract class Resolver<G : FileGroup>(
         @get:Internal
         val downloadDir: File
 ) {
+
+    private val aem = BaseExtension.of(project)
 
     private val groupDefault = this.createGroup(GROUP_DEFAULT)
 
@@ -64,13 +66,17 @@ abstract class Resolver<G : FileGroup>(
 
     fun dependency(notation: Any) {
         resolve(notation) {
-            val configName = "fileResolver_dependency_${DigestUtils.md5Hex(downloadDir.path + notation)}"
+            val configName = "fileResolver_dependency_${HashCodeBuilder().append(notation).append(downloadDir).build()}"
             val configOptions: (Configuration) -> Unit = { it.isTransitive = false }
             val config = project.configurations.create(configName, configOptions)
 
             project.dependencies.add(config.name, notation)
             config.singleFile
         }
+    }
+
+    fun dependency(dependencyOptions: DependencyOptions.() -> Unit) {
+        dependency(DependencyOptions.of(project.dependencies, dependencyOptions))
     }
 
     fun url(url: String) {
@@ -130,10 +136,9 @@ abstract class Resolver<G : FileGroup>(
             download(url, it.dir) { file ->
                 val downloader = SftpFileDownloader(project)
 
-                downloader.username = username ?: project.properties["aem.sftp.username"] as String?
-                downloader.password = password ?: project.properties["aem.sftp.password"] as String?
-                downloader.hostChecking = hostChecking ?: BooleanUtils.toBoolean(project.properties["aem.sftp.hostChecking"] as String?
-                        ?: "false")
+                downloader.username = username ?: aem.props.prop("aem.sftp.username")
+                downloader.password = password ?: aem.props.prop("aem.sftp.password")
+                downloader.hostChecking = hostChecking ?: aem.props.boolean("aem.sftp.hostChecking", false)
 
                 downloader.download(url, file)
             }
@@ -157,9 +162,9 @@ abstract class Resolver<G : FileGroup>(
             download(url, it.dir) { file ->
                 val downloader = SmbFileDownloader(project)
 
-                downloader.domain = domain ?: project.properties["aem.smb.domain"] as String?
-                downloader.username = username ?: project.properties["aem.smb.username"] as String?
-                downloader.password = password ?: project.properties["aem.smb.password"] as String?
+                downloader.domain = domain ?: aem.props.prop("aem.smb.domain")
+                downloader.username = username ?: aem.props.prop("aem.smb.username")
+                downloader.password = password ?: aem.props.prop("aem.smb.password")
 
                 downloader.download(url, file)
             }
@@ -191,10 +196,9 @@ abstract class Resolver<G : FileGroup>(
             download(url, it.dir) { file ->
                 val downloader = HttpFileDownloader(project)
 
-                downloader.username = user ?: project.properties["aem.http.username"] as String?
-                downloader.password = password ?: project.properties["aem.http.password"] as String?
-                downloader.ignoreSSLErrors = ignoreSSL ?: BooleanUtils.toBoolean(project.properties["aem.http.ignoreSSL"] as String?
-                        ?: "true")
+                downloader.username = user ?: aem.props.prop("aem.http.username")
+                downloader.password = password ?: aem.props.prop("aem.http.password")
+                downloader.ignoreSSLErrors = ignoreSSL ?: aem.props.boolean("aem.http.ignoreSSL", true)
 
                 downloader.download(url, file)
             }

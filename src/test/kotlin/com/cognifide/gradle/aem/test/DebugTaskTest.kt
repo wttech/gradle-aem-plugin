@@ -20,7 +20,7 @@ class DebugTaskTest : AemTest() {
 
     private fun buildDebugJsonFile(buildName: String) {
         build("debug/$buildName", {
-            withArguments(":aemDebug", "-S", "-i", "--offline")
+            withArguments(":aemDebug", "-S", "-i", "-Paem.debug.packageDeployed=false")
         }, {
             assertJsonCustomized(
                     readFile("debug/$buildName/debug.json"),
@@ -34,11 +34,9 @@ class DebugTaskTest : AemTest() {
         val JSON_CUSTOMIZATIONS = ValueMatcher.customizationsOf(mapOf(
                 "buildInfo" to AnyValueMatcher(),
                 "projectInfo.dir" to PathValueMatcher(),
-                "projectInfo.dir" to PathValueMatcher(),
                 "baseConfig.instanceRoot" to PathValueMatcher(),
                 "baseConfig.packageRoot" to PathValueMatcher(),
-                "baseConfig.vaultFilesPath" to PathValueMatcher(),
-                "bundleConfig.bndPath" to PathValueMatcher()
+                "bundleConfig.*.bndPath" to PathValueMatcher()
         ))
     }
 

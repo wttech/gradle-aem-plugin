@@ -1,5 +1,5 @@
-import com.cognifide.gradle.aem.instance.SatisfyTask
-import com.cognifide.gradle.aem.pkg.ComposeTask
+import com.cognifide.gradle.aem.instance.tasks.Satisfy
+import com.cognifide.gradle.aem.pkg.tasks.Compose
 
 plugins {
     id("com.cognifide.aem.package")
@@ -47,7 +47,7 @@ allprojects {
     }
 }
 
-tasks.named<SatisfyTask>("aemSatisfy") {
+tasks.named<Satisfy>("aemSatisfy") {
     packages {
         group("dependencies") {
             // local("pkg/vanityurls-components-1.0.2.zip")
@@ -60,8 +60,8 @@ tasks.named<SatisfyTask>("aemSatisfy") {
     }
 }
 
-tasks.named<ComposeTask>("aemCompose") {
-    includeProject(":common")
-    includeProject(":core")
-    includeProject(":design")
+tasks.named<Compose>("aemCompose") {
+    fromProject(":common")
+    fromProject(":core")
+    fromProject(":design")
 }

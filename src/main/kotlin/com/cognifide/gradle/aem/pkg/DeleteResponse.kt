@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.pkg
 
+import com.cognifide.gradle.aem.internal.http.ResponseException
 import java.io.InputStream
 
 class DeleteResponse private constructor(private val rawHtml: String) : HtmlResponse(rawHtml) {

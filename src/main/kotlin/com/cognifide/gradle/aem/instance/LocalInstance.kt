@@ -2,14 +2,10 @@ package com.cognifide.gradle.aem.instance
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
-import org.apache.commons.lang3.builder.EqualsBuilder
-import org.apache.commons.lang3.builder.HashCodeBuilder
 import org.gradle.api.Project
 import java.io.Serializable
 
-class LocalInstance private constructor(@Transient
-                                        @JsonIgnore
-                                        private val project: Project) : Instance, Serializable {
+class LocalInstance private constructor(project: Project) : AbstractInstance(project), Serializable {
 
     override lateinit var httpUrl: String
 
@@ -62,31 +58,8 @@ class LocalInstance private constructor(@Transient
     val runModesString: String
         get() = (runModesDefault + runModes).joinToString(",")
 
-    override fun sync(synchronizer: (InstanceSync) -> Unit) {
-        synchronizer(InstanceSync(project, this))
-    }
-
     override fun toString(): String {
         return "LocalInstance(httpUrl='$httpUrl', user='$user', password='$hiddenPassword', typeName='$typeName', debugPort=$debugPort)"
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as LocalInstance
-
-        return EqualsBuilder()
-                .append(name, other.name)
-                .append(httpUrl, other.httpUrl)
-                .isEquals
-    }
-
-    override fun hashCode(): Int {
-        return HashCodeBuilder()
-                .append(name)
-                .append(httpUrl)
-                .toHashCode()
     }
 
     companion object {

@@ -7,8 +7,6 @@ import org.gradle.util.GFileUtils
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
-import org.skyscreamer.jsonassert.Customization
-import org.skyscreamer.jsonassert.ValueMatcher
 import java.io.File
 import java.nio.file.Files
 
@@ -63,7 +61,6 @@ abstract class AemTest {
     fun readFile(file: File): String {
         return file.bufferedReader().use { it.readText() }
     }
-
 
 
 }

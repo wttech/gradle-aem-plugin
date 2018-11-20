@@ -21,12 +21,13 @@ class ReloadAction(project: Project) : AwaitAction(project) {
 
     private fun reload() {
         val reloaded = mutableListOf<Instance>()
-        instances.parallelStream().forEach { instance ->
+
+        aem.parallelWith(instances) {
             try {
-                InstanceSync(project, instance).reload()
-                reloaded += instance
+                InstanceSync(project, this).reload()
+                reloaded += this
             } catch (e: InstanceException) { // still await timeout will fail
-                aem.logger.error("Instance is unavailable: $instance", e)
+                aem.logger.error("Instance is unavailable: $this", e)
             }
         }
 

@@ -1,7 +1,8 @@
 package com.cognifide.gradle.aem.base.vlt
 
-import com.cognifide.gradle.aem.api.AemExtension
 import com.cognifide.gradle.aem.api.AemTask
+import com.cognifide.gradle.aem.base.BaseExtension
+import com.cognifide.gradle.aem.base.tasks.Vlt
 import com.cognifide.gradle.aem.internal.file.FileOperations
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import org.apache.commons.io.FileUtils
@@ -52,11 +53,17 @@ class VltFilter(
 
     companion object {
 
+        const val BUILD_NAME = "filter.xml"
+
+        const val CHECKOUT_NAME = "checkout.xml"
+
+        const val TEMPORARY_NAME = "temporaryFilter.xml"
+
         fun temporary(project: Project, paths: List<String>): VltFilter {
-            val template = FileOperations.readResource("vlt/temporaryFilter.xml")!!
+            val template = FileOperations.readResource("vlt/$TEMPORARY_NAME")!!
                     .bufferedReader().use { it.readText() }
-            val content = AemExtension.of(project).props.expand(template, mapOf("paths" to paths))
-            val file = AemTask.temporaryFile(project, VltTask.NAME, "temporaryFilter.xml")
+            val content = BaseExtension.of(project).props.expand(template, mapOf("paths" to paths))
+            val file = AemTask.temporaryFile(project, Vlt.NAME, TEMPORARY_NAME)
 
             FileUtils.deleteQuietly(file)
             file.printWriter().use { it.print(content) }
@@ -73,11 +80,11 @@ class VltFilter(
         }
 
         fun determine(project: Project): VltFilter {
-            val aem = AemExtension.of(project)
+            val aem = BaseExtension.of(project)
 
             val cmdFilterRoots = aem.props.list("aem.filter.roots")
             if (cmdFilterRoots.isNotEmpty()) {
-                aem.logger.info("Using Vault filter roots specified as command line property: $cmdFilterRoots")
+                aem.logger.debug("Using Vault filter roots specified as command line property: $cmdFilterRoots")
                 return VltFilter.temporary(project, cmdFilterRoots)
             }
 
@@ -85,13 +92,20 @@ class VltFilter(
             if (cmdFilterPath.isNotEmpty()) {
                 val cmdFilter = FileOperations.find(project, aem.config.packageVltRoot, cmdFilterPath)
                         ?: throw VltException("Vault check out filter file does not exist at path: $cmdFilterPath (or under directory: ${aem.config.packageVltRoot}).")
+                aem.logger.debug("Using Vault filter file specified as command line property: $cmdFilterPath")
                 return VltFilter(cmdFilter)
             }
 
-            val conventionFilterFiles = listOf("${aem.config.packageVltRoot}/checkout.xml", "${aem.config.packageVltRoot}/filter.xml")
+            val conventionFilterFiles = listOf("${aem.config.packageVltRoot}/$CHECKOUT_NAME", "${aem.config.packageVltRoot}/$BUILD_NAME")
             val conventionFilterFile = FileOperations.find(project, aem.config.packageVltRoot, conventionFilterFiles)
-                    ?: throw VltException("None of Vault check out filter file does not exist at one of convention paths: $conventionFilterFiles.")
-            return VltFilter(conventionFilterFile)
+            if (conventionFilterFile != null) {
+                aem.logger.debug("Using Vault filter file found by convention: $conventionFilterFile")
+                return VltFilter(conventionFilterFile)
+            }
+
+            aem.logger.debug("None of Vault filter files found by CMD properties or convention.")
+
+            return VltFilter.temporary(project, listOf())
         }
 
     }

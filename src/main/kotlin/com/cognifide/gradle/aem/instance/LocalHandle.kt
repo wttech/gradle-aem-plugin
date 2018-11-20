@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.api.AemException
-import com.cognifide.gradle.aem.api.AemExtension
+import com.cognifide.gradle.aem.base.BaseExtension
 import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.ProgressLogger
@@ -15,7 +15,7 @@ import java.io.File
 
 class LocalHandle(val project: Project, val instance: LocalInstance) {
 
-    val aem = AemExtension.of(project)
+    val aem = BaseExtension.of(project)
 
     val dir = File("${aem.config.instanceRoot}/${instance.typeName}")
 
@@ -204,7 +204,7 @@ class LocalHandle(val project: Project, val instance: LocalInstance) {
         execute(stopScript)
 
         try {
-            sync.stop()
+            instance.sync.stop()
         } catch (e: InstanceException) {
             // ignore, fallback when script failed
         }
@@ -242,10 +242,6 @@ class LocalHandle(val project: Project, val instance: LocalInstance) {
         cleanDir(false)
 
         aem.logger.info("Destroyed with success")
-    }
-
-    val sync by lazy {
-        InstanceSync(project, instance)
     }
 
     val created: Boolean

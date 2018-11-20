@@ -2,10 +2,11 @@ package com.cognifide.gradle.aem.pkg
 
 import com.cognifide.gradle.aem.api.AemPlugin
 import com.cognifide.gradle.aem.base.BasePlugin
-import com.cognifide.gradle.aem.instance.CreateTask
 import com.cognifide.gradle.aem.instance.InstancePlugin
-import com.cognifide.gradle.aem.instance.SatisfyTask
-import com.cognifide.gradle.aem.instance.UpTask
+import com.cognifide.gradle.aem.instance.tasks.Create
+import com.cognifide.gradle.aem.instance.tasks.Satisfy
+import com.cognifide.gradle.aem.instance.tasks.Up
+import com.cognifide.gradle.aem.pkg.tasks.*
 import org.gradle.api.Project
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 
@@ -21,25 +22,25 @@ class PackagePlugin : AemPlugin() {
     }
 
     private fun Project.setupTasks() {
-        registerTask(ComposeTask.NAME, ComposeTask::class.java) {
+        registerTask(Compose.NAME, Compose::class.java) {
             it.dependsOn(LifecycleBasePlugin.ASSEMBLE_TASK_NAME, LifecycleBasePlugin.CHECK_TASK_NAME)
             it.mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
         }
-        registerTask(DeleteTask.NAME, DeleteTask::class.java)
-        registerTask(PurgeTask.NAME, PurgeTask::class.java)
-        registerTask(UninstallTask.NAME, UninstallTask::class.java)
-        registerTask(ActivateTask.NAME, ActivateTask::class.java) {
-            it.mustRunAfter(ComposeTask.NAME)
+        registerTask(Delete.NAME, Delete::class.java)
+        registerTask(Purge.NAME, Purge::class.java)
+        registerTask(Uninstall.NAME, Uninstall::class.java)
+        registerTask(Activate.NAME, Activate::class.java) {
+            it.mustRunAfter(Compose.NAME)
         }
-        registerTask(DeployTask.NAME, DeployTask::class.java) {
-            it.dependsOn(ComposeTask.NAME)
+        registerTask(Deploy.NAME, Deploy::class.java) {
+            it.dependsOn(Compose.NAME)
         }
 
-        tasks.named(LifecycleBasePlugin.BUILD_TASK_NAME).configure { it.dependsOn(ComposeTask.NAME) }
+        tasks.named(LifecycleBasePlugin.BUILD_TASK_NAME).configure { it.dependsOn(Compose.NAME) }
 
         plugins.withId(InstancePlugin.ID) {
-            tasks.named(DeployTask.NAME).configure { task ->
-                task.mustRunAfter(CreateTask.NAME, UpTask.NAME, SatisfyTask.NAME)
+            tasks.named(Deploy.NAME).configure { task ->
+                task.mustRunAfter(Create.NAME, Up.NAME, Satisfy.NAME)
             }
         }
     }

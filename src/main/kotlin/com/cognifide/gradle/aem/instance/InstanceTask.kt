@@ -7,15 +7,15 @@ import org.gradle.api.tasks.Internal
 open class InstanceTask : AemDefaultTask() {
 
     @Input
-    var handles: List<LocalHandle> = listOf()
+    var instanceHandles: List<LocalHandle> = listOf()
 
     @get:Internal
     val instances: List<LocalInstance>
-        get() = handles.map { it.instance }
+        get() = instanceHandles.map { it.instance }
 
     override fun projectsEvaluated() {
-        if (handles.isEmpty()) {
-            handles = aem.handles
+        if (instanceHandles.isEmpty()) {
+            instanceHandles = aem.instanceHandles
         }
     }
 

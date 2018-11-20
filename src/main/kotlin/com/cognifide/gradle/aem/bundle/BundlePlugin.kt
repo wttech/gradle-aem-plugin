@@ -1,16 +1,14 @@
 package com.cognifide.gradle.aem.bundle
 
 import aQute.bnd.gradle.BundleTaskConvention
-import com.cognifide.gradle.aem.api.AemExtension
 import com.cognifide.gradle.aem.api.AemPlugin
+import com.cognifide.gradle.aem.base.BaseExtension
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import org.apache.commons.lang3.exception.ExceptionUtils
-import org.apache.commons.lang3.reflect.FieldUtils
 import org.gradle.api.JavaVersion
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.JavaPluginConvention
-import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.api.tasks.testing.Test
@@ -23,7 +21,6 @@ class BundlePlugin : AemPlugin() {
         setupJavaDefaults()
         setupJavaBndTool()
         setupTestTask()
-        setupConfigurations()
     }
 
     private fun Project.setupDependentPlugins() {
@@ -44,82 +41,6 @@ class BundlePlugin : AemPlugin() {
                 options.isIncremental = true
             }
         }
-
-        afterEvaluate {
-            tasks.named(JavaPlugin.JAR_TASK_NAME).configure { task ->
-                val jar = task as Jar
-
-                ensureJarBaseNameIfNotCustomized(jar)
-                ensureJarManifestAttributes(jar)
-                ensureJarEmbedded(jar)
-            }
-        }
-    }
-
-    private fun Project.ensureJarEmbedded(jar: Jar) {
-        val embedJars = configurations.getByName(CONFIG_EMBED).files
-                .asSequence()
-                .map { it.name }
-                .sorted()
-                .toList()
-
-        if (embedJars.isNotEmpty()) {
-            logger.info("Bundle '${jar.archiveName}' has configured embedded jars: $embedJars.")
-            logger.info("For each one, ensure to have its packages exported by JAR manifest attribute 'Export-Package' or 'Private-Package' using DSL: 'aem { bundle { exportPackage('x.y.z') } }'.")
-        }
-    }
-
-    /**
-     * Reflection is used, because in other way, default convention will provide value.
-     * It is only way to know, if base name was previously customized by build script.
-     */
-    private fun Project.ensureJarBaseNameIfNotCustomized(jar: Jar) {
-        val baseName = FieldUtils.readField(jar, "baseName", true) as String?
-        if (baseName.isNullOrBlank()) {
-            val groupValue = group as String?
-            if (!name.isNullOrBlank() && !groupValue.isNullOrBlank()) {
-                jar.baseName = AemExtension.of(project).config.baseName
-            }
-        }
-    }
-
-    /**
-     * Set (if not set) or update OSGi or AEM specific jar manifest attributes.
-     */
-    private fun Project.ensureJarManifestAttributes(jar: Jar) {
-        val bundle = AemExtension.of(project).bundle
-        if (!bundle.manifestAttributes) {
-            logger.debug("Bundle manifest dynamic attributes support is disabled.")
-            return
-        }
-
-        val attributes = mutableMapOf<String, Any>().apply { putAll(jar.manifest.attributes) }
-
-        if (!attributes.contains("Bundle-Name") && !description.isNullOrBlank()) {
-            attributes["Bundle-Name"] = description!!
-        }
-
-        if (!attributes.contains("Bundle-SymbolicName") && bundle.javaPackage.isNotBlank()) {
-            attributes["Bundle-SymbolicName"] = bundle.javaPackage
-        }
-
-        attributes["Export-Package"] = mutableSetOf<String>().apply {
-            if (bundle.javaPackage.isNotBlank()) {
-                add(if (bundle.javaPackageOptions.isNotBlank()) {
-                    "${bundle.javaPackage}.*;${bundle.javaPackageOptions}"
-                } else {
-                    "${bundle.javaPackage}.*"
-                })
-            }
-
-            addAll((attributes["Export-Package"]?.toString() ?: "").split(",").map { it.trim() })
-        }.joinToString(",")
-
-        if (!attributes.contains("Sling-Model-Packages") && bundle.javaPackage.isNotBlank()) {
-            attributes["Sling-Model-Packages"] = bundle.javaPackage
-        }
-
-        jar.manifest.attributes(attributes)
     }
 
     private fun Project.setupJavaBndTool() {
@@ -130,7 +51,7 @@ class BundlePlugin : AemPlugin() {
 
         jar.doLast {
             try {
-                val bundle = AemExtension.of(project).bundle
+                val bundle = BaseExtension.of(project).bundle
                 val instructionFile = File(bundle.bndPath)
                 if (instructionFile.isFile) {
                     bundleConvention.setBndfile(instructionFile)
@@ -153,36 +74,20 @@ class BundlePlugin : AemPlugin() {
      * @see <https://github.com/Cognifide/gradle-aem-plugin/issues/95>
      */
     private fun Project.setupTestTask() {
-        val testSourceSet = convention.getPlugin(JavaPluginConvention::class.java)
-                .sourceSets.getByName(SourceSet.TEST_SOURCE_SET_NAME)
+        val testImplConfig = configurations.getByName(JavaPlugin.TEST_IMPLEMENTATION_CONFIGURATION_NAME)
         val compileOnlyConfig = configurations.getByName(JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME)
 
-        testSourceSet.compileClasspath += compileOnlyConfig
-        testSourceSet.runtimeClasspath += compileOnlyConfig
+        testImplConfig.extendsFrom(compileOnlyConfig)
 
         val test = tasks.getByName(JavaPlugin.TEST_TASK_NAME) as Test
         val jar = tasks.getByName(JavaPlugin.JAR_TASK_NAME) as Jar
 
-        gradle.projectsEvaluated { test.classpath += files(jar.archivePath) }
         test.dependsOn(jar)
-    }
-
-    private fun Project.setupConfigurations() {
-        plugins.withType(JavaPlugin::class.java) { _ ->
-            val embedConfig = configurations.create(CONFIG_EMBED) { it.isTransitive = false }
-            val installConfig = configurations.create(CONFIG_INSTALL) { it.isTransitive = false }
-            val implConfig = configurations.getByName(JavaPlugin.IMPLEMENTATION_CONFIGURATION_NAME)
-
-            implConfig.extendsFrom(installConfig, embedConfig)
-        }
+        afterEvaluate { test.classpath += files(jar.archivePath) }
     }
 
     companion object {
         const val ID = "com.cognifide.aem.bundle"
-
-        const val CONFIG_INSTALL = "aemInstall"
-
-        const val CONFIG_EMBED = "aemEmbed"
 
         const val BND_CONVENTION_PLUGIN = "bundle"
     }

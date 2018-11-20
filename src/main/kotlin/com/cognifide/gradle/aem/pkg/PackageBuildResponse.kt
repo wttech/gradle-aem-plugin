@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.pkg
 
+import com.cognifide.gradle.aem.internal.http.ResponseException
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.databind.ObjectMapper
 import java.io.InputStream

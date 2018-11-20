@@ -1,13 +1,15 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.api.AemRetry
-import com.cognifide.gradle.aem.instance.satisfy.PackageException
-import com.cognifide.gradle.aem.internal.MemoryCache
+import com.cognifide.gradle.aem.base.Retry
+import com.cognifide.gradle.aem.internal.BuildScope
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.ProgressCountdown
 import com.cognifide.gradle.aem.internal.file.FileException
 import com.cognifide.gradle.aem.internal.file.downloader.HttpFileDownloader
+import com.cognifide.gradle.aem.internal.http.RequestException
+import com.cognifide.gradle.aem.internal.http.ResponseException
 import com.cognifide.gradle.aem.pkg.*
+import com.cognifide.gradle.aem.pkg.resolver.PackageException
 import org.gradle.api.Project
 import org.jsoup.Jsoup
 import org.jsoup.parser.Parser
@@ -44,7 +46,7 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
     private fun resolveRemotePackage(resolver: (ListResponse) -> ListResponse.Package?, refresh: Boolean): ListResponse.Package? {
         aem.logger.debug("Asking for uploaded packages on $instance")
 
-        val packages = MemoryCache.of(project).getOrPut("instance.${instance.name}.packages", {
+        val packages = BuildScope.of(project).getOrPut("instance.${instance.name}.packages", {
             try {
                 postMultipart(PKG_MANAGER_LIST_JSON) { ListResponse.fromJson(asStream(it)) }
             } catch (e: Exception) {
@@ -55,9 +57,9 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
         return resolver(packages)
     }
 
-    fun uploadPackage(file: File) = uploadPackage(file, true, AemRetry.once())
+    fun uploadPackage(file: File) = uploadPackage(file, true, Retry.once())
 
-    fun uploadPackage(file: File, force: Boolean, retry: AemRetry): UploadResponse {
+    fun uploadPackage(file: File, force: Boolean, retry: Retry): UploadResponse {
         lateinit var exception: DeployException
         for (i in 0..retry.times) {
             try {
@@ -104,7 +106,7 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
         return response
     }
 
-    fun downloadPackage(remotePath: String, targetFile: File, retry: AemRetry = AemRetry.once()) {
+    fun downloadPackage(remotePath: String, targetFile: File, retry: Retry = Retry.once()) {
         lateinit var exception: FileException
         val url = instance.httpUrl + remotePath
 
@@ -164,7 +166,7 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
         return response
     }
 
-    fun installPackage(remotePath: String, recursive: Boolean = true, retry: AemRetry = AemRetry.once()): InstallResponse {
+    fun installPackage(remotePath: String, recursive: Boolean = true, retry: Retry = Retry.once()): InstallResponse {
         lateinit var exception: DeployException
         for (i in 0..retry.times) {
             try {
@@ -212,12 +214,12 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
         return Patterns.wildcard(file, aem.config.packageSnapshots)
     }
 
-    fun deployPackage(file: File, uploadForce: Boolean = true, uploadRetry: AemRetry = AemRetry.once(), installRecursive: Boolean = true, installRetry: AemRetry = AemRetry.once()) {
+    fun deployPackage(file: File, uploadForce: Boolean = true, uploadRetry: Retry = Retry.once(), installRecursive: Boolean = true, installRetry: Retry = Retry.once()) {
         val uploadResponse = uploadPackage(file, uploadForce, uploadRetry)
         installPackage(uploadResponse.path, installRecursive, installRetry)
     }
 
-    fun distributePackage(file: File, uploadForce: Boolean = true, uploadRetry: AemRetry = AemRetry.once(), installRecursive: Boolean = true, installRetry: AemRetry = AemRetry.once()) {
+    fun distributePackage(file: File, uploadForce: Boolean = true, uploadRetry: Retry = Retry.once(), installRecursive: Boolean = true, installRetry: Retry = Retry.once()) {
         val uploadResponse = uploadPackage(file, uploadForce, uploadRetry)
         val packagePath = uploadResponse.path
 
@@ -348,8 +350,4 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
         const val OSGI_VMSTAT_SHUTDOWN_RESTART = "Restart"
     }
 
-}
-
-fun Collection<Instance>.sync(project: Project, callback: (InstanceSync) -> Unit) {
-    return map { InstanceSync(project, it) }.parallelStream().forEach(callback)
 }

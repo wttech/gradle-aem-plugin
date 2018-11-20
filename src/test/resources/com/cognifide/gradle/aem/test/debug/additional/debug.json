@@ -20,7 +20,6 @@
     "dir" : "*/additional"
   },
   "baseConfig" : {
-    "environment" : "local",
     "instances" : {
       "prod-author" : {
         "httpUrl" : "http://author.example.com",
@@ -186,12 +185,8 @@
       }
     },
     "instanceRoot" : "*/.aem/additional",
-    "instanceName" : "local-*",
-    "instanceList" : "",
-    "instanceAuthorName" : "local-author*",
-    "instanceConnectionTimeout" : 30000,
-    "instanceConnectionUntrustedSsl" : true,
     "packageRoot": "*/src/main/content",
+    "packageInstallPath" : "/apps/additional/install",
     "packageErrors" : [
       "javax.jcr.nodetype.ConstraintViolationException",
       "org.apache.jackrabbit.vault.packaging.DependencyException",
@@ -199,17 +194,33 @@
     ],
     "packageResponseBuffer" : 4096,
     "packageSnapshots" : [ ],
-    "vaultFilesPath" : "*/src/main/resources/META-INF/vault",
-    "vaultLineSeparator" : "LF",
+    "lineSeparator" : "LF",
     "notificationEnabled" : false
   },
   "bundleConfig" : {
-    "javaPackage" : "com.company.aem.additional",
-    "javaPackageOptions" : "-split-package:=merge-first",
-    "manifestAttributes" : true,
-    "bndPath" : "*/bnd.bnd",
-    "bndInstructions" : {
-      "-fixupmessages.bundleActivator" : "Bundle-Activator * is being imported *;is:=error"
+    "jar" : {
+      "installPath" : "/apps/additional/install",
+      "javaPackage" : "<auto>",
+      "javaPackageOptions" : "-split-package:=merge-first",
+      "manifestAttributes" : true,
+      "bndPath" : "*/bnd.bnd",
+      "bndInstructions" : {
+        "-fixupmessages.bundleActivator" : "Bundle-Activator * is being imported *;is:=error"
+      },
+      "importPackages" : [
+        "*"
+      ],
+      "exportPackages" : [ ],
+      "privatePackages" : [ ],
+      "name" : null,
+      "attributes" : {
+        "Manifest-Version" : "Manifest-Version=1.0"
+      },
+      "category" : null,
+      "manifestVersion" : null,
+      "activator" : null,
+      "vendor" : null,
+      "symbolicName" : null
     }
   },
   "packageDeployed" : { }
