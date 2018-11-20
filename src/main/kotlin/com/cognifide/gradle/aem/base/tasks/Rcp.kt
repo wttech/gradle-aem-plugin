@@ -14,10 +14,10 @@ open class Rcp : Vlt() {
     }
 
     @Input
-    var sourceInstance: Instance? = aem.instanceConcrete("source")
+    var sourceInstance: Instance? = aem.instanceTyped("source")
 
     @Input
-    var targetInstance: Instance? = aem.instanceConcrete("target")
+    var targetInstance: Instance? = aem.instanceTyped("target")
 
     @Input
     var paths: MutableMap<String, String> = mutableMapOf()

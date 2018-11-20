@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.base.Retry
-import com.cognifide.gradle.aem.internal.MemoryCache
+import com.cognifide.gradle.aem.internal.BuildScope
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.ProgressCountdown
 import com.cognifide.gradle.aem.internal.file.FileException
@@ -46,7 +46,7 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
     private fun resolveRemotePackage(resolver: (ListResponse) -> ListResponse.Package?, refresh: Boolean): ListResponse.Package? {
         aem.logger.debug("Asking for uploaded packages on $instance")
 
-        val packages = MemoryCache.of(project).getOrPut("instance.${instance.name}.packages", {
+        val packages = BuildScope.of(project).getOrPut("instance.${instance.name}.packages", {
             try {
                 postMultipart(PKG_MANAGER_LIST_JSON) { ListResponse.fromJson(asStream(it)) }
             } catch (e: Exception) {
@@ -350,8 +350,4 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
         const val OSGI_VMSTAT_SHUTDOWN_RESTART = "Restart"
     }
 
-}
-
-fun Collection<Instance>.sync(project: Project, callback: (InstanceSync) -> Unit) {
-    return map { InstanceSync(project, it) }.parallelStream().forEach(callback)
 }

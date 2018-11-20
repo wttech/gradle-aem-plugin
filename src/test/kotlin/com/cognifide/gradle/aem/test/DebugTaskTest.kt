@@ -20,7 +20,7 @@ class DebugTaskTest : AemTest() {
 
     private fun buildDebugJsonFile(buildName: String) {
         build("debug/$buildName", {
-            withArguments(":aemDebug", "-S", "-i", "--offline")
+            withArguments(":aemDebug", "-S", "-i", "-Paem.debug.packageDeployed=false")
         }, {
             assertJsonCustomized(
                     readFile("debug/$buildName/debug.json"),

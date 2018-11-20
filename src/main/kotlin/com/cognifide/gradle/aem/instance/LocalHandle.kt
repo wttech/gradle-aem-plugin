@@ -204,7 +204,7 @@ class LocalHandle(val project: Project, val instance: LocalInstance) {
         execute(stopScript)
 
         try {
-            sync.stop()
+            instance.sync.stop()
         } catch (e: InstanceException) {
             // ignore, fallback when script failed
         }
@@ -242,10 +242,6 @@ class LocalHandle(val project: Project, val instance: LocalInstance) {
         cleanDir(false)
 
         aem.logger.info("Destroyed with success")
-    }
-
-    val sync by lazy {
-        InstanceSync(project, instance)
     }
 
     val created: Boolean

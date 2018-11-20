@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.base
 
 import com.cognifide.gradle.aem.api.AemException
+import com.cognifide.gradle.aem.internal.BuildScope
 import com.cognifide.gradle.aem.internal.notifier.DorkboxNotifier
 import com.cognifide.gradle.aem.internal.notifier.JcGayNotifier
 import com.cognifide.gradle.aem.internal.notifier.Notifier
@@ -89,18 +90,11 @@ class Notifier private constructor(private val aem: BaseExtension) {
 
         const val IMAGE_PATH = "/com/cognifide/gradle/aem/META-INF/vault/definition/thumbnail.png"
 
-        val EXT_INSTANCE_PROP = Notifier::class.java.canonicalName
-
         /**
          * Get project specific notifier (config can vary)
          */
         fun of(aem: BaseExtension): com.cognifide.gradle.aem.base.Notifier {
-            val props = aem.project.extensions.extraProperties
-            if (!props.has(EXT_INSTANCE_PROP)) {
-                props.set(EXT_INSTANCE_PROP, setup(aem))
-            }
-
-            return props.get(EXT_INSTANCE_PROP) as com.cognifide.gradle.aem.base.Notifier
+            return BuildScope.of(aem.project).getOrPut(Notifier::class.java.canonicalName, { setup(aem) })
         }
 
         /**

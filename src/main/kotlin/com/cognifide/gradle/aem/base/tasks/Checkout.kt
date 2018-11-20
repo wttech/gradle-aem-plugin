@@ -19,7 +19,7 @@ import java.io.File
 open class Checkout : Vlt() {
 
     @Input
-    var instance = aem.instanceAny()
+    var instance = aem.instanceAny
 
     @Input
     var filter = aem.filter()

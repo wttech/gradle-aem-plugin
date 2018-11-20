@@ -139,7 +139,7 @@ open class HttpClient(val project: Project) {
     }
 
     fun asString(response: HttpResponse): String {
-        return IOUtils.toString(asStream(response)) ?: ""
+        return IOUtils.toString(asStream(response), Charsets.UTF_8) ?: ""
     }
 
     open fun checkStatus(response: HttpResponse, statuses: Collection<Int> = listOf(HttpStatus.SC_OK)) {

@@ -47,15 +47,15 @@ open class Create : InstanceTask() {
 
     @TaskAction
     fun create() {
-        if (handles.isEmpty()) {
+        if (instanceHandles.isEmpty()) {
             logger.info("No instances to create")
             return
         }
 
         logger.info("Creating instances")
-        aem.handles(handles) { create(options, instanceFiles) }
+        aem.parallelWith(instanceHandles) { create(options, instanceFiles) }
 
-        aem.notifier.notify("Instance(s) created", "Which: ${handles.names}")
+        aem.notifier.notify("Instance(s) created", "Which: ${instanceHandles.names}")
     }
 
     companion object {

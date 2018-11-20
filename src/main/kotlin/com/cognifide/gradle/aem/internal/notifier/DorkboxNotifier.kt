@@ -6,8 +6,12 @@ import org.apache.commons.lang3.StringUtils
 import org.gradle.api.Project
 import org.gradle.api.logging.LogLevel
 import javax.imageio.ImageIO
+import com.cognifide.gradle.aem.internal.notifier.Notifier as BaseNotifier
 
-class DorkboxNotifier(val project: Project, val configurer: Notify.() -> Unit) : com.cognifide.gradle.aem.internal.notifier.Notifier {
+class DorkboxNotifier(
+        val project: Project,
+        val configurer: Notify.() -> Unit
+) : BaseNotifier {
 
     override fun notify(title: String, text: String, level: LogLevel) {
         try {

@@ -1,10 +1,7 @@
 package com.cognifide.gradle.aem.base
 
 import com.cognifide.gradle.aem.api.AemException
-import com.cognifide.gradle.aem.instance.Instance
-import com.cognifide.gradle.aem.instance.InstanceType
-import com.cognifide.gradle.aem.instance.LocalInstance
-import com.cognifide.gradle.aem.instance.RemoteInstance
+import com.cognifide.gradle.aem.instance.*
 import com.cognifide.gradle.aem.internal.LineSeparator
 import com.cognifide.gradle.aem.internal.notifier.Notifier
 import com.cognifide.gradle.aem.pkg.PackagePlugin
@@ -38,45 +35,17 @@ class BaseConfig(
     var instanceRoot: String = "${System.getProperty("user.home")}/.aem/${aem.project.rootProject.name}"
 
     /**
-     * Determines instances involved in CRX package deployment (filters preconfigured instances).
-     *
-     * TODO move it to extension
-     */
-    @Input
-    var instanceName: String = aem.props.string("aem.instance.name", "${aem.environment}-*")
-
-    /**
-     * Forces instances involved in e.g CRX package deployment (uses explicit instances configuration).
-     *
-     * TODO move it to extension
-     */
-    @Input
-    var instanceList: String = aem.props.string("aem.instance.list", "")
-
-    /**
-     * Determines instance which will be used when CRX package activation from author to publishers
-     * will be performed (only if distributed deploy is enabled).
-     *
-     * TODO move it to extension
-     */
-    @Input
-    var instanceAuthorName: String = aem.props.string("aem.instance.author.name", "${aem.environment}-${InstanceType.AUTHOR.type}*")
-
-    /**
      * Defines maximum time after which initializing connection to AEM will be aborted (e.g on upload, install).
      *
      * Default value may look quite big, but it is just very fail-safe.
      */
-    @Input
-    var instanceConnectionTimeout: Int = aem.props.int("aem.instance.connectionTimeout", 30000)
+    @Internal
+    @JsonIgnore
+    var instanceHttpOptions: (InstanceHttpClient).() -> Unit = {
+        connectionTimeout = aem.props.int("aem.instance.httpOptions.connectionTimeout", 30000)
+        connectionUntrustedSsl = aem.props.boolean("aem.instance.httpOptions.connectionUntrustedSsl", true)
+    }
 
-    /**
-     * Determines if connection to untrusted (e.g. self-signed) SSL certificates should be allowed.
-     *
-     * By default allows all SSL connections.
-     */
-    @Input
-    var instanceConnectionUntrustedSsl: Boolean = aem.props.boolean("aem.instance.connectionUntrustedSsl", true)
     /**
      * CRX package name conventions (with wildcard) indicating that package can change over time
      * while having same version specified. Affects CRX packages composed and satisfied.
@@ -103,7 +72,8 @@ class BaseConfig(
      * Default convention assumes that subprojects have separate bundle paths, because of potential re-installation of subpackages.
      * When all subprojects will have same bundle path, reinstalling one subpackage may end with deletion of other bundles coming from another subpackage.
      *
-     * Beware that more nested bundle install directories are not supported by AEM by default.
+     * Beware that more nested bundle install directories are not supported by AEM by default (up to 4th depth level).
+     * That's the reason of using dots in subproject names to avoid that limitation.
      */
     @Input
     var packageInstallPath: String = if (aem.project == aem.project.rootProject) {
@@ -157,11 +127,11 @@ class BaseConfig(
     @JsonIgnore
     var notificationConfig: (com.cognifide.gradle.aem.base.Notifier) -> Notifier = { it.factory() }
 
-
     init {
-        // Define through command line (forced instances)
-        if (instanceList.isNotBlank()) {
-            instances(Instance.parse(aem.project, instanceList))
+        // Define through command line
+        val instancesForced = aem.props.string("aem.instances", "")
+        if (instancesForced.isNotBlank()) {
+            instances(Instance.parse(aem.project, instancesForced))
         }
 
         // Define through properties

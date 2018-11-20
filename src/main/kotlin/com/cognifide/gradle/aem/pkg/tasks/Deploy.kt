@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.pkg.tasks
 
 import com.cognifide.gradle.aem.instance.Instance
 import com.cognifide.gradle.aem.instance.InstanceSync
+import com.cognifide.gradle.aem.instance.InstanceType
 import com.cognifide.gradle.aem.instance.names
 import com.cognifide.gradle.aem.internal.fileNames
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -52,9 +53,9 @@ open class Deploy : Sync() {
         super.projectsEvaluated()
 
         instances = if (distributed) {
-            Instance.filter(project, aem.config.instanceAuthorName)
+            aem.instanceAuthors
         } else {
-            Instance.filter(project)
+            aem.instances
         }
     }
 
@@ -63,14 +64,6 @@ open class Deploy : Sync() {
         aem.syncPackages(instances, packages) { deployPackage(it) }
 
         aem.notifier.notify("Package deployed", "${packages.fileNames} on ${instances.names}")
-    }
-
-    protected fun InstanceSync.deployPackage(pkg: File) {
-        if (distributed) {
-            distributePackage(pkg, uploadForce, uploadRetry, installRecursive, installRetry)
-        } else {
-            deployPackage(pkg, uploadForce, uploadRetry, installRecursive, installRetry)
-        }
     }
 
     companion object {

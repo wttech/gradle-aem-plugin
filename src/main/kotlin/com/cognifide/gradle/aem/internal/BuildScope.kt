@@ -2,7 +2,7 @@ package com.cognifide.gradle.aem.internal
 
 import org.gradle.api.Project
 
-class MemoryCache {
+class BuildScope {
 
     private val cache = mutableMapOf<String, Any>()
 
@@ -28,14 +28,14 @@ class MemoryCache {
 
     companion object {
 
-        fun of(project: Project): MemoryCache {
+        fun of(project: Project): BuildScope {
             val ext = project.rootProject.extensions.extraProperties
-            val key = MemoryCache::class.java.canonicalName
+            val key = BuildScope::class.java.canonicalName
             if (!ext.has(key)) {
-                ext.set(key, MemoryCache())
+                ext.set(key, BuildScope())
             }
 
-            return ext.get(key) as MemoryCache
+            return ext.get(key) as BuildScope
         }
 
     }

@@ -44,11 +44,13 @@ class InstancePlugin : AemPlugin() {
         registerTask(Satisfy.NAME, Satisfy::class.java) {
             it.dependsOn(Resolve.NAME).mustRunAfter(Create.NAME, Up.NAME)
         }
-        registerTask(Reload.NAME, Reload::class.java) {
-            it.mustRunAfter(Satisfy.NAME, Deploy.NAME)
+        registerTask(Reload.NAME, Reload::class.java) { task ->
+            task.mustRunAfter(Satisfy.NAME)
+            plugins.withId(PackagePlugin.ID) { task.mustRunAfter(Deploy.NAME) }
         }
-        registerTask(Await.NAME, Await::class.java) {
-            it.mustRunAfter(Create.NAME, Up.NAME, Satisfy.NAME, Deploy.NAME)
+        registerTask(Await.NAME, Await::class.java) { task ->
+            task.mustRunAfter(Create.NAME, Up.NAME, Satisfy.NAME)
+            plugins.withId(PackagePlugin.ID) { task.mustRunAfter(Deploy.NAME) }
         }
         registerTask(Collect.NAME, Collect::class.java) { task ->
             task.mustRunAfter(Satisfy.NAME)

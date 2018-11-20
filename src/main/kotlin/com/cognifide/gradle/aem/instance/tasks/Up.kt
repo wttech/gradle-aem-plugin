@@ -23,7 +23,7 @@ open class Up : InstanceTask() {
      */
     @Internal
     @get:JsonIgnore
-    var init: (LocalHandle) -> Unit = { }
+    var init: LocalHandle.() -> Unit = { }
 
     fun await(configurer: AwaitAction.() -> Unit) {
         await.apply(configurer)
@@ -31,11 +31,11 @@ open class Up : InstanceTask() {
 
     @TaskAction
     fun up() {
-        aem.handles(handles) { up() }
+        aem.parallelWith(instanceHandles) { up() }
         await.apply { instances = this@Up.instances }.perform()
-        aem.handles(handles) { init(init) }
+        aem.parallelWith(instanceHandles) { init(init) }
 
-        aem.notifier.notify("Instance(s) up", "Which: ${handles.names}")
+        aem.notifier.notify("Instance(s) up", "Which: ${instanceHandles.names}")
     }
 
     companion object {

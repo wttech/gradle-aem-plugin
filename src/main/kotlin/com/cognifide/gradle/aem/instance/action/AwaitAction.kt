@@ -40,13 +40,8 @@ open class AwaitAction(project: Project) : AbstractAction(project) {
      */
     @Internal
     @get:JsonIgnore
-    var availableCheck: (InstanceState) -> Boolean = { state ->
-        state.check({ sync ->
-            sync.connectionTimeout = 750
-            sync.connectionRetries = false
-        }, {
-            !state.bundleState.unknown
-        })
+    var availableCheck: InstanceState.() -> Boolean = {
+        check(InstanceState.BUNDLE_STATE_SYNC_OPTIONS, { !bundleState.unknown })
     }
 
     /**
@@ -63,7 +58,7 @@ open class AwaitAction(project: Project) : AbstractAction(project) {
      */
     @Internal
     @get:JsonIgnore
-    var stableState: (InstanceState) -> Int = { it.checkBundleState(500) }
+    var stableState: InstanceState.() -> Int = { checkBundleState() }
 
     /**
      * Hook for customizing instance stability check.
@@ -71,7 +66,7 @@ open class AwaitAction(project: Project) : AbstractAction(project) {
      */
     @Internal
     @get:JsonIgnore
-    var stableCheck: (InstanceState) -> Boolean = { it.checkBundleStable(500) }
+    var stableCheck: InstanceState.() -> Boolean = { checkBundleStable() }
 
     /**
      * Number of intervals / additional instance stability checks to assure all stable instances.
@@ -85,7 +80,7 @@ open class AwaitAction(project: Project) : AbstractAction(project) {
      */
     @Internal
     @get:JsonIgnore
-    var healthCheck: (InstanceState) -> Boolean = { it.checkComponentState(10000) }
+    var healthCheck: InstanceState.() -> Boolean = { checkComponentState() }
 
     /**
      * Repeat health check when failed (brute-forcing).
@@ -130,24 +125,15 @@ open class AwaitAction(project: Project) : AbstractAction(project) {
             val instanceStates = synchronizers.map { it.determineInstanceState() }
 
             // Update checksum on any particular state change
-            val stableChecksum = instanceStates.parallelStream()
-                    .map { stableState(it) }
-                    .collect(Collectors.toList())
-                    .hashCode()
+            val stableChecksum = aem.parallelProcess(instanceStates) { stableState(it) }.hashCode()
             if (stableChecksum != lastStableChecksum) {
                 lastStableChecksum = stableChecksum
                 timer.reset()
             }
 
             // Examine instances
-            val unstableInstances = instanceStates.parallelStream()
-                    .filter { !stableCheck(it) }
-                    .map { it.instance }
-                    .collect(Collectors.toList())
-            val availableInstances = instanceStates.parallelStream()
-                    .filter { availableCheck(it) }
-                    .map { it.instance }
-                    .collect(Collectors.toList())
+            val unstableInstances = aem.parallelProcess(instanceStates, { !stableCheck(it) }, { it.instance })
+            val availableInstances = aem.parallelProcess(instanceStates, { availableCheck(it) }, { it.instance })
             val unavailableInstances = synchronizers.map { it.instance } - availableInstances
 
             val initializedUnavailableInstances = unavailableInstances.filter { it.isInitialized(project) }
@@ -201,10 +187,7 @@ open class AwaitAction(project: Project) : AbstractAction(project) {
         val synchronizers = prepareSynchronizers()
         for (i in 0..healthRetry.times) {
             val instanceStates = synchronizers.map { it.determineInstanceState() }
-            val unhealthyInstances = instanceStates.parallelStream().filter { !healthCheck(it) }
-                    .map { it.instance }
-                    .collect(Collectors.toList())
-
+            val unhealthyInstances = aem.parallelProcess(instanceStates, { !healthCheck(it) }, { it.instance })
             if (unhealthyInstances.isEmpty()) {
                 notify("Instance(s) healthy", "Which: ${instances.names}")
                 return

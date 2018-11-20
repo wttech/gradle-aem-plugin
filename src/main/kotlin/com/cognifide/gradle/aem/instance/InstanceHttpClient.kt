@@ -13,8 +13,8 @@ open class InstanceHttpClient(project: Project, val instance: Instance) : HttpCl
     init {
         basicUser = instance.user
         basicPassword = instance.password
-        connectionTimeout = aem.config.instanceConnectionTimeout
-        connectionUntrustedSsl = aem.config.instanceConnectionUntrustedSsl
+
+        apply(aem.config.instanceHttpOptions)
     }
 
     override fun baseUrl(url: String): String {

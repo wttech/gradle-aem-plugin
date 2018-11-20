@@ -43,11 +43,6 @@
       }
     },
     "instanceRoot" : "*/.aem/minimal",
-    "instanceName" : "local-*",
-    "instanceList" : "",
-    "instanceAuthorName" : "local-author*",
-    "instanceConnectionTimeout" : 30000,
-    "instanceConnectionUntrustedSsl" : true,
     "packageRoot": "*/src/main/content",
     "packageInstallPath" : "/apps/minimal/install",
     "packageErrors" : [
