@@ -1,51 +1,64 @@
 package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.api.AemException
-import com.cognifide.gradle.aem.base.BaseExtension
 import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.internal.Patterns
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.gradle.api.Project
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Internal
 import java.io.Serializable
-import kotlin.reflect.KClass
 
 interface Instance : Serializable {
 
+    @get:Input
     val httpUrl: String
 
+    @get:Internal
     val httpPort: Int
         get() = InstanceUrl.parse(httpUrl).httpPort
 
+    @get:Internal
     @get:JsonIgnore
     val httpBasicAuthUrl: String
         get() = InstanceUrl.parse(httpUrl).httpBasicAuthUrl(user, password)
 
+    @get:Input
     val user: String
 
+    @get:Input
     val password: String
 
+    @get:Internal
     @get:JsonIgnore
     val hiddenPassword: String
         get() = "*".repeat(password.length)
 
+    @get:Input
     val environment: String
 
+    @get:Internal
     @get:JsonIgnore
     val cmd: Boolean
         get() = environment == ENVIRONMENT_CMD
 
+    @get:Input
     val typeName: String
 
+    @get:Internal
     val type: InstanceType
         get() = InstanceType.byName(typeName)
 
+    @get:Internal
     @get:JsonIgnore
     val credentials: String
         get() = "$user:$password"
 
+    @get:Internal
     val name: String
         get() = "$environment-$typeName"
 
+    @get:Internal
     @get:JsonIgnore
     val sync: InstanceSync
 

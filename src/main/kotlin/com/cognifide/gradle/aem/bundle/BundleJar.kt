@@ -15,17 +15,16 @@ import org.gradle.api.tasks.bundling.Jar
 import java.io.Serializable
 
 /**
- * DSL for easier manipulation of OSGi bundle JAR manifest attributes.
- *
  * The main purpose of this extension point is to provide a place for specifying custom
  * OSGi bundle related properties, because it is not possible to add properties to existing tasks
  * like 'jar' directly.
  */
-class BundleExtension(
+class BundleJar(
         @Transient
         @JsonIgnore
         private val aem: BaseExtension,
 
+        @Internal
         @Transient
         @JsonIgnore
         val jar: Jar
@@ -41,6 +40,14 @@ class BundleExtension(
      */
     @Input
     var installPath: String = aem.config.packageInstallPath
+
+    /**
+     * Enable or disable support for auto-generating OSGi specific JAR manifest attributes
+     * like 'Bundle-SymbolicName', 'Export-Package' or AEM specific like 'Sling-Model-Packages'
+     * using 'bundlePackage' property.
+     */
+    @Input
+    var attributesConvention: Boolean = true
 
     /**
      * Determines package in which OSGi bundle being built contains its classes.
@@ -76,14 +83,6 @@ class BundleExtension(
     var javaPackageOptions: String = "-split-package:=merge-first"
 
     /**
-     * Enable or disable support for auto-generating OSGi specific JAR manifest attributes
-     * like 'Bundle-SymbolicName', 'Export-Package' or AEM specific like 'Sling-Model-Packages'
-     * using 'bundlePackage' property.
-     */
-    @Input
-    var manifestAttributes: Boolean = true
-
-    /**
      * Bundle instructions file location consumed by BND tool.
      *
      * If file exists, instructions will be taken from it instead of directly specified
@@ -107,13 +106,16 @@ class BundleExtension(
             "-fixupmessages.bundleActivator" to "${Bundle.ATTRIBUTE_ACTIVATOR} * is being imported *;is:=error"
     )
 
-    @Input
+    @Internal
+    @JsonIgnore
     var importPackages: MutableList<String> = mutableListOf("*")
 
-    @Input
+    @Internal
+    @JsonIgnore
     var exportPackages: MutableList<String> = mutableListOf()
 
-    @Input
+    @Internal
+    @JsonIgnore
     var privatePackages: MutableList<String> = mutableListOf()
 
     fun projectsEvaluated() {
@@ -121,20 +123,8 @@ class BundleExtension(
             javaPackage = javaPackageDefault
         }
 
-        if (!attribute(Bundle.ATTRIBUTE_IMPORT_PACKAGE).isNullOrBlank()) {
-            attribute(Bundle.ATTRIBUTE_IMPORT_PACKAGE, mergePackages(importPackages))
-        }
-
-        if (!attribute(Bundle.ATTRIBUTE_EXPORT_PACKAGE).isNullOrBlank()) {
-            attribute(Bundle.ATTRIBUTE_EXPORT_PACKAGE, mergePackages(exportPackages))
-        }
-
-        if (!attribute(Bundle.ATTRIBUTE_PRIVATE_PACKAGE).isNullOrBlank()) {
-            attribute(Bundle.ATTRIBUTE_PRIVATE_PACKAGE, mergePackages(privatePackages))
-        }
-
         ensureBaseNameIfNotCustomized()
-        ensureManifestAttributes()
+        updateAttributes()
     }
 
     /**
@@ -154,44 +144,54 @@ class BundleExtension(
     /**
      * Set (if not set) or update OSGi or AEM specific jar manifest attributes.
      */
-    private fun ensureManifestAttributes() {
-        if (!manifestAttributes) {
-            aem.logger.debug("Bundle manifest dynamic attributes support is disabled.")
-            return
+    private fun updateAttributes() {
+        if (attributesConvention) {
+            if (!hasAttribute(Bundle.ATTRIBUTE_NAME) && !aem.project.description.isNullOrBlank()) {
+                attribute(Bundle.ATTRIBUTE_NAME, aem.project.description)
+            }
+
+            if (!hasAttribute(Bundle.ATTRIBUTE_SYMBOLIC_NAME) && javaPackage.isNotBlank()) {
+                attribute(Bundle.ATTRIBUTE_SYMBOLIC_NAME, javaPackage)
+            }
+
+            if (!hasAttribute(Bundle.ATTRIBUTE_SLING_MODEL_PACKAGES) && javaPackage.isNotBlank()) {
+                attribute(Bundle.ATTRIBUTE_SLING_MODEL_PACKAGES, javaPackage)
+            }
         }
 
-        val attributes = mutableMapOf<String, Any>().apply { putAll(jar.manifest.attributes) }
-
-        if (!attributes.contains(Bundle.ATTRIBUTE_NAME) && !aem.project.description.isNullOrBlank()) {
-            attributes[Bundle.ATTRIBUTE_NAME] = aem.project.description!!
-        }
-
-        if (!attributes.contains(Bundle.ATTRIBUTE_SYMBOLIC_NAME) && javaPackage.isNotBlank()) {
-            attributes[Bundle.ATTRIBUTE_SYMBOLIC_NAME] = javaPackage
-        }
-
-        attributes[Bundle.ATTRIBUTE_EXPORT_PACKAGE] = mutableSetOf<String>().apply {
-            if (javaPackage.isNotBlank()) {
-                add(if (javaPackageOptions.isNotBlank()) {
+        combinePackageAttribute(Bundle.ATTRIBUTE_IMPORT_PACKAGE, importPackages)
+        combinePackageAttribute(Bundle.ATTRIBUTE_PRIVATE_PACKAGE, privatePackages)
+        combinePackageAttribute(Bundle.ATTRIBUTE_EXPORT_PACKAGE, exportPackages.apply {
+            if (attributesConvention && javaPackage.isNotBlank()) {
+                val javaPackageExported = if (javaPackageOptions.isNotBlank()) {
                     "$javaPackage.*;$javaPackageOptions"
                 } else {
                     "$javaPackage.*"
-                })
+                }
+
+                add(javaPackageExported)
             }
-
-            addAll((attributes[Bundle.ATTRIBUTE_EXPORT_PACKAGE]?.toString()
-                    ?: "").split(",").map { it.trim() })
-        }.joinToString(",")
-
-        if (!attributes.contains(Bundle.ATTRIBUTE_SLING_MODEL_PACKAGES) && javaPackage.isNotBlank()) {
-            attributes[Bundle.ATTRIBUTE_SLING_MODEL_PACKAGES] = javaPackage
-        }
-
-        jar.manifest.attributes(attributes)
+        })
     }
 
-    var attributes: MutableMap<String, String?>
-        get() = jar.manifest.attributes.mapValues { it.toString() }.toMutableMap()
+    private fun combinePackageAttribute(name: String, pkgs: Collection<String>) {
+        val combinedPkgs = mutableSetOf<String>().apply {
+            val existing = (attribute(name) ?: "")
+                    .split(",")
+                    .map { it.trim() }
+
+            addAll(pkgs)
+            addAll(existing)
+        }.filter { it.isNotBlank() }
+
+        if (combinedPkgs.isNotEmpty()) {
+            attribute(name, combinedPkgs.joinToString(","))
+        }
+    }
+
+    @get:Input
+    var attributes: MutableMap<String, Any?>
+        get() = mutableMapOf<String, Any?>().apply { putAll(jar.manifest.attributes) }
         set(value) {
             jar.manifest.attributes(value)
         }
@@ -200,36 +200,50 @@ class BundleExtension(
 
     fun attribute(name: String): String? = jar.manifest.attributes[name] as String?
 
+    fun hasAttribute(name: String) = attributes.containsKey(name)
+
+    @get:Internal
+    @get:JsonIgnore
     var name: String?
         get() = attribute(Bundle.ATTRIBUTE_NAME)
         set(value) {
             attribute(Bundle.ATTRIBUTE_NAME, value)
         }
 
+    @get:Internal
+    @get:JsonIgnore
     var symbolicName: String?
         get() = attribute(Bundle.ATTRIBUTE_SYMBOLIC_NAME)
         set(value) {
             attribute(Bundle.ATTRIBUTE_SYMBOLIC_NAME, value)
         }
 
+    @get:Internal
+    @get:JsonIgnore
     var manifestVersion: String?
         get() = attribute(Bundle.ATTRIBUTE_MANIFEST_VERSION)
         set(value) {
             attribute(Bundle.ATTRIBUTE_MANIFEST_VERSION, value)
         }
 
+    @get:Internal
+    @get:JsonIgnore
     var activator: String?
-        get() = attributes[Bundle.ATTRIBUTE_ACTIVATOR]
+        get() = attributes[Bundle.ATTRIBUTE_ACTIVATOR]?.toString()
         set(value) {
             attributes[Bundle.ATTRIBUTE_ACTIVATOR] = value
         }
 
+    @get:Internal
+    @get:JsonIgnore
     var category: String?
         get() = attribute(Bundle.ATTRIBUTE_CATEGORY)
         set(value) {
             attribute(Bundle.ATTRIBUTE_CATEGORY, value)
         }
 
+    @get:Internal
+    @get:JsonIgnore
     var vendor: String?
         get() = attribute(Bundle.ATTRIBUTE_VENDOR)
         set(value) {
@@ -243,6 +257,8 @@ class BundleExtension(
     fun privatePackage(pkg: String) = privatePackages.add(pkg)
 
     fun privatePackages(pkgs: Collection<String>) = privatePackages.addAll(pkgs)
+
+    fun excludePackage(pkg: String) = excludePackages(listOf(pkg))
 
     fun excludePackages(pkgs: Collection<String>) = importPackages.addAll(pkgs.map { "!$it" })
 

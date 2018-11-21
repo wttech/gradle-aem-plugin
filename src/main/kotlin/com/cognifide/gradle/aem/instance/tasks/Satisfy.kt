@@ -22,9 +22,7 @@ open class Satisfy : Deploy() {
     var groupName = aem.props.string("aem.satisfy.group.name", "*")
 
     @get:Internal
-    var groupFilter: (String) -> Boolean = { fileGroup ->
-        Patterns.wildcards(fileGroup, groupName)
-    }
+    var groupFilter: (String) -> Boolean = { fileGroup -> Patterns.wildcard(fileGroup, groupName) }
 
     /**
      * Satisfy is a lazy task, which means that it will not install package that is already installed.

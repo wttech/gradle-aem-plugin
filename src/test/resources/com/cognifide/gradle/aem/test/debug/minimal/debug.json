@@ -26,20 +26,14 @@
         "user" : "admin",
         "password" : "admin",
         "typeName" : "author",
-        "environment" : "local",
-        "name" : "local-author",
-        "type" : "AUTHOR",
-        "httpPort" : 4502
+        "environment" : "local"
       },
       "local-publish" : {
         "httpUrl" : "http://localhost:4503",
         "user" : "admin",
         "password" : "admin",
         "typeName" : "publish",
-        "environment" : "local",
-        "name" : "local-publish",
-        "type" : "PUBLISH",
-        "httpPort" : 4503
+        "environment" : "local"
       }
     },
     "instanceRoot" : "*/.aem/minimal",

@@ -21,106 +21,6 @@
   },
   "baseConfig" : {
     "instances" : {
-      "prod-author" : {
-        "httpUrl" : "http://author.example.com",
-        "user" : "admin",
-        "password" : "admin",
-        "typeName" : "author",
-        "environment" : "prod",
-        "name" : "prod-author",
-        "type" : "AUTHOR",
-        "httpPort" : 80
-      },
-      "prod-publish" : {
-        "httpUrl" : "http://example.com",
-        "user" : "admin",
-        "password" : "admin",
-        "typeName" : "publish",
-        "environment" : "prod",
-        "name" : "prod-publish",
-        "type" : "PUBLISH",
-        "httpPort" : 80
-      },
-      "int-author" : {
-        "httpUrl" : "http://192.168.1.1",
-        "user" : "admin",
-        "password" : "admin",
-        "typeName" : "author",
-        "environment" : "int",
-        "name" : "int-author",
-        "type" : "AUTHOR",
-        "httpPort" : 80
-      },
-      "int-publish" : {
-        "httpUrl" : "http://192.168.1.2",
-        "user" : "admin",
-        "password" : "admin",
-        "typeName" : "publish",
-        "environment" : "int",
-        "name" : "int-publish",
-        "type" : "PUBLISH",
-        "httpPort" : 80
-      },
-      "stg-author" : {
-        "httpUrl" : "https://192.168.3.1:8082",
-        "user" : "user1",
-        "password" : "password1",
-        "typeName" : "author",
-        "environment" : "stg",
-        "name" : "stg-author",
-        "type" : "AUTHOR",
-        "httpPort" : 8082
-      },
-      "stg-publish" : {
-        "httpUrl" : "https://192.168.3.2:8083",
-        "user" : "user2",
-        "password" : "password2",
-        "typeName" : "publish",
-        "environment" : "stg",
-        "name" : "stg-publish",
-        "type" : "PUBLISH",
-        "httpPort" : 8083
-      },
-      "perf-author-1" : {
-        "httpUrl" : "http://192.168.2.1:4502",
-        "user" : "admin",
-        "password" : "admin",
-        "typeName" : "author-1",
-        "environment" : "perf",
-        "name" : "perf-author-1",
-        "type" : "AUTHOR",
-        "httpPort" : 4502
-      },
-      "perf-author-2" : {
-        "httpUrl" : "http://192.168.2.1:5502",
-        "user" : "admin",
-        "password" : "admin",
-        "typeName" : "author-2",
-        "environment" : "perf",
-        "name" : "perf-author-2",
-        "type" : "AUTHOR",
-        "httpPort" : 5502
-      },
-      "perf-publish-1" : {
-        "httpUrl" : "http://192.168.2.2:4503",
-        "user" : "admin",
-        "password" : "admin",
-        "typeName" : "publish-1",
-        "environment" : "perf",
-        "name" : "perf-publish-1",
-        "type" : "PUBLISH",
-        "httpPort" : 4503
-      },
-      "perf-publish-2" : {
-        "httpUrl" : "http://192.168.2.2:5503",
-        "user" : "admin",
-        "password" : "admin",
-        "typeName" : "publish-2",
-        "environment" : "perf",
-        "name" : "perf-publish-2",
-        "type" : "PUBLISH",
-        "httpPort" : 5503
-      },
       "local-author" : {
         "httpUrl" : "http://localhost:4502",
         "user" : "admin",
@@ -128,11 +28,8 @@
         "typeName" : "author",
         "environment" : "local",
         "debugPort" : 24502,
-        "name" : "local-author",
-        "type" : "AUTHOR",
-        "httpPort" : 4502,
-        "runModes" : "author,nosamplecontent,mongo",
         "startOpts" : "",
+        "runModes" : "author,nosamplecontent,mongo",
         "jvmOpts" : "-Xdebug -Xrunjdwp:transport=dt_socket,address=24502,server=y,suspend=n -server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true"
       },
       "local-publish1" : {
@@ -142,11 +39,8 @@
         "typeName" : "publish1",
         "environment" : "local",
         "debugPort" : 14503,
-        "name" : "local-publish1",
-        "type" : "PUBLISH",
-        "httpPort" : 4503,
-        "runModes" : "publish,local",
         "startOpts" : "",
+        "runModes" : "publish,local",
         "jvmOpts" : "-Xdebug -Xrunjdwp:transport=dt_socket,address=14503,server=y,suspend=n -server -Xmx1024m -XX:MaxPermSize=256M -Djava.awt.headless=true"
       },
       "local-publish2" : {
@@ -156,11 +50,8 @@
         "typeName" : "publish2",
         "environment" : "local",
         "debugPort" : 14504,
-        "name" : "local-publish2",
-        "type" : "PUBLISH",
-        "httpPort" : 4504,
-        "runModes" : "publish,local",
         "startOpts" : "",
+        "runModes" : "publish,local",
         "jvmOpts" : "-Xdebug -Xrunjdwp:transport=dt_socket,address=14504,server=y,suspend=n -server -Xmx1024m -XX:MaxPermSize=256M -Djava.awt.headless=true"
       },
       "test-author" : {
@@ -168,20 +59,84 @@
         "user" : "admin",
         "password" : "admin",
         "typeName" : "author",
-        "environment" : "test",
-        "name" : "test-author",
-        "type" : "AUTHOR",
-        "httpPort" : 4502
+        "environment" : "test"
       },
       "test-publish" : {
         "httpUrl" : "http://192.168.6.6:4503",
         "user" : "admin",
         "password" : "admin",
         "typeName" : "publish",
-        "environment" : "test",
-        "name" : "test-publish",
-        "type" : "PUBLISH",
-        "httpPort" : 4503
+        "environment" : "test"
+      },
+      "prod-author" : {
+        "httpUrl" : "http://author.example.com",
+        "user" : "admin",
+        "password" : "admin",
+        "typeName" : "author",
+        "environment" : "prod"
+      },
+      "prod-publish" : {
+        "httpUrl" : "http://example.com",
+        "user" : "admin",
+        "password" : "admin",
+        "typeName" : "publish",
+        "environment" : "prod"
+      },
+      "int-author" : {
+        "httpUrl" : "http://192.168.1.1",
+        "user" : "admin",
+        "password" : "admin",
+        "typeName" : "author",
+        "environment" : "int"
+      },
+      "int-publish" : {
+        "httpUrl" : "http://192.168.1.2",
+        "user" : "admin",
+        "password" : "admin",
+        "typeName" : "publish",
+        "environment" : "int"
+      },
+      "stg-author" : {
+        "httpUrl" : "https://192.168.3.1:8082",
+        "user" : "user1",
+        "password" : "password1",
+        "typeName" : "author",
+        "environment" : "stg"
+      },
+      "stg-publish" : {
+        "httpUrl" : "https://192.168.3.2:8083",
+        "user" : "user2",
+        "password" : "password2",
+        "typeName" : "publish",
+        "environment" : "stg"
+      },
+      "perf-author-1" : {
+        "httpUrl" : "http://192.168.2.1:4502",
+        "user" : "admin",
+        "password" : "admin",
+        "typeName" : "author-1",
+        "environment" : "perf"
+      },
+      "perf-author-2" : {
+        "httpUrl" : "http://192.168.2.1:5502",
+        "user" : "admin",
+        "password" : "admin",
+        "typeName" : "author-2",
+        "environment" : "perf"
+      },
+      "perf-publish-1" : {
+        "httpUrl" : "http://192.168.2.2:4503",
+        "user" : "admin",
+        "password" : "admin",
+        "typeName" : "publish-1",
+        "environment" : "perf"
+      },
+      "perf-publish-2" : {
+        "httpUrl" : "http://192.168.2.2:5503",
+        "user" : "admin",
+        "password" : "admin",
+        "typeName" : "publish-2",
+        "environment" : "perf"
       }
     },
     "instanceRoot" : "*/.aem/additional",
@@ -200,27 +155,21 @@
   "bundleConfig" : {
     "jar" : {
       "installPath" : "/apps/additional/install",
-      "javaPackage" : "<auto>",
+      "javaPackage" : "com.company.aem.additional",
       "javaPackageOptions" : "-split-package:=merge-first",
-      "manifestAttributes" : true,
       "bndPath" : "*/bnd.bnd",
       "bndInstructions" : {
         "-fixupmessages.bundleActivator" : "Bundle-Activator * is being imported *;is:=error"
       },
-      "importPackages" : [
-        "*"
-      ],
-      "exportPackages" : [ ],
-      "privatePackages" : [ ],
-      "name" : null,
+      "attributesConvention" : true,
       "attributes" : {
-        "Manifest-Version" : "Manifest-Version=1.0"
-      },
-      "category" : null,
-      "manifestVersion" : null,
-      "activator" : null,
-      "vendor" : null,
-      "symbolicName" : null
+        "Manifest-Version" : "1.0",
+        "Bundle-Name" : "Additional",
+        "Bundle-SymbolicName" : "com.company.aem.additional",
+        "Import-Package" : "*",
+        "Export-Package" : "com.company.aem.additional.*;-split-package:=merge-first",
+        "Sling-Model-Packages" : "com.company.aem.additional"
+      }
     }
   },
   "packageDeployed" : { }
