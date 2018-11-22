@@ -12,6 +12,7 @@ import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.bundling.Zip
 import org.gradle.api.tasks.bundling.ZipEntryCompression
 
+// TODO collect should not zip both unwrapped and wrapped osgi bundles from satisfy
 open class Collect : Zip(), AemTask {
 
     @Nested
