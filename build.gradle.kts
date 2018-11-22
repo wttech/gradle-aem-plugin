@@ -101,14 +101,12 @@ tasks.named<Test>("test") {
 }
 
 detekt {
-    toolVersion = "1.0.0-RC11"
-    input = files("src/main/kotlin")
-    // filters = ".*/resources/.*,.*/build/.*"
+    config.from(file("detekt.yml"))
 }
 
 bintray {
-    user = (project.properties["bintray.user"] ?: System.getenv("BINTRAY_USER"))?.toString()
-    key = (project.properties["bintray.key"] ?: System.getenv("BINTRAY_KEY"))?.toString()
+    user = (project.findProperty("bintray.user") ?: System.getenv("BINTRAY_USER"))?.toString()
+    key = (project.findProperty("bintray.key") ?: System.getenv("BINTRAY_KEY"))?.toString()
     setPublications("mavenJava")
     with(pkg) {
         repo = "maven-public"
@@ -123,6 +121,6 @@ bintray {
             vcsTag = project.version.toString()
         }
     }
-    publish = (project.properties["bintray.publish"] ?: "true").toString().toBoolean()
-    override = (project.properties["bintray.override"] ?: "false").toString().toBoolean()
+    publish = (project.findProperty("bintray.publish") ?: "true").toString().toBoolean()
+    override = (project.findProperty("bintray.override") ?: "false").toString().toBoolean()
 }

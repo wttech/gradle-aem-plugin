@@ -4,10 +4,10 @@ import com.cognifide.gradle.aem.internal.CollectingLogger
 import org.apache.commons.lang3.builder.EqualsBuilder
 import org.apache.commons.lang3.builder.HashCodeBuilder
 
-class InstanceState(private var _sync: InstanceSync, val instance: Instance) {
+class InstanceState(private var syncOrigin: InstanceSync, val instance: Instance) {
 
     val sync: InstanceSync
-        get() = _sync
+        get() = syncOrigin
 
     val status = CollectingLogger()
 
@@ -20,10 +20,10 @@ class InstanceState(private var _sync: InstanceSync, val instance: Instance) {
      * timeouts etc while determining bundle or component states.
      */
     fun <T> check(configurer: InstanceSync.() -> Unit, action: InstanceState.() -> T): T {
-        val origin = _sync
-        _sync = InstanceSync(_sync.project, _sync.instance).apply(configurer)
+        val origin = syncOrigin
+        syncOrigin = InstanceSync(syncOrigin.project, syncOrigin.instance).apply(configurer)
         val result = action(this)
-        _sync = origin
+        syncOrigin = origin
         return result
     }
 

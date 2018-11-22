@@ -221,7 +221,7 @@ class LocalHandle(val project: Project, val instance: LocalInstance) {
     }
 
     private fun execute(script: Script) {
-        ProcessBuilder(*script.commandLine.toTypedArray())
+        ProcessBuilder(script.commandLine)
                 .directory(dir)
                 .start()
     }
