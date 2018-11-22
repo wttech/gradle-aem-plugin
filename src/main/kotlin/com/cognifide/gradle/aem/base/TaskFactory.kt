@@ -2,11 +2,32 @@ package com.cognifide.gradle.aem.base
 
 import com.cognifide.gradle.aem.api.AemTask
 import com.cognifide.gradle.aem.instance.tasks.*
+import org.gradle.api.Action
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.tasks.TaskProvider
 
 class TaskFactory(@Transient private val project: Project) {
+
+    fun <T : Task> register(name: String, clazz: Class<T>): TaskProvider<T> {
+        return register(name, clazz, Action {})
+    }
+
+    fun <T : Task> register(name: String, clazz: Class<T>, configurer: (T) -> Unit): TaskProvider<T> {
+        return register(name, clazz, Action { configurer(it) })
+    }
+
+    fun <T : Task> register(name: String, clazz: Class<T>, configurer: Action<T>): TaskProvider<T> {
+        with(project) {
+            val provider = tasks.register(name, clazz, configurer)
+
+            afterEvaluate { provider.configure { if (it is AemTask) it.projectEvaluated() } }
+            gradle.projectsEvaluated { provider.configure { if (it is AemTask) it.projectsEvaluated() } }
+            gradle.taskGraph.whenReady { graph -> provider.configure { if (it is AemTask) it.taskGraphReady(graph) } }
+
+            return provider
+        }
+    }
 
     fun path(path: String): TaskProvider<Task> {
         val projectPath = path.substringBeforeLast(":", project.path)

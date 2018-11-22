@@ -32,22 +32,24 @@ class BasePlugin : AemPlugin() {
     }
 
     private fun Project.setupTasks() {
-        registerTask(Debug.NAME, Debug::class.java) {
-            it.dependsOn(LifecycleBasePlugin.BUILD_TASK_NAME)
-        }
-        registerTask(Rcp.NAME, Rcp::class.java)
-        registerTask(Clean.NAME, Clean::class.java) {
-            it.mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME, Checkout.NAME)
-        }
-        registerTask(Vlt.NAME, Vlt::class.java) {
-            it.mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
-        }
-        registerTask(Checkout.NAME, Checkout::class.java) {
-            it.mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
-        }
-        registerTask(Sync.NAME, Sync::class.java) {
-            it.mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
-            it.dependsOn(Clean.NAME, Checkout.NAME)
+        with(TaskFactory(this)) {
+            register(Debug.NAME, Debug::class.java) {
+                it.dependsOn(LifecycleBasePlugin.BUILD_TASK_NAME)
+            }
+            register(Rcp.NAME, Rcp::class.java)
+            register(Clean.NAME, Clean::class.java) {
+                it.mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME, Checkout.NAME)
+            }
+            register(Vlt.NAME, Vlt::class.java) {
+                it.mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
+            }
+            register(Checkout.NAME, Checkout::class.java) {
+                it.mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
+            }
+            register(Sync.NAME, Sync::class.java) {
+                it.mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
+                it.dependsOn(Clean.NAME, Checkout.NAME)
+            }
         }
     }
 

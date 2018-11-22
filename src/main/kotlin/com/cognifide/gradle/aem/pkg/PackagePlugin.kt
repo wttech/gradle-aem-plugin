@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.pkg
 
 import com.cognifide.gradle.aem.api.AemPlugin
 import com.cognifide.gradle.aem.base.BasePlugin
+import com.cognifide.gradle.aem.base.TaskFactory
 import com.cognifide.gradle.aem.instance.InstancePlugin
 import com.cognifide.gradle.aem.instance.tasks.Create
 import com.cognifide.gradle.aem.instance.tasks.Satisfy
@@ -22,18 +23,20 @@ class PackagePlugin : AemPlugin() {
     }
 
     private fun Project.setupTasks() {
-        registerTask(Compose.NAME, Compose::class.java) {
-            it.dependsOn(LifecycleBasePlugin.ASSEMBLE_TASK_NAME, LifecycleBasePlugin.CHECK_TASK_NAME)
-            it.mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
-        }
-        registerTask(Delete.NAME, Delete::class.java)
-        registerTask(Purge.NAME, Purge::class.java)
-        registerTask(Uninstall.NAME, Uninstall::class.java)
-        registerTask(Activate.NAME, Activate::class.java) {
-            it.mustRunAfter(Compose.NAME)
-        }
-        registerTask(Deploy.NAME, Deploy::class.java) {
-            it.dependsOn(Compose.NAME)
+        with(TaskFactory(this)) {
+            register(Compose.NAME, Compose::class.java) {
+                it.dependsOn(LifecycleBasePlugin.ASSEMBLE_TASK_NAME, LifecycleBasePlugin.CHECK_TASK_NAME)
+                it.mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
+            }
+            register(Delete.NAME, Delete::class.java)
+            register(Purge.NAME, Purge::class.java)
+            register(Uninstall.NAME, Uninstall::class.java)
+            register(Activate.NAME, Activate::class.java) {
+                it.mustRunAfter(Compose.NAME)
+            }
+            register(Deploy.NAME, Deploy::class.java) {
+                it.dependsOn(Compose.NAME)
+            }
         }
 
         tasks.named(LifecycleBasePlugin.BUILD_TASK_NAME).configure { it.dependsOn(Compose.NAME) }
