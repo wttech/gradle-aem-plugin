@@ -2,8 +2,8 @@ package com.cognifide.gradle.aem.instance
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
-import org.gradle.api.Project
 import java.io.Serializable
+import org.gradle.api.Project
 
 class LocalInstance private constructor(project: Project) : AbstractInstance(project), Serializable {
 
@@ -88,7 +88,5 @@ class LocalInstance private constructor(project: Project) : AbstractInstance(pro
         fun create(project: Project, httpUrl: String): LocalInstance {
             return create(project, httpUrl) {}
         }
-
     }
-
 }

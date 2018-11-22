@@ -1,10 +1,10 @@
 package com.cognifide.gradle.aem.base.vlt
 
+import java.io.File
 import org.apache.jackrabbit.vault.cli.VaultFsApp
 import org.apache.jackrabbit.vault.util.console.ExecutionContext
 import org.apache.jackrabbit.vault.util.console.commands.CmdConsole
 import org.gradle.api.Project
-import java.io.File
 
 class VltApp(val project: Project) : VaultFsApp() {
 

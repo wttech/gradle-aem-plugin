@@ -2,10 +2,10 @@ package com.cognifide.gradle.aem.internal.file.downloader
 
 import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.internal.ProgressLogger
-import org.gradle.api.Project
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
+import org.gradle.api.Project
 
 open class ProgressFileDownloader(val project: Project) {
 

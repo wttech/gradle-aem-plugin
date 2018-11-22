@@ -6,9 +6,9 @@ import org.apache.commons.lang3.builder.HashCodeBuilder
 import org.gradle.api.Project
 
 abstract class AbstractInstance(
-        @Transient
-        @JsonIgnore
-        protected val project: Project
+    @Transient
+    @JsonIgnore
+    protected val project: Project
 ) : Instance {
 
     override val sync: InstanceSync
@@ -32,5 +32,4 @@ abstract class AbstractInstance(
                 .append(httpUrl)
                 .toHashCode()
     }
-
 }

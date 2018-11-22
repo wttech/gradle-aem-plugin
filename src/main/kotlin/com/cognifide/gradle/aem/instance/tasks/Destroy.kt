@@ -27,5 +27,4 @@ open class Destroy : InstanceTask() {
     companion object {
         const val NAME = "aemDestroy"
     }
-
 }

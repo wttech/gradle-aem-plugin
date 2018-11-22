@@ -1,11 +1,11 @@
 package com.cognifide.gradle.aem.api
 
 import com.cognifide.gradle.aem.base.BaseExtension
+import java.io.File
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.execution.TaskExecutionGraph
 import org.gradle.util.GFileUtils
-import java.io.File
 
 interface AemTask : Task {
 
@@ -50,5 +50,4 @@ interface AemTask : Task {
             return File(dir, name)
         }
     }
-
 }

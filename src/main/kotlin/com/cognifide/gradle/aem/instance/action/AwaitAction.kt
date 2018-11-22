@@ -4,12 +4,11 @@ import com.cognifide.gradle.aem.instance.*
 import com.cognifide.gradle.aem.internal.Behaviors
 import com.cognifide.gradle.aem.internal.ProgressCountdown
 import com.fasterxml.jackson.annotation.JsonIgnore
+import java.util.concurrent.TimeUnit
 import org.apache.http.HttpStatus
 import org.gradle.api.Project
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
-import java.util.concurrent.TimeUnit
-import java.util.stream.Collectors
 
 /**
  * Wait until all instances be stable.
@@ -246,5 +245,4 @@ open class AwaitAction(project: Project) : AbstractAction(project) {
     companion object {
         const val INSTANCE_UNAVAILABLE_RATIO: Double = 0.1
     }
-
 }

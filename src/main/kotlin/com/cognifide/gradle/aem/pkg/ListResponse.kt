@@ -5,8 +5,8 @@ import com.cognifide.gradle.aem.pkg.tasks.Compose
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.gradle.api.Project
 import java.io.InputStream
+import org.gradle.api.Project
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 class ListResponse private constructor() {
@@ -67,7 +67,6 @@ class ListResponse private constructor() {
 
         val installed: Boolean
             get() = lastUnpacked != null && lastUnpacked!! > 0
-
     }
 
     enum class PackageResolver {
@@ -94,7 +93,6 @@ class ListResponse private constructor() {
 
                 return null
             }
-
         },
         BY_CONVENTION_PATH() {
             override fun resolve(project: Project, response: ListResponse, expected: Package): Package? {
@@ -116,7 +114,6 @@ class ListResponse private constructor() {
         };
 
         abstract fun resolve(project: Project, response: ListResponse, expected: Package): Package?
-
     }
 
     companion object {
@@ -128,5 +125,4 @@ class ListResponse private constructor() {
             }
         }
     }
-
 }

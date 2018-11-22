@@ -72,7 +72,5 @@ open class Checkout : Vlt() {
 
     companion object {
         const val NAME = "aemCheckout"
-
     }
-
 }

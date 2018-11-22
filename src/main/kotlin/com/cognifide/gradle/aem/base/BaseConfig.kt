@@ -6,18 +6,18 @@ import com.cognifide.gradle.aem.internal.LineSeparator
 import com.cognifide.gradle.aem.internal.notifier.Notifier
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.fasterxml.jackson.annotation.JsonIgnore
+import java.io.Serializable
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
-import java.io.Serializable
 
 /**
  * General AEM related configuration (shared for tasks).
  */
 class BaseConfig(
-        @Transient
-        @JsonIgnore
-        private val aem: BaseExtension
+    @Transient
+    @JsonIgnore
+    private val aem: BaseExtension
 ) : Serializable {
 
     /**
@@ -194,5 +194,4 @@ class BaseConfig(
     @get:Internal
     @get:JsonIgnore
     val lineSeparatorString: String = LineSeparator.string(lineSeparator)
-
 }

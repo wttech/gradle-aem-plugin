@@ -1,15 +1,11 @@
 package com.cognifide.gradle.aem.pkg.tasks
 
-import com.cognifide.gradle.aem.instance.Instance
-import com.cognifide.gradle.aem.instance.InstanceSync
-import com.cognifide.gradle.aem.instance.InstanceType
 import com.cognifide.gradle.aem.instance.names
 import com.cognifide.gradle.aem.internal.fileNames
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
-import java.io.File
 
 open class Deploy : Sync() {
 
@@ -69,5 +65,4 @@ open class Deploy : Sync() {
     companion object {
         const val NAME = "aemDeploy"
     }
-
 }

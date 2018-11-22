@@ -5,10 +5,10 @@ import com.cognifide.gradle.aem.instance.InstanceTask
 import com.cognifide.gradle.aem.instance.LocalHandleOptions
 import com.cognifide.gradle.aem.instance.names
 import com.cognifide.gradle.aem.internal.file.resolver.FileResolver
+import java.io.File
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
-import java.io.File
 
 open class Create : InstanceTask() {
 
@@ -21,7 +21,6 @@ open class Create : InstanceTask() {
     @get:Internal
     val instanceFiles: List<File>
         get() = instanceFileResolver.allFiles()
-
 
     init {
         description = "Creates local AEM instance(s)."
@@ -67,5 +66,4 @@ open class Create : InstanceTask() {
 
         const val JAR_URL_PROP = "aem.instance.local.jarUrl"
     }
-
 }

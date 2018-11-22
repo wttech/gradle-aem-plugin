@@ -1,12 +1,12 @@
 package com.cognifide.gradle.aem.api
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import java.io.Serializable
 import org.gradle.api.Action
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.tasks.TaskProvider
-import java.io.Serializable
 
 abstract class AemPlugin : Plugin<Project> {
 
@@ -39,7 +39,6 @@ abstract class AemPlugin : Plugin<Project> {
         lateinit var pluginVersion: String
 
         lateinit var gradleVersion: String
-
     }
 
     companion object {
@@ -69,7 +68,5 @@ abstract class AemPlugin : Plugin<Project> {
                 once = true
             }
         }
-
     }
-
 }

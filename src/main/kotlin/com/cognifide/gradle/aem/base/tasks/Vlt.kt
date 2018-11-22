@@ -27,5 +27,4 @@ open class Vlt : AemDefaultTask() {
     companion object {
         const val NAME = "aemVlt"
     }
-
 }

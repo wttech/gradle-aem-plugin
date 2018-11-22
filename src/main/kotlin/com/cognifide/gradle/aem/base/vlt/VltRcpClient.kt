@@ -5,9 +5,9 @@ import com.cognifide.gradle.aem.internal.Formats
 import org.apache.commons.lang3.time.StopWatch
 
 class VltRcpClient(
-        private val runner: VltRunner,
-        val sourceInstance: Instance,
-        val targetInstance: Instance
+    private val runner: VltRunner,
+    val sourceInstance: Instance,
+    val targetInstance: Instance
 ) {
 
     var opts: String = ""
@@ -37,8 +37,5 @@ class VltRcpClient(
         override fun toString(): String {
             return "VltRcpSummary(copiedPaths=$copiedPaths, duration=$durationString, source=$source, target=$target)"
         }
-
     }
-
 }
-

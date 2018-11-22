@@ -26,5 +26,4 @@ open class Await : AemDefaultTask() {
     fun await() {
         await.perform()
     }
-
 }

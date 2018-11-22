@@ -2,10 +2,10 @@ package com.cognifide.gradle.aem.internal.file.downloader
 
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.file.FileException
-import org.gradle.api.Project
-import org.gradle.api.logging.Logger
 import java.io.File
 import java.net.URL
+import org.gradle.api.Project
+import org.gradle.api.logging.Logger
 
 class UrlFileDownloader(val project: Project) {
 
@@ -31,5 +31,4 @@ class UrlFileDownloader(val project: Project) {
             throw FileException("Cannot download URL '$sourceUrl' to file '$targetFile'.", e)
         }
     }
-
 }

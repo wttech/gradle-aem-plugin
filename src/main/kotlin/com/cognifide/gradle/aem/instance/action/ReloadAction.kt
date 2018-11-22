@@ -4,9 +4,9 @@ import com.cognifide.gradle.aem.instance.Instance
 import com.cognifide.gradle.aem.instance.InstanceException
 import com.cognifide.gradle.aem.instance.InstanceSync
 import com.cognifide.gradle.aem.internal.ProgressCountdown
+import java.util.concurrent.TimeUnit
 import org.gradle.api.Project
 import org.gradle.api.tasks.Input
-import java.util.concurrent.TimeUnit
 
 /**
  * Reloads all instances and waits until all be stable.
@@ -50,5 +50,4 @@ class ReloadAction(project: Project) : AwaitAction(project) {
         reload()
         super.perform()
     }
-
 }

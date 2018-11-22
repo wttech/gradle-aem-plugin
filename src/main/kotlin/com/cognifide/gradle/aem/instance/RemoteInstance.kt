@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.instance
 
-import org.gradle.api.Project
 import java.io.Serializable
+import org.gradle.api.Project
 
 class RemoteInstance private constructor(project: Project) : AbstractInstance(project), Serializable {
 
@@ -38,7 +38,5 @@ class RemoteInstance private constructor(project: Project) : AbstractInstance(pr
         fun create(project: Project, httpUrl: String): RemoteInstance {
             return create(project, httpUrl) {}
         }
-
     }
-
 }

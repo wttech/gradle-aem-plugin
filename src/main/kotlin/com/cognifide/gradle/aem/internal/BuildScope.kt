@@ -37,7 +37,5 @@ class BuildScope {
 
             return ext.get(key) as BuildScope
         }
-
     }
-
 }

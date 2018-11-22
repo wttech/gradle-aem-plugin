@@ -24,5 +24,4 @@ class PackageBuildResponse private constructor() {
             }
         }
     }
-
 }

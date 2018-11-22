@@ -3,14 +3,14 @@ package com.cognifide.gradle.aem.internal
 import com.fasterxml.jackson.core.util.DefaultIndenter
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
 import com.fasterxml.jackson.databind.ObjectMapper
+import java.io.File
+import java.nio.file.Paths
+import java.util.*
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.time.DurationFormatUtils
 import org.apache.commons.validator.routines.UrlValidator
 import org.apache.jackrabbit.util.ISO8601
 import org.gradle.api.Project
-import java.io.File
-import java.nio.file.Paths
-import java.util.*
 
 object Formats {
 
@@ -104,7 +104,6 @@ object Formats {
                 .removePrefix(separator)
                 .removeSuffix(separator)
     }
-
 }
 
 val Collection<File>.fileNames

@@ -11,5 +11,4 @@ open class Restart : AemDefaultTask() {
     companion object {
         const val NAME = "aemRestart"
     }
-
 }

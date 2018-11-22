@@ -69,5 +69,4 @@ class InstancePlugin : AemPlugin() {
 
         const val FILES_PATH = "local-instance"
     }
-
 }

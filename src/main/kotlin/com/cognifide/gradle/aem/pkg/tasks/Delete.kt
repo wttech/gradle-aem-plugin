@@ -27,5 +27,4 @@ open class Delete : Sync() {
     companion object {
         const val NAME = "aemDelete"
     }
-
 }

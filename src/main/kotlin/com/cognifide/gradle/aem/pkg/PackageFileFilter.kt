@@ -4,10 +4,10 @@ import aQute.bnd.osgi.Jar
 import com.cognifide.gradle.aem.base.BaseExtension
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.file.FileContentReader
+import java.io.Serializable
 import org.gradle.api.Project
 import org.gradle.api.file.CopySpec
 import org.gradle.api.tasks.Input
-import java.io.Serializable
 
 class PackageFileFilter(project: Project) : Serializable {
 
@@ -115,5 +115,4 @@ class PackageFileFilter(project: Project) : Serializable {
 
         )
     }
-
 }

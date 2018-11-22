@@ -35,5 +35,4 @@ open class Resolve : AemDefaultTask() {
     companion object {
         const val NAME = "aemResolve"
     }
-
 }

@@ -28,5 +28,4 @@ class ProgressCountdown(project: Project, header: String, private val value: Lon
         }
         logger.completed()
     }
-
 }

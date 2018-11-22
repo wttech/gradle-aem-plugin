@@ -35,5 +35,4 @@ enum class InstanceType {
 
     val type: String
         get() = name.toLowerCase()
-
 }

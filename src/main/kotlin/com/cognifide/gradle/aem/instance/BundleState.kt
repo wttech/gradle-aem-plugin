@@ -6,9 +6,9 @@ import com.cognifide.gradle.aem.internal.http.ResponseException
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.ObjectMapper
+import java.io.InputStream
 import org.apache.commons.lang3.builder.EqualsBuilder
 import org.apache.commons.lang3.builder.HashCodeBuilder
-import java.io.InputStream
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 class BundleState private constructor() {
@@ -111,5 +111,4 @@ class BundleState private constructor() {
             return response
         }
     }
-
 }

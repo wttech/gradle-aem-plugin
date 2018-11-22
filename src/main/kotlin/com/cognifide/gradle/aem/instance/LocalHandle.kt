@@ -6,12 +6,12 @@ import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.ProgressLogger
 import com.cognifide.gradle.aem.internal.file.FileOperations
+import java.io.File
 import org.apache.commons.io.FileUtils
 import org.gradle.api.Project
 import org.gradle.internal.os.OperatingSystem
 import org.gradle.util.GFileUtils
 import org.zeroturnaround.zip.ZipUtil
-import java.io.File
 
 class LocalHandle(val project: Project, val instance: LocalInstance) {
 
@@ -189,7 +189,6 @@ class LocalHandle(val project: Project, val instance: LocalInstance) {
             return
         }
 
-
         aem.logger.info("Executing start script: $startScript")
         execute(startScript)
     }
@@ -286,7 +285,6 @@ class LocalHandle(val project: Project, val instance: LocalInstance) {
             return "Script(commandLine=$commandLine)"
         }
     }
-
 }
 
 val List<LocalHandle>.names: String?

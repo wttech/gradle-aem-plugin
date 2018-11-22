@@ -56,5 +56,4 @@ class BasePlugin : AemPlugin() {
 
         const val ID = "com.cognifide.aem.base"
     }
-
 }

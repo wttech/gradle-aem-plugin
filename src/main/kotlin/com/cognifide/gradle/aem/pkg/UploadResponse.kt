@@ -19,5 +19,4 @@ class UploadResponse private constructor() {
             return ObjectMapper().readValue(json, UploadResponse::class.java)
         }
     }
-
 }

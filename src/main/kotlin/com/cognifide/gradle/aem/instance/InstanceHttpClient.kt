@@ -26,5 +26,4 @@ open class InstanceHttpClient(project: Project, val instance: Instance) : HttpCl
             throw ResponseException("Unexpected response from $instance: ${response.statusLine}")
         }
     }
-
 }

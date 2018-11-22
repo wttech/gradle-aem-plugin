@@ -1,8 +1,8 @@
 package com.cognifide.gradle.aem.internal
 
+import java.io.File
 import org.apache.commons.io.FilenameUtils
 import org.apache.commons.io.IOCase
-import java.io.File
 
 object Patterns {
 
@@ -44,5 +44,4 @@ object Patterns {
     fun normalizePath(path: String): String {
         return path.replace("\\", "/")
     }
-
 }

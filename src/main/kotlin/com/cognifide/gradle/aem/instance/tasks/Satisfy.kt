@@ -7,11 +7,11 @@ import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.pkg.ListResponse
 import com.cognifide.gradle.aem.pkg.resolver.PackageResolver
 import com.cognifide.gradle.aem.pkg.tasks.Deploy
+import java.io.File
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
-import java.io.File
 
 open class Satisfy : Deploy() {
 
@@ -168,5 +168,4 @@ open class Satisfy : Deploy() {
 
         const val DOWNLOAD_DIR = "download"
     }
-
 }

@@ -1,22 +1,37 @@
 package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.internal.Behaviors
-import org.gradle.api.Project
 import com.cognifide.gradle.aem.internal.ProgressLogger as BaseLogger
+import org.gradle.api.Project
 
 class ProgressLogger(project: Project, header: String, private val stableTimes: Long) : BaseLogger(project, header) {
 
-    fun progress(states: List<InstanceState>, unavailableInstances: List<Instance>, unstableInstances: List<Instance>, timer: Behaviors.Timer) {
+    fun progress(
+        states: List<InstanceState>,
+        unavailableInstances: List<Instance>,
+        unstableInstances: List<Instance>,
+        timer: Behaviors.Timer
+    ) {
         progress(progressFor(states, unavailableInstances, unstableInstances, timer))
     }
 
-    private fun progressFor(states: List<InstanceState>, unavailableInstances: List<Instance>, unstableInstances: List<Instance>, timer: Behaviors.Timer): String {
+    private fun progressFor(
+        states: List<InstanceState>,
+        unavailableInstances: List<Instance>,
+        unstableInstances: List<Instance>,
+        timer: Behaviors.Timer
+    ): String {
         return (progressTicks(timer.ticks, stableTimes) + " " + states.joinToString(" | ") {
             progressFor(it, states.size > 2, unavailableInstances, unstableInstances)
         }).trim()
     }
 
-    private fun progressFor(state: InstanceState, shortProgress: Boolean, unavailableInstances: List<Instance>, unstableInstances: List<Instance>): String {
+    private fun progressFor(
+        state: InstanceState,
+        shortProgress: Boolean,
+        unavailableInstances: List<Instance>,
+        unstableInstances: List<Instance>
+    ): String {
         return "${state.instance.name} ${progressIndicator(state, unavailableInstances, unstableInstances)}|${progressState(state, shortProgress)}"
     }
 
@@ -30,7 +45,11 @@ class ProgressLogger(project: Project, header: String, private val stableTimes: 
         }
     }
 
-    private fun progressIndicator(state: InstanceState, unavailableInstances: List<Instance>, unstableInstances: List<Instance>): String {
+    private fun progressIndicator(
+        state: InstanceState,
+        unavailableInstances: List<Instance>,
+        unstableInstances: List<Instance>
+    ): String {
         return when {
             unavailableInstances.contains(state.instance) -> "-"
             unstableInstances.contains(state.instance) -> "~"

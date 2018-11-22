@@ -5,14 +5,14 @@ import com.cognifide.gradle.aem.base.BaseExtension
 import com.mitchellbosecke.pebble.PebbleEngine
 import com.mitchellbosecke.pebble.lexer.Syntax
 import com.mitchellbosecke.pebble.loader.StringLoader
-import org.apache.commons.lang3.text.StrSubstitutor
-import org.gradle.api.Project
 import java.io.StringWriter
 import java.util.*
+import org.apache.commons.lang3.text.StrSubstitutor
+import org.gradle.api.Project
 
 class PropertyParser(
-        private val aem: BaseExtension,
-        private val project: Project
+    private val aem: BaseExtension,
+    private val project: Project
 ) {
 
     fun prop(name: String): String? {
@@ -88,7 +88,12 @@ class PropertyParser(
         return expand(source, interpolableProps, templateProps, context)
     }
 
-    private fun expand(source: String, interpolableProps: Map<String, Any>, templateProps: Map<String, Any>, context: String? = null): String {
+    private fun expand(
+        source: String,
+        interpolableProps: Map<String, Any>,
+        templateProps: Map<String, Any>,
+        context: String? = null
+    ): String {
         try {
             val interpolated = TEMPLATE_INTERPOLATOR(source, interpolableProps)
             val expanded = StringWriter()
@@ -164,5 +169,4 @@ class PropertyParser(
             StrSubstitutor.replace(source, props, TEMPLATE_VAR_PREFIX, TEMPLATE_VAR_SUFFIX)
         }
     }
-
 }

@@ -20,5 +20,4 @@ open class Activate : Sync() {
     companion object {
         const val NAME = "aemActivate"
     }
-
 }

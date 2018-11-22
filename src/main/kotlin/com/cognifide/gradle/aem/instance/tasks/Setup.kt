@@ -11,5 +11,4 @@ open class Setup : AemDefaultTask() {
     companion object {
         const val NAME = "aemSetup"
     }
-
 }

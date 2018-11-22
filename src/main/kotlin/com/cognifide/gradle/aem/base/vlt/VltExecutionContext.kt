@@ -1,8 +1,8 @@
 package com.cognifide.gradle.aem.base.vlt
 
 import org.apache.commons.cli2.CommandLine
-import org.apache.jackrabbit.vault.util.console.CliCommand
 import org.apache.jackrabbit.vault.cli.VltExecutionContext as BaseExecutionContext
+import org.apache.jackrabbit.vault.util.console.CliCommand
 
 class VltExecutionContext(app: VltApp) : BaseExecutionContext(app) {
 
@@ -19,5 +19,4 @@ class VltExecutionContext(app: VltApp) : BaseExecutionContext(app) {
 
         return false
     }
-
 }

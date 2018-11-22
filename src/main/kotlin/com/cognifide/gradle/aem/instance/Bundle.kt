@@ -92,6 +92,5 @@ class Bundle {
         const val ATTRIBUTE_IMPORT_PACKAGE = "Import-Package"
 
         const val ATTRIBUTE_SLING_MODEL_PACKAGES = "Sling-Model-Packages"
-
     }
 }

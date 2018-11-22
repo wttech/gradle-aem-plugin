@@ -3,9 +3,9 @@ package com.cognifide.gradle.aem.base.tasks
 import com.cognifide.gradle.aem.base.vlt.VltException
 import com.cognifide.gradle.aem.base.vlt.VltRcpClient
 import com.cognifide.gradle.aem.instance.Instance
+import java.io.File
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.TaskAction
-import java.io.File
 
 open class Rcp : Vlt() {
 
@@ -93,5 +93,4 @@ open class Rcp : Vlt() {
     companion object {
         const val NAME = "aemRcp"
     }
-
 }

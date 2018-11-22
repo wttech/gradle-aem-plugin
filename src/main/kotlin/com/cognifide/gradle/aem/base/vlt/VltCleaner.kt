@@ -3,6 +3,9 @@ package com.cognifide.gradle.aem.base.vlt
 import com.cognifide.gradle.aem.base.BaseExtension
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.pkg.PackagePlugin
+import java.io.File
+import java.io.IOException
+import java.util.regex.Pattern
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.filefilter.EmptyFileFilter
 import org.apache.commons.io.filefilter.NameFileFilter
@@ -12,9 +15,6 @@ import org.apache.commons.lang3.StringUtils
 import org.gradle.api.Project
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
-import java.io.File
-import java.io.IOException
-import java.util.regex.Pattern
 
 class VltCleaner(project: Project) {
 

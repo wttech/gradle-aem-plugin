@@ -4,10 +4,10 @@ import com.cognifide.gradle.aem.api.AemException
 import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.internal.Patterns
 import com.fasterxml.jackson.annotation.JsonIgnore
+import java.io.Serializable
 import org.gradle.api.Project
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
-import java.io.Serializable
 
 interface Instance : Serializable {
 
@@ -145,7 +145,6 @@ interface Instance : Serializable {
 
                     props["user"]?.let { this.user = it }
                     props["password"]?.let { this.password = it }
-
                 }
             }.sortedBy { it.name }
 

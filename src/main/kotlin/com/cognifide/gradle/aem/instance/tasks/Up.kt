@@ -41,5 +41,4 @@ open class Up : InstanceTask() {
     companion object {
         const val NAME = "aemUp"
     }
-
 }

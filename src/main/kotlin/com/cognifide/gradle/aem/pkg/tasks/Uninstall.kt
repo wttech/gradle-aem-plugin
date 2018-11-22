@@ -27,5 +27,4 @@ open class Uninstall : Sync() {
     companion object {
         const val NAME = "aemUninstall"
     }
-
 }

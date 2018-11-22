@@ -70,7 +70,12 @@ abstract class HtmlResponse(private val rawHtml: String) {
             return resultBuilder.toString()
         }
 
-        private fun extractErrors(chunk: StringBuilder, builder: StringBuilder, errorPatterns: List<ErrorPattern>, statusTags: List<String>) {
+        private fun extractErrors(
+            chunk: StringBuilder,
+            builder: StringBuilder,
+            errorPatterns: List<ErrorPattern>,
+            statusTags: List<String>
+        ) {
             errorPatterns.forEach {
                 val matcher = it.pattern.matcher(chunk)
                 while (matcher.find()) {
@@ -85,6 +90,4 @@ abstract class HtmlResponse(private val rawHtml: String) {
             chunk.setLength(0)
         }
     }
-
 }
-

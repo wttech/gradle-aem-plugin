@@ -57,5 +57,4 @@ open class Purge : Sync() {
     companion object {
         const val NAME = "aemPurge"
     }
-
 }

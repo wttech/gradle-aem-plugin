@@ -1,9 +1,9 @@
 package com.cognifide.gradle.aem.internal.file
 
+import java.io.Reader
 import org.apache.tools.ant.filters.BaseFilterReader
 import org.apache.tools.ant.filters.ChainableReader
 import org.gradle.api.file.ContentFilterable
-import java.io.Reader
 
 class FileContentReader(input: Reader) : BaseFilterReader(input), ChainableReader {
 
@@ -42,7 +42,5 @@ class FileContentReader(input: Reader) : BaseFilterReader(input), ChainableReade
         fun filter(filterable: ContentFilterable, filter: (String) -> String) {
             filterable.filter(props(filter), FileContentReader::class.java)
         }
-
     }
-
 }

@@ -124,5 +124,4 @@ class InstanceState(private var _sync: InstanceSync, val instance: Instance) {
                 "org.apache.sling.installer.*"
         )
     }
-
 }

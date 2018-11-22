@@ -51,7 +51,5 @@ class InstallResponse private constructor(private val rawHtml: String) : HtmlRes
                 throw ResponseException("Malformed install package response.")
             }
         }
-
     }
-
 }

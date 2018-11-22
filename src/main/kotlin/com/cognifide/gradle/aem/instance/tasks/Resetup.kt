@@ -11,5 +11,4 @@ open class Resetup : AemDefaultTask() {
     companion object {
         const val NAME = "aemResetup"
     }
-
 }

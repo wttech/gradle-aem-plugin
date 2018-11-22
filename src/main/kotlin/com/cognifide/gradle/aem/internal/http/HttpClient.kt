@@ -2,6 +2,9 @@ package com.cognifide.gradle.aem.internal.http
 
 import com.jayway.jsonpath.DocumentContext
 import com.jayway.jsonpath.JsonPath
+import java.io.File
+import java.io.InputStream
+import java.util.*
 import org.apache.commons.io.IOUtils
 import org.apache.http.HttpEntity
 import org.apache.http.HttpResponse
@@ -21,9 +24,6 @@ import org.apache.http.impl.client.HttpClientBuilder
 import org.apache.http.message.BasicNameValuePair
 import org.apache.http.ssl.SSLContextBuilder
 import org.gradle.api.Project
-import java.io.File
-import java.io.InputStream
-import java.util.*
 
 open class HttpClient(val project: Project) {
 
@@ -196,5 +196,4 @@ open class HttpClient(val project: Project) {
 
         return builder.build()
     }
-
 }

@@ -88,7 +88,5 @@ class TaskFactory(@Transient private val project: Project) {
     companion object {
 
         const val GROUP = "${AemTask.GROUP} (custom)"
-
     }
-
 }

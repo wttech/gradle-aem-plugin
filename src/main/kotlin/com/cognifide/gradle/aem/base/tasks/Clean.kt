@@ -3,12 +3,12 @@ package com.cognifide.gradle.aem.base.tasks
 import com.cognifide.gradle.aem.api.AemDefaultTask
 import com.cognifide.gradle.aem.base.vlt.VltCleaner
 import com.cognifide.gradle.aem.internal.Formats
+import java.io.File
 import org.gradle.api.execution.TaskExecutionGraph
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
-import java.io.File
 
 open class Clean : AemDefaultTask() {
 
@@ -82,5 +82,4 @@ open class Clean : AemDefaultTask() {
     companion object {
         const val NAME = "aemClean"
     }
-
 }

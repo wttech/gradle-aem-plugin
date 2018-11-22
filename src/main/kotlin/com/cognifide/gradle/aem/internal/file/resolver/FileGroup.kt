@@ -12,7 +12,6 @@ open class FileGroup(val downloadDir: File, val name: String) {
     val files: List<File>
         get() = _resolutions.map { it.file }
 
-
     val dirs: List<File>
         get() = _resolutions.map { it.dir }
 
@@ -21,5 +20,4 @@ open class FileGroup(val downloadDir: File, val name: String) {
     fun resolve(id: String, resolver: (FileResolution) -> File) {
         _resolutions += createResolution(id, resolver)
     }
-
 }

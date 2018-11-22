@@ -28,7 +28,5 @@ class PreemptiveAuthInterceptor : HttpRequestInterceptor {
 
             authState.update(BasicScheme(), creds)
         }
-
     }
-
 }

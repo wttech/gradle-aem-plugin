@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.internal.file.downloader
 
 import com.cognifide.gradle.aem.internal.file.FileException
 import com.cognifide.gradle.aem.internal.http.PreemptiveAuthInterceptor
+import java.io.File
 import org.apache.http.auth.AuthScope
 import org.apache.http.auth.UsernamePasswordCredentials
 import org.apache.http.client.HttpClient
@@ -14,7 +15,6 @@ import org.apache.http.impl.client.HttpClients
 import org.apache.http.impl.client.LaxRedirectStrategy
 import org.gradle.api.Project
 import org.gradle.api.logging.Logger
-import java.io.File
 
 // TODO reuse internal HttpClient
 class HttpFileDownloader(val project: Project) {
@@ -82,5 +82,4 @@ class HttpFileDownloader(val project: Project) {
 
         return builder.build()
     }
-
 }

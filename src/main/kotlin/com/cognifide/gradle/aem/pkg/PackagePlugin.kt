@@ -56,5 +56,4 @@ class PackagePlugin : AemPlugin() {
 
         const val JCR_ROOT = "jcr_root"
     }
-
 }

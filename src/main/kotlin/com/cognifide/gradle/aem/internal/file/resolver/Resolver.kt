@@ -10,23 +10,23 @@ import com.cognifide.gradle.aem.internal.file.downloader.SftpFileDownloader
 import com.cognifide.gradle.aem.internal.file.downloader.SmbFileDownloader
 import com.cognifide.gradle.aem.internal.file.downloader.UrlFileDownloader
 import com.google.common.hash.HashCode
+import java.io.File
 import org.apache.commons.io.FilenameUtils
 import org.apache.commons.lang3.builder.HashCodeBuilder
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.tasks.Internal
 import org.gradle.util.GFileUtils
-import java.io.File
 
 /**
  * File downloader with groups supporting files from multiple sources: local and remote (SFTP, SMB, HTTP).
  */
 abstract class Resolver<G : FileGroup>(
-        @get:Internal
-        val project: Project,
+    @get:Internal
+    val project: Project,
 
-        @get:Internal
-        val downloadDir: File
+    @get:Internal
+    val downloadDir: File
 ) {
 
     private val aem = BaseExtension.of(project)
@@ -239,5 +239,4 @@ abstract class Resolver<G : FileGroup>(
 
         const val DOWNLOAD_LOCK = "download.lock"
     }
-
 }

@@ -8,9 +8,9 @@ import com.cognifide.gradle.aem.internal.notifier.Notifier
 import dorkbox.notify.Notify
 import fr.jcgay.notification.Application
 import fr.jcgay.notification.Notification
+import java.util.concurrent.TimeUnit
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.gradle.api.logging.LogLevel
-import java.util.concurrent.TimeUnit
 
 class Notifier private constructor(private val aem: BaseExtension) {
 
@@ -116,7 +116,5 @@ class Notifier private constructor(private val aem: BaseExtension) {
 
             return notifier
         }
-
     }
-
 }

@@ -3,19 +3,18 @@ package com.cognifide.gradle.aem.internal.notifier
 import com.cognifide.gradle.aem.api.AemPlugin
 import com.cognifide.gradle.aem.base.Notifier
 import com.cognifide.gradle.aem.internal.BuildScope
+import com.cognifide.gradle.aem.internal.notifier.Notifier as BaseNotifier
 import fr.jcgay.notification.Application
 import fr.jcgay.notification.Icon
 import fr.jcgay.notification.Notification
 import fr.jcgay.notification.SendNotification
 import org.gradle.api.Project
 import org.gradle.api.logging.LogLevel
-import fr.jcgay.notification.Notifier as Base
-import com.cognifide.gradle.aem.internal.notifier.Notifier as BaseNotifier
 
 class JcGayNotifier(
-        val project: Project,
-        val appBuilder: Application.Builder.() -> Unit,
-        val messageBuilder: Notification.Builder.() -> Unit
+    val project: Project,
+    val appBuilder: Application.Builder.() -> Unit,
+    val messageBuilder: Notification.Builder.() -> Unit
 ) : BaseNotifier {
 
     private val notifier by lazy {
@@ -62,6 +61,5 @@ class JcGayNotifier(
                 LogLevel.ERROR to Notification.Level.ERROR,
                 LogLevel.WARN to Notification.Level.WARNING
         )
-
     }
 }

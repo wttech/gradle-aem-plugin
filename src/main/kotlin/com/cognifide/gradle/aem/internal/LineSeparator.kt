@@ -17,6 +17,5 @@ enum class LineSeparator(val value: String) {
             return values().find { it.name.equals(name, true) }?.value
                     ?: throw IllegalArgumentException("Unsupported line separator specified: $name. Valid are: ${values()}")
         }
-
     }
 }

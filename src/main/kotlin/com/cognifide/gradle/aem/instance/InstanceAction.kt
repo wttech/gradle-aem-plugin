@@ -5,5 +5,4 @@ import java.io.Serializable
 interface InstanceAction : Serializable {
 
     fun perform()
-
 }

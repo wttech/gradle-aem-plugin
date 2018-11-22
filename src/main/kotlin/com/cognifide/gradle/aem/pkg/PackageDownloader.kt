@@ -6,19 +6,19 @@ import com.cognifide.gradle.aem.instance.Instance
 import com.cognifide.gradle.aem.internal.file.FileOperations
 import com.cognifide.gradle.aem.internal.http.HttpClient
 import com.fasterxml.jackson.annotation.JsonIgnore
+import java.io.File
 import org.apache.commons.io.FilenameUtils
 import org.gradle.api.Project
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.util.GFileUtils
 import org.zeroturnaround.zip.ZipUtil
-import java.io.File
 
 class PackageDownloader(
-        @Internal
-        private val project: Project,
-        @Internal
-        private val temporaryDir: File
+    @Internal
+    private val project: Project,
+    @Internal
+    private val temporaryDir: File
 ) {
 
     @Internal
@@ -131,5 +131,4 @@ class PackageDownloader(
 
         const val PKG_CLASSIFIER_SHELL = "downloadShell"
     }
-
 }

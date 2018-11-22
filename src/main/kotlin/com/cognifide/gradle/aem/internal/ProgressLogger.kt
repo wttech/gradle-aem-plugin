@@ -1,10 +1,10 @@
 package com.cognifide.gradle.aem.internal
 
+import java.util.concurrent.TimeUnit
 import org.apache.commons.lang3.time.StopWatch
 import org.gradle.api.Project
 import org.gradle.api.logging.Logger
 import org.gradle.internal.logging.progress.ProgressLoggerFactory
-import java.util.concurrent.TimeUnit
 
 open class ProgressLogger(val project: Project, val header: String) {
 
@@ -67,5 +67,4 @@ open class ProgressLogger(val project: Project, val header: String) {
         invokeQuietly(progressLogger, "completed")
         stopWatch.stop()
     }
-
 }

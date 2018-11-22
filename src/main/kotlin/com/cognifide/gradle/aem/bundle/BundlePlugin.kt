@@ -4,6 +4,7 @@ import aQute.bnd.gradle.BundleTaskConvention
 import com.cognifide.gradle.aem.api.AemPlugin
 import com.cognifide.gradle.aem.base.BaseExtension
 import com.cognifide.gradle.aem.pkg.PackagePlugin
+import java.io.File
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.gradle.api.JavaVersion
 import org.gradle.api.Project
@@ -12,7 +13,6 @@ import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.api.tasks.testing.Test
-import java.io.File
 
 class BundlePlugin : AemPlugin() {
 
@@ -91,5 +91,4 @@ class BundlePlugin : AemPlugin() {
 
         const val BND_CONVENTION_PLUGIN = "bundle"
     }
-
 }

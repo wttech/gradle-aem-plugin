@@ -22,5 +22,4 @@ class Retry private constructor() {
     companion object {
         fun once() = Retry()
     }
-
 }

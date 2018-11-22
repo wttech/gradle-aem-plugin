@@ -98,5 +98,4 @@ open class Debug : AemDefaultTask() {
     companion object {
         const val NAME = "aemDebug"
     }
-
 }

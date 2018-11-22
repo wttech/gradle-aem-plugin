@@ -33,6 +33,5 @@ class DeleteResponse private constructor(private val rawHtml: String) : HtmlResp
                 throw ResponseException("Malformed delete package response.")
             }
         }
-
     }
 }

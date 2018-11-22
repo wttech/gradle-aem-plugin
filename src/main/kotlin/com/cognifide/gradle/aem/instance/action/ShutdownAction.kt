@@ -8,7 +8,6 @@ import com.cognifide.gradle.aem.internal.Behaviors
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.gradle.api.Project
 import org.gradle.api.tasks.Internal
-import java.util.stream.Collectors
 
 class ShutdownAction(project: Project) : AbstractAction(project) {
 
@@ -71,7 +70,7 @@ class ShutdownAction(project: Project) : AbstractAction(project) {
 
             // Examine instances
             val unstableInstances = aem.parallelProcess(instanceStates, { !stableCheck(it) }, { it.instance })
-            val availableInstances = aem.parallelProcess(instanceStates,{ availableCheck(it) }, { it.instance })
+            val availableInstances = aem.parallelProcess(instanceStates, { availableCheck(it) }, { it.instance })
             val unavailableInstances = instances - availableInstances
             val upInstances = instanceHandles.filter { it.running || availableInstances.contains(it.instance) }.map { it.instance }
 
@@ -89,5 +88,4 @@ class ShutdownAction(project: Project) : AbstractAction(project) {
 
         progressLogger.completed()
     }
-
 }

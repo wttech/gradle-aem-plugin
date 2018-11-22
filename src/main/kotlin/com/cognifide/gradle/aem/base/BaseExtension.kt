@@ -14,6 +14,9 @@ import com.cognifide.gradle.aem.internal.http.HttpClient
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.Compose
 import com.fasterxml.jackson.annotation.JsonIgnore
+import java.io.File
+import java.util.stream.Collectors
+import java.util.stream.StreamSupport
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.plugins.JavaPlugin
@@ -21,9 +24,6 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.bundling.Jar
-import java.io.File
-import java.util.stream.Collectors
-import java.util.stream.StreamSupport
 
 /**
  * Main place for providing build script DSL capabilities in case of AEM.
@@ -206,7 +206,11 @@ open class BaseExtension(@Internal val project: Project) {
 
     fun syncPackages(synchronizer: InstanceSync.(File) -> Unit) = syncPackages(instances, packages, synchronizer)
 
-    fun syncPackages(instances: Collection<Instance>, packages: Collection<File>, synchronizer: InstanceSync.(File) -> Unit) {
+    fun syncPackages(
+        instances: Collection<Instance>,
+        packages: Collection<File>,
+        synchronizer: InstanceSync.(File) -> Unit
+    ) {
         // single AEM instance dislikes parallel package installation
         packages.forEach { p ->
             // put same package could be in parallel deployed on different AEM instances
@@ -340,7 +344,5 @@ open class BaseExtension(@Internal val project: Project) {
             return project.extensions.findByType(BaseExtension::class.java)
                     ?: throw AemException("${project.displayName.capitalize()} has neither '${PackagePlugin.ID}' nor '${InstancePlugin.ID}' plugin applied.")
         }
-
     }
-
 }

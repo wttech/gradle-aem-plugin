@@ -2,10 +2,10 @@ package com.cognifide.gradle.aem.pkg.resolver
 
 import aQute.bnd.osgi.Jar
 import com.cognifide.gradle.aem.internal.file.resolver.Resolver
+import java.io.File
 import org.gradle.api.Project
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
-import java.io.File
 
 class PackageResolver(project: Project, downloadDir: File) : Resolver<PackageGroup>(project, downloadDir) {
 
@@ -24,5 +24,4 @@ class PackageResolver(project: Project, downloadDir: File) : Resolver<PackageGro
     override fun createGroup(name: String): PackageGroup {
         return PackageGroup(this, name)
     }
-
 }

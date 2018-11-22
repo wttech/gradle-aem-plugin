@@ -29,5 +29,4 @@ abstract class AemDefaultTask : DefaultTask(), AemTask {
             }
         }
     }
-
 }

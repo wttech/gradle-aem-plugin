@@ -5,6 +5,7 @@ plugins {
     id("java-gradle-plugin")
     id("maven-publish")
     kotlin("jvm") version "1.3.0"
+    id("io.gitlab.arturbosch.detekt") version "1.0.0-RC11"
     id("com.jfrog.bintray") version "1.8.4"
 }
 
@@ -45,6 +46,8 @@ dependencies {
     testImplementation(gradleTestKit())
     testImplementation("org.skyscreamer:jsonassert:1.5.0")
     testImplementation("org.junit-pioneer:junit-pioneer:0.2.2")
+
+    "detektPlugins"("io.gitlab.arturbosch.detekt:detekt-formatting:1.0.0-RC11")
 }
 
 gradlePlugin {
@@ -95,6 +98,12 @@ tasks.named<Test>("test") {
 
     useJUnitPlatform()
     dependsOn(tasks.named("publishToMavenLocal"))
+}
+
+detekt {
+    toolVersion = "1.0.0-RC11"
+    input = files("src/main/kotlin")
+    // filters = ".*/resources/.*,.*/build/.*"
 }
 
 bintray {

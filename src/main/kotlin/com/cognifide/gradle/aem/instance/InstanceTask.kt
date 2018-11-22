@@ -18,5 +18,4 @@ open class InstanceTask : AemDefaultTask() {
             instanceHandles = aem.instanceHandles
         }
     }
-
 }

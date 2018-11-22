@@ -82,7 +82,5 @@ class InstanceUrl(raw: String) {
                 throw AemException("Cannot parse instance URL: '$raw'", e)
             }
         }
-
     }
-
 }

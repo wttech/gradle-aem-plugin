@@ -10,12 +10,12 @@ import com.cognifide.gradle.aem.internal.http.RequestException
 import com.cognifide.gradle.aem.internal.http.ResponseException
 import com.cognifide.gradle.aem.pkg.*
 import com.cognifide.gradle.aem.pkg.resolver.PackageException
+import java.io.File
+import java.io.FileNotFoundException
 import org.gradle.api.Project
 import org.jsoup.Jsoup
 import org.jsoup.parser.Parser
 import org.zeroturnaround.zip.ZipUtil
-import java.io.File
-import java.io.FileNotFoundException
 
 class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(project, instance) {
 
@@ -214,12 +214,24 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
         return Patterns.wildcard(file, aem.config.packageSnapshots)
     }
 
-    fun deployPackage(file: File, uploadForce: Boolean = true, uploadRetry: Retry = Retry.once(), installRecursive: Boolean = true, installRetry: Retry = Retry.once()) {
+    fun deployPackage(
+        file: File,
+        uploadForce: Boolean = true,
+        uploadRetry: Retry = Retry.once(),
+        installRecursive: Boolean = true,
+        installRetry: Retry = Retry.once()
+    ) {
         val uploadResponse = uploadPackage(file, uploadForce, uploadRetry)
         installPackage(uploadResponse.path, installRecursive, installRetry)
     }
 
-    fun distributePackage(file: File, uploadForce: Boolean = true, uploadRetry: Retry = Retry.once(), installRecursive: Boolean = true, installRetry: Retry = Retry.once()) {
+    fun distributePackage(
+        file: File,
+        uploadForce: Boolean = true,
+        uploadRetry: Retry = Retry.once(),
+        installRecursive: Boolean = true,
+        installRetry: Retry = Retry.once()
+    ) {
         val uploadResponse = uploadPackage(file, uploadForce, uploadRetry)
         val packagePath = uploadResponse.path
 
@@ -349,5 +361,4 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
 
         const val OSGI_VMSTAT_SHUTDOWN_RESTART = "Restart"
     }
-
 }

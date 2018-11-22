@@ -8,11 +8,11 @@ import com.cognifide.gradle.aem.internal.file.FileOperations
 import com.cognifide.gradle.aem.internal.file.resolver.FileResolution
 import com.cognifide.gradle.aem.pkg.PackageFileFilter
 import com.cognifide.gradle.aem.pkg.PackagePlugin
+import java.io.File
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.FilenameUtils
 import org.gradle.util.GFileUtils
 import org.zeroturnaround.zip.ZipUtil
-import java.io.File
 
 class PackageResolution(group: PackageGroup, id: String, action: (FileResolution) -> File) : FileResolution(group, id, action) {
 

@@ -52,7 +52,5 @@ object Behaviors {
 
         val ticks: Long
             get() = _ticks
-
     }
-
 }

@@ -2,10 +2,10 @@ package com.cognifide.gradle.aem.base.vlt
 
 import com.cognifide.gradle.aem.base.BaseExtension
 import com.cognifide.gradle.aem.pkg.PackagePlugin
+import java.io.File
 import org.gradle.api.Project
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
-import java.io.File
 
 class VltRunner(project: Project) {
 
@@ -50,5 +50,4 @@ class VltRunner(project: Project) {
 
         app.execute(commandEffective, contentDirEffective)
     }
-
 }

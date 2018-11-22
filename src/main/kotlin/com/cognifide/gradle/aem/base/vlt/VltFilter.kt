@@ -5,6 +5,8 @@ import com.cognifide.gradle.aem.base.BaseExtension
 import com.cognifide.gradle.aem.base.tasks.Vlt
 import com.cognifide.gradle.aem.internal.file.FileOperations
 import com.cognifide.gradle.aem.pkg.PackagePlugin
+import java.io.Closeable
+import java.io.File
 import org.apache.commons.io.FileUtils
 import org.gradle.api.Project
 import org.gradle.api.tasks.InputFile
@@ -12,14 +14,12 @@ import org.gradle.api.tasks.Internal
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import org.jsoup.parser.Parser
-import java.io.Closeable
-import java.io.File
 
 class VltFilter(
-        @InputFile
-        val file: File,
+    @InputFile
+    val file: File,
 
-        private val temporary: Boolean = false
+    private val temporary: Boolean = false
 ) : Closeable {
 
     @get:Internal
@@ -78,7 +78,5 @@ class VltFilter(
         fun rootElementForPath(path: String): Element {
             return rootElement("<filter root=\"$path\"/>")
         }
-
     }
-
 }

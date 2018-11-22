@@ -29,5 +29,4 @@ class CollectingLogger {
     fun lifecycle(message: String) = log(LogLevel.LIFECYCLE, message)
 
     fun info(message: String) = log(LogLevel.INFO, message)
-
 }

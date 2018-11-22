@@ -45,7 +45,6 @@ class PackageGroup(val resolver: PackageResolver, name: String) : FileGroup(reso
         reload {}
     }
 
-
     fun reload(configurer: ReloadAction.() -> Unit) {
         action(ReloadAction(project), configurer)
     }
@@ -57,5 +56,4 @@ class PackageGroup(val resolver: PackageResolver, name: String) : FileGroup(reso
     override fun createResolution(id: String, resolver: (FileResolution) -> File): FileResolution {
         return PackageResolution(this, id, resolver)
     }
-
 }

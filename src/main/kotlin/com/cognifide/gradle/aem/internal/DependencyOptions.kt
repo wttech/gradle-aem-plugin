@@ -29,7 +29,15 @@ class DependencyOptions(private val handler: DependencyHandler) {
             return DependencyOptions(handler).apply(configurer).dependency
         }
 
-        fun of(handler: DependencyHandler, group: String, name: String, version: String?, configuration: String?, classifier: String?, ext: String?): ExternalModuleDependency {
+        fun of(
+            handler: DependencyHandler,
+            group: String,
+            name: String,
+            version: String?,
+            configuration: String?,
+            classifier: String?,
+            ext: String?
+        ): ExternalModuleDependency {
             return handler.create(
                     mapOfNonNullValuesOf(
                             "group" to group,

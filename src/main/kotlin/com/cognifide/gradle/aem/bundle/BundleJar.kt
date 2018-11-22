@@ -6,13 +6,13 @@ import com.cognifide.gradle.aem.instance.Bundle
 import com.cognifide.gradle.aem.internal.DependencyOptions
 import com.cognifide.gradle.aem.internal.Formats
 import com.fasterxml.jackson.annotation.JsonIgnore
+import java.io.Serializable
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.reflect.FieldUtils
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.bundling.Jar
-import java.io.Serializable
 
 /**
  * The main purpose of this extension point is to provide a place for specifying custom
@@ -20,14 +20,14 @@ import java.io.Serializable
  * like 'jar' directly.
  */
 class BundleJar(
-        @Transient
-        @JsonIgnore
-        private val aem: BaseExtension,
+    @Transient
+    @JsonIgnore
+    private val aem: BaseExtension,
 
-        @Internal
-        @Transient
-        @JsonIgnore
-        val jar: Jar
+    @Internal
+    @Transient
+    @JsonIgnore
+    val jar: Jar
 ) : Serializable {
 
     /**
@@ -287,5 +287,4 @@ class BundleJar(
     fun mergePackages(pkgs: Collection<String>): String {
         return pkgs.joinToString(",")
     }
-
 }

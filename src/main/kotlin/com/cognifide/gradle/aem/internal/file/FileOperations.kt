@@ -2,6 +2,12 @@ package com.cognifide.gradle.aem.internal.file
 
 import com.cognifide.gradle.aem.base.BasePlugin
 import com.cognifide.gradle.aem.internal.Patterns
+import java.io.File
+import java.io.FileOutputStream
+import java.io.InputStream
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
 import org.apache.commons.io.filefilter.TrueFileFilter
@@ -9,12 +15,6 @@ import org.gradle.api.Project
 import org.gradle.util.GFileUtils
 import org.reflections.Reflections
 import org.reflections.scanners.ResourcesScanner
-import java.io.File
-import java.io.FileOutputStream
-import java.io.InputStream
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
 
 object FileOperations {
 
@@ -108,5 +108,4 @@ object FileOperations {
     fun isDirEmpty(dir: Path): Boolean {
         Files.newDirectoryStream(dir).use { dirStream -> return !dirStream.iterator().hasNext() }
     }
-
 }

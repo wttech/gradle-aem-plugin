@@ -1,11 +1,10 @@
 package com.cognifide.gradle.aem.internal.http
 
-import com.cognifide.gradle.aem.pkg.DeployException
+import com.cognifide.gradle.aem.api.AemException
 
-class ResponseException : DeployException {
+class ResponseException : AemException {
 
     constructor(message: String, cause: Throwable) : super(message, cause)
 
     constructor(message: String) : super(message)
-
 }

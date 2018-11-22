@@ -1,13 +1,13 @@
 package com.cognifide.gradle.aem.internal.file.downloader
 
 import com.cognifide.gradle.aem.internal.file.FileException
+import java.io.File
 import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.sftp.OpenMode
 import net.schmizz.sshj.sftp.SFTPClient
 import org.apache.http.client.utils.URIBuilder
 import org.gradle.api.Project
 import org.gradle.api.logging.Logger
-import java.io.File
 
 class SftpFileDownloader(val project: Project) {
 
@@ -77,5 +77,4 @@ class SftpFileDownloader(val project: Project) {
             }
         }
     }
-
 }

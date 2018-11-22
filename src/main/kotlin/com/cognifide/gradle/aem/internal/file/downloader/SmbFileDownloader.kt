@@ -1,10 +1,10 @@
 package com.cognifide.gradle.aem.internal.file.downloader
 
 import com.cognifide.gradle.aem.internal.file.FileException
+import java.io.File
 import jcifs.smb.NtlmPasswordAuthentication
 import jcifs.smb.SmbFile
 import org.gradle.api.Project
-import java.io.File
 
 class SmbFileDownloader(val project: Project) {
 
@@ -41,5 +41,4 @@ class SmbFileDownloader(val project: Project) {
 
         return SmbFile(url)
     }
-
 }

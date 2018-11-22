@@ -17,5 +17,4 @@ class LocalHandleOptions(project: Project) {
      */
     @Input
     var filesExpanded: MutableList<String> = mutableListOf("**/*.properties", "**/*.sh", "**/*.bat", "**/*.xml", "**/start", "**/stop")
-
 }
