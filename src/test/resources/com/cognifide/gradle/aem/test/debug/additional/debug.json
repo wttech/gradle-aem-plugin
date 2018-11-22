@@ -28,9 +28,12 @@
         "typeName" : "author",
         "environment" : "local",
         "debugPort" : 24502,
-        "startOpts" : "",
+        "name" : "local-author",
+        "type" : "AUTHOR",
+        "httpPort" : 4502,
+        "jvmOpts" : "-Xdebug -Xrunjdwp:transport=dt_socket,address=24502,server=y,suspend=n -server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true",
         "runModes" : "author,nosamplecontent,mongo",
-        "jvmOpts" : "-Xdebug -Xrunjdwp:transport=dt_socket,address=24502,server=y,suspend=n -server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true"
+        "startOpts" : ""
       },
       "local-publish1" : {
         "httpUrl" : "http://localhost:4503",
@@ -39,9 +42,12 @@
         "typeName" : "publish1",
         "environment" : "local",
         "debugPort" : 14503,
-        "startOpts" : "",
+        "name" : "local-publish1",
+        "type" : "PUBLISH",
+        "httpPort" : 4503,
+        "jvmOpts" : "-Xdebug -Xrunjdwp:transport=dt_socket,address=14503,server=y,suspend=n -server -Xmx1024m -XX:MaxPermSize=256M -Djava.awt.headless=true",
         "runModes" : "publish,local",
-        "jvmOpts" : "-Xdebug -Xrunjdwp:transport=dt_socket,address=14503,server=y,suspend=n -server -Xmx1024m -XX:MaxPermSize=256M -Djava.awt.headless=true"
+        "startOpts" : ""
       },
       "local-publish2" : {
         "httpUrl" : "http://localhost:4504",
@@ -50,93 +56,132 @@
         "typeName" : "publish2",
         "environment" : "local",
         "debugPort" : 14504,
-        "startOpts" : "",
+        "name" : "local-publish2",
+        "type" : "PUBLISH",
+        "httpPort" : 4504,
+        "jvmOpts" : "-Xdebug -Xrunjdwp:transport=dt_socket,address=14504,server=y,suspend=n -server -Xmx1024m -XX:MaxPermSize=256M -Djava.awt.headless=true",
         "runModes" : "publish,local",
-        "jvmOpts" : "-Xdebug -Xrunjdwp:transport=dt_socket,address=14504,server=y,suspend=n -server -Xmx1024m -XX:MaxPermSize=256M -Djava.awt.headless=true"
+        "startOpts" : ""
       },
       "test-author" : {
         "httpUrl" : "http://192.168.6.6:4502",
         "user" : "admin",
         "password" : "admin",
         "typeName" : "author",
-        "environment" : "test"
+        "environment" : "test",
+        "name" : "test-author",
+        "type" : "AUTHOR",
+        "httpPort" : 4502
       },
       "test-publish" : {
         "httpUrl" : "http://192.168.6.6:4503",
         "user" : "admin",
         "password" : "admin",
         "typeName" : "publish",
-        "environment" : "test"
+        "environment" : "test",
+        "name" : "test-publish",
+        "type" : "PUBLISH",
+        "httpPort" : 4503
       },
       "prod-author" : {
         "httpUrl" : "http://author.example.com",
         "user" : "admin",
         "password" : "admin",
         "typeName" : "author",
-        "environment" : "prod"
+        "environment" : "prod",
+        "name" : "prod-author",
+        "type" : "AUTHOR",
+        "httpPort" : 80
       },
       "prod-publish" : {
         "httpUrl" : "http://example.com",
         "user" : "admin",
         "password" : "admin",
         "typeName" : "publish",
-        "environment" : "prod"
+        "environment" : "prod",
+        "name" : "prod-publish",
+        "type" : "PUBLISH",
+        "httpPort" : 80
       },
       "int-author" : {
         "httpUrl" : "http://192.168.1.1",
         "user" : "admin",
         "password" : "admin",
         "typeName" : "author",
-        "environment" : "int"
+        "environment" : "int",
+        "name" : "int-author",
+        "type" : "AUTHOR",
+        "httpPort" : 80
       },
       "int-publish" : {
         "httpUrl" : "http://192.168.1.2",
         "user" : "admin",
         "password" : "admin",
         "typeName" : "publish",
-        "environment" : "int"
+        "environment" : "int",
+        "name" : "int-publish",
+        "type" : "PUBLISH",
+        "httpPort" : 80
       },
       "stg-author" : {
         "httpUrl" : "https://192.168.3.1:8082",
         "user" : "user1",
         "password" : "password1",
         "typeName" : "author",
-        "environment" : "stg"
+        "environment" : "stg",
+        "name" : "stg-author",
+        "type" : "AUTHOR",
+        "httpPort" : 8082
       },
       "stg-publish" : {
         "httpUrl" : "https://192.168.3.2:8083",
         "user" : "user2",
         "password" : "password2",
         "typeName" : "publish",
-        "environment" : "stg"
+        "environment" : "stg",
+        "name" : "stg-publish",
+        "type" : "PUBLISH",
+        "httpPort" : 8083
       },
       "perf-author-1" : {
         "httpUrl" : "http://192.168.2.1:4502",
         "user" : "admin",
         "password" : "admin",
         "typeName" : "author-1",
-        "environment" : "perf"
+        "environment" : "perf",
+        "name" : "perf-author-1",
+        "type" : "AUTHOR",
+        "httpPort" : 4502
       },
       "perf-author-2" : {
         "httpUrl" : "http://192.168.2.1:5502",
         "user" : "admin",
         "password" : "admin",
         "typeName" : "author-2",
-        "environment" : "perf"
+        "environment" : "perf",
+        "name" : "perf-author-2",
+        "type" : "AUTHOR",
+        "httpPort" : 5502
       },
       "perf-publish-1" : {
         "httpUrl" : "http://192.168.2.2:4503",
         "user" : "admin",
         "password" : "admin",
         "typeName" : "publish-1",
-        "environment" : "perf"
+        "environment" : "perf",
+        "name" : "perf-publish-1",
+        "type" : "PUBLISH",
+        "httpPort" : 4503
       },
       "perf-publish-2" : {
         "httpUrl" : "http://192.168.2.2:5503",
         "user" : "admin",
         "password" : "admin",
         "typeName" : "publish-2",
-        "environment" : "perf"
+        "environment" : "perf",
+        "name" : "perf-publish-2",
+        "type" : "PUBLISH",
+        "httpPort" : 5503
       }
     },
     "instanceRoot" : "*/.aem/additional",

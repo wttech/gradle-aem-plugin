@@ -79,10 +79,10 @@ publishing {
 tasks.named<ProcessResources>("processResources") {
     doLast {
         file("$buildDir/resources/main/build.json").printWriter().use {
-            it.print(groovy.json.JsonOutput.toJson(mapOf(
-                    "pluginVersion" to project.version,
-                    "gradleVersion" to project.gradle.gradleVersion
-            )))
+            it.print("""{
+                    "pluginVersion": "${project.version}",
+                    "gradleVersion": "${project.gradle.gradleVersion}"
+            }""".trimIndent())
         }
     }
 }
@@ -94,7 +94,7 @@ tasks.named<Test>("test") {
     }
 
     useJUnitPlatform()
-    dependsOn("publishToMavenLocal")
+    dependsOn(tasks.named("publishToMavenLocal"))
 }
 
 bintray {
