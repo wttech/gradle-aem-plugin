@@ -20,7 +20,7 @@ open class Clean : AemDefaultTask() {
     var contentPath = aem.config.packageRoot
 
     @Nested
-    val filter = aem.filter()
+    val filter = aem.filter
 
     @get:Internal
     val filterRootDirs: List<File>

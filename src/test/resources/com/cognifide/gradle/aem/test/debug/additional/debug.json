@@ -21,6 +21,68 @@
   },
   "baseConfig" : {
     "instances" : {
+      "local-author" : {
+        "httpUrl" : "http://localhost:4502",
+        "user" : "admin",
+        "password" : "admin",
+        "typeName" : "author",
+        "environment" : "local",
+        "debugPort" : 24502,
+        "name" : "local-author",
+        "type" : "AUTHOR",
+        "httpPort" : 4502,
+        "jvmOpts" : "-Xdebug -Xrunjdwp:transport=dt_socket,address=24502,server=y,suspend=n -server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true",
+        "runModes" : "author,nosamplecontent,mongo",
+        "startOpts" : ""
+      },
+      "local-publish1" : {
+        "httpUrl" : "http://localhost:4503",
+        "user" : "admin",
+        "password" : "admin",
+        "typeName" : "publish1",
+        "environment" : "local",
+        "debugPort" : 14503,
+        "name" : "local-publish1",
+        "type" : "PUBLISH",
+        "httpPort" : 4503,
+        "jvmOpts" : "-Xdebug -Xrunjdwp:transport=dt_socket,address=14503,server=y,suspend=n -server -Xmx1024m -XX:MaxPermSize=256M -Djava.awt.headless=true",
+        "runModes" : "publish,local",
+        "startOpts" : ""
+      },
+      "local-publish2" : {
+        "httpUrl" : "http://localhost:4504",
+        "user" : "admin",
+        "password" : "admin",
+        "typeName" : "publish2",
+        "environment" : "local",
+        "debugPort" : 14504,
+        "name" : "local-publish2",
+        "type" : "PUBLISH",
+        "httpPort" : 4504,
+        "jvmOpts" : "-Xdebug -Xrunjdwp:transport=dt_socket,address=14504,server=y,suspend=n -server -Xmx1024m -XX:MaxPermSize=256M -Djava.awt.headless=true",
+        "runModes" : "publish,local",
+        "startOpts" : ""
+      },
+      "test-author" : {
+        "httpUrl" : "http://192.168.6.6:4502",
+        "user" : "admin",
+        "password" : "admin",
+        "typeName" : "author",
+        "environment" : "test",
+        "name" : "test-author",
+        "type" : "AUTHOR",
+        "httpPort" : 4502
+      },
+      "test-publish" : {
+        "httpUrl" : "http://192.168.6.6:4503",
+        "user" : "admin",
+        "password" : "admin",
+        "typeName" : "publish",
+        "environment" : "test",
+        "name" : "test-publish",
+        "type" : "PUBLISH",
+        "httpPort" : 4503
+      },
       "prod-author" : {
         "httpUrl" : "http://author.example.com",
         "user" : "admin",
@@ -120,68 +182,6 @@
         "name" : "perf-publish-2",
         "type" : "PUBLISH",
         "httpPort" : 5503
-      },
-      "local-author" : {
-        "httpUrl" : "http://localhost:4502",
-        "user" : "admin",
-        "password" : "admin",
-        "typeName" : "author",
-        "environment" : "local",
-        "debugPort" : 24502,
-        "name" : "local-author",
-        "type" : "AUTHOR",
-        "httpPort" : 4502,
-        "runModes" : "author,nosamplecontent,mongo",
-        "startOpts" : "",
-        "jvmOpts" : "-Xdebug -Xrunjdwp:transport=dt_socket,address=24502,server=y,suspend=n -server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true"
-      },
-      "local-publish1" : {
-        "httpUrl" : "http://localhost:4503",
-        "user" : "admin",
-        "password" : "admin",
-        "typeName" : "publish1",
-        "environment" : "local",
-        "debugPort" : 14503,
-        "name" : "local-publish1",
-        "type" : "PUBLISH",
-        "httpPort" : 4503,
-        "runModes" : "publish,local",
-        "startOpts" : "",
-        "jvmOpts" : "-Xdebug -Xrunjdwp:transport=dt_socket,address=14503,server=y,suspend=n -server -Xmx1024m -XX:MaxPermSize=256M -Djava.awt.headless=true"
-      },
-      "local-publish2" : {
-        "httpUrl" : "http://localhost:4504",
-        "user" : "admin",
-        "password" : "admin",
-        "typeName" : "publish2",
-        "environment" : "local",
-        "debugPort" : 14504,
-        "name" : "local-publish2",
-        "type" : "PUBLISH",
-        "httpPort" : 4504,
-        "runModes" : "publish,local",
-        "startOpts" : "",
-        "jvmOpts" : "-Xdebug -Xrunjdwp:transport=dt_socket,address=14504,server=y,suspend=n -server -Xmx1024m -XX:MaxPermSize=256M -Djava.awt.headless=true"
-      },
-      "test-author" : {
-        "httpUrl" : "http://192.168.6.6:4502",
-        "user" : "admin",
-        "password" : "admin",
-        "typeName" : "author",
-        "environment" : "test",
-        "name" : "test-author",
-        "type" : "AUTHOR",
-        "httpPort" : 4502
-      },
-      "test-publish" : {
-        "httpUrl" : "http://192.168.6.6:4503",
-        "user" : "admin",
-        "password" : "admin",
-        "typeName" : "publish",
-        "environment" : "test",
-        "name" : "test-publish",
-        "type" : "PUBLISH",
-        "httpPort" : 4503
       }
     },
     "instanceRoot" : "*/.aem/additional",
@@ -200,27 +200,21 @@
   "bundleConfig" : {
     "jar" : {
       "installPath" : "/apps/additional/install",
-      "javaPackage" : "<auto>",
+      "javaPackage" : "com.company.aem.additional",
       "javaPackageOptions" : "-split-package:=merge-first",
-      "manifestAttributes" : true,
       "bndPath" : "*/bnd.bnd",
       "bndInstructions" : {
         "-fixupmessages.bundleActivator" : "Bundle-Activator * is being imported *;is:=error"
       },
-      "importPackages" : [
-        "*"
-      ],
-      "exportPackages" : [ ],
-      "privatePackages" : [ ],
-      "name" : null,
+      "attributesConvention" : true,
       "attributes" : {
-        "Manifest-Version" : "Manifest-Version=1.0"
-      },
-      "category" : null,
-      "manifestVersion" : null,
-      "activator" : null,
-      "vendor" : null,
-      "symbolicName" : null
+        "Manifest-Version" : "1.0",
+        "Bundle-Name" : "Additional",
+        "Bundle-SymbolicName" : "com.company.aem.additional",
+        "Import-Package" : "*",
+        "Export-Package" : "com.company.aem.additional.*;-split-package:=merge-first",
+        "Sling-Model-Packages" : "com.company.aem.additional"
+      }
     }
   },
   "packageDeployed" : { }

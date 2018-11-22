@@ -1,12 +1,15 @@
 package com.cognifide.gradle.aem.base
 
 import com.cognifide.gradle.aem.api.AemException
+import com.cognifide.gradle.aem.base.vlt.VltException
 import com.cognifide.gradle.aem.base.vlt.VltFilter
-import com.cognifide.gradle.aem.bundle.BundleExtension
+import com.cognifide.gradle.aem.bundle.BundleJar
+import com.cognifide.gradle.aem.bundle.BundlePlugin
 import com.cognifide.gradle.aem.instance.*
 import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.PropertyParser
+import com.cognifide.gradle.aem.internal.file.FileOperations
 import com.cognifide.gradle.aem.internal.http.HttpClient
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.Compose
@@ -83,8 +86,8 @@ open class BaseExtension(@Internal val project: Project) {
     @Nested
     val config = BaseConfig(this)
 
-    @Input
-    val bundles = mutableMapOf<String, BundleExtension>()
+    @Nested
+    val bundles = mutableMapOf<String, BundleJar>()
 
     @Internal
     val notifier = Notifier.of(this)
@@ -150,7 +153,7 @@ open class BaseExtension(@Internal val project: Project) {
                 props.flag(Instance.PUBLISHERS_PROP) -> {
                     Patterns.wildcard(instance.name, "$environment-${InstanceType.PUBLISH}*")
                 }
-                else -> Patterns.wildcards(instance.name, nameMatcher)
+                else -> Patterns.wildcard(instance.name, nameMatcher)
             }
         }
     }
@@ -231,24 +234,24 @@ open class BaseExtension(@Internal val project: Project) {
         return project.tasks.getByName(taskName) as Compose
     }
 
-    fun bundle(configurer: BundleExtension.() -> Unit) {
+    fun bundle(configurer: BundleJar.() -> Unit) {
         bundle(JavaPlugin.JAR_TASK_NAME, configurer)
     }
 
-    fun bundle(jarTaskName: String, configurer: BundleExtension.() -> Unit) {
+    fun bundle(jarTaskName: String, configurer: BundleJar.() -> Unit) {
         project.tasks.withType(Jar::class.java)
                 .named(jarTaskName)
                 .configure { bundle(it, configurer) }
     }
 
     @get:Internal
-    val bundle: BundleExtension
+    val bundle: BundleJar
         get() = bundle(JavaPlugin.JAR_TASK_NAME)
 
     fun bundle(jarTaskName: String) = bundle(project.tasks.getByName(jarTaskName) as Jar)
 
-    fun bundle(jar: Jar, configurer: BundleExtension.() -> Unit = {}): BundleExtension {
-        return bundles.getOrPut(jar.name) { BundleExtension(this, jar).apply(configurer) }
+    fun bundle(jar: Jar, configurer: BundleJar.() -> Unit = {}): BundleJar {
+        return bundles.getOrPut(jar.name) { BundleJar(this, jar).apply(configurer) }
     }
 
     fun notifier(configurer: Notifier.() -> Unit) {
@@ -265,7 +268,34 @@ open class BaseExtension(@Internal val project: Project) {
 
     fun retry(): Retry = Retry.once()
 
-    fun filter(): VltFilter = VltFilter.determine(project)
+    @get:Internal
+    val filter: VltFilter
+        get() {
+            val cmdFilterRoots = props.list("aem.filter.roots")
+            if (cmdFilterRoots.isNotEmpty()) {
+                logger.debug("Using Vault filter roots specified as command line property: $cmdFilterRoots")
+                return VltFilter.temporary(project, cmdFilterRoots)
+            }
+
+            val cmdFilterPath = props.string("aem.filter.path", "")
+            if (cmdFilterPath.isNotEmpty()) {
+                val cmdFilter = FileOperations.find(project, config.packageVltRoot, cmdFilterPath)
+                        ?: throw VltException("Vault check out filter file does not exist at path: $cmdFilterPath (or under directory: ${config.packageVltRoot}).")
+                logger.debug("Using Vault filter file specified as command line property: $cmdFilterPath")
+                return VltFilter(cmdFilter)
+            }
+
+            val conventionFilterFiles = listOf("${config.packageVltRoot}/${VltFilter.CHECKOUT_NAME}", "${config.packageVltRoot}/${VltFilter.BUILD_NAME}")
+            val conventionFilterFile = FileOperations.find(project, config.packageVltRoot, conventionFilterFiles)
+            if (conventionFilterFile != null) {
+                logger.debug("Using Vault filter file found by convention: $conventionFilterFile")
+                return VltFilter(conventionFilterFile)
+            }
+
+            logger.debug("None of Vault filter files found by CMD properties or convention.")
+
+            return VltFilter.temporary(project, listOf())
+        }
 
     fun filter(file: File) = VltFilter(file)
 
@@ -288,6 +318,9 @@ open class BaseExtension(@Internal val project: Project) {
 
     init {
         project.gradle.projectsEvaluated { _ ->
+            if (project.plugins.hasPlugin(BundlePlugin.ID)) {
+                bundle // forces default jar to be configured
+            }
             bundles.values.forEach { it.projectsEvaluated() }
         }
     }

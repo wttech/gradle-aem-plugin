@@ -3,6 +3,15 @@ plugins {
 }
 
 group = "com.company.aem"
+description = "Additional"
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    compile(group = "org.osgi", name = "osgi.cmpn", version = "6.0.0")
+}
 
 aem {
     config {

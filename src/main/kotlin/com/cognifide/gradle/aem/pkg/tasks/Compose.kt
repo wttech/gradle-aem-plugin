@@ -4,7 +4,7 @@ import com.cognifide.gradle.aem.api.AemException
 import com.cognifide.gradle.aem.api.AemTask
 import com.cognifide.gradle.aem.base.BaseExtension
 import com.cognifide.gradle.aem.base.vlt.VltFilter
-import com.cognifide.gradle.aem.bundle.BundleExtension
+import com.cognifide.gradle.aem.bundle.BundleJar
 import com.cognifide.gradle.aem.bundle.BundlePlugin
 import com.cognifide.gradle.aem.internal.DependencyOptions
 import com.cognifide.gradle.aem.internal.Patterns
@@ -317,7 +317,7 @@ open class Compose : Zip(), AemTask {
         }
     }
 
-    fun fromBundle(bundle: BundleExtension) = fromJar(bundle.jar, bundle.installPath)
+    fun fromBundle(bundle: BundleJar) = fromJar(bundle.jar, bundle.installPath)
 
     fun fromJar(dependencyNotation: Any) {
         project.dependencies.add(BUNDLE_FILES_CONFIGURATION, dependencyNotation)

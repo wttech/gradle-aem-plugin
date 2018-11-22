@@ -38,11 +38,11 @@ class VltCleanRule(value: String) {
     }
 
     companion object {
-        val PATHS_DELIMITER = "|"
+        const val PATHS_DELIMITER = "|"
 
-        val PATH_DELIMITER = ","
+        const val PATH_DELIMITER = ","
 
-        val EXCLUDE_FLAG = "!"
+        const val EXCLUDE_FLAG = "!"
 
         fun manyFrom(props: List<String>): List<VltCleanRule> {
             return props.map { VltCleanRule(it) }

@@ -8,6 +8,7 @@ import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.Nested
 import java.io.Serializable
 
 /**
@@ -23,7 +24,7 @@ class BaseConfig(
      * List of AEM instances on which packages could be deployed.
      * Instance stored in map ensures name uniqueness and allows to be referenced in expanded properties.
      */
-    @Input
+    @Nested
     var instances: MutableMap<String, Instance> = mutableMapOf()
 
     /**
