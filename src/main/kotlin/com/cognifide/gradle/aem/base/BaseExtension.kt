@@ -333,13 +333,6 @@ open class BaseExtension(@Internal val project: Project) {
 
         const val NAME = "aem"
 
-        /**
-         * Token indicating that value need to be corrected later by more advanced logic / convention.
-         *
-         * TODO try to avoid that
-         */
-        const val AUTO_DETERMINED = "<auto>"
-
         fun of(project: Project): BaseExtension {
             return project.extensions.findByType(BaseExtension::class.java)
                     ?: throw AemException("${project.displayName.capitalize()} has neither '${PackagePlugin.ID}' nor '${InstancePlugin.ID}' plugin applied.")

@@ -57,21 +57,12 @@ class BundleJar(
      * - generated AEM specific manifest instructions like 'Sling-Model-Packages'.
      * - performed additional component stability checks during 'aemAwait'
      *
-     * Default convention: '${project.group}.${project.name}'
+     * Default convention: '${project.group}.${project.name}'.
+     *
+     * Use empty string to disable automatic determining of that package and going further OSGi components checks.
      */
     @Input
-    var javaPackage: String = BaseExtension.AUTO_DETERMINED
-
-    @get:Internal
-    @get:JsonIgnore
-    val javaPackageDefault: String
-        get() {
-            if ("${aem.project.group}".isBlank()) {
-                throw AemException("${aem.project.displayName.capitalize()} must has property 'group' defined to determine bundle package default.")
-            }
-
-            return Formats.normalizeSeparators("${aem.project.group}.${aem.project.name}", ".")
-        }
+    var javaPackage: String? = null
 
     /**
      * Determines how conflicts will be resolved when coincidental classes will be detected.
@@ -119,12 +110,19 @@ class BundleJar(
     var privatePackages: MutableList<String> = mutableListOf()
 
     fun projectsEvaluated() {
-        if (javaPackage == BaseExtension.AUTO_DETERMINED) {
-            javaPackage = javaPackageDefault
-        }
-
+        ensureJavaPackage()
         ensureBaseNameIfNotCustomized()
         updateAttributes()
+    }
+
+    private fun ensureJavaPackage() {
+        if (javaPackage == null) {
+            if ("${aem.project.group}".isBlank()) {
+                throw AemException("${aem.project.displayName.capitalize()} must has property 'group' defined to determine bundle package default.")
+            }
+
+            javaPackage = Formats.normalizeSeparators("${aem.project.group}.${aem.project.name}", ".")
+        }
     }
 
     /**
@@ -150,11 +148,11 @@ class BundleJar(
                 attribute(Bundle.ATTRIBUTE_NAME, aem.project.description)
             }
 
-            if (!hasAttribute(Bundle.ATTRIBUTE_SYMBOLIC_NAME) && javaPackage.isNotBlank()) {
+            if (!hasAttribute(Bundle.ATTRIBUTE_SYMBOLIC_NAME) && !javaPackage.isNullOrBlank()) {
                 attribute(Bundle.ATTRIBUTE_SYMBOLIC_NAME, javaPackage)
             }
 
-            if (!hasAttribute(Bundle.ATTRIBUTE_SLING_MODEL_PACKAGES) && javaPackage.isNotBlank()) {
+            if (!hasAttribute(Bundle.ATTRIBUTE_SLING_MODEL_PACKAGES) && !javaPackage.isNullOrBlank()) {
                 attribute(Bundle.ATTRIBUTE_SLING_MODEL_PACKAGES, javaPackage)
             }
         }
@@ -162,7 +160,7 @@ class BundleJar(
         combinePackageAttribute(Bundle.ATTRIBUTE_IMPORT_PACKAGE, importPackages)
         combinePackageAttribute(Bundle.ATTRIBUTE_PRIVATE_PACKAGE, privatePackages)
         combinePackageAttribute(Bundle.ATTRIBUTE_EXPORT_PACKAGE, exportPackages.apply {
-            if (attributesConvention && javaPackage.isNotBlank()) {
+            if (attributesConvention && !javaPackage.isNullOrBlank()) {
                 val javaPackageExported = if (javaPackageOptions.isNotBlank()) {
                     "$javaPackage.*;$javaPackageOptions"
                 } else {
