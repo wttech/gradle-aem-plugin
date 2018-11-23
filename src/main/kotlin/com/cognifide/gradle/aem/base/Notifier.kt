@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.base
 
 import com.cognifide.gradle.aem.api.AemException
+import com.cognifide.gradle.aem.api.AemExtension
 import com.cognifide.gradle.aem.internal.BuildScope
 import com.cognifide.gradle.aem.internal.notifier.DorkboxNotifier
 import com.cognifide.gradle.aem.internal.notifier.JcGayNotifier
@@ -12,7 +13,7 @@ import java.util.concurrent.TimeUnit
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.gradle.api.logging.LogLevel
 
-class Notifier private constructor(private val aem: BaseExtension) {
+class Notifier private constructor(private val aem: AemExtension) {
 
     private val notifier: Notifier by lazy { aem.config.notificationConfig(this@Notifier) }
 
@@ -93,14 +94,14 @@ class Notifier private constructor(private val aem: BaseExtension) {
         /**
          * Get project specific notifier (config can vary)
          */
-        fun of(aem: BaseExtension): com.cognifide.gradle.aem.base.Notifier {
+        fun of(aem: AemExtension): com.cognifide.gradle.aem.base.Notifier {
             return BuildScope.of(aem.project).getOrPut(Notifier::class.java.canonicalName, { setup(aem) })
         }
 
         /**
          * Register once (for root project only) listener for notifying about build errors.
          */
-        private fun setup(aem: BaseExtension): com.cognifide.gradle.aem.base.Notifier {
+        private fun setup(aem: AemExtension): com.cognifide.gradle.aem.base.Notifier {
             val notifier = Notifier(aem)
 
             if (aem.project == aem.project.rootProject) {

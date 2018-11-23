@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.pkg
 
 import aQute.bnd.osgi.Jar
-import com.cognifide.gradle.aem.base.BaseExtension
+import com.cognifide.gradle.aem.api.AemExtension
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.file.FileContentReader
 import java.io.Serializable
@@ -11,7 +11,7 @@ import org.gradle.api.tasks.Input
 
 class PackageFileFilter(project: Project) : Serializable {
 
-    private val aem = BaseExtension.of(project)
+    private val aem = AemExtension.of(project)
 
     @Input
     var excluding: Boolean = true
@@ -109,10 +109,15 @@ class PackageFileFilter(project: Project) : Serializable {
         )
 
         val FILE_PROPERTIES = mapOf(
-                "compose.vaultFilters" to mapOf<String, String>(),
-                "compose.vaultNodeTypesLibs" to listOf<String>(),
-                "compose.vaultNodeTypesLines" to listOf<String>()
-
+                "compose" to mapOf(
+                        "vaultFilters" to mapOf<String, String>(),
+                        "vaultNodeTypesLibs" to listOf<String>(),
+                        "vaultNodeTypesLines" to listOf<String>(),
+                        "vaultProperties" to mapOf(
+                                "acHandling" to "merge_preserve",
+                                "requiresRoot" to false
+                        )
+                )
         )
     }
 }

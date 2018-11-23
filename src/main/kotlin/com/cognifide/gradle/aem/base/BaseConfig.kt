@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.base
 
 import com.cognifide.gradle.aem.api.AemException
+import com.cognifide.gradle.aem.api.AemExtension
 import com.cognifide.gradle.aem.instance.*
 import com.cognifide.gradle.aem.internal.LineSeparator
 import com.cognifide.gradle.aem.internal.notifier.Notifier
@@ -17,7 +18,7 @@ import org.gradle.api.tasks.Nested
 class BaseConfig(
     @Transient
     @JsonIgnore
-    private val aem: BaseExtension
+    private val aem: AemExtension
 ) : Serializable {
 
     /**

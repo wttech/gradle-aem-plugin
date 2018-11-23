@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.base
 
+import com.cognifide.gradle.aem.api.AemExtension
 import com.cognifide.gradle.aem.api.AemPlugin
 import com.cognifide.gradle.aem.base.tasks.*
 import com.cognifide.gradle.aem.base.tasks.Debug
@@ -28,7 +29,7 @@ class BasePlugin : AemPlugin() {
     }
 
     private fun Project.setupExtensions() {
-        extensions.create(BaseExtension.NAME, BaseExtension::class.java, this)
+        extensions.create(AemExtension.NAME, AemExtension::class.java, this)
     }
 
     private fun Project.setupTasks() {

@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem.api
 
-import com.cognifide.gradle.aem.base.BaseExtension
 import org.gradle.api.DefaultTask
 import org.gradle.api.Task
 import org.gradle.api.tasks.Nested
@@ -8,7 +7,7 @@ import org.gradle.api.tasks.Nested
 abstract class AemDefaultTask : DefaultTask(), AemTask {
 
     @Nested
-    final override val aem = BaseExtension.of(project)
+    final override val aem = AemExtension.of(project)
 
     init {
         group = AemTask.GROUP

@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.instance.tasks
 
+import com.cognifide.gradle.aem.api.AemExtension
 import com.cognifide.gradle.aem.api.AemTask
-import com.cognifide.gradle.aem.base.BaseExtension
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.Compose
 import org.gradle.api.file.CopySpec
@@ -15,7 +15,7 @@ import java.io.File
 open class Collect : Zip(), AemTask {
 
     @Nested
-    final override val aem = BaseExtension.of(project)
+    final override val aem = AemExtension.of(project)
 
     @Internal
     var packageFilter: ((CopySpec) -> Unit) = { spec ->

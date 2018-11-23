@@ -30,7 +30,7 @@ class TaskFactory(@Transient private val project: Project) {
     }
 
     fun path(path: String): TaskProvider<Task> {
-        val projectPath = path.substringBeforeLast(":", project.path)
+        val projectPath = path.substringBeforeLast(":", project.path).ifEmpty { ":" }
         val taskName = path.substringAfterLast(":")
 
         return project.project(projectPath).tasks.named(taskName)

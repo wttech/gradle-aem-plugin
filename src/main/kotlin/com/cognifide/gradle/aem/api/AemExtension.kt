@@ -1,6 +1,6 @@
-package com.cognifide.gradle.aem.base
+package com.cognifide.gradle.aem.api
 
-import com.cognifide.gradle.aem.api.AemException
+import com.cognifide.gradle.aem.base.*
 import com.cognifide.gradle.aem.base.vlt.VltException
 import com.cognifide.gradle.aem.base.vlt.VltFilter
 import com.cognifide.gradle.aem.bundle.BundleJar
@@ -14,9 +14,6 @@ import com.cognifide.gradle.aem.internal.http.HttpClient
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.Compose
 import com.fasterxml.jackson.annotation.JsonIgnore
-import java.io.File
-import java.util.stream.Collectors
-import java.util.stream.StreamSupport
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.plugins.JavaPlugin
@@ -24,11 +21,11 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.bundling.Jar
+import java.io.File
+import java.util.stream.Collectors
+import java.util.stream.StreamSupport
 
-/**
- * Main place for providing build script DSL capabilities in case of AEM.
- */
-open class BaseExtension(@Internal val project: Project) {
+open class AemExtension(@Internal val project: Project) {
 
     @Internal
     val logger = project.logger
@@ -201,15 +198,15 @@ open class BaseExtension(@Internal val project: Project) {
     fun sync(synchronizer: InstanceSync.() -> Unit) = sync(instances, synchronizer)
 
     fun sync(instances: Collection<Instance>, synchronizer: InstanceSync.() -> Unit) {
-        parallelWith(instances) { sync(synchronizer) }
+        parallelWith(instances) { this.sync.apply(synchronizer) }
     }
 
     fun syncPackages(synchronizer: InstanceSync.(File) -> Unit) = syncPackages(instances, packages, synchronizer)
 
     fun syncPackages(
-        instances: Collection<Instance>,
-        packages: Collection<File>,
-        synchronizer: InstanceSync.(File) -> Unit
+            instances: Collection<Instance>,
+            packages: Collection<File>,
+            synchronizer: InstanceSync.(File) -> Unit
     ) {
         // single AEM instance dislikes parallel package installation
         packages.forEach { p ->
@@ -333,9 +330,10 @@ open class BaseExtension(@Internal val project: Project) {
 
         const val NAME = "aem"
 
-        fun of(project: Project): BaseExtension {
-            return project.extensions.findByType(BaseExtension::class.java)
+        fun of(project: Project): AemExtension {
+            return project.extensions.findByType(AemExtension::class.java)
                     ?: throw AemException("${project.displayName.capitalize()} has neither '${PackagePlugin.ID}' nor '${InstancePlugin.ID}' plugin applied.")
         }
     }
+
 }

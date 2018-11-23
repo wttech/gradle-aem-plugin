@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.internal.file.resolver
 
-import com.cognifide.gradle.aem.base.BaseExtension
+import com.cognifide.gradle.aem.api.AemExtension
 import com.cognifide.gradle.aem.internal.DependencyOptions
 import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.internal.Patterns
@@ -29,7 +29,7 @@ abstract class Resolver<G : FileGroup>(
     val downloadDir: File
 ) {
 
-    private val aem = BaseExtension.of(project)
+    private val aem = AemExtension.of(project)
 
     private val groupDefault = this.createGroup(GROUP_DEFAULT)
 

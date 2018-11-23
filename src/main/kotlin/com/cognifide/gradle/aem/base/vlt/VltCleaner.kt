@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.base.vlt
 
-import com.cognifide.gradle.aem.base.BaseExtension
+import com.cognifide.gradle.aem.api.AemExtension
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import java.io.File
@@ -19,7 +19,7 @@ import org.gradle.api.tasks.Internal
 class VltCleaner(project: Project) {
 
     @Internal
-    private val aem = BaseExtension.of(project)
+    private val aem = AemExtension.of(project)
 
     /**
      * Determines which files will be deleted within running cleaning

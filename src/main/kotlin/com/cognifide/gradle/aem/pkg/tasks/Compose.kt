@@ -1,8 +1,8 @@
 package com.cognifide.gradle.aem.pkg.tasks
 
 import com.cognifide.gradle.aem.api.AemException
+import com.cognifide.gradle.aem.api.AemExtension
 import com.cognifide.gradle.aem.api.AemTask
-import com.cognifide.gradle.aem.base.BaseExtension
 import com.cognifide.gradle.aem.base.vlt.VltFilter
 import com.cognifide.gradle.aem.bundle.BundleJar
 import com.cognifide.gradle.aem.bundle.BundlePlugin
@@ -29,7 +29,7 @@ import org.jsoup.nodes.Element
 open class Compose : Zip(), AemTask {
 
     @Nested
-    final override val aem = BaseExtension.of(project)
+    final override val aem = AemExtension.of(project)
 
     /**
      * Absolute path to JCR content to be included in CRX package.
@@ -67,10 +67,7 @@ open class Compose : Zip(), AemTask {
      * Additional entries added to file 'META-INF/vault/properties.xml'.
      */
     @Input
-    var vaultProperties: MutableMap<String, Any> = mutableMapOf(
-            "acHandling" to "merge_preserve",
-            "requiresRoot" to false
-    )
+    var vaultProperties: MutableMap<String, Any> = VAULT_PROPERTIES_DEFAULT.toMutableMap()
 
     fun vaultProperties(properties: Map<String, Any>) = vaultProperties.putAll(properties)
 
@@ -271,7 +268,7 @@ open class Compose : Zip(), AemTask {
 
     fun fromProject(project: Project) { // TODO options closure (bundleRunMode, bundlePath, content = true, bundles = false etc)
         fromProjects.add {
-            val other by lazy { BaseExtension.of(project) }
+            val other by lazy { AemExtension.of(project) }
 
             if (project.plugins.hasPlugin(PackagePlugin.ID)) {
                 fromCompose(other.compose)
@@ -378,6 +375,11 @@ open class Compose : Zip(), AemTask {
 
         const val BUNDLE_FILES_CONFIGURATION = "bundleConfiguration"
 
-        private val NODE_TYPES_LIB: Pattern = Pattern.compile("<.+>")
+        val VAULT_PROPERTIES_DEFAULT = mapOf(
+                "acHandling" to "merge_preserve",
+                "requiresRoot" to false
+        )
+
+        val NODE_TYPES_LIB: Pattern = Pattern.compile("<.+>")
     }
 }

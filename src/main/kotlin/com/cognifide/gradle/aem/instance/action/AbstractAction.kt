@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.instance.action
 
-import com.cognifide.gradle.aem.base.BaseExtension
+import com.cognifide.gradle.aem.api.AemExtension
 import com.cognifide.gradle.aem.instance.Instance
 import com.cognifide.gradle.aem.instance.InstanceAction
 import com.cognifide.gradle.aem.instance.LocalHandle
@@ -17,7 +17,7 @@ abstract class AbstractAction(
 
     @Internal
     @Transient
-    val aem = BaseExtension.of(project)
+    val aem = AemExtension.of(project)
 
     @Input
     var instances: List<Instance> = aem.instances

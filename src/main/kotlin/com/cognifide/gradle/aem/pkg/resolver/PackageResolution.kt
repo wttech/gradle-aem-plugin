@@ -1,9 +1,10 @@
 package com.cognifide.gradle.aem.pkg.resolver
 
 import aQute.bnd.osgi.Jar
-import com.cognifide.gradle.aem.base.BaseExtension
+import com.cognifide.gradle.aem.api.AemExtension
 import com.cognifide.gradle.aem.base.vlt.VltFilter
 import com.cognifide.gradle.aem.instance.Bundle
+import com.cognifide.gradle.aem.internal.Collections
 import com.cognifide.gradle.aem.internal.file.FileOperations
 import com.cognifide.gradle.aem.internal.file.resolver.FileResolution
 import com.cognifide.gradle.aem.pkg.PackageFileFilter
@@ -18,7 +19,7 @@ class PackageResolution(group: PackageGroup, id: String, action: (FileResolution
 
     private val resolver = group.resolver
 
-    private val aem = BaseExtension.of(resolver.project)
+    private val aem = AemExtension.of(resolver.project)
 
     override fun process(file: File): File {
         val origin = super.process(file)
@@ -55,19 +56,24 @@ class PackageResolution(group: PackageGroup, id: String, action: (FileResolution
         val group = symbolicName.substringBeforeLast(".")
         val version = bundle.manifest.mainAttributes.getValue(Bundle.ATTRIBUTE_VERSION)
         val filters = listOf(VltFilter.rootElementForPath(pkgPath))
-        val bundleProps = PackageFileFilter.FILE_PROPERTIES + mapOf<String, Any>(
-                "compose.vaultName" to symbolicName,
-                "compose.vaultGroup" to group,
-                "compose.vaultFilters" to filters,
-                "project.group" to group,
-                "project.name" to symbolicName,
-                "project.version" to version,
-                "project.description" to description
-        )
+        val bundleProps = Collections.extendMap(PackageFileFilter.FILE_PROPERTIES, mapOf<String, Any>(
+                "compose" to mapOf(
+                        "vaultName" to symbolicName,
+                        "vaultGroup" to group,
+                        "vaultFilters" to filters
+
+                ),
+                "project" to mapOf(
+                        "group" to group,
+                        "name" to symbolicName,
+                        "version" to version,
+                        "description" to description
+                )
+        ))
         val overrideProps = resolver.bundleProperties(bundle)
         val effectiveProps = bundleProps + overrideProps
 
-        FileOperations.amendFiles(vaultDir, listOf("**/${PackagePlugin.VLT_PATH}/*.xml")) { file, content ->
+        FileOperations.amendFiles(vaultDir, PackageFileFilter.EXPAND_FILES_DEFAULT) { file, content ->
             aem.props.expand(content, effectiveProps, file.absolutePath)
         }
 

@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem.api
 
-import com.cognifide.gradle.aem.base.BaseExtension
 import java.io.File
 import org.gradle.api.Project
 import org.gradle.api.Task
@@ -9,7 +8,7 @@ import org.gradle.util.GFileUtils
 
 interface AemTask : Task {
 
-    val aem: BaseExtension
+    val aem: AemExtension
 
     fun projectEvaluated() {
         // intentionally empty

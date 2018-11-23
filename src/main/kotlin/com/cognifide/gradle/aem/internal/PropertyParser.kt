@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.internal
 
 import com.cognifide.gradle.aem.api.AemException
-import com.cognifide.gradle.aem.base.BaseExtension
+import com.cognifide.gradle.aem.api.AemExtension
 import com.mitchellbosecke.pebble.PebbleEngine
 import com.mitchellbosecke.pebble.lexer.Syntax
 import com.mitchellbosecke.pebble.loader.StringLoader
@@ -11,8 +11,8 @@ import org.apache.commons.lang3.text.StrSubstitutor
 import org.gradle.api.Project
 
 class PropertyParser(
-    private val aem: BaseExtension,
-    private val project: Project
+        private val aem: AemExtension,
+        private val project: Project
 ) {
 
     fun prop(name: String): String? {

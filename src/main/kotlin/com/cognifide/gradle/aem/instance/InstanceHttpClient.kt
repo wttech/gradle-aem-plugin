@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.base.BaseExtension
+import com.cognifide.gradle.aem.api.AemExtension
 import com.cognifide.gradle.aem.internal.http.HttpClient
 import com.cognifide.gradle.aem.internal.http.ResponseException
 import org.apache.http.HttpResponse
@@ -8,7 +8,7 @@ import org.gradle.api.Project
 
 open class InstanceHttpClient(project: Project, val instance: Instance) : HttpClient(project) {
 
-    val aem = BaseExtension.of(project)
+    val aem = AemExtension.of(project)
 
     init {
         basicUser = instance.user
