@@ -4,42 +4,30 @@ import com.cognifide.gradle.aem.api.AemTask
 import com.cognifide.gradle.aem.base.BaseExtension
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.Compose
-import java.io.File
 import org.gradle.api.file.CopySpec
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.bundling.Zip
 import org.gradle.api.tasks.bundling.ZipEntryCompression
+import java.io.File
 
-// TODO collect should not zip both unwrapped and wrapped osgi bundles from satisfy
 open class Collect : Zip(), AemTask {
 
     @Nested
     final override val aem = BaseExtension.of(project)
 
-    init {
-        group = AemTask.GROUP
-        description = "Composes CRX package from all CRX packages being satisfied and built."
-
-        baseName = aem.baseName
-        classifier = "packages"
-        isZip64 = true
-        duplicatesStrategy = DuplicatesStrategy.FAIL
-        entryCompression = ZipEntryCompression.STORED
-
-        project.gradle.projectsEvaluated {
-            from(satisfiedPackages, packageFilter)
-            from(builtPackages, packageFilter)
-        }
-    }
-
     @Internal
     var packageFilter: ((CopySpec) -> Unit) = { spec ->
-        spec.exclude("**/*.lock")
+        spec.include("**/.zip")
     }
 
     @Internal
+    var packageCollector: () -> Unit = {
+        from(satisfiedPackages, packageFilter)
+        from(builtPackages, packageFilter)
+    }
+
     private val satisfy = (project.tasks.getByName(Satisfy.NAME) as Satisfy)
 
     @get:Internal
@@ -48,7 +36,20 @@ open class Collect : Zip(), AemTask {
 
     @get:Internal
     val builtPackages: List<File>
-        get() = listOf() // TODO AemConfig.pkgs(project).map { it.archivePath }
+        get() = aem.packages(this)
+
+    init {
+        group = AemTask.GROUP
+        description = "Composes CRX package from all CRX packages being satisfied and built."
+
+        baseName = aem.baseName
+        classifier = "collection"
+        isZip64 = true
+        duplicatesStrategy = DuplicatesStrategy.FAIL
+        entryCompression = ZipEntryCompression.STORED
+
+        project.gradle.projectsEvaluated { packageCollector() }
+    }
 
     override fun projectsEvaluated() {
         project.allprojects.forEach { subproject ->
