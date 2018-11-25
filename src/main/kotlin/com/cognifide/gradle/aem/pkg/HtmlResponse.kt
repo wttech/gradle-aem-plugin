@@ -59,8 +59,8 @@ abstract class HtmlResponse(private val rawHtml: String) {
             val resultBuilder = StringBuilder()
             val chunk = StringBuilder()
             var currentLine = 0
-            input.bufferedReader().forEachLine {
-                chunk.appendln(it)
+            input.bufferedReader().forEachLine { line ->
+                chunk.appendln(line)
                 currentLine++
                 if (currentLine % bufferSize == 0) {
                     extractErrors(chunk, resultBuilder, errorPatterns, statusTags)
@@ -76,15 +76,15 @@ abstract class HtmlResponse(private val rawHtml: String) {
             errorPatterns: List<ErrorPattern>,
             statusTags: List<String>
         ) {
-            errorPatterns.forEach {
-                val matcher = it.pattern.matcher(chunk)
+            errorPatterns.forEach { errorPattern ->
+                val matcher = errorPattern.pattern.matcher(chunk)
                 while (matcher.find()) {
                     builder.append("${matcher.group()}$ERROR_SEPARATOR")
                 }
             }
-            statusTags.forEach {
-                if (chunk.contains(it)) {
-                    builder.append(it)
+            statusTags.forEach { statusTag ->
+                if (chunk.contains(statusTag)) {
+                    builder.append(statusTag)
                 }
             }
             chunk.setLength(0)

@@ -156,7 +156,8 @@ open class Satisfy : Deploy() {
             if (packages.size == 1) {
                 aem.notifier.notify("Package satisfied", "${packages.first().name} on ${instances.names}")
             } else {
-                aem.notifier.notify("Packages satisfied", "Performed ${actions.size} action(s) for ${packages.size} package(s) on ${instances.size} instance(s).")
+                aem.notifier.notify("Packages satisfied", "Performed ${actions.size} action(s) for " +
+                        "${packages.size} package(s) on ${instances.size} instance(s).")
             }
         }
     }

@@ -136,7 +136,10 @@ open class AwaitAction(project: Project) : AbstractAction(project) {
             val unavailableInstances = synchronizers.map { it.instance } - availableInstances
 
             val initializedUnavailableInstances = unavailableInstances.filter { it.isInitialized(project) }
-            if (!unavailableNotification && (timer.ticks.toDouble() / stableRetry.times.toDouble() > INSTANCE_UNAVAILABLE_RATIO) && initializedUnavailableInstances.isNotEmpty()) {
+            val areUnavailableInstances = (timer.ticks.toDouble() / stableRetry.times.toDouble() > INSTANCE_UNAVAILABLE_RATIO) &&
+                    initializedUnavailableInstances.isNotEmpty()
+
+            if (!unavailableNotification && areUnavailableInstances) {
                 notify("Instances not available", "Which: ${initializedUnavailableInstances.names}")
                 unavailableNotification = true
             }

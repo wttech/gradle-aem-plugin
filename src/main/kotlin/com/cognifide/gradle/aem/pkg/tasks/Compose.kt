@@ -368,11 +368,11 @@ open class Compose : Zip(), AemTask {
 
         val file = File(other.vaultNodeTypesPath)
         if (file.exists()) {
-            file.forEachLine {
-                if (NODE_TYPES_LIB.matcher(it.trim()).matches()) {
-                    vaultNodeTypesLibs += it
+            file.forEachLine { line ->
+                if (NODE_TYPES_LIB.matcher(line.trim()).matches()) {
+                    vaultNodeTypesLibs += line
                 } else {
-                    vaultNodeTypesLines += it
+                    vaultNodeTypesLines += line
                 }
             }
         }

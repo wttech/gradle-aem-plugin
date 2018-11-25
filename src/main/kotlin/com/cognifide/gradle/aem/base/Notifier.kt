@@ -105,9 +105,9 @@ class Notifier private constructor(private val aem: AemExtension) {
             val notifier = Notifier(aem)
 
             if (aem.project == aem.project.rootProject) {
-                aem.project.gradle.buildFinished {
-                    if (it.failure != null) {
-                        val exception = ExceptionUtils.getRootCause(it.failure)
+                aem.project.gradle.buildFinished { result ->
+                    if (result.failure != null) {
+                        val exception = ExceptionUtils.getRootCause(result.failure)
                         val message = exception?.message ?: "no error message"
 
                         notifier.notify("Build failure", message, LogLevel.ERROR)

@@ -39,8 +39,8 @@ open class HttpClient(val project: Project) {
 
     var requestConfigurer: (HttpRequestBase) -> Unit = { }
 
-    var clientBuilder: ((HttpClientBuilder) -> HttpClient) = {
-        it.run {
+    var clientBuilder: ((HttpClientBuilder) -> HttpClient) = { builder ->
+        builder.run {
             addInterceptorFirst(PreemptiveAuthInterceptor())
 
             setDefaultRequestConfig(RequestConfig.custom().apply {

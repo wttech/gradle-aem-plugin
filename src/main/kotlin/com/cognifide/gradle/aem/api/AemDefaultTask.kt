@@ -22,8 +22,8 @@ abstract class AemDefaultTask : DefaultTask(), AemTask {
     }
 
     fun afterConfigured(task: Task, callback: Task.() -> Unit) {
-        project.gradle.taskGraph.whenReady {
-            if (it.hasTask(task)) {
+        project.gradle.taskGraph.whenReady { graph ->
+            if (graph.hasTask(task)) {
                 task.apply(callback)
             }
         }

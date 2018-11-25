@@ -34,10 +34,10 @@ class BundlePlugin : AemPlugin() {
             targetCompatibility = JavaVersion.VERSION_1_8
         }
 
-        tasks.withType(JavaCompile::class.java).configureEach {
-            with(it as JavaCompile) {
+        tasks.withType(JavaCompile::class.java).configureEach { compile ->
+            with(compile as JavaCompile) {
                 options.encoding = "UTF-8"
-                options.compilerArgs = it.options.compilerArgs + "-Xlint:deprecation"
+                options.compilerArgs = compile.options.compilerArgs + "-Xlint:deprecation"
                 options.isIncremental = true
             }
         }

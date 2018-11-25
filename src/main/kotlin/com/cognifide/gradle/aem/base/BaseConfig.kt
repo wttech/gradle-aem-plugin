@@ -2,7 +2,10 @@ package com.cognifide.gradle.aem.base
 
 import com.cognifide.gradle.aem.api.AemException
 import com.cognifide.gradle.aem.api.AemExtension
-import com.cognifide.gradle.aem.instance.*
+import com.cognifide.gradle.aem.instance.Instance
+import com.cognifide.gradle.aem.instance.InstanceHttpClient
+import com.cognifide.gradle.aem.instance.LocalInstance
+import com.cognifide.gradle.aem.instance.RemoteInstance
 import com.cognifide.gradle.aem.internal.LineSeparator
 import com.cognifide.gradle.aem.internal.notifier.Notifier
 import com.cognifide.gradle.aem.pkg.PackagePlugin
@@ -186,7 +189,9 @@ class BaseConfig(
 
     private fun instance(instance: Instance) {
         if (instances.containsKey(instance.name)) {
-            throw AemException("Instance named '${instance.name}' is already defined. Enumerate instance types (for example 'author1', 'author2') or distinguish environments.")
+            throw AemException("Instance named '${instance.name}' is already defined. " +
+                    "Enumerate instance types (for example 'author1', 'author2') " +
+                    "or distinguish environments (for example 'local', 'int', 'stg').")
         }
 
         instances[instance.name] = instance

@@ -47,9 +47,9 @@ class BasePlugin : AemPlugin() {
             register(Checkout.NAME, Checkout::class.java) {
                 it.mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
             }
-            register(Sync.NAME, Sync::class.java) {
-                it.mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
-                it.dependsOn(Clean.NAME, Checkout.NAME)
+            register(Sync.NAME, Sync::class.java) { task ->
+                task.dependsOn(Clean.NAME, Checkout.NAME)
+                task.mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
             }
         }
     }

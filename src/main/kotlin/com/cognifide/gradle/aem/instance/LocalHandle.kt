@@ -93,9 +93,9 @@ class LocalHandle(val project: Project, val instance: LocalInstance) {
 
     private fun copyFiles(resolvedFiles: List<File>) {
         GFileUtils.mkdirs(dir)
-        val files = resolvedFiles.map {
-            FileUtils.copyFileToDirectory(it, dir)
-            File(dir, it.name)
+        val files = resolvedFiles.map { file ->
+            FileUtils.copyFileToDirectory(file, dir)
+            File(dir, file.name)
         }
         findJar(files)?.let { FileUtils.moveFile(it, jar) }
     }
@@ -121,24 +121,36 @@ class LocalHandle(val project: Project, val instance: LocalInstance) {
     }
 
     private fun correctStaticFiles() {
-        FileOperations.amendFile(binScript("start", OperatingSystem.forName("windows")).bin) {
-            var result = it
+        FileOperations.amendFile(binScript("start", OperatingSystem.forName("windows")).bin) { origin ->
+            var result = origin
 
             // Force CMD to be launched in closable window mode. Inject nice title.
-            result = result.replace("start \"CQ\" cmd.exe /K", "start /min \"$instance\" cmd.exe /C") // AEM <= 6.2
-            result = result.replace("start \"CQ\" cmd.exe /C", "start /min \"$instance\" cmd.exe /C") // AEM 6.3
+            result = result.replace(
+                    "start \"CQ\" cmd.exe /K",
+                    "start /min \"$instance\" cmd.exe /C"
+            ) // AEM <= 6.2
+            result = result.replace(
+                    "start \"CQ\" cmd.exe /C",
+                    "start /min \"$instance\" cmd.exe /C"
+            ) // AEM 6.3
 
             // Introduce missing CQ_START_OPTS injectable by parent script.
-            result = result.replace("set START_OPTS=start -c %CurrDirName% -i launchpad", "set START_OPTS=start -c %CurrDirName% -i launchpad %CQ_START_OPTS%")
+            result = result.replace(
+                    "set START_OPTS=start -c %CurrDirName% -i launchpad",
+                    "set START_OPTS=start -c %CurrDirName% -i launchpad %CQ_START_OPTS%"
+            )
 
             result
         }
 
-        FileOperations.amendFile(binScript("start", OperatingSystem.forName("unix")).bin) {
-            var result = it
+        FileOperations.amendFile(binScript("start", OperatingSystem.forName("unix")).bin) { origin ->
+            var result = origin
 
             // Introduce missing CQ_START_OPTS injectable by parent script.
-            result = result.replace("START_OPTS=\"start -c ${'$'}{CURR_DIR} -i launchpad\"", "START_OPTS=\"start -c ${'$'}{CURR_DIR} -i launchpad ${'$'}{CQ_START_OPTS}\"")
+            result = result.replace(
+                    "START_OPTS=\"start -c ${'$'}{CURR_DIR} -i launchpad\"",
+                    "START_OPTS=\"start -c ${'$'}{CURR_DIR} -i launchpad ${'$'}{CQ_START_OPTS}\""
+            )
 
             result
         }

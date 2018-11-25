@@ -24,9 +24,9 @@ class PackagePlugin : AemPlugin() {
 
     private fun Project.setupTasks() {
         with(TaskFactory(this)) {
-            register(Compose.NAME, Compose::class.java) {
-                it.dependsOn(LifecycleBasePlugin.ASSEMBLE_TASK_NAME, LifecycleBasePlugin.CHECK_TASK_NAME)
-                it.mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
+            register(Compose.NAME, Compose::class.java) { task ->
+                task.dependsOn(LifecycleBasePlugin.ASSEMBLE_TASK_NAME, LifecycleBasePlugin.CHECK_TASK_NAME)
+                task.mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
             }
             register(Delete.NAME, Delete::class.java) {
                 it.dependsOn(Compose.NAME)

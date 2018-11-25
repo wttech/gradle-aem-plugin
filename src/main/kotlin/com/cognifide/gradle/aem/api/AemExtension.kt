@@ -280,12 +280,16 @@ open class AemExtension(@Internal val project: Project) {
             val cmdFilterPath = props.string("aem.filter.path", "")
             if (cmdFilterPath.isNotEmpty()) {
                 val cmdFilter = FileOperations.find(project, config.packageVltRoot, cmdFilterPath)
-                        ?: throw VltException("Vault check out filter file does not exist at path: $cmdFilterPath (or under directory: ${config.packageVltRoot}).")
+                        ?: throw VltException("Vault check out filter file does not exist at path: $cmdFilterPath" +
+                                " (or under directory: ${config.packageVltRoot}).")
                 logger.debug("Using Vault filter file specified as command line property: $cmdFilterPath")
                 return VltFilter(cmdFilter)
             }
 
-            val conventionFilterFiles = listOf("${config.packageVltRoot}/${VltFilter.CHECKOUT_NAME}", "${config.packageVltRoot}/${VltFilter.BUILD_NAME}")
+            val conventionFilterFiles = listOf(
+                    "${config.packageVltRoot}/${VltFilter.CHECKOUT_NAME}",
+                    "${config.packageVltRoot}/${VltFilter.BUILD_NAME}"
+            )
             val conventionFilterFile = FileOperations.find(project, config.packageVltRoot, conventionFilterFiles)
             if (conventionFilterFile != null) {
                 logger.debug("Using Vault filter file found by convention: $conventionFilterFile")

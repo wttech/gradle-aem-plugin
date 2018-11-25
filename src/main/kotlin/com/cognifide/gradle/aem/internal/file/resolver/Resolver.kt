@@ -90,8 +90,8 @@ abstract class Resolver<G : FileGroup>(
     }
 
     fun downloadSftp(url: String) {
-        resolve(url) {
-            download(url, it.dir) { file ->
+        resolve(url) { resolution ->
+            download(url, resolution.dir) { file ->
                 SftpFileDownloader(project).download(url, file)
             }
         }
@@ -108,12 +108,7 @@ abstract class Resolver<G : FileGroup>(
 
         if (!file.exists()) {
             downloader(file)
-
-            lock.printWriter().use {
-                it.print(Formats.toJson(mapOf(
-                        "downloaded" to Formats.date()
-                )))
-            }
+            lock.printWriter().use { it.print(Formats.toJson(mapOf("downloaded" to Formats.date()))) }
         }
 
         return file
@@ -132,8 +127,8 @@ abstract class Resolver<G : FileGroup>(
     }
 
     fun downloadSftpAuth(url: String, username: String?, password: String?, hostChecking: Boolean?) {
-        resolve(arrayOf(url, username, password, hostChecking)) {
-            download(url, it.dir) { file ->
+        resolve(arrayOf(url, username, password, hostChecking)) { resolution ->
+            download(url, resolution.dir) { file ->
                 val downloader = SftpFileDownloader(project)
 
                 downloader.username = username ?: aem.props.prop("aem.sftp.username")
@@ -146,8 +141,8 @@ abstract class Resolver<G : FileGroup>(
     }
 
     fun downloadSmb(url: String) {
-        resolve(url) {
-            download(url, it.dir) { file ->
+        resolve(url) { resolution ->
+            download(url, resolution.dir) { file ->
                 SmbFileDownloader(project).download(url, file)
             }
         }
@@ -158,8 +153,8 @@ abstract class Resolver<G : FileGroup>(
     }
 
     fun downloadSmbAuth(url: String, domain: String?, username: String?, password: String?) {
-        resolve(arrayOf(url, domain, username, password)) {
-            download(url, it.dir) { file ->
+        resolve(arrayOf(url, domain, username, password)) { resolution ->
+            download(url, resolution.dir) { file ->
                 val downloader = SmbFileDownloader(project)
 
                 downloader.domain = domain ?: aem.props.prop("aem.smb.domain")
@@ -172,8 +167,8 @@ abstract class Resolver<G : FileGroup>(
     }
 
     fun downloadHttp(url: String) {
-        resolve(url) {
-            download(url, it.dir) { file ->
+        resolve(url) { resolution ->
+            download(url, resolution.dir) { file ->
                 HttpFileDownloader(project).download(url, file)
             }
         }
@@ -192,8 +187,8 @@ abstract class Resolver<G : FileGroup>(
     }
 
     fun downloadHttpAuth(url: String, user: String?, password: String?, ignoreSSL: Boolean?) {
-        resolve(arrayOf(url, user, password, ignoreSSL)) {
-            download(url, it.dir) { file ->
+        resolve(arrayOf(url, user, password, ignoreSSL)) { resolution ->
+            download(url, resolution.dir) { file ->
                 val downloader = HttpFileDownloader(project)
 
                 downloader.username = user ?: aem.props.prop("aem.http.username")
@@ -206,8 +201,8 @@ abstract class Resolver<G : FileGroup>(
     }
 
     fun downloadUrl(url: String) {
-        resolve(url) {
-            download(url, it.dir) { file ->
+        resolve(url) { resolution ->
+            download(url, resolution.dir) { file ->
                 UrlFileDownloader(project).download(url, file)
             }
         }

@@ -37,11 +37,11 @@ class TaskFactory(@Transient private val project: Project) {
     }
 
     fun path(paths: Collection<Any>): List<TaskProvider<out Task>> {
-        return paths.map {
-            when (it) {
-                is String -> path(it)
-                is TaskProvider<*> -> it
-                else -> throw IllegalArgumentException("Illegal task argument: $it")
+        return paths.map { path ->
+            when (path) {
+                is String -> path(path)
+                is TaskProvider<*> -> path
+                else -> throw IllegalArgumentException("Illegal task argument: $path")
             }
         }
     }
