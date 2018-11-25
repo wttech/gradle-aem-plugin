@@ -18,6 +18,7 @@ import org.jsoup.Jsoup
 import org.jsoup.parser.Parser
 import org.zeroturnaround.zip.ZipUtil
 
+@Suppress("LargeClass")
 class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(project, instance) {
 
     fun determineRemotePackage(file: File, refresh: Boolean = true): Package? {

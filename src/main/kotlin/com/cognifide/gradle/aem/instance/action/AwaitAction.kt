@@ -109,6 +109,7 @@ open class AwaitAction(project: Project) : AbstractAction(project) {
         ProgressCountdown(project, "Waiting for instance(s): ${instances.names}", fastDelay).run()
     }
 
+    @Suppress("ComplexMethod")
     private fun awaitStable() {
         val progressLogger = ProgressLogger(project, "Awaiting stable instance(s): ${instances.names}", stableRetry.times)
         progressLogger.started()

@@ -6,6 +6,7 @@ import org.gradle.api.artifacts.dsl.DependencyHandler
 /**
  * Based on: org.gradle.kotlin.dsl.accessors.runtime
  */
+@Suppress("LongParameterList")
 class DependencyOptions(private val handler: DependencyHandler) {
 
     lateinit var group: String

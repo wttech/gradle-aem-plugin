@@ -21,6 +21,7 @@ abstract class HtmlResponse(private val rawHtml: String) {
         }
     }
 
+    @Suppress("NestedBlockDepth")
     private fun findErrorsByPattern(pattern: Pattern, printStacktrace: Boolean, message: String) {
         val matcher = pattern.matcher(rawHtml)
 

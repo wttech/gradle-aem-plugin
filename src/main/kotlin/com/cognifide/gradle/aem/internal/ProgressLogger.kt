@@ -6,6 +6,7 @@ import org.gradle.api.Project
 import org.gradle.api.logging.Logger
 import org.gradle.internal.logging.progress.ProgressLoggerFactory
 
+@Suppress("SpreadOperator")
 open class ProgressLogger(val project: Project, val header: String) {
 
     private val logger: Logger = project.logger

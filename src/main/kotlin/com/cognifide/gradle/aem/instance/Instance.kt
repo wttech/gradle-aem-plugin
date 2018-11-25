@@ -107,6 +107,32 @@ interface Instance : Serializable {
         }
 
         fun properties(project: Project): List<Instance> {
+            return localsFromProperties(project) + remotesFromProperties(project)
+        }
+
+        private fun remotesFromProperties(project: Project): List<RemoteInstance> {
+            val remoteInstances = collectProperties(project, "remote").map { e ->
+                val (name, props) = e
+                val nameParts = name.split("-")
+                if (nameParts.size != 2) {
+                    throw InstanceException("Remote instance name has invalid format: '$name'.")
+                }
+                val (environment, typeName) = nameParts
+                val httpUrl = props["httpUrl"]
+                        ?: throw InstanceException("Remote instance named '$name' must have property 'httpUrl' defined.")
+
+                RemoteInstance.create(project, httpUrl) {
+                    this.environment = environment
+                    this.typeName = typeName
+
+                    props["user"]?.let { this.user = it }
+                    props["password"]?.let { this.password = it }
+                }
+            }.sortedBy { it.name }
+            return remoteInstances
+        }
+
+        private fun localsFromProperties(project: Project): List<LocalInstance> {
             val localInstances = collectProperties(project, "local").map { e ->
                 val (name, props) = e
                 val nameParts = name.split("-")
@@ -128,27 +154,7 @@ interface Instance : Serializable {
                     props["debugPort"]?.let { this.debugPort = it.toInt() }
                 }
             }.sortedBy { it.name }
-
-            val remoteInstances = collectProperties(project, "remote").map { e ->
-                val (name, props) = e
-                val nameParts = name.split("-")
-                if (nameParts.size != 2) {
-                    throw InstanceException("Remote instance name has invalid format: '$name'.")
-                }
-                val (environment, typeName) = nameParts
-                val httpUrl = props["httpUrl"]
-                        ?: throw InstanceException("Remote instance named '$name' must have property 'httpUrl' defined.")
-
-                RemoteInstance.create(project, httpUrl) {
-                    this.environment = environment
-                    this.typeName = typeName
-
-                    props["user"]?.let { this.user = it }
-                    props["password"]?.let { this.password = it }
-                }
-            }.sortedBy { it.name }
-
-            return localInstances + remoteInstances
+            return localInstances
         }
 
         private fun collectProperties(project: Project, type: String): MutableMap<String, MutableMap<String, String>> {

@@ -89,6 +89,7 @@ open class Satisfy : Deploy() {
     }
 
     @TaskAction
+    @Suppress("ComplexMethod")
     fun satisfy() {
         val actions = mutableListOf<PackageAction>()
 
