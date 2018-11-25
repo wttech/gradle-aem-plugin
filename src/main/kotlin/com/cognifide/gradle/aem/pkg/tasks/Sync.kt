@@ -20,7 +20,7 @@ open class Sync : AemDefaultTask() {
         }
 
         if (packages.isEmpty()) {
-            packages = aem.packages(this)
+            packages = aem.packagesDependent(this)
         }
     }
 }

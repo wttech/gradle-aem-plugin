@@ -107,4 +107,4 @@ object Formats {
 }
 
 val Collection<File>.fileNames
-    get() = joinToString(", ") { it.name }
+    get() = if (isNotEmpty()) joinToString(", ") { it.name } else "none"

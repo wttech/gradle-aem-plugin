@@ -4,13 +4,13 @@ import com.cognifide.gradle.aem.api.AemExtension
 import com.cognifide.gradle.aem.api.AemTask
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.Compose
+import java.io.File
 import org.gradle.api.file.CopySpec
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.bundling.Zip
 import org.gradle.api.tasks.bundling.ZipEntryCompression
-import java.io.File
 
 open class Collect : Zip(), AemTask {
 
@@ -36,7 +36,7 @@ open class Collect : Zip(), AemTask {
 
     @get:Internal
     val builtPackages: List<File>
-        get() = aem.packages(this)
+        get() = aem.packagesDependent(this)
 
     init {
         group = AemTask.GROUP

@@ -4,6 +4,7 @@ import com.cognifide.gradle.aem.api.AemTask
 import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.pkg.PackageDownloader
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
 
 open class Checkout : Vlt() {
@@ -20,8 +21,8 @@ open class Checkout : Vlt() {
     @Input
     var filter = aem.filter
 
-    @Input
-    val downloader = PackageDownloader(project, AemTask.temporaryDir(project, name))
+    @Nested
+    val downloader = PackageDownloader(aem, AemTask.temporaryDir(project, name))
 
     init {
         description = "Check out JCR content from running AEM instance."

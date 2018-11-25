@@ -5,7 +5,7 @@ import com.cognifide.gradle.aem.api.AemPlugin
 import com.cognifide.gradle.aem.api.AemTask
 import com.cognifide.gradle.aem.instance.names
 import com.cognifide.gradle.aem.internal.Formats
-import com.cognifide.gradle.aem.pkg.ListResponse
+import com.cognifide.gradle.aem.pkg.Package
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
@@ -65,13 +65,13 @@ open class Debug : AemDefaultTask() {
         )
 
     @get:Internal
-    val packageProperties: Map<String, ListResponse.Package?>
+    val packageProperties: Map<String, Package?>
         get() = if (!project.plugins.hasPlugin(PackagePlugin.ID) || !packageDeployed || aem.instances.isEmpty()) {
             mapOf()
         } else {
             logger.info("Determining package states on instances: ${aem.instances.names}")
 
-            mutableMapOf<String, ListResponse.Package?>().apply {
+            mutableMapOf<String, Package?>().apply {
                 aem.syncPackages { pkg ->
                     try {
                         put(instance.name, determineRemotePackage(pkg))

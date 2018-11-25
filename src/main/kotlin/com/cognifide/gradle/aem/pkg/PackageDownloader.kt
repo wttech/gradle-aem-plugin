@@ -6,26 +6,22 @@ import com.cognifide.gradle.aem.instance.Instance
 import com.cognifide.gradle.aem.internal.file.FileOperations
 import com.cognifide.gradle.aem.internal.http.HttpClient
 import com.fasterxml.jackson.annotation.JsonIgnore
+import java.io.File
 import org.apache.commons.io.FilenameUtils
-import org.gradle.api.Project
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.util.GFileUtils
 import org.zeroturnaround.zip.ZipUtil
-import java.io.File
 
 class PackageDownloader(
-        @Internal
-        private val project: Project,
-        @Internal
-        private val temporaryDir: File
+    @Internal
+    private val aem: AemExtension,
+    @Internal
+    private val temporaryDir: File
 ) {
 
     @Internal
-    private val aem = AemExtension.of(project)
-
-    @Internal
-    private val shellDir = File(temporaryDir, PKG_CLASSIFIER_SHELL)
+    private val shellDir = File(temporaryDir, PKG_SHELL)
 
     @Input
     var instance: Instance = aem.instanceAny
@@ -92,18 +88,17 @@ class PackageDownloader(
     }
 
     private fun prepareShellPackage(): File {
-        val zipResult = File(temporaryDir, "$PKG_CLASSIFIER_SHELL.zip")
+        val zipResult = File(temporaryDir, "$PKG_SHELL.zip")
         val vltDir = File(shellDir, PackagePlugin.VLT_PATH)
         val jcrRoot = File(shellDir, PackagePlugin.JCR_ROOT)
+
         vltDir.mkdirs()
         jcrRoot.mkdirs()
 
-        filter.file.copyTo(File(vltDir, "filter.xml"))
+        filter.file.copyTo(File(vltDir, VltFilter.BUILD_NAME))
         FileOperations.copyResources(PackagePlugin.VLT_PATH, vltDir, true)
 
-        val fileProperties = PackageFileFilter.FILE_PROPERTIES + mapOf(
-                "project.version" to "${project.version}-$PKG_CLASSIFIER"
-        )
+        val fileProperties = PackageFileFilter.FILE_PROPERTIES + mapOf("project.version" to PKG_VERSION)
         FileOperations.amendFiles(vltDir, PackageFileFilter.EXPAND_FILES_DEFAULT) { file, content ->
             aem.props.expandPackage(content, fileProperties, file.absolutePath)
         }
@@ -119,16 +114,16 @@ class PackageDownloader(
 
         jcrRoot.mkdirs()
 
-        project.copy { spec ->
+        aem.project.copy { spec ->
             spec.into(jcrRoot.parentFile.path)
-                    .from(project.zipTree(downloadedPackage.path))
+                    .from(aem.project.zipTree(downloadedPackage.path))
                     .include("${PackagePlugin.JCR_ROOT}/**")
         }
     }
 
     companion object {
-        const val PKG_CLASSIFIER = "download"
+        const val PKG_SHELL = "shell"
 
-        const val PKG_CLASSIFIER_SHELL = "downloadShell"
+        const val PKG_VERSION = "download"
     }
 }

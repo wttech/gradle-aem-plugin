@@ -8,12 +8,10 @@ import com.mitchellbosecke.pebble.loader.StringLoader
 import java.io.StringWriter
 import java.util.*
 import org.apache.commons.lang3.text.StrSubstitutor
-import org.gradle.api.Project
 
-class PropertyParser(
-        private val aem: AemExtension,
-        private val project: Project
-) {
+class PropertyParser(private val aem: AemExtension) {
+
+    private val project = aem.project
 
     fun prop(name: String): String? {
         if (project.hasProperty(name)) {

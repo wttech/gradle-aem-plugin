@@ -10,6 +10,7 @@ import com.cognifide.gradle.aem.internal.http.RequestException
 import com.cognifide.gradle.aem.internal.http.ResponseException
 import com.cognifide.gradle.aem.pkg.*
 import com.cognifide.gradle.aem.pkg.resolver.PackageException
+import com.cognifide.gradle.aem.pkg.tasks.Compose
 import java.io.File
 import java.io.FileNotFoundException
 import org.gradle.api.Project
@@ -19,14 +20,7 @@ import org.zeroturnaround.zip.ZipUtil
 
 class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(project, instance) {
 
-    fun determineRemotePackagePath(file: File): String {
-        val pkg = determineRemotePackage(file)
-                ?: throw DeployException("Package is not uploaded on AEM instance.")
-
-        return pkg.path
-    }
-
-    fun determineRemotePackage(file: File, refresh: Boolean = true): ListResponse.Package? {
+    fun determineRemotePackage(file: File, refresh: Boolean = true): Package? {
         if (!ZipUtil.containsEntry(file, PackagePlugin.VLT_PROPERTIES)) {
             throw DeployException("File is not a valid CRX package: $file")
         }
@@ -38,12 +32,18 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
         val name = doc.select("entry[key=name]").text()
         val version = doc.select("entry[key=version]").text()
 
-        return resolveRemotePackage({ response ->
-            response.resolvePackage(project, ListResponse.Package(group, name, version))
-        }, refresh)
+        return determineRemotePackage(group, name, version, refresh)
     }
 
-    private fun resolveRemotePackage(resolver: (ListResponse) -> ListResponse.Package?, refresh: Boolean): ListResponse.Package? {
+    fun determineRemotePackage(compose: Compose, refresh: Boolean = true): Package? {
+        return resolveRemotePackage({ it.resolvePackage(project, Package(compose)) }, refresh)
+    }
+
+    fun determineRemotePackage(group: String, name: String, version: String, refresh: Boolean = true): Package? {
+        return resolveRemotePackage({ it.resolvePackage(project, Package(group, name, version)) }, refresh)
+    }
+
+    private fun resolveRemotePackage(resolver: (ListResponse) -> Package?, refresh: Boolean): Package? {
         aem.logger.debug("Asking for uploaded packages on $instance")
 
         val packages = BuildScope.of(project).getOrPut("instance.${instance.name}.packages", {
@@ -55,6 +55,18 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
         }, refresh)
 
         return resolver(packages)
+    }
+
+    fun determineRemotePackagePath(file: File, refresh: Boolean = true): String {
+        return getPackagePathOrFail(determineRemotePackage(file, refresh))
+    }
+
+    fun determineRemotePackagePath(compose: Compose, refresh: Boolean = true): String {
+        return getPackagePathOrFail(determineRemotePackage(compose, refresh))
+    }
+
+    private fun getPackagePathOrFail(pkg: Package?): String {
+        return pkg?.path ?: throw DeployException("Package is not uploaded on AEM instance.")
     }
 
     fun uploadPackage(file: File) = uploadPackage(file, true, Retry.once())

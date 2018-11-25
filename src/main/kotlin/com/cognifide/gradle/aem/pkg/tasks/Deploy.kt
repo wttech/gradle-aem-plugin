@@ -46,12 +46,16 @@ open class Deploy : Sync() {
     var installRecursive: Boolean = aem.props.boolean("aem.install.recursive", true)
 
     override fun projectsEvaluated() {
-        super.projectsEvaluated()
+        if (instances.isEmpty()) {
+            instances = if (distributed) {
+                aem.instanceAuthors
+            } else {
+                aem.instances
+            }
+        }
 
-        instances = if (distributed) {
-            aem.instanceAuthors
-        } else {
-            aem.instances
+        if (packages.isEmpty()) {
+            packages = aem.packagesDependent(this)
         }
     }
 

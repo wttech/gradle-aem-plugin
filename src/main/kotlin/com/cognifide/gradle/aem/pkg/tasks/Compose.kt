@@ -142,6 +142,12 @@ open class Compose : Zip(), AemTask {
     @Input
     var vaultGroup: String = ""
 
+    /**
+     * Version visible in CRX package manager.
+     */
+    @Input
+    var vaultVersion: String = ""
+
     @get:Internal
     val vaultFilters = mutableSetOf<Element>()
 
@@ -180,9 +186,11 @@ open class Compose : Zip(), AemTask {
                 project.rootProject.name
             }
         }
-
         if (vaultName.isBlank()) {
             vaultName = baseName
+        }
+        if (vaultVersion.isBlank()) {
+            vaultVersion = project.version.toString()
         }
 
         if (contentPath.isBlank()) {

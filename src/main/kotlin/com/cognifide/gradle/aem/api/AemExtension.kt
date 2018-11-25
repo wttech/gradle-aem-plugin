@@ -1,6 +1,9 @@
 package com.cognifide.gradle.aem.api
 
-import com.cognifide.gradle.aem.base.*
+import com.cognifide.gradle.aem.base.BaseConfig
+import com.cognifide.gradle.aem.base.Notifier
+import com.cognifide.gradle.aem.base.Retry
+import com.cognifide.gradle.aem.base.TaskFactory
 import com.cognifide.gradle.aem.base.vlt.VltException
 import com.cognifide.gradle.aem.base.vlt.VltFilter
 import com.cognifide.gradle.aem.bundle.BundleJar
@@ -14,6 +17,10 @@ import com.cognifide.gradle.aem.internal.http.HttpClient
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.Compose
 import com.fasterxml.jackson.annotation.JsonIgnore
+import java.io.File
+import java.util.concurrent.ForkJoinPool
+import java.util.stream.Collectors
+import java.util.stream.StreamSupport
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.plugins.JavaPlugin
@@ -21,9 +28,6 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.bundling.Jar
-import java.io.File
-import java.util.stream.Collectors
-import java.util.stream.StreamSupport
 
 open class AemExtension(@Internal val project: Project) {
 
@@ -34,7 +38,7 @@ open class AemExtension(@Internal val project: Project) {
      * Allows to read project property specified in command line and system property as a fallback.
      */
     @Internal
-    val props = PropertyParser(this, project)
+    val props = PropertyParser(this)
 
     /**
      * Project name convention prefixes used to determine default:
@@ -96,13 +100,9 @@ open class AemExtension(@Internal val project: Project) {
     val instances: List<Instance>
         get() = instanceNamed(props.string("aem.instance.name", "$environment-*"))
 
-    fun instances(consumer: (Instance) -> Unit) {
-        parallelWith(instances, consumer)
-    }
+    fun instances(consumer: (Instance) -> Unit) = parallelWith(instances, consumer)
 
-    fun instances(filter: String, consumer: (Instance) -> Unit) {
-        parallelWith(instanceNamed(filter), consumer)
-    }
+    fun instances(filter: String, consumer: (Instance) -> Unit) = parallelWith(instanceNamed(filter), consumer)
 
     fun instance(urlOrName: String): Instance {
         return config.parseInstance(urlOrName)
@@ -175,21 +175,16 @@ open class AemExtension(@Internal val project: Project) {
     val instancePublishers: List<Instance>
         get() = instanceNamed("$environment-${InstanceType.PUBLISH.type}*")
 
-    fun instanceHandles(consumer: LocalHandle.() -> Unit) {
-        parallelWith(instanceHandles, consumer)
-    }
+    fun instanceHandles(consumer: LocalHandle.() -> Unit) = parallelWith(instanceHandles, consumer)
 
-    fun packages(consumer: (File) -> Unit) {
-        val files = project.tasks.withType(Compose::class.java).map { it.archivePath }
-        parallelWith(files, consumer)
-    }
+    fun packages(consumer: (File) -> Unit) = parallelWith(packages, consumer)
 
     @get:Internal
     val packages: List<File>
         get() = project.tasks.withType(Compose::class.java)
                 .map { it.archivePath }
 
-    fun packages(task: Task): List<File> {
+    fun packagesDependent(task: Task): List<File> {
         return task.taskDependencies.getDependencies(task)
                 .filterIsInstance(Compose::class.java)
                 .map { it.archivePath }
@@ -204,9 +199,9 @@ open class AemExtension(@Internal val project: Project) {
     fun syncPackages(synchronizer: InstanceSync.(File) -> Unit) = syncPackages(instances, packages, synchronizer)
 
     fun syncPackages(
-            instances: Collection<Instance>,
-            packages: Collection<File>,
-            synchronizer: InstanceSync.(File) -> Unit
+        instances: Collection<Instance>,
+        packages: Collection<File>,
+        synchronizer: InstanceSync.(File) -> Unit
     ) {
         // single AEM instance dislikes parallel package installation
         packages.forEach { p ->
@@ -234,6 +229,10 @@ open class AemExtension(@Internal val project: Project) {
     fun compose(taskName: String): Compose {
         return project.tasks.getByName(taskName) as Compose
     }
+
+    @get:Internal
+    val composes: List<Compose>
+        get() = project.tasks.withType(Compose::class.java).toList()
 
     fun bundle(configurer: BundleJar.() -> Unit) {
         bundle(JavaPlugin.JAR_TASK_NAME, configurer)
@@ -306,15 +305,22 @@ open class AemExtension(@Internal val project: Project) {
         return parallelProcess(iterable, { true }, mapper)
     }
 
+    @Internal
+    var parallelPool = ForkJoinPool(PARALLEL_THREADS)
+
     fun <A, B> parallelProcess(iterable: Iterable<A>, filter: (A) -> Boolean, mapper: (A) -> B): List<B> {
-        return StreamSupport.stream(iterable.spliterator(), true)
-                .filter(filter)
-                .map(mapper)
-                .collect(Collectors.toList())
+        return parallelPool.submit<List<B>> {
+            StreamSupport.stream(iterable.spliterator(), true)
+                    .filter(filter)
+                    .map(mapper)
+                    .collect(Collectors.toList())
+        }.get()
     }
 
-    fun <A> parallelWith(collection: Collection<A>, callback: A.() -> Unit) {
-        collection.parallelStream().forEach(callback)
+    fun <A> parallelWith(iterable: Iterable<A>, callback: A.() -> Unit) {
+        parallelPool.submit {
+            StreamSupport.stream(iterable.spliterator(), true).forEach(callback)
+        }.get()
     }
 
     init {
@@ -330,10 +336,11 @@ open class AemExtension(@Internal val project: Project) {
 
         const val NAME = "aem"
 
+        const val PARALLEL_THREADS = 8
+
         fun of(project: Project): AemExtension {
             return project.extensions.findByType(AemExtension::class.java)
                     ?: throw AemException("${project.displayName.capitalize()} has neither '${PackagePlugin.ID}' nor '${InstancePlugin.ID}' plugin applied.")
         }
     }
-
 }

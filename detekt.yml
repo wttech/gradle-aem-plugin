@@ -195,7 +195,7 @@ exceptions:
     - RuntimeException
 
 formatting:
-  active: false # TODO true
+  active: true
   android: false
   autoCorrect: true
   ChainWrapping:
@@ -218,8 +218,8 @@ formatting:
     indentSize: 4
     continuationIndentSize: 4
   MaximumLineLength:
-    active: false # TODO true
-    maxLineLength: 120
+    active: true
+    maxLineLength: 160
   ModifierOrdering:
     active: true
     autoCorrect: true

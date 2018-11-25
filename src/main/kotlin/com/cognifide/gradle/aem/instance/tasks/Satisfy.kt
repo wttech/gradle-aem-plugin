@@ -4,7 +4,7 @@ import com.cognifide.gradle.aem.api.AemTask
 import com.cognifide.gradle.aem.instance.Instance
 import com.cognifide.gradle.aem.instance.names
 import com.cognifide.gradle.aem.internal.Patterns
-import com.cognifide.gradle.aem.pkg.ListResponse
+import com.cognifide.gradle.aem.pkg.Package
 import com.cognifide.gradle.aem.pkg.resolver.PackageResolver
 import com.cognifide.gradle.aem.pkg.tasks.Deploy
 import java.io.File
@@ -99,7 +99,7 @@ open class Satisfy : Deploy() {
             val packageInstances = instances.filter { Patterns.wildcard(it.name, packageGroup.instanceName) }
 
             aem.sync(packageInstances) {
-                val packageStates = packageGroup.files.fold(mutableMapOf<File, ListResponse.Package?>()) { states, pkg ->
+                val packageStates = packageGroup.files.fold(mutableMapOf<File, Package?>()) { states, pkg ->
                     states[pkg] = determineRemotePackage(pkg, packageRefreshing); states
                 }
                 val anyPackageSatisfiable = packageStates.any {
@@ -114,14 +114,14 @@ open class Satisfy : Deploy() {
                     when {
                         isSnapshot(pkg) -> {
                             logger.lifecycle("Satisfying package ${pkg.name} on ${instance.name} (snapshot).")
-                            deployPackage(pkg)
+                            deployPackage(pkg, uploadForce, uploadRetry, installRecursive, installRetry)
 
                             packageSatisfiedAny = true
                             actions.add(PackageAction(pkg, instance))
                         }
                         state == null -> {
                             logger.lifecycle("Satisfying package ${pkg.name} on ${instance.name} (not uploaded).")
-                            deployPackage(pkg)
+                            deployPackage(pkg, uploadForce, uploadRetry, installRecursive, installRetry)
 
                             packageSatisfiedAny = true
                             actions.add(PackageAction(pkg, instance))
