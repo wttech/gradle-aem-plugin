@@ -7,6 +7,7 @@ import com.cognifide.gradle.aem.instance.Bundle
 import com.cognifide.gradle.aem.internal.Collections
 import com.cognifide.gradle.aem.internal.file.FileOperations
 import com.cognifide.gradle.aem.internal.file.resolver.FileResolution
+import com.cognifide.gradle.aem.pkg.PackageException
 import com.cognifide.gradle.aem.pkg.PackageFileFilter
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import java.io.File

@@ -13,6 +13,7 @@ class DorkboxNotifier(
     val configurer: Notify.() -> Unit
 ) : BaseNotifier {
 
+    @Suppress("TooGenericExceptionCaught")
     override fun notify(title: String, text: String, level: LogLevel) {
         try {
             Notify.create()

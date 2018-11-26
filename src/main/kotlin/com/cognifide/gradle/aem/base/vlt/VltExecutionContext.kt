@@ -6,6 +6,7 @@ import org.apache.jackrabbit.vault.util.console.CliCommand
 
 class VltExecutionContext(app: VltApp) : BaseExecutionContext(app) {
 
+    @Suppress("TooGenericExceptionCaught")
     override fun execute(commandLine: CommandLine): Boolean {
         commands.filterIsInstance<CliCommand>().forEach { command ->
             try {

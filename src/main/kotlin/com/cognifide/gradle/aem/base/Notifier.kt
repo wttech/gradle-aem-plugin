@@ -41,6 +41,7 @@ class Notifier private constructor(private val aem: AemExtension) {
         notify(title, text, LogLevel.INFO)
     }
 
+    @Suppress("TooGenericExceptionCaught")
     fun notify(title: String, text: String, level: LogLevel) {
         log(title, text, level)
 
@@ -48,7 +49,7 @@ class Notifier private constructor(private val aem: AemExtension) {
             if (aem.config.notificationEnabled) {
                 notifier.notify(title, text, level)
             }
-        } catch (e: Throwable) {
+        } catch (e: Exception) {
             aem.logger.debug("AEM notifier is not available.", e)
         }
     }

@@ -50,23 +50,28 @@ class BundlePlugin : AemPlugin() {
         convention.plugins[BND_CONVENTION_PLUGIN] = bundleConvention
 
         jar.doLast {
-            try {
-                val bundle = AemExtension.of(project).bundle
-                val instructionFile = File(bundle.bndPath)
-                if (instructionFile.isFile) {
-                    bundleConvention.setBndfile(instructionFile)
-                }
-
-                val instructions = bundle.bndInstructions
-                if (instructions.isNotEmpty()) {
-                    bundleConvention.bnd(instructions)
-                }
-
-                bundleConvention.buildBundle()
-            } catch (e: Exception) {
-                logger.error("BND tool error: https://bnd.bndtools.org", ExceptionUtils.getRootCause(e))
-                throw BundleException("Bundle cannot be built properly.", e)
+            val bundle = AemExtension.of(project).bundle
+            val instructionFile = File(bundle.bndPath)
+            if (instructionFile.isFile) {
+                bundleConvention.setBndfile(instructionFile)
             }
+
+            val instructions = bundle.bndInstructions
+            if (instructions.isNotEmpty()) {
+                bundleConvention.bnd(instructions)
+            }
+
+            runBndTool(bundleConvention)
+        }
+    }
+
+    @Suppress("TooGenericExceptionCaught")
+    private fun Project.runBndTool(bundleConvention: BundleTaskConvention) {
+        try {
+            bundleConvention.buildBundle()
+        } catch (e: Exception) {
+            logger.error("BND tool error: https://bnd.bndtools.org", ExceptionUtils.getRootCause(e))
+            throw BundleException("Bundle cannot be built properly.", e)
         }
     }
 

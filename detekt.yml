@@ -23,7 +23,7 @@ test-pattern: # Configure exclusions for test sources
   - 'TooGenericExceptionCaught'
 
 build:
-  maxIssues: 10
+  maxIssues: 0
   weights:
   # complexity: 2
   # LongParameterList: 1
@@ -148,7 +148,7 @@ empty-blocks:
     active: true
 
 exceptions:
-  active: false # TODO true
+  active: true
   ExceptionRaisedInUnexpectedLocation:
     active: false
     methodNames: 'toString,hashCode,equals,finalize'

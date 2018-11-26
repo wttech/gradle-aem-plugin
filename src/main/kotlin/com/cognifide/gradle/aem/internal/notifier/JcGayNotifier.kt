@@ -40,6 +40,7 @@ class JcGayNotifier(
         Icon.create(javaClass.getResource(Notifier.IMAGE_PATH), "default")
     }
 
+    @Suppress("TooGenericExceptionCaught")
     override fun notify(title: String, text: String, level: LogLevel) {
         try {
             val notification = Notification.builder()

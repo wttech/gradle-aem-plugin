@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem.pkg
 
-import com.cognifide.gradle.aem.internal.http.ResponseException
 import java.io.InputStream
 import java.util.regex.Pattern
 
@@ -29,11 +28,7 @@ class UninstallResponse private constructor(private val rawHtml: String) : HtmlR
         private val STATUS_TAGS = listOf(UNINSTALL_SUCCESS)
 
         fun from(input: InputStream, bufferSize: Int): UninstallResponse {
-            return try {
-                UninstallResponse(readFrom(input, ERROR_PATTERNS, STATUS_TAGS, bufferSize))
-            } catch (e: Exception) {
-                throw ResponseException("Malformed uninstall package response.")
-            }
+            return UninstallResponse(filter(input, ERROR_PATTERNS, STATUS_TAGS, bufferSize))
         }
     }
 }

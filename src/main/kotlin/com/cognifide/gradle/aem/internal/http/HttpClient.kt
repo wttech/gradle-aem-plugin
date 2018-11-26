@@ -1,8 +1,10 @@
 package com.cognifide.gradle.aem.internal.http
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.jayway.jsonpath.DocumentContext
 import com.jayway.jsonpath.JsonPath
 import java.io.File
+import java.io.IOException
 import java.io.InputStream
 import java.util.*
 import org.apache.commons.io.IOUtils
@@ -142,6 +144,14 @@ open class HttpClient(val project: Project) {
         return IOUtils.toString(asStream(response), Charsets.UTF_8) ?: ""
     }
 
+    fun <T> asObjectFromJson(response: HttpResponse, clazz: Class<T>): T {
+        return try {
+            ObjectMapper().readValue(asStream(response), clazz)
+        } catch (e: IOException) {
+            throw ResponseException("Cannot parse / malformed response: $response")
+        }
+    }
+
     open fun checkStatus(response: HttpResponse, statuses: Collection<Int> = listOf(HttpStatus.SC_OK)) {
         if (!statuses.contains(response.statusLine.statusCode)) {
             throw ResponseException("Unexpected response: ${response.statusLine}")
@@ -156,6 +166,7 @@ open class HttpClient(val project: Project) {
         return url.replace(" ", "%20")
     }
 
+    @Suppress("TooGenericExceptionCaught")
     open fun <T> execute(method: HttpRequestBase, handler: (HttpResponse) -> T): T {
         try {
             requestConfigurer(method)

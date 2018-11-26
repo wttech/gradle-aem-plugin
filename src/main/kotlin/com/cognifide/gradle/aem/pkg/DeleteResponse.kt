@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem.pkg
 
-import com.cognifide.gradle.aem.internal.http.ResponseException
 import java.io.InputStream
 
 class DeleteResponse private constructor(private val rawHtml: String) : HtmlResponse(rawHtml) {
@@ -27,11 +26,7 @@ class DeleteResponse private constructor(private val rawHtml: String) : HtmlResp
         private val STATUS_TAGS = listOf(DELETE_SUCCESS)
 
         fun from(input: InputStream, bufferSize: Int): DeleteResponse {
-            return try {
-                DeleteResponse(readFrom(input, ERROR_PATTERNS, STATUS_TAGS, bufferSize))
-            } catch (e: Exception) {
-                throw ResponseException("Malformed delete package response.")
-            }
+            return DeleteResponse(filter(input, ERROR_PATTERNS, STATUS_TAGS, bufferSize))
         }
     }
 }

@@ -1,9 +1,9 @@
 package com.cognifide.gradle.aem.pkg.tasks
 
+import com.cognifide.gradle.aem.instance.InstanceException
 import com.cognifide.gradle.aem.instance.InstanceSync
 import com.cognifide.gradle.aem.instance.names
 import com.cognifide.gradle.aem.internal.fileNames
-import com.cognifide.gradle.aem.pkg.DeployException
 import org.gradle.api.execution.TaskExecutionGraph
 import org.gradle.api.tasks.TaskAction
 
@@ -27,7 +27,7 @@ open class Purge : Sync() {
 
                 uninstall(this, packagePath)
                 delete(this, packagePath)
-            } catch (e: DeployException) {
+            } catch (e: InstanceException) {
                 logger.info(e.message)
                 logger.debug("Nothing to purge.", e)
             }
@@ -39,7 +39,7 @@ open class Purge : Sync() {
     private fun uninstall(sync: InstanceSync, packagePath: String) {
         try {
             sync.uninstallPackage(packagePath)
-        } catch (e: DeployException) {
+        } catch (e: InstanceException) {
             logger.info("${e.message} Is it installed already?")
             logger.debug("Cannot uninstall package.", e)
         }
@@ -48,7 +48,7 @@ open class Purge : Sync() {
     private fun delete(sync: InstanceSync, packagePath: String) {
         try {
             sync.deletePackage(packagePath)
-        } catch (e: DeployException) {
+        } catch (e: InstanceException) {
             logger.info(e.message)
             logger.debug("Cannot delete package.", e)
         }

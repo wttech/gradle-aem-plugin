@@ -2,17 +2,12 @@ package com.cognifide.gradle.aem.internal.file.downloader
 
 import com.cognifide.gradle.aem.internal.file.FileException
 import java.io.File
+import java.io.IOException
 import jcifs.smb.NtlmPasswordAuthentication
 import jcifs.smb.SmbFile
 import org.gradle.api.Project
 
 class SmbFileDownloader(val project: Project) {
-
-    companion object {
-        fun handles(sourceUrl: String): Boolean {
-            return !sourceUrl.isNullOrBlank() && sourceUrl.startsWith("smb://")
-        }
-    }
 
     var domain: String? = null
 
@@ -29,7 +24,7 @@ class SmbFileDownloader(val project: Project) {
             downloader.size = smbFile.length()
 
             downloader.download(smbFile.inputStream, targetFile)
-        } catch (e: Exception) {
+        } catch (e: IOException) {
             throw FileException("Cannot download URL '$sourceUrl' to file '$targetFile' using SMB. Check connection.", e)
         }
     }
@@ -40,5 +35,11 @@ class SmbFileDownloader(val project: Project) {
         }
 
         return SmbFile(url)
+    }
+
+    companion object {
+        fun handles(sourceUrl: String): Boolean {
+            return !sourceUrl.isBlank() && sourceUrl.startsWith("smb://")
+        }
     }
 }

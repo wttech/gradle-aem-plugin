@@ -2,8 +2,10 @@ package com.cognifide.gradle.aem.pkg
 
 import aQute.bnd.osgi.Jar
 import com.cognifide.gradle.aem.api.AemExtension
+import com.cognifide.gradle.aem.instance.Bundle
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.file.FileContentReader
+import java.io.File
 import java.io.Serializable
 import org.gradle.api.Project
 import org.gradle.api.file.CopySpec
@@ -66,26 +68,31 @@ class PackageFileFilter(project: Project) : Serializable {
 
             if (expanding) {
                 if (Patterns.wildcard(path, expandFiles)) {
-                    FileContentReader.filter(fileDetail) { aem.props.expandPackage(it, expandProperties + this.expandProperties, path) }
+                    FileContentReader.filter(fileDetail) {
+                        aem.props.expandPackage(it, expandProperties + this.expandProperties, path)
+                    }
                 }
             }
 
             if (bundleChecking) {
                 if (Patterns.wildcard(path, "**/install/*.jar")) {
                     val bundle = fileDetail.file
-                    val isBundle = try {
-                        val manifest = Jar(bundle).manifest.mainAttributes
-                        !manifest.getValue("Bundle-SymbolicName").isNullOrBlank()
-                    } catch (e: Exception) {
-                        false
-                    }
-
-                    if (!isBundle) {
+                    if (!isBundle(bundle)) {
                         aem.logger.warn("Jar being a part of composed CRX package is not a valid OSGi bundle: $bundle")
                         fileDetail.exclude()
                     }
                 }
             }
+        }
+    }
+
+    @Suppress("TooGenericExceptionCaught")
+    private fun isBundle(bundle: File): Boolean {
+        return try {
+            val manifest = Jar(bundle).manifest.mainAttributes
+            !manifest.getValue(Bundle.ATTRIBUTE_SYMBOLIC_NAME).isNullOrBlank()
+        } catch (e: Exception) {
+            false
         }
     }
 

@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.pkg
 
+import com.cognifide.gradle.aem.internal.http.ResponseException
 import java.io.InputStream
 import java.util.regex.Pattern
 
@@ -56,19 +57,27 @@ abstract class HtmlResponse(private val rawHtml: String) {
 
         private const val ERROR_SEPARATOR = "\n\n"
 
-        fun readFrom(input: InputStream, errorPatterns: List<ErrorPattern>, statusTags: List<String>, bufferSize: Int): String {
-            val resultBuilder = StringBuilder()
-            val chunk = StringBuilder()
-            var currentLine = 0
-            input.bufferedReader().forEachLine { line ->
-                chunk.appendln(line)
-                currentLine++
-                if (currentLine % bufferSize == 0) {
-                    extractErrors(chunk, resultBuilder, errorPatterns, statusTags)
+        @Suppress("TooGenericExceptionCaught")
+        fun filter(input: InputStream, errorPatterns: List<ErrorPattern>, statusTags: List<String>, bufferSize: Int): String {
+            return try {
+                val resultBuilder = StringBuilder()
+                val chunk = StringBuilder()
+                var currentLine = 0
+
+                input.bufferedReader().forEachLine { line ->
+                    chunk.appendln(line)
+                    currentLine++
+                    if (currentLine % bufferSize == 0) {
+                        extractErrors(chunk, resultBuilder, errorPatterns, statusTags)
+                    }
                 }
+
+                extractErrors(chunk, resultBuilder, errorPatterns, statusTags)
+
+                resultBuilder.toString()
+            } catch (e: Exception) {
+                throw ResponseException("Cannot parse / malformed package HTML response.", e)
             }
-            extractErrors(chunk, resultBuilder, errorPatterns, statusTags)
-            return resultBuilder.toString()
         }
 
         private fun extractErrors(
@@ -83,11 +92,13 @@ abstract class HtmlResponse(private val rawHtml: String) {
                     builder.append("${matcher.group()}$ERROR_SEPARATOR")
                 }
             }
+
             statusTags.forEach { statusTag ->
                 if (chunk.contains(statusTag)) {
                     builder.append(statusTag)
                 }
             }
+
             chunk.setLength(0)
         }
     }

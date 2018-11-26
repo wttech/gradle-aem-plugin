@@ -5,6 +5,7 @@ import com.cognifide.gradle.aem.api.AemExtension
 import com.mitchellbosecke.pebble.PebbleEngine
 import com.mitchellbosecke.pebble.lexer.Syntax
 import com.mitchellbosecke.pebble.loader.StringLoader
+import java.io.IOException
 import java.io.StringWriter
 import java.util.*
 import org.apache.commons.lang3.text.StrSubstitutor
@@ -99,7 +100,7 @@ class PropertyParser(private val aem: AemExtension) {
             TEMPLATE_ENGINE.getTemplate(interpolated).evaluate(expanded, templateProps)
 
             return expanded.toString()
-        } catch (e: Throwable) {
+        } catch (e: IOException) {
             var msg = "Cannot expand properly all properties. Probably used non-existing field name or unescaped char detected. Source: '${source.trim()}'."
             if (!context.isNullOrBlank()) msg += " Context: $context"
             throw AemException(msg, e)

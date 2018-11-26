@@ -42,6 +42,7 @@ open class ProgressLogger(val project: Project, val header: String) {
         return m.invoke(obj, *args)
     }
 
+    @Suppress("TooGenericExceptionCaught")
     private fun invokeQuietly(obj: Any, method: String, vararg args: Any) {
         try {
             invoke(obj, method, *args)

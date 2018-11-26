@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.internal.file.downloader
 import com.cognifide.gradle.aem.internal.file.FileException
 import com.cognifide.gradle.aem.internal.http.PreemptiveAuthInterceptor
 import java.io.File
+import java.io.IOException
 import org.apache.http.auth.AuthScope
 import org.apache.http.auth.UsernamePasswordCredentials
 import org.apache.http.client.HttpClient
@@ -29,16 +30,6 @@ class HttpFileDownloader(val project: Project) {
 
     val logger: Logger = project.logger
 
-    companion object {
-        val PROTOCOLS_HANDLED = arrayOf("http://", "https://")
-
-        val STATUS_CODES_VALID = 200..300
-
-        fun handles(sourceUrl: String): Boolean {
-            return !sourceUrl.isNullOrBlank() && (PROTOCOLS_HANDLED.any { sourceUrl.startsWith(it) })
-        }
-    }
-
     fun download(sourceUrl: String, targetFile: File) {
         try {
             val client = createClient()
@@ -53,7 +44,7 @@ class HttpFileDownloader(val project: Project) {
             downloader.size = response.entity.contentLength
 
             downloader.download(response.entity.content, targetFile)
-        } catch (e: Exception) {
+        } catch (e: IOException) {
             throw FileException("Cannot download URL '$sourceUrl' to file '$targetFile' using HTTP(s). Check connection.", e)
         }
     }
@@ -81,5 +72,15 @@ class HttpFileDownloader(val project: Project) {
         builder.setRedirectStrategy(LaxRedirectStrategy())
 
         return builder.build()
+    }
+
+    companion object {
+        val PROTOCOLS_HANDLED = arrayOf("http://", "https://")
+
+        val STATUS_CODES_VALID = 200..300
+
+        fun handles(sourceUrl: String): Boolean {
+            return !sourceUrl.isBlank() && (PROTOCOLS_HANDLED.any { sourceUrl.startsWith(it) })
+        }
     }
 }

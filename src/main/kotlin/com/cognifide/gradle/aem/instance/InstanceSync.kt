@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.instance
 
+import com.cognifide.gradle.aem.api.AemException
 import com.cognifide.gradle.aem.base.Retry
 import com.cognifide.gradle.aem.internal.BuildScope
 import com.cognifide.gradle.aem.internal.Patterns
@@ -9,7 +10,7 @@ import com.cognifide.gradle.aem.internal.file.downloader.HttpFileDownloader
 import com.cognifide.gradle.aem.internal.http.RequestException
 import com.cognifide.gradle.aem.internal.http.ResponseException
 import com.cognifide.gradle.aem.pkg.*
-import com.cognifide.gradle.aem.pkg.resolver.PackageException
+import com.cognifide.gradle.aem.pkg.PackageException
 import com.cognifide.gradle.aem.pkg.tasks.Compose
 import java.io.File
 import java.io.FileNotFoundException
@@ -23,7 +24,7 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
 
     fun determineRemotePackage(file: File, refresh: Boolean = true): Package? {
         if (!ZipUtil.containsEntry(file, PackagePlugin.VLT_PROPERTIES)) {
-            throw DeployException("File is not a valid CRX package: $file")
+            throw PackageException("File is not a valid CRX package: $file")
         }
 
         val xml = ZipUtil.unpackEntry(file, PackagePlugin.VLT_PROPERTIES).toString(Charsets.UTF_8)
@@ -49,9 +50,9 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
 
         val packages = BuildScope.of(project).getOrPut("instance.${instance.name}.packages", {
             try {
-                postMultipart(PKG_MANAGER_LIST_JSON) { ListResponse.fromJson(asStream(it)) }
-            } catch (e: Exception) {
-                throw DeployException("Cannot ask for uploaded packages on $instance.", e)
+                postMultipart(PKG_MANAGER_LIST_JSON) { asObjectFromJson(it, ListResponse::class.java) }
+            } catch (e: AemException) {
+                throw InstanceException("Cannot ask for uploaded packages on $instance.", e)
             }
         }, refresh)
 
@@ -67,17 +68,17 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
     }
 
     private fun getPackagePathOrFail(pkg: Package?): String {
-        return pkg?.path ?: throw DeployException("Package is not uploaded on AEM instance.")
+        return pkg?.path ?: throw InstanceException("Package is not uploaded on AEM instance.")
     }
 
     fun uploadPackage(file: File) = uploadPackage(file, true, Retry.once())
 
     fun uploadPackage(file: File, force: Boolean, retry: Retry): UploadResponse {
-        lateinit var exception: DeployException
+        lateinit var exception: InstanceException
         for (i in 0..retry.times) {
             try {
                 return uploadPackageOnce(file, force)
-            } catch (e: DeployException) {
+            } catch (e: InstanceException) {
                 exception = e
 
                 if (i < retry.times) {
@@ -103,17 +104,17 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
             postMultipart(url, mapOf(
                     "package" to file,
                     "force" to (force || isSnapshot(file))
-            )) { UploadResponse.fromJson(asStream(it)) }
+            )) { asObjectFromJson(it, UploadResponse::class.java) }
         } catch (e: FileNotFoundException) {
-            throw DeployException("Package file $file to be uploaded not found!", e)
+            throw PackageException("Package file $file to be uploaded not found!", e)
         } catch (e: RequestException) {
-            throw DeployException("Cannot upload package $file to $instance. Reason: request failed.", e)
+            throw InstanceException("Cannot upload package $file to $instance. Reason: request failed.", e)
         } catch (e: ResponseException) {
-            throw DeployException("Malformed response after uploading package $file to $instance.", e)
+            throw InstanceException("Malformed response after uploading package $file to $instance.", e)
         }
 
         if (!response.isSuccess) {
-            throw DeployException("Cannot upload package $file to $instance. Reason: ${response.msg}.")
+            throw InstanceException("Cannot upload package $file to $instance. Reason: ${response.msg}.")
         }
 
         return response
@@ -156,7 +157,7 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
         }
 
         if (!targetFile.exists()) {
-            throw FileException("Downloaded package missing: ${targetFile.path}")
+            throw InstanceException("Downloaded package is missing: ${targetFile.path}")
         }
     }
 
@@ -166,25 +167,25 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
         aem.logger.info("Building package $remotePath on $instance")
 
         val response = try {
-            postMultipart(url) { PackageBuildResponse.fromJson(asStream(it)) }
+            postMultipart(url) { asObjectFromJson(it, PackageBuildResponse::class.java) }
         } catch (e: RequestException) {
-            throw DeployException("Cannot build package $remotePath on $instance. Reason: request failed.", e)
+            throw InstanceException("Cannot build package $remotePath on $instance. Reason: request failed.", e)
         } catch (e: ResponseException) {
-            throw DeployException("Malformed response after building package $remotePath on $instance.", e)
+            throw InstanceException("Malformed response after building package $remotePath on $instance.", e)
         }
 
         if (!response.isSuccess) {
-            throw DeployException("Cannot build package $remotePath on $instance. Reason: ${response.msg}.")
+            throw InstanceException("Cannot build package $remotePath on $instance. Reason: ${response.msg}.")
         }
         return response
     }
 
     fun installPackage(remotePath: String, recursive: Boolean = true, retry: Retry = Retry.once()): InstallResponse {
-        lateinit var exception: DeployException
+        lateinit var exception: InstanceException
         for (i in 0..retry.times) {
             try {
                 return installPackageOnce(remotePath, recursive)
-            } catch (e: DeployException) {
+            } catch (e: InstanceException) {
                 exception = e
                 if (i < retry.times) {
                     aem.logger.warn("Cannot install package $remotePath on $instance.")
@@ -208,16 +209,16 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
         val response = try {
             postMultipart(url, mapOf("recursive" to recursive)) { InstallResponse.from(asStream(it), aem.config.packageResponseBuffer) }
         } catch (e: RequestException) {
-            throw DeployException("Cannot install package $remotePath on $instance. Reason: request failed.", e)
+            throw InstanceException("Cannot install package $remotePath on $instance. Reason: request failed.", e)
         } catch (e: ResponseException) {
-            throw DeployException("Malformed response after installing package $remotePath on $instance.")
+            throw InstanceException("Malformed response after installing package $remotePath on $instance.")
         }
 
         val packageErrors = response.findPackageErrors(aem.config.packageErrors)
         if (packageErrors.isNotEmpty()) {
             throw PackageException("Cannot install package $remotePath on $instance because it is malformed by:\n$packageErrors \nErrors: ${response.errors}")
         } else if (!response.success) {
-            throw DeployException("Cannot install package $remotePath on $instance. Status: ${response.status}. Errors: ${response.errors}.")
+            throw InstanceException("Cannot install package $remotePath on $instance. Status: ${response.status}. Errors: ${response.errors}.")
         }
 
         return response
@@ -258,15 +259,15 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
         aem.logger.info("Activating package $remotePath on $instance")
 
         val response = try {
-            postMultipart(url) { UploadResponse.fromJson(asStream(it)) }
+            postMultipart(url) { asObjectFromJson(it, UploadResponse::class.java) }
         } catch (e: RequestException) {
-            throw DeployException("Cannot activate package $remotePath on $instance. Reason: request failed.", e)
+            throw InstanceException("Cannot activate package $remotePath on $instance. Reason: request failed.", e)
         } catch (e: ResponseException) {
-            throw DeployException("Malformed response after activating package $remotePath on $instance.", e)
+            throw InstanceException("Malformed response after activating package $remotePath on $instance.", e)
         }
 
         if (!response.isSuccess) {
-            throw DeployException("Cannot activate package $remotePath on $instance. Reason: ${response.msg}.")
+            throw InstanceException("Cannot activate package $remotePath on $instance. Reason: ${response.msg}.")
         }
 
         return response
@@ -280,13 +281,13 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
         val response = try {
             postMultipart(url) { DeleteResponse.from(asStream(it), aem.config.packageResponseBuffer) }
         } catch (e: RequestException) {
-            throw DeployException("Cannot delete package $remotePath from $instance. Reason: request failed.", e)
+            throw InstanceException("Cannot delete package $remotePath from $instance. Reason: request failed.", e)
         } catch (e: ResponseException) {
-            throw DeployException("Malformed response after deleting package $remotePath from $instance.", e)
+            throw InstanceException("Malformed response after deleting package $remotePath from $instance.", e)
         }
 
         if (!response.success) {
-            throw DeployException("Cannot delete package $remotePath from $instance. Status: ${response.status}. Errors: ${response.errors}.")
+            throw InstanceException("Cannot delete package $remotePath from $instance. Status: ${response.status}. Errors: ${response.errors}.")
         }
 
         return response
@@ -300,13 +301,13 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
         val response = try {
             postMultipart(url) { UninstallResponse.from(asStream(it), aem.config.packageResponseBuffer) }
         } catch (e: RequestException) {
-            throw DeployException("Cannot uninstall package $remotePath on $instance. Reason: request failed.", e)
+            throw InstanceException("Cannot uninstall package $remotePath on $instance. Reason: request failed.", e)
         } catch (e: ResponseException) {
-            throw DeployException("Malformed response after uninstalling package $remotePath from $instance.", e)
+            throw InstanceException("Malformed response after uninstalling package $remotePath from $instance.", e)
         }
 
         if (!response.success) {
-            throw DeployException("Cannot uninstall package $remotePath from $instance. Status: ${response.status}. Errors: ${response.errors}.")
+            throw InstanceException("Cannot uninstall package $remotePath from $instance. Status: ${response.status}. Errors: ${response.errors}.")
         }
 
         return response
@@ -320,9 +321,9 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
         aem.logger.debug("Asking for OSGi bundles on $instance")
 
         return try {
-            get(OSGI_BUNDLES_PATH) { BundleState.from(asStream(it)) }
-        } catch (e: Exception) {
-            aem.logger.debug("Cannot determine OSGi bundles state on $instance", e)
+            get(OSGI_BUNDLES_PATH) { asObjectFromJson(it, BundleState::class.java) }
+        } catch (e: AemException) {
+            aem.logger.debug("Cannot request OSGi bundles state on $instance", e)
             BundleState.unknown(e)
         }
     }
@@ -331,8 +332,8 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
         aem.logger.debug("Asking for OSGi components on $instance")
 
         return try {
-            get(OSGI_COMPONENTS_PATH) { ComponentState.from(asStream(it)) }
-        } catch (e: Exception) {
+            get(OSGI_COMPONENTS_PATH) { asObjectFromJson(it, ComponentState::class.java) }
+        } catch (e: AemException) {
             aem.logger.debug("Cannot determine OSGi components state on $instance", e)
             ComponentState.unknown()
         }
@@ -350,7 +351,7 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
         try {
             aem.logger.info("Triggering shutdown of $instance.")
             postUrlencoded(OSGI_VMSTAT_PATH, mapOf("shutdown_type" to type))
-        } catch (e: DeployException) {
+        } catch (e: AemException) {
             throw InstanceException("Cannot trigger shutdown of $instance.", e)
         }
     }

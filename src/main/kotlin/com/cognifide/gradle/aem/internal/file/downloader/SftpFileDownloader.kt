@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.internal.file.downloader
 
 import com.cognifide.gradle.aem.internal.file.FileException
 import java.io.File
+import java.io.IOException
 import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.sftp.OpenMode
 import net.schmizz.sshj.sftp.SFTPClient
@@ -10,12 +11,6 @@ import org.gradle.api.Project
 import org.gradle.api.logging.Logger
 
 class SftpFileDownloader(val project: Project) {
-
-    companion object {
-        fun handles(sourceUrl: String): Boolean {
-            return !sourceUrl.isNullOrBlank() && sourceUrl.startsWith("sftp://")
-        }
-    }
 
     var username: String? = null
 
@@ -32,14 +27,14 @@ class SftpFileDownloader(val project: Project) {
             val downloader = ProgressFileDownloader(project)
             downloader.headerSourceTarget(sourceUrl, targetFile)
 
-            connect(url, { sftp ->
+            connect(url) { sftp ->
                 val size = sftp.stat(url.path).size
                 val input = sftp.open(url.path, setOf(OpenMode.READ)).RemoteFileInputStream()
 
                 downloader.size = size
                 downloader.download(input, targetFile)
-            })
-        } catch (e: Exception) {
+            }
+        } catch (e: IOException) {
             throw FileException("Cannot download URL '$sourceUrl' to file '$targetFile' using SFTP. Check connection.", e)
         }
     }
@@ -48,7 +43,7 @@ class SftpFileDownloader(val project: Project) {
         val ssh = SSHClient()
         ssh.loadKnownHosts()
         if (!hostChecking) {
-            ssh.addHostKeyVerifier({ _, _, _ -> true })
+            ssh.addHostKeyVerifier { _, _, _ -> true }
         }
 
         val user = if (!username.isNullOrBlank()) username else url.userInfo
@@ -72,9 +67,15 @@ class SftpFileDownloader(val project: Project) {
                 method()
                 logger.info("Authenticated using method: $name")
                 return
-            } catch (e: Exception) {
+            } catch (e: IOException) {
                 logger.debug("Cannot authenticate using method: $name", e)
             }
+        }
+    }
+
+    companion object {
+        fun handles(sourceUrl: String): Boolean {
+            return !sourceUrl.isBlank() && sourceUrl.startsWith("sftp://")
         }
     }
 }
