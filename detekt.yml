@@ -427,10 +427,10 @@ style:
     active: false
     maxJumpCount: 1
   MagicNumber:
-    active: false # TODO true
+    active: true
     ignoreNumbers: '-1,0,1,2'
     ignoreHashCodeFunction: true
-    ignorePropertyDeclaration: false
+    ignorePropertyDeclaration: true
     ignoreConstantDeclaration: true
     ignoreCompanionObjectPropertyDeclaration: true
     ignoreAnnotation: false

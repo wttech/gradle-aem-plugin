@@ -7,6 +7,7 @@ import java.io.FileOutputStream
 import java.io.InputStream
 import org.gradle.api.Project
 
+@Suppress("MagicNumber")
 open class ProgressFileDownloader(val project: Project) {
 
     var size: Long = 0

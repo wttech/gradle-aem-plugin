@@ -12,14 +12,16 @@ class Retry private constructor() {
     }
 
     fun afterSecond(times: Long) {
-        retry(times) { 1000L }
+        retry(times) { SECOND_MILIS }
     }
 
     fun afterSquaredSecond(times: Long) {
-        retry(times) { n -> n * n * 1000L }
+        retry(times) { n -> n * n * SECOND_MILIS }
     }
 
     companion object {
         fun once() = Retry()
+
+        const val SECOND_MILIS = 1000L
     }
 }

@@ -47,7 +47,7 @@ class SftpFileDownloader(val project: Project) {
         }
 
         val user = if (!username.isNullOrBlank()) username else url.userInfo
-        val port = if (url.port >= 0) url.port else 22
+        val port = if (url.port >= 0) url.port else PORT_DEFAULT
 
         ssh.connect(url.host, port)
         try {
@@ -74,6 +74,8 @@ class SftpFileDownloader(val project: Project) {
     }
 
     companion object {
+        const val PORT_DEFAULT = 22
+
         fun handles(sourceUrl: String): Boolean {
             return !sourceUrl.isBlank() && sourceUrl.startsWith("sftp://")
         }

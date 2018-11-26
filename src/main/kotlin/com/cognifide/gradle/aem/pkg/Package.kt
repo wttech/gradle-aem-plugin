@@ -23,8 +23,6 @@ class Package private constructor() {
     var lastUnpacked: Long? = null
 
     constructor(compose: Compose) : this() {
-        val project = compose.project
-
         this.group = compose.vaultGroup
         this.name = compose.vaultName
         this.version = compose.vaultVersion

@@ -55,7 +55,7 @@ class Notifier private constructor(private val aem: AemExtension) {
     }
 
     fun dorkbox(): Notifier {
-        return dorkbox { darkStyle().hideAfter(TimeUnit.SECONDS.toMillis(5).toInt()) }
+        return dorkbox { darkStyle().hideAfter(TimeUnit.SECONDS.toMillis(DORKBOX_HIDE_AFTER_SECONDS).toInt()) }
     }
 
     fun dorkbox(configurer: Notify.() -> Unit): Notifier {
@@ -63,7 +63,7 @@ class Notifier private constructor(private val aem: AemExtension) {
     }
 
     fun jcgay(): JcGayNotifier {
-        return jcgay({ timeout(TimeUnit.SECONDS.toMillis(5)) }, {})
+        return jcgay({ timeout(TimeUnit.SECONDS.toMillis(JCGAY_TIMEOUT_SECONDS)) }, {})
     }
 
     fun jcgay(appBuilder: Application.Builder.() -> Unit, messageBuilder: Notification.Builder.() -> Unit): JcGayNotifier {
@@ -91,6 +91,10 @@ class Notifier private constructor(private val aem: AemExtension) {
     companion object {
 
         const val IMAGE_PATH = "/com/cognifide/gradle/aem/META-INF/vault/definition/thumbnail.png"
+
+        const val JCGAY_TIMEOUT_SECONDS = 5L
+
+        const val DORKBOX_HIDE_AFTER_SECONDS = 5L
 
         /**
          * Get project specific notifier (config can vary)

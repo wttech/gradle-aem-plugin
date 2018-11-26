@@ -40,9 +40,9 @@ class InstanceUrl(raw: String) {
             config.port
         } else {
             if (config.protocol == "https") {
-                443
+                HTTPS_PORT
             } else {
-                80
+                HTTP_PORT
             }
         }
 
@@ -57,9 +57,9 @@ class InstanceUrl(raw: String) {
             "1$httpPort".toInt()
         } else {
             if (config.protocol == "https") {
-                50443
+                HTTPS_DEBUG_PORT
             } else {
-                50080
+                HTTP_DEBUG_PORT
             }
         }
 
@@ -70,6 +70,14 @@ class InstanceUrl(raw: String) {
     }
 
     companion object {
+
+        const val HTTPS_PORT = 443
+
+        const val HTTPS_DEBUG_PORT = 50443
+
+        const val HTTP_PORT = 80
+
+        const val HTTP_DEBUG_PORT = 50080
 
         fun encode(text: String): String {
             return URLEncoder.encode(text, Charsets.UTF_8.name()) ?: text
