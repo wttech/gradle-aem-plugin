@@ -247,21 +247,21 @@ open class Compose : Zip(), AemTask {
         fromProject()
     }
 
-    fun fromProject(path: String) = fromProject(project.project(path))
+    fun fromProject(path: String, options: ProjectOptions.() -> Unit = {}) = fromProject(project.project(path), options)
 
-    fun fromProject() = fromProject(project)
+    fun fromProject(options: ProjectOptions.() -> Unit = {}) = fromProject(project, options)
 
-    fun fromProjects(pathFilter: String) {
+    fun fromProjects(pathFilter: String, options: ProjectOptions.() -> Unit = {}) {
         project.allprojects
                 .filter { Patterns.wildcard(it.path, pathFilter) }
-                .forEach { fromProject(it) }
+                .forEach { fromProject(it, options) }
     }
 
-    fun fromSubProjects() {
+    fun fromSubprojects(options: ProjectOptions.() -> Unit = {}) {
         if (project == project.rootProject) {
-            fromProjects(":*")
+            fromProjects(":*", options)
         } else {
-            fromProjects("${project.path}:*")
+            fromProjects("${project.path}:*", options)
         }
     }
 
@@ -274,16 +274,17 @@ open class Compose : Zip(), AemTask {
         }
     }
 
-    fun fromProject(project: Project) { // TODO options closure (bundleRunMode, bundlePath, content = true, bundles = false etc)
+    fun fromProject(project: Project, options: ProjectOptions.() -> Unit = {}) {
         fromProjects.add {
             val other by lazy { AemExtension.of(project) }
+            val configuredOptions = ProjectOptions().apply(options)
 
             if (project.plugins.hasPlugin(PackagePlugin.ID)) {
-                fromCompose(other.compose)
+                fromCompose(other.compose, configuredOptions)
             }
 
             if (project.plugins.hasPlugin(BundlePlugin.ID)) {
-                fromBundle(other.bundle)
+                fromBundle(other.bundle, configuredOptions)
             }
         }
     }
@@ -292,36 +293,55 @@ open class Compose : Zip(), AemTask {
         fromCompose(project.tasks.getByPath(composeTaskPath) as Compose)
     }
 
-    fun fromCompose(other: Compose) {
+    fun fromCompose(other: Compose) = fromCompose(other, ProjectOptions())
+
+    private fun fromCompose(other: Compose, options: ProjectOptions) {
         fromTasks.add {
             if (this@Compose != other) {
                 dependsOn(other.dependsOn)
             }
 
-            fromJarsInternal(other.bundleFiles.resolve(), other.bundlePath)
+            if (options.bundleDependent) {
+                fromJarsInternal(other.bundleFiles.resolve(), options.bundlePath(other.bundlePath))
+            }
 
-            extractVaultFilters(other)
-            extractVaultNodeTypes(other)
+            if (options.vaultFilters) {
+                extractVaultFilters(other)
+            }
 
-            val contentDir = File("${other.contentPath}/${PackagePlugin.JCR_ROOT}")
-            if (contentDir.exists()) {
-                into(PackagePlugin.JCR_ROOT) { spec ->
-                    spec.from(contentDir)
-                    fileFilterDelegate(spec)
+            if (options.vaultNodeTypes) {
+                extractVaultNodeTypes(other)
+            }
+
+            if (options.content) {
+                val contentDir = File("${other.contentPath}/${PackagePlugin.JCR_ROOT}")
+                if (contentDir.exists()) {
+                    into(PackagePlugin.JCR_ROOT) { spec ->
+                        spec.from(contentDir)
+                        fileFilterDelegate(spec)
+                    }
                 }
             }
 
-            val hooksDir = File("${other.contentPath}/${PackagePlugin.VLT_HOOKS_PATH}")
-            if (hooksDir.exists()) {
-                into(PackagePlugin.VLT_HOOKS_PATH) { spec ->
-                    spec.from(hooksDir)
-                    fileFilterDelegate(spec)
+            if (options.vaultHooks) {
+                val hooksDir = File("${other.contentPath}/${PackagePlugin.VLT_HOOKS_PATH}")
+                if (hooksDir.exists()) {
+                    into(PackagePlugin.VLT_HOOKS_PATH) { spec ->
+                        spec.from(hooksDir)
+                        fileFilterDelegate(spec)
+                    }
                 }
             }
         }
     }
 
-    fun fromBundle(bundle: BundleJar) = fromJar(bundle.jar, bundle.installPath)
+    fun fromBundle(bundle: BundleJar) = fromBundle(bundle, ProjectOptions())
+
+    private fun fromBundle(bundle: BundleJar, options: ProjectOptions) {
+        if (options.bundleBuilt) {
+            fromJar(bundle.jar, options.bundlePath(bundle.installPath))
+        }
+    }
 
     fun fromJar(dependencyNotation: Any) {
         project.dependencies.add(BUNDLE_FILES_CONFIGURATION, dependencyNotation)
@@ -375,6 +395,34 @@ open class Compose : Zip(), AemTask {
                     vaultNodeTypesLines += line
                 }
             }
+        }
+    }
+
+    class ProjectOptions {
+
+        var content: Boolean = true
+
+        var vaultHooks: Boolean = true
+
+        var vaultFilters: Boolean = true
+
+        var vaultNodeTypes: Boolean = true
+
+        var bundleBuilt: Boolean = true
+
+        var bundleDependent: Boolean = true
+
+        var bundlePath: String? = null
+
+        var bundleRunMode: String? = null
+
+        fun bundlePath(otherPath: String): String {
+            var result = bundlePath ?: otherPath
+            if (!bundleRunMode.isNullOrBlank()) {
+                result = "$result.$bundleRunMode"
+            }
+
+            return result
         }
     }
 
