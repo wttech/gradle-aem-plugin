@@ -80,9 +80,7 @@ open class AemExtension(@Internal val project: Project) {
      * Determines current environment to be used in e.g package deployment.
      */
     @Input
-    val environment: String = props.string("aem.env") {
-        System.getenv("AEM_ENV") ?: "local"
-    }
+    val environment: String = props.string("aem.env") ?: run { System.getenv("AEM_ENV") ?: "local" }
 
     @Nested
     val config = BaseConfig(this)
@@ -98,7 +96,7 @@ open class AemExtension(@Internal val project: Project) {
 
     @get:Internal
     val instances: List<Instance>
-        get() = instanceNamed(props.string("aem.instance.name", "$environment-*"))
+        get() = instanceNamed(props.string("aem.instance.name") ?: "$environment-*")
 
     fun instances(consumer: (Instance) -> Unit) = parallelWith(instances, consumer)
 
@@ -271,13 +269,13 @@ open class AemExtension(@Internal val project: Project) {
     @get:Internal
     val filter: VltFilter
         get() {
-            val cmdFilterRoots = props.list("aem.filter.roots")
+            val cmdFilterRoots = props.list("aem.filter.roots") ?: listOf()
             if (cmdFilterRoots.isNotEmpty()) {
                 logger.debug("Using Vault filter roots specified as command line property: $cmdFilterRoots")
                 return VltFilter.temporary(project, cmdFilterRoots)
             }
 
-            val cmdFilterPath = props.string("aem.filter.path", "")
+            val cmdFilterPath = props.string("aem.filter.path") ?: ""
             if (cmdFilterPath.isNotEmpty()) {
                 val cmdFilter = FileOperations.find(project, config.packageVltRoot, cmdFilterPath)
                         ?: throw VltException("Vault check out filter file does not exist at path: $cmdFilterPath" +

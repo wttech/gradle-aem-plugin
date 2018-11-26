@@ -82,13 +82,13 @@ class VltCleaner(project: Project) {
      * Controls unused namespaces skipping.
      */
     @Input
-    var namespacesSkipped: Boolean = aem.props.boolean("aem.clean.namespacesSkipped", true)
+    var namespacesSkipped: Boolean = aem.props.boolean("aem.clean.namespacesSkipped") ?: true
 
     /**
      * Controls backups for parent nodes of filter roots for keeping them untouched.
      */
     @Input
-    var parentsBackupEnabled: Boolean = aem.props.boolean("aem.clean.parentsBackup", true)
+    var parentsBackupEnabled: Boolean = aem.props.boolean("aem.clean.parentsBackup") ?: true
 
     /**
      * File suffix being added to parent node back up files.

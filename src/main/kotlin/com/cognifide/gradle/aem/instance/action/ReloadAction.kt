@@ -17,7 +17,7 @@ class ReloadAction(project: Project) : AwaitAction(project) {
      * Time in milliseconds to postpone instance stability checks after triggering instances restart.
      */
     @Input
-    var delay: Long = aem.props.long("aem.reload.delay", TimeUnit.SECONDS.toMillis(10))
+    var delay: Long = aem.props.long("aem.reload.delay") ?: TimeUnit.SECONDS.toMillis(10)
 
     private fun reload() {
         val reloaded = mutableListOf<Instance>()

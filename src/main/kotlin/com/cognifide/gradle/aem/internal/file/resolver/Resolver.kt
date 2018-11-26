@@ -9,6 +9,7 @@ import com.cognifide.gradle.aem.internal.file.downloader.HttpFileDownloader
 import com.cognifide.gradle.aem.internal.file.downloader.SftpFileDownloader
 import com.cognifide.gradle.aem.internal.file.downloader.SmbFileDownloader
 import com.cognifide.gradle.aem.internal.file.downloader.UrlFileDownloader
+import com.cognifide.gradle.aem.internal.http.HttpClient
 import com.google.common.hash.HashCode
 import java.io.File
 import org.apache.commons.io.FilenameUtils
@@ -114,89 +115,58 @@ abstract class Resolver<G : FileGroup>(
         return file
     }
 
-    fun downloadSftpAuth(url: String) {
-        downloadSftpAuth(url, null, null)
-    }
-
-    fun downloadSftpAuth(url: String, hostChecking: Boolean?) {
-        downloadSftpAuth(url, null, null, hostChecking)
-    }
-
-    fun downloadSftpAuth(url: String, username: String?, password: String?) {
-        downloadSftpAuth(url, username, password, null)
-    }
-
-    fun downloadSftpAuth(url: String, username: String?, password: String?, hostChecking: Boolean?) {
-        resolve(arrayOf(url, username, password, hostChecking)) { resolution ->
-            download(url, resolution.dir) { file ->
-                val downloader = SftpFileDownloader(project)
-
-                downloader.username = username ?: aem.props.prop("aem.sftp.username")
-                downloader.password = password ?: aem.props.prop("aem.sftp.password")
-                downloader.hostChecking = hostChecking ?: aem.props.boolean("aem.sftp.hostChecking", false)
-
-                downloader.download(url, file)
-            }
-        }
-    }
-
-    fun downloadSmb(url: String) {
+    fun downloadSftp(url: String, sftpOptions: SftpFileDownloader.() -> Unit = {}) {
         resolve(url) { resolution ->
             download(url, resolution.dir) { file ->
-                SmbFileDownloader(project).download(url, file)
+                SftpFileDownloader(project)
+                        .apply(sftpOptions)
+                        .download(url, file)
             }
         }
     }
 
-    fun downloadSmbAuth(url: String) {
-        downloadSmbAuth(url, null, null, null)
-    }
-
-    fun downloadSmbAuth(url: String, domain: String?, username: String?, password: String?) {
-        resolve(arrayOf(url, domain, username, password)) { resolution ->
-            download(url, resolution.dir) { file ->
-                val downloader = SmbFileDownloader(project)
-
-                downloader.domain = domain ?: aem.props.prop("aem.smb.domain")
-                downloader.username = username ?: aem.props.prop("aem.smb.username")
-                downloader.password = password ?: aem.props.prop("aem.smb.password")
-
-                downloader.download(url, file)
-            }
+    fun downloadSftpAuth(url: String, username: String? = null, password: String? = null, hostChecking: Boolean? = null) {
+        downloadSftp(url) {
+            this.username = username ?: aem.props.prop("aem.sftp.username")
+            this.password = password ?: aem.props.prop("aem.sftp.password")
+            this.hostChecking = hostChecking ?: aem.props.boolean("aem.sftp.hostChecking") ?: false
         }
     }
 
-    fun downloadHttp(url: String) {
+    fun downloadSmb(url: String, smbOptions: SmbFileDownloader.() -> Unit = {}) {
         resolve(url) { resolution ->
             download(url, resolution.dir) { file ->
-                HttpFileDownloader(project).download(url, file)
+                SmbFileDownloader(project)
+                        .apply(smbOptions)
+                        .download(url, file)
             }
         }
     }
 
-    fun downloadHttpAuth(url: String) {
-        downloadHttpAuth(url, null, null)
+    fun downloadSmbAuth(url: String, domain: String? = null, username: String? = null, password: String? = null) {
+        downloadSmb(url) {
+            this.domain = domain ?: aem.props.prop("aem.smb.domain")
+            this.username = username ?: aem.props.prop("aem.smb.username")
+            this.password = password ?: aem.props.prop("aem.smb.password")
+        }
     }
 
-    fun downloadHttpAuth(url: String, ignoreSSL: Boolean?) {
-        downloadHttpAuth(url, null, null, ignoreSSL)
-    }
-
-    fun downloadHttpAuth(url: String, user: String?, password: String?) {
-        downloadHttpAuth(url, user, password, null)
-    }
-
-    fun downloadHttpAuth(url: String, user: String?, password: String?, ignoreSSL: Boolean?) {
-        resolve(arrayOf(url, user, password, ignoreSSL)) { resolution ->
+    fun downloadHttp(url: String, httpOptions: HttpClient.() -> Unit = {}) {
+        resolve(url) { resolution ->
             download(url, resolution.dir) { file ->
-                val downloader = HttpFileDownloader(project)
-
-                downloader.username = user ?: aem.props.prop("aem.http.username")
-                downloader.password = password ?: aem.props.prop("aem.http.password")
-                downloader.ignoreSSLErrors = ignoreSSL ?: aem.props.boolean("aem.http.ignoreSSL", true)
-
-                downloader.download(url, file)
+                with(HttpFileDownloader(project)) {
+                    client(httpOptions)
+                    download(url, file)
+                }
             }
+        }
+    }
+
+    fun downloadHttpAuth(url: String, user: String? = null, password: String? = null, ignoreSsl: Boolean? = null) {
+        downloadHttp(url) {
+            basicUser = user ?: aem.props.string("aem.http.basicUser") ?: ""
+            basicPassword = password ?: aem.props.string("aem.http.basicPassword") ?: ""
+            connectionIgnoreSsl = ignoreSsl ?: aem.props.boolean("aem.http.connectionIgnoreSsl") ?: true
         }
     }
 

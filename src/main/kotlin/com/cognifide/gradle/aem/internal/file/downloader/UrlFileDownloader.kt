@@ -6,11 +6,8 @@ import java.io.File
 import java.io.IOException
 import java.net.URL
 import org.gradle.api.Project
-import org.gradle.api.logging.Logger
 
 class UrlFileDownloader(val project: Project) {
-
-    val logger: Logger = project.logger
 
     fun download(sourceUrl: String, targetFile: File) {
         try {

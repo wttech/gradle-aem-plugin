@@ -1,83 +1,39 @@
 package com.cognifide.gradle.aem.internal.file.downloader
 
+import com.cognifide.gradle.aem.api.AemException
 import com.cognifide.gradle.aem.internal.file.FileException
-import com.cognifide.gradle.aem.internal.http.PreemptiveAuthInterceptor
+import com.cognifide.gradle.aem.internal.http.HttpClient
 import java.io.File
 import java.io.IOException
-import org.apache.http.auth.AuthScope
-import org.apache.http.auth.UsernamePasswordCredentials
-import org.apache.http.client.HttpClient
-import org.apache.http.client.config.CookieSpecs
-import org.apache.http.client.config.RequestConfig
-import org.apache.http.client.methods.HttpGet
-import org.apache.http.conn.ssl.NoopHostnameVerifier
-import org.apache.http.impl.client.BasicCredentialsProvider
-import org.apache.http.impl.client.HttpClients
-import org.apache.http.impl.client.LaxRedirectStrategy
 import org.gradle.api.Project
-import org.gradle.api.logging.Logger
 
-// TODO reuse internal HttpClient
-class HttpFileDownloader(val project: Project) {
+class HttpFileDownloader(
+    val project: Project,
+    val client: HttpClient = HttpClient(project)
+) {
 
-    var username: String? = null
-
-    var password: String? = null
-
-    var ignoreSSLErrors: Boolean = true
-
-    var preemptiveAuthentication: Boolean = false
-
-    val logger: Logger = project.logger
+    fun client(configurer: HttpClient.() -> Unit) {
+        client.apply(configurer)
+    }
 
     fun download(sourceUrl: String, targetFile: File) {
         try {
-            val client = createClient()
-            val response = client.execute(HttpGet(sourceUrl))
-            val statusCode = response.statusLine.statusCode
-            if (statusCode !in STATUS_CODES_VALID) {
-                throw IllegalStateException("Cannot download file from URL '$sourceUrl' due to invalid status code of response ($statusCode).")
+            client.get(sourceUrl) { response ->
+                val downloader = ProgressFileDownloader(project)
+                downloader.headerSourceTarget(sourceUrl, targetFile)
+                downloader.size = response.entity.contentLength
+
+                downloader.download(asStream(response), targetFile)
             }
-
-            val downloader = ProgressFileDownloader(project)
-            downloader.headerSourceTarget(sourceUrl, targetFile)
-            downloader.size = response.entity.contentLength
-
-            downloader.download(response.entity.content, targetFile)
+        } catch (e: AemException) {
+            throw FileException("Cannot download URL '$sourceUrl' to file '$targetFile' using HTTP(s). Check connection.", e)
         } catch (e: IOException) {
             throw FileException("Cannot download URL '$sourceUrl' to file '$targetFile' using HTTP(s). Check connection.", e)
         }
     }
 
-    private fun createClient(): HttpClient {
-        val builder = HttpClients.custom()
-                .useSystemProperties()
-                .setDefaultRequestConfig(
-                        RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build()
-                )
-
-        if (!username.isNullOrBlank() && !password.isNullOrBlank()) {
-            val provider = BasicCredentialsProvider()
-            provider.setCredentials(AuthScope.ANY, UsernamePasswordCredentials(username, password))
-            builder.setDefaultCredentialsProvider(provider)
-            if (preemptiveAuthentication) {
-                builder.addInterceptorFirst(PreemptiveAuthInterceptor())
-            }
-        }
-
-        if (ignoreSSLErrors) {
-            builder.setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE)
-        }
-
-        builder.setRedirectStrategy(LaxRedirectStrategy())
-
-        return builder.build()
-    }
-
     companion object {
-        val PROTOCOLS_HANDLED = arrayOf("http://", "https://")
-
-        val STATUS_CODES_VALID = 200..300
+        private val PROTOCOLS_HANDLED = arrayOf("http://", "https://")
 
         fun handles(sourceUrl: String): Boolean {
             return !sourceUrl.isBlank() && (PROTOCOLS_HANDLED.any { sourceUrl.startsWith(it) })

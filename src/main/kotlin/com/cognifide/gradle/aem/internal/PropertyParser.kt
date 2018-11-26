@@ -7,7 +7,6 @@ import com.mitchellbosecke.pebble.lexer.Syntax
 import com.mitchellbosecke.pebble.loader.StringLoader
 import java.io.IOException
 import java.io.StringWriter
-import java.util.*
 import org.apache.commons.lang3.text.StrSubstitutor
 
 class PropertyParser(private val aem: AemExtension) {
@@ -38,43 +37,19 @@ class PropertyParser(private val aem: AemExtension) {
         return if (!value.isBlank()) value.toBoolean() else true
     }
 
-    fun list(name: String, delimiter: String = ",", defaultValue: List<String> = listOf()): List<String> {
-        val value = prop(name) ?: return defaultValue
+    fun list(name: String, delimiter: String = ","): List<String>? {
+        val value = prop(name) ?: return null
 
         return Formats.toList(value, delimiter)
     }
 
-    fun date(name: String, defaultValue: Date): Date {
-        val timestamp = prop(name)
+    fun boolean(name: String) = prop(name)?.toBoolean()
 
-        return if (timestamp.isNullOrBlank()) {
-            defaultValue
-        } else {
-            Date(timestamp.toLong())
-        }
-    }
+    fun long(name: String) = prop(name)?.toLong()
 
-    fun boolean(name: String, defaultValue: Boolean): Boolean {
-        return prop(name)?.toBoolean() ?: defaultValue
-    }
-
-    fun long(name: String, defaultValue: Long): Long {
-        return prop(name)?.toLong() ?: defaultValue
-    }
-
-    fun int(name: String, defaultValue: Int): Int {
-        return prop(name)?.toInt() ?: defaultValue
-    }
+    fun int(name: String) = prop(name)?.toInt()
 
     fun string(name: String) = prop(name)
-
-    fun string(name: String, defaultValue: String): String {
-        return prop(name) ?: defaultValue
-    }
-
-    fun string(name: String, defaultValue: () -> String): String {
-        return prop(name) ?: defaultValue()
-    }
 
     fun expand(source: String, props: Map<String, Any>, context: String? = null): String {
         return expand(source, envProps + systemProps + props, props, context)

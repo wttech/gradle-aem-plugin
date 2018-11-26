@@ -21,8 +21,8 @@ open class InstanceHttpClient(project: Project, val instance: Instance) : HttpCl
         return "${instance.httpUrl}${url.replace(" ", "%20")}"
     }
 
-    override fun checkStatus(response: HttpResponse, statuses: Collection<Int>) {
-        if (!statuses.contains(response.statusLine.statusCode)) {
+    override fun checkStatus(response: HttpResponse, checker: (Int) -> Boolean) {
+        if (!checker(response.statusLine.statusCode)) {
             throw ResponseException("Unexpected response from $instance: ${response.statusLine}")
         }
     }

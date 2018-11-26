@@ -60,7 +60,7 @@ open class Rcp : Vlt() {
             return
         }
 
-        val cmdPaths = aem.props.list("aem.rcp.paths")
+        val cmdPaths = aem.props.list("aem.rcp.paths") ?: listOf()
         if (cmdPaths.isNotEmpty()) {
             cmdPaths.asSequence().map { pathMapping(it) }.forEach(action)
             return

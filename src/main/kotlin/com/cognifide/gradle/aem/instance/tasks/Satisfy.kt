@@ -19,7 +19,7 @@ open class Satisfy : Deploy() {
      * Determines which packages should be installed by default when satisfy task is being executed.
      */
     @Input
-    var groupName = aem.props.string("aem.satisfy.group.name", "*")
+    var groupName = aem.props.string("aem.satisfy.group.name") ?: "*"
 
     @get:Internal
     var groupFilter: (String) -> Boolean = { fileGroup -> Patterns.wildcard(fileGroup, groupName) }
@@ -31,7 +31,7 @@ open class Satisfy : Deploy() {
      * This flag can change that behavior, so that information will be refreshed after each package installation.
      */
     @Input
-    var packageRefreshing: Boolean = aem.props.boolean("aem.satisfy.packageRefreshing", false)
+    var packageRefreshing: Boolean = aem.props.boolean("aem.satisfy.packageRefreshing") ?: false
 
     /**
      * Provides a packages from local and remote sources.
@@ -78,7 +78,8 @@ open class Satisfy : Deploy() {
 
     private fun defineCmdGroups() {
         if (cmdGroups) {
-            aem.props.list("aem.satisfy.urls").forEachIndexed { index, url ->
+            val urls = aem.props.list("aem.satisfy.urls") ?: listOf()
+            urls.forEachIndexed { index, url ->
                 packageProvider.group("cmd.${index + 1}") { url(url) }
             }
         }

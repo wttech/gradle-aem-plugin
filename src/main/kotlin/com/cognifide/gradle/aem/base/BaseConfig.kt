@@ -47,8 +47,9 @@ class BaseConfig(
     @Internal
     @JsonIgnore
     var instanceHttpOptions: (InstanceHttpClient).() -> Unit = {
-        connectionTimeout = aem.props.int("aem.instance.httpOptions.connectionTimeout", 30000)
-        connectionUntrustedSsl = aem.props.boolean("aem.instance.httpOptions.connectionUntrustedSsl", true)
+        connectionTimeout = aem.props.int("aem.instance.httpOptions.connectionTimeout") ?: 30000
+        connectionRetries = aem.props.boolean("aem.instance.httpOptions.connectionRetries") ?: true
+        connectionIgnoreSsl = aem.props.boolean("aem.instance.httpOptions.connectionIgnoreSsl") ?: true
     }
 
     /**
@@ -56,7 +57,7 @@ class BaseConfig(
      * while having same version specified. Affects CRX packages composed and satisfied.
      */
     @Input
-    var packageSnapshots: List<String> = aem.props.list("aem.package.snapshots")
+    var packageSnapshots: List<String> = aem.props.list("aem.package.snapshots") ?: listOf()
 
     @Input
     var packageRoot: String = "${aem.project.file("src/main/content")}"
@@ -95,11 +96,11 @@ class BaseConfig(
      * retries will be applied.
      */
     @Input
-    var packageErrors = aem.props.list("aem.package.errors", defaultValue = listOf(
+    var packageErrors = aem.props.list("aem.package.errors") ?: listOf(
             "javax.jcr.nodetype.ConstraintViolationException",
             "org.apache.jackrabbit.vault.packaging.DependencyException",
             "org.xml.sax.SAXException"
-    ))
+    )
 
     /**
      * Determines number of lines to process at once during reading html responses.
@@ -108,13 +109,13 @@ class BaseConfig(
      * It is a protection against exceeding max Java heap size.
      */
     @Input
-    var packageResponseBuffer = aem.props.int("aem.package.responseBuffer", 4096)
+    var packageResponseBuffer = aem.props.int("aem.package.responseBuffer") ?: 4096
 
     /**
      * Specify characters to be used as line endings when cleaning up checked out JCR content.
      */
     @Input
-    var lineSeparator: String = aem.props.string("aem.lineSeparator", "LF")
+    var lineSeparator: String = aem.props.string("aem.lineSeparator") ?: "LF"
 
     /**
      * Turn on/off default system notifications.
@@ -134,12 +135,12 @@ class BaseConfig(
 
     init {
         // Define through command line
-        val instancesForced = aem.props.string("aem.instances", "")
+        val instancesForced = aem.props.string("aem.instances") ?: ""
         if (instancesForced.isNotBlank()) {
             instances(Instance.parse(aem.project, instancesForced))
         }
 
-        // Define through properties
+        // Define through properties ]
         instances(Instance.properties(aem.project))
 
         aem.project.afterEvaluate { _ ->

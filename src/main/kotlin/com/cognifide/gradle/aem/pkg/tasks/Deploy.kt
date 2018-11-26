@@ -23,27 +23,27 @@ open class Deploy : Sync() {
      * Force upload CRX package regardless if it was previously uploaded.
      */
     @Input
-    var uploadForce: Boolean = aem.props.boolean("aem.deploy.uploadForce", true)
+    var uploadForce: Boolean = aem.props.boolean("aem.upload.force") ?: true
 
     /**
      * Repeat upload when failed (brute-forcing).
      */
     @Internal
     @get:JsonIgnore
-    var uploadRetry = aem.retry { afterSquaredSecond(aem.props.long("aem.upload.retry", 6)) }
+    var uploadRetry = aem.retry { afterSquaredSecond(aem.props.long("aem.upload.retry") ?: 6) }
 
     /**
      * Repeat install when failed (brute-forcing).
      */
     @Internal
     @get:JsonIgnore
-    var installRetry = aem.retry { afterSquaredSecond(aem.props.long("aem.install.retry", 4)) }
+    var installRetry = aem.retry { afterSquaredSecond(aem.props.long("aem.install.retry") ?: 4) }
 
     /**
      * Determines if when on package install, sub-packages included in CRX package content should be also installed.
      */
     @Input
-    var installRecursive: Boolean = aem.props.boolean("aem.install.recursive", true)
+    var installRecursive: Boolean = aem.props.boolean("aem.install.recursive") ?: true
 
     override fun projectsEvaluated() {
         if (instances.isEmpty()) {

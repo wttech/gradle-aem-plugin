@@ -79,7 +79,7 @@ class Notifier private constructor(private val aem: AemExtension) {
     }
 
     fun factory(): Notifier {
-        val name = aem.props.string("aem.notification.config", "dorkbox")
+        val name = aem.props.string("aem.notification.config") ?: "dorkbox"
 
         return when (name) {
             "dorkbox" -> dorkbox()

@@ -22,7 +22,7 @@ open class Debug : AemDefaultTask() {
      * Dump package states on defined instances.
      */
     @Input
-    var packageDeployed: Boolean = aem.props.boolean("aem.debug.packageDeployed", !project.gradle.startParameter.isOffline)
+    var packageDeployed: Boolean = aem.props.boolean("aem.debug.packageDeployed") ?: !project.gradle.startParameter.isOffline
 
     init {
         description = "Dumps effective AEM build configuration of project to JSON file"

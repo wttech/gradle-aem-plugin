@@ -10,11 +10,10 @@ import java.util.*
 import org.apache.commons.io.IOUtils
 import org.apache.http.HttpEntity
 import org.apache.http.HttpResponse
-import org.apache.http.HttpStatus
 import org.apache.http.NameValuePair
 import org.apache.http.auth.AuthScope
 import org.apache.http.auth.UsernamePasswordCredentials
-import org.apache.http.client.HttpClient
+import org.apache.http.client.HttpClient as BaseHttpClient
 import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.client.methods.*
@@ -35,13 +34,13 @@ open class HttpClient(val project: Project) {
 
     var connectionTimeout = 30000
 
-    var connectionUntrustedSsl = true
+    var connectionIgnoreSsl = true
 
     var connectionRetries = true
 
     var requestConfigurer: (HttpRequestBase) -> Unit = { }
 
-    var clientBuilder: ((HttpClientBuilder) -> HttpClient) = { builder ->
+    var clientBuilder: ((HttpClientBuilder) -> BaseHttpClient) = { builder ->
         builder.run {
             addInterceptorFirst(PreemptiveAuthInterceptor())
 
@@ -59,7 +58,7 @@ open class HttpClient(val project: Project) {
                 })
             }
 
-            if (connectionUntrustedSsl) {
+            if (connectionIgnoreSsl) {
                 setSSLSocketFactory(SSLConnectionSocketFactory(SSLContextBuilder()
                         .loadTrustMaterial(null) { _, _ -> true }
                         .build(), NoopHostnameVerifier.INSTANCE))
@@ -80,51 +79,51 @@ open class HttpClient(val project: Project) {
 
     fun get(path: String) = get(path) {}
 
-    fun <T> get(path: String, handler: (HttpResponse) -> T): T {
+    fun <T> get(path: String, handler: HttpClient.(HttpResponse) -> T): T {
         return execute(HttpGet(baseUrl(path)), handler)
     }
 
     fun head(path: String) = head(path) {}
 
-    fun <T> head(path: String, handler: (HttpResponse) -> T): T {
+    fun <T> head(path: String, handler: HttpClient.(HttpResponse) -> T): T {
         return execute(HttpHead(baseUrl(path)), handler)
     }
 
     fun delete(path: String) = delete(path) {}
 
-    fun <T> delete(path: String, handler: (HttpResponse) -> T): T {
+    fun <T> delete(path: String, handler: HttpClient.(HttpResponse) -> T): T {
         return execute(HttpDelete(baseUrl(path)), handler)
     }
 
     fun put(path: String) = put(path) {}
 
-    fun <T> put(path: String, handler: (HttpResponse) -> T): T {
+    fun <T> put(path: String, handler: HttpClient.(HttpResponse) -> T): T {
         return execute(HttpPut(baseUrl(path)), handler)
     }
 
     fun patch(path: String) = patch(path) {}
 
-    fun <T> patch(path: String, handler: (HttpResponse) -> T): T {
+    fun <T> patch(path: String, handler: HttpClient.(HttpResponse) -> T): T {
         return execute(HttpPatch(baseUrl(path)), handler)
     }
 
     fun post(url: String, params: Map<String, Any> = mapOf()) = postUrlencoded(url, params)
 
-    fun <T> post(url: String, params: Map<String, Any> = mapOf(), handler: (HttpResponse) -> T): T = postUrlencoded(url, params, handler)
+    fun <T> post(url: String, params: Map<String, Any> = mapOf(), handler: HttpClient.(HttpResponse) -> T): T = postUrlencoded(url, params, handler)
 
     fun postUrlencoded(url: String, params: Map<String, Any> = mapOf()) = postUrlencoded(url, params) {}
 
-    fun <T> postUrlencoded(url: String, params: Map<String, Any> = mapOf(), handler: (HttpResponse) -> T): T {
+    fun <T> postUrlencoded(url: String, params: Map<String, Any> = mapOf(), handler: HttpClient.(HttpResponse) -> T): T {
         return post(url, createEntityUrlencoded(params), handler)
     }
 
     fun postMultipart(url: String, params: Map<String, Any> = mapOf()) = postMultipart(url, params) {}
 
-    fun <T> postMultipart(url: String, params: Map<String, Any> = mapOf(), handler: (HttpResponse) -> T): T {
+    fun <T> postMultipart(url: String, params: Map<String, Any> = mapOf(), handler: HttpClient.(HttpResponse) -> T): T {
         return post(url, createEntityMultipart(params), handler)
     }
 
-    fun <T> post(url: String, entity: HttpEntity, handler: (HttpResponse) -> T): T {
+    fun <T> post(url: String, entity: HttpEntity, handler: HttpClient.(HttpResponse) -> T): T {
         return execute(HttpPost(baseUrl(url)).apply { this.entity = entity }, handler)
     }
 
@@ -152,8 +151,8 @@ open class HttpClient(val project: Project) {
         }
     }
 
-    open fun checkStatus(response: HttpResponse, statuses: Collection<Int> = listOf(HttpStatus.SC_OK)) {
-        if (!statuses.contains(response.statusLine.statusCode)) {
+    open fun checkStatus(response: HttpResponse, checker: (Int) -> Boolean = { it in STATUS_CODE_VALID }) {
+        if (!checker(response.statusLine.statusCode)) {
             throw ResponseException("Unexpected response: ${response.statusLine}")
         }
     }
@@ -167,7 +166,7 @@ open class HttpClient(val project: Project) {
     }
 
     @Suppress("TooGenericExceptionCaught")
-    open fun <T> execute(method: HttpRequestBase, handler: (HttpResponse) -> T): T {
+    open fun <T> execute(method: HttpRequestBase, handler: HttpClient.(HttpResponse) -> T): T {
         try {
             requestConfigurer(method)
 
@@ -176,7 +175,7 @@ open class HttpClient(val project: Project) {
 
             responseHandler(response)
 
-            return handler(response)
+            return handler.invoke(this, response)
         } catch (e: Exception) {
             throw RequestException("Failed request to $method: ${e.message}", e)
         } finally {
@@ -206,5 +205,9 @@ open class HttpClient(val project: Project) {
         }
 
         return builder.build()
+    }
+
+    companion object {
+        val STATUS_CODE_VALID = 200 until 300
     }
 }

@@ -148,13 +148,7 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
     fun downloadPackageOnce(url: String, targetFile: File) {
         aem.logger.info("Downloading package from $url to file $targetFile")
 
-        with(HttpFileDownloader(project)) {
-            username = basicUser
-            password = basicPassword
-            preemptiveAuthentication = true
-
-            download(url, targetFile)
-        }
+        HttpFileDownloader(project, this).download(url, targetFile)
 
         if (!targetFile.exists()) {
             throw InstanceException("Downloaded package is missing: ${targetFile.path}")
