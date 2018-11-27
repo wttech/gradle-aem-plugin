@@ -19,7 +19,7 @@ open class Satisfy : Deploy() {
      * Determines which packages should be installed by default when satisfy task is being executed.
      */
     @Input
-    var groupName = aem.props.string("aem.satisfy.group.name") ?: "*"
+    var groupName = aem.props.string("aem.satisfy.groupName") ?: "*"
 
     @get:Internal
     var groupFilter: (String) -> Boolean = { fileGroup -> Patterns.wildcard(fileGroup, groupName) }

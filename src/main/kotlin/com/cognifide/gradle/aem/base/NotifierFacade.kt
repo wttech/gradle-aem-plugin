@@ -13,9 +13,9 @@ import java.util.concurrent.TimeUnit
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.gradle.api.logging.LogLevel
 
-class Notifier private constructor(private val aem: AemExtension) {
+class NotifierFacade private constructor(private val aem: AemExtension) {
 
-    private val notifier: Notifier by lazy { aem.config.notificationConfig(this@Notifier) }
+    private val notifier: Notifier by lazy { aem.config.notificationConfig(this@NotifierFacade) }
 
     fun log(title: String) {
         log(title, "")
@@ -78,13 +78,22 @@ class Notifier private constructor(private val aem: AemExtension) {
         }
     }
 
-    fun factory(): Notifier {
-        val name = aem.props.string("aem.notification.config") ?: "dorkbox"
+    fun byType(type: Type): Notifier {
+        return when (type) {
+            Type.DORKBOX -> dorkbox()
+            Type.JCGAY -> jcgay()
+        }
+    }
 
-        return when (name) {
-            "dorkbox" -> dorkbox()
-            "jcgay" -> jcgay()
-            else -> throw AemException("Unsupported notifier: '$name'")
+    enum class Type {
+        DORKBOX,
+        JCGAY;
+
+        companion object {
+            fun of(name: String): Type {
+                return values().find { it.name.equals(name, true) }
+                        ?: throw AemException("Unsupported notification type: $name")
+            }
         }
     }
 
@@ -99,15 +108,15 @@ class Notifier private constructor(private val aem: AemExtension) {
         /**
          * Get project specific notifier (config can vary)
          */
-        fun of(aem: AemExtension): com.cognifide.gradle.aem.base.Notifier {
+        fun of(aem: AemExtension): NotifierFacade {
             return BuildScope.of(aem.project).getOrPut(Notifier::class.java.canonicalName, { setup(aem) })
         }
 
         /**
          * Register once (for root project only) listener for notifying about build errors.
          */
-        private fun setup(aem: AemExtension): com.cognifide.gradle.aem.base.Notifier {
-            val notifier = Notifier(aem)
+        private fun setup(aem: AemExtension): NotifierFacade {
+            val notifier = NotifierFacade(aem)
 
             if (aem.project == aem.project.rootProject) {
                 aem.project.gradle.buildFinished { result ->

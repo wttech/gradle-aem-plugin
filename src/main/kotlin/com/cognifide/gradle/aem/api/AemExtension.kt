@@ -2,7 +2,7 @@ package com.cognifide.gradle.aem.api
 
 import com.cognifide.gradle.aem.base.BaseConfig
 import com.cognifide.gradle.aem.base.BasePlugin
-import com.cognifide.gradle.aem.base.Notifier
+import com.cognifide.gradle.aem.base.NotifierFacade
 import com.cognifide.gradle.aem.base.Retry
 import com.cognifide.gradle.aem.base.TaskFactory
 import com.cognifide.gradle.aem.base.vlt.VltException
@@ -90,7 +90,7 @@ open class AemExtension(@Internal val project: Project) {
     val bundles = mutableMapOf<String, BundleJar>()
 
     @Internal
-    val notifier = Notifier.of(this)
+    val notifier = NotifierFacade.of(this)
 
     @Internal
     val tasks = TaskFactory(project)
@@ -126,10 +126,6 @@ open class AemExtension(@Internal val project: Project) {
 
             throw InstanceException("Instance cannot be determined neither by command line parameter nor AEM config.")
         }
-
-    fun instanceTyped(type: String): Instance? {
-        return props.prop("aem.instance.$type")?.run { config.parseInstance(this) }
-    }
 
     fun instanceNamed(nameMatcher: String): List<Instance> {
         val all = config.instances.values
@@ -253,7 +249,7 @@ open class AemExtension(@Internal val project: Project) {
         return bundles.getOrPut(jar.name) { BundleJar(this, jar).apply(configurer) }
     }
 
-    fun notifier(configurer: Notifier.() -> Unit) {
+    fun notifier(configurer: NotifierFacade.() -> Unit) {
         notifier.apply(configurer)
     }
 

@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.internal.notifier
 
 import com.cognifide.gradle.aem.api.AemPlugin
-import com.cognifide.gradle.aem.base.Notifier
+import com.cognifide.gradle.aem.base.NotifierFacade
 import com.cognifide.gradle.aem.internal.BuildScope
 import com.cognifide.gradle.aem.internal.notifier.Notifier as BaseNotifier
 import fr.jcgay.notification.Application
@@ -37,7 +37,7 @@ class JcGayNotifier(
     }
 
     private val icon by lazy {
-        Icon.create(javaClass.getResource(Notifier.IMAGE_PATH), "default")
+        Icon.create(javaClass.getResource(NotifierFacade.IMAGE_PATH), "default")
     }
 
     @Suppress("TooGenericExceptionCaught")

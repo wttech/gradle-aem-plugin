@@ -1,9 +1,10 @@
-package com.cognifide.gradle.aem.base.vlt
+package com.cognifide.gradle.aem.base
 
+import com.cognifide.gradle.aem.base.vlt.VltException
 import com.cognifide.gradle.aem.internal.Patterns
 import java.io.File
 
-class VltCleanRule(value: String) {
+class CleanerRule(value: String) {
 
     private var pattern: String = value
 
@@ -44,8 +45,8 @@ class VltCleanRule(value: String) {
 
         const val EXCLUDE_FLAG = "!"
 
-        fun manyFrom(props: List<String>): List<VltCleanRule> {
-            return props.map { VltCleanRule(it) }
+        fun manyFrom(props: List<String>): List<CleanerRule> {
+            return props.map { CleanerRule(it) }
         }
     }
 }

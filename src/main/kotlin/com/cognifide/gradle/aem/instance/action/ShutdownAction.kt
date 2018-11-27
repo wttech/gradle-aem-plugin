@@ -17,7 +17,7 @@ class ShutdownAction(project: Project) : AbstractAction(project) {
      */
     @Internal
     @get:JsonIgnore
-    var stableRetry = aem.retry { afterSecond(aem.props.long("aem.shutdown.stable.retry") ?: 300) }
+    var stableRetry = aem.retry { afterSecond(aem.props.long("aem.shutdown.stableRetry") ?: 300) }
 
     /**
      * Hook for customizing instance state provider used within stable checking.

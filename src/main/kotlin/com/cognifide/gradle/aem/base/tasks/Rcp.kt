@@ -14,13 +14,13 @@ open class Rcp : Vlt() {
     }
 
     @Input
-    var sourceInstance: Instance? = aem.instanceTyped("source")
-
-    @Input
-    var targetInstance: Instance? = aem.instanceTyped("target")
-
-    @Input
     var paths: MutableMap<String, String> = mutableMapOf()
+
+    @Input
+    var sourceInstance: Instance? = aem.props.string("aem.rcp.source")?.run { aem.config.parseInstance(this) }
+
+    @Input
+    var targetInstance: Instance? = aem.props.string("aem.rcp.target")?.run { aem.config.parseInstance(this) }
 
     @Input
     var opts: String = aem.props.string("aem.rcp.opts") ?: "-b 100 -r -u"

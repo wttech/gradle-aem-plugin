@@ -29,12 +29,12 @@ open class Create : InstanceTask() {
     }
 
     private fun instanceFilesByProperties() {
-        val jarUrl = aem.props.string(JAR_URL_PROP)
+        val jarUrl = aem.props.string("aem.create.jarUrl")
         if (!jarUrl.isNullOrBlank()) {
             instanceFileResolver.url(jarUrl)
         }
 
-        val licenseUrl = aem.props.string(LICENSE_URL_PROP)
+        val licenseUrl = aem.props.string("aem.create.licenseUrl")
         if (!licenseUrl.isNullOrBlank()) {
             instanceFileResolver.url(licenseUrl)
         }
@@ -61,9 +61,5 @@ open class Create : InstanceTask() {
         const val NAME = "aemCreate"
 
         const val DOWNLOAD_DIR = "download"
-
-        const val LICENSE_URL_PROP = "aem.instance.local.licenseUrl"
-
-        const val JAR_URL_PROP = "aem.instance.local.jarUrl"
     }
 }

@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.base.tasks
 
 import com.cognifide.gradle.aem.api.AemDefaultTask
-import com.cognifide.gradle.aem.base.vlt.VltCleaner
+import com.cognifide.gradle.aem.base.Cleaner
 import com.cognifide.gradle.aem.internal.Formats
 import java.io.File
 import org.gradle.api.execution.TaskExecutionGraph
@@ -41,7 +41,7 @@ open class Clean : AemDefaultTask() {
     var filterRootClean: (File) -> Unit = { cleaner.clean(it) }
 
     @Nested
-    val cleaner = VltCleaner(project)
+    val cleaner = Cleaner(project)
 
     @TaskAction
     fun perform() {
@@ -49,7 +49,7 @@ open class Clean : AemDefaultTask() {
         aem.notifier.notify("Cleaned JCR content", "Directory: ${Formats.rootProjectPath(contentPath, project)}")
     }
 
-    fun cleaner(configurer: VltCleaner.() -> Unit) {
+    fun cleaner(configurer: Cleaner.() -> Unit) {
         cleaner.apply(configurer)
     }
 

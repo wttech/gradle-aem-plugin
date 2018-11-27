@@ -47,9 +47,9 @@ class BaseConfig(
     @Internal
     @JsonIgnore
     var instanceHttpOptions: (InstanceHttpClient).() -> Unit = {
-        connectionTimeout = aem.props.int("aem.instance.httpOptions.connectionTimeout") ?: 30000
-        connectionRetries = aem.props.boolean("aem.instance.httpOptions.connectionRetries") ?: true
-        connectionIgnoreSsl = aem.props.boolean("aem.instance.httpOptions.connectionIgnoreSsl") ?: true
+        connectionTimeout = aem.props.int("aem.instanceHttpOptions.connectionTimeout") ?: 30000
+        connectionRetries = aem.props.boolean("aem.instanceHttpOptions.connectionRetries") ?: true
+        connectionIgnoreSsl = aem.props.boolean("aem.instanceHttpOptions.connectionIgnoreSsl") ?: true
     }
 
     /**
@@ -57,7 +57,7 @@ class BaseConfig(
      * while having same version specified. Affects CRX packages composed and satisfied.
      */
     @Input
-    var packageSnapshots: List<String> = aem.props.list("aem.package.snapshots") ?: listOf()
+    var packageSnapshots: List<String> = aem.props.list("aem.packageSnapshots") ?: listOf()
 
     @Input
     var packageRoot: String = "${aem.project.file("src/main/content")}"
@@ -96,7 +96,7 @@ class BaseConfig(
      * retries will be applied.
      */
     @Input
-    var packageErrors = aem.props.list("aem.package.errors") ?: listOf(
+    var packageErrors = aem.props.list("aem.packageErrors") ?: listOf(
             "javax.jcr.nodetype.ConstraintViolationException",
             "org.apache.jackrabbit.vault.packaging.DependencyException",
             "org.xml.sax.SAXException"
@@ -109,7 +109,7 @@ class BaseConfig(
      * It is a protection against exceeding max Java heap size.
      */
     @Input
-    var packageResponseBuffer = aem.props.int("aem.package.responseBuffer") ?: 4096
+    var packageResponseBuffer = aem.props.int("aem.packageResponseBuffer") ?: 4096
 
     /**
      * Specify characters to be used as line endings when cleaning up checked out JCR content.
@@ -121,7 +121,7 @@ class BaseConfig(
      * Turn on/off default system notifications.
      */
     @Internal
-    var notificationEnabled: Boolean = aem.props.flag("aem.notification.enabled")
+    var notificationEnabled: Boolean = aem.props.flag("aem.notificationEnabled")
 
     /**
      * Hook for customizing notifications being displayed.
@@ -131,7 +131,9 @@ class BaseConfig(
      */
     @Internal
     @JsonIgnore
-    var notificationConfig: (com.cognifide.gradle.aem.base.Notifier) -> Notifier = { it.factory() }
+    var notificationConfig: (NotifierFacade.() -> Notifier) = {
+        byType(NotifierFacade.Type.of(aem.props.string("aem.notificationType") ?: NotifierFacade.Type.DORKBOX.name))
+    }
 
     init {
         // Define through command line
@@ -180,8 +182,9 @@ class BaseConfig(
     }
 
     fun parseInstance(urlOrName: String): Instance {
-        return instances[urlOrName]
-                ?: Instance.parse(aem.project, urlOrName).single().apply { validate() }
+        return instances[urlOrName] ?: Instance.parse(aem.project, urlOrName).ifEmpty {
+            throw AemException("Instance cannot be determined by value '$urlOrName'.")
+        }.single().apply { validate() }
     }
 
     private fun instances(instances: Collection<Instance>) {

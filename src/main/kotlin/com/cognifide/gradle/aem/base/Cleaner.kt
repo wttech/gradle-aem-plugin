@@ -1,6 +1,7 @@
-package com.cognifide.gradle.aem.base.vlt
+package com.cognifide.gradle.aem.base
 
 import com.cognifide.gradle.aem.api.AemExtension
+import com.cognifide.gradle.aem.base.vlt.VltException
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.pkg.Package
 import java.io.File
@@ -16,7 +17,7 @@ import org.gradle.api.Project
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 
-class VltCleaner(project: Project) {
+class Cleaner(project: Project) {
 
     @Internal
     private val aem = AemExtension.of(project)
@@ -31,7 +32,7 @@ class VltCleaner(project: Project) {
             "**/.vlt*.tmp"
     )
 
-    private val filesDeletedRules by lazy { VltCleanRule.manyFrom(filesDeleted) }
+    private val filesDeletedRules by lazy { CleanerRule.manyFrom(filesDeleted) }
 
     /**
      * Properties that will be skipped when pulling JCR content from AEM instance.
@@ -53,7 +54,7 @@ class VltCleaner(project: Project) {
             "*_x0040_*"
     )
 
-    private val propertiesSkippedRules by lazy { VltCleanRule.manyFrom(propertiesSkipped) }
+    private val propertiesSkippedRules by lazy { CleanerRule.manyFrom(propertiesSkipped) }
 
     /**
      * Mixin types that will be skipped when pulling JCR content from AEM instance.
@@ -64,7 +65,7 @@ class VltCleaner(project: Project) {
             "mix:versionable"
     )
 
-    private val mixinTypesSkippedRules by lazy { VltCleanRule.manyFrom(mixinTypesSkipped) }
+    private val mixinTypesSkippedRules by lazy { CleanerRule.manyFrom(mixinTypesSkipped) }
 
     /**
      * Determines which files will be flattened
@@ -76,19 +77,19 @@ class VltCleaner(project: Project) {
             "**/_cq_htmlTag/.content.xml"
     )
 
-    private val filesFlattenedRules by lazy { VltCleanRule.manyFrom(filesFlattened) }
+    private val filesFlattenedRules by lazy { CleanerRule.manyFrom(filesFlattened) }
 
     /**
      * Controls unused namespaces skipping.
      */
     @Input
-    var namespacesSkipped: Boolean = aem.props.boolean("aem.clean.namespacesSkipped") ?: true
+    var namespacesSkipped: Boolean = aem.props.boolean("aem.cleaner.namespacesSkipped") ?: true
 
     /**
      * Controls backups for parent nodes of filter roots for keeping them untouched.
      */
     @Input
-    var parentsBackupEnabled: Boolean = aem.props.boolean("aem.clean.parentsBackup") ?: true
+    var parentsBackupEnabled: Boolean = aem.props.boolean("aem.cleaner.parentsBackup") ?: true
 
     /**
      * File suffix being added to parent node back up files.
@@ -377,7 +378,7 @@ class VltCleaner(project: Project) {
         }
     }
 
-    private fun matchAnyRule(value: String, file: File, rules: List<VltCleanRule>): Boolean {
+    private fun matchAnyRule(value: String, file: File, rules: List<CleanerRule>): Boolean {
         return rules.any { it.match(file, value) }
     }
 

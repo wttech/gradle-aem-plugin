@@ -26,7 +26,7 @@ open class AwaitAction(project: Project) : AbstractAction(project) {
      * Considered only when fast mode is enabled.
      */
     @Input
-    var fastDelay = aem.props.long("aem.await.fast.delay") ?: TimeUnit.SECONDS.toMillis(1)
+    var fastDelay = aem.props.long("aem.await.fastDelay") ?: TimeUnit.SECONDS.toMillis(1)
 
     /**
      * Do not fail build but log warning when there is still some unstable or unhealthy instance.
@@ -49,7 +49,7 @@ open class AwaitAction(project: Project) : AbstractAction(project) {
      */
     @Internal
     @get:JsonIgnore
-    var stableRetry = aem.retry { afterSecond(aem.props.long("aem.await.stable.retry") ?: 300) }
+    var stableRetry = aem.retry { afterSecond(aem.props.long("aem.await.stableRetry") ?: 300) }
 
     /**
      * Hook for customizing instance state provider used within stable checking.
@@ -72,7 +72,7 @@ open class AwaitAction(project: Project) : AbstractAction(project) {
      * This mechanism protect against temporary stable states.
      */
     @Input
-    var stableAssurance: Long = aem.props.long("aem.await.stable.assurance") ?: 3L
+    var stableAssurance: Long = aem.props.long("aem.await.stableAssurance") ?: 3L
 
     /**
      * Hook for customizing instance health check.
@@ -86,7 +86,7 @@ open class AwaitAction(project: Project) : AbstractAction(project) {
      */
     @Internal
     @get:JsonIgnore
-    var healthRetry = aem.retry { afterSquaredSecond(aem.props.long("aem.await.health.retry") ?: 6) }
+    var healthRetry = aem.retry { afterSquaredSecond(aem.props.long("aem.await.healthRetry") ?: 6) }
 
     override fun perform() {
         if (instances.isEmpty()) {

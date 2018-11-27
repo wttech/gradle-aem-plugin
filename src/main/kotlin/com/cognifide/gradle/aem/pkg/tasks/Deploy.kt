@@ -17,33 +17,33 @@ open class Deploy : Sync() {
      * Enables deployment via CRX package activation from author to publishers when e.g they are not accessible.
      */
     @Input
-    var distributed: Boolean = aem.props.flag("$name.distributed")
+    var distributed: Boolean = aem.props.flag("aem.deploy.distributed")
 
     /**
      * Force upload CRX package regardless if it was previously uploaded.
      */
     @Input
-    var uploadForce: Boolean = aem.props.boolean("$name.uploadForce") ?: true
+    var uploadForce: Boolean = aem.props.boolean("aem.deploy.uploadForce") ?: true
 
     /**
      * Repeat upload when failed (brute-forcing).
      */
     @Internal
     @get:JsonIgnore
-    var uploadRetry = aem.retry { afterSquaredSecond(aem.props.long("$name.uploadRetry") ?: 6) }
+    var uploadRetry = aem.retry { afterSquaredSecond(aem.props.long("aem.deploy.uploadRetry") ?: 6) }
 
     /**
      * Repeat install when failed (brute-forcing).
      */
     @Internal
     @get:JsonIgnore
-    var installRetry = aem.retry { afterSquaredSecond(aem.props.long("$name.installRetry") ?: 4) }
+    var installRetry = aem.retry { afterSquaredSecond(aem.props.long("aem.deploy.installRetry") ?: 4) }
 
     /**
      * Determines if when on package install, sub-packages included in CRX package content should be also installed.
      */
     @Input
-    var installRecursive: Boolean = aem.props.boolean("$name.installRecursive") ?: true
+    var installRecursive: Boolean = aem.props.boolean("aem.deploy.installRecursive") ?: true
 
     override fun projectsEvaluated() {
         if (instances.isEmpty()) {

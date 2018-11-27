@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.base.tasks
 
+import com.cognifide.gradle.aem.api.AemException
 import com.cognifide.gradle.aem.api.AemTask
 import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.pkg.PackageDownloader
@@ -13,7 +14,7 @@ open class Checkout : Vlt() {
      * Determines a method of getting JCR content from remote instance.
      */
     @Input
-    var type = Type.PACKAGE_DOWNLOAD
+    var type = Type.of(aem.props.string("aem.checkout.type") ?: Type.PACKAGE_DOWNLOAD.name)
 
     @Input
     var instance = aem.instanceAny
@@ -68,7 +69,14 @@ open class Checkout : Vlt() {
 
     enum class Type {
         VLT_CHECKOUT,
-        PACKAGE_DOWNLOAD
+        PACKAGE_DOWNLOAD;
+
+        companion object {
+            fun of(name: String): Type {
+                return values().find { it.name.equals(name, true) }
+                        ?: throw AemException("Unsupported checkout type: $name")
+            }
+        }
     }
 
     companion object {

@@ -34,7 +34,7 @@ class PackageDownloader(
      */
     @Internal
     @get:JsonIgnore
-    var retry = aem.retry { afterSquaredSecond(aem.props.long("aem.package.download.retry") ?: 3) }
+    var retry = aem.retry { afterSquaredSecond(aem.props.long("aem.packageDownload.retry") ?: 3) }
 
     /**
      * Extract the contents of package downloaded using aemDownload task to current project jcr_root directory
@@ -42,7 +42,7 @@ class PackageDownloader(
      * package content
      */
     @Input
-    var extract = aem.props.boolean("aem.package.download.extract") ?: true
+    var extract = aem.props.boolean("aem.packageDownload.extract") ?: true
 
     /**
      * In case of downloading big CRX packages, AEM could respond much slower so that special
@@ -50,7 +50,7 @@ class PackageDownloader(
      */
     @Input
     var httpOptions: HttpClient.() -> Unit = {
-        connectionTimeout = aem.props.int("aem.package.download.httpOptions.connectionTimeout") ?: 60000
+        connectionTimeout = aem.props.int("aem.packageDownload.httpOptions.connectionTimeout") ?: 60000
     }
 
     fun download() {
