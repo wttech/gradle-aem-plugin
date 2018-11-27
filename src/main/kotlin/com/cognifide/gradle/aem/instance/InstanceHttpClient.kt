@@ -13,6 +13,7 @@ open class InstanceHttpClient(project: Project, val instance: Instance) : HttpCl
     init {
         basicUser = instance.user
         basicPassword = instance.password
+        authorizationPreemptive = true
 
         apply(aem.config.instanceHttpOptions)
     }

@@ -14,6 +14,7 @@ import org.apache.http.NameValuePair
 import org.apache.http.auth.AuthScope
 import org.apache.http.auth.UsernamePasswordCredentials
 import org.apache.http.client.HttpClient as BaseHttpClient
+import org.apache.http.client.config.CookieSpecs
 import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.client.methods.*
@@ -32,6 +33,8 @@ open class HttpClient(val project: Project) {
 
     var basicPassword = ""
 
+    var authorizationPreemptive = false
+
     var connectionTimeout = 30000
 
     var connectionIgnoreSsl = true
@@ -42,9 +45,15 @@ open class HttpClient(val project: Project) {
 
     var clientBuilder: ((HttpClientBuilder) -> BaseHttpClient) = { builder ->
         builder.run {
-            addInterceptorFirst(PreemptiveAuthInterceptor())
+            useSystemProperties()
+
+            if (authorizationPreemptive) {
+                addInterceptorFirst(PreemptiveAuthInterceptor())
+            }
 
             setDefaultRequestConfig(RequestConfig.custom().apply {
+                setCookieSpec(CookieSpecs.STANDARD)
+
                 if (!connectionRetries) {
                     setSocketTimeout(connectionTimeout)
                 }
