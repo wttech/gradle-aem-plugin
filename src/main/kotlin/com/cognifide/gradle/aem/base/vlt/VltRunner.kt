@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.base.vlt
 
 import com.cognifide.gradle.aem.api.AemExtension
-import com.cognifide.gradle.aem.pkg.PackagePlugin
+import com.cognifide.gradle.aem.pkg.Package
 import java.io.File
 import org.gradle.api.Project
 import org.gradle.api.tasks.Input
@@ -32,7 +32,7 @@ class VltRunner(project: Project) {
     @get:Internal
     val contentDirEffective: File
         get() {
-            var workingPath = "$contentPath/${PackagePlugin.JCR_ROOT}"
+            var workingPath = "$contentPath/${Package.JCR_ROOT}"
             if (contentRelativePath.isNotBlank()) {
                 workingPath = "$workingPath/$contentRelativePath"
             }

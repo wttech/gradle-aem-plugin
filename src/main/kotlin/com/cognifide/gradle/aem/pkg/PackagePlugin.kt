@@ -56,13 +56,5 @@ class PackagePlugin : AemPlugin() {
 
     companion object {
         const val ID = "com.cognifide.aem.package"
-
-        const val VLT_PATH = "META-INF/vault"
-
-        const val VLT_HOOKS_PATH = "META-INF/vault/hooks"
-
-        const val VLT_PROPERTIES = "$VLT_PATH/properties.xml"
-
-        const val JCR_ROOT = "jcr_root"
     }
 }

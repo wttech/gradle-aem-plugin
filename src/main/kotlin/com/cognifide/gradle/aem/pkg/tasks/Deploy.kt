@@ -17,33 +17,33 @@ open class Deploy : Sync() {
      * Enables deployment via CRX package activation from author to publishers when e.g they are not accessible.
      */
     @Input
-    var distributed: Boolean = aem.props.flag("aem.deploy.distributed")
+    var distributed: Boolean = aem.props.flag("$name.distributed")
 
     /**
      * Force upload CRX package regardless if it was previously uploaded.
      */
     @Input
-    var uploadForce: Boolean = aem.props.boolean("aem.upload.force") ?: true
+    var uploadForce: Boolean = aem.props.boolean("$name.uploadForce") ?: true
 
     /**
      * Repeat upload when failed (brute-forcing).
      */
     @Internal
     @get:JsonIgnore
-    var uploadRetry = aem.retry { afterSquaredSecond(aem.props.long("aem.upload.retry") ?: 6) }
+    var uploadRetry = aem.retry { afterSquaredSecond(aem.props.long("$name.uploadRetry") ?: 6) }
 
     /**
      * Repeat install when failed (brute-forcing).
      */
     @Internal
     @get:JsonIgnore
-    var installRetry = aem.retry { afterSquaredSecond(aem.props.long("aem.install.retry") ?: 4) }
+    var installRetry = aem.retry { afterSquaredSecond(aem.props.long("$name.installRetry") ?: 4) }
 
     /**
      * Determines if when on package install, sub-packages included in CRX package content should be also installed.
      */
     @Input
-    var installRecursive: Boolean = aem.props.boolean("aem.install.recursive") ?: true
+    var installRecursive: Boolean = aem.props.boolean("$name.installRecursive") ?: true
 
     override fun projectsEvaluated() {
         if (instances.isEmpty()) {
@@ -61,7 +61,13 @@ open class Deploy : Sync() {
 
     @TaskAction
     fun deploy() {
-        aem.syncPackages(instances, packages) { deployPackage(it) }
+        aem.syncPackages(instances, packages) { pkg ->
+            if (distributed) {
+                distributePackage(pkg)
+            } else {
+                deployPackage(pkg)
+            }
+        }
 
         aem.notifier.notify("Package deployed", "${packages.fileNames} on ${instances.names}")
     }

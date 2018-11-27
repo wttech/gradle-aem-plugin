@@ -7,9 +7,9 @@ import com.cognifide.gradle.aem.instance.Bundle
 import com.cognifide.gradle.aem.internal.Collections
 import com.cognifide.gradle.aem.internal.file.FileOperations
 import com.cognifide.gradle.aem.internal.file.resolver.FileResolution
+import com.cognifide.gradle.aem.pkg.Package
 import com.cognifide.gradle.aem.pkg.PackageException
 import com.cognifide.gradle.aem.pkg.PackageFileFilter
-import com.cognifide.gradle.aem.pkg.PackagePlugin
 import java.io.File
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.FilenameUtils
@@ -44,11 +44,11 @@ class PackageResolution(group: PackageGroup, id: String, action: (FileResolution
 
         val pkgRoot = File(dir, pkgName)
         val pkgPath = "${resolver.bundlePath}/${jar.name}"
-        val vaultDir = File(pkgRoot, PackagePlugin.VLT_PATH)
+        val vaultDir = File(pkgRoot, Package.VLT_PATH)
 
         // Copy package template files
         GFileUtils.mkdirs(vaultDir)
-        FileOperations.copyResources(PackagePlugin.VLT_PATH, vaultDir)
+        FileOperations.copyResources(Package.VLT_PATH, vaultDir)
 
         // Expand package properties
         val bundle = Jar(jar)
@@ -79,7 +79,7 @@ class PackageResolution(group: PackageGroup, id: String, action: (FileResolution
         }
 
         // Copy bundle to install path
-        val pkgJar = File(pkgRoot, "jcr_root$pkgPath")
+        val pkgJar = File(pkgRoot, "${Package.JCR_ROOT}$pkgPath")
 
         GFileUtils.mkdirs(pkgJar.parentFile)
         FileUtils.copyFile(jar, pkgJar)

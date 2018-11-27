@@ -4,7 +4,7 @@ import com.cognifide.gradle.aem.api.AemExtension
 import com.cognifide.gradle.aem.api.AemTask
 import com.cognifide.gradle.aem.base.tasks.Vlt
 import com.cognifide.gradle.aem.internal.file.FileOperations
-import com.cognifide.gradle.aem.pkg.PackagePlugin
+import com.cognifide.gradle.aem.pkg.Package
 import java.io.Closeable
 import java.io.File
 import org.apache.commons.io.FileUtils
@@ -38,7 +38,7 @@ class VltFilter(
         }
 
     fun rootDirs(contentDir: File): List<File> {
-        return rootPaths.map { File(contentDir, "${PackagePlugin.JCR_ROOT}/${it.removeSurrounding("/")}") }
+        return rootPaths.map { File(contentDir, "${Package.JCR_ROOT}/${it.removeSurrounding("/")}") }
     }
 
     override fun close() {

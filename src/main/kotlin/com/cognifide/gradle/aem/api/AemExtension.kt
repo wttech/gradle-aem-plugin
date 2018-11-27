@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.api
 
 import com.cognifide.gradle.aem.base.BaseConfig
+import com.cognifide.gradle.aem.base.BasePlugin
 import com.cognifide.gradle.aem.base.Notifier
 import com.cognifide.gradle.aem.base.Retry
 import com.cognifide.gradle.aem.base.TaskFactory
@@ -340,9 +341,11 @@ open class AemExtension(@Internal val project: Project) {
 
         const val PARALLEL_THREADS = 8
 
+        private val PLUGIN_IDS = listOf(PackagePlugin.ID, BundlePlugin.ID, InstancePlugin.ID, BasePlugin.ID)
+
         fun of(project: Project): AemExtension {
             return project.extensions.findByType(AemExtension::class.java)
-                    ?: throw AemException("${project.displayName.capitalize()} has neither '${PackagePlugin.ID}' nor '${InstancePlugin.ID}' plugin applied.")
+                    ?: throw AemException("${project.displayName.capitalize()} must have at least one of following plugins applied: $PLUGIN_IDS")
         }
     }
 }

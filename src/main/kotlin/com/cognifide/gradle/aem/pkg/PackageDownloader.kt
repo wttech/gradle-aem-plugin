@@ -89,14 +89,14 @@ class PackageDownloader(
 
     private fun prepareShellPackage(): File {
         val zipResult = File(temporaryDir, "$PKG_SHELL.zip")
-        val vltDir = File(shellDir, PackagePlugin.VLT_PATH)
-        val jcrRoot = File(shellDir, PackagePlugin.JCR_ROOT)
+        val vltDir = File(shellDir, Package.VLT_PATH)
+        val jcrRoot = File(shellDir, Package.JCR_ROOT)
 
         vltDir.mkdirs()
         jcrRoot.mkdirs()
 
         filter.file.copyTo(File(vltDir, VltFilter.BUILD_NAME))
-        FileOperations.copyResources(PackagePlugin.VLT_PATH, vltDir, true)
+        FileOperations.copyResources(Package.VLT_PATH, vltDir, true)
 
         val fileProperties = PackageFileFilter.FILE_PROPERTIES + mapOf("project.version" to PKG_VERSION)
         FileOperations.amendFiles(vltDir, PackageFileFilter.EXPAND_FILES_DEFAULT) { file, content ->
@@ -117,7 +117,7 @@ class PackageDownloader(
         aem.project.copy { spec ->
             spec.into(jcrRoot.parentFile.path)
                     .from(aem.project.zipTree(downloadedPackage.path))
-                    .include("${PackagePlugin.JCR_ROOT}/**")
+                    .include("${Package.JCR_ROOT}/**")
         }
     }
 

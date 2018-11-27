@@ -50,4 +50,21 @@ class Package private constructor() {
 
     val installed: Boolean
         get() = lastUnpacked?.let { it > 0 } ?: false
+
+    companion object {
+
+        const val JCR_ROOT = "jcr_root"
+
+        const val META_PATH = "META-INF"
+
+        const val VLT_DIR = "vault"
+
+        const val VLT_PATH = "$META_PATH/$VLT_DIR"
+
+        const val VLT_HOOKS_PATH = "$VLT_PATH/hooks"
+
+        const val VLT_PROPERTIES = "$VLT_PATH/properties.xml"
+
+        const val VLT_NODETYPES_FILE = "nodetypes.cnd"
+    }
 }

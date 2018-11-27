@@ -23,11 +23,11 @@ import org.zeroturnaround.zip.ZipUtil
 class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(project, instance) {
 
     fun determineRemotePackage(file: File, refresh: Boolean = true): Package? {
-        if (!ZipUtil.containsEntry(file, PackagePlugin.VLT_PROPERTIES)) {
+        if (!ZipUtil.containsEntry(file, Package.VLT_PROPERTIES)) {
             throw PackageException("File is not a valid CRX package: $file")
         }
 
-        val xml = ZipUtil.unpackEntry(file, PackagePlugin.VLT_PROPERTIES).toString(Charsets.UTF_8)
+        val xml = ZipUtil.unpackEntry(file, Package.VLT_PROPERTIES).toString(Charsets.UTF_8)
         val doc = Jsoup.parse(xml, "", Parser.xmlParser())
 
         val group = doc.select("entry[key=group]").text()

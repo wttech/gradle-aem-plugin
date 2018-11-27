@@ -2,7 +2,7 @@ package com.cognifide.gradle.aem.base.vlt
 
 import com.cognifide.gradle.aem.api.AemExtension
 import com.cognifide.gradle.aem.internal.Patterns
-import com.cognifide.gradle.aem.pkg.PackagePlugin
+import com.cognifide.gradle.aem.pkg.Package
 import java.io.File
 import java.io.IOException
 import java.util.regex.Pattern
@@ -369,7 +369,7 @@ class VltCleaner(project: Project) {
             val siblingFiles = parent.listFiles { file -> file.isFile } ?: arrayOf()
             processFiles(parent, siblingFiles)
 
-            if (parent.name == PackagePlugin.JCR_ROOT) {
+            if (parent.name == Package.JCR_ROOT) {
                 break
             }
 

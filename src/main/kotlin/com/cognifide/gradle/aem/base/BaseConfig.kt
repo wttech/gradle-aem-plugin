@@ -8,7 +8,7 @@ import com.cognifide.gradle.aem.instance.LocalInstance
 import com.cognifide.gradle.aem.instance.RemoteInstance
 import com.cognifide.gradle.aem.internal.LineSeparator
 import com.cognifide.gradle.aem.internal.notifier.Notifier
-import com.cognifide.gradle.aem.pkg.PackagePlugin
+import com.cognifide.gradle.aem.pkg.Package
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.Serializable
 import org.gradle.api.tasks.Input
@@ -65,12 +65,12 @@ class BaseConfig(
     @get:Internal
     @get:JsonIgnore
     val packageJcrRoot: String
-        get() = "$packageRoot/${PackagePlugin.JCR_ROOT}"
+        get() = "$packageRoot/${Package.JCR_ROOT}"
 
     @get:Internal
     @get:JsonIgnore
     val packageVltRoot: String
-        get() = "$packageRoot/${PackagePlugin.VLT_PATH}"
+        get() = "$packageRoot/${Package.VLT_PATH}"
 
     /**
      * Content path for OSGi bundle jars being placed in CRX package.
