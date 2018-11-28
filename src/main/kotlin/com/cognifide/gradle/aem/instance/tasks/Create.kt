@@ -46,7 +46,7 @@ open class Create : InstanceTask() {
 
     @TaskAction
     fun create() {
-        if (instanceHandles.isEmpty()) {
+        if (instanceHandles.isEmpty() || instanceHandles.all { it.created }) {
             logger.info("No instances to create")
             return
         }
