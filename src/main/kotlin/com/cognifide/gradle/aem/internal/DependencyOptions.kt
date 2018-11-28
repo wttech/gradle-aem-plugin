@@ -21,8 +21,31 @@ class DependencyOptions(private val handler: DependencyHandler) {
 
     var ext: String? = null
 
+    fun dependency(
+            group: String,
+            name: String,
+            version: String? = null,
+            configuration: String? = null,
+            classifier: String? = null,
+            ext: String? = null
+    ) {
+        this.group = group
+        this.name = name
+        this.version = version
+        this.configuration = configuration
+        this.classifier = classifier
+        this.ext = ext
+    }
+
     val dependency: ExternalModuleDependency
-        get() = of(handler, group, name, version, configuration, classifier, ext)
+        get() = handler.create(Collections.mapOfNonNullValues(
+                "group" to group,
+                "name" to name,
+                "version" to version,
+                "configuration" to configuration,
+                "classifier" to classifier,
+                "ext" to ext
+        )) as ExternalModuleDependency
 
     companion object {
 
@@ -30,35 +53,5 @@ class DependencyOptions(private val handler: DependencyHandler) {
             return DependencyOptions(handler).apply(configurer).dependency
         }
 
-        fun of(
-            handler: DependencyHandler,
-            group: String,
-            name: String,
-            version: String?,
-            configuration: String?,
-            classifier: String?,
-            ext: String?
-        ): ExternalModuleDependency {
-            return handler.create(
-                    mapOfNonNullValuesOf(
-                            "group" to group,
-                            "name" to name,
-                            "version" to version,
-                            "configuration" to configuration,
-                            "classifier" to classifier,
-                            "ext" to ext
-                    )
-            ) as ExternalModuleDependency
-        }
-
-        private fun mapOfNonNullValuesOf(vararg entries: Pair<String, String?>): Map<String, String> {
-            return mutableMapOf<String, String>().apply {
-                for ((k, v) in entries) {
-                    if (v != null) {
-                        put(k, v)
-                    }
-                }
-            }
-        }
     }
 }

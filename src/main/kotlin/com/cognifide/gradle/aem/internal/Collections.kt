@@ -22,4 +22,14 @@ object Collections {
             }
         }
     }
+
+    fun mapOfNonNullValues(vararg entries: Pair<String, String?>): Map<String, String> {
+        return mutableMapOf<String, String>().apply {
+            for ((k, v) in entries) {
+                if (v != null) {
+                    put(k, v)
+                }
+            }
+        }
+    }
 }

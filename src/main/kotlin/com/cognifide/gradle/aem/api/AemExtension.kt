@@ -246,7 +246,7 @@ open class AemExtension(@Internal val project: Project) {
     fun bundle(jarTaskName: String) = bundle(project.tasks.getByName(jarTaskName) as Jar)
 
     fun bundle(jar: Jar, configurer: BundleJar.() -> Unit = {}): BundleJar {
-        return bundles.getOrPut(jar.name) { BundleJar(this, jar).apply(configurer) }
+        return bundles.getOrPut(jar.name) { BundleJar(this, jar) }.apply(configurer)
     }
 
     fun notifier(configurer: NotifierFacade.() -> Unit) {
