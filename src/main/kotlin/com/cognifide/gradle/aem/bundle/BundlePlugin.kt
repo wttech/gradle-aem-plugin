@@ -44,25 +44,27 @@ class BundlePlugin : AemPlugin() {
     }
 
     private fun Project.setupJavaBndTool() {
-        val jar = tasks.getByName(JavaPlugin.JAR_TASK_NAME) as Jar
-        val bundleConvention = BundleTaskConvention(jar)
+        tasks.named(JavaPlugin.JAR_TASK_NAME, Jar::class.java).configure { jar ->
+            val bundleConvention = BundleTaskConvention(jar)
 
-        convention.plugins[BND_CONVENTION_PLUGIN] = bundleConvention
+            convention.plugins[BND_CONVENTION_PLUGIN] = bundleConvention
 
-        jar.doLast {
-            val bundle = AemExtension.of(project).bundle
-            val instructionFile = File(bundle.bndPath)
-            if (instructionFile.isFile) {
-                bundleConvention.setBndfile(instructionFile)
+            jar.doLast {
+                val bundle = AemExtension.of(project).bundle
+                val instructionFile = File(bundle.bndPath)
+                if (instructionFile.isFile) {
+                    bundleConvention.setBndfile(instructionFile)
+                }
+
+                val instructions = bundle.bndInstructions
+                if (instructions.isNotEmpty()) {
+                    bundleConvention.bnd(instructions)
+                }
+
+                runBndTool(bundleConvention)
             }
-
-            val instructions = bundle.bndInstructions
-            if (instructions.isNotEmpty()) {
-                bundleConvention.bnd(instructions)
-            }
-
-            runBndTool(bundleConvention)
         }
+
     }
 
     @Suppress("TooGenericExceptionCaught")
@@ -84,11 +86,11 @@ class BundlePlugin : AemPlugin() {
 
         testImplConfig.extendsFrom(compileOnlyConfig)
 
-        val test = tasks.getByName(JavaPlugin.TEST_TASK_NAME) as Test
-        val jar = tasks.getByName(JavaPlugin.JAR_TASK_NAME) as Jar
+        val test = tasks.named(JavaPlugin.TEST_TASK_NAME, Test::class.java)
+        val jar = tasks.named(JavaPlugin.JAR_TASK_NAME, Jar::class.java)
 
-        test.dependsOn(jar)
-        afterEvaluate { test.classpath += files(jar.archivePath) }
+        test.configure { it.dependsOn(jar) }
+        afterEvaluate { test.configure { it.classpath += files(jar.get().archivePath) } }
     }
 
     companion object {
