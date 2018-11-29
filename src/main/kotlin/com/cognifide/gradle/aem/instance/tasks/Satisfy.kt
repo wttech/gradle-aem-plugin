@@ -91,7 +91,7 @@ open class Satisfy : Deploy() {
 
     @TaskAction
     @Suppress("ComplexMethod")
-    fun satisfy() {
+    override fun deploy() {
         val actions = mutableListOf<PackageAction>()
 
         for (packageGroup in packageGroups) {

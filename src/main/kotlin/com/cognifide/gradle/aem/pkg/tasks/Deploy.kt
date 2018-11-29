@@ -60,7 +60,7 @@ open class Deploy : Sync() {
     }
 
     @TaskAction
-    fun deploy() {
+    open fun deploy() {
         aem.syncPackages(instances, packages) { pkg ->
             if (distributed) {
                 distributePackage(pkg)

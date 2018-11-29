@@ -47,9 +47,9 @@ class TaskFactory(@Transient private val project: Project) {
     }
 
     fun sequence(name: String, configurer: SequenceOptions.() -> Unit): TaskProvider<Task> {
-        return project.tasks.register(name) { sequence ->
-            sequence.group = GROUP
+        val sequence = project.tasks.register(name)
 
+        project.gradle.projectsEvaluated { gradle ->
             val options = SequenceOptions().apply(configurer)
             val taskList = path(options.dependentTasks)
             val afterList = path(options.afterTasks)
@@ -62,17 +62,15 @@ class TaskFactory(@Transient private val project: Project) {
                     current.configure { it.mustRunAfter(previous) }
                 }
             }
+            taskList.forEach { task ->
+                task.configure { it.mustRunAfter(afterList) }
+            }
 
-            taskList.forEach { it.configure { task -> task.mustRunAfter(afterList) } }
-            sequence.dependsOn(taskList).mustRunAfter(afterList)
+            sequence.configure { task ->
+                task.group = GROUP
+                task.dependsOn(taskList).mustRunAfter(afterList)
+            }
         }
-    }
-
-    fun setupSequence(name: String, configurer: SequenceOptions.() -> Unit): TaskProvider<Task> {
-        val afterTasks = listOf(Create.NAME, Up.NAME, Satisfy.NAME)
-        val sequence = sequence(name) { apply(configurer); this.afterTasks = afterTasks }
-
-        project.tasks.named(Setup.NAME).configure { it.dependsOn(sequence) }
 
         return sequence
     }
