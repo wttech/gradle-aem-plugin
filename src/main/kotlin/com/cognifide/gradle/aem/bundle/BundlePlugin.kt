@@ -64,7 +64,6 @@ class BundlePlugin : AemPlugin() {
                 runBndTool(bundleConvention)
             }
         }
-
     }
 
     @Suppress("TooGenericExceptionCaught")

@@ -22,12 +22,12 @@ class DependencyOptions(private val handler: DependencyHandler) {
     var ext: String? = null
 
     fun dependency(
-            group: String,
-            name: String,
-            version: String? = null,
-            configuration: String? = null,
-            classifier: String? = null,
-            ext: String? = null
+        group: String,
+        name: String,
+        version: String? = null,
+        configuration: String? = null,
+        classifier: String? = null,
+        ext: String? = null
     ) {
         this.group = group
         this.name = name
@@ -52,6 +52,5 @@ class DependencyOptions(private val handler: DependencyHandler) {
         fun of(handler: DependencyHandler, configurer: DependencyOptions.() -> Unit): ExternalModuleDependency {
             return DependencyOptions(handler).apply(configurer).dependency
         }
-
     }
 }
