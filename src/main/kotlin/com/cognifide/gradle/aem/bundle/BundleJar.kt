@@ -93,7 +93,7 @@ class BundleJar(
      * @see <https://bnd.bndtools.org/chapters/825-instructions-ref.html>
      */
     @Input
-    var bndInstructions: Map<String, Any> = mutableMapOf(
+    var bndInstructions: Map<String, Any> = mapOf(
             "-fixupmessages.bundleActivator" to "${Bundle.ATTRIBUTE_ACTIVATOR} * is being imported *;is:=error"
     )
 
@@ -256,7 +256,7 @@ class BundleJar(
 
     fun privatePackage(pkg: String) = privatePackages(listOf(pkg))
 
-    fun privatePackages(pkgs: Collection<String>){
+    fun privatePackages(pkgs: Collection<String>) {
         privatePackages += pkgs
     }
 

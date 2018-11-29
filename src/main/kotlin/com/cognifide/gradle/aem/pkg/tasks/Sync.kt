@@ -2,9 +2,9 @@ package com.cognifide.gradle.aem.pkg.tasks
 
 import com.cognifide.gradle.aem.api.AemDefaultTask
 import com.cognifide.gradle.aem.instance.Instance
+import java.io.File
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFiles
-import java.io.File
 
 open class Sync : AemDefaultTask() {
 
