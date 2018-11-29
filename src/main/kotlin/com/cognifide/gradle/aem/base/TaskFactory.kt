@@ -1,13 +1,41 @@
 package com.cognifide.gradle.aem.base
 
 import com.cognifide.gradle.aem.api.AemTask
-import com.cognifide.gradle.aem.instance.tasks.*
+import com.cognifide.gradle.aem.instance.tasks.Await
 import org.gradle.api.Action
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.tasks.TaskProvider
 
 class TaskFactory(@Transient private val project: Project) {
+
+    fun pathed(path: String): TaskProvider<Task> {
+        val projectPath = path.substringBeforeLast(":", project.path).ifEmpty { ":" }
+        val taskName = path.substringAfterLast(":")
+
+        return project.project(projectPath).tasks.named(taskName)
+    }
+
+    fun pathed(paths: Collection<Any>): List<TaskProvider<out Task>> {
+        return paths.map { path ->
+            when (path) {
+                is String -> pathed(path)
+                is TaskProvider<*> -> path
+                else -> throw IllegalArgumentException("Illegal task argument: $path")
+            }
+        }
+    }
+
+    fun named(name: String) = project.tasks.named(name)
+
+    fun <T : Task> copy(name: String, suffix: String, type: Class<T>, configurer: T.() -> Unit = {}): TaskProvider<T> {
+        return project.tasks.register("$name${suffix.capitalize()}", type) { task ->
+            task.group = GROUP
+            task.apply(configurer)
+        }
+    }
+
+    fun await(suffix: String, configurer: Await.() -> Unit = {}) = copy(Await.NAME, suffix, Await::class.java, configurer)
 
     fun <T : Task> register(name: String, clazz: Class<T>): TaskProvider<T> {
         return register(name, clazz, Action {})
@@ -29,30 +57,13 @@ class TaskFactory(@Transient private val project: Project) {
         }
     }
 
-    fun path(path: String): TaskProvider<Task> {
-        val projectPath = path.substringBeforeLast(":", project.path).ifEmpty { ":" }
-        val taskName = path.substringAfterLast(":")
-
-        return project.project(projectPath).tasks.named(taskName)
-    }
-
-    fun path(paths: Collection<Any>): List<TaskProvider<out Task>> {
-        return paths.map { path ->
-            when (path) {
-                is String -> path(path)
-                is TaskProvider<*> -> path
-                else -> throw IllegalArgumentException("Illegal task argument: $path")
-            }
-        }
-    }
-
     fun sequence(name: String, configurer: SequenceOptions.() -> Unit): TaskProvider<Task> {
         val sequence = project.tasks.register(name)
 
         project.gradle.projectsEvaluated { gradle ->
             val options = SequenceOptions().apply(configurer)
-            val taskList = path(options.dependentTasks)
-            val afterList = path(options.afterTasks)
+            val taskList = pathed(options.dependentTasks)
+            val afterList = pathed(options.afterTasks)
 
             if (taskList.size > 1) {
                 for (i in 1 until taskList.size) {
@@ -75,14 +86,8 @@ class TaskFactory(@Transient private val project: Project) {
         return sequence
     }
 
-    fun await(suffix: String): TaskProvider<Await> {
-        val task = project.tasks.register("${Await.NAME}${suffix.capitalize()}", Await::class.java)
-        task.configure { it.group = GROUP }
-
-        return task
-    }
-
     class SequenceOptions {
+
         var dependentTasks: Collection<Any> = listOf()
 
         var afterTasks: Collection<Any> = listOf()
@@ -105,7 +110,6 @@ class TaskFactory(@Transient private val project: Project) {
     }
 
     companion object {
-
         const val GROUP = "${AemTask.GROUP} (custom)"
     }
 }
