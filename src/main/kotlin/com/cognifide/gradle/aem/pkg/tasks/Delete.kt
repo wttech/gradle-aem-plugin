@@ -13,7 +13,7 @@ open class Delete : Sync() {
 
     override fun taskGraphReady(graph: TaskExecutionGraph) {
         if (graph.hasTask(this)) {
-            aem.props.checkForce() // TODO not causing build error
+            aem.props.checkForce()
         }
     }
 
