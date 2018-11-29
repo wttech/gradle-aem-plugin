@@ -93,21 +93,21 @@ class BundleJar(
      * @see <https://bnd.bndtools.org/chapters/825-instructions-ref.html>
      */
     @Input
-    var bndInstructions: MutableMap<String, Any> = mutableMapOf(
+    var bndInstructions: Map<String, Any> = mutableMapOf(
             "-fixupmessages.bundleActivator" to "${Bundle.ATTRIBUTE_ACTIVATOR} * is being imported *;is:=error"
     )
 
     @Internal
     @JsonIgnore
-    var importPackages: MutableList<String> = mutableListOf("*")
+    var importPackages: List<String> = listOf("*")
 
     @Internal
     @JsonIgnore
-    var exportPackages: MutableList<String> = mutableListOf()
+    var exportPackages: List<String> = listOf()
 
     @Internal
     @JsonIgnore
-    var privatePackages: MutableList<String> = mutableListOf()
+    var privatePackages: List<String> = listOf()
 
     fun projectsEvaluated() {
         ensureJavaPackage()
@@ -159,7 +159,7 @@ class BundleJar(
 
         combinePackageAttribute(Bundle.ATTRIBUTE_IMPORT_PACKAGE, importPackages)
         combinePackageAttribute(Bundle.ATTRIBUTE_PRIVATE_PACKAGE, privatePackages)
-        combinePackageAttribute(Bundle.ATTRIBUTE_EXPORT_PACKAGE, exportPackages.apply {
+        combinePackageAttribute(Bundle.ATTRIBUTE_EXPORT_PACKAGE, exportPackages.toMutableList().apply {
             if (attributesConvention && !javaPackage.isNullOrBlank()) {
                 val javaPackageExported = if (javaPackageOptions.isNotBlank()) {
                     "$javaPackage.*;$javaPackageOptions"
@@ -248,17 +248,23 @@ class BundleJar(
             attribute(Bundle.ATTRIBUTE_VENDOR, value)
         }
 
-    fun exportPackage(pkg: String) = exportPackages.add(pkg)
+    fun exportPackage(pkg: String) = exportPackages(listOf(pkg))
 
-    fun exportPackages(pkgs: Collection<String>) = exportPackages.addAll(pkgs)
+    fun exportPackages(pkgs: Collection<String>) {
+        exportPackages += pkgs
+    }
 
-    fun privatePackage(pkg: String) = privatePackages.add(pkg)
+    fun privatePackage(pkg: String) = privatePackages(listOf(pkg))
 
-    fun privatePackages(pkgs: Collection<String>) = privatePackages.addAll(pkgs)
+    fun privatePackages(pkgs: Collection<String>){
+        privatePackages += pkgs
+    }
 
     fun excludePackage(pkg: String) = excludePackages(listOf(pkg))
 
-    fun excludePackages(pkgs: Collection<String>) = importPackages.addAll(pkgs.map { "!$it" })
+    fun excludePackages(pkgs: Collection<String>) {
+        importPackages += pkgs.map { "!$it" }
+    }
 
     fun embedPackage(pkg: String, export: Boolean, dependencyOptions: DependencyOptions.() -> Unit) {
         embedPackage(pkg, export, DependencyOptions.of(aem.project.dependencies, dependencyOptions))
@@ -278,11 +284,7 @@ class BundleJar(
         }
     }
 
-    fun wildcardPackages(pkgs: Collection<String>): String {
-        return pkgs.joinToString(",") { StringUtils.appendIfMissing(it, ".*") }
-    }
-
-    fun mergePackages(pkgs: Collection<String>): String {
-        return pkgs.joinToString(",")
+    fun wildcardPackages(pkgs: Collection<String>): List<String> {
+        return pkgs.map { StringUtils.appendIfMissing(it, ".*") }
     }
 }

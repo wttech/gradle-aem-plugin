@@ -86,8 +86,10 @@ open class AemExtension(@Internal val project: Project) {
     @Nested
     val config = BaseConfig(this)
 
+    private val bundleMap = mutableMapOf<String, BundleJar>()
+
     @Nested
-    val bundles = mutableMapOf<String, BundleJar>()
+    val bundles: Map<String, BundleJar> = bundleMap
 
     @Internal
     val notifier = NotifierFacade.of(this)
@@ -246,7 +248,7 @@ open class AemExtension(@Internal val project: Project) {
     fun bundle(jarTaskName: String) = bundle(project.tasks.getByName(jarTaskName) as Jar)
 
     fun bundle(jar: Jar, configurer: BundleJar.() -> Unit = {}): BundleJar {
-        return bundles.getOrPut(jar.name) { BundleJar(this, jar) }.apply(configurer)
+        return bundleMap.getOrPut(jar.name) { BundleJar(this, jar) }.apply(configurer)
     }
 
     fun notifier(configurer: NotifierFacade.() -> Unit) {

@@ -27,7 +27,7 @@ class Cleaner(project: Project) {
      * (e.g after checking out JCR content).
      */
     @Input
-    var filesDeleted: MutableList<String> = mutableListOf(
+    var filesDeleted: List<String> = listOf(
             "**/.vlt",
             "**/.vlt*.tmp"
     )
@@ -41,7 +41,7 @@ class Cleaner(project: Project) {
      * (ANT style, delimited with ',') in which property shouldn't be removed.
      */
     @Input
-    var propertiesSkipped: MutableList<String> = mutableListOf(
+    var propertiesSkipped: List<String> = listOf(
             pathRule("jcr:uuid", listOf("**/home/users/*", "**/home/groups/*")),
             "jcr:lastModified*",
             "jcr:created*",
@@ -60,7 +60,7 @@ class Cleaner(project: Project) {
      * Mixin types that will be skipped when pulling JCR content from AEM instance.
      */
     @Input
-    var mixinTypesSkipped: MutableList<String> = mutableListOf(
+    var mixinTypesSkipped: List<String> = listOf(
             "cq:ReplicationStatus",
             "mix:versionable"
     )
@@ -72,7 +72,7 @@ class Cleaner(project: Project) {
      * (e.g /_cq_dialog/.content.xml will be replaced by _cq_dialog.xml).
      */
     @Input
-    var filesFlattened: MutableList<String> = mutableListOf(
+    var filesFlattened: List<String> = listOf(
             "**/_cq_dialog/.content.xml",
             "**/_cq_htmlTag/.content.xml"
     )

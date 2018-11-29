@@ -97,11 +97,9 @@ open class Compose : Zip(), AemTask {
      * Additional entries added to file 'META-INF/vault/properties.xml'.
      */
     @Input
-    var vaultProperties: MutableMap<String, Any> = VAULT_PROPERTIES_DEFAULT.toMutableMap()
+    var vaultProperties: Map<String, Any> = VAULT_PROPERTIES_DEFAULT
 
-    fun vaultProperties(properties: Map<String, Any>) = vaultProperties.putAll(properties)
-
-    fun vaultProperty(name: String, value: String) = vaultProperties(mapOf(name to value))
+    fun vaultProperty(name: String, value: String) { vaultProperties += mapOf(name to value) }
 
     @get:Internal
     @get:JsonIgnore

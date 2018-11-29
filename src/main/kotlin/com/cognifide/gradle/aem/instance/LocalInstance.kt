@@ -32,7 +32,7 @@ class LocalInstance private constructor(project: Project) : AbstractInstance(pro
         }
 
     @get:JsonIgnore
-    var jvmOpts: List<String> = mutableListOf(
+    var jvmOpts: List<String> = listOf(
             "-server", "-Xmx1024m", "-XX:MaxPermSize=256M", "-Djava.awt.headless=true"
     )
 
@@ -41,7 +41,7 @@ class LocalInstance private constructor(project: Project) : AbstractInstance(pro
         get() = (jvmOptsDefaults + jvmOpts).joinToString(" ")
 
     @get:JsonIgnore
-    var startOpts: List<String> = mutableListOf()
+    var startOpts: List<String> = listOf()
 
     @get:JsonProperty("startOpts")
     val startOptsString: String
@@ -52,7 +52,7 @@ class LocalInstance private constructor(project: Project) : AbstractInstance(pro
         get() = listOf(type.name.toLowerCase())
 
     @get:JsonIgnore
-    var runModes: List<String> = mutableListOf(ENVIRONMENT)
+    var runModes: List<String> = listOf(ENVIRONMENT)
 
     @get:JsonProperty("runModes")
     val runModesString: String

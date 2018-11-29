@@ -22,11 +22,7 @@ class PackageFileFilter(project: Project) : Serializable {
      * Exclude files being a part of CRX package.
      */
     @Input
-    var excludeFiles: MutableList<String> = EXCLUDE_FILES_DEFAULT.toMutableList()
-
-    fun excludeFiles(files: List<String>) = excludeFiles.addAll(files)
-
-    fun excludeFile(file: String) = excludeFiles.add(file)
+    var excludeFiles: List<String> = EXCLUDE_FILES_DEFAULT
 
     @Input
     var expanding: Boolean = true
@@ -35,22 +31,16 @@ class PackageFileFilter(project: Project) : Serializable {
      * Wildcard file name filter expression that is used to filter in which Vault files properties can be injected.
      */
     @Input
-    var expandFiles: MutableList<String> = EXPAND_FILES_DEFAULT.toMutableList()
-
-    fun expandFiles(files: List<String>) = expandFiles.addAll(files)
-
-    fun expandFile(file: String) = expandFiles.add(file)
+    var expandFiles: List<String> = EXPAND_FILES_DEFAULT
 
     /**
      * Define here custom properties that can be used in CRX package files like 'META-INF/vault/properties.xml'.
      * Could override predefined properties provided by plugin itself.
      */
     @Input
-    var expandProperties: MutableMap<String, Any> = mutableMapOf()
+    var expandProperties: Map<String, Any> = mapOf()
 
-    fun expandProperties(properties: Map<String, Any>) = expandProperties.putAll(properties)
-
-    fun expandProperty(name: String, value: String) = expandProperties(mapOf(name to value))
+    fun expandProperty(name: String, value: String) { expandProperties += mapOf(name to value) }
 
     /**
      * Filter that ensures that only OSGi bundles will be put into CRX package under install path.

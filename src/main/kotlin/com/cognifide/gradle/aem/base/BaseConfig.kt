@@ -24,12 +24,14 @@ class BaseConfig(
     private val aem: AemExtension
 ) : Serializable {
 
+    private val instanceMap: MutableMap<String, Instance> = mutableMapOf()
+
     /**
      * List of AEM instances on which packages could be deployed.
      * Instance stored in map ensures name uniqueness and allows to be referenced in expanded properties.
      */
     @Nested
-    var instances: MutableMap<String, Instance> = mutableMapOf()
+    var instances: Map<String, Instance> = instanceMap
 
     /**
      * Path in which local AEM instances will be stored.
@@ -96,11 +98,11 @@ class BaseConfig(
      * retries will be applied.
      */
     @Input
-    var packageErrors = aem.props.list("aem.packageErrors") ?: listOf(
+    var packageErrors: List<String> = (aem.props.list("aem.packageErrors") ?: listOf(
             "javax.jcr.nodetype.ConstraintViolationException",
             "org.apache.jackrabbit.vault.packaging.DependencyException",
             "org.xml.sax.SAXException"
-    )
+    ))
 
     /**
      * Determines number of lines to process at once during reading html responses.
@@ -192,13 +194,13 @@ class BaseConfig(
     }
 
     private fun instance(instance: Instance) {
-        if (instances.containsKey(instance.name)) {
+        if (instanceMap.containsKey(instance.name)) {
             throw AemException("Instance named '${instance.name}' is already defined. " +
                     "Enumerate instance types (for example 'author1', 'author2') " +
                     "or distinguish environments (for example 'local', 'int', 'stg').")
         }
 
-        instances[instance.name] = instance
+        instanceMap[instance.name] = instance
     }
 
     @get:Internal

@@ -14,7 +14,7 @@ open class Rcp : Vlt() {
     }
 
     @Input
-    var paths: MutableMap<String, String> = mutableMapOf()
+    var paths: Map<String, String> = mapOf()
 
     @Input
     var sourceInstance: Instance? = aem.props.string("aem.rcp.source")?.run { aem.config.parseInstance(this) }

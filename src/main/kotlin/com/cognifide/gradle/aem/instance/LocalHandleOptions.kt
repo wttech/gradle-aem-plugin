@@ -16,5 +16,5 @@ class LocalHandleOptions(project: Project) {
      * Wildcard file name filter expression that is used to filter in which instance files properties can be injected.
      */
     @Input
-    var filesExpanded: MutableList<String> = mutableListOf("**/*.properties", "**/*.sh", "**/*.bat", "**/*.xml", "**/start", "**/stop")
+    var filesExpanded: List<String> = listOf("**/*.properties", "**/*.sh", "**/*.bat", "**/*.xml", "**/start", "**/stop")
 }
