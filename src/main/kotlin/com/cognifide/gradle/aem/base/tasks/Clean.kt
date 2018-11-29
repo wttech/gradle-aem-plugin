@@ -49,7 +49,7 @@ open class Clean : AemDefaultTask() {
         aem.notifier.notify("Cleaned JCR content", "Directory: ${Formats.rootProjectPath(contentPath, project)}")
     }
 
-    fun cleaner(configurer: Cleaner.() -> Unit) {
+    fun options(configurer: Cleaner.() -> Unit) {
         cleaner.apply(configurer)
     }
 

@@ -14,7 +14,7 @@ open class Vlt : AemDefaultTask() {
     @Nested
     val vlt = VltRunner(project)
 
-    fun vlt(configurer: VltRunner.() -> Unit) {
+    fun options(configurer: VltRunner.() -> Unit) {
         vlt.apply(configurer)
     }
 
