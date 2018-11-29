@@ -13,7 +13,6 @@ import org.apache.http.HttpResponse
 import org.apache.http.NameValuePair
 import org.apache.http.auth.AuthScope
 import org.apache.http.auth.UsernamePasswordCredentials
-import org.apache.http.client.HttpClient as BaseHttpClient
 import org.apache.http.client.config.CookieSpecs
 import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.entity.UrlEncodedFormEntity
@@ -41,42 +40,38 @@ open class HttpClient(val project: Project) {
 
     var connectionRetries = true
 
-    var requestConfigurer: (HttpRequestBase) -> Unit = { }
+    var requestConfigurer: HttpRequestBase.() -> Unit = { }
 
-    var clientBuilder: ((HttpClientBuilder) -> BaseHttpClient) = { builder ->
-        builder.run {
-            useSystemProperties()
+    var clientBuilder: HttpClientBuilder.() -> Unit = {
+        useSystemProperties()
 
-            if (authorizationPreemptive) {
-                addInterceptorFirst(PreemptiveAuthInterceptor())
-            }
+        if (authorizationPreemptive) {
+            addInterceptorFirst(PreemptiveAuthInterceptor())
+        }
 
-            setDefaultRequestConfig(RequestConfig.custom().apply {
-                setCookieSpec(CookieSpecs.STANDARD)
+        setDefaultRequestConfig(RequestConfig.custom().apply {
+            setCookieSpec(CookieSpecs.STANDARD)
 
-                if (!connectionRetries) {
-                    setSocketTimeout(connectionTimeout)
-                }
-                setConnectTimeout(connectionTimeout)
-                setConnectionRequestTimeout(connectionTimeout)
-            }.build())
-
-            if (basicUser.isNotBlank() && basicPassword.isNotBlank()) {
-                setDefaultCredentialsProvider(BasicCredentialsProvider().apply {
-                    setCredentials(AuthScope.ANY, UsernamePasswordCredentials(basicUser, basicPassword))
-                })
-            }
-
-            if (connectionIgnoreSsl) {
-                setSSLSocketFactory(SSLConnectionSocketFactory(SSLContextBuilder()
-                        .loadTrustMaterial(null) { _, _ -> true }
-                        .build(), NoopHostnameVerifier.INSTANCE))
-            }
             if (!connectionRetries) {
-                disableAutomaticRetries()
+                setSocketTimeout(connectionTimeout)
             }
+            setConnectTimeout(connectionTimeout)
+            setConnectionRequestTimeout(connectionTimeout)
+        }.build())
 
-            build()
+        if (basicUser.isNotBlank() && basicPassword.isNotBlank()) {
+            setDefaultCredentialsProvider(BasicCredentialsProvider().apply {
+                setCredentials(AuthScope.ANY, UsernamePasswordCredentials(basicUser, basicPassword))
+            })
+        }
+
+        if (connectionIgnoreSsl) {
+            setSSLSocketFactory(SSLConnectionSocketFactory(SSLContextBuilder()
+                    .loadTrustMaterial(null) { _, _ -> true }
+                    .build(), NoopHostnameVerifier.INSTANCE))
+        }
+        if (!connectionRetries) {
+            disableAutomaticRetries()
         }
     }
 
@@ -179,7 +174,7 @@ open class HttpClient(val project: Project) {
         try {
             requestConfigurer(method)
 
-            val client = clientBuilder(HttpClientBuilder.create())
+            val client = HttpClientBuilder.create().apply(clientBuilder).build()
             val response = client.execute(method)
 
             responseHandler(response)

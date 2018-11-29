@@ -61,6 +61,7 @@ open class Deploy : Sync() {
 
     @TaskAction
     open fun deploy() {
+        // TODO sync interactively: \ Deploying packages on instances (50%): example.full.zip on local-author, local-publish
         aem.syncPackages(instances, packages) { pkg ->
             if (distributed) {
                 distributePackage(pkg)
