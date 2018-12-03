@@ -21,17 +21,24 @@ open class Purge : Sync() {
 
     @TaskAction
     fun purge() {
-        aem.syncPackages(instances, packages) { pkg ->
-            try {
-                val packagePath = determineRemotePackagePath(pkg)
+        aem.progress({
+            header = "Purging package(s) from instance(s)"
+            total = instances.size.toLong() * packages.size.toLong()
+        }, {
+            aem.syncPackages(instances, packages) { pkg ->
+                increment("${pkg.name} -> ${instance.name}") {
+                    try {
+                        val packagePath = determineRemotePackagePath(pkg)
 
-                uninstall(this, packagePath)
-                delete(this, packagePath)
-            } catch (e: InstanceException) {
-                logger.info(e.message)
-                logger.debug("Nothing to purge.", e)
+                        uninstall(this, packagePath)
+                        delete(this, packagePath)
+                    } catch (e: InstanceException) {
+                        logger.info(e.message)
+                        logger.debug("Nothing to purge.", e)
+                    }
+                }
             }
-        }
+        })
 
         aem.notifier.notify("Package purged", "${packages.fileNames} from ${instances.names}")
     }

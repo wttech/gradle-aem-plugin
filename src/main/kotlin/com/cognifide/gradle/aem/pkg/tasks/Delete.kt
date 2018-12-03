@@ -19,7 +19,17 @@ open class Delete : Sync() {
 
     @TaskAction
     fun delete() {
-        aem.syncPackages(instances, packages) { deletePackage(determineRemotePackagePath(it)) }
+        aem.progress({
+            header = "Deleting package(s) from instance(s)"
+            total = instances.size.toLong() * packages.size.toLong()
+        }, {
+            aem.syncPackages(instances, packages) { pkg ->
+                increment("${pkg.name} -> ${instance.name}") {
+                    deletePackage(determineRemotePackagePath(pkg))
+                }
+
+            }
+        })
 
         aem.notifier.notify("Package deleted", "${packages.fileNames} on ${instances.names}")
     }

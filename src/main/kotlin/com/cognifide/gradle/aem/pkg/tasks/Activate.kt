@@ -12,7 +12,16 @@ open class Activate : Sync() {
 
     @TaskAction
     fun activate() {
-        aem.syncPackages(instances, packages) { activatePackage(determineRemotePackagePath(it)) }
+        aem.progress({
+            header = "Activating package(s) on instance(s)"
+            total = instances.size.toLong() * packages.size.toLong()
+        }, {
+            aem.syncPackages(instances, packages) { pkg ->
+                increment("${pkg.name} -> ${instance.name}") {
+                    activatePackage(determineRemotePackagePath(pkg))
+                }
+            }
+        })
 
         aem.notifier.notify("Package activated", "${packages.fileNames} on ${instances.names}")
     }
