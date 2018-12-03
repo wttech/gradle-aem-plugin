@@ -28,20 +28,31 @@ class PackagePlugin : AemPlugin() {
                 task.dependsOn(LifecycleBasePlugin.ASSEMBLE_TASK_NAME, LifecycleBasePlugin.CHECK_TASK_NAME)
                 task.mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
             }
-            register(Delete.NAME, Delete::class.java) {
+            register(Upload.NAME, Upload::class.java) {
                 it.dependsOn(Compose.NAME)
             }
-            register(Purge.NAME, Purge::class.java) {
+            register(Install.NAME, Install::class.java) {
                 it.dependsOn(Compose.NAME)
+                it.mustRunAfter(Upload.NAME)
             }
             register(Uninstall.NAME, Uninstall::class.java) {
                 it.dependsOn(Compose.NAME)
+                it.mustRunAfter(Upload.NAME, Install.NAME)
             }
             register(Activate.NAME, Activate::class.java) {
                 it.dependsOn(Compose.NAME)
+                it.mustRunAfter(Upload.NAME, Install.NAME)
             }
             register(Deploy.NAME, Deploy::class.java) {
                 it.dependsOn(Compose.NAME)
+            }
+            register(Delete.NAME, Delete::class.java) {
+                it.dependsOn(Compose.NAME)
+                it.mustRunAfter(Deploy.NAME, Upload.NAME, Install.NAME, Activate.NAME, Uninstall.NAME)
+            }
+            register(Purge.NAME, Purge::class.java) {
+                it.dependsOn(Compose.NAME)
+                it.mustRunAfter(Deploy.NAME, Upload.NAME, Install.NAME, Activate.NAME, Uninstall.NAME)
             }
         }
 

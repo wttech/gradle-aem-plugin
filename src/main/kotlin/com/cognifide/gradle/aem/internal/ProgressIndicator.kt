@@ -23,9 +23,11 @@ class ProgressIndicator(private val project: Project) {
         return runBlocking {
             var done = false
             val blockJob = async(Dispatchers.Default) {
-                val result = block()
-                done = true
-                result
+                try {
+                    block()
+                } finally {
+                    done = true
+                }
             }
 
             ProgressLogger(project, header).launch {
