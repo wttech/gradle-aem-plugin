@@ -16,9 +16,9 @@ import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.Compose
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
-import java.util.concurrent.ForkJoinPool
-import java.util.stream.Collectors
-import java.util.stream.StreamSupport
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.plugins.JavaPlugin
@@ -303,36 +303,30 @@ open class AemExtension(@Internal val project: Project) {
 
     fun filter(path: String) = filter(project.file(path))
 
-    fun <A, B> parallelProcess(iterable: Iterable<A>, mapper: (A) -> B): Collection<B> {
-        return parallelProcess(iterable, { true }, mapper)
-    }
-
     @Internal
     private val parallelEnabled = props.boolean("aem.parallelEnabled") ?: true
 
-    @Internal
-    private var parallelPool = ForkJoinPool()
+    fun <A, B : Any> parallelProcess(iterable: Iterable<A>, mapper: (A) -> B): Collection<B> {
+        return parallelProcess(iterable, { true }, mapper)
+    }
 
-    fun <A, B> parallelProcess(iterable: Iterable<A>, filter: (A) -> Boolean, mapper: (A) -> B): List<B> {
-        return if (parallelEnabled) {
-            parallelPool.submit<List<B>> {
-                StreamSupport.stream(iterable.spliterator(), true)
-                        .filter(filter)
-                        .map(mapper)
-                        .collect(Collectors.toList())
-            }.get()
-        } else {
-            iterable.filter(filter).map(mapper)
+    fun <A, B : Any> parallelProcess(iterable: Iterable<A>, filter: (A) -> Boolean, mapper: (A) -> B): List<B> {
+        if (!parallelEnabled) {
+            return iterable.filter(filter).map(mapper)
+        }
+
+        return runBlocking(Dispatchers.Default) {
+            iterable.map { value -> async { value.takeIf(filter)?.let(mapper) } }.mapNotNull { it.await() }
         }
     }
 
     fun <A> parallelWith(iterable: Iterable<A>, callback: A.() -> Unit) {
-        if (parallelEnabled) {
-            parallelPool.submit {
-                StreamSupport.stream(iterable.spliterator(), true).forEach(callback)
-            }.get()
-        } else {
-            iterable.forEach { it.apply(callback) }
+        if (!parallelEnabled) {
+            return iterable.forEach { it.apply(callback) }
+        }
+
+        return runBlocking(Dispatchers.Default) {
+            iterable.map { value -> async { value.apply(callback) } }.forEach { it.await() }
         }
     }
 
@@ -348,8 +342,6 @@ open class AemExtension(@Internal val project: Project) {
     companion object {
 
         const val NAME = "aem"
-
-        const val PARALLEL_THREADS = 8
 
         private val PLUGIN_IDS = listOf(PackagePlugin.ID, BundlePlugin.ID, InstancePlugin.ID, BasePlugin.ID)
 
