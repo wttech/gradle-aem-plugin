@@ -13,19 +13,19 @@ class ProgressCountdown(project: Project, header: String, private val value: Lon
     fun run() {
         val start = System.currentTimeMillis()
 
-        logger.started()
-        while (true) {
-            val current = System.currentTimeMillis()
-            val delta = current - start
-            val countdown = value - delta
+        logger.launch {
+            while (true) {
+                val current = System.currentTimeMillis()
+                val delta = current - start
+                val countdown = value - delta
 
-            if (countdown <= 0) {
-                break
+                if (countdown <= 0) {
+                    break
+                }
+
+                logger.progress(progress(countdown))
+                Behaviors.waitFor(loggerInterval)
             }
-
-            logger.progress(progress(countdown))
-            Behaviors.waitFor(loggerInterval)
         }
-        logger.completed()
     }
 }

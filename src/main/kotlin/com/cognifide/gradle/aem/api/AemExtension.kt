@@ -1,10 +1,6 @@
 package com.cognifide.gradle.aem.api
 
-import com.cognifide.gradle.aem.base.BaseConfig
-import com.cognifide.gradle.aem.base.BasePlugin
-import com.cognifide.gradle.aem.base.NotifierFacade
-import com.cognifide.gradle.aem.base.Retry
-import com.cognifide.gradle.aem.base.TaskFactory
+import com.cognifide.gradle.aem.base.*
 import com.cognifide.gradle.aem.base.vlt.VltException
 import com.cognifide.gradle.aem.base.vlt.VltFilter
 import com.cognifide.gradle.aem.bundle.BundleJar
@@ -12,6 +8,7 @@ import com.cognifide.gradle.aem.bundle.BundlePlugin
 import com.cognifide.gradle.aem.instance.*
 import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.internal.Patterns
+import com.cognifide.gradle.aem.internal.ProgressIndicator
 import com.cognifide.gradle.aem.internal.PropertyParser
 import com.cognifide.gradle.aem.internal.file.FileOperations
 import com.cognifide.gradle.aem.internal.http.HttpClient
@@ -263,7 +260,11 @@ open class AemExtension(@Internal val project: Project) {
         return retry().apply(configurer)
     }
 
-    fun retry(): Retry = Retry.once()
+    fun retry(): Retry = Retry.none()
+
+    fun <T> progress(options: ProgressIndicator.() -> Unit, action: ProgressIndicator.() -> T): T {
+        return ProgressIndicator(project).apply(options).launch(action)
+    }
 
     @get:Internal
     val filter: VltFilter
@@ -307,21 +308,32 @@ open class AemExtension(@Internal val project: Project) {
     }
 
     @Internal
-    var parallelPool = ForkJoinPool(PARALLEL_THREADS)
+    private val parallelEnabled = props.boolean("aem.parallelEnabled") ?: true
+
+    @Internal
+    private var parallelPool = ForkJoinPool()
 
     fun <A, B> parallelProcess(iterable: Iterable<A>, filter: (A) -> Boolean, mapper: (A) -> B): List<B> {
-        return parallelPool.submit<List<B>> {
-            StreamSupport.stream(iterable.spliterator(), true)
-                    .filter(filter)
-                    .map(mapper)
-                    .collect(Collectors.toList())
-        }.get()
+        return if (parallelEnabled) {
+            parallelPool.submit<List<B>> {
+                StreamSupport.stream(iterable.spliterator(), true)
+                        .filter(filter)
+                        .map(mapper)
+                        .collect(Collectors.toList())
+            }.get()
+        } else {
+            iterable.filter(filter).map(mapper)
+        }
     }
 
     fun <A> parallelWith(iterable: Iterable<A>, callback: A.() -> Unit) {
-        parallelPool.submit {
-            StreamSupport.stream(iterable.spliterator(), true).forEach(callback)
-        }.get()
+        if (parallelEnabled) {
+            parallelPool.submit {
+                StreamSupport.stream(iterable.spliterator(), true).forEach(callback)
+            }.get()
+        } else {
+            iterable.forEach { it.apply(callback) }
+        }
     }
 
     init {

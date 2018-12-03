@@ -61,14 +61,20 @@ open class Deploy : Sync() {
 
     @TaskAction
     open fun deploy() {
-        // TODO sync interactively: \ Deploying packages on instances (50%): example.full.zip on local-author, local-publish
-        aem.syncPackages(instances, packages) { pkg ->
-            if (distributed) {
-                distributePackage(pkg)
-            } else {
-                deployPackage(pkg)
+        aem.progress({
+            header = "Deploying package(s) to instance(s)"
+            total = instances.size.toLong() * packages.size.toLong()
+        }, {
+            aem.syncPackages(instances, packages) { pkg ->
+                increment("${pkg.name} -> ${instance.name}") {
+                    if (distributed) {
+                        distributePackage(pkg, uploadForce, uploadRetry, installRecursive, installRetry)
+                    } else {
+                        deployPackage(pkg, uploadForce, uploadRetry, installRecursive, installRetry)
+                    }
+                }
             }
-        }
+        })
 
         aem.notifier.notify("Package deployed", "${packages.fileNames} on ${instances.names}")
     }

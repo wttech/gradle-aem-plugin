@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.instance
 import com.cognifide.gradle.aem.api.AemException
 import com.cognifide.gradle.aem.base.Retry
 import com.cognifide.gradle.aem.internal.BuildScope
+import com.cognifide.gradle.aem.internal.Formats
 import com.cognifide.gradle.aem.internal.Patterns
 import com.cognifide.gradle.aem.internal.ProgressCountdown
 import com.cognifide.gradle.aem.internal.file.FileException
@@ -71,7 +72,7 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
         return pkg?.path ?: throw InstanceException("Package is not uploaded on AEM instance.")
     }
 
-    fun uploadPackage(file: File) = uploadPackage(file, true, Retry.once())
+    fun uploadPackage(file: File) = uploadPackage(file, true, Retry.none())
 
     fun uploadPackage(file: File, force: Boolean, retry: Retry): UploadResponse {
         lateinit var exception: InstanceException
@@ -85,8 +86,9 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
                     aem.logger.warn("Cannot upload package $file to $instance.")
                     aem.logger.debug("Upload error", e)
 
-                    val header = "Retrying upload (${i + 1}/${retry.times}) after delay."
-                    val countdown = ProgressCountdown(project, header, retry.delay(i + 1))
+                    val delay = retry.delay(i + 1)
+                    val header = "Retrying upload (${i + 1}/${retry.times}) after delay: ${Formats.duration(delay)}"
+                    val countdown = ProgressCountdown(project, header, delay)
                     countdown.run()
                 }
             }
@@ -120,7 +122,7 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
         return response
     }
 
-    fun downloadPackage(remotePath: String, targetFile: File, retry: Retry = Retry.once()) {
+    fun downloadPackage(remotePath: String, targetFile: File, retry: Retry = Retry.none()) {
         lateinit var exception: FileException
         val url = instance.httpUrl + remotePath
 
@@ -174,7 +176,7 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
         return response
     }
 
-    fun installPackage(remotePath: String, recursive: Boolean = true, retry: Retry = Retry.once()): InstallResponse {
+    fun installPackage(remotePath: String, recursive: Boolean = true, retry: Retry = Retry.none()): InstallResponse {
         lateinit var exception: InstanceException
         for (i in 0..retry.times) {
             try {
@@ -225,9 +227,9 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
     fun deployPackage(
         file: File,
         uploadForce: Boolean = true,
-        uploadRetry: Retry = Retry.once(),
+        uploadRetry: Retry = Retry.none(),
         installRecursive: Boolean = true,
-        installRetry: Retry = Retry.once()
+        installRetry: Retry = Retry.none()
     ) {
         val uploadResponse = uploadPackage(file, uploadForce, uploadRetry)
         installPackage(uploadResponse.path, installRecursive, installRetry)
@@ -236,9 +238,9 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
     fun distributePackage(
         file: File,
         uploadForce: Boolean = true,
-        uploadRetry: Retry = Retry.once(),
+        uploadRetry: Retry = Retry.none(),
         installRecursive: Boolean = true,
-        installRetry: Retry = Retry.once()
+        installRetry: Retry = Retry.none()
     ) {
         val uploadResponse = uploadPackage(file, uploadForce, uploadRetry)
         val packagePath = uploadResponse.path

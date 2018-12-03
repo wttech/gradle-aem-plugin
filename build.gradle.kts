@@ -22,6 +22,7 @@ dependencies {
     implementation(gradleApi())
     implementation("org.jetbrains.kotlin:kotlin-stdlib:1.3.0")
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.3.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.0.1")
     implementation("org.apache.commons:commons-lang3:3.4")
     implementation("commons-io:commons-io:2.4")
     implementation("commons-validator:commons-validator:1.6")
@@ -50,6 +51,14 @@ dependencies {
     "detektPlugins"("io.gitlab.arturbosch.detekt:detekt-formatting:1.0.0-RC11")
 }
 
+publishing {
+    publications {
+        create<MavenPublication>("mavenJava") {
+            from(components["java"])
+        }
+    }
+}
+
 gradlePlugin {
     plugins {
         create("base") {
@@ -69,35 +78,6 @@ gradlePlugin {
             implementationClass = "com.cognifide.gradle.aem.instance.InstancePlugin"
         }
     }
-}
-
-publishing {
-    publications {
-        create<MavenPublication>("mavenJava") {
-            from(components["java"])
-        }
-    }
-}
-
-tasks.named<ProcessResources>("processResources") {
-    doLast {
-        file("$buildDir/resources/main/build.json").printWriter().use {
-            it.print("""{
-                    "pluginVersion": "${project.version}",
-                    "gradleVersion": "${project.gradle.gradleVersion}"
-            }""".trimIndent())
-        }
-    }
-}
-
-tasks.named<Test>("test") {
-    testLogging {
-        events = setOf(TestLogEvent.FAILED)
-        exceptionFormat = TestExceptionFormat.SHORT
-    }
-
-    useJUnitPlatform()
-    dependsOn(tasks.named("publishToMavenLocal"))
 }
 
 detekt {
@@ -123,4 +103,27 @@ bintray {
     }
     publish = (project.findProperty("bintray.publish") ?: "true").toString().toBoolean()
     override = (project.findProperty("bintray.override") ?: "false").toString().toBoolean()
+}
+
+tasks {
+    named<ProcessResources>("processResources") {
+        doLast {
+            file("$buildDir/resources/main/build.json").printWriter().use {
+                it.print("""{
+                    "pluginVersion": "${project.version}",
+                    "gradleVersion": "${project.gradle.gradleVersion}"
+            }""".trimIndent())
+            }
+        }
+    }
+
+    named<Test>("test") {
+        testLogging {
+            events = setOf(TestLogEvent.FAILED)
+            exceptionFormat = TestExceptionFormat.SHORT
+        }
+
+        useJUnitPlatform()
+        dependsOn(named("publishToMavenLocal"))
+    }
 }

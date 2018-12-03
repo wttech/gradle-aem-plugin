@@ -2,7 +2,7 @@ package com.cognifide.gradle.aem.base
 
 class Retry private constructor() {
 
-    var times = 1L
+    var times = 0L
 
     var delay: (Long) -> Long = { 0L }
 
@@ -20,7 +20,7 @@ class Retry private constructor() {
     }
 
     companion object {
-        fun once() = Retry()
+        fun none() = Retry()
 
         const val SECOND_MILIS = 1000L
     }

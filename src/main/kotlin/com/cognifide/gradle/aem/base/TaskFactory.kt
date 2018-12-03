@@ -60,7 +60,7 @@ class TaskFactory(@Transient private val project: Project) {
     fun sequence(name: String, configurer: SequenceOptions.() -> Unit): TaskProvider<Task> {
         val sequence = project.tasks.register(name)
 
-        project.gradle.projectsEvaluated { gradle ->
+        project.gradle.projectsEvaluated { _ ->
             val options = SequenceOptions().apply(configurer)
             val taskList = pathed(options.dependentTasks)
             val afterList = pathed(options.afterTasks)

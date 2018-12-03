@@ -69,4 +69,10 @@ open class ProgressLogger(val project: Project, val header: String) {
         invokeQuietly(progressLogger, "completed")
         stopWatch.stop()
     }
+
+    fun launch(block: ProgressLogger.() -> Unit) {
+        started()
+        block()
+        completed()
+    }
 }
