@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.pkg.tasks
 
+import com.cognifide.gradle.aem.common.fileNames
 import com.cognifide.gradle.aem.instance.names
-import com.cognifide.gradle.aem.internal.fileNames
 import org.gradle.api.execution.TaskExecutionGraph
 import org.gradle.api.tasks.TaskAction
 
@@ -27,7 +27,6 @@ open class Delete : Sync() {
                 increment("${pkg.name} -> ${instance.name}") {
                     deletePackage(determineRemotePackagePath(pkg))
                 }
-
             }
         })
 

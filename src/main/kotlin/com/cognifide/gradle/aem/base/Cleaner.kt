@@ -1,8 +1,8 @@
 package com.cognifide.gradle.aem.base
 
-import com.cognifide.gradle.aem.api.AemExtension
 import com.cognifide.gradle.aem.base.vlt.VltException
-import com.cognifide.gradle.aem.internal.Patterns
+import com.cognifide.gradle.aem.common.AemExtension
+import com.cognifide.gradle.aem.common.Patterns
 import com.cognifide.gradle.aem.pkg.Package
 import java.io.File
 import java.io.IOException

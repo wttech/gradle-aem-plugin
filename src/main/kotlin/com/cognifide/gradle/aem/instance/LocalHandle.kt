@@ -1,11 +1,11 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.api.AemException
-import com.cognifide.gradle.aem.api.AemExtension
-import com.cognifide.gradle.aem.internal.Formats
-import com.cognifide.gradle.aem.internal.Patterns
-import com.cognifide.gradle.aem.internal.ProgressLogger
-import com.cognifide.gradle.aem.internal.file.FileOperations
+import com.cognifide.gradle.aem.common.AemException
+import com.cognifide.gradle.aem.common.AemExtension
+import com.cognifide.gradle.aem.common.Formats
+import com.cognifide.gradle.aem.common.Patterns
+import com.cognifide.gradle.aem.common.ProgressLogger
+import com.cognifide.gradle.aem.common.file.FileOperations
 import java.io.File
 import org.apache.commons.io.FileUtils
 import org.gradle.api.Project

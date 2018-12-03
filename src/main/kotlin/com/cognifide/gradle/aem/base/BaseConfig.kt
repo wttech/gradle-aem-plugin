@@ -1,13 +1,13 @@
 package com.cognifide.gradle.aem.base
 
-import com.cognifide.gradle.aem.api.AemException
-import com.cognifide.gradle.aem.api.AemExtension
+import com.cognifide.gradle.aem.common.AemException
+import com.cognifide.gradle.aem.common.AemExtension
+import com.cognifide.gradle.aem.common.LineSeparator
+import com.cognifide.gradle.aem.common.notifier.Notifier
 import com.cognifide.gradle.aem.instance.Instance
 import com.cognifide.gradle.aem.instance.InstanceHttpClient
 import com.cognifide.gradle.aem.instance.LocalInstance
 import com.cognifide.gradle.aem.instance.RemoteInstance
-import com.cognifide.gradle.aem.internal.LineSeparator
-import com.cognifide.gradle.aem.internal.notifier.Notifier
 import com.cognifide.gradle.aem.pkg.Package
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.Serializable

@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.internal.Behaviors
-import com.cognifide.gradle.aem.internal.ProgressLogger as BaseLogger
+import com.cognifide.gradle.aem.common.Behaviors
+import com.cognifide.gradle.aem.common.ProgressLogger as BaseLogger
 import org.gradle.api.Project
 
 class ProgressLogger(project: Project, header: String, private val stableTimes: Long) : BaseLogger(project, header) {

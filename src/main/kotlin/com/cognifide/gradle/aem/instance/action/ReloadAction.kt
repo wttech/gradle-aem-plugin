@@ -1,9 +1,9 @@
 package com.cognifide.gradle.aem.instance.action
 
+import com.cognifide.gradle.aem.common.ProgressCountdown
 import com.cognifide.gradle.aem.instance.Instance
 import com.cognifide.gradle.aem.instance.InstanceException
 import com.cognifide.gradle.aem.instance.InstanceSync
-import com.cognifide.gradle.aem.internal.ProgressCountdown
 import java.util.concurrent.TimeUnit
 import org.gradle.api.Project
 import org.gradle.api.tasks.Input

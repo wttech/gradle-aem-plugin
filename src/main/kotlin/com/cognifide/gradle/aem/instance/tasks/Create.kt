@@ -1,10 +1,10 @@
 package com.cognifide.gradle.aem.instance.tasks
 
-import com.cognifide.gradle.aem.api.AemTask
+import com.cognifide.gradle.aem.common.AemTask
+import com.cognifide.gradle.aem.common.file.resolver.FileResolver
 import com.cognifide.gradle.aem.instance.InstanceTask
 import com.cognifide.gradle.aem.instance.LocalHandleOptions
 import com.cognifide.gradle.aem.instance.names
-import com.cognifide.gradle.aem.internal.file.resolver.FileResolver
 import java.io.File
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested

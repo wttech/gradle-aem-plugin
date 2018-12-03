@@ -1,10 +1,10 @@
 package com.cognifide.gradle.aem.pkg
 
-import com.cognifide.gradle.aem.api.AemExtension
 import com.cognifide.gradle.aem.base.vlt.VltFilter
+import com.cognifide.gradle.aem.common.AemExtension
+import com.cognifide.gradle.aem.common.file.FileOperations
+import com.cognifide.gradle.aem.common.http.HttpClient
 import com.cognifide.gradle.aem.instance.Instance
-import com.cognifide.gradle.aem.internal.file.FileOperations
-import com.cognifide.gradle.aem.internal.http.HttpClient
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 import org.apache.commons.io.FilenameUtils
@@ -15,9 +15,9 @@ import org.zeroturnaround.zip.ZipUtil
 
 class PackageDownloader(
     @Internal
-    private val aem: AemExtension,
+private val aem: AemExtension,
     @Internal
-    private val temporaryDir: File
+private val temporaryDir: File
 ) {
 
     @Internal

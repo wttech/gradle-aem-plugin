@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.test
 
-import com.cognifide.gradle.aem.internal.file.FileOperations
+import com.cognifide.gradle.aem.common.file.FileOperations
 import org.apache.commons.io.FileUtils
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.util.GFileUtils

@@ -1,11 +1,11 @@
 package com.cognifide.gradle.aem.base
 
-import com.cognifide.gradle.aem.api.AemException
-import com.cognifide.gradle.aem.api.AemExtension
-import com.cognifide.gradle.aem.internal.BuildScope
-import com.cognifide.gradle.aem.internal.notifier.DorkboxNotifier
-import com.cognifide.gradle.aem.internal.notifier.JcGayNotifier
-import com.cognifide.gradle.aem.internal.notifier.Notifier
+import com.cognifide.gradle.aem.common.AemException
+import com.cognifide.gradle.aem.common.AemExtension
+import com.cognifide.gradle.aem.common.BuildScope
+import com.cognifide.gradle.aem.common.notifier.DorkboxNotifier
+import com.cognifide.gradle.aem.common.notifier.JcGayNotifier
+import com.cognifide.gradle.aem.common.notifier.Notifier
 import dorkbox.notify.Notify
 import fr.jcgay.notification.Application
 import fr.jcgay.notification.Notification

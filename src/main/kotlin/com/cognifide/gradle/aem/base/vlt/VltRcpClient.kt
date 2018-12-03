@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.base.vlt
 
+import com.cognifide.gradle.aem.common.Formats
 import com.cognifide.gradle.aem.instance.Instance
-import com.cognifide.gradle.aem.internal.Formats
 import org.apache.commons.lang3.time.StopWatch
 
 class VltRcpClient(

@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.base.vlt
 
-import com.cognifide.gradle.aem.api.AemExtension
+import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.pkg.Package
 import java.io.File
 import org.gradle.api.Project

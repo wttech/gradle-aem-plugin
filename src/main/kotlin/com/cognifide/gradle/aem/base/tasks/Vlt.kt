@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.base.tasks
 
-import com.cognifide.gradle.aem.api.AemDefaultTask
 import com.cognifide.gradle.aem.base.vlt.VltRunner
+import com.cognifide.gradle.aem.common.AemDefaultTask
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
 

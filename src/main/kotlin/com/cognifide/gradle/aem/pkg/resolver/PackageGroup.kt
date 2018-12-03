@@ -1,11 +1,11 @@
 package com.cognifide.gradle.aem.pkg.resolver
 
+import com.cognifide.gradle.aem.common.file.resolver.FileGroup
+import com.cognifide.gradle.aem.common.file.resolver.FileResolution
 import com.cognifide.gradle.aem.instance.InstanceSync
 import com.cognifide.gradle.aem.instance.action.AbstractAction
 import com.cognifide.gradle.aem.instance.action.AwaitAction
 import com.cognifide.gradle.aem.instance.action.ReloadAction
-import com.cognifide.gradle.aem.internal.file.resolver.FileGroup
-import com.cognifide.gradle.aem.internal.file.resolver.FileResolution
 import java.io.File
 
 class PackageGroup(val resolver: PackageResolver, name: String) : FileGroup(resolver.downloadDir, name) {

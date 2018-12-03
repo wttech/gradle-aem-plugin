@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.instance.tasks
 
-import com.cognifide.gradle.aem.api.AemDefaultTask
+import com.cognifide.gradle.aem.common.AemDefaultTask
 
 open class Resetup : AemDefaultTask() {
 

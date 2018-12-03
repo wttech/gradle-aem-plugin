@@ -1,10 +1,10 @@
 package com.cognifide.gradle.aem.instance.action
 
+import com.cognifide.gradle.aem.common.Behaviors
 import com.cognifide.gradle.aem.instance.InstanceException
 import com.cognifide.gradle.aem.instance.InstanceState
 import com.cognifide.gradle.aem.instance.ProgressLogger
 import com.cognifide.gradle.aem.instance.names
-import com.cognifide.gradle.aem.internal.Behaviors
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.gradle.api.Project
 import org.gradle.api.tasks.Internal

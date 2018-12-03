@@ -1,8 +1,8 @@
 package com.cognifide.gradle.aem.base.tasks
 
-import com.cognifide.gradle.aem.api.AemException
-import com.cognifide.gradle.aem.api.AemTask
-import com.cognifide.gradle.aem.internal.Formats
+import com.cognifide.gradle.aem.common.AemException
+import com.cognifide.gradle.aem.common.AemTask
+import com.cognifide.gradle.aem.common.Formats
 import com.cognifide.gradle.aem.pkg.PackageDownloader
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Nested

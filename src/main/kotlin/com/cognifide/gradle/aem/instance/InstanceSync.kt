@@ -1,15 +1,15 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.api.AemException
 import com.cognifide.gradle.aem.base.Retry
-import com.cognifide.gradle.aem.internal.BuildScope
-import com.cognifide.gradle.aem.internal.Formats
-import com.cognifide.gradle.aem.internal.Patterns
-import com.cognifide.gradle.aem.internal.ProgressCountdown
-import com.cognifide.gradle.aem.internal.file.FileException
-import com.cognifide.gradle.aem.internal.file.downloader.HttpFileDownloader
-import com.cognifide.gradle.aem.internal.http.RequestException
-import com.cognifide.gradle.aem.internal.http.ResponseException
+import com.cognifide.gradle.aem.common.AemException
+import com.cognifide.gradle.aem.common.BuildScope
+import com.cognifide.gradle.aem.common.Formats
+import com.cognifide.gradle.aem.common.Patterns
+import com.cognifide.gradle.aem.common.ProgressCountdown
+import com.cognifide.gradle.aem.common.file.FileException
+import com.cognifide.gradle.aem.common.file.downloader.HttpFileDownloader
+import com.cognifide.gradle.aem.common.http.RequestException
+import com.cognifide.gradle.aem.common.http.ResponseException
 import com.cognifide.gradle.aem.pkg.*
 import com.cognifide.gradle.aem.pkg.PackageException
 import com.cognifide.gradle.aem.pkg.tasks.Compose

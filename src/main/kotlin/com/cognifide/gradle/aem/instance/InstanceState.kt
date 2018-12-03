@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.internal.CollectingLogger
+import com.cognifide.gradle.aem.common.CollectingLogger
 import org.apache.commons.lang3.builder.EqualsBuilder
 import org.apache.commons.lang3.builder.HashCodeBuilder
 

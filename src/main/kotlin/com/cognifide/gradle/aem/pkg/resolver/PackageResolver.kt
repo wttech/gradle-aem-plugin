@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.pkg.resolver
 
 import aQute.bnd.osgi.Jar
-import com.cognifide.gradle.aem.internal.file.resolver.Resolver
+import com.cognifide.gradle.aem.common.file.resolver.Resolver
 import java.io.File
 import org.gradle.api.Project
 import org.gradle.api.tasks.Input

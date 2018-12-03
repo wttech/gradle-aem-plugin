@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.instance.tasks
 
-import com.cognifide.gradle.aem.api.AemDefaultTask
+import com.cognifide.gradle.aem.common.AemDefaultTask
 import com.cognifide.gradle.aem.instance.action.AwaitAction
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction

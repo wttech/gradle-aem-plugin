@@ -1,14 +1,14 @@
 package com.cognifide.gradle.aem.pkg.tasks
 
-import com.cognifide.gradle.aem.api.AemException
-import com.cognifide.gradle.aem.api.AemExtension
-import com.cognifide.gradle.aem.api.AemTask
 import com.cognifide.gradle.aem.base.vlt.VltFilter
 import com.cognifide.gradle.aem.bundle.BundleJar
 import com.cognifide.gradle.aem.bundle.BundlePlugin
-import com.cognifide.gradle.aem.internal.DependencyOptions
-import com.cognifide.gradle.aem.internal.Patterns
-import com.cognifide.gradle.aem.internal.file.FileOperations
+import com.cognifide.gradle.aem.common.AemException
+import com.cognifide.gradle.aem.common.AemExtension
+import com.cognifide.gradle.aem.common.AemTask
+import com.cognifide.gradle.aem.common.DependencyOptions
+import com.cognifide.gradle.aem.common.Patterns
+import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.pkg.Package
 import com.cognifide.gradle.aem.pkg.PackageFileFilter
 import com.cognifide.gradle.aem.pkg.PackagePlugin

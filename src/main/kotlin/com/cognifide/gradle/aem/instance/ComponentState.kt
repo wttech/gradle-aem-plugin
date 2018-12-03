@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.internal.Patterns
+import com.cognifide.gradle.aem.common.Patterns
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty

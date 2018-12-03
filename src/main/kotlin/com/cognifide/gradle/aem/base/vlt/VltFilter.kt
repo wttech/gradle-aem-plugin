@@ -1,9 +1,9 @@
 package com.cognifide.gradle.aem.base.vlt
 
-import com.cognifide.gradle.aem.api.AemExtension
-import com.cognifide.gradle.aem.api.AemTask
 import com.cognifide.gradle.aem.base.tasks.Vlt
-import com.cognifide.gradle.aem.internal.file.FileOperations
+import com.cognifide.gradle.aem.common.AemExtension
+import com.cognifide.gradle.aem.common.AemTask
+import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.pkg.Package
 import java.io.Closeable
 import java.io.File

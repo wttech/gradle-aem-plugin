@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.pkg.tasks
 
+import com.cognifide.gradle.aem.common.fileNames
 import com.cognifide.gradle.aem.instance.names
-import com.cognifide.gradle.aem.internal.fileNames
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal

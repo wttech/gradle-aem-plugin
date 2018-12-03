@@ -1,8 +1,8 @@
 package com.cognifide.gradle.aem.bundle
 
 import aQute.bnd.gradle.BundleTaskConvention
-import com.cognifide.gradle.aem.api.AemExtension
-import com.cognifide.gradle.aem.api.AemPlugin
+import com.cognifide.gradle.aem.common.AemExtension
+import com.cognifide.gradle.aem.common.AemPlugin
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import java.io.File
 import org.apache.commons.lang3.exception.ExceptionUtils

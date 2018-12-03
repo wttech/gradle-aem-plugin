@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.api.AemException
-import com.cognifide.gradle.aem.internal.Patterns
+import com.cognifide.gradle.aem.common.AemException
+import com.cognifide.gradle.aem.common.Patterns
 
 enum class InstanceType {
     AUTHOR,

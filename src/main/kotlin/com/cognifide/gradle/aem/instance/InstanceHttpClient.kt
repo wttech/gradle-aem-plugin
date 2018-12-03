@@ -1,8 +1,8 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.api.AemExtension
-import com.cognifide.gradle.aem.internal.http.HttpClient
-import com.cognifide.gradle.aem.internal.http.ResponseException
+import com.cognifide.gradle.aem.common.AemExtension
+import com.cognifide.gradle.aem.common.http.HttpClient
+import com.cognifide.gradle.aem.common.http.ResponseException
 import org.apache.http.HttpResponse
 import org.gradle.api.Project
 

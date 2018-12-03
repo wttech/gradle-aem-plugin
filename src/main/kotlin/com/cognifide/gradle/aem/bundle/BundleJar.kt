@@ -1,10 +1,10 @@
 package com.cognifide.gradle.aem.bundle
 
-import com.cognifide.gradle.aem.api.AemException
-import com.cognifide.gradle.aem.api.AemExtension
+import com.cognifide.gradle.aem.common.AemException
+import com.cognifide.gradle.aem.common.AemExtension
+import com.cognifide.gradle.aem.common.DependencyOptions
+import com.cognifide.gradle.aem.common.Formats
 import com.cognifide.gradle.aem.instance.Bundle
-import com.cognifide.gradle.aem.internal.DependencyOptions
-import com.cognifide.gradle.aem.internal.Formats
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.Serializable
 import org.apache.commons.lang3.StringUtils
@@ -21,13 +21,13 @@ import org.gradle.api.tasks.bundling.Jar
  */
 class BundleJar(
     @Transient
-    @JsonIgnore
-    private val aem: AemExtension,
+@JsonIgnore
+private val aem: AemExtension,
 
     @Internal
-    @Transient
-    @JsonIgnore
-    val jar: Jar
+@Transient
+@JsonIgnore
+val jar: Jar
 ) : Serializable {
 
     /**

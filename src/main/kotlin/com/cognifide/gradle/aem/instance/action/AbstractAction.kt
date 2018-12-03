@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.instance.action
 
-import com.cognifide.gradle.aem.api.AemExtension
+import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.instance.Instance
 import com.cognifide.gradle.aem.instance.InstanceAction
 import com.cognifide.gradle.aem.instance.LocalHandle

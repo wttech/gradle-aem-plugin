@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.instance.tasks
 
-import com.cognifide.gradle.aem.api.AemExtension
-import com.cognifide.gradle.aem.api.AemTask
+import com.cognifide.gradle.aem.common.AemExtension
+import com.cognifide.gradle.aem.common.AemTask
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.Compose
 import java.io.File

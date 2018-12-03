@@ -1,10 +1,10 @@
 package com.cognifide.gradle.aem.pkg
 
 import aQute.bnd.osgi.Jar
-import com.cognifide.gradle.aem.api.AemExtension
+import com.cognifide.gradle.aem.common.AemExtension
+import com.cognifide.gradle.aem.common.Patterns
+import com.cognifide.gradle.aem.common.file.FileContentReader
 import com.cognifide.gradle.aem.instance.Bundle
-import com.cognifide.gradle.aem.internal.Patterns
-import com.cognifide.gradle.aem.internal.file.FileContentReader
 import java.io.File
 import java.io.Serializable
 import org.gradle.api.Project

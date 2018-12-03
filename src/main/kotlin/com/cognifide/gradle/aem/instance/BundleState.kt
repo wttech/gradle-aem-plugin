@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.internal.Formats
-import com.cognifide.gradle.aem.internal.Patterns
+import com.cognifide.gradle.aem.common.Formats
+import com.cognifide.gradle.aem.common.Patterns
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.commons.lang3.builder.EqualsBuilder

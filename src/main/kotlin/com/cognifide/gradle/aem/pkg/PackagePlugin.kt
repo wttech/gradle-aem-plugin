@@ -1,8 +1,8 @@
 package com.cognifide.gradle.aem.pkg
 
-import com.cognifide.gradle.aem.api.AemPlugin
 import com.cognifide.gradle.aem.base.BasePlugin
 import com.cognifide.gradle.aem.base.TaskFactory
+import com.cognifide.gradle.aem.common.AemPlugin
 import com.cognifide.gradle.aem.instance.InstancePlugin
 import com.cognifide.gradle.aem.instance.tasks.Create
 import com.cognifide.gradle.aem.instance.tasks.Satisfy
@@ -28,31 +28,31 @@ class PackagePlugin : AemPlugin() {
                 task.dependsOn(LifecycleBasePlugin.ASSEMBLE_TASK_NAME, LifecycleBasePlugin.CHECK_TASK_NAME)
                 task.mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
             }
-            register(Upload.NAME, Upload::class.java) {
-                it.dependsOn(Compose.NAME)
+            register(Upload.NAME, Upload::class.java) { task ->
+                task.dependsOn(Compose.NAME)
             }
-            register(Install.NAME, Install::class.java) {
-                it.dependsOn(Compose.NAME)
-                it.mustRunAfter(Upload.NAME)
+            register(Install.NAME, Install::class.java) { task ->
+                task.dependsOn(Compose.NAME)
+                task.mustRunAfter(Upload.NAME)
             }
-            register(Uninstall.NAME, Uninstall::class.java) {
-                it.dependsOn(Compose.NAME)
-                it.mustRunAfter(Upload.NAME, Install.NAME)
+            register(Uninstall.NAME, Uninstall::class.java) { task ->
+                task.dependsOn(Compose.NAME)
+                task.mustRunAfter(Upload.NAME, Install.NAME)
             }
-            register(Activate.NAME, Activate::class.java) {
-                it.dependsOn(Compose.NAME)
-                it.mustRunAfter(Upload.NAME, Install.NAME)
+            register(Activate.NAME, Activate::class.java) { task ->
+                task.dependsOn(Compose.NAME)
+                task.mustRunAfter(Upload.NAME, Install.NAME)
             }
-            register(Deploy.NAME, Deploy::class.java) {
-                it.dependsOn(Compose.NAME)
+            register(Deploy.NAME, Deploy::class.java) { task ->
+                task.dependsOn(Compose.NAME)
             }
-            register(Delete.NAME, Delete::class.java) {
-                it.dependsOn(Compose.NAME)
-                it.mustRunAfter(Deploy.NAME, Upload.NAME, Install.NAME, Activate.NAME, Uninstall.NAME)
+            register(Delete.NAME, Delete::class.java) { task ->
+                task.dependsOn(Compose.NAME)
+                task.mustRunAfter(Deploy.NAME, Upload.NAME, Install.NAME, Activate.NAME, Uninstall.NAME)
             }
-            register(Purge.NAME, Purge::class.java) {
-                it.dependsOn(Compose.NAME)
-                it.mustRunAfter(Deploy.NAME, Upload.NAME, Install.NAME, Activate.NAME, Uninstall.NAME)
+            register(Purge.NAME, Purge::class.java) { task ->
+                task.dependsOn(Compose.NAME)
+                task.mustRunAfter(Deploy.NAME, Upload.NAME, Install.NAME, Activate.NAME, Uninstall.NAME)
             }
         }
 

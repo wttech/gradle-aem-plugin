@@ -1,8 +1,8 @@
 package com.cognifide.gradle.aem.instance.action
 
+import com.cognifide.gradle.aem.common.Behaviors
+import com.cognifide.gradle.aem.common.ProgressCountdown
 import com.cognifide.gradle.aem.instance.*
-import com.cognifide.gradle.aem.internal.Behaviors
-import com.cognifide.gradle.aem.internal.ProgressCountdown
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.util.concurrent.TimeUnit
 import org.apache.http.HttpStatus
