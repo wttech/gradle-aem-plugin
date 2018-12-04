@@ -1,9 +1,11 @@
 package com.cognifide.gradle.aem.common
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
+import org.gradle.api.Project
 import java.util.*
 import java.util.concurrent.TimeUnit
-import kotlinx.coroutines.*
-import org.gradle.api.Project
 
 class ProgressIndicator(private val project: Project) {
 
@@ -42,7 +44,7 @@ class ProgressIndicator(private val project: Project) {
                         text = "$text $count/$total|${Formats.percent(count, total)}"
                     }
 
-                    val messageQueued = if (messageQueue.isEmpty()) message else messageQueue.peek()
+                    val messageQueued = messageQueue.peek() ?: message
                     if (messageQueued.isNotBlank()) {
                         text = "$text | $messageQueued"
                     }
