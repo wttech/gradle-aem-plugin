@@ -136,7 +136,7 @@ open class Satisfy : Deploy() {
                             actions.add(PackageAction(pkg, instance))
                         }
                         else -> {
-                            logger.lifecycle("Not satisfying package: ${pkg.name} on ${instance.name} (already installed).")
+                            logger.info("Not satisfying package: ${pkg.name} on ${instance.name} (already installed).")
                         }
                     }
                 }
