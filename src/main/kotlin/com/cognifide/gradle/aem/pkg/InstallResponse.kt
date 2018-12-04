@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.pkg
 
+import com.cognifide.gradle.aem.common.Patterns
 import java.io.InputStream
 import java.util.regex.Pattern
 
@@ -18,11 +19,16 @@ class InstallResponse private constructor(private val rawHtml: String) : HtmlRes
             }
         }
 
-    fun findPackageErrors(packageErrors: Collection<String>): Set<String> {
-        return errors.fold(mutableSetOf()) { results, error ->
-            packageErrors.forEach { packageError ->
-                if (error.contains(packageError)) results.add(packageError)
-            }; results
+    fun hasPackageErrors(patterns: Collection<String>): Boolean {
+        val normalizedPatterns = patterns.map { "*${it.trim('*')}*" }
+
+        return errors.any { error ->
+            error.splitToSequence("\n").forEach { errorLine ->
+                if (Patterns.wildcard(errorLine.trim(), normalizedPatterns)) {
+                    return@any true
+                }
+            }
+            false
         }
     }
 

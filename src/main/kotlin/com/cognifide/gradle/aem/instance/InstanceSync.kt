@@ -1,24 +1,19 @@
 package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.base.Retry
-import com.cognifide.gradle.aem.common.AemException
-import com.cognifide.gradle.aem.common.BuildScope
-import com.cognifide.gradle.aem.common.Formats
-import com.cognifide.gradle.aem.common.Patterns
-import com.cognifide.gradle.aem.common.ProgressCountdown
+import com.cognifide.gradle.aem.common.*
 import com.cognifide.gradle.aem.common.file.FileException
 import com.cognifide.gradle.aem.common.file.downloader.HttpFileDownloader
 import com.cognifide.gradle.aem.common.http.RequestException
 import com.cognifide.gradle.aem.common.http.ResponseException
 import com.cognifide.gradle.aem.pkg.*
-import com.cognifide.gradle.aem.pkg.PackageException
 import com.cognifide.gradle.aem.pkg.tasks.Compose
-import java.io.File
-import java.io.FileNotFoundException
 import org.gradle.api.Project
 import org.jsoup.Jsoup
 import org.jsoup.parser.Parser
 import org.zeroturnaround.zip.ZipUtil
+import java.io.File
+import java.io.FileNotFoundException
 
 @Suppress("LargeClass")
 class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(project, instance) {
@@ -137,8 +132,9 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
                     aem.logger.warn("Cannot download package $remotePath from $instance.")
                     aem.logger.debug("Download error", e)
 
-                    val header = "Retrying download (${i + 1}/${retry.times}) after delay."
-                    val countdown = ProgressCountdown(project, header, retry.delay(i + 1))
+                    val delay = retry.delay(i + 1)
+                    val header = "Retrying download (${i + 1}/${retry.times}) after delay: ${Formats.duration(delay)}"
+                    val countdown = ProgressCountdown(project, header, delay)
                     countdown.run()
                 }
             }
@@ -187,8 +183,9 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
                     aem.logger.warn("Cannot install package $remotePath on $instance.")
                     aem.logger.debug("Install error", e)
 
-                    val header = "Retrying install (${i + 1}/${retry.times}) after delay."
-                    val countdown = ProgressCountdown(project, header, retry.delay(i + 1))
+                    val delay = retry.delay(i + 1)
+                    val header = "Retrying install (${i + 1}/${retry.times}) after delay: ${Formats.duration(delay)}"
+                    val countdown = ProgressCountdown(project, header, delay)
                     countdown.run()
                 }
             }
@@ -210,11 +207,10 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
             throw InstanceException("Malformed response after installing package $remotePath on $instance.")
         }
 
-        val packageErrors = response.findPackageErrors(aem.config.packageErrors)
-        if (packageErrors.isNotEmpty()) {
-            throw PackageException("Cannot install package $remotePath on $instance because it is malformed by:\n$packageErrors \nErrors: ${response.errors}")
+        if (response.hasPackageErrors(aem.config.packageErrors)) {
+            throw PackageException("Cannot install malformed package $remotePath on $instance. Status: ${response.status}. Errors: ${response.errors}")
         } else if (!response.success) {
-            throw InstanceException("Cannot install package $remotePath on $instance. Status: ${response.status}. Errors: ${response.errors}.")
+            throw InstanceException("Cannot install package $remotePath on $instance. Status: ${response.status}. Errors: ${response.errors}")
         }
 
         return response

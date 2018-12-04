@@ -91,7 +91,7 @@ class BaseConfig(
     }
 
     /**
-     * Define known exceptions which could be thrown during package installation
+     * Define patterns for known exceptions which could be thrown during package installation
      * making it impossible to succeed.
      *
      * When declared exception is encountered during package installation process, no more
@@ -99,9 +99,10 @@ class BaseConfig(
      */
     @Input
     var packageErrors: List<String> = (aem.props.list("aem.packageErrors") ?: listOf(
-            "javax.jcr.nodetype.ConstraintViolationException",
-            "org.apache.jackrabbit.vault.packaging.DependencyException",
-            "org.xml.sax.SAXException"
+            "javax.jcr.nodetype.*Exception",
+            "org.apache.jackrabbit.oak.api.*Exception",
+            "org.apache.jackrabbit.vault.packaging.*Exception",
+            "org.xml.sax.*Exception"
     ))
 
     /**

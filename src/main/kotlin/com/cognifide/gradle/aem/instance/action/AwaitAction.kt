@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.instance.action
 
 import com.cognifide.gradle.aem.common.Behaviors
+import com.cognifide.gradle.aem.common.Formats
 import com.cognifide.gradle.aem.common.ProgressCountdown
 import com.cognifide.gradle.aem.instance.*
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -201,8 +202,9 @@ open class AwaitAction(project: Project) : AbstractAction(project) {
             if (i < healthRetry.times) {
                 aem.logger.warn("Unhealthy instances detected: ${unhealthyInstances.names}")
 
-                val header = "Retrying health check (${i + 1}/${healthRetry.times}) after delay."
-                val countdown = ProgressCountdown(project, header, healthRetry.delay(i + 1))
+                val delay = healthRetry.delay(i + 1)
+                val header = "Retrying health check (${i + 1}/${healthRetry.times}) after delay: ${Formats.duration(delay)}"
+                val countdown = ProgressCountdown(project, header, delay)
                 countdown.run()
             } else if (i == healthRetry.times) {
                 instanceStates.forEach { it.status.logTo(aem.logger) }
