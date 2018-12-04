@@ -27,15 +27,12 @@ class InstanceState(private var syncOrigin: InstanceSync, val instance: Instance
         return result
     }
 
-    fun checkBundleStable(): Boolean {
-        return checkBundleStableExcept(listOf(), BUNDLE_STATE_SYNC_OPTIONS)
-    }
+    fun checkBundleStable() = checkBundleStableExcept(listOf(), BUNDLE_STATE_SYNC_OPTIONS)
 
-    fun checkBundleStableExcept(symbolicNamesIgnored: List<String>): Boolean {
-        return checkBundleStableExcept(symbolicNamesIgnored, BUNDLE_STATE_SYNC_OPTIONS)
-    }
-
-    fun checkBundleStableExcept(symbolicNamesIgnored: List<String>, syncOptions: InstanceSync.() -> Unit): Boolean {
+    fun checkBundleStableExcept(
+        symbolicNamesIgnored: List<String>,
+        syncOptions: InstanceSync.() -> Unit = BUNDLE_STATE_SYNC_OPTIONS
+    ): Boolean {
         return check(syncOptions, {
             if (bundleState.unknown) {
                 status.error("Unknown bundle state on $instance")
@@ -52,25 +49,15 @@ class InstanceState(private var syncOrigin: InstanceSync, val instance: Instance
         })
     }
 
-    fun checkBundleState(): Int {
-        return checkBundleState(BUNDLE_STATE_SYNC_OPTIONS)
+    fun checkBundleState(syncOptions: InstanceSync.() -> Unit = BUNDLE_STATE_SYNC_OPTIONS): Int {
+        return check(syncOptions, { bundleState.hashCode() })
     }
 
-    fun checkBundleState(syncOptions: InstanceSync.() -> Unit): Int {
-        return check(syncOptions, {
-            bundleState.hashCode()
-        })
-    }
-
-    fun checkComponentState(): Boolean {
-        return checkComponentState(PLATFORM_COMPONENTS)
-    }
-
-    fun checkComponentState(packagesActive: Collection<String>): Boolean {
-        return checkComponentState(packagesActive, COMPONENT_STATE_SYNC_OPTIONS)
-    }
-
-    fun checkComponentState(packagesActive: Collection<String>, syncOptions: InstanceSync.() -> Unit): Boolean {
+    fun checkComponentState(
+        packagesActive: Collection<String> = PLATFORM_COMPONENTS,
+        packagesSatisfied: Collection<String> = listOf(),
+        syncOptions: InstanceSync.() -> Unit = COMPONENT_STATE_SYNC_OPTIONS
+    ): Boolean {
         return check(syncOptions, {
             if (componentState.unknown) {
                 status.error("Unknown component state on $instance")
@@ -80,6 +67,12 @@ class InstanceState(private var syncOrigin: InstanceSync, val instance: Instance
             val inactiveComponents = componentState.find(packagesActive, listOf()).filter { !it.active }
             if (inactiveComponents.isNotEmpty()) {
                 status.error("Inactive components detected on $instance:\n${inactiveComponents.joinToString("\n")}")
+                return@check false
+            }
+
+            val unsatisfiedComponents = componentState.find(packagesSatisfied, listOf()).filter { it.unsatisfied }
+            if (unsatisfiedComponents.isNotEmpty()) {
+                status.error("Unsatisfied components detected on $instance:\n${unsatisfiedComponents.joinToString("\n")}")
                 return@check false
             }
 

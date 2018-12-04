@@ -62,15 +62,15 @@ class ShutdownAction(project: Project) : AbstractAction(project) {
         Behaviors.waitUntil(stableRetry.delay) { timer ->
             // Update checksum on any particular state change
             val instanceStates = instances.map { it.sync.determineInstanceState() }
-            val stableChecksum = aem.parallelProcess(instanceStates) { stableState(it) }.hashCode()
+            val stableChecksum = aem.parallelMap(instanceStates) { stableState(it) }.hashCode()
             if (stableChecksum != lastStableChecksum) {
                 lastStableChecksum = stableChecksum
                 timer.reset()
             }
 
             // Examine instances
-            val unstableInstances = aem.parallelProcess(instanceStates, { !stableCheck(it) }, { it.instance })
-            val availableInstances = aem.parallelProcess(instanceStates, { availableCheck(it) }, { it.instance })
+            val unstableInstances = aem.parallelMap(instanceStates, { !stableCheck(it) }, { it.instance })
+            val availableInstances = aem.parallelMap(instanceStates, { availableCheck(it) }, { it.instance })
             val unavailableInstances = instances - availableInstances
             val upInstances = instanceHandles.filter { it.running || availableInstances.contains(it.instance) }.map { it.instance }
 

@@ -76,19 +76,48 @@ open class AemExtension(@Internal val project: Project) {
     @Input
     val environment: String = props.string("aem.env") ?: run { System.getenv("AEM_ENV") ?: "local" }
 
+    /**
+     * Toggles parallel CRX package deployments and instance synchronization.
+     */
+    @Internal
+    val parallel = props.boolean("aem.parallel") ?: true
+
+    /**
+     * Collection of common AEM configuration properties like instance definitions. Contains default values for tasks.
+     */
     @Nested
     val config = BaseConfig(this)
 
-    private val bundleMap = mutableMapOf<String, BundleJar>()
-
-    @Nested
-    val bundles: Map<String, BundleJar> = bundleMap
-
+    /**
+     * Provides API for displaying interactive notification during running build tasks.
+     */
     @Internal
     val notifier = NotifierFacade.of(this)
 
+    /**
+     * Provides API for easier creation of tasks (e.g in sequence) in the matter of Gradle task configuration avoidance.
+     */
     @Internal
     val tasks = TaskFactory(project)
+
+    private val bundleMap = mutableMapOf<String, BundleJar>()
+
+    /**
+     * Contains OSGi bundle configuration used in case of composing CRX package.
+     */
+    @Nested
+    val bundles: Map<String, BundleJar> = bundleMap
+
+    /**
+     * Collection of all java packages from all projects applying bundle plugin.
+     */
+    @get:Internal
+    val javaPackages: List<String>
+        get() = project.allprojects.filter {
+            it.plugins.hasPlugin(BundlePlugin.ID)
+        }.flatMap { subproject ->
+            AemExtension.of(subproject).bundles.values.mapNotNull { it.javaPackage }
+        }
 
     @get:Internal
     val instances: List<Instance>
@@ -193,10 +222,10 @@ open class AemExtension(@Internal val project: Project) {
         packages: Collection<File>,
         synchronizer: InstanceSync.(File) -> Unit
     ) {
-        // single AEM instance dislikes parallel package installation
-        packages.forEach { p ->
-            // put same package could be in parallel deployed on different AEM instances
-            parallelWith(instances) { sync.apply { synchronizer(p) } }
+        packages.forEach { pkg -> // single AEM instance dislikes parallel package installation
+            parallelWith(instances) { // but same package could be in parallel deployed on different AEM instances
+                sync.apply { synchronizer(pkg) }
+            }
         }
     }
 
@@ -299,15 +328,12 @@ open class AemExtension(@Internal val project: Project) {
 
     fun filter(path: String) = filter(project.file(path))
 
-    @Internal
-    private val parallelEnabled = props.boolean("aem.parallelEnabled") ?: true
-
-    fun <A, B : Any> parallelProcess(iterable: Iterable<A>, mapper: (A) -> B): Collection<B> {
-        return parallelProcess(iterable, { true }, mapper)
+    fun <A, B : Any> parallelMap(iterable: Iterable<A>, mapper: (A) -> B): Collection<B> {
+        return parallelMap(iterable, { true }, mapper)
     }
 
-    fun <A, B : Any> parallelProcess(iterable: Iterable<A>, filter: (A) -> Boolean, mapper: (A) -> B): List<B> {
-        if (!parallelEnabled) {
+    fun <A, B : Any> parallelMap(iterable: Iterable<A>, filter: (A) -> Boolean, mapper: (A) -> B): List<B> {
+        if (!parallel) {
             return iterable.filter(filter).map(mapper)
         }
 
@@ -317,7 +343,7 @@ open class AemExtension(@Internal val project: Project) {
     }
 
     fun <A> parallelWith(iterable: Iterable<A>, callback: A.() -> Unit) {
-        if (!parallelEnabled) {
+        if (!parallel) {
             return iterable.forEach { it.apply(callback) }
         }
 

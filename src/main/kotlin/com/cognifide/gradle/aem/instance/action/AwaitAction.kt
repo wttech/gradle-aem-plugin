@@ -79,14 +79,16 @@ open class AwaitAction(project: Project) : AbstractAction(project) {
      */
     @Internal
     @get:JsonIgnore
-    var healthCheck: InstanceState.() -> Boolean = { checkComponentState() }
+    var healthCheck: InstanceState.() -> Boolean = {
+        checkComponentState(InstanceState.PLATFORM_COMPONENTS, aem.javaPackages.map { "$it.*" })
+    }
 
     /**
      * Repeat health check when failed (brute-forcing).
      */
     @Internal
     @get:JsonIgnore
-    var healthRetry = aem.retry { afterSquaredSecond(aem.props.long("aem.await.healthRetry") ?: 6) }
+    var healthRetry = aem.retry { afterSquaredSecond(aem.props.long("aem.await.healthRetry") ?: 5) }
 
     override fun perform() {
         if (instances.isEmpty()) {
@@ -125,15 +127,15 @@ open class AwaitAction(project: Project) : AbstractAction(project) {
             val instanceStates = synchronizers.map { it.determineInstanceState() }
 
             // Update checksum on any particular state change
-            val stableChecksum = aem.parallelProcess(instanceStates) { stableState(it) }.hashCode()
+            val stableChecksum = aem.parallelMap(instanceStates) { stableState(it) }.hashCode()
             if (stableChecksum != lastStableChecksum) {
                 lastStableChecksum = stableChecksum
                 timer.reset()
             }
 
             // Examine instances
-            val unstableInstances = aem.parallelProcess(instanceStates, { !stableCheck(it) }, { it.instance })
-            val availableInstances = aem.parallelProcess(instanceStates, { availableCheck(it) }, { it.instance })
+            val unstableInstances = aem.parallelMap(instanceStates, { !stableCheck(it) }, { it.instance })
+            val availableInstances = aem.parallelMap(instanceStates, { availableCheck(it) }, { it.instance })
             val unavailableInstances = synchronizers.map { it.instance } - availableInstances
 
             val initializedUnavailableInstances = unavailableInstances.filter { it.isInitialized(project) }
@@ -190,7 +192,7 @@ open class AwaitAction(project: Project) : AbstractAction(project) {
         val synchronizers = prepareSynchronizers()
         for (i in 0..healthRetry.times) {
             val instanceStates = synchronizers.map { it.determineInstanceState() }
-            val unhealthyInstances = aem.parallelProcess(instanceStates, { !healthCheck(it) }, { it.instance })
+            val unhealthyInstances = aem.parallelMap(instanceStates, { !healthCheck(it) }, { it.instance })
             if (unhealthyInstances.isEmpty()) {
                 notify("Instance(s) healthy", "Which: ${instances.names}")
                 return

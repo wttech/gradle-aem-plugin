@@ -104,11 +104,11 @@ open class Satisfy : Deploy() {
                 val packageStates = packageGroup.files.fold(mutableMapOf<File, Package?>()) { states, pkg ->
                     states[pkg] = determineRemotePackage(pkg, packageRefreshing); states
                 }
-                val anyPackageSatisfiable = packageStates.any {
+                val packageSatisfiableAny = packageStates.any {
                     isSnapshot(it.key) || it.value == null || !it.value!!.installed
                 }
 
-                if (anyPackageSatisfiable) {
+                if (packageSatisfiableAny) {
                     packageGroup.initializer(this)
                 }
 
@@ -141,7 +141,7 @@ open class Satisfy : Deploy() {
                     }
                 }
 
-                if (anyPackageSatisfiable) {
+                if (packageSatisfiableAny) {
                     packageGroup.finalizer(this)
                 }
             }
