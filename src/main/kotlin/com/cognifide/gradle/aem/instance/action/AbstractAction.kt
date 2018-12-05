@@ -5,26 +5,21 @@ import com.cognifide.gradle.aem.instance.Instance
 import com.cognifide.gradle.aem.instance.InstanceAction
 import com.cognifide.gradle.aem.instance.LocalHandle
 import com.cognifide.gradle.aem.instance.toLocalHandles
-import org.gradle.api.Project
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 
 abstract class AbstractAction(
     @Internal
     @Transient
-    val project: Project
+    val aem: AemExtension
 ) : InstanceAction {
-
-    @Internal
-    @Transient
-    val aem = AemExtension.of(project)
 
     @Input
     var instances: List<Instance> = aem.instances
 
     @get:Internal
     val instanceHandles: List<LocalHandle>
-        get() = instances.toLocalHandles(project)
+        get() = instances.toLocalHandles(aem.project)
 
     @Internal
     var notify = true

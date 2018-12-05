@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.instance.action
 
+import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.Behaviors
 import com.cognifide.gradle.aem.common.Formats
 import com.cognifide.gradle.aem.common.ProgressCountdown
@@ -7,14 +8,13 @@ import com.cognifide.gradle.aem.instance.*
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.util.concurrent.TimeUnit
 import org.apache.http.HttpStatus
-import org.gradle.api.Project
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 
 /**
  * Wait until all instances be stable.
  */
-open class AwaitAction(project: Project) : AbstractAction(project) {
+open class AwaitAction(aem: AemExtension) : AbstractAction(aem) {
 
     /**
      * Skip stable check assurances and health checking.
@@ -109,12 +109,12 @@ open class AwaitAction(project: Project) : AbstractAction(project) {
     }
 
     private fun awaitDelay() {
-        ProgressCountdown(project, "Waiting for instance(s): ${instances.names}", fastDelay).run()
+        ProgressCountdown(aem.project, "Waiting for instance(s): ${instances.names}", fastDelay).run()
     }
 
     @Suppress("ComplexMethod")
     private fun awaitStable() {
-        val progressLogger = ProgressLogger(project, "Awaiting stable instance(s): ${instances.names}", stableRetry.times)
+        val progressLogger = ProgressLogger(aem.project, "Awaiting stable instance(s): ${instances.names}", stableRetry.times)
         progressLogger.started()
 
         var lastStableChecksum = -1
@@ -139,7 +139,7 @@ open class AwaitAction(project: Project) : AbstractAction(project) {
             val availableInstances = aem.parallelMap(instanceStates, { availableCheck(it) }, { it.instance })
             val unavailableInstances = synchronizers.map { it.instance } - availableInstances
 
-            val initializedUnavailableInstances = unavailableInstances.filter { it.isInitialized(project) }
+            val initializedUnavailableInstances = unavailableInstances.filter { it.isInitialized(aem.project) }
             val areUnavailableInstances = (timer.ticks.toDouble() / stableRetry.times.toDouble() > INSTANCE_UNAVAILABLE_RATIO) &&
                     initializedUnavailableInstances.isNotEmpty()
 
@@ -204,7 +204,7 @@ open class AwaitAction(project: Project) : AbstractAction(project) {
 
                 val delay = healthRetry.delay(i + 1)
                 val header = "Retrying health check (${i + 1}/${healthRetry.times}) after delay: ${Formats.duration(delay)}"
-                val countdown = ProgressCountdown(project, header, delay)
+                val countdown = ProgressCountdown(aem.project, header, delay)
                 countdown.run()
             } else if (i == healthRetry.times) {
                 instanceStates.forEach { it.status.logTo(aem.logger) }
@@ -220,9 +220,9 @@ open class AwaitAction(project: Project) : AbstractAction(project) {
 
     private fun prepareSynchronizers(): List<InstanceSync> {
         return instances.map { instance ->
-            val init = instance.isBeingInitialized(project)
+            val init = instance.isBeingInitialized(aem.project)
 
-            InstanceSync(project, instance).apply {
+            instance.sync.apply {
                 val sync = this
 
                 if (init) {

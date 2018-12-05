@@ -1,21 +1,21 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.base.Retry
 import com.cognifide.gradle.aem.common.*
+import com.cognifide.gradle.aem.common.Retry
 import com.cognifide.gradle.aem.common.file.FileException
 import com.cognifide.gradle.aem.common.file.downloader.HttpFileDownloader
 import com.cognifide.gradle.aem.common.http.RequestException
 import com.cognifide.gradle.aem.common.http.ResponseException
 import com.cognifide.gradle.aem.pkg.*
 import com.cognifide.gradle.aem.pkg.tasks.Compose
+import java.io.File
+import java.io.FileNotFoundException
 import org.gradle.api.Project
 import org.jsoup.Jsoup
 import org.jsoup.parser.Parser
 import org.zeroturnaround.zip.ZipUtil
-import java.io.File
-import java.io.FileNotFoundException
 
-@Suppress("LargeClass")
+@Suppress("LargeClass", "TooManyFunctions")
 class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(project, instance) {
 
     fun determineRemotePackage(file: File, refresh: Boolean = true): Package? {
@@ -339,6 +339,53 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
         shutdown(OSGI_VMSTAT_SHUTDOWN_STOP)
     }
 
+    fun evalGroovyCode(code: String, data: Map<String, Any> = mapOf()): GroovyConsoleResult {
+        return try {
+            aem.logger.info("Executing Groovy Code: $code")
+            evalGroovyCodeInternal(code, data)
+        } catch (e: AemException) {
+            throw InstanceException("Cannot evaluate Groovy code properly on $instance, code:\n$code", e)
+        }
+    }
+
+    private fun evalGroovyCodeInternal(code: String, data: Map<String, Any>): GroovyConsoleResult {
+        return postMultipart(GROOVY_CONSOLE_EVAL_PATH, mapOf(
+                "script" to code,
+                "data" to Formats.toJson(data)
+        )) { asObjectFromJson(it, GroovyConsoleResult::class.java) }
+    }
+
+    fun evalGroovyScript(file: File, data: Map<String, Any> = mapOf()): GroovyConsoleResult {
+        return try {
+            aem.logger.info("Executing Groovy Script: $file")
+            evalGroovyCodeInternal(file.bufferedReader().use { it.readText() }, data)
+        } catch (e: AemException) {
+            throw InstanceException("Cannot evaluate Groovy script properly on $instance, file: $file", e)
+        }
+    }
+
+    fun evalGroovyScript(fileName: String, data: Map<String, Any> = mapOf()): GroovyConsoleResult {
+        val script = findGroovyScripts(fileName).firstOrNull()
+                ?: throw AemException("Groovy script '$fileName' not found in directory: ${aem.config.groovyScriptRoot}")
+
+        return evalGroovyScript(script, data)
+    }
+
+    fun evalGroovyScripts(fileNamePattern: String, data: Map<String, Any> = mapOf()) {
+        val scripts = findGroovyScripts(fileNamePattern)
+        if (scripts.isEmpty()) {
+            throw AemException("No Groovy scripts found in directory: ${aem.config.groovyScriptRoot}")
+        }
+
+        scripts.forEach { evalGroovyScript(it, data) }
+    }
+
+    private fun findGroovyScripts(fileNamePattern: String): List<File> {
+        return project.file(aem.config.groovyScriptRoot).listFiles()
+                .ifEmpty { arrayOf<File?>() }
+                .filter { Patterns.wildcard(it, fileNamePattern) }
+    }
+
     private fun shutdown(type: String) {
         try {
             aem.logger.info("Triggering shutdown of $instance.")
@@ -366,5 +413,7 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
         const val OSGI_VMSTAT_SHUTDOWN_STOP = "Stop"
 
         const val OSGI_VMSTAT_SHUTDOWN_RESTART = "Restart"
+
+        const val GROOVY_CONSOLE_EVAL_PATH = "/bin/groovyconsole/post.json"
     }
 }

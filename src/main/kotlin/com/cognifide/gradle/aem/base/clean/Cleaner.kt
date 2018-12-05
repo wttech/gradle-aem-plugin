@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.base
+package com.cognifide.gradle.aem.base.clean
 
 import com.cognifide.gradle.aem.base.vlt.VltException
 import com.cognifide.gradle.aem.common.AemExtension

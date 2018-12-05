@@ -1,13 +1,13 @@
 package com.cognifide.gradle.aem.pkg.resolver
 
 import aQute.bnd.osgi.Jar
+import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.file.resolver.Resolver
 import java.io.File
-import org.gradle.api.Project
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 
-class PackageResolver(project: Project, downloadDir: File) : Resolver<PackageGroup>(project, downloadDir) {
+class PackageResolver(aem: AemExtension, downloadDir: File) : Resolver<PackageGroup>(aem, downloadDir) {
 
     /**
      * Determines a path in JCR repository in which automatic wrapped bundles will be deployed.

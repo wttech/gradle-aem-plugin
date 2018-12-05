@@ -16,7 +16,7 @@ open class Await : AemDefaultTask() {
     }
 
     @Nested
-    var await = AwaitAction(project)
+    var await = AwaitAction(aem)
 
     fun options(configurer: AwaitAction.() -> Unit) {
         await.apply(configurer)

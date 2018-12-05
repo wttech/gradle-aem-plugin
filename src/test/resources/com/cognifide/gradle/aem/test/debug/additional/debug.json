@@ -188,14 +188,16 @@
     "packageRoot": "*/src/main/content",
     "packageInstallPath" : "/apps/additional/install",
     "packageErrors" : [
-      "javax.jcr.nodetype.ConstraintViolationException",
-      "org.apache.jackrabbit.vault.packaging.DependencyException",
-      "org.xml.sax.SAXException"
+      "javax.jcr.nodetype.*Exception",
+      "org.apache.jackrabbit.oak.api.*Exception",
+      "org.apache.jackrabbit.vault.packaging.*Exception",
+      "org.xml.sax.*Exception"
     ],
     "packageResponseBuffer" : 4096,
     "packageSnapshots" : [ ],
     "lineSeparator" : "LF",
-    "notificationEnabled" : false
+    "notificationEnabled" : false,
+    "groovyScriptRoot" : "*/aem/groovyScript"
   },
   "bundleConfig" : {
     "jar" : {

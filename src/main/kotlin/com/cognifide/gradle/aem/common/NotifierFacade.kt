@@ -1,8 +1,5 @@
-package com.cognifide.gradle.aem.base
+package com.cognifide.gradle.aem.common
 
-import com.cognifide.gradle.aem.common.AemException
-import com.cognifide.gradle.aem.common.AemExtension
-import com.cognifide.gradle.aem.common.BuildScope
 import com.cognifide.gradle.aem.common.notifier.DorkboxNotifier
 import com.cognifide.gradle.aem.common.notifier.JcGayNotifier
 import com.cognifide.gradle.aem.common.notifier.Notifier

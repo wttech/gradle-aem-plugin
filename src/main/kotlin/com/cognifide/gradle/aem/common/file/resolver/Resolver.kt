@@ -14,7 +14,6 @@ import com.google.common.hash.HashCode
 import java.io.File
 import org.apache.commons.io.FilenameUtils
 import org.apache.commons.lang3.builder.HashCodeBuilder
-import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.tasks.Internal
 import org.gradle.util.GFileUtils
@@ -24,13 +23,12 @@ import org.gradle.util.GFileUtils
  */
 abstract class Resolver<G : FileGroup>(
     @get:Internal
-    val project: Project,
+    val aem: AemExtension,
 
     @get:Internal
     val downloadDir: File
 ) {
-
-    private val aem = AemExtension.of(project)
+    private val project = aem.project
 
     private val groupDefault = this.createGroup(GROUP_DEFAULT)
 

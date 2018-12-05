@@ -13,7 +13,7 @@ open class Reload : InstanceTask() {
     }
 
     @Nested
-    val reload = ReloadAction(project)
+    val reload = ReloadAction(aem)
 
     fun reload(configurer: ReloadAction.() -> Unit) {
         reload.apply(configurer)

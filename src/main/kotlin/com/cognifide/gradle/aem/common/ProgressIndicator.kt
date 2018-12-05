@@ -1,11 +1,11 @@
 package com.cognifide.gradle.aem.common
 
+import java.util.*
+import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import org.gradle.api.Project
-import java.util.*
-import java.util.concurrent.TimeUnit
 
 class ProgressIndicator(private val project: Project) {
 

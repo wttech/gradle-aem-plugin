@@ -4,6 +4,7 @@ import com.cognifide.gradle.aem.base.tasks.*
 import com.cognifide.gradle.aem.base.tasks.Debug
 import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.AemPlugin
+import com.cognifide.gradle.aem.common.TaskFactory
 import org.gradle.api.Project
 import org.gradle.api.plugins.BasePlugin
 import org.gradle.language.base.plugins.LifecycleBasePlugin

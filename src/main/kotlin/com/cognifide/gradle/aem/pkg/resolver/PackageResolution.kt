@@ -2,7 +2,6 @@ package com.cognifide.gradle.aem.pkg.resolver
 
 import aQute.bnd.osgi.Jar
 import com.cognifide.gradle.aem.base.vlt.VltFilter
-import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.Collections
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.file.resolver.FileResolution
@@ -20,7 +19,7 @@ class PackageResolution(group: PackageGroup, id: String, action: (FileResolution
 
     private val resolver = group.resolver
 
-    private val aem = AemExtension.of(resolver.project)
+    private val aem = resolver.aem
 
     override fun process(file: File): File {
         val origin = super.process(file)

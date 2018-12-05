@@ -38,7 +38,7 @@ open class Satisfy : Deploy() {
      * Handles automatic wrapping OSGi bundles to CRX packages.
      */
     @Nested
-    val packageProvider = PackageResolver(project, AemTask.temporaryDir(project, name, DOWNLOAD_DIR))
+    val packageProvider = PackageResolver(aem, AemTask.temporaryDir(project, name, DOWNLOAD_DIR))
 
     @get:Internal
     val outputDirs: List<File>

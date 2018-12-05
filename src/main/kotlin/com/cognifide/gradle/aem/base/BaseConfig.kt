@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.base
 import com.cognifide.gradle.aem.common.AemException
 import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.LineSeparator
+import com.cognifide.gradle.aem.common.NotifierFacade
 import com.cognifide.gradle.aem.common.notifier.Notifier
 import com.cognifide.gradle.aem.instance.Instance
 import com.cognifide.gradle.aem.instance.InstanceHttpClient
@@ -137,6 +138,12 @@ class BaseConfig(
     var notificationConfig: (NotifierFacade.() -> Notifier) = {
         byType(NotifierFacade.Type.of(aem.props.string("aem.notificationType") ?: NotifierFacade.Type.DORKBOX.name))
     }
+
+    /**
+     * Convention location in which Groovy Script to be evaluated via instance sync will be searched for by file name.
+     */
+    @Input
+    var groovyScriptRoot: String = aem.project.rootProject.file("aem/groovyScript").toString()
 
     init {
         // Define through command line

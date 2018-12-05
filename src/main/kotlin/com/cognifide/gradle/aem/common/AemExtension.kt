@@ -100,6 +100,12 @@ open class AemExtension(@Internal val project: Project) {
     @Internal
     val tasks = TaskFactory(project)
 
+    /**
+     * Provides API for performing actions affecting multiple instances at once.
+     */
+    @Internal
+    val actions = ActionPerformer(this)
+
     private val bundleMap = mutableMapOf<String, BundleJar>()
 
     /**

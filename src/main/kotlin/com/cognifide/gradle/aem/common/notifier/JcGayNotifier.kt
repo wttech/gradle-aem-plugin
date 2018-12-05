@@ -1,8 +1,8 @@
 package com.cognifide.gradle.aem.common.notifier
 
-import com.cognifide.gradle.aem.base.NotifierFacade
 import com.cognifide.gradle.aem.common.AemPlugin
 import com.cognifide.gradle.aem.common.BuildScope
+import com.cognifide.gradle.aem.common.NotifierFacade
 import com.cognifide.gradle.aem.common.notifier.Notifier as BaseNotifier
 import fr.jcgay.notification.Application
 import fr.jcgay.notification.Icon

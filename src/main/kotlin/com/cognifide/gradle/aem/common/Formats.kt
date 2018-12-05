@@ -24,8 +24,12 @@ object Formats {
         ObjectMapper().writer(printer)
     }()
 
-    fun toJson(value: Any): String? {
-        return JSON_MAPPER.writeValueAsString(value)
+    fun toJson(value: Any): String {
+        return JSON_MAPPER.writeValueAsString(value) ?: ""
+    }
+
+    fun toJson(value: Map<String, Any?>): String {
+        return JSON_MAPPER.writeValueAsString(value) ?: "{}"
     }
 
     fun <T> fromJson(json: String, clazz: Class<T>): T {

@@ -1,8 +1,8 @@
 package com.cognifide.gradle.aem.pkg
 
 import com.cognifide.gradle.aem.base.BasePlugin
-import com.cognifide.gradle.aem.base.TaskFactory
 import com.cognifide.gradle.aem.common.AemPlugin
+import com.cognifide.gradle.aem.common.TaskFactory
 import com.cognifide.gradle.aem.instance.InstancePlugin
 import com.cognifide.gradle.aem.instance.tasks.Create
 import com.cognifide.gradle.aem.instance.tasks.Satisfy

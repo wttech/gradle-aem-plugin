@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.base.tasks
 
-import com.cognifide.gradle.aem.base.Cleaner
+import com.cognifide.gradle.aem.base.clean.Cleaner
 import com.cognifide.gradle.aem.common.AemDefaultTask
 import com.cognifide.gradle.aem.common.Formats
 import java.io.File

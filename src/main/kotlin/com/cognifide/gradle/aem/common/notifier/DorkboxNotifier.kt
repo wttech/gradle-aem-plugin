@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.common.notifier
 
-import com.cognifide.gradle.aem.base.NotifierFacade
+import com.cognifide.gradle.aem.common.NotifierFacade
 import com.cognifide.gradle.aem.common.notifier.Notifier as BaseNotifier
 import dorkbox.notify.Notify
 import javax.imageio.ImageIO

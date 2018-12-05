@@ -13,7 +13,7 @@ open class Down : InstanceTask() {
     }
 
     @Nested
-    val shutdown = ShutdownAction(project)
+    val shutdown = ShutdownAction(aem)
 
     fun shutdown(configurer: ShutdownAction.() -> Unit) {
         shutdown.apply(configurer)

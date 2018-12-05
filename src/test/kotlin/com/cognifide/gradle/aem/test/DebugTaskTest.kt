@@ -36,6 +36,7 @@ class DebugTaskTest : AemTest() {
                 "projectInfo.dir" to PathValueMatcher(),
                 "baseConfig.instanceRoot" to PathValueMatcher(),
                 "baseConfig.packageRoot" to PathValueMatcher(),
+                "baseConfig.groovyScriptRoot" to PathValueMatcher(),
                 "bundleConfig.*.bndPath" to PathValueMatcher()
         ))
     }

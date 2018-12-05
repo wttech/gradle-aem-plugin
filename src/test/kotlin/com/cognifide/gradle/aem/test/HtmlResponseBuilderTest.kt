@@ -14,7 +14,7 @@ class HtmlResponseBuilderTest {
     @Test
     fun shouldContainDependencyPackageException() {
         val response = InstallResponse.from(importFileAsStream("failure-dependency-exception.txt"), 4096)
-        assertTrue(response.findPackageErrors(setOf(DEPENDENCY_EXCEPTION)).contains(DEPENDENCY_EXCEPTION))
+        assertTrue(response.hasPackageErrors(setOf(DEPENDENCY_EXCEPTION)))
     }
 
     @Test

@@ -1,15 +1,15 @@
 package com.cognifide.gradle.aem.instance.action
 
+import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.Behaviors
 import com.cognifide.gradle.aem.instance.InstanceException
 import com.cognifide.gradle.aem.instance.InstanceState
 import com.cognifide.gradle.aem.instance.ProgressLogger
 import com.cognifide.gradle.aem.instance.names
 import com.fasterxml.jackson.annotation.JsonIgnore
-import org.gradle.api.Project
 import org.gradle.api.tasks.Internal
 
-class ShutdownAction(project: Project) : AbstractAction(project) {
+class ShutdownAction(aem: AemExtension) : AbstractAction(aem) {
 
     /**
      * Maximum intervals after which instance stability checks will
@@ -52,7 +52,7 @@ class ShutdownAction(project: Project) : AbstractAction(project) {
     }
 
     private fun shutdown() {
-        val progressLogger = ProgressLogger(project, "Awaiting instance(s) shutdown: ${instances.names}", stableRetry.times)
+        val progressLogger = ProgressLogger(aem.project, "Awaiting instance(s) shutdown: ${instances.names}", stableRetry.times)
         progressLogger.started()
 
         var lastStableChecksum = -1

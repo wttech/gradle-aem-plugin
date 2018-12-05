@@ -16,7 +16,7 @@ open class Up : InstanceTask() {
     }
 
     @Nested
-    val await = AwaitAction(project)
+    val await = AwaitAction(aem)
 
     /**
      * Hook called only when instance is up first time.

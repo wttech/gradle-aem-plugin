@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.base
+package com.cognifide.gradle.aem.common
 
 class Retry private constructor() {
 
