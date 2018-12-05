@@ -186,6 +186,7 @@
     },
     "instanceRoot" : "*/.aem/additional",
     "packageRoot": "*/src/main/content",
+    "packageMetaCommonRoot": "*/aem/gradle/META-INF",
     "packageInstallPath" : "/apps/additional/install",
     "packageErrors" : [
       "javax.jcr.nodetype.*Exception",

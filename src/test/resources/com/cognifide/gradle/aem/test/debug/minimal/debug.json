@@ -44,6 +44,7 @@
     },
     "instanceRoot" : "*/.aem/minimal",
     "packageRoot": "*/src/main/content",
+    "packageMetaCommonRoot": "*/aem/gradle/META-INF",
     "packageInstallPath" : "/apps/minimal/install",
     "packageErrors" : [
       "javax.jcr.nodetype.*Exception",

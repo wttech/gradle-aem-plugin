@@ -1,12 +1,11 @@
 package com.cognifide.gradle.aem.common
 
 import com.cognifide.gradle.aem.common.notifier.DorkboxNotifier
-import com.cognifide.gradle.aem.common.notifier.JcGayNotifier
 import com.cognifide.gradle.aem.common.notifier.Notifier
 import dorkbox.notify.Notify
-import fr.jcgay.notification.Application
-import fr.jcgay.notification.Notification
+import java.net.URL
 import java.util.concurrent.TimeUnit
+import javax.imageio.ImageIO
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.gradle.api.logging.LogLevel
 
@@ -52,19 +51,15 @@ class NotifierFacade private constructor(private val aem: AemExtension) {
     }
 
     fun dorkbox(): Notifier {
-        return dorkbox { darkStyle().hideAfter(TimeUnit.SECONDS.toMillis(DORKBOX_HIDE_AFTER_SECONDS).toInt()) }
+        return dorkbox {
+            darkStyle()
+                    .hideAfter(TimeUnit.SECONDS.toMillis(DORKBOX_HIDE_AFTER_SECONDS).toInt())
+                    .image(ImageIO.read(image))
+        }
     }
 
     fun dorkbox(configurer: Notify.() -> Unit): Notifier {
-        return DorkboxNotifier(aem.project, configurer)
-    }
-
-    fun jcgay(): JcGayNotifier {
-        return jcgay({ timeout(TimeUnit.SECONDS.toMillis(JCGAY_TIMEOUT_SECONDS)) }, {})
-    }
-
-    fun jcgay(appBuilder: Application.Builder.() -> Unit, messageBuilder: Notification.Builder.() -> Unit): JcGayNotifier {
-        return JcGayNotifier(aem.project, appBuilder, messageBuilder)
+        return DorkboxNotifier(aem, configurer)
     }
 
     fun custom(notifier: (title: String, text: String, level: LogLevel) -> Unit): Notifier {
@@ -75,30 +70,17 @@ class NotifierFacade private constructor(private val aem: AemExtension) {
         }
     }
 
-    fun byType(type: Type): Notifier {
-        return when (type) {
-            Type.DORKBOX -> dorkbox()
-            Type.JCGAY -> jcgay()
-        }
-    }
-
-    enum class Type {
-        DORKBOX,
-        JCGAY;
-
-        companion object {
-            fun of(name: String): Type {
-                return values().find { it.name.equals(name, true) }
-                        ?: throw AemException("Unsupported notification type: $name")
+    val image: URL
+        get() {
+            val customThumbnail = aem.project.file("${aem.config.packageMetaCommonRoot}/vault/definition/thumbnail.png")
+            return if (customThumbnail.exists()) {
+                customThumbnail.toURI().toURL()
+            } else {
+                javaClass.getResource("/com/cognifide/gradle/aem/META-INF/vault/definition/thumbnail.png")
             }
         }
-    }
 
     companion object {
-
-        const val IMAGE_PATH = "/com/cognifide/gradle/aem/META-INF/vault/definition/thumbnail.png"
-
-        const val JCGAY_TIMEOUT_SECONDS = 5L
 
         const val DORKBOX_HIDE_AFTER_SECONDS = 5L
 

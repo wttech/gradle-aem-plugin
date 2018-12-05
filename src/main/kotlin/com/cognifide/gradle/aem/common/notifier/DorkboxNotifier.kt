@@ -1,15 +1,13 @@
 package com.cognifide.gradle.aem.common.notifier
 
-import com.cognifide.gradle.aem.common.NotifierFacade
+import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.notifier.Notifier as BaseNotifier
 import dorkbox.notify.Notify
-import javax.imageio.ImageIO
 import org.apache.commons.lang3.StringUtils
-import org.gradle.api.Project
 import org.gradle.api.logging.LogLevel
 
 class DorkboxNotifier(
-    val project: Project,
+    val aem: AemExtension,
     val configurer: Notify.() -> Unit
 ) : BaseNotifier {
 
@@ -17,7 +15,6 @@ class DorkboxNotifier(
     override fun notify(title: String, text: String, level: LogLevel) {
         try {
             Notify.create()
-                    .image(ImageIO.read(javaClass.getResourceAsStream(NotifierFacade.IMAGE_PATH)))
                     .apply(configurer)
                     .apply {
                         title(title)
@@ -25,7 +22,7 @@ class DorkboxNotifier(
                     }
                     .show()
         } catch (e: Exception) {
-            project.logger.debug("Cannot show system notification", e)
+            aem.logger.debug("Cannot show system notification", e)
         }
     }
 }

@@ -76,6 +76,13 @@ class BaseConfig(
         get() = "$packageRoot/${Package.VLT_PATH}"
 
     /**
+     * Custom path to Vault files that will be used to build CRX package.
+     * Useful to share same files for all packages, like package thumbnail.
+     */
+    @Input
+    var packageMetaCommonRoot: String = "${aem.project.rootProject.file("aem/gradle/${Package.META_PATH}")}"
+
+    /**
      * Content path for OSGi bundle jars being placed in CRX package.
      *
      * Default convention assumes that subprojects have separate bundle paths, because of potential re-installation of subpackages.
@@ -135,19 +142,17 @@ class BaseConfig(
      */
     @Internal
     @JsonIgnore
-    var notificationConfig: (NotifierFacade.() -> Notifier) = {
-        byType(NotifierFacade.Type.of(aem.props.string("aem.notificationType") ?: NotifierFacade.Type.DORKBOX.name))
-    }
+    var notificationConfig: (NotifierFacade.() -> Notifier) = { dorkbox() }
 
     /**
      * Convention location in which Groovy Script to be evaluated via instance sync will be searched for by file name.
      */
     @Input
-    var groovyScriptRoot: String = aem.project.rootProject.file("aem/gradle/groovyScript").toString()
+    var groovyScriptRoot: String = "${aem.project.rootProject.file("aem/gradle/groovyScript")}"
 
     init {
         // Define through command line
-        val instancesForced = aem.props.string("aem.instances") ?: ""
+        val instancesForced = aem.props.string("aem.instance.list") ?: ""
         if (instancesForced.isNotBlank()) {
             instances(Instance.parse(aem.project, instancesForced))
         }

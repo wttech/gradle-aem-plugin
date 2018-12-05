@@ -65,14 +65,6 @@ open class Compose : Zip(), AemTask {
     @Input
     var metaDefaults: Boolean = true
 
-    /**
-     * Custom path to Vault files that will be used to build CRX package.
-     * Useful to share same files for all packages, like package thumbnail.
-     * Must be absolute or relative to current working directory.
-     */
-    @Input
-    var metaExtraPath: String = project.rootProject.file("aem/gradle/${Package.META_PATH}").toString()
-
     @Internal
     val metaDir = AemTask.temporaryDir(project, name, Package.META_PATH)
 
@@ -84,7 +76,7 @@ open class Compose : Zip(), AemTask {
     @get:JsonIgnore
     val metaDirs: List<File>
         get() {
-            val paths = listOf(metaExtraPath, "$contentPath/${Package.META_PATH}")
+            val paths = listOf(aem.config.packageMetaCommonRoot, "$contentPath/${Package.META_PATH}")
 
             return paths.asSequence()
                     .filter { !it.isBlank() }

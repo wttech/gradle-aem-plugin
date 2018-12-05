@@ -38,7 +38,7 @@ dependencies {
     implementation("org.apache.httpcomponents:httpmime:4.5.4")
     implementation("org.osgi:org.osgi.core:6.0.0")
     implementation("io.pebbletemplates:pebble:3.0.4")
-    implementation("fr.jcgay.send-notification:send-notification:0.15.0")
+    implementation("com.dorkbox:Notify:3.7")
     implementation("com.jayway.jsonpath:json-path:2.4.0")
 
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.3.1")

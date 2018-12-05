@@ -107,10 +107,6 @@ interface Instance : Serializable {
 
         const val PASSWORD_DEFAULT = "admin"
 
-        const val AUTHORS_PROP = "aem.instance.authors"
-
-        const val PUBLISHERS_PROP = "aem.instance.publishers"
-
         fun parse(project: Project, str: String): List<RemoteInstance> {
             return Formats.toList(str).map { RemoteInstance.create(project, it) }
         }

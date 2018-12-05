@@ -127,7 +127,7 @@ open class AemExtension(@Internal val project: Project) {
 
     @get:Internal
     val instances: List<Instance>
-        get() = instanceNamed(props.string("aem.instance.name") ?: "$environment-*")
+        get() = instanceNamed()
 
     fun instances(consumer: (Instance) -> Unit) = parallelWith(instances, consumer)
 
@@ -157,7 +157,7 @@ open class AemExtension(@Internal val project: Project) {
             throw InstanceException("Instance cannot be determined neither by command line parameter nor AEM config.")
         }
 
-    fun instanceNamed(nameMatcher: String): List<Instance> {
+    fun instanceNamed(nameMatcher: String = props.string("aem.instance.name") ?: "$environment-*"): List<Instance> {
         val all = config.instances.values
 
         // Specified by command line should not be filtered
@@ -169,10 +169,10 @@ open class AemExtension(@Internal val project: Project) {
         // Defined by build script, via properties or defaults are filterable by name
         return all.filter { instance ->
             when {
-                props.flag(Instance.AUTHORS_PROP) -> {
+                props.flag("aem.instance.authors") -> {
                     Patterns.wildcard(instance.name, "$environment-${InstanceType.AUTHOR}*")
                 }
-                props.flag(Instance.PUBLISHERS_PROP) -> {
+                props.flag("aem.instance.publishers") -> {
                     Patterns.wildcard(instance.name, "$environment-${InstanceType.PUBLISH}*")
                 }
                 else -> Patterns.wildcard(instance.name, nameMatcher)
@@ -194,11 +194,11 @@ open class AemExtension(@Internal val project: Project) {
 
     @get:Internal
     val instanceAuthors: List<Instance>
-        get() = instanceNamed("$environment-${InstanceType.AUTHOR.type}*")
+        get() = instanceNamed().filter { it.type == InstanceType.AUTHOR }
 
     @get:Internal
     val instancePublishers: List<Instance>
-        get() = instanceNamed("$environment-${InstanceType.PUBLISH.type}*")
+        get() = instanceNamed().filter { it.type == InstanceType.PUBLISH }
 
     fun instanceHandles(consumer: LocalHandle.() -> Unit) = parallelWith(instanceHandles, consumer)
 
@@ -235,13 +235,7 @@ open class AemExtension(@Internal val project: Project) {
         }
     }
 
-    fun <T> http(consumer: HttpClient.() -> T): T {
-        return HttpClient(project).run(consumer)
-    }
-
-    fun http(consumer: HttpClient.() -> Unit) {
-        HttpClient(project).run(consumer)
-    }
+    fun <T> http(consumer: HttpClient.() -> T) = HttpClient(project).run(consumer)
 
     fun config(configurer: BaseConfig.() -> Unit) {
         config.apply(configurer)
@@ -251,17 +245,13 @@ open class AemExtension(@Internal val project: Project) {
     val compose: Compose
         get() = compose(Compose.NAME)
 
-    fun compose(taskName: String): Compose {
-        return project.tasks.getByName(taskName) as Compose
-    }
+    fun compose(taskName: String) = project.tasks.getByName(taskName) as Compose
 
     @get:Internal
     val composes: List<Compose>
         get() = project.tasks.withType(Compose::class.java).toList()
 
-    fun bundle(configurer: BundleJar.() -> Unit) {
-        bundle(JavaPlugin.JAR_TASK_NAME, configurer)
-    }
+    fun bundle(configurer: BundleJar.() -> Unit) = bundle(JavaPlugin.JAR_TASK_NAME, configurer)
 
     fun bundle(jarTaskName: String, configurer: BundleJar.() -> Unit) {
         project.tasks.withType(Jar::class.java)
