@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.instance
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import org.apache.commons.lang3.StringUtils
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 class GroovyConsoleResult {
@@ -16,4 +17,18 @@ class GroovyConsoleResult {
     lateinit var script: String
 
     var result: String? = null
+
+    override fun toString(): String {
+        return StringBuilder().apply {
+            append("GroovyConsoleResult(output='${shorten(output)}', runningTime='$runningTime'")
+            append(", exceptionStackTrace='${shorten(exceptionStackTrace)}', result='$result'")
+            append(", script='${shorten(script)}', data='${shorten(data)}')")
+        }.toString()
+    }
+
+    companion object {
+        private const val ABBREVIATE_WIDTH = 200
+
+        private fun shorten(text: String) = StringUtils.abbreviate(text.trim(), ABBREVIATE_WIDTH)
+    }
 }

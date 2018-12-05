@@ -71,7 +71,7 @@ open class Compose : Zip(), AemTask {
      * Must be absolute or relative to current working directory.
      */
     @Input
-    var metaExtraPath: String = project.rootProject.file("aem/${Package.META_PATH}").toString()
+    var metaExtraPath: String = project.rootProject.file("aem/gradle/${Package.META_PATH}").toString()
 
     @Internal
     val metaDir = AemTask.temporaryDir(project, name, Package.META_PATH)

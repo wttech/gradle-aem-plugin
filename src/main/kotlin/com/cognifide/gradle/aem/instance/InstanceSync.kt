@@ -1,18 +1,17 @@
 package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.common.*
-import com.cognifide.gradle.aem.common.Retry
 import com.cognifide.gradle.aem.common.file.FileException
 import com.cognifide.gradle.aem.common.http.RequestException
 import com.cognifide.gradle.aem.common.http.ResponseException
 import com.cognifide.gradle.aem.pkg.*
 import com.cognifide.gradle.aem.pkg.tasks.Compose
-import java.io.File
-import java.io.FileNotFoundException
 import org.gradle.api.Project
 import org.jsoup.Jsoup
 import org.jsoup.parser.Parser
 import org.zeroturnaround.zip.ZipUtil
+import java.io.File
+import java.io.FileNotFoundException
 
 @Suppress("LargeClass", "TooManyFunctions")
 class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(project, instance) {
@@ -355,7 +354,7 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
 
     fun evalGroovyScript(file: File, data: Map<String, Any> = mapOf()): GroovyConsoleResult {
         return try {
-            aem.logger.info("Executing Groovy Script: $file")
+            aem.logger.info("Executing Groovy script: $file")
             evalGroovyCodeInternal(file.bufferedReader().use { it.readText() }, data)
         } catch (e: AemException) {
             throw InstanceException("Cannot evaluate Groovy script properly on $instance, file: $file", e)
@@ -363,25 +362,23 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
     }
 
     fun evalGroovyScript(fileName: String, data: Map<String, Any> = mapOf()): GroovyConsoleResult {
-        val script = findGroovyScripts(fileName).firstOrNull()
-                ?: throw AemException("Groovy script '$fileName' not found in directory: ${aem.config.groovyScriptRoot}")
+        val script = File(aem.config.groovyScriptRoot, fileName)
+        if (!script.exists()) {
+            throw AemException("Groovy script '$fileName' not found in directory: ${aem.config.groovyScriptRoot}")
+        }
 
         return evalGroovyScript(script, data)
     }
 
     fun evalGroovyScripts(fileNamePattern: String, data: Map<String, Any> = mapOf()) {
-        val scripts = findGroovyScripts(fileNamePattern)
+        val scripts = (project.file(aem.config.groovyScriptRoot).listFiles() ?: arrayOf()).filter {
+            Patterns.wildcard(it, fileNamePattern)
+        }
         if (scripts.isEmpty()) {
             throw AemException("No Groovy scripts found in directory: ${aem.config.groovyScriptRoot}")
         }
 
         scripts.forEach { evalGroovyScript(it, data) }
-    }
-
-    private fun findGroovyScripts(fileNamePattern: String): List<File> {
-        return project.file(aem.config.groovyScriptRoot).listFiles()
-                .ifEmpty { arrayOf<File?>() }
-                .filter { Patterns.wildcard(it, fileNamePattern) }
     }
 
     private fun shutdown(type: String) {
