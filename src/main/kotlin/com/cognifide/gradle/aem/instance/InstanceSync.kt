@@ -370,7 +370,7 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
         return evalGroovyScript(script, data)
     }
 
-    fun evalGroovyScripts(fileNamePattern: String, data: Map<String, Any> = mapOf()) {
+    fun evalGroovyScripts(fileNamePattern: String = "**/*", data: Map<String, Any> = mapOf()): Sequence<GroovyConsoleResult> {
         val scripts = (project.file(aem.config.groovyScriptRoot).listFiles() ?: arrayOf()).filter {
             Patterns.wildcard(it, fileNamePattern)
         }.sortedBy { it.absolutePath }
@@ -378,7 +378,7 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
             throw AemException("No Groovy scripts found in directory: ${aem.config.groovyScriptRoot}")
         }
 
-        scripts.forEach { evalGroovyScript(it, data) }
+        return scripts.asSequence().map { evalGroovyScript(it, data) }
     }
 
     private fun shutdown(type: String) {
