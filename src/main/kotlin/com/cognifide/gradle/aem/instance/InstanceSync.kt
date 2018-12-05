@@ -373,7 +373,7 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
     fun evalGroovyScripts(fileNamePattern: String, data: Map<String, Any> = mapOf()) {
         val scripts = (project.file(aem.config.groovyScriptRoot).listFiles() ?: arrayOf()).filter {
             Patterns.wildcard(it, fileNamePattern)
-        }
+        }.sortedBy { it.absolutePath }
         if (scripts.isEmpty()) {
             throw AemException("No Groovy scripts found in directory: ${aem.config.groovyScriptRoot}")
         }
