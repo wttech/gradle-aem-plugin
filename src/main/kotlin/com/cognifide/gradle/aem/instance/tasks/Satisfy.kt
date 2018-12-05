@@ -16,6 +16,12 @@ import org.gradle.api.tasks.TaskAction
 open class Satisfy : Deploy() {
 
     /**
+     * Forces to upload and install again all packages regardless their state on instances (already uploaded / installed).
+     */
+    @Input
+    var greedy = aem.props.flag("aem.satisfy.greedy")
+
+    /**
      * Determines which packages should be installed by default when satisfy task is being executed.
      */
     @Input
@@ -105,7 +111,7 @@ open class Satisfy : Deploy() {
                     states[pkg] = determineRemotePackage(pkg, packageRefreshing); states
                 }
                 val packageSatisfiableAny = packageStates.any {
-                    isSnapshot(it.key) || it.value == null || !it.value!!.installed
+                    greedy || isSnapshot(it.key) || it.value == null || !it.value!!.installed
                 }
 
                 if (packageSatisfiableAny) {
@@ -114,6 +120,13 @@ open class Satisfy : Deploy() {
 
                 packageStates.forEach { (pkg, state) ->
                     when {
+                        greedy -> {
+                            logger.lifecycle("Satisfying package ${pkg.name} on ${instance.name} (greedy).")
+                            deployPackage(pkg, uploadForce, uploadRetry, installRecursive, installRetry)
+
+                            packageSatisfiedAny = true
+                            actions.add(PackageAction(pkg, instance))
+                        }
                         isSnapshot(pkg) -> {
                             logger.lifecycle("Satisfying package ${pkg.name} on ${instance.name} (snapshot).")
                             deployPackage(pkg, uploadForce, uploadRetry, installRecursive, installRetry)
