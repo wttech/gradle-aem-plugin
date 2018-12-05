@@ -6,12 +6,12 @@ import com.cognifide.gradle.aem.common.http.RequestException
 import com.cognifide.gradle.aem.common.http.ResponseException
 import com.cognifide.gradle.aem.pkg.*
 import com.cognifide.gradle.aem.pkg.tasks.Compose
+import java.io.File
+import java.io.FileNotFoundException
 import org.gradle.api.Project
 import org.jsoup.Jsoup
 import org.jsoup.parser.Parser
 import org.zeroturnaround.zip.ZipUtil
-import java.io.File
-import java.io.FileNotFoundException
 
 @Suppress("LargeClass", "TooManyFunctions")
 class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(project, instance) {
@@ -378,6 +378,10 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
             throw AemException("No Groovy scripts found in directory: ${aem.config.groovyScriptRoot}")
         }
 
+        return evalGroovyScripts(scripts, data)
+    }
+
+    fun evalGroovyScripts(scripts: Collection<File>, data: Map<String, Any> = mapOf()): Sequence<GroovyConsoleResult> {
         return scripts.asSequence().map { evalGroovyScript(it, data) }
     }
 
