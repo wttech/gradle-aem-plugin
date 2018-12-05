@@ -11,6 +11,10 @@ class ProgressCountdown(project: Project, header: String, private val value: Lon
     var progress: (Long) -> String = { "time left: ${Formats.duration(it)}" }
 
     fun run() {
+        if (value <= 0) {
+            return
+        }
+
         val start = System.currentTimeMillis()
 
         logger.launch {

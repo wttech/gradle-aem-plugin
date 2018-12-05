@@ -5,11 +5,8 @@ import com.cognifide.gradle.aem.common.Behaviors
 import com.cognifide.gradle.aem.common.Formats
 import com.cognifide.gradle.aem.common.ProgressCountdown
 import com.cognifide.gradle.aem.instance.*
-import com.fasterxml.jackson.annotation.JsonIgnore
 import java.util.concurrent.TimeUnit
 import org.apache.http.HttpStatus
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.Internal
 
 /**
  * Wait until all instances be stable.
@@ -19,27 +16,27 @@ open class AwaitAction(aem: AemExtension) : AbstractAction(aem) {
     /**
      * Skip stable check assurances and health checking.
      */
-    @Input
     var fast = aem.props.flag("aem.await.fast")
+
+    /**
+     * Time to wait if check assurances and health checking are skipped.
+     */
+    var fastDelay = aem.props.long("aem.await.fastDelay") ?: TimeUnit.SECONDS.toMillis(1)
 
     /**
      * Time to wait e.g after deployment before checking instance stability.
      * Considered only when fast mode is enabled.
      */
-    @Input
-    var fastDelay = aem.props.long("aem.await.fastDelay") ?: TimeUnit.SECONDS.toMillis(1)
+    var warmupDelay = aem.props.long("aem.await.warmupDelay") ?: TimeUnit.SECONDS.toMillis(0)
 
     /**
      * Do not fail build but log warning when there is still some unstable or unhealthy instance.
      */
-    @Input
     var resume: Boolean = aem.props.flag("aem.await.resume")
 
     /**
      * Hook for customizing instance availability check.
      */
-    @Internal
-    @get:JsonIgnore
     var availableCheck: InstanceState.() -> Boolean = {
         check(InstanceState.BUNDLE_STATE_SYNC_OPTIONS, { !bundleState.unknown })
     }
@@ -48,38 +45,29 @@ open class AwaitAction(aem: AemExtension) : AbstractAction(aem) {
      * Maximum intervals after which instance stability checks will
      * be skipped if there is still some unstable instance left.
      */
-    @Internal
-    @get:JsonIgnore
     var stableRetry = aem.retry { afterSecond(aem.props.long("aem.await.stableRetry") ?: 300) }
 
     /**
      * Hook for customizing instance state provider used within stable checking.
      * State change cancels actual assurance.
      */
-    @Internal
-    @get:JsonIgnore
     var stableState: InstanceState.() -> Int = { checkBundleState() }
 
     /**
      * Hook for customizing instance stability check.
      * Check will be repeated if assurance is configured.
      */
-    @Internal
-    @get:JsonIgnore
     var stableCheck: InstanceState.() -> Boolean = { checkBundleStable() }
 
     /**
      * Number of intervals / additional instance stability checks to assure all stable instances.
      * This mechanism protect against temporary stable states.
      */
-    @Input
     var stableAssurance: Long = aem.props.long("aem.await.stableAssurance") ?: 3L
 
     /**
      * Hook for customizing instance health check.
      */
-    @Internal
-    @get:JsonIgnore
     var healthCheck: InstanceState.() -> Boolean = {
         checkComponentState(InstanceState.PLATFORM_COMPONENTS, aem.javaPackages.map { "$it.*" })
     }
@@ -87,18 +75,22 @@ open class AwaitAction(aem: AemExtension) : AbstractAction(aem) {
     /**
      * Repeat health check when failed (brute-forcing).
      */
-    @Internal
-    @get:JsonIgnore
     var healthRetry = aem.retry { afterSquaredSecond(aem.props.long("aem.await.healthRetry") ?: 5) }
 
     override fun perform() {
+        if (!enabled) {
+            return
+        }
+
         if (instances.isEmpty()) {
             aem.logger.info("No instances to await.")
             return
         }
 
         if (fast) {
-            awaitDelay()
+            awaitDelay(fastDelay)
+        } else {
+            awaitDelay(warmupDelay)
         }
 
         awaitStable()
@@ -108,8 +100,8 @@ open class AwaitAction(aem: AemExtension) : AbstractAction(aem) {
         }
     }
 
-    private fun awaitDelay() {
-        ProgressCountdown(aem.project, "Waiting for instance(s): ${instances.names}", fastDelay).run()
+    private fun awaitDelay(delay: Long) {
+        ProgressCountdown(aem.project, "Waiting for instance(s): ${instances.names}", delay).run()
     }
 
     @Suppress("ComplexMethod")

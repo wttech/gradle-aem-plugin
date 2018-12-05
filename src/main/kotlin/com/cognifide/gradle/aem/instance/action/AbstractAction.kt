@@ -5,7 +5,6 @@ import com.cognifide.gradle.aem.instance.Instance
 import com.cognifide.gradle.aem.instance.InstanceAction
 import com.cognifide.gradle.aem.instance.LocalHandle
 import com.cognifide.gradle.aem.instance.toLocalHandles
-import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 
 abstract class AbstractAction(
@@ -14,14 +13,13 @@ abstract class AbstractAction(
     val aem: AemExtension
 ) : InstanceAction {
 
-    @Input
+    var enabled = true
+
     var instances: List<Instance> = aem.instances
 
-    @get:Internal
     val instanceHandles: List<LocalHandle>
         get() = instances.toLocalHandles(aem.project)
 
-    @Internal
     var notify = true
 
     fun notify(title: String, text: String, enabled: Boolean = this.notify) {

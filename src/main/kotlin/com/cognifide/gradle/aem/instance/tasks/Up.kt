@@ -4,9 +4,6 @@ import com.cognifide.gradle.aem.instance.InstanceTask
 import com.cognifide.gradle.aem.instance.LocalHandle
 import com.cognifide.gradle.aem.instance.action.AwaitAction
 import com.cognifide.gradle.aem.instance.names
-import com.fasterxml.jackson.annotation.JsonIgnore
-import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
 
 open class Up : InstanceTask() {
@@ -15,25 +12,34 @@ open class Up : InstanceTask() {
         description = "Turns on local AEM instance(s)."
     }
 
-    @Nested
-    val await = AwaitAction(aem)
+    private var initOptions: LocalHandle.() -> Unit = {}
+
+    private var awaitOptions: AwaitAction.() -> Unit = {}
 
     /**
      * Hook called only when instance is up first time.
      */
-    @Internal
-    @get:JsonIgnore
-    var init: LocalHandle.() -> Unit = { }
+    fun init(options: LocalHandle.() -> Unit) {
+        this.initOptions = options
+    }
 
-    fun await(configurer: AwaitAction.() -> Unit) {
-        await.apply(configurer)
+    /**
+     * Controls instance awaiting.
+     */
+    fun await(options: AwaitAction.() -> Unit) {
+        this.awaitOptions = options
     }
 
     @TaskAction
     fun up() {
         aem.parallelWith(instanceHandles) { up() }
-        await.apply { instances = this@Up.instances }.perform()
-        aem.parallelWith(instanceHandles) { init(init) }
+
+        aem.actions.await {
+            instances = this@Up.instances
+            awaitOptions()
+        }
+
+        aem.parallelWith(instanceHandles) { init(initOptions) }
 
         aem.notifier.notify("Instance(s) up", "Which: ${instanceHandles.names}")
     }

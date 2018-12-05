@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.pkg.tasks
 
 import com.cognifide.gradle.aem.common.fileNames
+import com.cognifide.gradle.aem.instance.action.AwaitAction
 import com.cognifide.gradle.aem.instance.names
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.gradle.api.tasks.Input
@@ -45,6 +46,15 @@ open class Deploy : Sync() {
     @Input
     var installRecursive: Boolean = aem.props.boolean("aem.deploy.installRecursive") ?: true
 
+    private var awaitOptions: AwaitAction.() -> Unit = {}
+
+    /**
+     * Controls await action.
+     */
+    fun await(options: AwaitAction.() -> Unit) {
+        this.awaitOptions = options
+    }
+
     override fun projectsEvaluated() {
         if (instances.isEmpty()) {
             instances = if (distributed) {
@@ -75,6 +85,11 @@ open class Deploy : Sync() {
                 }
             }
         })
+
+        aem.actions.await {
+            instances = this@Deploy.instances
+            awaitOptions()
+        }
 
         aem.notifier.notify("Package deployed", "${packages.fileNames} on ${instances.names}")
     }

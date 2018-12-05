@@ -6,8 +6,6 @@ import com.cognifide.gradle.aem.instance.InstanceException
 import com.cognifide.gradle.aem.instance.InstanceState
 import com.cognifide.gradle.aem.instance.ProgressLogger
 import com.cognifide.gradle.aem.instance.names
-import com.fasterxml.jackson.annotation.JsonIgnore
-import org.gradle.api.tasks.Internal
 
 class ShutdownAction(aem: AemExtension) : AbstractAction(aem) {
 
@@ -15,34 +13,30 @@ class ShutdownAction(aem: AemExtension) : AbstractAction(aem) {
      * Maximum intervals after which instance stability checks will
      * be skipped if there is still some unstable instance left.
      */
-    @Internal
-    @get:JsonIgnore
     var stableRetry = aem.retry { afterSecond(aem.props.long("aem.shutdown.stableRetry") ?: 300) }
 
     /**
      * Hook for customizing instance state provider used within stable checking.
      * State change cancels actual assurance.
      */
-    @Internal
-    @get:JsonIgnore
     var stableState: InstanceState.() -> Int = { checkBundleState() }
 
     /**
      * Hook for customizing instance stability check.
      * Check will be repeated if assurance is configured.
      */
-    @Internal
-    @get:JsonIgnore
     var stableCheck: InstanceState.() -> Boolean = { checkBundleStable() }
 
     /**
      * Hook for customizing instance availability check.
      */
-    @Internal
-    @get:JsonIgnore
     var availableCheck: InstanceState.() -> Boolean = { check(InstanceState.BUNDLE_STATE_SYNC_OPTIONS, { !bundleState.unknown }) }
 
     override fun perform() {
+        if (!enabled) {
+            return
+        }
+
         if (instances.isEmpty()) {
             aem.logger.info("No instances to shutdown.")
             return
