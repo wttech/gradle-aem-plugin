@@ -15,6 +15,12 @@ open class Deploy : Sync() {
     }
 
     /**
+     * Check instance(s) health after deploying package(s).
+     */
+    @Input
+    var awaited: Boolean = aem.props.boolean("aem.deploy.awaited") ?: true
+
+    /**
      * Enables deployment via CRX package activation from author to publishers when e.g they are not accessible.
      */
     @Input
@@ -86,9 +92,11 @@ open class Deploy : Sync() {
             }
         })
 
-        aem.actions.await {
-            instances = this@Deploy.instances
-            awaitOptions()
+        if (awaited) {
+            aem.actions.await {
+                instances = this@Deploy.instances
+                awaitOptions()
+            }
         }
 
         aem.notifier.notify("Package deployed", "${packages.fileNames} on ${instances.names}")
