@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.common.http
 
+import com.cognifide.gradle.aem.common.file.downloader.HttpFileDownloader
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.jayway.jsonpath.DocumentContext
 import com.jayway.jsonpath.JsonPath
@@ -210,6 +211,10 @@ open class HttpClient(val project: Project) {
 
         return builder.build()
     }
+
+    fun download(path: String, target: File) = HttpFileDownloader(project, this).download(path, target)
+
+    fun downloadTo(path: String, dir: File) = File(dir, path.substringAfterLast("/")).apply { download(path, this) }
 
     companion object {
         val STATUS_CODE_VALID = 200 until 300

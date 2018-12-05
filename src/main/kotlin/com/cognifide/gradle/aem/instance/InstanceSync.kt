@@ -3,7 +3,6 @@ package com.cognifide.gradle.aem.instance
 import com.cognifide.gradle.aem.common.*
 import com.cognifide.gradle.aem.common.Retry
 import com.cognifide.gradle.aem.common.file.FileException
-import com.cognifide.gradle.aem.common.file.downloader.HttpFileDownloader
 import com.cognifide.gradle.aem.common.http.RequestException
 import com.cognifide.gradle.aem.common.http.ResponseException
 import com.cognifide.gradle.aem.pkg.*
@@ -119,11 +118,10 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
 
     fun downloadPackage(remotePath: String, targetFile: File, retry: Retry = Retry.none()) {
         lateinit var exception: FileException
-        val url = instance.httpUrl + remotePath
 
         for (i in 0..retry.times) {
             try {
-                downloadPackageOnce(url, targetFile)
+                downloadPackageOnce(remotePath, targetFile)
                 return
             } catch (e: FileException) {
                 exception = e
@@ -143,10 +141,10 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
         throw exception
     }
 
-    fun downloadPackageOnce(url: String, targetFile: File) {
-        aem.logger.info("Downloading package from $url to file $targetFile")
+    fun downloadPackageOnce(remotePath: String, targetFile: File) {
+        aem.logger.info("Downloading package from $remotePath to file $targetFile")
 
-        HttpFileDownloader(project, this).download(url, targetFile)
+        download(remotePath, targetFile)
 
         if (!targetFile.exists()) {
             throw InstanceException("Downloaded package is missing: ${targetFile.path}")
