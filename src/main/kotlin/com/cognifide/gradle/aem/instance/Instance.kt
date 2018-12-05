@@ -62,6 +62,10 @@ interface Instance : Serializable {
     @get:JsonIgnore
     val sync: InstanceSync
 
+    fun <T> sync(synchronizer: InstanceSync.() -> T): T {
+        return sync.run(synchronizer)
+    }
+
     fun validate() {
         if (!Formats.URL_VALIDATOR.isValid(httpUrl)) {
             throw AemException("Malformed URL address detected in $this")
@@ -83,6 +87,11 @@ interface Instance : Serializable {
             throw AemException("Type cannot be blank in $this")
         }
     }
+
+    @get:Internal
+    @get:JsonIgnore
+    val json: String
+        get() = Formats.toJson(this)
 
     companion object {
 
