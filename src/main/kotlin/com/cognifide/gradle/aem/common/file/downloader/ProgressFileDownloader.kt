@@ -10,7 +10,7 @@ import org.gradle.api.Project
 @Suppress("MagicNumber")
 open class ProgressFileDownloader(val project: Project) {
 
-    val progress = ProgressLogger(project)
+    val progress = ProgressLogger.of(project)
 
     var size: Long = 0
 

@@ -4,7 +4,7 @@ import org.gradle.api.Project
 
 class ProgressCountdown(project: Project, private val value: Long) {
 
-    val logger = ProgressLogger(project)
+    val logger = ProgressLogger.of(project)
 
     var loggerInterval = 100
 

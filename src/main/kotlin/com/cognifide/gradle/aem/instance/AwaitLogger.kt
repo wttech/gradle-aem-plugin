@@ -1,10 +1,12 @@
 package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.common.Behaviors
-import com.cognifide.gradle.aem.common.ProgressLogger as BaseLogger
+import com.cognifide.gradle.aem.common.ProgressLogger
 import org.gradle.api.Project
 
-class ProgressLogger(project: Project, private val stableTimes: Long) : BaseLogger(project) {
+class AwaitLogger(project: Project, private val stableTimes: Long) {
+
+    val logger = ProgressLogger.of(project)
 
     fun progress(
         states: List<InstanceState>,
@@ -12,7 +14,7 @@ class ProgressLogger(project: Project, private val stableTimes: Long) : BaseLogg
         unstableInstances: List<Instance>,
         timer: Behaviors.Timer
     ) {
-        progress(progressFor(states, unavailableInstances, unstableInstances, timer))
+        logger.progress(progressFor(states, unavailableInstances, unstableInstances, timer))
     }
 
     private fun progressFor(

@@ -9,7 +9,7 @@ import org.gradle.api.Project
 
 class ProgressIndicator(project: Project) {
 
-    val logger = ProgressLogger(project)
+    val logger = ProgressLogger.of(project)
 
     var delay = TimeUnit.SECONDS.toMillis(1)
 
@@ -18,6 +18,8 @@ class ProgressIndicator(project: Project) {
     var message = ""
 
     var count = 0L
+
+    var hold = false
 
     private val messageQueue: Queue<String> = LinkedList()
 
@@ -34,6 +36,10 @@ class ProgressIndicator(project: Project) {
 
             logger.launch {
                 Behaviors.waitUntil(delay) { timer ->
+                    if (hold) {
+                        return@waitUntil true
+                    }
+
                     var text = if (timer.ticks.rem(2L) == 0L) {
                         "\\"
                     } else {
@@ -64,5 +70,11 @@ class ProgressIndicator(project: Project) {
         block()
         count++
         messageQueue.remove(message)
+    }
+
+    fun hold(block: () -> Unit) {
+        hold = true
+        block()
+        hold = false
     }
 }

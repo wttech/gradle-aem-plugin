@@ -4,7 +4,7 @@ import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.Behaviors
 import com.cognifide.gradle.aem.instance.InstanceException
 import com.cognifide.gradle.aem.instance.InstanceState
-import com.cognifide.gradle.aem.instance.ProgressLogger
+import com.cognifide.gradle.aem.instance.AwaitLogger
 import com.cognifide.gradle.aem.instance.names
 
 class ShutdownAction(aem: AemExtension) : AbstractAction(aem) {
@@ -48,40 +48,38 @@ class ShutdownAction(aem: AemExtension) : AbstractAction(aem) {
     private fun shutdown() {
         aem.logger.info("Awaiting instance(s) shutdown: ${instances.names}")
 
-        val progressLogger = ProgressLogger(aem.project, stableRetry.times)
-        progressLogger.started()
+        val progress = AwaitLogger(aem.project, stableRetry.times)
+        progress.logger.launch {
+            var lastStableChecksum = -1
 
-        var lastStableChecksum = -1
+            aem.parallelWith(instanceHandles) { down() }
 
-        aem.parallelWith(instanceHandles) { down() }
+            Behaviors.waitUntil(stableRetry.delay) { timer ->
+                // Update checksum on any particular state change
+                val instanceStates = instances.map { it.sync.determineInstanceState() }
+                val stableChecksum = aem.parallelMap(instanceStates) { stableState(it) }.hashCode()
+                if (stableChecksum != lastStableChecksum) {
+                    lastStableChecksum = stableChecksum
+                    timer.reset()
+                }
 
-        Behaviors.waitUntil(stableRetry.delay) { timer ->
-            // Update checksum on any particular state change
-            val instanceStates = instances.map { it.sync.determineInstanceState() }
-            val stableChecksum = aem.parallelMap(instanceStates) { stableState(it) }.hashCode()
-            if (stableChecksum != lastStableChecksum) {
-                lastStableChecksum = stableChecksum
-                timer.reset()
+                // Examine instances
+                val unstableInstances = aem.parallelMap(instanceStates, { !stableCheck(it) }, { it.instance })
+                val availableInstances = aem.parallelMap(instanceStates, { availableCheck(it) }, { it.instance })
+                val unavailableInstances = instances - availableInstances
+                val upInstances = instanceHandles.filter { it.running || availableInstances.contains(it.instance) }.map { it.instance }
+
+                progress.progress(instanceStates, unavailableInstances, unstableInstances, timer)
+
+                // Detect timeout when same checksum is not being updated so long
+                if (stableRetry.times > 0 && timer.ticks > stableRetry.times) {
+                    instanceStates.forEach { it.status.logTo(aem.logger) }
+
+                    throw InstanceException("Instances cannot shutdown: ${upInstances.names}. Timeout reached.")
+                }
+
+                upInstances.isNotEmpty()
             }
-
-            // Examine instances
-            val unstableInstances = aem.parallelMap(instanceStates, { !stableCheck(it) }, { it.instance })
-            val availableInstances = aem.parallelMap(instanceStates, { availableCheck(it) }, { it.instance })
-            val unavailableInstances = instances - availableInstances
-            val upInstances = instanceHandles.filter { it.running || availableInstances.contains(it.instance) }.map { it.instance }
-
-            progressLogger.progress(instanceStates, unavailableInstances, unstableInstances, timer)
-
-            // Detect timeout when same checksum is not being updated so long
-            if (stableRetry.times > 0 && timer.ticks > stableRetry.times) {
-                instanceStates.forEach { it.status.logTo(aem.logger) }
-
-                throw InstanceException("Instances cannot shutdown: ${upInstances.names}. Timeout reached.")
-            }
-
-            upInstances.isNotEmpty()
         }
-
-        progressLogger.completed()
     }
 }

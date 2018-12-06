@@ -110,77 +110,75 @@ open class AwaitAction(aem: AemExtension) : AbstractAction(aem) {
     private fun awaitStable() {
         aem.logger.info("Awaiting stable instance(s): ${instances.names}")
 
-        val progressLogger = ProgressLogger(aem.project, stableRetry.times)
-        progressLogger.started()
+        val progress = AwaitLogger(aem.project, stableRetry.times)
+        progress.logger.launch {
+            var lastStableChecksum = -1
+            var sinceStableTicks = -1L
 
-        var lastStableChecksum = -1
-        var sinceStableTicks = -1L
+            val synchronizers = prepareSynchronizers()
+            var unavailableNotification = false
 
-        val synchronizers = prepareSynchronizers()
-        var unavailableNotification = false
+            Behaviors.waitUntil(stableRetry.delay) { timer ->
+                // Gather all instance states (lazy)
+                val instanceStates = synchronizers.map { it.determineInstanceState() }
 
-        Behaviors.waitUntil(stableRetry.delay) { timer ->
-            // Gather all instance states (lazy)
-            val instanceStates = synchronizers.map { it.determineInstanceState() }
+                // Update checksum on any particular state change
+                val stableChecksum = aem.parallelMap(instanceStates) { stableState(it) }.hashCode()
+                if (stableChecksum != lastStableChecksum) {
+                    lastStableChecksum = stableChecksum
+                    timer.reset()
+                }
 
-            // Update checksum on any particular state change
-            val stableChecksum = aem.parallelMap(instanceStates) { stableState(it) }.hashCode()
-            if (stableChecksum != lastStableChecksum) {
-                lastStableChecksum = stableChecksum
-                timer.reset()
-            }
+                // Examine instances
+                val unstableInstances = aem.parallelMap(instanceStates, { !stableCheck(it) }, { it.instance })
+                val availableInstances = aem.parallelMap(instanceStates, { availableCheck(it) }, { it.instance })
+                val unavailableInstances = synchronizers.map { it.instance } - availableInstances
 
-            // Examine instances
-            val unstableInstances = aem.parallelMap(instanceStates, { !stableCheck(it) }, { it.instance })
-            val availableInstances = aem.parallelMap(instanceStates, { availableCheck(it) }, { it.instance })
-            val unavailableInstances = synchronizers.map { it.instance } - availableInstances
+                val initializedUnavailableInstances = unavailableInstances.filter { it.isInitialized(aem.project) }
+                val areUnavailableInstances = (timer.ticks.toDouble() / stableRetry.times.toDouble() > INSTANCE_UNAVAILABLE_RATIO) &&
+                        initializedUnavailableInstances.isNotEmpty()
 
-            val initializedUnavailableInstances = unavailableInstances.filter { it.isInitialized(aem.project) }
-            val areUnavailableInstances = (timer.ticks.toDouble() / stableRetry.times.toDouble() > INSTANCE_UNAVAILABLE_RATIO) &&
-                    initializedUnavailableInstances.isNotEmpty()
+                if (!unavailableNotification && areUnavailableInstances) {
+                    notify("Instances not available", "Which: ${initializedUnavailableInstances.names}")
+                    unavailableNotification = true
+                }
 
-            if (!unavailableNotification && areUnavailableInstances) {
-                notify("Instances not available", "Which: ${initializedUnavailableInstances.names}")
-                unavailableNotification = true
-            }
+                progress.progress(instanceStates, unavailableInstances, unstableInstances, timer)
 
-            progressLogger.progress(instanceStates, unavailableInstances, unstableInstances, timer)
+                // Detect timeout when same checksum is not being updated so long
+                if (stableRetry.times > 0 && timer.ticks > stableRetry.times) {
+                    instanceStates.forEach { it.status.logTo(aem.logger) }
 
-            // Detect timeout when same checksum is not being updated so long
-            if (stableRetry.times > 0 && timer.ticks > stableRetry.times) {
-                instanceStates.forEach { it.status.logTo(aem.logger) }
+                    if (!resume) {
+                        throw InstanceException("Instances not stable: ${unstableInstances.names}. Timeout reached.")
+                    } else {
+                        notify("Instances not stable", "Problem with: ${unstableInstances.names}. Timeout reached.")
+                        return@waitUntil false
+                    }
+                }
 
-                if (!resume) {
-                    throw InstanceException("Instances not stable: ${unstableInstances.names}. Timeout reached.")
+                if (unstableInstances.isEmpty()) {
+                    // Assure that expected moment is not accidental, remember it
+                    val assurable = (stableAssurance > 0) && (sinceStableTicks == -1L)
+                    if (!fast && assurable) {
+                        aem.logger.info("Instance(s) stable: ${instances.names}. Assuring.")
+                        sinceStableTicks = timer.ticks
+                    }
+
+                    // End if assurance is not configured or this moment remains a little longer
+                    val assured = (stableAssurance <= 0) || (sinceStableTicks >= 0 && (timer.ticks - sinceStableTicks) >= stableAssurance)
+                    if (fast || assured) {
+                        notify("Instance(s) stable", "Which: ${instances.names}", fast)
+                        return@waitUntil false
+                    }
                 } else {
-                    notify("Instances not stable", "Problem with: ${unstableInstances.names}. Timeout reached.")
-                    return@waitUntil false
+                    // Reset assurance, because no longer stable
+                    sinceStableTicks = -1L
                 }
+
+                true
             }
-
-            if (unstableInstances.isEmpty()) {
-                // Assure that expected moment is not accidental, remember it
-                val assurable = (stableAssurance > 0) && (sinceStableTicks == -1L)
-                if (!fast && assurable) {
-                    aem.logger.info("Instance(s) stable: ${instances.names}. Assuring.")
-                    sinceStableTicks = timer.ticks
-                }
-
-                // End if assurance is not configured or this moment remains a little longer
-                val assured = (stableAssurance <= 0) || (sinceStableTicks >= 0 && (timer.ticks - sinceStableTicks) >= stableAssurance)
-                if (fast || assured) {
-                    notify("Instance(s) stable", "Which: ${instances.names}", fast)
-                    return@waitUntil false
-                }
-            } else {
-                // Reset assurance, because no longer stable
-                sinceStableTicks = -1L
-            }
-
-            true
         }
-
-        progressLogger.completed()
     }
 
     private fun awaitHealthy() {

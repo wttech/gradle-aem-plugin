@@ -162,7 +162,7 @@ class LocalHandle(val project: Project, val instance: LocalInstance) {
     private fun extractStaticFiles() {
         aem.logger.info("Extracting static files from JAR '${jar.absolutePath}' to directory: $staticDir")
 
-        ProgressLogger(project).launch {
+        ProgressLogger.of(project).launch {
             var total = 0
             ZipUtil.iterate(jar) { entry ->
                 if (entry.name.startsWith(JAR_STATIC_FILES_PATH)) {

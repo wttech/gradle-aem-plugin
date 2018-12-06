@@ -5,13 +5,16 @@ import org.apache.commons.lang3.time.StopWatch
 import org.gradle.api.Project
 import org.gradle.internal.logging.progress.ProgressLogger as BaseLogger
 import org.gradle.internal.logging.progress.ProgressLoggerFactory
+import java.util.concurrent.atomic.AtomicBoolean
 
 @Suppress("SpreadOperator")
-open class ProgressLogger(val project: Project) {
+open class ProgressLogger private constructor(val project: Project) {
 
     private lateinit var base: BaseLogger
 
     private lateinit var stopWatch: StopWatch
+
+    var running = AtomicBoolean(false)
 
     var header: String = "Operation in progress"
 
@@ -38,23 +41,31 @@ open class ProgressLogger(val project: Project) {
         return m.invoke(obj, *args)
     }
 
-    fun started() {
-        stopWatch = StopWatch()
-        stopWatch.start()
+    fun launch(block: ProgressLogger.() -> Unit) {
+        if (running.get()) {
+            apply(block)
+        } else {
+            try {
+                if (running.compareAndSet(false, true)) {
+                    stopWatch = StopWatch()
+                    stopWatch.start()
 
-        base = create()
-        base.description = header
-        base.started()
+                    base = create()
+                    base.description = header
+                    base.started()
+                }
+
+                apply(block)
+            } finally {
+                if (running.compareAndSet(true, false)) {
+                    base.completed()
+                    stopWatch.stop()
+                }
+            }
+        }
     }
 
-    val started: Boolean
-        get() = stopWatch.isStarted
-
     fun progress(message: String) {
-        if (!started) {
-            return
-        }
-
         base.progress(message)
 
         if (stopWatch.time >= progressWindow) {
@@ -63,30 +74,11 @@ open class ProgressLogger(val project: Project) {
         }
     }
 
-    fun completed() {
-        if (!started) {
-            return
-        }
-
-        base.completed()
-        stopWatch.stop()
-    }
-
-    fun launch(block: ProgressLogger.() -> Unit) {
-        try {
-            started()
-            block()
-        } finally {
-            completed()
-        }
-    }
-
-    fun hold(block: ProgressLogger.() -> Unit) {
-        try {
-            completed()
-            block()
-        } finally {
-            started()
+    companion object {
+        fun of(project: Project): ProgressLogger {
+            return BuildScope.of(project).getOrPut(ProgressLogger::class.java.canonicalName, {
+                ProgressLogger(project)
+            })
         }
     }
 }

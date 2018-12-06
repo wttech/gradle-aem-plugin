@@ -141,12 +141,7 @@ open class Satisfy : Deploy() {
             }
 
             if (packageSatisfiableAny) {
-                /* TODO fixme
-                logger.hold {
-                    group.initializer(this@sync)
-                }
-                */
-                group.initializer(this@sync)
+                hold { group.initializer(this) }
             }
 
             packageStates.forEach { pkg ->
@@ -189,12 +184,12 @@ open class Satisfy : Deploy() {
             }
 
             if (packageSatisfiableAny) {
-                logger.hold { group.finalizer(this@sync) }
+                hold { group.finalizer(this) }
             }
         }
 
         if (packageSatisfiedAny) {
-            logger.hold { group.completer() }
+            hold { group.completer() }
         }
     }
 
