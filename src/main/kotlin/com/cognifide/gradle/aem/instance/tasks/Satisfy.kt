@@ -2,9 +2,11 @@ package com.cognifide.gradle.aem.instance.tasks
 
 import com.cognifide.gradle.aem.common.AemTask
 import com.cognifide.gradle.aem.common.Patterns
+import com.cognifide.gradle.aem.common.ProgressIndicator
 import com.cognifide.gradle.aem.instance.Instance
 import com.cognifide.gradle.aem.instance.names
-import com.cognifide.gradle.aem.pkg.Package
+import com.cognifide.gradle.aem.pkg.PackageState
+import com.cognifide.gradle.aem.pkg.resolver.PackageGroup
 import com.cognifide.gradle.aem.pkg.resolver.PackageResolver
 import com.cognifide.gradle.aem.pkg.tasks.Deploy
 import java.io.File
@@ -75,6 +77,8 @@ open class Satisfy : Deploy() {
     val cmdGroups: Boolean
         get() = project.findProperty("aem.satisfy.urls") != null
 
+    private val packageActions = mutableListOf<PackageAction>()
+
     init {
         group = AemTask.GROUP
         description = "Satisfies AEM by uploading & installing dependent packages on instance(s)."
@@ -98,83 +102,98 @@ open class Satisfy : Deploy() {
     @TaskAction
     @Suppress("ComplexMethod")
     override fun deploy() {
-        val actions = mutableListOf<PackageAction>()
+        aem.progress({
+            header = "Satisfying packages(s)"
+            total = packageGroups.sumBy { packageGroup ->
+                packageGroup.files.size * determineInstancesForGroup(packageGroup).size
+            }.toLong()
+        }, {
+            packageGroups.forEach { satisfyGroup(it) }
+        })
 
-        for (packageGroup in packageGroups) {
-            logger.info("Satisfying group of packages '${packageGroup.name}'.")
+        if (packageActions.isNotEmpty()) {
+            val packages = packageActions.map { it.pkg }.toSet()
+            val instances = packageActions.map { it.instance }.toSet()
 
-            var packageSatisfiedAny = false
-            val packageInstances = instances.filter { Patterns.wildcard(it.name, packageGroup.instanceName) }
+            if (packages.size == 1) {
+                aem.notifier.notify("Package satisfied", "${packages.first().name} on ${instances.names}")
+            } else {
+                aem.notifier.notify("Packages satisfied", "Performed ${packageActions.size} action(s) for " +
+                        "${packages.size} package(s) on ${instances.size} instance(s).")
+            }
+        }
+    }
 
-            aem.sync(packageInstances) {
-                val packageStates = packageGroup.files.fold(mutableMapOf<File, Package?>()) { states, pkg ->
-                    states[pkg] = determineRemotePackage(pkg, packageRefreshing); states
-                }
-                val packageSatisfiableAny = packageStates.any {
-                    greedy || isSnapshot(it.key) || it.value == null || !it.value!!.installed
-                }
+    @Suppress("ComplexMethod")
+    private fun ProgressIndicator.satisfyGroup(group: PackageGroup) {
+        logger.info("Satisfying group of packages '${group.name}'.")
 
-                if (packageSatisfiableAny) {
-                    packageGroup.initializer(this)
-                }
+        var packageSatisfiedAny = false
+        val packageInstances = determineInstancesForGroup(group)
 
-                packageStates.forEach { (pkg, state) ->
+        aem.sync(packageInstances) {
+            val packageStates = group.files.map {
+                PackageState(it, determineRemotePackage(it, packageRefreshing))
+            }
+            val packageSatisfiableAny = packageStates.any {
+                greedy || isSnapshot(it.file) || !it.uploaded || !it.installed
+            }
+
+            if (packageSatisfiableAny) {
+                group.initializer(this)
+            }
+
+            packageStates.forEach { pkg ->
+                increment("${group.name} # ${pkg.file.name} -> ${instance.name}") {
                     when {
                         greedy -> {
-                            logger.lifecycle("Satisfying package ${pkg.name} on ${instance.name} (greedy).")
-                            deployPackage(pkg, uploadForce, uploadRetry, installRecursive, installRetry)
+                            logger.info("Satisfying package ${pkg.name} on ${instance.name} (greedy).")
+
+                            deployPackage(pkg.file, uploadForce, uploadRetry, installRecursive, installRetry)
 
                             packageSatisfiedAny = true
-                            actions.add(PackageAction(pkg, instance))
+                            packageActions.add(PackageAction(pkg.file, instance))
                         }
-                        isSnapshot(pkg) -> {
-                            logger.lifecycle("Satisfying package ${pkg.name} on ${instance.name} (snapshot).")
-                            deployPackage(pkg, uploadForce, uploadRetry, installRecursive, installRetry)
+                        isSnapshot(pkg.file) -> {
+                            logger.info("Satisfying package ${pkg.name} on ${instance.name} (snapshot).")
+                            deployPackage(pkg.file, uploadForce, uploadRetry, installRecursive, installRetry)
 
                             packageSatisfiedAny = true
-                            actions.add(PackageAction(pkg, instance))
+                            packageActions.add(PackageAction(pkg.file, instance))
                         }
-                        state == null -> {
-                            logger.lifecycle("Satisfying package ${pkg.name} on ${instance.name} (not uploaded).")
-                            deployPackage(pkg, uploadForce, uploadRetry, installRecursive, installRetry)
+                        !pkg.uploaded -> {
+                            logger.info("Satisfying package ${pkg.name} on ${instance.name} (not uploaded).")
+                            deployPackage(pkg.file, uploadForce, uploadRetry, installRecursive, installRetry)
 
                             packageSatisfiedAny = true
-                            actions.add(PackageAction(pkg, instance))
+                            packageActions.add(PackageAction(pkg.file, instance))
                         }
-                        !state.installed -> {
-                            logger.lifecycle("Satisfying package ${pkg.name} on ${instance.name} (not installed).")
-                            installPackage(state.path, installRecursive, installRetry)
+                        !pkg.installed -> {
+                            logger.info("Satisfying package ${pkg.name} on ${instance.name} (not installed).")
+                            installPackage(pkg.state!!.path, installRecursive, installRetry)
 
                             packageSatisfiedAny = true
-                            actions.add(PackageAction(pkg, instance))
+                            packageActions.add(PackageAction(pkg.file, instance))
                         }
                         else -> {
                             logger.info("Not satisfying package: ${pkg.name} on ${instance.name} (already installed).")
                         }
                     }
                 }
-
-                if (packageSatisfiableAny) {
-                    packageGroup.finalizer(this)
-                }
             }
 
-            if (packageSatisfiedAny) {
-                packageGroup.completer()
+            if (packageSatisfiableAny) {
+                group.finalizer(this)
             }
         }
 
-        if (actions.isNotEmpty()) {
-            val packages = actions.map { it.pkg }.toSet()
-            val instances = actions.map { it.instance }.toSet()
-
-            if (packages.size == 1) {
-                aem.notifier.notify("Package satisfied", "${packages.first().name} on ${instances.names}")
-            } else {
-                aem.notifier.notify("Packages satisfied", "Performed ${actions.size} action(s) for " +
-                        "${packages.size} package(s) on ${instances.size} instance(s).")
-            }
+        if (packageSatisfiedAny) {
+            group.completer()
         }
+    }
+
+    private fun determineInstancesForGroup(group: PackageGroup): List<Instance> {
+        return instances.filter { Patterns.wildcard(it.name, group.instanceName) }
     }
 
     class PackageAction(val pkg: File, val instance: Instance)

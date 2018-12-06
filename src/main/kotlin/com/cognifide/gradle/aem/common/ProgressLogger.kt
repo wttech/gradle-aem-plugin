@@ -5,13 +5,14 @@ import org.apache.commons.lang3.time.StopWatch
 import org.gradle.api.Project
 import org.gradle.api.logging.Logger
 import org.gradle.internal.logging.progress.ProgressLoggerFactory
+import org.gradle.internal.logging.progress.ProgressLogger as BaseLogger
 
 @Suppress("SpreadOperator")
 open class ProgressLogger(val project: Project, val header: String) {
 
     private val logger: Logger = project.logger
 
-    private val progressLogger = create(header)
+    private val base: BaseLogger = create(header)
 
     private var stopWatch = StopWatch()
 
@@ -19,14 +20,13 @@ open class ProgressLogger(val project: Project, val header: String) {
 
     var progressWindow = TimeUnit.SECONDS.toMillis(1)
 
-    private fun create(header: String): Any {
+    private fun create(header: String): BaseLogger {
         val progressLoggerFactoryClass: Class<*> = ProgressLoggerFactory::class.java
         val serviceFactory = invoke(project, "getServices")
         val progressLoggerFactory = invoke(serviceFactory, "get", progressLoggerFactoryClass)
 
-        val result = invoke(progressLoggerFactory, "newOperation", javaClass)
-        invoke(result, "setDescription", header)
-        invoke(result, "setLoggingHeader", header)
+        val result = invoke(progressLoggerFactory, "newOperation", javaClass) as BaseLogger
+        result.description = header
 
         return result
     }
@@ -42,22 +42,13 @@ open class ProgressLogger(val project: Project, val header: String) {
         return m.invoke(obj, *args)
     }
 
-    @Suppress("TooGenericExceptionCaught")
-    private fun invokeQuietly(obj: Any, method: String, vararg args: Any) {
-        try {
-            invoke(obj, method, *args)
-        } catch (e: Exception) {
-            logger.trace("Unable to log progress", e)
-        }
-    }
-
     fun started() {
         stopWatch.start()
-        invokeQuietly(progressLogger, "started")
+        base.started()
     }
 
     fun progress(message: String) {
-        invokeQuietly(progressLogger, "progress", message)
+        base.progress(message)
 
         if (stopWatch.time >= progressWindow) {
             stopWatch.run { reset(); start() }
@@ -66,7 +57,7 @@ open class ProgressLogger(val project: Project, val header: String) {
     }
 
     fun completed() {
-        invokeQuietly(progressLogger, "completed")
+        base.completed()
         stopWatch.stop()
     }
 
