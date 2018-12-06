@@ -11,13 +11,13 @@ class UrlFileDownloader(val project: Project) {
 
     fun download(sourceUrl: String, targetFile: File) {
         try {
+            project.logger.info("Downloading: $sourceUrl -> ${targetFile.absolutePath}")
+
             val connection = URL(sourceUrl).openConnection()
             connection.useCaches = false
 
             val downloader = ProgressFileDownloader(project)
-            downloader.headerSourceTarget(sourceUrl, targetFile)
             downloader.size = connection.contentLengthLong
-
             downloader.download(connection.getInputStream(), targetFile)
         } catch (e: IOException) {
             throw FileException("Cannot download URL '$sourceUrl' to file '$targetFile'.", e)

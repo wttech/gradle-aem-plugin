@@ -7,19 +7,19 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import org.gradle.api.Project
 
-class ProgressIndicator(private val project: Project) {
+class ProgressIndicator(project: Project) {
 
-    private val messageQueue: Queue<String> = LinkedList()
+    val logger = ProgressLogger(project)
 
     var delay = TimeUnit.SECONDS.toMillis(1)
 
-    var header = ""
+    var total = 0L
 
     var message = ""
 
-    var total = 0L
-
     var count = 0L
+
+    private val messageQueue: Queue<String> = LinkedList()
 
     fun <T> launch(block: ProgressIndicator.() -> T): T {
         return runBlocking {
@@ -32,7 +32,7 @@ class ProgressIndicator(private val project: Project) {
                 }
             }
 
-            ProgressLogger(project, header).launch {
+            logger.launch {
                 Behaviors.waitUntil(delay) { timer ->
                     var text = if (timer.ticks.rem(2L) == 0L) {
                         "\\"

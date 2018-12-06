@@ -22,10 +22,10 @@ class SftpFileDownloader(val project: Project) {
 
     fun download(sourceUrl: String, targetFile: File) {
         try {
-            val url = URIBuilder(sourceUrl)
+            project.logger.info("Downloading: $sourceUrl -> ${targetFile.absolutePath}")
 
+            val url = URIBuilder(sourceUrl)
             val downloader = ProgressFileDownloader(project)
-            downloader.headerSourceTarget(sourceUrl, targetFile)
 
             connect(url) { sftp ->
                 val size = sftp.stat(url.path).size

@@ -22,7 +22,6 @@ open class Purge : Sync() {
     @TaskAction
     fun purge() {
         aem.progress({
-            header = "Purging package(s) from instance(s)"
             total = instances.size.toLong() * packages.size.toLong()
         }, {
             aem.syncPackages(instances, packages) { pkg ->
@@ -33,8 +32,8 @@ open class Purge : Sync() {
                         uninstall(this, packagePath)
                         delete(this, packagePath)
                     } catch (e: InstanceException) {
-                        logger.info(e.message)
-                        logger.debug("Nothing to purge.", e)
+                        aem.logger.info(e.message)
+                        aem.logger.debug("Nothing to purge.", e)
                     }
                 }
             }

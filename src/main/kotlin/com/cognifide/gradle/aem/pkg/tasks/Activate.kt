@@ -13,7 +13,6 @@ open class Activate : Sync() {
     @TaskAction
     fun activate() {
         aem.progress({
-            header = "Activating package(s) on instance(s)"
             total = instances.size.toLong() * packages.size.toLong()
         }, {
             aem.syncPackages(instances, packages) { pkg ->

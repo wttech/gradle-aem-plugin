@@ -103,7 +103,6 @@ open class Satisfy : Deploy() {
     @Suppress("ComplexMethod")
     override fun deploy() {
         aem.progress({
-            header = "Satisfying packages(s)"
             total = packageGroups.sumBy { packageGroup ->
                 packageGroup.files.size * determineInstancesForGroup(packageGroup).size
             }.toLong()
@@ -121,12 +120,14 @@ open class Satisfy : Deploy() {
                 aem.notifier.notify("Packages satisfied", "Performed ${packageActions.size} action(s) for " +
                         "${packages.size} package(s) on ${instances.size} instance(s).")
             }
+        } else {
+            aem.logger.lifecycle("No actions to perform / all packages satisfied.")
         }
     }
 
     @Suppress("ComplexMethod")
     private fun ProgressIndicator.satisfyGroup(group: PackageGroup) {
-        logger.info("Satisfying group of packages '${group.name}'.")
+        aem.logger.info("Satisfying group of packages '${group.name}'.")
 
         var packageSatisfiedAny = false
         val packageInstances = determineInstancesForGroup(group)
@@ -140,14 +141,19 @@ open class Satisfy : Deploy() {
             }
 
             if (packageSatisfiableAny) {
-                group.initializer(this)
+                /* TODO fixme
+                logger.hold {
+                    group.initializer(this@sync)
+                }
+                */
+                group.initializer(this@sync)
             }
 
             packageStates.forEach { pkg ->
                 increment("${group.name} # ${pkg.file.name} -> ${instance.name}") {
                     when {
                         greedy -> {
-                            logger.info("Satisfying package ${pkg.name} on ${instance.name} (greedy).")
+                            aem.logger.info("Satisfying package ${pkg.name} on ${instance.name} (greedy).")
 
                             deployPackage(pkg.file, uploadForce, uploadRetry, installRecursive, installRetry)
 
@@ -155,40 +161,40 @@ open class Satisfy : Deploy() {
                             packageActions.add(PackageAction(pkg.file, instance))
                         }
                         isSnapshot(pkg.file) -> {
-                            logger.info("Satisfying package ${pkg.name} on ${instance.name} (snapshot).")
+                            aem.logger.info("Satisfying package ${pkg.name} on ${instance.name} (snapshot).")
                             deployPackage(pkg.file, uploadForce, uploadRetry, installRecursive, installRetry)
 
                             packageSatisfiedAny = true
                             packageActions.add(PackageAction(pkg.file, instance))
                         }
                         !pkg.uploaded -> {
-                            logger.info("Satisfying package ${pkg.name} on ${instance.name} (not uploaded).")
+                            aem.logger.info("Satisfying package ${pkg.name} on ${instance.name} (not uploaded).")
                             deployPackage(pkg.file, uploadForce, uploadRetry, installRecursive, installRetry)
 
                             packageSatisfiedAny = true
                             packageActions.add(PackageAction(pkg.file, instance))
                         }
                         !pkg.installed -> {
-                            logger.info("Satisfying package ${pkg.name} on ${instance.name} (not installed).")
+                            aem.logger.info("Satisfying package ${pkg.name} on ${instance.name} (not installed).")
                             installPackage(pkg.state!!.path, installRecursive, installRetry)
 
                             packageSatisfiedAny = true
                             packageActions.add(PackageAction(pkg.file, instance))
                         }
                         else -> {
-                            logger.info("Not satisfying package: ${pkg.name} on ${instance.name} (already installed).")
+                            aem.logger.info("Not satisfying package: ${pkg.name} on ${instance.name} (already installed).")
                         }
                     }
                 }
             }
 
             if (packageSatisfiableAny) {
-                group.finalizer(this)
+                logger.hold { group.finalizer(this@sync) }
             }
         }
 
         if (packageSatisfiedAny) {
-            group.completer()
+            logger.hold { group.completer() }
         }
     }
 

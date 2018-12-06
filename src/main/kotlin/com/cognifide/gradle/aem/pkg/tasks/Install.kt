@@ -13,7 +13,6 @@ open class Install : Sync() {
     @TaskAction
     fun install() {
         aem.progress({
-            header = "Installing package(s) on instance(s)"
             total = instances.size.toLong() * packages.size.toLong()
         }, {
             aem.syncPackages(instances, packages) { pkg ->

@@ -30,9 +30,10 @@ class ReloadAction(aem: AemExtension) : AwaitAction(aem) {
 
         if (reloaded.isNotEmpty()) {
             val unavailable = instances - reloaded
-            val header = "Reloading instance(s): ${reloaded.size} triggered, ${unavailable.size} unavailable"
+            val countdown = ProgressCountdown(aem.project, awaitDelay)
 
-            ProgressCountdown(aem.project, header, awaitDelay).run()
+            aem.logger.lifecycle("Reloading instance(s): ${reloaded.size} triggered, ${unavailable.size} unavailable")
+            countdown.run()
         } else {
             throw InstanceException("All instances are unavailable.")
         }

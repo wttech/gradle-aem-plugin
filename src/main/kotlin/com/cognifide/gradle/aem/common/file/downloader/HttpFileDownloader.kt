@@ -19,10 +19,10 @@ class HttpFileDownloader(
     fun download(sourceUrl: String, targetFile: File) {
         try {
             client.get(sourceUrl) { response ->
-                val downloader = ProgressFileDownloader(project)
-                downloader.headerSourceTarget(sourceUrl, targetFile)
-                downloader.size = response.entity.contentLength
+                project.logger.info("Downloading: $sourceUrl -> ${targetFile.absolutePath}")
 
+                val downloader = ProgressFileDownloader(project)
+                downloader.size = response.entity.contentLength
                 downloader.download(asStream(response), targetFile)
             }
         } catch (e: AemException) {

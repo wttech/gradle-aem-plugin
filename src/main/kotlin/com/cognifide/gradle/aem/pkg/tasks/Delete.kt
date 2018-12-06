@@ -20,7 +20,6 @@ open class Delete : Sync() {
     @TaskAction
     fun delete() {
         aem.progress({
-            header = "Deleting package(s) from instance(s)"
             total = instances.size.toLong() * packages.size.toLong()
         }, {
             aem.syncPackages(instances, packages) { pkg ->

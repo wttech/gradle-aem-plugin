@@ -10,6 +10,8 @@ import org.gradle.api.Project
 @Suppress("MagicNumber")
 open class ProgressFileDownloader(val project: Project) {
 
+    val progress = ProgressLogger(project)
+
     var size: Long = 0
 
     var header: String = "Downloading"
@@ -18,43 +20,32 @@ open class ProgressFileDownloader(val project: Project) {
 
     private var loggedKb: Long = 0
 
-    private val progressLogger by lazy {
-        ProgressLogger(project, header)
-    }
-
-    fun headerSourceTarget(sourceUrl: String, targetFile: File) {
-        header = "Downloading: $sourceUrl -> ${targetFile.absolutePath}"
-    }
-
     fun download(input: InputStream, outputFile: File) {
-        try {
-            progressLogger.started()
+        progress.launch {
+            input.use { input ->
+                val output = FileOutputStream(outputFile)
+                var finished = false
 
-            val output = FileOutputStream(outputFile)
-            var finished = false
+                try {
+                    val buf = ByteArray(1024 * 10)
+                    var read = input.read(buf)
 
-            try {
-                val buf = ByteArray(1024 * 10)
-                var read = input.read(buf)
+                    while (read >= 0) {
+                        output.write(buf, 0, read)
+                        processedBytes += read
+                        logProgress(outputFile)
+                        read = input.read(buf)
+                    }
 
-                while (read >= 0) {
-                    output.write(buf, 0, read)
-                    processedBytes += read
-                    logProgress(outputFile)
-                    read = input.read(buf)
-                }
-
-                output.flush()
-                finished = true
-            } finally {
-                output.close()
-                if (!finished) {
-                    outputFile.delete()
+                    output.flush()
+                    finished = true
+                } finally {
+                    output.close()
+                    if (!finished) {
+                        outputFile.delete()
+                    }
                 }
             }
-        } finally {
-            input.close()
-            progressLogger.completed()
         }
     }
 
@@ -65,7 +56,7 @@ open class ProgressFileDownloader(val project: Project) {
             if (size > 0) {
                 msg += "/${Formats.bytesToHuman(size)} [${Formats.percent(processedBytes, size)}]"
             }
-            progressLogger.progress(msg)
+            progress.progress(msg)
             loggedKb = processedKb
         }
     }

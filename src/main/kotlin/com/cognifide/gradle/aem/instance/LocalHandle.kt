@@ -160,30 +160,29 @@ class LocalHandle(val project: Project, val instance: LocalInstance) {
     }
 
     private fun extractStaticFiles() {
-        val progressLogger = ProgressLogger(project, "Extracting static files from JAR '${jar.absolutePath}' to directory: $staticDir")
-        progressLogger.started()
+        aem.logger.info("Extracting static files from JAR '${jar.absolutePath}' to directory: $staticDir")
 
-        var total = 0
-        ZipUtil.iterate(jar) { entry ->
-            if (entry.name.startsWith(JAR_STATIC_FILES_PATH)) {
-                total++
+        ProgressLogger(project).launch {
+            var total = 0
+            ZipUtil.iterate(jar) { entry ->
+                if (entry.name.startsWith(JAR_STATIC_FILES_PATH)) {
+                    total++
+                }
+            }
+
+            var processed = 0
+            ZipUtil.unpack(jar, staticDir) { name ->
+                if (name.startsWith(JAR_STATIC_FILES_PATH)) {
+                    val fileName = name.substringAfterLast("/")
+
+                    progress("Extracting: $fileName [${Formats.percent(processed, total)}]")
+                    processed++
+                    name.substring(JAR_STATIC_FILES_PATH.length)
+                } else {
+                    name
+                }
             }
         }
-
-        var processed = 0
-        ZipUtil.unpack(jar, staticDir) { name ->
-            if (name.startsWith(JAR_STATIC_FILES_PATH)) {
-                val fileName = name.substringAfterLast("/")
-
-                progressLogger.progress("Extracting: $fileName [${Formats.percent(processed, total)}]")
-                processed++
-                name.substring(JAR_STATIC_FILES_PATH.length)
-            } else {
-                name
-            }
-        }
-
-        progressLogger.completed()
     }
 
     private fun cleanDir(create: Boolean) {

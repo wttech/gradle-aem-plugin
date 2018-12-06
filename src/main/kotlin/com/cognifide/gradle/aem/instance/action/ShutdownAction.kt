@@ -46,7 +46,9 @@ class ShutdownAction(aem: AemExtension) : AbstractAction(aem) {
     }
 
     private fun shutdown() {
-        val progressLogger = ProgressLogger(aem.project, "Awaiting instance(s) shutdown: ${instances.names}", stableRetry.times)
+        aem.logger.info("Awaiting instance(s) shutdown: ${instances.names}")
+
+        val progressLogger = ProgressLogger(aem.project, stableRetry.times)
         progressLogger.started()
 
         var lastStableChecksum = -1

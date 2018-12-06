@@ -2,9 +2,9 @@ package com.cognifide.gradle.aem.common
 
 import org.gradle.api.Project
 
-class ProgressCountdown(project: Project, header: String, private val value: Long) {
+class ProgressCountdown(project: Project, private val value: Long) {
 
-    val logger = ProgressLogger(project, header)
+    val logger = ProgressLogger(project)
 
     var loggerInterval = 100
 

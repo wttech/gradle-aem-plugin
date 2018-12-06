@@ -20,7 +20,6 @@ open class Uninstall : Sync() {
     @TaskAction
     fun uninstall() {
         aem.progress({
-            header = "Uninstalling package(s) on instance(s)"
             total = instances.size.toLong() * packages.size.toLong()
         }, {
             aem.syncPackages(instances, packages) { pkg ->

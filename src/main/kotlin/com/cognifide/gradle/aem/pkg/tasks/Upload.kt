@@ -13,7 +13,6 @@ open class Upload : Sync() {
     @TaskAction
     fun upload() {
         aem.progress({
-            header = "Uploading package(s) to instance(s)"
             total = instances.size.toLong() * packages.size.toLong()
         }, {
             aem.syncPackages(instances, packages) { pkg ->

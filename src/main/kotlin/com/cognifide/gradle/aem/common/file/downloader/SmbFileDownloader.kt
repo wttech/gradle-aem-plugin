@@ -17,12 +17,12 @@ class SmbFileDownloader(val project: Project) {
 
     fun download(sourceUrl: String, targetFile: File) {
         try {
+            project.logger.info("Downloading: $sourceUrl -> ${targetFile.absolutePath}")
+
             val smbFile = fileFor(sourceUrl)
 
             val downloader = ProgressFileDownloader(project)
-            downloader.headerSourceTarget(sourceUrl, targetFile)
             downloader.size = smbFile.length()
-
             downloader.download(smbFile.inputStream, targetFile)
         } catch (e: IOException) {
             throw FileException("Cannot download URL '$sourceUrl' to file '$targetFile' using SMB. Check connection.", e)

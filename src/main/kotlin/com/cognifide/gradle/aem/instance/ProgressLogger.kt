@@ -4,7 +4,7 @@ import com.cognifide.gradle.aem.common.Behaviors
 import com.cognifide.gradle.aem.common.ProgressLogger as BaseLogger
 import org.gradle.api.Project
 
-class ProgressLogger(project: Project, header: String, private val stableTimes: Long) : BaseLogger(project, header) {
+class ProgressLogger(project: Project, private val stableTimes: Long) : BaseLogger(project) {
 
     fun progress(
         states: List<InstanceState>,

@@ -3,32 +3,28 @@ package com.cognifide.gradle.aem.common
 import java.util.concurrent.TimeUnit
 import org.apache.commons.lang3.time.StopWatch
 import org.gradle.api.Project
-import org.gradle.api.logging.Logger
-import org.gradle.internal.logging.progress.ProgressLoggerFactory
 import org.gradle.internal.logging.progress.ProgressLogger as BaseLogger
+import org.gradle.internal.logging.progress.ProgressLoggerFactory
 
 @Suppress("SpreadOperator")
-open class ProgressLogger(val project: Project, val header: String) {
+open class ProgressLogger(val project: Project) {
 
-    private val logger: Logger = project.logger
+    private lateinit var base: BaseLogger
 
-    private val base: BaseLogger = create(header)
+    private lateinit var stopWatch: StopWatch
 
-    private var stopWatch = StopWatch()
+    var header: String = "Operation in progress"
 
-    var progressEach: (String) -> Unit = { message -> logger.debug("$header: $message") }
+    var progressEach: (String) -> Unit = { message -> project.logger.debug("$header: $message") }
 
     var progressWindow = TimeUnit.SECONDS.toMillis(1)
 
-    private fun create(header: String): BaseLogger {
-        val progressLoggerFactoryClass: Class<*> = ProgressLoggerFactory::class.java
+    private fun create(): BaseLogger {
         val serviceFactory = invoke(project, "getServices")
-        val progressLoggerFactory = invoke(serviceFactory, "get", progressLoggerFactoryClass)
+        val baseFactoryClass: Class<*> = ProgressLoggerFactory::class.java
+        val baseFactory = invoke(serviceFactory, "get", baseFactoryClass)
 
-        val result = invoke(progressLoggerFactory, "newOperation", javaClass) as BaseLogger
-        result.description = header
-
-        return result
+        return invoke(baseFactory, "newOperation", javaClass) as BaseLogger
     }
 
     private operator fun invoke(obj: Any, method: String, vararg args: Any): Any {
@@ -43,11 +39,22 @@ open class ProgressLogger(val project: Project, val header: String) {
     }
 
     fun started() {
+        stopWatch = StopWatch()
         stopWatch.start()
+
+        base = create()
+        base.description = header
         base.started()
     }
 
+    val started: Boolean
+        get() = stopWatch.isStarted
+
     fun progress(message: String) {
+        if (!started) {
+            return
+        }
+
         base.progress(message)
 
         if (stopWatch.time >= progressWindow) {
@@ -57,13 +64,29 @@ open class ProgressLogger(val project: Project, val header: String) {
     }
 
     fun completed() {
+        if (!started) {
+            return
+        }
+
         base.completed()
         stopWatch.stop()
     }
 
     fun launch(block: ProgressLogger.() -> Unit) {
-        started()
-        block()
-        completed()
+        try {
+            started()
+            block()
+        } finally {
+            completed()
+        }
+    }
+
+    fun hold(block: ProgressLogger.() -> Unit) {
+        try {
+            completed()
+            block()
+        } finally {
+            started()
+        }
     }
 }

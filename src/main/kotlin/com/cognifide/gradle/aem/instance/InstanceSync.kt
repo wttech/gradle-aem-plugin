@@ -80,8 +80,9 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
                     aem.logger.debug("Upload error", e)
 
                     val delay = retry.delay(i + 1)
-                    val header = "Retrying upload (${i + 1}/${retry.times}) after delay: ${Formats.duration(delay)}"
-                    val countdown = ProgressCountdown(project, header, delay)
+                    val countdown = ProgressCountdown(project, delay)
+
+                    aem.logger.lifecycle("Retrying upload (${i + 1}/${retry.times}) after delay: ${Formats.duration(delay)}")
                     countdown.run()
                 }
             }
@@ -130,8 +131,9 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
                     aem.logger.debug("Download error", e)
 
                     val delay = retry.delay(i + 1)
-                    val header = "Retrying download (${i + 1}/${retry.times}) after delay: ${Formats.duration(delay)}"
-                    val countdown = ProgressCountdown(project, header, delay)
+                    val countdown = ProgressCountdown(project, delay)
+
+                    aem.logger.lifecycle("Retrying download (${i + 1}/${retry.times}) after delay: ${Formats.duration(delay)}")
                     countdown.run()
                 }
             }
@@ -181,8 +183,9 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
                     aem.logger.debug("Install error", e)
 
                     val delay = retry.delay(i + 1)
-                    val header = "Retrying install (${i + 1}/${retry.times}) after delay: ${Formats.duration(delay)}"
-                    val countdown = ProgressCountdown(project, header, delay)
+                    val countdown = ProgressCountdown(project, delay)
+
+                    aem.logger.lifecycle("Retrying install (${i + 1}/${retry.times}) after delay: ${Formats.duration(delay)}")
                     countdown.run()
                 }
             }

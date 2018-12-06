@@ -12,5 +12,4 @@ class PackageState(val file: File, val state: Package?) {
 
     val installed: Boolean
         get() = state != null && state.installed
-
 }

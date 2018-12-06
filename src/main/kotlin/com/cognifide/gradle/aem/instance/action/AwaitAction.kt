@@ -101,12 +101,16 @@ open class AwaitAction(aem: AemExtension) : AbstractAction(aem) {
     }
 
     private fun awaitDelay(delay: Long) {
-        ProgressCountdown(aem.project, "Waiting for instance(s): ${instances.names}", delay).run()
+        aem.logger.info("Waiting for instance(s): ${instances.names}")
+
+        ProgressCountdown(aem.project, delay).run()
     }
 
     @Suppress("ComplexMethod")
     private fun awaitStable() {
-        val progressLogger = ProgressLogger(aem.project, "Awaiting stable instance(s): ${instances.names}", stableRetry.times)
+        aem.logger.info("Awaiting stable instance(s): ${instances.names}")
+
+        val progressLogger = ProgressLogger(aem.project, stableRetry.times)
         progressLogger.started()
 
         var lastStableChecksum = -1
@@ -180,7 +184,7 @@ open class AwaitAction(aem: AemExtension) : AbstractAction(aem) {
     }
 
     private fun awaitHealthy() {
-        aem.logger.lifecycle("Checking health of instance(s): ${instances.names}")
+        aem.logger.info("Checking health of instance(s): ${instances.names}")
 
         val synchronizers = prepareSynchronizers()
         for (i in 0..healthRetry.times) {
@@ -195,8 +199,9 @@ open class AwaitAction(aem: AemExtension) : AbstractAction(aem) {
                 aem.logger.warn("Unhealthy instances detected: ${unhealthyInstances.names}")
 
                 val delay = healthRetry.delay(i + 1)
-                val header = "Retrying health check (${i + 1}/${healthRetry.times}) after delay: ${Formats.duration(delay)}"
-                val countdown = ProgressCountdown(aem.project, header, delay)
+                val countdown = ProgressCountdown(aem.project, delay)
+
+                aem.logger.lifecycle("Retrying health check (${i + 1}/${healthRetry.times}) after delay: ${Formats.duration(delay)}")
                 countdown.run()
             } else if (i == healthRetry.times) {
                 instanceStates.forEach { it.status.logTo(aem.logger) }
