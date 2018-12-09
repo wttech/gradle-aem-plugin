@@ -142,20 +142,20 @@ open class AemExtension(@Internal val project: Project) {
         get() {
             val cmdInstanceArg = props.string("aem.instance")
             if (!cmdInstanceArg.isNullOrBlank()) {
-                val cmdInstance = config.parseInstance(cmdInstanceArg)
-
-                logger.info("Using instance specified by command line parameter: $cmdInstance")
-                return cmdInstance
+                return instance(cmdInstanceArg)
             }
 
-            val anyInstance = instanceNamed(Instance.FILTER_ANY).firstOrNull()
-            if (anyInstance != null) {
-                logger.info("Using first instance matching filter '${Instance.FILTER_ANY}': $anyInstance")
-                return anyInstance
-            }
-
-            throw InstanceException("Instance cannot be determined neither by command line parameter nor AEM config.")
+            return instanceNamedExactly(Instance.FILTER_ANY)
         }
+
+    fun instanceNamedExactly(name: String): Instance {
+        val namedInstance = instanceNamed(name).firstOrNull()
+        if (namedInstance != null) {
+            return namedInstance
+        }
+
+        throw InstanceException("Instance named '$name' is not defined.")
+    }
 
     fun instanceNamed(nameMatcher: String = props.string("aem.instance.name") ?: "$environment-*"): List<Instance> {
         val all = config.instances.values
