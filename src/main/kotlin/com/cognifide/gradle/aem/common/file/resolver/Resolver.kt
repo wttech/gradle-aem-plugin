@@ -162,8 +162,8 @@ abstract class Resolver<G : FileGroup>(
 
     fun downloadHttpAuth(url: String, user: String? = null, password: String? = null, ignoreSsl: Boolean? = null) {
         downloadHttp(url) {
-            basicUser = user ?: aem.props.string("aem.resolver.http.basicUser") ?: ""
-            basicPassword = password ?: aem.props.string("aem.resolver.http.basicPassword") ?: ""
+            basicUser = user ?: aem.props.string("aem.resolver.http.username") ?: ""
+            basicPassword = password ?: aem.props.string("aem.resolver.http.password") ?: ""
             connectionIgnoreSsl = ignoreSsl ?: aem.props.boolean("aem.resolver.http.connectionIgnoreSsl") ?: true
         }
     }
