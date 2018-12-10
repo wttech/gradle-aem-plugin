@@ -92,18 +92,23 @@ class NotifierFacade private constructor(private val aem: AemExtension) {
         }
 
         /**
-         * Register once (for root project only) listener for notifying about build errors.
+         * Register once (for root project only) listener for notifying about build errors (if any task executed).
          */
         private fun setup(aem: AemExtension): NotifierFacade {
             val notifier = NotifierFacade(aem)
+            if (aem.project != aem.project.rootProject) {
+                return notifier
+            }
 
-            if (aem.project == aem.project.rootProject) {
-                aem.project.gradle.buildFinished { result ->
-                    if (result.failure != null) {
-                        val exception = ExceptionUtils.getRootCause(result.failure)
-                        val message = exception?.message ?: "no error message"
+            aem.project.gradle.taskGraph.whenReady { graph ->
+                if (graph.allTasks.isNotEmpty()) {
+                    aem.project.gradle.buildFinished { result ->
+                        if (result.failure != null) {
+                            val exception = ExceptionUtils.getRootCause(result.failure)
+                            val message = exception?.message ?: "no error message"
 
-                        notifier.notify("Build failure", message, LogLevel.ERROR)
+                            notifier.notify("Build failure", message, LogLevel.ERROR)
+                        }
                     }
                 }
             }

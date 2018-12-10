@@ -332,12 +332,22 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
 
     fun startBundle(symbolicName: String) {
         val bundle = getBundle(symbolicName)
+        if (bundle.stable) {
+            aem.logger.info("Not starting already started OSGi $bundle on $instance.")
+            return
+        }
+
         aem.logger.info("Starting OSGi $bundle on $instance.")
         post("$OSGI_BUNDLES_PATH/${bundle.id}", mapOf("action" to "start"))
     }
 
     fun stopBundle(symbolicName: String) {
         val bundle = getBundle(symbolicName)
+        if (!bundle.stable) {
+            aem.logger.info("Not stopping already stopped OSGi $bundle on $instance.")
+            return
+        }
+
         aem.logger.info("Stopping OSGi $bundle on $instance.")
         post("$OSGI_BUNDLES_PATH/${bundle.id}", mapOf("action" to "stop"))
     }
@@ -383,7 +393,7 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
     fun enableComponent(pid: String) {
         val component = getComponent(pid)
         if (component.id.isNotBlank()) {
-            aem.logger.info("Not enabling already enabled OSGi $component.")
+            aem.logger.info("Not enabling already enabled OSGi $component on $instance.")
             return
         }
 
@@ -394,7 +404,7 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
     fun disableComponent(pid: String) {
         val component = getComponent(pid)
         if (component.id.isBlank()) {
-            aem.logger.info("Not disabling already disabled OSGi $component.")
+            aem.logger.info("Not disabling already disabled OSGi $component on $instance.")
             return
         }
 

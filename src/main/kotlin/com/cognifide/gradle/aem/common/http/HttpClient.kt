@@ -27,6 +27,7 @@ import org.apache.http.message.BasicNameValuePair
 import org.apache.http.ssl.SSLContextBuilder
 import org.gradle.api.Project
 
+@Suppress("TooManyFunctions")
 open class HttpClient(val project: Project) {
 
     var baseUrl = ""
