@@ -9,11 +9,10 @@ import java.io.IOException
 import java.util.regex.Pattern
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.filefilter.EmptyFileFilter
-import org.apache.commons.io.filefilter.NameFileFilter
-import org.apache.commons.io.filefilter.TrueFileFilter
 import org.apache.commons.lang3.CharEncoding
 import org.apache.commons.lang3.StringUtils
 import org.gradle.api.Project
+import org.gradle.api.file.ConfigurableFileTree
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 
@@ -23,16 +22,35 @@ class Cleaner(project: Project) {
     private val aem = AemExtension.of(project)
 
     /**
+     * Allows to control which files under each root root should be cleaned.
+     */
+    var filesDotContent: ConfigurableFileTree.() -> Unit = {
+        include("**/$JCR_CONTENT_FILE")
+    }
+
+    /**
      * Determines which files will be deleted within running cleaning
      * (e.g after checking out JCR content).
      */
     @Input
-    var filesDeleted: List<String> = listOf(
-            "**/.vlt",
-            "**/.vlt*.tmp"
-    )
+    var filesDeleted: ConfigurableFileTree.() -> Unit = {
+        include(listOf(
+                "**/.vlt",
+                "**/.vlt*.tmp"
+        ))
+    }
 
-    private val filesDeletedRules by lazy { CleanerRule.manyFrom(filesDeleted) }
+    /**
+     * Determines which files will be flattened
+     * (e.g /_cq_dialog/.content.xml will be replaced by _cq_dialog.xml).
+     */
+    @Input
+    var filesFlattened: ConfigurableFileTree.() -> Unit = {
+        include(listOf(
+                "**/_cq_dialog/.content.xml",
+                "**/_cq_htmlTag/.content.xml"
+        ))
+    }
 
     /**
      * Properties that will be skipped when pulling JCR content from AEM instance.
@@ -54,8 +72,6 @@ class Cleaner(project: Project) {
             "*_x0040_*"
     )
 
-    private val propertiesSkippedRules by lazy { CleanerRule.manyFrom(propertiesSkipped) }
-
     /**
      * Mixin types that will be skipped when pulling JCR content from AEM instance.
      */
@@ -64,20 +80,6 @@ class Cleaner(project: Project) {
             "cq:ReplicationStatus",
             "mix:versionable"
     )
-
-    private val mixinTypesSkippedRules by lazy { CleanerRule.manyFrom(mixinTypesSkipped) }
-
-    /**
-     * Determines which files will be flattened
-     * (e.g /_cq_dialog/.content.xml will be replaced by _cq_dialog.xml).
-     */
-    @Input
-    var filesFlattened: List<String> = listOf(
-            "**/_cq_dialog/.content.xml",
-            "**/_cq_htmlTag/.content.xml"
-    )
-
-    private val filesFlattenedRules by lazy { CleanerRule.manyFrom(filesFlattened) }
 
     /**
      * Controls unused namespaces skipping.
@@ -122,8 +124,8 @@ class Cleaner(project: Project) {
     fun clean(root: File) {
         cleanDotContents(root)
         flattenFiles(root)
-        removeFiles(root)
-        removeEmptyDirs(root)
+        deleteFiles(root)
+        deleteEmptyDirs(root)
 
         if (parentsBackupEnabled) {
             undoParentsBackup(root)
@@ -132,19 +134,9 @@ class Cleaner(project: Project) {
         }
     }
 
-    private fun dotContentFiles(root: File): Collection<File> {
-        return FileUtils.listFiles(root, NameFileFilter(JCR_CONTENT_FILE), TrueFileFilter.INSTANCE)
-                ?: listOf()
-    }
-
-    private fun allFiles(root: File): Collection<File> {
-        return FileUtils.listFiles(root, TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE)
-                ?: listOf()
-    }
-
     private fun cleanDotContents(root: File) {
         if (root.isDirectory) {
-            dotContentFiles(root).forEach { cleanDotContentFile(it) }
+            aem.project.fileTree(root, filesDotContent).forEach { cleanDotContentFile(it) }
         } else {
             cleanDotContentFile(root)
         }
@@ -152,14 +144,14 @@ class Cleaner(project: Project) {
 
     private fun flattenFiles(root: File) {
         if (root.isDirectory) {
-            allFiles(root).forEach { flattenFile(it) }
+            aem.project.fileTree(root, filesFlattened).forEach { flattenFile(it) }
         } else {
             flattenFile(root)
         }
     }
 
     private fun flattenFile(file: File) {
-        if (!file.exists() || !matchAnyRule(file.path, file, filesFlattenedRules)) {
+        if (!file.exists()) {
             return
         }
 
@@ -174,16 +166,16 @@ class Cleaner(project: Project) {
         file.renameTo(dest)
     }
 
-    private fun removeFiles(root: File) {
+    private fun deleteFiles(root: File) {
         if (root.isDirectory) {
-            allFiles(root).forEach { removeFile(it) }
+            aem.project.fileTree(root, filesDeleted).forEach { deleteFile(it) }
         } else {
-            removeFile(root)
+            deleteFile(root)
         }
     }
 
-    private fun removeFile(file: File) {
-        if (!file.exists() || !matchAnyRule(file.path, file, filesDeletedRules)) {
+    private fun deleteFile(file: File) {
+        if (!file.exists()) {
             return
         }
 
@@ -191,11 +183,11 @@ class Cleaner(project: Project) {
         FileUtils.deleteQuietly(file)
     }
 
-    private fun removeEmptyDirs(root: File) {
+    private fun deleteEmptyDirs(root: File) {
         val siblingDirs = root.listFiles { file -> file.isDirectory } ?: arrayOf()
-        siblingDirs.forEach { removeEmptyDirs(it) }
+        siblingDirs.forEach { deleteEmptyDirs(it) }
         if (EmptyFileFilter.EMPTY.accept(root)) {
-            aem.logger.info("Removing empty directory {}", root.path)
+            aem.logger.info("Deleting empty directory {}", root.path)
             FileUtils.deleteQuietly(root)
         }
     }
@@ -281,8 +273,10 @@ class Cleaner(project: Project) {
             return line
         }
 
+        val rules by lazy { CleanerRule.manyFrom(propertiesSkipped) }
+
         return eachProp(line) { propOccurrence, _ ->
-            if (matchAnyRule(propOccurrence, file, propertiesSkippedRules)) {
+            if (matchAnyRule(propOccurrence, file, rules)) {
                 ""
             } else {
                 line
@@ -295,10 +289,12 @@ class Cleaner(project: Project) {
             return line
         }
 
+        val rules by lazy { CleanerRule.manyFrom(mixinTypesSkipped) }
+
         return eachProp(line) { propName, propValue ->
             if (propName == JCR_MIXIN_TYPES_PROP) {
                 val normalizedValue = StringUtils.substringBetween(propValue, "[", "]")
-                val resultValues = normalizedValue.split(",").filter { !matchAnyRule(it, file, mixinTypesSkippedRules) }
+                val resultValues = normalizedValue.split(",").filter { !matchAnyRule(it, file, rules) }
                 if (resultValues.isEmpty() || normalizedValue.isEmpty()) {
                     ""
                 } else {
@@ -328,7 +324,7 @@ class Cleaner(project: Project) {
         eachParentFiles(normalizedRoot) { parent, siblingFiles ->
             parent.mkdirs()
             if (File(parent, parentsBackupDirIndicator).createNewFile()) {
-                siblingFiles.filter { !it.name.endsWith(parentsBackupSuffix) && !matchAnyRule(it.path, it, filesDeletedRules) }
+                siblingFiles.filter { !it.name.endsWith(parentsBackupSuffix) }
                         .forEach { origin ->
                             val backup = File(parent, origin.name + parentsBackupSuffix)
                             aem.logger.info("Doing backup of parent file: $origin")
@@ -359,7 +355,7 @@ class Cleaner(project: Project) {
 
     private fun cleanParents(root: File) {
         eachParentFiles(root) { _, siblingFiles ->
-            siblingFiles.forEach { removeFile(it) }
+            siblingFiles.forEach { deleteFile(it) }
             siblingFiles.forEach { cleanDotContentFile(it) }
         }
     }
