@@ -52,10 +52,13 @@ open class ProgressFileDownloader(val project: Project) {
     private fun logProgress(outputFile: File) {
         val processedKb = processedBytes / 1024
         if (processedKb > loggedKb) {
-            var msg = "Downloading: ${outputFile.name} ${Formats.bytesToHuman(processedBytes)}"
-            if (size > 0) {
-                msg += "/${Formats.bytesToHuman(size)} [${Formats.percent(processedBytes, size)}]"
+            val msg = if (size > 0) {
+                "Downloading: ${outputFile.name} | ${Formats.bytesToHuman(processedBytes)}/${Formats.bytesToHuman(size)}"
+                        .plus(" [${Formats.percent(processedBytes, size)}]")
+            } else {
+                "Downloading: ${outputFile.name} | ${Formats.bytesToHuman(processedBytes)}"
             }
+
             progress.progress(msg)
             loggedKb = processedKb
         }

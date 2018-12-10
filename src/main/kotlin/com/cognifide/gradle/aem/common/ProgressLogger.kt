@@ -1,11 +1,11 @@
 package com.cognifide.gradle.aem.common
 
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import org.apache.commons.lang3.time.StopWatch
 import org.gradle.api.Project
 import org.gradle.internal.logging.progress.ProgressLogger as BaseLogger
 import org.gradle.internal.logging.progress.ProgressLoggerFactory
-import java.util.concurrent.atomic.AtomicBoolean
 
 @Suppress("SpreadOperator")
 open class ProgressLogger private constructor(val project: Project) {

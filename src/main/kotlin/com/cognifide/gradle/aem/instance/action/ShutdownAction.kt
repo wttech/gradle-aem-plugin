@@ -2,9 +2,9 @@ package com.cognifide.gradle.aem.instance.action
 
 import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.Behaviors
+import com.cognifide.gradle.aem.instance.AwaitLogger
 import com.cognifide.gradle.aem.instance.InstanceException
 import com.cognifide.gradle.aem.instance.InstanceState
-import com.cognifide.gradle.aem.instance.AwaitLogger
 import com.cognifide.gradle.aem.instance.names
 
 class ShutdownAction(aem: AemExtension) : AbstractAction(aem) {

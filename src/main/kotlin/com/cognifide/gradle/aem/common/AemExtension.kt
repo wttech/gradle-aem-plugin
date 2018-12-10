@@ -127,11 +127,11 @@ open class AemExtension(@Internal val project: Project) {
 
     @get:Internal
     val instances: List<Instance>
-        get() = instanceNamed()
+        get() = instanceFilter()
 
     fun instances(consumer: (Instance) -> Unit) = parallelWith(instances, consumer)
 
-    fun instances(filter: String, consumer: (Instance) -> Unit) = parallelWith(instanceNamed(filter), consumer)
+    fun instances(filter: String, consumer: (Instance) -> Unit) = parallelWith(instanceFilter(filter), consumer)
 
     fun instance(urlOrName: String): Instance {
         return config.parseInstance(urlOrName)
@@ -142,22 +142,24 @@ open class AemExtension(@Internal val project: Project) {
         get() {
             val cmdInstanceArg = props.string("aem.instance")
             if (!cmdInstanceArg.isNullOrBlank()) {
-                val cmdInstance = config.parseInstance(cmdInstanceArg)
-
-                logger.info("Using instance specified by command line parameter: $cmdInstance")
-                return cmdInstance
+                return instance(cmdInstanceArg)
             }
 
-            val anyInstance = instanceNamed(Instance.FILTER_ANY).firstOrNull()
-            if (anyInstance != null) {
-                logger.info("Using first instance matching filter '${Instance.FILTER_ANY}': $anyInstance")
-                return anyInstance
-            }
-
-            throw InstanceException("Instance cannot be determined neither by command line parameter nor AEM config.")
+            return instanceNamed(Instance.FILTER_ANY)
         }
 
-    fun instanceNamed(nameMatcher: String = props.string("aem.instance.name") ?: "$environment-*"): List<Instance> {
+    fun instanceNamed(desiredName: String? = props.string("aem.instance.name"), defaultName: String = "$environment-*"): Instance {
+        val nameMatcher: String = desiredName ?: defaultName
+
+        val namedInstance = instanceFilter(nameMatcher).firstOrNull()
+        if (namedInstance != null) {
+            return namedInstance
+        }
+
+        throw InstanceException("Instance named '$nameMatcher' is not defined.")
+    }
+
+    fun instanceFilter(nameMatcher: String = props.string("aem.instance.name") ?: "$environment-*"): List<Instance> {
         val all = config.instances.values
 
         // Specified by command line should not be filtered
@@ -194,11 +196,11 @@ open class AemExtension(@Internal val project: Project) {
 
     @get:Internal
     val instanceAuthors: List<Instance>
-        get() = instanceNamed().filter { it.type == InstanceType.AUTHOR }
+        get() = instanceFilter().filter { it.type == InstanceType.AUTHOR }
 
     @get:Internal
     val instancePublishers: List<Instance>
-        get() = instanceNamed().filter { it.type == InstanceType.PUBLISH }
+        get() = instanceFilter().filter { it.type == InstanceType.PUBLISH }
 
     fun instanceHandles(consumer: LocalHandle.() -> Unit) = parallelWith(instanceHandles, consumer)
 
