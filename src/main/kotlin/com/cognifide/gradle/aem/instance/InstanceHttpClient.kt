@@ -11,15 +11,12 @@ open class InstanceHttpClient(project: Project, val instance: Instance) : HttpCl
     val aem = AemExtension.of(project)
 
     init {
+        baseUrl = instance.httpUrl
         basicUser = instance.user
         basicPassword = instance.password
         authorizationPreemptive = true
 
         apply(aem.config.instanceHttpOptions)
-    }
-
-    override fun baseUrl(url: String): String {
-        return "${instance.httpUrl}${url.replace(" ", "%20")}"
     }
 
     override fun checkStatus(response: HttpResponse, checker: (Int) -> Boolean) {

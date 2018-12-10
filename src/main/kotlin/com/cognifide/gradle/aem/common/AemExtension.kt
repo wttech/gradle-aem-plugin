@@ -183,26 +183,34 @@ open class AemExtension(@Internal val project: Project) {
     }
 
     @get:Internal
-    val instanceLocals: List<LocalInstance>
-        get() = instances.filterIsInstance(LocalInstance::class.java)
-
-    @get:Internal
-    val instanceHandles: List<LocalHandle>
-        get() = instanceLocals.map { LocalHandle(project, it) }
-
-    @get:Internal
-    val instanceRemotes: List<RemoteInstance>
-        get() = instances.filterIsInstance(RemoteInstance::class.java)
-
-    @get:Internal
     val instanceAuthors: List<Instance>
         get() = instanceFilter().filter { it.type == InstanceType.AUTHOR }
+
+    fun instanceAuthors(consumer: (Instance) -> Unit) = parallelWith(instanceAuthors, consumer)
 
     @get:Internal
     val instancePublishers: List<Instance>
         get() = instanceFilter().filter { it.type == InstanceType.PUBLISH }
 
+    fun instancePublishers(consumer: Instance.() -> Unit) = parallelWith(instancePublishers, consumer)
+
+    @get:Internal
+    val instanceLocals: List<LocalInstance>
+        get() = instances.filterIsInstance(LocalInstance::class.java)
+
+    fun instanceLocals(consumer: LocalInstance.() -> Unit) = parallelWith(instanceLocals, consumer)
+
+    @get:Internal
+    val instanceHandles: List<LocalHandle>
+        get() = instanceLocals.map { LocalHandle(project, it) }
+
     fun instanceHandles(consumer: LocalHandle.() -> Unit) = parallelWith(instanceHandles, consumer)
+
+    @get:Internal
+    val instanceRemotes: List<RemoteInstance>
+        get() = instances.filterIsInstance(RemoteInstance::class.java)
+
+    fun instanceRemotes(consumer: RemoteInstance.() -> Unit) = parallelWith(instanceRemotes, consumer)
 
     fun packages(consumer: (File) -> Unit) = parallelWith(packages, consumer)
 
@@ -349,6 +357,10 @@ open class AemExtension(@Internal val project: Project) {
             iterable.map { value -> async { value.apply(callback) } }.forEach { it.await() }
         }
     }
+
+    fun temporaryDir(task: Task) = temporaryDir(task.name)
+
+    fun temporaryDir(name: String) = AemTask.temporaryDir(project, name)
 
     init {
         project.gradle.projectsEvaluated { _ ->

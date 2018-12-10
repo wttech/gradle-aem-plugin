@@ -29,6 +29,8 @@ import org.gradle.api.Project
 
 open class HttpClient(val project: Project) {
 
+    var baseUrl = ""
+
     var basicUser = ""
 
     var basicPassword = ""
@@ -167,7 +169,7 @@ open class HttpClient(val project: Project) {
      * https://stackoverflow.com/questions/13652681/httpclient-invalid-uri-escaped-absolute-path-not-valid
      */
     open fun baseUrl(url: String): String {
-        return url.replace(" ", "%20")
+            return "$baseUrl${url.replace(" ", "%20")}"
     }
 
     @Suppress("TooGenericExceptionCaught")
