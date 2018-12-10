@@ -23,6 +23,7 @@ import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.bundling.Jar
 
+@Suppress("TooManyFunctions")
 open class AemExtension(@Internal val project: Project) {
 
     @Internal

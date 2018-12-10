@@ -214,7 +214,7 @@ class LocalHandle(val project: Project, val instance: LocalInstance) {
         execute(stopScript)
 
         try {
-            instance.sync.stop()
+            instance.sync.stopFramework()
         } catch (e: InstanceException) {
             // ignore, fallback when script failed
         }

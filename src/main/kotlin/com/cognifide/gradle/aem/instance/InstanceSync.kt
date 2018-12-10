@@ -313,30 +313,91 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
         aem.logger.debug("Asking for OSGi bundles on $instance")
 
         return try {
-            get(OSGI_BUNDLES_PATH) { asObjectFromJson(it, BundleState::class.java) }
+            get(OSGI_BUNDLES_LIST_JSON) { asObjectFromJson(it, BundleState::class.java) }
         } catch (e: AemException) {
             aem.logger.debug("Cannot request OSGi bundles state on $instance", e)
             BundleState.unknown(e)
         }
     }
 
+    fun findBundle(symbolicName: String): Bundle? {
+        return determineBundleState().bundles.find {
+            symbolicName.equals(it.symbolicName, ignoreCase = true)
+        }
+    }
+
+    fun getBundle(symbolicName: String): Bundle {
+        return findBundle(symbolicName) ?: throw InstanceException("OSGi bundle '$symbolicName' cannot be found on $instance.")
+    }
+
+    fun startBundle(symbolicName: String) = controlBundle(getBundle(symbolicName), "start")
+
+    fun stopBundle(symbolicName: String) = controlBundle(getBundle(symbolicName), "stop")
+
+    fun restartBundle(symbolicName: String) {
+        val bundle = getBundle(symbolicName)
+
+        controlBundle(bundle, "stop")
+        controlBundle(bundle, "start")
+    }
+
+    fun refreshBundle(symbolicName: String) = controlBundle(getBundle(symbolicName), "refresh")
+
+    fun updateBundle(symbolicName: String) = controlBundle(getBundle(symbolicName), "update")
+
+    private fun controlBundle(bundle: Bundle, action: String) {
+        aem.logger.info("Performing action '$action' for OSGi $bundle.")
+        postMultipart("$OSGI_BUNDLES_PATH/${bundle.id}", mapOf("action" to action))
+    }
+
     fun determineComponentState(): ComponentState {
         aem.logger.debug("Asking for OSGi components on $instance")
 
         return try {
-            get(OSGI_COMPONENTS_PATH) { asObjectFromJson(it, ComponentState::class.java) }
+            get(OSGI_COMPONENTS_LIST_JSON) { asObjectFromJson(it, ComponentState::class.java) }
         } catch (e: AemException) {
             aem.logger.debug("Cannot determine OSGi components state on $instance", e)
             ComponentState.unknown()
         }
     }
 
-    fun reload() {
-        shutdown(OSGI_VMSTAT_SHUTDOWN_RESTART)
+    fun findComponent(pid: String): Component? {
+        return determineComponentState().components.find {
+            pid.equals(it.pid, ignoreCase = true)
+        }
     }
 
-    fun stop() {
-        shutdown(OSGI_VMSTAT_SHUTDOWN_STOP)
+    fun getComponent(pid: String): Component {
+        return findComponent(pid) ?: throw InstanceException("OSGi component '$pid' cannot be found on $instance.")
+    }
+
+    fun enableComponent(pid: String) = controlComponent(getComponent(pid), "enable")
+
+    fun disableComponent(pid: String) = controlComponent(getComponent(pid), "disable")
+
+    fun restartComponent(symbolicName: String) {
+        val component = getComponent(symbolicName)
+
+        controlComponent(component, "disable")
+        controlComponent(component, "enable")
+    }
+
+    private fun controlComponent(component: Component, action: String) {
+        aem.logger.info("Performing action '$action' for OSGi $component.")
+        postMultipart("$OSGI_COMPONENTS_PATH/${component.id}", mapOf("action" to action))
+    }
+
+    fun restartFramework() = shutdownFramework("Restart")
+
+    fun stopFramework() = shutdownFramework("Stop")
+
+    private fun shutdownFramework(type: String) {
+        try {
+            aem.logger.info("Triggering OSGi framework shutdown on $instance.")
+            postUrlencoded(OSGI_VMSTAT_PATH, mapOf("shutdown_type" to type))
+        } catch (e: AemException) {
+            throw InstanceException("Cannot trigger shutdown of $instance.", e)
+        }
     }
 
     fun evalGroovyCode(code: String, data: Map<String, Any> = mapOf()): GroovyConsoleResult {
@@ -388,15 +449,6 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
         return scripts.asSequence().map { evalGroovyScript(it, data) }
     }
 
-    private fun shutdown(type: String) {
-        try {
-            aem.logger.info("Triggering shutdown of $instance.")
-            postUrlencoded(OSGI_VMSTAT_PATH, mapOf("shutdown_type" to type))
-        } catch (e: AemException) {
-            throw InstanceException("Cannot trigger shutdown of $instance.", e)
-        }
-    }
-
     companion object {
         const val PKG_MANAGER_PATH = "/crx/packmgr/service"
 
@@ -406,15 +458,15 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
 
         const val PKG_MANAGER_LIST_JSON = "/crx/packmgr/list.jsp"
 
-        const val OSGI_BUNDLES_PATH = "/system/console/bundles.json"
+        const val OSGI_BUNDLES_PATH = "/system/console/bundles"
 
-        const val OSGI_COMPONENTS_PATH = "/system/console/components.json"
+        const val OSGI_BUNDLES_LIST_JSON = "$OSGI_BUNDLES_PATH.json"
+
+        const val OSGI_COMPONENTS_PATH = "/system/console/components"
+
+        const val OSGI_COMPONENTS_LIST_JSON = "$OSGI_COMPONENTS_PATH.json"
 
         const val OSGI_VMSTAT_PATH = "/system/console/vmstat"
-
-        const val OSGI_VMSTAT_SHUTDOWN_STOP = "Stop"
-
-        const val OSGI_VMSTAT_SHUTDOWN_RESTART = "Restart"
 
         const val GROOVY_CONSOLE_EVAL_PATH = "/bin/groovyconsole/post.json"
     }
