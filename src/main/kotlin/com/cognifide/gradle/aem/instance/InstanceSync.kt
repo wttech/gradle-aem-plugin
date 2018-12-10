@@ -330,24 +330,33 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
         return findBundle(symbolicName) ?: throw InstanceException("OSGi bundle '$symbolicName' cannot be found on $instance.")
     }
 
-    fun startBundle(symbolicName: String) = controlBundle(getBundle(symbolicName), "start")
-
-    fun stopBundle(symbolicName: String) = controlBundle(getBundle(symbolicName), "stop")
-
-    fun restartBundle(symbolicName: String) {
+    fun startBundle(symbolicName: String) {
         val bundle = getBundle(symbolicName)
-
-        controlBundle(bundle, "stop")
-        controlBundle(bundle, "start")
+        aem.logger.info("Starting OSGi $bundle on $instance.")
+        post("$OSGI_BUNDLES_PATH/${bundle.id}", mapOf("action" to "start"))
     }
 
-    fun refreshBundle(symbolicName: String) = controlBundle(getBundle(symbolicName), "refresh")
+    fun stopBundle(symbolicName: String) {
+        val bundle = getBundle(symbolicName)
+        aem.logger.info("Stopping OSGi $bundle on $instance.")
+        post("$OSGI_BUNDLES_PATH/${bundle.id}", mapOf("action" to "stop"))
+    }
 
-    fun updateBundle(symbolicName: String) = controlBundle(getBundle(symbolicName), "update")
+    fun restartBundle(symbolicName: String) {
+        stopBundle(symbolicName)
+        startBundle(symbolicName)
+    }
 
-    private fun controlBundle(bundle: Bundle, action: String) {
-        aem.logger.info("Performing action '$action' for OSGi $bundle.")
-        postMultipart("$OSGI_BUNDLES_PATH/${bundle.id}", mapOf("action" to action))
+    fun refreshBundle(symbolicName: String) {
+        val bundle = getBundle(symbolicName)
+        aem.logger.info("Refreshing OSGi $bundle on $instance.")
+        post("$OSGI_BUNDLES_PATH/${bundle.symbolicName}", mapOf("action" to "refresh"))
+    }
+
+    fun updateBundle(symbolicName: String) {
+        val bundle = getBundle(symbolicName)
+        aem.logger.info("Updating OSGi $bundle on $instance.")
+        post("$OSGI_BUNDLES_PATH/${bundle.symbolicName}", mapOf("action" to "update"))
     }
 
     fun determineComponentState(): ComponentState {
@@ -371,20 +380,31 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
         return findComponent(pid) ?: throw InstanceException("OSGi component '$pid' cannot be found on $instance.")
     }
 
-    fun enableComponent(pid: String) = controlComponent(getComponent(pid), "enable")
+    fun enableComponent(pid: String) {
+        val component = getComponent(pid)
+        if (component.id.isNotBlank()) {
+            aem.logger.info("Not enabling already enabled OSGi $component.")
+            return
+        }
 
-    fun disableComponent(pid: String) = controlComponent(getComponent(pid), "disable")
-
-    fun restartComponent(symbolicName: String) {
-        val component = getComponent(symbolicName)
-
-        controlComponent(component, "disable")
-        controlComponent(component, "enable")
+        aem.logger.info("Enabling OSGi $component on $instance.")
+        post("$OSGI_COMPONENTS_PATH/${component.pid}", mapOf("action" to "enable"))
     }
 
-    private fun controlComponent(component: Component, action: String) {
-        aem.logger.info("Performing action '$action' for OSGi $component.")
-        postMultipart("$OSGI_COMPONENTS_PATH/${component.id}", mapOf("action" to action))
+    fun disableComponent(pid: String) {
+        val component = getComponent(pid)
+        if (component.id.isBlank()) {
+            aem.logger.info("Not disabling already disabled OSGi $component.")
+            return
+        }
+
+        aem.logger.info("Disabling OSGi $component on $instance.")
+        post("$OSGI_COMPONENTS_PATH/${component.id}", mapOf("action" to "disable"))
+    }
+
+    fun restartComponent(pid: String) {
+        disableComponent(pid)
+        enableComponent(pid)
     }
 
     fun restartFramework() = shutdownFramework("Restart")

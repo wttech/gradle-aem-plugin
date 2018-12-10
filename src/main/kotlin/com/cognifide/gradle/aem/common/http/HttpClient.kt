@@ -84,31 +84,31 @@ open class HttpClient(val project: Project) {
 
     var responseChecker: (HttpResponse) -> Unit = { checkStatus(it) }
 
-    fun get(path: String) = get(path) {}
+    fun get(path: String) = get(path) { checkStatus(it) }
 
     fun <T> get(path: String, handler: HttpClient.(HttpResponse) -> T): T {
         return execute(HttpGet(baseUrl(path)), handler)
     }
 
-    fun head(path: String) = head(path) {}
+    fun head(path: String) = head(path) { checkStatus(it) }
 
     fun <T> head(path: String, handler: HttpClient.(HttpResponse) -> T): T {
         return execute(HttpHead(baseUrl(path)), handler)
     }
 
-    fun delete(path: String) = delete(path) {}
+    fun delete(path: String) = delete(path) { checkStatus(it) }
 
     fun <T> delete(path: String, handler: HttpClient.(HttpResponse) -> T): T {
         return execute(HttpDelete(baseUrl(path)), handler)
     }
 
-    fun put(path: String) = put(path) {}
+    fun put(path: String) = put(path) { checkStatus(it) }
 
     fun <T> put(path: String, handler: HttpClient.(HttpResponse) -> T): T {
         return execute(HttpPut(baseUrl(path)), handler)
     }
 
-    fun patch(path: String) = patch(path) {}
+    fun patch(path: String) = patch(path) { checkStatus(it) }
 
     fun <T> patch(path: String, handler: HttpClient.(HttpResponse) -> T): T {
         return execute(HttpPatch(baseUrl(path)), handler)
@@ -118,13 +118,13 @@ open class HttpClient(val project: Project) {
 
     fun <T> post(url: String, params: Map<String, Any> = mapOf(), handler: HttpClient.(HttpResponse) -> T): T = postUrlencoded(url, params, handler)
 
-    fun postUrlencoded(url: String, params: Map<String, Any> = mapOf()) = postUrlencoded(url, params) {}
+    fun postUrlencoded(url: String, params: Map<String, Any> = mapOf()) = postUrlencoded(url, params) { checkStatus(it) }
 
     fun <T> postUrlencoded(url: String, params: Map<String, Any> = mapOf(), handler: HttpClient.(HttpResponse) -> T): T {
         return post(url, createEntityUrlencoded(params), handler)
     }
 
-    fun postMultipart(url: String, params: Map<String, Any> = mapOf()) = postMultipart(url, params) {}
+    fun postMultipart(url: String, params: Map<String, Any> = mapOf()) = postMultipart(url, params) { checkStatus(it) }
 
     fun <T> postMultipart(url: String, params: Map<String, Any> = mapOf(), handler: HttpClient.(HttpResponse) -> T): T {
         return post(url, createEntityMultipart(params), handler)
@@ -157,6 +157,10 @@ open class HttpClient(val project: Project) {
             throw ResponseException("Cannot parse / malformed response: $response")
         }
     }
+
+    fun checkStatus(response: HttpResponse, statusCode: Int) = checkStatus(response, listOf(statusCode))
+
+    fun checkStatus(response: HttpResponse, statusCodes: List<Int>) = checkStatus(response) { statusCodes.contains(it) }
 
     open fun checkStatus(response: HttpResponse, checker: (Int) -> Boolean = { it in STATUS_CODE_VALID }) {
         if (!checker(response.statusLine.statusCode)) {
