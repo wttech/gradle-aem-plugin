@@ -188,6 +188,7 @@
     "packageRoot": "*/src/main/content",
     "packageMetaCommonRoot": "*/aem/gradle/META-INF",
     "packageInstallPath" : "/apps/additional/install",
+    "packageInstallRepository": true,
     "packageErrors" : [
       "javax.jcr.nodetype.*Exception",
       "org.apache.jackrabbit.oak.api.*Exception",
@@ -216,7 +217,8 @@
         "Bundle-SymbolicName" : "com.company.aem.additional",
         "Import-Package" : "*",
         "Export-Package" : "com.company.aem.additional.*;-split-package:=merge-first",
-        "Sling-Model-Packages" : "com.company.aem.additional"
+        "Sling-Model-Packages" : "com.company.aem.additional",
+        "Created-By": "Gradle AEM Plugin"
       }
     }
   },

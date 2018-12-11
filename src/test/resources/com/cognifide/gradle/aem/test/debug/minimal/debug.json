@@ -46,6 +46,7 @@
     "packageRoot": "*/src/main/content",
     "packageMetaCommonRoot": "*/aem/gradle/META-INF",
     "packageInstallPath" : "/apps/minimal/install",
+    "packageInstallRepository": true,
     "packageErrors" : [
       "javax.jcr.nodetype.*Exception",
       "org.apache.jackrabbit.oak.api.*Exception",

@@ -20,6 +20,7 @@ class BundlePlugin : AemPlugin() {
         setupDependentPlugins()
         setupJavaDefaults()
         setupJavaBndTool()
+        setupPackageInstallRepository()
         setupTestTask()
     }
 
@@ -73,6 +74,18 @@ class BundlePlugin : AemPlugin() {
         } catch (e: Exception) {
             logger.error("BND tool error: https://bnd.bndtools.org", ExceptionUtils.getRootCause(e))
             throw BundleException("Bundle cannot be built properly.", e)
+        }
+    }
+
+    private fun Project.setupPackageInstallRepository() {
+        afterEvaluate {
+            val config = AemExtension.of(this).config
+            if (config.packageInstallRepository) {
+                val installDir = file("${config.packageJcrRoot}${config.packageInstallPath}")
+                if (installDir.exists()) {
+                    repositories.flatDir { it.dir(installDir) }
+                }
+            }
         }
     }
 

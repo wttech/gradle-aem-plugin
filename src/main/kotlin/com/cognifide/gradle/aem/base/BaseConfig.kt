@@ -99,6 +99,13 @@ class BaseConfig(
     }
 
     /**
+     * Configures a local repository from which unreleased JARs could be added as 'compileOnly' dependency
+     * and be deployed within CRX package deployment.
+     */
+    @Input
+    var packageInstallRepository: Boolean = true
+
+    /**
      * Define patterns for known exceptions which could be thrown during package installation
      * making it impossible to succeed.
      *

@@ -1,9 +1,6 @@
 package com.cognifide.gradle.aem.bundle
 
-import com.cognifide.gradle.aem.common.AemException
-import com.cognifide.gradle.aem.common.AemExtension
-import com.cognifide.gradle.aem.common.DependencyOptions
-import com.cognifide.gradle.aem.common.Formats
+import com.cognifide.gradle.aem.common.*
 import com.cognifide.gradle.aem.instance.Bundle
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.Serializable
@@ -112,7 +109,8 @@ val jar: Jar
     fun projectsEvaluated() {
         ensureJavaPackage()
         ensureBaseNameIfNotCustomized()
-        updateAttributes()
+        applyConventionAttributes()
+        combinePackageAttributes()
     }
 
     private fun ensureJavaPackage() {
@@ -140,23 +138,9 @@ val jar: Jar
     }
 
     /**
-     * Set (if not set) or update OSGi or AEM specific jar manifest attributes.
+     * Combine package attributes set explicitly with generated ones.
      */
-    private fun updateAttributes() {
-        if (attributesConvention) {
-            if (!hasAttribute(Bundle.ATTRIBUTE_NAME) && !aem.project.description.isNullOrBlank()) {
-                attribute(Bundle.ATTRIBUTE_NAME, aem.project.description)
-            }
-
-            if (!hasAttribute(Bundle.ATTRIBUTE_SYMBOLIC_NAME) && !javaPackage.isNullOrBlank()) {
-                attribute(Bundle.ATTRIBUTE_SYMBOLIC_NAME, javaPackage)
-            }
-
-            if (!hasAttribute(Bundle.ATTRIBUTE_SLING_MODEL_PACKAGES) && !javaPackage.isNullOrBlank()) {
-                attribute(Bundle.ATTRIBUTE_SLING_MODEL_PACKAGES, javaPackage)
-            }
-        }
-
+    private fun combinePackageAttributes() {
         combinePackageAttribute(Bundle.ATTRIBUTE_IMPORT_PACKAGE, importPackages)
         combinePackageAttribute(Bundle.ATTRIBUTE_PRIVATE_PACKAGE, privatePackages)
         combinePackageAttribute(Bundle.ATTRIBUTE_EXPORT_PACKAGE, exportPackages.toMutableList().apply {
@@ -184,6 +168,31 @@ val jar: Jar
 
         if (combinedPkgs.isNotEmpty()) {
             attribute(name, combinedPkgs.joinToString(","))
+        }
+    }
+
+    /**
+     * Generate attributes by convention using Gradle project metadata.
+     */
+    private fun applyConventionAttributes() {
+        if (!attributesConvention) {
+            return
+        }
+
+        if (!hasAttribute(Bundle.ATTRIBUTE_NAME) && !aem.project.description.isNullOrBlank()) {
+            name = aem.project.description
+        }
+
+        if (!hasAttribute(Bundle.ATTRIBUTE_SYMBOLIC_NAME) && !javaPackage.isNullOrBlank()) {
+            symbolicName = javaPackage
+        }
+
+        if (!hasAttribute(Bundle.ATTRIBUTE_SLING_MODEL_PACKAGES) && !javaPackage.isNullOrBlank()) {
+            slingModelPackages = javaPackage
+        }
+
+        if (!hasAttribute(Bundle.ATTRIBUTE_CREATED_BY)) {
+            createdBy = AemPlugin.NAME
         }
     }
 
@@ -218,14 +227,6 @@ val jar: Jar
 
     @get:Internal
     @get:JsonIgnore
-    var manifestVersion: String?
-        get() = attribute(Bundle.ATTRIBUTE_MANIFEST_VERSION)
-        set(value) {
-            attribute(Bundle.ATTRIBUTE_MANIFEST_VERSION, value)
-        }
-
-    @get:Internal
-    @get:JsonIgnore
     var activator: String?
         get() = attributes[Bundle.ATTRIBUTE_ACTIVATOR]?.toString()
         set(value) {
@@ -246,6 +247,70 @@ val jar: Jar
         get() = attribute(Bundle.ATTRIBUTE_VENDOR)
         set(value) {
             attribute(Bundle.ATTRIBUTE_VENDOR, value)
+        }
+
+    @get:Internal
+    @get:JsonIgnore
+    var license: String?
+        get() = attribute(Bundle.ATTRIBUTE_LICENSE)
+        set(value) {
+            attribute(Bundle.ATTRIBUTE_LICENSE, value)
+        }
+
+    @get:Internal
+    @get:JsonIgnore
+    var copyright: String?
+        get() = attribute(Bundle.ATTRIBUTE_COPYRIGHT)
+        set(value) {
+            attribute(Bundle.ATTRIBUTE_COPYRIGHT, value)
+        }
+
+    @get:Internal
+    @get:JsonIgnore
+    var docUrl: String?
+        get() = attribute(Bundle.ATTRIBUTE_DOC_URL)
+        set(value) {
+            attribute(Bundle.ATTRIBUTE_DOC_URL, value)
+        }
+
+    @get:Internal
+    @get:JsonIgnore
+    var developers: String?
+        get() = attribute(Bundle.ATTRIBUTE_DEVELOPERS)
+        set(value) {
+            attribute(Bundle.ATTRIBUTE_DEVELOPERS, value)
+        }
+
+    @get:Internal
+    @get:JsonIgnore
+    var contributors: String?
+        get() = attribute(Bundle.ATTRIBUTE_CONTRIBUTORS)
+        set(value) {
+            attribute(Bundle.ATTRIBUTE_CONTRIBUTORS, value)
+        }
+
+    @get:Internal
+    @get:JsonIgnore
+    var fragmentHost: String?
+        get() = attribute(Bundle.ATTRIBUTE_FRAGMENT_HOST)
+        set(value) {
+            attribute(Bundle.ATTRIBUTE_FRAGMENT_HOST, value)
+        }
+
+    @get:Internal
+    @get:JsonIgnore
+    var createdBy: String?
+        get() = attribute(Bundle.ATTRIBUTE_CREATED_BY)
+        set(value) {
+            attribute(Bundle.ATTRIBUTE_CREATED_BY, value)
+        }
+
+    @get:Internal
+    @get:JsonIgnore
+    var slingModelPackages: String?
+        get() = attribute(Bundle.ATTRIBUTE_SLING_MODEL_PACKAGES)
+        set(value) {
+            attribute(Bundle.ATTRIBUTE_SLING_MODEL_PACKAGES, value)
         }
 
     fun exportPackage(pkg: String) = exportPackages(listOf(pkg))

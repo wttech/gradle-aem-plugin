@@ -77,19 +77,31 @@ class Bundle {
 
         const val ATTRIBUTE_VERSION = "Bundle-Version"
 
-        const val ATTRIBUTE_MANIFEST_VERSION = "Bundle-ManifestVersion"
-
         const val ATTRIBUTE_ACTIVATOR = "Bundle-Activator"
 
         const val ATTRIBUTE_CATEGORY = "Bundle-Category"
 
+        const val ATTRIBUTE_LICENSE = "Bundle-License"
+
+        const val ATTRIBUTE_COPYRIGHT = "Bundle-Copyright"
+
+        const val ATTRIBUTE_DOC_URL = "Bundle-DocURL"
+
+        const val ATTRIBUTE_DEVELOPERS = "Bundle-Developers"
+
+        const val ATTRIBUTE_CONTRIBUTORS = "Bundle-Contributors"
+
         const val ATTRIBUTE_VENDOR = "Bundle-Vendor"
+
+        const val ATTRIBUTE_FRAGMENT_HOST = "Fragment-Host"
 
         const val ATTRIBUTE_EXPORT_PACKAGE = "Export-Package"
 
         const val ATTRIBUTE_PRIVATE_PACKAGE = "Private-Package"
 
         const val ATTRIBUTE_IMPORT_PACKAGE = "Import-Package"
+
+        const val ATTRIBUTE_CREATED_BY = "Created-By"
 
         const val ATTRIBUTE_SLING_MODEL_PACKAGES = "Sling-Model-Packages"
     }
