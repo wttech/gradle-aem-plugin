@@ -190,10 +190,6 @@ val jar: Jar
         if (!hasAttribute(Bundle.ATTRIBUTE_SLING_MODEL_PACKAGES) && !javaPackage.isNullOrBlank()) {
             slingModelPackages = javaPackage
         }
-
-        if (!hasAttribute(Bundle.ATTRIBUTE_CREATED_BY)) {
-            createdBy = AemPlugin.NAME
-        }
     }
 
     @get:Input
@@ -295,14 +291,6 @@ val jar: Jar
         get() = attribute(Bundle.ATTRIBUTE_FRAGMENT_HOST)
         set(value) {
             attribute(Bundle.ATTRIBUTE_FRAGMENT_HOST, value)
-        }
-
-    @get:Internal
-    @get:JsonIgnore
-    var createdBy: String?
-        get() = attribute(Bundle.ATTRIBUTE_CREATED_BY)
-        set(value) {
-            attribute(Bundle.ATTRIBUTE_CREATED_BY, value)
         }
 
     @get:Internal
