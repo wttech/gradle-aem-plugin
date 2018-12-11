@@ -28,16 +28,16 @@ Looking for dedicated version of plugin for [**Apache Sling**](https://sling.apa
 
 ### Features
 
-* Fully automated, tied to project, local AEM instance(s) setup allowing to start development within few minutes.
 * Composing CRX package from multiple JCR content roots, bundles.
+* Fully automated, tied to project, local AEM instance(s) setup allowing to start development within few minutes.
+* Powerful AEM DSL scripting capabilities for performing content migrations, managing instances.
 * Advanced AEM instance(s) stability & health checking after CRX package deployment.
-* Automated all-in-one CRX packages generation (assemblies).
-* Easy multi-deployment with instance groups.
+* Automated all-in-one CRX packages generation (assemblies), vault filters merging etc.
+* Easy parallel CRX package deployment to many remote group of instances.
 * Automated dependent CRX packages and OSGi bundles installation from local and remote sources (SMB, SSH, HTTP(s)).
 * Smart Vault files generation (combining defaults with overiddables).
 * Embedded Vault tool for checking out and cleaning JCR content from running AEM instance.
-* OSGi Manifest customization by embedded [BND plugin](https://github.com/bndtools/bnd/tree/master/biz.aQute.bnd.gradle).
-* OSGi Declarative Services annotations support (instead of SCR, [see docs](http://blogs.adobe.com/experiencedelivers/experience-management/osgi/using-osgi-annotations-aem6-2/)).
+* Embedded [BND plugin](https://github.com/bndtools/bnd/tree/master/biz.aQute.bnd.gradle) for OSGi Manifest customization.
 
 ## Table of contents
 
@@ -683,15 +683,16 @@ This feature is especially useful to generate valid *META-INF/properties.xml* fi
 <!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
 <properties>
     <comment>{{project.description}}</comment>
-    <entry key="group">{{project.group}}</entry>
-    <entry key="name">{{project.name}}</entry>
+    <entry key="group">{{compose.vaultGroup}}</entry>
+    <entry key="name">{{compose.vaultName}}</entry>
     <entry key="version">{{project.version}}</entry>
+    <entry key="description">{{project.description}}</entry>
     <entry key="groupId">{{project.group}}</entry>
     <entry key="artifactId">{{project.name}}</entry>
-    <entry key="description">{{project.description}}</entry>
     <entry key="createdBy">{{user.name}}</entry>
-    <entry key="acHandling">{{config.packageAcHandling}}</entry>
-    <entry key="requiresRoot">{{requiresRoot}}</entry>
+    {% for e in compose.vaultProperties %}
+    <entry key="{{e.key}}">{{e.value | raw}}</entry>
+    {% endfor %}
 </properties>
 ```
 
@@ -699,15 +700,6 @@ Predefined properties:
 * `config` - [AEM configuration](src/main/kotlin/com/cognifide/gradle/aem/api/AemConfig.kt).
 * `rootProject` - project with directory in which *settings.gradle* is located.
 * `project` - current project.
-* `buildCount` - number to be used as CRX package build count (`buildDate` in format `yDDmmssSSS`).
-* `created` - current date in *ISO8601* format.
-
-Task specific:
-* `aemCompose` - properties which are being dynamically calculated basing on content actually included into package.
-   * `filterRoots` - after using method `includeContent` of `aemCompose` task, all Vault filter roots are being gathered. This property contains all these XML tags concatenated especially useful for building assemblies. If no projects will be included, then this variable will contain a single filter root with bundle path to be able to deploy auto-generated package with JAR file only.
-   * `filters` - same as above, but instead it is a collection of XML elements that could be traversed and rendered in a customized way.
-* `aemVlt` - properties are being injected to command specified in `aem.vlt.command` property. Following properties are being used internally also by `aemCheckout`.
-   * `instances` - map of defined instances with names as keys. 
 
 ## How to's
 
@@ -715,44 +707,70 @@ Task specific:
 
 Global configuration like AEM instances should be defined in root *build.gradle* file:
 
-```groovy
+```kotlin
 allprojects { subproject ->
-  plugins.withId 'com.cognifide.aem.base', {
+  plugins.withId("com.cognifide.aem.base") {
     aem {
         config {
-          contentPath = subproject.file("src/main/aem") // overrides default dir named 'content'
+          packageRoot = file("src/main/aem") // overrides default dir named 'content'
         }
     }
   }
 }
 ```
 
-For instance, project `:app:core` specific configuration like OSGi bundle or CRX package options should be defined in `app/core/build.gradle`:
+For instance, subproject `:aem:core` specific configuration like OSGi bundle or CRX package options should be defined in `aem/core/build.gradle.kts`:
 
-```groovy
+```kotlin
 aem {
-    config {
-        bundlePackage = 'com.company.aem.example.core'
+    bundle {
+        javaPackage = "com.company.example.aem.core"
     }
 }
 
-aemCompose {
-    includeProjects ':content:*'
-    baseName = 'example-core'
-    duplicatesStrategy = "EXCLUDE"
+tasks {
+    named<Compose>(Compose.NAME) {
+        fromProjects(':content:*')
+        baseName = "example-core"
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    }
 }
 ```
 
 Warning! Very often plugin users mistake is to configure `aemSatisfy` task in `allprojects` closure. 
 As an effect there will be same dependent CRX package defined multiple times.
 
-### Work with local and/or remote AEM instances
+### Understand instance conventions
 
-In AEM configuration section, there is possibility to use `localInstance` or `remoteInstance` methods to define AEM instances to be used to:
+Conventions assumed:
+
+* Instance **name** is a combination of *${environment}-${typeName}* e.g *local-author*, *integration-publish* etc.
+* Instance **type** indicates physical type of instance and could be only: *local* and *remote*. Local means that instance could be created by plugin automatically under local file system.
+* Instance **type name** is an instance purpose identifier and must start with prefix *author* or *publish*. Sample valid names: *author*, *author1*, *author2*, *author-master* and *publish*, *publish1* *publish2* etc.
+* Only instances defined as *local* are considered in command `aemSetup`, `aemCreate`, `aemUp` etc (that comes from `com.cognifide.aem.instance` plugin).
+* All instances defined as *local* or *remote* are considered in commands CRX package deployment related like `aemSatisfy`, `aemDeploy`, `aemUpload`, `aemInstall` etc.
+
+Instances could be defined in two ways, via:
  
-* install CRX packages being built via command `aemDeploy` or combination of more detailed `aemUpload`, `aemInstall` and optionally `aemActivate`,
-* communicate with while using Vault tool in commands `aemSync`, `aemCheckout`, `aemVlt`,
-* install dependent packages while using `aemSatisfy` command.
+* file `gradle.properties` - recommended approach, by properties convention.
+* build script - customizable approach.
+
+### Define instances via properties file
+
+The configuration could be specified through *gradle.properties* file using dedicated syntax.
+
+`aem.instance.$TYPE.$ENVIRONMENT-$TYPE_NAME.$PROP_NAME=$PROP_VALUE`
+
+Part | Possible values | Description |
+--- | --- | --- |
+`$TYPE` | `local` or `remote` (only) | Type of instance. Local means that for each one there will be set up AEM Quickstart at local file system. | 
+`$ENVIRONMENT` | `local`, `int`, `stg` etc | Environment name. |
+`$TYPE_NAME` | `author`, `publish`, `publish2`, etc | Combination of AEM instance type and semantic suffix useful when more than one of instance of same type is being configured. |
+`$PROP_NAME=$PROP_VALUE` | Local instances: `httpUrl=http://admin:admin@localhost:4502`, `password=foo`, `runModes=nosamplecontent`, `jvmOpts=-server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true`, `startOpts=...`, `debugPort=24502`. Remote instances: `httpUrl`, `user`, `password`. | Run modes, JVM opts and start opts should be comma delimited. |
+
+### Define instances via buildscript
+
+Example usage below. The commented value is an effective instance name.
 
 ```groovy
 aem {
@@ -800,24 +818,6 @@ aem {
     }
 }
 ```
-
-The above configuration can be also specified through *gradle.properties* file using dedicated syntax (recommended approach).
-
-`aem.instance.$TYPE.$ENVIRONMENT-$TYPE_NAME.$PROP_NAME=$PROP_VALUE`
-
-Part | Possible values | Description |
---- | --- | --- |
-`$TYPE` | `local` or `remote` (only) | Type of instance. Local means that for each one there will be set up AEM Quickstart at local file system. | 
-`$ENVIRONMENT` | `local`, `int`, `stg` etc | Environment name. |
-`$TYPE_NAME` | `author`, `publish`, `publish2`, etc | Combination of AEM instance type and semantic suffix useful when more than one of instance of same type is being configured. |
-`$PROP_NAME=$PROP_VALUE` | Local instances: `httpUrl=http://admin:admin@localhost:4502`, `password=foo`, `runModes=nosamplecontent`, `jvmOpts=-server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true`, `startOpts=...`, `debugPort=24502`. Remote instances: `httpUrl`, `user`, `password`. | Run modes, JVM opts and start opts should be comma delimited. |
-
-**Rules:**
-
-* Instance name is a combination of *${environment}-${typeName}* e.g *local-author*, *integration-publish* etc.
-* Instance type name must start with prefix *author* or *publish*. Sample valid names: *author*, *author1*, *author2*, *author-master* and *publish*, *publish1* *publish2* etc.
-* Only instances being defined as *local* are being considered in command `aemSetup`, `aemCreate`, `aemUp` etc (that comes from `com.cognifide.aem.instance` plugin).
-* All instances being defined as *local* or *remote* are being considered in commands CRX package deployment related like `aemSatisfy`, `aemDeploy`, `aemUpload`, `aemInstall` etc.
 
 ### Understand why there are one or two plugins to be applied in build script
 
@@ -870,13 +870,7 @@ gradlew aemDeploy -Paem.instance.publishers
 Instance urls delimited by semicolon:
 
 ```bash
-gradlew aemDeploy -Paem.instance.list=http://admin:admin@localhost:4502;http://admin:admin@localhost:4503
-```
-
-Alternative syntax - list delimited: instances by semicolon, instance properties by comma.
-
-```bash
-gradlew aemDeploy -Paem.instance.list=http://localhost:4502,admin,admin;http://localhost:4503,admin,admin
+gradlew aemDeploy -Paem.instance.list=[http://admin:admin@localhost:4502,http://admin:admin@localhost:4503]
 ```
 
 ### Customize local AEM instances configuration
@@ -884,26 +878,33 @@ gradlew aemDeploy -Paem.instance.list=http://localhost:4502,admin,admin;http://l
 Plugin allows to override or provide extra files to local AEM instance installations.
 This behavior is controlled by:
 
-```groovy
+```kotlin
 aem {
     config {
-        createPath = "${System.getProperty("user.home")}/.aem/${project.rootProject.name}"
-        createFilesPath = project.rootProject.file("src/main/resources/local-instance")
-        createFilesExpanded = [
-          "**/*.properties", 
-          "**/*.sh", 
-          "**/*.bat", 
-          "**/*.xml",
-          "**/start",
-          "**/stop"
-      ]
+        instanceRoot = "${System.getProperty("user.home")}/.aem/${project.rootProject.name}"
+    }
+}
+
+tasks {
+    named<Create>(Create.NAME) {
+        options {
+            overridesPath = "${project.rootProject.file("src/main/resources/local-instance")}"
+            filesExpanded = listOf(
+                "**/*.properties", 
+                "**/*.sh", 
+                "**/*.bat", 
+                "**/*.xml",
+                "**/start",
+                "**/stop"
+            )
+        }
     }
 }
 ```
 
-* Property *createPath* determines where AEM instance files will be extracted on local file system.
-* Property *createFilesPath* determines project location that holds extra instance files that will override plugin defaults (start / stop scripts) and / or extracted AEM files.
-* Property *createFilesExpandable* specifies which AEM instance files have an ability to use [expandable properties](#expandable-properties) inside.
+* Property *aem.config.instanceRoot* determines where AEM instance files will be extracted on local file system.
+* Property *overridesPath* determines project location that holds extra instance files that will override plugin defaults (start / stop scripts) and / or extracted AEM files.
+* Property *filesExpanded* specifies which AEM instance files have an ability to use [expandable properties](#expandable-properties) inside.
 
 In other words, to customize instance files just:
 
