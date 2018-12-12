@@ -135,7 +135,7 @@ dependencies {
 }
 ```
 
-File *build.gradle*:
+File *build.gradle.kts*:
 
 ```kotlin
 plugins {
@@ -304,7 +304,7 @@ gradlew :content:aemVlt -Paem.vlt.command='rcp -b 100 -r -u -n http://admin:admi
 
 For more details about available parameters, please visit [VLT Tool documentation](https://docs.adobe.com/docs/en/aem/6-2/develop/dev-tools/ht-vlttool.html).
 
-While using task `aemVlt` be aware that Gradle requires to have working directory with file *build.gradle* in it, but Vault tool can work at any directory under *jcr_root*. To change working directory for Vault, use property `aem.vlt.path` which is relative path to be appended to *jcr_root* for project task being currently executed.
+While using task `aemVlt` be aware that Gradle requires to have working directory with file *build.gradle.kts* in it, but Vault tool can work at any directory under *jcr_root*. To change working directory for Vault, use property `aem.vlt.path` which is relative path to be appended to *jcr_root* for project task being currently executed.
 
 #### Task `aemDebug` 
 
@@ -420,7 +420,7 @@ Compose CRX package from JCR content and bundles.
 
 ##### Expandable properties
 
-In exactly same way as it is working for instance files, properties can be expanded into metadata files of package being composed.
+In exactly same way as it is working for instance files, properties can be expanded inside metadata files of package being composed.
 
 Related configuration:
 
@@ -443,7 +443,7 @@ tasks {
 
 Predefined properties:
 * `compose` - [Compose](src/main/kotlin/com/cognifide/gradle/aem/pkg/tasks/Compose.kt) task instance.
-* `config` - [AEM configuration](src/main/kotlin/com/cognifide/gradle/aem/api/AemConfig.kt).
+* `config` - [Configuration](src/main/kotlin/com/cognifide/gradle/aem/base/BaseConfig.kt).
 * `rootProject` - project with directory in which *settings.gradle* is located.
 * `project` - current project.
 
@@ -678,16 +678,17 @@ gradlew aemSatisfy -Paem.satisfy.urls=[https://github.com/OlsonDigital/aem-groov
 
 Wait until all local or remote AEM instance(s) be stable.
 
-AEM Config Param | CMD Property | Default Value | Purpose
+Action parameter | CMD Property | Default Value | Purpose
 --- | --- | --- | ---
-`awaitStableRetry` | *aem.await.stable.retry* | `300` | Hook for customizing how often and how many stability checks will be performed. Corresponding CMD param controls maximum count of retries if default hook is active.
-`awaitStableAssurance` | *aem.await.stable.assurance* | `3` | Number of intervals / additional instance stability checks to assure all stable instances.
-`awaitStableCheck` | n/a | `{ it.checkBundleStable(500) }` | Hook for customizing instance stability check. Check will be repeated if assurance is configured. 
-`awaitHealthCheck` | n/a | { `it.checkComponentState(10000) }` | Hook for customizing instance health check.
-`awaitHealthRetry` | *aem.await.health.retry* | `6` | Hook for customizing how often and how many health checks will be performed.
-`awaitFast` | *aem.await.fast* | `false` | Skip stable check assurances and health checking. Alternative, quicker type of awaiting stable instances.
-`awaitFastDelay` | *aem.await.fast.delay* | `1000` | Time in milliseconds to postpone instance stability checks to avoid race condition related with actual operation being performed on AEM like starting JCR package installation or even creating launchpad.
-`awaitResume` | *aem.await.resume* | `false` | Do not fail build but log warning when there is still some unstable or unhealthy instance.
+`stableRetry` | *aem.await.stableRetry* | `300` | Hook for customizing how often and how many stability checks will be performed. Corresponding CMD param controls maximum count of retries if default hook is active.
+`stableAssurance` | *aem.await.stableAssurance* | `3` | Number of intervals / additional instance stability checks to assure all stable instances.
+`stableCheck` | n/a | `{ it.checkBundleStable() }` | Hook for customizing instance stability check. Check will be repeated if assurance is configured. 
+`healthCheck` | n/a | { `it.checkComponentState() }` | Hook for customizing instance health check.
+`healthRetry` | *aem.await.healthRetry* | `5` | Hook for customizing how often and how many health checks will be performed.
+`fast` | *aem.await.fast* | `false` | Skip stable check assurances and health checking. Alternative, quicker type of awaiting stable instances.
+`fastDelay` | *aem.await.fastDelay* | `1000` | Time in milliseconds to postpone instance stability checks to avoid race condition related with actual operation being performed on AEM like starting JCR package installation or even creating launchpad.  Considered only when fast mode is enabled.
+`warmupDelay` | *aem.await.warmupDelay* | `0` | Time to wait e.g after deployment before checking instance stability. Considered only when fast mode is disabled.
+`resume` | *aem.await.resume* | `false` | Do not fail build but log warning when there is still some unstable or unhealthy instance.
 
 Instance state, stable check, health check lambdas are using: [InstanceState](src/main/kotlin/com/cognifide/gradle/aem/instance/InstanceState.kt). Use its methods to achieve expected customized behavior.
 
@@ -705,7 +706,7 @@ Screenshot below presents generated ZIP package which is a result of running `gr
 
 ### Set AEM configuration properly for all / concrete project(s)
 
-Global configuration like AEM instances should be defined in root *build.gradle* file:
+Global configuration like AEM instances should be defined in root *build.gradle.kts* file:
 
 ```kotlin
 allprojects { subproject ->
@@ -893,7 +894,7 @@ gradlew :content:aemSync -Paem.filter.roots=[/etc/tags/example,/content/dam/exam
 
 Let's assume following project structure (with build file contents):
 
-* build.gradle (project `:`)
+* *build.gradle.kts* (project `:`)
 
 ```kotlin
 plugins {
@@ -912,7 +913,7 @@ tasks {
 
 When building via command `gradlew :build`, then the effect will be a CRX package with assembled JCR content and OSGi bundles from projects: `:app:core`, `:app:common`, `:content:init`, `:content:demo` and `:migration`.
 
-* app/build.gradle  (project `:app`)
+* *app/build.gradle.kts*  (project `:app`)
 
 ```kotlin
 plugins {
@@ -928,13 +929,13 @@ tasks {
 
 When building via command `gradlew :app:build`, then the effect will be a CRX package with assembled JCR content and OSGi bundles from projects: `:app:core`, `:app:common` only.
 
-* *app/core/build.gradle* (project `:app:core`, JCR content and OSGi bundle)
-* *app/common/build.gradle* (project `:app:common`, JCR content and OSGi bundle)
-* *content/init/build.gradle* (project `:content:init`, JCR content only)
-* *content/demo/build.gradle* (project `:content:demo`, JCR content only)
-* *migration/build.gradle* (project `:migration`, JCR content only)
-* *test/integration/build.gradle* (project `:test:integration`, any source code)
-* *test/functional/build.gradle* (project `:test:functional`, any source code)
+* *app/core/build.gradle.kts* (project `:app:core`, JCR content and OSGi bundle)
+* *app/common/build.gradle.kts* (project `:app:common`, JCR content and OSGi bundle)
+* *content/init/build.gradle.kts* (project `:content:init`, JCR content only)
+* *content/demo/build.gradle.kts* (project `:content:demo`, JCR content only)
+* *migration/build.gradle.kts* (project `:migration`, JCR content only)
+* *test/integration/build.gradle.kts* (project `:test:integration`, any source code)
+* *test/functional/build.gradle.kts* (project `:test:functional`, any source code)
 
 Gradle AEM Plugin is configured in that way that project can have:
  
@@ -996,7 +997,7 @@ Then the following attributes will be generated by convention:
 * `Export-Package` will grab value from `aem.bundle.javaPackage`.
 
 This values population behavior could be optionally disabled by config parameter `aem.bundle.attributesConvention = false`.
-Regardless if this behavior is enabled or diable, all of values are overiddable e.g:
+Regardless if this behavior is enabled or disabled, all of values are overiddable e.g:
 
 ```kotlin
 aem {

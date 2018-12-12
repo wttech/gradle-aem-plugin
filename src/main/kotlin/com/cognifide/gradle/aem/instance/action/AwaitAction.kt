@@ -25,7 +25,7 @@ open class AwaitAction(aem: AemExtension) : AbstractAction(aem) {
 
     /**
      * Time to wait e.g after deployment before checking instance stability.
-     * Considered only when fast mode is enabled.
+     * Considered only when fast mode is disabled.
      */
     var warmupDelay = aem.props.long("aem.await.warmupDelay") ?: TimeUnit.SECONDS.toMillis(0)
 
