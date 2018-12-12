@@ -312,59 +312,87 @@ gradlew :aemDebug
 
 Then file at path *build/aem/aemDebug/debug.json* with content below is being generated:
 
-```javascript
+```json
 {
   "buildInfo" : {
     "plugin" : {
-      "pluginVersion" : "x.y.z",
-      "gradleVersion" : "x.y.z"
+      "pluginVersion" : "6.0.0",
+      "gradleVersion" : "5.0"
+    },
+    "gradle" : {
+      "version" : "5.0",
+      "homeDir" : ".../.gradle/wrapper/dists/gradle-5.0-all/.../gradle-5.0"
+    },
+    "java" : {
+      "version" : "1.8",
+      "homeDir" : ".../Java/jdk1.8.0_121/jre"
     }
   },
   "projectInfo" : {
-    "displayName" : "root project 'example'",
-    "path" : ":",
-    "name" : "example",
-    "dir" : "C:\\Users\\krystian.panek\\Projects\\gradle-aem-multi"
+    "displayName" : "project ':aem:app.core'",
+    "path" : ":aem:app.core",
+    "name" : "app.core",
+    "dir" : ".../gradle-aem-multi/aem/app.core"
   },
-  "packageProperties" : {
-    "name" : "example",
-    "config" : {
-      "instances" : {
-        "local-author" : {
-          "httpUrl" : "http://localhost:4502",
-          "user" : "admin",
-          "password" : "admin",
-          "typeName" : "author",
-          "debugPort" : 14502,
-          "name" : "local-author",
-          "type" : "AUTHOR",
-          "httpPort" : 4502,
-          "environment" : "local"
-        }
-        // ...
-      },
-      "uploadForce" : true,
-      "installRecursive" : true
-      // ...
+  "baseConfig" : {
+    "instances" : {
+      "local-author" : {
+        "properties" : { },
+        "httpUrl" : "http://localhost:4502",
+        "user" : "admin",
+        "password" : "admin",
+        "typeName" : "author",
+        "environment" : "local",
+        "name" : "local-author",
+        "type" : "AUTHOR",
+        "httpPort" : 4502
+      }
     },
-    "requiresRoot" : "false",
-    "buildCount" : "20173491654283",
-    "created" : "2017-12-15T07:16:54Z"
+    "instanceRoot" : ".../.aem/example",
+    "packageSnapshots" : [ ],
+    "packageRoot" : ".../gradle-aem-multi/aem/app.core/src/main/content",
+    "packageMetaCommonRoot" : ".../gradle-aem-multi/aem/gradle/META-INF",
+    "packageInstallPath" : "/apps/example/app.core/install",
+    "packageInstallRepository" : true,
+    "packageErrors" : [
+      "javax.jcr.nodetype.*Exception",
+      "org.apache.jackrabbit.oak.api.*Exception",
+      "org.apache.jackrabbit.vault.packaging.*Exception",
+      "org.xml.sax.*Exception"
+    ],
+    "packageResponseBuffer" : 4096,
+    "lineSeparator" : "LF",
+    "notificationEnabled" : true,
+    "groovyScriptRoot" : ".../gradle-aem-multi/aem/gradle/groovyScript"
+  },
+  "bundleConfig" : {
+    "jar" : {
+      "installPath" : "/apps/example/app.core/install",
+      "attributesConvention" : true,
+      "javaPackage" : "com.company.example.aem.app.core",
+      "javaPackageOptions" : "-split-package:=merge-first",
+      "bndPath" : ".../gradle-aem-multi/aem/app.core/bnd.bnd",
+      "bndInstructions" : {
+        "-fixupmessages.bundleActivator" : "Bundle-Activator * is being imported *;is:=error"
+      },
+      "attributes" : {
+        "Manifest-Version" : "1.0",
+        "Bundle-Category" : "example",
+        "Bundle-Vendor" : "Company",
+        "Bundle-Name" : "Example - AEM Application Core",
+        "Bundle-SymbolicName" : "com.company.example.aem.app.core",
+        "Sling-Model-Packages" : "com.company.example.aem.app.core",
+        "Import-Package" : "*",
+        "Export-Package" : "com.company.example.aem.app.core.*;-split-package:=merge-first"
+      }
+    }
   },
   "packageDeployed" : {
-    "local-author" : {
-      "group" : "com.company.aem",
-      "name" : "example",
-      "version" : "1.0.0-SNAPSHOT",
-      "path" : "/etc/packages/com.company.aem/example-1.0.0-SNAPSHOT.zip",
-      "downloadName" : "example-1.0.0-SNAPSHOT.zip",
-      "lastUnpacked" : 1513321701062,
-      "installed" : true
-    }
-    // ...
+    "local-author" : null
   }
 }
 ```
+
 ### Package plugin tasks
 
 #### Task `aemCompose`
