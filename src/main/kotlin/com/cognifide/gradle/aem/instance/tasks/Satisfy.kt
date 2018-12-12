@@ -141,7 +141,7 @@ open class Satisfy : Deploy() {
             }
 
             if (packageSatisfiableAny) {
-                hold { group.initializer(this) }
+                hold { this@sync.apply(group.initializer) }
             }
 
             packageStates.forEach { pkg ->
@@ -184,7 +184,7 @@ open class Satisfy : Deploy() {
             }
 
             if (packageSatisfiableAny) {
-                hold { group.finalizer(this) }
+                hold { this@sync.apply(group.finalizer) }
             }
         }
 

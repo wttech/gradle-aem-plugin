@@ -80,9 +80,11 @@ class LocalHandle(val project: Project, val instance: LocalInstance) {
             FileUtils.copyDirectory(overridesDir, dir)
         }
 
+        val propertiesAll = this.properties + options.expandProperties
+
         aem.logger.info("Expanding instance files")
-        FileOperations.amendFiles(dir, options.filesExpanded) { file, source ->
-            aem.props.expand(source, properties, file.absolutePath)
+        FileOperations.amendFiles(dir, options.expandFiles) { file, source ->
+            aem.props.expand(source, propertiesAll, file.absolutePath)
         }
 
         aem.logger.info("Creating lock file")
@@ -241,7 +243,6 @@ class LocalHandle(val project: Project, val instance: LocalInstance) {
         get() {
             return mapOf(
                     "instance" to instance,
-                    "instancePath" to dir.absolutePath,
                     "handle" to this
             )
         }

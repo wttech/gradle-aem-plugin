@@ -17,12 +17,12 @@ class PackageGroup(val resolver: PackageResolver, name: String) : FileGroup(reso
     /**
      * Hook for preparing instance before deploying packages
      */
-    var initializer: (InstanceSync) -> Unit = {}
+    var initializer: InstanceSync.() -> Unit = {}
 
     /**
      * Hook for cleaning instance after deploying packages
      */
-    var finalizer: (InstanceSync) -> Unit = {}
+    var finalizer: InstanceSync.() -> Unit = {}
 
     /**
      * Hook after deploying all packages to all instances called only when

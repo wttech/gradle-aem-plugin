@@ -89,7 +89,7 @@ interface Instance : Serializable {
         }
 
         if (typeName.isBlank()) {
-            throw AemException("Type cannot be blank in $this")
+            throw AemException("Type name cannot be blank in $this")
         }
     }
 

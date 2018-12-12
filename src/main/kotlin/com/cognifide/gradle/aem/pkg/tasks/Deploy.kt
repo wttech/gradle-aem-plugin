@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.pkg.tasks
 
 import com.cognifide.gradle.aem.common.fileNames
+import com.cognifide.gradle.aem.instance.InstanceSync
 import com.cognifide.gradle.aem.instance.action.AwaitAction
 import com.cognifide.gradle.aem.instance.names
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -9,10 +10,6 @@ import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
 open class Deploy : Sync() {
-
-    init {
-        description = "Deploys CRX package on instance(s). Upload then install (and optionally activate)."
-    }
 
     /**
      * Check instance(s) health after deploying package(s).
@@ -52,13 +49,41 @@ open class Deploy : Sync() {
     @Input
     var installRecursive: Boolean = aem.props.boolean("aem.deploy.installRecursive") ?: true
 
+    /**
+     * Hook for preparing instance before deploying packages
+     */
+    var initializer: InstanceSync.() -> Unit = {}
+
+    /**
+     * Hook for cleaning instance after deploying packages
+     */
+    var finalizer: InstanceSync.() -> Unit = {}
+
+    /**
+     * Hook after deploying all packages to all instances.
+     */
+    var completer: () -> Unit = { await() }
+
     private var awaitOptions: AwaitAction.() -> Unit = {}
+
+    init {
+        description = "Deploys CRX package on instance(s). Upload then install (and optionally activate)."
+    }
 
     /**
      * Controls await action.
      */
     fun await(options: AwaitAction.() -> Unit) {
         this.awaitOptions = options
+    }
+
+    fun await() {
+        if (awaited) {
+            aem.actions.await {
+                instances = this@Deploy.instances
+                awaitOptions()
+            }
+        }
     }
 
     override fun projectsEvaluated() {
@@ -82,21 +107,20 @@ open class Deploy : Sync() {
         }, {
             aem.syncPackages(instances, packages) { pkg ->
                 increment("${pkg.name} -> ${instance.name}") {
+                    initializer()
+
                     if (distributed) {
                         distributePackage(pkg, uploadForce, uploadRetry, installRecursive, installRetry)
                     } else {
                         deployPackage(pkg, uploadForce, uploadRetry, installRecursive, installRetry)
                     }
+
+                    finalizer()
                 }
             }
         })
 
-        if (awaited) {
-            aem.actions.await {
-                instances = this@Deploy.instances
-                awaitOptions()
-            }
-        }
+        completer()
 
         aem.notifier.notify("Package deployed", "${packages.fileNames} on ${instances.names}")
     }
