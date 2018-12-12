@@ -456,7 +456,7 @@ This feature is especially useful to generate valid *META-INF/properties.xml* fi
     <comment>{{project.description}}</comment>
     <entry key="group">{{compose.vaultGroup}}</entry>
     <entry key="name">{{compose.vaultName}}</entry>
-    <entry key="version">{{project.version}}</entry>
+    <entry key="version">{{project.vaultVersion}}</entry>
     <entry key="description">{{project.description}}</entry>
     <entry key="groupId">{{project.group}}</entry>
     <entry key="artifactId">{{project.name}}</entry>
