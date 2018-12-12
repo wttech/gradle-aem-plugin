@@ -11,6 +11,12 @@ abstract class AbstractInstance(
     protected val project: Project
 ) : Instance {
 
+    override var properties = mapOf<String, Any>()
+
+    override fun property(key: String, value: Any) {
+        properties += mapOf(key to value)
+    }
+
     override val sync: InstanceSync
         get() = InstanceSync(project, this)
 

@@ -29,10 +29,12 @@ aem {
         remoteInstance("http://192.168.1.1") {
             typeName = "author"
             environment = "int"
+            property("externalUrl", "http://author.aem.local")
         }
         remoteInstance("http://192.168.1.2") {
             typeName = "publish"
             environment = "int"
+            property("externalUrl", "http://aem.local")
         }
 
         // custom env, ports and credentials

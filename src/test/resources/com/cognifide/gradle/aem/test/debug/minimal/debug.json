@@ -29,7 +29,8 @@
         "environment" : "local",
         "name" : "local-author",
         "type" : "AUTHOR",
-        "httpPort" : 4502
+        "httpPort" : 4502,
+        "properties" : { }
       },
       "local-publish" : {
         "httpUrl" : "http://localhost:4503",
@@ -39,7 +40,8 @@
         "environment" : "local",
         "name" : "local-publish",
         "type" : "PUBLISH",
-        "httpPort" : 4503
+        "httpPort" : 4503,
+        "properties" : { }
       }
     },
     "instanceRoot" : "*/.aem/minimal",

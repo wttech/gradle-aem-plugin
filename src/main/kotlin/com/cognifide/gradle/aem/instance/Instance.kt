@@ -58,6 +58,11 @@ interface Instance : Serializable {
     val name: String
         get() = "$environment-$typeName"
 
+    @get:Input
+    val properties: Map<String, Any>
+
+    fun property(key: String, value: Any)
+
     @get:Internal
     @get:JsonIgnore
     val sync: InstanceSync
@@ -107,6 +112,10 @@ interface Instance : Serializable {
 
         const val PASSWORD_DEFAULT = "admin"
 
+        val LOCAL_PROPS = listOf("httpUrl", "password", "jvmOpts", "startOpts", "runModes", "debugPort")
+
+        val REMOTE_PROPS = listOf("httpUrl", "user", "password")
+
         fun parse(project: Project, str: String): List<RemoteInstance> {
             return Formats.toList(str).map { RemoteInstance.create(project, it) }
         }
@@ -132,6 +141,8 @@ interface Instance : Serializable {
 
                     props["user"]?.let { this.user = it }
                     props["password"]?.let { this.password = it }
+
+                    this.properties = props.filterKeys { !REMOTE_PROPS.contains(it) }
                 }
             }.sortedBy { it.name }
             return remoteInstances
@@ -157,6 +168,8 @@ interface Instance : Serializable {
                     props["startOpts"]?.let { this.startOpts = it.split(" ") }
                     props["runModes"]?.let { this.runModes = it.split(",") }
                     props["debugPort"]?.let { this.debugPort = it.toInt() }
+
+                    this.properties = props.filterKeys { !LOCAL_PROPS.contains(it) }
                 }
             }.sortedBy { it.name }
             return localInstances

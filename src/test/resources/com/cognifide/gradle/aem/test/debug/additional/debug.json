@@ -33,7 +33,8 @@
         "httpPort" : 4502,
         "jvmOpts" : "-Xdebug -Xrunjdwp:transport=dt_socket,address=24502,server=y,suspend=n -server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true",
         "runModes" : "author,nosamplecontent,mongo",
-        "startOpts" : ""
+        "startOpts" : "",
+        "properties" : { }
       },
       "local-publish1" : {
         "httpUrl" : "http://localhost:4503",
@@ -47,7 +48,8 @@
         "httpPort" : 4503,
         "jvmOpts" : "-Xdebug -Xrunjdwp:transport=dt_socket,address=14503,server=y,suspend=n -server -Xmx1024m -XX:MaxPermSize=256M -Djava.awt.headless=true",
         "runModes" : "publish,local",
-        "startOpts" : ""
+        "startOpts" : "",
+        "properties" : { }
       },
       "local-publish2" : {
         "httpUrl" : "http://localhost:4504",
@@ -61,7 +63,8 @@
         "httpPort" : 4504,
         "jvmOpts" : "-Xdebug -Xrunjdwp:transport=dt_socket,address=14504,server=y,suspend=n -server -Xmx1024m -XX:MaxPermSize=256M -Djava.awt.headless=true",
         "runModes" : "publish,local",
-        "startOpts" : ""
+        "startOpts" : "",
+        "properties" : { }
       },
       "test-author" : {
         "httpUrl" : "http://192.168.6.6:4502",
@@ -71,7 +74,10 @@
         "environment" : "test",
         "name" : "test-author",
         "type" : "AUTHOR",
-        "httpPort" : 4502
+        "httpPort" : 4502,
+        "properties" : {
+          "externalUrl": "http://test-author.local"
+        }
       },
       "test-publish" : {
         "httpUrl" : "http://192.168.6.6:4503",
@@ -81,7 +87,10 @@
         "environment" : "test",
         "name" : "test-publish",
         "type" : "PUBLISH",
-        "httpPort" : 4503
+        "httpPort" : 4503,
+        "properties" : {
+          "externalUrl": "http://test-publish.local"
+        }
       },
       "prod-author" : {
         "httpUrl" : "http://author.example.com",
@@ -91,7 +100,8 @@
         "environment" : "prod",
         "name" : "prod-author",
         "type" : "AUTHOR",
-        "httpPort" : 80
+        "httpPort" : 80,
+        "properties" : { }
       },
       "prod-publish" : {
         "httpUrl" : "http://example.com",
@@ -101,7 +111,8 @@
         "environment" : "prod",
         "name" : "prod-publish",
         "type" : "PUBLISH",
-        "httpPort" : 80
+        "httpPort" : 80,
+        "properties" : { }
       },
       "int-author" : {
         "httpUrl" : "http://192.168.1.1",
@@ -111,7 +122,10 @@
         "environment" : "int",
         "name" : "int-author",
         "type" : "AUTHOR",
-        "httpPort" : 80
+        "httpPort" : 80,
+        "properties" : {
+          "externalUrl": "http://author.aem.local"
+        }
       },
       "int-publish" : {
         "httpUrl" : "http://192.168.1.2",
@@ -121,7 +135,10 @@
         "environment" : "int",
         "name" : "int-publish",
         "type" : "PUBLISH",
-        "httpPort" : 80
+        "httpPort" : 80,
+        "properties" : {
+          "externalUrl": "http://aem.local"
+        }
       },
       "stg-author" : {
         "httpUrl" : "https://192.168.3.1:8082",
@@ -131,7 +148,8 @@
         "environment" : "stg",
         "name" : "stg-author",
         "type" : "AUTHOR",
-        "httpPort" : 8082
+        "httpPort" : 8082,
+        "properties" : { }
       },
       "stg-publish" : {
         "httpUrl" : "https://192.168.3.2:8083",
@@ -141,7 +159,8 @@
         "environment" : "stg",
         "name" : "stg-publish",
         "type" : "PUBLISH",
-        "httpPort" : 8083
+        "httpPort" : 8083,
+        "properties" : { }
       },
       "perf-author-1" : {
         "httpUrl" : "http://192.168.2.1:4502",
@@ -151,7 +170,8 @@
         "environment" : "perf",
         "name" : "perf-author-1",
         "type" : "AUTHOR",
-        "httpPort" : 4502
+        "httpPort" : 4502,
+        "properties" : { }
       },
       "perf-author-2" : {
         "httpUrl" : "http://192.168.2.1:5502",
@@ -161,7 +181,8 @@
         "environment" : "perf",
         "name" : "perf-author-2",
         "type" : "AUTHOR",
-        "httpPort" : 5502
+        "httpPort" : 5502,
+        "properties" : { }
       },
       "perf-publish-1" : {
         "httpUrl" : "http://192.168.2.2:4503",
@@ -171,7 +192,8 @@
         "environment" : "perf",
         "name" : "perf-publish-1",
         "type" : "PUBLISH",
-        "httpPort" : 4503
+        "httpPort" : 4503,
+        "properties" : { }
       },
       "perf-publish-2" : {
         "httpUrl" : "http://192.168.2.2:5503",
@@ -181,7 +203,8 @@
         "environment" : "perf",
         "name" : "perf-publish-2",
         "type" : "PUBLISH",
-        "httpPort" : 5503
+        "httpPort" : 5503,
+        "properties" : { }
       }
     },
     "instanceRoot" : "*/.aem/additional",
@@ -217,8 +240,7 @@
         "Bundle-SymbolicName" : "com.company.aem.additional",
         "Import-Package" : "*",
         "Export-Package" : "com.company.aem.additional.*;-split-package:=merge-first",
-        "Sling-Model-Packages" : "com.company.aem.additional",
-        "Created-By": "Gradle AEM Plugin"
+        "Sling-Model-Packages" : "com.company.aem.additional"
       }
     }
   },
