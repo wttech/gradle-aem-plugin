@@ -407,6 +407,8 @@ Compose CRX package from JCR content and bundles.
 
 ##### Methods:
 
+TODO ...
+
 * `includeProject(projectPath: String)`, includes both bundles and JCR content from another project, example: `includeProject ':core'`.
 * `includeContent(projectPath: String)`, includes only JCR content, example: `includeContent ':design'`.
 * `includeBundles(projectPath: String)`, includes only bundles, example: `includeBundles ':common'`.
@@ -706,15 +708,28 @@ Screenshot below presents generated ZIP package which is a result of running `gr
 
 ### Set AEM configuration properly for all / concrete project(s)
 
-Global configuration like AEM instances should be defined in root *build.gradle.kts* file:
+Common configuration like root of content for JCR package, should be defined in `allprojects` section like below / e.g in root *build.gradle.kts* file:
 
 ```kotlin
-allprojects { subproject ->
+allprojects {
   plugins.withId("com.cognifide.aem.base") {
-    aem {
+    configure<AemExtension> {
         config {
             packageRoot = file("src/main/aem") // overrides default dir named 'content'
         }
+    }
+  }
+  
+  plugins.withId("com.cognifide.aem.bundle") {
+    configure<AemExtension> {
+        bundle {
+            category = "example"
+            vendor = "Company"
+        }
+    }
+  
+    dependencies {
+        "compileOnly"("com.adobe.aem:uber-jar:6.4.0:obfuscated-apis") // and more
     }
   }
 }
@@ -769,7 +784,7 @@ Part | Possible values | Description |
 `$TYPE_NAME` | `author`, `publish`, `publish2`, etc | Combination of AEM instance type and semantic suffix useful when more than one of instance of same type is being configured. |
 `$PROP_NAME=$PROP_VALUE` | Local instances: `httpUrl=http://admin:admin@localhost:4502`, `password=foo`, `runModes=nosamplecontent`, `jvmOpts=-server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true`, `startOpts=...`, `debugPort=24502`. Remote instances: `httpUrl`, `user`, `password`. | Run modes, JVM opts and start opts should be comma delimited. |
 
-### Define instances via buildscript
+### Define instances via build script
 
 Example usage below. The commented value is an effective instance name.
 
