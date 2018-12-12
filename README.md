@@ -12,8 +12,6 @@
 
 ## Description
 
-Currently there is no popular way to build applications for AEM using Gradle build system. This project contains brand new Gradle plugin to assemble CRX package and deploy it on instance(s).
-
 Incremental build which takes seconds, not minutes. Developer who does not loose focus between build time gaps. Extend freely your build system directly in project. 
 
 AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget to **star this project** on GitHub :)
@@ -405,22 +403,43 @@ Then file at path *build/aem/aemDebug/debug.json* with content below is being ge
 
 Compose CRX package from JCR content and bundles. 
 
-##### Methods:
+Inherits from [ZIP task](https://docs.gradle.org/3.5/dsl/org.gradle.api.tasks.bundling.Zip.html).
 
-TODO ...
+##### Default configuration
 
-* `includeProject(projectPath: String)`, includes both bundles and JCR content from another project, example: `includeProject ':core'`.
-* `includeContent(projectPath: String)`, includes only JCR content, example: `includeContent ':design'`.
-* `includeBundles(projectPath: String)`, includes only bundles, example: `includeBundles ':common'`.
-* `includeBundlesAtPath(projectPath: String, installPath: String)`, includes only bundles at custom install path, example: `includeBundles(':common', '/apps/my-app/install')`.
-* `includeBundles(projectPath: String, runMode: String)`, as above, useful when bundles need to be installed only on specific type of instance.
-* `mergeBundles(projectPath: String)`, includes only bundles at same install path.
-* `mergeBundles(projectPath: String, runMode: String)`, as above, useful when bundles need to be installed only on specific type of instance.
-* `includeProjects(pathPrefix: String)`, includes both bundles and JCR content from all AEM projects (excluding itself) in which project path is matching specified filter. Vault filter roots will be automatically merged and available in property `${filterRoots}` in *filter.xml* file. Useful for building assemblies (all-in-one packages).
-* `includeSubprojects()`, alias for method above: `includeProjects("${project.path}:*")`.
-* all inherited from [ZIP task](https://docs.gradle.org/3.5/dsl/org.gradle.api.tasks.bundling.Zip.html).
+```kotlin
+tasks {
+    named<Compose>(Compose.NAME) {
+        duplicatesStrategy = DuplicatesStrategy.WARN
+        baseName = aem.baseName
+        contentPath = aem.config.packageRoot
+        bundlePath = aem.config.packageInstallPath
+        metaDefaults = true
+        vaultProperties = mapOf(
+            "acHandling" to "merge_preserve",
+            "requiresRoot" to false
+        )
+        vaultName = baseName
+        vaultGroup = project.group
+        vaultVersion = project.version
+        fromConvention = true
+    }
+}
+```
 
-##### Expandable properties
+##### Assembly package generation
+
+Related methods:
+
+* `fromProject(path, options)`
+* `fromProjects(pathPattern, options)`
+* `fromCompose(task)`
+* `fromJar(task)`
+* `fromBundle(bundle)`
+
+TODO move from howto here
+
+##### Filtering package files
 
 In exactly same way as it is working for instance files, properties can be expanded inside metadata files of package being composed.
 
@@ -443,7 +462,8 @@ tasks {
 }
 ```
 
-Predefined properties:
+Predefined expandable properties:
+
 * `compose` - [Compose](src/main/kotlin/com/cognifide/gradle/aem/pkg/tasks/Compose.kt) task instance.
 * `config` - [Configuration](src/main/kotlin/com/cognifide/gradle/aem/base/BaseConfig.kt).
 * `rootProject` - project with directory in which *settings.gradle* is located.
@@ -567,6 +587,11 @@ Properties:
 * *expandFiles* specifies which AEM instance files have an ability to use [expandable properties](#expandable-properties) inside.
 * *expandProperties* is a place for defining custom properties that can be expanded in AEM instance files.
 
+Predefined expandable properties:
+
+* `handle` - [Handle](TODO) object,
+* `instance` - [LocalInstance](TODO) object.
+
 #### Task `aemDestroy` 
 
 Destroy local AEM instance(s).
@@ -653,7 +678,7 @@ tasks {
                     }
                     completer {
                         logger.info("Reloading instance(s) after installing Groovy Console")
-                        reload {
+                        aem.actions.reload {
                             delay = 3
                         }
                     }
