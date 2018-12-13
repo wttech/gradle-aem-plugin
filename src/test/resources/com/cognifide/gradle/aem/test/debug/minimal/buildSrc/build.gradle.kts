@@ -1,9 +1,9 @@
 repositories {
-    mavenLocal()
     jcenter()
+    mavenLocal()
+    maven { url = uri("http://dl.bintray.com/cognifide/maven-public") }
 }
 
 dependencies {
     implementation("com.cognifide.gradle:aem-plugin:6.0.0-beta")
-    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.3.0")
 }

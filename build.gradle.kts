@@ -10,7 +10,7 @@ plugins {
 }
 
 group = "com.cognifide.gradle"
-version = "6.0.0"
+version = "6.0.0-beta"
 description = "Gradle AEM Plugin"
 defaultTasks = listOf("build", "publishToMavenLocal")
 
