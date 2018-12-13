@@ -128,11 +128,11 @@ class Cleaner(project: Project) {
             cleanParents(root)
         }
 
-        deleteFiles(root)
-        deleteEmptyDirs(root)
-
         cleanDotContents(root)
         flattenFiles(root)
+
+        deleteFiles(root)
+        deleteEmptyDirs(root)
     }
 
     private fun cleanDotContents(root: File) {
