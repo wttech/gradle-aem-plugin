@@ -556,7 +556,7 @@ Should be applied to all projects that are composing CRX packages from *JCR cont
 
 Provides CRX package related tasks: `aemCompose`, `aemDeploy`, `aemActivate`, `aemPurge` etc.
 
-Inherits from [Base Plugin](#base-plugin).
+Inherits from [Tooling Plugin](#tooling-plugin).
 
 #### Task `aemCompose`
 
@@ -711,7 +711,7 @@ This feature is especially useful to generate valid *META-INF/properties.xml* fi
 
 Also file *nodetypes.cnd* is dynamically expanded to generate file containing all node types from all sub packages being merged into assembly package.
 
-Each JAR file in *hooks* directory will be also merged.
+Each JAR file in separate *hooks* directory will be combined into single directory when creating assembly package.
 
 #### Task `aemDeploy` 
 
@@ -843,7 +843,7 @@ Provides instance related tasks: `aemAwait`, `aemSetup`, `aemCreate` etc.
 
 Should be applied only at root project / only once within whole build.
 
-Inherits from [Base Plugin](#base-plugin).
+Inherits from [Config Plugin](#config-plugin).
 
 #### Task `aemSetup`
 
@@ -859,7 +859,7 @@ To prevent data loss, this unsafe task execution must be confirmed by parameter 
 
 #### Task `aemCreate`
  
-Create AEM instance(s) at local file system. Extracts *crx-quickstart* from downloaded JAR and applies configuration according to [instance definitions](#work-with-local-andor-remote-aem-instances). 
+Create AEM instance(s) at local file system. Extracts *crx-quickstart* from downloaded JAR and applies configuration according to [instance definitions](#defining-instances-via-properties-file). 
 
 ##### Source files configuration
 
