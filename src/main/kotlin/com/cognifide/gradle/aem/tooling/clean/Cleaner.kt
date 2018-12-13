@@ -36,7 +36,8 @@ class Cleaner(project: Project) {
     var filesDeleted: ConfigurableFileTree.() -> Unit = {
         include(listOf(
                 "**/.vlt",
-                "**/.vlt*.tmp"
+                "**/.vlt*.tmp",
+                "**/install/*.jar"
         ))
     }
 
