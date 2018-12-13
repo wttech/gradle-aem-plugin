@@ -37,6 +37,11 @@ Looking for dedicated version of plugin for [**Apache Sling**](https://sling.apa
 * Embedded Vault tool for checking out and cleaning JCR content from running AEM instance.
 * Embedded [BND plugin](https://github.com/bndtools/bnd/tree/master/biz.aQute.bnd.gradle) for OSGi Manifest customization.
 
+## Important notice 
+
+Gradle AEM Plugin 6.x serie and upper will **no longer support Groovy DSL** and **stands on Kotlin DSL** coming with Gradle 5.0.
+To see documentation appropriate for previous 5.x serie, please [click here](https://github.com/Cognifide/gradle-aem-plugin/tree/groovy) (navigate to branch `groovy`).
+
 ## Table of contents
 
   * [Getting started](#getting-started)
