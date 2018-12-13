@@ -2,7 +2,7 @@ package com.cognifide.gradle.aem.base.tasks
 
 import com.cognifide.gradle.aem.base.vlt.VltRunner
 import com.cognifide.gradle.aem.common.AemDefaultTask
-import org.gradle.api.tasks.Nested
+import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
 open class Vlt : AemDefaultTask() {
@@ -11,7 +11,7 @@ open class Vlt : AemDefaultTask() {
         description = "Execute any Vault command."
     }
 
-    @Nested
+    @Internal
     val vlt = VltRunner(project)
 
     fun options(configurer: VltRunner.() -> Unit) {

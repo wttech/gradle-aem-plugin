@@ -5,9 +5,7 @@ import com.cognifide.gradle.aem.common.AemDefaultTask
 import com.cognifide.gradle.aem.common.Formats
 import java.io.File
 import org.gradle.api.execution.TaskExecutionGraph
-import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
 
 open class Clean : AemDefaultTask() {
@@ -16,10 +14,10 @@ open class Clean : AemDefaultTask() {
         description = "Clean checked out JCR content."
     }
 
-    @Input
+    @Internal
     var contentPath = aem.config.packageRoot
 
-    @Nested
+    @Internal
     val filter = aem.filter
 
     @get:Internal
@@ -40,7 +38,7 @@ open class Clean : AemDefaultTask() {
     @Internal
     var filterRootClean: (File) -> Unit = { cleaner.clean(it) }
 
-    @Nested
+    @Internal
     val cleaner = Cleaner(project)
 
     @TaskAction

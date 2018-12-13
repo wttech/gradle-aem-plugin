@@ -52,16 +52,22 @@ open class Deploy : Sync() {
     /**
      * Hook for preparing instance before deploying packages
      */
+    @Internal
+    @get:JsonIgnore
     var initializer: InstanceSync.() -> Unit = {}
 
     /**
      * Hook for cleaning instance after deploying packages
      */
+    @Internal
+    @get:JsonIgnore
     var finalizer: InstanceSync.() -> Unit = {}
 
     /**
      * Hook after deploying all packages to all instances.
      */
+    @Internal
+    @get:JsonIgnore
     var completer: () -> Unit = { await() }
 
     private var awaitOptions: AwaitAction.() -> Unit = {}

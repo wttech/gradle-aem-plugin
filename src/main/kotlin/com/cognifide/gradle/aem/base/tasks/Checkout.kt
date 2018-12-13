@@ -4,8 +4,7 @@ import com.cognifide.gradle.aem.common.AemException
 import com.cognifide.gradle.aem.common.AemTask
 import com.cognifide.gradle.aem.common.Formats
 import com.cognifide.gradle.aem.pkg.PackageDownloader
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.Nested
+import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
 open class Checkout : Vlt() {
@@ -13,16 +12,16 @@ open class Checkout : Vlt() {
     /**
      * Determines a method of getting JCR content from remote instance.
      */
-    @Input
+    @Internal
     var type = Type.of(aem.props.string("aem.checkout.type") ?: Type.PACKAGE_DOWNLOAD.name)
 
-    @Input
+    @Internal
     var instance = aem.instanceAny
 
-    @Input
+    @Internal
     var filter = aem.filter
 
-    @Nested
+    @Internal
     val downloader = PackageDownloader(aem, AemTask.temporaryDir(project, name))
 
     init {

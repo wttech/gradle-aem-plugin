@@ -4,7 +4,7 @@ import com.cognifide.gradle.aem.base.vlt.VltException
 import com.cognifide.gradle.aem.base.vlt.VltRcpClient
 import com.cognifide.gradle.aem.instance.Instance
 import java.io.File
-import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
 open class Rcp : Vlt() {
@@ -13,16 +13,16 @@ open class Rcp : Vlt() {
         description = "Copy JCR content from one instance to another."
     }
 
-    @Input
+    @Internal
     var paths: Map<String, String> = mapOf()
 
-    @Input
+    @Internal
     var sourceInstance: Instance? = aem.props.string("aem.rcp.source")?.run { aem.config.parseInstance(this) }
 
-    @Input
+    @Internal
     var targetInstance: Instance? = aem.props.string("aem.rcp.target")?.run { aem.config.parseInstance(this) }
 
-    @Input
+    @Internal
     var opts: String = aem.props.string("aem.rcp.opts") ?: "-b 100 -r -u"
 
     @TaskAction
