@@ -1,5 +1,5 @@
 plugins {
-    id("com.cognifide.aem.tooling") version "6.0.0-beta"
+    id("com.cognifide.aem.tooling")
 }
 
 group = "com.company.aem"
