@@ -184,7 +184,7 @@ aem {
 To see all available options and actual documentation, please follow to:
 
 * `aem` - [AemExtension](src/main/kotlin/com/cognifide/gradle/aem/common/AemExtension.kt)
-* `config` - [BaseConfig](src/main/kotlin/com/cognifide/gradle/aem/base/BaseConfig.kt)
+* `config` - [Config](src/main/kotlin/com/cognifide/gradle/aem/config/Config.kt)
 * `bundle` - [BundleJar](src/main/kotlin/com/cognifide/gradle/aem/bundle/BundleJar.kt)
 
 ### Config plugin
@@ -684,9 +684,9 @@ tasks {
 
 Predefined expandable properties:
 
-* `compose` - [Compose](src/main/kotlin/com/cognifide/gradle/aem/pkg/tasks/Compose.kt) task instance.
-* `config` - [Configuration](src/main/kotlin/com/cognifide/gradle/aem/base/BaseConfig.kt).
-* `rootProject` - project with directory in which *settings.gradle* is located.
+* `compose` - [Compose](src/main/kotlin/com/cognifide/gradle/aem/pkg/tasks/Compose.kt) task instance,
+* `config` - [Config](src/main/kotlin/com/cognifide/gradle/aem/config/Config.kt) object,
+* `rootProject` - project with directory in which *settings.gradle* is located,
 * `project` - current project.
 
 This feature is especially useful to generate valid *META-INF/properties.xml* file, below is used by plugin by default:
