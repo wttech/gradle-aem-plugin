@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.test
 
-import org.junit.Assert
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.skyscreamer.jsonassert.Customization
 import org.skyscreamer.jsonassert.JSONAssert
 import org.skyscreamer.jsonassert.JSONCompareMode
@@ -9,7 +9,7 @@ import org.skyscreamer.jsonassert.comparator.CustomComparator
 object AemAssert {
 
     fun assertEqualsIgnoringLineEndings(expected: String, actual: String) {
-        Assert.assertEquals(normalizeLineEndings(expected), normalizeLineEndings(actual))
+        assertEquals(normalizeLineEndings(expected), normalizeLineEndings(actual))
     }
 
     private fun normalizeLineEndings(text: String): String {

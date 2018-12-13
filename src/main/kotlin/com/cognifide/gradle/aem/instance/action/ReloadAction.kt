@@ -1,47 +1,55 @@
 package com.cognifide.gradle.aem.instance.action
 
+import com.cognifide.gradle.aem.common.AemExtension
+import com.cognifide.gradle.aem.common.ProgressCountdown
 import com.cognifide.gradle.aem.instance.Instance
 import com.cognifide.gradle.aem.instance.InstanceException
-import com.cognifide.gradle.aem.instance.InstanceSync
-import com.cognifide.gradle.aem.internal.ProgressCountdown
-import org.gradle.api.Project
+import java.util.concurrent.TimeUnit
 
 /**
  * Reloads all instances and waits until all be stable.
  */
-class ReloadAction(project: Project, instances: List<Instance>) : AwaitAction(project, instances) {
+class ReloadAction(aem: AemExtension) : AwaitAction(aem) {
 
-    var delay = config.reloadDelay
+    /**
+     * Time in milliseconds to postpone await action after triggering instances restart.
+     */
+    var awaitDelay: Long = aem.props.long("aem.reload.awaitDelay") ?: TimeUnit.SECONDS.toMillis(10)
 
     private fun reload() {
         val reloaded = mutableListOf<Instance>()
-        instances.parallelStream().forEach { instance ->
+
+        aem.parallelWith(instances) {
             try {
-                InstanceSync(project, instance).reload()
-                reloaded += instance
+                sync.restartFramework()
+                reloaded += this
             } catch (e: InstanceException) { // still await timeout will fail
-                logger.error("Instance is unavailable: $instance", e)
+                aem.logger.error("Instance is unavailable: $this", e)
             }
         }
 
         if (reloaded.isNotEmpty()) {
             val unavailable = instances - reloaded
-            val header = "Reloading instance(s): ${reloaded.size} triggered, ${unavailable.size} unavailable"
+            val countdown = ProgressCountdown(aem.project, awaitDelay)
 
-            ProgressCountdown(project, header, delay).run()
+            aem.logger.lifecycle("Reloading instance(s): ${reloaded.size} triggered, ${unavailable.size} unavailable")
+            countdown.run()
         } else {
             throw InstanceException("All instances are unavailable.")
         }
     }
 
     override fun perform() {
+        if (!enabled) {
+            return
+        }
+
         if (instances.isEmpty()) {
-            logger.info("No instances to reload.")
+            aem.logger.info("No instances to reload.")
             return
         }
 
         reload()
         super.perform()
     }
-
 }

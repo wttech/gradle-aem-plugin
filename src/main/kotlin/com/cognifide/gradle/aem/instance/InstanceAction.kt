@@ -1,7 +1,8 @@
 package com.cognifide.gradle.aem.instance
 
-interface InstanceAction {
+import java.io.Serializable
+
+interface InstanceAction : Serializable {
 
     fun perform()
-
 }

@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.api.AemException
+import com.cognifide.gradle.aem.common.AemException
 import java.net.MalformedURLException
 import java.net.URL
 import java.net.URLEncoder
@@ -40,14 +40,14 @@ class InstanceUrl(raw: String) {
             config.port
         } else {
             if (config.protocol == "https") {
-                443
+                HTTPS_PORT
             } else {
-                80
+                HTTP_PORT
             }
         }
 
     val typeName: String
-        get() = InstanceType.nameByUrl(httpUrl)
+        get() = type.name.toLowerCase()
 
     val type: InstanceType
         get() = InstanceType.byUrl(httpUrl)
@@ -57,9 +57,9 @@ class InstanceUrl(raw: String) {
             "1$httpPort".toInt()
         } else {
             if (config.protocol == "https") {
-                50443
+                HTTPS_DEBUG_PORT
             } else {
-                50080
+                HTTP_DEBUG_PORT
             }
         }
 
@@ -70,6 +70,14 @@ class InstanceUrl(raw: String) {
     }
 
     companion object {
+
+        const val HTTPS_PORT = 443
+
+        const val HTTPS_DEBUG_PORT = 50443
+
+        const val HTTP_PORT = 80
+
+        const val HTTP_DEBUG_PORT = 50080
 
         fun encode(text: String): String {
             return URLEncoder.encode(text, Charsets.UTF_8.name()) ?: text
@@ -82,7 +90,5 @@ class InstanceUrl(raw: String) {
                 throw AemException("Cannot parse instance URL: '$raw'", e)
             }
         }
-
     }
-
 }

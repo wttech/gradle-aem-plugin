@@ -1,54 +1,75 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.api.AemConfig
-import com.cognifide.gradle.aem.api.AemException
-import com.cognifide.gradle.aem.internal.Formats
-import com.cognifide.gradle.aem.internal.Patterns
-import com.cognifide.gradle.aem.internal.PropertyParser
-import com.cognifide.gradle.aem.pkg.deploy.ListResponse
+import com.cognifide.gradle.aem.common.AemException
+import com.cognifide.gradle.aem.common.Formats
+import com.cognifide.gradle.aem.common.Patterns
 import com.fasterxml.jackson.annotation.JsonIgnore
-import org.gradle.api.Project
 import java.io.Serializable
-import kotlin.reflect.KClass
+import org.gradle.api.Project
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Internal
 
 interface Instance : Serializable {
 
+    @get:Input
     val httpUrl: String
 
+    @get:Internal
     val httpPort: Int
         get() = InstanceUrl.parse(httpUrl).httpPort
 
+    @get:Internal
     @get:JsonIgnore
     val httpBasicAuthUrl: String
         get() = InstanceUrl.parse(httpUrl).httpBasicAuthUrl(user, password)
 
+    @get:Input
     val user: String
 
+    @get:Input
     val password: String
 
+    @get:Internal
     @get:JsonIgnore
     val hiddenPassword: String
         get() = "*".repeat(password.length)
 
+    @get:Input
     val environment: String
 
+    @get:Internal
     @get:JsonIgnore
     val cmd: Boolean
         get() = environment == ENVIRONMENT_CMD
 
+    @get:Input
     val typeName: String
 
+    @get:Internal
     val type: InstanceType
         get() = InstanceType.byName(typeName)
 
+    @get:Internal
     @get:JsonIgnore
     val credentials: String
         get() = "$user:$password"
 
+    @get:Internal
     val name: String
         get() = "$environment-$typeName"
 
-    fun sync(synchronizer: (InstanceSync) -> Unit)
+    @get:Input
+    val properties: Map<String, Any>
+
+    fun property(key: String, value: Any)
+
+    @get:Internal
+    @get:JsonIgnore
+    val sync: InstanceSync
+
+    fun <T> sync(synchronizer: InstanceSync.() -> T): T {
+        return sync.run(synchronizer)
+    }
 
     fun validate() {
         if (!Formats.URL_VALIDATOR.isValid(httpUrl)) {
@@ -68,63 +89,68 @@ interface Instance : Serializable {
         }
 
         if (typeName.isBlank()) {
-            throw AemException("Type cannot be blank in $this")
+            throw AemException("Type name cannot be blank in $this")
         }
     }
 
+    @get:Internal
     @get:JsonIgnore
-    var packages: ListResponse?
+    val json: String
+        get() = Formats.toJson(this)
 
     companion object {
 
-        val FILTER_ANY = "*"
+        const val FILTER_ANY = "*"
 
-        val ENVIRONMENT_CMD = "cmd"
+        const val ENVIRONMENT_CMD = "cmd"
 
-        val URL_AUTHOR_DEFAULT = "http://localhost:4502"
+        const val URL_AUTHOR_DEFAULT = "http://localhost:4502"
 
-        val URL_PUBLISH_DEFAULT = "http://localhost:4503"
+        const val URL_PUBLISH_DEFAULT = "http://localhost:4503"
 
-        val USER_DEFAULT = "admin"
+        const val USER_DEFAULT = "admin"
 
-        val PASSWORD_DEFAULT = "admin"
+        const val PASSWORD_DEFAULT = "admin"
 
-        val AUTHORS_PROP = "aem.instance.authors"
+        val LOCAL_PROPS = listOf("httpUrl", "password", "jvmOpts", "startOpts", "runModes", "debugPort")
 
-        val PUBLISHERS_PROP = "aem.instance.publishers"
+        val REMOTE_PROPS = listOf("httpUrl", "user", "password")
 
         fun parse(project: Project, str: String): List<RemoteInstance> {
-            return str.split(";").map { urlRaw ->
-                val parts = urlRaw.split(",")
-
-                when (parts.size) {
-                    4 -> {
-                        val (httpUrl, type, user, password) = parts
-
-                        RemoteInstance.create(project, httpUrl) {
-                            this.user = user
-                            this.password = password
-                            this.typeName = type
-                        }
-                    }
-                    3 -> {
-                        val (httpUrl, user, password) = parts
-
-                        RemoteInstance.create(project, httpUrl) {
-                            this.user = user
-                            this.password = password
-                        }
-                    }
-                    else -> {
-                        RemoteInstance.create(project, urlRaw)
-                    }
-                }
-            }
+            return Formats.toList(str).map { RemoteInstance.create(project, it) }
         }
 
         fun properties(project: Project): List<Instance> {
-            val localInstances = collectProperties(project, "local").map {
-                val (name, props) = it
+            return localsFromProperties(project) + remotesFromProperties(project)
+        }
+
+        private fun remotesFromProperties(project: Project): List<RemoteInstance> {
+            val remoteInstances = collectProperties(project, "remote").map { e ->
+                val (name, props) = e
+                val nameParts = name.split("-")
+                if (nameParts.size != 2) {
+                    throw InstanceException("Remote instance name has invalid format: '$name'.")
+                }
+                val (environment, typeName) = nameParts
+                val httpUrl = props["httpUrl"]
+                        ?: throw InstanceException("Remote instance named '$name' must have property 'httpUrl' defined.")
+
+                RemoteInstance.create(project, httpUrl) {
+                    this.environment = environment
+                    this.typeName = typeName
+
+                    props["user"]?.let { this.user = it }
+                    props["password"]?.let { this.password = it }
+
+                    this.properties = props.filterKeys { !REMOTE_PROPS.contains(it) }
+                }
+            }.sortedBy { it.name }
+            return remoteInstances
+        }
+
+        private fun localsFromProperties(project: Project): List<LocalInstance> {
+            val localInstances = collectProperties(project, "local").map { e ->
+                val (name, props) = e
                 val nameParts = name.split("-")
                 if (nameParts.size != 2) {
                     throw InstanceException("Local instance name has invalid format: '$name'.")
@@ -142,30 +168,11 @@ interface Instance : Serializable {
                     props["startOpts"]?.let { this.startOpts = it.split(" ") }
                     props["runModes"]?.let { this.runModes = it.split(",") }
                     props["debugPort"]?.let { this.debugPort = it.toInt() }
+
+                    this.properties = props.filterKeys { !LOCAL_PROPS.contains(it) }
                 }
             }.sortedBy { it.name }
-
-            val remoteInstances = collectProperties(project, "remote").map {
-                val (name, props) = it
-                val nameParts = name.split("-")
-                if (nameParts.size != 2) {
-                    throw InstanceException("Remote instance name has invalid format: '$name'.")
-                }
-                val (environment, typeName) = nameParts
-                val httpUrl = props["httpUrl"]
-                        ?: throw InstanceException("Remote instance named '$name' must have property 'httpUrl' defined.")
-
-                RemoteInstance.create(project, httpUrl) {
-                    this.environment = environment
-                    this.typeName = typeName
-
-                    props["user"]?.let { this.user = it }
-                    props["password"]?.let { this.password = it }
-
-                }
-            }.sortedBy { it.name }
-
-            return localInstances + remoteInstances
+            return localInstances
         }
 
         private fun collectProperties(project: Project, type: String): MutableMap<String, MutableMap<String, String>> {
@@ -178,98 +185,26 @@ interface Instance : Serializable {
 
                 val (name, prop) = parts
 
-                result.getOrPut(name, { mutableMapOf() })[prop] = value as String
+                result.getOrPut(name) { mutableMapOf() }[prop] = value as String
                 result
             }
         }
 
-        fun defaults(project: Project): List<RemoteInstance> {
-            val config = AemConfig.of(project)
-
+        fun defaults(project: Project, environment: String): List<RemoteInstance> {
             return listOf(
-                    RemoteInstance.create(project, URL_AUTHOR_DEFAULT) { environment = config.environment },
-                    RemoteInstance.create(project, URL_PUBLISH_DEFAULT) { environment = config.environment }
+                    RemoteInstance.create(project, URL_AUTHOR_DEFAULT) { this.environment = environment },
+                    RemoteInstance.create(project, URL_PUBLISH_DEFAULT) { this.environment = environment }
             )
         }
-
-        fun filter(project: Project): List<Instance> {
-            return filter(project, AemConfig.of(project).instanceName)
-        }
-
-        fun filter(project: Project, instanceFilter: String): List<Instance> {
-            val config = AemConfig.of(project)
-            val all = config.instances.values
-
-            // Specified by command line should not be filtered
-            val cmd = all.filter { it.environment == Instance.ENVIRONMENT_CMD }
-            if (cmd.isNotEmpty()) {
-                return cmd
-            }
-
-            // Defined by build script, via properties or defaults are filterable by name
-            return all.filter { instance ->
-                when {
-                    config.props.flag(AUTHORS_PROP) -> {
-                        Patterns.wildcard(instance.name, "${config.environment}-${InstanceType.AUTHOR}*")
-                    }
-                    config.props.flag(PUBLISHERS_PROP) -> {
-                        Patterns.wildcard(instance.name, "${config.environment}-${InstanceType.PUBLISH}*")
-                    }
-                    else -> Patterns.wildcards(instance.name, instanceFilter)
-                }
-            }
-        }
-
-        fun <T : Instance> filter(project: Project, type: KClass<T>): List<T> {
-            return filter(project).filterIsInstance(type.java)
-        }
-
-        fun locals(project: Project): List<LocalInstance> {
-            return filter(project, LocalInstance::class)
-        }
-
-        fun handles(project: Project): List<LocalHandle> {
-            return Instance.locals(project).map { LocalHandle(project, it) }
-        }
-
-        fun remotes(project: Project): List<RemoteInstance> {
-            return filter(project, RemoteInstance::class)
-        }
-
-        fun single(project: Project): Instance {
-            val logger = project.logger
-            val props = PropertyParser(project)
-            val config = AemConfig.of(project)
-            // TODO: next major version -> refactor the property names to be more general (not aem.checkout)
-            val cmdInstanceArg = props.string("aem.checkout.instance")
-            if (!cmdInstanceArg.isNullOrBlank()) {
-                val cmdInstance = config.parseInstance(cmdInstanceArg!!)
-
-                logger.info("Using instance specified by command line parameter: $cmdInstance")
-                return cmdInstance
-            }
-
-            val namedInstance = Instance.filter(project, config.instanceName).firstOrNull()
-            if (namedInstance != null) {
-                logger.info("Using first instance matching filter '${config.instanceName}': $namedInstance")
-                return namedInstance
-            }
-
-            val anyInstance = Instance.filter(project, Instance.FILTER_ANY).firstOrNull()
-            if (anyInstance != null) {
-                logger.info("Using first instance matching filter '${Instance.FILTER_ANY}': $anyInstance")
-                return anyInstance
-            }
-
-            throw InstanceException("Single instance cannot be determined neither by command line parameter nor AEM config.")
-        }
-
     }
-
 }
 
 val Collection<Instance>.names: String
     get() = joinToString(", ") { it.name }
+
+fun Collection<Instance>.toLocalHandles(project: Project): List<LocalHandle> {
+    return filterIsInstance(LocalInstance::class.java).map { LocalHandle(project, it) }
+}
 
 fun Instance.isInitialized(project: Project): Boolean {
     return this !is LocalInstance || LocalHandle(project, this).initialized

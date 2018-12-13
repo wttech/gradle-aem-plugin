@@ -1,15 +1,9 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.pkg.deploy.ListResponse
-import com.fasterxml.jackson.annotation.JsonIgnore
-import org.apache.commons.lang3.builder.EqualsBuilder
-import org.apache.commons.lang3.builder.HashCodeBuilder
-import org.gradle.api.Project
 import java.io.Serializable
+import org.gradle.api.Project
 
-class RemoteInstance private constructor(@Transient
-                                         @get:JsonIgnore
-                                         private val project: Project) : Instance, Serializable {
+class RemoteInstance private constructor(project: Project) : AbstractInstance(project), Serializable {
 
     override lateinit var httpUrl: String
 
@@ -21,35 +15,8 @@ class RemoteInstance private constructor(@Transient
 
     override lateinit var environment: String
 
-    @Transient
-    @get:JsonIgnore
-    override var packages: ListResponse? = null
-
-    override fun sync(synchronizer: (InstanceSync) -> Unit) {
-        synchronizer(InstanceSync(project, this))
-    }
-
     override fun toString(): String {
         return "RemoteInstance(httpUrl='$httpUrl', user='$user', password='$hiddenPassword', environment='$environment', typeName='$typeName')"
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as RemoteInstance
-
-        return EqualsBuilder()
-                .append(name, other.name)
-                .append(httpUrl, other.httpUrl)
-                .isEquals
-    }
-
-    override fun hashCode(): Int {
-        return HashCodeBuilder()
-                .append(name)
-                .append(httpUrl)
-                .toHashCode()
     }
 
     companion object {
@@ -71,7 +38,5 @@ class RemoteInstance private constructor(@Transient
         fun create(project: Project, httpUrl: String): RemoteInstance {
             return create(project, httpUrl) {}
         }
-
     }
-
 }

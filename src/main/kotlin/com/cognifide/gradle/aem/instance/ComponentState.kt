@@ -1,10 +1,9 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.internal.Patterns
+import com.cognifide.gradle.aem.common.Patterns
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.apache.commons.lang3.builder.EqualsBuilder
 import org.apache.commons.lang3.builder.HashCodeBuilder
 
@@ -60,10 +59,6 @@ class ComponentState private constructor() {
 
     companion object {
 
-        fun fromJson(json: String): ComponentState {
-            return ObjectMapper().readValue(json, ComponentState::class.java)
-        }
-
         fun unknown(): ComponentState {
             val response = ComponentState()
             response.components = listOf()
@@ -72,5 +67,4 @@ class ComponentState private constructor() {
             return response
         }
     }
-
 }

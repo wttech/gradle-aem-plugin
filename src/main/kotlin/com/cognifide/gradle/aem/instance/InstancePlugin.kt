@@ -1,10 +1,11 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.base.BasePlugin
-import com.cognifide.gradle.aem.pkg.ComposeTask
+import com.cognifide.gradle.aem.common.AemPlugin
+import com.cognifide.gradle.aem.common.TaskFactory
+import com.cognifide.gradle.aem.config.ConfigPlugin
+import com.cognifide.gradle.aem.instance.tasks.*
 import com.cognifide.gradle.aem.pkg.PackagePlugin
-import com.cognifide.gradle.aem.pkg.deploy.DeployTask
-import org.gradle.api.Plugin
+import com.cognifide.gradle.aem.pkg.tasks.Deploy
 import org.gradle.api.Project
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 
@@ -13,58 +14,55 @@ import org.gradle.language.base.plugins.LifecycleBasePlugin
  * Most often should be applied only to one project in build.
  * Applying it multiple times to same configuration could case confusing errors like AEM started multiple times.
  */
-class InstancePlugin : Plugin<Project> {
+class InstancePlugin : AemPlugin() {
 
-    override fun apply(project: Project) {
-        with(project, {
-            setupDependentPlugins()
-            setupTasks()
-        })
+    override fun Project.configure() {
+        setupDependentPlugins()
+        setupTasks()
     }
 
     private fun Project.setupDependentPlugins() {
-        plugins.apply(BasePlugin::class.java)
+        plugins.apply(ConfigPlugin::class.java)
     }
 
     private fun Project.setupTasks() {
-        val clean = tasks.getByName(LifecycleBasePlugin.CLEAN_TASK_NAME)
-
-        val resolve = tasks.create(ResolveTask.NAME, ResolveTask::class.java)
-        val create = tasks.create(CreateTask.NAME, CreateTask::class.java)
-        val destroy = tasks.create(DestroyTask.NAME, DestroyTask::class.java)
-        val up = tasks.create(UpTask.NAME, UpTask::class.java)
-        val down = tasks.create(DownTask.NAME, DownTask::class.java)
-        val restart = tasks.create(RestartTask.NAME, RestartTask::class.java)
-        val reload = tasks.create(ReloadTask.NAME, ReloadTask::class.java)
-        val satisfy = tasks.create(SatisfyTask.NAME, SatisfyTask::class.java)
-        val await = tasks.create(AwaitTask.NAME, AwaitTask::class.java)
-        val collect = tasks.create(CollectTask.NAME, CollectTask::class.java)
-        val setup = tasks.create(SetupTask.NAME, SetupTask::class.java)
-        val resetup = tasks.create(ResetupTask.NAME, ResetupTask::class.java)
-
-        create.dependsOn(resolve).mustRunAfter(clean)
-        up.dependsOn(create).mustRunAfter(clean, down)
-        reload.mustRunAfter(satisfy)
-        restart.dependsOn(down, up)
-        destroy.dependsOn(down)
-        resolve.mustRunAfter(clean)
-        satisfy.dependsOn(resolve).mustRunAfter(create, up)
-        collect.mustRunAfter(satisfy)
-        setup.dependsOn(create, up, satisfy, await).mustRunAfter(destroy)
-        resetup.dependsOn(destroy, setup)
-
-        plugins.withId(PackagePlugin.ID, {
-            val deploy = tasks.getByName(DeployTask.NAME)
-
-            setup.dependsOn(deploy)
-            deploy.mustRunAfter(create, up, satisfy)
-            reload.mustRunAfter(deploy)
-            await.mustRunAfter(deploy)
-        })
-
-        gradle.afterProject { subproject ->
-            if (subproject.plugins.hasPlugin(PackagePlugin.ID)) {
-                collect.dependsOn(subproject.tasks.getByName(ComposeTask.NAME))
+        with(TaskFactory(this)) {
+            register(Resolve.NAME, Resolve::class.java) {
+                it.mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
+            }
+            register(Down.NAME, Down::class.java)
+            register(Up.NAME, Up::class.java) {
+                it.dependsOn(Create.NAME).mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME, Down.NAME)
+            }
+            register(Restart.NAME, Restart::class.java) {
+                it.dependsOn(Down.NAME, Up.NAME)
+            }
+            register(Create.NAME, Create::class.java) {
+                it.dependsOn(Resolve.NAME).mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
+            }
+            register(Destroy.NAME, Destroy::class.java) {
+                it.dependsOn(Down.NAME)
+            }
+            register(Satisfy.NAME, Satisfy::class.java) {
+                it.dependsOn(Resolve.NAME).mustRunAfter(Create.NAME, Up.NAME)
+            }
+            register(Reload.NAME, Reload::class.java) { task ->
+                task.mustRunAfter(Satisfy.NAME)
+                plugins.withId(PackagePlugin.ID) { task.mustRunAfter(Deploy.NAME) }
+            }
+            register(Await.NAME, Await::class.java) { task ->
+                task.mustRunAfter(Create.NAME, Up.NAME, Satisfy.NAME)
+                plugins.withId(PackagePlugin.ID) { task.mustRunAfter(Deploy.NAME) }
+            }
+            register(Collect.NAME, Collect::class.java) { task ->
+                task.mustRunAfter(Satisfy.NAME)
+            }
+            register(Setup.NAME, Setup::class.java) { task ->
+                task.dependsOn(Create.NAME, Up.NAME, Satisfy.NAME).mustRunAfter(Destroy.NAME)
+                plugins.withId(PackagePlugin.ID) { task.dependsOn(Deploy.NAME) }
+            }
+            register(Resetup.NAME, Resetup::class.java) {
+                it.dependsOn(Destroy.NAME, Setup.NAME)
             }
         }
     }
@@ -74,5 +72,4 @@ class InstancePlugin : Plugin<Project> {
 
         const val FILES_PATH = "local-instance"
     }
-
 }

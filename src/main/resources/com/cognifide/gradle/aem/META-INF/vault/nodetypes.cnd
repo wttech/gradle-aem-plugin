@@ -1,2 +1,2 @@
-{{nodeTypesLibs | raw}}
-{{nodeTypesLines | raw}}
+{{compose.vaultNodeTypesLibs | join('\n')}}
+{{compose.vaultNodeTypesLines | join('\n')}}

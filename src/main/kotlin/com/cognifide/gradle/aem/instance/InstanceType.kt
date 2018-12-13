@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.api.AemException
-import com.cognifide.gradle.aem.internal.Patterns
+import com.cognifide.gradle.aem.common.AemException
+import com.cognifide.gradle.aem.common.Patterns
 
 enum class InstanceType {
     AUTHOR,
@@ -9,31 +9,29 @@ enum class InstanceType {
 
     companion object {
 
-        private val AUTHOR_RULES = listOf("*02")
+        private val AUTHOR_PORTS = listOf("*02")
+
+        private val AUTHOR_HOST_PREFIXES = listOf("author.", "author-", "autor.", "autor-")
+
+        private val AUTHOR_HOST_SUFFIXES = listOf("-author", "-autor")
 
         fun byName(type: String): InstanceType {
             return values().find { type.startsWith(it.name, ignoreCase = true) }
                     ?: throw AemException("Invalid instance type: $type")
         }
 
-        fun nameByUrl(url: String): String {
-            return byUrl(url).name.toLowerCase()
-        }
-
         fun byUrl(url: String): InstanceType {
-            return byPort(InstanceUrl.parse(url).httpPort)
-        }
+            val urlDetails = InstanceUrl.parse(url)
 
-        fun byPort(port: Int): InstanceType {
-            return if (Patterns.wildcard(port.toString(), AUTHOR_RULES)) {
-                AUTHOR
-            } else {
-                PUBLISH
+            return when {
+                AUTHOR_HOST_PREFIXES.any { urlDetails.config.host.startsWith(it, true) } -> AUTHOR
+                AUTHOR_HOST_SUFFIXES.any { urlDetails.config.host.endsWith(it, true) } -> AUTHOR
+                Patterns.wildcard(urlDetails.httpPort.toString(), AUTHOR_PORTS) -> AUTHOR
+                else -> PUBLISH
             }
         }
     }
 
     val type: String
         get() = name.toLowerCase()
-
 }

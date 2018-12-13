@@ -1,10 +1,9 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.internal.Formats
-import com.cognifide.gradle.aem.internal.Patterns
+import com.cognifide.gradle.aem.common.Formats
+import com.cognifide.gradle.aem.common.Patterns
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.apache.commons.lang3.builder.EqualsBuilder
 import org.apache.commons.lang3.builder.HashCodeBuilder
 
@@ -92,10 +91,6 @@ class BundleState private constructor() {
     }
 
     companion object {
-        fun fromJson(json: String): BundleState {
-            return ObjectMapper().readValue(json, BundleState::class.java)
-        }
-
         fun unknown(e: Exception): BundleState {
             val response = BundleState()
             response.bundles = listOf()
@@ -105,5 +100,4 @@ class BundleState private constructor() {
             return response
         }
     }
-
 }
