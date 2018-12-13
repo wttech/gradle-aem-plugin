@@ -514,13 +514,15 @@ plugins {
 
 Should be applied to all projects that are composing CRX packages from *JCR content only*.
 
-Provides CRX package related tasks: `aemCompose`, `aemDeploy` etc.
+Provides CRX package related tasks: `aemCompose`, `aemDeploy`, `aemActivate`, `aemPurge` etc.
+
+Inherits from [Base Plugin](#base-plugin).
 
 #### Task `aemCompose`
 
 [Compose](src/main/kotlin/com/cognifide/gradle/aem/pkg/tasks/Compose.kt) CRX package from JCR content and bundles. 
 
-Inherits from [ZIP task](https://docs.gradle.org/3.5/dsl/org.gradle.api.tasks.bundling.Zip.html).
+Inherits from task [ZIP](https://docs.gradle.org/3.5/dsl/org.gradle.api.tasks.bundling.Zip.html).
 
 ##### Default configuration
 
@@ -555,6 +557,8 @@ tasks {
     }
 }
 ```
+
+For the reference, see [usage in AEM Multi-Project Example](https://github.com/Cognifide/gradle-aem-multi/blob/master/aem/app.common/build.gradle.kts).
 
 ##### Assembling packages (merging into all-in-one)
 
@@ -610,11 +614,10 @@ Gradle AEM Plugin is configured in that way that project can have:
 * both.
 
 By distinguishing `fromProject`, `fromBundle` or `fromCompose` there is ability to create any assembly CRX package with content of any type without restructuring the project.
-Even when using `fromProject` there is an ability to customize options like `bundlePath`, `bundleRunMode`, decide to include only JCR contents, only bundles and more.
-Only one must have rule to be kept while developing a multi-module project is that **all Vault filter roots of all projects must be exclusive**.
-In general, they are most often exclusive, to avoid strange JCR installer behaviors, but sometimes exceptional [workspace filter](http://jackrabbit.apache.org/filevault/filter.html) rules are being applied like `mode="merge"` etc.
 
-To control what should be taken from each project, pass options lambda to `fromProject` method. Using this project options it is possible to take only JCR content, OSGi bundle, customize bundle run mode etc.
+When using `fromProject` there is an ability to pass lambda to customize options like `bundlePath`, `bundleRunMode`, decide to include only JCR contents, only bundles and more.
+
+Only one must have rule to be kept while developing a multi-module project is that **all Vault filter roots of all projects must be exclusive**. In general, they are most often exclusive, to avoid strange JCR installer behaviors, but sometimes exceptional [workspace filter](http://jackrabbit.apache.org/filevault/filter.html) rules are being applied like `mode="merge"` etc.
 
 ##### Expandable properties
 
@@ -719,9 +722,9 @@ Replicate installed CRX package to other AEM instance(s).
 
 ### Bundle plugin
 
-Should be applied to all projects that are composing CRX packages from both *OSGi bundle* being built and optionally *JCR content*, extends package plugin.
+Should be applied to all projects that are composing CRX packages from both *OSGi bundle* being built and optionally *JCR content*, 
 
-For the reference, see [usage in AEM Multi-Project Example](https://github.com/Cognifide/gradle-aem-multi/blob/master/aem/app.common/build.gradle.kts).
+Inherits from [Package Plugin](#package-plugin).
 
 #### Embedding JAR file into built OSGi bundle
 
@@ -799,6 +802,8 @@ plugins {
 Provides instance related tasks: `aemAwait`, `aemSetup`, `aemCreate` etc.
 
 Should be applied only at root project / only once within whole build.
+
+Inherits from [Base Plugin](#base-plugin).
 
 #### Task `aemSetup`
 
@@ -994,9 +999,9 @@ Instance state, stable check, health check lambdas are using: [InstanceState](sr
 
 #### Task `aemCollect`
 
-Composes ZIP package from all CRX packages being satisfied and built. Available methods:
+Composes ZIP package from all CRX packages being satisfied and built.
 
-* all inherited from [ZIP task](https://docs.gradle.org/3.5/dsl/org.gradle.api.tasks.bundling.Zip.html).
+Inherits from task [ZIP](https://docs.gradle.org/3.5/dsl/org.gradle.api.tasks.bundling.Zip.html).
 
 Screenshot below presents generated ZIP package which is a result of running `gradlew :aemCollect` for [multi-module project](https://github.com/Cognifide/gradle-aem-multi).
 
