@@ -122,16 +122,17 @@ class Cleaner(project: Project) {
     }
 
     fun clean(root: File) {
-        cleanDotContents(root)
-        flattenFiles(root)
-        deleteFiles(root)
-        deleteEmptyDirs(root)
-
         if (parentsBackupEnabled) {
             undoParentsBackup(root)
         } else {
             cleanParents(root)
         }
+
+        deleteFiles(root)
+        deleteEmptyDirs(root)
+
+        cleanDotContents(root)
+        flattenFiles(root)
     }
 
     private fun cleanDotContents(root: File) {
