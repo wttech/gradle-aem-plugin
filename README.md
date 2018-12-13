@@ -123,7 +123,7 @@ so that this repository need to be included in *buildscript* section.
 
 #### Minimal:
 
-Configuration below assumes building and deploying on AEM instance(s) via command: `gradlew aemDeploy`.
+Configuration below assumes building and deploying CRX packages to AEM instance(s) via command: `gradlew aemDeploy`.
 
 File *buildSrc/build.gradle.kts*:
 
@@ -141,7 +141,7 @@ File *build.gradle.kts*:
 
 ```kotlin
 plugins {
-	id("com.cognifide.aem.bundle") // or 'package' for JCR content only
+    id("com.cognifide.aem.bundle") // or 'package' for JCR content only
 }
 ```
 
@@ -153,19 +153,31 @@ Configuration below assumes building and deploying on AEM instance(s) via comman
 
 ```kotlin
 plugins {
-	id("com.cognifide.aem.bundle")
-	id("com.cognifide.aem.instance")
-	id("'org.jetbrains.kotlin.jvm") // or any other like 'java' to compile OSGi bundle
+    id("com.cognifide.aem.bundle")
+    id("com.cognifide.aem.instance")
+    id("'org.jetbrains.kotlin.jvm") // or any other like 'java' to compile OSGi bundle
 }
 
 defaultTasks = listOf(":aemSatisfy", ":aemDeploy")
 
 aem {
     config {
-        // TODO ...
+        packageRoot = "${aem.project.file("src/main/content")}"
+        // ...
+               
+    }
+    bundle {
+        javaPackage = "com.company.example.aem"
+        // ...
     }
 }
 ```
+
+To see all available options and actual documentation, please follow to:
+
+* `aem` - [AemExtension](src/main/kotlin/com/cognifide/gradle/aem/common/AemExtension.kt)
+* `config` - [BaseConfig](src/main/kotlin/com/cognifide/gradle/aem/base/BaseConfig.kt)
+* `bundle` - [BundleJar](src/main/kotlin/com/cognifide/gradle/aem/bundle/BundleJar.kt)
 
 ### Base plugin
 
@@ -867,8 +879,8 @@ Properties:
 
 Predefined expandable properties:
 
-* `handle` - [Handle](TODO) object,
-* `instance` - [LocalInstance](TODO) object.
+* `handle` - [LocalHandle](src/main/kotlin/com/cognifide/gradle/aem/instance/LocalHandle.kt) object,
+* `instance` - [LocalInstance](src/main/kotlin/com/cognifide/gradle/aem/instance/LocalInstance.kt) object.
 
 #### Task `aemDestroy` 
 

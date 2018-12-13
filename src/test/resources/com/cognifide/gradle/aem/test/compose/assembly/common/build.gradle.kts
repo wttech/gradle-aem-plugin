@@ -17,7 +17,7 @@ dependencies {
 
 aem {
     bundle {
-        javaPackage = "com.company.aem.example.common"
+        javaPackage = "com.company.example.aem.common"
         exportPackage("org.hashids")
     }
 }

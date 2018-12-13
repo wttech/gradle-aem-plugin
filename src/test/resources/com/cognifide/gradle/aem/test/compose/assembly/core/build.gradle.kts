@@ -8,7 +8,7 @@ description = "Example - Core"
 
 aem {
     bundle {
-        javaPackage = "com.company.aem.example.core"
+        javaPackage = "com.compan.example.aem.core"
     }
 }
 
