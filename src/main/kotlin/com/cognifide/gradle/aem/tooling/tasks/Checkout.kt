@@ -6,6 +6,7 @@ import com.cognifide.gradle.aem.common.Formats
 import com.cognifide.gradle.aem.pkg.PackageDownloader
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
+import java.io.File
 
 open class Checkout : Vlt() {
 
@@ -43,6 +44,11 @@ open class Checkout : Vlt() {
 
     @TaskAction
     override fun perform() {
+        if (!File(aem.config.packageJcrRoot).exists()) {
+            aem.notifier.notify("Cannot checkout JCR content, because root does not exist: ${aem.config.packageJcrRoot}")
+            return
+        }
+
         when (type) {
             Type.VLT_CHECKOUT -> performVltCheckout()
             Type.PACKAGE_DOWNLOAD -> performPackageDownload()
