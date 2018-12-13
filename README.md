@@ -366,7 +366,7 @@ tasks {
 
 ##### Using alternative transfer type
 
-Available transfer types: `package_download` (default) and `vlt_checkout`.
+Available transfer types: *package_download* (default) and *vlt_checkout*.
 
 ```bash
 gradlew :content:aemSync -Paem.sync.type=vlt_checkout
@@ -374,7 +374,7 @@ gradlew :content:aemSync -Paem.sync.type=vlt_checkout
 
 ##### Copying or cleaning content only
 
-Available mode types: `copy_and_clean` (default), `clean_only` and `copy_only`.
+Available mode types: *copy_and_clean* (default), *clean_only* and *copy_only*.
 
 ```bash
 gradlew :content:aemSync -Paem.sync.mode=clean_only
