@@ -40,7 +40,8 @@ Looking for dedicated version of plugin for [**Apache Sling**](https://sling.apa
 ## Important notice 
 
 Gradle AEM Plugin 6.x serie and upper will **no longer support Groovy DSL** and **stands on Kotlin DSL** coming with Gradle 5.0.
-To see documentation appropriate for previous 5.x serie, please [click here](https://github.com/Cognifide/gradle-aem-plugin/tree/groovy) (navigate to branch `groovy`).
+
+To see documentation for previous 5.x serie, please [click here](https://github.com/Cognifide/gradle-aem-plugin/tree/groovy) (navigate to branch `groovy`).
 
 ## Table of contents
 
