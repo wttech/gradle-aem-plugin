@@ -12,7 +12,7 @@ open class Vlt : AemDefaultTask() {
     }
 
     @Internal
-    val vlt = VltRunner(project)
+    val vlt = VltRunner(aem)
 
     fun options(configurer: VltRunner.() -> Unit) {
         vlt.apply(configurer)

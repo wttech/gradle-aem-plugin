@@ -72,7 +72,7 @@ private val temporaryDir: File
                 extractDownloadedPackage(packageFile, jcrRoot)
             }
         } finally {
-            aem.logger.lifecycle("Cleaning downloaded package: $packageFile")
+            aem.logger.lifecycle("Deleting downloaded package: $packageFile")
 
             sync.deletePackage(packagePath)
         }

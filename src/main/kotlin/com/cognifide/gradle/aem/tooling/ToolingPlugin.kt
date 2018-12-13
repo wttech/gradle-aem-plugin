@@ -28,18 +28,11 @@ class ToolingPlugin : AemPlugin() {
                 it.dependsOn(LifecycleBasePlugin.BUILD_TASK_NAME)
             }
             register(Rcp.NAME, Rcp::class.java)
-            register(Clean.NAME, Clean::class.java) {
-                it.mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME, Checkout.NAME)
-            }
             register(Vlt.NAME, Vlt::class.java) {
                 it.mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
             }
-            register(Checkout.NAME, Checkout::class.java) {
+            register(Sync.NAME, Sync::class.java) {
                 it.mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
-            }
-            register(Sync.NAME, Sync::class.java) { task ->
-                task.dependsOn(Clean.NAME, Checkout.NAME)
-                task.mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
             }
         }
     }

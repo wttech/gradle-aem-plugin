@@ -3,33 +3,22 @@ package com.cognifide.gradle.aem.tooling.vlt
 import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.pkg.Package
 import java.io.File
-import org.gradle.api.Project
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.Internal
 
-class VltRunner(project: Project) {
+class VltRunner(val aem: AemExtension) {
 
-    private val aem = AemExtension.of(project)
+    private val app = VltApp(aem.project)
 
-    private val app = VltApp(project)
-
-    @Input
     var command: String = aem.props.string("aem.vlt.command") ?: ""
 
-    @Input
     var commandProperties: Map<String, Any> = mapOf("config" to aem.config)
 
-    @get:Internal
     val commandEffective: String
         get() = aem.props.expand(command, commandProperties)
 
-    @Input
     var contentPath: String = aem.config.packageRoot
 
-    @Input
     var contentRelativePath: String = aem.props.string("aem.vlt.path") ?: ""
 
-    @get:Internal
     val contentDirEffective: File
         get() {
             var workingPath = "$contentPath/${Package.JCR_ROOT}"

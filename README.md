@@ -292,42 +292,12 @@ Check out then clean JCR content.
 
 Below examples assume existence of subproject `:content`.
 
-##### Use alternative check out type
-
-Available types: `package_download` (default) and `vlt_checkout`.
-
-```bash
-gradlew :content:aemSync -Paem.checkout.type=vlt_checkout
-```
-
-##### Filter file at custom path
-   
-```bash
-gradlew :content:aemSync -Paem.filter.path=custom-filter.xml
-gradlew :content:aemSync -Paem.filter.path=src/main/content/META-INF/vault/custom-filter.xml
-gradlew :content:aemSync -Paem.filter.path=C:/aem/custom-filter.xml
-```
-
-##### Filter roots specified explicitly
-   
-```bash
-gradlew :content:aemSync -Paem.filter.roots=[/etc/tags/example,/content/dam/example]
-```
-
-#### Task `aemCheckout`
-
-Only check out JCR content from running AEM instance (author by default).
-
-#### Task `aemClean`
-
-Only clean previously checked out JCR content. E.g normalize existing content saved in VCS.
-
-##### Default configuration
+##### Default cleaning configuration
 
 ```kotlin
 tasks {
-    named<Clean>(Clean.NAME) {
-        options {
+    named<Sync>(Sync.NAME) {
+        cleaner {
             filesDotContent = { 
                 include("**/.content.xml") 
             }
@@ -392,6 +362,36 @@ tasks {
         }  
     }
 }
+```
+
+##### Using alternative transfer type
+
+Available transfer types: `package_download` (default) and `vlt_checkout`.
+
+```bash
+gradlew :content:aemSync -Paem.sync.type=vlt_checkout
+```
+
+##### Copying or cleaning content only
+
+Available mode types: `copy_and_clean` (default), `clean_only` and `copy_only`.
+
+```bash
+gradlew :content:aemSync -Paem.sync.mode=clean_only
+```
+
+##### Filter file at custom path
+   
+```bash
+gradlew :content:aemSync -Paem.filter.path=custom-filter.xml
+gradlew :content:aemSync -Paem.filter.path=src/main/content/META-INF/vault/custom-filter.xml
+gradlew :content:aemSync -Paem.filter.path=C:/aem/custom-filter.xml
+```
+
+##### Filter roots specified explicitly
+   
+```bash
+gradlew :content:aemSync -Paem.filter.roots=[/etc/tags/example,/content/dam/example]
 ```
 
 #### Task `aemRcp`
