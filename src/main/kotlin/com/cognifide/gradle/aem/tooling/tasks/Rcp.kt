@@ -42,11 +42,11 @@ open class Rcp : Vlt() {
 
     private fun createClient(): VltRcpClient {
         if (sourceInstance == null) {
-            throw VltException("Source RCP instance is not defined. Ensure specified param '-Paem.instance.left'")
+            throw VltException("Source RCP instance is not defined. Ensure specified param '-Paem.instance.source'")
         }
 
         if (targetInstance == null) {
-            throw VltException("Target RCP instance is not defined. Ensure specified param '-Paem.instance.right'")
+            throw VltException("Target RCP instance is not defined. Ensure specified param '-Paem.instance.target'")
         }
 
         return VltRcpClient(vlt, sourceInstance!!, targetInstance!!).apply {
