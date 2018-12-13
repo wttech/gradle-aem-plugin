@@ -1,9 +1,9 @@
 package com.cognifide.gradle.aem.common.http
 
+import com.cognifide.gradle.aem.common.Formats
 import com.cognifide.gradle.aem.common.file.downloader.HttpFileDownloader
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.jayway.jsonpath.DocumentContext
-import com.jayway.jsonpath.JsonPath
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
@@ -144,7 +144,7 @@ open class HttpClient(val project: Project) {
     }
 
     fun asJson(response: HttpResponse): DocumentContext {
-        return JsonPath.parse(asStream(response))
+        return Formats.asJson(asStream(response))
     }
 
     fun asString(response: HttpResponse): String {

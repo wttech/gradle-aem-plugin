@@ -3,7 +3,9 @@ package com.cognifide.gradle.aem.common
 import com.fasterxml.jackson.core.util.DefaultIndenter
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.jayway.jsonpath.JsonPath
 import java.io.File
+import java.io.InputStream
 import java.nio.file.Paths
 import java.util.*
 import org.apache.commons.lang3.StringUtils
@@ -23,6 +25,10 @@ object Formats {
 
         ObjectMapper().writer(printer)
     }()
+
+    fun asJson(input: InputStream) = JsonPath.parse(input)
+
+    fun asJson(value: String) = JsonPath.parse(value)
 
     fun toJson(value: Any): String {
         return JSON_MAPPER.writeValueAsString(value) ?: ""
