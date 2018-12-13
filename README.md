@@ -55,6 +55,7 @@ To see documentation for previous 5.x serie, please [click here](https://github.
         * [Defining instances via properties file](#defining-instances-via-properties-file)
         * [Defining instances via build script](#defining-instances-via-build-script)
         * [Task aemSync](#task-aemsync)
+           * [Use alternative check out type](#use-alternative-check-out-type)
            * [Filter file at custom path](#filter-file-at-custom-path)
            * [Filter roots specified explicitly](#filter-roots-specified-explicitly)
         * [Task aemCheckout](#task-aemcheckout)
@@ -277,6 +278,14 @@ aem {
 Check out then clean JCR content.
 
 Below examples assume existence of subproject `:content`.
+
+##### Use alternative check out type
+
+Available types: `package_download` (default) and `vlt_checkout`.
+
+```bash
+gradlew :content:aemSync -Paem.checkout.type=vlt_checkout
+```
 
 ##### Filter file at custom path
    

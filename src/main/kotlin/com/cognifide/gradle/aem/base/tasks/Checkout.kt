@@ -47,6 +47,7 @@ open class Checkout : Vlt() {
             Type.VLT_CHECKOUT -> performVltCheckout()
             Type.PACKAGE_DOWNLOAD -> performPackageDownload()
         }
+        aem.notifier.notify("Checked out JCR content", "Instance: ${instance.name}. Directory: ${Formats.rootProjectPath(vlt.contentPath, project)}")
     }
 
     private fun performVltCheckout() {
@@ -54,7 +55,6 @@ open class Checkout : Vlt() {
             command = "--credentials ${instance.credentials} checkout --force --filter ${filter.file} ${instance.httpUrl}/crx/server/crx.default"
             run()
         }
-        aem.notifier.notify("Checked out JCR content", "Instance: ${instance.name}. Directory: ${Formats.rootProjectPath(vlt.contentPath, project)}")
     }
 
     private fun performPackageDownload() {

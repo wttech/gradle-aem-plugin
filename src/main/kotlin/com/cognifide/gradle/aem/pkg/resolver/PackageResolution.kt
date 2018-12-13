@@ -60,6 +60,7 @@ class PackageResolution(group: PackageGroup, id: String, action: (FileResolution
                 "compose" to mapOf(
                         "vaultName" to symbolicName,
                         "vaultGroup" to group,
+                        "vaultVersion" to version,
                         "vaultFilters" to filters
 
                 ),

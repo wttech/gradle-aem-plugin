@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.pkg
 
 import com.cognifide.gradle.aem.base.vlt.VltFilter
 import com.cognifide.gradle.aem.common.AemExtension
+import com.cognifide.gradle.aem.common.Collections
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.http.HttpClient
 import com.cognifide.gradle.aem.instance.Instance
@@ -20,7 +21,6 @@ private val aem: AemExtension,
 private val temporaryDir: File
 ) {
 
-    @Internal
     private val shellDir = File(temporaryDir, PKG_SHELL)
 
     @Input
@@ -32,7 +32,6 @@ private val temporaryDir: File
     /**
      * Repeat download when failed (brute-forcing).
      */
-    @Internal
     @get:JsonIgnore
     var retry = aem.retry { afterSquaredSecond(aem.props.long("aem.packageDownload.retry") ?: 3) }
 
@@ -41,14 +40,12 @@ private val temporaryDir: File
      * This operation can be modified using -Paem.force command line to replace the contents of jcr_root directory with
      * package content
      */
-    @Input
     var extract = aem.props.boolean("aem.packageDownload.extract") ?: true
 
     /**
      * In case of downloading big CRX packages, AEM could respond much slower so that special
      * timeout is covering such edge case.
      */
-    @Input
     var httpOptions: HttpClient.() -> Unit = {
         connectionTimeout = aem.props.int("aem.packageDownload.httpOptions.connectionTimeout") ?: 60000
     }
@@ -74,8 +71,6 @@ private val temporaryDir: File
 
                 extractDownloadedPackage(packageFile, jcrRoot)
             }
-
-            aem.notifier.notify("Package downloaded", packageFile.name)
         } finally {
             aem.logger.lifecycle("Cleaning downloaded package: $packageFile")
 
@@ -98,7 +93,20 @@ private val temporaryDir: File
         filter.file.copyTo(File(vltDir, VltFilter.BUILD_NAME))
         FileOperations.copyResources(Package.VLT_PATH, vltDir, true)
 
-        val fileProperties = PackageFileFilter.FILE_PROPERTIES + mapOf("project.version" to PKG_VERSION)
+        val fileProperties = Collections.extendMap(PackageFileFilter.FILE_PROPERTIES, mapOf<String, Any>(
+                "compose" to mapOf(
+                        "vaultName" to aem.baseName,
+                        "vaultGroup" to aem.project.group,
+                        "vaultVersion" to PKG_VERSION
+
+                ),
+                "project" to mapOf(
+                        "group" to aem.project.group,
+                        "name" to aem.baseName,
+                        "version" to PKG_VERSION,
+                        "description" to aem.project.description.orEmpty()
+                )
+        ))
         FileOperations.amendFiles(vltDir, PackageFileFilter.EXPAND_FILES_DEFAULT) { file, content ->
             aem.props.expandPackage(content, fileProperties, file.absolutePath)
         }

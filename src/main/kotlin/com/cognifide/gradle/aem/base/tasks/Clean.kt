@@ -52,10 +52,8 @@ open class Clean : AemDefaultTask() {
     }
 
     override fun taskGraphReady(graph: TaskExecutionGraph) {
-        if (graph.hasTask(this@Clean)) {
-            project.tasks.named(Checkout.NAME).configure {
-                doFirst { beforeCheckout() }
-            }
+        if (graph.hasTask("${project.path.removeSuffix(":")}:${Checkout.NAME}")) {
+            project.tasks.getByName(Checkout.NAME).doFirst { beforeCheckout() }
         }
     }
 
