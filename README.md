@@ -35,8 +35,8 @@ Looking for dedicated version of plugin for [**Apache Sling**](https://sling.apa
 * Easy multi-deployment with instance groups.
 * Automated dependent CRX packages and OSGi bundles installation from local and remote sources (SMB, SSH, HTTP(s)).
 * Smart Vault files generation (combining defaults with overiddables).
-* Embedded Vault tool for checking out and cleaning JCR content from running AEM instance.
-* OSGi Manifest customization by embedded [BND plugin](https://github.com/bndtools/bnd/tree/master/biz.aQute.bnd.gradle).
+* Embedded [Vault Tool](http://jackrabbit.apache.org/filevault/) for checking out and cleaning JCR content from running AEM instance.
+* OSGi Manifest customization by embedded [BND Tool](https://github.com/bndtools/bnd/tree/master/biz.aQute.bnd.gradle).
 * OSGi Declarative Services annotations support (instead of SCR, [see docs](http://blogs.adobe.com/experiencedelivers/experience-management/osgi/using-osgi-annotations-aem6-2/)).
 
 ## Table of contents
