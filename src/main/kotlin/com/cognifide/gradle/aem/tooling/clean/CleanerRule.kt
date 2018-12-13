@@ -1,7 +1,7 @@
-package com.cognifide.gradle.aem.base.clean
+package com.cognifide.gradle.aem.tooling.clean
 
-import com.cognifide.gradle.aem.base.vlt.VltException
 import com.cognifide.gradle.aem.common.Patterns
+import com.cognifide.gradle.aem.tooling.vlt.VltException
 import java.io.File
 
 class CleanerRule(value: String) {

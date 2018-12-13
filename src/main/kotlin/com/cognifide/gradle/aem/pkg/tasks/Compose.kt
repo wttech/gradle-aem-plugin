@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem.pkg.tasks
 
-import com.cognifide.gradle.aem.base.vlt.VltFilter
 import com.cognifide.gradle.aem.bundle.BundleJar
 import com.cognifide.gradle.aem.bundle.BundlePlugin
 import com.cognifide.gradle.aem.common.AemException
@@ -12,6 +11,7 @@ import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.pkg.Package
 import com.cognifide.gradle.aem.pkg.PackageFileFilter
 import com.cognifide.gradle.aem.pkg.PackagePlugin
+import com.cognifide.gradle.aem.tooling.vlt.VltFilter
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 import java.util.regex.Pattern

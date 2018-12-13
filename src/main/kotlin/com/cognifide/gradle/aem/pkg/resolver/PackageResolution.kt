@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem.pkg.resolver
 
 import aQute.bnd.osgi.Jar
-import com.cognifide.gradle.aem.base.vlt.VltFilter
 import com.cognifide.gradle.aem.common.Collections
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.file.resolver.FileResolution
@@ -9,6 +8,7 @@ import com.cognifide.gradle.aem.instance.Bundle
 import com.cognifide.gradle.aem.pkg.Package
 import com.cognifide.gradle.aem.pkg.PackageException
 import com.cognifide.gradle.aem.pkg.PackageFileFilter
+import com.cognifide.gradle.aem.tooling.vlt.VltFilter
 import java.io.File
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.FilenameUtils

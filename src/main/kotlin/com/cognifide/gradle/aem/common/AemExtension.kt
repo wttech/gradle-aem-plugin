@@ -1,15 +1,17 @@
 package com.cognifide.gradle.aem.common
 
-import com.cognifide.gradle.aem.base.*
-import com.cognifide.gradle.aem.base.vlt.VltException
-import com.cognifide.gradle.aem.base.vlt.VltFilter
 import com.cognifide.gradle.aem.bundle.BundleJar
 import com.cognifide.gradle.aem.bundle.BundlePlugin
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.http.HttpClient
+import com.cognifide.gradle.aem.config.Config
+import com.cognifide.gradle.aem.config.ConfigPlugin
 import com.cognifide.gradle.aem.instance.*
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.Compose
+import com.cognifide.gradle.aem.tooling.*
+import com.cognifide.gradle.aem.tooling.vlt.VltException
+import com.cognifide.gradle.aem.tooling.vlt.VltFilter
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 import kotlinx.coroutines.Dispatchers
@@ -87,7 +89,7 @@ open class AemExtension(@Internal val project: Project) {
      * Collection of common AEM configuration properties like instance definitions. Contains default values for tasks.
      */
     @Nested
-    val config = BaseConfig(this)
+    val config = Config(this)
 
     /**
      * Provides API for displaying interactive notification during running build tasks.
@@ -248,7 +250,7 @@ open class AemExtension(@Internal val project: Project) {
 
     fun <T> http(consumer: HttpClient.() -> T) = HttpClient(project).run(consumer)
 
-    fun config(configurer: BaseConfig.() -> Unit) {
+    fun config(configurer: Config.() -> Unit) {
         config.apply(configurer)
     }
 
@@ -376,7 +378,13 @@ open class AemExtension(@Internal val project: Project) {
 
         const val NAME = "aem"
 
-        private val PLUGIN_IDS = listOf(PackagePlugin.ID, BundlePlugin.ID, InstancePlugin.ID, BasePlugin.ID)
+        private val PLUGIN_IDS = listOf(
+                PackagePlugin.ID,
+                BundlePlugin.ID,
+                InstancePlugin.ID,
+                ToolingPlugin.ID,
+                ConfigPlugin.ID
+        )
 
         fun of(project: Project): AemExtension {
             return project.extensions.findByType(AemExtension::class.java)

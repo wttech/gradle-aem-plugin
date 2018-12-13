@@ -1,36 +1,25 @@
-package com.cognifide.gradle.aem.base
+package com.cognifide.gradle.aem.tooling
 
-import com.cognifide.gradle.aem.base.tasks.*
-import com.cognifide.gradle.aem.base.tasks.Debug
-import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.AemPlugin
 import com.cognifide.gradle.aem.common.TaskFactory
+import com.cognifide.gradle.aem.config.ConfigPlugin
+import com.cognifide.gradle.aem.tooling.tasks.*
+import com.cognifide.gradle.aem.tooling.tasks.Debug
 import org.gradle.api.Project
-import org.gradle.api.plugins.BasePlugin
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 
 /**
  * Provides configuration used by both package and instance plugins.
  */
-class BasePlugin : AemPlugin() {
+class ToolingPlugin : AemPlugin() {
 
     override fun Project.configure() {
-        setupGreet()
         setupDependentPlugins()
-        setupExtensions()
         setupTasks()
     }
 
-    private fun Project.setupGreet() {
-        AemPlugin.once { logger.info("Using: ${AemPlugin.NAME_WITH_VERSION}") }
-    }
-
     private fun Project.setupDependentPlugins() {
-        plugins.apply(BasePlugin::class.java)
-    }
-
-    private fun Project.setupExtensions() {
-        extensions.create(AemExtension.NAME, AemExtension::class.java, this)
+        plugins.apply(ConfigPlugin::class.java)
     }
 
     private fun Project.setupTasks() {
@@ -56,8 +45,6 @@ class BasePlugin : AemPlugin() {
     }
 
     companion object {
-        const val PKG = "com.cognifide.gradle.aem"
-
-        const val ID = "com.cognifide.aem.base"
+        const val ID = "com.cognifide.aem.tooling"
     }
 }

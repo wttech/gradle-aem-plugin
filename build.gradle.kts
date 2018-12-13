@@ -61,11 +61,15 @@ publishing {
 
 gradlePlugin {
     plugins {
-        create("base") {
-            id = "com.cognifide.aem.base"
-            implementationClass = "com.cognifide.gradle.aem.base.BasePlugin"
+        create("config") {
+            id = "com.cognifide.aem.config"
+            implementationClass = "com.cognifide.gradle.aem.config.ConfigPlugin"
         }
-        create("pkg") {
+        create("tooling") {
+            id = "com.cognifide.aem.tooling"
+            implementationClass = "com.cognifide.gradle.aem.tooling.ToolingPlugin"
+        }
+        create("package") {
             id = "com.cognifide.aem.package"
             implementationClass = "com.cognifide.gradle.aem.pkg.PackagePlugin"
         }

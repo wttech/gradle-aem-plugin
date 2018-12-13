@@ -1,11 +1,11 @@
 package com.cognifide.gradle.aem.pkg
 
-import com.cognifide.gradle.aem.base.vlt.VltFilter
 import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.Collections
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.http.HttpClient
 import com.cognifide.gradle.aem.instance.Instance
+import com.cognifide.gradle.aem.tooling.vlt.VltFilter
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 import org.apache.commons.io.FilenameUtils

@@ -1,8 +1,8 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.base.BasePlugin
 import com.cognifide.gradle.aem.common.AemPlugin
 import com.cognifide.gradle.aem.common.TaskFactory
+import com.cognifide.gradle.aem.config.ConfigPlugin
 import com.cognifide.gradle.aem.instance.tasks.*
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.Deploy
@@ -22,7 +22,7 @@ class InstancePlugin : AemPlugin() {
     }
 
     private fun Project.setupDependentPlugins() {
-        plugins.apply(BasePlugin::class.java)
+        plugins.apply(ConfigPlugin::class.java)
     }
 
     private fun Project.setupTasks() {

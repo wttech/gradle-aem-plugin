@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.base.vlt
+package com.cognifide.gradle.aem.tooling.vlt
 
 import java.io.File
 import org.apache.jackrabbit.vault.cli.VaultFsApp

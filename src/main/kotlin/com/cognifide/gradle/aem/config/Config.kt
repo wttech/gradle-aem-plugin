@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.base
+package com.cognifide.gradle.aem.config
 
 import com.cognifide.gradle.aem.common.AemException
 import com.cognifide.gradle.aem.common.AemExtension
@@ -19,7 +19,7 @@ import org.gradle.api.tasks.Nested
 /**
  * General AEM related configuration (shared for tasks).
  */
-class BaseConfig(
+class Config(
     @Transient
     @JsonIgnore
     private val aem: AemExtension

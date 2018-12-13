@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem.pkg
 
-import com.cognifide.gradle.aem.base.BasePlugin
 import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.AemPlugin
 import com.cognifide.gradle.aem.common.TaskFactory
@@ -9,6 +8,7 @@ import com.cognifide.gradle.aem.instance.tasks.Create
 import com.cognifide.gradle.aem.instance.tasks.Satisfy
 import com.cognifide.gradle.aem.instance.tasks.Up
 import com.cognifide.gradle.aem.pkg.tasks.*
+import com.cognifide.gradle.aem.tooling.ToolingPlugin
 import org.gradle.api.Project
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 
@@ -21,7 +21,7 @@ class PackagePlugin : AemPlugin() {
     }
 
     private fun Project.setupDependentPlugins() {
-        plugins.apply(BasePlugin::class.java)
+        plugins.apply(ToolingPlugin::class.java)
     }
 
     private fun Project.setupInstallRepository() {

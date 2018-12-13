@@ -50,10 +50,11 @@ To see documentation for previous 5.x serie, please [click here](https://github.
      * [Plugin setup](#plugin-setup)
         * [Minimal:](#minimal)
         * [Additional](#additional)
-     * [Base plugin](#base-plugin)
+     * [Config plugin](#config-plugin)
         * [Instance conventions](#instance-conventions)
         * [Defining instances via properties file](#defining-instances-via-properties-file)
         * [Defining instances via build script](#defining-instances-via-build-script)
+     * [Tooling plugin](#tooling-plugin)
         * [Task aemSync](#task-aemsync)
            * [Use alternative check out type](#use-alternative-check-out-type)
            * [Filter file at custom path](#filter-file-at-custom-path)
@@ -186,15 +187,17 @@ To see all available options and actual documentation, please follow to:
 * `config` - [BaseConfig](src/main/kotlin/com/cognifide/gradle/aem/base/BaseConfig.kt)
 * `bundle` - [BundleJar](src/main/kotlin/com/cognifide/gradle/aem/bundle/BundleJar.kt)
 
-### Base plugin
+### Config plugin
 
 ```kotlin
 plugins {
-    id("com.cognifide.aem.base")
+    id("com.cognifide.aem.config")
 }
 ```
 
-Applied transparently by other plugins. Provides AEM section to build script and instance definitions, common configuration and general tasks: `aemDebug`, `aemVlt` etc.
+Applied transparently by other plugins. Provides AEM section to build script and instance definitions, common configuration.
+
+It does not provide any tasks.
 
 #### Instance conventions
 
@@ -272,6 +275,16 @@ aem {
     }
 }
 ```
+
+### Tooling plugin
+
+```kotlin
+plugins {
+    id("com.cognifide.aem.tooling")
+}
+```
+
+Applied transparently by package and bundle plugins. Provides tooling related tasks like `aemSync`, `aemRcp`, `aemDebug` etc.
 
 #### Task `aemSync`
 

@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.base.tasks
+package com.cognifide.gradle.aem.tooling.tasks
 
 import com.cognifide.gradle.aem.common.AemException
 import com.cognifide.gradle.aem.common.AemTask

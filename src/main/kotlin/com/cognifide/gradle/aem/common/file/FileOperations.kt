@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.common.file
 
-import com.cognifide.gradle.aem.base.BasePlugin
+import com.cognifide.gradle.aem.common.AemPlugin
 import com.cognifide.gradle.aem.common.Patterns
 import java.io.File
 import java.io.FileOutputStream
@@ -19,11 +19,11 @@ import org.reflections.scanners.ResourcesScanner
 object FileOperations {
 
     fun readResource(path: String): InputStream? {
-        return javaClass.getResourceAsStream("/${BasePlugin.PKG.replace(".", "/")}/$path")
+        return javaClass.getResourceAsStream("/${AemPlugin.PKG.replace(".", "/")}/$path")
     }
 
     fun getResources(path: String): List<String> {
-        return Reflections("${BasePlugin.PKG}.$path".replace("/", "."), ResourcesScanner()).getResources { true; }.toList()
+        return Reflections("${AemPlugin.PKG}.$path".replace("/", "."), ResourcesScanner()).getResources { true; }.toList()
     }
 
     fun eachResource(resourceRoot: String, targetDir: File, callback: (String, File) -> Unit) {

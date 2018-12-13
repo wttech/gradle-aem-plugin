@@ -1,7 +1,7 @@
-package com.cognifide.gradle.aem.base.tasks
+package com.cognifide.gradle.aem.tooling.tasks
 
-import com.cognifide.gradle.aem.base.vlt.VltRunner
 import com.cognifide.gradle.aem.common.AemDefaultTask
+import com.cognifide.gradle.aem.tooling.vlt.VltRunner
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 

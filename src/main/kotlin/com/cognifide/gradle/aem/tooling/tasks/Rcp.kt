@@ -1,8 +1,8 @@
-package com.cognifide.gradle.aem.base.tasks
+package com.cognifide.gradle.aem.tooling.tasks
 
-import com.cognifide.gradle.aem.base.vlt.VltException
-import com.cognifide.gradle.aem.base.vlt.VltRcpClient
 import com.cognifide.gradle.aem.instance.Instance
+import com.cognifide.gradle.aem.tooling.vlt.VltException
+import com.cognifide.gradle.aem.tooling.vlt.VltRcpClient
 import java.io.File
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction

@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.base.vlt
+package com.cognifide.gradle.aem.tooling.vlt
 
 import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.pkg.Package
