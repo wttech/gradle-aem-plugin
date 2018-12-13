@@ -34,8 +34,8 @@ Looking for dedicated version of plugin for [**Apache Sling**](https://sling.apa
 * Easy parallel CRX package deployment to many remote group of instances.
 * Automated dependent CRX packages and OSGi bundles installation from local and remote sources (SMB, SSH, HTTP(s)).
 * Smart Vault files generation (combining defaults with overiddables).
-* Embedded Vault tool for checking out and cleaning JCR content from running AEM instance.
-* Embedded [BND plugin](https://github.com/bndtools/bnd/tree/master/biz.aQute.bnd.gradle) for OSGi Manifest customization.
+* Embedded [Vault Tool](http://jackrabbit.apache.org/filevault) for checking out and cleaning JCR content from running AEM instance.
+* Embedded [BND Tool](https://github.com/bndtools/bnd/tree/master/biz.aQute.bnd.gradle) for OSGi Manifest customization.
 
 ## Important notice 
 
