@@ -222,7 +222,7 @@
     "packageSnapshots" : [ ],
     "lineSeparator" : "LF",
     "notificationEnabled" : false,
-    "groovyScriptRoot" : "*/aem/gradle/groovyScript"
+    "groovyScriptRoot" : "*/gradle/groovyScript"
   },
   "bundleConfig" : {
     "jar" : {

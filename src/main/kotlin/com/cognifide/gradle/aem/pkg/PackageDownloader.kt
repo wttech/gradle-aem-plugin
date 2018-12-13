@@ -6,33 +6,28 @@ import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.http.HttpClient
 import com.cognifide.gradle.aem.instance.Instance
 import com.cognifide.gradle.aem.tooling.vlt.VltFilter
-import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 import org.apache.commons.io.FilenameUtils
-import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.util.GFileUtils
 import org.zeroturnaround.zip.ZipUtil
 
 class PackageDownloader(
     @Internal
-private val aem: AemExtension,
+    private val aem: AemExtension,
     @Internal
-private val temporaryDir: File
+    private val temporaryDir: File
 ) {
 
     private val shellDir = File(temporaryDir, PKG_SHELL)
 
-    @Input
     var instance: Instance = aem.instanceAny
 
-    @Input
     var filter: VltFilter = aem.filter
 
     /**
      * Repeat download when failed (brute-forcing).
      */
-    @get:JsonIgnore
     var retry = aem.retry { afterSquaredSecond(aem.props.long("aem.packageDownload.retry") ?: 3) }
 
     /**

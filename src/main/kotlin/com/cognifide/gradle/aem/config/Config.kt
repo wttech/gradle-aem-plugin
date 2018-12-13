@@ -155,7 +155,7 @@ class Config(
      * Convention location in which Groovy Script to be evaluated via instance sync will be searched for by file name.
      */
     @Input
-    var groovyScriptRoot: String = "${aem.project.rootProject.file("aem/gradle/groovyScript")}"
+    var groovyScriptRoot: String = "${aem.project.file("gradle/groovyScript")}"
 
     init {
         // Define through command line
