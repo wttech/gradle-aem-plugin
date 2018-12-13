@@ -44,25 +44,40 @@ Looking for dedicated version of plugin for [**Apache Sling**](https://sling.apa
      * [Plugin setup](#plugin-setup)
         * [Minimal:](#minimal)
         * [Additional](#additional)
-     * [Base plugin tasks](#base-plugin-tasks)
+     * [Base plugin](#base-plugin)
+        * [Instance conventions](#instance-conventions)
+        * [Defining instances via properties file](#defining-instances-via-properties-file)
+        * [Defining instances via build script](#defining-instances-via-build-script)
         * [Task aemSync](#task-aemsync)
+           * [Filter file at custom path](#filter-file-at-custom-path)
+           * [Filter roots specified explicitly](#filter-roots-specified-explicitly)
         * [Task aemCheckout](#task-aemcheckout)
         * [Task aemClean](#task-aemclean)
+           * [Default configuration](#default-configuration)
+           * [Cleaning renditions](#cleaning-renditions)
         * [Task aemRcp](#task-aemrcp)
         * [Task aemVlt](#task-aemvlt)
         * [Task aemDebug](#task-aemdebug)
-     * [Package plugin tasks](#package-plugin-tasks)
+     * [Package plugin](#package-plugin)
         * [Task aemCompose](#task-aemcompose)
-           * [Methods:](#methods)
+           * [Default configuration](#default-configuration-1)
+        * [Including additional OSGi bundle into CRX package](#including-additional-osgi-bundle-into-crx-package)
+           * [Assembling packages (merging into all-in-one)](#assembling-packages-merging-into-all-in-one)
            * [Expandable properties](#expandable-properties)
         * [Task aemDeploy](#task-aemdeploy)
+           * [Deploying only to author or publish instances](#deploying-only-to-author-or-publish-instances)
+           * [Deploying only to instances specified explicitly](#deploying-only-to-instances-specified-explicitly)
         * [Task aemUpload](#task-aemupload)
         * [Task aemDelete](#task-aemdelete)
         * [Task aemInstall](#task-aeminstall)
         * [Task aemUninstall](#task-aemuninstall)
         * [Task aemPurge](#task-aempurge)
         * [Task aemActivate](#task-aemactivate)
-     * [Instance plugin tasks](#instance-plugin-tasks)
+     * [Bundle plugin](#bundle-plugin)
+        * [Embedding JAR file into built OSGi bundle](#embedding-jar-file-into-built-osgi-bundle)
+        * [Configuring OSGi bundle manifest attributes](#configuring-osgi-bundle-manifest-attributes)
+        * [Excluding packages being incidentally imported by OSGi bundle](#excluding-packages-being-incidentally-imported-by-osgi-bundle)
+     * [Instance plugin](#instance-plugin)
         * [Task aemSetup](#task-aemsetup)
         * [Task aemResetup](#task-aemresetup)
         * [Task aemCreate](#task-aemcreate)
@@ -78,20 +93,9 @@ Looking for dedicated version of plugin for [**Apache Sling**](https://sling.apa
         * [Task aemCollect](#task-aemcollect)
   * [How to's](#how-tos)
      * [Set AEM configuration properly for all / concrete project(s)](#set-aem-configuration-properly-for-all--concrete-projects)
-     * [Understand instance conventions](#understand-instance-conventions)
-     * [Define instances via properties file](#define-instances-via-properties-file)
-     * [Define instances via build script](#define-instances-via-build-script)
      * [Understand why there are one or two plugins to be applied in build script](#understand-why-there-are-one-or-two-plugins-to-be-applied-in-build-script)
      * [Work effectively on start and daily basis](#work-effectively-on-start-and-daily-basis)
-     * [Deploy CRX package(s) only to filtered group of instances:](#deploy-crx-packages-only-to-filtered-group-of-instances)
-     * [Deploy CRX package(s) only to instances specified explicitly](#deploy-crx-packages-only-to-instances-specified-explicitly)
-     * [Check out and clean JCR content using filter at custom path](#check-out-and-clean-jcr-content-using-filter-at-custom-path)
-     * [Check out and clean JCR content using filter roots specified explicitly](#check-out-and-clean-jcr-content-using-filter-roots-specified-explicitly)
-     * [Assemble all-in-one CRX package(s)](#assemble-all-in-one-crx-packages)
-     * [Include additional OSGi bundle into CRX package](#include-additional-osgi-bundle-into-crx-package)
-     * [Embed JAR file into built OSGi bundle](#embed-jar-file-into-built-osgi-bundle)
-     * [Configure OSGi bundle manifest attributes](#configure-osgi-bundle-manifest-attributes)
-     * [Exclude packages being incidentally imported by OSGi bundle](#exclude-packages-being-incidentally-imported-by-osgi-bundle)
+     * [Filter instances for which packages will be deployed or satisfied](#filter-instances-for-which-packages-will-be-deployed-or-satisfied)
      * [Know how properties are being expanded in instance or package files](#know-how-properties-are-being-expanded-in-instance-or-package-files)
   * [Known issues](#known-issues)
      * [No OSGi services / components are registered](#no-osgi-services--components-are-registered)
@@ -163,21 +167,122 @@ aem {
 }
 ```
 
-### Base plugin tasks
+### Base plugin
+
+```kotlin
+plugins {
+    id("com.cognifide.aem.base")
+}
+```
+
+Applied transparently by other plugins. Provides AEM section to build script and instance definitions, common configuration and general tasks: `aemDebug`, `aemVlt` etc.
+
+#### Instance conventions
+
+* Instance **name** is a combination of *${environment}-${typeName}* e.g *local-author*, *integration-publish* etc.
+* Instance **type** indicates physical type of instance and could be only: *local* and *remote*. Local means that instance could be created by plugin automatically under local file system.
+* Instance **type name** is an instance purpose identifier and must start with prefix *author* or *publish*. Sample valid names: *author*, *author1*, *author2*, *author-master* and *publish*, *publish1* *publish2* etc.
+* Only instances defined as *local* are considered in command `aemSetup`, `aemCreate`, `aemUp` etc (that comes from `com.cognifide.aem.instance` plugin).
+* All instances defined as *local* or *remote* are considered in commands CRX package deployment related like `aemSatisfy`, `aemDeploy`, `aemUpload`, `aemInstall` etc.
+
+Instances could be defined in two ways, via:
+ 
+* file `gradle.properties` - recommended approach, by properties convention.
+* build script - customizable approach.
+
+#### Defining instances via properties file
+
+The configuration could be specified through *gradle.properties* file using dedicated syntax.
+
+`aem.instance.$TYPE.$ENVIRONMENT-$TYPE_NAME.$PROP_NAME=$PROP_VALUE`
+
+Part | Possible values | Description |
+--- | --- | --- |
+`$TYPE` | `local` or `remote` (only) | Type of instance. Local means that for each one there will be set up AEM Quickstart at local file system. | 
+`$ENVIRONMENT` | `local`, `int`, `stg` etc | Environment name. |
+`$TYPE_NAME` | `author`, `publish`, `publish2`, etc | Combination of AEM instance type and semantic suffix useful when more than one of instance of same type is being configured. |
+`$PROP_NAME=$PROP_VALUE` | Local instances: `httpUrl=http://admin:admin@localhost:4502`, `password=foo`, `runModes=nosamplecontent`, `jvmOpts=-server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true`, `startOpts=...`, `debugPort=24502`. Remote instances: `httpUrl`, `user`, `password`. | Run modes, JVM opts and start opts should be comma delimited. |
+
+#### Defining instances via build script
+
+Example usage below. The commented value is an effective instance name.
+
+```kotlin
+aem {
+    config {
+        localInstance("http://localhost:4502") // local-author
+        localInstance("http://localhost:4502") { // local-author
+            user = "admin"
+            password = "admin"
+            typeName = "author"
+            debugPort = 14502 
+        }
+      
+        localInstance("http://localhost:4503") // local-publish
+        localInstance("http://localhost:4503") { // local-publish
+            user = "admin"
+            password = "admin"
+            typeName = "publish"
+            debugPort = 14503
+        } 
+      
+        remoteInstance("http://192.168.10.1:4502") { // integration-author1
+            user = "user1" 
+            password = "password2"
+            environment = "integration"
+            typeName = "author1"
+        } 
+        remoteInstance("http://192.168.10.1:8080") { // integration-author2
+            user = "user1" 
+            password = "password2"
+            environment = "integration"
+            typeName = "author2"
+        } 
+        remoteInstance("http://192.168.10.2:4503") { // integration-publish1
+            user = "user2"
+            password = "password2"
+            environment = "integration"
+            typeName = "publish1"
+        } 
+        remoteInstance("http://192.168.10.2:8080") { // integration-publish2
+            user = "user2"
+            password = "password2"
+            environment = "integration"
+            typeName = "publish2"
+        } 
+    }
+}
+```
 
 #### Task `aemSync`
 
 Check out then clean JCR content.
 
+Below examples assume existence of subproject `:content`.
+
+##### Filter file at custom path
+   
+```bash
+gradlew :content:aemSync -Paem.filter.path=custom-filter.xml
+gradlew :content:aemSync -Paem.filter.path=src/main/content/META-INF/vault/custom-filter.xml
+gradlew :content:aemSync -Paem.filter.path=C:/aem/custom-filter.xml
+```
+
+##### Filter roots specified explicitly
+   
+```bash
+gradlew :content:aemSync -Paem.filter.roots=[/etc/tags/example,/content/dam/example]
+```
+
 #### Task `aemCheckout`
 
-Check out JCR content from running AEM author instance to local content path.
+Only check out JCR content from running AEM instance (author by default).
 
 #### Task `aemClean`
 
-Clean checked out JCR content. 
+Only clean previously checked out JCR content. E.g normalize existing content saved in VCS.
 
-Default configuration:
+##### Default configuration
 
 ```kotlin
 tasks {
@@ -218,6 +323,8 @@ tasks {
 }
 ```
 
+##### Cleaning renditions
+
 Cleaning could also ensure that AEM renditions will be never saved in VCS. Also any additional properties could be cleaned.
 For such cases, see configuration below:
 
@@ -253,19 +360,19 @@ Copy JCR content from one instance to another. Sample usages below.
 
 * Using predefined instances with multiple different source and target nodes:
 
-  ```
+  ```bash
   gradlew :aemRcp -Paem.rcp.source.instance=int-author -Paem.rcp.target.instance=local-author -Paem.rcp.paths=[/content/example-demo=/content/example,/content/dam/example-demo=/content/dam/example]
   ```
 
 * Using predefined instances with multiple same source and target nodes:
 
-  ```
+  ```bash
   gradlew :aemRcp -Paem.rcp.source.instance=stg-author -Paem.rcp.target.instance=int-author -Paem.rcp.paths=[/content/example,/content/example2]
   ```
 
 * Using predefined instances with source and target nodes specified in file:
 
-  ```
+  ```bash
   gradlew :aemRcp -Paem.rcp.source.instance=int-author -Paem.rcp.target.instance=local-author -Paem.rcp.pathsFile=paths.txt
   ```
 
@@ -281,7 +388,7 @@ Copy JCR content from one instance to another. Sample usages below.
 
 * Using dynamically defined instances:
 
-  ```
+  ```bash
   gradlew :aemRcp -Paem.rcp.source.instance=http://user:pass@192.168.66.66:4502 -Paem.rcp.target.instance=http://user:pass@192.168.33.33:4502 -Paem.rcp.paths=[/content/example-demo=/content/example]
   ```
 
@@ -397,11 +504,21 @@ Then file at path *build/aem/aemDebug/debug.json* with content below is being ge
 }
 ```
 
-### Package plugin tasks
+### Package plugin
+
+```kotlin
+plugins {
+    id("com.cognifide.aem.package")
+}
+```
+
+Should be applied to all projects that are composing CRX packages from *JCR content only*.
+
+Provides CRX package related tasks: `aemCompose`, `aemDeploy` etc.
 
 #### Task `aemCompose`
 
-Compose CRX package from JCR content and bundles. 
+[Compose](src/main/kotlin/com/cognifide/gradle/aem/pkg/tasks/Compose.kt) CRX package from JCR content and bundles. 
 
 Inherits from [ZIP task](https://docs.gradle.org/3.5/dsl/org.gradle.api.tasks.bundling.Zip.html).
 
@@ -427,19 +544,79 @@ tasks {
 }
 ```
 
-##### Assembly package generation
+#### Including additional OSGi bundle into CRX package
 
-Related methods:
+Use dedicated task method named `fromJar`.
 
-* `fromProject(path, options)`
-* `fromProjects(pathPattern, options)`
-* `fromCompose(task)`
-* `fromJar(task)`
-* `fromBundle(bundle)`
+```kotlin
+tasks {
+    named<Compose>(Compose.NAME) {
+        fromJar("group:name:version")
+    }
+}
+```
 
-TODO move from howto here
+##### Assembling packages (merging into all-in-one)
 
-##### Filtering package files
+Let's assume following project structure (with build file contents):
+
+* *build.gradle.kts* (project `:`)
+
+```kotlin
+plugins {
+    id("com.cognifide.aem.package")
+}
+
+tasks {
+    named<Compose>(Compose.NAME) {
+        fromProjects(":app:*")
+        fromProjects(":content:*")
+        fromProject(":migration")
+    }
+}
+
+```
+
+When building via command `gradlew :build`, then the effect will be a CRX package with assembled JCR content and OSGi bundles from projects: `:app:core`, `:app:common`, `:content:init`, `:content:demo` and `:migration`.
+
+* *app/build.gradle.kts*  (project `:app`)
+
+```kotlin
+plugins {
+    id("com.cognifide.aem.package")
+}
+
+tasks {
+    named<Compose>(Compose.NAME) {
+        fromSubprojects()
+    }
+}
+```
+
+When building via command `gradlew :app:build`, then the effect will be a CRX package with assembled JCR content and OSGi bundles from projects: `:app:core`, `:app:common` only.
+
+* *app/core/build.gradle.kts* (project `:app:core`, JCR content and OSGi bundle)
+* *app/common/build.gradle.kts* (project `:app:common`, JCR content and OSGi bundle)
+* *content/init/build.gradle.kts* (project `:content:init`, JCR content only)
+* *content/demo/build.gradle.kts* (project `:content:demo`, JCR content only)
+* *migration/build.gradle.kts* (project `:migration`, JCR content only)
+* *test/integration/build.gradle.kts* (project `:test:integration`, any source code)
+* *test/functional/build.gradle.kts* (project `:test:functional`, any source code)
+
+Gradle AEM Plugin is configured in that way that project can have:
+ 
+* JCR content,
+* source code to compile OSGi bundle,
+* both.
+
+By distinguishing `fromProject`, `fromBundle` or `fromCompose` there is ability to create any assembly CRX package with content of any type without restructuring the project.
+Even when using `fromProject` there is an ability to customize options like `bundlePath`, `bundleRunMode`, decide to include only JCR contents, only bundles and more.
+Only one must have rule to be kept while developing a multi-module project is that **all Vault filter roots of all projects must be exclusive**.
+In general, they are most often exclusive, to avoid strange JCR installer behaviors, but sometimes exceptional [workspace filter](http://jackrabbit.apache.org/filevault/filter.html) rules are being applied like `mode="merge"` etc.
+
+To control what should be taken from each project, pass options lambda to `fromProject` method. Using this project options it is possible to take only JCR content, OSGi bundle, customize bundle run mode etc.
+
+##### Expandable properties
 
 In exactly same way as it is working for instance files, properties can be expanded inside metadata files of package being composed.
 
@@ -497,6 +674,21 @@ Each JAR file in *hooks* directory will be also merged.
 
 Upload & install CRX package into AEM instance(s). Primary, recommended form of deployment. Optimized version of `aemUpload aemInstall`.
 
+##### Deploying only to author or publish instances
+
+```bash
+gradlew aemDeploy -Paem.instance.authors
+gradlew aemDeploy -Paem.instance.publishers
+```
+
+##### Deploying only to instances specified explicitly
+
+Instance urls must be delimited by semicolon:
+
+```bash
+gradlew aemDeploy -Paem.instance.list=[http://admin:admin@localhost:4502,http://admin:admin@localhost:4503]
+```
+
 #### Task `aemUpload`
 
 Upload composed CRX package into AEM instance(s).
@@ -525,7 +717,88 @@ To prevent data loss, this unsafe task execution must be confirmed by parameter 
 
 Replicate installed CRX package to other AEM instance(s).
 
-### Instance plugin tasks
+### Bundle plugin
+
+Should be applied to all projects that are composing CRX packages from both *OSGi bundle* being built and optionally *JCR content*, extends package plugin.
+
+For the reference, see [usage in AEM Multi-Project Example](https://github.com/Cognifide/gradle-aem-multi/blob/master/aem/app.common/build.gradle.kts).
+
+#### Embedding JAR file into built OSGi bundle
+
+Use dedicated method in *bundle* section.
+
+```kotlin
+aem {
+    bundle {
+        embedPackage("com.group.name",  true, 'group:name:version') // true -> exportPackage, false -> privatePackage
+    }
+}
+```
+ 
+For the reference, see [usage in AEM Multi-Project Example](https://github.com/Cognifide/gradle-aem-multi/blob/master/aem/app.common/build.gradle.kts).
+
+#### Configuring OSGi bundle manifest attributes
+
+Plugin by default covers generation of few attributes by convention. The minimal need is to only specify *javaPackage*  in *bundle* section:
+
+
+```kotlin
+aem {
+    bundle {
+        javaPackage = "com.company.aem.example.common"
+    }
+}
+```
+
+Then the following attributes will be generated by convention:
+
+* `Bundle-Name` will grab value from `project.description`
+* `Bundle-SymbolicName` will grab value from `aem.bundle.javaPackage`
+* `Sling-Model-Packages` will grab value from `aem.bundle.javaPackage`
+* `Export-Package` will grab value from `aem.bundle.javaPackage`.
+
+This values population behavior could be optionally disabled by config parameter `aem.bundle.attributesConvention = false`.
+Regardless if this behavior is enabled or disabled, all of values are overiddable e.g:
+
+```kotlin
+aem {
+    bundle {
+        name = 'My Bundle"
+        symbolicName = "com.company.aem.example.common"
+        slingModelPackages = "com.company.aem.example.common.models"
+        exportPackage("com.company.aem.example.common")
+    }
+}
+```
+
+#### Excluding packages being incidentally imported by OSGi bundle
+
+Sometimes BND tool could generate *Import-Package* directive that will import too many OSGi classes to be available on bundle class path. Especially when we are migrating non-OSGi dependency to OSGi bundle (because of transitive class dependencies).
+ 
+To prevent that we could generate own manifest entry that will prevent importing optional classes.
+
+For instance: 
+
+```kotlin
+aem {
+    bundle {
+        excludePackages(listOf("org.junit", "org.mockito"))
+        importPackages(listOf("!org.junit", "!org.mockito", "*")) // alternatively
+    } 
+}
+```
+
+### Instance plugin
+
+```kotlin
+plugins {
+    id("com.cognifide.aem.instance")
+}
+```
+
+Provides instance related tasks: `aemAwait`, `aemSetup`, `aemCreate` etc.
+
+Should be applied only at root project / only once within whole build.
 
 #### Task `aemSetup`
 
@@ -781,93 +1054,9 @@ tasks {
 Warning! Very often plugin users mistake is to configure `aemSatisfy` task in `allprojects` closure. 
 As an effect there will be same dependent CRX package defined multiple times.
 
-### Understand instance conventions
-
-Conventions assumed:
-
-* Instance **name** is a combination of *${environment}-${typeName}* e.g *local-author*, *integration-publish* etc.
-* Instance **type** indicates physical type of instance and could be only: *local* and *remote*. Local means that instance could be created by plugin automatically under local file system.
-* Instance **type name** is an instance purpose identifier and must start with prefix *author* or *publish*. Sample valid names: *author*, *author1*, *author2*, *author-master* and *publish*, *publish1* *publish2* etc.
-* Only instances defined as *local* are considered in command `aemSetup`, `aemCreate`, `aemUp` etc (that comes from `com.cognifide.aem.instance` plugin).
-* All instances defined as *local* or *remote* are considered in commands CRX package deployment related like `aemSatisfy`, `aemDeploy`, `aemUpload`, `aemInstall` etc.
-
-Instances could be defined in two ways, via:
- 
-* file `gradle.properties` - recommended approach, by properties convention.
-* build script - customizable approach.
-
-### Define instances via properties file
-
-The configuration could be specified through *gradle.properties* file using dedicated syntax.
-
-`aem.instance.$TYPE.$ENVIRONMENT-$TYPE_NAME.$PROP_NAME=$PROP_VALUE`
-
-Part | Possible values | Description |
---- | --- | --- |
-`$TYPE` | `local` or `remote` (only) | Type of instance. Local means that for each one there will be set up AEM Quickstart at local file system. | 
-`$ENVIRONMENT` | `local`, `int`, `stg` etc | Environment name. |
-`$TYPE_NAME` | `author`, `publish`, `publish2`, etc | Combination of AEM instance type and semantic suffix useful when more than one of instance of same type is being configured. |
-`$PROP_NAME=$PROP_VALUE` | Local instances: `httpUrl=http://admin:admin@localhost:4502`, `password=foo`, `runModes=nosamplecontent`, `jvmOpts=-server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true`, `startOpts=...`, `debugPort=24502`. Remote instances: `httpUrl`, `user`, `password`. | Run modes, JVM opts and start opts should be comma delimited. |
-
-### Define instances via build script
-
-Example usage below. The commented value is an effective instance name.
-
-```kotlin
-aem {
-    config {
-        localInstance("http://localhost:4502") // local-author
-        localInstance("http://localhost:4502") { // local-author
-            user = "admin"
-            password = "admin"
-            typeName = "author"
-            debugPort = 14502 
-        }
-      
-        localInstance("http://localhost:4503") // local-publish
-        localInstance("http://localhost:4503") { // local-publish
-            user = "admin"
-            password = "admin"
-            typeName = "publish"
-            debugPort = 14503
-        } 
-      
-        remoteInstance("http://192.168.10.1:4502") { // integration-author1
-            user = "user1" 
-            password = "password2"
-            environment = "integration"
-            typeName = "author1"
-        } 
-        remoteInstance("http://192.168.10.1:8080") { // integration-author2
-            user = "user1" 
-            password = "password2"
-            environment = "integration"
-            typeName = "author2"
-        } 
-        remoteInstance("http://192.168.10.2:4503") { // integration-publish1
-            user = "user2"
-            password = "password2"
-            environment = "integration"
-            typeName = "publish1"
-        } 
-        remoteInstance("http://192.168.10.2:8080") { // integration-publish2
-            user = "user2"
-            password = "password2"
-            environment = "integration"
-            typeName = "publish2"
-        } 
-    }
-}
-```
-
 ### Understand why there are one or two plugins to be applied in build script
 
-Gradle AEM plugin architecture is splitted into 4 plugins to properly fit into Gradle tasks structure correctly.
-
-* base (`com.cognifide.aem.base`), applied transparently by other plugins, provides AEM config section to build script and general tasks: `aemDebug`, `aemVlt` etc.
-* instance (`com.cognifide.aem.instance`), should be applied only at root project (once), provides instance related tasks: `aemAwait`, `aemSetup`, `aemCreate` etc,
-* package (`com.cognifide.aem.package`), should be applied to all projects that are composing CRX packages from *JCR content only*, provides CRX package related tasks: `aemCompose`, `aemDeploy` etc.
-* bundle (`com.cognifide.aem.bundle`), should be applied to all projects that are composing CRX packages from both *OSGi bundle* being built and optionally *JCR content*, extends package plugin.
+Gradle AEM Plugin assumes separation of 4 plugins to properly fit into Gradle tasks structure correctly.
 
 Most often, Gradle commands are being launched from project root and tasks are being run by their name e.g `aemSatisfy` (which is not fully qualified, better if it will be `:aemSatisfy` of root project).
 Let's imagine if task `aemSatisfy` will come from package plugin, then Gradle will execute more than one `aemSatisfy` (for all projects that have plugin applied), so that this is unintended behavior.
@@ -884,7 +1073,7 @@ Above configuration uses [default tasks](https://docs.gradle.org/current/usergui
 * In next step application is being built and deployed to all configured AEM instances.
 * Finally build awaits till all AEM instances be stable.
 
-### Deploy CRX package(s) only to filtered group of instances:
+### Filter instances for which packages will be deployed or satisfied
 
 When there are defined named AEM instances: `local-author`, `local-publish`, `integration-author` and `integration-publish`,
 then it is available to deploy (or satisfy) packages with taking into account: 
@@ -892,180 +1081,16 @@ then it is available to deploy (or satisfy) packages with taking into account:
  * type of environment (local, integration, staging, etc)
  * type of AEM instance (author / publish)
 
+Example cases:
+
 ```bash
 gradlew aemDeploy -Paem.instance.name=integration-*
 gradlew aemDeploy -Paem.instance.name=*-author
+gradlew aemDeploy -Paem.instance.name=local-author,integration-author
 ```
 
-Default value of that instance name filter is `local-*`.
-
-To deploy only to author instance(s) or publish instance(s):
-
-```bash
-gradlew aemDeploy -Paem.instance.authors
-gradlew aemDeploy -Paem.instance.publishers
-```
-
-### Deploy CRX package(s) only to instances specified explicitly
-
-Instance urls delimited by semicolon:
-
-```bash
-gradlew aemDeploy -Paem.instance.list=[http://admin:admin@localhost:4502,http://admin:admin@localhost:4503]
-```
-
-### Check out and clean JCR content using filter at custom path
-   
-E.g for subproject `:content`:
-   
-```bash
-gradlew :content:aemSync -Paem.filter.path=custom-filter.xml
-gradlew :content:aemSync -Paem.filter.path=src/main/content/META-INF/vault/custom-filter.xml
-gradlew :content:aemSync -Paem.filter.path=C:/aem/custom-filter.xml
-```
-
-### Check out and clean JCR content using filter roots specified explicitly
-   
-```bash
-gradlew :content:aemSync -Paem.filter.roots=[/etc/tags/example,/content/dam/example]
-```
-
-### Assemble all-in-one CRX package(s)
-
-Let's assume following project structure (with build file contents):
-
-* *build.gradle.kts* (project `:`)
-
-```kotlin
-plugins {
-    id("com.cognifide.aem.package")
-}
-
-tasks {
-    named<Compose>(Compose.NAME) {
-        fromProjects(":app:*")
-        fromProjects(":content:*")
-        fromProject(":migration")
-    }
-}
-
-```
-
-When building via command `gradlew :build`, then the effect will be a CRX package with assembled JCR content and OSGi bundles from projects: `:app:core`, `:app:common`, `:content:init`, `:content:demo` and `:migration`.
-
-* *app/build.gradle.kts*  (project `:app`)
-
-```kotlin
-plugins {
-    id("com.cognifide.aem.package")
-}
-
-tasks {
-    named<Compose>(Compose.NAME) {
-        fromSubprojects()
-    }
-}
-```
-
-When building via command `gradlew :app:build`, then the effect will be a CRX package with assembled JCR content and OSGi bundles from projects: `:app:core`, `:app:common` only.
-
-* *app/core/build.gradle.kts* (project `:app:core`, JCR content and OSGi bundle)
-* *app/common/build.gradle.kts* (project `:app:common`, JCR content and OSGi bundle)
-* *content/init/build.gradle.kts* (project `:content:init`, JCR content only)
-* *content/demo/build.gradle.kts* (project `:content:demo`, JCR content only)
-* *migration/build.gradle.kts* (project `:migration`, JCR content only)
-* *test/integration/build.gradle.kts* (project `:test:integration`, any source code)
-* *test/functional/build.gradle.kts* (project `:test:functional`, any source code)
-
-Gradle AEM Plugin is configured in that way that project can have:
- 
-* JCR content,
-* source code to compile OSGi bundle,
-* both.
-
-By distinguishing `fromProject`, `fromBundle` or `fromCompose` there is ability to create any assembly CRX package with content of any type without restructuring the project.
-Even when using `fromProject` there is an ability to customize options like `bundlePath`, `bundleRunMode`, decide to include only JCR contents, only bundles and more.
-Only one must have rule to be kept while developing a multi-module project is that **all Vault filter roots of all projects must be exclusive**.
-In general, they are most often exclusive, to avoid strange JCR installer behaviors, but sometimes exceptional [workspace filter](http://jackrabbit.apache.org/filevault/filter.html) rules are being applied like `mode="merge"` etc.
-
-### Include additional OSGi bundle into CRX package
-
-Use dedicated method of compose task named *fromJar*.
-
-```kotlin
-tasks {
-    named<Compose>(Compose.NAME) {
-        fromJar("group:name:version")
-    }
-}
-```
-
-For the reference, see [usage in AEM Multi-Project Example](https://github.com/Cognifide/gradle-aem-multi/blob/master/aem/app.common/build.gradle.kts).
-
-### Embed JAR file into built OSGi bundle
-
-Use dedicated method in *bundle* section.
-
-```kotlin
-aem {
-    bundle {
-        embedPackage("com.group.name",  true, 'group:name:version') // true -> exportPackage, false -> privatePackage
-    }
-}
-```
- 
-For the reference, see [usage in AEM Multi-Project Example](https://github.com/Cognifide/gradle-aem-multi/blob/master/aem/app.common/build.gradle.kts).
-
-### Configure OSGi bundle manifest attributes
-
-Plugin by default covers generation of few attributes by convention. The minimal need is to only specify *javaPackage*  in *bundle* section:
-
-
-```kotlin
-aem {
-    bundle {
-        javaPackage = "com.company.aem.example.common"
-    }
-}
-```
-
-Then the following attributes will be generated by convention:
-
-* `Bundle-Name` will grab value from `project.description`
-* `Bundle-SymbolicName` will grab value from `aem.bundle.javaPackage`
-* `Sling-Model-Packages` will grab value from `aem.bundle.javaPackage`
-* `Export-Package` will grab value from `aem.bundle.javaPackage`.
-
-This values population behavior could be optionally disabled by config parameter `aem.bundle.attributesConvention = false`.
-Regardless if this behavior is enabled or disabled, all of values are overiddable e.g:
-
-```kotlin
-aem {
-    bundle {
-        name = 'My Bundle"
-        symbolicName = "com.company.aem.example.common"
-        slingModelPackages = "com.company.aem.example.common.models"
-        exportPackage("com.company.aem.example.common")
-    }
-}
-```
-
-### Exclude packages being incidentally imported by OSGi bundle
-
-Sometimes BND tool could generate *Import-Package* directive that will import too many OSGi classes to be available on bundle class path. Especially when we are migrating non-OSGi dependency to OSGi bundle (because of transitive class dependencies).
- 
-To prevent that we could generate own manifest entry that will prevent importing optional classes.
-
-For instance: 
-
-```kotlin
-aem {
-    bundle {
-        excludePackages(listOf("org.junit", "org.mockito"))
-        importPackages(listOf("!org.junit", "!org.mockito", "*")) // alternatively
-    } 
-}
-```
+Default value of that instance name filter is `${aem.environment}-*`, so that typically `local-*`.
+Environment value comes from system environment variable `AEM_ENV` or property `aem.env`.
 
 ### Know how properties are being expanded in instance or package files
 
