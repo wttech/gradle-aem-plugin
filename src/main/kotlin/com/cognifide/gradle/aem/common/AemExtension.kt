@@ -130,31 +130,31 @@ open class AemExtension(@Internal val project: Project) {
 
     @get:Internal
     val instances: List<Instance>
-        get() = instanceFilter()
+        get() = filterInstances()
 
     fun instances(consumer: (Instance) -> Unit) = parallelWith(instances, consumer)
 
-    fun instances(filter: String, consumer: (Instance) -> Unit) = parallelWith(instanceFilter(filter), consumer)
+    fun instances(filter: String, consumer: (Instance) -> Unit) = parallelWith(filterInstances(filter), consumer)
 
     fun instance(urlOrName: String): Instance {
         return config.parseInstance(urlOrName)
     }
 
     @get:Internal
-    val instanceAny: Instance
+    val anyInstance: Instance
         get() {
             val cmdInstanceArg = props.string("aem.instance")
             if (!cmdInstanceArg.isNullOrBlank()) {
                 return instance(cmdInstanceArg)
             }
 
-            return instanceNamed(Instance.FILTER_ANY)
+            return namedInstance(Instance.FILTER_ANY)
         }
 
-    fun instanceNamed(desiredName: String? = props.string("aem.instance.name"), defaultName: String = "$environment-*"): Instance {
+    fun namedInstance(desiredName: String? = props.string("aem.instance.name"), defaultName: String = "$environment-*"): Instance {
         val nameMatcher: String = desiredName ?: defaultName
 
-        val namedInstance = instanceFilter(nameMatcher).firstOrNull()
+        val namedInstance = filterInstances(nameMatcher).firstOrNull()
         if (namedInstance != null) {
             return namedInstance
         }
@@ -162,7 +162,7 @@ open class AemExtension(@Internal val project: Project) {
         throw InstanceException("Instance named '$nameMatcher' is not defined.")
     }
 
-    fun instanceFilter(nameMatcher: String = props.string("aem.instance.name") ?: "$environment-*"): List<Instance> {
+    fun filterInstances(nameMatcher: String = props.string("aem.instance.name") ?: "$environment-*"): List<Instance> {
         val all = config.instances.values
 
         // Specified by command line should not be filtered
@@ -186,34 +186,34 @@ open class AemExtension(@Internal val project: Project) {
     }
 
     @get:Internal
-    val instanceAuthors: List<Instance>
-        get() = instanceFilter().filter { it.type == InstanceType.AUTHOR }
+    val authorInstances: List<Instance>
+        get() = filterInstances().filter { it.type == InstanceType.AUTHOR }
 
-    fun instanceAuthors(consumer: (Instance) -> Unit) = parallelWith(instanceAuthors, consumer)
-
-    @get:Internal
-    val instancePublishers: List<Instance>
-        get() = instanceFilter().filter { it.type == InstanceType.PUBLISH }
-
-    fun instancePublishers(consumer: Instance.() -> Unit) = parallelWith(instancePublishers, consumer)
+    fun authorInstances(consumer: (Instance) -> Unit) = parallelWith(authorInstances, consumer)
 
     @get:Internal
-    val instanceLocals: List<LocalInstance>
+    val publishInstances: List<Instance>
+        get() = filterInstances().filter { it.type == InstanceType.PUBLISH }
+
+    fun publishInstances(consumer: Instance.() -> Unit) = parallelWith(publishInstances, consumer)
+
+    @get:Internal
+    val localInstances: List<LocalInstance>
         get() = instances.filterIsInstance(LocalInstance::class.java)
 
-    fun instanceLocals(consumer: LocalInstance.() -> Unit) = parallelWith(instanceLocals, consumer)
+    fun localInstances(consumer: LocalInstance.() -> Unit) = parallelWith(localInstances, consumer)
 
     @get:Internal
-    val instanceHandles: List<LocalHandle>
-        get() = instanceLocals.map { LocalHandle(project, it) }
+    val localHandles: List<LocalHandle>
+        get() = localInstances.map { LocalHandle(project, it) }
 
-    fun instanceHandles(consumer: LocalHandle.() -> Unit) = parallelWith(instanceHandles, consumer)
+    fun localHandles(consumer: LocalHandle.() -> Unit) = parallelWith(localHandles, consumer)
 
     @get:Internal
-    val instanceRemotes: List<RemoteInstance>
+    val remoteInstances: List<RemoteInstance>
         get() = instances.filterIsInstance(RemoteInstance::class.java)
 
-    fun instanceRemotes(consumer: RemoteInstance.() -> Unit) = parallelWith(instanceRemotes, consumer)
+    fun remoteInstances(consumer: RemoteInstance.() -> Unit) = parallelWith(remoteInstances, consumer)
 
     fun packages(consumer: (File) -> Unit) = parallelWith(packages, consumer)
 

@@ -21,7 +21,7 @@ class PackageDownloader(
 
     private val shellDir = File(temporaryDir, PKG_SHELL)
 
-    var instance: Instance = aem.instanceAny
+    var instance: Instance = aem.anyInstance
 
     var filter: VltFilter = aem.filter
 

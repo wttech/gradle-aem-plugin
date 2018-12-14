@@ -17,7 +17,7 @@ abstract class AbstractAction(
 
     var instances: List<Instance> = aem.instances
 
-    val instanceHandles: List<LocalHandle>
+    val localHandles: List<LocalHandle>
         get() = instances.toLocalHandles(aem.project)
 
     var notify = true

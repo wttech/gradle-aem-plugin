@@ -19,9 +19,9 @@ open class Destroy : InstanceTask() {
 
     @TaskAction
     fun destroy() {
-        aem.parallelWith(instanceHandles) { destroy() }
+        aem.parallelWith(localHandles) { destroy() }
 
-        aem.notifier.notify("Instance(s) destroyed", "Which: ${instanceHandles.names}")
+        aem.notifier.notify("Instance(s) destroyed", "Which: ${localHandles.names}")
     }
 
     companion object {

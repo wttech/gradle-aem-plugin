@@ -29,7 +29,7 @@ open class Sync : AemDefaultTask() {
      * Source instance from which JCR content will be copied.
      */
     @Internal
-    var instance = aem.instanceAny
+    var instance = aem.anyInstance
 
     /**
      * Determines which content will be copied from source instance.
