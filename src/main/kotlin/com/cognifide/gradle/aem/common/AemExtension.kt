@@ -136,9 +136,9 @@ open class AemExtension(@Internal val project: Project) {
 
     fun instances(filter: String, consumer: (Instance) -> Unit) = parallelWith(filterInstances(filter), consumer)
 
-    fun instance(urlOrName: String): Instance {
-        return config.parseInstance(urlOrName)
-    }
+    fun instance(urlOrName: String): Instance = config.parseInstance(urlOrName)
+
+    fun instances(urlsOrNames: Collection<String>): List<Instance> = urlsOrNames.map { instance(it) }
 
     @get:Internal
     val anyInstance: Instance
