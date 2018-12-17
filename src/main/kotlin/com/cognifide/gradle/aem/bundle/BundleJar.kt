@@ -9,6 +9,7 @@ import org.apache.commons.lang3.reflect.FieldUtils
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.bundling.Jar
 
 /**
@@ -41,9 +42,10 @@ val jar: Jar
     /**
      * Suffix added to install path effectively allowing to install bundles only on specific instances.
      *
-     * See: <https://helpx.adobe.com/experience-manager/6-4/sites/deploying/using/configure-runmodes.html#Definingadditionalbundlestobeinstalledforarunmode>
+     * @see <https://helpx.adobe.com/experience-manager/6-4/sites/deploying/using/configure-runmodes.html#Definingadditionalbundlestobeinstalledforarunmode>
      */
     @Input
+    @Optional
     var installRunMode: String? = null
 
     /**
