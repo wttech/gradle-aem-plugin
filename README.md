@@ -82,6 +82,7 @@ To see documentation for previous 5.x serie, please [click here](https://github.
         * [Task aemPurge](#task-aempurge)
         * [Task aemActivate](#task-aemactivate)
      * [Bundle plugin](#bundle-plugin)
+        * [Bundle conventions](#bundle-conventions)
         * [Embedding JAR file into built OSGi bundle](#embedding-jar-file-into-built-osgi-bundle)
         * [Configuring OSGi bundle manifest attributes](#configuring-osgi-bundle-manifest-attributes)
         * [Excluding packages being incidentally imported by OSGi bundle](#excluding-packages-being-incidentally-imported-by-osgi-bundle)
@@ -765,6 +766,41 @@ Replicate installed CRX package to other AEM instance(s).
 Should be applied to all projects that are composing CRX packages from both *OSGi bundle* being built and optionally *JCR content*, 
 
 Inherits from [Package Plugin](#package-plugin).
+
+#### Bundle conventions
+
+OSGi bundle jar base name and CRX package base name is computed from:
+
+* for subproject of multi project build - `${project.rootProject.name}.${project.name}`,
+* for single project build - `${project.name}` (just root project name).
+
+Value of `aem.bundle.javaPackage` is computed from `${project.group}.${project.name}`.
+
+*settings.gradle.kts*
+```kotlin
+includeProject(":aem:app.core")
+```
+
+*aem/build.gradle.kts*
+```kotlin
+allprojects {
+    group = "com.company.example.aem"
+}
+```
+
+Then below section is absolutely redundant:
+
+*aem/app.core/build.gradle.kts*
+```kotlin
+aem {
+    bundle {
+        javaPackage = "${project.group}.${project.name}" // "com.company.example.aem"
+    }
+}
+```
+
+Gradle AEM Plugin is following strategy [convention over configuration](https://pl.wikipedia.org/wiki/Convention_Over_Configuration), which means when following built-in convention about project structure & naming, then only minimal configuration is required. 
+Still all features are fully configurable.
 
 #### Embedding JAR file into built OSGi bundle
 
