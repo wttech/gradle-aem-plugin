@@ -32,16 +32,16 @@ open class Up : InstanceTask() {
 
     @TaskAction
     fun up() {
-        aem.parallelWith(instanceHandles) { up() }
+        aem.parallelWith(localHandles) { up() }
 
         aem.actions.await {
             instances = this@Up.instances
             awaitOptions()
         }
 
-        aem.parallelWith(instanceHandles) { init(initOptions) }
+        aem.parallelWith(localHandles) { init(initOptions) }
 
-        aem.notifier.notify("Instance(s) up", "Which: ${instanceHandles.names}")
+        aem.notifier.notify("Instance(s) up", "Which: ${localHandles.names}")
     }
 
     companion object {

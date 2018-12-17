@@ -95,7 +95,7 @@ open class Deploy : Sync() {
     override fun projectsEvaluated() {
         if (instances.isEmpty()) {
             instances = if (distributed) {
-                aem.instanceAuthors
+                aem.authorInstances
             } else {
                 aem.instances
             }

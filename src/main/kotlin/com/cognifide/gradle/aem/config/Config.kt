@@ -37,10 +37,10 @@ class Config(
     /**
      * Path in which local AEM instances will be stored.
      *
-     * Default: "${System.getProperty("user.home")}/.aem/${project.rootProject.name}"
+     * Default path is a subfolder named '.aem' under root project directory.
      */
     @Input
-    var instanceRoot: String = "${System.getProperty("user.home")}/.aem/${aem.project.rootProject.name}"
+    var instanceRoot: String = "${aem.project.rootProject.file(".aem")}"
 
     /**
      * Defines maximum time after which initializing connection to AEM will be aborted (e.g on upload, install).

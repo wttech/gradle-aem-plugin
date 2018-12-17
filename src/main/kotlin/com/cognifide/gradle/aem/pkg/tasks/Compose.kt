@@ -20,10 +20,7 @@ import org.gradle.api.Project
 import org.gradle.api.file.CopySpec
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.plugins.JavaPlugin
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.Nested
-import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.*
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.bundling.Zip
 import org.jsoup.nodes.Element
@@ -51,6 +48,15 @@ open class Compose : Zip(), AemTask {
      */
     @Input
     var bundlePath: String = aem.config.packageInstallPath
+
+    /**
+     * Suffix added to bundle path effectively allowing to install bundles only on specific instances.
+     *
+     * @see <https://helpx.adobe.com/experience-manager/6-4/sites/deploying/using/configure-runmodes.html#Definingadditionalbundlestobeinstalledforarunmode>
+     */
+    @Input
+    @Optional
+    var bundleRunMode: String? = null
 
     /**
      * Dependent OSGi bundles to be resolved from repositories and put into CRX package being built.
@@ -297,7 +303,7 @@ open class Compose : Zip(), AemTask {
             }
 
             if (options.bundleDependent) {
-                fromJarsInternal(other.bundleFiles.resolve(), options.bundlePath(other.bundlePath))
+                fromJarsInternal(other.bundleFiles.resolve(), options.bundlePath(other.bundlePath, other.bundleRunMode))
             }
 
             if (options.vaultFilters) {
@@ -334,7 +340,7 @@ open class Compose : Zip(), AemTask {
 
     private fun fromBundle(bundle: BundleJar, options: ProjectOptions) {
         if (options.bundleBuilt) {
-            fromJar(bundle.jar, options.bundlePath(bundle.installPath))
+            fromJar(bundle.jar, options.bundlePath(bundle.installPath, bundle.installRunMode))
         }
     }
 
@@ -421,10 +427,13 @@ open class Compose : Zip(), AemTask {
 
         var bundleRunMode: String? = null
 
-        internal fun bundlePath(otherPath: String): String {
-            var result = bundlePath ?: otherPath
-            if (!bundleRunMode.isNullOrBlank()) {
-                result = "$result.$bundleRunMode"
+        internal fun bundlePath(otherBundlePath: String, otherBundleRunMode: String?): String {
+            val effectiveBundlePath = bundlePath ?: otherBundlePath
+            val effectiveBundleRunMode = bundleRunMode ?: otherBundleRunMode
+
+            var result = effectiveBundlePath
+            if (!effectiveBundleRunMode.isNullOrBlank()) {
+                result = "$effectiveBundlePath.$effectiveBundleRunMode"
             }
 
             return result

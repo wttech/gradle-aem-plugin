@@ -9,6 +9,7 @@ import org.apache.commons.lang3.reflect.FieldUtils
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.bundling.Jar
 
 /**
@@ -37,6 +38,15 @@ val jar: Jar
      */
     @Input
     var installPath: String = aem.config.packageInstallPath
+
+    /**
+     * Suffix added to install path effectively allowing to install bundles only on specific instances.
+     *
+     * @see <https://helpx.adobe.com/experience-manager/6-4/sites/deploying/using/configure-runmodes.html#Definingadditionalbundlestobeinstalledforarunmode>
+     */
+    @Input
+    @Optional
+    var installRunMode: String? = null
 
     /**
      * Enable or disable support for auto-generating OSGi specific JAR manifest attributes

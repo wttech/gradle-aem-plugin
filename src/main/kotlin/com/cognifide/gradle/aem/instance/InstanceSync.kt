@@ -327,7 +327,8 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
     }
 
     fun getBundle(symbolicName: String): Bundle {
-        return findBundle(symbolicName) ?: throw InstanceException("OSGi bundle '$symbolicName' cannot be found on $instance.")
+        return findBundle(symbolicName)
+                ?: throw InstanceException("OSGi bundle '$symbolicName' cannot be found on $instance.")
     }
 
     fun startBundle(symbolicName: String) {
@@ -430,13 +431,20 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
         }
     }
 
-    fun evalGroovyCode(code: String, data: Map<String, Any> = mapOf()): GroovyConsoleResult {
-        return try {
+    fun evalGroovyCode(code: String, data: Map<String, Any> = mapOf(), verbose: Boolean = true): GroovyConsoleResult {
+        val result = try {
             aem.logger.info("Executing Groovy Code: $code")
             evalGroovyCodeInternal(code, data)
         } catch (e: AemException) {
             throw InstanceException("Cannot evaluate Groovy code properly on $instance, code:\n$code", e)
         }
+
+        if (verbose && result.exceptionStackTrace.isNotBlank()) {
+            aem.logger.debug(result.toString())
+            throw InstanceException("Execution of Groovy code on $instance ended with exception:\n${result.exceptionStackTrace}")
+        }
+
+        return result
     }
 
     private fun evalGroovyCodeInternal(code: String, data: Map<String, Any>): GroovyConsoleResult {
@@ -446,25 +454,32 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
         )) { asObjectFromJson(it, GroovyConsoleResult::class.java) }
     }
 
-    fun evalGroovyScript(file: File, data: Map<String, Any> = mapOf()): GroovyConsoleResult {
-        return try {
+    fun evalGroovyScript(file: File, data: Map<String, Any> = mapOf(), verbose: Boolean = true): GroovyConsoleResult {
+        val result = try {
             aem.logger.info("Executing Groovy script: $file")
             evalGroovyCodeInternal(file.bufferedReader().use { it.readText() }, data)
         } catch (e: AemException) {
             throw InstanceException("Cannot evaluate Groovy script properly on $instance, file: $file", e)
         }
+
+        if (verbose && result.exceptionStackTrace.isNotBlank()) {
+            aem.logger.debug(result.toString())
+            throw InstanceException("Execution of Groovy script $file on $instance ended with exception:\n${result.exceptionStackTrace}")
+        }
+
+        return result
     }
 
-    fun evalGroovyScript(fileName: String, data: Map<String, Any> = mapOf()): GroovyConsoleResult {
+    fun evalGroovyScript(fileName: String, data: Map<String, Any> = mapOf(), verbose: Boolean = true): GroovyConsoleResult {
         val script = File(aem.config.groovyScriptRoot, fileName)
         if (!script.exists()) {
             throw AemException("Groovy script '$fileName' not found in directory: ${aem.config.groovyScriptRoot}")
         }
 
-        return evalGroovyScript(script, data)
+        return evalGroovyScript(script, data, verbose)
     }
 
-    fun evalGroovyScripts(fileNamePattern: String = "**/*.groovy", data: Map<String, Any> = mapOf()): Sequence<GroovyConsoleResult> {
+    fun evalGroovyScripts(fileNamePattern: String = "**/*.groovy", data: Map<String, Any> = mapOf(), verbose: Boolean = true): Sequence<GroovyConsoleResult> {
         val scripts = (project.file(aem.config.groovyScriptRoot).listFiles() ?: arrayOf()).filter {
             Patterns.wildcard(it, fileNamePattern)
         }.sortedBy { it.absolutePath }
@@ -472,11 +487,11 @@ class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(pr
             throw AemException("No Groovy scripts found in directory: ${aem.config.groovyScriptRoot}")
         }
 
-        return evalGroovyScripts(scripts, data)
+        return evalGroovyScripts(scripts, data, verbose)
     }
 
-    fun evalGroovyScripts(scripts: Collection<File>, data: Map<String, Any> = mapOf()): Sequence<GroovyConsoleResult> {
-        return scripts.asSequence().map { evalGroovyScript(it, data) }
+    fun evalGroovyScripts(scripts: Collection<File>, data: Map<String, Any> = mapOf(), verbose: Boolean = true): Sequence<GroovyConsoleResult> {
+        return scripts.asSequence().map { evalGroovyScript(it, data, verbose) }
     }
 
     companion object {
