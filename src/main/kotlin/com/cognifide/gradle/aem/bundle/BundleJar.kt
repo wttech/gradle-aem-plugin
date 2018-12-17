@@ -39,6 +39,14 @@ val jar: Jar
     var installPath: String = aem.config.packageInstallPath
 
     /**
+     * Suffix added to install path effectively allowing to install bundles only on specific instances.
+     *
+     * See: <https://helpx.adobe.com/experience-manager/6-4/sites/deploying/using/configure-runmodes.html#Definingadditionalbundlestobeinstalledforarunmode>
+     */
+    @Input
+    var installRunMode: String? = null
+
+    /**
      * Enable or disable support for auto-generating OSGi specific JAR manifest attributes
      * like 'Bundle-SymbolicName', 'Export-Package' or AEM specific like 'Sling-Model-Packages'
      * using 'bundlePackage' property.

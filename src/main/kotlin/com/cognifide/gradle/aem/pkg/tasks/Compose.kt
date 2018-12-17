@@ -53,6 +53,14 @@ open class Compose : Zip(), AemTask {
     var bundlePath: String = aem.config.packageInstallPath
 
     /**
+     * Suffix added to bundle path effectively allowing to install bundles only on specific instances.
+     *
+     * See: <https://helpx.adobe.com/experience-manager/6-4/sites/deploying/using/configure-runmodes.html#Definingadditionalbundlestobeinstalledforarunmode>
+     */
+    @Input
+    var bundleRunMode: String? = null
+
+    /**
      * Dependent OSGi bundles to be resolved from repositories and put into CRX package being built.
      */
     @Internal
@@ -297,7 +305,7 @@ open class Compose : Zip(), AemTask {
             }
 
             if (options.bundleDependent) {
-                fromJarsInternal(other.bundleFiles.resolve(), options.bundlePath(other.bundlePath))
+                fromJarsInternal(other.bundleFiles.resolve(), options.bundlePath(other.bundlePath, other.bundleRunMode))
             }
 
             if (options.vaultFilters) {
@@ -334,7 +342,7 @@ open class Compose : Zip(), AemTask {
 
     private fun fromBundle(bundle: BundleJar, options: ProjectOptions) {
         if (options.bundleBuilt) {
-            fromJar(bundle.jar, options.bundlePath(bundle.installPath))
+            fromJar(bundle.jar, options.bundlePath(bundle.installPath, bundle.installRunMode))
         }
     }
 
@@ -421,10 +429,13 @@ open class Compose : Zip(), AemTask {
 
         var bundleRunMode: String? = null
 
-        internal fun bundlePath(otherPath: String): String {
-            var result = bundlePath ?: otherPath
-            if (!bundleRunMode.isNullOrBlank()) {
-                result = "$result.$bundleRunMode"
+        internal fun bundlePath(otherBundlePath: String, otherBundleRunMode: String?): String {
+            val effectiveBundlePath = bundlePath ?: otherBundlePath
+            val effectiveBundleRunMode = bundleRunMode ?: otherBundleRunMode
+
+            var result = effectiveBundlePath
+            if (!effectiveBundleRunMode.isNullOrBlank()) {
+                result = "$effectiveBundlePath.$effectiveBundleRunMode"
             }
 
             return result
