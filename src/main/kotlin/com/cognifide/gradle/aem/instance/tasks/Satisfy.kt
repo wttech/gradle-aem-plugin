@@ -137,7 +137,7 @@ open class Satisfy : Deploy() {
                 PackageState(it, determineRemotePackage(it, packageRefreshing))
             }
             val packageSatisfiableAny = packageStates.any {
-                greedy || isSnapshot(it.file) || !it.uploaded || !it.installed
+                greedy || group.greedy || isSnapshot(it.file) || !it.uploaded || !it.installed
             }
 
             if (packageSatisfiableAny) {
