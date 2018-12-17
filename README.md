@@ -156,8 +156,6 @@ plugins {
 
 #### Additional
 
-The snippet below tries to illustrate all default values of extensions and tasks for demonstrative purpose.
-
 Configuration below assumes building and deploying on AEM instance(s) via command: `gradlew` (default tasks will be used).
 
 ```kotlin
