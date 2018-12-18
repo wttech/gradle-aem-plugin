@@ -4,7 +4,6 @@ import com.cognifide.gradle.aem.bundle.tasks.Bundle
 import com.cognifide.gradle.aem.instance.tasks.Await
 import com.cognifide.gradle.aem.instance.tasks.Satisfy
 import com.cognifide.gradle.aem.pkg.tasks.Compose
-import org.gradle.api.Action
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.UnknownTaskException
@@ -77,11 +76,17 @@ class TaskFacade(@Transient private val project: Project) {
             }
         }
 
-        return register("${Bundle.NAME}${sourceSetName.capitalize()}", Bundle::class.java) { bundle ->
+        val task = register("${Bundle.NAME}${sourceSetName.capitalize()}", Bundle::class.java) { bundle ->
             bundle.from(sourceSet.output)
             bundle.classifier = sourceSetName
             bundle.apply(configurer)
         }
+
+        compose {
+            fromBundle(task.get())
+        }
+
+        return task
     }
 
     fun <T : Task> copy(name: String, suffix: String, type: Class<T>, configurer: T.() -> Unit = {}): TaskProvider<T> {
@@ -92,14 +97,10 @@ class TaskFacade(@Transient private val project: Project) {
     }
 
     fun <T : Task> register(name: String, clazz: Class<T>): TaskProvider<T> {
-        return register(name, clazz, Action {})
+        return register(name, clazz) {}
     }
 
     fun <T : Task> register(name: String, clazz: Class<T>, configurer: (T) -> Unit): TaskProvider<T> {
-        return register(name, clazz, Action { configurer(it) })
-    }
-
-    fun <T : Task> register(name: String, clazz: Class<T>, configurer: Action<T>): TaskProvider<T> {
         with(project) {
             val provider = tasks.register(name, clazz, configurer)
 
