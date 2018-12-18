@@ -290,7 +290,7 @@ open class Compose : Zip(), AemTask {
     }
 
     fun fromCompose(taskPath: String) {
-        fromCompose(project.tasks.getByPath(taskPath) as Compose)
+        fromCompose(aem.tasks.get(taskPath, Compose::class.java))
     }
 
     fun fromCompose(other: Compose) = fromCompose(other, ProjectOptions())
@@ -336,7 +336,7 @@ open class Compose : Zip(), AemTask {
     }
 
     fun fromBundle(taskPath: String) {
-        fromBundle(project.tasks.getByPath(taskPath) as Bundle)
+        fromBundle(aem.tasks.get(taskPath, Bundle::class.java))
     }
 
     fun fromBundle(bundle: Bundle) = fromBundle(bundle, ProjectOptions())
@@ -409,7 +409,7 @@ open class Compose : Zip(), AemTask {
          */
         var composeContent: Boolean = true
 
-        var composeTasks: AemExtension.() -> Collection<Compose> = { composes }
+        var composeTasks: AemExtension.() -> Collection<Compose> = { tasks.getAll(Compose::class.java) }
 
         var vaultHooks: Boolean = true
 
@@ -422,7 +422,7 @@ open class Compose : Zip(), AemTask {
          */
         var bundleBuilt: Boolean = true
 
-        var bundleTasks: AemExtension.() -> Collection<Bundle> = { bundles }
+        var bundleTasks: AemExtension.() -> Collection<Bundle> = { tasks.getAll(Bundle::class.java) }
 
         var bundleDependent: Boolean = true
 

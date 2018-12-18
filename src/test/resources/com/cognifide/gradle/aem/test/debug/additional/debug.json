@@ -19,7 +19,7 @@
     "name" : "additional",
     "dir" : "*/additional"
   },
-  "baseConfig" : {
+  "config" : {
     "instances" : {
       "local-author" : {
         "httpUrl" : "http://localhost:4502",
@@ -207,7 +207,7 @@
         "properties" : { }
       }
     },
-    "instanceRoot" : "*/.aem/additional",
+    "instanceRoot" : "*/.aem",
     "packageRoot": "*/src/main/content",
     "packageMetaCommonRoot": "*/aem/gradle/META-INF",
     "packageInstallPath" : "/apps/additional/install",
@@ -223,26 +223,6 @@
     "lineSeparator" : "LF",
     "notificationEnabled" : false,
     "groovyScriptRoot" : "*/gradle/groovyScript"
-  },
-  "bundleConfig" : {
-    "jar" : {
-      "installPath" : "/apps/additional/install",
-      "javaPackage" : "com.company.aem.additional",
-      "javaPackageOptions" : "-split-package:=merge-first",
-      "bndPath" : "*/bnd.bnd",
-      "bndInstructions" : {
-        "-fixupmessages.bundleActivator" : "Bundle-Activator * is being imported *;is:=error"
-      },
-      "attributesConvention" : true,
-      "attributes" : {
-        "Manifest-Version" : "1.0",
-        "Bundle-Name" : "Additional",
-        "Bundle-SymbolicName" : "com.company.aem.additional",
-        "Import-Package" : "*",
-        "Export-Package" : "com.company.aem.additional.*;-split-package:=merge-first",
-        "Sling-Model-Packages" : "com.company.aem.additional"
-      }
-    }
   },
   "packageDeployed" : { }
 }

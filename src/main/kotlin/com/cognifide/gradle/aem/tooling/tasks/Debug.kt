@@ -36,8 +36,7 @@ open class Debug : AemDefaultTask() {
             return mapOf(
                     "buildInfo" to buildProperties,
                     "projectInfo" to projectProperties,
-                    "baseConfig" to aem.config,
-                    "bundleConfig" to aem.bundles,
+                    "config" to aem.config,
                     "packageDeployed" to packageProperties
             )
         }

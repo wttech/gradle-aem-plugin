@@ -99,7 +99,7 @@ open class AemExtension(@Internal val project: Project) {
      * Provides API for easier creation of tasks (e.g in sequence) in the matter of Gradle task configuration avoidance.
      */
     @Internal
-    val tasks = TaskFactory(project)
+    val tasks = TaskFacade(project)
 
     /**
      * Provides API for performing actions affecting multiple instances at once.
@@ -115,7 +115,7 @@ open class AemExtension(@Internal val project: Project) {
         get() = project.allprojects.filter {
             it.plugins.hasPlugin(BundlePlugin.ID)
         }.flatMap { subproject ->
-            AemExtension.of(subproject).bundles.mapNotNull { it.javaPackage }
+            AemExtension.of(subproject).tasks.getAll(Bundle::class.java).mapNotNull { it.javaPackage }
         }
 
     @get:Internal
@@ -244,37 +244,11 @@ open class AemExtension(@Internal val project: Project) {
         config.apply(configurer)
     }
 
-    @get:Internal
-    val compose: Compose
-        get() = compose(Compose.NAME)
-
-    fun compose(configurer: Compose.() -> Unit) {
-        project.tasks.withType(Compose::class.java).named(Compose.NAME).configure(configurer)
-    }
-
-    fun compose(taskName: String) = project.tasks.getByName(taskName) as Compose
-
-    @get:Internal
-    val composes: List<Compose> = project.tasks.withType(Compose::class.java).toList()
-
-    @get:Internal
-    val bundle: Bundle
-        get() = bundle(Bundle.NAME)
-
-    fun bundle(configurer: Bundle.() -> Unit) {
-        project.tasks.withType(Bundle::class.java).named(Bundle.NAME).configure(configurer)
-    }
-
-    fun bundle(taskName: String) = project.tasks.getByName(taskName) as Bundle
-
-    @get:Internal
-    val bundles: List<Bundle> = project.tasks.withType(Bundle::class.java).toList()
-
     fun notifier(configurer: NotifierFacade.() -> Unit) {
         notifier.apply(configurer)
     }
 
-    fun tasks(configurer: TaskFactory.() -> Unit) {
+    fun tasks(configurer: TaskFacade.() -> Unit) {
         tasks.apply(configurer)
     }
 

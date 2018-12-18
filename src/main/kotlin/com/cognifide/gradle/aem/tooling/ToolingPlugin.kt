@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.tooling
 
 import com.cognifide.gradle.aem.common.AemPlugin
-import com.cognifide.gradle.aem.common.TaskFactory
+import com.cognifide.gradle.aem.common.TaskFacade
 import com.cognifide.gradle.aem.config.ConfigPlugin
 import com.cognifide.gradle.aem.tooling.tasks.*
 import com.cognifide.gradle.aem.tooling.tasks.Debug
@@ -23,7 +23,7 @@ class ToolingPlugin : AemPlugin() {
     }
 
     private fun Project.setupTasks() {
-        with(TaskFactory(this)) {
+        with(TaskFacade(this)) {
             register(Debug.NAME, Debug::class.java) {
                 it.dependsOn(LifecycleBasePlugin.BUILD_TASK_NAME)
             }

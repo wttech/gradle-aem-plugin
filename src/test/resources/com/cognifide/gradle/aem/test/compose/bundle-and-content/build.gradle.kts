@@ -19,8 +19,10 @@ dependencies {
 }
 
 aem {
-    bundle {
-        category = "example"
-        vendor = "Company"
+    tasks {
+        bundle {
+            category = "example"
+            vendor = "Company"
+        }
     }
 }

@@ -1,6 +1,3 @@
-import com.cognifide.gradle.aem.instance.tasks.Satisfy
-import com.cognifide.gradle.aem.pkg.tasks.Compose
-
 plugins {
     id("com.cognifide.aem.package")
     id("com.cognifide.aem.instance")
@@ -11,8 +8,6 @@ description = "Example"
 defaultTasks = listOf(":aemSatisfy", ":aemDeploy")
 
 allprojects {
-    val subproject = this@allprojects
-
     group = "com.company.aem"
     version = "1.0.0-SNAPSHOT"
 
@@ -35,9 +30,11 @@ allprojects {
     plugins.withId("com.cognifide.aem.bundle") {
 
         aem {
-            bundle {
-                category = "example"
-                vendor = "Company"
+            tasks {
+                bundle {
+                    category = "example"
+                    vendor = "Company"
+                }
             }
         }
 
@@ -48,21 +45,24 @@ allprojects {
     }
 }
 
-tasks.named<Satisfy>("aemSatisfy") {
-    packages {
-        group("dependencies") {
-            // local("pkg/vanityurls-components-1.0.2.zip")
-        }
+aem {
+    tasks {
+        satisfy {
+            packages {
+                group("dependencies") {
+                    // local("pkg/vanityurls-components-1.0.2.zip")
+                }
 
-        group("tools") {
-            url("https://github.com/OlsonDigital/aem-groovy-console/releases/download/9.0.1/aem-groovy-console-9.0.1.zip")
-            url("https://github.com/Cognifide/APM/releases/download/cqsm-2.0.0/apm-2.0.0.zip")
+                group("tools") {
+                    url("https://github.com/OlsonDigital/aem-groovy-console/releases/download/9.0.1/aem-groovy-console-9.0.1.zip")
+                    url("https://github.com/Cognifide/APM/releases/download/cqsm-2.0.0/apm-2.0.0.zip")
+                }
+            }
+        }
+        compose {
+            fromProject(":common")
+            fromProject(":core")
+            fromProject(":design")
         }
     }
-}
-
-tasks.named<Compose>("aemCompose") {
-    fromProject(":common")
-    fromProject(":core")
-    fromProject(":design")
 }

@@ -12,11 +12,13 @@ dependencies {
 }
 
 aem {
-    compose {
-        fromJar("org.jetbrains.kotlin:kotlin-osgi-bundle:1.2.21")
-    }
-    bundle {
-        javaPackage = "com.company.example.aem.common"
-        exportPackage("org.hashids")
+    tasks {
+        compose {
+            fromJar("org.jetbrains.kotlin:kotlin-osgi-bundle:1.2.21")
+        }
+        bundle {
+            javaPackage = "com.company.example.aem.common"
+            exportPackage("org.hashids")
+        }
     }
 }

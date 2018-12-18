@@ -1,14 +1,15 @@
 package com.cognifide.gradle.aem.bundle
 
 import com.cognifide.gradle.aem.bundle.tasks.Bundle
-import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.AemPlugin
+import com.cognifide.gradle.aem.common.TaskFacade
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import org.gradle.api.JavaVersion
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.tasks.SourceSet
+import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.api.tasks.testing.Test
 
@@ -42,8 +43,16 @@ class BundlePlugin : AemPlugin() {
     }
 
     private fun Project.setupTasks() {
-        tasks.named(JavaPlugin.JAR_TASK_NAME).configure { it.enabled = false }
-        AemExtension.of(project).tasks.bundle(Bundle.NAME, SourceSet.MAIN_SOURCE_SET_NAME)
+
+        with(TaskFacade(project)) {
+            named(JavaPlugin.JAR_TASK_NAME, Jar::class.java) { enabled = false }
+            register(Bundle.NAME, Bundle::class.java) { bundle ->
+                val convention = project.convention.getPlugin(JavaPluginConvention::class.java)
+                val mainSourceSet = convention.sourceSets.getByName(SourceSet.MAIN_SOURCE_SET_NAME)
+
+                bundle.from(mainSourceSet.output)
+            }
+        }
     }
 
     /**

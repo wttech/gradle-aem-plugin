@@ -2,21 +2,45 @@ package com.cognifide.gradle.aem.common
 
 import com.cognifide.gradle.aem.bundle.tasks.Bundle
 import com.cognifide.gradle.aem.instance.tasks.Await
+import com.cognifide.gradle.aem.instance.tasks.Satisfy
 import com.cognifide.gradle.aem.pkg.tasks.Compose
 import org.gradle.api.Action
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.UnknownTaskException
 import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.TaskProvider
 
-class TaskFactory(@Transient private val project: Project) {
+class TaskFacade(@Transient private val project: Project) {
+
+    @Suppress("unchecked_cast")
+    fun <T : Task> get(path: String, type: Class<T>): T {
+        val task = if (path.contains(":")) {
+            project.tasks.getByPath(path)
+        } else {
+            project.tasks.findByName(path)
+        }
+
+        if (task == null || !type.isInstance(task)) {
+            throw composeException(path, type)
+        }
+
+        return task as T
+    }
+
+    fun <T : Task> getAll(type: Class<T>) = project.tasks.withType(type).toList()
 
     fun pathed(path: String): TaskProvider<Task> {
         val projectPath = path.substringBeforeLast(":", project.path).ifEmpty { ":" }
         val taskName = path.substringAfterLast(":")
+        val subproject = project.project(projectPath)
 
-        return project.project(projectPath).tasks.named(taskName)
+        return try {
+            subproject.tasks.named(taskName)
+        } catch (e: UnknownTaskException) {
+            throw composeException(taskName, project = subproject)
+        }
     }
 
     fun pathed(paths: Collection<Any>): List<TaskProvider<out Task>> {
@@ -29,20 +53,23 @@ class TaskFactory(@Transient private val project: Project) {
         }
     }
 
-    fun named(name: String) = project.tasks.named(name)
-
-    fun <T : Task> copy(name: String, suffix: String, type: Class<T>, configurer: T.() -> Unit = {}): TaskProvider<T> {
-        return project.tasks.register("$name${suffix.capitalize()}", type) { task ->
-            task.group = GROUP
-            task.apply(configurer)
-        }
+    fun <T : Task> named(name: String, type: Class<T>, configurer: T.() -> Unit = {}) = try {
+        project.tasks.withType(type).named(name).configure(configurer)
+    } catch (e: UnknownTaskException) {
+        throw composeException(name, type)
     }
+
+    fun await(configurer: Await.() -> Unit) = named(Await.NAME, Await::class.java, configurer)
 
     fun await(suffix: String, configurer: Await.() -> Unit = {}) = copy(Await.NAME, suffix, Await::class.java, configurer)
 
-    fun bundle(sourceSetName: String) = bundle("${Bundle.NAME}${sourceSetName.capitalize()}", sourceSetName)
+    fun satisfy(configurer: Satisfy.() -> Unit) = named(Satisfy.NAME, Satisfy::class.java, configurer)
 
-    fun bundle(bundleTaskName: String, sourceSetName: String, configurer: Bundle.() -> Unit = {}): TaskProvider<Bundle> {
+    fun compose(configurer: Compose.() -> Unit) = named(Compose.NAME, Compose::class.java, configurer)
+
+    fun bundle(configurer: Bundle.() -> Unit) = named(Bundle.NAME, Bundle::class.java, configurer)
+
+    fun bundle(sourceSetName: String, configurer: Bundle.() -> Unit = {}): TaskProvider<Bundle> {
         val sourceSetContainer = project.convention.getPlugin(JavaPluginConvention::class.java).sourceSets
         val sourceSet = sourceSetContainer.findByName(sourceSetName) ?: sourceSetContainer.run {
             create(sourceSetName) {
@@ -50,14 +77,17 @@ class TaskFactory(@Transient private val project: Project) {
             }
         }
 
-        project.tasks.withType(Compose::class.java).named(Compose.NAME).configure {
-            it.fromBundle(bundleTaskName)
-        }
-
-        return register(bundleTaskName, Bundle::class.java) { bundle ->
+        return register("${Bundle.NAME}${sourceSetName.capitalize()}", Bundle::class.java) { bundle ->
             bundle.from(sourceSet.output)
             bundle.classifier = sourceSetName
             bundle.apply(configurer)
+        }
+    }
+
+    fun <T : Task> copy(name: String, suffix: String, type: Class<T>, configurer: T.() -> Unit = {}): TaskProvider<T> {
+        return project.tasks.register("$name${suffix.capitalize()}", type) { task ->
+            task.group = GROUP
+            task.apply(configurer)
         }
     }
 
@@ -108,6 +138,20 @@ class TaskFactory(@Transient private val project: Project) {
         }
 
         return sequence
+    }
+
+    private fun composeException(taskName: String, type: Class<*>? = null, cause: Exception? = null, project: Project = this.project): AemException {
+        val msg = if (type != null) {
+            "Project '${project.displayName}' does not have task '$taskName' of type '$type'. Ensure correct plugins applied."
+        } else {
+            "Project '${project.displayName}' does not have task '$taskName'. Ensure correct plugins applied."
+        }
+
+        return if (cause != null) {
+            AemException(msg, cause)
+        } else {
+            AemException(msg)
+        }
     }
 
     class SequenceOptions {

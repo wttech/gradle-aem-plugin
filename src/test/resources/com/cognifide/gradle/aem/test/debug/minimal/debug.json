@@ -19,7 +19,7 @@
     "name" : "minimal",
     "dir" : "*/minimal"
   },
-  "baseConfig" : {
+  "config" : {
     "instances" : {
       "local-author" : {
         "httpUrl" : "http://localhost:4502",
@@ -44,7 +44,7 @@
         "properties" : { }
       }
     },
-    "instanceRoot" : "*/.aem/minimal",
+    "instanceRoot" : "*/.aem",
     "packageRoot": "*/src/main/content",
     "packageMetaCommonRoot": "*/aem/gradle/META-INF",
     "packageInstallPath" : "/apps/minimal/install",
@@ -61,6 +61,5 @@
     "notificationEnabled" : false,
     "groovyScriptRoot" : "*/gradle/groovyScript"
   },
-  "bundleConfig" : { },
   "packageDeployed" : { }
 }
