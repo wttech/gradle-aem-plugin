@@ -258,7 +258,7 @@ open class Bundle : Jar(), AemTask {
         return pkgs.map { StringUtils.appendIfMissing(it, ".*") }
     }
 
-    override fun projectsEvaluated() {
+    override fun projectEvaluated() {
         ensureJavaPackage()
         ensureBaseNameIfNotCustomized()
         applyConventionAttributes()

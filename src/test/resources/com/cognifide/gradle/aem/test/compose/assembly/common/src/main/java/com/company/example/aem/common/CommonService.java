@@ -1,4 +1,4 @@
-package com.company.aem.example.common;
+package com.company.example.aem.common;
 
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
