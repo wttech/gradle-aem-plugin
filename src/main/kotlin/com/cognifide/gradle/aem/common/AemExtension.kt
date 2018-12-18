@@ -368,9 +368,10 @@ open class AemExtension(@Internal val project: Project) {
     init {
         project.gradle.projectsEvaluated { _ ->
             if (project.plugins.hasPlugin(BundlePlugin.ID)) {
-                bundle // forces default jar to be configured
+                project.tasks.withType(Jar::class.java).configureEach {
+                    bundle(it).projectsEvaluated()
+                }
             }
-            bundles.values.forEach { it.projectsEvaluated() }
         }
     }
 

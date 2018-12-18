@@ -281,11 +281,11 @@ open class Compose : Zip(), AemTask {
             val configuredOptions = ProjectOptions().apply(options)
 
             if (project.plugins.hasPlugin(PackagePlugin.ID)) {
-                fromCompose(other.compose(configuredOptions.composeTaskName), configuredOptions)
+                configuredOptions.composeTasks(project).forEach { fromCompose(it, configuredOptions) }
             }
 
             if (project.plugins.hasPlugin(BundlePlugin.ID)) {
-                fromBundle(other.bundle(configuredOptions.bundleTaskName), configuredOptions)
+                configuredOptions.bundleTasks(project).forEach { fromBundle(other.bundle(it), configuredOptions) }
             }
         }
     }
@@ -406,7 +406,7 @@ open class Compose : Zip(), AemTask {
          */
         var composeContent: Boolean = true
 
-        var composeTaskName = NAME
+        var composeTasks: Project.() -> Collection<Compose> = { tasks.withType(Compose::class.java) }
 
         var vaultHooks: Boolean = true
 
@@ -419,7 +419,7 @@ open class Compose : Zip(), AemTask {
          */
         var bundleBuilt: Boolean = true
 
-        var bundleTaskName: String = JavaPlugin.JAR_TASK_NAME
+        var bundleTasks: Project.() -> Collection<Jar> = { tasks.withType(Jar::class.java) }
 
         var bundleDependent: Boolean = true
 

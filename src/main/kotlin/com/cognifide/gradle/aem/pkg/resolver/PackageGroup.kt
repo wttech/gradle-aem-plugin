@@ -3,8 +3,8 @@ package com.cognifide.gradle.aem.pkg.resolver
 import com.cognifide.gradle.aem.common.file.resolver.FileGroup
 import com.cognifide.gradle.aem.common.file.resolver.FileResolution
 import com.cognifide.gradle.aem.instance.InstanceSync
-import org.gradle.api.tasks.Input
 import java.io.File
+import org.gradle.api.tasks.Input
 
 class PackageGroup(val resolver: PackageResolver, name: String) : FileGroup(resolver.downloadDir, name) {
 

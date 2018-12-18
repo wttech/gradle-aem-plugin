@@ -1,16 +1,24 @@
 package com.cognifide.gradle.aem.bundle
 
-import com.cognifide.gradle.aem.common.*
+import aQute.bnd.gradle.BundleTaskConvention
+import com.cognifide.gradle.aem.common.AemException
+import com.cognifide.gradle.aem.common.AemExtension
+import com.cognifide.gradle.aem.common.DependencyOptions
+import com.cognifide.gradle.aem.common.Formats
 import com.cognifide.gradle.aem.instance.Bundle
 import com.fasterxml.jackson.annotation.JsonIgnore
+import java.io.File
 import java.io.Serializable
 import org.apache.commons.lang3.StringUtils
+import org.apache.commons.lang3.exception.ExceptionUtils
 import org.apache.commons.lang3.reflect.FieldUtils
+import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.bundling.Jar
+import org.gradle.api.tasks.testing.Test
 
 /**
  * The main purpose of this extension point is to provide a place for specifying custom
@@ -19,13 +27,13 @@ import org.gradle.api.tasks.bundling.Jar
  */
 class BundleJar(
     @Transient
-@JsonIgnore
-private val aem: AemExtension,
+    @JsonIgnore
+    private val aem: AemExtension,
 
     @Internal
-@Transient
-@JsonIgnore
-val jar: Jar
+    @Transient
+    @JsonIgnore
+    val jar: Jar
 ) : Serializable {
 
     /**
@@ -115,92 +123,6 @@ val jar: Jar
     @Internal
     @JsonIgnore
     var privatePackages: List<String> = listOf()
-
-    fun projectsEvaluated() {
-        ensureJavaPackage()
-        ensureBaseNameIfNotCustomized()
-        applyConventionAttributes()
-        combinePackageAttributes()
-    }
-
-    private fun ensureJavaPackage() {
-        if (javaPackage == null) {
-            if ("${aem.project.group}".isBlank()) {
-                throw AemException("${aem.project.displayName.capitalize()} must has property 'group' defined to determine bundle package default.")
-            }
-
-            javaPackage = Formats.normalizeSeparators("${aem.project.group}.${aem.project.name}", ".")
-        }
-    }
-
-    /**
-     * Reflection is used, because in other way, default convention will provide value.
-     * It is only way to know, if base name was previously customized by build script.
-     */
-    private fun ensureBaseNameIfNotCustomized() {
-        val baseName = FieldUtils.readField(jar, "baseName", true) as String?
-        if (baseName.isNullOrBlank()) {
-            val groupValue = aem.project.group as String?
-            if (!aem.project.name.isNullOrBlank() && !groupValue.isNullOrBlank()) {
-                jar.baseName = aem.baseName
-            }
-        }
-    }
-
-    /**
-     * Combine package attributes set explicitly with generated ones.
-     */
-    private fun combinePackageAttributes() {
-        combinePackageAttribute(Bundle.ATTRIBUTE_IMPORT_PACKAGE, importPackages)
-        combinePackageAttribute(Bundle.ATTRIBUTE_PRIVATE_PACKAGE, privatePackages)
-        combinePackageAttribute(Bundle.ATTRIBUTE_EXPORT_PACKAGE, exportPackages.toMutableList().apply {
-            if (attributesConvention && !javaPackage.isNullOrBlank()) {
-                val javaPackageExported = if (javaPackageOptions.isNotBlank()) {
-                    "$javaPackage.*;$javaPackageOptions"
-                } else {
-                    "$javaPackage.*"
-                }
-
-                add(javaPackageExported)
-            }
-        })
-    }
-
-    private fun combinePackageAttribute(name: String, pkgs: Collection<String>) {
-        val combinedPkgs = mutableSetOf<String>().apply {
-            val existing = (attribute(name) ?: "")
-                    .split(",")
-                    .map { it.trim() }
-
-            addAll(pkgs)
-            addAll(existing)
-        }.filter { it.isNotBlank() }
-
-        if (combinedPkgs.isNotEmpty()) {
-            attribute(name, combinedPkgs.joinToString(","))
-        }
-    }
-
-    /**
-     * Generate attributes by convention using Gradle project metadata.
-     */
-    private fun applyConventionAttributes() {
-        if (!attributesConvention) {
-            return
-        }
-
-        if (!hasAttribute(Bundle.ATTRIBUTE_NAME) && !aem.project.description.isNullOrBlank()) {
-            name = aem.project.description
-        }
-
-        if (!hasAttribute(Bundle.ATTRIBUTE_SYMBOLIC_NAME) && !javaPackage.isNullOrBlank()) {
-            symbolicName = javaPackage
-        }
-
-        if (!hasAttribute(Bundle.ATTRIBUTE_SLING_MODEL_PACKAGES) && !javaPackage.isNullOrBlank()) {
-            slingModelPackages = javaPackage
-        }
-    }
 
     @get:Input
     var attributes: MutableMap<String, Any?>
@@ -349,5 +271,140 @@ val jar: Jar
 
     fun wildcardPackages(pkgs: Collection<String>): List<String> {
         return pkgs.map { StringUtils.appendIfMissing(it, ".*") }
+    }
+
+    internal fun projectsEvaluated() {
+        ensureJavaPackage()
+        ensureBaseNameIfNotCustomized()
+        applyConventionAttributes()
+        combinePackageAttributes()
+
+        with(aem.project) {
+            setupBndTool()
+            setupTestTask()
+        }
+    }
+
+    private fun ensureJavaPackage() {
+        if (javaPackage == null) {
+            if ("${aem.project.group}".isBlank()) {
+                throw AemException("${aem.project.displayName.capitalize()} must has property 'group' defined to determine bundle package default.")
+            }
+
+            javaPackage = Formats.normalizeSeparators("${aem.project.group}.${aem.project.name}", ".")
+        }
+    }
+
+    /**
+     * Reflection is used, because in other way, default convention will provide value.
+     * It is only way to know, if base name was previously customized by build script.
+     */
+    private fun ensureBaseNameIfNotCustomized() {
+        val baseName = FieldUtils.readField(jar, "baseName", true) as String?
+        if (baseName.isNullOrBlank()) {
+            val groupValue = aem.project.group as String?
+            if (!aem.project.name.isNullOrBlank() && !groupValue.isNullOrBlank()) {
+                jar.baseName = aem.baseName
+            }
+        }
+    }
+
+    /**
+     * Combine package attributes set explicitly with generated ones.
+     */
+    private fun combinePackageAttributes() {
+        combinePackageAttribute(Bundle.ATTRIBUTE_IMPORT_PACKAGE, importPackages)
+        combinePackageAttribute(Bundle.ATTRIBUTE_PRIVATE_PACKAGE, privatePackages)
+        combinePackageAttribute(Bundle.ATTRIBUTE_EXPORT_PACKAGE, exportPackages.toMutableList().apply {
+            if (attributesConvention && !javaPackage.isNullOrBlank()) {
+                val javaPackageExported = if (javaPackageOptions.isNotBlank()) {
+                    "$javaPackage.*;$javaPackageOptions"
+                } else {
+                    "$javaPackage.*"
+                }
+
+                add(javaPackageExported)
+            }
+        })
+    }
+
+    private fun combinePackageAttribute(name: String, pkgs: Collection<String>) {
+        val combinedPkgs = mutableSetOf<String>().apply {
+            val existing = (attribute(name) ?: "")
+                    .split(",")
+                    .map { it.trim() }
+
+            addAll(pkgs)
+            addAll(existing)
+        }.filter { it.isNotBlank() }
+
+        if (combinedPkgs.isNotEmpty()) {
+            attribute(name, combinedPkgs.joinToString(","))
+        }
+    }
+
+    /**
+     * Generate attributes by convention using Gradle project metadata.
+     */
+    private fun applyConventionAttributes() {
+        if (!attributesConvention) {
+            return
+        }
+
+        if (!hasAttribute(Bundle.ATTRIBUTE_NAME) && !aem.project.description.isNullOrBlank()) {
+            name = aem.project.description
+        }
+
+        if (!hasAttribute(Bundle.ATTRIBUTE_SYMBOLIC_NAME) && !javaPackage.isNullOrBlank()) {
+            symbolicName = javaPackage
+        }
+
+        if (!hasAttribute(Bundle.ATTRIBUTE_SLING_MODEL_PACKAGES) && !javaPackage.isNullOrBlank()) {
+            slingModelPackages = javaPackage
+        }
+    }
+
+    private fun Project.setupBndTool() {
+        val bundleConvention = BundleTaskConvention(jar)
+
+        convention.plugins["${BundlePlugin.BND_CONVENTION_PLUGIN}_${jar.name}"] = bundleConvention
+
+        jar.doLast {
+            val instructionFile = File(bndPath)
+            if (instructionFile.isFile) {
+                bundleConvention.setBndfile(instructionFile)
+            }
+
+            if (bndInstructions.isNotEmpty()) {
+                bundleConvention.bnd(bndInstructions)
+            }
+
+            runBndTool(bundleConvention)
+        }
+    }
+
+    @Suppress("TooGenericExceptionCaught")
+    private fun runBndTool(convention: BundleTaskConvention) {
+        try {
+            convention.buildBundle()
+        } catch (e: Exception) {
+            aem.logger.error("BND tool error: https://bnd.bndtools.org", ExceptionUtils.getRootCause(e))
+            throw BundleException("Bundle cannot be built properly.", e)
+        }
+    }
+
+    /**
+     * @see <https://github.com/Cognifide/gradle-aem-plugin/issues/95>
+     */
+    private fun Project.setupTestTask() {
+        val testImplConfig = configurations.getByName(JavaPlugin.TEST_IMPLEMENTATION_CONFIGURATION_NAME)
+        val compileOnlyConfig = configurations.getByName(JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME)
+
+        testImplConfig.extendsFrom(compileOnlyConfig)
+
+        val test = tasks.getByName(JavaPlugin.TEST_TASK_NAME) as Test
+
+        test.dependsOn(jar)
+        test.classpath += files(jar.archivePath)
     }
 }
