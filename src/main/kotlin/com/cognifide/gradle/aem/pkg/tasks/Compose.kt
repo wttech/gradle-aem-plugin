@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.pkg.tasks
 
-import com.cognifide.gradle.aem.bundle.BundleJar
 import com.cognifide.gradle.aem.bundle.BundlePlugin
+import com.cognifide.gradle.aem.bundle.tasks.Bundle
 import com.cognifide.gradle.aem.common.AemException
 import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.AemTask
@@ -19,7 +19,6 @@ import org.apache.commons.io.FileUtils
 import org.gradle.api.Project
 import org.gradle.api.file.CopySpec
 import org.gradle.api.file.DuplicatesStrategy
-import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.*
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.bundling.Zip
@@ -281,17 +280,17 @@ open class Compose : Zip(), AemTask {
             val configuredOptions = ProjectOptions().apply(options)
 
             if (project.plugins.hasPlugin(PackagePlugin.ID)) {
-                configuredOptions.composeTasks(project).forEach { fromCompose(it, configuredOptions) }
+                configuredOptions.composeTasks(other).forEach { fromCompose(it, configuredOptions) }
             }
 
             if (project.plugins.hasPlugin(BundlePlugin.ID)) {
-                configuredOptions.bundleTasks(project).forEach { fromBundle(other.bundle(it), configuredOptions) }
+                configuredOptions.bundleTasks(other).forEach { fromBundle(it, configuredOptions) }
             }
         }
     }
 
-    fun fromCompose(composeTaskPath: String) {
-        fromCompose(project.tasks.getByPath(composeTaskPath) as Compose)
+    fun fromCompose(taskPath: String) {
+        fromCompose(project.tasks.getByPath(taskPath) as Compose)
     }
 
     fun fromCompose(other: Compose) = fromCompose(other, ProjectOptions())
@@ -336,11 +335,15 @@ open class Compose : Zip(), AemTask {
         }
     }
 
-    fun fromBundle(bundle: BundleJar) = fromBundle(bundle, ProjectOptions())
+    fun fromBundle(taskPath: String) {
+        fromBundle(project.tasks.getByPath(taskPath) as Bundle)
+    }
 
-    private fun fromBundle(bundle: BundleJar, options: ProjectOptions) {
+    fun fromBundle(bundle: Bundle) = fromBundle(bundle, ProjectOptions())
+
+    private fun fromBundle(bundle: Bundle, options: ProjectOptions) {
         if (options.bundleBuilt) {
-            fromJar(bundle.jar, options.bundlePath(bundle.installPath, bundle.installRunMode))
+            fromJar(bundle, options.bundlePath(bundle.installPath, bundle.installRunMode))
         }
     }
 
@@ -406,7 +409,7 @@ open class Compose : Zip(), AemTask {
          */
         var composeContent: Boolean = true
 
-        var composeTasks: Project.() -> Collection<Compose> = { tasks.withType(Compose::class.java) }
+        var composeTasks: AemExtension.() -> Collection<Compose> = { composes }
 
         var vaultHooks: Boolean = true
 
@@ -419,7 +422,7 @@ open class Compose : Zip(), AemTask {
          */
         var bundleBuilt: Boolean = true
 
-        var bundleTasks: Project.() -> Collection<Jar> = { tasks.withType(Jar::class.java) }
+        var bundleTasks: AemExtension.() -> Collection<Bundle> = { bundles }
 
         var bundleDependent: Boolean = true
 

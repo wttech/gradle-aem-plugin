@@ -1,18 +1,24 @@
 package com.cognifide.gradle.aem.bundle
 
+import com.cognifide.gradle.aem.bundle.tasks.Bundle
+import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.AemPlugin
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import org.gradle.api.JavaVersion
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.JavaPluginConvention
+import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.compile.JavaCompile
+import org.gradle.api.tasks.testing.Test
 
 class BundlePlugin : AemPlugin() {
 
     override fun Project.configure() {
         setupDependentPlugins()
         setupJavaDefaults()
+        setupTasks()
+        // TODO setupTestTask()
     }
 
     private fun Project.setupDependentPlugins() {
@@ -35,9 +41,29 @@ class BundlePlugin : AemPlugin() {
         }
     }
 
+    private fun Project.setupTasks() {
+        tasks.named(JavaPlugin.JAR_TASK_NAME).configure { it.enabled = false }
+        AemExtension.of(project).tasks.bundle(Bundle.NAME, SourceSet.MAIN_SOURCE_SET_NAME)
+    }
+
+    /**
+     * @see <https://github.com/Cognifide/gradle-aem-plugin/issues/95>
+     */
+    private fun Project.setupTestTask() {
+        project.tasks.withType(Test::class.java).named(JavaPlugin.TEST_TASK_NAME).configure { test ->
+            val testImplConfig = project.configurations.getByName(JavaPlugin.TEST_IMPLEMENTATION_CONFIGURATION_NAME)
+            val compileOnlyConfig = project.configurations.getByName(JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME)
+
+            testImplConfig.extendsFrom(compileOnlyConfig)
+
+            project.tasks.withType(Bundle::class.java) { bundle ->
+                test.dependsOn(bundle)
+                test.classpath += project.files(bundle.archivePath)
+            }
+        }
+    }
+
     companion object {
         const val ID = "com.cognifide.aem.bundle"
-
-        const val BND_CONVENTION_PLUGIN = "bundle"
     }
 }

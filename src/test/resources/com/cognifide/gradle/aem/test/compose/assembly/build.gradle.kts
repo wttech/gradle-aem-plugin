@@ -33,14 +33,15 @@ allprojects {
     }
 
     plugins.withId("com.cognifide.aem.bundle") {
+
         aem {
             bundle {
-                attribute("Bundle-Category", "example")
-                attribute("Bundle-Vendor", "Company")
+                category = "example"
+                vendor = "Company"
             }
         }
 
-        subproject.dependencies {
+        dependencies {
             "compileOnly"("org.slf4j:slf4j-api:1.5.10")
             "compileOnly"("org.osgi:osgi.cmpn:6.0.0")
         }

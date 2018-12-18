@@ -1,40 +1,25 @@
-package com.cognifide.gradle.aem.bundle
+package com.cognifide.gradle.aem.bundle.tasks
 
 import aQute.bnd.gradle.BundleTaskConvention
-import com.cognifide.gradle.aem.common.AemException
-import com.cognifide.gradle.aem.common.AemExtension
-import com.cognifide.gradle.aem.common.DependencyOptions
-import com.cognifide.gradle.aem.common.Formats
+import com.cognifide.gradle.aem.bundle.BundleException
+import com.cognifide.gradle.aem.common.*
 import com.cognifide.gradle.aem.instance.Bundle
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
-import java.io.Serializable
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.apache.commons.lang3.reflect.FieldUtils
-import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.bundling.Jar
-import org.gradle.api.tasks.testing.Test
 
-/**
- * The main purpose of this extension point is to provide a place for specifying custom
- * OSGi bundle related properties, because it is not possible to add properties to existing tasks
- * like 'jar' directly.
- */
-class BundleJar(
-    @Transient
-    @JsonIgnore
-    private val aem: AemExtension,
+open class Bundle : Jar(), AemTask {
 
-    @Internal
-    @Transient
-    @JsonIgnore
-    val jar: Jar
-) : Serializable {
+    @Nested
+    final override val aem = AemExtension.of(project)
 
     /**
      * Content path for OSGi bundle jars being placed in CRX package.
@@ -126,20 +111,20 @@ class BundleJar(
 
     @get:Input
     var attributes: MutableMap<String, Any?>
-        get() = mutableMapOf<String, Any?>().apply { putAll(jar.manifest.attributes) }
+        get() = mutableMapOf<String, Any?>().apply { putAll(manifest.attributes) }
         set(value) {
-            jar.manifest.attributes(value)
+            manifest.attributes(value)
         }
 
-    fun attribute(name: String, value: String?) = jar.manifest.attributes(mapOf(name to value))
+    fun attribute(name: String, value: String?) = manifest.attributes(mapOf(name to value))
 
-    fun attribute(name: String): String? = jar.manifest.attributes[name] as String?
+    fun attribute(name: String): String? = manifest.attributes[name] as String?
 
     fun hasAttribute(name: String) = attributes.containsKey(name)
 
     @get:Internal
     @get:JsonIgnore
-    var name: String?
+    var displayName: String?
         get() = attribute(Bundle.ATTRIBUTE_NAME)
         set(value) {
             attribute(Bundle.ATTRIBUTE_NAME, value)
@@ -273,16 +258,12 @@ class BundleJar(
         return pkgs.map { StringUtils.appendIfMissing(it, ".*") }
     }
 
-    internal fun projectsEvaluated() {
+    override fun projectsEvaluated() {
         ensureJavaPackage()
         ensureBaseNameIfNotCustomized()
         applyConventionAttributes()
         combinePackageAttributes()
-
-        with(aem.project) {
-            setupBndTool()
-            setupTestTask()
-        }
+        setupBndTool()
     }
 
     private fun ensureJavaPackage() {
@@ -300,11 +281,11 @@ class BundleJar(
      * It is only way to know, if base name was previously customized by build script.
      */
     private fun ensureBaseNameIfNotCustomized() {
-        val baseName = FieldUtils.readField(jar, "baseName", true) as String?
-        if (baseName.isNullOrBlank()) {
+        val value = FieldUtils.readField(this, "baseName", true) as String?
+        if (value.isNullOrBlank()) {
             val groupValue = aem.project.group as String?
             if (!aem.project.name.isNullOrBlank() && !groupValue.isNullOrBlank()) {
-                jar.baseName = aem.baseName
+                baseName = aem.baseName
             }
         }
     }
@@ -352,7 +333,7 @@ class BundleJar(
         }
 
         if (!hasAttribute(Bundle.ATTRIBUTE_NAME) && !aem.project.description.isNullOrBlank()) {
-            name = aem.project.description
+            displayName = aem.project.description
         }
 
         if (!hasAttribute(Bundle.ATTRIBUTE_SYMBOLIC_NAME) && !javaPackage.isNullOrBlank()) {
@@ -364,12 +345,10 @@ class BundleJar(
         }
     }
 
-    private fun Project.setupBndTool() {
-        val bundleConvention = BundleTaskConvention(jar)
+    private fun setupBndTool() {
+        val bundleConvention = BundleTaskConvention(this)
 
-        convention.plugins["${BundlePlugin.BND_CONVENTION_PLUGIN}_${jar.name}"] = bundleConvention
-
-        jar.doLast {
+        doLast {
             val instructionFile = File(bndPath)
             if (instructionFile.isFile) {
                 bundleConvention.setBndfile(instructionFile)
@@ -393,18 +372,7 @@ class BundleJar(
         }
     }
 
-    /**
-     * @see <https://github.com/Cognifide/gradle-aem-plugin/issues/95>
-     */
-    private fun Project.setupTestTask() {
-        val testImplConfig = configurations.getByName(JavaPlugin.TEST_IMPLEMENTATION_CONFIGURATION_NAME)
-        val compileOnlyConfig = configurations.getByName(JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME)
-
-        testImplConfig.extendsFrom(compileOnlyConfig)
-
-        val test = tasks.getByName(JavaPlugin.TEST_TASK_NAME) as Test
-
-        test.dependsOn(jar)
-        test.classpath += files(jar.archivePath)
+    companion object {
+        const val NAME = "aemBundle"
     }
 }

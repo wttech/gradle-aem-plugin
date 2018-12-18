@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.common
 
-import com.cognifide.gradle.aem.bundle.BundleJar
 import com.cognifide.gradle.aem.bundle.BundlePlugin
+import com.cognifide.gradle.aem.bundle.tasks.Bundle
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.http.HttpClient
 import com.cognifide.gradle.aem.config.Config
@@ -19,11 +19,9 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import org.gradle.api.Project
 import org.gradle.api.Task
-import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
-import org.gradle.api.tasks.bundling.Jar
 
 @Suppress("TooManyFunctions")
 open class AemExtension(@Internal val project: Project) {
@@ -109,14 +107,6 @@ open class AemExtension(@Internal val project: Project) {
     @Internal
     val actions = ActionPerformer(this)
 
-    private val bundleMap = mutableMapOf<String, BundleJar>()
-
-    /**
-     * Contains OSGi bundle configuration used in case of composing CRX package.
-     */
-    @Nested
-    val bundles: Map<String, BundleJar> = bundleMap
-
     /**
      * Collection of all java packages from all projects applying bundle plugin.
      */
@@ -125,7 +115,7 @@ open class AemExtension(@Internal val project: Project) {
         get() = project.allprojects.filter {
             it.plugins.hasPlugin(BundlePlugin.ID)
         }.flatMap { subproject ->
-            AemExtension.of(subproject).bundles.values.mapNotNull { it.javaPackage }
+            AemExtension.of(subproject).bundles.mapNotNull { it.javaPackage }
         }
 
     @get:Internal
@@ -258,29 +248,27 @@ open class AemExtension(@Internal val project: Project) {
     val compose: Compose
         get() = compose(Compose.NAME)
 
+    fun compose(configurer: Compose.() -> Unit) {
+        project.tasks.withType(Compose::class.java).named(Compose.NAME).configure(configurer)
+    }
+
     fun compose(taskName: String) = project.tasks.getByName(taskName) as Compose
 
     @get:Internal
-    val composes: List<Compose>
-        get() = project.tasks.withType(Compose::class.java).toList()
-
-    fun bundle(configurer: BundleJar.() -> Unit) = bundle(JavaPlugin.JAR_TASK_NAME, configurer)
-
-    fun bundle(jarTaskName: String, configurer: BundleJar.() -> Unit) {
-        project.tasks.withType(Jar::class.java)
-                .named(jarTaskName)
-                .configure { bundle(it, configurer) }
-    }
+    val composes: List<Compose> = project.tasks.withType(Compose::class.java).toList()
 
     @get:Internal
-    val bundle: BundleJar
-        get() = bundle(JavaPlugin.JAR_TASK_NAME)
+    val bundle: Bundle
+        get() = bundle(Bundle.NAME)
 
-    fun bundle(jarTaskName: String) = bundle(project.tasks.getByName(jarTaskName) as Jar)
-
-    fun bundle(jar: Jar, configurer: BundleJar.() -> Unit = {}): BundleJar {
-        return bundleMap.getOrPut(jar.name) { BundleJar(this, jar) }.apply(configurer)
+    fun bundle(configurer: Bundle.() -> Unit) {
+        project.tasks.withType(Bundle::class.java).named(Bundle.NAME).configure(configurer)
     }
+
+    fun bundle(taskName: String) = project.tasks.getByName(taskName) as Bundle
+
+    @get:Internal
+    val bundles: List<Bundle> = project.tasks.withType(Bundle::class.java).toList()
 
     fun notifier(configurer: NotifierFacade.() -> Unit) {
         notifier.apply(configurer)
@@ -364,16 +352,6 @@ open class AemExtension(@Internal val project: Project) {
     fun temporaryDir(task: Task) = temporaryDir(task.name)
 
     fun temporaryDir(name: String) = AemTask.temporaryDir(project, name)
-
-    init {
-        project.gradle.projectsEvaluated { _ ->
-            if (project.plugins.hasPlugin(BundlePlugin.ID)) {
-                project.tasks.withType(Jar::class.java).configureEach {
-                    bundle(it).projectsEvaluated()
-                }
-            }
-        }
-    }
 
     companion object {
 

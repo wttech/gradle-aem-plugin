@@ -1,9 +1,13 @@
 package com.cognifide.gradle.aem.common
 
+import com.cognifide.gradle.aem.bundle.tasks.Bundle
 import com.cognifide.gradle.aem.instance.tasks.Await
+import com.cognifide.gradle.aem.pkg.tasks.Compose
 import org.gradle.api.Action
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.plugins.JavaPluginConvention
+import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.TaskProvider
 
 class TaskFactory(@Transient private val project: Project) {
@@ -35,6 +39,27 @@ class TaskFactory(@Transient private val project: Project) {
     }
 
     fun await(suffix: String, configurer: Await.() -> Unit = {}) = copy(Await.NAME, suffix, Await::class.java, configurer)
+
+    fun bundle(sourceSetName: String) = bundle("${Bundle.NAME}${sourceSetName.capitalize()}", sourceSetName)
+
+    fun bundle(bundleTaskName: String, sourceSetName: String, configurer: Bundle.() -> Unit = {}): TaskProvider<Bundle> {
+        val sourceSetContainer = project.convention.getPlugin(JavaPluginConvention::class.java).sourceSets
+        val sourceSet = sourceSetContainer.findByName(sourceSetName) ?: sourceSetContainer.run {
+            create(sourceSetName) {
+                it.compileClasspath += sourceSetContainer.getByName(SourceSet.MAIN_SOURCE_SET_NAME).compileClasspath
+            }
+        }
+
+        project.tasks.withType(Compose::class.java).named(Compose.NAME).configure {
+            it.fromBundle(bundleTaskName)
+        }
+
+        return register(bundleTaskName, Bundle::class.java) { bundle ->
+            bundle.from(sourceSet.output)
+            bundle.classifier = sourceSetName
+            bundle.apply(configurer)
+        }
+    }
 
     fun <T : Task> register(name: String, clazz: Class<T>): TaskProvider<T> {
         return register(name, clazz, Action {})
