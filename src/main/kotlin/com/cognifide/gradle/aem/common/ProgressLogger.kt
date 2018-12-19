@@ -58,8 +58,12 @@ open class ProgressLogger private constructor(val project: Project) {
                 apply(block)
             } finally {
                 if (running.compareAndSet(true, false)) {
-                    base.completed()
-                    stopWatch.stop()
+                    try {
+                        stopWatch.stop()
+                        base.completed()
+                    } catch (e: Exception) {
+                        // ignore
+                    }
                 }
             }
         }

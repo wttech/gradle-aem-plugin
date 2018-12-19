@@ -234,9 +234,9 @@ val jar: Jar
     @get:Internal
     @get:JsonIgnore
     var activator: String?
-        get() = attributes[Bundle.ATTRIBUTE_ACTIVATOR]?.toString()
+        get() = attribute(Bundle.ATTRIBUTE_ACTIVATOR)
         set(value) {
-            attributes[Bundle.ATTRIBUTE_ACTIVATOR] = value
+            attribute(Bundle.ATTRIBUTE_ACTIVATOR, value)
         }
 
     @get:Internal
