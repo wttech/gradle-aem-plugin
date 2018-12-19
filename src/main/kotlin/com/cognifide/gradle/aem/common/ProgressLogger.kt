@@ -41,6 +41,7 @@ open class ProgressLogger private constructor(val project: Project) {
         return m.invoke(obj, *args)
     }
 
+    @Suppress("NestedBlockDepth", "TooGenericExceptionCaught")
     fun launch(block: ProgressLogger.() -> Unit) {
         if (running.get()) {
             apply(block)
