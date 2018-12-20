@@ -101,6 +101,10 @@ open class AwaitAction(aem: AemExtension) : AbstractAction(aem) {
     }
 
     private fun awaitDelay(delay: Long) {
+        if (delay <= 0) {
+            return
+        }
+
         aem.logger.info("Waiting for instance(s): ${instances.names}")
 
         ProgressCountdown(aem.project, delay).run()
