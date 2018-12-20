@@ -24,7 +24,8 @@ class ReloadAction(aem: AemExtension) : AwaitAction(aem) {
                 sync.restartFramework()
                 reloaded += this
             } catch (e: InstanceException) { // still await timeout will fail
-                aem.logger.error("Instance is unavailable: $this", e)
+                aem.logger.error("Instance is unavailable: $this")
+                aem.logger.info("Error details", e)
             }
         }
 
