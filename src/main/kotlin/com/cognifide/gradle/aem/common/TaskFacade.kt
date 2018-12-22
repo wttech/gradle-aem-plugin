@@ -11,7 +11,7 @@ import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.bundling.Jar
 
-class TaskFactory(private val aem: AemExtension) {
+class TaskFacade(private val aem: AemExtension) {
 
     private val project = aem.project
 

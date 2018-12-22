@@ -190,7 +190,7 @@ val jar: Jar
         }
 
         if (!hasAttribute(Bundle.ATTRIBUTE_NAME) && !aem.project.description.isNullOrBlank()) {
-            name = aem.project.description
+            displayName = aem.project.description
         }
 
         if (!hasAttribute(Bundle.ATTRIBUTE_SYMBOLIC_NAME) && !javaPackage.isNullOrBlank()) {
@@ -217,7 +217,7 @@ val jar: Jar
 
     @get:Internal
     @get:JsonIgnore
-    var name: String?
+    var displayName: String?
         get() = attribute(Bundle.ATTRIBUTE_NAME)
         set(value) {
             attribute(Bundle.ATTRIBUTE_NAME, value)
@@ -234,9 +234,9 @@ val jar: Jar
     @get:Internal
     @get:JsonIgnore
     var activator: String?
-        get() = attributes[Bundle.ATTRIBUTE_ACTIVATOR]?.toString()
+        get() = attribute(Bundle.ATTRIBUTE_ACTIVATOR)
         set(value) {
-            attributes[Bundle.ATTRIBUTE_ACTIVATOR] = value
+            attribute(Bundle.ATTRIBUTE_ACTIVATOR, value)
         }
 
     @get:Internal

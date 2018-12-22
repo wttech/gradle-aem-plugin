@@ -92,7 +92,9 @@ open class Compose : Zip(), AemTask {
     @Input
     var vaultProperties: Map<String, Any> = VAULT_PROPERTIES_DEFAULT
 
-    fun vaultProperty(name: String, value: String) { vaultProperties += mapOf(name to value) }
+    fun vaultProperty(name: String, value: String) {
+        vaultProperties += mapOf(name to value)
+    }
 
     @get:Internal
     @get:JsonIgnore
@@ -273,7 +275,7 @@ open class Compose : Zip(), AemTask {
     fun fromProject(project: Project, options: ProjectOptions.() -> Unit = {}) {
         fromProjects.add {
             val other by lazy { AemExtension.of(project) }
-            val configuredOptions = ProjectOptions().apply(options)
+            val configuredOptions by lazy { ProjectOptions().apply(options) }
 
             if (project.plugins.hasPlugin(PackagePlugin.ID)) {
                 configuredOptions.composeTasks(other).forEach {

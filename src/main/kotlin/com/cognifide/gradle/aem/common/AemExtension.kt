@@ -98,7 +98,7 @@ open class AemExtension(@Internal val project: Project) {
      * Provides API for easier creation of tasks (e.g in sequence) in the matter of Gradle task configuration avoidance.
      */
     @Internal
-    val tasks = TaskFactory(this)
+    val tasks = TaskFacade(this)
 
     /**
      * Provides API for performing actions affecting multiple instances at once.
@@ -246,7 +246,7 @@ open class AemExtension(@Internal val project: Project) {
         notifier.apply(configurer)
     }
 
-    fun tasks(configurer: TaskFactory.() -> Unit) {
+    fun tasks(configurer: TaskFacade.() -> Unit) {
         tasks.apply(configurer)
     }
 
