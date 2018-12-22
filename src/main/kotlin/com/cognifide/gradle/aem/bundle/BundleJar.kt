@@ -1,16 +1,21 @@
 package com.cognifide.gradle.aem.bundle
 
+import aQute.bnd.gradle.BundleTaskConvention
 import com.cognifide.gradle.aem.common.*
 import com.cognifide.gradle.aem.instance.Bundle
 import com.fasterxml.jackson.annotation.JsonIgnore
+import java.io.File
 import java.io.Serializable
 import org.apache.commons.lang3.StringUtils
+import org.apache.commons.lang3.exception.ExceptionUtils
 import org.apache.commons.lang3.reflect.FieldUtils
+import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.bundling.Jar
+import org.gradle.api.tasks.testing.Test
 
 /**
  * The main purpose of this extension point is to provide a place for specifying custom
@@ -121,6 +126,11 @@ val jar: Jar
         ensureBaseNameIfNotCustomized()
         applyConventionAttributes()
         combinePackageAttributes()
+
+        with(aem.project) {
+            setupBndTool()
+            setupTestTask()
+        }
     }
 
     private fun ensureJavaPackage() {
@@ -349,5 +359,47 @@ val jar: Jar
 
     fun wildcardPackages(pkgs: Collection<String>): List<String> {
         return pkgs.map { StringUtils.appendIfMissing(it, ".*") }
+    }
+
+    private fun Project.setupBndTool() {
+        val bundleConvention = BundleTaskConvention(jar)
+
+        jar.doLast {
+            val instructionFile = File(bndPath)
+            if (instructionFile.isFile) {
+                bundleConvention.setBndfile(instructionFile)
+            }
+
+            if (bndInstructions.isNotEmpty()) {
+                bundleConvention.bnd(bndInstructions)
+            }
+
+            runBndTool(bundleConvention)
+        }
+    }
+
+    @Suppress("TooGenericExceptionCaught")
+    private fun Project.runBndTool(bundleConvention: BundleTaskConvention) {
+        try {
+            bundleConvention.buildBundle()
+        } catch (e: Exception) {
+            logger.error("BND tool error: https://bnd.bndtools.org", ExceptionUtils.getRootCause(e))
+            throw BundleException("Bundle cannot be built properly.", e)
+        }
+    }
+
+    /**
+     * @see <https://github.com/Cognifide/gradle-aem-plugin/issues/95>
+     */
+    private fun Project.setupTestTask() {
+        val testImplConfig = configurations.getByName(JavaPlugin.TEST_IMPLEMENTATION_CONFIGURATION_NAME)
+        val compileOnlyConfig = configurations.getByName(JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME)
+
+        testImplConfig.extendsFrom(compileOnlyConfig)
+
+        tasks.named(JavaPlugin.TEST_TASK_NAME, Test::class.java) { task ->
+            task.dependsOn(jar)
+            task.classpath += files(jar.archivePath)
+        }
     }
 }

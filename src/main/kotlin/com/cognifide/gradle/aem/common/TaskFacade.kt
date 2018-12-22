@@ -3,9 +3,13 @@ package com.cognifide.gradle.aem.common
 import com.cognifide.gradle.aem.bundle.BundleJar
 import com.cognifide.gradle.aem.bundle.BundlePlugin
 import com.cognifide.gradle.aem.instance.tasks.Await
+import com.cognifide.gradle.aem.instance.tasks.Satisfy
+import com.cognifide.gradle.aem.instance.tasks.Setup
 import com.cognifide.gradle.aem.pkg.tasks.Compose
 import org.gradle.api.Action
+import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.UnknownTaskException
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskProvider
@@ -59,11 +63,20 @@ class TaskFacade(private val aem: AemExtension) {
     @Nested
     val bundles: Map<String, BundleJar> = bundleMap
 
+    fun satisfy(configurer: Satisfy.() -> Unit) = project.tasks.named(Satisfy.NAME, Satisfy::class.java, configurer)
+
+    fun setup(configurer: Setup.() -> Unit) = project.tasks.named(Setup.NAME, Setup::class.java, configurer)
+
     fun pathed(path: String): TaskProvider<Task> {
         val projectPath = path.substringBeforeLast(":", project.path).ifEmpty { ":" }
         val taskName = path.substringAfterLast(":")
+        val subproject = project.project(projectPath)
 
-        return project.project(projectPath).tasks.named(taskName)
+        return try {
+            subproject.tasks.named(taskName)
+        } catch (e: UnknownTaskException) {
+            throw composeException(taskName, project = subproject)
+        }
     }
 
     fun pathed(paths: Collection<Any>): List<TaskProvider<out Task>> {
@@ -76,11 +89,17 @@ class TaskFacade(private val aem: AemExtension) {
         }
     }
 
-    fun named(name: String) = project.tasks.named(name)
+    fun named(name: String): TaskProvider<Task>? {
+        return try {
+            project.tasks.named(name)
+        } catch (e: UnknownTaskException) {
+            throw composeException(name)
+        }
+    }
 
     fun <T : Task> copy(name: String, suffix: String, type: Class<T>, configurer: T.() -> Unit = {}): TaskProvider<T> {
         return project.tasks.register("$name${suffix.capitalize()}", type) { task ->
-            task.group = GROUP
+            task.group = AemTask.GROUP
             task.apply(configurer)
         }
     }
@@ -107,6 +126,23 @@ class TaskFacade(private val aem: AemExtension) {
         }
     }
 
+    @Suppress("unchecked_cast")
+    fun <T : Task> get(path: String, type: Class<T>): T {
+        val task = if (path.contains(":")) {
+            project.tasks.getByPath(path)
+        } else {
+            project.tasks.findByName(path)
+        }
+
+        if (task == null || !type.isInstance(task)) {
+            throw composeException(path, type)
+        }
+
+        return task as T
+    }
+
+    fun <T : Task> getAll(type: Class<T>) = project.tasks.withType(type).toList()
+
     fun sequence(name: String, configurer: SequenceOptions.() -> Unit): TaskProvider<Task> {
         val sequence = project.tasks.register(name)
 
@@ -128,12 +164,26 @@ class TaskFacade(private val aem: AemExtension) {
             }
 
             sequence.configure { task ->
-                task.group = GROUP
+                task.group = AemTask.GROUP
                 task.dependsOn(taskList).mustRunAfter(afterList)
             }
         }
 
         return sequence
+    }
+
+    private fun composeException(taskName: String, type: Class<*>? = null, cause: Exception? = null, project: Project = this.project): AemException {
+        val msg = if (type != null) {
+            "Project '${project.displayName}' does not have task '$taskName' of type '$type'. Ensure correct plugins applied."
+        } else {
+            "Project '${project.displayName}' does not have task '$taskName'. Ensure correct plugins applied."
+        }
+
+        return if (cause != null) {
+            AemException(msg, cause)
+        } else {
+            AemException(msg)
+        }
     }
 
     class SequenceOptions {
@@ -157,9 +207,5 @@ class TaskFacade(private val aem: AemExtension) {
         fun mustRunAfter(tasks: Collection<Any>) {
             afterTasks = tasks
         }
-    }
-
-    companion object {
-        const val GROUP = "${AemTask.GROUP} (custom)"
     }
 }
