@@ -7,9 +7,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import org.gradle.api.Project
 
-class ProgressIndicator(project: Project) {
-
-    val logger = ProgressLogger.of(project)
+class ProgressIndicator(private val project: Project) {
 
     var delay = TimeUnit.SECONDS.toMillis(1)
 
@@ -34,7 +32,7 @@ class ProgressIndicator(project: Project) {
                 }
             }
 
-            logger.launch {
+            ProgressLogger.of(project).launch {
                 Behaviors.waitUntil(delay) { timer ->
                     if (hold) {
                         return@waitUntil true
