@@ -2,11 +2,7 @@ package com.cognifide.gradle.aem.pkg.tasks
 
 import com.cognifide.gradle.aem.bundle.BundleJar
 import com.cognifide.gradle.aem.bundle.BundlePlugin
-import com.cognifide.gradle.aem.common.AemException
-import com.cognifide.gradle.aem.common.AemExtension
-import com.cognifide.gradle.aem.common.AemTask
-import com.cognifide.gradle.aem.common.DependencyOptions
-import com.cognifide.gradle.aem.common.Patterns
+import com.cognifide.gradle.aem.common.*
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.pkg.Package
 import com.cognifide.gradle.aem.pkg.PackageFileFilter
@@ -19,7 +15,6 @@ import org.apache.commons.io.FileUtils
 import org.gradle.api.Project
 import org.gradle.api.file.CopySpec
 import org.gradle.api.file.DuplicatesStrategy
-import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.*
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.bundling.Zip
@@ -281,11 +276,15 @@ open class Compose : Zip(), AemTask {
             val configuredOptions = ProjectOptions().apply(options)
 
             if (project.plugins.hasPlugin(PackagePlugin.ID)) {
-                fromCompose(other.tasks.compose(configuredOptions.composeTaskName), configuredOptions)
+                configuredOptions.composeTasks(other).forEach {
+                    fromCompose(it, configuredOptions)
+                }
             }
 
             if (project.plugins.hasPlugin(BundlePlugin.ID)) {
-                fromBundle(other.tasks.bundle(configuredOptions.bundleTaskName), configuredOptions)
+                configuredOptions.bundleTasks(other).forEach {
+                    fromBundle(other.tasks.bundle(it), configuredOptions)
+                }
             }
         }
     }
@@ -406,7 +405,7 @@ open class Compose : Zip(), AemTask {
          */
         var composeContent: Boolean = true
 
-        var composeTaskName = NAME
+        var composeTasks: AemExtension.() -> Collection<Compose> = { project.tasks.withType(Compose::class.java).toList() }
 
         var vaultHooks: Boolean = true
 
@@ -419,7 +418,7 @@ open class Compose : Zip(), AemTask {
          */
         var bundleBuilt: Boolean = true
 
-        var bundleTaskName: String = JavaPlugin.JAR_TASK_NAME
+        var bundleTasks: AemExtension.() -> Collection<Jar> = { project.tasks.withType(Jar::class.java).toList() }
 
         var bundleDependent: Boolean = true
 
