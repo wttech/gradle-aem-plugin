@@ -13,6 +13,7 @@ import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.bundling.Jar
+import org.gradle.api.tasks.testing.Test
 
 class TaskFacade(private val aem: AemExtension) {
 
@@ -20,12 +21,15 @@ class TaskFacade(private val aem: AemExtension) {
 
     private val bundleMap = mutableMapOf<String, BundleJar>()
 
+    /**
+     * Contains OSGi bundle configuration used in case of composing CRX package.
+     */
+    @Nested
+    val bundles: Map<String, BundleJar> = bundleMap
+
     init {
-        project.gradle.projectsEvaluated { _ ->
-            if (project.plugins.hasPlugin(BundlePlugin.ID)) {
-                bundle(JavaPlugin.JAR_TASK_NAME) // forces default jar to be configured
-            }
-            bundles.values.forEach { it.projectsEvaluated() }
+        project.afterEvaluate {
+            setupJarsAsBundles()
         }
     }
 
@@ -44,12 +48,6 @@ class TaskFacade(private val aem: AemExtension) {
     internal fun bundle(jar: Jar, configurer: BundleJar.() -> Unit = {}): BundleJar {
         return bundleMap.getOrPut(jar.name) { BundleJar(aem, jar) }.apply(configurer)
     }
-
-    /**
-     * Contains OSGi bundle configuration used in case of composing CRX package.
-     */
-    @Nested
-    val bundles: Map<String, BundleJar> = bundleMap
 
     fun satisfy(configurer: Satisfy.() -> Unit) = named(Satisfy.NAME, Satisfy::class.java, configurer)
 
@@ -163,6 +161,29 @@ class TaskFacade(private val aem: AemExtension) {
         }
 
         return sequence
+    }
+
+    private fun setupJarsAsBundles() {
+        if (!project.plugins.hasPlugin(BundlePlugin.ID)) {
+            return
+        }
+
+        project.tasks.withType(Jar::class.java) {
+            bundle { setup() }
+        }
+
+        // @see <https://github.com/Cognifide/gradle-aem-plugin/issues/95>
+        named(JavaPlugin.TEST_TASK_NAME, Test::class.java) {
+            val testImplConfig = project.configurations.getByName(JavaPlugin.TEST_IMPLEMENTATION_CONFIGURATION_NAME)
+            val compileOnlyConfig = project.configurations.getByName(JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME)
+
+            testImplConfig.extendsFrom(compileOnlyConfig)
+
+            project.tasks.withType(Jar::class.java).forEach { jar ->
+                dependsOn(jar)
+                classpath += project.files(jar.archivePath)
+            }
+        }
     }
 
     private fun composeException(taskName: String, type: Class<*>? = null, cause: Exception? = null, project: Project = this.project): AemException {

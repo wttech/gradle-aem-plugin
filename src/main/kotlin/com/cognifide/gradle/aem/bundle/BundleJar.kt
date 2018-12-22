@@ -9,13 +9,11 @@ import java.io.Serializable
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.apache.commons.lang3.reflect.FieldUtils
-import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.bundling.Jar
-import org.gradle.api.tasks.testing.Test
 
 /**
  * The main purpose of this extension point is to provide a place for specifying custom
@@ -121,16 +119,12 @@ val jar: Jar
     @JsonIgnore
     var privatePackages: List<String> = listOf()
 
-    fun projectsEvaluated() {
+    internal fun setup() {
         ensureJavaPackage()
         ensureBaseNameIfNotCustomized()
         applyConventionAttributes()
         combinePackageAttributes()
-
-        with(aem.project) {
-            setupBndTool()
-            setupTestTask()
-        }
+        setupBndTool()
     }
 
     private fun ensureJavaPackage() {
@@ -361,7 +355,7 @@ val jar: Jar
         return pkgs.map { StringUtils.appendIfMissing(it, ".*") }
     }
 
-    private fun Project.setupBndTool() {
+    private fun setupBndTool() {
         val bundleConvention = BundleTaskConvention(jar)
 
         jar.doLast {
@@ -379,27 +373,12 @@ val jar: Jar
     }
 
     @Suppress("TooGenericExceptionCaught")
-    private fun Project.runBndTool(bundleConvention: BundleTaskConvention) {
+    private fun runBndTool(convention: BundleTaskConvention) {
         try {
-            bundleConvention.buildBundle()
+            convention.buildBundle()
         } catch (e: Exception) {
-            logger.error("BND tool error: https://bnd.bndtools.org", ExceptionUtils.getRootCause(e))
-            throw BundleException("Bundle cannot be built properly.", e)
-        }
-    }
-
-    /**
-     * @see <https://github.com/Cognifide/gradle-aem-plugin/issues/95>
-     */
-    private fun Project.setupTestTask() {
-        val testImplConfig = configurations.getByName(JavaPlugin.TEST_IMPLEMENTATION_CONFIGURATION_NAME)
-        val compileOnlyConfig = configurations.getByName(JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME)
-
-        testImplConfig.extendsFrom(compileOnlyConfig)
-
-        tasks.named(JavaPlugin.TEST_TASK_NAME, Test::class.java) { task ->
-            task.dependsOn(jar)
-            task.classpath += files(jar.archivePath)
+            aem.logger.error("BND tool error: https://bnd.bndtools.org", ExceptionUtils.getRootCause(e))
+            throw BundleException("OSGi bundle cannot be built properly.", e)
         }
     }
 }
