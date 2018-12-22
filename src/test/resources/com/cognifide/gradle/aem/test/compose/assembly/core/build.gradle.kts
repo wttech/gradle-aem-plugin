@@ -5,13 +5,6 @@ plugins {
 
 description = "Example - Core"
 
-
-aem {
-    bundle {
-        javaPackage = "com.compan.example.aem.core"
-    }
-}
-
 dependencies {
-    compile(project(":common"))
+    compileOnly(project(":common"))
 }

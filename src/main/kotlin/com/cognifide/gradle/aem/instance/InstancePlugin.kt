@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.instance
 
+import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.AemPlugin
-import com.cognifide.gradle.aem.common.TaskFactory
 import com.cognifide.gradle.aem.config.ConfigPlugin
 import com.cognifide.gradle.aem.instance.tasks.*
 import com.cognifide.gradle.aem.pkg.PackagePlugin
@@ -26,7 +26,7 @@ class InstancePlugin : AemPlugin() {
     }
 
     private fun Project.setupTasks() {
-        with(TaskFactory(this)) {
+        with(AemExtension.of(this).tasks) {
             register(Resolve.NAME, Resolve::class.java) {
                 it.mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
             }

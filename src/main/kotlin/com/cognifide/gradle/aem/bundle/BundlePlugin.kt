@@ -50,7 +50,7 @@ class BundlePlugin : AemPlugin() {
             convention.plugins[BND_CONVENTION_PLUGIN] = bundleConvention
 
             jar.doLast {
-                val bundle = AemExtension.of(project).bundle
+                val bundle = AemExtension.of(project).tasks.bundle
                 val instructionFile = File(bundle.bndPath)
                 if (instructionFile.isFile) {
                     bundleConvention.setBndfile(instructionFile)

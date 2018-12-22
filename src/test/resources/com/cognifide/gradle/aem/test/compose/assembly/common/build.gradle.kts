@@ -7,17 +7,18 @@ plugins {
 
 description = "Example - Common"
 
-tasks.named<Compose>("aemCompose") {
-    fromJar("org.jetbrains.kotlin:kotlin-osgi-bundle:1.2.21")
-}
-
 dependencies {
     compileOnly("org.hashids:hashids:1.0.1")
 }
 
 aem {
-    bundle {
-        javaPackage = "com.company.example.aem.common"
-        exportPackage("org.hashids")
+    tasks {
+        compose {
+            fromJar("org.jetbrains.kotlin:kotlin-osgi-bundle:1.2.21")
+        }
+        bundle {
+            exportPackage("org.hashids")
+        }
     }
+
 }

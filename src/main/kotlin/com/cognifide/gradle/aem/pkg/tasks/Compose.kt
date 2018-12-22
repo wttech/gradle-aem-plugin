@@ -281,11 +281,11 @@ open class Compose : Zip(), AemTask {
             val configuredOptions = ProjectOptions().apply(options)
 
             if (project.plugins.hasPlugin(PackagePlugin.ID)) {
-                fromCompose(other.compose(configuredOptions.composeTaskName), configuredOptions)
+                fromCompose(other.tasks.compose(configuredOptions.composeTaskName), configuredOptions)
             }
 
             if (project.plugins.hasPlugin(BundlePlugin.ID)) {
-                fromBundle(other.bundle(configuredOptions.bundleTaskName), configuredOptions)
+                fromBundle(other.tasks.bundle(configuredOptions.bundleTaskName), configuredOptions)
             }
         }
     }

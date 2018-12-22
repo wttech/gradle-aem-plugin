@@ -1,12 +1,63 @@
 package com.cognifide.gradle.aem.common
 
+import com.cognifide.gradle.aem.bundle.BundleJar
+import com.cognifide.gradle.aem.bundle.BundlePlugin
 import com.cognifide.gradle.aem.instance.tasks.Await
+import com.cognifide.gradle.aem.pkg.tasks.Compose
 import org.gradle.api.Action
-import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.plugins.JavaPlugin
+import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskProvider
+import org.gradle.api.tasks.bundling.Jar
 
-class TaskFactory(@Transient private val project: Project) {
+class TaskFactory(private val aem: AemExtension) {
+
+    private val project = aem.project
+
+    private val bundleMap = mutableMapOf<String, BundleJar>()
+
+    init {
+        project.gradle.projectsEvaluated { _ ->
+            if (project.plugins.hasPlugin(BundlePlugin.ID)) {
+                bundle // forces default jar to be configured
+            }
+            bundles.values.forEach { it.projectsEvaluated() }
+        }
+    }
+
+    val compose: Compose
+        get() = compose(Compose.NAME)
+
+    fun compose(taskName: String) = project.tasks.getByName(taskName) as Compose
+
+    val composes: List<Compose>
+        get() = project.tasks.withType(Compose::class.java).toList()
+
+    fun compose(configurer: Compose.() -> Unit) = project.tasks.named(Compose.NAME, Compose::class.java, configurer)
+
+    fun bundle(configurer: BundleJar.() -> Unit) = bundle(JavaPlugin.JAR_TASK_NAME, configurer)
+
+    fun bundle(jarTaskName: String, configurer: BundleJar.() -> Unit) {
+        project.tasks.withType(Jar::class.java)
+                .named(jarTaskName)
+                .configure { bundle(it, configurer) }
+    }
+
+    val bundle: BundleJar
+        get() = bundle(JavaPlugin.JAR_TASK_NAME)
+
+    fun bundle(jarTaskName: String) = bundle(project.tasks.getByName(jarTaskName) as Jar)
+
+    fun bundle(jar: Jar, configurer: BundleJar.() -> Unit = {}): BundleJar {
+        return bundleMap.getOrPut(jar.name) { BundleJar(aem, jar) }.apply(configurer)
+    }
+
+    /**
+     * Contains OSGi bundle configuration used in case of composing CRX package.
+     */
+    @Nested
+    val bundles: Map<String, BundleJar> = bundleMap
 
     fun pathed(path: String): TaskProvider<Task> {
         val projectPath = path.substringBeforeLast(":", project.path).ifEmpty { ":" }
