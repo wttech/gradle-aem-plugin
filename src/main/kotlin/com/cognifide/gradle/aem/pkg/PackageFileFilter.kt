@@ -56,21 +56,17 @@ class PackageFileFilter(project: Project) : Serializable {
         spec.eachFile { fileDetail ->
             val path = "/${fileDetail.relativePath.pathString.removePrefix("/")}"
 
-            if (expanding) {
-                if (Patterns.wildcard(path, expandFiles)) {
-                    FileContentReader.filter(fileDetail) {
-                        aem.props.expandPackage(it, expandProperties + this.expandProperties, path)
-                    }
+            if (expanding && Patterns.wildcard(path, expandFiles)) {
+                FileContentReader.filter(fileDetail) {
+                    aem.props.expandPackage(it, expandProperties + this.expandProperties, path)
                 }
             }
 
-            if (bundleChecking) {
-                if (Patterns.wildcard(path, "**/install/*.jar")) {
-                    val bundle = fileDetail.file
-                    if (!isBundle(bundle)) {
-                        aem.logger.warn("Jar being a part of composed CRX package is not a valid OSGi bundle: $bundle")
-                        fileDetail.exclude()
-                    }
+            if (bundleChecking && Patterns.wildcard(path, "**/install/*.jar")) {
+                val bundle = fileDetail.file
+                if (!isBundle(bundle)) {
+                    aem.logger.warn("Jar being a part of composed CRX package is not a valid OSGi bundle: $bundle")
+                    fileDetail.exclude()
                 }
             }
         }

@@ -292,10 +292,8 @@ open class Compose : Zip(), AemTask {
     }
 
     fun fromCompose(composeTaskPath: String) {
-        fromCompose(project.tasks.getByPath(composeTaskPath) as Compose)
+        fromCompose(aem.tasks.get(composeTaskPath, Compose::class.java), ProjectOptions())
     }
-
-    fun fromCompose(other: Compose) = fromCompose(other, ProjectOptions())
 
     private fun fromCompose(other: Compose, options: ProjectOptions) {
         fromTasks.add {
@@ -337,7 +335,9 @@ open class Compose : Zip(), AemTask {
         }
     }
 
-    fun fromBundle(bundle: BundleJar) = fromBundle(bundle, ProjectOptions())
+    fun fromBundle(jarTaskPath: String) {
+        fromBundle(aem.tasks.bundle(jarTaskPath), ProjectOptions())
+    }
 
     private fun fromBundle(bundle: BundleJar, options: ProjectOptions) {
         if (options.bundleBuilt) {

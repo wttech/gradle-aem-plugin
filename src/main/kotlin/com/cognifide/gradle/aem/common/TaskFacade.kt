@@ -6,7 +6,6 @@ import com.cognifide.gradle.aem.instance.tasks.Await
 import com.cognifide.gradle.aem.instance.tasks.Satisfy
 import com.cognifide.gradle.aem.instance.tasks.Setup
 import com.cognifide.gradle.aem.pkg.tasks.Compose
-import org.gradle.api.Action
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.UnknownTaskException
@@ -24,36 +23,25 @@ class TaskFacade(private val aem: AemExtension) {
     init {
         project.gradle.projectsEvaluated { _ ->
             if (project.plugins.hasPlugin(BundlePlugin.ID)) {
-                bundle // forces default jar to be configured
+                bundle(JavaPlugin.JAR_TASK_NAME) // forces default jar to be configured
             }
             bundles.values.forEach { it.projectsEvaluated() }
         }
     }
 
-    val compose: Compose
-        get() = compose(Compose.NAME)
-
-    fun compose(taskName: String) = project.tasks.getByName(taskName) as Compose
-
-    val composes: List<Compose>
-        get() = project.tasks.withType(Compose::class.java).toList()
-
-    fun compose(configurer: Compose.() -> Unit) = project.tasks.named(Compose.NAME, Compose::class.java, configurer)
+    fun compose(configurer: Compose.() -> Unit) = named(Compose.NAME, Compose::class.java, configurer)
 
     fun bundle(configurer: BundleJar.() -> Unit) = bundle(JavaPlugin.JAR_TASK_NAME, configurer)
 
     fun bundle(jarTaskName: String, configurer: BundleJar.() -> Unit) {
-        project.tasks.withType(Jar::class.java)
-                .named(jarTaskName)
-                .configure { bundle(it, configurer) }
+        named(jarTaskName, Jar::class.java) { bundle(this, configurer) }
     }
 
-    val bundle: BundleJar
-        get() = bundle(JavaPlugin.JAR_TASK_NAME)
+    internal fun bundle(jarTaskPath: String): BundleJar {
+        return bundle(get(jarTaskPath, Jar::class.java))
+    }
 
-    fun bundle(jarTaskName: String) = bundle(project.tasks.getByName(jarTaskName) as Jar)
-
-    fun bundle(jar: Jar, configurer: BundleJar.() -> Unit = {}): BundleJar {
+    internal fun bundle(jar: Jar, configurer: BundleJar.() -> Unit = {}): BundleJar {
         return bundleMap.getOrPut(jar.name) { BundleJar(aem, jar) }.apply(configurer)
     }
 
@@ -63,9 +51,9 @@ class TaskFacade(private val aem: AemExtension) {
     @Nested
     val bundles: Map<String, BundleJar> = bundleMap
 
-    fun satisfy(configurer: Satisfy.() -> Unit) = project.tasks.named(Satisfy.NAME, Satisfy::class.java, configurer)
+    fun satisfy(configurer: Satisfy.() -> Unit) = named(Satisfy.NAME, Satisfy::class.java, configurer)
 
-    fun setup(configurer: Setup.() -> Unit) = project.tasks.named(Setup.NAME, Setup::class.java, configurer)
+    fun setup(configurer: Setup.() -> Unit) = named(Setup.NAME, Setup::class.java, configurer)
 
     fun pathed(path: String): TaskProvider<Task> {
         val projectPath = path.substringBeforeLast(":", project.path).ifEmpty { ":" }
@@ -89,9 +77,18 @@ class TaskFacade(private val aem: AemExtension) {
         }
     }
 
-    fun named(name: String): TaskProvider<Task>? {
+    @Suppress("unchecked_cast")
+    fun <T : Task> named(name: String): TaskProvider<T> {
         return try {
-            project.tasks.named(name)
+            project.tasks.named(name) as TaskProvider<T>
+        } catch (e: UnknownTaskException) {
+            throw composeException(name)
+        }
+    }
+
+    fun <T : Task> named(name: String, type: Class<T>, configurer: T.() -> Unit) {
+        try {
+            project.tasks.named(name, type, configurer)
         } catch (e: UnknownTaskException) {
             throw composeException(name)
         }
@@ -107,14 +104,10 @@ class TaskFacade(private val aem: AemExtension) {
     fun await(suffix: String, configurer: Await.() -> Unit = {}) = copy(Await.NAME, suffix, Await::class.java, configurer)
 
     fun <T : Task> register(name: String, clazz: Class<T>): TaskProvider<T> {
-        return register(name, clazz, Action {})
+        return register(name, clazz) {}
     }
 
-    fun <T : Task> register(name: String, clazz: Class<T>, configurer: (T) -> Unit): TaskProvider<T> {
-        return register(name, clazz, Action { configurer(it) })
-    }
-
-    fun <T : Task> register(name: String, clazz: Class<T>, configurer: Action<T>): TaskProvider<T> {
+    fun <T : Task> register(name: String, clazz: Class<T>, configurer: T.() -> Unit): TaskProvider<T> {
         with(project) {
             val provider = tasks.register(name, clazz, configurer)
 
