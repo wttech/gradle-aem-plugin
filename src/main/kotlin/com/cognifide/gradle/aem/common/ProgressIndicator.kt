@@ -28,7 +28,7 @@ class ProgressIndicator(private val project: Project) {
                 try {
                     block()
                 } finally {
-                    done = true
+                    done = true // TODO logger sometimes not dies
                 }
             }
 
