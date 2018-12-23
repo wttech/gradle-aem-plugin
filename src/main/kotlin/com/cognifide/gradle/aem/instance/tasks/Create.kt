@@ -2,7 +2,6 @@ package com.cognifide.gradle.aem.instance.tasks
 
 import com.cognifide.gradle.aem.common.AemTask
 import com.cognifide.gradle.aem.common.file.resolver.FileResolver
-import com.cognifide.gradle.aem.instance.InstanceTask
 import com.cognifide.gradle.aem.instance.LocalHandleOptions
 import com.cognifide.gradle.aem.instance.names
 import java.io.File
@@ -10,7 +9,7 @@ import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
 
-open class Create : InstanceTask() {
+open class Create : Instance() {
 
     @Nested
     val options = LocalHandleOptions(project)

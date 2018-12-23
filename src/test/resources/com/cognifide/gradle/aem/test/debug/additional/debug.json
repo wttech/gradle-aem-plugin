@@ -226,10 +226,12 @@
   },
   "bundleConfig" : {
     "jar" : {
+      "enabled": true,
       "installPath" : "/apps/additional/install",
       "installRunMode": null,
       "javaPackage" : "com.company.aem.additional",
       "javaPackageOptions" : "-split-package:=merge-first",
+      "bndEnabled": true,
       "bndPath" : "*/bnd.bnd",
       "bndInstructions" : {
         "-fixupmessages.bundleActivator" : "Bundle-Activator * is being imported *;is:=error"

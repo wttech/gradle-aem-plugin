@@ -1,11 +1,10 @@
 package com.cognifide.gradle.aem.instance.tasks
 
-import com.cognifide.gradle.aem.instance.InstanceTask
 import com.cognifide.gradle.aem.instance.names
 import org.gradle.api.execution.TaskExecutionGraph
 import org.gradle.api.tasks.TaskAction
 
-open class Destroy : InstanceTask() {
+open class Destroy : Instance() {
 
     init {
         description = "Destroys local AEM instance(s)."

@@ -127,6 +127,8 @@ open class Satisfy : Deploy() {
 
     @Suppress("ComplexMethod")
     private fun ProgressIndicator.satisfyGroup(group: PackageGroup) {
+        step = group.name
+
         aem.logger.info("Satisfying group of packages '${group.name}'.")
 
         var packageSatisfiedAny = false
@@ -141,11 +143,11 @@ open class Satisfy : Deploy() {
             }
 
             if (packageSatisfiableAny) {
-                hold { this@sync.apply(group.initializer) }
+                apply(group.initializer)
             }
 
             packageStates.forEach { pkg ->
-                increment("${group.name} # ${pkg.file.name} -> ${instance.name}") {
+                increment("${pkg.file.name} -> ${instance.name}") {
                     when {
                         greedy -> {
                             aem.logger.info("Satisfying package ${pkg.name} on ${instance.name} (greedy).")
@@ -184,12 +186,12 @@ open class Satisfy : Deploy() {
             }
 
             if (packageSatisfiableAny) {
-                hold { this@sync.apply(group.finalizer) }
+                apply(group.finalizer)
             }
         }
 
         if (packageSatisfiedAny) {
-            hold { group.completer() }
+            group.completer()
         }
     }
 

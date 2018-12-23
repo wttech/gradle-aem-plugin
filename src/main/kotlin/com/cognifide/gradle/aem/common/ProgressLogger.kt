@@ -1,20 +1,14 @@
 package com.cognifide.gradle.aem.common
 
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicBoolean
 import org.apache.commons.lang3.time.StopWatch
 import org.gradle.api.Project
 import org.gradle.internal.logging.progress.ProgressLogger as BaseLogger
 import org.gradle.internal.logging.progress.ProgressLoggerFactory
+import java.util.*
 
 @Suppress("SpreadOperator")
 open class ProgressLogger private constructor(val project: Project) {
-
-    private lateinit var base: BaseLogger
-
-    private lateinit var stopWatch: StopWatch
-
-    var running = AtomicBoolean(false)
 
     var header: String = "Operation in progress"
 
@@ -22,12 +16,16 @@ open class ProgressLogger private constructor(val project: Project) {
 
     var progressWindow = TimeUnit.SECONDS.toMillis(1)
 
+    private lateinit var base: BaseLogger
+
+    private lateinit var stopWatch: StopWatch
+
     private fun create(): BaseLogger {
         val serviceFactory = invoke(project, "getServices")
         val baseFactoryClass: Class<*> = ProgressLoggerFactory::class.java
         val baseFactory = invoke(serviceFactory, "get", baseFactoryClass)
 
-        return invoke(baseFactory, "newOperation", javaClass) as BaseLogger
+        return invokeWithArgTypes(baseFactory, "newOperation", listOf(javaClass, stack.peek()), listOf(javaClass.javaClass, BaseLogger::class.java)) as BaseLogger
     }
 
     private operator fun invoke(obj: Any, method: String, vararg args: Any): Any {
@@ -41,27 +39,28 @@ open class ProgressLogger private constructor(val project: Project) {
         return m.invoke(obj, *args)
     }
 
+    private fun invokeWithArgTypes(obj: Any, method: String, args: List<Any?>, argTypes: List<Class<out Any>>): Any {
+        val m = obj.javaClass.getMethod(method, *argTypes.toTypedArray())
+        m.isAccessible = true
+
+        return m.invoke(obj, *args.toTypedArray())
+    }
+
     fun launch(block: ProgressLogger.() -> Unit) {
-        if (running.get()) {
+        stopWatch = StopWatch()
+        base = create()
+        stack.add(base)
+
+        try {
+            stopWatch.start()
+            base.description = "$header # ${Math.random()}"
+            base.started()
+
             apply(block)
-        } else {
-            try {
-                if (running.compareAndSet(false, true)) {
-                    stopWatch = StopWatch()
-                    stopWatch.start()
-
-                    base = create()
-                    base.description = header
-                    base.started()
-                }
-
-                apply(block)
-            } finally {
-                if (running.compareAndSet(true, false)) {
-                    base.completed()
-                    stopWatch.stop()
-                }
-            }
+        } finally {
+            base.completed()
+            stack.remove(base)
+            stopWatch.stop()
         }
     }
 
@@ -76,9 +75,9 @@ open class ProgressLogger private constructor(val project: Project) {
 
     companion object {
         fun of(project: Project): ProgressLogger {
-            return BuildScope.of(project).getOrPut(ProgressLogger::class.java.canonicalName, {
-                ProgressLogger(project)
-            })
+            return ProgressLogger(project)
         }
+
+        private val stack = LinkedList<BaseLogger>() // TODO stack should not be static / move to AemExtension
     }
 }

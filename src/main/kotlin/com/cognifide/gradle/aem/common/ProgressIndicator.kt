@@ -13,11 +13,11 @@ class ProgressIndicator(private val project: Project) {
 
     var total = 0L
 
+    var step = ""
+
     var message = ""
 
     var count = 0L
-
-    var hold = false
 
     private val messageQueue: Queue<String> = LinkedList()
 
@@ -34,10 +34,6 @@ class ProgressIndicator(private val project: Project) {
 
             ProgressLogger.of(project).launch {
                 Behaviors.waitUntil(delay) { timer ->
-                    if (hold) {
-                        return@waitUntil true
-                    }
-
                     var text = if (timer.ticks.rem(2L) == 0L) {
                         "\\"
                     } else {
@@ -46,6 +42,10 @@ class ProgressIndicator(private val project: Project) {
 
                     if (total > 0) {
                         text = "$text $count/$total|${Formats.percent(count, total)}"
+                    }
+
+                    if (step.isNotEmpty()) {
+                        text = "$text # $step"
                     }
 
                     val messageQueued = messageQueue.peek() ?: message
@@ -68,11 +68,5 @@ class ProgressIndicator(private val project: Project) {
         block()
         count++
         messageQueue.remove(message)
-    }
-
-    fun hold(block: () -> Unit) {
-        hold = true
-        block()
-        hold = false
     }
 }

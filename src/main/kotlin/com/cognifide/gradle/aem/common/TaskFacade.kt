@@ -101,11 +101,15 @@ class TaskFacade(private val aem: AemExtension) {
 
     fun await(suffix: String, configurer: Await.() -> Unit = {}) = copy(Await.NAME, suffix, Await::class.java, configurer)
 
+    fun register(name: String, configurer: AemDefaultTask.() -> Unit) {
+        register(name, AemDefaultTask::class.java, configurer)
+    }
+
     fun <T : Task> register(name: String, clazz: Class<T>): TaskProvider<T> {
         return register(name, clazz) {}
     }
 
-    fun <T : Task> register(name: String, clazz: Class<T>, configurer: T.() -> Unit): TaskProvider<T> {
+    fun <T : Task> register(name: String, clazz: Class<T>, configurer: T.() -> Unit = {}): TaskProvider<T> {
         with(project) {
             val provider = tasks.register(name, clazz, configurer)
 

@@ -32,6 +32,11 @@ val jar: Jar
 ) : Serializable {
 
     /**
+     * Allows to disable OSGi bundle specific JAR task customization.
+     */
+    var enabled: Boolean = true
+
+    /**
      * Content path for OSGi bundle jars being placed in CRX package.
      *
      * Default convention assumes that subprojects have separate bundle paths, because of potential re-installation of subpackages.
@@ -84,6 +89,12 @@ val jar: Jar
     var javaPackageOptions: String = "-split-package:=merge-first"
 
     /**
+     * Allows to disable BND tool.
+     */
+    @Input
+    var bndEnabled: Boolean = true
+
+    /**
      * Bundle instructions file location consumed by BND tool.
      *
      * If file exists, instructions will be taken from it instead of directly specified
@@ -120,6 +131,11 @@ val jar: Jar
     var privatePackages: List<String> = listOf()
 
     internal fun setup() {
+        if (!enabled) {
+            aem.logger.info("OSGi bundle customizations are disabled for task '${jar.path}'.")
+            return
+        }
+
         ensureJavaPackage()
         ensureBaseNameIfNotCustomized()
         applyConventionAttributes()
@@ -356,6 +372,11 @@ val jar: Jar
     }
 
     private fun setupBndTool() {
+        if (!bndEnabled) {
+            aem.logger.info("BND tool is disabled for task '${jar.path}'.")
+            return
+        }
+
         val bundleConvention = BundleTaskConvention(jar)
 
         jar.doLast {
