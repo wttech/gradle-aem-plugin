@@ -108,9 +108,8 @@ open class Deploy : Sync() {
 
     @TaskAction
     open fun deploy() {
-        aem.progress({
+        aem.progress {
             total = instances.size.toLong() * packages.size.toLong()
-        }, {
             aem.syncPackages(instances, packages) { pkg ->
                 increment("${pkg.name} -> ${instance.name}") {
                     initializer()
@@ -124,7 +123,7 @@ open class Deploy : Sync() {
                     finalizer()
                 }
             }
-        })
+        }
 
         completer()
 

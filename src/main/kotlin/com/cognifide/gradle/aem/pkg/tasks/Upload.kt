@@ -12,15 +12,14 @@ open class Upload : Sync() {
 
     @TaskAction
     fun upload() {
-        aem.progress({
+        aem.progress {
             total = instances.size.toLong() * packages.size.toLong()
-        }, {
             aem.syncPackages(instances, packages) { pkg ->
                 increment("${pkg.name} -> ${instance.name}") {
                     uploadPackage(pkg)
                 }
             }
-        })
+        }
 
         aem.notifier.notify("Package uploaded", "${packages.fileNames} from ${instances.names}")
     }

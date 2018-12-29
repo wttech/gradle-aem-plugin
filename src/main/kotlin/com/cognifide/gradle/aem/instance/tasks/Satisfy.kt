@@ -102,13 +102,12 @@ open class Satisfy : Deploy() {
     @TaskAction
     @Suppress("ComplexMethod")
     override fun deploy() {
-        aem.progress({
+        aem.progress {
             total = packageGroups.sumBy { packageGroup ->
                 packageGroup.files.size * determineInstancesForGroup(packageGroup).size
             }.toLong()
-        }, {
             packageGroups.forEach { satisfyGroup(it) }
-        })
+        }
 
         if (packageActions.isNotEmpty()) {
             val packages = packageActions.map { it.pkg }.toSet()

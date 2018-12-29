@@ -21,9 +21,8 @@ open class Purge : Sync() {
 
     @TaskAction
     fun purge() {
-        aem.progress({
+        aem.progress {
             total = instances.size.toLong() * packages.size.toLong()
-        }, {
             aem.syncPackages(instances, packages) { pkg ->
                 increment("${pkg.name} -> ${instance.name}") {
                     try {
@@ -37,7 +36,7 @@ open class Purge : Sync() {
                     }
                 }
             }
-        })
+        }
 
         aem.notifier.notify("Package purged", "${packages.fileNames} from ${instances.names}")
     }

@@ -19,15 +19,14 @@ open class Uninstall : Sync() {
 
     @TaskAction
     fun uninstall() {
-        aem.progress({
+        aem.progress {
             total = instances.size.toLong() * packages.size.toLong()
-        }, {
             aem.syncPackages(instances, packages) { pkg ->
                 increment("${pkg.name} -> ${instance.name}") {
                     uninstallPackage(determineRemotePackagePath(pkg))
                 }
             }
-        })
+        }
 
         aem.notifier.notify("Package uninstalled", "${packages.fileNames} from ${instances.names}")
     }

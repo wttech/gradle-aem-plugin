@@ -256,8 +256,8 @@ open class AemExtension(@Internal val project: Project) {
 
     fun retry(): Retry = Retry.none()
 
-    fun <T> progress(options: ProgressIndicator.() -> Unit, action: ProgressIndicator.() -> T): T {
-        return ProgressIndicator(project).apply(options).launch(action)
+    fun <T> progress(action: ProgressIndicator.() -> T): T {
+        return ProgressIndicator(project).launch(action)
     }
 
     @get:Internal
