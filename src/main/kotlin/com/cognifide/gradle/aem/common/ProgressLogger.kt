@@ -1,11 +1,11 @@
 package com.cognifide.gradle.aem.common
 
+import java.util.*
 import java.util.concurrent.TimeUnit
 import org.apache.commons.lang3.time.StopWatch
 import org.gradle.api.Project
 import org.gradle.internal.logging.progress.ProgressLogger as BaseLogger
 import org.gradle.internal.logging.progress.ProgressLoggerFactory
-import java.util.*
 
 @Suppress("SpreadOperator")
 open class ProgressLogger private constructor(val project: Project) {
@@ -16,6 +16,13 @@ open class ProgressLogger private constructor(val project: Project) {
 
     var progressWindow = TimeUnit.SECONDS.toMillis(1)
 
+    private val baseParents: Queue<BaseLogger>
+        get() {
+            return BuildScope.of(project).getOrPut("${ProgressLogger::class.java.canonicalName}_${project.path}", {
+                LinkedList<BaseLogger>()
+            })
+        }
+
     private lateinit var base: BaseLogger
 
     private lateinit var stopWatch: StopWatch
@@ -25,7 +32,11 @@ open class ProgressLogger private constructor(val project: Project) {
         val baseFactoryClass: Class<*> = ProgressLoggerFactory::class.java
         val baseFactory = invoke(serviceFactory, "get", baseFactoryClass)
 
-        return invokeWithArgTypes(baseFactory, "newOperation", listOf(javaClass, stack.peek()), listOf(javaClass.javaClass, BaseLogger::class.java)) as BaseLogger
+        return invokeWithArgTypes(
+                baseFactory,
+                "newOperation",
+                listOf(javaClass, baseParents.peek()), listOf(javaClass.javaClass, BaseLogger::class.java)
+        ) as BaseLogger
     }
 
     private operator fun invoke(obj: Any, method: String, vararg args: Any): Any {
@@ -49,7 +60,7 @@ open class ProgressLogger private constructor(val project: Project) {
     fun launch(block: ProgressLogger.() -> Unit) {
         stopWatch = StopWatch()
         base = create()
-        stack.add(base)
+        baseParents.add(base)
 
         try {
             stopWatch.start()
@@ -59,7 +70,7 @@ open class ProgressLogger private constructor(val project: Project) {
             apply(block)
         } finally {
             base.completed()
-            stack.remove(base)
+            baseParents.remove(base)
             stopWatch.stop()
         }
     }
@@ -77,7 +88,5 @@ open class ProgressLogger private constructor(val project: Project) {
         fun of(project: Project): ProgressLogger {
             return ProgressLogger(project)
         }
-
-        private val stack = LinkedList<BaseLogger>() // TODO stack should not be static / move to AemExtension
     }
 }

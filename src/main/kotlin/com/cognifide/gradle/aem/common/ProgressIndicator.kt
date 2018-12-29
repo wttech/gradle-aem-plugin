@@ -21,6 +21,10 @@ class ProgressIndicator(private val project: Project) {
 
     private val messageQueue: Queue<String> = LinkedList()
 
+    private lateinit var logger: ProgressLogger
+
+    private lateinit var timer: Behaviors.Timer
+
     fun <T> launch(block: ProgressIndicator.() -> T): T {
         return runBlocking {
             var done = false
@@ -33,28 +37,10 @@ class ProgressIndicator(private val project: Project) {
             }
 
             ProgressLogger.of(project).launch {
+                this@ProgressIndicator.logger = this
                 Behaviors.waitUntil(delay) { timer ->
-                    var text = if (timer.ticks.rem(2L) == 0L) {
-                        "\\"
-                    } else {
-                        "/"
-                    }
-
-                    if (total > 0) {
-                        text = "$text $count/$total|${Formats.percent(count, total)}"
-                    }
-
-                    if (step.isNotEmpty()) {
-                        text = "$text # $step"
-                    }
-
-                    val messageQueued = messageQueue.peek() ?: message
-                    if (messageQueued.isNotBlank()) {
-                        text = "$text | $messageQueued"
-                    }
-
-                    progress(text)
-
+                    this@ProgressIndicator.timer = timer
+                    update()
                     !done
                 }
             }
@@ -64,9 +50,39 @@ class ProgressIndicator(private val project: Project) {
     }
 
     fun increment(message: String, block: () -> Unit) {
+        update()
         messageQueue.add(message)
         block()
         count++
         messageQueue.remove(message)
+        update()
     }
+
+    private fun update() {
+        logger.progress(text)
+    }
+
+    private val text: String
+        get() {
+            var result = if (timer.ticks.rem(2L) == 0L) {
+                "\\"
+            } else {
+                "/"
+            }
+
+            if (total > 0) {
+                result = "$result $count/$total|${Formats.percent(count, total)}"
+            }
+
+            if (step.isNotEmpty()) {
+                result = "$result # $step"
+            }
+
+            val messageQueued = messageQueue.peek() ?: message
+            if (messageQueued.isNotBlank()) {
+                result = "$result | $messageQueued"
+            }
+
+            return result
+        }
 }
