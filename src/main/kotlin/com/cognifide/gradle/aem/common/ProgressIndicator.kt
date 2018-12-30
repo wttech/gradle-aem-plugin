@@ -6,8 +6,6 @@ import org.gradle.api.Project
 
 class ProgressIndicator(private val project: Project) {
 
-    var delay = 100
-
     var total = 0L
 
     var step = ""
@@ -15,6 +13,8 @@ class ProgressIndicator(private val project: Project) {
     var message = ""
 
     var count = 0L
+
+    private var delay = 100
 
     private val messageQueue: Queue<String> = LinkedList()
 
@@ -66,7 +66,7 @@ class ProgressIndicator(private val project: Project) {
 
     private val text: String
         get() {
-            var result = if (::timer.isInitialized && timer.ticks.rem(2L) == 0L) {
+            var result = if (::timer.isInitialized && timer.ticks.rem(10L) < 5) {
                 "\\"
             } else {
                 "/"

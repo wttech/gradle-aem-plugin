@@ -173,7 +173,7 @@ class LocalHandle(val project: Project, val instance: LocalInstance) {
             ZipUtil.unpack(jar, staticDir) { name ->
                 if (name.startsWith(JAR_STATIC_FILES_PATH)) {
                     val fileName = name.substringAfterLast("/")
-                    increment("Extracting '$fileName'")
+                    increment("Extracting file '$fileName'")
                     name.substring(JAR_STATIC_FILES_PATH.length)
                 } else {
                     name

@@ -56,7 +56,7 @@ open class Create : Instance() {
 
         aem.progress(handles.size) {
             handles.onEachApply {
-                increment("Creating '${instance.name}'") {
+                increment("Instance '${instance.name}'") {
                     create(options, instanceFiles)
                 }
             }
