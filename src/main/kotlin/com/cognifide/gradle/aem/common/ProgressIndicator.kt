@@ -1,15 +1,12 @@
 package com.cognifide.gradle.aem.common
 
 import java.util.*
-import java.util.concurrent.TimeUnit
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import org.gradle.api.Project
 
 class ProgressIndicator(private val project: Project) {
 
-    var delay = TimeUnit.SECONDS.toMillis(1)
+    var delay = 100
 
     var total = 0L
 
@@ -27,44 +24,49 @@ class ProgressIndicator(private val project: Project) {
 
     fun <T> launch(block: ProgressIndicator.() -> T): T {
         return runBlocking {
-            var done = false
-            val blockJob = async(Dispatchers.Default) {
-                try {
-                    block()
-                } finally {
-                    done = true // TODO logger sometimes not dies
+            val blockJob = async(Dispatchers.Default) { block() }
+            val loggerJob = async(Dispatchers.Default) {
+                ProgressLogger.of(project).launch {
+                    this@ProgressIndicator.logger = this
+                    Behaviors.waitUntil(delay) { timer ->
+                        this@ProgressIndicator.timer = timer
+                        update()
+                        isActive
+                    }
                 }
             }
 
-            ProgressLogger.of(project).launch {
-                this@ProgressIndicator.logger = this
-                Behaviors.waitUntil(delay) { timer ->
-                    this@ProgressIndicator.timer = timer
-                    update()
-                    !done
-                }
-            }
-
-            blockJob.await()
+            loggerJob.start()
+            val result = blockJob.await()
+            loggerJob.cancelAndJoin()
+            result
         }
     }
 
-    fun increment(message: String, block: () -> Unit) {
+    fun increment(message: String) {
+        this.message = message
+        count++
+    }
+
+    fun <T> increment(message: String, block: () -> T): T {
         update()
         messageQueue.add(message)
-        block()
+        val result = block()
         count++
         messageQueue.remove(message)
         update()
+        return result
     }
 
-    private fun update() {
-        logger.progress(text)
+    fun update() {
+        if (::logger.isInitialized) {
+            logger.progress(text)
+        }
     }
 
     private val text: String
         get() {
-            var result = if (timer.ticks.rem(2L) == 0L) {
+            var result = if (::timer.isInitialized && timer.ticks.rem(2L) == 0L) {
                 "\\"
             } else {
                 "/"

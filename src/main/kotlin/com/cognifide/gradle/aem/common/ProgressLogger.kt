@@ -32,11 +32,18 @@ open class ProgressLogger private constructor(val project: Project) {
         val baseFactoryClass: Class<*> = ProgressLoggerFactory::class.java
         val baseFactory = invoke(serviceFactory, "get", baseFactoryClass)
 
-        return invokeWithArgTypes(
-                baseFactory,
-                "newOperation",
-                listOf(javaClass, baseParents.peek()), listOf(javaClass.javaClass, BaseLogger::class.java)
-        ) as BaseLogger
+        val parent = baseParents.peek()
+
+        return if (parent == null) {
+            invoke(baseFactory, "newOperation", javaClass) as BaseLogger
+        } else {
+            invokeWithArgTypes(
+                    baseFactory,
+                    "newOperation",
+                    listOf(javaClass, baseParents.peek()),
+                    listOf(javaClass.javaClass, BaseLogger::class.java)
+            ) as BaseLogger
+        }
     }
 
     private operator fun invoke(obj: Any, method: String, vararg args: Any): Any {

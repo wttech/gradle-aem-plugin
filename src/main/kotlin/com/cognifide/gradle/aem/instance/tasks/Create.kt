@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.instance.tasks
 
 import com.cognifide.gradle.aem.common.AemTask
 import com.cognifide.gradle.aem.common.file.resolver.FileResolver
+import com.cognifide.gradle.aem.common.onEachApply
 import com.cognifide.gradle.aem.instance.LocalHandleOptions
 import com.cognifide.gradle.aem.instance.names
 import java.io.File
@@ -45,15 +46,23 @@ open class Create : Instance() {
 
     @TaskAction
     fun create() {
-        if (localHandles.isEmpty() || localHandles.all { it.created }) {
-            logger.info("No instances to create")
+        val handles = localHandles.filter { !it.created }
+        if (handles.isEmpty()) {
+            logger.info("No instance(s) to create")
             return
         }
 
-        logger.info("Creating instances")
-        aem.parallelWith(localHandles) { create(options, instanceFiles) }
+        logger.info("Creating instances: ${handles.names}")
 
-        aem.notifier.notify("Instance(s) created", "Which: ${localHandles.names}")
+        aem.progress(handles.size) {
+            handles.onEachApply {
+                increment("Creating '${instance.name}'") {
+                    create(options, instanceFiles)
+                }
+            }
+        }
+
+        aem.notifier.notify("Instance(s) created", "Which: ${handles.names}")
     }
 
     companion object {

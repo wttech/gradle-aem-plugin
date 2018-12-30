@@ -256,6 +256,12 @@ open class AemExtension(@Internal val project: Project) {
 
     fun retry(): Retry = Retry.none()
 
+    fun <T> progress(total: Int, action: ProgressIndicator.() -> T): T = progress(total.toLong(), action)
+
+    fun <T> progress(total: Long, action: ProgressIndicator.() -> T): T {
+        return ProgressIndicator(project).apply { this.total = total }.launch(action)
+    }
+
     fun <T> progress(action: ProgressIndicator.() -> T): T {
         return ProgressIndicator(project).launch(action)
     }
