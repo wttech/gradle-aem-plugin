@@ -35,11 +35,6 @@ open class Compose : Zip(), AemTask {
 
     /**
      * Content path for OSGi bundle jars being placed in CRX package.
-     *
-     * Default convention assumes that subprojects have separate bundle paths, because of potential re-installation of subpackages.
-     * When all subprojects will have same bundle path, reinstalling one subpackage may end with deletion of other bundles coming from another subpackage.
-     *
-     * Beware that more nested bundle install directories are not supported by AEM by default.
      */
     @Input
     var bundlePath: String = aem.config.packageInstallPath
