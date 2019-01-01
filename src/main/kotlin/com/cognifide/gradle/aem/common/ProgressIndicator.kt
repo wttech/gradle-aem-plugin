@@ -64,6 +64,7 @@ class ProgressIndicator(private val project: Project) {
         }
     }
 
+    @Suppress("MagicNumber")
     private val text: String
         get() {
             var result = if (::timer.isInitialized && timer.ticks.rem(10L) < 5) {

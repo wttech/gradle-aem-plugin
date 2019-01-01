@@ -2,9 +2,8 @@ package com.cognifide.gradle.aem.common
 
 import com.cognifide.gradle.aem.bundle.BundleJar
 import com.cognifide.gradle.aem.bundle.BundlePlugin
-import com.cognifide.gradle.aem.instance.tasks.Await
-import com.cognifide.gradle.aem.instance.tasks.Satisfy
-import com.cognifide.gradle.aem.instance.tasks.Setup
+import com.cognifide.gradle.aem.instance.tasks.*
+import com.cognifide.gradle.aem.pkg.tasks.Activate
 import com.cognifide.gradle.aem.pkg.tasks.Compose
 import org.gradle.api.Project
 import org.gradle.api.Task
@@ -15,6 +14,7 @@ import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.testing.Test
 
+@Suppress("TooManyFunctions")
 class TaskFacade(private val aem: AemExtension) {
 
     private val project = aem.project
@@ -33,8 +33,6 @@ class TaskFacade(private val aem: AemExtension) {
         }
     }
 
-    fun compose(configurer: Compose.() -> Unit) = named(Compose.NAME, Compose::class.java, configurer)
-
     fun bundle(configurer: BundleJar.() -> Unit) = bundle(JavaPlugin.JAR_TASK_NAME, configurer)
 
     fun bundle(jarTaskName: String, configurer: BundleJar.() -> Unit) {
@@ -48,10 +46,6 @@ class TaskFacade(private val aem: AemExtension) {
     internal fun bundle(jar: Jar, configurer: BundleJar.() -> Unit = {}): BundleJar {
         return bundleMap.getOrPut(jar.name) { BundleJar(aem, jar) }.apply(configurer)
     }
-
-    fun satisfy(configurer: Satisfy.() -> Unit) = named(Satisfy.NAME, Satisfy::class.java, configurer)
-
-    fun setup(configurer: Setup.() -> Unit) = named(Setup.NAME, Setup::class.java, configurer)
 
     fun pathed(path: String): TaskProvider<Task> {
         val projectPath = path.substringBeforeLast(":", project.path).ifEmpty { ":" }
@@ -203,6 +197,38 @@ class TaskFacade(private val aem: AemExtension) {
             AemException(msg)
         }
     }
+
+    // lazy task configuration shorthands
+
+    fun await(configurer: Await.() -> Unit) = named(Await.NAME, Await::class.java, configurer)
+
+    fun collect(configurer: Collect.() -> Unit) = named(Collect.NAME, Collect::class.java, configurer)
+
+    fun create(configurer: Create.() -> Unit) = named(Create.NAME, Create::class.java, configurer)
+
+    fun destroy(configurer: Destroy.() -> Unit) = named(Destroy.NAME, Destroy::class.java, configurer)
+
+    fun down(configurer: Down.() -> Unit) = named(Down.NAME, Down::class.java, configurer)
+
+    fun reload(configurer: Reload.() -> Unit) = named(Reload.NAME, Reload::class.java, configurer)
+
+    fun resetup(configurer: Resetup.() -> Unit) = named(Resetup.NAME, Resetup::class.java, configurer)
+
+    fun resolve(configurer: Resolve.() -> Unit) = named(Resolve.NAME, Resolve::class.java, configurer)
+
+    fun restart(configurer: Restart.() -> Unit) = named(Restart.NAME, Restart::class.java, configurer)
+
+    fun satisfy(configurer: Satisfy.() -> Unit) = named(Satisfy.NAME, Satisfy::class.java, configurer)
+
+    fun setup(configurer: Setup.() -> Unit) = named(Setup.NAME, Setup::class.java, configurer)
+
+    fun up(configurer: Up.() -> Unit) = named(Up.NAME, Up::class.java, configurer)
+
+    fun activate(configurer: Activate.() -> Unit) = named(Activate.NAME, Activate::class.java, configurer)
+
+    fun compose(configurer: Compose.() -> Unit) = named(Compose.NAME, Compose::class.java, configurer)
+
+    // TODO ... pkg delete
 
     class SequenceOptions {
 
