@@ -3,8 +3,11 @@ package com.cognifide.gradle.aem.common
 import com.cognifide.gradle.aem.bundle.BundleJar
 import com.cognifide.gradle.aem.bundle.BundlePlugin
 import com.cognifide.gradle.aem.instance.tasks.*
-import com.cognifide.gradle.aem.pkg.tasks.Activate
-import com.cognifide.gradle.aem.pkg.tasks.Compose
+import com.cognifide.gradle.aem.pkg.tasks.*
+import com.cognifide.gradle.aem.tooling.tasks.Debug
+import com.cognifide.gradle.aem.tooling.tasks.Rcp
+import com.cognifide.gradle.aem.tooling.tasks.Sync
+import com.cognifide.gradle.aem.tooling.tasks.Vlt
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.UnknownTaskException
@@ -118,7 +121,7 @@ class TaskFacade(private val aem: AemExtension) {
     @Suppress("unchecked_cast")
     fun <T : Task> get(path: String, type: Class<T>): T {
         val task = if (path.contains(":")) {
-            project.tasks.getByPath(path)
+            project.tasks.findByPath(path)
         } else {
             project.tasks.findByName(path)
         }
@@ -186,9 +189,9 @@ class TaskFacade(private val aem: AemExtension) {
 
     private fun composeException(taskName: String, type: Class<*>? = null, cause: Exception? = null, project: Project = this.project): AemException {
         val msg = if (type != null) {
-            "Project '${project.displayName}' does not have task '$taskName' of type '$type'. Ensure correct plugins applied."
+            "${project.displayName.capitalize()} does not have task '$taskName' of type '$type'. Ensure correct plugins applied."
         } else {
-            "Project '${project.displayName}' does not have task '$taskName'. Ensure correct plugins applied."
+            "${project.displayName.capitalize()} does not have task '$taskName'. Ensure correct plugins applied."
         }
 
         return if (cause != null) {
@@ -228,7 +231,25 @@ class TaskFacade(private val aem: AemExtension) {
 
     fun compose(configurer: Compose.() -> Unit) = named(Compose.NAME, Compose::class.java, configurer)
 
-    // TODO ... pkg delete
+    fun delete(configurer: Delete.() -> Unit) = named(Delete.NAME, Delete::class.java, configurer)
+
+    fun deploy(configurer: Deploy.() -> Unit) = named(Deploy.NAME, Deploy::class.java, configurer)
+
+    fun install(configurer: Install.() -> Unit) = named(Install.NAME, Install::class.java, configurer)
+
+    fun purge(configurer: Purge.() -> Unit) = named(Purge.NAME, Purge::class.java, configurer)
+
+    fun uninstall(configurer: Uninstall.() -> Unit) = named(Uninstall.NAME, Uninstall::class.java, configurer)
+
+    fun upload(configurer: Upload.() -> Unit) = named(Upload.NAME, Upload::class.java, configurer)
+
+    fun debug(configurer: Debug.() -> Unit) = named(Debug.NAME, Debug::class.java, configurer)
+
+    fun rcp(configurer: Rcp.() -> Unit) = named(Rcp.NAME, Rcp::class.java, configurer)
+
+    fun sync(configurer: Sync.() -> Unit) = named(Sync.NAME, Sync::class.java, configurer)
+
+    fun vlt(configurer: Vlt.() -> Unit) = named(Vlt.NAME, Vlt::class.java, configurer)
 
     class SequenceOptions {
 
