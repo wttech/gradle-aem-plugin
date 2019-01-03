@@ -13,14 +13,16 @@ object InstanceProgress {
         unstableInstances: List<Instance>,
         timer: Behaviors.Timer
     ): String {
-        return (timeout(timer.ticks, stableTimes) + " " + states(states, unavailableInstances, unstableInstances)).trim()
+        return (ticks(timer.ticks, stableTimes) + " " + states(states, unavailableInstances, unstableInstances)).trim()
     }
 
-    private fun timeout(tick: Long, maxTicks: Long): String {
+    private fun ticks(tick: Long, maxTicks: Long): String {
         return if (maxTicks > 0 && (tick.toDouble() / maxTicks.toDouble() > COUNTING_RATIO)) {
             "!${maxTicks - tick}"
+        } else if (tick.rem(2) == 0L) {
+            "/"
         } else {
-            ""
+            "\\"
         }
     }
 
