@@ -2,8 +2,9 @@ package com.cognifide.gradle.aem.instance.action
 
 import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.Behaviors
-import com.cognifide.gradle.aem.instance.AwaitLogger
+import com.cognifide.gradle.aem.common.ProgressLogger
 import com.cognifide.gradle.aem.instance.InstanceException
+import com.cognifide.gradle.aem.instance.InstanceProgress
 import com.cognifide.gradle.aem.instance.InstanceState
 import com.cognifide.gradle.aem.instance.names
 
@@ -48,8 +49,7 @@ class ShutdownAction(aem: AemExtension) : AbstractAction(aem) {
     private fun shutdown() {
         aem.logger.info("Awaiting instance(s) shutdown: ${instances.names}")
 
-        val progress = AwaitLogger(aem.project, stableRetry.times)
-        progress.logger.launch {
+        ProgressLogger.of(aem.project).launch {
             var lastStableChecksum = -1
 
             aem.parallelWith(localHandles) { down() }
@@ -69,7 +69,7 @@ class ShutdownAction(aem: AemExtension) : AbstractAction(aem) {
                 val unavailableInstances = instances - availableInstances
                 val upInstances = localHandles.filter { it.running || availableInstances.contains(it.instance) }.map { it.instance }
 
-                progress.progress(instanceStates, unavailableInstances, unstableInstances, timer)
+                progress(InstanceProgress.determine(stableRetry.times, instanceStates, unavailableInstances, unstableInstances, timer))
 
                 // Detect timeout when same checksum is not being updated so long
                 if (stableRetry.times > 0 && timer.ticks > stableRetry.times) {

@@ -4,10 +4,17 @@ import com.cognifide.gradle.aem.common.file.resolver.FileGroup
 import com.cognifide.gradle.aem.common.file.resolver.FileResolution
 import com.cognifide.gradle.aem.instance.InstanceSync
 import java.io.File
+import org.gradle.api.tasks.Input
 
 class PackageGroup(val resolver: PackageResolver, name: String) : FileGroup(resolver.downloadDir, name) {
 
     private val aem = resolver.aem
+
+    /**
+     * Forces to upload and install package again regardless its state on instances (already uploaded / installed).
+     */
+    @Input
+    var greedy = false
 
     /**
      * Instance name filter for excluding group from deployment.

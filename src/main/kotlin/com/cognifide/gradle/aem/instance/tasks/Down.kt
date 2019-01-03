@@ -1,11 +1,10 @@
 package com.cognifide.gradle.aem.instance.tasks
 
-import com.cognifide.gradle.aem.instance.InstanceTask
 import com.cognifide.gradle.aem.instance.action.ShutdownAction
 import com.cognifide.gradle.aem.instance.names
 import org.gradle.api.tasks.TaskAction
 
-open class Down : InstanceTask() {
+open class Down : Instance() {
 
     init {
         description = "Turns off local AEM instance(s)."

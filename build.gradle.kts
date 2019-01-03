@@ -4,13 +4,13 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent
 plugins {
     id("java-gradle-plugin")
     id("maven-publish")
-    kotlin("jvm") version "1.3.0"
+    kotlin("jvm") version "1.3.10"
     id("io.gitlab.arturbosch.detekt") version "1.0.0-RC11"
     id("com.jfrog.bintray") version "1.8.4"
 }
 
 group = "com.cognifide.gradle"
-version = "6.0.0-beta3"
+version = "6.0.0-beta4"
 description = "Gradle AEM Plugin"
 defaultTasks = listOf("build", "publishToMavenLocal")
 
@@ -20,8 +20,8 @@ repositories {
 
 dependencies {
     implementation(gradleApi())
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.3.0")
-    implementation("org.jetbrains.kotlin:kotlin-reflect:1.3.0")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.3.10")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:1.3.10")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.0.1")
     implementation("org.apache.commons:commons-lang3:3.4")
     implementation("commons-io:commons-io:2.4")

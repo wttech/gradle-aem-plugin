@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem.common
 
-import com.cognifide.gradle.aem.bundle.BundleJar
 import com.cognifide.gradle.aem.bundle.BundlePlugin
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.http.HttpClient
@@ -19,11 +18,9 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import org.gradle.api.Project
 import org.gradle.api.Task
-import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
-import org.gradle.api.tasks.bundling.Jar
 
 @Suppress("TooManyFunctions")
 open class AemExtension(@Internal val project: Project) {
@@ -101,22 +98,13 @@ open class AemExtension(@Internal val project: Project) {
      * Provides API for easier creation of tasks (e.g in sequence) in the matter of Gradle task configuration avoidance.
      */
     @Internal
-    val tasks = TaskFactory(project)
+    val tasks = TaskFacade(this)
 
     /**
      * Provides API for performing actions affecting multiple instances at once.
      */
     @Internal
     val actions = ActionPerformer(this)
-
-    private val bundleMap = mutableMapOf<String, BundleJar>()
-
-    /**
-     * Contains OSGi bundle configuration used in case of composing CRX package.
-     */
-    @Nested
-    val bundles: Map<String, BundleJar> = bundleMap
-
     /**
      * Collection of all java packages from all projects applying bundle plugin.
      */
@@ -125,7 +113,7 @@ open class AemExtension(@Internal val project: Project) {
         get() = project.allprojects.filter {
             it.plugins.hasPlugin(BundlePlugin.ID)
         }.flatMap { subproject ->
-            AemExtension.of(subproject).bundles.values.mapNotNull { it.javaPackage }
+            AemExtension.of(subproject).tasks.bundles.values.mapNotNull { it.javaPackage }
         }
 
     @get:Internal
@@ -254,39 +242,11 @@ open class AemExtension(@Internal val project: Project) {
         config.apply(configurer)
     }
 
-    @get:Internal
-    val compose: Compose
-        get() = compose(Compose.NAME)
-
-    fun compose(taskName: String) = project.tasks.getByName(taskName) as Compose
-
-    @get:Internal
-    val composes: List<Compose>
-        get() = project.tasks.withType(Compose::class.java).toList()
-
-    fun bundle(configurer: BundleJar.() -> Unit) = bundle(JavaPlugin.JAR_TASK_NAME, configurer)
-
-    fun bundle(jarTaskName: String, configurer: BundleJar.() -> Unit) {
-        project.tasks.withType(Jar::class.java)
-                .named(jarTaskName)
-                .configure { bundle(it, configurer) }
-    }
-
-    @get:Internal
-    val bundle: BundleJar
-        get() = bundle(JavaPlugin.JAR_TASK_NAME)
-
-    fun bundle(jarTaskName: String) = bundle(project.tasks.getByName(jarTaskName) as Jar)
-
-    fun bundle(jar: Jar, configurer: BundleJar.() -> Unit = {}): BundleJar {
-        return bundleMap.getOrPut(jar.name) { BundleJar(this, jar) }.apply(configurer)
-    }
-
     fun notifier(configurer: NotifierFacade.() -> Unit) {
         notifier.apply(configurer)
     }
 
-    fun tasks(configurer: TaskFactory.() -> Unit) {
+    fun tasks(configurer: TaskFacade.() -> Unit) {
         tasks.apply(configurer)
     }
 
@@ -296,9 +256,31 @@ open class AemExtension(@Internal val project: Project) {
 
     fun retry(): Retry = Retry.none()
 
-    fun <T> progress(options: ProgressIndicator.() -> Unit, action: ProgressIndicator.() -> T): T {
-        return ProgressIndicator(project).apply(options).launch(action)
+    /**
+     * Show asynchronous progress indicator with percentage while performing some action.
+     */
+    fun <T> progress(total: Int, action: ProgressIndicator.() -> T): T = progress(total.toLong(), action)
+
+    /**
+     * Show asynchronous progress indicator with percentage while performing some action.
+     */
+    fun <T> progress(total: Long, action: ProgressIndicator.() -> T): T {
+        return ProgressIndicator(project).apply { this.total = total }.launch(action)
     }
+
+    /**
+     * Show asynchronous progress indicator while performing some action.
+     *
+     * Warning! Nesting progress indicators is not supported.
+     */
+    fun <T> progressIndicator(action: ProgressIndicator.() -> T): T = ProgressIndicator(project).launch(action)
+
+    /**
+     * Show synchronous progress logger while performing some action.
+     *
+     * Nesting progress loggers is supported.
+     */
+    fun <T> progressLogger(action: ProgressLogger.() -> T): T = ProgressLogger.of(project).launch(action)
 
     @get:Internal
     val filter: VltFilter
@@ -364,15 +346,6 @@ open class AemExtension(@Internal val project: Project) {
     fun temporaryDir(task: Task) = temporaryDir(task.name)
 
     fun temporaryDir(name: String) = AemTask.temporaryDir(project, name)
-
-    init {
-        project.gradle.projectsEvaluated { _ ->
-            if (project.plugins.hasPlugin(BundlePlugin.ID)) {
-                bundle // forces default jar to be configured
-            }
-            bundles.values.forEach { it.projectsEvaluated() }
-        }
-    }
 
     companion object {
 

@@ -59,7 +59,7 @@ class Config(
      * CRX package name conventions (with wildcard) indicating that package can change over time
      * while having same version specified. Affects CRX packages composed and satisfied.
      */
-    @Input
+    @Internal
     var packageSnapshots: List<String> = aem.props.list("aem.packageSnapshots") ?: listOf()
 
     @Input
@@ -112,7 +112,7 @@ class Config(
      * When declared exception is encountered during package installation process, no more
      * retries will be applied.
      */
-    @Input
+    @Internal
     var packageErrors: List<String> = (aem.props.list("aem.packageErrors") ?: listOf(
             "javax.jcr.nodetype.*Exception",
             "org.apache.jackrabbit.oak.api.*Exception",
@@ -126,7 +126,7 @@ class Config(
      * The higher the value, the bigger consumption of memory but shorter execution time.
      * It is a protection against exceeding max Java heap size.
      */
-    @Input
+    @Internal
     var packageResponseBuffer = aem.props.int("aem.packageResponseBuffer") ?: 4096
 
     /**
@@ -154,7 +154,7 @@ class Config(
     /**
      * Convention location in which Groovy Script to be evaluated via instance sync will be searched for by file name.
      */
-    @Input
+    @Internal
     var groovyScriptRoot: String = "${aem.project.file("gradle/groovyScript")}"
 
     init {

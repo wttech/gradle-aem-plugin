@@ -12,7 +12,7 @@
 
 ## Description
 
-Incremental build which takes seconds, not minutes. Developer who does not loose focus between build time gaps. Extend freely your build system directly in project. 
+Swiss army knife for AEM related automation. Incremental build which takes seconds, not minutes. Developer who does not loose focus between build time gaps. Extend freely your build system directly in project. 
 
 AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget to **star this project** on GitHub :)
 
@@ -27,7 +27,7 @@ Looking for dedicated version of plugin for [**Apache Sling**](https://sling.apa
 ### Features
 
 * Composing CRX package from multiple JCR content roots, bundles.
-* Fully automated, tied to project, local AEM instance(s) setup allowing to start development within few minutes.
+* Fully automated, native (no virtulization), tied to project, AEM instance(s) setup allowing to start development within few minutes.
 * Powerful AEM DSL scripting capabilities for performing content migrations, managing instances.
 * Advanced AEM instance(s) stability & health checking after CRX package deployment.
 * Automated all-in-one CRX packages generation (assemblies), vault filters merging etc.
@@ -56,19 +56,18 @@ To see documentation for previous 5.x serie, please [click here](https://github.
         * [Defining instances via build script](#defining-instances-via-build-script)
      * [Tooling plugin](#tooling-plugin)
         * [Task aemSync](#task-aemsync)
-           * [Use alternative check out type](#use-alternative-check-out-type)
+           * [Default cleaning configuration](#default-cleaning-configuration)
+           * [Cleaning renditions](#cleaning-renditions)
+           * [Using alternative transfer type](#using-alternative-transfer-type)
+           * [Copying or cleaning content only](#copying-or-cleaning-content-only)
            * [Filter file at custom path](#filter-file-at-custom-path)
            * [Filter roots specified explicitly](#filter-roots-specified-explicitly)
-        * [Task aemCheckout](#task-aemcheckout)
-        * [Task aemClean](#task-aemclean)
-           * [Default configuration](#default-configuration)
-           * [Cleaning renditions](#cleaning-renditions)
         * [Task aemRcp](#task-aemrcp)
         * [Task aemVlt](#task-aemvlt)
         * [Task aemDebug](#task-aemdebug)
      * [Package plugin](#package-plugin)
         * [Task aemCompose](#task-aemcompose)
-           * [Default configuration](#default-configuration-1)
+           * [Default configuration](#default-configuration)
         * [Including additional OSGi bundle into CRX package](#including-additional-osgi-bundle-into-crx-package)
            * [Assembling packages (merging into all-in-one)](#assembling-packages-merging-into-all-in-one)
            * [Expandable properties](#expandable-properties)
@@ -142,7 +141,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.cognifide.gradle:aem-plugin:6.0.0-beta3")
+    implementation("com.cognifide.gradle:aem-plugin:6.0.0-beta4")
 }
 ```
 
@@ -162,7 +161,7 @@ Configuration below assumes building and deploying on AEM instance(s) via comman
 plugins {
     id("com.cognifide.aem.bundle")
     id("com.cognifide.aem.instance")
-    id("'org.jetbrains.kotlin.jvm") // or any other like 'java' to compile OSGi bundle
+    id("org.jetbrains.kotlin.jvm") // or any other like 'java' to compile OSGi bundle
 }
 
 defaultTasks = listOf(":aemSatisfy", ":aemDeploy")
@@ -173,9 +172,18 @@ aem {
         // ...
                
     }
-    bundle {
-        javaPackage = "com.company.example.aem"
-        // ...
+    tasks {
+        compose {
+            fromProject(':core')
+            fromProject(':config')
+        }
+        bundle {
+            javaPackage = "com.company.example.aem"
+            // ...
+        }
+        satisfy {
+            url('http://.../package.zip')
+        }
     }
 }
 ```
@@ -184,7 +192,10 @@ To see all available options and actual documentation, please follow to:
 
 * `aem` - [AemExtension](src/main/kotlin/com/cognifide/gradle/aem/common/AemExtension.kt)
 * `config` - [Config](src/main/kotlin/com/cognifide/gradle/aem/config/Config.kt)
+* `compose` - [Compose](src/main/kotlin/com/cognifide/gradle/aem/pkg/tasks/Compose.kt)
 * `bundle` - [BundleJar](src/main/kotlin/com/cognifide/gradle/aem/bundle/BundleJar.kt)
+* `satisfy` - [Satisfy](src/main/kotlin/com/cognifide/gradle/aem/instance/tasks/Satisfy.kt)
+* `...` - other tasks in similar way.
 
 ### Config plugin
 
@@ -294,39 +305,41 @@ Below examples assume existence of subproject `:content`.
 ##### Default cleaning configuration
 
 ```kotlin
-tasks {
-    named<Sync>(Sync.NAME) {
-        cleaner {
-            filesDotContent = { 
-                include("**/.content.xml") 
+aem {
+    tasks {
+        sync {
+            cleaner {
+                filesDotContent = { 
+                    include("**/.content.xml") 
+                }
+                filesDeleted = { 
+                    include(listOf("**/.vlt", "**/.vlt*.tmp")) 
+                }
+                filesFlattened = { 
+                    include(listOf("**/_cq_dialog/.content.xml", "**/_cq_htmlTag/.content.xml")) 
+                }
+                propertiesSkipped = listOf(
+                    pathRule("jcr:uuid", listOf("**/home/users/*", "**/home/groups/*")),
+                    "jcr:lastModified*",
+                    "jcr:created*",
+                    "jcr:isCheckedOut",
+                    "cq:lastModified*",
+                    "cq:lastReplicat*",
+                    "dam:extracted",
+                    "dam:assetState",
+                    "dc:modified",
+                    "*_x0040_*"
+                )
+                mixinTypesSkipped = listOf(
+                    "cq:ReplicationStatus",
+                    "mix:versionable"
+                )
+                namespacesSkipped = true
+                parentsBackupEnabled = true
+                parentsBackupSuffix = ".bak"
+                lineProcess = { file, line -> normalizeLine(file, line) }
+                contentProcess = { file, lines -> normalizeContent(file, lines) }
             }
-            filesDeleted = { 
-                include(listOf("**/.vlt", "**/.vlt*.tmp")) 
-            }
-            filesFlattened = { 
-                include(listOf("**/_cq_dialog/.content.xml", "**/_cq_htmlTag/.content.xml")) 
-            }
-            propertiesSkipped = listOf(
-                pathRule("jcr:uuid", listOf("**/home/users/*", "**/home/groups/*")),
-                "jcr:lastModified*",
-                "jcr:created*",
-                "jcr:isCheckedOut",
-                "cq:lastModified*",
-                "cq:lastReplicat*",
-                "dam:extracted",
-                "dam:assetState",
-                "dc:modified",
-                "*_x0040_*"
-            )
-            mixinTypesSkipped = listOf(
-                "cq:ReplicationStatus",
-                "mix:versionable"
-            )
-            namespacesSkipped = true
-            parentsBackupEnabled = true
-            parentsBackupSuffix = ".bak"
-            lineProcess = { file, line -> normalizeLine(file, line) }
-            contentProcess = { file, lines -> normalizeContent(file, lines) }
         }
     }
 }
@@ -338,27 +351,29 @@ Cleaning could also ensure that AEM renditions will be never saved in VCS. Also 
 For such cases, see configuration below:
 
 ```kotlin
-tasks {
-    named<Clean>(Clean.NAME) {
-        options {
-            propertiesSkipped += listOf(
-                    pathRule("dam:sha1", listOf(), listOf("**/content/dam/*.svg/*")),
-                    pathRule("dam:size", listOf(), listOf("**/content/dam/*.svg/*")),
-                    "cq:name",
-                    "cq:parentPath",
-                    "dam:copiedAt",
-                    "dam:parentAssetID",
-                    "dam:relativePath"
-            )
-            filesDeleted = { 
-                include(listOf(
-                    "**/.vlt",
-                     "**/.vlt*.tmp",
-                    "**/content/dam/**/_jcr_content/folderThumbnail*",
-                    "**/content/dam/**/_jcr_content/renditions/*"
-                ))
-            }
-        }  
+aem {
+    tasks {
+        clean {
+            options {
+                propertiesSkipped += listOf(
+                        pathRule("dam:sha1", listOf(), listOf("**/content/dam/*.svg/*")),
+                        pathRule("dam:size", listOf(), listOf("**/content/dam/*.svg/*")),
+                        "cq:name",
+                        "cq:parentPath",
+                        "dam:copiedAt",
+                        "dam:parentAssetID",
+                        "dam:relativePath"
+                )
+                filesDeleted = { 
+                    include(listOf(
+                        "**/.vlt",
+                         "**/.vlt*.tmp",
+                        "**/content/dam/**/_jcr_content/folderThumbnail*",
+                        "**/content/dam/**/_jcr_content/renditions/*"
+                    ))
+                }
+            }  
+        }
     }
 }
 ```
@@ -466,7 +481,7 @@ Then file at path *build/aem/aemDebug/debug.json* with content below is being ge
 {
   "buildInfo" : {
     "plugin" : {
-      "pluginVersion" : "6.0.0-beta3",
+      "pluginVersion" : "6.0.0-beta4",
       "gradleVersion" : "5.0"
     },
     "gradle" : {
@@ -566,22 +581,24 @@ Inherits from task [ZIP](https://docs.gradle.org/3.5/dsl/org.gradle.api.tasks.bu
 ##### Default configuration
 
 ```kotlin
-tasks {
-    named<Compose>(Compose.NAME) {
-        duplicatesStrategy = DuplicatesStrategy.WARN
-        baseName = aem.baseName
-        contentPath = aem.config.packageRoot
-        bundlePath = aem.config.packageInstallPath
-        metaDefaults = true
-        vaultProperties = mapOf(
-            "acHandling" to "merge_preserve",
-            "requiresRoot" to false
-        )
-        vaultName = baseName
-        vaultGroup = project.group
-        vaultVersion = project.version
-        fromConvention = true
-    }
+aem {
+    tasks {
+        compose {
+            duplicatesStrategy = DuplicatesStrategy.WARN
+            baseName = aem.baseName
+            contentPath = aem.config.packageRoot
+            bundlePath = aem.config.packageInstallPath
+            metaDefaults = true
+            vaultProperties = mapOf(
+                "acHandling" to "merge_preserve",
+                "requiresRoot" to false
+            )
+            vaultName = baseName
+            vaultGroup = project.group
+            vaultVersion = project.version
+            fromConvention = true
+        }
+    }    
 }
 ```
 
@@ -590,9 +607,11 @@ tasks {
 Use dedicated task method named `fromJar`.
 
 ```kotlin
-tasks {
-    named<Compose>(Compose.NAME) {
-        fromJar("group:name:version")
+aem {
+    tasks {
+        compose {
+            fromJar("group:name:version")
+        }
     }
 }
 ```
@@ -610,14 +629,15 @@ plugins {
     id("com.cognifide.aem.package")
 }
 
-tasks {
-    named<Compose>(Compose.NAME) {
-        fromProjects(":app:*")
-        fromProjects(":content:*")
-        fromProject(":migration")
-    }
+aem {
+    tasks {
+        compose {
+            fromProjects(":app:*")
+            fromProjects(":content:*")
+            fromProject(":migration")
+        }
+    }    
 }
-
 ```
 
 When building via command `gradlew :build`, then the effect will be a CRX package with assembled JCR content and OSGi bundles from projects: `:app:core`, `:app:common`, `:content:init`, `:content:demo` and `:migration`.
@@ -629,9 +649,11 @@ plugins {
     id("com.cognifide.aem.package")
 }
 
-tasks {
-    named<Compose>(Compose.NAME) {
-        fromSubprojects()
+aem {
+    tasks {
+        compose {
+            fromSubprojects()
+        }
     }
 }
 ```
@@ -665,17 +687,19 @@ In exactly same way as it is working for instance files, properties can be expan
 Related configuration:
 
 ```kotlin
-tasks {
-    named<Compose>(Compose.NAME) {
-        fileFilter {
-            expandProperties = mapOf(
-                "organization" to "Company"
-            )
-            expandFiles = listOf(
-                "**/META-INF/*.xml",
-                "**/META-INF/*.MF",
-                "**/META-INF/*.cnd"
-            )
+aem {
+    tasks {
+        compose {
+            fileFilter {
+                expandProperties = mapOf(
+                    "organization" to "Company"
+                )
+                expandFiles = listOf(
+                    "**/META-INF/*.xml",
+                    "**/META-INF/*.MF",
+                    "**/META-INF/*.cnd"
+                )
+            }
         }
     }
 }
@@ -697,7 +721,7 @@ This feature is especially useful to generate valid *META-INF/properties.xml* fi
     <comment>{{project.description}}</comment>
     <entry key="group">{{compose.vaultGroup}}</entry>
     <entry key="name">{{compose.vaultName}}</entry>
-    <entry key="version">{{project.vaultVersion}}</entry>
+    <entry key="version">{{compose.vaultVersion}}</entry>
     <entry key="description">{{project.description}}</entry>
     <entry key="groupId">{{project.group}}</entry>
     <entry key="artifactId">{{project.name}}</entry>
@@ -772,7 +796,7 @@ OSGi bundle jar base name and CRX package base name is computed from:
 * for subproject of multi project build - `${project.rootProject.name}.${project.name}`,
 * for single project build - `${project.name}` (just root project name).
 
-Value of `aem.bundle.javaPackage` is computed from `${project.group}.${project.name}`.
+Value of bundle `javaPackage` is computed from `${project.group}.${project.name}`.
 
 *settings.gradle.kts*
 ```kotlin
@@ -791,8 +815,10 @@ Then below section is absolutely redundant:
 *aem/app.core/build.gradle.kts*
 ```kotlin
 aem {
-    bundle {
-        javaPackage = "${project.group}.${project.name}" // "com.company.example.aem"
+    tasks {
+        bundle {
+            javaPackage = "${project.group}.${project.name}" // "com.company.example.aem.app.core"
+        }
     }
 }
 ```
@@ -806,8 +832,10 @@ Use dedicated method in *bundle* section.
 
 ```kotlin
 aem {
-    bundle {
-        embedPackage("com.group.name",  true, 'group:name:version') // true -> exportPackage, false -> privatePackage
+    tasks {
+        bundle {
+            embedPackage("com.group.name",  true, 'group:name:version') // true -> exportPackage, false -> privatePackage
+        }
     }
 }
 ```
@@ -821,8 +849,10 @@ Plugin by default covers generation of few attributes by convention. The minimal
 
 ```kotlin
 aem {
-    bundle {
-        javaPackage = "com.company.aem.example.common"
+    tasks {
+        bundle {
+            javaPackage = "com.company.aem.example.common"
+        }
     }
 }
 ```
@@ -830,20 +860,22 @@ aem {
 Then the following attributes will be generated by convention:
 
 * `Bundle-Name` will grab value from `project.description`
-* `Bundle-SymbolicName` will grab value from `aem.bundle.javaPackage`
-* `Sling-Model-Packages` will grab value from `aem.bundle.javaPackage`
-* `Export-Package` will grab value from `aem.bundle.javaPackage`.
+* `Bundle-SymbolicName` will grab value from `javaPackage`
+* `Sling-Model-Packages` will grab value from `javaPackage`
+* `Export-Package` will grab value from `javaPackage`.
 
-This values population behavior could be optionally disabled by config parameter `aem.bundle.attributesConvention = false`.
+This values population behavior could be optionally disabled by bundle parameter `attributesConvention = false`.
 Regardless if this behavior is enabled or disabled, all of values are overiddable e.g:
 
 ```kotlin
 aem {
-    bundle {
-        name = 'My Bundle"
-        symbolicName = "com.company.aem.example.common"
-        slingModelPackages = "com.company.aem.example.common.models"
-        exportPackage("com.company.aem.example.common")
+    tasks {
+        bundle {
+            displayName = 'My Bundle"
+            symbolicName = "com.company.aem.example.common"
+            slingModelPackages = "com.company.aem.example.common.models"
+            exportPackage("com.company.aem.example.common")
+        }
     }
 }
 ```
@@ -858,10 +890,12 @@ For instance:
 
 ```kotlin
 aem {
-    bundle {
-        excludePackages(listOf("org.junit", "org.mockito"))
-        importPackages(listOf("!org.junit", "!org.mockito", "*")) // alternatively
-    } 
+    tasks {
+        bundle {
+            excludePackages(listOf("org.junit", "org.mockito"))
+            importPackages(listOf("!org.junit", "!org.mockito", "*")) // alternatively
+        } 
+    }
 }
 ```
 
@@ -912,21 +946,20 @@ aem {
     config {
         instanceRoot = "${System.getProperty("user.home")}/.aem/${project.rootProject.name}"
     }
-}
-
-tasks {
-    named<Create>(Create.NAME) {
-        options {
-            overridesPath = "${project.rootProject.file("src/main/resources/local-instance")}"
-            expandProperties = mapOf()
-            expandFiles = listOf(
-                "**/*.properties", 
-                "**/*.sh", 
-                "**/*.bat", 
-                "**/*.xml",
-                "**/start",
-                "**/stop"
-            )
+    tasks {
+        create {
+            options {
+                overridesPath = "${project.rootProject.file("src/main/resources/local-instance")}"
+                expandProperties = mapOf()
+                expandFiles = listOf(
+                    "**/*.properties", 
+                    "**/*.sh", 
+                    "**/*.bat", 
+                    "**/*.xml",
+                    "**/start",
+                    "**/stop"
+                )
+            }
         }
     }
 }
@@ -986,19 +1019,21 @@ Upload & install dependent CRX package(s) before deployment. Available methods:
 Example configuration:
 
 ```kotlin
-tasks {
-    named<Satisfy>(Satisfy.NAME) {
-        group("default") {
-            local("pkg/vanityurls-components-1.0.2.zip")
-            url("smb://company-share/aem/packages/my-lib.zip")
-            url("sftp://company-share/aem/packages/other-lib.zip")
-            url("file:///C:/Libraries/aem/package/extra-lib.zip")
-        }
-        
-        group("tools") {
-            dependency("com.neva.felix:search-webconsole-plugin:1.2.0")
-            url("https://github.com/Cognifide/APM/releases/download/cqsm-3.0.0/apm-3.0.0.zip")
-            url("https://github.com/Adobe-Consulting-Services/acs-aem-tools/releases/download/acs-aem-tools-1.0.0/acs-aem-tools-content-1.0.0-min.zip")
+aem {
+    tasks {
+        satisfy {
+            group("default") {
+                local("pkg/vanityurls-components-1.0.2.zip")
+                url("smb://company-share/aem/packages/my-lib.zip")
+                url("sftp://company-share/aem/packages/other-lib.zip")
+                url("file:///C:/Libraries/aem/package/extra-lib.zip")
+            }
+            
+            group("tools") {
+                dependency("com.neva.felix:search-webconsole-plugin:1.2.0")
+                url("https://github.com/Cognifide/APM/releases/download/cqsm-3.0.0/apm-3.0.0.zip")
+                url("https://github.com/Adobe-Consulting-Services/acs-aem-tools/releases/download/acs-aem-tools-1.0.0/acs-aem-tools-content-1.0.0-min.zip")
+            }
         }
     }
 }
@@ -1015,23 +1050,25 @@ Also there is a hook called when satisfying each package group on all instances 
 In other words, for instance, there is ability to run groovy console script before/after deploying some CRX package and then restarting instance(s) if it is exceptionally required.
 
 ```kotlin
-tasks {
-    named<Satisfy>(Satisfy.NAME) {
-        packages {
-            group("tool.groovy-console") { 
-                url("https://github.com/OlsonDigital/aem-groovy-console/releases/download/11.0.0/aem-groovy-console-11.0.0.zip")
-                config {
-                    instanceName = "*-author" // additional filter intersecting 'deployInstanceName'
-                    initializer { sync ->
-                        logger.info("Installing Groovy Console on ${sync.instance}")
-                    }
-                    finalizer { sync ->
-                        logger.info("Installed Groovy Console on ${sync.instance}")
-                    }
-                    completer {
-                        logger.info("Reloading instance(s) after installing Groovy Console")
-                        aem.actions.reload {
-                            delay = 3
+aem {
+    tasks {
+        satisfy {
+            packages {
+                group("tool.groovy-console") { 
+                    url("https://github.com/OlsonDigital/aem-groovy-console/releases/download/11.0.0/aem-groovy-console-11.0.0.zip")
+                    config {
+                        instanceName = "*-author" // additional filter intersecting 'deployInstanceName'
+                        initializer { sync ->
+                            logger.info("Installing Groovy Console on ${sync.instance}")
+                        }
+                        finalizer { sync ->
+                            logger.info("Installed Groovy Console on ${sync.instance}")
+                        }
+                        completer {
+                            logger.info("Reloading instance(s) after installing Groovy Console")
+                            aem.actions.reload {
+                                delay = 3
+                            }
                         }
                     }
                 }
@@ -1099,9 +1136,11 @@ allprojects {
   
   plugins.withId("com.cognifide.aem.bundle") {
     configure<AemExtension> {
-        bundle {
-            category = "example"
-            vendor = "Company"
+        tasks {
+            bundle {
+                category = "example"
+                vendor = "Company"
+            }
         }
     }
   
@@ -1116,16 +1155,15 @@ For instance, subproject `:aem:core` specific configuration like OSGi bundle or 
 
 ```kotlin
 aem {
-    bundle {
-        javaPackage = "com.company.example.aem.core"
-    }
-}
-
-tasks {
-    named<Compose>(Compose.NAME) {
-        fromProjects(':content:*')
-        baseName = "example-core"
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    tasks {
+        compose {
+            fromProjects(':content:*')
+            baseName = "example-core"
+            duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        }
+        bundle {
+            javaPackage = "com.company.example.aem.core"
+        }
     }
 }
 ```

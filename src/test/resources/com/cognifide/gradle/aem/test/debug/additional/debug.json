@@ -1,7 +1,7 @@
 {
   "buildInfo" : {
     "plugin" : {
-      "pluginVersion" : "6.0.0-beta3",
+      "pluginVersion" : "6.0.0-beta4",
       "gradleVersion" : "4.10"
     },
     "gradle" : {
@@ -226,10 +226,12 @@
   },
   "bundleConfig" : {
     "jar" : {
+      "enabled": true,
       "installPath" : "/apps/additional/install",
       "installRunMode": null,
       "javaPackage" : "com.company.aem.additional",
       "javaPackageOptions" : "-split-package:=merge-first",
+      "bndEnabled": true,
       "bndPath" : "*/bnd.bnd",
       "bndInstructions" : {
         "-fixupmessages.bundleActivator" : "Bundle-Activator * is being imported *;is:=error"

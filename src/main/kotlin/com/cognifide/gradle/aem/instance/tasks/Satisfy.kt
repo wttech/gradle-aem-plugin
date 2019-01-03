@@ -102,13 +102,9 @@ open class Satisfy : Deploy() {
     @TaskAction
     @Suppress("ComplexMethod")
     override fun deploy() {
-        aem.progress({
-            total = packageGroups.sumBy { packageGroup ->
-                packageGroup.files.size * determineInstancesForGroup(packageGroup).size
-            }.toLong()
-        }, {
+        aem.progress(packageGroups.sumBy { it.files.size * determineInstancesForGroup(it).size }) {
             packageGroups.forEach { satisfyGroup(it) }
-        })
+        }
 
         if (packageActions.isNotEmpty()) {
             val packages = packageActions.map { it.pkg }.toSet()
@@ -127,6 +123,8 @@ open class Satisfy : Deploy() {
 
     @Suppress("ComplexMethod")
     private fun ProgressIndicator.satisfyGroup(group: PackageGroup) {
+        step = group.name
+
         aem.logger.info("Satisfying group of packages '${group.name}'.")
 
         var packageSatisfiedAny = false
@@ -137,15 +135,15 @@ open class Satisfy : Deploy() {
                 PackageState(it, determineRemotePackage(it, packageRefreshing))
             }
             val packageSatisfiableAny = packageStates.any {
-                greedy || isSnapshot(it.file) || !it.uploaded || !it.installed
+                greedy || group.greedy || isSnapshot(it.file) || !it.uploaded || !it.installed
             }
 
             if (packageSatisfiableAny) {
-                hold { this@sync.apply(group.initializer) }
+                apply(group.initializer)
             }
 
             packageStates.forEach { pkg ->
-                increment("${group.name} # ${pkg.file.name} -> ${instance.name}") {
+                increment("${pkg.file.name} -> ${instance.name}") {
                     when {
                         greedy -> {
                             aem.logger.info("Satisfying package ${pkg.name} on ${instance.name} (greedy).")
@@ -184,12 +182,12 @@ open class Satisfy : Deploy() {
             }
 
             if (packageSatisfiableAny) {
-                hold { this@sync.apply(group.finalizer) }
+                apply(group.finalizer)
             }
         }
 
         if (packageSatisfiedAny) {
-            hold { group.completer() }
+            group.completer()
         }
     }
 

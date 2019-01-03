@@ -19,8 +19,10 @@ dependencies {
 }
 
 aem {
-    bundle {
-        attribute("Bundle-Category", "example")
-        attribute("Bundle-Vendor", "Company")
+    tasks {
+        bundle {
+            category = "example"
+            vendor = "Company"
+        }
     }
 }

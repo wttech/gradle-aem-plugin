@@ -33,3 +33,7 @@ object Collections {
         }
     }
 }
+
+fun <T> Iterable<T>.onEachApply(block: T.() -> Unit): Iterable<T> {
+    return this.onEach { it.apply(block) }
+}
