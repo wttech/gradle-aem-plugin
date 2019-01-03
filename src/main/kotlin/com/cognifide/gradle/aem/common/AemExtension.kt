@@ -256,15 +256,31 @@ open class AemExtension(@Internal val project: Project) {
 
     fun retry(): Retry = Retry.none()
 
+    /**
+     * Show asynchronous progress indicator with percentage while performing some action.
+     */
     fun <T> progress(total: Int, action: ProgressIndicator.() -> T): T = progress(total.toLong(), action)
 
+    /**
+     * Show asynchronous progress indicator with percentage while performing some action.
+     */
     fun <T> progress(total: Long, action: ProgressIndicator.() -> T): T {
         return ProgressIndicator(project).apply { this.total = total }.launch(action)
     }
 
-    fun <T> progress(action: ProgressIndicator.() -> T): T {
-        return ProgressIndicator(project).launch(action)
-    }
+    /**
+     * Show asynchronous progress indicator while performing some action.
+     *
+     * Warning! Nesting progress indicators is not supported.
+     */
+    fun <T> progressIndicator(action: ProgressIndicator.() -> T): T = ProgressIndicator(project).launch(action)
+
+    /**
+     * Show synchronous progress logger while performing some action.
+     *
+     * Nesting progress loggers is supported.
+     */
+    fun <T> progressLogger(action: ProgressLogger.() -> T): T = ProgressLogger.of(project).launch(action)
 
     @get:Internal
     val filter: VltFilter

@@ -102,10 +102,7 @@ open class Satisfy : Deploy() {
     @TaskAction
     @Suppress("ComplexMethod")
     override fun deploy() {
-        aem.progress {
-            total = packageGroups.sumBy { packageGroup ->
-                packageGroup.files.size * determineInstancesForGroup(packageGroup).size
-            }.toLong()
+        aem.progress(packageGroups.sumBy { it.files.size * determineInstancesForGroup(it).size }) {
             packageGroups.forEach { satisfyGroup(it) }
         }
 

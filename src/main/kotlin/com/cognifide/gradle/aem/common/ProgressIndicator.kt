@@ -23,6 +23,16 @@ class ProgressIndicator(private val project: Project) {
     private lateinit var timer: Behaviors.Timer
 
     fun <T> launch(block: ProgressIndicator.() -> T): T {
+        return if (ProgressLogger.parents(project).isEmpty()) {
+            ProgressLogger.of(project).launch {
+                launchAsync(block) // progress logger requires some parent launched at main thread
+            }
+        } else {
+            launchAsync(block)
+        }
+    }
+
+    private fun <T> ProgressIndicator.launchAsync(block: ProgressIndicator.() -> T): T {
         return runBlocking {
             val blockJob = async(Dispatchers.Default) { block() }
             val loggerJob = async(Dispatchers.Default) {
@@ -62,6 +72,11 @@ class ProgressIndicator(private val project: Project) {
         if (::logger.isInitialized) {
             logger.progress(text)
         }
+    }
+
+    fun update(message: String) {
+        this.message = message
+        update()
     }
 
     @Suppress("MagicNumber")

@@ -17,11 +17,7 @@ open class ProgressLogger private constructor(val project: Project) {
     var progressWindow = TimeUnit.SECONDS.toMillis(1)
 
     private val baseParents: Queue<BaseLogger>
-        get() {
-            return BuildScope.of(project).getOrPut("${ProgressLogger::class.java.canonicalName}_${project.path}", {
-                LinkedList<BaseLogger>()
-            })
-        }
+        get() = parents(project)
 
     private lateinit var base: BaseLogger
 
@@ -58,17 +54,17 @@ open class ProgressLogger private constructor(val project: Project) {
         return m.invoke(obj, *args.toTypedArray())
     }
 
-    fun launch(block: ProgressLogger.() -> Unit) {
+    fun <T> launch(block: ProgressLogger.() -> T): T {
         stopWatch = StopWatch()
         base = create()
         baseParents.add(base)
 
         try {
             stopWatch.start()
-            base.description = "$header # ${Math.random()}"
+            base.description = header
             base.started()
 
-            apply(block)
+            return run(block)
         } finally {
             base.completed()
             baseParents.remove(base)
@@ -88,6 +84,12 @@ open class ProgressLogger private constructor(val project: Project) {
     companion object {
         fun of(project: Project): ProgressLogger {
             return ProgressLogger(project)
+        }
+
+        fun parents(project: Project): Queue<BaseLogger> {
+            return BuildScope.of(project).getOrPut("${ProgressLogger::class.java.canonicalName}_${project.path}", {
+                LinkedList()
+            })
         }
     }
 }

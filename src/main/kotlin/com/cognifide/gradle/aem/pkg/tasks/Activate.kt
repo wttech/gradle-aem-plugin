@@ -12,8 +12,7 @@ open class Activate : Sync() {
 
     @TaskAction
     fun activate() {
-        aem.progress {
-            total = instances.size.toLong() * packages.size.toLong()
+        aem.progress(instances.size * packages.size) {
             aem.syncPackages(instances, packages) { pkg ->
                 increment("${pkg.name} -> ${instance.name}") {
                     activatePackage(determineRemotePackagePath(pkg))

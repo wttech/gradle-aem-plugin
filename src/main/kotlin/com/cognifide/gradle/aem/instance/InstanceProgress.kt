@@ -13,31 +13,33 @@ object InstanceProgress {
         unstableInstances: List<Instance>,
         timer: Behaviors.Timer
     ): String {
-        return (ticks(timer.ticks, stableTimes) + " " + states.joinToString(" | ") {
-            determine(it, states.size > 2, unavailableInstances, unstableInstances)
-        }).trim()
+        return (timeout(timer.ticks, stableTimes) + " " + states(states, unavailableInstances, unstableInstances)).trim()
     }
 
-    private fun determine(
+    private fun timeout(tick: Long, maxTicks: Long): String {
+        return if (maxTicks > 0 && (tick.toDouble() / maxTicks.toDouble() > COUNTING_RATIO)) {
+            "!${maxTicks - tick}"
+        } else {
+            ""
+        }
+    }
+
+    private fun states(states: List<InstanceState>, unavailableInstances: List<Instance>, unstableInstances: List<Instance>): String {
+        return states.joinToString(" | ") {
+            state(it, states.size > 2, unavailableInstances, unstableInstances)
+        }
+    }
+
+    private fun state(
         state: InstanceState,
         shortProgress: Boolean,
         unavailableInstances: List<Instance>,
         unstableInstances: List<Instance>
     ): String {
-        return "${state.instance.name} ${indicator(state, unavailableInstances, unstableInstances)}|${state(state, shortProgress)}"
+        return "${state.instance.name} ${stateIndicator(state, unavailableInstances, unstableInstances)}|${stateDetails(state, shortProgress)}"
     }
 
-    private fun ticks(tick: Long, maxTicks: Long): String {
-        return if (maxTicks > 0 && (tick.toDouble() / maxTicks.toDouble() > COUNTING_RATIO)) {
-            "!${maxTicks - tick}"
-        } else if (tick.rem(2) == 0L) {
-            "/"
-        } else {
-            "\\"
-        }
-    }
-
-    private fun indicator(
+    private fun stateIndicator(
         state: InstanceState,
         unavailableInstances: List<Instance>,
         unstableInstances: List<Instance>
@@ -49,7 +51,7 @@ object InstanceProgress {
         }
     }
 
-    private fun state(state: InstanceState, shortInfo: Boolean): String {
+    private fun stateDetails(state: InstanceState, shortInfo: Boolean): String {
         return if (shortInfo) {
             state.bundleState.stablePercent
         } else {

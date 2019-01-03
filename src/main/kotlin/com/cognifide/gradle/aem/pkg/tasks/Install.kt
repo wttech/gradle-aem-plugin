@@ -12,8 +12,7 @@ open class Install : Sync() {
 
     @TaskAction
     fun install() {
-        aem.progress {
-            total = instances.size.toLong() * packages.size.toLong()
+        aem.progress(instances.size * packages.size) {
             aem.syncPackages(instances, packages) { pkg ->
                 increment("${pkg.name} -> ${instance.name}") {
                     installPackage(determineRemotePackagePath(pkg))
