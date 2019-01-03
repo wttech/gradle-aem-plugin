@@ -1,11 +1,11 @@
 package com.cognifide.gradle.aem.instance.tasks
 
-import com.cognifide.gradle.aem.instance.InstanceTask
+import com.cognifide.gradle.aem.common.onEachApply
 import com.cognifide.gradle.aem.instance.names
 import org.gradle.api.execution.TaskExecutionGraph
 import org.gradle.api.tasks.TaskAction
 
-open class Destroy : InstanceTask() {
+open class Destroy : Instance() {
 
     init {
         description = "Destroys local AEM instance(s)."
@@ -19,9 +19,23 @@ open class Destroy : InstanceTask() {
 
     @TaskAction
     fun destroy() {
-        aem.parallelWith(localHandles) { destroy() }
+        val handles = localHandles.filter { it.created }
+        if (handles.isEmpty()) {
+            logger.info("No instance(s) to destroy")
+            return
+        }
 
-        aem.notifier.notify("Instance(s) destroyed", "Which: ${localHandles.names}")
+        logger.info("Destroying instance(s): ${handles.names}")
+
+        aem.progress(handles.size) {
+            handles.onEachApply {
+                increment("Destroying '${instance.name}'") {
+                    destroy()
+                }
+            }
+        }
+
+        aem.notifier.notify("Instance(s) destroyed", "Which: ${handles.names}")
     }
 
     companion object {

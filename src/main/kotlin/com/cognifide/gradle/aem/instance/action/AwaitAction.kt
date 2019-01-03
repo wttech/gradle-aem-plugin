@@ -1,9 +1,6 @@
 package com.cognifide.gradle.aem.instance.action
 
-import com.cognifide.gradle.aem.common.AemExtension
-import com.cognifide.gradle.aem.common.Behaviors
-import com.cognifide.gradle.aem.common.Formats
-import com.cognifide.gradle.aem.common.ProgressCountdown
+import com.cognifide.gradle.aem.common.*
 import com.cognifide.gradle.aem.instance.*
 import java.util.concurrent.TimeUnit
 import org.apache.http.HttpStatus
@@ -101,6 +98,10 @@ open class AwaitAction(aem: AemExtension) : AbstractAction(aem) {
     }
 
     private fun awaitDelay(delay: Long) {
+        if (delay <= 0) {
+            return
+        }
+
         aem.logger.info("Waiting for instance(s): ${instances.names}")
 
         ProgressCountdown(aem.project, delay).run()
@@ -110,8 +111,7 @@ open class AwaitAction(aem: AemExtension) : AbstractAction(aem) {
     private fun awaitStable() {
         aem.logger.info("Awaiting stable instance(s): ${instances.names}")
 
-        val progress = AwaitLogger(aem.project, stableRetry.times)
-        progress.logger.launch {
+        ProgressLogger.of(aem.project).launch {
             var lastStableChecksum = -1
             var sinceStableTicks = -1L
 
@@ -143,7 +143,7 @@ open class AwaitAction(aem: AemExtension) : AbstractAction(aem) {
                     unavailableNotification = true
                 }
 
-                progress.progress(instanceStates, unavailableInstances, unstableInstances, timer)
+                progress(InstanceProgress.determine(stableRetry.times, instanceStates, unavailableInstances, unstableInstances, timer))
 
                 // Detect timeout when same checksum is not being updated so long
                 if (stableRetry.times > 0 && timer.ticks > stableRetry.times) {

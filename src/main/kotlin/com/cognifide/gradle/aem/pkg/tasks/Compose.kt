@@ -2,11 +2,7 @@ package com.cognifide.gradle.aem.pkg.tasks
 
 import com.cognifide.gradle.aem.bundle.BundleJar
 import com.cognifide.gradle.aem.bundle.BundlePlugin
-import com.cognifide.gradle.aem.common.AemException
-import com.cognifide.gradle.aem.common.AemExtension
-import com.cognifide.gradle.aem.common.AemTask
-import com.cognifide.gradle.aem.common.DependencyOptions
-import com.cognifide.gradle.aem.common.Patterns
+import com.cognifide.gradle.aem.common.*
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.pkg.Package
 import com.cognifide.gradle.aem.pkg.PackageFileFilter
@@ -19,7 +15,6 @@ import org.apache.commons.io.FileUtils
 import org.gradle.api.Project
 import org.gradle.api.file.CopySpec
 import org.gradle.api.file.DuplicatesStrategy
-import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.*
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.bundling.Zip
@@ -40,11 +35,6 @@ open class Compose : Zip(), AemTask {
 
     /**
      * Content path for OSGi bundle jars being placed in CRX package.
-     *
-     * Default convention assumes that subprojects have separate bundle paths, because of potential re-installation of subpackages.
-     * When all subprojects will have same bundle path, reinstalling one subpackage may end with deletion of other bundles coming from another subpackage.
-     *
-     * Beware that more nested bundle install directories are not supported by AEM by default.
      */
     @Input
     var bundlePath: String = aem.config.packageInstallPath
@@ -97,7 +87,9 @@ open class Compose : Zip(), AemTask {
     @Input
     var vaultProperties: Map<String, Any> = VAULT_PROPERTIES_DEFAULT
 
-    fun vaultProperty(name: String, value: String) { vaultProperties += mapOf(name to value) }
+    fun vaultProperty(name: String, value: String) {
+        vaultProperties += mapOf(name to value)
+    }
 
     @get:Internal
     @get:JsonIgnore
@@ -278,23 +270,25 @@ open class Compose : Zip(), AemTask {
     fun fromProject(project: Project, options: ProjectOptions.() -> Unit = {}) {
         fromProjects.add {
             val other by lazy { AemExtension.of(project) }
-            val configuredOptions = ProjectOptions().apply(options)
+            val configuredOptions by lazy { ProjectOptions().apply(options) }
 
             if (project.plugins.hasPlugin(PackagePlugin.ID)) {
-                fromCompose(other.compose(configuredOptions.composeTaskName), configuredOptions)
+                configuredOptions.composeTasks(other).forEach {
+                    fromCompose(it, configuredOptions)
+                }
             }
 
             if (project.plugins.hasPlugin(BundlePlugin.ID)) {
-                fromBundle(other.bundle(configuredOptions.bundleTaskName), configuredOptions)
+                configuredOptions.bundleTasks(other).forEach {
+                    fromBundle(other.tasks.bundle(it), configuredOptions)
+                }
             }
         }
     }
 
     fun fromCompose(composeTaskPath: String) {
-        fromCompose(project.tasks.getByPath(composeTaskPath) as Compose)
+        fromCompose(aem.tasks.get(composeTaskPath, Compose::class.java), ProjectOptions())
     }
-
-    fun fromCompose(other: Compose) = fromCompose(other, ProjectOptions())
 
     private fun fromCompose(other: Compose, options: ProjectOptions) {
         fromTasks.add {
@@ -336,7 +330,9 @@ open class Compose : Zip(), AemTask {
         }
     }
 
-    fun fromBundle(bundle: BundleJar) = fromBundle(bundle, ProjectOptions())
+    fun fromBundle(jarTaskPath: String) {
+        fromBundle(aem.tasks.bundle(jarTaskPath), ProjectOptions())
+    }
 
     private fun fromBundle(bundle: BundleJar, options: ProjectOptions) {
         if (options.bundleBuilt) {
@@ -406,7 +402,7 @@ open class Compose : Zip(), AemTask {
          */
         var composeContent: Boolean = true
 
-        var composeTaskName = NAME
+        var composeTasks: AemExtension.() -> Collection<Compose> = { tasks.getAll(Compose::class.java) }
 
         var vaultHooks: Boolean = true
 
@@ -419,7 +415,7 @@ open class Compose : Zip(), AemTask {
          */
         var bundleBuilt: Boolean = true
 
-        var bundleTaskName: String = JavaPlugin.JAR_TASK_NAME
+        var bundleTasks: AemExtension.() -> Collection<Jar> = { tasks.getAll(Jar::class.java) }
 
         var bundleDependent: Boolean = true
 

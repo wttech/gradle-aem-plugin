@@ -1,10 +1,13 @@
 package com.cognifide.gradle.aem.bundle
 
+import aQute.bnd.gradle.BundleTaskConvention
 import com.cognifide.gradle.aem.common.*
 import com.cognifide.gradle.aem.instance.Bundle
 import com.fasterxml.jackson.annotation.JsonIgnore
+import java.io.File
 import java.io.Serializable
 import org.apache.commons.lang3.StringUtils
+import org.apache.commons.lang3.exception.ExceptionUtils
 import org.apache.commons.lang3.reflect.FieldUtils
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.Input
@@ -29,12 +32,12 @@ val jar: Jar
 ) : Serializable {
 
     /**
+     * Allows to disable OSGi bundle specific JAR task customization.
+     */
+    var enabled: Boolean = true
+
+    /**
      * Content path for OSGi bundle jars being placed in CRX package.
-     *
-     * Default convention assumes that subprojects have separate bundle paths, because of potential re-installation of subpackages.
-     * When all subprojects will have same bundle path, reinstalling one subpackage may end with deletion of other bundles coming from another subpackage.
-     *
-     * Beware that more nested bundle install directories are not supported by AEM by default.
      */
     @Input
     var installPath: String = aem.config.packageInstallPath
@@ -51,7 +54,7 @@ val jar: Jar
     /**
      * Enable or disable support for auto-generating OSGi specific JAR manifest attributes
      * like 'Bundle-SymbolicName', 'Export-Package' or AEM specific like 'Sling-Model-Packages'
-     * using 'bundlePackage' property.
+     * using 'javaPackage' property.
      */
     @Input
     var attributesConvention: Boolean = true
@@ -79,6 +82,12 @@ val jar: Jar
      */
     @Input
     var javaPackageOptions: String = "-split-package:=merge-first"
+
+    /**
+     * Allows to disable BND tool.
+     */
+    @Input
+    var bndEnabled: Boolean = true
 
     /**
      * Bundle instructions file location consumed by BND tool.
@@ -116,11 +125,17 @@ val jar: Jar
     @JsonIgnore
     var privatePackages: List<String> = listOf()
 
-    fun projectsEvaluated() {
+    internal fun setup() {
+        if (!enabled) {
+            aem.logger.info("OSGi bundle customizations are disabled for task '${jar.path}'.")
+            return
+        }
+
         ensureJavaPackage()
         ensureBaseNameIfNotCustomized()
         applyConventionAttributes()
         combinePackageAttributes()
+        setupBndTool()
     }
 
     private fun ensureJavaPackage() {
@@ -190,7 +205,7 @@ val jar: Jar
         }
 
         if (!hasAttribute(Bundle.ATTRIBUTE_NAME) && !aem.project.description.isNullOrBlank()) {
-            name = aem.project.description
+            displayName = aem.project.description
         }
 
         if (!hasAttribute(Bundle.ATTRIBUTE_SYMBOLIC_NAME) && !javaPackage.isNullOrBlank()) {
@@ -217,7 +232,7 @@ val jar: Jar
 
     @get:Internal
     @get:JsonIgnore
-    var name: String?
+    var displayName: String?
         get() = attribute(Bundle.ATTRIBUTE_NAME)
         set(value) {
             attribute(Bundle.ATTRIBUTE_NAME, value)
@@ -234,9 +249,9 @@ val jar: Jar
     @get:Internal
     @get:JsonIgnore
     var activator: String?
-        get() = attributes[Bundle.ATTRIBUTE_ACTIVATOR]?.toString()
+        get() = attribute(Bundle.ATTRIBUTE_ACTIVATOR)
         set(value) {
-            attributes[Bundle.ATTRIBUTE_ACTIVATOR] = value
+            attribute(Bundle.ATTRIBUTE_ACTIVATOR, value)
         }
 
     @get:Internal
@@ -349,5 +364,37 @@ val jar: Jar
 
     fun wildcardPackages(pkgs: Collection<String>): List<String> {
         return pkgs.map { StringUtils.appendIfMissing(it, ".*") }
+    }
+
+    private fun setupBndTool() {
+        if (!bndEnabled) {
+            aem.logger.info("BND tool is disabled for task '${jar.path}'.")
+            return
+        }
+
+        val bundleConvention = BundleTaskConvention(jar)
+
+        jar.doLast {
+            val instructionFile = File(bndPath)
+            if (instructionFile.isFile) {
+                bundleConvention.setBndfile(instructionFile)
+            }
+
+            if (bndInstructions.isNotEmpty()) {
+                bundleConvention.bnd(bndInstructions)
+            }
+
+            runBndTool(bundleConvention)
+        }
+    }
+
+    @Suppress("TooGenericExceptionCaught")
+    private fun runBndTool(convention: BundleTaskConvention) {
+        try {
+            convention.buildBundle()
+        } catch (e: Exception) {
+            aem.logger.error("BND tool error: https://bnd.bndtools.org", ExceptionUtils.getRootCause(e))
+            throw BundleException("OSGi bundle cannot be built properly.", e)
+        }
     }
 }

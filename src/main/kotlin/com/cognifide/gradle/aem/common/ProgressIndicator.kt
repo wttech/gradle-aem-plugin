@@ -1,80 +1,106 @@
 package com.cognifide.gradle.aem.common
 
 import java.util.*
-import java.util.concurrent.TimeUnit
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import org.gradle.api.Project
 
-class ProgressIndicator(project: Project) {
-
-    val logger = ProgressLogger.of(project)
-
-    var delay = TimeUnit.SECONDS.toMillis(1)
+class ProgressIndicator(private val project: Project) {
 
     var total = 0L
+
+    var step = ""
 
     var message = ""
 
     var count = 0L
 
-    var hold = false
+    private var delay = 100
 
     private val messageQueue: Queue<String> = LinkedList()
 
+    private lateinit var logger: ProgressLogger
+
+    private lateinit var timer: Behaviors.Timer
+
     fun <T> launch(block: ProgressIndicator.() -> T): T {
-        return runBlocking {
-            var done = false
-            val blockJob = async(Dispatchers.Default) {
-                try {
-                    block()
-                } finally {
-                    done = true
-                }
+        return if (ProgressLogger.parents(project).isEmpty()) {
+            ProgressLogger.of(project).launch {
+                launchAsync(block) // progress logger requires some parent launched at main thread
             }
-
-            logger.launch {
-                Behaviors.waitUntil(delay) { timer ->
-                    if (hold) {
-                        return@waitUntil true
-                    }
-
-                    var text = if (timer.ticks.rem(2L) == 0L) {
-                        "\\"
-                    } else {
-                        "/"
-                    }
-
-                    if (total > 0) {
-                        text = "$text $count/$total|${Formats.percent(count, total)}"
-                    }
-
-                    val messageQueued = messageQueue.peek() ?: message
-                    if (messageQueued.isNotBlank()) {
-                        text = "$text | $messageQueued"
-                    }
-
-                    progress(text)
-
-                    !done
-                }
-            }
-
-            blockJob.await()
+        } else {
+            launchAsync(block)
         }
     }
 
-    fun increment(message: String, block: () -> Unit) {
-        messageQueue.add(message)
-        block()
-        count++
-        messageQueue.remove(message)
+    private fun <T> ProgressIndicator.launchAsync(block: ProgressIndicator.() -> T): T {
+        return runBlocking {
+            val blockJob = async(Dispatchers.Default) { block() }
+            val loggerJob = async(Dispatchers.Default) {
+                ProgressLogger.of(project).launch {
+                    this@ProgressIndicator.logger = this
+                    Behaviors.waitUntil(delay) { timer ->
+                        this@ProgressIndicator.timer = timer
+                        update()
+                        isActive
+                    }
+                }
+            }
+
+            loggerJob.start()
+            val result = blockJob.await()
+            loggerJob.cancelAndJoin()
+            result
+        }
     }
 
-    fun hold(block: () -> Unit) {
-        hold = true
-        block()
-        hold = false
+    fun increment(message: String) {
+        this.message = message
+        count++
     }
+
+    fun <T> increment(message: String, block: () -> T): T {
+        update()
+        messageQueue.add(message)
+        val result = block()
+        count++
+        messageQueue.remove(message)
+        update()
+        return result
+    }
+
+    fun update() {
+        if (::logger.isInitialized) {
+            logger.progress(text)
+        }
+    }
+
+    fun update(message: String) {
+        this.message = message
+        update()
+    }
+
+    @Suppress("MagicNumber")
+    private val text: String
+        get() {
+            var result = if (::timer.isInitialized && timer.ticks.rem(10L) < 5) {
+                "\\"
+            } else {
+                "/"
+            }
+
+            if (total > 0) {
+                result = "$result $count/$total|${Formats.percent(count, total)}"
+            }
+
+            if (step.isNotEmpty()) {
+                result = "$result # $step"
+            }
+
+            val messageQueued = messageQueue.peek() ?: message
+            if (messageQueued.isNotBlank()) {
+                result = "$result | $messageQueued"
+            }
+
+            return result
+        }
 }

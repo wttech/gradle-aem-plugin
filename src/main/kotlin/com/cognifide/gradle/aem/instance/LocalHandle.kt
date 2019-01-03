@@ -4,7 +4,6 @@ import com.cognifide.gradle.aem.common.AemException
 import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.Formats
 import com.cognifide.gradle.aem.common.Patterns
-import com.cognifide.gradle.aem.common.ProgressLogger
 import com.cognifide.gradle.aem.common.file.FileOperations
 import java.io.File
 import org.apache.commons.io.FileUtils
@@ -164,21 +163,17 @@ class LocalHandle(val project: Project, val instance: LocalInstance) {
     private fun extractStaticFiles() {
         aem.logger.info("Extracting static files from JAR '${jar.absolutePath}' to directory: $staticDir")
 
-        ProgressLogger.of(project).launch {
-            var total = 0
+        aem.progressIndicator {
             ZipUtil.iterate(jar) { entry ->
                 if (entry.name.startsWith(JAR_STATIC_FILES_PATH)) {
                     total++
                 }
             }
 
-            var processed = 0
             ZipUtil.unpack(jar, staticDir) { name ->
                 if (name.startsWith(JAR_STATIC_FILES_PATH)) {
                     val fileName = name.substringAfterLast("/")
-
-                    progress("Extracting: $fileName [${Formats.percent(processed, total)}]")
-                    processed++
+                    increment("Extracting file '$fileName'")
                     name.substring(JAR_STATIC_FILES_PATH.length)
                 } else {
                     name

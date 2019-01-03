@@ -11,8 +11,6 @@ description = "Example"
 defaultTasks = listOf(":aemSatisfy", ":aemDeploy")
 
 allprojects {
-    val subproject = this@allprojects
-
     group = "com.company.aem"
     version = "1.0.0-SNAPSHOT"
 
@@ -34,13 +32,15 @@ allprojects {
 
     plugins.withId("com.cognifide.aem.bundle") {
         aem {
-            bundle {
-                attribute("Bundle-Category", "example")
-                attribute("Bundle-Vendor", "Company")
+            tasks {
+                bundle {
+                    category = "example"
+                    vendor = "Company"
+                }
             }
         }
 
-        subproject.dependencies {
+        dependencies {
             "compileOnly"("org.slf4j:slf4j-api:1.5.10")
             "compileOnly"("org.osgi:osgi.cmpn:6.0.0")
         }
@@ -60,8 +60,12 @@ tasks.named<Satisfy>("aemSatisfy") {
     }
 }
 
-tasks.named<Compose>("aemCompose") {
-    fromProject(":common")
-    fromProject(":core")
-    fromProject(":design")
+aem {
+    tasks {
+        compose {
+            fromProject(":common")
+            fromProject(":core")
+            fromProject(":design")
+        }
+    }
 }
