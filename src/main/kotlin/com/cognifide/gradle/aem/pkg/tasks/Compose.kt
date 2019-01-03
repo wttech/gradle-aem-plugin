@@ -402,7 +402,7 @@ open class Compose : Zip(), AemTask {
          */
         var composeContent: Boolean = true
 
-        var composeTasks: AemExtension.() -> Collection<Compose> = { project.tasks.withType(Compose::class.java).toList() }
+        var composeTasks: AemExtension.() -> Collection<Compose> = { tasks.getAll(Compose::class.java) }
 
         var vaultHooks: Boolean = true
 
@@ -415,7 +415,7 @@ open class Compose : Zip(), AemTask {
          */
         var bundleBuilt: Boolean = true
 
-        var bundleTasks: AemExtension.() -> Collection<Jar> = { project.tasks.withType(Jar::class.java).toList() }
+        var bundleTasks: AemExtension.() -> Collection<Jar> = { tasks.getAll(Jar::class.java) }
 
         var bundleDependent: Boolean = true
 
