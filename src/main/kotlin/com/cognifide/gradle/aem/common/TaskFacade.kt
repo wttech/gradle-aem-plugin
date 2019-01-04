@@ -89,6 +89,10 @@ class TaskFacade(private val aem: AemExtension) {
         }
     }
 
+    fun <T: Task> typed(type: Class<T>, configurer: T.() -> Unit) {
+        project.tasks.withType(type).configureEach(configurer)
+    }
+
     fun <T : Task> copy(name: String, suffix: String, type: Class<T>, configurer: T.() -> Unit = {}): TaskProvider<T> {
         return project.tasks.register("$name${suffix.capitalize()}", type) { task ->
             task.group = AemTask.GROUP
