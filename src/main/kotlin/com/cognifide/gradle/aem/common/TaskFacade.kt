@@ -36,11 +36,67 @@ class TaskFacade(private val aem: AemExtension) {
         }
     }
 
+    // lazy task configuration shorthands
+
     fun bundle(configurer: BundleJar.() -> Unit) = bundle(JavaPlugin.JAR_TASK_NAME, configurer)
 
     fun bundle(jarTaskName: String, configurer: BundleJar.() -> Unit) {
         named(jarTaskName, Jar::class.java) { bundle(this, configurer) }
     }
+
+    fun await(configurer: Await.() -> Unit) = named(Await.NAME, Await::class.java, configurer)
+
+    fun collect(configurer: Collect.() -> Unit) = named(Collect.NAME, Collect::class.java, configurer)
+
+    fun create(configurer: Create.() -> Unit) = named(Create.NAME, Create::class.java, configurer)
+
+    fun destroy(configurer: Destroy.() -> Unit) = named(Destroy.NAME, Destroy::class.java, configurer)
+
+    fun down(configurer: Down.() -> Unit) = named(Down.NAME, Down::class.java, configurer)
+
+    fun reload(configurer: Reload.() -> Unit) = named(Reload.NAME, Reload::class.java, configurer)
+
+    fun resetup(configurer: Resetup.() -> Unit) = named(Resetup.NAME, Resetup::class.java, configurer)
+
+    fun resolve(configurer: Resolve.() -> Unit) = named(Resolve.NAME, Resolve::class.java, configurer)
+
+    fun restart(configurer: Restart.() -> Unit) = named(Restart.NAME, Restart::class.java, configurer)
+
+    fun satisfy(configurer: Satisfy.() -> Unit) = named(Satisfy.NAME, Satisfy::class.java, configurer)
+
+    fun setup(configurer: Setup.() -> Unit) = named(Setup.NAME, Setup::class.java, configurer)
+
+    fun up(configurer: Up.() -> Unit) = named(Up.NAME, Up::class.java, configurer)
+
+    fun activate(configurer: Activate.() -> Unit) = named(Activate.NAME, Activate::class.java, configurer)
+
+    fun compose(configurer: Compose.() -> Unit) = named(Compose.NAME, Compose::class.java, configurer)
+
+    fun delete(configurer: Delete.() -> Unit) = named(Delete.NAME, Delete::class.java, configurer)
+
+    fun deploy(configurer: Deploy.() -> Unit) = named(Deploy.NAME, Deploy::class.java, configurer)
+
+    fun install(configurer: Install.() -> Unit) = named(Install.NAME, Install::class.java, configurer)
+
+    fun purge(configurer: Purge.() -> Unit) = named(Purge.NAME, Purge::class.java, configurer)
+
+    fun uninstall(configurer: Uninstall.() -> Unit) = named(Uninstall.NAME, Uninstall::class.java, configurer)
+
+    fun upload(configurer: Upload.() -> Unit) = named(Upload.NAME, Upload::class.java, configurer)
+
+    fun debug(configurer: Debug.() -> Unit) = named(Debug.NAME, Debug::class.java, configurer)
+
+    fun rcp(configurer: Rcp.() -> Unit) = named(Rcp.NAME, Rcp::class.java, configurer)
+
+    fun sync(configurer: Sync.() -> Unit) = named(Sync.NAME, Sync::class.java, configurer)
+
+    fun vlt(configurer: Vlt.() -> Unit) = named(Vlt.NAME, Vlt::class.java, configurer)
+
+    // extra task factory methods
+
+    fun await(suffix: String, configurer: Await.() -> Unit = {}) = register(Await.NAME, suffix, Await::class.java, configurer)
+
+    // generic API & internals
 
     internal fun bundle(jarTaskPath: String): BundleJar {
         return bundle(get(jarTaskPath, Jar::class.java))
@@ -89,30 +145,24 @@ class TaskFacade(private val aem: AemExtension) {
         }
     }
 
-    fun <T: Task> typed(type: Class<T>, configurer: T.() -> Unit) {
+    fun <T : Task> typed(type: Class<T>, configurer: T.() -> Unit) {
         project.tasks.withType(type).configureEach(configurer)
     }
 
-    fun <T : Task> copy(name: String, suffix: String, type: Class<T>, configurer: T.() -> Unit = {}): TaskProvider<T> {
-        return project.tasks.register("$name${suffix.capitalize()}", type) { task ->
-            task.group = AemTask.GROUP
-            task.apply(configurer)
-        }
+    fun <T : Task> register(name: String, suffix: String, type: Class<T>, configurer: T.() -> Unit = {}): TaskProvider<T> {
+        return register("$name${suffix.capitalize()}", type, configurer)
     }
-
-    fun await(suffix: String, configurer: Await.() -> Unit = {}) = copy(Await.NAME, suffix, Await::class.java, configurer)
 
     fun register(name: String, configurer: AemDefaultTask.() -> Unit) {
         register(name, AemDefaultTask::class.java, configurer)
     }
 
-    fun <T : Task> register(name: String, clazz: Class<T>): TaskProvider<T> {
-        return register(name, clazz) {}
-    }
-
     fun <T : Task> register(name: String, clazz: Class<T>, configurer: T.() -> Unit = {}): TaskProvider<T> {
         with(project) {
-            val provider = tasks.register(name, clazz, configurer)
+            val provider = tasks.register(name, clazz) { task ->
+                task.group = AemTask.GROUP
+                task.apply(configurer)
+            }
 
             afterEvaluate { provider.configure { if (it is AemTask) it.projectEvaluated() } }
             gradle.projectsEvaluated { provider.configure { if (it is AemTask) it.projectsEvaluated() } }
@@ -204,56 +254,6 @@ class TaskFacade(private val aem: AemExtension) {
             AemException(msg)
         }
     }
-
-    // lazy task configuration shorthands
-
-    fun await(configurer: Await.() -> Unit) = named(Await.NAME, Await::class.java, configurer)
-
-    fun collect(configurer: Collect.() -> Unit) = named(Collect.NAME, Collect::class.java, configurer)
-
-    fun create(configurer: Create.() -> Unit) = named(Create.NAME, Create::class.java, configurer)
-
-    fun destroy(configurer: Destroy.() -> Unit) = named(Destroy.NAME, Destroy::class.java, configurer)
-
-    fun down(configurer: Down.() -> Unit) = named(Down.NAME, Down::class.java, configurer)
-
-    fun reload(configurer: Reload.() -> Unit) = named(Reload.NAME, Reload::class.java, configurer)
-
-    fun resetup(configurer: Resetup.() -> Unit) = named(Resetup.NAME, Resetup::class.java, configurer)
-
-    fun resolve(configurer: Resolve.() -> Unit) = named(Resolve.NAME, Resolve::class.java, configurer)
-
-    fun restart(configurer: Restart.() -> Unit) = named(Restart.NAME, Restart::class.java, configurer)
-
-    fun satisfy(configurer: Satisfy.() -> Unit) = named(Satisfy.NAME, Satisfy::class.java, configurer)
-
-    fun setup(configurer: Setup.() -> Unit) = named(Setup.NAME, Setup::class.java, configurer)
-
-    fun up(configurer: Up.() -> Unit) = named(Up.NAME, Up::class.java, configurer)
-
-    fun activate(configurer: Activate.() -> Unit) = named(Activate.NAME, Activate::class.java, configurer)
-
-    fun compose(configurer: Compose.() -> Unit) = named(Compose.NAME, Compose::class.java, configurer)
-
-    fun delete(configurer: Delete.() -> Unit) = named(Delete.NAME, Delete::class.java, configurer)
-
-    fun deploy(configurer: Deploy.() -> Unit) = named(Deploy.NAME, Deploy::class.java, configurer)
-
-    fun install(configurer: Install.() -> Unit) = named(Install.NAME, Install::class.java, configurer)
-
-    fun purge(configurer: Purge.() -> Unit) = named(Purge.NAME, Purge::class.java, configurer)
-
-    fun uninstall(configurer: Uninstall.() -> Unit) = named(Uninstall.NAME, Uninstall::class.java, configurer)
-
-    fun upload(configurer: Upload.() -> Unit) = named(Upload.NAME, Upload::class.java, configurer)
-
-    fun debug(configurer: Debug.() -> Unit) = named(Debug.NAME, Debug::class.java, configurer)
-
-    fun rcp(configurer: Rcp.() -> Unit) = named(Rcp.NAME, Rcp::class.java, configurer)
-
-    fun sync(configurer: Sync.() -> Unit) = named(Sync.NAME, Sync::class.java, configurer)
-
-    fun vlt(configurer: Vlt.() -> Unit) = named(Vlt.NAME, Vlt::class.java, configurer)
 
     class SequenceOptions {
 
