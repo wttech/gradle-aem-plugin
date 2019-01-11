@@ -303,14 +303,15 @@ Check out then clean JCR content.
 
 ##### Cleaning features
 
+Cleaning assumes advanced JCR content normalization to minimize changes visible in VCS after each synchronization.
+
 * unwanted JCR properties removal (with path based inclusion / exclusion rules),
 * unwanted JCR mixin types removal,
 * unwanted files removal,
 * unused XML namespaces removal,
+* flattening files (renaming e.g *_cq_dialog/.content.xml* to *_cq_dialog.xml*),
 * preserving state of parent files for each Vault filter root (by backup mechanism),
-* hooks for custom cleaning rules / processing '.content.xml' files.
-
-Below examples assume existence of subproject `:content`.
+* hooks for custom cleaning rules / processing *.content.xml* files.
 
 ##### Default cleaning configuration
 
