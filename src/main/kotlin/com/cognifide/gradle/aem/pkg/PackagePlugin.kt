@@ -37,33 +37,33 @@ class PackagePlugin : AemPlugin() {
 
     private fun Project.setupTasks() {
         with(AemExtension.of(this).tasks) {
-            register(Compose.NAME, Compose::class.java) {
+            register<Compose>(Compose.NAME) {
                 dependsOn(LifecycleBasePlugin.ASSEMBLE_TASK_NAME, LifecycleBasePlugin.CHECK_TASK_NAME)
                 mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
             }
-            register(Upload.NAME, Upload::class.java) {
+            register<Upload>(Upload.NAME) {
                 dependsOn(Compose.NAME)
             }
-            register(Install.NAME, Install::class.java) {
+            register<Install>(Install.NAME) {
                 dependsOn(Compose.NAME)
                 mustRunAfter(Upload.NAME)
             }
-            register(Uninstall.NAME, Uninstall::class.java) {
+            register<Uninstall>(Uninstall.NAME) {
                 dependsOn(Compose.NAME)
                 mustRunAfter(Upload.NAME, Install.NAME)
             }
-            register(Activate.NAME, Activate::class.java) {
+            register<Activate>(Activate.NAME) {
                 dependsOn(Compose.NAME)
                 mustRunAfter(Upload.NAME, Install.NAME)
             }
-            register(Deploy.NAME, Deploy::class.java) {
+            register<Deploy>(Deploy.NAME) {
                 dependsOn(Compose.NAME)
             }
-            register(Delete.NAME, Delete::class.java) {
+            register<Delete>(Delete.NAME) {
                 dependsOn(Compose.NAME)
                 mustRunAfter(Deploy.NAME, Upload.NAME, Install.NAME, Activate.NAME, Uninstall.NAME)
             }
-            register(Purge.NAME, Purge::class.java) {
+            register<Purge>(Purge.NAME) {
                 dependsOn(Compose.NAME)
                 mustRunAfter(Deploy.NAME, Upload.NAME, Install.NAME, Activate.NAME, Uninstall.NAME)
             }
