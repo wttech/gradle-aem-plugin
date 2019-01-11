@@ -56,8 +56,9 @@ To see documentation for previous 5.x serie, please [click here](https://github.
         * [Defining instances via build script](#defining-instances-via-build-script)
      * [Tooling plugin](#tooling-plugin)
         * [Task aemSync](#task-aemsync)
+           * [Cleaning features](#cleaning-features)
            * [Default cleaning configuration](#default-cleaning-configuration)
-           * [Cleaning renditions](#cleaning-renditions)
+           * [Rendition cleaning configuration](#rendition-cleaning-configuration)
            * [Using alternative transfer type](#using-alternative-transfer-type)
            * [Copying or cleaning content only](#copying-or-cleaning-content-only)
            * [Filter file at custom path](#filter-file-at-custom-path)
@@ -298,7 +299,16 @@ Applied transparently by package and bundle plugins. Provides tooling related ta
 
 #### Task `aemSync`
 
-Check out then clean JCR content.
+Check out then clean JCR content. 
+
+##### Cleaning features
+
+* unwanted JCR properties removal (with path based inclusion / exclusion rules),
+* unwanted JCR mixin types removal,
+* unwanted files removal,
+* unused XML namespaces removal,
+* preserving state of parent files for each Vault filter root (by backup mechanism),
+* hooks for custom cleaning rules / processing '.content.xml' files.
 
 Below examples assume existence of subproject `:content`.
 
@@ -345,7 +355,7 @@ aem {
 }
 ```
 
-##### Cleaning renditions
+##### Rendition cleaning configuration
 
 Cleaning could also ensure that AEM renditions will be never saved in VCS. Also any additional properties could be cleaned.
 For such cases, see configuration below:
