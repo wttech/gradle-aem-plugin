@@ -124,6 +124,7 @@ class Cleaner(project: Project) {
 
     fun clean(root: File) {
         if (parentsBackupEnabled) {
+            doRootBackup(root)
             undoParentsBackup(root)
         } else {
             cleanParents(root)
@@ -139,16 +140,12 @@ class Cleaner(project: Project) {
     private fun cleanDotContents(root: File) {
         if (root.isDirectory) {
             aem.project.fileTree(root, filesDotContent).forEach { cleanDotContentFile(it) }
-        } else {
-            cleanDotContentFile(root)
         }
     }
 
     private fun flattenFiles(root: File) {
         if (root.isDirectory) {
             aem.project.fileTree(root, filesFlattened).forEach { flattenFile(it) }
-        } else {
-            flattenFile(root)
         }
     }
 
@@ -171,8 +168,6 @@ class Cleaner(project: Project) {
     private fun deleteFiles(root: File) {
         if (root.isDirectory) {
             aem.project.fileTree(root, filesDeleted).forEach { deleteFile(it) }
-        } else {
-            deleteFile(root)
         }
     }
 
@@ -333,6 +328,15 @@ class Cleaner(project: Project) {
                             origin.copyTo(backup, true)
                         }
             }
+        }
+    }
+
+    private fun doRootBackup(root: File) {
+        if (root.isFile) {
+            var parent = root.parentFile
+            val backup = File(parent, root.name + parentsBackupSuffix)
+            aem.logger.info("Doing backup of root file: $root")
+            root.copyTo(backup, true)
         }
     }
 
