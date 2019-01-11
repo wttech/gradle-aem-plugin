@@ -333,8 +333,7 @@ class Cleaner(project: Project) {
 
     private fun doRootBackup(root: File) {
         if (root.isFile) {
-            var parent = root.parentFile
-            val backup = File(parent, root.name + parentsBackupSuffix)
+            val backup = File(root.parentFile, root.name + parentsBackupSuffix)
             aem.logger.info("Doing backup of root file: $root")
             root.copyTo(backup, true)
         }
