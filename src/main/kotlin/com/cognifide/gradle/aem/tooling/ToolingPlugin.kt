@@ -24,14 +24,14 @@ class ToolingPlugin : AemPlugin() {
 
     private fun Project.setupTasks() {
         with(AemExtension.of(this).tasks) {
-            register(Debug.NAME, Debug::class.java) {
+            register<Debug>(Debug.NAME) {
                 dependsOn(LifecycleBasePlugin.BUILD_TASK_NAME)
             }
-            register(Rcp.NAME, Rcp::class.java)
-            register(Vlt.NAME, Vlt::class.java) {
+            register<Rcp>(Rcp.NAME)
+            register<Vlt>(Vlt.NAME) {
                 mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
             }
-            register(Sync.NAME, Sync::class.java) {
+            register<Sync>(Sync.NAME) {
                 mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
             }
         }

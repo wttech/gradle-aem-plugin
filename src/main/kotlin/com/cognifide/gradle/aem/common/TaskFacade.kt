@@ -92,10 +92,6 @@ class TaskFacade(private val aem: AemExtension) {
 
     fun vlt(configurer: Vlt.() -> Unit) = named(Vlt.NAME, Vlt::class.java, configurer)
 
-    // extra task factory methods
-
-    fun await(suffix: String, configurer: Await.() -> Unit = {}) = register(Await.NAME, suffix, Await::class.java, configurer)
-
     // generic API & internals
 
     internal fun bundle(jarTaskPath: String): BundleJar {
@@ -149,12 +145,8 @@ class TaskFacade(private val aem: AemExtension) {
         project.tasks.withType(type).configureEach(configurer)
     }
 
-    fun <T : Task> register(name: String, suffix: String, type: Class<T>, configurer: T.() -> Unit = {}): TaskProvider<T> {
-        return register("$name${suffix.capitalize()}", type, configurer)
-    }
-
-    fun register(name: String, configurer: AemDefaultTask.() -> Unit) {
-        register(name, AemDefaultTask::class.java, configurer)
+    inline fun <reified T : Task> register(name: String, noinline configurer: T.() -> Unit = {}): TaskProvider<T> {
+        return register(name, T::class.java, configurer)
     }
 
     fun <T : Task> register(name: String, clazz: Class<T>, configurer: T.() -> Unit = {}): TaskProvider<T> {
@@ -170,6 +162,10 @@ class TaskFacade(private val aem: AemExtension) {
 
             return provider
         }
+    }
+
+    fun register(name: String, configurer: AemDefaultTask.() -> Unit) {
+        register(name, AemDefaultTask::class.java, configurer)
     }
 
     @Suppress("unchecked_cast")

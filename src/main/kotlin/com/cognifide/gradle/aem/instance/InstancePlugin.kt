@@ -27,41 +27,41 @@ class InstancePlugin : AemPlugin() {
 
     private fun Project.setupTasks() {
         with(AemExtension.of(this).tasks) {
-            register(Resolve.NAME, Resolve::class.java) {
+            register<Resolve>(Resolve.NAME) {
                 mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
             }
-            register(Down.NAME, Down::class.java)
-            register(Up.NAME, Up::class.java) {
+            register<Down>(Down.NAME)
+            register<Up>(Up.NAME) {
                 dependsOn(Create.NAME).mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME, Down.NAME)
             }
-            register(Restart.NAME, Restart::class.java) {
+            register<Restart>(Restart.NAME) {
                 dependsOn(Down.NAME, Up.NAME)
             }
-            register(Create.NAME, Create::class.java) {
+            register<Create>(Create.NAME) {
                 dependsOn(Resolve.NAME).mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
             }
-            register(Destroy.NAME, Destroy::class.java) {
+            register<Destroy>(Destroy.NAME) {
                 dependsOn(Down.NAME)
             }
-            register(Satisfy.NAME, Satisfy::class.java) {
+            register<Satisfy>(Satisfy.NAME) {
                 dependsOn(Resolve.NAME).mustRunAfter(Create.NAME, Up.NAME)
             }
-            register(Reload.NAME, Reload::class.java) {
+            register<Reload>(Reload.NAME) {
                 mustRunAfter(Satisfy.NAME)
                 plugins.withId(PackagePlugin.ID) { mustRunAfter(Deploy.NAME) }
             }
-            register(Await.NAME, Await::class.java) {
+            register<Await>(Await.NAME) {
                 mustRunAfter(Create.NAME, Up.NAME, Satisfy.NAME)
                 plugins.withId(PackagePlugin.ID) { mustRunAfter(Deploy.NAME) }
             }
-            register(Collect.NAME, Collect::class.java) {
+            register<Collect>(Collect.NAME) {
                 mustRunAfter(Satisfy.NAME)
             }
-            register(Setup.NAME, Setup::class.java) {
+            register<Setup>(Setup.NAME) {
                 dependsOn(Create.NAME, Up.NAME, Satisfy.NAME).mustRunAfter(Destroy.NAME)
                 plugins.withId(PackagePlugin.ID) { dependsOn(Deploy.NAME) }
             }
-            register(Resetup.NAME, Resetup::class.java) {
+            register<Resetup>(Resetup.NAME) {
                 dependsOn(Destroy.NAME, Setup.NAME)
             }
         }
