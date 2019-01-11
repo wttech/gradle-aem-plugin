@@ -140,6 +140,8 @@ class Cleaner(project: Project) {
     private fun cleanDotContents(root: File) {
         if (root.isDirectory) {
             aem.project.fileTree(root, filesDotContent).forEach { cleanDotContentFile(it) }
+        } else {
+            cleanDotContentFile(root)
         }
     }
 
@@ -315,7 +317,7 @@ class Cleaner(project: Project) {
     }
 
     private fun doParentsBackup(root: File) {
-        val normalizedRoot = normalizeParentRoot(root)
+        val normalizedRoot = normalizeRoot(root)
 
         normalizedRoot.parentFile.mkdirs()
         eachParentFiles(normalizedRoot) { parent, siblingFiles ->
@@ -340,7 +342,7 @@ class Cleaner(project: Project) {
     }
 
     private fun undoParentsBackup(root: File) {
-        val normalizedRoot = normalizeParentRoot(root)
+        val normalizedRoot = normalizeRoot(root)
 
         eachParentFiles(normalizedRoot) { _, siblingFiles ->
             if (siblingFiles.any { it.name == parentsBackupDirIndicator }) {
@@ -354,7 +356,7 @@ class Cleaner(project: Project) {
         }
     }
 
-    private fun normalizeParentRoot(root: File): File {
+    private fun normalizeRoot(root: File): File {
         return File(Patterns.normalizePath(root.path).substringBefore("/$JCR_CONTENT_NODE"))
     }
 
