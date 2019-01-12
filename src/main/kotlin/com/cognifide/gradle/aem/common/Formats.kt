@@ -13,6 +13,7 @@ import org.apache.commons.lang3.time.DurationFormatUtils
 import org.apache.commons.validator.routines.UrlValidator
 import org.apache.jackrabbit.util.ISO8601
 import org.gradle.api.Project
+import java.text.SimpleDateFormat
 
 @Suppress("MagicNumber")
 object Formats {
@@ -79,6 +80,10 @@ object Formats {
 
     fun date(date: Date = Date()): String {
         return ISO8601.format(Calendar.getInstance().apply { time = date })
+    }
+
+    fun dateFileName(date: Date = Date()): String {
+        return SimpleDateFormat("yyyyMMddHHmmss").format(date)
     }
 
     fun duration(millis: Long): String {

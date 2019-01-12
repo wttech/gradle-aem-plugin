@@ -1,21 +1,16 @@
 package com.cognifide.gradle.aem.instance.tasks
 
-import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.AemTask
+import com.cognifide.gradle.aem.common.tasks.Zip
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.Compose
-import java.io.File
 import org.gradle.api.file.CopySpec
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.Nested
-import org.gradle.api.tasks.bundling.Zip
 import org.gradle.api.tasks.bundling.ZipEntryCompression
+import java.io.File
 
 open class Collect : Zip(), AemTask {
-
-    @Nested
-    final override val aem = AemExtension.of(project)
 
     @Internal
     var packageFilter: ((CopySpec) -> Unit) = { spec ->
@@ -39,12 +34,9 @@ open class Collect : Zip(), AemTask {
         get() = aem.packagesDependent(this)
 
     init {
-        group = AemTask.GROUP
         description = "Composes CRX package from all CRX packages being satisfied and built."
-
         baseName = aem.baseName
         classifier = "collection"
-        isZip64 = true
         duplicatesStrategy = DuplicatesStrategy.FAIL
         entryCompression = ZipEntryCompression.STORED
 
