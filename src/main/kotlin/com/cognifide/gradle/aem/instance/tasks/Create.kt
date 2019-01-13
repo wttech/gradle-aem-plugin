@@ -6,6 +6,7 @@ import com.cognifide.gradle.aem.common.onEachApply
 import com.cognifide.gradle.aem.instance.LocalHandleOptions
 import com.cognifide.gradle.aem.instance.names
 import java.io.File
+import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
@@ -13,6 +14,9 @@ open class Create : Instance() {
 
     @Internal
     val options = LocalHandleOptions(aem, AemTask.temporaryDir(project, name))
+
+    @Input
+    var mode = aem.props.string("aem.create.mode") // TODO auto (most recent), from external jar, from recent internal jar
 
     init {
         description = "Creates local AEM instance(s)."
@@ -32,9 +36,10 @@ open class Create : Instance() {
 
         logger.info("Creating instances: ${handles.names}")
 
-        val backupZip = options.zip
+        val backupZip = findRecentBackup(options.zip)
         if (backupZip != null) {
             val instanceRoot = File(aem.config.instanceRoot)
+
             aem.logger.info("Extracting files from backup ZIP '$backupZip' to directory '$instanceRoot'")
             aem.progress(FileOperations.zipCount(backupZip)) {
                 FileOperations.zipUnpack(backupZip, instanceRoot) { increment("Extracting file '$it'") }
@@ -52,13 +57,14 @@ open class Create : Instance() {
         aem.notifier.notify("Instance(s) created", "Which: ${handles.names}")
     }
 
-    private fun findBackup(instanceFiles: List<File>): File? {
-        return instanceFiles.find { it.extension == "zip" }
+    private fun findRecentBackup(zip: File?): File? {
+        val external = if (zip == null) listOf() else listOf(zip)
+        val internal = aem.tasks.named<Backup>(Backup.NAME).get().available
+
+        return (external + internal).asSequence().sortedByDescending { it.name }.firstOrNull()
     }
 
     companion object {
         const val NAME = "aemCreate"
-
-        const val DOWNLOAD_DIR = "download"
     }
 }

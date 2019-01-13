@@ -5,6 +5,7 @@ import com.cognifide.gradle.aem.common.Formats
 import com.cognifide.gradle.aem.common.tasks.Zip
 import com.cognifide.gradle.aem.instance.InstanceException
 import com.cognifide.gradle.aem.instance.names
+import java.io.File
 import org.gradle.api.execution.TaskExecutionGraph
 
 open class Backup : Zip(), AemTask {
@@ -14,6 +15,12 @@ open class Backup : Zip(), AemTask {
         baseName = "${project.rootProject.name}-${Formats.dateFileName()}"
         classifier = "backup"
     }
+
+    val available: List<File>
+        get() {
+            return destinationDir.listFiles { _, name -> name.endsWith("-$classifier.$extension") }
+                    .ifEmpty { arrayOf() }.toList()
+        }
 
     override fun taskGraphReady(graph: TaskExecutionGraph) {
         if (graph.hasTask(this)) {
