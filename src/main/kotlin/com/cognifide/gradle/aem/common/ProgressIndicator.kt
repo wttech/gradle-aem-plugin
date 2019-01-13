@@ -14,6 +14,8 @@ class ProgressIndicator(private val project: Project) {
 
     var count = 0L
 
+    var updater: ProgressIndicator.() -> Unit = { update() }
+
     private var delay = 100
 
     private val messageQueue: Queue<String> = LinkedList()
@@ -40,7 +42,7 @@ class ProgressIndicator(private val project: Project) {
                     this@ProgressIndicator.logger = this
                     Behaviors.waitUntil(delay) { timer ->
                         this@ProgressIndicator.timer = timer
-                        update()
+                        updater()
                         isActive
                     }
                 }
@@ -82,25 +84,24 @@ class ProgressIndicator(private val project: Project) {
     @Suppress("MagicNumber")
     private val text: String
         get() {
-            var result = if (::timer.isInitialized && timer.ticks.rem(10L) < 5) {
+            val indicator = if (::timer.isInitialized && timer.ticks.rem(10L) < 5) {
                 "\\"
             } else {
                 "/"
             }
 
+            val parts = mutableListOf<String>()
             if (total > 0) {
-                result = "$result $count/$total|${Formats.percent(count, total)}"
+                parts += "$count/$total|${Formats.percent(count, total)}"
             }
-
             if (step.isNotEmpty()) {
-                result = "$result # $step"
+                parts += step
             }
-
             val messageQueued = messageQueue.peek() ?: message
             if (messageQueued.isNotBlank()) {
-                result = "$result | $messageQueued"
+                parts += messageQueued
             }
 
-            return result
+            return "$indicator ${parts.joinToString(" # ")}".trim()
         }
 }

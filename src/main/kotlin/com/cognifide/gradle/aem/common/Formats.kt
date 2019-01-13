@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.util.DefaultIndenter
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.jayway.jsonpath.JsonPath
+import org.apache.commons.io.FileUtils
 import java.io.File
 import java.io.InputStream
 import java.nio.file.Paths
@@ -55,6 +56,10 @@ object Formats {
 
     fun toBase64(value: String): String {
         return Base64.getEncoder().encodeToString(value.toByteArray())
+    }
+
+    fun size(file: File): String {
+        return bytesToHuman(FileUtils.sizeOf(file))
     }
 
     fun bytesToHuman(bytes: Long): String {

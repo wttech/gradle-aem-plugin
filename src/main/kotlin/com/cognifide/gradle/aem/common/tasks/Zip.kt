@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.common.tasks
 
 import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.AemTask
+import com.cognifide.gradle.aem.common.Formats
 import com.cognifide.gradle.aem.common.ProgressIndicator
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
@@ -14,7 +15,7 @@ open class Zip : Base(), AemTask {
     final override val aem = AemExtension.of(project)
 
     @Internal
-    var copyProgress: ProgressIndicator.() -> Unit = { update("Creating ZIP file: $archiveName (please wait)") }
+    var copyProgress: ProgressIndicator.() -> Unit = { update("Creating ZIP file: $archiveName, current size: ${Formats.size(archivePath)}") }
 
     init {
         group = AemTask.GROUP
@@ -24,7 +25,7 @@ open class Zip : Base(), AemTask {
     @TaskAction
     override fun copy() {
         aem.progressIndicator {
-            update("Zipping in progress")
+            updater = copyProgress
             super.copy()
         }
     }

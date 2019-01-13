@@ -12,8 +12,7 @@ open class Backup : Zip(), AemTask {
     init {
         description = "Turns off local instance(s), archives to ZIP file, then turns on again."
         baseName = "${project.rootProject.name}-${Formats.dateFileName()}"
-        classifier = "aem"
-        copyProgress = { update("Creating backup file: $archiveName (please wait few minutes)") }
+        classifier = "backup"
     }
 
     override fun taskGraphReady(graph: TaskExecutionGraph) {
