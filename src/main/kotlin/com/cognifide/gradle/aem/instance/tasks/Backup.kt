@@ -31,5 +31,4 @@ open class Backup : Zip(), AemTask {
     companion object {
         const val NAME = "aemBackup"
     }
-
 }

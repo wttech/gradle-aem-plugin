@@ -1,47 +1,25 @@
 package com.cognifide.gradle.aem.instance.tasks
 
 import com.cognifide.gradle.aem.common.AemTask
-import com.cognifide.gradle.aem.common.file.resolver.FileResolver
+import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.onEachApply
 import com.cognifide.gradle.aem.instance.LocalHandleOptions
 import com.cognifide.gradle.aem.instance.names
 import java.io.File
 import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
 
 open class Create : Instance() {
 
-    @Nested
-    val options = LocalHandleOptions(project)
-
     @Internal
-    val instanceFileResolver = FileResolver(aem, AemTask.temporaryDir(project, name, DOWNLOAD_DIR))
-
-    @get:Internal
-    val instanceFiles: List<File>
-        get() = instanceFileResolver.allFiles()
+    val options = LocalHandleOptions(aem, AemTask.temporaryDir(project, name))
 
     init {
         description = "Creates local AEM instance(s)."
-
-        instanceFilesByProperties()
     }
 
-    private fun instanceFilesByProperties() {
-        val jarUrl = aem.props.string("aem.create.jarUrl")
-        if (!jarUrl.isNullOrBlank()) {
-            instanceFileResolver.url(jarUrl)
-        }
-
-        val licenseUrl = aem.props.string("aem.create.licenseUrl")
-        if (!licenseUrl.isNullOrBlank()) {
-            instanceFileResolver.url(licenseUrl)
-        }
-    }
-
-    fun instanceFiles(configurer: FileResolver.() -> Unit) {
-        instanceFileResolver.apply(configurer)
+    fun options(configurer: LocalHandleOptions.() -> Unit) {
+        options.apply(configurer)
     }
 
     @TaskAction
@@ -54,15 +32,28 @@ open class Create : Instance() {
 
         logger.info("Creating instances: ${handles.names}")
 
-        aem.progress(handles.size) {
-            handles.onEachApply {
-                increment("Instance '${instance.name}'") {
-                    create(options, instanceFiles)
+        val backupZip = options.zip
+        if (backupZip != null) {
+            val instanceRoot = File(aem.config.instanceRoot)
+            aem.logger.info("Extracting files from backup ZIP '$backupZip' to directory '$instanceRoot'")
+            aem.progress(FileOperations.zipCount(backupZip)) {
+                FileOperations.zipUnpack(backupZip, instanceRoot) { increment("Extracting file '$it'") }
+            }
+        } else {
+            aem.progress(handles.size) {
+                handles.onEachApply {
+                    increment("Instance '${instance.name}'") {
+                        create(options)
+                    }
                 }
             }
         }
 
         aem.notifier.notify("Instance(s) created", "Which: ${handles.names}")
+    }
+
+    private fun findBackup(instanceFiles: List<File>): File? {
+        return instanceFiles.find { it.extension == "zip" }
     }
 
     companion object {

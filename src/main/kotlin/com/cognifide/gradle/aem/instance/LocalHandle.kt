@@ -10,7 +10,6 @@ import org.apache.commons.io.FileUtils
 import org.gradle.api.Project
 import org.gradle.internal.os.OperatingSystem
 import org.gradle.util.GFileUtils
-import org.zeroturnaround.zip.ZipUtil
 
 class LocalHandle(val project: Project, val instance: LocalInstance) {
 
@@ -47,7 +46,7 @@ class LocalHandle(val project: Project, val instance: LocalInstance) {
         }
     }
 
-    fun create(options: LocalHandleOptions, instanceFiles: List<File>) {
+    fun create(options: LocalHandleOptions) {
         if (created) {
             aem.logger.info(("Instance already created: $this"))
             return
@@ -57,8 +56,8 @@ class LocalHandle(val project: Project, val instance: LocalInstance) {
 
         aem.logger.info("Creating instance at path '${dir.absolutePath}'")
 
-        aem.logger.info("Copying resolved instance files: $instanceFiles")
-        copyFiles(instanceFiles)
+        aem.logger.info("Copying resolved instance files: ${options.allFiles}")
+        copyFiles(options)
 
         aem.logger.info("Validating instance files")
         validateFiles()
@@ -92,13 +91,16 @@ class LocalHandle(val project: Project, val instance: LocalInstance) {
         aem.logger.info("Created instance with success")
     }
 
-    private fun copyFiles(resolvedFiles: List<File>) {
+    private fun copyFiles(options: LocalHandleOptions) {
         GFileUtils.mkdirs(dir)
-        val files = resolvedFiles.map { file ->
+
+        options.license?.let { FileUtils.moveFile(options.license, license) }
+        options.jar?.let { FileUtils.moveFile(options.jar, jar) }
+
+        options.extraFiles.map { file ->
             FileUtils.copyFileToDirectory(file, dir)
             File(dir, file.name)
         }
-        findJar(files)?.let { FileUtils.moveFile(it, jar) }
     }
 
     private fun findJar(files: List<File>): File? {
@@ -161,24 +163,10 @@ class LocalHandle(val project: Project, val instance: LocalInstance) {
     }
 
     private fun extractStaticFiles() {
-        aem.logger.info("Extracting static files from JAR '${jar.absolutePath}' to directory: $staticDir")
+        aem.logger.info("Extracting static files from JAR '$jar' to directory '$staticDir'")
 
-        aem.progressIndicator {
-            ZipUtil.iterate(jar) { entry ->
-                if (entry.name.startsWith(JAR_STATIC_FILES_PATH)) {
-                    total++
-                }
-            }
-
-            ZipUtil.unpack(jar, staticDir) { name ->
-                if (name.startsWith(JAR_STATIC_FILES_PATH)) {
-                    val fileName = name.substringAfterLast("/")
-                    increment("Extracting file '$fileName'")
-                    name.substring(JAR_STATIC_FILES_PATH.length)
-                } else {
-                    name
-                }
-            }
+        aem.progress(FileOperations.zipCount(jar, JAR_STATIC_FILES_PATH)) {
+            FileOperations.zipUnpack(jar, staticDir, JAR_STATIC_FILES_PATH) { increment("Extracting file '$it'") }
         }
     }
 

@@ -4,17 +4,17 @@ import com.fasterxml.jackson.core.util.DefaultIndenter
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.jayway.jsonpath.JsonPath
-import org.apache.commons.io.FileUtils
 import java.io.File
 import java.io.InputStream
 import java.nio.file.Paths
+import java.text.SimpleDateFormat
 import java.util.*
+import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.time.DurationFormatUtils
 import org.apache.commons.validator.routines.UrlValidator
 import org.apache.jackrabbit.util.ISO8601
 import org.gradle.api.Project
-import java.text.SimpleDateFormat
 
 @Suppress("MagicNumber")
 object Formats {

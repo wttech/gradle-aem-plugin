@@ -4,11 +4,11 @@ import com.cognifide.gradle.aem.common.AemTask
 import com.cognifide.gradle.aem.common.tasks.Zip
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.Compose
+import java.io.File
 import org.gradle.api.file.CopySpec
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.bundling.ZipEntryCompression
-import java.io.File
 
 open class Collect : Zip(), AemTask {
 

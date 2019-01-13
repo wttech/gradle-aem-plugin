@@ -24,7 +24,7 @@ open class Resolve : AemDefaultTask() {
 
         if (premature || willBeExecuted(Create.NAME)) {
             logger.info("Resolving instance files for creating instances.")
-            logger.info("Resolved instance files: ${createTask.instanceFiles}")
+            logger.info("Resolved instance files: ${createTask.options.allFiles}")
         }
         if (premature || willBeExecuted(Satisfy.NAME)) {
             logger.info("Resolving CRX packages for satisfying instances.")
