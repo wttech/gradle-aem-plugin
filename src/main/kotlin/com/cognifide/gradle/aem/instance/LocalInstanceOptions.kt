@@ -20,9 +20,16 @@ class LocalInstanceOptions(aem: AemExtension, downloadDir: File) {
     /**
      * Defines backup selection rule.
      *
-     * By default, it just takes most recent backup (file names sorted lexically / descending).
+     * By default takes desired backup by name (if provided) or takes most recent backup
+     * (file names sorted lexically / descending).
      */
-    var zipSelector: Collection<File>.() -> File? = { sortedByDescending { it.name }.firstOrNull() }
+    var zipSelector: Collection<File>.() -> File? = {
+        val name = aem.props.string("aem.localInstance.zipName") ?: ""
+        when {
+            name.isNotBlank() -> firstOrNull { it.name == name }
+            else -> sortedByDescending { it.name }.firstOrNull()
+        }
+    }
 
     /**
      * URI pointing to ZIP file created by backup task (packed AEM instances already created).
