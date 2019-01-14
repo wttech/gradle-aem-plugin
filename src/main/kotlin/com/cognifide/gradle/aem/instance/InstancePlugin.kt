@@ -64,6 +64,10 @@ class InstancePlugin : AemPlugin() {
             register<Resetup>(Resetup.NAME) {
                 dependsOn(Destroy.NAME, Setup.NAME)
             }
+            register<Backup>(Backup.NAME) {
+                dependsOn(Down.NAME)
+                finalizedBy(Up.NAME)
+            }
         }
     }
 

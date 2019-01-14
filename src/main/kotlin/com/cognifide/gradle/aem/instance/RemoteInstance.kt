@@ -1,9 +1,9 @@
 package com.cognifide.gradle.aem.instance
 
+import com.cognifide.gradle.aem.common.AemExtension
 import java.io.Serializable
-import org.gradle.api.Project
 
-class RemoteInstance private constructor(project: Project) : AbstractInstance(project), Serializable {
+class RemoteInstance private constructor(aem: AemExtension) : AbstractInstance(aem), Serializable {
 
     override lateinit var httpUrl: String
 
@@ -21,8 +21,8 @@ class RemoteInstance private constructor(project: Project) : AbstractInstance(pr
 
     companion object {
 
-        fun create(project: Project, httpUrl: String, configurer: RemoteInstance.() -> Unit): RemoteInstance {
-            return RemoteInstance(project).apply {
+        fun create(aem: AemExtension, httpUrl: String, configurer: RemoteInstance.() -> Unit): RemoteInstance {
+            return RemoteInstance(aem).apply {
                 val instanceUrl = InstanceUrl.parse(httpUrl)
 
                 this.httpUrl = instanceUrl.httpUrl
@@ -35,8 +35,8 @@ class RemoteInstance private constructor(project: Project) : AbstractInstance(pr
             }
         }
 
-        fun create(project: Project, httpUrl: String): RemoteInstance {
-            return create(project, httpUrl) {}
+        fun create(aem: AemExtension, httpUrl: String): RemoteInstance {
+            return create(aem, httpUrl) {}
         }
     }
 }

@@ -944,8 +944,43 @@ Create AEM instance(s) at local file system. Extracts *crx-quickstart* from down
 
 To use this task, specify required properties in ignored file *gradle.properties* at project root (protocols supported: SMB, SSH, HTTP(s) or local path, HTTP with basic auth as example):
 
-* `aem.create.jarUrl=http://[user]:[password]@[host]/[path]/cq-quickstart.jar`
-* `aem.create.licenseUrl=http://[user]:[password]@[host]/[path]/license.properties`
+To create instances from backup created by `aemBackup` task, specify:
+
+* `aem.localInstance.zipUrl=http://[user]:[password]@[host]/[path]/example-yyyyMMddmmss-x.x.x-backup.zip`
+
+To create instances from scratch, specify:
+
+* `aem.localInstance.jarUrl=http://[user]:[password]@[host]/[path]/cq-quickstart.jar`
+* `aem.localInstance.licenseUrl=http://[user]:[password]@[host]/[path]/license.properties`
+
+Source mode, can be adjusted by specifying parameter `-Paem.localInstance.source`:
+
+* `auto` - Create instances from most recent backup (external or internal) or fallback to creating from the scratch if there is no backup available.
+* `none` - Force creating instances from the scratch.
+* `backup_external` - Force using backup available at external source (specified in `aem.localInstance.zipUrl`).      
+* `backup_internal` - Force using internal backup (created by task `aemBackup`).
+
+When mode is set to `auto` or `backup_internal`, then ZIP selection rule could be adjusted:
+
+```kotlin
+
+aem {
+    tasks {
+        create {
+            options {
+                zipSelector = {  // default implementation below
+                    val name = aem.props.string("aem.localInstance.zipName") ?: ""
+                    when {
+                        name.isNotBlank() -> firstOrNull { it.name == name }
+                        else -> sortedByDescending { it.name }.firstOrNull()
+                    }
+                }
+            }
+        }
+    }
+}
+
+```
 
 ##### Extracted files configuration (optional)
 
@@ -985,7 +1020,6 @@ Properties:
 
 Predefined expandable properties:
 
-* `handle` - [LocalHandle](src/main/kotlin/com/cognifide/gradle/aem/instance/LocalHandle.kt) object,
 * `instance` - [LocalInstance](src/main/kotlin/com/cognifide/gradle/aem/instance/LocalInstance.kt) object.
 
 #### Task `aemDestroy` 

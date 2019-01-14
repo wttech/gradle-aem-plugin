@@ -21,7 +21,7 @@ class InstanceState(private var syncOrigin: InstanceSync, val instance: Instance
      */
     fun <T> check(configurer: InstanceSync.() -> Unit, action: InstanceState.() -> T): T {
         val origin = syncOrigin
-        syncOrigin = InstanceSync(syncOrigin.project, syncOrigin.instance).apply(configurer)
+        syncOrigin = InstanceSync(syncOrigin.aem, syncOrigin.instance).apply(configurer)
         val result = action(this)
         syncOrigin = origin
         return result
