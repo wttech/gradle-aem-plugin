@@ -23,11 +23,13 @@ open class Backup : Zip(), AemTask {
         }
 
     override fun taskGraphReady(graph: TaskExecutionGraph) {
-        if (graph.hasTask(this)) {
-            val uncreated = aem.localHandles.filter { !it.created }
-            if (uncreated.isNotEmpty()) {
-                throw InstanceException("Cannot create backup of local instances, because there are instances not yet created: ${uncreated.names}")
-            }
+        if (!graph.hasTask(this)) {
+            return
+        }
+
+        val uncreatedInstances = aem.localInstances.filter { !it.created }
+        if (uncreatedInstances.isNotEmpty()) {
+            throw InstanceException("Cannot create backup of local instances, because there are instances not yet created: ${uncreatedInstances.names}")
         }
     }
 

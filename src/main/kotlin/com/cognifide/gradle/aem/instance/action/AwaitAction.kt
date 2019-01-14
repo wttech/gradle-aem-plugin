@@ -134,7 +134,7 @@ open class AwaitAction(aem: AemExtension) : AbstractAction(aem) {
                 val availableInstances = aem.parallelMap(instanceStates, { availableCheck(it) }, { it.instance })
                 val unavailableInstances = synchronizers.map { it.instance } - availableInstances
 
-                val initializedUnavailableInstances = unavailableInstances.filter { it.isInitialized(aem.project) }
+                val initializedUnavailableInstances = unavailableInstances.filter { it.isInitialized() }
                 val areUnavailableInstances = (timer.ticks.toDouble() / stableRetry.times.toDouble() > INSTANCE_UNAVAILABLE_RATIO) &&
                         initializedUnavailableInstances.isNotEmpty()
 
@@ -215,7 +215,7 @@ open class AwaitAction(aem: AemExtension) : AbstractAction(aem) {
 
     private fun prepareSynchronizers(): List<InstanceSync> {
         return instances.map { instance ->
-            val init = instance.isBeingInitialized(aem.project)
+            val init = instance.isBeingInitialized()
 
             instance.sync.apply {
                 val sync = this

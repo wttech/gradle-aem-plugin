@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.common.AemException
+import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.Formats
 import com.cognifide.gradle.aem.common.Patterns
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -116,16 +117,16 @@ interface Instance : Serializable {
 
         val REMOTE_PROPS = listOf("httpUrl", "user", "password")
 
-        fun parse(project: Project, str: String): List<RemoteInstance> {
-            return Formats.toList(str).map { RemoteInstance.create(project, it) }
+        fun parse(aem: AemExtension, str: String): List<RemoteInstance> {
+            return Formats.toList(str).map { RemoteInstance.create(aem, it) }
         }
 
-        fun properties(project: Project): List<Instance> {
-            return localsFromProperties(project) + remotesFromProperties(project)
+        fun properties(aem: AemExtension): List<Instance> {
+            return localsFromProperties(aem) + remotesFromProperties(aem)
         }
 
-        private fun remotesFromProperties(project: Project): List<RemoteInstance> {
-            val remoteInstances = collectProperties(project, "remote").map { e ->
+        private fun remotesFromProperties(aem: AemExtension): List<RemoteInstance> {
+            val remoteInstances = collectProperties(aem.project, "remote").map { e ->
                 val (name, props) = e
                 val nameParts = name.split("-")
                 if (nameParts.size != 2) {
@@ -135,7 +136,7 @@ interface Instance : Serializable {
                 val httpUrl = props["httpUrl"]
                         ?: throw InstanceException("Remote instance named '$name' must have property 'httpUrl' defined.")
 
-                RemoteInstance.create(project, httpUrl) {
+                RemoteInstance.create(aem, httpUrl) {
                     this.environment = environment
                     this.typeName = typeName
 
@@ -148,8 +149,8 @@ interface Instance : Serializable {
             return remoteInstances
         }
 
-        private fun localsFromProperties(project: Project): List<LocalInstance> {
-            val localInstances = collectProperties(project, "local").map { e ->
+        private fun localsFromProperties(aem: AemExtension): List<LocalInstance> {
+            val localInstances = collectProperties(aem.project, "local").map { e ->
                 val (name, props) = e
                 val nameParts = name.split("-")
                 if (nameParts.size != 2) {
@@ -159,7 +160,7 @@ interface Instance : Serializable {
                 val httpUrl = props["httpUrl"]
                         ?: throw InstanceException("Local instance named '$name' must have property 'httpUrl' defined.")
 
-                LocalInstance.create(project, httpUrl) {
+                LocalInstance.create(aem, httpUrl) {
                     this.environment = environment
                     this.typeName = typeName
 
@@ -190,10 +191,10 @@ interface Instance : Serializable {
             }
         }
 
-        fun defaults(project: Project, environment: String): List<RemoteInstance> {
+        fun defaults(aem: AemExtension, environment: String): List<RemoteInstance> {
             return listOf(
-                    RemoteInstance.create(project, URL_AUTHOR_DEFAULT) { this.environment = environment },
-                    RemoteInstance.create(project, URL_PUBLISH_DEFAULT) { this.environment = environment }
+                    RemoteInstance.create(aem, URL_AUTHOR_DEFAULT) { this.environment = environment },
+                    RemoteInstance.create(aem, URL_PUBLISH_DEFAULT) { this.environment = environment }
             )
         }
     }
@@ -202,14 +203,10 @@ interface Instance : Serializable {
 val Collection<Instance>.names: String
     get() = joinToString(", ") { it.name }
 
-fun Collection<Instance>.toLocalHandles(project: Project): List<LocalHandle> {
-    return filterIsInstance(LocalInstance::class.java).map { LocalHandle(project, it) }
+fun Instance.isInitialized(): Boolean {
+    return this !is LocalInstance || initialized
 }
 
-fun Instance.isInitialized(project: Project): Boolean {
-    return this !is LocalInstance || LocalHandle(project, this).initialized
-}
-
-fun Instance.isBeingInitialized(project: Project): Boolean {
-    return this is LocalInstance && !LocalHandle(project, this).initialized
+fun Instance.isBeingInitialized(): Boolean {
+    return this is LocalInstance && !initialized
 }

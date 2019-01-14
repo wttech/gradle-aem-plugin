@@ -19,23 +19,23 @@ open class Destroy : Instance() {
 
     @TaskAction
     fun destroy() {
-        val handles = localHandles.filter { it.created }
-        if (handles.isEmpty()) {
+        val createdInstances = instances.filter { it.created }
+        if (createdInstances.isEmpty()) {
             logger.info("No instance(s) to destroy")
             return
         }
 
-        logger.info("Destroying instance(s): ${handles.names}")
+        logger.info("Destroying instance(s): ${createdInstances.names}")
 
-        aem.progress(handles.size) {
-            handles.onEachApply {
-                increment("Destroying '${instance.name}'") {
+        aem.progress(createdInstances.size) {
+            createdInstances.onEachApply {
+                increment("Destroying '$name'") {
                     destroy()
                 }
             }
         }
 
-        aem.notifier.notify("Instance(s) destroyed", "Which: ${handles.names}")
+        aem.notifier.notify("Instance(s) destroyed", "Which: ${createdInstances.names}")
     }
 
     companion object {

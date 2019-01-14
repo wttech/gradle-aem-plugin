@@ -8,13 +8,12 @@ import com.cognifide.gradle.aem.pkg.*
 import com.cognifide.gradle.aem.pkg.tasks.Compose
 import java.io.File
 import java.io.FileNotFoundException
-import org.gradle.api.Project
 import org.jsoup.Jsoup
 import org.jsoup.parser.Parser
 import org.zeroturnaround.zip.ZipUtil
 
 @Suppress("LargeClass", "TooManyFunctions")
-class InstanceSync(project: Project, instance: Instance) : InstanceHttpClient(project, instance) {
+class InstanceSync(aem: AemExtension, instance: Instance) : InstanceHttpClient(aem, instance) {
 
     fun determineRemotePackage(file: File, refresh: Boolean = true): Package? {
         if (!ZipUtil.containsEntry(file, Package.VLT_PROPERTIES)) {

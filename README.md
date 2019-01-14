@@ -985,7 +985,6 @@ Properties:
 
 Predefined expandable properties:
 
-* `handle` - [LocalHandle](src/main/kotlin/com/cognifide/gradle/aem/instance/LocalHandle.kt) object,
 * `instance` - [LocalInstance](src/main/kotlin/com/cognifide/gradle/aem/instance/LocalInstance.kt) object.
 
 #### Task `aemDestroy` 

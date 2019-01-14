@@ -4,11 +4,8 @@ import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.http.HttpClient
 import com.cognifide.gradle.aem.common.http.ResponseException
 import org.apache.http.HttpResponse
-import org.gradle.api.Project
 
-open class InstanceHttpClient(project: Project, val instance: Instance) : HttpClient(project) {
-
-    val aem = AemExtension.of(project)
+open class InstanceHttpClient(internal val aem: AemExtension, val instance: Instance) : HttpClient(aem.project) {
 
     init {
         baseUrl = instance.httpUrl

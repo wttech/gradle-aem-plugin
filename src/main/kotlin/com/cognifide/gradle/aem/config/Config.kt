@@ -161,16 +161,16 @@ class Config(
         // Define through command line
         val instancesForced = aem.props.string("aem.instance.list") ?: ""
         if (instancesForced.isNotBlank()) {
-            instances(Instance.parse(aem.project, instancesForced))
+            instances(Instance.parse(aem, instancesForced))
         }
 
         // Define through properties ]
-        instances(Instance.properties(aem.project))
+        instances(Instance.properties(aem))
 
         aem.project.afterEvaluate { _ ->
             // Ensure defaults if still no instances defined at all
             if (instances.isEmpty()) {
-                instances(Instance.defaults(aem.project, aem.environment))
+                instances(Instance.defaults(aem, aem.environment))
             }
 
             // Validate all
@@ -186,7 +186,7 @@ class Config(
     }
 
     fun localInstance(httpUrl: String, configurer: LocalInstance.() -> Unit) {
-        instance(LocalInstance.create(aem.project, httpUrl) {
+        instance(LocalInstance.create(aem, httpUrl) {
             this.environment = aem.environment
             this.apply(configurer)
         })
@@ -197,14 +197,14 @@ class Config(
     }
 
     fun remoteInstance(httpUrl: String, configurer: RemoteInstance.() -> Unit) {
-        instance(RemoteInstance.create(aem.project, httpUrl) {
+        instance(RemoteInstance.create(aem, httpUrl) {
             this.environment = aem.environment
             this.apply(configurer)
         })
     }
 
     fun parseInstance(urlOrName: String): Instance {
-        return instances[urlOrName] ?: Instance.parse(aem.project, urlOrName).ifEmpty {
+        return instances[urlOrName] ?: Instance.parse(aem, urlOrName).ifEmpty {
             throw AemException("Instance cannot be determined by value '$urlOrName'.")
         }.single().apply { validate() }
     }

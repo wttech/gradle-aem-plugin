@@ -3,38 +3,34 @@ package com.cognifide.gradle.aem.instance.tasks
 import com.cognifide.gradle.aem.common.AemTask
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.onEachApply
-import com.cognifide.gradle.aem.instance.LocalHandleOptions
+import com.cognifide.gradle.aem.instance.LocalInstanceOptions
 import com.cognifide.gradle.aem.instance.names
 import java.io.File
-import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
 open class Create : Instance() {
 
     @Internal
-    val options = LocalHandleOptions(aem, AemTask.temporaryDir(project, name))
-
-    @Input
-    var mode = aem.props.string("aem.create.mode") // TODO auto (most recent), from external jar, from recent internal jar
+    val options = LocalInstanceOptions(aem, AemTask.temporaryDir(project, name))
 
     init {
         description = "Creates local AEM instance(s)."
     }
 
-    fun options(configurer: LocalHandleOptions.() -> Unit) {
-        options.apply(configurer)
+    fun options(options: LocalInstanceOptions.() -> Unit) {
+        this.options.apply(options)
     }
 
     @TaskAction
     fun create() {
-        val handles = localHandles.filter { !it.created }
-        if (handles.isEmpty()) {
+        val uncreatedInstances = instances.filter { !it.created }
+        if (uncreatedInstances.isEmpty()) {
             logger.info("No instance(s) to create")
             return
         }
 
-        logger.info("Creating instances: ${handles.names}")
+        logger.info("Creating instances: ${uncreatedInstances.names}")
 
         val backupZip = findRecentBackup(options.zip)
         if (backupZip != null) {
@@ -45,16 +41,16 @@ open class Create : Instance() {
                 FileOperations.zipUnpack(backupZip, instanceRoot) { increment("Extracting file '$it'") }
             }
         } else {
-            aem.progress(handles.size) {
-                handles.onEachApply {
-                    increment("Instance '${instance.name}'") {
+            aem.progress(uncreatedInstances.size) {
+                uncreatedInstances.onEachApply {
+                    increment("Instance '$name'") {
                         create(options)
                     }
                 }
             }
         }
 
-        aem.notifier.notify("Instance(s) created", "Which: ${handles.names}")
+        aem.notifier.notify("Instance(s) created", "Which: ${uncreatedInstances.names}")
     }
 
     private fun findRecentBackup(zip: File?): File? {
