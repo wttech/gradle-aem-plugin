@@ -6,9 +6,9 @@ import com.cognifide.gradle.aem.common.onEachApply
 import com.cognifide.gradle.aem.instance.InstanceException
 import com.cognifide.gradle.aem.instance.LocalInstanceOptions
 import com.cognifide.gradle.aem.instance.names
+import java.io.File
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
-import java.io.File
 
 open class Create : Instance() {
 
@@ -48,8 +48,8 @@ open class Create : Instance() {
             }
         } else {
             if (options.jar == null || options.license == null) {
-                throw InstanceException("Cannot create instances due to lacking source files. "
-                        + "Ensure having specified: local instance ZIP url or jar & license url.")
+                throw InstanceException("Cannot create instances due to lacking source files. " +
+                        "Ensure having specified: local instance ZIP url or jar & license url.")
             }
 
             aem.progress(uncreatedInstances.size) {
@@ -68,7 +68,7 @@ open class Create : Instance() {
         val external = if (externalZip == null) listOf() else listOf(externalZip)
         val internal = aem.tasks.named<Backup>(Backup.NAME).get().available
 
-        return (external + internal).asSequence().sortedByDescending { it.name }.firstOrNull()
+        return options.zipSelector(external + internal)
     }
 
     companion object {
