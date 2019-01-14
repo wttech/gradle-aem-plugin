@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.instance
 import com.cognifide.gradle.aem.common.AemException
 import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.file.resolver.FileGroup
+import com.cognifide.gradle.aem.common.file.resolver.FileResolution
 import com.cognifide.gradle.aem.common.file.resolver.FileResolver
 import com.cognifide.gradle.aem.common.file.resolver.Resolver
 import java.io.File
@@ -12,7 +13,7 @@ class LocalInstanceOptions(aem: AemExtension, downloadDir: File) {
     private val fileResolver = FileResolver(aem, downloadDir)
 
     /**
-     * Determines what need to be done (content copied and clean or something else).
+     * Determines how instances will be created (from backup or from the scratch).
      */
     var source = Source.of(aem.props.string("aem.localInstance.source") ?: Source.AUTO.name)
 
@@ -47,14 +48,26 @@ class LocalInstanceOptions(aem: AemExtension, downloadDir: File) {
      */
     var expandProperties: Map<String, Any> = mapOf()
 
+    var zipSource: FileResolver.() -> FileResolution = {
+        url(zipUrl ?: throw InstanceException("Local instance ZIP url is not defined."))
+    }
+
     val zip: File?
-        get() = zipUrl?.run { fileResolver.url(this).file }
+        get() = fileResolver.run(zipSource).file
+
+    var jarSource: FileResolver.() -> FileResolution = {
+        url(jarUrl ?: throw InstanceException("Local instance JAR url is not defined."))
+    }
 
     val jar: File?
-        get() = jarUrl?.run { fileResolver.url(this).file }
+        get() = fileResolver.run(jarSource).file
+
+    var licenseSource: FileResolver.() -> FileResolution = {
+        url(licenseUrl ?: throw InstanceException("Local instance license url is not defined."))
+    }
 
     val license: File?
-        get() = licenseUrl?.run { fileResolver.url(this).file }
+        get() = fileResolver.run(licenseSource).file
 
     val allFiles: List<File>
         get() = mandatoryFiles + extraFiles
@@ -69,9 +82,23 @@ class LocalInstanceOptions(aem: AemExtension, downloadDir: File) {
     }
 
     enum class Source {
+        /**
+         * Create instances from most recent backup (external or internal)
+         * or fallback to creating from the scratch if there is no backup available.
+         */
         AUTO,
-        EXTERNAL,
-        INTERNAL;
+        /**
+         * Force creating instances from the scratch.
+         */
+        NONE,
+        /**
+         * Force using backup available at external source (specified in 'aem.localInstance.zipUrl').
+         */
+        BACKUP_EXTERNAL,
+        /**
+         * Force using internal backup (created by task 'aemBackup').
+         */
+        BACKUP_INTERNAL;
 
         companion object {
             fun of(name: String): Source {

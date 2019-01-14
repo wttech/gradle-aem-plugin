@@ -32,7 +32,12 @@ open class Create : Instance() {
 
         logger.info("Creating instances: ${uncreatedInstances.names}")
 
-        val backupZip = findRecentBackup(options.zip)
+        val backupZip = when (options.source) {
+            LocalInstanceOptions.Source.AUTO -> findRecentBackup(options.zip)
+            LocalInstanceOptions.Source.BACKUP_INTERNAL -> findRecentBackup(null)
+            LocalInstanceOptions.Source.BACKUP_EXTERNAL -> options.zip
+            LocalInstanceOptions.Source.NONE -> null
+        }
         if (backupZip != null) {
             val instanceRoot = File(aem.config.instanceRoot)
 
@@ -53,8 +58,8 @@ open class Create : Instance() {
         aem.notifier.notify("Instance(s) created", "Which: ${uncreatedInstances.names}")
     }
 
-    private fun findRecentBackup(zip: File?): File? {
-        val external = if (zip == null) listOf() else listOf(zip)
+    private fun findRecentBackup(externalZip: File?): File? {
+        val external = if (externalZip == null) listOf() else listOf(externalZip)
         val internal = aem.tasks.named<Backup>(Backup.NAME).get().available
 
         return (external + internal).asSequence().sortedByDescending { it.name }.firstOrNull()
