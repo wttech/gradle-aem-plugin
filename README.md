@@ -953,7 +953,7 @@ To create instances from scratch, specify:
 * `aem.localInstance.jarUrl=http://[user]:[password]@[host]/[path]/cq-quickstart.jar`
 * `aem.localInstance.licenseUrl=http://[user]:[password]@[host]/[path]/license.properties`
 
-Source mode, can be adjusted by adding specifying parameter `-Paem.localInstance.source`:
+Source mode, can be adjusted by specifying parameter `-Paem.localInstance.source`:
 
 * `auto` - Create instances from most recent backup (external or internal) or fallback to creating from the scratch if there is no backup available.
 * `none` - Force creating instances from the scratch.
