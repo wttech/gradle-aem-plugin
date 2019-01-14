@@ -34,9 +34,9 @@ open class Create : Instance() {
         logger.info("Creating instances: ${uncreatedInstances.names}")
 
         val backupZip = when (options.source) {
-            LocalInstanceOptions.Source.AUTO -> findRecentBackup(options.zip)
-            LocalInstanceOptions.Source.BACKUP_INTERNAL -> findRecentBackup(null)
-            LocalInstanceOptions.Source.BACKUP_EXTERNAL -> options.zip
+            LocalInstanceOptions.Source.AUTO -> findRecentBackup()
+            LocalInstanceOptions.Source.BACKUP_INTERNAL -> getInternalBackup()
+            LocalInstanceOptions.Source.BACKUP_EXTERNAL -> getExternalBackup()
             LocalInstanceOptions.Source.NONE -> null
         }
         if (backupZip != null) {
@@ -64,11 +64,23 @@ open class Create : Instance() {
         aem.notifier.notify("Instance(s) created", "Which: ${uncreatedInstances.names}")
     }
 
+    private fun findRecentBackup() = findRecentBackup(options.zip)
+
     private fun findRecentBackup(externalZip: File?): File? {
         val external = if (externalZip == null) listOf() else listOf(externalZip)
         val internal = aem.tasks.named<Backup>(Backup.NAME).get().available
 
         return options.zipSelector(external + internal)
+    }
+
+    private fun getInternalBackup(): File? {
+        return findRecentBackup(null) ?: throw InstanceException("Internal local instance backup is not yet created. " +
+                "Ensure running task 'aemBackup' before.")
+    }
+
+    private fun getExternalBackup(): File {
+        return options.zip ?: throw InstanceException("External local instance backup is not available. " +
+                "Ensure having property 'aem.localInstance.zipUrl' specified.")
     }
 
     companion object {
