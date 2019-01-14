@@ -944,8 +944,14 @@ Create AEM instance(s) at local file system. Extracts *crx-quickstart* from down
 
 To use this task, specify required properties in ignored file *gradle.properties* at project root (protocols supported: SMB, SSH, HTTP(s) or local path, HTTP with basic auth as example):
 
-* `aem.create.jarUrl=http://[user]:[password]@[host]/[path]/cq-quickstart.jar`
-* `aem.create.licenseUrl=http://[user]:[password]@[host]/[path]/license.properties`
+To create instances from backup created by `aemBackup` task, specify:
+
+* `aem.localInstance.zipUrl=http://[user]:[password]@[host]/[path]/cq-quickstart.jar`
+
+To create instances from scratch, specify:
+
+* `aem.localInstance.jarUrl=http://[user]:[password]@[host]/[path]/cq-quickstart.jar`
+* `aem.localInstance.licenseUrl=http://[user]:[password]@[host]/[path]/license.properties`
 
 ##### Extracted files configuration (optional)
 

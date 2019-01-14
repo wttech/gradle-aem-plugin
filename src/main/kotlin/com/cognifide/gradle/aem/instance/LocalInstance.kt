@@ -125,9 +125,9 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
 
         cleanDir(true)
 
-        aem.logger.info("Creating instance at path '${dir.absolutePath}'")
+        aem.logger.info("Creating instance at path '$dir'")
 
-        aem.logger.info("Copying resolved instance files: ${options.allFiles}")
+        aem.logger.info("Copying instance files")
         copyFiles(options)
 
         aem.logger.info("Validating instance files")

@@ -48,31 +48,32 @@ class LocalInstanceOptions(aem: AemExtension, downloadDir: File) {
      */
     var expandProperties: Map<String, Any> = mapOf()
 
-    var zipSource: FileResolver.() -> FileResolution = {
-        url(zipUrl ?: throw InstanceException("Local instance ZIP url is not defined."))
+    var zipSource: FileResolver.() -> FileResolution? = {
+        zipUrl?.run { url(this) }
     }
 
     val zip: File?
-        get() = fileResolver.run(zipSource).file
+        get() = fileResolver.run(zipSource)?.file
 
-    var jarSource: FileResolver.() -> FileResolution = {
-        url(jarUrl ?: throw InstanceException("Local instance JAR url is not defined."))
+    var jarSource: FileResolver.() -> FileResolution? = {
+        jarUrl?.run { url(this) }
     }
 
     val jar: File?
-        get() = fileResolver.run(jarSource).file
+        get() = fileResolver.run(jarSource)?.file
 
-    var licenseSource: FileResolver.() -> FileResolution = {
-        url(licenseUrl ?: throw InstanceException("Local instance license url is not defined."))
+    var licenseSource: FileResolver.() -> FileResolution? = {
+        licenseUrl?.run { url(this) }
     }
 
     val license: File?
-        get() = fileResolver.run(licenseSource).file
+        get() = fileResolver.run(licenseSource)?.file
 
     val allFiles: List<File>
         get() = mandatoryFiles + extraFiles
 
-    val mandatoryFiles: List<File> = listOfNotNull(jar, license)
+    val mandatoryFiles: List<File>
+        get() = listOfNotNull(jar, license)
 
     val extraFiles: List<File>
         get() = fileResolver.group(GROUP_EXTRA).files

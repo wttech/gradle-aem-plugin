@@ -3,11 +3,12 @@ package com.cognifide.gradle.aem.instance.tasks
 import com.cognifide.gradle.aem.common.AemTask
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.onEachApply
+import com.cognifide.gradle.aem.instance.InstanceException
 import com.cognifide.gradle.aem.instance.LocalInstanceOptions
 import com.cognifide.gradle.aem.instance.names
-import java.io.File
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
+import java.io.File
 
 open class Create : Instance() {
 
@@ -46,6 +47,11 @@ open class Create : Instance() {
                 FileOperations.zipUnpack(backupZip, instanceRoot) { increment("Extracting file '$it'") }
             }
         } else {
+            if (options.jar == null || options.license == null) {
+                throw InstanceException("Cannot create instances due to lacking source files. "
+                        + "Ensure having specified: local instance ZIP url or jar & license url.")
+            }
+
             aem.progress(uncreatedInstances.size) {
                 uncreatedInstances.onEachApply {
                     increment("Instance '$name'") {
