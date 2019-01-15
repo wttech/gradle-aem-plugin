@@ -144,7 +144,7 @@ class Cleaner(project: Project) {
 
     private fun eachFiles(root: File, filter: PatternFilterable.() -> Unit, action: (File) -> Unit) {
         if (root.isDirectory) {
-            aem.project.fileTree(root).matching(filesDeleted).forEach(action)
+            aem.project.fileTree(root).matching(filter).forEach(action)
         } else {
             aem.project.fileTree(root.parent).matching { it.include(root.name) }.matching(filter).forEach(action)
         }
