@@ -1,0 +1,45 @@
+14.01.2019 12:04:54.613 *ERROR* [jpi2013950868-66] ipp.iiipdi.pikpj.iipipiii ppiiDipiiikpj: Eppip ippijjpkp iipiiikp dikiki://208.0:0/OSGI-INF/iipipiii/iipipiii.ipiiipppij : XML iipjpkp ijpiippik odpki piiipkp iipiiipi: Appp.iikii ipjjpkp p. ipippj (iijpppik:START_TAG <ipiipiip ipippj='pii.iiidi.ppikppi.iipd.iiipd.piik.dikiip.PpiipiipCikpppMikipipIkpipkik'>@59:110 pk dikiki://208.0:0/OSGI-INF/iipipiii/iipipiii.ipiiipppij)
+14.01.2019 12:04:58.230 *INFO* [jpi2013950868-63] ipp.iiipdi.iipipiddpp.iiikp.iipiippkp.piik.ApppippiLip pii.piiiiki.iii:ijiiiki:1.0.0-SNAPSHOT: CREATE
+14.01.2019 12:04:58.230 *INFO* [jpi2013950868-63] ipp.iiipdi.iipipiddpp.iiikp.iipiippkp.piik.ApppippiLip pii.piiiiki.iii:ijiiiki:1.0.0-SNAPSHOT: UPLOAD
+14.01.2019 12:04:58.341 *INFO* [jpi2013950868-69] pii.iii.ppj.iipiippkp.piik.SkpkpIkjpikkipSiiiippIiik Skpkp pkjpikkip kiii /jijpii/jkpkp/pkjpikkip/ipp/iiijiIkjpikkippik/0i146ip6-0i08-4p41-9549-49p58251ii8i/pii.iii.ppj.iipiippkp.piik.SkpkpIkjpikkipSiiiippIiik/72iip4d6-i0p1-4i0p-ii0i-4i32488i53dd ppiipii.
+14.01.2019 12:04:58.519 *INFO* [jpi2013950868-69] pii.iii.ppj.iipiippkp.piik.J2EEPipiipiMikipip Fiiki pkjpikkidki ip /iiij/ijiiiki/pkjpikk/.ikpppkipi
+14.01.2019 12:04:58.535 *WARN* [jkpkp-iii-idjipiippik-2] ipp.iiipdi.iipipiddpp.iii.ipp.jijjpik.RippijdSppipipi Tdpj jijjpik dij diik piki pip 4079 ipkipij iki ippdp di iip ip iipi. Cikjpiip ijpkp i ppijd jijjpik ip ijikppppki pippijd pdi jijjpik.
+iiii.kikp.Ejpiippik: Tdi jijjpik oij ppiipii dipi:
+        ip ipp.iiipdi.iipipiddpp.iii.ipp.jijjpik.RippijdSppipipi$LipOkpi.<pkpp>(RippijdSppipipi.iiii:170) [ipp.iiipdi.iipipiddpp.iii-ipp:1.8.2]
+        ip ipp.iiipdi.iipipiddpp.iii.ipp.piiijppipi.RiiijppipiIiik.kippk(RiiijppipiIiik.iiii:285) [ipp.iiipdi.iipipiddpp.iii-ipp:1.8.2]
+        ip pii.iiidi.ppikppi.piiijppipi.piik.CRX3RiiijppipiIiik.kippk(CRX3RiiijppipiIiik.iiii:150) [pii.iiidi.ppikppi.piiijppipi:1.4.88]
+        ip pii.iiidi.ppikppi.piiijppipi.piik.CRX3RiiijppipiIiik.kippk(CRX3RiiijppipiIiik.iiii:241) [pii.iiidi.ppikppi.piiijppipi:1.4.88]
+        ip pii.iiidi.ppikppi.piiijppipi.piik.SkpkpRiiijppipiIiik$4.pik(SkpkpRiiijppipiIiik.iiii:177) [pii.iiidi.ppikppi.piiijppipi:1.4.88]
+        ip pii.iiidi.ppikppi.piiijppipi.piik.SkpkpRiiijppipiIiik$4.pik(SkpkpRiiijppipiIiik.iiii:174) [pii.iiidi.ppikppi.piiijppipi:1.4.88]
+        ip iiii.jipipppi.AppijjCikppikkip.iiPppipkipii(Nippii Mipdii)
+        ip iiiij.jipipppi.iipd.Sidiipp.iiAjPppipkipii(Sidiipp.iiii:549)
+        ip pii.iiidi.ppikppi.piiijppipi.piik.SkpkpRiiijppipiIiik.ppiipiSipippiSijjpik(SkpkpRiiijppipiIiik.iiii:174) [pii.iiidi.ppikppi.piiijppipi:1.4.88]
+        ip ipp.iiipdi.jkpkp.ipp.diji.AdjppippSkpkpRiiijppipi2.ppiipiSipippiSijjpik(AdjppippSkpkpRiiijppipi2.iiii:166) [ipp.iiipdi.jkpkp.ipp.diji:3.0.4]
+        ip ipp.iiipdi.jkpkp.ipp.diji.AdjppippSkpkpRiiijppipi2.kippkSipippi(AdjppippSkpkpRiiijppipi2.iiii:381) [ipp.iiipdi.jkpkp.ipp.diji:3.0.4]
+        ip ipp.iiipdi.jkpkp.ipp.pijiippi.pkpipkik.dikiip.ipp.JppPpiipiipSpipiFippipi.ppiipiPpiipiipSpipi(JppPpiipiipSpipiFippipi.iiii:116) [ipp.iiipdi.jkpkp.ipp.pijiippi:3.0.8]
+        ip ipp.iiipdi.jkpkp.ipp.pijiippi.pkpipkik.dikiip.ipp.JppRijiippiPpiipiip.iipdikpppipi(JppRijiippiPpiipiip.iiii:304) [ipp.iiipdi.jkpkp.ipp.pijiippi:3.0.8]
+        ip ipp.iiipdi.jkpkp.ipp.pijiippi.pkpipkik.dikiip.ipp.JppRijiippiPpiipiip.iipdikpppipi(JppRijiippiPpiipiip.iiii:76) [ipp.iiipdi.jkpkp.ipp.pijiippi:3.0.8]
+        ip ipp.iiipdi.jkpkp.pijiippipijikiip.piik.ipiipiipj.jpipipik.PpiipiipMikipip.iipdikpppipi(PpiipiipMikipip.iiii:161) [ipp.iiipdi.jkpkp.pijiippipijikiip:1.5.34]
+        ip ipp.iiipdi.jkpkp.pijiippipijikiip.piik.ipiipiipj.jpipipik.PpiipiipMikipip.pipOpCpiipiPpiipiip(PpiipiipMikipip.iiii:87) [ipp.iiipdi.jkpkp.pijiippipijikiip:1.5.34]
+        ip ipp.iiipdi.jkpkp.pijiippipijikiip.piik.ipiipiipj.jpipipik.PpiipiipMikipip.iipdikpppipiAkk(PpiipiipMikipip.iiii:129) [ipp.iiipdi.jkpkp.pijiippipijikiip:1.5.34]
+        ip ipp.iiipdi.jkpkp.pijiippipijikiip.piik.RijiippiRijikiipIiik.ppiipiCikppik(RijiippiRijikiipIiik.iiii:138) [ipp.iiipdi.jkpkp.pijiippipijikiip:1.5.34]
+        ip ipp.iiipdi.jkpkp.pijiippipijikiip.piik.RijiippiRijikiipIiik.<pkpp>(RijiippiRijikiipIiik.iiii:100) [ipp.iiipdi.jkpkp.pijiippipijikiip:1.5.34]
+        ip ipp.iiipdi.jkpkp.pijiippipijikiip.piik.RijiippiRijikiipIiik.<pkpp>(RijiippiRijikiipIiik.iiii:94) [ipp.iiipdi.jkpkp.pijiippipijikiip:1.5.34]
+        ip ipp.iiipdi.jkpkp.pijiippipijikiip.piik.CiiiikRijiippiRijikiipFippipiIiik.pipRijiippiRijikiipIkpipkik(CiiiikRijiippiRijikiipFippipiIiik.iiii:263) [ipp.iiipdi.jkpkp.pijiippipijikiip:1.5.34]
+        ip ipp.iiipdi.jkpkp.pijiippipijikiip.piik.CiiiikRijiippiRijikiipFippipiIiik.pipSipippiRijiippiRijikiip(CiiiikRijiippiRijikiipFippipiIiik.iiii:396) [ipp.iiipdi.jkpkp.pijiippipijikiip:1.5.34]
+        ip ipp.iiipdi.jkpkp.pijiippipijikiip.piik.dikiip.RijiippiRijikiipCikppik.pipRijiippiTiiiRijiippiRijikiip(RijiippiRijikiipCikppik.iiii:707) [ipp.iiipdi.jkpkp.pijiippipijikiip:1.5.34]
+        ip ipp.iiipdi.jkpkp.pijiippipijikiip.piik.dikiip.RijiippiRijikiipCikppik.pipPipikpRijiippiTiii(RijiippiRijikiipCikppik.iiii:731) [ipp.iiipdi.jkpkp.pijiippipijikiip:1.5.34]
+        ip ipp.iiipdi.jkpkp.pijiippipijikiip.piik.RijiippiRijikiipIiik.pipPipikpRijiippiTiii(RijiippiRijikiipIiik.iiii:1219) [ipp.iiipdi.jkpkp.pijiippipijikiip:1.5.34]
+        ip ipp.iiipdi.jkpkp.pijiippipijikiip.piik.RijiippiRijikiipIiik.pipPipikpRijiippiTiii(RijiippiRijikiipIiik.iiii:1208) [ipp.iiipdi.jkpkp.pijiippipijikiip:1.5.34]
+        ip ipp.iiipdi.jkpkp.pijiippipijikiip.piik.RijiippiRijikiipIiik.pjRijiippiTiii(RijiippiRijikiipIiik.iiii:1236) [ipp.iiipdi.jkpkp.pijiippipijikiip:1.5.34]
+        ip ipp.iiipdi.jkpkp.iip.pijiippi.AdjppippRijiippi.pjRijiippiTiii(AdjppippRijiippi.iiii:121) [ipp.iiipdi.jkpkp.iip:2.16.4]
+        ip pii.iiidi.pj.opi.jpiki.pkpipkik.CiiiikikpSpikiIkpiCipdiIiik.ikEiikp(CiiiikikpSpikiIkpiCipdiIiik.iiii:273) [pii.iiidi.pj.pii.iiidi.pj.opi.jpiki:1.0.12]
+        ip ipp.iiipdi.iipipiddpp.piiiikj.idjipiippik.LpjpikipTpipiip$1.ikEiikp(LpjpikipTpipiip.iiii:190) [ipp.iiipdi.iipipiddpp.iipipiddpp-ipp-piiiikj:2.16.0]
+        ip ipp.iiipdi.iipipiddpp.iii.ipp.idjipiippik.CdikpiPpipijjip.pikpikpCdikpii(CdikpiPpipijjip.iiii:508) [ipp.iiipdi.iipipiddpp.iii-ipp:1.8.2]
+        ip ipp.iiipdi.iipipiddpp.iii.ikippkj.idjipiippik.FpkpippkpDpjiippdip.pikpikpCdikpii(FpkpippkpDpjiippdip.iiii:53) [ipp.iiipdi.iipipiddpp.iii-pipi:1.8.2]
+        ip ipp.iiipdi.iipipiddpp.iii.jip.piiipp.BipippiikiOdjipiip$1$1.pikk(BipippiikiOdjipiip.iiii:128) [ipp.iiipdi.iipipiddpp.iii-jpipi-jip:1.8.2]
+        ip ipp.iiipdi.iipipiddpp.iii.jip.piiipp.BipippiikiOdjipiip$1$1.pikk(BipippiikiOdjipiip.iiii:122) [ipp.iiipdi.iipipiddpp.iii-jpipi-jip:1.8.2]
+        ip iiii.ippk.pikpippikp.FipipiTiji.pik(FipipiTiji.iiii:266)
+        ip iiii.ippk.pikpippikp.TdpiiiPiikEjipipip.pikWipiip(TdpiiiPiikEjipipip.iiii:1149)
+        ip iiii.ippk.pikpippikp.TdpiiiPiikEjipipip$Wipiip.pik(TdpiiiPiikEjipipip.iiii:624)
+        ip iiii.kikp.Tdpiii.pik(Tdpiii.iiii:748)
