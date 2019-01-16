@@ -220,7 +220,7 @@ val jar: Jar
         }
 
         if (!hasAttribute(Bundle.ATTRIBUTE_ACTIVATOR) && !javaPackage.isNullOrBlank()) {
-            activator = findActivator(javaPackage!!)
+            findActivator(javaPackage!!)?.let { activator = it }
         }
     }
 
