@@ -18,7 +18,7 @@ open class Backup : Zip(), AemTask {
 
     val available: List<File>
         get() {
-            return destinationDir.listFiles { _, name -> name.endsWith("-$classifier.$extension") }
+            return (destinationDir.listFiles { _, name -> name.endsWith("-$classifier.$extension") } ?: arrayOf())
                     .ifEmpty { arrayOf() }.toList()
         }
 
