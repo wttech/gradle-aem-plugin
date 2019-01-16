@@ -7,6 +7,8 @@ import com.cognifide.gradle.aem.common.DependencyOptions
 import com.cognifide.gradle.aem.common.Formats
 import com.cognifide.gradle.aem.instance.Bundle
 import com.fasterxml.jackson.annotation.JsonIgnore
+import java.io.File
+import java.io.Serializable
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.apache.commons.lang3.reflect.FieldUtils
@@ -15,8 +17,6 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.bundling.Jar
-import java.io.File
-import java.io.Serializable
 
 /**
  * The main purpose of this extension point is to provide a place for specifying custom
