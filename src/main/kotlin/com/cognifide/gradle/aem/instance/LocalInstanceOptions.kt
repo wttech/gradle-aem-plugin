@@ -10,7 +10,7 @@ import java.io.File
 
 class LocalInstanceOptions(aem: AemExtension, downloadDir: File) {
 
-    private val fileResolver = FileResolver(aem, downloadDir)
+    private val fileResolver = FileResolver(aem, downloadDir).apply { group(GROUP_EXTRA) {} }
 
     /**
      * Determines how instances will be created (from backup or from the scratch).
