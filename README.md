@@ -92,6 +92,7 @@ To see documentation for previous 5.x serie, please [click here](https://github.
         * [Task aemCreate](#task-aemcreate)
            * [Source files configuration](#source-files-configuration)
            * [Extracted files configuration (optional)](#extracted-files-configuration-optional)
+        * [Task aemBackup](#task-aembackup)
         * [Task aemDestroy](#task-aemdestroy)
         * [Task aemUp](#task-aemup)
         * [Task aemDown](#task-aemdown)
@@ -1021,6 +1022,14 @@ Properties:
 Predefined expandable properties:
 
 * `instance` - [LocalInstance](src/main/kotlin/com/cognifide/gradle/aem/instance/LocalInstance.kt) object.
+
+
+#### Task `aemBackup`
+
+Turns off local AEM instance(s) then archives them into ZIP file, then turns on again.
+
+The most recent file created by this task will be reused automatically while running task `aemResetup`.
+Also the file created could be also a [source file](#source-files-configuration) for task `aemCreate`.
 
 #### Task `aemDestroy` 
 
