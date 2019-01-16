@@ -125,9 +125,9 @@ abstract class Resolver<G : FileGroup>(
 
     fun downloadSftpAuth(url: String, username: String? = null, password: String? = null, hostChecking: Boolean? = null): FileResolution {
         return downloadSftp(url) {
-            this.username = username ?: aem.props.prop("aem.resolver.sftp.username")
-            this.password = password ?: aem.props.prop("aem.resolver.sftp.password")
-            this.hostChecking = hostChecking ?: aem.props.boolean("aem.resolver.sftp.hostChecking") ?: false
+            this.username = username ?: aem.config.resolver.sftpUsername
+            this.password = password ?: aem.config.resolver.sftpPassword
+            this.hostChecking = hostChecking ?: aem.config.resolver.sftpHostChecking ?: false
         }
     }
 
@@ -143,9 +143,9 @@ abstract class Resolver<G : FileGroup>(
 
     fun downloadSmbAuth(url: String, domain: String? = null, username: String? = null, password: String? = null): FileResolution {
         return downloadSmb(url) {
-            this.domain = domain ?: aem.props.prop("aem.resolver.smb.domain")
-            this.username = username ?: aem.props.prop("aem.resolver.smb.username")
-            this.password = password ?: aem.props.prop("aem.resolver.smb.password")
+            this.domain = domain ?: aem.config.resolver.smbDomain
+            this.username = username ?: aem.config.resolver.smbUsername
+            this.password = password ?: aem.config.resolver.smbPassword
         }
     }
 
@@ -162,9 +162,9 @@ abstract class Resolver<G : FileGroup>(
 
     fun downloadHttpAuth(url: String, user: String? = null, password: String? = null, ignoreSsl: Boolean? = null): FileResolution {
         return downloadHttp(url) {
-            basicUser = user ?: aem.props.string("aem.resolver.http.username") ?: ""
-            basicPassword = password ?: aem.props.string("aem.resolver.http.password") ?: ""
-            connectionIgnoreSsl = ignoreSsl ?: aem.props.boolean("aem.resolver.http.connectionIgnoreSsl") ?: true
+            basicUser = user ?: aem.config.resolver.httpUsername ?: ""
+            basicPassword = password ?: aem.config.resolver.httpPassword ?: ""
+            connectionIgnoreSsl = ignoreSsl ?: aem.config.resolver.httpConnectionIgnoreSsl ?: true
         }
     }
 

@@ -1,7 +1,10 @@
 package com.cognifide.gradle.aem.bundle
 
 import aQute.bnd.gradle.BundleTaskConvention
-import com.cognifide.gradle.aem.common.*
+import com.cognifide.gradle.aem.common.AemException
+import com.cognifide.gradle.aem.common.AemExtension
+import com.cognifide.gradle.aem.common.DependencyOptions
+import com.cognifide.gradle.aem.common.Formats
 import com.cognifide.gradle.aem.instance.Bundle
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
@@ -215,6 +218,22 @@ val jar: Jar
         if (!hasAttribute(Bundle.ATTRIBUTE_SLING_MODEL_PACKAGES) && !javaPackage.isNullOrBlank()) {
             slingModelPackages = javaPackage
         }
+
+        if (!hasAttribute(Bundle.ATTRIBUTE_ACTIVATOR) && !javaPackage.isNullOrBlank()) {
+            findActivator(javaPackage!!)?.let { activator = it }
+        }
+    }
+
+    private fun findActivator(pkg: String): String? {
+        for ((sourceSet, ext) in SOURCE_SETS) {
+            for (activatorClass in ACTIVATOR_CLASSES) {
+                if (aem.project.file("src/main/$sourceSet/${pkg.replace(".", "/")}/$activatorClass.$ext").exists()) {
+                    return "$pkg.$activatorClass"
+                }
+            }
+        }
+
+        return null
     }
 
     @get:Input
@@ -396,5 +415,14 @@ val jar: Jar
             aem.logger.error("BND tool error: https://bnd.bndtools.org", ExceptionUtils.getRootCause(e))
             throw BundleException("OSGi bundle cannot be built properly.", e)
         }
+    }
+
+    companion object {
+        val ACTIVATOR_CLASSES = listOf("Activator", "BundleActivator")
+        val SOURCE_SETS = mapOf(
+                "java" to "java",
+                "kotlin" to "kt",
+                "scala" to "scala"
+        )
     }
 }

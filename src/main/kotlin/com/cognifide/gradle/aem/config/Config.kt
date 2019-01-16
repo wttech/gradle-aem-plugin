@@ -4,6 +4,7 @@ import com.cognifide.gradle.aem.common.AemException
 import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.LineSeparator
 import com.cognifide.gradle.aem.common.NotifierFacade
+import com.cognifide.gradle.aem.common.file.resolver.ResolverOptions
 import com.cognifide.gradle.aem.common.notifier.Notifier
 import com.cognifide.gradle.aem.instance.Instance
 import com.cognifide.gradle.aem.instance.InstanceHttpClient
@@ -24,6 +25,10 @@ class Config(
     @JsonIgnore
     private val aem: AemExtension
 ) : Serializable {
+
+    @Internal
+    @JsonIgnore
+    val resolver = ResolverOptions(aem)
 
     private val instanceMap: MutableMap<String, Instance> = mutableMapOf()
 
@@ -226,4 +231,8 @@ class Config(
     @get:Internal
     @get:JsonIgnore
     val lineSeparatorString: String = LineSeparator.string(lineSeparator)
+
+    @Internal
+    @JsonIgnore
+    fun resolver(options: ResolverOptions.() -> Unit) = resolver.apply(options)
 }

@@ -149,7 +149,7 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
             FileUtils.copyDirectory(overridesDir, dir)
         }
 
-        val propertiesAll = this.properties + options.expandProperties
+        val propertiesAll = mapOf("instance" to this) + properties + options.expandProperties
 
         aem.logger.info("Expanding instance files")
         FileOperations.amendFiles(dir, options.expandFiles) { file, source ->

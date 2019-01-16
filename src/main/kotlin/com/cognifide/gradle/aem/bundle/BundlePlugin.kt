@@ -37,7 +37,5 @@ class BundlePlugin : AemPlugin() {
 
     companion object {
         const val ID = "com.cognifide.aem.bundle"
-
-        const val BND_CONVENTION_PLUGIN = "bundle"
     }
 }
