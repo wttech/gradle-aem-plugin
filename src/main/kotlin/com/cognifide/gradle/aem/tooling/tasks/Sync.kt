@@ -62,6 +62,8 @@ open class Sync : AemDefaultTask() {
             return filter.rootDirs(contentDir)
         }
 
+    private val filterNormalizedRootDirs by lazy { filterRootDirs.map { normalizeRoot(it) } }
+
     fun cleaner(options: Cleaner.() -> Unit) {
         cleaner.apply(options)
     }
@@ -134,19 +136,19 @@ open class Sync : AemDefaultTask() {
     private fun cleanContent() {
         logger.info("Cleaning using $filter")
 
-        filterRootDirs.forEach { root ->
+        filterNormalizedRootDirs.forEach { root ->
             logger.lifecycle("Before cleaning root: $root")
-            cleaner.beforeClean(normalizeRoot(root))
+            cleaner.beforeClean(root)
         }
 
-        filterRootDirs.forEach { root ->
+        filterNormalizedRootDirs.forEach { root ->
             logger.lifecycle("Cleaning root: $root")
-            cleaner.clean(normalizeRoot(root))
+            cleaner.clean(root)
         }
 
-        filterRootDirs.forEach { root ->
+        filterNormalizedRootDirs.forEach { root ->
             logger.lifecycle("After cleaning root: $root")
-            cleaner.afterClean(normalizeRoot(root))
+            cleaner.afterClean(root)
         }
     }
 
