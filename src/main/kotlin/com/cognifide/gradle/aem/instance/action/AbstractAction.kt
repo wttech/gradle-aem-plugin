@@ -3,8 +3,7 @@ package com.cognifide.gradle.aem.instance.action
 import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.instance.Instance
 import com.cognifide.gradle.aem.instance.InstanceAction
-import com.cognifide.gradle.aem.instance.LocalHandle
-import com.cognifide.gradle.aem.instance.toLocalHandles
+import com.cognifide.gradle.aem.instance.LocalInstance
 import org.gradle.api.tasks.Internal
 
 abstract class AbstractAction(
@@ -17,8 +16,8 @@ abstract class AbstractAction(
 
     var instances: List<Instance> = aem.instances
 
-    val localHandles: List<LocalHandle>
-        get() = instances.toLocalHandles(aem.project)
+    val localInstances: List<LocalInstance>
+        get() = instances.filterIsInstance(LocalInstance::class.java)
 
     var notify = true
 

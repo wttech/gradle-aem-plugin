@@ -10,7 +10,7 @@ plugins {
 }
 
 group = "com.cognifide.gradle"
-version = "6.0.0-beta4"
+version = "6.0.0-beta5"
 description = "Gradle AEM Plugin"
 defaultTasks = listOf("build", "publishToMavenLocal")
 
@@ -51,11 +51,32 @@ dependencies {
     "detektPlugins"("io.gitlab.arturbosch.detekt:detekt-formatting:1.0.0-RC11")
 }
 
-publishing {
-    publications {
-        create<MavenPublication>("mavenJava") {
-            from(components["java"])
+tasks {
+    register<Jar>("sourcesJar") {
+        classifier = "sources"
+        dependsOn("classes")
+        from(sourceSets["main"].allSource)
+    }
+
+    named<ProcessResources>("processResources") {
+        doLast {
+            file("$buildDir/resources/main/build.json").printWriter().use {
+                it.print("""{
+                    "pluginVersion": "${project.version}",
+                    "gradleVersion": "${project.gradle.gradleVersion}"
+            }""".trimIndent())
+            }
         }
+    }
+
+    named<Test>("test") {
+        testLogging {
+            events = setOf(TestLogEvent.FAILED)
+            exceptionFormat = TestExceptionFormat.SHORT
+        }
+
+        useJUnitPlatform()
+        dependsOn(named("publishToMavenLocal"))
     }
 }
 
@@ -88,6 +109,15 @@ detekt {
     config.from(file("detekt.yml"))
 }
 
+publishing {
+    publications {
+        create<MavenPublication>("mavenJava") {
+            from(components["java"])
+            artifact(tasks["sourcesJar"])
+        }
+    }
+}
+
 bintray {
     user = (project.findProperty("bintray.user") ?: System.getenv("BINTRAY_USER"))?.toString()
     key = (project.findProperty("bintray.key") ?: System.getenv("BINTRAY_KEY"))?.toString()
@@ -107,27 +137,4 @@ bintray {
     }
     publish = (project.findProperty("bintray.publish") ?: "true").toString().toBoolean()
     override = (project.findProperty("bintray.override") ?: "false").toString().toBoolean()
-}
-
-tasks {
-    named<ProcessResources>("processResources") {
-        doLast {
-            file("$buildDir/resources/main/build.json").printWriter().use {
-                it.print("""{
-                    "pluginVersion": "${project.version}",
-                    "gradleVersion": "${project.gradle.gradleVersion}"
-            }""".trimIndent())
-            }
-        }
-    }
-
-    named<Test>("test") {
-        testLogging {
-            events = setOf(TestLogEvent.FAILED)
-            exceptionFormat = TestExceptionFormat.SHORT
-        }
-
-        useJUnitPlatform()
-        dependsOn(named("publishToMavenLocal"))
-    }
 }

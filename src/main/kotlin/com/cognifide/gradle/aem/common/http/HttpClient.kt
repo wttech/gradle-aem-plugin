@@ -85,54 +85,68 @@ open class HttpClient(val project: Project) {
 
     var responseChecker: (HttpResponse) -> Unit = { checkStatus(it) }
 
-    fun get(path: String) = get(path) { checkStatus(it) }
+    fun get(uri: String) = get(uri) { checkStatus(it) }
 
-    fun <T> get(path: String, handler: HttpClient.(HttpResponse) -> T): T {
-        return execute(HttpGet(baseUrl(path)), handler)
+    fun <T> get(uri: String, handler: HttpClient.(HttpResponse) -> T): T = get(uri, handler) {}
+
+    fun <T> get(uri: String, handler: HttpClient.(HttpResponse) -> T, options: HttpGet.() -> Unit): T {
+        return execute(HttpGet(baseUrl(uri)).apply(options), handler)
     }
 
-    fun head(path: String) = head(path) { checkStatus(it) }
+    fun head(uri: String) = head(uri) { checkStatus(it) }
 
-    fun <T> head(path: String, handler: HttpClient.(HttpResponse) -> T): T {
-        return execute(HttpHead(baseUrl(path)), handler)
+    fun <T> head(uri: String, handler: HttpClient.(HttpResponse) -> T): T = head(uri, handler)
+
+    fun <T> head(uri: String, handler: HttpClient.(HttpResponse) -> T, options: HttpHead.() -> Unit): T {
+        return execute(HttpHead(baseUrl(uri)).apply(options), handler)
     }
 
-    fun delete(path: String) = delete(path) { checkStatus(it) }
+    fun delete(uri: String) = delete(uri) { checkStatus(it) }
 
-    fun <T> delete(path: String, handler: HttpClient.(HttpResponse) -> T): T {
-        return execute(HttpDelete(baseUrl(path)), handler)
+    fun <T> delete(uri: String, handler: HttpClient.(HttpResponse) -> T): T = delete(uri, handler) {}
+
+    fun <T> delete(uri: String, handler: HttpClient.(HttpResponse) -> T, options: HttpDelete.() -> Unit): T {
+        return execute(HttpDelete(baseUrl(uri)).apply(options), handler)
     }
 
-    fun put(path: String) = put(path) { checkStatus(it) }
+    fun put(uri: String) = put(uri) { checkStatus(it) }
 
-    fun <T> put(path: String, handler: HttpClient.(HttpResponse) -> T): T {
-        return execute(HttpPut(baseUrl(path)), handler)
+    fun <T> put(uri: String, handler: HttpClient.(HttpResponse) -> T): T = put(uri, handler) {}
+
+    fun <T> put(uri: String, handler: HttpClient.(HttpResponse) -> T, options: HttpPut.() -> Unit): T {
+        return execute(HttpPut(baseUrl(uri)).apply(options), handler)
     }
 
     fun patch(path: String) = patch(path) { checkStatus(it) }
 
-    fun <T> patch(path: String, handler: HttpClient.(HttpResponse) -> T): T {
-        return execute(HttpPatch(baseUrl(path)), handler)
+    fun <T> patch(uri: String, handler: HttpClient.(HttpResponse) -> T): T = patch(uri, handler) {}
+
+    fun <T> patch(uri: String, handler: HttpClient.(HttpResponse) -> T, options: HttpPatch.() -> Unit): T {
+        return execute(HttpPatch(baseUrl(uri)).apply(options), handler)
     }
 
     fun post(url: String, params: Map<String, Any> = mapOf()) = postUrlencoded(url, params)
 
-    fun <T> post(url: String, params: Map<String, Any> = mapOf(), handler: HttpClient.(HttpResponse) -> T): T = postUrlencoded(url, params, handler)
-
-    fun postUrlencoded(url: String, params: Map<String, Any> = mapOf()) = postUrlencoded(url, params) { checkStatus(it) }
-
-    fun <T> postUrlencoded(url: String, params: Map<String, Any> = mapOf(), handler: HttpClient.(HttpResponse) -> T): T {
-        return post(url, createEntityUrlencoded(params), handler)
+    fun <T> post(uri: String, params: Map<String, Any> = mapOf(), handler: HttpClient.(HttpResponse) -> T): T {
+        return postUrlencoded(uri, params, handler)
     }
 
-    fun postMultipart(url: String, params: Map<String, Any> = mapOf()) = postMultipart(url, params) { checkStatus(it) }
+    fun postUrlencoded(uri: String, params: Map<String, Any> = mapOf()) = postUrlencoded(uri, params) { checkStatus(it) }
 
-    fun <T> postMultipart(url: String, params: Map<String, Any> = mapOf(), handler: HttpClient.(HttpResponse) -> T): T {
-        return post(url, createEntityMultipart(params), handler)
+    fun <T> postUrlencoded(uri: String, params: Map<String, Any> = mapOf(), handler: HttpClient.(HttpResponse) -> T): T {
+        return post(uri, handler) { entity = createEntityUrlencoded(params) }
     }
 
-    fun <T> post(url: String, entity: HttpEntity, handler: HttpClient.(HttpResponse) -> T): T {
-        return execute(HttpPost(baseUrl(url)).apply { this.entity = entity }, handler)
+    fun postMultipart(uri: String, params: Map<String, Any> = mapOf()) = postMultipart(uri, params) { checkStatus(it) }
+
+    fun <T> postMultipart(uri: String, params: Map<String, Any> = mapOf(), handler: HttpClient.(HttpResponse) -> T): T {
+        return post(uri, handler) { entity = createEntityMultipart(params) }
+    }
+
+    fun <T> post(uri: String, handler: HttpClient.(HttpResponse) -> T): T = post(uri, handler) {}
+
+    fun <T> post(uri: String, handler: HttpClient.(HttpResponse) -> T, options: HttpPost.() -> Unit): T {
+        return execute(HttpPost(baseUrl(uri)).apply(options), handler)
     }
 
     fun asStream(response: HttpResponse): InputStream {
@@ -173,8 +187,8 @@ open class HttpClient(val project: Project) {
      * Fix for HttpClient's: 'escaped absolute path not valid'
      * https://stackoverflow.com/questions/13652681/httpclient-invalid-uri-escaped-absolute-path-not-valid
      */
-    open fun baseUrl(url: String): String {
-            return "$baseUrl${url.replace(" ", "%20")}"
+    open fun baseUrl(uri: String): String {
+        return "$baseUrl${uri.replace(" ", "%20")}"
     }
 
     @Suppress("TooGenericExceptionCaught")
@@ -194,6 +208,8 @@ open class HttpClient(val project: Project) {
             method.releaseConnection()
         }
     }
+
+    fun execute(method: HttpRequestBase) = execute(method) { checkStatus(it) }
 
     open fun createEntityUrlencoded(params: Map<String, Any>): HttpEntity {
         return UrlEncodedFormEntity(params.entries.fold(ArrayList<NameValuePair>()) { result, e ->

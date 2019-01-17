@@ -4,6 +4,7 @@ import com.cognifide.gradle.aem.common.AemException
 import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.LineSeparator
 import com.cognifide.gradle.aem.common.NotifierFacade
+import com.cognifide.gradle.aem.common.file.resolver.ResolverOptions
 import com.cognifide.gradle.aem.common.notifier.Notifier
 import com.cognifide.gradle.aem.instance.Instance
 import com.cognifide.gradle.aem.instance.InstanceHttpClient
@@ -24,6 +25,10 @@ class Config(
     @JsonIgnore
     private val aem: AemExtension
 ) : Serializable {
+
+    @Internal
+    @JsonIgnore
+    val resolver = ResolverOptions(aem)
 
     private val instanceMap: MutableMap<String, Instance> = mutableMapOf()
 
@@ -161,16 +166,16 @@ class Config(
         // Define through command line
         val instancesForced = aem.props.string("aem.instance.list") ?: ""
         if (instancesForced.isNotBlank()) {
-            instances(Instance.parse(aem.project, instancesForced))
+            instances(Instance.parse(aem, instancesForced))
         }
 
         // Define through properties ]
-        instances(Instance.properties(aem.project))
+        instances(Instance.properties(aem))
 
         aem.project.afterEvaluate { _ ->
             // Ensure defaults if still no instances defined at all
             if (instances.isEmpty()) {
-                instances(Instance.defaults(aem.project, aem.environment))
+                instances(Instance.defaults(aem, aem.environment))
             }
 
             // Validate all
@@ -186,7 +191,7 @@ class Config(
     }
 
     fun localInstance(httpUrl: String, configurer: LocalInstance.() -> Unit) {
-        instance(LocalInstance.create(aem.project, httpUrl) {
+        instance(LocalInstance.create(aem, httpUrl) {
             this.environment = aem.environment
             this.apply(configurer)
         })
@@ -197,14 +202,14 @@ class Config(
     }
 
     fun remoteInstance(httpUrl: String, configurer: RemoteInstance.() -> Unit) {
-        instance(RemoteInstance.create(aem.project, httpUrl) {
+        instance(RemoteInstance.create(aem, httpUrl) {
             this.environment = aem.environment
             this.apply(configurer)
         })
     }
 
     fun parseInstance(urlOrName: String): Instance {
-        return instances[urlOrName] ?: Instance.parse(aem.project, urlOrName).ifEmpty {
+        return instances[urlOrName] ?: Instance.parse(aem, urlOrName).ifEmpty {
             throw AemException("Instance cannot be determined by value '$urlOrName'.")
         }.single().apply { validate() }
     }
@@ -226,4 +231,8 @@ class Config(
     @get:Internal
     @get:JsonIgnore
     val lineSeparatorString: String = LineSeparator.string(lineSeparator)
+
+    @Internal
+    @JsonIgnore
+    fun resolver(options: ResolverOptions.() -> Unit) = resolver.apply(options)
 }

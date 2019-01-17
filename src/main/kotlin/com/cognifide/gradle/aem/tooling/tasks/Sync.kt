@@ -4,10 +4,12 @@ import com.cognifide.gradle.aem.common.AemDefaultTask
 import com.cognifide.gradle.aem.common.AemException
 import com.cognifide.gradle.aem.common.AemTask
 import com.cognifide.gradle.aem.common.Formats
+import com.cognifide.gradle.aem.common.Patterns
 import com.cognifide.gradle.aem.pkg.PackageDownloader
 import com.cognifide.gradle.aem.tooling.clean.Cleaner
 import com.cognifide.gradle.aem.tooling.vlt.VltRunner
 import java.io.File
+import java.util.regex.Pattern
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
@@ -49,7 +51,7 @@ open class Sync : AemDefaultTask() {
 
     private val vlt = VltRunner(aem)
 
-    private val filterRootDirs: List<File>
+    private val filterRootFiles: List<File>
         get() {
             val contentDir = project.file(contentPath)
             if (!contentDir.exists()) {
@@ -57,7 +59,7 @@ open class Sync : AemDefaultTask() {
                 return listOf()
             }
 
-            return filter.rootDirs(contentDir)
+            return filter.rootDirs(contentDir).map { normalizeRoot(it) }.distinct()
         }
 
     fun cleaner(options: Cleaner.() -> Unit) {
@@ -102,12 +104,13 @@ open class Sync : AemDefaultTask() {
             }
         }
     }
-    private fun prepareContent() {
-        logger.info("Preparing files to be cleaned up (before copying new ones) using filter: $filter")
 
-        filterRootDirs.forEach { root ->
+    private fun prepareContent() {
+        logger.info("Preparing files to be cleaned up (before copying new ones) using: $filter")
+
+        filterRootFiles.forEach { root ->
             logger.lifecycle("Preparing root: $root")
-            cleaner.prepare(root)
+            cleaner.prepare(normalizeRoot(root))
         }
     }
 
@@ -129,12 +132,34 @@ open class Sync : AemDefaultTask() {
     }
 
     private fun cleanContent() {
-        logger.info("Cleaning using $filter")
+        logger.info("Cleaning copied files using: $filter")
 
-        filterRootDirs.forEach { root ->
-            logger.lifecycle("Cleaning root: $root")
+        filterRootFiles.forEach { root ->
+            cleaner.beforeClean(root)
+        }
+
+        filterRootFiles.forEach { root ->
             cleaner.clean(root)
         }
+    }
+
+    private fun normalizeRoot(root: File): File {
+        return File(manglePath(Patterns.normalizePath(root.path).substringBefore("/${Cleaner.JCR_CONTENT_NODE}")))
+    }
+
+    private fun manglePath(path: String): String {
+        var mangledPath = path
+        if (path.contains(":")) {
+            val matcher = MANGLE_NAMESPACE_OUT_PATTERN.matcher(path)
+            val buffer = StringBuffer()
+            while (matcher.find()) {
+                val namespace = matcher.group(1)
+                matcher.appendReplacement(buffer, "/_${namespace}_")
+            }
+            matcher.appendTail(buffer)
+            mangledPath = buffer.toString()
+        }
+        return mangledPath
     }
 
     enum class Transfer {
@@ -164,5 +189,7 @@ open class Sync : AemDefaultTask() {
 
     companion object {
         val NAME = "aemSync"
+
+        private val MANGLE_NAMESPACE_OUT_PATTERN: Pattern = Pattern.compile("/([^:/]+):")
     }
 }

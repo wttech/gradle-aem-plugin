@@ -7,7 +7,9 @@ import com.jayway.jsonpath.JsonPath
 import java.io.File
 import java.io.InputStream
 import java.nio.file.Paths
+import java.text.SimpleDateFormat
 import java.util.*
+import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.time.DurationFormatUtils
 import org.apache.commons.validator.routines.UrlValidator
@@ -56,15 +58,19 @@ object Formats {
         return Base64.getEncoder().encodeToString(value.toByteArray())
     }
 
+    fun size(file: File): String {
+        return bytesToHuman(when {
+            file.exists() -> FileUtils.sizeOf(file)
+            else -> 0L
+        })
+    }
+
     fun bytesToHuman(bytes: Long): String {
-        if (bytes < 1024) {
-            return bytes.toString() + " B"
-        } else if (bytes < 1024 * 1024) {
-            return (bytes / 1024).toString() + " KB"
-        } else if (bytes < 1024 * 1024 * 1024) {
-            return String.format("%.2f MB", bytes / (1024.0 * 1024.0))
-        } else {
-            return String.format("%.2f GB", bytes / (1024.0 * 1024.0 * 1024.0))
+        return when {
+            bytes < 1024 -> bytes.toString() + " B"
+            bytes < 1024 * 1024 -> (bytes / 1024).toString() + " KB"
+            bytes < 1024 * 1024 * 1024 -> String.format("%.2f MB", bytes / (1024.0 * 1024.0))
+            else -> String.format("%.2f GB", bytes / (1024.0 * 1024.0 * 1024.0))
         }
     }
 
@@ -73,12 +79,20 @@ object Formats {
     }
 
     fun percent(current: Long, total: Long): String {
-        val value: Double = if (total == 0L) 0.0 else current.toDouble() / total.toDouble()
+        val value: Double = when (total) {
+            0L -> 0.0
+            else -> current.toDouble() / total.toDouble()
+        }
+
         return "${"%.2f".format(value * 100.0)}%"
     }
 
     fun date(date: Date = Date()): String {
         return ISO8601.format(Calendar.getInstance().apply { time = date })
+    }
+
+    fun dateFileName(date: Date = Date()): String {
+        return SimpleDateFormat("yyyyMMddHHmmss").format(date)
     }
 
     fun duration(millis: Long): String {

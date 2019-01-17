@@ -52,7 +52,7 @@ class ShutdownAction(aem: AemExtension) : AbstractAction(aem) {
         ProgressLogger.of(aem.project).launch {
             var lastStableChecksum = -1
 
-            aem.parallelWith(localHandles) { down() }
+            aem.parallelWith(localInstances) { down() }
 
             Behaviors.waitUntil(stableRetry.delay) { timer ->
                 // Update checksum on any particular state change
@@ -67,7 +67,7 @@ class ShutdownAction(aem: AemExtension) : AbstractAction(aem) {
                 val unstableInstances = aem.parallelMap(instanceStates, { !stableCheck(it) }, { it.instance })
                 val availableInstances = aem.parallelMap(instanceStates, { availableCheck(it) }, { it.instance })
                 val unavailableInstances = instances - availableInstances
-                val upInstances = localHandles.filter { it.running || availableInstances.contains(it.instance) }.map { it.instance }
+                val upInstances = localInstances.filter { it.running || availableInstances.contains(it) }
 
                 progress(InstanceProgress.determine(stableRetry.times, instanceStates, unavailableInstances, unstableInstances, timer))
 

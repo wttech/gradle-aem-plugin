@@ -192,12 +192,6 @@ open class AemExtension(@Internal val project: Project) {
     fun localInstances(consumer: LocalInstance.() -> Unit) = parallelWith(localInstances, consumer)
 
     @get:Internal
-    val localHandles: List<LocalHandle>
-        get() = localInstances.map { LocalHandle(project, it) }
-
-    fun localHandles(consumer: LocalHandle.() -> Unit) = parallelWith(localHandles, consumer)
-
-    @get:Internal
     val remoteInstances: List<RemoteInstance>
         get() = instances.filterIsInstance(RemoteInstance::class.java)
 

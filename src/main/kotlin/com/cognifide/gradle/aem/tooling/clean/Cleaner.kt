@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem.tooling.clean
 
 import com.cognifide.gradle.aem.common.AemExtension
-import com.cognifide.gradle.aem.common.Patterns
 import com.cognifide.gradle.aem.pkg.Package
 import com.cognifide.gradle.aem.tooling.vlt.VltException
 import java.io.File
@@ -12,9 +11,9 @@ import org.apache.commons.io.filefilter.EmptyFileFilter
 import org.apache.commons.lang3.CharEncoding
 import org.apache.commons.lang3.StringUtils
 import org.gradle.api.Project
-import org.gradle.api.file.ConfigurableFileTree
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.util.PatternFilterable
 
 class Cleaner(project: Project) {
 
@@ -24,7 +23,7 @@ class Cleaner(project: Project) {
     /**
      * Allows to control which files under each root root should be cleaned.
      */
-    var filesDotContent: ConfigurableFileTree.() -> Unit = {
+    var filesDotContent: PatternFilterable.() -> Unit = {
         include("**/$JCR_CONTENT_FILE")
     }
 
@@ -33,7 +32,7 @@ class Cleaner(project: Project) {
      * (e.g after checking out JCR content).
      */
     @Input
-    var filesDeleted: ConfigurableFileTree.() -> Unit = {
+    var filesDeleted: PatternFilterable.() -> Unit = {
         include(listOf(
                 "**/.vlt",
                 "**/.vlt*.tmp",
@@ -46,7 +45,7 @@ class Cleaner(project: Project) {
      * (e.g /_cq_dialog/.content.xml will be replaced by _cq_dialog.xml).
      */
     @Input
-    var filesFlattened: ConfigurableFileTree.() -> Unit = {
+    var filesFlattened: PatternFilterable.() -> Unit = {
         include(listOf(
                 "**/_cq_dialog/.content.xml",
                 "**/_cq_htmlTag/.content.xml"
@@ -122,7 +121,15 @@ class Cleaner(project: Project) {
         }
     }
 
+    fun beforeClean(root: File) {
+        if (parentsBackupEnabled) {
+            doRootBackup(root)
+        }
+    }
+
     fun clean(root: File) {
+        flattenFiles(root)
+
         if (parentsBackupEnabled) {
             undoParentsBackup(root)
         } else {
@@ -130,72 +137,25 @@ class Cleaner(project: Project) {
         }
 
         cleanDotContents(root)
-        flattenFiles(root)
 
         deleteFiles(root)
+        deleteBackupFiles(root)
         deleteEmptyDirs(root)
     }
 
-    private fun cleanDotContents(root: File) {
-        if (root.isDirectory) {
-            aem.project.fileTree(root, filesDotContent).forEach { cleanDotContentFile(it) }
+    private fun eachFiles(root: File, filter: PatternFilterable.() -> Unit, action: (File) -> Unit) {
+        val rootFilter: PatternFilterable.() -> Unit = if (root.isDirectory) {
+            { include("**/${root.name}/**") }
         } else {
-            cleanDotContentFile(root)
+            { include(root.name) }
         }
+        aem.project.fileTree(root.parent).matching(rootFilter).matching(filter).forEach(action)
     }
 
-    private fun flattenFiles(root: File) {
-        if (root.isDirectory) {
-            aem.project.fileTree(root, filesFlattened).forEach { flattenFile(it) }
-        } else {
-            flattenFile(root)
-        }
-    }
-
-    private fun flattenFile(file: File) {
-        if (!file.exists()) {
-            return
-        }
-
-        val dest = File(file.parentFile.path + ".xml")
-        if (dest.exists()) {
-            aem.logger.info("Overriding file by flattening $file")
-            FileUtils.deleteQuietly(dest)
-        } else {
-            aem.logger.info("Flattening file $file")
-        }
-
-        file.renameTo(dest)
-    }
-
-    private fun deleteFiles(root: File) {
-        if (root.isDirectory) {
-            aem.project.fileTree(root, filesDeleted).forEach { deleteFile(it) }
-        } else {
-            deleteFile(root)
-        }
-    }
-
-    private fun deleteFile(file: File) {
-        if (!file.exists()) {
-            return
-        }
-
-        aem.logger.info("Deleting file {}", file.path)
-        FileUtils.deleteQuietly(file)
-    }
-
-    private fun deleteEmptyDirs(root: File) {
-        val siblingDirs = root.listFiles { file -> file.isDirectory } ?: arrayOf()
-        siblingDirs.forEach { deleteEmptyDirs(it) }
-        if (EmptyFileFilter.EMPTY.accept(root)) {
-            aem.logger.info("Deleting empty directory {}", root.path)
-            FileUtils.deleteQuietly(root)
-        }
-    }
+    private fun cleanDotContents(root: File) = eachFiles(root, filesDotContent) { cleanDotContentFile(it) }
 
     private fun cleanDotContentFile(file: File) {
-        if (!file.exists() || file.name != JCR_CONTENT_FILE) {
+        if (!file.exists()) {
             return
         }
 
@@ -319,11 +279,58 @@ class Cleaner(project: Project) {
         }
     }
 
-    private fun doParentsBackup(root: File) {
-        val normalizedRoot = normalizeParentRoot(root)
+    private fun flattenFiles(root: File) = eachFiles(root, filesFlattened) { flattenFile(it) }
 
-        normalizedRoot.parentFile.mkdirs()
-        eachParentFiles(normalizedRoot) { parent, siblingFiles ->
+    private fun flattenFile(file: File) {
+        if (!file.exists()) {
+            return
+        }
+
+        val dest = File(file.parentFile.path + ".xml")
+        if (dest.exists()) {
+            aem.logger.info("Overriding file by flattening $file")
+            FileUtils.deleteQuietly(dest)
+        } else {
+            aem.logger.info("Flattening file $file")
+        }
+
+        file.renameTo(dest)
+    }
+
+    private fun deleteFiles(root: File) = eachFiles(root, filesDeleted) { deleteFile(it) }
+
+    private fun deleteBackupFiles(root: File) = eachFiles(root, {
+        include(listOf(
+                "**/$parentsBackupDirIndicator",
+                "**/*$parentsBackupSuffix"
+        ))
+    }) { deleteFile(it) }
+
+    private fun deleteFile(file: File) {
+        if (!file.exists()) {
+            return
+        }
+
+        aem.logger.info("Deleting file {}", file.path)
+        FileUtils.deleteQuietly(file)
+    }
+
+    private fun deleteEmptyDirs(root: File) {
+        if (!root.exists() || root.isFile) {
+            return
+        }
+
+        val siblingDirs = root.listFiles { file -> file.isDirectory } ?: arrayOf()
+        siblingDirs.forEach { deleteEmptyDirs(it) }
+        if (EmptyFileFilter.EMPTY.accept(root)) {
+            aem.logger.info("Deleting empty directory {}", root.path)
+            FileUtils.deleteQuietly(root)
+        }
+    }
+
+    private fun doParentsBackup(root: File) {
+        root.parentFile.mkdirs()
+        eachParentFiles(root) { parent, siblingFiles ->
             parent.mkdirs()
             if (File(parent, parentsBackupDirIndicator).createNewFile()) {
                 siblingFiles.filter { !it.name.endsWith(parentsBackupSuffix) }
@@ -336,10 +343,22 @@ class Cleaner(project: Project) {
         }
     }
 
-    private fun undoParentsBackup(root: File) {
-        val normalizedRoot = normalizeParentRoot(root)
+    private fun doRootBackup(root: File) {
+        if (root.isFile) {
+            val backup = File(root.parentFile, root.name + parentsBackupSuffix)
+            aem.logger.info("Doing backup of root file: $root")
+            root.copyTo(backup, true)
+        }
 
-        eachParentFiles(normalizedRoot) { _, siblingFiles ->
+        eachFiles(root, filesFlattened) { file ->
+            val backup = File(file.parentFile.path + ".xml" + parentsBackupSuffix)
+            aem.logger.info("Doing backup of file: $file")
+            file.copyTo(backup, true)
+        }
+    }
+
+    private fun undoParentsBackup(root: File) {
+        eachParentFiles(root) { _, siblingFiles ->
             if (siblingFiles.any { it.name == parentsBackupDirIndicator }) {
                 siblingFiles.filter { !it.name.endsWith(parentsBackupSuffix) }.forEach { FileUtils.deleteQuietly(it) }
                 siblingFiles.filter { it.name.endsWith(parentsBackupSuffix) }.forEach { backup ->
@@ -349,10 +368,6 @@ class Cleaner(project: Project) {
                 }
             }
         }
-    }
-
-    private fun normalizeParentRoot(root: File): File {
-        return File(Patterns.normalizePath(root.path).substringBefore("/$JCR_CONTENT_NODE"))
     }
 
     private fun cleanParents(root: File) {
