@@ -145,7 +145,7 @@ class Cleaner(project: Project) {
 
     private fun eachFiles(root: File, filter: PatternFilterable.() -> Unit, action: (File) -> Unit) {
         val rootFilter: PatternFilterable.() -> Unit = if (root.isDirectory) {
-            { include("**/${root.name}/**") }
+            { include("${root.name}/**") }
         } else {
             { include(root.name) }
         }
