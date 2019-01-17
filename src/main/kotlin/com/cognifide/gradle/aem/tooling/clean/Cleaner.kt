@@ -123,7 +123,7 @@ class Cleaner(project: Project) {
         }
     }
 
-    fun process(root: File) {
+    fun beforeClean(root: File) {
         if (parentsBackupEnabled) {
             doRootBackup(root)
         }
@@ -142,6 +142,16 @@ class Cleaner(project: Project) {
 
         deleteFiles(root)
         deleteEmptyDirs(root)
+    }
+
+    fun afterClean(root: File) {
+        val filter: PatternFilterable.() -> Unit = {
+            include(listOf(
+                    "**/$parentsBackupDirIndicator",
+                    "**/*$parentsBackupSuffix"
+            ))
+        }
+        eachFiles(root, filter) { deleteFile(it) }
     }
 
     private fun eachFiles(root: File, filter: PatternFilterable.() -> Unit, action: (File) -> Unit) {
@@ -296,14 +306,6 @@ class Cleaner(project: Project) {
         }
 
         file.renameTo(dest)
-
-        if (parentsBackupEnabled) {
-            val backup = File(dest.parentFile, dest.name + parentsBackupSuffix)
-            if (!backup.exists()) {
-                aem.logger.info("Doing backup of file: $dest")
-                dest.copyTo(backup, true)
-            }
-        }
     }
 
     private fun deleteFiles(root: File) = eachFiles(root, filesDeleted) { deleteFile(it) }
@@ -350,6 +352,12 @@ class Cleaner(project: Project) {
             val backup = File(root.parentFile, root.name + parentsBackupSuffix)
             aem.logger.info("Doing backup of root file: $root")
             root.copyTo(backup, true)
+        }
+
+        eachFiles(root, filesFlattened) { file ->
+            val backup = File(file.parentFile.path + ".xml" + parentsBackupSuffix)
+            aem.logger.info("Doing backup of file: $file")
+            file.copyTo(backup, true)
         }
     }
 

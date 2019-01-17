@@ -135,13 +135,18 @@ open class Sync : AemDefaultTask() {
         logger.info("Cleaning using $filter")
 
         filterRootDirs.forEach { root ->
-            logger.lifecycle("Processing root: $root")
-            cleaner.process(normalizeRoot(root))
+            logger.lifecycle("Before cleaning root: $root")
+            cleaner.beforeClean(normalizeRoot(root))
         }
 
         filterRootDirs.forEach { root ->
             logger.lifecycle("Cleaning root: $root")
             cleaner.clean(normalizeRoot(root))
+        }
+
+        filterRootDirs.forEach { root ->
+            logger.lifecycle("After cleaning root: $root")
+            cleaner.afterClean(normalizeRoot(root))
         }
     }
 
