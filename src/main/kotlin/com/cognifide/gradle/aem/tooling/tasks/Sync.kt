@@ -51,7 +51,7 @@ open class Sync : AemDefaultTask() {
 
     private val vlt = VltRunner(aem)
 
-    private val filterRootDirs: List<File>
+    private val filterRootFiles: List<File>
         get() {
             val contentDir = project.file(contentPath)
             if (!contentDir.exists()) {
@@ -106,9 +106,9 @@ open class Sync : AemDefaultTask() {
     }
 
     private fun prepareContent() {
-        logger.info("Preparing files to be cleaned up (before copying new ones) using filter: $filter")
+        logger.info("Preparing files to be cleaned up (before copying new ones) using: $filter")
 
-        filterRootDirs.forEach { root ->
+        filterRootFiles.forEach { root ->
             logger.lifecycle("Preparing root: $root")
             cleaner.prepare(normalizeRoot(root))
         }
@@ -132,15 +132,13 @@ open class Sync : AemDefaultTask() {
     }
 
     private fun cleanContent() {
-        logger.info("Cleaning using $filter")
+        logger.info("Cleaning copied files using: $filter")
 
-        filterRootDirs.forEach { root ->
-            logger.lifecycle("Before cleaning root: $root")
+        filterRootFiles.forEach { root ->
             cleaner.beforeClean(root)
         }
 
-        filterRootDirs.forEach { root ->
-            logger.lifecycle("Cleaning root: $root")
+        filterRootFiles.forEach { root ->
             cleaner.clean(root)
         }
     }

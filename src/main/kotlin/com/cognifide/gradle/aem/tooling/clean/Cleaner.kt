@@ -40,13 +40,6 @@ class Cleaner(project: Project) {
         ))
     }
 
-    private val backupFilesDeleted: PatternFilterable.() -> Unit = {
-        include(listOf(
-                "**/$parentsBackupDirIndicator",
-                "**/*$parentsBackupSuffix"
-        ))
-    }
-
     /**
      * Determines which files will be flattened
      * (e.g /_cq_dialog/.content.xml will be replaced by _cq_dialog.xml).
@@ -306,7 +299,12 @@ class Cleaner(project: Project) {
 
     private fun deleteFiles(root: File) = eachFiles(root, filesDeleted) { deleteFile(it) }
 
-    private fun deleteBackupFiles(root: File) = eachFiles(root, backupFilesDeleted) { deleteFile(it) }
+    private fun deleteBackupFiles(root: File) = eachFiles(root, {
+        include(listOf(
+                "**/$parentsBackupDirIndicator",
+                "**/*$parentsBackupSuffix"
+        ))
+    }) { deleteFile(it) }
 
     private fun deleteFile(file: File) {
         if (!file.exists()) {
