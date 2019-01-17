@@ -145,14 +145,12 @@ class Cleaner(project: Project) {
     }
 
     private fun eachFiles(root: File, filter: PatternFilterable.() -> Unit, action: (File) -> Unit) {
-        val normalizedRoot = Root.normalize(root)
-
-        val rootFilter: PatternFilterable.() -> Unit = if (normalizedRoot.isDirectory) {
-            { include("**/${normalizedRoot.name}/**") }
+        val rootFilter: PatternFilterable.() -> Unit = if (root.isDirectory) {
+            { include("**/${root.name}/**") }
         } else {
-            { include(normalizedRoot.name) }
+            { include(root.name) }
         }
-        aem.project.fileTree(normalizedRoot.parent).matching(rootFilter).matching(filter).forEach(action)
+        aem.project.fileTree(root.parent).matching(rootFilter).matching(filter).forEach(action)
     }
 
     private fun cleanDotContents(root: File) = eachFiles(root, filesDotContent) { cleanDotContentFile(it) }
@@ -320,25 +318,21 @@ class Cleaner(project: Project) {
     }
 
     private fun deleteEmptyDirs(root: File) {
-        val normalizedRoot = Root.normalize(root)
-
-        if (!normalizedRoot.exists() || normalizedRoot.isFile) {
+        if (!root.exists() || root.isFile) {
             return
         }
 
-        val siblingDirs = normalizedRoot.listFiles { file -> file.isDirectory } ?: arrayOf()
+        val siblingDirs = root.listFiles { file -> file.isDirectory } ?: arrayOf()
         siblingDirs.forEach { deleteEmptyDirs(it) }
-        if (EmptyFileFilter.EMPTY.accept(normalizedRoot)) {
-            aem.logger.info("Deleting empty directory {}", normalizedRoot.path)
-            FileUtils.deleteQuietly(normalizedRoot)
+        if (EmptyFileFilter.EMPTY.accept(root)) {
+            aem.logger.info("Deleting empty directory {}", root.path)
+            FileUtils.deleteQuietly(root)
         }
     }
 
     private fun doParentsBackup(root: File) {
-        val normalizedRoot = Root.normalize(root)
-
-        normalizedRoot.parentFile.mkdirs()
-        eachParentFiles(normalizedRoot) { parent, siblingFiles ->
+        root.parentFile.mkdirs()
+        eachParentFiles(root) { parent, siblingFiles ->
             parent.mkdirs()
             if (File(parent, parentsBackupDirIndicator).createNewFile()) {
                 siblingFiles.filter { !it.name.endsWith(parentsBackupSuffix) }
@@ -360,9 +354,7 @@ class Cleaner(project: Project) {
     }
 
     private fun undoParentsBackup(root: File) {
-        val normalizedRoot = Root.normalize(root)
-
-        eachParentFiles(normalizedRoot) { _, siblingFiles ->
+        eachParentFiles(root) { _, siblingFiles ->
             if (siblingFiles.any { it.name == parentsBackupDirIndicator }) {
                 siblingFiles.filter { !it.name.endsWith(parentsBackupSuffix) }.forEach { FileUtils.deleteQuietly(it) }
                 siblingFiles.filter { it.name.endsWith(parentsBackupSuffix) }.forEach { backup ->

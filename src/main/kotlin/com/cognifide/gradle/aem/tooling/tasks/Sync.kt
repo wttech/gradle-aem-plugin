@@ -6,6 +6,7 @@ import com.cognifide.gradle.aem.common.AemTask
 import com.cognifide.gradle.aem.common.Formats
 import com.cognifide.gradle.aem.pkg.PackageDownloader
 import com.cognifide.gradle.aem.tooling.clean.Cleaner
+import com.cognifide.gradle.aem.tooling.clean.Root
 import com.cognifide.gradle.aem.tooling.vlt.VltRunner
 import java.io.File
 import org.gradle.api.tasks.Internal
@@ -102,12 +103,13 @@ open class Sync : AemDefaultTask() {
             }
         }
     }
+
     private fun prepareContent() {
         logger.info("Preparing files to be cleaned up (before copying new ones) using filter: $filter")
 
         filterRootDirs.forEach { root ->
             logger.lifecycle("Preparing root: $root")
-            cleaner.prepare(root)
+            cleaner.prepare(Root.normalize(root))
         }
     }
 
@@ -133,12 +135,12 @@ open class Sync : AemDefaultTask() {
 
         filterRootDirs.forEach { root ->
             logger.lifecycle("Processing root: $root")
-            cleaner.process(root)
+            cleaner.process(Root.normalize(root))
         }
 
         filterRootDirs.forEach { root ->
             logger.lifecycle("Cleaning root: $root")
-            cleaner.clean(root)
+            cleaner.clean(Root.normalize(root))
         }
     }
 
