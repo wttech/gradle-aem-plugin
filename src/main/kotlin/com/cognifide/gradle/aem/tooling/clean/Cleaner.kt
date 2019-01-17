@@ -34,11 +34,16 @@ class Cleaner(project: Project) {
     @Input
     var filesDeleted: PatternFilterable.() -> Unit = {
         include(listOf(
-                "**/$parentsBackupDirIndicator",
-                "**/*$parentsBackupSuffix",
                 "**/.vlt",
                 "**/.vlt*.tmp",
                 "**/install/*.jar"
+        ))
+    }
+
+    private val backupFilesDeleted: PatternFilterable.() -> Unit = {
+        include(listOf(
+                "**/$parentsBackupDirIndicator",
+                "**/*$parentsBackupSuffix"
         ))
     }
 
@@ -141,17 +146,8 @@ class Cleaner(project: Project) {
         cleanDotContents(root)
 
         deleteFiles(root)
+        deleteBackupFiles(root)
         deleteEmptyDirs(root)
-    }
-
-    fun afterClean(root: File) {
-        val filter: PatternFilterable.() -> Unit = {
-            include(listOf(
-                    "**/$parentsBackupDirIndicator",
-                    "**/*$parentsBackupSuffix"
-            ))
-        }
-        eachFiles(root, filter) { deleteFile(it) }
     }
 
     private fun eachFiles(root: File, filter: PatternFilterable.() -> Unit, action: (File) -> Unit) {
@@ -309,6 +305,8 @@ class Cleaner(project: Project) {
     }
 
     private fun deleteFiles(root: File) = eachFiles(root, filesDeleted) { deleteFile(it) }
+
+    private fun deleteBackupFiles(root: File) = eachFiles(root, backupFilesDeleted) { deleteFile(it) }
 
     private fun deleteFile(file: File) {
         if (!file.exists()) {
