@@ -62,7 +62,7 @@ open class Sync : AemDefaultTask() {
             return filter.rootDirs(contentDir)
         }
 
-    private val filterNormalizedRootDirs by lazy { filterRootDirs.map { normalizeRoot(it) } }
+    private val filterNormalizedRootDirs by lazy { filterRootDirs.map { normalizeRoot(it) }.distinct() }
 
     fun cleaner(options: Cleaner.() -> Unit) {
         cleaner.apply(options)
