@@ -1,8 +1,15 @@
 package com.cognifide.gradle.aem.tooling.tail
 
 import java.io.BufferedReader
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
 
-class Tailer(private val source: LogSource, private val destination: LogDestination, val name: String = "") {
+class Tailer(
+    private val source: LogSource,
+    private val destination: LogDestination,
+    private val logsAnalyzerChannel: Channel<Log>? = null
+) {
 
     private val parser = Parser()
 
@@ -14,8 +21,15 @@ class Tailer(private val source: LogSource, private val destination: LogDestinat
 
         if (newLogs.isNotEmpty()) {
             lastLogChecksum = newLogs.last().checksum
-
+            sendLogsToBeAnalyzed(newLogs)
             destination.dump(newLogs)
+        }
+    }
+
+    private fun sendLogsToBeAnalyzed(newLogs: List<Log>) {
+        if (logsAnalyzerChannel == null) return
+        GlobalScope.launch {
+            newLogs.forEach { logsAnalyzerChannel.send(it) }
         }
     }
 
@@ -27,14 +41,6 @@ class Tailer(private val source: LogSource, private val destination: LogDestinat
             else -> logs.slice(logs.indexOf(lastFetchedLog) + 1 until logs.size)
         }
     }
-
-//    class Analyzer(private val notifier: NotifierFacade) {
-//        fun reviewForErrors(newLogs: List<Log>) {
-//            newLogs.filter { it.level == "ERROR" }.forEach {
-//                notifier.notify("Error on ", it.text)
-//            }
-//        }
-//    }
 }
 
 interface LogDestination {

@@ -52,14 +52,14 @@ class TailerTest {
         assertEquals(10, logsList.size)
 
         logsList.first().apply {
-            assertEquals("14.01.2019 12:19:48.350", timestamp)
+            assertEquals(Log.parseTimestamp("14.01.2019 12:19:48.350"), timestamp)
             assertEquals("INFO", level)
             assertEquals("[0:0:0:0:0:0:0:1 [1547464785823] GET /rge.etkrggtkgk/etkrggtkgk/gaegkgr/ragrae/gaegkgr.gkg.rk HTTP/1.1]", source)
             assertEquals("egg.erggr.gaegkgr.gk.etkrggtkgk.kgrt.HggtLkgaeaeMegegraIgrt Sgeag ggktrkgg JS tkgaeae: /tkgk/etkrggtkgk/gaegkgr/ragrae/gaegkgr (gkgkpkrr)", message)
             assertEquals("c298a80e1b5083dea0c9dbf12b045a67", checksum)
         }
         logsList.last().apply {
-            assertEquals("14.01.2019 12:20:43.111", timestamp)
+            assertEquals(Log.parseTimestamp("14.01.2019 12:20:43.111"), timestamp)
             assertEquals("ERROR", level)
             assertEquals("[gea-arrgkkggae-rtreggga-1] egg.erggr.gaegkgr.arrgkkggae Sragker [6848, [gag.ereeer.reeaaeggkg.gea.erk.rgt.SrkkkggMBreg]]", source)
             assertEquals("SragkerEgrgg REGISTERED", message)
@@ -80,14 +80,14 @@ class TailerTest {
         assertEquals(4, logsList.size)
 
         logsList[0].apply {
-            assertEquals("14.01.2019 12:20:05.242", timestamp)
+            assertEquals(Log.parseTimestamp("14.01.2019 12:20:05.242"), timestamp)
             assertEquals("WARN", level)
             assertEquals("[0:0:0:0:0:0:0:1 [1547464792884] GET /llr.resllleskr/resllleskr/rcslsll/rrcsess3.fsl.cr HTTP/1.1]", source)
             assertEquals(MockSource.text("com/cognifide/gradle/aem/test/tail/aggregating/multiline/multiline-short.log"), message)
             assertEquals("148a7ab608478f4a609d428a28773fc8", checksum)
         }
         logsList[2].apply {
-            assertEquals("14.01.2019 12:04:58.535", timestamp)
+            assertEquals(Log.parseTimestamp("14.01.2019 12:04:58.535"), timestamp)
             assertEquals("WARN", level)
             assertEquals("[reslr-rsf-rkrlcsslsrl-2]", source)
             assertEquals(MockSource.text("com/cognifide/gradle/aem/test/tail/aggregating/multiline/multiline-long.log"), message)
@@ -108,7 +108,7 @@ class TailerTest {
         assertEquals(3, logsList.size)
 
         logsList.first().apply {
-            assertEquals("14.01.2019 12:20:05.242", timestamp)
+            assertEquals(Log.parseTimestamp("14.01.2019 12:20:05.242"), timestamp)
             assertEquals("6fe84dd875d8ca95b4f061a57b3c815d", checksum)
         }
     }
@@ -131,11 +131,11 @@ class TailerTest {
         assertEquals(11, logs.size)
 
         logs.first().apply {
-            assertEquals("14.01.2019 12:04:54.613", timestamp)
+            assertEquals(Log.parseTimestamp("14.01.2019 12:04:54.613"), timestamp)
             assertEquals("d37f9ce5287800493de0b6ef5bb43338", checksum)
         }
         logs.last().apply {
-            assertEquals("14.01.2019 12:04:58.773", timestamp)
+            assertEquals(Log.parseTimestamp("14.01.2019 12:04:58.773"), timestamp)
             assertEquals("68b331e94d5fe5ec182207198b149535", checksum)
         }
     }
@@ -158,11 +158,11 @@ class TailerTest {
         assertEquals(10, logs.size)
 
         logs.first().apply {
-            assertEquals("14.01.2019 12:04:54.613", timestamp)
+            assertEquals(Log.parseTimestamp("14.01.2019 12:04:54.613"), timestamp)
             assertEquals("1310668b557d5e87686385dfd8c82bdb", checksum)
         }
         logs.last().apply {
-            assertEquals("14.01.2019 12:04:58.773", timestamp)
+            assertEquals(Log.parseTimestamp("14.01.2019 12:04:58.773"), timestamp)
             assertEquals("7071e8cc64b8d3821dea686b20ba5b58", checksum)
         }
     }
@@ -185,11 +185,11 @@ class TailerTest {
         assertEquals(5, logs.size)
 
         logs.first().apply {
-            assertEquals("14.01.2019 12:04:54.613", timestamp)
+            assertEquals(Log.parseTimestamp("14.01.2019 12:04:54.613"), timestamp)
             assertEquals("1310668b557d5e87686385dfd8c82bdb", checksum)
         }
         logs.last().apply {
-            assertEquals("14.01.2019 12:04:58.519", timestamp)
+            assertEquals(Log.parseTimestamp("14.01.2019 12:04:58.519"), timestamp)
             assertEquals("b410a72d5bc75b608c2c6f0014f9d88b", checksum)
         }
     }
