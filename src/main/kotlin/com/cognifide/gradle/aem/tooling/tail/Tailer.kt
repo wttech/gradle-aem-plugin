@@ -9,9 +9,7 @@ class Tailer(private val source: LogSource, private val destination: LogDestinat
     private var lastLogChecksum = ""
 
     fun tail() {
-        val logs = source.processChunk { chunkReader ->
-            parser.parseLogs(chunkReader)
-        }
+        val logs = source.processChunk(parser::parseLogs)
         val newLogs = determineNewLogs(logs)
 
         if (newLogs.isNotEmpty()) {
@@ -21,8 +19,7 @@ class Tailer(private val source: LogSource, private val destination: LogDestinat
     }
 
     private fun determineNewLogs(logs: List<Log>): List<Log> {
-        val reversedLogs = logs.reversed()
-        val lastFetchedLog = reversedLogs.find { log -> lastLogChecksum == log.checksum }
+        val lastFetchedLog = logs.asReversed().find { lastLogChecksum == it.checksum }
         return when {
             lastFetchedLog == null -> logs
             logs.last() === lastFetchedLog -> emptyList()
