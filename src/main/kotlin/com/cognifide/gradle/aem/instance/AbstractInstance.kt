@@ -1,14 +1,14 @@
 package com.cognifide.gradle.aem.instance
 
+import com.cognifide.gradle.aem.common.AemExtension
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.apache.commons.lang3.builder.EqualsBuilder
 import org.apache.commons.lang3.builder.HashCodeBuilder
-import org.gradle.api.Project
 
 abstract class AbstractInstance(
     @Transient
     @JsonIgnore
-    protected val project: Project
+    protected val aem: AemExtension
 ) : Instance {
 
     override var properties = mapOf<String, Any>()
@@ -18,7 +18,7 @@ abstract class AbstractInstance(
     }
 
     override val sync: InstanceSync
-        get() = InstanceSync(project, this)
+        get() = InstanceSync(aem, this)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

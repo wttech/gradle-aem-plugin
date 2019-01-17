@@ -4,6 +4,7 @@ import com.cognifide.gradle.aem.bundle.BundleJar
 import com.cognifide.gradle.aem.bundle.BundlePlugin
 import com.cognifide.gradle.aem.common.*
 import com.cognifide.gradle.aem.common.file.FileOperations
+import com.cognifide.gradle.aem.common.tasks.Zip
 import com.cognifide.gradle.aem.pkg.Package
 import com.cognifide.gradle.aem.pkg.PackageFileFilter
 import com.cognifide.gradle.aem.pkg.PackagePlugin
@@ -17,13 +18,9 @@ import org.gradle.api.file.CopySpec
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.tasks.*
 import org.gradle.api.tasks.bundling.Jar
-import org.gradle.api.tasks.bundling.Zip
 import org.jsoup.nodes.Element
 
 open class Compose : Zip(), AemTask {
-
-    @Nested
-    final override val aem = AemExtension.of(project)
 
     /**
      * Absolute path to JCR content to be included in CRX package.
@@ -163,11 +160,8 @@ open class Compose : Zip(), AemTask {
 
     init {
         description = "Composes CRX package from JCR content and built OSGi bundles"
-        group = AemTask.GROUP
-
         baseName = aem.baseName
         duplicatesStrategy = DuplicatesStrategy.WARN
-        isZip64 = true
 
         doLast { aem.notifier.notify("Package composed", archiveName) }
     }

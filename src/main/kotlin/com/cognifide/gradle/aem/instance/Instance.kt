@@ -1,11 +1,11 @@
 package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.common.AemException
+import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.Formats
 import com.cognifide.gradle.aem.common.Patterns
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.Serializable
-import org.gradle.api.Project
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 
@@ -112,88 +112,72 @@ interface Instance : Serializable {
 
         const val PASSWORD_DEFAULT = "admin"
 
-        val LOCAL_PROPS = listOf("httpUrl", "password", "jvmOpts", "startOpts", "runModes", "debugPort")
+        const val TYPE_REMOTE = "remote"
 
-        val REMOTE_PROPS = listOf("httpUrl", "user", "password")
+        const val TYPE_LOCAL = "local"
 
-        fun parse(project: Project, str: String): List<RemoteInstance> {
-            return Formats.toList(str).map { RemoteInstance.create(project, it) }
+        val LOCAL_PROPS = listOf("httpUrl", "type", "password", "jvmOpts", "startOpts", "runModes", "debugPort")
+
+        val REMOTE_PROPS = listOf("httpUrl", "type", "user", "password")
+
+        fun parse(aem: AemExtension, str: String): List<RemoteInstance> {
+            return Formats.toList(str).map { RemoteInstance.create(aem, it) }
         }
 
-        fun properties(project: Project): List<Instance> {
-            return localsFromProperties(project) + remotesFromProperties(project)
-        }
-
-        private fun remotesFromProperties(project: Project): List<RemoteInstance> {
-            val remoteInstances = collectProperties(project, "remote").map { e ->
-                val (name, props) = e
+        @Suppress("ComplexMethod")
+        fun properties(aem: AemExtension): List<Instance> {
+            return aem.project.properties.filterKeys {
+                Patterns.wildcard(it, "aem.instance.*.httpUrl")
+            }.keys.map { it.split(".")[2] }.map { name ->
                 val nameParts = name.split("-")
                 if (nameParts.size != 2) {
-                    throw InstanceException("Remote instance name has invalid format: '$name'.")
+                    throw InstanceException("Instance name has invalid format: '$name'.")
                 }
-                val (environment, typeName) = nameParts
-                val httpUrl = props["httpUrl"]
-                        ?: throw InstanceException("Remote instance named '$name' must have property 'httpUrl' defined.")
 
-                RemoteInstance.create(project, httpUrl) {
-                    this.environment = environment
-                    this.typeName = typeName
-
-                    props["user"]?.let { this.user = it }
-                    props["password"]?.let { this.password = it }
-
-                    this.properties = props.filterKeys { !REMOTE_PROPS.contains(it) }
+                val props = aem.project.properties.filterKeys {
+                    Patterns.wildcard(it, "aem.instance.$name.*")
+                }.entries.fold(mutableMapOf<String, String>()) { result, e ->
+                    val (key, value) = e
+                    val prop = key.substringAfter("aem.instance.$name.")
+                    result.apply { put(prop, value as String) }
                 }
-            }.sortedBy { it.name }
-            return remoteInstances
-        }
 
-        private fun localsFromProperties(project: Project): List<LocalInstance> {
-            val localInstances = collectProperties(project, "local").map { e ->
-                val (name, props) = e
-                val nameParts = name.split("-")
-                if (nameParts.size != 2) {
-                    throw InstanceException("Local instance name has invalid format: '$name'.")
-                }
-                val (environment, typeName) = nameParts
                 val httpUrl = props["httpUrl"]
                         ?: throw InstanceException("Local instance named '$name' must have property 'httpUrl' defined.")
+                val type = props["type"] ?: TYPE_REMOTE
+                val (environment, typeName) = nameParts
 
-                LocalInstance.create(project, httpUrl) {
-                    this.environment = environment
-                    this.typeName = typeName
+                when (type) {
+                    TYPE_LOCAL -> LocalInstance.create(aem, httpUrl) {
+                        this.environment = environment
+                        this.typeName = typeName
 
-                    props["password"]?.let { this.password = it }
-                    props["jvmOpts"]?.let { this.jvmOpts = it.split(" ") }
-                    props["startOpts"]?.let { this.startOpts = it.split(" ") }
-                    props["runModes"]?.let { this.runModes = it.split(",") }
-                    props["debugPort"]?.let { this.debugPort = it.toInt() }
+                        props["password"]?.let { this.password = it }
+                        props["jvmOpts"]?.let { this.jvmOpts = it.split(" ") }
+                        props["startOpts"]?.let { this.startOpts = it.split(" ") }
+                        props["runModes"]?.let { this.runModes = it.split(",") }
+                        props["debugPort"]?.let { this.debugPort = it.toInt() }
 
-                    this.properties = props.filterKeys { !LOCAL_PROPS.contains(it) }
+                        this.properties = props.filterKeys { !LOCAL_PROPS.contains(it) }
+                    }
+                    TYPE_REMOTE -> RemoteInstance.create(aem, httpUrl) {
+                        this.environment = environment
+                        this.typeName = typeName
+
+                        props["user"]?.let { this.user = it }
+                        props["password"]?.let { this.password = it }
+
+                        this.properties = props.filterKeys { !REMOTE_PROPS.contains(it) }
+                    }
+                    else -> throw InstanceException("Invalid instance type: '$type'. Supported types: 'local', 'remote'.")
                 }
-            }.sortedBy { it.name }
-            return localInstances
-        }
-
-        private fun collectProperties(project: Project, type: String): MutableMap<String, MutableMap<String, String>> {
-            return project.properties.filterKeys { Patterns.wildcard(it, "aem.instance.$type.*.*") }.entries.fold(mutableMapOf()) { result, e ->
-                val (key, value) = e
-                val parts = key.substringAfter(".$type.").split(".")
-                if (parts.size != 2) {
-                    throw InstanceException("Instance list property '$key' has invalid format.")
-                }
-
-                val (name, prop) = parts
-
-                result.getOrPut(name) { mutableMapOf() }[prop] = value as String
-                result
             }
         }
 
-        fun defaults(project: Project, environment: String): List<RemoteInstance> {
+        fun defaults(aem: AemExtension, environment: String): List<RemoteInstance> {
             return listOf(
-                    RemoteInstance.create(project, URL_AUTHOR_DEFAULT) { this.environment = environment },
-                    RemoteInstance.create(project, URL_PUBLISH_DEFAULT) { this.environment = environment }
+                    RemoteInstance.create(aem, URL_AUTHOR_DEFAULT) { this.environment = environment },
+                    RemoteInstance.create(aem, URL_PUBLISH_DEFAULT) { this.environment = environment }
             )
         }
     }
@@ -202,14 +186,10 @@ interface Instance : Serializable {
 val Collection<Instance>.names: String
     get() = joinToString(", ") { it.name }
 
-fun Collection<Instance>.toLocalHandles(project: Project): List<LocalHandle> {
-    return filterIsInstance(LocalInstance::class.java).map { LocalHandle(project, it) }
+fun Instance.isInitialized(): Boolean {
+    return this !is LocalInstance || initialized
 }
 
-fun Instance.isInitialized(project: Project): Boolean {
-    return this !is LocalInstance || LocalHandle(project, this).initialized
-}
-
-fun Instance.isBeingInitialized(project: Project): Boolean {
-    return this is LocalInstance && !LocalHandle(project, this).initialized
+fun Instance.isBeingInitialized(): Boolean {
+    return this is LocalInstance && !initialized
 }

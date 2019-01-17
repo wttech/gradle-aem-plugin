@@ -17,7 +17,9 @@ open class FileGroup(val downloadDir: File, val name: String) {
 
     protected open fun createResolution(id: String, resolver: (FileResolution) -> File) = FileResolution(this, id, resolver)
 
-    fun resolve(id: String, resolver: (FileResolution) -> File) {
-        _resolutions += createResolution(id, resolver)
+    fun resolve(id: String, resolver: (FileResolution) -> File): FileResolution {
+        return createResolution(id, resolver).apply {
+            _resolutions += this
+        }
     }
 }
