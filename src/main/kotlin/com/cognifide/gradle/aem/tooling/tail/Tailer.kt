@@ -9,11 +9,12 @@ class Tailer(private val source: LogSource, private val destination: LogDestinat
     private var lastLogChecksum = ""
 
     fun tail() {
-        val logs = source.processChunk(parser::parseLogs)
+        val logs = source.readChunk(parser::parseLogs)
         val newLogs = determineNewLogs(logs)
 
         if (newLogs.isNotEmpty()) {
             lastLogChecksum = newLogs.last().checksum
+
             destination.dump(newLogs)
         }
     }
@@ -26,6 +27,14 @@ class Tailer(private val source: LogSource, private val destination: LogDestinat
             else -> logs.slice(logs.indexOf(lastFetchedLog) + 1 until logs.size)
         }
     }
+
+//    class Analyzer(private val notifier: NotifierFacade) {
+//        fun reviewForErrors(newLogs: List<Log>) {
+//            newLogs.filter { it.level == "ERROR" }.forEach {
+//                notifier.notify("Error on ", it.text)
+//            }
+//        }
+//    }
 }
 
 interface LogDestination {
@@ -33,9 +42,5 @@ interface LogDestination {
 }
 
 interface LogSource {
-    fun <T> processChunk(parser: (BufferedReader) -> T): T {
-        return nextReader().use(parser)
-    }
-
-    fun nextReader(): BufferedReader
+    fun <T> readChunk(parser: (BufferedReader) -> T): T
 }

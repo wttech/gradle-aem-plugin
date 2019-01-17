@@ -19,14 +19,14 @@ class TailerTest {
             addAll(resources.reversed().map { MockSource.reader(it) })
         }
 
-        override fun nextReader(): BufferedReader = streamsStack.pop()
+        override fun <T> readChunk(parser: (BufferedReader) -> T): T = streamsStack.pop().use(parser)
 
         companion object {
             fun reader(resource: String) = BufferedReader(InputStreamReader(GFileUtils.openInputStream(file(resource))))
 
-            private fun file(resource: String) = File(this::class.java.classLoader.getResource(resource).file)
-
             fun text(resource: String): String = FileUtils.readFileToString(file(resource), "UTF8")
+
+            private fun file(resource: String) = File(this::class.java.classLoader.getResource(resource).file)
         }
 
     }
