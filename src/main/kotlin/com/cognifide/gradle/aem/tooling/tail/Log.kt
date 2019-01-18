@@ -1,8 +1,8 @@
 package com.cognifide.gradle.aem.tooling.tail
 
 import com.cognifide.gradle.aem.common.Formats
-import org.gradle.internal.impldep.org.joda.time.LocalDateTime
-import org.gradle.internal.impldep.org.joda.time.format.DateTimeFormat
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 class Log(
     val text: String,
@@ -17,7 +17,7 @@ class Log(
 
     fun isError() = level == "ERROR"
 
-    fun isOlderThan(minutes: Int) = LocalDateTime.now().minusMinutes(minutes).isAfter(timestamp)
+    fun isOlderThan(minutes: Long) = LocalDateTime.now().minusMinutes(minutes).isAfter(timestamp)
 
     companion object {
         private const val TIMESTAMP = """(?<timestamp>[0-9]{2}\.[0-9]{2}\.[0-9]{4}\s[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{3})"""
@@ -26,6 +26,7 @@ class Log(
         private const val MESSAGE = """(?<message>.*)"""
         private const val LOG_PATTERN = "$TIMESTAMP\\s$LEVEL\\s$SOURCE\\s$MESSAGE"
         private const val DATE_TIME_FORMAT = "dd.MM.yyyy HH:mm:ss.SSS"
+        private val DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern(DATE_TIME_FORMAT)
 
         fun create(logLines: List<String>): Log {
             if (logLines.isEmpty() || logLines.first().isBlank()) throw TailException("Passed log entry is empty!")
@@ -45,7 +46,7 @@ class Log(
         fun isFirstLineOfLog(text: String) = matchLogLine(text) != null
 
         fun parseTimestamp(timestamp: String): LocalDateTime {
-            return DateTimeFormat.forPattern(DATE_TIME_FORMAT).parseLocalDateTime(timestamp)
+            return LocalDateTime.parse(timestamp, DATE_TIME_FORMATTER)
                     ?: throw TailException("Invalid timestamp in log:\n$timestamp\n required format: $DATE_TIME_FORMAT")
         }
 
