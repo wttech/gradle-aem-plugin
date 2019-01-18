@@ -17,7 +17,7 @@ class Log(
 
     fun isError() = level == "ERROR"
 
-    fun isOlderThan(minutes: Long) = LocalDateTime.now().minusMinutes(minutes).isAfter(timestamp)
+    fun isOlderThan(minutes: Long = 0, seconds: Long = 0) = LocalDateTime.now().minusMinutes(minutes).minusSeconds(seconds).isAfter(timestamp)
 
     companion object {
         private const val TIMESTAMP = """(?<timestamp>[0-9]{2}\.[0-9]{2}\.[0-9]{4}\s[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{3})"""
