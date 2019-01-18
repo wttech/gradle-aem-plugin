@@ -56,7 +56,7 @@ class LocalInstanceOptions(aem: AemExtension, downloadDir: File) {
      * Wildcard file name filter expression that is used to filter in which instance files properties can be injected.
      */
     var expandFiles: List<String> = listOf(
-            "**/start.sh",
+            "**/start.bat",
             "**/stop.bat",
             "**/start",
             "**/stop"

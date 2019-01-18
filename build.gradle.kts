@@ -57,7 +57,8 @@ tasks {
         dependsOn("classes")
         from(sourceSets["main"].allSource)
     }
-
+    named("build") { dependsOn("sourcesJar") }
+    named("publishToMavenLocal") { dependsOn("sourcesJar") }
     named<ProcessResources>("processResources") {
         doLast {
             file("$buildDir/resources/main/build.json").printWriter().use {
