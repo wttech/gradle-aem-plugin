@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem.tooling.tasks
 
 import com.cognifide.gradle.aem.common.AemDefaultTask
-import com.cognifide.gradle.aem.common.AemTask
 import com.cognifide.gradle.aem.instance.Instance
 import com.cognifide.gradle.aem.tooling.tail.*
 import kotlinx.coroutines.ObsoleteCoroutinesApi
@@ -14,6 +13,8 @@ import org.gradle.process.internal.shutdown.ShutdownHooks
 
 @UseExperimental(ObsoleteCoroutinesApi::class)
 open class Tail : AemDefaultTask() {
+
+    private val logFileCreator = LogFiles(aem)
 
     @TaskAction
     fun tail() {
@@ -36,17 +37,16 @@ open class Tail : AemDefaultTask() {
 
     private fun createAllTailers(): List<Tailer> {
         val notificationChannel = Channel<ProblematicLogs>(Channel.UNLIMITED)
-        LogNotifier(notificationChannel, aem.notifier)
+        LogNotifier(notificationChannel, aem.notifier, logFileCreator)
         return aem.instances.map { create(it, notificationChannel) }
     }
 
     private fun create(instance: Instance, notificationChannel: Channel<ProblematicLogs>): Tailer {
         val source = InstanceLogSource(instance)
-        val destinationFile = AemTask.temporaryFile(aem.project, "$name/${instance.name}", "error.log")
-        val destination = FileLogDestination(destinationFile)
+        val destination = FileLogDestination(instance.name, logFileCreator)
         val logsAnalyzerChannel = Channel<Log>(Channel.UNLIMITED)
         LogAnalyzer(instance.name, logsAnalyzerChannel, notificationChannel)
-        logger.lifecycle("Creating log tailer for ${instance.name} (${instance.httpUrl}) -> ${destinationFile.path}")
+        logger.lifecycle("Creating log tailer for ${instance.name} (${instance.httpUrl}) -> ${logFileCreator.mainUri(instance.name)}")
         return Tailer(source, destination, logsAnalyzerChannel)
     }
 

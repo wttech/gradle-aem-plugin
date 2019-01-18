@@ -2,13 +2,13 @@ package com.cognifide.gradle.aem.tooling.tail
 
 import java.io.BufferedReader
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
 
 class Tailer(
     private val source: LogSource,
     private val destination: LogDestination,
-    private val logsAnalyzerChannel: Channel<Log>? = null
+    private val logsAnalyzerChannel: SendChannel<Log>? = null
 ) {
 
     private val parser = Parser()
