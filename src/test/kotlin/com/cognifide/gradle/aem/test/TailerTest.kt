@@ -195,14 +195,14 @@ class TailerTest {
     }
 
     @Test
-    fun shouldFilterOutBlacklistedErrors(){
+    fun shouldFilterOutBlacklistedErrors() {
         //given
         val parser = Parser()
         val logsFile = "com/cognifide/gradle/aem/test/tail/blacklist/errors-blacklist.log"
         val logsList = parser.parseLogs(MockSource.reader(logsFile))
 
         //when
-        val blacklist = Blacklist(arrayOf(logsFile))
+        val blacklist = Blacklist(blacklists = arrayOf(logsFile))
 
         //then
         assertTrue(blacklist.isBlacklisted(logsList.first()))
@@ -210,16 +210,44 @@ class TailerTest {
     }
 
     @Test
-    fun shouldLetGoErrorsThatWereNotBlacklisted(){
+    fun shouldLetGoErrorsThatWereNotBlacklisted() {
         //given
         val parser = Parser()
         val logsList = parser.parseLogs(MockSource.reader("com/cognifide/gradle/aem/test/tail/10-logs-error.log"))
 
         //when
-        val blacklist = Blacklist(arrayOf("com/cognifide/gradle/aem/test/tail/blacklist/errors-blacklist.log"))
+        val blacklist = Blacklist(blacklists = arrayOf("com/cognifide/gradle/aem/test/tail/blacklist/errors-blacklist.log"))
 
         //then
         assertFalse(blacklist.isBlacklisted(logsList.first()))
         assertFalse(blacklist.isBlacklisted(logsList.last()))
+    }
+
+    @Test
+    fun shouldFilterOutAllErrorsBasedOnLambdas() {
+        //given
+        val filter: (Log) -> Boolean = { log -> log.message.isNotEmpty() }
+
+        //when
+        val blacklist = Blacklist(filters = listOf(filter))
+
+        //then
+        assertTrue(blacklist.isBlacklisted(Log.create(listOf("14.01.2019 12:20:43.111 *ERROR* " +
+                "[gea-arrgkkggae-rtreggga-1] egg.erggr.gaegkgr.arrgkkggae Sragker " +
+                "[6848, [gag.ereeer.reeaaeggkg.gea.erk.rgt.SrkkkggMBreg]] SragkerEgrgg REGISTERED"))))
+    }
+
+    @Test
+    fun shouldLetGoAllErrorsBasedOnLambdas() {
+        //given
+        val filter: (Log) -> Boolean = { log -> log.message.isEmpty() }
+
+        //when
+        val blacklist = Blacklist(filters = listOf(filter))
+
+        //then
+        assertFalse(blacklist.isBlacklisted(Log.create(listOf("14.01.2019 12:20:43.111 *ERROR* " +
+                "[gea-arrgkkggae-rtreggga-1] egg.erggr.gaegkgr.arrgkkggae Sragker " +
+                "[6848, [gag.ereeer.reeaaeggkg.gea.erk.rgt.SrkkkggMBreg]] SragkerEgrgg REGISTERED"))))
     }
 }

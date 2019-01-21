@@ -9,6 +9,7 @@ import com.cognifide.gradle.aem.instance.*
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.Compose
 import com.cognifide.gradle.aem.tooling.*
+import com.cognifide.gradle.aem.tooling.tail.TailConfig
 import com.cognifide.gradle.aem.tooling.vlt.VltException
 import com.cognifide.gradle.aem.tooling.vlt.VltFilter
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -340,6 +341,13 @@ open class AemExtension(@Internal val project: Project) {
     fun temporaryDir(task: Task) = temporaryDir(task.name)
 
     fun temporaryDir(name: String) = AemTask.temporaryDir(project, name)
+
+    @Nested
+    val tailConfig = TailConfig()
+
+    fun logTailing(configure: TailConfig.() -> Unit) {
+        tailConfig.apply(configure)
+    }
 
     companion object {
 

@@ -16,12 +16,11 @@ class LogAnalyzer(
     private val instanceName: String,
     private val logsChannel: ReceiveChannel<Log>,
     private val notificationChannel: SendChannel<ProblematicLogs>,
-    vararg blacklists: String
+    private val blacklist: Blacklist = Blacklist()
 ) {
 
     private val errorsChannel = Channel<Log>(Channel.UNLIMITED)
     private var aggregatedErrors = mutableListOf<Log>()
-    private val blacklist = Blacklist(blacklists)
 
     init {
         GlobalScope.launch {
@@ -63,7 +62,10 @@ class ProblematicLogs(val instanceName: String, val logs: List<Log>) {
     val size = logs.size
 }
 
-class Blacklist(private val blacklists: Array<out String>) {
+class Blacklist(
+    private val filters: List<(Log) -> Boolean> = emptyList(),
+    private val blacklists: Array<String> = emptyArray()
+) {
     private val blacklist = loadBlacklist()
 
     private fun loadBlacklist(): Map<String, Log> {
@@ -75,5 +77,5 @@ class Blacklist(private val blacklists: Array<out String>) {
         }.flatten().map { it.messageChecksum to it }.toMap()
     }
 
-    fun isBlacklisted(log: Log) = blacklist.containsKey(log.messageChecksum)
+    fun isBlacklisted(log: Log) = blacklist.containsKey(log.messageChecksum) || !filters.none { it(log) }
 }
