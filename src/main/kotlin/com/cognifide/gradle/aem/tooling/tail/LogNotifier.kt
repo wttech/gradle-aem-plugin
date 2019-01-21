@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.tooling.tail
 
 import com.cognifide.gradle.aem.common.NotifierFacade
+import com.cognifide.gradle.aem.tooling.tail.io.LogFiles
 import java.net.URI
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.ObsoleteCoroutinesApi
@@ -19,7 +20,7 @@ class LogNotifier(
         GlobalScope.launch {
             notificationChannel.consumeEach { logs ->
                 val file = snapshotErrorsToSeparateFile(logs)
-                notifier.notifyLogError("${logs.size} errors on ${logs.instanceName} (click to open)", logs.logs.last().message, file)
+                notifier.notifyLogError("${logs.size} errors on ${logs.instanceName}", "Click to open incident log:\n${logs.logs.last().message}", file)
             }
         }
     }

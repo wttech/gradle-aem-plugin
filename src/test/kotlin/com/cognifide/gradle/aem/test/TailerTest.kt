@@ -3,7 +3,7 @@ package com.cognifide.gradle.aem.test
 import com.cognifide.gradle.aem.tooling.tail.*
 import org.apache.commons.io.FileUtils
 import org.gradle.util.GFileUtils
-import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.io.BufferedReader
 import java.io.File
@@ -192,5 +192,34 @@ class TailerTest {
             assertEquals(Log.parseTimestamp("14.01.2019 12:04:58.519"), timestamp)
             assertEquals("b410a72d5bc75b608c2c6f0014f9d88b", checksum)
         }
+    }
+
+    @Test
+    fun shouldFilterOutBlacklistedErrors(){
+        //given
+        val parser = Parser()
+        val logsFile = "com/cognifide/gradle/aem/test/tail/blacklist/errors-blacklist.log"
+        val logsList = parser.parseLogs(MockSource.reader(logsFile))
+
+        //when
+        val blacklist = Blacklist(arrayOf(logsFile))
+
+        //then
+        assertTrue(blacklist.isBlacklisted(logsList.first()))
+        assertTrue(blacklist.isBlacklisted(logsList.last()))
+    }
+
+    @Test
+    fun shouldLetGoErrorsThatWereNotBlacklisted(){
+        //given
+        val parser = Parser()
+        val logsList = parser.parseLogs(MockSource.reader("com/cognifide/gradle/aem/test/tail/10-logs-error.log"))
+
+        //when
+        val blacklist = Blacklist(arrayOf("com/cognifide/gradle/aem/test/tail/blacklist/errors-blacklist.log"))
+
+        //then
+        assertFalse(blacklist.isBlacklisted(logsList.first()))
+        assertFalse(blacklist.isBlacklisted(logsList.last()))
     }
 }

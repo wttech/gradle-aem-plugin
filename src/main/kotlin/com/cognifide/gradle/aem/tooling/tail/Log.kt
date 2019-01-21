@@ -6,14 +6,15 @@ import java.time.format.DateTimeFormatter
 
 class Log(
     val text: String,
-    val checksum: String,
     val timestamp: LocalDateTime,
     val level: String,
     val source: String,
     messageLines: List<String>
 ) {
 
+    val checksum = Formats.calculateChecksum(text)
     val message = messageLines.joinToString("\n")
+    val messageChecksum = Formats.calculateChecksum(message)
 
     fun isError() = level == "ERROR"
 
@@ -31,14 +32,13 @@ class Log(
         fun create(logLines: List<String>): Log {
             if (logLines.isEmpty() || logLines.first().isBlank()) throw TailException("Passed log entry is empty!")
             val fullLog = logLines.joinToString("\n")
-            val checksum = Formats.calculateChecksum(fullLog)
             val result = matchLogLine(logLines.first())
             when (result) {
                 null -> throw TailException("Passed text is not a log entry\nPattern:\n$LOG_PATTERN\nText:\n${logLines.first()}")
                 else -> {
                     val (timestamp, level, source, message) = result.destructured
                     val followingMessageLines = logLines.slice(1 until logLines.size)
-                    return Log(fullLog, checksum, parseTimestamp(timestamp), level, source, listOf(message) + followingMessageLines)
+                    return Log(fullLog, parseTimestamp(timestamp), level, source, listOf(message) + followingMessageLines)
                 }
             }
         }

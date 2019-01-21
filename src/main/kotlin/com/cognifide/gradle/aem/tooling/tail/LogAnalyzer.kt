@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.tooling.tail
 
+import com.cognifide.gradle.aem.tooling.tail.io.LogFiles
 import com.cognifide.gradle.aem.tooling.tasks.Tail
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.ObsoleteCoroutinesApi
@@ -14,11 +15,13 @@ import kotlinx.coroutines.launch
 class LogAnalyzer(
     private val instanceName: String,
     private val logsChannel: ReceiveChannel<Log>,
-    private val notificationChannel: SendChannel<ProblematicLogs>
+    private val notificationChannel: SendChannel<ProblematicLogs>,
+    vararg blacklists: String
 ) {
 
     private val errorsChannel = Channel<Log>(Channel.UNLIMITED)
     private var aggregatedErrors = mutableListOf<Log>()
+    private val blacklist = Blacklist(blacklists)
 
     init {
         GlobalScope.launch {
@@ -26,7 +29,7 @@ class LogAnalyzer(
                 when {
                     log.isOlderThan(minutes = 1) -> {
                     }
-                    log.isError() -> errorsChannel.send(log)
+                    log.isError() && !blacklist.isBlacklisted(log) -> errorsChannel.send(log)
                 }
             }
         }
@@ -45,7 +48,7 @@ class LogAnalyzer(
 
     private suspend fun checkIfErrorsCannonadeEnded() {
         if (aggregatedErrors.isEmpty()) return
-        if (aggregatedErrors.last().isOlderThan(seconds = Tail.DELAY_TO_SHOW_ERROR_NOTIFICATION_IN_SEC)) {
+        if (aggregatedErrors.last().isOlderThan(seconds = Tail.DELAY_TO_SHOW_NOTIFICATION_AFTER_LAST_ERROR_IN_SEC)) {
             notificationChannel.send(ProblematicLogs(instanceName, aggregatedErrors))
             aggregatedErrors = mutableListOf()
         }
@@ -58,4 +61,19 @@ class LogAnalyzer(
 
 class ProblematicLogs(val instanceName: String, val logs: List<Log>) {
     val size = logs.size
+}
+
+class Blacklist(private val blacklists: Array<out String>) {
+    private val blacklist = loadBlacklist()
+
+    private fun loadBlacklist(): Map<String, Log> {
+        val parser = Parser()
+        return blacklists.map { logFile ->
+            LogFiles.readClasspathOrPath(logFile) { reader ->
+                parser.parseLogs(reader)
+            }
+        }.flatten().map { it.messageChecksum to it }.toMap()
+    }
+
+    fun isBlacklisted(log: Log) = blacklist.containsKey(log.messageChecksum)
 }
