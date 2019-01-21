@@ -8,6 +8,7 @@ import com.cognifide.gradle.aem.tooling.tasks.Tail
 import java.io.*
 import java.net.URI
 import java.net.URL
+import org.apache.commons.io.FileUtils
 import org.gradle.util.GFileUtils
 
 class LogFiles(private val aem: AemExtension) {
@@ -15,6 +16,9 @@ class LogFiles(private val aem: AemExtension) {
     fun mainUri(instanceName: String) = uri(main(instanceName))
 
     fun clearMain(instanceName: String) = main(instanceName).bufferedWriter().use { it.write("") }
+
+    fun clearSnapshots(instanceName: String) =
+            FileUtils.deleteDirectory(AemTask.temporaryDir(aem.project, Tail.NAME, "$instanceName/snapshots"))
 
     fun writeToSnapshot(instanceName: String, writerBlock: (BufferedWriter) -> Unit): URI {
         val snapshotFile = snapshot(instanceName)
