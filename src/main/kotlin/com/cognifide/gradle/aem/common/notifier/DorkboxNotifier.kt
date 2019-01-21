@@ -12,14 +12,14 @@ class DorkboxNotifier(
 ) : BaseNotifier {
 
     @Suppress("TooGenericExceptionCaught")
-    override fun notify(title: String, text: String, level: LogLevel, clickActionHandler: (Notify) -> Unit) {
+    override fun notify(title: String, text: String, level: LogLevel, onClick: (Notify) -> Unit) {
         try {
             Notify.create()
                     .apply(configurer)
                     .apply {
                         title(title)
                         text(StringUtils.replace(text, "\n", "<br>"))
-                        onAction(clickActionHandler)
+                        onAction(onClick)
                     }
                     .show()
         } catch (e: Exception) {
