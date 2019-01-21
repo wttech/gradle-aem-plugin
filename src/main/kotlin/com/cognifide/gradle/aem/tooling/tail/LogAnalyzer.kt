@@ -64,7 +64,7 @@ class ProblematicLogs(val instanceName: String, val logs: List<Log>) {
 
 class Blacklist(
     private val filters: List<(Log) -> Boolean> = emptyList(),
-    private val blacklists: Array<String> = emptyArray()
+    private val blacklists: List<String> = emptyList()
 ) {
     private val blacklist = loadBlacklist()
 

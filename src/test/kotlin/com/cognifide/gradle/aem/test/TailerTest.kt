@@ -202,7 +202,7 @@ class TailerTest {
         val logsList = parser.parseLogs(MockSource.reader(logsFile))
 
         //when
-        val blacklist = Blacklist(blacklists = arrayOf(logsFile))
+        val blacklist = Blacklist(blacklists = listOf(logsFile))
 
         //then
         assertTrue(blacklist.isBlacklisted(logsList.first()))
@@ -216,7 +216,7 @@ class TailerTest {
         val logsList = parser.parseLogs(MockSource.reader("com/cognifide/gradle/aem/test/tail/10-logs-error.log"))
 
         //when
-        val blacklist = Blacklist(blacklists = arrayOf("com/cognifide/gradle/aem/test/tail/blacklist/errors-blacklist.log"))
+        val blacklist = Blacklist(blacklists = listOf("com/cognifide/gradle/aem/test/tail/blacklist/errors-blacklist.log"))
 
         //then
         assertFalse(blacklist.isBlacklisted(logsList.first()))

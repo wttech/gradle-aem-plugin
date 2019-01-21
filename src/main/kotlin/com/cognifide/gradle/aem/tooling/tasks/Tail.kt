@@ -25,13 +25,13 @@ open class Tail : AemDefaultTask() {
         ShutdownHooks.addShutdownHook {
             shouldRunTailing = false
         }
-        logger.lifecycle("Fetching logs every ${FETCH_INTERVAL_IN_MILLIS}ms")
+        logger.lifecycle("Fetching logs every ${Tail.FETCH_INTERVAL_IN_MILLIS}ms")
         runBlocking {
             createAllTailers().forEach { tailer ->
                 launch {
                     while (shouldRunTailing) {
                         tailer.tail()
-                        delay(FETCH_INTERVAL_IN_MILLIS)
+                        delay(Tail.FETCH_INTERVAL_IN_MILLIS)
                     }
                 }
             }
@@ -48,7 +48,7 @@ open class Tail : AemDefaultTask() {
         val source = UrlSource(instance)
         val destination = FileDestination(instance.name, logFileCreator)
         val logsAnalyzerChannel = Channel<Log>(Channel.UNLIMITED)
-        LogAnalyzer(instance.name, logsAnalyzerChannel, notificationChannel, Blacklist(aem.tailConfig.filters, arrayOf(DEFAULT_BLACKLIST_FILE)))
+        LogAnalyzer(instance.name, logsAnalyzerChannel, notificationChannel, Blacklist(aem.tailConfig.filters, aem.tailConfig.blacklistFiles))
         logger.lifecycle("Creating log tailer for ${instance.name} (${instance.httpUrl}) -> ${logFileCreator.mainUri(instance.name)}")
         return Tailer(source, destination, logsAnalyzerChannel)
     }
