@@ -17,6 +17,10 @@ import org.gradle.process.internal.shutdown.ShutdownHooks
 @UseExperimental(ObsoleteCoroutinesApi::class)
 open class Tail : AemDefaultTask() {
 
+    init {
+        description = "Tails logs from all configured instances (local & remote) and notifies developer about unknown errors."
+    }
+
     private val logFileCreator = LogFiles(aem)
 
     @TaskAction
