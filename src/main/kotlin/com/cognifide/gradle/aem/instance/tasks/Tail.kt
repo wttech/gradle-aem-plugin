@@ -1,12 +1,12 @@
-package com.cognifide.gradle.aem.tooling.tasks
+package com.cognifide.gradle.aem.instance.tasks
 
 import com.cognifide.gradle.aem.common.AemDefaultTask
 import com.cognifide.gradle.aem.common.Formats
 import com.cognifide.gradle.aem.instance.Instance
-import com.cognifide.gradle.aem.tooling.tail.*
-import com.cognifide.gradle.aem.tooling.tail.io.FileDestination
-import com.cognifide.gradle.aem.tooling.tail.io.LogFiles
-import com.cognifide.gradle.aem.tooling.tail.io.UrlSource
+import com.cognifide.gradle.aem.instance.tail.*
+import com.cognifide.gradle.aem.instance.tail.io.FileDestination
+import com.cognifide.gradle.aem.instance.tail.io.LogFiles
+import com.cognifide.gradle.aem.instance.tail.io.UrlSource
 import kotlinx.coroutines.ObsoleteCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay

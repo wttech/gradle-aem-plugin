@@ -1,3 +1,3 @@
-package com.cognifide.gradle.aem.tooling.tail
+package com.cognifide.gradle.aem.instance.tail
 
 class TailException(message: String) : RuntimeException(message)

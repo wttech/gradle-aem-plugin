@@ -1,8 +1,8 @@
 package com.cognifide.gradle.aem.common.file
 
+import com.cognifide.gradle.aem.common.AemException
 import com.cognifide.gradle.aem.common.AemPlugin
 import com.cognifide.gradle.aem.common.Patterns
-import com.cognifide.gradle.aem.tooling.tail.TailException
 import java.io.*
 import java.net.URL
 import java.nio.file.Files
@@ -25,7 +25,7 @@ object FileOperations {
     fun <T> optionalReadResourceFromPathOrClasspath(resource: String, parser: (BufferedReader) -> T): T? =
             try {
                 readResourceFromPathOrClasspath(resource, parser)
-            } catch (e: TailException) {
+            } catch (e: AemException) {
                 null
             }
 
@@ -42,7 +42,7 @@ object FileOperations {
         if (resource != null) {
             return GFileUtils.openInputStream(File(resource.file))
         }
-        throw TailException("Cannot load blacklist from file: $resourcePath")
+        throw AemException("Cannot load blacklist from file: $resourcePath")
     }
 
     fun readResourceFromAemPkg(path: String): InputStream? {

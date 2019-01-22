@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.tooling.tail
+package com.cognifide.gradle.aem.instance.tail
 
 import com.cognifide.gradle.aem.common.Formats
 import java.time.LocalDateTime

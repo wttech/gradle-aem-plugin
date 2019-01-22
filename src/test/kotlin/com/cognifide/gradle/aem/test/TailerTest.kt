@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.test
 
 import com.cognifide.gradle.aem.common.Patterns
-import com.cognifide.gradle.aem.tooling.tail.*
+import com.cognifide.gradle.aem.instance.tail.*
 import org.apache.commons.io.FileUtils
 import org.gradle.util.GFileUtils
 import org.junit.jupiter.api.Assertions.*

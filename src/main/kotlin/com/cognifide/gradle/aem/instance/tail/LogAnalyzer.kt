@@ -1,7 +1,7 @@
-package com.cognifide.gradle.aem.tooling.tail
+package com.cognifide.gradle.aem.instance.tail
 
 import com.cognifide.gradle.aem.common.file.FileOperations
-import com.cognifide.gradle.aem.tooling.tasks.Tail
+import com.cognifide.gradle.aem.instance.tasks.Tail
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.ObsoleteCoroutinesApi
 import kotlinx.coroutines.channels.Channel

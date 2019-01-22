@@ -1,7 +1,7 @@
-package com.cognifide.gradle.aem.tooling.tail.io
+package com.cognifide.gradle.aem.instance.tail.io
 
-import com.cognifide.gradle.aem.tooling.tail.Log
-import com.cognifide.gradle.aem.tooling.tail.LogDestination
+import com.cognifide.gradle.aem.instance.tail.Log
+import com.cognifide.gradle.aem.instance.tail.LogDestination
 
 class FileDestination(
     private val instanceName: String,

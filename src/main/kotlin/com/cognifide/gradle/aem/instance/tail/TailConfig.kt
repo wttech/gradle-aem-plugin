@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.tooling.tail
+package com.cognifide.gradle.aem.instance.tail
 
 import com.cognifide.gradle.aem.common.Patterns
 import org.gradle.api.tasks.Input

@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.tooling.tail
+package com.cognifide.gradle.aem.instance.tail
 
 import java.io.BufferedReader
 import kotlinx.coroutines.GlobalScope

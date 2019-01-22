@@ -1,9 +1,9 @@
-package com.cognifide.gradle.aem.tooling.tail.io
+package com.cognifide.gradle.aem.instance.tail.io
 
 import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.AemTask
 import com.cognifide.gradle.aem.common.Formats
-import com.cognifide.gradle.aem.tooling.tasks.Tail
+import com.cognifide.gradle.aem.instance.tasks.Tail
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileWriter

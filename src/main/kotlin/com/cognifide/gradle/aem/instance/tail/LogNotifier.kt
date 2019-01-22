@@ -1,7 +1,7 @@
-package com.cognifide.gradle.aem.tooling.tail
+package com.cognifide.gradle.aem.instance.tail
 
 import com.cognifide.gradle.aem.common.NotifierFacade
-import com.cognifide.gradle.aem.tooling.tail.io.LogFiles
+import com.cognifide.gradle.aem.instance.tail.io.LogFiles
 import java.net.URI
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.ObsoleteCoroutinesApi

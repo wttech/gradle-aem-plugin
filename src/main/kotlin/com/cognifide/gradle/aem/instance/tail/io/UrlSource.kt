@@ -1,8 +1,8 @@
-package com.cognifide.gradle.aem.tooling.tail.io
+package com.cognifide.gradle.aem.instance.tail.io
 
 import com.cognifide.gradle.aem.instance.Instance
-import com.cognifide.gradle.aem.tooling.tail.LogSource
-import com.cognifide.gradle.aem.tooling.tasks.Tail
+import com.cognifide.gradle.aem.instance.tail.LogSource
+import com.cognifide.gradle.aem.instance.tasks.Tail
 import java.io.BufferedReader
 import java.io.InputStreamReader
 
