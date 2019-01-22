@@ -7,6 +7,7 @@ import com.cognifide.gradle.aem.instance.tail.*
 import com.cognifide.gradle.aem.instance.tail.io.FileDestination
 import com.cognifide.gradle.aem.instance.tail.io.LogFiles
 import com.cognifide.gradle.aem.instance.tail.io.UrlSource
+import kotlin.math.max
 import kotlinx.coroutines.ObsoleteCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -42,12 +43,20 @@ open class Tail : AemDefaultTask() {
         ShutdownHooks.addShutdownHook {
             shouldRunTailing = false
         }
-
+        if (logFileCreator.isLocked()) {
+            logger.lifecycle(
+                "Another instance of aemTail ($name) is running for this project. " +
+                    "Stop it before starting a new one."
+            )
+            return
+        }
+        logFileCreator.lock()
         logger.lifecycle("Fetching logs every ${Formats.duration(FETCH_INTERVAL)}")
         runBlocking {
             createAllTailers().forEach { tailer ->
                 launch {
                     while (shouldRunTailing) {
+                        logFileCreator.lock()
                         tailer.tail()
                         delay(FETCH_INTERVAL)
                     }
@@ -74,6 +83,7 @@ open class Tail : AemDefaultTask() {
     companion object {
         const val NAME = "aemTail"
         const val FETCH_INTERVAL = 500L
+        val LOCK_INTERVAL = max(1000L + FETCH_INTERVAL, 2000L)
         const val LOG_LINES_CHUNK_SIZE = 400L
         const val NOTIFICATION_DELAY = 5000L
         const val LOG_FILE = "error.log"
@@ -83,8 +93,8 @@ open class Tail : AemDefaultTask() {
             "&tail=$LOG_LINES_CHUNK_SIZE" +
             "&name=$LOG_FILE_PATH"
         val BLACKLIST_FILES_DEFAULT = listOf(
-                "aem/gradle/tail/errors-blacklist.log",
-                "gradle/aem/tail/errors-blacklist.log"
+            "aem/gradle/tail/errors-blacklist.log",
+            "gradle/aem/tail/errors-blacklist.log"
         )
     }
 }

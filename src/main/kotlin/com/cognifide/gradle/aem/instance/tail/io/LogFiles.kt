@@ -38,5 +38,27 @@ class LogFiles(private val aem: AemExtension, private val taskName: String) {
             "${Formats.dateFileName()}-${Tail.LOG_FILE}"
         )
 
+    fun lock() {
+        val lockFile = lockFile()
+        if (!lockFile.exists()) {
+            lockFile.bufferedWriter().use { it.write("") }
+        } else {
+            lockFile.setLastModified(System.currentTimeMillis())
+        }
+    }
+
+    fun isLocked(): Boolean {
+        val lockFile = lockFile()
+        return lockFile.exists() && lockFile.lastModified() + Tail.LOCK_INTERVAL > System.currentTimeMillis()
+    }
+
+    private fun lockFile(): File {
+        return AemTask.temporaryFile(
+            aem.project,
+            taskName,
+            ".lock"
+        )
+    }
+
     private fun uri(file: File): URI = file.toURI()
 }
