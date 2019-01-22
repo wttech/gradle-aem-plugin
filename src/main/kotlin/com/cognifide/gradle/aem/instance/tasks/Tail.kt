@@ -27,7 +27,7 @@ open class Tail : AemDefaultTask() {
         description = "Tails logs from all configured instances (local & remote) and notifies developer about unknown errors."
     }
 
-    private val logFileCreator = LogFiles(aem)
+    private val logFileCreator = LogFiles(aem, name)
 
     @Nested
     private val config = TailConfig()

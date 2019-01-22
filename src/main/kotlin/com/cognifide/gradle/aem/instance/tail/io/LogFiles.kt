@@ -10,14 +10,14 @@ import java.io.FileWriter
 import java.net.URI
 import org.apache.commons.io.FileUtils
 
-class LogFiles(private val aem: AemExtension) {
+class LogFiles(private val aem: AemExtension, private val taskName: String) {
 
     fun mainUri(instanceName: String) = uri(main(instanceName))
 
     fun clearMain(instanceName: String) = main(instanceName).bufferedWriter().use { it.write("") }
 
     fun clearSnapshots(instanceName: String) =
-        FileUtils.deleteDirectory(AemTask.temporaryDir(aem.project, Tail.NAME, "$instanceName/snapshots"))
+        FileUtils.deleteDirectory(AemTask.temporaryDir(aem.project, taskName, "$instanceName/snapshots"))
 
     fun writeToSnapshot(instanceName: String, writerBlock: (BufferedWriter) -> Unit): URI {
         val snapshotFile = snapshot(instanceName)
@@ -29,12 +29,12 @@ class LogFiles(private val aem: AemExtension) {
         FileWriter(main(instanceName).path, true).use(writerBlock)
 
     private fun main(instanceName: String) =
-        AemTask.temporaryFile(aem.project, "${Tail.NAME}/$instanceName", Tail.LOG_FILE)
+        AemTask.temporaryFile(aem.project, "$taskName/$instanceName", Tail.LOG_FILE)
 
     private fun snapshot(instanceName: String) =
         AemTask.temporaryFile(
             aem.project,
-            "${Tail.NAME}/$instanceName/snapshots",
+            "$taskName/$instanceName/snapshots",
             "${Formats.dateFileName()}-${Tail.LOG_FILE}"
         )
 
