@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.instance.tasks
 
 import com.cognifide.gradle.aem.common.AemTask
+import com.cognifide.gradle.aem.common.Formats
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.onEachApply
 import com.cognifide.gradle.aem.instance.InstanceException
@@ -44,8 +45,8 @@ open class Create : Instance() {
 
             aem.logger.info("Extracting files from backup ZIP '$backupZip' to directory '$instanceRoot'")
             aem.progressIndicator {
-                message = "Extracting backup ZIP '${backupZip.name}'"
-                FileOperations.zipUnpackSafe(backupZip, instanceRoot)
+                message = "Extracting backup ZIP: ${backupZip.name}, size: ${Formats.size(backupZip)}"
+                FileOperations.zipUnpack(backupZip, instanceRoot)
             }
         } else {
             if (options.jar == null || options.license == null) {
