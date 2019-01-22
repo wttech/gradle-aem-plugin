@@ -43,8 +43,13 @@ open class Create : Instance() {
             val instanceRoot = File(aem.config.instanceRoot)
 
             aem.logger.info("Extracting files from backup ZIP '$backupZip' to directory '$instanceRoot'")
-            aem.progress(FileOperations.zipCount(backupZip)) {
-                FileOperations.zipUnpack(backupZip, instanceRoot) { increment("Extracting file '$it'") }
+            aem.progressIndicator {
+                // TODO try with: https://github.com/neva-dev/gradle-fork-plugin/blob/master/src/main/kotlin/com/neva/gradle/fork/file/FileOperations.kt#L44
+                // TODO try with: http://sevenzipjbind.sourceforge.net/first_steps.html
+                project.copy {
+                    it.from(project.zipTree(backupZip))
+                    it.into(instanceRoot)
+                }
             }
         } else {
             if (options.jar == null || options.license == null) {
