@@ -7,6 +7,8 @@ import com.cognifide.gradle.aem.instance.InstanceException
 import com.cognifide.gradle.aem.instance.names
 import java.io.File
 import org.gradle.api.execution.TaskExecutionGraph
+import org.gradle.api.file.DuplicatesStrategy
+import org.gradle.api.tasks.bundling.ZipEntryCompression
 
 open class Backup : Zip(), AemTask {
 
@@ -14,6 +16,8 @@ open class Backup : Zip(), AemTask {
         description = "Turns off local instance(s), archives to ZIP file, then turns on again."
         baseName = "${project.rootProject.name}-${Formats.dateFileName()}"
         classifier = "backup"
+        duplicatesStrategy = DuplicatesStrategy.FAIL
+        entryCompression = ZipEntryCompression.STORED
     }
 
     val available: List<File>
