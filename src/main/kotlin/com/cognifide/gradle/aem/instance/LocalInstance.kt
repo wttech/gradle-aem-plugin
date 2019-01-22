@@ -74,7 +74,7 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
         get() = File(dir, "aem-quickstart.jar")
 
     @get:JsonIgnore
-    val staticDir: File
+    val quickstartDir: File
         get() = File(dir, "crx-quickstart")
 
     @get:JsonIgnore
@@ -87,11 +87,11 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
 
     @get:JsonIgnore
     val pidFile: File
-        get() = File("$staticDir/conf/cq.pid")
+        get() = File("$quickstartDir/conf/cq.pid")
 
     @get:JsonIgnore
     val controlPortFile: File
-        get() = File("$staticDir/conf/controlport")
+        get() = File("$quickstartDir/conf/controlport")
 
     @get:JsonIgnore
     val running: Boolean
@@ -111,9 +111,9 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
 
     private fun binScript(name: String, os: OperatingSystem = OperatingSystem.current()): Script {
         return if (os.isWindows) {
-            Script(File(dir, "$name.bat"), File(staticDir, "bin/$name.bat"), listOf("cmd", "/C"))
+            Script(File(dir, "$name.bat"), File(quickstartDir, "bin/$name.bat"), listOf("cmd", "/C"))
         } else {
-            Script(File(dir, name), File(staticDir, "bin/$name"), listOf("sh"))
+            Script(File(dir, name), File(quickstartDir, "bin/$name"), listOf("sh"))
         }
     }
 
@@ -133,11 +133,11 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
         aem.logger.info("Validating instance files")
         validateFiles()
 
-        aem.logger.info("Extracting AEM static files from JAR")
-        extractStaticFiles()
+        aem.logger.info("Unpacking AEM from JAR")
+        unpackFiles()
 
-        aem.logger.info("Correcting AEM static files")
-        correctStaticFiles()
+        aem.logger.info("Correcting AEM files")
+        correctFiles()
 
         aem.logger.info("Creating default instance files")
         FileOperations.copyResources(InstancePlugin.FILES_PATH, dir, true)
@@ -184,7 +184,7 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
         }
     }
 
-    private fun correctStaticFiles() {
+    private fun correctFiles() {
         FileOperations.amendFile(binScript("start", OperatingSystem.forName("windows")).bin) { origin ->
             var result = origin
 
@@ -220,14 +220,19 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
         }
 
         // Ensure that 'logs' directory exists
-        GFileUtils.mkdirs(File(staticDir, "logs"))
+        GFileUtils.mkdirs(File(quickstartDir, "logs"))
     }
 
-    private fun extractStaticFiles() {
-        aem.logger.info("Extracting static files from JAR '$jar' to directory '$staticDir'")
+    private fun unpackFiles() {
+        aem.logger.info("Unpacking quickstart from JAR '$jar' to directory '$quickstartDir'")
 
-        aem.progress(FileOperations.zipCount(jar, JAR_STATIC_FILES_PATH)) {
-            FileOperations.zipUnpack(jar, staticDir, JAR_STATIC_FILES_PATH) { increment("Extracting file '$it'") }
+        aem.progressIndicator {
+            message = "Unpacking quickstart JAR: ${jar.name}, size: ${Formats.size(jar)}"
+            aem.project.javaexec { spec ->
+                spec.workingDir = dir
+                spec.main = "-jar"
+                spec.args = listOf(jar.name, "-unpack")
+            }
         }
     }
 
@@ -318,8 +323,6 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
         const val ENVIRONMENT = "local"
 
         const val USER = "admin"
-
-        const val JAR_STATIC_FILES_PATH = "static/"
 
         const val LOCK_CREATE = "create"
 

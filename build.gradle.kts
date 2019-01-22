@@ -10,7 +10,7 @@ plugins {
 }
 
 group = "com.cognifide.gradle"
-version = "6.0.0"
+version = "6.0.0-beta6"
 description = "Gradle AEM Plugin"
 defaultTasks = listOf("build", "publishToMavenLocal")
 
@@ -33,6 +33,7 @@ dependencies {
     implementation("org.samba.jcifs:jcifs:1.3.18-kohsuke-1")
     implementation("biz.aQute.bnd:biz.aQute.bnd.gradle:4.0.0")
     implementation("org.zeroturnaround:zt-zip:1.11")
+    implementation("net.lingala.zip4j:zip4j:1.3.2")
     implementation("com.hierynomus:sshj:0.21.1")
     implementation("org.apache.httpcomponents:httpclient:4.5.4")
     implementation("org.apache.httpcomponents:httpmime:4.5.4")
@@ -57,8 +58,8 @@ tasks {
         dependsOn("classes")
         from(sourceSets["main"].allSource)
     }
-    named("build") { dependsOn("sourcesJar") }
-    named("publishToMavenLocal") { dependsOn("sourcesJar") }
+    named<Task>("build") {  dependsOn("sourcesJar") }
+    named<Task>("publishToMavenLocal") { dependsOn("sourcesJar") }
     named<ProcessResources>("processResources") {
         doLast {
             file("$buildDir/resources/main/build.json").printWriter().use {
