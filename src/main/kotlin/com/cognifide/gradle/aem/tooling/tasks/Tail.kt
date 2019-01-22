@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.tooling.tasks
 
 import com.cognifide.gradle.aem.common.AemDefaultTask
+import com.cognifide.gradle.aem.common.Formats
 import com.cognifide.gradle.aem.instance.Instance
 import com.cognifide.gradle.aem.tooling.tail.*
 import com.cognifide.gradle.aem.tooling.tail.io.FileDestination
@@ -15,6 +16,10 @@ import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
 import org.gradle.process.internal.shutdown.ShutdownHooks
 
+/**
+ * TODO: Since coroutines API is still in experimental mode we would need to adapt to it's final API when released.
+ * Please see https://github.com/Kotlin/kotlinx.coroutines/issues/632#issuecomment-425408865
+ */
 @UseExperimental(ObsoleteCoroutinesApi::class)
 open class Tail : AemDefaultTask() {
 
@@ -37,13 +42,14 @@ open class Tail : AemDefaultTask() {
         ShutdownHooks.addShutdownHook {
             shouldRunTailing = false
         }
-        logger.lifecycle("Fetching logs every ${Tail.FETCH_INTERVAL_IN_MILLIS}ms")
+
+        logger.lifecycle("Fetching logs every ${Formats.duration(FETCH_INTERVAL)}")
         runBlocking {
             createAllTailers().forEach { tailer ->
                 launch {
                     while (shouldRunTailing) {
                         tailer.tail()
-                        delay(Tail.FETCH_INTERVAL_IN_MILLIS)
+                        delay(FETCH_INTERVAL)
                     }
                 }
             }
@@ -67,9 +73,18 @@ open class Tail : AemDefaultTask() {
 
     companion object {
         const val NAME = "aemTail"
-        const val FETCH_INTERVAL_IN_MILLIS = 500L
-        const val NUMBER_OF_LOG_LINES_READ_EACH_TIME = 400
-        const val DELAY_TO_SHOW_NOTIFICATION_AFTER_LAST_ERROR_IN_SEC = 4L
-        val DEFAULT_BLACKLIST_FILES = listOf("aem/gradle/tail/errors-blacklist.log", "gradle/aem/tail/errors-blacklist.log")
+        const val FETCH_INTERVAL = 500L
+        const val LOG_LINES_CHUNK_SIZE = 400L
+        const val NOTIFICATION_DELAY = 5000L
+        const val LOG_FILE = "error.log"
+        const val LOG_FILE_PATH = "%2Flogs%2F$LOG_FILE"
+        const val ERROR_LOG_ENDPOINT = "/system/console/slinglog/tailer.txt" +
+            "?_dc=1520834477194" +
+            "&tail=$LOG_LINES_CHUNK_SIZE" +
+            "&name=$LOG_FILE_PATH"
+        val BLACKLIST_FILES_DEFAULT = listOf(
+                "aem/gradle/tail/errors-blacklist.log",
+                "gradle/aem/tail/errors-blacklist.log"
+        )
     }
 }

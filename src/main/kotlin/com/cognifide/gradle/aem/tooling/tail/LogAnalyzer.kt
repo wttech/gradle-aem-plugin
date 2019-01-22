@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.tooling.tail
 
-import com.cognifide.gradle.aem.tooling.tail.io.LogFiles
+import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.tooling.tasks.Tail
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.ObsoleteCoroutinesApi
@@ -11,6 +11,10 @@ import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+/**
+ * TODO: Since coroutines API is still in experimental mode we would need to adapt to it's final API when released.
+ * Please see https://github.com/Kotlin/kotlinx.coroutines/issues/632#issuecomment-425408865
+ */
 @UseExperimental(ObsoleteCoroutinesApi::class)
 class LogAnalyzer(
     private val instanceName: String,
@@ -47,7 +51,7 @@ class LogAnalyzer(
 
     private suspend fun checkIfErrorsCannonadeEnded() {
         if (aggregatedErrors.isEmpty()) return
-        if (aggregatedErrors.last().isOlderThan(seconds = Tail.DELAY_TO_SHOW_NOTIFICATION_AFTER_LAST_ERROR_IN_SEC)) {
+        if (aggregatedErrors.last().isOlderThan(millis = Tail.NOTIFICATION_DELAY)) {
             notificationChannel.send(ProblematicLogs(instanceName, aggregatedErrors))
             aggregatedErrors = mutableListOf()
         }
@@ -71,14 +75,14 @@ class Blacklist(
     private val blacklist = loadBlacklists()
 
     private fun loadBlacklists(): Map<String, Log> {
-        return (loadDefaultBlacklists(Tail.DEFAULT_BLACKLIST_FILES) +
+        return (loadDefaultBlacklists(Tail.BLACKLIST_FILES_DEFAULT) +
                 loadConfiguredBlacklists(blacklists))
                 .flatten().map { it.messageChecksum to it }.toMap()
     }
 
     private fun loadConfiguredBlacklists(blacklists: List<String>): List<List<Log>> {
         return blacklists.map { logFile ->
-            LogFiles.readClasspathOrPath(logFile) { reader ->
+            FileOperations.readResourceFromPathOrClasspath(logFile) { reader ->
                 parser.parseLogs(reader)
             }
         }
@@ -86,7 +90,7 @@ class Blacklist(
 
     private fun loadDefaultBlacklists(blacklists: List<String>): List<List<Log>> {
         return blacklists.mapNotNull { logFile ->
-            LogFiles.optionalReadClasspathOrPath(logFile) { reader ->
+            FileOperations.optionalReadResourceFromPathOrClasspath(logFile) { reader ->
                 parser.parseLogs(reader)
             }
         }

@@ -18,9 +18,17 @@ class Log(
 
     fun isError() = level == "ERROR"
 
-    fun isOlderThan(minutes: Long = 0, seconds: Long = 0) = LocalDateTime.now().minusMinutes(minutes).minusSeconds(seconds).isAfter(timestamp)
+    @Suppress("MagicNumber")
+    fun isOlderThan(minutes: Long = 0, seconds: Long = 0, millis: Long = 0) =
+            LocalDateTime
+                    .now()
+                    .minusMinutes(minutes)
+                    .minusSeconds(seconds)
+                    .minusNanos(millis * 1000_000)
+                    .isAfter(timestamp)
 
     companion object {
+
         private const val TIMESTAMP = """(?<timestamp>[0-9]{2}\.[0-9]{2}\.[0-9]{4}\s[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{3})"""
         private const val LEVEL = """\*(?<level>[A-Z]+)\*"""
         private const val SOURCE = """(?<source>\[.*\])"""
@@ -31,8 +39,10 @@ class Log(
 
         fun create(logLines: List<String>): Log {
             if (logLines.isEmpty() || logLines.first().isBlank()) throw TailException("Passed log entry is empty!")
+
             val fullLog = logLines.joinToString("\n")
             val result = matchLogLine(logLines.first())
+
             when (result) {
                 null -> throw TailException("Passed text is not a log entry\nPattern:\n$LOG_PATTERN\nText:\n${logLines.first()}")
                 else -> {

@@ -43,7 +43,7 @@ abstract class AemTest {
         val projectDir = File(tmpDir, rootProjectDir)
 
         GFileUtils.mkdirs(projectDir)
-        FileOperations.copyResources("test/$rootProjectDir", projectDir)
+        FileOperations.copyResourcesFromAemPkg("test/$rootProjectDir", projectDir)
 
         val runner = GradleRunner.create()
                 .withProjectDir(projectDir)

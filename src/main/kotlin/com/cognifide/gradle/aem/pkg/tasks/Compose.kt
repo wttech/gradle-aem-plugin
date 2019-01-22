@@ -225,7 +225,7 @@ open class Compose : Zip(), AemTask {
         }
 
         if (metaDefaults) {
-            FileOperations.copyResources(Package.META_PATH, metaDir, true)
+            FileOperations.copyResourcesFromAemPkg(Package.META_PATH, metaDir, true)
         }
     }
 
