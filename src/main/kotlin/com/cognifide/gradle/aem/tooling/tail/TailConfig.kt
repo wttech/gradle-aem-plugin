@@ -9,7 +9,7 @@ class TailConfig {
     val filters = mutableListOf<(Log) -> Boolean>()
 
     @Input
-    val blacklistFiles = mutableListOf<String>(Tail.DEFAULT_BLACKLIST_FILE)
+    val blacklistFiles = mutableListOf(Tail.DEFAULT_BLACKLIST_FILE)
 
     fun blacklist(filePath: String) {
         blacklistFiles += filePath

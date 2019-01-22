@@ -11,6 +11,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
 import org.gradle.process.internal.shutdown.ShutdownHooks
 
@@ -22,6 +23,13 @@ open class Tail : AemDefaultTask() {
     }
 
     private val logFileCreator = LogFiles(aem)
+
+    @Nested
+    private val config = TailConfig()
+
+    fun config(configurer: TailConfig.() -> Unit) {
+        config.apply(configurer)
+    }
 
     @TaskAction
     fun tail() {
@@ -52,7 +60,7 @@ open class Tail : AemDefaultTask() {
         val source = UrlSource(instance)
         val destination = FileDestination(instance.name, logFileCreator)
         val logsAnalyzerChannel = Channel<Log>(Channel.UNLIMITED)
-        LogAnalyzer(instance.name, logsAnalyzerChannel, notificationChannel, Blacklist(aem.tailConfig.filters, aem.tailConfig.blacklistFiles))
+        LogAnalyzer(instance.name, logsAnalyzerChannel, notificationChannel, Blacklist(config.filters, config.blacklistFiles))
         logger.lifecycle("Creating log tailer for ${instance.name} (${instance.httpUrl}) -> ${logFileCreator.mainUri(instance.name)}")
         return Tailer(source, destination, logsAnalyzerChannel)
     }
