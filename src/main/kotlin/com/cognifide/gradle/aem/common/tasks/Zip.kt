@@ -27,6 +27,7 @@ open class Zip : Base(), AemTask {
         aem.progressIndicator {
             updater = copyProgress
             super.copy()
+            logger.info("ZIP file created: $archivePath")
         }
     }
 }
