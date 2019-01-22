@@ -228,10 +228,10 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
 
         aem.progressIndicator {
             message = "Unpacking quickstart JAR: ${jar.name}, size: ${Formats.size(jar)}"
-            aem.project.javaexec {
-                it.workingDir = dir
-                it.main = "-jar"
-                it.args = listOf(jar.name, "-unpack")
+            aem.project.javaexec { spec ->
+                spec.workingDir = dir
+                spec.main = "-jar"
+                spec.args = listOf(jar.name, "-unpack")
             }
         }
     }
