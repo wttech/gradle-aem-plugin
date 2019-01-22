@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.test
 
+import com.cognifide.gradle.aem.common.Patterns
 import com.cognifide.gradle.aem.tooling.tail.*
 import org.apache.commons.io.FileUtils
 import org.gradle.util.GFileUtils
@@ -224,7 +225,7 @@ class TailerTest {
     }
 
     @Test
-    fun shouldFilterOutAllErrorsBasedOnLambdas() {
+    fun shouldFilterOutAllErrorBasedOnLambdas() {
         //given
         val filter: (Log) -> Boolean = { log -> log.message.isNotEmpty() }
 
@@ -238,9 +239,37 @@ class TailerTest {
     }
 
     @Test
-    fun shouldLetGoAllErrorsBasedOnLambdas() {
+    fun shouldLetGoAllErrorBasedOnLambdas() {
         //given
         val filter: (Log) -> Boolean = { log -> log.message.isEmpty() }
+
+        //when
+        val blacklist = Blacklist(filters = listOf(filter))
+
+        //then
+        assertFalse(blacklist.isBlacklisted(Log.create(listOf("14.01.2019 12:20:43.111 *ERROR* " +
+                "[gea-arrgkkggae-rtreggga-1] egg.erggr.gaegkgr.arrgkkggae Sragker " +
+                "[6848, [gag.ereeer.reeaaeggkg.gea.erk.rgt.SrkkkggMBreg]] SragkerEgrgg REGISTERED"))))
+    }
+
+    @Test
+    fun shouldFilterOutAllErrorBasedOnWildcard() {
+        //given
+        val filter: (Log) -> Boolean = { Patterns.wildcard(it.text, "*egg.erggr.gaegkgr.*") }
+
+        //when
+        val blacklist = Blacklist(filters = listOf(filter))
+
+        //then
+        assertTrue(blacklist.isBlacklisted(Log.create(listOf("14.01.2019 12:20:43.111 *ERROR* " +
+                "[gea-arrgkkggae-rtreggga-1] egg.erggr.gaegkgr.arrgkkggae Sragker " +
+                "[6848, [gag.ereeer.reeaaeggkg.gea.erk.rgt.SrkkkggMBreg]] SragkerEgrgg REGISTERED"))))
+    }
+
+    @Test
+    fun shouldLetGoAllErrorBasedOnWildcard() {
+        //given
+        val filter: (Log) -> Boolean = { Patterns.wildcard(it.text, "a.b.cde.*") }
 
         //when
         val blacklist = Blacklist(filters = listOf(filter))
