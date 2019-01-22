@@ -66,15 +66,30 @@ class Blacklist(
     private val filters: List<(Log) -> Boolean> = emptyList(),
     private val blacklists: List<String> = emptyList()
 ) {
-    private val blacklist = loadBlacklist()
 
-    private fun loadBlacklist(): Map<String, Log> {
-        val parser = Parser()
+    private val parser = Parser()
+    private val blacklist = loadBlacklists()
+
+    private fun loadBlacklists(): Map<String, Log> {
+        return (loadDefaultBlacklists(Tail.DEFAULT_BLACKLIST_FILES) +
+                loadConfiguredBlacklists(blacklists))
+                .flatten().map { it.messageChecksum to it }.toMap()
+    }
+
+    private fun loadConfiguredBlacklists(blacklists: List<String>): List<List<Log>> {
         return blacklists.map { logFile ->
             LogFiles.readClasspathOrPath(logFile) { reader ->
                 parser.parseLogs(reader)
             }
-        }.flatten().map { it.messageChecksum to it }.toMap()
+        }
+    }
+
+    private fun loadDefaultBlacklists(blacklists: List<String>): List<List<Log>> {
+        return blacklists.mapNotNull { logFile ->
+            LogFiles.optionalReadClasspathOrPath(logFile) { reader ->
+                parser.parseLogs(reader)
+            }
+        }
     }
 
     fun isBlacklisted(log: Log) = blacklist.containsKey(log.messageChecksum) || !filters.none { it(log) }

@@ -42,6 +42,13 @@ class LogFiles(private val aem: AemExtension) {
         fun <T> readClasspathOrPath(resource: String, parser: (BufferedReader) -> T): T =
                 BufferedReader(InputStreamReader(inputStream(resource))).use(parser)
 
+        fun <T> optionalReadClasspathOrPath(resource: String, parser: (BufferedReader) -> T): T? =
+                try {
+                    readClasspathOrPath(resource, parser)
+                } catch (e: TailException) {
+                    null
+                }
+
         private fun inputStream(resourcePath: String): InputStream {
             val resource: URL? = this::class.java.classLoader.getResource(resourcePath)
             if (resource != null) {

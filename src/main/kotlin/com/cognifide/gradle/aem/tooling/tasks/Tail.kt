@@ -70,6 +70,6 @@ open class Tail : AemDefaultTask() {
         const val FETCH_INTERVAL_IN_MILLIS = 500L
         const val NUMBER_OF_LOG_LINES_READ_EACH_TIME = 400
         const val DELAY_TO_SHOW_NOTIFICATION_AFTER_LAST_ERROR_IN_SEC = 4L
-        const val DEFAULT_BLACKLIST_FILE = "/aemTail/errors-blacklist.log"
+        val DEFAULT_BLACKLIST_FILES = listOf("aem/gradle/tail/errors-blacklist.log", "gradle/aem/tail/errors-blacklist.log")
     }
 }

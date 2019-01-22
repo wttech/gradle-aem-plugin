@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem.tooling.tail
 
 import com.cognifide.gradle.aem.common.Patterns
-import com.cognifide.gradle.aem.tooling.tasks.Tail
 import org.gradle.api.tasks.Input
 
 class TailConfig {
@@ -10,7 +9,7 @@ class TailConfig {
     val filters = mutableListOf<(Log) -> Boolean>()
 
     @Input
-    val blacklistFiles = mutableListOf(Tail.DEFAULT_BLACKLIST_FILE)
+    val blacklistFiles = mutableListOf<String>()
 
     fun blacklistFile(filePath: String) {
         blacklistFiles += filePath

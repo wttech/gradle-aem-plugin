@@ -34,7 +34,7 @@ class ToolingPlugin : AemPlugin() {
             register<Sync>(Sync.NAME) {
                 mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
             }
-            register(Tail.NAME, Tail::class.java)
+            register<Tail>(Tail.NAME)
         }
     }
 
