@@ -227,11 +227,8 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
         aem.logger.info("Extracting static files from JAR '$jar' to directory '$staticDir'")
 
         aem.progressIndicator {
-            aem.project.copy {
-                it.from(aem.project.zipTree(jar))
-                it.into(staticDir)
-                it.include(JAR_STATIC_FILES_PATTERN)
-            }
+            message = "Extracting quickstart JAR '${jar.name}'"
+            FileOperations.zipUnpackSafe(jar, staticDir, JAR_STATIC_DIR)
         }
     }
 
@@ -323,7 +320,7 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
 
         const val USER = "admin"
 
-        const val JAR_STATIC_FILES_PATTERN = "static/**"
+        const val JAR_STATIC_DIR = "static"
 
         const val LOCK_CREATE = "create"
 

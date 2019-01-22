@@ -44,12 +44,8 @@ open class Create : Instance() {
 
             aem.logger.info("Extracting files from backup ZIP '$backupZip' to directory '$instanceRoot'")
             aem.progressIndicator {
-                // TODO try with: https://github.com/neva-dev/gradle-fork-plugin/blob/master/src/main/kotlin/com/neva/gradle/fork/file/FileOperations.kt#L44
-                // TODO try with: http://sevenzipjbind.sourceforge.net/first_steps.html
-                project.copy {
-                    it.from(project.zipTree(backupZip))
-                    it.into(instanceRoot)
-                }
+                message = "Extracting backup ZIP '${backupZip.name}'"
+                FileOperations.zipUnpackSafe(backupZip, instanceRoot)
             }
         } else {
             if (options.jar == null || options.license == null) {

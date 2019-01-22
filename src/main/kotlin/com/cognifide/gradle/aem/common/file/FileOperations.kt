@@ -2,12 +2,7 @@ package com.cognifide.gradle.aem.common.file
 
 import com.cognifide.gradle.aem.common.AemPlugin
 import com.cognifide.gradle.aem.common.Patterns
-import java.io.File
-import java.io.FileOutputStream
-import java.io.InputStream
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
+import net.lingala.zip4j.core.ZipFile
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
 import org.apache.commons.io.filefilter.TrueFileFilter
@@ -16,6 +11,12 @@ import org.gradle.util.GFileUtils
 import org.reflections.Reflections
 import org.reflections.scanners.ResourcesScanner
 import org.zeroturnaround.zip.ZipUtil
+import java.io.File
+import java.io.FileOutputStream
+import java.io.InputStream
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 
 object FileOperations {
 
@@ -134,5 +135,17 @@ object FileOperations {
                 name
             }
         }
+    }
+
+    /**
+     * Only Zip4j correctly extracts AEM backup ZIP files.
+     * Gradle zipTree and Zero-Turnaround ZipUtil is not working properly in that case.
+     */
+    fun zipUnpackSafe(zip: File, targetDir: File, path: String) {
+        ZipFile(zip).apply { extractFile(path, targetDir.absolutePath) }
+    }
+
+    fun zipUnpackSafe(zip: File, targetDir: File) {
+        ZipFile(zip).extractAll(targetDir.absolutePath)
     }
 }
