@@ -68,21 +68,21 @@ class LocalInstanceOptions(aem: AemExtension, downloadDir: File) {
     var expandProperties: Map<String, Any> = mapOf()
 
     var zipSource: FileResolver.() -> FileResolution? = {
-        zipUrl?.run { url(this) }
+        zipUrl?.ifBlank { null }?.run { url(this) }
     }
 
     val zip: File?
         get() = fileResolver.run(zipSource)?.file
 
     var jarSource: FileResolver.() -> FileResolution? = {
-        jarUrl?.run { url(this) }
+        jarUrl?.ifBlank { null }?.run { url(this) }
     }
 
     val jar: File?
         get() = fileResolver.run(jarSource)?.file
 
     var licenseSource: FileResolver.() -> FileResolution? = {
-        licenseUrl?.run { url(this) }
+        licenseUrl?.ifBlank { null }?.run { url(this) }
     }
 
     val license: File?

@@ -1,7 +1,7 @@
 {
   "buildInfo" : {
     "plugin" : {
-      "pluginVersion" : "6.0.0-beta5",
+      "pluginVersion" : "6.0.0-beta6",
       "gradleVersion" : "4.10"
     },
     "gradle" : {
@@ -46,7 +46,7 @@
         "name" : "local-publish1",
         "type" : "PUBLISH",
         "httpPort" : 4503,
-        "jvmOpts" : "-Xdebug -Xrunjdwp:transport=dt_socket,address=14503,server=y,suspend=n -server -Xmx1024m -XX:MaxPermSize=256M -Djava.awt.headless=true",
+        "jvmOpts" : "-Xdebug -Xrunjdwp:transport=dt_socket,address=14503,server=y,suspend=n -server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true",
         "runModes" : "publish,local",
         "startOpts" : "",
         "properties" : { }
@@ -61,7 +61,7 @@
         "name" : "local-publish2",
         "type" : "PUBLISH",
         "httpPort" : 4504,
-        "jvmOpts" : "-Xdebug -Xrunjdwp:transport=dt_socket,address=14504,server=y,suspend=n -server -Xmx1024m -XX:MaxPermSize=256M -Djava.awt.headless=true",
+        "jvmOpts" : "-Xdebug -Xrunjdwp:transport=dt_socket,address=14504,server=y,suspend=n -server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true",
         "runModes" : "publish,local",
         "startOpts" : "",
         "properties" : { }
