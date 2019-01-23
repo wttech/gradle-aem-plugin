@@ -33,6 +33,8 @@ open class Tail : AemDefaultTask() {
     @Nested
     private val config = TailConfig()
 
+    fun isRunning() = logFileCreator.isLocked()
+
     fun config(configurer: TailConfig.() -> Unit) {
         config.apply(configurer)
     }
