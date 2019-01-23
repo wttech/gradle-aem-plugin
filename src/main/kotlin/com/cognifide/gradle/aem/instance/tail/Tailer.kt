@@ -12,7 +12,6 @@ class Tailer(
 ) {
 
     private val parser = Parser()
-
     private var lastLogChecksum = ""
 
     fun tail() {
@@ -48,5 +47,5 @@ interface LogDestination {
 }
 
 interface LogSource {
-    fun <T> readChunk(parser: (BufferedReader) -> T): T
+    fun <T> readChunk(parser: (BufferedReader) -> List<T>): List<T>
 }

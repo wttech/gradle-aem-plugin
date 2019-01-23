@@ -46,7 +46,7 @@ open class Tail : AemDefaultTask() {
             shouldRunTailing = false
         }
         if (logFileCreator.isLocked()) {
-            logger.lifecycle(
+            logger.warn(
                 "Another instance of aemTail ($name) is running for this project. " +
                     "Stop it before starting a new one."
             )
@@ -74,7 +74,7 @@ open class Tail : AemDefaultTask() {
     }
 
     private fun create(instance: Instance, notificationChannel: Channel<ProblematicLogs>): Tailer {
-        val source = UrlSource(instance)
+        val source = UrlSource(instance, aem)
         val destination = FileDestination(instance.name, logFileCreator)
         val logsAnalyzerChannel = Channel<Log>(Channel.UNLIMITED)
         LogAnalyzer(instance.name, logsAnalyzerChannel, notificationChannel, Blacklist(config.filters, config.blacklistFiles))

@@ -17,7 +17,7 @@ class LogFiles(private val aem: AemExtension, private val taskName: String) {
     fun clearMain(instanceName: String) = main(instanceName).bufferedWriter().use { it.write("") }
 
     fun clearSnapshots(instanceName: String) =
-        FileUtils.deleteDirectory(AemTask.temporaryDir(aem.project, taskName, "$instanceName/snapshots"))
+        FileUtils.deleteDirectory(AemTask.temporaryDir(aem.project, taskName, "$instanceName/$INCIDENT_DIR"))
 
     fun writeToSnapshot(instanceName: String, writerBlock: (BufferedWriter) -> Unit): URI {
         val snapshotFile = snapshot(instanceName)
@@ -34,7 +34,7 @@ class LogFiles(private val aem: AemExtension, private val taskName: String) {
     private fun snapshot(instanceName: String) =
         AemTask.temporaryFile(
             aem.project,
-            "$taskName/$instanceName/snapshots",
+            "$taskName/$instanceName/$INCIDENT_DIR",
             "${Formats.dateFileName()}-${Tail.LOG_FILE}"
         )
 
@@ -61,4 +61,8 @@ class LogFiles(private val aem: AemExtension, private val taskName: String) {
     }
 
     private fun uri(file: File): URI = file.toURI()
+
+    companion object {
+        const val INCIDENT_DIR = "incidents"
+    }
 }

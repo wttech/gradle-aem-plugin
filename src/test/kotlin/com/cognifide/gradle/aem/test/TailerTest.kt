@@ -11,7 +11,6 @@ import java.io.File
 import java.io.InputStreamReader
 import java.util.*
 
-
 class TailerTest {
 
     class MockSource(vararg resources: String) : LogSource {
@@ -20,7 +19,7 @@ class TailerTest {
             addAll(resources.reversed().map { MockSource.reader(it) })
         }
 
-        override fun <T> readChunk(parser: (BufferedReader) -> T): T = streamsStack.pop().use(parser)
+        override fun <T> readChunk(parser: (BufferedReader) -> List<T>): List<T> = streamsStack.pop().use(parser)
 
         companion object {
             fun reader(resource: String) = BufferedReader(InputStreamReader(GFileUtils.openInputStream(file(resource))))
@@ -118,8 +117,8 @@ class TailerTest {
     fun shouldAggregateOverlappingLogsBetweenRequests() {
         // given
         val source = MockSource(
-                "com/cognifide/gradle/aem/test/tail/aggregating/overlapping/first-chunk-error.log",
-                "com/cognifide/gradle/aem/test/tail/aggregating/overlapping/second-chunk-error.log")
+            "com/cognifide/gradle/aem/test/tail/aggregating/overlapping/first-chunk-error.log",
+            "com/cognifide/gradle/aem/test/tail/aggregating/overlapping/second-chunk-error.log")
         val destination = MockDestination()
         val tailer = Tailer(source, destination)
 
@@ -145,8 +144,8 @@ class TailerTest {
     fun shouldAggregateWhenThereIsNoOverlapping() {
         // given
         val source = MockSource(
-                "com/cognifide/gradle/aem/test/tail/aggregating/disjoint/first-chunk-error.log",
-                "com/cognifide/gradle/aem/test/tail/aggregating/disjoint/second-chunk-error.log")
+            "com/cognifide/gradle/aem/test/tail/aggregating/disjoint/first-chunk-error.log",
+            "com/cognifide/gradle/aem/test/tail/aggregating/disjoint/second-chunk-error.log")
         val destination = MockDestination()
         val tailer = Tailer(source, destination)
 
@@ -172,8 +171,8 @@ class TailerTest {
     fun shouldSkipLogsChunkWhenThereAreNoNewLogs() {
         // given
         val source = MockSource(
-                "com/cognifide/gradle/aem/test/tail/aggregating/disjoint/first-chunk-error.log",
-                "com/cognifide/gradle/aem/test/tail/aggregating/disjoint/first-chunk-error.log")
+            "com/cognifide/gradle/aem/test/tail/aggregating/disjoint/first-chunk-error.log",
+            "com/cognifide/gradle/aem/test/tail/aggregating/disjoint/first-chunk-error.log")
         val destination = MockDestination()
         val tailer = Tailer(source, destination)
 
@@ -234,8 +233,8 @@ class TailerTest {
 
         //then
         assertTrue(blacklist.isBlacklisted(Log.create(listOf("14.01.2019 12:20:43.111 *ERROR* " +
-                "[gea-arrgkkggae-rtreggga-1] egg.erggr.gaegkgr.arrgkkggae Sragker " +
-                "[6848, [gag.ereeer.reeaaeggkg.gea.erk.rgt.SrkkkggMBreg]] SragkerEgrgg REGISTERED"))))
+            "[gea-arrgkkggae-rtreggga-1] egg.erggr.gaegkgr.arrgkkggae Sragker " +
+            "[6848, [gag.ereeer.reeaaeggkg.gea.erk.rgt.SrkkkggMBreg]] SragkerEgrgg REGISTERED"))))
     }
 
     @Test
@@ -248,8 +247,8 @@ class TailerTest {
 
         //then
         assertFalse(blacklist.isBlacklisted(Log.create(listOf("14.01.2019 12:20:43.111 *ERROR* " +
-                "[gea-arrgkkggae-rtreggga-1] egg.erggr.gaegkgr.arrgkkggae Sragker " +
-                "[6848, [gag.ereeer.reeaaeggkg.gea.erk.rgt.SrkkkggMBreg]] SragkerEgrgg REGISTERED"))))
+            "[gea-arrgkkggae-rtreggga-1] egg.erggr.gaegkgr.arrgkkggae Sragker " +
+            "[6848, [gag.ereeer.reeaaeggkg.gea.erk.rgt.SrkkkggMBreg]] SragkerEgrgg REGISTERED"))))
     }
 
     @Test
@@ -262,8 +261,8 @@ class TailerTest {
 
         //then
         assertTrue(blacklist.isBlacklisted(Log.create(listOf("14.01.2019 12:20:43.111 *ERROR* " +
-                "[gea-arrgkkggae-rtreggga-1] egg.erggr.gaegkgr.arrgkkggae Sragker " +
-                "[6848, [gag.ereeer.reeaaeggkg.gea.erk.rgt.SrkkkggMBreg]] SragkerEgrgg REGISTERED"))))
+            "[gea-arrgkkggae-rtreggga-1] egg.erggr.gaegkgr.arrgkkggae Sragker " +
+            "[6848, [gag.ereeer.reeaaeggkg.gea.erk.rgt.SrkkkggMBreg]] SragkerEgrgg REGISTERED"))))
     }
 
     @Test
@@ -276,7 +275,7 @@ class TailerTest {
 
         //then
         assertFalse(blacklist.isBlacklisted(Log.create(listOf("14.01.2019 12:20:43.111 *ERROR* " +
-                "[gea-arrgkkggae-rtreggga-1] egg.erggr.gaegkgr.arrgkkggae Sragker " +
-                "[6848, [gag.ereeer.reeaaeggkg.gea.erk.rgt.SrkkkggMBreg]] SragkerEgrgg REGISTERED"))))
+            "[gea-arrgkkggae-rtreggga-1] egg.erggr.gaegkgr.arrgkkggae Sragker " +
+            "[6848, [gag.ereeer.reeaaeggkg.gea.erk.rgt.SrkkkggMBreg]] SragkerEgrgg REGISTERED"))))
     }
 }
