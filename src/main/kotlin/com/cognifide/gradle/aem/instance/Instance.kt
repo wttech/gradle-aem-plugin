@@ -128,10 +128,12 @@ interface Instance : Serializable {
         fun properties(aem: AemExtension): List<Instance> {
             return aem.project.properties.filterKeys {
                 Patterns.wildcard(it, "aem.instance.*.httpUrl")
-            }.keys.map { it.split(".")[2] }.map { name ->
+            }.keys.mapNotNull { property ->
+                val name = property.split(".")[2]
                 val nameParts = name.split("-")
                 if (nameParts.size != 2) {
-                    throw InstanceException("Instance name has invalid format: '$name'.")
+                    aem.logger.warn("Instance name has invalid format '$name' in property '$property'.")
+                    return@mapNotNull null
                 }
 
                 val props = aem.project.properties.filterKeys {
@@ -142,8 +144,12 @@ interface Instance : Serializable {
                     result.apply { put(prop, value as String) }
                 }
 
-                val httpUrl = props["httpUrl"]
-                        ?: throw InstanceException("Local instance named '$name' must have property 'httpUrl' defined.")
+                if (props["httpUrl"] == null) {
+                    aem.logger.warn("Instance named '$name' must have property 'httpUrl' defined.")
+                    return@mapNotNull null
+                }
+
+                val httpUrl = props["httpUrl"]!!
                 val type = props["type"] ?: TYPE_REMOTE
                 val (environment, typeName) = nameParts
 
@@ -169,7 +175,10 @@ interface Instance : Serializable {
 
                         this.properties = props.filterKeys { !REMOTE_PROPS.contains(it) }
                     }
-                    else -> throw InstanceException("Invalid instance type: '$type'. Supported types: 'local', 'remote'.")
+                    else -> {
+                        aem.logger.warn("Invalid instance type '$type' defined in property '$property'. Supported types: 'local', 'remote'.")
+                        return@mapNotNull null
+                    }
                 }
             }
         }
