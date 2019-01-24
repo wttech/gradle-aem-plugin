@@ -180,7 +180,7 @@ interface Instance : Serializable {
                         return@mapNotNull null
                     }
                 }
-            }
+            }.sortedBy { it.name }
         }
 
         fun defaults(aem: AemExtension, environment: String): List<RemoteInstance> {
