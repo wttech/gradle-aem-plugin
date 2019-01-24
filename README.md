@@ -244,7 +244,7 @@ aem.instance.local-author.httpUrl=http://localhost:4502
 aem.instance.local-publish.httpUrl=http://localhost:4503
 ```
 
-Example for defining multiple remote instances:
+Example for defining multiple remote instances (that could be [filtered](#filter-instances-for-which-packages-will-be-deployed-or-satisfied)):
 
 ```
 aem.instance.int-author.httpUrl=http://author.aem-integration.company.com
