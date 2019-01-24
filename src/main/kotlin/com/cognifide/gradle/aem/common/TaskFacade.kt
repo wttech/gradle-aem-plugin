@@ -50,6 +50,8 @@ class TaskFacade(private val aem: AemExtension) {
 
     fun create(configurer: Create.() -> Unit) = named(Create.NAME, Create::class.java, configurer)
 
+    fun backup(configurer: Backup.() -> Unit) = named(Backup.NAME, Backup::class.java, configurer)
+
     fun destroy(configurer: Destroy.() -> Unit) = named(Destroy.NAME, Destroy::class.java, configurer)
 
     fun down(configurer: Down.() -> Unit) = named(Down.NAME, Down::class.java, configurer)
