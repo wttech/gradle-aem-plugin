@@ -47,7 +47,7 @@ class PackageResolution(group: PackageGroup, id: String, action: (FileResolution
 
         // Copy package template files
         GFileUtils.mkdirs(vaultDir)
-        FileOperations.copyResourcesFromAemPkg(Package.VLT_PATH, vaultDir)
+        FileOperations.copyFromAemPkg(Package.VLT_PATH, vaultDir)
 
         // Expand package properties
         val bundle = Jar(jar)

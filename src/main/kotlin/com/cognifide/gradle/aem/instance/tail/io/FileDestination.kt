@@ -10,7 +10,7 @@ class FileDestination(
 
     init {
         logFiles.clearMain(instanceName)
-        logFiles.clearSnapshots(instanceName)
+        logFiles.clearIncidents(instanceName)
     }
 
     override fun dump(logs: List<Log>) {

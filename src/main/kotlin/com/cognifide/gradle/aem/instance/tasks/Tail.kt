@@ -7,7 +7,6 @@ import com.cognifide.gradle.aem.instance.tail.*
 import com.cognifide.gradle.aem.instance.tail.io.FileDestination
 import com.cognifide.gradle.aem.instance.tail.io.LogFiles
 import com.cognifide.gradle.aem.instance.tail.io.UrlSource
-import kotlin.math.max
 import kotlinx.coroutines.ObsoleteCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -28,16 +27,10 @@ open class Tail : AemDefaultTask() {
         description = "Tails logs from all configured instances (local & remote) and notifies developer about unknown errors."
     }
 
-    private val logFileCreator = LogFiles(aem, name)
-
     @Nested
-    private val config = TailConfig()
+    private val options = aem.project.objects.newInstance(TailOptions::class.java, aem)
 
-    fun isRunning() = logFileCreator.isLocked()
-
-    fun config(configurer: TailConfig.() -> Unit) {
-        config.apply(configurer)
-    }
+    private val logFileCreator = LogFiles(options, aem, name)
 
     @TaskAction
     fun tail() {
@@ -45,26 +38,46 @@ open class Tail : AemDefaultTask() {
         ShutdownHooks.addShutdownHook {
             shouldRunTailing = false
         }
-        if (logFileCreator.isLocked()) {
-            logger.warn(
-                "Another instance of aemTail ($name) is running for this project. " +
-                    "Stop it before starting a new one."
-            )
-            return
-        }
-        logFileCreator.lock()
-        logger.lifecycle("Fetching logs every ${Formats.duration(FETCH_INTERVAL)}")
+        checkStartLock()
+        logger.lifecycle("Fetching logs every ${Formats.duration(options.fetchInterval)}")
         runBlocking {
             createAllTailers().forEach { tailer ->
                 launch {
                     while (shouldRunTailing) {
                         logFileCreator.lock()
                         tailer.tail()
-                        delay(FETCH_INTERVAL)
+                        delay(options.fetchInterval)
                     }
                 }
             }
         }
+    }
+
+    fun config(configurer: TailOptions.() -> Unit) {
+        options.apply(configurer)
+    }
+
+    fun showUsageNotification() {
+        if (logFileCreator.shouldShowUsageNotification()) {
+            aem.notifier.notify("Notice: log tailing is not running", "Consider starting it to easily monitor AEM logs:\nsh gradlew aemTail")
+            aem.logger.lifecycle("*****************************************************************************************")
+            aem.logger.lifecycle("*                                                                                       *")
+            aem.logger.lifecycle("* Notice: Log tailing is not running!                                                   *")
+            aem.logger.lifecycle("*         Consider starting it to easily monitor AEM logs: sh gradlew aemTail           *")
+            aem.logger.lifecycle("*                                                                                       *")
+            aem.logger.lifecycle("*****************************************************************************************")
+        }
+    }
+
+    private fun checkStartLock() {
+        if (logFileCreator.isLocked()) {
+            logger.warn(
+                "Another instance of log tailer is running for this project. " +
+                    "Stop it before starting a new one."
+            )
+            throw TailException("Another instance of log tailer is running for this project.")
+        }
+        logFileCreator.lock()
     }
 
     private fun createAllTailers(): List<Tailer> {
@@ -74,29 +87,15 @@ open class Tail : AemDefaultTask() {
     }
 
     private fun create(instance: Instance, notificationChannel: Channel<ProblematicLogs>): Tailer {
-        val source = UrlSource(instance, aem)
+        val source = UrlSource(options, instance, aem)
         val destination = FileDestination(instance.name, logFileCreator)
         val logsAnalyzerChannel = Channel<Log>(Channel.UNLIMITED)
-        LogAnalyzer(instance.name, logsAnalyzerChannel, notificationChannel, Blacklist(config.filters, config.blacklistFiles))
+        LogAnalyzer(options, instance.name, logsAnalyzerChannel, notificationChannel, Blacklist(options.filters, options.blacklistFiles))
         logger.lifecycle("Creating log tailer for ${instance.name} (${instance.httpUrl}) -> ${logFileCreator.mainUri(instance.name)}")
         return Tailer(source, destination, logsAnalyzerChannel)
     }
 
     companion object {
         const val NAME = "aemTail"
-        const val FETCH_INTERVAL = 500L
-        val LOCK_INTERVAL = max(1000L + FETCH_INTERVAL, 2000L)
-        const val LOG_LINES_CHUNK_SIZE = 400L
-        const val NOTIFICATION_DELAY = 5000L
-        const val LOG_FILE = "error.log"
-        const val LOG_FILE_PATH = "%2Flogs%2F$LOG_FILE"
-        const val ERROR_LOG_ENDPOINT = "/system/console/slinglog/tailer.txt" +
-            "?_dc=1520834477194" +
-            "&tail=$LOG_LINES_CHUNK_SIZE" +
-            "&name=$LOG_FILE_PATH"
-        val BLACKLIST_FILES_DEFAULT = listOf(
-            "aem/gradle/tail/errors-blacklist.log",
-            "gradle/aem/tail/errors-blacklist.log"
-        )
     }
 }

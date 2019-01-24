@@ -35,18 +35,14 @@ open class Deploy : Sync() {
      */
     @Internal
     @get:JsonIgnore
-    var uploadRetry = aem.retry {
-        afterSquaredSecond(aem.props.long("aem.deploy.uploadRetry") ?: 6)
-    }
+    var uploadRetry = aem.retry { afterSquaredSecond(aem.props.long("aem.deploy.uploadRetry") ?: 6) }
 
     /**
      * Repeat install when failed (brute-forcing).
      */
     @Internal
     @get:JsonIgnore
-    var installRetry = aem.retry {
-        afterSquaredSecond(aem.props.long("aem.deploy.installRetry") ?: 4)
-    }
+    var installRetry = aem.retry { afterSquaredSecond(aem.props.long("aem.deploy.installRetry") ?: 4) }
 
     /**
      * Determines if when on package install, sub-packages included in CRX package content should be also installed.
@@ -138,12 +134,8 @@ open class Deploy : Sync() {
 
     private fun tailTaskNotification() {
         val tail = aem.project.tasks.find { it is Tail }
-        if (tail is Tail && !tail.isRunning()) {
-            aem.logger.lifecycle("*****************************************************************************************")
-            aem.logger.lifecycle("*                                                                                       *")
-            aem.logger.lifecycle("* Notice: aemTail task is not running, consider starting it to easily monitor AEM logs. *")
-            aem.logger.lifecycle("*                                                                                       *")
-            aem.logger.lifecycle("*****************************************************************************************")
+        if (tail is Tail) {
+            tail.showUsageNotification()
         }
     }
 

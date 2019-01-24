@@ -60,7 +60,7 @@ class VltFilter(
         const val TEMPORARY_NAME = "temporaryFilter.xml"
 
         fun temporary(project: Project, paths: List<String>): VltFilter {
-            val template = FileOperations.readResourceFromAemPkg("vlt/$TEMPORARY_NAME")!!
+            val template = FileOperations.fromAemPkg("vlt/$TEMPORARY_NAME")!!
                     .bufferedReader().use { it.readText() }
             val content = AemExtension.of(project).props.expand(template, mapOf("paths" to paths))
             val file = AemTask.temporaryFile(project, Vlt.NAME, TEMPORARY_NAME)

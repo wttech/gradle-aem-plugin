@@ -19,17 +19,17 @@ import org.zeroturnaround.zip.ZipUtil
 
 object FileOperations {
 
-    fun <T> readResourceFromPathOrClasspath(resource: String, parser: (BufferedReader) -> T): T =
-            BufferedReader(InputStreamReader(inputStreamFromPathOrClasspath(resource))).use(parser)
+    fun <T> fromPathOrClasspath(resource: String, parser: (BufferedReader) -> T): T =
+            BufferedReader(InputStreamReader(fromPathOrClasspath(resource))).use(parser)
 
-    fun <T> optionalReadResourceFromPathOrClasspath(resource: String, parser: (BufferedReader) -> T): T? =
+    fun <T> optionalFromPathOrClasspath(resource: String, parser: (BufferedReader) -> T): T? =
             try {
-                readResourceFromPathOrClasspath(resource, parser)
+                fromPathOrClasspath(resource, parser)
             } catch (e: AemException) {
                 null
             }
 
-    private fun inputStreamFromPathOrClasspath(resourcePath: String): InputStream {
+    private fun fromPathOrClasspath(resourcePath: String): InputStream {
         val resourceFile = File(resourcePath)
         if (resourceFile.exists()) {
             return GFileUtils.openInputStream(resourceFile)
@@ -45,31 +45,31 @@ object FileOperations {
         throw AemException("Cannot load blacklist from file: $resourcePath")
     }
 
-    fun readResourceFromAemPkg(path: String): InputStream? {
+    fun fromAemPkg(path: String): InputStream? {
         return javaClass.getResourceAsStream("/${AemPlugin.PKG.replace(".", "/")}/$path")
     }
 
-    private fun getResourcesFromAemPkg(path: String): List<String> {
+    private fun loadFromAemPkg(path: String): List<String> {
         return Reflections("${AemPlugin.PKG}.$path".replace("/", "."), ResourcesScanner()).getResources { true; }.toList()
     }
 
-    private fun eachResourceFromAemPkg(resourceRoot: String, targetDir: File, callback: (String, File) -> Unit) {
-        for (resourcePath in getResourcesFromAemPkg(resourceRoot)) {
+    private fun eachFromAemPkg(resourceRoot: String, targetDir: File, callback: (String, File) -> Unit) {
+        for (resourcePath in loadFromAemPkg(resourceRoot)) {
             val outputFile = File(targetDir, resourcePath.substringAfterLast("$resourceRoot/"))
 
             callback(resourcePath, outputFile)
         }
     }
 
-    fun copyResourcesFromAemPkg(resourceRoot: String, targetDir: File, skipExisting: Boolean = false) {
-        eachResourceFromAemPkg(resourceRoot, targetDir) { resourcePath, outputFile ->
+    fun copyFromAemPkg(resourceRoot: String, targetDir: File, skipExisting: Boolean = false) {
+        eachFromAemPkg(resourceRoot, targetDir) { resourcePath, outputFile ->
             if (!skipExisting || !outputFile.exists()) {
-                copyResource(resourcePath, outputFile)
+                copy(resourcePath, outputFile)
             }
         }
     }
 
-    private fun copyResource(resourcePath: String, outputFile: File) {
+    private fun copy(resourcePath: String, outputFile: File) {
         GFileUtils.mkdirs(outputFile.parentFile)
 
         javaClass.getResourceAsStream("/$resourcePath").use { input ->

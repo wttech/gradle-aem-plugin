@@ -140,7 +140,7 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
         correctStaticFiles()
 
         aem.logger.info("Creating default instance files")
-        FileOperations.copyResourcesFromAemPkg(InstancePlugin.FILES_PATH, dir, true)
+        FileOperations.copyFromAemPkg(InstancePlugin.FILES_PATH, dir, true)
 
         val overridesDir = File(options.overridesPath)
 

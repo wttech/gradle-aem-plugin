@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem.instance.tail
 
 import com.cognifide.gradle.aem.common.file.FileOperations
-import com.cognifide.gradle.aem.instance.tasks.Tail
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.ObsoleteCoroutinesApi
 import kotlinx.coroutines.channels.Channel
@@ -17,6 +16,7 @@ import kotlinx.coroutines.launch
  */
 @UseExperimental(ObsoleteCoroutinesApi::class)
 class LogAnalyzer(
+    private val options: TailOptions,
     private val instanceName: String,
     private val logsChannel: ReceiveChannel<Log>,
     private val notificationChannel: SendChannel<ProblematicLogs>,
@@ -51,7 +51,7 @@ class LogAnalyzer(
 
     private suspend fun checkIfErrorsCannonadeEnded() {
         if (aggregatedErrors.isEmpty()) return
-        if (aggregatedErrors.last().isOlderThan(millis = Tail.NOTIFICATION_DELAY)) {
+        if (aggregatedErrors.last().isOlderThan(millis = options.notificationDelay)) {
             notificationChannel.send(ProblematicLogs(instanceName, aggregatedErrors))
             aggregatedErrors = mutableListOf()
         }
@@ -75,14 +75,14 @@ class Blacklist(
     private val blacklist = loadBlacklists()
 
     private fun loadBlacklists(): Map<String, Log> {
-        return (loadDefaultBlacklists(Tail.BLACKLIST_FILES_DEFAULT) +
+        return (loadDefaultBlacklists(TailOptions.BLACKLIST_FILES_DEFAULT) +
                 loadConfiguredBlacklists(blacklists))
                 .flatten().map { it.messageChecksum to it }.toMap()
     }
 
     private fun loadConfiguredBlacklists(blacklists: List<String>): List<List<Log>> {
         return blacklists.map { logFile ->
-            FileOperations.readResourceFromPathOrClasspath(logFile) { reader ->
+            FileOperations.fromPathOrClasspath(logFile) { reader ->
                 parser.parseLogs(reader)
             }
         }
@@ -90,7 +90,7 @@ class Blacklist(
 
     private fun loadDefaultBlacklists(blacklists: List<String>): List<List<Log>> {
         return blacklists.mapNotNull { logFile ->
-            FileOperations.optionalReadResourceFromPathOrClasspath(logFile) { reader ->
+            FileOperations.optionalFromPathOrClasspath(logFile) { reader ->
                 parser.parseLogs(reader)
             }
         }

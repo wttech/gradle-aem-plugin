@@ -4,11 +4,12 @@ import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.http.RequestException
 import com.cognifide.gradle.aem.instance.Instance
 import com.cognifide.gradle.aem.instance.tail.LogSource
-import com.cognifide.gradle.aem.instance.tasks.Tail
+import com.cognifide.gradle.aem.instance.tail.TailOptions
 import java.io.BufferedReader
 import java.io.InputStreamReader
 
 class UrlSource(
+    private val options: TailOptions,
     private val aemInstance: Instance,
     private val aem: AemExtension
 ) : LogSource {
@@ -18,7 +19,7 @@ class UrlSource(
     override fun <T> readChunk(parser: (BufferedReader) -> List<T>) =
         handleInstanceUnavailability {
             aemInstance.sync {
-                get(Tail.ERROR_LOG_ENDPOINT) {
+                get(options.errorLogEndpoint()) {
                     BufferedReader(InputStreamReader(asStream(it))).use(parser)
                 }
             }

@@ -37,7 +37,7 @@ class LogNotifier(
     }
 
     private fun snapshotErrorsToSeparateFile(logs: ProblematicLogs): URI {
-        return logFiles.writeToSnapshot(logs.instanceName) { out ->
+        return logFiles.writeToIncident(logs.instanceName) { out ->
             logs.logs.forEach {
                 out.write("${it.text}\n")
             }
