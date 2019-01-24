@@ -236,6 +236,53 @@ Part | Possible values | Description |
 `$TYPE_NAME` | `author`, `publish`, `publish2`, etc | Combination of AEM instance type and semantic suffix useful when more than one of instance of same type is being configured. |
 `$PROP_NAME=$PROP_VALUE` | **Local instances:** `httpUrl=http://admin:admin@localhost:4502`<br>`type=local`(or remote)<br>`password=foo`<br>`runModes=nosamplecontent`<br>`jvmOpts=-server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true`, `startOpts=...`<br>`debugPort=24502`.<br><br>**Remote instances:** `httpUrl`, `type`, `user`, `password`. | Run modes, JVM opts and start opts should be comma delimited. |
 
+
+Default remote instances defined via properties (below lines are optional):
+
+```
+aem.instance.local-author.httpUrl=http://localhost:4502
+aem.instance.local-publish.httpUrl=http://localhost:4503
+```
+
+Example for defining multiple remote instances:
+
+```
+aem.instance.int-author.httpUrl=http://author.aem-integration.company.com
+aem.instance.int-publish.httpUrl=http://aem-integration.company.com
+aem.instance.stg-author.httpUrl=http://author.aem-staging.company.com
+aem.instance.stg-publish.httpUrl=http://aem-staging.company.com
+```
+
+Example for defining remote instance with credentials separated:
+
+```
+aem.instance.test-author.httpUrl=http://author.aem-integration.company.com
+aem.instance.test-author.user=foo
+aem.instance.test-author.password=bar
+```
+
+Example for defining remote instance with credentials details included in URL:
+
+```
+aem.instance.test-author.httpUrl=http://foo:bar@author.aem-integration.company.com
+```
+
+Example for defining local instances (created on local file system):
+
+```
+aem.instance.local-author.httpUrl=http://localhost:4502
+aem.instance.local-author.type=local
+aem.instance.local-author.runModes=nosamplecontent
+aem.instance.local-author.jvmOpts=-server -Xmx1024m -XX:MaxPermSize=256M -Djava.awt.headless=true
+
+aem.instance.local-publish.httpUrl=http://localhost:4503
+aem.instance.local-publish.type=local
+aem.instance.local-publish.runModes=nosamplecontent
+aem.instance.local-publish.jvmOpts=-server -Xmx1024m -XX:MaxPermSize=256M -Djava.awt.headless=true
+```
+
+Notice! Remember to define also AEM [source files](#source-files-configuration).
+
 #### Defining instances via build script
 
 Example usage below. The commented value is an effective instance name.
