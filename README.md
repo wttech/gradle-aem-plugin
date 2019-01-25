@@ -411,8 +411,8 @@ For such cases, see configuration below:
 ```kotlin
 aem {
     tasks {
-        clean {
-            options {
+        sync {
+            cleaner {
                 propertiesSkipped += listOf(
                         pathRule("dam:sha1", listOf(), listOf("**/content/dam/*.svg/*")),
                         pathRule("dam:size", listOf(), listOf("**/content/dam/*.svg/*")),
@@ -1274,7 +1274,7 @@ As an effect there will be same dependent CRX package defined multiple times.
 
 ### Understand why there are one or two plugins to be applied in build script
 
-Gradle AEM Plugin assumes separation of 4 plugins to properly fit into Gradle tasks structure correctly.
+Gradle AEM Plugin assumes separation of 5 plugins to properly fit into Gradle tasks structure correctly.
 
 Most often, Gradle commands are being launched from project root and tasks are being run by their name e.g `aemSatisfy` (which is not fully qualified, better if it will be `:aemSatisfy` of root project).
 Let's imagine if task `aemSatisfy` will come from package plugin, then Gradle will execute more than one `aemSatisfy` (for all projects that have plugin applied), so that this is unintended behavior.
