@@ -28,7 +28,7 @@ open class Tail : AemDefaultTask() {
     }
 
     @Nested
-    private val options = aem.project.objects.newInstance(TailOptions::class.java, aem)
+    private val options = TailOptions(aem)
 
     private val logFileCreator = LogFiles(options, aem, name)
 
@@ -59,13 +59,7 @@ open class Tail : AemDefaultTask() {
 
     fun showUsageNotification() {
         if (logFileCreator.shouldShowUsageNotification()) {
-            aem.notifier.notify("Notice: log tailing is not running", "Consider starting it to easily monitor AEM logs:\nsh gradlew aemTail")
-            aem.logger.lifecycle("*****************************************************************************************")
-            aem.logger.lifecycle("*                                                                                       *")
-            aem.logger.lifecycle("* Notice: Log tailing is not running!                                                   *")
-            aem.logger.lifecycle("*         Consider starting it to easily monitor AEM logs: sh gradlew aemTail           *")
-            aem.logger.lifecycle("*                                                                                       *")
-            aem.logger.lifecycle("*****************************************************************************************")
+            aem.notifier.notify("Notice: log tailer not running", "Consider starting it")
         }
     }
 

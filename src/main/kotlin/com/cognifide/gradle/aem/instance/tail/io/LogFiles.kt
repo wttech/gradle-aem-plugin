@@ -74,7 +74,7 @@ class LogFiles(
         return AemTask.temporaryFile(
             aem.project,
             taskName,
-            ".lock"
+            "tailer.lock"
         )
     }
 
@@ -82,7 +82,7 @@ class LogFiles(
         return AemTask.temporaryFile(
             aem.project,
             taskName,
-            ".notify"
+            "tailer.notify"
         )
     }
 
