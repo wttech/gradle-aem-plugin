@@ -1055,7 +1055,7 @@ Turn off local AEM instance(s).
 
 #### Task `aemRestart`
 
-Restarts local AEM instance(s).
+Turn off and then turn on local AEM instance(s).
 
 #### Task `aemReload`
 
@@ -1158,8 +1158,8 @@ Wait until all local or remote AEM instance(s) be stable.
 
 Action parameter | CMD Property | Default Value | Purpose
 --- | --- | --- | ---
-`stableRetry` | *aem.await.stableRetry* | `300` | Hook for customizing how often and how many stability checks will be performed. Corresponding CMD param controls maximum count of retries if default hook is active. //there is only one number, how it can specify two things?
-`stableAssurance` | *aem.await.stableAssurance* | `3` | Number of intervals / additional instance stability checks to assure all stable instances. //not sure what you mean by that...
+`stableRetry` | *aem.await.stableRetry* | `300` | Hook for customizing how often and how many stability checks will be performed. Corresponding CMD param controls maximum count of retries if default hook is active.
+`stableAssurance` | *aem.await.stableAssurance* | `3` | Number of intervals / additional instance stability checks after stable state has been reached for the first time to assure all stable instances.
 `stableCheck` | n/a | `{ it.checkBundleStable() }` | Hook for customizing instance stability check. Check will be repeated if assurance is configured. 
 `healthCheck` | n/a | { `it.checkComponentState() }` | Hook for customizing instance health check.
 `healthRetry` | *aem.await.healthRetry* | `5` | Hook for customizing how often and how many health checks will be performed.
@@ -1174,7 +1174,7 @@ Instance state, stable check, health check lambdas are using: [InstanceState](sr
 
 #### Task `aemCollect`
 
-// how this tasks corresponds to oher tasks? it's been never mentioned in other places :-D
+// how this tasks corresponds to other tasks? it's been never mentioned in other places :-D
 
 Composes ZIP package from all CRX packages being satisfied and built.
 
