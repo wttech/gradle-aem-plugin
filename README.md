@@ -90,7 +90,7 @@ To see documentation for previous 5.x serie, please [click here](https://github.
         * [Task aemSetup](#task-aemsetup)
         * [Task aemResetup](#task-aemresetup)
         * [Task aemCreate](#task-aemcreate)
-           * [Configuration of AEM instance source](#configuration-of-aem-instance-source-jar-file-or-backup-file)
+           * [Configuration of AEM instance source (JAR file or backup file)](#configuration-of-aem-instance-source-jar-file-or-backup-file)
            * [Extracted files configuration (optional)](#extracted-files-configuration-optional)
         * [Task aemBackup](#task-aembackup)
         * [Task aemDestroy](#task-aemdestroy)
@@ -111,7 +111,7 @@ To see documentation for previous 5.x serie, please [click here](https://github.
      * [No OSGi services / components are registered](#no-osgi-services--components-are-registered)
      * [Caching task aemCompose](#caching-task-aemcompose)
      * [Vault tasks parallelism](#vault-tasks-parallelism)
-     * [Files from SSH for aemCreate and aemSatisfy](#files-from-ssh-for-aemcreate-and-aemsatisfy)
+     * [Files from SSH for aemCreate and <code>aemSatisfy</code>](#files-from-ssh-for-aemcreate-and-aemsatisfy)
   * [Building](#building)
   * [Contributing](#contributing)
   * [License](#license)
@@ -632,9 +632,15 @@ For the reference, see [usage in AEM Multi-Project Example](https://github.com/C
 
 ##### Assembling packages (merging all-in-one)
 
-Let's assume following project structure (with build file contents):
+Let's assume following project structure:
 
-* *build.gradle.kts* (project `:`)
+* *aem/build.gradle.kts* (project `:aem`, no source files at all)
+* *aem/sites/build.gradle.kts*  (project `:aem:sites`, JCR content and OSGi bundle)
+* *aem/common/build.gradle.kts*  (project `:aem:common`, JCR content and OSGi bundle)
+* *aem/content.init/build.gradle.kts*  (project `:aem:content.init`, JCR content only)
+* *aem/content.demo/build.gradle.kts*  (project `:aem:content.demo`, JCR content only)
+
+File content of *aem/build.gradle.kts*:
 
 ```kotlin
 plugins {
@@ -644,40 +650,15 @@ plugins {
 aem {
     tasks {
         compose {
-            fromProjects(":app:*")
-            fromProjects(":content:*")
-            fromProject(":migration")
+            fromProject(":aem:sites")
+            fromProject(":aem:common")
+            fromProjects(":aem:content.*")
         }
     }    
 }
 ```
 
-When building via command `gradlew :build`, then the effect will be a CRX package with assembled JCR content and OSGi bundles from projects: `:app:core`, `:app:common`, `:content:init`, `:content:demo` and `:migration`.
-
-* *app/build.gradle.kts*  (project `:app`)
-
-```kotlin
-plugins {
-    id("com.cognifide.aem.package")
-}
-
-aem {
-    tasks {
-        compose {
-            fromSubprojects()
-        }
-    }
-}
-```
-
-When building via command `gradlew :app:build`, then the effect will be a CRX package with assembled JCR content and OSGi bundles from projects: `:app:core`, `:app:common` only.
-* *app/core/build.gradle.kts* (project `:app:core`, JCR content and OSGi bundle)
-* *app/common/build.gradle.kts* (project `:app:common`, JCR content and OSGi bundle)
-* *content/init/build.gradle.kts* (project `:content:init`, JCR content only)
-* *content/demo/build.gradle.kts* (project `:content:demo`, JCR content only)
-* *migration/build.gradle.kts* (project `:migration`, JCR content only)
-* *test/integration/build.gradle.kts* (project `:test:integration`, any source code)
-* *test/functional/build.gradle.kts* (project `:test:functional`, any source code)
+When building via command `gradlew :aem:build`, then the effect will be a CRX package with assembled JCR content and OSGi bundles from projects: `:aem:sites`, `:aem:common`, `:aem:content.init`, `:aem:content.demo`.
 
 Gradle AEM Plugin is configured in a way that project can have:
  
