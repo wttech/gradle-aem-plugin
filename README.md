@@ -153,6 +153,8 @@ File *build.gradle.kts*:
 plugins {
     id("com.cognifide.aem.bundle") // or 'package' for JCR content only
 }
+
+group = "com.company.aem"
 ```
 
 #### Additional
@@ -166,6 +168,8 @@ plugins {
     id("org.jetbrains.kotlin.jvm") // or any other like 'java' to compile OSGi bundle
 }
 
+group = "com.company.aem"
+version = "1.0.0"
 defaultTasks = listOf(":aemSatisfy", ":aemDeploy")
 
 aem {
