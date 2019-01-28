@@ -249,7 +249,6 @@ aem {
     config {
         localInstance("http://localhost:4502") // local-author
         localInstance("http://localhost:4502") { // local-author
-            user = "admin" //<- this won't compile: override val user: String = USER
             password = "admin"
             typeName = "author"
             debugPort = 14502 
@@ -257,7 +256,6 @@ aem {
       
         localInstance("http://localhost:4503") // local-publish
         localInstance("http://localhost:4503") { // local-publish
-            user = "admin"
             password = "admin"
             typeName = "publish"
             debugPort = 14503
