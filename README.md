@@ -48,7 +48,7 @@ To see documentation for previous 5.x serie, please [click here](https://github.
   * [Getting started](#getting-started)
   * [Configuration](#configuration)
      * [Plugin setup](#plugin-setup)
-        * [Minimal:](#minimal)
+        * [Minimal](#minimal)
         * [Additional](#additional)
      * [Config plugin](#config-plugin)
         * [Instance conventions](#instance-conventions)
@@ -70,7 +70,7 @@ To see documentation for previous 5.x serie, please [click here](https://github.
         * [Task aemCompose](#task-aemcompose)
            * [Default configuration](#default-configuration)
         * [Including additional OSGi bundle into CRX package](#including-additional-osgi-bundle-into-crx-package)
-           * [Assembling packages (merging into all-in-one)](#assembling-packages-merging-into-all-in-one)
+           * [Assembling packages (merging all-in-one)](#assembling-packages-merging-all-in-one)
            * [Expandable properties](#expandable-properties)
         * [Task aemDeploy](#task-aemdeploy)
            * [Deploying only to author or publish instances](#deploying-only-to-author-or-publish-instances)
@@ -83,14 +83,14 @@ To see documentation for previous 5.x serie, please [click here](https://github.
         * [Task aemActivate](#task-aemactivate)
      * [Bundle plugin](#bundle-plugin)
         * [Bundle conventions](#bundle-conventions)
-        * [Embedding JAR file into built OSGi bundle](#embedding-jar-file-into-built-osgi-bundle)
+        * [Embedding JAR file into OSGi bundle](#embedding-jar-file-into-osgi-bundle)
         * [Configuring OSGi bundle manifest attributes](#configuring-osgi-bundle-manifest-attributes)
         * [Excluding packages being incidentally imported by OSGi bundle](#excluding-packages-being-incidentally-imported-by-osgi-bundle)
      * [Instance plugin](#instance-plugin)
         * [Task aemSetup](#task-aemsetup)
         * [Task aemResetup](#task-aemresetup)
         * [Task aemCreate](#task-aemcreate)
-           * [Source files configuration](#source-files-configuration)
+           * [Configuration of AEM instance source](#configuration-of-aem-instance-source-jar-file-or-backup-file)
            * [Extracted files configuration (optional)](#extracted-files-configuration-optional)
         * [Task aemBackup](#task-aembackup)
         * [Task aemDestroy](#task-aemdestroy)
@@ -111,7 +111,7 @@ To see documentation for previous 5.x serie, please [click here](https://github.
      * [No OSGi services / components are registered](#no-osgi-services--components-are-registered)
      * [Caching task aemCompose](#caching-task-aemcompose)
      * [Vault tasks parallelism](#vault-tasks-parallelism)
-     * [Files from SSH for aemCreate and <code>aemSatisfy</code>](#files-from-ssh-for-aemcreate-and-aemsatisfy)
+     * [Files from SSH for aemCreate and aemSatisfy](#files-from-ssh-for-aemcreate-and-aemsatisfy)
   * [Building](#building)
   * [Contributing](#contributing)
   * [License](#license)
@@ -121,7 +121,7 @@ To see documentation for previous 5.x serie, please [click here](https://github.
 * Most effective way to experience Gradle AEM Plugin is to use *Quickstart* located in:
   * [AEM Single-Project Example](https://github.com/Cognifide/gradle-aem-single#quickstart) - recommended for **application** development,
   * [AEM Multi-Project Example](https://github.com/Cognifide/gradle-aem-multi#quickstart) - recommended for **project** development,
-* The only needed software to start using plugin is to have installed on machine Java 8.
+* The only software needed on your machine to start using plugin is Java 8.
 * As a build command, it is recommended to use Gradle Wrapper (`gradlew`) instead of locally installed Gradle (`gradle`) to easily have same version of build tool installed on all environments. Only at first build time, wrapper will be automatically downloaded and installed, then reused.
 
 ## Configuration
@@ -129,9 +129,9 @@ To see documentation for previous 5.x serie, please [click here](https://github.
 ### Plugin setup
 
 Released versions of plugin are available on [Bintray](https://bintray.com/cognifide/maven-public/gradle-aem-plugin), 
-so that this repository need to be included in *buildscript* section.
+so that this repository needs to be included in *buildscript* section.
 
-#### Minimal:
+#### Minimal
 
 Configuration below assumes building and deploying CRX packages to AEM instance(s) via command: `gradlew aemDeploy`.
 
@@ -176,15 +176,17 @@ aem {
     }
     tasks {
         compose {
-            fromProject(':core')
-            fromProject(':config')
+            fromProject(":core")
+            fromProject(":config")
         }
         bundle {
             javaPackage = "com.company.example.aem"
             // ...
         }
         satisfy {
-            url('http://.../package.zip')
+            packages {
+                url("http://.../package.zip")
+            }
         }
     }
 }
@@ -245,7 +247,6 @@ aem {
     config {
         localInstance("http://localhost:4502") // local-author
         localInstance("http://localhost:4502") { // local-author
-            user = "admin"
             password = "admin"
             typeName = "author"
             debugPort = 14502 
@@ -253,7 +254,6 @@ aem {
       
         localInstance("http://localhost:4503") // local-publish
         localInstance("http://localhost:4503") { // local-publish
-            user = "admin"
             password = "admin"
             typeName = "publish"
             debugPort = 14503
@@ -434,6 +434,7 @@ Copy JCR content from one instance to another. Sample usages below.
   ```bash
   gradlew :aemRcp -Paem.rcp.source.instance=stg-author -Paem.rcp.target.instance=int-author -Paem.rcp.paths=[/content/example,/content/example2]
   ```
+  Right side of assignment could skipped if equals to left (same path on both source & target instance).
 
 * Using predefined instances with source and target nodes specified in file:
 
@@ -460,7 +461,7 @@ Copy JCR content from one instance to another. Sample usages below.
 Keep in mind, that copying JCR content between instances, could be a trigger for running AEM workflows like *DAM Update Asset* which could cause heavy load on instance.
 Consider disabling AEM workflow launchers before running this task and re-enabling after.
 
-RCP task is internally using [Vault Remote Copy](http://jackrabbit.apache.org/filevault/rcp.html) which requires to having bundle *Apache Sling Simple WebDAV Access to repositories (org.apache.sling.jcr.webdav)* " in active state on instance.
+RCP task is internally using [Vault Remote Copy](http://jackrabbit.apache.org/filevault/rcp.html) which requires bundle *Apache Sling Simple WebDAV Access to repositories (org.apache.sling.jcr.webdav)* present in active state on instance.
 
 #### Task `aemVlt`
 
@@ -472,7 +473,7 @@ For instance, to reflect `aemRcp` functionality, command below could be executed
 gradlew :content:aemVlt -Paem.vlt.command='rcp -b 100 -r -u -n http://admin:admin@localhost:4502/crx/-/jcr:root/content/dam/example http://admin:admin@localhost:4503/crx/-/jcr:root/content/dam/example' 
 ```
 
-For more details about available parameters, please visit [VLT Tool documentation](https://docs.adobe.com/docs/en/aem/6-2/develop/dev-tools/ht-vlttool.html).
+For more details about available parameters, please visit [VLT Tool documentation](https://helpx.adobe.com/experience-manager/6-4/sites/developing/using/ht-vlttool.html).
 
 While using task `aemVlt` be aware that Gradle requires to have working directory with file *build.gradle.kts* in it, but Vault tool can work at any directory under *jcr_root*. To change working directory for Vault, use property `aem.vlt.path` which is relative path to be appended to *jcr_root* for project task being currently executed.
 
@@ -627,9 +628,9 @@ aem {
 }
 ```
 
-For the reference, see [usage in AEM Multi-Project Example](https://github.com/Cognifide/gradle-aem-multi/blob/master/aem/app.common/build.gradle.kts).
+For the reference, see [usage in AEM Multi-Project Example](https://github.com/Cognifide/gradle-aem-multi/blob/master/aem/common/build.gradle.kts).
 
-##### Assembling packages (merging into all-in-one)
+##### Assembling packages (merging all-in-one)
 
 Let's assume following project structure (with build file contents):
 
@@ -670,7 +671,6 @@ aem {
 ```
 
 When building via command `gradlew :app:build`, then the effect will be a CRX package with assembled JCR content and OSGi bundles from projects: `:app:core`, `:app:common` only.
-
 * *app/core/build.gradle.kts* (project `:app:core`, JCR content and OSGi bundle)
 * *app/common/build.gradle.kts* (project `:app:common`, JCR content and OSGi bundle)
 * *content/init/build.gradle.kts* (project `:content:init`, JCR content only)
@@ -679,7 +679,7 @@ When building via command `gradlew :app:build`, then the effect will be a CRX pa
 * *test/integration/build.gradle.kts* (project `:test:integration`, any source code)
 * *test/functional/build.gradle.kts* (project `:test:functional`, any source code)
 
-Gradle AEM Plugin is configured in that way that project can have:
+Gradle AEM Plugin is configured in a way that project can have:
  
 * JCR content,
 * source code to compile OSGi bundle,
@@ -689,11 +689,11 @@ By distinguishing `fromProject`, `fromBundle` or `fromCompose` there is ability 
 
 When using `fromProject` there is an ability to pass lambda to customize options like `bundlePath`, `bundleRunMode`, decide to include only JCR contents, only bundles and more.
 
-Only one must have rule to be kept while developing a multi-module project is that **all Vault filter roots of all projects must be exclusive**. In general, they are most often exclusive, to avoid strange JCR installer behaviors, but sometimes exceptional [workspace filter](http://jackrabbit.apache.org/filevault/filter.html) rules are being applied like `mode="merge"` etc.
+However, one rule must be kept while developing a multi-module project: **all Vault filter roots of all projects must be exclusive**. In general, they are most often exclusive, to avoid strange JCR installer behaviors, but sometimes exceptional [workspace filter](http://jackrabbit.apache.org/filevault/filter.html) rules are being applied like `mode="merge"` etc.
 
 ##### Expandable properties
 
-In exactly same way as it is working for instance files, properties can be expanded inside metadata files of package being composed.
+In exactly the same way as it works for instance files, properties can be expanded inside metadata files of package being composed.
 
 Related configuration:
 
@@ -796,7 +796,7 @@ Replicate installed CRX package to other AEM instance(s).
 
 ### Bundle plugin
 
-Should be applied to all projects that are composing CRX packages from both *OSGi bundle* being built and optionally *JCR content*, 
+Should be applied to all projects that are composing CRX packages from both *OSGi bundle* being built and optionally *JCR content*. 
 
 Inherits from [Package Plugin](#package-plugin).
 
@@ -834,10 +834,10 @@ aem {
 }
 ```
 
-Gradle AEM Plugin is following strategy [convention over configuration](https://pl.wikipedia.org/wiki/Convention_Over_Configuration), which means when following built-in convention about project structure & naming, then only minimal configuration is required. 
+Gradle AEM Plugin is following strategy [convention over configuration](https://en.wikipedia.org/wiki/Convention_over_configuration). When following built-in convention about project structure & naming, then only minimal configuration is required. 
 Still all features are fully configurable.
 
-#### Embedding JAR file into built OSGi bundle
+#### Embedding JAR file into OSGi bundle
 
 Use dedicated method in *bundle* section.
 
@@ -851,11 +851,11 @@ aem {
 }
 ```
  
-For the reference, see [usage in AEM Multi-Project Example](https://github.com/Cognifide/gradle-aem-multi/blob/master/aem/app.common/build.gradle.kts).
+For the reference, see [usage in AEM Multi-Project Example](https://github.com/Cognifide/gradle-aem-multi/blob/master/aem/common/build.gradle.kts).
 
 #### Configuring OSGi bundle manifest attributes
 
-Plugin by default covers generation of few attributes by convention. The minimal need is to only specify *javaPackage*  in *bundle* section:
+Plugin by default covers generation of few attributes by convention. It is only required to specify *javaPackage*  in *bundle* section:
 
 
 ```kotlin
@@ -927,7 +927,7 @@ Inherits from [Config Plugin](#config-plugin).
 
 #### Task `aemSetup`
 
-Perform initial setup of local AEM instance(s). Automated version of `aemCreate aemUp aemSatisfy aemDeploy`.
+Performs initial setup of local AEM instance(s). Automated version of `aemCreate aemUp aemSatisfy aemDeploy`.
 
 ![Setup task](docs/setup-task.png)
 
@@ -941,7 +941,7 @@ To prevent data loss, this unsafe task execution must be confirmed by parameter 
  
 Create AEM instance(s) at local file system. Extracts *crx-quickstart* from downloaded JAR and applies configuration according to [instance definitions](#defining-instances-via-properties-file). 
 
-##### Source files configuration
+##### Configuration of AEM instance source (JAR file or backup file)
 
 To use this task, specify required properties in ignored file *gradle.properties* at project root (protocols supported: SMB, SSH, HTTP(s) or local path, HTTP with basic auth as example):
 
@@ -992,6 +992,7 @@ This behavior is controlled by:
 aem {
     config {
         instanceRoot = "${System.getProperty("user.home")}/.aem/${project.rootProject.name}"
+        // as far as I know this path is not valid anymore
     }
     tasks {
         create {
@@ -1029,7 +1030,7 @@ Predefined expandable properties:
 Turns off local AEM instance(s) then archives them into ZIP file, then turns on again.
 
 The most recent file created by this task will be reused automatically while running task `aemResetup`.
-Also the file created could be also a [source file](#source-files-configuration) for task `aemCreate`.
+Also the file created could be also a [source file](#configuration-of-aem-instance-source-jar-file-or-backup-file) for task `aemCreate`.
 
 #### Task `aemDestroy` 
 
@@ -1047,7 +1048,7 @@ Turn off local AEM instance(s).
 
 #### Task `aemRestart`
 
-Turn off then on local AEM instance(s).
+Turn off and then turn on local AEM instance(s).
 
 #### Task `aemReload`
 
@@ -1151,7 +1152,7 @@ Wait until all local or remote AEM instance(s) be stable.
 Action parameter | CMD Property | Default Value | Purpose
 --- | --- | --- | ---
 `stableRetry` | *aem.await.stableRetry* | `300` | Hook for customizing how often and how many stability checks will be performed. Corresponding CMD param controls maximum count of retries if default hook is active.
-`stableAssurance` | *aem.await.stableAssurance* | `3` | Number of intervals / additional instance stability checks to assure all stable instances.
+`stableAssurance` | *aem.await.stableAssurance* | `3` | Number of intervals / additional instance stability checks after stable state has been reached for the first time to assure all stable instances.
 `stableCheck` | n/a | `{ it.checkBundleStable() }` | Hook for customizing instance stability check. Check will be repeated if assurance is configured. 
 `healthCheck` | n/a | { `it.checkComponentState() }` | Hook for customizing instance health check.
 `healthRetry` | *aem.await.healthRetry* | `5` | Hook for customizing how often and how many health checks will be performed.
@@ -1161,6 +1162,35 @@ Action parameter | CMD Property | Default Value | Purpose
 `resume` | *aem.await.resume* | `false` | Do not fail build but log warning when there is still some unstable or unhealthy instance.
 
 Instance state, stable check, health check lambdas are using: [InstanceState](src/main/kotlin/com/cognifide/gradle/aem/instance/InstanceState.kt). Use its methods to achieve expected customized behavior.
+
+```kotlin
+aem {
+    tasks {
+        await {
+            options {
+                availableCheck = check(InstanceState.BUNDLE_STATE_SYNC_OPTIONS, { !bundleState.unknown })
+                stableState = checkBundleState()
+                stableCheck = checkBundleStable()
+                healthCheck = checkComponentState(InstanceState.PLATFORM_COMPONENTS, aem.javaPackages.map { "$it.*" })
+            }
+        }
+    }
+}
+```
+
+Such options could be also customized for `aemDeploy` task when using block:
+
+```
+aem {
+    tasks {
+        deploy {
+            await {
+                // ...
+            }
+        }
+    }
+}
+```
 
 #### Task `aemCollect`
 
@@ -1237,17 +1267,17 @@ Currently used plugin architecture solves that problem.
 
 Initially, to create fully configured local AEM instances simply run command `gradlew aemSetup`.
 
-Later during development process, building and deploying to AEM should be done using most simple command: `gradlew`.
-Above configuration uses [default tasks](https://docs.gradle.org/current/userguide/tutorial_using_tasks.html#sec:default_tasks), so that alternatively it is possible to build same using explicitly specified command `gradlew aemSatisfy aemDeploy aemAwait`.
+Later during development process, building and deploying to AEM should be done using the simplest command: `gradlew`.
+Above configuration uses [default tasks](https://docs.gradle.org/current/userguide/tutorial_using_tasks.html#sec:default_tasks), so that alternatively it is possible to do the same using explicitly specified command `gradlew aemSatisfy aemDeploy aemAwait`.
 
 * Firstly dependent packages (like AEM hotfixes, Vanity URL Components etc) will be installed lazily (only when they are not installed yet).
 * In next step application is being built and deployed to all configured AEM instances.
-* Finally build awaits till all AEM instances be stable.
+* Finally build awaits till all AEM instances are stable.
 
 ### Filter instances for which packages will be deployed or satisfied
 
 When there are defined named AEM instances: `local-author`, `local-publish`, `integration-author` and `integration-publish`,
-then it is available to deploy (or satisfy) packages with taking into account: 
+then it is possible to deploy (or satisfy) packages taking into account: 
 
  * type of environment (local, integration, staging, etc)
  * type of AEM instance (author / publish)
