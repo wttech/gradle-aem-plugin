@@ -153,7 +153,6 @@ File *build.gradle.kts*:
 plugins {
     id("com.cognifide.aem.bundle") // or 'package' for JCR content only
 }
-// This setup ended with exception: Cannot locate field baseName on class org.gradle.api.tasks.bundling.Jar_Decorated 
 ```
 
 #### Additional
@@ -191,7 +190,6 @@ aem {
         }
     }
 }
-// same issue here: Cannot locate field baseName on class org.gradle.api.tasks.bundling.Jar_Decorated
 ```
 
 To see all available options and actual documentation, please follow to:
@@ -432,11 +430,11 @@ Copy JCR content from one instance to another. Sample usages below.
   ```
 
 * Using predefined instances with multiple same source and target nodes:
-// I do not understand this point 
 
   ```bash
   gradlew :aemRcp -Paem.rcp.source.instance=stg-author -Paem.rcp.target.instance=int-author -Paem.rcp.paths=[/content/example,/content/example2]
   ```
+  Right side of assignment could skipped if equals to left (same path on both source & target instance).
 
 * Using predefined instances with source and target nodes specified in file:
 
@@ -478,8 +476,6 @@ gradlew :content:aemVlt -Paem.vlt.command='rcp -b 100 -r -u -n http://admin:admi
 For more details about available parameters, please visit [VLT Tool documentation](https://helpx.adobe.com/experience-manager/6-4/sites/developing/using/ht-vlttool.html).
 
 While using task `aemVlt` be aware that Gradle requires to have working directory with file *build.gradle.kts* in it, but Vault tool can work at any directory under *jcr_root*. To change working directory for Vault, use property `aem.vlt.path` which is relative path to be appended to *jcr_root* for project task being currently executed.
-
-// an example would be nice here
 
 #### Task `aemDebug` 
 
@@ -675,7 +671,6 @@ aem {
 ```
 
 When building via command `gradlew :app:build`, then the effect will be a CRX package with assembled JCR content and OSGi bundles from projects: `:app:core`, `:app:common` only.
-// as I can see gradle-aem-multi structure has changed and is not aligned with does anymore
 * *app/core/build.gradle.kts* (project `:app:core`, JCR content and OSGi bundle)
 * *app/common/build.gradle.kts* (project `:app:common`, JCR content and OSGi bundle)
 * *content/init/build.gradle.kts* (project `:content:init`, JCR content only)
@@ -796,7 +791,7 @@ Fail-safe combination of `aemUninstall` and `aemDelete`.
 To prevent data loss, this unsafe task execution must be confirmed by parameter `-Paem.force`.
 
 #### Task `aemActivate` 
-// Sounds weird, I would imagine it activates bundle on an instance.
+
 Replicate installed CRX package to other AEM instance(s).
 
 ### Bundle plugin
@@ -1168,11 +1163,36 @@ Action parameter | CMD Property | Default Value | Purpose
 
 Instance state, stable check, health check lambdas are using: [InstanceState](src/main/kotlin/com/cognifide/gradle/aem/instance/InstanceState.kt). Use its methods to achieve expected customized behavior.
 
-// some examples would be nice here, I don't really know how this all health check works and what it actually checks by default.
+```kotlin
+aem {
+    tasks {
+        await {
+            options {
+                availableCheck = check(InstanceState.BUNDLE_STATE_SYNC_OPTIONS, { !bundleState.unknown })
+                stableState = checkBundleState()
+                stableCheck = checkBundleStable()
+                healthCheck = checkComponentState(InstanceState.PLATFORM_COMPONENTS, aem.javaPackages.map { "$it.*" })
+            }
+        }
+    }
+}
+```
+
+Such options could be also customized for `aemDeploy` task when using block:
+
+```
+aem {
+    tasks {
+        deploy {
+            await {
+                // ...
+            }
+        }
+    }
+}
+```
 
 #### Task `aemCollect`
-
-// how this tasks corresponds to other tasks? it's been never mentioned in other places :-D
 
 Composes ZIP package from all CRX packages being satisfied and built.
 
