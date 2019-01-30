@@ -69,6 +69,8 @@ class InstancePlugin : AemPlugin() {
                 finalizedBy(Up.NAME)
             }
             register<Tail>(Tail.NAME)
+            register<DockerDeploy>(DockerDeploy.NAME)
+            register<DockerRm>(DockerRm.NAME)
         }
     }
 
