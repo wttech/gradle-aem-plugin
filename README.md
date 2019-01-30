@@ -106,6 +106,7 @@ To see documentation for previous 5.x serie, please [click here](https://github.
      * [Implement custom AEM tasks](#implement-custom-aem-tasks)
         * [Downloading CRX package from external HTTP endpoint and deploying it on desired AEM instances](#downloading-crx-package-from-external-http-endpoint-and-deploying-it-on-desired-aem-instances)
         * [Controlling OSGi bundles and components](#controlling-osgi-bundles-and-components)
+        * [Executing code on AEM runtime](#executing-code-on-aem-runtime)
         * [Calling AEM endpoints / making any HTTP requests](#calling-aem-endpoints--making-any-http-requests)
      * [Understand why there are one or two plugins to be applied in build script](#understand-why-there-are-one-or-two-plugins-to-be-applied-in-build-script)
      * [Work effectively on start and daily basis](#work-effectively-on-start-and-daily-basis)
@@ -1331,6 +1332,32 @@ aem {
                 aem.sync(aem.publishInstances) {
                     disableComponent("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet")
                     // stopBundle("org.apache.sling.jcr.webdav")
+                }
+            }
+        }
+    }
+}
+```
+
+#### Executing code on AEM runtime
+
+It is possible to easily execute any code on AEM runtime using [Groovy Console](https://github.com/icfnext/aem-groovy-console). Assuming that on AEM instances there is already installed Groovy Console e.g via `aemSatisfy` task, then it is possible to use methods `evalGroovyCode` and `evalGroovyScript` of `aem.sync`.
+
+```kotlin
+aem {
+    tasks {
+        satisfy {
+            group("tool.groovyconsole") { url("https://github.com/icfnext/aem-groovy-console/releases/download/12.0.0/aem-groovy-console-12.0.0.zip") }
+        }
+        register("aemConfigure") {
+            doLast {
+                aem.sync {
+                    evalGroovyCode("""
+                        def postsService = getService("com.company.example.aem.sites.services.posts.PostsService")
+                        
+                        println postsService.randomPosts(5)
+                    """)
+                    // evalGroovyScript("posts.groovy") // if script above moved to 'aem/gradle/groovyScript/posts.groovy'
                 }
             }
         }
