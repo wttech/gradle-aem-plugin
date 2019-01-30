@@ -103,6 +103,10 @@ To see documentation for previous 5.x serie, please [click here](https://github.
         * [Task aemCollect](#task-aemcollect)
   * [How to's](#how-tos)
      * [Set AEM configuration properly for all / concrete project(s)](#set-aem-configuration-properly-for-all--concrete-projects)
+     * [Implement custom AEM tasks](#implement-custom-aem-tasks)
+        * [Downloading CRX package from external HTTP endpoint and deploying it on desired AEM instances](#downloading-crx-package-from-external-http-endpoint-and-deploying-it-on-desired-aem-instances)
+        * [Controlling OSGi bundles and components](#controlling-osgi-bundles-and-components)
+        * [Calling AEM endpoints / making any HTTP requests](#calling-aem-endpoints--making-any-http-requests)
      * [Understand why there are one or two plugins to be applied in build script](#understand-why-there-are-one-or-two-plugins-to-be-applied-in-build-script)
      * [Work effectively on start and daily basis](#work-effectively-on-start-and-daily-basis)
      * [Filter instances for which packages will be deployed or satisfied](#filter-instances-for-which-packages-will-be-deployed-or-satisfied)
@@ -1286,6 +1290,98 @@ aem {
 
 Warning! Very often plugin users mistake is to configure `aemSatisfy` task in `allprojects` closure. 
 As an effect there will be same dependent CRX package defined multiple times.
+
+### Implement custom AEM tasks
+
+Most of built-in tasks logic is based on`aem` object of type [AemExtension](src/main/kotlin/com/cognifide/gradle/aem/common/AemExtension.kt). 
+It provides concise AEM related API for accessing AEM configuration, synchronizing with AEM instances via specialized methods of `aem.sync` to make tasks implementation a breeze.
+What is more, it also provides built-in HTTP client `aem.http` to be able to communicate with any external services like for downloading CRX packages from package shares like Nexus repositories, JFrog Artifactory etc.
+The options are almost unlimited. 
+
+#### Downloading CRX package from external HTTP endpoint and deploying it on desired AEM instances
+
+```kotlin
+
+aem {
+    tasks {
+        register("aemDeployProductionContent") {
+            doLast {
+                val instances = listOf(
+                        aem.instance("http://user:password@aem-host.com"), // URL specified directly, could be parametrized by some gradle command line property
+                        // aem.namedInstance("local-publish") // reused AEM instance defined in 'gradle.properties'
+                )
+                val pkg = aem.http { downloadTo("https://company.com/aem/backups/example-1.0.0-201901300932.backup.zip", project.file("build/tmp")) }
+                aem.sync(instances) { deployPackage(pkg) }
+            }
+        }
+    }
+}
+```
+
+#### Controlling OSGi bundles and components
+
+To disable specific OSGi component by its PID value and only on publish instances, simply write:
+
+
+```kotlin
+aem {
+    tasks {
+        register("aemConfigure") {
+            doLast {
+                aem.sync(aem.publishInstances) {
+                    disableComponent("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet")
+                    // stopBundle("org.apache.sling.jcr.webdav")
+                }
+            }
+        }
+    }
+}
+```
+
+#### Calling AEM endpoints / making any HTTP requests
+
+To make an HTTP request to some AEM endpoint (servlet) simply write:
+
+```kotlin
+aem {
+    tasks {
+        register("aemHealthCheck") {
+            doLast {
+                aem.sync {
+                    get("/bin/example/healthCheck") { checkStatus(it, 200) }
+                }
+            }
+        }
+    }
+}
+```
+
+There are unspecified AEM instances as `aem.sync` method parameter so that instances matching [default filtering](#filter-instances-for-which-packages-will-be-deployed-or-satisfied) will be used.
+
+The fragment `{ checkStatus(it, 200) }` could be even ommitted because, by default sync API checks status code that it belongs to range [200,300\).
+
+To parse endpoint response as [JSON](http://static.javadoc.io/com.jayway.jsonpath/json-path/2.4.0/com/jayway/jsonpath/DocumentContext.html) (using [JsonPath](https://github.com/json-path/JsonPath)), simply write:
+
+```kotlin
+aem {
+    tasks {
+        register("aemHealthCheck") {
+            doLast {
+                aem.sync {
+                    val json = get("/bin/example/healthCheck") { asJson(it) }
+                    val status = json.read("status") as String
+                    
+                    if (status != "OK") {
+                        throw GradleException("Health check failed on: $instance because status '$status' detected.")
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+There are also available convenient methods `asStream`, `asString` to be able to process endpoint responses.
 
 ### Understand why there are one or two plugins to be applied in build script
 
