@@ -43,6 +43,8 @@ Gradle AEM Plugin 6.x serie and upper will **no longer support Groovy DSL** and 
 
 To see documentation for previous 5.x serie, please [click here](https://github.com/Cognifide/gradle-aem-plugin/tree/groovy) (navigate to branch `groovy`).
 
+Also keep in mind, that GAP 6.x is **temporarily supporting only Gradle 5.x** (is not supporting 5.1 or higher) due to API changes related with [lazy configuration](https://docs.gradle.org/5.1.1/userguide/userguide.html).
+
 ## Table of contents
 
   * [Getting started](#getting-started)
