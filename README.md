@@ -1069,6 +1069,19 @@ Turns off local AEM instance(s) then archives them into ZIP file, then turns on 
 The most recent file created by this task will be reused automatically while running task `aemResetup`.
 Also the file created could be also a [source file](#configuration-of-aem-instance-source-jar-file-or-backup-file) for task `aemCreate`.
 
+Backup files are stored at path relative to project that is applying plugin `com.cognifide.aem.instance`.
+Most often it will be path: *build/distributions/xxx.backup.zip*. It could be overridden by writing:
+
+```kotlin
+aem {
+    tasks {
+        backup {
+            destinationDir = file("any/other/path")
+        }
+    }
+}
+```
+
 #### Task `aemDestroy` 
 
 Destroy local AEM instance(s).
