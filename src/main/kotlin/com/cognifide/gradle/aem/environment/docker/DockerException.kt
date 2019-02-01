@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.instance.docker
+package com.cognifide.gradle.aem.environment.docker
 
 class DockerException : RuntimeException {
 
