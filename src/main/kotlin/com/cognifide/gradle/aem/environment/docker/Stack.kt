@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.instance.docker
+package com.cognifide.gradle.aem.environment.docker
 
 import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.file.FileException
