@@ -83,14 +83,14 @@ class TailerTest {
             assertEquals(Log.parseTimestamp("14.01.2019 12:20:05.242"), timestamp)
             assertEquals("WARN", level)
             assertEquals("[0:0:0:0:0:0:0:1 [1547464792884] GET /llr.resllleskr/resllleskr/rcslsll/rrcsess3.fsl.cr HTTP/1.1]", source)
-            assertEquals(MockSource.text("com/cognifide/gradle/aem/test/tail/aggregating/multiline/multiline-short.log"), message)
+            assertEqualsIgnoringCr(MockSource.text("com/cognifide/gradle/aem/test/tail/aggregating/multiline/multiline-short.log"), message)
             assertEquals("148a7ab608478f4a609d428a28773fc8", checksum)
         }
         logsList[2].apply {
             assertEquals(Log.parseTimestamp("14.01.2019 12:04:58.535"), timestamp)
             assertEquals("WARN", level)
             assertEquals("[reslr-rsf-rkrlcsslsrl-2]", source)
-            assertEquals(MockSource.text("com/cognifide/gradle/aem/test/tail/aggregating/multiline/multiline-long.log"), message)
+            assertEqualsIgnoringCr(MockSource.text("com/cognifide/gradle/aem/test/tail/aggregating/multiline/multiline-long.log"), message)
             assertEquals("46f3b3368c92b1e7400643ab8b1f3e3a", checksum)
         }
     }
@@ -278,4 +278,10 @@ class TailerTest {
             "[gea-arrgkkggae-rtreggga-1] egg.erggr.gaegkgr.arrgkkggae Sragker " +
             "[6848, [gag.ereeer.reeaaeggkg.gea.erk.rgt.SrkkkggMBreg]] SragkerEgrgg REGISTERED"))))
     }
+
+    private fun assertEqualsIgnoringCr(expected: String, actual: String) {
+        assertEquals(removeCr(expected), removeCr(actual))
+    }
+
+    private fun removeCr(expected: String) = expected.replace("\r", "")
 }
