@@ -11,20 +11,38 @@ import de.gesellix.docker.client.stack.DeployStackConfig
 import de.gesellix.docker.client.stack.DeployStackOptions
 import java.nio.file.Paths
 
-class Stack(private val aem: AemExtension) {
+class Stack(
+    private val aem: AemExtension,
+    private val serviceAwait: ServiceAwait
+) {
+
+    private val options = aem.dockerOptions
 
     fun deploy() {
-        aem.logger.lifecycle("Stack: ${aem.dockerOptions.stackName}")
+        aem.logger.lifecycle("Stack: ${options.stackName}")
         docker {
             initSwarmIfNotInitialized()
-            stackDeploy(aem.dockerOptions.stackName, aem.dockerOptions.composeFilePath)
+            stackDeploy(options.stackName, options.composeFilePath)
+            serviceAwait.await()
         }
     }
 
-    fun rm() = docker { stackRm(aem.dockerOptions.stackName) }
+    fun rm() = docker { stackRm(options.stackName) }
 
-    private fun DockerClient.stackDeploy(stackName: String, composeFilePath: String) =
-        stackDeploy(stackName, loadComposeConfig(stackName, composeFilePath), DeployStackOptions())
+    private fun DockerClient.stackDeploy(stackName: String, composeFilePath: String) {
+        try {
+            stackDeploy(stackName, loadComposeConfig(stackName, composeFilePath), DeployStackOptions())
+        } catch (dce: DockerClientException) {
+            val cause = dce.cause
+            if (cause is java.lang.IllegalStateException && cause.message == "docker service create failed") {
+                aem.logger.warn(
+                    "It is possible, that stack with the same name is still being switched off by docker." +
+                        " Please wait few seconds before starting stack with the same name."
+                )
+            }
+            throw DockerException("Failed to initialize service stack on docker!")
+        }
+    }
 
     private fun DockerClient.loadComposeConfig(stackName: String, composeFilePath: String): DeployStackConfig {
         try {
