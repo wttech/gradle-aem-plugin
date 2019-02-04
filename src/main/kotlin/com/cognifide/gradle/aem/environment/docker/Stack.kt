@@ -9,6 +9,8 @@ import de.gesellix.docker.client.DockerClientImpl
 import de.gesellix.docker.client.stack.DeployConfigReader
 import de.gesellix.docker.client.stack.DeployStackConfig
 import de.gesellix.docker.client.stack.DeployStackOptions
+import java.io.FileNotFoundException
+import java.net.SocketException
 import java.nio.file.Paths
 
 class Stack(
@@ -60,18 +62,33 @@ class Stack(
         }
     }
 
-    private fun docker(block: DockerClient.() -> Unit) = DockerClientImpl().block()
+    private fun docker(block: DockerClient.() -> Unit) =
+        try {
+            DockerClientImpl().block()
+        } catch (fnfe: FileNotFoundException) {
+            if (fnfe.message?.contains("docker_engine") == true) {
+                aem.logger.warn("It seems Docker is not installed on this machine and it is required to use Aem Environment plugin.\n" +
+                    "Please install Docker and try again: https://docs.docker.com/docker-for-windows/install/")
+            }
+            throw DockerException("Failed to initialize Docker Swarm", fnfe)
+        } catch (se: SocketException) {
+            if (se.message?.contains("Socket file not found: /private/var/run/docker.sock") == true) {
+                aem.logger.warn("It seems Docker is not installed on this machine and it is required to use Aem Environment plugin.\n" +
+                    "Please install Docker and try again: https://docs.docker.com/install/")
+            }
+            throw DockerException("Failed to initialize Docker Swarm", se)
+        }
 
     private fun DockerClient.initSwarmIfNotInitialized() {
         try {
             aem.logger.lifecycle("Swarm already initialized: $swarmManagerToken")
-        } catch (e: DockerClientException) {
-            val cause = e.cause
+        } catch (dce: DockerClientException) {
+            val cause = dce.cause
             if (cause is IllegalStateException && cause.message == "docker swarm inspect failed") {
                 initSwarm()
                 aem.logger.lifecycle("Swarm initialized")
             } else {
-                throw e
+                throw DockerException("Failed to initialize Docker Swarm", dce)
             }
         }
     }
