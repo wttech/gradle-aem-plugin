@@ -175,7 +175,7 @@ open class Compose : Zip(), AemTask {
             }
         }
         if (vaultName.isBlank()) {
-            vaultName = baseName
+            vaultName = baseName ?: project.name
         }
         if (vaultVersion.isBlank()) {
             vaultVersion = project.version.toString()

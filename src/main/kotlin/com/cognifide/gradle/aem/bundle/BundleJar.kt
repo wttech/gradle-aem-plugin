@@ -17,6 +17,7 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.bundling.Jar
+import org.gradle.util.GradleVersion
 
 /**
  * The main purpose of this extension point is to provide a place for specifying custom
@@ -158,11 +159,23 @@ val jar: Jar
      * It is only way to know, if base name was previously customized by build script.
      */
     private fun ensureBaseNameIfNotCustomized() {
-        val baseName = FieldUtils.readField(jar, "baseName", true) as String?
-        if (baseName.isNullOrBlank()) {
+        val conventionValue by lazy {
             val groupValue = aem.project.group as String?
             if (!aem.project.name.isNullOrBlank() && !groupValue.isNullOrBlank()) {
-                jar.baseName = aem.baseName
+                aem.baseName
+            } else {
+                null
+            }
+        }
+
+        if (GradleVersion.current() >= GradleVersion.version("5.1")) {
+            if (conventionValue != null) {
+                jar.archiveBaseName.convention(conventionValue!!)
+            }
+        } else {
+            val originValue = FieldUtils.readField(jar, "baseName", true) as String?
+            if (originValue.isNullOrBlank() && conventionValue != null) {
+                jar.baseName = conventionValue
             }
         }
     }
