@@ -22,7 +22,7 @@ class LocalInstanceOptions(aem: AemExtension) : Serializable {
      *
      * Default path is a subfolder named '.aem' under root project directory.
      */
-    var root: String = "${aem.project.rootProject.file(".aem")}"
+    var root: String = aem.props.string("aem.localInstance.root") ?: "${aem.project.rootProject.file(".aem")}"
 
     /**
      * Determines how instances will be created (from backup or from the scratch).
