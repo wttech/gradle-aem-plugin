@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem.common
 
 import com.cognifide.gradle.aem.bundle.BundleJar
-import com.cognifide.gradle.aem.bundle.BundlePlugin
 import com.cognifide.gradle.aem.instance.tasks.*
 import com.cognifide.gradle.aem.pkg.tasks.*
 import com.cognifide.gradle.aem.tooling.tasks.Debug
@@ -25,9 +24,10 @@ class TaskFacade(private val aem: AemExtension) {
 
     val bundles: List<BundleJar> = getAll(Jar::class.java).map { bundle(it) }
 
-    init {
+    internal fun jarsAsBundles() {
+        initializeJarsAsBundles()
         project.afterEvaluate {
-            setupJarsAsBundles()
+            finalizeJarsAsBundles()
         }
     }
 
@@ -214,13 +214,15 @@ class TaskFacade(private val aem: AemExtension) {
         return sequence
     }
 
-    private fun setupJarsAsBundles() {
-        if (!project.plugins.hasPlugin(BundlePlugin.ID)) {
-            return
-        }
-
+    private fun initializeJarsAsBundles() {
         project.tasks.withType(Jar::class.java) {
-            bundle { setup() }
+            bundle { initialize() }
+        }
+    }
+
+    private fun finalizeJarsAsBundles() {
+        project.tasks.withType(Jar::class.java) {
+            bundle { finalize() }
         }
 
         // @see <https://github.com/Cognifide/gradle-aem-plugin/issues/95>

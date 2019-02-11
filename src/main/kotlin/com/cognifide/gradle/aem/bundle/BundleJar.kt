@@ -11,13 +11,11 @@ import java.io.File
 import java.io.Serializable
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.exception.ExceptionUtils
-import org.apache.commons.lang3.reflect.FieldUtils
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.bundling.Jar
-import org.gradle.util.GradleVersion
 
 /**
  * The main purpose of this extension point is to provide a place for specifying custom
@@ -36,11 +34,6 @@ val jar: Jar
 ) : Serializable {
 
     var name = jar.name
-
-    /**
-     * Allows to disable OSGi bundle specific JAR task customization.
-     */
-    var enabled: Boolean = true
 
     /**
      * Content path for OSGi bundle jars being placed in CRX package.
@@ -71,7 +64,7 @@ val jar: Jar
      *
      * - generated OSGi specific manifest instructions like 'Bundle-SymbolicName', 'Export-Package'.
      * - generated AEM specific manifest instructions like 'Sling-Model-Packages'.
-     * - performed additional component stability checks during 'aemAwait'
+     * - performed additional component stability checks during within 'aemDeploy' or separately using 'aemAwait'.
      *
      * Default convention: '${project.group}.${project.name}'.
      *
@@ -131,15 +124,17 @@ val jar: Jar
     @JsonIgnore
     var privatePackages: List<String> = listOf()
 
-    internal fun setup() {
-        if (!enabled) {
-            aem.logger.info("OSGi bundle customizations are disabled for task '${jar.path}'.")
-            return
-        }
+    internal fun initialize() {
+        proposeBaseName()
+    }
 
+    private fun proposeBaseName() {
+        jar.baseName = aem.baseName
+    }
+
+    internal fun finalize() {
         ensureJavaPackage()
-        ensureBaseNameIfNotCustomized()
-        applyConventionAttributes()
+        applyAttributesConvention()
         combinePackageAttributes()
         setupBndTool()
     }
@@ -151,32 +146,6 @@ val jar: Jar
             }
 
             javaPackage = Formats.normalizeSeparators("${aem.project.group}.${aem.project.name}", ".")
-        }
-    }
-
-    /**
-     * Reflection is used, because in other way, default convention will provide value.
-     * It is only way to know, if base name was previously customized by build script.
-     */
-    private fun ensureBaseNameIfNotCustomized() {
-        val conventionValue by lazy {
-            val groupValue = aem.project.group as String?
-            if (!aem.project.name.isNullOrBlank() && !groupValue.isNullOrBlank()) {
-                aem.baseName
-            } else {
-                null
-            }
-        }
-
-        if (GradleVersion.current() >= GradleVersion.version("5.1")) {
-            if (conventionValue != null) {
-                jar.archiveBaseName.convention(conventionValue!!)
-            }
-        } else {
-            val originValue = FieldUtils.readField(jar, "baseName", true) as String?
-            if (originValue.isNullOrBlank() && conventionValue != null) {
-                jar.baseName = conventionValue
-            }
         }
     }
 
@@ -217,7 +186,7 @@ val jar: Jar
     /**
      * Generate attributes by convention using Gradle project metadata.
      */
-    private fun applyConventionAttributes() {
+    private fun applyAttributesConvention() {
         if (!attributesConvention) {
             return
         }

@@ -258,7 +258,6 @@
   "bundleConfig" : [
     {
       "name": "jar",
-      "enabled": true,
       "installPath" : "/apps/additional/install",
       "installRunMode": null,
       "javaPackage" : "com.company.aem.additional",

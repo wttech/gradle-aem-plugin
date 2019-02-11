@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.bundle
 
+import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.AemPlugin
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import org.gradle.api.JavaVersion
@@ -13,6 +14,7 @@ class BundlePlugin : AemPlugin() {
     override fun Project.configure() {
         setupDependentPlugins()
         setupJavaDefaults()
+        setupJarTasks()
     }
 
     private fun Project.setupDependentPlugins() {
@@ -33,6 +35,10 @@ class BundlePlugin : AemPlugin() {
                 options.isIncremental = true
             }
         }
+    }
+
+    private fun Project.setupJarTasks() {
+        AemExtension.of(this).tasks.jarsAsBundles()
     }
 
     companion object {
