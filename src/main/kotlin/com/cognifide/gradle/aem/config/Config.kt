@@ -45,7 +45,7 @@ class Config(
      * Default path is a subfolder named '.aem' under root project directory.
      */
     @Input
-    var instanceRoot: String = "${aem.project.rootProject.file(".aem")}"
+    var instanceRoot: String = aem.props.string("aem.config.instanceRoot") ?: "${aem.project.rootProject.file(".aem")}"
 
     /**
      * Defines maximum time after which initializing connection to AEM will be aborted (e.g on upload, install).
