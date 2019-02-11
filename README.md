@@ -43,6 +43,8 @@ Gradle AEM Plugin 6.x serie and upper will **no longer support Groovy DSL** and 
 
 To see documentation for previous 5.x serie, please [click here](https://github.com/Cognifide/gradle-aem-plugin/tree/groovy) (navigate to branch `groovy`).
 
+Also keep in mind, that GAP 6.x is **temporarily supporting only Gradle 5.x** (is not supporting 5.1 or higher) due to API changes related with [lazy configuration](https://docs.gradle.org/5.1.1/userguide/userguide.html).
+
 ## Table of contents
 
   * [Getting started](#getting-started)
@@ -103,6 +105,11 @@ To see documentation for previous 5.x serie, please [click here](https://github.
         * [Task aemCollect](#task-aemcollect)
   * [How to's](#how-tos)
      * [Set AEM configuration properly for all / concrete project(s)](#set-aem-configuration-properly-for-all--concrete-projects)
+     * [Implement custom AEM tasks](#implement-custom-aem-tasks)
+        * [Downloading CRX package from external HTTP endpoint and deploying it on desired AEM instances](#downloading-crx-package-from-external-http-endpoint-and-deploying-it-on-desired-aem-instances)
+        * [Controlling OSGi bundles and components](#controlling-osgi-bundles-and-components)
+        * [Executing code on AEM runtime](#executing-code-on-aem-runtime)
+        * [Calling AEM endpoints / making any HTTP requests](#calling-aem-endpoints--making-any-http-requests)
      * [Understand why there are one or two plugins to be applied in build script](#understand-why-there-are-one-or-two-plugins-to-be-applied-in-build-script)
      * [Work effectively on start and daily basis](#work-effectively-on-start-and-daily-basis)
      * [Filter instances for which packages will be deployed or satisfied](#filter-instances-for-which-packages-will-be-deployed-or-satisfied)
@@ -242,6 +249,53 @@ Part | Possible values | Description |
 `$TYPE_NAME` | `author`, `publish`, `publish2`, etc | Combination of AEM instance type and semantic suffix useful when more than one of instance of same type is being configured. |
 `$PROP_NAME=$PROP_VALUE` | **Local instances:** `httpUrl=http://admin:admin@localhost:4502`<br>`type=local`(or remote)<br>`password=foo`<br>`runModes=nosamplecontent`<br>`jvmOpts=-server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true`, `startOpts=...`<br>`debugPort=24502`.<br><br>**Remote instances:** `httpUrl`, `type`, `user`, `password`. | Run modes, JVM opts and start opts should be comma delimited. |
 
+
+Default remote instances defined via properties (below lines are optional):
+
+```
+aem.instance.local-author.httpUrl=http://localhost:4502
+aem.instance.local-publish.httpUrl=http://localhost:4503
+```
+
+Example for defining multiple remote instances (that could be [filtered](#filter-instances-for-which-packages-will-be-deployed-or-satisfied)):
+
+```
+aem.instance.int-author.httpUrl=http://author.aem-integration.company.com
+aem.instance.int-publish.httpUrl=http://aem-integration.company.com
+aem.instance.stg-author.httpUrl=http://author.aem-staging.company.com
+aem.instance.stg-publish.httpUrl=http://aem-staging.company.com
+```
+
+Example for defining remote instance with credentials separated:
+
+```
+aem.instance.test-author.httpUrl=http://author.aem-integration.company.com
+aem.instance.test-author.user=foo
+aem.instance.test-author.password=bar
+```
+
+Example for defining remote instance with credentials details included in URL:
+
+```
+aem.instance.test-author.httpUrl=http://foo:bar@author.aem-integration.company.com
+```
+
+Example for defining local instances (created on local file system):
+
+```
+aem.instance.local-author.httpUrl=http://localhost:4502
+aem.instance.local-author.type=local
+aem.instance.local-author.runModes=nosamplecontent
+aem.instance.local-author.jvmOpts=-server -Xmx1024m -XX:MaxPermSize=256M -Djava.awt.headless=true
+
+aem.instance.local-publish.httpUrl=http://localhost:4503
+aem.instance.local-publish.type=local
+aem.instance.local-publish.runModes=nosamplecontent
+aem.instance.local-publish.jvmOpts=-server -Xmx1024m -XX:MaxPermSize=256M -Djava.awt.headless=true
+```
+
+Notice! Remember to define also AEM [source files](#source-files-configuration).
+
 #### Defining instances via build script
 
 Example usage below. The commented value is an effective instance name.
@@ -368,8 +422,8 @@ For such cases, see configuration below:
 ```kotlin
 aem {
     tasks {
-        clean {
-            options {
+        sync {
+            cleaner {
                 propertiesSkipped += listOf(
                         pathRule("dam:sha1", listOf(), listOf("**/content/dam/*.svg/*")),
                         pathRule("dam:size", listOf(), listOf("**/content/dam/*.svg/*")),
@@ -1017,6 +1071,19 @@ Turns off local AEM instance(s) then archives them into ZIP file, then turns on 
 The most recent file created by this task will be reused automatically while running task `aemResetup`.
 Also the file created could be also a [source file](#configuration-of-aem-instance-source-jar-file-or-backup-file) for task `aemCreate`.
 
+Backup files are stored at path relative to project that is applying plugin `com.cognifide.aem.instance`.
+Most often it will be path: *build/distributions/xxx.backup.zip*. It could be overridden by writing:
+
+```kotlin
+aem {
+    tasks {
+        backup {
+            destinationDir = file("any/other/path")
+        }
+    }
+}
+```
+
 #### Task `aemDestroy` 
 
 Destroy local AEM instance(s).
@@ -1240,9 +1307,127 @@ aem {
 Warning! Very often plugin users mistake is to configure `aemSatisfy` task in `allprojects` closure. 
 As an effect there will be same dependent CRX package defined multiple times.
 
+### Implement custom AEM tasks
+
+Most of built-in tasks logic is based on`aem` object of type [AemExtension](src/main/kotlin/com/cognifide/gradle/aem/common/AemExtension.kt). 
+It provides concise AEM related API for accessing AEM configuration, synchronizing with AEM instances via specialized methods of `aem.sync` to make tasks implementation a breeze.
+What is more, it also provides built-in HTTP client `aem.http` to be able to communicate with any external services like for downloading CRX packages from package shares like Nexus repositories, JFrog Artifactory etc.
+The options are almost unlimited. 
+
+#### Downloading CRX package from external HTTP endpoint and deploying it on desired AEM instances
+
+```kotlin
+
+aem {
+    tasks {
+        register("aemDeployProductionContent") {
+            doLast {
+                val instances = listOf(
+                        aem.instance("http://user:password@aem-host.com"), // URL specified directly, could be parametrized by some gradle command line property
+                        // aem.namedInstance("local-publish") // reused AEM instance defined in 'gradle.properties'
+                )
+                val pkg = aem.http { downloadTo("https://company.com/aem/backups/example-1.0.0-201901300932.backup.zip", project.file("build/tmp")) }
+                aem.sync(instances) { deployPackage(pkg) }
+            }
+        }
+    }
+}
+```
+
+#### Controlling OSGi bundles and components
+
+To disable specific OSGi component by its PID value and only on publish instances, simply write:
+
+
+```kotlin
+aem {
+    tasks {
+        register("aemConfigure") {
+            doLast {
+                aem.sync(aem.publishInstances) {
+                    disableComponent("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet")
+                    // stopBundle("org.apache.sling.jcr.webdav")
+                }
+            }
+        }
+    }
+}
+```
+
+#### Executing code on AEM runtime
+
+It is possible to easily execute any code on AEM runtime using [Groovy Console](https://github.com/icfnext/aem-groovy-console). Assuming that on AEM instances there is already installed Groovy Console e.g via `aemSatisfy` task, then it is possible to use methods `evalGroovyCode` and `evalGroovyScript` of `aem.sync`.
+
+```kotlin
+aem {
+    tasks {
+        satisfy {
+            group("tool.groovyconsole") { url("https://github.com/icfnext/aem-groovy-console/releases/download/12.0.0/aem-groovy-console-12.0.0.zip") }
+        }
+        register("aemConfigure") {
+            doLast {
+                aem.sync {
+                    evalGroovyCode("""
+                        def postsService = getService("com.company.example.aem.sites.services.posts.PostsService")
+                        
+                        println postsService.randomPosts(5)
+                    """)
+                    // evalGroovyScript("posts.groovy") // if script above moved to 'aem/gradle/groovyScript/posts.groovy'
+                }
+            }
+        }
+    }
+}
+```
+
+#### Calling AEM endpoints / making any HTTP requests
+
+To make an HTTP request to some AEM endpoint (servlet) simply write:
+
+```kotlin
+aem {
+    tasks {
+        register("aemHealthCheck") {
+            doLast {
+                aem.sync {
+                    get("/bin/example/healthCheck") { checkStatus(it, 200) }
+                }
+            }
+        }
+    }
+}
+```
+
+There are unspecified AEM instances as `aem.sync` method parameter so that instances matching [default filtering](#filter-instances-for-which-packages-will-be-deployed-or-satisfied) will be used.
+
+The fragment `{ checkStatus(it, 200) }` could be even ommitted because, by default sync API checks status code that it belongs to range [200,300\).
+
+To parse endpoint response as [JSON](http://static.javadoc.io/com.jayway.jsonpath/json-path/2.4.0/com/jayway/jsonpath/DocumentContext.html) (using [JsonPath](https://github.com/json-path/JsonPath)), simply write:
+
+```kotlin
+aem {
+    tasks {
+        register("aemHealthCheck") {
+            doLast {
+                aem.sync {
+                    val json = get("/bin/example/healthCheck") { asJson(it) }
+                    val status = json.read("status") as String
+                    
+                    if (status != "OK") {
+                        throw GradleException("Health check failed on: $instance because status '$status' detected.")
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+There are also available convenient methods `asStream`, `asString` to be able to process endpoint responses.
+
 ### Understand why there are one or two plugins to be applied in build script
 
-Gradle AEM Plugin assumes separation of 4 plugins to properly fit into Gradle tasks structure correctly.
+Gradle AEM Plugin assumes separation of 5 plugins to properly fit into Gradle tasks structure correctly.
 
 Most often, Gradle commands are being launched from project root and tasks are being run by their name e.g `aemSatisfy` (which is not fully qualified, better if it will be `:aemSatisfy` of root project).
 Let's imagine if task `aemSatisfy` will come from package plugin, then Gradle will execute more than one `aemSatisfy` (for all projects that have plugin applied), so that this is unintended behavior.
