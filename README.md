@@ -302,7 +302,7 @@ aem.instance.local-publish.runModes=nosamplecontent
 aem.instance.local-publish.jvmOpts=-server -Xmx1024m -XX:MaxPermSize=256M -Djava.awt.headless=true
 ```
 
-Notice! Remember to define also AEM [source files](#source-files-configuration).
+Notice! Remember to define also AEM [source files](#configuration-of-aem-instance-source-jar-file-or-backup-file).
 
 #### Defining instances via build script
 
