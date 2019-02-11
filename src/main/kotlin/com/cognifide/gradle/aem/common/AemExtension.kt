@@ -105,15 +105,14 @@ open class AemExtension(@Internal val project: Project) {
      */
     @Internal
     val actions = ActionPerformer(this)
+
     /**
      * Collection of all java packages from all projects applying bundle plugin.
      */
     @get:Internal
     val javaPackages: List<String>
-        get() = project.allprojects.filter {
-            it.plugins.hasPlugin(BundlePlugin.ID)
-        }.flatMap { subproject ->
-            AemExtension.of(subproject).tasks.bundles.values.mapNotNull { it.javaPackage }
+        get() = AemPlugin.withId(project, BundlePlugin.ID).flatMap { subproject ->
+            AemExtension.of(subproject).tasks.bundles.mapNotNull { it.javaPackage }
         }
 
     @get:Internal

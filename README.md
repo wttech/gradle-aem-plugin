@@ -150,7 +150,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.cognifide.gradle:aem-plugin:6.0.0")
+    implementation("com.cognifide.gradle:aem-plugin:6.0.1")
 }
 ```
 
@@ -183,7 +183,13 @@ aem {
     config {
         packageRoot = "${aem.project.file("src/main/content")}"
         // ...
-               
+        
+        localInstance {
+            // ...
+        }
+        resolver {
+            // ...
+        }
     }
     tasks {
         compose {
@@ -211,6 +217,8 @@ To see all available options and actual documentation, please follow to:
 * `bundle` - [BundleJar](src/main/kotlin/com/cognifide/gradle/aem/bundle/BundleJar.kt)
 * `satisfy` - [Satisfy](src/main/kotlin/com/cognifide/gradle/aem/instance/tasks/Satisfy.kt)
 * `...` - other tasks in similar way.
+* `config.localInstance` - [LocalInstanceOptions](src/main/kotlin/com/cognifide/gradle/aem/instance/LocalInstanceOptions.kt)
+* `config.resolver` - [ResolverOptions](src/main/kotlin/com/cognifide/gradle/aem/common/file/resolver/ResolverOptions.kt)
 
 ### Config plugin
 
@@ -294,7 +302,7 @@ aem.instance.local-publish.runModes=nosamplecontent
 aem.instance.local-publish.jvmOpts=-server -Xmx1024m -XX:MaxPermSize=256M -Djava.awt.headless=true
 ```
 
-Notice! Remember to define also AEM [source files](#source-files-configuration).
+Notice! Remember to define also AEM [source files](#configuration-of-aem-instance-source-jar-file-or-backup-file).
 
 #### Defining instances via build script
 
@@ -551,7 +559,7 @@ Then file at path *build/aem/aemDebug/debug.json* with content below is being ge
 {
   "buildInfo" : {
     "plugin" : {
-      "pluginVersion" : "6.0.0",
+      "pluginVersion" : "6.0.1",
       "gradleVersion" : "5.0"
     },
     "gradle" : {
@@ -583,7 +591,27 @@ Then file at path *build/aem/aemDebug/debug.json* with content below is being ge
         "httpPort" : 4502
       }
     },
-    "instanceRoot" : ".../.aem/example",
+    "localInstanceOptions" : {
+      "root" : ".../.aem/example",
+      "source" : "AUTO",
+      "zipUrl" : null,
+      "jarUrl" : null,
+      "licenseUrl" : null,
+      "overridesPath" : "*/src/main/resources/local-instance",
+      "expandFiles" : [
+        "**/start.bat",
+        "**/stop.bat",
+        "**/start",
+        "**/stop"
+      ],
+      "expandProperties" : { },
+      "allFiles" : [ ],
+      "extraFiles" : [ ],
+      "jar" : null,
+      "license" : null,
+      "zip" : null,
+      "mandatoryFiles" : [ ]
+    },
     "packageSnapshots" : [ ],
     "packageRoot" : ".../gradle-aem-multi/aem/app.core/src/main/content",
     "packageMetaCommonRoot" : ".../gradle-aem-multi/aem/gradle/META-INF",
@@ -1030,23 +1058,18 @@ This behavior is controlled by:
 ```kotlin
 aem {
     config {
-        instanceRoot = "${System.getProperty("user.home")}/.aem/${project.rootProject.name}"
-        // as far as I know this path is not valid anymore
-    }
-    tasks {
-        create {
-            options {
-                overridesPath = "${project.rootProject.file("src/main/resources/local-instance")}"
-                expandProperties = mapOf()
-                expandFiles = listOf(
-                    "**/*.properties", 
-                    "**/*.sh", 
-                    "**/*.bat", 
-                    "**/*.xml",
-                    "**/start",
-                    "**/stop"
-                )
-            }
+        localInstance {
+            root = aem.props.string("aem.localInstance.root") ?: "${aem.project.rootProject.file(".aem")}"
+            overridesPath = "${project.rootProject.file("src/main/resources/local-instance")}"
+            expandProperties = mapOf()
+            expandFiles = listOf(
+                "**/*.properties", 
+                "**/*.sh", 
+                "**/*.bat", 
+                "**/*.xml",
+                "**/start",
+                "**/stop"
+            )
         }
     }
 }
@@ -1054,7 +1077,7 @@ aem {
 
 Properties:
 
-* *aem.config.instanceRoot* determines where AEM instance files will be extracted on local file system.
+* *root* determines where AEM instance files will be extracted on local file system.
 * *overridesPath* determines project location that holds extra instance files that will override plugin defaults (start / stop scripts) and / or extracted AEM files.
 * *expandFiles* specifies which AEM instance files have an ability to use [expandable properties](#expandable-properties) inside.
 * *expandProperties* is a place for defining custom properties that can be expanded in AEM instance files.

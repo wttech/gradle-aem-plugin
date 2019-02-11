@@ -6,10 +6,7 @@ import com.cognifide.gradle.aem.common.LineSeparator
 import com.cognifide.gradle.aem.common.NotifierFacade
 import com.cognifide.gradle.aem.common.file.resolver.ResolverOptions
 import com.cognifide.gradle.aem.common.notifier.Notifier
-import com.cognifide.gradle.aem.instance.Instance
-import com.cognifide.gradle.aem.instance.InstanceHttpClient
-import com.cognifide.gradle.aem.instance.LocalInstance
-import com.cognifide.gradle.aem.instance.RemoteInstance
+import com.cognifide.gradle.aem.instance.*
 import com.cognifide.gradle.aem.pkg.Package
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.Serializable
@@ -27,8 +24,10 @@ class Config(
 ) : Serializable {
 
     @Internal
-    @JsonIgnore
-    val resolver = ResolverOptions(aem)
+    val resolverOptions = ResolverOptions(aem)
+
+    @Internal
+    val localInstanceOptions = LocalInstanceOptions(aem)
 
     private val instanceMap: MutableMap<String, Instance> = mutableMapOf()
 
@@ -38,14 +37,6 @@ class Config(
      */
     @Nested
     var instances: Map<String, Instance> = instanceMap
-
-    /**
-     * Path in which local AEM instances will be stored.
-     *
-     * Default path is a subfolder named '.aem' under root project directory.
-     */
-    @Input
-    var instanceRoot: String = "${aem.project.rootProject.file(".aem")}"
 
     /**
      * Defines maximum time after which initializing connection to AEM will be aborted (e.g on upload, install).
@@ -184,6 +175,20 @@ class Config(
     }
 
     /**
+     * Customize file resolver options like default credentials, remote host checking etc.
+     */
+    @Internal
+    @JsonIgnore
+    fun resolver(options: ResolverOptions.() -> Unit) = resolverOptions.apply(options)
+
+    /**
+     * Customize common local instance options
+     */
+    @Internal
+    @JsonIgnore
+    fun localInstance(options: LocalInstanceOptions.() -> Unit) = localInstanceOptions.apply(options)
+
+    /**
      * Declare new deployment target (AEM instance).
      */
     fun localInstance(httpUrl: String) {
@@ -231,8 +236,4 @@ class Config(
     @get:Internal
     @get:JsonIgnore
     val lineSeparatorString: String = LineSeparator.string(lineSeparator)
-
-    @Internal
-    @JsonIgnore
-    fun resolver(options: ResolverOptions.() -> Unit) = resolver.apply(options)
 }

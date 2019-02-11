@@ -2,15 +2,27 @@ package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.common.AemException
 import com.cognifide.gradle.aem.common.AemExtension
+import com.cognifide.gradle.aem.common.AemTask
 import com.cognifide.gradle.aem.common.file.resolver.FileGroup
 import com.cognifide.gradle.aem.common.file.resolver.FileResolution
 import com.cognifide.gradle.aem.common.file.resolver.FileResolver
 import com.cognifide.gradle.aem.common.file.resolver.Resolver
+import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
+import java.io.Serializable
 
-class LocalInstanceOptions(aem: AemExtension, downloadDir: File) {
+class LocalInstanceOptions(aem: AemExtension) : Serializable {
+
+    private val downloadDir = AemTask.temporaryDir(aem.project, TEMPORARY_DIR)
 
     private val fileResolver = FileResolver(aem, downloadDir).apply { group(GROUP_EXTRA) {} }
+
+    /**
+     * Path in which local AEM instances will be stored.
+     *
+     * Default path is a subfolder named '.aem' under root project directory.
+     */
+    var root: String = aem.props.string("aem.localInstance.root") ?: "${aem.project.rootProject.file(".aem")}"
 
     /**
      * Determines how instances will be created (from backup or from the scratch).
@@ -23,6 +35,7 @@ class LocalInstanceOptions(aem: AemExtension, downloadDir: File) {
      * By default takes desired backup by name (if provided) or takes most recent backup
      * (file names sorted lexically / descending).
      */
+    @JsonIgnore
     var zipSelector: Collection<File>.() -> File? = {
         val name = aem.props.string("aem.localInstance.zipName") ?: ""
         when {
@@ -67,6 +80,7 @@ class LocalInstanceOptions(aem: AemExtension, downloadDir: File) {
      */
     var expandProperties: Map<String, Any> = mapOf()
 
+    @JsonIgnore
     var zipSource: FileResolver.() -> FileResolution? = {
         zipUrl?.ifBlank { null }?.run { url(this) }
     }
@@ -74,6 +88,7 @@ class LocalInstanceOptions(aem: AemExtension, downloadDir: File) {
     val zip: File?
         get() = fileResolver.run(zipSource)?.file
 
+    @JsonIgnore
     var jarSource: FileResolver.() -> FileResolution? = {
         jarUrl?.ifBlank { null }?.run { url(this) }
     }
@@ -81,6 +96,7 @@ class LocalInstanceOptions(aem: AemExtension, downloadDir: File) {
     val jar: File?
         get() = fileResolver.run(jarSource)?.file
 
+    @JsonIgnore
     var licenseSource: FileResolver.() -> FileResolution? = {
         licenseUrl?.ifBlank { null }?.run { url(this) }
     }
@@ -129,6 +145,9 @@ class LocalInstanceOptions(aem: AemExtension, downloadDir: File) {
     }
 
     companion object {
+
         const val GROUP_EXTRA = "extra"
+
+        const val TEMPORARY_DIR = "localInstance"
     }
 }

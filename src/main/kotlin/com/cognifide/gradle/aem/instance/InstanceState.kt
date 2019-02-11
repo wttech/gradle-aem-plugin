@@ -39,13 +39,15 @@ class InstanceState(private var syncOrigin: InstanceSync, val instance: Instance
                 return@check false
             }
 
+            var result = true
+
             val unstableBundles = bundleState.bundlesExcept(symbolicNamesIgnored).filter { !it.stable }
             if (unstableBundles.isNotEmpty()) {
                 status.error("Unstable bundles detected on $instance:\n${unstableBundles.joinToString("\n")}")
-                return@check false
+                result = false
             }
 
-            return@check true
+            return@check result
         })
     }
 
@@ -54,8 +56,8 @@ class InstanceState(private var syncOrigin: InstanceSync, val instance: Instance
     }
 
     fun checkComponentState(
-        packagesActive: Collection<String> = PLATFORM_COMPONENTS,
-        packagesSatisfied: Collection<String> = listOf(),
+        platformComponents: Collection<String> = PLATFORM_COMPONENTS,
+        specificComponents: Collection<String> = listOf(),
         syncOptions: InstanceSync.() -> Unit = COMPONENT_STATE_SYNC_OPTIONS
     ): Boolean {
         return check(syncOptions, {
@@ -64,19 +66,27 @@ class InstanceState(private var syncOrigin: InstanceSync, val instance: Instance
                 return@check false
             }
 
-            val inactiveComponents = componentState.find(packagesActive, listOf()).filter { !it.active }
+            var result = true
+
+            val inactiveComponents = componentState.find(platformComponents, listOf()).filter { !it.active }
             if (inactiveComponents.isNotEmpty()) {
                 status.error("Inactive components detected on $instance:\n${inactiveComponents.joinToString("\n")}")
-                return@check false
+                result = false
             }
 
-            val unsatisfiedComponents = componentState.find(packagesSatisfied, listOf()).filter { it.unsatisfied }
+            val failedComponents = componentState.find(specificComponents, listOf()).filter { it.failedActivation }
+            if (failedComponents.isNotEmpty()) {
+                status.error("Components with failed activation detected on $instance:\n${failedComponents.joinToString("\n")}")
+                result = false
+            }
+
+            val unsatisfiedComponents = componentState.find(specificComponents, listOf()).filter { it.unsatisfied }
             if (unsatisfiedComponents.isNotEmpty()) {
                 status.error("Unsatisfied components detected on $instance:\n${unsatisfiedComponents.joinToString("\n")}")
-                return@check false
+                result = false
             }
 
-            return@check true
+            return@check result
         })
     }
 

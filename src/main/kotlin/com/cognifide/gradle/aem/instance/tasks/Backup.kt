@@ -38,7 +38,7 @@ open class Backup : Zip(), AemTask {
     }
 
     override fun projectEvaluated() {
-        from(aem.config.instanceRoot)
+        from(aem.config.localInstanceOptions.root)
     }
 
     companion object {
