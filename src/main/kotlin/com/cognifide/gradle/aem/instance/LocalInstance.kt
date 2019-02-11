@@ -67,7 +67,7 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
 
     @get:JsonIgnore
     val dir: File
-        get() = File("${aem.config.instanceRoot}/$typeName")
+        get() = File("${aem.config.localInstanceOptions.root}/$typeName")
 
     @get:JsonIgnore
     val jar: File
@@ -117,7 +117,10 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
         }
     }
 
-    fun create(options: LocalInstanceOptions) {
+    private val options: LocalInstanceOptions
+        get() = aem.config.localInstanceOptions
+
+    fun create() {
         if (created) {
             aem.logger.info(("Instance already created: $this"))
             return
@@ -142,6 +145,15 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
         aem.logger.info("Creating default instance files")
         FileOperations.copyResources(InstancePlugin.FILES_PATH, dir, true)
 
+        customize()
+
+        aem.logger.info("Creating lock file")
+        lock(LOCK_CREATE)
+
+        aem.logger.info("Created instance with success")
+    }
+
+    fun customize() {
         val overridesDir = File(options.overridesPath)
 
         aem.logger.info("Overriding instance files using: ${overridesDir.absolutePath}")
@@ -155,11 +167,6 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
         FileOperations.amendFiles(dir, options.expandFiles) { file, source ->
             aem.props.expand(source, propertiesAll, file.absolutePath)
         }
-
-        aem.logger.info("Creating lock file")
-        lock(LOCK_CREATE)
-
-        aem.logger.info("Created instance with success")
     }
 
     private fun copyFiles(options: LocalInstanceOptions) {
@@ -250,6 +257,8 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
             aem.logger.warn("Instance not created, so it could not be up: $this")
             return
         }
+
+        customize()
 
         aem.logger.info("Executing start script: $startScript")
         execute(startScript)

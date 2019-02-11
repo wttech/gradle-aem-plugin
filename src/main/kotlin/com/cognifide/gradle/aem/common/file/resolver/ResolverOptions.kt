@@ -1,8 +1,9 @@
 package com.cognifide.gradle.aem.common.file.resolver
 
 import com.cognifide.gradle.aem.common.AemExtension
+import java.io.Serializable
 
-class ResolverOptions(aem: AemExtension) {
+class ResolverOptions(aem: AemExtension) : Serializable {
 
     var httpUsername: String? = aem.props.string("aem.resolver.http.username")
 

@@ -34,7 +34,8 @@ class DebugTaskTest : AemTest() {
         val JSON_CUSTOMIZATIONS = ValueMatcher.customizationsOf(mapOf(
                 "buildInfo" to AnyValueMatcher(),
                 "projectInfo.dir" to PathValueMatcher(),
-                "baseConfig.instanceRoot" to PathValueMatcher(),
+                "baseConfig.localInstanceOptions.root" to PathValueMatcher(),
+                "baseConfig.localInstanceOptions.overridesPath" to PathValueMatcher(),
                 "baseConfig.packageRoot" to PathValueMatcher(),
                 "baseConfig.packageMetaCommonRoot" to PathValueMatcher(),
                 "baseConfig.groovyScriptRoot" to PathValueMatcher(),

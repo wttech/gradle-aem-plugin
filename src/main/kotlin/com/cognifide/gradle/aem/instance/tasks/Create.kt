@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem.instance.tasks
 
-import com.cognifide.gradle.aem.common.AemTask
 import com.cognifide.gradle.aem.common.Formats
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.onEachApply
@@ -8,20 +7,12 @@ import com.cognifide.gradle.aem.instance.InstanceException
 import com.cognifide.gradle.aem.instance.LocalInstanceOptions
 import com.cognifide.gradle.aem.instance.names
 import java.io.File
-import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
 open class Create : Instance() {
 
-    @Internal
-    val options = LocalInstanceOptions(aem, AemTask.temporaryDir(project, name))
-
     init {
         description = "Creates local AEM instance(s)."
-    }
-
-    fun options(options: LocalInstanceOptions.() -> Unit) {
-        this.options.apply(options)
     }
 
     @TaskAction
@@ -34,14 +25,14 @@ open class Create : Instance() {
 
         logger.info("Creating instances: ${uncreatedInstances.names}")
 
-        val backupZip = when (options.source) {
+        val backupZip = when (instanceOptions.source) {
             LocalInstanceOptions.Source.AUTO -> findRecentBackup()
             LocalInstanceOptions.Source.BACKUP_INTERNAL -> getInternalBackup()
             LocalInstanceOptions.Source.BACKUP_EXTERNAL -> getExternalBackup()
             LocalInstanceOptions.Source.NONE -> null
         }
         if (backupZip != null) {
-            val instanceRoot = File(aem.config.instanceRoot)
+            val instanceRoot = File(aem.config.localInstanceOptions.root)
 
             aem.logger.info("Extracting files from backup ZIP '$backupZip' to directory '$instanceRoot'")
             aem.progressIndicator {
@@ -49,7 +40,7 @@ open class Create : Instance() {
                 FileOperations.zipUnpack(backupZip, instanceRoot)
             }
         } else {
-            if (options.jar == null || options.license == null) {
+            if (instanceOptions.jar == null || instanceOptions.license == null) {
                 throw InstanceException("Cannot create instances due to lacking source files. " +
                         "Ensure having specified: local instance ZIP url or jar & license url.")
             }
@@ -57,7 +48,7 @@ open class Create : Instance() {
             aem.progress(uncreatedInstances.size) {
                 uncreatedInstances.onEachApply {
                     increment("Instance '$name'") {
-                        create(options)
+                        create()
                     }
                 }
             }
@@ -66,13 +57,13 @@ open class Create : Instance() {
         aem.notifier.notify("Instance(s) created", "Which: ${uncreatedInstances.names}")
     }
 
-    private fun findRecentBackup() = findRecentBackup(options.zip)
+    private fun findRecentBackup() = findRecentBackup(instanceOptions.zip)
 
     private fun findRecentBackup(externalZip: File?): File? {
         val external = if (externalZip == null) listOf() else listOf(externalZip)
         val internal = aem.tasks.named<Backup>(Backup.NAME).get().available
 
-        return options.zipSelector(external + internal)
+        return instanceOptions.zipSelector(external + internal)
     }
 
     private fun getInternalBackup(): File? {
@@ -81,7 +72,7 @@ open class Create : Instance() {
     }
 
     private fun getExternalBackup(): File {
-        return options.zip ?: throw InstanceException("External local instance backup is not available. " +
+        return instanceOptions.zip ?: throw InstanceException("External local instance backup is not available. " +
                 "Ensure having property 'aem.localInstance.zipUrl' specified.")
     }
 

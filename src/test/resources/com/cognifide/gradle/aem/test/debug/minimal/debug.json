@@ -1,7 +1,7 @@
 {
   "buildInfo" : {
     "plugin" : {
-      "pluginVersion" : "6.0.0",
+      "pluginVersion" : "6.0.1",
       "gradleVersion" : "4.10"
     },
     "gradle" : {
@@ -44,7 +44,38 @@
         "properties" : { }
       }
     },
-    "instanceRoot" : "*/.aem",
+    "resolverOptions" : {
+      "httpUsername" : null,
+      "httpPassword" : null,
+      "httpConnectionIgnoreSsl" : null,
+      "sftpUsername" : null,
+      "sftpPassword" : null,
+      "sftpHostChecking" : null,
+      "smbDomain" : null,
+      "smbUsername" : null,
+      "smbPassword" : null
+    },
+    "localInstanceOptions" : {
+      "root" : "*/.aem",
+      "source" : "AUTO",
+      "zipUrl" : null,
+      "jarUrl" : null,
+      "licenseUrl" : null,
+      "overridesPath" : "*/src/main/resources/local-instance",
+      "expandFiles" : [
+        "**/start.bat",
+        "**/stop.bat",
+        "**/start",
+        "**/stop"
+      ],
+      "expandProperties" : { },
+      "allFiles" : [ ],
+      "extraFiles" : [ ],
+      "jar" : null,
+      "license" : null,
+      "zip" : null,
+      "mandatoryFiles" : [ ]
+    },
     "packageRoot": "*/src/main/content",
     "packageMetaCommonRoot": "*/aem/gradle/META-INF",
     "packageInstallPath" : "/apps/minimal/install",
