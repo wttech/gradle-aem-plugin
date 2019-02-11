@@ -92,6 +92,6 @@
     "notificationEnabled" : false,
     "groovyScriptRoot" : "*/gradle/groovyScript"
   },
-  "bundleConfig" : { },
+  "bundleConfig" : [],
   "packageDeployed" : { }
 }

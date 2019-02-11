@@ -34,6 +34,8 @@ private val aem: AemExtension,
 val jar: Jar
 ) : Serializable {
 
+    var name = jar.name
+
     /**
      * Allows to disable OSGi bundle specific JAR task customization.
      */

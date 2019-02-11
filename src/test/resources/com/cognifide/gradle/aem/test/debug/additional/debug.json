@@ -255,8 +255,9 @@
     "notificationEnabled" : false,
     "groovyScriptRoot" : "*/gradle/groovyScript"
   },
-  "bundleConfig" : {
-    "jar" : {
+  "bundleConfig" : [
+    {
+      "name": "jar",
       "enabled": true,
       "installPath" : "/apps/additional/install",
       "installRunMode": null,
@@ -277,6 +278,6 @@
         "Sling-Model-Packages" : "com.company.aem.additional"
       }
     }
-  },
+  ],
   "packageDeployed" : { }
 }

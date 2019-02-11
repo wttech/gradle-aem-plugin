@@ -7,8 +7,8 @@ import com.cognifide.gradle.aem.instance.InstanceException
 import com.cognifide.gradle.aem.instance.LocalInstance
 import com.cognifide.gradle.aem.instance.LocalInstanceOptions
 import com.cognifide.gradle.aem.instance.names
-import org.gradle.api.tasks.TaskAction
 import java.io.File
+import org.gradle.api.tasks.TaskAction
 
 open class Create : Instance() {
 
@@ -106,6 +106,5 @@ open class Create : Instance() {
     companion object {
 
         const val NAME = "aemCreate"
-
     }
 }

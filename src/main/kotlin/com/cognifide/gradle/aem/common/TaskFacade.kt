@@ -12,7 +12,6 @@ import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.UnknownTaskException
 import org.gradle.api.plugins.JavaPlugin
-import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.testing.Test
@@ -24,11 +23,7 @@ class TaskFacade(private val aem: AemExtension) {
 
     private val bundleMap = mutableMapOf<String, BundleJar>()
 
-    /**
-     * Contains OSGi bundle configuration used in case of composing CRX package.
-     */
-    @Nested
-    val bundles: Map<String, BundleJar> = bundleMap
+    val bundles: List<BundleJar> = getAll(Jar::class.java).map { bundle(it) }
 
     init {
         project.afterEvaluate {

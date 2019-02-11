@@ -39,7 +39,7 @@ class DebugTaskTest : AemTest() {
                 "baseConfig.packageRoot" to PathValueMatcher(),
                 "baseConfig.packageMetaCommonRoot" to PathValueMatcher(),
                 "baseConfig.groovyScriptRoot" to PathValueMatcher(),
-                "bundleConfig.*.bndPath" to PathValueMatcher()
+                "bundleConfig[*].bndPath" to PathValueMatcher()
         ))
     }
 
