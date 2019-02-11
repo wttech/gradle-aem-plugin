@@ -55,7 +55,9 @@ open class Create : Instance() {
         aem.progressIndicator {
             message = "Extracting backup ZIP: ${backupZip.name}, size: ${Formats.size(backupZip)}"
 
-            instanceRoot.deleteRecursively()
+            if (instanceRoot.exists()) {
+                instanceRoot.deleteRecursively()
+            }
             instanceRoot.mkdirs()
             FileOperations.zipUnpack(backupZip, instanceRoot)
         }
