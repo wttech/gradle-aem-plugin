@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import java.io.File
 import java.io.Serializable
 import org.apache.commons.io.FileUtils
+import org.apache.commons.lang3.StringUtils
 import org.gradle.internal.os.OperatingSystem
 import org.gradle.util.GFileUtils
 
@@ -126,50 +127,20 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
             return
         }
 
+        aem.logger.info("Creating: $this")
+
         cleanDir(true)
-
-        aem.logger.info("Creating instance at path '$dir'")
-
-        aem.logger.info("Copying instance files")
-        copyFiles(options)
-
-        aem.logger.info("Validating instance files")
+        copyFiles()
         validateFiles()
-
-        aem.logger.info("Unpacking AEM from JAR")
         unpackFiles()
-
-        aem.logger.info("Correcting AEM files")
         correctFiles()
-
-        aem.logger.info("Creating default instance files")
-        FileOperations.copyResources(InstancePlugin.FILES_PATH, dir, true)
-
         customize()
-
-        aem.logger.info("Creating lock file")
         lock(LOCK_CREATE)
 
-        aem.logger.info("Created instance with success")
+        aem.logger.info("Created: $this")
     }
 
-    fun customize() {
-        val overridesDir = File(options.overridesPath)
-
-        aem.logger.info("Overriding instance files using: ${overridesDir.absolutePath}")
-        if (overridesDir.exists()) {
-            FileUtils.copyDirectory(overridesDir, dir)
-        }
-
-        val propertiesAll = mapOf("instance" to this) + properties + options.expandProperties
-
-        aem.logger.info("Expanding instance files")
-        FileOperations.amendFiles(dir, options.expandFiles) { file, source ->
-            aem.props.expand(source, propertiesAll, file.absolutePath)
-        }
-    }
-
-    private fun copyFiles(options: LocalInstanceOptions) {
+    private fun copyFiles() {
         GFileUtils.mkdirs(dir)
 
         options.license?.let { FileUtils.copyFile(options.license, license) }
@@ -195,14 +166,14 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
         FileOperations.amendFile(binScript("start", OperatingSystem.forName("windows")).bin) { origin ->
             var result = origin
 
-            // Force CMD to be launched in closable window mode. Inject nice title.
+            // Force CMD to be launched in closable window mode.
             result = result.replace(
                     "start \"CQ\" cmd.exe /K",
-                    "start /min \"$this\" cmd.exe /C"
+                    "start /min \"CQ\" cmd.exe /C"
             ) // AEM <= 6.2
             result = result.replace(
                     "start \"CQ\" cmd.exe /C",
-                    "start /min \"$this\" cmd.exe /C"
+                    "start /min \"CQ\" cmd.exe /C"
             ) // AEM 6.3
 
             // Introduce missing CQ_START_OPTS injectable by parent script.
@@ -252,6 +223,37 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
         }
     }
 
+    fun customize() {
+        aem.logger.info("Customizing: $this")
+
+        FileOperations.copyResources(InstancePlugin.FILES_PATH, dir, false)
+
+        val overridesDir = File(options.overridesPath)
+        if (overridesDir.exists()) {
+            FileUtils.copyDirectory(overridesDir, dir)
+        }
+
+        val propertiesAll = mapOf("instance" to this) + properties + options.expandProperties
+
+        FileOperations.amendFiles(dir, options.expandFiles) { file, source ->
+            aem.props.expand(source, propertiesAll, file.absolutePath)
+        }
+
+        FileOperations.amendFile(binScript("start", OperatingSystem.forName("windows")).bin) { origin ->
+            var result = origin
+
+            // Update window title
+            val previousTitle = StringUtils.substringBetween(origin, "start /min \"", "\" cmd.exe ")
+            if (previousTitle != null) {
+                result = StringUtils.replace(result, previousTitle, this.toString())
+            }
+
+            result
+        }
+
+        aem.logger.info("Customized: $this")
+    }
+
     fun up() {
         if (!created) {
             aem.logger.warn("Instance not created, so it could not be up: $this")
@@ -298,11 +300,11 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
     }
 
     fun destroy() {
-        aem.logger.info("Destroying at path '${dir.absolutePath}'")
+        aem.logger.info("Destroying: $this")
 
         cleanDir(false)
 
-        aem.logger.info("Destroyed with success")
+        aem.logger.info("Destroyed: $this")
     }
 
     private fun lockFile(name: String): File = File(dir, "$name.lock")

@@ -4,10 +4,11 @@ import com.cognifide.gradle.aem.common.Formats
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.onEachApply
 import com.cognifide.gradle.aem.instance.InstanceException
+import com.cognifide.gradle.aem.instance.LocalInstance
 import com.cognifide.gradle.aem.instance.LocalInstanceOptions
 import com.cognifide.gradle.aem.instance.names
-import java.io.File
 import org.gradle.api.tasks.TaskAction
+import java.io.File
 
 open class Create : Instance() {
 
@@ -32,29 +33,55 @@ open class Create : Instance() {
             LocalInstanceOptions.Source.NONE -> null
         }
         if (backupZip != null) {
-            val instanceRoot = File(aem.config.localInstanceOptions.root)
-
-            aem.logger.info("Extracting files from backup ZIP '$backupZip' to directory '$instanceRoot'")
-            aem.progressIndicator {
-                message = "Extracting backup ZIP: ${backupZip.name}, size: ${Formats.size(backupZip)}"
-                FileOperations.zipUnpack(backupZip, instanceRoot)
-            }
+            createFromBackup(uncreatedInstances, backupZip)
         } else {
-            if (instanceOptions.jar == null || instanceOptions.license == null) {
-                throw InstanceException("Cannot create instances due to lacking source files. " +
-                        "Ensure having specified: local instance ZIP url or jar & license url.")
-            }
+            createFromScratch(uncreatedInstances)
+        }
 
-            aem.progress(uncreatedInstances.size) {
-                uncreatedInstances.onEachApply {
-                    increment("Instance '$name'") {
-                        create()
-                    }
+        val createdInstances = uncreatedInstances.filter { it.created }
+
+        aem.notifier.notify("Instance(s) created", "Which: ${createdInstances.names}")
+    }
+
+    private fun createFromBackup(uncreatedInstances: List<LocalInstance>, backupZip: File) {
+        if (instances != uncreatedInstances) {
+            throw InstanceException("Backup ZIP cannot be used to create missing instances.")
+        }
+
+        val instanceRoot = File(aem.config.localInstanceOptions.root)
+
+        aem.logger.info("Extracting files from backup ZIP '$backupZip' to directory '$instanceRoot'")
+
+        aem.progressIndicator {
+            message = "Extracting backup ZIP: ${backupZip.name}, size: ${Formats.size(backupZip)}"
+
+            instanceRoot.deleteRecursively()
+            instanceRoot.mkdirs()
+            FileOperations.zipUnpack(backupZip, instanceRoot)
+        }
+
+        aem.progress(uncreatedInstances.size) {
+            uncreatedInstances.onEachApply {
+                increment("Customizing instance '$name'") {
+                    customize()
                 }
             }
         }
+    }
 
-        aem.notifier.notify("Instance(s) created", "Which: ${uncreatedInstances.names}")
+    private fun createFromScratch(uncreatedInstances: List<LocalInstance>) {
+        if (instanceOptions.jar == null || instanceOptions.license == null) {
+            throw InstanceException("Cannot create instances due to lacking source files. " +
+                    "Ensure having specified: local instance ZIP url or jar & license url.")
+        }
+
+        aem.progress(uncreatedInstances.size) {
+            uncreatedInstances.onEachApply {
+                increment("Creating instance '$name'") {
+                    create()
+                }
+            }
+        }
     }
 
     private fun findRecentBackup() = findRecentBackup(instanceOptions.zip)
@@ -77,6 +104,8 @@ open class Create : Instance() {
     }
 
     companion object {
+
         const val NAME = "aemCreate"
+
     }
 }
