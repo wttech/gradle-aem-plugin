@@ -836,12 +836,14 @@ gradlew aemDeploy -Paem.instance.list=[http://admin:admin@localhost:4502,http://
 
 ##### Deploying options
 
-* `aem.deploy.awaited=false` - disable stability & health checks after deploying CRX package.
-* `aem.deploy.distributed=true` - use alternative form of deployment. At first, deploys CRX package to author instances, then triggers replication of CRX package so that it will be installed also on publish instances.
-* `aem.deploy.uploadForce=false` - disable force installation (by default even unchanged CRX package is forced to be reinstalled)
-* `aem.deploy.installRecursive=false` - disable automatic installation of subpackages located inside CRX package being deployed.  
-* `aem.deploy.uploadRetry=n` - customize number of retries being performed after failed CRX package upload.
-* `aem.deploy.installRetry=n` - customize number of retries being performed after failed CRX package install.
+Add any of below command line parameters to customize CRX package deployment behavior:
+
+* `-Paem.deploy.awaited=false` - disable stability & health checks after deploying CRX package.
+* `-Paem.deploy.distributed=true` - use alternative form of deployment. At first, deploys CRX package to author instances, then triggers replication of CRX package so that it will be installed also on publish instances.
+* `-Paem.deploy.uploadForce=false` - disable force installation (by default even unchanged CRX package is forced to be reinstalled)
+* `-Paem.deploy.installRecursive=false` - disable automatic installation of subpackages located inside CRX package being deployed.  
+* `-Paem.deploy.uploadRetry=n` - customize number of retries being performed after failed CRX package upload.
+* `-Paem.deploy.installRetry=n` - customize number of retries being performed after failed CRX package install.
 
 #### Task `aemUpload`
 
