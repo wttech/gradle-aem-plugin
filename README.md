@@ -1187,11 +1187,11 @@ aem {
                     url("https://github.com/OlsonDigital/aem-groovy-console/releases/download/11.0.0/aem-groovy-console-11.0.0.zip")
                     config {
                         instanceName = "*-author" // additional filter intersecting 'deployInstanceName'
-                        initializer { sync ->
-                            logger.info("Installing Groovy Console on ${sync.instance}")
+                        initializer {
+                            logger.info("Installing Groovy Console on $instance")
                         }
-                        finalizer { sync ->
-                            logger.info("Installed Groovy Console on ${sync.instance}")
+                        finalizer {
+                            logger.info("Installed Groovy Console on $instance")
                         }
                         completer {
                             logger.info("Reloading instance(s) after installing Groovy Console")
