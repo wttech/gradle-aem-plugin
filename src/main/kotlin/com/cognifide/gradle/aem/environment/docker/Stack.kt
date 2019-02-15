@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.environment.docker
 import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.file.FileException
 import com.cognifide.gradle.aem.common.file.FileOperations
+import com.cognifide.gradle.aem.environment.ServiceAwait
 import de.gesellix.docker.client.DockerClient
 import de.gesellix.docker.client.DockerClientException
 import de.gesellix.docker.client.DockerClientImpl
@@ -18,18 +19,18 @@ class Stack(
     private val serviceAwait: ServiceAwait
 ) {
 
-    private val options = aem.dockerOptions
+    private val options = aem.environmentOptions
 
     fun deploy() {
-        aem.logger.lifecycle("Stack: ${options.stackName}")
+        aem.logger.lifecycle("Stack: ${options.docker.stackName}")
         docker {
             initSwarmIfNotInitialized()
-            stackDeploy(options.stackName, options.composeFilePath)
+            stackDeploy(options.docker.stackName, options.docker.composeFilePath)
             serviceAwait.await()
         }
     }
 
-    fun rm() = docker { stackRm(options.stackName) }
+    fun rm() = docker { stackRm(options.docker.stackName) }
 
     private fun DockerClient.stackDeploy(stackName: String, composeFilePath: String) {
         try {
