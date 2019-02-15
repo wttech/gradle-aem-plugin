@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.environment.docker
+package com.cognifide.gradle.aem.environment
 
 import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.ProgressLogger
@@ -13,15 +13,15 @@ import org.apache.commons.io.IOUtils
 class ServiceAwait(aem: AemExtension) {
 
     private val http = HttpClient(aem.project)
-    private val options = aem.dockerOptions
+    private val options = aem.environmentOptions
     val progress = ProgressLogger.of(aem.project)
 
     fun await() =
         progress.launch {
-            val serviceStatuses = options.serviceHealthChecks.parallelStream().map { it.url to healthy(it) }.toList()
+            val serviceStatuses = options.healthChecks.list.parallelStream().map { it.url to healthy(it) }.toList()
             if (!serviceStatuses.all { it.second }) {
                 val unavailableUrls = serviceStatuses.filter { !it.second }.map { it.first }.joinToString("\n")
-                throw DockerException("Failed to initialized all services! Following URLs are still unavailable " +
+                throw EnvironmentException("Failed to initialized all services! Following URLs are still unavailable " +
                     "or returned different response than expected:\n$unavailableUrls")
             }
         }
@@ -58,6 +58,6 @@ class ServiceAwait(aem: AemExtension) {
     private fun noOfChecks(check: HealthCheck) = Math.max(check.maxAwaitTime / DELAY_BETWEEN_CHECKS, 1)
 
     companion object {
-        private const val DELAY_BETWEEN_CHECKS = 1000
+        private const val DELAY_BETWEEN_CHECKS = 500
     }
 }
