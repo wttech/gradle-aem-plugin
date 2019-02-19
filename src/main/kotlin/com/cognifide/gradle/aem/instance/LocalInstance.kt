@@ -245,7 +245,10 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
             // Update window title
             val previousTitle = StringUtils.substringBetween(origin, "start /min \"", "\" cmd.exe ")
             if (previousTitle != null) {
-                result = StringUtils.replace(result, previousTitle, this.toString())
+                result = StringUtils.replace(result,
+                        "start /min \"$previousTitle\" cmd.exe ",
+                        "start /min \"${this}\" cmd.exe "
+                )
             }
 
             result

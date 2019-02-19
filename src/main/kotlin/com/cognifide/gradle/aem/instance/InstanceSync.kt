@@ -109,7 +109,7 @@ class InstanceSync(aem: AemExtension, instance: Instance) : InstanceHttpClient(a
         }
 
         if (!response.isSuccess) {
-            throw InstanceException("Cannot upload package $file to $instance. Reason: ${response.msg}.")
+            throw InstanceException("Cannot upload package $file to $instance. Reason: ${interpretFail(response.msg)}.")
         }
 
         return response
@@ -165,7 +165,7 @@ class InstanceSync(aem: AemExtension, instance: Instance) : InstanceHttpClient(a
         }
 
         if (!response.isSuccess) {
-            throw InstanceException("Cannot build package $remotePath on $instance. Reason: ${response.msg}.")
+            throw InstanceException("Cannot build package $remotePath on $instance. Reason: ${interpretFail(response.msg)}.")
         }
         return response
     }
@@ -215,6 +215,12 @@ class InstanceSync(aem: AemExtension, instance: Instance) : InstanceHttpClient(a
         return response
     }
 
+    private fun interpretFail(message: String): String = when (message) {
+        // https://forums.adobe.com/thread/2338290
+        "Inaccessible value" -> "no disk space left (server respond with '$message'})"
+        else -> message
+    }
+
     fun isSnapshot(file: File): Boolean {
         return Patterns.wildcard(file, aem.config.packageSnapshots)
     }
@@ -258,7 +264,7 @@ class InstanceSync(aem: AemExtension, instance: Instance) : InstanceHttpClient(a
         }
 
         if (!response.isSuccess) {
-            throw InstanceException("Cannot activate package $remotePath on $instance. Reason: ${response.msg}.")
+            throw InstanceException("Cannot activate package $remotePath on $instance. Reason: ${interpretFail(response.msg)}.")
         }
 
         return response
