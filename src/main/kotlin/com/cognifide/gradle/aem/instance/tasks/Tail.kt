@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem.instance.tasks
 
 import com.cognifide.gradle.aem.common.AemDefaultTask
-import com.cognifide.gradle.aem.common.Formats
 import com.cognifide.gradle.aem.instance.Instance
 import com.cognifide.gradle.aem.instance.tail.*
 import com.cognifide.gradle.aem.instance.tail.io.FileDestination
@@ -39,9 +38,9 @@ open class Tail : AemDefaultTask() {
             shouldRunTailing = false
         }
         checkStartLock()
-        logger.lifecycle("Fetching logs every ${Formats.duration(options.fetchInterval)}")
+
         runBlocking {
-            createAllTailers().forEach { tailer ->
+            startAll().forEach { tailer ->
                 launch {
                     while (shouldRunTailing) {
                         logFileCreator.lock()
@@ -65,28 +64,31 @@ open class Tail : AemDefaultTask() {
 
     private fun checkStartLock() {
         if (logFileCreator.isLocked()) {
-            logger.warn(
-                "Another instance of log tailer is running for this project. " +
-                    "Stop it before starting a new one."
-            )
             throw TailException("Another instance of log tailer is running for this project.")
         }
         logFileCreator.lock()
     }
 
-    private fun createAllTailers(): List<Tailer> {
+    private fun startAll(): List<Tailer> {
         val notificationChannel = Channel<ProblematicLogs>(Channel.UNLIMITED)
+
         LogNotifier(notificationChannel, aem.notifier, logFileCreator)
-        return aem.instances.map { create(it, notificationChannel) }
+
+        return aem.instances.map { start(it, notificationChannel) }
     }
 
-    private fun create(instance: Instance, notificationChannel: Channel<ProblematicLogs>): Tailer {
+    private fun start(instance: Instance, notificationChannel: Channel<ProblematicLogs>): Tailer {
         val source = UrlSource(options, instance, aem)
         val destination = FileDestination(instance.name, logFileCreator)
-        val logsAnalyzerChannel = Channel<Log>(Channel.UNLIMITED)
-        LogAnalyzer(options, instance.name, logsAnalyzerChannel, notificationChannel, Blacklist(options.filters, options.blacklistFiles))
-        logger.lifecycle("Creating log tailer for ${instance.name} (${instance.httpUrl}) -> ${logFileCreator.mainUri(instance.name)}")
-        return Tailer(source, destination, logsAnalyzerChannel)
+        val logAnalyzerChannel = Channel<Log>(Channel.UNLIMITED)
+        val logFile = logFileCreator.main(instance.name)
+        val blacklist = Blacklist(options.filters, options.blacklistFiles)
+
+        LogAnalyzer(options, instance.name, logAnalyzerChannel, notificationChannel, blacklist)
+
+        logger.lifecycle("Tailing logs to file: $logFile")
+
+        return Tailer(source, destination, logAnalyzerChannel)
     }
 
     companion object {

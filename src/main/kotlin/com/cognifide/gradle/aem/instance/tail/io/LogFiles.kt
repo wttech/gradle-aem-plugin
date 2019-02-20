@@ -16,7 +16,17 @@ class LogFiles(
     private val taskName: String
 ) {
 
-    fun mainUri(instanceName: String) = uri(main(instanceName))
+    fun main(instanceName: String): File {
+        return AemTask.temporaryFile(aem.project, "$taskName/$instanceName", options.logFile())
+    }
+
+    fun incident(instanceName: String): File {
+        return AemTask.temporaryFile(
+                aem.project,
+                "$taskName/$instanceName/$INCIDENT_DIR",
+                "${Formats.dateFileName()}-${options.logFile()}"
+        )
+    }
 
     fun clearMain(instanceName: String) = main(instanceName).bufferedWriter().use { it.write("") }
 
@@ -57,18 +67,6 @@ class LogFiles(
         lock(notify)
 
         return true
-    }
-
-    private fun main(instanceName: String): File {
-        return AemTask.temporaryFile(aem.project, "$taskName/$instanceName", options.logFile())
-    }
-
-    private fun incident(instanceName: String): File {
-        return AemTask.temporaryFile(
-                aem.project,
-                "$taskName/$instanceName/$INCIDENT_DIR",
-                "${Formats.dateFileName()}-${options.logFile()}"
-        )
     }
 
     private fun lock(file: File) {

@@ -10,7 +10,7 @@ import java.io.InputStreamReader
 
 class UrlSource(
     private val options: TailOptions,
-    private val aemInstance: Instance,
+    private val instance: Instance,
     private val aem: AemExtension
 ) : LogSource {
 
@@ -18,7 +18,7 @@ class UrlSource(
 
     override fun <T> readChunk(parser: (BufferedReader) -> List<T>) =
         handleInstanceUnavailability {
-            aemInstance.sync {
+            instance.sync {
                 get(options.errorLogEndpoint()) {
                     BufferedReader(InputStreamReader(asStream(it))).use(parser)
                 }
@@ -29,17 +29,13 @@ class UrlSource(
         try {
             val chunk = parser()
             if (!wasStable) {
-                aem.logger.lifecycle("Restored log tailing from ${aemInstance.httpUrl}")
+                aem.logger.debug("Tailing resumed for $instance")
                 wasStable = true
             }
             chunk
         } catch (ex: RequestException) {
             if (wasStable) {
-                aem.logger.lifecycle(
-                    "Failed to tail logs (${aemInstance.httpUrl}):" +
-                        "\n${ex.message}." +
-                        "\nWaiting for it to restore."
-                )
+                aem.logger.debug("Tailing paused for $instance due to '${ex.message}'. Waiting for resuming.")
             }
             wasStable = false
             emptyList<T>()

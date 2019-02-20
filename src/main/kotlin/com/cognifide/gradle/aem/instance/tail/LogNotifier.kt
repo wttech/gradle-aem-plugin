@@ -30,10 +30,18 @@ class LogNotifier(
     }
 
     private fun notifyLogErrors(logs: ProblematicLogs, file: URI) {
-        notifier.notifyLogError(
-            "${logs.size} errors on ${logs.instanceName}",
-            "Click to open incident log:\n${logs.logs.last().message}",
-            file)
+        val errors = logs.size
+        val message = logs.logs.lastOrNull()
+                ?.message
+                ?.splitToSequence("\n")
+                ?.firstOrNull()
+                ?.run { trim() }
+                ?.substringAfter(" ")
+                ?.capitalize()
+                ?: ""
+        val instance = logs.instanceName
+
+        notifier.notifyLogError("$errors error(s) on $instance", message, file)
     }
 
     private fun snapshotErrorsToSeparateFile(logs: ProblematicLogs): URI {
