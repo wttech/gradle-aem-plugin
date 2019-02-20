@@ -26,9 +26,7 @@ class HealthChecks {
     val list = mutableListOf<HealthCheck>()
 
     infix fun String.respondsWith(block: HealthCheck.() -> Unit) {
-        val check = HealthCheck(this)
-        check.apply(block)
-        list += check
+        list += HealthCheck(this).apply(block)
     }
 }
 
