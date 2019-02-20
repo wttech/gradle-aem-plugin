@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.environment
 import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.AemPlugin
 import com.cognifide.gradle.aem.environment.tasks.EnvDown
+import com.cognifide.gradle.aem.environment.tasks.EnvHosts
 import com.cognifide.gradle.aem.environment.tasks.EnvSetup
 import com.cognifide.gradle.aem.environment.tasks.EnvUp
 import com.cognifide.gradle.aem.instance.InstancePlugin
@@ -27,6 +28,7 @@ class EnvironmentPlugin : AemPlugin() {
 
     private fun Project.setupTasks() {
         with(AemExtension.of(this).tasks) {
+            register<EnvHosts>(EnvHosts.NAME)
             register<EnvUp>(EnvUp.NAME)
             register<EnvDown>(EnvDown.NAME)
             register<EnvSetup>(EnvSetup.NAME) {
