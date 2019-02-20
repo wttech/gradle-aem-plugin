@@ -47,20 +47,6 @@ class LogFiles(private val options: TailOptions, private val taskName: String) {
         return lockFile.exists() && lockFile.lastModified() + options.lockInterval > System.currentTimeMillis()
     }
 
-    fun isNotifiable(): Boolean {
-        if (isLocked()) {
-            return false
-        }
-
-        if (notifyFile.exists() && notifyFile.lastModified() + options.usageInterval > System.currentTimeMillis()) {
-            return false
-        }
-
-        lock(notifyFile)
-
-        return true
-    }
-
     private fun lock(file: File) {
         if (!file.exists()) {
             file.bufferedWriter().use { it.write("") }
@@ -72,14 +58,9 @@ class LogFiles(private val options: TailOptions, private val taskName: String) {
     private val lockFile: File
         get() = AemTask.temporaryFile(aem.project, taskName, LOCK_FILE)
 
-    private val notifyFile: File
-        get() = AemTask.temporaryFile(aem.project, taskName, NOTIFY_FILE)
-
     companion object {
 
         const val LOCK_FILE = "tailer.lock"
-
-        const val NOTIFY_FILE = "tailer.notify"
 
         const val INCIDENT_DIR = "incidents"
     }

@@ -10,8 +10,6 @@ class TailOptions(val aem: AemExtension) {
 
     var lockInterval = aem.props.long("aem.tail.lockInterval") ?: max(1000L + fetchInterval, 2000L)
 
-    var usageInterval = aem.props.long("aem.tai.usageInterval") ?: 24 * 60 * 60 * 1000
-
     var linesChunkSize = aem.props.long("aem.tail.linesChunkSize") ?: 400L
 
     var notificationDelay = aem.props.long("aem.tail.notificationDelay") ?: 5000L

@@ -6,14 +6,12 @@ import com.cognifide.gradle.aem.instance.tail.*
 import com.cognifide.gradle.aem.instance.tail.io.FileDestination
 import com.cognifide.gradle.aem.instance.tail.io.LogFiles
 import com.cognifide.gradle.aem.instance.tail.io.UrlSource
-import com.cognifide.gradle.aem.pkg.tasks.Deploy
 import java.io.File
 import kotlinx.coroutines.ObsoleteCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import org.gradle.api.execution.TaskExecutionGraph
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 import org.gradle.process.internal.shutdown.ShutdownHooks
@@ -62,12 +60,6 @@ open class Tail : AemDefaultTask() {
         logFiles.lock()
     }
 
-    private fun proposeStarting() {
-        if (logFiles.isNotifiable()) {
-            aem.notifier.notify("Log tailer not running", "Consider starting it")
-        }
-    }
-
     private fun startAll(): List<Tailer> {
         val notificationChannel = Channel<ProblematicLogs>(Channel.UNLIMITED)
 
@@ -98,14 +90,6 @@ open class Tail : AemDefaultTask() {
 
         File(options.logFilterPath).takeIf { it.exists() }?.apply {
             options.logFilter.excludeFile(this)
-        }
-    }
-
-    override fun taskGraphReady(graph: TaskExecutionGraph) {
-        super.taskGraphReady(graph)
-
-        if (graph.allTasks.any { it is Deploy }) {
-            proposeStarting()
         }
     }
 
