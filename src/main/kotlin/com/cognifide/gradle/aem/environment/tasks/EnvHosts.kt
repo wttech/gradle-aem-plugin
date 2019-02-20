@@ -14,7 +14,7 @@ open class EnvHosts : AemDefaultTask() {
 
     init {
         description = "Appends /etc/hosts file with specified list of hosts. " +
-            "Tested on Windows 10. Requires super user privileges."
+            "Requires super/admin user privileges."
     }
 
     @Internal
@@ -26,12 +26,12 @@ open class EnvHosts : AemDefaultTask() {
     @TaskAction
     fun appendHosts() = try {
         FileOperations.amendFile(File(hosts.file)) { appender.appendedContent(it, hosts.list) }
-    } catch (fnf: FileNotFoundException) {
-        if (fnf.message?.contains("Permission denied") == true) {
+    } catch (e: FileNotFoundException) {
+        if (e.message?.contains("Permission denied") == true) {
             throw EnvironmentException("Failed to append hosts to ${hosts.file} file - permission denied." +
-                "\nConsider running this task with sudo or in PowerShell with admin privileges.", fnf)
+                "\nConsider running this task with sudo or in PowerShell with admin privileges.", e)
         }
-        throw EnvironmentException("Failed to append hosts to ${hosts.file} file.", fnf)
+        throw EnvironmentException("Failed to append hosts to ${hosts.file} file.", e)
     }
 
     companion object {

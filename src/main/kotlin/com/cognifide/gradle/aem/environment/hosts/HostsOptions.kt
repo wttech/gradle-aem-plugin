@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem.environment.hosts
 
-import com.cognifide.gradle.aem.environment.EnvironmentException
 import org.apache.commons.lang3.SystemUtils
 
 class HostsOptions {
@@ -18,11 +17,6 @@ class HostsOptions {
     }
 
     fun configure(config: Map<String, String>) {
-        config.forEach { hostEntry ->
-            if (hostEntry.key.isBlank() || hostEntry.value.isBlank()) {
-                throw EnvironmentException("Invalid hosts configuration (empty value), ip: ${hostEntry.key}, name: ${hostEntry.value}. ")
-            }
-        }
         list = config.map { Host(it.key, it.value) }
     }
 

@@ -5,7 +5,7 @@ import com.cognifide.gradle.aem.common.AemDefaultTask
 open class EnvSetup : AemDefaultTask() {
 
     init {
-        description = "Creates and turns on local AEM instance(s) and development environment."
+        description = "Creates and turns on local AEM instance(s) and virtualized development environment."
     }
 
     companion object {

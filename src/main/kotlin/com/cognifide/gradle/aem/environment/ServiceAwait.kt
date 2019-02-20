@@ -4,11 +4,9 @@ import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.ProgressLogger
 import com.cognifide.gradle.aem.common.http.HttpClient
 import com.cognifide.gradle.aem.common.http.RequestException
-import java.nio.charset.Charset
 import kotlin.streams.toList
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
-import org.apache.commons.io.IOUtils
 
 class ServiceAwait(aem: AemExtension) {
 
@@ -49,7 +47,7 @@ class ServiceAwait(aem: AemExtension) {
 
     private fun get(url: String): Pair<Int, String> {
         return http.get(url) { response ->
-            val body = response.entity.content.use { IOUtils.toString(it, Charset.forName("UTF-8")) }
+            val body = asString(response)
             val status = response.statusLine.statusCode
             status to body
         }
