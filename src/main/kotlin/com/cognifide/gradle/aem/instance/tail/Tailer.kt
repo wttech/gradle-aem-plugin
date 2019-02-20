@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem.instance.tail
 
-import java.io.BufferedReader
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
@@ -12,6 +11,7 @@ class Tailer(
 ) {
 
     private val parser = Parser()
+
     private var lastLogChecksum = ""
 
     fun tail() {
@@ -40,12 +40,4 @@ class Tailer(
             else -> logs.slice(logs.indexOf(lastFetchedLog) + 1 until logs.size)
         }
     }
-}
-
-interface LogDestination {
-    fun dump(logs: List<Log>)
-}
-
-interface LogSource {
-    fun <T> readChunk(parser: (BufferedReader) -> List<T>): List<T>
 }

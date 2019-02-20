@@ -14,7 +14,10 @@ class FileDestination(
     }
 
     override fun dump(logs: List<Log>) {
-        if (logs.isEmpty()) return
+        if (logs.isEmpty()) {
+            return
+        }
+
         logFiles.writeToMain(instanceName) { out ->
             logs.forEach { log ->
                 out.append("${log.text}\n")

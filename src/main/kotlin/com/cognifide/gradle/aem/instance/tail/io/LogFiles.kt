@@ -20,8 +20,9 @@ class LogFiles(
 
     fun clearMain(instanceName: String) = main(instanceName).bufferedWriter().use { it.write("") }
 
-    fun clearIncidents(instanceName: String) =
+    fun clearIncidents(instanceName: String) {
         FileUtils.deleteDirectory(AemTask.temporaryDir(aem.project, taskName, "$instanceName/$INCIDENT_DIR"))
+    }
 
     fun writeToIncident(instanceName: String, writerBlock: (BufferedWriter) -> Unit): URI {
         val incidentFile = incident(instanceName)
@@ -29,8 +30,9 @@ class LogFiles(
         return uri(incidentFile)
     }
 
-    fun writeToMain(instanceName: String, writerBlock: (FileWriter) -> Unit) =
+    fun writeToMain(instanceName: String, writerBlock: (FileWriter) -> Unit) {
         FileWriter(main(instanceName).path, true).use(writerBlock)
+    }
 
     fun lock() {
         lock(lockFile())
@@ -42,25 +44,32 @@ class LogFiles(
     }
 
     fun shouldShowUsageNotification(): Boolean {
-        if (isLocked()) return false
-        val notify = notificationFile()
-        if (notify.exists() &&
-            notify.lastModified() + TailOptions.USAGE_NOTIFICATION_INTERVAL > System.currentTimeMillis()) {
+        if (isLocked()) {
             return false
         }
+
+        val notify = notificationFile()
+        if (notify.exists() &&
+                notify.lastModified() + TailOptions.USAGE_NOTIFICATION_INTERVAL > System.currentTimeMillis()) {
+            return false
+        }
+
         lock(notify)
+
         return true
     }
 
-    private fun main(instanceName: String) =
-        AemTask.temporaryFile(aem.project, "$taskName/$instanceName", options.logFile())
+    private fun main(instanceName: String): File {
+        return AemTask.temporaryFile(aem.project, "$taskName/$instanceName", options.logFile())
+    }
 
-    private fun incident(instanceName: String) =
-        AemTask.temporaryFile(
-            aem.project,
-            "$taskName/$instanceName/$INCIDENT_DIR",
-            "${Formats.dateFileName()}-${options.logFile()}"
+    private fun incident(instanceName: String): File {
+        return AemTask.temporaryFile(
+                aem.project,
+                "$taskName/$instanceName/$INCIDENT_DIR",
+                "${Formats.dateFileName()}-${options.logFile()}"
         )
+    }
 
     private fun lock(file: File) {
         if (!file.exists()) {
@@ -70,25 +79,18 @@ class LogFiles(
         }
     }
 
-    private fun lockFile(): File {
-        return AemTask.temporaryFile(
-            aem.project,
-            taskName,
-            "tailer.lock"
-        )
-    }
+    private fun lockFile(): File = AemTask.temporaryFile(aem.project, taskName, LOCK_FILE)
 
-    private fun notificationFile(): File {
-        return AemTask.temporaryFile(
-            aem.project,
-            taskName,
-            "tailer.notify"
-        )
-    }
+    private fun notificationFile(): File = AemTask.temporaryFile(aem.project, taskName, NOTIFICATION_FILE)
 
     private fun uri(file: File): URI = file.toURI()
 
     companion object {
+
+        const val LOCK_FILE = "tailer.lock"
+
+        const val NOTIFICATION_FILE = "tailer.notify"
+
         const val INCIDENT_DIR = "incidents"
     }
 }
