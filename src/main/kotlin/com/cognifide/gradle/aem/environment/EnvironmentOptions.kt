@@ -1,14 +1,20 @@
 package com.cognifide.gradle.aem.environment
 
 import com.cognifide.gradle.aem.environment.docker.DockerOptions
+import com.cognifide.gradle.aem.environment.hosts.HostsOptions
 import java.net.URI
 
 class EnvironmentOptions {
-    val docker = DockerOptions()
     val healthChecks = HealthChecks()
+    val hosts = HostsOptions()
+    val docker = DockerOptions()
 
     fun healthChecks(configurer: HealthChecks.() -> Unit) {
         healthChecks.apply(configurer)
+    }
+
+    fun hosts(config: Map<String, String>) {
+        hosts.configure(config)
     }
 
     fun docker(configurer: DockerOptions.() -> Unit) {
