@@ -16,7 +16,9 @@ class Log(
 
     val message = messageLines.joinToString("\n")
 
-    val messageChecksum = Formats.calculateChecksum(message)
+    val cause: String
+        get() = message.splitToSequence("\n").firstOrNull()?.run { trim() }
+                ?.substringAfter(" ")?.capitalize() ?: ""
 
     fun isError() = level == "ERROR"
 

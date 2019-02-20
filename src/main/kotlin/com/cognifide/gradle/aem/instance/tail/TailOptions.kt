@@ -1,67 +1,35 @@
 package com.cognifide.gradle.aem.instance.tail
 
 import com.cognifide.gradle.aem.common.AemExtension
-import com.cognifide.gradle.aem.common.Patterns
 import java.nio.file.Paths
 import kotlin.math.max
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.Internal
 
-class TailOptions(aem: AemExtension) {
+class TailOptions(val aem: AemExtension) {
 
-    @Internal
-    var fetchInterval = aem.props.long("aem.tail.fetchInterval") ?: FETCH_INTERVAL
+    var fetchInterval = aem.props.long("aem.tail.fetchInterval") ?: 500L
 
-    @Internal
     var lockInterval = aem.props.long("aem.tail.lockInterval") ?: max(1000L + fetchInterval, 2000L)
 
-    @Internal
-    var linesChunkSize = aem.props.long("aem.tail.linesChunkSize") ?: LOG_LINES_CHUNK_SIZE
+    var usageInterval = aem.props.long("aem.tai.usageInterval") ?: 24 * 60 * 60 * 1000
 
-    @Internal
-    var notificationDelay = aem.props.long("aem.tail.notificationDelay") ?: NOTIFICATION_DELAY
+    var linesChunkSize = aem.props.long("aem.tail.linesChunkSize") ?: 400L
 
-    @Internal
-    var logFilePath = aem.props.string("aem.tail.logFilePath") ?: LOG_FILE_PATH
+    var notificationDelay = aem.props.long("aem.tail.notificationDelay") ?: 5000L
 
-    fun errorLogEndpoint() = "/system/console/slinglog/tailer.txt" +
-        "?tail=$linesChunkSize" +
-        "&name=${logFilePath.replace("/", "%2F")}"
+    var logFilePath = aem.props.string("aem.tail.logFilePath") ?: "/logs/error.log"
+
+    var logFilterPath = aem.props.string("aem.tail.logFilterPath") ?: "${aem.project.rootProject.file("aem/gradle/tail/logFilter.txt")}"
+
+    val errorLogEndpoint: String
+        get() = "/system/console/slinglog/tailer.txt" +
+                "?tail=$linesChunkSize" +
+                "&name=${logFilePath.replace("/", "%2F")}"
 
     fun logFile() = Paths.get(logFilePath).fileName.toString()
 
-    @Input
-    val filters = mutableListOf<(Log) -> Boolean>()
+    val logFilter = LogFilter()
 
-    @Input
-    val blacklistFiles = mutableListOf<String>()
-
-    fun blacklistFile(filePath: String) {
-        blacklistFiles += filePath
-    }
-
-    fun blacklist(filter: (Log) -> Boolean) {
-        filters += filter
-    }
-
-    fun blacklist(filter: String) {
-        filters += { Patterns.wildcard(it.source, filter) || Patterns.wildcard(it.message, filter) }
-    }
-
-    companion object {
-        private const val FETCH_INTERVAL = 500L
-
-        private const val LOG_LINES_CHUNK_SIZE = 400L
-
-        private const val NOTIFICATION_DELAY = 5000L
-
-        private const val LOG_FILE_PATH = "/logs/error.log"
-
-        val BLACKLIST_FILES_DEFAULT = listOf(
-            "aem/gradle/tail/errors-blacklist.log",
-            "gradle/aem/tail/errors-blacklist.log"
-        )
-
-        const val USAGE_NOTIFICATION_INTERVAL: Long = 24 * 60 * 60 * 1000
+    fun logFilter(options: LogFilter.() -> Unit) {
+        logFilter.apply(options)
     }
 }

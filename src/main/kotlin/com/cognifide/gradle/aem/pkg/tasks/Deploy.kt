@@ -4,7 +4,6 @@ import com.cognifide.gradle.aem.common.fileNames
 import com.cognifide.gradle.aem.instance.InstanceSync
 import com.cognifide.gradle.aem.instance.action.AwaitAction
 import com.cognifide.gradle.aem.instance.names
-import com.cognifide.gradle.aem.instance.tasks.Tail
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
@@ -109,8 +108,6 @@ open class Deploy : Sync() {
 
     @TaskAction
     open fun deploy() {
-        tailTaskNotification()
-
         aem.progress(instances.size * packages.size) {
             aem.syncPackages(instances, packages) { pkg ->
                 increment("${pkg.name} -> ${instance.name}") {
@@ -130,13 +127,6 @@ open class Deploy : Sync() {
         completer()
 
         aem.notifier.notify("Package deployed", "${packages.fileNames} on ${instances.names}")
-    }
-
-    private fun tailTaskNotification() {
-        val tail = aem.project.tasks.find { it is Tail }
-        if (tail is Tail) {
-            tail.showUsageNotification()
-        }
     }
 
     companion object {

@@ -3,10 +3,7 @@ package com.cognifide.gradle.aem.instance.tail.io
 import com.cognifide.gradle.aem.instance.tail.Log
 import com.cognifide.gradle.aem.instance.tail.LogDestination
 
-class FileDestination(
-    private val instanceName: String,
-    private val logFiles: LogFiles
-) : LogDestination {
+class FileDestination(private val instanceName: String, private val logFiles: LogFiles) : LogDestination {
 
     init {
         logFiles.clearMain(instanceName)

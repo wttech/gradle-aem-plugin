@@ -31,14 +31,7 @@ class LogNotifier(
 
     private fun notifyLogErrors(logs: ProblematicLogs, file: URI) {
         val errors = logs.size
-        val message = logs.logs.lastOrNull()
-                ?.message
-                ?.splitToSequence("\n")
-                ?.firstOrNull()
-                ?.run { trim() }
-                ?.substringAfter(" ")
-                ?.capitalize()
-                ?: ""
+        val message = logs.logs.lastOrNull()?.cause ?: ""
         val instance = logs.instanceName
 
         notifier.notifyLogError("$errors error(s) on $instance", message, file)

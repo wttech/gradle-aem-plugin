@@ -6,12 +6,15 @@ import com.cognifide.gradle.aem.instance.tail.*
 import com.cognifide.gradle.aem.instance.tail.io.FileDestination
 import com.cognifide.gradle.aem.instance.tail.io.LogFiles
 import com.cognifide.gradle.aem.instance.tail.io.UrlSource
+import com.cognifide.gradle.aem.pkg.tasks.Deploy
+import java.io.File
 import kotlinx.coroutines.ObsoleteCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import org.gradle.api.tasks.Nested
+import org.gradle.api.execution.TaskExecutionGraph
+import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 import org.gradle.process.internal.shutdown.ShutdownHooks
 
@@ -22,14 +25,14 @@ import org.gradle.process.internal.shutdown.ShutdownHooks
 @UseExperimental(ObsoleteCoroutinesApi::class)
 open class Tail : AemDefaultTask() {
 
+    @Internal
+    val options = TailOptions(aem)
+
+    private val logFiles = LogFiles(options, name)
+
     init {
-        description = "Tails logs from all configured instances (local & remote) and notifies developer about unknown errors."
+        description = "Tails logs from all configured instances (local & remote) and notifies about unknown errors."
     }
-
-    @Nested
-    private val options = TailOptions(aem)
-
-    private val logFileCreator = LogFiles(options, aem, name)
 
     @TaskAction
     fun tail() {
@@ -43,7 +46,7 @@ open class Tail : AemDefaultTask() {
             startAll().forEach { tailer ->
                 launch {
                     while (shouldRunTailing) {
-                        logFileCreator.lock()
+                        logFiles.lock()
                         tailer.tail()
                         delay(options.fetchInterval)
                     }
@@ -52,43 +55,58 @@ open class Tail : AemDefaultTask() {
         }
     }
 
-    fun config(configurer: TailOptions.() -> Unit) {
-        options.apply(configurer)
-    }
-
-    fun showUsageNotification() {
-        if (logFileCreator.shouldShowUsageNotification()) {
-            aem.notifier.notify("Notice: log tailer not running", "Consider starting it")
-        }
-    }
-
     private fun checkStartLock() {
-        if (logFileCreator.isLocked()) {
+        if (logFiles.isLocked()) {
             throw TailException("Another instance of log tailer is running for this project.")
         }
-        logFileCreator.lock()
+        logFiles.lock()
+    }
+
+    private fun proposeStarting() {
+        if (logFiles.isNotifiable()) {
+            aem.notifier.notify("Log tailer not running", "Consider starting it")
+        }
     }
 
     private fun startAll(): List<Tailer> {
         val notificationChannel = Channel<ProblematicLogs>(Channel.UNLIMITED)
 
-        LogNotifier(notificationChannel, aem.notifier, logFileCreator)
+        LogNotifier(notificationChannel, aem.notifier, logFiles)
 
         return aem.instances.map { start(it, notificationChannel) }
     }
 
     private fun start(instance: Instance, notificationChannel: Channel<ProblematicLogs>): Tailer {
-        val source = UrlSource(options, instance, aem)
-        val destination = FileDestination(instance.name, logFileCreator)
+        val source = UrlSource(options, instance)
+        val destination = FileDestination(instance.name, logFiles)
         val logAnalyzerChannel = Channel<Log>(Channel.UNLIMITED)
-        val logFile = logFileCreator.main(instance.name)
-        val blacklist = Blacklist(options.filters, options.blacklistFiles)
+        val logFile = logFiles.main(instance.name)
 
-        LogAnalyzer(options, instance.name, logAnalyzerChannel, notificationChannel, blacklist)
+        LogAnalyzer(options, instance.name, logAnalyzerChannel, notificationChannel)
 
         logger.lifecycle("Tailing logs to file: $logFile")
 
         return Tailer(source, destination, logAnalyzerChannel)
+    }
+
+    fun options(options: TailOptions.() -> Unit) {
+        this.options.apply(options)
+    }
+
+    override fun projectEvaluated() {
+        super.projectEvaluated()
+
+        File(options.logFilterPath).takeIf { it.exists() }?.apply {
+            options.logFilter.excludeFile(this)
+        }
+    }
+
+    override fun taskGraphReady(graph: TaskExecutionGraph) {
+        super.taskGraphReady(graph)
+
+        if (graph.allTasks.any { it is Deploy }) {
+            proposeStarting()
+        }
     }
 
     companion object {

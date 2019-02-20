@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem.instance.tail.io
 
-import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.AemTask
 import com.cognifide.gradle.aem.common.Formats
 import com.cognifide.gradle.aem.instance.tail.TailOptions
@@ -10,11 +9,9 @@ import java.io.FileWriter
 import java.net.URI
 import org.apache.commons.io.FileUtils
 
-class LogFiles(
-    private val options: TailOptions,
-    private val aem: AemExtension,
-    private val taskName: String
-) {
+class LogFiles(private val options: TailOptions, private val taskName: String) {
+
+    private val aem = options.aem
 
     fun main(instanceName: String): File {
         return AemTask.temporaryFile(aem.project, "$taskName/$instanceName", options.logFile())
@@ -35,9 +32,7 @@ class LogFiles(
     }
 
     fun writeToIncident(instanceName: String, writerBlock: (BufferedWriter) -> Unit): URI {
-        val incidentFile = incident(instanceName)
-        incidentFile.bufferedWriter().use(writerBlock)
-        return uri(incidentFile)
+        return incident(instanceName).apply { bufferedWriter().use(writerBlock) }.toURI()
     }
 
     fun writeToMain(instanceName: String, writerBlock: (FileWriter) -> Unit) {
@@ -45,26 +40,23 @@ class LogFiles(
     }
 
     fun lock() {
-        lock(lockFile())
+        lock(lockFile)
     }
 
     fun isLocked(): Boolean {
-        val lockFile = lockFile()
         return lockFile.exists() && lockFile.lastModified() + options.lockInterval > System.currentTimeMillis()
     }
 
-    fun shouldShowUsageNotification(): Boolean {
+    fun isNotifiable(): Boolean {
         if (isLocked()) {
             return false
         }
 
-        val notify = notificationFile()
-        if (notify.exists() &&
-                notify.lastModified() + TailOptions.USAGE_NOTIFICATION_INTERVAL > System.currentTimeMillis()) {
+        if (notifyFile.exists() && notifyFile.lastModified() + options.usageInterval > System.currentTimeMillis()) {
             return false
         }
 
-        lock(notify)
+        lock(notifyFile)
 
         return true
     }
@@ -77,17 +69,17 @@ class LogFiles(
         }
     }
 
-    private fun lockFile(): File = AemTask.temporaryFile(aem.project, taskName, LOCK_FILE)
+    private val lockFile: File
+        get() = AemTask.temporaryFile(aem.project, taskName, LOCK_FILE)
 
-    private fun notificationFile(): File = AemTask.temporaryFile(aem.project, taskName, NOTIFICATION_FILE)
-
-    private fun uri(file: File): URI = file.toURI()
+    private val notifyFile: File
+        get() = AemTask.temporaryFile(aem.project, taskName, NOTIFY_FILE)
 
     companion object {
 
         const val LOCK_FILE = "tailer.lock"
 
-        const val NOTIFICATION_FILE = "tailer.notify"
+        const val NOTIFY_FILE = "tailer.notify"
 
         const val INCIDENT_DIR = "incidents"
     }

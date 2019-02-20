@@ -18,8 +18,7 @@ class LogAnalyzer(
     private val options: TailOptions,
     private val instanceName: String,
     private val logsChannel: ReceiveChannel<Log>,
-    private val notificationChannel: SendChannel<ProblematicLogs>,
-    private val blacklist: Blacklist = Blacklist()
+    private val notificationChannel: SendChannel<ProblematicLogs>
 ) {
 
     private val errorsChannel = Channel<Log>(Channel.UNLIMITED)
@@ -32,7 +31,7 @@ class LogAnalyzer(
                 when {
                     log.isOlderThan(minutes = 1) -> {
                     }
-                    log.isError() && !blacklist.isBlacklisted(log) -> errorsChannel.send(log)
+                    log.isError() && !options.logFilter.isExcluded(log) -> errorsChannel.send(log)
                 }
             }
         }
