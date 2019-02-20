@@ -151,7 +151,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.cognifide.gradle:aem-plugin:7.0.0-beta")
+    implementation("com.cognifide.gradle:aem-plugin:6.1.0")
 }
 ```
 
@@ -560,7 +560,7 @@ Then file at path *build/aem/aemDebug/debug.json* with content below is being ge
 {
   "buildInfo" : {
     "plugin" : {
-      "pluginVersion" : "7.0.0-beta",
+      "pluginVersion" : "6.1.0",
       "gradleVersion" : "5.0"
     },
     "gradle" : {
