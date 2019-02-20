@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem.tooling.clean
 
 import com.cognifide.gradle.aem.common.AemExtension
-import com.cognifide.gradle.aem.common.Patterns
 import com.cognifide.gradle.aem.pkg.Package
 import com.cognifide.gradle.aem.tooling.vlt.VltException
 import java.io.File
@@ -122,13 +121,15 @@ class Cleaner(project: Project) {
         }
     }
 
-    fun process(root: File) {
+    fun beforeClean(root: File) {
         if (parentsBackupEnabled) {
             doRootBackup(root)
         }
     }
 
     fun clean(root: File) {
+        flattenFiles(root)
+
         if (parentsBackupEnabled) {
             undoParentsBackup(root)
         } else {
@@ -136,18 +137,19 @@ class Cleaner(project: Project) {
         }
 
         cleanDotContents(root)
-        flattenFiles(root)
 
         deleteFiles(root)
+        deleteBackupFiles(root)
         deleteEmptyDirs(root)
     }
 
     private fun eachFiles(root: File, filter: PatternFilterable.() -> Unit, action: (File) -> Unit) {
-        if (root.isDirectory) {
-            aem.project.fileTree(root).matching(filter).forEach(action)
+        val rootFilter: PatternFilterable.() -> Unit = if (root.isDirectory) {
+            { include("${root.name}/**") }
         } else {
-            aem.project.fileTree(root.parent).matching { it.include(root.name) }.matching(filter).forEach(action)
+            { include(root.name) }
         }
+        aem.project.fileTree(root.parent).matching(rootFilter).matching(filter).forEach(action)
     }
 
     private fun cleanDotContents(root: File) = eachFiles(root, filesDotContent) { cleanDotContentFile(it) }
@@ -297,6 +299,13 @@ class Cleaner(project: Project) {
 
     private fun deleteFiles(root: File) = eachFiles(root, filesDeleted) { deleteFile(it) }
 
+    private fun deleteBackupFiles(root: File) = eachFiles(root, {
+        include(listOf(
+                "**/$parentsBackupDirIndicator",
+                "**/*$parentsBackupSuffix"
+        ))
+    }) { deleteFile(it) }
+
     private fun deleteFile(file: File) {
         if (!file.exists()) {
             return
@@ -320,10 +329,8 @@ class Cleaner(project: Project) {
     }
 
     private fun doParentsBackup(root: File) {
-        val normalizedRoot = normalizeRoot(root)
-
-        normalizedRoot.parentFile.mkdirs()
-        eachParentFiles(normalizedRoot) { parent, siblingFiles ->
+        root.parentFile.mkdirs()
+        eachParentFiles(root) { parent, siblingFiles ->
             parent.mkdirs()
             if (File(parent, parentsBackupDirIndicator).createNewFile()) {
                 siblingFiles.filter { !it.name.endsWith(parentsBackupSuffix) }
@@ -342,12 +349,16 @@ class Cleaner(project: Project) {
             aem.logger.info("Doing backup of root file: $root")
             root.copyTo(backup, true)
         }
+
+        eachFiles(root, filesFlattened) { file ->
+            val backup = File(file.parentFile.path + ".xml" + parentsBackupSuffix)
+            aem.logger.info("Doing backup of file: $file")
+            file.copyTo(backup, true)
+        }
     }
 
     private fun undoParentsBackup(root: File) {
-        val normalizedRoot = normalizeRoot(root)
-
-        eachParentFiles(normalizedRoot) { _, siblingFiles ->
+        eachParentFiles(root) { _, siblingFiles ->
             if (siblingFiles.any { it.name == parentsBackupDirIndicator }) {
                 siblingFiles.filter { !it.name.endsWith(parentsBackupSuffix) }.forEach { FileUtils.deleteQuietly(it) }
                 siblingFiles.filter { it.name.endsWith(parentsBackupSuffix) }.forEach { backup ->
@@ -357,10 +368,6 @@ class Cleaner(project: Project) {
                 }
             }
         }
-    }
-
-    private fun normalizeRoot(root: File): File {
-        return File(Patterns.normalizePath(root.path).substringBefore("/$JCR_CONTENT_NODE"))
     }
 
     private fun cleanParents(root: File) {

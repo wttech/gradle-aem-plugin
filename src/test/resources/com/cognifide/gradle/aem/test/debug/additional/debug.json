@@ -1,7 +1,7 @@
 {
   "buildInfo" : {
     "plugin" : {
-      "pluginVersion" : "6.0.0",
+      "pluginVersion" : "6.0.2",
       "gradleVersion" : "4.10"
     },
     "gradle" : {
@@ -46,7 +46,7 @@
         "name" : "local-publish1",
         "type" : "PUBLISH",
         "httpPort" : 4503,
-        "jvmOpts" : "-Xdebug -Xrunjdwp:transport=dt_socket,address=14503,server=y,suspend=n -server -Xmx1024m -XX:MaxPermSize=256M -Djava.awt.headless=true",
+        "jvmOpts" : "-Xdebug -Xrunjdwp:transport=dt_socket,address=14503,server=y,suspend=n -server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true",
         "runModes" : "publish,local",
         "startOpts" : "",
         "properties" : { }
@@ -61,7 +61,7 @@
         "name" : "local-publish2",
         "type" : "PUBLISH",
         "httpPort" : 4504,
-        "jvmOpts" : "-Xdebug -Xrunjdwp:transport=dt_socket,address=14504,server=y,suspend=n -server -Xmx1024m -XX:MaxPermSize=256M -Djava.awt.headless=true",
+        "jvmOpts" : "-Xdebug -Xrunjdwp:transport=dt_socket,address=14504,server=y,suspend=n -server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true",
         "runModes" : "publish,local",
         "startOpts" : "",
         "properties" : { }
@@ -207,7 +207,38 @@
         "properties" : { }
       }
     },
-    "instanceRoot" : "*/.aem",
+    "resolverOptions" : {
+      "httpUsername" : null,
+      "httpPassword" : null,
+      "httpConnectionIgnoreSsl" : null,
+      "sftpUsername" : null,
+      "sftpPassword" : null,
+      "sftpHostChecking" : null,
+      "smbDomain" : null,
+      "smbUsername" : null,
+      "smbPassword" : null
+    },
+    "localInstanceOptions" : {
+      "root" : "*/.aem",
+      "source" : "AUTO",
+      "zipUrl" : null,
+      "jarUrl" : null,
+      "licenseUrl" : null,
+      "overridesPath" : "*/src/main/resources/local-instance",
+      "expandFiles" : [
+        "**/start.bat",
+        "**/stop.bat",
+        "**/start",
+        "**/stop"
+      ],
+      "expandProperties" : { },
+      "allFiles" : [ ],
+      "extraFiles" : [ ],
+      "jar" : null,
+      "license" : null,
+      "zip" : null,
+      "mandatoryFiles" : [ ]
+    },
     "packageRoot": "*/src/main/content",
     "packageMetaCommonRoot": "*/aem/gradle/META-INF",
     "packageInstallPath" : "/apps/additional/install",
@@ -224,8 +255,9 @@
     "notificationEnabled" : false,
     "groovyScriptRoot" : "*/gradle/groovyScript"
   },
-  "bundleConfig" : {
-    "jar" : {
+  "bundleConfig" : [
+    {
+      "name": "jar",
       "enabled": true,
       "installPath" : "/apps/additional/install",
       "installRunMode": null,
@@ -246,6 +278,6 @@
         "Sling-Model-Packages" : "com.company.aem.additional"
       }
     }
-  },
+  ],
   "packageDeployed" : { }
 }

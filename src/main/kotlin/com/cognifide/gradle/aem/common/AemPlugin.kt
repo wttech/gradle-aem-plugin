@@ -49,5 +49,9 @@ abstract class AemPlugin : Plugin<Project> {
                 once = true
             }
         }
+
+        fun withId(project: Project, id: String): List<Project> {
+            return project.rootProject.allprojects.filter { it.plugins.hasPlugin(id) }
+        }
     }
 }

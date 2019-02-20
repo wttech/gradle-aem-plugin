@@ -30,6 +30,9 @@ class Component {
     val unsatisfied: Boolean
         get() = stateRaw == STATE_RAW_UNSATISFIED
 
+    val failedActivation: Boolean
+        get() = stateRaw == STATE_RAW_FAILED_ACTIVATION
+
     val noConfig: Boolean
         get() = state == STATE_NO_CONFIG
 
@@ -74,6 +77,8 @@ class Component {
         val STATE_RAW_SATISTIED = 4
 
         val STATE_RAW_ACTIVE = 8
+
+        val STATE_RAW_FAILED_ACTIVATION = 16
 
         val STATE_ACTIVE = "active"
 

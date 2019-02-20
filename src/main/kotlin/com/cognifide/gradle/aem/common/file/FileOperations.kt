@@ -8,6 +8,7 @@ import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import net.lingala.zip4j.core.ZipFile
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
 import org.apache.commons.io.filefilter.TrueFileFilter
@@ -15,7 +16,6 @@ import org.gradle.api.Project
 import org.gradle.util.GFileUtils
 import org.reflections.Reflections
 import org.reflections.scanners.ResourcesScanner
-import org.zeroturnaround.zip.ZipUtil
 
 object FileOperations {
 
@@ -136,29 +136,11 @@ object FileOperations {
         Files.newDirectoryStream(dir).use { dirStream -> return !dirStream.iterator().hasNext() }
     }
 
-    fun zipCount(zip: File) = zipCount(zip, "")
-
-    fun zipCount(zip: File, path: String): Long {
-        var total = 0L
-        ZipUtil.iterate(zip) { entry ->
-            if (entry.name.startsWith(path)) {
-                total++
-            }
-        }
-        return total
-    }
-
-    fun zipUnpack(zip: File, targetDir: File, eachFileName: (String) -> Unit = {}) = zipUnpack(zip, targetDir, "", eachFileName)
-
-    fun zipUnpack(zip: File, targetDir: File, path: String, eachFileName: (String) -> Unit = {}) {
-        ZipUtil.unpack(zip, targetDir) { name ->
-            if (name.startsWith(path)) {
-                val fileName = name.substringAfterLast("/")
-                eachFileName(fileName)
-                name.substring(path.length)
-            } else {
-                name
-            }
-        }
+    /**
+     * Only Zip4j correctly extracts AEM backup ZIP files.
+     * Gradle zipTree and Zero-Turnaround ZipUtil is not working properly in that case.
+     */
+    fun zipUnpack(zip: File, targetDir: File) {
+        ZipFile(zip).extractAll(targetDir.absolutePath)
     }
 }
