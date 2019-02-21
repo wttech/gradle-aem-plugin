@@ -106,6 +106,8 @@ Also keep in mind, that GAP 6.x is **temporarily supporting only Gradle 5.x** (i
         * [Task aemAwait](#task-aemawait)
         * [Task aemCollect](#task-aemcollect)
         * [Task aemTail](#task-aemtail)
+           * [Tailing multiple instances](#tailing-multiple-instances)
+           * [Standalone tailer tool](#standalone-tailer-tool)
   * [How to's](#how-tos)
      * [Set AEM configuration properly for all / concrete project(s)](#set-aem-configuration-properly-for-all--concrete-projects)
      * [Implement custom AEM tasks](#implement-custom-aem-tasks)
@@ -1280,7 +1282,7 @@ Screenshot below presents generated ZIP package which is a result of running `gr
 
 #### Task `aemTail`
 
-Constantly downloads logs from any AEM instances via HTTP.
+Constantly downloads logs from any local or remote AEM instances.
 Detects and interactively notifies about unknown errors as incident reports.
 
 To customize behavior, see [TailOptions](src/main/kotlin/com/cognifide/gradle/aem/instance/tail/TailOptions.kt).
@@ -1297,14 +1299,35 @@ aem {
 }
 ```
 
-To use log tailer for even undefined AEM instances, use command:
+
+Tailer eliminates a need for connecting to remote environments using SSH protocol to be able to run `tail` command on that servers. 
+Instead, tailer is continuously polling log files using HTTP endpoint provided by Sling Framework. 
+New log entries are being dynamically appended to log files stored on local file system in a separate file for each environment. 
+By having all log files in one place, AEM developer or QA engineer has an opportunity to comportably analyze logs, verify incidents occuring on AEM instances.
+
+##### Tailing remote instances
+
+Common use case could be to tail many remote AEM instances at once that comes from multiple environments.
+To cover such case, it is possible to run tailer using predefined instances and defined dynamically. Number of specified instance URLs is unlimited.
+
+Simply use command:
 
 ```bash
-gradlew aemTail -Paem.instance.list=[http://admin:admin@localhost:4502,http://admin:admin@localhost:4503]
+gradlew aemTail -Paem.instance.list=[local-author,http://admin:admin@192.168.1.1:4502,http://admin:admin@author.example.com]
 ```
-Number of instances is unlimited.
 
-To use log tailer outside of any AEM project see [vanilla-tailer](docs/vanilla-tailer.zip) example project.
+##### Standalone tailer tool
+
+Tailer could be used as standalone tool.
+
+Usage:
+
+1. Download archive *<a href="docs/grale-aem-tailer.zip" download>gradle-aem-tailer.zip</a>*
+2. Extract archive on any file system location.
+3. Start tool:
+    * Windows - script: *gradlew.bat* (by double clicking)
+    * Unix - script: *gradlew*
+4. Use *Ctrl + C* to stop tool.
 
 ## How to's
 
