@@ -1,10 +1,11 @@
 package com.cognifide.gradle.aem.pkg.tasks
 
 import com.cognifide.gradle.aem.common.fileNames
+import com.cognifide.gradle.aem.common.tasks.PackageTask
 import com.cognifide.gradle.aem.instance.names
 import org.gradle.api.tasks.TaskAction
 
-open class Activate : Sync() {
+open class Activate : PackageTask() {
 
     init {
         description = "Activates CRX package on instance(s)."

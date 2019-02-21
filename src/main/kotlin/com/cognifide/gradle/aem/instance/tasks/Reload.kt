@@ -1,10 +1,11 @@
 package com.cognifide.gradle.aem.instance.tasks
 
+import com.cognifide.gradle.aem.common.tasks.InstanceTask
 import com.cognifide.gradle.aem.instance.action.ReloadAction
 import com.cognifide.gradle.aem.instance.names
 import org.gradle.api.tasks.TaskAction
 
-open class Reload : Instance() {
+open class Reload : InstanceTask() {
 
     init {
         description = "Reloads all AEM instance(s)."

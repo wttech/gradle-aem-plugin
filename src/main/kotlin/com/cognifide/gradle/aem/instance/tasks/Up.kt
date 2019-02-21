@@ -1,11 +1,12 @@
 package com.cognifide.gradle.aem.instance.tasks
 
+import com.cognifide.gradle.aem.common.tasks.LocalInstanceTask
 import com.cognifide.gradle.aem.instance.LocalInstance
 import com.cognifide.gradle.aem.instance.action.AwaitAction
 import com.cognifide.gradle.aem.instance.names
 import org.gradle.api.tasks.TaskAction
 
-open class Up : Instance() {
+open class Up : LocalInstanceTask() {
 
     init {
         description = "Turns on local AEM instance(s)."

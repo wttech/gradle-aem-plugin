@@ -4,7 +4,7 @@ import com.cognifide.gradle.aem.bundle.BundleJar
 import com.cognifide.gradle.aem.bundle.BundlePlugin
 import com.cognifide.gradle.aem.common.*
 import com.cognifide.gradle.aem.common.file.FileOperations
-import com.cognifide.gradle.aem.common.tasks.Zip
+import com.cognifide.gradle.aem.common.tasks.ZipTask
 import com.cognifide.gradle.aem.pkg.Package
 import com.cognifide.gradle.aem.pkg.PackageFileFilter
 import com.cognifide.gradle.aem.pkg.PackagePlugin
@@ -20,7 +20,7 @@ import org.gradle.api.tasks.*
 import org.gradle.api.tasks.bundling.Jar
 import org.jsoup.nodes.Element
 
-open class Compose : Zip(), AemTask {
+open class Compose : ZipTask() {
 
     /**
      * Absolute path to JCR content to be included in CRX package.
