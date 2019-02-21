@@ -1322,7 +1322,7 @@ Tailer could be used as standalone tool.
 
 Usage:
 
-1. Download archive *<a href="docs/grale-aem-tailer.zip" download>gradle-aem-tailer.zip</a>*
+1. Download archive *<a href="docs/gradle-aem-tailer.zip" download>gradle-aem-tailer.zip</a>*
 2. Extract archive on any file system location.
 3. Start tool:
     * Windows - script: *gradlew.bat* (by double clicking)
