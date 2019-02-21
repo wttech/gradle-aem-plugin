@@ -1297,13 +1297,14 @@ aem {
 }
 ```
 
-To use log tailer for even undefined AEM instances, use command :
+To use log tailer for even undefined AEM instances, use command:
 
 ```bash
 gradlew aemTail -Paem.instance.list=[http://admin:admin@localhost:4502,http://admin:admin@localhost:4503]
 ```
-
 Number of instances is unlimited.
+
+To use log tailer outside of any AEM project see [vanilla-tailer](docs/vanilla-tailer.zip) example project.
 
 ## How to's
 
