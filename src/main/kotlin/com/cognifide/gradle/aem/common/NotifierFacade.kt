@@ -64,7 +64,7 @@ class NotifierFacade private constructor(private val aem: AemExtension) {
         return DorkboxNotifier(aem, configurer)
     }
 
-    fun custom(notifier: (title: String, text: String, level: LogLevel, clickActionHandler: (Notify) -> Unit) -> Unit): Notifier {
+    fun custom(notifier: (title: String, text: String, level: LogLevel, onClick: (Notify) -> Unit) -> Unit): Notifier {
         return object : Notifier {
             override fun notify(title: String, text: String, level: LogLevel, onClick: (Notify) -> Unit) {
                 notifier(title, text, level, onClick)

@@ -86,7 +86,7 @@ class PackageDownloader(
         jcrRoot.mkdirs()
 
         filter.file.copyTo(File(vltDir, VltFilter.BUILD_NAME))
-        FileOperations.copyFromAemPkg(Package.VLT_PATH, vltDir, true)
+        FileOperations.copyResources(Package.VLT_PATH, vltDir, true)
 
         val fileProperties = Collections.extendMap(PackageFileFilter.FILE_PROPERTIES, mapOf<String, Any>(
                 "compose" to mapOf(

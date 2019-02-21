@@ -226,7 +226,7 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
     fun customize() {
         aem.logger.info("Customizing: $this")
 
-        FileOperations.copyFromAemPkg(InstancePlugin.FILES_PATH, dir, false)
+        FileOperations.copyResources(InstancePlugin.FILES_PATH, dir, false)
 
         val overridesDir = File(options.overridesPath)
         if (overridesDir.exists()) {
