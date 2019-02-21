@@ -1,13 +1,14 @@
 package com.cognifide.gradle.aem.pkg.tasks
 
 import com.cognifide.gradle.aem.common.fileNames
+import com.cognifide.gradle.aem.common.tasks.PackageTask
 import com.cognifide.gradle.aem.instance.InstanceException
 import com.cognifide.gradle.aem.instance.InstanceSync
 import com.cognifide.gradle.aem.instance.names
 import org.gradle.api.execution.TaskExecutionGraph
 import org.gradle.api.tasks.TaskAction
 
-open class Purge : Sync() {
+open class Purge : PackageTask() {
 
     init {
         description = "Uninstalls and then deletes CRX package on AEM instance(s)."

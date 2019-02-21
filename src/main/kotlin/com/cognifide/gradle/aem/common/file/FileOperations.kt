@@ -2,9 +2,7 @@ package com.cognifide.gradle.aem.common.file
 
 import com.cognifide.gradle.aem.common.AemPlugin
 import com.cognifide.gradle.aem.common.Patterns
-import java.io.File
-import java.io.FileOutputStream
-import java.io.InputStream
+import java.io.*
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -38,12 +36,12 @@ object FileOperations {
     fun copyResources(resourceRoot: String, targetDir: File, skipExisting: Boolean = false) {
         eachResource(resourceRoot, targetDir) { resourcePath, outputFile ->
             if (!skipExisting || !outputFile.exists()) {
-                copyResource(resourcePath, outputFile)
+                copy(resourcePath, outputFile)
             }
         }
     }
 
-    fun copyResource(resourcePath: String, outputFile: File) {
+    private fun copy(resourcePath: String, outputFile: File) {
         GFileUtils.mkdirs(outputFile.parentFile)
 
         javaClass.getResourceAsStream("/$resourcePath").use { input ->

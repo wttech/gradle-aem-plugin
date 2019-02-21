@@ -1,10 +1,11 @@
 package com.cognifide.gradle.aem.pkg.tasks
 
 import com.cognifide.gradle.aem.common.fileNames
+import com.cognifide.gradle.aem.common.tasks.PackageTask
 import com.cognifide.gradle.aem.instance.names
 import org.gradle.api.tasks.TaskAction
 
-open class Upload : Sync() {
+open class Upload : PackageTask() {
 
     init {
         description = "Uploads AEM package to instance(s)."

@@ -68,6 +68,7 @@ class InstancePlugin : AemPlugin() {
                 dependsOn(Down.NAME)
                 finalizedBy(Up.NAME)
             }
+            register<Tail>(Tail.NAME)
         }
     }
 

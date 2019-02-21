@@ -3,6 +3,8 @@ package com.cognifide.gradle.aem.common
 import com.cognifide.gradle.aem.common.notifier.DorkboxNotifier
 import com.cognifide.gradle.aem.common.notifier.Notifier
 import dorkbox.notify.Notify
+import java.awt.Desktop
+import java.net.URI
 import java.net.URL
 import java.util.concurrent.TimeUnit
 import javax.imageio.ImageIO
@@ -62,10 +64,18 @@ class NotifierFacade private constructor(private val aem: AemExtension) {
         return DorkboxNotifier(aem, configurer)
     }
 
-    fun custom(notifier: (title: String, text: String, level: LogLevel) -> Unit): Notifier {
+    fun custom(notifier: (title: String, text: String, level: LogLevel, onClick: (Notify) -> Unit) -> Unit): Notifier {
         return object : Notifier {
-            override fun notify(title: String, text: String, level: LogLevel) {
-                notifier(title, text, level)
+            override fun notify(title: String, text: String, level: LogLevel, onClick: (Notify) -> Unit) {
+                notifier(title, text, level, onClick)
+            }
+        }
+    }
+
+    fun notifyLogError(title: String, message: String, file: URI) {
+        notifier.notify(title, message, LogLevel.INFO) {
+            if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+                Desktop.getDesktop().browse(file)
             }
         }
     }

@@ -104,6 +104,7 @@ Also keep in mind, that GAP 6.x is **temporarily supporting only Gradle 5.x** (i
         * [Task aemSatisfy](#task-aemsatisfy)
         * [Task aemAwait](#task-aemawait)
         * [Task aemCollect](#task-aemcollect)
+        * [Task aemTail](#task-aemtail)
   * [How to's](#how-tos)
      * [Set AEM configuration properly for all / concrete project(s)](#set-aem-configuration-properly-for-all--concrete-projects)
      * [Implement custom AEM tasks](#implement-custom-aem-tasks)
@@ -151,7 +152,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.cognifide.gradle:aem-plugin:6.0.2")
+    implementation("com.cognifide.gradle:aem-plugin:6.1.0")
 }
 ```
 
@@ -560,7 +561,7 @@ Then file at path *build/aem/aemDebug/debug.json* with content below is being ge
 {
   "buildInfo" : {
     "plugin" : {
-      "pluginVersion" : "6.0.2",
+      "pluginVersion" : "6.1.0",
       "gradleVersion" : "5.0"
     },
     "gradle" : {
@@ -1187,11 +1188,11 @@ aem {
                     url("https://github.com/OlsonDigital/aem-groovy-console/releases/download/11.0.0/aem-groovy-console-11.0.0.zip")
                     config {
                         instanceName = "*-author" // additional filter intersecting 'deployInstanceName'
-                        initializer { sync ->
-                            logger.info("Installing Groovy Console on ${sync.instance}")
+                        initializer {
+                            logger.info("Installing Groovy Console on $instance")
                         }
-                        finalizer { sync ->
-                            logger.info("Installed Groovy Console on ${sync.instance}")
+                        finalizer {
+                            logger.info("Installed Groovy Console on $instance")
                         }
                         completer {
                             logger.info("Reloading instance(s) after installing Groovy Console")
@@ -1254,7 +1255,7 @@ aem {
 
 Such options could be also customized for `aemDeploy` task when using block:
 
-```
+```kotlin
 aem {
     tasks {
         deploy {
@@ -1275,6 +1276,33 @@ Inherits from task [ZIP](https://docs.gradle.org/3.5/dsl/org.gradle.api.tasks.bu
 Screenshot below presents generated ZIP package which is a result of running `gradlew :aemCollect` for [multi-module project](https://github.com/Cognifide/gradle-aem-multi).
 
 ![Collect task - ZIP Overview](docs/collect-zip-overview.png)
+
+#### Task `aemTail`
+
+Constantly downloads logs from any AEM instances via HTTP.
+Detects and interactively notifies about unknown errors as incident reports.
+
+To customize behavior, see [TailOptions](src/main/kotlin/com/cognifide/gradle/aem/instance/tail/TailOptions.kt).
+
+```kotlin
+aem {
+    tasks {
+        tail {
+            options {
+                // ...
+            }
+        }
+    }
+}
+```
+
+To use log tailer for even undefined AEM instances, use command :
+
+```bash
+gradlew aemTail -Paem.instance.list=[http://admin:admin@localhost:4502,http://admin:admin@localhost:4503]
+```
+
+Number of instances is unlimited.
 
 ## How to's
 
