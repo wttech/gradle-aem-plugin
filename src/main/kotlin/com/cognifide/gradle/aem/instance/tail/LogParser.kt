@@ -2,25 +2,25 @@ package com.cognifide.gradle.aem.instance.tail
 
 import java.io.BufferedReader
 
-class Parser {
+class LogParser {
 
-    fun parseLogs(reader: BufferedReader): List<Log> {
-        val firstLogLine = skipIncompleteLog(reader)
-        return parseLogs(reader, firstLogLine)
+    fun parse(reader: BufferedReader): List<Log> {
+        val firstLogLine = skipIncomplete(reader)
+        return parse(reader, firstLogLine)
     }
 
-    private fun parseLogs(reader: BufferedReader, firstLineOfLog: String?): List<Log> {
-        val (log, firstLineOfNextLog) = readLog(reader, firstLineOfLog)
+    private fun parse(reader: BufferedReader, firstLineOfLog: String?): List<Log> {
+        val (log, firstLineOfNextLog) = read(reader, firstLineOfLog)
         if (log == null) {
             return emptyList()
         }
         if (firstLineOfNextLog == null) {
             return listOf(log)
         }
-        return listOf(log) + parseLogs(reader, firstLineOfNextLog)
+        return listOf(log) + parse(reader, firstLineOfNextLog)
     }
 
-    private fun readLog(reader: BufferedReader, firstLogLine: String?): Pair<Log?, String?> {
+    private fun read(reader: BufferedReader, firstLogLine: String?): Pair<Log?, String?> {
         val (completeLogLines, firstLineOfNextLog) = readSubsequentLogLines(reader, firstLogLine)
         return if (completeLogLines.isNotEmpty()) {
             Log.create(completeLogLines) to firstLineOfNextLog
@@ -44,12 +44,12 @@ class Parser {
         }
     }
 
-    private fun skipIncompleteLog(reader: BufferedReader): String? {
+    private fun skipIncomplete(reader: BufferedReader): String? {
         val line: String? = readLine(reader)
         return when {
             line == null -> null
             Log.isFirstLineOfLog(line) -> line
-            else -> skipIncompleteLog(reader)
+            else -> skipIncomplete(reader)
         }
     }
 

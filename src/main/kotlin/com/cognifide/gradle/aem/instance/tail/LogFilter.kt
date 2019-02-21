@@ -22,7 +22,7 @@ class LogFilter {
         return excludeRules.any { it(log) } || excludeFiles.any { matchWildcardFile(log, it) }
     }
 
-    fun exclude(predicate: Log.() -> Boolean) {
+    fun excludeRule(predicate: Log.() -> Boolean) {
         excludeRules += predicate
     }
 
@@ -37,7 +37,7 @@ class LogFilter {
     fun excludeWildcard(matchers: Sequence<String>) = matchers.iterator().forEachRemaining { excludeWildcard(it) }
 
     fun excludeWildcard(matcher: String) {
-        exclude { matchWildcard(this, matcher) }
+        excludeRule { matchWildcard(this, matcher) }
     }
 
     private fun matchWildcard(log: Log, matcher: String): Boolean {
@@ -45,10 +45,12 @@ class LogFilter {
     }
 
     private fun matchWildcardFile(log: Log, file: File): Boolean {
-        file.useLines { line ->
-            line.map { it.trim() }.filter { !it.startsWith(FILE_COMMENT_PREFIX) }.forEach { matcher ->
-                if (matchWildcard(log, matcher)) {
-                    return@matchWildcardFile true
+        if (file.exists()) {
+            file.useLines { line ->
+                line.map { it.trim() }.filter { !it.startsWith(FILE_COMMENT_PREFIX) }.forEach { matcher ->
+                    if (matchWildcard(log, matcher)) {
+                        return@matchWildcardFile true
+                    }
                 }
             }
         }

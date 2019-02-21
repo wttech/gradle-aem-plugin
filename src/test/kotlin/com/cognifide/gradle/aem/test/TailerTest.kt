@@ -5,7 +5,6 @@ import com.cognifide.gradle.aem.instance.tail.*
 import org.apache.commons.io.FileUtils
 import org.gradle.util.GFileUtils
 import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.io.BufferedReader
 import java.io.File
@@ -43,11 +42,11 @@ class TailerTest {
     @Test
     fun shouldParseLogs() {
         // given
-        val parser = Parser()
+        val parser = LogParser()
         val logsChunk = MockSource.reader("com/cognifide/gradle/aem/test/tail/10-logs-error.log")
 
         // when
-        val logsList = parser.parseLogs(logsChunk)
+        val logsList = parser.parse(logsChunk)
 
         // then
         assertEquals(10, logsList.size)
@@ -71,11 +70,11 @@ class TailerTest {
     @Test
     fun shouldParseMultilineLogs() {
         // given
-        val parser = Parser()
+        val parser = LogParser()
         val logsChunk = MockSource.reader("com/cognifide/gradle/aem/test/tail/aggregating/multiline/multiline-logs-error.log")
 
         // when
-        val logsList = parser.parseLogs(logsChunk)
+        val logsList = parser.parse(logsChunk)
 
         // then
         assertEquals(4, logsList.size)
@@ -99,11 +98,11 @@ class TailerTest {
     @Test
     fun shouldSkipIncompleteMultilineLogs() {
         // given
-        val parser = Parser()
+        val parser = LogParser()
         val logsChunk = MockSource.reader("com/cognifide/gradle/aem/test/tail/aggregating/multiline/incomplete-multiline-logs-error.log")
 
         // when
-        val logsList = parser.parseLogs(logsChunk)
+        val logsList = parser.parse(logsChunk)
 
         // then
         assertEquals(3, logsList.size)
@@ -121,7 +120,7 @@ class TailerTest {
             "com/cognifide/gradle/aem/test/tail/aggregating/overlapping/first-chunk-error.log",
             "com/cognifide/gradle/aem/test/tail/aggregating/overlapping/second-chunk-error.log")
         val destination = MockDestination()
-        val tailer = Tailer(source, destination)
+        val tailer = LogTailer(source, destination)
 
         // when
         tailer.tail()
@@ -148,7 +147,7 @@ class TailerTest {
             "com/cognifide/gradle/aem/test/tail/aggregating/disjoint/first-chunk-error.log",
             "com/cognifide/gradle/aem/test/tail/aggregating/disjoint/second-chunk-error.log")
         val destination = MockDestination()
-        val tailer = Tailer(source, destination)
+        val tailer = LogTailer(source, destination)
 
         // when
         tailer.tail()
@@ -175,7 +174,7 @@ class TailerTest {
             "com/cognifide/gradle/aem/test/tail/aggregating/disjoint/first-chunk-error.log",
             "com/cognifide/gradle/aem/test/tail/aggregating/disjoint/first-chunk-error.log")
         val destination = MockDestination()
-        val tailer = Tailer(source, destination)
+        val tailer = LogTailer(source, destination)
 
         // when
         tailer.tail()
@@ -196,43 +195,12 @@ class TailerTest {
     }
 
     @Test
-    @Disabled // TODO
-    fun shouldFilterOutBlacklistedErrors() {
-        //given
-        val parser = Parser()
-        val logsFile = "com/cognifide/gradle/aem/test/tail/blacklist/errors-blacklist.log"
-        val logsList = parser.parseLogs(MockSource.reader(logsFile))
-
-        //when
-        val filter = LogFilter() // TODO load()
-
-        //then
-        assertTrue(filter.isExcluded(logsList.first()))
-        assertTrue(filter.isExcluded(logsList.last()))
-    }
-
-    @Test
-    @Disabled // TODO
-    fun shouldLetGoErrorsThatWereNotBlacklisted() {
-        //given
-        val parser = Parser()
-        val logsList = parser.parseLogs(MockSource.reader("com/cognifide/gradle/aem/test/tail/10-logs-error.log"))
-
-        //when
-        val filter = LogFilter() // TODO load()
-
-        //then
-        assertFalse(filter.isExcluded(logsList.first()))
-        assertFalse(filter.isExcluded(logsList.last()))
-    }
-
-    @Test
     fun shouldFilterOutAllErrorBasedOnLambdas() {
         //given
         val filter: (Log) -> Boolean = { log -> log.message.isNotEmpty() }
 
         //when
-        val logFilter = LogFilter().apply { exclude(filter) }
+        val logFilter = LogFilter().apply { excludeRule(filter) }
 
         //then
         assertTrue(logFilter.isExcluded(Log.create(listOf("14.01.2019 12:20:43.111 *ERROR* " +
@@ -246,7 +214,7 @@ class TailerTest {
         val filter: (Log) -> Boolean = { log -> log.message.isEmpty() }
 
         //when
-        val blacklist = LogFilter().apply { exclude(filter) }
+        val blacklist = LogFilter().apply { excludeRule(filter) }
 
         //then
         assertFalse(blacklist.isExcluded(Log.create(listOf("14.01.2019 12:20:43.111 *ERROR* " +
@@ -260,7 +228,7 @@ class TailerTest {
         val filter: (Log) -> Boolean = { Patterns.wildcard(it.text, "*egg.erggr.gaegkgr.*") }
 
         //when
-        val logFilter = LogFilter().apply { exclude(filter) }
+        val logFilter = LogFilter().apply { excludeRule(filter) }
 
         //then
         assertTrue(logFilter.isExcluded(Log.create(listOf("14.01.2019 12:20:43.111 *ERROR* " +
@@ -274,7 +242,7 @@ class TailerTest {
         val filter: (Log) -> Boolean = { Patterns.wildcard(it.text, "a.b.cde.*") }
 
         //when
-        val blacklist = LogFilter().apply { exclude(filter) }
+        val blacklist = LogFilter().apply { excludeRule(filter) }
 
         //then
         assertFalse(blacklist.isExcluded(Log.create(listOf("14.01.2019 12:20:43.111 *ERROR* " +

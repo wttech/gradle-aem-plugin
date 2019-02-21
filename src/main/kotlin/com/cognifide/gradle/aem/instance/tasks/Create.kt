@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.instance.tasks
 import com.cognifide.gradle.aem.common.Formats
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.onEachApply
+import com.cognifide.gradle.aem.common.tasks.LocalInstanceTask
 import com.cognifide.gradle.aem.instance.InstanceException
 import com.cognifide.gradle.aem.instance.LocalInstance
 import com.cognifide.gradle.aem.instance.LocalInstanceOptions
@@ -10,7 +11,7 @@ import com.cognifide.gradle.aem.instance.names
 import java.io.File
 import org.gradle.api.tasks.TaskAction
 
-open class Create : Instance() {
+open class Create : LocalInstanceTask() {
 
     init {
         description = "Creates local AEM instance(s)."

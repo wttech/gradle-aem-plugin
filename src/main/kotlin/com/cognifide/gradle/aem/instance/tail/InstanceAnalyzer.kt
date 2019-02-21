@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.instance.tail
 
+import com.cognifide.gradle.aem.instance.Instance
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.ObsoleteCoroutinesApi
 import kotlinx.coroutines.channels.Channel
@@ -14,52 +15,53 @@ import kotlinx.coroutines.launch
  * Please see https://github.com/Kotlin/kotlinx.coroutines/issues/632#issuecomment-425408865
  */
 @UseExperimental(ObsoleteCoroutinesApi::class)
-class LogAnalyzer(
+class InstanceAnalyzer(
     private val options: TailOptions,
-    private val instanceName: String,
+    private val instance: Instance,
     private val logsChannel: ReceiveChannel<Log>,
-    private val notificationChannel: SendChannel<ProblematicLogs>
+    private val notificationChannel: SendChannel<LogChunk>
 ) {
 
-    private val errorsChannel = Channel<Log>(Channel.UNLIMITED)
+    private val incidentChannel = Channel<Log>(Channel.UNLIMITED)
 
-    private var aggregatedErrors = mutableListOf<Log>()
+    private var incidentCannonade = mutableListOf<Log>()
 
-    init {
+    fun listenTailed() {
         GlobalScope.launch {
             logsChannel.consumeEach { log ->
-                when {
-                    log.isOlderThan(minutes = 1) -> {
-                    }
-                    log.isError() && !options.logFilter.isExcluded(log) -> errorsChannel.send(log)
+                options.logListener(log, instance)
+
+                if (options.incidentChecker(log)) {
+                    incidentChannel.send(log)
                 }
             }
         }
         GlobalScope.launch {
             while (true) {
-                val log = errorsChannel.poll()
+                val log = incidentChannel.poll()
                 if (log == null) {
-                    checkIfErrorsCannonadeEnded()
-                    delay(CHECKING_FOR_ERROR_CANNONADE_TO_END_INTERVAL_IN_MILLIS)
+                    checkIncidentCannonadeEnded()
+                    delay(INCIDENT_CANNONADE_END_INTERVAL)
                 } else {
-                    aggregatedErrors.add(log)
+                    incidentCannonade.add(log)
                 }
             }
         }
     }
 
-    private suspend fun checkIfErrorsCannonadeEnded() {
-        if (aggregatedErrors.isEmpty()) {
+    private suspend fun checkIncidentCannonadeEnded() {
+        if (incidentCannonade.isEmpty()) {
             return
         }
 
-        if (aggregatedErrors.last().isOlderThan(millis = options.notificationDelay)) {
-            notificationChannel.send(ProblematicLogs(instanceName, aggregatedErrors))
-            aggregatedErrors = mutableListOf()
+        if (incidentCannonade.last().isOlderThan(millis = options.incidentDelay)) {
+            notificationChannel.send(LogChunk(instance, incidentCannonade))
+            incidentCannonade = mutableListOf()
         }
     }
 
     companion object {
-        private const val CHECKING_FOR_ERROR_CANNONADE_TO_END_INTERVAL_IN_MILLIS = 100L
+
+        private const val INCIDENT_CANNONADE_END_INTERVAL = 100L
     }
 }

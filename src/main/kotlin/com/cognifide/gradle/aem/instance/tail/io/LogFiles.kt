@@ -9,18 +9,18 @@ import java.io.FileWriter
 import java.net.URI
 import org.apache.commons.io.FileUtils
 
-class LogFiles(private val options: TailOptions, private val taskName: String) {
+class LogFiles(private val options: TailOptions) {
 
     private val aem = options.aem
 
     fun main(instanceName: String): File {
-        return AemTask.temporaryFile(aem.project, "$taskName/$instanceName", options.logFile())
+        return AemTask.temporaryFile(aem.project, "${options.taskName}/$instanceName", options.logFile())
     }
 
     fun incident(instanceName: String): File {
         return AemTask.temporaryFile(
                 aem.project,
-                "$taskName/$instanceName/$INCIDENT_DIR",
+                "${options.taskName}/$instanceName/$INCIDENT_DIR",
                 "${Formats.dateFileName()}-${options.logFile()}"
         )
     }
@@ -28,7 +28,7 @@ class LogFiles(private val options: TailOptions, private val taskName: String) {
     fun clearMain(instanceName: String) = main(instanceName).bufferedWriter().use { it.write("") }
 
     fun clearIncidents(instanceName: String) {
-        FileUtils.deleteDirectory(AemTask.temporaryDir(aem.project, taskName, "$instanceName/$INCIDENT_DIR"))
+        FileUtils.deleteDirectory(AemTask.temporaryDir(aem.project, options.taskName, "$instanceName/$INCIDENT_DIR"))
     }
 
     fun writeToIncident(instanceName: String, writerBlock: (BufferedWriter) -> Unit): URI {
@@ -56,7 +56,7 @@ class LogFiles(private val options: TailOptions, private val taskName: String) {
     }
 
     private val lockFile: File
-        get() = AemTask.temporaryFile(aem.project, taskName, LOCK_FILE)
+        get() = AemTask.temporaryFile(aem.project, options.taskName, LOCK_FILE)
 
     companion object {
 

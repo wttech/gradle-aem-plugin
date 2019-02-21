@@ -1,3 +1,5 @@
 package com.cognifide.gradle.aem.instance.tail
 
-class TailException(message: String) : RuntimeException(message)
+import com.cognifide.gradle.aem.common.AemException
+
+class TailException(message: String) : AemException(message)

@@ -15,12 +15,12 @@ import kotlinx.coroutines.launch
  */
 @UseExperimental(ObsoleteCoroutinesApi::class)
 class LogNotifier(
-    private val notificationChannel: ReceiveChannel<ProblematicLogs>,
+    private val notificationChannel: ReceiveChannel<LogChunk>,
     private val notifier: NotifierFacade,
     private val logFiles: LogFiles
 ) {
 
-    init {
+    fun listenTailed() {
         GlobalScope.launch {
             notificationChannel.consumeEach { logs ->
                 val file = snapshotErrorsToSeparateFile(logs)
@@ -29,17 +29,17 @@ class LogNotifier(
         }
     }
 
-    private fun notifyLogErrors(logs: ProblematicLogs, file: URI) {
-        val errors = logs.size
-        val message = logs.logs.lastOrNull()?.cause ?: ""
-        val instance = logs.instanceName
+    private fun notifyLogErrors(chunk: LogChunk, file: URI) {
+        val errors = chunk.size
+        val message = chunk.logs.lastOrNull()?.cause ?: ""
+        val instance = chunk.instance.name
 
         notifier.notifyLogError("$errors error(s) on $instance", message, file)
     }
 
-    private fun snapshotErrorsToSeparateFile(logs: ProblematicLogs): URI {
-        return logFiles.writeToIncident(logs.instanceName) { out ->
-            logs.logs.forEach {
+    private fun snapshotErrorsToSeparateFile(chunk: LogChunk): URI {
+        return logFiles.writeToIncident(chunk.instance.name) { out ->
+            chunk.logs.forEach {
                 out.write("${it.text}\n")
             }
         }

@@ -1,11 +1,12 @@
 package com.cognifide.gradle.aem.pkg.tasks
 
 import com.cognifide.gradle.aem.common.fileNames
+import com.cognifide.gradle.aem.common.tasks.PackageTask
 import com.cognifide.gradle.aem.instance.names
 import org.gradle.api.execution.TaskExecutionGraph
 import org.gradle.api.tasks.TaskAction
 
-open class Delete : Sync() {
+open class Delete : PackageTask() {
 
     init {
         description = "Deletes AEM package on instance(s)."

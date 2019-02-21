@@ -20,7 +20,9 @@ class Log(
         get() = message.splitToSequence("\n").firstOrNull()?.run { trim() }
                 ?.substringAfter(" ")?.capitalize() ?: ""
 
-    fun isError() = level == "ERROR"
+    fun isLevel(vararg levels: String) = isLevel(levels.asIterable())
+
+    fun isLevel(levels: Iterable<String>): Boolean = levels.any { it.equals(level, true) }
 
     @Suppress("MagicNumber")
     fun isOlderThan(minutes: Long = 0, seconds: Long = 0, millis: Long = 0) =
@@ -47,7 +49,9 @@ class Log(
         private val DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern(DATE_TIME_FORMAT)
 
         fun create(logLines: List<String>): Log {
-            if (logLines.isEmpty() || logLines.first().isBlank()) throw TailException("Passed log entry is empty!")
+            if (logLines.isEmpty() || logLines.first().isBlank()) {
+                throw TailException("Passed log entry is empty!")
+            }
 
             val fullLog = logLines.joinToString("\n")
             val result = matchLogLine(logLines.first())

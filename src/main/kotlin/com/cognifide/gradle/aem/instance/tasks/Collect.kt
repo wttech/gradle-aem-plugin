@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem.instance.tasks
 
-import com.cognifide.gradle.aem.common.AemTask
-import com.cognifide.gradle.aem.common.tasks.Zip
+import com.cognifide.gradle.aem.common.tasks.ZipTask
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.Compose
 import java.io.File
@@ -10,7 +9,7 @@ import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.bundling.ZipEntryCompression
 
-open class Collect : Zip(), AemTask {
+open class Collect : ZipTask() {
 
     @Internal
     var packageFilter: ((CopySpec) -> Unit) = { spec ->

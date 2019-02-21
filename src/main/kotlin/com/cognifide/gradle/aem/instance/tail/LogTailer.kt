@@ -4,18 +4,18 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
 
-class Tailer(
+class LogTailer(
     private val source: LogSource,
     private val destination: LogDestination,
     private val logsAnalyzerChannel: SendChannel<Log>? = null
 ) {
 
-    private val parser = Parser()
+    private val parser = LogParser()
 
     private var lastLogChecksum = ""
 
     fun tail() {
-        val logs = source.readChunk(parser::parseLogs)
+        val logs = source.readChunk(parser::parse)
         val newLogs = determineNewLogs(logs)
 
         if (newLogs.isNotEmpty()) {
