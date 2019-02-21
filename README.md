@@ -1305,7 +1305,7 @@ Instead, tailer is continuously polling log files using HTTP endpoint provided b
 New log entries are being dynamically appended to log files stored on local file system in a separate file for each environment. 
 By having all log files in one place, AEM developer or QA engineer has an opportunity to comportably analyze logs, verify incidents occuring on AEM instances.
 
-##### Tailing remote instances
+##### Tailing multiple instances
 
 Common use case could be to tail many remote AEM instances at once that comes from multiple environments.
 To cover such case, it is possible to run tailer using predefined instances and defined dynamically. Number of specified instance URLs is unlimited.
