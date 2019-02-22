@@ -10,8 +10,3 @@ Tailer is based on Gradle AEM Plugin task named `aemTail`. See [documentation](.
     * Windows - script: *gradlew.bat* (by double clicking)
     * Unix - script: *gradlew*
 4. Use *Ctrl + C* to stop tool.
-
-## Configuration
-
-Instance URLs can be configured in file *gradle.properties*.
-To skip incident reports for known issues, add log text exclusion rules to file *incidentFilter.txt*.
