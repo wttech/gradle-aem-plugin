@@ -1338,7 +1338,7 @@ gradlew aemTail -Paem.instance.list=[local-author,http://admin:admin@192.168.1.1
 
 ##### Standalone tailer tool
 
-Tailer could be used as standalone tool. See [documentation](dists/gradle-aem-tailer).
+Tailer could be used as standalone tool. Just download it from [here](dists/gradle-aem-tailer).
 
 ## How to's
 

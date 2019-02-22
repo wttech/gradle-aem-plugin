@@ -1,6 +1,12 @@
 # Gradle AEM Tailer
 
-Tailer is based on Gradle AEM Plugin task named `aemTail`. See [documentation](../../README.md#task-aemtail).
+<p align="center">
+  <img src="docs/screenshot.png" alt="Gradle AEM Tailer"/>
+</p>
+
+## Description
+
+Tailer is tool based on Gradle AEM Plugin task named `aemTail`. See [documentation](../../README.md#task-aemtail).
 
 ## Usage
 
