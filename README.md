@@ -1283,7 +1283,7 @@ Screenshot below presents generated ZIP package which is a result of running `gr
 
 #### Task `aemTail`
 
-Constantly downloads logs from any local or remote AEM instances.
+Continuosly downloads logs from any local or remote AEM instances.
 Detects and interactively notifies about unknown errors as incident reports.
 
 Tailer eliminates a need for connecting to remote environments using SSH protocol to be able to run `tail` command on that servers. 
