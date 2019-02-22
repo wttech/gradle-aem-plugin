@@ -53,14 +53,7 @@ dependencies {
 }
 
 tasks {
-    register<Jar>("sourcesJar") {
-        classifier = "sources"
-        dependsOn("classes")
-        from(sourceSets["main"].allSource)
-    }
-    named<Task>("build") {  dependsOn("sourcesJar") }
-    named<Task>("publishToMavenLocal") { dependsOn("sourcesJar") }
-    named<ProcessResources>("processResources") {
+    register("buildJson") {
         doLast {
             file("$buildDir/resources/main/build.json").printWriter().use {
                 it.print("""{
@@ -69,6 +62,30 @@ tasks {
             }""".trimIndent())
             }
         }
+    }
+
+    register<Zip>("tailerZip") {
+        from("dists/gradle-aem-tailer")
+        archiveName = "gradle-aem-tailer.zip"
+        destinationDir = file("dists")
+    }
+
+    register<Jar>("sourcesJar") {
+        classifier = "sources"
+        dependsOn("classes")
+        from(sourceSets["main"].allSource)
+    }
+
+    named<Task>("build") {
+        dependsOn("sourcesJar")
+    }
+    
+    named<Task>("publishToMavenLocal") {
+        dependsOn("sourcesJar")
+    }
+    
+    named<ProcessResources>("processResources") {
+        dependsOn("buildJson", "tailerZip")
     }
 
     named<Test>("test") {

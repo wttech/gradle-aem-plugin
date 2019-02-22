@@ -106,6 +106,7 @@ Also keep in mind, that GAP 6.x is **temporarily supporting only Gradle 5.x** (i
         * [Task aemAwait](#task-aemawait)
         * [Task aemCollect](#task-aemcollect)
         * [Task aemTail](#task-aemtail)
+           * [Tailing incidents](#tailing-incidents)
            * [Tailing multiple instances](#tailing-multiple-instances)
            * [Standalone tailer tool](#standalone-tailer-tool)
   * [How to's](#how-tos)
@@ -1285,7 +1286,12 @@ Screenshot below presents generated ZIP package which is a result of running `gr
 Constantly downloads logs from any local or remote AEM instances.
 Detects and interactively notifies about unknown errors as incident reports.
 
-To customize behavior, see [TailOptions](src/main/kotlin/com/cognifide/gradle/aem/instance/tail/TailOptions.kt).
+Tailer eliminates a need for connecting to remote environments using SSH protocol to be able to run `tail` command on that servers. 
+Instead, tailer is continuously polling log files using HTTP endpoint provided by Sling Framework. 
+New log entries are being dynamically appended to log files stored on local file system in a separate file for each environment. 
+By having all log files in one place, AEM developer or QA engineer has an opportunity to comportably analyze logs, verify incidents occuring on AEM instances.
+
+To customize tailer behavior, see [TailOptions](src/main/kotlin/com/cognifide/gradle/aem/instance/tail/TailOptions.kt).
 
 ```kotlin
 aem {
@@ -1299,11 +1305,25 @@ aem {
 }
 ```
 
+Log files are stored under directory: *build/aem/aemTail/${instance.name}/error.log*.
 
-Tailer eliminates a need for connecting to remote environments using SSH protocol to be able to run `tail` command on that servers. 
-Instead, tailer is continuously polling log files using HTTP endpoint provided by Sling Framework. 
-New log entries are being dynamically appended to log files stored on local file system in a separate file for each environment. 
-By having all log files in one place, AEM developer or QA engineer has an opportunity to comportably analyze logs, verify incidents occuring on AEM instances.
+##### Tailing incidents
+
+By default, tailer is buffering cannonade of log entries of level *ERROR* and *WARN* in 5 seconds time window then interactively shows notification.
+Clicking on that notification will browse to incident log file created containing only desired exceptions. These incident files are stored under directory: *build/aem/aemTail/${instance.name}/incidents/${timestamp}-error.log*.
+
+Which type of log entries are treated as a part of incident is determined by:
+
+* property `-Paem.tail.incidentLevels=[ERROR,WARN]`
+* wildcard exclusion rules defined in file which location is controlled by property `-Paem.tail.incidentFilterPath=aem/gradle/tail/incidentFilter.txt`
+
+Sample content of  *incidentFilter.txt* file, which holds a fragments of log entries that will be treated as known issues (notifications will be no longer shown):
+
+```text
+# On Unix OS, it is required to have execution rights on some scripts:
+Error while executing script *diskusage.sh
+Error while executing script *cpu.sh
+```
 
 ##### Tailing multiple instances
 
@@ -1322,7 +1342,7 @@ Tailer could be used as standalone tool.
 
 Usage:
 
-1. Download archive [gradle-aem-tailer.zip](https://github.com/Cognifide/gradle-aem-plugin/raw/master/docs/gradle-aem-tailer.zip)
+1. Download archive [gradle-aem-tailer.zip](https://github.com/Cognifide/gradle-aem-plugin/raw/master/dists/gradle-aem-tailer.zip)
 2. Extract archive on any file system location.
 3. Start tool:
     * Windows - script: *gradlew.bat* (by double clicking)
