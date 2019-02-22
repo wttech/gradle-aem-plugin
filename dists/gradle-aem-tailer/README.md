@@ -1,11 +1,15 @@
 # Gradle AEM Tailer
 
-Documentation is available [here](https://github.com/Cognifide/gradle-aem-plugin/tree/6.1.0-beta#task-aemtail).
+Tailer is based on Gradle AEM Plugin task named `aemTail`. See [documentation](../../README.md#task-aemtail).
 
 ## Usage
 
-* Starting - `gradlew` or `gradlew aemTail`
-* Stopping - use keys combination *Ctrl + C*
+1. Download archive [gradle-aem-tailer.zip](https://github.com/Cognifide/gradle-aem-plugin/raw/master/dists/gradle-aem-tailer.zip)
+2. Extract archive on any file system location.
+3. Start tool:
+    * Windows - script: *gradlew.bat* (by double clicking)
+    * Unix - script: *gradlew*
+4. Use *Ctrl + C* to stop tool.
 
 ## Configuration
 
