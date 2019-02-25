@@ -48,10 +48,13 @@ object Formats {
 
     fun toList(value: String?, delimiter: String = ","): List<String>? {
         if (value.isNullOrBlank()) {
-            return emptyList()
+            return null
         }
 
         val between = StringUtils.substringBetween(value, "[", "]") ?: value
+        if (between.isBlank()) {
+            return null
+        }
 
         return between.split(delimiter)
     }
