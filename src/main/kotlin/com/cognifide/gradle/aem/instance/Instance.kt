@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.Serializable
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
+import java.time.ZoneId
 
 interface Instance : Serializable {
 
@@ -57,6 +58,9 @@ interface Instance : Serializable {
     @get:Internal
     val name: String
         get() = "$environment-$typeName"
+
+    @get:Internal
+    val zoneId: ZoneId
 
     @get:Input
     val properties: Map<String, Any>
@@ -116,12 +120,12 @@ interface Instance : Serializable {
 
         const val TYPE_LOCAL = "local"
 
-        val LOCAL_PROPS = listOf("httpUrl", "type", "password", "jvmOpts", "startOpts", "runModes", "debugPort")
+        val LOCAL_PROPS = listOf("httpUrl", "type", "password", "jvmOpts", "startOpts", "runModes", "debugPort", "zoneId")
 
-        val REMOTE_PROPS = listOf("httpUrl", "type", "user", "password")
+        val REMOTE_PROPS = listOf("httpUrl", "type", "user", "password", "zoneId")
 
-        fun parse(aem: AemExtension, str: String): List<RemoteInstance> {
-            return Formats.toList(str).map { RemoteInstance.create(aem, it) }
+        fun parse(aem: AemExtension, str: String, configurer: RemoteInstance.() -> Unit = {}): List<RemoteInstance> {
+            return Formats.toList(str).map { RemoteInstance.create(aem, it, configurer) }
         }
 
         @Suppress("ComplexMethod")
@@ -163,6 +167,7 @@ interface Instance : Serializable {
                         props["startOpts"]?.let { this.startOpts = it.split(" ") }
                         props["runModes"]?.let { this.runModes = it.split(",") }
                         props["debugPort"]?.let { this.debugPort = it.toInt() }
+                        props["zoneId"]?.let { this.zoneId = ZoneId.of(it) }
 
                         this.properties = props.filterKeys { !LOCAL_PROPS.contains(it) }
                     }
@@ -172,6 +177,7 @@ interface Instance : Serializable {
 
                         props["user"]?.let { this.user = it }
                         props["password"]?.let { this.password = it }
+                        props["zoneId"]?.let { this.zoneId = ZoneId.of(it) }
 
                         this.properties = props.filterKeys { !REMOTE_PROPS.contains(it) }
                     }

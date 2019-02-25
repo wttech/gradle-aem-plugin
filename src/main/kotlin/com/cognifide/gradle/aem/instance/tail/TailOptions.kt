@@ -27,9 +27,9 @@ class TailOptions(val aem: AemExtension, val taskName: String) {
     /**
      * Determines which log entries are considered as incidents.
      */
-    var incidentChecker: Log.() -> Boolean = {
+    var incidentChecker: Log.(Instance) -> Boolean = { instance ->
         isLevel(aem.props.list("aem.tail.incidentLevels") ?: listOf("ERROR")) &&
-                !isOlderThan(aem.props.long("aem.tail.incidentOlderThan") ?: 1000L * 60) &&
+                !isOlderThan(instance, aem.props.long("aem.tail.incidentOlderThan") ?: 1000L * 60) &&
                 !incidentFilter.isExcluded(this)
     }
 

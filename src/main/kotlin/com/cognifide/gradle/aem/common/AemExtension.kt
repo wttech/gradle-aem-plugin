@@ -21,6 +21,7 @@ import org.gradle.api.Task
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
+import java.time.ZoneId
 
 @Suppress("TooManyFunctions")
 open class AemExtension(@Internal val project: Project) {
@@ -75,6 +76,13 @@ open class AemExtension(@Internal val project: Project) {
      */
     @Input
     val environment: String = props.string("aem.env") ?: run { System.getenv("AEM_ENV") ?: "local" }
+
+    /**
+     * Timezone ID (default for defined instances)
+     */
+    @Internal
+    @JsonIgnore
+    var zoneId: ZoneId = props.string("aem.zoneId")?.let { ZoneId.of(it) } ?: ZoneId.systemDefault()
 
     /**
      * Toggles parallel CRX package deployments and instance synchronization.

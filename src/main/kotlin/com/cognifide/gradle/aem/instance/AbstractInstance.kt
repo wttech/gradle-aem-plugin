@@ -4,12 +4,15 @@ import com.cognifide.gradle.aem.common.AemExtension
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.apache.commons.lang3.builder.EqualsBuilder
 import org.apache.commons.lang3.builder.HashCodeBuilder
+import java.time.ZoneId
 
 abstract class AbstractInstance(
     @Transient
     @JsonIgnore
     protected val aem: AemExtension
 ) : Instance {
+
+    override var zoneId = ZoneId.systemDefault()
 
     override var properties = mapOf<String, Any>()
 

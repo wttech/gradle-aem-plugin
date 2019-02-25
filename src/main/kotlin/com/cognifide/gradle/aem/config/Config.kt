@@ -13,6 +13,7 @@ import java.io.Serializable
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
+import java.time.ZoneId
 
 /**
  * General AEM related configuration (shared for tasks).
@@ -157,7 +158,9 @@ class Config(
         // Define through command line
         val instancesForced = aem.props.string("aem.instance.list") ?: ""
         if (instancesForced.isNotBlank()) {
-            instances(Instance.parse(aem, instancesForced))
+            instances(Instance.parse(aem, instancesForced) {
+                this.environment = Instance.ENVIRONMENT_CMD
+            })
         }
 
         // Define through properties ]
@@ -196,10 +199,7 @@ class Config(
     }
 
     fun localInstance(httpUrl: String, configurer: LocalInstance.() -> Unit) {
-        instance(LocalInstance.create(aem, httpUrl) {
-            this.environment = aem.environment
-            this.apply(configurer)
-        })
+        instance(LocalInstance.create(aem, httpUrl, configurer))
     }
 
     fun remoteInstance(httpUrl: String) {
@@ -207,10 +207,7 @@ class Config(
     }
 
     fun remoteInstance(httpUrl: String, configurer: RemoteInstance.() -> Unit) {
-        instance(RemoteInstance.create(aem, httpUrl) {
-            this.environment = aem.environment
-            this.apply(configurer)
-        })
+        instance(RemoteInstance.create(aem, httpUrl, configurer))
     }
 
     fun parseInstance(urlOrName: String): Instance {
