@@ -16,3 +16,12 @@ Tailer is tool based on Gradle AEM Plugin task named `aemTail`. See [documentati
     * Windows - script: *gradlew.bat* (by double clicking)
     * Unix - script: *gradlew*
 4. Use *Ctrl + C* to stop tool.
+
+
+## Configuration
+
+1. Stop tool if running.
+2. Edit *gradle.properties* file.
+3. Start tool again.
+
+*Notice!* After updating file *incidentFilter.txt* tool does not need to be restarted.
