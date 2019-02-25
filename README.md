@@ -1333,7 +1333,7 @@ To cover such case, it is possible to run tailer using predefined instances and 
 Simply use command:
 
 ```bash
-gradlew aemTail -Paem.instance.list=[local-author,http://admin:admin@192.168.1.1:4502,http://admin:admin@author.example.com]
+gradlew aemTail -Paem.instance.list=[http://admin:admin@192.168.1.1:4502,http://admin:admin@author.example.com]
 ```
 
 ##### Standalone tailer tool
