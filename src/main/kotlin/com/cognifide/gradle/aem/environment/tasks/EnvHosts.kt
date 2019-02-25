@@ -1,11 +1,7 @@
 package com.cognifide.gradle.aem.environment.tasks
 
 import com.cognifide.gradle.aem.common.AemDefaultTask
-import com.cognifide.gradle.aem.common.file.FileOperations
-import com.cognifide.gradle.aem.environment.EnvironmentException
 import com.cognifide.gradle.aem.environment.hosts.HostsAppender
-import java.io.File
-import java.io.FileNotFoundException
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
