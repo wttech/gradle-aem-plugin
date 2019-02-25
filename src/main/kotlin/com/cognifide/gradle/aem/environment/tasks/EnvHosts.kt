@@ -18,21 +18,13 @@ open class EnvHosts : AemDefaultTask() {
     }
 
     @Internal
-    private val appender = HostsAppender()
+    private val appender = HostsAppender.create(aem.environmentOptions.hosts)
 
     @Input
     private val hosts = aem.environmentOptions.hosts
 
     @TaskAction
-    fun appendHosts() = try {
-        FileOperations.amendFile(File(hosts.file)) { appender.appendedContent(it, hosts.list) }
-    } catch (e: FileNotFoundException) {
-        if (e.message?.contains("Permission denied") == true) {
-            throw EnvironmentException("Failed to append hosts to ${hosts.file} file - permission denied." +
-                "\nConsider running this task with sudo or in PowerShell with admin privileges.", e)
-        }
-        throw EnvironmentException("Failed to append hosts to ${hosts.file} file.", e)
-    }
+    fun appendHosts() = appender.appendHosts()
 
     companion object {
         const val NAME = "aemEnvHosts"
