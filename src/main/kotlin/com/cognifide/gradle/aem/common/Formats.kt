@@ -46,7 +46,7 @@ object Formats {
         return ObjectMapper().readValue(json, clazz)
     }
 
-    fun toList(value: String?, delimiter: String = ","): List<String> {
+    fun toList(value: String?, delimiter: String = ","): List<String>? {
         if (value.isNullOrBlank()) {
             return emptyList()
         }

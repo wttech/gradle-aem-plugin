@@ -20,6 +20,10 @@ abstract class AbstractInstance(
         properties += mapOf(key to value)
     }
 
+    override fun property(key: String): Any? = properties[key]
+
+    override fun string(key: String): String? = (properties[key] as String?)?.ifBlank { null }
+
     override val sync: InstanceSync
         get() = InstanceSync(aem, this)
 

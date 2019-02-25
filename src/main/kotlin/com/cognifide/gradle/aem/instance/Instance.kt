@@ -68,6 +68,10 @@ interface Instance : Serializable {
 
     fun property(key: String, value: Any)
 
+    fun property(key: String): Any?
+
+    fun string(key: String): String?
+
     @get:Internal
     @get:JsonIgnore
     val sync: InstanceSync
@@ -126,7 +130,7 @@ interface Instance : Serializable {
         val REMOTE_PROPS = listOf("httpUrl", "type", "user", "password", "zoneId")
 
         fun parse(aem: AemExtension, str: String, configurer: RemoteInstance.() -> Unit = {}): List<RemoteInstance> {
-            return Formats.toList(str).map { RemoteInstance.create(aem, it, configurer) }
+            return (Formats.toList(str) ?: listOf()).map { RemoteInstance.create(aem, it, configurer) }
         }
 
         @Suppress("ComplexMethod")
