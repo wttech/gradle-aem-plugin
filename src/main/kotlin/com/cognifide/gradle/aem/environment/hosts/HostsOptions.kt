@@ -4,16 +4,15 @@ import org.apache.commons.lang3.SystemUtils
 
 class HostsOptions {
     var list = listOf(
-        Host("127.0.0.1", "example.com"),
-        Host("127.0.0.1", "demo.example.com"),
-        Host("127.0.0.1", "author.example.com"),
-        Host("127.0.0.1", "invalidation-only")
+            Host("127.0.0.1", "example.com"),
+            Host("127.0.0.1", "demo.example.com"),
+            Host("127.0.0.1", "author.example.com"),
+            Host("127.0.0.1", "invalidation-only")
     )
 
-    val file = if (SystemUtils.IS_OS_WINDOWS) {
-        HOSTS_FILE_ON_WINDOWS
-    } else {
-        HOSTS_FILE
+    val file = when {
+        SystemUtils.IS_OS_WINDOWS -> HOSTS_FILE_ON_WINDOWS
+        else -> HOSTS_FILE
     }
 
     fun configure(config: Map<String, String>) {

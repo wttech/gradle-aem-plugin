@@ -17,7 +17,9 @@ class HostsAppenderTest {
         private fun file(resource: String) = File(this::class.java.classLoader.getResource(resource).file)
     }
 
-    private val hostsAppender = HostsAppender()
+    private val hostsAppender = object : HostsAppender() {
+        override fun appendHosts() {}
+    }
 
     @Test
     fun shouldAppendEtcHostsWithRequiredHosts() {
