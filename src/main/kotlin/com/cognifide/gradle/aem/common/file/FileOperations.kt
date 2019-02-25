@@ -2,7 +2,10 @@ package com.cognifide.gradle.aem.common.file
 
 import com.cognifide.gradle.aem.common.AemPlugin
 import com.cognifide.gradle.aem.common.Patterns
-import java.io.*
+import java.io.File
+import java.io.FileOutputStream
+import java.io.InputStream
+import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -16,6 +19,25 @@ import org.reflections.Reflections
 import org.reflections.scanners.ResourcesScanner
 
 object FileOperations {
+
+    fun <T> streamFromPathOrClasspath(resourcePath: String, reader: (InputStream) -> T): T =
+            fromPathOrClasspath(resourcePath).use { reader(it) }
+
+    private fun fromPathOrClasspath(resourcePath: String): InputStream {
+        val resourceFile = File(resourcePath)
+        if (resourceFile.exists()) {
+            return GFileUtils.openInputStream(resourceFile)
+        }
+        val resourceStream: InputStream? = this::class.java.getResourceAsStream(resourcePath)
+        if (resourceStream != null) {
+            return resourceStream
+        }
+        val resource: URL? = this::class.java.classLoader.getResource(resourcePath)
+        if (resource != null) {
+            return GFileUtils.openInputStream(File(resource.file))
+        }
+        throw FileException("Cannot load file: $resourcePath")
+    }
 
     fun readResource(path: String): InputStream? {
         return javaClass.getResourceAsStream("/${AemPlugin.PKG.replace(".", "/")}/$path")
