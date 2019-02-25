@@ -26,6 +26,8 @@ class TailOptions(val aem: AemExtension, val taskName: String) {
 
     /**
      * Determines which log entries are considered as incidents.
+     *
+     * TODO use instance.properties["tail.incidentLevels"] then fallback to common value
      */
     var incidentChecker: Log.(Instance) -> Boolean = { instance ->
         isLevel(aem.props.list("aem.tail.incidentLevels") ?: listOf("ERROR")) &&
