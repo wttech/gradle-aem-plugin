@@ -38,6 +38,7 @@ class InstanceSync(aem: AemExtension, instance: Instance) : InstanceHttpClient(a
         return resolveRemotePackage({ it.resolvePackage(project, Package(group, name, version)) }, refresh)
     }
 
+    // TODO extract method 'listPackages', add retries support
     private fun resolveRemotePackage(resolver: (ListResponse) -> Package?, refresh: Boolean): Package? {
         aem.logger.debug("Asking for uploaded packages on $instance")
 
