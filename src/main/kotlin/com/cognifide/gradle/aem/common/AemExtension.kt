@@ -13,6 +13,7 @@ import com.cognifide.gradle.aem.tooling.vlt.VltException
 import com.cognifide.gradle.aem.tooling.vlt.VltFilter
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
+import java.time.ZoneId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
@@ -21,7 +22,6 @@ import org.gradle.api.Task
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
-import java.time.ZoneId
 
 @Suppress("TooManyFunctions")
 open class AemExtension(@Internal val project: Project) {

@@ -13,7 +13,6 @@ import java.io.Serializable
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
-import java.time.ZoneId
 
 /**
  * General AEM related configuration (shared for tasks).
@@ -158,9 +157,7 @@ class Config(
         // Define through command line
         val instancesForced = aem.props.string("aem.instance.list") ?: ""
         if (instancesForced.isNotBlank()) {
-            instances(Instance.parse(aem, instancesForced) {
-                this.environment = Instance.ENVIRONMENT_CMD
-            })
+            instances(Instance.parse(aem, instancesForced) { environment = Instance.ENVIRONMENT_CMD })
         }
 
         // Define through properties ]
@@ -169,7 +166,7 @@ class Config(
         aem.project.afterEvaluate { _ ->
             // Ensure defaults if still no instances defined at all
             if (instances.isEmpty()) {
-                instances(Instance.defaults(aem, aem.environment))
+                instances(Instance.defaults(aem) { environment = aem.environment })
             }
 
             // Validate all

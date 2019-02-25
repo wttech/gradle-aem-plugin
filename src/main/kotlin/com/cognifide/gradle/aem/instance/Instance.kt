@@ -6,9 +6,9 @@ import com.cognifide.gradle.aem.common.Formats
 import com.cognifide.gradle.aem.common.Patterns
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.Serializable
+import java.time.ZoneId
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
-import java.time.ZoneId
 
 interface Instance : Serializable {
 
@@ -60,6 +60,7 @@ interface Instance : Serializable {
         get() = "$environment-$typeName"
 
     @get:Internal
+    @get:JsonIgnore
     val zoneId: ZoneId
 
     @get:Input
@@ -189,10 +190,10 @@ interface Instance : Serializable {
             }.sortedBy { it.name }
         }
 
-        fun defaults(aem: AemExtension, environment: String): List<RemoteInstance> {
+        fun defaults(aem: AemExtension, configurer: RemoteInstance.() -> Unit = {}): List<RemoteInstance> {
             return listOf(
-                    RemoteInstance.create(aem, URL_AUTHOR_DEFAULT) { this.environment = environment },
-                    RemoteInstance.create(aem, URL_PUBLISH_DEFAULT) { this.environment = environment }
+                    RemoteInstance.create(aem, URL_AUTHOR_DEFAULT, configurer),
+                    RemoteInstance.create(aem, URL_PUBLISH_DEFAULT, configurer)
             )
         }
     }

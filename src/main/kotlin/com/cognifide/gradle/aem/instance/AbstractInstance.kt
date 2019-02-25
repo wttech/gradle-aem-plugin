@@ -2,9 +2,9 @@ package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.common.AemExtension
 import com.fasterxml.jackson.annotation.JsonIgnore
+import java.time.ZoneId
 import org.apache.commons.lang3.builder.EqualsBuilder
 import org.apache.commons.lang3.builder.HashCodeBuilder
-import java.time.ZoneId
 
 abstract class AbstractInstance(
     @Transient
