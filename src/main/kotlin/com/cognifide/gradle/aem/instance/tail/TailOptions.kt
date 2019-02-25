@@ -34,7 +34,7 @@ class TailOptions(val aem: AemExtension, val taskName: String) {
                 ?: listOf("ERROR")
         val oldMillis = instance.string("tail.incidentOlderThan")?.toLong()
                 ?: aem.props.long("aem.tail.incidentOlderThan")
-                ?: 1000L * 60
+                ?: 1000L * 10
 
         isLevel(levels) && !isOlderThan(instance, oldMillis) && !incidentFilter.isExcluded(this)
     }
