@@ -6,7 +6,7 @@ import java.io.File
 import java.io.FileNotFoundException
 
 class HostsAppenderWindows(
-        private val hosts: HostsOptions
+    private val hosts: HostsOptions
 ) : HostsAppender() {
     override fun appendHosts() = try {
         FileOperations.amendFile(File(hosts.file)) { appendedContent(it, hosts.list) }

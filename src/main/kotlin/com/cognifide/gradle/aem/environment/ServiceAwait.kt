@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.environment
 
 import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.ProgressLogger
+import com.cognifide.gradle.aem.common.Retry
 import com.cognifide.gradle.aem.common.http.HttpClient
 import com.cognifide.gradle.aem.common.http.RequestException
 import kotlin.streams.toList
@@ -14,23 +15,40 @@ class ServiceAwait(aem: AemExtension) {
     private val options = aem.environmentOptions
     val progress = ProgressLogger.of(aem.project)
 
-    fun await() =
+    fun await(retry: Retry) =
+            progress.launch {
+                val serviceStatuses = options.healthChecks.list.parallelStream().map { it.url to healthy(retry, it) }.toList()
+                if (!serviceStatuses.all { it.second }) {
+                    val unavailableUrls = serviceStatuses.filter { !it.second }.map { it.first }.joinToString("\n")
+                    throw EnvironmentException("Failed to initialized all services! Following URLs are still unavailable " +
+                            "or returned different response than expected:\n$unavailableUrls")
+                }
+            }
+
+    fun await(message: String, retry: Retry, condition: () -> Boolean) {
         progress.launch {
-            val serviceStatuses = options.healthChecks.list.parallelStream().map { it.url to healthy(it) }.toList()
-            if (!serviceStatuses.all { it.second }) {
-                val unavailableUrls = serviceStatuses.filter { !it.second }.map { it.first }.joinToString("\n")
-                throw EnvironmentException("Failed to initialized all services! Following URLs are still unavailable " +
-                    "or returned different response than expected:\n$unavailableUrls")
+            runBlocking {
+                val noOfChecks = retry.times.toInt()
+                repeat(noOfChecks) { iteration ->
+                    progress("!${noOfChecks - iteration} $message")
+                    delay(retry.delay(iteration.toLong()))
+                    if (condition()) {
+                        return@runBlocking
+                    }
+                }
+                throw EnvironmentException("Failed to stop docker stack after ${retry.times} seconds." +
+                        "\nPlease try to stop it manually by running: `docker stack rm ${options.docker.stackName}`")
             }
         }
+    }
 
-    private fun ProgressLogger.healthy(check: HealthCheck): Boolean {
+    private fun ProgressLogger.healthy(retry: Retry, check: HealthCheck): Boolean {
         var isValid = false
         runBlocking {
-            val noOfChecks = noOfChecks(check)
+            val noOfChecks = retry.times.toInt()
             repeat(noOfChecks) { iteration ->
-                progress("$iteration/$noOfChecks ${check.url} - awaiting to start")
-                delay(DELAY_BETWEEN_CHECKS.toLong())
+                progress("!${noOfChecks - iteration} ${check.url} - awaiting to start")
+                delay(retry.delay(iteration.toLong()))
                 try {
                     val (status, body) = get(check.url)
                     if (status == check.status && body.contains(check.text)) {
@@ -51,11 +69,5 @@ class ServiceAwait(aem: AemExtension) {
             val status = response.statusLine.statusCode
             status to body
         }
-    }
-
-    private fun noOfChecks(check: HealthCheck) = Math.max(check.maxAwaitTime / DELAY_BETWEEN_CHECKS, 1)
-
-    companion object {
-        private const val DELAY_BETWEEN_CHECKS = 500
     }
 }
