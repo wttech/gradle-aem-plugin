@@ -53,16 +53,6 @@ dependencies {
 }
 
 tasks {
-    register("buildJson") {
-        doLast {
-            file("$buildDir/resources/main/build.json").printWriter().use {
-                it.print("""{
-                    "pluginVersion": "${project.version}",
-                    "gradleVersion": "${project.gradle.gradleVersion}"
-            }""".trimIndent())
-            }
-        }
-    }
 
     register<Zip>("tailerZip") {
         from("dists/gradle-aem-tailer")
@@ -85,9 +75,17 @@ tasks {
     }
     
     named<ProcessResources>("processResources") {
-        dependsOn("buildJson", "tailerZip")
+        dependsOn( "tailerZip")
+        doLast {
+            file("$buildDir/resources/main/build.json").printWriter().use {
+                it.print("""{
+                    "pluginVersion": "${project.version}",
+                    "gradleVersion": "${project.gradle.gradleVersion}"
+            }""".trimIndent())
+            }
+        }
     }
-
+    
     named<Test>("test") {
         testLogging {
             events = setOf(TestLogEvent.FAILED)
