@@ -1,7 +1,7 @@
 {
   "buildInfo" : {
     "plugin" : {
-      "pluginVersion" : "6.1.0-beta",
+      "pluginVersion" : "6.1.0",
       "gradleVersion" : "4.10"
     },
     "gradle" : {

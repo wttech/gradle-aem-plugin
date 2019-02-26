@@ -21,9 +21,10 @@ open class Uninstall : PackageTask() {
     @TaskAction
     fun uninstall() {
         aem.progress(instances.size * packages.size) {
-            aem.syncPackages(instances, packages) { pkg ->
-                increment("${pkg.name} -> ${instance.name}") {
-                    uninstallPackage(determineRemotePackagePath(pkg))
+            aem.syncPackages(instances, packages) { file ->
+                increment("${file.name} -> ${instance.name}") {
+                    val pkg = getPackage(file)
+                    uninstallPackage(pkg.path)
                 }
             }
         }
