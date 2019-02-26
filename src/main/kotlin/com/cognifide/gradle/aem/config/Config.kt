@@ -157,7 +157,7 @@ class Config(
         // Define through command line
         val instancesForced = aem.props.string("aem.instance.list") ?: ""
         if (instancesForced.isNotBlank()) {
-            instances(Instance.parse(aem, instancesForced))
+            instances(Instance.parse(aem, instancesForced) { environment = Instance.ENVIRONMENT_CMD })
         }
 
         // Define through properties ]
@@ -166,7 +166,7 @@ class Config(
         aem.project.afterEvaluate { _ ->
             // Ensure defaults if still no instances defined at all
             if (instances.isEmpty()) {
-                instances(Instance.defaults(aem, aem.environment))
+                instances(Instance.defaults(aem) { environment = aem.environment })
             }
 
             // Validate all
@@ -196,10 +196,7 @@ class Config(
     }
 
     fun localInstance(httpUrl: String, configurer: LocalInstance.() -> Unit) {
-        instance(LocalInstance.create(aem, httpUrl) {
-            this.environment = aem.environment
-            this.apply(configurer)
-        })
+        instance(LocalInstance.create(aem, httpUrl, configurer))
     }
 
     fun remoteInstance(httpUrl: String) {
@@ -207,10 +204,7 @@ class Config(
     }
 
     fun remoteInstance(httpUrl: String, configurer: RemoteInstance.() -> Unit) {
-        instance(RemoteInstance.create(aem, httpUrl) {
-            this.environment = aem.environment
-            this.apply(configurer)
-        })
+        instance(RemoteInstance.create(aem, httpUrl, configurer))
     }
 
     fun parseInstance(urlOrName: String): Instance {

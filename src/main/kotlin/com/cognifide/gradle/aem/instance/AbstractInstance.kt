@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.common.AemExtension
 import com.fasterxml.jackson.annotation.JsonIgnore
+import java.time.ZoneId
 import org.apache.commons.lang3.builder.EqualsBuilder
 import org.apache.commons.lang3.builder.HashCodeBuilder
 
@@ -11,11 +12,17 @@ abstract class AbstractInstance(
     protected val aem: AemExtension
 ) : Instance {
 
+    override var zoneId = ZoneId.systemDefault()
+
     override var properties = mapOf<String, Any>()
 
     override fun property(key: String, value: Any) {
         properties += mapOf(key to value)
     }
+
+    override fun property(key: String): Any? = properties[key]
+
+    override fun string(key: String): String? = (properties[key] as String?)?.ifBlank { null }
 
     override val sync: InstanceSync
         get() = InstanceSync(aem, this)

@@ -31,7 +31,7 @@ class InstanceAnalyzer(
             logsChannel.consumeEach { log ->
                 options.logListener(log, instance)
 
-                if (options.incidentChecker(log)) {
+                if (options.incidentChecker(log, instance)) {
                     incidentChannel.send(log)
                 }
             }
@@ -39,24 +39,17 @@ class InstanceAnalyzer(
         GlobalScope.launch {
             while (true) {
                 val log = incidentChannel.poll()
-                if (log == null) {
-                    checkIncidentCannonadeEnded()
-                    delay(INCIDENT_CANNONADE_END_INTERVAL)
-                } else {
+                if (log != null) {
                     incidentCannonade.add(log)
                 }
+
+                if (incidentCannonade.lastOrNull()?.isOlderThan(instance, options.incidentDelay) == true) {
+                    notificationChannel.send(LogChunk(instance, incidentCannonade))
+                    incidentCannonade = mutableListOf()
+                }
+
+                delay(INCIDENT_CANNONADE_END_INTERVAL)
             }
-        }
-    }
-
-    private suspend fun checkIncidentCannonadeEnded() {
-        if (incidentCannonade.isEmpty()) {
-            return
-        }
-
-        if (incidentCannonade.last().isOlderThan(millis = options.incidentDelay)) {
-            notificationChannel.send(LogChunk(instance, incidentCannonade))
-            incidentCannonade = mutableListOf()
         }
     }
 

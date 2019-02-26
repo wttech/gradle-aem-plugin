@@ -13,6 +13,7 @@ import com.cognifide.gradle.aem.tooling.vlt.VltException
 import com.cognifide.gradle.aem.tooling.vlt.VltFilter
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
+import java.time.ZoneId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
@@ -75,6 +76,13 @@ open class AemExtension(@Internal val project: Project) {
      */
     @Input
     val environment: String = props.string("aem.env") ?: run { System.getenv("AEM_ENV") ?: "local" }
+
+    /**
+     * Timezone ID (default for defined instances)
+     */
+    @Internal
+    @JsonIgnore
+    var zoneId: ZoneId = props.string("aem.zoneId")?.let { ZoneId.of(it) } ?: ZoneId.systemDefault()
 
     /**
      * Toggles parallel CRX package deployments and instance synchronization.
@@ -247,7 +255,7 @@ open class AemExtension(@Internal val project: Project) {
         return retry().apply(configurer)
     }
 
-    fun retry(): Retry = Retry.none()
+    fun retry(): Retry = Retry.none(this)
 
     /**
      * Show asynchronous progress indicator with percentage while performing some action.

@@ -156,7 +156,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.cognifide.gradle:aem-plugin:6.1.0-beta")
+    implementation("com.cognifide.gradle:aem-plugin:6.1.0")
 }
 ```
 
@@ -565,7 +565,7 @@ Then file at path *build/aem/aemDebug/debug.json* with content below is being ge
 {
   "buildInfo" : {
     "plugin" : {
-      "pluginVersion" : "6.1.0-beta",
+      "pluginVersion" : "6.1.0",
       "gradleVersion" : "5.0"
     },
     "gradle" : {
@@ -1338,7 +1338,7 @@ gradlew aemTail -Paem.instance.list=[local-author,http://admin:admin@192.168.1.1
 
 ##### Standalone tailer tool
 
-Tailer could be used as standalone tool. Just download it from [here](dists/gradle-aem-tailer).
+Tailer could be used as standalone tool. Just download it from [here](dists/gradle-aem-tailer) (< 100 KB).
 
 ## How to's
 

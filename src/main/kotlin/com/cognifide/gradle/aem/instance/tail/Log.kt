@@ -1,8 +1,11 @@
 package com.cognifide.gradle.aem.instance.tail
 
 import com.cognifide.gradle.aem.common.Formats
+import com.cognifide.gradle.aem.instance.Instance
 import java.time.LocalDateTime
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 
 class Log(
     val text: String,
@@ -24,13 +27,13 @@ class Log(
 
     fun isLevel(levels: Iterable<String>): Boolean = levels.any { it.equals(level, true) }
 
-    @Suppress("MagicNumber")
-    fun isOlderThan(minutes: Long = 0, seconds: Long = 0, millis: Long = 0) =
-            LocalDateTime.now()
-                    .minusMinutes(minutes)
-                    .minusSeconds(seconds)
-                    .minusNanos(millis * 1000_000)
-                    .isAfter(timestamp)
+    fun isOlderThan(instance: Instance, millis: Long): Boolean {
+        val nowTimestamp = LocalDateTime.now().atZone(ZoneId.systemDefault())
+        val thenTimestamp = timestamp.atZone(instance.zoneId)
+        val diffMillis = ChronoUnit.MILLIS.between(thenTimestamp, nowTimestamp)
+
+        return diffMillis > millis
+    }
 
     companion object {
 

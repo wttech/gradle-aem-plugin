@@ -5,7 +5,6 @@ import com.cognifide.gradle.aem.instance.Instance
 import com.cognifide.gradle.aem.instance.tail.LogSource
 import com.cognifide.gradle.aem.instance.tail.TailOptions
 import java.io.BufferedReader
-import java.io.InputStreamReader
 
 class UrlSource(
     private val options: TailOptions,
@@ -20,7 +19,7 @@ class UrlSource(
         handleInstanceUnavailability {
             instance.sync {
                 get(options.errorLogEndpoint) {
-                    BufferedReader(InputStreamReader(asStream(it))).use(parser)
+                    asStream(it).bufferedReader().use(parser)
                 }
             }
         }
@@ -29,13 +28,13 @@ class UrlSource(
         try {
             val chunk = parser()
             if (!wasStable) {
-                aem.logger.debug("Tailing resumed for $instance")
+                aem.logger.info("Tailing resumed for $instance")
                 wasStable = true
             }
             chunk
         } catch (ex: RequestException) {
             if (wasStable) {
-                aem.logger.debug("Tailing paused for $instance due to '${ex.message}'. Waiting for resuming.")
+                aem.logger.warn("Tailing paused for $instance due to '${ex.message}'. Waiting for resuming.")
             }
             wasStable = false
             emptyList<T>()

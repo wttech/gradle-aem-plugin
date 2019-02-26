@@ -21,9 +21,10 @@ open class Delete : PackageTask() {
     @TaskAction
     fun delete() {
         aem.progress(instances.size * packages.size) {
-            aem.syncPackages(instances, packages) { pkg ->
-                increment("${pkg.name} -> ${instance.name}") {
-                    deletePackage(determineRemotePackagePath(pkg))
+            aem.syncPackages(instances, packages) { file ->
+                increment("${file.name} -> ${instance.name}") {
+                    val pkg = getPackage(file)
+                    deletePackage(pkg.path)
                 }
             }
         }

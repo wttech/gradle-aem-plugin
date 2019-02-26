@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.instance.tail
 
 import com.cognifide.gradle.aem.common.AemExtension
+import com.cognifide.gradle.aem.common.Formats
 import com.cognifide.gradle.aem.instance.Instance
 import java.nio.file.Paths
 import kotlin.math.max
@@ -27,10 +28,15 @@ class TailOptions(val aem: AemExtension, val taskName: String) {
     /**
      * Determines which log entries are considered as incidents.
      */
-    var incidentChecker: Log.() -> Boolean = {
-        isLevel(aem.props.list("aem.tail.incidentLevels") ?: listOf("ERROR")) &&
-                !isOlderThan(aem.props.long("aem.tail.incidentOlderThan") ?: 1000L * 60) &&
-                !incidentFilter.isExcluded(this)
+    var incidentChecker: Log.(Instance) -> Boolean = { instance ->
+        val levels = Formats.toList(instance.string("tail.incidentLevels"))
+                ?: aem.props.list("aem.tail.incidentLevels")
+                ?: INCIDENT_LEVELS_DEFAULT
+        val oldMillis = instance.string("tail.incidentOld")?.toLong()
+                ?: aem.props.long("aem.tail.incidentOld")
+                ?: INCIDENT_OLD_DEFAULT
+
+        isLevel(levels) && !isOlderThan(instance, oldMillis) && !incidentFilter.isExcluded(this)
     }
 
     /**
@@ -64,5 +70,12 @@ class TailOptions(val aem: AemExtension, val taskName: String) {
 
     fun incidentFilter(options: LogFilter.() -> Unit) {
         incidentFilter.apply(options)
+    }
+
+    companion object {
+
+        val INCIDENT_LEVELS_DEFAULT = listOf("ERROR")
+
+        const val INCIDENT_OLD_DEFAULT = 1000L * 10
     }
 }
