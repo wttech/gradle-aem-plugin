@@ -9,15 +9,14 @@ import kotlin.streams.toList
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 
-class ServiceAwait(aem: AemExtension) {
+class ServiceAwait(private val aem: AemExtension) {
 
-    private val http = HttpClient(aem.project)
     private val options = aem.environmentOptions
     val progress = ProgressLogger.of(aem.project)
 
-    fun await(retry: Retry) =
+    fun await() =
             progress.launch {
-                val serviceStatuses = options.healthChecks.list.parallelStream().map { it.url to healthy(retry, it) }.toList()
+                val serviceStatuses = options.healthChecks.list.parallelStream().map { it.url to healthy(it) }.toList()
                 if (!serviceStatuses.all { it.second }) {
                     val unavailableUrls = serviceStatuses.filter { !it.second }.map { it.first }.joinToString("\n")
                     throw EnvironmentException("Failed to initialized all services! Following URLs are still unavailable " +
@@ -42,15 +41,15 @@ class ServiceAwait(aem: AemExtension) {
         }
     }
 
-    private fun ProgressLogger.healthy(retry: Retry, check: HealthCheck): Boolean {
+    private fun ProgressLogger.healthy(check: HealthCheck): Boolean {
         var isValid = false
         runBlocking {
-            val noOfChecks = retry.times.toInt()
+            val noOfChecks = check.numberOfChecks()
             repeat(noOfChecks) { iteration ->
-                progress("!${noOfChecks - iteration} ${check.url} - awaiting to start")
-                delay(retry.delay(iteration.toLong()))
+                progress("!${check.timeLeft(iteration)} ${check.url} - awaiting to start")
+                delay(check.delay)
                 try {
-                    val (status, body) = get(check.url)
+                    val (status, body) = get(check.connectionTimeout, check.url)
                     if (status == check.status && body.contains(check.text)) {
                         isValid = true
                         return@runBlocking
@@ -63,8 +62,14 @@ class ServiceAwait(aem: AemExtension) {
         return isValid
     }
 
-    private fun get(url: String): Pair<Int, String> {
-        return http.get(url) { response ->
+    private fun http(connectionTimeout: Int): HttpClient {
+        val http = HttpClient(aem.project)
+        http.connectionTimeout = connectionTimeout
+        return http
+    }
+
+    private fun get(connectionTimeout: Int, url: String): Pair<Int, String> {
+        return http(connectionTimeout).get(url) { response ->
             val body = asString(response)
             val status = response.statusLine.statusCode
             status to body
