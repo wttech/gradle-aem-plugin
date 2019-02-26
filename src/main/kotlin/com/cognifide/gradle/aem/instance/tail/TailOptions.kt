@@ -31,10 +31,10 @@ class TailOptions(val aem: AemExtension, val taskName: String) {
     var incidentChecker: Log.(Instance) -> Boolean = { instance ->
         val levels = Formats.toList(instance.string("tail.incidentLevels"))
                 ?: aem.props.list("aem.tail.incidentLevels")
-                ?: listOf("ERROR")
-        val oldMillis = instance.string("tail.incidentOlderThan")?.toLong()
-                ?: aem.props.long("aem.tail.incidentOlderThan")
-                ?: 1000L * 10
+                ?: INCIDENT_LEVELS_DEFAULT
+        val oldMillis = instance.string("tail.incidentOld")?.toLong()
+                ?: aem.props.long("aem.tail.incidentOld")
+                ?: INCIDENT_OLD_DEFAULT
 
         isLevel(levels) && !isOlderThan(instance, oldMillis) && !incidentFilter.isExcluded(this)
     }
@@ -70,5 +70,12 @@ class TailOptions(val aem: AemExtension, val taskName: String) {
 
     fun incidentFilter(options: LogFilter.() -> Unit) {
         incidentFilter.apply(options)
+    }
+
+    companion object {
+
+        val INCIDENT_LEVELS_DEFAULT = listOf("ERROR")
+
+        const val INCIDENT_OLD_DEFAULT = 1000L * 10
     }
 }

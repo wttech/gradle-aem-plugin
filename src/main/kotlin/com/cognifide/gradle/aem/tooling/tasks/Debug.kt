@@ -8,26 +8,22 @@ import com.cognifide.gradle.aem.common.Formats
 import com.cognifide.gradle.aem.instance.names
 import com.cognifide.gradle.aem.pkg.Package
 import com.cognifide.gradle.aem.pkg.PackagePlugin
-import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 
 open class Debug : AemDefaultTask() {
 
-    @OutputFile
+    @Internal
     val file = AemTask.temporaryFile(project, NAME, "debug.json")
 
     /**
      * Dump package states on defined instances.
      */
-    @Input
+    @Internal
     var packageDeployed: Boolean = aem.props.boolean("aem.debug.packageDeployed") ?: !project.gradle.startParameter.isOffline
 
     init {
         description = "Dumps effective AEM build configuration of project to JSON file"
-
-        outputs.upToDateWhen { false }
     }
 
     @get:Internal
@@ -75,7 +71,7 @@ open class Debug : AemDefaultTask() {
             mutableMapOf<String, Package?>().apply {
                 aem.syncPackages { pkg ->
                     try {
-                        put(instance.name, determineRemotePackage(pkg))
+                        put(instance.name, resolvePackage(pkg))
                     } catch (e: AemException) {
                         logger.info("Cannot determine remote package, because instance is not available: $instance")
                         logger.debug("Detailed error", e)

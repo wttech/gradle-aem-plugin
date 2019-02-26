@@ -255,7 +255,7 @@ open class AemExtension(@Internal val project: Project) {
         return retry().apply(configurer)
     }
 
-    fun retry(): Retry = Retry.none()
+    fun retry(): Retry = Retry.none(this)
 
     /**
      * Show asynchronous progress indicator with percentage while performing some action.

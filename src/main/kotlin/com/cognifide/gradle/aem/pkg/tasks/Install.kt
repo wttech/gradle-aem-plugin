@@ -14,9 +14,10 @@ open class Install : PackageTask() {
     @TaskAction
     fun install() {
         aem.progress(instances.size * packages.size) {
-            aem.syncPackages(instances, packages) { pkg ->
-                increment("${pkg.name} -> ${instance.name}") {
-                    installPackage(determineRemotePackagePath(pkg))
+            aem.syncPackages(instances, packages) { file ->
+                increment("${file.name} -> ${instance.name}") {
+                    val pkg = getPackage(file)
+                    installPackage(pkg.path)
                 }
             }
         }

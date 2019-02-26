@@ -14,9 +14,10 @@ open class Activate : PackageTask() {
     @TaskAction
     fun activate() {
         aem.progress(instances.size * packages.size) {
-            aem.syncPackages(instances, packages) { pkg ->
-                increment("${pkg.name} -> ${instance.name}") {
-                    activatePackage(determineRemotePackagePath(pkg))
+            aem.syncPackages(instances, packages) { file ->
+                increment("${file.name} -> ${instance.name}") {
+                    val pkg = getPackage(file)
+                    activatePackage(pkg.path)
                 }
             }
         }

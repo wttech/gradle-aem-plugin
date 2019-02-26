@@ -23,7 +23,7 @@ open class Uninstall : PackageTask() {
         aem.progress(instances.size * packages.size) {
             aem.syncPackages(instances, packages) { pkg ->
                 increment("${pkg.name} -> ${instance.name}") {
-                    uninstallPackage(determineRemotePackagePath(pkg))
+                    uninstallPackage(getPackage(pkg).path)
                 }
             }
         }
