@@ -37,6 +37,10 @@ class EnvironmentPlugin : AemPlugin() {
                 dependsOn(Setup.NAME)
                 finalizedBy(EnvUp.NAME)
             }
+            register<EnvRestart>(EnvRestart.NAME) {
+                dependsOn(EnvDown.NAME)
+                finalizedBy(EnvUp.NAME)
+            }
             register<EnvResetup>(EnvResetup.NAME) {
                 dependsOn(EnvDestroy.NAME)
                 finalizedBy(EnvSetup.NAME)

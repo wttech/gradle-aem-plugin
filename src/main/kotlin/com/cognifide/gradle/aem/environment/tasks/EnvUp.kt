@@ -15,12 +15,10 @@ open class EnvUp : DockerTask() {
     @Internal
     private val serviceAwait = ServiceAwait(aem)
 
-    private val upDelay = aem.retry { afterSecond(options.upDelay) }
-
     @TaskAction
     fun up() {
         stack.deploy()
-        serviceAwait.await(upDelay)
+        serviceAwait.await()
     }
 
     companion object {
