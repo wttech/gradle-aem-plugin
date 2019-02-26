@@ -2,11 +2,9 @@ package com.cognifide.gradle.aem.environment
 
 import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.AemPlugin
-import com.cognifide.gradle.aem.environment.tasks.EnvDown
-import com.cognifide.gradle.aem.environment.tasks.EnvHosts
-import com.cognifide.gradle.aem.environment.tasks.EnvSetup
-import com.cognifide.gradle.aem.environment.tasks.EnvUp
+import com.cognifide.gradle.aem.environment.tasks.*
 import com.cognifide.gradle.aem.instance.InstancePlugin
+import com.cognifide.gradle.aem.instance.tasks.Destroy
 import com.cognifide.gradle.aem.instance.tasks.Setup
 import org.gradle.api.Project
 
@@ -31,9 +29,17 @@ class EnvironmentPlugin : AemPlugin() {
             register<EnvHosts>(EnvHosts.NAME)
             register<EnvUp>(EnvUp.NAME)
             register<EnvDown>(EnvDown.NAME)
+            register<EnvDestroy>(EnvDestroy.NAME) {
+                dependsOn(EnvDown.NAME)
+                finalizedBy(Destroy.NAME)
+            }
             register<EnvSetup>(EnvSetup.NAME) {
                 dependsOn(Setup.NAME)
                 finalizedBy(EnvUp.NAME)
+            }
+            register<EnvResetup>(EnvResetup.NAME) {
+                dependsOn(EnvDestroy.NAME)
+                finalizedBy(EnvSetup.NAME)
             }
         }
     }

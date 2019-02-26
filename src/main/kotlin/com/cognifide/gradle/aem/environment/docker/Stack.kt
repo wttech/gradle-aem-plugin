@@ -18,7 +18,7 @@ class Stack(private val aem: AemExtension) {
     private val options = aem.environmentOptions.docker
 
     fun deploy() {
-        aem.logger.lifecycle("Stack: ${options.stackName}")
+        aem.logger.info("Deploying stack: ${options.stackName}")
         docker {
             initSwarmIfNotInitialized()
             stackDeploy(options.stackName, options.composeFilePath)
