@@ -53,7 +53,7 @@ abstract class Resolver<G : FileGroup>(
         return  resolveGroups(filter).flatMap { it.files }
     }
 
-    fun resolveGroups(filter: G.() -> Boolean): List<G> {
+    fun resolveGroups(filter: G.() -> Boolean = { true }): List<G> {
         return aem.parallel.pool(PARALLEL_POOL_SIZE, PARALLEL_POOL_NAME, groups.filter(filter)) { it.files; it }
     }
 
