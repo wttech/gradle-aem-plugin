@@ -825,7 +825,7 @@ Upload & install CRX package into AEM instance(s). Primary, recommended form of 
 
 ##### Deploying only to desired instances
 
-Simply use generic approach for [[filtering instances to work with](#filter-instances-to-work-with).
+Simply use generic approach for [filtering instances to work with](#filter-instances-to-work-with).
 
 ##### Deploying options
 
