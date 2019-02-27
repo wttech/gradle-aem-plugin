@@ -25,7 +25,7 @@ class SmbFileDownloader(val project: Project) {
             downloader.size = smbFile.length()
             downloader.download(smbFile.inputStream, targetFile)
         } catch (e: IOException) {
-            throw FileException("Cannot download URL '$sourceUrl' to file '$targetFile' using SMB. Check connection.", e)
+            throw FileException("Cannot download URL '$sourceUrl' to file '$targetFile' using SMB. Cause: ${e.message}.", e)
         }
     }
 

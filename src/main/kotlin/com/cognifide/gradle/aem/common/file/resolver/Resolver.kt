@@ -34,7 +34,10 @@ abstract class Resolver<G : FileGroup>(
 
     private var groupCurrent = groupDefault
 
-    private val groups = mutableListOf<G>().apply { add(groupDefault) }
+    private val groupsDefined = mutableListOf<G>().apply { add(groupDefault) }
+
+    val groups: List<G>
+        get() = groupsDefined.filter { it.resolutions.isNotEmpty() }
 
     protected open fun resolve(hash: Any, resolver: (FileResolution) -> File): FileResolution {
         val id = HashCode.fromInt(HashCodeBuilder().append(hash).toHashCode()).toString()
@@ -42,25 +45,21 @@ abstract class Resolver<G : FileGroup>(
         return groupCurrent.resolve(id, resolver)
     }
 
-    fun outputDirs(filter: (String) -> Boolean = { true }): List<File> {
-        return filterGroups(filter).flatMap { it.dirs }
+    fun outputDirs(filter: G.() -> Boolean = { true }): List<File> {
+        return groups.filter(filter).flatMap { it.dirs }
     }
 
-    fun allFiles(filter: (String) -> Boolean = { true }): List<File> {
-        return filterGroups(filter).flatMap { it.files }
+    fun allFiles(filter: G.() -> Boolean = { true }): List<File> {
+        return aem.parallel.map(groups.filter(filter)) { it.files }.flatten()
+    }
+
+    fun resolveGroups(filter: G.() -> Boolean): List<G> {
+        return aem.parallel.pool(PARALLEL_POOL_SIZE, PARALLEL_POOL_NAME, groups.filter(filter)) { it.files; it }
     }
 
     fun group(name: String): G {
-        return groups.find { it.name == name }
+        return groupsDefined.find { it.name == name }
                 ?: throw FileException("File group '$name' is not defined.")
-    }
-
-    fun filterGroups(filter: String): List<G> {
-        return filterGroups { Patterns.wildcard(it, filter) }
-    }
-
-    fun filterGroups(filter: (String) -> Boolean): List<G> {
-        return groups.filter { filter(it.name) }.filter { it.resolutions.isNotEmpty() }
     }
 
     fun dependency(notation: Any): FileResolution {
@@ -190,7 +189,7 @@ abstract class Resolver<G : FileGroup>(
 
     @Synchronized
     fun group(name: String, configurer: Resolver<G>.() -> Unit) {
-        groupCurrent = groups.find { it.name == name } ?: createGroup(name).apply { groups.add(this) }
+        groupCurrent = groupsDefined.find { it.name == name } ?: createGroup(name).apply { groupsDefined.add(this) }
         this.apply(configurer)
         groupCurrent = groupDefault
     }
@@ -201,5 +200,9 @@ abstract class Resolver<G : FileGroup>(
         const val GROUP_DEFAULT = "default"
 
         const val DOWNLOAD_LOCK = "download.lock"
+
+        const val PARALLEL_POOL_SIZE = 3
+
+        const val PARALLEL_POOL_NAME = "aem-resolver"
     }
 }

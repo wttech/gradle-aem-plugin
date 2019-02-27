@@ -9,10 +9,6 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.launch
 
-/**
- * TODO: Since coroutines API is still in experimental mode we would need to adapt to it's final API when released.
- * Please see https://github.com/Kotlin/kotlinx.coroutines/issues/632#issuecomment-425408865
- */
 @UseExperimental(ObsoleteCoroutinesApi::class)
 class LogNotifier(
     private val notificationChannel: ReceiveChannel<LogChunk>,

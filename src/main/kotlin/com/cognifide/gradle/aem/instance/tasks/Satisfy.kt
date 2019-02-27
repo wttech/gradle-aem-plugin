@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.instance.tasks
 import com.cognifide.gradle.aem.common.AemTask
 import com.cognifide.gradle.aem.common.Patterns
 import com.cognifide.gradle.aem.common.ProgressIndicator
+import com.cognifide.gradle.aem.common.file.resolver.FileGroup
 import com.cognifide.gradle.aem.instance.Instance
 import com.cognifide.gradle.aem.instance.names
 import com.cognifide.gradle.aem.pkg.PackageState
@@ -10,11 +11,11 @@ import com.cognifide.gradle.aem.pkg.resolver.PackageGroup
 import com.cognifide.gradle.aem.pkg.resolver.PackageResolver
 import com.cognifide.gradle.aem.pkg.tasks.Deploy
 import com.fasterxml.jackson.annotation.JsonIgnore
-import java.io.File
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
+import java.io.File
 
 open class Satisfy : Deploy() {
 
@@ -31,7 +32,7 @@ open class Satisfy : Deploy() {
     var groupName = aem.props.string("aem.satisfy.groupName") ?: "*"
 
     @get:Internal
-    var groupFilter: (String) -> Boolean = { fileGroup -> Patterns.wildcard(fileGroup, groupName) }
+    var groupFilter: FileGroup.() -> Boolean = { Patterns.wildcard(name, groupName) }
 
     /**
      * Packages are installed lazy which means already installed will no be installed again.
@@ -68,10 +69,10 @@ open class Satisfy : Deploy() {
     val packageGroups by lazy {
         val result = if (cmdGroups) {
             logger.info("Providing packages defined via command line.")
-            packageProvider.filterGroups("cmd.*")
+            packageProvider.resolveGroups { Patterns.wildcard(name, groupName) }
         } else {
             logger.info("Providing packages defined in build script.")
-            packageProvider.filterGroups(groupFilter)
+            packageProvider.resolveGroups(groupFilter)
         }
 
         val files = result.flatMap { it.files }

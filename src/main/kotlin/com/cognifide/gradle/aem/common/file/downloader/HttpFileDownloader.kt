@@ -26,9 +26,9 @@ class HttpFileDownloader(
                 downloader.download(asStream(response), targetFile)
             }
         } catch (e: AemException) {
-            throw FileException("Cannot download URL '$sourceUrl' to file '$targetFile' using HTTP(s). Check connection.", e)
+            throw FileException("Cannot download URL '$sourceUrl' to file '$targetFile' using HTTP(s). Cause: ${e.message}", e)
         } catch (e: IOException) {
-            throw FileException("Cannot download URL '$sourceUrl' to file '$targetFile' using HTTP(s). Check connection.", e)
+            throw FileException("Cannot download URL '$sourceUrl' to file '$targetFile' using HTTP(s). Cause: ${e.message}", e)
         }
     }
 

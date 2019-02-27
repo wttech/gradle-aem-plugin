@@ -8,10 +8,6 @@ import kotlinx.coroutines.ObsoleteCoroutinesApi
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
-/**
- * TODO: Since coroutines API is still in experimental mode we would need to adapt to it's final API when released.
- * Please see https://github.com/Kotlin/kotlinx.coroutines/issues/632#issuecomment-425408865
- */
 @UseExperimental(ObsoleteCoroutinesApi::class)
 open class Tail : InstanceTask() {
 
