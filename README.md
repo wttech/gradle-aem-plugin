@@ -76,8 +76,7 @@ Also keep in mind, that GAP 6.x is **temporarily supporting only Gradle 5.x** (i
            * [Assembling packages (merging all-in-one)](#assembling-packages-merging-all-in-one)
            * [Expandable properties](#expandable-properties)
         * [Task aemDeploy](#task-aemdeploy)
-           * [Deploying only to author or publish instances](#deploying-only-to-author-or-publish-instances)
-           * [Deploying only to instances specified explicitly](#deploying-only-to-instances-specified-explicitly)
+           * [Deploying only to desired instances](#deploying-only-to-desired-instances)
            * [Deploying options](#deploying-options)
         * [Task aemUpload](#task-aemupload)
         * [Task aemDelete](#task-aemdelete)
@@ -118,7 +117,7 @@ Also keep in mind, that GAP 6.x is **temporarily supporting only Gradle 5.x** (i
         * [Calling AEM endpoints / making any HTTP requests](#calling-aem-endpoints--making-any-http-requests)
      * [Understand why there are one or two plugins to be applied in build script](#understand-why-there-are-one-or-two-plugins-to-be-applied-in-build-script)
      * [Work effectively on start and daily basis](#work-effectively-on-start-and-daily-basis)
-     * [Filter instances for which packages will be deployed or satisfied](#filter-instances-for-which-packages-will-be-deployed-or-satisfied)
+     * [Filter instances to work with](#filter-instances-to-work-with)
      * [Know how properties are being expanded in instance or package files](#know-how-properties-are-being-expanded-in-instance-or-package-files)
   * [Known issues](#known-issues)
      * [No OSGi services / components are registered](#no-osgi-services--components-are-registered)
@@ -824,20 +823,9 @@ Each JAR file in separate *hooks* directory will be combined into single directo
 
 Upload & install CRX package into AEM instance(s). Primary, recommended form of deployment. Optimized version of `aemUpload aemInstall`.
 
-##### Deploying only to author or publish instances
+##### Deploying only to desired instances
 
-```bash
-gradlew aemDeploy -Paem.instance.authors
-gradlew aemDeploy -Paem.instance.publishers
-```
-
-##### Deploying only to instances specified explicitly
-
-Instance urls must be delimited by semicolon:
-
-```bash
-gradlew aemDeploy -Paem.instance.list=[http://admin:admin@localhost:4502,http://admin:admin@localhost:4503]
-```
+Simply use generic approach for [[filtering instances to work with](#filter-instances-to-work-with).
 
 ##### Deploying options
 
@@ -1530,15 +1518,21 @@ Above configuration uses [default tasks](https://docs.gradle.org/current/usergui
 * In next step application is being built and deployed to all configured AEM instances.
 * Finally build awaits till all AEM instances are stable.
 
-### Filter instances for which packages will be deployed or satisfied
+### Filter instances to work with
 
 When there are defined named AEM instances: `local-author`, `local-publish`, `integration-author` and `integration-publish`,
-then it is possible to deploy (or satisfy) packages taking into account: 
+then it is possible to:
+
+* deploy (or satisfy) CRX package(s)
+* tail logs
+* checkout JCR content 
+
+with taking into account: 
 
  * type of environment (local, integration, staging, etc)
  * type of AEM instance (author / publish)
 
-Example cases:
+by filtering instances by names, e.g:
 
 ```bash
 gradlew aemDeploy -Paem.instance.name=integration-*
@@ -1548,6 +1542,21 @@ gradlew aemDeploy -Paem.instance.name=local-author,integration-author
 
 Default value of that instance name filter is `${aem.environment}-*`, so that typically `local-*`.
 Environment value comes from system environment variable `AEM_ENV` or property `aem.env`.
+
+To deploy only to author or publish instances:
+
+```bash
+gradlew aemDeploy -Paem.instance.authors
+gradlew aemDeploy -Paem.instance.publishers
+```
+
+To deploy only to instances specified explicitly:
+
+```bash
+gradlew aemDeploy -Paem.instance.list=[http://admin:admin@localhost:4502,http://admin:admin@localhost:4503]
+```
+
+Instance urls must be delimited by colon.
 
 ### Know how properties are being expanded in instance or package files
 
