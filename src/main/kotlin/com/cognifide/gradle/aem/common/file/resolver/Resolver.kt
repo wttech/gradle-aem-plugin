@@ -50,7 +50,7 @@ abstract class Resolver<G : FileGroup>(
     }
 
     fun allFiles(filter: G.() -> Boolean = { true }): List<File> {
-        return aem.parallel.map(groups.filter(filter)) { it.files }.flatten()
+        return  resolveGroups(filter).flatMap { it.files }
     }
 
     fun resolveGroups(filter: G.() -> Boolean): List<G> {
