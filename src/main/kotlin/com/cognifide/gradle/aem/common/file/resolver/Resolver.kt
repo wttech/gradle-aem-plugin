@@ -30,6 +30,8 @@ abstract class Resolver<G : FileGroup>(
 ) {
     private val project = aem.project
 
+    private val options = aem.config.resolverOptions
+
     private val groupDefault = this.createGroup(GROUP_DEFAULT)
 
     private var groupCurrent = groupDefault
@@ -54,7 +56,7 @@ abstract class Resolver<G : FileGroup>(
     }
 
     fun resolveGroups(filter: G.() -> Boolean = { true }): List<G> {
-        return aem.parallel.pool(PARALLEL_POOL_SIZE, PARALLEL_POOL_NAME, groups.filter(filter)) { it.files; it }
+        return aem.parallel.pool(options.parallelLevel, PARALLEL_POOL_NAME, groups.filter(filter)) { it.files; it }
     }
 
     fun group(name: String): G {
