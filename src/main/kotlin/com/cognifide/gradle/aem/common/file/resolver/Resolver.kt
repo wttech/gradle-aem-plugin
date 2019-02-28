@@ -30,7 +30,7 @@ abstract class Resolver<G : FileGroup>(
 ) {
     private val project = aem.project
 
-    private val options = aem.config.resolverOptions
+    // TODO private val options = aem.config.resolverOptions
 
     private val groupDefault = this.createGroup(GROUP_DEFAULT)
 
