@@ -56,7 +56,8 @@ abstract class Resolver<G : FileGroup>(
     }
 
     fun resolveGroups(filter: G.() -> Boolean = { true }): List<G> {
-        return aem.parallel.pool(options.parallelLevel, PARALLEL_POOL_NAME, groups.filter(filter)) { it.files; it }
+        // TODO return aem.parallel.pool(options.parallelLevel, PARALLEL_POOL_NAME, groups.filter(filter)) { it.files; it }
+        return groups.filter(filter).onEach { it.files }
     }
 
     fun group(name: String): G {
