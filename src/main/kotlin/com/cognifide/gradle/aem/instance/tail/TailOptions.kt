@@ -45,7 +45,7 @@ class TailOptions(val aem: AemExtension, val taskName: String) {
      * Changes in that file are automatically considered (tailer restart is not required).
      */
     var incidentFilterPath = aem.props.string("aem.tail.incidentFilterPath")
-            ?: "${aem.project.rootProject.file("aem/gradle/tail/incidentFilter.txt")}"
+            ?: "${aem.configCommonDir}/tail/incidentFilter.txt"
 
     /**
      * Time window in which exceptions will be aggregated and reported as single incident.
