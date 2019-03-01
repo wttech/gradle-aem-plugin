@@ -76,7 +76,7 @@ class Config(
      * Useful to share same files for all packages, like package thumbnail.
      */
     @Input
-    var packageMetaCommonRoot: String = "${aem.project.rootProject.file("aem/gradle/${Package.META_PATH}")}"
+    var packageMetaCommonRoot: String = "${aem.configCommonDir}/${Package.META_PATH}"
 
     /**
      * Content path for OSGi bundle jars being placed in CRX package.
@@ -151,7 +151,7 @@ class Config(
      * Convention location in which Groovy Script to be evaluated via instance sync will be searched for by file name.
      */
     @Internal
-    var groovyScriptRoot: String = "${aem.project.file("gradle/groovyScript")}"
+    var groovyScriptRoot: String = "${aem.configDir}/groovyScript"
 
     init {
         // Define through command line

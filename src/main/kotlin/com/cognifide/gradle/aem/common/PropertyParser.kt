@@ -34,7 +34,7 @@ class PropertyParser(private val aem: AemExtension) {
     }
 
     fun flag(name: String): Boolean {
-        val value = prop(name) ?: return false
+        val value = find(name) ?: return false
 
         return if (!value.isBlank()) value.toBoolean() else true
     }

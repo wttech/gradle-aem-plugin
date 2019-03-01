@@ -19,7 +19,7 @@ class ReloadAction(aem: AemExtension) : AwaitAction(aem) {
     private fun reload() {
         val reloaded = mutableListOf<Instance>()
 
-        aem.parallelWith(instances) {
+        aem.parallel.with(instances) {
             try {
                 sync.restartFramework()
                 reloaded += this
