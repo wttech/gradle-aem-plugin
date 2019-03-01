@@ -7,6 +7,7 @@ import com.cognifide.gradle.aem.instance.names
 import java.io.File
 import org.gradle.api.execution.TaskExecutionGraph
 import org.gradle.api.file.DuplicatesStrategy
+import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.bundling.ZipEntryCompression
 
 open class Backup : ZipTask() {
@@ -19,6 +20,7 @@ open class Backup : ZipTask() {
         entryCompression = ZipEntryCompression.STORED
     }
 
+    @get:Internal
     val available: List<File>
         get() {
             return (destinationDir.listFiles { _, name -> name.endsWith("-$classifier.$extension") } ?: arrayOf())

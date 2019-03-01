@@ -5,8 +5,6 @@ import java.io.Serializable
 
 class ResolverOptions(aem: AemExtension) : Serializable {
 
-    var parallelLevel = aem.props.int("aem.resolver.parallelLevel") ?: 3
-
     var httpUsername: String? = aem.props.string("aem.resolver.http.username")
 
     var httpPassword: String? = aem.props.string("aem.resolver.http.password")

@@ -33,6 +33,18 @@ open class AemExtension(@Internal val project: Project) {
     val props = PropertyParser(this)
 
     /**
+     * Project under which common configuration files are stored.
+     * Usually it is also a project which is building full assembly CRX package.
+     *
+     * Convention assumes in case of:
+     * - multi-project build - subproject with path ':aem'
+     * - single-project build - root project
+     */
+    @get:Internal
+    @get:JsonIgnore
+    val projectMain: Project = project.findProject(props.string("aem.projectMainPath") ?: ":aem") ?: project.rootProject
+
+    /**
      * Project name convention prefixes used to determine default:
      *
      * - bundle install subdirectory
@@ -54,18 +66,6 @@ open class AemExtension(@Internal val project: Project) {
         get() = project.name.run {
             var n = this; projectPrefixes.forEach { n = n.removePrefix(it) }; n
         }
-
-    /**
-     * Project under which common configuration files are stored.
-     * Usually it is also a project which is building full assembly CRX package.
-     *
-     * Convention assumes in case of:
-     * - multi-project build - subproject with path ':aem'
-     * - single-project build - root project
-     */
-    @get:Internal
-    @get:JsonIgnore
-    val projectMain: Project = project.findProject(props.string("aem.projectMainPath") ?: ":aem") ?: project.rootProject
 
     /**
      * Base name used as default for CRX packages being created by compose or collect task

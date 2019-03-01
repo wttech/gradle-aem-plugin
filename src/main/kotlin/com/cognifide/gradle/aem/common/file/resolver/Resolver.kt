@@ -3,7 +3,6 @@ package com.cognifide.gradle.aem.common.file.resolver
 import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.DependencyOptions
 import com.cognifide.gradle.aem.common.Formats
-import com.cognifide.gradle.aem.common.Patterns
 import com.cognifide.gradle.aem.common.file.FileException
 import com.cognifide.gradle.aem.common.file.downloader.HttpFileDownloader
 import com.cognifide.gradle.aem.common.file.downloader.SftpFileDownloader
@@ -30,14 +29,13 @@ abstract class Resolver<G : FileGroup>(
 ) {
     private val project = aem.project
 
-    // TODO private val options = aem.config.resolverOptions
-
     private val groupDefault = this.createGroup(GROUP_DEFAULT)
 
     private var groupCurrent = groupDefault
 
     private val groupsDefined = mutableListOf<G>().apply { add(groupDefault) }
 
+    @get:Internal
     val groups: List<G>
         get() = groupsDefined.filter { it.resolutions.isNotEmpty() }
 
@@ -52,11 +50,10 @@ abstract class Resolver<G : FileGroup>(
     }
 
     fun allFiles(filter: G.() -> Boolean = { true }): List<File> {
-        return  resolveGroups(filter).flatMap { it.files }
+        return resolveGroups(filter).flatMap { it.files }
     }
 
     fun resolveGroups(filter: G.() -> Boolean = { true }): List<G> {
-        // TODO return aem.parallel.pool(options.parallelLevel, PARALLEL_POOL_NAME, groups.filter(filter)) { it.files; it }
         return groups.filter(filter).onEach { it.files }
     }
 
@@ -203,9 +200,5 @@ abstract class Resolver<G : FileGroup>(
         const val GROUP_DEFAULT = "default"
 
         const val DOWNLOAD_LOCK = "download.lock"
-
-        const val PARALLEL_POOL_SIZE = 3
-
-        const val PARALLEL_POOL_NAME = "aem-resolver"
     }
 }

@@ -240,7 +240,7 @@
       "mandatoryFiles" : [ ]
     },
     "packageRoot": "*/src/main/content",
-    "packageMetaCommonRoot": "*/aem/gradle/META-INF",
+    "packageMetaCommonRoot": "*/gradle/META-INF",
     "packageInstallPath" : "/apps/additional/install",
     "packageInstallRepository": true,
     "packageErrors" : [

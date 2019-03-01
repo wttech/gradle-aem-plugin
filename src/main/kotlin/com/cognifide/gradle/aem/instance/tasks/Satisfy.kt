@@ -11,11 +11,11 @@ import com.cognifide.gradle.aem.pkg.resolver.PackageGroup
 import com.cognifide.gradle.aem.pkg.resolver.PackageResolver
 import com.cognifide.gradle.aem.pkg.tasks.Deploy
 import com.fasterxml.jackson.annotation.JsonIgnore
+import java.io.File
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
-import java.io.File
 
 open class Satisfy : Deploy() {
 

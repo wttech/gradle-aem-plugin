@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.common
 
-import kotlinx.coroutines.*
 import kotlin.coroutines.CoroutineContext
+import kotlinx.coroutines.*
 
 @UseExperimental(ObsoleteCoroutinesApi::class)
 class ParallelExecutor(aem: AemExtension) {
@@ -31,10 +31,6 @@ class ParallelExecutor(aem: AemExtension) {
     }
 
     fun <A> with(iterable: Iterable<A>, callback: A.() -> Unit) {
-        map(iterable) {
-            it.apply(callback)
-            Unit
-        }
+        map(iterable) { it.apply(callback); Unit }
     }
-
 }
