@@ -6,9 +6,9 @@ import com.cognifide.gradle.aem.instance.tail.io.LogFiles
 import com.cognifide.gradle.aem.instance.tail.io.UrlSource
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import org.gradle.process.internal.shutdown.ShutdownHooks
 
 class InstanceTailer(val options: TailOptions, val instances: List<Instance>) {
 
@@ -17,16 +17,12 @@ class InstanceTailer(val options: TailOptions, val instances: List<Instance>) {
     private val logFiles = LogFiles(options)
 
     fun tail() {
-        var shouldRunTailing = true
-        ShutdownHooks.addShutdownHook {
-            shouldRunTailing = false
-        }
         checkStartLock()
 
         runBlocking {
             startAll().forEach { tailer ->
                 launch {
-                    while (shouldRunTailing) {
+                    while (isActive) {
                         logFiles.lock()
                         tailer.tail()
                         delay(options.fetchInterval)
