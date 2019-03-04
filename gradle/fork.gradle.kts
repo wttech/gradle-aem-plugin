@@ -14,8 +14,9 @@ configure<ForkExtension> {
     inPlaceConfig("version") {
         eachTextFiles("**/*.gradle.kts") {
             amend {
+                it.replace("version = \"${project.version}\"", render("version = \"{{version}}\""))
                 it.replace(
-                        "implementation\\(\"com.cognifide.gradle:aem-plugin:(\\d.\\d.\\d)\")\\)",
+                        "implementation(\"com.cognifide.gradle:aem-plugin:${project.version}\")",
                         render("implementation(\"com.cognifide.gradle:aem-plugin:{{version}}\")")
                 )
             }
