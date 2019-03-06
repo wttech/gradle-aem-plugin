@@ -97,6 +97,10 @@ tasks {
         useJUnitPlatform()
         dependsOn(named("publishToMavenLocal"))
     }
+    
+    named("afterReleaseBuild") {
+        dependsOn("bintrayUpload")
+    }
 }
 
 detekt {
