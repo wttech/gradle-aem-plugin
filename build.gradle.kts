@@ -8,10 +8,11 @@ plugins {
     id("io.gitlab.arturbosch.detekt")
     id("com.jfrog.bintray")
     id("com.neva.fork")
+    id("net.researchgate.release")
 }
 
 group = "com.cognifide.gradle"
-version = "6.1.1"
+version = "6.1.2"
 description = "Gradle AEM Plugin"
 defaultTasks = listOf("build", "publishToMavenLocal")
 

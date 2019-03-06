@@ -11,4 +11,6 @@ dependencies {
     implementation("io.gitlab.arturbosch.detekt:detekt-gradle-plugin:1.0.0-RC14")
     implementation("com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4")
     implementation("com.neva.gradle:fork-plugin:3.0.6")
+    implementation("net.researchgate:gradle-release:2.6.0")
+
 }
