@@ -12,6 +12,11 @@ configure<ForkExtension> {
         ))
     }
     inPlaceConfig("version") {
+        eachTextFiles("gradle.properties") {
+            amend {
+                it.replace("version=${project.version}", render("version={{version}}"))
+            }
+        }
         eachTextFiles("build.gradle.kts") {
             amend {
                 it.replace("version = \"${project.version}\"", render("version = \"{{version}}\""))
