@@ -28,3 +28,4 @@ Tailer is tool based on Gradle AEM Plugin task named `aemTail`. See [documentati
 
 * After updating file *incidentFilter.txt* tool does not need to be restarted.
 * By clicking on incident GUI notification, file with corresponding logs will be opened. On Windows, consider setting nicer than *Notepad* default text editor for *.log files (e.g [Notepad++](https://notepad-plus-plus.org)) to use it immediatelly after clicking on notification.
+![](././changedefault.png)
