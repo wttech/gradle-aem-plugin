@@ -101,6 +101,10 @@ tasks {
     named("afterReleaseBuild") {
         dependsOn("bintrayUpload")
     }
+    
+    named("updateVersion") {
+        enabled = false
+    }
 }
 
 detekt {
