@@ -12,7 +12,7 @@ plugins {
 }
 
 group = "com.cognifide.gradle"
-version = "6.1.2"
+version = "6.1.3"
 description = "Gradle AEM Plugin"
 defaultTasks = listOf("build", "publishToMavenLocal")
 
@@ -51,7 +51,7 @@ dependencies {
     testImplementation("org.skyscreamer:jsonassert:1.5.0")
     testImplementation("org.junit-pioneer:junit-pioneer:0.2.2")
 
-    "detektPlugins"("io.gitlab.arturbosch.detekt:detekt-formatting:1.0.0-RC11")
+    "detektPlugins"("io.gitlab.arturbosch.detekt:detekt-formatting:1.0.0-RC14")
 }
 
 tasks {

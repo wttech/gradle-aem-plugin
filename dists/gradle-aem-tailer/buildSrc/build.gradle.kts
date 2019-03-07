@@ -6,5 +6,5 @@ repositories {
 }
 
 dependencies {
-    implementation("com.cognifide.gradle:aem-plugin:6.1.2")
+    implementation("com.cognifide.gradle:aem-plugin:6.1.3")
 }
