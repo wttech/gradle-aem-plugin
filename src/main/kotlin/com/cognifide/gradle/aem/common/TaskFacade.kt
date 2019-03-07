@@ -21,7 +21,8 @@ class TaskFacade(private val aem: AemExtension) {
 
     private val bundleMap = mutableMapOf<String, BundleJar>()
 
-    val bundles: List<BundleJar> = getAll(Jar::class.java).map { bundle(it) }
+    val bundles: List<BundleJar>
+        get() = getAll(Jar::class.java).map { bundle(it) }
 
     init {
         project.afterEvaluate {
