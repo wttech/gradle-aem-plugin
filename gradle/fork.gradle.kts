@@ -17,11 +17,6 @@ configure<ForkExtension> {
                 it.replace("version=${project.version}", render("version={{version}}"))
             }
         }
-        eachTextFiles("build.gradle.kts") {
-            amend {
-                it.replace("version = \"${project.version}\"", render("version = \"{{version}}\""))
-            }
-        }
         eachTextFiles("**/*.gradle.kts") {
             amend {
                 it.replace(
