@@ -63,6 +63,7 @@ Also keep in mind, that GAP 6.x is **temporarily supporting only Gradle 5.x** (i
            * [Default cleaning configuration](#default-cleaning-configuration)
            * [Rendition cleaning configuration](#rendition-cleaning-configuration)
            * [Using alternative transfer type](#using-alternative-transfer-type)
+           * [Downloading package options](#downloading-package-options)
            * [Copying or cleaning content only](#copying-or-cleaning-content-only)
            * [Filter file at custom path](#filter-file-at-custom-path)
            * [Filter roots specified explicitly](#filter-roots-specified-explicitly)
@@ -466,6 +467,22 @@ Available transfer types: *package_download* (default) and *vlt_checkout*.
 
 ```bash
 gradlew :content:aemSync -Paem.sync.type=vlt_checkout
+```
+
+##### Downloading package options
+
+When transfer type is set to *package_download* then it is also possible to...
+
+Download package only without extracting:
+
+```bash
+gradlew :content:aemSync -Paem.packageDownload.extract=false
+```
+
+Download, delete all previous JCR root contents then extract fresh content:
+
+```bash
+gradlew :content:aemSync -Paem.force
 ```
 
 ##### Copying or cleaning content only
