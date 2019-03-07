@@ -51,7 +51,7 @@ dependencies {
     testImplementation("org.skyscreamer:jsonassert:1.5.0")
     testImplementation("org.junit-pioneer:junit-pioneer:0.2.2")
 
-    "detektPlugins"("io.gitlab.arturbosch.detekt:detekt-formatting:1.0.0-RC11")
+    "detektPlugins"("io.gitlab.arturbosch.detekt:detekt-formatting:1.0.0-RC14")
 }
 
 tasks {
