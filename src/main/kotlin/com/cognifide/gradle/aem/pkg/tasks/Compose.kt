@@ -143,25 +143,12 @@ open class Compose : ZipTask() {
                 }
             }
 
-            if (groupId.isBlank()) {
-                groupId = group
-            }
-
             if (name.isBlank()) {
                 name = baseName
             }
 
-            if (artifactId.isBlank()) {
-                artifactId = name
-            }
-
             if (version.isBlank()) {
                 version = project.version.toString()
-            }
-
-            // TODO handle not generating / null case
-            if (createdBy.isBlank()) {
-                createdBy = System.getProperty("user.name")
             }
         }
 

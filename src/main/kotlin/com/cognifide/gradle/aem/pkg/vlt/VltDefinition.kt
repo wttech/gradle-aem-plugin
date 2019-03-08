@@ -7,19 +7,27 @@ import org.gradle.api.tasks.Internal
 import org.jsoup.nodes.Element
 
 // TODO handle skipping properties like createdBy (nulls allowed?)
-class VltDefinition(val aem: AemExtension) {
+open class VltDefinition(val aem: AemExtension) {
 
     /**
      * Name visible in CRX package manager
      */
     @Input
     var name: String = ""
+        set(value) {
+            field = value
+            artifactId = value
+        }
 
     /**
-     * Group for categorizing in CRX package manager
+     * Group for categorizing in qCRX package manager
      */
     @Input
     var group: String = ""
+        set(value) {
+            field = value
+            groupId = value
+        }
 
     /**
      * Version visible in CRX package manager.
@@ -37,7 +45,7 @@ class VltDefinition(val aem: AemExtension) {
     var description: String = ""
 
     @Input
-    var createdBy: String = ""
+    var createdBy: String = System.getProperty("user.name")
 
     @Internal
     var filterElements: MutableList<Element> = mutableListOf()

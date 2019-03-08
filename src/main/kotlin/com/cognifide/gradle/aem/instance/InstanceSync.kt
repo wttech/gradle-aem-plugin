@@ -16,8 +16,6 @@ import org.zeroturnaround.zip.ZipUtil
 @Suppress("LargeClass", "TooManyFunctions")
 class InstanceSync(aem: AemExtension, instance: Instance) : InstanceHttpClient(aem, instance) {
 
-    fun composePackage(definition: VltDefinition.() -> Unit) = aem.packageComposer.compose(definition)
-
     fun getPackage(file: File, refresh: Boolean = true, retry: Retry = aem.retry()): Package {
         if (!file.exists()) {
             throw PackageException("Package $file does not exist so it cannot be resolved on $instance")
@@ -112,6 +110,11 @@ class InstanceSync(aem: AemExtension, instance: Instance) : InstanceHttpClient(a
         return response
     }
 
+    fun composePackage(definition: VltDefinition.() -> Unit) = aem.packageComposer.compose(definition)
+
+    fun composePackage(file: File, definition: VltDefinition.() -> Unit) = aem.packageComposer.compose(file, definition)
+
+    // TODO allow to download to desired location
     fun downloadPackage(definition: VltDefinition.() -> Unit): File {
         var path: String? = null
         try {
