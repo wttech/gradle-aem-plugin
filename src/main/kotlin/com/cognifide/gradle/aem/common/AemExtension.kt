@@ -6,6 +6,7 @@ import com.cognifide.gradle.aem.common.http.HttpClient
 import com.cognifide.gradle.aem.config.Config
 import com.cognifide.gradle.aem.config.ConfigPlugin
 import com.cognifide.gradle.aem.instance.*
+import com.cognifide.gradle.aem.pkg.PackageComposer
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.Compose
 import com.cognifide.gradle.aem.pkg.vlt.VltFilter
@@ -229,6 +230,9 @@ open class AemExtension(@Internal val project: Project) {
         get() = instances.filterIsInstance(RemoteInstance::class.java)
 
     fun remoteInstances(consumer: RemoteInstance.() -> Unit) = parallel.with(remoteInstances, consumer)
+
+    @get:Internal
+    val packageComposer = PackageComposer(this)
 
     fun packages(consumer: (File) -> Unit) = parallel.with(packages, consumer)
 

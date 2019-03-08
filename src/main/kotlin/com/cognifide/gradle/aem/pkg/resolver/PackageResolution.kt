@@ -45,7 +45,7 @@ class PackageResolution(group: PackageGroup, id: String, action: (FileResolution
         val pkgPath = "${resolver.bundlePath}/${jar.name}"
         val vaultDir = File(pkgRoot, Package.VLT_PATH)
 
-        // TODO use sync.composePackage
+        // TODO use 'aem.packageComposer.compose()'
 
         // Copy package template files
         GFileUtils.mkdirs(vaultDir)
