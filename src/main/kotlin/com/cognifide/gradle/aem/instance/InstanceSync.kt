@@ -120,12 +120,13 @@ class InstanceSync(aem: AemExtension, instance: Instance) : InstanceHttpClient(a
             var path: String? = null
             try {
                 val pkg = uploadPackage(file)
+                file.delete()
+
                 path = pkg.path
                 buildPackage(path)
 
                 downloadPackage(path, file)
             } finally {
-                file.delete()
                 if (path != null) {
                     deletePackage(path)
                 }
