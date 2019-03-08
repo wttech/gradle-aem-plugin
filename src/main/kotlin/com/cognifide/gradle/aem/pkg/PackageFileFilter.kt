@@ -102,11 +102,12 @@ class PackageFileFilter(project: Project) : Serializable {
                 "jcr_root/.vlt-sync-config.properties"
         )
 
+        // TODO remove it
         val FILE_PROPERTIES = mapOf(
                 "compose" to mapOf(
                         "vaultFilters" to mapOf<String, String>(),
-                        "vaultNodeTypesLibs" to listOf<String>(),
-                        "vaultNodeTypesLines" to listOf<String>(),
+                        "vaultNodeTypeLibs" to listOf<String>(),
+                        "vaultNodeTypeLines" to listOf<String>(),
                         "vaultProperties" to mapOf(
                                 "acHandling" to "merge_preserve",
                                 "requiresRoot" to false

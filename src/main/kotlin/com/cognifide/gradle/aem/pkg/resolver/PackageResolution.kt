@@ -8,7 +8,7 @@ import com.cognifide.gradle.aem.instance.Bundle
 import com.cognifide.gradle.aem.pkg.Package
 import com.cognifide.gradle.aem.pkg.PackageException
 import com.cognifide.gradle.aem.pkg.PackageFileFilter
-import com.cognifide.gradle.aem.tooling.vlt.VltFilter
+import com.cognifide.gradle.aem.pkg.vlt.VltFilter
 import java.io.File
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.FilenameUtils
@@ -44,6 +44,8 @@ class PackageResolution(group: PackageGroup, id: String, action: (FileResolution
         val pkgRoot = File(dir, pkgName)
         val pkgPath = "${resolver.bundlePath}/${jar.name}"
         val vaultDir = File(pkgRoot, Package.VLT_PATH)
+
+        // TODO use sync.composePackage
 
         // Copy package template files
         GFileUtils.mkdirs(vaultDir)

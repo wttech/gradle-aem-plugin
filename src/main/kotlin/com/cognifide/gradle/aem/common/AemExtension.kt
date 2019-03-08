@@ -8,9 +8,9 @@ import com.cognifide.gradle.aem.config.ConfigPlugin
 import com.cognifide.gradle.aem.instance.*
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.Compose
-import com.cognifide.gradle.aem.tooling.*
+import com.cognifide.gradle.aem.pkg.vlt.VltFilter
+import com.cognifide.gradle.aem.tooling.ToolingPlugin
 import com.cognifide.gradle.aem.tooling.vlt.VltException
-import com.cognifide.gradle.aem.tooling.vlt.VltFilter
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 import java.time.ZoneId
@@ -263,7 +263,7 @@ open class AemExtension(@Internal val project: Project) {
         }
     }
 
-    fun <T> http(consumer: HttpClient.() -> T) = HttpClient(project).run(consumer)
+    fun <T> http(consumer: HttpClient.() -> T) = HttpClient(this).run(consumer)
 
     fun config(configurer: Config.() -> Unit) {
         config.apply(configurer)
@@ -350,9 +350,16 @@ open class AemExtension(@Internal val project: Project) {
 
     fun temporaryDir(name: String) = AemTask.temporaryDir(project, name)
 
+    fun temporaryFile(name: String) = AemTask.temporaryFile(project, TEMPORARY_DIR, name)
+
+    val temporaryDir: File
+        get() = temporaryDir(TEMPORARY_DIR)
+
     companion object {
 
         const val NAME = "aem"
+
+        const val TEMPORARY_DIR = "tmp"
 
         private val PLUGIN_IDS = listOf(
                 PackagePlugin.ID,

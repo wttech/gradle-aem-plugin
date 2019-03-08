@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.common.http
 
+import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.Formats
 import com.cognifide.gradle.aem.common.file.downloader.HttpFileDownloader
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -25,10 +26,11 @@ import org.apache.http.impl.client.BasicCredentialsProvider
 import org.apache.http.impl.client.HttpClientBuilder
 import org.apache.http.message.BasicNameValuePair
 import org.apache.http.ssl.SSLContextBuilder
-import org.gradle.api.Project
 
 @Suppress("TooManyFunctions")
-open class HttpClient(val project: Project) {
+open class HttpClient(val aem: AemExtension) {
+
+    val project = aem.project
 
     var baseUrl = ""
 
@@ -235,9 +237,15 @@ open class HttpClient(val project: Project) {
         return builder.build()
     }
 
-    fun download(path: String, target: File) = HttpFileDownloader(project, this).download(path, target)
+    fun download(path: String) = download(path, aem.temporaryDir)
 
-    fun downloadTo(path: String, dir: File) = File(dir, path.substringAfterLast("/")).apply { download(path, this) }
+    fun download(path: String, target: File) {
+        HttpFileDownloader(aem, this).download(path, target)
+    }
+
+    fun downloadTo(path: String, dir: File): File {
+        return File(dir, path.substringAfterLast("/")).apply { download(path, this) }
+    }
 
     companion object {
         val STATUS_CODE_VALID = 200 until 300

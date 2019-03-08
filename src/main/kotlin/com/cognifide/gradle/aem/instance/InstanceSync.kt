@@ -1,18 +1,50 @@
 package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.common.*
+import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.http.RequestException
 import com.cognifide.gradle.aem.common.http.ResponseException
 import com.cognifide.gradle.aem.pkg.*
 import com.cognifide.gradle.aem.pkg.tasks.Compose
+import com.cognifide.gradle.aem.pkg.vlt.VltDefinition
 import java.io.File
 import java.io.FileNotFoundException
+import org.apache.commons.io.FilenameUtils
 import org.jsoup.Jsoup
 import org.jsoup.parser.Parser
 import org.zeroturnaround.zip.ZipUtil
 
 @Suppress("LargeClass", "TooManyFunctions")
 class InstanceSync(aem: AemExtension, instance: Instance) : InstanceHttpClient(aem, instance) {
+
+    fun composePackage(definition: VltDefinition.() -> Unit) = composePackage(definition) {}
+
+    fun composePackage(definition: VltDefinition.() -> Unit, amender: (File) -> Unit): File {
+        val pkgDefinition = VltDefinition(aem).apply(definition)
+
+        val pkgFile = File(aem.temporaryDir, "${pkgDefinition.group}-${pkgDefinition.name}-${pkgDefinition.version}.zip")
+        val pkgDir = File(aem.temporaryDir, "${pkgFile.name}_package")
+        val vltDir = File(pkgDir, Package.VLT_PATH)
+        val jcrDir = File(pkgDir, Package.JCR_ROOT)
+
+        pkgFile.delete()
+        pkgDir.deleteRecursively()
+
+        vltDir.mkdirs()
+        jcrDir.mkdirs()
+
+        FileOperations.copyResources(Package.VLT_PATH, vltDir)
+        FileOperations.amendFiles(vltDir, PackageFileFilter.EXPAND_FILES_DEFAULT) { source, content ->
+            aem.props.expandPackage(content, mapOf("definition" to pkgDefinition), source.absolutePath)
+        }
+
+        amender(pkgDir)
+
+        ZipUtil.pack(pkgDir, pkgFile)
+        pkgDir.deleteRecursively()
+
+        return pkgFile
+    }
 
     fun getPackage(file: File, refresh: Boolean = true, retry: Retry = aem.retry()): Package {
         if (!file.exists()) {
@@ -108,7 +140,27 @@ class InstanceSync(aem: AemExtension, instance: Instance) : InstanceHttpClient(a
         return response
     }
 
-    fun downloadPackage(remotePath: String, targetFile: File, retry: Retry = aem.retry()) {
+    fun downloadPackage(definition: VltDefinition.() -> Unit): File {
+        var path: String? = null
+        try {
+            val file = composePackage(definition)
+            val pkg = uploadPackage(file)
+
+            path = pkg.path
+            buildPackage(path)
+
+            file.delete()
+            downloadPackage(path, file)
+
+            return file
+        } finally {
+            if (path != null) {
+                deletePackage(path)
+            }
+        }
+    }
+
+    fun downloadPackage(remotePath: String, targetFile: File = aem.temporaryFile(FilenameUtils.getName(remotePath)), retry: Retry = aem.retry()) {
         return retry.launch<Unit, InstanceException>("download package") {
             downloadPackageOnce(remotePath, targetFile)
         }

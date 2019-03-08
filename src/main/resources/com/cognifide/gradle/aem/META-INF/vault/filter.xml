@@ -1,6 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <workspaceFilter version="1.0">
-  {% for filter in compose.vaultFilters %}
-  {{filter | raw}}
-  {% endfor %}
+  {{ definition.filters | raw }}
 </workspaceFilter>

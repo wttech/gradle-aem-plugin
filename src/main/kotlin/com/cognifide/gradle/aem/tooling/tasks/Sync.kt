@@ -2,7 +2,6 @@ package com.cognifide.gradle.aem.tooling.tasks
 
 import com.cognifide.gradle.aem.common.AemDefaultTask
 import com.cognifide.gradle.aem.common.AemException
-import com.cognifide.gradle.aem.common.AemTask
 import com.cognifide.gradle.aem.common.Formats
 import com.cognifide.gradle.aem.common.Patterns
 import com.cognifide.gradle.aem.pkg.PackageDownloader
@@ -47,7 +46,7 @@ open class Sync : AemDefaultTask() {
 
     private val cleaner = Cleaner(project)
 
-    private val downloader = PackageDownloader(aem, AemTask.temporaryDir(project, name))
+    private val downloader = PackageDownloader(aem)
 
     private val vlt = VltRunner(aem)
 
