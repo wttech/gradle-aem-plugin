@@ -71,12 +71,17 @@ class VltFilter(
             return VltFilter(file, true)
         }
 
-        fun rootElement(xml: String): Element {
-            return Jsoup.parse(xml, "", Parser.xmlParser()).select("filter[root]").first()
+        fun parseElement(xml: String): Element {
+            return Jsoup.parse(xml, "", Parser.xmlParser()).select("filter").first()
         }
 
-        fun rootElementForPath(path: String): Element {
-            return rootElement("<filter root=\"$path\"/>")
+        fun createElement(root: String, mode: String? = null): Element {
+            return parseElement("<filter/>").apply {
+                attr("root", root)
+                if (!mode.isNullOrBlank()) {
+                    attr("mode", mode)
+                }
+            }
         }
     }
 }

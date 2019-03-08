@@ -5,7 +5,6 @@ import com.cognifide.gradle.aem.common.file.resolver.FileResolution
 import com.cognifide.gradle.aem.instance.Bundle
 import com.cognifide.gradle.aem.pkg.Package
 import com.cognifide.gradle.aem.pkg.PackageException
-import com.cognifide.gradle.aem.pkg.vlt.VltFilter
 import java.io.File
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.FilenameUtils
@@ -43,23 +42,24 @@ class PackageResolution(group: PackageGroup, id: String, action: (FileResolution
         val symbolicName = bundle.manifest.mainAttributes.getValue(Bundle.ATTRIBUTE_SYMBOLIC_NAME)
         val group = symbolicName.substringBeforeLast(".")
         val version = bundle.manifest.mainAttributes.getValue(Bundle.ATTRIBUTE_VERSION)
-        val filterElements = listOf(VltFilter.rootElementForPath(bundlePath)).toMutableList()
 
-        return aem.packageComposer.compose(pkg) {
+        return aem.packageComposer.compose {
+            this.file = pkg
             this.description = description
 
             this.group = group
             this.name = symbolicName
             this.version = version
-            this.filterElements = filterElements
-
-            resolver.bundleDefinition(this, bundle)
 
             content { pkgRoot ->
                 val pkgJar = File(pkgRoot, "${Package.JCR_ROOT}$bundlePath")
                 GFileUtils.mkdirs(pkgJar.parentFile)
                 FileUtils.copyFile(jar, pkgJar)
             }
+
+            filter(bundlePath)
+
+            resolver.bundleDefinition(this, bundle)
         }
     }
 }

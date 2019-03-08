@@ -58,6 +58,14 @@ open class VltDefinition(val aem: AemExtension) {
     val filters: String
         get() = filterElements.joinToString(aem.config.lineSeparatorString)
 
+    fun filters(vararg roots: String) = filters(roots.asIterable())
+
+    fun filters(roots: Iterable<String>) = roots.forEach { filter(it) }
+
+    fun filter(root: String, mode: String? = null) {
+        filterElements.add(VltFilter.createElement(root, mode))
+    }
+
     @Internal
     var nodeTypeLibs: MutableList<String> = mutableListOf()
 

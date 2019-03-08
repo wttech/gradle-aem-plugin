@@ -339,7 +339,7 @@ open class Compose : ZipTask() {
         if (!other.vaultFilterPath.isBlank() && File(other.vaultFilterPath).exists()) {
             vaultDefinition.filterElements.addAll(VltFilter(File(other.vaultFilterPath)).rootElements)
         } else if (project.plugins.hasPlugin(BundlePlugin.ID)) {
-            vaultDefinition.filterElements.add(VltFilter.rootElement(vaultFilterDefault(other)))
+            vaultDefinition.filterElements.add(VltFilter.parseElement(vaultFilterDefault(other)))
         }
     }
 

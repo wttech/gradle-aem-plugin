@@ -356,6 +356,7 @@ open class AemExtension(@Internal val project: Project) {
 
     fun temporaryFile(name: String) = AemTask.temporaryFile(project, TEMPORARY_DIR, name)
 
+    @get:Internal
     val temporaryDir: File
         get() = temporaryDir(TEMPORARY_DIR)
 

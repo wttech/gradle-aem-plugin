@@ -15,7 +15,6 @@ class PackageDownloader(@Internal private val aem: AemExtension) {
 
     /**
      * Repeat download when failed (brute-forcing).
-     * TODO consider using it / changing it
      */
     var retry = aem.retry { afterSquaredSecond(aem.props.long("aem.packageDownload.retry") ?: 3) }
 
@@ -35,7 +34,7 @@ class PackageDownloader(@Internal private val aem: AemExtension) {
     }
 
     fun download() {
-        val file = instance.sync.apply(httpOptions).downloadPackage {
+        val file = instance.sync.apply(httpOptions).downloadPackage({
             filterElements = filter.rootElements.toMutableList()
 
             name = aem.baseName
@@ -46,7 +45,7 @@ class PackageDownloader(@Internal private val aem: AemExtension) {
             artifactId = name
 
             description = aem.project.description.orEmpty()
-        }
+        }, retry)
 
         if (extract) {
             val jcrRoot = File(aem.config.packageJcrRoot)

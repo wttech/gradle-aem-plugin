@@ -5,7 +5,6 @@ import com.cognifide.gradle.aem.common.http.RequestException
 import com.cognifide.gradle.aem.common.http.ResponseException
 import com.cognifide.gradle.aem.pkg.*
 import com.cognifide.gradle.aem.pkg.tasks.Compose
-import com.cognifide.gradle.aem.pkg.vlt.VltDefinition
 import java.io.File
 import java.io.FileNotFoundException
 import org.apache.commons.io.FilenameUtils
@@ -110,30 +109,33 @@ class InstanceSync(aem: AemExtension, instance: Instance) : InstanceHttpClient(a
         return response
     }
 
-    fun composePackage(definition: VltDefinition.() -> Unit) = aem.packageComposer.compose(definition)
+    /**
+     * Upload source package (usually empty) to instance then build it.
+     * Finally download built package to target file then delete previously uploaded & built package (clean up).
+     */
+    fun downloadPackage(definition: PackageDefinition.() -> Unit, retry: Retry): File {
+        return retry.launch<File, InstanceException>("download package") {
+            val file = aem.packageComposer.compose(definition)
 
-    fun composePackage(file: File, definition: VltDefinition.() -> Unit) = aem.packageComposer.compose(file, definition)
+            var path: String? = null
+            try {
+                val pkg = uploadPackage(file)
+                path = pkg.path
+                buildPackage(path)
 
-    // TODO allow to download to desired location
-    fun downloadPackage(definition: VltDefinition.() -> Unit): File {
-        var path: String? = null
-        try {
-            val file = composePackage(definition)
-            val pkg = uploadPackage(file)
-
-            path = pkg.path
-            buildPackage(path)
-
-            file.delete()
-            downloadPackage(path, file)
+                downloadPackage(path, file)
+            } finally {
+                file.delete()
+                if (path != null) {
+                    deletePackage(path)
+                }
+            }
 
             return file
-        } finally {
-            if (path != null) {
-                deletePackage(path)
-            }
         }
     }
+
+    fun downloadPackage(definition: PackageDefinition.() -> Unit) = downloadPackage(definition, aem.retry())
 
     fun downloadPackage(remotePath: String, targetFile: File = aem.temporaryFile(FilenameUtils.getName(remotePath)), retry: Retry = aem.retry()) {
         return retry.launch<Unit, InstanceException>("download package") {
@@ -167,6 +169,10 @@ class InstanceSync(aem: AemExtension, instance: Instance) : InstanceHttpClient(a
         if (!response.isSuccess) {
             throw InstanceException("Cannot build package $remotePath on $instance. Reason: ${interpretFail(response.msg)}.")
         }
+
+        downloadPackage {
+        }
+
         return response
     }
 
