@@ -30,7 +30,7 @@ open class Collect : ZipTask() {
 
     @get:Internal
     val builtPackages: List<File>
-        get() = aem.packagesDependent(this)
+        get() = aem.dependentPackages(this)
 
     init {
         description = "Composes CRX package from all CRX packages being satisfied and built."

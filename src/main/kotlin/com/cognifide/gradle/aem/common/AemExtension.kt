@@ -238,7 +238,7 @@ open class AemExtension(@Internal val project: Project) {
         get() = project.tasks.withType(Compose::class.java)
                 .map { it.archivePath }
 
-    fun packagesDependent(task: Task): List<File> {
+    fun dependentPackages(task: Task): List<File> {
         return task.taskDependencies.getDependencies(task)
                 .filterIsInstance(Compose::class.java)
                 .map { it.archivePath }
