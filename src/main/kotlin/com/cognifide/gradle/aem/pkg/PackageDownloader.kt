@@ -36,15 +36,6 @@ class PackageDownloader(@Internal private val aem: AemExtension) {
     fun download() {
         val file = instance.sync.apply(httpOptions).downloadPackage({
             filterElements = filter.rootElements.toMutableList()
-
-            name = aem.baseName
-            group = aem.project.group.toString()
-            version = PKG_VERSION
-
-            groupId = group
-            artifactId = name
-
-            description = aem.project.description.orEmpty()
         }, retry)
 
         if (extract) {

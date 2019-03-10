@@ -8,12 +8,6 @@
     <entry key="group">{{definition.group}}</entry>
     <entry key="name">{{definition.name}}</entry>
     <entry key="version">{{definition.version}}</entry>
-    {% if definition.groupId is not empty %}
-    <entry key="groupId">{{definition.groupId}}</entry>
-    {% endif %}
-    {% if definition.artifactId is not empty %}
-    <entry key="artifactId">{{definition.artifactId}}</entry>
-    {% endif %}
     {% if definition.createdBy is not empty %}
     <entry key="createdBy">{{definition.createdBy}}</entry>
     {% endif %}

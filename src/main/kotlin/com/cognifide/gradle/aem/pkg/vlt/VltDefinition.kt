@@ -17,34 +17,18 @@ open class VltDefinition(@Internal internal val aem: AemExtension) {
      */
     @Input
     var name: String = ""
-        set(value) {
-            field = value
-            artifactId = value
-        }
 
     /**
      * Group for categorizing in qCRX package manager
      */
     @Input
     var group: String = ""
-        set(value) {
-            field = value
-            groupId = value
-        }
 
     /**
      * Version visible in CRX package manager.
      */
     @Input
     var version: String = ""
-
-    @Input
-    @Optional
-    var artifactId: String? = null
-
-    @Input
-    @Optional
-    var groupId: String? = null
 
     @Input
     @Optional

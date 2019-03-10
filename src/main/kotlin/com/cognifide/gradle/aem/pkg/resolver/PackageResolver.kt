@@ -11,7 +11,7 @@ import org.gradle.api.tasks.Internal
 class PackageResolver(aem: AemExtension, downloadDir: File) : Resolver<PackageGroup>(aem, downloadDir) {
 
     /**
-     * Determines a path in JCR repository in which automatic wrapped bundles will be deployed.
+     * Determines a path in JCR repository in which automatically wrapped bundles will be deployed.
      */
     @Input
     var bundlePath: String = "/apps/gradle-aem-plugin/wrap/install"

@@ -108,7 +108,7 @@ class InstanceSync(aem: AemExtension, instance: Instance) : InstanceHttpClient(a
     fun downloadPackage(definition: PackageDefinition.() -> Unit, retry: Retry): File {
         return retry.launch<File, InstanceException>("download package") {
             val file = aem.composePackage {
-                classifier = "download"
+                version = "download" // prevents CRX package from task 'Compose' being replaced
                 definition()
             }
 

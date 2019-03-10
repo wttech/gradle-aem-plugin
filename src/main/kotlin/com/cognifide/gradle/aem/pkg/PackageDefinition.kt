@@ -37,8 +37,9 @@ class PackageDefinition(aem: AemExtension) : VltDefinition(aem) {
 
     private var archivePathCustom: File? = null
 
-    val archiveBaseName = listOf(baseName, appendix, version, classifier)
-            .filter { !it.isNullOrBlank() }.joinToString("-")
+    val archiveBaseName: String
+        get() = listOf(baseName, appendix, version, classifier)
+                .filter { !it.isNullOrBlank() }.joinToString("-")
 
     /**
      * ZIP file name
@@ -47,7 +48,7 @@ class PackageDefinition(aem: AemExtension) : VltDefinition(aem) {
         set(value) {
             archiveNameCustom = value
         }
-        get() = "$archiveBaseName.$extension"
+        get() = archiveNameCustom ?: "$archiveBaseName.$extension"
 
     private var archiveNameCustom: String? = null
 
@@ -55,7 +56,7 @@ class PackageDefinition(aem: AemExtension) : VltDefinition(aem) {
      * Temporary directory being zipped to produce CRX package.
      */
     val pkgDir: File
-        get() = File(destinationDir, archiveBaseName)
+        get() = File(archivePath.parentFile, archivePath.nameWithoutExtension)
 
     val metaDir: File
         get() = File(pkgDir, Package.META_PATH)
