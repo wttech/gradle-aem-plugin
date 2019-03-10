@@ -64,49 +64,41 @@ class InstanceSync(aem: AemExtension, instance: Instance) : InstanceHttpClient(a
 
     fun listPackages(retry: Retry = aem.retry()): ListResponse {
         return retry.launch<ListResponse, InstanceException>("list packages") {
-            listPackagesOnce()
-        }
-    }
-
-    private fun listPackagesOnce(): ListResponse {
-        return try {
-            postMultipart(PKG_MANAGER_LIST_JSON) { asObjectFromJson(it, ListResponse::class.java) }
-        } catch (e: RequestException) {
-            throw InstanceException("Cannot list packages on $instance. Reason: request failed.", e)
-        } catch (e: ResponseException) {
-            throw InstanceException("Malformed response after listing packages on $instance.", e)
+            return try {
+                postMultipart(PKG_MANAGER_LIST_JSON) { asObjectFromJson(it, ListResponse::class.java) }
+            } catch (e: RequestException) {
+                throw InstanceException("Cannot list packages on $instance. Reason: request failed.", e)
+            } catch (e: ResponseException) {
+                throw InstanceException("Malformed response after listing packages on $instance.", e)
+            }
         }
     }
 
     fun uploadPackage(file: File, force: Boolean = true, retry: Retry = aem.retry()): UploadResponse {
         return retry.launch<UploadResponse, InstanceException>("upload package") {
-            uploadPackageOnce(file, force)
+            val url = "$PKG_MANAGER_JSON_PATH/?cmd=upload"
+
+            aem.logger.info("Uploading package $file to $instance'")
+
+            val response = try {
+                postMultipart(url, mapOf(
+                        "package" to file,
+                        "force" to (force || isSnapshot(file))
+                )) { asObjectFromJson(it, UploadResponse::class.java) }
+            } catch (e: FileNotFoundException) {
+                throw PackageException("Package file $file to be uploaded not found!", e)
+            } catch (e: RequestException) {
+                throw InstanceException("Cannot upload package $file to $instance. Reason: request failed.", e)
+            } catch (e: ResponseException) {
+                throw InstanceException("Malformed response after uploading package $file to $instance.", e)
+            }
+
+            if (!response.isSuccess) {
+                throw InstanceException("Cannot upload package $file to $instance. Reason: ${interpretFail(response.msg)}.")
+            }
+
+            return response
         }
-    }
-
-    private fun uploadPackageOnce(file: File, force: Boolean): UploadResponse {
-        val url = "$PKG_MANAGER_JSON_PATH/?cmd=upload"
-
-        aem.logger.info("Uploading package $file to $instance'")
-
-        val response = try {
-            postMultipart(url, mapOf(
-                    "package" to file,
-                    "force" to (force || isSnapshot(file))
-            )) { asObjectFromJson(it, UploadResponse::class.java) }
-        } catch (e: FileNotFoundException) {
-            throw PackageException("Package file $file to be uploaded not found!", e)
-        } catch (e: RequestException) {
-            throw InstanceException("Cannot upload package $file to $instance. Reason: request failed.", e)
-        } catch (e: ResponseException) {
-            throw InstanceException("Malformed response after uploading package $file to $instance.", e)
-        }
-
-        if (!response.isSuccess) {
-            throw InstanceException("Cannot upload package $file to $instance. Reason: ${interpretFail(response.msg)}.")
-        }
-
-        return response
     }
 
     /**
@@ -140,17 +132,13 @@ class InstanceSync(aem: AemExtension, instance: Instance) : InstanceHttpClient(a
 
     fun downloadPackage(remotePath: String, targetFile: File = aem.temporaryFile(FilenameUtils.getName(remotePath)), retry: Retry = aem.retry()) {
         return retry.launch<Unit, InstanceException>("download package") {
-            downloadPackageOnce(remotePath, targetFile)
-        }
-    }
+            aem.logger.info("Downloading package from $remotePath to file $targetFile")
 
-    private fun downloadPackageOnce(remotePath: String, targetFile: File) {
-        aem.logger.info("Downloading package from $remotePath to file $targetFile")
+            download(remotePath, targetFile)
 
-        download(remotePath, targetFile)
-
-        if (!targetFile.exists()) {
-            throw InstanceException("Downloaded package is missing: ${targetFile.path}")
+            if (!targetFile.exists()) {
+                throw InstanceException("Downloaded package is missing: ${targetFile.path}")
+            }
         }
     }
 
@@ -171,38 +159,31 @@ class InstanceSync(aem: AemExtension, instance: Instance) : InstanceHttpClient(a
             throw InstanceException("Cannot build package $remotePath on $instance. Reason: ${interpretFail(response.msg)}.")
         }
 
-        downloadPackage {
-        }
-
         return response
     }
 
     fun installPackage(remotePath: String, recursive: Boolean = true, retry: Retry = aem.retry()): InstallResponse {
         return retry.launch<InstallResponse, InstanceException>("install package") {
-            installPackageOnce(remotePath, recursive)
+            val url = "$PKG_MANAGER_HTML_PATH$remotePath/?cmd=install"
+
+            aem.logger.info("Installing package $remotePath on $instance")
+
+            val response = try {
+                postMultipart(url, mapOf("recursive" to recursive)) { InstallResponse.from(asStream(it), aem.config.packageResponseBuffer) }
+            } catch (e: RequestException) {
+                throw InstanceException("Cannot install package $remotePath on $instance. Reason: request failed.", e)
+            } catch (e: ResponseException) {
+                throw InstanceException("Malformed response after installing package $remotePath on $instance.")
+            }
+
+            if (response.hasPackageErrors(aem.config.packageErrors)) {
+                throw PackageException("Cannot install malformed package $remotePath on $instance. Status: ${response.status}. Errors: ${response.errors}")
+            } else if (!response.success) {
+                throw InstanceException("Cannot install package $remotePath on $instance. Status: ${response.status}. Errors: ${response.errors}")
+            }
+
+            return response
         }
-    }
-
-    private fun installPackageOnce(remotePath: String, recursive: Boolean = true): InstallResponse {
-        val url = "$PKG_MANAGER_HTML_PATH$remotePath/?cmd=install"
-
-        aem.logger.info("Installing package $remotePath on $instance")
-
-        val response = try {
-            postMultipart(url, mapOf("recursive" to recursive)) { InstallResponse.from(asStream(it), aem.config.packageResponseBuffer) }
-        } catch (e: RequestException) {
-            throw InstanceException("Cannot install package $remotePath on $instance. Reason: request failed.", e)
-        } catch (e: ResponseException) {
-            throw InstanceException("Malformed response after installing package $remotePath on $instance.")
-        }
-
-        if (response.hasPackageErrors(aem.config.packageErrors)) {
-            throw PackageException("Cannot install malformed package $remotePath on $instance. Status: ${response.status}. Errors: ${response.errors}")
-        } else if (!response.success) {
-            throw InstanceException("Cannot install package $remotePath on $instance. Status: ${response.status}. Errors: ${response.errors}")
-        }
-
-        return response
     }
 
     private fun interpretFail(message: String): String = when (message) {
