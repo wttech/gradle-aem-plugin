@@ -11,44 +11,57 @@ import org.zeroturnaround.zip.ZipUtil
 /**
  * Package definition that could be used to compose CRX package in place.
  *
- * This is programmatic approach to create ZIP file.
+ * This is programmatic approach to create ZIP file. API reflects Gradle's AbstractArchiveTask.
  * Useful for writing complex custom tasks that cannot inherit from Gradle's ZIP task.
  */
 class PackageDefinition(aem: AemExtension) : VltDefinition(aem) {
 
-    var destination: File = aem.temporaryDir
+    var destinationDir: File = aem.temporaryDir
 
     var baseName: String = aem.baseName
+
+    var appendix: String? = null
 
     var extension: String = "zip"
 
     var classifier: String? = null
 
     /**
-     * ZIP file being composed.
+     * ZIP file path
      */
-    var file: File
+    var archivePath: File
         set(value) {
-            fileCustom = value
+            archivePathCustom = value
         }
-        get() = fileCustom ?: File(destination, fileName)
+        get() = archivePathCustom ?: File(destinationDir, archiveName)
 
-    private var fileCustom: File? = null
+    private var archivePathCustom: File? = null
 
-    val fileName: String
-        get() = listOf(baseName, classifier, extension).filter { !it.isNullOrBlank() }.joinToString(".")
+    val archiveBaseName = listOf(baseName, appendix, version, classifier)
+            .filter { !it.isNullOrBlank() }.joinToString("-")
+
+    /**
+     * ZIP file name
+     */
+    var archiveName: String
+        set(value) {
+            archiveNameCustom = value
+        }
+        get() = "$archiveBaseName.$extension"
+
+    private var archiveNameCustom: String? = null
 
     /**
      * Temporary directory being zipped to produce CRX package.
      */
-    val dir: File
-        get() = File(file.parentFile, file.nameWithoutExtension)
+    val pkgDir: File
+        get() = File(destinationDir, archiveBaseName)
 
     val metaDir: File
-        get() = File(dir, Package.META_PATH)
+        get() = File(pkgDir, Package.META_PATH)
 
     val jcrDir: File
-        get() = File(dir, Package.JCR_ROOT)
+        get() = File(pkgDir, Package.JCR_ROOT)
 
     /**
      * Hook for customizing how package will be processed before zipping.
@@ -79,25 +92,25 @@ class PackageDefinition(aem: AemExtension) : VltDefinition(aem) {
             definition()
             ensureDefaults()
 
-            file.delete()
-            dir.deleteRecursively()
+            archivePath.delete()
+            pkgDir.deleteRecursively()
             metaDir.mkdirs()
             jcrDir.mkdirs()
 
             content()
             process()
 
-            ZipUtil.pack(dir, file)
-            dir.deleteRecursively()
+            ZipUtil.pack(pkgDir, archivePath)
+            pkgDir.deleteRecursively()
 
-            return file
+            return archivePath
         }
     }
 
     // 'content' & 'process' methods DSL
 
     fun copyJcrFile(file: File, path: String) {
-        val pkgFile = File(dir, "${Package.JCR_ROOT}$path")
+        val pkgFile = File(pkgDir, "${Package.JCR_ROOT}$path")
         GFileUtils.mkdirs(pkgFile.parentFile)
         FileUtils.copyFile(file, pkgFile)
     }

@@ -41,7 +41,7 @@ class PackageResolution(group: PackageGroup, id: String, action: (FileResolution
         val version = bundle.manifest.mainAttributes.getValue(Bundle.ATTRIBUTE_VERSION)
 
         return aem.composePackage {
-            this.file = pkg
+            this.archivePath = pkg
             this.description = description
 
             this.group = group
