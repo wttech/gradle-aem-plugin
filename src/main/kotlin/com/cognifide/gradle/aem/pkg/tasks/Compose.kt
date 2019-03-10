@@ -85,6 +85,10 @@ open class Compose : ZipTask() {
     @Nested
     val vaultDefinition = VltDefinition(aem)
 
+    fun vaultDefinition(options: VltDefinition.() -> Unit) {
+        vaultDefinition.apply(options)
+    }
+
     @get:Internal
     @get:JsonIgnore
     val vaultPath: String
