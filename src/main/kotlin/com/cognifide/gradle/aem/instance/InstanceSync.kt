@@ -107,7 +107,10 @@ class InstanceSync(aem: AemExtension, instance: Instance) : InstanceHttpClient(a
      */
     fun downloadPackage(definition: PackageDefinition.() -> Unit, retry: Retry): File {
         return retry.launch<File, InstanceException>("download package") {
-            val file = aem.composePackage(definition)
+            val file = aem.composePackage {
+                classifier = "download"
+                definition()
+            }
 
             var path: String? = null
             try {

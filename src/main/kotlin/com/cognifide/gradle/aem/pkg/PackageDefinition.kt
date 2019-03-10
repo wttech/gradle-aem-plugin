@@ -16,16 +16,27 @@ import org.zeroturnaround.zip.ZipUtil
  */
 class PackageDefinition(aem: AemExtension) : VltDefinition(aem) {
 
-    private var fileCustom: File? = null
+    var destination: File = aem.temporaryDir
+
+    var baseName: String = aem.baseName
+
+    var extension: String = "zip"
+
+    var classifier: String? = null
 
     /**
      * ZIP file being composed.
      */
     var file: File
-        get() = fileCustom ?: File(aem.temporaryDir, "$group-$name-$version.zip")
         set(value) {
             fileCustom = value
         }
+        get() = fileCustom ?: File(destination, fileName)
+
+    private var fileCustom: File? = null
+
+    val fileName: String
+        get() = listOf(baseName, classifier, extension).filter { !it.isNullOrBlank() }.joinToString(".")
 
     /**
      * Temporary directory being zipped to produce CRX package.

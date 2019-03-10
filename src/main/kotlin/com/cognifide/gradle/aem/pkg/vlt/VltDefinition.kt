@@ -4,9 +4,13 @@ import com.cognifide.gradle.aem.common.AemExtension
 import org.apache.commons.lang3.StringUtils
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.Optional
 import org.jsoup.nodes.Element
 
-open class VltDefinition(val aem: AemExtension) {
+/**
+ * Represents collection of metadata being a part of CRX package.
+ */
+open class VltDefinition(@Internal internal val aem: AemExtension) {
 
     /**
      * Name visible in CRX package manager
@@ -35,16 +39,20 @@ open class VltDefinition(val aem: AemExtension) {
     var version: String = ""
 
     @Input
-    var artifactId: String = ""
+    @Optional
+    var artifactId: String? = null
 
     @Input
-    var groupId: String = ""
+    @Optional
+    var groupId: String? = null
 
     @Input
-    var description: String = ""
+    @Optional
+    var description: String? = null
 
     @Input
-    var createdBy: String = System.getProperty("user.name")
+    @Optional
+    var createdBy: String? = System.getProperty("user.name")
 
     @Internal
     var filterElements: MutableList<Element> = mutableListOf()
