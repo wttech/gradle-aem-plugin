@@ -102,12 +102,12 @@ class InstanceSync(aem: AemExtension, instance: Instance) : InstanceHttpClient(a
     }
 
     /**
-     * Upload source package (usually empty) to instance then build it.
-     * Finally download built package to target file then delete previously uploaded & built package (clean up).
+     * Create package on the fly, upload it to instance then build it.
+     * Finally download built package by replacing it with initially created.
      */
     fun downloadPackage(definition: PackageDefinition.() -> Unit, retry: Retry): File {
         return retry.launch<File, InstanceException>("download package") {
-            val file = aem.packageComposer.compose(definition)
+            val file = aem.composePackage(definition)
 
             var path: String? = null
             try {

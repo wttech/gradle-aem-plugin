@@ -6,7 +6,7 @@ import com.cognifide.gradle.aem.common.http.HttpClient
 import com.cognifide.gradle.aem.config.Config
 import com.cognifide.gradle.aem.config.ConfigPlugin
 import com.cognifide.gradle.aem.instance.*
-import com.cognifide.gradle.aem.pkg.PackageComposer
+import com.cognifide.gradle.aem.pkg.PackageDefinition
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.Compose
 import com.cognifide.gradle.aem.pkg.vlt.VltFilter
@@ -231,9 +231,6 @@ open class AemExtension(@Internal val project: Project) {
 
     fun remoteInstances(consumer: RemoteInstance.() -> Unit) = parallel.with(remoteInstances, consumer)
 
-    @get:Internal
-    val packageComposer = PackageComposer(this)
-
     fun packages(consumer: (File) -> Unit) = parallel.with(packages, consumer)
 
     @get:Internal
@@ -265,6 +262,10 @@ open class AemExtension(@Internal val project: Project) {
                 sync.apply { synchronizer(pkg) }
             }
         }
+    }
+
+    fun composePackage(definition: PackageDefinition.() -> Unit): File {
+        return PackageDefinition(this).compose(definition)
     }
 
     fun <T> http(consumer: HttpClient.() -> T) = HttpClient(this).run(consumer)

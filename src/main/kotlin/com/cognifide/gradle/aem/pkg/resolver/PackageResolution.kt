@@ -3,12 +3,9 @@ package com.cognifide.gradle.aem.pkg.resolver
 import aQute.bnd.osgi.Jar
 import com.cognifide.gradle.aem.common.file.resolver.FileResolution
 import com.cognifide.gradle.aem.instance.Bundle
-import com.cognifide.gradle.aem.pkg.Package
 import com.cognifide.gradle.aem.pkg.PackageException
 import java.io.File
-import org.apache.commons.io.FileUtils
 import org.apache.commons.io.FilenameUtils
-import org.gradle.util.GFileUtils
 
 class PackageResolution(group: PackageGroup, id: String, action: (FileResolution) -> File) : FileResolution(group, id, action) {
 
@@ -43,7 +40,7 @@ class PackageResolution(group: PackageGroup, id: String, action: (FileResolution
         val group = symbolicName.substringBeforeLast(".")
         val version = bundle.manifest.mainAttributes.getValue(Bundle.ATTRIBUTE_VERSION)
 
-        return aem.packageComposer.compose {
+        return aem.composePackage {
             this.file = pkg
             this.description = description
 
@@ -51,13 +48,8 @@ class PackageResolution(group: PackageGroup, id: String, action: (FileResolution
             this.name = symbolicName
             this.version = version
 
-            content { pkgRoot ->
-                val pkgJar = File(pkgRoot, "${Package.JCR_ROOT}$bundlePath")
-                GFileUtils.mkdirs(pkgJar.parentFile)
-                FileUtils.copyFile(jar, pkgJar)
-            }
-
             filter(bundlePath)
+            content { copyJcrFile(jar, bundlePath) }
 
             resolver.bundleDefinition(this, bundle)
         }
