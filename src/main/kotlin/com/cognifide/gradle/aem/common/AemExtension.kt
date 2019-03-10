@@ -246,6 +246,8 @@ open class AemExtension(@Internal val project: Project) {
 
     fun sync(synchronizer: InstanceSync.() -> Unit) = sync(instances, synchronizer)
 
+    fun sync(instance: Instance, synchronizer: InstanceSync.() -> Unit) = instance.sync(synchronizer)
+
     fun sync(instances: Collection<Instance>, synchronizer: InstanceSync.() -> Unit) {
         parallel.with(instances) { this.sync.apply(synchronizer) }
     }
