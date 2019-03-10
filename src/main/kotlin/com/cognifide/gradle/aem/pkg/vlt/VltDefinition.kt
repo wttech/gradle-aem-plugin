@@ -6,7 +6,6 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.jsoup.nodes.Element
 
-// TODO handle skipping properties like createdBy (nulls allowed?)
 open class VltDefinition(val aem: AemExtension) {
 
     /**
@@ -91,5 +90,23 @@ open class VltDefinition(val aem: AemExtension) {
 
     fun property(name: String, value: String) {
         properties[name] = value
+    }
+
+    fun ensureDefaults() {
+        if (group.isBlank()) {
+            group = if (aem.project == aem.project.rootProject) {
+                aem.project.group.toString()
+            } else {
+                aem.project.rootProject.name
+            }
+        }
+
+        if (name.isBlank()) {
+            name = aem.baseName
+        }
+
+        if (version.isBlank()) {
+            version = aem.project.version.toString()
+        }
     }
 }

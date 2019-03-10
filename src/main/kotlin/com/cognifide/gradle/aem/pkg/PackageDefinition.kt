@@ -66,6 +66,7 @@ class PackageDefinition(aem: AemExtension) : VltDefinition(aem) {
     fun compose(definition: PackageDefinition.() -> Unit): File {
         PackageDefinition(aem).apply {
             definition()
+            ensureDefaults()
 
             file.delete()
             dir.deleteRecursively()

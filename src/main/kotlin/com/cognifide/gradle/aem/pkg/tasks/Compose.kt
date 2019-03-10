@@ -138,23 +138,7 @@ open class Compose : ZipTask() {
 
     @Suppress("ComplexMethod")
     override fun projectEvaluated() {
-        vaultDefinition.apply {
-            if (group.isBlank()) {
-                group = if (project == project.rootProject) {
-                    project.group.toString()
-                } else {
-                    project.rootProject.name
-                }
-            }
-
-            if (name.isBlank()) {
-                name = baseName
-            }
-
-            if (version.isBlank()) {
-                version = project.version.toString()
-            }
-        }
+        vaultDefinition.ensureDefaults()
 
         if (contentPath.isBlank()) {
             throw AemException("Content path cannot be blank")
