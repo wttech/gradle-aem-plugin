@@ -692,14 +692,20 @@ aem {
             contentPath = aem.config.packageRoot
             bundlePath = aem.config.packageInstallPath
             metaDefaults = true
-            vaultProperties = mapOf(
-                "acHandling" to "merge_preserve",
-                "requiresRoot" to false
-            )
-            vaultName = baseName
-            vaultGroup = project.group
-            vaultVersion = project.version
             fromConvention = true
+            vaultDefinition {
+                properties = mapOf(
+                    "acHandling" to "merge_preserve",
+                    "requiresRoot" to false
+                )
+                name = aem.baseName
+                group = if (aem.project == aem.project.rootProject) {
+                    aem.project.group.toString()
+                } else {
+                    aem.project.rootProject.name
+                }
+                version = project.version.toString()
+            }
         }
     }    
 }
