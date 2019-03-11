@@ -795,27 +795,29 @@ Predefined expandable properties:
 * `rootProject` - project with directory in which *settings.gradle* is located,
 * `project` - current project.
 
-This feature is especially useful to generate valid *META-INF/properties.xml* file, below is used by plugin by default:
+This feature is especially useful to generate valid *META-INF/properties.xml* file, below [template](src/main/resources/com/cognifide/gradle/aem/META-INF/vault/properties.xml) is used by plugin by default:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
 <properties>
-    <comment>{{project.description}}</comment>
-    <entry key="group">{{compose.vaultGroup}}</entry>
-    <entry key="name">{{compose.vaultName}}</entry>
-    <entry key="version">{{compose.vaultVersion}}</entry>
-    <entry key="description">{{project.description}}</entry>
-    <entry key="groupId">{{project.group}}</entry>
-    <entry key="artifactId">{{project.name}}</entry>
-    <entry key="createdBy">{{user.name}}</entry>
-    {% for e in compose.vaultProperties %}
+    {% if definition.description is not empty %}
+    <comment>{{definition.description}}</comment>
+    <entry key="description">{{definition.description}}</entry>
+    {% endif %}
+    <entry key="group">{{definition.group}}</entry>
+    <entry key="name">{{definition.name}}</entry>
+    <entry key="version">{{definition.version}}</entry>
+    {% if definition.createdBy is not empty %}
+    <entry key="createdBy">{{definition.createdBy}}</entry>
+    {% endif %}
+    {% for e in definition.properties %}
     <entry key="{{e.key}}">{{e.value | raw}}</entry>
     {% endfor %}
 </properties>
 ```
 
-Also file *nodetypes.cnd* is dynamically expanded to generate file containing all node types from all sub packages being merged into assembly package.
+Also file *nodetypes.cnd* is dynamically expanded from [template](src/main/resources/com/cognifide/gradle/aem/META-INF/vault/nodetypes.cnd) to generate file containing all node types from all sub packages being merged into assembly package.
 
 Each JAR file in separate *hooks* directory will be combined into single directory when creating assembly package.
 
