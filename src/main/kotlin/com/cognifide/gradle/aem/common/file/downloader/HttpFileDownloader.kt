@@ -1,16 +1,13 @@
 package com.cognifide.gradle.aem.common.file.downloader
 
 import com.cognifide.gradle.aem.common.AemException
+import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.file.FileException
 import com.cognifide.gradle.aem.common.http.HttpClient
 import java.io.File
 import java.io.IOException
-import org.gradle.api.Project
 
-class HttpFileDownloader(
-    val project: Project,
-    val client: HttpClient = HttpClient(project)
-) {
+class HttpFileDownloader(val aem: AemExtension, val client: HttpClient = HttpClient(aem)) {
 
     fun client(configurer: HttpClient.() -> Unit) {
         client.apply(configurer)

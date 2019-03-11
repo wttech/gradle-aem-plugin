@@ -1,4 +1,4 @@
 Manifest-Version: 1.0
-Content-Package-Roots: {{compose.vaultFilterRoots | join(',')}}
+Content-Package-Roots: {{definition.filterRoots | join(',')}}
 Content-Package-Type: mixed
-Content-Package-Id: {{compose.vaultGroup}}:{{compose.vaultName}}:{{compose.vaultVersion}}
+Content-Package-Id: {{definition.group}}:{{definition.name}}:{{definition.version}}

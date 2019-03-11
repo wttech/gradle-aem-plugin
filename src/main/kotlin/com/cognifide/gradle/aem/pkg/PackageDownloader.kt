@@ -1,25 +1,13 @@
 package com.cognifide.gradle.aem.pkg
 
 import com.cognifide.gradle.aem.common.AemExtension
-import com.cognifide.gradle.aem.common.Collections
-import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.http.HttpClient
 import com.cognifide.gradle.aem.instance.Instance
-import com.cognifide.gradle.aem.tooling.vlt.VltFilter
+import com.cognifide.gradle.aem.pkg.vlt.VltFilter
 import java.io.File
-import org.apache.commons.io.FilenameUtils
 import org.gradle.api.tasks.Internal
-import org.gradle.util.GFileUtils
-import org.zeroturnaround.zip.ZipUtil
 
-class PackageDownloader(
-    @Internal
-    private val aem: AemExtension,
-    @Internal
-    private val temporaryDir: File
-) {
-
-    private val shellDir = File(temporaryDir, PKG_SHELL)
+class PackageDownloader(@Internal private val aem: AemExtension) {
 
     var instance: Instance = aem.anyInstance
 
@@ -46,68 +34,16 @@ class PackageDownloader(
     }
 
     fun download() {
-        clean()
+        val file = instance.sync.apply(httpOptions).downloadPackage({
+            filterElements = filter.rootElements.toMutableList()
+        }, retry)
 
-        val shellPackageFile = prepareShellPackage()
-        val sync = instance.sync.apply(httpOptions)
+        if (extract) {
+            val jcrRoot = File(aem.config.packageJcrRoot)
+            aem.logger.lifecycle("Extracting package $file to $jcrRoot")
 
-        aem.logger.lifecycle("Uploading then building package to be downloaded: $shellPackageFile")
-
-        val packagePath = sync.uploadPackage(shellPackageFile).path
-        val packageFile = File(temporaryDir, FilenameUtils.getName(packagePath))
-
-        try {
-            sync.buildPackage(packagePath)
-            sync.downloadPackage(packagePath, packageFile, retry)
-
-            if (extract) {
-                val jcrRoot = File(aem.config.packageJcrRoot)
-                aem.logger.lifecycle("Extracting package $packageFile to $jcrRoot")
-
-                extractDownloadedPackage(packageFile, jcrRoot)
-            }
-        } finally {
-            aem.logger.lifecycle("Deleting downloaded package: $packageFile")
-
-            sync.deletePackage(packagePath)
+            extractDownloadedPackage(file, jcrRoot)
         }
-    }
-
-    private fun clean() {
-        GFileUtils.cleanDirectory(temporaryDir)
-    }
-
-    private fun prepareShellPackage(): File {
-        val zipResult = File(temporaryDir, "$PKG_SHELL.zip")
-        val vltDir = File(shellDir, Package.VLT_PATH)
-        val jcrRoot = File(shellDir, Package.JCR_ROOT)
-
-        vltDir.mkdirs()
-        jcrRoot.mkdirs()
-
-        filter.file.copyTo(File(vltDir, VltFilter.BUILD_NAME))
-        FileOperations.copyResources(Package.VLT_PATH, vltDir, true)
-
-        val fileProperties = Collections.extendMap(PackageFileFilter.FILE_PROPERTIES, mapOf<String, Any>(
-                "compose" to mapOf(
-                        "vaultName" to aem.baseName,
-                        "vaultGroup" to aem.project.group,
-                        "vaultVersion" to PKG_VERSION
-
-                ),
-                "project" to mapOf(
-                        "group" to aem.project.group,
-                        "name" to aem.baseName,
-                        "version" to PKG_VERSION,
-                        "description" to aem.project.description.orEmpty()
-                )
-        ))
-        FileOperations.amendFiles(vltDir, PackageFileFilter.EXPAND_FILES_DEFAULT) { file, content ->
-            aem.props.expandPackage(content, fileProperties, file.absolutePath)
-        }
-
-        ZipUtil.pack(shellDir, zipResult)
-        return zipResult
     }
 
     private fun extractDownloadedPackage(downloadedPackage: File, jcrRoot: File) {
@@ -125,7 +61,6 @@ class PackageDownloader(
     }
 
     companion object {
-        const val PKG_SHELL = "shell"
 
         const val PKG_VERSION = "download"
     }

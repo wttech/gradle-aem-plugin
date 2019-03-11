@@ -8,7 +8,9 @@ import com.cognifide.gradle.aem.common.tasks.ZipTask
 import com.cognifide.gradle.aem.pkg.Package
 import com.cognifide.gradle.aem.pkg.PackageFileFilter
 import com.cognifide.gradle.aem.pkg.PackagePlugin
-import com.cognifide.gradle.aem.tooling.vlt.VltFilter
+import com.cognifide.gradle.aem.pkg.tasks.compose.ProjectOptions
+import com.cognifide.gradle.aem.pkg.vlt.VltDefinition
+import com.cognifide.gradle.aem.pkg.vlt.VltFilter
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 import java.util.regex.Pattern
@@ -18,7 +20,6 @@ import org.gradle.api.file.CopySpec
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.tasks.*
 import org.gradle.api.tasks.bundling.Jar
-import org.jsoup.nodes.Element
 
 open class Compose : ZipTask() {
 
@@ -79,13 +80,13 @@ open class Compose : ZipTask() {
         }
 
     /**
-     * Additional entries added to file 'META-INF/vault/properties.xml'.
+     * Defines properties being used to generate CRX package metadata files.
      */
-    @Input
-    var vaultProperties: Map<String, Any> = VAULT_PROPERTIES_DEFAULT
+    @Nested
+    val vaultDefinition = VltDefinition(aem)
 
-    fun vaultProperty(name: String, value: String) {
-        vaultProperties += mapOf(name to value)
+    fun vaultDefinition(options: VltDefinition.() -> Unit) {
+        vaultDefinition.apply(options)
     }
 
     @get:Internal
@@ -115,41 +116,10 @@ open class Compose : ZipTask() {
 
     @get:Internal
     val fileProperties
-        get() = mapOf("compose" to this)
-
-    /**
-     * Name visible in CRX package manager
-     */
-    @Input
-    var vaultName: String = ""
-
-    /**
-     * Group for categorizing in CRX package manager
-     */
-    @Input
-    var vaultGroup: String = ""
-
-    /**
-     * Version visible in CRX package manager.
-     */
-    @Input
-    var vaultVersion: String = ""
-
-    @get:Internal
-    val vaultFilters = mutableSetOf<Element>()
-
-    @get:Internal
-    val vaultFilterRoots: List<String>
-        get() = vaultFilters.map { it.attr("root") }
+        get() = mapOf("definition" to vaultDefinition)
 
     @Internal
     var vaultFilterDefault = { other: Compose -> "<filter root=\"${other.bundlePath}\"/>" }
-
-    @Internal
-    val vaultNodeTypesLibs = mutableSetOf<String>()
-
-    @Internal
-    val vaultNodeTypesLines = mutableListOf<String>()
 
     @Internal
     var fromConvention = true
@@ -166,20 +136,9 @@ open class Compose : ZipTask() {
         doLast { aem.notifier.notify("Package composed", archiveName) }
     }
 
+    @Suppress("ComplexMethod")
     override fun projectEvaluated() {
-        if (vaultGroup.isBlank()) {
-            vaultGroup = if (project == project.rootProject) {
-                project.group.toString()
-            } else {
-                project.rootProject.name
-            }
-        }
-        if (vaultName.isBlank()) {
-            vaultName = baseName
-        }
-        if (vaultVersion.isBlank()) {
-            vaultVersion = project.version.toString()
-        }
+        vaultDefinition.ensureDefaults()
 
         if (contentPath.isBlank()) {
             throw AemException("Content path cannot be blank")
@@ -366,9 +325,9 @@ open class Compose : ZipTask() {
 
     private fun extractVaultFilters(other: Compose) {
         if (!other.vaultFilterPath.isBlank() && File(other.vaultFilterPath).exists()) {
-            vaultFilters.addAll(VltFilter(File(other.vaultFilterPath)).rootElements)
+            vaultDefinition.filterElements.addAll(VltFilter(File(other.vaultFilterPath)).rootElements)
         } else if (project.plugins.hasPlugin(BundlePlugin.ID)) {
-            vaultFilters.add(VltFilter.rootElement(vaultFilterDefault(other)))
+            vaultDefinition.filterElements.add(VltFilter.parseElement(vaultFilterDefault(other)))
         }
     }
 
@@ -381,52 +340,11 @@ open class Compose : ZipTask() {
         if (file.exists()) {
             file.forEachLine { line ->
                 if (NODE_TYPES_LIB.matcher(line.trim()).matches()) {
-                    vaultNodeTypesLibs += line
+                    vaultDefinition.nodeTypeLibs.add(line)
                 } else {
-                    vaultNodeTypesLines += line
+                    vaultDefinition.nodeTypeLines.add(line)
                 }
             }
-        }
-    }
-
-    class ProjectOptions {
-
-        /**
-         * Determines if JCR content from separate project should be included in composed package.
-         */
-        var composeContent: Boolean = true
-
-        var composeTasks: AemExtension.() -> Collection<Compose> = { tasks.getAll(Compose::class.java) }
-
-        var vaultHooks: Boolean = true
-
-        var vaultFilters: Boolean = true
-
-        var vaultNodeTypes: Boolean = true
-
-        /**
-         * Determines if OSGi bundle built in separate project should be included in composed package.
-         */
-        var bundleBuilt: Boolean = true
-
-        var bundleTasks: AemExtension.() -> Collection<Jar> = { tasks.getAll(Jar::class.java) }
-
-        var bundleDependent: Boolean = true
-
-        var bundlePath: String? = null
-
-        var bundleRunMode: String? = null
-
-        internal fun bundlePath(otherBundlePath: String, otherBundleRunMode: String?): String {
-            val effectiveBundlePath = bundlePath ?: otherBundlePath
-            val effectiveBundleRunMode = bundleRunMode ?: otherBundleRunMode
-
-            var result = effectiveBundlePath
-            if (!effectiveBundleRunMode.isNullOrBlank()) {
-                result = "$effectiveBundlePath.$effectiveBundleRunMode"
-            }
-
-            return result
         }
     }
 
@@ -434,11 +352,6 @@ open class Compose : ZipTask() {
         const val NAME = "aemCompose"
 
         const val BUNDLE_FILES_CONFIGURATION = "bundleConfiguration"
-
-        val VAULT_PROPERTIES_DEFAULT = mapOf(
-                "acHandling" to "merge_preserve",
-                "requiresRoot" to false
-        )
 
         val NODE_TYPES_LIB: Pattern = Pattern.compile("<.+>")
     }
