@@ -14,7 +14,7 @@ import org.zeroturnaround.zip.ZipUtil
  * This is programmatic approach to create ZIP file. API reflects Gradle's AbstractArchiveTask.
  * Useful for writing complex custom tasks that cannot inherit from Gradle's ZIP task.
  */
-class PackageDefinition(aem: AemExtension) : VltDefinition(aem) {
+class PackageDefinition(private val aem: AemExtension) : VltDefinition(aem) {
 
     var destinationDir: File = aem.temporaryDir
 

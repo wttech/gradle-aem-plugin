@@ -10,7 +10,7 @@ import org.jsoup.nodes.Element
 /**
  * Represents collection of metadata being a part of CRX package.
  */
-open class VltDefinition(@Internal internal val aem: AemExtension) {
+open class VltDefinition(private val aem: AemExtension) {
 
     /**
      * Name visible in CRX package manager
