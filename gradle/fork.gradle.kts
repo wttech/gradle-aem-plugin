@@ -17,7 +17,7 @@ configure<ForkExtension> {
                 it.replace("version=${project.version}", render("version={{version}}"))
             }
         }
-        eachTextFiles("**/*.gradle.kts") {
+        eachTextFiles(listOf("README.md", "**/*.gradle.kts")) {
             amend {
                 it.replace(
                     "implementation(\"com.cognifide.gradle:aem-plugin:${project.version}\")",
