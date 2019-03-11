@@ -1421,6 +1421,8 @@ aem {
                 }
     
                 aem.http {
+                    basicUser = "foo"
+                    basicPassword = "bar"
                     postMultipart("http://my-aem-backup-service.com/package/upload", mapOf("file" to pkg)) 
                 }
             }
