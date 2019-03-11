@@ -116,15 +116,15 @@ class PackageDefinition(aem: AemExtension) : VltDefinition(aem) {
         FileUtils.copyFile(file, pkgFile)
     }
 
-    fun copyMetaFiles() {
-        FileOperations.copyResources(Package.META_PATH, metaDir, true)
+    fun copyMetaFiles(skipExisting: Boolean = true) {
+        FileOperations.copyResources(Package.META_PATH, metaDir, skipExisting)
     }
 
-    fun expandMetaFiles() {
-        expandFiles(metaDir, PackageFileFilter.EXPAND_FILES_DEFAULT)
+    fun expandMetaFiles(filePatterns: List<String> = PackageFileFilter.EXPAND_FILES_DEFAULT) {
+        expandFiles(metaDir, filePatterns)
     }
 
-    fun expandFiles(dir: File, filePatterns: List<String>) {
+    fun expandFiles(dir: File, filePatterns: List<String> = PackageFileFilter.EXPAND_FILES_DEFAULT) {
         FileOperations.amendFiles(dir, filePatterns) { source, content ->
             aem.props.expandPackage(content, mapOf("definition" to this), source.absolutePath)
         }

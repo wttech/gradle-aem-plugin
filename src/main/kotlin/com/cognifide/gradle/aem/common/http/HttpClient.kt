@@ -5,11 +5,11 @@ import com.cognifide.gradle.aem.common.Formats
 import com.cognifide.gradle.aem.common.file.downloader.HttpFileDownloader
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.jayway.jsonpath.DocumentContext
-import org.apache.commons.io.FilenameUtils
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
 import java.util.*
+import org.apache.commons.io.FilenameUtils
 import org.apache.commons.io.IOUtils
 import org.apache.http.HttpEntity
 import org.apache.http.HttpResponse
