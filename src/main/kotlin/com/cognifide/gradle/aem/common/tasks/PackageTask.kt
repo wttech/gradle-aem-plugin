@@ -20,7 +20,7 @@ open class PackageTask : AemDefaultTask() {
         }
 
         if (packages.isEmpty()) {
-            packages = aem.packagesDependent(this)
+            packages = aem.dependentPackages(this)
         }
     }
 

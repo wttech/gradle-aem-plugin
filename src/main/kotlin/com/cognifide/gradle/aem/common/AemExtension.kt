@@ -6,11 +6,12 @@ import com.cognifide.gradle.aem.common.http.HttpClient
 import com.cognifide.gradle.aem.config.Config
 import com.cognifide.gradle.aem.config.ConfigPlugin
 import com.cognifide.gradle.aem.instance.*
+import com.cognifide.gradle.aem.pkg.PackageDefinition
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.Compose
-import com.cognifide.gradle.aem.tooling.*
+import com.cognifide.gradle.aem.pkg.vlt.VltFilter
+import com.cognifide.gradle.aem.tooling.ToolingPlugin
 import com.cognifide.gradle.aem.tooling.vlt.VltException
-import com.cognifide.gradle.aem.tooling.vlt.VltFilter
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 import java.time.ZoneId
@@ -237,13 +238,15 @@ open class AemExtension(@Internal val project: Project) {
         get() = project.tasks.withType(Compose::class.java)
                 .map { it.archivePath }
 
-    fun packagesDependent(task: Task): List<File> {
+    fun dependentPackages(task: Task): List<File> {
         return task.taskDependencies.getDependencies(task)
                 .filterIsInstance(Compose::class.java)
                 .map { it.archivePath }
     }
 
     fun sync(synchronizer: InstanceSync.() -> Unit) = sync(instances, synchronizer)
+
+    fun <T> sync(instance: Instance, synchronizer: InstanceSync.() -> T) = instance.sync(synchronizer)
 
     fun sync(instances: Collection<Instance>, synchronizer: InstanceSync.() -> Unit) {
         parallel.with(instances) { this.sync.apply(synchronizer) }
@@ -263,7 +266,11 @@ open class AemExtension(@Internal val project: Project) {
         }
     }
 
-    fun <T> http(consumer: HttpClient.() -> T) = HttpClient(project).run(consumer)
+    fun composePackage(definition: PackageDefinition.() -> Unit): File {
+        return PackageDefinition(this).compose(definition)
+    }
+
+    fun <T> http(consumer: HttpClient.() -> T) = HttpClient(this).run(consumer)
 
     fun config(configurer: Config.() -> Unit) {
         config.apply(configurer)
@@ -350,9 +357,17 @@ open class AemExtension(@Internal val project: Project) {
 
     fun temporaryDir(name: String) = AemTask.temporaryDir(project, name)
 
+    fun temporaryFile(name: String) = AemTask.temporaryFile(project, TEMPORARY_DIR, name)
+
+    @get:Internal
+    val temporaryDir: File
+        get() = temporaryDir(TEMPORARY_DIR)
+
     companion object {
 
         const val NAME = "aem"
+
+        const val TEMPORARY_DIR = "tmp"
 
         private val PLUGIN_IDS = listOf(
                 PackagePlugin.ID,

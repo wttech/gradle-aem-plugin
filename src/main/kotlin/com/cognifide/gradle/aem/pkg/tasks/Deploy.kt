@@ -103,7 +103,7 @@ open class Deploy : PackageTask() {
         }
 
         if (packages.isEmpty()) {
-            packages = aem.packagesDependent(this)
+            packages = aem.dependentPackages(this)
         }
     }
 

@@ -112,6 +112,7 @@ Also keep in mind, that GAP 6.x is **temporarily supporting only Gradle 5.x** (i
   * [How to's](#how-tos)
      * [Set AEM configuration properly for all / concrete project(s)](#set-aem-configuration-properly-for-all--concrete-projects)
      * [Implement custom AEM tasks](#implement-custom-aem-tasks)
+        * [Defining CRX package via code then downloading and sharing it using external HTTP endpoint](#defining-crx-package-via-code-then-downloading-and-sharing-it-using-external-http-endpoint)
         * [Downloading CRX package from external HTTP endpoint and deploying it on desired AEM instances](#downloading-crx-package-from-external-http-endpoint-and-deploying-it-on-desired-aem-instances)
         * [Controlling OSGi bundles and components](#controlling-osgi-bundles-and-components)
         * [Executing code on AEM runtime](#executing-code-on-aem-runtime)
@@ -709,14 +710,20 @@ aem {
             contentPath = aem.config.packageRoot
             bundlePath = aem.config.packageInstallPath
             metaDefaults = true
-            vaultProperties = mapOf(
-                "acHandling" to "merge_preserve",
-                "requiresRoot" to false
-            )
-            vaultName = baseName
-            vaultGroup = project.group
-            vaultVersion = project.version
             fromConvention = true
+            vaultDefinition {
+                properties = mapOf(
+                    "acHandling" to "merge_preserve",
+                    "requiresRoot" to false
+                )
+                name = aem.baseName
+                group = if (aem.project == aem.project.rootProject) {
+                    aem.project.group.toString()
+                } else {
+                    aem.project.rootProject.name
+                }
+                version = project.version.toString()
+            }
         }
     }    
 }
@@ -812,27 +819,29 @@ Predefined expandable properties:
 * `rootProject` - project with directory in which *settings.gradle* is located,
 * `project` - current project.
 
-This feature is especially useful to generate valid *META-INF/properties.xml* file, below is used by plugin by default:
+This feature is especially useful to generate valid *META-INF/properties.xml* file, below [template](src/main/resources/com/cognifide/gradle/aem/META-INF/vault/properties.xml) is used by plugin by default:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
 <properties>
-    <comment>{{project.description}}</comment>
-    <entry key="group">{{compose.vaultGroup}}</entry>
-    <entry key="name">{{compose.vaultName}}</entry>
-    <entry key="version">{{compose.vaultVersion}}</entry>
-    <entry key="description">{{project.description}}</entry>
-    <entry key="groupId">{{project.group}}</entry>
-    <entry key="artifactId">{{project.name}}</entry>
-    <entry key="createdBy">{{user.name}}</entry>
-    {% for e in compose.vaultProperties %}
+    {% if definition.description is not empty %}
+    <comment>{{definition.description}}</comment>
+    <entry key="description">{{definition.description}}</entry>
+    {% endif %}
+    <entry key="group">{{definition.group}}</entry>
+    <entry key="name">{{definition.name}}</entry>
+    <entry key="version">{{definition.version}}</entry>
+    {% if definition.createdBy is not empty %}
+    <entry key="createdBy">{{definition.createdBy}}</entry>
+    {% endif %}
+    {% for e in definition.properties %}
     <entry key="{{e.key}}">{{e.value | raw}}</entry>
     {% endfor %}
 </properties>
 ```
 
-Also file *nodetypes.cnd* is dynamically expanded to generate file containing all node types from all sub packages being merged into assembly package.
+Also file *nodetypes.cnd* is dynamically expanded from [template](src/main/resources/com/cognifide/gradle/aem/META-INF/vault/nodetypes.cnd) to generate file containing all node types from all sub packages being merged into assembly package.
 
 Each JAR file in separate *hooks* directory will be combined into single directory when creating assembly package.
 
@@ -1405,7 +1414,43 @@ It provides concise AEM related API for accessing AEM configuration, synchronizi
 What is more, it also provides built-in HTTP client `aem.http` to be able to communicate with any external services like for downloading CRX packages from package shares like Nexus repositories, JFrog Artifactory etc.
 The options are almost unlimited. 
 
+#### Defining CRX package via code then downloading and sharing it using external HTTP endpoint
+
+Below snippet could be used to automatize creation of production content backups.
+
+```kotlin
+aem {
+    tasks {
+        register("aemProdAuthorBackup") {
+            doLast {
+                val pkg = aem.namedInstance("prod-author").sync {
+                    downloadPackage {
+                        group = "example"
+                        name = "backup"
+                        description = "Backup of content, tags and DAM"
+                        archiveName = "backup-author.zip"
+                        filters(
+                                "/content/cq:tags/example",
+                                "/content/example",
+                                "/content/dam/example"
+                        )
+                    }
+                }
+    
+                aem.http {
+                    basicUser = "foo"
+                    basicPassword = "bar"
+                    postMultipart("http://my-aem-backup-service.com/package/upload", mapOf("file" to pkg)) 
+                }
+            }
+        }
+    }
+}
+```
+
 #### Downloading CRX package from external HTTP endpoint and deploying it on desired AEM instances
+
+Below snippet could be used to automatize recovery from content backups (e.g for production or to replicate production content to test environment).
 
 ```kotlin
 
@@ -1414,11 +1459,14 @@ aem {
         register("aemDeployProductionContent") {
             doLast {
                 val instances = listOf(
-                        aem.instance("http://user:password@aem-host.com"), // URL specified directly, could be parametrized by some gradle command line property
+                        aem.instance("http://user:password@aem-host.com") // URL specified directly, could be parametrized by some gradle command line property
                         // aem.namedInstance("local-publish") // reused AEM instance defined in 'gradle.properties'
                 )
                 val pkg = aem.http { downloadTo("https://company.com/aem/backups/example-1.0.0-201901300932.backup.zip", project.file("build/tmp")) }
-                aem.sync(instances) { deployPackage(pkg) }
+                
+                aem.sync(instances) { 
+                    deployPackage(pkg) 
+                }
             }
         }
     }

@@ -151,7 +151,7 @@ abstract class Resolver<G : FileGroup>(
     fun downloadHttp(url: String, httpOptions: HttpClient.() -> Unit = {}): FileResolution {
         return resolve(url) { resolution ->
             download(url, resolution.dir) { file ->
-                with(HttpFileDownloader(project)) {
+                with(HttpFileDownloader(aem)) {
                     client(httpOptions)
                     download(url, file)
                 }
