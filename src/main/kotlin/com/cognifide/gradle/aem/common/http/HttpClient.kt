@@ -5,6 +5,7 @@ import com.cognifide.gradle.aem.common.Formats
 import com.cognifide.gradle.aem.common.file.downloader.HttpFileDownloader
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.jayway.jsonpath.DocumentContext
+import org.apache.commons.io.FilenameUtils
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
@@ -237,7 +238,7 @@ open class HttpClient(val aem: AemExtension) {
         return builder.build()
     }
 
-    fun download(path: String) = download(path, aem.temporaryDir)
+    fun download(path: String) = download(path, aem.temporaryFile(FilenameUtils.getName(path)))
 
     fun download(path: String, target: File) {
         HttpFileDownloader(aem, this).download(path, target)
