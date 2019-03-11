@@ -111,6 +111,7 @@ Also keep in mind, that GAP 6.x is **temporarily supporting only Gradle 5.x** (i
   * [How to's](#how-tos)
      * [Set AEM configuration properly for all / concrete project(s)](#set-aem-configuration-properly-for-all--concrete-projects)
      * [Implement custom AEM tasks](#implement-custom-aem-tasks)
+        * [Defining CRX package via code then downloading and sharing it using external HTTP endpoint](#defining-crx-package-via-code-then-downloading-and-sharing-it-using-external-http-endpoint)
         * [Downloading CRX package from external HTTP endpoint and deploying it on desired AEM instances](#downloading-crx-package-from-external-http-endpoint-and-deploying-it-on-desired-aem-instances)
         * [Controlling OSGi bundles and components](#controlling-osgi-bundles-and-components)
         * [Executing code on AEM runtime](#executing-code-on-aem-runtime)
@@ -1396,7 +1397,41 @@ It provides concise AEM related API for accessing AEM configuration, synchronizi
 What is more, it also provides built-in HTTP client `aem.http` to be able to communicate with any external services like for downloading CRX packages from package shares like Nexus repositories, JFrog Artifactory etc.
 The options are almost unlimited. 
 
+#### Defining CRX package via code then downloading and sharing it using external HTTP endpoint
+
+Below snippet could be used to automatize creation of production content backups.
+
+```kotlin
+aem {
+    tasks {
+        register("aemProdAuthorBackup") {
+            doLast {
+                val pkg = aem.namedInstance("prod-author").sync {
+                    downloadPackage {
+                        group = "example"
+                        name = "backup"
+                        description = "Backup of content, tags and DAM"
+                        archiveName = "backup-author.zip"
+                        filters(
+                                "/content/cq:tags/example",
+                                "/content/example",
+                                "/content/dam/example"
+                        )
+                    }
+                }
+    
+                aem.http {
+                    postMultipart("http://my-aem-backup-service.com/package/upload", mapOf("file" to pkg)) 
+                }
+            }
+        }
+    }
+}
+```
+
 #### Downloading CRX package from external HTTP endpoint and deploying it on desired AEM instances
+
+Below snippet could be used to automatize recovery from content backups (e.g for production or to replicate production content to test environment).
 
 ```kotlin
 
@@ -1405,11 +1440,14 @@ aem {
         register("aemDeployProductionContent") {
             doLast {
                 val instances = listOf(
-                        aem.instance("http://user:password@aem-host.com"), // URL specified directly, could be parametrized by some gradle command line property
+                        aem.instance("http://user:password@aem-host.com") // URL specified directly, could be parametrized by some gradle command line property
                         // aem.namedInstance("local-publish") // reused AEM instance defined in 'gradle.properties'
                 )
                 val pkg = aem.http { downloadTo("https://company.com/aem/backups/example-1.0.0-201901300932.backup.zip", project.file("build/tmp")) }
-                aem.sync(instances) { deployPackage(pkg) }
+                
+                aem.sync(instances) { 
+                    deployPackage(pkg) 
+                }
             }
         }
     }
