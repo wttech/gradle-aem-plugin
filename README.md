@@ -1156,11 +1156,11 @@ Upload & install dependent CRX package(s) before deployment. Available methods:
 * `url(url: String)`, use CRX package that will be downloaded from specified URL to local temporary directory.
 * `downloadHttp(url: String)`, download package using HTTP with no auth.
 * `downloadHttpAuth(url: String, username: String, password: String)`, download package using HTTP with Basic Auth support.
-* `downloadHttpAuth(url: String)`, as above, but credentials must be specified in variables: `aem.http.username`, `aem.http.password`. Optionally enable SSL errors checking by setting property `aem.http.ignoreSSL` to `false`.
+* `downloadHttpAuth(url: String)`, as above, but credentials must be specified in variables: `aem.resolver.http.username`, `aem.resolver.http.password`. Optionally enable SSL errors checking by setting property `aem.resolver.http.connectionIgnoreSsl` to `false`.
 * `downloadSmbAuth(url: String, domain: String, username: String, password: String)`, download package using SMB protocol.
-* `downloadSmbAuth(url: String)`, as above, but credentials must be specified in variables: `aem.smb.domain`, `aem.smb.username`, `aem.smb.password`.
+* `downloadSmbAuth(url: String)`, as above, but credentials must be specified in variables: `aem.resolver.smb.domain`, `aem.resolver.smb.username`, `aem.resolver.smb.password`.
 * `downloadSftpAuth(url: String, username: String, password: String)`, download package using SFTP protocol.
-* `downloadSftpAuth(url: String)`, as above, but credentials must be specified in variables: `aem.sftp.username`, `aem.sftp.password`. Optionally enable strict host checking by setting property `aem.sftp.hostChecking` to `true`.
+* `downloadSftpAuth(url: String)`, as above, but credentials must be specified in variables: `aem.resolver.sftp.username`, `aem.resolver.sftp.password`. Optionally enable strict host checking by setting property `aem.resolver.sftp.hostChecking` to `true`.
 * `dependency(notation: String)`, use OSGi bundle that will be resolved from defined repositories (for instance from Maven) then wrapped to CRX package: `dependency('com.neva.felix:search-webconsole-plugin:1.2.0')`.
 * `group(name: String, options: Resolver<PackageGroup>.() -> Unit)`, useful for declaring group of packages (or just optionally naming single package) to be installed only on demand. For instance: `group 'tools', { url('http://example.com/package.zip'); url('smb://internal-nt/package2.zip')  }`. Then to install only packages in group `tools`, use command: `gradlew aemSatisfy -Paem.satisfy.group=tools`.
 
@@ -1170,17 +1170,19 @@ Example configuration:
 aem {
     tasks {
         satisfy {
-            group("default") {
-                local("pkg/vanityurls-components-1.0.2.zip")
-                url("smb://company-share/aem/packages/my-lib.zip")
-                url("sftp://company-share/aem/packages/other-lib.zip")
-                url("file:///C:/Libraries/aem/package/extra-lib.zip")
-            }
-            
-            group("tools") {
-                dependency("com.neva.felix:search-webconsole-plugin:1.2.0")
-                url("https://github.com/Cognifide/APM/releases/download/cqsm-3.0.0/apm-3.0.0.zip")
-                url("https://github.com/Adobe-Consulting-Services/acs-aem-tools/releases/download/acs-aem-tools-1.0.0/acs-aem-tools-content-1.0.0-min.zip")
+            packages {
+                group("default") {
+                    local("pkg/vanityurls-components-1.0.2.zip")
+                    url("smb://company-share/aem/packages/my-lib.zip")
+                    url("sftp://company-share/aem/packages/other-lib.zip")
+                    url("file:///C:/Libraries/aem/package/extra-lib.zip")
+                }
+
+                group("tools") {
+                    dependency("com.neva.felix:search-webconsole-plugin:1.2.0")
+                    url("https://github.com/Cognifide/APM/releases/download/cqsm-3.0.0/apm-3.0.0.zip")
+                    url("https://github.com/Adobe-Consulting-Services/acs-aem-tools/releases/download/acs-aem-tools-1.0.0/acs-aem-tools-content-1.0.0-min.zip")
+                }
             }
         }
     }
