@@ -20,7 +20,7 @@ open class EnvDown : DockerTask() {
     @TaskAction
     fun down() {
         stack.rm()
-        serviceAwait.await("docker network - awaiting stop", downDelay) { stack.isStackDown() }
+        serviceAwait.await("docker network - awaiting stop", downDelay) { stack.isDown() }
     }
 
     companion object {
