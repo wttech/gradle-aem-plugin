@@ -9,13 +9,5 @@ class DockerOptions {
             field = value
         }
 
-    var composeFilePath = "local-environment/docker-compose.yml"
-        set(value) {
-            if (value.isBlank()) {
-                throw DockerException("Compose file path is required to run aemEnvUp (environment -> docker -> composeFilePath)!")
-            }
-            field = value
-        }
-
     var downDelay = 30L
 }

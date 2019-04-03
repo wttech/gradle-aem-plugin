@@ -17,7 +17,7 @@ open class EnvUp : DockerTask() {
 
     @TaskAction
     fun up() {
-        stack.deploy()
+        stack.deploy(config.composeFilePath)
         serviceAwait.await()
     }
 
