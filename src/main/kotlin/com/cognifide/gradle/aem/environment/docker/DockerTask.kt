@@ -9,5 +9,8 @@ open class DockerTask : AemDefaultTask() {
     protected val stack = Stack(aem)
 
     @Internal
+    protected val config = ConfigExpander(aem.project.projectDir.path)
+
+    @Internal
     protected val options = aem.environmentOptions.docker
 }

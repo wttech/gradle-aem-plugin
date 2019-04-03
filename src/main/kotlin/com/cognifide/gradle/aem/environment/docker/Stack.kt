@@ -17,11 +17,11 @@ class Stack(private val aem: AemExtension) {
 
     private val options = aem.environmentOptions.docker
 
-    fun deploy() {
+    fun deploy(composeFilePath: String) {
         aem.logger.info("Deploying stack: ${options.stackName}")
         docker {
             initSwarmIfNotInitialized()
-            stackDeploy(options.stackName, options.composeFilePath)
+            stackDeploy(options.stackName, composeFilePath)
         }
     }
 
@@ -51,7 +51,7 @@ class Stack(private val aem: AemExtension) {
                                 " Please wait few seconds before starting stack with the same name."
                 )
             }
-            throw DockerException("Failed to initialize service stack on docker!")
+            throw DockerException("Failed to initialize service stack on docker!", dce)
         }
     }
 

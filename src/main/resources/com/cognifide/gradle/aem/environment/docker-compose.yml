@@ -1,0 +1,18 @@
+version: "3"
+services:
+  dispatcher:
+    image: mierzwid/dispatcher:0.0.3
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    ports:
+    - "80:80"
+    networks:
+    - docker-net
+    volumes:
+      - "./dispatcher/conf:/etc/httpd/conf"
+      - "./build/cache:/opt/aem/dispatcher/cache"
+      - "./build/logs:/opt/aem/dispatcher/logs"
+networks:
+  docker-net:
