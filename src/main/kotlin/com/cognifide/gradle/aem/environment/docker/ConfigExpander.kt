@@ -11,6 +11,7 @@ class ConfigExpander(private val projectDir: String) {
     }
 
     val composeFilePath: String = composeFile(projectDir).path
+    val dispatcherConfPath: String = dispatcherConfPath(projectDir)
 
     private fun setupEnvironmentConfiguration() {
         if (isEnvironmentConfigExpanded(projectDir)) {
@@ -35,14 +36,15 @@ class ConfigExpander(private val projectDir: String) {
         private const val SINGLE_MODULE_PROJECT_AEM_GRADLE_DIR = "gradle"
         private const val MULTI_MODULE_PROJECT_AEM_GRADLE_DIR = "aem/gradle"
 
-        private fun environmentDir(projectDir: String) = if (isEnvironmentConfigExpanded(projectDir)) {
-            "$projectDir/$MULTI_MODULE_PROJECT_AEM_GRADLE_DIR/$ENVIRONMENT_DIR"
-        } else {
-            "$projectDir/$SINGLE_MODULE_PROJECT_AEM_GRADLE_DIR/$ENVIRONMENT_DIR"
-        }
+        private fun environmentDir(projectDir: String) =
+                if (File("$projectDir/$MULTI_MODULE_PROJECT_AEM_GRADLE_DIR").exists()) {
+                    "$projectDir/$MULTI_MODULE_PROJECT_AEM_GRADLE_DIR/$ENVIRONMENT_DIR"
+                } else {
+                    "$projectDir/$SINGLE_MODULE_PROJECT_AEM_GRADLE_DIR/$ENVIRONMENT_DIR"
+                }
 
         private fun isEnvironmentConfigExpanded(projectDir: String) =
-                File("$projectDir/$MULTI_MODULE_PROJECT_AEM_GRADLE_DIR").exists()
+                File(environmentDir(projectDir)).exists()
 
         private fun composeFile(projectDir: String) = File("${environmentDir(projectDir)}/docker-compose.yml")
         private fun createDispatcherBuildDirs(projectDir: String) {
@@ -52,5 +54,7 @@ class ConfigExpander(private val projectDir: String) {
             GFileUtils.mkdirs(File("$environmentDir/$LOGS_DIR_DISPATCHER"))
             GFileUtils.mkdirs(File("$environmentDir/$LOGS_DIR_APACHE"))
         }
+
+        fun dispatcherConfPath(projectDir: String) = "${environmentDir(projectDir)}/dispatcher/conf"
     }
 }
