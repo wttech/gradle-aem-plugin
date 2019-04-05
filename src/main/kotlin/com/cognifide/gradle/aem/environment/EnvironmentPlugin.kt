@@ -26,6 +26,7 @@ class EnvironmentPlugin : AemPlugin() {
 
     private fun Project.setupTasks() {
         with(AemExtension.of(this).tasks) {
+            register<DispatcherDev>(DispatcherDev.NAME)
             register<EnvHosts>(EnvHosts.NAME)
             register<EnvUp>(EnvUp.NAME)
             register<EnvDown>(EnvDown.NAME)

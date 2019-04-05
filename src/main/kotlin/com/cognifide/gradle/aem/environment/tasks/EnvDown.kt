@@ -15,7 +15,7 @@ open class EnvDown : DockerTask() {
     @Internal
     private val serviceAwait = ServiceAwait(aem)
 
-    private val downDelay = aem.retry { afterSecond(options.downDelay) }
+    private val downDelay = aem.retry { afterSecond(dockerOptions.downDelay) }
 
     @TaskAction
     fun down() {

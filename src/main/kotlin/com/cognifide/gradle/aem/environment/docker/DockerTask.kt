@@ -6,11 +6,14 @@ import org.gradle.api.tasks.Internal
 open class DockerTask : AemDefaultTask() {
 
     @Internal
-    protected val stack: Stack = StackCommandline(aem)
+    protected val stack = Stack(aem)
 
     @Internal
     protected val config = ConfigExpander(aem.project.projectDir.path)
 
     @Internal
-    protected val options = aem.environmentOptions.docker
+    protected val options = aem.environmentOptions
+
+    @Internal
+    protected val dockerOptions = aem.environmentOptions.docker
 }
