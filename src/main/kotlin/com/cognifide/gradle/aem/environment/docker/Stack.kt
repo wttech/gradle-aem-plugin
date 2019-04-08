@@ -59,14 +59,9 @@ class Stack(aem: AemExtension) {
     fun exec(containerName: String, command: String, exitCode: Int = 0) {
         val containerId = containerId(containerName)
         val commands = command.split(" ").toTypedArray()
-        try {
-            ProcBuilder("docker")
-                    .withArgs("exec", containerId, *commands)
-                    .withExpectedExitStatuses(exitCode)
-                    .run()
-        } catch (e: ExternalProcessFailureException) {
-            throw DockerException("Failed to exec command '${e.command}' on a container '$containerId'.\n" +
-                    "Error: '${e.stderr}'", e)
-        }
+        ProcBuilder("docker")
+                .withArgs("exec", containerId, *commands)
+                .withExpectedExitStatuses(exitCode)
+                .run()
     }
 }
