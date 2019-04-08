@@ -5,6 +5,7 @@ import com.cognifide.gradle.aem.environment.docker.DockerTask
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
 open class DispatcherDev : DockerTask() {
@@ -12,7 +13,9 @@ open class DispatcherDev : DockerTask() {
         description = "Listens to httpd/dispatcher configuration changes and reloads Apache."
     }
 
+    @Internal
     private val dispatcherConfModificationChannel = Channel<Any>()
+    @Internal
     private val dirWatcher = DirWatcher(config.dispatcherConfPath, dispatcherConfModificationChannel)
 
     @TaskAction
