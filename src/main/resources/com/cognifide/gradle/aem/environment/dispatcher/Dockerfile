@@ -5,7 +5,7 @@ FROM centos:7
 
 LABEL maintainer="mierzwid"
 
-# Install HTTPD and enable it
+# Install httpd and enable it
 RUN yum -y install httpd mod_ssl mod_so mod_security openssl; yum clean all; systemctl enable httpd.service
 
 # Download dispatcher module

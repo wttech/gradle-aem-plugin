@@ -7,6 +7,8 @@ import java.text.SimpleDateFormat
 import java.util.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ReceiveChannel
+import org.buildobjects.process.ExternalProcessFailureException
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
@@ -29,7 +31,7 @@ open class DispatcherDev : DockerTask() {
 
     @TaskAction
     fun dev() {
-        aem.logger.lifecycle("Listening for HTTPD configuration changes at: ${config.dispatcherConfPath}")
+        aem.logger.lifecycle("Listening for httpd configuration changes at: ${config.dispatcherConfPath}")
         runBlocking {
             dirWatcher.watch()
             reloadConfigurationOnChange()
@@ -40,12 +42,18 @@ open class DispatcherDev : DockerTask() {
     private fun CoroutineScope.reloadConfigurationOnChange() {
         launch(Dispatchers.IO) {
             while (true) {
-                val changes = modificationsChannel.receive()
-                log("Reloading HTTPD because of: ${changes.joinToString(", ")}")
-                stack.exec("dispatcher", HTTPD_RESTART_COMMAND, EXPECTED_HTTPD_RESTART_EXIT_CODE)
-                log("HTTPD restarted with new configuration. Checking service stability.")
-                requestToCheckStability.send(Date())
-                delay(ServiceAwait.AWAIT_DELAY_DEFAULT)
+                val changes = modificationsChannel.receiveAvailable().flatten()
+                log("Reloading httpd because of: ${changes.joinToString(", ")}")
+                try {
+                    stack.exec("dispatcher", HTTPD_RESTART_COMMAND, EXPECTED_HTTPD_RESTART_EXIT_CODE)
+                    log("httpd restarted with new configuration. Checking service stability.")
+                    requestToCheckStability.send(Date())
+                } catch (e: ExternalProcessFailureException) {
+                    log("Failed to reload httpd, exit code: ${e.exitValue}! Error:\n" +
+                            "-------------------------------------------------------------------------------------------\n" +
+                            e.stderr +
+                            "-------------------------------------------------------------------------------------------")
+                }
             }
         }
     }
@@ -53,7 +61,7 @@ open class DispatcherDev : DockerTask() {
     private fun CoroutineScope.checkServiceStability(): Job {
         return launch {
             while (true) {
-                requestToCheckStability.receive()
+                requestToCheckStability.receiveAvailable()
                 val unavailableServices = serviceAwait.checkForUnavailableServices()
                 if (unavailableServices.isEmpty()) {
                     log("All stable, configuration update looks good.")
@@ -63,6 +71,17 @@ open class DispatcherDev : DockerTask() {
                 }
             }
         }
+    }
+
+    private suspend fun <E> ReceiveChannel<E>.receiveAvailable(): List<E> {
+        val allMessages = mutableListOf<E>()
+        allMessages.add(receive())
+        var next = poll()
+        while (next != null) {
+            allMessages.add(next)
+            next = poll()
+        }
+        return allMessages
     }
 
     private fun log(message: String) {
