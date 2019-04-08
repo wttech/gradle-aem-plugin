@@ -13,15 +13,9 @@ class ServiceAwait(private val aem: AemExtension) {
     private val options = aem.environmentOptions
     val progress = ProgressLogger.of(aem.project)
 
-    fun awaitAllServices() {
-        progress.launch {
-            val serviceStatuses = options.healthChecks.list.parallelStream().map { it.url to isServiceHealthy(it) }.toList()
-            if (!serviceStatuses.all { it.second }) {
-                val unavailableUrls = serviceStatuses.filter { !it.second }.map { it.first }.joinToString("\n")
-                throw EnvironmentException("Failed to initialized all services! Following URLs are still unavailable " +
-                        "or returned different response than expected:\n$unavailableUrls")
-            }
-        }
+    fun checkForUnavailableServices() = progress.launch {
+        val serviceStatuses = options.healthChecks.list.parallelStream().map { it.url to isServiceHealthy(it) }.toList()
+        return@launch serviceStatuses.filter { !it.second }.map { it.first }
     }
 
     fun awaitConditionObservingProgress(message: String, maxAwaitTime: Long, condition: suspend () -> Boolean) = progress.launch {

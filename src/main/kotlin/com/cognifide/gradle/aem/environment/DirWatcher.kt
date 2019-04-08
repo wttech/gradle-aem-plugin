@@ -9,7 +9,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
 
-class DirWatcher(private val directory: String, private val modificationChannel: SendChannel<Any>) {
+class DirWatcher(private val directory: String, private val modificationChannel: SendChannel<List<String>>) {
     private val watcher = FileSystems.getDefault().newWatchService()
 
     fun watch() {
@@ -17,8 +17,21 @@ class DirWatcher(private val directory: String, private val modificationChannel:
             registerRecursive(directory)
             launch(Dispatchers.IO) {
                 while (true) {
-                    val change = async { watcher.take() }
-                    modificationChannel.send(change.await())
+                    val changes = async {
+                        val key = watcher.take()
+                        val changes = key.pollEvents().map { change ->
+                            when (change.kind()) {
+                                ENTRY_CREATE -> "${change.context()} was created"
+                                ENTRY_MODIFY -> "${change.context()} was modified"
+                                OVERFLOW -> "${change.context()} overflow"
+                                ENTRY_DELETE -> "${change.context()} was deleted"
+                                else -> "unknown change"
+                            }
+                        }.toList()
+                        key.reset()
+                        changes
+                    }
+                    modificationChannel.send(changes.await())
                 }
             }
         }
