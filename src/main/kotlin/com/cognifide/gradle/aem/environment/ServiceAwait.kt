@@ -6,60 +6,65 @@ import com.cognifide.gradle.aem.common.Retry
 import com.cognifide.gradle.aem.common.http.HttpClient
 import com.cognifide.gradle.aem.common.http.RequestException
 import kotlin.streams.toList
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 
 class ServiceAwait(private val aem: AemExtension) {
 
     private val options = aem.environmentOptions
     val progress = ProgressLogger.of(aem.project)
 
-    fun await() =
-            progress.launch {
-                val serviceStatuses = options.healthChecks.list.parallelStream().map { it.url to healthy(it) }.toList()
-                if (!serviceStatuses.all { it.second }) {
-                    val unavailableUrls = serviceStatuses.filter { !it.second }.map { it.first }.joinToString("\n")
-                    throw EnvironmentException("Failed to initialized all services! Following URLs are still unavailable " +
-                            "or returned different response than expected:\n$unavailableUrls")
-                }
-            }
-
-    fun await(message: String, retry: Retry, condition: () -> Boolean) {
+    fun awaitAllServices() {
         progress.launch {
-            runBlocking {
-                val noOfChecks = retry.times.toInt()
-                repeat(noOfChecks) { iteration ->
-                    progress("!${noOfChecks - iteration} $message")
-                    delay(retry.delay(iteration.toLong()))
-                    if (condition()) {
-                        return@runBlocking
-                    }
-                }
-                throw EnvironmentException("Failed to stop docker stack after ${retry.times} seconds." +
-                        "\nPlease try to stop it manually by running: `docker stack rm ${options.docker.stackName}`")
+            val serviceStatuses = options.healthChecks.list.parallelStream().map { it.url to isServiceHealthy(it) }.toList()
+            if (!serviceStatuses.all { it.second }) {
+                val unavailableUrls = serviceStatuses.filter { !it.second }.map { it.first }.joinToString("\n")
+                throw EnvironmentException("Failed to initialized all services! Following URLs are still unavailable " +
+                        "or returned different response than expected:\n$unavailableUrls")
             }
         }
     }
 
-    private fun ProgressLogger.healthy(check: HealthCheck): Boolean {
+    fun awaitConditionObservingProgress(message: String, maxAwaitTime: Long, condition: suspend () -> Boolean) = progress.launch {
+        awaitCondition(message, maxAwaitTime, condition)
+    }
+
+    private fun ProgressLogger.isServiceHealthy(check: HealthCheck): Boolean {
+        return awaitCondition("${check.url} - awaiting to start", check.maxAwaitTime) {
+            isResponseValid(check)
+        }
+    }
+
+    private fun ProgressLogger.awaitCondition(message: String, maxAwaitTime: Long, condition: suspend () -> Boolean): Boolean {
         var isValid = false
         runBlocking {
-            val noOfChecks = check.numberOfChecks()
-            repeat(noOfChecks) { iteration ->
-                progress("!${check.timeLeft(iteration)} ${check.url} - awaiting to start")
-                delay(check.delay)
-                try {
-                    val (status, body) = get(check.connectionTimeout, check.url)
-                    if (status == check.status && body.contains(check.text)) {
-                        isValid = true
-                        return@runBlocking
+            withTimeoutOrNull(maxAwaitTime) {
+                val startTime = System.currentTimeMillis()
+                while (true) {
+                    val timePassed = System.currentTimeMillis() - startTime
+                    val remainingTime = (maxAwaitTime - timePassed) / Retry.SECOND_MILIS
+                    progress("!$remainingTime $message")
+                    delay(AWAIT_DELAY_DEFAULT)
+                    isValid = condition()
+                    if (isValid) {
+                        return@withTimeoutOrNull
                     }
-                } catch (ex: RequestException) {
-                    // wait for service to start
                 }
             }
         }
         return isValid
+    }
+
+    private suspend fun isResponseValid(check: HealthCheck): Boolean {
+        return coroutineScope {
+            async {
+                try {
+                    val (status, body) = get(check.connectionTimeout, check.url)
+                    status == check.status && body.contains(check.text)
+                } catch (ex: RequestException) {
+                    false
+                }
+            }.await()
+        }
     }
 
     private fun http(connectionTimeout: Int): HttpClient {
@@ -74,5 +79,9 @@ class ServiceAwait(private val aem: AemExtension) {
             val status = response.statusLine.statusCode
             status to body
         }
+    }
+
+    companion object {
+        const val AWAIT_DELAY_DEFAULT = 500L
     }
 }

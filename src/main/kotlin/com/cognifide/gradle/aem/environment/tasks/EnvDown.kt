@@ -1,5 +1,7 @@
 package com.cognifide.gradle.aem.environment.tasks
 
+import com.cognifide.gradle.aem.common.Retry
+import com.cognifide.gradle.aem.environment.EnvironmentException
 import com.cognifide.gradle.aem.environment.ServiceAwait
 import com.cognifide.gradle.aem.environment.docker.DockerTask
 import org.gradle.api.tasks.Internal
@@ -15,15 +17,18 @@ open class EnvDown : DockerTask() {
     @Internal
     private val serviceAwait = ServiceAwait(aem)
 
-    private val downDelay = aem.retry { afterSecond(dockerOptions.downDelay) }
-
     @TaskAction
     fun down() {
         stack.rm()
-        serviceAwait.await("docker network - awaiting stop", downDelay) { stack.isDown() }
+        val isStopped = serviceAwait.awaitConditionObservingProgress("docker network - awaiting stop", NETWORK_STOP_AWAIT_TIME) { stack.isDown() }
+        if (!isStopped) {
+            throw EnvironmentException("Failed to stop docker stack after ${NETWORK_STOP_AWAIT_TIME / Retry.SECOND_MILIS} seconds." +
+                    "\nPlease try to stop it manually by running: `docker stack rm ${options.docker.stackName}`")
+        }
     }
 
     companion object {
         const val NAME = "aemEnvDown"
+        const val NETWORK_STOP_AWAIT_TIME = 30000L
     }
 }
