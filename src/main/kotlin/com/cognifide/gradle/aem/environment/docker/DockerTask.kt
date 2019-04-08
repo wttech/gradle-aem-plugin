@@ -13,7 +13,4 @@ open class DockerTask : AemDefaultTask() {
 
     @Internal
     protected val options = aem.environmentOptions
-
-    @Internal
-    protected val dockerOptions = aem.environmentOptions.docker
 }
