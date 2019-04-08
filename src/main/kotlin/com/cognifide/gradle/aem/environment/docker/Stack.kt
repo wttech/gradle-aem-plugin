@@ -30,13 +30,13 @@ class Stack(aem: AemExtension) {
 
     fun isDown(): Boolean {
         val result = ProcBuilder("docker")
-                .withArgs("service", "inspect", options.stackName)
+                .withArgs("network", "inspect", "${options.stackName}_docker-net")
                 .ignoreExitStatus()
                 .run()
         if (result.exitValue == 0) {
             return false
         }
-        if (result.errorString.contains("Status: Error: no such service")) {
+        if (result.errorString.contains("Error: No such network")) {
             return true
         }
         throw DockerException("Unable to determine stack '${options.stackName}' status. Error: '${result.errorString}'")
