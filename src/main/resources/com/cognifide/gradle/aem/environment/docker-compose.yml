@@ -13,7 +13,6 @@ services:
     volumes:
       - "./dispatcher/conf:/etc/httpd/conf"
       - "./build/cache:/opt/aem/dispatcher/cache"
-      - "./build/logs/dispatcher:/opt/aem/dispatcher/logs"
-      - "./build/logs/apache:/var/log/httpd"
+      - "./build/logs:/var/log/httpd"
 networks:
   docker-net:
