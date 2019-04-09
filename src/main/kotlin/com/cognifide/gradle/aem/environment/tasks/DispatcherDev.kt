@@ -1,6 +1,8 @@
 package com.cognifide.gradle.aem.environment.tasks
 
+import com.cognifide.gradle.aem.common.Retry
 import com.cognifide.gradle.aem.environment.DirWatcher
+import com.cognifide.gradle.aem.environment.EnvironmentException
 import com.cognifide.gradle.aem.environment.ServiceAwait
 import com.cognifide.gradle.aem.environment.docker.DockerTask
 import java.text.SimpleDateFormat
@@ -13,6 +15,7 @@ import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
 open class DispatcherDev : DockerTask() {
+
     init {
         description = "Listens to httpd/dispatcher configuration changes and reloads Apache."
     }
@@ -31,9 +34,17 @@ open class DispatcherDev : DockerTask() {
 
     @TaskAction
     fun dev() {
-        aem.logger.lifecycle("Listening for httpd configuration changes at: ${config.dispatcherConfPath}")
         runBlocking {
+            stack.rm()
+            val isStopped = serviceAwait.awaitConditionObservingProgress("docker network - awaiting stop", EnvDown.NETWORK_STOP_AWAIT_TIME) { stack.isDown() }
+            if (!isStopped) {
+                throw EnvironmentException("Failed to stop docker stack after ${EnvDown.NETWORK_STOP_AWAIT_TIME / Retry.SECOND_MILIS} seconds." +
+                        "\nPlease try to stop it manually by running: `docker stack rm ${options.docker.stackName}`")
+            }
+            stack.deploy(config.composeFilePath)
+            requestToCheckStability.send(Date())
             dirWatcher.watch()
+            aem.logger.lifecycle("Listening for httpd configuration changes at: ${config.dispatcherConfPath}")
             reloadConfigurationOnChange()
             checkServiceStability()
         }
