@@ -29,8 +29,6 @@ class ConfigExpander(private val projectDir: String) {
         private const val ENVIRONMENT_DIR = "environment"
         private const val BUILD_DIR = "build"
         private const val LOGS_DIR = "$BUILD_DIR/logs"
-        private const val LOGS_DIR_DISPATCHER = "$LOGS_DIR/dispatcher"
-        private const val LOGS_DIR_APACHE = "$LOGS_DIR/apache"
         private const val CACHE_DIR_LIVE = "$BUILD_DIR/cache/content/example/live"
         private const val CACHE_DIR_DEMO = "$BUILD_DIR/cache/content/example/demo"
         private const val SINGLE_MODULE_PROJECT_AEM_GRADLE_DIR = "gradle"
@@ -51,8 +49,7 @@ class ConfigExpander(private val projectDir: String) {
             val environmentDir = environmentDir(projectDir)
             GFileUtils.mkdirs(File("$environmentDir/$CACHE_DIR_DEMO"))
             GFileUtils.mkdirs(File("$environmentDir/$CACHE_DIR_LIVE"))
-            GFileUtils.mkdirs(File("$environmentDir/$LOGS_DIR_DISPATCHER"))
-            GFileUtils.mkdirs(File("$environmentDir/$LOGS_DIR_APACHE"))
+            GFileUtils.mkdirs(File("$environmentDir/$LOGS_DIR"))
         }
 
         fun dispatcherConfPath(projectDir: String) = "${environmentDir(projectDir)}/dispatcher/conf"

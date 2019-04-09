@@ -17,10 +17,6 @@ RUN tar -C dispatcher -zxvf dispatcher-apache2.*.tar.gz
 RUN cp ./dispatcher/dispatcher-apache2.*.so /etc/httpd/modules/
 RUN ln -s /etc/httpd/modules/dispatcher-apache2.*.so /etc/httpd/modules/mod_dispatcher.so
 
-# Logs & cache directories
-RUN mkdir -p /opt/aem/dispatcher/logs
-RUN chown apache:apache /opt/aem/dispatcher/logs
-
 # Cache directories
 RUN mkdir -p /opt/aem/dispatcher/cache/content/example/demo
 RUN mkdir -p /opt/aem/dispatcher/cache/content/example/live
