@@ -12,6 +12,7 @@ class Stack(aem: AemExtension) {
         try {
             ProcBuilder("docker")
                     .withArgs("stack", "deploy", "-c", composeFilePath, options.stackName)
+                    .withNoTimeout()
                     .run()
         } catch (e: ExternalProcessFailureException) {
             throw DockerException("Failed to initialize stack '${options.stackName}' on docker! Error: '${e.stderr}'", e)

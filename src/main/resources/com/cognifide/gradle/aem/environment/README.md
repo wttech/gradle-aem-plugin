@@ -30,6 +30,11 @@ Run `gradlew aemEnvSetup` to start both dispatcher and AEM instances and deploy 
 
 Run `gradlew aemEnvUp` to start dispatcher when AEM instances are up and application is deployed.
 
+**Windows only:**
+
+Because dispatchers configuration is provided using Dockers bind mount, on Windows first start requires additional user confirmation to share those files.
+
+### Service health checks
 In case of the dispatcher it takes few seconds to start. Default service heath check can be described in the following configuration. By default it will wait for all three domains to be available:
 
 ```kotlin
@@ -61,10 +66,12 @@ ukdohhbfvxm8        local-setup_dispatcher   replicated          1/1            
 
 Run `gradlew aemEnvDown` to stop it.
 
-## Updating httpd/dispatcher configuration
+## Developing httpd/dispatcher configuration
 
 If you need to make changes to httpd/dispatcher configuration:
-1. edit files in the [dispatcher](dispatcher) directory 
+1. Run `gradlew aemDispatcherDev`
+2. On Windows accept Docker to access files from your machine, as dispatcher configuration is directly bind mounted from the project
+2. edit files in the [dispatcher/conf](dispatcher/conf) directory 
 2. `cd dispatcher`
 3. build your new image using `docker build --tag=image_name:version .`
 4. update [docker-compose.yml](docker-compose.yml) to use your dispatcher image 
