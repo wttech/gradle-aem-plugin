@@ -1,14 +1,12 @@
 package com.cognifide.gradle.aem.environment
 
 import com.cognifide.gradle.aem.environment.checks.HealthChecks
-import com.cognifide.gradle.aem.environment.docker.DockerOptions
 import com.cognifide.gradle.aem.environment.hosts.HostsOptions
 import java.net.HttpURLConnection.HTTP_OK
 
 class EnvironmentOptions {
     var healthChecks = HealthChecks()
     val hosts = HostsOptions()
-    val docker = DockerOptions()
 
     fun healthChecks(configurer: HealthChecks.() -> Unit) {
         healthChecks = HealthChecks().apply(configurer)
@@ -16,10 +14,6 @@ class EnvironmentOptions {
 
     fun hosts(config: Map<String, String>) {
         hosts.configure(config)
-    }
-
-    fun docker(configurer: DockerOptions.() -> Unit) {
-        docker.apply(configurer)
     }
 
     init {
@@ -40,4 +34,3 @@ class EnvironmentOptions {
         }
     }
 }
-

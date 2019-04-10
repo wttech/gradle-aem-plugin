@@ -8,7 +8,12 @@ import com.cognifide.gradle.aem.common.http.RequestException
 import kotlin.streams.toList
 import kotlinx.coroutines.*
 
-class ServiceAwait(private val aem: AemExtension) {
+/**
+ * TODO: Since coroutines API is still in experimental mode we would need to adapt to it's final API when released.
+ * Please see https://github.com/Kotlin/kotlinx.coroutines/issues/632#issuecomment-425408865
+ */
+@UseExperimental(ObsoleteCoroutinesApi::class)
+class ServiceChecker(private val aem: AemExtension) {
 
     private val options = aem.environmentOptions
     val progress = ProgressLogger.of(aem.project)

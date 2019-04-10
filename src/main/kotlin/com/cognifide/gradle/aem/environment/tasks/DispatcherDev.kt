@@ -1,10 +1,11 @@
 package com.cognifide.gradle.aem.environment.tasks
 
 import com.cognifide.gradle.aem.common.Retry
-import com.cognifide.gradle.aem.environment.io.DirWatcher
 import com.cognifide.gradle.aem.environment.EnvironmentException
-import com.cognifide.gradle.aem.environment.checks.ServiceAwait
+import com.cognifide.gradle.aem.environment.checks.ServiceChecker
 import com.cognifide.gradle.aem.environment.docker.DockerTask
+import com.cognifide.gradle.aem.environment.docker.Stack
+import com.cognifide.gradle.aem.environment.io.DirWatcher
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlinx.coroutines.*
@@ -14,6 +15,11 @@ import org.buildobjects.process.ExternalProcessFailureException
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
+/**
+ * TODO: Since coroutines API is still in experimental mode we would need to adapt to it's final API when released.
+ * Please see https://github.com/Kotlin/kotlinx.coroutines/issues/632#issuecomment-425408865
+ */
+@UseExperimental(ObsoleteCoroutinesApi::class)
 open class DispatcherDev : DockerTask() {
 
     init {
@@ -30,7 +36,7 @@ open class DispatcherDev : DockerTask() {
     private val dirWatcher = DirWatcher(config.dispatcherConfPath, modificationsChannel)
 
     @Internal
-    private val serviceAwait = ServiceAwait(aem)
+    private val serviceAwait = ServiceChecker(aem)
 
     @TaskAction
     fun dev() {
@@ -39,7 +45,7 @@ open class DispatcherDev : DockerTask() {
             val isStopped = serviceAwait.awaitConditionObservingProgress("docker network - awaiting stop", EnvDown.NETWORK_STOP_AWAIT_TIME) { stack.isDown() }
             if (!isStopped) {
                 throw EnvironmentException("Failed to stop docker stack after ${EnvDown.NETWORK_STOP_AWAIT_TIME / Retry.SECOND_MILIS} seconds." +
-                        "\nPlease try to stop it manually by running: `docker stack rm ${options.docker.stackName}`")
+                        "\nPlease try to stop it manually by running: `docker stack rm ${Stack.STACK_NAME_DEFAULT}`")
             }
             stack.deploy(config.composeFilePath)
             requestToCheckStability.send(Date())
