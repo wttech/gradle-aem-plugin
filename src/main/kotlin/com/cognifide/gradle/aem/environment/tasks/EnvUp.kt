@@ -9,7 +9,7 @@ import org.gradle.api.tasks.TaskAction
 open class EnvUp : DockerTask() {
 
     init {
-        description = "Starts additional services for local environment " +
+        description = "Turn on additional services for local environment " +
                 "- based on provided docker compose file."
     }
 

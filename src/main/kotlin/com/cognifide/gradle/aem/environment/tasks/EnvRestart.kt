@@ -5,7 +5,7 @@ import com.cognifide.gradle.aem.common.AemDefaultTask
 open class EnvRestart : AemDefaultTask() {
 
     init {
-        description = "Restarts virtualized development environment."
+        description = "Restart virtualized development environment."
     }
 
     companion object {

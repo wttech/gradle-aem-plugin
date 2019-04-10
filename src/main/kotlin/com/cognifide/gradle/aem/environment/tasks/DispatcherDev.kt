@@ -23,7 +23,7 @@ import org.gradle.api.tasks.TaskAction
 open class DispatcherDev : DockerTask() {
 
     init {
-        description = "Listens to httpd/dispatcher configuration changes and reloads Apache."
+        description = "Listen to httpd/dispatcher configuration changes and reloads Apache."
     }
 
     @Internal

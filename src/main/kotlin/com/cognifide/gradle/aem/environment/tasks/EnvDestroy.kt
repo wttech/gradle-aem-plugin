@@ -5,7 +5,7 @@ import com.cognifide.gradle.aem.common.AemDefaultTask
 open class EnvDestroy : AemDefaultTask() {
 
     init {
-        description = "Destroys local AEM instance(s) and virtualized development environment."
+        description = "Destroy local AEM instance(s) and virtualized development environment."
     }
 
     companion object {
