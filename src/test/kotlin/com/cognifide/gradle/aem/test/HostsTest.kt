@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.test
 
 import com.cognifide.gradle.aem.environment.hosts.Host
-import com.cognifide.gradle.aem.environment.hosts.HostsAppender
+import com.cognifide.gradle.aem.environment.hosts.HostsUnix
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.io.File
 
-class HostsAppenderTest {
+class HostsTest {
 
     object IO {
         fun text(resource: String): String = FileUtils.readFileToString(file(resource), "UTF8")
@@ -17,18 +17,14 @@ class HostsAppenderTest {
         private fun file(resource: String) = File(this::class.java.classLoader.getResource(resource).file)
     }
 
-    private val hostsAppender = object : HostsAppender() {
-        override fun appendHosts() {}
-    }
-
     @Test
     fun shouldAppendEtcHostsWithRequiredHosts() {
         // given
         val hosts = listOf(Host("127.0.0.1", "example.com"), Host("127.0.0.1", "demo.example.com"))
-        val hostsText = IO.text("com/cognifide/gradle/aem/test/hosts/hosts")
+        val fileText = IO.text("com/cognifide/gradle/aem/test/hosts/hosts")
 
         // when
-        val content = hostsAppender.appendedContent(hostsText, hosts)
+        val content = HostsUnix(hosts).append(fileText)
 
         // then
         hosts.forEach { assertTrue(content.contains(it.text)) }
@@ -38,10 +34,10 @@ class HostsAppenderTest {
     fun appendingEtcHostsShouldBeIdempotent() {
         // given
         val hosts = listOf(Host("127.0.0.1", "example.com"), Host("127.0.0.1", "demo.example.com"))
-        val hostsText = IO.text("com/cognifide/gradle/aem/test/hosts/hosts_already_appended")
+        val fileText = IO.text("com/cognifide/gradle/aem/test/hosts/hosts_already_appended")
 
         // when
-        val content: String = hostsAppender.appendedContent(hostsText, hosts)
+        val content: String = HostsUnix(hosts).append(fileText)
 
         // then
         hosts.forEach { assertEquals(1, StringUtils.countMatches(content, it.text)) }
@@ -51,10 +47,10 @@ class HostsAppenderTest {
     fun shouldIgnoreCommentsWhenAppending() {
         // given
         val hosts = listOf(Host("127.0.0.1", "example.com"), Host("127.0.0.1", "demo.example.com"))
-        val hostsText = IO.text("com/cognifide/gradle/aem/test/hosts/hosts_with_comments")
+        val fileText = IO.text("com/cognifide/gradle/aem/test/hosts/hosts_with_comments")
 
         // when
-        val content: String = hostsAppender.appendedContent(hostsText, hosts)
+        val content: String = HostsUnix(hosts).append(fileText)
 
         // then
         hosts.forEach { assertEquals(2, StringUtils.countMatches(content, it.text)) }
