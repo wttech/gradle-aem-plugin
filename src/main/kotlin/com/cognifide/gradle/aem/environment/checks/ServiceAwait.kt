@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.environment
+package com.cognifide.gradle.aem.environment.checks
 
 import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.ProgressLogger

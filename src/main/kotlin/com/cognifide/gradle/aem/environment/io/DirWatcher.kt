@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.environment
+package com.cognifide.gradle.aem.environment.io
 
 import java.nio.file.*
 import java.nio.file.StandardWatchEventKinds.*
@@ -19,15 +19,7 @@ class DirWatcher(private val directory: String, private val modificationChannel:
                 while (true) {
                     val changes = async {
                         val key = watcher.take()
-                        val changes = key.pollEvents().map { change ->
-                            when (change.kind()) {
-                                ENTRY_CREATE -> "${change.context()} was created"
-                                ENTRY_MODIFY -> "${change.context()} was modified"
-                                OVERFLOW -> "${change.context()} overflow"
-                                ENTRY_DELETE -> "${change.context()} was deleted"
-                                else -> "unknown change"
-                            }
-                        }.toList()
+                        val changes = mapModificationEvents(key)
                         key.reset()
                         changes
                     }
@@ -35,6 +27,18 @@ class DirWatcher(private val directory: String, private val modificationChannel:
                 }
             }
         }
+    }
+
+    private fun mapModificationEvents(key: WatchKey): List<String> {
+        return key.pollEvents().map { change ->
+            when (change.kind()) {
+                ENTRY_CREATE -> "${change.context()} was created"
+                ENTRY_MODIFY -> "${change.context()} was modified"
+                OVERFLOW -> "${change.context()} overflow"
+                ENTRY_DELETE -> "${change.context()} was deleted"
+                else -> "unknown change"
+            }
+        }.toList()
     }
 
     private fun registerRecursive(root: String) {

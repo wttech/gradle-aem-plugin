@@ -1,9 +1,9 @@
 package com.cognifide.gradle.aem.environment
 
+import com.cognifide.gradle.aem.environment.checks.HealthChecks
 import com.cognifide.gradle.aem.environment.docker.DockerOptions
 import com.cognifide.gradle.aem.environment.hosts.HostsOptions
 import java.net.HttpURLConnection.HTTP_OK
-import java.net.URI
 
 class EnvironmentOptions {
     var healthChecks = HealthChecks()
@@ -41,18 +41,3 @@ class EnvironmentOptions {
     }
 }
 
-class HealthChecks {
-    val list = mutableListOf<HealthCheck>()
-
-    infix fun String.respondsWith(block: HealthCheck.() -> Unit) {
-        list += HealthCheck(this).apply(block)
-    }
-}
-
-class HealthCheck(val url: String) {
-    val uri = URI(url)
-    var status = HTTP_OK
-    var text: String = ""
-    var maxAwaitTime = 60000L
-    var connectionTimeout = 3000
-}
