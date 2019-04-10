@@ -1,37 +1,34 @@
 package com.cognifide.gradle.aem.environment.docker
 
-import com.cognifide.gradle.aem.common.AemExtension
 import org.buildobjects.process.ExternalProcessFailureException
 import org.buildobjects.process.ProcBuilder
 
-class Stack(aem: AemExtension) {
-
-    private val options = aem.environmentOptions.docker
+class Stack {
 
     fun deploy(composeFilePath: String) {
         try {
             ProcBuilder("docker")
-                    .withArgs("stack", "deploy", "-c", composeFilePath, options.stackName)
+                    .withArgs("stack", "deploy", "-c", composeFilePath, STACK_NAME_DEFAULT)
                     .withNoTimeout()
                     .run()
         } catch (e: ExternalProcessFailureException) {
-            throw DockerException("Failed to initialize stack '${options.stackName}' on docker! Error: '${e.stderr}'", e)
+            throw DockerException("Failed to initialize stack '$STACK_NAME_DEFAULT' on docker! Error: '${e.stderr}'", e)
         }
     }
 
     fun rm() {
         try {
             ProcBuilder("docker")
-                    .withArgs("stack", "rm", options.stackName)
+                    .withArgs("stack", "rm", STACK_NAME_DEFAULT)
                     .run()
         } catch (e: ExternalProcessFailureException) {
-            throw DockerException("Failed to remove stack '${options.stackName}' on docker! Error: '${e.stderr}'", e)
+            throw DockerException("Failed to remove stack '$STACK_NAME_DEFAULT' on docker! Error: '${e.stderr}'", e)
         }
     }
 
     fun isDown(): Boolean {
         val result = ProcBuilder("docker")
-                .withArgs("network", "inspect", "${options.stackName}_docker-net")
+                .withArgs("network", "inspect", "${STACK_NAME_DEFAULT}_docker-net")
                 .ignoreExitStatus()
                 .run()
         if (result.exitValue == 0) {
@@ -40,17 +37,17 @@ class Stack(aem: AemExtension) {
         if (result.errorString.contains("Error: No such network")) {
             return true
         }
-        throw DockerException("Unable to determine stack '${options.stackName}' status. Error: '${result.errorString}'")
+        throw DockerException("Unable to determine stack '$STACK_NAME_DEFAULT' status. Error: '${result.errorString}'")
     }
 
     private fun containerId(containerName: String): String {
         try {
             return ProcBuilder("docker")
-                    .withArgs("ps", "-l", "-q", "-f", "name=${options.stackName}_$containerName")
+                    .withArgs("ps", "-l", "-q", "-f", "name=${STACK_NAME_DEFAULT}_$containerName")
                     .run()
                     .outputString.trim()
         } catch (e: ExternalProcessFailureException) {
-            throw DockerException("Failed to load container id for name '${options.stackName}_$containerName'!\n" +
+            throw DockerException("Failed to load container id for name '${STACK_NAME_DEFAULT}_$containerName'!\n" +
                     "Make sure your container is up and running before checking its id.\n" +
                     "Error: '${e.stderr}'", e)
         }
@@ -64,5 +61,9 @@ class Stack(aem: AemExtension) {
                 .withArgs("exec", containerId, *commands)
                 .withExpectedExitStatuses(exitCode)
                 .run()
+    }
+
+    companion object {
+        const val STACK_NAME_DEFAULT = "aem-local-setup"
     }
 }
