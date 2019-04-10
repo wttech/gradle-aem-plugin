@@ -8,7 +8,7 @@ import org.gradle.api.tasks.TaskAction
 open class EnvHosts : AemDefaultTask() {
 
     init {
-        description = "Appends /etc/hosts file with specified list of hosts. " +
+        description = "Append /etc/hosts file with specified list of hosts. " +
                 "Requires super/admin user privileges."
     }
 
