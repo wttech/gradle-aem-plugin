@@ -8,6 +8,4 @@ class DockerOptions {
             }
             field = value
         }
-
-    var downDelay = 30L
 }

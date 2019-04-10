@@ -2,7 +2,7 @@ package com.cognifide.gradle.aem.environment.tasks
 
 import com.cognifide.gradle.aem.common.Retry
 import com.cognifide.gradle.aem.environment.EnvironmentException
-import com.cognifide.gradle.aem.environment.ServiceAwait
+import com.cognifide.gradle.aem.environment.checks.ServiceAwait
 import com.cognifide.gradle.aem.environment.docker.DockerTask
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
