@@ -67,7 +67,7 @@ class ServiceChecker(private val aem: AemExtension) {
     }
 
     private fun http(connectionTimeout: Int): HttpClient {
-        val http = HttpClient(aem.project)
+        val http = HttpClient(aem)
         http.connectionTimeout = connectionTimeout
         return http
     }
