@@ -3,9 +3,12 @@ package com.cognifide.gradle.aem.environment
 import com.cognifide.gradle.aem.environment.checks.HealthChecks
 import com.cognifide.gradle.aem.environment.hosts.HostsOptions
 import java.net.HttpURLConnection.HTTP_OK
+import org.gradle.api.tasks.Internal
 
 class EnvironmentOptions {
+    @Internal
     var healthChecks = HealthChecks()
+    @Internal
     val hosts = HostsOptions()
 
     fun healthChecks(configurer: HealthChecks.() -> Unit) {

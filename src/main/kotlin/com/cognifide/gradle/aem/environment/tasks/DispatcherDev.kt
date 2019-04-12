@@ -5,7 +5,7 @@ import com.cognifide.gradle.aem.environment.EnvironmentException
 import com.cognifide.gradle.aem.environment.checks.ServiceChecker
 import com.cognifide.gradle.aem.environment.docker.DockerTask
 import com.cognifide.gradle.aem.environment.docker.Stack
-import com.cognifide.gradle.aem.environment.io.DirWatcher
+import com.cognifide.gradle.aem.environment.io.DirMonitor
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlinx.coroutines.*
@@ -27,13 +27,13 @@ open class DispatcherDev : DockerTask() {
     }
 
     @Internal
-    private val modificationsChannel = Channel<List<String>>(Channel.UNLIMITED)
+    private val modificationsChannel = Channel<String>(Channel.UNLIMITED)
 
     @Internal
     private val requestToCheckStability = Channel<Any>(Channel.UNLIMITED)
 
     @Internal
-    private val dirWatcher = DirWatcher(config.dispatcherConfPath, modificationsChannel)
+    private val dirWatcher = DirMonitor(config.dispatcherConfPath, modificationsChannel)
 
     @Internal
     private val serviceAwait = ServiceChecker(aem)
@@ -49,7 +49,7 @@ open class DispatcherDev : DockerTask() {
             }
             stack.deploy(config.composeFilePath)
             requestToCheckStability.send(Date())
-            dirWatcher.watch()
+            dirWatcher.start()
             aem.logger.lifecycle("Listening for httpd configuration changes at: ${config.dispatcherConfPath}")
             reloadConfigurationOnChange()
             checkServiceStability()
@@ -59,7 +59,7 @@ open class DispatcherDev : DockerTask() {
     private fun CoroutineScope.reloadConfigurationOnChange() {
         launch(Dispatchers.IO) {
             while (true) {
-                val changes = modificationsChannel.receiveAvailable().flatten()
+                val changes = modificationsChannel.receiveAvailable()
                 log("Reloading httpd because of: ${changes.joinToString(", ")}")
                 try {
                     stack.exec("dispatcher", HTTPD_RESTART_COMMAND, EXPECTED_HTTPD_RESTART_EXIT_CODE)
