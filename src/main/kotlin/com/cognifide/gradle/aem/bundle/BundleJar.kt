@@ -365,6 +365,12 @@ val jar: Jar
         importPackages += pkgs.map { "!$it" }
     }
 
+    fun importPackage(pkg: String) = importPackages(listOf(pkg))
+
+    fun importPackages(pkgs: Collection<String>) {
+        importPackages += pkgs
+    }
+
     fun embedPackage(pkg: String, export: Boolean, dependencyOptions: DependencyOptions.() -> Unit) {
         embedPackage(pkg, export, DependencyOptions.of(aem.project.dependencies, dependencyOptions))
     }
