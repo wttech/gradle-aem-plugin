@@ -23,6 +23,9 @@ Most of the configuration steps are automated. However, there are three manual s
         * Execute: `.\gradlew.bat aemEnvHosts --no-daemon`
     * Unix: 
         * Execute: `sudo ./gradlew aemEnvHosts --no-daemon`
+3. Configure AEM dispatcher distribution TAR URL. In `gradle.properties` set `aem.environment.dispatcher.apache24-linux-x64.distUrl` property to URL pointing to your distribution of AEM dispatcher (apache2.4, linux-x86_64), e.g.:
+    * `file:///Users/user.name/adobe/distributions/dispatcher-apache2.4-linux-x86_64-ssl-4.3.2.tar.gz`
+    * `http://download.macromedia.com/dispatcher/download/dispatcher-apache2.4-linux-x86_64-ssl-4.3.2.tar.gz`
     
 ## Starting
 
