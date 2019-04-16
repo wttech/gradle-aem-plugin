@@ -1,15 +1,24 @@
 package com.cognifide.gradle.aem.environment
 
+import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.environment.checks.HealthChecks
 import com.cognifide.gradle.aem.environment.hosts.HostsOptions
 import java.net.HttpURLConnection.HTTP_OK
+import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 
-class EnvironmentOptions {
+class EnvironmentOptions(aem: AemExtension) {
+
     @Internal
     var healthChecks = HealthChecks()
     @Internal
     val hosts = HostsOptions()
+
+    /**
+     * URI pointing to Dispatcher distribution TAR file.
+     */
+    @Input
+    var dispatcherDistUrl = aem.props.string("aem.environment.dispatcher.apache24-linux-x64.distUrl") ?: ""
 
     fun healthChecks(configurer: HealthChecks.() -> Unit) {
         healthChecks = HealthChecks().apply(configurer)

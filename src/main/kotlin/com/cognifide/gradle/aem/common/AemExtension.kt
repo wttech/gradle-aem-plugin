@@ -112,7 +112,7 @@ open class AemExtension(@Internal val project: Project) {
      * Configuration of additional development environment, e.g. dispatcher
      */
     @Nested
-    val environmentOptions = EnvironmentOptions()
+    val environmentOptions = EnvironmentOptions(this)
 
     /**
      * Directory for storing project specific files used by plugin e.g:
