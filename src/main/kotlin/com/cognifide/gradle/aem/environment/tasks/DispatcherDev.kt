@@ -3,8 +3,8 @@ package com.cognifide.gradle.aem.environment.tasks
 import com.cognifide.gradle.aem.common.Retry
 import com.cognifide.gradle.aem.environment.EnvironmentException
 import com.cognifide.gradle.aem.environment.checks.ServiceChecker
+import com.cognifide.gradle.aem.environment.docker.Container
 import com.cognifide.gradle.aem.environment.docker.DockerTask
-import com.cognifide.gradle.aem.environment.docker.Stack
 import com.cognifide.gradle.aem.environment.io.DirMonitor
 import java.text.SimpleDateFormat
 import java.util.*
@@ -23,7 +23,7 @@ import org.gradle.api.tasks.TaskAction
 open class DispatcherDev : DockerTask() {
 
     init {
-        description = "Listen to httpd/dispatcher configuration changes and reloads Apache."
+        description = "Listen to httpd/dispatcher configuration changes and reloads httpd."
     }
 
     @Internal
@@ -36,7 +36,10 @@ open class DispatcherDev : DockerTask() {
     private val dirWatcher = DirMonitor(config.dispatcherConfPath, modificationsChannel)
 
     @Internal
-    private val serviceAwait = ServiceChecker(aem)
+    private val serviceChecker = ServiceChecker(aem)
+
+    @Internal
+    private val httpdContainer = Container("${stack.name}_httpd")
 
     @TaskAction
     fun dev() {
@@ -46,29 +49,29 @@ open class DispatcherDev : DockerTask() {
             restartHttpd()
             requestToCheckStability.send(Date())
             dirWatcher.start()
-            aem.logger.lifecycle("Listening for httpd configuration changes at: ${config.dispatcherConfPath}")
+            aem.logger.lifecycle("Listening for httpd/dispatcher configuration changes: ${config.dispatcherConfPath}")
             reloadConfigurationOnChange()
             checkServiceStabilityOnReload()
         }
     }
 
-    private fun deployStack() {
-        stack.deploy(config.composeFilePath)
-        val isContainerStarted = serviceAwait.awaitConditionObservingProgress("docker container - awaiting start", EnvDown.NETWORK_STOP_AWAIT_TIME) {
-            stack.isContainerRunning(DISPATCHER_CONTAINER_NAME)
-        }
-        if (!isContainerStarted) {
-            throw EnvironmentException("Failed to start docker container $DISPATCHER_CONTAINER_NAME" +
-                    " after ${EnvDown.NETWORK_STOP_AWAIT_TIME / Retry.SECOND_MILIS} seconds.")
+    private fun removeStackIfDeployed() {
+        stack.rm()
+        val isStopped = serviceChecker.awaitConditionObservingProgress("compose stack - awaiting stop", EnvDown.NETWORK_STOP_AWAIT_TIME) { stack.isDown() }
+        if (!isStopped) {
+            throw EnvironmentException("Failed to stop compose stack after ${EnvDown.NETWORK_STOP_AWAIT_TIME / Retry.SECOND_MILIS} seconds." +
+                    "\nPlease try to stop it manually by running: `docker stack rm ${stack.name}`")
         }
     }
 
-    private fun removeStackIfDeployed() {
-        stack.rm()
-        val isStopped = serviceAwait.awaitConditionObservingProgress("docker network - awaiting stop", EnvDown.NETWORK_STOP_AWAIT_TIME) { stack.isDown() }
-        if (!isStopped) {
-            throw EnvironmentException("Failed to stop docker stack after ${EnvDown.NETWORK_STOP_AWAIT_TIME / Retry.SECOND_MILIS} seconds." +
-                    "\nPlease try to stop it manually by running: `docker stack rm ${Stack.STACK_NAME_DEFAULT}`")
+    private fun deployStack() {
+        stack.deploy(config.composeFilePath)
+        val isContainerStarted = serviceChecker.awaitConditionObservingProgress("httpd container - awaiting start", HTTPD_CONTAINER_AWAIT_TIME) {
+            httpdContainer.isRunning()
+        }
+        if (!isContainerStarted) {
+            throw EnvironmentException("Failed to start '${httpdContainer.name}' container " +
+                    " after ${EnvDown.NETWORK_STOP_AWAIT_TIME / Retry.SECOND_MILIS} seconds.")
         }
     }
 
@@ -84,7 +87,7 @@ open class DispatcherDev : DockerTask() {
 
     private suspend fun restartHttpd() {
         try {
-            stack.exec(DISPATCHER_CONTAINER_NAME, HTTPD_RESTART_COMMAND, EXPECTED_HTTPD_RESTART_EXIT_CODE)
+            httpdContainer.exec(HTTPD_RESTART_COMMAND, HTTPD_RESTART_EXIT_CODE)
             log("httpd restarted with new configuration. Checking service stability.")
             requestToCheckStability.send(Date())
         } catch (e: ExternalProcessFailureException) {
@@ -99,7 +102,7 @@ open class DispatcherDev : DockerTask() {
         return launch {
             while (true) {
                 requestToCheckStability.receiveAvailable()
-                val unavailableServices = serviceAwait.checkForUnavailableServices()
+                val unavailableServices = serviceChecker.checkForUnavailableServices()
                 if (unavailableServices.isEmpty()) {
                     log("All stable, configuration update looks good.")
                 } else {
@@ -132,8 +135,8 @@ open class DispatcherDev : DockerTask() {
 
     companion object {
         const val NAME = "aemDispatcherDev"
-        private const val DISPATCHER_CONTAINER_NAME = "dispatcher"
         private const val HTTPD_RESTART_COMMAND = "/usr/local/apache2/bin/httpd -k restart"
-        private const val EXPECTED_HTTPD_RESTART_EXIT_CODE = 0
+        private const val HTTPD_RESTART_EXIT_CODE = 0
+        private const val HTTPD_CONTAINER_AWAIT_TIME = 5000L
     }
 }

@@ -1,6 +1,6 @@
 version: "3"
 services:
-  dispatcher:
+  httpd:
     image: httpd:2.4.39
     command: ["tail", "-f", "--retry", "/usr/local/apache2/logs/error_log"]
     deploy:
