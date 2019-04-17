@@ -40,6 +40,18 @@ class Stack {
         throw DockerException("Unable to determine stack '$STACK_NAME_DEFAULT' status. Error: '${result.errorString}'")
     }
 
+    fun isContainerRunning(containerName: String): Boolean {
+        try {
+            return ProcBuilder("docker")
+                    .withArgs("inspect", "-f", "{{.State.Running}}", containerId(containerName))
+                    .run()
+                    .outputString.trim().toBoolean()
+        } catch (e: ExternalProcessFailureException) {
+            throw DockerException("Failed to check container state '${STACK_NAME_DEFAULT}_$containerName'!\n" +
+                    "Error: '${e.stderr}'", e)
+        }
+    }
+
     private fun containerId(containerName: String): String {
         try {
             return ProcBuilder("docker")

@@ -2,6 +2,7 @@ version: "3"
 services:
   dispatcher:
     image: httpd:2.4.39
+    command: ["tail", "-f", "--retry", "/usr/local/apache2/logs/error_log"]
     deploy:
       replicas: 1
       restart_policy:

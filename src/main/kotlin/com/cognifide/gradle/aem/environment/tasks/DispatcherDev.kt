@@ -41,18 +41,34 @@ open class DispatcherDev : DockerTask() {
     @TaskAction
     fun dev() {
         runBlocking {
-            stack.rm()
-            val isStopped = serviceAwait.awaitConditionObservingProgress("docker network - awaiting stop", EnvDown.NETWORK_STOP_AWAIT_TIME) { stack.isDown() }
-            if (!isStopped) {
-                throw EnvironmentException("Failed to stop docker stack after ${EnvDown.NETWORK_STOP_AWAIT_TIME / Retry.SECOND_MILIS} seconds." +
-                        "\nPlease try to stop it manually by running: `docker stack rm ${Stack.STACK_NAME_DEFAULT}`")
-            }
-            stack.deploy(config.composeFilePath)
+            removeStackIfDeployed()
+            deployStack()
+            restartHttpd()
             requestToCheckStability.send(Date())
             dirWatcher.start()
             aem.logger.lifecycle("Listening for httpd configuration changes at: ${config.dispatcherConfPath}")
             reloadConfigurationOnChange()
-            checkServiceStability()
+            checkServiceStabilityOnReload()
+        }
+    }
+
+    private fun deployStack() {
+        stack.deploy(config.composeFilePath)
+        val isContainerStarted = serviceAwait.awaitConditionObservingProgress("docker container - awaiting start", EnvDown.NETWORK_STOP_AWAIT_TIME) {
+            stack.isContainerRunning(DISPATCHER_CONTAINER_NAME)
+        }
+        if (!isContainerStarted) {
+            throw EnvironmentException("Failed to start docker container $DISPATCHER_CONTAINER_NAME" +
+                    " after ${EnvDown.NETWORK_STOP_AWAIT_TIME / Retry.SECOND_MILIS} seconds.")
+        }
+    }
+
+    private fun removeStackIfDeployed() {
+        stack.rm()
+        val isStopped = serviceAwait.awaitConditionObservingProgress("docker network - awaiting stop", EnvDown.NETWORK_STOP_AWAIT_TIME) { stack.isDown() }
+        if (!isStopped) {
+            throw EnvironmentException("Failed to stop docker stack after ${EnvDown.NETWORK_STOP_AWAIT_TIME / Retry.SECOND_MILIS} seconds." +
+                    "\nPlease try to stop it manually by running: `docker stack rm ${Stack.STACK_NAME_DEFAULT}`")
         }
     }
 
@@ -61,21 +77,25 @@ open class DispatcherDev : DockerTask() {
             while (true) {
                 val changes = modificationsChannel.receiveAvailable()
                 log("Reloading httpd because of: ${changes.joinToString(", ")}")
-                try {
-                    stack.exec("dispatcher", HTTPD_RESTART_COMMAND, EXPECTED_HTTPD_RESTART_EXIT_CODE)
-                    log("httpd restarted with new configuration. Checking service stability.")
-                    requestToCheckStability.send(Date())
-                } catch (e: ExternalProcessFailureException) {
-                    log("Failed to reload httpd, exit code: ${e.exitValue}! Error:\n" +
-                            "-------------------------------------------------------------------------------------------\n" +
-                            e.stderr +
-                            "-------------------------------------------------------------------------------------------")
-                }
+                restartHttpd()
             }
         }
     }
 
-    private fun CoroutineScope.checkServiceStability(): Job {
+    private suspend fun restartHttpd() {
+        try {
+            stack.exec(DISPATCHER_CONTAINER_NAME, HTTPD_RESTART_COMMAND, EXPECTED_HTTPD_RESTART_EXIT_CODE)
+            log("httpd restarted with new configuration. Checking service stability.")
+            requestToCheckStability.send(Date())
+        } catch (e: ExternalProcessFailureException) {
+            log("Failed to reload httpd, exit code: ${e.exitValue}! Error:\n" +
+                    "-------------------------------------------------------------------------------------------\n" +
+                    e.stderr +
+                    "-------------------------------------------------------------------------------------------")
+        }
+    }
+
+    private fun CoroutineScope.checkServiceStabilityOnReload(): Job {
         return launch {
             while (true) {
                 requestToCheckStability.receiveAvailable()
@@ -83,8 +103,9 @@ open class DispatcherDev : DockerTask() {
                 if (unavailableServices.isEmpty()) {
                     log("All stable, configuration update looks good.")
                 } else {
-                    log("Services verification failed! Following URLs are still unavailable " +
-                            "or returned different response than expected:\n${unavailableServices.joinToString("\n")}")
+                    log("Services verification failed! URLs are unavailable or returned different response than expected:" +
+                            "\n${unavailableServices.joinToString("\n")}" +
+                            "\nFix configuration to make it working again.")
                 }
             }
         }
@@ -111,6 +132,7 @@ open class DispatcherDev : DockerTask() {
 
     companion object {
         const val NAME = "aemDispatcherDev"
+        private const val DISPATCHER_CONTAINER_NAME = "dispatcher"
         private const val HTTPD_RESTART_COMMAND = "/usr/local/apache2/bin/httpd -k restart"
         private const val EXPECTED_HTTPD_RESTART_EXIT_CODE = 0
     }
