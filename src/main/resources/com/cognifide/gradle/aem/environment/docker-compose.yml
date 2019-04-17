@@ -1,7 +1,7 @@
 version: "3"
 services:
   dispatcher:
-    image: mierzwid/httpd4dispatcher:0.0.1
+    image: httpd:2.4.39
     deploy:
       replicas: 1
       restart_policy:
@@ -11,9 +11,9 @@ services:
     networks:
       - docker-net
     volumes:
-      - "./build/distributions/mod_dispatcher.so:/etc/httpd/modules/mod_dispatcher.so"
+      - "./build/distributions/mod_dispatcher.so:/usr/local/apache2/modules/mod_dispatcher.so"
       - "./build/cache:/opt/aem/dispatcher/cache"
-      - "./build/logs:/var/log/httpd"
-      - "./dispatcher/conf:/etc/httpd/conf"
+      - "./build/logs:/usr/local/apache2/logs"
+      - "./dispatcher/conf:/usr/local/apache2/conf"
 networks:
   docker-net:

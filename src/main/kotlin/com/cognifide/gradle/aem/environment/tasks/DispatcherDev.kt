@@ -111,7 +111,7 @@ open class DispatcherDev : DockerTask() {
 
     companion object {
         const val NAME = "aemDispatcherDev"
-        private const val HTTPD_RESTART_COMMAND = "/usr/sbin/httpd -k restart"
-        private const val EXPECTED_HTTPD_RESTART_EXIT_CODE = 129
+        private const val HTTPD_RESTART_COMMAND = "/usr/local/apache2/bin/httpd -k restart"
+        private const val EXPECTED_HTTPD_RESTART_EXIT_CODE = 0
     }
 }
