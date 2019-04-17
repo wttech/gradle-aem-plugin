@@ -23,7 +23,7 @@ class ServiceChecker(private val aem: AemExtension) {
         return@launch serviceStatuses.filter { !it.second }.map { it.first }
     }
 
-    fun awaitConditionObservingProgress(message: String, maxAwaitTime: Long, condition: suspend () -> Boolean) = progress.launch {
+    fun awaitObservingProgress(message: String, maxAwaitTime: Long, condition: suspend () -> Boolean) = progress.launch {
         awaitCondition(message, maxAwaitTime, condition)
     }
 

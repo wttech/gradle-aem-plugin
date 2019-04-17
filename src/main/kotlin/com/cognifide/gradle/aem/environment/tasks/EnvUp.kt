@@ -1,28 +1,22 @@
 package com.cognifide.gradle.aem.environment.tasks
 
 import com.cognifide.gradle.aem.environment.EnvironmentException
-import com.cognifide.gradle.aem.environment.checks.ServiceChecker
-import com.cognifide.gradle.aem.environment.docker.DockerTask
-import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
-open class EnvUp : DockerTask() {
+open class EnvUp : EnvTask() {
 
     init {
         description = "Turn on additional services for local environment " +
                 "- based on provided docker compose file."
     }
 
-    @Internal
-    private val serviceAwait = ServiceChecker(aem)
-
     @TaskAction
     fun up() {
-        stack.deploy(config.composeFilePath)
-        val unavailableServices = serviceAwait.checkForUnavailableServices()
+        deployStack()
+        val unavailableServices = serviceChecker.checkForUnavailableServices()
         if (unavailableServices.isNotEmpty()) {
-            throw EnvironmentException("Failed to initialized all services! Following URLs are still unavailable " +
-                    "or returned different response than expected:\n${unavailableServices.joinToString("\n")}")
+            throw EnvironmentException("Services verification failed! URLs are unavailable or returned different response than expected:" +
+                    "\n${unavailableServices.joinToString("\n")}")
         }
     }
 
