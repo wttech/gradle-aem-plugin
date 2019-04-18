@@ -12,6 +12,7 @@ open class EnvUp : EnvTask() {
 
     @TaskAction
     fun up() {
+        removeStackIfDeployed()
         deployStack()
         val unavailableServices = serviceChecker.checkForUnavailableServices()
         if (unavailableServices.isNotEmpty()) {

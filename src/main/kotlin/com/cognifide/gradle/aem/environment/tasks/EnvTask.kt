@@ -73,6 +73,6 @@ open class EnvTask : AemDefaultTask() {
         private const val NETWORK_STOP_AWAIT_TIME = 30000L
         private const val HTTPD_RESTART_COMMAND = "/usr/local/apache2/bin/httpd -k restart"
         private const val HTTPD_RESTART_EXIT_CODE = 0
-        private const val HTTPD_CONTAINER_AWAIT_TIME = 5000L
+        private const val HTTPD_CONTAINER_AWAIT_TIME = 10000L
     }
 }
