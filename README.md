@@ -184,7 +184,7 @@ plugins {
 
 group = "com.company.aem"
 version = "1.0.0"
-defaultTasks = listOf(":aemSatisfy", ":aemDeploy")
+defaultTasks(":aemSatisfy", ":aemDeploy")
 
 aem {
     config {

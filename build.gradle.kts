@@ -13,7 +13,7 @@ plugins {
 
 group = "com.cognifide.gradle"
 description = "Gradle AEM Plugin"
-defaultTasks = listOf("build", "publishToMavenLocal")
+defaultTasks("build", "publishToMavenLocal")
 
 repositories {
     jcenter()
@@ -21,9 +21,9 @@ repositories {
 
 dependencies {
     implementation(gradleApi())
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.3.10")
-    implementation("org.jetbrains.kotlin:kotlin-reflect:1.3.10")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.0.1")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.3.30")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:1.3.30")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.2.0")
     implementation("org.apache.commons:commons-lang3:3.4")
     implementation("commons-io:commons-io:2.4")
     implementation("commons-validator:commons-validator:1.6")
@@ -86,7 +86,7 @@ tasks {
             }
         }
     }
-    
+
     named<Test>("test") {
         testLogging {
             events = setOf(TestLogEvent.FAILED)
@@ -96,11 +96,11 @@ tasks {
         useJUnitPlatform()
         dependsOn(named("publishToMavenLocal"))
     }
-    
+
     named("afterReleaseBuild") {
         dependsOn("bintrayUpload")
     }
-    
+
     named("updateVersion") {
         enabled = false
     }

@@ -22,6 +22,7 @@ import org.gradle.api.tasks.bundling.Jar
  * OSGi bundle related properties, because it is not possible to add properties to existing tasks
  * like 'jar' directly.
  */
+@Suppress("LargeClass", "TooManyFunctions")
 class BundleJar(
     @Transient
 @JsonIgnore
