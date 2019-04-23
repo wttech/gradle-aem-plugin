@@ -4,10 +4,12 @@ import java.io.File
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.execution.TaskExecutionGraph
+import org.gradle.api.tasks.Nested
 import org.gradle.util.GFileUtils
 
 interface AemTask : Task {
 
+    @get:Nested
     val aem: AemExtension
 
     fun projectEvaluated() {

@@ -130,7 +130,7 @@ val jar: Jar
     }
 
     private fun proposeBaseName() {
-        jar.baseName = aem.baseName
+        jar.archiveBaseName.convention(aem.baseName)
     }
 
     internal fun finalize() {
