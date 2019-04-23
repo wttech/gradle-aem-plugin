@@ -18,7 +18,7 @@ class EnvironmentOptions(aem: AemExtension) {
      * URI pointing to Dispatcher distribution TAR file.
      */
     @Input
-    var dispatcherDistUrl = aem.props.string("aem.environment.dispatcher.apache24-linux-x64.distUrl") ?: ""
+    var dispatcherDistUrl = aem.props.string("aem.environment.dispatcher.distUrl") ?: ""
 
     fun healthChecks(configurer: HealthChecks.() -> Unit) {
         healthChecks = HealthChecks().apply(configurer)

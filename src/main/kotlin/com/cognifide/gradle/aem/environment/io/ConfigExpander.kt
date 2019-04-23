@@ -30,7 +30,7 @@ class ConfigExpander(private val aem: AemExtension) {
         }
         if (dispatcherDistUrl.isBlank()) {
             throw EnvironmentException("Dispatcher distribution URL needs to be configured in order to turn on the environment:" +
-                    "\naem.environment.dispatcher.apache24-linux-x64.distUrl")
+                    "\naem.environment.dispatcher.distUrl")
         }
 
         val dispatcherDist = fileResolver.run { dispatcherDistUrl.run { url(this) } }.file

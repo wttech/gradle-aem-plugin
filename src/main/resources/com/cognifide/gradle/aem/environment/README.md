@@ -1,7 +1,7 @@
 
 # Local AEM Environment Setup with Docker
 
-This setup consists of a dispatcher connected by default with AEM publish and AEM author deployed via [gradle-aem-plugin](https://github.com/Cognifide/gradle-aem-plugin). Dispatcher runs on docker and its image is build based on [dispatcher/Dockerfile](dispatcher/Dockerfile).
+This setup consists of a dispatcher connected by default with AEM publish and AEM author deployed via [gradle-aem-plugin](https://github.com/Cognifide/gradle-aem-plugin). Dispatcher runs on docker on a [official httpd image](https://hub.docker.com/_/httpd).
 
 AEM author and publish instances need to be up.
 
@@ -23,7 +23,7 @@ Most of the configuration steps are automated. However, there are three manual s
         * Execute: `.\gradlew.bat aemEnvHosts --no-daemon`
     * Unix: 
         * Execute: `sudo ./gradlew aemEnvHosts --no-daemon`
-3. Configure AEM dispatcher distribution TAR URL. In `gradle.properties` set `aem.environment.dispatcher.apache24-linux-x64.distUrl` property to URL pointing to your distribution of AEM dispatcher (apache2.4, linux-x86_64, no ssl), e.g.:
+3. Configure AEM dispatcher distribution TAR URL. In `gradle.properties` set `aem.environment.dispatcher.distUrl` property to URL pointing to your distribution of AEM dispatcher (apache2.4, linux-x86_64, no ssl), e.g.:
     * `file:///Users/user.name/adobe/distributions/dispatcher-apache2.4-linux-x86_64-4.3.2.tar.gz`
     * `http://download.macromedia.com/dispatcher/download/dispatcher-apache2.4-linux-x86_64-4.3.2.tar.gz`
     
@@ -61,8 +61,8 @@ environment {
 
 You can override this configuration in your build script or check docker services status using `docker service ls`:
 ```
-ID                  NAME                   MODE                REPLICAS            IMAGE                       PORTS
-ukdohhbfvxm8        local-setup_dispatcher   replicated          1/1                 mierzwid/dispatcher:0.0.1   *:80->80/tcp
+ID                  NAME                    MODE                REPLICAS            IMAGE               PORTS
+z2j4spwxb0ky        aem-local-setup_httpd   replicated          1/1                 httpd:2.4.39        *:80->80/tcp
 ```
 
 ## Stopping
@@ -72,19 +72,23 @@ Run `gradlew aemEnvDown` to stop it.
 ## Developing httpd/dispatcher configuration
 
 If you need to make changes to httpd/dispatcher configuration:
+
+**NOTE** On Windows accept Docker to access files from your machine, as dispatcher configuration is directly bind mounted from the project
+
 1. Run `gradlew aemDispatcherDev`
-2. On Windows accept Docker to access files from your machine, as dispatcher configuration is directly bind mounted from the project
-2. edit files in the [dispatcher/conf](dispatcher/conf) directory 
-2. `cd dispatcher`
-3. build your new image using `docker build --tag=image_name:version .`
-4. update [docker-compose.yml](docker-compose.yml) to use your dispatcher image 
+2. update your service health checks as required - yes, TDD :-)
+3. edit files in the [dispatcher/conf](dispatcher/conf) directory 
+4. look your tests passing/failing
+5. (optional) check httpd/dispatcher logs in [build/logs](build/logs) 
+6. (optional) check dispatchers cache in [build/cache](build/cache)
+7. drink a coffee and feel the flow 
 
 ## Using Docker Stack directly 
 1. First of all init Docker Swarm:
 `docker swarm init`
 
 2. Then setup the local environment:
-`docker stack deploy -c docker-compose.yml local-setup` 
+`docker stack deploy -c docker-compose.yml aem-local-setup` 
 
 3. To stop it run:
-`docker stack rm local-setup`
+`docker stack rm aem-local-setup`
