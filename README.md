@@ -28,7 +28,7 @@ Looking for dedicated version of plugin for [**Apache Sling**](https://sling.apa
 
 * Composing CRX package from multiple JCR content roots, bundles.
 * Fully automated, native (no virtulization), tied to project, AEM instance(s) setup allowing to start development within few minutes.
-* Powerful AEM DSL scripting capabilities for performing content migrations, managing instances.
+* [Powerful AEM DSL scripting capabilities](#implement-custom-aem-tasks) for performing content migrations, managing instances.
 * Advanced AEM instance(s) stability & health checking after CRX package deployment.
 * Continous AEM incident monitoring and interactive reporting (centralized log tailing of any AEM instances with no SSH).
 * Automated all-in-one CRX packages generation (assemblies), vault filters merging etc.
