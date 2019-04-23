@@ -186,7 +186,7 @@ val jar: Jar
         })
     }
 
-    private fun combinePackageAttribute(name: String, pkgs: Collection<String>) {
+    private fun combinePackageAttribute(name: String, pkgs: Iterable<String>) {
         val combinedPkgs = mutableSetOf<String>().apply {
             val existing = (attribute(name) ?: "")
                     .split(",")
@@ -347,23 +347,37 @@ val jar: Jar
             attribute(Bundle.ATTRIBUTE_SLING_MODEL_PACKAGES, value)
         }
 
-    fun exportPackage(pkg: String) = exportPackages(listOf(pkg))
+    fun exportPackage(pkg: String) = exportPackages(pkg)
 
-    fun exportPackages(pkgs: Collection<String>) {
+    fun exportPackages(pkgs: Iterable<String>) {
         exportPackages += pkgs
     }
 
+    fun exportPackages(vararg pkgs: String) = exportPackages(pkgs.toList())
+
     fun privatePackage(pkg: String) = privatePackages(listOf(pkg))
 
-    fun privatePackages(pkgs: Collection<String>) {
+    fun privatePackages(pkgs: Iterable<String>) {
         privatePackages += pkgs
     }
 
+    fun privatePackages(vararg pkgs: String) = privatePackages(pkgs.toList())
+
     fun excludePackage(pkg: String) = excludePackages(listOf(pkg))
 
-    fun excludePackages(pkgs: Collection<String>) {
+    fun excludePackages(pkgs: Iterable<String>) {
         importPackages += pkgs.map { "!$it" }
     }
+
+    fun excludePackages(vararg pkgs: String) = excludePackages(pkgs.toList())
+
+    fun importPackage(pkg: String) = importPackages(listOf(pkg))
+
+    fun importPackages(pkgs: Iterable<String>) {
+        importPackages += pkgs
+    }
+
+    fun importPackages(vararg pkgs: String) = importPackages(pkgs.toList())
 
     fun embedPackage(pkg: String, export: Boolean, dependencyOptions: DependencyOptions.() -> Unit) {
         embedPackage(pkg, export, DependencyOptions.of(aem.project.dependencies, dependencyOptions))
@@ -373,7 +387,7 @@ val jar: Jar
         embedPackages(listOf(pkg), export, dependencyNotation)
     }
 
-    fun embedPackages(pkgs: Collection<String>, export: Boolean, dependencyNotation: Any) {
+    fun embedPackages(pkgs: Iterable<String>, export: Boolean, dependencyNotation: Any) {
         aem.project.dependencies.add(JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME, dependencyNotation)
 
         if (export) {
@@ -383,8 +397,12 @@ val jar: Jar
         }
     }
 
-    fun wildcardPackages(pkgs: Collection<String>): List<String> {
+    fun wildcardPackages(pkgs: Iterable<String>): List<String> {
         return pkgs.map { StringUtils.appendIfMissing(it, ".*") }
+    }
+
+    fun wildcardPackages(vararg pkgs: String): List<String> {
+        return wildcardPackages(pkgs.toList())
     }
 
     private fun setupBndTool() {
