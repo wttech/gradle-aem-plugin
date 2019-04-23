@@ -3,6 +3,8 @@ package com.cognifide.gradle.aem.common
 import com.cognifide.gradle.aem.common.notifier.DorkboxNotifier
 import com.cognifide.gradle.aem.common.notifier.Notifier
 import dorkbox.notify.Notify
+import dorkbox.notify.Theme
+import java.awt.Color
 import java.awt.Desktop
 import java.net.URI
 import java.net.URL
@@ -54,7 +56,7 @@ class NotifierFacade private constructor(private val aem: AemExtension) {
 
     fun dorkbox(): Notifier {
         return dorkbox {
-            darkStyle()
+            text(DORKBOX_DARK_LIGHT_THEME)
                     .hideAfter(TimeUnit.SECONDS.toMillis(DORKBOX_HIDE_AFTER_SECONDS).toInt())
                     .image(ImageIO.read(image))
         }
@@ -93,6 +95,20 @@ class NotifierFacade private constructor(private val aem: AemExtension) {
     companion object {
 
         const val DORKBOX_HIDE_AFTER_SECONDS = 5L
+
+        private const val DORKBOX_MAIN_TEXT_FONT = "Source Code Pro BOLD 13"
+
+        private val DORKBOX_FG_COLOR = Color(220, 220, 220)
+
+        val DORKBOX_DARK_LIGHT_THEME = Theme(
+                Notify.TITLE_TEXT_FONT,
+                DORKBOX_MAIN_TEXT_FONT,
+                Color.DARK_GRAY,
+                DORKBOX_FG_COLOR,
+                DORKBOX_FG_COLOR,
+                DORKBOX_FG_COLOR,
+                Color.GRAY
+        )
 
         /**
          * Get project specific notifier (config can vary)
