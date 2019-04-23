@@ -14,8 +14,6 @@ open class ProgressFileDownloader(val project: Project) {
 
     var size: Long = 0
 
-    var header: String = "Downloading"
-
     private var processedBytes: Long = 0
 
     private var loggedKb: Long = 0
