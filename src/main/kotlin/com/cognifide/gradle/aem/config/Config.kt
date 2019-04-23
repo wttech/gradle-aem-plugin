@@ -76,7 +76,7 @@ class Config(
      * Useful to share same files for all packages, like package thumbnail.
      */
     @Input
-    var packageMetaCommonRoot: String = "${aem.project.rootProject.file("aem/gradle/${Package.META_PATH}")}"
+    var packageMetaCommonRoot: String = "${aem.configCommonDir}/${Package.META_PATH}"
 
     /**
      * Content path for OSGi bundle jars being placed in CRX package.
@@ -151,13 +151,13 @@ class Config(
      * Convention location in which Groovy Script to be evaluated via instance sync will be searched for by file name.
      */
     @Internal
-    var groovyScriptRoot: String = "${aem.project.file("gradle/groovyScript")}"
+    var groovyScriptRoot: String = "${aem.configDir}/groovyScript"
 
     init {
         // Define through command line
         val instancesForced = aem.props.string("aem.instance.list") ?: ""
         if (instancesForced.isNotBlank()) {
-            instances(Instance.parse(aem, instancesForced))
+            instances(Instance.parse(aem, instancesForced) { environment = Instance.ENVIRONMENT_CMD })
         }
 
         // Define through properties ]
@@ -166,7 +166,7 @@ class Config(
         aem.project.afterEvaluate { _ ->
             // Ensure defaults if still no instances defined at all
             if (instances.isEmpty()) {
-                instances(Instance.defaults(aem, aem.environment))
+                instances(Instance.defaults(aem) { environment = aem.environment })
             }
 
             // Validate all
@@ -196,10 +196,7 @@ class Config(
     }
 
     fun localInstance(httpUrl: String, configurer: LocalInstance.() -> Unit) {
-        instance(LocalInstance.create(aem, httpUrl) {
-            this.environment = aem.environment
-            this.apply(configurer)
-        })
+        instance(LocalInstance.create(aem, httpUrl, configurer))
     }
 
     fun remoteInstance(httpUrl: String) {
@@ -207,10 +204,7 @@ class Config(
     }
 
     fun remoteInstance(httpUrl: String, configurer: RemoteInstance.() -> Unit) {
-        instance(RemoteInstance.create(aem, httpUrl) {
-            this.environment = aem.environment
-            this.apply(configurer)
-        })
+        instance(RemoteInstance.create(aem, httpUrl, configurer))
     }
 
     fun parseInstance(urlOrName: String): Instance {

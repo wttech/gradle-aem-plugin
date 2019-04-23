@@ -1,0 +1,2 @@
+Error while executing script *diskusage.sh
+Error while executing script *cpu.sh

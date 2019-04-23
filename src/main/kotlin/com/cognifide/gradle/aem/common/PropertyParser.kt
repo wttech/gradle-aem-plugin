@@ -11,7 +11,7 @@ class PropertyParser(private val aem: AemExtension) {
 
     private val project = aem.project
 
-    fun prop(name: String): String? {
+    private fun find(name: String): String? {
         if (project.hasProperty(name)) {
             return project.property(name).toString()
         }
@@ -29,8 +29,12 @@ class PropertyParser(private val aem: AemExtension) {
         return null
     }
 
+    fun prop(name: String): String? {
+        return find(name)?.ifBlank { null }
+    }
+
     fun flag(name: String): Boolean {
-        val value = prop(name) ?: return false
+        val value = find(name) ?: return false
 
         return if (!value.isBlank()) value.toBoolean() else true
     }

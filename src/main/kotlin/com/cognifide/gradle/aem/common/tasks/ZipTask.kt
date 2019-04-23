@@ -9,7 +9,7 @@ import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.bundling.Zip as Base
 
-open class Zip : Base(), AemTask {
+open class ZipTask : Base(), AemTask {
 
     @Nested
     final override val aem = AemExtension.of(project)

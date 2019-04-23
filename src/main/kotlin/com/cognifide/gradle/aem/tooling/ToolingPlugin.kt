@@ -3,8 +3,10 @@ package com.cognifide.gradle.aem.tooling
 import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.AemPlugin
 import com.cognifide.gradle.aem.config.ConfigPlugin
-import com.cognifide.gradle.aem.tooling.tasks.*
 import com.cognifide.gradle.aem.tooling.tasks.Debug
+import com.cognifide.gradle.aem.tooling.tasks.Rcp
+import com.cognifide.gradle.aem.tooling.tasks.Sync
+import com.cognifide.gradle.aem.tooling.tasks.Vlt
 import org.gradle.api.Project
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 

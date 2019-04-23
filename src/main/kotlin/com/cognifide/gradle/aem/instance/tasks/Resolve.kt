@@ -16,7 +16,7 @@ open class Resolve : AemDefaultTask() {
 
     @TaskAction
     fun resolve() {
-        val premature = !willBeExecuted(Create.NAME) && !willBeExecuted(Satisfy.NAME)
+        val premature = !willBeExecuted(Satisfy.NAME)
 
         if (premature || willBeExecuted(Satisfy.NAME)) {
             logger.info("Resolving CRX packages for satisfying instances.")

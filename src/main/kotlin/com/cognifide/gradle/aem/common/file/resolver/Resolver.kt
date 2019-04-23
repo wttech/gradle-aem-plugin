@@ -3,7 +3,6 @@ package com.cognifide.gradle.aem.common.file.resolver
 import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.DependencyOptions
 import com.cognifide.gradle.aem.common.Formats
-import com.cognifide.gradle.aem.common.Patterns
 import com.cognifide.gradle.aem.common.file.FileException
 import com.cognifide.gradle.aem.common.file.downloader.HttpFileDownloader
 import com.cognifide.gradle.aem.common.file.downloader.SftpFileDownloader
@@ -34,7 +33,11 @@ abstract class Resolver<G : FileGroup>(
 
     private var groupCurrent = groupDefault
 
-    private val groups = mutableListOf<G>().apply { add(groupDefault) }
+    private val groupsDefined = mutableListOf<G>().apply { add(groupDefault) }
+
+    @get:Internal
+    val groups: List<G>
+        get() = groupsDefined.filter { it.resolutions.isNotEmpty() }
 
     protected open fun resolve(hash: Any, resolver: (FileResolution) -> File): FileResolution {
         val id = HashCode.fromInt(HashCodeBuilder().append(hash).toHashCode()).toString()
@@ -42,25 +45,21 @@ abstract class Resolver<G : FileGroup>(
         return groupCurrent.resolve(id, resolver)
     }
 
-    fun outputDirs(filter: (String) -> Boolean = { true }): List<File> {
-        return filterGroups(filter).flatMap { it.dirs }
+    fun outputDirs(filter: G.() -> Boolean = { true }): List<File> {
+        return groups.filter(filter).flatMap { it.dirs }
     }
 
-    fun allFiles(filter: (String) -> Boolean = { true }): List<File> {
-        return filterGroups(filter).flatMap { it.files }
+    fun allFiles(filter: G.() -> Boolean = { true }): List<File> {
+        return resolveGroups(filter).flatMap { it.files }
+    }
+
+    fun resolveGroups(filter: G.() -> Boolean = { true }): List<G> {
+        return groups.filter(filter).onEach { it.files }
     }
 
     fun group(name: String): G {
-        return groups.find { it.name == name }
+        return groupsDefined.find { it.name == name }
                 ?: throw FileException("File group '$name' is not defined.")
-    }
-
-    fun filterGroups(filter: String): List<G> {
-        return filterGroups { Patterns.wildcard(it, filter) }
-    }
-
-    fun filterGroups(filter: (String) -> Boolean): List<G> {
-        return groups.filter { filter(it.name) }.filter { it.resolutions.isNotEmpty() }
     }
 
     fun dependency(notation: Any): FileResolution {
@@ -152,7 +151,7 @@ abstract class Resolver<G : FileGroup>(
     fun downloadHttp(url: String, httpOptions: HttpClient.() -> Unit = {}): FileResolution {
         return resolve(url) { resolution ->
             download(url, resolution.dir) { file ->
-                with(HttpFileDownloader(project)) {
+                with(HttpFileDownloader(aem)) {
                     client(httpOptions)
                     download(url, file)
                 }
@@ -190,7 +189,7 @@ abstract class Resolver<G : FileGroup>(
 
     @Synchronized
     fun group(name: String, configurer: Resolver<G>.() -> Unit) {
-        groupCurrent = groups.find { it.name == name } ?: createGroup(name).apply { groups.add(this) }
+        groupCurrent = groupsDefined.find { it.name == name } ?: createGroup(name).apply { groupsDefined.add(this) }
         this.apply(configurer)
         groupCurrent = groupDefault
     }

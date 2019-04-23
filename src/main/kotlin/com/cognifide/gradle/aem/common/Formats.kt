@@ -6,7 +6,9 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.jayway.jsonpath.JsonPath
 import java.io.File
 import java.io.InputStream
+import java.math.BigInteger
 import java.nio.file.Paths
+import java.security.MessageDigest
 import java.text.SimpleDateFormat
 import java.util.*
 import org.apache.commons.io.FileUtils
@@ -44,12 +46,15 @@ object Formats {
         return ObjectMapper().readValue(json, clazz)
     }
 
-    fun toList(value: String?, delimiter: String = ","): List<String> {
+    fun toList(value: String?, delimiter: String = ","): List<String>? {
         if (value.isNullOrBlank()) {
-            return emptyList()
+            return null
         }
 
         val between = StringUtils.substringBetween(value, "[", "]") ?: value
+        if (between.isBlank()) {
+            return null
+        }
 
         return between.split(delimiter)
     }
@@ -128,6 +133,14 @@ object Formats {
                 .replace(".", separator)
                 .removePrefix(separator)
                 .removeSuffix(separator)
+    }
+
+    fun calculateChecksum(text: String): String {
+        val messageDigest = MessageDigest.getInstance("MD5")
+        val data = text.toByteArray()
+        messageDigest.update(data, 0, data.size)
+        val result = BigInteger(1, messageDigest.digest())
+        return String.format("%1$032x", result)
     }
 }
 

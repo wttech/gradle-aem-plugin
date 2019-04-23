@@ -123,15 +123,15 @@ open class AwaitAction(aem: AemExtension) : AbstractAction(aem) {
                 val instanceStates = synchronizers.map { it.determineInstanceState() }
 
                 // Update checksum on any particular state change
-                val stableChecksum = aem.parallelMap(instanceStates) { stableState(it) }.hashCode()
+                val stableChecksum = aem.parallel.map(instanceStates) { stableState(it) }.hashCode()
                 if (stableChecksum != lastStableChecksum) {
                     lastStableChecksum = stableChecksum
                     timer.reset()
                 }
 
                 // Examine instances
-                val unstableInstances = aem.parallelMap(instanceStates, { !stableCheck(it) }, { it.instance })
-                val availableInstances = aem.parallelMap(instanceStates, { availableCheck(it) }, { it.instance })
+                val unstableInstances = aem.parallel.map(instanceStates, { !stableCheck(it) }, { it.instance })
+                val availableInstances = aem.parallel.map(instanceStates, { availableCheck(it) }, { it.instance })
                 val unavailableInstances = synchronizers.map { it.instance } - availableInstances
 
                 val initializedUnavailableInstances = unavailableInstances.filter { it.isInitialized() }
@@ -187,7 +187,7 @@ open class AwaitAction(aem: AemExtension) : AbstractAction(aem) {
         val synchronizers = prepareSynchronizers()
         for (i in 0..healthRetry.times) {
             val instanceStates = synchronizers.map { it.determineInstanceState() }
-            val unhealthyInstances = aem.parallelMap(instanceStates, { !healthCheck(it) }, { it.instance })
+            val unhealthyInstances = aem.parallel.map(instanceStates, { !healthCheck(it) }, { it.instance })
             if (unhealthyInstances.isEmpty()) {
                 notify("Instance(s) healthy", "Which: ${instances.names}")
                 return

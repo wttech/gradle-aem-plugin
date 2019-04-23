@@ -23,9 +23,9 @@ class Package private constructor() {
     var lastUnpacked: Long? = null
 
     constructor(compose: Compose) : this() {
-        this.group = compose.vaultGroup
-        this.name = compose.vaultName
-        this.version = compose.vaultVersion
+        this.group = compose.vaultDefinition.group
+        this.name = compose.vaultDefinition.name
+        this.version = compose.vaultDefinition.version
 
         this.downloadName = "$name-$version.zip"
         this.conventionPaths = listOf(
@@ -46,7 +46,7 @@ class Package private constructor() {
 
     @get:JsonIgnore
     val coordinates: String
-        get() = "[group=$group][name=$name][version=$version]"
+        get() = coordinates(group, name, version)
 
     val installed: Boolean
         get() = lastUnpacked?.let { it > 0 } ?: false
@@ -66,5 +66,7 @@ class Package private constructor() {
         const val VLT_PROPERTIES = "$VLT_PATH/properties.xml"
 
         const val VLT_NODETYPES_FILE = "nodetypes.cnd"
+
+        fun coordinates(group: String, name: String, version: String) = "[group=$group][name=$name][version=$version]"
     }
 }

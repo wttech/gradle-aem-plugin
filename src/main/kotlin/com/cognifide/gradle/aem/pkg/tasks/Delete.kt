@@ -1,11 +1,12 @@
 package com.cognifide.gradle.aem.pkg.tasks
 
 import com.cognifide.gradle.aem.common.fileNames
+import com.cognifide.gradle.aem.common.tasks.PackageTask
 import com.cognifide.gradle.aem.instance.names
 import org.gradle.api.execution.TaskExecutionGraph
 import org.gradle.api.tasks.TaskAction
 
-open class Delete : Sync() {
+open class Delete : PackageTask() {
 
     init {
         description = "Deletes AEM package on instance(s)."
@@ -20,9 +21,10 @@ open class Delete : Sync() {
     @TaskAction
     fun delete() {
         aem.progress(instances.size * packages.size) {
-            aem.syncPackages(instances, packages) { pkg ->
-                increment("${pkg.name} -> ${instance.name}") {
-                    deletePackage(determineRemotePackagePath(pkg))
+            aem.syncPackages(instances, packages) { file ->
+                increment("${file.name} -> ${instance.name}") {
+                    val pkg = getPackage(file)
+                    deletePackage(pkg.path)
                 }
             }
         }

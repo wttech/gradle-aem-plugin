@@ -245,7 +245,10 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
             // Update window title
             val previousTitle = StringUtils.substringBetween(origin, "start /min \"", "\" cmd.exe ")
             if (previousTitle != null) {
-                result = StringUtils.replace(result, previousTitle, this.toString())
+                result = StringUtils.replace(result,
+                        "start /min \"$previousTitle\" cmd.exe ",
+                        "start /min \"${this}\" cmd.exe "
+                )
             }
 
             result
@@ -317,7 +320,7 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
     fun locked(name: String): Boolean = lockFile(name).exists()
 
     override fun toString(): String {
-        return "LocalInstance(httpUrl='$httpUrl', user='$user', password='$hiddenPassword', typeName='$typeName', debugPort=$debugPort, dir=$dir)"
+        return "LocalInstance(httpUrl='$httpUrl', user='$user', password='$hiddenPassword', typeName='$typeName', debugPort=$debugPort)"
     }
 
     class Script(val wrapper: File, val bin: File, val command: List<String>) {
@@ -350,7 +353,9 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
                 this.password = instanceUrl.password
                 this.typeName = instanceUrl.typeName
                 this.debugPort = instanceUrl.debugPort
-                this.environment = ENVIRONMENT
+
+                this.environment = aem.environment
+                this.zoneId = aem.zoneId
 
                 this.apply(configurer)
             }

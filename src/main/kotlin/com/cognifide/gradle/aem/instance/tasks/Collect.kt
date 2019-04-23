@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem.instance.tasks
 
-import com.cognifide.gradle.aem.common.AemTask
-import com.cognifide.gradle.aem.common.tasks.Zip
+import com.cognifide.gradle.aem.common.tasks.ZipTask
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.Compose
 import java.io.File
@@ -10,7 +9,7 @@ import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.bundling.ZipEntryCompression
 
-open class Collect : Zip(), AemTask {
+open class Collect : ZipTask() {
 
     @Internal
     var packageFilter: ((CopySpec) -> Unit) = { spec ->
@@ -31,7 +30,7 @@ open class Collect : Zip(), AemTask {
 
     @get:Internal
     val builtPackages: List<File>
-        get() = aem.packagesDependent(this)
+        get() = aem.dependentPackages(this)
 
     init {
         description = "Composes CRX package from all CRX packages being satisfied and built."

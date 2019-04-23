@@ -82,7 +82,7 @@ class LocalInstanceOptions(aem: AemExtension) : Serializable {
 
     @JsonIgnore
     var zipSource: FileResolver.() -> FileResolution? = {
-        zipUrl?.ifBlank { null }?.run { url(this) }
+        zipUrl?.run { url(this) }
     }
 
     val zip: File?
@@ -90,7 +90,7 @@ class LocalInstanceOptions(aem: AemExtension) : Serializable {
 
     @JsonIgnore
     var jarSource: FileResolver.() -> FileResolution? = {
-        jarUrl?.ifBlank { null }?.run { url(this) }
+        jarUrl?.run { url(this) }
     }
 
     val jar: File?
@@ -98,7 +98,7 @@ class LocalInstanceOptions(aem: AemExtension) : Serializable {
 
     @JsonIgnore
     var licenseSource: FileResolver.() -> FileResolution? = {
-        licenseUrl?.ifBlank { null }?.run { url(this) }
+        licenseUrl?.run { url(this) }
     }
 
     val license: File?

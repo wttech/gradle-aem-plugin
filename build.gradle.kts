@@ -2,15 +2,16 @@ import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 
 plugins {
+    id("org.jetbrains.kotlin.jvm")
     id("java-gradle-plugin")
     id("maven-publish")
-    kotlin("jvm") version "1.3.10"
-    id("io.gitlab.arturbosch.detekt") version "1.0.0-RC11"
-    id("com.jfrog.bintray") version "1.8.4"
+    id("io.gitlab.arturbosch.detekt")
+    id("com.jfrog.bintray")
+    id("com.neva.fork")
+    id("net.researchgate.release")
 }
 
 group = "com.cognifide.gradle"
-version = "6.0.2"
 description = "Gradle AEM Plugin"
 defaultTasks = listOf("build", "publishToMavenLocal")
 
@@ -49,18 +50,33 @@ dependencies {
     testImplementation("org.skyscreamer:jsonassert:1.5.0")
     testImplementation("org.junit-pioneer:junit-pioneer:0.2.2")
 
-    "detektPlugins"("io.gitlab.arturbosch.detekt:detekt-formatting:1.0.0-RC11")
+    "detektPlugins"("io.gitlab.arturbosch.detekt:detekt-formatting:1.0.0-RC14")
 }
 
 tasks {
+
+    register<Zip>("tailerZip") {
+        from("dists/gradle-aem-tailer")
+        archiveName = "gradle-aem-tailer.zip"
+        destinationDir = file("dists")
+    }
+
     register<Jar>("sourcesJar") {
         classifier = "sources"
         dependsOn("classes")
         from(sourceSets["main"].allSource)
     }
-    named<Task>("build") {  dependsOn("sourcesJar") }
-    named<Task>("publishToMavenLocal") { dependsOn("sourcesJar") }
+
+    named<Task>("build") {
+        dependsOn("sourcesJar")
+    }
+
+    named<Task>("publishToMavenLocal") {
+        dependsOn("sourcesJar")
+    }
+
     named<ProcessResources>("processResources") {
+        dependsOn( "tailerZip")
         doLast {
             file("$buildDir/resources/main/build.json").printWriter().use {
                 it.print("""{
@@ -70,7 +86,7 @@ tasks {
             }
         }
     }
-
+    
     named<Test>("test") {
         testLogging {
             events = setOf(TestLogEvent.FAILED)
@@ -80,30 +96,13 @@ tasks {
         useJUnitPlatform()
         dependsOn(named("publishToMavenLocal"))
     }
-}
-
-gradlePlugin {
-    plugins {
-        create("config") {
-            id = "com.cognifide.aem.config"
-            implementationClass = "com.cognifide.gradle.aem.config.ConfigPlugin"
-        }
-        create("tooling") {
-            id = "com.cognifide.aem.tooling"
-            implementationClass = "com.cognifide.gradle.aem.tooling.ToolingPlugin"
-        }
-        create("package") {
-            id = "com.cognifide.aem.package"
-            implementationClass = "com.cognifide.gradle.aem.pkg.PackagePlugin"
-        }
-        create("bundle") {
-            id = "com.cognifide.aem.bundle"
-            implementationClass = "com.cognifide.gradle.aem.bundle.BundlePlugin"
-        }
-        create("instance") {
-            id = "com.cognifide.aem.instance"
-            implementationClass = "com.cognifide.gradle.aem.instance.InstancePlugin"
-        }
+    
+    named("afterReleaseBuild") {
+        dependsOn("bintrayUpload")
+    }
+    
+    named("updateVersion") {
+        enabled = false
     }
 }
 
@@ -111,32 +110,5 @@ detekt {
     config.from(file("detekt.yml"))
 }
 
-publishing {
-    publications {
-        create<MavenPublication>("mavenJava") {
-            from(components["java"])
-            artifact(tasks["sourcesJar"])
-        }
-    }
-}
-
-bintray {
-    user = (project.findProperty("bintray.user") ?: System.getenv("BINTRAY_USER"))?.toString()
-    key = (project.findProperty("bintray.key") ?: System.getenv("BINTRAY_KEY"))?.toString()
-    setPublications("mavenJava")
-    with(pkg) {
-        repo = "maven-public"
-        name = "gradle-aem-plugin"
-        userOrg = "cognifide"
-        setLicenses("Apache-2.0")
-        vcsUrl = "https://github.com/Cognifide/gradle-aem-plugin.git"
-        setLabels("aem", "cq", "vault", "scr")
-        with(version) {
-            name = project.version.toString()
-            desc = "${project.description} ${project.version}"
-            vcsTag = project.version.toString()
-        }
-    }
-    publish = (project.findProperty("bintray.publish") ?: "true").toString().toBoolean()
-    override = (project.findProperty("bintray.override") ?: "false").toString().toBoolean()
-}
+apply(from = "gradle/publish.gradle.kts")
+apply(from = "gradle/fork.gradle.kts")

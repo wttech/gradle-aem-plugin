@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.pkg.tasks
 
 import com.cognifide.gradle.aem.common.fileNames
+import com.cognifide.gradle.aem.common.tasks.PackageTask
 import com.cognifide.gradle.aem.instance.InstanceSync
 import com.cognifide.gradle.aem.instance.action.AwaitAction
 import com.cognifide.gradle.aem.instance.names
@@ -9,7 +10,7 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
-open class Deploy : Sync() {
+open class Deploy : PackageTask() {
 
     /**
      * Check instance(s) health after deploying package(s).
@@ -102,7 +103,7 @@ open class Deploy : Sync() {
         }
 
         if (packages.isEmpty()) {
-            packages = aem.packagesDependent(this)
+            packages = aem.dependentPackages(this)
         }
     }
 

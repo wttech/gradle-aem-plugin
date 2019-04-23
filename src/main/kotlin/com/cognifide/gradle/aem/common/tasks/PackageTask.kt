@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.pkg.tasks
+package com.cognifide.gradle.aem.common.tasks
 
 import com.cognifide.gradle.aem.common.AemDefaultTask
 import com.cognifide.gradle.aem.instance.Instance
@@ -6,7 +6,7 @@ import java.io.File
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFiles
 
-open class Sync : AemDefaultTask() {
+open class PackageTask : AemDefaultTask() {
 
     @Input
     var instances: List<Instance> = listOf()
@@ -20,7 +20,7 @@ open class Sync : AemDefaultTask() {
         }
 
         if (packages.isEmpty()) {
-            packages = aem.packagesDependent(this)
+            packages = aem.dependentPackages(this)
         }
     }
 

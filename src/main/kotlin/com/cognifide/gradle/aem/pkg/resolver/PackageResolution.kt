@@ -1,19 +1,11 @@
 package com.cognifide.gradle.aem.pkg.resolver
 
 import aQute.bnd.osgi.Jar
-import com.cognifide.gradle.aem.common.Collections
-import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.file.resolver.FileResolution
 import com.cognifide.gradle.aem.instance.Bundle
-import com.cognifide.gradle.aem.pkg.Package
 import com.cognifide.gradle.aem.pkg.PackageException
-import com.cognifide.gradle.aem.pkg.PackageFileFilter
-import com.cognifide.gradle.aem.tooling.vlt.VltFilter
 import java.io.File
-import org.apache.commons.io.FileUtils
 import org.apache.commons.io.FilenameUtils
-import org.gradle.util.GFileUtils
-import org.zeroturnaround.zip.ZipUtil
 
 class PackageResolution(group: PackageGroup, id: String, action: (FileResolution) -> File) : FileResolution(group, id, action) {
 
@@ -41,53 +33,25 @@ class PackageResolution(group: PackageGroup, id: String, action: (FileResolution
 
         aem.logger.info("Wrapping OSGi bundle to CRX package: $jar")
 
-        val pkgRoot = File(dir, pkgName)
-        val pkgPath = "${resolver.bundlePath}/${jar.name}"
-        val vaultDir = File(pkgRoot, Package.VLT_PATH)
-
-        // Copy package template files
-        GFileUtils.mkdirs(vaultDir)
-        FileOperations.copyResources(Package.VLT_PATH, vaultDir)
-
-        // Expand package properties
         val bundle = Jar(jar)
+        val bundlePath = "${resolver.bundlePath}/${jar.name}"
         val description = bundle.manifest.mainAttributes.getValue(Bundle.ATTRIBUTE_DESCRIPTION) ?: ""
         val symbolicName = bundle.manifest.mainAttributes.getValue(Bundle.ATTRIBUTE_SYMBOLIC_NAME)
         val group = symbolicName.substringBeforeLast(".")
         val version = bundle.manifest.mainAttributes.getValue(Bundle.ATTRIBUTE_VERSION)
-        val filters = listOf(VltFilter.rootElementForPath(pkgPath))
-        val bundleProps = Collections.extendMap(PackageFileFilter.FILE_PROPERTIES, mapOf<String, Any>(
-                "compose" to mapOf(
-                        "vaultName" to symbolicName,
-                        "vaultGroup" to group,
-                        "vaultVersion" to version,
-                        "vaultFilters" to filters
 
-                ),
-                "project" to mapOf(
-                        "group" to group,
-                        "name" to symbolicName,
-                        "version" to version,
-                        "description" to description
-                )
-        ))
-        val overrideProps = resolver.bundleProperties(bundle)
-        val effectiveProps = bundleProps + overrideProps
+        return aem.composePackage {
+            this.archivePath = pkg
+            this.description = description
 
-        FileOperations.amendFiles(vaultDir, PackageFileFilter.EXPAND_FILES_DEFAULT) { file, content ->
-            aem.props.expand(content, effectiveProps, file.absolutePath)
+            this.group = group
+            this.name = symbolicName
+            this.version = version
+
+            filter(bundlePath)
+            content { copyJcrFile(jar, bundlePath) }
+
+            resolver.bundleDefinition(this, bundle)
         }
-
-        // Copy bundle to install path
-        val pkgJar = File(pkgRoot, "${Package.JCR_ROOT}$pkgPath")
-
-        GFileUtils.mkdirs(pkgJar.parentFile)
-        FileUtils.copyFile(jar, pkgJar)
-
-        // ZIP all to CRX package
-        ZipUtil.pack(pkgRoot, pkg)
-        pkgRoot.deleteRecursively()
-
-        return pkg
     }
 }

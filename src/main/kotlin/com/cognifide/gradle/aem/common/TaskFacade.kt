@@ -3,10 +3,8 @@ package com.cognifide.gradle.aem.common
 import com.cognifide.gradle.aem.bundle.BundleJar
 import com.cognifide.gradle.aem.instance.tasks.*
 import com.cognifide.gradle.aem.pkg.tasks.*
-import com.cognifide.gradle.aem.tooling.tasks.Debug
-import com.cognifide.gradle.aem.tooling.tasks.Rcp
+import com.cognifide.gradle.aem.tooling.tasks.*
 import com.cognifide.gradle.aem.tooling.tasks.Sync
-import com.cognifide.gradle.aem.tooling.tasks.Vlt
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.UnknownTaskException
@@ -22,7 +20,8 @@ class TaskFacade(private val aem: AemExtension) {
 
     private val bundleMap = mutableMapOf<String, BundleJar>()
 
-    val bundles: List<BundleJar> = getAll(Jar::class.java).map { bundle(it) }
+    val bundles: List<BundleJar>
+        get() = getAll(Jar::class.java).map { bundle(it) }
 
     internal fun jarsAsBundles() {
         initializeJarsAsBundles()
@@ -88,6 +87,8 @@ class TaskFacade(private val aem: AemExtension) {
     fun sync(configurer: Sync.() -> Unit) = named(Sync.NAME, Sync::class.java, configurer)
 
     fun vlt(configurer: Vlt.() -> Unit) = named(Vlt.NAME, Vlt::class.java, configurer)
+
+    fun tail(configurer: Tail.() -> Unit) = named(Tail.NAME, Tail::class.java, configurer)
 
     // generic API & internals
 

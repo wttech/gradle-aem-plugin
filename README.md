@@ -28,8 +28,9 @@ Looking for dedicated version of plugin for [**Apache Sling**](https://sling.apa
 
 * Composing CRX package from multiple JCR content roots, bundles.
 * Fully automated, native (no virtulization), tied to project, AEM instance(s) setup allowing to start development within few minutes.
-* Powerful AEM DSL scripting capabilities for performing content migrations, managing instances.
+* [Powerful AEM DSL scripting capabilities](#implement-custom-aem-tasks) for performing content migrations, managing instances.
 * Advanced AEM instance(s) stability & health checking after CRX package deployment.
+* Continous AEM incident monitoring and interactive reporting (centralized log tailing of any AEM instances with no SSH).
 * Automated all-in-one CRX packages generation (assemblies), vault filters merging etc.
 * Easy parallel CRX package deployment to many remote group of instances.
 * Automated dependent CRX packages and OSGi bundles installation from local and remote sources (SMB, SSH, HTTP(s)).
@@ -42,6 +43,8 @@ Looking for dedicated version of plugin for [**Apache Sling**](https://sling.apa
 Gradle AEM Plugin 6.x serie and upper will **no longer support Groovy DSL** and **stands on Kotlin DSL** coming with Gradle 5.0.
 
 To see documentation for previous 5.x serie, please [click here](https://github.com/Cognifide/gradle-aem-plugin/tree/groovy) (navigate to branch `groovy`).
+
+Also keep in mind, that GAP 6.x is **temporarily supporting only Gradle 5.x** (is not supporting 5.1 or higher) due to API changes related with [lazy configuration](https://docs.gradle.org/5.1.1/userguide/userguide.html).
 
 ## Table of contents
 
@@ -60,6 +63,7 @@ To see documentation for previous 5.x serie, please [click here](https://github.
            * [Default cleaning configuration](#default-cleaning-configuration)
            * [Rendition cleaning configuration](#rendition-cleaning-configuration)
            * [Using alternative transfer type](#using-alternative-transfer-type)
+           * [Downloading package options](#downloading-package-options)
            * [Copying or cleaning content only](#copying-or-cleaning-content-only)
            * [Filter file at custom path](#filter-file-at-custom-path)
            * [Filter roots specified explicitly](#filter-roots-specified-explicitly)
@@ -73,8 +77,8 @@ To see documentation for previous 5.x serie, please [click here](https://github.
            * [Assembling packages (merging all-in-one)](#assembling-packages-merging-all-in-one)
            * [Expandable properties](#expandable-properties)
         * [Task aemDeploy](#task-aemdeploy)
-           * [Deploying only to author or publish instances](#deploying-only-to-author-or-publish-instances)
-           * [Deploying only to instances specified explicitly](#deploying-only-to-instances-specified-explicitly)
+           * [Deploying only to desired instances](#deploying-only-to-desired-instances)
+           * [Deploying options](#deploying-options)
         * [Task aemUpload](#task-aemupload)
         * [Task aemDelete](#task-aemdelete)
         * [Task aemInstall](#task-aeminstall)
@@ -101,16 +105,21 @@ To see documentation for previous 5.x serie, please [click here](https://github.
         * [Task aemSatisfy](#task-aemsatisfy)
         * [Task aemAwait](#task-aemawait)
         * [Task aemCollect](#task-aemcollect)
+        * [Task aemTail](#task-aemtail)
+           * [Tailing incidents](#tailing-incidents)
+           * [Tailing multiple instances](#tailing-multiple-instances)
+           * [Standalone tailer tool](#standalone-tailer-tool)
   * [How to's](#how-tos)
      * [Set AEM configuration properly for all / concrete project(s)](#set-aem-configuration-properly-for-all--concrete-projects)
      * [Implement custom AEM tasks](#implement-custom-aem-tasks)
+        * [Defining CRX package via code then downloading and sharing it using external HTTP endpoint](#defining-crx-package-via-code-then-downloading-and-sharing-it-using-external-http-endpoint)
         * [Downloading CRX package from external HTTP endpoint and deploying it on desired AEM instances](#downloading-crx-package-from-external-http-endpoint-and-deploying-it-on-desired-aem-instances)
         * [Controlling OSGi bundles and components](#controlling-osgi-bundles-and-components)
         * [Executing code on AEM runtime](#executing-code-on-aem-runtime)
         * [Calling AEM endpoints / making any HTTP requests](#calling-aem-endpoints--making-any-http-requests)
      * [Understand why there are one or two plugins to be applied in build script](#understand-why-there-are-one-or-two-plugins-to-be-applied-in-build-script)
      * [Work effectively on start and daily basis](#work-effectively-on-start-and-daily-basis)
-     * [Filter instances for which packages will be deployed or satisfied](#filter-instances-for-which-packages-will-be-deployed-or-satisfied)
+     * [Filter instances to work with](#filter-instances-to-work-with)
      * [Know how properties are being expanded in instance or package files](#know-how-properties-are-being-expanded-in-instance-or-package-files)
   * [Known issues](#known-issues)
      * [No OSGi services / components are registered](#no-osgi-services--components-are-registered)
@@ -148,7 +157,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.cognifide.gradle:aem-plugin:6.0.2")
+    implementation("com.cognifide.gradle:aem-plugin:6.2.0")
 }
 ```
 
@@ -461,6 +470,22 @@ Available transfer types: *package_download* (default) and *vlt_checkout*.
 gradlew :content:aemSync -Paem.sync.type=vlt_checkout
 ```
 
+##### Downloading package options
+
+When transfer type is set to *package_download* then it is also possible to...
+
+Download package only without extracting:
+
+```bash
+gradlew :content:aemSync -Paem.packageDownload.extract=false
+```
+
+Download, delete all previous JCR root contents then extract fresh content:
+
+```bash
+gradlew :content:aemSync -Paem.force
+```
+
 ##### Copying or cleaning content only
 
 Available mode types: *copy_and_clean* (default), *clean_only* and *copy_only*.
@@ -557,7 +582,7 @@ Then file at path *build/aem/aemDebug/debug.json* with content below is being ge
 {
   "buildInfo" : {
     "plugin" : {
-      "pluginVersion" : "6.0.2",
+      "pluginVersion" : "6.1.1",
       "gradleVersion" : "5.0"
     },
     "gradle" : {
@@ -611,7 +636,7 @@ Then file at path *build/aem/aemDebug/debug.json* with content below is being ge
       "mandatoryFiles" : [ ]
     },
     "packageSnapshots" : [ ],
-    "packageRoot" : ".../gradle-aem-multi/aem/app.core/src/main/content",
+    "packageRoot" : ".../gradle-aem-multi/aem/sites/src/main/content",
     "packageMetaCommonRoot" : ".../gradle-aem-multi/aem/gradle/META-INF",
     "packageInstallPath" : "/apps/example/app.core/install",
     "packageInstallRepository" : true,
@@ -630,7 +655,7 @@ Then file at path *build/aem/aemDebug/debug.json* with content below is being ge
     "jar" : {
       "installPath" : "/apps/example/app.core/install",
       "attributesConvention" : true,
-      "javaPackage" : "com.company.example.aem.app.core",
+      "javaPackage" : "com.company.example.aem.sites",
       "javaPackageOptions" : "-split-package:=merge-first",
       "bndPath" : ".../gradle-aem-multi/aem/app.core/bnd.bnd",
       "bndInstructions" : {
@@ -641,10 +666,10 @@ Then file at path *build/aem/aemDebug/debug.json* with content below is being ge
         "Bundle-Category" : "example",
         "Bundle-Vendor" : "Company",
         "Bundle-Name" : "Example - AEM Application Core",
-        "Bundle-SymbolicName" : "com.company.example.aem.app.core",
-        "Sling-Model-Packages" : "com.company.example.aem.app.core",
+        "Bundle-SymbolicName" : "com.company.example.aem.sites",
+        "Sling-Model-Packages" : "com.company.example.aem.sites",
         "Import-Package" : "*",
-        "Export-Package" : "com.company.example.aem.app.core.*;-split-package:=merge-first"
+        "Export-Package" : "com.company.example.aem.sites.*;-split-package:=merge-first"
       }
     }
   },
@@ -685,14 +710,20 @@ aem {
             contentPath = aem.config.packageRoot
             bundlePath = aem.config.packageInstallPath
             metaDefaults = true
-            vaultProperties = mapOf(
-                "acHandling" to "merge_preserve",
-                "requiresRoot" to false
-            )
-            vaultName = baseName
-            vaultGroup = project.group
-            vaultVersion = project.version
             fromConvention = true
+            vaultDefinition {
+                properties = mapOf(
+                    "acHandling" to "merge_preserve",
+                    "requiresRoot" to false
+                )
+                name = aem.baseName
+                group = if (aem.project == aem.project.rootProject) {
+                    aem.project.group.toString()
+                } else {
+                    aem.project.rootProject.name
+                }
+                version = project.version.toString()
+            }
         }
     }    
 }
@@ -788,27 +819,29 @@ Predefined expandable properties:
 * `rootProject` - project with directory in which *settings.gradle* is located,
 * `project` - current project.
 
-This feature is especially useful to generate valid *META-INF/properties.xml* file, below is used by plugin by default:
+This feature is especially useful to generate valid *META-INF/properties.xml* file, below [template](src/main/resources/com/cognifide/gradle/aem/META-INF/vault/properties.xml) is used by plugin by default:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
 <properties>
-    <comment>{{project.description}}</comment>
-    <entry key="group">{{compose.vaultGroup}}</entry>
-    <entry key="name">{{compose.vaultName}}</entry>
-    <entry key="version">{{compose.vaultVersion}}</entry>
-    <entry key="description">{{project.description}}</entry>
-    <entry key="groupId">{{project.group}}</entry>
-    <entry key="artifactId">{{project.name}}</entry>
-    <entry key="createdBy">{{user.name}}</entry>
-    {% for e in compose.vaultProperties %}
+    {% if definition.description is not empty %}
+    <comment>{{definition.description}}</comment>
+    <entry key="description">{{definition.description}}</entry>
+    {% endif %}
+    <entry key="group">{{definition.group}}</entry>
+    <entry key="name">{{definition.name}}</entry>
+    <entry key="version">{{definition.version}}</entry>
+    {% if definition.createdBy is not empty %}
+    <entry key="createdBy">{{definition.createdBy}}</entry>
+    {% endif %}
+    {% for e in definition.properties %}
     <entry key="{{e.key}}">{{e.value | raw}}</entry>
     {% endfor %}
 </properties>
 ```
 
-Also file *nodetypes.cnd* is dynamically expanded to generate file containing all node types from all sub packages being merged into assembly package.
+Also file *nodetypes.cnd* is dynamically expanded from [template](src/main/resources/com/cognifide/gradle/aem/META-INF/vault/nodetypes.cnd) to generate file containing all node types from all sub packages being merged into assembly package.
 
 Each JAR file in separate *hooks* directory will be combined into single directory when creating assembly package.
 
@@ -816,20 +849,20 @@ Each JAR file in separate *hooks* directory will be combined into single directo
 
 Upload & install CRX package into AEM instance(s). Primary, recommended form of deployment. Optimized version of `aemUpload aemInstall`.
 
-##### Deploying only to author or publish instances
+##### Deploying only to desired instances
 
-```bash
-gradlew aemDeploy -Paem.instance.authors
-gradlew aemDeploy -Paem.instance.publishers
-```
+Simply use generic approach for [filtering instances to work with](#filter-instances-to-work-with).
 
-##### Deploying only to instances specified explicitly
+##### Deploying options
 
-Instance urls must be delimited by semicolon:
+Add any of below command line parameters to customize CRX package deployment behavior:
 
-```bash
-gradlew aemDeploy -Paem.instance.list=[http://admin:admin@localhost:4502,http://admin:admin@localhost:4503]
-```
+* `-Paem.deploy.awaited=false` - disable stability & health checks after deploying CRX package.
+* `-Paem.deploy.distributed=true` - use alternative form of deployment. At first, deploys CRX package to author instances, then triggers replication of CRX package so that it will be installed also on publish instances.
+* `-Paem.deploy.uploadForce=false` - disable force installation (by default even unchanged CRX package is forced to be reinstalled)
+* `-Paem.deploy.installRecursive=false` - disable automatic installation of subpackages located inside CRX package being deployed.  
+* `-Paem.deploy.uploadRetry=n` - customize number of retries being performed after failed CRX package upload.
+* `-Paem.deploy.installRetry=n` - customize number of retries being performed after failed CRX package install.
 
 #### Task `aemUpload`
 
@@ -888,12 +921,12 @@ allprojects {
 
 Then below section is absolutely redundant:
 
-*aem/app.core/build.gradle.kts*
+*aem/sites/build.gradle.kts*
 ```kotlin
 aem {
     tasks {
         bundle {
-            javaPackage = "${project.group}.${project.name}" // "com.company.example.aem.app.core"
+            javaPackage = "${project.group}.${project.name}" // "com.company.example.aem.sites"
         }
     }
 }
@@ -920,23 +953,10 @@ For the reference, see [usage in AEM Multi-Project Example](https://github.com/C
 
 #### Configuring OSGi bundle manifest attributes
 
-Plugin by default covers generation of few attributes by convention. It is only required to specify *javaPackage*  in *bundle* section:
-
-
-```kotlin
-aem {
-    tasks {
-        bundle {
-            javaPackage = "com.company.aem.example.common"
-        }
-    }
-}
-```
-
-Then the following attributes will be generated by convention:
+Plugin by default covers generation of few attributes by convention:
 
 * `Bundle-Name` will grab value from `project.description`
-* `Bundle-SymbolicName` will grab value from `javaPackage`
+* `Bundle-SymbolicName` will grab value from `javaPackage` (from section `aem.tasks.bundle`)
 * `Bundle-Activator` will grab value from `javaPackage.activator` assuming that activator is an existing file named *Activator* or *BundleActivator* under *main* source set.
 * `Sling-Model-Packages` will grab value from `javaPackage`
 * `Export-Package` will grab value from `javaPackage`.
@@ -1136,11 +1156,11 @@ Upload & install dependent CRX package(s) before deployment. Available methods:
 * `url(url: String)`, use CRX package that will be downloaded from specified URL to local temporary directory.
 * `downloadHttp(url: String)`, download package using HTTP with no auth.
 * `downloadHttpAuth(url: String, username: String, password: String)`, download package using HTTP with Basic Auth support.
-* `downloadHttpAuth(url: String)`, as above, but credentials must be specified in variables: `aem.http.username`, `aem.http.password`. Optionally enable SSL errors checking by setting property `aem.http.ignoreSSL` to `false`.
+* `downloadHttpAuth(url: String)`, as above, but credentials must be specified in variables: `aem.resolver.http.username`, `aem.resolver.http.password`. Optionally enable SSL errors checking by setting property `aem.resolver.http.connectionIgnoreSsl` to `false`.
 * `downloadSmbAuth(url: String, domain: String, username: String, password: String)`, download package using SMB protocol.
-* `downloadSmbAuth(url: String)`, as above, but credentials must be specified in variables: `aem.smb.domain`, `aem.smb.username`, `aem.smb.password`.
+* `downloadSmbAuth(url: String)`, as above, but credentials must be specified in variables: `aem.resolver.smb.domain`, `aem.resolver.smb.username`, `aem.resolver.smb.password`.
 * `downloadSftpAuth(url: String, username: String, password: String)`, download package using SFTP protocol.
-* `downloadSftpAuth(url: String)`, as above, but credentials must be specified in variables: `aem.sftp.username`, `aem.sftp.password`. Optionally enable strict host checking by setting property `aem.sftp.hostChecking` to `true`.
+* `downloadSftpAuth(url: String)`, as above, but credentials must be specified in variables: `aem.resolver.sftp.username`, `aem.resolver.sftp.password`. Optionally enable strict host checking by setting property `aem.resolver.sftp.hostChecking` to `true`.
 * `dependency(notation: String)`, use OSGi bundle that will be resolved from defined repositories (for instance from Maven) then wrapped to CRX package: `dependency('com.neva.felix:search-webconsole-plugin:1.2.0')`.
 * `group(name: String, options: Resolver<PackageGroup>.() -> Unit)`, useful for declaring group of packages (or just optionally naming single package) to be installed only on demand. For instance: `group 'tools', { url('http://example.com/package.zip'); url('smb://internal-nt/package2.zip')  }`. Then to install only packages in group `tools`, use command: `gradlew aemSatisfy -Paem.satisfy.group=tools`.
 
@@ -1150,17 +1170,19 @@ Example configuration:
 aem {
     tasks {
         satisfy {
-            group("default") {
-                local("pkg/vanityurls-components-1.0.2.zip")
-                url("smb://company-share/aem/packages/my-lib.zip")
-                url("sftp://company-share/aem/packages/other-lib.zip")
-                url("file:///C:/Libraries/aem/package/extra-lib.zip")
-            }
-            
-            group("tools") {
-                dependency("com.neva.felix:search-webconsole-plugin:1.2.0")
-                url("https://github.com/Cognifide/APM/releases/download/cqsm-3.0.0/apm-3.0.0.zip")
-                url("https://github.com/Adobe-Consulting-Services/acs-aem-tools/releases/download/acs-aem-tools-1.0.0/acs-aem-tools-content-1.0.0-min.zip")
+            packages {
+                group("default") {
+                    local("pkg/vanityurls-components-1.0.2.zip")
+                    url("smb://company-share/aem/packages/my-lib.zip")
+                    url("sftp://company-share/aem/packages/other-lib.zip")
+                    url("file:///C:/Libraries/aem/package/extra-lib.zip")
+                }
+
+                group("tools") {
+                    dependency("com.neva.felix:search-webconsole-plugin:1.2.0")
+                    url("https://github.com/Cognifide/APM/releases/download/cqsm-3.0.0/apm-3.0.0.zip")
+                    url("https://github.com/Adobe-Consulting-Services/acs-aem-tools/releases/download/acs-aem-tools-1.0.0/acs-aem-tools-content-1.0.0-min.zip")
+                }
             }
         }
     }
@@ -1186,11 +1208,11 @@ aem {
                     url("https://github.com/OlsonDigital/aem-groovy-console/releases/download/11.0.0/aem-groovy-console-11.0.0.zip")
                     config {
                         instanceName = "*-author" // additional filter intersecting 'deployInstanceName'
-                        initializer { sync ->
-                            logger.info("Installing Groovy Console on ${sync.instance}")
+                        initializer {
+                            logger.info("Installing Groovy Console on $instance")
                         }
-                        finalizer { sync ->
-                            logger.info("Installed Groovy Console on ${sync.instance}")
+                        finalizer {
+                            logger.info("Installed Groovy Console on $instance")
                         }
                         completer {
                             logger.info("Reloading instance(s) after installing Groovy Console")
@@ -1253,7 +1275,7 @@ aem {
 
 Such options could be also customized for `aemDeploy` task when using block:
 
-```
+```kotlin
 aem {
     tasks {
         deploy {
@@ -1274,6 +1296,65 @@ Inherits from task [ZIP](https://docs.gradle.org/3.5/dsl/org.gradle.api.tasks.bu
 Screenshot below presents generated ZIP package which is a result of running `gradlew :aemCollect` for [multi-module project](https://github.com/Cognifide/gradle-aem-multi).
 
 ![Collect task - ZIP Overview](docs/collect-zip-overview.png)
+
+#### Task `aemTail`
+
+Continuosly downloads logs from any local or remote AEM instances.
+Detects and interactively notifies about unknown errors as incident reports.
+
+Tailer eliminates a need for connecting to remote environments using SSH protocol to be able to run `tail` command on that servers. 
+Instead, tailer is continuously polling log files using HTTP endpoint provided by Sling Framework. 
+New log entries are being dynamically appended to log files stored on local file system in a separate file for each environment. 
+By having all log files in one place, AEM developer or QA engineer has an opportunity to comportably analyze logs, verify incidents occuring on AEM instances.
+
+To customize tailer behavior, see [TailOptions](src/main/kotlin/com/cognifide/gradle/aem/instance/tail/TailOptions.kt).
+
+```kotlin
+aem {
+    tasks {
+        tail {
+            options {
+                // ...
+            }
+        }
+    }
+}
+```
+
+Log files are stored under directory: *build/aem/aemTail/${instance.name}/error.log*.
+
+##### Tailing incidents
+
+By default, tailer is buffering cannonade of log entries of level *ERROR* and *WARN* in 5 seconds time window then interactively shows notification.
+Clicking on that notification will browse to incident log file created containing only desired exceptions. These incident files are stored under directory: *build/aem/aemTail/${instance.name}/incidents/${timestamp}-error.log*.
+
+Which type of log entries are treated as a part of incident is determined by:
+
+* property `-Paem.tail.incidentLevels=[ERROR,WARN]`
+* wildcard exclusion rules defined in file which location is controlled by property `-Paem.tail.incidentFilterPath=aem/gradle/tail/incidentFilter.txt`
+
+Sample content of  *incidentFilter.txt* file, which holds a fragments of log entries that will be treated as known issues (notifications will be no longer shown):
+
+```text
+# On Unix OS, it is required to have execution rights on some scripts:
+Error while executing script *diskusage.sh
+Error while executing script *cpu.sh
+```
+
+##### Tailing multiple instances
+
+Common use case could be to tail many remote AEM instances at once that comes from multiple environments.
+To cover such case, it is possible to run tailer using predefined instances and defined dynamically. Number of specified instance URLs is unlimited.
+
+Simply use command:
+
+```bash
+gradlew aemTail -Paem.instance.list=[http://admin:admin@192.168.1.1:4502,http://admin:admin@author.example.com]
+```
+
+##### Standalone tailer tool
+
+Tailer could be used as standalone tool. Just download it from [here](dists/gradle-aem-tailer) (< 100 KB).
 
 ## How to's
 
@@ -1335,7 +1416,43 @@ It provides concise AEM related API for accessing AEM configuration, synchronizi
 What is more, it also provides built-in HTTP client `aem.http` to be able to communicate with any external services like for downloading CRX packages from package shares like Nexus repositories, JFrog Artifactory etc.
 The options are almost unlimited. 
 
+#### Defining CRX package via code then downloading and sharing it using external HTTP endpoint
+
+Below snippet could be used to automatize creation of production content backups.
+
+```kotlin
+aem {
+    tasks {
+        register("aemProdAuthorBackup") {
+            doLast {
+                val pkg = aem.namedInstance("prod-author").sync {
+                    downloadPackage {
+                        group = "example"
+                        name = "backup"
+                        description = "Backup of content, tags and DAM"
+                        archiveName = "backup-author.zip"
+                        filters(
+                                "/content/cq:tags/example",
+                                "/content/example",
+                                "/content/dam/example"
+                        )
+                    }
+                }
+    
+                aem.http {
+                    basicUser = "foo"
+                    basicPassword = "bar"
+                    postMultipart("http://my-aem-backup-service.com/package/upload", mapOf("file" to pkg)) 
+                }
+            }
+        }
+    }
+}
+```
+
 #### Downloading CRX package from external HTTP endpoint and deploying it on desired AEM instances
+
+Below snippet could be used to automatize recovery from content backups (e.g for production or to replicate production content to test environment).
 
 ```kotlin
 
@@ -1344,11 +1461,14 @@ aem {
         register("aemDeployProductionContent") {
             doLast {
                 val instances = listOf(
-                        aem.instance("http://user:password@aem-host.com"), // URL specified directly, could be parametrized by some gradle command line property
+                        aem.instance("http://user:password@aem-host.com") // URL specified directly, could be parametrized by some gradle command line property
                         // aem.namedInstance("local-publish") // reused AEM instance defined in 'gradle.properties'
                 )
                 val pkg = aem.http { downloadTo("https://company.com/aem/backups/example-1.0.0-201901300932.backup.zip", project.file("build/tmp")) }
-                aem.sync(instances) { deployPackage(pkg) }
+                
+                aem.sync(instances) { 
+                    deployPackage(pkg) 
+                }
             }
         }
     }
@@ -1459,21 +1579,27 @@ Currently used plugin architecture solves that problem.
 Initially, to create fully configured local AEM instances simply run command `gradlew aemSetup`.
 
 Later during development process, building and deploying to AEM should be done using the simplest command: `gradlew`.
-Above configuration uses [default tasks](https://docs.gradle.org/current/userguide/tutorial_using_tasks.html#sec:default_tasks), so that alternatively it is possible to do the same using explicitly specified command `gradlew aemSatisfy aemDeploy`.
+Above configuration uses [default tasks](https://docs.gradle.org/current/userguide/tutorial_using_tasks.html#sec:default_tasks), so that alternatively it is possible to do the same using explicitly specified command `gradlew aemSatisfy aemDeploy aemAwait`.
 
 * Firstly dependent packages (like AEM hotfixes, Vanity URL Components etc) will be installed lazily (only when they are not installed yet).
 * In next step application is being built and deployed to all configured AEM instances.
 * Finally build awaits till all AEM instances are stable.
 
-### Filter instances for which packages will be deployed or satisfied
+### Filter instances to work with
 
 When there are defined named AEM instances: `local-author`, `local-publish`, `integration-author` and `integration-publish`,
-then it is possible to deploy (or satisfy) packages taking into account: 
+then it is possible to:
+
+* deploy (or satisfy) CRX package(s)
+* tail logs
+* checkout JCR content 
+
+with taking into account: 
 
  * type of environment (local, integration, staging, etc)
  * type of AEM instance (author / publish)
 
-Example cases:
+by filtering instances by names, e.g:
 
 ```bash
 gradlew aemDeploy -Paem.instance.name=integration-*
@@ -1483,6 +1609,21 @@ gradlew aemDeploy -Paem.instance.name=local-author,integration-author
 
 Default value of that instance name filter is `${aem.environment}-*`, so that typically `local-*`.
 Environment value comes from system environment variable `AEM_ENV` or property `aem.env`.
+
+To deploy only to author or publish instances:
+
+```bash
+gradlew aemDeploy -Paem.instance.authors
+gradlew aemDeploy -Paem.instance.publishers
+```
+
+To deploy only to instances specified explicitly:
+
+```bash
+gradlew aemDeploy -Paem.instance.list=[http://admin:admin@localhost:4502,http://admin:admin@localhost:4503]
+```
+
+Instance urls must be delimited by colon.
 
 ### Know how properties are being expanded in instance or package files
 

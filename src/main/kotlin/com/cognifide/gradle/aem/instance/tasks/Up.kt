@@ -1,11 +1,12 @@
 package com.cognifide.gradle.aem.instance.tasks
 
+import com.cognifide.gradle.aem.common.tasks.LocalInstanceTask
 import com.cognifide.gradle.aem.instance.LocalInstance
 import com.cognifide.gradle.aem.instance.action.AwaitAction
 import com.cognifide.gradle.aem.instance.names
 import org.gradle.api.tasks.TaskAction
 
-open class Up : Instance() {
+open class Up : LocalInstanceTask() {
 
     init {
         description = "Turns on local AEM instance(s)."
@@ -31,14 +32,14 @@ open class Up : Instance() {
 
     @TaskAction
     fun up() {
-        aem.parallelWith(instances) { up() }
+        aem.parallel.with(instances) { up() }
 
         aem.actions.await {
             instances = this@Up.instances
             awaitOptions()
         }
 
-        aem.parallelWith(instances) { init(initOptions) }
+        aem.parallel.with(instances) { init(initOptions) }
 
         aem.notifier.notify("Instance(s) up", "Which: ${instances.names}")
     }

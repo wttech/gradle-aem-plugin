@@ -1,7 +1,7 @@
 {
   "buildInfo" : {
     "plugin" : {
-      "pluginVersion" : "6.0.2",
+      "pluginVersion" : "6.1.1",
       "gradleVersion" : "4.10"
     },
     "gradle" : {
@@ -240,7 +240,7 @@
       "mandatoryFiles" : [ ]
     },
     "packageRoot": "*/src/main/content",
-    "packageMetaCommonRoot": "*/aem/gradle/META-INF",
+    "packageMetaCommonRoot": "*/gradle/META-INF",
     "packageInstallPath" : "/apps/additional/install",
     "packageInstallRepository": true,
     "packageErrors" : [
@@ -258,6 +258,7 @@
   "bundleConfig" : [
     {
       "name": "jar",
+      "enabled": true,
       "installPath" : "/apps/additional/install",
       "installRunMode": null,
       "javaPackage" : "com.company.aem.additional",

@@ -6,16 +6,15 @@ import com.cognifide.gradle.aem.common.http.HttpClient
 import com.cognifide.gradle.aem.config.Config
 import com.cognifide.gradle.aem.config.ConfigPlugin
 import com.cognifide.gradle.aem.instance.*
+import com.cognifide.gradle.aem.pkg.PackageDefinition
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.Compose
-import com.cognifide.gradle.aem.tooling.*
+import com.cognifide.gradle.aem.pkg.vlt.VltFilter
+import com.cognifide.gradle.aem.tooling.ToolingPlugin
 import com.cognifide.gradle.aem.tooling.vlt.VltException
-import com.cognifide.gradle.aem.tooling.vlt.VltFilter
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.runBlocking
+import java.time.ZoneId
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.tasks.Input
@@ -35,6 +34,18 @@ open class AemExtension(@Internal val project: Project) {
     val props = PropertyParser(this)
 
     /**
+     * Project under which common configuration files are stored.
+     * Usually it is also a project which is building full assembly CRX package.
+     *
+     * Convention assumes in case of:
+     * - multi-project build - subproject with path ':aem'
+     * - single-project build - root project
+     */
+    @get:Internal
+    @get:JsonIgnore
+    val projectMain: Project = project.findProject(props.string("aem.projectMainPath") ?: ":aem") ?: project.rootProject
+
+    /**
      * Project name convention prefixes used to determine default:
      *
      * - bundle install subdirectory
@@ -45,7 +56,7 @@ open class AemExtension(@Internal val project: Project) {
      */
     @get:Internal
     @get:JsonIgnore
-    val projectPrefixes: List<String> = listOf("aem.", "aem-", "aem_")
+    val projectPrefixes: List<String> = props.list("aem.projectPrefixes") ?: listOf("aem.", "aem-", "aem_")
 
     /**
      * Project name with skipped convention prefixes.
@@ -77,16 +88,40 @@ open class AemExtension(@Internal val project: Project) {
     val environment: String = props.string("aem.env") ?: run { System.getenv("AEM_ENV") ?: "local" }
 
     /**
-     * Toggles parallel CRX package deployments and instance synchronization.
+     * Timezone ID (default for defined instances)
      */
     @Internal
-    val parallel = props.boolean("aem.parallel") ?: true
+    @JsonIgnore
+    var zoneId: ZoneId = props.string("aem.zoneId")?.let { ZoneId.of(it) } ?: ZoneId.systemDefault()
+
+    /**
+     * Performs parallel CRX package deployments and instance synchronization.
+     */
+    @Internal
+    val parallel = ParallelExecutor(this)
 
     /**
      * Collection of common AEM configuration properties like instance definitions. Contains default values for tasks.
      */
     @Nested
     val config = Config(this)
+
+    /**
+     * Directory for storing project specific files used by plugin e.g:
+     * - Groovy Scripts to be launched by instance sync in tasks defined in project
+     */
+    @get:Internal
+    val configDir: File
+        get() = project.file(props.string("aem.configDir") ?: "gradle")
+
+    /**
+     * Directory for storing common files used by plugin e.g:
+     * - CRX package thumbnail
+     * - tail incident filter
+     */
+    @get:Internal
+    val configCommonDir: File
+        get() = projectMain.file(props.string("aem.configDir") ?: "gradle")
 
     /**
      * Provides API for displaying interactive notification during running build tasks.
@@ -119,9 +154,9 @@ open class AemExtension(@Internal val project: Project) {
     val instances: List<Instance>
         get() = filterInstances()
 
-    fun instances(consumer: (Instance) -> Unit) = parallelWith(instances, consumer)
+    fun instances(consumer: (Instance) -> Unit) = parallel.with(instances, consumer)
 
-    fun instances(filter: String, consumer: (Instance) -> Unit) = parallelWith(filterInstances(filter), consumer)
+    fun instances(filter: String, consumer: (Instance) -> Unit) = parallel.with(filterInstances(filter), consumer)
 
     fun instance(urlOrName: String): Instance = config.parseInstance(urlOrName)
 
@@ -176,34 +211,34 @@ open class AemExtension(@Internal val project: Project) {
     val authorInstances: List<Instance>
         get() = filterInstances().filter { it.type == InstanceType.AUTHOR }
 
-    fun authorInstances(consumer: (Instance) -> Unit) = parallelWith(authorInstances, consumer)
+    fun authorInstances(consumer: (Instance) -> Unit) = parallel.with(authorInstances, consumer)
 
     @get:Internal
     val publishInstances: List<Instance>
         get() = filterInstances().filter { it.type == InstanceType.PUBLISH }
 
-    fun publishInstances(consumer: Instance.() -> Unit) = parallelWith(publishInstances, consumer)
+    fun publishInstances(consumer: Instance.() -> Unit) = parallel.with(publishInstances, consumer)
 
     @get:Internal
     val localInstances: List<LocalInstance>
         get() = instances.filterIsInstance(LocalInstance::class.java)
 
-    fun localInstances(consumer: LocalInstance.() -> Unit) = parallelWith(localInstances, consumer)
+    fun localInstances(consumer: LocalInstance.() -> Unit) = parallel.with(localInstances, consumer)
 
     @get:Internal
     val remoteInstances: List<RemoteInstance>
         get() = instances.filterIsInstance(RemoteInstance::class.java)
 
-    fun remoteInstances(consumer: RemoteInstance.() -> Unit) = parallelWith(remoteInstances, consumer)
+    fun remoteInstances(consumer: RemoteInstance.() -> Unit) = parallel.with(remoteInstances, consumer)
 
-    fun packages(consumer: (File) -> Unit) = parallelWith(packages, consumer)
+    fun packages(consumer: (File) -> Unit) = parallel.with(packages, consumer)
 
     @get:Internal
     val packages: List<File>
         get() = project.tasks.withType(Compose::class.java)
                 .map { it.archivePath }
 
-    fun packagesDependent(task: Task): List<File> {
+    fun dependentPackages(task: Task): List<File> {
         return task.taskDependencies.getDependencies(task)
                 .filterIsInstance(Compose::class.java)
                 .map { it.archivePath }
@@ -211,8 +246,10 @@ open class AemExtension(@Internal val project: Project) {
 
     fun sync(synchronizer: InstanceSync.() -> Unit) = sync(instances, synchronizer)
 
+    fun <T> sync(instance: Instance, synchronizer: InstanceSync.() -> T) = instance.sync(synchronizer)
+
     fun sync(instances: Collection<Instance>, synchronizer: InstanceSync.() -> Unit) {
-        parallelWith(instances) { this.sync.apply(synchronizer) }
+        parallel.with(instances) { this.sync.apply(synchronizer) }
     }
 
     fun syncPackages(synchronizer: InstanceSync.(File) -> Unit) = syncPackages(instances, packages, synchronizer)
@@ -223,13 +260,17 @@ open class AemExtension(@Internal val project: Project) {
         synchronizer: InstanceSync.(File) -> Unit
     ) {
         packages.forEach { pkg -> // single AEM instance dislikes parallel package installation
-            parallelWith(instances) { // but same package could be in parallel deployed on different AEM instances
+            parallel.with(instances) { // but same package could be in parallel deployed on different AEM instances
                 sync.apply { synchronizer(pkg) }
             }
         }
     }
 
-    fun <T> http(consumer: HttpClient.() -> T) = HttpClient(project).run(consumer)
+    fun composePackage(definition: PackageDefinition.() -> Unit): File {
+        return PackageDefinition(this).compose(definition)
+    }
+
+    fun <T> http(consumer: HttpClient.() -> T) = HttpClient(this).run(consumer)
 
     fun config(configurer: Config.() -> Unit) {
         config.apply(configurer)
@@ -247,7 +288,7 @@ open class AemExtension(@Internal val project: Project) {
         return retry().apply(configurer)
     }
 
-    fun retry(): Retry = Retry.none()
+    fun retry(): Retry = Retry.none(this)
 
     /**
      * Show asynchronous progress indicator with percentage while performing some action.
@@ -312,37 +353,21 @@ open class AemExtension(@Internal val project: Project) {
 
     fun filter(path: String) = filter(project.file(path))
 
-    fun <A, B : Any> parallelMap(iterable: Iterable<A>, mapper: (A) -> B): Collection<B> {
-        return parallelMap(iterable, { true }, mapper)
-    }
-
-    fun <A, B : Any> parallelMap(iterable: Iterable<A>, filter: (A) -> Boolean, mapper: (A) -> B): List<B> {
-        if (!parallel) {
-            return iterable.filter(filter).map(mapper)
-        }
-
-        return runBlocking(Dispatchers.Default) {
-            iterable.map { value -> async { value.takeIf(filter)?.let(mapper) } }.mapNotNull { it.await() }
-        }
-    }
-
-    fun <A> parallelWith(iterable: Iterable<A>, callback: A.() -> Unit) {
-        if (!parallel) {
-            return iterable.forEach { it.apply(callback) }
-        }
-
-        return runBlocking(Dispatchers.Default) {
-            iterable.map { value -> async { value.apply(callback) } }.forEach { it.await() }
-        }
-    }
-
     fun temporaryDir(task: Task) = temporaryDir(task.name)
 
     fun temporaryDir(name: String) = AemTask.temporaryDir(project, name)
 
+    fun temporaryFile(name: String) = AemTask.temporaryFile(project, TEMPORARY_DIR, name)
+
+    @get:Internal
+    val temporaryDir: File
+        get() = temporaryDir(TEMPORARY_DIR)
+
     companion object {
 
         const val NAME = "aem"
+
+        const val TEMPORARY_DIR = "tmp"
 
         private val PLUGIN_IDS = listOf(
                 PackagePlugin.ID,

@@ -1,13 +1,14 @@
 package com.cognifide.gradle.aem.pkg.tasks
 
 import com.cognifide.gradle.aem.common.fileNames
+import com.cognifide.gradle.aem.common.tasks.PackageTask
 import com.cognifide.gradle.aem.instance.InstanceException
 import com.cognifide.gradle.aem.instance.InstanceSync
 import com.cognifide.gradle.aem.instance.names
 import org.gradle.api.execution.TaskExecutionGraph
 import org.gradle.api.tasks.TaskAction
 
-open class Purge : Sync() {
+open class Purge : PackageTask() {
 
     init {
         description = "Uninstalls and then deletes CRX package on AEM instance(s)."
@@ -22,13 +23,13 @@ open class Purge : Sync() {
     @TaskAction
     fun purge() {
         aem.progress(instances.size * packages.size) {
-            aem.syncPackages(instances, packages) { pkg ->
-                increment("${pkg.name} -> ${instance.name}") {
+            aem.syncPackages(instances, packages) { file ->
+                increment("${file.name} -> ${instance.name}") {
                     try {
-                        val packagePath = determineRemotePackagePath(pkg)
+                        val pkg = getPackage(file)
 
-                        uninstall(this, packagePath)
-                        delete(this, packagePath)
+                        uninstall(this, pkg.path)
+                        delete(this, pkg.path)
                     } catch (e: InstanceException) {
                         aem.logger.info(e.message)
                         aem.logger.debug("Nothing to purge.", e)

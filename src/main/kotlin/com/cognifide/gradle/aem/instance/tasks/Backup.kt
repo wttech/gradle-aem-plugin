@@ -1,16 +1,16 @@
 package com.cognifide.gradle.aem.instance.tasks
 
-import com.cognifide.gradle.aem.common.AemTask
 import com.cognifide.gradle.aem.common.Formats
-import com.cognifide.gradle.aem.common.tasks.Zip
+import com.cognifide.gradle.aem.common.tasks.ZipTask
 import com.cognifide.gradle.aem.instance.InstanceException
 import com.cognifide.gradle.aem.instance.names
 import java.io.File
 import org.gradle.api.execution.TaskExecutionGraph
 import org.gradle.api.file.DuplicatesStrategy
+import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.bundling.ZipEntryCompression
 
-open class Backup : Zip(), AemTask {
+open class Backup : ZipTask() {
 
     init {
         description = "Turns off local instance(s), archives to ZIP file, then turns on again."
@@ -20,6 +20,7 @@ open class Backup : Zip(), AemTask {
         entryCompression = ZipEntryCompression.STORED
     }
 
+    @get:Internal
     val available: List<File>
         get() {
             return (destinationDir.listFiles { _, name -> name.endsWith("-$classifier.$extension") } ?: arrayOf())
