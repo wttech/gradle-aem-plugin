@@ -235,7 +235,7 @@ class TaskFacade(private val aem: AemExtension) {
 
             project.tasks.withType(Jar::class.java).forEach { jar ->
                 dependsOn(jar)
-                classpath += project.files(jar.archivePath)
+                classpath += project.files(jar.archiveFile.get().asFile)
             }
         }
     }

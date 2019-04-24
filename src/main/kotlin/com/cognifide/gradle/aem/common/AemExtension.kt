@@ -236,12 +236,12 @@ open class AemExtension(@Internal val project: Project) {
     @get:Internal
     val packages: List<File>
         get() = project.tasks.withType(Compose::class.java)
-                .map { it.archivePath }
+                .map { it.archiveFile.get().asFile }
 
     fun dependentPackages(task: Task): List<File> {
         return task.taskDependencies.getDependencies(task)
                 .filterIsInstance(Compose::class.java)
-                .map { it.archivePath }
+                .map { it.archiveFile.get().asFile }
     }
 
     fun sync(synchronizer: InstanceSync.() -> Unit) = sync(instances, synchronizer)

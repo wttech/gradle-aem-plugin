@@ -15,7 +15,9 @@ open class ZipTask : Base(), AemTask {
     final override val aem = AemExtension.of(project)
 
     @Internal
-    var copyProgress: ProgressIndicator.() -> Unit = { update("Creating ZIP file: $archiveName, current size: ${Formats.size(archivePath)}") }
+    var copyProgress: ProgressIndicator.() -> Unit = {
+        update("Creating ZIP file: $archiveFileName, current size: ${Formats.size(archiveFile.get().asFile)}")
+    }
 
     init {
         group = AemTask.GROUP
@@ -27,7 +29,7 @@ open class ZipTask : Base(), AemTask {
         aem.progressIndicator {
             updater = copyProgress
             super.copy()
-            logger.info("ZIP file created: $archivePath")
+            logger.info("ZIP file created: ${archiveFile.get().asFile}")
         }
     }
 }
