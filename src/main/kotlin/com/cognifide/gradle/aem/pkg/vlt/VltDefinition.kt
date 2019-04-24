@@ -53,8 +53,13 @@ open class VltDefinition(private val aem: AemExtension) {
 
     fun filters(roots: Iterable<String>) = roots.forEach { filter(it) }
 
-    fun filter(root: String, mode: String? = null) {
-        filterElements.add(VltFilter.createElement(root, mode))
+    fun filter(
+        root: String,
+        mode: String? = null,
+        excludes: Iterable<String> = listOf(),
+        includes: Iterable<String> = listOf()
+    ) {
+        filterElements.add(VltFilter.createElement(root, mode, excludes, includes))
     }
 
     @Internal

@@ -20,6 +20,7 @@ import org.gradle.api.file.CopySpec
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.tasks.*
 import org.gradle.api.tasks.bundling.Jar
+import org.jsoup.nodes.Element
 
 open class Compose : ZipTask() {
 
@@ -119,7 +120,7 @@ open class Compose : ZipTask() {
         get() = mapOf("definition" to vaultDefinition)
 
     @Internal
-    var vaultFilterDefault = { other: Compose -> "<filter root=\"${other.bundlePath}\"/>" }
+    var vaultFilterDefault: (Compose) -> Element = { VltFilter.createElement(it.bundlePath) }
 
     @Internal
     var fromConvention = true
@@ -305,7 +306,7 @@ open class Compose : ZipTask() {
     fun fromJar(bundle: Jar, bundlePath: String? = null) {
         fromTasks.add {
             dependsOn(bundle)
-            fromJarsInternal(listOf(bundle.archivePath), bundlePath)
+            fromJarsInternal(listOf(bundle.archiveFile.get().asFile), bundlePath)
         }
     }
 
@@ -328,7 +329,7 @@ open class Compose : ZipTask() {
         if (!other.vaultFilterPath.isBlank() && File(other.vaultFilterPath).exists()) {
             vaultDefinition.filterElements.addAll(VltFilter(File(other.vaultFilterPath)).rootElements)
         } else if (project.plugins.hasPlugin(BundlePlugin.ID)) {
-            vaultDefinition.filterElements.add(VltFilter.parseElement(vaultFilterDefault(other)))
+            vaultDefinition.filterElements.add(vaultFilterDefault(other))
         }
     }
 

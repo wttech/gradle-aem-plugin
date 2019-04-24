@@ -65,7 +65,7 @@ val jar: Jar
      *
      * - generated OSGi specific manifest instructions like 'Bundle-SymbolicName', 'Export-Package'.
      * - generated AEM specific manifest instructions like 'Sling-Model-Packages'.
-     * - performed additional component stability checks during within 'aemDeploy' or separately using 'aemAwait'.
+     * - performed additional component stability checks within 'aemDeploy' or separately using 'aemAwait'.
      *
      * Default convention: '${project.group}.${project.name}'.
      *
@@ -125,6 +125,9 @@ val jar: Jar
     @JsonIgnore
     var privatePackages: List<String> = listOf()
 
+    /**
+     * Configure jar task before evaluating build script.
+     */
     internal fun initialize() {
         proposeBaseName()
     }
@@ -133,6 +136,9 @@ val jar: Jar
         jar.archiveBaseName.convention(aem.baseName)
     }
 
+    /**
+     * Configure jar task after evaluating build script.
+     */
     internal fun finalize() {
         ensureJavaPackage()
         applyAttributesConvention()
@@ -422,6 +428,7 @@ val jar: Jar
 
     companion object {
         val ACTIVATOR_CLASSES = listOf("Activator", "BundleActivator")
+
         val SOURCE_SETS = mapOf(
                 "java" to "java",
                 "kotlin" to "kt",
