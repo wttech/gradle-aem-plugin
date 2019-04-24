@@ -94,7 +94,7 @@ class PackageDefinition(private val aem: AemExtension) : VltDefinition(aem) {
     }
 
     fun copyMetaFiles(skipExisting: Boolean = true) {
-        FileOperations.copyResources(Package.META_PATH, metaDir, skipExisting)
+        FileOperations.copyResources(Package.META_RESOURCES_PATH, metaDir, skipExisting)
     }
 
     fun expandMetaFiles(filePatterns: List<String> = PackageFileFilter.EXPAND_FILES_DEFAULT) {

@@ -638,7 +638,7 @@ Then file at path *build/aem/aemDebug/debug.json* with content below is being ge
     },
     "packageSnapshots" : [ ],
     "packageRoot" : ".../gradle-aem-multi/aem/sites/src/main/content",
-    "packageMetaCommonRoot" : ".../gradle-aem-multi/aem/gradle/pkg/META-INF",
+    "packageMetaCommonRoot" : ".../gradle-aem-multi/aem/gradle/package/META-INF",
     "packageInstallPath" : "/apps/example/app.core/install",
     "packageInstallRepository" : true,
     "packageErrors" : [
