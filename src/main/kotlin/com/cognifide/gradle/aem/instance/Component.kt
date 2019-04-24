@@ -6,9 +6,8 @@ import org.apache.commons.lang3.builder.HashCodeBuilder
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 class Component {
-    lateinit var id: String
 
-    var bundleId: Int = -1
+    lateinit var id: String
 
     lateinit var name: String
 
@@ -16,7 +15,12 @@ class Component {
 
     var stateRaw: Int = 0
 
-    lateinit var pid: String
+    var bundleId: Int? = -1
+
+    var pid: String? = null
+
+    val uid: String
+        get() = pid ?: name
 
     val active: Boolean
         get() = stateRaw == STATE_RAW_ACTIVE
@@ -47,11 +51,11 @@ class Component {
 
         return EqualsBuilder()
                 .append(id, other.id)
-                .append(bundleId, other.bundleId)
                 .append(name, other.name)
                 .append(state, other.state)
                 .append(stateRaw, other.stateRaw)
                 .append(pid, other.pid)
+                .append(bundleId, other.bundleId)
                 .isEquals
     }
 
@@ -66,7 +70,7 @@ class Component {
     }
 
     override fun toString(): String {
-        return "Component(pid='$pid', state='$state', id='$id', bundleId='$bundleId')"
+        return "Component(uid='$uid', state='$state', id='$id', bundleId='$bundleId')"
     }
 
     companion object {
