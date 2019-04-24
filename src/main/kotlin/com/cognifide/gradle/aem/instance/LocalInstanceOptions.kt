@@ -148,6 +148,6 @@ class LocalInstanceOptions(aem: AemExtension) : Serializable {
 
         const val GROUP_EXTRA = "extra"
 
-        const val TEMPORARY_DIR = "localInstance"
+        const val TEMPORARY_DIR = "instance"
     }
 }

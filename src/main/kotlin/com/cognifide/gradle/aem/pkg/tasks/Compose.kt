@@ -186,7 +186,7 @@ open class Compose : ZipTask() {
         }
 
         if (metaDefaults) {
-            FileOperations.copyResources(Package.META_PATH, metaDir, true)
+            FileOperations.copyResources(Package.META_RESOURCES_PATH, metaDir, true)
         }
     }
 

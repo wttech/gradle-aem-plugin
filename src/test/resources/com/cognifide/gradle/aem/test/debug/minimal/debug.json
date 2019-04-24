@@ -77,7 +77,7 @@
       "mandatoryFiles" : [ ]
     },
     "packageRoot": "*/src/main/content",
-    "packageMetaCommonRoot": "*/gradle/META-INF",
+    "packageMetaCommonRoot": "*/gradle/package/META-INF",
     "packageInstallPath" : "/apps/minimal/install",
     "packageInstallRepository": true,
     "packageErrors" : [

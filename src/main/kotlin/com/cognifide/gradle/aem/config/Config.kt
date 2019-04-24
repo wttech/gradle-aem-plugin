@@ -76,7 +76,7 @@ class Config(
      * Useful to share same files for all packages, like package thumbnail.
      */
     @Input
-    var packageMetaCommonRoot: String = "${aem.configCommonDir}/${Package.META_PATH}" // TODO '/compose/'
+    var packageMetaCommonRoot: String = "${aem.configCommonDir}/${Package.META_RESOURCES_PATH}"
 
     /**
      * Content path for OSGi bundle jars being placed in CRX package.

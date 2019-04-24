@@ -57,6 +57,8 @@ class Package private constructor() {
 
         const val META_PATH = "META-INF"
 
+        const val META_RESOURCES_PATH = "package/$META_PATH"
+
         const val VLT_DIR = "vault"
 
         const val VLT_PATH = "$META_PATH/$VLT_DIR"
