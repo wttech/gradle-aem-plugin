@@ -18,6 +18,8 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
 
 Looking for dedicated version of plugin for [**Apache Sling**](https://sling.apache.org)? Check out [Gradle Sling Plugin](https://github.com/Cognifide/gradle-sling-plugin)!
 
+Be inspired by watching [live demo](https://adapt.to/2018/en/schedule/a-better-developer-experience-for-sling-based-applications.html) presented on official **Sling adaptTo() 2018** conference.
+
 ### Screenshot
 
 <p align="center">
@@ -43,8 +45,6 @@ Looking for dedicated version of plugin for [**Apache Sling**](https://sling.apa
 Gradle AEM Plugin 6.x serie and upper will **no longer support Groovy DSL** and **stands on Kotlin DSL** coming with Gradle 5.0.
 
 To see documentation for previous 5.x serie, please [click here](https://github.com/Cognifide/gradle-aem-plugin/tree/groovy) (navigate to branch `groovy`).
-
-Also keep in mind, that GAP 6.x is **temporarily supporting only Gradle 5.x** (is not supporting 5.1 or higher) due to API changes related with [lazy configuration](https://docs.gradle.org/5.1.1/userguide/userguide.html).
 
 ## Table of contents
 
@@ -126,6 +126,7 @@ Also keep in mind, that GAP 6.x is **temporarily supporting only Gradle 5.x** (i
      * [Caching task aemCompose](#caching-task-aemcompose)
      * [Vault tasks parallelism](#vault-tasks-parallelism)
      * [Files from SSH for aemCreate and <code>aemSatisfy</code>](#files-from-ssh-for-aemcreate-and-aemsatisfy)
+  * [Compatibility](#compatibility)
   * [Building](#building)
   * [Contributing](#contributing)
   * [License](#license)
@@ -184,7 +185,7 @@ plugins {
 
 group = "com.company.aem"
 version = "1.0.0"
-defaultTasks = listOf(":aemSatisfy", ":aemDeploy")
+defaultTasks(":aemSatisfy", ":aemDeploy")
 
 aem {
     config {
@@ -620,7 +621,7 @@ Then file at path *build/aem/aemDebug/debug.json* with content below is being ge
       "zipUrl" : null,
       "jarUrl" : null,
       "licenseUrl" : null,
-      "overridesPath" : "*/src/main/resources/local-instance",
+      "overridesPath" : "*/gradle/instance",
       "expandFiles" : [
         "**/start.bat",
         "**/stop.bat",
@@ -637,7 +638,7 @@ Then file at path *build/aem/aemDebug/debug.json* with content below is being ge
     },
     "packageSnapshots" : [ ],
     "packageRoot" : ".../gradle-aem-multi/aem/sites/src/main/content",
-    "packageMetaCommonRoot" : ".../gradle-aem-multi/aem/gradle/META-INF",
+    "packageMetaCommonRoot" : ".../gradle-aem-multi/aem/gradle/package/META-INF",
     "packageInstallPath" : "/apps/example/app.core/install",
     "packageInstallRepository" : true,
     "packageErrors" : [
@@ -1077,8 +1078,8 @@ This behavior is controlled by:
 aem {
     config {
         localInstance {
-            root = aem.props.string("aem.localInstance.root") ?: "${aem.project.rootProject.file(".aem")}"
-            overridesPath = "${project.rootProject.file("src/main/resources/local-instance")}"
+            root = aem.props.string("aem.localInstance.root") ?: "${aem.projectMain.file(".aem")}"
+            overridesPath = "${aem.projectMain.file("gradle/instance")}"
             expandProperties = mapOf()
             expandFiles = listOf(
                 "**/*.properties", 
@@ -1669,6 +1670,15 @@ In case of that workaround, Vault tasks should not be run in parallel (by separa
 
 Local instance JAR file can be provided using SSH, but SSHJ client used in implementation has an [integration issue](https://github.com/hierynomus/sshj/issues/347) related with JDK and Crypto Policy.
 As a workaround, just run build without daemon (`--no-daemon`).
+
+## Compatibility
+
+| Gradle AEM Plugin | Gradle Build Tool |
+|:-----------------:|:-----------------:|
+|   4.x.x -> 5.x.x  |     4.x -> 4.8    |
+|   6.0.0 -> 6.2.1  |     4.9 -> 5.0    |
+|         -         |     5.1 -> 5.3    |
+|    6.3.0 and up   |     5.4 and up    |
 
 ## Building
 

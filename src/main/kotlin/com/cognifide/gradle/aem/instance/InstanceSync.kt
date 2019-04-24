@@ -362,7 +362,7 @@ class InstanceSync(aem: AemExtension, instance: Instance) : InstanceHttpClient(a
 
     fun findComponent(pid: String): Component? {
         return determineComponentState().components.find {
-            pid.equals(it.pid, ignoreCase = true)
+            pid.equals(it.uid, ignoreCase = true)
         }
     }
 
@@ -378,7 +378,7 @@ class InstanceSync(aem: AemExtension, instance: Instance) : InstanceHttpClient(a
         }
 
         aem.logger.info("Enabling OSGi $component on $instance.")
-        post("$OSGI_COMPONENTS_PATH/${component.pid}", mapOf("action" to "enable"))
+        post("$OSGI_COMPONENTS_PATH/${component.uid}", mapOf("action" to "enable"))
     }
 
     fun disableComponent(pid: String) {

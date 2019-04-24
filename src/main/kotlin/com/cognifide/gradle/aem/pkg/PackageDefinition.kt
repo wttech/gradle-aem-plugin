@@ -64,48 +64,25 @@ class PackageDefinition(private val aem: AemExtension) : VltDefinition(aem) {
     val jcrDir: File
         get() = File(pkgDir, Package.JCR_ROOT)
 
-    /**
-     * Hook for customizing how package will be processed before zipping.
-     */
     private var process: PackageDefinition.() -> Unit = {
         copyMetaFiles()
         expandMetaFiles()
     }
 
+    /**
+     * Hook for customizing how package will be processed before zipping.
+     */
     fun process(options: PackageDefinition.() -> Unit) {
         this.process = options
     }
 
+    private var content: PackageDefinition.() -> Unit = {}
+
     /**
      * Hook for adding files to package being composed.
      */
-    private var content: PackageDefinition.() -> Unit = {}
-
     fun content(options: PackageDefinition.() -> Unit) {
         this.content = options
-    }
-
-    /**
-     * Compose a CRX package basing on configured definition.
-     */
-    fun compose(definition: PackageDefinition.() -> Unit): File {
-        PackageDefinition(aem).apply {
-            definition()
-            ensureDefaults()
-
-            archivePath.delete()
-            pkgDir.deleteRecursively()
-            metaDir.mkdirs()
-            jcrDir.mkdirs()
-
-            content()
-            process()
-
-            ZipUtil.pack(pkgDir, archivePath)
-            pkgDir.deleteRecursively()
-
-            return archivePath
-        }
     }
 
     // 'content' & 'process' methods DSL
@@ -117,7 +94,7 @@ class PackageDefinition(private val aem: AemExtension) : VltDefinition(aem) {
     }
 
     fun copyMetaFiles(skipExisting: Boolean = true) {
-        FileOperations.copyResources(Package.META_PATH, metaDir, skipExisting)
+        FileOperations.copyResources(Package.META_RESOURCES_PATH, metaDir, skipExisting)
     }
 
     fun expandMetaFiles(filePatterns: List<String> = PackageFileFilter.EXPAND_FILES_DEFAULT) {
@@ -128,5 +105,26 @@ class PackageDefinition(private val aem: AemExtension) : VltDefinition(aem) {
         FileOperations.amendFiles(dir, filePatterns) { source, content ->
             aem.props.expandPackage(content, mapOf("definition" to this), source.absolutePath)
         }
+    }
+
+    /**
+     * Compose a CRX package basing on configured definition.
+     */
+    fun compose(definition: PackageDefinition.() -> Unit): File {
+        definition()
+        ensureDefaults()
+
+        archivePath.delete()
+        pkgDir.deleteRecursively()
+        metaDir.mkdirs()
+        jcrDir.mkdirs()
+
+        content()
+        process()
+
+        ZipUtil.pack(pkgDir, archivePath)
+        pkgDir.deleteRecursively()
+
+        return archivePath
     }
 }

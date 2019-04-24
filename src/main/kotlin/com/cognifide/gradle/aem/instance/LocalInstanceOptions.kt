@@ -22,7 +22,7 @@ class LocalInstanceOptions(aem: AemExtension) : Serializable {
      *
      * Default path is a subfolder named '.aem' under root project directory.
      */
-    var root: String = aem.props.string("aem.localInstance.root") ?: "${aem.project.rootProject.file(".aem")}"
+    var root: String = aem.props.string("aem.localInstance.root") ?: "${aem.projectMain.file(".aem")}"
 
     /**
      * Determines how instances will be created (from backup or from the scratch).
@@ -63,7 +63,7 @@ class LocalInstanceOptions(aem: AemExtension) : Serializable {
      * Path from which extra files for local AEM instances will be copied.
      * Useful for overriding default startup scripts ('start.bat' or 'start.sh') or providing some files inside 'crx-quickstart'.
      */
-    var overridesPath: String = "${aem.project.rootProject.file("src/main/resources/${InstancePlugin.FILES_PATH}")}"
+    var overridesPath: String = "${aem.configCommonDir}/${InstancePlugin.FILES_PATH}"
 
     /**
      * Wildcard file name filter expression that is used to filter in which instance files properties can be injected.
@@ -148,6 +148,6 @@ class LocalInstanceOptions(aem: AemExtension) : Serializable {
 
         const val GROUP_EXTRA = "extra"
 
-        const val TEMPORARY_DIR = "localInstance"
+        const val TEMPORARY_DIR = "instance"
     }
 }
