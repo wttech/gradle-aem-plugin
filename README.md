@@ -18,6 +18,8 @@ AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget
 
 Looking for dedicated version of plugin for [**Apache Sling**](https://sling.apache.org)? Check out [Gradle Sling Plugin](https://github.com/Cognifide/gradle-sling-plugin)!
 
+Be inspired by watching [live demo](https://adapt.to/2018/en/schedule/a-better-developer-experience-for-sling-based-applications.html) presented on official **Sling adaptTo() 2018** conference.
+
 ### Screenshot
 
 <p align="center">
@@ -43,15 +45,6 @@ Looking for dedicated version of plugin for [**Apache Sling**](https://sling.apa
 Gradle AEM Plugin 6.x serie and upper will **no longer support Groovy DSL** and **stands on Kotlin DSL** coming with Gradle 5.0.
 
 To see documentation for previous 5.x serie, please [click here](https://github.com/Cognifide/gradle-aem-plugin/tree/groovy) (navigate to branch `groovy`).
-
-## Compatibility
-
-| Gradle AEM Plugin | Gradle Build Tool |
-|:-----------------:|:-----------------:|
-|   4.x.x -> 5.x.x  |     4.x -> 4.8    |
-|   6.0.0 -> 6.2.1  |     4.9 -> 5.0    |
-|         -         |     5.1 -> 5.3    |
-|    6.3.0 and up   |     5.4 and up    |
 
 ## Table of contents
 
@@ -133,6 +126,7 @@ To see documentation for previous 5.x serie, please [click here](https://github.
      * [Caching task aemCompose](#caching-task-aemcompose)
      * [Vault tasks parallelism](#vault-tasks-parallelism)
      * [Files from SSH for aemCreate and <code>aemSatisfy</code>](#files-from-ssh-for-aemcreate-and-aemsatisfy)
+  * [Compatibility](#compatibility)
   * [Building](#building)
   * [Contributing](#contributing)
   * [License](#license)
@@ -1676,6 +1670,15 @@ In case of that workaround, Vault tasks should not be run in parallel (by separa
 
 Local instance JAR file can be provided using SSH, but SSHJ client used in implementation has an [integration issue](https://github.com/hierynomus/sshj/issues/347) related with JDK and Crypto Policy.
 As a workaround, just run build without daemon (`--no-daemon`).
+
+## Compatibility
+
+| Gradle AEM Plugin | Gradle Build Tool |
+|:-----------------:|:-----------------:|
+|   4.x.x -> 5.x.x  |     4.x -> 4.8    |
+|   6.0.0 -> 6.2.1  |     4.9 -> 5.0    |
+|         -         |     5.1 -> 5.3    |
+|    6.3.0 and up   |     5.4 and up    |
 
 ## Building
 
