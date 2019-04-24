@@ -132,7 +132,7 @@ open class Compose : ZipTask() {
     init {
         description = "Composes CRX package from JCR content and built OSGi bundles"
 
-        archiveBaseName.convention(aem.baseName)
+        archiveBaseName.set(aem.baseName)
         duplicatesStrategy = DuplicatesStrategy.WARN
 
         doLast { aem.notifier.notify("Package composed", archiveFileName.get()) }

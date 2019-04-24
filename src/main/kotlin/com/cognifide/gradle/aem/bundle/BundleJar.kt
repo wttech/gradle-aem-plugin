@@ -133,7 +133,7 @@ val jar: Jar
     }
 
     private fun proposeBaseName() {
-        jar.archiveBaseName.convention(aem.baseName)
+        jar.archiveBaseName.set(aem.baseName)
     }
 
     /**

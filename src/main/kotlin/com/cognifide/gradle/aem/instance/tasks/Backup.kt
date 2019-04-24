@@ -15,8 +15,8 @@ open class Backup : ZipTask() {
     init {
         description = "Turns off local instance(s), archives to ZIP file, then turns on again."
 
-        archiveBaseName.convention(project.provider { "${project.rootProject.name}-${Formats.dateFileName()}" })
-        archiveClassifier.convention("backup")
+        archiveBaseName.set(project.provider { "${project.rootProject.name}-${Formats.dateFileName()}" })
+        archiveClassifier.set("backup")
 
         duplicatesStrategy = DuplicatesStrategy.FAIL
         entryCompression = ZipEntryCompression.STORED
