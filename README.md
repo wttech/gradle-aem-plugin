@@ -44,10 +44,6 @@ Gradle AEM Plugin 6.x serie and upper will **no longer support Groovy DSL** and 
 
 To see documentation for previous 5.x serie, please [click here](https://github.com/Cognifide/gradle-aem-plugin/tree/groovy) (navigate to branch `groovy`).
 
-Also keep in mind, because Gradle changes related with [lazy configuration](https://docs.gradle.org/5.1.1/userguide/userguide.html) plugin has following version constrains on Gradle:
-
-* Gradle AEM Plugin 6.0.0 .. 6.2.1 is compatible with Gradle 4.9.0 .. 5.0.1
-
 ## Compatibility
 
 | Gradle AEM Plugin | Gradle Build Tool |
