@@ -34,8 +34,10 @@ open class Collect : ZipTask() {
 
     init {
         description = "Composes CRX package from all CRX packages being satisfied and built."
-        baseName = aem.baseName
-        classifier = "collection"
+
+        archiveBaseName.set(aem.baseName)
+        archiveClassifier.set("collection")
+
         duplicatesStrategy = DuplicatesStrategy.FAIL
         entryCompression = ZipEntryCompression.STORED
 

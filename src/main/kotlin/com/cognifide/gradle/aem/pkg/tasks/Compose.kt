@@ -20,6 +20,7 @@ import org.gradle.api.file.CopySpec
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.tasks.*
 import org.gradle.api.tasks.bundling.Jar
+import org.jsoup.nodes.Element
 
 open class Compose : ZipTask() {
 
@@ -119,7 +120,7 @@ open class Compose : ZipTask() {
         get() = mapOf("definition" to vaultDefinition)
 
     @Internal
-    var vaultFilterDefault = { other: Compose -> "<filter root=\"${other.bundlePath}\"/>" }
+    var vaultFilterDefault: (Compose) -> Element = { VltFilter.createElement(it.bundlePath) }
 
     @Internal
     var fromConvention = true
@@ -130,10 +131,11 @@ open class Compose : ZipTask() {
 
     init {
         description = "Composes CRX package from JCR content and built OSGi bundles"
-        baseName = aem.baseName
+
+        archiveBaseName.set(aem.baseName)
         duplicatesStrategy = DuplicatesStrategy.WARN
 
-        doLast { aem.notifier.notify("Package composed", archiveName) }
+        doLast { aem.notifier.notify("Package composed", archiveFileName.get()) }
     }
 
     @Suppress("ComplexMethod")
@@ -184,7 +186,7 @@ open class Compose : ZipTask() {
         }
 
         if (metaDefaults) {
-            FileOperations.copyResources(Package.META_PATH, metaDir, true)
+            FileOperations.copyResources(Package.META_RESOURCES_PATH, metaDir, true)
         }
     }
 
@@ -304,7 +306,7 @@ open class Compose : ZipTask() {
     fun fromJar(bundle: Jar, bundlePath: String? = null) {
         fromTasks.add {
             dependsOn(bundle)
-            fromJarsInternal(listOf(bundle.archivePath), bundlePath)
+            fromJarsInternal(listOf(bundle.archiveFile.get().asFile), bundlePath)
         }
     }
 
@@ -327,7 +329,7 @@ open class Compose : ZipTask() {
         if (!other.vaultFilterPath.isBlank() && File(other.vaultFilterPath).exists()) {
             vaultDefinition.filterElements.addAll(VltFilter(File(other.vaultFilterPath)).rootElements)
         } else if (project.plugins.hasPlugin(BundlePlugin.ID)) {
-            vaultDefinition.filterElements.add(VltFilter.parseElement(vaultFilterDefault(other)))
+            vaultDefinition.filterElements.add(vaultFilterDefault(other))
         }
     }
 

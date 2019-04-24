@@ -14,6 +14,7 @@ import org.gradle.api.tasks.Internal
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import org.jsoup.parser.Parser
+import org.jsoup.select.Elements
 
 class VltFilter(
     @InputFile
@@ -24,18 +25,11 @@ class VltFilter(
 
     @get:Internal
     val rootElements: Set<Element>
-        get() {
-            val xml = file.bufferedReader().use { it.readText() }
-            val doc = Jsoup.parse(xml, "", Parser.xmlParser())
-
-            return doc.select("filter[root]").toSet()
-        }
+        get() = parseElements(file.bufferedReader().use { it.readText() }).toSet()
 
     @get:Internal
     val rootPaths: Set<String>
-        get() {
-            return rootElements.map { it.attr("root") }.toSet()
-        }
+        get() = rootElements.map { it.attr("root") }.toSet()
 
     fun rootDirs(contentDir: File): List<File> {
         return rootPaths.map { File(contentDir, "${Package.JCR_ROOT}/${it.removeSurrounding("/")}") }
@@ -71,16 +65,34 @@ class VltFilter(
             return VltFilter(file, true)
         }
 
-        fun parseElement(xml: String): Element {
-            return Jsoup.parse(xml, "", Parser.xmlParser()).select("filter").first()
+        fun parseElement(xml: String) = parseElements(xml).first()
+
+        fun parseElements(xml: String): Elements {
+            val doc = Jsoup.parse(xml, "", Parser.xmlParser())
+
+            return doc.select("filter[root]")
         }
 
-        fun createElement(root: String, mode: String? = null): Element {
-            return parseElement("<filter/>").apply {
+        fun createElement(
+            root: String,
+            mode: String? = null,
+            excludes: Iterable<String> = listOf(),
+            includes: Iterable<String> = listOf()
+        ): Element {
+            return Element("filter").apply {
                 attr("root", root)
+
                 if (!mode.isNullOrBlank()) {
                     attr("mode", mode)
                 }
+
+                excludes.map { e -> Element("exclude").apply {
+                    attr("pattern", e) }
+                }.forEach { appendChild(it) }
+
+                includes.map { e -> Element("include").apply {
+                    attr("pattern", e) }
+                }.forEach { appendChild(it) }
             }
         }
     }

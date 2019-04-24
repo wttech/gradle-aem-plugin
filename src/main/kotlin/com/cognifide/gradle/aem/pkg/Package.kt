@@ -29,7 +29,7 @@ class Package private constructor() {
 
         this.downloadName = "$name-$version.zip"
         this.conventionPaths = listOf(
-                "/etc/packages/$group/${compose.archiveName}",
+                "/etc/packages/$group/${compose.archiveFileName}",
                 "/etc/packages/$group/$name-$version.zip"
         )
     }
@@ -56,6 +56,8 @@ class Package private constructor() {
         const val JCR_ROOT = "jcr_root"
 
         const val META_PATH = "META-INF"
+
+        const val META_RESOURCES_PATH = "package/$META_PATH"
 
         const val VLT_DIR = "vault"
 

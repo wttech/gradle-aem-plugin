@@ -8,7 +8,7 @@ plugins {
 }
 
 description = "Example"
-defaultTasks = listOf(":aemSatisfy", ":aemDeploy")
+defaultTasks(":aemSatisfy", ":aemDeploy")
 
 allprojects {
     group = "com.company.aem"

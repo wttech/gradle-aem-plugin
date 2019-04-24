@@ -34,7 +34,7 @@ class ComponentState private constructor() {
 
     fun find(pids: Collection<String>, ignoredPids: Collection<String>): List<Component> {
         return components.filter {
-            Patterns.wildcard(it.pid, pids) && !Patterns.wildcard(it.pid, ignoredPids)
+            Patterns.wildcard(it.uid, pids) && !Patterns.wildcard(it.uid, ignoredPids)
         }
     }
 

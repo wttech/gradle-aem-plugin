@@ -224,7 +224,7 @@
       "zipUrl" : null,
       "jarUrl" : null,
       "licenseUrl" : null,
-      "overridesPath" : "*/src/main/resources/local-instance",
+      "overridesPath" : "*/gradle/instance",
       "expandFiles" : [
         "**/start.bat",
         "**/stop.bat",
@@ -240,7 +240,7 @@
       "mandatoryFiles" : [ ]
     },
     "packageRoot": "*/src/main/content",
-    "packageMetaCommonRoot": "*/gradle/META-INF",
+    "packageMetaCommonRoot": "*/gradle/package/META-INF",
     "packageInstallPath" : "/apps/additional/install",
     "packageInstallRepository": true,
     "packageErrors" : [
@@ -258,7 +258,6 @@
   "bundleConfig" : [
     {
       "name": "jar",
-      "enabled": true,
       "installPath" : "/apps/additional/install",
       "installRunMode": null,
       "javaPackage" : "com.company.aem.additional",

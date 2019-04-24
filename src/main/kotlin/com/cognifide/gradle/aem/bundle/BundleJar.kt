@@ -11,7 +11,6 @@ import java.io.File
 import java.io.Serializable
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.exception.ExceptionUtils
-import org.apache.commons.lang3.reflect.FieldUtils
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
@@ -23,6 +22,7 @@ import org.gradle.api.tasks.bundling.Jar
  * OSGi bundle related properties, because it is not possible to add properties to existing tasks
  * like 'jar' directly.
  */
+@Suppress("LargeClass", "TooManyFunctions")
 class BundleJar(
     @Transient
 @JsonIgnore
@@ -35,11 +35,6 @@ val jar: Jar
 ) : Serializable {
 
     var name = jar.name
-
-    /**
-     * Allows to disable OSGi bundle specific JAR task customization.
-     */
-    var enabled: Boolean = true
 
     /**
      * Content path for OSGi bundle jars being placed in CRX package.
@@ -70,7 +65,7 @@ val jar: Jar
      *
      * - generated OSGi specific manifest instructions like 'Bundle-SymbolicName', 'Export-Package'.
      * - generated AEM specific manifest instructions like 'Sling-Model-Packages'.
-     * - performed additional component stability checks during 'aemAwait'
+     * - performed additional component stability checks within 'aemDeploy' or separately using 'aemAwait'.
      *
      * Default convention: '${project.group}.${project.name}'.
      *
@@ -130,15 +125,23 @@ val jar: Jar
     @JsonIgnore
     var privatePackages: List<String> = listOf()
 
-    internal fun setup() {
-        if (!enabled) {
-            aem.logger.info("OSGi bundle customizations are disabled for task '${jar.path}'.")
-            return
-        }
+    /**
+     * Configure jar task before evaluating build script.
+     */
+    internal fun initialize() {
+        proposeBaseName()
+    }
 
+    private fun proposeBaseName() {
+        jar.archiveBaseName.set(aem.baseName)
+    }
+
+    /**
+     * Configure jar task after evaluating build script.
+     */
+    internal fun finalize() {
         ensureJavaPackage()
-        ensureBaseNameIfNotCustomized()
-        applyConventionAttributes()
+        applyAttributesConvention()
         combinePackageAttributes()
         setupBndTool()
     }
@@ -150,20 +153,6 @@ val jar: Jar
             }
 
             javaPackage = Formats.normalizeSeparators("${aem.project.group}.${aem.project.name}", ".")
-        }
-    }
-
-    /**
-     * Reflection is used, because in other way, default convention will provide value.
-     * It is only way to know, if base name was previously customized by build script.
-     */
-    private fun ensureBaseNameIfNotCustomized() {
-        val baseName = FieldUtils.readField(jar, "baseName", true) as String?
-        if (baseName.isNullOrBlank()) {
-            val groupValue = aem.project.group as String?
-            if (!aem.project.name.isNullOrBlank() && !groupValue.isNullOrBlank()) {
-                jar.baseName = aem.baseName
-            }
         }
     }
 
@@ -186,7 +175,7 @@ val jar: Jar
         })
     }
 
-    private fun combinePackageAttribute(name: String, pkgs: Collection<String>) {
+    private fun combinePackageAttribute(name: String, pkgs: Iterable<String>) {
         val combinedPkgs = mutableSetOf<String>().apply {
             val existing = (attribute(name) ?: "")
                     .split(",")
@@ -204,7 +193,7 @@ val jar: Jar
     /**
      * Generate attributes by convention using Gradle project metadata.
      */
-    private fun applyConventionAttributes() {
+    private fun applyAttributesConvention() {
         if (!attributesConvention) {
             return
         }
@@ -347,23 +336,37 @@ val jar: Jar
             attribute(Bundle.ATTRIBUTE_SLING_MODEL_PACKAGES, value)
         }
 
-    fun exportPackage(pkg: String) = exportPackages(listOf(pkg))
+    fun exportPackage(pkg: String) = exportPackages(pkg)
 
-    fun exportPackages(pkgs: Collection<String>) {
+    fun exportPackages(pkgs: Iterable<String>) {
         exportPackages += pkgs
     }
 
+    fun exportPackages(vararg pkgs: String) = exportPackages(pkgs.toList())
+
     fun privatePackage(pkg: String) = privatePackages(listOf(pkg))
 
-    fun privatePackages(pkgs: Collection<String>) {
+    fun privatePackages(pkgs: Iterable<String>) {
         privatePackages += pkgs
     }
 
+    fun privatePackages(vararg pkgs: String) = privatePackages(pkgs.toList())
+
     fun excludePackage(pkg: String) = excludePackages(listOf(pkg))
 
-    fun excludePackages(pkgs: Collection<String>) {
+    fun excludePackages(pkgs: Iterable<String>) {
         importPackages += pkgs.map { "!$it" }
     }
+
+    fun excludePackages(vararg pkgs: String) = excludePackages(pkgs.toList())
+
+    fun importPackage(pkg: String) = importPackages(listOf(pkg))
+
+    fun importPackages(pkgs: Iterable<String>) {
+        importPackages += pkgs
+    }
+
+    fun importPackages(vararg pkgs: String) = importPackages(pkgs.toList())
 
     fun embedPackage(pkg: String, export: Boolean, dependencyOptions: DependencyOptions.() -> Unit) {
         embedPackage(pkg, export, DependencyOptions.of(aem.project.dependencies, dependencyOptions))
@@ -373,7 +376,7 @@ val jar: Jar
         embedPackages(listOf(pkg), export, dependencyNotation)
     }
 
-    fun embedPackages(pkgs: Collection<String>, export: Boolean, dependencyNotation: Any) {
+    fun embedPackages(pkgs: Iterable<String>, export: Boolean, dependencyNotation: Any) {
         aem.project.dependencies.add(JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME, dependencyNotation)
 
         if (export) {
@@ -383,8 +386,12 @@ val jar: Jar
         }
     }
 
-    fun wildcardPackages(pkgs: Collection<String>): List<String> {
+    fun wildcardPackages(pkgs: Iterable<String>): List<String> {
         return pkgs.map { StringUtils.appendIfMissing(it, ".*") }
+    }
+
+    fun wildcardPackages(vararg pkgs: String): List<String> {
+        return wildcardPackages(pkgs.toList())
     }
 
     private fun setupBndTool() {
@@ -421,6 +428,7 @@ val jar: Jar
 
     companion object {
         val ACTIVATOR_CLASSES = listOf("Activator", "BundleActivator")
+
         val SOURCE_SETS = mapOf(
                 "java" to "java",
                 "kotlin" to "kt",

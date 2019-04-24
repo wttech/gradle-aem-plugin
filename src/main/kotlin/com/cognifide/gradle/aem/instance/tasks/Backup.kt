@@ -14,8 +14,10 @@ open class Backup : ZipTask() {
 
     init {
         description = "Turns off local instance(s), archives to ZIP file, then turns on again."
-        baseName = "${project.rootProject.name}-${Formats.dateFileName()}"
-        classifier = "backup"
+
+        archiveBaseName.set(project.provider { "${project.rootProject.name}-${Formats.dateFileName()}" })
+        archiveClassifier.set("backup")
+
         duplicatesStrategy = DuplicatesStrategy.FAIL
         entryCompression = ZipEntryCompression.STORED
     }
@@ -23,8 +25,9 @@ open class Backup : ZipTask() {
     @get:Internal
     val available: List<File>
         get() {
-            return (destinationDir.listFiles { _, name -> name.endsWith("-$classifier.$extension") } ?: arrayOf())
-                    .ifEmpty { arrayOf() }.toList()
+            return (destinationDirectory.asFile.get().listFiles {
+                _, name -> name.endsWith("-$archiveClassifier.$archiveExtension")
+            } ?: arrayOf()).ifEmpty { arrayOf() }.toList()
         }
 
     override fun taskGraphReady(graph: TaskExecutionGraph) {
