@@ -1,13 +1,19 @@
 package com.cognifide.gradle.aem.instance.tasks
 
+import com.cognifide.gradle.aem.common.AemException
 import com.cognifide.gradle.aem.common.Formats
+import com.cognifide.gradle.aem.common.file.downloader.FileTransfer
+import com.cognifide.gradle.aem.common.file.downloader.SftpFileTransfer
+import com.cognifide.gradle.aem.common.file.downloader.SmbFileTransfer
 import com.cognifide.gradle.aem.common.tasks.ZipTask
 import com.cognifide.gradle.aem.instance.InstanceException
 import com.cognifide.gradle.aem.instance.names
 import java.io.File
 import org.gradle.api.execution.TaskExecutionGraph
 import org.gradle.api.file.DuplicatesStrategy
+import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.bundling.ZipEntryCompression
 
 open class InstanceBackup : ZipTask() {
@@ -20,6 +26,23 @@ open class InstanceBackup : ZipTask() {
 
         duplicatesStrategy = DuplicatesStrategy.FAIL
         entryCompression = ZipEntryCompression.STORED
+    }
+
+    @Input
+    var uploadUrl: String? = aem.project.property("aem.backup.uploadUrl") as String?
+
+    @TaskAction
+    override fun copy() {
+        super.copy()
+        upload()
+    }
+
+    private fun upload() {
+        uploadUrl?.let { url ->
+            val targetUrl = "${url.trimEnd('/')}/$archiveName"
+            logger.lifecycle("Uploading backup '$archivePath' to '$targetUrl'")
+            fileTransfer(url).upload(archivePath, targetUrl)
+        }
     }
 
     @get:Internal
@@ -43,6 +66,14 @@ open class InstanceBackup : ZipTask() {
 
     override fun projectEvaluated() {
         from(aem.config.localInstanceOptions.rootDir)
+    }
+
+    private fun fileTransfer(url: String): FileTransfer {
+        return when {
+            SftpFileTransfer.handles(url) -> SftpFileTransfer(aem.project)
+            SmbFileTransfer.handles(url) -> SmbFileTransfer(aem.project)
+            else -> throw AemException("Cannot upload backup to URL: '$url'. Only SMB and SFTP URLs are supported.")
+        }
     }
 
     companion object {
