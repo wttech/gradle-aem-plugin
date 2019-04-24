@@ -620,7 +620,7 @@ Then file at path *build/aem/aemDebug/debug.json* with content below is being ge
       "zipUrl" : null,
       "jarUrl" : null,
       "licenseUrl" : null,
-      "overridesPath" : "*/src/main/resources/local-instance",
+      "overridesPath" : "*/gradle/instance",
       "expandFiles" : [
         "**/start.bat",
         "**/stop.bat",
@@ -1077,8 +1077,8 @@ This behavior is controlled by:
 aem {
     config {
         localInstance {
-            root = aem.props.string("aem.localInstance.root") ?: "${aem.project.rootProject.file(".aem")}"
-            overridesPath = "${project.rootProject.file("src/main/resources/local-instance")}"
+            root = aem.props.string("aem.localInstance.root") ?: "${aem.projectMain.file(".aem")}"
+            overridesPath = "${aem.projectMain.file("gradle/instance")}"
             expandProperties = mapOf()
             expandFiles = listOf(
                 "**/*.properties", 

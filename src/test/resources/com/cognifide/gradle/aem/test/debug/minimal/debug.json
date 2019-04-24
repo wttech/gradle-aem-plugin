@@ -61,7 +61,7 @@
       "zipUrl" : null,
       "jarUrl" : null,
       "licenseUrl" : null,
-      "overridesPath" : "*/src/main/resources/local-instance",
+      "overridesPath" : "*/gradle/instance",
       "expandFiles" : [
         "**/start.bat",
         "**/stop.bat",
