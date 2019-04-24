@@ -98,7 +98,7 @@ class NotifierFacade private constructor(private val aem: AemExtension) {
 
         val DORKBOX_DARK_LIGHT_THEME = Theme(
                 Notify.TITLE_TEXT_FONT,
-                "Source Code Pro BOLD 13",
+                Notify.MAIN_TEXT_FONT,
                 Color.DARK_GRAY,
                 Color(168, 168, 168),
                 Color(220, 220, 220),
