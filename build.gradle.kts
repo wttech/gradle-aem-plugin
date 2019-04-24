@@ -42,7 +42,6 @@ dependencies {
     implementation("io.pebbletemplates:pebble:3.0.4")
     implementation("com.dorkbox:Notify:3.7")
     implementation("com.jayway.jsonpath:json-path:2.4.0")
-    implementation("de.gesellix:docker-client:2018-12-30T15-32-58")
     implementation("org.buildobjects:jproc:2.2.3")
 
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.3.1")

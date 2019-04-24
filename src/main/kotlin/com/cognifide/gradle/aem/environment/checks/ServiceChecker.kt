@@ -5,7 +5,7 @@ import com.cognifide.gradle.aem.common.ProgressLogger
 import com.cognifide.gradle.aem.common.Retry
 import com.cognifide.gradle.aem.common.http.HttpClient
 import com.cognifide.gradle.aem.common.http.RequestException
-import kotlin.streams.toList
+import java.util.stream.Collectors
 import kotlinx.coroutines.*
 
 /**
@@ -19,7 +19,7 @@ class ServiceChecker(private val aem: AemExtension) {
     val progress = ProgressLogger.of(aem.project)
 
     fun checkForUnavailableServices() = progress.launch {
-        val serviceStatuses = options.healthChecks.list.parallelStream().map { it.url to isServiceHealthy(it) }.toList()
+        val serviceStatuses = options.healthChecks.list.parallelStream().map { it.url to isServiceHealthy(it) }.collect(Collectors.toList())
         return@launch serviceStatuses.filter { !it.second }.map { it.first }
     }
 
