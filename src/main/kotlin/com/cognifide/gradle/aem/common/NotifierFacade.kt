@@ -96,17 +96,13 @@ class NotifierFacade private constructor(private val aem: AemExtension) {
 
         const val DORKBOX_HIDE_AFTER_SECONDS = 5L
 
-        private const val DORKBOX_MAIN_TEXT_FONT = "Source Code Pro BOLD 13"
-
-        private val DORKBOX_FG_COLOR = Color(220, 220, 220)
-
         val DORKBOX_DARK_LIGHT_THEME = Theme(
                 Notify.TITLE_TEXT_FONT,
-                DORKBOX_MAIN_TEXT_FONT,
+                "Source Code Pro BOLD 13",
                 Color.DARK_GRAY,
-                DORKBOX_FG_COLOR,
-                DORKBOX_FG_COLOR,
-                DORKBOX_FG_COLOR,
+                Color(168, 168, 168),
+                Color(220, 220, 220),
+                Color(220, 220, 220),
                 Color.GRAY
         )
 
