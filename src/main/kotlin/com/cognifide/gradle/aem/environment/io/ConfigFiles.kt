@@ -11,7 +11,7 @@ import org.gradle.util.GFileUtils
 
 class ConfigFiles(private val aem: AemExtension) {
 
-    private val options = aem.environmentOptions
+    private val options = aem.config.environmentOptions
 
     private val downloadDir = AemTask.temporaryDir(aem.project, TEMPORARY_DIR)
 
@@ -30,10 +30,9 @@ class ConfigFiles(private val aem: AemExtension) {
         get() = File(options.root)
 
     private val dispatcherDistUrl: String
-        get() {
-            return aem.environmentOptions.dispatcherDistUrl.ifBlank { null }
-                    ?: throw EnvironmentException("Dispatcher distribution URL needs to be configured in property 'aem.env.dispatcher.distUrl' in order to use AEM environment.")
-        }
+        get() = options.dispatcherDistUrl.ifBlank { null }
+                ?: throw EnvironmentException("Dispatcher distribution URL needs to be configured in property" +
+                        " 'aem.env.dispatcher.distUrl' in order to use AEM environment.")
 
     fun prepare() {
         if (!dispatcherModuleFile.exists()) {
@@ -49,9 +48,9 @@ class ConfigFiles(private val aem: AemExtension) {
 
     private fun downloadDispatcherModule(): File {
         val zipFile = fileResolver.run { dispatcherDistUrl.run { url(this) } }.file
-        return aem.project.tarTree(zipFile).find { Patterns.wildcard(it, aem.environmentOptions.dispatcherModuleName) }
+        return aem.project.tarTree(zipFile).find { Patterns.wildcard(it, options.dispatcherModuleName) }
                 ?: throw EnvironmentException("Dispatcher distribution seems to be invalid." +
-                        "Cannot find file matching name '${aem.environmentOptions.dispatcherModuleName}' in '$zipFile'")
+                        "Cannot find file matching name '${options.dispatcherModuleName}' in '$zipFile'")
     }
 
     private fun ensureDirs() {

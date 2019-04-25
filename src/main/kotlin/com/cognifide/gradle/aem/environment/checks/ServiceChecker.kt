@@ -16,7 +16,8 @@ import kotlinx.coroutines.*
 class ServiceChecker
 (private val aem: AemExtension) {
 
-    private val options = aem.environmentOptions
+    private val options = aem.config.environmentOptions
+
     val progress = ProgressLogger.of(aem.project)
 
     fun checkForUnavailableServices() = progress.launch {

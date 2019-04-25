@@ -13,7 +13,7 @@ open class EnvHosts : AemDefaultTask() {
     }
 
     @Internal
-    private val hosts = Hosts.create(aem.environmentOptions.hosts.list)
+    private val hosts = Hosts.create(aem.config.environmentOptions.hosts.list)
 
     @TaskAction
     fun appendHosts() = hosts.append()

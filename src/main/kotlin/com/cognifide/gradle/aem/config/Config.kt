@@ -6,6 +6,7 @@ import com.cognifide.gradle.aem.common.LineSeparator
 import com.cognifide.gradle.aem.common.NotifierFacade
 import com.cognifide.gradle.aem.common.file.resolver.ResolverOptions
 import com.cognifide.gradle.aem.common.notifier.Notifier
+import com.cognifide.gradle.aem.environment.EnvironmentOptions
 import com.cognifide.gradle.aem.instance.*
 import com.cognifide.gradle.aem.pkg.Package
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -28,6 +29,9 @@ class Config(
 
     @Internal
     val localInstanceOptions = LocalInstanceOptions(aem)
+
+    @Internal
+    val environmentOptions = EnvironmentOptions(aem)
 
     private val instanceMap: MutableMap<String, Instance> = mutableMapOf()
 
@@ -187,6 +191,13 @@ class Config(
     @Internal
     @JsonIgnore
     fun localInstance(options: LocalInstanceOptions.() -> Unit) = localInstanceOptions.apply(options)
+
+    /**
+     * Customize environment options
+     */
+    @Internal
+    @JsonIgnore
+    fun environment(options: EnvironmentOptions.() -> Unit) = environmentOptions.run(options)
 
     /**
      * Declare new deployment target (AEM instance).

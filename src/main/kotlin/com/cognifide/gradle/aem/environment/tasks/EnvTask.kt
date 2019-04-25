@@ -14,7 +14,7 @@ import org.gradle.api.tasks.Internal
 open class EnvTask : AemDefaultTask() {
 
     @Internal
-    protected val options = aem.environmentOptions
+    protected val options = aem.config.environmentOptions
 
     @Internal
     protected val stack = Stack()
