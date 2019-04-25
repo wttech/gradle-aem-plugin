@@ -1677,8 +1677,7 @@ As a workaround, just run build without daemon (`--no-daemon`).
 |:-----------------:|:-----------------:|
 |   4.x.x -> 5.x.x  |     4.x -> 4.8    |
 |   6.0.0 -> 6.2.1  |     4.9 -> 5.0    |
-|         -         |     5.1 -> 5.3    |
-|    6.3.0 and up   |     5.4 and up    |
+|   6.3.0 and up    |     5.1 and up    |
 
 ## Building
 
