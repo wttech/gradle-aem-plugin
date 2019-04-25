@@ -8,16 +8,8 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
-/**
- * TODO: Since coroutines API is still in experimental mode we would need to adapt to it's final API when released.
- * Please see https://github.com/Kotlin/kotlinx.coroutines/issues/632#issuecomment-425408865
- */
 @UseExperimental(ObsoleteCoroutinesApi::class)
-open class DispatcherDev : EnvTask() {
-
-    init {
-        description = "Listen to httpd/dispatcher configuration changes and reloads httpd."
-    }
+open class EnvDev : EnvTask() {
 
     @Internal
     private val modificationsChannel = Channel<String>(Channel.UNLIMITED)
@@ -26,7 +18,11 @@ open class DispatcherDev : EnvTask() {
     private val requestToCheckStability = Channel<Any>(Channel.UNLIMITED)
 
     @Internal
-    private val dirWatcher = DirMonitor(config.dispatcherConfPath, modificationsChannel)
+    private val dirMonitor = DirMonitor(configFiles.dispatcherConfDir, modificationsChannel)
+
+    init {
+        description = "Listen to httpd/dispatcher configuration changes and reloads httpd."
+    }
 
     @TaskAction
     fun dev() {
@@ -34,8 +30,8 @@ open class DispatcherDev : EnvTask() {
             removeStackIfDeployed()
             deployStack()
             requestToCheckStability.send(Date())
-            dirWatcher.start()
-            aem.logger.lifecycle("Listening for httpd/dispatcher configuration changes: ${config.dispatcherConfPath}")
+            dirMonitor.start()
+            aem.logger.lifecycle("Listening for httpd/dispatcher configuration changes: ${configFiles.dispatcherConfDir}")
             reloadConfigurationOnChange()
             checkServiceStabilityOnReload()
         }
@@ -80,6 +76,7 @@ open class DispatcherDev : EnvTask() {
     }
 
     companion object {
-        const val NAME = "aemDispatcherDev"
+
+        const val NAME = "aemEnvDev"
     }
 }

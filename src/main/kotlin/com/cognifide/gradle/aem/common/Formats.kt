@@ -92,6 +92,10 @@ object Formats {
         return "${"%.2f".format(value * 100.0)}%"
     }
 
+    fun timestamp(): String {
+        return SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(Date())
+    }
+
     fun date(date: Date = Date()): String {
         return ISO8601.format(Calendar.getInstance().apply { time = date })
     }

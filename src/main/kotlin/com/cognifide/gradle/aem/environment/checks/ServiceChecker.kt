@@ -13,7 +13,8 @@ import kotlinx.coroutines.*
  * Please see https://github.com/Kotlin/kotlinx.coroutines/issues/632#issuecomment-425408865
  */
 @UseExperimental(ObsoleteCoroutinesApi::class)
-class ServiceChecker(private val aem: AemExtension) {
+class ServiceChecker
+(private val aem: AemExtension) {
 
     private val options = aem.environmentOptions
     val progress = ProgressLogger.of(aem.project)

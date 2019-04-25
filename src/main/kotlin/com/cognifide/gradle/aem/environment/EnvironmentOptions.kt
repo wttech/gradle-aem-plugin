@@ -9,16 +9,27 @@ import org.gradle.api.tasks.Internal
 
 class EnvironmentOptions(aem: AemExtension) {
 
-    @Internal
-    var healthChecks = HealthChecks()
-    @Internal
-    val hosts = HostsOptions()
+    /**
+     * Path in which local AEM environment will be stored.
+     */
+    var root: String = aem.props.string("aem.env.root") ?: "${aem.projectMain.file(".aem/environment")}"
 
     /**
      * URI pointing to Dispatcher distribution TAR file.
      */
     @Input
-    var dispatcherDistUrl = aem.props.string("aem.environment.dispatcher.distUrl") ?: ""
+    var dispatcherDistUrl = aem.props.string("aem.env.dispatcher.distUrl")
+            ?: "http://download.macromedia.com/dispatcher/download/dispatcher-apache2.4-linux-x86_64-4.3.2.tar.gz"
+
+    @Input
+    var dispatcherModuleName = aem.props.string("aem.env.dispatcher.moduleName")
+            ?: "dispatcher-apache2.4*.so"
+
+    @Internal
+    var healthChecks = HealthChecks()
+
+    @Internal
+    val hosts = HostsOptions()
 
     fun healthChecks(configurer: HealthChecks.() -> Unit) {
         healthChecks = HealthChecks().apply(configurer)
