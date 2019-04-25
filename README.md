@@ -273,7 +273,7 @@ aem.instance.local-author.httpUrl=http://localhost:4502
 aem.instance.local-publish.httpUrl=http://localhost:4503
 ```
 
-Example for defining multiple remote instances (that could be [filtered](#filter-instances-for-which-packages-will-be-deployed-or-satisfied)):
+Example for defining multiple remote instances (that could be [filtered](#filter-instances-to-work-with)):
 
 ```
 aem.instance.int-author.httpUrl=http://author.aem-integration.company.com
@@ -1540,7 +1540,7 @@ aem {
 }
 ```
 
-There are unspecified AEM instances as `aem.sync` method parameter so that instances matching [default filtering](#filter-instances-for-which-packages-will-be-deployed-or-satisfied) will be used.
+There are unspecified AEM instances as `aem.sync` method parameter so that instances matching [default filtering](#filter-instances-to-work-with) will be used.
 
 The fragment `{ checkStatus(it, 200) }` could be even ommitted because, by default sync API checks status code that it belongs to range [200,300\).
 
