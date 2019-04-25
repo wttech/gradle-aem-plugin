@@ -105,7 +105,7 @@ open class InstanceCreate : LocalInstanceTask() {
 
     private fun getExternalBackup(): File {
         return instanceOptions.zip ?: throw InstanceException("External local instance backup is not available. " +
-                "Ensure having property 'localInstance.zipUrl' specified.")
+                "Ensure having property 'aem.backup.downloadUrl' specified.")
     }
 
     companion object {

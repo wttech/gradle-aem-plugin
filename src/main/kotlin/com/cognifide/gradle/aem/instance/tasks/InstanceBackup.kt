@@ -8,13 +8,13 @@ import com.cognifide.gradle.aem.common.file.downloader.SmbFileTransfer
 import com.cognifide.gradle.aem.common.tasks.ZipTask
 import com.cognifide.gradle.aem.instance.InstanceException
 import com.cognifide.gradle.aem.instance.names
-import java.io.File
 import org.gradle.api.execution.TaskExecutionGraph
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.bundling.ZipEntryCompression
+import java.io.File
 
 open class InstanceBackup : ZipTask() {
 
@@ -29,7 +29,7 @@ open class InstanceBackup : ZipTask() {
     }
 
     @Input
-    var uploadUrl: String? = aem.project.property("aem.backup.uploadUrl") as String?
+    var uploadUrl = aem.props.string("aem.backup.uploadUrl")
 
     @TaskAction
     override fun copy() {
@@ -39,17 +39,18 @@ open class InstanceBackup : ZipTask() {
 
     private fun upload() {
         uploadUrl?.let { url ->
-            val targetUrl = "${url.trimEnd('/')}/$archiveName"
-            logger.lifecycle("Uploading backup '$archivePath' to '$targetUrl'")
-            fileTransfer(url).upload(archivePath, targetUrl)
+            val targetUrl = "${url.trimEnd('/')}/$archiveFileName"
+            val backupZip = archiveFile.get().asFile
+            logger.lifecycle("Uploading backup '${backupZip.path}' to '$targetUrl'")
+            fileTransfer(url).upload(backupZip, targetUrl)
         }
     }
 
     @get:Internal
     val available: List<File>
         get() {
-            return (destinationDirectory.asFile.get().listFiles {
-                _, name -> name.endsWith("-$archiveClassifier.$archiveExtension")
+            return (destinationDirectory.asFile.get().listFiles { _, name ->
+                name.endsWith("-$archiveClassifier.$archiveExtension")
             } ?: arrayOf()).ifEmpty { arrayOf() }.toList()
         }
 
