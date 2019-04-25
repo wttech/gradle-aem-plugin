@@ -5,6 +5,8 @@ import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.http.HttpClient
 import com.cognifide.gradle.aem.config.Config
 import com.cognifide.gradle.aem.config.ConfigPlugin
+import com.cognifide.gradle.aem.environment.EnvironmentOptions
+import com.cognifide.gradle.aem.environment.EnvironmentPlugin
 import com.cognifide.gradle.aem.instance.*
 import com.cognifide.gradle.aem.pkg.PackageDefinition
 import com.cognifide.gradle.aem.pkg.PackagePlugin
@@ -105,6 +107,12 @@ open class AemExtension(@Internal val project: Project) {
      */
     @Nested
     val config = Config(this)
+
+    /**
+     * Configuration of additional development environment, e.g. dispatcher
+     */
+    @Nested
+    val environmentOptions = EnvironmentOptions(this)
 
     /**
      * Directory for storing project specific files used by plugin e.g:
@@ -276,6 +284,8 @@ open class AemExtension(@Internal val project: Project) {
         config.apply(configurer)
     }
 
+    fun environment(configurer: EnvironmentOptions.() -> Unit) = environmentOptions.run(configurer)
+
     fun notifier(configurer: NotifierFacade.() -> Unit) {
         notifier.apply(configurer)
     }
@@ -373,6 +383,7 @@ open class AemExtension(@Internal val project: Project) {
                 PackagePlugin.ID,
                 BundlePlugin.ID,
                 InstancePlugin.ID,
+                EnvironmentPlugin.ID,
                 ToolingPlugin.ID,
                 ConfigPlugin.ID
         )
