@@ -64,13 +64,13 @@ class EnvironmentOptions(private val aem: AemExtension) {
         get() = File("$root/docker-compose.yml")
 
     val dockerComposeSourceFile: File
-        get() = File(aem.configCommonDir, "environment/docker-compose.yml")
+        get() = File(aem.configCommonDir, "$ENVIRONMENT_DIR/docker-compose.yml")
 
     val httpdConfDir
-        get() = File("$root/$HTTPD_DIR/conf")
+        get() = File(aem.configCommonDir, "$ENVIRONMENT_DIR/httpd/conf")
 
     val dispatcherModuleFile: File
-        get() = File("$root/$DISTRIBUTIONS_DIR/mod_dispatcher.so")
+        get() = File("$root/$FILES_DIR/mod_dispatcher.so")
 
     fun prepare() {
         provideFiles()
@@ -117,8 +117,6 @@ class EnvironmentOptions(private val aem: AemExtension) {
 
         const val ENVIRONMENT_DIR = "environment"
 
-        const val HTTPD_DIR = "httpd"
-
-        const val DISTRIBUTIONS_DIR = "distributions"
+        const val FILES_DIR = "files"
     }
 }
