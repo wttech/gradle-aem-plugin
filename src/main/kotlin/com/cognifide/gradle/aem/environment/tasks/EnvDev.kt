@@ -18,7 +18,7 @@ open class EnvDev : EnvTask() {
     private val requestToCheckStability = Channel<Any>(Channel.UNLIMITED)
 
     @Internal
-    private val dirMonitor = DirMonitor(configFiles.dispatcherConfDir, modificationsChannel)
+    private val dirMonitor = DirMonitor(options.httpdConfDir, modificationsChannel)
 
     init {
         description = "Listen to httpd/dispatcher configuration changes and reloads httpd."
@@ -31,7 +31,7 @@ open class EnvDev : EnvTask() {
             deployStack()
             requestToCheckStability.send(Date())
             dirMonitor.start()
-            aem.logger.lifecycle("Listening for httpd/dispatcher configuration changes: ${configFiles.dispatcherConfDir}")
+            aem.logger.lifecycle("Listening for HTTPD configuration changes: ${options.httpdConfDir}")
             reloadConfigurationOnChange()
             checkServiceStabilityOnReload()
         }

@@ -92,6 +92,12 @@ object Formats {
         return "${"%.2f".format(value * 100.0)}%"
     }
 
+    fun logMessage(text: String): String {
+        return "-------------------------------------------------------------------------------------------\n" +
+                text +
+                "-------------------------------------------------------------------------------------------"
+    }
+
     fun timestamp(): String {
         return SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(Date())
     }

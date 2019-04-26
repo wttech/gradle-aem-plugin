@@ -7,7 +7,6 @@ import com.cognifide.gradle.aem.environment.EnvironmentException
 import com.cognifide.gradle.aem.environment.checks.ServiceChecker
 import com.cognifide.gradle.aem.environment.docker.Container
 import com.cognifide.gradle.aem.environment.docker.Stack
-import com.cognifide.gradle.aem.environment.io.ConfigFiles
 import org.buildobjects.process.ExternalProcessFailureException
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
@@ -21,9 +20,6 @@ open class EnvTask : AemDefaultTask() {
     protected val stack = Stack()
 
     @Internal
-    protected val configFiles = ConfigFiles(aem)
-
-    @Internal
     protected val serviceChecker = ServiceChecker(aem)
 
     @Internal
@@ -31,11 +27,12 @@ open class EnvTask : AemDefaultTask() {
 
     @TaskAction
     open fun perform() {
-        configFiles.prepare()
+        options.prepare()
+        options.validate()
     }
 
     protected fun deployStack() {
-        stack.deploy(configFiles.dockerComposeFile.path)
+        stack.deploy(options.dockerComposeFile.path)
 
         val isRunning = serviceChecker.awaitObservingProgress("httpd container - awaiting start", HTTPD_CONTAINER_AWAIT_TIME) {
             httpdContainer.isRunning()
@@ -62,10 +59,7 @@ open class EnvTask : AemDefaultTask() {
             httpdContainer.exec(HTTPD_RESTART_COMMAND, HTTPD_RESTART_EXIT_CODE)
             log("httpd restarted with new configuration. Checking service stability.")
         } catch (e: ExternalProcessFailureException) {
-            log("Failed to reload httpd, exit code: ${e.exitValue}! Error:\n" +
-                    "-------------------------------------------------------------------------------------------\n" +
-                    e.stderr +
-                    "-------------------------------------------------------------------------------------------")
+            log("Failed to reload httpd, exit code: ${e.exitValue}! Error:\n${Formats.logMessage(e.stderr)}")
         }
     }
 
