@@ -7,7 +7,6 @@ import java.io.File
 import java.io.IOException
 import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.sftp.*
-import net.schmizz.sshj.xfer.FileSystemFile
 import org.apache.http.client.utils.URIBuilder
 
 class FileTransferSftp(
@@ -48,7 +47,12 @@ class FileTransferSftp(
 
     override fun upload(source: File) {
         try {
-            connect { path -> put(FileSystemFile(source), path) }
+            connect { path ->
+                open(fullPath(path, source.name), setOf(OpenMode.CREAT)).close()
+                val remoteFile = open(fullPath(path, source.name), setOf(OpenMode.WRITE))
+                val output = remoteFile.RemoteFileOutputStream()
+                ioTransfer.upload(source, output)
+            }
         } catch (e: SFTPException) {
             throw FileException("Cannot upload file '${source.path}' to URL '$uploadUrl' using SFTP: ${e.statusCode}, ${e.message}", e)
         }
