@@ -1357,6 +1357,88 @@ gradlew aemTail -Paem.instance.list=[http://admin:admin@192.168.1.1:4502,http://
 
 Tailer could be used as standalone tool. Just download it from [here](dists/gradle-aem-tailer) (< 100 KB).
 
+### Environment plugin
+
+```kotlin
+plugins {
+    id("com.cognifide.aem.environment")
+}
+```
+
+Provides instance related tasks: `aemEnvUp`, `aemEnvDev`, `aemEnvHosts` etc.
+
+Should be applied only at root project / only once within whole build.
+
+Inherits from [Config Plugin](#config-plugin).
+
+#### Environment configuration
+
+Most of the configuration steps are automated. However, there are three manual steps to make this setup fully operating:
+
+1. [Install docker](https://docs.docker.com/install/)
+    * [Windows Installer](https://download.docker.com/win/stable/Docker%20for%20Windows%20Installer.exe)
+2. Setup hosts on local machine (admin rights are required to access `/etc/hosts` or `C:\Windows\System32\drivers\etc\hosts` file): 
+    * Windows: 
+        * Start PowerShell with "Run as administrator"
+        * Execute: `.\gradlew.bat aemEnvHosts --no-daemon`
+    * Unix: 
+        * Execute: `sudo ./gradlew aemEnvHosts --no-daemon`
+    
+**Windows only:**
+
+Because environment is using Dockers bind mount, on Windows, running task `aemEnvUp` will require additional user confirmation to allow virtualized container to access local configuration files.
+
+#### Environment service health checks
+
+In case of the dispatcher it takes few seconds to start. Default service heath check can be described in the following configuration. By default it will wait for all three domains to be available:
+
+```kotlin
+environment {
+    healthChecks {
+        "http://example.com/en-us.html" respondsWith {
+            status = 200
+            text = "English"
+        }
+        "http://demo.example.com/en-us.html" respondsWith {
+            status = 200
+            text = "English"
+        }
+        "http://author.example.com/libs/granite/core/content/login.html?resource=%2F&\$\$login\$\$=%24%24login%24%24&j_reason=unknown&j_reason_code=unknown" respondsWith {
+            status = 200
+            text = "AEM Sign In"
+        }
+    }
+}
+```
+
+You can override this configuration in your build script or check docker services status using `docker service ls`:
+```
+ID                  NAME                    MODE                REPLICAS            IMAGE               PORTS
+z2j4spwxb0ky        aem-local-setup_httpd   replicated          1/1                 httpd:2.4.39        *:80->80/tcp
+```
+
+#### Task `aemEnvUp`
+
+Turns on local AEM environment.
+
+#### Task `aemEnvDown`
+
+Turns off local AEM environment.
+
+#### Task `aemEnvDev`
+
+Allows to listen for Apache Web Server / Dispatcher configuration files changed and then automatically reload HTTP service.
+
+**NOTE** On Windows, it is required to accept granting Docker to access local files.
+
+1. Run command `gradlew aemEnvDev`,
+2. Edit files located in *aem/gradle/environment/httpd/conf* ,
+3. Notice that HTTPD service should be restarted automatically after file changes,
+4. Check results of [environment service health checks](#environment-service-health-checks),
+4. Optionally, check logs:
+   * httpd/dispatcher logs located in path **build/logs**
+   * dispatchers cache located in [build/cache](build/cache)
+
 ## How to's
 
 ### Set AEM configuration properly for all / concrete project(s)

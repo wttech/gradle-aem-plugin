@@ -35,22 +35,24 @@ class ConfigFiles(private val aem: AemExtension) {
                         " 'aem.env.dispatcher.distUrl' in order to use AEM environment.")
 
     fun prepare() {
-        if (!dispatcherModuleFile.exists()) {
-            GFileUtils.copyFile(downloadDispatcherModule(), dispatcherModuleFile)
+        if (!rootDir.exists()) {
+            FileOperations.copyResources(ENVIRONMENT_DIR, rootDir)
         }
 
-        if (!rootDir.exists()) {
-            FileOperations.copyResources(ENVIRONMENT_DIR, rootDir, true)
+        if (!dispatcherModuleFile.exists()) {
+            GFileUtils.copyFile(downloadDispatcherModule(), dispatcherModuleFile)
         }
 
         ensureDirs()
     }
 
     private fun downloadDispatcherModule(): File {
-        val zipFile = fileResolver.run { dispatcherDistUrl.run { url(this) } }.file
-        return aem.project.tarTree(zipFile).find { Patterns.wildcard(it, options.dispatcherModuleName) }
+        val tarFile = fileResolver.url(dispatcherDistUrl).file
+        val tarTree = aem.project.tarTree(tarFile)
+
+        return tarTree.find { Patterns.wildcard(it, options.dispatcherModuleName) }
                 ?: throw EnvironmentException("Dispatcher distribution seems to be invalid." +
-                        "Cannot find file matching name '${options.dispatcherModuleName}' in '$zipFile'")
+                        " Cannot find file matching '${options.dispatcherModuleName}' in '$tarFile'")
     }
 
     private fun ensureDirs() {

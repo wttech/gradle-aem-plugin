@@ -23,7 +23,7 @@ class EnvironmentOptions(aem: AemExtension) {
 
     @Input
     var dispatcherModuleName = aem.props.string("aem.env.dispatcher.moduleName")
-            ?: "dispatcher-apache2.4*.so"
+            ?: "*/dispatcher-apache*.so"
 
     @Internal
     var healthChecks = HealthChecks()

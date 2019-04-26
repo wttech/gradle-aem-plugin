@@ -10,6 +10,7 @@ import com.cognifide.gradle.aem.environment.docker.Stack
 import com.cognifide.gradle.aem.environment.io.ConfigFiles
 import org.buildobjects.process.ExternalProcessFailureException
 import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.TaskAction
 
 open class EnvTask : AemDefaultTask() {
 
@@ -28,10 +29,9 @@ open class EnvTask : AemDefaultTask() {
     @Internal
     private val httpdContainer = Container("${stack.name}_httpd")
 
-    init {
-        doFirst {
-            configFiles.prepare()
-        }
+    @TaskAction
+    open fun perform() {
+        configFiles.prepare()
     }
 
     protected fun deployStack() {
