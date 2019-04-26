@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.common.file.downloader
 import com.cognifide.gradle.aem.common.AemException
 import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.file.FileException
+import com.cognifide.gradle.aem.common.file.IoTransferLogger
 import com.cognifide.gradle.aem.common.http.HttpClient
 import java.io.File
 import java.io.IOException
@@ -17,10 +18,7 @@ class HttpFileDownloader(val aem: AemExtension, val client: HttpClient = HttpCli
         try {
             client.get(sourceUrl) { response ->
                 project.logger.info("Downloading: $sourceUrl -> ${targetFile.absolutePath}")
-
-                val downloader = ProgressFileDownloader(project)
-                downloader.size = response.entity.contentLength
-                downloader.download(asStream(response), targetFile)
+                IoTransferLogger(project).download(response.entity.contentLength, asStream(response), targetFile)
             }
         } catch (e: AemException) {
             throw FileException("Cannot download URL '$sourceUrl' to file '$targetFile' using HTTP(s). Cause: ${e.message}", e)

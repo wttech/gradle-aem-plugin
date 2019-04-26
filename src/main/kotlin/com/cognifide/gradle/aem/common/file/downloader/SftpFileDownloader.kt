@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.common.file.downloader
 
 import com.cognifide.gradle.aem.common.file.FileException
+import com.cognifide.gradle.aem.common.file.IoTransferLogger
 import java.io.File
 import java.io.IOException
 import net.schmizz.sshj.SSHClient
@@ -25,14 +26,12 @@ class SftpFileDownloader(val project: Project) {
             project.logger.info("Downloading: $sourceUrl -> ${targetFile.absolutePath}")
 
             val url = URIBuilder(sourceUrl)
-            val downloader = ProgressFileDownloader(project)
 
             connect(url) { sftp ->
                 val size = sftp.stat(url.path).size
                 val input = sftp.open(url.path, setOf(OpenMode.READ)).RemoteFileInputStream()
 
-                downloader.size = size
-                downloader.download(input, targetFile)
+                IoTransferLogger(project).download(size, input, targetFile)
             }
         } catch (e: IOException) {
             throw FileException("Cannot download URL '$sourceUrl' to file '$targetFile' using SFTP. Cause: ${e.message}", e)

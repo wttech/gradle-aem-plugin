@@ -2,10 +2,9 @@ package com.cognifide.gradle.aem.common.file.transfer
 
 import com.cognifide.gradle.aem.common.AemException
 import com.cognifide.gradle.aem.common.file.FileException
+import com.cognifide.gradle.aem.common.file.IoTransfer
 import java.io.File
 import java.io.IOException
-import java.io.InputStream
-import java.io.OutputStream
 import jcifs.smb.NtlmPasswordAuthentication
 import jcifs.smb.SmbException
 import jcifs.smb.SmbFile
@@ -13,7 +12,8 @@ import jcifs.smb.SmbFile
 class FileTransferSmb(
     uploadUrl: String,
     private val credentials: Credentials,
-    private val domain: String = ""
+    private val domain: String = "",
+    private val ioTransfer: IoTransfer = IoTransfer()
 ) : FileTransfer {
 
     private val uploadUrl = if (uploadUrl.endsWith('/')) {
@@ -28,29 +28,13 @@ class FileTransferSmb(
         }
     }
 
-    private fun File.writeFrom(inputStream: InputStream) {
-        inputStream.use { input ->
-            this.outputStream().use { fileOut ->
-                input.copyTo(fileOut)
-            }
-        }
-    }
-
-    private fun File.writeTo(outputStream: OutputStream) {
-        this.inputStream().use { input ->
-            outputStream.use { fileOut ->
-                input.copyTo(fileOut)
-            }
-        }
-    }
-
     override fun download(name: String, target: File) {
         try {
             val smbFile = fileByName(name)
             if (!smbFile.exists()) {
                 throw FileException("File not found $name")
             }
-            target.writeFrom(smbFile.inputStream)
+            ioTransfer.download(smbFile.length(), smbFile.inputStream, target)
         } catch (e: SmbException) {
             throw FileException("Cannot download URL '$name' to file '$target' using SMB. Cause: ${e.message}", e)
         }
@@ -58,8 +42,7 @@ class FileTransferSmb(
 
     override fun upload(source: File) {
         try {
-            val destination = fileByName(source.name)
-            source.writeTo(destination.outputStream)
+            ioTransfer.upload(source, fileByName(source.name).outputStream)
         } catch (e: IOException) {
             throw FileException("Cannot upload file '${source.absolutePath}' to URL '$uploadUrl' using SMB. Cause: ${e.message}", e)
         }

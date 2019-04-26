@@ -2,10 +2,9 @@ package com.cognifide.gradle.aem.common.file.transfer
 
 import com.cognifide.gradle.aem.common.AemException
 import com.cognifide.gradle.aem.common.file.FileException
+import com.cognifide.gradle.aem.common.file.IoTransfer
 import java.io.File
-import java.io.FileOutputStream
 import java.io.IOException
-import java.io.InputStream
 import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.sftp.*
 import net.schmizz.sshj.xfer.FileSystemFile
@@ -14,7 +13,8 @@ import org.apache.http.client.utils.URIBuilder
 class FileTransferSftp(
     uploadUrl: String,
     private val credentials: Credentials,
-    private val hostChecking: Boolean? = false
+    private val hostChecking: Boolean? = false,
+    private val ioTransfer: IoTransfer = IoTransfer()
 ) : FileTransfer {
 
     private val uploadUrl = uploadUrl.trimEnd('/')
@@ -31,37 +31,12 @@ class FileTransferSftp(
         }
     }
 
-    @Suppress("MagicNumber")
-    private fun File.writeFrom(inputStream: InputStream) {
-        inputStream.use { input ->
-            val output = FileOutputStream(this)
-            var finished = false
-
-            try {
-                val buf = ByteArray(1024 * 10)
-                var read = input.read(buf)
-
-                while (read >= 0) {
-                    output.write(buf, 0, read)
-                    read = input.read(buf)
-                }
-
-                output.flush()
-                finished = true
-            } finally {
-                output.close()
-                if (!finished) {
-                    this.delete()
-                }
-            }
-        }
-    }
-
     override fun download(name: String, target: File) {
         try {
             connect { path ->
-                val input = open(fullPath(path, name), setOf(OpenMode.READ)).RemoteFileInputStream()
-                target.writeFrom(input)
+                val remoteFile = open(fullPath(path, name), setOf(OpenMode.READ))
+                val input = remoteFile.RemoteFileInputStream()
+                ioTransfer.download(remoteFile.length(), input, target)
             }
         } catch (e: SFTPException) {
             when (e.statusCode) {
