@@ -39,7 +39,12 @@ class DebugTaskTest : AemTest() {
                 "baseConfig.packageRoot" to PathValueMatcher(),
                 "baseConfig.packageMetaCommonRoot" to PathValueMatcher(),
                 "baseConfig.groovyScriptRoot" to PathValueMatcher(),
-                "bundleConfig[*].bndPath" to PathValueMatcher()
+                "bundleConfig[*].bndPath" to PathValueMatcher(),
+                "baseConfig.environmentOptions.dispatcherModuleFile" to PathValueMatcher(),
+                "baseConfig.environmentOptions.dockerComposeFile" to PathValueMatcher(),
+                "baseConfig.environmentOptions.dockerComposeSourceFile" to PathValueMatcher(),
+                "baseConfig.environmentOptions.root" to PathValueMatcher(),
+                "baseConfig.environmentOptions.httpdConfDir" to PathValueMatcher()
         ))
     }
 

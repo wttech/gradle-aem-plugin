@@ -6,16 +6,14 @@ import com.cognifide.gradle.aem.common.Patterns
 import com.cognifide.gradle.aem.common.file.resolver.FileResolver
 import com.cognifide.gradle.aem.environment.checks.HealthChecks
 import com.cognifide.gradle.aem.environment.hosts.HostsOptions
+import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.Internal
 import org.gradle.util.GFileUtils
 
 class EnvironmentOptions(private val aem: AemExtension) {
 
     private val fileResolver = FileResolver(aem, AemTask.temporaryDir(aem.project, "environment"))
 
-    @Input
     val directories: MutableList<String> = mutableListOf()
 
     /**
@@ -26,18 +24,27 @@ class EnvironmentOptions(private val aem: AemExtension) {
     /**
      * URI pointing to Dispatcher distribution TAR file.
      */
-    @Input
     var dispatcherDistUrl = aem.props.string("aem.env.dispatcher.distUrl")
             ?: "http://download.macromedia.com/dispatcher/download/dispatcher-apache2.4-linux-x86_64-4.3.2.tar.gz"
 
-    @Input
     var dispatcherModuleName = aem.props.string("aem.env.dispatcher.moduleName")
             ?: "*/dispatcher-apache*.so"
 
-    @Internal
+    val dockerComposeFile
+        get() = File("$root/docker-compose.yml")
+
+    val dockerComposeSourceFile: File
+        get() = File(aem.configCommonDir, "$ENVIRONMENT_DIR/docker-compose.yml")
+
+    val httpdConfDir
+        get() = File(aem.configCommonDir, "$ENVIRONMENT_DIR/httpd/conf")
+
+    val dispatcherModuleFile: File
+        get() = File("$root/$FILES_DIR/mod_dispatcher.so")
+
+    @JsonIgnore
     var healthChecks = HealthChecks()
 
-    @Internal
     val hosts = HostsOptions()
 
     fun healthChecks(options: HealthChecks.() -> Unit) {
@@ -59,18 +66,6 @@ class EnvironmentOptions(private val aem: AemExtension) {
      * Ensures that specified directories will exist.
      */
     fun directories(vararg paths: String) = directories(paths.toList())
-
-    val dockerComposeFile
-        get() = File("$root/docker-compose.yml")
-
-    val dockerComposeSourceFile: File
-        get() = File(aem.configCommonDir, "$ENVIRONMENT_DIR/docker-compose.yml")
-
-    val httpdConfDir
-        get() = File(aem.configCommonDir, "$ENVIRONMENT_DIR/httpd/conf")
-
-    val dispatcherModuleFile: File
-        get() = File("$root/$FILES_DIR/mod_dispatcher.so")
 
     fun prepare() {
         provideFiles()

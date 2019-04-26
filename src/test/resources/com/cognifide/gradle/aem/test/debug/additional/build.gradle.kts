@@ -15,6 +15,30 @@ dependencies {
 
 aem {
     config {
+        environment {
+            directories(
+                    "logs",
+                    "cache/content/example/live",
+                    "cache/content/example/demo"
+            )
+            healthChecks {
+
+                "http://example.com/en-us.html" respondsWith {
+                    status = 200
+                    text = "English"
+                }
+                "http://demo.example.com/en-us.html" respondsWith {
+                    status = 200
+                    text = "English"
+                }
+                "http://author.example.com/libs/granite/core/content/login.html" +
+                        "?resource=%2F&\$\$login\$\$=%24%24login%24%24&j_reason=unknown&j_reason_code=unknown" respondsWith {
+                    status = 200
+                    text = "AEM Sign In"
+                }
+            }
+        }
+
         // custom env, no ports, by domain name
         remoteInstance("http://author.example.com") {
             environment = "prod"
