@@ -12,7 +12,7 @@ open class IoTransfer {
             var finished = false
 
             try {
-                val buf = ByteArray(TRANSFER_CHUNK_10_MB)
+                val buf = ByteArray(TRANSFER_CHUNK_100_KB)
                 var read = input.read(buf)
 
                 while (read >= 0) {
@@ -37,7 +37,7 @@ open class IoTransfer {
             var finished = false
 
             try {
-                val buf = ByteArray(TRANSFER_CHUNK_10_MB)
+                val buf = ByteArray(TRANSFER_CHUNK_100_KB)
                 var read = inputStream.read(buf)
 
                 while (read >= 0) {
@@ -57,6 +57,6 @@ open class IoTransfer {
     }
 
     companion object {
-        const val TRANSFER_CHUNK_10_MB = 10 * 1024 * 1024
+        const val TRANSFER_CHUNK_100_KB = 100 * 1024
     }
 }

@@ -22,7 +22,7 @@ class IoTransferLogger(val project: Project) : IoTransfer() {
                 var finished = false
 
                 try {
-                    val buf = ByteArray(TRANSFER_CHUNK_10_MB)
+                    val buf = ByteArray(TRANSFER_CHUNK_100_KB)
                     var read = input.read(buf)
 
                     while (read >= 0) {
@@ -51,7 +51,7 @@ class IoTransferLogger(val project: Project) : IoTransfer() {
                 var finished = false
 
                 try {
-                    val buf = ByteArray(TRANSFER_CHUNK_10_MB)
+                    val buf = ByteArray(TRANSFER_CHUNK_100_KB)
                     var read = inputStream.read(buf)
 
                     while (read >= 0) {

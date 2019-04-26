@@ -39,7 +39,7 @@ open class InstanceBackup : ZipTask() {
     private fun upload() {
         uploadUrl?.let { url ->
             val backupZip = archiveFile.get().asFile
-            logger.lifecycle("Uploading backup '${backupZip.path}' to '$url'")
+            logger.lifecycle("Uploading backup: ${backupZip.path} to $url")
             fileTransfer(url).upload(backupZip)
         }
     }
@@ -81,7 +81,7 @@ open class InstanceBackup : ZipTask() {
                     aem.config.resolverOptions.smbDomain ?: "",
                     IoTransferLogger(project)
             )
-            else -> throw AemException("Cannot upload backup to URL: '$url'. Only SMB and SFTP URLs are supported.")
+            else -> throw AemException("Cannot upload backup to URL: $url. Only SMB and SFTP URLs are supported.")
         }
     }
 
