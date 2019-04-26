@@ -80,15 +80,18 @@ tasks {
     named<ProcessResources>("processResources") {
         dependsOn( "tailerZip")
 
-        val json = """{
-                    "pluginVersion": "${project.version}",
-                    "gradleVersion": "${project.gradle.gradleVersion}"
-            }""".trimIndent()
+        val json = """
+        |{
+        |    "pluginVersion": "${project.version}",
+        |    "gradleVersion": "${project.gradle.gradleVersion}"
+        |}""".trimMargin()
+        val file = file("$buildDir/resources/main/build.json")
 
         inputs.property("buildJson", json)
+        outputs.file(file)
 
         doLast {
-            file("$buildDir/resources/main/build.json").writeText(json)
+            file.writeText(json)
         }
     }
 
