@@ -1370,7 +1370,7 @@ plugins {
 }
 ```
 
-Provides instance related tasks: `aemEnvUp`, `aemEnvDev`, `aemEnvHosts` etc.
+Provides environment related tasks: `aemEnvUp`, `aemEnvDev`, `aemEnvHosts` etc.
 
 Should be applied only at root project / only once within whole build.
 
