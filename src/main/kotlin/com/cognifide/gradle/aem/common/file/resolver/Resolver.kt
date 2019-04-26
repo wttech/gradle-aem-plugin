@@ -5,8 +5,8 @@ import com.cognifide.gradle.aem.common.DependencyOptions
 import com.cognifide.gradle.aem.common.Formats
 import com.cognifide.gradle.aem.common.file.FileException
 import com.cognifide.gradle.aem.common.file.downloader.HttpFileDownloader
-import com.cognifide.gradle.aem.common.file.downloader.SftpFileTransfer
-import com.cognifide.gradle.aem.common.file.downloader.SmbFileTransfer
+import com.cognifide.gradle.aem.common.file.downloader.SftpFileDownloader
+import com.cognifide.gradle.aem.common.file.downloader.SmbFileDownloader
 import com.cognifide.gradle.aem.common.file.downloader.UrlFileDownloader
 import com.cognifide.gradle.aem.common.http.HttpClient
 import com.google.common.hash.HashCode
@@ -80,8 +80,8 @@ abstract class Resolver<G : FileGroup>(
 
     fun url(url: String): FileResolution {
         return when {
-            SftpFileTransfer.handles(url) -> downloadSftpAuth(url)
-            SmbFileTransfer.handles(url) -> downloadSmbAuth(url)
+            SftpFileDownloader.handles(url) -> downloadSftpAuth(url)
+            SmbFileDownloader.handles(url) -> downloadSmbAuth(url)
             HttpFileDownloader.handles(url) -> downloadHttpAuth(url)
             UrlFileDownloader.handles(url) -> downloadUrl(url)
             else -> local(url)
@@ -91,7 +91,7 @@ abstract class Resolver<G : FileGroup>(
     fun downloadSftp(url: String): FileResolution {
         return resolve(url) { resolution ->
             download(url, resolution.dir) { file ->
-                SftpFileTransfer(project).download(url, file)
+                SftpFileDownloader(project).download(url, file)
             }
         }
     }
@@ -113,10 +113,10 @@ abstract class Resolver<G : FileGroup>(
         return file
     }
 
-    fun downloadSftp(url: String, sftpOptions: SftpFileTransfer.() -> Unit = {}): FileResolution {
+    fun downloadSftp(url: String, sftpOptions: SftpFileDownloader.() -> Unit = {}): FileResolution {
         return resolve(url) { resolution ->
             download(url, resolution.dir) { file ->
-                SftpFileTransfer(project)
+                SftpFileDownloader(project)
                         .apply(sftpOptions)
                         .download(url, file)
             }
@@ -131,10 +131,10 @@ abstract class Resolver<G : FileGroup>(
         }
     }
 
-    fun downloadSmb(url: String, smbOptions: SmbFileTransfer.() -> Unit = {}): FileResolution {
+    fun downloadSmb(url: String, smbOptions: SmbFileDownloader.() -> Unit = {}): FileResolution {
         return resolve(url) { resolution ->
             download(url, resolution.dir) { file ->
-                SmbFileTransfer(project)
+                SmbFileDownloader(project)
                         .apply(smbOptions)
                         .download(url, file)
             }

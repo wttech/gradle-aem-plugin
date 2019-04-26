@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.test
+package com.cognifide.gradle.aem.test.integration
 
 import aQute.bnd.osgi.Jar
 import org.gradle.testkit.runner.BuildResult

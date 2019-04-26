@@ -2,19 +2,20 @@ package com.cognifide.gradle.aem.instance.tasks
 
 import com.cognifide.gradle.aem.common.AemException
 import com.cognifide.gradle.aem.common.Formats
-import com.cognifide.gradle.aem.common.file.downloader.FileTransfer
-import com.cognifide.gradle.aem.common.file.downloader.SftpFileTransfer
-import com.cognifide.gradle.aem.common.file.downloader.SmbFileTransfer
+import com.cognifide.gradle.aem.common.file.transfer.Credentials
+import com.cognifide.gradle.aem.common.file.transfer.FileTransfer
+import com.cognifide.gradle.aem.common.file.transfer.FileTransferSftp
+import com.cognifide.gradle.aem.common.file.transfer.FileTransferSmb
 import com.cognifide.gradle.aem.common.tasks.ZipTask
 import com.cognifide.gradle.aem.instance.InstanceException
 import com.cognifide.gradle.aem.instance.names
+import java.io.File
 import org.gradle.api.execution.TaskExecutionGraph
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.bundling.ZipEntryCompression
-import java.io.File
 
 open class InstanceBackup : ZipTask() {
 
@@ -39,10 +40,9 @@ open class InstanceBackup : ZipTask() {
 
     private fun upload() {
         uploadUrl?.let { url ->
-            val targetUrl = "${url.trimEnd('/')}/$archiveFileName"
             val backupZip = archiveFile.get().asFile
-            logger.lifecycle("Uploading backup '${backupZip.path}' to '$targetUrl'")
-            fileTransfer(url).upload(backupZip, targetUrl)
+            logger.lifecycle("Uploading backup '${backupZip.path}' to '$url'")
+            fileTransfer(url).upload(backupZip)
         }
     }
 
@@ -71,8 +71,16 @@ open class InstanceBackup : ZipTask() {
 
     private fun fileTransfer(url: String): FileTransfer {
         return when {
-            SftpFileTransfer.handles(url) -> SftpFileTransfer(aem.project)
-            SmbFileTransfer.handles(url) -> SmbFileTransfer(aem.project)
+            FileTransferSftp.handles(url) -> FileTransferSftp(
+                    url,
+                    Credentials(aem.config.resolverOptions.sftpUsername, aem.config.resolverOptions.sftpPassword),
+                    aem.config.resolverOptions.sftpHostChecking
+            )
+            FileTransferSmb.handles(url) -> FileTransferSmb(
+                    url,
+                    Credentials(aem.config.resolverOptions.smbUsername, aem.config.resolverOptions.smbPassword),
+                    aem.config.resolverOptions.smbDomain ?: ""
+            )
             else -> throw AemException("Cannot upload backup to URL: '$url'. Only SMB and SFTP URLs are supported.")
         }
     }

@@ -5,15 +5,12 @@ import java.io.File
 import java.io.IOException
 import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.sftp.OpenMode
-import net.schmizz.sshj.sftp.Response
 import net.schmizz.sshj.sftp.SFTPClient
-import net.schmizz.sshj.sftp.SFTPException
-import net.schmizz.sshj.xfer.FileSystemFile
 import org.apache.http.client.utils.URIBuilder
 import org.gradle.api.Project
 import org.gradle.api.logging.Logger
 
-class SftpFileTransfer(val project: Project) : FileTransfer {
+class SftpFileDownloader(val project: Project) {
 
     var username: String? = null
 
@@ -23,47 +20,22 @@ class SftpFileTransfer(val project: Project) : FileTransfer {
 
     val logger: Logger = project.logger
 
-    override fun download(url: String, target: File) {
+    fun download(sourceUrl: String, targetFile: File) {
         try {
-            project.logger.info("Downloading: $url -> ${target.absolutePath}")
+            project.logger.info("Downloading: $sourceUrl -> ${targetFile.absolutePath}")
 
-            val urlObj = URIBuilder(url)
+            val url = URIBuilder(sourceUrl)
             val downloader = ProgressFileDownloader(project)
 
-            connect(urlObj) { sftp ->
-                val size = sftp.stat(urlObj.path).size
-                val input = sftp.open(urlObj.path, setOf(OpenMode.READ)).RemoteFileInputStream()
+            connect(url) { sftp ->
+                val size = sftp.stat(url.path).size
+                val input = sftp.open(url.path, setOf(OpenMode.READ)).RemoteFileInputStream()
 
                 downloader.size = size
-                downloader.download(input, target)
+                downloader.download(input, targetFile)
             }
         } catch (e: IOException) {
-            throw FileException("Cannot download URL '$url' to file '$target' using SFTP. Cause: ${e.message}", e)
-        }
-    }
-
-    override fun upload(source: File, url: String) {
-        try {
-            val urlObj = URIBuilder(url)
-            connect(urlObj) { sftp ->
-                sftp.put(FileSystemFile(source), urlObj.path)
-            }
-        } catch (e: SFTPException) {
-            throw FileException("Cannot upload file '${source.path}' to URL '$url' using SFTP: ${e.statusCode}, ${e.message}", e)
-        }
-    }
-
-    override fun delete(url: String) {
-        try {
-            val urlObj = URIBuilder(url)
-            connect(urlObj) { sftp ->
-                sftp.rm(urlObj.path)
-            }
-        } catch (e: SFTPException) {
-            when (e.statusCode) {
-                Response.StatusCode.NO_SUCH_FILE -> throw FileException("Cannot delete URL. File not found '$url'.", e)
-                else -> throw FileException("Cannot delete file '$url' using SFTP: ${e.statusCode}, ${e.message}", e)
-            }
+            throw FileException("Cannot download URL '$sourceUrl' to file '$targetFile' using SFTP. Cause: ${e.message}", e)
         }
     }
 
@@ -104,8 +76,8 @@ class SftpFileTransfer(val project: Project) : FileTransfer {
     companion object {
         const val PORT_DEFAULT = 22
 
-        fun handles(url: String): Boolean {
-            return !url.isBlank() && url.startsWith("sftp://")
+        fun handles(sourceUrl: String): Boolean {
+            return !sourceUrl.isBlank() && sourceUrl.startsWith("sftp://")
         }
     }
 }
