@@ -6,7 +6,7 @@ import kotlinx.coroutines.*
 @UseExperimental(ObsoleteCoroutinesApi::class)
 class ParallelExecutor(aem: AemExtension) {
 
-    val enabled = aem.props.boolean("aem.parallel") ?: true
+    val enabled = aem.props.boolean("parallel") ?: true
 
     fun <A, B : Any> map(iterable: Iterable<A>, mapper: (A) -> B): Collection<B> {
         return map(iterable, { true }, mapper)

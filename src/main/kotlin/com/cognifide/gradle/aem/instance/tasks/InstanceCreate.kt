@@ -98,7 +98,7 @@ open class InstanceCreate : LocalInstanceTask() {
 
     private fun getInternalBackup(): File? {
         return findRecentBackup(null) ?: throw InstanceException("Internal local instance backup is not yet created. " +
-                "Ensure running task 'aemBackup' before.")
+                "Ensure running task 'instanceBackup' before.")
     }
 
     private fun getExternalBackup(): File {

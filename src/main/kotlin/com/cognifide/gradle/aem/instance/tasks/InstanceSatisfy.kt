@@ -23,13 +23,13 @@ open class InstanceSatisfy : PackageDeploy() {
      * Forces to upload and install again all packages regardless their state on instances (already uploaded / installed).
      */
     @Input
-    var greedy = aem.props.flag("aem.satisfy.greedy")
+    var greedy = aem.props.flag("satisfy.greedy")
 
     /**
      * Determines which packages should be installed by default when satisfy task is being executed.
      */
     @Input
-    var groupName = aem.props.string("aem.satisfy.groupName") ?: "*"
+    var groupName = aem.props.string("satisfy.groupName") ?: "*"
 
     @get:Internal
     var groupFilter: FileGroup.() -> Boolean = { Patterns.wildcard(name, groupName) }
@@ -41,14 +41,14 @@ open class InstanceSatisfy : PackageDeploy() {
      * This flag can change that behavior, so that information will be refreshed after each package installation.
      */
     @Input
-    var listRefresh: Boolean = aem.props.boolean("aem.satisfy.listRefresh") ?: false
+    var listRefresh: Boolean = aem.props.boolean("satisfy.listRefresh") ?: false
 
     /**
      * Repeat listing package when failed (brute-forcing).
      */
     @Internal
     @get:JsonIgnore
-    var listRetry = aem.retry { afterSquaredSecond(aem.props.long("aem.satisfy.listRetry") ?: 4) }
+    var listRetry = aem.retry { afterSquaredSecond(aem.props.long("satisfy.listRetry") ?: 4) }
 
     /**
      * Provides a packages from local and remote sources.
@@ -84,7 +84,7 @@ open class InstanceSatisfy : PackageDeploy() {
 
     @get:Internal
     val cmdGroups: Boolean
-        get() = project.findProperty("aem.satisfy.urls") != null
+        get() = project.findProperty("satisfy.urls") != null
 
     private val packageActions = mutableListOf<PackageAction>()
 
@@ -97,7 +97,7 @@ open class InstanceSatisfy : PackageDeploy() {
 
     private fun defineCmdGroups() {
         if (cmdGroups) {
-            val urls = aem.props.list("aem.satisfy.urls") ?: listOf()
+            val urls = aem.props.list("satisfy.urls") ?: listOf()
             urls.forEachIndexed { index, url ->
                 packageProvider.group("cmd.${index + 1}") { url(url) }
             }

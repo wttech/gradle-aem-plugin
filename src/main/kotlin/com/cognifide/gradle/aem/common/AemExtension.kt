@@ -44,7 +44,7 @@ open class AemExtension(@Internal val project: Project) {
      */
     @get:Internal
     @get:JsonIgnore
-    val projectMain: Project = project.findProject(props.string("aem.projectMainPath") ?: ":aem") ?: project.rootProject
+    val projectMain: Project = project.findProject(props.string("projectMainPath") ?: ":aem") ?: project.rootProject
 
     /**
      * Project name convention prefixes used to determine default:
@@ -57,7 +57,7 @@ open class AemExtension(@Internal val project: Project) {
      */
     @get:Internal
     @get:JsonIgnore
-    val projectPrefixes: List<String> = props.list("aem.projectPrefixes") ?: listOf("aem.", "aem-", "aem_")
+    val projectPrefixes: List<String> = props.list("projectPrefixes") ?: listOf("aem.", "aem-", "aem_")
 
     /**
      * Project name with skipped convention prefixes.
@@ -86,14 +86,14 @@ open class AemExtension(@Internal val project: Project) {
      * Determines current environment to be used in e.g package deployment.
      */
     @Input
-    val environment: String = props.string("aem.env") ?: run { System.getenv("AEM_ENV") ?: "local" }
+    val environment: String = props.string("env") ?: run { System.getenv("ENV") ?: "local" }
 
     /**
      * Timezone ID (default for defined instances)
      */
     @Internal
     @JsonIgnore
-    var zoneId: ZoneId = props.string("aem.zoneId")?.let { ZoneId.of(it) } ?: ZoneId.systemDefault()
+    var zoneId: ZoneId = props.string("zoneId")?.let { ZoneId.of(it) } ?: ZoneId.systemDefault()
 
     /**
      * Performs parallel CRX package deployments and instance synchronization.
@@ -113,7 +113,7 @@ open class AemExtension(@Internal val project: Project) {
      */
     @get:Internal
     val configDir: File
-        get() = project.file(props.string("aem.configDir") ?: "gradle")
+        get() = project.file(props.string("configDir") ?: "gradle")
 
     /**
      * Directory for storing common files used by plugin e.g:
@@ -122,7 +122,7 @@ open class AemExtension(@Internal val project: Project) {
      */
     @get:Internal
     val configCommonDir: File
-        get() = projectMain.file(props.string("aem.configDir") ?: "gradle")
+        get() = projectMain.file(props.string("configCommonDir") ?: "gradle")
 
     /**
      * Provides API for displaying interactive notification during running build tasks.
@@ -148,7 +148,7 @@ open class AemExtension(@Internal val project: Project) {
     @get:Internal
     val javaPackages: List<String>
         get() = AemPlugin.withId(project, BundlePlugin.ID).flatMap { subproject ->
-            AemExtension.of(subproject).tasks.bundles.mapNotNull { it.javaPackage }
+            of(subproject).tasks.bundles.mapNotNull { it.javaPackage }
         }
 
     @get:Internal
@@ -166,7 +166,7 @@ open class AemExtension(@Internal val project: Project) {
     @get:Internal
     val anyInstance: Instance
         get() {
-            val cmdInstanceArg = props.string("aem.instance")
+            val cmdInstanceArg = props.string("instance")
             if (!cmdInstanceArg.isNullOrBlank()) {
                 return instance(cmdInstanceArg)
             }
@@ -174,7 +174,7 @@ open class AemExtension(@Internal val project: Project) {
             return namedInstance(Instance.FILTER_ANY)
         }
 
-    fun namedInstance(desiredName: String? = props.string("aem.instance.name"), defaultName: String = "$environment-*"): Instance {
+    fun namedInstance(desiredName: String? = props.string("instance.name"), defaultName: String = "$environment-*"): Instance {
         val nameMatcher: String = desiredName ?: defaultName
 
         val namedInstance = filterInstances(nameMatcher).firstOrNull()
@@ -185,7 +185,7 @@ open class AemExtension(@Internal val project: Project) {
         throw InstanceException("Instance named '$nameMatcher' is not defined.")
     }
 
-    fun filterInstances(nameMatcher: String = props.string("aem.instance.name") ?: "$environment-*"): List<Instance> {
+    fun filterInstances(nameMatcher: String = props.string("instance.name") ?: "$environment-*"): List<Instance> {
         val all = config.instances.values
 
         // Specified by command line should not be filtered
@@ -197,10 +197,10 @@ open class AemExtension(@Internal val project: Project) {
         // Defined by build script, via properties or defaults are filterable by name
         return all.filter { instance ->
             when {
-                props.flag("aem.instance.authors") -> {
+                props.flag("instance.authors") -> {
                     Patterns.wildcard(instance.name, "$environment-${InstanceType.AUTHOR}*")
                 }
-                props.flag("aem.instance.publishers") -> {
+                props.flag("instance.publishers") -> {
                     Patterns.wildcard(instance.name, "$environment-${InstanceType.PUBLISH}*")
                 }
                 else -> Patterns.wildcard(instance.name, nameMatcher)
@@ -320,13 +320,13 @@ open class AemExtension(@Internal val project: Project) {
     @get:Internal
     val filter: VltFilter
         get() {
-            val cmdFilterRoots = props.list("aem.filter.roots") ?: listOf()
+            val cmdFilterRoots = props.list("filter.roots") ?: listOf()
             if (cmdFilterRoots.isNotEmpty()) {
                 logger.debug("Using Vault filter roots specified as command line property: $cmdFilterRoots")
                 return VltFilter.temporary(project, cmdFilterRoots)
             }
 
-            val cmdFilterPath = props.string("aem.filter.path") ?: ""
+            val cmdFilterPath = props.string("filter.path") ?: ""
             if (cmdFilterPath.isNotEmpty()) {
                 val cmdFilter = FileOperations.find(project, config.packageVltRoot, cmdFilterPath)
                         ?: throw VltException("Vault check out filter file does not exist at path: $cmdFilterPath" +

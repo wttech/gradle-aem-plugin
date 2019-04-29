@@ -85,13 +85,13 @@ class Cleaner(project: Project) {
      * Controls unused namespaces skipping.
      */
     @Input
-    var namespacesSkipped: Boolean = aem.props.boolean("aem.cleaner.namespacesSkipped") ?: true
+    var namespacesSkipped: Boolean = aem.props.boolean("cleaner.namespacesSkipped") ?: true
 
     /**
      * Controls backups for parent nodes of filter roots for keeping them untouched.
      */
     @Input
-    var parentsBackupEnabled: Boolean = aem.props.boolean("aem.cleaner.parentsBackup") ?: true
+    var parentsBackupEnabled: Boolean = aem.props.boolean("cleaner.parentsBackup") ?: true
 
     /**
      * File suffix being added to parent node back up files.

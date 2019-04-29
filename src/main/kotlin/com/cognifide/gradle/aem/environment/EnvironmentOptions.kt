@@ -19,15 +19,15 @@ class EnvironmentOptions(private val aem: AemExtension) {
     /**
      * Path in which local AEM environment will be stored.
      */
-    var root: String = aem.props.string("aem.env.root") ?: "${aem.projectMain.file(".aem/environment")}"
+    var root: String = aem.props.string("env.root") ?: "${aem.projectMain.file(".aem/environment")}"
 
     /**
      * URI pointing to Dispatcher distribution TAR file.
      */
-    var dispatcherDistUrl = aem.props.string("aem.env.dispatcher.distUrl")
+    var dispatcherDistUrl = aem.props.string("env.dispatcher.distUrl")
             ?: "http://download.macromedia.com/dispatcher/download/dispatcher-apache2.4-linux-x86_64-4.3.2.tar.gz"
 
-    var dispatcherModuleName = aem.props.string("aem.env.dispatcher.moduleName")
+    var dispatcherModuleName = aem.props.string("env.dispatcher.moduleName")
             ?: "*/dispatcher-apache*.so"
 
     val dockerComposeFile

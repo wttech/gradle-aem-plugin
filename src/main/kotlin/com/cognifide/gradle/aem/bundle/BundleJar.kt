@@ -65,7 +65,7 @@ val jar: Jar
      *
      * - generated OSGi specific manifest instructions like 'Bundle-SymbolicName', 'Export-Package'.
      * - generated AEM specific manifest instructions like 'Sling-Model-Packages'.
-     * - performed additional component stability checks within 'aemDeploy' or separately using 'aemAwait'.
+     * - performed additional component stability checks within 'packageDeploy' or separately using 'instanceAwait'.
      *
      * Default convention: '${project.group}.${project.name}'.
      *

@@ -17,13 +17,13 @@ open class Rcp : Vlt() {
     var paths: Map<String, String> = mapOf()
 
     @Internal
-    var sourceInstance: Instance? = aem.props.string("aem.rcp.source")?.run { aem.config.parseInstance(this) }
+    var sourceInstance: Instance? = aem.props.string("rcp.source")?.run { aem.config.parseInstance(this) }
 
     @Internal
-    var targetInstance: Instance? = aem.props.string("aem.rcp.target")?.run { aem.config.parseInstance(this) }
+    var targetInstance: Instance? = aem.props.string("rcp.target")?.run { aem.config.parseInstance(this) }
 
     @Internal
-    var opts: String = aem.props.string("aem.rcp.opts") ?: "-b 100 -r -u"
+    var opts: String = aem.props.string("rcp.opts") ?: "-b 100 -r -u"
 
     @TaskAction
     override fun perform() {
@@ -42,11 +42,11 @@ open class Rcp : Vlt() {
 
     private fun createClient(): VltRcpClient {
         if (sourceInstance == null) {
-            throw VltException("Source RCP instance is not defined. Ensure specified param '-Paem.instance.source'")
+            throw VltException("Source RCP instance is not defined. Ensure specified param '-Pinstance.source'")
         }
 
         if (targetInstance == null) {
-            throw VltException("Target RCP instance is not defined. Ensure specified param '-Paem.instance.target'")
+            throw VltException("Target RCP instance is not defined. Ensure specified param '-Pinstance.target'")
         }
 
         return VltRcpClient(vlt, sourceInstance!!, targetInstance!!).apply {
@@ -60,13 +60,13 @@ open class Rcp : Vlt() {
             return
         }
 
-        val cmdPaths = aem.props.list("aem.rcp.paths") ?: listOf()
+        val cmdPaths = aem.props.list("rcp.paths") ?: listOf()
         if (cmdPaths.isNotEmpty()) {
             cmdPaths.asSequence().map { pathMapping(it) }.forEach(action)
             return
         }
 
-        val cmdFilePath = aem.props.string("aem.rcp.pathsFile")
+        val cmdFilePath = aem.props.string("rcp.pathsFile")
         if (!cmdFilePath.isNullOrBlank()) {
             val cmdFile = File(cmdFilePath)
             if (!cmdFile.exists()) {
@@ -77,7 +77,7 @@ open class Rcp : Vlt() {
             return
         }
 
-        throw VltException("RCP param '-Paem.rcp.paths' or '-Paem.rcp.pathsFile' must be specified.")
+        throw VltException("RCP param '-Prcp.paths' or '-Prcp.pathsFile' must be specified.")
     }
 
     private fun pathMapping(path: String): Pair<String, String> {
@@ -91,6 +91,6 @@ open class Rcp : Vlt() {
     }
 
     companion object {
-        const val NAME = "aemRcp"
+        const val NAME = "rcp"
     }
 }

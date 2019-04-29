@@ -9,6 +9,6 @@ open class Up : AemDefaultTask() {
     }
 
     companion object {
-        const val NAME = "aemUp"
+        const val NAME = "up"
     }
 }

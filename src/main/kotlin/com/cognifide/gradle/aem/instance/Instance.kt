@@ -136,9 +136,9 @@ interface Instance : Serializable {
         @Suppress("ComplexMethod")
         fun properties(aem: AemExtension): List<Instance> {
             return aem.project.properties.filterKeys {
-                Patterns.wildcard(it, "aem.instance.*.httpUrl")
+                Patterns.wildcard(it, "instance.*.httpUrl")
             }.keys.mapNotNull { property ->
-                val name = property.split(".")[2]
+                val name = property.split(".")[1]
                 val nameParts = name.split("-")
                 if (nameParts.size != 2) {
                     aem.logger.warn("Instance name has invalid format '$name' in property '$property'.")
@@ -146,10 +146,10 @@ interface Instance : Serializable {
                 }
 
                 val props = aem.project.properties.filterKeys {
-                    Patterns.wildcard(it, "aem.instance.$name.*")
+                    Patterns.wildcard(it, "instance.$name.*")
                 }.entries.fold(mutableMapOf<String, String>()) { result, e ->
                     val (key, value) = e
-                    val prop = key.substringAfter("aem.instance.$name.")
+                    val prop = key.substringAfter("instance.$name.")
                     result.apply { put(prop, value as String) }
                 }
 

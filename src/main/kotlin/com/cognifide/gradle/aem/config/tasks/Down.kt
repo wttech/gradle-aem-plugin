@@ -9,6 +9,6 @@ open class Down : AemDefaultTask() {
     }
 
     companion object {
-        const val NAME = "aemDown"
+        const val NAME = "down"
     }
 }

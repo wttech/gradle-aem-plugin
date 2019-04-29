@@ -18,13 +18,13 @@ open class Sync : AemDefaultTask() {
      * Determines what need to be done (content copied and clean or something else).
      */
     @Internal
-    var mode = Mode.of(aem.props.string("aem.sync.mode") ?: Mode.COPY_AND_CLEAN.name)
+    var mode = Mode.of(aem.props.string("sync.mode") ?: Mode.COPY_AND_CLEAN.name)
 
     /**
      * Determines a method of getting JCR content from remote instance.
      */
     @Internal
-    var transfer = Transfer.of(aem.props.string("aem.sync.transfer") ?: Transfer.PACKAGE_DOWNLOAD.name)
+    var transfer = Transfer.of(aem.props.string("sync.transfer") ?: Transfer.PACKAGE_DOWNLOAD.name)
 
     /**
      * Source instance from which JCR content will be copied.
@@ -187,7 +187,7 @@ open class Sync : AemDefaultTask() {
     }
 
     companion object {
-        val NAME = "aemSync"
+        const val NAME = "sync"
 
         private val MANGLE_NAMESPACE_OUT_PATTERN: Pattern = Pattern.compile("/([^:/]+):")
     }

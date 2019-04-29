@@ -6,7 +6,7 @@
 
 ## Description
 
-Tailer is tool based on Gradle AEM Plugin task named `aemTail`. See [documentation](../../README.md#task-aemtail).
+Tailer is tool based on Gradle AEM Plugin task named `instanceTail`. See [documentation](../../README.md#task-instanceTail).
 
 ## Usage
 
