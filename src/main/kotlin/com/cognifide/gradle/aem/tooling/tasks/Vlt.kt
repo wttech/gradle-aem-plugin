@@ -25,6 +25,6 @@ open class Vlt : AemDefaultTask() {
     }
 
     companion object {
-        const val NAME = "sync"
+        const val NAME = "vlt"
     }
 }
