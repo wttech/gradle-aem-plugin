@@ -205,15 +205,15 @@ aem {
         }
     }
     tasks {
-        compose {
-            fromProject(":core")
-            fromProject(":config")
-        }
         bundle {
             javaPackage = "com.company.example.aem"
             // ...
         }
-        satisfy {
+        packageCompose {
+            fromProject(":core")
+            fromProject(":config")
+        }
+        instanceSatisfy {
             packages {
                 url("http://.../package.zip")
             }
@@ -710,7 +710,7 @@ Inherits from task [ZIP](https://docs.gradle.org/3.5/dsl/org.gradle.api.tasks.bu
 ```kotlin
 aem {
     tasks {
-        compose {
+        packageCompose {
             duplicatesStrategy = DuplicatesStrategy.WARN
             baseName = aem.baseName
             contentPath = aem.config.packageRoot
@@ -742,7 +742,7 @@ Use dedicated task method named `fromJar`.
 ```kotlin
 aem {
     tasks {
-        compose {
+        packageCompose {
             fromJar("group:name:version")
         }
     }
@@ -770,7 +770,7 @@ plugins {
 
 aem {
     tasks {
-        compose {
+        packageCompose {
             fromProject(":aem:sites")
             fromProject(":aem:common")
             fromProjects(":aem:content.*")
@@ -802,7 +802,7 @@ Related configuration:
 ```kotlin
 aem {
     tasks {
-        compose {
+        packageCompose {
             fileFilter {
                 expandProperties = mapOf(
                     "organization" to "Company"
@@ -1486,13 +1486,13 @@ For instance, subproject `:aem:core` specific configuration like OSGi bundle or 
 ```kotlin
 aem {
     tasks {
-        compose {
+        bundle {
+            javaPackage = "com.company.example.aem.core"
+        }
+        packageCompose {
             fromProjects(':content:*')
             baseName = "example-core"
             duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-        }
-        bundle {
-            javaPackage = "com.company.example.aem.core"
         }
     }
 }

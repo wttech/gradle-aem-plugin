@@ -82,20 +82,7 @@
       "dispatcherDistUrl" : "http://download.macromedia.com/dispatcher/download/dispatcher-apache2.4-linux-x86_64-4.3.2.tar.gz",
       "dispatcherModuleName" : "*/dispatcher-apache*.so",
       "hosts" : {
-        "list" : [
-          {
-            "text" : "127.0.0.1\texample.com"
-          },
-          {
-            "text" : "127.0.0.1\tdemo.example.com"
-          },
-          {
-            "text" : "127.0.0.1\tauthor.example.com"
-          },
-          {
-            "text" : "127.0.0.1\tinvalidation-only"
-          }
-        ]
+        "defined" : []
       },
       "httpdConfDir" : "*/gradle/environment/httpd/conf",
       "dockerComposeSourceFile" : "*/gradle/environment/docker-compose.yml",

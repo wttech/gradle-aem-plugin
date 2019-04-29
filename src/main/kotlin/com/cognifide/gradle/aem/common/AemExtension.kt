@@ -9,7 +9,7 @@ import com.cognifide.gradle.aem.environment.EnvironmentPlugin
 import com.cognifide.gradle.aem.instance.*
 import com.cognifide.gradle.aem.pkg.PackageDefinition
 import com.cognifide.gradle.aem.pkg.PackagePlugin
-import com.cognifide.gradle.aem.pkg.tasks.Compose
+import com.cognifide.gradle.aem.pkg.tasks.PackageCompose
 import com.cognifide.gradle.aem.pkg.vlt.VltFilter
 import com.cognifide.gradle.aem.tooling.ToolingPlugin
 import com.cognifide.gradle.aem.tooling.vlt.VltException
@@ -236,12 +236,12 @@ open class AemExtension(@Internal val project: Project) {
 
     @get:Internal
     val packages: List<File>
-        get() = project.tasks.withType(Compose::class.java)
+        get() = project.tasks.withType(PackageCompose::class.java)
                 .map { it.archiveFile.get().asFile }
 
     fun dependentPackages(task: Task): List<File> {
         return task.taskDependencies.getDependencies(task)
-                .filterIsInstance(Compose::class.java)
+                .filterIsInstance(PackageCompose::class.java)
                 .map { it.archiveFile.get().asFile }
     }
 

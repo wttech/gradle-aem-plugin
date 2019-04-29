@@ -47,13 +47,10 @@ class EnvironmentOptions(private val aem: AemExtension) {
 
     val hosts = HostsOptions()
 
-    fun healthChecks(options: HealthChecks.() -> Unit) {
-        healthChecks = HealthChecks().apply(options)
-    }
-
-    fun hosts(config: Map<String, String>) {
-        hosts.configure(config)
-    }
+    /**
+     * Ensures that specified directories will exist.
+     */
+    fun directories(vararg paths: String) = directories(paths.toList())
 
     /**
      * Ensures that specified directories will exist.
@@ -63,9 +60,21 @@ class EnvironmentOptions(private val aem: AemExtension) {
     }
 
     /**
-     * Ensures that specified directories will exist.
+     * Defines hosts to be appended to system specific hosts file.
      */
-    fun directories(vararg paths: String) = directories(paths.toList())
+    fun hosts(vararg values: String) = hosts(values.toList())
+
+    /**
+     * Defines hosts to be appended to system specific hosts file.
+     */
+    fun hosts(values: Iterable<String>) = hosts.define(values)
+
+    /**
+     * Configures environment service health checks.
+     */
+    fun healthChecks(options: HealthChecks.() -> Unit) {
+        healthChecks.apply(options)
+    }
 
     fun prepare() {
         provideFiles()
@@ -109,7 +118,6 @@ class EnvironmentOptions(private val aem: AemExtension) {
     }
 
     companion object {
-
         const val ENVIRONMENT_DIR = "environment"
 
         const val FILES_DIR = "files"

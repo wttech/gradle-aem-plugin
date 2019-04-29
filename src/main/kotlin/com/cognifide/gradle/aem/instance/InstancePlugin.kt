@@ -3,9 +3,10 @@ package com.cognifide.gradle.aem.instance
 import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.AemPlugin
 import com.cognifide.gradle.aem.config.ConfigPlugin
+import com.cognifide.gradle.aem.config.tasks.Resolve
 import com.cognifide.gradle.aem.instance.tasks.*
 import com.cognifide.gradle.aem.pkg.PackagePlugin
-import com.cognifide.gradle.aem.pkg.tasks.Deploy
+import com.cognifide.gradle.aem.pkg.tasks.PackageDeploy
 import org.gradle.api.Project
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 
@@ -27,48 +28,45 @@ class InstancePlugin : AemPlugin() {
 
     private fun Project.setupTasks() {
         with(AemExtension.of(this).tasks) {
-            register<Resolve>(Resolve.NAME) {
-                mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
+            register<InstanceDown>(InstanceDown.NAME)
+            register<InstanceUp>(InstanceUp.NAME) {
+                dependsOn(InstanceCreate.NAME).mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME, InstanceDown.NAME)
             }
-            register<Down>(Down.NAME)
-            register<Up>(Up.NAME) {
-                dependsOn(Create.NAME).mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME, Down.NAME)
+            register<InstanceRestart>(InstanceRestart.NAME) {
+                dependsOn(InstanceDown.NAME, InstanceUp.NAME)
             }
-            register<Restart>(Restart.NAME) {
-                dependsOn(Down.NAME, Up.NAME)
-            }
-            register<Create>(Create.NAME) {
+            register<InstanceCreate>(InstanceCreate.NAME) {
                 dependsOn(Resolve.NAME).mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
             }
-            register<Destroy>(Destroy.NAME) {
-                dependsOn(Down.NAME)
+            register<InstanceDestroy>(InstanceDestroy.NAME) {
+                dependsOn(InstanceDown.NAME)
             }
-            register<Satisfy>(Satisfy.NAME) {
-                dependsOn(Resolve.NAME).mustRunAfter(Create.NAME, Up.NAME)
+            register<InstanceSatisfy>(InstanceSatisfy.NAME) {
+                dependsOn(Resolve.NAME).mustRunAfter(InstanceCreate.NAME, InstanceUp.NAME)
             }
-            register<Reload>(Reload.NAME) {
-                mustRunAfter(Satisfy.NAME)
-                plugins.withId(PackagePlugin.ID) { mustRunAfter(Deploy.NAME) }
+            register<InstanceReload>(InstanceReload.NAME) {
+                mustRunAfter(InstanceSatisfy.NAME)
+                plugins.withId(PackagePlugin.ID) { mustRunAfter(PackageDeploy.NAME) }
             }
-            register<Await>(Await.NAME) {
-                mustRunAfter(Create.NAME, Up.NAME, Satisfy.NAME)
-                plugins.withId(PackagePlugin.ID) { mustRunAfter(Deploy.NAME) }
+            register<InstanceAwait>(InstanceAwait.NAME) {
+                mustRunAfter(InstanceCreate.NAME, InstanceUp.NAME, InstanceSatisfy.NAME)
+                plugins.withId(PackagePlugin.ID) { mustRunAfter(PackageDeploy.NAME) }
             }
-            register<Collect>(Collect.NAME) {
-                mustRunAfter(Satisfy.NAME)
+            register<InstanceCollect>(InstanceCollect.NAME) {
+                mustRunAfter(InstanceSatisfy.NAME)
             }
-            register<Setup>(Setup.NAME) {
-                dependsOn(Create.NAME, Up.NAME, Satisfy.NAME).mustRunAfter(Destroy.NAME)
-                plugins.withId(PackagePlugin.ID) { dependsOn(Deploy.NAME) }
+            register<InstanceSetup>(InstanceSetup.NAME) {
+                dependsOn(InstanceCreate.NAME, InstanceUp.NAME, InstanceSatisfy.NAME).mustRunAfter(InstanceDestroy.NAME)
+                plugins.withId(PackagePlugin.ID) { dependsOn(PackageDeploy.NAME) }
             }
-            register<Resetup>(Resetup.NAME) {
-                dependsOn(Destroy.NAME, Setup.NAME)
+            register<InstanceResetup>(InstanceResetup.NAME) {
+                dependsOn(InstanceDestroy.NAME, InstanceSetup.NAME)
             }
-            register<Backup>(Backup.NAME) {
-                dependsOn(Down.NAME)
-                finalizedBy(Up.NAME)
+            register<InstanceBackup>(InstanceBackup.NAME) {
+                dependsOn(InstanceDown.NAME)
+                finalizedBy(InstanceUp.NAME)
             }
-            register<Tail>(Tail.NAME)
+            register<InstanceTail>(InstanceTail.NAME)
         }
     }
 

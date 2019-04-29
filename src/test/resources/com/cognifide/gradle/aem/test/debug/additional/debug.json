@@ -249,18 +249,22 @@
       "dispatcherDistUrl" : "http://download.macromedia.com/dispatcher/download/dispatcher-apache2.4-linux-x86_64-4.3.2.tar.gz",
       "dispatcherModuleName" : "*/dispatcher-apache*.so",
       "hosts" : {
-        "list" : [
+        "defined" : [
           {
-            "text" : "127.0.0.1\texample.com"
+            "ip" : "127.0.0.1",
+            "name" : "example.com"
           },
           {
-            "text" : "127.0.0.1\tdemo.example.com"
+            "ip" : "127.0.0.1",
+            "name" : "demo.example.com"
           },
           {
-            "text" : "127.0.0.1\tauthor.example.com"
+            "ip" : "127.0.0.1",
+            "name" : "author.example.com"
           },
           {
-            "text" : "127.0.0.1\tinvalidation-only"
+            "ip" : "127.0.0.1",
+            "name" : "invalidation-only"
           }
         ]
       },

@@ -36,10 +36,6 @@ open class AemDefaultTask : DefaultTask(), AemTask {
         doTaskGraphReady(graph)
     }
 
-    fun willBeExecuted(taskName: String): Boolean {
-        return project.gradle.taskGraph.allTasks.any { it.name == taskName }
-    }
-
     fun afterConfigured(callback: Task.() -> Unit) {
         afterConfigured(this, callback)
     }

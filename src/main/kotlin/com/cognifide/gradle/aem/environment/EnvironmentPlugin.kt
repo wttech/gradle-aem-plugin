@@ -25,17 +25,17 @@ class EnvironmentPlugin : AemPlugin() {
 
     private fun Project.setupTasks() {
         with(AemExtension.of(this).tasks) {
-            register<EnvDev>(EnvDev.NAME)
-            register<EnvHosts>(EnvHosts.NAME)
-            register<EnvUp>(EnvUp.NAME)
-            register<EnvDown>(EnvDown.NAME)
+            register<EnvironmentDev>(EnvironmentDev.NAME)
+            register<EnvironmentHosts>(EnvironmentHosts.NAME)
+            register<EnvironmentUp>(EnvironmentUp.NAME)
+            register<EnvironmentDown>(EnvironmentDown.NAME)
 
-            register<EnvDestroy>(EnvDestroy.NAME) {
-                dependsOn(EnvDown.NAME)
+            register<EnvironmentDestroy>(EnvironmentDestroy.NAME) {
+                dependsOn(EnvironmentDown.NAME)
             }
-            register<EnvRestart>(EnvRestart.NAME) {
-                dependsOn(EnvDown.NAME)
-                finalizedBy(EnvUp.NAME)
+            register<EnvironmentRestart>(EnvironmentRestart.NAME) {
+                dependsOn(EnvironmentDown.NAME)
+                finalizedBy(EnvironmentUp.NAME)
             }
         }
     }

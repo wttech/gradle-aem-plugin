@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.pkg
 
-import com.cognifide.gradle.aem.pkg.tasks.Compose
+import com.cognifide.gradle.aem.pkg.tasks.PackageCompose
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 
@@ -22,7 +22,7 @@ class Package private constructor() {
 
     var lastUnpacked: Long? = null
 
-    constructor(compose: Compose) : this() {
+    constructor(compose: PackageCompose) : this() {
         this.group = compose.vaultDefinition.group
         this.name = compose.vaultDefinition.name
         this.version = compose.vaultDefinition.version
