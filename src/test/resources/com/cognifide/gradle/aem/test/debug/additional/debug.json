@@ -219,7 +219,7 @@
       "smbPassword" : null
     },
     "localInstanceOptions" : {
-      "root" : "*/.aem",
+      "root" : "*/.aem/instance",
       "source" : "AUTO",
       "zipUrl" : null,
       "jarUrl" : null,
@@ -238,6 +238,40 @@
       "license" : null,
       "zip" : null,
       "mandatoryFiles" : [ ]
+    },
+    "environmentOptions" : {
+      "directories" : [
+        "logs",
+        "cache/content/example/live",
+        "cache/content/example/demo"
+      ],
+      "root" : "*/.aem/environment",
+      "dispatcherDistUrl" : "http://download.macromedia.com/dispatcher/download/dispatcher-apache2.4-linux-x86_64-4.3.2.tar.gz",
+      "dispatcherModuleName" : "*/dispatcher-apache*.so",
+      "hosts" : {
+        "defined" : [
+          {
+            "ip" : "127.0.0.1",
+            "name" : "example.com"
+          },
+          {
+            "ip" : "127.0.0.1",
+            "name" : "demo.example.com"
+          },
+          {
+            "ip" : "127.0.0.1",
+            "name" : "author.example.com"
+          },
+          {
+            "ip" : "127.0.0.1",
+            "name" : "invalidation-only"
+          }
+        ]
+      },
+      "httpdConfDir" : "*/gradle/environment/httpd/conf",
+      "dockerComposeSourceFile" : "*/gradle/environment/docker-compose.yml",
+      "dispatcherModuleFile" : "*/.aem/environment/files/mod_dispatcher.so",
+      "dockerComposeFile" : "*/.aem/environment/docker-compose.yml"
     },
     "packageRoot": "*/src/main/content",
     "packageMetaCommonRoot": "*/gradle/package/META-INF",

@@ -16,21 +16,22 @@ class PackageDownloader(@Internal private val aem: AemExtension) {
     /**
      * Repeat download when failed (brute-forcing).
      */
-    var retry = aem.retry { afterSquaredSecond(aem.props.long("aem.packageDownload.retry") ?: 3) }
+    var retry = aem.retry { afterSquaredSecond(aem.props.long("packageDownload.retry") ?: 3) }
 
     /**
-     * Extract the contents of package downloaded using aemDownload task to current project jcr_root directory
-     * This operation can be modified using -Paem.force command line to replace the contents of jcr_root directory with
-     * package content
+     * Extract the contents of download package to current project 'jcr_root' directory.
+     *
+     * This operation can be modified using -Pforce command line to replace the contents of jcr_root directory
+     * with package content.
      */
-    var extract = aem.props.boolean("aem.packageDownload.extract") ?: true
+    var extract = aem.props.boolean("packageDownload.extract") ?: true
 
     /**
      * In case of downloading big CRX packages, AEM could respond much slower so that special
      * timeout is covering such edge case.
      */
     var httpOptions: HttpClient.() -> Unit = {
-        connectionTimeout = aem.props.int("aem.packageDownload.httpOptions.connectionTimeout") ?: 60000
+        connectionTimeout = aem.props.int("packageDownload.httpOptions.connectionTimeout") ?: 60000
     }
 
     fun download() {

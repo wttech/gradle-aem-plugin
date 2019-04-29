@@ -8,7 +8,7 @@ class VltRunner(val aem: AemExtension) {
 
     private val app = VltApp(aem.project)
 
-    var command: String = aem.props.string("aem.vlt.command") ?: ""
+    var command: String = aem.props.string("vlt.command") ?: ""
 
     var commandProperties: Map<String, Any> = mapOf("config" to aem.config)
 
@@ -17,7 +17,7 @@ class VltRunner(val aem: AemExtension) {
 
     var contentPath: String = aem.config.packageRoot
 
-    var contentRelativePath: String = aem.props.string("aem.vlt.path") ?: ""
+    var contentRelativePath: String = aem.props.string("vlt.path") ?: ""
 
     val contentDirEffective: File
         get() {

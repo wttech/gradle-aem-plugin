@@ -13,23 +13,23 @@ open class AwaitAction(aem: AemExtension) : AbstractAction(aem) {
     /**
      * Skip stable check assurances and health checking.
      */
-    var fast = aem.props.flag("aem.await.fast")
+    var fast = aem.props.flag("await.fast")
 
     /**
      * Time to wait if check assurances and health checking are skipped.
      */
-    var fastDelay = aem.props.long("aem.await.fastDelay") ?: TimeUnit.SECONDS.toMillis(1)
+    var fastDelay = aem.props.long("await.fastDelay") ?: TimeUnit.SECONDS.toMillis(1)
 
     /**
      * Time to wait e.g after deployment before checking instance stability.
      * Considered only when fast mode is disabled.
      */
-    var warmupDelay = aem.props.long("aem.await.warmupDelay") ?: TimeUnit.SECONDS.toMillis(0)
+    var warmupDelay = aem.props.long("await.warmupDelay") ?: TimeUnit.SECONDS.toMillis(0)
 
     /**
      * Do not fail build but log warning when there is still some unstable or unhealthy instance.
      */
-    var resume: Boolean = aem.props.flag("aem.await.resume")
+    var resume: Boolean = aem.props.flag("await.resume")
 
     /**
      * Hook for customizing instance availability check.
@@ -42,7 +42,7 @@ open class AwaitAction(aem: AemExtension) : AbstractAction(aem) {
      * Maximum intervals after which instance stability checks will
      * be skipped if there is still some unstable instance left.
      */
-    var stableRetry = aem.retry { afterSecond(aem.props.long("aem.await.stableRetry") ?: 300) }
+    var stableRetry = aem.retry { afterSecond(aem.props.long("await.stableRetry") ?: 300) }
 
     /**
      * Hook for customizing instance state provider used within stable checking.
@@ -60,7 +60,7 @@ open class AwaitAction(aem: AemExtension) : AbstractAction(aem) {
      * Number of intervals / additional instance stability checks to assure all stable instances.
      * This mechanism protect against temporary stable states.
      */
-    var stableAssurance: Long = aem.props.long("aem.await.stableAssurance") ?: 3L
+    var stableAssurance: Long = aem.props.long("await.stableAssurance") ?: 3L
 
     /**
      * Hook for customizing instance health check.
@@ -72,7 +72,7 @@ open class AwaitAction(aem: AemExtension) : AbstractAction(aem) {
     /**
      * Repeat health check when failed (brute-forcing).
      */
-    var healthRetry = aem.retry { afterSquaredSecond(aem.props.long("aem.await.healthRetry") ?: 5) }
+    var healthRetry = aem.retry { afterSquaredSecond(aem.props.long("await.healthRetry") ?: 5) }
 
     override fun perform() {
         if (!enabled) {

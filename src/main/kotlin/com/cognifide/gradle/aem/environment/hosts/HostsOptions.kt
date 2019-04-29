@@ -1,14 +1,10 @@
 package com.cognifide.gradle.aem.environment.hosts
 
 class HostsOptions {
-    var list = listOf(
-            Host("127.0.0.1", "example.com"),
-            Host("127.0.0.1", "demo.example.com"),
-            Host("127.0.0.1", "author.example.com"),
-            Host("127.0.0.1", "invalidation-only")
-    )
 
-    fun configure(config: Map<String, String>) {
-        list = config.map { Host(it.key, it.value) }
+    var defined = mutableListOf<Host>()
+
+    fun define(values: Iterable<String>) {
+        defined.addAll(values.map { Host.of(it) })
     }
 }

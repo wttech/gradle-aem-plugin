@@ -6,6 +6,7 @@ import com.cognifide.gradle.aem.common.LineSeparator
 import com.cognifide.gradle.aem.common.NotifierFacade
 import com.cognifide.gradle.aem.common.file.resolver.ResolverOptions
 import com.cognifide.gradle.aem.common.notifier.Notifier
+import com.cognifide.gradle.aem.environment.EnvironmentOptions
 import com.cognifide.gradle.aem.instance.*
 import com.cognifide.gradle.aem.pkg.Package
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -29,6 +30,9 @@ class Config(
     @Internal
     val localInstanceOptions = LocalInstanceOptions(aem)
 
+    @Internal
+    val environmentOptions = EnvironmentOptions(aem)
+
     private val instanceMap: MutableMap<String, Instance> = mutableMapOf()
 
     /**
@@ -46,9 +50,9 @@ class Config(
     @Internal
     @JsonIgnore
     var instanceHttpOptions: (InstanceHttpClient).() -> Unit = {
-        connectionTimeout = aem.props.int("aem.instanceHttpOptions.connectionTimeout") ?: 30000
-        connectionRetries = aem.props.boolean("aem.instanceHttpOptions.connectionRetries") ?: true
-        connectionIgnoreSsl = aem.props.boolean("aem.instanceHttpOptions.connectionIgnoreSsl") ?: true
+        connectionTimeout = aem.props.int("instanceHttpOptions.connectionTimeout") ?: 30000
+        connectionRetries = aem.props.boolean("instanceHttpOptions.connectionRetries") ?: true
+        connectionIgnoreSsl = aem.props.boolean("instanceHttpOptions.connectionIgnoreSsl") ?: true
     }
 
     /**
@@ -56,7 +60,7 @@ class Config(
      * while having same version specified. Affects CRX packages composed and satisfied.
      */
     @Internal
-    var packageSnapshots: List<String> = aem.props.list("aem.packageSnapshots") ?: listOf()
+    var packageSnapshots: List<String> = aem.props.list("packageSnapshots") ?: listOf()
 
     @Input
     var packageRoot: String = "${aem.project.file("src/main/content")}"
@@ -109,7 +113,7 @@ class Config(
      * retries will be applied.
      */
     @Internal
-    var packageErrors: List<String> = (aem.props.list("aem.packageErrors") ?: listOf(
+    var packageErrors: List<String> = (aem.props.list("packageErrors") ?: listOf(
             "javax.jcr.nodetype.*Exception",
             "org.apache.jackrabbit.oak.api.*Exception",
             "org.apache.jackrabbit.vault.packaging.*Exception",
@@ -123,19 +127,19 @@ class Config(
      * It is a protection against exceeding max Java heap size.
      */
     @Internal
-    var packageResponseBuffer = aem.props.int("aem.packageResponseBuffer") ?: 4096
+    var packageResponseBuffer = aem.props.int("packageResponseBuffer") ?: 4096
 
     /**
      * Specify characters to be used as line endings when cleaning up checked out JCR content.
      */
     @Input
-    var lineSeparator: String = aem.props.string("aem.lineSeparator") ?: "LF"
+    var lineSeparator: String = aem.props.string("lineSeparator") ?: "LF"
 
     /**
      * Turn on/off default system notifications.
      */
     @Internal
-    var notificationEnabled: Boolean = aem.props.flag("aem.notificationEnabled")
+    var notificationEnabled: Boolean = aem.props.flag("notificationEnabled")
 
     /**
      * Hook for customizing notifications being displayed.
@@ -155,7 +159,7 @@ class Config(
 
     init {
         // Define through command line
-        val instancesForced = aem.props.string("aem.instance.list") ?: ""
+        val instancesForced = aem.props.string("instance.list") ?: ""
         if (instancesForced.isNotBlank()) {
             instances(Instance.parse(aem, instancesForced) { environment = Instance.ENVIRONMENT_CMD })
         }
@@ -187,6 +191,13 @@ class Config(
     @Internal
     @JsonIgnore
     fun localInstance(options: LocalInstanceOptions.() -> Unit) = localInstanceOptions.apply(options)
+
+    /**
+     * Customize environment options
+     */
+    @Internal
+    @JsonIgnore
+    fun environment(options: EnvironmentOptions.() -> Unit) = environmentOptions.run(options)
 
     /**
      * Declare new deployment target (AEM instance).

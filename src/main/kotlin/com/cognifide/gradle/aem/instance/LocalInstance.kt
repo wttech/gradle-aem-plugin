@@ -345,7 +345,7 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
         fun create(aem: AemExtension, httpUrl: String, configurer: LocalInstance.() -> Unit): LocalInstance {
             return LocalInstance(aem).apply {
                 val instanceUrl = InstanceUrl.parse(httpUrl)
-                if (instanceUrl.user != LocalInstance.USER) {
+                if (instanceUrl.user != USER) {
                     throw InstanceException("User '${instanceUrl.user}' (other than 'admin') is not allowed while using local instance(s).")
                 }
 

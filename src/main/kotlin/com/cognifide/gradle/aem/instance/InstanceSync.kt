@@ -4,7 +4,7 @@ import com.cognifide.gradle.aem.common.*
 import com.cognifide.gradle.aem.common.http.RequestException
 import com.cognifide.gradle.aem.common.http.ResponseException
 import com.cognifide.gradle.aem.pkg.*
-import com.cognifide.gradle.aem.pkg.tasks.Compose
+import com.cognifide.gradle.aem.pkg.tasks.PackageCompose
 import java.io.File
 import java.io.FileNotFoundException
 import org.apache.commons.io.FilenameUtils
@@ -44,7 +44,7 @@ class InstanceSync(aem: AemExtension, instance: Instance) : InstanceHttpClient(a
         return resolvePackage(group, name, version, refresh, retry)
     }
 
-    fun resolvePackage(compose: Compose, refresh: Boolean = true, retry: Retry = aem.retry()): Package? {
+    fun resolvePackage(compose: PackageCompose, refresh: Boolean = true, retry: Retry = aem.retry()): Package? {
         return resolvePackage({ it.resolvePackage(project, Package(compose)) }, refresh, retry)
     }
 

@@ -7,10 +7,8 @@ import org.buildobjects.process.ProcBuilder
 class Container(val name: String) {
 
     fun isRunning(): Boolean {
-        val containerId = containerId()
-        if (containerId == null) {
-            return false
-        }
+        val containerId = containerId() ?: return false
+
         try {
             return ProcBuilder("docker")
                     .withArgs("inspect", "-f", "{{.State.Running}}", containerId)
@@ -27,7 +25,9 @@ class Container(val name: String) {
         if (!isRunning()) {
             throw EnvironmentException("Cannot exec command '$command' since container '$name' is not running!")
         }
+
         val commands = command.split(" ").toTypedArray()
+
         ProcBuilder("docker")
                 .withArgs("exec", containerId(), *commands)
                 .withExpectedExitStatuses(exitCode)
@@ -40,6 +40,7 @@ class Container(val name: String) {
                     .withArgs("ps", "-l", "-q", "-f", "name=$name")
                     .run()
                     .outputString.trim()
+
             return if (containerId.isBlank()) {
                 null
             } else {

@@ -14,7 +14,7 @@ class ReloadAction(aem: AemExtension) : AwaitAction(aem) {
     /**
      * Time in milliseconds to postpone await action after triggering instances restart.
      */
-    var awaitDelay: Long = aem.props.long("aem.reload.awaitDelay") ?: TimeUnit.SECONDS.toMillis(10)
+    var awaitDelay: Long = aem.props.long("reload.awaitDelay") ?: TimeUnit.SECONDS.toMillis(10)
 
     private fun reload() {
         val reloaded = mutableListOf<Instance>()

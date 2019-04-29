@@ -2,9 +2,12 @@ package com.cognifide.gradle.aem.config
 
 import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.AemPlugin
+import com.cognifide.gradle.aem.config.tasks.Debug
+import com.cognifide.gradle.aem.config.tasks.Resolve
 import java.util.*
 import org.gradle.api.Project
 import org.gradle.api.plugins.BasePlugin
+import org.gradle.language.base.plugins.LifecycleBasePlugin
 
 /**
  * Provides configuration used by both package and instance plugins.
@@ -16,10 +19,11 @@ class ConfigPlugin : AemPlugin() {
         setupDependentPlugins()
         setupStructureProperties()
         setupExtensions()
+        setupTasks()
     }
 
     private fun Project.setupGreet() {
-        AemPlugin.once { logger.info("Using: ${AemPlugin.NAME_WITH_VERSION}") }
+        once { logger.info("Using: $NAME_WITH_VERSION") }
     }
 
     private fun Project.setupDependentPlugins() {
@@ -39,6 +43,15 @@ class ConfigPlugin : AemPlugin() {
 
     private fun Project.setupExtensions() {
         extensions.create(AemExtension.NAME, AemExtension::class.java, this)
+    }
+
+    private fun Project.setupTasks() {
+        with(AemExtension.of(project).tasks) {
+            register<Debug>(Debug.NAME) {
+                dependsOn(LifecycleBasePlugin.BUILD_TASK_NAME)
+            }
+            register<Resolve>(Resolve.NAME)
+        }
     }
 
     companion object {

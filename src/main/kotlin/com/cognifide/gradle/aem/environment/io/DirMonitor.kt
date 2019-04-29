@@ -7,10 +7,10 @@ import kotlinx.coroutines.launch
 import org.apache.commons.io.monitor.FileAlterationMonitor
 import org.apache.commons.io.monitor.FileAlterationObserver
 
-class DirMonitor(private val directory: String, private val modificationChannel: SendChannel<String>) {
+class DirMonitor(private val dir: File, private val modificationChannel: SendChannel<String>) {
 
     fun start() {
-        val fao = FileAlterationObserver(File(directory))
+        val fao = FileAlterationObserver(dir)
         fao.addListener(Listener { event ->
             GlobalScope.launch {
                 modificationChannel.send(event)

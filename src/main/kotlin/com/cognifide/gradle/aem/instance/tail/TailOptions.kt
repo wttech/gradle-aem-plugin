@@ -11,7 +11,7 @@ class TailOptions(val aem: AemExtension, val taskName: String) {
     /**
      * Determines log file being tracked on AEM instance.
      */
-    var logFilePath = aem.props.string("aem.tail.logFilePath") ?: "/logs/error.log"
+    var logFilePath = aem.props.string("tail.logFilePath") ?: "/logs/error.log"
 
     /**
      * Hook for tracking all log entries on each AEM instance.
@@ -30,10 +30,10 @@ class TailOptions(val aem: AemExtension, val taskName: String) {
      */
     var incidentChecker: Log.(Instance) -> Boolean = { instance ->
         val levels = Formats.toList(instance.string("tail.incidentLevels"))
-                ?: aem.props.list("aem.tail.incidentLevels")
+                ?: aem.props.list("tail.incidentLevels")
                 ?: INCIDENT_LEVELS_DEFAULT
         val oldMillis = instance.string("tail.incidentOld")?.toLong()
-                ?: aem.props.long("aem.tail.incidentOld")
+                ?: aem.props.long("tail.incidentOld")
                 ?: INCIDENT_OLD_DEFAULT
 
         isLevel(levels) && !isOlderThan(instance, oldMillis) && !incidentFilter.isExcluded(this)
@@ -44,22 +44,22 @@ class TailOptions(val aem: AemExtension, val taskName: String) {
      *
      * Changes in that file are automatically considered (tailer restart is not required).
      */
-    var incidentFilterPath = aem.props.string("aem.tail.incidentFilterPath")
+    var incidentFilterPath = aem.props.string("tail.incidentFilterPath")
             ?: "${aem.configCommonDir}/tail/incidentFilter.txt"
 
     /**
      * Time window in which exceptions will be aggregated and reported as single incident.
      */
-    var incidentDelay = aem.props.long("aem.tail.incidentDelay") ?: 5000L
+    var incidentDelay = aem.props.long("tail.incidentDelay") ?: 5000L
 
     /**
      * Determines how often logs will be polled from AEM instance.
      */
-    var fetchInterval = aem.props.long("aem.tail.fetchInterval") ?: 500L
+    var fetchInterval = aem.props.long("tail.fetchInterval") ?: 500L
 
-    var lockInterval = aem.props.long("aem.tail.lockInterval") ?: max(1000L + fetchInterval, 2000L)
+    var lockInterval = aem.props.long("tail.lockInterval") ?: max(1000L + fetchInterval, 2000L)
 
-    var linesChunkSize = aem.props.long("aem.tail.linesChunkSize") ?: 400L
+    var linesChunkSize = aem.props.long("tail.linesChunkSize") ?: 400L
 
     val errorLogEndpoint: String
         get() = "/system/console/slinglog/tailer.txt" +

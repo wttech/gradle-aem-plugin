@@ -58,8 +58,9 @@ tasks {
 
     register<Zip>("tailerZip") {
         from("dists/gradle-aem-tailer")
-        archiveName = "gradle-aem-tailer.zip"
-        destinationDir = file("dists")
+
+        archiveFileName.set("gradle-aem-tailer.zip")
+        destinationDirectory.set(file("dists"))
     }
 
     register<Jar>("sourcesJar") {
@@ -78,13 +79,19 @@ tasks {
 
     named<ProcessResources>("processResources") {
         dependsOn( "tailerZip")
+
+        val json = """
+        |{
+        |    "pluginVersion": "${project.version}",
+        |    "gradleVersion": "${project.gradle.gradleVersion}"
+        |}""".trimMargin()
+        val file = file("$buildDir/resources/main/build.json")
+
+        inputs.property("buildJson", json)
+        outputs.file(file)
+
         doLast {
-            file("$buildDir/resources/main/build.json").printWriter().use {
-                it.print("""{
-                    "pluginVersion": "${project.version}",
-                    "gradleVersion": "${project.gradle.gradleVersion}"
-            }""".trimIndent())
-            }
+            file.writeText(json)
         }
     }
 

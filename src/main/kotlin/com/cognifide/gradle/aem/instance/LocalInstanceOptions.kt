@@ -19,15 +19,13 @@ class LocalInstanceOptions(aem: AemExtension) : Serializable {
 
     /**
      * Path in which local AEM instances will be stored.
-     *
-     * Default path is a subfolder named '.aem' under root project directory.
      */
-    var root: String = aem.props.string("aem.localInstance.root") ?: "${aem.projectMain.file(".aem")}"
+    var root: String = aem.props.string("localInstance.root") ?: "${aem.projectMain.file(".aem/instance")}"
 
     /**
      * Determines how instances will be created (from backup or from the scratch).
      */
-    var source = Source.of(aem.props.string("aem.localInstance.source") ?: Source.AUTO.name)
+    var source = Source.of(aem.props.string("localInstance.source") ?: Source.AUTO.name)
 
     /**
      * Defines backup selection rule.
@@ -37,7 +35,7 @@ class LocalInstanceOptions(aem: AemExtension) : Serializable {
      */
     @JsonIgnore
     var zipSelector: Collection<File>.() -> File? = {
-        val name = aem.props.string("aem.localInstance.zipName") ?: ""
+        val name = aem.props.string("localInstance.zipName") ?: ""
         when {
             name.isNotBlank() -> firstOrNull { it.name == name }
             else -> sortedByDescending { it.name }.firstOrNull()
@@ -47,17 +45,17 @@ class LocalInstanceOptions(aem: AemExtension) : Serializable {
     /**
      * URI pointing to ZIP file created by backup task (packed AEM instances already created).
      */
-    var zipUrl = aem.props.string("aem.localInstance.zipUrl")
+    var zipUrl = aem.props.string("localInstance.zipUrl")
 
     /**
      * URI pointing to AEM self-extractable JAR containing 'crx-quickstart'.
      */
-    var jarUrl = aem.props.string("aem.localInstance.jarUrl")
+    var jarUrl = aem.props.string("localInstance.jarUrl")
 
     /**
      * URI pointing to AEM quickstart license file.
      */
-    var licenseUrl = aem.props.string("aem.localInstance.licenseUrl")
+    var licenseUrl = aem.props.string("localInstance.licenseUrl")
 
     /**
      * Path from which extra files for local AEM instances will be copied.
@@ -132,7 +130,7 @@ class LocalInstanceOptions(aem: AemExtension) : Serializable {
          */
         BACKUP_EXTERNAL,
         /**
-         * Force using internal backup (created by task 'aemBackup').
+         * Force using internal backup (created by task 'instanceBackup').
          */
         BACKUP_INTERNAL;
 

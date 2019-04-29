@@ -121,7 +121,7 @@ class PropertyParser(private val aem: AemExtension) {
 
     companion object {
 
-        const val FORCE_PROP = "aem.force"
+        const val FORCE_PROP = "force"
 
         private const val TEMPLATE_VAR_PREFIX = "{{"
 
