@@ -18,7 +18,7 @@ import org.gradle.api.tasks.testing.Test
 @Suppress("TooManyFunctions")
 class TaskFacade(private val aem: AemExtension) {
 
-    private val project = aem.project
+    val project = aem.project
 
     private val bundleMap = mutableMapOf<String, BundleJar>()
 
@@ -149,9 +149,9 @@ class TaskFacade(private val aem: AemExtension) {
         }
     }
 
-    fun <T : Task> named(name: String, type: Class<T>, configurer: T.() -> Unit) {
+    fun <T : Task> named(name: String, type: Class<T>, configurer: T.() -> Unit): TaskProvider<T> {
         try {
-            project.tasks.named(name, type, configurer)
+            return project.tasks.named(name, type, configurer)
         } catch (e: UnknownTaskException) {
             throw composeException(name)
         }
@@ -159,6 +159,14 @@ class TaskFacade(private val aem: AemExtension) {
 
     fun <T : Task> typed(type: Class<T>, configurer: T.() -> Unit) {
         project.tasks.withType(type).configureEach(configurer)
+    }
+
+    inline fun <reified T : Task> registerOrConfigure(name: String, noinline configurer: T.() -> Unit = {}): TaskProvider<T> {
+        return try {
+            project.tasks.named(name, T::class.java, configurer)
+        } catch (e: UnknownTaskException) {
+            register(name, T::class.java, configurer)
+        }
     }
 
     inline fun <reified T : Task> register(name: String, noinline configurer: T.() -> Unit = {}): TaskProvider<T> {

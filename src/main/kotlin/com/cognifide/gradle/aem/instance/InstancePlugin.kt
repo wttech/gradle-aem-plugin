@@ -3,7 +3,10 @@ package com.cognifide.gradle.aem.instance
 import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.AemPlugin
 import com.cognifide.gradle.aem.config.ConfigPlugin
+import com.cognifide.gradle.aem.config.tasks.Destroy
+import com.cognifide.gradle.aem.config.tasks.Down
 import com.cognifide.gradle.aem.config.tasks.Resolve
+import com.cognifide.gradle.aem.config.tasks.Up
 import com.cognifide.gradle.aem.instance.tasks.*
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.PackageDeploy
@@ -67,6 +70,15 @@ class InstancePlugin : AemPlugin() {
                 finalizedBy(InstanceUp.NAME)
             }
             register<InstanceTail>(InstanceTail.NAME)
+            registerOrConfigure<Up>(Up.NAME) {
+                dependsOn(InstanceUp.NAME)
+            }
+            registerOrConfigure<Down>(Down.NAME) {
+                dependsOn(InstanceDown.NAME)
+            }
+            registerOrConfigure<Destroy>(Destroy.NAME) {
+                dependsOn(InstanceDestroy.NAME)
+            }
         }
     }
 

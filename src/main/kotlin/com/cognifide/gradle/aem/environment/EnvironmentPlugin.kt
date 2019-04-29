@@ -3,7 +3,12 @@ package com.cognifide.gradle.aem.environment
 import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.AemPlugin
 import com.cognifide.gradle.aem.config.ConfigPlugin
+import com.cognifide.gradle.aem.config.tasks.Destroy
+import com.cognifide.gradle.aem.config.tasks.Down
+import com.cognifide.gradle.aem.config.tasks.Up
 import com.cognifide.gradle.aem.environment.tasks.*
+import com.cognifide.gradle.aem.instance.InstancePlugin
+import com.cognifide.gradle.aem.instance.tasks.InstanceUp
 import org.gradle.api.Project
 
 /**
@@ -27,7 +32,9 @@ class EnvironmentPlugin : AemPlugin() {
         with(AemExtension.of(this).tasks) {
             register<EnvironmentDev>(EnvironmentDev.NAME)
             register<EnvironmentHosts>(EnvironmentHosts.NAME)
-            register<EnvironmentUp>(EnvironmentUp.NAME)
+            register<EnvironmentUp>(EnvironmentUp.NAME) {
+                plugins.withId(InstancePlugin.ID) { mustRunAfter(InstanceUp.NAME) }
+            }
             register<EnvironmentDown>(EnvironmentDown.NAME)
 
             register<EnvironmentDestroy>(EnvironmentDestroy.NAME) {
@@ -36,6 +43,15 @@ class EnvironmentPlugin : AemPlugin() {
             register<EnvironmentRestart>(EnvironmentRestart.NAME) {
                 dependsOn(EnvironmentDown.NAME)
                 finalizedBy(EnvironmentUp.NAME)
+            }
+            registerOrConfigure<Up>(Up.NAME) {
+                dependsOn(EnvironmentUp.NAME)
+            }
+            registerOrConfigure<Down>(Down.NAME) {
+                dependsOn(EnvironmentDown.NAME)
+            }
+            registerOrConfigure<Destroy>(Destroy.NAME) {
+                dependsOn(EnvironmentDestroy.NAME)
             }
         }
     }
