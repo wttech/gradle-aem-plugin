@@ -16,6 +16,7 @@ import org.apache.commons.lang3.builder.HashCodeBuilder
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.tasks.Internal
 import org.gradle.util.GFileUtils
+import java.util.*
 
 /**
  * File downloader with groups supporting files from multiple sources: local and remote (SFTP, SMB, HTTP).
@@ -64,7 +65,7 @@ abstract class Resolver<G : FileGroup>(
 
     fun dependency(notation: Any): FileResolution {
         return resolve(notation) {
-            val configName = "fileResolver_dependency_${HashCodeBuilder().append(notation).append(downloadDir).build()}"
+            val configName = "fileResolver_dependency_${UUID.randomUUID()}"
             val configOptions: (Configuration) -> Unit = { it.isTransitive = false }
             val config = project.configurations.create(configName, configOptions)
 
