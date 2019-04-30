@@ -3,7 +3,7 @@ package com.cognifide.gradle.aem.environment.docker
 import org.buildobjects.process.ExternalProcessFailureException
 import org.buildobjects.process.ProcBuilder
 
-class Stack(val name: String = STACK_NAME_DEFAULT) {
+class DockerStack(val name: String) {
 
     fun deploy(composeFilePath: String) {
         try {
@@ -26,21 +26,20 @@ class Stack(val name: String = STACK_NAME_DEFAULT) {
         }
     }
 
-    fun isDown(): Boolean {
-        val result = ProcBuilder("docker")
-                .withArgs("network", "inspect", "${name}_docker-net")
-                .ignoreExitStatus()
-                .run()
-        if (result.exitValue == 0) {
-            return false
-        }
-        if (result.errorString.contains("Error: No such network")) {
-            return true
-        }
-        throw DockerException("Unable to determine stack '$name' status. Error: '${result.errorString}'")
-    }
+    val running: Boolean
+        get() {
+            val result = ProcBuilder("docker")
+                    .withArgs("network", "inspect", "${name}_docker-net")
+                    .ignoreExitStatus()
+                    .run()
 
-    companion object {
-        private const val STACK_NAME_DEFAULT = "aem-local-setup"
-    }
+            if (result.exitValue == 0) {
+                return true
+            }
+            if (result.errorString.contains("Error: No such network")) {
+                return false
+            }
+
+            throw DockerException("Unable to determine stack '$name' status. Error: '${result.errorString}'")
+        }
 }

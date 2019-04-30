@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.environment.io
+package com.cognifide.gradle.aem.environment.service.reloader
 
 import java.io.File
 import kotlinx.coroutines.GlobalScope
@@ -7,11 +7,12 @@ import kotlinx.coroutines.launch
 import org.apache.commons.io.monitor.FileAlterationMonitor
 import org.apache.commons.io.monitor.FileAlterationObserver
 
+// TODO get rid off shutdown hook
 class DirMonitor(private val dir: File, private val modificationChannel: SendChannel<String>) {
 
     fun start() {
         val fao = FileAlterationObserver(dir)
-        fao.addListener(Listener { event ->
+        fao.addListener(DirMonitorListener { event ->
             GlobalScope.launch {
                 modificationChannel.send(event)
             }

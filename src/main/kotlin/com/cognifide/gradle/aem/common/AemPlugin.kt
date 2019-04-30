@@ -13,6 +13,10 @@ abstract class AemPlugin : Plugin<Project> {
 
     abstract fun Project.configure()
 
+    protected fun Project.tasks(configurer: TaskFacade.() -> Unit) {
+        return AemExtension.of(this).tasks(configurer)
+    }
+
     class Build : Serializable {
 
         lateinit var pluginVersion: String

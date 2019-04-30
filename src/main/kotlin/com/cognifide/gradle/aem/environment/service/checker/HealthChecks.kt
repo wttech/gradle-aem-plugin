@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.environment.checks
+package com.cognifide.gradle.aem.environment.service.checker
 
 class HealthChecks {
 

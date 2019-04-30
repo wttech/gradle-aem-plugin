@@ -1,12 +1,12 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.AemPlugin
+import com.cognifide.gradle.aem.common.tasks.lifecycle.Destroy
+import com.cognifide.gradle.aem.common.tasks.lifecycle.Down
+import com.cognifide.gradle.aem.common.tasks.lifecycle.Restart
+import com.cognifide.gradle.aem.common.tasks.lifecycle.Up
 import com.cognifide.gradle.aem.config.ConfigPlugin
-import com.cognifide.gradle.aem.config.tasks.Destroy
-import com.cognifide.gradle.aem.config.tasks.Down
 import com.cognifide.gradle.aem.config.tasks.Resolve
-import com.cognifide.gradle.aem.config.tasks.Up
 import com.cognifide.gradle.aem.instance.tasks.*
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.PackageDeploy
@@ -30,7 +30,7 @@ class InstancePlugin : AemPlugin() {
     }
 
     private fun Project.setupTasks() {
-        with(AemExtension.of(this).tasks) {
+        tasks {
             register<InstanceDown>(InstanceDown.NAME)
             register<InstanceUp>(InstanceUp.NAME) {
                 dependsOn(InstanceCreate.NAME).mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME, InstanceDown.NAME)
@@ -78,6 +78,9 @@ class InstancePlugin : AemPlugin() {
             }
             registerOrConfigure<Destroy>(Destroy.NAME) {
                 dependsOn(InstanceDestroy.NAME)
+            }
+            registerOrConfigure<Restart>(Restart.NAME) {
+                dependsOn(InstanceRestart.NAME)
             }
         }
     }

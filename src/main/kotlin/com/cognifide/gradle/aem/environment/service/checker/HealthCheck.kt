@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.environment.checks
+package com.cognifide.gradle.aem.environment.service.checker
 
 import java.net.HttpURLConnection
 import java.net.URI

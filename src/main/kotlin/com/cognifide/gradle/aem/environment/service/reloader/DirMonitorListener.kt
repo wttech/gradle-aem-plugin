@@ -1,10 +1,11 @@
-package com.cognifide.gradle.aem.environment.io
+package com.cognifide.gradle.aem.environment.service.reloader
 
 import java.io.File
 import org.apache.commons.io.monitor.FileAlterationListener
 import org.apache.commons.io.monitor.FileAlterationObserver
 
-class Listener(private val notify: (String) -> Unit) : FileAlterationListener {
+class DirMonitorListener(private val notify: (String) -> Unit) : FileAlterationListener {
+
     override fun onDirectoryDelete(directory: File?) {
         notify("${directory?.name} deleted")
     }
@@ -26,6 +27,8 @@ class Listener(private val notify: (String) -> Unit) : FileAlterationListener {
     }
 
     override fun onDirectoryChange(directory: File?) {}
+
     override fun onStart(observer: FileAlterationObserver?) {}
+
     override fun onStop(observer: FileAlterationObserver?) {}
 }

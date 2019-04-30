@@ -1,6 +1,8 @@
 package com.cognifide.gradle.aem.environment.docker
 
-class DockerException : RuntimeException {
+import com.cognifide.gradle.aem.common.AemException
+
+class DockerException : AemException {
 
     constructor(message: String, cause: Throwable) : super(message, cause)
 

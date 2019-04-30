@@ -68,13 +68,7 @@
         "**/start",
         "**/stop"
       ],
-      "expandProperties" : { },
-      "allFiles" : [ ],
-      "extraFiles" : [ ],
-      "jar" : null,
-      "license" : null,
-      "zip" : null,
-      "mandatoryFiles" : [ ]
+      "expandProperties" : { }
     },
     "environmentOptions" : {
       "directories" : [ ],
@@ -86,7 +80,7 @@
       },
       "httpdConfDir" : "*/gradle/environment/httpd/conf",
       "dockerComposeSourceFile" : "*/gradle/environment/docker-compose.yml",
-      "dispatcherModuleFile" : "*/.aem/environment/files/mod_dispatcher.so",
+      "dispatcherModuleFile" : "*/.aem/environment/distributions/mod_dispatcher.so",
       "dockerComposeFile" : "*/.aem/environment/docker-compose.yml"
     },
     "packageRoot": "*/src/main/content",

@@ -170,7 +170,7 @@ class Config(
         aem.project.afterEvaluate { _ ->
             // Ensure defaults if still no instances defined at all
             if (instances.isEmpty()) {
-                instances(Instance.defaults(aem) { environment = aem.environment })
+                instances(Instance.defaults(aem) { environment = aem.env })
             }
 
             // Validate all

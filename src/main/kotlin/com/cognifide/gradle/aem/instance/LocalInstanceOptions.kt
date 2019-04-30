@@ -22,6 +22,10 @@ class LocalInstanceOptions(aem: AemExtension) : Serializable {
      */
     var root: String = aem.props.string("localInstance.root") ?: "${aem.projectMain.file(".aem/instance")}"
 
+    @get:JsonIgnore
+    val rootDir: File
+        get() = File(root)
+
     /**
      * Determines how instances will be created (from backup or from the scratch).
      */
@@ -83,6 +87,7 @@ class LocalInstanceOptions(aem: AemExtension) : Serializable {
         zipUrl?.run { url(this) }
     }
 
+    @get:JsonIgnore
     val zip: File?
         get() = fileResolver.run(zipSource)?.file
 
@@ -91,6 +96,7 @@ class LocalInstanceOptions(aem: AemExtension) : Serializable {
         jarUrl?.run { url(this) }
     }
 
+    @get:JsonIgnore
     val jar: File?
         get() = fileResolver.run(jarSource)?.file
 
@@ -99,15 +105,19 @@ class LocalInstanceOptions(aem: AemExtension) : Serializable {
         licenseUrl?.run { url(this) }
     }
 
+    @get:JsonIgnore
     val license: File?
         get() = fileResolver.run(licenseSource)?.file
 
+    @get:JsonIgnore
     val allFiles: List<File>
         get() = mandatoryFiles + extraFiles
 
+    @get:JsonIgnore
     val mandatoryFiles: List<File>
         get() = listOfNotNull(jar, license)
 
+    @get:JsonIgnore
     val extraFiles: List<File>
         get() = fileResolver.group(GROUP_EXTRA).files
 

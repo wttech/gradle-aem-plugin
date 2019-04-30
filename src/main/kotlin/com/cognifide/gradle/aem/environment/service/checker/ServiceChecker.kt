@@ -1,27 +1,25 @@
-package com.cognifide.gradle.aem.environment.checks
+package com.cognifide.gradle.aem.environment.service.checker
 
-import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.ProgressLogger
 import com.cognifide.gradle.aem.common.Retry
 import com.cognifide.gradle.aem.common.http.HttpClient
 import com.cognifide.gradle.aem.common.http.RequestException
-import java.util.stream.Collectors
+import com.cognifide.gradle.aem.environment.Environment
 import kotlinx.coroutines.*
 
-/**
- * TODO: Since coroutines API is still in experimental mode we would need to adapt to it's final API when released.
- * Please see https://github.com/Kotlin/kotlinx.coroutines/issues/632#issuecomment-425408865
- */
 @UseExperimental(ObsoleteCoroutinesApi::class)
-class ServiceChecker
-(private val aem: AemExtension) {
+class ServiceChecker(environment: Environment) {
 
-    private val options = aem.config.environmentOptions
+    private val aem = environment.aem
 
-    val progress = ProgressLogger.of(aem.project)
+    private val options = environment.options
 
-    fun checkForUnavailableServices() = progress.launch {
-        val serviceStatuses = options.healthChecks.list.parallelStream().map { it.url to isServiceHealthy(it) }.collect(Collectors.toList())
+    val progress = ProgressLogger.of(environment.aem.project)
+
+    fun findUnavailable() = progress.launch {
+        val serviceStatuses = aem.parallel.map(options.healthChecks.list) {
+            it.url to isHealthy(it)
+        }
         return@launch serviceStatuses.filter { !it.second }.map { it.first }
     }
 
@@ -29,7 +27,7 @@ class ServiceChecker
         awaitCondition(message, maxAwaitTime, condition)
     }
 
-    private fun ProgressLogger.isServiceHealthy(check: HealthCheck): Boolean {
+    private fun ProgressLogger.isHealthy(check: HealthCheck): Boolean {
         return awaitCondition("${check.url} - awaiting to start", check.maxAwaitTime) {
             isResponseValid(check)
         }
@@ -57,14 +55,14 @@ class ServiceChecker
 
     private suspend fun isResponseValid(check: HealthCheck): Boolean {
         return coroutineScope {
-            async {
+            withContext(Dispatchers.Default) {
                 try {
                     val (status, body) = get(check.connectionTimeout, check.url)
                     status == check.status && body.contains(check.text)
                 } catch (ex: RequestException) {
                     false
                 }
-            }.await()
+            }
         }
     }
 

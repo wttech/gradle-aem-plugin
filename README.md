@@ -1763,11 +1763,11 @@ As a workaround, just run build without daemon (`--no-daemon`).
 
 ## Compatibility
 
-| Gradle AEM Plugin | Gradle Build Tool |
-|:-----------------:|:-----------------:|
-|   4.x.x -> 5.x.x  |     4.x -> 4.8    |
-|   6.0.0 -> 6.2.1  |     4.9 -> 5.0    |
-|   6.3.0 and up    |     5.1 and up    |
+| Gradle AEM Plugin | Gradle Build Tool | Adobe Experience Manager |
+|:-----------------:|:-----------------:|:------------------------:|
+|   4.x.x -> 5.x.x  |     4.x -> 4.8    |        6.x and up        |
+|   6.0.0 -> 6.2.1  |     4.9 -> 5.0    |        6.x and up        |
+|   6.3.0 and up    |     5.1 and up    |        6.x and up        |
 
 ## Building
 

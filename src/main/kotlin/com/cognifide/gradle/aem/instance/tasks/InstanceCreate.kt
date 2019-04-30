@@ -49,7 +49,7 @@ open class InstanceCreate : LocalInstanceTask() {
             throw InstanceException("Backup ZIP cannot be used to create missing instances.")
         }
 
-        val instanceRoot = File(aem.config.localInstanceOptions.root)
+        val instanceRoot = aem.config.localInstanceOptions.rootDir
 
         aem.logger.info("Extracting files from backup ZIP '$backupZip' to directory '$instanceRoot'")
 

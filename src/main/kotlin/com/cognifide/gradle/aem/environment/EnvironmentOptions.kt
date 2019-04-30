@@ -4,15 +4,14 @@ import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.AemTask
 import com.cognifide.gradle.aem.common.Patterns
 import com.cognifide.gradle.aem.common.file.resolver.FileResolver
-import com.cognifide.gradle.aem.environment.checks.HealthChecks
 import com.cognifide.gradle.aem.environment.hosts.HostsOptions
+import com.cognifide.gradle.aem.environment.service.checker.HealthChecks
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
-import org.gradle.util.GFileUtils
 
 class EnvironmentOptions(private val aem: AemExtension) {
 
-    private val fileResolver = FileResolver(aem, AemTask.temporaryDir(aem.project, "environment"))
+    private val distributionsResolver = FileResolver(aem, AemTask.temporaryDir(aem.project, "environment", DISTRIBUTIONS_DIR))
 
     val directories: MutableList<String> = mutableListOf()
 
@@ -20,6 +19,14 @@ class EnvironmentOptions(private val aem: AemExtension) {
      * Path in which local AEM environment will be stored.
      */
     var root: String = aem.props.string("env.root") ?: "${aem.projectMain.file(".aem/environment")}"
+
+    @get:JsonIgnore
+    val rootDir: File
+        get() = File(root)
+
+    @get:JsonIgnore
+    val createdLockFile: File
+        get() = File(rootDir, "create.lock")
 
     /**
      * URI pointing to Dispatcher distribution TAR file.
@@ -30,8 +37,24 @@ class EnvironmentOptions(private val aem: AemExtension) {
     var dispatcherModuleName = aem.props.string("env.dispatcher.moduleName")
             ?: "*/dispatcher-apache*.so"
 
+    @get:JsonIgnore
+    val dispatcherModuleSourceFile: File
+        get() {
+            if (dispatcherDistUrl.isBlank()) {
+                throw EnvironmentException("Dispatcher distribution URL needs to be configured in property" +
+                        " 'aem.env.dispatcher.distUrl' in order to use AEM environment.")
+            }
+
+            val tarFile = distributionsResolver.url(dispatcherDistUrl).file
+            val tarTree = aem.project.tarTree(tarFile)
+
+            return tarTree.find { Patterns.wildcard(it, dispatcherModuleName) }
+                    ?: throw EnvironmentException("Dispatcher distribution seems to be invalid." +
+                            " Cannot find file matching '$dispatcherModuleName' in '$tarFile'")
+        }
+
     val dockerComposeFile
-        get() = File("$root/docker-compose.yml")
+        get() = File(rootDir, "docker-compose.yml")
 
     val dockerComposeSourceFile: File
         get() = File(aem.configCommonDir, "$ENVIRONMENT_DIR/docker-compose.yml")
@@ -40,7 +63,7 @@ class EnvironmentOptions(private val aem: AemExtension) {
         get() = File(aem.configCommonDir, "$ENVIRONMENT_DIR/httpd/conf")
 
     val dispatcherModuleFile: File
-        get() = File("$root/$FILES_DIR/mod_dispatcher.so")
+        get() = File(rootDir, "$DISTRIBUTIONS_DIR/mod_dispatcher.so")
 
     @JsonIgnore
     var healthChecks = HealthChecks()
@@ -76,50 +99,9 @@ class EnvironmentOptions(private val aem: AemExtension) {
         healthChecks.apply(options)
     }
 
-    fun prepare() {
-        provideFiles()
-        syncDockerComposeFile()
-        ensureDirsExist()
-    }
-
-    private fun provideFiles() {
-        if (!dispatcherModuleFile.exists()) {
-            GFileUtils.copyFile(downloadDispatcherModule(), dispatcherModuleFile)
-        }
-    }
-
-    private fun syncDockerComposeFile() {
-        GFileUtils.deleteFileQuietly(dockerComposeFile)
-        GFileUtils.copyFile(dockerComposeSourceFile, dockerComposeFile)
-    }
-
-    fun validate() {
-        if (!dockerComposeFile.exists()) {
-            throw EnvironmentException("Docker compose file does not exist: $dockerComposeFile")
-        }
-    }
-
-    private fun downloadDispatcherModule(): File {
-        if (dispatcherDistUrl.isBlank()) {
-            throw EnvironmentException("Dispatcher distribution URL needs to be configured in property" +
-                    " 'aem.env.dispatcher.distUrl' in order to use AEM environment.")
-        }
-
-        val tarFile = fileResolver.url(dispatcherDistUrl).file
-        val tarTree = aem.project.tarTree(tarFile)
-
-        return tarTree.find { Patterns.wildcard(it, dispatcherModuleName) }
-                ?: throw EnvironmentException("Dispatcher distribution seems to be invalid." +
-                        " Cannot find file matching '$dispatcherModuleName' in '$tarFile'")
-    }
-
-    private fun ensureDirsExist() {
-        directories.forEach { GFileUtils.mkdirs(File("$root/$it")) }
-    }
-
     companion object {
         const val ENVIRONMENT_DIR = "environment"
 
-        const val FILES_DIR = "files"
+        const val DISTRIBUTIONS_DIR = "distributions"
     }
 }

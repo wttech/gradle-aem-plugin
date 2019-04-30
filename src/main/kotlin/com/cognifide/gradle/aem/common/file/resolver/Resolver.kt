@@ -11,12 +11,12 @@ import com.cognifide.gradle.aem.common.file.downloader.UrlFileDownloader
 import com.cognifide.gradle.aem.common.http.HttpClient
 import com.google.common.hash.HashCode
 import java.io.File
+import java.util.*
 import org.apache.commons.io.FilenameUtils
 import org.apache.commons.lang3.builder.HashCodeBuilder
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.tasks.Internal
 import org.gradle.util.GFileUtils
-import java.util.*
 
 /**
  * File downloader with groups supporting files from multiple sources: local and remote (SFTP, SMB, HTTP).

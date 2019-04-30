@@ -1,6 +1,8 @@
 package com.cognifide.gradle.aem.environment
 
-class EnvironmentException : RuntimeException {
+import com.cognifide.gradle.aem.common.AemException
+
+class EnvironmentException : AemException {
 
     constructor(message: String, cause: Throwable) : super(message, cause)
 
