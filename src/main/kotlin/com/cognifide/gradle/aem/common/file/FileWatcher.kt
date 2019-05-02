@@ -2,13 +2,13 @@ package com.cognifide.gradle.aem.common.file
 
 import com.cognifide.gradle.aem.common.AemException
 import com.cognifide.gradle.aem.common.AemExtension
+import java.io.File
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import org.apache.commons.io.monitor.FileAlterationListener
 import org.apache.commons.io.monitor.FileAlterationMonitor
 import org.apache.commons.io.monitor.FileAlterationObserver
-import java.io.File
 
 @UseExperimental(ObsoleteCoroutinesApi::class)
 open class FileWatcher(val aem: AemExtension) {
@@ -99,5 +99,4 @@ open class FileWatcher(val aem: AemExtension) {
 
         override fun onStop(observer: FileAlterationObserver?) {}
     }
-
 }
