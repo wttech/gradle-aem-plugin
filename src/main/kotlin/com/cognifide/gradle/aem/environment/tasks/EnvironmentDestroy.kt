@@ -28,7 +28,7 @@ open class EnvironmentDestroy : AemDefaultTask() {
             aem.environment.destroy()
         }
 
-        aem.notifier.notify("Environment destroyed")
+        aem.notifier.notify("Environment destroyed", "Destroyed with success.")
     }
 
     companion object {

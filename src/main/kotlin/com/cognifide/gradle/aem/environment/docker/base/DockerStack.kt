@@ -1,9 +1,9 @@
-package com.cognifide.gradle.aem.environment.docker
+package com.cognifide.gradle.aem.environment.docker.base
 
 import org.buildobjects.process.ExternalProcessFailureException
 import org.buildobjects.process.ProcBuilder
 
-class DockerStack(val name: String) {
+open class DockerStack(val name: String) {
 
     fun deploy(composeFilePath: String) {
         try {

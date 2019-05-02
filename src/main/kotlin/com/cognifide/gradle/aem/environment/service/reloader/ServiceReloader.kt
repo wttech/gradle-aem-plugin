@@ -36,7 +36,7 @@ open class ServiceReloader(val environment: Environment) {
             while (true) {
                 val changes = modificationsChannel.receiveAvailable()
                 environment.log("Reloading httpd because of: ${changes.joinToString(", ")}")
-                environment.restartHttpd()
+                environment.httpd.restart()
                 requestToCheckStability.send(Date())
             }
         }

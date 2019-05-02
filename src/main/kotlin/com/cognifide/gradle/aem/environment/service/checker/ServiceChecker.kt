@@ -23,10 +23,6 @@ class ServiceChecker(environment: Environment) {
         return@launch serviceStatuses.filter { !it.second }.map { it.first }
     }
 
-    fun awaitObservingProgress(message: String, maxAwaitTime: Long, condition: suspend () -> Boolean) = progress.launch {
-        awaitCondition(message, maxAwaitTime, condition)
-    }
-
     private fun ProgressLogger.isHealthy(check: HealthCheck): Boolean {
         return awaitCondition("${check.url} - awaiting to start", check.maxAwaitTime) {
             isResponseValid(check)

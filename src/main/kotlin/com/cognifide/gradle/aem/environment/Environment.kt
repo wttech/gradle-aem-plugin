@@ -2,23 +2,21 @@ package com.cognifide.gradle.aem.environment
 
 import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.Formats
-import com.cognifide.gradle.aem.common.Retry
 import com.cognifide.gradle.aem.common.file.FileOperations
-import com.cognifide.gradle.aem.environment.docker.DockerContainer
-import com.cognifide.gradle.aem.environment.docker.DockerStack
+import com.cognifide.gradle.aem.environment.docker.domain.AemStack
+import com.cognifide.gradle.aem.environment.docker.domain.HttpdContainer
 import com.cognifide.gradle.aem.environment.service.checker.ServiceChecker
 import com.cognifide.gradle.aem.environment.service.reloader.ServiceReloader
-import java.io.File
-import org.buildobjects.process.ExternalProcessFailureException
 import org.gradle.util.GFileUtils
+import java.io.File
 
 class Environment(val aem: AemExtension) {
 
     val options = aem.config.environmentOptions
 
-    val stack = DockerStack("aem")
+    val stack = AemStack(this)
 
-    val httpdContainer = DockerContainer("aem_httpd")
+    val httpd = HttpdContainer(this)
 
     val serviceReloader = ServiceReloader(this)
 
@@ -28,7 +26,7 @@ class Environment(val aem: AemExtension) {
         get() = options.createdLockFile.exists()
 
     val running: Boolean
-        get() = created && stack.running
+        get() = created && stack.running && httpd.running
 
     fun up() {
         if (running) {
@@ -39,9 +37,11 @@ class Environment(val aem: AemExtension) {
         aem.logger.info("Turning on: $this")
 
         customize()
-        deployStack()
-        restartHttpd()
-        createLock()
+
+        stack.deploy()
+        httpd.deploy()
+
+        lock()
 
         aem.logger.info("Turned on: $this")
     }
@@ -54,7 +54,7 @@ class Environment(val aem: AemExtension) {
 
         aem.logger.info("Turning off: $this")
 
-        undeployStack()
+        stack.undeploy()
 
         aem.logger.info("Turned off: $this")
     }
@@ -72,33 +72,7 @@ class Environment(val aem: AemExtension) {
         aem.logger.info("Destroyed: $this")
     }
 
-    private fun deployStack() {
-        stack.deploy(options.dockerComposeFile.path)
-
-        if (!serviceChecker.awaitObservingProgress("HTTPD container - awaiting start", HTTPD_CONTAINER_AWAIT_TIME) { httpdContainer.running }) {
-            throw EnvironmentException("Failed to start '${httpdContainer.name}' container.")
-        }
-    }
-
-    private fun undeployStack() {
-        stack.rm()
-
-        if (!serviceChecker.awaitObservingProgress("compose stack - awaiting stop", NETWORK_STOP_AWAIT_TIME) { !stack.running }) {
-            throw EnvironmentException("Failed to stop compose stack after ${NETWORK_STOP_AWAIT_TIME / Retry.SECOND_MILIS} seconds." +
-                    "\nPlease try to stop it manually by running: `docker stack rm ${stack.name}`")
-        }
-    }
-
-    fun restartHttpd() {
-        try {
-            httpdContainer.exec(HTTPD_RESTART_COMMAND, HTTPD_RESTART_EXIT_CODE)
-            log("HTTPD restarted with new configuration. Checking service stability.")
-        } catch (e: ExternalProcessFailureException) {
-            log("Failed to reload HTTPD, exit code: ${e.exitValue}! Error:\n${Formats.logMessage(e.stderr)}")
-        }
-    }
-
-    fun customize() {
+    private fun customize() {
         aem.logger.info("Customizing AEM environment")
 
         with(options) {
@@ -108,7 +82,7 @@ class Environment(val aem: AemExtension) {
         }
     }
 
-    private fun createLock() {
+    private fun lock() {
         FileOperations.lock(options.createdLockFile)
     }
 
@@ -154,15 +128,5 @@ class Environment(val aem: AemExtension) {
 
     override fun toString(): String {
         return "Environment(root=${options.rootDir},running=$running)"
-    }
-
-    companion object {
-        const val NETWORK_STOP_AWAIT_TIME = 30000L
-
-        const val HTTPD_RESTART_COMMAND = "/usr/local/apache2/bin/httpd -k restart"
-
-        const val HTTPD_RESTART_EXIT_CODE = 0
-
-        const val HTTPD_CONTAINER_AWAIT_TIME = 10000L
     }
 }

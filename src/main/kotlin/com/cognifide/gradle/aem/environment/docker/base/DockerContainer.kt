@@ -1,10 +1,11 @@
-package com.cognifide.gradle.aem.environment.docker
+package com.cognifide.gradle.aem.environment.docker.base
 
 import com.cognifide.gradle.aem.environment.EnvironmentException
 import org.buildobjects.process.ExternalProcessFailureException
 import org.buildobjects.process.ProcBuilder
+import org.gradle.process.internal.streams.SafeStreams
 
-class DockerContainer(val name: String) {
+open class DockerContainer(val name: String) {
 
     val id: String?
         get() {
@@ -52,6 +53,8 @@ class DockerContainer(val name: String) {
         ProcBuilder("docker")
                 .withArgs("exec", id, *commands)
                 .withExpectedExitStatuses(exitCode)
+                .withOutputStream(SafeStreams.systemOut())
+                .withErrorStream(SafeStreams.systemErr())
                 .run()
     }
 }
