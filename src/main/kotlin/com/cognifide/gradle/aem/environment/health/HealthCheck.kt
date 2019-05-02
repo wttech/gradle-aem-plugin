@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.environment.service.checker
+package com.cognifide.gradle.aem.environment.health
 
 import java.net.HttpURLConnection
 import java.net.URI

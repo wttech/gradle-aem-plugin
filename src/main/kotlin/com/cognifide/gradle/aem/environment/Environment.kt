@@ -7,9 +7,8 @@ import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.file.resolver.FileResolver
 import com.cognifide.gradle.aem.environment.docker.domain.AemStack
 import com.cognifide.gradle.aem.environment.docker.domain.HttpdContainer
+import com.cognifide.gradle.aem.environment.health.HealthChecker
 import com.cognifide.gradle.aem.environment.hosts.HostsOptions
-import com.cognifide.gradle.aem.environment.service.checker.HealthChecks
-import com.cognifide.gradle.aem.environment.service.checker.ServiceChecker
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 import org.gradle.util.GFileUtils
@@ -34,9 +33,6 @@ class Environment(val aem: AemExtension) {
      * Represents Docker container named 'aem_httpd' and provides API for manipulating it.
      */
     val httpd = HttpdContainer(this)
-
-    // TODO refactor
-    val serviceChecker = ServiceChecker(this)
 
     /**
      * Directories to be created if not exist
@@ -86,7 +82,7 @@ class Environment(val aem: AemExtension) {
         get() = File(rootDir, "$DISTRIBUTIONS_DIR/mod_dispatcher.so")
 
     @JsonIgnore
-    var healthChecks = HealthChecks()
+    var healthChecker = HealthChecker(this)
 
     val hosts = HostsOptions()
 
@@ -184,7 +180,7 @@ class Environment(val aem: AemExtension) {
     }
 
     fun check() {
-        serviceChecker.findUnavailable().apply {
+        healthChecker.findUnavailable().apply {
             if (isNotEmpty()) {
                 throw EnvironmentException("Services verification failed! URLs are unavailable or returned different " +
                         "response than expected:\n${joinToString("\n")}")
@@ -217,8 +213,8 @@ class Environment(val aem: AemExtension) {
     /**
      * Configures environment service health checks.
      */
-    fun healthChecks(options: HealthChecks.() -> Unit) {
-        healthChecks.apply(options)
+    fun healthChecks(options: HealthChecker.() -> Unit) {
+        healthChecker.apply(options)
     }
 
     override fun toString(): String {

@@ -24,7 +24,7 @@ open class EnvironmentDev : AemDefaultTask() {
                     val restarted = environment.httpd.restart(false)
                     if (restarted) {
                         logger.lifecycle("Checking HTTP health checks")
-                        val unavailableServices = environment.serviceChecker.findUnavailable()
+                        val unavailableServices = environment.healthChecker.findUnavailable()
                         if (unavailableServices.isEmpty()) {
                             logger.lifecycle("All stable, configuration update looks good.")
                         } else {
