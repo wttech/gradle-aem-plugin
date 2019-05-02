@@ -1,9 +1,9 @@
 package com.cognifide.gradle.aem.environment.tasks
 
-import com.cognifide.gradle.aem.environment.EnvironmentException
+import com.cognifide.gradle.aem.common.AemDefaultTask
 import org.gradle.api.tasks.TaskAction
 
-open class EnvironmentUp : EnvironmentTask() {
+open class EnvironmentUp : AemDefaultTask() {
 
     init {
         description = "Turn on additional services for local environment " +
@@ -11,16 +11,16 @@ open class EnvironmentUp : EnvironmentTask() {
     }
 
     @TaskAction
-    override fun perform() {
-        super.perform()
-
-        removeStackIfDeployed()
-        deployStack()
-        val unavailableServices = serviceChecker.checkForUnavailableServices()
-        if (unavailableServices.isNotEmpty()) {
-            throw EnvironmentException("Services verification failed! URLs are unavailable or returned different response than expected:" +
-                    "\n${unavailableServices.joinToString("\n")}")
+    fun up() {
+        if (aem.environment.running) {
+            aem.notifier.notify("Environment up", "Cannot turn on as it is already running")
+            return
         }
+
+        aem.environment.up()
+        aem.environment.check()
+
+        aem.notifier.notify("Environment up", "Turned on with success. HTTP server / AEM dispatcher is now available")
     }
 
     companion object {

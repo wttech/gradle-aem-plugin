@@ -68,7 +68,7 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
 
     @get:JsonIgnore
     val dir: File
-        get() = File("${aem.config.localInstanceOptions.root}/$typeName")
+        get() = File(aem.config.localInstanceOptions.rootDir, typeName)
 
     @get:JsonIgnore
     val jar: File
@@ -312,10 +312,7 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
 
     private fun lockFile(name: String): File = File(dir, "$name.lock")
 
-    fun lock(name: String) {
-        val metaJson = Formats.toJson(mapOf("locked" to Formats.date()))
-        lockFile(name).printWriter().use { it.print(metaJson) }
-    }
+    fun lock(name: String) = FileOperations.lock(lockFile(name))
 
     fun locked(name: String): Boolean = lockFile(name).exists()
 
@@ -354,7 +351,7 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
                 this.typeName = instanceUrl.typeName
                 this.debugPort = instanceUrl.debugPort
 
-                this.environment = aem.environment
+                this.environment = aem.env
                 this.zoneId = aem.zoneId
 
                 this.apply(configurer)

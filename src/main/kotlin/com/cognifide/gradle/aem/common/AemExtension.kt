@@ -2,9 +2,11 @@ package com.cognifide.gradle.aem.common
 
 import com.cognifide.gradle.aem.bundle.BundlePlugin
 import com.cognifide.gradle.aem.common.file.FileOperations
+import com.cognifide.gradle.aem.common.file.FileWatcher
 import com.cognifide.gradle.aem.common.http.HttpClient
 import com.cognifide.gradle.aem.config.Config
 import com.cognifide.gradle.aem.config.ConfigPlugin
+import com.cognifide.gradle.aem.environment.Environment
 import com.cognifide.gradle.aem.environment.EnvironmentPlugin
 import com.cognifide.gradle.aem.instance.*
 import com.cognifide.gradle.aem.pkg.PackageDefinition
@@ -13,7 +15,6 @@ import com.cognifide.gradle.aem.pkg.tasks.PackageCompose
 import com.cognifide.gradle.aem.pkg.vlt.VltFilter
 import com.cognifide.gradle.aem.tooling.ToolingPlugin
 import com.cognifide.gradle.aem.tooling.vlt.VltException
-import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 import java.time.ZoneId
 import org.gradle.api.Project
@@ -22,6 +23,9 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
 
+/**
+ * Core of library, facade for implementing tasks, configuration aggregator.
+ */
 @Suppress("TooManyFunctions")
 open class AemExtension(@Internal val project: Project) {
 
@@ -43,7 +47,6 @@ open class AemExtension(@Internal val project: Project) {
      * - single-project build - root project
      */
     @get:Internal
-    @get:JsonIgnore
     val projectMain: Project = project.findProject(props.string("projectMainPath") ?: ":aem") ?: project.rootProject
 
     /**
@@ -56,14 +59,12 @@ open class AemExtension(@Internal val project: Project) {
      * in case of multi-project build and assembly packages.
      */
     @get:Internal
-    @get:JsonIgnore
     val projectPrefixes: List<String> = props.list("projectPrefixes") ?: listOf("aem.", "aem-", "aem_")
 
     /**
      * Project name with skipped convention prefixes.
      */
     @get:Internal
-    @get:JsonIgnore
     val projectName: String
         get() = project.name.run {
             var n = this; projectPrefixes.forEach { n = n.removePrefix(it) }; n
@@ -74,7 +75,6 @@ open class AemExtension(@Internal val project: Project) {
      * and also for OSGi bundle JARs.
      */
     @get:Internal
-    @get:JsonIgnore
     val baseName: String
         get() = Formats.normalizeSeparators(if (project == project.rootProject) {
             project.rootProject.name
@@ -83,17 +83,16 @@ open class AemExtension(@Internal val project: Project) {
         }, ".")
 
     /**
-     * Determines current environment to be used in e.g package deployment.
+     * Determines current environment name to be used in e.g package deployment.
      */
     @Input
-    val environment: String = props.string("env") ?: run { System.getenv("ENV") ?: "local" }
+    val env: String = props.string("env") ?: run { System.getenv("ENV") ?: "local" }
 
     /**
      * Timezone ID (default for defined instances)
      */
     @Internal
-    @JsonIgnore
-    var zoneId: ZoneId = props.string("zoneId")?.let { ZoneId.of(it) } ?: ZoneId.systemDefault()
+    val zoneId: ZoneId = props.string("zoneId")?.let { ZoneId.of(it) } ?: ZoneId.systemDefault()
 
     /**
      * Performs parallel CRX package deployments and instance synchronization.
@@ -123,6 +122,12 @@ open class AemExtension(@Internal val project: Project) {
     @get:Internal
     val configCommonDir: File
         get() = projectMain.file(props.string("configCommonDir") ?: "gradle")
+
+    /**
+     * Provides API for controlling virtualized AEM environment with HTTPD and dispatcher module.
+     */
+    @get:Internal
+    val environment = Environment(this)
 
     /**
      * Provides API for displaying interactive notification during running build tasks.
@@ -174,7 +179,7 @@ open class AemExtension(@Internal val project: Project) {
             return namedInstance(Instance.FILTER_ANY)
         }
 
-    fun namedInstance(desiredName: String? = props.string("instance.name"), defaultName: String = "$environment-*"): Instance {
+    fun namedInstance(desiredName: String? = props.string("instance.name"), defaultName: String = "$env-*"): Instance {
         val nameMatcher: String = desiredName ?: defaultName
 
         val namedInstance = filterInstances(nameMatcher).firstOrNull()
@@ -185,7 +190,7 @@ open class AemExtension(@Internal val project: Project) {
         throw InstanceException("Instance named '$nameMatcher' is not defined.")
     }
 
-    fun filterInstances(nameMatcher: String = props.string("instance.name") ?: "$environment-*"): List<Instance> {
+    fun filterInstances(nameMatcher: String = props.string("instance.name") ?: "$env-*"): List<Instance> {
         val all = config.instances.values
 
         // Specified by command line should not be filtered
@@ -198,10 +203,10 @@ open class AemExtension(@Internal val project: Project) {
         return all.filter { instance ->
             when {
                 props.flag("instance.authors") -> {
-                    Patterns.wildcard(instance.name, "$environment-${InstanceType.AUTHOR}*")
+                    Patterns.wildcard(instance.name, "$env-${InstanceType.AUTHOR}*")
                 }
                 props.flag("instance.publishers") -> {
-                    Patterns.wildcard(instance.name, "$environment-${InstanceType.PUBLISH}*")
+                    Patterns.wildcard(instance.name, "$env-${InstanceType.PUBLISH}*")
                 }
                 else -> Patterns.wildcard(instance.name, nameMatcher)
             }
@@ -281,6 +286,10 @@ open class AemExtension(@Internal val project: Project) {
         notifier.apply(configurer)
     }
 
+    fun environment(configurer: Environment.() -> Unit) {
+        environment.apply(configurer)
+    }
+
     fun tasks(configurer: TaskFacade.() -> Unit) {
         tasks.apply(configurer)
     }
@@ -302,6 +311,8 @@ open class AemExtension(@Internal val project: Project) {
     fun <T> progress(total: Long, action: ProgressIndicator.() -> T): T {
         return ProgressIndicator(project).apply { this.total = total }.launch(action)
     }
+
+    fun <T> progress(action: ProgressIndicator.() -> T) = progressIndicator(action)
 
     /**
      * Show asynchronous progress indicator while performing some action.
@@ -363,6 +374,10 @@ open class AemExtension(@Internal val project: Project) {
     @get:Internal
     val temporaryDir: File
         get() = temporaryDir(TEMPORARY_DIR)
+
+    fun fileWatcher(options: FileWatcher.() -> Unit) {
+        FileWatcher(this).apply(options).start()
+    }
 
     companion object {
 

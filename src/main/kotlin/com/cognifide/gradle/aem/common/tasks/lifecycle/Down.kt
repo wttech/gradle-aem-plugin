@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.config.tasks
+package com.cognifide.gradle.aem.common.tasks.lifecycle
 
 import com.cognifide.gradle.aem.common.AemDefaultTask
 

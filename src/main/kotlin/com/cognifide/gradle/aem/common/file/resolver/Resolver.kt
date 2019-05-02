@@ -11,6 +11,7 @@ import com.cognifide.gradle.aem.common.file.downloader.UrlFileDownloader
 import com.cognifide.gradle.aem.common.http.HttpClient
 import com.google.common.hash.HashCode
 import java.io.File
+import java.util.*
 import org.apache.commons.io.FilenameUtils
 import org.apache.commons.lang3.builder.HashCodeBuilder
 import org.gradle.api.artifacts.Configuration
@@ -64,7 +65,7 @@ abstract class Resolver<G : FileGroup>(
 
     fun dependency(notation: Any): FileResolution {
         return resolve(notation) {
-            val configName = "fileResolver_dependency_${HashCodeBuilder().append(notation).append(downloadDir).build()}"
+            val configName = "fileResolver_dependency_${UUID.randomUUID()}"
             val configOptions: (Configuration) -> Unit = { it.isTransitive = false }
             val config = project.configurations.create(configName, configOptions)
 

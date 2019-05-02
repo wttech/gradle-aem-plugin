@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.environment.checks
+package com.cognifide.gradle.aem.environment.health
 
 import java.net.HttpURLConnection
 import java.net.URI
@@ -11,7 +11,7 @@ class HealthCheck(val url: String) {
 
     var text: String = ""
 
-    var maxAwaitTime = 60000L
+    var maxAwaitTime = 10000L
 
     var connectionTimeout = 3000
 }

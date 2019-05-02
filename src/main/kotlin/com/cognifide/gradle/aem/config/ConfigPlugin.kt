@@ -46,7 +46,7 @@ class ConfigPlugin : AemPlugin() {
     }
 
     private fun Project.setupTasks() {
-        with(AemExtension.of(project).tasks) {
+        tasks {
             register<Debug>(Debug.NAME) {
                 dependsOn(LifecycleBasePlugin.BUILD_TASK_NAME)
             }

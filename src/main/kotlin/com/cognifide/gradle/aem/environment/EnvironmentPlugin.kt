@@ -1,15 +1,16 @@
 package com.cognifide.gradle.aem.environment
 
-import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.AemPlugin
+import com.cognifide.gradle.aem.common.tasks.lifecycle.Destroy
+import com.cognifide.gradle.aem.common.tasks.lifecycle.Down
+import com.cognifide.gradle.aem.common.tasks.lifecycle.Restart
+import com.cognifide.gradle.aem.common.tasks.lifecycle.Up
 import com.cognifide.gradle.aem.config.ConfigPlugin
-import com.cognifide.gradle.aem.config.tasks.Destroy
-import com.cognifide.gradle.aem.config.tasks.Down
-import com.cognifide.gradle.aem.config.tasks.Up
 import com.cognifide.gradle.aem.environment.tasks.*
 import com.cognifide.gradle.aem.instance.InstancePlugin
 import com.cognifide.gradle.aem.instance.tasks.InstanceUp
 import org.gradle.api.Project
+import org.gradle.language.base.plugins.LifecycleBasePlugin
 
 /**
  * Separate plugin which provides tasks for managing local development environment additional to AEM, like:
@@ -29,10 +30,11 @@ class EnvironmentPlugin : AemPlugin() {
     }
 
     private fun Project.setupTasks() {
-        with(AemExtension.of(this).tasks) {
+        tasks {
             register<EnvironmentDev>(EnvironmentDev.NAME)
             register<EnvironmentHosts>(EnvironmentHosts.NAME)
             register<EnvironmentUp>(EnvironmentUp.NAME) {
+                mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME, EnvironmentDown.NAME)
                 plugins.withId(InstancePlugin.ID) { mustRunAfter(InstanceUp.NAME) }
             }
             register<EnvironmentDown>(EnvironmentDown.NAME)
@@ -41,8 +43,7 @@ class EnvironmentPlugin : AemPlugin() {
                 dependsOn(EnvironmentDown.NAME)
             }
             register<EnvironmentRestart>(EnvironmentRestart.NAME) {
-                dependsOn(EnvironmentDown.NAME)
-                finalizedBy(EnvironmentUp.NAME)
+                dependsOn(EnvironmentDown.NAME, EnvironmentUp.NAME)
             }
             registerOrConfigure<Up>(Up.NAME) {
                 dependsOn(EnvironmentUp.NAME)
@@ -52,6 +53,9 @@ class EnvironmentPlugin : AemPlugin() {
             }
             registerOrConfigure<Destroy>(Destroy.NAME) {
                 dependsOn(EnvironmentDestroy.NAME)
+            }
+            registerOrConfigure<Restart>(Restart.NAME) {
+                dependsOn(EnvironmentRestart.NAME)
             }
         }
     }

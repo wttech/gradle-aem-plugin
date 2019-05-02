@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.common.file
 
 import com.cognifide.gradle.aem.common.AemPlugin
+import com.cognifide.gradle.aem.common.Formats
 import com.cognifide.gradle.aem.common.Patterns
 import java.io.File
 import java.io.FileOutputStream
@@ -137,4 +138,6 @@ object FileOperations {
     fun zipUnpack(zip: File, targetDir: File) {
         ZipFile(zip).extractAll(targetDir.absolutePath)
     }
+
+    fun lock(file: File) = file.writeText(Formats.toJson(mapOf("locked" to Formats.date())))
 }
