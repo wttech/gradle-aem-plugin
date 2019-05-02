@@ -15,6 +15,8 @@ class HttpdContainer(private val environment: Environment) {
 
     var awaitRetry = aem.retry { afterSecond(10) }
 
+    var restartCommand = "/usr/local/apache2/bin/httpd -k restart"
+
     val running: Boolean
         get() = container.running
 
@@ -28,7 +30,7 @@ class HttpdContainer(private val environment: Environment) {
             message = "Restarting HTTPD service"
 
             try {
-                container.exec("/usr/local/apache2/bin/httpd -k restart", 0)
+                container.exec(restartCommand, 0)
             } catch (e: ExternalProcessFailureException) {
                 throw EnvironmentException("Failed to reload HTTPD, exit code: ${e.exitValue}! Error:\n${Formats.logMessage(e.stderr)}")
             }
