@@ -11,10 +11,8 @@ open class ServiceReloader(val environment: Environment) {
 
     private val aem = environment.aem
 
-    private val options = environment.options
-
     private val dirMonitor: DirMonitor
-        get() = DirMonitor(options.httpdConfDir, modificationsChannel)
+        get() = DirMonitor(environment.httpdConfDir, modificationsChannel)
 
     private val modificationsChannel = Channel<String>(Channel.UNLIMITED)
 
@@ -25,7 +23,7 @@ open class ServiceReloader(val environment: Environment) {
             environment.restart()
             requestToCheckStability.send(Date())
             dirMonitor.start()
-            aem.logger.lifecycle("Listening for HTTPD configuration changes: ${options.httpdConfDir}")
+            aem.logger.lifecycle("Listening for HTTPD configuration changes: ${environment.httpdConfDir}")
             reloadConfigurationOnChange()
             checkServiceStabilityOnReload()
         }

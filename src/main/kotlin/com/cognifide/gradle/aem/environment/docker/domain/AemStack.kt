@@ -5,6 +5,9 @@ import com.cognifide.gradle.aem.environment.Environment
 import com.cognifide.gradle.aem.environment.EnvironmentException
 import com.cognifide.gradle.aem.environment.docker.base.DockerStack
 
+/**
+ * Represents Docker stack named 'aem' and provides API for manipulating it.
+ */
 class AemStack(val environment: Environment) {
 
     private val aem = environment.aem
@@ -25,10 +28,10 @@ class AemStack(val environment: Environment) {
 
     fun deploy() {
         aem.progressIndicator {
-            message = "Starting AEM Stack"
-            stack.deploy(environment.options.dockerComposeFile.path)
+            message = "Starting AEM stack"
+            stack.deploy(environment.dockerComposeFile.path)
 
-            message = "Awaiting started AEM Stack"
+            message = "Awaiting started AEM stack"
             Behaviors.waitUntil(deployRetry.delay) { timer ->
                 val running = stack.running
                 if (timer.ticks == deployRetry.times && !running) {
@@ -42,10 +45,10 @@ class AemStack(val environment: Environment) {
 
     fun undeploy() {
         aem.progressIndicator {
-            message = "Stopping AEM Stack"
+            message = "Stopping AEM stack"
             stack.rm()
 
-            message = "Awaiting stopped AEM Stack"
+            message = "Awaiting stopped AEM stack"
             Behaviors.waitUntil(undeployRetry.delay) { timer ->
                 val running = stack.running
                 if (timer.ticks == undeployRetry.times && running) {
@@ -56,5 +59,4 @@ class AemStack(val environment: Environment) {
             }
         }
     }
-
 }

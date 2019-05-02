@@ -285,6 +285,10 @@ open class AemExtension(@Internal val project: Project) {
         notifier.apply(configurer)
     }
 
+    fun environment(configurer: Environment.() -> Unit) {
+        environment.apply(configurer)
+    }
+
     fun tasks(configurer: TaskFacade.() -> Unit) {
         tasks.apply(configurer)
     }

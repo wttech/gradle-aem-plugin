@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.environment.docker.base
 
 import org.buildobjects.process.ExternalProcessFailureException
 import org.buildobjects.process.ProcBuilder
+import org.gradle.process.internal.streams.SafeStreams
 
 open class DockerStack(val name: String) {
 
@@ -10,6 +11,8 @@ open class DockerStack(val name: String) {
             ProcBuilder("docker")
                     .withArgs("stack", "deploy", "-c", composeFilePath, name)
                     .withNoTimeout()
+                    .withOutputStream(SafeStreams.systemOut())
+                    .withErrorStream(SafeStreams.systemErr())
                     .run()
         } catch (e: ExternalProcessFailureException) {
             throw DockerException("Failed to initialize stack '$name' on docker! Error: '${e.stderr}'", e)
@@ -20,6 +23,8 @@ open class DockerStack(val name: String) {
         try {
             ProcBuilder("docker")
                     .withArgs("stack", "rm", name)
+                    .withOutputStream(SafeStreams.systemOut())
+                    .withErrorStream(SafeStreams.systemErr())
                     .run()
         } catch (e: ExternalProcessFailureException) {
             throw DockerException("Failed to remove stack '$name' on docker! Error: '${e.stderr}'", e)

@@ -12,7 +12,7 @@ open class EnvironmentHosts : AemDefaultTask() {
 
     @TaskAction
     fun appendHosts() {
-        Hosts.of(aem.config.environmentOptions.hosts.defined).append()
+        Hosts.of(aem.environment.hosts.defined).append()
     }
 
     companion object {

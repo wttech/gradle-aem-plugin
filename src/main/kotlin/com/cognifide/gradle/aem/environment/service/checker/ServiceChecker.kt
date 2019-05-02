@@ -8,16 +8,14 @@ import com.cognifide.gradle.aem.environment.Environment
 import kotlinx.coroutines.*
 
 @UseExperimental(ObsoleteCoroutinesApi::class)
-class ServiceChecker(environment: Environment) {
+class ServiceChecker(val environment: Environment) {
 
     private val aem = environment.aem
-
-    private val options = environment.options
 
     val progress = ProgressLogger.of(environment.aem.project)
 
     fun findUnavailable() = progress.launch {
-        val serviceStatuses = aem.parallel.map(options.healthChecks.list) {
+        val serviceStatuses = aem.parallel.map(environment.healthChecks.list) {
             it.url to isHealthy(it)
         }
         return@launch serviceStatuses.filter { !it.second }.map { it.first }
