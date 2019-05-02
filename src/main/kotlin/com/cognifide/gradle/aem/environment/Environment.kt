@@ -2,7 +2,6 @@ package com.cognifide.gradle.aem.environment
 
 import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.AemTask
-import com.cognifide.gradle.aem.common.Formats
 import com.cognifide.gradle.aem.common.Patterns
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.file.resolver.FileResolver
@@ -11,7 +10,6 @@ import com.cognifide.gradle.aem.environment.docker.domain.HttpdContainer
 import com.cognifide.gradle.aem.environment.hosts.HostsOptions
 import com.cognifide.gradle.aem.environment.service.checker.HealthChecks
 import com.cognifide.gradle.aem.environment.service.checker.ServiceChecker
-import com.cognifide.gradle.aem.environment.service.reloader.ServiceReloader
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 import org.gradle.util.GFileUtils
@@ -36,9 +34,6 @@ class Environment(val aem: AemExtension) {
      * Represents Docker container named 'aem_httpd' and provides API for manipulating it.
      */
     val httpd = HttpdContainer(this)
-
-    // TODO refactor
-    val serviceReloader = ServiceReloader(this)
 
     // TODO refactor
     val serviceChecker = ServiceChecker(this)
@@ -195,10 +190,6 @@ class Environment(val aem: AemExtension) {
                         "response than expected:\n${joinToString("\n")}")
             }
         }
-    }
-
-    fun log(message: String) {
-        aem.logger.lifecycle("${Formats.timestamp()} $message")
     }
 
     /**

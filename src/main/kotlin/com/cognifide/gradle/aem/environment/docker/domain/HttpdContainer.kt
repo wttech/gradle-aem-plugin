@@ -25,16 +25,29 @@ class HttpdContainer(private val environment: Environment) {
         restart()
     }
 
-    fun restart() {
+    fun restart(verbose: Boolean = true): Boolean {
+        var success = false
+
         aem.progressIndicator {
             message = "Restarting HTTPD service"
 
             try {
                 container.exec(restartCommand, 0)
+                success = true
             } catch (e: ExternalProcessFailureException) {
-                throw EnvironmentException("Failed to reload HTTPD, exit code: ${e.exitValue}! Error:\n${Formats.logMessage(e.stderr)}")
+                success = false
+                if (verbose) {
+                    throw EnvironmentException("Failed to reload HTTPD service!", e)
+                } else {
+                    aem.logger.error("Failed to reload HTTPD service, exit code: ${e.exitValue}")
+                    if (!e.stderr.isNullOrBlank()) {
+                        aem.logger.error(e.stderr)
+                    }
+                }
             }
         }
+
+        return success
     }
 
     fun await() {

@@ -7,6 +7,7 @@ import com.cognifide.gradle.aem.config.Config
 import com.cognifide.gradle.aem.config.ConfigPlugin
 import com.cognifide.gradle.aem.environment.Environment
 import com.cognifide.gradle.aem.environment.EnvironmentPlugin
+import com.cognifide.gradle.aem.common.file.FileWatcher
 import com.cognifide.gradle.aem.instance.*
 import com.cognifide.gradle.aem.pkg.PackageDefinition
 import com.cognifide.gradle.aem.pkg.PackagePlugin
@@ -373,6 +374,10 @@ open class AemExtension(@Internal val project: Project) {
     @get:Internal
     val temporaryDir: File
         get() = temporaryDir(TEMPORARY_DIR)
+
+    fun fileWatcher(options: FileWatcher.() -> Unit) {
+        FileWatcher(this).apply(options).start()
+    }
 
     companion object {
 
