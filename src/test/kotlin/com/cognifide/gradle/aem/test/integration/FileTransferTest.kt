@@ -8,6 +8,7 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import java.io.File
+import java.io.RandomAccessFile
 import java.util.*
 
 abstract class FileTransferTest {
@@ -37,6 +38,26 @@ abstract class FileTransferTest {
 
         Assertions.assertTrue(downloaded.exists())
         Assertions.assertTrue(text(downloaded).contains("Some text"))
+    }
+
+    @Test
+    fun shouldUploadLargeFile() {
+        //given
+        val hundredMegs = 100L * 1024L * 1024L
+        val transfer: FileTransfer = transfer()
+        val source = tmpFile()
+        val randomFile = RandomAccessFile(source, "rw")
+        randomFile.setLength(hundredMegs)
+
+        //when
+        transfer.upload(source)
+
+        //then
+        val downloaded = tmpFile()
+        transfer.download(source.name, downloaded)
+
+        Assertions.assertTrue(downloaded.exists())
+        Assertions.assertEquals(hundredMegs, downloaded.length())
     }
 
     @Test
