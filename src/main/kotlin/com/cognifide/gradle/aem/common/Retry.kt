@@ -20,11 +20,13 @@ class Retry private constructor(val aem: AemExtension) {
     }
 
     @Suppress("TooGenericExceptionCaught")
-    inline fun <T, reified E> launch(operation: String, block: () -> T): T {
+    inline fun <T, reified E> launch(operation: String, block: (Long) -> T): T {
         lateinit var exception: Exception
         for (i in 0..times) {
+            val no = i + 1
+
             try {
-                return block()
+                return block(i)
             } catch (e: Exception) {
                 exception = e
 
@@ -33,8 +35,7 @@ class Retry private constructor(val aem: AemExtension) {
                 }
 
                 if (i < times) {
-                    val delay = delay(i + 1)
-                    val no = i + 1
+                    val delay = delay(no)
 
                     aem.logger.lifecycle("Retrying ($no/$times) $operation after delay: ${Formats.duration(delay)}")
                     aem.logger.debug("Retrying due to exception", e)
@@ -48,11 +49,12 @@ class Retry private constructor(val aem: AemExtension) {
     }
 
     @Suppress("TooGenericExceptionCaught")
-    inline fun <T, reified E> launchSimply(block: () -> T): T {
+    inline fun <T, reified E> launchSimply(block: (Long) -> T): T {
         lateinit var exception: Exception
         for (i in 0..times) {
+            val no = i + 1
             try {
-                return block()
+                return block(i)
             } catch (e: Exception) {
                 exception = e
 
@@ -61,7 +63,7 @@ class Retry private constructor(val aem: AemExtension) {
                 }
 
                 if (i < times) {
-                    val delay = delay(i + 1)
+                    val delay = delay(no)
                     Thread.sleep(delay)
                 }
             }

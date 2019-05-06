@@ -22,13 +22,21 @@ class HealthChecker(val environment: Environment) {
         var all = listOf<HealthStatus>()
         var passed = listOf<HealthStatus>()
         var failed = listOf<HealthStatus>()
+        val count by lazy { "${passed.size}/${all.size} (${Formats.percent(passed.size, all.size)})" }
 
         aem.progress(checks.size) {
             try {
-                retry.launchSimply<Unit, EnvironmentException> {
+                retry.launchSimply<Unit, EnvironmentException> { no ->
                     reset()
+
+                    step = if (no > 1) {
+                        "Checking (${failed.size} failed)"
+                    } else {
+                        "Checking"
+                    }
+
                     all = aem.parallel.map(checks) { check ->
-                        increment("Checking $check") {
+                        increment(check.name) {
                             check.perform()
                         }
                     }.toList()
@@ -39,13 +47,15 @@ class HealthChecker(val environment: Environment) {
                         throw EnvironmentException("There are failed environment health checks. Retrying...")
                     }
                 }
+
+                aem.logger.lifecycle("Environment health check(s) succeed: $count")
             } catch (e: EnvironmentException) {
-                val message = "Environment health check(s) failed (${passed.size}/${all.size} " +
-                        "(${Formats.percent(passed.size, all.size)}):\n${failed.joinToString("\n")}"
-                if (verbose) {
-                    throw EnvironmentException(message)
-                } else {
+                val message = "Environment health check(s) failed: $count:\n${failed.joinToString("\n")})"
+
+                if (!verbose) {
                     aem.logger.error(message)
+                } else {
+                    throw EnvironmentException(message)
                 }
             }
         }
@@ -55,8 +65,6 @@ class HealthChecker(val environment: Environment) {
 
     fun url(url: String, method: String = "GET", statusCode: Int = 200, text: String? = null) {
         define("URL $url") {
-            Thread.sleep(1000) // TODO tmp
-
             aem.http {
                 call(method, url) { response ->
                     connectionRetries = false

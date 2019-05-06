@@ -25,7 +25,7 @@ open class FileWatcher(val aem: AemExtension) {
 
     var ignores = mutableListOf("**/___jb_tmp___")
 
-    fun ignore(vararg paths: String) =  ignore(paths.toList())
+    fun ignore(vararg paths: String) = ignore(paths.toList())
 
     fun ignore(paths: Iterable<String>) {
         ignores.addAll(paths)
