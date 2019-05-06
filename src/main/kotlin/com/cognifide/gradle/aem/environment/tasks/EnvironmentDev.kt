@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem.environment.tasks
 
 import com.cognifide.gradle.aem.common.AemDefaultTask
-import com.cognifide.gradle.aem.environment.EnvironmentException
 import org.gradle.api.tasks.TaskAction
 
 open class EnvironmentDev : AemDefaultTask() {
@@ -28,12 +27,7 @@ open class EnvironmentDev : AemDefaultTask() {
                         if (restarted) {
                             logger.lifecycle("Running environment health checks")
 
-                            try {
-                                environment.check()
-                                logger.lifecycle("Configuration change passed environment checks")
-                            } catch (e: EnvironmentException) {
-                                logger.lifecycle("Configuration change caused environment checks fail(s)", e)
-                            }
+                            environment.check(false)
                         }
                     }
                 }

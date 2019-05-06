@@ -47,6 +47,29 @@ class Retry private constructor(val aem: AemExtension) {
         throw exception
     }
 
+    @Suppress("TooGenericExceptionCaught")
+    inline fun <T, reified E> launchSimply(block: () -> T): T {
+        lateinit var exception: Exception
+        for (i in 0..times) {
+            try {
+                return block()
+            } catch (e: Exception) {
+                exception = e
+
+                if (e !is E) {
+                    throw exception
+                }
+
+                if (i < times) {
+                    val delay = delay(i + 1)
+                    Thread.sleep(delay)
+                }
+            }
+        }
+
+        throw exception
+    }
+
     companion object {
         fun none(aem: AemExtension) = Retry(aem)
 

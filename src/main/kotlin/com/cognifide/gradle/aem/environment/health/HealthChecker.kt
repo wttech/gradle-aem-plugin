@@ -10,24 +10,43 @@ class HealthChecker(val environment: Environment) {
 
     private val checks = mutableListOf<HealthCheck>()
 
+    var retry = aem.retry { afterSecond(5) }
+
     fun define(name: String, check: () -> Unit) {
         checks += HealthCheck(name, check)
     }
 
-    fun check() {
-        aem.progress(checks.size) {
-            val all = aem.parallel.map(checks) { check ->
-                increment("Checking $check") {
-                    check.perform()
-                }
-            }
-            val passed = all.filter { it.passed }
-            val failed = all - passed
+    // Evaluation
 
-            if (failed.isNotEmpty()) {
-                aem.logger.error("Failed environment health checks:", failed.joinToString("\n"))
-                throw EnvironmentException("Some environment health checks failed (${passed.size}/${all.size}" +
-                        " (${Formats.percent(passed.size, all.size)})")
+    fun check(verbose: Boolean = true) {
+        var all = listOf<HealthStatus>()
+        var passed = listOf<HealthStatus>()
+        var failed = listOf<HealthStatus>()
+
+        aem.progress(checks.size) {
+            try {
+                retry.launchSimply<Unit, EnvironmentException> {
+                    reset()
+                    all = aem.parallel.map(checks) { check ->
+                        increment("Checking $check") {
+                            check.perform()
+                        }
+                    }.toList()
+                    passed = all.filter { it.passed }
+                    failed = all - passed
+
+                    if (failed.isNotEmpty()) {
+                        throw EnvironmentException("There are failed environment health checks. Retrying...")
+                    }
+                }
+            } catch (e: EnvironmentException) {
+                val message = "Environment health check(s) failed (${passed.size}/${all.size} " +
+                        "(${Formats.percent(passed.size, all.size)}):\n${failed.joinToString("\n")}"
+                if (verbose) {
+                    throw EnvironmentException(message)
+                } else {
+                    aem.logger.error(message)
+                }
             }
         }
     }
@@ -40,6 +59,9 @@ class HealthChecker(val environment: Environment) {
 
             aem.http {
                 call(method, url) { response ->
+                    connectionRetries = false
+                    connectionTimeout = 1000
+
                     checkStatus(response, statusCode)
                     if (text != null) {
                         checkText(response, text)

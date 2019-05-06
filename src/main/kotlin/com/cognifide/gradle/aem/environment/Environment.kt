@@ -179,8 +179,8 @@ class Environment(val aem: AemExtension) {
         }
     }
 
-    fun check() {
-        healthChecker.check()
+    fun check(verbose: Boolean = true) {
+        healthChecker.check(verbose)
     }
 
     /**

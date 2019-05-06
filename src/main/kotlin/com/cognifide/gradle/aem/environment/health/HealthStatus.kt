@@ -9,9 +9,9 @@ class HealthStatus(val check: HealthCheck, val cause: Exception? = null) {
 
     val status: String
         get() = if (cause == null) {
-            "passed"
+            "OK"
         } else {
-            "failed (${StringUtils.abbreviate(cause.message, 120)})"
+            "FAIL | ${StringUtils.abbreviate(cause.message, 120)}"
         }
 
     override fun toString(): String {
