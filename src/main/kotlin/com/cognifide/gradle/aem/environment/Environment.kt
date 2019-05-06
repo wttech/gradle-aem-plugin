@@ -180,12 +180,7 @@ class Environment(val aem: AemExtension) {
     }
 
     fun check() {
-        healthChecker.findUnavailable().apply {
-            if (isNotEmpty()) {
-                throw EnvironmentException("Services verification failed! URLs are unavailable or returned different " +
-                        "response than expected:\n${joinToString("\n")}")
-            }
-        }
+        healthChecker.check()
     }
 
     /**

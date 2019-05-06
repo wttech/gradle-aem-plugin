@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.common.file
 
 import com.cognifide.gradle.aem.common.AemException
 import com.cognifide.gradle.aem.common.AemExtension
+import com.cognifide.gradle.aem.common.Patterns
 import java.io.File
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -10,16 +11,25 @@ import org.apache.commons.io.monitor.FileAlterationListener
 import org.apache.commons.io.monitor.FileAlterationMonitor
 import org.apache.commons.io.monitor.FileAlterationObserver
 
+// TODO refactor / remove shutdown hook somehow
 @UseExperimental(ObsoleteCoroutinesApi::class)
 open class FileWatcher(val aem: AemExtension) {
 
-    private val modificationsChannel = Channel<String>(Channel.UNLIMITED)
+    private val modificationsChannel = Channel<Event>(Channel.UNLIMITED)
 
     lateinit var dir: File
 
-    lateinit var onChange: (List<String>) -> Unit
+    lateinit var onChange: (List<Event>) -> Unit
 
     var interval = 500L
+
+    var ignores = mutableListOf("**/___jb_tmp___")
+
+    fun ignore(vararg paths: String) =  ignore(paths.toList())
+
+    fun ignore(paths: Iterable<String>) {
+        ignores.addAll(paths)
+    }
 
     fun start() {
         if (!::dir.isInitialized) {
@@ -34,8 +44,10 @@ open class FileWatcher(val aem: AemExtension) {
             // register watching
             val fao = FileAlterationObserver(dir)
             fao.addListener(CustomFileAlterationListener { event ->
-                GlobalScope.launch {
-                    modificationsChannel.send(event)
+                if (!Patterns.wildcard(event.file, ignores)) {
+                    GlobalScope.launch {
+                        modificationsChannel.send(event)
+                    }
                 }
             })
             val monitor = FileAlterationMonitor(interval)
@@ -71,26 +83,40 @@ open class FileWatcher(val aem: AemExtension) {
         return allMessages
     }
 
-    private class CustomFileAlterationListener(private val notify: (String) -> Unit) : FileAlterationListener {
+    class Event(val file: File, val type: EventType) {
+        override fun toString(): String {
+            return "$file [${type.name.toLowerCase().replace("_", " ")}]"
+        }
+    }
+
+    enum class EventType {
+        FILE_CREATED,
+        FILE_CHANGED,
+        FILE_DELETED,
+        DIR_CREATED,
+        DIR_DELETED,
+    }
+
+    private class CustomFileAlterationListener(private val notify: (Event) -> Unit) : FileAlterationListener {
 
         override fun onFileCreate(file: File) {
-            notify("$file [file created]")
+            notify(Event(file, EventType.FILE_CREATED))
         }
 
         override fun onFileChange(file: File) {
-            notify("$file [file changed]")
+            notify(Event(file, EventType.FILE_CHANGED))
         }
 
         override fun onFileDelete(file: File) {
-            notify("$file [file deleted]")
+            notify(Event(file, EventType.FILE_DELETED))
         }
 
         override fun onDirectoryCreate(directory: File) {
-            notify("$directory [dir created]")
+            notify(Event(directory, EventType.DIR_CREATED))
         }
 
         override fun onDirectoryDelete(directory: File) {
-            notify("$directory [dir deleted]")
+            notify(Event(directory, EventType.DIR_DELETED))
         }
 
         override fun onDirectoryChange(directory: File?) {}

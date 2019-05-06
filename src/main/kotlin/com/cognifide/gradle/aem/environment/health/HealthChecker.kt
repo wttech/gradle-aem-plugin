@@ -1,85 +1,51 @@
 package com.cognifide.gradle.aem.environment.health
 
-import com.cognifide.gradle.aem.common.ProgressLogger
-import com.cognifide.gradle.aem.common.Retry
-import com.cognifide.gradle.aem.common.http.HttpClient
-import com.cognifide.gradle.aem.common.http.RequestException
+import com.cognifide.gradle.aem.common.Formats
 import com.cognifide.gradle.aem.environment.Environment
-import kotlinx.coroutines.*
+import com.cognifide.gradle.aem.environment.EnvironmentException
 
-@UseExperimental(ObsoleteCoroutinesApi::class)
 class HealthChecker(val environment: Environment) {
 
     private val aem = environment.aem
 
-    val checks = mutableListOf<HealthCheck>()
+    private val checks = mutableListOf<HealthCheck>()
 
-    fun url(url: String, block: HealthCheck.() -> Unit) {
-        checks += HealthCheck(url).apply(block)
+    fun define(name: String, check: () -> Unit) {
+        checks += HealthCheck(name, check)
     }
 
-    private val progress = ProgressLogger.of(environment.aem.project)
+    fun check() {
+        aem.progress(checks.size) {
+            val all = aem.parallel.map(checks) { check ->
+                increment("Checking $check") {
+                    check.perform()
+                }
+            }
+            val passed = all.filter { it.passed }
+            val failed = all - passed
 
-    internal fun findUnavailable() = progress.launch {
-        val serviceStatuses = aem.parallel.map(checks) {
-            it.url to isHealthy(it)
+            if (failed.isNotEmpty()) {
+                aem.logger.error("Failed environment health checks:", failed.joinToString("\n"))
+                throw EnvironmentException("Some environment health checks failed (${passed.size}/${all.size}" +
+                        " (${Formats.percent(passed.size, all.size)})")
+            }
         }
-        return@launch serviceStatuses.filter { !it.second }.map { it.first }
     }
 
-    private fun ProgressLogger.isHealthy(check: HealthCheck): Boolean {
-        return awaitCondition("${check.url} - awaiting to start", check.maxAwaitTime) {
-            isResponseValid(check)
-        }
-    }
+    // Shorthand methods for defining health checks
 
-    private fun ProgressLogger.awaitCondition(message: String, maxAwaitTime: Long, condition: suspend () -> Boolean): Boolean {
-        var isValid = false
-        runBlocking {
-            withTimeoutOrNull(maxAwaitTime) {
-                val startTime = System.currentTimeMillis()
-                while (true) {
-                    val timePassed = System.currentTimeMillis() - startTime
-                    val remainingTime = (maxAwaitTime - timePassed) / Retry.SECOND_MILIS
-                    progress("!$remainingTime $message")
-                    delay(AWAIT_DELAY_DEFAULT)
-                    isValid = condition()
-                    if (isValid) {
-                        return@withTimeoutOrNull
+    fun url(url: String, method: String = "GET", statusCode: Int = 200, text: String? = null) {
+        define("URL $url") {
+            Thread.sleep(1000) // TODO tmp
+
+            aem.http {
+                call(method, url) { response ->
+                    checkStatus(response, statusCode)
+                    if (text != null) {
+                        checkText(response, text)
                     }
                 }
             }
         }
-        return isValid
-    }
-
-    private suspend fun isResponseValid(check: HealthCheck): Boolean {
-        return coroutineScope {
-            withContext(Dispatchers.Default) {
-                try {
-                    val (status, body) = get(check.connectionTimeout, check.url)
-                    status == check.status && body.contains(check.text)
-                } catch (ex: RequestException) {
-                    false
-                }
-            }
-        }
-    }
-
-    private fun http(timeout: Int) = HttpClient(aem).apply {
-        connectionRetries = false
-        connectionTimeout = timeout
-    }
-
-    private fun get(connectionTimeout: Int, url: String): Pair<Int, String> {
-        return http(connectionTimeout).get(url) { response ->
-            val body = asString(response)
-            val status = response.statusLine.statusCode
-            status to body
-        }
-    }
-
-    companion object {
-        const val AWAIT_DELAY_DEFAULT = 500L
     }
 }
