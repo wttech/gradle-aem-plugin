@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.environment.health
 
 import com.cognifide.gradle.aem.common.Formats
+import com.cognifide.gradle.aem.common.http.HttpClient
 import com.cognifide.gradle.aem.environment.Environment
 import com.cognifide.gradle.aem.environment.EnvironmentException
 
@@ -9,6 +10,11 @@ class HealthChecker(val environment: Environment) {
     private val aem = environment.aem
 
     private val checks = mutableListOf<HealthCheck>()
+
+    private var urlOptions: HttpClient.() -> Unit = {
+        connectionRetries = false
+        connectionTimeout = 1000
+    }
 
     var retry = aem.retry { afterSecond(5) }
 
@@ -64,11 +70,14 @@ class HealthChecker(val environment: Environment) {
     // Shorthand methods for defining health checks
 
     fun url(url: String, method: String = "GET", statusCode: Int = 200, text: String? = null) {
-        define("URL $url") {
+        url("URL $url", url, method, statusCode, text)
+    }
+
+    fun url(checkName: String, url: String, method: String = "GET", statusCode: Int = 200, text: String? = null) {
+        define(checkName) {
             aem.http {
                 call(method, url) { response ->
-                    connectionRetries = false
-                    connectionTimeout = 1000
+                    apply(urlOptions)
 
                     checkStatus(response, statusCode)
                     if (text != null) {
@@ -77,5 +86,9 @@ class HealthChecker(val environment: Environment) {
                 }
             }
         }
+    }
+
+    fun urlOptions(options: HttpClient.() -> Unit) {
+        this.urlOptions = options
     }
 }
