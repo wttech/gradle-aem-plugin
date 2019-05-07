@@ -2,10 +2,10 @@ package com.cognifide.gradle.aem.environment.docker.domain
 
 import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.file.FileWatcher
+import java.util.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
-import java.util.*
 
 @UseExperimental(ObsoleteCoroutinesApi::class)
 open class HttpdReloader(val aem: AemExtension) {
