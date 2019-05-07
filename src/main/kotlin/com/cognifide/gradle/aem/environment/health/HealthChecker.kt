@@ -30,9 +30,9 @@ class HealthChecker(val environment: Environment) {
                     reset()
 
                     step = if (no > 1) {
-                        "Checking (${failed.size} failed)"
+                        "Health rechecking (${failed.size} failed)"
                     } else {
-                        "Checking"
+                        "Health checking"
                     }
 
                     all = aem.parallel.map(checks) { check ->

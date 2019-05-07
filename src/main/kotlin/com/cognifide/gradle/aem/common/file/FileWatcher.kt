@@ -4,22 +4,15 @@ import com.cognifide.gradle.aem.common.AemException
 import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.Patterns
 import java.io.File
-import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.ReceiveChannel
 import org.apache.commons.io.monitor.FileAlterationListener
 import org.apache.commons.io.monitor.FileAlterationMonitor
 import org.apache.commons.io.monitor.FileAlterationObserver
 
-// TODO refactor / remove shutdown hook somehow
-@UseExperimental(ObsoleteCoroutinesApi::class)
 open class FileWatcher(val aem: AemExtension) {
-
-    private val modificationsChannel = Channel<Event>(Channel.UNLIMITED)
 
     lateinit var dir: File
 
-    lateinit var onChange: (List<Event>) -> Unit
+    lateinit var onChange: (Event) -> Unit
 
     var interval = 500L
 
@@ -40,47 +33,26 @@ open class FileWatcher(val aem: AemExtension) {
             throw AemException("File watcher on change callback is not specified!")
         }
 
-        runBlocking {
-            // register watching
-            val fao = FileAlterationObserver(dir)
-            fao.addListener(CustomFileAlterationListener { event ->
-                if (!Patterns.wildcard(event.file, ignores)) {
-                    GlobalScope.launch {
-                        modificationsChannel.send(event)
-                    }
-                }
-            })
-            val monitor = FileAlterationMonitor(interval)
-            monitor.addObserver(fao)
-            monitor.start()
-
-            // handle on exit
-            Runtime.getRuntime().addShutdownHook(Thread(Runnable {
-                try {
-                    monitor.stop()
-                } catch (ignored: Exception) {
-                }
-            }))
-
-            // listen watched changes
-            launch(Dispatchers.IO) {
-                while (true) {
-                    val changes = modificationsChannel.receiveAvailable()
-                    onChange(changes)
-                }
+        // register watching
+        val fao = FileAlterationObserver(dir)
+        fao.addListener(CustomFileAlterationListener { event ->
+            if (!Patterns.wildcard(event.file, ignores)) {
+                onChange(event)
             }
-        }
-    }
+        })
+        val monitor = FileAlterationMonitor(interval)
+        monitor.addObserver(fao)
+        monitor.start()
 
-    private suspend fun <E> ReceiveChannel<E>.receiveAvailable(): List<E> {
-        val allMessages = mutableListOf<E>()
-        allMessages.add(receive())
-        var next = poll()
-        while (next != null) {
-            allMessages.add(next)
-            next = poll()
-        }
-        return allMessages
+        // handle on exit
+        // TODO remove/refactor shutdown hook somehow
+        Runtime.getRuntime().addShutdownHook(Thread(Runnable {
+            try {
+                monitor.stop()
+            } catch (ignored: Exception) {
+                // ignore
+            }
+        }))
     }
 
     class Event(val file: File, val type: EventType) {
