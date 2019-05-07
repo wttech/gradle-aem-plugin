@@ -69,10 +69,6 @@ class HealthChecker(val environment: Environment) {
 
     // Shorthand methods for defining health checks
 
-    fun url(url: String, method: String = "GET", statusCode: Int = 200, text: String? = null) {
-        url("URL $url", url, method, statusCode, text)
-    }
-
     fun url(checkName: String, url: String, method: String = "GET", statusCode: Int = 200, text: String? = null) {
         define(checkName) {
             aem.http {
