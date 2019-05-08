@@ -216,13 +216,13 @@ class TaskFacade(private val aem: AemExtension) {
 
     fun <T : Task> getAll(type: Class<T>) = project.tasks.withType(type).toList()
 
-    fun sequence(name: String, sequenceOptions: SequenceOptions.() -> Unit) = sequence(name, sequenceOptions) {}
+    fun sequence(name: String, sequenceOptions: TaskSequence.() -> Unit) = sequence(name, {}, sequenceOptions)
 
-    fun sequence(name: String, sequenceOptions: SequenceOptions.() -> Unit, taskOptions: Task.() -> Unit): TaskProvider<Task> {
+    fun sequence(name: String, taskOptions: Task.() -> Unit, sequenceOptions: TaskSequence.() -> Unit): TaskProvider<Task> {
         val sequence = project.tasks.register(name)
 
         project.gradle.projectsEvaluated { _ ->
-            val options = SequenceOptions().apply(sequenceOptions)
+            val options = TaskSequence().apply(sequenceOptions)
             val taskList = pathed(options.dependentTasks)
             val afterList = pathed(options.afterTasks)
 
@@ -284,29 +284,6 @@ class TaskFacade(private val aem: AemExtension) {
             AemException(msg, cause)
         } else {
             AemException(msg)
-        }
-    }
-
-    class SequenceOptions {
-
-        var dependentTasks: Collection<Any> = listOf()
-
-        var afterTasks: Collection<Any> = listOf()
-
-        fun dependsOn(vararg tasks: Any) {
-            dependsOn(tasks.toList())
-        }
-
-        fun dependsOn(tasks: Collection<Any>) {
-            dependentTasks = tasks
-        }
-
-        fun mustRunAfter(vararg tasks: Any) {
-            mustRunAfter(tasks.toList())
-        }
-
-        fun mustRunAfter(tasks: Collection<Any>) {
-            afterTasks = tasks
         }
     }
 }

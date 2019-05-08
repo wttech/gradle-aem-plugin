@@ -1,16 +1,12 @@
 package com.cognifide.gradle.aem.environment
 
 import com.cognifide.gradle.aem.common.AemPlugin
-import com.cognifide.gradle.aem.common.tasks.lifecycle.Destroy
-import com.cognifide.gradle.aem.common.tasks.lifecycle.Down
-import com.cognifide.gradle.aem.common.tasks.lifecycle.Restart
-import com.cognifide.gradle.aem.common.tasks.lifecycle.Up
+import com.cognifide.gradle.aem.common.tasks.lifecycle.*
 import com.cognifide.gradle.aem.config.ConfigPlugin
 import com.cognifide.gradle.aem.environment.tasks.*
 import com.cognifide.gradle.aem.instance.InstancePlugin
 import com.cognifide.gradle.aem.instance.tasks.InstanceUp
 import org.gradle.api.Project
-import org.gradle.language.base.plugins.LifecycleBasePlugin
 
 /**
  * Separate plugin which provides tasks for managing local development environment additional to AEM, like:
@@ -31,20 +27,28 @@ class EnvironmentPlugin : AemPlugin() {
 
     private fun Project.setupTasks() {
         tasks {
-            register<EnvironmentDev>(EnvironmentDev.NAME)
-            register<EnvironmentHosts>(EnvironmentHosts.NAME)
-            register<EnvironmentUp>(EnvironmentUp.NAME) {
-                mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME, EnvironmentDown.NAME)
-                plugins.withId(InstancePlugin.ID) { mustRunAfter(InstanceUp.NAME) }
-            }
-            register<EnvironmentDown>(EnvironmentDown.NAME)
+            // Plugin tasks
 
-            register<EnvironmentDestroy>(EnvironmentDestroy.NAME) {
-                dependsOn(EnvironmentDown.NAME)
+            register<EnvironmentDown>(EnvironmentDown.NAME)
+            register<EnvironmentUp>(EnvironmentUp.NAME) {
+                mustRunAfter(EnvironmentDown.NAME, EnvironmentDestroy.NAME)
+                plugins.withId(InstancePlugin.ID) { mustRunAfter(InstanceUp.NAME) }
             }
             register<EnvironmentRestart>(EnvironmentRestart.NAME) {
                 dependsOn(EnvironmentDown.NAME, EnvironmentUp.NAME)
             }
+            register<EnvironmentDestroy>(EnvironmentDestroy.NAME) {
+                dependsOn(EnvironmentDown.NAME)
+            }
+            register<EnvironmentResetup>(EnvironmentResetup.NAME) {
+                dependsOn(EnvironmentDestroy.NAME, EnvironmentUp.NAME)
+            }
+
+            register<EnvironmentDev>(EnvironmentDev.NAME)
+            register<EnvironmentHosts>(EnvironmentHosts.NAME)
+
+            // Common lifecycle
+
             registerOrConfigure<Up>(Up.NAME) {
                 dependsOn(EnvironmentUp.NAME)
             }
@@ -56,6 +60,9 @@ class EnvironmentPlugin : AemPlugin() {
             }
             registerOrConfigure<Restart>(Restart.NAME) {
                 dependsOn(EnvironmentRestart.NAME)
+            }
+            registerOrConfigure<Resetup>(Resetup.NAME) {
+                dependsOn(EnvironmentResetup.NAME)
             }
         }
     }
