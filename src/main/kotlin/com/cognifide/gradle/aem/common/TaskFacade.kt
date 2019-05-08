@@ -140,13 +140,16 @@ class TaskFacade(private val aem: AemExtension) {
         }
     }
 
-    @Suppress("unchecked_cast")
-    fun <T : Task> named(name: String): TaskProvider<T> {
+    fun named(name: String): TaskProvider<Task> {
         return try {
-            project.tasks.named(name) as TaskProvider<T>
+            project.tasks.named(name)
         } catch (e: UnknownTaskException) {
             throw composeException(name)
         }
+    }
+
+    inline fun <reified T : Task> named(name: String, noinline configurer: T.() -> Unit = {}): TaskProvider<T> {
+        return named(name, T::class.java, configurer)
     }
 
     fun <T : Task> named(name: String, type: Class<T>, configurer: T.() -> Unit): TaskProvider<T> {
@@ -155,6 +158,10 @@ class TaskFacade(private val aem: AemExtension) {
         } catch (e: UnknownTaskException) {
             throw composeException(name)
         }
+    }
+
+    inline fun <reified T : Task> typed(noinline configurer: T.() -> Unit = {}) {
+        typed(T::class.java, configurer)
     }
 
     fun <T : Task> typed(type: Class<T>, configurer: T.() -> Unit) {

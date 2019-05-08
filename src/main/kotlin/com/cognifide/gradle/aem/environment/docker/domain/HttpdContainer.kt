@@ -10,7 +10,7 @@ class HttpdContainer(private val environment: Environment) {
 
     private val aem = environment.aem
 
-    private val container = DockerContainer("aem_httpd")
+    val container = DockerContainer("aem_httpd")
 
     var awaitRetry = aem.retry { afterSecond(10) }
 

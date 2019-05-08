@@ -3,7 +3,6 @@ package com.cognifide.gradle.aem.environment
 import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.AemTask
 import com.cognifide.gradle.aem.common.Patterns
-import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.file.resolver.FileResolver
 import com.cognifide.gradle.aem.environment.docker.domain.AemStack
 import com.cognifide.gradle.aem.environment.docker.domain.HttpdContainer
@@ -86,12 +85,8 @@ class Environment(val aem: AemExtension) {
 
     val hosts = HostsOptions()
 
-    @get:JsonIgnore
-    val createdLockFile: File
-        get() = File(rootDir, "create.lock")
-
     val created: Boolean
-        get() = createdLockFile.exists()
+        get() = rootDir.exists()
 
     val running: Boolean
         get() = created && stack.running && httpd.running
@@ -106,10 +101,8 @@ class Environment(val aem: AemExtension) {
 
         customize()
 
-        stack.deploy()
+        stack.reset()
         httpd.deploy()
-
-        lock()
 
         aem.logger.info("Turned on: $this")
     }
@@ -146,10 +139,6 @@ class Environment(val aem: AemExtension) {
         provideFiles()
         syncDockerComposeFile()
         ensureDirsExist()
-    }
-
-    private fun lock() {
-        FileOperations.lock(createdLockFile)
     }
 
     private fun provideFiles() {
