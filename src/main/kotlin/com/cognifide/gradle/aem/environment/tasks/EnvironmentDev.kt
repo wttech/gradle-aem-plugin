@@ -7,13 +7,18 @@ import org.gradle.api.tasks.TaskAction
 open class EnvironmentDev : AemDefaultTask() {
 
     init {
-        description = "Watches for HTTPD configuration file changes and reloads service deployed on AEM virtualized environment"
+        description = "Turns on environment development mode (interactive HTTPD configuration reloading on file changes)"
     }
 
     val httpdReloader = HttpdReloader(aem)
 
     @TaskAction
     fun dev() {
+        if (!aem.environment.running) {
+            aem.notifier.notify("Environment development mode", "Cannot turn on as environment is not running.")
+            return
+        }
+
         aem.progressLogger {
             // Whatever on parent logger to be able to pin children loggers from other threads
             progress("Watching files")

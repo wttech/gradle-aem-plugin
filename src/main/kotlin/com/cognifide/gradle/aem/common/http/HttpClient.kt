@@ -91,7 +91,7 @@ open class HttpClient(val aem: AemExtension) {
 
     var responseChecker: (HttpResponse) -> Unit = { checkStatus(it) }
 
-    fun <T> call(method: String, uri: String, handler: HttpClient.(HttpResponse) -> T) = when (method.toLowerCase()) {
+    fun <T> request(method: String, uri: String, handler: HttpClient.(HttpResponse) -> T) = when (method.toLowerCase()) {
         "get" -> get(uri, handler)
         "post" -> post(uri, handler)
         "put" -> put(uri, handler)

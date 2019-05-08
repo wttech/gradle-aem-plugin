@@ -72,7 +72,7 @@ class HealthChecker(val environment: Environment) {
     fun url(checkName: String, url: String, method: String = "GET", statusCode: Int = 200, text: String? = null) {
         define(checkName) {
             aem.http {
-                call(method, url) { response ->
+                request(method, url) { response ->
                     apply(urlOptions)
 
                     checkStatus(response, statusCode)
