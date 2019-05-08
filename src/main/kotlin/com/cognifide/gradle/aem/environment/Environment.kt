@@ -102,7 +102,10 @@ class Environment(val aem: AemExtension) {
         customize()
 
         stack.reset()
-        httpd.deploy()
+        if (!httpd.deploy()) {
+            throw EnvironmentException("Environment deploy failed. HTTPD service cannot be started."+
+                    " Check HTTPD configuration, because it is probably wrong.")
+        }
 
         aem.logger.info("Turned on: $this")
     }

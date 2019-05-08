@@ -19,9 +19,10 @@ class HttpdContainer(private val environment: Environment) {
     val running: Boolean
         get() = container.running
 
-    fun deploy() {
+    fun deploy(): Boolean {
         await()
-        restart()
+
+        return restart()
     }
 
     fun restart(verbose: Boolean = true): Boolean {
