@@ -32,7 +32,7 @@ class HealthChecker(val environment: Environment) {
 
         aem.progress(checks.size) {
             try {
-                retry.launchSimply<Unit, EnvironmentException> { no ->
+                retry.withSleep<Unit, EnvironmentException> { no ->
                     reset()
 
                     step = if (no > 1) {

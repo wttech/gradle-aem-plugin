@@ -20,13 +20,13 @@ class Retry private constructor(val aem: AemExtension) {
     }
 
     @Suppress("TooGenericExceptionCaught")
-    inline fun <T, reified E> launch(operation: String, block: (Long) -> T): T {
+    inline fun <T, reified E> withCountdown(operation: String, block: (Long) -> T): T {
         lateinit var exception: Exception
         for (i in 0..times) {
             val no = i + 1
 
             try {
-                return block(i)
+                return block(no)
             } catch (e: Exception) {
                 exception = e
 
@@ -49,12 +49,12 @@ class Retry private constructor(val aem: AemExtension) {
     }
 
     @Suppress("TooGenericExceptionCaught")
-    inline fun <T, reified E> launchSimply(block: (Long) -> T): T {
+    inline fun <T, reified E> withSleep(block: (Long) -> T): T {
         lateinit var exception: Exception
         for (i in 0..times) {
             val no = i + 1
             try {
-                return block(i)
+                return block(no)
             } catch (e: Exception) {
                 exception = e
 
