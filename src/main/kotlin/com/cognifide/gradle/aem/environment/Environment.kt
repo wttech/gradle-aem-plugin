@@ -71,6 +71,9 @@ class Environment(val aem: AemExtension) {
                             " Cannot find file matching '$dispatcherModuleName' in '$tarFile'")
         }
 
+    val dispatcherModuleFile: File
+        get() = File(rootDir, "$DISTRIBUTIONS_DIR/mod_dispatcher.so")
+
     val dockerComposeFile
         get() = File(rootDir, "docker-compose.yml")
 
@@ -79,9 +82,6 @@ class Environment(val aem: AemExtension) {
 
     val httpdConfDir
         get() = File(aem.configCommonDir, "$ENVIRONMENT_DIR/httpd/conf")
-
-    val dispatcherModuleFile: File
-        get() = File(rootDir, "$DISTRIBUTIONS_DIR/mod_dispatcher.so")
 
     @JsonIgnore
     var healthChecker = HealthChecker(this)
