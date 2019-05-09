@@ -90,14 +90,15 @@ class BundleState private constructor() {
                 .toHashCode()
     }
 
-    companion object {
-        fun unknown(e: Exception): BundleState {
-            val response = BundleState()
-            response.bundles = listOf()
-            response.status = e.message ?: "Unknown"
-            response.stats = listOf(0, 0, 0, 0, 0)
+    override fun toString(): String {
+        return "BundleState(status='$status')"
+    }
 
-            return response
+    companion object {
+        fun unknown(e: Exception): BundleState = BundleState().apply {
+            bundles = listOf()
+            status = e.message ?: "Unknown"
+            stats = listOf(0, 0, 0, 0, 0)
         }
     }
 }

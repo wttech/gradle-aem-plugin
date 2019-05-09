@@ -360,6 +360,17 @@ class InstanceSync(aem: AemExtension, instance: Instance) : InstanceHttpClient(a
         }
     }
 
+    fun determineEventState(): EventState {
+        aem.logger.debug("Asking for OSGi events on $instance")
+
+        return try {
+            get(OSGI_EVENTS_LIST_JSON) { asObjectFromJson(it, EventState::class.java) }
+        } catch (e: AemException) {
+            aem.logger.debug("Cannot determine OSGi events state on $instance", e)
+            EventState.unknown()
+        }
+    }
+
     fun findComponent(pid: String): Component? {
         return determineComponentState().components.find {
             pid.equals(it.uid, ignoreCase = true)
@@ -489,6 +500,8 @@ class InstanceSync(aem: AemExtension, instance: Instance) : InstanceHttpClient(a
         const val OSGI_COMPONENTS_PATH = "/system/console/components"
 
         const val OSGI_COMPONENTS_LIST_JSON = "$OSGI_COMPONENTS_PATH.json"
+
+        const val OSGI_EVENTS_LIST_JSON = "/system/console/events.json"
 
         const val OSGI_VMSTAT_PATH = "/system/console/vmstat"
 

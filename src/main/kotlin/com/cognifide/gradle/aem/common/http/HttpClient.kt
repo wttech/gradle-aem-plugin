@@ -185,7 +185,7 @@ open class HttpClient(val aem: AemExtension) {
         return try {
             ObjectMapper().readValue(asStream(response), clazz)
         } catch (e: IOException) {
-            throw ResponseException("Cannot parse / malformed response: $response")
+            throw ResponseException("Cannot parse / malformed response: $response", e)
         }
     }
 

@@ -10,6 +10,9 @@ import java.math.BigInteger
 import java.nio.file.Paths
 import java.security.MessageDigest
 import java.text.SimpleDateFormat
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
 import java.util.*
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
@@ -104,6 +107,10 @@ object Formats {
 
     fun date(date: Date = Date()): String {
         return ISO8601.format(Calendar.getInstance().apply { time = date })
+    }
+
+    fun dateTime(timestamp: Long, zoneId: ZoneId): LocalDateTime {
+        return LocalDateTime.ofInstant(Instant.ofEpochMilli(timestamp), zoneId)
     }
 
     fun dateFileName(date: Date = Date()): String {
