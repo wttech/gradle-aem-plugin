@@ -62,6 +62,9 @@ class EnvironmentPlugin : AemPlugin() {
             registerOrConfigure<Restart>(Restart.NAME) {
                 dependsOn(EnvironmentRestart.NAME)
             }
+            registerOrConfigure<Setup>(Setup.NAME) {
+                dependsOn(EnvironmentUp.NAME)
+            }
             registerOrConfigure<Resetup>(Resetup.NAME) {
                 dependsOn(EnvironmentResetup.NAME)
             }

@@ -87,6 +87,9 @@ class InstancePlugin : AemPlugin() {
             registerOrConfigure<Restart>(Restart.NAME) {
                 dependsOn(InstanceRestart.NAME)
             }
+            registerOrConfigure<Setup>(Setup.NAME) {
+                dependsOn(InstanceSetup.NAME)
+            }
             registerOrConfigure<Resetup>(Resetup.NAME) {
                 dependsOn(InstanceResetup.NAME)
             }
