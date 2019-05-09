@@ -180,7 +180,7 @@ class Environment(val aem: AemExtension) {
 
     fun clean() {
         with(aem.project) {
-            delete(fileTree(dispatcherCacheDir) { it.include("**") })
+            delete(fileTree(dispatcherCacheDir) { it.include("*/**") })
         }
     }
 
