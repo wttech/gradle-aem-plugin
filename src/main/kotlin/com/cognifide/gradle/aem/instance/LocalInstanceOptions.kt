@@ -20,11 +20,8 @@ class LocalInstanceOptions(aem: AemExtension) : Serializable {
     /**
      * Path in which local AEM instances will be stored.
      */
-    var root: String = aem.props.string("localInstance.root") ?: "${aem.projectMain.file(".aem/instance")}"
-
-    @get:JsonIgnore
-    val rootDir: File
-        get() = File(root)
+    var rootDir: File = aem.props.string("localInstance.root")?.let { aem.project.file(it) }
+            ?: aem.projectMain.file(".aem/instance")
 
     /**
      * Determines how instances will be created (from backup or from the scratch).

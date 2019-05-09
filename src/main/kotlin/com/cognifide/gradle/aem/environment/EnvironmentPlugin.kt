@@ -47,6 +47,7 @@ class EnvironmentPlugin : AemPlugin() {
             register<EnvironmentDev>(EnvironmentDev.NAME)
             register<EnvironmentHosts>(EnvironmentHosts.NAME)
             register<EnvironmentCheck>(EnvironmentCheck.NAME)
+            register<EnvironmentClean>(EnvironmentClean.NAME)
 
             // Common lifecycle
 
