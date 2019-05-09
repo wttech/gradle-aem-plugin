@@ -2,8 +2,15 @@ package com.cognifide.gradle.aem.environment.docker.base
 
 open class DockerStack(val name: String) {
 
+    var initTimeout = 10000L
+
+    var runningTimeout = 10000L
+
     fun init() {
-        val result = Docker.execQuietly { withArgs("swarm", "init") }
+        val result = Docker.execQuietly {
+            withTimeoutMillis(runningTimeout)
+            withArgs("swarm", "init")
+        }
         if (result.exitValue != 0 && !result.errorString.contains("This node is already part of a swarm")) {
             throw DockerStackException("Failed to initialize Docker Swarm. Is Docker installed? Error: '${result.errorString}'")
         }
@@ -27,7 +34,10 @@ open class DockerStack(val name: String) {
 
     val running: Boolean
         get() {
-            val result = Docker.execQuietly { withArgs("network", "inspect", "${name}_docker-net") }
+            val result = Docker.execQuietly {
+                withTimeoutMillis(runningTimeout)
+                withArgs("network", "inspect", "${name}_docker-net")
+            }
             return when {
                 result.exitValue == 0 -> true
                 result.errorString.contains("Error: No such network") -> false

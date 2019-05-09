@@ -11,9 +11,9 @@ class Event {
 
     lateinit var topic: String
 
-    lateinit var category: String
-
     lateinit var received: String
+
+    var category: String? = null
 
     var info: String? = null
 
