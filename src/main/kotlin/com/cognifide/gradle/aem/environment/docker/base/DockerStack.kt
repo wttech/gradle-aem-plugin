@@ -8,7 +8,7 @@ open class DockerStack(val name: String) {
 
     fun init() {
         val result = Docker.execQuietly {
-            withTimeoutMillis(runningTimeout)
+            withTimeoutMillis(initTimeout)
             withArgs("swarm", "init")
         }
         if (result.exitValue != 0 && !result.errorString.contains("This node is already part of a swarm")) {
