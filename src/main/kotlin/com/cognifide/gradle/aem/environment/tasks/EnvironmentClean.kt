@@ -6,11 +6,12 @@ import org.gradle.api.tasks.TaskAction
 open class EnvironmentClean : AemDefaultTask() {
 
     init {
-        description = "Cleans virtualized AEM environment by removing Dispatcher cache files."
+        description = "Cleans virtualized AEM environment by restarting HTTPD service & removing Dispatcher cache files."
     }
 
     @TaskAction
-    fun check() {
+    fun clean() {
+        aem.environment.httpd.restart()
         aem.environment.clean()
 
         aem.notifier.notify("Environment cleaned", "Cleaned with success.")
