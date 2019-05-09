@@ -103,7 +103,7 @@ class Environment(val aem: AemExtension) {
 
         stack.reset()
         if (!httpd.deploy()) {
-            throw EnvironmentException("Environment deploy failed. HTTPD service cannot be started."+
+            throw EnvironmentException("Environment deploy failed. HTTPD service cannot be started." +
                     " Check HTTPD configuration, because it is probably wrong.")
         }
 

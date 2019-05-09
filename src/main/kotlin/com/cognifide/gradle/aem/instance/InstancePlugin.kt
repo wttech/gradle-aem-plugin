@@ -25,6 +25,7 @@ class InstancePlugin : AemPlugin() {
         plugins.apply(ConfigPlugin::class.java)
     }
 
+    @Suppress("LongMethod")
     private fun Project.setupTasks() {
         tasks {
             // Plugin tasks
