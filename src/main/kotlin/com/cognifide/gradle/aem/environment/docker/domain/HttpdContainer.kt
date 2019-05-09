@@ -41,12 +41,7 @@ class HttpdContainer(environment: Environment) {
                 } else {
                     val processException = e.processException
                     if (processException != null) {
-                        aem.logger.error("----------------------------------------------------------------------------")
                         aem.logger.error("Failed to reload HTTPD service, exit code: ${processException.exitValue}")
-                        if (!processException.stderr.isNullOrBlank()) {
-                            aem.logger.error(processException.stderr)
-                        }
-                        aem.logger.error("----------------------------------------------------------------------------")
                     }
                 }
             }
