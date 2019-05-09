@@ -7,6 +7,7 @@ import com.cognifide.gradle.aem.common.file.resolver.FileResolver
 import com.cognifide.gradle.aem.environment.docker.domain.AemStack
 import com.cognifide.gradle.aem.environment.docker.domain.HttpdContainer
 import com.cognifide.gradle.aem.environment.health.HealthChecker
+import com.cognifide.gradle.aem.environment.health.HealthStatus
 import com.cognifide.gradle.aem.environment.hosts.HostsOptions
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
@@ -174,13 +175,13 @@ class Environment(val aem: AemExtension) {
         }
     }
 
-    fun check(verbose: Boolean = true) {
-        healthChecker.check(verbose)
+    fun check(verbose: Boolean = true): List<HealthStatus> {
+        return healthChecker.check(verbose)
     }
 
-    fun clean() {
+    fun clean(): Boolean {
         with(aem.project) {
-            delete(fileTree(dispatcherCacheDir) { it.include("*/**") })
+            return delete(fileTree(dispatcherCacheDir) { it.include("*/**") })
         }
     }
 

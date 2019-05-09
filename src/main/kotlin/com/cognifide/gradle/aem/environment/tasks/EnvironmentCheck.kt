@@ -12,6 +12,8 @@ open class EnvironmentCheck : AemDefaultTask() {
     @TaskAction
     fun check() {
         aem.environment.check()
+
+        aem.notifier.notify("Environment checked", "Checked with success.")
     }
 
     companion object {

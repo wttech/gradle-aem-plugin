@@ -12,6 +12,8 @@ open class EnvironmentClean : AemDefaultTask() {
     @TaskAction
     fun check() {
         aem.environment.clean()
+
+        aem.notifier.notify("Environment cleaned", "Cleaned with success.")
     }
 
     companion object {

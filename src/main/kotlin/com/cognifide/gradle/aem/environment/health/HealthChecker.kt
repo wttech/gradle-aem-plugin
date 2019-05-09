@@ -24,7 +24,7 @@ class HealthChecker(val environment: Environment) {
 
     // Evaluation
 
-    fun check(verbose: Boolean = true) {
+    fun check(verbose: Boolean = true): List<HealthStatus> {
         var all = listOf<HealthStatus>()
         var passed = listOf<HealthStatus>()
         var failed = listOf<HealthStatus>()
@@ -65,6 +65,8 @@ class HealthChecker(val environment: Environment) {
                 }
             }
         }
+
+        return all
     }
 
     // Shorthand methods for defining health checks
