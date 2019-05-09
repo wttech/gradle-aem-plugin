@@ -140,4 +140,11 @@ object FileOperations {
     }
 
     fun lock(file: File) = file.writeText(Formats.toJson(mapOf("locked" to Formats.date())))
+
+    fun lock(file: File, callback: () -> Unit) {
+        if (!file.exists()) {
+            callback()
+            lock(file)
+        }
+    }
 }

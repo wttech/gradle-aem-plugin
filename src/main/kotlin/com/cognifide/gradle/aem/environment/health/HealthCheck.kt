@@ -1,17 +1,18 @@
 package com.cognifide.gradle.aem.environment.health
 
-import java.net.HttpURLConnection
-import java.net.URI
+class HealthCheck(val name: String, val action: () -> Any?) {
 
-class HealthCheck(val url: String) {
+    @Suppress("TooGenericExceptionCaught")
+    fun perform(): HealthStatus {
+        var cause: Exception? = null
+        try {
+            action()
+        } catch (e: Exception) {
+            cause = e
+        }
 
-    val uri = URI(url)
+        return HealthStatus(this, cause)
+    }
 
-    var status = HttpURLConnection.HTTP_OK
-
-    var text: String = ""
-
-    var maxAwaitTime = 10000L
-
-    var connectionTimeout = 3000
+    override fun toString(): String = name
 }

@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.common.http
 
+import com.cognifide.gradle.aem.common.AemException
 import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.Formats
 import com.cognifide.gradle.aem.common.file.downloader.HttpFileDownloader
@@ -27,6 +28,8 @@ import org.apache.http.impl.client.BasicCredentialsProvider
 import org.apache.http.impl.client.HttpClientBuilder
 import org.apache.http.message.BasicNameValuePair
 import org.apache.http.ssl.SSLContextBuilder
+import org.jsoup.Jsoup
+import org.jsoup.nodes.Document
 
 @Suppress("TooManyFunctions")
 open class HttpClient(val aem: AemExtension) {
@@ -87,6 +90,16 @@ open class HttpClient(val aem: AemExtension) {
     var responseChecks: Boolean = true
 
     var responseChecker: (HttpResponse) -> Unit = { checkStatus(it) }
+
+    fun <T> request(method: String, uri: String, handler: HttpClient.(HttpResponse) -> T) = when (method.toLowerCase()) {
+        "get" -> get(uri, handler)
+        "post" -> post(uri, handler)
+        "put" -> put(uri, handler)
+        "patch" -> patch(uri, handler)
+        "head" -> head(uri, handler)
+        "delete" -> delete(uri, handler)
+        else -> throw AemException("Invalid HTTP client method: '$method'")
+    }
 
     fun get(uri: String) = get(uri) { checkStatus(it) }
 
@@ -182,7 +195,24 @@ open class HttpClient(val aem: AemExtension) {
 
     open fun checkStatus(response: HttpResponse, checker: (Int) -> Boolean = { it in STATUS_CODE_VALID }) {
         if (!checker(response.statusLine.statusCode)) {
-            throw ResponseException("Unexpected response: ${response.statusLine}")
+            throw ResponseException("Unexpected response detected: ${response.statusLine}")
+        }
+    }
+
+    fun checkText(response: HttpResponse, containedText: String, ignoreCase: Boolean = true) {
+        val text = asString(response)
+        if (!text.contains(containedText, ignoreCase)) {
+            aem.logger.debug("Actual text:\n$text")
+            throw ResponseException("Response does not contain text: $text")
+        }
+    }
+
+    fun checkHtml(response: HttpResponse, validator: Document.() -> Boolean) {
+        val html = asString(response)
+        val doc = Jsoup.parse(html)
+        if (!validator(doc)) {
+            aem.logger.debug("Actual HTML:\n$html")
+            throw ResponseException("Response HTML does not pass validation")
         }
     }
 

@@ -63,7 +63,7 @@ class InstanceSync(aem: AemExtension, instance: Instance) : InstanceHttpClient(a
     }
 
     fun listPackages(retry: Retry = aem.retry()): ListResponse {
-        return retry.launch<ListResponse, InstanceException>("list packages") {
+        return retry.withCountdown<ListResponse, InstanceException>("list packages") {
             return try {
                 postMultipart(PKG_MANAGER_LIST_JSON) { asObjectFromJson(it, ListResponse::class.java) }
             } catch (e: RequestException) {
@@ -75,7 +75,7 @@ class InstanceSync(aem: AemExtension, instance: Instance) : InstanceHttpClient(a
     }
 
     fun uploadPackage(file: File, force: Boolean = true, retry: Retry = aem.retry()): UploadResponse {
-        return retry.launch<UploadResponse, InstanceException>("upload package") {
+        return retry.withCountdown<UploadResponse, InstanceException>("upload package") {
             val url = "$PKG_MANAGER_JSON_PATH/?cmd=upload"
 
             aem.logger.info("Uploading package $file to $instance'")
@@ -106,7 +106,7 @@ class InstanceSync(aem: AemExtension, instance: Instance) : InstanceHttpClient(a
      * Finally download built package by replacing it with initially created.
      */
     fun downloadPackage(definition: PackageDefinition.() -> Unit, retry: Retry): File {
-        return retry.launch<File, InstanceException>("download package") {
+        return retry.withCountdown<File, InstanceException>("download package") {
             val file = aem.composePackage {
                 version = "download" // prevents CRX package from task 'Compose' being replaced
                 definition()
@@ -134,7 +134,7 @@ class InstanceSync(aem: AemExtension, instance: Instance) : InstanceHttpClient(a
     fun downloadPackage(definition: PackageDefinition.() -> Unit) = downloadPackage(definition, aem.retry())
 
     fun downloadPackage(remotePath: String, targetFile: File = aem.temporaryFile(FilenameUtils.getName(remotePath)), retry: Retry = aem.retry()) {
-        return retry.launch<Unit, InstanceException>("download package") {
+        return retry.withCountdown<Unit, InstanceException>("download package") {
             aem.logger.info("Downloading package from $remotePath to file $targetFile")
 
             download(remotePath, targetFile)
@@ -166,7 +166,7 @@ class InstanceSync(aem: AemExtension, instance: Instance) : InstanceHttpClient(a
     }
 
     fun installPackage(remotePath: String, recursive: Boolean = true, retry: Retry = aem.retry()): InstallResponse {
-        return retry.launch<InstallResponse, InstanceException>("install package") {
+        return retry.withCountdown<InstallResponse, InstanceException>("install package") {
             val url = "$PKG_MANAGER_HTML_PATH$remotePath/?cmd=install"
 
             aem.logger.info("Installing package $remotePath on $instance")

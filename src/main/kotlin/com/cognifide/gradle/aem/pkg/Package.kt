@@ -29,7 +29,7 @@ class Package private constructor() {
 
         this.downloadName = "$name-$version.zip"
         this.conventionPaths = listOf(
-                "/etc/packages/$group/${compose.archiveFileName}",
+                "/etc/packages/$group/${compose.archiveFileName.get()}",
                 "/etc/packages/$group/$name-$version.zip"
         )
     }

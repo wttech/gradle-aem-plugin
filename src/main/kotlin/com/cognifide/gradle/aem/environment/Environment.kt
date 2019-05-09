@@ -3,7 +3,6 @@ package com.cognifide.gradle.aem.environment
 import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.AemTask
 import com.cognifide.gradle.aem.common.Patterns
-import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.file.resolver.FileResolver
 import com.cognifide.gradle.aem.environment.docker.domain.AemStack
 import com.cognifide.gradle.aem.environment.docker.domain.HttpdContainer
@@ -86,12 +85,8 @@ class Environment(val aem: AemExtension) {
 
     val hosts = HostsOptions()
 
-    @get:JsonIgnore
-    val createdLockFile: File
-        get() = File(rootDir, "create.lock")
-
     val created: Boolean
-        get() = createdLockFile.exists()
+        get() = rootDir.exists()
 
     val running: Boolean
         get() = created && stack.running && httpd.running
@@ -106,10 +101,11 @@ class Environment(val aem: AemExtension) {
 
         customize()
 
-        stack.deploy()
-        httpd.deploy()
-
-        lock()
+        stack.reset()
+        if (!httpd.deploy()) {
+            throw EnvironmentException("Environment deploy failed. HTTPD service cannot be started." +
+                    " Check HTTPD configuration, because it is probably wrong.")
+        }
 
         aem.logger.info("Turned on: $this")
     }
@@ -148,10 +144,6 @@ class Environment(val aem: AemExtension) {
         ensureDirsExist()
     }
 
-    private fun lock() {
-        FileOperations.lock(createdLockFile)
-    }
-
     private fun provideFiles() {
         if (!dispatcherModuleFile.exists()) {
             GFileUtils.copyFile(dispatcherModuleSourceFile, dispatcherModuleFile)
@@ -179,13 +171,8 @@ class Environment(val aem: AemExtension) {
         }
     }
 
-    fun check() {
-        healthChecker.findUnavailable().apply {
-            if (isNotEmpty()) {
-                throw EnvironmentException("Services verification failed! URLs are unavailable or returned different " +
-                        "response than expected:\n${joinToString("\n")}")
-            }
-        }
+    fun check(verbose: Boolean = true) {
+        healthChecker.check(verbose)
     }
 
     /**

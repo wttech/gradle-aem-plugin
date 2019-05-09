@@ -16,7 +16,7 @@ open class ZipTask : Base(), AemTask {
 
     @Internal
     var copyProgress: ProgressIndicator.() -> Unit = {
-        update("Creating ZIP file: $archiveFileName, current size: ${Formats.size(archiveFile.get().asFile)}")
+        update("Creating ZIP file: ${archiveFileName.get()}, current size: ${Formats.size(archiveFile.get().asFile)}")
     }
 
     init {

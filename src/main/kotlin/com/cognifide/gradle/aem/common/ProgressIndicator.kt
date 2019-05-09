@@ -55,6 +55,15 @@ class ProgressIndicator(private val project: Project) {
         }
     }
 
+    fun reset() {
+        message = ""
+        count = 0
+    }
+
+    fun increment() {
+        count++
+    }
+
     fun increment(message: String) {
         this.message = message
         count++

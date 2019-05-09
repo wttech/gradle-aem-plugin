@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.environment.docker.domain
 import com.cognifide.gradle.aem.common.Behaviors
 import com.cognifide.gradle.aem.environment.Environment
 import com.cognifide.gradle.aem.environment.EnvironmentException
+import com.cognifide.gradle.aem.environment.docker.base.DockerException
 import com.cognifide.gradle.aem.environment.docker.base.DockerStack
 
 /**
@@ -12,14 +13,34 @@ class AemStack(val environment: Environment) {
 
     private val aem = environment.aem
 
-    private val stack = DockerStack("aem")
+    val stack = DockerStack("aem")
 
     var deployRetry = aem.retry { afterSecond(30) }
 
     var undeployRetry = aem.retry { afterSecond(30) }
 
+    private val initialized: Boolean by lazy {
+        var error: Exception? = null
+
+        aem.progressIndicator {
+            message = "Initializing AEM stack"
+
+            try {
+                stack.init()
+            } catch (e: DockerException) {
+                error = e
+            }
+        }
+
+        if (error != null) {
+            throw EnvironmentException("AEM stack cannot be initialized. Is Docker running / installed?", error!!)
+        }
+
+        true
+    }
+
     val running: Boolean
-        get() = stack.running
+        get() = initialized && stack.running
 
     fun reset() {
         undeploy()

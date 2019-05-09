@@ -71,6 +71,13 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
         get() = File(aem.config.localInstanceOptions.rootDir, typeName)
 
     @get:JsonIgnore
+    val overridesDirs: List<File>
+        get() = listOf(
+                File("${options.overridesPath}/common"),
+                File("${options.overridesPath}/$typeName")
+        )
+
+    @get:JsonIgnore
     val jar: File
         get() = File(dir, "aem-quickstart.jar")
 
@@ -228,9 +235,8 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
 
         FileOperations.copyResources(InstancePlugin.FILES_PATH, dir, false)
 
-        val overridesDir = File(options.overridesPath)
-        if (overridesDir.exists()) {
-            FileUtils.copyDirectory(overridesDir, dir)
+        overridesDirs.filter { it.exists() }.forEach {
+            FileUtils.copyDirectory(it, dir)
         }
 
         val propertiesAll = mapOf("instance" to this) + properties + options.expandProperties

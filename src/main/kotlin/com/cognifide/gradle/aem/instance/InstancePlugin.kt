@@ -1,17 +1,13 @@
 package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.common.AemPlugin
-import com.cognifide.gradle.aem.common.tasks.lifecycle.Destroy
-import com.cognifide.gradle.aem.common.tasks.lifecycle.Down
-import com.cognifide.gradle.aem.common.tasks.lifecycle.Restart
-import com.cognifide.gradle.aem.common.tasks.lifecycle.Up
+import com.cognifide.gradle.aem.common.tasks.lifecycle.*
 import com.cognifide.gradle.aem.config.ConfigPlugin
 import com.cognifide.gradle.aem.config.tasks.Resolve
 import com.cognifide.gradle.aem.instance.tasks.*
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.PackageDeploy
 import org.gradle.api.Project
-import org.gradle.language.base.plugins.LifecycleBasePlugin
 
 /**
  * Separate plugin which provides tasks for managing local instances.
@@ -29,17 +25,22 @@ class InstancePlugin : AemPlugin() {
         plugins.apply(ConfigPlugin::class.java)
     }
 
+    @Suppress("LongMethod")
     private fun Project.setupTasks() {
         tasks {
+            // Plugin tasks
+
             register<InstanceDown>(InstanceDown.NAME)
             register<InstanceUp>(InstanceUp.NAME) {
-                dependsOn(InstanceCreate.NAME).mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME, InstanceDown.NAME)
+                dependsOn(InstanceCreate.NAME)
+                mustRunAfter(InstanceDown.NAME, InstanceDestroy.NAME)
             }
             register<InstanceRestart>(InstanceRestart.NAME) {
                 dependsOn(InstanceDown.NAME, InstanceUp.NAME)
             }
             register<InstanceCreate>(InstanceCreate.NAME) {
-                dependsOn(Resolve.NAME).mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
+                dependsOn(Resolve.NAME)
+                mustRunAfter(InstanceDestroy.NAME)
             }
             register<InstanceDestroy>(InstanceDestroy.NAME) {
                 dependsOn(InstanceDown.NAME)
@@ -59,7 +60,8 @@ class InstancePlugin : AemPlugin() {
                 mustRunAfter(InstanceSatisfy.NAME)
             }
             register<InstanceSetup>(InstanceSetup.NAME) {
-                dependsOn(InstanceCreate.NAME, InstanceUp.NAME, InstanceSatisfy.NAME).mustRunAfter(InstanceDestroy.NAME)
+                dependsOn(InstanceCreate.NAME, InstanceUp.NAME, InstanceSatisfy.NAME)
+                mustRunAfter(InstanceDestroy.NAME)
                 plugins.withId(PackagePlugin.ID) { dependsOn(PackageDeploy.NAME) }
             }
             register<InstanceResetup>(InstanceResetup.NAME) {
@@ -69,7 +71,11 @@ class InstancePlugin : AemPlugin() {
                 dependsOn(InstanceDown.NAME)
                 finalizedBy(InstanceUp.NAME)
             }
+
             register<InstanceTail>(InstanceTail.NAME)
+
+            // Common lifecycle
+
             registerOrConfigure<Up>(Up.NAME) {
                 dependsOn(InstanceUp.NAME)
             }
@@ -81,6 +87,12 @@ class InstancePlugin : AemPlugin() {
             }
             registerOrConfigure<Restart>(Restart.NAME) {
                 dependsOn(InstanceRestart.NAME)
+            }
+            registerOrConfigure<Setup>(Setup.NAME) {
+                dependsOn(InstanceSetup.NAME)
+            }
+            registerOrConfigure<Resetup>(Resetup.NAME) {
+                dependsOn(InstanceResetup.NAME)
             }
         }
     }

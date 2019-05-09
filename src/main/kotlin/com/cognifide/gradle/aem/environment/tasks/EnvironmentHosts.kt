@@ -7,12 +7,14 @@ import org.gradle.api.tasks.TaskAction
 open class EnvironmentHosts : AemDefaultTask() {
 
     init {
-        description = "Append hosts to system hosts file. Requires super/admin user privileges."
+        description = "Append environment hosts to system hosts file. Requires super/admin user privileges."
     }
 
     @TaskAction
     fun appendHosts() {
         Hosts.of(aem.environment.hosts.defined).append()
+
+        aem.notifier.notify("Environment hosts", "Appended with success")
     }
 
     companion object {

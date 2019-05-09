@@ -1,41 +1,34 @@
 package com.cognifide.gradle.aem.environment.tasks
 
 import com.cognifide.gradle.aem.common.AemDefaultTask
-import kotlinx.coroutines.ObsoleteCoroutinesApi
+import com.cognifide.gradle.aem.environment.docker.domain.HttpdReloader
 import org.gradle.api.tasks.TaskAction
 
-@UseExperimental(ObsoleteCoroutinesApi::class)
 open class EnvironmentDev : AemDefaultTask() {
 
     init {
-        description = "Listens for HTTPD configuration file changes and reloads service deployed on AEM virtualized environment"
+        description = "Turns on environment development mode (interactive HTTPD configuration reloading on file changes)"
     }
+
+    val httpdReloader = HttpdReloader(aem)
 
     @TaskAction
     fun dev() {
-        with(aem) {
-            logger.lifecycle("Listening for HTTPD configuration file changes in directory: ${environment.httpdConfDir}")
-
-            fileWatcher {
-                dir = environment.httpdConfDir
-                onChange = { changes ->
-                    logger.lifecycle("Reloading HTTP service due to file changes:\n${changes.joinToString("\n")}")
-
-                    val restarted = environment.httpd.restart(false)
-                    if (restarted) {
-                        logger.lifecycle("Checking HTTP health checks")
-                        val unavailableServices = environment.healthChecker.findUnavailable()
-                        if (unavailableServices.isEmpty()) {
-                            logger.lifecycle("All stable, configuration update looks good.")
-                        } else {
-                            logger.lifecycle("Services verification failed! URLs are unavailable or returned different response than expected:" +
-                                    "\n${unavailableServices.joinToString("\n")}" +
-                                    "\nFix configuration to make it working again.")
-                        }
-                    }
-                }
-            }
+        if (!aem.environment.running) {
+            aem.notifier.notify("Environment development mode", "Cannot turn on as environment is not running.")
+            return
         }
+
+        aem.progressLogger {
+            // Whatever on parent logger to be able to pin children loggers from other threads
+            progress("Watching files")
+
+            httpdReloader.start()
+        }
+    }
+
+    fun httpdReloader(options: HttpdReloader.() -> Unit) {
+        httpdReloader.apply(options)
     }
 
     companion object {

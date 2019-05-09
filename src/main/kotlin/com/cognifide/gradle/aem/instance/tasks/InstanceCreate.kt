@@ -53,8 +53,10 @@ open class InstanceCreate : LocalInstanceTask() {
 
         aem.logger.info("Extracting files from backup ZIP '$backupZip' to directory '$instanceRoot'")
 
+        val backupSize = Formats.size(backupZip)
+
         aem.progressIndicator {
-            message = "Extracting backup ZIP: ${backupZip.name}, size: ${Formats.size(backupZip)}"
+            message = "Extracting backup ZIP: ${backupZip.name}, size: $backupSize"
 
             if (instanceRoot.exists()) {
                 instanceRoot.deleteRecursively()
