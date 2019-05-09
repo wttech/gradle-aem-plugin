@@ -43,5 +43,4 @@ class Event {
     override fun toString(): String {
         return "Event(id='$id', topic='$topic', category='$category' received='$received')"
     }
-
 }

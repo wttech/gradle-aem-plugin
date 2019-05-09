@@ -104,8 +104,9 @@ class InstanceState(private var syncOrigin: InstanceSync, val instance: Instance
     }
 
     fun checkEventStable(
-            syncOptions: InstanceSync.() -> Unit = EVENT_STATE_SYNC_OPTIONS,
-            topics: Iterable<String> = EVENT_STATE_TOPICS
+        syncOptions: InstanceSync.() -> Unit = EVENT_STATE_SYNC_OPTIONS,
+        topics: Iterable<String> = EVENT_STATE_UNSTABLE_TOPICS,
+        ageMillis: Long = EVENT_STATE_UNSTABLE_AGE_MILLIS
     ): Boolean {
         return check(syncOptions, {
             if (eventState.unknown) {
@@ -115,7 +116,7 @@ class InstanceState(private var syncOrigin: InstanceSync, val instance: Instance
 
             var result = true
 
-            val unstableEvents = eventState.withTopics(topics)
+            val unstableEvents = eventState.matching(topics, ageMillis, instance.zoneId)
             if (unstableEvents.isNotEmpty()) {
                 status.error("Events causing instability detected on $instance:${unstableEvents.joinToString("\n")}")
                 result = false
@@ -126,10 +127,11 @@ class InstanceState(private var syncOrigin: InstanceSync, val instance: Instance
     }
 
     fun checkEventState(
-            syncOptions: InstanceSync.() -> Unit = EVENT_STATE_SYNC_OPTIONS,
-            topics: Iterable<String> = EVENT_STATE_TOPICS
+        syncOptions: InstanceSync.() -> Unit = EVENT_STATE_SYNC_OPTIONS,
+        topics: Iterable<String> = EVENT_STATE_UNSTABLE_TOPICS,
+        ageMillis: Long = EVENT_STATE_UNSTABLE_AGE_MILLIS
     ): Int {
-        return check(syncOptions, { eventState.withTopics(topics).hashCode() })
+        return check(syncOptions, { eventState.matching(topics, ageMillis, instance.zoneId).hashCode() })
     }
 
     override fun hashCode(): Int {
@@ -165,11 +167,13 @@ class InstanceState(private var syncOrigin: InstanceSync, val instance: Instance
             this.connectionRetries = false
         }
 
-        val EVENT_STATE_TOPICS = listOf(
+        val EVENT_STATE_UNSTABLE_TOPICS = listOf(
                 "org/osgi/framework/ServiceEvent/*",
                 "org/osgi/framework/FrameworkEvent/*",
                 "org/osgi/framework/BundleEvent/*"
         )
+
+        val EVENT_STATE_UNSTABLE_AGE_MILLIS = 5000L
 
         val COMPONENT_STATE_SYNC_OPTIONS: InstanceSync.() -> Unit = {
             this.connectionTimeout = 10000
