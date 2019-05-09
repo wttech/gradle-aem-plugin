@@ -17,11 +17,8 @@ class Environment(val aem: AemExtension) {
     /**
      * Path in which local AEM environment will be stored.
      */
-    var root: String = aem.props.string("env.root") ?: "${aem.projectMain.file(".aem/environment")}"
-
-    @get:JsonIgnore
-    val rootDir: File
-        get() = File(root)
+    var rootDir: File = aem.props.string("env.rootDir")?.let { aem.project.file(it) }
+            ?: aem.projectMain.file(".aem/environment")
 
     /**
      * Represents Docker stack named 'aem' and provides API for manipulating it.
@@ -52,6 +49,12 @@ class Environment(val aem: AemExtension) {
     var dispatcherModuleName = aem.props.string("env.dispatcher.moduleName")
             ?: "*/dispatcher-apache*.so"
 
+    /**
+     * Location in which dispatcher stores cached files.
+     */
+    var dispatcherCacheDir: File = aem.props.string("env.dispatcher.cacheDir")?.let { aem.project.file(it) }
+            ?: aem.projectMain.file(".aem/environment/cache")
+
     @get:JsonIgnore
     val dispatcherModuleSourceFile: File
         get() {
@@ -68,6 +71,9 @@ class Environment(val aem: AemExtension) {
                             " Cannot find file matching '$dispatcherModuleName' in '$tarFile'")
         }
 
+    val dispatcherModuleFile: File
+        get() = File(rootDir, "$DISTRIBUTIONS_DIR/mod_dispatcher.so")
+
     val dockerComposeFile
         get() = File(rootDir, "docker-compose.yml")
 
@@ -76,9 +82,6 @@ class Environment(val aem: AemExtension) {
 
     val httpdConfDir
         get() = File(aem.configCommonDir, "$ENVIRONMENT_DIR/httpd/conf")
-
-    val dispatcherModuleFile: File
-        get() = File(rootDir, "$DISTRIBUTIONS_DIR/mod_dispatcher.so")
 
     @JsonIgnore
     var healthChecker = HealthChecker(this)
@@ -173,6 +176,12 @@ class Environment(val aem: AemExtension) {
 
     fun check(verbose: Boolean = true) {
         healthChecker.check(verbose)
+    }
+
+    fun clean() {
+        with(aem.project) {
+            delete(fileTree(dispatcherCacheDir) { it.include("*/**") })
+        }
     }
 
     /**
