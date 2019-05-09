@@ -48,13 +48,13 @@ open class AwaitAction(aem: AemExtension) : AbstractAction(aem) {
      * Hook for customizing instance state provider used within stable checking.
      * State change cancels actual assurance.
      */
-    var stableState: InstanceState.() -> Int = { checkBundleState() }
+    var stableState: InstanceState.() -> Int = { checkState() }
 
     /**
      * Hook for customizing instance stability check.
      * Check will be repeated if assurance is configured.
      */
-    var stableCheck: InstanceState.() -> Boolean = { checkBundleStable() }
+    var stableCheck: InstanceState.() -> Boolean = { checkStable() }
 
     /**
      * Number of intervals / additional instance stability checks to assure all stable instances.

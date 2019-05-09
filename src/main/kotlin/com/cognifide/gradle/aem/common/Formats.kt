@@ -17,6 +17,9 @@ import org.apache.commons.lang3.time.DurationFormatUtils
 import org.apache.commons.validator.routines.UrlValidator
 import org.apache.jackrabbit.util.ISO8601
 import org.gradle.api.Project
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
 
 @Suppress("MagicNumber")
 object Formats {
@@ -104,6 +107,10 @@ object Formats {
 
     fun date(date: Date = Date()): String {
         return ISO8601.format(Calendar.getInstance().apply { time = date })
+    }
+
+    fun dateTime(timestamp: Long, zoneId: ZoneId): LocalDateTime {
+        return LocalDateTime.ofInstant(Instant.ofEpochMilli(timestamp), zoneId)
     }
 
     fun dateFileName(date: Date = Date()): String {

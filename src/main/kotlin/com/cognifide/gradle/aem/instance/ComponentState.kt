@@ -57,14 +57,15 @@ class ComponentState private constructor() {
                 .toHashCode()
     }
 
+    override fun toString(): String {
+        return "ComponentState(total='$total')"
+    }
+
     companion object {
 
-        fun unknown(): ComponentState {
-            val response = ComponentState()
-            response.components = listOf()
-            response.total = 0
-
-            return response
+        fun unknown(): ComponentState = ComponentState().apply {
+            components = listOf()
+            total = 0
         }
     }
 }

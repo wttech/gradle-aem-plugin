@@ -15,6 +15,8 @@ class InstanceState(private var syncOrigin: InstanceSync, val instance: Instance
 
     val componentState by lazy { sync.determineComponentState() }
 
+    val eventState by lazy { sync.determineEventState() }
+
     /**
      * Customize default synchronization options like basic auth credentials, connection
      * timeouts etc while determining bundle or component states.
@@ -25,6 +27,17 @@ class InstanceState(private var syncOrigin: InstanceSync, val instance: Instance
         val result = action(this)
         syncOrigin = origin
         return result
+    }
+
+    fun checkStable(): Boolean {
+        return checkBundleStable() && checkEventStable()
+    }
+
+    fun checkState(): Int {
+        return HashCodeBuilder()
+                .append(checkBundleState())
+                .append(checkEventState())
+                .toHashCode()
     }
 
     fun checkBundleStable() = checkBundleStableExcept(listOf(), BUNDLE_STATE_SYNC_OPTIONS)
@@ -90,6 +103,35 @@ class InstanceState(private var syncOrigin: InstanceSync, val instance: Instance
         })
     }
 
+    fun checkEventStable(
+            syncOptions: InstanceSync.() -> Unit = EVENT_STATE_SYNC_OPTIONS,
+            topics: Iterable<String> = EVENT_STATE_TOPICS
+    ): Boolean {
+        return check(syncOptions, {
+            if (eventState.unknown) {
+                status.error("Unknown event state on $instance")
+                return@check false
+            }
+
+            var result = true
+
+            val unstableEvents = eventState.withTopics(topics)
+            if (unstableEvents.isNotEmpty()) {
+                status.error("Events causing instability detected on $instance:${unstableEvents.joinToString("\n")}")
+                result = false
+            }
+
+            return@check result
+        })
+    }
+
+    fun checkEventState(
+            syncOptions: InstanceSync.() -> Unit = EVENT_STATE_SYNC_OPTIONS,
+            topics: Iterable<String> = EVENT_STATE_TOPICS
+    ): Int {
+        return check(syncOptions, { eventState.withTopics(topics).hashCode() })
+    }
+
     override fun hashCode(): Int {
         return HashCodeBuilder()
                 .append(instance)
@@ -117,6 +159,17 @@ class InstanceState(private var syncOrigin: InstanceSync, val instance: Instance
             this.connectionTimeout = 750
             this.connectionRetries = false
         }
+
+        val EVENT_STATE_SYNC_OPTIONS: InstanceSync.() -> Unit = {
+            this.connectionTimeout = 250
+            this.connectionRetries = false
+        }
+
+        val EVENT_STATE_TOPICS = listOf(
+                "org/osgi/framework/ServiceEvent/*",
+                "org/osgi/framework/FrameworkEvent/*",
+                "org/osgi/framework/BundleEvent/*"
+        )
 
         val COMPONENT_STATE_SYNC_OPTIONS: InstanceSync.() -> Unit = {
             this.connectionTimeout = 10000
