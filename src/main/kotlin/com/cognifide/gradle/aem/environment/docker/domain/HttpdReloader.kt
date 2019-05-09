@@ -45,7 +45,7 @@ open class HttpdReloader(val aem: AemExtension) {
 
             aem.logger.lifecycle("Reloading HTTP service due to file changes:\n${changes.joinToString("\n")}")
 
-            environment.httpd.restart()
+            environment.httpd.restart(verbose = false)
             healthCheckRequests.send(Date())
         }
     }

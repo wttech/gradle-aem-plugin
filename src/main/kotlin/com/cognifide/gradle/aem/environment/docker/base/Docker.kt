@@ -44,6 +44,6 @@ object Docker {
     }
 
     private fun composeException(e: ExternalProcessFailureException): DockerException {
-        return DockerException("Cannot execute Docker command: '${e.command}'! Error: ${e.stderr}. Exit code: ${e.exitValue}")
+        return DockerException("Cannot execute Docker command: '${e.command}'! Error: ${e.stderr}. Exit code: ${e.exitValue}", e)
     }
 }
