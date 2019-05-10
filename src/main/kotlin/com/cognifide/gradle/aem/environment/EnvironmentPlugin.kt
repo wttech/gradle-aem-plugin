@@ -44,10 +44,16 @@ class EnvironmentPlugin : AemPlugin() {
                 dependsOn(EnvironmentDestroy.NAME, EnvironmentUp.NAME)
             }
 
-            register<EnvironmentDev>(EnvironmentDev.NAME)
+            register<EnvironmentDev>(EnvironmentDev.NAME) {
+                mustRunAfter(EnvironmentUp.NAME)
+            }
+            register<EnvironmentCheck>(EnvironmentCheck.NAME) {
+                mustRunAfter(EnvironmentUp.NAME)
+            }
+            register<EnvironmentClean>(EnvironmentClean.NAME) {
+                mustRunAfter(EnvironmentUp.NAME)
+            }
             register<EnvironmentHosts>(EnvironmentHosts.NAME)
-            register<EnvironmentCheck>(EnvironmentCheck.NAME)
-            register<EnvironmentClean>(EnvironmentClean.NAME)
 
             // Common lifecycle
 

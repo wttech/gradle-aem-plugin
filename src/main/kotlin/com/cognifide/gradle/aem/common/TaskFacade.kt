@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.common
 
 import com.cognifide.gradle.aem.bundle.BundleJar
+import com.cognifide.gradle.aem.common.tasks.lifecycle.*
 import com.cognifide.gradle.aem.config.tasks.Debug
 import com.cognifide.gradle.aem.environment.tasks.*
 import com.cognifide.gradle.aem.instance.tasks.*
@@ -40,73 +41,87 @@ class TaskFacade(private val aem: AemExtension) {
 
     // Package plugin shorthands
 
-    fun packageActivate(configurer: PackageActivate.() -> Unit) = named(PackageActivate.NAME, PackageActivate::class.java, configurer)
+    fun packageActivate(configurer: PackageActivate.() -> Unit) = named(PackageActivate.NAME, configurer)
 
-    fun packageCompose(configurer: PackageCompose.() -> Unit) = named(PackageCompose.NAME, PackageCompose::class.java, configurer)
+    fun packageCompose(configurer: PackageCompose.() -> Unit) = named(PackageCompose.NAME, configurer)
 
-    fun packageDelete(configurer: PackageDelete.() -> Unit) = named(PackageDelete.NAME, PackageDelete::class.java, configurer)
+    fun packageDelete(configurer: PackageDelete.() -> Unit) = named(PackageDelete.NAME, configurer)
 
-    fun packageDeploy(configurer: PackageDeploy.() -> Unit) = named(PackageDeploy.NAME, PackageDeploy::class.java, configurer)
+    fun packageDeploy(configurer: PackageDeploy.() -> Unit) = named(PackageDeploy.NAME, configurer)
 
-    fun packageInstall(configurer: PackageInstall.() -> Unit) = named(PackageInstall.NAME, PackageInstall::class.java, configurer)
+    fun packageInstall(configurer: PackageInstall.() -> Unit) = named(PackageInstall.NAME, configurer)
 
-    fun packagePurge(configurer: PackagePurge.() -> Unit) = named(PackagePurge.NAME, PackagePurge::class.java, configurer)
+    fun packagePurge(configurer: PackagePurge.() -> Unit) = named(PackagePurge.NAME, configurer)
 
-    fun packageUninstall(configurer: PackageUninstall.() -> Unit) = named(PackageUninstall.NAME, PackageUninstall::class.java, configurer)
+    fun packageUninstall(configurer: PackageUninstall.() -> Unit) = named(PackageUninstall.NAME, configurer)
 
-    fun packageUpload(configurer: PackageUpload.() -> Unit) = named(PackageUpload.NAME, PackageUpload::class.java, configurer)
+    fun packageUpload(configurer: PackageUpload.() -> Unit) = named(PackageUpload.NAME, configurer)
 
     // Instance plugin shorthands
 
-    fun instanceAwait(configurer: InstanceAwait.() -> Unit) = named(InstanceAwait.NAME, InstanceAwait::class.java, configurer)
+    fun instanceAwait(configurer: InstanceAwait.() -> Unit) = named(InstanceAwait.NAME, configurer)
 
-    fun instanceBackup(configurer: InstanceBackup.() -> Unit) = named(InstanceBackup.NAME, InstanceBackup::class.java, configurer)
+    fun instanceBackup(configurer: InstanceBackup.() -> Unit) = named(InstanceBackup.NAME, configurer)
 
-    fun instanceCollect(configurer: InstanceCollect.() -> Unit) = named(InstanceCollect.NAME, InstanceCollect::class.java, configurer)
+    fun instanceCollect(configurer: InstanceCollect.() -> Unit) = named(InstanceCollect.NAME, configurer)
 
-    fun instanceCreate(configurer: InstanceCreate.() -> Unit) = named(InstanceCreate.NAME, InstanceCreate::class.java, configurer)
+    fun instanceCreate(configurer: InstanceCreate.() -> Unit) = named(InstanceCreate.NAME, configurer)
 
-    fun instanceDestroy(configurer: InstanceDestroy.() -> Unit) = named(InstanceDestroy.NAME, InstanceDestroy::class.java, configurer)
+    fun instanceDestroy(configurer: InstanceDestroy.() -> Unit) = named(InstanceDestroy.NAME, configurer)
 
-    fun instanceDown(configurer: InstanceDown.() -> Unit) = named(InstanceDown.NAME, InstanceDown::class.java, configurer)
+    fun instanceDown(configurer: InstanceDown.() -> Unit) = named(InstanceDown.NAME, configurer)
 
-    fun instanceReload(configurer: InstanceReload.() -> Unit) = named(InstanceReload.NAME, InstanceReload::class.java, configurer)
+    fun instanceReload(configurer: InstanceReload.() -> Unit) = named(InstanceReload.NAME, configurer)
 
-    fun instanceResetup(configurer: InstanceResetup.() -> Unit) = named(InstanceResetup.NAME, InstanceResetup::class.java, configurer)
+    fun instanceResetup(configurer: InstanceResetup.() -> Unit) = named(InstanceResetup.NAME, configurer)
 
-    fun instanceRestart(configurer: InstanceRestart.() -> Unit) = named(InstanceRestart.NAME, InstanceRestart::class.java, configurer)
+    fun instanceRestart(configurer: InstanceRestart.() -> Unit) = named(InstanceRestart.NAME, configurer)
 
-    fun instanceSatisfy(configurer: InstanceSatisfy.() -> Unit) = named(InstanceSatisfy.NAME, InstanceSatisfy::class.java, configurer)
+    fun instanceSatisfy(configurer: InstanceSatisfy.() -> Unit) = named(InstanceSatisfy.NAME, configurer)
 
-    fun instanceSetup(configurer: InstanceSetup.() -> Unit) = named(InstanceSetup.NAME, InstanceSetup::class.java, configurer)
+    fun instanceSetup(configurer: InstanceSetup.() -> Unit) = named(InstanceSetup.NAME, configurer)
 
-    fun instanceTail(configurer: InstanceTail.() -> Unit) = named(InstanceTail.NAME, InstanceTail::class.java, configurer)
+    fun instanceTail(configurer: InstanceTail.() -> Unit) = named(InstanceTail.NAME, configurer)
 
-    fun instanceUp(configurer: InstanceUp.() -> Unit) = named(InstanceUp.NAME, InstanceUp::class.java, configurer)
+    fun instanceUp(configurer: InstanceUp.() -> Unit) = named(InstanceUp.NAME, configurer)
 
     // Environment plugin shorthands
 
-    fun environmentDestroy(configurer: EnvironmentDestroy.() -> Unit) = named(EnvironmentDestroy.NAME, EnvironmentDestroy::class.java, configurer)
+    fun environmentDestroy(configurer: EnvironmentDestroy.() -> Unit) = named(EnvironmentDestroy.NAME, configurer)
 
-    fun environmentDev(configurer: EnvironmentDev.() -> Unit) = named(EnvironmentDev.NAME, EnvironmentDev::class.java, configurer)
+    fun environmentDev(configurer: EnvironmentDev.() -> Unit) = named(EnvironmentDev.NAME, configurer)
 
-    fun environmentDown(configurer: EnvironmentDown.() -> Unit) = named(EnvironmentDown.NAME, EnvironmentDown::class.java, configurer)
+    fun environmentDown(configurer: EnvironmentDown.() -> Unit) = named(EnvironmentDown.NAME, configurer)
 
-    fun environmentHosts(configurer: EnvironmentHosts.() -> Unit) = named(EnvironmentHosts.NAME, EnvironmentHosts::class.java, configurer)
+    fun environmentHosts(configurer: EnvironmentHosts.() -> Unit) = named(EnvironmentHosts.NAME, configurer)
 
-    fun environmentUp(configurer: EnvironmentUp.() -> Unit) = named(EnvironmentUp.NAME, EnvironmentUp::class.java, configurer)
+    fun environmentUp(configurer: EnvironmentUp.() -> Unit) = named(EnvironmentUp.NAME, configurer)
 
-    fun environmentRestart(configurer: EnvironmentRestart.() -> Unit) = named(EnvironmentRestart.NAME, EnvironmentRestart::class.java, configurer)
+    fun environmentRestart(configurer: EnvironmentRestart.() -> Unit) = named(EnvironmentRestart.NAME, configurer)
 
     // Tooling plugin shorthands
 
-    fun debug(configurer: Debug.() -> Unit) = named(Debug.NAME, Debug::class.java, configurer)
+    fun debug(configurer: Debug.() -> Unit) = named(Debug.NAME, configurer)
 
-    fun rcp(configurer: Rcp.() -> Unit) = named(Rcp.NAME, Rcp::class.java, configurer)
+    fun rcp(configurer: Rcp.() -> Unit) = named(Rcp.NAME, configurer)
 
-    fun sync(configurer: Sync.() -> Unit) = named(Sync.NAME, Sync::class.java, configurer)
+    fun sync(configurer: Sync.() -> Unit) = named(Sync.NAME, configurer)
 
-    fun vlt(configurer: Vlt.() -> Unit) = named(Vlt.NAME, Vlt::class.java, configurer)
+    fun vlt(configurer: Vlt.() -> Unit) = named(Vlt.NAME, configurer)
+
+    // Common lifecycle
+
+    fun destroy(configurer: Destroy.() -> Unit) = registerOrConfigure(Destroy.NAME, configurer)
+
+    fun down(configurer: Down.() -> Unit) = registerOrConfigure(Down.NAME, configurer)
+
+    fun resetup(configurer: Resetup.() -> Unit) = registerOrConfigure(Resetup.NAME, configurer)
+
+    fun restart(configurer: Restart.() -> Unit) = registerOrConfigure(Restart.NAME, configurer)
+
+    fun setup(configurer: Setup.() -> Unit) = registerOrConfigure(Setup.NAME, configurer)
+
+    fun up(configurer: Up.() -> Unit) = registerOrConfigure(Up.NAME, configurer)
 
     // Generic API & internals
 
@@ -174,6 +189,10 @@ class TaskFacade(private val aem: AemExtension) {
         } catch (e: UnknownTaskException) {
             register(name, T::class.java, configurer)
         }
+    }
+
+    inline fun <reified T : Task> registerOrConfigure(vararg names: String, noinline configurer: T.() -> Unit = {}) {
+        names.forEach { registerOrConfigure(it, configurer) }
     }
 
     inline fun <reified T : Task> register(name: String, noinline configurer: T.() -> Unit = {}): TaskProvider<T> {

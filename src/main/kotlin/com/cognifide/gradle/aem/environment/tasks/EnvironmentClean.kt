@@ -13,8 +13,6 @@ open class EnvironmentClean : AemDefaultTask() {
     fun clean() {
         aem.environment.httpd.restart()
         aem.environment.clean()
-
-        aem.notifier.notify("Environment cleaned", "Cleaned with success.")
     }
 
     companion object {
