@@ -46,7 +46,7 @@ class LocalInstanceOptions(aem: AemExtension) : Serializable {
     /**
      * URI pointing to ZIP file created by backup task (packed AEM instances already created).
      */
-    var zipUrl = aem.props.string("localInstance.zipUrl")
+    var zipUrl = aem.props.string("backup.downloadUrl")
 
     /**
      * URI pointing to AEM self-extractable JAR containing 'crx-quickstart'.
@@ -133,7 +133,7 @@ class LocalInstanceOptions(aem: AemExtension) : Serializable {
          */
         NONE,
         /**
-         * Force using backup available at external source (specified in 'localInstance.zipUrl').
+         * Force using backup available at external source (specified in 'backup.downloadUrl').
          */
         BACKUP_EXTERNAL,
         /**

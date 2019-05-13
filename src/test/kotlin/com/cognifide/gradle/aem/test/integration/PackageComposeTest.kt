@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.test
+package com.cognifide.gradle.aem.test.integration
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith

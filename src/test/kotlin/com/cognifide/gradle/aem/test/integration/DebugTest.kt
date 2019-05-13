@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.test
+package com.cognifide.gradle.aem.test.integration
 
 import com.cognifide.gradle.aem.config.tasks.Debug
 import com.cognifide.gradle.aem.test.AemAssert.assertJsonCustomized
