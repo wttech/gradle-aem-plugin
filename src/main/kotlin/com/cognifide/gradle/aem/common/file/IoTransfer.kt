@@ -7,6 +7,8 @@ import java.io.OutputStream
 
 open class IoTransfer {
 
+    protected open fun logProgress(operation: String, readLength: Long, fullLength: Long, file: File) {}
+
     open fun upload(file: File, output: OutputStream, cleanup: (File) -> Unit = {}) {
         file.inputStream().use { input ->
             var finished = false
@@ -17,6 +19,7 @@ open class IoTransfer {
 
                 while (read >= 0) {
                     output.write(buf, 0, read)
+                    logProgress("Uploading", read.toLong(), file.length(), file)
                     read = input.read(buf)
                 }
 
@@ -42,6 +45,7 @@ open class IoTransfer {
 
                 while (read >= 0) {
                     output.write(buf, 0, read)
+                    logProgress("Downloading", read.toLong(), size, target)
                     read = inputStream.read(buf)
                 }
 

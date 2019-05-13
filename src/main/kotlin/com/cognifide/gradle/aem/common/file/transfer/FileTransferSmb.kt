@@ -22,12 +22,6 @@ class FileTransferSmb(
         "$uploadUrl/"
     }
 
-    init {
-        if (!file(uploadUrl).isDirectory) {
-            throw AemException("aem.backup.uploadUrl must be a directory: '$uploadUrl'")
-        }
-    }
-
     override fun download(name: String, target: File) {
         try {
             val smbFile = fileByName(name)
@@ -58,7 +52,12 @@ class FileTransferSmb(
 
     override fun truncate() = uploadDir().listFiles().forEach { delete(it.name) }
 
-    private fun file(url: String, name: String = "") =
+    private fun file(url: String, name: String = ""): SmbFile {
+        validateUploadDir()
+        return smbFile(url, name)
+    }
+
+    private fun smbFile(url: String, name: String = "") =
             if (!credentials.username.isNullOrBlank() && !credentials.password.isNullOrBlank()) {
                 SmbFile(url, name, NtlmPasswordAuthentication(domain, credentials.username, credentials.password))
             } else {
@@ -68,6 +67,12 @@ class FileTransferSmb(
     private fun fileByName(name: String) = file(uploadUrl, name)
 
     private fun uploadDir() = file(uploadUrl)
+
+    private fun validateUploadDir() {
+        if (!smbFile(uploadUrl).isDirectory) {
+            throw AemException("uploadUrl must be a directory: '$uploadUrl'")
+        }
+    }
 
     companion object {
         fun handles(url: String): Boolean {

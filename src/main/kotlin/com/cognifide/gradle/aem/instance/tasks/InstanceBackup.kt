@@ -28,7 +28,7 @@ open class InstanceBackup : ZipTask() {
     }
 
     @Input
-    var uploadUrl = aem.props.string("aem.backup.uploadUrl")
+    var uploadUrl = aem.props.string("backup.uploadUrl")
 
     @TaskAction
     override fun copy() {

@@ -115,7 +115,7 @@ abstract class FileTransferTest {
 
         //when
         try {
-            invalidTransfer()
+            invalidTransfer().list()
 
             //then
             Assertions.fail<FileTransferTest>()

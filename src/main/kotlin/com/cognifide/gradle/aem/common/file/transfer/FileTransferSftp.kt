@@ -18,18 +18,6 @@ class FileTransferSftp(
 
     private val uploadUrl = uploadUrl.trimEnd('/')
 
-    init {
-        try {
-            connect { path ->
-                if (!isDirectory(path)) {
-                    throw AemException("aem.backup.uploadUrl must be a directory: '$uploadUrl'")
-                }
-            }
-        } catch (e: SFTPException) {
-            throw AemException("Problem accessing uploadUrl: '$uploadUrl': ${e.statusCode}, ${e.message}", e)
-        }
-    }
-
     override fun download(name: String, target: File) {
         try {
             connect { path ->
@@ -69,14 +57,35 @@ class FileTransferSftp(
         }
     }
 
-    override fun list() = connect { path -> ls(path).map { it.name } }
+    override fun list(): List<String> {
+        return connect { path -> ls(path).map { it.name } }
+    }
 
-    override fun truncate() = connect { path -> ls(path).forEach { rm(it.path) } }
+    override fun truncate() {
+        connect { path -> ls(path).forEach { rm(it.path) } }
+    }
 
     private fun SFTPClient.isDirectory(path: String) = lstat(path).type == FileMode.Type.DIRECTORY
 
-    @Suppress("MagicNumber")
     private fun <T> connect(action: SFTPClient.(path: String) -> T): T {
+        validateUploadDir()
+        return connectSftp(action)
+    }
+
+    private fun validateUploadDir() {
+        try {
+            connectSftp { path ->
+                if (!isDirectory(path)) {
+                    throw AemException("uploadUrl must be a directory: '$uploadUrl'")
+                }
+            }
+        } catch (e: SFTPException) {
+            throw AemException("Problem accessing uploadUrl: '$uploadUrl': ${e.statusCode}, ${e.message}", e)
+        }
+    }
+
+    @Suppress("MagicNumber")
+    private fun <T> connectSftp(action: SFTPClient.(path: String) -> T): T {
         val url = URIBuilder(uploadUrl)
         val ssh = SSHClient()
         ssh.loadKnownHosts()
