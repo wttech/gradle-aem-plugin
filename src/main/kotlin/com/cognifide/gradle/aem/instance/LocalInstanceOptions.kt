@@ -35,18 +35,18 @@ class LocalInstanceOptions(aem: AemExtension) : Serializable {
      * (file names sorted lexically / descending).
      */
     @JsonIgnore
-    var zipSelector: Collection<File>.() -> File? = {
-        val name = aem.props.string("localInstance.zipName") ?: ""
+    var backupSelector: Collection<String>.() -> String? = {
+        val backupName = aem.props.string("backup.name") ?: ""
         when {
-            name.isNotBlank() -> firstOrNull { it.name == name }
-            else -> sortedByDescending { it.name }.firstOrNull()
+            backupName.isNotBlank() -> firstOrNull { it == backupName }
+            else -> sortedByDescending { it }.firstOrNull()
         }
     }
 
     /**
      * URI pointing to ZIP file created by backup task (packed AEM instances already created).
      */
-    var zipUrl = aem.props.string("backup.downloadUrl")
+    var backupUrl = aem.props.string("backup.downloadUrl")
 
     /**
      * URI pointing to AEM self-extractable JAR containing 'crx-quickstart'.
@@ -80,13 +80,13 @@ class LocalInstanceOptions(aem: AemExtension) : Serializable {
     var expandProperties: Map<String, Any> = mapOf()
 
     @JsonIgnore
-    var zipSource: FileResolver.() -> FileResolution? = {
-        zipUrl?.run { url(this) }
+    var backupSource: FileResolver.() -> FileResolution? = {
+        backupUrl?.run { url(this) }
     }
 
     @get:JsonIgnore
-    val zip: File?
-        get() = fileResolver.run(zipSource)?.file
+    val backup: File?
+        get() = fileResolver.run(backupSource)?.file
 
     @JsonIgnore
     var jarSource: FileResolver.() -> FileResolution? = {

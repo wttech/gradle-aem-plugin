@@ -3,14 +3,16 @@ package com.cognifide.gradle.aem.instance.tasks
 import com.cognifide.gradle.aem.common.AemException
 import com.cognifide.gradle.aem.common.Formats
 import com.cognifide.gradle.aem.common.file.IoTransferLogger
-import com.cognifide.gradle.aem.common.file.transfer.*
+import com.cognifide.gradle.aem.common.file.transfer.Credentials
+import com.cognifide.gradle.aem.common.file.transfer.FileTransfer
+import com.cognifide.gradle.aem.common.file.transfer.FileTransferSftp
+import com.cognifide.gradle.aem.common.file.transfer.FileTransferSmb
 import com.cognifide.gradle.aem.common.tasks.ZipTask
 import com.cognifide.gradle.aem.instance.InstanceException
 import com.cognifide.gradle.aem.instance.names
 import java.io.File
 import org.gradle.api.execution.TaskExecutionGraph
 import org.gradle.api.file.DuplicatesStrategy
-import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.bundling.ZipEntryCompression
@@ -27,7 +29,7 @@ open class InstanceBackup : ZipTask() {
         entryCompression = ZipEntryCompression.STORED
     }
 
-    @Input
+    @Internal
     var uploadUrl = aem.props.string("backup.uploadUrl")
 
     @TaskAction
@@ -39,7 +41,7 @@ open class InstanceBackup : ZipTask() {
     private fun upload() {
         uploadUrl?.let { url ->
             val backupZip = archiveFile.get().asFile
-            logger.lifecycle("Uploading backup: ${backupZip.path} to $url")
+            logger.info("Uploading backup: ${backupZip.path} to $url")
             fileTransfer(url).upload(backupZip)
         }
     }

@@ -89,13 +89,14 @@ open class InstanceCreate : LocalInstanceTask() {
         }
     }
 
-    private fun findRecentBackup() = findRecentBackup(instanceOptions.zip)
+    private fun findRecentBackup() = findRecentBackup(instanceOptions.backup)
 
     private fun findRecentBackup(externalZip: File?): File? {
         val external = if (externalZip == null) listOf() else listOf(externalZip)
         val internal = aem.tasks.named<InstanceBackup>(InstanceBackup.NAME).get().available
-
-        return instanceOptions.zipSelector(external + internal)
+        val allBackups = external + internal
+        val selectedBackupName = instanceOptions.backupSelector(allBackups.map { it.name })
+        return allBackups.find { it.name == selectedBackupName }
     }
 
     private fun getInternalBackup(): File? {
@@ -104,7 +105,7 @@ open class InstanceCreate : LocalInstanceTask() {
     }
 
     private fun getExternalBackup(): File {
-        return instanceOptions.zip ?: throw InstanceException("External local instance backup is not available. " +
+        return instanceOptions.backup ?: throw InstanceException("External local instance backup is not available. " +
                 "Ensure having property 'aem.backup.downloadUrl' specified.")
     }
 
