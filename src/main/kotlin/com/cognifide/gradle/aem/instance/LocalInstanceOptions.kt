@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.common.AemException
 import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.AemTask
 import com.cognifide.gradle.aem.common.file.resolver.FileGroup
@@ -22,31 +21,6 @@ class LocalInstanceOptions(aem: AemExtension) : Serializable {
      */
     var rootDir: File = aem.props.string("localInstance.root")?.let { aem.project.file(it) }
             ?: aem.projectMain.file(".aem/instance")
-
-    /**
-     * Determines how instances will be created (from backup or from the scratch).
-     */
-    var source = Source.of(aem.props.string("localInstance.source") ?: Source.AUTO.name)
-
-    /**
-     * Defines backup selection rule.
-     *
-     * By default takes desired backup by name (if provided) or takes most recent backup
-     * (file names sorted lexically / descending).
-     */
-    @JsonIgnore
-    var backupSelector: Collection<String>.() -> String? = {
-        val backupName = aem.props.string("backup.name") ?: ""
-        when {
-            backupName.isNotBlank() -> firstOrNull { it == backupName }
-            else -> sortedByDescending { it }.firstOrNull()
-        }
-    }
-
-    /**
-     * URI pointing to ZIP file created by backup task (packed AEM instances already created).
-     */
-    var backupUrl = aem.props.string("backup.downloadUrl")
 
     /**
      * URI pointing to AEM self-extractable JAR containing 'crx-quickstart'.
@@ -80,15 +54,6 @@ class LocalInstanceOptions(aem: AemExtension) : Serializable {
     var expandProperties: Map<String, Any> = mapOf()
 
     @JsonIgnore
-    var backupSource: FileResolver.() -> FileResolution? = {
-        backupUrl?.run { url(this) }
-    }
-
-    @get:JsonIgnore
-    val backup: File?
-        get() = fileResolver.run(backupSource)?.file
-
-    @JsonIgnore
     var jarSource: FileResolver.() -> FileResolution? = {
         jarUrl?.run { url(this) }
     }
@@ -120,33 +85,6 @@ class LocalInstanceOptions(aem: AemExtension) : Serializable {
 
     fun extraFiles(configurer: Resolver<FileGroup>.() -> Unit) {
         fileResolver.group(GROUP_EXTRA, configurer)
-    }
-
-    enum class Source {
-        /**
-         * Create instances from most recent backup (external or internal)
-         * or fallback to creating from the scratch if there is no backup available.
-         */
-        AUTO,
-        /**
-         * Force creating instances from the scratch.
-         */
-        NONE,
-        /**
-         * Force using backup available at external source (specified in 'backup.downloadUrl').
-         */
-        BACKUP_EXTERNAL,
-        /**
-         * Force using internal backup (created by task 'instanceBackup').
-         */
-        BACKUP_INTERNAL;
-
-        companion object {
-            fun of(name: String): Source {
-                return values().find { it.name.equals(name, true) }
-                        ?: throw AemException("Unsupported local instance source: $name")
-            }
-        }
     }
 
     companion object {

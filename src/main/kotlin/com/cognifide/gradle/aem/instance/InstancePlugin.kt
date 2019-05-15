@@ -32,7 +32,6 @@ class InstancePlugin : AemPlugin() {
 
             register<InstanceDown>(InstanceDown.NAME)
             register<InstanceUp>(InstanceUp.NAME) {
-                dependsOn(InstanceCreate.NAME)
                 mustRunAfter(InstanceDown.NAME, InstanceDestroy.NAME)
             }
             register<InstanceRestart>(InstanceRestart.NAME) {
@@ -41,6 +40,7 @@ class InstancePlugin : AemPlugin() {
             register<InstanceCreate>(InstanceCreate.NAME) {
                 dependsOn(Resolve.NAME)
                 mustRunAfter(InstanceDestroy.NAME)
+                finalizedBy(InstanceUp.NAME)
             }
             register<InstanceDestroy>(InstanceDestroy.NAME) {
                 dependsOn(InstanceDown.NAME)
@@ -69,6 +69,11 @@ class InstancePlugin : AemPlugin() {
             }
             register<InstanceBackup>(InstanceBackup.NAME) {
                 dependsOn(InstanceDown.NAME)
+                finalizedBy(InstanceUp.NAME)
+            }
+            register<InstanceRestore>(InstanceRestore.NAME) {
+                dependsOn(Resolve.NAME)
+                dependsOn(InstanceDestroy.NAME)
                 finalizedBy(InstanceUp.NAME)
             }
 
