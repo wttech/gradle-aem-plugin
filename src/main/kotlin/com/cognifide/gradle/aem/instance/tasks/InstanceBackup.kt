@@ -1,12 +1,6 @@
 package com.cognifide.gradle.aem.instance.tasks
 
-import com.cognifide.gradle.aem.common.AemException
 import com.cognifide.gradle.aem.common.Formats
-import com.cognifide.gradle.aem.common.file.IoTransferLogger
-import com.cognifide.gradle.aem.common.file.transfer.Credentials
-import com.cognifide.gradle.aem.common.file.transfer.FileTransfer
-import com.cognifide.gradle.aem.common.file.transfer.FileTransferSftp
-import com.cognifide.gradle.aem.common.file.transfer.FileTransferSmb
 import com.cognifide.gradle.aem.common.tasks.ZipTask
 import com.cognifide.gradle.aem.instance.InstanceException
 import com.cognifide.gradle.aem.instance.names
@@ -42,7 +36,7 @@ open class InstanceBackup : ZipTask() {
         uploadUrl?.let { url ->
             val backupZip = archiveFile.get().asFile
             logger.info("Uploading backup: ${backupZip.path} to $url")
-            fileTransfer(url).upload(backupZip)
+            aem.fileTransfer(url).upload(backupZip)
         }
     }
 
@@ -67,24 +61,6 @@ open class InstanceBackup : ZipTask() {
 
     override fun projectEvaluated() {
         from(aem.config.localInstanceOptions.rootDir)
-    }
-
-    private fun fileTransfer(url: String): FileTransfer {
-        return when {
-            FileTransferSftp.handles(url) -> FileTransferSftp(
-                    url,
-                    Credentials(aem.config.resolverOptions.sftpUsername, aem.config.resolverOptions.sftpPassword),
-                    aem.config.resolverOptions.sftpHostChecking,
-                    IoTransferLogger(project)
-            )
-            FileTransferSmb.handles(url) -> FileTransferSmb(
-                    url,
-                    Credentials(aem.config.resolverOptions.smbUsername, aem.config.resolverOptions.smbPassword),
-                    aem.config.resolverOptions.smbDomain ?: "",
-                    IoTransferLogger(project)
-            )
-            else -> throw AemException("Cannot upload backup to URL: $url. Only SMB and SFTP URLs are supported.")
-        }
     }
 
     companion object {

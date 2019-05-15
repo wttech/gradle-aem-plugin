@@ -4,12 +4,7 @@ import com.cognifide.gradle.aem.common.AemException
 import com.cognifide.gradle.aem.common.AemTask
 import com.cognifide.gradle.aem.common.Formats
 import com.cognifide.gradle.aem.common.file.FileOperations
-import com.cognifide.gradle.aem.common.file.IoTransferLogger
 import com.cognifide.gradle.aem.common.file.resolver.FileResolver
-import com.cognifide.gradle.aem.common.file.transfer.Credentials
-import com.cognifide.gradle.aem.common.file.transfer.FileTransfer
-import com.cognifide.gradle.aem.common.file.transfer.FileTransferSftp
-import com.cognifide.gradle.aem.common.file.transfer.FileTransferSmb
 import com.cognifide.gradle.aem.common.onEachApply
 import com.cognifide.gradle.aem.common.tasks.LocalInstanceTask
 import com.cognifide.gradle.aem.instance.InstanceException
@@ -69,7 +64,7 @@ open class InstanceRestore : LocalInstanceTask() {
     private fun selectBackup() = when {
         backupUrl != null -> fileResolver.run { backupUrl.run { url(this) } }.file
         uploadUrl != null -> {
-            val name = backupSelector(fileTransfer(uploadUrl).list())
+            val name = backupSelector(aem.fileTransfer(uploadUrl).list())
                     ?: throw AemException("No backups to restore. Please perform backup before restoring.")
             fileResolver.run { backupUrl(uploadUrl, name).run { url(this) } }.file
         }
@@ -109,24 +104,6 @@ open class InstanceRestore : LocalInstanceTask() {
                     customize()
                 }
             }
-        }
-    }
-
-    private fun fileTransfer(url: String): FileTransfer {
-        return when {
-            FileTransferSftp.handles(url) -> FileTransferSftp(
-                    url,
-                    Credentials(aem.config.resolverOptions.sftpUsername, aem.config.resolverOptions.sftpPassword),
-                    aem.config.resolverOptions.sftpHostChecking,
-                    IoTransferLogger(project)
-            )
-            FileTransferSmb.handles(url) -> FileTransferSmb(
-                    url,
-                    Credentials(aem.config.resolverOptions.smbUsername, aem.config.resolverOptions.smbPassword),
-                    aem.config.resolverOptions.smbDomain ?: "",
-                    IoTransferLogger(project)
-            )
-            else -> throw AemException("Invalid backup.uploadUrl: $url. Only SMB and SFTP URLs are supported.")
         }
     }
 

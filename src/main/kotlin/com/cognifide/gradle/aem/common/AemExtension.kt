@@ -3,6 +3,10 @@ package com.cognifide.gradle.aem.common
 import com.cognifide.gradle.aem.bundle.BundlePlugin
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.file.FileWatcher
+import com.cognifide.gradle.aem.common.file.IoTransferLogger
+import com.cognifide.gradle.aem.common.file.transfer.Credentials
+import com.cognifide.gradle.aem.common.file.transfer.FileTransferSftp
+import com.cognifide.gradle.aem.common.file.transfer.FileTransferSmb
 import com.cognifide.gradle.aem.common.http.HttpClient
 import com.cognifide.gradle.aem.config.Config
 import com.cognifide.gradle.aem.config.ConfigPlugin
@@ -48,6 +52,25 @@ open class AemExtension(@Internal val project: Project) {
      */
     @get:Internal
     val projectMain: Project = project.findProject(props.string("projectMainPath") ?: ":aem") ?: project.rootProject
+
+    /**
+     * Creates FileTransfer instance that enables user to upload/download/delete/list files under specified url
+     */
+    fun fileTransfer(url: String) = when {
+        FileTransferSftp.handles(url) -> FileTransferSftp(
+                url,
+                Credentials(config.resolverOptions.sftpUsername, config.resolverOptions.sftpPassword),
+                config.resolverOptions.sftpHostChecking,
+                IoTransferLogger(project)
+        )
+        FileTransferSmb.handles(url) -> FileTransferSmb(
+                url,
+                Credentials(config.resolverOptions.smbUsername, config.resolverOptions.smbPassword),
+                config.resolverOptions.smbDomain ?: "",
+                IoTransferLogger(project)
+        )
+        else -> throw AemException("Invalid url for file transfer: $url. Only SMB and SFTP URLs are supported.")
+    }
 
     /**
      * Project name convention prefixes used to determine default:
