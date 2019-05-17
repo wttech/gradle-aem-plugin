@@ -7,7 +7,7 @@ import com.cognifide.gradle.aem.instance.LocalInstance
 import com.cognifide.gradle.aem.instance.names
 import org.gradle.api.tasks.TaskAction
 
-open class InstanceCreate : LocalInstanceTask() {
+open class InstanceCreateOnly : LocalInstanceTask() {
 
     init {
         description = "Creates local AEM instance(s)."
@@ -23,14 +23,14 @@ open class InstanceCreate : LocalInstanceTask() {
 
         logger.info("Creating instances: ${uncreatedInstances.names}")
 
-        createFromScratch(uncreatedInstances)
+        create(uncreatedInstances)
 
         val createdInstances = uncreatedInstances.filter { it.created }
 
         aem.notifier.notify("Instance(s) created", "Which: ${createdInstances.names}")
     }
 
-    private fun createFromScratch(uncreatedInstances: List<LocalInstance>) {
+    private fun create(uncreatedInstances: List<LocalInstance>) {
         if (instanceOptions.jar == null || instanceOptions.license == null) {
             throw InstanceException("Cannot create instances due to lacking source files. " +
                     "Ensure having specified: local instance ZIP url or jar & license url.")
@@ -46,6 +46,6 @@ open class InstanceCreate : LocalInstanceTask() {
     }
 
     companion object {
-        const val NAME = "instanceCreate"
+        const val NAME = "instanceCreateOnly"
     }
 }

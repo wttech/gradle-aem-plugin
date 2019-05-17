@@ -17,7 +17,7 @@ class UrlFileDownloader(val project: Project) {
             val connection = URL(sourceUrl).openConnection()
             connection.useCaches = false
 
-            IoTransferLogger(project).download(connection.contentLengthLong, connection.getInputStream(), targetFile)
+            IoTransferLogger(project).download(connection.contentLengthLong, connection.inputStream, targetFile)
         } catch (e: IOException) {
             throw FileException("Cannot download URL '$sourceUrl' to file '$targetFile'.", e)
         }

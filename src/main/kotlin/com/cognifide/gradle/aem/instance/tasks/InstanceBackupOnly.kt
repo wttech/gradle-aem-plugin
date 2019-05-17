@@ -11,10 +11,10 @@ import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.bundling.ZipEntryCompression
 
-open class InstanceBackup : ZipTask() {
+open class InstanceBackupOnly : ZipTask() {
 
     init {
-        description = "Turns off local instance(s), archives to ZIP file, then turns on again."
+        description = "Turns off local instance(s), archives to ZIP file."
 
         archiveBaseName.set(project.provider { "${project.rootProject.name}-${Formats.dateFileName()}" })
         archiveClassifier.set("backup")
@@ -64,6 +64,6 @@ open class InstanceBackup : ZipTask() {
     }
 
     companion object {
-        const val NAME = "instanceBackup"
+        const val NAME = "instanceBackupOnly"
     }
 }

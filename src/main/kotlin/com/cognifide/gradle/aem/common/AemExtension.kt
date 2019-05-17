@@ -54,7 +54,9 @@ open class AemExtension(@Internal val project: Project) {
     val projectMain: Project = project.findProject(props.string("projectMainPath") ?: ":aem") ?: project.rootProject
 
     /**
-     * Creates FileTransfer instance that enables user to upload/download/delete/list files under specified url
+     * File transfer object that enables upload/download/delete/list files under specified url.
+     *  - url needs to be a directory
+     *  - SMB and SFTP protocols supported
      */
     fun fileTransfer(url: String) = when {
         FileTransferSftp.handles(url) -> FileTransferSftp(

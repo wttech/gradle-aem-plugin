@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.config.tasks
 
 import com.cognifide.gradle.aem.common.AemDefaultTask
-import com.cognifide.gradle.aem.instance.tasks.InstanceCreate
+import com.cognifide.gradle.aem.instance.tasks.InstanceCreateOnly
 import com.cognifide.gradle.aem.instance.tasks.InstanceSatisfy
 import org.gradle.api.tasks.TaskAction
 
@@ -18,7 +18,7 @@ open class Resolve : AemDefaultTask() {
             if (task is InstanceSatisfy) {
                 logger.info("Resolving CRX packages for satisfying instances.")
                 logger.info("Resolved CRX packages: ${task.allFiles}")
-            } else if (task is InstanceCreate) {
+            } else if (task is InstanceCreateOnly) {
                 // TODO instance files eagerly jar & license file)
             }
         }

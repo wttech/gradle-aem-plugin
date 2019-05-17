@@ -15,21 +15,23 @@ import java.io.File
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
-open class InstanceRestore : LocalInstanceTask() {
-
-    init {
-        description = "Restores AEM instance(s) from backup file."
-    }
+open class InstanceRestoreOnly : LocalInstanceTask() {
 
     private val downloadDir = AemTask.temporaryDir(aem.project, TEMPORARY_DIR)
 
     private val fileResolver = FileResolver(aem, downloadDir).apply { group(GROUP_EXTRA) {} }
+
+    private val localBackups by lazy { aem.tasks.named<InstanceBackupOnly>(InstanceBackupOnly.NAME).get().available }
 
     @Internal
     val uploadUrl = aem.props.string("backup.uploadUrl")
 
     @Internal
     val backupUrl = aem.props.string("backup.downloadUrl")
+
+    init {
+        description = "Restores AEM instance(s) from backup file."
+    }
 
     /**
      * Defines backup selection rule.
@@ -68,13 +70,13 @@ open class InstanceRestore : LocalInstanceTask() {
                     ?: throw AemException("No backups to restore. Please perform backup before restoring.")
             fileResolver.run { backupUrl(uploadUrl, name).run { url(this) } }.file
         }
-        aem.tasks.named<InstanceBackup>(InstanceBackup.NAME).get().available.isNotEmpty() -> {
-            val localBackups = aem.tasks.named<InstanceBackup>(InstanceBackup.NAME).get().available
+        localBackups.isNotEmpty() -> {
             val name = backupSelector(localBackups.map { it.name })
             localBackups.find { it.name == name }
                     ?: throw AemException("No local backups to restore. Please perform backup before restoring.")
         }
-        else -> throw AemException("No backups to restore. Please specify backup.downloadUrl, backup.uploadUrl or perform backup locally before restoring.")
+        else -> throw AemException("No backups to restore. Please specify one of properties: " +
+                "['backup.downloadUrl', 'backup.uploadUrl'] or perform backup locally before restoring.")
     }
 
     private fun restoreFromBackup(uncreatedInstances: List<LocalInstance>, backupZip: File) {
@@ -114,7 +116,7 @@ open class InstanceRestore : LocalInstanceTask() {
     }
 
     companion object {
-        const val NAME = "instanceRestore"
+        const val NAME = "instanceRestoreOnly"
         const val TEMPORARY_DIR = "backup"
         const val GROUP_EXTRA = "extra"
     }

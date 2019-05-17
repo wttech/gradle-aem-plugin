@@ -37,44 +37,49 @@ class InstancePlugin : AemPlugin() {
             register<InstanceRestart>(InstanceRestart.NAME) {
                 dependsOn(InstanceDown.NAME, InstanceUp.NAME)
             }
-            register<InstanceCreate>(InstanceCreate.NAME) {
+            register<InstanceCreateOnly>(InstanceCreateOnly.NAME) {
                 dependsOn(Resolve.NAME)
                 mustRunAfter(InstanceDestroy.NAME)
-                finalizedBy(InstanceUp.NAME)
+            }
+            register<InstanceCreateAndUp>(InstanceCreateAndUp.NAME) {
+                dependsOn(InstanceCreateOnly.NAME, InstanceUp.NAME)
             }
             register<InstanceDestroy>(InstanceDestroy.NAME) {
                 dependsOn(InstanceDown.NAME)
             }
             register<InstanceSatisfy>(InstanceSatisfy.NAME) {
-                dependsOn(Resolve.NAME).mustRunAfter(InstanceCreate.NAME, InstanceUp.NAME)
+                dependsOn(Resolve.NAME).mustRunAfter(InstanceCreateAndUp.NAME)
             }
             register<InstanceReload>(InstanceReload.NAME) {
                 mustRunAfter(InstanceSatisfy.NAME)
                 plugins.withId(PackagePlugin.ID) { mustRunAfter(PackageDeploy.NAME) }
             }
             register<InstanceAwait>(InstanceAwait.NAME) {
-                mustRunAfter(InstanceCreate.NAME, InstanceUp.NAME, InstanceSatisfy.NAME)
+                mustRunAfter(InstanceCreateAndUp.NAME, InstanceSatisfy.NAME)
                 plugins.withId(PackagePlugin.ID) { mustRunAfter(PackageDeploy.NAME) }
             }
             register<InstanceCollect>(InstanceCollect.NAME) {
                 mustRunAfter(InstanceSatisfy.NAME)
             }
             register<InstanceSetup>(InstanceSetup.NAME) {
-                dependsOn(InstanceCreate.NAME, InstanceUp.NAME, InstanceSatisfy.NAME)
+                dependsOn(InstanceCreateAndUp.NAME, InstanceSatisfy.NAME)
                 mustRunAfter(InstanceDestroy.NAME)
                 plugins.withId(PackagePlugin.ID) { dependsOn(PackageDeploy.NAME) }
             }
             register<InstanceResetup>(InstanceResetup.NAME) {
                 dependsOn(InstanceDestroy.NAME, InstanceSetup.NAME)
             }
-            register<InstanceBackup>(InstanceBackup.NAME) {
+            register<InstanceBackupOnly>(InstanceBackupOnly.NAME) {
                 dependsOn(InstanceDown.NAME)
-                finalizedBy(InstanceUp.NAME)
             }
-            register<InstanceRestore>(InstanceRestore.NAME) {
-                dependsOn(Resolve.NAME)
-                dependsOn(InstanceDestroy.NAME)
-                finalizedBy(InstanceUp.NAME)
+            register<InstanceBackupAndUp>(InstanceBackupAndUp.NAME) {
+                dependsOn(InstanceBackupOnly.NAME, InstanceUp.NAME)
+            }
+            register<InstanceRestoreOnly>(InstanceRestoreOnly.NAME) {
+                dependsOn(Resolve.NAME, InstanceDestroy.NAME)
+            }
+            register<InstanceRestoreAndUp>(InstanceRestoreAndUp.NAME) {
+                dependsOn(InstanceRestoreOnly.NAME, InstanceUp.NAME)
             }
 
             register<InstanceTail>(InstanceTail.NAME)
