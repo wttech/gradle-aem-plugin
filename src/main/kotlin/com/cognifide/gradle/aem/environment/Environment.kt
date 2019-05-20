@@ -4,8 +4,9 @@ import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.AemTask
 import com.cognifide.gradle.aem.common.Patterns
 import com.cognifide.gradle.aem.common.file.resolver.FileResolver
-import com.cognifide.gradle.aem.environment.docker.domain.AemStack
+import com.cognifide.gradle.aem.environment.docker.base.DockerType
 import com.cognifide.gradle.aem.environment.docker.domain.HttpdContainer
+import com.cognifide.gradle.aem.environment.docker.domain.Stack
 import com.cognifide.gradle.aem.environment.health.HealthChecker
 import com.cognifide.gradle.aem.environment.health.HealthStatus
 import com.cognifide.gradle.aem.environment.hosts.HostsOptions
@@ -18,13 +19,13 @@ class Environment(val aem: AemExtension) {
     /**
      * Path in which local AEM environment will be stored.
      */
-    var rootDir: File = aem.props.string("env.rootDir")?.let { aem.project.file(it) }
+    var rootDir: File = aem.props.string("environment.rootDir")?.let { aem.project.file(it) }
             ?: aem.projectMain.file(".aem/environment")
 
     /**
      * Represents Docker stack named 'aem' and provides API for manipulating it.
      */
-    val stack = AemStack(this)
+    val stack = Stack(this)
 
     /**
      * Represents Docker container named 'aem_httpd' and provides API for manipulating it.
@@ -44,16 +45,16 @@ class Environment(val aem: AemExtension) {
     /**
      * URI pointing to Dispatcher distribution TAR file.
      */
-    var dispatcherDistUrl = aem.props.string("env.dispatcher.distUrl")
+    var dispatcherDistUrl = aem.props.string("environment.dispatcher.distUrl")
             ?: "http://download.macromedia.com/dispatcher/download/dispatcher-apache2.4-linux-x86_64-4.3.2.tar.gz"
 
-    var dispatcherModuleName = aem.props.string("env.dispatcher.moduleName")
+    var dispatcherModuleName = aem.props.string("environment.dispatcher.moduleName")
             ?: "*/dispatcher-apache*.so"
 
     /**
      * Location in which dispatcher stores cached files.
      */
-    var dispatcherCacheDir: File = aem.props.string("env.dispatcher.cacheDir")?.let { aem.project.file(it) }
+    var dispatcherCacheDir: File = aem.props.string("environment.dispatcher.cacheDir")?.let { aem.project.file(it) }
             ?: aem.projectMain.file(".aem/environment/cache")
 
     @get:JsonIgnore
@@ -75,11 +76,13 @@ class Environment(val aem: AemExtension) {
     val dispatcherModuleFile: File
         get() = File(rootDir, "$DISTRIBUTIONS_DIR/mod_dispatcher.so")
 
+    val dockerType: DockerType = DockerType.determine(aem)
+
     val dockerComposeFile
         get() = File(rootDir, "docker-compose.yml")
 
     val dockerComposeSourceFile: File
-        get() = File(aem.configCommonDir, "$ENVIRONMENT_DIR/docker-compose.yml")
+        get() = File(aem.configCommonDir, "$ENVIRONMENT_DIR/docker-compose.$dockerType.yml")
 
     val httpdConfDir
         get() = File(aem.configCommonDir, "$ENVIRONMENT_DIR/httpd/conf")
@@ -197,6 +200,10 @@ class Environment(val aem: AemExtension) {
         directories += paths
     }
 
+    fun hosts(options: HostsOptions.() -> Unit) {
+        hosts.apply(options)
+    }
+
     /**
      * Defines hosts to be appended to system specific hosts file.
      */
@@ -205,7 +212,7 @@ class Environment(val aem: AemExtension) {
     /**
      * Defines hosts to be appended to system specific hosts file.
      */
-    fun hosts(values: Iterable<String>) = hosts.define(values)
+    fun hosts(names: Iterable<String>) = hosts.define(dockerType.hostIp, names)
 
     /**
      * Configures environment service health checks.

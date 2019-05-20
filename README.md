@@ -1037,18 +1037,18 @@ To use this task, specify required properties in ignored file *gradle.properties
 
 To create instances from backup created by `instanceBackup` task, specify:
 
-* `aem.localInstance.zipUrl=http://[user]:[password]@[host]/[path]/example-yyyyMMddmmss-x.x.x-backup.zip`
+* `localInstance.zipUrl=http://[user]:[password]@[host]/[path]/example-yyyyMMddmmss-x.x.x-backup.zip`
 
 To create instances from scratch, specify:
 
-* `aem.localInstance.jarUrl=http://[user]:[password]@[host]/[path]/cq-quickstart.jar`
-* `aem.localInstance.licenseUrl=http://[user]:[password]@[host]/[path]/license.properties`
+* `localInstance.jarUrl=http://[user]:[password]@[host]/[path]/cq-quickstart.jar`
+* `localInstance.licenseUrl=http://[user]:[password]@[host]/[path]/license.properties`
 
 Source mode, can be adjusted by specifying parameter `-PlocalInstance.source`:
 
 * `auto` - Create instances from most recent backup (external or internal) or fallback to creating from the scratch if there is no backup available.
 * `none` - Force creating instances from the scratch.
-* `backup_external` - Force using backup available at external source (specified in `aem.localInstance.zipUrl`).      
+* `backup_external` - Force using backup available at external source (specified in `localInstance.zipUrl`).      
 * `backup_internal` - Force using internal backup (created by task `instanceBackup`).
 
 When mode is set to `auto` or `backup_internal`, then ZIP selection rule could be adjusted:
