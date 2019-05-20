@@ -18,6 +18,7 @@ open class InstanceBackupOnly : ZipTask() {
 
         archiveBaseName.set(project.provider { "${project.rootProject.name}-${Formats.dateFileName()}" })
         archiveClassifier.set("backup")
+        destinationDirectory.set(project.file("build/aem/backup/local"))
 
         duplicatesStrategy = DuplicatesStrategy.FAIL
         entryCompression = ZipEntryCompression.STORED
@@ -44,8 +45,8 @@ open class InstanceBackupOnly : ZipTask() {
     val available: List<File>
         get() {
             return (destinationDirectory.asFile.get().listFiles { _, name ->
-                name.endsWith("-$archiveClassifier.$archiveExtension")
-            } ?: arrayOf()).ifEmpty { arrayOf() }.toList()
+                name.endsWith("-${archiveClassifier.get()}.${archiveExtension.get()}")
+            } ?: arrayOf()).toList()
         }
 
     override fun taskGraphReady(graph: TaskExecutionGraph) {

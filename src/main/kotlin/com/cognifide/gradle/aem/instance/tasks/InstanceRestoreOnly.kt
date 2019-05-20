@@ -11,9 +11,9 @@ import com.cognifide.gradle.aem.instance.InstanceException
 import com.cognifide.gradle.aem.instance.LocalInstance
 import com.cognifide.gradle.aem.instance.names
 import com.fasterxml.jackson.annotation.JsonIgnore
-import java.io.File
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
+import java.io.File
 
 open class InstanceRestoreOnly : LocalInstanceTask() {
 
@@ -21,7 +21,10 @@ open class InstanceRestoreOnly : LocalInstanceTask() {
 
     private val fileResolver = FileResolver(aem, downloadDir).apply { group(GROUP_EXTRA) {} }
 
-    private val localBackups by lazy { aem.tasks.named<InstanceBackupOnly>(InstanceBackupOnly.NAME).get().available }
+    private val localBackups: List<File>
+        get() {
+            return aem.tasks.named<InstanceBackupOnly>(InstanceBackupOnly.NAME).get().available
+        }
 
     @Internal
     val uploadUrl = aem.props.string("backup.uploadUrl")
