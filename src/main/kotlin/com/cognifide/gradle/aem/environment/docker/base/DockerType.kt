@@ -26,5 +26,4 @@ enum class DockerType(val hostIp: String) {
             return null
         }
     }
-
 }
