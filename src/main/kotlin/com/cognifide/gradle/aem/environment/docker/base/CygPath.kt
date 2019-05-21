@@ -1,8 +1,8 @@
 package com.cognifide.gradle.aem.environment.docker.base
 
+import java.io.File
 import org.buildobjects.process.ExternalProcessFailureException
 import org.buildobjects.process.ProcBuilder
-import java.io.File
 
 object CygPath {
 
@@ -18,5 +18,4 @@ object CygPath {
             throw DockerException("Cannot calculate 'cygpath' for path: $path", e)
         }
     }
-
 }
