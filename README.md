@@ -111,6 +111,8 @@ To see documentation for previous 5.x serie, please [click here](https://github.
            * [Standalone tailer tool](#standalone-tailer-tool)
      * [Environment plugin](#environment-plugin)
         * [Environment configuration](#environment-configuration)
+           * [Notice for Docker on Windows](#notice-for-docker-on-windows)
+           * [Notice for Docker Toolbox](#notice-for-docker-toolbox)
         * [Environment service health checks](#environment-service-health-checks)
         * [Task environmentUp](#task-environmentup)
         * [Task environmentDown](#task-environmentdown)
@@ -1384,18 +1386,21 @@ Most of the configuration steps are automated. However, there are three manual s
 1. [Install Docker](https://docs.docker.com/install/)
     * [Desktop](https://docs.docker.com/docker-for-windows/install/) (highly recommended, using Hyper-V)
     * [Toolbox](https://docs.docker.com/toolbox/toolbox_install_windows/) (legacy, using VirtualBox)
-2. Setup hosts on local machine (admin rights are required to access `/etc/hosts` or `C:\Windows\System32\drivers\etc\hosts` file): 
-    * Windows: 
-        * Start PowerShell with "Run as administrator"
-        * Execute: `.\gradlew.bat environmentHosts --no-daemon`
-    * Unix: 
-        * Execute: `sudo ./gradlew environmentHosts --no-daemon`
+2. Setup hosts on local machine (admin rights are required to access `/etc/hosts` or `C:\Windows\System32\drivers\etc\hosts` file)
+    * In project based on [Gradle AEM Multi](https://github.com/Cognifide/gradle-aem-multi/blob/master/aem/hosts.bat), just run script `aem/hosts.sh` or `aem/hosts.bat`
+    * Otherwise: 
+        * Windows: 
+            * Start PowerShell with "Run as administrator"
+            * Execute: `.\gradlew.bat environmentHosts --no-daemon`
+        * Unix: 
+            * Execute: `sudo ./gradlew environmentHosts --no-daemon`
     
-**Windows issues**
+    
+##### Notice for Docker on Windows
 
 Because environment is using Docker volumes, on Windows, running task `environmentUp` will require additional user confirmation to allow virtualized container to access local configuration files.
 
-**Toolbox issues**
+##### Notice for Docker Toolbox
 
 While using Docker Toolbox, beware that, by default, there is only one shared folder in VirtualBox configured which mounts *C:/Users* to */c/users* on Docker Machine / Ubuntu. 
 As a consequence, if AEM project is located outside of *C:/Users* directory, there is a need to manually add corresponding shared folder and mount it to */c/users* path on Docker Machine using VirtualBox GUI.
