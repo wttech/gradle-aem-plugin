@@ -5,6 +5,7 @@ import com.cognifide.gradle.aem.common.AemTask
 import com.cognifide.gradle.aem.common.Patterns
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.file.resolver.FileResolver
+import com.cognifide.gradle.aem.environment.docker.base.CygPath
 import com.cognifide.gradle.aem.environment.docker.base.DockerType
 import com.cognifide.gradle.aem.environment.docker.domain.HttpdContainer
 import com.cognifide.gradle.aem.environment.docker.domain.Stack
@@ -22,6 +23,12 @@ class Environment(val aem: AemExtension) {
      */
     var rootDir: File = aem.props.string("environment.rootDir")?.let { aem.project.file(it) }
             ?: aem.projectMain.file(".aem/environment")
+
+    /**
+     * Convention directory for storing environment specific configuration files.
+     */
+    val configDir
+        get() = File(aem.configCommonDir, ENVIRONMENT_DIR)
 
     /**
      * Represents Docker stack named 'aem' and provides API for manipulating it.
@@ -80,7 +87,13 @@ class Environment(val aem: AemExtension) {
         get() = File(rootDir, "docker-compose.yml")
 
     val dockerComposeSourceFile: File
-        get() = File(aem.configCommonDir, "$ENVIRONMENT_DIR/docker-compose.yml.peb")
+        get() = File(configDir, "docker-compose.yml.peb")
+
+    val dockerConfigPath: String
+        get() = determineDockerPath(configDir)
+
+    val dockerRootPath: String
+        get() = determineDockerPath(rootDir)
 
     @JsonIgnore
     var healthChecker = HealthChecker(this)
@@ -171,6 +184,11 @@ class Environment(val aem: AemExtension) {
                 GFileUtils.mkdirs(dir)
             }
         }
+    }
+
+    private fun determineDockerPath(file: File): String = when (dockerType) {
+        DockerType.TOOLBOX -> CygPath.calculate(file)
+        else -> file.toString()
     }
 
     fun check(verbose: Boolean = true): List<HealthStatus> {
