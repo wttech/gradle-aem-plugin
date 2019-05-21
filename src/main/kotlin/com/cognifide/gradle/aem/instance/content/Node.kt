@@ -53,7 +53,7 @@ class Node private constructor() {
 
         fun loadChild(instanceSync: InstanceSync, parentNodePath: String, props: MutableMap<*, *>): Node = Node().apply {
             val childName = props.remove("__name__") as String
-            initMainProps(instanceSync, "$parentNodePath/$childName", "$parentNodePath/$childName")
+            initMainProps(instanceSync, "$parentNodePath/$childName", childName)
 
             document = JsonPath.parse(props)
         }
@@ -62,7 +62,7 @@ class Node private constructor() {
             initMainProps(instanceSync, nodePath, nodePath.substringAfterLast("/"))
 
             try {
-                sync.post("$path.json", props)
+                sync.post(path, props)
                 document = sync.get("$path.json") { asJson(it) }
             } catch (e: Exception) {
                 throw NodeException("Unable to create JCR Node: $nodePath", e)
@@ -74,7 +74,7 @@ class Node private constructor() {
 
             try {
                 document = sync.get("$path.json") { asJson(it) }
-                sync.post("$path.json", props)
+                sync.post(path, props)
             } catch (e: Exception) {
                 throw NodeException("Unable to update JCR Node: $nodePath (does it exist?)", e)
             }
