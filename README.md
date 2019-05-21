@@ -1381,8 +1381,9 @@ Inherits from [Config Plugin](#config-plugin).
 
 Most of the configuration steps are automated. However, there are three manual steps to make this setup fully operating:
 
-1. [Install docker](https://docs.docker.com/install/)
-    * [Windows Installer](https://download.docker.com/win/stable/Docker%20for%20Windows%20Installer.exe)
+1. [Install Docker](https://docs.docker.com/install/)
+    * [Desktop](https://docs.docker.com/docker-for-windows/install/) (highly recommended, using Hyper-V)
+    * [Toolbox](https://docs.docker.com/toolbox/toolbox_install_windows/) (legacy, using VirtualBox)
 2. Setup hosts on local machine (admin rights are required to access `/etc/hosts` or `C:\Windows\System32\drivers\etc\hosts` file): 
     * Windows: 
         * Start PowerShell with "Run as administrator"
@@ -1390,9 +1391,14 @@ Most of the configuration steps are automated. However, there are three manual s
     * Unix: 
         * Execute: `sudo ./gradlew environmentHosts --no-daemon`
     
-**Windows only:**
+**Windows issues**
 
-Because environment is using Dockers bind mount, on Windows, running task `environmentUp` will require additional user confirmation to allow virtualized container to access local configuration files.
+Because environment is using Docker volumes, on Windows, running task `environmentUp` will require additional user confirmation to allow virtualized container to access local configuration files.
+
+**Toolbox issues**
+
+While using Docker Toolbox, beware that, by default, there is only one shared folder in VirtualBox configured which mounts *C:/Users* to */c/users* on Docker Machine / Ubuntu. 
+As a consequence, if AEM project is located outside of *C:/Users* directory, there is a need to manually add corresponding shared folder and mount it to */c/users* path on Docker Machine using VirtualBox GUI.
 
 #### Environment service health checks
 
@@ -1402,16 +1408,20 @@ In case of the dispatcher it takes few seconds to start. Default service heath c
 aem {
     environment {
             hosts(
-                    "127.0.0.1 example.com",
-                    "127.0.0.1 demo.example.com",
-                    "127.0.0.1 author.example.com",
-                    "127.0.0.1 invalidation-only"
+                "example.com",
+                "demo.example.com",
+                "author.example.com",
+                "invalidation-only"
             )
-            directories(
-                    "logs",
-                    "cache/content/example/live",
-                    "cache/content/example/demo"
-            )
+            directories {
+                regular(
+                    "httpd/logs"
+                )
+                cache(
+                    "httpd/cache/content/example/live",
+                    "httpd/cache/content/example/demo"
+                )
+            }
             healthChecks {
                 url("Live site", "http://example.com/en-us.html", text = "English")
                 url("Demo site", "http://demo.example.com/en-us.html", text = "English")
