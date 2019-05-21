@@ -14,4 +14,3 @@ interface ContentManipulator {
 
     fun hasNode(path: String): Boolean
 }
-

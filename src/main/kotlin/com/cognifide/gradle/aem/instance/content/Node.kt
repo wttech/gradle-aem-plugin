@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.instance.content
 
+import com.cognifide.gradle.aem.common.http.RequestException
 import com.cognifide.gradle.aem.instance.InstanceSync
 import com.jayway.jsonpath.DocumentContext
 import com.jayway.jsonpath.JsonPath
@@ -46,7 +47,7 @@ class Node private constructor() {
 
             try {
                 document = sync.get("$path.json") { asJson(it) }
-            } catch (e: Exception) {
+            } catch (e: RequestException) {
                 throw NodeException("Unable to load JCR Node: $nodePath", e)
             }
         }
@@ -64,7 +65,7 @@ class Node private constructor() {
             try {
                 sync.post(path, props)
                 document = sync.get("$path.json") { asJson(it) }
-            } catch (e: Exception) {
+            } catch (e: RequestException) {
                 throw NodeException("Unable to create JCR Node: $nodePath", e)
             }
         }
@@ -75,7 +76,7 @@ class Node private constructor() {
             try {
                 document = sync.get("$path.json") { asJson(it) }
                 sync.post(path, props)
-            } catch (e: Exception) {
+            } catch (e: RequestException) {
                 throw NodeException("Unable to update JCR Node: $nodePath (does it exist?)", e)
             }
         }
@@ -91,7 +92,7 @@ class Node private constructor() {
         fun delete(instanceSync: InstanceSync, nodePath: String) {
             try {
                 instanceSync.delete(nodePath)
-            } catch (e: Exception) {
+            } catch (e: RequestException) {
                 throw NodeException("Unable to delete JCR Node: $nodePath", e)
             }
         }
@@ -100,7 +101,7 @@ class Node private constructor() {
             var node: Node?
             try {
                 node = load(instanceSync, nodePath)
-            } catch (e: Exception) {
+            } catch (e: RequestException) {
                 node = null
             }
             return node != null

@@ -7,12 +7,12 @@ import com.cognifide.gradle.aem.instance.content.ContentManipulator
 import com.cognifide.gradle.aem.instance.content.Node
 import com.cognifide.gradle.aem.pkg.*
 import com.cognifide.gradle.aem.pkg.tasks.PackageCompose
+import java.io.File
+import java.io.FileNotFoundException
 import org.apache.commons.io.FilenameUtils
 import org.jsoup.Jsoup
 import org.jsoup.parser.Parser
 import org.zeroturnaround.zip.ZipUtil
-import java.io.File
-import java.io.FileNotFoundException
 
 @Suppress("LargeClass", "TooManyFunctions")
 class InstanceSync(aem: AemExtension, instance: Instance) : InstanceHttpClient(aem, instance), ContentManipulator {
