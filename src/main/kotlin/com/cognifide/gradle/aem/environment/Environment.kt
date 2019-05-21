@@ -3,12 +3,15 @@ package com.cognifide.gradle.aem.environment
 import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.AemTask
 import com.cognifide.gradle.aem.common.Patterns
+import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.file.resolver.FileResolver
-import com.cognifide.gradle.aem.environment.docker.domain.AemStack
+import com.cognifide.gradle.aem.environment.docker.base.CygPath
+import com.cognifide.gradle.aem.environment.docker.base.DockerType
 import com.cognifide.gradle.aem.environment.docker.domain.HttpdContainer
+import com.cognifide.gradle.aem.environment.docker.domain.Stack
 import com.cognifide.gradle.aem.environment.health.HealthChecker
 import com.cognifide.gradle.aem.environment.health.HealthStatus
-import com.cognifide.gradle.aem.environment.hosts.HostsOptions
+import com.cognifide.gradle.aem.environment.hosts.HostOptions
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 import org.gradle.util.GFileUtils
@@ -18,23 +21,32 @@ class Environment(val aem: AemExtension) {
     /**
      * Path in which local AEM environment will be stored.
      */
-    var rootDir: File = aem.props.string("env.rootDir")?.let { aem.project.file(it) }
+    var rootDir: File = aem.props.string("environment.rootDir")?.let { aem.project.file(it) }
             ?: aem.projectMain.file(".aem/environment")
+
+    /**
+     * Convention directory for storing environment specific configuration files.
+     */
+    val configDir
+        get() = File(aem.configCommonDir, ENVIRONMENT_DIR)
 
     /**
      * Represents Docker stack named 'aem' and provides API for manipulating it.
      */
-    val stack = AemStack(this)
+    val stack = Stack(this)
 
     /**
      * Represents Docker container named 'aem_httpd' and provides API for manipulating it.
      */
     val httpd = HttpdContainer(this)
 
+    val httpdConfDir
+        get() = File(aem.configCommonDir, "$ENVIRONMENT_DIR/httpd/conf")
+
     /**
-     * Directories to be created if not exist
+     * Directory options (defines caches and regular directories to be created)
      */
-    val directories: MutableList<String> = mutableListOf()
+    val directories = DirectoryOptions(this)
 
     /**
      * Allows to provide remote files to Docker containers by mounted volumes.
@@ -44,17 +56,11 @@ class Environment(val aem: AemExtension) {
     /**
      * URI pointing to Dispatcher distribution TAR file.
      */
-    var dispatcherDistUrl = aem.props.string("env.dispatcher.distUrl")
+    var dispatcherDistUrl = aem.props.string("environment.dispatcher.distUrl")
             ?: "http://download.macromedia.com/dispatcher/download/dispatcher-apache2.4-linux-x86_64-4.3.2.tar.gz"
 
-    var dispatcherModuleName = aem.props.string("env.dispatcher.moduleName")
+    var dispatcherModuleName = aem.props.string("environment.dispatcher.moduleName")
             ?: "*/dispatcher-apache*.so"
-
-    /**
-     * Location in which dispatcher stores cached files.
-     */
-    var dispatcherCacheDir: File = aem.props.string("env.dispatcher.cacheDir")?.let { aem.project.file(it) }
-            ?: aem.projectMain.file(".aem/environment/cache")
 
     @get:JsonIgnore
     val dispatcherModuleSourceFile: File
@@ -75,19 +81,24 @@ class Environment(val aem: AemExtension) {
     val dispatcherModuleFile: File
         get() = File(rootDir, "$DISTRIBUTIONS_DIR/mod_dispatcher.so")
 
+    val dockerType: DockerType = DockerType.determine(aem)
+
     val dockerComposeFile
         get() = File(rootDir, "docker-compose.yml")
 
     val dockerComposeSourceFile: File
-        get() = File(aem.configCommonDir, "$ENVIRONMENT_DIR/docker-compose.yml")
+        get() = File(configDir, "docker-compose.yml.peb")
 
-    val httpdConfDir
-        get() = File(aem.configCommonDir, "$ENVIRONMENT_DIR/httpd/conf")
+    val dockerConfigPath: String
+        get() = determineDockerPath(configDir)
+
+    val dockerRootPath: String
+        get() = determineDockerPath(rootDir)
 
     @JsonIgnore
     var healthChecker = HealthChecker(this)
 
-    val hosts = HostsOptions()
+    val hosts = HostOptions()
 
     val created: Boolean
         get() = rootDir.exists()
@@ -163,11 +174,11 @@ class Environment(val aem: AemExtension) {
 
         GFileUtils.deleteFileQuietly(dockerComposeFile)
         GFileUtils.copyFile(dockerComposeSourceFile, dockerComposeFile)
+        aem.props.expand(dockerComposeFile, mapOf("environment" to this))
     }
 
     private fun ensureDirsExist() {
-        directories.forEach { dirPath ->
-            val dir = File(rootDir, dirPath)
+        directories.all.forEach { dir ->
             if (!dir.exists()) {
                 aem.logger.info("Creating AEM environment directory: $dir")
                 GFileUtils.mkdirs(dir)
@@ -175,26 +186,42 @@ class Environment(val aem: AemExtension) {
         }
     }
 
+    private fun determineDockerPath(file: File): String = when (dockerType) {
+        DockerType.TOOLBOX -> CygPath.calculate(file)
+        else -> file.toString()
+    }
+
     fun check(verbose: Boolean = true): List<HealthStatus> {
+        aem.logger.info("Checking $this")
+
         return healthChecker.check(verbose)
     }
 
-    fun clean(): Boolean {
-        with(aem.project) {
-            return delete(fileTree(dispatcherCacheDir) { it.include("*/**") })
+    fun clean() {
+        aem.logger.info("Cleaning $this")
+
+        directories.caches.forEach { dir ->
+            if (dir.exists()) {
+                aem.logger.info("Cleaning AEM environment cache directory: $dir")
+                FileOperations.removeDirContents(dir)
+            }
         }
     }
 
     /**
      * Ensures that specified directories will exist.
      */
-    fun directories(vararg paths: String) = directories(paths.toList())
+    fun directories(vararg paths: String) = directories.regular(paths.asIterable())
 
     /**
-     * Ensures that specified directories will exist.
+     * Allows to distinguish regular directories and caches (cleanable).
      */
-    fun directories(paths: Iterable<String>) {
-        directories += paths
+    fun directories(options: DirectoryOptions.() -> Unit) {
+        directories.apply(options)
+    }
+
+    fun hosts(options: HostOptions.() -> Unit) {
+        hosts.apply(options)
     }
 
     /**
@@ -205,7 +232,7 @@ class Environment(val aem: AemExtension) {
     /**
      * Defines hosts to be appended to system specific hosts file.
      */
-    fun hosts(values: Iterable<String>) = hosts.define(values)
+    fun hosts(names: Iterable<String>) = hosts.define(dockerType.hostIp, names)
 
     /**
      * Configures environment service health checks.

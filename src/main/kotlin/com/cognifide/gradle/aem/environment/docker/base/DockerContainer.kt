@@ -1,8 +1,10 @@
 package com.cognifide.gradle.aem.environment.docker.base
 
-open class DockerContainer(val name: String) {
+import com.cognifide.gradle.aem.common.AemExtension
 
-    var runningTimeout = 10000L
+open class DockerContainer(aem: AemExtension, val name: String) {
+
+    var runningTimeout = aem.props.long("environment.dockerContainer.runningTimeout") ?: 10000L
 
     val id: String?
         get() {
