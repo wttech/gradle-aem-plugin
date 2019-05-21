@@ -177,6 +177,10 @@ open class HttpClient(val aem: AemExtension) {
         return Formats.asJson(asStream(response))
     }
 
+    fun asJson(jsonString: String): DocumentContext {
+        return Formats.asJson(jsonString)
+    }
+
     fun asString(response: HttpResponse): String {
         return IOUtils.toString(asStream(response), Charsets.UTF_8) ?: ""
     }

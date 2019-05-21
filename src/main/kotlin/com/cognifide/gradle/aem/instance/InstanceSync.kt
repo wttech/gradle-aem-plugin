@@ -3,17 +3,19 @@ package com.cognifide.gradle.aem.instance
 import com.cognifide.gradle.aem.common.*
 import com.cognifide.gradle.aem.common.http.RequestException
 import com.cognifide.gradle.aem.common.http.ResponseException
+import com.cognifide.gradle.aem.instance.content.ContentManipulator
+import com.cognifide.gradle.aem.instance.content.Node
 import com.cognifide.gradle.aem.pkg.*
 import com.cognifide.gradle.aem.pkg.tasks.PackageCompose
-import java.io.File
-import java.io.FileNotFoundException
 import org.apache.commons.io.FilenameUtils
 import org.jsoup.Jsoup
 import org.jsoup.parser.Parser
 import org.zeroturnaround.zip.ZipUtil
+import java.io.File
+import java.io.FileNotFoundException
 
 @Suppress("LargeClass", "TooManyFunctions")
-class InstanceSync(aem: AemExtension, instance: Instance) : InstanceHttpClient(aem, instance) {
+class InstanceSync(aem: AemExtension, instance: Instance) : InstanceHttpClient(aem, instance), ContentManipulator {
 
     fun getPackage(file: File, refresh: Boolean = true, retry: Retry = aem.retry()): Package {
         if (!file.exists()) {
@@ -482,6 +484,30 @@ class InstanceSync(aem: AemExtension, instance: Instance) : InstanceHttpClient(a
 
     fun evalGroovyScripts(scripts: Collection<File>, data: Map<String, Any> = mapOf(), verbose: Boolean = true): Sequence<GroovyConsoleResult> {
         return scripts.asSequence().map { evalGroovyScript(it, data, verbose) }
+    }
+
+    override fun getNode(path: String): Node? {
+        return Node.load(this, path)
+    }
+
+    override fun createNode(path: String, props: Map<String, Any>): Node {
+        return Node.create(this, path, props)
+    }
+
+    override fun updateNode(path: String, props: Map<String, Any>): Node {
+        return Node.update(this, path, props)
+    }
+
+    override fun saveNode(path: String, props: Map<String, Any>): Node {
+        return Node.createOrUpdate(this, path, props)
+    }
+
+    override fun removeNode(path: String) {
+        return Node.delete(this, path)
+    }
+
+    override fun hasNode(path: String): Boolean {
+        return Node.exists(this, path)
     }
 
     companion object {
