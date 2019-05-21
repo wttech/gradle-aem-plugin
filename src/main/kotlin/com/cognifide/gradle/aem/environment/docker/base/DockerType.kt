@@ -11,7 +11,7 @@ enum class DockerType(val hostIp: String) {
     companion object {
 
         fun determine(aem: AemExtension): DockerType {
-            return aem.props.string("aem.environment.docker.type")?.let { of(it) } ?: detect() ?: DESKTOP
+            return aem.props.string("environment.docker.type")?.let { of(it) } ?: detect() ?: DESKTOP
         }
 
         fun of(name: String): DockerType? {

@@ -3,13 +3,14 @@ package com.cognifide.gradle.aem.environment
 import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.AemTask
 import com.cognifide.gradle.aem.common.Patterns
+import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.file.resolver.FileResolver
 import com.cognifide.gradle.aem.environment.docker.base.DockerType
 import com.cognifide.gradle.aem.environment.docker.domain.HttpdContainer
 import com.cognifide.gradle.aem.environment.docker.domain.Stack
 import com.cognifide.gradle.aem.environment.health.HealthChecker
 import com.cognifide.gradle.aem.environment.health.HealthStatus
-import com.cognifide.gradle.aem.environment.hosts.HostsOptions
+import com.cognifide.gradle.aem.environment.hosts.HostOptions
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 import org.gradle.util.GFileUtils
@@ -32,10 +33,13 @@ class Environment(val aem: AemExtension) {
      */
     val httpd = HttpdContainer(this)
 
+    val httpdConfDir
+        get() = File(aem.configCommonDir, "$ENVIRONMENT_DIR/httpd/conf")
+
     /**
-     * Directories to be created if not exist
+     * Directory options (defines caches and regular directories to be created)
      */
-    val directories: MutableList<String> = mutableListOf()
+    val directories = DirectoryOptions(this)
 
     /**
      * Allows to provide remote files to Docker containers by mounted volumes.
@@ -50,12 +54,6 @@ class Environment(val aem: AemExtension) {
 
     var dispatcherModuleName = aem.props.string("environment.dispatcher.moduleName")
             ?: "*/dispatcher-apache*.so"
-
-    /**
-     * Location in which dispatcher stores cached files.
-     */
-    var dispatcherCacheDir: File = aem.props.string("environment.dispatcher.cacheDir")?.let { aem.project.file(it) }
-            ?: aem.projectMain.file(".aem/environment/cache")
 
     @get:JsonIgnore
     val dispatcherModuleSourceFile: File
@@ -84,13 +82,10 @@ class Environment(val aem: AemExtension) {
     val dockerComposeSourceFile: File
         get() = File(aem.configCommonDir, "$ENVIRONMENT_DIR/docker-compose.yml.peb")
 
-    val httpdConfDir
-        get() = File(aem.configCommonDir, "$ENVIRONMENT_DIR/httpd/conf")
-
     @JsonIgnore
     var healthChecker = HealthChecker(this)
 
-    val hosts = HostsOptions()
+    val hosts = HostOptions()
 
     val created: Boolean
         get() = rootDir.exists()
@@ -170,8 +165,7 @@ class Environment(val aem: AemExtension) {
     }
 
     private fun ensureDirsExist() {
-        directories.forEach { dirPath ->
-            val dir = File(rootDir, dirPath)
+        directories.all.forEach { dir ->
             if (!dir.exists()) {
                 aem.logger.info("Creating AEM environment directory: $dir")
                 GFileUtils.mkdirs(dir)
@@ -180,28 +174,35 @@ class Environment(val aem: AemExtension) {
     }
 
     fun check(verbose: Boolean = true): List<HealthStatus> {
+        aem.logger.info("Checking $this")
+
         return healthChecker.check(verbose)
     }
 
-    fun clean(): Boolean {
-        with(aem.project) {
-            return delete(fileTree(dispatcherCacheDir) { it.include("*/**") })
+    fun clean() {
+        aem.logger.info("Cleaning $this")
+
+        directories.caches.forEach { dir ->
+            if (dir.exists()) {
+                aem.logger.info("Cleaning AEM environment cache directory: $dir")
+                FileOperations.removeDirContents(dir)
+            }
         }
     }
 
     /**
      * Ensures that specified directories will exist.
      */
-    fun directories(vararg paths: String) = directories(paths.toList())
+    fun directories(vararg paths: String) = directories.regular(paths.asIterable())
 
     /**
-     * Ensures that specified directories will exist.
+     * Allows to distinguish regular directories and caches (cleanable).
      */
-    fun directories(paths: Iterable<String>) {
-        directories += paths
+    fun directories(options: DirectoryOptions.() -> Unit) {
+        directories.apply(options)
     }
 
-    fun hosts(options: HostsOptions.() -> Unit) {
+    fun hosts(options: HostOptions.() -> Unit) {
         hosts.apply(options)
     }
 

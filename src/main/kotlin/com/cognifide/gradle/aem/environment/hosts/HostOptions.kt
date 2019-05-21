@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.environment.hosts
 
-class HostsOptions {
+class HostOptions {
 
     var defined = mutableListOf<Host>()
 
