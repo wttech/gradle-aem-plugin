@@ -13,6 +13,5 @@ interface ContentManipulator {
     fun removeNode(path: String)
 
     fun hasNode(path: String): Boolean
-
 }
 

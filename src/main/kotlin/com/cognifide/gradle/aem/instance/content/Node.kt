@@ -55,11 +55,7 @@ class Node private constructor() {
             val childName = props.remove("__name__") as String
             initMainProps(instanceSync, "$parentNodePath/$childName", "$parentNodePath/$childName")
 
-            try {
-                document = JsonPath.parse(props)
-            } catch (e: Exception) {
-                throw NodeException("Unable to load JCR Node: $path", e)
-            }
+            document = JsonPath.parse(props)
         }
 
         fun create(instanceSync: InstanceSync, nodePath: String, props: Map<String, Any> = mapOf()): Node = Node().apply {
