@@ -82,7 +82,7 @@ class Environment(val aem: AemExtension) {
         get() = File(rootDir, "docker-compose.yml")
 
     val dockerComposeSourceFile: File
-        get() = File(aem.configCommonDir, "$ENVIRONMENT_DIR/docker-compose.$dockerType.yml")
+        get() = File(aem.configCommonDir, "$ENVIRONMENT_DIR/docker-compose.yml.peb")
 
     val httpdConfDir
         get() = File(aem.configCommonDir, "$ENVIRONMENT_DIR/httpd/conf")
@@ -166,6 +166,7 @@ class Environment(val aem: AemExtension) {
 
         GFileUtils.deleteFileQuietly(dockerComposeFile)
         GFileUtils.copyFile(dockerComposeSourceFile, dockerComposeFile)
+        aem.props.expand(dockerComposeFile, mapOf("environment" to this))
     }
 
     private fun ensureDirsExist() {

@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.common
 import com.mitchellbosecke.pebble.PebbleEngine
 import com.mitchellbosecke.pebble.lexer.Syntax
 import com.mitchellbosecke.pebble.loader.StringLoader
+import java.io.File
 import java.io.IOException
 import java.io.StringWriter
 import org.apache.commons.lang3.text.StrSubstitutor
@@ -52,6 +53,10 @@ class PropertyParser(private val aem: AemExtension) {
     fun int(name: String) = prop(name)?.toInt()
 
     fun string(name: String) = prop(name)
+
+    fun expand(file: File, props: Map<String, Any>) {
+        file.writeText(expand(file.readText(), props, file.toString()))
+    }
 
     fun expand(source: String, props: Map<String, Any>, context: String? = null): String {
         return expand(source, envProps + systemProps + props, props, context)
