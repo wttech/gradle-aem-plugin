@@ -1035,47 +1035,12 @@ To prevent data loss, this unsafe task execution must be confirmed by parameter 
  
 Create AEM instance(s) at local file system. Extracts *crx-quickstart* from downloaded JAR and applies configuration according to [instance definitions](#defining-instances-via-properties-file). 
 
-##### Configuration of AEM instance source (JAR file or backup file)
+##### Configuration of AEM instance source (JAR file)
 
-To use this task, specify required properties in ignored file *gradle.properties* at project root (protocols supported: SMB, SSH, HTTP(s) or local path, HTTP with basic auth as example):
-
-To create instances from backup created by `instanceBackup` task, specify:
-
-* `localInstance.zipUrl=http://[user]:[password]@[host]/[path]/example-yyyyMMddmmss-x.x.x-backup.zip`
-
-To create instances from scratch, specify:
+To create instances specify:
 
 * `localInstance.jarUrl=http://[user]:[password]@[host]/[path]/cq-quickstart.jar`
 * `localInstance.licenseUrl=http://[user]:[password]@[host]/[path]/license.properties`
-
-Source mode, can be adjusted by specifying parameter `-PlocalInstance.source`:
-
-* `auto` - Create instances from most recent backup (external or internal) or fallback to creating from the scratch if there is no backup available.
-* `none` - Force creating instances from the scratch.
-* `backup_external` - Force using backup available at external source (specified in `localInstance.zipUrl`).      
-* `backup_internal` - Force using internal backup (created by task `instanceBackup`).
-
-When mode is set to `auto` or `backup_internal`, then ZIP selection rule could be adjusted:
-
-```kotlin
-
-aem {
-    tasks {
-        create {
-            options {
-                zipSelector = {  // default implementation below
-                    val name = aem.props.string("localInstance.zipName") ?: ""
-                    when {
-                        name.isNotBlank() -> firstOrNull { it.name == name }
-                        else -> sortedByDescending { it.name }.firstOrNull()
-                    }
-                }
-            }
-        }
-    }
-}
-
-```
 
 ##### Extracted files configuration (optional)
 
@@ -1118,21 +1083,49 @@ Predefined expandable properties:
 
 Turns off local AEM instance(s) then archives them into ZIP file, then turns on again.
 
-The most recent file created by this task will be reused automatically while running task `instanceResetup`.
-Also the file created could be also a [source file](#configuration-of-aem-instance-source-jar-file-or-backup-file) for task `instanceCreate`.
+The most recent file created by this task will be reused automatically while running task `instanceRestore`.
 
 Backup files are stored at path relative to project that is applying plugin `com.cognifide.aem.instance`.
-Most often it will be path: *build/distributions/xxx.backup.zip*. It could be overridden by writing:
+Most often it will be path: *build/aem/backup/local/xxx.backup.zip*. It could be overridden by writing:
 
 ```kotlin
 aem {
     tasks {
         backup {
-            destinationDir = file("any/other/path")
+            destinationDirectory.set(file("any/other/path"))
         }
     }
 }
 ```
+
+##### Uploading backups to remote locations
+
+Backups can be automatically uploaded to remote location. You just need to specify `backup.uploadUrl` in `gradle.properties` file.
+* SMB & SFTP protocols supported
+* `backup.uploadUrl` must point to a directory
+
+you can specify SMB or SFTP credentials using resolver options:
+
+```kotlin
+aem {
+    config {
+        resolver {
+            smbDomain = props.string("smb.domain")
+            smbUsername = props.string("smb.username")
+            smbPassword = props.string("smb.password")
+        }
+    }
+}
+```
+
+#### Task `instanceRestore`
+
+`instanceRestore` requires `-Pforce` commandline switch. It destroys the instance, gets backup zip and unzip it, runs instanceUp.
+
+This task selects backup zip file based on  properties configured in `gradle.properties` file:
+* if `backup.downloadUrl` is defined, backup is restored from that URL (HTTP, SFTP, SMB, FILE protocols supported) 
+* else, if `backup.uploadUrl` is defined, backup is restored from a file uploaded to `backup.uploadUrl` that matches `backup.name` or the most recent backup uploaded to `backup.uploadUrl`
+* else, backup is restored from a local backup file that matches `backup.name` or the most recent local backup (see [instanceBackup](#task-instancebackup) for information about backup)
 
 #### Task `instanceDestroy` 
 
