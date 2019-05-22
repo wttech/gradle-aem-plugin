@@ -4,11 +4,10 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.Task
 import org.gradle.api.execution.TaskExecutionGraph
 import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.Nested
 
 open class AemDefaultTask : DefaultTask(), AemTask {
 
-    @Nested
+    @Internal
     final override val aem = AemExtension.of(project)
 
     init {

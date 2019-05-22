@@ -17,10 +17,10 @@ open class Rcp : Vlt() {
     var paths: Map<String, String> = mapOf()
 
     @Internal
-    var sourceInstance: Instance? = aem.props.string("rcp.source")?.run { aem.config.parseInstance(this) }
+    var sourceInstance: Instance? = aem.props.string("rcp.source")?.run { aem.instance(this) }
 
     @Internal
-    var targetInstance: Instance? = aem.props.string("rcp.target")?.run { aem.config.parseInstance(this) }
+    var targetInstance: Instance? = aem.props.string("rcp.target")?.run { aem.instance(this) }
 
     @Internal
     var opts: String = aem.props.string("rcp.opts") ?: "-b 100 -r -u"

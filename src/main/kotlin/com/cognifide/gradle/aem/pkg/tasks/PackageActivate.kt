@@ -16,8 +16,8 @@ open class PackageActivate : PackageTask() {
         aem.progress(instances.size * packages.size) {
             aem.syncPackages(instances, packages) { file ->
                 increment("${file.name} -> ${instance.name}") {
-                    val pkg = getPackage(file)
-                    activatePackage(pkg.path)
+                    val pkg = packageManager.getPackage(file)
+                    packageManager.activatePackage(pkg.path)
                 }
             }
         }

@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.common
 
 import com.cognifide.gradle.aem.common.notifier.DorkboxNotifier
 import com.cognifide.gradle.aem.common.notifier.Notifier
+import com.fasterxml.jackson.annotation.JsonIgnore
 import dorkbox.notify.Notify
 import dorkbox.notify.Theme
 import java.awt.Color
@@ -15,7 +16,21 @@ import org.gradle.api.logging.LogLevel
 
 class NotifierFacade private constructor(private val aem: AemExtension) {
 
-    private val notifier: Notifier by lazy { aem.config.notificationConfig(this@NotifierFacade) }
+    /**
+     * Turn on/off default system notifications.
+     */
+    var enabled: Boolean = aem.props.flag("notifier.enabled")
+
+    /**
+     * Hook for customizing notifications being displayed.
+     *
+     * To customize notification use one of concrete provider methods: 'dorkbox' or 'jcgay' (and optionally pass configuration lambda(s)).
+     * Also it is possible to implement own notifier directly in build script by using provider method 'custom'.
+     */
+    @JsonIgnore
+    var config: (NotifierFacade.() -> Notifier) = { dorkbox() }
+
+    private val notifier: Notifier by lazy { config(this@NotifierFacade) }
 
     fun log(title: String) {
         log(title, "")
@@ -46,7 +61,7 @@ class NotifierFacade private constructor(private val aem: AemExtension) {
         log(title, text, level)
 
         try {
-            if (aem.config.notificationEnabled) {
+            if (enabled) {
                 notifier.notify(title, text, level)
             }
         } catch (e: Exception) {
@@ -84,7 +99,7 @@ class NotifierFacade private constructor(private val aem: AemExtension) {
 
     val image: URL
         get() {
-            val customThumbnail = aem.project.file("${aem.config.packageMetaCommonRoot}/vault/definition/thumbnail.png")
+            val customThumbnail = aem.project.file("${aem.packageOptions.metaCommonRoot}/vault/definition/thumbnail.png")
             return if (customThumbnail.exists()) {
                 customThumbnail.toURI().toURL()
             } else {

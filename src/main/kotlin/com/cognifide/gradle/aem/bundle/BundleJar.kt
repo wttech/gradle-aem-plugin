@@ -40,7 +40,7 @@ val jar: Jar
      * Content path for OSGi bundle jars being placed in CRX package.
      */
     @Input
-    var installPath: String = aem.config.packageInstallPath
+    var installPath: String = aem.packageOptions.installPath
 
     /**
      * Suffix added to install path effectively allowing to install bundles only on specific instances.

@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.instance.action
 
 import com.cognifide.gradle.aem.common.*
 import com.cognifide.gradle.aem.instance.*
+import com.cognifide.gradle.aem.instance.service.StateChecker
 import java.util.concurrent.TimeUnit
 import org.apache.http.HttpStatus
 
@@ -34,8 +35,8 @@ open class AwaitAction(aem: AemExtension) : AbstractAction(aem) {
     /**
      * Hook for customizing instance availability check.
      */
-    var availableCheck: InstanceState.() -> Boolean = {
-        check(InstanceState.BUNDLE_STATE_SYNC_OPTIONS, { !bundleState.unknown })
+    var availableCheck: StateChecker.() -> Boolean = {
+        check(StateChecker.BUNDLE_STATE_SYNC_OPTIONS, { !bundleState.unknown })
     }
 
     /**
@@ -48,13 +49,13 @@ open class AwaitAction(aem: AemExtension) : AbstractAction(aem) {
      * Hook for customizing instance state provider used within stable checking.
      * State change cancels actual assurance.
      */
-    var stableState: InstanceState.() -> Int = { checkState() }
+    var stableState: StateChecker.() -> Int = { checkState() }
 
     /**
      * Hook for customizing instance stability check.
      * Check will be repeated if assurance is configured.
      */
-    var stableCheck: InstanceState.() -> Boolean = { checkStable() }
+    var stableCheck: StateChecker.() -> Boolean = { checkStable() }
 
     /**
      * Number of intervals / additional instance stability checks to assure all stable instances.
@@ -65,8 +66,8 @@ open class AwaitAction(aem: AemExtension) : AbstractAction(aem) {
     /**
      * Hook for customizing instance health check.
      */
-    var healthCheck: InstanceState.() -> Boolean = {
-        checkComponentState(InstanceState.PLATFORM_COMPONENTS, aem.javaPackages.map { "$it.*" })
+    var healthCheck: StateChecker.() -> Boolean = {
+        checkComponentState(StateChecker.PLATFORM_COMPONENTS, aem.javaPackages.map { "$it.*" })
     }
 
     /**
@@ -120,7 +121,7 @@ open class AwaitAction(aem: AemExtension) : AbstractAction(aem) {
 
             Behaviors.waitUntil(stableRetry.delay) { timer ->
                 // Gather all instance states (lazy)
-                val instanceStates = synchronizers.map { it.determineInstanceState() }
+                val instanceStates = synchronizers.map { it.stateChecker() }
 
                 // Update checksum on any particular state change
                 val stableChecksum = aem.parallel.map(instanceStates) { stableState(it) }.hashCode()
@@ -186,7 +187,7 @@ open class AwaitAction(aem: AemExtension) : AbstractAction(aem) {
 
         val synchronizers = prepareSynchronizers()
         for (i in 0..healthRetry.times) {
-            val instanceStates = synchronizers.map { it.determineInstanceState() }
+            val instanceStates = synchronizers.map { it.stateChecker() }
             val unhealthyInstances = aem.parallel.map(instanceStates, { !healthCheck(it) }, { it.instance })
             if (unhealthyInstances.isEmpty()) {
                 notify("Instance(s) healthy", "Which: ${instances.names}")
@@ -217,16 +218,14 @@ open class AwaitAction(aem: AemExtension) : AbstractAction(aem) {
         return instances.map { instance ->
             val init = instance.isBeingInitialized()
 
-            instance.sync.apply {
-                val sync = this
-
+            instance.sync.also { sync ->
                 if (init) {
                     aem.logger.debug("Initializing instance using default credentials.")
                     sync.basicUser = Instance.USER_DEFAULT
                     sync.basicPassword = Instance.PASSWORD_DEFAULT
                 }
 
-                responseHandler = { response ->
+                sync.responseHandler = { response ->
                     if (init && response.statusLine.statusCode == HttpStatus.SC_UNAUTHORIZED) {
                         if (sync.basicUser == Instance.USER_DEFAULT) {
                             aem.logger.debug("Switching instance credentials from defaults to customized.")

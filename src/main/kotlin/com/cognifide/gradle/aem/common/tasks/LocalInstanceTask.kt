@@ -13,7 +13,7 @@ open class LocalInstanceTask : AemDefaultTask() {
 
     @get:Internal
     val instanceOptions: LocalInstanceOptions
-        get() = aem.config.localInstanceOptions
+        get() = aem.localInstanceOptions
 
     override fun projectsEvaluated() {
         if (instances.isEmpty()) {

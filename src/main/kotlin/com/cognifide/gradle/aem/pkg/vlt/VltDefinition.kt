@@ -47,7 +47,7 @@ open class VltDefinition(private val aem: AemExtension) {
 
     @get:Input
     val filters: String
-        get() = filterElements.joinToString(aem.config.lineSeparatorString)
+        get() = filterElements.joinToString(aem.lineSeparatorString)
 
     fun filters(vararg roots: String) = filters(roots.asIterable())
 
@@ -71,9 +71,9 @@ open class VltDefinition(private val aem: AemExtension) {
     @get:Input
     val nodeTypes: String
         get() = StringUtils.join(
-                nodeTypeLibs.joinToString(aem.config.lineSeparatorString),
-                aem.config.lineSeparatorString,
-                nodeTypeLines.joinToString(aem.config.lineSeparatorString)
+                nodeTypeLibs.joinToString(aem.lineSeparatorString),
+                aem.lineSeparatorString,
+                nodeTypeLines.joinToString(aem.lineSeparatorString)
         )
 
     /**

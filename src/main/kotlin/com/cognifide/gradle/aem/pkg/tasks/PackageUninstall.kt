@@ -23,8 +23,8 @@ open class PackageUninstall : PackageTask() {
         aem.progress(instances.size * packages.size) {
             aem.syncPackages(instances, packages) { file ->
                 increment("${file.name} -> ${instance.name}") {
-                    val pkg = getPackage(file)
-                    uninstallPackage(pkg.path)
+                    val pkg = packageManager.getPackage(file)
+                    packageManager.uninstallPackage(pkg.path)
                 }
             }
         }

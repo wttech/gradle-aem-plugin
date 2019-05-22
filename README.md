@@ -240,7 +240,7 @@ To see all available options and actual documentation, please follow to:
 
 ```kotlin
 plugins {
-    id("com.cognifide.aem.config")
+    id("com.cognifide.aem.common")
 }
 ```
 
@@ -326,40 +326,40 @@ Example usage below. The commented value is an effective instance name.
 
 ```kotlin
 aem {
-    config {
-        localInstance("http://localhost:4502") // local-author
-        localInstance("http://localhost:4502") { // local-author
+    instance {
+        local("http://localhost:4502") // local-author
+        local("http://localhost:4502") { // local-author
             password = "admin"
             typeName = "author"
             debugPort = 14502 
         }
       
-        localInstance("http://localhost:4503") // local-publish
-        localInstance("http://localhost:4503") { // local-publish
+        local("http://localhost:4503") // local-publish
+        local("http://localhost:4503") { // local-publish
             password = "admin"
             typeName = "publish"
             debugPort = 14503
         } 
       
-        remoteInstance("http://192.168.10.1:4502") { // integration-author1
+        remote("http://192.168.10.1:4502") { // integration-author1
             user = "user1" 
             password = "password2"
             environment = "integration"
             typeName = "author1"
         } 
-        remoteInstance("http://192.168.10.1:8080") { // integration-author2
+        remote("http://192.168.10.1:8080") { // integration-author2
             user = "user1" 
             password = "password2"
             environment = "integration"
             typeName = "author2"
         } 
-        remoteInstance("http://192.168.10.2:4503") { // integration-publish1
+        remote("http://192.168.10.2:4503") { // integration-publish1
             user = "user2"
             password = "password2"
             environment = "integration"
             typeName = "publish1"
         } 
-        remoteInstance("http://192.168.10.2:8080") { // integration-publish2
+        remote("http://192.168.10.2:8080") { // integration-publish2
             user = "user2"
             password = "password2"
             environment = "integration"

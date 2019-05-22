@@ -5,8 +5,8 @@ import com.cognifide.gradle.aem.common.Behaviors
 import com.cognifide.gradle.aem.common.ProgressLogger
 import com.cognifide.gradle.aem.instance.InstanceException
 import com.cognifide.gradle.aem.instance.InstanceProgress
-import com.cognifide.gradle.aem.instance.InstanceState
 import com.cognifide.gradle.aem.instance.names
+import com.cognifide.gradle.aem.instance.service.StateChecker
 
 class ShutdownAction(aem: AemExtension) : AbstractAction(aem) {
 
@@ -20,18 +20,18 @@ class ShutdownAction(aem: AemExtension) : AbstractAction(aem) {
      * Hook for customizing instance state provider used within stable checking.
      * State change cancels actual assurance.
      */
-    var stableState: InstanceState.() -> Int = { checkBundleState() }
+    var stableState: StateChecker.() -> Int = { checkBundleState() }
 
     /**
      * Hook for customizing instance stability check.
      * Check will be repeated if assurance is configured.
      */
-    var stableCheck: InstanceState.() -> Boolean = { checkBundleStable() }
+    var stableCheck: StateChecker.() -> Boolean = { checkBundleStable() }
 
     /**
      * Hook for customizing instance availability check.
      */
-    var availableCheck: InstanceState.() -> Boolean = { check(InstanceState.BUNDLE_STATE_SYNC_OPTIONS, { !bundleState.unknown }) }
+    var availableCheck: StateChecker.() -> Boolean = { check(StateChecker.BUNDLE_STATE_SYNC_OPTIONS, { !bundleState.unknown }) }
 
     override fun perform() {
         if (!enabled) {
@@ -56,7 +56,7 @@ class ShutdownAction(aem: AemExtension) : AbstractAction(aem) {
 
             Behaviors.waitUntil(stableRetry.delay) { timer ->
                 // Update checksum on any particular state change
-                val instanceStates = instances.map { it.sync.determineInstanceState() }
+                val instanceStates = instances.map { it.sync.stateChecker() }
                 val stableChecksum = aem.parallel.map(instanceStates) { stableState(it) }.hashCode()
                 if (stableChecksum != lastStableChecksum) {
                     lastStableChecksum = stableChecksum

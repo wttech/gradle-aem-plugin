@@ -2,7 +2,7 @@ package com.cognifide.gradle.aem.pkg
 
 import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.AemPlugin
-import com.cognifide.gradle.aem.config.ConfigPlugin
+import com.cognifide.gradle.aem.common.CommonPlugin
 import com.cognifide.gradle.aem.instance.InstancePlugin
 import com.cognifide.gradle.aem.instance.tasks.InstanceCreate
 import com.cognifide.gradle.aem.instance.tasks.InstanceSatisfy
@@ -20,14 +20,14 @@ class PackagePlugin : AemPlugin() {
     }
 
     private fun Project.setupDependentPlugins() {
-        plugins.apply(ConfigPlugin::class.java)
+        plugins.apply(CommonPlugin::class.java)
     }
 
     private fun Project.setupInstallRepository() {
         afterEvaluate {
-            val config = AemExtension.of(this).config
-            if (config.packageInstallRepository) {
-                val installDir = file("${config.packageJcrRoot}${config.packageInstallPath}")
+            val packageOptions = AemExtension.of(this).packageOptions
+            if (packageOptions.installRepository) {
+                val installDir = file("${packageOptions.jcrRootDir}${packageOptions.installPath}")
                 if (installDir.exists()) {
                     repositories.flatDir { it.dir(installDir) }
                 }

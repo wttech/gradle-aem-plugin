@@ -64,7 +64,7 @@ class PropertyParser(private val aem: AemExtension) {
 
     fun expandPackage(source: String, props: Map<String, Any>, context: String? = null): String {
         val interpolableProps = envProps + systemProps + props
-        val templateProps = projectProps + configProps + props
+        val templateProps = projectProps + commonProps + props
 
         return expand(source, interpolableProps, templateProps, context)
     }
@@ -111,8 +111,8 @@ class PropertyParser(private val aem: AemExtension) {
                 "project.build.finalName" to "${project.name}-${project.version}"
         )
 
-    val configProps: Map<String, Any>
-        get() = mapOf("config" to aem.config)
+    val commonProps: Map<String, Any>
+        get() = mapOf("aem" to aem)
 
     fun isForce(): Boolean {
         return flag(FORCE_PROP)

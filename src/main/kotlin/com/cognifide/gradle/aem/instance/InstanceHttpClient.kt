@@ -13,7 +13,7 @@ open class InstanceHttpClient(aem: AemExtension, val instance: Instance) : HttpC
         basicPassword = instance.password
         authorizationPreemptive = true
 
-        apply(aem.config.instanceHttpOptions)
+        apply(aem.instanceOptions.instanceHttpOptions)
     }
 
     override fun checkStatus(response: HttpResponse, checker: (Int) -> Boolean) {

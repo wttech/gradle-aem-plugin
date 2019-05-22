@@ -35,15 +35,15 @@ class PackageDownloader(@Internal private val aem: AemExtension) {
     }
 
     fun download() {
-        val file = instance.sync.apply(httpOptions).downloadPackage({
+        val file = instance.sync.apply(httpOptions).packageManager.downloadPackage({
             filterElements = filter.rootElements.toMutableList()
         }, retry)
 
         if (extract) {
-            val jcrRoot = File(aem.config.packageJcrRoot)
-            aem.logger.lifecycle("Extracting package $file to $jcrRoot")
+            val extractDir = aem.packageOptions.jcrRootDir
+            aem.logger.lifecycle("Extracting package $file to $extractDir")
 
-            extractDownloadedPackage(file, jcrRoot)
+            extractDownloadedPackage(file, extractDir)
         }
     }
 

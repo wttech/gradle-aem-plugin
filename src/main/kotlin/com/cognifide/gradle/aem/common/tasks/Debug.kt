@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.config.tasks
+package com.cognifide.gradle.aem.common.tasks
 
 import com.cognifide.gradle.aem.common.AemDefaultTask
 import com.cognifide.gradle.aem.common.AemException
@@ -32,9 +32,8 @@ open class Debug : AemDefaultTask() {
             return mapOf(
                     "buildInfo" to buildProperties,
                     "projectInfo" to projectProperties,
-                    "baseConfig" to aem.config,
-                    "bundleConfig" to aem.tasks.bundles,
-                    "packageDeployed" to packageProperties
+                    "packageDeployed" to packageProperties,
+                    "aem" to aem
             )
         }
 
@@ -71,7 +70,7 @@ open class Debug : AemDefaultTask() {
             mutableMapOf<String, Package?>().apply {
                 aem.syncPackages { pkg ->
                     try {
-                        put(instance.name, resolvePackage(pkg))
+                        put(instance.name, packageManager.resolvePackage(pkg))
                     } catch (e: AemException) {
                         logger.info("Cannot determine remote package, because instance is not available: $instance")
                         logger.debug("Detailed error", e)
