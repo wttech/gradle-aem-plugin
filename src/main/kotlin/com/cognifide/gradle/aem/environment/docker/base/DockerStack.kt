@@ -18,7 +18,7 @@ open class DockerStack(private val aem: AemExtension, val name: String) {
             }
         }
         if (result.exitValue != 0 && !result.errorString.contains("This node is already part of a swarm")) {
-            throw DockerStackException("Failed to initialize Docker Swarm. Is Docker installed? Error: '${result.errorString}'")
+            throw DockerStackException("Failed to initialize Docker Swarm. Is Docker running / installed? Error: '${result.errorString}'")
         }
     }
 

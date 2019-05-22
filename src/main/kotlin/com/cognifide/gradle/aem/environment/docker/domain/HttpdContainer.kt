@@ -12,7 +12,7 @@ class HttpdContainer(environment: Environment) {
 
     val container = DockerContainer(aem, aem.props.string("environment.httpdContainer.containerName") ?: "aem_httpd")
 
-    var awaitRetry = aem.retry { afterSecond(aem.props.long("environment.httpdContainer.awaitRetry") ?: 10) }
+    var awaitRetry = aem.retry { afterSecond(aem.props.long("environment.httpdContainer.awaitRetry") ?: 30) }
 
     var restartCommand = aem.props.string("environment.httpdContainer.restartCommand") ?: "/usr/local/apache2/bin/httpd -k restart"
 
