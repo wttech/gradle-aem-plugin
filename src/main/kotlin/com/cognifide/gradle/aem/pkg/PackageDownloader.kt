@@ -40,7 +40,7 @@ class PackageDownloader(@Internal private val aem: AemExtension) {
         }, retry)
 
         if (extract) {
-            val jcrRoot = File(aem.config.packageJcrRoot)
+            val jcrRoot = File(aem.packageOptions.packageJcrRoot)
             aem.logger.lifecycle("Extracting package $file to $jcrRoot")
 
             extractDownloadedPackage(file, jcrRoot)

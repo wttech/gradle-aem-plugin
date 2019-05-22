@@ -42,7 +42,7 @@ open class Sync : AemDefaultTask() {
      * Location of JCR content root to which content will be copied.
      */
     @Internal
-    var contentPath = aem.config.packageRoot
+    var contentPath = aem.packageOptions.packageRoot
 
     private val cleaner = Cleaner(project)
 
@@ -85,7 +85,7 @@ open class Sync : AemDefaultTask() {
             }
 
             if (!File(contentPath).exists()) {
-                aem.notifier.notify("Cannot synchronize JCR content", "Directory does not exist: ${aem.config.packageJcrRoot}")
+                aem.notifier.notify("Cannot synchronize JCR content", "Directory does not exist: ${aem.packageOptions.packageJcrRoot}")
                 return
             }
 

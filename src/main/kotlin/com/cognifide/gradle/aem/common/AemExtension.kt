@@ -3,9 +3,8 @@ package com.cognifide.gradle.aem.common
 import com.cognifide.gradle.aem.bundle.BundlePlugin
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.file.FileWatcher
+import com.cognifide.gradle.aem.common.file.resolver.ResolverOptions
 import com.cognifide.gradle.aem.common.http.HttpClient
-import com.cognifide.gradle.aem.config.Config
-import com.cognifide.gradle.aem.config.ConfigPlugin
 import com.cognifide.gradle.aem.environment.Environment
 import com.cognifide.gradle.aem.environment.EnvironmentPlugin
 import com.cognifide.gradle.aem.instance.*
@@ -15,27 +14,26 @@ import com.cognifide.gradle.aem.pkg.tasks.PackageCompose
 import com.cognifide.gradle.aem.pkg.vlt.VltFilter
 import com.cognifide.gradle.aem.tooling.ToolingPlugin
 import com.cognifide.gradle.aem.tooling.vlt.VltException
+import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
+import java.io.Serializable
 import java.time.ZoneId
 import org.gradle.api.Project
 import org.gradle.api.Task
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.Nested
 
 /**
  * Core of library, facade for implementing tasks, configuration aggregator.
  */
 @Suppress("TooManyFunctions")
-open class AemExtension(@Internal val project: Project) {
+class AemExtension(@JsonIgnore val project: Project) : Serializable {
 
-    @Internal
+    @JsonIgnore
     val logger = project.logger
 
     /**
      * Allows to read project property specified in command line and system property as a fallback.
      */
-    @Internal
+    @JsonIgnore
     val props = PropertyParser(this)
 
     /**
@@ -46,7 +44,6 @@ open class AemExtension(@Internal val project: Project) {
      * - multi-project build - subproject with path ':aem'
      * - single-project build - root project
      */
-    @get:Internal
     val projectMain: Project = project.findProject(props.string("projectMainPath") ?: ":aem") ?: project.rootProject
 
     /**
@@ -58,13 +55,11 @@ open class AemExtension(@Internal val project: Project) {
      *
      * in case of multi-project build and assembly packages.
      */
-    @get:Internal
     val projectPrefixes: List<String> = props.list("projectPrefixes") ?: listOf("aem.", "aem-", "aem_")
 
     /**
      * Project name with skipped convention prefixes.
      */
-    @get:Internal
     val projectName: String
         get() = project.name.run {
             var n = this; projectPrefixes.forEach { n = n.removePrefix(it) }; n
@@ -74,7 +69,6 @@ open class AemExtension(@Internal val project: Project) {
      * Base name used as default for CRX packages being created by compose or collect task
      * and also for OSGi bundle JARs.
      */
-    @get:Internal
     val baseName: String
         get() = Formats.normalizeSeparators(if (project == project.rootProject) {
             project.rootProject.name
@@ -85,32 +79,25 @@ open class AemExtension(@Internal val project: Project) {
     /**
      * Determines current environment name to be used in e.g package deployment.
      */
-    @Input
     val env: String = props.string("env") ?: run { System.getenv("ENV") ?: "local" }
 
     /**
      * Timezone ID (default for defined instances)
      */
-    @Internal
     val zoneId: ZoneId = props.string("zoneId")?.let { ZoneId.of(it) } ?: ZoneId.systemDefault()
 
     /**
-     * Performs parallel CRX package deployments and instance synchronization.
+     * Specify characters to be used as line endings when cleaning up checked out JCR content.
      */
-    @Internal
-    val parallel = ParallelExecutor(this)
+    var lineSeparator: String = props.string("lineSeparator") ?: "LF"
 
-    /**
-     * Collection of common AEM configuration properties like instance definitions. Contains default values for tasks.
-     */
-    @Nested
-    val config = Config(this)
+    @JsonIgnore
+    val lineSeparatorString: String = LineSeparator.string(lineSeparator)
 
     /**
      * Directory for storing project specific files used by plugin e.g:
      * - Groovy Scripts to be launched by instance sync in tasks defined in project
      */
-    @get:Internal
     val configDir: File
         get() = project.file(props.string("configDir") ?: "gradle")
 
@@ -119,44 +106,93 @@ open class AemExtension(@Internal val project: Project) {
      * - CRX package thumbnail
      * - tail incident filter
      */
-    @get:Internal
     val configCommonDir: File
         get() = projectMain.file(props.string("configCommonDir") ?: "gradle")
 
     /**
+     * Convention location in which Groovy Script to be evaluated via instance sync will be searched for by file name.
+     */
+    var groovyScriptRoot: String = "$configDir/groovyScript"
+
+    /**
+     * Performs parallel CRX package deployments and instance synchronization.
+     */
+    @JsonIgnore
+    val parallel = ParallelExecutor(this)
+
+    /**
+     * TODO to be merged with upcoming file transfer impl
+     */
+    val resolverOptions = ResolverOptions(this)
+
+    /**
+     * Customize file resolver options like default credentials, remote host checking etc.
+     */
+    fun resolver(options: ResolverOptions.() -> Unit) = resolverOptions.apply(options)
+
+    /**
+     * Defines common settings for built packages and deployment related behavior.
+     */
+    val packageOptions = PackageOptions(this)
+
+    val instanceOptions = InstanceOptions(this)
+
+    /**
+     * Defines instances to work with.
+     */
+    fun instance(options: InstanceOptions.() -> Unit) {
+        instanceOptions.apply(options)
+    }
+
+    val localInstanceOptions = LocalInstanceOptions(this)
+
+    /**
+     * Define common settings valid only for instances created at local file system.
+     */
+    fun localInstance(options: LocalInstanceOptions.() -> Unit) = localInstanceOptions.apply(options)
+
+    /**
      * Provides API for controlling virtualized AEM environment with HTTPD and dispatcher module.
      */
-    @get:Internal
     val environment = Environment(this)
+
+    fun environment(configurer: Environment.() -> Unit) {
+        environment.apply(configurer)
+    }
 
     /**
      * Provides API for displaying interactive notification during running build tasks.
      */
-    @Internal
     val notifier = NotifierFacade.of(this)
+
+    fun notifier(configurer: NotifierFacade.() -> Unit) {
+        notifier.apply(configurer)
+    }
 
     /**
      * Provides API for easier creation of tasks (e.g in sequence) in the matter of Gradle task configuration avoidance.
      */
-    @Internal
+    @JsonIgnore
     val tasks = TaskFacade(this)
+
+    fun tasks(configurer: TaskFacade.() -> Unit) {
+        tasks.apply(configurer)
+    }
 
     /**
      * Provides API for performing actions affecting multiple instances at once.
      */
-    @Internal
+    @JsonIgnore
     val actions = ActionPerformer(this)
 
     /**
      * Collection of all java packages from all projects applying bundle plugin.
      */
-    @get:Internal
     val javaPackages: List<String>
         get() = AemPlugin.withId(project, BundlePlugin.ID).flatMap { subproject ->
             of(subproject).tasks.bundles.mapNotNull { it.javaPackage }
         }
 
-    @get:Internal
     val instances: List<Instance>
         get() = filterInstances()
 
@@ -164,11 +200,10 @@ open class AemExtension(@Internal val project: Project) {
 
     fun instances(filter: String, consumer: (Instance) -> Unit) = parallel.with(filterInstances(filter), consumer)
 
-    fun instance(urlOrName: String): Instance = config.parseInstance(urlOrName)
+    fun instance(urlOrName: String): Instance = instanceOptions.parseInstance(urlOrName)
 
     fun instances(urlsOrNames: Collection<String>): List<Instance> = urlsOrNames.map { instance(it) }
 
-    @get:Internal
     val anyInstance: Instance
         get() {
             val cmdInstanceArg = props.string("instance")
@@ -191,7 +226,7 @@ open class AemExtension(@Internal val project: Project) {
     }
 
     fun filterInstances(nameMatcher: String = props.string("instance.name") ?: "$env-*"): List<Instance> {
-        val all = config.instances.values
+        val all = instanceOptions.instances.values
 
         // Specified by command line should not be filtered
         val cmd = all.filter { it.environment == Instance.ENVIRONMENT_CMD }
@@ -213,25 +248,22 @@ open class AemExtension(@Internal val project: Project) {
         }
     }
 
-    @get:Internal
     val authorInstances: List<Instance>
         get() = filterInstances().filter { it.type == InstanceType.AUTHOR }
 
     fun authorInstances(consumer: (Instance) -> Unit) = parallel.with(authorInstances, consumer)
 
-    @get:Internal
     val publishInstances: List<Instance>
         get() = filterInstances().filter { it.type == InstanceType.PUBLISH }
 
     fun publishInstances(consumer: Instance.() -> Unit) = parallel.with(publishInstances, consumer)
 
-    @get:Internal
     val localInstances: List<LocalInstance>
         get() = instances.filterIsInstance(LocalInstance::class.java)
 
     fun localInstances(consumer: LocalInstance.() -> Unit) = parallel.with(localInstances, consumer)
 
-    @get:Internal
+    @get:JsonIgnore
     val remoteInstances: List<RemoteInstance>
         get() = instances.filterIsInstance(RemoteInstance::class.java)
 
@@ -239,7 +271,7 @@ open class AemExtension(@Internal val project: Project) {
 
     fun packages(consumer: (File) -> Unit) = parallel.with(packages, consumer)
 
-    @get:Internal
+    @get:JsonIgnore
     val packages: List<File>
         get() = project.tasks.withType(PackageCompose::class.java)
                 .map { it.archiveFile.get().asFile }
@@ -278,22 +310,6 @@ open class AemExtension(@Internal val project: Project) {
 
     fun <T> http(consumer: HttpClient.() -> T) = HttpClient(this).run(consumer)
 
-    fun config(configurer: Config.() -> Unit) {
-        config.apply(configurer)
-    }
-
-    fun notifier(configurer: NotifierFacade.() -> Unit) {
-        notifier.apply(configurer)
-    }
-
-    fun environment(configurer: Environment.() -> Unit) {
-        environment.apply(configurer)
-    }
-
-    fun tasks(configurer: TaskFacade.() -> Unit) {
-        tasks.apply(configurer)
-    }
-
     fun retry(configurer: Retry.() -> Unit): Retry {
         return retry().apply(configurer)
     }
@@ -328,7 +344,7 @@ open class AemExtension(@Internal val project: Project) {
      */
     fun <T> progressLogger(action: ProgressLogger.() -> T): T = ProgressLogger.of(project).launch(action)
 
-    @get:Internal
+    @get:JsonIgnore
     val filter: VltFilter
         get() {
             val cmdFilterRoots = props.list("filter.roots") ?: listOf()
@@ -339,18 +355,18 @@ open class AemExtension(@Internal val project: Project) {
 
             val cmdFilterPath = props.string("filter.path") ?: ""
             if (cmdFilterPath.isNotEmpty()) {
-                val cmdFilter = FileOperations.find(project, config.packageVltRoot, cmdFilterPath)
+                val cmdFilter = FileOperations.find(project, packageOptions.packageVltRoot, cmdFilterPath)
                         ?: throw VltException("Vault check out filter file does not exist at path: $cmdFilterPath" +
-                                " (or under directory: ${config.packageVltRoot}).")
+                                " (or under directory: ${packageOptions.packageVltRoot}).")
                 logger.debug("Using Vault filter file specified as command line property: $cmdFilterPath")
                 return VltFilter(cmdFilter)
             }
 
             val conventionFilterFiles = listOf(
-                    "${config.packageVltRoot}/${VltFilter.CHECKOUT_NAME}",
-                    "${config.packageVltRoot}/${VltFilter.BUILD_NAME}"
+                    "${packageOptions.packageVltRoot}/${VltFilter.CHECKOUT_NAME}",
+                    "${packageOptions.packageVltRoot}/${VltFilter.BUILD_NAME}"
             )
-            val conventionFilterFile = FileOperations.find(project, config.packageVltRoot, conventionFilterFiles)
+            val conventionFilterFile = FileOperations.find(project, packageOptions.packageVltRoot, conventionFilterFiles)
             if (conventionFilterFile != null) {
                 logger.debug("Using Vault filter file found by convention: $conventionFilterFile")
                 return VltFilter(conventionFilterFile)
@@ -371,7 +387,7 @@ open class AemExtension(@Internal val project: Project) {
 
     fun temporaryFile(name: String) = AemTask.temporaryFile(project, TEMPORARY_DIR, name)
 
-    @get:Internal
+    @get:JsonIgnore
     val temporaryDir: File
         get() = temporaryDir(TEMPORARY_DIR)
 
@@ -391,7 +407,7 @@ open class AemExtension(@Internal val project: Project) {
                 InstancePlugin.ID,
                 EnvironmentPlugin.ID,
                 ToolingPlugin.ID,
-                ConfigPlugin.ID
+                CommonPlugin.ID
         )
 
         fun of(project: Project): AemExtension {

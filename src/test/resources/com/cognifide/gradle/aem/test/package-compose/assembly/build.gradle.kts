@@ -18,11 +18,11 @@ allprojects {
         mavenLocal()
     }
 
-    plugins.withId("com.cognifide.aem.config") {
+    plugins.withId("com.cognifide.aem.common") {
         aem {
-            config {
-                localInstance("http://localhost:4502")
-                localInstance("http://localhost:4503")
+            instance {
+                local("http://localhost:4502")
+                local("http://localhost:4503")
             }
         }
     }

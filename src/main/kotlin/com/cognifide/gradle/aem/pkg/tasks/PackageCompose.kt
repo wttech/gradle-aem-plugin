@@ -30,13 +30,13 @@ open class PackageCompose : ZipTask() {
      * Must be absolute or relative to current working directory.
      */
     @Input
-    var contentPath: String = aem.config.packageRoot
+    var contentPath: String = aem.packageOptions.packageRoot
 
     /**
      * Content path for OSGi bundle jars being placed in CRX package.
      */
     @Input
-    var bundlePath: String = aem.config.packageInstallPath
+    var bundlePath: String = aem.packageOptions.packageInstallPath
 
     /**
      * Suffix added to bundle path effectively allowing to install bundles only on specific instances.
@@ -71,7 +71,7 @@ open class PackageCompose : ZipTask() {
     @get:JsonIgnore
     val metaDirs: List<File>
         get() {
-            val paths = listOf(aem.config.packageMetaCommonRoot, "$contentPath/${Package.META_PATH}")
+            val paths = listOf(aem.packageOptions.packageMetaCommonRoot, "$contentPath/${Package.META_PATH}")
 
             return paths.asSequence()
                     .filter { !it.isBlank() }

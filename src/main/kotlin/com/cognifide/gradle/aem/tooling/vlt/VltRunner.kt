@@ -10,12 +10,12 @@ class VltRunner(val aem: AemExtension) {
 
     var command: String = aem.props.string("vlt.command") ?: ""
 
-    var commandProperties: Map<String, Any> = mapOf("config" to aem.config)
+    var commandProperties: Map<String, Any> = mapOf("aem" to aem)
 
     val commandEffective: String
         get() = aem.props.expand(command, commandProperties)
 
-    var contentPath: String = aem.config.packageRoot
+    var contentPath: String = aem.packageOptions.packageRoot
 
     var contentRelativePath: String = aem.props.string("vlt.path") ?: ""
 

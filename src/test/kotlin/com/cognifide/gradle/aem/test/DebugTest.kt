@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.test
 
-import com.cognifide.gradle.aem.config.tasks.Debug
+import com.cognifide.gradle.aem.common.tasks.Debug
 import com.cognifide.gradle.aem.test.AemAssert.assertJsonCustomized
 import com.cognifide.gradle.aem.test.json.AnyValueMatcher
 import com.cognifide.gradle.aem.test.json.PathValueMatcher

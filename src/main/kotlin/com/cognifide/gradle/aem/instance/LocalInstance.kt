@@ -68,7 +68,7 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
 
     @get:JsonIgnore
     val dir: File
-        get() = File(aem.config.localInstanceOptions.rootDir, typeName)
+        get() = File(aem.localInstanceOptions.rootDir, typeName)
 
     @get:JsonIgnore
     val overridesDirs: List<File>
@@ -126,7 +126,7 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
     }
 
     private val options: LocalInstanceOptions
-        get() = aem.config.localInstanceOptions
+        get() = aem.localInstanceOptions
 
     fun create() {
         if (created) {
