@@ -112,7 +112,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     /**
      * Convention location in which Groovy Script to be evaluated via instance sync will be searched for by file name.
      */
-    var groovyScriptRoot: String = "$configDir/groovyScript"
+    var groovyScriptRootDir: File = File(configDir, "groovyScript")
 
     /**
      * Performs parallel CRX package deployments and instance synchronization.
@@ -226,7 +226,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     }
 
     fun filterInstances(nameMatcher: String = props.string("instance.name") ?: "$env-*"): List<Instance> {
-        val all = instanceOptions.instances.values
+        val all = instanceOptions.defined.values
 
         // Specified by command line should not be filtered
         val cmd = all.filter { it.environment == Instance.ENVIRONMENT_CMD }

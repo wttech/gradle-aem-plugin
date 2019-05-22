@@ -8,14 +8,12 @@ import org.gradle.api.tasks.Nested
 
 open class InstanceOptions(private val aem: AemExtension) : Serializable {
 
-    private val defined: MutableMap<String, Instance> = mutableMapOf()
-
     /**
      * List of AEM instances on which packages could be deployed.
      * Instance stored in map ensures name uniqueness and allows to be referenced in expanded properties.
      */
     @Nested
-    var instances: Map<String, Instance> = defined.toMap()
+    val defined: MutableMap<String, Instance> = mutableMapOf()
 
     /**
      * Defines maximum time after which initializing connection to AEM will be aborted (e.g on upload, install).

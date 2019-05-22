@@ -141,10 +141,10 @@ open class InstanceSatisfy : PackageDeploy() {
 
         aem.sync(packageInstances) {
             val packageStates = group.files.map {
-                PackageState(it, resolvePackage(it, listRefresh, listRetry))
+                PackageState(it, packageManager.resolvePackage(it, listRefresh, listRetry))
             }
             val packageSatisfiableAny = packageStates.any {
-                greedy || group.greedy || isSnapshot(it.file) || !it.uploaded || !it.installed
+                greedy || group.greedy || packageManager.isSnapshot(it.file) || !it.uploaded || !it.installed
             }
 
             if (packageSatisfiableAny) {
@@ -157,28 +157,28 @@ open class InstanceSatisfy : PackageDeploy() {
                         greedy || group.greedy -> {
                             aem.logger.info("Satisfying package ${pkg.name} on ${instance.name} (greedy).")
 
-                            deployPackage(pkg.file, uploadForce, uploadRetry, installRecursive, installRetry)
+                            packageManager.deployPackage(pkg.file, uploadForce, uploadRetry, installRecursive, installRetry)
 
                             packageSatisfiedAny = true
                             packageActions.add(PackageAction(pkg.file, instance))
                         }
-                        isSnapshot(pkg.file) -> {
+                        packageManager.isSnapshot(pkg.file) -> {
                             aem.logger.info("Satisfying package ${pkg.name} on ${instance.name} (snapshot).")
-                            deployPackage(pkg.file, uploadForce, uploadRetry, installRecursive, installRetry)
+                            packageManager.deployPackage(pkg.file, uploadForce, uploadRetry, installRecursive, installRetry)
 
                             packageSatisfiedAny = true
                             packageActions.add(PackageAction(pkg.file, instance))
                         }
                         !pkg.uploaded -> {
                             aem.logger.info("Satisfying package ${pkg.name} on ${instance.name} (not uploaded).")
-                            deployPackage(pkg.file, uploadForce, uploadRetry, installRecursive, installRetry)
+                            packageManager.deployPackage(pkg.file, uploadForce, uploadRetry, installRecursive, installRetry)
 
                             packageSatisfiedAny = true
                             packageActions.add(PackageAction(pkg.file, instance))
                         }
                         !pkg.installed -> {
                             aem.logger.info("Satisfying package ${pkg.name} on ${instance.name} (not installed).")
-                            installPackage(pkg.state!!.path, installRecursive, installRetry)
+                            packageManager.installPackage(pkg.state!!.path, installRecursive, installRetry)
 
                             packageSatisfiedAny = true
                             packageActions.add(PackageAction(pkg.file, instance))

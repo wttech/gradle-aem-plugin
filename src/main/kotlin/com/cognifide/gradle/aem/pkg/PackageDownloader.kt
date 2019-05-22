@@ -35,7 +35,7 @@ class PackageDownloader(@Internal private val aem: AemExtension) {
     }
 
     fun download() {
-        val file = instance.sync.apply(httpOptions).downloadPackage({
+        val file = instance.sync.apply(httpOptions).packageManager.downloadPackage({
             filterElements = filter.rootElements.toMutableList()
         }, retry)
 

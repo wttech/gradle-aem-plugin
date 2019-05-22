@@ -285,7 +285,7 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
         execute(stopScript)
 
         try {
-            sync.stopFramework()
+            sync.osgiFramework.stop()
         } catch (e: InstanceException) {
             // ignore, fallback when script failed
         }
