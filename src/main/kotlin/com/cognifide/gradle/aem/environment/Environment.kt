@@ -104,7 +104,7 @@ class Environment(val aem: AemExtension) {
         get() = rootDir.exists()
 
     val running: Boolean
-        get() = created && stack.running && httpd.running
+        get() = stack.running && httpd.running
 
     fun up() {
         if (running) {
