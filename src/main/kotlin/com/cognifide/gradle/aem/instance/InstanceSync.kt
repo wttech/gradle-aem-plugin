@@ -3,8 +3,7 @@ package com.cognifide.gradle.aem.instance
 import com.cognifide.gradle.aem.common.*
 import com.cognifide.gradle.aem.common.http.RequestException
 import com.cognifide.gradle.aem.common.http.ResponseException
-import com.cognifide.gradle.aem.instance.content.ContentManipulator
-import com.cognifide.gradle.aem.instance.content.Node
+import com.cognifide.gradle.aem.instance.content.Nodes
 import com.cognifide.gradle.aem.pkg.*
 import com.cognifide.gradle.aem.pkg.tasks.PackageCompose
 import java.io.File
@@ -15,7 +14,7 @@ import org.jsoup.parser.Parser
 import org.zeroturnaround.zip.ZipUtil
 
 @Suppress("LargeClass", "TooManyFunctions")
-class InstanceSync(aem: AemExtension, instance: Instance) : InstanceHttpClient(aem, instance), ContentManipulator {
+class InstanceSync(aem: AemExtension, instance: Instance) : InstanceHttpClient(aem, instance) {
 
     fun getPackage(file: File, refresh: Boolean = true, retry: Retry = aem.retry()): Package {
         if (!file.exists()) {
@@ -486,29 +485,7 @@ class InstanceSync(aem: AemExtension, instance: Instance) : InstanceHttpClient(a
         return scripts.asSequence().map { evalGroovyScript(it, data, verbose) }
     }
 
-    override fun getNode(path: String): Node? {
-        return Node.load(this, path)
-    }
-
-    override fun createNode(path: String, props: Map<String, Any>): Node {
-        return Node.create(this, path, props)
-    }
-
-    override fun updateNode(path: String, props: Map<String, Any>): Node {
-        return Node.update(this, path, props)
-    }
-
-    override fun saveNode(path: String, props: Map<String, Any>): Node {
-        return Node.createOrUpdate(this, path, props)
-    }
-
-    override fun removeNode(path: String) {
-        return Node.delete(this, path)
-    }
-
-    override fun hasNode(path: String): Boolean {
-        return Node.exists(this, path)
-    }
+    fun nodes(block: Nodes.() -> Unit) = Nodes(this).block()
 
     companion object {
         const val PKG_MANAGER_PATH = "/crx/packmgr/service"

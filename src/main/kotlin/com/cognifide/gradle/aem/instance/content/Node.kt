@@ -3,89 +3,77 @@ package com.cognifide.gradle.aem.instance.content
 import com.cognifide.gradle.aem.common.http.RequestException
 import com.cognifide.gradle.aem.instance.InstanceSync
 import com.jayway.jsonpath.DocumentContext
-import com.jayway.jsonpath.JsonPath
 import net.minidev.json.JSONArray
 import org.apache.jackrabbit.vault.util.JcrConstants
 
-class Node private constructor() {
+class Node private constructor(val sync: InstanceSync, val path: String, val props: Map<String, Any> = mapOf()) {
 
-    lateinit var sync: InstanceSync
-    lateinit var path: String
-    lateinit var name: String
     lateinit var document: DocumentContext
 
-    fun children(): Iterator<Node> {
-        return sync.get("$path.harray.1.json") { asJson(it) }
+    val name: String
+        get() = path.substringAfterLast("/")
+    val jcrTitle: String
+        get() = stringValue(JcrConstants.JCR_TITLE)
+    val jcrCreated
+        get() = value(JcrConstants.JCR_CREATED)
+    val jcrCreatedBy: String
+        get() = stringValue(JcrConstants.JCR_CREATED_BY)
+    val jcrDescription: String
+        get() = stringValue(JcrConstants.JCR_DESCRIPTION)
+    val jcrPrimaryType: String
+        get() = stringValue(JcrConstants.JCR_PRIMARYTYPE)
+    val slingResourceType: String
+        get() = stringValue("sling:resourceType")
+    val cqAllowedTemplates
+        get() = value("cq:allowedTemplates")
+    val cqDesignPath: String
+        get() = stringValue("cq:designPath")
+    val cqTemplate: String
+        get() = stringValue("cq:template")
+    val children: Iterator<Node>
+        get() = sync.get("$path.harray.1.json") { asJson(it) }
                 .read<JSONArray>("__children__")
-                .map { props -> loadChild(sync, path, props as MutableMap<*, *>) }
+                .map { child -> child as Map<*, *> }
+                .map { props -> load(sync, path + "/" + props["__name__"] as String) }
                 .iterator()
-    }
 
-    fun get(propName: String): Any = document.read(propName) as Any
-    fun getString(propName: String): String = document.read(propName) as String
+    fun value(propName: String): Any = document.read(propName) as Any
+    fun stringValue(propName: String): String = document.read(propName) as String
     fun json(): String = document.jsonString()
 
-    fun getJcrTitle(): String = getString(JcrConstants.JCR_TITLE)
-    fun getJcrCreated() = get(JcrConstants.JCR_CREATED)
-    fun getJcrCreatedBy(): String = getString(JcrConstants.JCR_CREATED_BY)
-    fun getJcrDescription(): String = getString(JcrConstants.JCR_DESCRIPTION)
-    fun getJcrPrimaryType(): String = getString(JcrConstants.JCR_PRIMARYTYPE)
-    fun getSlingResourceType(): String = getString("sling:resourceType")
-    fun getCqAllowedTemplates() = get("cq:allowedTemplates")
-    fun getCqDesignPath(): String = getString("cq:designPath")
-    fun getCqTemplate(): String = getString("cq:template")
-
-    private fun initMainProps(instanceSync: InstanceSync, nodePath: String, nodeName: String) {
-        sync = instanceSync
-        path = nodePath
-        name = nodeName
-    }
-
     companion object {
-        fun load(instanceSync: InstanceSync, nodePath: String): Node = Node().apply {
-            initMainProps(instanceSync, nodePath, nodePath.substringAfterLast("/"))
-
+        fun load(sync: InstanceSync, path: String): Node = Node(sync, path).apply {
             try {
                 document = sync.get("$path.json") { asJson(it) }
             } catch (e: RequestException) {
-                throw NodeException("Unable to load JCR Node: $nodePath", e)
+                throw NodeException("Unable to load JCR Node: $path", e)
             }
         }
 
-        fun loadChild(instanceSync: InstanceSync, parentNodePath: String, props: MutableMap<*, *>): Node = Node().apply {
-            val childName = props.remove("__name__") as String
-            initMainProps(instanceSync, "$parentNodePath/$childName", childName)
-
-            document = JsonPath.parse(props)
-        }
-
-        fun create(instanceSync: InstanceSync, nodePath: String, props: Map<String, Any> = mapOf()): Node = Node().apply {
-            initMainProps(instanceSync, nodePath, nodePath.substringAfterLast("/"))
-
+        fun create(sync: InstanceSync, path: String, props: Map<String, Any>): Node = Node(sync, path).apply {
             try {
                 sync.post(path, props)
                 document = sync.get("$path.json") { asJson(it) }
             } catch (e: RequestException) {
-                throw NodeException("Unable to create JCR Node: $nodePath", e)
+                throw NodeException("Unable to create JCR Node: $path", e)
             }
         }
 
-        fun update(instanceSync: InstanceSync, nodePath: String, props: Map<String, Any> = mapOf()): Node = Node().apply {
-            initMainProps(instanceSync, nodePath, nodePath.substringAfterLast("/"))
-
-            try {
-                document = sync.get("$path.json") { asJson(it) }
+        fun update(sync: InstanceSync, path: String, props: Map<String, Any>): Node {
+            return if (exists(sync, path)) {
                 sync.post(path, props)
-            } catch (e: RequestException) {
-                throw NodeException("Unable to update JCR Node: $nodePath (does it exist?)", e)
-            }
-        }
-
-        fun createOrUpdate(instanceSync: InstanceSync, nodePath: String, props: Map<String, Any> = mapOf()): Node = Node().apply {
-            return if (exists(instanceSync, nodePath)) {
-                update(instanceSync, nodePath, props)
+                load(sync, path)
             } else {
-                create(instanceSync, nodePath, props)
+                throw NodeException("Unable to update JCR Node: $path. Node doesn't exist.")
+            }
+        }
+
+        fun createOrUpdate(sync: InstanceSync, path: String, props: Map<String, Any>): Node {
+            return if (exists(sync, path)) {
+                sync.post(path, props)
+                load(sync, path)
+            } else {
+                create(sync, path, props)
             }
         }
 
@@ -101,7 +89,7 @@ class Node private constructor() {
             var node: Node?
             try {
                 node = load(instanceSync, nodePath)
-            } catch (e: RequestException) {
+            } catch (e: NodeException) {
                 node = null
             }
             return node != null
