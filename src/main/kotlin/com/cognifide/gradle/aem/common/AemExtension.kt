@@ -44,6 +44,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
      * - multi-project build - subproject with path ':aem'
      * - single-project build - root project
      */
+    @JsonIgnore
     val projectMain: Project = project.findProject(props.string("projectMainPath") ?: ":aem") ?: project.rootProject
 
     /**
@@ -84,6 +85,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     /**
      * Timezone ID (default for defined instances)
      */
+    @JsonIgnore
     val zoneId: ZoneId = props.string("zoneId")?.let { ZoneId.of(it) } ?: ZoneId.systemDefault()
 
     /**

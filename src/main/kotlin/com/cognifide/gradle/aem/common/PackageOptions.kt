@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 import java.io.Serializable
 
-class PackageOptions(private val aem: AemExtension) : Serializable {
+class PackageOptions(aem: AemExtension) : Serializable {
 
     var rootDir: File = aem.project.file("src/main/content")
 

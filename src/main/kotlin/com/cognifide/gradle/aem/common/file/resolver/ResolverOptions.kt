@@ -1,18 +1,21 @@
 package com.cognifide.gradle.aem.common.file.resolver
 
 import com.cognifide.gradle.aem.common.AemExtension
+import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.Serializable
 
 class ResolverOptions(aem: AemExtension) : Serializable {
 
     var httpUsername: String? = aem.props.string("resolver.http.username")
 
+    @JsonIgnore
     var httpPassword: String? = aem.props.string("resolver.http.password")
 
     var httpConnectionIgnoreSsl: Boolean? = aem.props.boolean("resolver.http.connectionIgnoreSsl")
 
     var sftpUsername: String? = aem.props.prop("resolver.sftp.username")
 
+    @JsonIgnore
     var sftpPassword: String? = aem.props.prop("resolver.sftp.password")
 
     var sftpHostChecking = aem.props.boolean("resolver.sftp.hostChecking")
@@ -21,5 +24,6 @@ class ResolverOptions(aem: AemExtension) : Serializable {
 
     var smbUsername: String? = aem.props.prop("resolver.smb.username")
 
+    @JsonIgnore
     var smbPassword: String? = aem.props.prop("resolver.smb.password")
 }

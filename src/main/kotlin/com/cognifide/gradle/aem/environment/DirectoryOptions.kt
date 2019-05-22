@@ -1,8 +1,10 @@
 package com.cognifide.gradle.aem.environment
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
+import java.io.Serializable
 
-class DirectoryOptions(private val environment: Environment) {
+class DirectoryOptions(private val environment: Environment): Serializable {
 
     val regulars = mutableListOf<File>()
 
@@ -28,6 +30,7 @@ class DirectoryOptions(private val environment: Environment) {
         caches.addAll(files)
     }
 
+    @get:JsonIgnore
     val all: List<File>
         get() = regulars + caches
 }
