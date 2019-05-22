@@ -14,14 +14,15 @@ import java.util.*
 abstract class FileTransferTest {
 
     abstract fun transfer(): FileTransfer
-    abstract fun invalidTransfer(): FileTransfer
+    abstract val uploadUrl: String
+    abstract val invalidUrl: String
 
     private fun fileIo(resource: String) = File(this::class.java.classLoader.getResource(resource).file)
     private fun text(file: File): String = FileUtils.readFileToString(file, "UTF8")
     private fun tmpFile() = File("${System.getProperty("java.io.tmpdir")}/${UUID.randomUUID()}")
 
     @AfterEach
-    fun truncate() = transfer().truncate()
+    fun truncate() = transfer().truncate(uploadUrl)
 
     @Test
     fun shouldUploadFile() {
@@ -30,11 +31,11 @@ abstract class FileTransferTest {
         val source = fileIo("com/cognifide/gradle/aem/test/upload/source.txt")
 
         //when
-        transfer.upload(source)
+        transfer.upload(uploadUrl, source)
 
         //then
         val downloaded = tmpFile()
-        transfer.download("source.txt", downloaded)
+        transfer.download(uploadUrl, "source.txt", downloaded)
 
         Assertions.assertTrue(downloaded.exists())
         Assertions.assertTrue(text(downloaded).contains("Some text"))
@@ -50,11 +51,11 @@ abstract class FileTransferTest {
         randomFile.setLength(hundredMegs)
 
         //when
-        transfer.upload(source)
+        transfer.upload(uploadUrl, source)
 
         //then
         val downloaded = tmpFile()
-        transfer.download(source.name, downloaded)
+        transfer.download(uploadUrl, source.name, downloaded)
 
         Assertions.assertTrue(downloaded.exists())
         Assertions.assertEquals(hundredMegs, downloaded.length())
@@ -67,13 +68,13 @@ abstract class FileTransferTest {
         val source = fileIo("com/cognifide/gradle/aem/test/upload/source.txt")
 
         //when
-        transfer.upload(source)
-        transfer.delete("source.txt")
+        transfer.upload(uploadUrl, source)
+        transfer.delete(uploadUrl, "source.txt")
 
         //then
         val downloaded = tmpFile()
         try {
-            transfer.download("source.txt", downloaded)
+            transfer.download(uploadUrl, "source.txt", downloaded)
             Assertions.fail<FileTransferSftpTest>()
         } catch (e: FileException) {
             //pass
@@ -86,11 +87,11 @@ abstract class FileTransferTest {
         val transfer: FileTransfer = transfer()
         val source = fileIo("com/cognifide/gradle/aem/test/upload/source.txt")
         val source2 = fileIo("com/cognifide/gradle/aem/test/upload/source2.txt")
-        transfer.upload(source)
-        transfer.upload(source2)
+        transfer.upload(uploadUrl, source)
+        transfer.upload(uploadUrl, source2)
 
         //when
-        val backups = transfer.list()
+        val backups = transfer.list(uploadUrl)
 
         //then
         Assertions.assertTrue(backups.size == 2)
@@ -103,7 +104,7 @@ abstract class FileTransferTest {
         val transfer: FileTransfer = transfer()
 
         //when
-        val backups = transfer.list()
+        val backups = transfer.list(uploadUrl)
 
         //then
         Assertions.assertTrue(backups.isEmpty())
@@ -115,7 +116,7 @@ abstract class FileTransferTest {
 
         //when
         try {
-            invalidTransfer().list()
+            transfer().list(invalidUrl)
 
             //then
             Assertions.fail<FileTransferTest>()

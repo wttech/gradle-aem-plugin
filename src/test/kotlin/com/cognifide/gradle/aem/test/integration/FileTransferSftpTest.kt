@@ -10,8 +10,8 @@ import org.junit.jupiter.api.Disabled
  */
 @Disabled
 class FileTransferSftpTest : FileTransferTest() {
-
+    override val uploadUrl = "sftp://localhost/upload/"
+    override val invalidUrl = "sftp://localhost/upload/file.txt"
     private val credentials = Credentials("foo", "pass")
-    override fun transfer() = FileTransferSftp("sftp://localhost/upload/", credentials)
-    override fun invalidTransfer() = FileTransferSftp("sftp://localhost/upload/file.txt", credentials)
+    override fun transfer() = FileTransferSftp(credentials)
 }

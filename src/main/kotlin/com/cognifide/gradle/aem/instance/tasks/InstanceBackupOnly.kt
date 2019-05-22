@@ -37,7 +37,7 @@ open class InstanceBackupOnly : ZipTask() {
         uploadUrl?.let { url ->
             val backupZip = archiveFile.get().asFile
             logger.info("Uploading backup: ${backupZip.path} to $url")
-            aem.fileTransfer(url).upload(backupZip)
+            aem.fileTransfer.upload(url, backupZip)
         }
     }
 

@@ -9,7 +9,8 @@ import org.junit.jupiter.api.Disabled
  */
 @Disabled
 class FileTransferSmbTest : FileTransferTest() {
+    override val uploadUrl = "smb://server/path"
+    override val invalidUrl = "smb://server/path/file.txt"
     private val credentials = Credentials("user", "password")
-    override fun transfer() = FileTransferSmb("smb://server/path", credentials)
-    override fun invalidTransfer() = FileTransferSmb("smb://server/path/file.txt", credentials)
+    override fun transfer() = FileTransferSmb(credentials)
 }

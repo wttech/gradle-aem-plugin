@@ -3,13 +3,15 @@ package com.cognifide.gradle.aem.common.file.transfer
 import java.io.File
 
 interface FileTransfer {
-    fun download(name: String, target: File)
+    fun download(url: String, name: String, target: File)
 
-    fun upload(source: File)
+    fun upload(url: String, source: File)
 
-    fun list(): List<String>
+    fun list(url: String): List<String>
 
-    fun delete(name: String)
+    fun delete(url: String, name: String)
 
-    fun truncate()
+    fun truncate(url: String)
+
+    fun handles(url: String): Boolean
 }

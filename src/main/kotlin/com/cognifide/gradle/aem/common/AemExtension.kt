@@ -3,10 +3,8 @@ package com.cognifide.gradle.aem.common
 import com.cognifide.gradle.aem.bundle.BundlePlugin
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.file.FileWatcher
-import com.cognifide.gradle.aem.common.file.IoTransferLogger
-import com.cognifide.gradle.aem.common.file.transfer.Credentials
-import com.cognifide.gradle.aem.common.file.transfer.FileTransferSftp
-import com.cognifide.gradle.aem.common.file.transfer.FileTransferSmb
+import com.cognifide.gradle.aem.common.file.transfer.FileTransfer
+import com.cognifide.gradle.aem.common.file.transfer.FileTransferProtocolAgnostic
 import com.cognifide.gradle.aem.common.http.HttpClient
 import com.cognifide.gradle.aem.config.Config
 import com.cognifide.gradle.aem.config.ConfigPlugin
@@ -58,21 +56,8 @@ open class AemExtension(@Internal val project: Project) {
      *  - url needs to be a directory
      *  - SMB and SFTP protocols supported
      */
-    fun fileTransfer(url: String) = when {
-        FileTransferSftp.handles(url) -> FileTransferSftp(
-                url,
-                Credentials(config.resolverOptions.sftpUsername, config.resolverOptions.sftpPassword),
-                config.resolverOptions.sftpHostChecking,
-                IoTransferLogger(project)
-        )
-        FileTransferSmb.handles(url) -> FileTransferSmb(
-                url,
-                Credentials(config.resolverOptions.smbUsername, config.resolverOptions.smbPassword),
-                config.resolverOptions.smbDomain ?: "",
-                IoTransferLogger(project)
-        )
-        else -> throw AemException("Invalid url for file transfer: $url. Only SMB and SFTP URLs are supported.")
-    }
+    @get:Internal
+    val fileTransfer: FileTransfer = FileTransferProtocolAgnostic(this)
 
     /**
      * Project name convention prefixes used to determine default:
@@ -290,8 +275,10 @@ open class AemExtension(@Internal val project: Project) {
         packages: Collection<File>,
         synchronizer: InstanceSync.(File) -> Unit
     ) {
-        packages.forEach { pkg -> // single AEM instance dislikes parallel package installation
-            parallel.with(instances) { // but same package could be in parallel deployed on different AEM instances
+        packages.forEach { pkg ->
+            // single AEM instance dislikes parallel package installation
+            parallel.with(instances) {
+                // but same package could be in parallel deployed on different AEM instances
                 sync.apply { synchronizer(pkg) }
             }
         }

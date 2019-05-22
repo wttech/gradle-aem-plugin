@@ -10,17 +10,15 @@ import net.schmizz.sshj.sftp.*
 import org.apache.http.client.utils.URIBuilder
 
 class FileTransferSftp(
-    uploadUrl: String,
     private val credentials: Credentials,
     private val hostChecking: Boolean? = false,
     private val ioTransfer: IoTransfer = IoTransfer()
 ) : FileTransfer {
 
-    private val uploadUrl = uploadUrl.trimEnd('/')
-
-    override fun download(name: String, target: File) {
+    override fun download(url: String, name: String, target: File) {
+        val uploadUrl = url.trimSlash()
         try {
-            connect { path ->
+            connect(uploadUrl) { path ->
                 val remoteFile = open(fullPath(path, name), setOf(OpenMode.READ))
                 val input = remoteFile.RemoteFileInputStream()
                 ioTransfer.download(remoteFile.length(), input, target)
@@ -33,9 +31,10 @@ class FileTransferSftp(
         }
     }
 
-    override fun upload(source: File) {
+    override fun upload(url: String, source: File) {
+        val uploadUrl = url.trimSlash()
         try {
-            connect { path ->
+            connect(uploadUrl) { path ->
                 open(fullPath(path, source.name), setOf(OpenMode.CREAT)).close()
                 val remoteFile = open(fullPath(path, source.name), setOf(OpenMode.WRITE))
                 val output = remoteFile.RemoteFileOutputStream()
@@ -46,9 +45,10 @@ class FileTransferSftp(
         }
     }
 
-    override fun delete(name: String) {
+    override fun delete(url: String, name: String) {
+        val uploadUrl = url.trimSlash()
         try {
-            connect { path -> rm(fullPath(path, name)) }
+            connect(uploadUrl) { path -> rm(fullPath(path, name)) }
         } catch (e: SFTPException) {
             when (e.statusCode) {
                 Response.StatusCode.NO_SUCH_FILE -> throw FileException("Cannot delete URL. File not found '$name'.", e)
@@ -57,24 +57,32 @@ class FileTransferSftp(
         }
     }
 
-    override fun list(): List<String> {
-        return connect { path -> ls(path).map { it.name } }
+    override fun list(url: String): List<String> {
+        val uploadUrl = url.trimSlash()
+        return connect(uploadUrl) { path -> ls(path).map { it.name } }
     }
 
-    override fun truncate() {
-        connect { path -> ls(path).forEach { rm(it.path) } }
+    override fun truncate(url: String) {
+        val uploadUrl = url.trimSlash()
+        connect(uploadUrl) { path -> ls(path).forEach { rm(it.path) } }
     }
+
+    override fun handles(url: String): Boolean {
+        return !url.isBlank() && url.startsWith("sftp://")
+    }
+
+    private fun String.trimSlash() = trimEnd('/')
 
     private fun SFTPClient.isDirectory(path: String) = lstat(path).type == FileMode.Type.DIRECTORY
 
-    private fun <T> connect(action: SFTPClient.(path: String) -> T): T {
-        validateUploadDir()
-        return connectSftp(action)
+    private fun <T> connect(uploadUrl: String, action: SFTPClient.(path: String) -> T): T {
+        validateUploadDir(uploadUrl)
+        return connectSftp(uploadUrl, action)
     }
 
-    private fun validateUploadDir() {
+    private fun validateUploadDir(uploadUrl: String) {
         try {
-            connectSftp { path ->
+            connectSftp(uploadUrl) { path ->
                 if (!isDirectory(path)) {
                     throw AemException("uploadUrl must be a directory: '$uploadUrl'")
                 }
@@ -85,7 +93,7 @@ class FileTransferSftp(
     }
 
     @Suppress("MagicNumber")
-    private fun <T> connectSftp(action: SFTPClient.(path: String) -> T): T {
+    private fun <T> connectSftp(uploadUrl: String, action: SFTPClient.(path: String) -> T): T {
         val url = URIBuilder(uploadUrl)
         val ssh = SSHClient()
         ssh.loadKnownHosts()
@@ -123,8 +131,5 @@ class FileTransferSftp(
 
     companion object {
         const val PORT_DEFAULT = 22
-        fun handles(sourceUrl: String): Boolean {
-            return !sourceUrl.isBlank() && sourceUrl.startsWith("sftp://")
-        }
     }
 }

@@ -10,21 +10,15 @@ import jcifs.smb.SmbException
 import jcifs.smb.SmbFile
 
 class FileTransferSmb(
-    uploadUrl: String,
     private val credentials: Credentials,
     private val domain: String = "",
     private val ioTransfer: IoTransfer = IoTransfer()
 ) : FileTransfer {
 
-    private val uploadUrl = if (uploadUrl.endsWith('/')) {
-        uploadUrl
-    } else {
-        "$uploadUrl/"
-    }
-
-    override fun download(name: String, target: File) {
+    override fun download(url: String, name: String, target: File) {
+        val uploadUrl = url.appendSlash()
         try {
-            val smbFile = fileByName(name)
+            val smbFile = fileByName(uploadUrl, name)
             if (!smbFile.exists()) {
                 throw FileException("File not found $name")
             }
@@ -34,49 +28,59 @@ class FileTransferSmb(
         }
     }
 
-    override fun upload(source: File) {
+    override fun upload(url: String, source: File) {
+        val uploadUrl = url.appendSlash()
         try {
-            ioTransfer.upload(source, fileByName(source.name).outputStream)
+            ioTransfer.upload(source, fileByName(uploadUrl, source.name).outputStream)
         } catch (e: IOException) {
             throw FileException("Cannot upload file '${source.absolutePath}' to URL '$uploadUrl' using SMB. Cause: ${e.message}", e)
         }
     }
 
-    override fun list(): List<String> {
-        return uploadDir().listFiles().map { it.name }
+    override fun list(url: String): List<String> {
+        val uploadUrl = url.appendSlash()
+        return uploadDir(uploadUrl).listFiles().map { it.name }
     }
 
-    override fun delete(name: String) {
-        fileByName(name).delete()
+    override fun delete(url: String, name: String) {
+        val uploadUrl = url.appendSlash()
+        fileByName(uploadUrl, name).delete()
     }
 
-    override fun truncate() = uploadDir().listFiles().forEach { delete(it.name) }
-
-    private fun file(url: String, name: String = ""): SmbFile {
-        validateUploadDir()
-        return smbFile(url, name)
+    override fun truncate(url: String) {
+        val uploadUrl = url.appendSlash()
+        uploadDir(uploadUrl).listFiles().forEach { delete(uploadUrl, it.name) }
     }
 
-    private fun smbFile(url: String, name: String = "") =
+    override fun handles(url: String): Boolean {
+        return !url.isBlank() && url.startsWith("smb://")
+    }
+
+    private fun file(uploadUrl: String, name: String = ""): SmbFile {
+        validateUploadDir(uploadUrl)
+        return smbFile(uploadUrl, name)
+    }
+
+    private fun smbFile(uploadUrl: String, name: String = "") =
             if (!credentials.username.isNullOrBlank() && !credentials.password.isNullOrBlank()) {
-                SmbFile(url, name, NtlmPasswordAuthentication(domain, credentials.username, credentials.password))
+                SmbFile(uploadUrl, name, NtlmPasswordAuthentication(domain, credentials.username, credentials.password))
             } else {
-                SmbFile(url, name)
+                SmbFile(uploadUrl, name)
             }
 
-    private fun fileByName(name: String) = file(uploadUrl, name)
+    private fun fileByName(uploadUrl: String, name: String) = file(uploadUrl, name)
 
-    private fun uploadDir() = file(uploadUrl)
+    private fun uploadDir(uploadUrl: String) = file(uploadUrl)
 
-    private fun validateUploadDir() {
+    private fun validateUploadDir(uploadUrl: String) {
         if (!smbFile(uploadUrl).isDirectory) {
             throw AemException("uploadUrl used for file transfer must be a directory: '$uploadUrl'")
         }
     }
 
-    companion object {
-        fun handles(url: String): Boolean {
-            return !url.isBlank() && url.startsWith("smb://")
-        }
+    private fun String.appendSlash() = if (this.endsWith('/')) {
+        this
+    } else {
+        "$this/"
     }
 }
