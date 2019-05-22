@@ -22,14 +22,6 @@ class Node private constructor(val sync: InstanceSync, val path: String, val pro
         get() = stringValue(JcrConstants.JCR_DESCRIPTION)
     val jcrPrimaryType: String
         get() = stringValue(JcrConstants.JCR_PRIMARYTYPE)
-    val slingResourceType: String
-        get() = stringValue("sling:resourceType")
-    val cqAllowedTemplates
-        get() = value("cq:allowedTemplates")
-    val cqDesignPath: String
-        get() = stringValue("cq:designPath")
-    val cqTemplate: String
-        get() = stringValue("cq:template")
     val children: Iterator<Node>
         get() = sync.get("$path.harray.1.json") { asJson(it) }
                 .read<JSONArray>("__children__")

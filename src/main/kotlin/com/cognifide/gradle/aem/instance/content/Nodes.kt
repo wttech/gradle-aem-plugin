@@ -4,7 +4,7 @@ import com.cognifide.gradle.aem.instance.InstanceSync
 
 class Nodes(val sync: InstanceSync) {
 
-    fun get(path: String): Node? {
+    fun get(path: String): Node {
         return Node.load(sync, path)
     }
 

@@ -121,6 +121,7 @@ To see documentation for previous 5.x serie, please [click here](https://github.
     * [Controlling OSGi bundles and components](#controlling-osgi-bundles-and-components)
     * [Executing code on AEM runtime](#executing-code-on-aem-runtime)
     * [Calling AEM endpoints / making any HTTP requests](#calling-aem-endpoints--making-any-http-requests)
+    * [Making changes to repository](#making-changes-to-repository)
  * [Understand why there are one or two plugins to be applied in build script](#understand-why-there-are-one-or-two-plugins-to-be-applied-in-build-script)
  * [Work effectively on start and daily basis](#work-effectively-on-start-and-daily-basis)
  * [Filter instances to work with](#filter-instances-to-work-with)
@@ -1657,6 +1658,47 @@ aem {
 ```
 
 There are also available convenient methods `asStream`, `asString` to be able to process endpoint responses.
+
+#### Making changes to repository
+
+To make some changes in repository on AEM instance use `nodes` namespace in `aem.sync`
+
+```kotlin
+aem {
+    tasks {
+        register("updateNodes") {
+            doLast {
+                aem.authorInstances.first().sync {
+                    nodes {
+                        val path = "/content/we-retail/us/en/men/jcr:content/new-node"
+                        val props = mapOf("property-name" to "value")
+
+                        // Available actions
+                        create(path, props)
+                        get(path)
+                        update(path, props)
+                        save(path, props)
+                        exists(path)
+                        remove(path)
+
+                        // Example node operations
+                        val page = get("/content/we-retail/us/en/men")
+                        page.name
+                        page.path
+                        page.json() // all props as jason
+                        page.children.forEach { it.name } // iterate through children
+
+                        val content = page.children.asSequence().first { it.name == "jcr:content" }
+                        content.jcrPrimaryType
+                        content.value("jcr:created")
+                        content.stringValue("sling:resourceType")
+                    }
+                }
+            }
+        }
+    }
+}
+```
 
 ### Understand why there are one or two plugins to be applied in build script
 
