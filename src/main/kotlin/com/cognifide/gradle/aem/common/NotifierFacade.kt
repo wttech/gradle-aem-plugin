@@ -99,7 +99,7 @@ class NotifierFacade private constructor(private val aem: AemExtension) {
 
     val image: URL
         get() {
-            val customThumbnail = aem.project.file("${aem.packageOptions.packageMetaCommonRoot}/vault/definition/thumbnail.png")
+            val customThumbnail = aem.project.file("${aem.packageOptions.metaCommonRoot}/vault/definition/thumbnail.png")
             return if (customThumbnail.exists()) {
                 customThumbnail.toURI().toURL()
             } else {

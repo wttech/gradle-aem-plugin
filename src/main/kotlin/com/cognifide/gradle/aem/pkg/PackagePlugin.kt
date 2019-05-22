@@ -26,8 +26,8 @@ class PackagePlugin : AemPlugin() {
     private fun Project.setupInstallRepository() {
         afterEvaluate {
             val packageOptions = AemExtension.of(this).packageOptions
-            if (packageOptions.packageInstallRepository) {
-                val installDir = file("${packageOptions.packageJcrRoot}${packageOptions.packageInstallPath}")
+            if (packageOptions.installRepository) {
+                val installDir = file("${packageOptions.jcrRootDir}${packageOptions.installPath}")
                 if (installDir.exists()) {
                     repositories.flatDir { it.dir(installDir) }
                 }

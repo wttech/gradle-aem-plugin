@@ -42,7 +42,7 @@ open class Sync : AemDefaultTask() {
      * Location of JCR content root to which content will be copied.
      */
     @Internal
-    var contentPath = aem.packageOptions.packageRoot
+    var contentDir = aem.packageOptions.rootDir
 
     private val cleaner = Cleaner(project)
 
@@ -52,9 +52,8 @@ open class Sync : AemDefaultTask() {
 
     private val filterRootFiles: List<File>
         get() {
-            val contentDir = project.file(contentPath)
             if (!contentDir.exists()) {
-                logger.warn("JCR content directory does not exist: $contentPath")
+                logger.warn("JCR content directory does not exist: $contentDir")
                 return listOf()
             }
 
@@ -84,8 +83,8 @@ open class Sync : AemDefaultTask() {
                 prepareContent()
             }
 
-            if (!File(contentPath).exists()) {
-                aem.notifier.notify("Cannot synchronize JCR content", "Directory does not exist: ${aem.packageOptions.packageJcrRoot}")
+            if (!contentDir.exists()) {
+                aem.notifier.notify("Cannot synchronize JCR content", "Directory does not exist: ${aem.packageOptions.jcrRootDir}")
                 return
             }
 
@@ -96,7 +95,7 @@ open class Sync : AemDefaultTask() {
                 }
             }
 
-            aem.notifier.notify("Synchronized JCR content", "Instance: ${instance.name}. Directory: ${Formats.rootProjectPath(contentPath, project)}")
+            aem.notifier.notify("Synchronized JCR content", "Instance: ${instance.name}. Directory: ${Formats.rootProjectPath(contentDir, project)}")
         } finally {
             if (mode != Mode.COPY_ONLY) {
                 cleanContent()
@@ -115,7 +114,7 @@ open class Sync : AemDefaultTask() {
 
     private fun transferUsingVltCheckout() {
         vlt.apply {
-            contentPath = this@Sync.contentPath
+            contentDir = this@Sync.contentDir
             command = "--credentials ${instance.credentials} checkout --force --filter ${filter.file} ${instance.httpUrl}/crx/server/crx.default"
             run()
         }

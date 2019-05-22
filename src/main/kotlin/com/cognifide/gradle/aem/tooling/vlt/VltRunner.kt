@@ -15,18 +15,18 @@ class VltRunner(val aem: AemExtension) {
     val commandEffective: String
         get() = aem.props.expand(command, commandProperties)
 
-    var contentPath: String = aem.packageOptions.packageRoot
+    var contentDir: File = aem.packageOptions.rootDir
 
     var contentRelativePath: String = aem.props.string("vlt.path") ?: ""
 
     val contentDirEffective: File
         get() {
-            var workingPath = "$contentPath/${Package.JCR_ROOT}"
+            var workingDir = File(contentDir, Package.JCR_ROOT)
             if (contentRelativePath.isNotBlank()) {
-                workingPath = "$workingPath/$contentRelativePath"
+                workingDir = File(workingDir, contentRelativePath)
             }
 
-            return File(workingPath)
+            return workingDir
         }
 
     fun run() {

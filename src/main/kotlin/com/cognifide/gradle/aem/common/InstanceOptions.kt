@@ -33,33 +33,33 @@ open class InstanceOptions(private val aem: AemExtension) : Serializable {
     /**
      * Declare new deployment target (AEM instance).
      */
-    fun localInstance(httpUrl: String) {
-        localInstance(httpUrl) {}
+    fun local(httpUrl: String) {
+        local(httpUrl) {}
     }
 
-    fun localInstance(httpUrl: String, configurer: LocalInstance.() -> Unit) {
-        instance(LocalInstance.create(aem, httpUrl, configurer))
+    fun local(httpUrl: String, configurer: LocalInstance.() -> Unit) {
+        define(LocalInstance.create(aem, httpUrl, configurer))
     }
 
-    fun remoteInstance(httpUrl: String) {
-        remoteInstance(httpUrl) {}
+    fun remote(httpUrl: String) {
+        remote(httpUrl) {}
     }
 
-    fun remoteInstance(httpUrl: String, configurer: RemoteInstance.() -> Unit) {
-        instance(RemoteInstance.create(aem, httpUrl, configurer))
+    fun remote(httpUrl: String, configurer: RemoteInstance.() -> Unit) {
+        define(RemoteInstance.create(aem, httpUrl, configurer))
     }
 
-    fun parseInstance(urlOrName: String): Instance {
-        return instances[urlOrName] ?: Instance.parse(aem, urlOrName).ifEmpty {
+    fun parse(urlOrName: String): Instance {
+        return defined[urlOrName] ?: Instance.parse(aem, urlOrName).ifEmpty {
             throw AemException("Instance cannot be determined by value '$urlOrName'.")
         }.single().apply { validate() }
     }
 
-    private fun instances(instances: Collection<Instance>) {
-        instances.forEach { instance(it) }
+    private fun define(instances: Iterable<Instance>) {
+        instances.forEach { define(it) }
     }
 
-    private fun instance(instance: Instance) {
+    private fun define(instance: Instance) {
         if (defined.containsKey(instance.name)) {
             throw AemException("Instance named '${instance.name}' is already defined. " +
                     "Enumerate instance types (for example 'author1', 'author2') " +
@@ -73,20 +73,20 @@ open class InstanceOptions(private val aem: AemExtension) : Serializable {
         // Define through command line
         val instancesForced = aem.props.string("instance.list") ?: ""
         if (instancesForced.isNotBlank()) {
-            instances(Instance.parse(aem, instancesForced) { environment = Instance.ENVIRONMENT_CMD })
+            define(Instance.parse(aem, instancesForced) { environment = Instance.ENVIRONMENT_CMD })
         }
 
         // Define through properties ]
-        instances(Instance.properties(aem))
+        define(Instance.properties(aem))
 
         aem.project.afterEvaluate { _ ->
             // Ensure defaults if still no instances defined at all
-            if (instances.isEmpty()) {
-                instances(Instance.defaults(aem) { environment = aem.env })
+            if (defined.isEmpty()) {
+                define(Instance.defaults(aem) { environment = aem.env })
             }
 
             // Validate all
-            instances.values.forEach { it.validate() }
+            defined.values.forEach { it.validate() }
         }
     }
 }

@@ -200,7 +200,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
 
     fun instances(filter: String, consumer: (Instance) -> Unit) = parallel.with(filterInstances(filter), consumer)
 
-    fun instance(urlOrName: String): Instance = instanceOptions.parseInstance(urlOrName)
+    fun instance(urlOrName: String): Instance = instanceOptions.parse(urlOrName)
 
     fun instances(urlsOrNames: Collection<String>): List<Instance> = urlsOrNames.map { instance(it) }
 
@@ -355,18 +355,18 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
 
             val cmdFilterPath = props.string("filter.path") ?: ""
             if (cmdFilterPath.isNotEmpty()) {
-                val cmdFilter = FileOperations.find(project, packageOptions.packageVltRoot, cmdFilterPath)
+                val cmdFilter = FileOperations.find(project, packageOptions.vltRootDir.toString(), cmdFilterPath)
                         ?: throw VltException("Vault check out filter file does not exist at path: $cmdFilterPath" +
-                                " (or under directory: ${packageOptions.packageVltRoot}).")
+                                " (or under directory: ${packageOptions.vltRootDir}).")
                 logger.debug("Using Vault filter file specified as command line property: $cmdFilterPath")
                 return VltFilter(cmdFilter)
             }
 
             val conventionFilterFiles = listOf(
-                    "${packageOptions.packageVltRoot}/${VltFilter.CHECKOUT_NAME}",
-                    "${packageOptions.packageVltRoot}/${VltFilter.BUILD_NAME}"
+                    "${packageOptions.vltRootDir}/${VltFilter.CHECKOUT_NAME}",
+                    "${packageOptions.vltRootDir}/${VltFilter.BUILD_NAME}"
             )
-            val conventionFilterFile = FileOperations.find(project, packageOptions.packageVltRoot, conventionFilterFiles)
+            val conventionFilterFile = FileOperations.find(project, packageOptions.vltRootDir.toString(), conventionFilterFiles)
             if (conventionFilterFile != null) {
                 logger.debug("Using Vault filter file found by convention: $conventionFilterFile")
                 return VltFilter(conventionFilterFile)

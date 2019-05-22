@@ -172,14 +172,14 @@ class InstanceSync(aem: AemExtension, instance: Instance) : InstanceHttpClient(a
             aem.logger.info("Installing package $remotePath on $instance")
 
             val response = try {
-                postMultipart(url, mapOf("recursive" to recursive)) { InstallResponse.from(asStream(it), aem.packageOptions.packageResponseBuffer) }
+                postMultipart(url, mapOf("recursive" to recursive)) { InstallResponse.from(asStream(it), aem.packageOptions.responseBuffer) }
             } catch (e: RequestException) {
                 throw InstanceException("Cannot install package $remotePath on $instance. Reason: request failed.", e)
             } catch (e: ResponseException) {
                 throw InstanceException("Malformed response after installing package $remotePath on $instance.")
             }
 
-            if (response.hasPackageErrors(aem.packageOptions.packageErrors)) {
+            if (response.hasPackageErrors(aem.packageOptions.errors)) {
                 throw PackageException("Cannot install malformed package $remotePath on $instance. Status: ${response.status}. Errors: ${response.errors}")
             } else if (!response.success) {
                 throw InstanceException("Cannot install package $remotePath on $instance. Status: ${response.status}. Errors: ${response.errors}")
@@ -196,7 +196,7 @@ class InstanceSync(aem: AemExtension, instance: Instance) : InstanceHttpClient(a
     }
 
     fun isSnapshot(file: File): Boolean {
-        return Patterns.wildcard(file, aem.packageOptions.packageSnapshots)
+        return Patterns.wildcard(file, aem.packageOptions.snapshots)
     }
 
     fun deployPackage(
@@ -250,7 +250,7 @@ class InstanceSync(aem: AemExtension, instance: Instance) : InstanceHttpClient(a
         aem.logger.info("Deleting package $remotePath on $instance")
 
         val response = try {
-            postMultipart(url) { DeleteResponse.from(asStream(it), aem.packageOptions.packageResponseBuffer) }
+            postMultipart(url) { DeleteResponse.from(asStream(it), aem.packageOptions.responseBuffer) }
         } catch (e: RequestException) {
             throw InstanceException("Cannot delete package $remotePath from $instance. Reason: request failed.", e)
         } catch (e: ResponseException) {
@@ -270,7 +270,7 @@ class InstanceSync(aem: AemExtension, instance: Instance) : InstanceHttpClient(a
         aem.logger.info("Uninstalling package using command: $url")
 
         val response = try {
-            postMultipart(url) { UninstallResponse.from(asStream(it), aem.packageOptions.packageResponseBuffer) }
+            postMultipart(url) { UninstallResponse.from(asStream(it), aem.packageOptions.responseBuffer) }
         } catch (e: RequestException) {
             throw InstanceException("Cannot uninstall package $remotePath on $instance. Reason: request failed.", e)
         } catch (e: ResponseException) {

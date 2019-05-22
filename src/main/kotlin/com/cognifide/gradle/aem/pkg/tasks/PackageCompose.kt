@@ -29,14 +29,14 @@ open class PackageCompose : ZipTask() {
      *
      * Must be absolute or relative to current working directory.
      */
-    @Input
-    var contentPath: String = aem.packageOptions.packageRoot
+    @Internal
+    var contentDir: File = aem.packageOptions.rootDir
 
     /**
      * Content path for OSGi bundle jars being placed in CRX package.
      */
     @Input
-    var bundlePath: String = aem.packageOptions.packageInstallPath
+    var bundlePath: String = aem.packageOptions.installPath
 
     /**
      * Suffix added to bundle path effectively allowing to install bundles only on specific instances.
@@ -71,7 +71,7 @@ open class PackageCompose : ZipTask() {
     @get:JsonIgnore
     val metaDirs: List<File>
         get() {
-            val paths = listOf(aem.packageOptions.packageMetaCommonRoot, "$contentPath/${Package.META_PATH}")
+            val paths = listOf(aem.packageOptions.metaCommonRoot, "$contentDir/${Package.META_PATH}")
 
             return paths.asSequence()
                     .filter { !it.isBlank() }
@@ -92,18 +92,18 @@ open class PackageCompose : ZipTask() {
 
     @get:Internal
     @get:JsonIgnore
-    val vaultPath: String
-        get() = "$contentPath/${Package.VLT_PATH}"
+    val vaultDir: File
+        get() = File(contentDir, Package.VLT_PATH)
 
     @get:Internal
     @get:JsonIgnore
-    val vaultFilterPath: String
-        get() = "$vaultPath/${VltFilter.BUILD_NAME}"
+    val vaultFilterFile: File
+        get() = File(vaultDir, VltFilter.BUILD_NAME)
 
     @get:Internal
     @get:JsonIgnore
-    val vaultNodeTypesPath: String
-        get() = "$vaultPath/${Package.VLT_NODETYPES_FILE}"
+    val vaultNodeTypesFile: File
+        get() = File(vaultDir, Package.VLT_NODETYPES_FILE)
 
     @Nested
     val fileFilter = PackageFileFilter(project)
@@ -141,10 +141,6 @@ open class PackageCompose : ZipTask() {
     @Suppress("ComplexMethod")
     override fun projectEvaluated() {
         vaultDefinition.ensureDefaults()
-
-        if (contentPath.isBlank()) {
-            throw AemException("Content path cannot be blank")
-        }
 
         if (bundlePath.isBlank()) {
             throw AemException("Bundle path cannot be blank")
@@ -264,7 +260,7 @@ open class PackageCompose : ZipTask() {
             }
 
             if (options.composeContent) {
-                val contentDir = File("${other.contentPath}/${Package.JCR_ROOT}")
+                val contentDir = File(other.contentDir, Package.JCR_ROOT)
                 if (contentDir.exists()) {
                     into(Package.JCR_ROOT) { spec ->
                         spec.from(contentDir)
@@ -274,7 +270,7 @@ open class PackageCompose : ZipTask() {
             }
 
             if (options.vaultHooks) {
-                val hooksDir = File("${other.contentPath}/${Package.VLT_HOOKS_PATH}")
+                val hooksDir = File(other.contentDir, Package.VLT_HOOKS_PATH)
                 if (hooksDir.exists()) {
                     into(Package.VLT_HOOKS_PATH) { spec ->
                         spec.from(hooksDir)
@@ -326,19 +322,15 @@ open class PackageCompose : ZipTask() {
     }
 
     private fun extractVaultFilters(other: PackageCompose) {
-        if (!other.vaultFilterPath.isBlank() && File(other.vaultFilterPath).exists()) {
-            vaultDefinition.filterElements.addAll(VltFilter(File(other.vaultFilterPath)).rootElements)
+        if (other.vaultFilterFile.exists()) {
+            vaultDefinition.filterElements.addAll(VltFilter(other.vaultFilterFile).rootElements)
         } else if (project.plugins.hasPlugin(BundlePlugin.ID)) {
             vaultDefinition.filterElements.add(vaultFilterDefault(other))
         }
     }
 
     private fun extractVaultNodeTypes(other: PackageCompose) {
-        if (other.vaultNodeTypesPath.isBlank()) {
-            return
-        }
-
-        val file = File(other.vaultNodeTypesPath)
+        val file = other.vaultNodeTypesFile
         if (file.exists()) {
             file.forEachLine { line ->
                 if (NODE_TYPES_LIB.matcher(line.trim()).matches()) {
