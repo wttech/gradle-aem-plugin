@@ -12,7 +12,7 @@ class Repository(sync: InstanceSync) : InstanceService(sync) {
         try {
             return Node(this, loadNode(path), path)
         } catch (e: RequestException) {
-            throw RepositoryException("Unable to load JCR Node: $path", e)
+            throw RepositoryException("Unable to load Node: $path", e)
         }
     }
 
@@ -69,6 +69,23 @@ class Repository(sync: InstanceSync) : InstanceService(sync) {
             node = null
         }
         return node != null
+    }
+
+    fun getProperty(path: String, propName: String): Any {
+        return findProperty(path, propName)
+        ?: throw RepositoryException("Unable to load Property: $path/$propName")
+    }
+
+    fun findProperty(path: String, propName: String): Any? {
+        return Node(this, loadNode(path), path).property(propName)
+    }
+
+    fun updateProperty(path: String, propName: String, value: Any): Node {
+        return updateNode(path, mapOf(propName to value))
+    }
+
+    fun hasProperty(path: String, propName: String): Boolean {
+        return getNode(path).property(propName) != null
     }
 
     internal fun getChildren(node: Node): Sequence<Node> {
