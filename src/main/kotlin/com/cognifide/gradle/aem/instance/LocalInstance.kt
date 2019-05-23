@@ -323,7 +323,7 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
     fun locked(name: String): Boolean = lockFile(name).exists()
 
     override fun toString(): String {
-        return "LocalInstance(httpUrl='$httpUrl', user='$user', password='$hiddenPassword', typeName='$typeName', debugPort=$debugPort)"
+        return "LocalInstance(httpUrl='$httpUrl', user='$user', password='${Formats.asPassword(password)}', typeName='$typeName', debugPort=$debugPort)"
     }
 
     class Script(val wrapper: File, val bin: File, val command: List<String>) {
