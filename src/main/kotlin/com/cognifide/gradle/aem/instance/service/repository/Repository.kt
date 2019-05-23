@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.instance.content
+package com.cognifide.gradle.aem.instance.service.repository
 
 import com.cognifide.gradle.aem.common.http.RequestException
 import com.cognifide.gradle.aem.instance.InstanceService
@@ -25,30 +25,30 @@ class Repository(sync: InstanceSync) : InstanceService(sync) {
         return node
     }
 
-    fun createNode(path: String, props: Map<String, Any>): Node {
+    fun createNode(path: String, props: Map<String, Any?>): Node {
         try {
-            sync.post(path, props)
+            sync.post(path, props.handleNulls())
             return getNode(path)
         } catch (e: RequestException) {
             throw RepositoryException("Unable to create Node: $path", e)
         }
     }
 
-    fun updateNode(path: String, props: Map<String, Any>): Node {
+    fun updateNode(path: String, props: Map<String, Any?>): Node {
         return if (hasNode(path)) {
-            sync.post(path, props)
+            sync.post(path, props.handleNulls())
             getNode(path)
         } else {
             throw RepositoryException("Unable to update Node: $path. Node doesn't exists.")
         }
     }
 
-    fun saveNode(path: String, props: Map<String, Any>): Node {
+    fun saveNode(path: String, props: Map<String, Any?>): Node {
         return if (hasNode(path)) {
-            sync.post(path, props)
+            sync.post(path, props.handleNulls())
             getNode(path)
         } else {
-            createNode(path, props)
+            createNode(path, props.handleNulls())
         }
     }
 
@@ -83,9 +83,19 @@ class Repository(sync: InstanceSync) : InstanceService(sync) {
         return updateNode(path, mapOf(propName to value))
     }
 
+    fun removeProperty(path: String, propName: String): Node {
+        return updateNode(path, mapOf("$propName@Delete" to "this prop will be deleted"))
+    }
+
     fun hasProperty(path: String, propName: String): Boolean {
         return getNode(path).property(propName) != null
     }
 
     private fun loadNode(path: String): DocumentContext = sync.get("$path.json") { asJson(it) }
+
+    private fun Map<String, Any?>.handleNulls(): Map<String, Any?> {
+        return this
+                .mapKeys { if (it.value == null) "${it.key}@Delete" else it.key }
+                .mapValues { if (it.value == null) "this prop will be deleted" else it.value }
+    }
 }

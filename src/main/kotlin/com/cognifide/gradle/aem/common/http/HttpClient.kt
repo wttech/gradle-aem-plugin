@@ -141,15 +141,15 @@ open class HttpClient(val aem: AemExtension) {
         return execute(HttpPatch(baseUrl(uri)).apply(options), handler)
     }
 
-    fun post(url: String, params: Map<String, Any> = mapOf()) = postUrlencoded(url, params)
+    fun post(url: String, params: Map<String, Any?> = mapOf()) = postUrlencoded(url, params)
 
     fun <T> post(uri: String, params: Map<String, Any> = mapOf(), handler: HttpClient.(HttpResponse) -> T): T {
         return postUrlencoded(uri, params, handler)
     }
 
-    fun postUrlencoded(uri: String, params: Map<String, Any> = mapOf()) = postUrlencoded(uri, params) { checkStatus(it) }
+    fun postUrlencoded(uri: String, params: Map<String, Any?> = mapOf()) = postUrlencoded(uri, params) { checkStatus(it) }
 
-    fun <T> postUrlencoded(uri: String, params: Map<String, Any> = mapOf(), handler: HttpClient.(HttpResponse) -> T): T {
+    fun <T> postUrlencoded(uri: String, params: Map<String, Any?> = mapOf(), handler: HttpClient.(HttpResponse) -> T): T {
         return post(uri, handler) { entity = createEntityUrlencoded(params) }
     }
 
@@ -248,7 +248,7 @@ open class HttpClient(val aem: AemExtension) {
 
     fun execute(method: HttpRequestBase) = execute(method) { checkStatus(it) }
 
-    open fun createEntityUrlencoded(params: Map<String, Any>): HttpEntity {
+    open fun createEntityUrlencoded(params: Map<String, Any?>): HttpEntity {
         return UrlEncodedFormEntity(params.entries.fold(ArrayList<NameValuePair>()) { result, e ->
             result.add(BasicNameValuePair(e.key, e.value.toString())); result
         })

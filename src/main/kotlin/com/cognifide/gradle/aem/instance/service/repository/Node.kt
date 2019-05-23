@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.instance.content
+package com.cognifide.gradle.aem.instance.service.repository
 
 import com.jayway.jsonpath.DocumentContext
 import net.minidev.json.JSONArray

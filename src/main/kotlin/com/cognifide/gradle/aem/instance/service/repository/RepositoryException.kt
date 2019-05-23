@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.instance.content
+package com.cognifide.gradle.aem.instance.service.repository
 
 import com.cognifide.gradle.aem.common.AemException
 
