@@ -5,7 +5,7 @@ import com.cognifide.gradle.aem.bundle.BundlePlugin
 import com.cognifide.gradle.aem.common.*
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.tasks.ZipTask
-import com.cognifide.gradle.aem.pkg.Package
+import com.cognifide.gradle.aem.instance.service.pkg.Package
 import com.cognifide.gradle.aem.pkg.PackageFileFilter
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.compose.ProjectOptions
@@ -71,11 +71,12 @@ open class PackageCompose : ZipTask() {
     @get:JsonIgnore
     val metaDirs: List<File>
         get() {
-            val paths = listOf(aem.packageOptions.metaCommonRoot, "$contentDir/${Package.META_PATH}")
+            val dirs = listOf(
+                    aem.packageOptions.metaCommonRootDir,
+                    File(contentDir, Package.META_PATH)
+            )
 
-            return paths.asSequence()
-                    .filter { !it.isBlank() }
-                    .map { File(it) }
+            return dirs.asSequence()
                     .filter { it.exists() }
                     .toList()
         }

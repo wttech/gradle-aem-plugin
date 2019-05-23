@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.instance
+package com.cognifide.gradle.aem.instance.service.groovy
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import org.apache.commons.lang3.StringUtils

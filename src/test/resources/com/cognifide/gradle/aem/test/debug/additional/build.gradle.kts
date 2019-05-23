@@ -14,66 +14,61 @@ dependencies {
 }
 
 aem {
-    config {
-        environment {
-            directories(
-                    "logs",
-                    "cache/content/example/live",
-                    "cache/content/example/demo"
+    environment {
+        hosts(
+                "example.com",
+                "demo.example.com",
+                "author.example.com",
+                "invalidation-only"
+        )
+        directories {
+            regular(
+                    "httpd/logs"
             )
-            hosts(
-                    "127.0.0.1 example.com",
-                    "127.0.0.1 demo.example.com",
-                    "127.0.0.1 author.example.com",
-                    "127.0.0.1 invalidation-only"
+            cache(
+                    "httpd/cache/content/example/live",
+                    "httpd/cache/content/example/demo"
             )
-            healthChecks {
-                "http://example.com/en-us.html" respondsWith {
-                    status = 200
-                    text = "English"
-                }
-                "http://demo.example.com/en-us.html" respondsWith {
-                    status = 200
-                    text = "English"
-                }
-                "http://author.example.com/libs/granite/core/content/login.html" +
-                        "?resource=%2F&\$\$login\$\$=%24%24login%24%24&j_reason=unknown&j_reason_code=unknown" respondsWith {
-                    status = 200
-                    text = "AEM Sign In"
-                }
-            }
         }
-
+        healthChecks {
+            url("Live site", "http://example.com/en-us.html", text = "English")
+            url("Demo site", "http://demo.example.com/en-us.html", text = "English")
+            url("Author login", "http://author.example.com/libs/granite/core/content/login.html" +
+                    "?resource=%2F&\$\$login\$\$=%24%24login%24%24&j_reason=unknown&j_reason_code=unknown", text = "AEM Sign In")
+        }
+    }
+    
+    instance {
         // custom env, no ports, by domain name
-        remoteInstance("http://author.example.com") {
+        remote("http://author.example.com") {
             environment = "prod"
             typeName = "author"
         }
-        remoteInstance("http://example.com") {
+        remote("http://example.com") {
             environment = "prod"
             typeName = "publish"
         }
 
         // custom env, no ports, by IP
-        remoteInstance("http://192.168.1.1") {
+        remote("http://192.168.1.1") {
             typeName = "author"
             environment = "int"
             property("externalUrl", "http://author.aem.local")
         }
-        remoteInstance("http://192.168.1.2") {
+        remote("http://192.168.1.2") {
             typeName = "publish"
             environment = "int"
             property("externalUrl", "http://aem.local")
         }
 
         // custom env, ports and credentials
-        remoteInstance("https://192.168.3.1:8082") {
+        remote("https://192.168.3.1:8082") {
             typeName = "author"
             environment = "stg"
             user = "user1"
             password = "password1"
         }
-        remoteInstance("https://192.168.3.2:8083") {
+        remote("https://192.168.3.2:8083") {
             typeName = "publish"
             environment = "stg"
             user = "user2"
@@ -81,19 +76,19 @@ aem {
         }
 
         // custom ports but same url, multiple instances of same type
-        remoteInstance("http://192.168.2.1:4502") {
+        remote("http://192.168.2.1:4502") {
             typeName = "author-1"
             environment = "perf"
         }
-        remoteInstance("http://192.168.2.1:5502") {
+        remote("http://192.168.2.1:5502") {
             typeName = "author-2"
             environment = "perf"
         }
-        remoteInstance("http://192.168.2.2:4503") {
+        remote("http://192.168.2.2:4503") {
             typeName = "publish-1"
             environment = "perf"
         }
-        remoteInstance("http://192.168.2.2:5503") {
+        remote("http://192.168.2.2:5503") {
             typeName = "publish-2"
             environment = "perf"
         }

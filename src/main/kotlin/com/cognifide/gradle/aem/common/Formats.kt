@@ -33,6 +33,8 @@ object Formats {
         ObjectMapper().writer(printer)
     }()
 
+    fun asPassword(value: String) = "*".repeat(value.length)
+
     fun asJson(input: InputStream) = JsonPath.parse(input)
 
     fun asJson(value: String) = JsonPath.parse(value)

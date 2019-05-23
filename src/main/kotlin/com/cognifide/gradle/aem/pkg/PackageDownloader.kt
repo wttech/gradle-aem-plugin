@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.pkg
 import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.http.HttpClient
 import com.cognifide.gradle.aem.instance.Instance
+import com.cognifide.gradle.aem.instance.service.pkg.Package
 import com.cognifide.gradle.aem.pkg.vlt.VltFilter
 import java.io.File
 import org.gradle.api.tasks.Internal

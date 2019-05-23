@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.pkg
 
 import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.file.FileOperations
+import com.cognifide.gradle.aem.instance.service.pkg.Package
 import com.cognifide.gradle.aem.pkg.vlt.VltDefinition
 import java.io.File
 import org.apache.commons.io.FileUtils

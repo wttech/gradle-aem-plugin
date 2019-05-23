@@ -22,10 +22,10 @@ open class InstanceOptions(private val aem: AemExtension) : Serializable {
      */
     @Internal
     @JsonIgnore
-    var instanceHttpOptions: (InstanceHttpClient).() -> Unit = {
-        connectionTimeout = aem.props.int("instanceHttpOptions.connectionTimeout") ?: 30000
-        connectionRetries = aem.props.boolean("instanceHttpOptions.connectionRetries") ?: true
-        connectionIgnoreSsl = aem.props.boolean("instanceHttpOptions.connectionIgnoreSsl") ?: true
+    var httpOptions: (InstanceHttpClient).() -> Unit = {
+        connectionTimeout = aem.props.int("instance.http.connectionTimeout") ?: 30000
+        connectionRetries = aem.props.boolean("instance.http.connectionRetries") ?: true
+        connectionIgnoreSsl = aem.props.boolean("instance.http.connectionIgnoreSsl") ?: true
     }
 
     /**

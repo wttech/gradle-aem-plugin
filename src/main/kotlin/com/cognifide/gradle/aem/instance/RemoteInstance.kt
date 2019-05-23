@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.common.AemExtension
+import com.cognifide.gradle.aem.common.Formats
 import java.io.Serializable
 
 class RemoteInstance private constructor(aem: AemExtension) : AbstractInstance(aem), Serializable {
@@ -16,7 +17,7 @@ class RemoteInstance private constructor(aem: AemExtension) : AbstractInstance(a
     override lateinit var environment: String
 
     override fun toString(): String {
-        return "RemoteInstance(httpUrl='$httpUrl', user='$user', password='$hiddenPassword', environment='$environment', typeName='$typeName')"
+        return "RemoteInstance(httpUrl='$httpUrl', user='$user', password='${Formats.asPassword(password)}', environment='$environment', typeName='$typeName')"
     }
 
     companion object {

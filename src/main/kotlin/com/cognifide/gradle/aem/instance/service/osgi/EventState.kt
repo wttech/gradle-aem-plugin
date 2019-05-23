@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.instance
+package com.cognifide.gradle.aem.instance.service.osgi
 
 import com.cognifide.gradle.aem.common.Formats
 import com.cognifide.gradle.aem.common.Patterns
