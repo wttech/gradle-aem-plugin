@@ -98,7 +98,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
 
     /**
      * Directory for storing project specific files used by plugin e.g:
-     * - Groovy Scripts to be launched by instance sync in tasks defined in project
+     * - Groovy Scripts to be launched by Groovy Console instance service in tasks defined in project.
      */
     val configDir: File
         get() = project.file(props.string("configDir") ?: "gradle")
@@ -106,6 +106,8 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     /**
      * Directory for storing common files used by plugin e.g:
      * - CRX package thumbnail
+     * - environment configuration files (HTTPD virtual hosts, Dispatcher)
+     * - instance overrides files
      * - tail incident filter
      */
     val configCommonDir: File
