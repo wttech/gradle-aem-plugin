@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.instance.tasks
 
-import com.cognifide.gradle.aem.common.AemDefaultTask
-import com.cognifide.gradle.aem.instance.action.AwaitAction
+import com.cognifide.gradle.aem.AemDefaultTask
+import com.cognifide.gradle.aem.common.instance.action.AwaitAction
 import org.gradle.api.tasks.TaskAction
 
 open class InstanceAwait : AemDefaultTask() {
@@ -18,7 +18,7 @@ open class InstanceAwait : AemDefaultTask() {
 
     @TaskAction
     fun await() {
-        aem.actions.await(options)
+        aem.instanceActions.await(options)
     }
 
     companion object {

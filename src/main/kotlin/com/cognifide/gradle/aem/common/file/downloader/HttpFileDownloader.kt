@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.common.file.downloader
 
-import com.cognifide.gradle.aem.common.AemException
-import com.cognifide.gradle.aem.common.AemExtension
+import com.cognifide.gradle.aem.AemException
+import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.file.FileException
 import com.cognifide.gradle.aem.common.http.HttpClient
 import java.io.File

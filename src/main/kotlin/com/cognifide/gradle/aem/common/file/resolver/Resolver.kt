@@ -1,14 +1,14 @@
 package com.cognifide.gradle.aem.common.file.resolver
 
-import com.cognifide.gradle.aem.common.AemExtension
-import com.cognifide.gradle.aem.common.DependencyOptions
-import com.cognifide.gradle.aem.common.Formats
+import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.common.build.DependencyOptions
 import com.cognifide.gradle.aem.common.file.FileException
 import com.cognifide.gradle.aem.common.file.downloader.HttpFileDownloader
 import com.cognifide.gradle.aem.common.file.downloader.SftpFileDownloader
 import com.cognifide.gradle.aem.common.file.downloader.SmbFileDownloader
 import com.cognifide.gradle.aem.common.file.downloader.UrlFileDownloader
 import com.cognifide.gradle.aem.common.http.HttpClient
+import com.cognifide.gradle.aem.common.utils.Formats
 import com.google.common.hash.HashCode
 import java.io.File
 import java.util.*
@@ -23,10 +23,10 @@ import org.gradle.util.GFileUtils
  */
 abstract class Resolver<G : FileGroup>(
     @get:Internal
-    val aem: AemExtension,
+val aem: AemExtension,
 
     @get:Internal
-    val downloadDir: File
+val downloadDir: File
 ) {
     private val project = aem.project
 

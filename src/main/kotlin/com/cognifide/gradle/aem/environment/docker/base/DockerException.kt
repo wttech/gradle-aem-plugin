@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.environment.docker.base
 
-import com.cognifide.gradle.aem.common.AemException
+import com.cognifide.gradle.aem.AemException
 import org.buildobjects.process.ExternalProcessFailureException
 
 open class DockerException : AemException {

@@ -1,9 +1,9 @@
 package com.cognifide.gradle.aem.instance.tasks
 
+import com.cognifide.gradle.aem.common.instance.LocalInstance
+import com.cognifide.gradle.aem.common.instance.action.AwaitAction
+import com.cognifide.gradle.aem.common.instance.names
 import com.cognifide.gradle.aem.common.tasks.LocalInstanceTask
-import com.cognifide.gradle.aem.instance.LocalInstance
-import com.cognifide.gradle.aem.instance.action.AwaitAction
-import com.cognifide.gradle.aem.instance.names
 import org.gradle.api.tasks.TaskAction
 
 open class InstanceUp : LocalInstanceTask() {
@@ -34,7 +34,7 @@ open class InstanceUp : LocalInstanceTask() {
     fun up() {
         aem.parallel.with(instances) { up() }
 
-        aem.actions.await {
+        aem.instanceActions.await {
             instances = this@InstanceUp.instances
             awaitOptions()
         }

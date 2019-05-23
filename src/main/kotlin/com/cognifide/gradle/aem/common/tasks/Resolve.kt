@@ -1,8 +1,8 @@
 package com.cognifide.gradle.aem.common.tasks
 
-import com.cognifide.gradle.aem.common.AemDefaultTask
+import com.cognifide.gradle.aem.AemDefaultTask
+import com.cognifide.gradle.aem.instance.satisfy.InstanceSatisfy
 import com.cognifide.gradle.aem.instance.tasks.InstanceCreate
-import com.cognifide.gradle.aem.instance.tasks.InstanceSatisfy
 import org.gradle.api.tasks.TaskAction
 
 open class Resolve : AemDefaultTask() {

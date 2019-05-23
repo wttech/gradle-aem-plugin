@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.instance.tail
 
-import com.cognifide.gradle.aem.instance.Instance
+import com.cognifide.gradle.aem.common.instance.Instance
 
 class LogChunk(val instance: Instance, val logs: List<Log>) {
 

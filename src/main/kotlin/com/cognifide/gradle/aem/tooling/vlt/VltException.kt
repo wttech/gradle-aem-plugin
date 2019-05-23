@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.tooling.vlt
 
-import com.cognifide.gradle.aem.common.AemException
+import com.cognifide.gradle.aem.AemException
 
 class VltException : AemException {
 

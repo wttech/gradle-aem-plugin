@@ -1,10 +1,10 @@
 package com.cognifide.gradle.aem.pkg.tasks
 
-import com.cognifide.gradle.aem.common.fileNames
+import com.cognifide.gradle.aem.common.instance.InstanceException
+import com.cognifide.gradle.aem.common.instance.InstanceSync
+import com.cognifide.gradle.aem.common.instance.names
 import com.cognifide.gradle.aem.common.tasks.PackageTask
-import com.cognifide.gradle.aem.instance.InstanceException
-import com.cognifide.gradle.aem.instance.InstanceSync
-import com.cognifide.gradle.aem.instance.names
+import com.cognifide.gradle.aem.common.utils.fileNames
 import org.gradle.api.execution.TaskExecutionGraph
 import org.gradle.api.tasks.TaskAction
 

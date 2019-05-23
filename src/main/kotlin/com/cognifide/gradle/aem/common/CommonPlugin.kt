@@ -1,5 +1,7 @@
 package com.cognifide.gradle.aem.common
 
+import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.AemPlugin
 import com.cognifide.gradle.aem.common.tasks.Debug
 import com.cognifide.gradle.aem.common.tasks.Resolve
 import java.util.*
@@ -8,7 +10,7 @@ import org.gradle.api.plugins.BasePlugin
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 
 /**
- * Provides configuration used by both package and instance plugins.
+ * Provides 'aem' extension to build script on which all other build logic is based.
  */
 class CommonPlugin : AemPlugin() {
 
