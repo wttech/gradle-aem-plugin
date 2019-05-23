@@ -101,7 +101,5 @@ class InstancePlugin : AemPlugin() {
 
     companion object {
         const val ID = "com.cognifide.aem.instance"
-
-        const val FILES_PATH = "instance"
     }
 }

@@ -4,7 +4,6 @@ import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.utils.Formats
-import com.cognifide.gradle.aem.instance.InstancePlugin
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import java.io.File
@@ -234,7 +233,7 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
     fun customize() {
         aem.logger.info("Customizing: $this")
 
-        FileOperations.copyResources(InstancePlugin.FILES_PATH, dir, false)
+        FileOperations.copyResources(FILES_PATH, dir, false)
 
         overridesDirs.filter { it.exists() }.forEach {
             FileUtils.copyDirectory(it, dir)
@@ -337,6 +336,8 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
     }
 
     companion object {
+
+        const val FILES_PATH = "instance"
 
         const val ENVIRONMENT = "local"
 

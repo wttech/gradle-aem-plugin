@@ -7,7 +7,6 @@ import com.cognifide.gradle.aem.common.file.resolver.FileGroup
 import com.cognifide.gradle.aem.common.file.resolver.FileResolution
 import com.cognifide.gradle.aem.common.file.resolver.FileResolver
 import com.cognifide.gradle.aem.common.file.resolver.Resolver
-import com.cognifide.gradle.aem.instance.InstancePlugin
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 import java.io.Serializable
@@ -64,7 +63,7 @@ class LocalInstanceOptions(aem: AemExtension) : Serializable {
      * Path from which extra files for local AEM instances will be copied.
      * Useful for overriding default startup scripts ('start.bat' or 'start.sh') or providing some files inside 'crx-quickstart'.
      */
-    var overridesDir = File(aem.configCommonDir, InstancePlugin.FILES_PATH)
+    var overridesDir = File(aem.configCommonDir, LocalInstance.FILES_PATH)
 
     /**
      * Wildcard file name filter expression that is used to filter in which instance files properties can be injected.
