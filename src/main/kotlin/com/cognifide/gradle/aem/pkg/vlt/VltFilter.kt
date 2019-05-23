@@ -3,7 +3,7 @@ package com.cognifide.gradle.aem.pkg.vlt
 import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.AemTask
 import com.cognifide.gradle.aem.common.file.FileOperations
-import com.cognifide.gradle.aem.pkg.Package
+import com.cognifide.gradle.aem.instance.service.pkg.Package
 import com.cognifide.gradle.aem.tooling.tasks.Vlt
 import java.io.Closeable
 import java.io.File

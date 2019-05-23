@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.instance.service
+package com.cognifide.gradle.aem.instance.service.pkg
 
 import com.cognifide.gradle.aem.common.BuildScope
 import com.cognifide.gradle.aem.common.Patterns
@@ -17,6 +17,11 @@ import org.jsoup.Jsoup
 import org.jsoup.parser.Parser
 import org.zeroturnaround.zip.ZipUtil
 
+/**
+ * Allows to communicate with CRX Package Manager.
+ *
+ * @see <https://helpx.adobe.com/experience-manager/6-5/sites/administering/using/package-manager.html>
+ */
 class PackageManager(sync: InstanceSync) : InstanceService(sync) {
 
     fun getPackage(file: File, refresh: Boolean = true, retry: Retry = aem.retry()): Package {

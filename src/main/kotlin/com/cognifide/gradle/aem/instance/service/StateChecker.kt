@@ -5,6 +5,11 @@ import com.cognifide.gradle.aem.instance.InstanceSync
 import org.apache.commons.lang3.builder.EqualsBuilder
 import org.apache.commons.lang3.builder.HashCodeBuilder
 
+/**
+ * Stateful instance condition checker.
+ *
+ * Basing on particular components states (cacheable) allows to estimate general instance health.
+ */
 class StateChecker(private var syncOrigin: InstanceSync) {
 
     val instance = syncOrigin.instance

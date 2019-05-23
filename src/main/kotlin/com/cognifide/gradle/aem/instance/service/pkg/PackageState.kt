@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.pkg
+package com.cognifide.gradle.aem.instance.service.pkg
 
 import java.io.File
 

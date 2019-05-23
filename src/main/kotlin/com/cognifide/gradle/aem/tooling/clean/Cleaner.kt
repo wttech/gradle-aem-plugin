@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.tooling.clean
 
 import com.cognifide.gradle.aem.common.AemExtension
-import com.cognifide.gradle.aem.pkg.Package
+import com.cognifide.gradle.aem.instance.service.pkg.Package
 import com.cognifide.gradle.aem.tooling.vlt.VltException
 import java.io.File
 import java.io.IOException

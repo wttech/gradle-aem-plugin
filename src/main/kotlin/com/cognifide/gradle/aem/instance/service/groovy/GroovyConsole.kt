@@ -1,14 +1,18 @@
-package com.cognifide.gradle.aem.instance.service
+package com.cognifide.gradle.aem.instance.service.groovy
 
 import com.cognifide.gradle.aem.common.AemException
 import com.cognifide.gradle.aem.common.Formats
 import com.cognifide.gradle.aem.common.Patterns
-import com.cognifide.gradle.aem.instance.GroovyConsoleResult
 import com.cognifide.gradle.aem.instance.InstanceException
 import com.cognifide.gradle.aem.instance.InstanceService
 import com.cognifide.gradle.aem.instance.InstanceSync
 import java.io.File
 
+/**
+ * Allows to execute Groovy code / scripts on AEM instance having Groovy Console CRX package installed.
+ *
+ * @see <https://github.com/icfnext/aem-groovy-console>
+ */
 class GroovyConsole(sync: InstanceSync) : InstanceService(sync) {
 
     fun evalCode(code: String, data: Map<String, Any> = mapOf(), verbose: Boolean = true): GroovyConsoleResult {

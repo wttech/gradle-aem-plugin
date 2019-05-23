@@ -191,8 +191,15 @@ class Environment(@JsonIgnore val aem: AemExtension) : Serializable {
         }
     }
 
+    @Suppress("TooGenericExceptionCaught")
     private fun determineDockerPath(file: File): String = when (dockerType) {
-        DockerType.TOOLBOX -> CygPath.calculate(file)
+        DockerType.TOOLBOX -> try {
+            CygPath.calculate(file)
+        } catch (e: Exception) {
+            aem.logger.warn("Cannot determine Docker path for '$file' using 'cygpath', because it is not available.")
+            aem.logger.debug("CygPath error", e)
+            file.toString()
+        }
         else -> file.toString()
     }
 

@@ -2,7 +2,7 @@ package com.cognifide.gradle.aem.pkg.resolver
 
 import aQute.bnd.osgi.Jar
 import com.cognifide.gradle.aem.common.file.resolver.FileResolution
-import com.cognifide.gradle.aem.instance.Bundle
+import com.cognifide.gradle.aem.instance.service.osgi.Bundle
 import com.cognifide.gradle.aem.pkg.PackageException
 import java.io.File
 import org.apache.commons.io.FilenameUtils

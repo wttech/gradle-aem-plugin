@@ -73,8 +73,8 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
     @get:JsonIgnore
     val overridesDirs: List<File>
         get() = listOf(
-                File("${options.overridesPath}/common"),
-                File("${options.overridesPath}/$typeName")
+                File(options.overridesDir, "common"),
+                File(options.overridesDir, typeName)
         )
 
     @get:JsonIgnore

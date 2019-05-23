@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 import java.io.Serializable
 
-class DirectoryOptions(private val environment: Environment): Serializable {
+class DirectoryOptions(private val environment: Environment) : Serializable {
 
     val regulars = mutableListOf<File>()
 

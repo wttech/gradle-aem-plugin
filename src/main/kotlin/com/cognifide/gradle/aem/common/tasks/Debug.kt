@@ -6,7 +6,7 @@ import com.cognifide.gradle.aem.common.AemPlugin
 import com.cognifide.gradle.aem.common.AemTask
 import com.cognifide.gradle.aem.common.Formats
 import com.cognifide.gradle.aem.instance.names
-import com.cognifide.gradle.aem.pkg.Package
+import com.cognifide.gradle.aem.instance.service.pkg.Package
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction

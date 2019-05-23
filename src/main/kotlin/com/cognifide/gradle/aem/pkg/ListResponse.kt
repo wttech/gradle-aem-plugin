@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.pkg
 
+import com.cognifide.gradle.aem.instance.service.pkg.Package
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import org.gradle.api.Project
 
