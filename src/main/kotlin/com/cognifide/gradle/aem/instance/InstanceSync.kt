@@ -3,7 +3,7 @@ package com.cognifide.gradle.aem.instance
 import com.cognifide.gradle.aem.common.*
 import com.cognifide.gradle.aem.common.http.RequestException
 import com.cognifide.gradle.aem.common.http.ResponseException
-import com.cognifide.gradle.aem.instance.content.Nodes
+import com.cognifide.gradle.aem.instance.content.ContentRepository
 import com.cognifide.gradle.aem.pkg.*
 import com.cognifide.gradle.aem.pkg.tasks.PackageCompose
 import java.io.File
@@ -485,7 +485,7 @@ class InstanceSync(aem: AemExtension, instance: Instance) : InstanceHttpClient(a
         return scripts.asSequence().map { evalGroovyScript(it, data, verbose) }
     }
 
-    fun nodes(block: Nodes.() -> Unit) = Nodes(this).block()
+    fun repository(block: ContentRepository.() -> Unit) = ContentRepository(this).block()
 
     companion object {
         const val PKG_MANAGER_PATH = "/crx/packmgr/service"

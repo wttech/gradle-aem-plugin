@@ -1666,33 +1666,19 @@ To make some changes in repository on AEM instance use `nodes` namespace in `aem
 ```kotlin
 aem {
     tasks {
-        register("updateNodes") {
+        instanceSatisfy {
+            doFirst {
+                aem.authorInstances.first().sync.repository {
+                    logger.lifecycle("Script:  Workflow DISABLED")
+                    updateNode("/libs/settings/workflow/launcher/config/update_asset_create", mapOf("enabled" to false))
+                }
+            }
+        }
+        packageDeploy {
             doLast {
-                aem.authorInstances.first().sync {
-                    nodes {
-                        val path = "/content/we-retail/us/en/men/jcr:content/new-node"
-                        val props = mapOf("property-name" to "value")
-
-                        // Available actions
-                        create(path, props)
-                        get(path)
-                        update(path, props)
-                        save(path, props)
-                        exists(path)
-                        remove(path)
-
-                        // Example node operations
-                        val page = get("/content/we-retail/us/en/men")
-                        page.name
-                        page.path
-                        page.json() // all props as jason
-                        page.children.forEach { it.name } // iterate through children
-
-                        val content = page.children.asSequence().first { it.name == "jcr:content" }
-                        content.jcrPrimaryType
-                        content.value("jcr:created")
-                        content.stringValue("sling:resourceType")
-                    }
+                aem.authorInstances.first().sync.repository {
+                    logger.lifecycle("Script:  Workflow ENABLED")
+                    updateNode("/libs/settings/workflow/launcher/config/update_asset_create", mapOf("enabled" to true))
                 }
             }
         }
