@@ -1,11 +1,11 @@
 package com.cognifide.gradle.aem.common
 
-import com.cognifide.gradle.aem.pkg.Package
+import com.cognifide.gradle.aem.instance.service.pkg.Package
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 import java.io.Serializable
 
-class PackageOptions(private val aem: AemExtension) : Serializable {
+class PackageOptions(aem: AemExtension) : Serializable {
 
     var rootDir: File = aem.project.file("src/main/content")
 
@@ -27,7 +27,7 @@ class PackageOptions(private val aem: AemExtension) : Serializable {
      * Custom path to Vault files that will be used to build CRX package.
      * Useful to share same files for all packages, like package thumbnail.
      */
-    var metaCommonRoot: String = "${aem.configCommonDir}/${Package.META_RESOURCES_PATH}"
+    var metaCommonRootDir: File = File(aem.configCommonDir, Package.META_RESOURCES_PATH)
 
     /**
      * Content path for OSGi bundle jars being placed in CRX package.

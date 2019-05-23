@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.pkg
+package com.cognifide.gradle.aem.instance.service.pkg
 
 import com.cognifide.gradle.aem.pkg.tasks.PackageCompose
 import com.fasterxml.jackson.annotation.JsonIgnore

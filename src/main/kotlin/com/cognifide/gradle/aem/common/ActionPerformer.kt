@@ -8,7 +8,7 @@ import com.cognifide.gradle.aem.instance.action.ShutdownAction
 /**
  * Executor for actions affecting multiple remote instances at once.
  */
-class ActionPerformer(val aem: AemExtension) {
+class ActionPerformer(private val aem: AemExtension) {
 
     fun await() = await {}
 

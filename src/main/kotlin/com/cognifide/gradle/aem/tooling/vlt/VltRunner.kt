@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.tooling.vlt
 
 import com.cognifide.gradle.aem.common.AemExtension
-import com.cognifide.gradle.aem.pkg.Package
+import com.cognifide.gradle.aem.instance.service.pkg.Package
 import java.io.File
 
 class VltRunner(val aem: AemExtension) {

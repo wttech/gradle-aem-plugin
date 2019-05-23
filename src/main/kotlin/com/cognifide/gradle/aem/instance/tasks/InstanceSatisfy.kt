@@ -6,7 +6,7 @@ import com.cognifide.gradle.aem.common.ProgressIndicator
 import com.cognifide.gradle.aem.common.file.resolver.FileGroup
 import com.cognifide.gradle.aem.instance.Instance
 import com.cognifide.gradle.aem.instance.names
-import com.cognifide.gradle.aem.pkg.PackageState
+import com.cognifide.gradle.aem.instance.service.pkg.PackageState
 import com.cognifide.gradle.aem.pkg.resolver.PackageGroup
 import com.cognifide.gradle.aem.pkg.resolver.PackageResolver
 import com.cognifide.gradle.aem.pkg.tasks.PackageDeploy

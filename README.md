@@ -26,19 +26,21 @@ Be inspired by watching [live demo](https://adapt.to/2018/en/schedule/a-better-d
   <img src="docs/example-build.gif" alt="Example Project Build"/>
 </p>
 
-### Features
+### Features 
 
-* Composing CRX package from multiple JCR content roots, bundles.
-* Fully automated, native (no virtulization), tied to project, AEM instance(s) setup allowing to start development within few minutes.
-* [Powerful AEM DSL scripting capabilities](#implement-custom-aem-tasks) for performing content migrations, managing instances.
-* Advanced AEM instance(s) stability & health checking after CRX package deployment.
-* Continous AEM incident monitoring and interactive reporting (centralized log tailing of any AEM instances with no SSH).
-* Automated all-in-one CRX packages generation (assemblies), vault filters merging etc.
-* Easy parallel CRX package deployment to many remote group of instances.
-* Automated dependent CRX packages and OSGi bundles installation from local and remote sources (SMB, SSH, HTTP(s)).
-* Smart Vault files generation (combining defaults with overiddables).
-* Embedded [Vault Tool](http://jackrabbit.apache.org/filevault) for checking out and cleaning JCR content from running AEM instance.
-* Embedded [BND Tool](https://github.com/bndtools/bnd/tree/master/biz.aQute.bnd.gradle) for OSGi Manifest customization.
+* [Powerful AEM DSL scripting capabilities](#implement-custom-aem-tasks) for performing JCR content migrations, managing AEM instances.
+* Automated full stack AEM environment setup with [virtualized AEM dispatcher](#environment-plugin) and [native AEM instances](#instance-plugin) optimized for best development performance
+* [Composing CRX package](#task-packagecompose) from multiple JCR content roots, bundles.
+* [Advanced AEM instance(s) stability & health checking](#task-instanceawait) after CRX package deployment.
+* [Continuous AEM incident monitoring](#task-instancetail) and interactive reporting (centralized log tailing of any AEM instances with no SSH).
+* [All-in-one CRX packages generation](#assembling-packages-merging-all-in-one) (assemblies), vault filters merging etc.
+* Easy parallel [CRX package deployment](#task-packagedeploy) to many remote group of instances.
+* [Fail-safe dependent CRX packages installation](#task-instancesatisfy) from local and remote sources (SMB, SSH, HTTP(s)).
+* [Fast JCR content synchronization](#task-sync) from running AEM instances with advanced content normalization.
+* [Easy OSGi bundle customization](#bundle-plugin) with BND tool embedded.
+
+Gradle AEM Plugin is following strategy [convention over configuration](https://en.wikipedia.org/wiki/Convention_over_configuration). When following built-in conventions about project structure & naming, then only minimal configuration is required. 
+Still all features are **fully configurable**.
 
 ## Important notice 
 
@@ -941,9 +943,6 @@ aem {
     }
 }
 ```
-
-Gradle AEM Plugin is following strategy [convention over configuration](https://en.wikipedia.org/wiki/Convention_over_configuration). When following built-in convention about project structure & naming, then only minimal configuration is required. 
-Still all features are fully configurable.
 
 #### Embedding JAR file into OSGi bundle
 

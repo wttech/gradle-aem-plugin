@@ -2,10 +2,10 @@ package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.instance.content.Repository
-import com.cognifide.gradle.aem.instance.service.GroovyConsole
-import com.cognifide.gradle.aem.instance.service.OsgiFramework
-import com.cognifide.gradle.aem.instance.service.PackageManager
 import com.cognifide.gradle.aem.instance.service.StateChecker
+import com.cognifide.gradle.aem.instance.service.groovy.GroovyConsole
+import com.cognifide.gradle.aem.instance.service.osgi.OsgiFramework
+import com.cognifide.gradle.aem.instance.service.pkg.PackageManager
 
 class InstanceSync(aem: AemExtension, instance: Instance) : InstanceHttpClient(aem, instance) {
 

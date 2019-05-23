@@ -1,8 +1,13 @@
-package com.cognifide.gradle.aem.instance.service
+package com.cognifide.gradle.aem.instance.service.osgi
 
 import com.cognifide.gradle.aem.common.AemException
 import com.cognifide.gradle.aem.instance.*
 
+/**
+ * Controls OSGi framework using Apache Felix Web Console endpoints.
+ *
+ * @see <https://felix.apache.org/documentation/subprojects/apache-felix-web-console.html>
+ */
 class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
 
     fun determineBundleState(): BundleState {

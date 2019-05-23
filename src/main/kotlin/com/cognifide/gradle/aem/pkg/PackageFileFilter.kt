@@ -4,7 +4,8 @@ import aQute.bnd.osgi.Jar
 import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.Patterns
 import com.cognifide.gradle.aem.common.file.FileContentReader
-import com.cognifide.gradle.aem.instance.Bundle
+import com.cognifide.gradle.aem.instance.service.osgi.Bundle
+import com.cognifide.gradle.aem.instance.service.pkg.Package
 import java.io.File
 import java.io.Serializable
 import org.gradle.api.Project

@@ -44,6 +44,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
      * - multi-project build - subproject with path ':aem'
      * - single-project build - root project
      */
+    @JsonIgnore
     val projectMain: Project = project.findProject(props.string("projectMainPath") ?: ":aem") ?: project.rootProject
 
     /**
@@ -84,6 +85,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     /**
      * Timezone ID (default for defined instances)
      */
+    @JsonIgnore
     val zoneId: ZoneId = props.string("zoneId")?.let { ZoneId.of(it) } ?: ZoneId.systemDefault()
 
     /**
@@ -96,7 +98,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
 
     /**
      * Directory for storing project specific files used by plugin e.g:
-     * - Groovy Scripts to be launched by instance sync in tasks defined in project
+     * - Groovy Scripts to be launched by Groovy Console instance service in tasks defined in project.
      */
     val configDir: File
         get() = project.file(props.string("configDir") ?: "gradle")
@@ -104,6 +106,8 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     /**
      * Directory for storing common files used by plugin e.g:
      * - CRX package thumbnail
+     * - environment configuration files (HTTPD virtual hosts, Dispatcher)
+     * - instance overrides files
      * - tail incident filter
      */
     val configCommonDir: File
@@ -172,7 +176,6 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     /**
      * Provides API for easier creation of tasks (e.g in sequence) in the matter of Gradle task configuration avoidance.
      */
-    @JsonIgnore
     val tasks = TaskFacade(this)
 
     fun tasks(configurer: TaskFacade.() -> Unit) {

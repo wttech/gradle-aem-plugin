@@ -5,7 +5,7 @@ import com.cognifide.gradle.aem.common.AemException
 import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.DependencyOptions
 import com.cognifide.gradle.aem.common.Formats
-import com.cognifide.gradle.aem.instance.Bundle
+import com.cognifide.gradle.aem.instance.service.osgi.Bundle
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 import java.io.Serializable
