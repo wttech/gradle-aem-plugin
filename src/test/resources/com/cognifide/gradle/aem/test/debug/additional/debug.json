@@ -1,11 +1,11 @@
 {
   "buildInfo" : {
     "plugin" : {
-      "pluginVersion" : "6.1.1",
-      "gradleVersion" : "4.10"
+      "pluginVersion" : "7.0.0-beta",
+      "gradleVersion" : "5.4"
     },
     "gradle" : {
-      "version" : "4.10",
+      "version" : "5.4",
       "homeDir" : "*"
     },
     "java" : {
@@ -19,9 +19,317 @@
     "name" : "additional",
     "dir" : "*/additional"
   },
-  "baseConfig" : {
-    "instances" : {
-      "local-author" : {
+  "packageDeployed" : { },
+  "aem" : {
+    "projectPrefixes" : [
+      "aem.",
+      "aem-",
+      "aem_"
+    ],
+    "env" : "local",
+    "lineSeparator" : "LF",
+    "groovyScriptRootDir" : "*/additional/gradle/groovyScript",
+    "resolverOptions" : {
+      "httpUsername" : null,
+      "httpConnectionIgnoreSsl" : null,
+      "sftpUsername" : null,
+      "sftpHostChecking" : null,
+      "smbDomain" : null,
+      "smbUsername" : null
+    },
+    "packageOptions" : {
+      "rootDir" : "*/additional/src/main/content",
+      "snapshots" : [ ],
+      "metaCommonRootDir" : "*/additional/gradle/package/META-INF",
+      "installPath" : "/apps/additional/install",
+      "installRepository" : true,
+      "errors" : [
+        "javax.jcr.nodetype.*Exception",
+        "org.apache.jackrabbit.oak.api.*Exception",
+        "org.apache.jackrabbit.vault.packaging.*Exception",
+        "org.xml.sax.*Exception"
+      ],
+      "responseBuffer" : 4096
+    },
+    "instanceOptions" : {
+      "defined" : {
+        "local-author" : {
+          "properties" : { },
+          "httpUrl" : "http://localhost:4502",
+          "user" : "admin",
+          "password" : "admin",
+          "typeName" : "author",
+          "environment" : "local",
+          "debugPort" : 24502,
+          "name" : "local-author",
+          "type" : "AUTHOR",
+          "httpPort" : 4502,
+          "jvmOpts" : "-Xdebug -Xrunjdwp:transport=dt_socket,address=24502,server=y,suspend=n -server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true",
+          "runModes" : "author,nosamplecontent,mongo",
+          "startOpts" : ""
+        },
+        "local-publish1" : {
+          "properties" : { },
+          "httpUrl" : "http://localhost:4503",
+          "user" : "admin",
+          "password" : "admin",
+          "typeName" : "publish1",
+          "environment" : "local",
+          "debugPort" : 14503,
+          "name" : "local-publish1",
+          "type" : "PUBLISH",
+          "httpPort" : 4503,
+          "jvmOpts" : "-Xdebug -Xrunjdwp:transport=dt_socket,address=14503,server=y,suspend=n -server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true",
+          "runModes" : "publish,local",
+          "startOpts" : ""
+        },
+        "local-publish2" : {
+          "properties" : { },
+          "httpUrl" : "http://localhost:4504",
+          "user" : "admin",
+          "password" : "admin",
+          "typeName" : "publish2",
+          "environment" : "local",
+          "debugPort" : 14504,
+          "name" : "local-publish2",
+          "type" : "PUBLISH",
+          "httpPort" : 4504,
+          "jvmOpts" : "-Xdebug -Xrunjdwp:transport=dt_socket,address=14504,server=y,suspend=n -server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true",
+          "runModes" : "publish,local",
+          "startOpts" : ""
+        },
+        "test-author" : {
+          "properties" : {
+            "externalUrl" : "http://test-author.local"
+          },
+          "httpUrl" : "http://192.168.6.6:4502",
+          "user" : "admin",
+          "password" : "admin",
+          "typeName" : "author",
+          "environment" : "test",
+          "name" : "test-author",
+          "type" : "AUTHOR",
+          "httpPort" : 4502
+        },
+        "test-publish" : {
+          "properties" : {
+            "externalUrl" : "http://test-publish.local"
+          },
+          "httpUrl" : "http://192.168.6.6:4503",
+          "user" : "admin",
+          "password" : "admin",
+          "typeName" : "publish",
+          "environment" : "test",
+          "name" : "test-publish",
+          "type" : "PUBLISH",
+          "httpPort" : 4503
+        },
+        "prod-author" : {
+          "properties" : { },
+          "httpUrl" : "http://author.example.com",
+          "user" : "admin",
+          "password" : "admin",
+          "typeName" : "author",
+          "environment" : "prod",
+          "name" : "prod-author",
+          "type" : "AUTHOR",
+          "httpPort" : 80
+        },
+        "prod-publish" : {
+          "properties" : { },
+          "httpUrl" : "http://example.com",
+          "user" : "admin",
+          "password" : "admin",
+          "typeName" : "publish",
+          "environment" : "prod",
+          "name" : "prod-publish",
+          "type" : "PUBLISH",
+          "httpPort" : 80
+        },
+        "int-author" : {
+          "properties" : {
+            "externalUrl" : "http://author.aem.local"
+          },
+          "httpUrl" : "http://192.168.1.1",
+          "user" : "admin",
+          "password" : "admin",
+          "typeName" : "author",
+          "environment" : "int",
+          "name" : "int-author",
+          "type" : "AUTHOR",
+          "httpPort" : 80
+        },
+        "int-publish" : {
+          "properties" : {
+            "externalUrl" : "http://aem.local"
+          },
+          "httpUrl" : "http://192.168.1.2",
+          "user" : "admin",
+          "password" : "admin",
+          "typeName" : "publish",
+          "environment" : "int",
+          "name" : "int-publish",
+          "type" : "PUBLISH",
+          "httpPort" : 80
+        },
+        "stg-author" : {
+          "properties" : { },
+          "httpUrl" : "https://192.168.3.1:8082",
+          "user" : "user1",
+          "password" : "password1",
+          "typeName" : "author",
+          "environment" : "stg",
+          "name" : "stg-author",
+          "type" : "AUTHOR",
+          "httpPort" : 8082
+        },
+        "stg-publish" : {
+          "properties" : { },
+          "httpUrl" : "https://192.168.3.2:8083",
+          "user" : "user2",
+          "password" : "password2",
+          "typeName" : "publish",
+          "environment" : "stg",
+          "name" : "stg-publish",
+          "type" : "PUBLISH",
+          "httpPort" : 8083
+        },
+        "perf-author-1" : {
+          "properties" : { },
+          "httpUrl" : "http://192.168.2.1:4502",
+          "user" : "admin",
+          "password" : "admin",
+          "typeName" : "author-1",
+          "environment" : "perf",
+          "name" : "perf-author-1",
+          "type" : "AUTHOR",
+          "httpPort" : 4502
+        },
+        "perf-author-2" : {
+          "properties" : { },
+          "httpUrl" : "http://192.168.2.1:5502",
+          "user" : "admin",
+          "password" : "admin",
+          "typeName" : "author-2",
+          "environment" : "perf",
+          "name" : "perf-author-2",
+          "type" : "AUTHOR",
+          "httpPort" : 5502
+        },
+        "perf-publish-1" : {
+          "properties" : { },
+          "httpUrl" : "http://192.168.2.2:4503",
+          "user" : "admin",
+          "password" : "admin",
+          "typeName" : "publish-1",
+          "environment" : "perf",
+          "name" : "perf-publish-1",
+          "type" : "PUBLISH",
+          "httpPort" : 4503
+        },
+        "perf-publish-2" : {
+          "properties" : { },
+          "httpUrl" : "http://192.168.2.2:5503",
+          "user" : "admin",
+          "password" : "admin",
+          "typeName" : "publish-2",
+          "environment" : "perf",
+          "name" : "perf-publish-2",
+          "type" : "PUBLISH",
+          "httpPort" : 5503
+        }
+      }
+    },
+    "localInstanceOptions" : {
+      "rootDir" : "*/additional/.aem/instance",
+      "source" : "AUTO",
+      "zipUrl" : null,
+      "jarUrl" : null,
+      "licenseUrl" : null,
+      "overridesDir" : "*/additional/gradle/instance",
+      "expandFiles" : [
+        "**/start.bat",
+        "**/stop.bat",
+        "**/start",
+        "**/stop"
+      ],
+      "expandProperties" : { }
+    },
+    "environment" : {
+      "rootDir" : "*/additional/.aem/environment",
+      "directories" : {
+        "regulars" : [
+          "*/additional/.aem/environment/httpd/logs"
+        ],
+        "caches" : [
+          "*/additional/.aem/environment/httpd/cache/content/example/live",
+          "*/additional/.aem/environment/httpd/cache/content/example/demo"
+        ]
+      },
+      "dispatcherDistUrl" : "http://download.macromedia.com/dispatcher/download/dispatcher-apache2.4-linux-x86_64-4.3.2.tar.gz",
+      "dispatcherModuleName" : "*/dispatcher-apache*.so",
+      "dockerType" : "TOOLBOX",
+      "hosts" : {
+        "defined" : [
+          {
+            "ip" : "192.168.99.100",
+            "name" : "example.com"
+          },
+          {
+            "ip" : "192.168.99.100",
+            "name" : "demo.example.com"
+          },
+          {
+            "ip" : "192.168.99.100",
+            "name" : "author.example.com"
+          },
+          {
+            "ip" : "192.168.99.100",
+            "name" : "invalidation-only"
+          }
+        ]
+      },
+      "configDir" : "*/additional/gradle/environment",
+      "dockerComposeSourceFile" : "*/additional/gradle/environment/docker-compose.yml.peb",
+      "dockerComposeFile" : "*/additional/.aem/environment/docker-compose.yml",
+      "dockerConfigPath" : "*/additional/gradle/environment",
+      "dockerRootPath" : "*/additional/.aem/environment",
+      "dispatcherModuleFile" : "*/additional/.aem/environment/distributions/mod_dispatcher.so",
+      "httpdConfDir" : "*/additional/gradle/environment/httpd/conf",
+      "created" : false
+    },
+    "notifier" : {
+      "enabled" : false
+    },
+    "tasks" : {
+      "bundles" : [
+        {
+          "name" : "jar",
+          "installPath" : "/apps/additional/install",
+          "installRunMode" : null,
+          "attributesConvention" : true,
+          "javaPackage" : "com.company.aem.additional",
+          "javaPackageOptions" : "-split-package:=merge-first",
+          "bndEnabled" : true,
+          "bndPath" : "*/additional/bnd.bnd",
+          "bndInstructions" : {
+            "-fixupmessages.bundleActivator" : "Bundle-Activator * is being imported *;is:=error"
+          },
+          "attributes" : {
+            "Manifest-Version" : "1.0",
+            "Bundle-Name" : "Additional",
+            "Bundle-SymbolicName" : "com.company.aem.additional",
+            "Sling-Model-Packages" : "com.company.aem.additional",
+            "Import-Package" : "*",
+            "Export-Package" : "com.company.aem.additional.*;-split-package:=merge-first"
+          }
+        }
+      ]
+    },
+    "projectName" : "additional",
+    "instances" : [
+      {
+        "properties" : { },
         "httpUrl" : "http://localhost:4502",
         "user" : "admin",
         "password" : "admin",
@@ -33,10 +341,10 @@
         "httpPort" : 4502,
         "jvmOpts" : "-Xdebug -Xrunjdwp:transport=dt_socket,address=24502,server=y,suspend=n -server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true",
         "runModes" : "author,nosamplecontent,mongo",
-        "startOpts" : "",
-        "properties" : { }
+        "startOpts" : ""
       },
-      "local-publish1" : {
+      {
+        "properties" : { },
         "httpUrl" : "http://localhost:4503",
         "user" : "admin",
         "password" : "admin",
@@ -48,10 +356,10 @@
         "httpPort" : 4503,
         "jvmOpts" : "-Xdebug -Xrunjdwp:transport=dt_socket,address=14503,server=y,suspend=n -server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true",
         "runModes" : "publish,local",
-        "startOpts" : "",
-        "properties" : { }
+        "startOpts" : ""
       },
-      "local-publish2" : {
+      {
+        "properties" : { },
         "httpUrl" : "http://localhost:4504",
         "user" : "admin",
         "password" : "admin",
@@ -63,248 +371,125 @@
         "httpPort" : 4504,
         "jvmOpts" : "-Xdebug -Xrunjdwp:transport=dt_socket,address=14504,server=y,suspend=n -server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true",
         "runModes" : "publish,local",
-        "startOpts" : "",
-        "properties" : { }
-      },
-      "test-author" : {
-        "httpUrl" : "http://192.168.6.6:4502",
-        "user" : "admin",
-        "password" : "admin",
-        "typeName" : "author",
-        "environment" : "test",
-        "name" : "test-author",
-        "type" : "AUTHOR",
-        "httpPort" : 4502,
-        "properties" : {
-          "externalUrl": "http://test-author.local"
-        }
-      },
-      "test-publish" : {
-        "httpUrl" : "http://192.168.6.6:4503",
-        "user" : "admin",
-        "password" : "admin",
-        "typeName" : "publish",
-        "environment" : "test",
-        "name" : "test-publish",
-        "type" : "PUBLISH",
-        "httpPort" : 4503,
-        "properties" : {
-          "externalUrl": "http://test-publish.local"
-        }
-      },
-      "prod-author" : {
-        "httpUrl" : "http://author.example.com",
-        "user" : "admin",
-        "password" : "admin",
-        "typeName" : "author",
-        "environment" : "prod",
-        "name" : "prod-author",
-        "type" : "AUTHOR",
-        "httpPort" : 80,
-        "properties" : { }
-      },
-      "prod-publish" : {
-        "httpUrl" : "http://example.com",
-        "user" : "admin",
-        "password" : "admin",
-        "typeName" : "publish",
-        "environment" : "prod",
-        "name" : "prod-publish",
-        "type" : "PUBLISH",
-        "httpPort" : 80,
-        "properties" : { }
-      },
-      "int-author" : {
-        "httpUrl" : "http://192.168.1.1",
-        "user" : "admin",
-        "password" : "admin",
-        "typeName" : "author",
-        "environment" : "int",
-        "name" : "int-author",
-        "type" : "AUTHOR",
-        "httpPort" : 80,
-        "properties" : {
-          "externalUrl": "http://author.aem.local"
-        }
-      },
-      "int-publish" : {
-        "httpUrl" : "http://192.168.1.2",
-        "user" : "admin",
-        "password" : "admin",
-        "typeName" : "publish",
-        "environment" : "int",
-        "name" : "int-publish",
-        "type" : "PUBLISH",
-        "httpPort" : 80,
-        "properties" : {
-          "externalUrl": "http://aem.local"
-        }
-      },
-      "stg-author" : {
-        "httpUrl" : "https://192.168.3.1:8082",
-        "user" : "user1",
-        "password" : "password1",
-        "typeName" : "author",
-        "environment" : "stg",
-        "name" : "stg-author",
-        "type" : "AUTHOR",
-        "httpPort" : 8082,
-        "properties" : { }
-      },
-      "stg-publish" : {
-        "httpUrl" : "https://192.168.3.2:8083",
-        "user" : "user2",
-        "password" : "password2",
-        "typeName" : "publish",
-        "environment" : "stg",
-        "name" : "stg-publish",
-        "type" : "PUBLISH",
-        "httpPort" : 8083,
-        "properties" : { }
-      },
-      "perf-author-1" : {
-        "httpUrl" : "http://192.168.2.1:4502",
-        "user" : "admin",
-        "password" : "admin",
-        "typeName" : "author-1",
-        "environment" : "perf",
-        "name" : "perf-author-1",
-        "type" : "AUTHOR",
-        "httpPort" : 4502,
-        "properties" : { }
-      },
-      "perf-author-2" : {
-        "httpUrl" : "http://192.168.2.1:5502",
-        "user" : "admin",
-        "password" : "admin",
-        "typeName" : "author-2",
-        "environment" : "perf",
-        "name" : "perf-author-2",
-        "type" : "AUTHOR",
-        "httpPort" : 5502,
-        "properties" : { }
-      },
-      "perf-publish-1" : {
-        "httpUrl" : "http://192.168.2.2:4503",
-        "user" : "admin",
-        "password" : "admin",
-        "typeName" : "publish-1",
-        "environment" : "perf",
-        "name" : "perf-publish-1",
-        "type" : "PUBLISH",
-        "httpPort" : 4503,
-        "properties" : { }
-      },
-      "perf-publish-2" : {
-        "httpUrl" : "http://192.168.2.2:5503",
-        "user" : "admin",
-        "password" : "admin",
-        "typeName" : "publish-2",
-        "environment" : "perf",
-        "name" : "perf-publish-2",
-        "type" : "PUBLISH",
-        "httpPort" : 5503,
-        "properties" : { }
+        "startOpts" : ""
       }
-    },
-    "resolverOptions" : {
-      "httpUsername" : null,
-      "httpPassword" : null,
-      "httpConnectionIgnoreSsl" : null,
-      "sftpUsername" : null,
-      "sftpPassword" : null,
-      "sftpHostChecking" : null,
-      "smbDomain" : null,
-      "smbUsername" : null,
-      "smbPassword" : null
-    },
-    "localInstanceOptions" : {
-      "root" : "*/.aem/instance",
-      "source" : "AUTO",
-      "zipUrl" : null,
-      "jarUrl" : null,
-      "licenseUrl" : null,
-      "overridesPath" : "*/gradle/instance",
-      "expandFiles" : [
-        "**/start.bat",
-        "**/stop.bat",
-        "**/start",
-        "**/stop"
-      ],
-      "expandProperties" : { }
-    },
-    "environmentOptions" : {
-      "directories" : [
-        "logs",
-        "cache/content/example/live",
-        "cache/content/example/demo"
-      ],
-      "root" : "*/.aem/environment",
-      "dispatcherDistUrl" : "http://download.macromedia.com/dispatcher/download/dispatcher-apache2.4-linux-x86_64-4.3.2.tar.gz",
-      "dispatcherModuleName" : "*/dispatcher-apache*.so",
-      "hosts" : {
-        "defined" : [
-          {
-            "ip" : "127.0.0.1",
-            "name" : "example.com"
-          },
-          {
-            "ip" : "127.0.0.1",
-            "name" : "demo.example.com"
-          },
-          {
-            "ip" : "127.0.0.1",
-            "name" : "author.example.com"
-          },
-          {
-            "ip" : "127.0.0.1",
-            "name" : "invalidation-only"
-          }
-        ]
-      },
-      "httpdConfDir" : "*/gradle/environment/httpd/conf",
-      "dockerComposeSourceFile" : "*/gradle/environment/docker-compose.yml",
-      "dispatcherModuleFile" : "*/.aem/environment/distributions/mod_dispatcher.so",
-      "dockerComposeFile" : "*/.aem/environment/docker-compose.yml"
-    },
-    "packageRoot": "*/src/main/content",
-    "packageMetaCommonRoot": "*/gradle/package/META-INF",
-    "packageInstallPath" : "/apps/additional/install",
-    "packageInstallRepository": true,
-    "packageErrors" : [
-      "javax.jcr.nodetype.*Exception",
-      "org.apache.jackrabbit.oak.api.*Exception",
-      "org.apache.jackrabbit.vault.packaging.*Exception",
-      "org.xml.sax.*Exception"
     ],
-    "packageResponseBuffer" : 4096,
-    "packageSnapshots" : [ ],
-    "lineSeparator" : "LF",
-    "notificationEnabled" : false,
-    "groovyScriptRoot" : "*/gradle/groovyScript"
-  },
-  "bundleConfig" : [
-    {
-      "name": "jar",
-      "installPath" : "/apps/additional/install",
-      "installRunMode": null,
-      "javaPackage" : "com.company.aem.additional",
-      "javaPackageOptions" : "-split-package:=merge-first",
-      "bndEnabled": true,
-      "bndPath" : "*/bnd.bnd",
-      "bndInstructions" : {
-        "-fixupmessages.bundleActivator" : "Bundle-Activator * is being imported *;is:=error"
-      },
-      "attributesConvention" : true,
-      "attributes" : {
-        "Manifest-Version" : "1.0",
-        "Bundle-Name" : "Additional",
-        "Bundle-SymbolicName" : "com.company.aem.additional",
-        "Import-Package" : "*",
-        "Export-Package" : "com.company.aem.additional.*;-split-package:=merge-first",
-        "Sling-Model-Packages" : "com.company.aem.additional"
+    "anyInstance" : {
+      "properties" : { },
+      "httpUrl" : "http://localhost:4502",
+      "user" : "admin",
+      "password" : "admin",
+      "typeName" : "author",
+      "environment" : "local",
+      "debugPort" : 24502,
+      "name" : "local-author",
+      "type" : "AUTHOR",
+      "httpPort" : 4502,
+      "jvmOpts" : "-Xdebug -Xrunjdwp:transport=dt_socket,address=24502,server=y,suspend=n -server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true",
+      "runModes" : "author,nosamplecontent,mongo",
+      "startOpts" : ""
+    },
+    "configDir" : "*/additional/gradle",
+    "javaPackages" : [
+      "com.company.aem.additional"
+    ],
+    "baseName" : "additional",
+    "configCommonDir" : "*/additional/gradle",
+    "authorInstances" : [
+      {
+        "properties" : { },
+        "httpUrl" : "http://localhost:4502",
+        "user" : "admin",
+        "password" : "admin",
+        "typeName" : "author",
+        "environment" : "local",
+        "debugPort" : 24502,
+        "name" : "local-author",
+        "type" : "AUTHOR",
+        "httpPort" : 4502,
+        "jvmOpts" : "-Xdebug -Xrunjdwp:transport=dt_socket,address=24502,server=y,suspend=n -server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true",
+        "runModes" : "author,nosamplecontent,mongo",
+        "startOpts" : ""
       }
-    }
-  ],
-  "packageDeployed" : { }
+    ],
+    "localInstances" : [
+      {
+        "properties" : { },
+        "httpUrl" : "http://localhost:4502",
+        "user" : "admin",
+        "password" : "admin",
+        "typeName" : "author",
+        "environment" : "local",
+        "debugPort" : 24502,
+        "name" : "local-author",
+        "type" : "AUTHOR",
+        "httpPort" : 4502,
+        "jvmOpts" : "-Xdebug -Xrunjdwp:transport=dt_socket,address=24502,server=y,suspend=n -server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true",
+        "runModes" : "author,nosamplecontent,mongo",
+        "startOpts" : ""
+      },
+      {
+        "properties" : { },
+        "httpUrl" : "http://localhost:4503",
+        "user" : "admin",
+        "password" : "admin",
+        "typeName" : "publish1",
+        "environment" : "local",
+        "debugPort" : 14503,
+        "name" : "local-publish1",
+        "type" : "PUBLISH",
+        "httpPort" : 4503,
+        "jvmOpts" : "-Xdebug -Xrunjdwp:transport=dt_socket,address=14503,server=y,suspend=n -server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true",
+        "runModes" : "publish,local",
+        "startOpts" : ""
+      },
+      {
+        "properties" : { },
+        "httpUrl" : "http://localhost:4504",
+        "user" : "admin",
+        "password" : "admin",
+        "typeName" : "publish2",
+        "environment" : "local",
+        "debugPort" : 14504,
+        "name" : "local-publish2",
+        "type" : "PUBLISH",
+        "httpPort" : 4504,
+        "jvmOpts" : "-Xdebug -Xrunjdwp:transport=dt_socket,address=14504,server=y,suspend=n -server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true",
+        "runModes" : "publish,local",
+        "startOpts" : ""
+      }
+    ],
+    "publishInstances" : [
+      {
+        "properties" : { },
+        "httpUrl" : "http://localhost:4503",
+        "user" : "admin",
+        "password" : "admin",
+        "typeName" : "publish1",
+        "environment" : "local",
+        "debugPort" : 14503,
+        "name" : "local-publish1",
+        "type" : "PUBLISH",
+        "httpPort" : 4503,
+        "jvmOpts" : "-Xdebug -Xrunjdwp:transport=dt_socket,address=14503,server=y,suspend=n -server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true",
+        "runModes" : "publish,local",
+        "startOpts" : ""
+      },
+      {
+        "properties" : { },
+        "httpUrl" : "http://localhost:4504",
+        "user" : "admin",
+        "password" : "admin",
+        "typeName" : "publish2",
+        "environment" : "local",
+        "debugPort" : 14504,
+        "name" : "local-publish2",
+        "type" : "PUBLISH",
+        "httpPort" : 4504,
+        "jvmOpts" : "-Xdebug -Xrunjdwp:transport=dt_socket,address=14504,server=y,suspend=n -server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true",
+        "runModes" : "publish,local",
+        "startOpts" : ""
+      }
+    ]
+  }
 }
