@@ -1,9 +1,8 @@
 package com.cognifide.gradle.aem.common.http
 
-import com.cognifide.gradle.aem.common.AemException
-import com.cognifide.gradle.aem.common.AemExtension
-import com.cognifide.gradle.aem.common.Formats
+import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.file.downloader.HttpFileDownloader
+import com.cognifide.gradle.aem.common.utils.Formats
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.jayway.jsonpath.DocumentContext
 import java.io.File
@@ -98,7 +97,7 @@ open class HttpClient(val aem: AemExtension) {
         "patch" -> patch(uri, handler)
         "head" -> head(uri, handler)
         "delete" -> delete(uri, handler)
-        else -> throw AemException("Invalid HTTP client method: '$method'")
+        else -> throw RequestException("Invalid HTTP client method: '$method'")
     }
 
     fun get(uri: String) = get(uri) { checkStatus(it) }

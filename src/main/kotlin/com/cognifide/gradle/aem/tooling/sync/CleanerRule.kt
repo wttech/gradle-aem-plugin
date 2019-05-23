@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.tooling.sync
 
-import com.cognifide.gradle.aem.common.Patterns
+import com.cognifide.gradle.aem.common.utils.Patterns
 import com.cognifide.gradle.aem.tooling.vlt.VltException
 import java.io.File
 

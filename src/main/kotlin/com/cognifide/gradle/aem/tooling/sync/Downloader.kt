@@ -1,10 +1,10 @@
 package com.cognifide.gradle.aem.tooling.sync
 
-import com.cognifide.gradle.aem.common.AemExtension
+import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.http.HttpClient
-import com.cognifide.gradle.aem.instance.Instance
-import com.cognifide.gradle.aem.instance.service.pkg.Package
-import com.cognifide.gradle.aem.pkg.vlt.VltFilter
+import com.cognifide.gradle.aem.common.instance.Instance
+import com.cognifide.gradle.aem.common.instance.service.pkg.Package
+import com.cognifide.gradle.aem.common.pkg.vlt.VltFilter
 import java.io.File
 import org.gradle.api.tasks.Internal
 

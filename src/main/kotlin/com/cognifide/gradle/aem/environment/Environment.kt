@@ -1,10 +1,10 @@
 package com.cognifide.gradle.aem.environment
 
-import com.cognifide.gradle.aem.common.AemExtension
-import com.cognifide.gradle.aem.common.AemTask
-import com.cognifide.gradle.aem.common.Patterns
+import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.file.resolver.FileResolver
+import com.cognifide.gradle.aem.common.utils.Patterns
 import com.cognifide.gradle.aem.environment.docker.base.CygPath
 import com.cognifide.gradle.aem.environment.docker.base.DockerType
 import com.cognifide.gradle.aem.environment.docker.domain.HttpdContainer

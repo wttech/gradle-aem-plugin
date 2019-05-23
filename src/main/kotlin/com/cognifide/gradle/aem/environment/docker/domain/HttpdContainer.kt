@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.environment.docker.domain
 
-import com.cognifide.gradle.aem.common.Behaviors
+import com.cognifide.gradle.aem.common.build.Behaviors
 import com.cognifide.gradle.aem.environment.Environment
 import com.cognifide.gradle.aem.environment.EnvironmentException
 import com.cognifide.gradle.aem.environment.docker.base.DockerContainer

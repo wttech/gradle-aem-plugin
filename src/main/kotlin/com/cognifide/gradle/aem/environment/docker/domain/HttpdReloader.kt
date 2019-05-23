@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.environment.docker.domain
 
-import com.cognifide.gradle.aem.common.AemExtension
+import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.file.FileWatcher
 import java.util.*
 import kotlinx.coroutines.*

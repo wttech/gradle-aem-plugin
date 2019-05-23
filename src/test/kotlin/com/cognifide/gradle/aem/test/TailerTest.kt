@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.test
 
-import com.cognifide.gradle.aem.common.Patterns
+import com.cognifide.gradle.aem.common.utils.Patterns
 import com.cognifide.gradle.aem.instance.tail.*
 import org.apache.commons.io.FileUtils
 import org.gradle.util.GFileUtils

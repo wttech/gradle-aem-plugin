@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.instance.tail
 
-import com.cognifide.gradle.aem.instance.Instance
+import com.cognifide.gradle.aem.common.instance.Instance
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel

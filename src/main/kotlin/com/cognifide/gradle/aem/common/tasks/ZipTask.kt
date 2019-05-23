@@ -1,9 +1,9 @@
 package com.cognifide.gradle.aem.common.tasks
 
-import com.cognifide.gradle.aem.common.AemExtension
-import com.cognifide.gradle.aem.common.AemTask
-import com.cognifide.gradle.aem.common.Formats
-import com.cognifide.gradle.aem.common.ProgressIndicator
+import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.AemTask
+import com.cognifide.gradle.aem.common.build.ProgressIndicator
+import com.cognifide.gradle.aem.common.utils.Formats
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.bundling.Zip as Base

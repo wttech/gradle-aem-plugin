@@ -1,10 +1,10 @@
 package com.cognifide.gradle.aem.pkg.tasks
 
-import com.cognifide.gradle.aem.common.fileNames
+import com.cognifide.gradle.aem.common.instance.InstanceSync
+import com.cognifide.gradle.aem.common.instance.action.AwaitAction
+import com.cognifide.gradle.aem.common.instance.names
 import com.cognifide.gradle.aem.common.tasks.PackageTask
-import com.cognifide.gradle.aem.instance.InstanceSync
-import com.cognifide.gradle.aem.instance.action.AwaitAction
-import com.cognifide.gradle.aem.instance.names
+import com.cognifide.gradle.aem.common.utils.fileNames
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
@@ -86,7 +86,7 @@ open class PackageDeploy : PackageTask() {
 
     fun await() {
         if (awaited) {
-            aem.actions.await {
+            aem.instanceActions.await {
                 instances = this@PackageDeploy.instances
                 awaitOptions()
             }

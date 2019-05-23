@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.environment.health
 
-import com.cognifide.gradle.aem.common.Formats
 import com.cognifide.gradle.aem.common.http.HttpClient
+import com.cognifide.gradle.aem.common.utils.Formats
 import com.cognifide.gradle.aem.environment.Environment
 import com.cognifide.gradle.aem.environment.EnvironmentException
 

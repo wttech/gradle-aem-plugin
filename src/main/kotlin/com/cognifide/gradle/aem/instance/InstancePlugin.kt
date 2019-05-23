@@ -1,9 +1,11 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.common.AemPlugin
+import com.cognifide.gradle.aem.AemPlugin
 import com.cognifide.gradle.aem.common.CommonPlugin
 import com.cognifide.gradle.aem.common.tasks.Resolve
 import com.cognifide.gradle.aem.common.tasks.lifecycle.*
+import com.cognifide.gradle.aem.instance.satisfy.InstanceSatisfy
+import com.cognifide.gradle.aem.instance.tail.InstanceTail
 import com.cognifide.gradle.aem.instance.tasks.*
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.PackageDeploy

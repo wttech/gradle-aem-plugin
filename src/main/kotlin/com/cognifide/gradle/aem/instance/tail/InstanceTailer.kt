@@ -1,9 +1,9 @@
 package com.cognifide.gradle.aem.instance.tail
 
-import com.cognifide.gradle.aem.common.AemExtension
-import com.cognifide.gradle.aem.common.AemTask
-import com.cognifide.gradle.aem.common.Formats
-import com.cognifide.gradle.aem.instance.Instance
+import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.AemTask
+import com.cognifide.gradle.aem.common.instance.Instance
+import com.cognifide.gradle.aem.common.utils.Formats
 import com.cognifide.gradle.aem.instance.tail.io.FileDestination
 import com.cognifide.gradle.aem.instance.tail.io.LogFiles
 import com.cognifide.gradle.aem.instance.tail.io.UrlSource
@@ -113,7 +113,7 @@ class InstanceTailer(val aem: AemExtension) {
 
     private fun checkStartLock() {
         if (logFiles.isLocked()) {
-            throw TailException("Another instance of log tailer is running for this project.")
+            throw InstanceTailerException("Another instance of log tailer is running for this project.")
         }
         logFiles.lock()
     }

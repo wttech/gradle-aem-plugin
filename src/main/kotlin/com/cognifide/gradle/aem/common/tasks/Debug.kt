@@ -1,12 +1,12 @@
 package com.cognifide.gradle.aem.common.tasks
 
-import com.cognifide.gradle.aem.common.AemDefaultTask
-import com.cognifide.gradle.aem.common.AemException
-import com.cognifide.gradle.aem.common.AemPlugin
-import com.cognifide.gradle.aem.common.AemTask
-import com.cognifide.gradle.aem.common.Formats
-import com.cognifide.gradle.aem.instance.names
-import com.cognifide.gradle.aem.instance.service.pkg.Package
+import com.cognifide.gradle.aem.AemDefaultTask
+import com.cognifide.gradle.aem.AemException
+import com.cognifide.gradle.aem.AemPlugin
+import com.cognifide.gradle.aem.AemTask
+import com.cognifide.gradle.aem.common.instance.names
+import com.cognifide.gradle.aem.common.instance.service.pkg.Package
+import com.cognifide.gradle.aem.common.utils.Formats
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction

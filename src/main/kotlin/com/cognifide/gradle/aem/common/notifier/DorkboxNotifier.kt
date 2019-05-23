@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.common.notifier
 
-import com.cognifide.gradle.aem.common.AemExtension
+import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.notifier.Notifier as BaseNotifier
 import dorkbox.notify.Notify
 import org.apache.commons.lang3.StringUtils

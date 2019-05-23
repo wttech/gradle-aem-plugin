@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.tooling.sync
 
-import com.cognifide.gradle.aem.common.AemExtension
-import com.cognifide.gradle.aem.instance.service.pkg.Package
+import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.aem.tooling.vlt.VltException
 import java.io.File
 import java.io.IOException
@@ -10,15 +10,9 @@ import org.apache.commons.io.FileUtils
 import org.apache.commons.io.filefilter.EmptyFileFilter
 import org.apache.commons.lang3.CharEncoding
 import org.apache.commons.lang3.StringUtils
-import org.gradle.api.Project
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.util.PatternFilterable
 
-class Cleaner(project: Project) {
-
-    @Internal
-    private val aem = AemExtension.of(project)
+class Cleaner(private val aem: AemExtension) {
 
     /**
      * Allows to control which files under each root root should be cleaned.
@@ -31,7 +25,6 @@ class Cleaner(project: Project) {
      * Determines which files will be deleted within running cleaning
      * (e.g after checking out JCR content).
      */
-    @Input
     var filesDeleted: PatternFilterable.() -> Unit = {
         include(listOf(
                 "**/.vlt",
@@ -44,7 +37,6 @@ class Cleaner(project: Project) {
      * Determines which files will be flattened
      * (e.g /_cq_dialog/.content.xml will be replaced by _cq_dialog.xml).
      */
-    @Input
     var filesFlattened: PatternFilterable.() -> Unit = {
         include(listOf(
                 "**/_cq_dialog/.content.xml",
@@ -58,7 +50,6 @@ class Cleaner(project: Project) {
      * After special delimiter '!' there could be specified one or many path patterns
      * (ANT style, delimited with ',') in which property shouldn't be removed.
      */
-    @Input
     var propertiesSkipped: List<String> = listOf(
             pathRule("jcr:uuid", listOf("**/home/users/*", "**/home/groups/*")),
             "jcr:lastModified*",
@@ -75,7 +66,6 @@ class Cleaner(project: Project) {
     /**
      * Mixin types that will be skipped when pulling JCR content from AEM instance.
      */
-    @Input
     var mixinTypesSkipped: List<String> = listOf(
             "cq:ReplicationStatus",
             "mix:versionable"
@@ -84,20 +74,17 @@ class Cleaner(project: Project) {
     /**
      * Controls unused namespaces skipping.
      */
-    @Input
     var namespacesSkipped: Boolean = aem.props.boolean("sync.cleaner.namespacesSkipped") ?: true
 
     /**
      * Controls backups for parent nodes of filter roots for keeping them untouched.
      */
-    @Input
     var parentsBackupEnabled: Boolean = aem.props.boolean("sync.cleaner.parentsBackup") ?: true
 
     /**
      * File suffix being added to parent node back up files.
      * Customize it only if really needed to resolve conflict with file being checked out.
      */
-    @Internal
     var parentsBackupSuffix = ".bak"
 
     private val parentsBackupDirIndicator
@@ -106,13 +93,11 @@ class Cleaner(project: Project) {
     /**
      * Hook for customizing particular line processing for '.content.xml' files.
      */
-    @Internal
     var lineProcess: (File, String) -> String = { file, line -> normalizeLine(file, line) }
 
     /**
      * Hook for additional all lines processing for '.content.xml' files.
      */
-    @Internal
     var contentProcess: (File, List<String>) -> List<String> = { file, lines -> normalizeContent(file, lines) }
 
     fun prepare(root: File) {

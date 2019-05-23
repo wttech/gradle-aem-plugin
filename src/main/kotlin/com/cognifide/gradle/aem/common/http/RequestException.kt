@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.common.http
 
-import com.cognifide.gradle.aem.common.AemException
+import com.cognifide.gradle.aem.AemException
 
 class RequestException : AemException {
 

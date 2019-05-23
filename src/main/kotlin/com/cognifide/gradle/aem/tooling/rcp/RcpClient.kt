@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.tooling.rcp
 
-import com.cognifide.gradle.aem.common.Formats
-import com.cognifide.gradle.aem.instance.Instance
+import com.cognifide.gradle.aem.common.instance.Instance
+import com.cognifide.gradle.aem.common.utils.Formats
 import com.cognifide.gradle.aem.tooling.vlt.VltRunner
 import org.apache.commons.lang3.time.StopWatch
 
