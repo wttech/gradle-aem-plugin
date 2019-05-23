@@ -115,9 +115,9 @@ open class PackageDeploy : PackageTask() {
                     initializer()
 
                     if (distributed) {
-                        distributePackage(pkg, uploadForce, uploadRetry, installRecursive, installRetry)
+                        packageManager.distributePackage(pkg, uploadForce, uploadRetry, installRecursive, installRetry)
                     } else {
-                        deployPackage(pkg, uploadForce, uploadRetry, installRecursive, installRetry)
+                        packageManager.deployPackage(pkg, uploadForce, uploadRetry, installRecursive, installRetry)
                     }
 
                     finalizer()

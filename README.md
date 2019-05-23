@@ -46,95 +46,99 @@ Gradle AEM Plugin 6.x serie and upper will **no longer support Groovy DSL** and 
 
 To see documentation for previous 5.x serie, please [click here](https://github.com/Cognifide/gradle-aem-plugin/tree/groovy) (navigate to branch `groovy`).
 
-* [Getting started](#getting-started)
-* [Configuration](#configuration)
- * [Plugin setup](#plugin-setup)
-    * [Minimal](#minimal)
-    * [Additional](#additional)
- * [Config plugin](#config-plugin)
-    * [Instance conventions](#instance-conventions)
-    * [Defining instances via properties file](#defining-instances-via-properties-file)
-    * [Defining instances via build script](#defining-instances-via-build-script)
- * [Tooling plugin](#tooling-plugin)
-    * [Task sync](#task-sync)
-       * [Cleaning features](#cleaning-features)
-       * [Default cleaning configuration](#default-cleaning-configuration)
-       * [Rendition cleaning configuration](#rendition-cleaning-configuration)
-       * [Using alternative transfer type](#using-alternative-transfer-type)
-       * [Downloading package options](#downloading-package-options)
-       * [Copying or cleaning content only](#copying-or-cleaning-content-only)
-       * [Filter file at custom path](#filter-file-at-custom-path)
-       * [Filter roots specified explicitly](#filter-roots-specified-explicitly)
-    * [Task rcp](#task-rcp)
-    * [Task sync](#task-sync)
-    * [Task debug](#task-debug)
- * [Package plugin](#package-plugin)
-    * [Task packageCompose](#task-packagecompose)
-       * [Default configuration](#default-configuration)
-    * [Including additional OSGi bundle into CRX package](#including-additional-osgi-bundle-into-crx-package)
-       * [Assembling packages (merging all-in-one)](#assembling-packages-merging-all-in-one)
-       * [Expandable properties](#expandable-properties)
-    * [Task packageDeploy](#task-packagedeploy)
-       * [Deploying only to desired instances](#deploying-only-to-desired-instances)
-       * [Deploying options](#deploying-options)
-    * [Task packageUpload](#task-packageupload)
-    * [Task packageDelete](#task-packagedelete)
-    * [Task packageInstall](#task-packageinstall)
-    * [Task packageUninstall](#task-packageuninstall)
-    * [Task packagePurge](#task-packagepurge)
-    * [Task packageActivate](#task-packageactivate)
- * [Bundle plugin](#bundle-plugin)
-    * [Bundle conventions](#bundle-conventions)
-    * [Embedding JAR file into OSGi bundle](#embedding-jar-file-into-osgi-bundle)
-    * [Configuring OSGi bundle manifest attributes](#configuring-osgi-bundle-manifest-attributes)
-    * [Excluding packages being incidentally imported by OSGi bundle](#excluding-packages-being-incidentally-imported-by-osgi-bundle)
- * [Instance plugin](#instance-plugin)
-    * [Task instanceSetup](#task-instancesetup)
-    * [Task instanceResetup](#task-instanceresetup)
-    * [Task instanceCreate](#task-instancecreate)
-       * [Configuration of AEM instance source (JAR file or backup file)](#configuration-of-aem-instance-source-jar-file-or-backup-file)
-       * [Extracted files configuration (optional)](#extracted-files-configuration-optional)
-    * [Task instanceBackup](#task-instancebackup)
-    * [Task instanceDestroy](#task-instancedestroy)
-    * [Task instanceUp](#task-instanceup)
-    * [Task instanceDown](#task-instancedown)
-    * [Task instanceRestart](#task-instancerestart)
-    * [Task instanceReload](#task-instancereload)
-    * [Task instanceSatisfy](#task-instancesatisfy)
-    * [Task instanceAwait](#task-instanceawait)
-    * [Task instanceCollect](#task-instancecollect)
-    * [Task instanceTail](#task-instancetail)
-       * [Tailing incidents](#tailing-incidents)
-       * [Tailing multiple instances](#tailing-multiple-instances)
-       * [Standalone tailer tool](#standalone-tailer-tool)
- * [Environment plugin](#environment-plugin)
-    * [Environment configuration](#environment-configuration)
-    * [Environment service health checks](#environment-service-health-checks)
-    * [Task environmentUp](#task-environmentup)
-    * [Task environmentDown](#task-environmentdown)
-    * [Task environmentDev](#task-environmentdev)
-* [How to's](#how-tos)
- * [Set AEM configuration properly for all / concrete project(s)](#set-aem-configuration-properly-for-all--concrete-projects)
- * [Implement custom AEM tasks](#implement-custom-aem-tasks)
-    * [Defining CRX package via code then downloading and sharing it using external HTTP endpoint](#defining-crx-package-via-code-then-downloading-and-sharing-it-using-external-http-endpoint)
-    * [Downloading CRX package from external HTTP endpoint and deploying it on desired AEM instances](#downloading-crx-package-from-external-http-endpoint-and-deploying-it-on-desired-aem-instances)
-    * [Controlling OSGi bundles and components](#controlling-osgi-bundles-and-components)
-    * [Executing code on AEM runtime](#executing-code-on-aem-runtime)
-    * [Calling AEM endpoints / making any HTTP requests](#calling-aem-endpoints--making-any-http-requests)
-    * [Making changes to repository](#making-changes-to-repository)
- * [Understand why there are one or two plugins to be applied in build script](#understand-why-there-are-one-or-two-plugins-to-be-applied-in-build-script)
- * [Work effectively on start and daily basis](#work-effectively-on-start-and-daily-basis)
- * [Filter instances to work with](#filter-instances-to-work-with)
- * [Know how properties are being expanded in instance or package files](#know-how-properties-are-being-expanded-in-instance-or-package-files)
-* [Known issues](#known-issues)
- * [No OSGi services / components are registered](#no-osgi-services--components-are-registered)
- * [Caching task packageCompose](#caching-task-packagecompose)
- * [Vault tasks parallelism](#vault-tasks-parallelism)
- * [Resolving files using SSH](#resolving-files-using-ssh)
-* [Compatibility](#compatibility)
-* [Building](#building)
-* [Contributing](#contributing)
-* [License](#license)
+## Table of contents
+
+  * [Getting started](#getting-started)
+  * [Configuration](#configuration)
+     * [Plugin setup](#plugin-setup)
+        * [Minimal](#minimal)
+        * [Additional](#additional)
+     * [Config plugin](#config-plugin)
+        * [Instance conventions](#instance-conventions)
+        * [Defining instances via properties file](#defining-instances-via-properties-file)
+        * [Defining instances via build script](#defining-instances-via-build-script)
+     * [Tooling plugin](#tooling-plugin)
+        * [Task sync](#task-sync)
+           * [Cleaning features](#cleaning-features)
+           * [Default cleaning configuration](#default-cleaning-configuration)
+           * [Rendition cleaning configuration](#rendition-cleaning-configuration)
+           * [Using alternative transfer type](#using-alternative-transfer-type)
+           * [Downloading package options](#downloading-package-options)
+           * [Copying or cleaning content only](#copying-or-cleaning-content-only)
+           * [Filter file at custom path](#filter-file-at-custom-path)
+           * [Filter roots specified explicitly](#filter-roots-specified-explicitly)
+        * [Task rcp](#task-rcp)
+        * [Task vlt](#task-vlt)
+        * [Task debug](#task-debug)
+     * [Package plugin](#package-plugin)
+        * [Task packageCompose](#task-packagecompose)
+           * [Default configuration](#default-configuration)
+        * [Including additional OSGi bundle into CRX package](#including-additional-osgi-bundle-into-crx-package)
+           * [Assembling packages (merging all-in-one)](#assembling-packages-merging-all-in-one)
+           * [Expandable properties](#expandable-properties)
+        * [Task packageDeploy](#task-packagedeploy)
+           * [Deploying only to desired instances](#deploying-only-to-desired-instances)
+           * [Deploying options](#deploying-options)
+        * [Task packageUpload](#task-packageupload)
+        * [Task packageDelete](#task-packagedelete)
+        * [Task packageInstall](#task-packageinstall)
+        * [Task packageUninstall](#task-packageuninstall)
+        * [Task packagePurge](#task-packagepurge)
+        * [Task packageActivate](#task-packageactivate)
+     * [Bundle plugin](#bundle-plugin)
+        * [Bundle conventions](#bundle-conventions)
+        * [Embedding JAR file into OSGi bundle](#embedding-jar-file-into-osgi-bundle)
+        * [Configuring OSGi bundle manifest attributes](#configuring-osgi-bundle-manifest-attributes)
+        * [Excluding packages being incidentally imported by OSGi bundle](#excluding-packages-being-incidentally-imported-by-osgi-bundle)
+     * [Instance plugin](#instance-plugin)
+        * [Task instanceSetup](#task-instancesetup)
+        * [Task instanceResetup](#task-instanceresetup)
+        * [Task instanceCreate](#task-instancecreate)
+           * [Configuration of AEM instance source (JAR file or backup file)](#configuration-of-aem-instance-source-jar-file-or-backup-file)
+           * [Extracted files configuration (optional)](#extracted-files-configuration-optional)
+        * [Task instanceBackup](#task-instancebackup)
+        * [Task instanceDestroy](#task-instancedestroy)
+        * [Task instanceUp](#task-instanceup)
+        * [Task instanceDown](#task-instancedown)
+        * [Task instanceRestart](#task-instancerestart)
+        * [Task instanceReload](#task-instancereload)
+        * [Task instanceSatisfy](#task-instancesatisfy)
+        * [Task instanceAwait](#task-instanceawait)
+        * [Task instanceCollect](#task-instancecollect)
+        * [Task instanceTail](#task-instancetail)
+           * [Tailing incidents](#tailing-incidents)
+           * [Tailing multiple instances](#tailing-multiple-instances)
+           * [Standalone tailer tool](#standalone-tailer-tool)
+     * [Environment plugin](#environment-plugin)
+        * [Environment configuration](#environment-configuration)
+           * [Notice for Docker on Windows](#notice-for-docker-on-windows)
+           * [Notice for Docker Toolbox](#notice-for-docker-toolbox)
+        * [Environment service health checks](#environment-service-health-checks)
+        * [Task environmentUp](#task-environmentup)
+        * [Task environmentDown](#task-environmentdown)
+        * [Task environmentDev](#task-environmentdev)
+  * [How to's](#how-tos)
+     * [Set AEM configuration properly for all / concrete project(s)](#set-aem-configuration-properly-for-all--concrete-projects)
+     * [Implement custom AEM tasks](#implement-custom-aem-tasks)
+        * [Defining CRX package via code then downloading and sharing it using external HTTP endpoint](#defining-crx-package-via-code-then-downloading-and-sharing-it-using-external-http-endpoint)
+        * [Downloading CRX package from external HTTP endpoint and deploying it on desired AEM instances](#downloading-crx-package-from-external-http-endpoint-and-deploying-it-on-desired-aem-instances)
+        * [Controlling OSGi bundles and components](#controlling-osgi-bundles-and-components)
+        * [Executing code on AEM runtime](#executing-code-on-aem-runtime)
+        * [Calling AEM endpoints / making any HTTP requests](#calling-aem-endpoints--making-any-http-requests)
+        * [Making changes to repository](#making-changes-to-repository)
+     * [Understand why there are one or two plugins to be applied in build script](#understand-why-there-are-one-or-two-plugins-to-be-applied-in-build-script)
+     * [Work effectively on start and daily basis](#work-effectively-on-start-and-daily-basis)
+     * [Filter instances to work with](#filter-instances-to-work-with)
+     * [Know how properties are being expanded in instance or package files](#know-how-properties-are-being-expanded-in-instance-or-package-files)
+  * [Known issues](#known-issues)
+     * [No OSGi services / components are registered](#no-osgi-services--components-are-registered)
+     * [Caching task packageCompose](#caching-task-packagecompose)
+     * [Vault tasks parallelism](#vault-tasks-parallelism)
+     * [Resolving files using SSH](#resolving-files-using-ssh)
+  * [Compatibility](#compatibility)
+  * [Building](#building)
+  * [Contributing](#contributing)
+  * [License](#license)
 
 ## Getting started
 
@@ -237,7 +241,7 @@ To see all available options and actual documentation, please follow to:
 
 ```kotlin
 plugins {
-    id("com.cognifide.aem.config")
+    id("com.cognifide.aem.common")
 }
 ```
 
@@ -323,40 +327,40 @@ Example usage below. The commented value is an effective instance name.
 
 ```kotlin
 aem {
-    config {
-        localInstance("http://localhost:4502") // local-author
-        localInstance("http://localhost:4502") { // local-author
+    instance {
+        local("http://localhost:4502") // local-author
+        local("http://localhost:4502") { // local-author
             password = "admin"
             typeName = "author"
             debugPort = 14502 
         }
       
-        localInstance("http://localhost:4503") // local-publish
-        localInstance("http://localhost:4503") { // local-publish
+        local("http://localhost:4503") // local-publish
+        local("http://localhost:4503") { // local-publish
             password = "admin"
             typeName = "publish"
             debugPort = 14503
         } 
       
-        remoteInstance("http://192.168.10.1:4502") { // integration-author1
+        remote("http://192.168.10.1:4502") { // integration-author1
             user = "user1" 
             password = "password2"
             environment = "integration"
             typeName = "author1"
         } 
-        remoteInstance("http://192.168.10.1:8080") { // integration-author2
+        remote("http://192.168.10.1:8080") { // integration-author2
             user = "user1" 
             password = "password2"
             environment = "integration"
             typeName = "author2"
         } 
-        remoteInstance("http://192.168.10.2:4503") { // integration-publish1
+        remote("http://192.168.10.2:4503") { // integration-publish1
             user = "user2"
             password = "password2"
             environment = "integration"
             typeName = "publish1"
         } 
-        remoteInstance("http://192.168.10.2:8080") { // integration-publish2
+        remote("http://192.168.10.2:8080") { // integration-publish2
             user = "user2"
             password = "password2"
             environment = "integration"
@@ -558,7 +562,7 @@ Consider disabling AEM workflow launchers before running this task and re-enabli
 
 RCP task is internally using [Vault Remote Copy](http://jackrabbit.apache.org/filevault/rcp.html) which requires bundle *Apache Sling Simple WebDAV Access to repositories (org.apache.sling.jcr.webdav)* present in active state on instance.
 
-#### Task `sync`
+#### Task `vlt`
 
 Execute any JCR File Vault command. 
 
@@ -1038,18 +1042,18 @@ To use this task, specify required properties in ignored file *gradle.properties
 
 To create instances from backup created by `instanceBackup` task, specify:
 
-* `aem.localInstance.zipUrl=http://[user]:[password]@[host]/[path]/example-yyyyMMddmmss-x.x.x-backup.zip`
+* `localInstance.zipUrl=http://[user]:[password]@[host]/[path]/example-yyyyMMddmmss-x.x.x-backup.zip`
 
 To create instances from scratch, specify:
 
-* `aem.localInstance.jarUrl=http://[user]:[password]@[host]/[path]/cq-quickstart.jar`
-* `aem.localInstance.licenseUrl=http://[user]:[password]@[host]/[path]/license.properties`
+* `localInstance.jarUrl=http://[user]:[password]@[host]/[path]/cq-quickstart.jar`
+* `localInstance.licenseUrl=http://[user]:[password]@[host]/[path]/license.properties`
 
 Source mode, can be adjusted by specifying parameter `-PlocalInstance.source`:
 
 * `auto` - Create instances from most recent backup (external or internal) or fallback to creating from the scratch if there is no backup available.
 * `none` - Force creating instances from the scratch.
-* `backup_external` - Force using backup available at external source (specified in `aem.localInstance.zipUrl`).      
+* `backup_external` - Force using backup available at external source (specified in `localInstance.zipUrl`).      
 * `backup_internal` - Force using internal backup (created by task `instanceBackup`).
 
 When mode is set to `auto` or `backup_internal`, then ZIP selection rule could be adjusted:
@@ -1380,18 +1384,27 @@ Inherits from [Config Plugin](#config-plugin).
 
 Most of the configuration steps are automated. However, there are three manual steps to make this setup fully operating:
 
-1. [Install docker](https://docs.docker.com/install/)
-    * [Windows Installer](https://download.docker.com/win/stable/Docker%20for%20Windows%20Installer.exe)
-2. Setup hosts on local machine (admin rights are required to access `/etc/hosts` or `C:\Windows\System32\drivers\etc\hosts` file): 
-    * Windows: 
-        * Start PowerShell with "Run as administrator"
-        * Execute: `.\gradlew.bat environmentHosts --no-daemon`
-    * Unix: 
-        * Execute: `sudo ./gradlew environmentHosts --no-daemon`
+1. [Install Docker](https://docs.docker.com/install/)
+    * [Desktop](https://docs.docker.com/docker-for-windows/install/) (highly recommended, using Hyper-V)
+    * [Toolbox](https://docs.docker.com/toolbox/toolbox_install_windows/) (legacy, using VirtualBox)
+2. Setup hosts on local machine (admin rights are required to access `/etc/hosts` or `C:\Windows\System32\drivers\etc\hosts` file)
+    * In project based on [Gradle AEM Multi](https://github.com/Cognifide/gradle-aem-multi/blob/master/aem/hosts.bat), just run script `aem/hosts.sh` or `aem/hosts.bat`
+    * Otherwise: 
+        * Windows: 
+            * Start PowerShell with "Run as administrator"
+            * Execute: `.\gradlew.bat environmentHosts --no-daemon`
+        * Unix: 
+            * Execute: `sudo ./gradlew environmentHosts --no-daemon`
     
-**Windows only:**
+    
+##### Notice for Docker on Windows
 
-Because environment is using Dockers bind mount, on Windows, running task `environmentUp` will require additional user confirmation to allow virtualized container to access local configuration files.
+Because environment is using Docker volumes, on Windows, running task `environmentUp` will require additional user confirmation to allow virtualized container to access local configuration files.
+
+##### Notice for Docker Toolbox
+
+While using Docker Toolbox, beware that, by default, there is only one shared folder in VirtualBox configured which mounts *C:/Users* to */c/users* on Docker Machine / Ubuntu. 
+As a consequence, if AEM project is located outside of *C:/Users* directory, there is a need to manually add corresponding shared folder and mount it to */c/users* path on Docker Machine using VirtualBox GUI.
 
 #### Environment service health checks
 
@@ -1401,16 +1414,20 @@ In case of the dispatcher it takes few seconds to start. Default service heath c
 aem {
     environment {
             hosts(
-                    "127.0.0.1 example.com",
-                    "127.0.0.1 demo.example.com",
-                    "127.0.0.1 author.example.com",
-                    "127.0.0.1 invalidation-only"
+                "example.com",
+                "demo.example.com",
+                "author.example.com",
+                "invalidation-only"
             )
-            directories(
-                    "logs",
-                    "cache/content/example/live",
-                    "cache/content/example/demo"
-            )
+            directories {
+                regular(
+                    "httpd/logs"
+                )
+                cache(
+                    "httpd/cache/content/example/live",
+                    "httpd/cache/content/example/demo"
+                )
+            }
             healthChecks {
                 url("Live site", "http://example.com/en-us.html", text = "English")
                 url("Demo site", "http://demo.example.com/en-us.html", text = "English")
@@ -1658,33 +1675,6 @@ aem {
 ```
 
 There are also available convenient methods `asStream`, `asString` to be able to process endpoint responses.
-
-#### Making changes to repository
-
-To make some changes in repository on AEM instance use `nodes` namespace in `aem.sync`
-
-```kotlin
-aem {
-    tasks {
-        instanceSatisfy {
-            doFirst {
-                aem.authorInstances.first().sync.repository {
-                    logger.lifecycle("Script:  Workflow DISABLED")
-                    updateNode("/libs/settings/workflow/launcher/config/update_asset_create", mapOf("enabled" to false))
-                }
-            }
-        }
-        packageDeploy {
-            doLast {
-                aem.authorInstances.first().sync.repository {
-                    logger.lifecycle("Script:  Workflow ENABLED")
-                    updateNode("/libs/settings/workflow/launcher/config/update_asset_create", mapOf("enabled" to true))
-                }
-            }
-        }
-    }
-}
-```
 
 ### Understand why there are one or two plugins to be applied in build script
 

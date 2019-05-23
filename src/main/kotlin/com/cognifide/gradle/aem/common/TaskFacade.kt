@@ -1,8 +1,8 @@
 package com.cognifide.gradle.aem.common
 
 import com.cognifide.gradle.aem.bundle.BundleJar
+import com.cognifide.gradle.aem.common.tasks.Debug
 import com.cognifide.gradle.aem.common.tasks.lifecycle.*
-import com.cognifide.gradle.aem.config.tasks.Debug
 import com.cognifide.gradle.aem.environment.tasks.*
 import com.cognifide.gradle.aem.instance.tasks.*
 import com.cognifide.gradle.aem.pkg.tasks.*

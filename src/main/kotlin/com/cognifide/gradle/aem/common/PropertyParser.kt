@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.common
 import com.mitchellbosecke.pebble.PebbleEngine
 import com.mitchellbosecke.pebble.lexer.Syntax
 import com.mitchellbosecke.pebble.loader.StringLoader
+import java.io.File
 import java.io.IOException
 import java.io.StringWriter
 import org.apache.commons.lang3.text.StrSubstitutor
@@ -53,13 +54,17 @@ class PropertyParser(private val aem: AemExtension) {
 
     fun string(name: String) = prop(name)
 
+    fun expand(file: File, props: Map<String, Any>) {
+        file.writeText(expand(file.readText(), props, file.toString()))
+    }
+
     fun expand(source: String, props: Map<String, Any>, context: String? = null): String {
         return expand(source, envProps + systemProps + props, props, context)
     }
 
     fun expandPackage(source: String, props: Map<String, Any>, context: String? = null): String {
         val interpolableProps = envProps + systemProps + props
-        val templateProps = projectProps + configProps + props
+        val templateProps = projectProps + commonProps + props
 
         return expand(source, interpolableProps, templateProps, context)
     }
@@ -106,8 +111,8 @@ class PropertyParser(private val aem: AemExtension) {
                 "project.build.finalName" to "${project.name}-${project.version}"
         )
 
-    val configProps: Map<String, Any>
-        get() = mapOf("config" to aem.config)
+    val commonProps: Map<String, Any>
+        get() = mapOf("aem" to aem)
 
     fun isForce(): Boolean {
         return flag(FORCE_PROP)

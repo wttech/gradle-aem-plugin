@@ -133,7 +133,7 @@ class LocalInstanceOptions(aem: AemExtension) : Serializable {
          */
         NONE,
         /**
-         * Force using backup available at external source (specified in 'aem.localInstance.zipUrl').
+         * Force using backup available at external source (specified in 'localInstance.zipUrl').
          */
         BACKUP_EXTERNAL,
         /**

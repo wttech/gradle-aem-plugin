@@ -21,7 +21,7 @@ class ReloadAction(aem: AemExtension) : AwaitAction(aem) {
 
         aem.parallel.with(instances) {
             try {
-                sync.restartFramework()
+                sync.osgiFramework.restart()
                 reloaded += this
             } catch (e: InstanceException) { // still await timeout will fail
                 aem.logger.error("Instance is unavailable: $this")

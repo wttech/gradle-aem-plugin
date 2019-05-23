@@ -1,27 +1,30 @@
-package com.cognifide.gradle.aem.instance
+package com.cognifide.gradle.aem.instance.service
 
 import com.cognifide.gradle.aem.common.CollectingLogger
+import com.cognifide.gradle.aem.instance.InstanceSync
 import org.apache.commons.lang3.builder.EqualsBuilder
 import org.apache.commons.lang3.builder.HashCodeBuilder
 
-class InstanceState(private var syncOrigin: InstanceSync, val instance: Instance) {
+class StateChecker(private var syncOrigin: InstanceSync) {
+
+    val instance = syncOrigin.instance
 
     val sync: InstanceSync
         get() = syncOrigin
 
     val status = CollectingLogger()
 
-    val bundleState by lazy { sync.determineBundleState() }
+    val bundleState by lazy { sync.osgiFramework.determineBundleState() }
 
-    val componentState by lazy { sync.determineComponentState() }
+    val componentState by lazy { sync.osgiFramework.determineComponentState() }
 
-    val eventState by lazy { sync.determineEventState() }
+    val eventState by lazy { sync.osgiFramework.determineEventState() }
 
     /**
      * Customize default synchronization options like basic auth credentials, connection
      * timeouts etc while determining bundle or component states.
      */
-    fun <T> check(configurer: InstanceSync.() -> Unit, action: InstanceState.() -> T): T {
+    fun <T> check(configurer: InstanceSync.() -> Unit, action: StateChecker.() -> T): T {
         val origin = syncOrigin
         syncOrigin = InstanceSync(syncOrigin.aem, syncOrigin.instance).apply(configurer)
         val result = action(this)
@@ -146,7 +149,7 @@ class InstanceState(private var syncOrigin: InstanceSync, val instance: Instance
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as InstanceState
+        other as StateChecker
 
         return EqualsBuilder()
                 .append(instance, other.instance)

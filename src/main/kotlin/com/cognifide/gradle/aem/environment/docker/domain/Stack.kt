@@ -9,15 +9,15 @@ import com.cognifide.gradle.aem.environment.docker.base.DockerStack
 /**
  * Represents Docker stack named 'aem' and provides API for manipulating it.
  */
-class AemStack(val environment: Environment) {
+class Stack(val environment: Environment) {
 
     private val aem = environment.aem
 
-    val stack = DockerStack("aem")
+    val stack = DockerStack(aem, aem.props.string("environment.stack.name") ?: "aem")
 
-    var deployRetry = aem.retry { afterSecond(30) }
+    var deployRetry = aem.retry { afterSecond(aem.props.long("environment.stack.deployRetry") ?: 30) }
 
-    var undeployRetry = aem.retry { afterSecond(30) }
+    var undeployRetry = aem.retry { afterSecond(aem.props.long("environment.stack.undeployRetry") ?: 30) }
 
     private val initialized: Boolean by lazy {
         var error: Exception? = null

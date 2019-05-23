@@ -49,7 +49,7 @@ open class InstanceCreate : LocalInstanceTask() {
             throw InstanceException("Backup ZIP cannot be used to create missing instances.")
         }
 
-        val instanceRoot = aem.config.localInstanceOptions.rootDir
+        val instanceRoot = aem.localInstanceOptions.rootDir
 
         aem.logger.info("Extracting files from backup ZIP '$backupZip' to directory '$instanceRoot'")
 
@@ -105,7 +105,7 @@ open class InstanceCreate : LocalInstanceTask() {
 
     private fun getExternalBackup(): File {
         return instanceOptions.zip ?: throw InstanceException("External local instance backup is not available. " +
-                "Ensure having property 'aem.localInstance.zipUrl' specified.")
+                "Ensure having property 'localInstance.zipUrl' specified.")
     }
 
     companion object {

@@ -131,6 +131,15 @@ object FileOperations {
         Files.newDirectoryStream(dir).use { dirStream -> return !dirStream.iterator().hasNext() }
     }
 
+    fun removeDirContents(dir: File): Boolean {
+        val children = dir.listFiles() ?: arrayOf()
+        var result = true
+        children.forEach {
+            result = result && it.deleteRecursively()
+        }
+        return result
+    }
+
     /**
      * Only Zip4j correctly extracts AEM backup ZIP files.
      * Gradle zipTree and Zero-Turnaround ZipUtil is not working properly in that case.

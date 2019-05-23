@@ -1,9 +1,7 @@
-package com.cognifide.gradle.aem.config
+package com.cognifide.gradle.aem.common
 
-import com.cognifide.gradle.aem.common.AemExtension
-import com.cognifide.gradle.aem.common.AemPlugin
-import com.cognifide.gradle.aem.config.tasks.Debug
-import com.cognifide.gradle.aem.config.tasks.Resolve
+import com.cognifide.gradle.aem.common.tasks.Debug
+import com.cognifide.gradle.aem.common.tasks.Resolve
 import java.util.*
 import org.gradle.api.Project
 import org.gradle.api.plugins.BasePlugin
@@ -12,7 +10,7 @@ import org.gradle.language.base.plugins.LifecycleBasePlugin
 /**
  * Provides configuration used by both package and instance plugins.
  */
-class ConfigPlugin : AemPlugin() {
+class CommonPlugin : AemPlugin() {
 
     override fun Project.configure() {
         setupGreet()
@@ -42,7 +40,7 @@ class ConfigPlugin : AemPlugin() {
     }
 
     private fun Project.setupExtensions() {
-        extensions.create(AemExtension.NAME, AemExtension::class.java, this)
+        extensions.add(AemExtension.NAME, AemExtension(this))
     }
 
     private fun Project.setupTasks() {
@@ -55,7 +53,7 @@ class ConfigPlugin : AemPlugin() {
     }
 
     companion object {
-        const val ID = "com.cognifide.aem.config"
+        const val ID = "com.cognifide.aem.common"
 
         const val STRUCTURE_PROPERTIES_FILE = "aem.properties"
     }

@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.common.Behaviors
+import com.cognifide.gradle.aem.instance.service.StateChecker
 
 object InstanceProgress {
 
@@ -8,7 +9,7 @@ object InstanceProgress {
 
     fun determine(
         stableTimes: Long,
-        states: List<InstanceState>,
+        states: List<StateChecker>,
         unavailableInstances: List<Instance>,
         unstableInstances: List<Instance>,
         timer: Behaviors.Timer
@@ -26,14 +27,14 @@ object InstanceProgress {
         }
     }
 
-    private fun states(states: List<InstanceState>, unavailableInstances: List<Instance>, unstableInstances: List<Instance>): String {
+    private fun states(states: List<StateChecker>, unavailableInstances: List<Instance>, unstableInstances: List<Instance>): String {
         return states.joinToString(" | ") {
             state(it, states.size > 2, unavailableInstances, unstableInstances)
         }
     }
 
     private fun state(
-        state: InstanceState,
+        state: StateChecker,
         shortProgress: Boolean,
         unavailableInstances: List<Instance>,
         unstableInstances: List<Instance>
@@ -42,7 +43,7 @@ object InstanceProgress {
     }
 
     private fun stateIndicator(
-        state: InstanceState,
+        state: StateChecker,
         unavailableInstances: List<Instance>,
         unstableInstances: List<Instance>
     ): String {
@@ -53,7 +54,7 @@ object InstanceProgress {
         }
     }
 
-    private fun stateDetails(state: InstanceState, shortInfo: Boolean): String {
+    private fun stateDetails(state: StateChecker, shortInfo: Boolean): String {
         return if (shortInfo) {
             state.bundleState.stablePercent
         } else {
