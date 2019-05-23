@@ -1676,6 +1676,33 @@ aem {
 
 There are also available convenient methods `asStream`, `asString` to be able to process endpoint responses.
 
+#### Making changes to repository
+
+To make some changes in repository on AEM instance use `nodes` namespace in `aem.sync`
+
+```kotlin
+aem {
+    tasks {
+        instanceSatisfy {
+            doFirst {
+                aem.authorInstances.first().sync.repository {
+                    logger.lifecycle("Script:  Workflow DISABLED")
+                    updateNode("/libs/settings/workflow/launcher/config/update_asset_create", mapOf("enabled" to false))
+                }
+            }
+        }
+        packageDeploy {
+            doLast {
+                aem.authorInstances.first().sync.repository {
+                    logger.lifecycle("Script:  Workflow ENABLED")
+                    updateNode("/libs/settings/workflow/launcher/config/update_asset_create", mapOf("enabled" to true))
+                }
+            }
+        }
+    }
+}
+```
+
 ### Understand why there are one or two plugins to be applied in build script
 
 Gradle AEM Plugin assumes separation of 5 plugins to properly fit into Gradle tasks structure correctly.

@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.common.AemExtension
+import com.cognifide.gradle.aem.instance.content.Repository
 import com.cognifide.gradle.aem.instance.service.GroovyConsole
 import com.cognifide.gradle.aem.instance.service.OsgiFramework
 import com.cognifide.gradle.aem.instance.service.PackageManager
@@ -26,5 +27,11 @@ class InstanceSync(aem: AemExtension, instance: Instance) : InstanceHttpClient(a
 
     fun groovyConsole(callback: GroovyConsole.() -> Unit) {
         groovyConsole.apply(callback)
+    }
+
+    val repository = Repository(this)
+
+    fun repository(callback: Repository.() -> Unit) {
+        repository.apply(callback)
     }
 }
