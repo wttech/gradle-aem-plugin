@@ -22,12 +22,12 @@ class Node private constructor(val sync: InstanceSync, val path: String, val pro
         get() = stringValue(JcrConstants.JCR_DESCRIPTION)
     val jcrPrimaryType: String
         get() = stringValue(JcrConstants.JCR_PRIMARYTYPE)
-    val children: Iterator<Node>
+    val children: Sequence<Node>
         get() = sync.get("$path.harray.1.json") { asJson(it) }
                 .read<JSONArray>("__children__")
                 .map { child -> child as Map<*, *> }
                 .map { props -> load(sync, path + "/" + props["__name__"] as String) }
-                .iterator()
+                .asSequence()
 
     fun value(propName: String): Any = document.read(propName) as Any
     fun stringValue(propName: String): String = document.read(propName) as String
