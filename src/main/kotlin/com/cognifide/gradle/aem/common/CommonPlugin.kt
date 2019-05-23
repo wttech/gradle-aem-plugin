@@ -10,7 +10,7 @@ import org.gradle.api.plugins.BasePlugin
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 
 /**
- * Provides configuration used by both package and instance plugins.
+ * Provides 'aem' extension to build script on which all other build logic is based.
  */
 class CommonPlugin : AemPlugin() {
 
