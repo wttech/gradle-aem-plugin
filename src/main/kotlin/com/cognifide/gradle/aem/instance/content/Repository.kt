@@ -4,7 +4,6 @@ import com.cognifide.gradle.aem.common.http.RequestException
 import com.cognifide.gradle.aem.instance.InstanceService
 import com.cognifide.gradle.aem.instance.InstanceSync
 import com.jayway.jsonpath.DocumentContext
-import net.minidev.json.JSONArray
 
 class Repository(sync: InstanceSync) : InstanceService(sync) {
 
@@ -86,14 +85,6 @@ class Repository(sync: InstanceSync) : InstanceService(sync) {
 
     fun hasProperty(path: String, propName: String): Boolean {
         return getNode(path).property(propName) != null
-    }
-
-    internal fun getChildren(node: Node): Sequence<Node> {
-        return sync.get("${node.path}.harray.1.json") { asJson(it) }
-                .read<JSONArray>("__children__")
-                .map { child -> child as Map<*, *> }
-                .map { props -> getNode("${node.path}${node.path}/${props["__name__"]}") }
-                .asSequence()
     }
 
     private fun loadNode(path: String): DocumentContext = sync.get("$path.json") { asJson(it) }

@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.instance.content
 
-import com.google.common.collect.ImmutableMap
 import com.jayway.jsonpath.DocumentContext
+import net.minidev.json.JSONArray
 
 class Node internal constructor(
     private val repository: Repository,
@@ -16,10 +16,14 @@ class Node internal constructor(
         get() = document.jsonString()
 
     val props: Map<String, Any>
-        get() = ImmutableMap.copyOf(document.json<LinkedHashMap<String, Any>>())
+        get() = document.json<LinkedHashMap<String, Any>>().toMap()
 
     val children: Sequence<Node>
-        get() = repository.getChildren(this)
+        get() = repository.sync.get("$path.harray.1.json") { asJson(it) }
+                .read<JSONArray>("__children__")
+                .map { child -> child as Map<*, *> }
+                .map { props -> repository.getNode("$path/${props["__name__"]}") }
+                .asSequence()
 
     fun property(propName: String): Any? = document.read(propName) as Any
 
