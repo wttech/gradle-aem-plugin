@@ -1677,7 +1677,7 @@ There are also available convenient methods `asStream`, `asString` to be able to
 
 #### Making changes to repository
 
-To make some changes in repository on AEM instance use `nodes` namespace in `aem.sync`
+To make some changes in repository on AEM instance use `repository` namespace in `aem.sync`
 
 ```kotlin
 aem {
@@ -1685,16 +1685,16 @@ aem {
         instanceSatisfy {
             doFirst {
                 aem.authorInstances.first().sync.repository {
-                    logger.lifecycle("Script:  Workflow DISABLED")
-                    updateNode("/libs/settings/workflow/launcher/config/update_asset_create", mapOf("enabled" to false))
+                    updateNode("/libs/settings/workflow/launcher/config/update_asset_create", mapOf("enabled" to true))
+                    logger.lifecycle("Workflow `${getNode("/libs/settings/workflow/launcher/config/update_asset_create").props["description"]}` DISABLED")
                 }
             }
         }
         packageDeploy {
             doLast {
                 aem.authorInstances.first().sync.repository {
-                    logger.lifecycle("Script:  Workflow ENABLED")
-                    updateNode("/libs/settings/workflow/launcher/config/update_asset_create", mapOf("enabled" to true))
+                    updateProperty("/libs/settings/workflow/launcher/config/update_asset_create", "enabled", true)
+                    logger.lifecycle("Workflow `${getProperty("/libs/settings/workflow/launcher/config/update_asset_create", "description")}` ENABLED")
                 }
             }
         }
