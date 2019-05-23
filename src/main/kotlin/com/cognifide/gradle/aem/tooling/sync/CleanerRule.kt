@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.tooling.clean
+package com.cognifide.gradle.aem.tooling.sync
 
 import com.cognifide.gradle.aem.common.Patterns
 import com.cognifide.gradle.aem.tooling.vlt.VltException

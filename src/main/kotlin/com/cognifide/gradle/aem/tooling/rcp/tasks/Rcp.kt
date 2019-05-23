@@ -1,8 +1,9 @@
-package com.cognifide.gradle.aem.tooling.tasks
+package com.cognifide.gradle.aem.tooling.rcp.tasks
 
 import com.cognifide.gradle.aem.instance.Instance
+import com.cognifide.gradle.aem.tooling.rcp.RcpClient
 import com.cognifide.gradle.aem.tooling.vlt.VltException
-import com.cognifide.gradle.aem.tooling.vlt.VltRcpClient
+import com.cognifide.gradle.aem.tooling.vlt.tasks.Vlt
 import java.io.File
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
@@ -40,7 +41,7 @@ open class Rcp : Vlt() {
         }
     }
 
-    private fun createClient(): VltRcpClient {
+    private fun createClient(): RcpClient {
         if (sourceInstance == null) {
             throw VltException("Source RCP instance is not defined. Ensure specified param '-Pinstance.source'")
         }
@@ -49,7 +50,7 @@ open class Rcp : Vlt() {
             throw VltException("Target RCP instance is not defined. Ensure specified param '-Pinstance.target'")
         }
 
-        return VltRcpClient(vlt, sourceInstance!!, targetInstance!!).apply {
+        return RcpClient(vlt, sourceInstance!!, targetInstance!!).apply {
             this@apply.opts = this@Rcp.opts
         }
     }

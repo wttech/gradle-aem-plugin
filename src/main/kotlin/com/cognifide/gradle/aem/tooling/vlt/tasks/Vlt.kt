@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.tooling.tasks
+package com.cognifide.gradle.aem.tooling.vlt.tasks
 
 import com.cognifide.gradle.aem.common.AemDefaultTask
 import com.cognifide.gradle.aem.tooling.vlt.VltRunner

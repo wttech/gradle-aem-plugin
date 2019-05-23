@@ -30,7 +30,7 @@ class PropertyParser(private val aem: AemExtension) {
         return null
     }
 
-    fun prop(name: String): String? {
+    private fun prop(name: String): String? {
         return find(name)?.ifBlank { null }
     }
 

@@ -1,20 +1,99 @@
 package com.cognifide.gradle.aem.instance.tail
 
+import com.cognifide.gradle.aem.common.AemExtension
+import com.cognifide.gradle.aem.common.AemTask
+import com.cognifide.gradle.aem.common.Formats
 import com.cognifide.gradle.aem.instance.Instance
 import com.cognifide.gradle.aem.instance.tail.io.FileDestination
 import com.cognifide.gradle.aem.instance.tail.io.LogFiles
 import com.cognifide.gradle.aem.instance.tail.io.UrlSource
+import java.io.File
+import java.nio.file.Paths
+import kotlin.math.max
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
-class InstanceTailer(val options: TailOptions, val instances: List<Instance>) {
+class InstanceTailer(val aem: AemExtension) {
 
-    private val aem = options.aem
+    /**
+     * Directory where log files will be stored.
+     */
+    var rootDir: File = AemTask.temporaryDir(aem.project, "instanceTail")
 
-    private val logFiles = LogFiles(options)
+    /**
+     * Instances from which logs will be tailed.
+     */
+    var instances: List<Instance> = listOf()
+
+    /**
+     * Determines log file being tracked on AEM instance.
+     */
+    var logFilePath = aem.props.string("instance.tail.logFilePath") ?: "/logs/error.log"
+
+    /**
+     * Hook for tracking all log entries on each AEM instance.
+     *
+     * Useful for integrating external services like chats etc.
+     */
+    var logListener: Log.(Instance) -> Unit = {}
+
+    /**
+     * Log filter responsible for filtering incidents.
+     */
+    val logFilter = LogFilter()
+
+    /**
+     * Determines which log entries are considered as incidents.
+     */
+    var incidentChecker: Log.(Instance) -> Boolean = { instance ->
+        val levels = Formats.toList(instance.string("instance.tail.incidentLevels"))
+                ?: aem.props.list("instance.tail.incidentLevels")
+                ?: INCIDENT_LEVELS_DEFAULT
+        val oldMillis = instance.string("instance.tail.incidentOld")?.toLong()
+                ?: aem.props.long("instance.tail.incidentOld")
+                ?: INCIDENT_OLD_DEFAULT
+
+        isLevel(levels) && !isOlderThan(instance, oldMillis) && !logFilter.isExcluded(this)
+    }
+
+    /**
+     * Path to file holding wildcard rules that will effectively deactivate notifications for desired exception.
+     *
+     * Changes in that file are automatically considered (tailer restart is not required).
+     */
+    var incidentFilter: File = aem.props.string("instance.tail.incidentFilter")?.let { aem.project.file(it) }
+            ?: File(aem.configCommonDir, "tail/incidentFilter.txt")
+
+    /**
+     * Time window in which exceptions will be aggregated and reported as single incident.
+     */
+    var incidentDelay = aem.props.long("instance.tail.incidentDelay") ?: 5000L
+
+    /**
+     * Determines how often logs will be polled from AEM instance.
+     */
+    var fetchInterval = aem.props.long("instance.tail.fetchInterval") ?: 500L
+
+    var lockInterval = aem.props.long("instance.tail.lockInterval") ?: max(1000L + fetchInterval, 2000L)
+
+    var linesChunkSize = aem.props.long("instance.tail.linesChunkSize") ?: 400L
+
+    val errorLogEndpoint: String
+        get() = "/system/console/slinglog/tailer.txt" +
+                "?tail=$linesChunkSize" +
+                "&name=${logFilePath.replace("/", "%2F")}"
+
+    val logFile: String
+        get() = Paths.get(logFilePath).fileName.toString()
+
+    fun incidentFilter(options: LogFilter.() -> Unit) {
+        logFilter.apply(options)
+    }
+
+    private val logFiles = LogFiles(this)
 
     fun tail() {
         checkStartLock()
@@ -25,7 +104,7 @@ class InstanceTailer(val options: TailOptions, val instances: List<Instance>) {
                     while (isActive) {
                         logFiles.lock()
                         tailer.tail()
-                        delay(options.fetchInterval)
+                        delay(fetchInterval)
                     }
                 }
             }
@@ -48,16 +127,23 @@ class InstanceTailer(val options: TailOptions, val instances: List<Instance>) {
     }
 
     private fun start(instance: Instance, notificationChannel: Channel<LogChunk>): LogTailer {
-        val source = UrlSource(options, instance)
+        val source = UrlSource(this, instance)
         val destination = FileDestination(instance.name, logFiles)
         val logAnalyzerChannel = Channel<Log>(Channel.UNLIMITED)
 
-        val logAnalyzer = InstanceAnalyzer(options, instance, logAnalyzerChannel, notificationChannel)
+        val logAnalyzer = InstanceAnalyzer(this, instance, logAnalyzerChannel, notificationChannel)
         logAnalyzer.listenTailed()
 
         val logFile = logFiles.main(instance.name)
         aem.logger.lifecycle("Tailing logs to file: $logFile")
 
         return LogTailer(source, destination, logAnalyzerChannel)
+    }
+
+    companion object {
+
+        val INCIDENT_LEVELS_DEFAULT = listOf("ERROR")
+
+        const val INCIDENT_OLD_DEFAULT = 1000L * 10
     }
 }

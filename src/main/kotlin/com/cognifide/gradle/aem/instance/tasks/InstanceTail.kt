@@ -2,8 +2,6 @@ package com.cognifide.gradle.aem.instance.tasks
 
 import com.cognifide.gradle.aem.common.tasks.InstanceTask
 import com.cognifide.gradle.aem.instance.tail.InstanceTailer
-import com.cognifide.gradle.aem.instance.tail.TailOptions
-import java.io.File
 import kotlinx.coroutines.ObsoleteCoroutinesApi
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
@@ -12,7 +10,11 @@ import org.gradle.api.tasks.TaskAction
 open class InstanceTail : InstanceTask() {
 
     @Internal
-    val options = TailOptions(aem, name)
+    val tailer = InstanceTailer(aem)
+
+    fun tailer(options: InstanceTailer.() -> Unit) {
+        tailer.apply(options)
+    }
 
     init {
         description = "Tails logs from all configured instances (local & remote) and notifies about unknown errors."
@@ -20,19 +22,15 @@ open class InstanceTail : InstanceTask() {
 
     @TaskAction
     fun tail() {
-        InstanceTailer(options, instances).tail()
-    }
-
-    fun options(options: TailOptions.() -> Unit) {
-        this.options.apply(options)
+        tailer.apply {
+            instances = this@InstanceTail.instances
+            tail()
+        }
     }
 
     override fun projectEvaluated() {
         super.projectEvaluated()
-
-        File(options.incidentFilterPath).apply {
-            options.incidentFilter.excludeFile(this)
-        }
+        tailer.logFilter.excludeFile(tailer.incidentFilter)
     }
 
     companion object {

@@ -1,38 +1,40 @@
 package com.cognifide.gradle.aem.instance.tail.io
 
-import com.cognifide.gradle.aem.common.AemTask
 import com.cognifide.gradle.aem.common.Formats
-import com.cognifide.gradle.aem.instance.tail.TailOptions
+import com.cognifide.gradle.aem.instance.tail.InstanceTailer
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileWriter
 import java.net.URI
 import org.apache.commons.io.FileUtils
+import org.gradle.util.GFileUtils
 
-class LogFiles(private val options: TailOptions) {
-
-    private val aem = options.aem
+class LogFiles(private val tailer: InstanceTailer) {
 
     fun main(instanceName: String): File {
-        return AemTask.temporaryFile(aem.project, "${options.taskName}/$instanceName", options.logFile())
+        val file = File(tailer.rootDir, "$instanceName/${tailer.logFile}")
+        GFileUtils.mkdirs(file.parentFile)
+
+        return file
     }
 
-    fun incident(instanceName: String): File {
-        return AemTask.temporaryFile(
-                aem.project,
-                "${options.taskName}/$instanceName/$INCIDENT_DIR",
-                "${Formats.dateFileName()}-${options.logFile()}"
-        )
+    fun incidentDir(instanceName: String): File = File(tailer.rootDir, "$instanceName/$INCIDENT_DIR")
+
+    fun incidentFile(instanceName: String): File {
+        val file = File(incidentDir(instanceName), "${Formats.dateFileName()}-${tailer.logFile}")
+        GFileUtils.mkdirs(file.parentFile)
+
+        return file
     }
 
     fun clearMain(instanceName: String) = main(instanceName).bufferedWriter().use { it.write("") }
 
     fun clearIncidents(instanceName: String) {
-        FileUtils.deleteDirectory(AemTask.temporaryDir(aem.project, options.taskName, "$instanceName/$INCIDENT_DIR"))
+        FileUtils.deleteDirectory(incidentDir(instanceName))
     }
 
     fun writeToIncident(instanceName: String, writerBlock: (BufferedWriter) -> Unit): URI {
-        return incident(instanceName).apply { bufferedWriter().use(writerBlock) }.toURI()
+        return incidentFile(instanceName).apply { bufferedWriter().use(writerBlock) }.toURI()
     }
 
     fun writeToMain(instanceName: String, writerBlock: (FileWriter) -> Unit) {
@@ -44,7 +46,7 @@ class LogFiles(private val options: TailOptions) {
     }
 
     fun isLocked(): Boolean {
-        return lockFile.exists() && lockFile.lastModified() + options.lockInterval > System.currentTimeMillis()
+        return lockFile.exists() && lockFile.lastModified() + tailer.lockInterval > System.currentTimeMillis()
     }
 
     private fun lock(file: File) {
@@ -56,7 +58,12 @@ class LogFiles(private val options: TailOptions) {
     }
 
     private val lockFile: File
-        get() = AemTask.temporaryFile(aem.project, options.taskName, LOCK_FILE)
+        get() {
+            val file = File(tailer.rootDir, LOCK_FILE)
+            GFileUtils.mkdirs(file.parentFile)
+
+            return file
+        }
 
     companion object {
 

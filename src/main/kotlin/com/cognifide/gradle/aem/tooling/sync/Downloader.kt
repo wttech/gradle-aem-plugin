@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.pkg
+package com.cognifide.gradle.aem.tooling.sync
 
 import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.http.HttpClient
@@ -8,31 +8,43 @@ import com.cognifide.gradle.aem.pkg.vlt.VltFilter
 import java.io.File
 import org.gradle.api.tasks.Internal
 
-class PackageDownloader(@Internal private val aem: AemExtension) {
+class Downloader(@Internal private val aem: AemExtension) {
 
+    /**
+     * Determines instance from which JCR content will be downloaded.
+     */
     var instance: Instance = aem.anyInstance
 
+    /**
+     * Determines VLT filter used to grab JCR content from AEM instance.
+     */
     var filter: VltFilter = aem.filter
+
+    /**
+     * Allows to disable extracting contents of download package to directory.
+     *
+     * This operation can be modified using '-Pforce' command line to replace the contents of extract directory
+     * with package content.
+     */
+    var extract = aem.props.boolean("sync.downloader.extract") ?: true
+
+    /**
+     * Path in which downloader JCR content will be extracted.
+     */
+    var extractDir: File = aem.props.string("sync.downloader.extractDir")?.let { aem.project.file(it) }
+            ?: aem.packageOptions.jcrRootDir
 
     /**
      * Repeat download when failed (brute-forcing).
      */
-    var retry = aem.retry { afterSquaredSecond(aem.props.long("packageDownload.retry") ?: 3) }
-
-    /**
-     * Extract the contents of download package to current project 'jcr_root' directory.
-     *
-     * This operation can be modified using -Pforce command line to replace the contents of jcr_root directory
-     * with package content.
-     */
-    var extract = aem.props.boolean("packageDownload.extract") ?: true
+    var retry = aem.retry { afterSquaredSecond(aem.props.long("sync.downloader.retry") ?: 3) }
 
     /**
      * In case of downloading big CRX packages, AEM could respond much slower so that special
      * timeout is covering such edge case.
      */
     var httpOptions: HttpClient.() -> Unit = {
-        connectionTimeout = aem.props.int("packageDownload.httpOptions.connectionTimeout") ?: 60000
+        connectionTimeout = aem.props.int("sync.downloader.http.connectionTimeout") ?: 60000
     }
 
     fun download() {
@@ -41,9 +53,7 @@ class PackageDownloader(@Internal private val aem: AemExtension) {
         }, retry)
 
         if (extract) {
-            val extractDir = aem.packageOptions.jcrRootDir
             aem.logger.lifecycle("Extracting package $file to $extractDir")
-
             extractDownloadedPackage(file, extractDir)
         }
     }
@@ -60,10 +70,5 @@ class PackageDownloader(@Internal private val aem: AemExtension) {
                     .from(aem.project.zipTree(downloadedPackage.path))
                     .include("${Package.JCR_ROOT}/**")
         }
-    }
-
-    companion object {
-
-        const val PKG_VERSION = "download"
     }
 }

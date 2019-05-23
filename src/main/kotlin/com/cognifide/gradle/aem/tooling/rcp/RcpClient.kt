@@ -1,10 +1,11 @@
-package com.cognifide.gradle.aem.tooling.vlt
+package com.cognifide.gradle.aem.tooling.rcp
 
 import com.cognifide.gradle.aem.common.Formats
 import com.cognifide.gradle.aem.instance.Instance
+import com.cognifide.gradle.aem.tooling.vlt.VltRunner
 import org.apache.commons.lang3.time.StopWatch
 
-class VltRcpClient(
+class RcpClient(
     private val runner: VltRunner,
     val sourceInstance: Instance,
     val targetInstance: Instance

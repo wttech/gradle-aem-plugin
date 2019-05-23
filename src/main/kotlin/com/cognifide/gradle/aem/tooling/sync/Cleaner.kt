@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.tooling.clean
+package com.cognifide.gradle.aem.tooling.sync
 
 import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.instance.service.pkg.Package
@@ -85,13 +85,13 @@ class Cleaner(project: Project) {
      * Controls unused namespaces skipping.
      */
     @Input
-    var namespacesSkipped: Boolean = aem.props.boolean("cleaner.namespacesSkipped") ?: true
+    var namespacesSkipped: Boolean = aem.props.boolean("sync.cleaner.namespacesSkipped") ?: true
 
     /**
      * Controls backups for parent nodes of filter roots for keeping them untouched.
      */
     @Input
-    var parentsBackupEnabled: Boolean = aem.props.boolean("cleaner.parentsBackup") ?: true
+    var parentsBackupEnabled: Boolean = aem.props.boolean("sync.cleaner.parentsBackup") ?: true
 
     /**
      * File suffix being added to parent node back up files.

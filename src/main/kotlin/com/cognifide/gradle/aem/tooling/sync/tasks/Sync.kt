@@ -1,11 +1,11 @@
-package com.cognifide.gradle.aem.tooling.tasks
+package com.cognifide.gradle.aem.tooling.sync.tasks
 
 import com.cognifide.gradle.aem.common.AemDefaultTask
 import com.cognifide.gradle.aem.common.AemException
 import com.cognifide.gradle.aem.common.Formats
 import com.cognifide.gradle.aem.common.Patterns
-import com.cognifide.gradle.aem.pkg.PackageDownloader
-import com.cognifide.gradle.aem.tooling.clean.Cleaner
+import com.cognifide.gradle.aem.tooling.sync.Cleaner
+import com.cognifide.gradle.aem.tooling.sync.Downloader
 import com.cognifide.gradle.aem.tooling.vlt.VltRunner
 import java.io.File
 import java.util.regex.Pattern
@@ -44,12 +44,6 @@ open class Sync : AemDefaultTask() {
     @Internal
     var contentDir = aem.packageOptions.rootDir
 
-    private val cleaner = Cleaner(project)
-
-    private val downloader = PackageDownloader(aem)
-
-    private val vlt = VltRunner(aem)
-
     private val filterRootFiles: List<File>
         get() {
             if (!contentDir.exists()) {
@@ -60,16 +54,22 @@ open class Sync : AemDefaultTask() {
             return filter.rootDirs(contentDir).map { normalizeRoot(it) }.distinct()
         }
 
+    val vlt = VltRunner(aem)
+
+    fun vlt(options: VltRunner.() -> Unit) {
+        vlt.apply(options)
+    }
+
+    val cleaner = Cleaner(project)
+
     fun cleaner(options: Cleaner.() -> Unit) {
         cleaner.apply(options)
     }
 
-    fun download(options: PackageDownloader.() -> Unit) {
-        downloader.apply(options)
-    }
+    val downloader = Downloader(aem)
 
-    fun vlt(options: VltRunner.() -> Unit) {
-        vlt.apply(options)
+    fun downloader(options: Downloader.() -> Unit) {
+        downloader.apply(options)
     }
 
     init {

@@ -6,8 +6,7 @@ import org.gradle.api.tasks.TaskAction
 open class EnvironmentUp : AemDefaultTask() {
 
     init {
-        description = "Turn on additional services for local environment " +
-                "- based on provided docker compose file."
+        description = "Turns on AEM virtualized environment (HTTPD service with AEM dispatcher module)"
     }
 
     @TaskAction

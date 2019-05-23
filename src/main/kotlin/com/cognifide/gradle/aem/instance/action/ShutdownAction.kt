@@ -14,7 +14,7 @@ class ShutdownAction(aem: AemExtension) : AbstractAction(aem) {
      * Maximum intervals after which instance stability checks will
      * be skipped if there is still some unstable instance left.
      */
-    var stableRetry = aem.retry { afterSecond(aem.props.long("shutdown.stableRetry") ?: 300) }
+    var stableRetry = aem.retry { afterSecond(aem.props.long("instance.shutdown.stableRetry") ?: 300) }
 
     /**
      * Hook for customizing instance state provider used within stable checking.

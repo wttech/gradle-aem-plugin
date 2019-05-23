@@ -6,8 +6,9 @@ import com.cognifide.gradle.aem.common.tasks.lifecycle.*
 import com.cognifide.gradle.aem.environment.tasks.*
 import com.cognifide.gradle.aem.instance.tasks.*
 import com.cognifide.gradle.aem.pkg.tasks.*
-import com.cognifide.gradle.aem.tooling.tasks.*
-import com.cognifide.gradle.aem.tooling.tasks.Sync
+import com.cognifide.gradle.aem.tooling.rcp.tasks.Rcp
+import com.cognifide.gradle.aem.tooling.sync.tasks.Sync
+import com.cognifide.gradle.aem.tooling.vlt.tasks.Vlt
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.Serializable
 import org.gradle.api.Project
