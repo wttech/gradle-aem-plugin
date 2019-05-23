@@ -2,7 +2,6 @@ package com.cognifide.gradle.aem.common.file.resolver
 
 import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.formats.JsonPassword
-import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import java.io.Serializable
 
