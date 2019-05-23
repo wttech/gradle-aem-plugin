@@ -268,23 +268,23 @@
       },
       "dispatcherDistUrl" : "http://download.macromedia.com/dispatcher/download/dispatcher-apache2.4-linux-x86_64-4.3.2.tar.gz",
       "dispatcherModuleName" : "*/dispatcher-apache*.so",
-      "dockerType" : "TOOLBOX",
+      "dockerType" : "DESKTOP",
       "hosts" : {
         "defined" : [
           {
-            "ip" : "192.168.99.100",
+            "ip" : "127.0.0.1",
             "name" : "example.com"
           },
           {
-            "ip" : "192.168.99.100",
+            "ip" : "127.0.0.1",
             "name" : "demo.example.com"
           },
           {
-            "ip" : "192.168.99.100",
+            "ip" : "127.0.0.1",
             "name" : "author.example.com"
           },
           {
-            "ip" : "192.168.99.100",
+            "ip" : "127.0.0.1",
             "name" : "invalidation-only"
           }
         ]
