@@ -123,6 +123,7 @@ class FileTransferSftp(
                 method()
                 return
             } catch (e: IOException) {
+                // intentionally empty
             }
         }
     }

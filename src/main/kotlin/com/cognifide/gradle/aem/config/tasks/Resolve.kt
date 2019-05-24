@@ -1,8 +1,9 @@
 package com.cognifide.gradle.aem.config.tasks
 
 import com.cognifide.gradle.aem.common.AemDefaultTask
-import com.cognifide.gradle.aem.instance.tasks.InstanceCreateOnly
+import com.cognifide.gradle.aem.instance.tasks.InstanceRestore
 import com.cognifide.gradle.aem.instance.tasks.InstanceSatisfy
+import com.cognifide.gradle.aem.instance.tasks.InstanceUp
 import org.gradle.api.tasks.TaskAction
 
 open class Resolve : AemDefaultTask() {
@@ -15,11 +16,17 @@ open class Resolve : AemDefaultTask() {
     @TaskAction
     fun resolve() {
         project.gradle.taskGraph.allTasks.forEach { task ->
-            if (task is InstanceSatisfy) {
-                logger.info("Resolving CRX packages for satisfying instances.")
-                logger.info("Resolved CRX packages: ${task.allFiles}")
-            } else if (task is InstanceCreateOnly) {
-                // TODO instance files eagerly jar & license file)
+            when (task) {
+                is InstanceSatisfy -> {
+                    logger.info("Resolving CRX packages for satisfying instances.")
+                    logger.info("Resolved CRX packages: ${task.allFiles}")
+                }
+                is InstanceUp -> {
+                    // TODO instance files eagerly jar & license file)
+                }
+                is InstanceRestore -> {
+                    // TODO instance files eagerly jar & license file)
+                }
             }
         }
     }

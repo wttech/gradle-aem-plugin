@@ -31,55 +31,43 @@ class InstancePlugin : AemPlugin() {
             // Plugin tasks
 
             register<InstanceDown>(InstanceDown.NAME)
-            register<InstanceUp>(InstanceUp.NAME) {
-                mustRunAfter(InstanceDown.NAME, InstanceDestroy.NAME)
-            }
             register<InstanceRestart>(InstanceRestart.NAME) {
                 dependsOn(InstanceDown.NAME, InstanceUp.NAME)
             }
-            register<InstanceCreateOnly>(InstanceCreateOnly.NAME) {
+            register<InstanceUp>(InstanceUp.NAME) {
                 dependsOn(Resolve.NAME)
-                mustRunAfter(InstanceDestroy.NAME)
-            }
-            register<InstanceCreateAndUp>(InstanceCreateAndUp.NAME) {
-                dependsOn(InstanceCreateOnly.NAME, InstanceUp.NAME)
+                mustRunAfter(InstanceDown.NAME, InstanceDestroy.NAME)
             }
             register<InstanceDestroy>(InstanceDestroy.NAME) {
                 dependsOn(InstanceDown.NAME)
             }
             register<InstanceSatisfy>(InstanceSatisfy.NAME) {
-                dependsOn(Resolve.NAME).mustRunAfter(InstanceCreateAndUp.NAME)
+                dependsOn(Resolve.NAME).mustRunAfter(InstanceCreate.NAME)
             }
             register<InstanceReload>(InstanceReload.NAME) {
                 mustRunAfter(InstanceSatisfy.NAME)
                 plugins.withId(PackagePlugin.ID) { mustRunAfter(PackageDeploy.NAME) }
             }
             register<InstanceAwait>(InstanceAwait.NAME) {
-                mustRunAfter(InstanceCreateAndUp.NAME, InstanceSatisfy.NAME)
+                mustRunAfter(InstanceCreate.NAME, InstanceSatisfy.NAME)
                 plugins.withId(PackagePlugin.ID) { mustRunAfter(PackageDeploy.NAME) }
             }
             register<InstanceCollect>(InstanceCollect.NAME) {
                 mustRunAfter(InstanceSatisfy.NAME)
             }
             register<InstanceSetup>(InstanceSetup.NAME) {
-                dependsOn(InstanceCreateAndUp.NAME, InstanceSatisfy.NAME)
+                dependsOn(InstanceCreate.NAME, InstanceSatisfy.NAME)
                 mustRunAfter(InstanceDestroy.NAME)
                 plugins.withId(PackagePlugin.ID) { dependsOn(PackageDeploy.NAME) }
             }
             register<InstanceResetup>(InstanceResetup.NAME) {
                 dependsOn(InstanceDestroy.NAME, InstanceSetup.NAME)
             }
-            register<InstanceBackupOnly>(InstanceBackupOnly.NAME) {
+            register<InstanceBackup>(InstanceBackup.NAME) {
                 dependsOn(InstanceDown.NAME)
             }
-            register<InstanceBackupAndUp>(InstanceBackupAndUp.NAME) {
-                dependsOn(InstanceBackupOnly.NAME, InstanceUp.NAME)
-            }
-            register<InstanceRestoreOnly>(InstanceRestoreOnly.NAME) {
+            register<InstanceRestore>(InstanceRestore.NAME) {
                 dependsOn(Resolve.NAME, InstanceDestroy.NAME)
-            }
-            register<InstanceRestoreAndUp>(InstanceRestoreAndUp.NAME) {
-                dependsOn(InstanceRestoreOnly.NAME, InstanceUp.NAME)
             }
 
             register<InstanceTail>(InstanceTail.NAME)

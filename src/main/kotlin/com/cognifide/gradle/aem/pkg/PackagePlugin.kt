@@ -4,7 +4,8 @@ import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.AemPlugin
 import com.cognifide.gradle.aem.config.ConfigPlugin
 import com.cognifide.gradle.aem.instance.InstancePlugin
-import com.cognifide.gradle.aem.instance.tasks.InstanceCreateAndUp
+import com.cognifide.gradle.aem.instance.tasks.InstanceCreate
+import com.cognifide.gradle.aem.instance.tasks.InstanceRestore
 import com.cognifide.gradle.aem.instance.tasks.InstanceSatisfy
 import com.cognifide.gradle.aem.pkg.tasks.*
 import org.gradle.api.Project
@@ -72,7 +73,7 @@ class PackagePlugin : AemPlugin() {
 
         plugins.withId(InstancePlugin.ID) {
             tasks.named(PackageDeploy.NAME).configure { task ->
-                task.mustRunAfter(InstanceCreateAndUp.NAME, InstanceSatisfy.NAME)
+                task.mustRunAfter(InstanceCreate.NAME, InstanceRestore.NAME, InstanceSatisfy.NAME)
             }
         }
     }

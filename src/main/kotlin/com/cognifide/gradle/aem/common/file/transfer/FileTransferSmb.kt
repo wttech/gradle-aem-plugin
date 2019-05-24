@@ -74,7 +74,7 @@ class FileTransferSmb(
 
     private fun validateUploadDir(uploadUrl: String) {
         if (!smbFile(uploadUrl).isDirectory) {
-            throw AemException("uploadUrl used for file transfer must be a directory: '$uploadUrl'")
+            throw AemException("URL used for file upload must be a directory: '$uploadUrl'")
         }
     }
 

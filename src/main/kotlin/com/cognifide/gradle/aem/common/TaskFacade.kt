@@ -61,11 +61,11 @@ class TaskFacade(private val aem: AemExtension) {
 
     fun instanceAwait(configurer: InstanceAwait.() -> Unit) = named(InstanceAwait.NAME, configurer)
 
-    fun instanceBackup(configurer: InstanceBackupOnly.() -> Unit) = named(InstanceBackupOnly.NAME, configurer)
+    fun instanceBackup(configurer: InstanceBackup.() -> Unit) = named(InstanceBackup.NAME, configurer)
 
     fun instanceCollect(configurer: InstanceCollect.() -> Unit) = named(InstanceCollect.NAME, configurer)
 
-    fun instanceCreate(configurer: InstanceCreateOnly.() -> Unit) = named(InstanceCreateOnly.NAME, configurer)
+    fun instanceCreate(configurer: InstanceCreate.() -> Unit) = named(InstanceCreate.NAME, configurer)
 
     fun instanceDestroy(configurer: InstanceDestroy.() -> Unit) = named(InstanceDestroy.NAME, configurer)
 

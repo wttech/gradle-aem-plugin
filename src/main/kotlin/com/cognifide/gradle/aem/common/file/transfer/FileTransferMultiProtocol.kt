@@ -5,7 +5,7 @@ import com.cognifide.gradle.aem.common.AemExtension
 import com.cognifide.gradle.aem.common.file.IoTransferLogger
 import java.io.File
 
-class FileTransferProtocolAgnostic(private val aem: AemExtension) : FileTransfer {
+class FileTransferMultiProtocol(private val aem: AemExtension) : FileTransfer {
 
     private val fileTransfers by lazy {
         listOf(

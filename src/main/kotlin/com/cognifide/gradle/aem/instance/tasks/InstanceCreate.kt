@@ -7,7 +7,7 @@ import com.cognifide.gradle.aem.instance.LocalInstance
 import com.cognifide.gradle.aem.instance.names
 import org.gradle.api.tasks.TaskAction
 
-open class InstanceCreateOnly : LocalInstanceTask() {
+open class InstanceCreate : LocalInstanceTask() {
 
     init {
         description = "Creates local AEM instance(s)."
@@ -28,6 +28,8 @@ open class InstanceCreateOnly : LocalInstanceTask() {
         val createdInstances = uncreatedInstances.filter { it.created }
 
         aem.notifier.notify("Instance(s) created", "Which: ${createdInstances.names}")
+
+        aem.tasks.named<InstanceUp>(InstanceUp.NAME).get().up()
     }
 
     private fun create(uncreatedInstances: List<LocalInstance>) {
@@ -46,6 +48,6 @@ open class InstanceCreateOnly : LocalInstanceTask() {
     }
 
     companion object {
-        const val NAME = "instanceCreateOnly"
+        const val NAME = "instanceCreate"
     }
 }

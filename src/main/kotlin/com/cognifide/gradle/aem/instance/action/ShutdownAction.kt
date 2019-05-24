@@ -38,7 +38,7 @@ class ShutdownAction(aem: AemExtension) : AbstractAction(aem) {
             return
         }
 
-        if (instances.isEmpty()) {
+        if (localInstances.isEmpty()) {
             aem.logger.info("No instances to shutdown.")
             return
         }
@@ -47,7 +47,7 @@ class ShutdownAction(aem: AemExtension) : AbstractAction(aem) {
     }
 
     private fun shutdown() {
-        aem.logger.info("Awaiting instance(s) shutdown: ${instances.names}")
+        aem.logger.info("Awaiting instance(s) shutdown: ${localInstances.names}")
 
         ProgressLogger.of(aem.project).launch {
             var lastStableChecksum = -1
@@ -56,7 +56,7 @@ class ShutdownAction(aem: AemExtension) : AbstractAction(aem) {
 
             Behaviors.waitUntil(stableRetry.delay) { timer ->
                 // Update checksum on any particular state change
-                val instanceStates = instances.map { it.sync.determineInstanceState() }
+                val instanceStates = localInstances.map { it.sync.determineInstanceState() }
                 val stableChecksum = aem.parallel.map(instanceStates) { stableState(it) }.hashCode()
                 if (stableChecksum != lastStableChecksum) {
                     lastStableChecksum = stableChecksum
@@ -66,7 +66,7 @@ class ShutdownAction(aem: AemExtension) : AbstractAction(aem) {
                 // Examine instances
                 val unstableInstances = aem.parallel.map(instanceStates, { !stableCheck(it) }, { it.instance })
                 val availableInstances = aem.parallel.map(instanceStates, { availableCheck(it) }, { it.instance })
-                val unavailableInstances = instances - availableInstances
+                val unavailableInstances = localInstances - availableInstances
                 val upInstances = localInstances.filter { it.running || availableInstances.contains(it) }
 
                 progress(InstanceProgress.determine(stableRetry.times, instanceStates, unavailableInstances, unstableInstances, timer))

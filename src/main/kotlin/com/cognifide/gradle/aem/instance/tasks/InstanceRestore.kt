@@ -15,7 +15,7 @@ import java.io.File
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
-open class InstanceRestoreOnly : LocalInstanceTask() {
+open class InstanceRestore : LocalInstanceTask() {
 
     private val downloadDir = AemTask.temporaryDir(aem.project, TEMPORARY_DIR)
 
@@ -23,7 +23,7 @@ open class InstanceRestoreOnly : LocalInstanceTask() {
 
     private val localBackups: List<File>
         get() {
-            return aem.tasks.named<InstanceBackupOnly>(InstanceBackupOnly.NAME).get().available
+            return aem.tasks.named<InstanceBackup>(InstanceBackup.NAME).get().available
         }
 
     @Internal
@@ -64,6 +64,8 @@ open class InstanceRestoreOnly : LocalInstanceTask() {
 
         val restoredInstances = uncreatedInstances.filter { it.created }
         aem.notifier.notify("Instance(s) restored", "Which: ${restoredInstances.names}")
+
+        aem.tasks.named<InstanceUp>(InstanceUp.NAME).get().up()
     }
 
     private fun selectBackup() = when {
@@ -119,7 +121,7 @@ open class InstanceRestoreOnly : LocalInstanceTask() {
     }
 
     companion object {
-        const val NAME = "instanceRestoreOnly"
+        const val NAME = "instanceRestore"
         const val TEMPORARY_DIR = "backup"
         const val GROUP_EXTRA = "extra"
     }

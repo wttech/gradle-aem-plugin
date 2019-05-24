@@ -11,7 +11,7 @@ import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.bundling.ZipEntryCompression
 
-open class InstanceBackupOnly : ZipTask() {
+open class InstanceBackup : ZipTask() {
 
     init {
         description = "Turns off local instance(s), archives to ZIP file."
@@ -31,6 +31,7 @@ open class InstanceBackupOnly : ZipTask() {
     override fun copy() {
         super.copy()
         upload()
+        aem.tasks.named<InstanceUp>(InstanceUp.NAME).get().up()
     }
 
     private fun upload() {
@@ -65,6 +66,6 @@ open class InstanceBackupOnly : ZipTask() {
     }
 
     companion object {
-        const val NAME = "instanceBackupOnly"
+        const val NAME = "instanceBackup"
     }
 }

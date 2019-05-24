@@ -1120,7 +1120,7 @@ aem {
 
 #### Task `instanceRestore`
 
-`instanceRestore` requires `-Pforce` commandline switch. It destroys the instance, gets backup zip and unzip it, runs instanceUp.
+`instanceRestore` requires `-Pforce` command line switch. It destroys the instance, gets backup zip and unzip it, runs instanceUp.
 
 This task selects backup zip file based on  properties configured in `gradle.properties` file:
 * if `backup.downloadUrl` is defined, backup is restored from that URL (HTTP, SFTP, SMB, FILE protocols supported) 

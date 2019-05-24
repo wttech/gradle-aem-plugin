@@ -4,7 +4,7 @@ import com.cognifide.gradle.aem.bundle.BundlePlugin
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.file.FileWatcher
 import com.cognifide.gradle.aem.common.file.transfer.FileTransfer
-import com.cognifide.gradle.aem.common.file.transfer.FileTransferProtocolAgnostic
+import com.cognifide.gradle.aem.common.file.transfer.FileTransferMultiProtocol
 import com.cognifide.gradle.aem.common.http.HttpClient
 import com.cognifide.gradle.aem.config.Config
 import com.cognifide.gradle.aem.config.ConfigPlugin
@@ -57,7 +57,7 @@ open class AemExtension(@Internal val project: Project) {
      *  - SMB and SFTP protocols supported
      */
     @get:Internal
-    val fileTransfer: FileTransfer = FileTransferProtocolAgnostic(this)
+    val fileTransfer: FileTransfer = FileTransferMultiProtocol(this)
 
     /**
      * Project name convention prefixes used to determine default:
