@@ -26,25 +26,25 @@ object Formats {
 
     val URL_VALIDATOR = UrlValidator(arrayOf("http", "https"), UrlValidator.ALLOW_LOCAL_URLS)
 
-    val JSON_MAPPER = {
-        val printer = DefaultPrettyPrinter()
-        printer.indentArraysWith(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE)
-
-        ObjectMapper().writer(printer)
-    }()
-
     fun asPassword(value: String) = "*".repeat(value.length)
 
+    fun jsonMapper(pretty: Boolean): ObjectMapper = ObjectMapper().apply {
+        if (pretty) {
+            writer(DefaultPrettyPrinter().apply {
+                indentArraysWith(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE)
+            })
+        }
+    }
     fun asJson(input: InputStream) = JsonPath.parse(input)
 
     fun asJson(value: String) = JsonPath.parse(value)
 
-    fun toJson(value: Any): String {
-        return JSON_MAPPER.writeValueAsString(value) ?: ""
+    fun toJson(value: Any, pretty: Boolean = true): String {
+        return jsonMapper(pretty).writeValueAsString(value) ?: ""
     }
 
-    fun toJson(value: Map<String, Any?>): String {
-        return JSON_MAPPER.writeValueAsString(value) ?: "{}"
+    fun toJson(value: Map<String, Any?>, pretty: Boolean = true): String {
+        return jsonMapper(pretty).writeValueAsString(value) ?: "{}"
     }
 
     fun <T> fromJson(json: String, clazz: Class<T>): T {
@@ -97,10 +97,8 @@ object Formats {
         return "${"%.2f".format(value * 100.0)}%"
     }
 
-    fun logMessage(text: String): String {
-        return "-------------------------------------------------------------------------------------------\n" +
-                text +
-                "-------------------------------------------------------------------------------------------"
+    fun noLineBreaks(text: String): String {
+        return text.replace("\r\n", " ").replace("\n", " ")
     }
 
     fun timestamp(): String {
