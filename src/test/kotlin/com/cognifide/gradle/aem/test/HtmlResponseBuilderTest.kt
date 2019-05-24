@@ -1,8 +1,8 @@
 package com.cognifide.gradle.aem.test
 
-import com.cognifide.gradle.aem.pkg.DeleteResponse
-import com.cognifide.gradle.aem.pkg.HtmlResponse
-import com.cognifide.gradle.aem.pkg.InstallResponse
+import com.cognifide.gradle.aem.common.instance.service.pkg.DeleteResponse
+import com.cognifide.gradle.aem.common.instance.service.pkg.HtmlResponse
+import com.cognifide.gradle.aem.common.instance.service.pkg.InstallResponse
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test

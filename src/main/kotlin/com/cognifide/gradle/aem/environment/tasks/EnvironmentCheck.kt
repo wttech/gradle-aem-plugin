@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.environment.tasks
 
-import com.cognifide.gradle.aem.common.AemDefaultTask
+import com.cognifide.gradle.aem.AemDefaultTask
 import org.gradle.api.tasks.TaskAction
 
 open class EnvironmentCheck : AemDefaultTask() {

@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.environment
 
-import com.cognifide.gradle.aem.common.AemPlugin
+import com.cognifide.gradle.aem.AemPlugin
 import com.cognifide.gradle.aem.common.CommonPlugin
 import com.cognifide.gradle.aem.common.tasks.lifecycle.*
 import com.cognifide.gradle.aem.environment.tasks.*

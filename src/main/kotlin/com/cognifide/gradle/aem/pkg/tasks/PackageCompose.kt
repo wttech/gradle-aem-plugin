@@ -1,16 +1,20 @@
 package com.cognifide.gradle.aem.pkg.tasks
 
+import com.cognifide.gradle.aem.AemException
+import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.bundle.BundleJar
 import com.cognifide.gradle.aem.bundle.BundlePlugin
-import com.cognifide.gradle.aem.common.*
+import com.cognifide.gradle.aem.common.build.DependencyOptions
 import com.cognifide.gradle.aem.common.file.FileOperations
+import com.cognifide.gradle.aem.common.instance.service.pkg.Package
+import com.cognifide.gradle.aem.common.pkg.PackageFileFilter
+import com.cognifide.gradle.aem.common.pkg.vlt.VltDefinition
+import com.cognifide.gradle.aem.common.pkg.vlt.VltFilter
 import com.cognifide.gradle.aem.common.tasks.ZipTask
-import com.cognifide.gradle.aem.instance.service.pkg.Package
-import com.cognifide.gradle.aem.pkg.PackageFileFilter
+import com.cognifide.gradle.aem.common.utils.Patterns
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.compose.ProjectOptions
-import com.cognifide.gradle.aem.pkg.vlt.VltDefinition
-import com.cognifide.gradle.aem.pkg.vlt.VltFilter
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 import java.util.regex.Pattern
@@ -107,7 +111,7 @@ open class PackageCompose : ZipTask() {
         get() = File(vaultDir, Package.VLT_NODETYPES_FILE)
 
     @Nested
-    val fileFilter = PackageFileFilter(project)
+    val fileFilter = PackageFileFilter(aem)
 
     fun fileFilter(configurer: PackageFileFilter.() -> Unit) {
         fileFilter.apply(configurer)

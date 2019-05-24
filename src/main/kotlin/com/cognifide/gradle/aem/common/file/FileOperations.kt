@@ -1,8 +1,8 @@
 package com.cognifide.gradle.aem.common.file
 
-import com.cognifide.gradle.aem.common.AemPlugin
-import com.cognifide.gradle.aem.common.Formats
-import com.cognifide.gradle.aem.common.Patterns
+import com.cognifide.gradle.aem.AemPlugin
+import com.cognifide.gradle.aem.common.utils.Formats
+import com.cognifide.gradle.aem.common.utils.Patterns
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream

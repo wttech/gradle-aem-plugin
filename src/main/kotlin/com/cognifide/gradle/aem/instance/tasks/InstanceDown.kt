@@ -1,8 +1,8 @@
 package com.cognifide.gradle.aem.instance.tasks
 
+import com.cognifide.gradle.aem.common.instance.action.ShutdownAction
+import com.cognifide.gradle.aem.common.instance.names
 import com.cognifide.gradle.aem.common.tasks.LocalInstanceTask
-import com.cognifide.gradle.aem.instance.action.ShutdownAction
-import com.cognifide.gradle.aem.instance.names
 import org.gradle.api.tasks.TaskAction
 
 open class InstanceDown : LocalInstanceTask() {
@@ -22,7 +22,7 @@ open class InstanceDown : LocalInstanceTask() {
 
     @TaskAction
     fun down() {
-        aem.actions.shutdown {
+        aem.instanceActions.shutdown {
             instances = this@InstanceDown.instances
             shutdownOptions()
         }

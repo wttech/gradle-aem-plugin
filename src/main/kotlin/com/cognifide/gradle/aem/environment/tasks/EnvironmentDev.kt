@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.environment.tasks
 
-import com.cognifide.gradle.aem.common.AemDefaultTask
+import com.cognifide.gradle.aem.AemDefaultTask
 import com.cognifide.gradle.aem.environment.docker.domain.HttpdReloader
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction

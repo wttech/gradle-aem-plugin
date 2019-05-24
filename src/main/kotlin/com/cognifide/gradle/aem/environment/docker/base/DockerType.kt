@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.environment.docker.base
 
-import com.cognifide.gradle.aem.common.AemExtension
+import com.cognifide.gradle.aem.AemExtension
 
 enum class DockerType(val hostIp: String) {
     DESKTOP("127.0.0.1"),
