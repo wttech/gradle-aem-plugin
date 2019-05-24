@@ -15,7 +15,20 @@ import java.io.File
  */
 class GroovyConsole(sync: InstanceSync) : InstanceService(sync) {
 
-    fun evalCode(code: String, data: Map<String, Any> = mapOf(), verbose: Boolean = true): GroovyConsoleResult {
+    /**
+     * Controls throwing exception on script execution error.
+     */
+    var verbose: Boolean = true
+
+    /**
+     * Directory to search for scripts to be evaluated.
+     */
+    var scriptRootDir: File = aem.groovyScriptRootDir
+
+    /**
+     * Evaluate Groovy code snippet on AEM instance.
+     */
+    fun evalCode(code: String, data: Map<String, Any> = mapOf()): GroovyConsoleResult {
         val result = try {
             aem.logger.info("Executing Groovy Code: $code")
             evalCodeInternal(code, data)
@@ -38,7 +51,10 @@ class GroovyConsole(sync: InstanceSync) : InstanceService(sync) {
         )) { asObjectFromJson(it, GroovyConsoleResult::class.java) }
     }
 
-    fun evalGroovyScript(file: File, data: Map<String, Any> = mapOf(), verbose: Boolean = true): GroovyConsoleResult {
+    /**
+     * Evaluate any Groovy script on AEM instance.
+     */
+    fun evalScript(file: File, data: Map<String, Any> = mapOf()): GroovyConsoleResult {
         val result = try {
             aem.logger.info("Executing Groovy script: $file")
             evalCodeInternal(file.bufferedReader().use { it.readText() }, data)
@@ -54,28 +70,37 @@ class GroovyConsole(sync: InstanceSync) : InstanceService(sync) {
         return result
     }
 
-    fun evalScript(fileName: String, data: Map<String, Any> = mapOf(), verbose: Boolean = true): GroovyConsoleResult {
-        val script = File(aem.groovyScriptRootDir, fileName)
+    /**
+     * Evaluate Groovy script found by its file name on AEM instance.
+     */
+    fun evalScript(fileName: String, data: Map<String, Any> = mapOf()): GroovyConsoleResult {
+        val script = File(scriptRootDir, fileName)
         if (!script.exists()) {
-            throw AemException("Groovy script '$fileName' not found in directory: ${aem.groovyScriptRootDir}")
+            throw AemException("Groovy script '$fileName' not found in directory: $scriptRootDir")
         }
 
-        return evalGroovyScript(script, data, verbose)
+        return evalScript(script, data)
     }
 
-    fun evalScripts(fileNamePattern: String = "**/*.groovy", data: Map<String, Any> = mapOf(), verbose: Boolean = true): Sequence<GroovyConsoleResult> {
-        val scripts = (aem.groovyScriptRootDir.listFiles() ?: arrayOf()).filter {
+    /**
+     * Evaluate all Groovy scripts found by file name pattern on AEM instance in path-based alphabetical order.
+     */
+    fun evalScripts(fileNamePattern: String = "**/*.groovy", data: Map<String, Any> = mapOf()): Sequence<GroovyConsoleResult> {
+        val scripts = (scriptRootDir.listFiles() ?: arrayOf()).filter {
             Patterns.wildcard(it, fileNamePattern)
         }.sortedBy { it.absolutePath }
         if (scripts.isEmpty()) {
-            throw AemException("No Groovy scripts found in directory: ${aem.groovyScriptRootDir}")
+            throw AemException("No Groovy scripts found in directory: $scriptRootDir")
         }
 
-        return evalScripts(scripts, data, verbose)
+        return evalScripts(scripts, data)
     }
 
-    fun evalScripts(scripts: Collection<File>, data: Map<String, Any> = mapOf(), verbose: Boolean = true): Sequence<GroovyConsoleResult> {
-        return scripts.asSequence().map { evalGroovyScript(it, data, verbose) }
+    /**
+     * Evaluate any Groovy scripts on AEM instance in specified order.
+     */
+    fun evalScripts(scripts: Iterable<File>, data: Map<String, Any> = mapOf()): Sequence<GroovyConsoleResult> {
+        return scripts.asSequence().map { evalScript(it, data) }
     }
 
     companion object {

@@ -3,8 +3,13 @@ package com.cognifide.gradle.aem.common.instance.service.repository
 import com.cognifide.gradle.aem.common.http.RequestException
 import com.cognifide.gradle.aem.common.instance.InstanceService
 import com.cognifide.gradle.aem.common.instance.InstanceSync
+import org.apache.commons.lang3.StringUtils
 
 class Repository(sync: InstanceSync) : InstanceService(sync) {
+
+    val typeHints: Boolean = true
+
+    val nullDeletes: Boolean = true
 
     fun getNode(path: String): Node {
         try {
@@ -22,7 +27,7 @@ class Repository(sync: InstanceSync) : InstanceService(sync) {
 
     fun createNode(path: String, props: Map<String, Any?>): Node {
         try {
-            sync.post(path, props.handleNulls())
+            sync.post(path, normalizeProperties(props))
             return getNode(path)
         } catch (e: RequestException) {
             throw RepositoryException("Unable to create node: $path", e)
@@ -31,7 +36,7 @@ class Repository(sync: InstanceSync) : InstanceService(sync) {
 
     fun updateNode(path: String, props: Map<String, Any?>): Node {
         return if (hasNode(path)) {
-            sync.post(path, props.handleNulls())
+            sync.post(path, normalizeProperties(props))
             getNode(path)
         } else {
             throw RepositoryException("Unable to update node: $path. Node does not exist.")
@@ -40,10 +45,10 @@ class Repository(sync: InstanceSync) : InstanceService(sync) {
 
     fun saveNode(path: String, props: Map<String, Any?>): Node {
         return if (hasNode(path)) {
-            sync.post(path, props.handleNulls())
+            sync.post(path, normalizeProperties(props))
             getNode(path)
         } else {
-            createNode(path, props.handleNulls())
+            createNode(path, props)
         }
     }
 
@@ -69,9 +74,13 @@ class Repository(sync: InstanceSync) : InstanceService(sync) {
 
     fun hasProperty(path: String, name: String): Boolean = findNode(path)?.property(name) != null
 
-    private fun Map<String, Any?>.handleNulls(): Map<String, Any?> {
-        return this
-                .mapKeys { if (it.value == null) "${it.key}@Delete" else it.key }
-                .mapValues { if (it.value == null) "" else it.value }
+    private fun normalizeProperties(properties: Map<String, Any?>): Map<String, Any?> {
+        return properties.entries.fold(mutableMapOf(), { p, (n, v) ->
+            when {
+                nullDeletes && v == null -> p[StringUtils.appendIfMissing(n, "@Delete")] = ""
+                else -> p[n] = v
+            }
+            p
+        })
     }
 }
