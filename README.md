@@ -1559,77 +1559,6 @@ aem {
 }
 ```
 
-#### Downloading CRX package from external HTTP endpoint and deploying it on desired AEM instances
-
-Below snippet could be used to automatize recovery from content backups (e.g for production or to replicate production content to test environment).
-
-```kotlin
-
-aem {
-    tasks {
-        register("packageDeployProductionContent") {
-            doLast {
-                val instances = listOf(
-                        aem.instance("http://user:password@aem-host.com") // URL specified directly, could be parametrized by some gradle command line property
-                        // aem.namedInstance("local-publish") // reused AEM instance defined in 'gradle.properties'
-                )
-                val pkg = aem.http { downloadTo("https://company.com/aem/backups/example-1.0.0-201901300932.backup.zip", project.file("build/tmp")) }
-                
-                aem.sync(instances) { 
-                    deployPackage(pkg) 
-                }
-            }
-        }
-    }
-}
-```
-
-#### Controlling OSGi bundles and components
-
-To disable specific OSGi component by its PID value and only on publish instances, simply write:
-
-
-```kotlin
-aem {
-    tasks {
-        register("aemConfigure") {
-            doLast {
-                aem.sync(aem.publishInstances) {
-                    disableComponent("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet")
-                    // stopBundle("org.apache.sling.jcr.webdav")
-                }
-            }
-        }
-    }
-}
-```
-
-#### Executing code on AEM runtime
-
-It is possible to easily execute any code on AEM runtime using [Groovy Console](https://github.com/icfnext/aem-groovy-console). Assuming that on AEM instances there is already installed Groovy Console e.g via `instanceSatisfy` task, then it is possible to use methods `evalGroovyCode` and `evalGroovyScript` of `aem.sync`.
-
-```kotlin
-aem {
-    tasks {
-        satisfy {
-            group("tool.groovyconsole") { url("https://github.com/icfnext/aem-groovy-console/releases/download/12.0.0/aem-groovy-console-12.0.0.zip") }
-        }
-        register("aemConfigure") {
-            doLast {
-                aem.sync {
-                    evalGroovyCode("""
-                        def postsService = getService("com.company.example.aem.sites.services.posts.PostsService")
-                        
-                        println postsService.randomPosts(5)
-                    """)
-                    // evalGroovyScript("posts.groovy") // if script above moved to 'aem/gradle/groovyScript/posts.groovy'
-                }
-            }
-        }
-    }
-}
-```
-
 #### Calling AEM endpoints / making any HTTP requests
 
 To make an HTTP request to some AEM endpoint (servlet) simply write:
@@ -1640,7 +1569,9 @@ aem {
         register("aemHealthCheck") {
             doLast {
                 aem.sync {
-                    get("/bin/example/healthCheck") { checkStatus(it, 200) }
+                    http {
+                        get("/bin/example/healthCheck") { checkStatus(it, 200) }
+                    }
                 }
             }
         }
@@ -1660,11 +1591,13 @@ aem {
         register("aemHealthCheck") {
             doLast {
                 aem.sync {
-                    val json = get("/bin/example/healthCheck") { asJson(it) }
-                    val status = json.read("status") as String
-                    
-                    if (status != "OK") {
-                        throw GradleException("Health check failed on: $instance because status '$status' detected.")
+                    http {
+                        val json = get("/bin/example/healthCheck") { asJson(it) }
+                        val status = json.read("status") as String
+                        
+                        if (status != "OK") {
+                            throw GradleException("Health check failed on: $instance because status '$status' detected.")
+                        }
                     }
                 }
             }
@@ -1675,26 +1608,123 @@ aem {
 
 There are also available convenient methods `asStream`, `asString` to be able to process endpoint responses.
 
-#### Making changes to repository
+#### Downloading CRX package from external HTTP endpoint and deploying it on desired AEM instances
 
-To make some changes in repository on AEM instance use `repository` namespace in `aem.sync`
+Below snippet could be used to automatize recovery from content backups (e.g for production or to replicate production content to test environment).
+
+```kotlin
+
+aem {
+    tasks {
+        register("packageDeployProductionContent") {
+            doLast {
+                val instances = listOf(
+                        aem.instance("http://user:password@aem-host.com") // URL specified directly, could be parametrized by some gradle command line property
+                        // aem.namedInstance("local-publish") // reused AEM instance defined in 'gradle.properties'
+                )
+                val pkg = aem.http { download("https://company.com/aem/backups/example-1.0.0-201901300932.backup.zip") }
+                
+                aem.sync(instances) { 
+                    packageManager.deployPackage(pkg) 
+                }
+            }
+        }
+    }
+}
+```
+
+#### Working with content repository (JCR)
+
+To make changes in AEM content repository, use [Repository](blob/develop/src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/repository/Repository.kt) instance service which is a part of instance sync tool.
+
+For example, to migrate pages even without using [Groovy Console](https://github.com/icfnext/aem-groovy-console) deployed on instance, simply write:
 
 ```kotlin
 aem {
     tasks {
-        instanceSatisfy {
-            doFirst {
-                aem.authorInstances.first().sync.repository {
-                    updateNode("/libs/settings/workflow/launcher/config/update_asset_create", mapOf("enabled" to true))
-                    logger.lifecycle("Workflow `${getNode("/libs/settings/workflow/launcher/config/update_asset_create").props["description"]}` DISABLED")
+        register("migratePages") {
+            description = "Migrates pages to new component"
+            doLast {
+                aem.sync {
+                    repository {
+                        node("/content/example")
+                            .traverse()
+                            .filter { it.type == "cq:PageContent" && properties["sling:resourceType"] == "example/components/basicPage" }
+                            .forEach { page ->
+                                logger.info("Migrating page: ${page.path}")
+                                page.saveProperty("sling:resourceType", "example/components/advancedPage")
+                            }
+                    }
                 }
             }
         }
-        packageDeploy {
+    }
+}
+```
+
+To create new / update existing nodes to configure e.g replication agents write:
+
+```kotlin
+aem {
+    tasks {
+        register("migratePages") {
+            description = "Corrects publish replication agent transport URI"
             doLast {
-                aem.authorInstances.first().sync.repository {
-                    updateProperty("/libs/settings/workflow/launcher/config/update_asset_create", "enabled", true)
-                    logger.lifecycle("Workflow `${getProperty("/libs/settings/workflow/launcher/config/update_asset_create", "description")}` ENABLED")
+                aem.sync {
+                    repository {
+                        node("/etc/replication/agents.publish/flush/jcr:content", mapOf( // shorthand for 'node(path).save(props)'
+                            "transportUri" to "http://invalidation-only/dispatcher/invalidate.cache"
+                        ))
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+Under the hood, repository service is using only AEM built-in [Sling Post Servlet](https://sling.apache.org/documentation/bundles/manipulating-content-the-slingpostservlet-servlets-post.html).
+
+#### Executing code on AEM runtime
+
+It is also possible to easily execute any code on AEM runtime using [Groovy Console](https://github.com/icfnext/aem-groovy-console). 
+Assuming that on AEM instances there is already installed Groovy Console e.g via `instanceSatisfy` task, then it is possible to use [GroovyConsole](blob/develop/src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/groovy/GroovyConsole.kt) instance service.
+
+```kotlin
+aem {
+    tasks {
+        satisfy {
+            group("tool.groovyconsole") { url("https://github.com/icfnext/aem-groovy-console/releases/download/12.0.0/aem-groovy-console-12.0.0.zip") }
+        }
+        register("aemConfigure") {
+            doLast {
+                aem.sync {
+                    groovyConsole.evalCode("""
+                        def postsService = getService("com.company.example.aem.sites.services.posts.PostsService")
+                        
+                        println postsService.randomPosts(5)
+                    """)
+                    // groovyConsole.evalScript("posts.groovy") // if script above moved to 'aem/gradle/groovyScript/posts.groovy'
+                }
+            }
+        }
+    }
+}
+```
+
+#### Controlling OSGi bundles and components
+
+To disable specific OSGi component by its PID value and only on publish instances use [OsgiFramework](blob/develop/src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/osgi/OsgiFramework.kt) instance service and write:
+
+
+```kotlin
+aem {
+    tasks {
+        register("aemConfigure") {
+            doLast {
+                aem.sync(aem.publishInstances) {
+                    osgiFramework.disableComponent("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet")
+                    // osgiFramework.stopBundle("org.apache.sling.jcr.webdav")
                 }
             }
         }

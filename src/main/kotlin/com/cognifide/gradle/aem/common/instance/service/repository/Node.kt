@@ -196,12 +196,12 @@ class Node(private val repository: Repository, val path: String) : Serializable 
      */
     private fun postProperties(properties: Map<String, Any?>): Map<String, Any?> {
         return properties.entries.fold(mutableMapOf(), { props, (name, value) ->
-            when {
-                value == null -> props["$name@Delete"] = ""
+            when (value) {
+                null -> props["$name@Delete"] = ""
                 else -> {
-                    props[name] = value
+                    props[name] = RepositoryType.normalize(value)
                     if (repository.typeHints) {
-                        TypeHint.of(value)?.let { props["$name@TypeHint"] = it }
+                        RepositoryType.hint(value)?.let { props["$name@TypeHint"] = it }
                     }
                 }
             }
