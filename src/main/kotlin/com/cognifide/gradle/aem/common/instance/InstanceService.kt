@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.common.instance
 
-open class InstanceService(val sync: InstanceSync) {
+open class InstanceService(open val sync: InstanceSync) {
 
     val aem = sync.aem
 

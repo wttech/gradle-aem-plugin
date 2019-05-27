@@ -34,4 +34,8 @@ class InstanceSync(aem: AemExtension, instance: Instance) : InstanceHttpClient(a
     fun repository(callback: Repository.() -> Unit) {
         repository.apply(callback)
     }
+
+    fun customize(options: InstanceSync.() -> Unit): InstanceSync {
+        return InstanceSync(aem, instance).apply(options)
+    }
 }

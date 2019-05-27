@@ -5,9 +5,9 @@ import com.cognifide.gradle.aem.common.instance.InstanceSync
 
 class Repository(sync: InstanceSync) : InstanceService(sync) {
 
-    val typeHints: Boolean = true
+    var typeHints: Boolean = true
 
-    val nullDeletes: Boolean = true
+    var nullDeletes: Boolean = true
 
     fun node(path: String): Node {
         return Node(this, path)

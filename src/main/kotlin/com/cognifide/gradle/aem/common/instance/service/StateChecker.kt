@@ -31,7 +31,7 @@ class StateChecker(private var syncOrigin: InstanceSync) {
      */
     fun <T> check(configurer: InstanceSync.() -> Unit, action: StateChecker.() -> T): T {
         val origin = syncOrigin
-        syncOrigin = InstanceSync(syncOrigin.aem, syncOrigin.instance).apply(configurer)
+        syncOrigin = syncOrigin.customize(configurer)
         val result = action(this)
         syncOrigin = origin
         return result

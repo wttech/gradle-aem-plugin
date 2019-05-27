@@ -49,21 +49,21 @@ class Node(private val repository: Repository, val path: String) : Serializable 
             }
             .asSequence()
 
-    @get:JsonIgnore
-    val json: String
-        get() = Formats.toJson(this)
-
-    fun save(properties: Map<String, Any?>) {
-        try {
-            repository.sync.post(path, preparePostProperties(properties))
+    fun save(properties: Map<String, Any?>): RepositoryResult {
+        return try {
+            repository.sync.postMultipart(path, postProperties(properties) + operationProperties("")) {
+                asObjectFromJson(it, RepositoryResult::class.java)
+            }
         } catch (e: RequestException) {
             throw RepositoryException("Cannot save repository node: $path", e)
         }
     }
 
-    fun delete() {
-        try {
-            repository.sync.delete(path)
+    fun delete(): RepositoryResult {
+        return try {
+            repository.sync.postMultipart(path, operationProperties("delete")) {
+                asObjectFromJson(it, RepositoryResult::class.java)
+            }
         } catch (e: RequestException) {
             throw RepositoryException("Cannot delete repository node: $path", e)
         }
@@ -73,11 +73,11 @@ class Node(private val repository: Repository, val path: String) : Serializable 
         reloadProperties()
     }
 
-    fun saveProperty(name: String, value: Any?) = save(mapOf(name to value))
+    fun saveProperty(name: String, value: Any?): RepositoryResult = save(mapOf(name to value))
 
-    fun deleteProperty(name: String) = saveProperty(name, null)
+    fun deleteProperty(name: String): RepositoryResult = saveProperty(name, null)
 
-    fun hasProperty(name: String): Boolean = properties[name] != null
+    fun hasProperty(name: String): Boolean = properties.containsKey(name)
 
     private fun reloadProperties(): Properties {
         return repository.sync.get("$path.json") {
@@ -91,7 +91,7 @@ class Node(private val repository: Repository, val path: String) : Serializable 
      *
      * TODO support 'repository.typeHints'
      */
-    private fun preparePostProperties(properties: Map<String, Any?>): Map<String, Any?> {
+    private fun postProperties(properties: Map<String, Any?>): Map<String, Any?> {
         return properties.entries.fold(mutableMapOf(), { p, (n, v) ->
             when {
                 repository.nullDeletes && v == null -> p[StringUtils.appendIfMissing(n, "@Delete")] = ""
@@ -101,13 +101,18 @@ class Node(private val repository: Repository, val path: String) : Serializable 
         })
     }
 
+    private fun operationProperties(operation: String): Map<String, Any?> {
+        return mapOf(
+                ":operation" to operation,
+                ":http-equiv-accept" to "application/json"
+        )
+    }
+
     private fun filterMetaProperties(properties: Map<String, Any>): Map<String, Any> {
         return properties.filterKeys { p -> !Property.values().any { it.value == p } }
     }
 
-    fun recurse(filter: (Node) -> Boolean) = recurse(filter, false)
-
-    fun recurse(filter: (Node) -> Boolean = { true }, self: Boolean = false): Sequence<Node> = sequence {
+    fun recurse(self: Boolean = false): Sequence<Node> = sequence {
         val stack = Stack<Node>()
 
         if (self) {
@@ -118,19 +123,21 @@ class Node(private val repository: Repository, val path: String) : Serializable 
 
         while (stack.isNotEmpty()) {
             val current = stack.pop()
-            if (filter(current)) {
-                stack.addAll(current.children)
-                yield(current)
-            }
+            stack.addAll(current.children)
+            yield(current)
         }
+    }
+
+    @get:JsonIgnore
+    val json: String
+        get() = Formats.toJson(this)
+
+    override fun toString(): String {
+        return "Node(path='$path', type='$type', properties=$properties)"
     }
 
     enum class Property(val value: String) {
         CHILDREN("__children__"),
         NAME("__name__")
-    }
-
-    override fun toString(): String {
-        return "Node(path='$path', type='$type', properties=$properties)"
     }
 }

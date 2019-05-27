@@ -152,9 +152,9 @@ open class HttpClient(val aem: AemExtension) {
         return post(uri, handler) { entity = createEntityUrlencoded(params) }
     }
 
-    fun postMultipart(uri: String, params: Map<String, Any> = mapOf()) = postMultipart(uri, params) { checkStatus(it) }
+    fun postMultipart(uri: String, params: Map<String, Any?> = mapOf()) = postMultipart(uri, params) { checkStatus(it) }
 
-    fun <T> postMultipart(uri: String, params: Map<String, Any> = mapOf(), handler: HttpClient.(HttpResponse) -> T): T {
+    fun <T> postMultipart(uri: String, params: Map<String, Any?> = mapOf(), handler: HttpClient.(HttpResponse) -> T): T {
         return post(uri, handler) { entity = createEntityMultipart(params) }
     }
 
@@ -249,22 +249,17 @@ open class HttpClient(val aem: AemExtension) {
 
     open fun createEntityUrlencoded(params: Map<String, Any?>): HttpEntity {
         return UrlEncodedFormEntity(params.entries.fold(ArrayList<NameValuePair>()) { result, e ->
-            result.add(BasicNameValuePair(e.key, e.value.toString())); result
+            result.add(BasicNameValuePair(e.key, e.value?.toString() ?: "")); result
         })
     }
 
-    open fun createEntityMultipart(params: Map<String, Any>): HttpEntity {
+    open fun createEntityMultipart(params: Map<String, Any?>): HttpEntity {
         val builder = MultipartEntityBuilder.create()
         for ((key, value) in params) {
-            if (value is File) {
-                if (value.exists()) {
-                    builder.addBinaryBody(key, value)
-                }
+            if (value is File && value.exists()) {
+                builder.addBinaryBody(key, value)
             } else {
-                val str = value.toString()
-                if (str.isNotBlank()) {
-                    builder.addTextBody(key, str)
-                }
+                builder.addTextBody(key, value?.toString() ?: "")
             }
         }
 

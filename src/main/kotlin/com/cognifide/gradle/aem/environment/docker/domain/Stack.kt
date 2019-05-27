@@ -13,7 +13,7 @@ class Stack(val environment: Environment) {
 
     private val aem = environment.aem
 
-    val stack = DockerStack(aem, aem.props.string("environment.stack.name") ?: "aem")
+    val stack = DockerStack(aem, aem.props.string("environment.stack.name") ?: aem.project.rootProject.name)
 
     var deployRetry = aem.retry { afterSecond(aem.props.long("environment.stack.deployRetry") ?: 30) }
 
