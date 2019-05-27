@@ -48,8 +48,9 @@ class Node(private val repository: Repository, val path: String) : Serializable 
             }
             .asSequence()
 
-    fun save(properties: Map<String, Any?>): RepositoryResult = try {
-        repository.http.postMultipart(path, postProperties(properties) + operationProperties("")) {
+    fun save(properties: Map<String, Any?>, removeUnspecified: Boolean = false): RepositoryResult = try {
+        val allProps = postProperties(properties, removeUnspecified) + operationProperties("")
+        repository.http.postMultipart(path, allProps) {
             asObjectFromJson(it, RepositoryResult::class.java)
         }
     } catch (e: RequestException) {
@@ -81,11 +82,9 @@ class Node(private val repository: Repository, val path: String) : Serializable 
     /**
      * Implementation for supporting "Controlling Content Updates with @ Suffixes"
      * @see <https://sling.apache.org/documentation/bundles/manipulating-content-the-slingpostservlet-servlets-post.html>
-     *
-     * TODO support 'repository.typeHints'
      */
-    private fun postProperties(properties: Map<String, Any?>): Map<String, Any?> {
-        return properties.entries.fold(mutableMapOf(), { props, (name, value) ->
+    private fun postProperties(properties: Map<String, Any?>, removeOther: Boolean): Map<String, Any?> {
+        var result = properties.entries.fold(mutableMapOf<String, Any?>(), { props, (name, value) ->
             when {
                 value == null && repository.nullDeletes -> props["$name@Delete"] = ""
                 else -> {
@@ -97,6 +96,16 @@ class Node(private val repository: Repository, val path: String) : Serializable 
             }
             props
         })
+
+        if (removeOther) {
+            result = mutableMapOf<String, Any?>().apply {
+                putAll(result)
+                this@Node.properties.keys.filter { !result.keys.contains(it) }.forEach { put("$it@Delete", "") }
+
+            }
+        }
+
+        return result
     }
 
     private fun operationProperties(operation: String): Map<String, Any?> = mapOf(
