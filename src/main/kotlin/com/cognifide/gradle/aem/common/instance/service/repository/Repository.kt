@@ -9,8 +9,6 @@ class Repository(sync: InstanceSync) : InstanceService(sync) {
 
     var typeHints: Boolean = true
 
-    var nullDeletes: Boolean = true
-
     var verbose: Boolean
         get() = http.responseChecks
         set(value) {
@@ -20,4 +18,6 @@ class Repository(sync: InstanceSync) : InstanceService(sync) {
     fun node(path: String): Node {
         return Node(this, path)
     }
+
+    fun <T> node(path: String, options: Node.() -> T): T = node(path).run(options)
 }

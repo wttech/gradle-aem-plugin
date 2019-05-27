@@ -16,21 +16,41 @@ class Node(private val repository: Repository, val path: String) : Serializable 
 
     private var propertiesLoaded: Properties? = null
 
+    /**
+     * Node properties.
+     *
+     * Keep in mind that these values are loaded lazily and sometimes it is needed to reload them
+     * using dedicated method.
+     */
     val properties: Properties
         get() = propertiesLoaded ?: reloadProperties()
 
+    /**
+     * JCR primary type of node.
+     */
     @get:JsonIgnore
     val type: String
         get() = properties.string(JcrConstants.JCR_PRIMARYTYPE)!!
 
+    /**
+     * Parent node.
+     */
     @get:JsonIgnore
     val parent: Node
         get() = Node(repository, path.substringBeforeLast("/"))
 
+    /**
+     * Get all node child nodes.
+     *
+     * Because of performance issues, using method is more preferred.
+     */
     @get:JsonIgnore
     val children: List<Node>
         get() = children().toList()
 
+    /**
+     * Loop over all node child nodes.
+     */
     @Suppress("unchecked_cast")
     fun children(): Sequence<Node> = repository.http.get("$path.harray.1.json") { asJson(it) }
             .run {
@@ -48,15 +68,20 @@ class Node(private val repository: Repository, val path: String) : Serializable 
             }
             .asSequence()
 
-    fun save(properties: Map<String, Any?>, removeUnspecified: Boolean = false): RepositoryResult = try {
-        val allProps = postProperties(properties, removeUnspecified) + operationProperties("")
-        repository.http.postMultipart(path, allProps) {
+    /**
+     * Create or update node in repository.
+     */
+    fun save(properties: Map<String, Any?>): RepositoryResult = try {
+        repository.http.postMultipart(path, postProperties(properties) + operationProperties("")) {
             asObjectFromJson(it, RepositoryResult::class.java)
         }
     } catch (e: RequestException) {
         throw RepositoryException("Cannot save repository node: $path", e)
     }
 
+    /**
+     * Delete node and all children from repository.
+     */
     fun delete(): RepositoryResult = try {
         repository.http.postMultipart(path, operationProperties("delete")) {
             asObjectFromJson(it, RepositoryResult::class.java)
@@ -65,58 +90,26 @@ class Node(private val repository: Repository, val path: String) : Serializable 
         throw RepositoryException("Cannot delete repository node: $path", e)
     }
 
+    /**
+     * Deletes node and creates it again. Use with caution!
+     */
+    fun replace(properties: Map<String, Any?>): RepositoryResult {
+        delete()
+        return save(properties)
+    }
+
+    /**
+     * Synchronizes on demand previously loaded properties of node (by default properties are loaded lazily).
+     * Useful when saving and working on same node again (without instantiating variable).
+     */
     fun reload() {
         reloadProperties()
     }
 
-    fun saveProperty(name: String, value: Any?): RepositoryResult = save(mapOf(name to value))
-
-    fun deleteProperty(name: String): RepositoryResult = saveProperty(name, null)
-
-    fun hasProperty(name: String): Boolean = properties.containsKey(name)
-
-    private fun reloadProperties(): Properties = repository.http.get("$path.json") {
-        Properties(asJson(it).json<LinkedHashMap<String, Any>>()).apply { propertiesLoaded = this }
-    }
-
     /**
-     * Implementation for supporting "Controlling Content Updates with @ Suffixes"
-     * @see <https://sling.apache.org/documentation/bundles/manipulating-content-the-slingpostservlet-servlets-post.html>
+     * Search nodes by traversing a node tree.
+     * Use sequence filter method to find desired nodes.
      */
-    private fun postProperties(properties: Map<String, Any?>, removeOther: Boolean): Map<String, Any?> {
-        var result = properties.entries.fold(mutableMapOf<String, Any?>(), { props, (name, value) ->
-            when {
-                value == null && repository.nullDeletes -> props["$name@Delete"] = ""
-                else -> {
-                    props[name] = value
-                    if (repository.typeHints) {
-                        TypeHint.of(value)?.let { props["$name@TypeHint"] = it }
-                    }
-                }
-            }
-            props
-        })
-
-        if (removeOther) {
-            result = mutableMapOf<String, Any?>().apply {
-                putAll(result)
-                this@Node.properties.keys.filter { !result.keys.contains(it) }.forEach { put("$it@Delete", "") }
-
-            }
-        }
-
-        return result
-    }
-
-    private fun operationProperties(operation: String): Map<String, Any?> = mapOf(
-            ":operation" to operation,
-            ":http-equiv-accept" to "application/json"
-    )
-
-    private fun filterMetaProperties(properties: Map<String, Any>): Map<String, Any> {
-        return properties.filterKeys { p -> !Property.values().any { it.value == p } }
-    }
-
     fun recurse(self: Boolean = false): Sequence<Node> = sequence {
         val stack = Stack<Node>()
 
@@ -131,6 +124,75 @@ class Node(private val repository: Repository, val path: String) : Serializable 
             stack.addAll(current.children)
             yield(current)
         }
+    }
+
+    /**
+     * Update only single property of node.
+     */
+    fun saveProperty(name: String, value: Any?): RepositoryResult = save(mapOf(name to value))
+
+    /**
+     * Delete single property from node.
+     */
+    fun deleteProperty(name: String): RepositoryResult = deleteProperties(listOf(name))
+
+    /**
+     * Delete multiple properties from node.
+     */
+    fun deleteProperties(vararg names: String) = deleteProperties(names.asIterable())
+
+    /**
+     * Delete multiple properties from node.
+     */
+    fun deleteProperties(names: Iterable<String>): RepositoryResult {
+        return save(names.fold(mutableMapOf(), { props, name -> props[name] = null; props }))
+    }
+
+    /**
+     * Check if node has property.
+     */
+    fun hasProperty(name: String): Boolean = properties.containsKey(name)
+
+    /**
+     * Check if node has properties.
+     */
+    fun hasProperties(vararg names: String) = hasProperties(names.asIterable())
+
+    /**
+     * Check if node has properties.
+     */
+    fun hasProperties(names: Iterable<String>): Boolean = names.all { properties.containsKey(it) }
+
+    private fun reloadProperties(): Properties = repository.http.get("$path.json") {
+        Properties(asJson(it).json<LinkedHashMap<String, Any>>()).apply { propertiesLoaded = this }
+    }
+
+    /**
+     * Implementation for supporting "Controlling Content Updates with @ Suffixes"
+     * @see <https://sling.apache.org/documentation/bundles/manipulating-content-the-slingpostservlet-servlets-post.html>
+     */
+    private fun postProperties(properties: Map<String, Any?>): Map<String, Any?> {
+        return properties.entries.fold(mutableMapOf(), { props, (name, value) ->
+            when {
+                value == null -> props["$name@Delete"] = ""
+                else -> {
+                    props[name] = value
+                    if (repository.typeHints) {
+                        TypeHint.of(value)?.let { props["$name@TypeHint"] = it }
+                    }
+                }
+            }
+            props
+        })
+    }
+
+    private fun operationProperties(operation: String): Map<String, Any?> = mapOf(
+            ":operation" to operation,
+            ":http-equiv-accept" to "application/json"
+    )
+
+    private fun filterMetaProperties(properties: Map<String, Any>): Map<String, Any> {
+        return properties.filterKeys { p -> !Property.values().any { it.value == p } }
     }
 
     @get:JsonIgnore
