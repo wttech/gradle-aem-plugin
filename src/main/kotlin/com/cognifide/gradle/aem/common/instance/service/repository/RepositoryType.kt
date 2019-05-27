@@ -15,6 +15,7 @@ object RepositoryType {
         is String -> "String"
         is Boolean -> "Boolean"
         is Int, Long -> "Long"
+        is Calendar -> "Date"
         is Date -> "Date"
         is Float -> "Decimal"
         is Double -> "Double"
