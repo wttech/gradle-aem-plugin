@@ -23,6 +23,12 @@ object RepositoryType {
     }
 
     fun normalize(value: Any?) = when (value) {
+        is Iterable<*> -> value.map { normalizeSimpleType(value) }
+        is Array<*> -> value.map { normalizeSimpleType(value) }
+        else -> normalizeSimpleType(value)
+    }
+
+    fun normalizeSimpleType(value: Any?) = when (value) {
         is Date -> ISO8601.format(Calendar.getInstance().apply { time = value })
         is Calendar -> ISO8601.format(value)
         else -> value
