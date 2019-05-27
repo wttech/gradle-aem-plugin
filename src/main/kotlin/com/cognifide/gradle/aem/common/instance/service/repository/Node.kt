@@ -9,15 +9,26 @@ import java.util.*
 import net.minidev.json.JSONArray
 import org.apache.jackrabbit.vault.util.JcrConstants
 
+/**
+ * Represents node stored in JCR content repository.
+ */
 class Node(private val repository: Repository, val path: String) : Serializable {
 
-    val name: String
-        get() = path.substringAfterLast("/")
+    private val logger = repository.aem.logger
 
+    /**
+     * Cached properties of node.
+     */
     private var propertiesLoaded: Properties? = null
 
     /**
-     * Node properties.
+     * Node name
+     */
+    val name: String
+        get() = path.substringAfterLast("/")
+
+    /**
+     * JCR node properties.
      *
      * Keep in mind that these values are loaded lazily and sometimes it is needed to reload them
      * using dedicated method.
@@ -52,26 +63,32 @@ class Node(private val repository: Repository, val path: String) : Serializable 
      * Loop over all node child nodes.
      */
     @Suppress("unchecked_cast")
-    fun children(): Sequence<Node> = repository.http.get("$path.harray.1.json") { asJson(it) }
-            .run {
-                try {
-                    read<JSONArray>(Property.CHILDREN.value)
-                } catch (e: PathNotFoundException) {
-                    JSONArray() // no children
+    fun children(): Sequence<Node> {
+        logger.info("Reading child nodes of repository node: $path")
+
+        return repository.http.get("$path.harray.1.json") { asJson(it) }
+                .run {
+                    try {
+                        read<JSONArray>(Property.CHILDREN.value)
+                    } catch (e: PathNotFoundException) {
+                        JSONArray() // no children
+                    }
                 }
-            }
-            .map { child -> child as Map<String, Any> }
-            .map { props ->
-                Node(repository, "$path/${props[Property.NAME.value]}").apply {
-                    propertiesLoaded = Properties(filterMetaProperties(props))
+                .map { child -> child as Map<String, Any> }
+                .map { props ->
+                    Node(repository, "$path/${props[Property.NAME.value]}").apply {
+                        propertiesLoaded = Properties(filterMetaProperties(props))
+                    }
                 }
-            }
-            .asSequence()
+                .asSequence()
+    }
 
     /**
      * Create or update node in repository.
      */
     fun save(properties: Map<String, Any?>): RepositoryResult = try {
+        logger.info("Saving repository node: $path, properties: $properties")
+
         repository.http.postMultipart(path, postProperties(properties) + operationProperties("")) {
             asObjectFromJson(it, RepositoryResult::class.java)
         }
@@ -83,6 +100,8 @@ class Node(private val repository: Repository, val path: String) : Serializable 
      * Delete node and all children from repository.
      */
     fun delete(): RepositoryResult = try {
+        logger.info("Deleting repository node: $path")
+
         repository.http.postMultipart(path, operationProperties("delete")) {
             asObjectFromJson(it, RepositoryResult::class.java)
         }
@@ -110,7 +129,7 @@ class Node(private val repository: Repository, val path: String) : Serializable 
      * Search nodes by traversing a node tree.
      * Use sequence filter method to find desired nodes.
      */
-    fun recurse(self: Boolean = false): Sequence<Node> = sequence {
+    fun traverse(self: Boolean = false): Sequence<Node> = sequence {
         val stack = Stack<Node>()
 
         if (self) {
@@ -163,8 +182,12 @@ class Node(private val repository: Repository, val path: String) : Serializable 
      */
     fun hasProperties(names: Iterable<String>): Boolean = names.all { properties.containsKey(it) }
 
-    private fun reloadProperties(): Properties = repository.http.get("$path.json") {
-        Properties(asJson(it).json<LinkedHashMap<String, Any>>()).apply { propertiesLoaded = this }
+    private fun reloadProperties(): Properties {
+        logger.info("Reading properties of repository node: $path")
+
+        return repository.http.get("$path.json") {
+            Properties(asJson(it).json<LinkedHashMap<String, Any>>()).apply { propertiesLoaded = this }
+        }
     }
 
     /**
@@ -200,7 +223,7 @@ class Node(private val repository: Repository, val path: String) : Serializable 
         get() = Formats.toJson(this)
 
     override fun toString(): String {
-        return "Node(path='$path', type='$type', properties=$properties)"
+        return "Node(path='$path', properties=$properties)"
     }
 
     enum class Property(val value: String) {
