@@ -7,7 +7,6 @@ import com.jayway.jsonpath.PathNotFoundException
 import java.io.Serializable
 import java.util.*
 import net.minidev.json.JSONArray
-import org.apache.commons.lang3.StringUtils
 import org.apache.jackrabbit.vault.util.JcrConstants
 
 class Node(private val repository: Repository, val path: String) : Serializable {
@@ -33,7 +32,7 @@ class Node(private val repository: Repository, val path: String) : Serializable 
         get() = children().toList()
 
     @Suppress("unchecked_cast")
-    fun children(): Sequence<Node> = repository.sync.get("$path.harray.1.json") { asJson(it) }
+    fun children(): Sequence<Node> = repository.http.get("$path.harray.1.json") { asJson(it) }
             .run {
                 try {
                     read<JSONArray>(Property.CHILDREN.value)
@@ -49,24 +48,20 @@ class Node(private val repository: Repository, val path: String) : Serializable 
             }
             .asSequence()
 
-    fun save(properties: Map<String, Any?>): RepositoryResult {
-        return try {
-            repository.sync.postMultipart(path, postProperties(properties) + operationProperties("")) {
-                asObjectFromJson(it, RepositoryResult::class.java)
-            }
-        } catch (e: RequestException) {
-            throw RepositoryException("Cannot save repository node: $path", e)
+    fun save(properties: Map<String, Any?>): RepositoryResult = try {
+        repository.http.postMultipart(path, postProperties(properties) + operationProperties("")) {
+            asObjectFromJson(it, RepositoryResult::class.java)
         }
+    } catch (e: RequestException) {
+        throw RepositoryException("Cannot save repository node: $path", e)
     }
 
-    fun delete(): RepositoryResult {
-        return try {
-            repository.sync.postMultipart(path, operationProperties("delete")) {
-                asObjectFromJson(it, RepositoryResult::class.java)
-            }
-        } catch (e: RequestException) {
-            throw RepositoryException("Cannot delete repository node: $path", e)
+    fun delete(): RepositoryResult = try {
+        repository.http.postMultipart(path, operationProperties("delete")) {
+            asObjectFromJson(it, RepositoryResult::class.java)
         }
+    } catch (e: RequestException) {
+        throw RepositoryException("Cannot delete repository node: $path", e)
     }
 
     fun reload() {
@@ -79,10 +74,8 @@ class Node(private val repository: Repository, val path: String) : Serializable 
 
     fun hasProperty(name: String): Boolean = properties.containsKey(name)
 
-    private fun reloadProperties(): Properties {
-        return repository.sync.get("$path.json") {
-            Properties(asJson(it).json<LinkedHashMap<String, Any>>()).apply { propertiesLoaded = this }
-        }
+    private fun reloadProperties(): Properties = repository.http.get("$path.json") {
+        Properties(asJson(it).json<LinkedHashMap<String, Any>>()).apply { propertiesLoaded = this }
     }
 
     /**
@@ -92,21 +85,24 @@ class Node(private val repository: Repository, val path: String) : Serializable 
      * TODO support 'repository.typeHints'
      */
     private fun postProperties(properties: Map<String, Any?>): Map<String, Any?> {
-        return properties.entries.fold(mutableMapOf(), { p, (n, v) ->
+        return properties.entries.fold(mutableMapOf(), { props, (name, value) ->
             when {
-                repository.nullDeletes && v == null -> p[StringUtils.appendIfMissing(n, "@Delete")] = ""
-                else -> p[n] = v
+                value == null && repository.nullDeletes -> props["$name@Delete"] = ""
+                else -> {
+                    props[name] = value
+                    if (repository.typeHints) {
+                        TypeHint.of(value)?.let { props["$name@TypeHint"] = it }
+                    }
+                }
             }
-            p
+            props
         })
     }
 
-    private fun operationProperties(operation: String): Map<String, Any?> {
-        return mapOf(
-                ":operation" to operation,
-                ":http-equiv-accept" to "application/json"
-        )
-    }
+    private fun operationProperties(operation: String): Map<String, Any?> = mapOf(
+            ":operation" to operation,
+            ":http-equiv-accept" to "application/json"
+    )
 
     private fun filterMetaProperties(properties: Map<String, Any>): Map<String, Any> {
         return properties.filterKeys { p -> !Property.values().any { it.value == p } }

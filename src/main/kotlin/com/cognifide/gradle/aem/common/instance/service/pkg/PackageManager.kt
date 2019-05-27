@@ -75,7 +75,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
     fun listPackages(retry: Retry = aem.retry()): ListResponse {
         return retry.withCountdown<ListResponse, InstanceException>("list packages") {
             return try {
-                sync.postMultipart(LIST_JSON) { asObjectFromJson(it, ListResponse::class.java) }
+                sync.http.postMultipart(LIST_JSON) { asObjectFromJson(it, ListResponse::class.java) }
             } catch (e: RequestException) {
                 throw InstanceException("Cannot list packages on $instance. Reason: request failed.", e)
             } catch (e: ResponseException) {
@@ -91,7 +91,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
             aem.logger.info("Uploading package $file to $instance'")
 
             val response = try {
-                sync.postMultipart(url, mapOf(
+                sync.http.postMultipart(url, mapOf(
                         "package" to file,
                         "force" to (force || isSnapshot(file))
                 )) { asObjectFromJson(it, UploadResponse::class.java) }
@@ -147,7 +147,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         return retry.withCountdown<Unit, InstanceException>("download package") {
             aem.logger.info("Downloading package from $remotePath to file $targetFile")
 
-            sync.download(remotePath, targetFile)
+            sync.http.download(remotePath, targetFile)
 
             if (!targetFile.exists()) {
                 throw InstanceException("Downloaded package is missing: ${targetFile.path}")
@@ -161,7 +161,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         aem.logger.info("Building package $remotePath on $instance")
 
         val response = try {
-            sync.postMultipart(url) { asObjectFromJson(it, BuildResponse::class.java) }
+            sync.http.postMultipart(url) { asObjectFromJson(it, BuildResponse::class.java) }
         } catch (e: RequestException) {
             throw InstanceException("Cannot build package $remotePath on $instance. Reason: request failed.", e)
         } catch (e: ResponseException) {
@@ -182,7 +182,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
             aem.logger.info("Installing package $remotePath on $instance")
 
             val response = try {
-                sync.postMultipart(url, mapOf("recursive" to recursive)) { InstallResponse.from(asStream(it), aem.packageOptions.responseBuffer) }
+                sync.http.postMultipart(url, mapOf("recursive" to recursive)) { InstallResponse.from(asStream(it), aem.packageOptions.responseBuffer) }
             } catch (e: RequestException) {
                 throw InstanceException("Cannot install package $remotePath on $instance. Reason: request failed.", e)
             } catch (e: ResponseException) {
@@ -240,7 +240,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         aem.logger.info("Activating package $remotePath on $instance")
 
         val response = try {
-            sync.postMultipart(url) { asObjectFromJson(it, UploadResponse::class.java) }
+            sync.http.postMultipart(url) { asObjectFromJson(it, UploadResponse::class.java) }
         } catch (e: RequestException) {
             throw InstanceException("Cannot activate package $remotePath on $instance. Reason: request failed.", e)
         } catch (e: ResponseException) {
@@ -260,7 +260,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         aem.logger.info("Deleting package $remotePath on $instance")
 
         val response = try {
-            sync.postMultipart(url) { DeleteResponse.from(asStream(it), aem.packageOptions.responseBuffer) }
+            sync.http.postMultipart(url) { DeleteResponse.from(asStream(it), aem.packageOptions.responseBuffer) }
         } catch (e: RequestException) {
             throw InstanceException("Cannot delete package $remotePath from $instance. Reason: request failed.", e)
         } catch (e: ResponseException) {
@@ -280,7 +280,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         aem.logger.info("Uninstalling package using command: $url")
 
         val response = try {
-            sync.postMultipart(url) { UninstallResponse.from(asStream(it), aem.packageOptions.responseBuffer) }
+            sync.http.postMultipart(url) { UninstallResponse.from(asStream(it), aem.packageOptions.responseBuffer) }
         } catch (e: RequestException) {
             throw InstanceException("Cannot uninstall package $remotePath on $instance. Reason: request failed.", e)
         } catch (e: ResponseException) {

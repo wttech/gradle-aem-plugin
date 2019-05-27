@@ -225,20 +225,20 @@ open class AwaitAction(aem: AemExtension) : AbstractAction(aem) {
             instance.sync.also { sync ->
                 if (init) {
                     aem.logger.debug("Initializing instance using default credentials.")
-                    sync.basicUser = Instance.USER_DEFAULT
-                    sync.basicPassword = Instance.PASSWORD_DEFAULT
+                    sync.http.basicUser = Instance.USER_DEFAULT
+                    sync.http.basicPassword = Instance.PASSWORD_DEFAULT
                 }
 
-                sync.responseHandler = { response ->
+                sync.http.responseHandler = { response ->
                     if (init && response.statusLine.statusCode == HttpStatus.SC_UNAUTHORIZED) {
-                        if (sync.basicUser == Instance.USER_DEFAULT) {
+                        if (sync.http.basicUser == Instance.USER_DEFAULT) {
                             aem.logger.debug("Switching instance credentials from defaults to customized.")
-                            sync.basicUser = instance.user
-                            sync.basicPassword = instance.password
+                            sync.http.basicUser = instance.user
+                            sync.http.basicPassword = instance.password
                         } else {
                             aem.logger.debug("Switching instance credentials from customized to defaults.")
-                            sync.basicUser = Instance.USER_DEFAULT
-                            sync.basicPassword = Instance.PASSWORD_DEFAULT
+                            sync.http.basicUser = Instance.USER_DEFAULT
+                            sync.http.basicPassword = Instance.PASSWORD_DEFAULT
                         }
                     }
                 }

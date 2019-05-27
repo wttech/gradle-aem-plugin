@@ -13,15 +13,26 @@ class RepositoryResult {
     @JsonProperty("status.code")
     var statusCode: Int = -1
 
+    @JsonProperty("status.message")
+    var statusMessage: String? = null
+
     lateinit var referer: String
 
     lateinit var location: String
 
     lateinit var parentLocation: String
 
+    var error: RepositoryError? = null
+
     lateinit var changes: List<RepositoryChange>
 
+    val success: Boolean
+        get() = !fail
+
+    val fail: Boolean
+        get() = error != null
+
     override fun toString(): String {
-        return "RepositoryResult(title='$title', path='$path', statusCode=$statusCode)"
+        return "RepositoryResult(title='$title', path='$path', statusCode=$statusCode, statusMessage=$statusMessage)"
     }
 }

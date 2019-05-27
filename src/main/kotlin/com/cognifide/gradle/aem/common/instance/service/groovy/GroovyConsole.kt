@@ -45,7 +45,7 @@ class GroovyConsole(sync: InstanceSync) : InstanceService(sync) {
     }
 
     private fun evalCodeInternal(code: String, data: Map<String, Any>): GroovyConsoleResult {
-        return sync.postMultipart(EVAL_PATH, mapOf(
+        return sync.http.postMultipart(EVAL_PATH, mapOf(
                 "script" to code,
                 "data" to Formats.toJson(data)
         )) { asObjectFromJson(it, GroovyConsoleResult::class.java) }

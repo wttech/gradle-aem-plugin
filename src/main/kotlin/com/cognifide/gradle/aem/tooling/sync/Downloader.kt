@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem.tooling.sync
 
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.common.http.HttpClient
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.aem.common.pkg.vlt.VltFilter
@@ -39,16 +38,8 @@ class Downloader(@Internal private val aem: AemExtension) {
      */
     var retry = aem.retry { afterSquaredSecond(aem.props.long("sync.downloader.retry") ?: 3) }
 
-    /**
-     * In case of downloading big CRX packages, AEM could respond much slower so that special
-     * timeout is covering such edge case.
-     */
-    var httpOptions: HttpClient.() -> Unit = {
-        connectionTimeout = aem.props.int("sync.downloader.http.connectionTimeout") ?: 60000
-    }
-
     fun download() {
-        val file = instance.sync.apply(httpOptions).packageManager.downloadPackage({
+        val file = instance.sync.packageManager.downloadPackage({
             filterElements = filter.rootElements.toMutableList()
         }, retry)
 

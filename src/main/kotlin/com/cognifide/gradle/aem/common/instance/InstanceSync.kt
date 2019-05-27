@@ -7,34 +7,54 @@ import com.cognifide.gradle.aem.common.instance.service.osgi.OsgiFramework
 import com.cognifide.gradle.aem.common.instance.service.pkg.PackageManager
 import com.cognifide.gradle.aem.common.instance.service.repository.Repository
 
-class InstanceSync(aem: AemExtension, instance: Instance) : InstanceHttpClient(aem, instance) {
+class InstanceSync(val aem: AemExtension, val instance: Instance) {
 
-    fun stateChecker() = StateChecker(this)
+    val http = InstanceHttpClient(aem, instance)
+
+    /**
+     * Perform easily any HTTP requests to AEM instance.
+     */
+    fun <T> http(callback: InstanceHttpClient.() -> T): T = http.run(callback)
 
     val osgiFramework = OsgiFramework(this)
 
-    fun osgiFramework(callback: OsgiFramework.() -> Unit) {
-        osgiFramework.apply(callback)
-    }
+    /**
+     * Control OSGi framework (Apache Felix) on AEM instance.
+     */
+    fun <T> osgiFramework(callback: OsgiFramework.() -> T): T = osgiFramework.run(callback)
 
     val packageManager = PackageManager(this)
 
-    fun packageManager(callback: PackageManager.() -> Unit) {
-        packageManager.apply(callback)
-    }
+    /**
+     * Manage CRX packages on AEM instance (upload, install, delete etc).
+     */
+    fun <T> packageManager(callback: PackageManager.() -> T): T = packageManager.run(callback)
 
     val groovyConsole = GroovyConsole(this)
 
-    fun groovyConsole(callback: GroovyConsole.() -> Unit) {
-        groovyConsole.apply(callback)
-    }
+    /**
+     * Execute Groovy Scripts on AEM runtime.
+     */
+    fun <T> groovyConsole(callback: GroovyConsole.() -> T): T = groovyConsole.run(callback)
 
     val repository = Repository(this)
 
-    fun repository(callback: Repository.() -> Unit) {
-        repository.apply(callback)
-    }
+    /**
+     * Perform operations on JCR content repository (CRUD etc).
+     */
+    fun <T> repository(callback: Repository.() -> T): T = repository.run(callback)
 
+    /**
+     * Perform health condition checking for running AEM instance.
+     * Each particular state requested from AEM will be cached (stateful service).
+     */
+    fun stateChecker() = StateChecker(this)
+
+    fun <T> stateChecker(callback: StateChecker.() -> T): T = stateChecker().run(callback)
+
+    /**
+     * Clone synchronizer tool and use it with different options (temporarily).
+     */
     fun customize(options: InstanceSync.() -> Unit): InstanceSync {
         return InstanceSync(aem, instance).apply(options)
     }
