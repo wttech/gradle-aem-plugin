@@ -3,12 +3,12 @@ package com.cognifide.gradle.aem.common.http
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.file.downloader.HttpFileDownloader
 import com.cognifide.gradle.aem.common.utils.Formats
+import com.cognifide.gradle.aem.common.utils.Utils
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.jayway.jsonpath.DocumentContext
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
-import java.util.*
 import org.apache.commons.io.FilenameUtils
 import org.apache.commons.io.IOUtils
 import org.apache.http.HttpEntity
@@ -248,22 +248,28 @@ open class HttpClient(val aem: AemExtension) {
     fun execute(method: HttpRequestBase) = execute(method) { checkStatus(it) }
 
     open fun createEntityUrlencoded(params: Map<String, Any?>): HttpEntity {
-        return UrlEncodedFormEntity(params.entries.fold(ArrayList<NameValuePair>()) { result, e ->
-            result.add(BasicNameValuePair(e.key, e.value?.toString() ?: "")); result
+        return UrlEncodedFormEntity(params.entries.fold(mutableListOf<NameValuePair>()) { result, (key, value) ->
+            Utils.unroll(value) { addEntityUrlencoded(result, key, it) }
+            result
         })
     }
 
-    open fun createEntityMultipart(params: Map<String, Any?>): HttpEntity {
-        val builder = MultipartEntityBuilder.create()
-        for ((key, value) in params) {
-            if (value is File && value.exists()) {
-                builder.addBinaryBody(key, value)
-            } else {
-                builder.addTextBody(key, value?.toString() ?: "")
-            }
-        }
+    private fun addEntityUrlencoded(result: MutableList<NameValuePair>, key: String, value: Any?) {
+        result.add(BasicNameValuePair(key, value?.toString() ?: ""))
+    }
 
-        return builder.build()
+    open fun createEntityMultipart(params: Map<String, Any?>): HttpEntity {
+        return MultipartEntityBuilder.create().apply {
+            params.forEach { (key, value) -> Utils.unroll(value) { addEntityMultipart(key, it) } }
+        }.build()
+    }
+
+    private fun MultipartEntityBuilder.addEntityMultipart(key: String, value: Any?) {
+        if (value is File && value.exists()) {
+            addBinaryBody(key, value)
+        } else {
+            addTextBody(key, value?.toString() ?: "")
+        }
     }
 
     fun download(path: String) = download(path, aem.temporaryFile(FilenameUtils.getName(path)))
