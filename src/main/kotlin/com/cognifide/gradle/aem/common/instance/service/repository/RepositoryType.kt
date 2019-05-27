@@ -11,7 +11,7 @@ object RepositoryType {
         else -> hintSimpleType(value)
     }
 
-    private fun hintSimpleType(value: Any?) = when (value) {
+    fun hintSimpleType(value: Any?) = when (value) {
         is String -> "String"
         is Boolean -> "Boolean"
         is Int, Long -> "Long"
