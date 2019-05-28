@@ -109,6 +109,10 @@ object Formats {
         return ISO8601.format(Calendar.getInstance().apply { time = date })
     }
 
+    fun dateToCalendar(date: Date): Calendar {
+        return Calendar.getInstance().apply { time = date }
+    }
+
     fun dateTime(timestamp: Long, zoneId: ZoneId): LocalDateTime {
         return LocalDateTime.ofInstant(Instant.ofEpochMilli(timestamp), zoneId)
     }

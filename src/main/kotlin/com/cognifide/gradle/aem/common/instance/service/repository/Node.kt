@@ -77,7 +77,7 @@ class Node(private val repository: Repository, val path: String) : Serializable 
                 .map { child -> child as Map<String, Any> }
                 .map { props ->
                     Node(repository, "$path/${props[Property.NAME.value]}").apply {
-                        propertiesLoaded = Properties(filterMetaProperties(props))
+                        propertiesLoaded = Properties(this, filterMetaProperties(props))
                     }
                 }
                 .asSequence()
@@ -186,7 +186,7 @@ class Node(private val repository: Repository, val path: String) : Serializable 
         logger.info("Reading properties of repository node: $path")
 
         return repository.http.get("$path.json") {
-            Properties(asJson(it).json<LinkedHashMap<String, Any>>()).apply { propertiesLoaded = this }
+            Properties(this@Node, asJson(it).json<LinkedHashMap<String, Any>>()).apply { propertiesLoaded = this }
         }
     }
 

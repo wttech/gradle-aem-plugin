@@ -1,5 +1,7 @@
 package com.cognifide.gradle.aem.common.instance.service.repository
 
+import com.cognifide.gradle.aem.common.utils.Formats
+import java.text.SimpleDateFormat
 import java.util.*
 import org.apache.jackrabbit.util.ISO8601
 
@@ -23,14 +25,23 @@ object RepositoryType {
     }
 
     fun normalize(value: Any?) = when (value) {
-        is Iterable<*> -> value.map { normalizeSimpleType(value) }
-        is Array<*> -> value.map { normalizeSimpleType(value) }
+        is Iterable<*> -> value.map { normalizeSimpleType(it) }
+        is Array<*> -> value.map { normalizeSimpleType(it) }
         else -> normalizeSimpleType(value)
     }
 
     fun normalizeSimpleType(value: Any?) = when (value) {
-        is Date -> ISO8601.format(Calendar.getInstance().apply { time = value })
+        is Date -> ISO8601.format(Formats.dateToCalendar(value))
         is Calendar -> ISO8601.format(value)
         else -> value
     }
+
+    private const val DATE_FORMAT_ECMA = "EEE MMM dd yyyy HH:mm:ss 'GMT'Z"
+
+    private val DATE_LOCALE = Locale.US
+
+    /**
+     * @see <https://sling.apache.org/documentation/bundles/manipulating-content-the-slingpostservlet-servlets-post.html#date-properties>
+     */
+    fun dateFormat() = SimpleDateFormat(DATE_FORMAT_ECMA, DATE_LOCALE)
 }

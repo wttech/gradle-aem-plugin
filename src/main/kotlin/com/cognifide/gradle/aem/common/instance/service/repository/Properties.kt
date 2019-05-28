@@ -1,11 +1,16 @@
 package com.cognifide.gradle.aem.common.instance.service.repository
 
+import com.cognifide.gradle.aem.common.instance.service.repository.Node as Base
 import com.cognifide.gradle.aem.common.utils.Formats
 import com.fasterxml.jackson.annotation.JsonIgnore
+import java.text.ParseException
 import java.util.*
-import org.apache.jackrabbit.util.ISO8601
 
-class Properties(props: Map<String, Any>) : LinkedHashMap<String, Any>(props) {
+/**
+ * Provides easy conversion of properties to desired types.
+ * Sling's ValueMap equivalent.
+ */
+class Properties(@JsonIgnore val node: Base, props: Map<String, Any>) : LinkedHashMap<String, Any>(props) {
 
     fun string(name: String): String? = get(name)?.toString()
 
@@ -18,28 +23,77 @@ class Properties(props: Map<String, Any>) : LinkedHashMap<String, Any>(props) {
                 value.map { it.toString() }
             }
         }
-        else -> listOf()
+        is Array<*> -> {
+            if (value.isEmpty()) {
+                listOf()
+            } else {
+                value.map { it.toString() }
+            }
+        }
+        else -> listOf(value.toString())
     }
 
-    fun long(name: String): Long? = string(name)?.toLong()
+    fun long(name: String): Long? {
+        val string = string(name)
+        return try {
+            string?.toLong()
+        } catch (e: NumberFormatException) {
+            throw RepositoryException("Node property '${node.path}[$name]=$string' cannot be converted to long.", e)
+        }
+    }
 
-    fun longs(name: String): List<Long>? = strings(name)?.map { it.toLong() }
+    fun longs(name: String): List<Long>? {
+        val strings = strings(name)
+        return try {
+            strings?.map { it.toLong() }
+        } catch (e: NumberFormatException) {
+            throw RepositoryException("Node property '${node.path}[$name]=$strings' cannot be converted to longs.", e)
+        }
+    }
 
-    fun double(name: String): Double? = string(name)?.toDouble()
+    fun double(name: String): Double? {
+        val string = string(name)
+        return try {
+            string?.toDouble()
+        } catch (e: NumberFormatException) {
+            throw RepositoryException("Node property '${node.path}[$name]=$string' cannot be converted to double.", e)
+        }
+    }
 
-    fun doubles(name: String): List<Double>? = strings(name)?.map { it.toDouble() }
+    fun doubles(name: String): List<Double>? {
+        val strings = strings(name)
+        return try {
+            strings?.map { it.toDouble() }
+        } catch (e: NumberFormatException) {
+            throw RepositoryException("Node property '${node.path}[$name]=$strings' cannot be converted to doubles.", e)
+        }
+    }
 
     fun boolean(name: String): Boolean? = string(name)?.toBoolean()
 
     fun booleans(name: String): List<Boolean>? = strings(name)?.map { it.toBoolean() }
 
-    fun calendar(name: String): Calendar? = string(name)?.let { ISO8601.parse(it) }
+    fun date(name: String): Date? {
+        val string = string(name)
+        return try {
+            string?.let { RepositoryType.dateFormat().parse(it) }
+        } catch (e: ParseException) {
+            throw RepositoryException("Node property '${node.path}[$name]=$string' cannot be converted to date.", e)
+        }
+    }
 
-    fun calendars(name: String): List<Calendar>? = strings(name)?.map { ISO8601.parse(it) }
+    fun dates(name: String): List<Date>? {
+        val strings = strings(name)
+        return try {
+            strings?.map { RepositoryType.dateFormat().parse(it) }
+        } catch (e: ParseException) {
+            throw RepositoryException("Node property '${node.path}[$name]=$strings' cannot be converted to dates.")
+        }
+    }
 
-    fun date(name: String): Date? = calendar(name)?.time
+    fun calendar(name: String): Calendar? = date(name)?.let { Formats.dateToCalendar(it) }
 
-    fun dates(name: String): List<Date>? = strings(name)?.map { ISO8601.parse(it).time }
+    fun calendars(name: String): List<Calendar>? = dates(name)?.map { Formats.dateToCalendar(it) }
 
     @get:JsonIgnore
     val json: String
