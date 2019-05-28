@@ -99,18 +99,5 @@ class PackageFileFilter(private val aem: AemExtension) : Serializable {
                 "**/node_modules/**",
                 "jcr_root/.vlt-sync-config.properties"
         )
-
-        // TODO remove it
-        val FILE_PROPERTIES = mapOf(
-                "compose" to mapOf(
-                        "vaultFilters" to mapOf<String, String>(),
-                        "vaultNodeTypeLibs" to listOf<String>(),
-                        "vaultNodeTypeLines" to listOf<String>(),
-                        "vaultProperties" to mapOf(
-                                "acHandling" to "merge_preserve",
-                                "requiresRoot" to false
-                        )
-                )
-        )
     }
 }

@@ -740,8 +740,9 @@ aem {
         packageCompose {
             duplicatesStrategy = DuplicatesStrategy.WARN
             baseName = aem.baseName
-            contentPath = aem.config.packageRoot
-            bundlePath = aem.config.packageInstallPath
+            contentDir = aem.packageOptions.rootDir
+            bundlePath = aem.packageOptions.installPath
+            bundleRunMode = null
             metaDefaults = true
             fromConvention = true
             vaultDefinition {
@@ -756,6 +757,28 @@ aem {
                     aem.project.rootProject.name
                 }
                 version = project.version.toString()
+            }
+            fileFilter {
+                expanding = true
+                expandFiles = listOf(
+                    "**/META-INF/*.xml",
+                    "**/META-INF/*.MF",
+                    "**/META-INF/*.cnd"
+                )
+                excluding = true
+                excludeFiles = listOf(
+                       "**/.gradle",
+                       "**/.git",
+                       "**/.git/**",
+                       "**/.gitattributes",
+                       "**/.gitignore",
+                       "**/.gitmodules",
+                       "**/.vlt",
+                       "**/.vlt*.tmp",
+                       "**/node_modules/**",
+                       "jcr_root/.vlt-sync-config.properties"
+               )
+                bundleChecking = true
             }
         }
     }    
