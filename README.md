@@ -859,7 +859,7 @@ aem {
         packageCompose {
             fromProject(":aem:sites")
             fromProject(":aem:common")
-            fromProjects(":aem:content.*")
+            fromProjects(":aem:site.*")
         }
     }    
 }
