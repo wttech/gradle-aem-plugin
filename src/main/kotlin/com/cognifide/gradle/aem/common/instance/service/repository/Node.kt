@@ -64,7 +64,7 @@ class Node(private val repository: Repository, val path: String) : Serializable 
      */
     @Suppress("unchecked_cast")
     fun children(): Sequence<Node> {
-        logger.info("Reading child nodes of repository node: $path")
+        logger.info("Reading child nodes of repository node '$path'")
 
         return repository.http.get("$path.harray.1.json") { asJson(it) }
                 .run {
@@ -87,7 +87,7 @@ class Node(private val repository: Repository, val path: String) : Serializable 
      * Create or update node in repository.
      */
     fun save(properties: Map<String, Any?>): RepositoryResult = try {
-        logger.info("Saving repository node: $path, properties: $properties")
+        logger.info("Saving repository node '$path', properties '$properties'")
 
         repository.http.postMultipart(path, postProperties(properties) + operationProperties("")) {
             asObjectFromJson(it, RepositoryResult::class.java)
@@ -100,7 +100,7 @@ class Node(private val repository: Repository, val path: String) : Serializable 
      * Delete node and all children from repository.
      */
     fun delete(): RepositoryResult = try {
-        logger.info("Deleting repository node: $path")
+        logger.info("Deleting repository node '$path'")
 
         repository.http.postMultipart(path, operationProperties("delete")) {
             asObjectFromJson(it, RepositoryResult::class.java)
@@ -183,7 +183,7 @@ class Node(private val repository: Repository, val path: String) : Serializable 
     fun hasProperties(names: Iterable<String>): Boolean = names.all { properties.containsKey(it) }
 
     private fun reloadProperties(): Properties {
-        logger.info("Reading properties of repository node: $path")
+        logger.info("Reading properties of repository node '$path'")
 
         return repository.http.get("$path.json") {
             Properties(this@Node, asJson(it).json<LinkedHashMap<String, Any>>()).apply { propertiesLoaded = this }
