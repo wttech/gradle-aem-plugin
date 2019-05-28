@@ -10,7 +10,7 @@ class Repository(sync: InstanceSync) : InstanceService(sync) {
     /**
      * Take care about property value types saved in repository.
      */
-    var typeHints: Boolean = true
+    var typeHints: Boolean = aem.props.boolean("instance.repository.typeHints") ?: true
 
     /**
      * Controls throwing exceptions in case of response statuses indicating repository errors.
@@ -21,6 +21,10 @@ class Repository(sync: InstanceSync) : InstanceService(sync) {
         set(value) {
             http.responseChecks = value
         }
+
+    init {
+        verbose = aem.props.boolean("instance.repository.verbose") ?: true
+    }
 
     fun node(path: String): Node {
         return Node(this, path)

@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.test.integration
+package com.cognifide.gradle.aem.test
 
 import com.cognifide.gradle.aem.common.file.FileOperations
 import org.apache.commons.io.FileUtils

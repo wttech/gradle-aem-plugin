@@ -13,7 +13,7 @@ enum class LocalInstanceSource {
      */
     SCRATCH,
     /**
-     * Force using backup available at external source (specified in 'localInstance.zipUrl').
+     * Force using backup available at external source (available by using 'localInstance.backup.[downloadUrl|uploadUrl]').
      */
     BACKUP_EXTERNAL,
     /**

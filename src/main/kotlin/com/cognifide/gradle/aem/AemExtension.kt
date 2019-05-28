@@ -125,11 +125,6 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
         get() = projectMain.file(props.string("configCommonDir") ?: "gradle")
 
     /**
-     * Convention location in which Groovy Script to be evaluated via instance sync will be searched for by file name.
-     */
-    var groovyScriptRootDir: File = File(configDir, "groovyScript")
-
-    /**
      * Performs parallel CRX package deployments and instance synchronization.
      */
     @JsonIgnore

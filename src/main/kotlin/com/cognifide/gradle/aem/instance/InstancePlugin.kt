@@ -33,32 +33,36 @@ class InstancePlugin : AemPlugin() {
             // Plugin tasks
 
             register<InstanceDown>(InstanceDown.NAME)
+            register<InstanceUp>(InstanceUp.NAME) {
+                dependsOn(InstanceCreate.NAME)
+                mustRunAfter(InstanceDown.NAME, InstanceDestroy.NAME)
+            }
             register<InstanceRestart>(InstanceRestart.NAME) {
                 dependsOn(InstanceDown.NAME, InstanceUp.NAME)
             }
-            register<InstanceUp>(InstanceUp.NAME) {
+            register<InstanceCreate>(InstanceCreate.NAME) {
                 dependsOn(Resolve.NAME)
-                mustRunAfter(InstanceDown.NAME, InstanceDestroy.NAME)
+                mustRunAfter(InstanceDestroy.NAME)
             }
             register<InstanceDestroy>(InstanceDestroy.NAME) {
                 dependsOn(InstanceDown.NAME)
             }
             register<InstanceSatisfy>(InstanceSatisfy.NAME) {
-                dependsOn(Resolve.NAME).mustRunAfter(InstanceCreate.NAME)
+                dependsOn(Resolve.NAME).mustRunAfter(InstanceCreate.NAME, InstanceUp.NAME)
             }
             register<InstanceReload>(InstanceReload.NAME) {
                 mustRunAfter(InstanceSatisfy.NAME)
                 plugins.withId(PackagePlugin.ID) { mustRunAfter(PackageDeploy.NAME) }
             }
             register<InstanceAwait>(InstanceAwait.NAME) {
-                mustRunAfter(InstanceCreate.NAME, InstanceSatisfy.NAME)
+                mustRunAfter(InstanceCreate.NAME, InstanceUp.NAME, InstanceSatisfy.NAME)
                 plugins.withId(PackagePlugin.ID) { mustRunAfter(PackageDeploy.NAME) }
             }
             register<InstanceCollect>(InstanceCollect.NAME) {
                 mustRunAfter(InstanceSatisfy.NAME)
             }
             register<InstanceSetup>(InstanceSetup.NAME) {
-                dependsOn(InstanceCreate.NAME, InstanceSatisfy.NAME)
+                dependsOn(InstanceCreate.NAME, InstanceUp.NAME, InstanceSatisfy.NAME)
                 mustRunAfter(InstanceDestroy.NAME)
                 plugins.withId(PackagePlugin.ID) { dependsOn(PackageDeploy.NAME) }
             }
@@ -67,6 +71,7 @@ class InstancePlugin : AemPlugin() {
             }
             register<InstanceBackup>(InstanceBackup.NAME) {
                 dependsOn(InstanceDown.NAME)
+                finalizedBy(InstanceUp.NAME)
             }
 
             register<InstanceTail>(InstanceTail.NAME)

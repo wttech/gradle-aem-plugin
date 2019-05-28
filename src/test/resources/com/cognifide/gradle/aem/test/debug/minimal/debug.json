@@ -29,17 +29,6 @@
     "env" : "local",
     "lineSeparator" : "LF",
     "groovyScriptRootDir" : "*/minimal/gradle/groovyScript",
-    "resolverOptions" : {
-      "httpUsername" : null,
-      "httpPassword": null,
-      "httpConnectionIgnoreSsl" : null,
-      "sftpUsername" : null,
-      "sftpPassword": null,
-      "sftpHostChecking" : null,
-      "smbDomain" : null,
-      "smbUsername" : null,
-      "smbPassword": null
-    },
     "packageOptions" : {
       "rootDir" : "*/minimal/src/main/content",
       "snapshots" : [ ],
@@ -80,12 +69,9 @@
         }
       }
     },
-    "localInstanceOptions" : {
+    "localInstanceManager" : {
       "rootDir" : "*/minimal/.aem/instance",
       "source" : "AUTO",
-      "zipUrl" : null,
-      "jarUrl" : null,
-      "licenseUrl" : null,
       "overridesDir" : "*/minimal/gradle/instance",
       "expandFiles" : [
         "**/start.bat",
@@ -93,7 +79,16 @@
         "**/start",
         "**/stop"
       ],
-      "expandProperties" : { }
+      "expandProperties" : { },
+      "quickstart": {
+        "jarUrl": null,
+        "licenseUrl": null
+      },
+      "backup": {
+        "uploadUrl": null,
+        "downloadUrl": null,
+        "downloadDir": "*/minimal/build/aem/backup/external"
+      }
     },
     "environment" : {
       "rootDir" : "*/minimal/.aem/environment",

@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.test.integration
+package com.cognifide.gradle.aem.test
 
 import com.cognifide.gradle.aem.common.tasks.Debug
 import com.cognifide.gradle.aem.test.AemAssert.assertJsonCustomized
@@ -38,8 +38,9 @@ class DebugTest : AemTest() {
                 "aem.configDir" to PathValueMatcher(),
                 "aem.configCommonDir" to PathValueMatcher(),
                 "aem.groovyScriptRootDir" to PathValueMatcher(),
-                "aem.localInstanceOptions.rootDir" to PathValueMatcher(),
-                "aem.localInstanceOptions.overridesDir" to PathValueMatcher(),
+                "aem.localInstanceManager.rootDir" to PathValueMatcher(),
+                "aem.localInstanceManager.overridesDir" to PathValueMatcher(),
+                "aem.localInstanceManager.backup.downloadDir" to PathValueMatcher(),
                 "aem.packageOptions.rootDir" to PathValueMatcher(),
                 "aem.packageOptions.metaCommonRootDir" to PathValueMatcher(),
                 "aem.tasks.bundles[*].bndPath" to PathValueMatcher(),

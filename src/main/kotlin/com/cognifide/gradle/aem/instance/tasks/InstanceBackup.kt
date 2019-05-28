@@ -14,7 +14,7 @@ import org.gradle.api.tasks.bundling.ZipEntryCompression
 open class InstanceBackup : ZipTask() {
 
     init {
-        description = "Turns off local instance(s), archives to ZIP file."
+        description = "Turns off local instance(s), archives to ZIP file, then turns on again."
 
         archiveBaseName.set(project.provider { "${project.rootProject.name}-${Formats.dateFileName()}" })
         archiveClassifier.set("backup")
@@ -24,20 +24,17 @@ open class InstanceBackup : ZipTask() {
         entryCompression = ZipEntryCompression.STORED
     }
 
-    @Internal
-    var uploadUrl = aem.props.string("backup.uploadUrl")
-
     @TaskAction
     override fun copy() {
         super.copy()
         upload()
-        aem.tasks.named<InstanceUp>(InstanceUp.NAME).get().up()
     }
 
     private fun upload() {
-        uploadUrl?.let { url ->
+        aem.localInstanceManager.backup.uploadUrl?.let { url ->
             val backupZip = archiveFile.get().asFile
-            logger.info("Uploading backup: ${backupZip.path} to $url")
+
+            aem.logger.info("Uploading backup '$backupZip' to '$url'")
             aem.fileTransfer.upload(url, backupZip)
         }
     }
