@@ -869,12 +869,12 @@ Simply use generic approach for [filtering instances to work with](#filter-insta
 
 Add any of below command line parameters to customize CRX package deployment behavior:
 
-* `-Pdeploy.awaited=false` - disable stability & health checks after deploying CRX package.
-* `-Pdeploy.distributed=true` - use alternative form of deployment. At first, deploys CRX package to author instances, then triggers replication of CRX package so that it will be installed also on publish instances.
-* `-Pdeploy.uploadForce=false` - disable force installation (by default even unchanged CRX package is forced to be reinstalled)
-* `-Pdeploy.installRecursive=false` - disable automatic installation of subpackages located inside CRX package being deployed.  
-* `-Pdeploy.uploadRetry=n` - customize number of retries being performed after failed CRX package upload.
-* `-Pdeploy.installRetry=n` - customize number of retries being performed after failed CRX package install.
+* `-Ppackage.deploy.awaited=false` - disable stability & health checks after deploying CRX package.
+* `-Ppackage.deploy.distributed=true` - use alternative form of deployment. At first, deploys CRX package to author instances, then triggers replication of CRX package so that it will be installed also on publish instances.
+* `-Ppackage.deploy.uploadForce=false` - disable force installation (by default even unchanged CRX package is forced to be reinstalled)
+* `-Ppackage.deploy.installRecursive=false` - disable automatic installation of subpackages located inside CRX package being deployed.  
+* `-Ppackage.deploy.uploadRetry=n` - customize number of retries being performed after failed CRX package upload.
+* `-Ppackage.deploy.installRetry=n` - customize number of retries being performed after failed CRX package install.
 
 #### Task `packageUpload`
 
@@ -1171,7 +1171,7 @@ Upload & install dependent CRX package(s) before deployment. Available methods:
 * `downloadSftpAuth(url: String, username: String, password: String)`, download package using SFTP protocol.
 * `downloadSftpAuth(url: String)`, as above, but credentials must be specified in variables: `aem.resolver.sftp.username`, `aem.resolver.sftp.password`. Optionally enable strict host checking by setting property `aem.resolver.sftp.hostChecking` to `true`.
 * `dependency(notation: String)`, use OSGi bundle that will be resolved from defined repositories (for instance from Maven) then wrapped to CRX package: `dependency('com.neva.felix:search-webconsole-plugin:1.2.0')`.
-* `group(name: String, options: Resolver<PackageGroup>.() -> Unit)`, useful for declaring group of packages (or just optionally naming single package) to be installed only on demand. For instance: `group 'tools', { url('http://example.com/package.zip'); url('smb://internal-nt/package2.zip')  }`. Then to install only packages in group `tools`, use command: `gradlew instanceSatisfy -Psatisfy.group=tools`.
+* `group(name: String, options: Resolver<PackageGroup>.() -> Unit)`, useful for declaring group of packages (or just optionally naming single package) to be installed only on demand. For instance: `group 'tools', { url('http://example.com/package.zip'); url('smb://internal-nt/package2.zip')  }`. Then to install only packages in group `tools`, use command: `gradlew instanceSatisfy -Pinstance.satisfy.group=tools`.
 
 Example configuration:
 
@@ -1201,7 +1201,7 @@ aem {
 By default, all packages will be deployed when running task `instanceSatisfy`.
 Although, by grouping packages, there are available new options:
 
-* group name could be used to filter out packages that will be deployed (`-Psatisfy.group=tools`, wildcards supported, comma delimited).
+* group name could be used to filter out packages that will be deployed (`-Pinstance.satisfy.group=tools`, wildcards supported, comma delimited).
 * after satisfying particular group, there are being run instance stability checks automatically (this behavior could be customized).
 
 Task supports hooks for preparing (and finalizing) instance before (after) deploying packages in group on each instance. 
@@ -1240,13 +1240,13 @@ aem {
 It is also possible to specify packages to be deployed only once via command line parameter, without a need to specify them in build script. Also for local files at any file system paths.
 
 ```bash
-gradlew instanceSatisfy -Psatisfy.urls=[url1,url2]
+gradlew instanceSatisfy -Pinstance.satisfy.urls=[url1,url2]
 ```
 
 For instance:
 
 ```bash
-gradlew instanceSatisfy -Psatisfy.urls=[https://github.com/OlsonDigital/aem-groovy-console/releases/download/11.0.0/aem-groovy-console-11.0.0.zip,https://github.com/neva-dev/felix-search-webconsole-plugin/releases/download/search-webconsole-plugin-1.2.0/search-webconsole-plugin-1.2.0.jar]
+gradlew instanceSatisfy -Pinstance.satisfy.urls=[https://github.com/OlsonDigital/aem-groovy-console/releases/download/11.0.0/aem-groovy-console-11.0.0.zip,https://github.com/neva-dev/felix-search-webconsole-plugin/releases/download/search-webconsole-plugin-1.2.0/search-webconsole-plugin-1.2.0.jar]
 ```
 
 #### Task `instanceAwait`
@@ -1393,7 +1393,7 @@ Most of the configuration steps are automated. However, there are three manual s
             * Start PowerShell with "Run as administrator"
             * Execute: `.\gradlew.bat environmentHosts --no-daemon`
         * Unix: 
-            * Execute: `sudo ./gradlew environmentHosts --no-daemon`
+            * Execute: `sudo gradlew environmentHosts --no-daemon`
     
     
 ##### Notice for Docker on Windows
@@ -1457,7 +1457,7 @@ Allows to listen for Apache Web Server / Dispatcher configuration files changed 
 
 **NOTE** On Windows, it is required to accept granting Docker to access local files.
 
-1. Run command `gradlew aemEnvDev`,
+1. Run command `gradlew environmentDev`,
 2. Edit files located in *aem/gradle/environment/httpd/conf* ,
 3. Notice that HTTPD service should be restarted automatically after file changes,
 4. Check results of [environment service health checks](#environment-service-health-checks),
@@ -1696,7 +1696,7 @@ aem {
         satisfy {
             group("tool.groovyconsole") { url("https://github.com/icfnext/aem-groovy-console/releases/download/12.0.0/aem-groovy-console-12.0.0.zip") }
         }
-        register("aemConfigure") {
+        register("generatePosts") {
             doLast {
                 aem.sync {
                     groovyConsole.evalCode("""
@@ -1720,7 +1720,7 @@ To disable specific OSGi component by its PID value and only on publish instance
 ```kotlin
 aem {
     tasks {
-        register("aemConfigure") {
+        register("instanceSecure") {
             doLast {
                 aem.sync(aem.publishInstances) {
                     osgiFramework.disableComponent("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet")
