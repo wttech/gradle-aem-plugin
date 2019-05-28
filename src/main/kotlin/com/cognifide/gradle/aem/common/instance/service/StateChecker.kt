@@ -29,9 +29,9 @@ class StateChecker(private var syncOrigin: InstanceSync) {
      * Customize default synchronization options like basic auth credentials, connection
      * timeouts etc while determining bundle or component states.
      */
-    fun <T> check(configurer: InstanceSync.() -> Unit, action: StateChecker.() -> T): T {
+    fun <T> check(options: InstanceSync.() -> Unit, action: StateChecker.() -> T): T {
         val origin = syncOrigin
-        syncOrigin = InstanceSync(syncOrigin.aem, syncOrigin.instance).apply(configurer)
+        syncOrigin = syncOrigin.customize(options)
         val result = action(this)
         syncOrigin = origin
         return result
@@ -166,13 +166,13 @@ class StateChecker(private var syncOrigin: InstanceSync) {
     companion object {
 
         val BUNDLE_STATE_SYNC_OPTIONS: InstanceSync.() -> Unit = {
-            this.connectionTimeout = 750
-            this.connectionRetries = false
+            http.connectionTimeout = 750
+            http.connectionRetries = false
         }
 
         val EVENT_STATE_SYNC_OPTIONS: InstanceSync.() -> Unit = {
-            this.connectionTimeout = 250
-            this.connectionRetries = false
+            http.connectionTimeout = 250
+            http.connectionRetries = false
         }
 
         val EVENT_STATE_UNSTABLE_TOPICS = listOf(
@@ -184,7 +184,7 @@ class StateChecker(private var syncOrigin: InstanceSync) {
         val EVENT_STATE_UNSTABLE_AGE_MILLIS = 5000L
 
         val COMPONENT_STATE_SYNC_OPTIONS: InstanceSync.() -> Unit = {
-            this.connectionTimeout = 10000
+            http.connectionTimeout = 10000
         }
 
         val PLATFORM_COMPONENTS = setOf(

@@ -127,6 +127,7 @@ To see documentation for previous 5.x serie, please [click here](https://github.
         * [Controlling OSGi bundles and components](#controlling-osgi-bundles-and-components)
         * [Executing code on AEM runtime](#executing-code-on-aem-runtime)
         * [Calling AEM endpoints / making any HTTP requests](#calling-aem-endpoints--making-any-http-requests)
+        * [Making changes to repository](#making-changes-to-repository)
      * [Understand why there are one or two plugins to be applied in build script](#understand-why-there-are-one-or-two-plugins-to-be-applied-in-build-script)
      * [Work effectively on start and daily basis](#work-effectively-on-start-and-daily-basis)
      * [Filter instances to work with](#filter-instances-to-work-with)
@@ -868,12 +869,12 @@ Simply use generic approach for [filtering instances to work with](#filter-insta
 
 Add any of below command line parameters to customize CRX package deployment behavior:
 
-* `-Pdeploy.awaited=false` - disable stability & health checks after deploying CRX package.
-* `-Pdeploy.distributed=true` - use alternative form of deployment. At first, deploys CRX package to author instances, then triggers replication of CRX package so that it will be installed also on publish instances.
-* `-Pdeploy.uploadForce=false` - disable force installation (by default even unchanged CRX package is forced to be reinstalled)
-* `-Pdeploy.installRecursive=false` - disable automatic installation of subpackages located inside CRX package being deployed.  
-* `-Pdeploy.uploadRetry=n` - customize number of retries being performed after failed CRX package upload.
-* `-Pdeploy.installRetry=n` - customize number of retries being performed after failed CRX package install.
+* `-Ppackage.deploy.awaited=false` - disable stability & health checks after deploying CRX package.
+* `-Ppackage.deploy.distributed=true` - use alternative form of deployment. At first, deploys CRX package to author instances, then triggers replication of CRX package so that it will be installed also on publish instances.
+* `-Ppackage.deploy.uploadForce=false` - disable force installation (by default even unchanged CRX package is forced to be reinstalled)
+* `-Ppackage.deploy.installRecursive=false` - disable automatic installation of subpackages located inside CRX package being deployed.  
+* `-Ppackage.deploy.uploadRetry=n` - customize number of retries being performed after failed CRX package upload.
+* `-Ppackage.deploy.installRetry=n` - customize number of retries being performed after failed CRX package install.
 
 #### Task `packageUpload`
 
@@ -1170,7 +1171,7 @@ Upload & install dependent CRX package(s) before deployment. Available methods:
 * `downloadSftpAuth(url: String, username: String, password: String)`, download package using SFTP protocol.
 * `downloadSftpAuth(url: String)`, as above, but credentials must be specified in variables: `aem.resolver.sftp.username`, `aem.resolver.sftp.password`. Optionally enable strict host checking by setting property `aem.resolver.sftp.hostChecking` to `true`.
 * `dependency(notation: String)`, use OSGi bundle that will be resolved from defined repositories (for instance from Maven) then wrapped to CRX package: `dependency('com.neva.felix:search-webconsole-plugin:1.2.0')`.
-* `group(name: String, options: Resolver<PackageGroup>.() -> Unit)`, useful for declaring group of packages (or just optionally naming single package) to be installed only on demand. For instance: `group 'tools', { url('http://example.com/package.zip'); url('smb://internal-nt/package2.zip')  }`. Then to install only packages in group `tools`, use command: `gradlew instanceSatisfy -Psatisfy.group=tools`.
+* `group(name: String, options: Resolver<PackageGroup>.() -> Unit)`, useful for declaring group of packages (or just optionally naming single package) to be installed only on demand. For instance: `group 'tools', { url('http://example.com/package.zip'); url('smb://internal-nt/package2.zip')  }`. Then to install only packages in group `tools`, use command: `gradlew instanceSatisfy -Pinstance.satisfy.group=tools`.
 
 Example configuration:
 
@@ -1200,7 +1201,7 @@ aem {
 By default, all packages will be deployed when running task `instanceSatisfy`.
 Although, by grouping packages, there are available new options:
 
-* group name could be used to filter out packages that will be deployed (`-Psatisfy.group=tools`, wildcards supported, comma delimited).
+* group name could be used to filter out packages that will be deployed (`-Pinstance.satisfy.group=tools`, wildcards supported, comma delimited).
 * after satisfying particular group, there are being run instance stability checks automatically (this behavior could be customized).
 
 Task supports hooks for preparing (and finalizing) instance before (after) deploying packages in group on each instance. 
@@ -1239,13 +1240,13 @@ aem {
 It is also possible to specify packages to be deployed only once via command line parameter, without a need to specify them in build script. Also for local files at any file system paths.
 
 ```bash
-gradlew instanceSatisfy -Psatisfy.urls=[url1,url2]
+gradlew instanceSatisfy -Pinstance.satisfy.urls=[url1,url2]
 ```
 
 For instance:
 
 ```bash
-gradlew instanceSatisfy -Psatisfy.urls=[https://github.com/OlsonDigital/aem-groovy-console/releases/download/11.0.0/aem-groovy-console-11.0.0.zip,https://github.com/neva-dev/felix-search-webconsole-plugin/releases/download/search-webconsole-plugin-1.2.0/search-webconsole-plugin-1.2.0.jar]
+gradlew instanceSatisfy -Pinstance.satisfy.urls=[https://github.com/OlsonDigital/aem-groovy-console/releases/download/11.0.0/aem-groovy-console-11.0.0.zip,https://github.com/neva-dev/felix-search-webconsole-plugin/releases/download/search-webconsole-plugin-1.2.0/search-webconsole-plugin-1.2.0.jar]
 ```
 
 #### Task `instanceAwait`
@@ -1392,7 +1393,7 @@ Most of the configuration steps are automated. However, there are three manual s
             * Start PowerShell with "Run as administrator"
             * Execute: `.\gradlew.bat environmentHosts --no-daemon`
         * Unix: 
-            * Execute: `sudo ./gradlew environmentHosts --no-daemon`
+            * Execute: `sudo gradlew environmentHosts --no-daemon`
     
     
 ##### Notice for Docker on Windows
@@ -1456,7 +1457,7 @@ Allows to listen for Apache Web Server / Dispatcher configuration files changed 
 
 **NOTE** On Windows, it is required to accept granting Docker to access local files.
 
-1. Run command `gradlew aemEnvDev`,
+1. Run command `gradlew environmentDev`,
 2. Edit files located in *aem/gradle/environment/httpd/conf* ,
 3. Notice that HTTPD service should be restarted automatically after file changes,
 4. Check results of [environment service health checks](#environment-service-health-checks),
@@ -1558,77 +1559,6 @@ aem {
 }
 ```
 
-#### Downloading CRX package from external HTTP endpoint and deploying it on desired AEM instances
-
-Below snippet could be used to automatize recovery from content backups (e.g for production or to replicate production content to test environment).
-
-```kotlin
-
-aem {
-    tasks {
-        register("packageDeployProductionContent") {
-            doLast {
-                val instances = listOf(
-                        aem.instance("http://user:password@aem-host.com") // URL specified directly, could be parametrized by some gradle command line property
-                        // aem.namedInstance("local-publish") // reused AEM instance defined in 'gradle.properties'
-                )
-                val pkg = aem.http { downloadTo("https://company.com/aem/backups/example-1.0.0-201901300932.backup.zip", project.file("build/tmp")) }
-                
-                aem.sync(instances) { 
-                    deployPackage(pkg) 
-                }
-            }
-        }
-    }
-}
-```
-
-#### Controlling OSGi bundles and components
-
-To disable specific OSGi component by its PID value and only on publish instances, simply write:
-
-
-```kotlin
-aem {
-    tasks {
-        register("aemConfigure") {
-            doLast {
-                aem.sync(aem.publishInstances) {
-                    disableComponent("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet")
-                    // stopBundle("org.apache.sling.jcr.webdav")
-                }
-            }
-        }
-    }
-}
-```
-
-#### Executing code on AEM runtime
-
-It is possible to easily execute any code on AEM runtime using [Groovy Console](https://github.com/icfnext/aem-groovy-console). Assuming that on AEM instances there is already installed Groovy Console e.g via `instanceSatisfy` task, then it is possible to use methods `evalGroovyCode` and `evalGroovyScript` of `aem.sync`.
-
-```kotlin
-aem {
-    tasks {
-        satisfy {
-            group("tool.groovyconsole") { url("https://github.com/icfnext/aem-groovy-console/releases/download/12.0.0/aem-groovy-console-12.0.0.zip") }
-        }
-        register("aemConfigure") {
-            doLast {
-                aem.sync {
-                    evalGroovyCode("""
-                        def postsService = getService("com.company.example.aem.sites.services.posts.PostsService")
-                        
-                        println postsService.randomPosts(5)
-                    """)
-                    // evalGroovyScript("posts.groovy") // if script above moved to 'aem/gradle/groovyScript/posts.groovy'
-                }
-            }
-        }
-    }
-}
-```
-
 #### Calling AEM endpoints / making any HTTP requests
 
 To make an HTTP request to some AEM endpoint (servlet) simply write:
@@ -1639,7 +1569,9 @@ aem {
         register("aemHealthCheck") {
             doLast {
                 aem.sync {
-                    get("/bin/example/healthCheck") { checkStatus(it, 200) }
+                    http {
+                        get("/bin/example/healthCheck") { checkStatus(it, 200) }
+                    }
                 }
             }
         }
@@ -1659,11 +1591,13 @@ aem {
         register("aemHealthCheck") {
             doLast {
                 aem.sync {
-                    val json = get("/bin/example/healthCheck") { asJson(it) }
-                    val status = json.read("status") as String
-                    
-                    if (status != "OK") {
-                        throw GradleException("Health check failed on: $instance because status '$status' detected.")
+                    http {
+                        val json = get("/bin/example/healthCheck") { asJson(it) }
+                        val status = json.read("status") as String
+                        
+                        if (status != "OK") {
+                            throw GradleException("Health check failed on: $instance because status '$status' detected.")
+                        }
                     }
                 }
             }
@@ -1673,6 +1607,130 @@ aem {
 ```
 
 There are also available convenient methods `asStream`, `asString` to be able to process endpoint responses.
+
+#### Downloading CRX package from external HTTP endpoint and deploying it on desired AEM instances
+
+Below snippet could be used to automatize recovery from content backups (e.g for production or to replicate production content to test environment).
+
+```kotlin
+
+aem {
+    tasks {
+        register("packageDeployProductionContent") {
+            doLast {
+                val instances = listOf(
+                        aem.instance("http://user:password@aem-host.com") // URL specified directly, could be parametrized by some gradle command line property
+                        // aem.namedInstance("local-publish") // reused AEM instance defined in 'gradle.properties'
+                )
+                val pkg = aem.http { download("https://company.com/aem/backups/example-1.0.0-201901300932.backup.zip") }
+                
+                aem.sync(instances) { 
+                    packageManager.deployPackage(pkg) 
+                }
+            }
+        }
+    }
+}
+```
+
+#### Working with content repository (JCR)
+
+To make changes in AEM content repository, use [Repository](blob/develop/src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/repository/Repository.kt) instance service which is a part of instance sync tool.
+
+For example, to migrate pages even without using [Groovy Console](https://github.com/icfnext/aem-groovy-console) deployed on instance, simply write:
+
+```kotlin
+aem {
+    tasks {
+        register("migratePages") {
+            description = "Migrates pages to new component"
+            doLast {
+                aem.sync {
+                    repository {
+                        node("/content/example")
+                            .traverse()
+                            .filter { it.type == "cq:PageContent" && properties["sling:resourceType"] == "example/components/basicPage" }
+                            .forEach { page ->
+                                logger.info("Migrating page: ${page.path}")
+                                page.saveProperty("sling:resourceType", "example/components/advancedPage")
+                            }
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+To create new / update existing nodes to configure e.g replication agents write:
+
+```kotlin
+aem {
+    tasks {
+        register("migratePages") {
+            description = "Corrects publish replication agent transport URI"
+            doLast {
+                aem.sync {
+                    repository {
+                        node("/etc/replication/agents.publish/flush/jcr:content", mapOf( // shorthand for 'node(path).save(props)'
+                            "transportUri" to "http://invalidation-only/dispatcher/invalidate.cache"
+                        ))
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+Under the hood, repository service is using only AEM built-in [Sling Post Servlet](https://sling.apache.org/documentation/bundles/manipulating-content-the-slingpostservlet-servlets-post.html).
+
+#### Executing code on AEM runtime
+
+It is also possible to easily execute any code on AEM runtime using [Groovy Console](https://github.com/icfnext/aem-groovy-console). 
+Assuming that on AEM instances there is already installed Groovy Console e.g via `instanceSatisfy` task, then it is possible to use [GroovyConsole](blob/develop/src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/groovy/GroovyConsole.kt) instance service.
+
+```kotlin
+aem {
+    tasks {
+        satisfy {
+            group("tool.groovyconsole") { url("https://github.com/icfnext/aem-groovy-console/releases/download/12.0.0/aem-groovy-console-12.0.0.zip") }
+        }
+        register("generatePosts") {
+            doLast {
+                aem.sync {
+                    groovyConsole.evalCode("""
+                        def postsService = getService("com.company.example.aem.sites.services.posts.PostsService")
+                        
+                        println postsService.randomPosts(5)
+                    """)
+                    // groovyConsole.evalScript("posts.groovy") // if script above moved to 'aem/gradle/groovyScript/posts.groovy'
+                }
+            }
+        }
+    }
+}
+```
+
+#### Controlling OSGi bundles and components
+
+To disable specific OSGi component by its PID value and only on publish instances use [OsgiFramework](blob/develop/src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/osgi/OsgiFramework.kt) instance service and write:
+
+
+```kotlin
+aem {
+    tasks {
+        register("instanceSecure") {
+            doLast {
+                aem.sync(aem.publishInstances) {
+                    osgiFramework.disableComponent("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet")
+                    // osgiFramework.stopBundle("org.apache.sling.jcr.webdav")
+                }
+            }
+        }
+    }
+}
+```
 
 ### Understand why there are one or two plugins to be applied in build script
 

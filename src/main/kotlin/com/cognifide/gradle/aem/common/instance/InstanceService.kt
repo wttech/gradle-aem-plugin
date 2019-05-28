@@ -6,5 +6,5 @@ open class InstanceService(val sync: InstanceSync) {
 
     val instance = sync.instance
 
-    val project = sync.project
+    val project = sync.aem.project
 }

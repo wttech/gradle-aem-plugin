@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.common.build
 
-import com.cognifide.gradle.aem.common.utils.Collections
+import com.cognifide.gradle.aem.common.utils.Utils
 import org.gradle.api.artifacts.ExternalModuleDependency
 import org.gradle.api.artifacts.dsl.DependencyHandler
 
@@ -39,7 +39,7 @@ class DependencyOptions(private val handler: DependencyHandler) {
     }
 
     val dependency: ExternalModuleDependency
-        get() = handler.create(Collections.mapOfNonNullValues(
+        get() = handler.create(Utils.mapOfNonNullValues(
                 "group" to group,
                 "name" to name,
                 "version" to version,

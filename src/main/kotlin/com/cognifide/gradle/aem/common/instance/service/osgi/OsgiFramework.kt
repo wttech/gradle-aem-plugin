@@ -16,7 +16,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         aem.logger.debug("Asking for OSGi bundles on $instance")
 
         return try {
-            sync.get(BUNDLES_LIST_JSON) { asObjectFromJson(it, BundleState::class.java) }
+            sync.http.get(BUNDLES_LIST_JSON) { asObjectFromJson(it, BundleState::class.java) }
         } catch (e: AemException) {
             aem.logger.debug("Cannot request OSGi bundles state on $instance", e)
             BundleState.unknown(e)
@@ -42,7 +42,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         }
 
         aem.logger.info("Starting OSGi $bundle on $instance.")
-        sync.post("$BUNDLES_PATH/${bundle.id}", mapOf("action" to "start"))
+        sync.http.post("$BUNDLES_PATH/${bundle.id}", mapOf("action" to "start"))
     }
 
     fun stopBundle(symbolicName: String) {
@@ -53,7 +53,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         }
 
         aem.logger.info("Stopping OSGi $bundle on $instance.")
-        sync.post("$BUNDLES_PATH/${bundle.id}", mapOf("action" to "stop"))
+        sync.http.post("$BUNDLES_PATH/${bundle.id}", mapOf("action" to "stop"))
     }
 
     fun restartBundle(symbolicName: String) {
@@ -64,20 +64,20 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
     fun refreshBundle(symbolicName: String) {
         val bundle = getBundle(symbolicName)
         aem.logger.info("Refreshing OSGi $bundle on $instance.")
-        sync.post("$BUNDLES_PATH/${bundle.symbolicName}", mapOf("action" to "refresh"))
+        sync.http.post("$BUNDLES_PATH/${bundle.symbolicName}", mapOf("action" to "refresh"))
     }
 
     fun updateBundle(symbolicName: String) {
         val bundle = getBundle(symbolicName)
         aem.logger.info("Updating OSGi $bundle on $instance.")
-        sync.post("$BUNDLES_PATH/${bundle.symbolicName}", mapOf("action" to "update"))
+        sync.http.post("$BUNDLES_PATH/${bundle.symbolicName}", mapOf("action" to "update"))
     }
 
     fun determineComponentState(): ComponentState {
         aem.logger.debug("Asking for OSGi components on $instance")
 
         return try {
-            sync.get(COMPONENTS_LIST_JSON) { asObjectFromJson(it, ComponentState::class.java) }
+            sync.http.get(COMPONENTS_LIST_JSON) { asObjectFromJson(it, ComponentState::class.java) }
         } catch (e: AemException) {
             aem.logger.debug("Cannot determine OSGi components state on $instance", e)
             ComponentState.unknown()
@@ -88,7 +88,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         aem.logger.debug("Asking for OSGi events on $instance")
 
         return try {
-            sync.get(EVENTS_LIST_JSON) { asObjectFromJson(it, EventState::class.java) }
+            sync.http.get(EVENTS_LIST_JSON) { asObjectFromJson(it, EventState::class.java) }
         } catch (e: AemException) {
             aem.logger.debug("Cannot determine OSGi events state on $instance", e)
             EventState.unknown()
@@ -113,7 +113,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         }
 
         aem.logger.info("Enabling OSGi $component on $instance.")
-        sync.post("$COMPONENTS_PATH/${component.uid}", mapOf("action" to "enable"))
+        sync.http.post("$COMPONENTS_PATH/${component.uid}", mapOf("action" to "enable"))
     }
 
     fun disableComponent(pid: String) {
@@ -124,7 +124,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         }
 
         aem.logger.info("Disabling OSGi $component on $instance.")
-        sync.post("$COMPONENTS_PATH/${component.id}", mapOf("action" to "disable"))
+        sync.http.post("$COMPONENTS_PATH/${component.id}", mapOf("action" to "disable"))
     }
 
     fun restartComponent(pid: String) {
@@ -139,7 +139,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
     private fun shutdown(type: String) {
         try {
             aem.logger.info("Triggering OSGi framework shutdown on $instance.")
-            sync.postUrlencoded(VMSTAT_PATH, mapOf("shutdown_type" to type))
+            sync.http.postUrlencoded(VMSTAT_PATH, mapOf("shutdown_type" to type))
         } catch (e: AemException) {
             throw InstanceException("Cannot trigger shutdown of $instance.", e)
         }
