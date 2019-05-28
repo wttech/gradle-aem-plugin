@@ -906,12 +906,12 @@ aem {
 
 Predefined expandable properties:
 
-* `compose` - [Compose](src/main/kotlin/com/cognifide/gradle/aem/pkg/tasks/Compose.kt) task instance,
-* `config` - [Config](src/main/kotlin/com/cognifide/gradle/aem/config/Config.kt) object,
+* `aem` - [AemExtension](src/main/kotlin/com/cognifide/gradle/aem/AemExtension.kt) object,
+* `definition` - [VltDefinition](src/main/kotlin/com/cognifide/gradle/aem/common/pkg/vlt/VltDefinition.kt) object,
 * `rootProject` - project with directory in which *settings.gradle* is located,
 * `project` - current project.
 
-This feature is especially useful to generate valid *META-INF/properties.xml* file, below [template](src/main/resources/com/cognifide/gradle/aem/META-INF/vault/properties.xml) is used by plugin by default:
+This feature is especially useful to generate valid *META-INF/properties.xml* file, below [template](src/main/resources/com/cognifide/gradle/aem/package/META-INF/vault/properties.xml) is used by plugin by default:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
@@ -933,7 +933,7 @@ This feature is especially useful to generate valid *META-INF/properties.xml* fi
 </properties>
 ```
 
-Also file *nodetypes.cnd* is dynamically expanded from [template](src/main/resources/com/cognifide/gradle/aem/META-INF/vault/nodetypes.cnd) to generate file containing all node types from all sub packages being merged into assembly package.
+Also file *nodetypes.cnd* is dynamically expanded from [template](src/main/resources/com/cognifide/gradle/aem/package/META-INF/vault/nodetypes.cnd) to generate file containing all node types from all sub packages being merged into assembly package.
 
 Each JAR file in separate *hooks* directory will be combined into single directory when creating assembly package.
 
