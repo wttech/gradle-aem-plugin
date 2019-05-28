@@ -256,8 +256,8 @@ To see all available options and actual documentation, please follow to:
 * `environment` - [Environment](src/main/kotlin/com/cognifide/gradle/aem/environment/Environment.kt)
 * `fileTransfer` - [FileTransfer]()
 
-* `packageCompose` - [PackageCompose]()
-* `packageSatisfy` - [PackageSatisfy]()
+* `packageCompose` - [PackageCompose](src/main/kotlin/com/cognifide/gradle/aem/pkg/tasks/PackageCompose.kt)
+* `instanceSatisfy` - [InstanceSatisfy](src/main/kotlin/com/cognifide/gradle/aem/instance/satisfy/InstanceSatisfy.kt)
 * `...` - other tasks in similar way.
 
 ### Common plugin
@@ -283,7 +283,7 @@ It does not provide any tasks. Apply other plugins to have tasks or implement ow
 Instances could be defined in two ways, via:
  
 * file `gradle.properties` - recommended approach, by properties convention.
-* build script - customizable approach.
+* build script - dynamic & more customizable approach.
 
 #### Defining instances via properties file
 
@@ -728,7 +728,7 @@ Inherits from [Common Plugin](#common-plugin).
 
 #### Task `packageCompose`
 
-[Compose](src/main/kotlin/com/cognifide/gradle/aem/pkg/tasks/Compose.kt) CRX package from JCR content and bundles. 
+Compose CRX package from JCR content and bundles. 
 
 Inherits from task [ZIP](https://docs.gradle.org/3.5/dsl/org.gradle.api.tasks.bundling.Zip.html).
 
