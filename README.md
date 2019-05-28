@@ -612,103 +612,138 @@ gradlew :debug
 
 Then file at path *build/aem/debug/debug.json* with content below is being generated:
 
-```json
+```javascript
 {
-  "buildInfo" : {
-    "plugin" : {
-      "pluginVersion" : "6.1.1",
-      "gradleVersion" : "5.0"
+  "buildInfo": {
+    "plugin": {
+      "pluginVersion": "7.0.0-beta",
+      "gradleVersion": "5.4"
     },
-    "gradle" : {
-      "version" : "5.0",
-      "homeDir" : ".../.gradle/wrapper/dists/gradle-5.0-all/.../gradle-5.0"
+    "gradle": {
+      "version": "5.4.1",
+      "homeDir": ".../gradle-5.4.1"
     },
-    "java" : {
-      "version" : "1.8",
-      "homeDir" : ".../Java/jdk1.8.0_121/jre"
+    "java": {
+      "version": "1.8",
+      "homeDir": ".../jdk1.8.0_121/jre"
     }
   },
-  "projectInfo" : {
-    "displayName" : "project ':aem:app.core'",
-    "path" : ":aem:app.core",
-    "name" : "app.core",
-    "dir" : ".../gradle-aem-multi/aem/app.core"
+  "projectInfo": {
+    "displayName": "project ':aem:assembly:full'",
+    "path": ":aem:assembly:full",
+    "name": "full",
+    "dir": ".../gradle-aem-multi/aem/assembly/full"
   },
-  "baseConfig" : {
-    "instances" : {
-      "local-author" : {
-        "properties" : { },
-        "httpUrl" : "http://localhost:4502",
-        "user" : "admin",
-        "password" : "admin",
-        "typeName" : "author",
-        "environment" : "local",
-        "name" : "local-author",
-        "type" : "AUTHOR",
-        "httpPort" : 4502
+  "packageDeployed": {
+    "local-author": {
+      "group": "example",
+      "name": "example.full",
+      "version": "1.0.0-SNAPSHOT",
+      "path": "/etc/packages/example/example.full-1.0.0-SNAPSHOT.zip",
+      "downloadName": "example.full-1.0.0-SNAPSHOT.zip",
+      "lastUnpacked": 1558622734756,
+      "installed": true
+    },
+    // ...
+  },
+  "aem": {
+    "projectPrefixes": [
+      "aem.",
+      "aem-",
+      "aem_"
+    ],
+    "env": "local",
+    "lineSeparator": "LF",
+    "groovyScriptRootDir": ".../gradle-aem-multi/aem/assembly/full/gradle/groovyScript",
+    "fileTransfer": {
+      "httpUsername": null,
+      "httpPassword": null,
+      // ...
+    },
+    "packageOptions": {
+      "rootDir": ".../gradle-aem-multi/aem/assembly/full/src/main/content",
+      "snapshots": [],
+      "metaCommonRootDir": ".../gradle-aem-multi/aem/gradle/package/META-INF",
+      "installPath": "/apps/example/full/install",
+      "installRepository": true,
+      "errors": [
+        "javax.jcr.nodetype.*Exception",
+        "org.apache.jackrabbit.oak.api.*Exception",
+        "org.apache.jackrabbit.vault.packaging.*Exception",
+        "org.xml.sax.*Exception"
+      ],
+      "responseBuffer": 4096
+    },
+    "instanceOptions": {
+      "defined": {
+        "local-author": {
+          "properties": {},
+          "httpUrl": "http://localhost:4502",
+          "user": "admin",
+          "password": "*****",
+          "typeName": "author",
+          "environment": "local",
+          "debugPort": 14502,
+          "name": "local-author",
+          "type": "AUTHOR",
+          "httpPort": 4502,
+          "runModes": "author,local",
+          "startOpts": "",
+          "jvmOpts": "-Xdebug -Xrunjdwp:transport=dt_socket,address=14502,server=y,suspend=n -server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true"
+        }
+        // ...
       }
     },
-    "localInstanceOptions" : {
-      "root" : ".../.aem/example",
-      "source" : "AUTO",
-      "zipUrl" : null,
-      "jarUrl" : null,
-      "licenseUrl" : null,
-      "overridesPath" : "*/gradle/instance",
-      "expandFiles" : [
+    "localInstanceOptions": {
+      "rootDir": ".../gradle-aem-multi/aem/.aem/instance",
+      "source": "AUTO",
+      "zipUrl": null,
+      "jarUrl": ".../aem-6.5/cq-quickstart-6.5.0.jar",
+      "licenseUrl": ".../aem-6.5/license.properties.txt",
+      "overridesDir": ".../gradle-aem-multi/aem/gradle/instance",
+      "expandFiles": [
         "**/start.bat",
         "**/stop.bat",
         "**/start",
         "**/stop"
       ],
-      "expandProperties" : { },
-      "allFiles" : [ ],
-      "extraFiles" : [ ],
-      "jar" : null,
-      "license" : null,
-      "zip" : null,
-      "mandatoryFiles" : [ ]
+      "expandProperties": {}
     },
-    "packageSnapshots" : [ ],
-    "packageRoot" : ".../gradle-aem-multi/aem/sites/src/main/content",
-    "packageMetaCommonRoot" : ".../gradle-aem-multi/aem/gradle/package/META-INF",
-    "packageInstallPath" : "/apps/example/app.core/install",
-    "packageInstallRepository" : true,
-    "packageErrors" : [
-      "javax.jcr.nodetype.*Exception",
-      "org.apache.jackrabbit.oak.api.*Exception",
-      "org.apache.jackrabbit.vault.packaging.*Exception",
-      "org.xml.sax.*Exception"
-    ],
-    "packageResponseBuffer" : 4096,
-    "lineSeparator" : "LF",
-    "notificationEnabled" : true,
-    "groovyScriptRoot" : ".../gradle-aem-multi/aem/gradle/groovyScript"
-  },
-  "bundleConfig" : {
-    "jar" : {
-      "installPath" : "/apps/example/app.core/install",
-      "attributesConvention" : true,
-      "javaPackage" : "com.company.example.aem.sites",
-      "javaPackageOptions" : "-split-package:=merge-first",
-      "bndPath" : ".../gradle-aem-multi/aem/app.core/bnd.bnd",
-      "bndInstructions" : {
-        "-fixupmessages.bundleActivator" : "Bundle-Activator * is being imported *;is:=error"
+    "environment": {
+      "rootDir": ".../gradle-aem-multi/aem/.aem/environment",
+      "directories": {
+        "regulars": [],
+        "caches": []
       },
-      "attributes" : {
-        "Manifest-Version" : "1.0",
-        "Bundle-Category" : "example",
-        "Bundle-Vendor" : "Company",
-        "Bundle-Name" : "Example - AEM Application Core",
-        "Bundle-SymbolicName" : "com.company.example.aem.sites",
-        "Sling-Model-Packages" : "com.company.example.aem.sites",
-        "Import-Package" : "*",
-        "Export-Package" : "com.company.example.aem.sites.*;-split-package:=merge-first"
-      }
-    }
-  },
-  "packageDeployed" : {
-    "local-author" : null
+      "dispatcherDistUrl": "http://download.macromedia.com/dispatcher/download/dispatcher-apache2.4-linux-x86_64-4.3.2.tar.gz",
+      "dispatcherModuleName": "*/dispatcher-apache*.so",
+      "dockerType": "TOOLBOX",
+      "hosts": {
+        "defined": []
+      },
+      "dockerComposeFile": ".../gradle-aem-multi/aem/.aem/environment/docker-compose.yml",
+      "dockerComposeSourceFile": ".../gradle-aem-multi/aem/gradle/environment/docker-compose.yml.peb",
+      "dockerConfigPath": ".../gradle-aem-multi/aem/gradle/environment",
+      "dockerRootPath": ".../gradle-aem-multi/aem/.aem/environment",
+      "dispatcherModuleFile": ".../gradle-aem-multi/aem/.aem/environment/distributions/mod_dispatcher.so",
+      "configDir": ".../gradle-aem-multi/aem/gradle/environment",
+      "created": true,
+      "httpdConfDir": ".../gradle-aem-multi/aem/gradle/environment/httpd/conf"
+    },
+    "notifier": {
+      "enabled": true
+    },
+    "tasks": {
+      "bundles": []
+    },
+    "projectName": "full",
+    "baseName": "example.full",
+    "configCommonDir": ".../gradle-aem-multi/aem/gradle",
+    "configDir": ".../gradle-aem-multi/aem/assembly/full/gradle",
+    "javaPackages": [
+      "com.company.example.aem.common",
+      "com.company.example.aem.sites"
+    ]
   }
 }
 ```

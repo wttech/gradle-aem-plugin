@@ -4,8 +4,6 @@ import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.AemExtension
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.Serializable
-import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.Nested
 
 open class InstanceOptions(private val aem: AemExtension) : Serializable {
 
@@ -13,7 +11,6 @@ open class InstanceOptions(private val aem: AemExtension) : Serializable {
      * List of AEM instances on which packages could be deployed.
      * Instance stored in map ensures name uniqueness and allows to be referenced in expanded properties.
      */
-    @Nested
     val defined: MutableMap<String, Instance> = mutableMapOf()
 
     /**
@@ -21,7 +18,6 @@ open class InstanceOptions(private val aem: AemExtension) : Serializable {
      *
      * Default value may look quite big, but it is just very fail-safe.
      */
-    @Internal
     @JsonIgnore
     var httpOptions: (InstanceHttpClient).() -> Unit = {
         connectionTimeout = aem.props.int("instance.http.connectionTimeout") ?: 30000

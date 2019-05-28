@@ -123,71 +123,9 @@
       "bundles" : [ ]
     },
     "projectName" : "minimal",
-    "instances" : [
-      {
-        "properties" : { },
-        "httpUrl" : "http://localhost:4502",
-        "user" : "admin",
-        "password" : "*****",
-        "typeName" : "author",
-        "environment" : "local",
-        "name" : "local-author",
-        "type" : "AUTHOR",
-        "httpPort" : 4502
-      },
-      {
-        "properties" : { },
-        "httpUrl" : "http://localhost:4503",
-        "user" : "admin",
-        "password" : "*****",
-        "typeName" : "publish",
-        "environment" : "local",
-        "name" : "local-publish",
-        "type" : "PUBLISH",
-        "httpPort" : 4503
-      }
-    ],
-    "anyInstance" : {
-      "properties" : { },
-      "httpUrl" : "http://localhost:4502",
-      "user" : "admin",
-      "password" : "*****",
-      "typeName" : "author",
-      "environment" : "local",
-      "name" : "local-author",
-      "type" : "AUTHOR",
-      "httpPort" : 4502
-    },
     "configDir" : "*/minimal/gradle",
     "javaPackages" : [ ],
     "baseName" : "minimal",
-    "configCommonDir" : "*/minimal/gradle",
-    "authorInstances" : [
-      {
-        "properties" : { },
-        "httpUrl" : "http://localhost:4502",
-        "user" : "admin",
-        "password" : "*****",
-        "typeName" : "author",
-        "environment" : "local",
-        "name" : "local-author",
-        "type" : "AUTHOR",
-        "httpPort" : 4502
-      }
-    ],
-    "localInstances" : [ ],
-    "publishInstances" : [
-      {
-        "properties" : { },
-        "httpUrl" : "http://localhost:4503",
-        "user" : "admin",
-        "password" : "*****",
-        "typeName" : "publish",
-        "environment" : "local",
-        "name" : "local-publish",
-        "type" : "PUBLISH",
-        "httpPort" : 4503
-      }
-    ]
+    "configCommonDir" : "*/minimal/gradle"
   }
 }

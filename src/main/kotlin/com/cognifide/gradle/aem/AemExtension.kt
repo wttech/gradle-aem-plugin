@@ -210,6 +210,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
             of(subproject).tasks.bundles.mapNotNull { it.javaPackage }
         }
 
+    @get:JsonIgnore
     val instances: List<Instance>
         get() = filterInstances()
 
@@ -221,6 +222,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
 
     fun instances(urlsOrNames: Collection<String>): List<Instance> = urlsOrNames.map { instance(it) }
 
+    @get:JsonIgnore
     val anyInstance: Instance
         get() {
             val cmdInstanceArg = props.string("instance")
@@ -265,16 +267,19 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
         }
     }
 
+    @get:JsonIgnore
     val authorInstances: List<Instance>
         get() = filterInstances().filter { it.type == InstanceType.AUTHOR }
 
     fun authorInstances(consumer: (Instance) -> Unit) = parallel.with(authorInstances, consumer)
 
+    @get:JsonIgnore
     val publishInstances: List<Instance>
         get() = filterInstances().filter { it.type == InstanceType.PUBLISH }
 
     fun publishInstances(consumer: Instance.() -> Unit) = parallel.with(publishInstances, consumer)
 
+    @get:JsonIgnore
     val localInstances: List<LocalInstance>
         get() = instances.filterIsInstance(LocalInstance::class.java)
 
