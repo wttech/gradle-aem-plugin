@@ -6,6 +6,7 @@ import com.cognifide.gradle.aem.common.instance.local.BackupResolver
 import com.cognifide.gradle.aem.common.instance.local.QuickstartResolver
 import com.cognifide.gradle.aem.common.utils.Formats
 import com.cognifide.gradle.aem.common.utils.onEachApply
+import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 import java.io.Serializable
 
@@ -56,6 +57,7 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
         backup.apply(options)
     }
 
+    @get:JsonIgnore
     val backupZip: File?
         get() {
             return when (source) {
@@ -66,7 +68,16 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
             }
         }
 
-    fun createFromBackup(uncreatedInstances: List<LocalInstance>, backupZip: File) {
+    fun create(instances: List<LocalInstance>) {
+        val backupZip = backupZip
+        if (backupZip != null) {
+            createFromBackup(instances, backupZip)
+        } else {
+            createFromScratch(instances)
+        }
+    }
+
+    fun createFromBackup(instances: List<LocalInstance>, backupZip: File) {
         aem.logger.info("Extracting files from backup ZIP '$backupZip' to directory '$rootDir'")
 
         val backupSize = Formats.size(backupZip)
@@ -81,8 +92,15 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
             FileOperations.zipUnpack(backupZip, rootDir)
         }
 
-        aem.progress(uncreatedInstances.size) {
-            uncreatedInstances.onEachApply {
+        val missingInstances = instances.filter { !it.created }
+        if (missingInstances.isNotEmpty()) {
+            aem.logger.info("Backup ZIP '$backupZip' does not contain all instances. Creating from scratch: ${missingInstances.names}")
+
+            createFromScratch(missingInstances)
+        }
+
+        aem.progress(instances.size) {
+            instances.onEachApply {
                 increment("Customizing instance '$name'") {
                     customize()
                 }
@@ -90,14 +108,14 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
         }
     }
 
-    fun createFromScratch(uncreatedInstances: List<LocalInstance>) {
+    fun createFromScratch(instances: List<LocalInstance>) {
         if (quickstart.jar == null || quickstart.license == null) {
             throw InstanceException("Cannot create instances due to lacking source files. " +
                     "Ensure having specified local instance quickstart jar & license urls.")
         }
 
-        aem.progress(uncreatedInstances.size) {
-            uncreatedInstances.onEachApply {
+        aem.progress(instances.size) {
+            instances.onEachApply {
                 increment("Creating instance '$name'") {
                     create()
                 }

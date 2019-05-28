@@ -18,7 +18,7 @@ open class InstanceBackup : ZipTask() {
 
         archiveBaseName.set(project.provider { "${project.rootProject.name}-${Formats.dateFileName()}" })
         archiveClassifier.set("backup")
-        destinationDirectory.set(project.file("build/aem/backup/local"))
+        destinationDirectory.set(aem.temporaryDir("backup/internal"))
 
         duplicatesStrategy = DuplicatesStrategy.FAIL
         entryCompression = ZipEntryCompression.STORED

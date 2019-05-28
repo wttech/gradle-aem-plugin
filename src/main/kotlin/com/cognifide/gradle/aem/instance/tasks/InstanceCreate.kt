@@ -20,17 +20,7 @@ open class InstanceCreate : LocalInstanceTask() {
 
         logger.info("Creating instances: ${uncreatedInstances.names}")
 
-        val backupZip = manager.backupZip
-        if (backupZip != null) {
-            if (instances != uncreatedInstances) {
-                throw InstanceException("Backup ZIP cannot be used to create missing instances.")
-            }
-
-            manager.createFromBackup(uncreatedInstances, backupZip)
-        } else {
-            manager.createFromScratch(uncreatedInstances)
-        }
-
+        manager.create(uncreatedInstances)
         val createdInstances = uncreatedInstances.filter { it.created }
 
         aem.notifier.notify("Instance(s) created", "Which: ${createdInstances.names}")

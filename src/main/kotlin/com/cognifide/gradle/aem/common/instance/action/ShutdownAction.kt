@@ -67,7 +67,7 @@ class ShutdownAction(aem: AemExtension) : AbstractAction(aem) {
                 val unstableInstances = aem.parallel.map(instanceStates, { !stableCheck(it) }, { it.instance })
                 val availableInstances = aem.parallel.map(instanceStates, { availableCheck(it) }, { it.instance })
                 val unavailableInstances = instances - availableInstances
-                val upInstances = localInstances.filter { it.running || availableInstances.contains(it) }
+                val upInstances = localInstances.filter { it.running || availableInstances.contains(it) } // TODO remove local relation
 
                 progress(InstanceProgress.determine(stableRetry.times, instanceStates, unavailableInstances, unstableInstances, timer))
 
