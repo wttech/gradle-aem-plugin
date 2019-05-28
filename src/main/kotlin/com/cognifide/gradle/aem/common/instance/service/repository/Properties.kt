@@ -87,7 +87,7 @@ class Properties(@JsonIgnore val node: Base, props: Map<String, Any>) : LinkedHa
         return try {
             strings?.map { RepositoryType.dateFormat().parse(it) }
         } catch (e: ParseException) {
-            throw RepositoryException("Node property '${node.path}[$name]=$strings' cannot be converted to dates.")
+            throw RepositoryException("Node property '${node.path}[$name]=$strings' cannot be converted to dates.", e)
         }
     }
 
