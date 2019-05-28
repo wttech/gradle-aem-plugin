@@ -142,10 +142,16 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
      */
     fun resolver(options: ResolverOptions.() -> Unit) = resolverOptions.apply(options)
 
+    val packageOptions = PackageOptions(this)
+
     /**
      * Defines common settings for built packages and deployment related behavior.
      */
-    val packageOptions = PackageOptions(this)
+    fun `package`(options: PackageOptions.() -> Unit) {
+        packageOptions.apply(options)
+    }
+
+    fun pkg(options: PackageOptions.() -> Unit) = `package`(options)
 
     val instanceOptions = InstanceOptions(this)
 
@@ -279,8 +285,6 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
         get() = instances.filterIsInstance(RemoteInstance::class.java)
 
     fun remoteInstances(consumer: RemoteInstance.() -> Unit) = parallel.with(remoteInstances, consumer)
-
-    fun packages(consumer: (File) -> Unit) = parallel.with(packages, consumer)
 
     @get:JsonIgnore
     val packages: List<File>

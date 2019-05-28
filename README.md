@@ -55,7 +55,7 @@ To see documentation for previous 5.x serie, please [click here](https://github.
      * [Plugin setup](#plugin-setup)
         * [Minimal](#minimal)
         * [Additional](#additional)
-     * [Config plugin](#config-plugin)
+     * [Common plugin](#common-plugin)
         * [Instance conventions](#instance-conventions)
         * [Defining instances via properties file](#defining-instances-via-properties-file)
         * [Defining instances via build script](#defining-instances-via-build-script)
@@ -199,16 +199,34 @@ version = "1.0.0"
 defaultTasks(":instanceSatisfy", ":packageDeploy")
 
 aem {
-    config {
-        packageRoot = "${aem.project.file("src/main/content")}"
+    `package` {
+        jcrRoot = aem.project.file("src/main/content")
         // ...
-        
-        localInstance {
-            // ...
-        }
-        resolver {
-            // ...
-        }
+    }
+    instance {
+        local("http://localhost:4502")
+        local("http://localhost:4503")
+        remote("http://192.168.100.101:4502") {
+            typeName = "int-author"
+        } 
+        remote("http://192.168.100.101:4503") {
+            typeName = "int-publish"
+        } 
+        // etc
+    }
+    localInstance {
+        zipUrl = aem.props.string("localInstance.zipUrl")
+        jarUrl = aem.props.string("localInstance.jarUrl")
+        licenseUrl = aem.props.string("localInstance.licenseUrl")
+        // ...
+    }
+    environment {
+        rootDir = aem.props.string("environment.rootDir")?.let { aem.project.file(it) } ?: aem.projectMain.file(".aem/environment")
+        dispatcherDistUrl = aem.props.string("environment.dispatcher.distUrl") ?: "http://download.macromedia.com/dispatcher/download/dispatcher-apache2.4-linux-x86_64-4.3.2.tar.gz"
+        // ...
+    }
+    fileTransfer {
+        // ...
     }
     tasks {
         bundle {
@@ -230,16 +248,19 @@ aem {
 
 To see all available options and actual documentation, please follow to:
 
-* `aem` - [AemExtension](src/main/kotlin/com/cognifide/gradle/aem/common/AemExtension.kt)
-* `config` - [Config](src/main/kotlin/com/cognifide/gradle/aem/config/Config.kt)
-* `compose` - [Compose](src/main/kotlin/com/cognifide/gradle/aem/pkg/tasks/Compose.kt)
+* `aem` - [AemExtension]()
+* `package` - [PackageOptions](src/main/kotlin/com/cognifide/gradle/aem/common/pkg/PackageOptions.kt)
 * `bundle` - [BundleJar](src/main/kotlin/com/cognifide/gradle/aem/bundle/BundleJar.kt)
-* `satisfy` - [Satisfy](src/main/kotlin/com/cognifide/gradle/aem/instance/tasks/Satisfy.kt)
-* `...` - other tasks in similar way.
-* `config.localInstance` - [LocalInstanceOptions](src/main/kotlin/com/cognifide/gradle/aem/instance/LocalInstanceOptions.kt)
-* `config.resolver` - [ResolverOptions](src/main/kotlin/com/cognifide/gradle/aem/common/file/resolver/ResolverOptions.kt)
 
-### Config plugin
+* `localInstance` - [LocalInstanceOptions](src/main/kotlin/com/cognifide/gradle/aem/instance/LocalInstanceOptions.kt)
+* `environment` - [Environment](src/main/kotlin/com/cognifide/gradle/aem/environment/Environment.kt)
+* `fileTransfer` - [FileTransfer]()
+
+* `packageCompose` - [PackageCompose]()
+* `packageSatisfy` - [PackageSatisfy]()
+* `...` - other tasks in similar way.
+
+### Common plugin
 
 ```kotlin
 plugins {
@@ -247,9 +268,9 @@ plugins {
 }
 ```
 
-Applied transparently by other plugins. Provides AEM section to build script and instance definitions, common configuration.
+Applied transparently by other plugins. Provides AEM extension to build script / **AEM Gradle DSL** which consists of instance definitions, common configuration, methods for controlling local instances and virtualized environment.
 
-It does not provide any tasks.
+It does not provide any tasks. Apply other plugins to have tasks or implement own.
 
 #### Instance conventions
 
@@ -268,7 +289,7 @@ Instances could be defined in two ways, via:
 
 The configuration could be specified through *gradle.properties* file using dedicated syntax.
 
-`aem.instance.$ENVIRONMENT-$TYPE_NAME.$PROP_NAME=$PROP_VALUE`
+`instance.$ENVIRONMENT-$TYPE_NAME.$PROP_NAME=$PROP_VALUE`
 
 Part | Possible values | Description |
 --- | --- | --- |
@@ -280,45 +301,45 @@ Part | Possible values | Description |
 Default remote instances defined via properties (below lines are optional):
 
 ```
-aem.instance.local-author.httpUrl=http://localhost:4502
-aem.instance.local-publish.httpUrl=http://localhost:4503
+instance.local-author.httpUrl=http://localhost:4502
+instance.local-publish.httpUrl=http://localhost:4503
 ```
 
 Example for defining multiple remote instances (that could be [filtered](#filter-instances-to-work-with)):
 
 ```
-aem.instance.int-author.httpUrl=http://author.aem-integration.company.com
-aem.instance.int-publish.httpUrl=http://aem-integration.company.com
-aem.instance.stg-author.httpUrl=http://author.aem-staging.company.com
-aem.instance.stg-publish.httpUrl=http://aem-staging.company.com
+instance.int-author.httpUrl=http://author.aem-integration.company.com
+instance.int-publish.httpUrl=http://aem-integration.company.com
+instance.stg-author.httpUrl=http://author.aem-staging.company.com
+instance.stg-publish.httpUrl=http://aem-staging.company.com
 ```
 
 Example for defining remote instance with credentials separated:
 
 ```
-aem.instance.test-author.httpUrl=http://author.aem-integration.company.com
-aem.instance.test-author.user=foo
-aem.instance.test-author.password=bar
+instance.test-author.httpUrl=http://author.aem-integration.company.com
+instance.test-author.user=foo
+instance.test-author.password=bar
 ```
 
 Example for defining remote instance with credentials details included in URL:
 
 ```
-aem.instance.test-author.httpUrl=http://foo:bar@author.aem-integration.company.com
+instance.test-author.httpUrl=http://foo:bar@author.aem-integration.company.com
 ```
 
 Example for defining local instances (created on local file system):
 
 ```
-aem.instance.local-author.httpUrl=http://localhost:4502
-aem.instance.local-author.type=local
-aem.instance.local-author.runModes=nosamplecontent
-aem.instance.local-author.jvmOpts=-server -Xmx1024m -XX:MaxPermSize=256M -Djava.awt.headless=true
+instance.local-author.httpUrl=http://localhost:4502
+instance.local-author.type=local
+instance.local-author.runModes=nosamplecontent
+instance.local-author.jvmOpts=-server -Xmx1024m -XX:MaxPermSize=256M -Djava.awt.headless=true
 
-aem.instance.local-publish.httpUrl=http://localhost:4503
-aem.instance.local-publish.type=local
-aem.instance.local-publish.runModes=nosamplecontent
-aem.instance.local-publish.jvmOpts=-server -Xmx1024m -XX:MaxPermSize=256M -Djava.awt.headless=true
+instance.local-publish.httpUrl=http://localhost:4503
+instance.local-publish.type=local
+instance.local-publish.runModes=nosamplecontent
+instance.local-publish.jvmOpts=-server -Xmx1024m -XX:MaxPermSize=256M -Djava.awt.headless=true
 ```
 
 Notice! Remember to define also AEM [source files](#configuration-of-aem-instance-source-jar-file-or-backup-file).
@@ -703,7 +724,7 @@ Should be applied to all projects that are composing CRX packages from *JCR cont
 
 Provides CRX package related tasks: `packageCompose`, `packageDeploy`, `packageActivate`, `packagePurge` etc.
 
-Inherits from [Tooling Plugin](#tooling-plugin).
+Inherits from [Common Plugin](#common-plugin).
 
 #### Task `packageCompose`
 
@@ -1017,7 +1038,7 @@ Provides instance related tasks: `instanceAwait`, `instanceSetup`, `instanceCrea
 
 Should be applied only at root project / only once within whole build.
 
-Inherits from [Config Plugin](#config-plugin).
+Inherits from [Common Plugin](#common-plugin).
 
 #### Task `instanceSetup`
 
@@ -1377,7 +1398,7 @@ Provides environment related tasks: `environmentUp`, `environmentDev`, `environm
 
 Should be applied only at root project / only once within whole build.
 
-Inherits from [Config Plugin](#config-plugin).
+Inherits from [Common Plugin](#common-plugin).
 
 #### Environment configuration
 
@@ -1773,8 +1794,8 @@ gradlew packageDeploy -Pinstance.name=*-author
 gradlew packageDeploy -Pinstance.name=local-author,integration-author
 ```
 
-Default value of that instance name filter is `${aem.environment}-*`, so that typically `local-*`.
-Environment value comes from system environment variable `AEM_ENV` or property `aem.env`.
+Default value of that instance name filter is `${environment}-*`, so that typically `local-*`.
+Environment value comes from system environment variable `ENV` or property `env`.
 
 To deploy only to author or publish instances:
 
