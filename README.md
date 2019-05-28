@@ -616,7 +616,7 @@ Then file at path *build/aem/debug/debug.json* with content below is being gener
 {
   "buildInfo": {
     "plugin": {
-      "pluginVersion": "7.0.0-beta",
+      "pluginVersion": "7.0.0",
       "gradleVersion": "5.4"
     },
     "gradle": {
@@ -844,8 +844,8 @@ Let's assume following project structure:
 * *aem/build.gradle.kts* (project `:aem`, no source files at all)
 * *aem/sites/build.gradle.kts*  (project `:aem:sites`, JCR content and OSGi bundle)
 * *aem/common/build.gradle.kts*  (project `:aem:common`, JCR content and OSGi bundle)
-* *aem/content.init/build.gradle.kts*  (project `:aem:content.init`, JCR content only)
-* *aem/content.demo/build.gradle.kts*  (project `:aem:content.demo`, JCR content only)
+* *aem/site.live/build.gradle.kts*  (project `:aem:site.live`, JCR content only)
+* *aem/site.demo/build.gradle.kts*  (project `:aem:site.demo`, JCR content only)
 
 File content of *aem/build.gradle.kts*:
 
@@ -865,7 +865,7 @@ aem {
 }
 ```
 
-When building via command `gradlew :aem:build`, then the effect will be a CRX package with assembled JCR content and OSGi bundles from projects: `:aem:sites`, `:aem:common`, `:aem:content.init`, `:aem:content.demo`.
+When building via command `gradlew :aem:build`, then the effect will be a CRX package with assembled JCR content and OSGi bundles from projects: `:aem:sites`, `:aem:common`, `:aem:site.live`, `:aem:site.demo`.
 
 Gradle AEM Plugin is configured in a way that project can have:
  
