@@ -225,27 +225,6 @@ aem {
         rootDir = aem.props.string("environment.rootDir")?.let { aem.project.file(it) } ?: aem.projectMain.file(".aem/environment")
         dispatcherDistUrl = aem.props.string("environment.dispatcher.distUrl") ?: "http://download.macromedia.com/dispatcher/download/dispatcher-apache2.4-linux-x86_64-4.3.2.tar.gz"
         // ...
-        
-        hosts(
-                "example.com",
-                "demo.example.com",
-                "author.example.com",
-                "invalidation-only"
-        )
-        directories {
-            regular(
-                "httpd/logs"
-            )
-            cache(
-                "httpd/cache/content/example/live",
-                "httpd/cache/content/example/demo"
-            )
-        }
-        healthChecks {
-            url("Live site", "http://example.com/en-us.html", text = "English")
-            url("Demo site", "http://demo.example.com/en-us.html", text = "English")
-            url("Author login", "http://author.example.com/libs/granite/core/content/login.html?resource=%2F&\$\$login\$\$=%24%24login%24%24&j_reason=unknown&j_reason_code=unknown", text = "AEM Sign In")
-        }
     }
     fileTransfer {
         // ...
