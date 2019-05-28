@@ -1,16 +1,20 @@
 package com.cognifide.gradle.aem.pkg.tasks
 
+import com.cognifide.gradle.aem.AemException
+import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.bundle.BundleJar
 import com.cognifide.gradle.aem.bundle.BundlePlugin
-import com.cognifide.gradle.aem.common.*
+import com.cognifide.gradle.aem.common.build.DependencyOptions
 import com.cognifide.gradle.aem.common.file.FileOperations
+import com.cognifide.gradle.aem.common.instance.service.pkg.Package
+import com.cognifide.gradle.aem.common.pkg.PackageFileFilter
+import com.cognifide.gradle.aem.common.pkg.vlt.VltDefinition
+import com.cognifide.gradle.aem.common.pkg.vlt.VltFilter
 import com.cognifide.gradle.aem.common.tasks.ZipTask
-import com.cognifide.gradle.aem.pkg.Package
-import com.cognifide.gradle.aem.pkg.PackageFileFilter
+import com.cognifide.gradle.aem.common.utils.Patterns
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.compose.ProjectOptions
-import com.cognifide.gradle.aem.pkg.vlt.VltDefinition
-import com.cognifide.gradle.aem.pkg.vlt.VltFilter
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 import java.util.regex.Pattern
@@ -29,14 +33,14 @@ open class PackageCompose : ZipTask() {
      *
      * Must be absolute or relative to current working directory.
      */
-    @Input
-    var contentPath: String = aem.config.packageRoot
+    @Internal
+    var contentDir: File = aem.packageOptions.rootDir
 
     /**
      * Content path for OSGi bundle jars being placed in CRX package.
      */
     @Input
-    var bundlePath: String = aem.config.packageInstallPath
+    var bundlePath: String = aem.packageOptions.installPath
 
     /**
      * Suffix added to bundle path effectively allowing to install bundles only on specific instances.
@@ -71,11 +75,12 @@ open class PackageCompose : ZipTask() {
     @get:JsonIgnore
     val metaDirs: List<File>
         get() {
-            val paths = listOf(aem.config.packageMetaCommonRoot, "$contentPath/${Package.META_PATH}")
+            val dirs = listOf(
+                    aem.packageOptions.metaCommonRootDir,
+                    File(contentDir, Package.META_PATH)
+            )
 
-            return paths.asSequence()
-                    .filter { !it.isBlank() }
-                    .map { File(it) }
+            return dirs.asSequence()
                     .filter { it.exists() }
                     .toList()
         }
@@ -92,21 +97,21 @@ open class PackageCompose : ZipTask() {
 
     @get:Internal
     @get:JsonIgnore
-    val vaultPath: String
-        get() = "$contentPath/${Package.VLT_PATH}"
+    val vaultDir: File
+        get() = File(contentDir, Package.VLT_PATH)
 
     @get:Internal
     @get:JsonIgnore
-    val vaultFilterPath: String
-        get() = "$vaultPath/${VltFilter.BUILD_NAME}"
+    val vaultFilterFile: File
+        get() = File(vaultDir, VltFilter.BUILD_NAME)
 
     @get:Internal
     @get:JsonIgnore
-    val vaultNodeTypesPath: String
-        get() = "$vaultPath/${Package.VLT_NODETYPES_FILE}"
+    val vaultNodeTypesFile: File
+        get() = File(vaultDir, Package.VLT_NODETYPES_FILE)
 
     @Nested
-    val fileFilter = PackageFileFilter(project)
+    val fileFilter = PackageFileFilter(aem)
 
     fun fileFilter(configurer: PackageFileFilter.() -> Unit) {
         fileFilter.apply(configurer)
@@ -141,10 +146,6 @@ open class PackageCompose : ZipTask() {
     @Suppress("ComplexMethod")
     override fun projectEvaluated() {
         vaultDefinition.ensureDefaults()
-
-        if (contentPath.isBlank()) {
-            throw AemException("Content path cannot be blank")
-        }
 
         if (bundlePath.isBlank()) {
             throw AemException("Bundle path cannot be blank")
@@ -264,7 +265,7 @@ open class PackageCompose : ZipTask() {
             }
 
             if (options.composeContent) {
-                val contentDir = File("${other.contentPath}/${Package.JCR_ROOT}")
+                val contentDir = File(other.contentDir, Package.JCR_ROOT)
                 if (contentDir.exists()) {
                     into(Package.JCR_ROOT) { spec ->
                         spec.from(contentDir)
@@ -274,7 +275,7 @@ open class PackageCompose : ZipTask() {
             }
 
             if (options.vaultHooks) {
-                val hooksDir = File("${other.contentPath}/${Package.VLT_HOOKS_PATH}")
+                val hooksDir = File(other.contentDir, Package.VLT_HOOKS_PATH)
                 if (hooksDir.exists()) {
                     into(Package.VLT_HOOKS_PATH) { spec ->
                         spec.from(hooksDir)
@@ -326,19 +327,15 @@ open class PackageCompose : ZipTask() {
     }
 
     private fun extractVaultFilters(other: PackageCompose) {
-        if (!other.vaultFilterPath.isBlank() && File(other.vaultFilterPath).exists()) {
-            vaultDefinition.filterElements.addAll(VltFilter(File(other.vaultFilterPath)).rootElements)
+        if (other.vaultFilterFile.exists()) {
+            vaultDefinition.filterElements.addAll(VltFilter(other.vaultFilterFile).rootElements)
         } else if (project.plugins.hasPlugin(BundlePlugin.ID)) {
             vaultDefinition.filterElements.add(vaultFilterDefault(other))
         }
     }
 
     private fun extractVaultNodeTypes(other: PackageCompose) {
-        if (other.vaultNodeTypesPath.isBlank()) {
-            return
-        }
-
-        val file = File(other.vaultNodeTypesPath)
+        val file = other.vaultNodeTypesFile
         if (file.exists()) {
             file.forEachLine { line ->
                 if (NODE_TYPES_LIB.matcher(line.trim()).matches()) {

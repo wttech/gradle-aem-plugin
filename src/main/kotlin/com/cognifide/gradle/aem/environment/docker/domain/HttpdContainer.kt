@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.environment.docker.domain
 
-import com.cognifide.gradle.aem.common.Behaviors
+import com.cognifide.gradle.aem.common.build.Behaviors
 import com.cognifide.gradle.aem.environment.Environment
 import com.cognifide.gradle.aem.environment.EnvironmentException
 import com.cognifide.gradle.aem.environment.docker.base.DockerContainer
@@ -10,7 +10,7 @@ class HttpdContainer(environment: Environment) {
 
     private val aem = environment.aem
 
-    val container = DockerContainer(aem, aem.props.string("environment.httpdContainer.containerName") ?: "aem_httpd")
+    val container = DockerContainer(aem, aem.props.string("environment.httpdContainer.containerName") ?: "${aem.project.rootProject.name}_httpd")
 
     var awaitRetry = aem.retry { afterSecond(aem.props.long("environment.httpdContainer.awaitRetry") ?: 30) }
 

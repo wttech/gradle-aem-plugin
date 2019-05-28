@@ -1,8 +1,8 @@
 package com.cognifide.gradle.aem.pkg.tasks
 
-import com.cognifide.gradle.aem.common.fileNames
+import com.cognifide.gradle.aem.common.instance.names
 import com.cognifide.gradle.aem.common.tasks.PackageTask
-import com.cognifide.gradle.aem.instance.names
+import com.cognifide.gradle.aem.common.utils.fileNames
 import org.gradle.api.execution.TaskExecutionGraph
 import org.gradle.api.tasks.TaskAction
 
@@ -23,8 +23,8 @@ open class PackageUninstall : PackageTask() {
         aem.progress(instances.size * packages.size) {
             aem.syncPackages(instances, packages) { file ->
                 increment("${file.name} -> ${instance.name}") {
-                    val pkg = getPackage(file)
-                    uninstallPackage(pkg.path)
+                    val pkg = packageManager.getPackage(file)
+                    packageManager.uninstallPackage(pkg.path)
                 }
             }
         }

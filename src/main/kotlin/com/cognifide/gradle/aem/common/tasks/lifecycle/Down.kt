@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.common.tasks.lifecycle
 
-import com.cognifide.gradle.aem.common.AemDefaultTask
+import com.cognifide.gradle.aem.AemDefaultTask
 
 open class Down : AemDefaultTask() {
 

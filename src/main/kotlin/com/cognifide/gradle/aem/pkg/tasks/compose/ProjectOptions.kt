@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.pkg.tasks.compose
 
-import com.cognifide.gradle.aem.common.AemExtension
+import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.pkg.tasks.PackageCompose
 import org.gradle.api.tasks.bundling.Jar
 

@@ -1,9 +1,11 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.common.AemPlugin
+import com.cognifide.gradle.aem.AemPlugin
+import com.cognifide.gradle.aem.common.CommonPlugin
+import com.cognifide.gradle.aem.common.tasks.Resolve
 import com.cognifide.gradle.aem.common.tasks.lifecycle.*
-import com.cognifide.gradle.aem.config.ConfigPlugin
-import com.cognifide.gradle.aem.config.tasks.Resolve
+import com.cognifide.gradle.aem.instance.satisfy.InstanceSatisfy
+import com.cognifide.gradle.aem.instance.tail.InstanceTail
 import com.cognifide.gradle.aem.instance.tasks.*
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.PackageDeploy
@@ -22,7 +24,7 @@ class InstancePlugin : AemPlugin() {
     }
 
     private fun Project.setupDependentPlugins() {
-        plugins.apply(ConfigPlugin::class.java)
+        plugins.apply(CommonPlugin::class.java)
     }
 
     @Suppress("LongMethod")
@@ -97,7 +99,5 @@ class InstancePlugin : AemPlugin() {
 
     companion object {
         const val ID = "com.cognifide.aem.instance"
-
-        const val FILES_PATH = "instance"
     }
 }

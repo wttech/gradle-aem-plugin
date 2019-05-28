@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.common.file
 
-import com.cognifide.gradle.aem.common.Formats
-import com.cognifide.gradle.aem.common.ProgressLogger
+import com.cognifide.gradle.aem.common.build.ProgressLogger
+import com.cognifide.gradle.aem.common.utils.Formats
 import java.io.File
 import java.io.InputStream
 import java.io.OutputStream

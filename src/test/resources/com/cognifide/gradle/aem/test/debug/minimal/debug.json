@@ -1,11 +1,11 @@
 {
   "buildInfo" : {
     "plugin" : {
-      "pluginVersion" : "6.1.1",
-      "gradleVersion" : "4.10"
+      "pluginVersion" : "7.0.0",
+      "gradleVersion" : "5.4"
     },
     "gradle" : {
-      "version" : "4.10",
+      "version" : "5.4",
       "homeDir" : "*"
     },
     "java" : {
@@ -19,49 +19,74 @@
     "name" : "minimal",
     "dir" : "*/minimal"
   },
-  "baseConfig" : {
-    "instances" : {
-      "local-author" : {
-        "httpUrl" : "http://localhost:4502",
-        "user" : "admin",
-        "password" : "admin",
-        "typeName" : "author",
-        "environment" : "local",
-        "name" : "local-author",
-        "type" : "AUTHOR",
-        "httpPort" : 4502,
-        "properties" : { }
-      },
-      "local-publish" : {
-        "httpUrl" : "http://localhost:4503",
-        "user" : "admin",
-        "password" : "admin",
-        "typeName" : "publish",
-        "environment" : "local",
-        "name" : "local-publish",
-        "type" : "PUBLISH",
-        "httpPort" : 4503,
-        "properties" : { }
-      }
-    },
+  "packageDeployed" : { },
+  "aem" : {
+    "projectPrefixes" : [
+      "aem.",
+      "aem-",
+      "aem_"
+    ],
+    "env" : "local",
+    "lineSeparator" : "LF",
+    "groovyScriptRootDir" : "*/minimal/gradle/groovyScript",
     "resolverOptions" : {
       "httpUsername" : null,
-      "httpPassword" : null,
+      "httpPassword": null,
       "httpConnectionIgnoreSsl" : null,
       "sftpUsername" : null,
-      "sftpPassword" : null,
+      "sftpPassword": null,
       "sftpHostChecking" : null,
       "smbDomain" : null,
       "smbUsername" : null,
-      "smbPassword" : null
+      "smbPassword": null
+    },
+    "packageOptions" : {
+      "rootDir" : "*/minimal/src/main/content",
+      "snapshots" : [ ],
+      "metaCommonRootDir" : "*/minimal/gradle/package/META-INF",
+      "installPath" : "/apps/minimal/install",
+      "installRepository" : true,
+      "errors" : [
+        "javax.jcr.nodetype.*Exception",
+        "org.apache.jackrabbit.oak.api.*Exception",
+        "org.apache.jackrabbit.vault.packaging.*Exception",
+        "org.xml.sax.*Exception"
+      ],
+      "responseBuffer" : 4096
+    },
+    "instanceOptions" : {
+      "defined" : {
+        "local-author" : {
+          "properties" : { },
+          "httpUrl" : "http://localhost:4502",
+          "user" : "admin",
+          "password" : "*****",
+          "typeName" : "author",
+          "environment" : "local",
+          "name" : "local-author",
+          "type" : "AUTHOR",
+          "httpPort" : 4502
+        },
+        "local-publish" : {
+          "properties" : { },
+          "httpUrl" : "http://localhost:4503",
+          "user" : "admin",
+          "password" : "*****",
+          "typeName" : "publish",
+          "environment" : "local",
+          "name" : "local-publish",
+          "type" : "PUBLISH",
+          "httpPort" : 4503
+        }
+      }
     },
     "localInstanceOptions" : {
-      "root" : "*/.aem/instance",
+      "rootDir" : "*/minimal/.aem/instance",
       "source" : "AUTO",
       "zipUrl" : null,
       "jarUrl" : null,
       "licenseUrl" : null,
-      "overridesPath" : "*/gradle/instance",
+      "overridesDir" : "*/minimal/gradle/instance",
       "expandFiles" : [
         "**/start.bat",
         "**/stop.bat",
@@ -70,35 +95,37 @@
       ],
       "expandProperties" : { }
     },
-    "environmentOptions" : {
-      "directories" : [ ],
-      "root" : "*/.aem/environment",
+    "environment" : {
+      "rootDir" : "*/minimal/.aem/environment",
+      "directories" : {
+        "regulars" : [ ],
+        "caches" : [ ]
+      },
       "dispatcherDistUrl" : "http://download.macromedia.com/dispatcher/download/dispatcher-apache2.4-linux-x86_64-4.3.2.tar.gz",
       "dispatcherModuleName" : "*/dispatcher-apache*.so",
+      "dockerType" : "DESKTOP",
       "hosts" : {
-        "defined" : []
+        "defined" : [ ]
       },
-      "httpdConfDir" : "*/gradle/environment/httpd/conf",
-      "dockerComposeSourceFile" : "*/gradle/environment/docker-compose.yml",
-      "dispatcherModuleFile" : "*/.aem/environment/distributions/mod_dispatcher.so",
-      "dockerComposeFile" : "*/.aem/environment/docker-compose.yml"
+      "configDir" : "*/minimal/gradle/environment",
+      "dockerComposeSourceFile" : "*/minimal/gradle/environment/docker-compose.yml.peb",
+      "dockerComposeFile" : "*/minimal/.aem/environment/docker-compose.yml",
+      "dockerConfigPath" : "*/minimal/gradle/environment",
+      "dockerRootPath" : "*/minimal/.aem/environment",
+      "dispatcherModuleFile" : "*/minimal/.aem/environment/distributions/mod_dispatcher.so",
+      "httpdConfDir" : "*/minimal/gradle/environment/httpd/conf",
+      "created" : false
     },
-    "packageRoot": "*/src/main/content",
-    "packageMetaCommonRoot": "*/gradle/package/META-INF",
-    "packageInstallPath" : "/apps/minimal/install",
-    "packageInstallRepository": true,
-    "packageErrors" : [
-      "javax.jcr.nodetype.*Exception",
-      "org.apache.jackrabbit.oak.api.*Exception",
-      "org.apache.jackrabbit.vault.packaging.*Exception",
-      "org.xml.sax.*Exception"
-    ],
-    "packageResponseBuffer" : 4096,
-    "packageSnapshots" : [ ],
-    "lineSeparator" : "LF",
-    "notificationEnabled" : false,
-    "groovyScriptRoot" : "*/gradle/groovyScript"
-  },
-  "bundleConfig" : [],
-  "packageDeployed" : { }
+    "notifier" : {
+      "enabled" : false
+    },
+    "tasks" : {
+      "bundles" : [ ]
+    },
+    "projectName" : "minimal",
+    "configDir" : "*/minimal/gradle",
+    "javaPackages" : [ ],
+    "baseName" : "minimal",
+    "configCommonDir" : "*/minimal/gradle"
+  }
 }

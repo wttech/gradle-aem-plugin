@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.tooling.vlt
 
-import com.cognifide.gradle.aem.common.AemExtension
-import com.cognifide.gradle.aem.pkg.Package
+import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import java.io.File
 
 class VltRunner(val aem: AemExtension) {
@@ -10,23 +10,23 @@ class VltRunner(val aem: AemExtension) {
 
     var command: String = aem.props.string("vlt.command") ?: ""
 
-    var commandProperties: Map<String, Any> = mapOf("config" to aem.config)
+    var commandProperties: Map<String, Any> = mapOf("aem" to aem)
 
     val commandEffective: String
         get() = aem.props.expand(command, commandProperties)
 
-    var contentPath: String = aem.config.packageRoot
+    var contentDir: File = aem.packageOptions.rootDir
 
     var contentRelativePath: String = aem.props.string("vlt.path") ?: ""
 
     val contentDirEffective: File
         get() {
-            var workingPath = "$contentPath/${Package.JCR_ROOT}"
+            var workingDir = File(contentDir, Package.JCR_ROOT)
             if (contentRelativePath.isNotBlank()) {
-                workingPath = "$workingPath/$contentRelativePath"
+                workingDir = File(workingDir, contentRelativePath)
             }
 
-            return File(workingPath)
+            return workingDir
         }
 
     fun run() {

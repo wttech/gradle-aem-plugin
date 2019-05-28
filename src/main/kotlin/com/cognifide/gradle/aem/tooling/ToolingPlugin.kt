@@ -1,11 +1,11 @@
 package com.cognifide.gradle.aem.tooling
 
-import com.cognifide.gradle.aem.common.AemExtension
-import com.cognifide.gradle.aem.common.AemPlugin
-import com.cognifide.gradle.aem.config.ConfigPlugin
-import com.cognifide.gradle.aem.tooling.tasks.Rcp
-import com.cognifide.gradle.aem.tooling.tasks.Sync
-import com.cognifide.gradle.aem.tooling.tasks.Vlt
+import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.AemPlugin
+import com.cognifide.gradle.aem.common.CommonPlugin
+import com.cognifide.gradle.aem.tooling.rcp.Rcp
+import com.cognifide.gradle.aem.tooling.sync.Sync
+import com.cognifide.gradle.aem.tooling.vlt.Vlt
 import org.gradle.api.Project
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 
@@ -22,7 +22,7 @@ class ToolingPlugin : AemPlugin() {
     }
 
     private fun Project.setupDependentPlugins() {
-        plugins.apply(ConfigPlugin::class.java)
+        plugins.apply(CommonPlugin::class.java)
     }
 
     private fun Project.setupTasks() {

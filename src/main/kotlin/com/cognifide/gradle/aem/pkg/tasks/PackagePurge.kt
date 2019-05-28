@@ -1,10 +1,10 @@
 package com.cognifide.gradle.aem.pkg.tasks
 
-import com.cognifide.gradle.aem.common.fileNames
+import com.cognifide.gradle.aem.common.instance.InstanceException
+import com.cognifide.gradle.aem.common.instance.InstanceSync
+import com.cognifide.gradle.aem.common.instance.names
 import com.cognifide.gradle.aem.common.tasks.PackageTask
-import com.cognifide.gradle.aem.instance.InstanceException
-import com.cognifide.gradle.aem.instance.InstanceSync
-import com.cognifide.gradle.aem.instance.names
+import com.cognifide.gradle.aem.common.utils.fileNames
 import org.gradle.api.execution.TaskExecutionGraph
 import org.gradle.api.tasks.TaskAction
 
@@ -26,7 +26,7 @@ open class PackagePurge : PackageTask() {
             aem.syncPackages(instances, packages) { file ->
                 increment("${file.name} -> ${instance.name}") {
                     try {
-                        val pkg = getPackage(file)
+                        val pkg = packageManager.getPackage(file)
 
                         uninstall(this, pkg.path)
                         delete(this, pkg.path)
@@ -43,7 +43,7 @@ open class PackagePurge : PackageTask() {
 
     private fun uninstall(sync: InstanceSync, packagePath: String) {
         try {
-            sync.uninstallPackage(packagePath)
+            sync.packageManager.uninstallPackage(packagePath)
         } catch (e: InstanceException) {
             logger.info("${e.message} Is it installed already?")
             logger.debug("Cannot uninstall package.", e)
@@ -52,7 +52,7 @@ open class PackagePurge : PackageTask() {
 
     private fun delete(sync: InstanceSync, packagePath: String) {
         try {
-            sync.deletePackage(packagePath)
+            sync.packageManager.deletePackage(packagePath)
         } catch (e: InstanceException) {
             logger.info(e.message)
             logger.debug("Cannot delete package.", e)

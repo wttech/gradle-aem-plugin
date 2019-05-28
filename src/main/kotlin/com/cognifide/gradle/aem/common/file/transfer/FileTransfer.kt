@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.common.file.transfer
 import java.io.File
 
 interface FileTransfer {
+
     fun download(url: String, name: String, target: File)
 
     fun upload(url: String, source: File)

@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.common.file.transfer
 
-import com.cognifide.gradle.aem.common.AemException
+import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.common.file.FileException
 import com.cognifide.gradle.aem.common.file.IoTransfer
 import java.io.File

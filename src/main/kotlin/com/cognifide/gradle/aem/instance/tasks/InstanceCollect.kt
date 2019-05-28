@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.instance.tasks
 
 import com.cognifide.gradle.aem.common.tasks.ZipTask
+import com.cognifide.gradle.aem.instance.satisfy.InstanceSatisfy
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.PackageCompose
 import java.io.File

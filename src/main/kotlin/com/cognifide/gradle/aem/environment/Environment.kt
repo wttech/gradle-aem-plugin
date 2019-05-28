@@ -1,10 +1,10 @@
 package com.cognifide.gradle.aem.environment
 
-import com.cognifide.gradle.aem.common.AemExtension
-import com.cognifide.gradle.aem.common.AemTask
-import com.cognifide.gradle.aem.common.Patterns
+import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.file.resolver.FileResolver
+import com.cognifide.gradle.aem.common.utils.Patterns
 import com.cognifide.gradle.aem.environment.docker.base.CygPath
 import com.cognifide.gradle.aem.environment.docker.base.DockerType
 import com.cognifide.gradle.aem.environment.docker.domain.HttpdContainer
@@ -14,9 +14,10 @@ import com.cognifide.gradle.aem.environment.health.HealthStatus
 import com.cognifide.gradle.aem.environment.hosts.HostOptions
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
+import java.io.Serializable
 import org.gradle.util.GFileUtils
 
-class Environment(val aem: AemExtension) {
+class Environment(@JsonIgnore val aem: AemExtension) : Serializable {
 
     /**
      * Path in which local AEM environment will be stored.
@@ -33,11 +34,13 @@ class Environment(val aem: AemExtension) {
     /**
      * Represents Docker stack named 'aem' and provides API for manipulating it.
      */
+    @JsonIgnore
     val stack = Stack(this)
 
     /**
      * Represents Docker container named 'aem_httpd' and provides API for manipulating it.
      */
+    @JsonIgnore
     val httpd = HttpdContainer(this)
 
     val httpdConfDir
@@ -51,6 +54,7 @@ class Environment(val aem: AemExtension) {
     /**
      * Allows to provide remote files to Docker containers by mounted volumes.
      */
+    @JsonIgnore
     val distributionsResolver = FileResolver(aem, AemTask.temporaryDir(aem.project, "environment", DISTRIBUTIONS_DIR))
 
     /**
@@ -103,6 +107,7 @@ class Environment(val aem: AemExtension) {
     val created: Boolean
         get() = rootDir.exists()
 
+    @get:JsonIgnore
     val running: Boolean
         get() = stack.running && httpd.running
 
@@ -186,8 +191,15 @@ class Environment(val aem: AemExtension) {
         }
     }
 
+    @Suppress("TooGenericExceptionCaught")
     private fun determineDockerPath(file: File): String = when (dockerType) {
-        DockerType.TOOLBOX -> CygPath.calculate(file)
+        DockerType.TOOLBOX -> try {
+            CygPath.calculate(file)
+        } catch (e: Exception) {
+            aem.logger.warn("Cannot determine Docker path for '$file' using 'cygpath', because it is not available.")
+            aem.logger.debug("CygPath error", e)
+            file.toString()
+        }
         else -> file.toString()
     }
 

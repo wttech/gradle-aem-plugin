@@ -1,15 +1,15 @@
 package com.cognifide.gradle.aem.instance.tasks
 
-import com.cognifide.gradle.aem.common.AemException
-import com.cognifide.gradle.aem.common.AemTask
-import com.cognifide.gradle.aem.common.Formats
+import com.cognifide.gradle.aem.AemException
+import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.file.resolver.FileResolver
-import com.cognifide.gradle.aem.common.onEachApply
+import com.cognifide.gradle.aem.common.instance.InstanceException
+import com.cognifide.gradle.aem.common.instance.LocalInstance
+import com.cognifide.gradle.aem.common.instance.names
 import com.cognifide.gradle.aem.common.tasks.LocalInstanceTask
-import com.cognifide.gradle.aem.instance.InstanceException
-import com.cognifide.gradle.aem.instance.LocalInstance
-import com.cognifide.gradle.aem.instance.names
+import com.cognifide.gradle.aem.common.utils.Formats
+import com.cognifide.gradle.aem.common.utils.onEachApply
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 import org.gradle.api.tasks.Internal
@@ -89,7 +89,7 @@ open class InstanceRestore : LocalInstanceTask() {
             throw InstanceException("Backup ZIP cannot be used to create missing instances.")
         }
 
-        val instanceRoot = aem.config.localInstanceOptions.rootDir
+        val instanceRoot = aem.localInstanceOptions.rootDir
 
         aem.logger.info("Extracting files from backup ZIP '$backupZip' to directory '$instanceRoot'")
 

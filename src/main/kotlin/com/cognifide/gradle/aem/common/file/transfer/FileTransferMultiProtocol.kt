@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.common.file.transfer
 
-import com.cognifide.gradle.aem.common.AemException
-import com.cognifide.gradle.aem.common.AemExtension
+import com.cognifide.gradle.aem.AemException
+import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.file.IoTransferLogger
 import java.io.File
 
@@ -10,13 +10,13 @@ class FileTransferMultiProtocol(private val aem: AemExtension) : FileTransfer {
     private val fileTransfers by lazy {
         listOf(
                 FileTransferSftp(
-                        Credentials(aem.config.resolverOptions.sftpUsername, aem.config.resolverOptions.sftpPassword),
-                        aem.config.resolverOptions.sftpHostChecking,
+                        Credentials(aem.resolverOptions.sftpUsername, aem.resolverOptions.sftpPassword),
+                        aem.resolverOptions.sftpHostChecking,
                         IoTransferLogger(aem.project)
                 ),
                 FileTransferSmb(
-                        Credentials(aem.config.resolverOptions.smbUsername, aem.config.resolverOptions.smbPassword),
-                        aem.config.resolverOptions.smbDomain ?: "",
+                        Credentials(aem.resolverOptions.smbUsername, aem.resolverOptions.smbPassword),
+                        aem.resolverOptions.smbDomain ?: "",
                         IoTransferLogger(aem.project)
                 )
         )

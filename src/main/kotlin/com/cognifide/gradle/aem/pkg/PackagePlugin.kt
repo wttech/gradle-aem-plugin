@@ -1,12 +1,12 @@
 package com.cognifide.gradle.aem.pkg
 
-import com.cognifide.gradle.aem.common.AemExtension
-import com.cognifide.gradle.aem.common.AemPlugin
-import com.cognifide.gradle.aem.config.ConfigPlugin
+import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.AemPlugin
+import com.cognifide.gradle.aem.common.CommonPlugin
 import com.cognifide.gradle.aem.instance.InstancePlugin
+import com.cognifide.gradle.aem.instance.satisfy.InstanceSatisfy
 import com.cognifide.gradle.aem.instance.tasks.InstanceCreate
-import com.cognifide.gradle.aem.instance.tasks.InstanceRestore
-import com.cognifide.gradle.aem.instance.tasks.InstanceSatisfy
+import com.cognifide.gradle.aem.instance.tasks.InstanceUp
 import com.cognifide.gradle.aem.pkg.tasks.*
 import org.gradle.api.Project
 import org.gradle.language.base.plugins.LifecycleBasePlugin
@@ -20,14 +20,14 @@ class PackagePlugin : AemPlugin() {
     }
 
     private fun Project.setupDependentPlugins() {
-        plugins.apply(ConfigPlugin::class.java)
+        plugins.apply(CommonPlugin::class.java)
     }
 
     private fun Project.setupInstallRepository() {
         afterEvaluate {
-            val config = AemExtension.of(this).config
-            if (config.packageInstallRepository) {
-                val installDir = file("${config.packageJcrRoot}${config.packageInstallPath}")
+            val packageOptions = AemExtension.of(this).packageOptions
+            if (packageOptions.installRepository) {
+                val installDir = file("${packageOptions.jcrRootDir}${packageOptions.installPath}")
                 if (installDir.exists()) {
                     repositories.flatDir { it.dir(installDir) }
                 }
@@ -73,7 +73,7 @@ class PackagePlugin : AemPlugin() {
 
         plugins.withId(InstancePlugin.ID) {
             tasks.named(PackageDeploy.NAME).configure { task ->
-                task.mustRunAfter(InstanceCreate.NAME, InstanceRestore.NAME, InstanceSatisfy.NAME)
+                task.mustRunAfter(InstanceCreate.NAME, InstanceUp.NAME, InstanceSatisfy.NAME)
             }
         }
     }

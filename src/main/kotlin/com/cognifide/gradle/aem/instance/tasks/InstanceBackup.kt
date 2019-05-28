@@ -1,9 +1,9 @@
 package com.cognifide.gradle.aem.instance.tasks
 
-import com.cognifide.gradle.aem.common.Formats
+import com.cognifide.gradle.aem.common.instance.InstanceException
+import com.cognifide.gradle.aem.common.instance.names
 import com.cognifide.gradle.aem.common.tasks.ZipTask
-import com.cognifide.gradle.aem.instance.InstanceException
-import com.cognifide.gradle.aem.instance.names
+import com.cognifide.gradle.aem.common.utils.Formats
 import java.io.File
 import org.gradle.api.execution.TaskExecutionGraph
 import org.gradle.api.file.DuplicatesStrategy
@@ -62,7 +62,7 @@ open class InstanceBackup : ZipTask() {
     }
 
     override fun projectEvaluated() {
-        from(aem.config.localInstanceOptions.rootDir)
+        from(aem.localInstanceOptions.rootDir)
     }
 
     companion object {

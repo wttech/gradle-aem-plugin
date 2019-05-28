@@ -26,19 +26,21 @@ Be inspired by watching [live demo](https://adapt.to/2018/en/schedule/a-better-d
   <img src="docs/example-build.gif" alt="Example Project Build"/>
 </p>
 
-### Features
+### Features 
 
-* Composing CRX package from multiple JCR content roots, bundles.
-* Fully automated, native (no virtulization), tied to project, AEM instance(s) setup allowing to start development within few minutes.
-* [Powerful AEM DSL scripting capabilities](#implement-custom-aem-tasks) for performing content migrations, managing instances.
-* Advanced AEM instance(s) stability & health checking after CRX package deployment.
-* Continous AEM incident monitoring and interactive reporting (centralized log tailing of any AEM instances with no SSH).
-* Automated all-in-one CRX packages generation (assemblies), vault filters merging etc.
-* Easy parallel CRX package deployment to many remote group of instances.
-* Automated dependent CRX packages and OSGi bundles installation from local and remote sources (SMB, SSH, HTTP(s)).
-* Smart Vault files generation (combining defaults with overiddables).
-* Embedded [Vault Tool](http://jackrabbit.apache.org/filevault) for checking out and cleaning JCR content from running AEM instance.
-* Embedded [BND Tool](https://github.com/bndtools/bnd/tree/master/biz.aQute.bnd.gradle) for OSGi Manifest customization.
+* [Powerful AEM DSL scripting capabilities](#implement-custom-aem-tasks) for performing JCR content migrations, managing AEM instances.
+* Automated full stack AEM environment setup with [virtualized AEM dispatcher](#environment-plugin) and [native AEM instances](#instance-plugin) optimized for best development performance
+* [Composing CRX package](#task-packagecompose) from multiple JCR content roots, bundles.
+* [Advanced AEM instance(s) stability & health checking](#task-instanceawait) after CRX package deployment.
+* [Continuous AEM incident monitoring](#task-instancetail) and interactive reporting (centralized log tailing of any AEM instances with no SSH).
+* [All-in-one CRX packages generation](#assembling-packages-merging-all-in-one) (assemblies), vault filters merging etc.
+* Easy parallel [CRX package deployment](#task-packagedeploy) to many remote group of instances.
+* [Fail-safe dependent CRX packages installation](#task-instancesatisfy) from local and remote sources (SMB, SSH, HTTP(s)).
+* [Fast JCR content synchronization](#task-sync) from running AEM instances with advanced content normalization.
+* [Easy OSGi bundle customization](#bundle-plugin) with BND tool embedded.
+
+Gradle AEM Plugin is following strategy [convention over configuration](https://en.wikipedia.org/wiki/Convention_over_configuration). When following built-in conventions about project structure & naming, then only minimal configuration is required. 
+Still all features are **fully configurable**.
 
 ## Important notice 
 
@@ -53,7 +55,7 @@ To see documentation for previous 5.x serie, please [click here](https://github.
      * [Plugin setup](#plugin-setup)
         * [Minimal](#minimal)
         * [Additional](#additional)
-     * [Config plugin](#config-plugin)
+     * [Common plugin](#common-plugin)
         * [Instance conventions](#instance-conventions)
         * [Defining instances via properties file](#defining-instances-via-properties-file)
         * [Defining instances via build script](#defining-instances-via-build-script)
@@ -125,6 +127,7 @@ To see documentation for previous 5.x serie, please [click here](https://github.
         * [Controlling OSGi bundles and components](#controlling-osgi-bundles-and-components)
         * [Executing code on AEM runtime](#executing-code-on-aem-runtime)
         * [Calling AEM endpoints / making any HTTP requests](#calling-aem-endpoints--making-any-http-requests)
+        * [Making changes to repository](#making-changes-to-repository)
      * [Understand why there are one or two plugins to be applied in build script](#understand-why-there-are-one-or-two-plugins-to-be-applied-in-build-script)
      * [Work effectively on start and daily basis](#work-effectively-on-start-and-daily-basis)
      * [Filter instances to work with](#filter-instances-to-work-with)
@@ -188,6 +191,7 @@ Configuration below assumes building and deploying on AEM instance(s) via comman
 plugins {
     id("com.cognifide.aem.bundle")
     id("com.cognifide.aem.instance")
+    id("com.cognifide.aem.environment")
     id("org.jetbrains.kotlin.jvm") // or any other like 'java' to compile OSGi bundle
 }
 
@@ -196,16 +200,34 @@ version = "1.0.0"
 defaultTasks(":instanceSatisfy", ":packageDeploy")
 
 aem {
-    config {
-        packageRoot = "${aem.project.file("src/main/content")}"
+    `package` {
+        jcrRoot = aem.project.file("src/main/content")
         // ...
-        
-        localInstance {
-            // ...
-        }
-        resolver {
-            // ...
-        }
+    }
+    instance {
+        local("http://localhost:4502")
+        local("http://localhost:4503")
+        remote("http://192.168.100.101:4502") {
+            typeName = "int-author"
+        } 
+        remote("http://192.168.100.101:4503") {
+            typeName = "int-publish"
+        } 
+        // etc
+    }
+    localInstance {
+        zipUrl = aem.props.string("localInstance.zipUrl")
+        jarUrl = aem.props.string("localInstance.jarUrl")
+        licenseUrl = aem.props.string("localInstance.licenseUrl")
+        // ...
+    }
+    environment {
+        rootDir = aem.props.string("environment.rootDir")?.let { aem.project.file(it) } ?: aem.projectMain.file(".aem/environment")
+        dispatcherDistUrl = aem.props.string("environment.dispatcher.distUrl") ?: "http://download.macromedia.com/dispatcher/download/dispatcher-apache2.4-linux-x86_64-4.3.2.tar.gz"
+        // ...
+    }
+    fileTransfer {
+        // ...
     }
     tasks {
         bundle {
@@ -227,26 +249,29 @@ aem {
 
 To see all available options and actual documentation, please follow to:
 
-* `aem` - [AemExtension](src/main/kotlin/com/cognifide/gradle/aem/common/AemExtension.kt)
-* `config` - [Config](src/main/kotlin/com/cognifide/gradle/aem/config/Config.kt)
-* `compose` - [Compose](src/main/kotlin/com/cognifide/gradle/aem/pkg/tasks/Compose.kt)
+* `aem` - [AemExtension]()
+* `package` - [PackageOptions](src/main/kotlin/com/cognifide/gradle/aem/common/pkg/PackageOptions.kt)
 * `bundle` - [BundleJar](src/main/kotlin/com/cognifide/gradle/aem/bundle/BundleJar.kt)
-* `satisfy` - [Satisfy](src/main/kotlin/com/cognifide/gradle/aem/instance/tasks/Satisfy.kt)
-* `...` - other tasks in similar way.
-* `config.localInstance` - [LocalInstanceOptions](src/main/kotlin/com/cognifide/gradle/aem/instance/LocalInstanceOptions.kt)
-* `config.resolver` - [ResolverOptions](src/main/kotlin/com/cognifide/gradle/aem/common/file/resolver/ResolverOptions.kt)
 
-### Config plugin
+* `localInstance` - [LocalInstanceOptions](src/main/kotlin/com/cognifide/gradle/aem/instance/LocalInstanceOptions.kt)
+* `environment` - [Environment](src/main/kotlin/com/cognifide/gradle/aem/environment/Environment.kt)
+* `fileTransfer` - [FileTransfer]()
+
+* `packageCompose` - [PackageCompose](src/main/kotlin/com/cognifide/gradle/aem/pkg/tasks/PackageCompose.kt)
+* `instanceSatisfy` - [InstanceSatisfy](src/main/kotlin/com/cognifide/gradle/aem/instance/satisfy/InstanceSatisfy.kt)
+* `...` - other tasks in similar way.
+
+### Common plugin
 
 ```kotlin
 plugins {
-    id("com.cognifide.aem.config")
+    id("com.cognifide.aem.common")
 }
 ```
 
-Applied transparently by other plugins. Provides AEM section to build script and instance definitions, common configuration.
+Applied transparently by other plugins. Provides AEM extension to build script / **AEM Gradle DSL** which consists of instance definitions, common configuration, methods for controlling local instances and virtualized environment.
 
-It does not provide any tasks.
+It does not provide any tasks. Apply other plugins to have tasks or implement own.
 
 #### Instance conventions
 
@@ -259,13 +284,13 @@ It does not provide any tasks.
 Instances could be defined in two ways, via:
  
 * file `gradle.properties` - recommended approach, by properties convention.
-* build script - customizable approach.
+* build script - dynamic & more customizable approach.
 
 #### Defining instances via properties file
 
 The configuration could be specified through *gradle.properties* file using dedicated syntax.
 
-`aem.instance.$ENVIRONMENT-$TYPE_NAME.$PROP_NAME=$PROP_VALUE`
+`instance.$ENVIRONMENT-$TYPE_NAME.$PROP_NAME=$PROP_VALUE`
 
 Part | Possible values | Description |
 --- | --- | --- |
@@ -277,45 +302,45 @@ Part | Possible values | Description |
 Default remote instances defined via properties (below lines are optional):
 
 ```
-aem.instance.local-author.httpUrl=http://localhost:4502
-aem.instance.local-publish.httpUrl=http://localhost:4503
+instance.local-author.httpUrl=http://localhost:4502
+instance.local-publish.httpUrl=http://localhost:4503
 ```
 
 Example for defining multiple remote instances (that could be [filtered](#filter-instances-to-work-with)):
 
 ```
-aem.instance.int-author.httpUrl=http://author.aem-integration.company.com
-aem.instance.int-publish.httpUrl=http://aem-integration.company.com
-aem.instance.stg-author.httpUrl=http://author.aem-staging.company.com
-aem.instance.stg-publish.httpUrl=http://aem-staging.company.com
+instance.int-author.httpUrl=http://author.aem-integration.company.com
+instance.int-publish.httpUrl=http://aem-integration.company.com
+instance.stg-author.httpUrl=http://author.aem-staging.company.com
+instance.stg-publish.httpUrl=http://aem-staging.company.com
 ```
 
 Example for defining remote instance with credentials separated:
 
 ```
-aem.instance.test-author.httpUrl=http://author.aem-integration.company.com
-aem.instance.test-author.user=foo
-aem.instance.test-author.password=bar
+instance.test-author.httpUrl=http://author.aem-integration.company.com
+instance.test-author.user=foo
+instance.test-author.password=bar
 ```
 
 Example for defining remote instance with credentials details included in URL:
 
 ```
-aem.instance.test-author.httpUrl=http://foo:bar@author.aem-integration.company.com
+instance.test-author.httpUrl=http://foo:bar@author.aem-integration.company.com
 ```
 
 Example for defining local instances (created on local file system):
 
 ```
-aem.instance.local-author.httpUrl=http://localhost:4502
-aem.instance.local-author.type=local
-aem.instance.local-author.runModes=nosamplecontent
-aem.instance.local-author.jvmOpts=-server -Xmx1024m -XX:MaxPermSize=256M -Djava.awt.headless=true
+instance.local-author.httpUrl=http://localhost:4502
+instance.local-author.type=local
+instance.local-author.runModes=nosamplecontent
+instance.local-author.jvmOpts=-server -Xmx1024m -XX:MaxPermSize=256M -Djava.awt.headless=true
 
-aem.instance.local-publish.httpUrl=http://localhost:4503
-aem.instance.local-publish.type=local
-aem.instance.local-publish.runModes=nosamplecontent
-aem.instance.local-publish.jvmOpts=-server -Xmx1024m -XX:MaxPermSize=256M -Djava.awt.headless=true
+instance.local-publish.httpUrl=http://localhost:4503
+instance.local-publish.type=local
+instance.local-publish.runModes=nosamplecontent
+instance.local-publish.jvmOpts=-server -Xmx1024m -XX:MaxPermSize=256M -Djava.awt.headless=true
 ```
 
 Notice! Remember to define also AEM [source files](#configuration-of-aem-instance-source-jar-file-or-backup-file).
@@ -326,40 +351,40 @@ Example usage below. The commented value is an effective instance name.
 
 ```kotlin
 aem {
-    config {
-        localInstance("http://localhost:4502") // local-author
-        localInstance("http://localhost:4502") { // local-author
+    instance {
+        local("http://localhost:4502") // local-author
+        local("http://localhost:4502") { // local-author
             password = "admin"
             typeName = "author"
             debugPort = 14502 
         }
       
-        localInstance("http://localhost:4503") // local-publish
-        localInstance("http://localhost:4503") { // local-publish
+        local("http://localhost:4503") // local-publish
+        local("http://localhost:4503") { // local-publish
             password = "admin"
             typeName = "publish"
             debugPort = 14503
         } 
       
-        remoteInstance("http://192.168.10.1:4502") { // integration-author1
+        remote("http://192.168.10.1:4502") { // integration-author1
             user = "user1" 
             password = "password2"
             environment = "integration"
             typeName = "author1"
         } 
-        remoteInstance("http://192.168.10.1:8080") { // integration-author2
+        remote("http://192.168.10.1:8080") { // integration-author2
             user = "user1" 
             password = "password2"
             environment = "integration"
             typeName = "author2"
         } 
-        remoteInstance("http://192.168.10.2:4503") { // integration-publish1
+        remote("http://192.168.10.2:4503") { // integration-publish1
             user = "user2"
             password = "password2"
             environment = "integration"
             typeName = "publish1"
         } 
-        remoteInstance("http://192.168.10.2:8080") { // integration-publish2
+        remote("http://192.168.10.2:8080") { // integration-publish2
             user = "user2"
             password = "password2"
             environment = "integration"
@@ -587,103 +612,138 @@ gradlew :debug
 
 Then file at path *build/aem/debug/debug.json* with content below is being generated:
 
-```json
+```javascript
 {
-  "buildInfo" : {
-    "plugin" : {
-      "pluginVersion" : "6.1.1",
-      "gradleVersion" : "5.0"
+  "buildInfo": {
+    "plugin": {
+      "pluginVersion": "7.0.0",
+      "gradleVersion": "5.4"
     },
-    "gradle" : {
-      "version" : "5.0",
-      "homeDir" : ".../.gradle/wrapper/dists/gradle-5.0-all/.../gradle-5.0"
+    "gradle": {
+      "version": "5.4.1",
+      "homeDir": ".../gradle-5.4.1"
     },
-    "java" : {
-      "version" : "1.8",
-      "homeDir" : ".../Java/jdk1.8.0_121/jre"
+    "java": {
+      "version": "1.8",
+      "homeDir": ".../jdk1.8.0_121/jre"
     }
   },
-  "projectInfo" : {
-    "displayName" : "project ':aem:app.core'",
-    "path" : ":aem:app.core",
-    "name" : "app.core",
-    "dir" : ".../gradle-aem-multi/aem/app.core"
+  "projectInfo": {
+    "displayName": "project ':aem:assembly:full'",
+    "path": ":aem:assembly:full",
+    "name": "full",
+    "dir": ".../gradle-aem-multi/aem/assembly/full"
   },
-  "baseConfig" : {
-    "instances" : {
-      "local-author" : {
-        "properties" : { },
-        "httpUrl" : "http://localhost:4502",
-        "user" : "admin",
-        "password" : "admin",
-        "typeName" : "author",
-        "environment" : "local",
-        "name" : "local-author",
-        "type" : "AUTHOR",
-        "httpPort" : 4502
+  "packageDeployed": {
+    "local-author": {
+      "group": "example",
+      "name": "example.full",
+      "version": "1.0.0-SNAPSHOT",
+      "path": "/etc/packages/example/example.full-1.0.0-SNAPSHOT.zip",
+      "downloadName": "example.full-1.0.0-SNAPSHOT.zip",
+      "lastUnpacked": 1558622734756,
+      "installed": true
+    },
+    // ...
+  },
+  "aem": {
+    "projectPrefixes": [
+      "aem.",
+      "aem-",
+      "aem_"
+    ],
+    "env": "local",
+    "lineSeparator": "LF",
+    "groovyScriptRootDir": ".../gradle-aem-multi/aem/assembly/full/gradle/groovyScript",
+    "fileTransfer": {
+      "httpUsername": null,
+      "httpPassword": null,
+      // ...
+    },
+    "packageOptions": {
+      "rootDir": ".../gradle-aem-multi/aem/assembly/full/src/main/content",
+      "snapshots": [],
+      "metaCommonRootDir": ".../gradle-aem-multi/aem/gradle/package/META-INF",
+      "installPath": "/apps/example/full/install",
+      "installRepository": true,
+      "errors": [
+        "javax.jcr.nodetype.*Exception",
+        "org.apache.jackrabbit.oak.api.*Exception",
+        "org.apache.jackrabbit.vault.packaging.*Exception",
+        "org.xml.sax.*Exception"
+      ],
+      "responseBuffer": 4096
+    },
+    "instanceOptions": {
+      "defined": {
+        "local-author": {
+          "properties": {},
+          "httpUrl": "http://localhost:4502",
+          "user": "admin",
+          "password": "*****",
+          "typeName": "author",
+          "environment": "local",
+          "debugPort": 14502,
+          "name": "local-author",
+          "type": "AUTHOR",
+          "httpPort": 4502,
+          "runModes": "author,local",
+          "startOpts": "",
+          "jvmOpts": "-Xdebug -Xrunjdwp:transport=dt_socket,address=14502,server=y,suspend=n -server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true"
+        }
+        // ...
       }
     },
-    "localInstanceOptions" : {
-      "root" : ".../.aem/example",
-      "source" : "AUTO",
-      "zipUrl" : null,
-      "jarUrl" : null,
-      "licenseUrl" : null,
-      "overridesPath" : "*/gradle/instance",
-      "expandFiles" : [
+    "localInstanceOptions": {
+      "rootDir": ".../gradle-aem-multi/aem/.aem/instance",
+      "source": "AUTO",
+      "zipUrl": null,
+      "jarUrl": ".../aem-6.5/cq-quickstart-6.5.0.jar",
+      "licenseUrl": ".../aem-6.5/license.properties.txt",
+      "overridesDir": ".../gradle-aem-multi/aem/gradle/instance",
+      "expandFiles": [
         "**/start.bat",
         "**/stop.bat",
         "**/start",
         "**/stop"
       ],
-      "expandProperties" : { },
-      "allFiles" : [ ],
-      "extraFiles" : [ ],
-      "jar" : null,
-      "license" : null,
-      "zip" : null,
-      "mandatoryFiles" : [ ]
+      "expandProperties": {}
     },
-    "packageSnapshots" : [ ],
-    "packageRoot" : ".../gradle-aem-multi/aem/sites/src/main/content",
-    "packageMetaCommonRoot" : ".../gradle-aem-multi/aem/gradle/package/META-INF",
-    "packageInstallPath" : "/apps/example/app.core/install",
-    "packageInstallRepository" : true,
-    "packageErrors" : [
-      "javax.jcr.nodetype.*Exception",
-      "org.apache.jackrabbit.oak.api.*Exception",
-      "org.apache.jackrabbit.vault.packaging.*Exception",
-      "org.xml.sax.*Exception"
-    ],
-    "packageResponseBuffer" : 4096,
-    "lineSeparator" : "LF",
-    "notificationEnabled" : true,
-    "groovyScriptRoot" : ".../gradle-aem-multi/aem/gradle/groovyScript"
-  },
-  "bundleConfig" : {
-    "jar" : {
-      "installPath" : "/apps/example/app.core/install",
-      "attributesConvention" : true,
-      "javaPackage" : "com.company.example.aem.sites",
-      "javaPackageOptions" : "-split-package:=merge-first",
-      "bndPath" : ".../gradle-aem-multi/aem/app.core/bnd.bnd",
-      "bndInstructions" : {
-        "-fixupmessages.bundleActivator" : "Bundle-Activator * is being imported *;is:=error"
+    "environment": {
+      "rootDir": ".../gradle-aem-multi/aem/.aem/environment",
+      "directories": {
+        "regulars": [],
+        "caches": []
       },
-      "attributes" : {
-        "Manifest-Version" : "1.0",
-        "Bundle-Category" : "example",
-        "Bundle-Vendor" : "Company",
-        "Bundle-Name" : "Example - AEM Application Core",
-        "Bundle-SymbolicName" : "com.company.example.aem.sites",
-        "Sling-Model-Packages" : "com.company.example.aem.sites",
-        "Import-Package" : "*",
-        "Export-Package" : "com.company.example.aem.sites.*;-split-package:=merge-first"
-      }
-    }
-  },
-  "packageDeployed" : {
-    "local-author" : null
+      "dispatcherDistUrl": "http://download.macromedia.com/dispatcher/download/dispatcher-apache2.4-linux-x86_64-4.3.2.tar.gz",
+      "dispatcherModuleName": "*/dispatcher-apache*.so",
+      "dockerType": "TOOLBOX",
+      "hosts": {
+        "defined": []
+      },
+      "dockerComposeFile": ".../gradle-aem-multi/aem/.aem/environment/docker-compose.yml",
+      "dockerComposeSourceFile": ".../gradle-aem-multi/aem/gradle/environment/docker-compose.yml.peb",
+      "dockerConfigPath": ".../gradle-aem-multi/aem/gradle/environment",
+      "dockerRootPath": ".../gradle-aem-multi/aem/.aem/environment",
+      "dispatcherModuleFile": ".../gradle-aem-multi/aem/.aem/environment/distributions/mod_dispatcher.so",
+      "configDir": ".../gradle-aem-multi/aem/gradle/environment",
+      "created": true,
+      "httpdConfDir": ".../gradle-aem-multi/aem/gradle/environment/httpd/conf"
+    },
+    "notifier": {
+      "enabled": true
+    },
+    "tasks": {
+      "bundles": []
+    },
+    "projectName": "full",
+    "baseName": "example.full",
+    "configCommonDir": ".../gradle-aem-multi/aem/gradle",
+    "configDir": ".../gradle-aem-multi/aem/assembly/full/gradle",
+    "javaPackages": [
+      "com.company.example.aem.common",
+      "com.company.example.aem.sites"
+    ]
   }
 }
 ```
@@ -700,11 +760,11 @@ Should be applied to all projects that are composing CRX packages from *JCR cont
 
 Provides CRX package related tasks: `packageCompose`, `packageDeploy`, `packageActivate`, `packagePurge` etc.
 
-Inherits from [Tooling Plugin](#tooling-plugin).
+Inherits from [Common Plugin](#common-plugin).
 
 #### Task `packageCompose`
 
-[Compose](src/main/kotlin/com/cognifide/gradle/aem/pkg/tasks/Compose.kt) CRX package from JCR content and bundles. 
+Compose CRX package from JCR content and bundles. 
 
 Inherits from task [ZIP](https://docs.gradle.org/3.5/dsl/org.gradle.api.tasks.bundling.Zip.html).
 
@@ -716,8 +776,9 @@ aem {
         packageCompose {
             duplicatesStrategy = DuplicatesStrategy.WARN
             baseName = aem.baseName
-            contentPath = aem.config.packageRoot
-            bundlePath = aem.config.packageInstallPath
+            contentDir = aem.packageOptions.rootDir
+            bundlePath = aem.packageOptions.installPath
+            bundleRunMode = null
             metaDefaults = true
             fromConvention = true
             vaultDefinition {
@@ -732,6 +793,28 @@ aem {
                     aem.project.rootProject.name
                 }
                 version = project.version.toString()
+            }
+            fileFilter {
+                expanding = true
+                expandFiles = listOf(
+                    "**/META-INF/*.xml",
+                    "**/META-INF/*.MF",
+                    "**/META-INF/*.cnd"
+                )
+                excluding = true
+                excludeFiles = listOf(
+                       "**/.gradle",
+                       "**/.git",
+                       "**/.git/**",
+                       "**/.gitattributes",
+                       "**/.gitignore",
+                       "**/.gitmodules",
+                       "**/.vlt",
+                       "**/.vlt*.tmp",
+                       "**/node_modules/**",
+                       "jcr_root/.vlt-sync-config.properties"
+               )
+                bundleChecking = true
             }
         }
     }    
@@ -761,8 +844,8 @@ Let's assume following project structure:
 * *aem/build.gradle.kts* (project `:aem`, no source files at all)
 * *aem/sites/build.gradle.kts*  (project `:aem:sites`, JCR content and OSGi bundle)
 * *aem/common/build.gradle.kts*  (project `:aem:common`, JCR content and OSGi bundle)
-* *aem/content.init/build.gradle.kts*  (project `:aem:content.init`, JCR content only)
-* *aem/content.demo/build.gradle.kts*  (project `:aem:content.demo`, JCR content only)
+* *aem/site.live/build.gradle.kts*  (project `:aem:site.live`, JCR content only)
+* *aem/site.demo/build.gradle.kts*  (project `:aem:site.demo`, JCR content only)
 
 File content of *aem/build.gradle.kts*:
 
@@ -776,13 +859,13 @@ aem {
         packageCompose {
             fromProject(":aem:sites")
             fromProject(":aem:common")
-            fromProjects(":aem:content.*")
+            fromProjects(":aem:site.*")
         }
     }    
 }
 ```
 
-When building via command `gradlew :aem:build`, then the effect will be a CRX package with assembled JCR content and OSGi bundles from projects: `:aem:sites`, `:aem:common`, `:aem:content.init`, `:aem:content.demo`.
+When building via command `gradlew :aem:build`, then the effect will be a CRX package with assembled JCR content and OSGi bundles from projects: `:aem:sites`, `:aem:common`, `:aem:site.live`, `:aem:site.demo`.
 
 Gradle AEM Plugin is configured in a way that project can have:
  
@@ -823,12 +906,12 @@ aem {
 
 Predefined expandable properties:
 
-* `compose` - [Compose](src/main/kotlin/com/cognifide/gradle/aem/pkg/tasks/Compose.kt) task instance,
-* `config` - [Config](src/main/kotlin/com/cognifide/gradle/aem/config/Config.kt) object,
+* `aem` - [AemExtension](src/main/kotlin/com/cognifide/gradle/aem/AemExtension.kt) object,
+* `definition` - [VltDefinition](src/main/kotlin/com/cognifide/gradle/aem/common/pkg/vlt/VltDefinition.kt) object,
 * `rootProject` - project with directory in which *settings.gradle* is located,
 * `project` - current project.
 
-This feature is especially useful to generate valid *META-INF/properties.xml* file, below [template](src/main/resources/com/cognifide/gradle/aem/META-INF/vault/properties.xml) is used by plugin by default:
+This feature is especially useful to generate valid *META-INF/properties.xml* file, below [template](src/main/resources/com/cognifide/gradle/aem/package/META-INF/vault/properties.xml) is used by plugin by default:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
@@ -850,7 +933,7 @@ This feature is especially useful to generate valid *META-INF/properties.xml* fi
 </properties>
 ```
 
-Also file *nodetypes.cnd* is dynamically expanded from [template](src/main/resources/com/cognifide/gradle/aem/META-INF/vault/nodetypes.cnd) to generate file containing all node types from all sub packages being merged into assembly package.
+Also file *nodetypes.cnd* is dynamically expanded from [template](src/main/resources/com/cognifide/gradle/aem/package/META-INF/vault/nodetypes.cnd) to generate file containing all node types from all sub packages being merged into assembly package.
 
 Each JAR file in separate *hooks* directory will be combined into single directory when creating assembly package.
 
@@ -866,12 +949,12 @@ Simply use generic approach for [filtering instances to work with](#filter-insta
 
 Add any of below command line parameters to customize CRX package deployment behavior:
 
-* `-Pdeploy.awaited=false` - disable stability & health checks after deploying CRX package.
-* `-Pdeploy.distributed=true` - use alternative form of deployment. At first, deploys CRX package to author instances, then triggers replication of CRX package so that it will be installed also on publish instances.
-* `-Pdeploy.uploadForce=false` - disable force installation (by default even unchanged CRX package is forced to be reinstalled)
-* `-Pdeploy.installRecursive=false` - disable automatic installation of subpackages located inside CRX package being deployed.  
-* `-Pdeploy.uploadRetry=n` - customize number of retries being performed after failed CRX package upload.
-* `-Pdeploy.installRetry=n` - customize number of retries being performed after failed CRX package install.
+* `-Ppackage.deploy.awaited=false` - disable stability & health checks after deploying CRX package.
+* `-Ppackage.deploy.distributed=true` - use alternative form of deployment. At first, deploys CRX package to author instances, then triggers replication of CRX package so that it will be installed also on publish instances.
+* `-Ppackage.deploy.uploadForce=false` - disable force installation (by default even unchanged CRX package is forced to be reinstalled)
+* `-Ppackage.deploy.installRecursive=false` - disable automatic installation of subpackages located inside CRX package being deployed.  
+* `-Ppackage.deploy.uploadRetry=n` - customize number of retries being performed after failed CRX package upload.
+* `-Ppackage.deploy.installRetry=n` - customize number of retries being performed after failed CRX package install.
 
 #### Task `packageUpload`
 
@@ -940,9 +1023,6 @@ aem {
     }
 }
 ```
-
-Gradle AEM Plugin is following strategy [convention over configuration](https://en.wikipedia.org/wiki/Convention_over_configuration). When following built-in convention about project structure & naming, then only minimal configuration is required. 
-Still all features are fully configurable.
 
 #### Embedding JAR file into OSGi bundle
 
@@ -1017,7 +1097,7 @@ Provides instance related tasks: `instanceAwait`, `instanceSetup`, `instanceCrea
 
 Should be applied only at root project / only once within whole build.
 
-Inherits from [Config Plugin](#config-plugin).
+Inherits from [Common Plugin](#common-plugin).
 
 #### Task `instanceSetup`
 
@@ -1164,7 +1244,7 @@ Upload & install dependent CRX package(s) before deployment. Available methods:
 * `downloadSftpAuth(url: String, username: String, password: String)`, download package using SFTP protocol.
 * `downloadSftpAuth(url: String)`, as above, but credentials must be specified in variables: `aem.resolver.sftp.username`, `aem.resolver.sftp.password`. Optionally enable strict host checking by setting property `aem.resolver.sftp.hostChecking` to `true`.
 * `dependency(notation: String)`, use OSGi bundle that will be resolved from defined repositories (for instance from Maven) then wrapped to CRX package: `dependency('com.neva.felix:search-webconsole-plugin:1.2.0')`.
-* `group(name: String, options: Resolver<PackageGroup>.() -> Unit)`, useful for declaring group of packages (or just optionally naming single package) to be installed only on demand. For instance: `group 'tools', { url('http://example.com/package.zip'); url('smb://internal-nt/package2.zip')  }`. Then to install only packages in group `tools`, use command: `gradlew instanceSatisfy -Psatisfy.group=tools`.
+* `group(name: String, options: Resolver<PackageGroup>.() -> Unit)`, useful for declaring group of packages (or just optionally naming single package) to be installed only on demand. For instance: `group 'tools', { url('http://example.com/package.zip'); url('smb://internal-nt/package2.zip')  }`. Then to install only packages in group `tools`, use command: `gradlew instanceSatisfy -Pinstance.satisfy.group=tools`.
 
 Example configuration:
 
@@ -1194,7 +1274,7 @@ aem {
 By default, all packages will be deployed when running task `instanceSatisfy`.
 Although, by grouping packages, there are available new options:
 
-* group name could be used to filter out packages that will be deployed (`-Psatisfy.group=tools`, wildcards supported, comma delimited).
+* group name could be used to filter out packages that will be deployed (`-Pinstance.satisfy.group=tools`, wildcards supported, comma delimited).
 * after satisfying particular group, there are being run instance stability checks automatically (this behavior could be customized).
 
 Task supports hooks for preparing (and finalizing) instance before (after) deploying packages in group on each instance. 
@@ -1233,13 +1313,13 @@ aem {
 It is also possible to specify packages to be deployed only once via command line parameter, without a need to specify them in build script. Also for local files at any file system paths.
 
 ```bash
-gradlew instanceSatisfy -Psatisfy.urls=[url1,url2]
+gradlew instanceSatisfy -Pinstance.satisfy.urls=[url1,url2]
 ```
 
 For instance:
 
 ```bash
-gradlew instanceSatisfy -Psatisfy.urls=[https://github.com/OlsonDigital/aem-groovy-console/releases/download/11.0.0/aem-groovy-console-11.0.0.zip,https://github.com/neva-dev/felix-search-webconsole-plugin/releases/download/search-webconsole-plugin-1.2.0/search-webconsole-plugin-1.2.0.jar]
+gradlew instanceSatisfy -Pinstance.satisfy.urls=[https://github.com/OlsonDigital/aem-groovy-console/releases/download/11.0.0/aem-groovy-console-11.0.0.zip,https://github.com/neva-dev/felix-search-webconsole-plugin/releases/download/search-webconsole-plugin-1.2.0/search-webconsole-plugin-1.2.0.jar]
 ```
 
 #### Task `instanceAwait`
@@ -1370,7 +1450,7 @@ Provides environment related tasks: `environmentUp`, `environmentDev`, `environm
 
 Should be applied only at root project / only once within whole build.
 
-Inherits from [Config Plugin](#config-plugin).
+Inherits from [Common Plugin](#common-plugin).
 
 #### Environment configuration
 
@@ -1386,7 +1466,7 @@ Most of the configuration steps are automated. However, there are three manual s
             * Start PowerShell with "Run as administrator"
             * Execute: `.\gradlew.bat environmentHosts --no-daemon`
         * Unix: 
-            * Execute: `sudo ./gradlew environmentHosts --no-daemon`
+            * Execute: `sudo gradlew environmentHosts --no-daemon`
     
     
 ##### Notice for Docker on Windows
@@ -1450,7 +1530,7 @@ Allows to listen for Apache Web Server / Dispatcher configuration files changed 
 
 **NOTE** On Windows, it is required to accept granting Docker to access local files.
 
-1. Run command `gradlew aemEnvDev`,
+1. Run command `gradlew environmentDev`,
 2. Edit files located in *aem/gradle/environment/httpd/conf* ,
 3. Notice that HTTPD service should be restarted automatically after file changes,
 4. Check results of [environment service health checks](#environment-service-health-checks),
@@ -1552,77 +1632,6 @@ aem {
 }
 ```
 
-#### Downloading CRX package from external HTTP endpoint and deploying it on desired AEM instances
-
-Below snippet could be used to automatize recovery from content backups (e.g for production or to replicate production content to test environment).
-
-```kotlin
-
-aem {
-    tasks {
-        register("packageDeployProductionContent") {
-            doLast {
-                val instances = listOf(
-                        aem.instance("http://user:password@aem-host.com") // URL specified directly, could be parametrized by some gradle command line property
-                        // aem.namedInstance("local-publish") // reused AEM instance defined in 'gradle.properties'
-                )
-                val pkg = aem.http { downloadTo("https://company.com/aem/backups/example-1.0.0-201901300932.backup.zip", project.file("build/tmp")) }
-                
-                aem.sync(instances) { 
-                    deployPackage(pkg) 
-                }
-            }
-        }
-    }
-}
-```
-
-#### Controlling OSGi bundles and components
-
-To disable specific OSGi component by its PID value and only on publish instances, simply write:
-
-
-```kotlin
-aem {
-    tasks {
-        register("aemConfigure") {
-            doLast {
-                aem.sync(aem.publishInstances) {
-                    disableComponent("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet")
-                    // stopBundle("org.apache.sling.jcr.webdav")
-                }
-            }
-        }
-    }
-}
-```
-
-#### Executing code on AEM runtime
-
-It is possible to easily execute any code on AEM runtime using [Groovy Console](https://github.com/icfnext/aem-groovy-console). Assuming that on AEM instances there is already installed Groovy Console e.g via `instanceSatisfy` task, then it is possible to use methods `evalGroovyCode` and `evalGroovyScript` of `aem.sync`.
-
-```kotlin
-aem {
-    tasks {
-        satisfy {
-            group("tool.groovyconsole") { url("https://github.com/icfnext/aem-groovy-console/releases/download/12.0.0/aem-groovy-console-12.0.0.zip") }
-        }
-        register("aemConfigure") {
-            doLast {
-                aem.sync {
-                    evalGroovyCode("""
-                        def postsService = getService("com.company.example.aem.sites.services.posts.PostsService")
-                        
-                        println postsService.randomPosts(5)
-                    """)
-                    // evalGroovyScript("posts.groovy") // if script above moved to 'aem/gradle/groovyScript/posts.groovy'
-                }
-            }
-        }
-    }
-}
-```
-
 #### Calling AEM endpoints / making any HTTP requests
 
 To make an HTTP request to some AEM endpoint (servlet) simply write:
@@ -1633,7 +1642,9 @@ aem {
         register("aemHealthCheck") {
             doLast {
                 aem.sync {
-                    get("/bin/example/healthCheck") { checkStatus(it, 200) }
+                    http {
+                        get("/bin/example/healthCheck") { checkStatus(it, 200) }
+                    }
                 }
             }
         }
@@ -1653,11 +1664,13 @@ aem {
         register("aemHealthCheck") {
             doLast {
                 aem.sync {
-                    val json = get("/bin/example/healthCheck") { asJson(it) }
-                    val status = json.read("status") as String
-                    
-                    if (status != "OK") {
-                        throw GradleException("Health check failed on: $instance because status '$status' detected.")
+                    http {
+                        val json = get("/bin/example/healthCheck") { asJson(it) }
+                        val status = json.read("status") as String
+                        
+                        if (status != "OK") {
+                            throw GradleException("Health check failed on: $instance because status '$status' detected.")
+                        }
                     }
                 }
             }
@@ -1667,6 +1680,130 @@ aem {
 ```
 
 There are also available convenient methods `asStream`, `asString` to be able to process endpoint responses.
+
+#### Downloading CRX package from external HTTP endpoint and deploying it on desired AEM instances
+
+Below snippet could be used to automatize recovery from content backups (e.g for production or to replicate production content to test environment).
+
+```kotlin
+
+aem {
+    tasks {
+        register("packageDeployProductionContent") {
+            doLast {
+                val instances = listOf(
+                        aem.instance("http://user:password@aem-host.com") // URL specified directly, could be parametrized by some gradle command line property
+                        // aem.namedInstance("local-publish") // reused AEM instance defined in 'gradle.properties'
+                )
+                val pkg = aem.http { download("https://company.com/aem/backups/example-1.0.0-201901300932.backup.zip") }
+                
+                aem.sync(instances) { 
+                    packageManager.deployPackage(pkg) 
+                }
+            }
+        }
+    }
+}
+```
+
+#### Working with content repository (JCR)
+
+To make changes in AEM content repository, use [Repository](blob/develop/src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/repository/Repository.kt) instance service which is a part of instance sync tool.
+
+For example, to migrate pages even without using [Groovy Console](https://github.com/icfnext/aem-groovy-console) deployed on instance, simply write:
+
+```kotlin
+aem {
+    tasks {
+        register("migratePages") {
+            description = "Migrates pages to new component"
+            doLast {
+                aem.sync {
+                    repository {
+                        node("/content/example")
+                            .traverse()
+                            .filter { it.type == "cq:PageContent" && properties["sling:resourceType"] == "example/components/basicPage" }
+                            .forEach { page ->
+                                logger.info("Migrating page: ${page.path}")
+                                page.saveProperty("sling:resourceType", "example/components/advancedPage")
+                            }
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+To create new / update existing nodes to configure e.g replication agents write:
+
+```kotlin
+aem {
+    tasks {
+        register("migratePages") {
+            description = "Corrects publish replication agent transport URI"
+            doLast {
+                aem.sync {
+                    repository {
+                        node("/etc/replication/agents.publish/flush/jcr:content", mapOf( // shorthand for 'node(path).save(props)'
+                            "transportUri" to "http://invalidation-only/dispatcher/invalidate.cache"
+                        ))
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+Under the hood, repository service is using only AEM built-in [Sling Post Servlet](https://sling.apache.org/documentation/bundles/manipulating-content-the-slingpostservlet-servlets-post.html).
+
+#### Executing code on AEM runtime
+
+It is also possible to easily execute any code on AEM runtime using [Groovy Console](https://github.com/icfnext/aem-groovy-console). 
+Assuming that on AEM instances there is already installed Groovy Console e.g via `instanceSatisfy` task, then it is possible to use [GroovyConsole](blob/develop/src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/groovy/GroovyConsole.kt) instance service.
+
+```kotlin
+aem {
+    tasks {
+        satisfy {
+            group("tool.groovyconsole") { url("https://github.com/icfnext/aem-groovy-console/releases/download/12.0.0/aem-groovy-console-12.0.0.zip") }
+        }
+        register("generatePosts") {
+            doLast {
+                aem.sync {
+                    groovyConsole.evalCode("""
+                        def postsService = getService("com.company.example.aem.sites.services.posts.PostsService")
+                        
+                        println postsService.randomPosts(5)
+                    """)
+                    // groovyConsole.evalScript("posts.groovy") // if script above moved to 'aem/gradle/groovyScript/posts.groovy'
+                }
+            }
+        }
+    }
+}
+```
+
+#### Controlling OSGi bundles and components
+
+To disable specific OSGi component by its PID value and only on publish instances use [OsgiFramework](blob/develop/src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/osgi/OsgiFramework.kt) instance service and write:
+
+
+```kotlin
+aem {
+    tasks {
+        register("instanceSecure") {
+            doLast {
+                aem.sync(aem.publishInstances) {
+                    osgiFramework.disableComponent("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet")
+                    // osgiFramework.stopBundle("org.apache.sling.jcr.webdav")
+                }
+            }
+        }
+    }
+}
+```
 
 ### Understand why there are one or two plugins to be applied in build script
 
@@ -1709,8 +1846,8 @@ gradlew packageDeploy -Pinstance.name=*-author
 gradlew packageDeploy -Pinstance.name=local-author,integration-author
 ```
 
-Default value of that instance name filter is `${aem.environment}-*`, so that typically `local-*`.
-Environment value comes from system environment variable `AEM_ENV` or property `aem.env`.
+Default value of that instance name filter is `${environment}-*`, so that typically `local-*`.
+Environment value comes from system environment variable `ENV` or property `env`.
 
 To deploy only to author or publish instances:
 

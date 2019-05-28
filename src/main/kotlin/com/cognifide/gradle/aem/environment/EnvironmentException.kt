@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.environment
 
-import com.cognifide.gradle.aem.common.AemException
+import com.cognifide.gradle.aem.AemException
 
 class EnvironmentException : AemException {
 

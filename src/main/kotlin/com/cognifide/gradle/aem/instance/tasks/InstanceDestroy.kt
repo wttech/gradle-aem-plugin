@@ -1,8 +1,8 @@
 package com.cognifide.gradle.aem.instance.tasks
 
-import com.cognifide.gradle.aem.common.onEachApply
+import com.cognifide.gradle.aem.common.instance.names
 import com.cognifide.gradle.aem.common.tasks.LocalInstanceTask
-import com.cognifide.gradle.aem.instance.names
+import com.cognifide.gradle.aem.common.utils.onEachApply
 import org.gradle.api.execution.TaskExecutionGraph
 import org.gradle.api.tasks.TaskAction
 

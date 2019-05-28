@@ -1,8 +1,8 @@
 package com.cognifide.gradle.aem.environment
 
-import com.cognifide.gradle.aem.common.AemPlugin
+import com.cognifide.gradle.aem.AemPlugin
+import com.cognifide.gradle.aem.common.CommonPlugin
 import com.cognifide.gradle.aem.common.tasks.lifecycle.*
-import com.cognifide.gradle.aem.config.ConfigPlugin
 import com.cognifide.gradle.aem.environment.tasks.*
 import com.cognifide.gradle.aem.instance.InstancePlugin
 import com.cognifide.gradle.aem.instance.tasks.InstanceUp
@@ -22,7 +22,7 @@ class EnvironmentPlugin : AemPlugin() {
     }
 
     private fun Project.setupDependentPlugins() {
-        plugins.apply(ConfigPlugin::class.java)
+        plugins.apply(CommonPlugin::class.java)
     }
 
     private fun Project.setupTasks() {

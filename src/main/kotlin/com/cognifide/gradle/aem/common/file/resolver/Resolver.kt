@@ -1,14 +1,14 @@
 package com.cognifide.gradle.aem.common.file.resolver
 
-import com.cognifide.gradle.aem.common.AemExtension
-import com.cognifide.gradle.aem.common.DependencyOptions
-import com.cognifide.gradle.aem.common.Formats
+import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.common.build.DependencyOptions
 import com.cognifide.gradle.aem.common.file.FileException
 import com.cognifide.gradle.aem.common.file.downloader.HttpFileDownloader
 import com.cognifide.gradle.aem.common.file.downloader.SftpFileDownloader
 import com.cognifide.gradle.aem.common.file.downloader.SmbFileDownloader
 import com.cognifide.gradle.aem.common.file.downloader.UrlFileDownloader
 import com.cognifide.gradle.aem.common.http.HttpClient
+import com.cognifide.gradle.aem.common.utils.Formats
 import com.google.common.hash.HashCode
 import java.io.File
 import java.util.*
@@ -23,10 +23,10 @@ import org.gradle.util.GFileUtils
  */
 abstract class Resolver<G : FileGroup>(
     @get:Internal
-    val aem: AemExtension,
+val aem: AemExtension,
 
     @get:Internal
-    val downloadDir: File
+val downloadDir: File
 ) {
     private val project = aem.project
 
@@ -125,9 +125,9 @@ abstract class Resolver<G : FileGroup>(
 
     fun downloadSftpAuth(url: String, username: String? = null, password: String? = null, hostChecking: Boolean? = null): FileResolution {
         return downloadSftp(url) {
-            this.username = username ?: aem.config.resolverOptions.sftpUsername
-            this.password = password ?: aem.config.resolverOptions.sftpPassword
-            this.hostChecking = hostChecking ?: aem.config.resolverOptions.sftpHostChecking ?: false
+            this.username = username ?: aem.resolverOptions.sftpUsername
+            this.password = password ?: aem.resolverOptions.sftpPassword
+            this.hostChecking = hostChecking ?: aem.resolverOptions.sftpHostChecking ?: false
         }
     }
 
@@ -143,9 +143,9 @@ abstract class Resolver<G : FileGroup>(
 
     fun downloadSmbAuth(url: String, domain: String? = null, username: String? = null, password: String? = null): FileResolution {
         return downloadSmb(url) {
-            this.domain = domain ?: aem.config.resolverOptions.smbDomain
-            this.username = username ?: aem.config.resolverOptions.smbUsername
-            this.password = password ?: aem.config.resolverOptions.smbPassword
+            this.domain = domain ?: aem.resolverOptions.smbDomain
+            this.username = username ?: aem.resolverOptions.smbUsername
+            this.password = password ?: aem.resolverOptions.smbPassword
         }
     }
 
@@ -162,9 +162,9 @@ abstract class Resolver<G : FileGroup>(
 
     fun downloadHttpAuth(url: String, user: String? = null, password: String? = null, ignoreSsl: Boolean? = null): FileResolution {
         return downloadHttp(url) {
-            basicUser = user ?: aem.config.resolverOptions.httpUsername ?: ""
-            basicPassword = password ?: aem.config.resolverOptions.httpPassword ?: ""
-            connectionIgnoreSsl = ignoreSsl ?: aem.config.resolverOptions.httpConnectionIgnoreSsl ?: true
+            basicUser = user ?: aem.resolverOptions.httpUsername ?: ""
+            basicPassword = password ?: aem.resolverOptions.httpPassword ?: ""
+            connectionIgnoreSsl = ignoreSsl ?: aem.resolverOptions.httpConnectionIgnoreSsl ?: true
         }
     }
 

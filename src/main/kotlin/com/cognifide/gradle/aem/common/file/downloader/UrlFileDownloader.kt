@@ -1,8 +1,8 @@
 package com.cognifide.gradle.aem.common.file.downloader
 
-import com.cognifide.gradle.aem.common.Patterns
 import com.cognifide.gradle.aem.common.file.FileException
 import com.cognifide.gradle.aem.common.file.IoTransferLogger
+import com.cognifide.gradle.aem.common.utils.Patterns
 import java.io.File
 import java.io.IOException
 import java.net.URL
