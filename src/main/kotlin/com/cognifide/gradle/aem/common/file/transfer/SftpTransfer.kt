@@ -1,19 +1,26 @@
 package com.cognifide.gradle.aem.common.file.transfer
 
 import com.cognifide.gradle.aem.AemException
+import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.file.FileException
-import com.cognifide.gradle.aem.common.file.IoTransfer
+import com.cognifide.gradle.aem.common.file.operation.FileDownloader
+import com.cognifide.gradle.aem.common.file.operation.FileUploader
+import com.cognifide.gradle.aem.common.utils.formats.JsonPassword
+import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import java.io.File
 import java.io.IOException
 import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.sftp.*
 import org.apache.http.client.utils.URIBuilder
 
-class FileTransferSftp(
-    private val credentials: Credentials,
-    private val hostChecking: Boolean? = false,
-    private val ioTransfer: IoTransfer = IoTransfer()
-) : FileTransfer {
+class SftpTransfer(private val aem: AemExtension) : FileTransfer {
+
+    var user: String? = aem.props.string("fileTransfer.sftp.user")
+
+    @JsonSerialize(using = JsonPassword::class, `as` = String::class)
+    var password: String? = aem.props.string("fileTransfer.sftp.password")
+
+    var hostChecking = aem.props.boolean("fileTransfer.sftp.hostChecking") ?: false
 
     override fun download(url: String, name: String, target: File) {
         val uploadUrl = url.trimSlash()
@@ -21,7 +28,8 @@ class FileTransferSftp(
             connect(uploadUrl) { path ->
                 val remoteFile = open(fullPath(path, name), setOf(OpenMode.READ))
                 val input = remoteFile.RemoteFileInputStream()
-                ioTransfer.download(remoteFile.length(), input, target)
+
+                FileDownloader(aem).download(remoteFile.length(), input, target)
             }
         } catch (e: SFTPException) {
             when (e.statusCode) {
@@ -38,7 +46,8 @@ class FileTransferSftp(
                 open(fullPath(path, source.name), setOf(OpenMode.CREAT)).close()
                 val remoteFile = open(fullPath(path, source.name), setOf(OpenMode.WRITE))
                 val output = remoteFile.RemoteFileOutputStream()
-                ioTransfer.upload(source, output)
+
+                FileUploader(aem).upload(source, output)
             }
         } catch (e: SFTPException) {
             throw FileException("Cannot upload file '${source.path}' to URL '$uploadUrl' using SFTP: ${e.statusCode}, ${e.message}", e)
@@ -96,19 +105,29 @@ class FileTransferSftp(
     private fun <T> connectSftp(uploadUrl: String, action: SFTPClient.(path: String) -> T): T {
         val url = URIBuilder(uploadUrl)
         val ssh = SSHClient()
+
         ssh.loadKnownHosts()
-        if (hostChecking == null || !hostChecking) {
+
+        if (!hostChecking) {
             ssh.addHostKeyVerifier { _, _, _ -> true }
         }
 
-        val user = if (!credentials.username.isNullOrBlank()) credentials.username else url.userInfo
-        val port = if (url.port >= 0) url.port else PORT_DEFAULT
+        val user = if (!user.isNullOrBlank()) {
+            user
+        } else {
+            url.userInfo
+        }
+        val port = if (url.port >= 0) {
+            url.port
+        } else {
+            PORT_DEFAULT
+        }
 
         ssh.connect(url.host, port)
         try {
             authenticate(mapOf(
                     "public key" to { ssh.authPublickey(user) },
-                    "password" to { ssh.authPassword(user, credentials.password) }
+                    "password" to { ssh.authPassword(user, password) }
             ))
             return ssh.newSFTPClient().use { it.action(url.path) }
         } finally {

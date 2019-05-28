@@ -20,6 +20,8 @@ import org.gradle.util.GFileUtils
 
 /**
  * File downloader with groups supporting files from multiple sources: local and remote (SFTP, SMB, HTTP).
+ *
+ * TODO use FileManager to download files, ensure overriding credentials support (cloning each particular transfer)
  */
 abstract class Resolver<G : FileGroup>(
     @get:Internal
@@ -80,10 +82,11 @@ val downloadDir: File
 
     fun url(url: String): FileResolution {
         return when {
-            SftpFileDownloader.handles(url) -> downloadSftpAuth(url)
-            SmbFileDownloader.handles(url) -> downloadSmbAuth(url)
-            HttpFileDownloader.handles(url) -> downloadHttpAuth(url)
-            UrlFileDownloader.handles(url) -> downloadUrl(url)
+// TODO fix satisfy etc
+//            SftpFileDownloader.handles(url) -> downloadSftpAuth(url)
+//            SmbFileDownloader.handles(url) -> downloadSmbAuth(url)
+//            HttpFileDownloader.handles(url) -> downloadHttpAuth(url)
+//            UrlFileDownloader.handles(url) -> downloadUrl(url)
             else -> local(url)
         }
     }
@@ -91,7 +94,7 @@ val downloadDir: File
     fun downloadSftp(url: String): FileResolution {
         return resolve(url) { resolution ->
             download(url, resolution.dir) { file ->
-                SftpFileDownloader(project).download(url, file)
+                SftpFileDownloader(aem).download(url, file)
             }
         }
     }
@@ -116,38 +119,38 @@ val downloadDir: File
     fun downloadSftp(url: String, sftpOptions: SftpFileDownloader.() -> Unit = {}): FileResolution {
         return resolve(url) { resolution ->
             download(url, resolution.dir) { file ->
-                SftpFileDownloader(project)
+                SftpFileDownloader(aem)
                         .apply(sftpOptions)
                         .download(url, file)
             }
         }
     }
 
-    fun downloadSftpAuth(url: String, username: String? = null, password: String? = null, hostChecking: Boolean? = null): FileResolution {
-        return downloadSftp(url) {
-            this.username = username ?: aem.resolverOptions.sftpUsername
-            this.password = password ?: aem.resolverOptions.sftpPassword
-            this.hostChecking = hostChecking ?: aem.resolverOptions.sftpHostChecking ?: false
-        }
-    }
+//    fun downloadSftpAuth(url: String, sftpOptions: SftpFileDownloader.() -> Unit): FileResolution {
+//        return downloadSftp(url) {
+//            this.username = username ?: aem.fileTransfer.sftpUsername
+//            this.password = password ?: aem.resolverOptions.sftpPassword
+//            this.hostChecking = hostChecking ?: aem.resolverOptions.sftpHostChecking ?: false
+//        }
+//    }
 
     fun downloadSmb(url: String, smbOptions: SmbFileDownloader.() -> Unit = {}): FileResolution {
         return resolve(url) { resolution ->
             download(url, resolution.dir) { file ->
-                SmbFileDownloader(project)
+                SmbFileDownloader(aem)
                         .apply(smbOptions)
                         .download(url, file)
             }
         }
     }
 
-    fun downloadSmbAuth(url: String, domain: String? = null, username: String? = null, password: String? = null): FileResolution {
-        return downloadSmb(url) {
-            this.domain = domain ?: aem.resolverOptions.smbDomain
-            this.username = username ?: aem.resolverOptions.smbUsername
-            this.password = password ?: aem.resolverOptions.smbPassword
-        }
-    }
+//    fun downloadSmbAuth(url: String, domain: String? = null, username: String? = null, password: String? = null): FileResolution {
+//        return downloadSmb(url) {
+//            this.domain = domain ?: aem.resolverOptions.smbDomain
+//            this.username = username ?: aem.resolverOptions.smbUsername
+//            this.password = password ?: aem.resolverOptions.smbPassword
+//        }
+//    }
 
     fun downloadHttp(url: String, httpOptions: HttpClient.() -> Unit = {}): FileResolution {
         return resolve(url) { resolution ->
@@ -160,18 +163,18 @@ val downloadDir: File
         }
     }
 
-    fun downloadHttpAuth(url: String, user: String? = null, password: String? = null, ignoreSsl: Boolean? = null): FileResolution {
-        return downloadHttp(url) {
-            basicUser = user ?: aem.resolverOptions.httpUsername ?: ""
-            basicPassword = password ?: aem.resolverOptions.httpPassword ?: ""
-            connectionIgnoreSsl = ignoreSsl ?: aem.resolverOptions.httpConnectionIgnoreSsl ?: true
-        }
-    }
+//    fun downloadHttpAuth(url: String, user: String? = null, password: String? = null, ignoreSsl: Boolean? = null): FileResolution {
+//        return downloadHttp(url) {
+//            basicUser = user ?: aem.resolverOptions.httpUsername ?: ""
+//            basicPassword = password ?: aem.resolverOptions.httpPassword ?: ""
+//            connectionIgnoreSsl = ignoreSsl ?: aem.resolverOptions.httpConnectionIgnoreSsl ?: true
+//        }
+//    }
 
     fun downloadUrl(url: String): FileResolution {
         return resolve(url) { resolution ->
             download(url, resolution.dir) { file ->
-                UrlFileDownloader(project).download(url, file)
+                UrlFileDownloader(aem).download(url, file)
             }
         }
     }

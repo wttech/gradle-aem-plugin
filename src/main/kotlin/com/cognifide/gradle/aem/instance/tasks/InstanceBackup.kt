@@ -62,7 +62,7 @@ open class InstanceBackup : ZipTask() {
     }
 
     override fun projectEvaluated() {
-        from(aem.localInstanceOptions.rootDir)
+        from(aem.localInstanceManager.rootDir)
     }
 
     companion object {

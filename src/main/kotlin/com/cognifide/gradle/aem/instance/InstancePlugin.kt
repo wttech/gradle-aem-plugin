@@ -68,9 +68,6 @@ class InstancePlugin : AemPlugin() {
             register<InstanceBackup>(InstanceBackup.NAME) {
                 dependsOn(InstanceDown.NAME)
             }
-            register<InstanceRestore>(InstanceRestore.NAME) {
-                dependsOn(Resolve.NAME, InstanceDestroy.NAME)
-            }
 
             register<InstanceTail>(InstanceTail.NAME)
 

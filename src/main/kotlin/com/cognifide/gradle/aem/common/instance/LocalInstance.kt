@@ -68,13 +68,13 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
 
     @get:JsonIgnore
     val dir: File
-        get() = File(aem.localInstanceOptions.rootDir, typeName)
+        get() = File(aem.localInstanceManager.rootDir, typeName)
 
     @get:JsonIgnore
     val overridesDirs: List<File>
         get() = listOf(
-                File(options.overridesDir, "common"),
-                File(options.overridesDir, typeName)
+                File(manager.overridesDir, "common"),
+                File(manager.overridesDir, typeName)
         )
 
     @get:JsonIgnore
@@ -125,8 +125,8 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
         }
     }
 
-    private val options: LocalInstanceOptions
-        get() = aem.localInstanceOptions
+    private val manager: LocalInstanceManager
+        get() = aem.localInstanceManager
 
     fun create() {
         if (created) {
@@ -150,10 +150,10 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
     private fun copyFiles() {
         GFileUtils.mkdirs(dir)
 
-        options.license?.let { FileUtils.copyFile(options.license, license) }
-        options.jar?.let { FileUtils.copyFile(options.jar, jar) }
+        manager.quickstart.license?.let { FileUtils.copyFile(manager.quickstart.license, license) }
+        manager.quickstart.jar?.let { FileUtils.copyFile(manager.quickstart.jar, jar) }
 
-        options.extraFiles.map { file ->
+        manager.quickstart.extraFiles.map { file ->
             FileUtils.copyFileToDirectory(file, dir)
             File(dir, file.name)
         }
@@ -239,9 +239,9 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
             FileUtils.copyDirectory(it, dir)
         }
 
-        val propertiesAll = mapOf("instance" to this) + properties + options.expandProperties
+        val propertiesAll = mapOf("instance" to this) + properties + manager.expandProperties
 
-        FileOperations.amendFiles(dir, options.expandFiles) { file, source ->
+        FileOperations.amendFiles(dir, manager.expandFiles) { file, source ->
             aem.props.expand(source, propertiesAll, file.absolutePath)
         }
 

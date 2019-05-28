@@ -6,8 +6,8 @@ import com.cognifide.gradle.aem.common.build.*
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.file.FileWatcher
 import com.cognifide.gradle.aem.common.file.resolver.ResolverOptions
+import com.cognifide.gradle.aem.common.file.transfer.FileMultiTransfer
 import com.cognifide.gradle.aem.common.file.transfer.FileTransfer
-import com.cognifide.gradle.aem.common.file.transfer.FileTransferMultiProtocol
 import com.cognifide.gradle.aem.common.http.HttpClient
 import com.cognifide.gradle.aem.common.instance.*
 import com.cognifide.gradle.aem.common.notifier.NotifierFacade
@@ -141,13 +141,10 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     val resolverOptions = ResolverOptions(this)
 
     /**
-     * File transfer object that enables upload/download/delete/list files under specified url.
-     *  - url needs to be a directory
-     *  - SMB and SFTP protocols supported
+     * Multi-protocol file transfer facade that allows to list, upload and download files available at remote servers.
      */
     @get:Internal
-    val fileTransfer: FileTransfer = FileTransferMultiProtocol(this)
-
+    val fileTransfer: FileTransfer = FileMultiTransfer(this)
 
     /**
      * Customize file resolver options like default credentials, remote host checking etc.
@@ -174,12 +171,12 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
         instanceOptions.apply(options)
     }
 
-    val localInstanceOptions = LocalInstanceOptions(this)
+    val localInstanceManager = LocalInstanceManager(this)
 
     /**
      * Define common settings valid only for instances created at local file system.
      */
-    fun localInstance(options: LocalInstanceOptions.() -> Unit) = localInstanceOptions.apply(options)
+    fun localInstance(options: LocalInstanceManager.() -> Unit) = localInstanceManager.apply(options)
 
     /**
      * Provides API for controlling virtualized AEM environment with HTTPD and dispatcher module.

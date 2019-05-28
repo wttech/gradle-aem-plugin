@@ -1,17 +1,17 @@
 package com.cognifide.gradle.aem.common.file.downloader
 
+import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.file.FileException
-import com.cognifide.gradle.aem.common.file.IoTransferLogger
+import com.cognifide.gradle.aem.common.file.operation.FileDownloader
 import java.io.File
 import java.io.IOException
 import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.sftp.OpenMode
 import net.schmizz.sshj.sftp.SFTPClient
 import org.apache.http.client.utils.URIBuilder
-import org.gradle.api.Project
 import org.gradle.api.logging.Logger
 
-class SftpFileDownloader(val project: Project) {
+class SftpFileDownloader(val aem: AemExtension) {
 
     var username: String? = null
 
@@ -19,11 +19,11 @@ class SftpFileDownloader(val project: Project) {
 
     var hostChecking: Boolean = false
 
-    val logger: Logger = project.logger
+    val logger: Logger = aem.logger
 
     fun download(sourceUrl: String, targetFile: File) {
         try {
-            project.logger.info("Downloading: $sourceUrl -> ${targetFile.absolutePath}")
+            aem.logger.info("Downloading: $sourceUrl -> ${targetFile.absolutePath}")
 
             val url = URIBuilder(sourceUrl)
 
@@ -31,7 +31,7 @@ class SftpFileDownloader(val project: Project) {
                 val size = sftp.stat(url.path).size
                 val input = sftp.open(url.path, setOf(OpenMode.READ)).RemoteFileInputStream()
 
-                IoTransferLogger(project).download(size, input, targetFile)
+                FileDownloader(aem).download(size, input, targetFile)
             }
         } catch (e: IOException) {
             throw FileException("Cannot download URL '$sourceUrl' to file '$targetFile' using SFTP. Cause: ${e.message}", e)

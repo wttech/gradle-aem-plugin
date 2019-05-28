@@ -1,14 +1,14 @@
 package com.cognifide.gradle.aem.common.file.downloader
 
+import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.file.FileException
-import com.cognifide.gradle.aem.common.file.IoTransferLogger
+import com.cognifide.gradle.aem.common.file.operation.FileDownloader
 import java.io.File
 import java.io.IOException
 import jcifs.smb.NtlmPasswordAuthentication
 import jcifs.smb.SmbFile
-import org.gradle.api.Project
 
-class SmbFileDownloader(val project: Project) {
+class SmbFileDownloader(val aem: AemExtension) {
 
     var domain: String? = null
 
@@ -18,11 +18,11 @@ class SmbFileDownloader(val project: Project) {
 
     fun download(sourceUrl: String, targetFile: File) {
         try {
-            project.logger.info("Downloading: $sourceUrl -> ${targetFile.absolutePath}")
+            aem.logger.info("Downloading: $sourceUrl -> ${targetFile.absolutePath}")
 
             val smbFile = fileFor(sourceUrl)
 
-            IoTransferLogger(project).download(smbFile.length(), smbFile.inputStream, targetFile)
+            FileDownloader(aem).download(smbFile.length(), smbFile.inputStream, targetFile)
         } catch (e: IOException) {
             throw FileException("Cannot download URL '$sourceUrl' to file '$targetFile' using SMB. Cause: ${e.message}.", e)
         }
