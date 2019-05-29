@@ -1,14 +1,18 @@
 package com.cognifide.gradle.aem.common.http
 
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.common.file.downloader.HttpFileDownloader
+import com.cognifide.gradle.aem.common.file.transfer.HttpFileTransfer
 import com.cognifide.gradle.aem.common.utils.Formats
 import com.cognifide.gradle.aem.common.utils.Utils
+import com.cognifide.gradle.aem.common.utils.formats.JsonPassword
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import com.jayway.jsonpath.DocumentContext
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
+import java.io.Serializable
 import org.apache.commons.io.FilenameUtils
 import org.apache.commons.io.IOUtils
 import org.apache.http.HttpEntity
@@ -31,15 +35,16 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 
 @Suppress("TooManyFunctions")
-open class HttpClient(val aem: AemExtension) {
+open class HttpClient(val aem: AemExtension) : Serializable {
 
-    val project = aem.project
+    private val project = aem.project
 
     var baseUrl = ""
 
-    var basicUser = ""
+    var basicUser: String? = null
 
-    var basicPassword = ""
+    @JsonSerialize(using = JsonPassword::class, `as` = String::class)
+    var basicPassword: String? = null
 
     var authorizationPreemptive = false
 
@@ -49,8 +54,10 @@ open class HttpClient(val aem: AemExtension) {
 
     var connectionRetries = true
 
+    @JsonIgnore
     var requestConfigurer: HttpRequestBase.() -> Unit = { }
 
+    @JsonIgnore
     var clientBuilder: HttpClientBuilder.() -> Unit = {
         useSystemProperties()
 
@@ -68,7 +75,7 @@ open class HttpClient(val aem: AemExtension) {
             setConnectionRequestTimeout(connectionTimeout)
         }.build())
 
-        if (basicUser.isNotBlank() && basicPassword.isNotBlank()) {
+        if (!basicUser.isNullOrBlank() && !basicPassword.isNullOrBlank()) {
             setDefaultCredentialsProvider(BasicCredentialsProvider().apply {
                 setCredentials(AuthScope.ANY, UsernamePasswordCredentials(basicUser, basicPassword))
             })
@@ -84,10 +91,12 @@ open class HttpClient(val aem: AemExtension) {
         }
     }
 
+    @JsonIgnore
     var responseHandler: (HttpResponse) -> Unit = { }
 
     var responseChecks: Boolean = true
 
+    @JsonIgnore
     var responseChecker: (HttpResponse) -> Unit = { checkStatus(it) }
 
     fun <T> request(method: String, uri: String, handler: HttpClient.(HttpResponse) -> T) = when (method.toLowerCase()) {
@@ -275,7 +284,7 @@ open class HttpClient(val aem: AemExtension) {
     fun download(path: String) = download(path, aem.temporaryFile(FilenameUtils.getName(path)))
 
     fun download(path: String, target: File) {
-        HttpFileDownloader(aem, this).download(path, target)
+        HttpFileTransfer(aem, this).download(path, target)
     }
 
     fun downloadTo(path: String, dir: File): File {

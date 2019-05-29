@@ -1,12 +1,13 @@
-package com.cognifide.gradle.aem.common.file.operation
+package com.cognifide.gradle.aem.common.file.transfer
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.build.ProgressLogger
 import com.cognifide.gradle.aem.common.utils.Formats
 import java.io.File
-import java.io.OutputStream
+import java.io.FileOutputStream
+import java.io.InputStream
 
-class FileUploader(private val aem: AemExtension) {
+class FileDownloader(private val aem: AemExtension) {
 
     private var processedBytes: Long = 0
 
@@ -30,19 +31,20 @@ class FileUploader(private val aem: AemExtension) {
         }
     }
 
-    fun upload(file: File, output: OutputStream, cleanup: (File) -> Unit = {}) {
+    fun download(size: Long, input: InputStream, target: File) {
         aem.progressLogger {
-            file.inputStream().use { input ->
+            input.use { inputStream ->
+                val output = FileOutputStream(target)
                 var finished = false
 
                 try {
                     val buf = ByteArray(TRANSFER_CHUNK_100_KB)
-                    var read = input.read(buf)
+                    var read = inputStream.read(buf)
 
                     while (read >= 0) {
                         output.write(buf, 0, read)
-                        logProgress("Uploading", read.toLong(), file.length(), file)
-                        read = input.read(buf)
+                        logProgress("Downloading", read.toLong(), size, target)
+                        read = inputStream.read(buf)
                     }
 
                     output.flush()
@@ -50,7 +52,7 @@ class FileUploader(private val aem: AemExtension) {
                 } finally {
                     output.close()
                     if (!finished) {
-                        cleanup(file)
+                        target.delete()
                     }
                 }
             }

@@ -74,7 +74,7 @@ class Environment(@JsonIgnore val aem: AemExtension) : Serializable {
                         " 'aem.env.dispatcher.distUrl' in order to use AEM environment.")
             }
 
-            val tarFile = distributionsResolver.url(dispatcherDistUrl).file
+            val tarFile = distributionsResolver.download(dispatcherDistUrl).file
             val tarTree = aem.project.tarTree(tarFile)
 
             return tarTree.find { Patterns.wildcard(it, dispatcherModuleName) }

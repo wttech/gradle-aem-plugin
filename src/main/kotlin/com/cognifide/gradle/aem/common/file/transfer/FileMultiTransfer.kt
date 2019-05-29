@@ -1,39 +1,80 @@
 package com.cognifide.gradle.aem.common.file.transfer
 
-import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.common.file.FileException
 import java.io.File
 
-// TODO add http transfer and url transfer (with unsupported methods impl)
-class FileMultiTransfer(aem: AemExtension) : FileTransfer {
+class FileMultiTransfer(private val aem: AemExtension) : FileTransfer {
 
-    val sftp = SftpTransfer(aem)
+    val factory = FileTransferFactory(aem)
 
-    fun sftp(options: SftpTransfer.() -> Unit) {
+    val http = HttpFileTransfer(aem)
+
+    fun http(options: HttpFileTransfer.() -> Unit) {
+        http.apply(options)
+    }
+
+    val sftp = SftpFileTransfer(aem)
+
+    fun sftp(options: SftpFileTransfer.() -> Unit) {
         sftp.apply(options)
     }
 
-    val smb = SmbTransfer(aem)
+    val smb = SmbFileTransfer(aem)
 
-    fun smb(options: SmbTransfer.() -> Unit) {
+    fun smb(options: SmbFileTransfer.() -> Unit) {
         smb.apply(options)
     }
 
-    private val all = arrayOf(sftp, smb)
+    val url = UrlFileTransfer(aem)
 
-    // TODO join url and name / split internally
-    override fun download(url: String, name: String, target: File) = transfer(url).download(url, name, target)
+    fun url(options: UrlFileTransfer.() -> Unit) {
+        url.apply(options)
+    }
 
-    override fun upload(url: String, source: File) = transfer(url).upload(url, source)
+    val local = LocalFileTransfer(aem)
 
-    override fun list(url: String): List<String> = transfer(url).list(url)
+    fun local(options: LocalFileTransfer.() -> Unit) {
+        local.apply(options)
+    }
 
-    override fun delete(url: String, name: String) = transfer(url).delete(url, name)
+    private val custom = mutableListOf<CustomFileTransfer>()
 
-    override fun truncate(url: String) = transfer(url).truncate(url)
+    private val all = (custom + arrayOf(http, sftp, smb, url, local)).filter { it.enabled }
 
-    override fun handles(url: String) = all.any { it.handles(url) }
+    override fun download(dirUrl: String, fileName: String, target: File) = handling(dirUrl).download(dirUrl, fileName, target)
 
-    private fun transfer(url: String) = all.find { it.handles(url) }
-            ?: throw AemException("Invalid url for file transfer: $url. Only SMB and SFTP URLs are supported.")
+    override fun upload(dirUrl: String, fileName: String, source: File) = handling(dirUrl).upload(dirUrl, fileName, source)
+
+    override fun list(dirUrl: String): List<String> = handling(dirUrl).list(dirUrl)
+
+    override fun delete(dirUrl: String, fileName: String) = handling(dirUrl).delete(dirUrl, fileName)
+
+    override fun truncate(dirUrl: String) = handling(dirUrl).truncate(dirUrl)
+
+    override fun handles(fileUrl: String) = all.any { it.handles(fileUrl) }
+
+    fun handling(fileUrl: String): FileTransfer = all.find { it.handles(fileUrl) }
+            ?: throw FileException("File transfer supporting URL '$fileUrl' not found!")
+
+    fun named(name: String): FileTransfer {
+        return all.find { it.name == name } ?: throw FileException("File transfer named '$name' not found!")
+    }
+
+    fun custom(name: String, definition: CustomFileTransfer.() -> Unit) {
+        custom.add(CustomFileTransfer(aem).apply {
+            this.name = name
+            apply(definition)
+        })
+    }
+
+    override val name: String
+        get() = NAME
+
+    override val enabled: Boolean
+        get() = true
+
+    companion object {
+        const val NAME = "multi"
+    }
 }

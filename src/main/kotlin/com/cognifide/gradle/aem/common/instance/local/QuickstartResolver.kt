@@ -21,7 +21,7 @@ class QuickstartResolver(aem: AemExtension) {
 
     @get:JsonIgnore
     val jar: File?
-        get() = jarUrl?.run { fileResolver.url(this) }?.file
+        get() = jarUrl?.run { fileResolver.download(this) }?.file
 
     /**
      * URI pointing to AEM quickstart license file.
@@ -30,7 +30,7 @@ class QuickstartResolver(aem: AemExtension) {
 
     @get:JsonIgnore
     val license: File?
-        get() = licenseUrl?.run { fileResolver.url(this) }?.file
+        get() = licenseUrl?.run { fileResolver.download(this) }?.file
 
     @get:JsonIgnore
     val allFiles: List<File>

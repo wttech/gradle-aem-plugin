@@ -5,9 +5,7 @@ import com.cognifide.gradle.aem.common.CommonPlugin
 import com.cognifide.gradle.aem.common.build.*
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.file.FileWatcher
-import com.cognifide.gradle.aem.common.file.resolver.ResolverOptions
 import com.cognifide.gradle.aem.common.file.transfer.FileMultiTransfer
-import com.cognifide.gradle.aem.common.file.transfer.FileTransfer
 import com.cognifide.gradle.aem.common.http.HttpClient
 import com.cognifide.gradle.aem.common.instance.*
 import com.cognifide.gradle.aem.common.notifier.NotifierFacade
@@ -130,21 +128,18 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     @JsonIgnore
     val parallel = ParallelExecutor(this)
 
-    /**
-     * TODO to be merged with upcoming file transfer impl
-     */
-    val resolverOptions = ResolverOptions(this)
-
-    /**
-     * Multi-protocol file transfer facade that allows to list, upload and download files available at remote servers.
-     */
     @get:Internal
-    val fileTransfer: FileTransfer = FileMultiTransfer(this)
+    val fileTransfer = FileMultiTransfer(this)
 
     /**
-     * Customize file resolver options like default credentials, remote host checking etc.
+     * Define settings for file transfer facade which allows to perform basic file operations on remote servers
+     * like uploading and downloading files.
+     *
+     * Supports multiple protocols: HTTP, SFTP, SMB and other supported by JVM.
      */
-    fun resolver(options: ResolverOptions.() -> Unit) = resolverOptions.apply(options)
+    fun fileTransfer(options: FileMultiTransfer.() -> Unit) {
+        fileTransfer.apply(options)
+    }
 
     val packageOptions = PackageOptions(this)
 
