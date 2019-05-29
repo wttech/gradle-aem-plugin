@@ -54,10 +54,14 @@ class HealthChecker(val environment: Environment) {
                     }
                 }
 
-                aem.logger.info("Environment health check(s) succeed: $count")
+                val message = "Environment health check(s) succeed: $count"
+                if (!verbose) {
+                    aem.logger.lifecycle(message)
+                } else {
+                    aem.logger.info(message)
+                }
             } catch (e: EnvironmentException) {
                 val message = "Environment health check(s) failed: $count:\n${all.joinToString("\n")}"
-
                 if (!verbose) {
                     aem.logger.error(message)
                 } else {
