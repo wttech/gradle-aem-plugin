@@ -35,7 +35,7 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 
 @Suppress("TooManyFunctions")
-open class HttpClient(val aem: AemExtension) : Serializable {
+open class HttpClient(private val aem: AemExtension) : Serializable {
 
     private val project = aem.project
 

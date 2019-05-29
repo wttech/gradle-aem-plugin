@@ -38,8 +38,8 @@ class HttpFileTransfer(aem: AemExtension, val client: HttpClient = client(aem)) 
         const val NAME = "httpd"
 
         fun client(aem: AemExtension) = HttpClient(aem).apply {
-            basicUser = aem.props.string("fileTransfer.http.user") ?: ""
-            basicPassword = aem.props.string("fileTransfer.http.password") ?: ""
+            basicUser = aem.props.string("fileTransfer.http.user")
+            basicPassword = aem.props.string("fileTransfer.http.password")
             connectionIgnoreSsl = aem.props.boolean("fileTransfer.http.connectionIgnoreSsl") ?: true
         }
     }

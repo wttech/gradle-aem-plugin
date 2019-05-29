@@ -382,7 +382,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
             }
 
             val conventionFilterFiles = listOf(
-                    "${packageOptions.vltRootDir}/${VltFilter.CHECKOUT_NAME}",
+                    "${packageOptions.vltRootDir}/${VltFilter.SYNC_NAME}",
                     "${packageOptions.vltRootDir}/${VltFilter.BUILD_NAME}"
             )
             val conventionFilterFile = FileOperations.find(project, packageOptions.vltRootDir.toString(), conventionFilterFiles)

@@ -28,7 +28,57 @@
     ],
     "env" : "local",
     "lineSeparator" : "LF",
-    "groovyScriptRootDir" : "*/minimal/gradle/groovyScript",
+    "fileTransfer": {
+      "http": {
+        "enabled": true,
+        "client": {
+          "baseUrl": "",
+          "basicUser": null,
+          "basicPassword": null,
+          "authorizationPreemptive": false,
+          "connectionTimeout": 30000,
+          "connectionIgnoreSsl": true,
+          "connectionRetries": true,
+          "responseChecks": true
+        },
+        "name": "httpd",
+        "protocols": [
+          "http://*",
+          "https://*"
+        ]
+      },
+      "sftp": {
+        "enabled": true,
+        "user": null,
+        "password": null,
+        "hostChecking": false,
+        "name": "sftp",
+        "protocols": [
+          "sftp://*"
+        ]
+      },
+      "smb": {
+        "enabled": true,
+        "domain": null,
+        "user": null,
+        "password": null,
+        "name": "smb",
+        "protocols": [
+          "smb://*"
+        ]
+      },
+      "url": {
+        "enabled": true,
+        "name": "url",
+        "protocols": [
+          "*://*"
+        ]
+      },
+      "local": {
+        "enabled": true,
+        "name": "local"
+      }
+    },
     "packageOptions" : {
       "rootDir" : "*/minimal/src/main/content",
       "snapshots" : [ ],

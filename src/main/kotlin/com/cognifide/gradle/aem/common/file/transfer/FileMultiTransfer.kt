@@ -2,10 +2,12 @@ package com.cognifide.gradle.aem.common.file.transfer
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.file.FileException
+import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 
 class FileMultiTransfer(private val aem: AemExtension) : FileTransfer {
 
+    @JsonIgnore
     val factory = FileTransferFactory(aem)
 
     val http = HttpFileTransfer(aem)
@@ -64,13 +66,17 @@ class FileMultiTransfer(private val aem: AemExtension) : FileTransfer {
     fun custom(name: String, definition: CustomFileTransfer.() -> Unit) {
         custom.add(CustomFileTransfer(aem).apply {
             this.name = name
+            this.protocols = listOf("$name://*")
+
             apply(definition)
         })
     }
 
+    @get:JsonIgnore
     override val name: String
         get() = NAME
 
+    @get:JsonIgnore
     override val enabled: Boolean
         get() = true
 
