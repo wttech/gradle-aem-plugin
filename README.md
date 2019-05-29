@@ -408,6 +408,17 @@ Applied transparently by package and bundle plugins. Provides tooling related ta
 
 Check out then clean JCR content. 
 
+JCR content to be synchronized from AEM instance repository is determined by [workspace filter file](https://jackrabbit.apache.org/filevault/filter.html) located at path *src/main/content/META-INF/vault/sync.xml*.
+However, when this file does not exist, plugin as a fallback will use same file used when composing CRX package which is *src/main/content/META-INF/vault/filter.xml*.
+
+To exclude some files from synchronization, simply copy *filter.xml* file and create file named *sync.xml*. Then add exclusion in a following way:
+
+```xml
+<filter root="/content/dam/example">
+    <exclude pattern=".*\.gif"/>
+</filter>
+```
+
 ##### Cleaning features
 
 Cleaning assumes advanced JCR content normalization to minimize changes visible in VCS after each synchronization.
