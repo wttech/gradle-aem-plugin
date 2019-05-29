@@ -28,15 +28,17 @@ class SmbFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
 
     override fun download(dirUrl: String, fileName: String, target: File) {
         val url = dirUrl.appendSlash()
+        val fileUrl = "$dirUrl/$fileName"
+
         try {
             val file = smbFile(url, fileName)
             if (!file.exists()) {
-                throw FileException("File not found $fileName")
+                throw FileException("Cannot download URL '$fileUrl' using SMB. File not found!")
             }
 
             downloader().download(file.length(), file.inputStream, target)
         } catch (e: SmbException) {
-            throw FileException("Cannot download URL '$fileName' to file '$target' using SMB. Cause: ${e.message}", e)
+            throw FileException("Cannot download URL '$fileUrl' to file '$target' using SMB. Cause: ${e.message}", e)
         }
     }
 
@@ -46,7 +48,7 @@ class SmbFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
             validateDir(url)
             uploader().upload(source, smbFile(url, fileName).outputStream)
         } catch (e: IOException) {
-            throw FileException("Cannot upload file '${source.absolutePath}' to URL '$url' using SMB. Cause: ${e.message}", e)
+            throw FileException("Cannot upload file '$source' to URL '$url' using SMB. Cause: ${e.message}", e)
         }
     }
 

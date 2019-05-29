@@ -24,6 +24,7 @@ class HealthChecker(val environment: Environment) {
 
     // Evaluation
 
+    @Suppress("ComplexMethod")
     fun check(verbose: Boolean = true): List<HealthStatus> {
         var all = listOf<HealthStatus>()
         var passed = listOf<HealthStatus>()

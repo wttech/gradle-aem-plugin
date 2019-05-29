@@ -112,8 +112,8 @@ class SftpFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
         val user = if (!user.isNullOrBlank()) user else url.userInfo
         val port = if (url.port >= 0) url.port else PORT_DEFAULT
 
-        ssh.connect(url.host, port)
         try {
+            ssh.connect(url.host, port)
             authenticate(mapOf(
                     "public key" to { ssh.authPublickey(user) },
                     "password" to { ssh.authPassword(user, password) }
@@ -126,12 +126,12 @@ class SftpFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
 
     @Suppress("EmptyCatchBlock")
     private fun authenticate(methods: Map<String, () -> Unit>) {
-        for ((_, method) in methods) {
+        for ((name, method) in methods) {
             try {
                 method()
                 return
             } catch (e: IOException) {
-                // intentionally empty
+                aem.logger.debug("Cannot authenticate SFTP using method '$name'", e)
             }
         }
     }

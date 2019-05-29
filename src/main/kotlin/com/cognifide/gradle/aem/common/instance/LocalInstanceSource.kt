@@ -15,11 +15,11 @@ enum class LocalInstanceSource {
     /**
      * Force using backup available at external source (available by using 'localInstance.backup.[downloadUrl|uploadUrl]').
      */
-    BACKUP_EXTERNAL,
+    BACKUP_REMOTE,
     /**
      * Force using internal backup (created by task 'instanceBackup').
      */
-    BACKUP_INTERNAL;
+    BACKUP_LOCAL;
 
     companion object {
         fun of(name: String): LocalInstanceSource {

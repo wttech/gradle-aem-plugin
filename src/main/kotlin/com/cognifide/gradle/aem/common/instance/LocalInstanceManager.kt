@@ -25,6 +25,13 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
             ?: LocalInstanceSource.AUTO.name)
 
     /**
+     * Collection of files potentially needed to create instance
+     */
+    @get:JsonIgnore
+    val sourceFiles: List<File>
+        get() = listOfNotNull(backupZip) + quickstart.allFiles
+
+    /**
      * Path from which extra files for local AEM instances will be copied.
      * Useful for overriding default startup scripts ('start.bat' or 'start.sh') or providing some files inside 'crx-quickstart'.
      */
@@ -62,18 +69,33 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
         get() {
             return when (source) {
                 LocalInstanceSource.AUTO -> backup.auto
-                LocalInstanceSource.BACKUP_INTERNAL -> backup.internal
-                LocalInstanceSource.BACKUP_EXTERNAL -> backup.external
-                LocalInstanceSource.SCRATCH -> null
+                LocalInstanceSource.BACKUP_LOCAL -> backup.local
+                LocalInstanceSource.BACKUP_REMOTE -> backup.remote
+                else -> null
             }
         }
 
     fun create(instances: List<LocalInstance>) {
-        val backupZip = backupZip
-        if (backupZip != null) {
-            createFromBackup(instances, backupZip)
-        } else {
-            createFromScratch(instances)
+        when (source) {
+            LocalInstanceSource.AUTO -> {
+                val backupZip = backup.auto
+                if (backupZip != null) {
+                    createFromBackup(instances, backupZip)
+                } else {
+                    createFromScratch(instances)
+                }
+            }
+            LocalInstanceSource.BACKUP_LOCAL -> {
+                val backupZip = backup.local
+                        ?: throw InstanceException("Cannot create instance(s) as of no local backups available!")
+                createFromBackup(instances, backupZip)
+            }
+            LocalInstanceSource.BACKUP_REMOTE -> {
+                val backupZip = backup.remote
+                        ?: throw InstanceException("Cannot create instance(s) as of no remote backups available!")
+                createFromBackup(instances, backupZip)
+            }
+            LocalInstanceSource.SCRATCH -> createFromScratch(instances)
         }
     }
 
