@@ -204,6 +204,10 @@ class Environment(@JsonIgnore val aem: AemExtension) : Serializable {
     }
 
     fun check(verbose: Boolean = true): List<HealthStatus> {
+        if (!running) {
+            throw EnvironmentException("Cannot check environment as it is not running!")
+        }
+
         aem.logger.info("Checking $this")
 
         return healthChecker.check(verbose)

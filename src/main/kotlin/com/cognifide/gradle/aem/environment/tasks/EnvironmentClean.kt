@@ -11,7 +11,9 @@ open class EnvironmentClean : AemDefaultTask() {
 
     @TaskAction
     fun clean() {
-        aem.environment.httpd.restart()
+        if (aem.environment.running) {
+            aem.environment.httpd.restart()
+        }
         aem.environment.clean()
     }
 
