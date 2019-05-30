@@ -57,8 +57,8 @@ open class AemDefaultTask : DefaultTask(), AemTask {
     }
 
     fun checkForce() {
-        taskGraphReady {
-            if (it.hasTask(this)) {
+        taskGraphReady { graph ->
+            if (graph.hasTask(this)) {
                 aem.props.checkForce()
             }
         }
