@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.common.file.transfer.smb
 
 import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.common.file.transfer.FileEntry
 import com.cognifide.gradle.aem.common.file.transfer.ProtocolFileTransfer
 import com.cognifide.gradle.aem.common.utils.formats.JsonPassword
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
@@ -30,6 +31,8 @@ class SmbFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
         val fileUrl = "$dirUrl/$fileName"
 
         try {
+            validateDir(dirUrl)
+
             val file = smbFile(url, fileName)
             if (!file.exists()) {
                 throw SmbException("Cannot download URL '$fileUrl'. File not found!")
@@ -51,11 +54,11 @@ class SmbFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
         }
     }
 
-    override fun list(dirUrl: String): List<String> {
+    override fun list(dirUrl: String): List<FileEntry> {
         val url = dirUrl.appendSlash()
         try {
             validateDir(url)
-            return smbFile(url).listFiles().map { it.name }
+            return smbFile(url).listFiles().map { FileEntry(it.name, it.lastModified(), it.length()) }
         } catch (e: IOException) {
             throw SmbException("Cannot list files at URL '$url'. Cause: ${e.message}", e)
         }
@@ -64,6 +67,7 @@ class SmbFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
     override fun delete(dirUrl: String, fileName: String) {
         val url = dirUrl.appendSlash()
         try {
+            validateDir(dirUrl)
             smbFile(url, fileName).delete()
         } catch (e: IOException) {
             throw SmbException("Cannot delete files at URL '$url'. Cause: ${e.message}", e)

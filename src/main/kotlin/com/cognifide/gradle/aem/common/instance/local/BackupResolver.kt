@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.common.instance.local
 
 import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.common.file.transfer.FileEntry
 import com.cognifide.gradle.aem.instance.tasks.InstanceBackup
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
@@ -23,8 +24,8 @@ class BackupResolver(private val aem: AemExtension) {
     var selector: Collection<BackupSource>.() -> BackupSource? = {
         val backupName = aem.props.string("localInstance.backup.name") ?: ""
         when {
-            backupName.isNotBlank() -> firstOrNull { it.fileName == backupName }
-            else -> sortedByDescending { it.fileName }.firstOrNull()
+            backupName.isNotBlank() -> firstOrNull { it.fileEntry.name == backupName }
+            else -> sortedByDescending { it.fileEntry.name }.firstOrNull()
         }
     }
 
@@ -41,8 +42,8 @@ class BackupResolver(private val aem: AemExtension) {
         get() = resolve(localSources + remoteSources)
 
     private val localSources: List<BackupSource>
-        get() = aem.tasks.named<InstanceBackup>(InstanceBackup.NAME).get().available.map {
-            BackupSource(BackupType.LOCAL, it.name) { it }
+        get() = aem.tasks.named<InstanceBackup>(InstanceBackup.NAME).get().available.map { file ->
+            BackupSource(BackupType.LOCAL, FileEntry.of(file)) { file }
         }
 
     private val remoteSources: List<BackupSource>
@@ -52,7 +53,7 @@ class BackupResolver(private val aem: AemExtension) {
                 val name = downloadUrl!!.substringAfterLast("/")
 
                 listOf(
-                    BackupSource(BackupType.REMOTE, name) {
+                    BackupSource(BackupType.REMOTE, FileEntry(name)) {
                         File(downloadDir, name).apply {
                             aem.fileTransfer.download(dirUrl, name, this)
                         }
@@ -60,10 +61,10 @@ class BackupResolver(private val aem: AemExtension) {
                 )
             }
             uploadUrl != null -> {
-                aem.fileTransfer.list(uploadUrl!!).map { name ->
-                    BackupSource(BackupType.REMOTE, name) {
-                        File(downloadDir, name).apply {
-                            aem.fileTransfer.download(uploadUrl!!, name, this)
+                aem.fileTransfer.list(uploadUrl!!).map { file ->
+                    BackupSource(BackupType.REMOTE, file) {
+                        File(downloadDir, file.name).apply {
+                            aem.fileTransfer.download(uploadUrl!!, file.name, this)
                         }
                     }
                 }

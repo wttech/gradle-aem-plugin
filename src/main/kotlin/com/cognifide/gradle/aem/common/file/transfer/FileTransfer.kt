@@ -51,7 +51,7 @@ interface FileTransfer {
     /**
      * Lists files in directory available at specified URL.
      */
-    fun list(dirUrl: String): List<String>
+    fun list(dirUrl: String): List<FileEntry>
 
     /**
      * Deletes file of given name in directory available at specified URL.

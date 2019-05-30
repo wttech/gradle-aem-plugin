@@ -51,7 +51,7 @@ class FileMultiTransfer(private val aem: AemExtension) : FileTransfer {
 
     override fun upload(dirUrl: String, fileName: String, source: File) = handling(dirUrl).upload(dirUrl, fileName, source)
 
-    override fun list(dirUrl: String): List<String> = handling(dirUrl).list(dirUrl)
+    override fun list(dirUrl: String): List<FileEntry> = handling(dirUrl).list(dirUrl)
 
     override fun delete(dirUrl: String, fileName: String) = handling(dirUrl).delete(dirUrl, fileName)
 

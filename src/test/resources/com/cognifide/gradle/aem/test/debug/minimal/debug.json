@@ -51,7 +51,7 @@
         "enabled": true,
         "user": null,
         "password": null,
-        "hostChecking": false,
+        "timeout": 60000,
         "name": "sftp",
         "protocols": [
           "sftp://*"

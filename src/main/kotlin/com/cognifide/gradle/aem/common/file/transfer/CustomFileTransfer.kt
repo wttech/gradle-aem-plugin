@@ -20,7 +20,7 @@ class CustomFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
 
     private var uploader: ((dirUrl: String, fileName: String, target: File) -> Unit)? = null
 
-    private var lister: ((dirUrl: String) -> List<String>)? = null
+    private var lister: ((dirUrl: String) -> List<FileEntry>)? = null
 
     private var deleter: ((dirUrl: String, fileName: String) -> Unit)? = null
 
@@ -44,11 +44,11 @@ class CustomFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
         uploader?.invoke(dirUrl, fileName, source) ?: super.upload(dirUrl, fileName, source)
     }
 
-    fun list(callback: (dirUrl: String) -> List<String>) {
+    fun list(callback: (dirUrl: String) -> List<FileEntry>) {
         this.lister = callback
     }
 
-    override fun list(dirUrl: String): List<String> {
+    override fun list(dirUrl: String): List<FileEntry> {
         return lister?.invoke(dirUrl) ?: super.list(dirUrl)
     }
 

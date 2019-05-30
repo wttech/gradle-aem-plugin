@@ -17,7 +17,7 @@ abstract class AbstractFileTransfer(protected val aem: AemExtension) : FileTrans
         throw FileException("File transfer '$name' does not support upload operation.")
     }
 
-    override fun list(dirUrl: String): List<String> {
+    override fun list(dirUrl: String): List<FileEntry> {
         throw FileException("File transfer '$name' does not support list operation.")
     }
 

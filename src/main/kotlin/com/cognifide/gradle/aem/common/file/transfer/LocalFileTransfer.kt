@@ -22,8 +22,8 @@ class LocalFileTransfer(aem: AemExtension) : AbstractFileTransfer(aem) {
         source.copyTo(target)
     }
 
-    override fun list(dirUrl: String): List<String> {
-        return dirFiles(dirUrl).map { it.name }
+    override fun list(dirUrl: String): List<FileEntry> {
+        return dirFiles(dirUrl).map { FileEntry.of(it) }
     }
 
     override fun delete(dirUrl: String, fileName: String) {

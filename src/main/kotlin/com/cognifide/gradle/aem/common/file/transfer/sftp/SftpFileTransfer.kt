@@ -1,16 +1,17 @@
 package com.cognifide.gradle.aem.common.file.transfer.sftp
 
 import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.common.file.transfer.FileEntry
 import com.cognifide.gradle.aem.common.file.transfer.ProtocolFileTransfer
 import com.cognifide.gradle.aem.common.utils.formats.JsonPassword
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
+import java.io.File
 import org.apache.http.client.utils.URIBuilder
 import org.apache.sshd.client.SshClient
 import org.apache.sshd.client.session.ClientSession
 import org.apache.sshd.client.subsystem.sftp.SftpClient
 import org.apache.sshd.client.subsystem.sftp.SftpClientFactory
-import java.io.File
-import java.net.URL
 
 class SftpFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
 
@@ -19,14 +20,16 @@ class SftpFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
     @JsonSerialize(using = JsonPassword::class, `as` = String::class)
     var password: String? = aem.props.string("fileTransfer.sftp.password")
 
-    var timeout: Long = aem.props.long("fileTransfer.sftp.timeout") ?: Long.MAX_VALUE
+    var timeout: Long = aem.props.long("fileTransfer.sftp.timeout") ?: 60000L
 
+    @JsonIgnore
     var sshOptions: SshClient.() -> Unit = {}
 
     fun ssh(options: SshClient.() -> Unit) {
         this.sshOptions = options
     }
 
+    @JsonIgnore
     var sessionOptions: ClientSession.() -> Unit = {}
 
     fun session(options: ClientSession.() -> Unit) {
@@ -40,35 +43,49 @@ class SftpFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
         get() = listOf("sftp://*")
 
     override fun download(dirUrl: String, fileName: String, target: File) {
-        connect(dirUrl) { path ->
+        connectDir(dirUrl) { path ->
             val filePath = "$path/$fileName"
             downloader().download(stat(filePath).size, read(filePath), target)
         }
     }
 
     override fun upload(dirUrl: String, fileName: String, source: File) {
-        connect(dirUrl) { path ->
+        connectDir(dirUrl) { path ->
             val filePath = "$path/$fileName"
             uploader().upload(source, write(filePath))
         }
     }
 
-    override fun list(dirUrl: String): List<String> {
-        return connect(dirUrl) { path ->
-            listDir(openDir(path)).map { it.filename }
+    override fun list(dirUrl: String): List<FileEntry> {
+        return connectDir(dirUrl) { path ->
+            listDir(openDir(path))
+                    .filter { !FILE_NAME_IGNORED.contains(it.filename) }
+                    .map { FileEntry(it.filename, it.attributes.modifyTime.toMillis(), it.attributes.size)
+            }
         }
     }
 
     override fun delete(dirUrl: String, fileName: String) {
-        connect(dirUrl) { path ->
+        connectDir(dirUrl) { path ->
             val filePath = "$path/$fileName"
             remove(filePath)
         }
     }
 
     override fun truncate(dirUrl: String) {
-        connect(dirUrl) { path ->
-            listDir(openDir(path)).forEach { remove("$path/${it.filename}") }
+        connectDir(dirUrl) { path ->
+            listDir(openDir(path))
+                    .filter { !FILE_NAME_IGNORED.contains(it.filename) }
+                    .forEach { remove("$path/${it.filename}") }
+        }
+    }
+
+    private fun <T> connectDir(dirUrl: String, callback: SftpClient.(String) -> T): T {
+        return connect(dirUrl) { path ->
+            if (!lstat(path).isDirectory) {
+                throw SftpException("URL does not point to directory: '$dirUrl'")
+            }
+            callback(path)
         }
     }
 
@@ -97,5 +114,7 @@ class SftpFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
         const val NAME = "sftp"
 
         const val PORT_DEFAULT = 22
+
+        val FILE_NAME_IGNORED = listOf(".", "..")
     }
 }
