@@ -52,7 +52,7 @@ class SftpFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
     override fun upload(dirUrl: String, fileName: String, source: File) {
         connectDir(dirUrl) { path ->
             val filePath = "$path/$fileName"
-            uploader().upload(source, write(filePath))
+            uploader().upload(source, write(filePath)) // TODO fix it (file not exists)
         }
     }
 
