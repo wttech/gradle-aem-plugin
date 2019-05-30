@@ -1207,7 +1207,7 @@ Predefined expandable properties:
 
 Turns off local AEM instance(s) then archives them into ZIP file, then turns on again.
 
-The most recent file created by this task will be reused automatically while running task `instanceRestore`.
+The most recent file created by this task will be reused automatically while running task `instanceCreate`.
 
 Backup files are stored at path relative to project that is applying plugin `com.cognifide.aem.instance`.
 Most often it will be path: *build/aem/backup/local/xxx.backup.zip*. It could be overridden by writing:
@@ -1241,15 +1241,6 @@ aem {
     }
 }
 ```
-
-#### Task `instanceRestore`
-
-`instanceRestore` requires `-Pforce` command line switch. It destroys the instance, gets backup zip and unzip it, runs instanceUp.
-
-This task selects backup zip file based on  properties configured in `gradle.properties` file:
-* if `backup.downloadUrl` is defined, backup is restored from that URL (HTTP, SFTP, SMB, FILE protocols supported) 
-* else, if `backup.uploadUrl` is defined, backup is restored from a file uploaded to `backup.uploadUrl` that matches `backup.name` or the most recent backup uploaded to `backup.uploadUrl`
-* else, backup is restored from a local backup file that matches `backup.name` or the most recent local backup (see [instanceBackup](#task-instancebackup) for information about backup)
 
 #### Task `instanceDestroy` 
 
