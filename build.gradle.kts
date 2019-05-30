@@ -35,6 +35,7 @@ dependencies {
     implementation("biz.aQute.bnd:biz.aQute.bnd.gradle:4.0.0")
     implementation("org.zeroturnaround:zt-zip:1.11")
     implementation("net.lingala.zip4j:zip4j:1.3.2")
+    // implementation("org.apache.sshd:sshd-sftp:2.2.0")
     implementation("com.hierynomus:sshj:0.21.1")
     implementation("org.apache.httpcomponents:httpclient:4.5.4")
     implementation("org.apache.httpcomponents:httpmime:4.5.4")

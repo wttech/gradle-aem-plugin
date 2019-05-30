@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem.common.file.transfer.sftp
 
-import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.file.transfer.ProtocolFileTransfer
 import com.cognifide.gradle.aem.common.utils.formats.JsonPassword
@@ -94,7 +93,7 @@ class SftpFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
 
     private fun SFTPClient.validateDir(path: String, dirUrl: String) {
         if (lstat(path).type != FileMode.Type.DIRECTORY) {
-            throw AemException("URL is not pointing to directory: '$dirUrl'")
+            throw SftpException("URL is not pointing to directory: '$dirUrl'")
         }
     }
 

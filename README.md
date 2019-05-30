@@ -1126,13 +1126,47 @@ To prevent data loss, this unsafe task execution must be confirmed by parameter 
  
 Create AEM instance(s) at local file system. Extracts *crx-quickstart* from downloaded JAR and applies configuration according to [instance definitions](#defining-instances-via-properties-file). 
 
-##### Configuration of AEM instance source (JAR file)
+##### Configuration of AEM instance source (JAR file or backup file)
 
-To create instances specify:
+To use this task, specify required properties in ignored file *gradle.properties* at project root (protocols supported: SMB, SSH, HTTP(s) or local path, HTTP with basic auth as example):
 
-* `localInstance.jarUrl=http://[user]:[password]@[host]/[path]/cq-quickstart.jar`
-* `localInstance.licenseUrl=http://[user]:[password]@[host]/[path]/license.properties`
+To create instances from backup created by `instanceBackup` task, specify:
 
+* `localInstance.zipUrl=http://[user]:[password]@[host]/[path]/example-yyyyMMddmmss-x.x.x-backup.zip`
+
+To create instances from scratch, specify:
+
+* `localInstance.quickstart.jarUrl=[protocol]://[user]:[password]@[host]/[path]/cq-quickstart.jar`
+* `localInstance.quickstart.licenseUrl=[protocol]://[user]:[password]@[host]/[path]/license.properties`
+
+Source mode, can be adjusted by specifying parameter `-PlocalInstance.source`:
+
+* `auto` - Create instances from most recent backup (external or internal) or fallback to creating from the scratch if there is no backup available.
+* `none` - Force creating instances from the scratch.
+* `backup_external` - Force using backup available at external source (specified in `localInstance.zipUrl`).      
+* `backup_internal` - Force using internal backup (created by task `instanceBackup`).
+
+When mode is set to `auto` or `backup_internal`, then ZIP selection rule could be adjusted:
+
+```kotlin
+
+aem {
+    tasks {
+        create {
+            options {
+                zipSelector = {  // default implementation below
+                    val name = aem.props.string("localInstance.zipName") ?: ""
+                    when {
+                        name.isNotBlank() -> firstOrNull { it.name == name }
+                        else -> sortedByDescending { it.name }.firstOrNull()
+                    }
+                }
+            }
+        }
+    }
+}
+
+```
 ##### Extracted files configuration (optional)
 
 Plugin allows to override or provide extra files to local AEM instance installations.
