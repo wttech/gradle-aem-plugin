@@ -1,8 +1,8 @@
-package com.cognifide.gradle.aem.common.file.transfer
+package com.cognifide.gradle.aem.common.file.transfer.sftp
 
 import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.common.file.FileException
+import com.cognifide.gradle.aem.common.file.transfer.ProtocolFileTransfer
 import com.cognifide.gradle.aem.common.utils.formats.JsonPassword
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import java.io.File
@@ -37,8 +37,8 @@ class SftpFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
             }
         } catch (e: SFTPException) {
             when (e.statusCode) {
-                Response.StatusCode.NO_SUCH_FILE -> throw FileException("Cannot download URL. File not found '$url'.", e)
-                else -> throw FileException("Cannot download URL '$url' to file '$target' using SFTP. Cause: ${e.message}", e)
+                Response.StatusCode.NO_SUCH_FILE -> throw SftpException("Cannot download URL. File not found '$url'.", e)
+                else -> throw SftpException("Cannot download URL '$url' to file '$target'. Cause: ${e.message}", e)
             }
         }
     }
@@ -56,7 +56,7 @@ class SftpFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
                 uploader().upload(source, output)
             }
         } catch (e: SFTPException) {
-            throw FileException("Cannot upload file '$source' to URL '$url' using SFTP: ${e.statusCode}, ${e.message}", e)
+            throw SftpException("Cannot upload file '$source' to URL '$url'. Cause: ${e.message}", e)
         }
     }
 
@@ -68,8 +68,8 @@ class SftpFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
             }
         } catch (e: SFTPException) {
             when (e.statusCode) {
-                Response.StatusCode.NO_SUCH_FILE -> throw FileException("Cannot delete URL. File not found '$fileName'.", e)
-                else -> throw FileException("Cannot delete file '$fileName' using SFTP: ${e.statusCode}, ${e.message}", e)
+                Response.StatusCode.NO_SUCH_FILE -> throw SftpException("Cannot delete URL. File not found '$fileName'.", e)
+                else -> throw SftpException("Cannot delete file '$fileName'. Cause: ${e.message}", e)
             }
         }
     }

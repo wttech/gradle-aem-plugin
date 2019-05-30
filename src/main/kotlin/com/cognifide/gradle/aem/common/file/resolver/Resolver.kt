@@ -3,9 +3,9 @@ package com.cognifide.gradle.aem.common.file.resolver
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.build.DependencyOptions
 import com.cognifide.gradle.aem.common.file.FileException
-import com.cognifide.gradle.aem.common.file.transfer.HttpFileTransfer
-import com.cognifide.gradle.aem.common.file.transfer.SftpFileTransfer
-import com.cognifide.gradle.aem.common.file.transfer.SmbFileTransfer
+import com.cognifide.gradle.aem.common.file.transfer.http.HttpFileTransfer
+import com.cognifide.gradle.aem.common.file.transfer.sftp.SftpFileTransfer
+import com.cognifide.gradle.aem.common.file.transfer.smb.SmbFileTransfer
 import com.cognifide.gradle.aem.common.utils.Formats
 import com.google.common.hash.HashCode
 import java.io.File

@@ -1,8 +1,7 @@
-package com.cognifide.gradle.aem.common.file.transfer
+package com.cognifide.gradle.aem.common.file.transfer.smb
 
-import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.common.file.FileException
+import com.cognifide.gradle.aem.common.file.transfer.ProtocolFileTransfer
 import com.cognifide.gradle.aem.common.utils.formats.JsonPassword
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import java.io.File
@@ -33,12 +32,12 @@ class SmbFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
         try {
             val file = smbFile(url, fileName)
             if (!file.exists()) {
-                throw FileException("Cannot download URL '$fileUrl' using SMB. File not found!")
+                throw SmbException("Cannot download URL '$fileUrl'. File not found!")
             }
 
             downloader().download(file.length(), file.inputStream, target)
         } catch (e: SmbException) {
-            throw FileException("Cannot download URL '$fileUrl' to file '$target' using SMB. Cause: ${e.message}", e)
+            throw SmbException("Cannot download URL '$fileUrl' to file '$target'. Cause: ${e.message}", e)
         }
     }
 
@@ -48,7 +47,7 @@ class SmbFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
             validateDir(url)
             uploader().upload(source, smbFile(url, fileName).outputStream)
         } catch (e: IOException) {
-            throw FileException("Cannot upload file '$source' to URL '$url' using SMB. Cause: ${e.message}", e)
+            throw SmbException("Cannot upload file '$source' to URL '$url'. Cause: ${e.message}", e)
         }
     }
 
@@ -58,7 +57,7 @@ class SmbFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
             validateDir(url)
             return smbFile(url).listFiles().map { it.name }
         } catch (e: IOException) {
-            throw FileException("Cannot list files at URL '$url' using SMB. Cause: ${e.message}", e)
+            throw SmbException("Cannot list files at URL '$url'. Cause: ${e.message}", e)
         }
     }
 
@@ -67,7 +66,7 @@ class SmbFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
         try {
             smbFile(url, fileName).delete()
         } catch (e: IOException) {
-            throw FileException("Cannot delete files at URL '$url' using SMB. Cause: ${e.message}", e)
+            throw SmbException("Cannot delete files at URL '$url'. Cause: ${e.message}", e)
         }
     }
 
@@ -79,7 +78,7 @@ class SmbFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
                 delete(url, it.name)
             }
         } catch (e: IOException) {
-            throw FileException("Cannot truncate files at URL '$url' using SMB. Cause: ${e.message}", e)
+            throw SmbException("Cannot truncate files at URL '$url'. Cause: ${e.message}", e)
         }
     }
 
@@ -93,7 +92,7 @@ class SmbFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
 
     private fun validateDir(url: String) {
         if (!smbFile(url).isDirectory) {
-            throw AemException("URL does not point to directory: '$url'")
+            throw SmbException("URL does not point to directory: '$url'")
         }
     }
 

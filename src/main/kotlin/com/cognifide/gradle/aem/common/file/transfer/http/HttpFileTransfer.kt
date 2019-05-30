@@ -1,8 +1,8 @@
-package com.cognifide.gradle.aem.common.file.transfer
+package com.cognifide.gradle.aem.common.file.transfer.http
 
 import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.common.file.FileException
+import com.cognifide.gradle.aem.common.file.transfer.ProtocolFileTransfer
 import com.cognifide.gradle.aem.common.http.HttpClient
 import java.io.File
 import java.io.IOException
@@ -28,9 +28,9 @@ class HttpFileTransfer(aem: AemExtension, val client: HttpClient = client(aem)) 
                 downloader().download(response.entity.contentLength, asStream(response), target)
             }
         } catch (e: AemException) {
-            throw FileException("Cannot download URL '$sourceUrl' to file '$target' using HTTP(s). Cause: ${e.message}", e)
+            throw HttpException("Cannot download URL '$sourceUrl' to file '$target' using HTTP(s). Cause: ${e.message}", e)
         } catch (e: IOException) {
-            throw FileException("Cannot download URL '$sourceUrl' to file '$target' using HTTP(s). Cause: ${e.message}", e)
+            throw HttpException("Cannot download URL '$sourceUrl' to file '$target' using HTTP(s). Cause: ${e.message}", e)
         }
     }
 

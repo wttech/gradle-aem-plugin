@@ -1,6 +1,9 @@
 package com.cognifide.gradle.aem.common.file.transfer
 
 import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.common.file.transfer.http.HttpFileTransfer
+import com.cognifide.gradle.aem.common.file.transfer.sftp.SftpFileTransfer
+import com.cognifide.gradle.aem.common.file.transfer.smb.SmbFileTransfer
 
 /**
  * Allows to create separate file transfer of same type but with different settings.

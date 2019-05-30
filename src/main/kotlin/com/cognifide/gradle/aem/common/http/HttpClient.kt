@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.common.http
 
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.common.file.transfer.HttpFileTransfer
+import com.cognifide.gradle.aem.common.file.transfer.http.HttpFileTransfer
 import com.cognifide.gradle.aem.common.utils.Formats
 import com.cognifide.gradle.aem.common.utils.Utils
 import com.cognifide.gradle.aem.common.utils.formats.JsonPassword
