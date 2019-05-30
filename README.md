@@ -136,7 +136,6 @@ To see documentation for previous 5.x serie, please [click here](https://github.
      * [No OSGi services / components are registered](#no-osgi-services--components-are-registered)
      * [Caching task packageCompose](#caching-task-packagecompose)
      * [Vault tasks parallelism](#vault-tasks-parallelism)
-     * [Resolving files using SSH](#resolving-files-using-ssh)
   * [Compatibility](#compatibility)
   * [Building](#building)
   * [Contributing](#contributing)
@@ -1948,11 +1947,6 @@ because such usages will effectively forbid caching `packageCompose` task and it
 
 Vault tool current working directory cannot be easily configured, because of its API. AEM plugin is temporarily changing current working directory for Vault, then returning it back to original value.
 In case of that workaround, Vault tasks should not be run in parallel (by separated daemon processed / JVM synchronization bypassed), because of potential unpredictable behavior.
-
-### Resolving files using SSH
-
-Local instance JAR file can be provided using SSH, but SSHJ client used in implementation has an [integration issue](https://github.com/hierynomus/sshj/issues/347) related with JDK and Crypto Policy.
-As a workaround, just run build without daemon (`--no-daemon`).
 
 ## Compatibility
 

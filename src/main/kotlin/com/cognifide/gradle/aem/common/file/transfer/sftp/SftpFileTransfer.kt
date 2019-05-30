@@ -4,11 +4,13 @@ import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.file.transfer.ProtocolFileTransfer
 import com.cognifide.gradle.aem.common.utils.formats.JsonPassword
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
-import java.io.File
-import java.io.IOException
-import net.schmizz.sshj.SSHClient
-import net.schmizz.sshj.sftp.*
 import org.apache.http.client.utils.URIBuilder
+import org.apache.sshd.client.SshClient
+import org.apache.sshd.client.session.ClientSession
+import org.apache.sshd.client.subsystem.sftp.SftpClient
+import org.apache.sshd.client.subsystem.sftp.SftpClientFactory
+import java.io.File
+import java.net.URL
 
 class SftpFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
 
@@ -17,7 +19,19 @@ class SftpFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
     @JsonSerialize(using = JsonPassword::class, `as` = String::class)
     var password: String? = aem.props.string("fileTransfer.sftp.password")
 
-    var hostChecking: Boolean = aem.props.boolean("fileTransfer.sftp.hostChecking") ?: false
+    var timeout: Long = aem.props.long("fileTransfer.sftp.timeout") ?: Long.MAX_VALUE
+
+    var sshOptions: SshClient.() -> Unit = {}
+
+    fun ssh(options: SshClient.() -> Unit) {
+        this.sshOptions = options
+    }
+
+    var sessionOptions: ClientSession.() -> Unit = {}
+
+    fun session(options: ClientSession.() -> Unit) {
+        this.sessionOptions = options
+    }
 
     override val name: String
         get() = NAME
@@ -26,116 +40,58 @@ class SftpFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
         get() = listOf("sftp://*")
 
     override fun download(dirUrl: String, fileName: String, target: File) {
-        val url = dirUrl.trimSlash()
-        try {
-            connect(url) { path ->
-                val remoteFile = open(fullPath(path, fileName), setOf(OpenMode.READ))
-                val input = remoteFile.RemoteFileInputStream()
-
-                downloader().download(remoteFile.length(), input, target)
-            }
-        } catch (e: SFTPException) {
-            when (e.statusCode) {
-                Response.StatusCode.NO_SUCH_FILE -> throw SftpException("Cannot download URL. File not found '$url'.", e)
-                else -> throw SftpException("Cannot download URL '$url' to file '$target'. Cause: ${e.message}", e)
-            }
+        connect(dirUrl) { path ->
+            val filePath = "$path/$fileName"
+            downloader().download(stat(filePath).size, read(filePath), target)
         }
     }
 
     override fun upload(dirUrl: String, fileName: String, source: File) {
-        val url = dirUrl.trimSlash()
-        try {
-            connect(url) { path ->
-                validateDir(path, url)
-
-                open(fullPath(path, fileName), setOf(OpenMode.CREAT)).close()
-                val remoteFile = open(fullPath(path, fileName), setOf(OpenMode.WRITE))
-                val output = remoteFile.RemoteFileOutputStream()
-
-                uploader().upload(source, output)
-            }
-        } catch (e: SFTPException) {
-            throw SftpException("Cannot upload file '$source' to URL '$url'. Cause: ${e.message}", e)
-        }
-    }
-
-    override fun delete(dirUrl: String, fileName: String) {
-        val url = dirUrl.trimSlash()
-        try {
-            connect(url) { path ->
-                rm(fullPath(path, fileName))
-            }
-        } catch (e: SFTPException) {
-            when (e.statusCode) {
-                Response.StatusCode.NO_SUCH_FILE -> throw SftpException("Cannot delete URL. File not found '$fileName'.", e)
-                else -> throw SftpException("Cannot delete file '$fileName'. Cause: ${e.message}", e)
-            }
+        connect(dirUrl) { path ->
+            val filePath = "$path/$fileName"
+            uploader().upload(source, write(filePath))
         }
     }
 
     override fun list(dirUrl: String): List<String> {
-        val uploadUrl = dirUrl.trimSlash()
-        return connect(uploadUrl) { path ->
-            validateDir(path, dirUrl)
-            ls(path).map { it.name }
+        return connect(dirUrl) { path ->
+            listDir(openDir(path)).map { it.filename }
+        }
+    }
+
+    override fun delete(dirUrl: String, fileName: String) {
+        connect(dirUrl) { path ->
+            val filePath = "$path/$fileName"
+            remove(filePath)
         }
     }
 
     override fun truncate(dirUrl: String) {
-        val uploadUrl = dirUrl.trimSlash()
-        connect(uploadUrl) { path ->
-            validateDir(path, dirUrl)
-            ls(path).forEach { rm(it.path) }
+        connect(dirUrl) { path ->
+            listDir(openDir(path)).forEach { remove("$path/${it.filename}") }
         }
     }
 
-    private fun String.trimSlash() = trimEnd('/')
+    fun <T> connect(url: String, callback: SftpClient.(String) -> T): T {
+        val urlConfig = URIBuilder(url)
+        val user = if (!user.isNullOrBlank()) user else urlConfig.userInfo
+        val port = if (urlConfig.port >= 0) urlConfig.port else PORT_DEFAULT
+        val host = urlConfig.host
 
-    private fun SFTPClient.validateDir(path: String, dirUrl: String) {
-        if (lstat(path).type != FileMode.Type.DIRECTORY) {
-            throw SftpException("URL is not pointing to directory: '$dirUrl'")
-        }
-    }
+        SshClient.setUpDefaultClient().use { client ->
+            client.apply(sshOptions)
+            client.start()
+            client.connect(user, host, port).apply { await(timeout) }.session.use { session ->
+                session.apply(sessionOptions)
+                session.addPasswordIdentity(password)
+                session.auth().await(timeout)
 
-    @Suppress("MagicNumber")
-    private fun <T> connect(uploadUrl: String, action: SFTPClient.(path: String) -> T): T {
-        val url = URIBuilder(uploadUrl)
-        val ssh = SSHClient()
-
-        ssh.loadKnownHosts()
-
-        if (!hostChecking) {
-            ssh.addHostKeyVerifier { _, _, _ -> true }
-        }
-
-        val user = if (!user.isNullOrBlank()) user else url.userInfo
-        val port = if (url.port >= 0) url.port else PORT_DEFAULT
-
-        try {
-            ssh.connect(url.host, port)
-            authenticate(mapOf(
-                    "public key" to { ssh.authPublickey(user) },
-                    "password" to { ssh.authPassword(user, password) }
-            ))
-            return ssh.newSFTPClient().use { it.action(url.path) }
-        } finally {
-            ssh.disconnect()
-        }
-    }
-
-    @Suppress("EmptyCatchBlock")
-    private fun authenticate(methods: Map<String, () -> Unit>) {
-        for ((name, method) in methods) {
-            try {
-                method()
-                return
-            } catch (e: IOException) {
-                aem.logger.debug("Cannot authenticate SFTP using method '$name'", e)
+                SftpClientFactory.instance().createSftpClient(session).use { sftp ->
+                    return callback(sftp, urlConfig.path).also { client.stop() }
+                }
             }
         }
     }
-
-    private fun fullPath(path: String, name: String) = "$path/$name"
 
     companion object {
         const val NAME = "sftp"
