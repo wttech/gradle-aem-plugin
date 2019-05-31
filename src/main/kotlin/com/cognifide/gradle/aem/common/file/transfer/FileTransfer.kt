@@ -20,7 +20,7 @@ interface FileTransfer {
     fun handles(fileUrl: String): Boolean
 
     /**
-     * Downloads file of given name from directory available at specified URL.
+     * Downloads file with given name from directory available at specified URL.
      */
     fun downloadFrom(dirUrl: String, fileName: String, target: File)
 
@@ -82,4 +82,19 @@ interface FileTransfer {
      * Deletes all files in directory available at specified URL.
      */
     fun truncate(dirUrl: String)
+
+    /**
+     * Checks if file at URL exists.
+     */
+    fun exists(fileUrl: String): Boolean {
+        val dirUrl = fileUrl.substringBeforeLast("/")
+        val fileName = fileUrl.substringAfterLast("/")
+
+        return exists(dirUrl, fileName)
+    }
+
+    /**
+     * Checks if file  with given name exists in directory at specified URL.
+     */
+    fun exists(dirUrl: String, fileName: String): Boolean
 }

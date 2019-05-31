@@ -8,8 +8,8 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import java.io.File
 import java.io.IOException
 import jcifs.smb.NtlmPasswordAuthentication
-import jcifs.smb.SmbException
 import jcifs.smb.SmbFile
+import org.apache.commons.lang3.StringUtils
 
 class SmbFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
 
@@ -27,86 +27,98 @@ class SmbFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
         get() = listOf("smb://*")
 
     override fun downloadFrom(dirUrl: String, fileName: String, target: File) {
-        val url = dirUrl.appendSlash()
         val fileUrl = "$dirUrl/$fileName"
-
         try {
-            validateDir(dirUrl)
-
-            val file = smbFile(url, fileName)
-            if (!file.exists()) {
-                throw SmbFileException("Cannot download URL '$fileUrl'. File not found!")
+            file(dirUrl, fileName).apply {
+                aem.logger.info("Downloading file from URL '$fileUrl'")
+                downloader().download(length(), inputStream, target)
             }
-
-            downloader().download(file.length(), file.inputStream, target)
-        } catch (e: SmbException) {
-            throw SmbFileException("Cannot download URL '$fileUrl' to file '$target'. Cause: ${e.message}", e)
+        } catch (e: IOException) {
+            throw SmbFileException("Cannot download file from URL '$fileUrl'")
         }
     }
 
     override fun uploadTo(dirUrl: String, fileName: String, source: File) {
-        val url = dirUrl.appendSlash()
-        try {
-            validateDir(url)
-            uploader().upload(source, smbFile(url, fileName).outputStream)
-        } catch (e: IOException) {
-            throw SmbFileException("Cannot upload file '$source' to URL '$url'. Cause: ${e.message}", e)
-        }
-    }
+        val fileUrl = "$dirUrl/$fileName"
 
-    override fun list(dirUrl: String): List<FileEntry> {
-        val url = dirUrl.appendSlash()
         try {
-            validateDir(url)
-            return smbFile(url).listFiles().map { FileEntry(it.name, it.lastModified(), it.length()) }
+            file(dirUrl, fileName).apply {
+                aem.logger.info("Uploading file to URL '$fileUrl'")
+                uploader().upload(source, outputStream)
+            }
         } catch (e: IOException) {
-            throw SmbFileException("Cannot list files at URL '$url'. Cause: ${e.message}", e)
+            throw SmbFileException("Cannot upload file '$source' to URL '$fileUrl'", e)
         }
     }
 
     override fun deleteFrom(dirUrl: String, fileName: String) {
-        val url = dirUrl.appendSlash()
+        val fileUrl = "$dirUrl/$fileName"
+
+        file(dirUrl, fileName).apply {
+            try {
+                aem.logger.info("Deleting file at URL '$fileUrl'")
+                delete()
+            } catch (e: IOException) {
+                throw SmbFileException("Cannot delete file at URL '$fileUrl'", e)
+            }
+        }
+    }
+
+    override fun list(dirUrl: String): List<FileEntry> = dir(dirUrl).run {
         try {
-            validateDir(dirUrl)
-            smbFile(url, fileName).delete()
+            aem.logger.info("Listing files at URL '$dirUrl'")
+            dirFiles().map { FileEntry(it.name, it.lastModified(), it.length()) }
         } catch (e: IOException) {
-            throw SmbFileException("Cannot delete files at URL '$url'. Cause: ${e.message}", e)
+            throw SmbFileException("Cannot list files in directory at URL '$dirUrl'", e)
         }
     }
 
     override fun truncate(dirUrl: String) {
-        val url = dirUrl.appendSlash()
-        try {
-            validateDir(url)
-            smbFile(url).listFiles().forEach {
-                deleteFrom(url, it.name)
+        dir(dirUrl).apply {
+            try {
+                aem.logger.info("Truncating files at URL '$dirUrl'")
+                dirFiles().forEach { it.delete() }
+            } catch (e: IOException) {
+                throw SmbFileException("Cannot truncate directory at URL '$dirUrl'", e)
             }
+        }
+    }
+
+    override fun exists(dirUrl: String, fileName: String): Boolean {
+        val fileUrl = "$dirUrl/$fileName"
+        aem.logger.info("Checking file existence at URL '$fileUrl'")
+        try {
+            return file(dirUrl, fileName).isFile
         } catch (e: IOException) {
-            throw SmbFileException("Cannot truncate files at URL '$url'. Cause: ${e.message}", e)
+            throw SmbFileException("Cannot check file existence at URL '$fileUrl'", e)
         }
     }
 
-    private fun smbFile(dirUrl: String, fileName: String = ""): SmbFile {
+    fun file(dirUrl: String, fileName: String): SmbFile {
+        val dirUrlNormalized = StringUtils.appendIfMissing(dirUrl, "/")
+
         return if (!user.isNullOrBlank() && !password.isNullOrBlank()) {
-            SmbFile(dirUrl, fileName, NtlmPasswordAuthentication(domain, user, password))
+            SmbFile(dirUrlNormalized, fileName, NtlmPasswordAuthentication(domain, user, password))
         } else {
-            SmbFile(dirUrl, fileName)
+            SmbFile(dirUrlNormalized, fileName)
+        }.apply {
+            useCaches = false
         }
     }
 
-    private fun validateDir(url: String) {
-        if (!smbFile(url).isDirectory) {
-            throw SmbFileException("URL does not point to directory: '$url'")
+    fun dir(dirUrl: String): SmbFile {
+        return file(dirUrl, "").apply {
+            try {
+                if (!isDirectory) {
+                    throw SmbFileException("Path at URL '$dirUrl' is not a directory.")
+                }
+            } catch (e: IOException) {
+                throw SmbFileException("Directory at URL '$dirUrl' does not exist.", e)
+            }
         }
     }
 
-    // TODO fun <T> connectDir() // same as in sftp
-
-    private fun String.appendSlash() = if (this.endsWith('/')) {
-        this
-    } else {
-        "$this/"
-    }
+    private fun SmbFile.dirFiles(): List<SmbFile> = (listFiles() ?: arrayOf()).filter { it.isFile }
 
     companion object {
         const val NAME = "smb"

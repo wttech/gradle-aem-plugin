@@ -13,6 +13,8 @@ import org.apache.sshd.client.SshClient
 import org.apache.sshd.client.session.ClientSession
 import org.apache.sshd.client.subsystem.sftp.SftpClient
 import org.apache.sshd.client.subsystem.sftp.SftpClientFactory
+import org.apache.sshd.common.subsystem.sftp.SftpConstants
+import org.apache.sshd.common.subsystem.sftp.SftpException
 
 class SftpFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
 
@@ -44,23 +46,40 @@ class SftpFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
         get() = listOf("sftp://*")
 
     override fun downloadFrom(dirUrl: String, fileName: String, target: File) {
+        val fileUrl = "$dirUrl/$fileName"
+
         connectDir(dirUrl) { dirPath ->
             try {
+                aem.logger.info("Downloading file from URL '$fileUrl'")
                 val filePath = "$dirPath/$fileName"
                 downloader().download(stat(filePath).size, read(filePath), target)
             } catch (e: IOException) {
-                throw SftpFileException("Cannot download file from URL '$dirUrl/$fileName'")
+                throw SftpFileException("Cannot download file from URL '$fileUrl'")
             }
         }
     }
 
     override fun uploadTo(dirUrl: String, fileName: String, source: File) {
+        val fileUrl = "$dirUrl/$fileName"
+
         connectDir(dirUrl) { dirPath ->
             try {
+                aem.logger.info("Uploading file to URL '$fileUrl'")
                 val filePath = "$dirPath/$fileName"
                 uploader().upload(source, write(filePath))
             } catch (e: IOException) {
-                throw SftpFileException("Cannot upload file '$source' to URL '$dirUrl/$fileName'", e)
+                throw SftpFileException("Cannot upload file '$source' to URL '$fileUrl'", e)
+            }
+        }
+    }
+
+    override fun deleteFrom(dirUrl: String, fileName: String) {
+        connectDir(dirUrl) { dirPath ->
+            try {
+                val filePath = "$dirPath/$fileName"
+                remove(filePath)
+            } catch (e: IOException) {
+                throw SftpFileException("Cannot delete file at URL '$dirUrl/$fileName'", e)
             }
         }
     }
@@ -68,45 +87,38 @@ class SftpFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
     override fun list(dirUrl: String): List<FileEntry> {
         return connectDir(dirUrl) { dirPath ->
             try {
-                listDir(openDir(dirPath))
-                        .filter { it.attributes.isRegularFile }
-                        .map { FileEntry(it.filename, it.attributes.modifyTime.toMillis(), it.attributes.size) }
+                aem.logger.info("Listing files at URL '$dirUrl'")
+                dirFiles(dirPath).map { FileEntry(it.filename, it.attributes.modifyTime.toMillis(), it.attributes.size) }
             } catch (e: IOException) {
                 throw SftpFileException("Cannot list files in directory at URL '$dirUrl'", e)
             }
         }
     }
 
-    override fun deleteFrom(dirUrl: String, fileName: String) {
-        connectDir(dirUrl) { dirPath ->
-            val filePath = "$dirPath/$fileName"
-            remove(filePath)
-        }
-    }
-
     override fun truncate(dirUrl: String) {
         connectDir(dirUrl) { dirPath ->
             try {
-                listDir(openDir(dirPath))
-                        .filter { it.attributes.isRegularFile }
-                        .forEach { remove("$dirPath/${it.filename}") }
+                aem.logger.info("Truncating files at URL '$dirUrl'")
+                dirFiles(dirPath).forEach { remove("$dirPath/${it.filename}") }
             } catch (e: IOException) {
                 throw SftpFileException("Cannot truncate directory at URL '$dirUrl'", e)
             }
         }
     }
 
-    private fun <T> connectDir(dirUrl: String, callback: SftpClient.(String) -> T): T {
-        return connect(dirUrl) { dirPath ->
-            try {
-                if (!lstat(dirPath).isDirectory) {
-                    throw SftpFileException("Path at URL '$dirUrl' is not a directory.")
-                }
-            } catch (e: IOException) {
-                throw SftpFileException("Directory at URL '$dirUrl' does not exist.", e)
-            }
+    override fun exists(dirUrl: String, fileName: String): Boolean {
+        val fileUrl = "$dirUrl/$fileName"
 
-            callback(dirPath)
+        return connectDir(dirUrl) { dirPath ->
+            try {
+                aem.logger.info("Checking file existence at URL '$fileUrl'")
+                stat("$dirPath/$fileName").isRegularFile
+            } catch (e: IOException) {
+                when {
+                    e is SftpException && STATUS_NOT_EXISTS.contains(e.status) -> false
+                    else -> throw e
+                }
+            }
         }
     }
 
@@ -140,9 +152,30 @@ class SftpFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
         }
     }
 
+    fun <T> connectDir(dirUrl: String, callback: SftpClient.(String) -> T): T {
+        return connect(dirUrl) { dirPath ->
+            try {
+                if (!lstat(dirPath).isDirectory) {
+                    throw SftpFileException("Path at URL '$dirUrl' is not a directory.")
+                }
+            } catch (e: IOException) {
+                throw SftpFileException("Directory at URL '$dirUrl' does not exist.", e)
+            }
+
+            callback(dirPath)
+        }
+    }
+
+    private fun SftpClient.dirFiles(dirPath: String) = listDir(openDir(dirPath)).filter { it.attributes.isRegularFile }
+
     companion object {
         const val NAME = "sftp"
 
         const val PORT_DEFAULT = 22
+
+        val STATUS_NOT_EXISTS = arrayOf(
+                SftpConstants.SSH_FX_NO_SUCH_FILE,
+                SftpConstants.SSH_FX_NO_SUCH_PATH
+        )
     }
 }

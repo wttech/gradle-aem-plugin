@@ -2,6 +2,9 @@ package com.cognifide.gradle.aem.common.file.transfer
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.file.FileException
+import com.cognifide.gradle.aem.common.file.transfer.generic.CustomFileTransfer
+import com.cognifide.gradle.aem.common.file.transfer.generic.LocalFileTransfer
+import com.cognifide.gradle.aem.common.file.transfer.generic.UrlFileTransfer
 import com.cognifide.gradle.aem.common.file.transfer.http.HttpFileTransfer
 import com.cognifide.gradle.aem.common.file.transfer.sftp.SftpFileTransfer
 import com.cognifide.gradle.aem.common.file.transfer.smb.SmbFileTransfer
@@ -48,29 +51,34 @@ class FileTransferManager(private val aem: AemExtension) : FileTransfer {
     private val all = (custom + arrayOf(http, sftp, smb, url, local)).filter { it.enabled }
 
     /**
-     * Downloads file of given name from directory at specified URL using auto-determined file transfer type.
+     * Downloads file of given name from directory at specified URL.
      */
     override fun downloadFrom(dirUrl: String, fileName: String, target: File) = handling(dirUrl).downloadFrom(dirUrl, fileName, target)
 
     /**
-     * Uploads file to directory at specified URL and set given name using auto-determined file transfer type.
+     * Uploads file to directory at specified URL and set given name.
      */
     override fun uploadTo(dirUrl: String, fileName: String, source: File) = handling(dirUrl).uploadTo(dirUrl, fileName, source)
 
     /**
-     * Lists files in directory available at specified URL using auto-determined file transfer type.
+     * Lists files in directory available at specified URL.
      */
     override fun list(dirUrl: String): List<FileEntry> = handling(dirUrl).list(dirUrl)
 
     /**
-     * Deletes file of given name in directory at specified URL using auto-determined file transfer type.
+     * Deletes file of given name in directory at specified URL.
      */
     override fun deleteFrom(dirUrl: String, fileName: String) = handling(dirUrl).deleteFrom(dirUrl, fileName)
 
     /**
-     * Deletes all files in directory available at specified URL using auto-determined file transfer type.
+     * Deletes all files in directory available at specified URL.
      */
     override fun truncate(dirUrl: String) = handling(dirUrl).truncate(dirUrl)
+
+    /**
+     * Checks if file with given name exists in directory at specified URL.
+     */
+    override fun exists(dirUrl: String, fileName: String) = handling(dirUrl).exists(dirUrl, fileName)
 
     /**
      * Check if there is any file transfer supporting specified URL.
@@ -130,6 +138,6 @@ class FileTransferManager(private val aem: AemExtension) : FileTransfer {
         get() = true
 
     companion object {
-        const val NAME = "multi"
+        const val NAME = "manager"
     }
 }

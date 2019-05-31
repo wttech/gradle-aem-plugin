@@ -1,6 +1,8 @@
-package com.cognifide.gradle.aem.common.file.transfer
+package com.cognifide.gradle.aem.common.file.transfer.generic
 
 import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.common.file.transfer.AbstractFileTransfer
+import com.cognifide.gradle.aem.common.file.transfer.FileEntry
 import java.io.File
 import org.gradle.util.GFileUtils
 
@@ -13,13 +15,13 @@ class LocalFileTransfer(aem: AemExtension) : AbstractFileTransfer(aem) {
 
     override fun downloadFrom(dirUrl: String, fileName: String, target: File) {
         GFileUtils.mkdirs(target.parentFile)
-        file(dirUrl, fileName).copyTo(target)
+        file(dirUrl, fileName).apply { inputStream().use { downloader().download(length(), it, target) } }
     }
 
     override fun uploadTo(dirUrl: String, fileName: String, source: File) {
         val target = file(dirUrl, fileName)
         GFileUtils.mkdirs(target.parentFile)
-        source.copyTo(target)
+        target.outputStream().use { uploader().upload(source, it) }
     }
 
     override fun list(dirUrl: String): List<FileEntry> {
@@ -34,9 +36,13 @@ class LocalFileTransfer(aem: AemExtension) : AbstractFileTransfer(aem) {
         dirFiles(dirUrl).forEach { it.delete() }
     }
 
+    override fun exists(dirUrl: String, fileName: String): Boolean {
+        return file(dirUrl, fileName).isFile
+    }
+
     private fun file(dirUrl: String, fileName: String) = aem.project.file("$dirUrl/$fileName")
 
-    private fun dirFiles(dirUrl: String): Array<out File> = (aem.project.file(dirUrl).listFiles() ?: arrayOf())
+    private fun dirFiles(dirUrl: String) = (aem.project.file(dirUrl).listFiles() ?: arrayOf()).filter { it.isFile }
 
     companion object {
         const val NAME = "local"

@@ -10,23 +10,27 @@ abstract class AbstractFileTransfer(protected val aem: AemExtension) : FileTrans
     override var enabled: Boolean = true
 
     override fun downloadFrom(dirUrl: String, fileName: String, target: File) {
-        throw FileException("File transfer '$name' does not support download operation.")
+        throw FileException("File transfer '$name' does not support 'download' operation.")
     }
 
     override fun uploadTo(dirUrl: String, fileName: String, source: File) {
-        throw FileException("File transfer '$name' does not support upload operation.")
+        throw FileException("File transfer '$name' does not support 'upload' operation.")
     }
 
     override fun deleteFrom(dirUrl: String, fileName: String) {
-        throw FileException("File transfer '$name' does not support delete operation.")
+        throw FileException("File transfer '$name' does not support 'delete' operation.")
     }
 
     override fun list(dirUrl: String): List<FileEntry> {
-        throw FileException("File transfer '$name' does not support list operation.")
+        throw FileException("File transfer '$name' does not support 'list' operation.")
     }
 
     override fun truncate(dirUrl: String) {
-        throw FileException("File transfer '$name' does not support truncate operation.")
+        throw FileException("File transfer '$name' does not support 'truncate' operation.")
+    }
+
+    override fun exists(dirUrl: String, fileName: String): Boolean {
+        throw FileException("File transfer '$name' does not support 'exists' operation.")
     }
 
     fun downloader() = FileDownloader(aem)
