@@ -10,8 +10,9 @@ import com.cognifide.gradle.aem.common.file.transfer.sftp.SftpFileTransfer
 import com.cognifide.gradle.aem.common.file.transfer.smb.SmbFileTransfer
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
+import org.apache.commons.io.FilenameUtils
 
-class FileTransferManager(aem: AemExtension) : AbstractFileTransfer(aem) {
+class FileTransferManager(private val aem: AemExtension) : FileTransfer {
 
     @JsonIgnore
     val factory = FileTransferFactory(aem)
@@ -49,6 +50,11 @@ class FileTransferManager(aem: AemExtension) : AbstractFileTransfer(aem) {
     private val custom = mutableListOf<CustomFileTransfer>()
 
     private val all = (custom + arrayOf(http, sftp, smb, url, local)).filter { it.enabled }
+
+    /**
+     * Downloads file from specified URL to temporary directory with preserving file name.
+     */
+    override fun download(fileUrl: String) = download(fileUrl, aem.temporaryFile(FilenameUtils.getName(fileUrl)))
 
     /**
      * Downloads file of given name from directory at specified URL.
@@ -128,6 +134,10 @@ class FileTransferManager(aem: AemExtension) : AbstractFileTransfer(aem) {
         smb.password = password
         smb.domain = domain
     }
+
+    @get:JsonIgnore
+    override val enabled: Boolean
+        get() = true
 
     @get:JsonIgnore
     override val name: String

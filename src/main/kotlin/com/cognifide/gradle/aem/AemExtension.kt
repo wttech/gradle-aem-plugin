@@ -355,9 +355,11 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
      * Get CRX package defined to be built (could not yet exist).
      */
     @Suppress("VariableNaming")
+    @get:JsonIgnore
     val `package`: File
         get() = tasks.get(PackageCompose.NAME, PackageCompose::class.java).archiveFile.get().asFile
 
+    @get:JsonIgnore
     val pkg: File
         get() = `package`
 
