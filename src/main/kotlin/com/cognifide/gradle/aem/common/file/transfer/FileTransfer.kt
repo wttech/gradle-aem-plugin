@@ -28,9 +28,7 @@ interface FileTransfer {
      * Downloads file from specified URL.
      */
     fun download(fileUrl: String, target: File) {
-        val dirUrl = fileUrl.substringBeforeLast("/")
-        val fileName = fileUrl.substringAfterLast("/")
-
+        val (dirUrl, fileName) = splitFileUrl(fileUrl)
         downloadFrom(dirUrl, fileName, target)
     }
 
@@ -52,9 +50,7 @@ interface FileTransfer {
      * Uploads file to specified URL.
      */
     fun upload(fileUrl: String, source: File) {
-        val dirUrl = fileUrl.substringBeforeLast("/")
-        val fileName = fileUrl.substringAfterLast("/")
-
+        val (dirUrl, fileName) = splitFileUrl(fileUrl)
         uploadTo(dirUrl, fileName, source)
     }
 
@@ -67,9 +63,7 @@ interface FileTransfer {
      * Deletes file available at specified URL.
      */
     fun delete(fileUrl: String) {
-        val dirUrl = fileUrl.substringBeforeLast("/")
-        val fileName = fileUrl.substringAfterLast("/")
-
+        val (dirUrl, fileName) = splitFileUrl(fileUrl)
         deleteFrom(dirUrl, fileName)
     }
 
@@ -84,17 +78,35 @@ interface FileTransfer {
     fun truncate(dirUrl: String)
 
     /**
-     * Checks if file at URL exists.
+     * Checks if file at specified URL exists.
      */
     fun exists(fileUrl: String): Boolean {
-        val dirUrl = fileUrl.substringBeforeLast("/")
-        val fileName = fileUrl.substringAfterLast("/")
-
+        val (dirUrl, fileName) = splitFileUrl(fileUrl)
         return exists(dirUrl, fileName)
     }
 
     /**
-     * Checks if file  with given name exists in directory at specified URL.
+     * Checks if file with given name exists in directory at specified URL.
      */
-    fun exists(dirUrl: String, fileName: String): Boolean
+    fun exists(dirUrl: String, fileName: String): Boolean = stat(dirUrl, fileName) != null
+
+    /**
+     * Gets file status of given name in directory at specified URL.
+     */
+    fun stat(dirUrl: String, fileName: String): FileEntry?
+
+    /**
+     * Gets file status at specified URL.
+     */
+    fun stat(fileUrl: String): FileEntry? {
+        val (dirUrl, fileName) = splitFileUrl(fileUrl)
+        return stat(dirUrl, fileName)
+    }
+
+    private fun splitFileUrl(fileUrl: String): Pair<String, String> {
+        val dirUrl = fileUrl.substringBeforeLast("/")
+        val fileName = fileUrl.substringAfterLast("/")
+
+        return dirUrl to fileName
+    }
 }

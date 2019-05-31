@@ -36,8 +36,10 @@ class LocalFileTransfer(aem: AemExtension) : AbstractFileTransfer(aem) {
         dirFiles(dirUrl).forEach { it.delete() }
     }
 
-    override fun exists(dirUrl: String, fileName: String): Boolean {
-        return file(dirUrl, fileName).isFile
+    override fun stat(dirUrl: String, fileName: String): FileEntry? {
+        return file(dirUrl, fileName)
+                .takeIf { it.isFile }
+                ?.run { FileEntry(fileName, length(), lastModified()) }
     }
 
     private fun file(dirUrl: String, fileName: String) = aem.project.file("$dirUrl/$fileName")

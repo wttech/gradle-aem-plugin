@@ -67,7 +67,7 @@ class SmbFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
     override fun list(dirUrl: String): List<FileEntry> = dir(dirUrl).run {
         try {
             aem.logger.info("Listing files at URL '$dirUrl'")
-            dirFiles().map { FileEntry(it.name, it.lastModified(), it.length()) }
+            dirFiles().map { FileEntry(it.name, it.length(), it.lastModified()) }
         } catch (e: IOException) {
             throw SmbFileException("Cannot list files in directory at URL '$dirUrl'", e)
         }
@@ -84,13 +84,15 @@ class SmbFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
         }
     }
 
-    override fun exists(dirUrl: String, fileName: String): Boolean {
+    override fun stat(dirUrl: String, fileName: String): FileEntry? {
         val fileUrl = "$dirUrl/$fileName"
-        aem.logger.info("Checking file existence at URL '$fileUrl'")
+        aem.logger.info("Checking file status at URL '$fileUrl'")
         try {
-            return file(dirUrl, fileName).isFile
+            return file(dirUrl, fileName)
+                    .takeIf { it.isFile }
+                    ?.run { FileEntry(fileName, length(), lastModified()) }
         } catch (e: IOException) {
-            throw SmbFileException("Cannot check file existence at URL '$fileUrl'", e)
+            throw SmbFileException("Cannot check file status at URL '$fileUrl'", e)
         }
     }
 

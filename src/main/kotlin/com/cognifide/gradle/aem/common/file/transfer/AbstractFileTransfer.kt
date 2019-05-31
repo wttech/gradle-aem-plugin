@@ -21,16 +21,16 @@ abstract class AbstractFileTransfer(protected val aem: AemExtension) : FileTrans
         throw FileException("File transfer '$name' does not support 'delete' operation.")
     }
 
-    override fun list(dirUrl: String): List<FileEntry> {
-        throw FileException("File transfer '$name' does not support 'list' operation.")
-    }
-
     override fun truncate(dirUrl: String) {
         throw FileException("File transfer '$name' does not support 'truncate' operation.")
     }
 
-    override fun exists(dirUrl: String, fileName: String): Boolean {
-        throw FileException("File transfer '$name' does not support 'exists' operation.")
+    override fun list(dirUrl: String): List<FileEntry> {
+        throw FileException("File transfer '$name' does not support 'list' operation.")
+    }
+
+    override fun stat(dirUrl: String, fileName: String): FileEntry? {
+        throw FileException("File transfer '$name' does not support 'stat' operation.")
     }
 
     fun downloader() = FileDownloader(aem)

@@ -76,9 +76,9 @@ class FileTransferManager(private val aem: AemExtension) : FileTransfer {
     override fun truncate(dirUrl: String) = handling(dirUrl).truncate(dirUrl)
 
     /**
-     * Checks if file with given name exists in directory at specified URL.
+     * Gets file status of given name in directory at specified URL.
      */
-    override fun exists(dirUrl: String, fileName: String) = handling(dirUrl).exists(dirUrl, fileName)
+    override fun stat(dirUrl: String, fileName: String) = handling(dirUrl).stat(dirUrl, fileName)
 
     /**
      * Check if there is any file transfer supporting specified URL.

@@ -21,10 +21,10 @@ class UrlFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
         try {
             aem.logger.info("Downloading: $fileUrl -> ${target.absolutePath}")
 
-            val connection = URL(fileUrl).openConnection()
-            connection.useCaches = false
-
-            downloader().download(connection.contentLengthLong, connection.inputStream, target)
+            URL(fileUrl).openConnection().apply {
+                useCaches = false
+                inputStream.use { downloader().download(contentLengthLong, it, target) }
+            }
         } catch (e: IOException) {
             throw FileException("Cannot download URL '$fileUrl' to file '$target'.", e)
         }

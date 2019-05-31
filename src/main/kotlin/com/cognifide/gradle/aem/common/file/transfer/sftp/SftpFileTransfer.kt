@@ -88,7 +88,7 @@ class SftpFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
         return connectDir(dirUrl) { dirPath ->
             try {
                 aem.logger.info("Listing files at URL '$dirUrl'")
-                dirFiles(dirPath).map { FileEntry(it.filename, it.attributes.modifyTime.toMillis(), it.attributes.size) }
+                dirFiles(dirPath).map { FileEntry(it.filename, it.attributes.size, it.attributes.modifyTime.toMillis()) }
             } catch (e: IOException) {
                 throw SftpFileException("Cannot list files in directory at URL '$dirUrl'", e)
             }
@@ -106,17 +106,19 @@ class SftpFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
         }
     }
 
-    override fun exists(dirUrl: String, fileName: String): Boolean {
+    override fun stat(dirUrl: String, fileName: String): FileEntry? {
         val fileUrl = "$dirUrl/$fileName"
 
         return connectDir(dirUrl) { dirPath ->
             try {
-                aem.logger.info("Checking file existence at URL '$fileUrl'")
-                stat("$dirPath/$fileName").isRegularFile
+                aem.logger.info("Checking file status at URL '$fileUrl'")
+                stat("$dirPath/$fileName").takeIf { it.isRegularFile }?.run {
+                    FileEntry(fileName, size, modifyTime.toMillis())
+                }
             } catch (e: IOException) {
                 when {
-                    e is SftpException && STATUS_NOT_EXISTS.contains(e.status) -> false
-                    else -> throw e
+                    e is SftpException && STATUS_NOT_EXISTS.contains(e.status) -> null
+                    else -> throw SftpFileException("Cannot check file status at URL '$fileUrl'", e)
                 }
             }
         }
