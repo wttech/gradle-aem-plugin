@@ -19,7 +19,7 @@ class HttpFileTransfer(aem: AemExtension, val client: HttpClient = client(aem)) 
     override val protocols: List<String>
         get() = listOf("http://*", "https://*")
 
-    override fun download(dirUrl: String, fileName: String, target: File) {
+    override fun downloadFrom(dirUrl: String, fileName: String, target: File) {
         val sourceUrl = "$dirUrl/$fileName"
 
         try {
@@ -28,9 +28,9 @@ class HttpFileTransfer(aem: AemExtension, val client: HttpClient = client(aem)) 
                 downloader().download(response.entity.contentLength, asStream(response), target)
             }
         } catch (e: AemException) {
-            throw HttpException("Cannot download URL '$sourceUrl' to file '$target' using HTTP(s). Cause: ${e.message}", e)
+            throw HttpFileException("Cannot download URL '$sourceUrl' to file '$target' using HTTP(s). Cause: ${e.message}", e)
         } catch (e: IOException) {
-            throw HttpException("Cannot download URL '$sourceUrl' to file '$target' using HTTP(s). Cause: ${e.message}", e)
+            throw HttpFileException("Cannot download URL '$sourceUrl' to file '$target' using HTTP(s). Cause: ${e.message}", e)
         }
     }
 

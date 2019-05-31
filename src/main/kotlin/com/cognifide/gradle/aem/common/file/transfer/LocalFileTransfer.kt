@@ -11,12 +11,12 @@ class LocalFileTransfer(aem: AemExtension) : AbstractFileTransfer(aem) {
 
     override fun handles(fileUrl: String): Boolean = true
 
-    override fun download(dirUrl: String, fileName: String, target: File) {
+    override fun downloadFrom(dirUrl: String, fileName: String, target: File) {
         GFileUtils.mkdirs(target.parentFile)
         file(dirUrl, fileName).copyTo(target)
     }
 
-    override fun upload(dirUrl: String, fileName: String, source: File) {
+    override fun uploadTo(dirUrl: String, fileName: String, source: File) {
         val target = file(dirUrl, fileName)
         GFileUtils.mkdirs(target.parentFile)
         source.copyTo(target)
@@ -26,7 +26,7 @@ class LocalFileTransfer(aem: AemExtension) : AbstractFileTransfer(aem) {
         return dirFiles(dirUrl).map { FileEntry.of(it) }
     }
 
-    override fun delete(dirUrl: String, fileName: String) {
+    override fun deleteFrom(dirUrl: String, fileName: String) {
         file(dirUrl, fileName).delete()
     }
 

@@ -1,8 +1,8 @@
-package com.cognifide.gradle.aem.common.file.transfer.smb
+package com.cognifide.gradle.aem.common.file.transfer.sftp
 
 import com.cognifide.gradle.aem.common.file.FileException
 
-class SmbException : FileException {
+class SftpFileException : FileException {
 
     constructor(message: String, cause: Throwable) : super(message, cause)
 

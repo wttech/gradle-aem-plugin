@@ -26,7 +26,7 @@ class SmbFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
     override val protocols: List<String>
         get() = listOf("smb://*")
 
-    override fun download(dirUrl: String, fileName: String, target: File) {
+    override fun downloadFrom(dirUrl: String, fileName: String, target: File) {
         val url = dirUrl.appendSlash()
         val fileUrl = "$dirUrl/$fileName"
 
@@ -35,22 +35,22 @@ class SmbFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
 
             val file = smbFile(url, fileName)
             if (!file.exists()) {
-                throw SmbException("Cannot download URL '$fileUrl'. File not found!")
+                throw SmbFileException("Cannot download URL '$fileUrl'. File not found!")
             }
 
             downloader().download(file.length(), file.inputStream, target)
         } catch (e: SmbException) {
-            throw SmbException("Cannot download URL '$fileUrl' to file '$target'. Cause: ${e.message}", e)
+            throw SmbFileException("Cannot download URL '$fileUrl' to file '$target'. Cause: ${e.message}", e)
         }
     }
 
-    override fun upload(dirUrl: String, fileName: String, source: File) {
+    override fun uploadTo(dirUrl: String, fileName: String, source: File) {
         val url = dirUrl.appendSlash()
         try {
             validateDir(url)
             uploader().upload(source, smbFile(url, fileName).outputStream)
         } catch (e: IOException) {
-            throw SmbException("Cannot upload file '$source' to URL '$url'. Cause: ${e.message}", e)
+            throw SmbFileException("Cannot upload file '$source' to URL '$url'. Cause: ${e.message}", e)
         }
     }
 
@@ -60,17 +60,17 @@ class SmbFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
             validateDir(url)
             return smbFile(url).listFiles().map { FileEntry(it.name, it.lastModified(), it.length()) }
         } catch (e: IOException) {
-            throw SmbException("Cannot list files at URL '$url'. Cause: ${e.message}", e)
+            throw SmbFileException("Cannot list files at URL '$url'. Cause: ${e.message}", e)
         }
     }
 
-    override fun delete(dirUrl: String, fileName: String) {
+    override fun deleteFrom(dirUrl: String, fileName: String) {
         val url = dirUrl.appendSlash()
         try {
             validateDir(dirUrl)
             smbFile(url, fileName).delete()
         } catch (e: IOException) {
-            throw SmbException("Cannot delete files at URL '$url'. Cause: ${e.message}", e)
+            throw SmbFileException("Cannot delete files at URL '$url'. Cause: ${e.message}", e)
         }
     }
 
@@ -79,10 +79,10 @@ class SmbFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
         try {
             validateDir(url)
             smbFile(url).listFiles().forEach {
-                delete(url, it.name)
+                deleteFrom(url, it.name)
             }
         } catch (e: IOException) {
-            throw SmbException("Cannot truncate files at URL '$url'. Cause: ${e.message}", e)
+            throw SmbFileException("Cannot truncate files at URL '$url'. Cause: ${e.message}", e)
         }
     }
 
@@ -96,9 +96,11 @@ class SmbFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
 
     private fun validateDir(url: String) {
         if (!smbFile(url).isDirectory) {
-            throw SmbException("URL does not point to directory: '$url'")
+            throw SmbFileException("URL does not point to directory: '$url'")
         }
     }
+
+    // TODO fun <T> connectDir() // same as in sftp
 
     private fun String.appendSlash() = if (this.endsWith('/')) {
         this

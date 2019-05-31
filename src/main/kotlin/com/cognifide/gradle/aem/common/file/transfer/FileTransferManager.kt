@@ -8,7 +8,7 @@ import com.cognifide.gradle.aem.common.file.transfer.smb.SmbFileTransfer
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 
-class FileMultiTransfer(private val aem: AemExtension) : FileTransfer {
+class FileTransferManager(private val aem: AemExtension) : FileTransfer {
 
     @JsonIgnore
     val factory = FileTransferFactory(aem)
@@ -47,25 +47,46 @@ class FileMultiTransfer(private val aem: AemExtension) : FileTransfer {
 
     private val all = (custom + arrayOf(http, sftp, smb, url, local)).filter { it.enabled }
 
-    override fun download(dirUrl: String, fileName: String, target: File) = handling(dirUrl).download(dirUrl, fileName, target)
+    /**
+     * Downloads file of given name from directory at specified URL using auto-determined file transfer type.
+     */
+    override fun downloadFrom(dirUrl: String, fileName: String, target: File) = handling(dirUrl).downloadFrom(dirUrl, fileName, target)
 
-    override fun upload(dirUrl: String, fileName: String, source: File) = handling(dirUrl).upload(dirUrl, fileName, source)
+    /**
+     * Uploads file to directory at specified URL and set given name using auto-determined file transfer type.
+     */
+    override fun uploadTo(dirUrl: String, fileName: String, source: File) = handling(dirUrl).uploadTo(dirUrl, fileName, source)
 
+    /**
+     * Lists files in directory available at specified URL using auto-determined file transfer type.
+     */
     override fun list(dirUrl: String): List<FileEntry> = handling(dirUrl).list(dirUrl)
 
-    override fun delete(dirUrl: String, fileName: String) = handling(dirUrl).delete(dirUrl, fileName)
+    /**
+     * Deletes file of given name in directory at specified URL using auto-determined file transfer type.
+     */
+    override fun deleteFrom(dirUrl: String, fileName: String) = handling(dirUrl).deleteFrom(dirUrl, fileName)
 
+    /**
+     * Deletes all files in directory available at specified URL using auto-determined file transfer type.
+     */
     override fun truncate(dirUrl: String) = handling(dirUrl).truncate(dirUrl)
 
+    /**
+     * Check if there is any file transfer supporting specified URL.
+     */
     override fun handles(fileUrl: String) = all.any { it.handles(fileUrl) }
 
+    /**
+     * Find file transfer supporting specified URL.
+     */
     fun handling(fileUrl: String): FileTransfer = all.find { it.handles(fileUrl) }
             ?: throw FileException("File transfer supporting URL '$fileUrl' not found!")
 
-    fun named(name: String): FileTransfer {
-        return all.find { it.name == name } ?: throw FileException("File transfer named '$name' not found!")
-    }
-
+    /**
+     * Register custom file transfer for e.g downloading / uploading files from cloud storages like:
+     * Amazon S3, Google Cloud Storage etc.
+     */
     fun custom(name: String, definition: CustomFileTransfer.() -> Unit) {
         custom.add(CustomFileTransfer(aem).apply {
             this.name = name
@@ -73,6 +94,31 @@ class FileMultiTransfer(private val aem: AemExtension) : FileTransfer {
 
             apply(definition)
         })
+    }
+
+    /**
+     * Get custom (or built-in) file transfer by name.
+     */
+    fun named(name: String): FileTransfer {
+        return all.find { it.name == name } ?: throw FileException("File transfer named '$name' not found!")
+    }
+
+    /**
+     * Shorthand method to set same credentials for all protocols requiring it.
+     *
+     * Useful only in specific cases, when e.g company storage offers accessing files via multiple protocols
+     * using same AD credentials.
+     */
+    fun credentials(user: String, password: String, domain: String? = null) {
+        http.client.basicUser = user
+        http.client.basicPassword = password
+
+        sftp.user = user
+        sftp.password = password
+
+        smb.user = user
+        smb.password = password
+        smb.domain = domain
     }
 
     @get:JsonIgnore

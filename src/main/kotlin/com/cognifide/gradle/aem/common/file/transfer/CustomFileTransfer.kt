@@ -32,16 +32,16 @@ class CustomFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
         this.downloader = callback
     }
 
-    override fun download(dirUrl: String, fileName: String, target: File) {
-        downloader?.invoke(dirUrl, fileName, target) ?: super.download(dirUrl, fileName, target)
+    override fun downloadFrom(dirUrl: String, fileName: String, target: File) {
+        downloader?.invoke(dirUrl, fileName, target) ?: super.downloadFrom(dirUrl, fileName, target)
     }
 
     fun upload(callback: (dirUrl: String, fileName: String, target: File) -> Unit) {
         this.uploader = callback
     }
 
-    override fun upload(dirUrl: String, fileName: String, source: File) {
-        uploader?.invoke(dirUrl, fileName, source) ?: super.upload(dirUrl, fileName, source)
+    override fun uploadTo(dirUrl: String, fileName: String, source: File) {
+        uploader?.invoke(dirUrl, fileName, source) ?: super.uploadTo(dirUrl, fileName, source)
     }
 
     fun list(callback: (dirUrl: String) -> List<FileEntry>) {
@@ -56,8 +56,8 @@ class CustomFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
         this.deleter = callback
     }
 
-    override fun delete(dirUrl: String, fileName: String) {
-        deleter?.invoke(dirUrl, fileName) ?: super.delete(dirUrl, fileName)
+    override fun deleteFrom(dirUrl: String, fileName: String) {
+        deleter?.invoke(dirUrl, fileName) ?: super.deleteFrom(dirUrl, fileName)
     }
 
     fun truncate(callback: (dirUrl: String) -> Unit) {

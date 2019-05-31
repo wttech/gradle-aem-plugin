@@ -5,7 +5,7 @@ import com.cognifide.gradle.aem.common.CommonPlugin
 import com.cognifide.gradle.aem.common.build.*
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.file.FileWatcher
-import com.cognifide.gradle.aem.common.file.transfer.FileMultiTransfer
+import com.cognifide.gradle.aem.common.file.transfer.FileTransferManager
 import com.cognifide.gradle.aem.common.http.HttpClient
 import com.cognifide.gradle.aem.common.instance.*
 import com.cognifide.gradle.aem.common.notifier.NotifierFacade
@@ -129,7 +129,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     val parallel = ParallelExecutor(this)
 
     @get:Internal
-    val fileTransfer = FileMultiTransfer(this)
+    val fileTransfer = FileTransferManager(this)
 
     /**
      * Define settings for file transfer facade which allows to perform basic file operations on remote servers
@@ -137,7 +137,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
      *
      * Supports multiple protocols: HTTP, SFTP, SMB and other supported by JVM.
      */
-    fun fileTransfer(options: FileMultiTransfer.() -> Unit) {
+    fun fileTransfer(options: FileTransferManager.() -> Unit) {
         fileTransfer.apply(options)
     }
 

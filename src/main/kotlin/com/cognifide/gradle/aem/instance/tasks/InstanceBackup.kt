@@ -45,8 +45,8 @@ open class InstanceBackup : ZipTask() {
     }
 
     private fun upload(verbose: Boolean) {
-        val url = aem.localInstanceManager.backup.uploadUrl
-        if (url.isNullOrBlank()) {
+        val dirUrl = aem.localInstanceManager.backup.uploadUrl
+        if (dirUrl.isNullOrBlank()) {
             val message = "Cannot upload local instance backup as of URL is not defined."
             if (verbose) {
                 throw InstanceException(message)
@@ -58,8 +58,8 @@ open class InstanceBackup : ZipTask() {
 
         val backupZip = archiveFile.get().asFile
 
-        aem.logger.info("Uploading local instance(s) backup '$backupZip' to '$url'")
-        aem.fileTransfer.upload(url, backupZip)
+        aem.logger.info("Uploading local instance(s) backup '$backupZip' to '$dirUrl'")
+        aem.fileTransfer.uploadTo(dirUrl, backupZip)
     }
 
     @get:Internal

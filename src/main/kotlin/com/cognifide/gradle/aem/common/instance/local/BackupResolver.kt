@@ -55,7 +55,7 @@ class BackupResolver(private val aem: AemExtension) {
                 listOf(
                     BackupSource(BackupType.REMOTE, FileEntry(name)) {
                         File(downloadDir, name).apply {
-                            aem.fileTransfer.download(dirUrl, name, this)
+                            aem.fileTransfer.downloadFrom(dirUrl, name, this)
                         }
                     }
                 )
@@ -64,7 +64,7 @@ class BackupResolver(private val aem: AemExtension) {
                 aem.fileTransfer.list(uploadUrl!!).map { file ->
                     BackupSource(BackupType.REMOTE, file) {
                         File(downloadDir, file.name).apply {
-                            aem.fileTransfer.download(uploadUrl!!, file.name, this)
+                            aem.fileTransfer.downloadFrom(uploadUrl!!, file.name, this)
                         }
                     }
                 }

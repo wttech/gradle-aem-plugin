@@ -22,41 +22,46 @@ interface FileTransfer {
     /**
      * Downloads file of given name from directory available at specified URL.
      */
-    fun download(dirUrl: String, fileName: String, target: File)
+    fun downloadFrom(dirUrl: String, fileName: String, target: File)
 
     /**
-     * Downloads file available at specified URL.
+     * Downloads file from specified URL.
      */
     fun download(fileUrl: String, target: File) {
         val dirUrl = fileUrl.substringBeforeLast("/")
         val fileName = fileUrl.substringAfterLast("/")
 
-        download(dirUrl, fileName, target)
+        downloadFrom(dirUrl, fileName, target)
     }
 
     /**
      * Uploads file to directory available at specified URL and set given name.
      */
-    fun upload(dirUrl: String, fileName: String, source: File)
+    fun uploadTo(dirUrl: String, fileName: String, source: File)
 
     /**
      * Uploads file to directory available at specified URL.
      */
-    fun upload(dirUrl: String, source: File) {
+    fun uploadTo(dirUrl: String, source: File) {
         val fileName = source.name
 
-        upload(dirUrl, fileName, source)
+        uploadTo(dirUrl, fileName, source)
     }
 
     /**
-     * Lists files in directory available at specified URL.
+     * Uploads file to specified URL.
      */
-    fun list(dirUrl: String): List<FileEntry>
+    fun upload(fileUrl: String, source: File) {
+        val dirUrl = fileUrl.substringBeforeLast("/")
+        val fileName = fileUrl.substringAfterLast("/")
+
+        uploadTo(dirUrl, fileName, source)
+    }
 
     /**
      * Deletes file of given name in directory available at specified URL.
      */
-    fun delete(dirUrl: String, fileName: String)
+    fun deleteFrom(dirUrl: String, fileName: String)
 
     /**
      * Deletes file available at specified URL.
@@ -65,8 +70,13 @@ interface FileTransfer {
         val dirUrl = fileUrl.substringBeforeLast("/")
         val fileName = fileUrl.substringAfterLast("/")
 
-        delete(dirUrl, fileName)
+        deleteFrom(dirUrl, fileName)
     }
+
+    /**
+     * Lists files in directory available at specified URL.
+     */
+    fun list(dirUrl: String): List<FileEntry>
 
     /**
      * Deletes all files in directory available at specified URL.

@@ -14,7 +14,7 @@ class UrlFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
     override val protocols: List<String>
         get() = listOf("*://*")
 
-    override fun download(dirUrl: String, fileName: String, target: File) {
+    override fun downloadFrom(dirUrl: String, fileName: String, target: File) {
         val fileUrl = "$dirUrl/$fileName"
 
         try {
