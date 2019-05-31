@@ -18,12 +18,12 @@ class GroovyConsole(sync: InstanceSync) : InstanceService(sync) {
     /**
      * Controls throwing exception on script execution error.
      */
-    var verbose: Boolean = true
+    var verbose: Boolean = aem.props.boolean("instance.groovyConsole.verbose") ?: true
 
     /**
      * Directory to search for scripts to be evaluated.
      */
-    var scriptRootDir: File = aem.groovyScriptRootDir
+    var scriptRootDir: File = File(aem.configDir, "groovyScript")
 
     /**
      * Evaluate Groovy code snippet on AEM instance.

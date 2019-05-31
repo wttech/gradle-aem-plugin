@@ -16,10 +16,11 @@ open class Resolve : AemDefaultTask() {
     fun resolve() {
         project.gradle.taskGraph.allTasks.forEach { task ->
             if (task is InstanceSatisfy) {
-                logger.info("Resolving CRX packages for satisfying instances.")
+                logger.info("Resolving CRX packages for satisfying instances")
                 logger.info("Resolved CRX packages: ${task.allFiles}")
             } else if (task is InstanceCreate) {
-                // TODO instance files eagerly jar & license file)
+                logger.info("Resolving local instance files")
+                logger.info("Resolved local instance files: ${aem.localInstanceManager.sourceFiles}")
             }
         }
     }

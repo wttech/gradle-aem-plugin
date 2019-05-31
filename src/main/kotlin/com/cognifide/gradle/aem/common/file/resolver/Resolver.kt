@@ -3,11 +3,9 @@ package com.cognifide.gradle.aem.common.file.resolver
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.build.DependencyOptions
 import com.cognifide.gradle.aem.common.file.FileException
-import com.cognifide.gradle.aem.common.file.downloader.HttpFileDownloader
-import com.cognifide.gradle.aem.common.file.downloader.SftpFileDownloader
-import com.cognifide.gradle.aem.common.file.downloader.SmbFileDownloader
-import com.cognifide.gradle.aem.common.file.downloader.UrlFileDownloader
-import com.cognifide.gradle.aem.common.http.HttpClient
+import com.cognifide.gradle.aem.common.file.transfer.http.HttpFileTransfer
+import com.cognifide.gradle.aem.common.file.transfer.sftp.SftpFileTransfer
+import com.cognifide.gradle.aem.common.file.transfer.smb.SmbFileTransfer
 import com.cognifide.gradle.aem.common.utils.Formats
 import com.google.common.hash.HashCode
 import java.io.File
@@ -40,12 +38,6 @@ val downloadDir: File
     val groups: List<G>
         get() = groupsDefined.filter { it.resolutions.isNotEmpty() }
 
-    protected open fun resolve(hash: Any, resolver: (FileResolution) -> File): FileResolution {
-        val id = HashCode.fromInt(HashCodeBuilder().append(hash).toHashCode()).toString()
-
-        return groupCurrent.resolve(id, resolver)
-    }
-
     fun outputDirs(filter: G.() -> Boolean = { true }): List<File> {
         return groups.filter(filter).flatMap { it.dirs }
     }
@@ -63,8 +55,11 @@ val downloadDir: File
                 ?: throw FileException("File group '$name' is not defined.")
     }
 
-    fun dependency(notation: Any): FileResolution {
-        return resolve(notation) {
+    /**
+     * Resolve file by dependency notation using defined Gradle repositories (Maven, Ivy etc).
+     */
+    fun resolve(notation: Any): FileResolution {
+        return groupFile(notation) {
             val configName = "fileResolver_dependency_${UUID.randomUUID()}"
             val configOptions: (Configuration) -> Unit = { it.isTransitive = false }
             val config = project.configurations.create(configName, configOptions)
@@ -74,29 +69,86 @@ val downloadDir: File
         }
     }
 
-    fun dependency(dependencyOptions: DependencyOptions.() -> Unit): FileResolution {
-        return dependency(DependencyOptions.of(project.dependencies, dependencyOptions))
+    /**
+     * Resolve file using defined Gradle repositories (Maven, Ivy etc).
+     */
+    fun resolve(dependencyOptions: DependencyOptions.() -> Unit): FileResolution {
+        return resolve(DependencyOptions.of(project.dependencies, dependencyOptions))
     }
 
-    fun url(url: String): FileResolution {
-        return when {
-            SftpFileDownloader.handles(url) -> downloadSftpAuth(url)
-            SmbFileDownloader.handles(url) -> downloadSmbAuth(url)
-            HttpFileDownloader.handles(url) -> downloadHttpAuth(url)
-            UrlFileDownloader.handles(url) -> downloadUrl(url)
-            else -> local(url)
-        }
+    /**
+     * Download file using automatically determined file transfer (HTTP, SFTP, SMB, URL, local file system).
+     *
+     * Same global settings (like basic auth credentials of HTTP) of each particular file transfer will be used
+     * for all files downloaded. This shorthand method assumes that mostly only single HTTP / SFTP / SMB server
+     * will be used to download all files.
+     *
+     * To use many remote servers with different settings, simply use dedicated methods 'download[Http/Sftp/Smb]'
+     * when declaring each file to be downloaded.
+     */
+    fun download(url: String): FileResolution = groupDownload(url) { aem.fileTransfer.download(url, it) }
+
+    /**
+     * Download file using HTTP file transfer with custom settings (like basic auth credentials).
+     *
+     * Use only when using more than one remote HTTP server to download files.
+     */
+    fun downloadHttp(url: String, options: HttpFileTransfer.() -> Unit): FileResolution {
+        return groupDownload(url) { aem.httpFile { options(); download(url, it) } }
     }
 
-    fun downloadSftp(url: String): FileResolution {
-        return resolve(url) { resolution ->
-            download(url, resolution.dir) { file ->
-                SftpFileDownloader(project).download(url, file)
-            }
-        }
+    /**
+     * Download file using SFTP file transfer with custom settings (different credentials).
+     *
+     * Use only when using more than one remote SFTP server to download files.
+     */
+    fun downloadSftp(url: String, options: SftpFileTransfer.() -> Unit): FileResolution {
+        return groupDownload(url) { aem.sftpFile { options(); download(url, it) } }
     }
 
-    private fun download(url: String, targetDir: File, downloader: (File) -> Unit): File {
+    /**
+     * Download file using SMB file transfer with custom settings (different credentials, domain).
+     *
+     * Use only when using more than one remote SMB server to download files.
+     */
+    fun downloadSmb(url: String, options: SmbFileTransfer.() -> Unit): FileResolution {
+        return groupDownload(url) { aem.smbFile { options(); download(url, it) } }
+    }
+
+    /**
+     * Use local file directly (without copying).
+     */
+    fun useLocal(path: String): FileResolution {
+        return useLocal(project.file(path))
+    }
+
+    /**
+     * Use local file directly (without copying).
+     */
+    fun useLocal(sourceFile: File): FileResolution {
+        return groupFile(sourceFile.absolutePath) { sourceFile }
+    }
+
+    fun config(configurer: G.() -> Unit) {
+        groupCurrent.apply(configurer)
+    }
+
+    @Synchronized
+    fun group(name: String, configurer: Resolver<G>.() -> Unit) {
+        groupCurrent = groupsDefined.find { it.name == name } ?: createGroup(name).apply { groupsDefined.add(this) }
+        this.apply(configurer)
+        groupCurrent = groupDefault
+    }
+
+    abstract fun createGroup(name: String): G
+
+    protected open fun groupFile(hash: Any, resolver: (FileResolution) -> File): FileResolution {
+        val id = HashCode.fromInt(HashCodeBuilder().append(hash).toHashCode()).toString()
+
+        return groupCurrent.resolve(id, resolver)
+    }
+
+    private fun downloadFile(url: String, targetDir: File, downloader: (File) -> Unit): File {
         GFileUtils.mkdirs(targetDir)
 
         val file = File(targetDir, FilenameUtils.getName(url))
@@ -113,89 +165,13 @@ val downloadDir: File
         return file
     }
 
-    fun downloadSftp(url: String, sftpOptions: SftpFileDownloader.() -> Unit = {}): FileResolution {
-        return resolve(url) { resolution ->
-            download(url, resolution.dir) { file ->
-                SftpFileDownloader(project)
-                        .apply(sftpOptions)
-                        .download(url, file)
+    private fun groupDownload(url: String, downloader: (File) -> Unit): FileResolution {
+        return groupFile(url) { resolution ->
+            downloadFile(url, resolution.dir) { file ->
+                downloader(file)
             }
         }
     }
-
-    fun downloadSftpAuth(url: String, username: String? = null, password: String? = null, hostChecking: Boolean? = null): FileResolution {
-        return downloadSftp(url) {
-            this.username = username ?: aem.resolverOptions.sftpUsername
-            this.password = password ?: aem.resolverOptions.sftpPassword
-            this.hostChecking = hostChecking ?: aem.resolverOptions.sftpHostChecking ?: false
-        }
-    }
-
-    fun downloadSmb(url: String, smbOptions: SmbFileDownloader.() -> Unit = {}): FileResolution {
-        return resolve(url) { resolution ->
-            download(url, resolution.dir) { file ->
-                SmbFileDownloader(project)
-                        .apply(smbOptions)
-                        .download(url, file)
-            }
-        }
-    }
-
-    fun downloadSmbAuth(url: String, domain: String? = null, username: String? = null, password: String? = null): FileResolution {
-        return downloadSmb(url) {
-            this.domain = domain ?: aem.resolverOptions.smbDomain
-            this.username = username ?: aem.resolverOptions.smbUsername
-            this.password = password ?: aem.resolverOptions.smbPassword
-        }
-    }
-
-    fun downloadHttp(url: String, httpOptions: HttpClient.() -> Unit = {}): FileResolution {
-        return resolve(url) { resolution ->
-            download(url, resolution.dir) { file ->
-                with(HttpFileDownloader(aem)) {
-                    client(httpOptions)
-                    download(url, file)
-                }
-            }
-        }
-    }
-
-    fun downloadHttpAuth(url: String, user: String? = null, password: String? = null, ignoreSsl: Boolean? = null): FileResolution {
-        return downloadHttp(url) {
-            basicUser = user ?: aem.resolverOptions.httpUsername ?: ""
-            basicPassword = password ?: aem.resolverOptions.httpPassword ?: ""
-            connectionIgnoreSsl = ignoreSsl ?: aem.resolverOptions.httpConnectionIgnoreSsl ?: true
-        }
-    }
-
-    fun downloadUrl(url: String): FileResolution {
-        return resolve(url) { resolution ->
-            download(url, resolution.dir) { file ->
-                UrlFileDownloader(project).download(url, file)
-            }
-        }
-    }
-
-    fun local(path: String): FileResolution {
-        return local(project.file(path))
-    }
-
-    fun local(sourceFile: File): FileResolution {
-        return resolve(sourceFile.absolutePath) { sourceFile }
-    }
-
-    fun config(configurer: G.() -> Unit) {
-        groupCurrent.apply(configurer)
-    }
-
-    @Synchronized
-    fun group(name: String, configurer: Resolver<G>.() -> Unit) {
-        groupCurrent = groupsDefined.find { it.name == name } ?: createGroup(name).apply { groupsDefined.add(this) }
-        this.apply(configurer)
-        groupCurrent = groupDefault
-    }
-
-    abstract fun createGroup(name: String): G
 
     companion object {
         const val GROUP_DEFAULT = "default"

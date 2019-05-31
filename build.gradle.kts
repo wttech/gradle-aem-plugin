@@ -1,5 +1,6 @@
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     id("org.jetbrains.kotlin.jvm")
@@ -35,7 +36,7 @@ dependencies {
     implementation("biz.aQute.bnd:biz.aQute.bnd.gradle:4.0.0")
     implementation("org.zeroturnaround:zt-zip:1.11")
     implementation("net.lingala.zip4j:zip4j:1.3.2")
-    implementation("com.hierynomus:sshj:0.21.1")
+    implementation("org.apache.sshd:sshd-sftp:2.2.0")
     implementation("org.apache.httpcomponents:httpclient:4.5.4")
     implementation("org.apache.httpcomponents:httpmime:4.5.4")
     implementation("org.osgi:org.osgi.core:6.0.0")
@@ -64,9 +65,20 @@ tasks {
     }
 
     register<Jar>("sourcesJar") {
-        classifier = "sources"
+        archiveClassifier.set("sources")
         dependsOn("classes")
         from(sourceSets["main"].allSource)
+    }
+
+    withType<JavaCompile>().configureEach{
+        sourceCompatibility = JavaVersion.VERSION_1_8.toString()
+        targetCompatibility = JavaVersion.VERSION_1_8.toString()
+    }
+
+    withType<KotlinCompile>().configureEach {
+        kotlinOptions {
+            jvmTarget = JavaVersion.VERSION_1_8.toString()
+        }
     }
 
     named<Task>("build") {

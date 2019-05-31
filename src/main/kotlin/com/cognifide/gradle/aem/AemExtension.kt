@@ -5,7 +5,10 @@ import com.cognifide.gradle.aem.common.CommonPlugin
 import com.cognifide.gradle.aem.common.build.*
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.file.FileWatcher
-import com.cognifide.gradle.aem.common.file.resolver.ResolverOptions
+import com.cognifide.gradle.aem.common.file.transfer.FileTransferManager
+import com.cognifide.gradle.aem.common.file.transfer.http.HttpFileTransfer
+import com.cognifide.gradle.aem.common.file.transfer.sftp.SftpFileTransfer
+import com.cognifide.gradle.aem.common.file.transfer.smb.SmbFileTransfer
 import com.cognifide.gradle.aem.common.http.HttpClient
 import com.cognifide.gradle.aem.common.instance.*
 import com.cognifide.gradle.aem.common.notifier.NotifierFacade
@@ -28,6 +31,7 @@ import java.io.Serializable
 import java.time.ZoneId
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.tasks.Internal
 
 /**
  * Core of library, facade for implementing tasks, configuration aggregator.
@@ -122,25 +126,23 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
         get() = projectMain.file(props.string("configCommonDir") ?: "gradle")
 
     /**
-     * Convention location in which Groovy Script to be evaluated via instance sync will be searched for by file name.
-     */
-    var groovyScriptRootDir: File = File(configDir, "groovyScript")
-
-    /**
      * Performs parallel CRX package deployments and instance synchronization.
      */
     @JsonIgnore
     val parallel = ParallelExecutor(this)
 
-    /**
-     * TODO to be merged with upcoming file transfer impl
-     */
-    val resolverOptions = ResolverOptions(this)
+    @get:Internal
+    val fileTransfer = FileTransferManager(this)
 
     /**
-     * Customize file resolver options like default credentials, remote host checking etc.
+     * Define settings for file transfer facade which allows to perform basic file operations on remote servers
+     * like uploading and downloading files.
+     *
+     * Supports multiple protocols: HTTP, SFTP, SMB and other supported by JVM.
      */
-    fun resolver(options: ResolverOptions.() -> Unit) = resolverOptions.apply(options)
+    fun fileTransfer(options: FileTransferManager.() -> Unit) {
+        fileTransfer.apply(options)
+    }
 
     val packageOptions = PackageOptions(this)
 
@@ -162,12 +164,12 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
         instanceOptions.apply(options)
     }
 
-    val localInstanceOptions = LocalInstanceOptions(this)
+    val localInstanceManager = LocalInstanceManager(this)
 
     /**
      * Define common settings valid only for instances created at local file system.
      */
-    fun localInstance(options: LocalInstanceOptions.() -> Unit) = localInstanceOptions.apply(options)
+    fun localInstance(options: LocalInstanceManager.() -> Unit) = localInstanceManager.apply(options)
 
     /**
      * Provides API for controlling virtualized AEM environment with HTTPD and dispatcher module.
@@ -210,18 +212,43 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
             of(subproject).tasks.bundles.mapNotNull { it.javaPackage }
         }
 
+    /**
+     * All instances matching default filtering.
+     *
+     * @see <https://github.com/Cognifide/gradle-aem-plugin#filter-instances-to-work-with>
+     */
     @get:JsonIgnore
     val instances: List<Instance>
         get() = filterInstances()
 
+    /**
+     * Work in parallel with instances matching default filtering.
+     */
     fun instances(consumer: (Instance) -> Unit) = parallel.with(instances, consumer)
 
+    /**
+     * Work in parallel with instances which name is matching specified wildcard filter.
+     */
     fun instances(filter: String, consumer: (Instance) -> Unit) = parallel.with(filterInstances(filter), consumer)
 
+    /**
+     * Shorthand method for getting defined instance or creating temporary instance by URL.
+     */
     fun instance(urlOrName: String): Instance = instanceOptions.parse(urlOrName)
 
-    fun instances(urlsOrNames: Collection<String>): List<Instance> = urlsOrNames.map { instance(it) }
+    /**
+     * Shorthand method for getting defined instances or creating temporary instances by URLs.
+     */
+    fun instances(urlsOrNames: Iterable<String>): List<Instance> = urlsOrNames.map { instance(it) }
 
+    /**
+     * Get or create instance using command line parameter named 'instance' which holds instance name or URL.
+     * If it is not specified, then first instance matching default filtering fill be returned.
+     *
+     * Purpose of this method is to easily get any instance to work with (no matter how it will be defined).
+     *
+     * @see <https://github.com/Cognifide/gradle-aem-plugin#filter-instances-to-work-with>
+     */
     @get:JsonIgnore
     val anyInstance: Instance
         get() {
@@ -233,6 +260,12 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
             return namedInstance(Instance.FILTER_ANY)
         }
 
+    /**
+     * Get all instances which names are matching wildcard filter specified via command line parameter 'instance.name'.
+     * By default, this method respects current environment which is used to work only with instances running locally.
+     *
+     * If none instances will be found, throws exception.
+     */
     fun namedInstance(desiredName: String? = props.string("instance.name"), defaultName: String = "$env-*"): Instance {
         val nameMatcher: String = desiredName ?: defaultName
 
@@ -244,6 +277,9 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
         throw InstanceException("Instance named '$nameMatcher' is not defined.")
     }
 
+    /**
+     * Find all instances which names are matching wildcard filter specified via command line parameter 'instance.name'.
+     */
     fun filterInstances(nameMatcher: String = props.string("instance.name") ?: "$env-*"): List<Instance> {
         val all = instanceOptions.defined.values
 
@@ -267,56 +303,109 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
         }
     }
 
+    /**
+     * Get all author instances running on current environment.
+     */
     @get:JsonIgnore
     val authorInstances: List<Instance>
         get() = filterInstances().filter { it.type == InstanceType.AUTHOR }
 
+    /**
+     * Work in parallel with all author instances running on current environment.
+     */
     fun authorInstances(consumer: (Instance) -> Unit) = parallel.with(authorInstances, consumer)
 
+    /**
+     * Get all publish instances running on current environment.
+     */
     @get:JsonIgnore
     val publishInstances: List<Instance>
         get() = filterInstances().filter { it.type == InstanceType.PUBLISH }
 
+    /**
+     * Work in parallel with all publish instances running on current environment.
+     */
     fun publishInstances(consumer: Instance.() -> Unit) = parallel.with(publishInstances, consumer)
 
+    /**
+     * Get all local instances.
+     */
     @get:JsonIgnore
     val localInstances: List<LocalInstance>
         get() = instances.filterIsInstance(LocalInstance::class.java)
 
+    /**
+     * Work in parallel with all local instances.
+     */
     fun localInstances(consumer: LocalInstance.() -> Unit) = parallel.with(localInstances, consumer)
 
+    /**
+     * Get all remote instances.
+     */
     @get:JsonIgnore
     val remoteInstances: List<RemoteInstance>
         get() = instances.filterIsInstance(RemoteInstance::class.java)
 
+    /**
+     * Work in parallel with all remote instances.
+     */
     fun remoteInstances(consumer: RemoteInstance.() -> Unit) = parallel.with(remoteInstances, consumer)
 
+    /**
+     * Get CRX package defined to be built (could not yet exist).
+     */
+    @Suppress("VariableNaming")
+    @get:JsonIgnore
+    val `package`: File
+        get() = tasks.get(PackageCompose.NAME, PackageCompose::class.java).archiveFile.get().asFile
+
+    @get:JsonIgnore
+    val pkg: File
+        get() = `package`
+
+    /**
+     * Get all CRX packages defined to be built.
+     */
     @get:JsonIgnore
     val packages: List<File>
         get() = project.tasks.withType(PackageCompose::class.java)
                 .map { it.archiveFile.get().asFile }
 
+    /**
+     * Get all CRX packages built before running particular task.
+     */
     fun dependentPackages(task: Task): List<File> {
         return task.taskDependencies.getDependencies(task)
                 .filterIsInstance(PackageCompose::class.java)
                 .map { it.archiveFile.get().asFile }
     }
 
+    /**
+     * In parallel, work with services of all instances matching default filtering.
+     */
     fun sync(synchronizer: InstanceSync.() -> Unit) = sync(instances, synchronizer)
 
+    /**
+     * Work with instance services of specified instance.
+     */
     fun <T> sync(instance: Instance, synchronizer: InstanceSync.() -> T) = instance.sync(synchronizer)
 
-    fun sync(instances: Collection<Instance>, synchronizer: InstanceSync.() -> Unit) {
+    /**
+     * In parallel, work with services of all specified instances.
+     */
+    fun sync(instances: Iterable<Instance>, synchronizer: InstanceSync.() -> Unit) {
         parallel.with(instances) { this.sync.apply(synchronizer) }
     }
 
+    /**
+     * In parallel, work with built packages and services of instances matching default filtering.
+     */
     fun syncPackages(synchronizer: InstanceSync.(File) -> Unit) = syncPackages(instances, packages, synchronizer)
 
-    fun syncPackages(
-        instances: Collection<Instance>,
-        packages: Collection<File>,
-        synchronizer: InstanceSync.(File) -> Unit
-    ) {
+    /**
+     * In parallel, work with built packages and services of specified instances.
+     */
+    fun syncPackages(instances: Iterable<Instance>, packages: Iterable<File>, synchronizer: InstanceSync.(File) -> Unit) {
         packages.forEach { pkg -> // single AEM instance dislikes parallel package installation
             parallel.with(instances) { // but same package could be in parallel deployed on different AEM instances
                 sync.apply { synchronizer(pkg) }
@@ -324,17 +413,13 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
         }
     }
 
+    /**
+     * Build minimal CRX package in-place / only via code.
+     * All details like Vault properties, archive destination directory, file name are customizable.
+     */
     fun composePackage(definition: PackageDefinition.() -> Unit): File {
         return PackageDefinition(this).compose(definition)
     }
-
-    fun <T> http(consumer: HttpClient.() -> T) = HttpClient(this).run(consumer)
-
-    fun retry(configurer: Retry.() -> Unit): Retry {
-        return retry().apply(configurer)
-    }
-
-    fun retry(): Retry = Retry.none(this)
 
     /**
      * Show asynchronous progress indicator with percentage while performing some action.
@@ -383,7 +468,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
             }
 
             val conventionFilterFiles = listOf(
-                    "${packageOptions.vltRootDir}/${VltFilter.CHECKOUT_NAME}",
+                    "${packageOptions.vltRootDir}/${VltFilter.SYNC_NAME}",
                     "${packageOptions.vltRootDir}/${VltFilter.BUILD_NAME}"
             )
             val conventionFilterFile = FileOperations.find(project, packageOptions.vltRootDir.toString(), conventionFilterFiles)
@@ -397,23 +482,76 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
             return VltFilter.temporary(project, listOf())
         }
 
+    /**
+     * Get Vault filter object for specified file.
+     */
     fun filter(file: File) = VltFilter(file)
 
+    /**
+     * Get Vault filter object for specified path.
+     */
     fun filter(path: String) = filter(project.file(path))
 
+    /**
+     * Determine temporary directory for particular task.
+     */
     fun temporaryDir(task: Task) = temporaryDir(task.name)
 
+    /**
+     * Determine temporary directory for particular service (any name).
+     */
     fun temporaryDir(name: String) = AemTask.temporaryDir(project, name)
 
+    /**
+     * Determine temporary file for particular service (any name).
+     */
     fun temporaryFile(name: String) = AemTask.temporaryFile(project, TEMPORARY_DIR, name)
 
+    /**
+     * Predefined temporary directory.
+     */
     @get:JsonIgnore
     val temporaryDir: File
         get() = temporaryDir(TEMPORARY_DIR)
 
+    /**
+     * Factory method for configuration object determining how operation should be retried.
+     */
+    fun retry(configurer: Retry.() -> Unit): Retry {
+        return retry().apply(configurer)
+    }
+
+    /**
+     * Factory method for configuration object determining that operation should not be retried.
+     */
+    fun retry(): Retry = Retry.none(this)
+
+    /**
+     * React on file changes under configured directory.
+     */
     fun fileWatcher(options: FileWatcher.() -> Unit) {
         FileWatcher(this).apply(options).start()
     }
+
+    /**
+     * Perform any HTTP requests to external endpoints.
+     */
+    fun <T> http(consumer: HttpClient.() -> T) = HttpClient(this).run(consumer)
+
+    /**
+     * Download files using HTTP protocol using custom settings.
+     */
+    fun <T> httpFile(consumer: HttpFileTransfer.() -> T) = fileTransfer.factory.http(consumer)
+
+    /**
+     * Transfer files using over SFTP protocol using custom settings.
+     */
+    fun <T> sftpFile(consumer: SftpFileTransfer.() -> T) = fileTransfer.factory.sftp(consumer)
+
+    /**
+     * Transfer files using over SMB protocol using custom settings.
+     */
+    fun <T> smbFile(consumer: SmbFileTransfer.() -> T) = fileTransfer.factory.smb(consumer)
 
     companion object {
 

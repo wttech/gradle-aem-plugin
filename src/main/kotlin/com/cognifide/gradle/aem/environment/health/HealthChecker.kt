@@ -24,6 +24,7 @@ class HealthChecker(val environment: Environment) {
 
     // Evaluation
 
+    @Suppress("ComplexMethod")
     fun check(verbose: Boolean = true): List<HealthStatus> {
         var all = listOf<HealthStatus>()
         var passed = listOf<HealthStatus>()
@@ -54,10 +55,14 @@ class HealthChecker(val environment: Environment) {
                     }
                 }
 
-                aem.logger.lifecycle("Environment health check(s) succeed: $count")
+                val message = "Environment health check(s) succeed: $count"
+                if (!verbose) {
+                    aem.logger.lifecycle(message)
+                } else {
+                    aem.logger.info(message)
+                }
             } catch (e: EnvironmentException) {
                 val message = "Environment health check(s) failed: $count:\n${all.joinToString("\n")}"
-
                 if (!verbose) {
                     aem.logger.error(message)
                 } else {
