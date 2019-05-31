@@ -99,6 +99,7 @@ To see documentation for previous 5.x serie, please [click here](https://github.
            * [Configuration of AEM instance source (JAR file or backup file)](#configuration-of-aem-instance-source-jar-file-or-backup-file)
            * [Extracted files configuration (optional)](#extracted-files-configuration-optional)
         * [Task instanceBackup](#task-instancebackup)
+           * [Work with remote instance backups](#work-with-remote-instance-backups)
         * [Task instanceDestroy](#task-instancedestroy)
         * [Task instanceUp](#task-instanceup)
         * [Task instanceDown](#task-instancedown)
@@ -123,11 +124,11 @@ To see documentation for previous 5.x serie, please [click here](https://github.
      * [Set AEM configuration properly for all / concrete project(s)](#set-aem-configuration-properly-for-all--concrete-projects)
      * [Implement custom AEM tasks](#implement-custom-aem-tasks)
         * [Defining CRX package via code then downloading and sharing it using external HTTP endpoint](#defining-crx-package-via-code-then-downloading-and-sharing-it-using-external-http-endpoint)
-        * [Downloading CRX package from external HTTP endpoint and deploying it on desired AEM instances](#downloading-crx-package-from-external-http-endpoint-and-deploying-it-on-desired-aem-instances)
-        * [Controlling OSGi bundles and components](#controlling-osgi-bundles-and-components)
-        * [Executing code on AEM runtime](#executing-code-on-aem-runtime)
         * [Calling AEM endpoints / making any HTTP requests](#calling-aem-endpoints--making-any-http-requests)
-        * [Making changes to repository](#making-changes-to-repository)
+        * [Downloading CRX package from external HTTP endpoint and deploying it on desired AEM instances](#downloading-crx-package-from-external-http-endpoint-and-deploying-it-on-desired-aem-instances)
+        * [Working with content repository (JCR)](#working-with-content-repository-jcr)
+        * [Executing code on AEM runtime](#executing-code-on-aem-runtime)
+        * [Controlling OSGi bundles and components](#controlling-osgi-bundles-and-components)
      * [Understand why there are one or two plugins to be applied in build script](#understand-why-there-are-one-or-two-plugins-to-be-applied-in-build-script)
      * [Work effectively on start and daily basis](#work-effectively-on-start-and-daily-basis)
      * [Filter instances to work with](#filter-instances-to-work-with)
@@ -226,7 +227,23 @@ aem {
         // ...
     }
     fileTransfer {
-        // ...
+        sftp {
+            user = props.string("fileTransfer.sftp.user")
+            password = props.string("fileTransfer.sftp.password")
+        }
+        smb {
+            user = props.string("fileTransfer.smb.user")
+            password = props.string("fileTransfer.smb.password")
+            domain = props.string("fileTransfer.smb.domain")
+        }
+        http {
+            client {
+                basicUser = props.string("fileTransfer.http.user")
+                basicPassword = props.string("fileTransfer.http.password")
+            }
+        }
+        
+        credentials("foo", "bar") // shorthand to set all user / password pairs above
     }
     tasks {
         bundle {
@@ -254,7 +271,7 @@ To see all available options and actual documentation, please follow to:
 
 * `localInstance` - [LocalInstanceOptions](src/main/kotlin/com/cognifide/gradle/aem/instance/LocalInstanceOptions.kt)
 * `environment` - [Environment](src/main/kotlin/com/cognifide/gradle/aem/environment/Environment.kt)
-* `fileTransfer` - [FileTransfer]()
+* `fileTransfer` - [FileTransfer](src/main/kotlin/com/cognifide/gradle/aem/common/file/transfer/FileTransferManager.kt)
 
 * `packageCompose` - [PackageCompose](src/main/kotlin/com/cognifide/gradle/aem/pkg/tasks/PackageCompose.kt)
 * `instanceSatisfy` - [InstanceSatisfy](src/main/kotlin/com/cognifide/gradle/aem/instance/satisfy/InstanceSatisfy.kt)
@@ -666,8 +683,34 @@ Then file at path *build/aem/debug/debug.json* with content below is being gener
     "lineSeparator": "LF",
     "groovyScriptRootDir": ".../gradle-aem-multi/aem/assembly/full/gradle/groovyScript",
     "fileTransfer": {
-      "httpUsername": null,
-      "httpPassword": null,
+      "http": {
+        "enabled": true,
+        "client": {
+          "baseUrl": "",
+          "basicUser": null,
+          "basicPassword": null,
+          "authorizationPreemptive": false,
+          "connectionTimeout": 30000,
+          "connectionIgnoreSsl": true,
+          "connectionRetries": true,
+          "responseChecks": true
+        },
+        "name": "httpd",
+        "protocols": [
+          "http://*",
+          "https://*"
+        ]
+      },
+      "sftp": {
+        "enabled": true,
+        "user": null,
+        "password": null,
+        "timeout": 60000,
+        "name": "sftp",
+        "protocols": [
+          "sftp://*"
+        ]
+      },
       // ...
     },
     "packageOptions": {
@@ -824,7 +867,7 @@ aem {
                        "**/node_modules/**",
                        "jcr_root/.vlt-sync-config.properties"
                )
-                bundleChecking = true
+               bundleChecking = true
             }
         }
     }    
@@ -1222,21 +1265,59 @@ aem {
 }
 ```
 
-##### Uploading backups to remote locations
+##### Work with remote instance backups
 
-Backups can be automatically uploaded to remote location. You just need to specify `backup.uploadUrl` in `gradle.properties` file.
-* SMB & SFTP protocols supported
-* `backup.uploadUrl` must point to a directory
+Backups can be automatically downloaded and uploaded from remote server.
+ 
+Minimal requirement to have it working is only to specify `instance.backup.uploadUrl`.
+By having only this upload property specified, plugin will automatically download most recent backup found in directory determined by upload URL.
 
-you can specify SMB or SFTP credentials using resolver options:
+It is also possible to specify second property `instance.backup.downloadUrl` which will cause that concrete backup will be always in use.
+By having only this download property specified, plugin will not automatically upload any backups.
+
+Most often only these few lines in *gradle.properties* files are required to have automatic two-way backups working:
+
+```ini
+localInstance.backup.uploadUrl=sftp://example.com/aem/packages
+fileTransfer.sftp.user=foo
+fileTransfer.sftp.password=pass
+```
+
+Protocols SFTP & SMB are supported by default.
+However if there is a need to upload backups to cloud storage like Amazon S3, Google Cloud Storage it is possible by implementing custom file transfer.
 
 ```kotlin
 aem {
-    config {
-        resolver {
-            smbDomain = props.string("smb.domain")
-            smbUsername = props.string("smb.username")
-            smbPassword = props.string("smb.password")
+    fileTransfer {
+        custom("s3") {
+            download { dirUrl: String, fileName: String, target: File ->
+                // ...
+            }
+            upload { dirUrl: String, fileName: String, source: File ->
+                // ...
+            }
+        }
+    }
+}
+```
+
+Custom file transfers could be used more widely than in only backup file resolution.
+It is also possible to download packages to be satisfied on instances via custom file transfer or use it in task scripting:
+
+```kotlin
+aem {
+    tasks {
+        instanceSatisfy {
+            packages {
+                download("s3://packages/my-package.zip")
+            }
+        }
+        tasks {
+            register("doThings") {
+                aem.fileTransfer.download("s3://packages/my-package.zip")
+                aem.fileTransfer.upload("s3://packages", aem.`package`)
+                // etc
+            }
         }
     }
 }
@@ -1268,37 +1349,33 @@ Reload OSGi Framework (Apache Felix) on local and remote AEM instance(s).
 
 Upload & install dependent CRX package(s) before deployment. Available methods:
 
-* `local(path: String)`, use CRX package from local file system.
-* `local(file: File)`, same as above, but file can be even located outside the project.
-* `url(url: String)`, use CRX package that will be downloaded from specified URL to local temporary directory.
-* `downloadHttp(url: String)`, download package using HTTP with no auth.
-* `downloadHttpAuth(url: String, username: String, password: String)`, download package using HTTP with Basic Auth support.
-* `downloadHttpAuth(url: String)`, as above, but credentials must be specified in variables: `aem.resolver.http.username`, `aem.resolver.http.password`. Optionally enable SSL errors checking by setting property `aem.resolver.http.connectionIgnoreSsl` to `false`.
-* `downloadSmbAuth(url: String, domain: String, username: String, password: String)`, download package using SMB protocol.
-* `downloadSmbAuth(url: String)`, as above, but credentials must be specified in variables: `aem.resolver.smb.domain`, `aem.resolver.smb.username`, `aem.resolver.smb.password`.
-* `downloadSftpAuth(url: String, username: String, password: String)`, download package using SFTP protocol.
-* `downloadSftpAuth(url: String)`, as above, but credentials must be specified in variables: `aem.resolver.sftp.username`, `aem.resolver.sftp.password`. Optionally enable strict host checking by setting property `aem.resolver.sftp.hostChecking` to `true`.
-* `dependency(notation: String)`, use OSGi bundle that will be resolved from defined repositories (for instance from Maven) then wrapped to CRX package: `dependency('com.neva.felix:search-webconsole-plugin:1.2.0')`.
 * `group(name: String, options: Resolver<PackageGroup>.() -> Unit)`, useful for declaring group of packages (or just optionally naming single package) to be installed only on demand. For instance: `group 'tools', { url('http://example.com/package.zip'); url('smb://internal-nt/package2.zip')  }`. Then to install only packages in group `tools`, use command: `gradlew instanceSatisfy -Pinstance.satisfy.group=tools`.
+* `useLocal(path: String)`, use CRX package from local file system.
+* `useLocal(file: File)`, same as above, but file can be even located outside the project.
+* `resolve(notation: String)`, use OSGi bundle that will be resolved from defined Gradle repositories (for example from Maven) then wrapped to CRX package.
+* `download(url: String)`, use CRX package that will be downloaded from specified URL to local temporary directory.
+* `downloadHttp(url: String, options: HttpFileTransfer.() -> Unit)`, download package using HTTP with.
+* `downloadSftp(url: String, options: SftpFileTransfer.() -> Unit)`, download package using SFTP protocol.
+* `downloadSmbAuth(url: String, options: SmbFileTransfer.() -> Unit)`, download package using SMB protocol.
 
 Example configuration:
 
 ```kotlin
 aem {
     tasks {
-        satisfy {
+        instanceSatisfy {
             packages {
                 group("default") {
-                    local("pkg/vanityurls-components-1.0.2.zip")
-                    url("smb://company-share/aem/packages/my-lib.zip")
-                    url("sftp://company-share/aem/packages/other-lib.zip")
-                    url("file:///C:/Libraries/aem/package/extra-lib.zip")
+                    useLocal("pkg/vanityurls-components-1.0.2.zip")
+                    download("smb://company-share/aem/packages/my-lib.zip")
+                    download("sftp://company-share/aem/packages/other-lib.zip")
+                    download("file:///C:/Libraries/aem/package/extra-lib.zip")
                 }
 
                 group("tools") {
-                    dependency("com.neva.felix:search-webconsole-plugin:1.2.0")
-                    url("https://github.com/Cognifide/APM/releases/download/cqsm-3.0.0/apm-3.0.0.zip")
-                    url("https://github.com/Adobe-Consulting-Services/acs-aem-tools/releases/download/acs-aem-tools-1.0.0/acs-aem-tools-content-1.0.0-min.zip")
+                    resolve("com.neva.felix:search-webconsole-plugin:1.2.0")
+                    download("https://github.com/Cognifide/APM/releases/download/cqsm-3.0.0/apm-3.0.0.zip")
+                    download("https://github.com/Adobe-Consulting-Services/acs-aem-tools/releases/download/acs-aem-tools-1.0.0/acs-aem-tools-content-1.0.0-min.zip")
                 }
             }
         }
@@ -1322,7 +1399,7 @@ aem {
         satisfy {
             packages {
                 group("tool.groovy-console") { 
-                    url("https://github.com/OlsonDigital/aem-groovy-console/releases/download/11.0.0/aem-groovy-console-11.0.0.zip")
+                    download("https://github.com/OlsonDigital/aem-groovy-console/releases/download/11.0.0/aem-groovy-console-11.0.0.zip")
                     config {
                         instanceName = "*-author" // additional filter intersecting 'deployInstanceName'
                         initializer {
@@ -1333,7 +1410,7 @@ aem {
                         }
                         completer {
                             logger.info("Reloading instance(s) after installing Groovy Console")
-                            aem.actions.reload {
+                            aem.instanceActions.reload {
                                 delay = 3
                             }
                         }
@@ -1378,7 +1455,7 @@ Instance state, stable check, health check lambdas are using: [InstanceState](sr
 ```kotlin
 aem {
     tasks {
-        await {
+        instanceAwait {
             options {
                 availableCheck = check(InstanceState.BUNDLE_STATE_SYNC_OPTIONS, { !bundleState.unknown })
                 stableState = checkBundleState()
@@ -1395,7 +1472,7 @@ Such options could be also customized for `packageDeploy` task when using block:
 ```kotlin
 aem {
     tasks {
-        deploy {
+        packageDeploy {
             await {
                 // ...
             }
@@ -1429,8 +1506,8 @@ To customize tailer behavior, see [TailOptions](src/main/kotlin/com/cognifide/gr
 ```kotlin
 aem {
     tasks {
-        tail {
-            options {
+        instanceTail {
+            tailer {
                 // ...
             }
         }
@@ -1724,13 +1801,13 @@ Below snippet could be used to automatize recovery from content backups (e.g for
 
 aem {
     tasks {
-        register("packageDeployProductionContent") {
+        register("deployProductionContent") {
             doLast {
                 val instances = listOf(
                         aem.instance("http://user:password@aem-host.com") // URL specified directly, could be parametrized by some gradle command line property
                         // aem.namedInstance("local-publish") // reused AEM instance defined in 'gradle.properties'
                 )
-                val pkg = aem.http { download("https://company.com/aem/backups/example-1.0.0-201901300932.backup.zip") }
+                val pkg = aem.httpFile { download("https://company.com/aem/backups/example-1.0.0-201901300932.backup.zip") }
                 
                 aem.sync(instances) { 
                     packageManager.deployPackage(pkg) 
