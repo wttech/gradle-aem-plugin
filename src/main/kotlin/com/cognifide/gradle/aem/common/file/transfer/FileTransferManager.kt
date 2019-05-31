@@ -11,7 +11,7 @@ import com.cognifide.gradle.aem.common.file.transfer.smb.SmbFileTransfer
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 
-class FileTransferManager(private val aem: AemExtension) : FileTransfer {
+class FileTransferManager(aem: AemExtension) : AbstractFileTransfer(aem) {
 
     @JsonIgnore
     val factory = FileTransferFactory(aem)
@@ -132,10 +132,6 @@ class FileTransferManager(private val aem: AemExtension) : FileTransfer {
     @get:JsonIgnore
     override val name: String
         get() = NAME
-
-    @get:JsonIgnore
-    override val enabled: Boolean
-        get() = true
 
     companion object {
         const val NAME = "manager"

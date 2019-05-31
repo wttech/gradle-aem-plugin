@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.common.file.transfer
 
 import java.io.File
+import org.apache.commons.io.FilenameUtils
 
 interface FileTransfer {
 
@@ -30,6 +31,18 @@ interface FileTransfer {
     fun download(fileUrl: String, target: File) {
         val (dirUrl, fileName) = splitFileUrl(fileUrl)
         downloadFrom(dirUrl, fileName, target)
+    }
+
+    /**
+     * Downloads file from specified URL to temporary directory with preserving file name.
+     */
+    fun download(fileUrl: String)
+
+    /**
+     * Downloads file from specified URL to specified directory with preserving file name.
+     */
+    fun downloadTo(fileUrl: String, dir: File): File {
+        return File(dir, FilenameUtils.getName(fileUrl)).apply { download(fileUrl, this) }
     }
 
     /**

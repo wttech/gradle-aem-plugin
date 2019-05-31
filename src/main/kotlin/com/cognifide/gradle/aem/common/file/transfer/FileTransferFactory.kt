@@ -12,9 +12,9 @@ import com.cognifide.gradle.aem.common.file.transfer.smb.SmbFileTransfer
  */
 class FileTransferFactory(private val aem: AemExtension) {
 
-    fun http(options: HttpFileTransfer.() -> Unit) = HttpFileTransfer(aem).apply(options)
+    fun <T> http(options: HttpFileTransfer.() -> T) = HttpFileTransfer(aem).run(options)
 
-    fun sftp(options: SftpFileTransfer.() -> Unit) = SftpFileTransfer(aem).apply(options)
+    fun <T> sftp(options: SftpFileTransfer.() -> T) = SftpFileTransfer(aem).run(options)
 
-    fun smb(options: SmbFileTransfer.() -> Unit) = SmbFileTransfer(aem).apply(options)
+    fun <T> smb(options: SmbFileTransfer.() -> T) = SmbFileTransfer(aem).run(options)
 }

@@ -13,7 +13,6 @@ import java.io.File
 import java.io.IOException
 import java.io.InputStream
 import java.io.Serializable
-import org.apache.commons.io.FilenameUtils
 import org.apache.commons.io.IOUtils
 import org.apache.http.HttpEntity
 import org.apache.http.HttpResponse
@@ -281,15 +280,7 @@ open class HttpClient(private val aem: AemExtension) : Serializable {
         }
     }
 
-    fun download(path: String) = download(path, aem.temporaryFile(FilenameUtils.getName(path)))
-
-    fun download(path: String, target: File) {
-        HttpFileTransfer(aem, this).download(path, target)
-    }
-
-    fun downloadTo(path: String, dir: File): File {
-        return File(dir, path.substringAfterLast("/")).apply { download(path, this) }
-    }
+    fun <T> fileTransfer(operation: HttpFileTransfer.() -> T): T = aem.httpFile { client = this@HttpClient; operation() }
 
     companion object {
         val STATUS_CODE_VALID = 200 until 300

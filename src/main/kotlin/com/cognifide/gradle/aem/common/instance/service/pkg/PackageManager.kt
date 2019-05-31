@@ -147,7 +147,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         return retry.withCountdown<Unit, InstanceException>("download package") {
             aem.logger.info("Downloading package from $remotePath to file $targetFile")
 
-            sync.http.download(remotePath, targetFile)
+            sync.http.fileTransfer { download(remotePath, targetFile) }
 
             if (!targetFile.exists()) {
                 throw InstanceException("Downloaded package is missing: ${targetFile.path}")

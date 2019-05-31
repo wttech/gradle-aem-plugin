@@ -94,7 +94,7 @@ val downloadDir: File
      * Use only when using more than one remote HTTP server to download files.
      */
     fun downloadHttp(url: String, options: HttpFileTransfer.() -> Unit): FileResolution {
-        return groupDownload(url) { aem.fileTransfer.factory.http(options).download(url, it) }
+        return groupDownload(url) { aem.httpFile { options(); download(url, it) } }
     }
 
     /**
@@ -103,7 +103,7 @@ val downloadDir: File
      * Use only when using more than one remote SFTP server to download files.
      */
     fun downloadSftp(url: String, options: SftpFileTransfer.() -> Unit): FileResolution {
-        return groupDownload(url) { aem.fileTransfer.factory.sftp(options).download(url, it) }
+        return groupDownload(url) { aem.sftpFile { options(); download(url, it) } }
     }
 
     /**
@@ -112,7 +112,7 @@ val downloadDir: File
      * Use only when using more than one remote SMB server to download files.
      */
     fun downloadSmb(url: String, options: SmbFileTransfer.() -> Unit): FileResolution {
-        return groupDownload(url) { aem.fileTransfer.factory.smb(options).download(url, it) }
+        return groupDownload(url) { aem.smbFile { options(); download(url, it) } }
     }
 
     /**

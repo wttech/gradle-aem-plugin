@@ -7,7 +7,7 @@ import com.cognifide.gradle.aem.common.http.HttpClient
 import java.io.File
 import java.io.IOException
 
-class HttpFileTransfer(aem: AemExtension, val client: HttpClient = client(aem)) : ProtocolFileTransfer(aem) {
+class HttpFileTransfer(aem: AemExtension, var client: HttpClient = client(aem)) : ProtocolFileTransfer(aem) {
 
     fun client(configurer: HttpClient.() -> Unit) {
         client.apply(configurer)
