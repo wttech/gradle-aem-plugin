@@ -26,6 +26,10 @@ object Parallel {
         }
     }
 
+    fun <A> each(iterable: Iterable<A>, callback: CoroutineScope.(A) -> Unit) {
+        map(iterable) { callback(it); Unit }
+    }
+
     fun <A> with(iterable: Iterable<A>, callback: A.() -> Unit) {
         map(iterable) { it.apply(callback); Unit }
     }
