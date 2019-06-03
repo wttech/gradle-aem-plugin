@@ -1,18 +1,18 @@
 package com.cognifide.gradle.aem.common.instance.action.check
 
-import com.cognifide.gradle.aem.common.build.CollectingLogger
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.InstanceSync
-import com.cognifide.gradle.aem.common.instance.action.CheckAction
 import com.cognifide.gradle.aem.common.instance.isBeingInitialized
 import org.apache.http.HttpStatus
 import org.gradle.api.logging.LogLevel
 
-abstract class DefaultCheck(protected val action: CheckAction, protected val instance: Instance) : Check {
+abstract class DefaultCheck(protected val base: CheckGroup) : Check {
 
-    protected val aem = action.aem
+    protected val aem = base.action.aem
 
-    var statusLogger = CollectingLogger()
+    protected val instance = base.instance
+
+    protected val statusLogger = base.statusLogger
 
     var sync: InstanceSync = instance.sync.apply {
         val init = instance.isBeingInitialized()
@@ -42,7 +42,7 @@ abstract class DefaultCheck(protected val action: CheckAction, protected val ins
     }
 
     override val status: String
-        get() = statusLogger.entries.lastOrNull()?.message ?: "<no status>"
+        get() = statusLogger.entries.firstOrNull()?.summary ?: "<no status>"
 
     override val success: Boolean
         get() = statusLogger.entries.none { it.level == LogLevel.ERROR }

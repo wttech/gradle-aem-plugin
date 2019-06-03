@@ -1,10 +1,7 @@
 package com.cognifide.gradle.aem.common.instance.action.check
 
-import com.cognifide.gradle.aem.common.instance.Instance
-import com.cognifide.gradle.aem.common.instance.action.CheckAction
-
 @Suppress("MagicNumber")
-class ComponentsCheck(action: CheckAction, instance: Instance) : DefaultCheck(action, instance) {
+class ComponentsCheck(group: CheckGroup) : DefaultCheck(group) {
 
     var platformComponents = setOf(
             "com.day.crx.packaging.*",
@@ -20,25 +17,39 @@ class ComponentsCheck(action: CheckAction, instance: Instance) : DefaultCheck(ac
     var specificComponents = aem.javaPackages.map { "$it.*" }
 
     override fun check() {
+        aem.logger.info("Checking OSGi components on $instance")
+
         val state = sync.osgiFramework.determineComponentState()
         if (state.unknown) {
-            statusLogger.error("Unknown component state on $instance")
+            statusLogger.error(
+                    "Components unknown",
+                    "Unknown component state on $instance"
+            )
             return
         }
 
-        val inactiveComponents = state.find(platformComponents, listOf()).filter { !it.active }
-        if (inactiveComponents.isNotEmpty()) {
-            statusLogger.error("Inactive components detected on $instance:\n${inactiveComponents.joinToString("\n")}")
+        val inactive = state.find(platformComponents, listOf()).filter { !it.active }
+        if (inactive.isNotEmpty()) {
+            statusLogger.error(
+                    "Components inactive (${inactive.size})",
+                    "Inactive components detected on $instance:\n${inactive.joinToString("\n")}"
+            )
         }
 
-        val failedComponents = state.find(specificComponents, listOf()).filter { it.failedActivation }
-        if (failedComponents.isNotEmpty()) {
-            statusLogger.error("Components with failed activation detected on $instance:\n${failedComponents.joinToString("\n")}")
+        val failed = state.find(specificComponents, listOf()).filter { it.failedActivation }
+        if (failed.isNotEmpty()) {
+            statusLogger.error(
+                    "Components failed (${failed.size})",
+                    "Components with failed activation detected on $instance:\n${failed.joinToString("\n")}"
+            )
         }
 
-        val unsatisfiedComponents = state.find(specificComponents, listOf()).filter { it.unsatisfied }
-        if (unsatisfiedComponents.isNotEmpty()) {
-            statusLogger.error("Unsatisfied components detected on $instance:\n${unsatisfiedComponents.joinToString("\n")}")
+        val unsatisfied = state.find(specificComponents, listOf()).filter { it.unsatisfied }
+        if (unsatisfied.isNotEmpty()) {
+            statusLogger.error(
+                    "Components unsatisfied (${unsatisfied.size})",
+                    "Unsatisfied components detected on $instance:\n${unsatisfied.joinToString("\n")}"
+            )
         }
     }
 }

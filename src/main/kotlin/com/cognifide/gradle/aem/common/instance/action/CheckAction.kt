@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.common.instance.action
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.instance.Instance
+import com.cognifide.gradle.aem.common.instance.InstanceException
 import com.cognifide.gradle.aem.common.instance.action.check.*
 import com.cognifide.gradle.aem.common.instance.names
 import kotlinx.coroutines.isActive
@@ -10,7 +11,7 @@ import org.apache.commons.lang3.time.StopWatch
 
 open class CheckAction(aem: AemExtension) : AbstractAction(aem) {
 
-    var checks: (Instance) -> Set<Check> = { setOf() }
+    var checks: CheckGroup.() -> Set<Check> = { throw InstanceException("No instance checks defined!") }
 
     private val stopWatch = StopWatch()
 
@@ -39,32 +40,36 @@ open class CheckAction(aem: AemExtension) : AbstractAction(aem) {
         aem.logger.info("Checking instance(s): ${instances.names}")
 
         aem.progressIndicator {
-            val instanceStatuses = mutableMapOf<Instance, String>()
+            val allChecks = mutableMapOf<Instance, CheckGroup>()
 
             updater = {
-                update(instanceStatuses.map { (instance, status) ->
-                    "${instance.name} $status"
-                }.joinToString(" | "))
+                update(allChecks.map { (instance, group) ->
+                    "${instance.name}|${group.summary.decapitalize()}"
+                }.joinToString(" "))
             }
 
             runBlocking {
                 stopWatch.start()
                 aem.parallel.with(instances) {
                     while (isActive) {
-                        val checks = Checks(this@CheckAction, this, checks(this))
+                        val checks = CheckGroup(this@CheckAction, this, checks)
 
                         checks.check()
                         if (aborted || checks.done) {
                             break
                         }
 
-                        instanceStatuses[this] = checks.status
+                        allChecks[this] = checks
                     }
                 }
                 stopWatch.stop()
             }
 
             if (aborted) {
+                allChecks.forEach { (_, group) ->
+                    group.statusLogger.entries.forEach { aem.logger.log(it.level, it.details) }
+                }
+
                 error?.let { throw it }
             }
         }

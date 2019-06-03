@@ -1,13 +1,18 @@
 package com.cognifide.gradle.aem.common.instance.action.check
 
+import com.cognifide.gradle.aem.common.build.CollectingLogger
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.action.CheckAction
 
-class Checks(
+class CheckGroup(
     val action: CheckAction,
     val instance: Instance,
-    val checks: Set<Check>
+    checkFactory: CheckGroup.() -> Set<Check>
 ) {
+
+    val statusLogger = CollectingLogger()
+
+    var checks: Set<Check> = checkFactory(this)
 
     @Suppress("TooGenericExceptionCaught")
     fun check() {
@@ -24,6 +29,6 @@ class Checks(
     val done: Boolean
         get() = checks.all { it.success }
 
-    val status: String
+    val summary: String
         get() = checks.firstOrNull { it.failure }?.status ?: "<no status>"
 }

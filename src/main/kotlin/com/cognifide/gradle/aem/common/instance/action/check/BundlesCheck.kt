@@ -1,10 +1,7 @@
 package com.cognifide.gradle.aem.common.instance.action.check
 
-import com.cognifide.gradle.aem.common.instance.Instance
-import com.cognifide.gradle.aem.common.instance.action.CheckAction
-
 @Suppress("MagicNumber")
-class BundlesCheck(action: CheckAction, instance: Instance) : DefaultCheck(action, instance) {
+class BundlesCheck(group: CheckGroup) : DefaultCheck(group) {
 
     init {
         sync.apply {
@@ -16,16 +13,24 @@ class BundlesCheck(action: CheckAction, instance: Instance) : DefaultCheck(actio
     var symbolicNamesIgnored: Iterable<String> = setOf()
 
     override fun check() {
+        aem.logger.info("Checking OSGi bundles on $instance")
+
         val state = sync.osgiFramework.determineBundleState()
 
         if (state.unknown) {
-            statusLogger.error("Unknown bundle state on $instance")
+            statusLogger.error(
+                    "Bundles unknown",
+                    "Unknown bundle state on $instance"
+            )
             return
         }
 
-        val unstableBundles = state.bundlesExcept(symbolicNamesIgnored).filter { !it.stable }
-        if (unstableBundles.isNotEmpty()) {
-            statusLogger.error("Unstable bundles detected on $instance:\n${unstableBundles.joinToString("\n")}")
+        val unstable = state.bundlesExcept(symbolicNamesIgnored).filter { !it.stable }
+        if (unstable.isNotEmpty()) {
+            statusLogger.error(
+                    "Unstable bundles (${unstable.size})",
+                    "Unstable bundles detected on $instance:\n${unstable.joinToString("\n")}"
+            )
         }
     }
 }

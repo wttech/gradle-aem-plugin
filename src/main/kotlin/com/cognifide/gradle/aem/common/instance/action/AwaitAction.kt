@@ -9,12 +9,12 @@ import com.cognifide.gradle.aem.common.instance.action.check.TimeoutCheck
 class AwaitAction(aem: AemExtension) : CheckAction(aem) {
 
     init {
-        checks = { instance ->
+        checks = {
             setOf(
-                    TimeoutCheck(this, instance),
-                    BundlesCheck(this, instance),
-                    EventsCheck(this, instance),
-                    ComponentsCheck(this, instance)
+                    TimeoutCheck(this),
+                    BundlesCheck(this),
+                    EventsCheck(this),
+                    ComponentsCheck(this)
             )
         }
     }
