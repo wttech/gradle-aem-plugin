@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit
 /**
  * Reloads all instances and waits until all be stable.
  */
-class ReloadAction(aem: AemExtension) : AwaitAction(aem) {
+class ReloadAction(aem: AemExtension) : CheckAction(aem) {
 
     /**
      * Time in milliseconds to postpone await action after triggering instances restart.

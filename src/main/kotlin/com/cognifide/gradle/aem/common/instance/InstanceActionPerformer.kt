@@ -1,10 +1,7 @@
 package com.cognifide.gradle.aem.common.instance
 
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.common.instance.action.AbstractAction
-import com.cognifide.gradle.aem.common.instance.action.AwaitAction
-import com.cognifide.gradle.aem.common.instance.action.ReloadAction
-import com.cognifide.gradle.aem.common.instance.action.ShutdownAction
+import com.cognifide.gradle.aem.common.instance.action.*
 
 /**
  * Executor for actions affecting multiple remote instances at once.

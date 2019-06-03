@@ -5,20 +5,20 @@ import org.gradle.api.logging.Logger
 
 class CollectingLogger {
 
-    private val _logEntries = mutableListOf<LogEntry>()
+    private val _entries = mutableListOf<LogEntry>()
 
     data class LogEntry(val level: LogLevel, val message: String)
 
     fun log(level: LogLevel, message: String) {
-        _logEntries += LogEntry(level, message)
+        _entries += LogEntry(level, message)
     }
 
     fun logTo(logger: Logger) {
-        _logEntries.forEach { logger.log(it.level, it.message) }
+        _entries.forEach { logger.log(it.level, it.message) }
     }
 
-    val logEntries
-        get() = _logEntries
+    val entries
+        get() = _entries
 
     fun error(message: String) = log(LogLevel.ERROR, message)
 

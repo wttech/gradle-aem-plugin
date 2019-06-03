@@ -125,12 +125,6 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     val configCommonDir: File
         get() = projectMain.file(props.string("configCommonDir") ?: "gradle")
 
-    /**
-     * Performs parallel CRX package deployments and instance synchronization.
-     */
-    @JsonIgnore
-    val parallel = ParallelExecutor(this)
-
     @get:Internal
     val fileTransfer = FileTransferManager(this)
 
@@ -552,6 +546,14 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
      * Transfer files using over SMB protocol using custom settings.
      */
     fun <T> smbFile(consumer: SmbFileTransfer.() -> T) = fileTransfer.factory.smb(consumer)
+
+    // Utlities (to use without imports)
+
+    @JsonIgnore
+    val parallel = Parallel
+
+    @JsonIgnore
+    val formats = Formats
 
     companion object {
 

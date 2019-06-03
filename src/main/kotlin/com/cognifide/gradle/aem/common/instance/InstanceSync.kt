@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem.common.instance
 
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.common.instance.service.StateChecker
 import com.cognifide.gradle.aem.common.instance.service.groovy.GroovyConsole
 import com.cognifide.gradle.aem.common.instance.service.osgi.OsgiFramework
 import com.cognifide.gradle.aem.common.instance.service.pkg.PackageManager
@@ -43,19 +42,4 @@ class InstanceSync(val aem: AemExtension, val instance: Instance) {
      * Perform operations on JCR content repository (CRUD etc).
      */
     fun <T> repository(callback: Repository.() -> T): T = repository.run(callback)
-
-    /**
-     * Perform health condition checking for running AEM instance.
-     * Each particular state requested from AEM will be cached (stateful service).
-     */
-    fun stateChecker() = StateChecker(this)
-
-    fun <T> stateChecker(callback: StateChecker.() -> T): T = stateChecker().run(callback)
-
-    /**
-     * Clone synchronizer tool and use it with different options (temporarily).
-     */
-    fun customize(options: InstanceSync.() -> Unit): InstanceSync {
-        return InstanceSync(aem, instance).apply(options)
-    }
 }

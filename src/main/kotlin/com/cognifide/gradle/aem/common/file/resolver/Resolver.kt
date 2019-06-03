@@ -129,6 +129,9 @@ val downloadDir: File
         return groupFile(sourceFile.absolutePath) { sourceFile }
     }
 
+    /**
+     * Customize configuration for particular file group.
+     */
     fun config(configurer: G.() -> Unit) {
         groupCurrent.apply(configurer)
     }
@@ -139,6 +142,11 @@ val downloadDir: File
         this.apply(configurer)
         groupCurrent = groupDefault
     }
+
+    /**
+     * Shorthand for creating named group with single file only to be downloaded.
+     */
+    fun group(name: String, downloadUrl: String) = group(name) { download(downloadUrl) }
 
     abstract fun createGroup(name: String): G
 
