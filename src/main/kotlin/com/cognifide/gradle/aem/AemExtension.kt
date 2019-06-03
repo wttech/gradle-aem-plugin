@@ -431,15 +431,11 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
 
     /**
      * Show asynchronous progress indicator while performing some action.
-     *
-     * Warning! Nesting progress indicators is not supported.
      */
     fun <T> progressIndicator(action: ProgressIndicator.() -> T): T = ProgressIndicator(project).launch(action)
 
     /**
      * Show synchronous progress logger while performing some action.
-     *
-     * Nesting progress loggers is supported.
      */
     fun <T> progressLogger(action: ProgressLogger.() -> T): T = ProgressLogger.of(project).launch(action)
 
