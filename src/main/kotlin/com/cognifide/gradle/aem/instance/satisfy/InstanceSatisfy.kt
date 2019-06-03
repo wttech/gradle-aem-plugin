@@ -106,6 +106,7 @@ open class InstanceSatisfy : PackageDeploy() {
         packageProvider.apply(configurer)
     }
 
+    // TODO fix nesting progress indicator
     @TaskAction
     @Suppress("ComplexMethod")
     override fun deploy() {

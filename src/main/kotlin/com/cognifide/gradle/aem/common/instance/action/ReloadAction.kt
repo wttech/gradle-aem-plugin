@@ -4,6 +4,7 @@ import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.build.ProgressCountdown
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.InstanceException
+import com.cognifide.gradle.aem.common.instance.check.CheckAction
 import java.util.concurrent.TimeUnit
 
 /**

@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.common.instance.action.check
+package com.cognifide.gradle.aem.common.instance.check
 
 interface Check {
 

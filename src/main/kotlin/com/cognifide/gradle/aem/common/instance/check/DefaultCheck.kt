@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.common.instance.action.check
+package com.cognifide.gradle.aem.common.instance.check
 
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.InstanceSync

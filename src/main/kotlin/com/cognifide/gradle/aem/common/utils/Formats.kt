@@ -88,6 +88,10 @@ object Formats {
         return percent(current.toLong(), total.toLong())
     }
 
+    fun percentExplained(current: Int, total: Int): String {
+        return "$current/$total=${percent(current, total)}"
+    }
+
     fun percent(current: Long, total: Long): String {
         val value: Double = when (total) {
             0L -> 0.0
@@ -96,6 +100,8 @@ object Formats {
 
         return "${"%.2f".format(value * 100.0)}%"
     }
+
+    fun percentExplained(current: Long, total: Long) = "$current/$total=${percent(current, total)}"
 
     fun noLineBreaks(text: String): String {
         return text.replace("\r\n", " ").replace("\n", " ")
