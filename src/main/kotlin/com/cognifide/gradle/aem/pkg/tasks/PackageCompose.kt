@@ -34,7 +34,7 @@ open class PackageCompose : ZipTask() {
      * Must be absolute or relative to current working directory.
      */
     @Internal
-    var contentDir: File = aem.packageOptions.rootDir
+    var contentDir: File = aem.packageOptions.contentDir
 
     /**
      * Content path for OSGi bundle jars being placed in CRX package.
@@ -76,7 +76,7 @@ open class PackageCompose : ZipTask() {
     val metaDirs: List<File>
         get() {
             val dirs = listOf(
-                    aem.packageOptions.metaCommonRootDir,
+                    aem.packageOptions.metaCommonDir,
                     File(contentDir, Package.META_PATH)
             )
 

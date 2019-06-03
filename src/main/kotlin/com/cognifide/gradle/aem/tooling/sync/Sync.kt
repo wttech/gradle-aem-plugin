@@ -42,7 +42,7 @@ open class Sync : AemDefaultTask() {
      * Location of JCR content root to which content will be copied.
      */
     @Internal
-    var contentDir = aem.packageOptions.rootDir
+    var contentDir = aem.packageOptions.contentDir
 
     private val filterRootFiles: List<File>
         get() {

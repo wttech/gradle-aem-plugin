@@ -80,9 +80,9 @@
       }
     },
     "packageOptions" : {
-      "rootDir" : "*/minimal/src/main/content",
+      "contentDir" : "*/minimal/src/main/content",
       "snapshots" : [ ],
-      "metaCommonRootDir" : "*/minimal/gradle/package/META-INF",
+      "metaCommonDir" : "*/minimal/gradle/package/META-INF",
       "installPath" : "/apps/minimal/install",
       "installRepository" : true,
       "errors" : [

@@ -80,9 +80,9 @@
       }
     },
     "packageOptions" : {
-      "rootDir" : "*/additional/src/main/content",
+      "contentDir" : "*/additional/src/main/content",
       "snapshots" : [ ],
-      "metaCommonRootDir" : "*/additional/gradle/package/META-INF",
+      "metaCommonDir" : "*/additional/gradle/package/META-INF",
       "installPath" : "/apps/additional/install",
       "installRepository" : true,
       "errors" : [

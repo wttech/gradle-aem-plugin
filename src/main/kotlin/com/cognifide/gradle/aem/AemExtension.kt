@@ -460,18 +460,18 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
 
             val cmdFilterPath = props.string("filter.path") ?: ""
             if (cmdFilterPath.isNotEmpty()) {
-                val cmdFilter = FileOperations.find(project, packageOptions.vltRootDir.toString(), cmdFilterPath)
+                val cmdFilter = FileOperations.find(project, packageOptions.vltDir.toString(), cmdFilterPath)
                         ?: throw VltException("Vault check out filter file does not exist at path: $cmdFilterPath" +
-                                " (or under directory: ${packageOptions.vltRootDir}).")
+                                " (or under directory: ${packageOptions.vltDir}).")
                 logger.debug("Using Vault filter file specified as command line property: $cmdFilterPath")
                 return VltFilter(cmdFilter)
             }
 
             val conventionFilterFiles = listOf(
-                    "${packageOptions.vltRootDir}/${VltFilter.SYNC_NAME}",
-                    "${packageOptions.vltRootDir}/${VltFilter.BUILD_NAME}"
+                    "${packageOptions.vltDir}/${VltFilter.SYNC_NAME}",
+                    "${packageOptions.vltDir}/${VltFilter.BUILD_NAME}"
             )
-            val conventionFilterFile = FileOperations.find(project, packageOptions.vltRootDir.toString(), conventionFilterFiles)
+            val conventionFilterFile = FileOperations.find(project, packageOptions.vltDir.toString(), conventionFilterFiles)
             if (conventionFilterFile != null) {
                 logger.debug("Using Vault filter file found by convention: $conventionFilterFile")
                 return VltFilter(conventionFilterFile)

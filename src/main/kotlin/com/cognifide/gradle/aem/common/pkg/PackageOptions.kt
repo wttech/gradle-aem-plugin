@@ -8,27 +8,30 @@ import java.io.Serializable
 
 class PackageOptions(aem: AemExtension) : Serializable {
 
-    var rootDir: File = aem.project.file("src/main/content")
-
-    @get:JsonIgnore
-    val jcrRootDir: File
-        get() = File(rootDir, Package.JCR_ROOT)
-
-    @get:JsonIgnore
-    val vltRootDir: File
-        get() = File(rootDir, Package.VLT_PATH)
+    /**
+     * Package root directory containing 'jcr_root' and 'META-INF' directories.
+     */
+    var contentDir: File = aem.project.file("src/main/content")
 
     /**
-     * CRX package name conventions (with wildcard) indicating that package can change over time
-     * while having same version specified. Affects CRX packages composed and satisfied.
+     * JCR root directory.
      */
-    var snapshots: List<String> = aem.props.list("package.snapshots") ?: listOf()
+    @get:JsonIgnore
+    val jcrRootDir: File
+        get() = File(contentDir, Package.JCR_ROOT)
+
+    /**
+     * Vault metadata files directory (package definition).
+     */
+    @get:JsonIgnore
+    val vltDir: File
+        get() = File(contentDir, Package.VLT_PATH)
 
     /**
      * Custom path to Vault files that will be used to build CRX package.
      * Useful to share same files for all packages, like package thumbnail.
      */
-    var metaCommonRootDir: File = File(aem.configCommonDir, Package.META_RESOURCES_PATH)
+    var metaCommonDir: File = File(aem.configCommonDir, Package.META_RESOURCES_PATH)
 
     /**
      * Content path for OSGi bundle jars being placed in CRX package.
@@ -66,7 +69,13 @@ class PackageOptions(aem: AemExtension) : Serializable {
     ))
 
     /**
-     * Determines number of lines to process at once during reading html responses.
+     * CRX package name conventions (with wildcard) indicating that package can change over time
+     * while having same version specified. Affects CRX packages composed and satisfied.
+     */
+    var snapshots: List<String> = aem.props.list("package.snapshots") ?: listOf()
+
+    /**
+     * Determines number of lines to process at once during reading Package Manager HTML responses.
      *
      * The higher the value, the bigger consumption of memory but shorter execution time.
      * It is a protection against exceeding max Java heap size.
