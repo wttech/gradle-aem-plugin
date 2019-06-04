@@ -29,21 +29,20 @@ class CheckRunner(internal val aem: AemExtension) {
     var verbose = true
 
     /**
-     * Measures running times.
-     */
-    private val runningWatch = StopWatch()
-
-    /**
      * Time since running started.
      */
     val runningTime: Long
         get() = runningWatch.time
 
+    private val runningWatch = StopWatch()
+
     /**
      * Time since last instance state change.
      */
     val stateTime: Long
-        get() = runningWatch.splitTime
+        get() = stateWatch.time
+
+    private val stateWatch = StopWatch()
 
     /**
      * Error causing running stopped.
@@ -62,10 +61,11 @@ class CheckRunner(internal val aem: AemExtension) {
 
     val stateChanged: Boolean
         get() = currentChecks.any { (instance, current) ->
-            val previous = previousChecks[instance] ?: return@any true
+            val previous = previousChecks[instance] ?: return true
             current.state != previous.state
         }
 
+    @Suppress("ComplexMethod")
     fun check(instances: Collection<Instance>) {
         aem.progressIndicator {
             updater = {
@@ -75,25 +75,22 @@ class CheckRunner(internal val aem: AemExtension) {
             }
 
             runningWatch.start()
-            runningWatch.split()
+            stateWatch.start()
 
             aem.parallel.each(instances) { instance ->
                 while (isActive) {
-                    val checks = CheckGroup(this@CheckRunner, instance, checks)
-                    checks.check()
-
-                    currentChecks[instance] = checks
-
-                    if (aborted || checks.done) {
+                    val checks = CheckGroup(this@CheckRunner, instance, checks).apply { check() }
+                    if (checks.done || aborted) {
                         break
                     }
 
-                    Behaviors.waitFor(delay)
-
-                    previousChecks = currentChecks.toMap()
+                    currentChecks[instance] = checks
                     if (stateChanged) {
-                        runningWatch.split()
+                        stateWatch.apply { reset(); start() }
                     }
+                    previousChecks = currentChecks.toMap()
+
+                    Behaviors.waitFor(delay)
                 }
             }
 
