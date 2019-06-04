@@ -5,12 +5,9 @@ import com.cognifide.gradle.aem.common.utils.Formats
 @Suppress("MagicNumber")
 class ComponentsCheck(group: CheckGroup) : DefaultCheck(group) {
 
-    var platformComponents = aem.props.list("instance.check.components.platform") ?: listOf(
-            "com.day.crx.packaging.*",
-            "org.apache.sling.installer.*"
-    )
+    var platformComponents = listOf<String>()
 
-    var specificComponents = aem.props.list("instance.check.components.specific") ?: aem.javaPackages.map { "$it.*" }
+    var specificComponents = listOf<String>()
 
     init {
         sync.apply {
@@ -38,6 +35,7 @@ class ComponentsCheck(group: CheckGroup) : DefaultCheck(group) {
             statusLogger.error(
                     when (inactive.size) {
                         1 -> "Component inactive '${inactive.first().uid}'"
+                        in 2..10 -> "Components inactive (${inactive.size})"
                         else -> "Components inactive (${Formats.percentExplained(inactive.size, total)})"
                     },
                     "Inactive components detected on $instance:\n${inactive.joinToString("\n")}"
@@ -49,6 +47,7 @@ class ComponentsCheck(group: CheckGroup) : DefaultCheck(group) {
             statusLogger.error(
                     when (failed.size) {
                         1 -> "Component failed '${failed.first().uid}'"
+                        in 2..10 -> "Components failed (${failed.size})"
                         else -> "Components failed (${Formats.percentExplained(failed.size, total)})"
                     },
                     "Components with failed activation detected on $instance:\n${failed.joinToString("\n")}"
@@ -60,6 +59,7 @@ class ComponentsCheck(group: CheckGroup) : DefaultCheck(group) {
             statusLogger.error(
                     when (unsatisfied.size) {
                         1 -> "Component unsatisfied '${unsatisfied.first().uid}'"
+                        in 2..10 -> "Components unsatisfied (${unsatisfied.size})"
                         else -> "Components unsatisified (${Formats.percentExplained(unsatisfied.size, total)})"
                     },
                     "Unsatisfied components detected on $instance:\n${unsatisfied.joinToString("\n")}"

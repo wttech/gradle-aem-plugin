@@ -4,45 +4,28 @@ import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.build.Behaviors
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.InstanceException
-import com.cognifide.gradle.aem.common.instance.action.AbstractAction
-import com.cognifide.gradle.aem.common.instance.names
 import kotlinx.coroutines.isActive
 import org.apache.commons.lang3.time.StopWatch
 
-open class CheckAction(aem: AemExtension) : AbstractAction(aem) {
+class CheckRunner(internal val aem: AemExtension) {
 
-    var delay = aem.props.long("instance.check.delay") ?: 1000
+    var delay = 0L
 
-    var resume = aem.props.flag("instance.check.resume")
+    var resume = false
 
     var checks: CheckGroup.() -> List<Check> = { throw InstanceException("No instance checks defined!") }
 
-    private val stopWatch = StopWatch()
+    private val runningWatch = StopWatch()
 
-    val running: Long
-        get() = stopWatch.time
+    val runningTime: Long
+        get() = runningWatch.time
 
-    var error: Exception? = null
+    var abortCause: Exception? = null
 
     val aborted: Boolean
-        get() = error != null
+        get() = abortCause != null
 
-    override fun perform() {
-        if (!enabled) {
-            return
-        }
-
-        if (instances.isEmpty()) {
-            aem.logger.info("No instances to check.")
-            return
-        }
-
-        check()
-    }
-
-    private fun check() {
-        aem.logger.info("Checking instance(s): ${instances.names}")
-
+    fun check(instances: Iterable<Instance>) {
         aem.progressIndicator {
             val instanceChecks = mutableMapOf<Instance, CheckGroup>()
 
@@ -52,10 +35,10 @@ open class CheckAction(aem: AemExtension) : AbstractAction(aem) {
                 update(instanceCheckSummaries.joinToString(" | "))
             }
 
-            stopWatch.start()
+            runningWatch.start()
             aem.parallel.each(instances) { instance ->
                 while (isActive) {
-                    val checks = CheckGroup(this@CheckAction, instance, checks)
+                    val checks = CheckGroup(this@CheckRunner, instance, checks)
                     checks.check()
                     instanceChecks[instance] = checks
 
@@ -66,14 +49,14 @@ open class CheckAction(aem: AemExtension) : AbstractAction(aem) {
                     Behaviors.waitFor(delay)
                 }
             }
-            stopWatch.stop()
+            runningWatch.stop()
 
             if (aborted && !resume) {
                 instanceChecks.forEach { (_, group) ->
                     group.statusLogger.entries.forEach { aem.logger.log(it.level, it.details) }
                 }
 
-                error?.let { throw it }
+                abortCause?.let { throw it }
             }
         }
     }

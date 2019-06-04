@@ -1,13 +1,14 @@
 package com.cognifide.gradle.aem.common.instance.check
 
 import com.cognifide.gradle.aem.common.instance.InstanceException
+import java.util.concurrent.TimeUnit
 
 class TimeoutCheck(group: CheckGroup) : DefaultCheck(group) {
 
-    var timeout = aem.props.long("instance.check.timeout") ?: 60000 // TODO corelate with instance
+    var timeout: Long = TimeUnit.SECONDS.toMillis(60)
 
     override fun check() {
-        if (base.action.running > timeout) {
+        if (runner.runningTime > timeout) {
             throw InstanceException("Instance timeout reached!")
         }
     }

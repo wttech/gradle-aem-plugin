@@ -93,6 +93,7 @@ To see documentation for previous 5.x serie, please [click here](https://github.
         * [Configuring OSGi bundle manifest attributes](#configuring-osgi-bundle-manifest-attributes)
         * [Excluding packages being incidentally imported by OSGi bundle](#excluding-packages-being-incidentally-imported-by-osgi-bundle)
      * [Instance plugin](#instance-plugin)
+        * [Instance file structure](#instance-file-structure)
         * [Task instanceSetup](#task-instancesetup)
         * [Task instanceResetup](#task-instanceresetup)
         * [Task instanceCreate](#task-instancecreate)
@@ -116,6 +117,7 @@ To see documentation for previous 5.x serie, please [click here](https://github.
         * [Environment configuration](#environment-configuration)
            * [Notice for Docker on Windows](#notice-for-docker-on-windows)
            * [Notice for Docker Toolbox](#notice-for-docker-toolbox)
+        * [Environment file structure](#environment-file-structure)
         * [Environment service health checks](#environment-service-health-checks)
         * [Task environmentUp](#task-environmentup)
         * [Task environmentDown](#task-environmentdown)
@@ -1152,6 +1154,13 @@ Should be applied only at root project / only once within whole build.
 
 Inherits from [Common Plugin](#common-plugin).
 
+#### Instance file structure
+
+By default, instance file are stored directly in project, under so called main AEM module usually named *aem*.
+Ensure having directory *aem/.aem* ignored in VCS and excluded from indexing by IDE.
+
+![Instance file structure](docs/instance-dir-structure.png)
+
 #### Task `instanceSetup`
 
 Performs initial setup of local AEM instance(s). Automated version of `instanceCreate instanceUp instanceSatisfy packageDeploy`.
@@ -1558,6 +1567,7 @@ plugins {
 }
 ```
 
+Controls virtualized AEM environment consisting of Apache Web Server (HTTPD) with AEM dispatcher module installed.
 Provides environment related tasks: `environmentUp`, `environmentDev`, `environmentHosts` etc.
 
 Should be applied only at root project / only once within whole build.
@@ -1572,11 +1582,11 @@ Most of the configuration steps are automated. However, there are three manual s
     * [Desktop](https://docs.docker.com/docker-for-windows/install/) (highly recommended, using Hyper-V)
     * [Toolbox](https://docs.docker.com/toolbox/toolbox_install_windows/) (legacy, using VirtualBox)
 2. Setup hosts on local machine (admin rights are required to access `/etc/hosts` or `C:\Windows\System32\drivers\etc\hosts` file)
-    * In project based on [Gradle AEM Multi](https://github.com/Cognifide/gradle-aem-multi/blob/master/aem/hosts.bat), just run script `aem/hosts.sh` or `aem/hosts.bat`
+    * In project based on [Gradle AEM Multi](https://github.com/Cognifide/gradle-aem-multi/blob/master/aem), just run script `aem/hosts` or `aem/hosts.bat`
     * Otherwise: 
         * Windows: 
             * Start PowerShell with "Run as administrator"
-            * Execute: `.\gradlew.bat environmentHosts --no-daemon`
+            * Execute: `./gradlew.bat environmentHosts --no-daemon`
         * Unix: 
             * Execute: `sudo gradlew environmentHosts --no-daemon`
     
@@ -1589,6 +1599,21 @@ Because environment is using Docker volumes, on Windows, running task `environme
 
 While using Docker Toolbox, beware that, by default, there is only one shared folder in VirtualBox configured which mounts *C:/Users* to */c/users* on Docker Machine / Ubuntu. 
 As a consequence, if AEM project is located outside of *C:/Users* directory, there is a need to manually add corresponding shared folder and mount it to */c/users* path on Docker Machine using VirtualBox GUI.
+
+#### Environment file structure
+
+Environment plugin is a little more depending on convention in case of directory structure.
+Screenshot below presents recommended file structure which does not need any additional configuration.
+
+![Environment file structure](docs/environment-dir-structure.png)
+
+Ensure having directory *aem/.aem* ignored in VCS and excluded from indexing by IDE.
+
+Environment as a code paradigm is a main reason of locating environment configuration and runtime inside a project. 
+Nowadays, advanced web applications (like AEM applications) are multi-layered and closely related with environment.
+By having AEM dispatcher configuration and HTTDP configuration near application code base, the changes could be applied very easily and quickly.
+By having all source code opened in single IDE window, e.g finding and amending content repository path occurrences at same time both in AEM application and HTTPD configuration could reduce risk of regression and they could be versioned once.
+All code base - application and environment - could be treated as a whole, fully operating unit.
 
 #### Environment service health checks
 

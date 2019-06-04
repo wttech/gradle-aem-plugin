@@ -6,13 +6,15 @@ import com.cognifide.gradle.aem.common.instance.isBeingInitialized
 import org.apache.http.HttpStatus
 import org.gradle.api.logging.LogLevel
 
-abstract class DefaultCheck(protected val base: CheckGroup) : Check {
+abstract class DefaultCheck(protected val group: CheckGroup) : Check {
 
-    protected val aem = base.action.aem
+    protected val runner = group.runner
 
-    protected val instance = base.instance
+    protected val aem = runner.aem
 
-    protected val statusLogger = base.statusLogger
+    protected val instance = group.instance
+
+    protected val statusLogger = group.statusLogger
 
     var sync: InstanceSync = instance.sync.apply {
         val init = instance.isBeingInitialized()

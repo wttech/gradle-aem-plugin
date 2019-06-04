@@ -1,15 +1,13 @@
 package com.cognifide.gradle.aem.common.instance.check
 
+import java.util.concurrent.TimeUnit
+
 @Suppress("MagicNumber")
 class EventsCheck(group: CheckGroup) : DefaultCheck(group) {
 
-    var unstableTopics = aem.props.list("instance.check.event.unstableTopics") ?: listOf(
-            "org/osgi/framework/ServiceEvent/*",
-            "org/osgi/framework/FrameworkEvent/*",
-            "org/osgi/framework/BundleEvent/*"
-    )
+    var unstableTopics = listOf<String>()
 
-    var unstableAgeMillis = aem.props.long("instance.check.event.unstableAgeMillis") ?: 5000L
+    var unstableAgeMillis = TimeUnit.SECONDS.toMillis(5)
 
     init {
         sync.apply {

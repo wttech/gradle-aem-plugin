@@ -54,12 +54,9 @@ class InstancePlugin : AemPlugin() {
                 mustRunAfter(InstanceSatisfy.NAME)
                 plugins.withId(PackagePlugin.ID) { mustRunAfter(PackageDeploy.NAME) }
             }
-            register<InstanceAwait>(InstanceAwait.NAME) {
+            register<InstanceCheck>(InstanceCheck.NAME) {
                 mustRunAfter(InstanceCreate.NAME, InstanceUp.NAME, InstanceSatisfy.NAME)
                 plugins.withId(PackagePlugin.ID) { mustRunAfter(PackageDeploy.NAME) }
-            }
-            register<InstanceCollect>(InstanceCollect.NAME) {
-                mustRunAfter(InstanceSatisfy.NAME)
             }
             register<InstanceSetup>(InstanceSetup.NAME) {
                 dependsOn(InstanceCreate.NAME, InstanceUp.NAME, InstanceSatisfy.NAME)

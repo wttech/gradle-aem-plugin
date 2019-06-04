@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.pkg.tasks
 
 import com.cognifide.gradle.aem.common.instance.InstanceSync
-import com.cognifide.gradle.aem.common.instance.action.AwaitAction
+import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
 import com.cognifide.gradle.aem.common.instance.names
 import com.cognifide.gradle.aem.common.tasks.PackageTask
 import com.cognifide.gradle.aem.common.utils.fileNames
@@ -69,26 +69,26 @@ open class PackageDeploy : PackageTask() {
      */
     @Internal
     @get:JsonIgnore
-    var completer: () -> Unit = { await() }
+    var completer: () -> Unit = { awaitUp() }
 
-    private var awaitOptions: AwaitAction.() -> Unit = {}
+    private var awaitUpOptions: AwaitUpAction.() -> Unit = {}
 
     init {
         description = "Deploys CRX package on instance(s). Upload then install (and optionally activate)."
     }
 
     /**
-     * Controls await action.
+     * Controls await up action.
      */
-    fun await(options: AwaitAction.() -> Unit) {
-        this.awaitOptions = options
+    fun awaitUp(options: AwaitUpAction.() -> Unit) {
+        this.awaitUpOptions = options
     }
 
-    fun await() {
+    fun awaitUp() {
         if (awaited) {
-            aem.instanceActions.await {
+            aem.instanceActions.awaitUp {
                 instances = this@PackageDeploy.instances
-                awaitOptions()
+                awaitUpOptions()
             }
         }
     }

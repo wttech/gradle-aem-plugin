@@ -35,7 +35,7 @@ class PackageGroup(val resolver: PackageResolver, name: String) : FileGroup(reso
      * Hook after deploying all packages to all instances called only when
      * at least one package was deployed on any instance.
      */
-    var completer: () -> Unit = { aem.instanceActions.await() }
+    var completer: () -> Unit = { aem.instanceActions.awaitUp() }
 
     override fun createResolution(id: String, resolver: (FileResolution) -> File): FileResolution {
         return PackageResolution(this, id, resolver)

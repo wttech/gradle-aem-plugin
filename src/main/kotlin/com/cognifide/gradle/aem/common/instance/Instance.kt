@@ -206,7 +206,7 @@ interface Instance : Serializable {
     }
 }
 
-val Collection<Instance>.names: String
+val Iterable<Instance>.names: String
     get() = joinToString(", ") { it.name }
 
 fun Instance.isInitialized(): Boolean {

@@ -4,7 +4,7 @@ import com.cognifide.gradle.aem.common.build.CollectingLogger
 import com.cognifide.gradle.aem.common.instance.Instance
 
 class CheckGroup(
-    val action: CheckAction,
+    val runner: CheckRunner,
     val instance: Instance,
     checkFactory: CheckGroup.() -> List<Check>
 ) {
@@ -19,7 +19,7 @@ class CheckGroup(
             try {
                 check.check()
             } catch (e: Exception) {
-                action.error = e
+                runner.abortCause = e
                 break
             }
         }

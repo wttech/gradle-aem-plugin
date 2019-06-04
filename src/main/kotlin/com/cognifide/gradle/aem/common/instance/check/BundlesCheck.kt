@@ -1,11 +1,9 @@
 package com.cognifide.gradle.aem.common.instance.check
 
-import com.cognifide.gradle.aem.common.utils.Formats
-
 @Suppress("MagicNumber")
 class BundlesCheck(group: CheckGroup) : DefaultCheck(group) {
 
-    var symbolicNamesIgnored = aem.props.list("instance.check.bundles.symbolicNamesIgnored") ?: listOf()
+    var symbolicNamesIgnored = listOf<String>()
 
     init {
         sync.apply {
@@ -31,8 +29,9 @@ class BundlesCheck(group: CheckGroup) : DefaultCheck(group) {
         if (unstable.isNotEmpty()) {
             statusLogger.error(
                     when (unstable.size) {
-                        1 -> "Unstable bundle '${unstable.first().symbolicName}'"
-                        else -> "Unstable bundles (${Formats.percentExplained(unstable.size, state.bundles.size)})"
+                        1 -> "Bundle unstable '${unstable.first().symbolicName}'"
+                        in 2..10 -> "Bundles unstable (${unstable.size})"
+                        else -> "Bundles stable (${state.stablePercent})"
                     },
                     "Unstable bundles detected on $instance:\n${unstable.joinToString("\n")}"
             )

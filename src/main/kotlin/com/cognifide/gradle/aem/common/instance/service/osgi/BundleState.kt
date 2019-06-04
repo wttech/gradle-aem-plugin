@@ -43,7 +43,7 @@ class BundleState private constructor() {
         get() = "${total}t|${activeBundles}ba|${activeFragments}fa|${resolvedBundles}br"
 
     val stablePercent: String
-        get() = Formats.percent(total - (resolvedBundles + installedBundles), total)
+        get() = Formats.percentExplained(total - (resolvedBundles + installedBundles), total)
 
     /**
      * Checks if all bundles of matching symbolic name pattern are stable.
