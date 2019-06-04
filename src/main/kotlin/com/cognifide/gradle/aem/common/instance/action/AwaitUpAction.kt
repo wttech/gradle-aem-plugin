@@ -57,7 +57,6 @@ class AwaitUpAction(aem: AemExtension) : AnyInstanceAction(aem) {
 
     val runner = CheckRunner(aem).apply {
         delay = aem.props.long("instance.awaitUp.delay") ?: TimeUnit.SECONDS.toMillis(1)
-        retries = aem.props.int("instance.awaitUp.retries") ?: 1
         verbose = aem.props.boolean("instance.awaitUp.verbose") ?: true
 
         checks {

@@ -19,14 +19,7 @@ class CheckRunner(internal val aem: AemExtension) {
     }
 
     /**
-     * Controls how many times same instance state should be checked.
-     *
-     * TODO is it needed or not?
-     */
-    var retries = 1
-
-    /**
-     * Controls how long to wait after checking once.
+     * Controls how long to wait after failed checking before checking again.
      */
     var delay = 0L
 
