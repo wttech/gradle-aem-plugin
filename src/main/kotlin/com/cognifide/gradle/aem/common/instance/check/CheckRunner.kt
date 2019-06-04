@@ -9,50 +9,105 @@ import org.apache.commons.lang3.time.StopWatch
 
 class CheckRunner(internal val aem: AemExtension) {
 
+    private var checks: CheckGroup.() -> List<Check> = { throw InstanceException("No instance checks defined!") }
+
+    /**
+     * Defines which checks should be performed (and repeated).
+     */
+    fun checks(definitions: CheckGroup.() -> List<Check>) {
+        checks = definitions
+    }
+
+    /**
+     * Controls how many times same instance state should be checked.
+     *
+     * TODO is it needed or not?
+     */
+    var retries = 1
+
+    /**
+     * Controls how long to wait after checking once.
+     */
     var delay = 0L
 
-    var resume = false
+    /**
+     * Controls if aborted running should fail build.
+     */
+    var verbose = true
 
-    var checks: CheckGroup.() -> List<Check> = { throw InstanceException("No instance checks defined!") }
-
+    /**
+     * Measures running times.
+     */
     private val runningWatch = StopWatch()
 
+    /**
+     * Time since running started.
+     */
     val runningTime: Long
         get() = runningWatch.time
 
+    /**
+     * Time since last instance state change.
+     */
+    val stateTime: Long
+        get() = runningWatch.splitTime
+
+    /**
+     * Error causing running stopped.
+     */
     var abortCause: Exception? = null
 
+    /**
+     * Verify if running is stopped.
+     */
     val aborted: Boolean
         get() = abortCause != null
 
-    fun check(instances: Iterable<Instance>) {
-        aem.progressIndicator {
-            val instanceChecks = mutableMapOf<Instance, CheckGroup>()
+    private val currentChecks = mutableMapOf<Instance, CheckGroup>()
 
+    private var previousChecks = mapOf<Instance, CheckGroup>()
+
+    val stateChanged: Boolean
+        get() = currentChecks.any { (instance, current) ->
+            val previous = previousChecks[instance] ?: return@any true
+            current.state != previous.state
+        }
+
+    fun check(instances: Collection<Instance>) {
+        aem.progressIndicator {
             updater = {
-                val instanceCheckSummaries = instanceChecks.toSortedMap(compareBy { it.name })
+                val instanceSummaries = currentChecks.toSortedMap(compareBy { it.name })
                         .map { (instance, checks) -> "${instance.name}: ${checks.summary.decapitalize()}" }
-                update(instanceCheckSummaries.joinToString(" | "))
+                update(instanceSummaries.joinToString(" | "))
             }
 
             runningWatch.start()
+            runningWatch.split()
+
             aem.parallel.each(instances) { instance ->
                 while (isActive) {
                     val checks = CheckGroup(this@CheckRunner, instance, checks)
                     checks.check()
-                    instanceChecks[instance] = checks
+
+                    currentChecks[instance] = checks
 
                     if (aborted || checks.done) {
                         break
                     }
 
                     Behaviors.waitFor(delay)
+
+                    previousChecks = currentChecks.toMap()
+                    if (stateChanged) {
+                        runningWatch.split()
+                    }
                 }
             }
+
             runningWatch.stop()
 
-            if (aborted && !resume) {
-                instanceChecks.forEach { (_, group) ->
+            if (aborted && verbose) {
+                currentChecks.forEach { (_, group) ->
                     group.statusLogger.entries.forEach { aem.logger.log(it.level, it.details) }
                 }
 

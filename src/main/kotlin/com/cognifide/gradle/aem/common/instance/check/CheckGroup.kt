@@ -2,12 +2,15 @@ package com.cognifide.gradle.aem.common.instance.check
 
 import com.cognifide.gradle.aem.common.build.CollectingLogger
 import com.cognifide.gradle.aem.common.instance.Instance
+import org.apache.commons.lang3.builder.HashCodeBuilder
 
 class CheckGroup(
     val runner: CheckRunner,
     val instance: Instance,
     checkFactory: CheckGroup.() -> List<Check>
 ) {
+
+    val stateBuilder = HashCodeBuilder()
 
     val statusLogger = CollectingLogger()
 
@@ -25,9 +28,30 @@ class CheckGroup(
         }
     }
 
+    fun state(value: Any) {
+        stateBuilder.append(value)
+    }
+
+    val state: Int
+        get() = stateBuilder.toHashCode()
+
     val done: Boolean
         get() = checks.all { it.success }
 
     val summary: String
         get() = checks.firstOrNull { it.failure }?.status ?: "checks passed"
+
+    // Factory methods / DSL
+
+    fun custom(callback: CustomCheck.() -> Unit) = CustomCheck(this, callback)
+
+    fun bundles(options: BundlesCheck.() -> Unit) = BundlesCheck(this).apply(options)
+
+    fun components(options: ComponentsCheck.() -> Unit) = ComponentsCheck(this).apply(options)
+
+    fun events(options: EventsCheck.() -> Unit) = EventsCheck(this).apply(options)
+
+    fun timeout(options: TimeoutCheck.() -> Unit) = TimeoutCheck(this).apply(options)
+
+    fun unavailable(options: UnavailableCheck.() -> Unit) = UnavailableCheck(this).apply(options)
 }

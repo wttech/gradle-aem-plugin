@@ -10,7 +10,12 @@ import java.util.concurrent.TimeUnit
  */
 class AwaitUpAction(aem: AemExtension) : AnyInstanceAction(aem) {
 
-    private var timeoutOptions: TimeoutCheck.() -> Unit = {}
+    private var timeoutOptions: TimeoutCheck.() -> Unit = {
+        stateTimeout = aem.props.long("instance.awaitUp.stateTimeout")
+                ?: TimeUnit.MINUTES.toMillis(1)
+        constantTimeout = aem.props.long("instance.awaitUp.constantTimeout")
+                ?: TimeUnit.MINUTES.toMillis(30)
+    }
 
     fun timeout(options: TimeoutCheck.() -> Unit) {
         timeoutOptions = options
@@ -52,14 +57,15 @@ class AwaitUpAction(aem: AemExtension) : AnyInstanceAction(aem) {
 
     val runner = CheckRunner(aem).apply {
         delay = aem.props.long("instance.awaitUp.delay") ?: TimeUnit.SECONDS.toMillis(1)
-        resume = aem.props.flag("instance.awaitUp.resume")
+        retries = aem.props.int("instance.awaitUp.retries") ?: 1
+        verbose = aem.props.boolean("instance.awaitUp.verbose") ?: true
 
-        checks = {
+        checks {
             listOf(
-                    TimeoutCheck(this).apply(timeoutOptions),
-                    BundlesCheck(this).apply(bundlesOptions),
-                    EventsCheck(this).apply(eventsOptions),
-                    ComponentsCheck(this).apply(componentsOptions)
+                    timeout(timeoutOptions),
+                    bundles(bundlesOptions),
+                    events(eventsOptions),
+                    components(componentsOptions)
             )
         }
     }

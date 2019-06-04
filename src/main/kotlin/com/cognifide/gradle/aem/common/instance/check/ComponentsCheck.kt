@@ -19,7 +19,7 @@ class ComponentsCheck(group: CheckGroup) : DefaultCheck(group) {
     override fun check() {
         aem.logger.info("Checking OSGi components on $instance")
 
-        val state = sync.osgiFramework.determineComponentState()
+        val state = state(sync.osgiFramework.determineComponentState())
         if (state.unknown) {
             statusLogger.error(
                     "Components unknown",

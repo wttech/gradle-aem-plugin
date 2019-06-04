@@ -107,7 +107,7 @@ To see documentation for previous 5.x serie, please [click here](https://github.
         * [Task instanceRestart](#task-instancerestart)
         * [Task instanceReload](#task-instancereload)
         * [Task instanceSatisfy](#task-instancesatisfy)
-        * [Task instanceAwait](#task-instanceawait)
+        * [Task instanceCheck](#task-instancecheck)
         * [Task instanceCollect](#task-instancecollect)
         * [Task instanceTail](#task-instancetail)
            * [Tailing incidents](#tailing-incidents)
@@ -1148,7 +1148,7 @@ plugins {
 }
 ```
 
-Provides instance related tasks: `instanceAwait`, `instanceSetup`, `instanceCreate` etc.
+Provides instance related tasks: `instanceCheck`, `instanceSetup`, `instanceCreate` etc.
 
 Should be applied only at root project / only once within whole build.
 
@@ -1443,46 +1443,43 @@ For instance:
 gradlew instanceSatisfy -Pinstance.satisfy.urls=[https://github.com/OlsonDigital/aem-groovy-console/releases/download/11.0.0/aem-groovy-console-11.0.0.zip,https://github.com/neva-dev/felix-search-webconsole-plugin/releases/download/search-webconsole-plugin-1.2.0/search-webconsole-plugin-1.2.0.jar]
 ```
 
-#### Task `instanceAwait`
+#### Task `instanceCheck`
 
-Wait until all local or remote AEM instance(s) be stable.
+Check health condition of AEM instance(s) of any type (local & remote).
 
-Action parameter | CMD Property | Default Value | Purpose
---- | --- | --- | ---
-`stableRetry` | *aem.await.stableRetry* | `300` | Hook for customizing how often and how many stability checks will be performed. Corresponding CMD param controls maximum count of retries if default hook is active.
-`stableAssurance` | *aem.await.stableAssurance* | `3` | Number of intervals / additional instance stability checks after stable state has been reached for the first time to assure all stable instances.
-`stableCheck` | n/a | `{ it.checkBundleStable() }` | Hook for customizing instance stability check. Check will be repeated if assurance is configured. 
-`healthCheck` | n/a | { `it.checkComponentState() }` | Hook for customizing instance health check.
-`healthRetry` | *aem.await.healthRetry* | `5` | Hook for customizing how often and how many health checks will be performed.
-`fast` | *aem.await.fast* | `false` | Skip stable check assurances and health checking. Alternative, quicker type of awaiting stable instances.
-`fastDelay` | *aem.await.fastDelay* | `1000` | Time in milliseconds to postpone instance stability checks to avoid race condition related with actual operation being performed on AEM like starting JCR package installation or even creating launchpad.  Considered only when fast mode is enabled.
-`warmupDelay` | *aem.await.warmupDelay* | `0` | Time to wait e.g after deployment before checking instance stability. Considered only when fast mode is disabled.
-`resume` | *aem.await.resume* | `false` | Do not fail build but log warning when there is still some unstable or unhealthy instance.
-
-Instance state, stable check, health check lambdas are using: [InstanceState](src/main/kotlin/com/cognifide/gradle/aem/instance/InstanceState.kt). Use its methods to achieve expected customized behavior.
+Custom behavior of each particular health check using following lambdas:
 
 ```kotlin
 aem {
     tasks {
-        instanceAwait {
-            options {
-                availableCheck = check(InstanceState.BUNDLE_STATE_SYNC_OPTIONS, { !bundleState.unknown })
-                stableState = checkBundleState()
-                stableCheck = checkBundleStable()
-                healthCheck = checkComponentState(InstanceState.PLATFORM_COMPONENTS, aem.javaPackages.map { "$it.*" })
+        instanceCheck {
+            awaitUp {
+                timeout {
+                    // ...
+                }
+                bundles {
+                    // ...
+                }
+                components {
+                    // ...
+                }
+                events {
+                    // ...
+                }
             }
         }
     }
 }
 ```
 
-Such options could be also customized for `packageDeploy` task when using block:
+By default, `packageDeploy` task is also awaiting up instances (this could be optionally disabled by property `package.deploy.awaited=false`).
+So it is also possible to configure each health check there:
 
 ```kotlin
 aem {
     tasks {
         packageDeploy {
-            await {
+            awaitUp {
                 // ...
             }
         }
@@ -1955,7 +1952,7 @@ Currently used plugin architecture solves that problem.
 Initially, to create fully configured local AEM instances simply run command `gradlew instanceSetup`.
 
 Later during development process, building and deploying to AEM should be done using the simplest command: `gradlew`.
-Above configuration uses [default tasks](https://docs.gradle.org/current/userguide/tutorial_using_tasks.html#sec:default_tasks), so that alternatively it is possible to do the same using explicitly specified command `gradlew instanceSatisfy packageDeploy instanceAwait`.
+Above configuration uses [default tasks](https://docs.gradle.org/current/userguide/tutorial_using_tasks.html#sec:default_tasks), so that alternatively it is possible to do the same using explicitly specified command `gradlew instanceSatisfy packageDeploy instanceCheck`.
 
 * Firstly dependent packages (like AEM hotfixes, Vanity URL Components etc) will be installed lazily (only when they are not installed yet).
 * In next step application is being built and deployed to all configured AEM instances.

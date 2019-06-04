@@ -8,7 +8,7 @@ class UnavailableCheck(group: CheckGroup) : DefaultCheck(group) {
     var controlPortAge = TimeUnit.MINUTES.toMillis(1)
 
     override fun check() {
-        val bundleState = sync.osgiFramework.determineBundleState()
+        val bundleState = state(sync.osgiFramework.determineBundleState())
 
         val stillResponding = !bundleState.unknown
         if (stillResponding) {

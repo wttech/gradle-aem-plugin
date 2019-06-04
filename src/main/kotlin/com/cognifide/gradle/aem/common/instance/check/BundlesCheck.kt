@@ -15,7 +15,7 @@ class BundlesCheck(group: CheckGroup) : DefaultCheck(group) {
     override fun check() {
         aem.logger.info("Checking OSGi bundles on $instance")
 
-        val state = sync.osgiFramework.determineBundleState()
+        val state = state(sync.osgiFramework.determineBundleState())
 
         if (state.unknown) {
             statusLogger.error(

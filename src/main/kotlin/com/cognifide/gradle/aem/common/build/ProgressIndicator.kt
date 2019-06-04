@@ -37,7 +37,9 @@ class ProgressIndicator(private val project: Project) {
 
     private fun <T> ProgressIndicator.launchAsync(block: ProgressIndicator.() -> T): T {
         return runBlocking {
-            val blockJob = async(Dispatchers.Default) { block() }
+            val blockJob = async(Dispatchers.IO) {
+                block()
+            }
             val loggerJob = async(Dispatchers.IO) {
                 ProgressLogger.of(project).launch {
                     this@ProgressIndicator.logger = this

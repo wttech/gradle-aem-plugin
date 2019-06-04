@@ -10,10 +10,16 @@ import com.cognifide.gradle.aem.instance.tasks.*
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.PackageDeploy
 import org.gradle.api.Project
+import org.gradle.api.Task
+import org.gradle.language.base.plugins.LifecycleBasePlugin
 
 /**
- * Separate plugin which provides tasks for managing local instances.
- * Most often should be applied only to one project in build.
+ * Separate plugin which provides tasks for:
+ * - managing local instances (create, up, down)
+ * - monitoring health condition (check)
+ * - automatically installing dependent CRX packages (satisfy)
+ *
+ * Most often should be applied only to one project in build (typically project named 'aem' or root project).
  * Applying it multiple times to same configuration could case confusing errors like AEM started multiple times.
  */
 class InstancePlugin : AemPlugin() {
@@ -92,6 +98,12 @@ class InstancePlugin : AemPlugin() {
             }
             registerOrConfigure<Resetup>(Resetup.NAME) {
                 dependsOn(InstanceResetup.NAME)
+            }
+
+            // Gradle lifecycle
+
+            named<Task>(LifecycleBasePlugin.CHECK_TASK_NAME) {
+                dependsOn(InstanceCheck.NAME)
             }
         }
     }

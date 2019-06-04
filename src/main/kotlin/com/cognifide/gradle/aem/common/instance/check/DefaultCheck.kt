@@ -48,4 +48,6 @@ abstract class DefaultCheck(protected val group: CheckGroup) : Check {
 
     override val success: Boolean
         get() = statusLogger.entries.none { it.level == LogLevel.ERROR }
+
+    fun <T : Any> state(value: T) = value.also { group.state(it) }
 }
