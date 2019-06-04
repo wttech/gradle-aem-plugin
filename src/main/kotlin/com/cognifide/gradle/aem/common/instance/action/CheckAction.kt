@@ -5,7 +5,7 @@ import com.cognifide.gradle.aem.common.instance.check.CheckRunner
 import com.cognifide.gradle.aem.common.instance.names
 
 /**
- * Verify instances using custom runner and / or set of checks.
+ * Verify instances using custom runner and set of checks.
  */
 class CheckAction(aem: AemExtension) : AnyInstanceAction(aem) {
 

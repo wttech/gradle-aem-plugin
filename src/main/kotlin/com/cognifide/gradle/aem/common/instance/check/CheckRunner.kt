@@ -55,6 +55,13 @@ class CheckRunner(internal val aem: AemExtension) {
     val aborted: Boolean
         get() = abortCause != null
 
+    /**
+     * Controls logging behavior
+     *
+     * By default it just keeps clean console if info logging level is not enabled.
+     */
+    var logInstantly = aem.logger.isInfoEnabled
+
     private val currentChecks = mutableMapOf<Instance, CheckGroup>()
 
     private var previousChecks = mapOf<Instance, CheckGroup>()
@@ -65,7 +72,6 @@ class CheckRunner(internal val aem: AemExtension) {
             current.state != previous.state
         }
 
-    @Suppress("ComplexMethod")
     fun check(instances: Collection<Instance>) {
         aem.progressIndicator {
             updater = {
@@ -79,7 +85,12 @@ class CheckRunner(internal val aem: AemExtension) {
 
             aem.parallel.each(instances) { instance ->
                 while (isActive) {
-                    val checks = CheckGroup(this@CheckRunner, instance, checks).apply { check() }
+                    val checks = CheckGroup(this@CheckRunner, instance, checks).apply {
+                        check()
+                        if (logInstantly) {
+                            log()
+                        }
+                    }
                     if (checks.done || aborted) {
                         break
                     }
@@ -97,10 +108,9 @@ class CheckRunner(internal val aem: AemExtension) {
             runningWatch.stop()
 
             if (aborted && verbose) {
-                currentChecks.forEach { (_, group) ->
-                    group.statusLogger.entries.forEach { aem.logger.log(it.level, it.details) }
+                if (!logInstantly) {
+                    currentChecks.values.forEach { it.log() }
                 }
-
                 abortCause?.let { throw it }
             }
         }

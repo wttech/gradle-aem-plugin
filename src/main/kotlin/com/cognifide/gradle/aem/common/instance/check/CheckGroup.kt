@@ -28,6 +28,10 @@ class CheckGroup(
         }
     }
 
+    fun log() {
+        statusLogger.entries.forEach { runner.aem.logger.log(it.level, it.details) }
+    }
+
     fun state(value: Any) {
         stateBuilder.append(value)
     }

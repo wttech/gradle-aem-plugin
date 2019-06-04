@@ -11,7 +11,7 @@ object Parallel {
     }
 
     fun <A, B : Any> map(iterable: Iterable<A>, filter: (A) -> Boolean, mapper: CoroutineScope.(A) -> B): List<B> {
-        return map(Dispatchers.Default, iterable) {
+        return map(Dispatchers.IO, iterable) {
             if (filter(it)) { mapper(it) } else { null }
         }
     }

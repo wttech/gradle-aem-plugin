@@ -6,17 +6,17 @@ import java.util.concurrent.TimeUnit
 
 class TimeoutCheck(group: CheckGroup) : DefaultCheck(group) {
 
-    var constantTimeout: Long = TimeUnit.MINUTES.toMillis(30)
+    var state: Long = TimeUnit.MINUTES.toMillis(1)
 
-    var stateTimeout: Long = TimeUnit.MINUTES.toMillis(1)
+    var constant: Long = TimeUnit.MINUTES.toMillis(30)
 
     override fun check() {
-        if (runner.stateTime > stateTimeout) {
-            throw InstanceException("Instance state timeout reached '${Formats.duration(stateTimeout)}' for $instance!")
+        if (runner.stateTime > state) {
+            throw InstanceException("Instance state timeout reached '${Formats.duration(state)}' for $instance!")
         }
 
-        if (runner.runningTime > constantTimeout) {
-            throw InstanceException("Instance constant timeout reached '${Formats.duration(constantTimeout)}'!")
+        if (runner.runningTime > constant) {
+            throw InstanceException("Instance constant timeout reached '${Formats.duration(constant)}'!")
         }
     }
 }
