@@ -26,7 +26,7 @@ open class PackagePurge : PackageTask() {
             aem.syncPackages(instances, packages) { file ->
                 increment("${file.name} -> ${instance.name}") {
                     try {
-                        val pkg = packageManager.getPackage(file)
+                        val pkg = packageManager.get(file)
 
                         uninstall(this, pkg.path)
                         delete(this, pkg.path)
@@ -43,7 +43,7 @@ open class PackagePurge : PackageTask() {
 
     private fun uninstall(sync: InstanceSync, packagePath: String) {
         try {
-            sync.packageManager.uninstallPackage(packagePath)
+            sync.packageManager.uninstall(packagePath)
         } catch (e: InstanceException) {
             logger.info("${e.message} Is it installed already?")
             logger.debug("Cannot uninstall package.", e)
@@ -52,7 +52,7 @@ open class PackagePurge : PackageTask() {
 
     private fun delete(sync: InstanceSync, packagePath: String) {
         try {
-            sync.packageManager.deletePackage(packagePath)
+            sync.packageManager.delete(packagePath)
         } catch (e: InstanceException) {
             logger.info(e.message)
             logger.debug("Cannot delete package.", e)

@@ -39,7 +39,7 @@ class Downloader(@Internal private val aem: AemExtension) {
     var retry = aem.retry { afterSquaredSecond(aem.props.long("sync.downloader.retry") ?: 3) }
 
     fun download() {
-        val file = instance.sync.packageManager.downloadPackage({
+        val file = instance.sync.packageManager.download({
             filterElements = filter.rootElements.toMutableList()
         }, retry)
 

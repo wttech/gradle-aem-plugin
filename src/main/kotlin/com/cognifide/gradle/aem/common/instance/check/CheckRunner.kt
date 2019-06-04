@@ -72,6 +72,7 @@ class CheckRunner(internal val aem: AemExtension) {
             current.state != previous.state
         }
 
+    @Suppress("ComplexMethod")
     fun check(instances: Collection<Instance>) {
         aem.progressIndicator {
             updater = {

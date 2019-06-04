@@ -23,8 +23,8 @@ open class PackageDelete : PackageTask() {
         aem.progress(instances.size * packages.size) {
             aem.syncPackages(instances, packages) { file ->
                 increment("${file.name} -> ${instance.name}") {
-                    val pkg = packageManager.getPackage(file)
-                    packageManager.deletePackage(pkg.path)
+                    val pkg = packageManager.get(file)
+                    packageManager.delete(pkg.path)
                 }
             }
         }

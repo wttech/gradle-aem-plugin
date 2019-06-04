@@ -21,6 +21,9 @@ class CheckGroup(
         for (check in checks) {
             try {
                 check.check()
+                if (check.failure) {
+                    break
+                }
             } catch (e: Exception) {
                 runner.abortCause = e
                 break
@@ -29,7 +32,9 @@ class CheckGroup(
     }
 
     fun log() {
-        statusLogger.entries.forEach { runner.aem.logger.log(it.level, it.details) }
+        statusLogger.entries.forEach {
+            runner.aem.logger.log(it.level, it.details)
+        }
     }
 
     fun state(value: Any) {

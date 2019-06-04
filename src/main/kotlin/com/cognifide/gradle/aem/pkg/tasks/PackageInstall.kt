@@ -16,8 +16,8 @@ open class PackageInstall : PackageTask() {
         aem.progress(instances.size * packages.size) {
             aem.syncPackages(instances, packages) { file ->
                 increment("${file.name} -> ${instance.name}") {
-                    val pkg = packageManager.getPackage(file)
-                    packageManager.installPackage(pkg.path)
+                    val pkg = packageManager.get(file)
+                    packageManager.install(pkg.path)
                 }
             }
         }
