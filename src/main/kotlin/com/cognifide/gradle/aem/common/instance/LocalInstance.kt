@@ -259,7 +259,7 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
 
     fun up() {
         if (!created) {
-            aem.logger.warn("Instance not created, so it could not be up: $this")
+            aem.logger.info("Instance not created, so it could not be up: $this")
             return
         }
 
@@ -271,7 +271,7 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
 
     fun down() {
         if (!created) {
-            aem.logger.warn("Instance not created, so it could not be down: $this")
+            aem.logger.info("Instance not created, so it could not be down: $this")
             return
         }
 
