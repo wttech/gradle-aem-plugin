@@ -300,7 +300,7 @@
       "backup": {
         "uploadUrl": null,
         "downloadUrl": null,
-        "downloadDir": "*/additional/build/aem/backup/remote"
+        "downloadDir": "*/additional/build/aem/instanceBackup/remote"
       }
     },
     "environment" : {

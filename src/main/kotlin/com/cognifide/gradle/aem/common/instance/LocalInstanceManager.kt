@@ -75,6 +75,7 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
             }
         }
 
+    @Suppress("ComplexMethod")
     fun create(instances: List<LocalInstance>) {
         when (source) {
             Source.AUTO -> {
@@ -85,14 +86,22 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
                     createFromScratch(instances)
                 }
             }
+            Source.BACKUP_ANY -> {
+                val backupZip = backup.auto
+                if (backupZip != null) {
+                    createFromBackup(instances, backupZip)
+                } else {
+                    throw InstanceException("Cannot create instance(s) because no backups available!")
+                }
+            }
             Source.BACKUP_LOCAL -> {
                 val backupZip = backup.local
-                        ?: throw InstanceException("Cannot create instance(s) as of no local backups available!")
+                        ?: throw InstanceException("Cannot create instance(s) because no local backups available!")
                 createFromBackup(instances, backupZip)
             }
             Source.BACKUP_REMOTE -> {
                 val backupZip = backup.remote
-                        ?: throw InstanceException("Cannot create instance(s) as of no remote backups available!")
+                        ?: throw InstanceException("Cannot create instance(s) because no remote backups available!")
                 createFromBackup(instances, backupZip)
             }
             Source.SCRATCH -> createFromScratch(instances)

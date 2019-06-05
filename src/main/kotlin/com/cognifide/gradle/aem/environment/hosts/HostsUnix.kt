@@ -15,6 +15,6 @@ class HostsUnix(list: List<Host>) : Hosts(
 
         const val PERMISSION_DENIED_SYSTEM_TEXT = "Permission denied"
 
-        const val SUPER_USER_REQUEST_MESSAGE = "This very task requires super user privileges: `sudo ./gradlew ${EnvironmentHosts.NAME}`"
+        const val SUPER_USER_REQUEST_MESSAGE = "Editing hosts requires super user privileges: `sudo ./gradlew ${EnvironmentHosts.NAME}`"
     }
 }

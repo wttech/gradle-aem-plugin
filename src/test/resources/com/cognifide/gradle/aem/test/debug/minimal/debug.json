@@ -137,7 +137,7 @@
       "backup": {
         "uploadUrl": null,
         "downloadUrl": null,
-        "downloadDir": "*/minimal/build/aem/backup/remote"
+        "downloadDir": "*/minimal/build/aem/instanceBackup/remote"
       }
     },
     "environment" : {
