@@ -8,13 +8,13 @@ import org.gradle.api.logging.LogLevel
 
 abstract class DefaultCheck(protected val group: CheckGroup) : Check {
 
-    protected val runner = group.runner
+    val runner = group.runner
 
     protected val aem = runner.aem
 
-    protected val instance = group.instance
+    val instance = group.instance
 
-    protected val statusLogger = group.statusLogger
+    val statusLogger = group.statusLogger
 
     var sync: InstanceSync = instance.sync.apply {
         val init = instance.isBeingInitialized()
@@ -44,10 +44,16 @@ abstract class DefaultCheck(protected val group: CheckGroup) : Check {
     }
 
     override val status: String
-        get() = statusLogger.entries.firstOrNull()?.summary ?: "<no status>"
+        get() = statusLogger.entries.firstOrNull()?.summary ?: "check passed"
 
     override val success: Boolean
         get() = statusLogger.entries.none { it.level == LogLevel.ERROR }
 
     fun <T : Any> state(value: T) = value.also { group.state(it) }
+
+    val stateTime: Long
+        get() = runner.stateTime(instance)
+
+    val stateChanged: Boolean
+        get() = runner.stateChanged(instance)
 }

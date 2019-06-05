@@ -23,7 +23,7 @@ class AwaitDownAction(aem: AemExtension) : LocalInstanceAction(aem) {
 
     private var unavailableOptions: UnavailableCheck.() -> Unit = {
         controlPortAge = aem.props.long("instance.awaitDown.unavailable.controlPortAge")
-                ?: TimeUnit.MINUTES.toMillis(3)
+                ?: TimeUnit.SECONDS.toMillis(45)
     }
 
     fun unavailable(options: UnavailableCheck.() -> Unit) {

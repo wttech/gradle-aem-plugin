@@ -37,14 +37,6 @@ class CheckRunner(internal val aem: AemExtension) {
     private val runningWatch = StopWatch()
 
     /**
-     * Time since last instance state change.
-     */
-    val stateTime: Long
-        get() = stateWatch.time
-
-    private val stateWatch = StopWatch()
-
-    /**
      * Error causing running stopped.
      */
     var abortCause: Exception? = null
@@ -66,25 +58,22 @@ class CheckRunner(internal val aem: AemExtension) {
 
     private var previousChecks = mapOf<Instance, CheckGroup>()
 
-    val stateChanged: Boolean
-        get() = currentChecks.any { (instance, current) ->
-            val previous = previousChecks[instance] ?: return true
-            current.state != previous.state
-        }
+    private var stateWatches = mutableMapOf<Instance, StopWatch>()
 
     @Suppress("ComplexMethod")
     fun check(instances: Collection<Instance>) {
         aem.progressIndicator {
             updater = {
                 val instanceSummaries = currentChecks.toSortedMap(compareBy { it.name })
-                        .map { (instance, checks) -> "${instance.name}: ${checks.summary.decapitalize()}" }
+                        .map { (instance, checks) -> "${instance.name}: ${checks.summary}" }
                 update(instanceSummaries.joinToString(" | "))
             }
 
             runningWatch.start()
-            stateWatch.start()
 
             aem.parallel.each(instances) { instance ->
+                stateWatches[instance] = StopWatch().apply { start() }
+
                 while (isActive) {
                     val checks = CheckGroup(this@CheckRunner, instance, checks).apply {
                         check()
@@ -97,8 +86,8 @@ class CheckRunner(internal val aem: AemExtension) {
                     }
 
                     currentChecks[instance] = checks
-                    if (stateChanged) {
-                        stateWatch.apply { reset(); start() }
+                    if (stateChanged(instance)) {
+                        stateWatches[instance]?.apply { reset(); start() }
                     }
                     previousChecks = currentChecks.toMap()
 
@@ -115,5 +104,16 @@ class CheckRunner(internal val aem: AemExtension) {
                 abortCause?.let { throw it }
             }
         }
+    }
+
+    fun stateChanged(instance: Instance): Boolean {
+        val current = currentChecks[instance] ?: return true
+        val previous = previousChecks[instance] ?: return true
+
+        return current.state != previous.state
+    }
+
+    fun stateTime(instance: Instance): Long {
+        return stateWatches[instance]?.time ?: throw InstanceException("State time not yet measured for $instance!")
     }
 }

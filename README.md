@@ -111,7 +111,6 @@ Documentation for previous series:
         * [Task instanceReload](#task-instancereload)
         * [Task instanceSatisfy](#task-instancesatisfy)
         * [Task instanceCheck](#task-instancecheck)
-        * [Task instanceCollect](#task-instancecollect)
         * [Task instanceTail](#task-instancetail)
            * [Tailing incidents](#tailing-incidents)
            * [Tailing multiple instances](#tailing-multiple-instances)
@@ -1489,16 +1488,6 @@ aem {
     }
 }
 ```
-
-#### Task `instanceCollect`
-
-Composes ZIP package from all CRX packages being satisfied and built.
-
-Inherits from task [ZIP](https://docs.gradle.org/3.5/dsl/org.gradle.api.tasks.bundling.Zip.html).
-
-Screenshot below presents generated ZIP package which is a result of running `gradlew :instanceCollect` for [multi-module project](https://github.com/Cognifide/gradle-aem-multi).
-
-![Collect task - ZIP Overview](docs/collect-zip-overview.png)
 
 #### Task `instanceTail`
 

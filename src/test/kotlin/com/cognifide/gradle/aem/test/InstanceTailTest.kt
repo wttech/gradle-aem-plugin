@@ -11,7 +11,7 @@ import java.io.File
 import java.io.InputStreamReader
 import java.util.*
 
-class TailerTest {
+class InstanceTailTest {
 
     class MockSource(vararg resources: String) : LogSource {
 
@@ -43,7 +43,7 @@ class TailerTest {
     fun shouldParseLogs() {
         // given
         val parser = LogParser()
-        val logsChunk = MockSource.reader("com/cognifide/gradle/aem/test/tail/10-logs-error.log")
+        val logsChunk = MockSource.reader("com/cognifide/gradle/aem/test/instance-tail/10-logs-error.log")
 
         // when
         val logsList = parser.parse(logsChunk)
@@ -71,7 +71,7 @@ class TailerTest {
     fun shouldParseMultilineLogs() {
         // given
         val parser = LogParser()
-        val logsChunk = MockSource.reader("com/cognifide/gradle/aem/test/tail/aggregating/multiline/multiline-logs-error.log")
+        val logsChunk = MockSource.reader("com/cognifide/gradle/aem/test/instance-tail/aggregating/multiline/multiline-logs-error.log")
 
         // when
         val logsList = parser.parse(logsChunk)
@@ -83,14 +83,14 @@ class TailerTest {
             assertEquals(Log.parseTimestamp("14.01.2019 12:20:05.242"), timestamp)
             assertEquals("WARN", level)
             assertEquals("[0:0:0:0:0:0:0:1 [1547464792884] GET /llr.resllleskr/resllleskr/rcslsll/rrcsess3.fsl.cr HTTP/1.1]", source)
-            assertEqualsIgnoringCr(MockSource.text("com/cognifide/gradle/aem/test/tail/aggregating/multiline/multiline-short.log"), message)
+            assertEqualsIgnoringCr(MockSource.text("com/cognifide/gradle/aem/test/instance-tail/aggregating/multiline/multiline-short.log"), message)
             assertEquals("148a7ab608478f4a609d428a28773fc8", checksum)
         }
         logsList[2].apply {
             assertEquals(Log.parseTimestamp("14.01.2019 12:04:58.535"), timestamp)
             assertEquals("WARN", level)
             assertEquals("[reslr-rsf-rkrlcsslsrl-2]", source)
-            assertEqualsIgnoringCr(MockSource.text("com/cognifide/gradle/aem/test/tail/aggregating/multiline/multiline-long.log"), message)
+            assertEqualsIgnoringCr(MockSource.text("com/cognifide/gradle/aem/test/instance-tail/aggregating/multiline/multiline-long.log"), message)
             assertEquals("46f3b3368c92b1e7400643ab8b1f3e3a", checksum)
         }
     }
@@ -99,7 +99,7 @@ class TailerTest {
     fun shouldSkipIncompleteMultilineLogs() {
         // given
         val parser = LogParser()
-        val logsChunk = MockSource.reader("com/cognifide/gradle/aem/test/tail/aggregating/multiline/incomplete-multiline-logs-error.log")
+        val logsChunk = MockSource.reader("com/cognifide/gradle/aem/test/instance-tail/aggregating/multiline/incomplete-multiline-logs-error.log")
 
         // when
         val logsList = parser.parse(logsChunk)
@@ -117,8 +117,8 @@ class TailerTest {
     fun shouldAggregateOverlappingLogsBetweenRequests() {
         // given
         val source = MockSource(
-            "com/cognifide/gradle/aem/test/tail/aggregating/overlapping/first-chunk-error.log",
-            "com/cognifide/gradle/aem/test/tail/aggregating/overlapping/second-chunk-error.log")
+            "com/cognifide/gradle/aem/test/instance-tail/aggregating/overlapping/first-chunk-error.log",
+            "com/cognifide/gradle/aem/test/instance-tail/aggregating/overlapping/second-chunk-error.log")
         val destination = MockDestination()
         val tailer = LogTailer(source, destination)
 
@@ -144,8 +144,8 @@ class TailerTest {
     fun shouldAggregateWhenThereIsNoOverlapping() {
         // given
         val source = MockSource(
-            "com/cognifide/gradle/aem/test/tail/aggregating/disjoint/first-chunk-error.log",
-            "com/cognifide/gradle/aem/test/tail/aggregating/disjoint/second-chunk-error.log")
+            "com/cognifide/gradle/aem/test/instance-tail/aggregating/disjoint/first-chunk-error.log",
+            "com/cognifide/gradle/aem/test/instance-tail/aggregating/disjoint/second-chunk-error.log")
         val destination = MockDestination()
         val tailer = LogTailer(source, destination)
 
@@ -171,8 +171,8 @@ class TailerTest {
     fun shouldSkipLogsChunkWhenThereAreNoNewLogs() {
         // given
         val source = MockSource(
-            "com/cognifide/gradle/aem/test/tail/aggregating/disjoint/first-chunk-error.log",
-            "com/cognifide/gradle/aem/test/tail/aggregating/disjoint/first-chunk-error.log")
+            "com/cognifide/gradle/aem/test/instance-tail/aggregating/disjoint/first-chunk-error.log",
+            "com/cognifide/gradle/aem/test/instance-tail/aggregating/disjoint/first-chunk-error.log")
         val destination = MockDestination()
         val tailer = LogTailer(source, destination)
 

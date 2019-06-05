@@ -11,12 +11,12 @@ class TimeoutCheck(group: CheckGroup) : DefaultCheck(group) {
     var constant: Long = TimeUnit.MINUTES.toMillis(30)
 
     override fun check() {
-        if (runner.stateTime > state) {
-            throw InstanceException("Instance state timeout reached '${Formats.duration(state)}' for $instance!")
+        if (stateTime >= state) {
+            throw InstanceException("Instance state timeout reached '${Formats.duration(stateTime)}' for $instance!")
         }
 
-        if (runner.runningTime > constant) {
-            throw InstanceException("Instance constant timeout reached '${Formats.duration(constant)}'!")
+        if (runner.runningTime >= constant) {
+            throw InstanceException("Instance constant timeout reached '${Formats.duration(runner.runningTime)}'!")
         }
     }
 }

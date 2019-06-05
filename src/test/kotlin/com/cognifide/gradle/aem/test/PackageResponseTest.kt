@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test
 import java.io.File
 import java.io.InputStream
 
-class HtmlResponseBuilderTest {
+class PackageResponseTest {
 
     @Test
     fun shouldContainDependencyPackageException() {
@@ -24,7 +24,7 @@ class HtmlResponseBuilderTest {
     }
 
     companion object {
-        private const val RESOURCE_PATH = "src/test/resources/com/cognifide/gradle/aem/test/response/"
+        private const val RESOURCE_PATH = "src/test/resources/com/cognifide/gradle/aem/test/package-response/"
 
         private const val DEPENDENCY_EXCEPTION = "org.apache.jackrabbit.vault.packaging.DependencyException"
 
