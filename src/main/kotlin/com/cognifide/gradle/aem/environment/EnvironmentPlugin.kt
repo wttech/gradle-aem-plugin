@@ -83,6 +83,10 @@ class EnvironmentPlugin : AemPlugin() {
             named<Task>(LifecycleBasePlugin.CHECK_TASK_NAME) {
                 dependsOn(EnvironmentCheck.NAME)
             }
+
+            named<Task>(LifecycleBasePlugin.CLEAN_TASK_NAME) {
+                dependsOn(EnvironmentClean.NAME)
+            }
         }
     }
 

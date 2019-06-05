@@ -6,12 +6,13 @@ import com.cognifide.gradle.aem.common.instance.InstanceException
 import java.util.concurrent.TimeUnit
 
 /**
- * Reloads all instances.
+ * Reloads all instances (both remote and local instances).
  */
 class ReloadAction(aem: AemExtension) : AnyInstanceAction(aem) {
 
     /**
-     * Time in milliseconds to postpone awaitUp action after triggering instances restart.
+     * Triggering instance reload sometimes does not force to stop instance immediately.
+     * Delay ensures that await up action which is usually called just after will not end to early (false-positively).
      */
     var delay: Long = aem.props.long("instance.reload.delay") ?: TimeUnit.SECONDS.toMillis(10)
 

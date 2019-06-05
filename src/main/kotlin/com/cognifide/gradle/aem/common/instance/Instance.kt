@@ -206,8 +206,8 @@ interface Instance : Serializable {
     }
 }
 
-val Iterable<Instance>.names: String
-    get() = joinToString(", ") { it.name }
+val Collection<Instance>.names: String
+    get() = if (isNotEmpty()) joinToString(", ") { it.name } else "none"
 
 fun Instance.isInitialized(): Boolean {
     return this !is LocalInstance || initialized

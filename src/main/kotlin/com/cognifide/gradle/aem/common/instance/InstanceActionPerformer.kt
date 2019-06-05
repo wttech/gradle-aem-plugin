@@ -19,4 +19,11 @@ class InstanceActionPerformer(private val aem: AemExtension) {
     private fun <T : AbstractAction> action(action: T, configurer: T.() -> Unit) {
         action.apply { notify = false }.apply(configurer).perform()
     }
+
+    // Aggregated / shorthands
+
+    fun reloadAndAwaitUp() {
+        reload()
+        awaitUp()
+    }
 }
