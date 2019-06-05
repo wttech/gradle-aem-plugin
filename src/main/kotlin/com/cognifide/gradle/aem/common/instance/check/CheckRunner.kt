@@ -19,7 +19,12 @@ class CheckRunner(internal val aem: AemExtension) {
     }
 
     /**
-     * Controls how long to wait after failed checking before checking again.
+     * How long to wait before running checks.
+     */
+    var wait = 0L
+
+    /**
+     * How long to wait after failed checking before checking again.
      */
     var delay = 0L
 
@@ -69,6 +74,11 @@ class CheckRunner(internal val aem: AemExtension) {
                 update(instanceSummaries.joinToString(" | "))
             }
 
+            step = "Waiting"
+            Behaviors.waitFor(wait)
+
+            step = "Checking"
+
             runningWatch.start()
 
             aem.parallel.each(instances) { instance ->
@@ -81,14 +91,17 @@ class CheckRunner(internal val aem: AemExtension) {
                             log()
                         }
                     }
+
+                    currentChecks[instance] = checks
+
                     if (checks.done || aborted) {
                         break
                     }
 
-                    currentChecks[instance] = checks
                     if (stateChanged(instance)) {
                         stateWatches[instance]?.apply { reset(); start() }
                     }
+
                     previousChecks = currentChecks.toMap()
 
                     Behaviors.waitFor(delay)
@@ -96,6 +109,8 @@ class CheckRunner(internal val aem: AemExtension) {
             }
 
             runningWatch.stop()
+
+            step = "Aborting"
 
             if (aborted && verbose) {
                 if (!logInstantly) {
@@ -113,7 +128,5 @@ class CheckRunner(internal val aem: AemExtension) {
         return current.state != previous.state
     }
 
-    fun stateTime(instance: Instance): Long {
-        return stateWatches[instance]?.time ?: throw InstanceException("State time not yet measured for $instance!")
-    }
+    fun stateTime(instance: Instance): Long = stateWatches[instance]?.time ?: -1L
 }

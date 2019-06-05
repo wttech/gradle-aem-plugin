@@ -32,9 +32,10 @@ class AwaitDownAction(aem: AemExtension) : LocalInstanceAction(aem) {
         unavailableOptions = options
     }
 
-    val runner = CheckRunner(aem).apply {
-        delay = aem.props.long("instance.awaitDown.runner.delay") ?: TimeUnit.SECONDS.toMillis(1)
-        verbose = aem.props.boolean("instance.awaitDown.runner.verbose") ?: true
+    private val runner = CheckRunner(aem).apply {
+        wait = aem.props.long("instance.awaitDown.wait") ?: TimeUnit.SECONDS.toMillis(5)
+        delay = aem.props.long("instance.awaitDown.delay") ?: TimeUnit.SECONDS.toMillis(1)
+        verbose = aem.props.boolean("instance.awaitDown.verbose") ?: true
 
         checks {
             listOf(

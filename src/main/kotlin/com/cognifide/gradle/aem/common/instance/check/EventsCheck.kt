@@ -36,7 +36,7 @@ class EventsCheck(group: CheckGroup) : DefaultCheck(group) {
                         1 -> "Event unstable '${unstable.first().topic}'"
                         else -> "Events unstable (${unstable.size})"
                     },
-                    "Events causing instability detected on $instance:${unstable.joinToString("\n")}"
+                    "Events causing instability detected on $instance:\n${unstable.joinToString("\n")}"
             )
         }
     }

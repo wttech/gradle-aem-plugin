@@ -55,9 +55,10 @@ class AwaitUpAction(aem: AemExtension) : AnyInstanceAction(aem) {
         componentsOptions = options
     }
 
-    val runner = CheckRunner(aem).apply {
-        delay = aem.props.long("instance.awaitUp.runner.delay") ?: TimeUnit.SECONDS.toMillis(1)
-        verbose = aem.props.boolean("instance.awaitUp.runner.verbose") ?: true
+    private val runner = CheckRunner(aem).apply {
+        wait = aem.props.long("instance.awaitUp.wait") ?: TimeUnit.SECONDS.toMillis(1)
+        delay = aem.props.long("instance.awaitUp.delay") ?: TimeUnit.SECONDS.toMillis(1)
+        verbose = aem.props.boolean("instance.awaitUp.verbose") ?: true
 
         checks {
             listOf(
