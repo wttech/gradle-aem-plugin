@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.common.instance.action
 
 import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.common.instance.InstanceStatus
 import com.cognifide.gradle.aem.common.instance.check.*
 import com.cognifide.gradle.aem.common.instance.names
 import java.util.concurrent.TimeUnit
@@ -22,8 +23,10 @@ class AwaitDownAction(aem: AemExtension) : LocalInstanceAction(aem) {
     }
 
     private var unavailableOptions: UnavailableCheck.() -> Unit = {
-        controlPortAge = aem.props.long("instance.awaitDown.unavailable.controlPortAge")
-                ?: TimeUnit.SECONDS.toMillis(45)
+        statusExpected = aem.props.string("instance.awaitDown.unavailable.statusExpected")
+                ?.run { InstanceStatus.named(this) } ?: InstanceStatus.UNKNOWN
+        utilisationTime = aem.props.long("instance.awaitDown.unavailable.utilizationTime")
+                ?: TimeUnit.SECONDS.toMillis(10)
     }
 
     fun unavailable(options: UnavailableCheck.() -> Unit) {

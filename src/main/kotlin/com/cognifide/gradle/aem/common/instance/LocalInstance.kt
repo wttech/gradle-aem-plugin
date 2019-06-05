@@ -94,20 +94,12 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
         get() = binScript("start")
 
     @get:JsonIgnore
-    val pidFile: File
-        get() = File("$quickstartDir/conf/cq.pid")
-
-    @get:JsonIgnore
-    val controlPortFile: File
-        get() = File("$quickstartDir/conf/controlport")
-
-    @get:JsonIgnore
-    val running: Boolean
-        get() = pidFile.exists() && controlPortFile.exists()
-
-    @get:JsonIgnore
     val stopScript: Script
         get() = binScript("stop")
+
+    @get:JsonIgnore
+    val statusScript: Script
+        get() = binScript("status")
 
     @get:JsonIgnore
     val created: Boolean
@@ -291,6 +283,8 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
         }
     }
 
+    fun status(): InstanceStatus = InstanceStatus.of(execute(statusScript))
+
     fun init(callback: LocalInstance.() -> Unit) {
         if (initialized) {
             aem.logger.debug("Instance already initialized: $this")
@@ -302,11 +296,7 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
         lock(LOCK_INIT)
     }
 
-    private fun execute(script: Script) {
-        ProcessBuilder(script.commandLine)
-                .directory(dir)
-                .start()
-    }
+    private fun execute(script: Script): Int = ProcessBuilder(script.commandLine).directory(dir).start().waitFor()
 
     fun destroy() {
         aem.logger.info("Destroying: $this")

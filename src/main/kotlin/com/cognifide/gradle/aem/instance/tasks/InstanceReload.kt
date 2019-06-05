@@ -18,10 +18,10 @@ open class InstanceReload : InstanceTask() {
         this.reloadOptions = options
     }
 
-    private var awaitOptions: AwaitUpAction.() -> Unit = {}
+    private var awaitUpOptions: AwaitUpAction.() -> Unit = {}
 
-    fun await(options: AwaitUpAction.() -> Unit) {
-        this.awaitOptions = options
+    fun awaitUp(options: AwaitUpAction.() -> Unit) {
+        this.awaitUpOptions = options
     }
 
     @TaskAction
@@ -32,7 +32,7 @@ open class InstanceReload : InstanceTask() {
         }
         aem.instanceActions.awaitUp {
             instances = this@InstanceReload.instances
-            awaitOptions()
+            awaitUpOptions()
         }
 
         aem.notifier.notify("Instance(s) reloaded", "Which: ${instances.names}")
