@@ -8,6 +8,7 @@ enum class BackupType {
      * File located at local file system (created by instance backup task).
      */
     LOCAL,
+
     /**
      * File downloaded from remote server (via file transfer).
      */
