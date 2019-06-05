@@ -28,7 +28,7 @@ class BackupResolver(private val aem: AemExtension) {
      * Backup file from any source (local & remote sources).
      */
     @get:JsonIgnore
-    val auto: File?
+    val any: File?
         get() = resolve(localSources + remoteSources)
 
     /**

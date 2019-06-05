@@ -54,10 +54,16 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
 
     val quickstart = QuickstartResolver(aem)
 
+    /**
+     * Configure AEM source files when creating instances from the scratch.
+     */
     fun quickstart(options: QuickstartResolver.() -> Unit) {
         quickstart.apply(options)
     }
 
+    /**
+     * Configure AEM backup sources.
+     */
     val backup = BackupResolver(aem)
 
     fun backup(options: BackupResolver.() -> Unit) {
@@ -68,7 +74,7 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
     val backupZip: File?
         get() {
             return when (source) {
-                Source.AUTO -> backup.auto
+                Source.AUTO, Source.BACKUP_ANY -> backup.any
                 Source.BACKUP_LOCAL -> backup.local
                 Source.BACKUP_REMOTE -> backup.remote
                 else -> null
@@ -79,7 +85,7 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
     fun create(instances: List<LocalInstance>) {
         when (source) {
             Source.AUTO -> {
-                val backupZip = backup.auto
+                val backupZip = backup.any
                 if (backupZip != null) {
                     createFromBackup(instances, backupZip)
                 } else {
@@ -87,7 +93,7 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
                 }
             }
             Source.BACKUP_ANY -> {
-                val backupZip = backup.auto
+                val backupZip = backup.any
                 if (backupZip != null) {
                     createFromBackup(instances, backupZip)
                 } else {
