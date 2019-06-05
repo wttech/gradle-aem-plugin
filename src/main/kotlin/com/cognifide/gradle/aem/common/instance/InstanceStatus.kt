@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.common.instance
 
+@Suppress("MagicNumber")
 enum class InstanceStatus(val exitStatus: Int) {
     RUNNING(0),
     DEAD(1),

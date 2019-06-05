@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem.common.instance.action
 
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.common.build.ProgressCountdown
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.InstanceException
 import java.util.concurrent.TimeUnit
@@ -44,10 +43,9 @@ class ReloadAction(aem: AemExtension) : AnyInstanceAction(aem) {
 
         if (reloaded.isNotEmpty()) {
             val unavailable = instances - reloaded
-            val countdown = ProgressCountdown(aem.project, delay)
 
             aem.logger.info("Reloading instance(s): ${reloaded.size} triggered, ${unavailable.size} unavailable")
-            countdown.run()
+            aem.progressCountdown(delay)
         } else {
             throw InstanceException("All instances are unavailable.")
         }

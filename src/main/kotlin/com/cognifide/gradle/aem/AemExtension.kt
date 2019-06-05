@@ -439,6 +439,16 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
      */
     fun <T> progressLogger(action: ProgressLogger.() -> T): T = ProgressLogger.of(project).launch(action)
 
+    /**
+     * Show synchronous progress countdown / time to wait after performing asynchronous operation.
+     */
+    fun progressCountdown(time: Long) = progressCountdown { this.time = time }
+
+    /**
+     * Show synchronous progress countdown / time to wait after performing asynchronous operation.
+     */
+    fun progressCountdown(options: ProgressCountdown.() -> Unit) = ProgressCountdown(project).apply(options).run()
+
     @get:JsonIgnore
     val filter: VltFilter
         get() {

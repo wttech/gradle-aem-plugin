@@ -42,8 +42,7 @@ class Retry private constructor(val aem: AemExtension) {
 
                     aem.logger.lifecycle("Retrying ($no/$times) $operation after delay: ${Formats.duration(delay)}")
                     aem.logger.debug("Retrying due to exception", e)
-
-                    ProgressCountdown(aem.project, delay).run()
+                    aem.progressCountdown(delay)
                 }
             }
         }
