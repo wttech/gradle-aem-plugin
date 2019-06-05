@@ -283,7 +283,13 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
         }
     }
 
-    fun status(): InstanceStatus = InstanceStatus.of(execute(statusScript))
+    fun status(): InstanceStatus {
+        if (!created) {
+            return InstanceStatus.UNKNOWN
+        }
+
+        return InstanceStatus.of(execute(statusScript))
+    }
 
     fun init(callback: LocalInstance.() -> Unit) {
         if (initialized) {

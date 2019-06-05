@@ -6,7 +6,7 @@ import java.util.concurrent.TimeUnit
 
 class TimeoutCheck(group: CheckGroup) : DefaultCheck(group) {
 
-    var state: Long = TimeUnit.MINUTES.toMillis(1)
+    var state: Long = TimeUnit.MINUTES.toMillis(5)
 
     var constant: Long = TimeUnit.MINUTES.toMillis(30)
 

@@ -13,9 +13,9 @@ class AwaitDownAction(aem: AemExtension) : LocalInstanceAction(aem) {
 
     private var timeoutOptions: TimeoutCheck.() -> Unit = {
         state = aem.props.long("instance.awaitDown.timeout.state")
-                ?: TimeUnit.MINUTES.toMillis(1)
+                ?: TimeUnit.MINUTES.toMillis(2)
         constant = aem.props.long("instance.awaitDown.timeout.constant")
-                ?: TimeUnit.MINUTES.toMillis(5)
+                ?: TimeUnit.MINUTES.toMillis(10)
     }
 
     fun timeout(options: TimeoutCheck.() -> Unit) {
