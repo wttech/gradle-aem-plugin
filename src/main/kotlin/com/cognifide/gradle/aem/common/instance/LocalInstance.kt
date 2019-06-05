@@ -3,6 +3,8 @@ package com.cognifide.gradle.aem.common.instance
 import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.file.FileOperations
+import com.cognifide.gradle.aem.common.instance.local.Script
+import com.cognifide.gradle.aem.common.instance.local.Status
 import com.cognifide.gradle.aem.common.utils.Formats
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -283,12 +285,12 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
         }
     }
 
-    fun status(): InstanceStatus {
+    fun status(): Status {
         if (!created) {
-            return InstanceStatus.UNKNOWN
+            return Status.UNKNOWN
         }
 
-        return InstanceStatus.of(execute(statusScript))
+        return Status.byScriptStatus(execute(statusScript))
     }
 
     fun init(callback: LocalInstance.() -> Unit) {
@@ -320,15 +322,6 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
 
     override fun toString(): String {
         return "LocalInstance(httpUrl='$httpUrl', user='$user', password='${Formats.asPassword(password)}', typeName='$typeName', debugPort=$debugPort)"
-    }
-
-    class Script(val wrapper: File, val bin: File, val command: List<String>) {
-        val commandLine: List<String>
-            get() = command + listOf(wrapper.absolutePath)
-
-        override fun toString(): String {
-            return "Script(commandLine=$commandLine)"
-        }
     }
 
     companion object {

@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.common.instance.check
 
-import com.cognifide.gradle.aem.common.instance.InstanceStatus
 import com.cognifide.gradle.aem.common.instance.LocalInstance
+import com.cognifide.gradle.aem.common.instance.local.Status
 import java.util.concurrent.TimeUnit
 
 class UnavailableCheck(group: CheckGroup) : DefaultCheck(group) {
@@ -10,7 +10,7 @@ class UnavailableCheck(group: CheckGroup) : DefaultCheck(group) {
      * Local instances can be checked by running status script provided by AEM quickstart.
      * Determines when instance should be considered as unavailable.
      */
-    var statusExpected = InstanceStatus.UNKNOWN
+    var statusExpected = Status.UNKNOWN
 
     /**
      * Status of remote instances cannot be checked easily. Because of that, check will work just a little bit longer.
@@ -29,10 +29,10 @@ class UnavailableCheck(group: CheckGroup) : DefaultCheck(group) {
 
         if (instance is LocalInstance) {
             val status = instance.status()
-            if (status != InstanceStatus.UNKNOWN) {
+            if (status != Status.UNKNOWN) {
                 statusLogger.error(
                         "Awaiting not running",
-                        "Incorrect instance status '$status'. Waiting for status '${InstanceStatus.UNKNOWN}' of $instance"
+                        "Incorrect instance status '$status'. Waiting for status '${Status.UNKNOWN}' of $instance"
                 )
             }
         } else {
