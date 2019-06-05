@@ -43,12 +43,12 @@ class BundleState private constructor() {
         get() = "${total}t|${activeBundles}ba|${activeFragments}fa|${resolvedBundles}br"
 
     val stablePercent: String
-        get() = Formats.percent(total - (resolvedBundles + installedBundles), total)
+        get() = Formats.percentExplained(total - (resolvedBundles + installedBundles), total)
 
     /**
      * Checks if all bundles of matching symbolic name pattern are stable.
      */
-    fun stable(symbolicNames: Collection<String>): Boolean {
+    fun stable(symbolicNames: Iterable<String>): Boolean {
         return !unknown && bundles.filter { Patterns.wildcard(it.symbolicName, symbolicNames) }.all { it.stable }
     }
 
@@ -56,14 +56,14 @@ class BundleState private constructor() {
         return stable(listOf(symbolicName))
     }
 
-    fun bundlesExcept(symbolicNames: Collection<String>): List<Bundle> {
+    fun bundlesExcept(symbolicNames: Iterable<String>): List<Bundle> {
         return bundles.filter { !Patterns.wildcard(it.symbolicName, symbolicNames) }
     }
 
     /**
      * Checks if all bundles except these matching symbolic name pattern are active.
      */
-    fun stableExcept(symbolicNames: Collection<String>): Boolean {
+    fun stableExcept(symbolicNames: Iterable<String>): Boolean {
         return !unknown && bundlesExcept(symbolicNames).all { it.stable }
     }
 

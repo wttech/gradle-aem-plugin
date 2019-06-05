@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.io.File
 
-class HostsTest {
+class EnvironmentHostsTest {
 
     object IO {
         fun text(resource: String): String = FileUtils.readFileToString(file(resource), "UTF8")
@@ -21,7 +21,7 @@ class HostsTest {
     fun shouldAppendEtcHostsWithRequiredHosts() {
         // given
         val hosts = listOf(Host("127.0.0.1", "example.com"), Host("127.0.0.1", "demo.example.com"))
-        val fileText = IO.text("com/cognifide/gradle/aem/test/hosts/hosts")
+        val fileText = IO.text("com/cognifide/gradle/aem/test/environment-hosts/hosts")
 
         // when
         val content = HostsUnix(hosts).append(fileText)
@@ -34,7 +34,7 @@ class HostsTest {
     fun appendingEtcHostsShouldBeIdempotent() {
         // given
         val hosts = listOf(Host("127.0.0.1", "example.com"), Host("127.0.0.1", "demo.example.com"))
-        val fileText = IO.text("com/cognifide/gradle/aem/test/hosts/hosts_already_appended")
+        val fileText = IO.text("com/cognifide/gradle/aem/test/environment-hosts/hosts_already_appended")
 
         // when
         val content: String = HostsUnix(hosts).append(fileText)
@@ -47,7 +47,7 @@ class HostsTest {
     fun shouldIgnoreCommentsWhenAppending() {
         // given
         val hosts = listOf(Host("127.0.0.1", "example.com"), Host("127.0.0.1", "demo.example.com"))
-        val fileText = IO.text("com/cognifide/gradle/aem/test/hosts/hosts_with_comments")
+        val fileText = IO.text("com/cognifide/gradle/aem/test/environment-hosts/hosts_with_comments")
 
         // when
         val content: String = HostsUnix(hosts).append(fileText)

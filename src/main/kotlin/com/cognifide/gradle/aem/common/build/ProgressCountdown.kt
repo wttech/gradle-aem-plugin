@@ -3,16 +3,22 @@ package com.cognifide.gradle.aem.common.build
 import com.cognifide.gradle.aem.common.utils.Formats
 import org.gradle.api.Project
 
-class ProgressCountdown(project: Project, private val value: Long) {
+class ProgressCountdown(project: Project) {
 
-    val logger = ProgressLogger.of(project)
+    var time: Long = 0
 
     var loggerInterval = 100
 
-    var progress: (Long) -> String = { "time left: ${Formats.duration(it)}" }
+    private val logger = ProgressLogger.of(project)
+
+    private var progress: (Long) -> String = { "Waiting... time left: ${Formats.duration(it)}" }
+
+    fun progress(messageComposer: (Long) -> String) {
+        this.progress = messageComposer
+    }
 
     fun run() {
-        if (value <= 0) {
+        if (time <= 0) {
             return
         }
 
@@ -22,7 +28,7 @@ class ProgressCountdown(project: Project, private val value: Long) {
             while (true) {
                 val current = System.currentTimeMillis()
                 val delta = current - start
-                val countdown = value - delta
+                val countdown = time - delta
 
                 if (countdown <= 0) {
                     break

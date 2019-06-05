@@ -1,21 +1,18 @@
 plugins {
     id("com.cognifide.aem.package")
-    id("com.cognifide.aem.instance")
-    kotlin("jvm") apply false
 }
 
 description = "Example"
-defaultTasks(":instanceSatisfy", ":packageDeploy")
 
 allprojects {
     group = "com.company.aem"
     version = "1.0.0-SNAPSHOT"
 
     repositories {
+        mavenLocal()
+        jcenter()
         maven { url = uri("https://repo.adobe.com/nexus/content/groups/public") }
         maven { url = uri("https://repo1.maven.org/maven2") }
-        jcenter()
-        mavenLocal()
     }
 
     plugins.withId("com.cognifide.aem.common") {
@@ -50,18 +47,6 @@ aem {
             fromProject(":common")
             fromProject(":core")
             fromProject(":design")
-        }
-        instanceSatisfy {
-            packages {
-                group("dependencies") {
-                    // local("pkg/vanityurls-components-1.0.2.zip")
-                }
-
-                group("tools") {
-                    download("https://github.com/OlsonDigital/aem-groovy-console/releases/download/9.0.1/aem-groovy-console-9.0.1.zip")
-                    download("https://github.com/Cognifide/APM/releases/download/cqsm-2.0.0/apm-2.0.0.zip")
-                }
-            }
         }
     }
 }

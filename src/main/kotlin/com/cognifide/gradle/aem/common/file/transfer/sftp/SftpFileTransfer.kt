@@ -26,10 +26,10 @@ class SftpFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
     var timeout: Long = aem.props.long("fileTransfer.sftp.timeout") ?: 60000L
 
     @JsonIgnore
-    var sshOptions: SshClient.() -> Unit = {}
+    var clientOptions: SshClient.() -> Unit = {}
 
-    fun ssh(options: SshClient.() -> Unit) {
-        this.sshOptions = options
+    fun client(options: SshClient.() -> Unit) {
+        this.clientOptions = options
     }
 
     @JsonIgnore
@@ -135,7 +135,7 @@ class SftpFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
 
         try {
             SshClient.setUpDefaultClient().use { client ->
-                client.apply(sshOptions)
+                client.apply(clientOptions)
                 client.start()
                 client.connect(user, host, port).apply { await(timeout) }.session.use { session ->
                     session.apply(sessionOptions)

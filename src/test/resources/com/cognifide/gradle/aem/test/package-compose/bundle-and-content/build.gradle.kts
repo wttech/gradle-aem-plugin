@@ -8,14 +8,14 @@ description = "Example"
 
 repositories {
     mavenLocal()
+    jcenter()
     maven { url = uri("https://repo.adobe.com/nexus/content/groups/public") }
     maven { url = uri("https://repo1.maven.org/maven2") }
-    jcenter()
 }
 
 dependencies {
-    compile(group = "org.slf4j", name = "slf4j-api", version = "1.5.10")
-    compile(group = "org.osgi", name = "osgi.cmpn", version = "6.0.0")
+    compileOnly("org.slf4j:slf4j-api:1.5.10")
+    compileOnly("org.osgi:osgi.cmpn:6.0.0")
 }
 
 aem {

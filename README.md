@@ -28,15 +28,15 @@ Be inspired by watching [live demo](https://adapt.to/2018/en/schedule/a-better-d
 
 ### Features 
 
+* Automated complete AEM environment setup with [virtualized AEM dispatcher](#environment-plugin) and [native AEM instances](#instance-plugin) optimized for best development performance
 * [Powerful AEM DSL scripting capabilities](#implement-custom-aem-tasks) for performing JCR content migrations, managing AEM instances.
-* Automated full stack AEM environment setup with [virtualized AEM dispatcher](#environment-plugin) and [native AEM instances](#instance-plugin) optimized for best development performance
-* [Composing CRX package](#task-packagecompose) from multiple JCR content roots, bundles.
 * [Advanced AEM instance(s) stability & health checking](#task-instanceawait) after CRX package deployment.
 * [Continuous AEM incident monitoring](#task-instancetail) and interactive reporting (centralized log tailing of any AEM instances with no SSH).
-* [All-in-one CRX packages generation](#assembling-packages-merging-all-in-one) (assemblies), vault filters merging etc.
 * Easy parallel [CRX package deployment](#task-packagedeploy) to many remote group of instances.
-* [Fail-safe dependent CRX packages installation](#task-instancesatisfy) from local and remote sources (SMB, SSH, HTTP(s)).
+* [Fail-safe dependent CRX packages installation](#task-instancesatisfy) from local and remote sources using various protocols (SMB / SSH / HTTP / custom).
 * [Fast JCR content synchronization](#task-sync) from running AEM instances with advanced content normalization.
+* [Composing CRX package](#task-packagecompose) from multiple separate JCR content roots, bundles.
+* [All-in-one CRX packages generation](#assembling-packages-merging-all-in-one) (assemblies), vault filters merging etc.
 * [Easy OSGi bundle customization](#bundle-plugin) with BND tool embedded.
 
 Gradle AEM Plugin is following strategy [convention over configuration](https://en.wikipedia.org/wiki/Convention_over_configuration). When following built-in conventions about project structure & naming, then only minimal configuration is required. 
@@ -44,9 +44,12 @@ Still all features are **fully configurable**.
 
 ## Important notice 
 
-Gradle AEM Plugin 6.x serie and upper will **no longer support Groovy DSL** and **stands on Kotlin DSL** coming with Gradle 5.0.
+Major releases of plugin are introducing breaking changes. Build functionality is mostly covered, however build scripts need corrections.
 
-To see documentation for previous 5.x serie, please [click here](https://github.com/Cognifide/gradle-aem-plugin/tree/groovy) (navigate to branch `groovy`).
+Documentation for previous series:
+
+* [6.2.0](https://github.com/Cognifide/gradle-aem-plugin/tree/6.2.0) (last in 6.x serie / with *aem* prefixes in task / property names)
+* [5.1.4](https://github.com/Cognifide/gradle-aem-plugin/tree/5.1.4) (last supporting Groovy DSL)
 
 ## Table of contents
 
@@ -93,6 +96,7 @@ To see documentation for previous 5.x serie, please [click here](https://github.
         * [Configuring OSGi bundle manifest attributes](#configuring-osgi-bundle-manifest-attributes)
         * [Excluding packages being incidentally imported by OSGi bundle](#excluding-packages-being-incidentally-imported-by-osgi-bundle)
      * [Instance plugin](#instance-plugin)
+        * [Instance file structure](#instance-file-structure)
         * [Task instanceSetup](#task-instancesetup)
         * [Task instanceResetup](#task-instanceresetup)
         * [Task instanceCreate](#task-instancecreate)
@@ -106,8 +110,7 @@ To see documentation for previous 5.x serie, please [click here](https://github.
         * [Task instanceRestart](#task-instancerestart)
         * [Task instanceReload](#task-instancereload)
         * [Task instanceSatisfy](#task-instancesatisfy)
-        * [Task instanceAwait](#task-instanceawait)
-        * [Task instanceCollect](#task-instancecollect)
+        * [Task instanceCheck](#task-instancecheck)
         * [Task instanceTail](#task-instancetail)
            * [Tailing incidents](#tailing-incidents)
            * [Tailing multiple instances](#tailing-multiple-instances)
@@ -116,6 +119,7 @@ To see documentation for previous 5.x serie, please [click here](https://github.
         * [Environment configuration](#environment-configuration)
            * [Notice for Docker on Windows](#notice-for-docker-on-windows)
            * [Notice for Docker Toolbox](#notice-for-docker-toolbox)
+        * [Environment file structure](#environment-file-structure)
         * [Environment service health checks](#environment-service-health-checks)
         * [Task environmentUp](#task-environmentup)
         * [Task environmentDown](#task-environmentdown)
@@ -1146,11 +1150,18 @@ plugins {
 }
 ```
 
-Provides instance related tasks: `instanceAwait`, `instanceSetup`, `instanceCreate` etc.
+Provides instance related tasks: `instanceCheck`, `instanceSetup`, `instanceCreate` etc.
 
 Should be applied only at root project / only once within whole build.
 
 Inherits from [Common Plugin](#common-plugin).
+
+#### Instance file structure
+
+By default, instance file are stored directly in project, under so called main AEM module usually named *aem*.
+Ensure having directory *aem/.aem* ignored in VCS and excluded from indexing by IDE.
+
+![Instance file structure](docs/instance-dir-structure.png)
 
 #### Task `instanceSetup`
 
@@ -1434,62 +1445,49 @@ For instance:
 gradlew instanceSatisfy -Pinstance.satisfy.urls=[https://github.com/OlsonDigital/aem-groovy-console/releases/download/11.0.0/aem-groovy-console-11.0.0.zip,https://github.com/neva-dev/felix-search-webconsole-plugin/releases/download/search-webconsole-plugin-1.2.0/search-webconsole-plugin-1.2.0.jar]
 ```
 
-#### Task `instanceAwait`
+#### Task `instanceCheck`
 
-Wait until all local or remote AEM instance(s) be stable.
+Check health condition of AEM instance(s) of any type (local & remote).
 
-Action parameter | CMD Property | Default Value | Purpose
---- | --- | --- | ---
-`stableRetry` | *aem.await.stableRetry* | `300` | Hook for customizing how often and how many stability checks will be performed. Corresponding CMD param controls maximum count of retries if default hook is active.
-`stableAssurance` | *aem.await.stableAssurance* | `3` | Number of intervals / additional instance stability checks after stable state has been reached for the first time to assure all stable instances.
-`stableCheck` | n/a | `{ it.checkBundleStable() }` | Hook for customizing instance stability check. Check will be repeated if assurance is configured. 
-`healthCheck` | n/a | { `it.checkComponentState() }` | Hook for customizing instance health check.
-`healthRetry` | *aem.await.healthRetry* | `5` | Hook for customizing how often and how many health checks will be performed.
-`fast` | *aem.await.fast* | `false` | Skip stable check assurances and health checking. Alternative, quicker type of awaiting stable instances.
-`fastDelay` | *aem.await.fastDelay* | `1000` | Time in milliseconds to postpone instance stability checks to avoid race condition related with actual operation being performed on AEM like starting JCR package installation or even creating launchpad.  Considered only when fast mode is enabled.
-`warmupDelay` | *aem.await.warmupDelay* | `0` | Time to wait e.g after deployment before checking instance stability. Considered only when fast mode is disabled.
-`resume` | *aem.await.resume* | `false` | Do not fail build but log warning when there is still some unstable or unhealthy instance.
-
-Instance state, stable check, health check lambdas are using: [InstanceState](src/main/kotlin/com/cognifide/gradle/aem/instance/InstanceState.kt). Use its methods to achieve expected customized behavior.
+Custom behavior of each particular health check using following lambdas:
 
 ```kotlin
 aem {
     tasks {
-        instanceAwait {
-            options {
-                availableCheck = check(InstanceState.BUNDLE_STATE_SYNC_OPTIONS, { !bundleState.unknown })
-                stableState = checkBundleState()
-                stableCheck = checkBundleStable()
-                healthCheck = checkComponentState(InstanceState.PLATFORM_COMPONENTS, aem.javaPackages.map { "$it.*" })
+        instanceCheck {
+            awaitUp {
+                timeout {
+                    // ...
+                }
+                bundles {
+                    // ...
+                }
+                components {
+                    // ...
+                }
+                events {
+                    // ...
+                }
             }
         }
     }
 }
 ```
 
-Such options could be also customized for `packageDeploy` task when using block:
+By default, `packageDeploy` task is also awaiting up instances (this could be optionally disabled by property `package.deploy.awaited=false`).
+So it is also possible to configure each health check there:
 
 ```kotlin
 aem {
     tasks {
         packageDeploy {
-            await {
+            awaitUp {
                 // ...
             }
         }
     }
 }
 ```
-
-#### Task `instanceCollect`
-
-Composes ZIP package from all CRX packages being satisfied and built.
-
-Inherits from task [ZIP](https://docs.gradle.org/3.5/dsl/org.gradle.api.tasks.bundling.Zip.html).
-
-Screenshot below presents generated ZIP package which is a result of running `gradlew :instanceCollect` for [multi-module project](https://github.com/Cognifide/gradle-aem-multi).
-
-![Collect task - ZIP Overview](docs/collect-zip-overview.png)
 
 #### Task `instanceTail`
 
@@ -1558,6 +1556,7 @@ plugins {
 }
 ```
 
+Controls virtualized AEM environment consisting of Apache Web Server (HTTPD) with AEM dispatcher module installed.
 Provides environment related tasks: `environmentUp`, `environmentDev`, `environmentHosts` etc.
 
 Should be applied only at root project / only once within whole build.
@@ -1572,11 +1571,11 @@ Most of the configuration steps are automated. However, there are three manual s
     * [Desktop](https://docs.docker.com/docker-for-windows/install/) (highly recommended, using Hyper-V)
     * [Toolbox](https://docs.docker.com/toolbox/toolbox_install_windows/) (legacy, using VirtualBox)
 2. Setup hosts on local machine (admin rights are required to access `/etc/hosts` or `C:\Windows\System32\drivers\etc\hosts` file)
-    * In project based on [Gradle AEM Multi](https://github.com/Cognifide/gradle-aem-multi/blob/master/aem/hosts.bat), just run script `aem/hosts.sh` or `aem/hosts.bat`
+    * In project based on [Gradle AEM Multi](https://github.com/Cognifide/gradle-aem-multi/blob/master/aem), just run script `aem/hosts` or `aem/hosts.bat`
     * Otherwise: 
         * Windows: 
             * Start PowerShell with "Run as administrator"
-            * Execute: `.\gradlew.bat environmentHosts --no-daemon`
+            * Execute: `./gradlew.bat environmentHosts --no-daemon`
         * Unix: 
             * Execute: `sudo gradlew environmentHosts --no-daemon`
     
@@ -1589,6 +1588,21 @@ Because environment is using Docker volumes, on Windows, running task `environme
 
 While using Docker Toolbox, beware that, by default, there is only one shared folder in VirtualBox configured which mounts *C:/Users* to */c/users* on Docker Machine / Ubuntu. 
 As a consequence, if AEM project is located outside of *C:/Users* directory, there is a need to manually add corresponding shared folder and mount it to */c/users* path on Docker Machine using VirtualBox GUI.
+
+#### Environment file structure
+
+Environment plugin is a little more depending on convention in case of directory structure.
+Screenshot below presents recommended file structure which does not need any additional configuration.
+
+![Environment file structure](docs/environment-dir-structure.png)
+
+Ensure having directory *aem/.aem* ignored in VCS and excluded from indexing by IDE.
+
+Environment as a code paradigm is a main reason of locating environment configuration and runtime inside a project. 
+Nowadays, advanced web applications (like AEM applications) are multi-layered and closely related with environment.
+By having AEM dispatcher configuration and HTTDP configuration near application code base, the changes could be applied very easily and quickly.
+By having all source code opened in single IDE window, e.g finding and amending content repository path occurrences at same time both in AEM application and HTTPD configuration could reduce risk of regression and they could be versioned once.
+All code base - application and environment - could be treated as a whole, fully operating unit.
 
 #### Environment service health checks
 
@@ -1810,7 +1824,7 @@ aem {
                 val pkg = aem.httpFile { download("https://company.com/aem/backups/example-1.0.0-201901300932.backup.zip") }
                 
                 aem.sync(instances) { 
-                    packageManager.deployPackage(pkg) 
+                    packageManager.deploy(pkg) 
                 }
             }
         }
@@ -1930,7 +1944,7 @@ Currently used plugin architecture solves that problem.
 Initially, to create fully configured local AEM instances simply run command `gradlew instanceSetup`.
 
 Later during development process, building and deploying to AEM should be done using the simplest command: `gradlew`.
-Above configuration uses [default tasks](https://docs.gradle.org/current/userguide/tutorial_using_tasks.html#sec:default_tasks), so that alternatively it is possible to do the same using explicitly specified command `gradlew instanceSatisfy packageDeploy instanceAwait`.
+Above configuration uses [default tasks](https://docs.gradle.org/current/userguide/tutorial_using_tasks.html#sec:default_tasks), so that alternatively it is possible to do the same using explicitly specified command `gradlew instanceSatisfy packageDeploy instanceCheck`.
 
 * Firstly dependent packages (like AEM hotfixes, Vanity URL Components etc) will be installed lazily (only when they are not installed yet).
 * In next step application is being built and deployed to all configured AEM instances.

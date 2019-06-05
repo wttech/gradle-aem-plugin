@@ -125,12 +125,6 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     val configCommonDir: File
         get() = projectMain.file(props.string("configCommonDir") ?: "gradle")
 
-    /**
-     * Performs parallel CRX package deployments and instance synchronization.
-     */
-    @JsonIgnore
-    val parallel = ParallelExecutor(this)
-
     @get:Internal
     val fileTransfer = FileTransferManager(this)
 
@@ -437,17 +431,23 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
 
     /**
      * Show asynchronous progress indicator while performing some action.
-     *
-     * Warning! Nesting progress indicators is not supported.
      */
     fun <T> progressIndicator(action: ProgressIndicator.() -> T): T = ProgressIndicator(project).launch(action)
 
     /**
      * Show synchronous progress logger while performing some action.
-     *
-     * Nesting progress loggers is supported.
      */
     fun <T> progressLogger(action: ProgressLogger.() -> T): T = ProgressLogger.of(project).launch(action)
+
+    /**
+     * Show synchronous progress countdown / time to wait after performing asynchronous operation.
+     */
+    fun progressCountdown(time: Long) = progressCountdown { this.time = time }
+
+    /**
+     * Show synchronous progress countdown / time to wait after performing asynchronous operation.
+     */
+    fun progressCountdown(options: ProgressCountdown.() -> Unit) = ProgressCountdown(project).apply(options).run()
 
     @get:JsonIgnore
     val filter: VltFilter
@@ -460,18 +460,18 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
 
             val cmdFilterPath = props.string("filter.path") ?: ""
             if (cmdFilterPath.isNotEmpty()) {
-                val cmdFilter = FileOperations.find(project, packageOptions.vltRootDir.toString(), cmdFilterPath)
+                val cmdFilter = FileOperations.find(project, packageOptions.vltDir.toString(), cmdFilterPath)
                         ?: throw VltException("Vault check out filter file does not exist at path: $cmdFilterPath" +
-                                " (or under directory: ${packageOptions.vltRootDir}).")
+                                " (or under directory: ${packageOptions.vltDir}).")
                 logger.debug("Using Vault filter file specified as command line property: $cmdFilterPath")
                 return VltFilter(cmdFilter)
             }
 
             val conventionFilterFiles = listOf(
-                    "${packageOptions.vltRootDir}/${VltFilter.SYNC_NAME}",
-                    "${packageOptions.vltRootDir}/${VltFilter.BUILD_NAME}"
+                    "${packageOptions.vltDir}/${VltFilter.SYNC_NAME}",
+                    "${packageOptions.vltDir}/${VltFilter.BUILD_NAME}"
             )
-            val conventionFilterFile = FileOperations.find(project, packageOptions.vltRootDir.toString(), conventionFilterFiles)
+            val conventionFilterFile = FileOperations.find(project, packageOptions.vltDir.toString(), conventionFilterFiles)
             if (conventionFilterFile != null) {
                 logger.debug("Using Vault filter file found by convention: $conventionFilterFile")
                 return VltFilter(conventionFilterFile)
@@ -552,6 +552,14 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
      * Transfer files using over SMB protocol using custom settings.
      */
     fun <T> smbFile(consumer: SmbFileTransfer.() -> T) = fileTransfer.factory.smb(consumer)
+
+    // Utlities (to use without imports)
+
+    @JsonIgnore
+    val parallel = Parallel
+
+    @JsonIgnore
+    val formats = Formats
 
     companion object {
 

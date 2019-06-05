@@ -66,11 +66,9 @@ class AemTaskFacade(private val aem: AemExtension) : Serializable {
 
     // Instance plugin shorthands
 
-    fun instanceAwait(configurer: InstanceAwait.() -> Unit) = named(InstanceAwait.NAME, configurer)
-
     fun instanceBackup(configurer: InstanceBackup.() -> Unit) = named(InstanceBackup.NAME, configurer)
 
-    fun instanceCollect(configurer: InstanceCollect.() -> Unit) = named(InstanceCollect.NAME, configurer)
+    fun instanceCheck(configurer: InstanceCheck.() -> Unit) = named(InstanceCheck.NAME, configurer)
 
     fun instanceCreate(configurer: InstanceCreate.() -> Unit) = named(InstanceCreate.NAME, configurer)
 

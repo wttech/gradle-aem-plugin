@@ -70,7 +70,7 @@ open class Debug : AemDefaultTask() {
             mutableMapOf<String, Package?>().apply {
                 aem.syncPackages { pkg ->
                     try {
-                        put(instance.name, packageManager.resolvePackage(pkg))
+                        put(instance.name, packageManager.find(pkg))
                     } catch (e: AemException) {
                         logger.info("Cannot determine remote package, because instance is not available: $instance")
                         logger.debug("Detailed error", e)

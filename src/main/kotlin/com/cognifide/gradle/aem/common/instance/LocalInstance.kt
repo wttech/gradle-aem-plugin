@@ -3,6 +3,8 @@ package com.cognifide.gradle.aem.common.instance
 import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.file.FileOperations
+import com.cognifide.gradle.aem.common.instance.local.Script
+import com.cognifide.gradle.aem.common.instance.local.Status
 import com.cognifide.gradle.aem.common.utils.Formats
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -94,20 +96,12 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
         get() = binScript("start")
 
     @get:JsonIgnore
-    val pidFile: File
-        get() = File("$quickstartDir/conf/cq.pid")
-
-    @get:JsonIgnore
-    val controlPortFile: File
-        get() = File("$quickstartDir/conf/controlport")
-
-    @get:JsonIgnore
-    val running: Boolean
-        get() = pidFile.exists() && controlPortFile.exists()
-
-    @get:JsonIgnore
     val stopScript: Script
         get() = binScript("stop")
+
+    @get:JsonIgnore
+    val statusScript: Script
+        get() = binScript("status")
 
     @get:JsonIgnore
     val created: Boolean
@@ -265,7 +259,7 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
 
     fun up() {
         if (!created) {
-            aem.logger.warn("Instance not created, so it could not be up: $this")
+            aem.logger.info("Instance not created, so it could not be up: $this")
             return
         }
 
@@ -277,7 +271,7 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
 
     fun down() {
         if (!created) {
-            aem.logger.warn("Instance not created, so it could not be down: $this")
+            aem.logger.info("Instance not created, so it could not be down: $this")
             return
         }
 
@@ -291,6 +285,14 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
         }
     }
 
+    fun status(): Status {
+        if (!created) {
+            return Status.UNKNOWN
+        }
+
+        return Status.byScriptStatus(execute(statusScript))
+    }
+
     fun init(callback: LocalInstance.() -> Unit) {
         if (initialized) {
             aem.logger.debug("Instance already initialized: $this")
@@ -302,11 +304,7 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
         lock(LOCK_INIT)
     }
 
-    private fun execute(script: Script) {
-        ProcessBuilder(script.commandLine)
-                .directory(dir)
-                .start()
-    }
+    private fun execute(script: Script): Int = ProcessBuilder(script.commandLine).directory(dir).start().waitFor()
 
     fun destroy() {
         aem.logger.info("Destroying: $this")
@@ -324,15 +322,6 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
 
     override fun toString(): String {
         return "LocalInstance(httpUrl='$httpUrl', user='$user', password='${Formats.asPassword(password)}', typeName='$typeName', debugPort=$debugPort)"
-    }
-
-    class Script(val wrapper: File, val bin: File, val command: List<String>) {
-        val commandLine: List<String>
-            get() = command + listOf(wrapper.absolutePath)
-
-        override fun toString(): String {
-            return "Script(commandLine=$commandLine)"
-        }
     }
 
     companion object {

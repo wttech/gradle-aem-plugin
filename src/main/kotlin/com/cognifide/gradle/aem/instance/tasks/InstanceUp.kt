@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.instance.tasks
 
 import com.cognifide.gradle.aem.common.instance.LocalInstance
-import com.cognifide.gradle.aem.common.instance.action.AwaitAction
+import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
 import com.cognifide.gradle.aem.common.instance.names
 import com.cognifide.gradle.aem.common.tasks.LocalInstanceTask
 import org.gradle.api.tasks.TaskAction
@@ -12,9 +12,9 @@ open class InstanceUp : LocalInstanceTask() {
         description = "Turns on local AEM instance(s)."
     }
 
-    private var initOptions: LocalInstance.() -> Unit = {}
+    private var awaitOptions: AwaitUpAction.() -> Unit = {}
 
-    private var awaitOptions: AwaitAction.() -> Unit = {}
+    private var initOptions: LocalInstance.() -> Unit = {}
 
     /**
      * Hook called only when instance is up first time.
@@ -26,7 +26,7 @@ open class InstanceUp : LocalInstanceTask() {
     /**
      * Controls instance awaiting.
      */
-    fun await(options: AwaitAction.() -> Unit) {
+    fun await(options: AwaitUpAction.() -> Unit) {
         this.awaitOptions = options
     }
 
@@ -34,7 +34,7 @@ open class InstanceUp : LocalInstanceTask() {
     fun up() {
         aem.parallel.with(instances) { up() }
 
-        aem.instanceActions.await {
+        aem.instanceActions.awaitUp {
             instances = this@InstanceUp.instances
             awaitOptions()
         }
