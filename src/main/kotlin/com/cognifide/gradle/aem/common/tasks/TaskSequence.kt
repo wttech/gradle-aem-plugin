@@ -6,11 +6,11 @@ class TaskSequence {
 
     var afterTasks: Collection<Any> = listOf()
 
-    fun dependsOn(vararg tasks: Any) {
-        dependsOn(tasks.toList())
+    fun dependsOrdered(vararg tasks: Any) {
+        dependsOrdered(tasks.toList())
     }
 
-    fun dependsOn(tasks: Collection<Any>) {
+    fun dependsOrdered(tasks: Collection<Any>) {
         dependentTasks = tasks
     }
 

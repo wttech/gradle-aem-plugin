@@ -44,7 +44,7 @@ abstract class DefaultCheck(protected val group: CheckGroup) : Check {
     }
 
     override val status: String
-        get() = statusLogger.entries.firstOrNull()?.summary ?: "check passed"
+        get() = statusLogger.entries.firstOrNull()?.summary ?: "Check passed"
 
     override val success: Boolean
         get() = statusLogger.entries.none { it.level == LogLevel.ERROR }

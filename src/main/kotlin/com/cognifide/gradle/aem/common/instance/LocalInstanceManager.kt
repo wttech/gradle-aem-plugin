@@ -54,10 +54,16 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
 
     val quickstart = QuickstartResolver(aem)
 
+    /**
+     * Configure AEM source files when creating instances from the scratch.
+     */
     fun quickstart(options: QuickstartResolver.() -> Unit) {
         quickstart.apply(options)
     }
 
+    /**
+     * Configure AEM backup sources.
+     */
     val backup = BackupResolver(aem)
 
     fun backup(options: BackupResolver.() -> Unit) {
@@ -68,31 +74,40 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
     val backupZip: File?
         get() {
             return when (source) {
-                Source.AUTO -> backup.auto
+                Source.AUTO, Source.BACKUP_ANY -> backup.any
                 Source.BACKUP_LOCAL -> backup.local
                 Source.BACKUP_REMOTE -> backup.remote
                 else -> null
             }
         }
 
+    @Suppress("ComplexMethod")
     fun create(instances: List<LocalInstance>) {
         when (source) {
             Source.AUTO -> {
-                val backupZip = backup.auto
+                val backupZip = backup.any
                 if (backupZip != null) {
                     createFromBackup(instances, backupZip)
                 } else {
                     createFromScratch(instances)
                 }
             }
+            Source.BACKUP_ANY -> {
+                val backupZip = backup.any
+                if (backupZip != null) {
+                    createFromBackup(instances, backupZip)
+                } else {
+                    throw InstanceException("Cannot create instance(s) because no backups available!")
+                }
+            }
             Source.BACKUP_LOCAL -> {
                 val backupZip = backup.local
-                        ?: throw InstanceException("Cannot create instance(s) as of no local backups available!")
+                        ?: throw InstanceException("Cannot create instance(s) because no local backups available!")
                 createFromBackup(instances, backupZip)
             }
             Source.BACKUP_REMOTE -> {
                 val backupZip = backup.remote
-                        ?: throw InstanceException("Cannot create instance(s) as of no remote backups available!")
+                        ?: throw InstanceException("Cannot create instance(s) because no remote backups available!")
                 createFromBackup(instances, backupZip)
             }
             Source.SCRATCH -> createFromScratch(instances)

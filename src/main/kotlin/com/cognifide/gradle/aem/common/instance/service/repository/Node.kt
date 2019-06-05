@@ -164,7 +164,7 @@ class Node(private val repository: Repository, val path: String) : Serializable 
      * Delete multiple properties from node.
      */
     fun deleteProperties(names: Iterable<String>): RepositoryResult {
-        return save(names.fold(mutableMapOf(), { props, name -> props[name] = null; props }))
+        return save(names.fold(mutableMapOf()) { props, name -> props[name] = null; props })
     }
 
     /**
@@ -195,7 +195,7 @@ class Node(private val repository: Repository, val path: String) : Serializable 
      * @see <https://sling.apache.org/documentation/bundles/manipulating-content-the-slingpostservlet-servlets-post.html>
      */
     private fun postProperties(properties: Map<String, Any?>): Map<String, Any?> {
-        return properties.entries.fold(mutableMapOf(), { props, (name, value) ->
+        return properties.entries.fold(mutableMapOf()) { props, (name, value) ->
             when (value) {
                 null -> props["$name@Delete"] = ""
                 else -> {
@@ -206,7 +206,7 @@ class Node(private val repository: Repository, val path: String) : Serializable 
                 }
             }
             props
-        })
+        }
     }
 
     private fun operationProperties(operation: String): Map<String, Any?> = mapOf(

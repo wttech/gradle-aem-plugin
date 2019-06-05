@@ -48,7 +48,7 @@ class CheckGroup(
         get() = checks.all { it.success }
 
     val summary: String
-        get() = checks.firstOrNull { it.failure }?.status ?: "checks passed"
+        get() = checks.firstOrNull { it.failure }?.status ?: "Checks passed"
 
     // Factory methods / DSL
 
