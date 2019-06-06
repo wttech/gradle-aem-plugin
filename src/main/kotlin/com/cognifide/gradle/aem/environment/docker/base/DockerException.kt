@@ -5,10 +5,10 @@ import org.buildobjects.process.ExternalProcessFailureException
 
 open class DockerException : AemException {
 
-    var processException: ExternalProcessFailureException? = null
+    var processCause: ExternalProcessFailureException? = null
 
     constructor(message: String, cause: ExternalProcessFailureException) : super(message, cause) {
-        processException = cause
+        processCause = cause
     }
 
     constructor(message: String, cause: Throwable) : super(message, cause)

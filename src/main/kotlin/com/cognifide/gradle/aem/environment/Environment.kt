@@ -6,7 +6,8 @@ import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.file.resolver.FileResolver
 import com.cognifide.gradle.aem.common.utils.Patterns
 import com.cognifide.gradle.aem.environment.docker.base.CygPath
-import com.cognifide.gradle.aem.environment.docker.base.DockerType
+import com.cognifide.gradle.aem.environment.docker.base.DockerRuntime
+import com.cognifide.gradle.aem.environment.docker.base.runtime.Toolbox
 import com.cognifide.gradle.aem.environment.docker.domain.HttpdContainer
 import com.cognifide.gradle.aem.environment.docker.domain.Stack
 import com.cognifide.gradle.aem.environment.health.HealthChecker
@@ -85,7 +86,7 @@ class Environment(@JsonIgnore val aem: AemExtension) : Serializable {
     val dispatcherModuleFile: File
         get() = File(rootDir, "$DISTRIBUTIONS_DIR/mod_dispatcher.so")
 
-    val dockerType: DockerType = DockerType.determine(aem)
+    val dockerRuntime: DockerRuntime = DockerRuntime.determine(aem)
 
     val dockerComposeFile
         get() = File(rootDir, "docker-compose.yml")
@@ -192,8 +193,8 @@ class Environment(@JsonIgnore val aem: AemExtension) : Serializable {
     }
 
     @Suppress("TooGenericExceptionCaught")
-    private fun determineDockerPath(file: File): String = when (dockerType) {
-        DockerType.TOOLBOX -> try {
+    private fun determineDockerPath(file: File): String = when (dockerRuntime) {
+        is Toolbox -> try {
             CygPath.calculate(file)
         } catch (e: Exception) {
             aem.logger.warn("Cannot determine Docker path for '$file' using 'cygpath', because it is not available.")
@@ -248,7 +249,7 @@ class Environment(@JsonIgnore val aem: AemExtension) : Serializable {
     /**
      * Defines hosts to be appended to system specific hosts file.
      */
-    fun hosts(names: Iterable<String>) = hosts.define(dockerType.hostIp, names)
+    fun hosts(names: Iterable<String>) = hosts.define(dockerRuntime.hostIp, names)
 
     /**
      * Configures environment service health checks.
