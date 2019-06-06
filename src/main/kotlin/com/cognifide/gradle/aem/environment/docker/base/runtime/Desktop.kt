@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.environment.docker.base.type
+package com.cognifide.gradle.aem.environment.docker.base.runtime
 
 import com.cognifide.gradle.aem.AemExtension
 

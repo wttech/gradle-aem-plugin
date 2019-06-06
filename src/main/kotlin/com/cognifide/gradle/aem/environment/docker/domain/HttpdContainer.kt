@@ -37,11 +37,11 @@ class HttpdContainer(environment: Environment) {
             } catch (e: DockerException) {
                 success = false
                 if (verbose) {
-                    throw EnvironmentException("Failed to reload HTTPD service!", e)
+                    throw EnvironmentException("Failed to restart HTTPD service! Check logs then configuration.", e)
                 } else {
-                    val processException = e.processException
-                    if (processException != null) {
-                        aem.logger.error("Failed to reload HTTPD service, exit code: ${processException.exitValue}")
+                    val processCause = e.processCause
+                    if (processCause != null) {
+                        aem.logger.error("Failed to restart HTTPD service, exit code: ${processCause.exitValue}")
                     }
                 }
             }
@@ -56,7 +56,7 @@ class HttpdContainer(environment: Environment) {
             Behaviors.waitUntil(awaitRetry.delay) { timer ->
                 val running = container.running
                 if (timer.ticks == awaitRetry.times && !running) {
-                    throw EnvironmentException("Failed to restart HTTPD service")
+                    throw EnvironmentException("Failed to await HTTPD service")
                 }
 
                 !running

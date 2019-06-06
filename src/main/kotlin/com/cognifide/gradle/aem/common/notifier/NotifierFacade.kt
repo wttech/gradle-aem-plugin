@@ -11,7 +11,6 @@ import java.net.URI
 import java.net.URL
 import java.util.concurrent.TimeUnit
 import javax.imageio.ImageIO
-import org.apache.commons.lang3.exception.ExceptionUtils
 import org.gradle.api.logging.LogLevel
 
 class NotifierFacade private constructor(private val aem: AemExtension) {
@@ -142,8 +141,7 @@ class NotifierFacade private constructor(private val aem: AemExtension) {
                 if (graph.allTasks.isNotEmpty()) {
                     aem.project.gradle.buildFinished { result ->
                         if (result.failure != null) {
-                            val exception = ExceptionUtils.getRootCause(result.failure)
-                            val message = exception?.message ?: "no error message"
+                            val message = result.failure?.message ?: "no error message"
 
                             notifier.notify("Build failure", message, LogLevel.ERROR)
                         }
