@@ -462,10 +462,10 @@ aem {
                     include("**/.content.xml") 
                 }
                 filesDeleted = { 
-                    include(listOf("**/.vlt", "**/.vlt*.tmp")) 
+                    include("**/.vlt", "**/.vlt*.tmp") 
                 }
                 filesFlattened = { 
-                    include(listOf("**/_cq_dialog/.content.xml", "**/_cq_htmlTag/.content.xml")) 
+                    include("**/_cq_dialog/.content.xml", "**/_cq_htmlTag/.content.xml") 
                 }
                 propertiesSkipped = listOf(
                     pathRule("jcr:uuid", listOf("**/home/users/*", "**/home/groups/*")),
@@ -514,12 +514,12 @@ aem {
                         "dam:relativePath"
                 )
                 filesDeleted = { 
-                    include(listOf(
+                    include(
                         "**/.vlt",
                          "**/.vlt*.tmp",
                         "**/content/dam/**/_jcr_content/folderThumbnail*",
                         "**/content/dam/**/_jcr_content/renditions/*"
-                    ))
+                    )
                 }
             }  
         }
@@ -532,7 +532,7 @@ aem {
 Available transfer types: *package_download* (default) and *vlt_checkout*.
 
 ```bash
-gradlew :content:sync -Psync.type=vlt_checkout
+gradlew :site.demo:sync -Psync.type=vlt_checkout
 ```
 
 ##### Downloading package options
@@ -542,13 +542,13 @@ When transfer type is set to *package_download* then it is also possible to...
 Download package only without extracting:
 
 ```bash
-gradlew :content:sync -PpackageDownload.extract=false
+gradlew :site.demo:sync -PpackageDownload.extract=false
 ```
 
 Download, delete all previous JCR root contents then extract fresh content:
 
 ```bash
-gradlew :content:sync -Pforce
+gradlew :site.demo:sync -Pforce
 ```
 
 ##### Copying or cleaning content only
@@ -556,21 +556,21 @@ gradlew :content:sync -Pforce
 Available mode types: *copy_and_clean* (default), *clean_only* and *copy_only*.
 
 ```bash
-gradlew :content:sync -Psync.mode=clean_only
+gradlew :site.demo:sync -Psync.mode=clean_only
 ```
 
 ##### Filter file at custom path
    
 ```bash
-gradlew :content:sync -Pfilter.path=custom-filter.xml
-gradlew :content:sync -Pfilter.path=src/main/content/META-INF/vault/custom-filter.xml
-gradlew :content:sync -Pfilter.path=C:/aem/custom-filter.xml
+gradlew :site.demo:sync -Pfilter.path=custom-filter.xml
+gradlew :site.demo:sync -Pfilter.path=src/main/content/META-INF/vault/custom-filter.xml
+gradlew :site.demo:sync -Pfilter.path=C:/aem/custom-filter.xml
 ```
 
 ##### Filter roots specified explicitly
    
 ```bash
-gradlew :content:sync -Pfilter.roots=[/etc/tags/example,/content/dam/example]
+gradlew :site.demo:sync -Pfilter.roots=[/etc/tags/example,/content/dam/example]
 ```
 
 #### Task `rcp`
@@ -624,7 +624,7 @@ Execute any JCR File Vault command.
 For instance, to reflect `rcp` functionality, command below could be executed:
 
 ```bash
-gradlew :content:sync -Pvlt.command='rcp -b 100 -r -u -n http://admin:admin@localhost:4502/crx/-/jcr:root/content/dam/example http://admin:admin@localhost:4503/crx/-/jcr:root/content/dam/example' 
+gradlew :site.demo:sync -Pvlt.command='rcp -b 100 -r -u -n http://admin:admin@localhost:4502/crx/-/jcr:root/content/dam/example http://admin:admin@localhost:4503/crx/-/jcr:root/content/dam/example' 
 ```
 
 For more details about available parameters, please visit [VLT Tool documentation](https://helpx.adobe.com/experience-manager/6-4/sites/developing/using/ht-vlttool.html).
@@ -1135,8 +1135,8 @@ For instance:
 aem {
     tasks {
         bundle {
-            excludePackages(listOf("org.junit", "org.mockito"))
-            importPackages(listOf("!org.junit", "!org.mockito", "*")) // alternatively
+            excludePackages("org.junit", "org.mockito")
+            importPackages("!org.junit", "!org.mockito", "*") // alternatively
         } 
     }
 }

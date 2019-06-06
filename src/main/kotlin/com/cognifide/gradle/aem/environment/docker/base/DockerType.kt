@@ -1,26 +1,30 @@
 package com.cognifide.gradle.aem.environment.docker.base
 
 import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.environment.docker.base.type.Desktop
+import com.cognifide.gradle.aem.environment.docker.base.type.Toolbox
 
-enum class DockerType(val hostIp: String) {
-    DESKTOP("127.0.0.1"),
-    TOOLBOX("192.168.99.100");
+interface DockerType {
 
-    override fun toString(): String = name.toLowerCase()
+    val name: String
+
+    val hostIp: String
 
     companion object {
 
         fun determine(aem: AemExtension): DockerType {
-            return aem.props.string("environment.docker.type")?.let { of(it) } ?: detect() ?: DESKTOP
+            return aem.props.string("environment.docker.type")?.let { of(aem, it) } ?: detect(aem) ?: Desktop(aem)
         }
 
-        fun of(name: String): DockerType? {
-            return values().firstOrNull { it.name.equals(name, true) }
+        fun of(aem: AemExtension, name: String): DockerType? = when (name.toLowerCase()) {
+            Toolbox.NAME -> Toolbox(aem)
+            Desktop.NAME -> Desktop(aem)
+            else -> throw DockerException("Unsupported Docker type '$name'")
         }
 
-        fun detect(): DockerType? {
+        fun detect(aem: AemExtension): DockerType? {
             if (!System.getenv("DOCKER_TOOLBOX_INSTALL_PATH").isNullOrBlank()) {
-                return TOOLBOX
+                return Toolbox(aem)
             }
 
             return null

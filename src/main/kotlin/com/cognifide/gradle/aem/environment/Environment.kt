@@ -7,6 +7,7 @@ import com.cognifide.gradle.aem.common.file.resolver.FileResolver
 import com.cognifide.gradle.aem.common.utils.Patterns
 import com.cognifide.gradle.aem.environment.docker.base.CygPath
 import com.cognifide.gradle.aem.environment.docker.base.DockerType
+import com.cognifide.gradle.aem.environment.docker.base.type.Toolbox
 import com.cognifide.gradle.aem.environment.docker.domain.HttpdContainer
 import com.cognifide.gradle.aem.environment.docker.domain.Stack
 import com.cognifide.gradle.aem.environment.health.HealthChecker
@@ -193,7 +194,7 @@ class Environment(@JsonIgnore val aem: AemExtension) : Serializable {
 
     @Suppress("TooGenericExceptionCaught")
     private fun determineDockerPath(file: File): String = when (dockerType) {
-        DockerType.TOOLBOX -> try {
+        is Toolbox -> try {
             CygPath.calculate(file)
         } catch (e: Exception) {
             aem.logger.warn("Cannot determine Docker path for '$file' using 'cygpath', because it is not available.")

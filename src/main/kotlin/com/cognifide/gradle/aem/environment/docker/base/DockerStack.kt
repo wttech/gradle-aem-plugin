@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.environment.docker.base
 
 import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.environment.docker.base.type.Toolbox
 
 open class DockerStack(private val aem: AemExtension, val name: String) {
 
@@ -13,7 +14,7 @@ open class DockerStack(private val aem: AemExtension, val name: String) {
             withTimeoutMillis(initTimeout)
             withArgs("swarm", "init")
 
-            if (aem.environment.dockerType == DockerType.TOOLBOX) {
+            if (aem.environment.dockerType is Toolbox) {
                 withArgs("--advertise-addr", aem.environment.dockerType.hostIp)
             }
         }
@@ -26,7 +27,7 @@ open class DockerStack(private val aem: AemExtension, val name: String) {
         try {
             Docker.exec { withArgs("stack", "deploy", "-c", composeFilePath, name) }
         } catch (e: DockerException) {
-            throw DockerStackException("Failed to initialize stack '$name' on Docker!", e)
+            throw DockerStackException("Failed to initialize Docker stack '$name'!", e)
         }
     }
 
@@ -34,7 +35,7 @@ open class DockerStack(private val aem: AemExtension, val name: String) {
         try {
             Docker.exec { withArgs("stack", "rm", name) }
         } catch (e: DockerException) {
-            throw DockerStackException("Failed to remove stack '$name' on Docker!", e)
+            throw DockerStackException("Failed to remove Docker stack '$name'!", e)
         }
     }
 
@@ -47,7 +48,7 @@ open class DockerStack(private val aem: AemExtension, val name: String) {
             return when {
                 result.exitValue == 0 -> true
                 result.errorString.contains("Error: No such network") -> false
-                else -> throw DockerStackException("Unable to determine stack '$name' status. Error: '${result.errorString}'")
+                else -> throw DockerStackException("Unable to determine Docker stack '$name' status. Error: '${result.errorString}'")
             }
         }
 }

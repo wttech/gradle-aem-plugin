@@ -3,8 +3,10 @@ package com.cognifide.gradle.aem.environment.docker.base
 import org.buildobjects.process.ExternalProcessFailureException
 import org.buildobjects.process.ProcBuilder
 import org.buildobjects.process.ProcResult
+import org.buildobjects.process.TimeoutException
 import org.gradle.process.internal.streams.SafeStreams
 
+@Suppress("TooGenericExceptionCaught")
 object Docker {
 
     fun exec(options: ProcBuilder.() -> Unit): ProcResult {
@@ -15,7 +17,7 @@ object Docker {
                     .withErrorStream(SafeStreams.systemErr())
                     .apply(options)
                     .run()
-        } catch (e: ExternalProcessFailureException) {
+        } catch (e: Exception) {
             throw composeException(e)
         }
     }
@@ -26,7 +28,7 @@ object Docker {
                     .ignoreExitStatus()
                     .apply(options)
                     .run()
-        } catch (e: ExternalProcessFailureException) {
+        } catch (e: Exception) {
             throw composeException(e)
         }
     }
@@ -38,12 +40,17 @@ object Docker {
                     .apply(options)
                     .run()
                     .outputString.trim()
-        } catch (e: ExternalProcessFailureException) {
+        } catch (e: Exception) {
             throw composeException(e)
         }
     }
 
-    private fun composeException(e: ExternalProcessFailureException): DockerException {
-        return DockerException("Cannot execute Docker command: '${e.command}'! Error: ${e.stderr}. Exit code: ${e.exitValue}", e)
+    private fun composeException(e: Exception): DockerException {
+        return when (e) {
+            is ExternalProcessFailureException -> DockerException("Docker command process failure!" +
+                    " Command: '${e.command}', error: '${e.stderr}', exit code: '${e.exitValue}'", e)
+            is TimeoutException -> DockerException("Docker command timeout! Error: '${e.message}'", e)
+            else -> DockerException("Docker command unknown failure. Error: '${e.message}'", e)
+        }
     }
 }
