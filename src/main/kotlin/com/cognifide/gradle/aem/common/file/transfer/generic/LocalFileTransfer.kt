@@ -5,8 +5,8 @@ import com.cognifide.gradle.aem.common.file.FileException
 import com.cognifide.gradle.aem.common.file.transfer.AbstractFileTransfer
 import com.cognifide.gradle.aem.common.file.transfer.FileEntry
 import java.io.File
-import org.gradle.util.GFileUtils
 import java.io.IOException
+import org.gradle.util.GFileUtils
 
 class LocalFileTransfer(aem: AemExtension) : AbstractFileTransfer(aem) {
 
