@@ -5,6 +5,7 @@ import com.cognifide.gradle.aem.common.instance.service.groovy.GroovyConsole
 import com.cognifide.gradle.aem.common.instance.service.osgi.OsgiFramework
 import com.cognifide.gradle.aem.common.instance.service.pkg.PackageManager
 import com.cognifide.gradle.aem.common.instance.service.repository.Repository
+import com.cognifide.gradle.aem.common.instance.service.status.StatusRetriever
 
 class InstanceSync(val aem: AemExtension, val instance: Instance) {
 
@@ -42,4 +43,11 @@ class InstanceSync(val aem: AemExtension, val instance: Instance) {
      * Perform operations on JCR content repository (CRUD etc).
      */
     fun <T> repository(callback: Repository.() -> T): T = repository.run(callback)
+
+    var status = StatusRetriever(this)
+
+    /**
+     * Status retriever (system properties etc).
+     */
+    fun <T> status(callback: StatusRetriever.() -> T): T = status.run(callback)
 }

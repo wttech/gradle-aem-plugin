@@ -21,7 +21,7 @@ import org.apache.commons.validator.routines.UrlValidator
 import org.apache.jackrabbit.util.ISO8601
 import org.gradle.api.Project
 
-@Suppress("MagicNumber")
+@Suppress("MagicNumber", "TooManyFunctions")
 object Formats {
 
     val URL_VALIDATOR = UrlValidator(arrayOf("http", "https"), UrlValidator.ALLOW_LOCAL_URLS)
@@ -49,6 +49,10 @@ object Formats {
 
     fun <T> fromJson(json: String, clazz: Class<T>): T {
         return ObjectMapper().readValue(json, clazz)
+    }
+
+    fun fromJsonToMap(json: String): Map<String, Any?> = ObjectMapper().run {
+        readValue(json, typeFactory.constructMapType(HashMap::class.java, String::class.java, Any::class.java))
     }
 
     fun toList(value: String?, delimiter: String = ","): List<String>? {

@@ -1184,38 +1184,42 @@ Create AEM instance(s) at local file system. Extracts *crx-quickstart* from down
 
 ##### Configuration of AEM instance source (JAR file or backup file)
 
-To use this task, specify required properties in ignored file *gradle.properties* at project root (protocols supported: SMB, SSH, HTTP(s) or local path, HTTP with basic auth as example):
-
-To create instances from backup created by `instanceBackup` task, specify:
-
-* `localInstance.zipUrl=http://[user]:[password]@[host]/[path]/example-yyyyMMddmmss-x.x.x-backup.zip`
-
 To create instances from scratch, specify:
 
-* `localInstance.quickstart.jarUrl=[protocol]://[user]:[password]@[host]/[path]/cq-quickstart.jar`
-* `localInstance.quickstart.licenseUrl=[protocol]://[user]:[password]@[host]/[path]/license.properties`
+```ini
+localInstance.quickstart.jarUrl=[protocol]://[user]:[password]@[host]/[path]/cq-quickstart.jar
+localInstance.quickstart.licenseUrl=[protocol]://[user]:[password]@[host]/[path]/license.properties
+```
 
-Source mode, can be adjusted by specifying parameter `-PlocalInstance.source`:
+To create instances from local backups, firstly create instances from scratch, then run [backup task](#task-instancebackup). After creating backup, at any time, instances could be restored to previous state by running [resetup task](#task-resetup).
+Nothing need to be configured by default.
+
+To create instances from remote backups see section [work with remote instance backups](#work-with-remote-instance-backups).
+
+By default plugin tries to automatically find most recent backup from all available sources. 
+However to e.g avoid creating instances from the scratch accidentally, source mode can be adjusted by specifying property `localInstance.source`.
+Available values:
 
 * `auto` - Create instances from most recent backup (external or internal) or fallback to creating from the scratch if there is no backup available.
-* `none` - Force creating instances from the scratch.
-* `backup_external` - Force using backup available at external source (specified in `localInstance.zipUrl`).      
-* `backup_internal` - Force using internal backup (created by task `instanceBackup`).
+* `scratch` - Force creating instances from the scratch.
+* `backup_any` - Force using any backup available at local or remote source.
+* `backup_remote` - Force using backup available at remote source (specified as `localInstance.backup.[downloadUrl|uploadUrl]`).      
+* `backup_local` - Force using local backup (created by task `instanceBackup`).
 
-When mode is set to `auto` or `backup_internal`, then ZIP selection rule could be adjusted:
+When mode is different than `scratch`, then backup ZIP file selection rule could be adjusted:
 
 ```kotlin
 
 aem {
-    tasks {
-        create {
-            options {
-                zipSelector = {  // default implementation below
-                    val name = aem.props.string("localInstance.zipName") ?: ""
-                    when {
-                        name.isNotBlank() -> firstOrNull { it.name == name }
-                        else -> sortedByDescending { it.name }.firstOrNull()
-                    }
+    localInstance {
+        backup {
+            selector = {  // default implementation below
+                val sorted = sortedWith(compareByDescending<BackupSource> { it.fileEntry.name }.thenBy { it.type.ordinal })
+                val name = aem.props.string("localInstance.backup.name") ?: ""
+        
+                when {
+                    name.isNotBlank() -> sorted.firstOrNull { it.fileEntry.name == name }
+                    else -> sorted.firstOrNull()
                 }
             }
         }
@@ -1223,42 +1227,44 @@ aem {
 }
 
 ```
-##### Extracted files configuration (optional)
+
+Notice that, default selector assumes that most recent backup will be selected.
+Ordering by file name including timestamp then local backups precedence when backup is available on both local & remote source.
+Still, backup selector could select exact backup by name when property `localInstance.backup.name` is specified.
+
+##### Extracted instance files configuration (optional)
 
 Plugin allows to override or provide extra files to local AEM instance installations.
 This behavior is controlled by:
 
 ```kotlin
 aem {
-    config {
-        localInstance {
-            root = aem.props.string("localInstance.root") ?: "${aem.projectMain.file(".aem")}"
-            overridesPath = "${aem.projectMain.file("gradle/instance")}"
-            expandProperties = mapOf()
-            expandFiles = listOf(
-                "**/*.properties", 
-                "**/*.sh", 
-                "**/*.bat", 
-                "**/*.xml",
-                "**/start",
-                "**/stop"
-            )
-        }
+    localInstance {
+        rootDir = aem.props.string("localInstance.root")?.let { aem.project.file(it) } ?: aem.projectMain.file(".aem/instance")
+        overridesDir = File(aem.configCommonDir, LocalInstance.FILES_PATH)
+        expandProperties = mapOf()
+        expandFiles = listOf(
+            "**/*.properties", 
+            "**/*.sh", 
+            "**/*.bat", 
+            "**/*.xml",
+            "**/start",
+            "**/stop"
+        )
     }
 }
 ```
 
 Properties:
 
-* *root* determines where AEM instance files will be extracted on local file system.
-* *overridesPath* determines project location that holds extra instance files that will override plugin defaults (start / stop scripts) and / or extracted AEM files.
-* *expandFiles* specifies which AEM instance files have an ability to use [expandable properties](#expandable-properties) inside.
+* *rootDir* determines where AEM instance files will be extracted on local file system.
+* *overridesDir* determines project location that holds extra instance files that will override plugin defaults (start / stop scripts) and / or extracted AEM files.
 * *expandProperties* is a place for defining custom properties that can be expanded in AEM instance files.
+* *expandFiles* specifies which AEM instance files have an ability to use [expandable properties](#expandable-properties) inside.
 
 Predefined expandable properties:
 
-* `instance` - [LocalInstance](src/main/kotlin/com/cognifide/gradle/aem/instance/LocalInstance.kt) object.
-
+* `instance` - [LocalInstance](src/main/kotlin/com/cognifide/gradle/aem/common/instance/LocalInstance.kt) object.
 
 #### Task `instanceBackup`
 
@@ -1267,7 +1273,7 @@ Turns off local AEM instance(s) then archives them into ZIP file, then turns on 
 The most recent file created by this task will be reused automatically while running task `instanceCreate`.
 
 Backup files are stored at path relative to project that is applying plugin `com.cognifide.aem.instance`.
-Most often it will be path: *build/aem/backup/local/xxx.backup.zip*. It could be overridden by writing:
+Most often it will be path: *build/aem/instanceBackup/local/xxx.backup.zip*. It could be overridden by writing:
 
 ```kotlin
 aem {
@@ -1278,6 +1284,8 @@ aem {
     }
 }
 ```
+
+Instance backups created by this task could be used later by [create task](#task-instancecreate).
 
 ##### Work with remote instance backups
 

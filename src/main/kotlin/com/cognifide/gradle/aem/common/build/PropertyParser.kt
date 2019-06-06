@@ -57,15 +57,15 @@ class PropertyParser(private val aem: AemExtension) {
 
     fun string(name: String) = prop(name)
 
-    fun expand(file: File, props: Map<String, Any>) {
+    fun expand(file: File, props: Map<String, Any?>) {
         file.writeText(expand(file.readText(), props, file.toString()))
     }
 
-    fun expand(source: String, props: Map<String, Any>, context: String? = null): String {
+    fun expand(source: String, props: Map<String, Any?>, context: String? = null): String {
         return expand(source, envProps + systemProps + props, props, context)
     }
 
-    fun expandPackage(source: String, props: Map<String, Any>, context: String? = null): String {
+    fun expandPackage(source: String, props: Map<String, Any?>, context: String? = null): String {
         val interpolableProps = envProps + systemProps + props
         val templateProps = projectProps + commonProps + props
 
@@ -74,8 +74,8 @@ class PropertyParser(private val aem: AemExtension) {
 
     private fun expand(
         source: String,
-        interpolableProps: Map<String, Any>,
-        templateProps: Map<String, Any>,
+        interpolableProps: Map<String, Any?>,
+        templateProps: Map<String, Any?>,
         context: String? = null
     ): String {
         try {
@@ -149,7 +149,7 @@ class PropertyParser(private val aem: AemExtension) {
                 )
                 .build()
 
-        private val TEMPLATE_INTERPOLATOR: (String, Map<String, Any>) -> String = { source, props ->
+        private val TEMPLATE_INTERPOLATOR: (String, Map<String, Any?>) -> String = { source, props ->
             StrSubstitutor.replace(source, props, TEMPLATE_VAR_PREFIX, TEMPLATE_VAR_SUFFIX)
         }
     }

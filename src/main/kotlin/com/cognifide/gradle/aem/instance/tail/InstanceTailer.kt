@@ -49,10 +49,10 @@ class InstanceTailer(val aem: AemExtension) {
      * Determines which log entries are considered as incidents.
      */
     var incidentChecker: Log.(Instance) -> Boolean = { instance ->
-        val levels = Formats.toList(instance.string("instance.tail.incidentLevels"))
+        val levels = Formats.toList(instance.property("instance.tail.incidentLevels"))
                 ?: aem.props.list("instance.tail.incidentLevels")
                 ?: INCIDENT_LEVELS_DEFAULT
-        val oldMillis = instance.string("instance.tail.incidentOld")?.toLong()
+        val oldMillis = instance.property("instance.tail.incidentOld")?.toLong()
                 ?: aem.props.long("instance.tail.incidentOld")
                 ?: INCIDENT_OLD_DEFAULT
 

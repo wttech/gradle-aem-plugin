@@ -84,7 +84,7 @@ class BackupResolver(private val aem: AemExtension) {
 
                 if (fileEntry != null) {
                     listOf(BackupSource(BackupType.REMOTE, fileEntry) {
-                        File(downloadDir, name).apply { aem.fileTransfer.downloadFrom(dirUrl, name, this) }
+                        File(downloadDir, name).apply { remoteSourceDownload(dirUrl, name) }
                     })
                 } else {
                     aem.logger.info("Instance backup at URL '$dirUrl/$name' is not available.")
@@ -99,12 +99,19 @@ class BackupResolver(private val aem: AemExtension) {
 
                 fileEntries.map { file ->
                     BackupSource(BackupType.REMOTE, file) {
-                        File(downloadDir, file.name).apply {
-                            aem.fileTransfer.downloadFrom(uploadUrl!!, file.name, this)
-                        }
+                        File(downloadDir, file.name).apply { remoteSourceDownload(uploadUrl!!, file.name) }
                     }
                 }
             }
             else -> listOf()
         }
+
+    private fun File.remoteSourceDownload(dirUrl: String, name: String) {
+        if (!exists()) {
+            aem.logger.info("Downloading remote backup from URL '$dirUrl/$name' to file '$this'")
+            aem.fileTransfer.downloadFrom(dirUrl, name, this)
+        } else {
+            aem.logger.info("Reusing previously downloaded remote backup from URL '$dirUrl/$name' to file '$this'")
+        }
+    }
 }
