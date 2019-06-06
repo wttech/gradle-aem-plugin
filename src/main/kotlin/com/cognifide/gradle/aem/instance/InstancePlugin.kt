@@ -46,13 +46,13 @@ class InstancePlugin : AemPlugin() {
                 dependsOn(InstanceDown.NAME, InstanceUp.NAME)
             }
             register<InstanceCreate>(InstanceCreate.NAME) {
-                mustRunAfter(InstanceDestroy.NAME)
+                mustRunAfter(InstanceDestroy.NAME, InstanceResolve.NAME)
             }
             register<InstanceDestroy>(InstanceDestroy.NAME) {
                 dependsOn(InstanceDown.NAME)
             }
             register<InstanceSatisfy>(InstanceSatisfy.NAME) {
-                mustRunAfter(InstanceCreate.NAME, InstanceUp.NAME)
+                mustRunAfter(InstanceResolve.NAME, InstanceCreate.NAME, InstanceUp.NAME)
             }
             register<InstanceReload>(InstanceReload.NAME) {
                 mustRunAfter(InstanceSatisfy.NAME)
@@ -75,6 +75,7 @@ class InstancePlugin : AemPlugin() {
                 finalizedBy(InstanceUp.NAME)
             }
 
+            register<InstanceResolve>(InstanceResolve.NAME)
             register<InstanceTail>(InstanceTail.NAME)
 
             // Common lifecycle

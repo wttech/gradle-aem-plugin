@@ -1367,6 +1367,17 @@ Turn off and then turn on local AEM instance(s).
 
 Reload OSGi Framework (Apache Felix) on local and remote AEM instance(s).
 
+#### Task `instanceResolve`
+
+Resolve instance files from remote sources before running other tasks.
+
+Files considered:
+
+* CRX packages configured in [satisfy task](#task-instancesatisfy)
+* local instance source files (backup ZIP and AEM quickstart JAR & license file used by [create task](#task-instancecreate))
+
+This task might be also useful to check amended configuration to verify HTTP urls, SMB / SSH credentials etc and fail fast when they are wrong.
+
 #### Task `instanceSatisfy` 
 
 Upload & install dependent CRX package(s) before deployment. Available methods:

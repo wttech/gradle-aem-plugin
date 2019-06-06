@@ -1,14 +1,13 @@
-package com.cognifide.gradle.aem.common.tasks
+package com.cognifide.gradle.aem.instance.tasks
 
 import com.cognifide.gradle.aem.AemDefaultTask
 import com.cognifide.gradle.aem.instance.satisfy.InstanceSatisfy
 import org.gradle.api.tasks.TaskAction
 
-open class Resolve : AemDefaultTask() {
+open class InstanceResolve : AemDefaultTask() {
 
     init {
-        description = "Resolve files from remote sources before running other tasks to optimize build time" +
-                " and fail fast on configuration error."
+        description = "Resolve instance files from remote sources before running other tasks"
     }
 
     @TaskAction
@@ -24,6 +23,6 @@ open class Resolve : AemDefaultTask() {
         get() = aem.tasks.named<InstanceSatisfy>(InstanceSatisfy.NAME).get()
 
     companion object {
-        const val NAME = "resolve"
+        const val NAME = "instanceResolve"
     }
 }

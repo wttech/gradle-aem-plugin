@@ -3,7 +3,6 @@ package com.cognifide.gradle.aem.common
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.AemPlugin
 import com.cognifide.gradle.aem.common.tasks.Debug
-import com.cognifide.gradle.aem.common.tasks.Resolve
 import java.util.*
 import org.gradle.api.Project
 import org.gradle.api.plugins.BasePlugin
@@ -50,7 +49,6 @@ class CommonPlugin : AemPlugin() {
             register<Debug>(Debug.NAME) {
                 dependsOn(LifecycleBasePlugin.BUILD_TASK_NAME)
             }
-            register<Resolve>(Resolve.NAME)
         }
     }
 

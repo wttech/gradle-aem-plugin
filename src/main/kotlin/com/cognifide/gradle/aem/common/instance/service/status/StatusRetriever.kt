@@ -20,7 +20,9 @@ class StatusRetriever(sync: InstanceSync) : InstanceService(sync) {
             aem.instanceOptions.systemProperties -> try {
                 readSystemProperties()
             } catch (e: AemException) {
-                aem.logger.warn("Cannot read system properties of $instance", e)
+                aem.logger.warn("Cannot read system properties of $instance")
+                aem.logger.debug("Instance system properties read error", e)
+
                 mapOf<String, String>()
             }
             else -> mapOf()
