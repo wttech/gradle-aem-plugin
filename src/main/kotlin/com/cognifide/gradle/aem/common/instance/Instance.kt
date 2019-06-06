@@ -67,13 +67,14 @@ interface Instance : Serializable {
     val zoneId: ZoneId
 
     @get:Input
-    val properties: Map<String, Any>
+    val properties: Map<String, String?>
 
-    fun property(key: String, value: Any)
+    fun property(key: String, value: String?)
 
-    fun property(key: String): Any?
+    fun property(key: String): String?
 
-    fun string(key: String): String?
+    @get:JsonIgnore
+    val systemProperties: Map<String, String>
 
     @get:Internal
     @get:JsonIgnore
@@ -128,9 +129,9 @@ interface Instance : Serializable {
 
         const val TYPE_LOCAL = "local"
 
-        val LOCAL_PROPS = listOf("httpUrl", "type", "password", "jvmOpts", "startOpts", "runModes", "debugPort", "zoneId")
+        val LOCAL_PROPS = listOf("httpUrl", "type", "password", "jvmOpts", "startOpts", "runModes", "debugPort")
 
-        val REMOTE_PROPS = listOf("httpUrl", "type", "user", "password", "zoneId")
+        val REMOTE_PROPS = listOf("httpUrl", "type", "user", "password")
 
         fun parse(aem: AemExtension, str: String, configurer: RemoteInstance.() -> Unit = {}): List<RemoteInstance> {
             return (Formats.toList(str) ?: listOf()).map { RemoteInstance.create(aem, it, configurer) }
@@ -175,9 +176,8 @@ interface Instance : Serializable {
                         props["startOpts"]?.let { this.startOpts = it.split(" ") }
                         props["runModes"]?.let { this.runModes = it.split(",") }
                         props["debugPort"]?.let { this.debugPort = it.toInt() }
-                        props["zoneId"]?.let { this.zoneId = ZoneId.of(it) }
 
-                        this.properties = props.filterKeys { !LOCAL_PROPS.contains(it) }
+                        this.properties.putAll(props.filterKeys { !LOCAL_PROPS.contains(it) })
                     }
                     TYPE_REMOTE -> RemoteInstance.create(aem, httpUrl) {
                         this.environment = environment
@@ -185,9 +185,8 @@ interface Instance : Serializable {
 
                         props["user"]?.let { this.user = it }
                         props["password"]?.let { this.password = it }
-                        props["zoneId"]?.let { this.zoneId = ZoneId.of(it) }
 
-                        this.properties = props.filterKeys { !REMOTE_PROPS.contains(it) }
+                        this.properties.putAll(props.filterKeys { !REMOTE_PROPS.contains(it) })
                     }
                     else -> {
                         aem.logger.warn("Invalid instance type '$type' defined in property '$property'. Supported types: 'local', 'remote'.")

@@ -12,17 +12,19 @@ abstract class AbstractInstance(
     protected val aem: AemExtension
 ) : Instance {
 
-    override var zoneId = ZoneId.systemDefault()
+    override var properties = mutableMapOf<String, String?>()
 
-    override var properties = mapOf<String, Any>()
+    override val systemProperties: Map<String, String>
+        get() = sync.status.systemProperties
 
-    override fun property(key: String, value: Any) {
-        properties += mapOf(key to value)
+    override fun property(key: String, value: String?) {
+        properties[key] = value
     }
 
-    override fun property(key: String): Any? = properties[key]
+    final override fun property(key: String): String? = properties[key] ?: systemProperties[key]
 
-    override fun string(key: String): String? = (properties[key] as String?)?.ifBlank { null }
+    override val zoneId: ZoneId
+        get() = property("user.timezone")?.let { ZoneId.of(it) } ?: ZoneId.systemDefault()
 
     override val sync: InstanceSync
         get() = InstanceSync(aem, this)

@@ -11,8 +11,10 @@ class BuildScope {
         return cache[key] as T
     }
 
+    fun <T : Any> getOrPut(key: String, defaultValue: () -> T): T = getOrPut(key, defaultValue, false)
+
     @Suppress("unchecked_cast")
-    fun <T : Any> getOrPut(key: String, defaultValue: () -> T, invalidate: Boolean = false): T {
+    fun <T : Any> getOrPut(key: String, defaultValue: () -> T, invalidate: Boolean): T {
         return if (invalidate) {
             val value = defaultValue()
             put(key, value)

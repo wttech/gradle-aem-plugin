@@ -54,7 +54,7 @@ class SftpFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
                 val filePath = "$dirPath/$fileName"
                 downloader().download(stat(filePath).size, read(filePath), target)
             } catch (e: IOException) {
-                throw SftpFileException("Cannot download file from URL '$fileUrl'")
+                throw SftpFileException("Cannot download file from URL '$fileUrl'. Cause: '${e.message}")
             }
         }
     }
@@ -68,7 +68,7 @@ class SftpFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
                 val filePath = "$dirPath/$fileName"
                 uploader().upload(source, write(filePath))
             } catch (e: IOException) {
-                throw SftpFileException("Cannot upload file '$source' to URL '$fileUrl'", e)
+                throw SftpFileException("Cannot upload file '$source' to URL '$fileUrl'. Cause: '${e.message}", e)
             }
         }
     }
@@ -79,7 +79,7 @@ class SftpFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
                 val filePath = "$dirPath/$fileName"
                 remove(filePath)
             } catch (e: IOException) {
-                throw SftpFileException("Cannot delete file at URL '$dirUrl/$fileName'", e)
+                throw SftpFileException("Cannot delete file at URL '$dirUrl/$fileName'. Cause: '${e.message}", e)
             }
         }
     }
@@ -90,7 +90,7 @@ class SftpFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
                 aem.logger.info("Listing files at URL '$dirUrl'")
                 dirFiles(dirPath).map { FileEntry(it.filename, it.attributes.size, it.attributes.modifyTime.toMillis()) }
             } catch (e: IOException) {
-                throw SftpFileException("Cannot list files in directory at URL '$dirUrl'", e)
+                throw SftpFileException("Cannot list files in directory at URL '$dirUrl'. Cause: '${e.message}", e)
             }
         }
     }
@@ -101,7 +101,7 @@ class SftpFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
                 aem.logger.info("Truncating files at URL '$dirUrl'")
                 dirFiles(dirPath).forEach { remove("$dirPath/${it.filename}") }
             } catch (e: IOException) {
-                throw SftpFileException("Cannot truncate directory at URL '$dirUrl'", e)
+                throw SftpFileException("Cannot truncate directory at URL '$dirUrl'. Cause: '${e.message}", e)
             }
         }
     }
@@ -118,7 +118,7 @@ class SftpFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
             } catch (e: IOException) {
                 when {
                     e is SftpException && STATUS_NOT_EXISTS.contains(e.status) -> null
-                    else -> throw SftpFileException("Cannot check file status at URL '$fileUrl'", e)
+                    else -> throw SftpFileException("Cannot check file status at URL '$fileUrl'. Cause: '${e.message}", e)
                 }
             }
         }

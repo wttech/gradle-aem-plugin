@@ -30,9 +30,7 @@ class RemoteInstance private constructor(aem: AemExtension) : AbstractInstance(a
                 this.user = instanceUrl.user
                 this.password = instanceUrl.password
                 this.typeName = instanceUrl.typeName
-
                 this.environment = aem.env
-                this.zoneId = aem.zoneId
 
                 this.apply(configurer)
             }

@@ -87,9 +87,9 @@ open class ProgressLogger private constructor(val project: Project) {
         }
 
         fun parents(project: Project): Queue<BaseLogger> {
-            return BuildScope.of(project).getOrPut("${ProgressLogger::class.java.canonicalName}_${project.path}", {
+            return BuildScope.of(project).getOrPut("${ProgressLogger::class.java.canonicalName}_${project.path}") {
                 LinkedList()
-            })
+            }
         }
     }
 }

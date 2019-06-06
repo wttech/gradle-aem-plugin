@@ -180,7 +180,7 @@ class AemTaskFacade(private val aem: AemExtension) : Serializable {
         }
     }
 
-    inline fun <reified T : Task> typed(noinline configurer: T.() -> Unit = {}) {
+    inline fun <reified T : Task> typed(noinline configurer: T.() -> Unit) {
         typed(T::class.java, configurer)
     }
 

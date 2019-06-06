@@ -347,9 +347,7 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
                 this.password = instanceUrl.password
                 this.typeName = instanceUrl.typeName
                 this.debugPort = instanceUrl.debugPort
-
                 this.environment = aem.env
-                this.zoneId = aem.zoneId
 
                 this.apply(configurer)
             }
