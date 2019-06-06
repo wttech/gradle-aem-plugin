@@ -26,7 +26,7 @@ class UrlFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
                 inputStream.use { downloader().download(contentLengthLong, it, target) }
             }
         } catch (e: IOException) {
-            throw FileException("Cannot download URL '$fileUrl' to file '$target'.", e)
+            throw FileException("Cannot download URL '$fileUrl' to file '$target'. Cause: '${e.message}'", e)
         }
     }
 

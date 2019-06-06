@@ -34,7 +34,7 @@ class SmbFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
                 downloader().download(length(), inputStream, target)
             }
         } catch (e: IOException) {
-            throw SmbFileException("Cannot download file from URL '$fileUrl'")
+            throw SmbFileException("Cannot download file from URL '$fileUrl' . Cause: '${e.message}")
         }
     }
 
@@ -47,7 +47,7 @@ class SmbFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
                 uploader().upload(source, outputStream)
             }
         } catch (e: IOException) {
-            throw SmbFileException("Cannot upload file '$source' to URL '$fileUrl'", e)
+            throw SmbFileException("Cannot upload file '$source' to URL '$fileUrl'. Cause: '${e.message}", e)
         }
     }
 
@@ -59,7 +59,7 @@ class SmbFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
                 aem.logger.info("Deleting file at URL '$fileUrl'")
                 delete()
             } catch (e: IOException) {
-                throw SmbFileException("Cannot delete file at URL '$fileUrl'", e)
+                throw SmbFileException("Cannot delete file at URL '$fileUrl'. Cause: '${e.message}", e)
             }
         }
     }
@@ -69,7 +69,7 @@ class SmbFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
             aem.logger.info("Listing files at URL '$dirUrl'")
             dirFiles().map { FileEntry(it.name, it.length(), it.lastModified()) }
         } catch (e: IOException) {
-            throw SmbFileException("Cannot list files in directory at URL '$dirUrl'", e)
+            throw SmbFileException("Cannot list files in directory at URL '$dirUrl'. Cause: '${e.message}", e)
         }
     }
 
@@ -79,7 +79,7 @@ class SmbFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
                 aem.logger.info("Truncating files at URL '$dirUrl'")
                 dirFiles().forEach { it.delete() }
             } catch (e: IOException) {
-                throw SmbFileException("Cannot truncate directory at URL '$dirUrl'", e)
+                throw SmbFileException("Cannot truncate directory at URL '$dirUrl'. Cause: '${e.message}", e)
             }
         }
     }
@@ -92,7 +92,7 @@ class SmbFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
                     .takeIf { it.isFile }
                     ?.run { FileEntry(fileName, length(), lastModified()) }
         } catch (e: IOException) {
-            throw SmbFileException("Cannot check file status at URL '$fileUrl'", e)
+            throw SmbFileException("Cannot check file status at URL '$fileUrl'. Cause: '${e.message}", e)
         }
     }
 
