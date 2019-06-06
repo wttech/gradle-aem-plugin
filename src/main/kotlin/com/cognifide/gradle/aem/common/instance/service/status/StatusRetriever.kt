@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem.common.instance.service.status
 
 import com.cognifide.gradle.aem.AemException
-import com.cognifide.gradle.aem.common.build.BuildScope
 import com.cognifide.gradle.aem.common.instance.InstanceService
 import com.cognifide.gradle.aem.common.instance.InstanceSync
 import java.util.*
@@ -16,12 +15,12 @@ class StatusRetriever(sync: InstanceSync) : InstanceService(sync) {
     /**
      * System properties of instance. Read once across whole build, fail-safe.
      */
-    val systemProperties: Map<String, String> = BuildScope.of(project).getOrPut("${instance.httpUrl}$SYSTEM_PROPERTIES_PATH") {
+    val systemProperties: Map<String, String> = aem.buildScope.getOrPut("${instance.httpUrl}$SYSTEM_PROPERTIES_PATH") {
         when {
             aem.instanceOptions.systemProperties -> try {
                 readSystemProperties()
             } catch (e: AemException) {
-                aem.logger.warn("Cannot read system properties at $instance")
+                aem.logger.warn("Cannot read system properties of $instance", e)
                 mapOf<String, String>()
             }
             else -> mapOf()
@@ -33,8 +32,14 @@ class StatusRetriever(sync: InstanceSync) : InstanceService(sync) {
      */
     @Suppress("unchecked_cast")
     fun readSystemProperties(): Map<String, String> = sync.http.get(SYSTEM_PROPERTIES_PATH) {
-        Properties().apply { load(asStream(it)) } as Map<String, String>
+        Properties().apply { load(fixSystemPropertiesIniFormat(asString(it))) } as Map<String, String>
     }
+
+    /**
+     * System properties endpoint response is broken / not valid INI file, because is not escaping
+     * Windows paths with backslash. Below code is fixing 'Malformed \uxxxx encoding.' exception.
+     */
+    private fun fixSystemPropertiesIniFormat(text: String) = text.replace("\\", "\\\\").byteInputStream()
 
     companion object {
 

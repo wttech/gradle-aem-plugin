@@ -561,6 +561,9 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     @JsonIgnore
     val formats = Formats
 
+    @JsonIgnore
+    val buildScope = BuildScope.of(project)
+
     companion object {
 
         const val NAME = "aem"

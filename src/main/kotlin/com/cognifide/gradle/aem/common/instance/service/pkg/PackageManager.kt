@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem.common.instance.service.pkg
 
-import com.cognifide.gradle.aem.common.build.BuildScope
 import com.cognifide.gradle.aem.common.build.Retry
 import com.cognifide.gradle.aem.common.http.RequestException
 import com.cognifide.gradle.aem.common.http.ResponseException
@@ -60,7 +59,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
     private fun find(resolver: (ListResponse) -> Package?, refresh: Boolean, retry: Retry = aem.retry()): Package? {
         aem.logger.debug("Asking for uploaded packages on $instance")
 
-        return resolver(BuildScope.of(project).getOrPut("instance.${instance.name}.packages", { list(retry) }, refresh))
+        return resolver(aem.buildScope.getOrPut("instance.${instance.name}.packages", { list(retry) }, refresh))
     }
 
     fun list(retry: Retry = aem.retry()): ListResponse {
