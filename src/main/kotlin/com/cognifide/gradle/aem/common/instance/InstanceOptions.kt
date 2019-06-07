@@ -38,16 +38,24 @@ open class InstanceOptions(private val aem: AemExtension) : Serializable {
         local(httpUrl) {}
     }
 
-    fun local(httpUrl: String, configurer: LocalInstance.() -> Unit) {
-        define(LocalInstance.create(aem, httpUrl, configurer))
+    fun local(httpUrl: String, name: String) {
+        local(httpUrl) { this.name = name }
+    }
+
+    fun local(httpUrl: String, options: LocalInstance.() -> Unit) {
+        define(LocalInstance.create(aem, httpUrl, options))
     }
 
     fun remote(httpUrl: String) {
         remote(httpUrl) {}
     }
 
-    fun remote(httpUrl: String, configurer: RemoteInstance.() -> Unit) {
-        define(RemoteInstance.create(aem, httpUrl, configurer))
+    fun remote(httpUrl: String, name: String) {
+        remote(httpUrl) { this.name = name }
+    }
+
+    fun remote(httpUrl: String, options: RemoteInstance.() -> Unit) {
+        define(RemoteInstance.create(aem, httpUrl, options))
     }
 
     fun parse(urlOrName: String): Instance {

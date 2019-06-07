@@ -210,25 +210,35 @@ aem {
         // ...
     }
     instance {
-        local("http://localhost:4502")
-        local("http://localhost:4503")
-        remote("http://192.168.100.101:4502") {
-            id = "int-author"
-        } 
-        remote("http://192.168.100.101:4503") {
-            id = "int-publish"
-        } 
+        local("http://localhost:4502") // local-author
+        local("http://localhost:4503") // local-publish
+        remote("http://192.168.100.101:4502", "int-author")
+        remote("http://192.168.100.101:4503", "int-publish")
         // etc
     }
     localInstance {
-        zipUrl = aem.props.string("localInstance.zipUrl")
-        jarUrl = aem.props.string("localInstance.jarUrl")
-        licenseUrl = aem.props.string("localInstance.licenseUrl")
+        quickstart {
+            jarUrl = aem.props.string("localInstance.quickstart.jarUrl")
+            licenseUrl = aem.props.string("localInstance.quickstart.licenseUrl")
+        }
+        backup {
+            zipUrl = aem.props.string("localInstance.zipUrl")
+        }
+        rootDir = aem.props.string("localInstance.root")
         // ...
     }
     environment {
         rootDir = aem.props.string("environment.rootDir")?.let { aem.project.file(it) } ?: aem.projectMain.file(".aem/environment")
         dispatcherDistUrl = aem.props.string("environment.dispatcher.distUrl") ?: "http://download.macromedia.com/dispatcher/download/dispatcher-apache2.4-linux-x86_64-4.3.2.tar.gz"
+        hosts {
+            // ...
+        }
+        directories {
+            // ....
+        }
+        healthChecks {
+            // ...
+        }
         // ...
     }
     fileTransfer {
@@ -1857,7 +1867,7 @@ aem {
 
 #### Working with content repository (JCR)
 
-To make changes in AEM content repository, use [Repository](blob/develop/src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/repository/Repository.kt) instance service which is a part of instance sync tool.
+To make changes in AEM content repository, use [Repository](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/repository/Repository.kt) instance service which is a part of instance sync tool.
 
 For example, to migrate pages even without using [Groovy Console](https://github.com/icfnext/aem-groovy-console) deployed on instance, simply write:
 
@@ -1910,7 +1920,7 @@ Under the hood, repository service is using only AEM built-in [Sling Post Servle
 #### Executing code on AEM runtime
 
 It is also possible to easily execute any code on AEM runtime using [Groovy Console](https://github.com/icfnext/aem-groovy-console). 
-Assuming that on AEM instances there is already installed Groovy Console e.g via `instanceSatisfy` task, then it is possible to use [GroovyConsole](blob/develop/src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/groovy/GroovyConsole.kt) instance service.
+Assuming that on AEM instances there is already installed Groovy Console e.g via `instanceSatisfy` task, then it is possible to use [GroovyConsole](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/groovy/GroovyConsole.kt) instance service.
 
 ```kotlin
 aem {
@@ -1936,7 +1946,7 @@ aem {
 
 #### Controlling OSGi bundles and components
 
-To disable specific OSGi component by its PID value and only on publish instances use [OsgiFramework](blob/develop/src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/osgi/OsgiFramework.kt) instance service and write:
+To disable specific OSGi component by its PID value and only on publish instances use [OsgiFramework](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/osgi/OsgiFramework.kt) instance service and write:
 
 
 ```kotlin
