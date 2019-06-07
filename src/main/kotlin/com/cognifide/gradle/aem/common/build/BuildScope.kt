@@ -8,7 +8,7 @@ class BuildScope {
 
     @Suppress("unchecked_cast")
     fun <T : Any> get(key: String): T? {
-        return cache[key] as T
+        return cache[key] as T?
     }
 
     fun <T : Any> getOrPut(key: String, defaultValue: () -> T): T = getOrPut(key, defaultValue, false)
