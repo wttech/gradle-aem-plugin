@@ -28,6 +28,18 @@ class BuildScope {
         cache[key] = value
     }
 
+    fun <T : Any> tryGetOrPut(key: String, defaultValue: () -> T?): T? {
+        var result: T? = get(key)
+        if (result == null) {
+            result = defaultValue()
+            if (result != null) {
+                put(key, result)
+            }
+        }
+
+        return result
+    }
+
     companion object {
 
         fun of(project: Project): BuildScope {

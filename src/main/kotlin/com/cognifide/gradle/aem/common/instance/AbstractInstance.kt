@@ -12,6 +12,9 @@ abstract class AbstractInstance(
     protected val aem: AemExtension
 ) : Instance {
 
+    override val sync: InstanceSync
+        get() = InstanceSync(aem, this)
+
     override var properties = mutableMapOf<String, String?>()
 
     override val systemProperties: Map<String, String>
@@ -26,8 +29,8 @@ abstract class AbstractInstance(
     override val zoneId: ZoneId
         get() = property("user.timezone")?.let { ZoneId.of(it) } ?: ZoneId.systemDefault()
 
-    override val sync: InstanceSync
-        get() = InstanceSync(aem, this)
+    override val version: String
+        get() = sync.status.productVersion
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

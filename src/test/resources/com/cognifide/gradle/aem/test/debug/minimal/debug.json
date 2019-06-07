@@ -94,7 +94,7 @@
       "responseBuffer" : 4096
     },
     "instanceOptions" : {
-      "systemProperties": false,
+      "statusProperties": false,
       "defined" : {
         "local-author" : {
           "properties" : { },

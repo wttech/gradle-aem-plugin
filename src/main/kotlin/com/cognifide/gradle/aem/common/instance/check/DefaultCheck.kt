@@ -2,7 +2,7 @@ package com.cognifide.gradle.aem.common.instance.check
 
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.InstanceSync
-import com.cognifide.gradle.aem.common.instance.isBeingInitialized
+import com.cognifide.gradle.aem.common.instance.LocalInstance
 import org.apache.http.HttpStatus
 import org.gradle.api.logging.LogLevel
 
@@ -17,7 +17,7 @@ abstract class DefaultCheck(protected val group: CheckGroup) : Check {
     val statusLogger = group.statusLogger
 
     var sync: InstanceSync = instance.sync.apply {
-        val init = instance.isBeingInitialized()
+        val init = instance.run { this is LocalInstance && !initialized }
 
         http.connectionTimeout = 1000
         http.connectionRetries = false

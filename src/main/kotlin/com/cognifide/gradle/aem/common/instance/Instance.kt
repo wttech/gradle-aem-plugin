@@ -24,7 +24,7 @@ interface Instance : Serializable {
     @get:Internal
     @get:JsonIgnore
     val httpBasicAuthUrl: String
-        get() = InstanceUrl.parse(httpUrl).httpBasicAuthUrl(user, password)
+        get() = InstanceUrl.parse(httpUrl).basicAuth(user, password)
 
     @get:Input
     val user: String
@@ -75,6 +75,9 @@ interface Instance : Serializable {
 
     @get:JsonIgnore
     val systemProperties: Map<String, String>
+
+    @get:JsonIgnore
+    val version: String
 
     @get:Internal
     @get:JsonIgnore
@@ -207,11 +210,3 @@ interface Instance : Serializable {
 
 val Collection<Instance>.names: String
     get() = if (isNotEmpty()) joinToString(", ") { it.name } else "none"
-
-fun Instance.isInitialized(): Boolean {
-    return this !is LocalInstance || initialized
-}
-
-fun Instance.isBeingInitialized(): Boolean {
-    return this is LocalInstance && !initialized
-}

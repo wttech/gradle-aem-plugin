@@ -5,7 +5,7 @@ import com.cognifide.gradle.aem.common.instance.service.groovy.GroovyConsole
 import com.cognifide.gradle.aem.common.instance.service.osgi.OsgiFramework
 import com.cognifide.gradle.aem.common.instance.service.pkg.PackageManager
 import com.cognifide.gradle.aem.common.instance.service.repository.Repository
-import com.cognifide.gradle.aem.common.instance.service.status.StatusRetriever
+import com.cognifide.gradle.aem.common.instance.service.status.Status
 
 class InstanceSync(val aem: AemExtension, val instance: Instance) {
 
@@ -44,10 +44,10 @@ class InstanceSync(val aem: AemExtension, val instance: Instance) {
      */
     fun <T> repository(callback: Repository.() -> T): T = repository.run(callback)
 
-    var status = StatusRetriever(this)
+    var status = Status(this)
 
     /**
-     * Status retriever (system properties etc).
+     * Status retriever (system properties, product version etc).
      */
-    fun <T> status(callback: StatusRetriever.() -> T): T = status.run(callback)
+    fun <T> status(callback: Status.() -> T): T = status.run(callback)
 }
