@@ -222,7 +222,8 @@ aem {
             licenseUrl = aem.props.string("localInstance.quickstart.licenseUrl")
         }
         backup {
-            zipUrl = aem.props.string("localInstance.zipUrl")
+            uploadUrl = aem.props.string("localInstance.backup.uploadUrl")
+            downloadUrl = aem.props.string("localInstance.backup.downloadUrl")
         }
         rootDir = aem.props.string("localInstance.root")
         // ...
@@ -762,20 +763,26 @@ Then file at path *build/aem/debug/debug.json* with content below is being gener
         // ...
       }
     },
-    "localInstanceOptions": {
-      "rootDir": ".../gradle-aem-multi/aem/.aem/instance",
-      "source": "AUTO",
-      "zipUrl": null,
-      "jarUrl": ".../aem-6.5/cq-quickstart-6.5.0.jar",
-      "licenseUrl": ".../aem-6.5/license.properties.txt",
-      "overridesDir": ".../gradle-aem-multi/aem/gradle/instance",
-      "expandFiles": [
+    "localInstanceManager" : {
+      "rootDir" : "*/minimal/.aem/instance",
+      "source" : "AUTO",
+      "overridesDir" : "*/minimal/gradle/instance",
+      "expandFiles" : [
         "**/start.bat",
         "**/stop.bat",
         "**/start",
         "**/stop"
       ],
-      "expandProperties": {}
+      "expandProperties" : { },
+      "quickstart": {
+        "jarUrl": null,
+        "licenseUrl": null
+      },
+      "backup": {
+        "uploadUrl": null,
+        "downloadUrl": null,
+        "downloadDir": "*/minimal/build/aem/instanceBackup/remote"
+      }
     },
     "environment": {
       "rootDir": ".../gradle-aem-multi/aem/.aem/environment",
