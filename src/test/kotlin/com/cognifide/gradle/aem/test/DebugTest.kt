@@ -21,7 +21,7 @@ class DebugTest : AemTest() {
 
     private fun buildDebugJsonFile(buildName: String) {
         build("debug/$buildName", {
-            withArguments(":${Debug.NAME}", "-S", "-i", "--offline")
+            withArguments(":${Debug.NAME}", "-S", "-i", "-Poffline=true")
         }, {
             assertJsonCustomized(
                     readFile("debug/$buildName/debug.json"),

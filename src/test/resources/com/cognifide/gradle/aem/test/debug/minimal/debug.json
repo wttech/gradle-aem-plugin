@@ -26,6 +26,7 @@
       "aem-",
       "aem_"
     ],
+    "offline": true,
     "env" : "local",
     "lineSeparator" : "LF",
     "fileTransfer": {
@@ -94,14 +95,14 @@
       "responseBuffer" : 4096
     },
     "instanceOptions" : {
-      "systemProperties": false,
+      "statusProperties": false,
       "defined" : {
         "local-author" : {
           "properties" : { },
           "httpUrl" : "http://localhost:4502",
           "user" : "admin",
           "password" : "*****",
-          "typeName" : "author",
+          "id" : "author",
           "environment" : "local",
           "name" : "local-author",
           "type" : "AUTHOR",
@@ -112,7 +113,7 @@
           "httpUrl" : "http://localhost:4503",
           "user" : "admin",
           "password" : "*****",
-          "typeName" : "publish",
+          "id" : "publish",
           "environment" : "local",
           "name" : "local-publish",
           "type" : "PUBLISH",

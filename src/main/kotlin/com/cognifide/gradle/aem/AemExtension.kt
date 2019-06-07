@@ -28,7 +28,6 @@ import com.cognifide.gradle.aem.tooling.vlt.VltException
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 import java.io.Serializable
-import java.time.ZoneId
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.tasks.Internal
@@ -90,15 +89,17 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
         }, ".")
 
     /**
+     * Allows to disable features that are using running instances.
+     *
+     * Gradle's offline mode does much more. It will not use any Maven repository so that CI build
+     * will fail which is not expected in integration tests.
+     */
+    val offline = props.boolean("offline") ?: project.gradle.startParameter.isOffline
+
+    /**
      * Determines current environment name to be used in e.g package deployment.
      */
     val env: String = props.string("env") ?: run { System.getenv("ENV") ?: "local" }
-
-    /**
-     * Timezone ID (default for defined instances)
-     */
-    @JsonIgnore
-    val zoneId: ZoneId = props.string("zoneId")?.let { ZoneId.of(it) } ?: ZoneId.systemDefault()
 
     /**
      * Specify characters to be used as line endings when cleaning up checked out JCR content.
@@ -553,7 +554,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
      */
     fun <T> smbFile(consumer: SmbFileTransfer.() -> T) = fileTransfer.factory.smb(consumer)
 
-    // Utlities (to use without imports)
+    // Utilities (to use without imports)
 
     @JsonIgnore
     val parallel = Parallel

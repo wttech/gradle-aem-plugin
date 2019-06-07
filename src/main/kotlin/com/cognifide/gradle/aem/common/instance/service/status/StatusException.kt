@@ -1,8 +1,8 @@
-package com.cognifide.gradle.aem.common.instance.service.repository
+package com.cognifide.gradle.aem.common.instance.service.status
 
 import com.cognifide.gradle.aem.common.instance.InstanceException
 
-class RepositoryException : InstanceException {
+class StatusException : InstanceException {
 
     constructor(message: String, cause: Throwable) : super(message, cause)
 

@@ -20,6 +20,7 @@ import org.apache.commons.lang3.time.DurationFormatUtils
 import org.apache.commons.validator.routines.UrlValidator
 import org.apache.jackrabbit.util.ISO8601
 import org.gradle.api.Project
+import org.gradle.util.GradleVersion
 
 @Suppress("MagicNumber", "TooManyFunctions")
 object Formats {
@@ -27,6 +28,8 @@ object Formats {
     val URL_VALIDATOR = UrlValidator(arrayOf("http", "https"), UrlValidator.ALLOW_LOCAL_URLS)
 
     fun asPassword(value: String) = "*".repeat(value.length)
+
+    fun asVersion(value: String) = GradleVersion.version(value)
 
     fun jsonMapper(pretty: Boolean): ObjectMapper = ObjectMapper().apply {
         if (pretty) {
@@ -81,7 +84,7 @@ object Formats {
 
     fun bytesToHuman(bytes: Long): String {
         return when {
-            bytes < 1024 -> bytes.toString() + " B"
+            bytes < 1024 -> "$bytes B"
             bytes < 1024 * 1024 -> (bytes / 1024).toString() + " KB"
             bytes < 1024 * 1024 * 1024 -> String.format("%.2f MB", bytes / (1024.0 * 1024.0))
             else -> String.format("%.2f GB", bytes / (1024.0 * 1024.0 * 1024.0))

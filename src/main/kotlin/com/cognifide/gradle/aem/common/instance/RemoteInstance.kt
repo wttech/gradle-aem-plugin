@@ -6,18 +6,12 @@ import java.io.Serializable
 
 class RemoteInstance private constructor(aem: AemExtension) : AbstractInstance(aem), Serializable {
 
-    override lateinit var httpUrl: String
-
     override lateinit var user: String
 
     override lateinit var password: String
 
-    override lateinit var typeName: String
-
-    override lateinit var environment: String
-
     override fun toString(): String {
-        return "RemoteInstance(httpUrl='$httpUrl', user='$user', password='${Formats.asPassword(password)}', environment='$environment', typeName='$typeName')"
+        return "RemoteInstance(httpUrl='$httpUrl', user='$user', password='${Formats.asPassword(password)}', environment='$environment', id='$id')"
     }
 
     companion object {
@@ -29,8 +23,8 @@ class RemoteInstance private constructor(aem: AemExtension) : AbstractInstance(a
                 this.httpUrl = instanceUrl.httpUrl
                 this.user = instanceUrl.user
                 this.password = instanceUrl.password
-                this.typeName = instanceUrl.typeName
                 this.environment = aem.env
+                this.id = instanceUrl.id
 
                 this.apply(configurer)
             }

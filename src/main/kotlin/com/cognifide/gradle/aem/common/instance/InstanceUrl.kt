@@ -22,10 +22,10 @@ class InstanceUrl(raw: String) {
             "${config.protocol}://${config.host}"
         }
 
-    val httpBasicAuthUrl: String
-        get() = httpBasicAuthUrl(user, password)
+    val basicAuth: String
+        get() = basicAuth(user, password)
 
-    fun httpBasicAuthUrl(user: String, password: String): String {
+    fun basicAuth(user: String, password: String): String {
         val userInfo = "${encode(user)}:${encode(password)}"
 
         return if (config.port != -1) {
@@ -46,7 +46,7 @@ class InstanceUrl(raw: String) {
             }
         }
 
-    val typeName: String
+    val id: String
         get() = type.name.toLowerCase()
 
     val type: InstanceType
