@@ -766,7 +766,7 @@ Then file at path *build/aem/debug/debug.json* with content below is being gener
     "localInstanceManager" : {
       "rootDir" : "*/minimal/.aem/instance",
       "source" : "AUTO",
-      "overridesDir" : "*/minimal/gradle/instance",
+      "overridesDir" : ".../gradle-aem-multi/gradle/instance",
       "expandFiles" : [
         "**/start.bat",
         "**/stop.bat",
@@ -781,7 +781,7 @@ Then file at path *build/aem/debug/debug.json* with content below is being gener
       "backup": {
         "uploadUrl": null,
         "downloadUrl": null,
-        "downloadDir": "*/minimal/build/aem/instanceBackup/remote"
+        "downloadDir": ".../gradle-aem-multi/build/aem/instanceBackup/remote"
       }
     },
     "environment": {
