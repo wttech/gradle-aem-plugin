@@ -7,25 +7,19 @@ class BuildScope {
     private val cache = mutableMapOf<String, Any>()
 
     @Suppress("unchecked_cast")
-    fun <T : Any> get(key: String): T? {
-        return cache[key] as T?
-    }
-
-    fun <T : Any> getOrPut(key: String, defaultValue: () -> T): T = getOrPut(key, defaultValue, false)
+    fun <T : Any> get(key: String): T? = cache[key] as T?
 
     @Suppress("unchecked_cast")
+    fun <T : Any> getOrPut(key: String, defaultValue: () -> T) = cache.getOrPut(key, defaultValue) as T
+
     fun <T : Any> getOrPut(key: String, defaultValue: () -> T, invalidate: Boolean): T {
         return if (invalidate) {
             val value = defaultValue()
             put(key, value)
             value
         } else {
-            cache.getOrPut(key, defaultValue) as T
+            getOrPut(key, defaultValue)
         }
-    }
-
-    fun <T : Any> put(key: String, value: T) {
-        cache[key] = value
     }
 
     fun <T : Any> tryGetOrPut(key: String, defaultValue: () -> T?): T? {
@@ -38,6 +32,10 @@ class BuildScope {
         }
 
         return result
+    }
+
+    fun <T : Any> put(key: String, value: T) {
+        cache[key] = value
     }
 
     companion object {
