@@ -39,28 +39,27 @@ interface Instance : Serializable {
         get() = "*".repeat(password.length)
 
     @get:Input
+    val name: String
+
+    @get:Input
     val environment: String
+
+    @get:Input
+    val id: String
 
     @get:Internal
     @get:JsonIgnore
     val cmd: Boolean
         get() = environment == ENVIRONMENT_CMD
 
-    @get:Input
-    val typeName: String
-
     @get:Internal
     val type: InstanceType
-        get() = InstanceType.byName(typeName)
+        get() = InstanceType.byId(id)
 
     @get:Internal
     @get:JsonIgnore
     val credentials: String
         get() = "$user:$password"
-
-    @get:Internal
-    val name: String
-        get() = "$environment-$typeName"
 
     @get:Internal
     @get:JsonIgnore
@@ -104,7 +103,7 @@ interface Instance : Serializable {
             throw AemException("Environment cannot be blank in $this")
         }
 
-        if (typeName.isBlank()) {
+        if (id.isBlank()) {
             throw AemException("Type name cannot be blank in $this")
         }
     }
@@ -167,12 +166,12 @@ interface Instance : Serializable {
 
                 val httpUrl = props["httpUrl"]!!
                 val type = props["type"] ?: TYPE_REMOTE
-                val (environment, typeName) = nameParts
+                val (environment, id) = nameParts
 
                 when (type) {
                     TYPE_LOCAL -> LocalInstance.create(aem, httpUrl) {
                         this.environment = environment
-                        this.typeName = typeName
+                        this.id = id
 
                         props["password"]?.let { this.password = it }
                         props["jvmOpts"]?.let { this.jvmOpts = it.split(" ") }
@@ -184,7 +183,7 @@ interface Instance : Serializable {
                     }
                     TYPE_REMOTE -> RemoteInstance.create(aem, httpUrl) {
                         this.environment = environment
-                        this.typeName = typeName
+                        this.id = id
 
                         props["user"]?.let { this.user = it }
                         props["password"]?.let { this.password = it }

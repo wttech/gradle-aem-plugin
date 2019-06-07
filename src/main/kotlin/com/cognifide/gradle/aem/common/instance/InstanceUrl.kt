@@ -46,7 +46,7 @@ class InstanceUrl(raw: String) {
             }
         }
 
-    val typeName: String
+    val id: String
         get() = type.name.toLowerCase()
 
     val type: InstanceType

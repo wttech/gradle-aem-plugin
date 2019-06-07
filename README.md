@@ -213,10 +213,10 @@ aem {
         local("http://localhost:4502")
         local("http://localhost:4503")
         remote("http://192.168.100.101:4502") {
-            typeName = "int-author"
+            id = "int-author"
         } 
         remote("http://192.168.100.101:4503") {
-            typeName = "int-publish"
+            id = "int-publish"
         } 
         // etc
     }
@@ -296,9 +296,9 @@ It does not provide any tasks. Apply other plugins to have tasks or implement ow
 
 #### Instance conventions
 
-* Instance **name** is a combination of *${environment}-${typeName}* e.g *local-author*, *integration-publish* etc.
+* Instance **name** is a combination of *${environment}-${id}* e.g *local-author*, *integration-publish* etc.
 * Instance **type** indicates physical type of instance and could be only: *local* and *remote*. Local means that instance could be created by plugin automatically under local file system.
-* Instance **type name** is an instance purpose identifier and must start with prefix *author* or *publish*. Sample valid names: *author*, *author1*, *author2*, *author-master* and *publish*, *publish1* *publish2* etc.
+* Instance **id** is an instance purpose identifier and must start with prefix *author* or *publish*. Sample valid names: *author*, *author1*, *author2*, *author-master* and *publish*, *publish1* *publish2* etc.
 * Only instances defined as *local* are considered in command `instanceSetup`, `instanceCreate`, `instanceUp` etc (that comes from `com.cognifide.aem.instance` plugin).
 * All instances defined as *local* or *remote* are considered in commands CRX package deployment related like `instanceSatisfy`, `packageDeploy`, `packageUpload`, `packageInstall` etc.
 
@@ -376,14 +376,14 @@ aem {
         local("http://localhost:4502") // local-author
         local("http://localhost:4502") { // local-author
             password = "admin"
-            typeName = "author"
+            id = "author"
             debugPort = 14502 
         }
       
         local("http://localhost:4503") // local-publish
         local("http://localhost:4503") { // local-publish
             password = "admin"
-            typeName = "publish"
+            id = "publish"
             debugPort = 14503
         } 
       
@@ -391,25 +391,25 @@ aem {
             user = "user1" 
             password = "password2"
             environment = "integration"
-            typeName = "author1"
+            id = "author1"
         } 
         remote("http://192.168.10.1:8080") { // integration-author2
             user = "user1" 
             password = "password2"
             environment = "integration"
-            typeName = "author2"
+            id = "author2"
         } 
         remote("http://192.168.10.2:4503") { // integration-publish1
             user = "user2"
             password = "password2"
             environment = "integration"
-            typeName = "publish1"
+            id = "publish1"
         } 
         remote("http://192.168.10.2:8080") { // integration-publish2
             user = "user2"
             password = "password2"
             environment = "integration"
-            typeName = "publish2"
+            id = "publish2"
         } 
     }
 }
@@ -739,7 +739,7 @@ Then file at path *build/aem/debug/debug.json* with content below is being gener
           "httpUrl": "http://localhost:4502",
           "user": "admin",
           "password": "*****",
-          "typeName": "author",
+          "id": "author",
           "environment": "local",
           "debugPort": 14502,
           "name": "local-author",

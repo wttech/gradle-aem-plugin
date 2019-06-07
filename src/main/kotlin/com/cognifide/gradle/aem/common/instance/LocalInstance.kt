@@ -17,15 +17,9 @@ import org.gradle.util.GFileUtils
 
 class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(aem), Serializable {
 
-    override lateinit var httpUrl: String
-
     override val user: String = USER
 
     override lateinit var password: String
-
-    override lateinit var typeName: String
-
-    override lateinit var environment: String
 
     var debugPort: Int = 5005
 
@@ -70,13 +64,13 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
 
     @get:JsonIgnore
     val dir: File
-        get() = File(aem.localInstanceManager.rootDir, typeName)
+        get() = File(aem.localInstanceManager.rootDir, id)
 
     @get:JsonIgnore
     val overridesDirs: List<File>
         get() = listOf(
                 File(manager.overridesDir, "common"),
-                File(manager.overridesDir, typeName)
+                File(manager.overridesDir, id)
         )
 
     @get:JsonIgnore
@@ -321,7 +315,7 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
     fun locked(name: String): Boolean = lockFile(name).exists()
 
     override fun toString(): String {
-        return "LocalInstance(httpUrl='$httpUrl', user='$user', password='${Formats.asPassword(password)}', typeName='$typeName', debugPort=$debugPort)"
+        return "LocalInstance(httpUrl='$httpUrl', user='$user', password='${Formats.asPassword(password)}', id='$id', debugPort=$debugPort)"
     }
 
     companion object {
@@ -345,7 +339,7 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
 
                 this.httpUrl = instanceUrl.httpUrl
                 this.password = instanceUrl.password
-                this.typeName = instanceUrl.typeName
+                this.id = instanceUrl.id
                 this.debugPort = instanceUrl.debugPort
                 this.environment = aem.env
 

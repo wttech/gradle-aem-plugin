@@ -78,8 +78,8 @@ class Status(sync: InstanceSync) : InstanceService(sync) {
             throw StatusException("Cannot request product version of $instance")
         }
 
-        val version = text.lineSequence().mapNotNull { line ->
-            Regex("^ {2}Adobe Experience Manager \\((.*)\\)$").matchEntire(line)?.groupValues?.get(1)
+        val version = text.lineSequence().mapNotNull {
+            PRODUCT_VERSION_REGEX.matchEntire(it)?.groupValues?.get(1)
         }.firstOrNull()
 
         return version ?: throw StatusException("Cannot find product version in response of $instance:\n$text")
@@ -91,7 +91,7 @@ class Status(sync: InstanceSync) : InstanceService(sync) {
 
         const val PRODUCT_INFO_PATH = "/system/console/status-productinfo.txt"
 
-        val PRODUCT_VERSION_REGEX = Regex("^ {2}Adobe Experience Manager \\((.*)\\)$", RegexOption.MULTILINE)
+        val PRODUCT_VERSION_REGEX = Regex("^ {2}Adobe Experience Manager \\((.*)\\)$")
 
         const val PRODUCT_VERSION_UNKNOWN = "<unknown>"
     }

@@ -15,9 +15,9 @@ enum class InstanceType {
 
         private val AUTHOR_HOST_SUFFIXES = listOf("-author", "-autor")
 
-        fun byName(type: String): InstanceType {
-            return values().find { type.startsWith(it.name, ignoreCase = true) }
-                    ?: throw AemException("Invalid instance type: $type")
+        fun byId(id: String): InstanceType {
+            return values().find { id.startsWith(it.name, ignoreCase = true) }
+                    ?: throw AemException("Invalid instance ID '$id' (must start with 'author' or 'publish')!")
         }
 
         fun byUrl(url: String): InstanceType {
