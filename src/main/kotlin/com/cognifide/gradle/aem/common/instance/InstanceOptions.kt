@@ -29,8 +29,7 @@ open class InstanceOptions(private val aem: AemExtension) : Serializable {
      * Allows to control automatic system properties (and product version) gathering from running instance to instances defined.
      * Essential for correctly working features that are using timestamps like instance tail and instance events check.
      */
-    var statusProperties: Boolean = aem.props.boolean("instance.statusProperties")
-            ?: !aem.project.gradle.startParameter.isOffline
+    var statusProperties: Boolean = aem.props.boolean("instance.statusProperties") ?: !aem.offline
 
     /**
      * Declare new deployment target (AEM instance).

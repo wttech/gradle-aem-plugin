@@ -26,6 +26,7 @@
       "aem-",
       "aem_"
     ],
+    "offline": true,
     "env" : "local",
     "lineSeparator" : "LF",
     "fileTransfer": {
