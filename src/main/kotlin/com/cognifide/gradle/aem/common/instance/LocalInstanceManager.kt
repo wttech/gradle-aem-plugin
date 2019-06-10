@@ -10,6 +10,7 @@ import com.cognifide.gradle.aem.common.utils.onEachApply
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 import java.io.Serializable
+import java.util.concurrent.TimeUnit
 
 class LocalInstanceManager(private val aem: AemExtension) : Serializable {
 
@@ -23,6 +24,11 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
      * Determines how instances will be created (from backup or quickstart built from the scratch).
      */
     var source = Source.of(aem.props.string("localInstance.source") ?: Source.AUTO.name)
+
+    /**
+     * Maximum time to wait for status script response.
+     */
+    var scriptTimeout: Long = aem.props.long("localInstance.scriptTimeout") ?: TimeUnit.SECONDS.toMillis(10)
 
     /**
      * Collection of files potentially needed to create instance

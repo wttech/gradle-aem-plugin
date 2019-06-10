@@ -156,4 +156,18 @@ object FileOperations {
             lock(file)
         }
     }
+
+    fun lockOperation(file: File, operation: (File) -> Unit): File {
+        val lock = File(file.parentFile, "${file.name}.lock")
+        if (!lock.exists() && file.exists()) {
+            file.delete()
+        }
+
+        if (!file.exists()) {
+            operation(file)
+            lock.printWriter().use { it.print(Formats.toJson(mapOf("locked" to Formats.date()))) }
+        }
+
+        return file
+    }
 }

@@ -7,12 +7,6 @@ import java.util.concurrent.TimeUnit
 class UnavailableCheck(group: CheckGroup) : DefaultCheck(group) {
 
     /**
-     * Local instances can be checked by running status script provided by AEM quickstart.
-     * Determines when instance should be considered as unavailable.
-     */
-    var statusExpected = Status.UNKNOWN
-
-    /**
      * Status of remote instances cannot be checked easily. Because of that, check will work just a little bit longer.
      */
     var utilisationTime = TimeUnit.SECONDS.toMillis(15)
@@ -28,11 +22,11 @@ class UnavailableCheck(group: CheckGroup) : DefaultCheck(group) {
         }
 
         if (instance is LocalInstance) {
-            val status = instance.status()
-            if (status != Status.UNKNOWN) {
+            val status = state(instance.checkStatus())
+            if (!STATUS_EXPECTED.contains(status)) {
                 statusLogger.error(
                         "Awaiting not running",
-                        "Incorrect instance status '$status'. Waiting for status '${Status.UNKNOWN}' of $instance"
+                        "Unexpected instance status '$status'. Waiting for status '$STATUS_EXPECTED' of $instance"
                 )
             }
         } else {
@@ -43,5 +37,9 @@ class UnavailableCheck(group: CheckGroup) : DefaultCheck(group) {
                 )
             }
         }
+    }
+
+    companion object {
+        val STATUS_EXPECTED = listOf(Status.NOT_RUNNING, Status.UNKNOWN)
     }
 }

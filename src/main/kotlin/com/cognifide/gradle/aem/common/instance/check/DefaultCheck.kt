@@ -56,4 +56,16 @@ abstract class DefaultCheck(protected val group: CheckGroup) : Check {
 
     val stateChanged: Boolean
         get() = runner.stateChanged(instance)
+
+    fun logValues(values: Collection<Any>): String {
+        val other = values.size - LOG_VALUES_COUNT
+        return when {
+            other > 0 -> values.take(LOG_VALUES_COUNT).joinToString("\n") + "... and other ($other)"
+            else -> values.take(LOG_VALUES_COUNT).joinToString("\n")
+        }
+    }
+
+    companion object {
+        const val LOG_VALUES_COUNT = 15
+    }
 }

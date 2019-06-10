@@ -33,7 +33,7 @@ class BundlesCheck(group: CheckGroup) : DefaultCheck(group) {
                         in 2..10 -> "Bundles unstable (${unstable.size})"
                         else -> "Bundles stable (${state.stablePercent})"
                     },
-                    "Unstable bundles detected on $instance:\n${unstable.joinToString("\n")}"
+                    "Unstable bundles detected (${unstable.size}) on $instance:\n${logValues(unstable)}"
             )
         }
     }

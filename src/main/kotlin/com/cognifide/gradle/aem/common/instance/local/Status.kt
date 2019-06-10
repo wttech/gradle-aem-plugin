@@ -11,7 +11,7 @@ enum class Status(val exitStatus: Int) {
 
     companion object {
 
-        fun byScriptStatus(exitStatus: Int) = values().find { it.exitStatus == exitStatus }
+        fun byExitCode(exitStatus: Int) = values().find { it.exitStatus == exitStatus }
                 ?: throw InstanceException("Unrecognized local instance script exit status '$exitStatus'")
 
         fun of(name: String) = values().find { it.name.equals(name, true) }

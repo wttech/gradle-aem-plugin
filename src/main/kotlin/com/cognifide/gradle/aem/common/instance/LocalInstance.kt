@@ -107,13 +107,14 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
 
     private fun binScript(name: String, os: OperatingSystem = OperatingSystem.current()): Script {
         return if (os.isWindows) {
-            Script(File(dir, "$name.bat"), File(quickstartDir, "bin/$name.bat"), listOf("cmd", "/C"))
+            Script(this, listOf("cmd", "/C"), File(dir, "$name.bat"), File(quickstartDir, "bin/$name.bat"))
         } else {
-            Script(File(dir, name), File(quickstartDir, "bin/$name"), listOf("sh"))
+            Script(this, listOf("sh"), File(dir, name), File(quickstartDir, "bin/$name"))
         }
     }
 
-    private val manager: LocalInstanceManager
+    @get:JsonIgnore
+    val manager: LocalInstanceManager
         get() = aem.localInstanceManager
 
     fun create() {
@@ -252,10 +253,20 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
             return
         }
 
+        val status = checkStatus()
+        if (status == Status.RUNNING) {
+            aem.logger.info("Instance already running. No need to start it: $this")
+            return
+        }
+
         customize()
 
-        aem.logger.info("Executing start script: $startScript")
-        execute(startScript)
+        try {
+            aem.logger.info("Executing start script: $startScript")
+            startScript.executeAsync()
+        } catch (e: InstanceException) {
+            throw InstanceException("Instance start script failed! Check resources like disk free space, open HTTP ports etc.", e)
+        }
     }
 
     fun down() {
@@ -264,36 +275,49 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
             return
         }
 
-        aem.logger.info("Executing stop script: $stopScript")
-        execute(stopScript)
+        val status = checkStatus()
+        if (status != Status.RUNNING) {
+            aem.logger.info("Instance is not running (reports status '$status'). No need to stop it: $this")
+            return
+        }
 
         try {
-            sync.osgiFramework.stop()
+            aem.logger.info("Executing stop script: $stopScript")
+            stopScript.executeAsync()
         } catch (e: InstanceException) {
-            // ignore, fallback when script failed
+            throw InstanceException("Instance stop script failed!", e)
         }
     }
 
-    fun status(): Status {
+    @get:JsonIgnore
+    val status: Status
+        get() = checkStatus()
+
+    fun checkStatus(): Status {
         if (!created) {
             return Status.UNKNOWN
         }
 
-        return Status.byScriptStatus(execute(statusScript))
+        return try {
+            val procResult = statusScript.executeSync()
+            Status.byExitCode(procResult.exitValue)
+        } catch (e: InstanceException) {
+            aem.logger.info("Instance status not available: $this")
+            aem.logger.debug("Instance status error", e)
+            Status.UNKNOWN
+        }
     }
 
     fun init(callback: LocalInstance.() -> Unit) {
         if (initialized) {
-            aem.logger.debug("Instance already initialized: $this")
+            aem.logger.debug("Already initialized: $this")
             return
         }
 
-        aem.logger.info("Initializing running instance")
+        aem.logger.info("Initializing: $this")
         callback(this)
         lock(LOCK_INIT)
     }
-
-    private fun execute(script: Script): Int = ProcessBuilder(script.commandLine).directory(dir).start().waitFor()
 
     fun destroy() {
         aem.logger.info("Destroying: $this")

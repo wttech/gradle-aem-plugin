@@ -32,14 +32,22 @@ open class InstanceUp : LocalInstanceTask() {
 
     @TaskAction
     fun up() {
-        aem.parallel.with(instances) { up() }
+        aem.progress(instances.size) {
+            aem.parallel.with(instances) {
+                increment("Starting instance '$name'") { up() }
+            }
+        }
 
         aem.instanceActions.awaitUp {
             instances = this@InstanceUp.instances
             awaitOptions()
         }
 
-        aem.parallel.with(instances) { init(initOptions) }
+        aem.progress(instances.size) {
+            aem.parallel.with(instances) {
+                increment("Initializing instance '$name'") { init(initOptions) }
+            }
+        }
 
         aem.notifier.notify("Instance(s) up", "Which: ${instances.names}")
     }
