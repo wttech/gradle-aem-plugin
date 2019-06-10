@@ -174,7 +174,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.cognifide.gradle:aem-plugin:6.2.0")
+    implementation("com.cognifide.gradle:aem-plugin:7.0.0-beta")
 }
 ```
 
@@ -1566,13 +1566,13 @@ Log files are stored under directory: *build/aem/instanceTail/${instance.name}/e
 
 ##### Tailing incidents
 
-By default, tailer is buffering cannonade of log entries of level *ERROR* and *WARN* in 5 seconds time window then interactively shows notification.
+By default, tailer is buffering cannonade of log entries of level *ERROR* in 5 seconds time window then interactively shows notification.
 Clicking on that notification will browse to incident log file created containing only desired exceptions. These incident files are stored under directory: *build/aem/instanceTail/${instance.name}/incidents/${timestamp}-error.log*.
 
 Which type of log entries are treated as a part of incident is determined by:
 
-* property `-Ptail.incidentLevels=[ERROR,WARN]`
-* wildcard exclusion rules defined in file which location is controlled by property `-Ptail.incidentFilterPath=aem/gradle/tail/incidentFilter.txt`
+* property `-Pinstance.tail.incidentLevels=[ERROR,WARN]`
+* wildcard exclusion rules defined in file which location is controlled by property `-Pinstance.tail.incidentFilter=aem/gradle/instanceTail/incidentFilter.txt`
 
 Sample content of  *incidentFilter.txt* file, which holds a fragments of log entries that will be treated as known issues (notifications will be no longer shown):
 
@@ -1595,7 +1595,8 @@ gradlew instanceTail -Pinstance.list=[http://admin:admin@192.168.1.1:4502,http:/
 
 ##### Standalone tailer tool
 
-Tailer could be used as standalone tool. Just download it from [here](dists/gradle-aem-tailer) (< 100 KB).
+Instance tailer could be used as standalone tool beside of e.g Maven based AEM application builds using [Content Package Maven Plugin](https://helpx.adobe.com/experience-manager/6-5/sites/developing/using/vlt-mavenplugin.html).
+Just download it from [here](dists/gradle-aem-tailer) (< 100 KB), extract anywhere on disk and run.
 
 ### Environment plugin
 
@@ -1685,12 +1686,6 @@ aem {
 }
 ```
 
-You can override this configuration in your build script or check docker services status using `docker service ls`:
-```
-ID                  NAME                MODE                REPLICAS            IMAGE               PORTS
-68jpi16eqmlq        aem_httpd           replicated          1/1                 httpd:2.4.39        *:80->80/tcp
-```
-
 #### Task `environmentUp`
 
 Turns on local AEM environment.
@@ -1721,10 +1716,10 @@ Common configuration like root of content for JCR package, should be defined in 
 
 ```kotlin
 allprojects {
-  plugins.withId("com.cognifide.aem.base") {
+  plugins.withId("com.cognifide.aem.common") {
     configure<AemExtension> {
         config {
-            packageRoot = file("src/main/aem") // overrides default dir named 'content'
+            contentDir = aem.project.file("src/main/aem") // overrides default dir named 'content'
         }
     }
   }
@@ -1740,7 +1735,7 @@ allprojects {
     }
   
     dependencies {
-        "compileOnly"("com.adobe.aem:uber-jar:6.4.0:obfuscated-apis") // and more
+        "compileOnly"("com.adobe.aem:uber-jar:${Build.AEM_VERSION}:apis") // and more
     }
   }
 }
@@ -1780,7 +1775,7 @@ Below snippet could be used to automatize creation of production content backups
 ```kotlin
 aem {
     tasks {
-        register("aemProdAuthorBackup") {
+        register("backupProductionAuthor") {
             doLast {
                 val pkg = aem.namedInstance("prod-author").sync {
                     downloadPackage {
@@ -1814,7 +1809,7 @@ To make an HTTP request to some AEM endpoint (servlet) simply write:
 ```kotlin
 aem {
     tasks {
-        register("aemHealthCheck") {
+        register("runHealthCheck") {
             doLast {
                 aem.sync {
                     http {
@@ -1836,7 +1831,7 @@ To parse endpoint response as [JSON](http://static.javadoc.io/com.jayway.jsonpat
 ```kotlin
 aem {
     tasks {
-        register("aemHealthCheck") {
+        register("runHealthCheck") {
             doLast {
                 aem.sync {
                     http {
@@ -1915,7 +1910,7 @@ To create new / update existing nodes to configure e.g replication agents write:
 ```kotlin
 aem {
     tasks {
-        register("migratePages") {
+        register("setupReplicationAgents") {
             description = "Corrects publish replication agent transport URI"
             doLast {
                 aem.sync {

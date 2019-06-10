@@ -13,27 +13,51 @@ open class FileResolution(val group: FileGroup, val id: String, private val reso
 
     private var thenOperations = mutableListOf<FileResolution.(File) -> File>()
 
+    /**
+     * Perform operation on resolved file, but do not change it path (work in-place).
+     */
+    fun use(operation: FileResolution.(File) -> Unit) {
+        then { operation(it); it }
+    }
+
+    /**
+     * Perform operation on resolved file with ability to change it path.
+     */
     fun then(operation: FileResolution.(File) -> File) {
         thenOperations.add(operation)
     }
 
+    // DSL for 'then' and 'use' methods
+
+    /**
+     * Copy source file to target only if it does not exist.
+     */
     fun copyFile(source: File, target: File) {
         if (!target.exists()) {
             source.copyTo(target)
         }
     }
 
+    /**
+     * Read files from ZIP/TAR archive.
+     */
     fun archiveTree(archive: File): FileTree = when (archive.extension) {
         "zip" -> aem.project.zipTree(archive)
         else -> aem.project.tarTree(archive)
     }
 
-    fun archiveEntry(archive: File, entryPath: String): File = archiveTree(archive)
+    /**
+     * Read single file from ZIP/TAR archive.
+     */
+    fun archiveFile(archive: File, entryPath: String): File = archiveTree(archive)
             .matching { it.include(entryPath) }.singleFile
 
-    fun copyArchiveEntry(archive: File, entryPath: String, target: File) {
-        if (!target.exists()) {
-            archiveEntry(archive, entryPath).copyTo(target)
+    /**
+     * Extract & copy single archive file and copy it to target location only if it does not exist.
+     */
+    fun copyArchiveFile(archive: File, entryPath: String, target: File) = target.apply {
+        if (!exists()) {
+            archiveFile(archive, entryPath).copyTo(this)
         }
     }
 }

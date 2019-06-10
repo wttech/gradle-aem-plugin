@@ -22,7 +22,8 @@ class BackupResolver(private val aem: AemExtension) {
     /**
      * Directory storing downloaded remote backup files.
      */
-    var downloadDir: File = aem.temporaryDir("instanceBackup/remote")
+    var downloadDir: File = aem.props.string("localInstance.backup.downloadDir")?.let { aem.project.file(it) }
+            ?: aem.temporaryDir("instanceBackup/remote")
 
     /**
      * Backup file from any source (local & remote sources).

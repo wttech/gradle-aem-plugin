@@ -10,7 +10,8 @@ class QuickstartResolver(private val aem: AemExtension) {
     /**
      * Directory storing downloaded AEM Quickstart source files (JAR & license).
      */
-    var downloadDir = AemTask.temporaryDir(aem.project, TEMPORARY_DIR)
+    var downloadDir = aem.props.string("localInstance.quickstart.downloadDir")?.let { aem.project.file(it) }
+            ?: AemTask.temporaryDir(aem.project, TEMPORARY_DIR)
 
     /**
      * URI pointing to AEM self-extractable JAR containing 'crx-quickstart'.
@@ -36,6 +37,6 @@ class QuickstartResolver(private val aem: AemExtension) {
 
     companion object {
 
-        const val TEMPORARY_DIR = "instance"
+        const val TEMPORARY_DIR = "instance/quickstart"
     }
 }

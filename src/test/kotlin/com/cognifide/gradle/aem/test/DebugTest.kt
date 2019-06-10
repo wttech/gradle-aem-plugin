@@ -40,6 +40,7 @@ class DebugTest : AemTest() {
                 "aem.groovyScriptRootDir" to PathValueMatcher(),
                 "aem.localInstanceManager.rootDir" to PathValueMatcher(),
                 "aem.localInstanceManager.overridesDir" to PathValueMatcher(),
+                "aem.localInstanceManager.quickstart.downloadDir" to PathValueMatcher(),
                 "aem.localInstanceManager.backup.downloadDir" to PathValueMatcher(),
                 "aem.packageOptions.contentDir" to PathValueMatcher(),
                 "aem.packageOptions.metaCommonDir" to PathValueMatcher(),

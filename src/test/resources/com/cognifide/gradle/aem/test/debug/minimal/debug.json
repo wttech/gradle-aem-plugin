@@ -134,7 +134,8 @@
       "expandProperties" : { },
       "quickstart": {
         "jarUrl": null,
-        "licenseUrl": null
+        "licenseUrl": null,
+        "downloadDir": "*/minimal/build/aem/instance/quickstart"
       },
       "backup": {
         "uploadUrl": null,
