@@ -34,6 +34,8 @@ open class FileResolution(val group: FileGroup, val id: String, private val reso
      */
     fun copyFile(source: File, target: File) {
         if (!target.exists()) {
+            aem.logger.info("Copying resolved file '$source' to file '$target'")
+
             source.copyTo(target)
         }
     }
@@ -57,6 +59,8 @@ open class FileResolution(val group: FileGroup, val id: String, private val reso
      */
     fun copyArchiveFile(archive: File, entryPath: String, target: File) = target.apply {
         if (!exists()) {
+            aem.logger.info("Copying resolved archive file '$archive' to file '$target'")
+
             archiveFile(archive, entryPath).copyTo(this)
         }
     }

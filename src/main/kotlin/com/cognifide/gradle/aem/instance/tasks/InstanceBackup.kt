@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.instance.tasks
 
 import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.common.instance.InstanceException
+import com.cognifide.gradle.aem.common.instance.local.BackupResolver
 import com.cognifide.gradle.aem.common.instance.names
 import com.cognifide.gradle.aem.common.tasks.ZipTask
 import com.cognifide.gradle.aem.common.utils.Formats
@@ -13,6 +14,17 @@ import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.bundling.ZipEntryCompression
 
 open class InstanceBackup : ZipTask() {
+
+    private val resolver: BackupResolver
+        get() = aem.localInstanceManager.backup
+
+    @get:Internal
+    val available: List<File>
+        get() {
+            return (destinationDirectory.asFile.get().listFiles { _, name ->
+                name.endsWith("-${archiveClassifier.get()}.${archiveExtension.get()}")
+            } ?: arrayOf()).toList()
+        }
 
     /**
      * Determines what need to be done (backup zipped and uploaded or something else).
@@ -37,6 +49,7 @@ open class InstanceBackup : ZipTask() {
         when (mode) {
             Mode.ZIP_ONLY -> zip()
             Mode.ZIP_AND_UPLOAD -> { zip(); upload(false) }
+            Mode.UPLOAD_ONLY -> upload(true)
         }
     }
 
@@ -45,7 +58,7 @@ open class InstanceBackup : ZipTask() {
     }
 
     private fun upload(verbose: Boolean) {
-        val dirUrl = aem.localInstanceManager.backup.uploadUrl
+        val dirUrl = resolver.uploadUrl
         if (dirUrl.isNullOrBlank()) {
             val message = "Cannot upload local instance backup as of URL is not defined."
             if (verbose) {
@@ -56,19 +69,14 @@ open class InstanceBackup : ZipTask() {
             }
         }
 
-        val backupZip = archiveFile.get().asFile
-
-        aem.logger.info("Uploading local instance(s) backup '$backupZip' to '$dirUrl'")
-        aem.fileTransfer.uploadTo(dirUrl, backupZip)
-    }
-
-    @get:Internal
-    val available: List<File>
-        get() {
-            return (destinationDirectory.asFile.get().listFiles { _, name ->
-                name.endsWith("-${archiveClassifier.get()}.${archiveExtension.get()}")
-            } ?: arrayOf()).toList()
+        val file = when (mode) {
+            Mode.UPLOAD_ONLY -> resolver.local ?: throw InstanceException("No local instance backup to upload!")
+            else -> archiveFile.get().asFile
         }
+
+        aem.logger.info("Uploading local instance(s) backup '$file' to '$dirUrl'")
+        aem.fileTransfer.uploadTo(dirUrl, file)
+    }
 
     override fun taskGraphReady(graph: TaskExecutionGraph) {
         if (!graph.hasTask(this)) {
@@ -87,7 +95,8 @@ open class InstanceBackup : ZipTask() {
 
     enum class Mode {
         ZIP_ONLY,
-        ZIP_AND_UPLOAD;
+        ZIP_AND_UPLOAD,
+        UPLOAD_ONLY;
 
         companion object {
             fun of(name: String): Mode {
