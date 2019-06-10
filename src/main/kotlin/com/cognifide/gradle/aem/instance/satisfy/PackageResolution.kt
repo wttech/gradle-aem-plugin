@@ -5,7 +5,6 @@ import com.cognifide.gradle.aem.common.file.resolver.FileResolution
 import com.cognifide.gradle.aem.common.instance.service.osgi.Bundle
 import com.cognifide.gradle.aem.common.pkg.PackageException
 import java.io.File
-import org.apache.commons.io.FilenameUtils
 
 class PackageResolution(group: PackageGroup, id: String, action: (FileResolution) -> File) : FileResolution(group, id, action) {
 
@@ -13,13 +12,13 @@ class PackageResolution(group: PackageGroup, id: String, action: (FileResolution
 
     private val aem = resolver.aem
 
-    override fun process(file: File): File {
-        val origin = super.process(file)
-
-        return when (FilenameUtils.getExtension(file.name)) {
-            "jar" -> wrap(origin)
-            "zip" -> origin
-            else -> throw PackageException("File $origin must have *.jar or *.zip extension")
+    init {
+        then { origin ->
+            when (file.extension) {
+                "jar" -> wrap(origin)
+                "zip" -> origin
+                else -> throw PackageException("File $origin must have '*.jar' or '*.zip' extension")
+            }
         }
     }
 

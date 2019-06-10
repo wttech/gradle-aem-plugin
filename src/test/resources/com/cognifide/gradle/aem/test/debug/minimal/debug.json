@@ -148,8 +148,6 @@
         "regulars" : [ ],
         "caches" : [ ]
       },
-      "dispatcherDistUrl" : "http://download.macromedia.com/dispatcher/download/dispatcher-apache2.4-linux-x86_64-4.3.2.tar.gz",
-      "dispatcherModuleName" : "*/dispatcher-apache*.so",
       "dockerRuntime" : {
         "name": "desktop",
         "hostIp": "127.0.0.1"
@@ -162,7 +160,6 @@
       "dockerComposeFile" : "*/minimal/.aem/environment/docker-compose.yml",
       "dockerConfigPath" : "*/minimal/gradle/environment",
       "dockerRootPath" : "*/minimal/.aem/environment",
-      "dispatcherModuleFile" : "*/minimal/.aem/environment/distributions/mod_dispatcher.so",
       "httpdConfDir" : "*/minimal/gradle/environment/httpd/conf",
       "created" : false
     },

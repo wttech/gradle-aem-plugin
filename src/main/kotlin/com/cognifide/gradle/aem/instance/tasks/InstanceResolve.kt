@@ -13,10 +13,10 @@ open class InstanceResolve : AemDefaultTask() {
     @TaskAction
     fun resolve() {
         logger.info("Resolving CRX packages for satisfying instances")
-        logger.info("Resolved CRX packages: ${instanceSatisfy.allFiles}")
+        logger.info("Resolved CRX packages:\n${instanceSatisfy.allFiles.joinToString("\n")}")
 
         logger.info("Resolving local instance files")
-        logger.info("Resolved local instance files: ${aem.localInstanceManager.sourceFiles}")
+        logger.info("Resolved local instance files:\n${aem.localInstanceManager.sourceFiles.joinToString("\n")}")
     }
 
     private val instanceSatisfy: InstanceSatisfy

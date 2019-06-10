@@ -138,13 +138,8 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
     private fun copyFiles() {
         GFileUtils.mkdirs(dir)
 
-        manager.quickstart.license?.let { FileUtils.copyFile(manager.quickstart.license, license) }
-        manager.quickstart.jar?.let { FileUtils.copyFile(manager.quickstart.jar, jar) }
-
-        manager.quickstart.extraFiles.map { file ->
-            FileUtils.copyFileToDirectory(file, dir)
-            File(dir, file.name)
-        }
+        manager.quickstart.license?.let { FileUtils.copyFile(it, license) }
+        manager.quickstart.jar?.let { FileUtils.copyFile(it, jar) }
     }
 
     private fun validateFiles() {

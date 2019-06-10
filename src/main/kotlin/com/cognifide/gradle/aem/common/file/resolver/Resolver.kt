@@ -38,15 +38,23 @@ val downloadDir: File
     val groups: List<G>
         get() = groupsDefined.filter { it.resolutions.isNotEmpty() }
 
-    fun outputDirs(filter: G.() -> Boolean = { true }): List<File> {
+    @get:Internal
+    val outputDirs: List<File>
+        get() = outputDirs { true }
+
+    fun outputDirs(filter: G.() -> Boolean): List<File> {
         return groups.filter(filter).flatMap { it.dirs }
     }
 
-    fun allFiles(filter: G.() -> Boolean = { true }): List<File> {
+    @get:Internal
+    val allFiles: List<File>
+        get() = allFiles { true }
+
+    fun allFiles(filter: G.() -> Boolean): List<File> {
         return resolveGroups(filter).flatMap { it.files }
     }
 
-    fun resolveGroups(filter: G.() -> Boolean = { true }): List<G> {
+    fun resolveGroups(filter: G.() -> Boolean): List<G> {
         return groups.filter(filter).onEach { it.files }
     }
 
