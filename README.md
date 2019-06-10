@@ -231,7 +231,7 @@ aem {
     environment { // config for AEM environment running on Docker
         rootDir = aem.props.string("environment.rootDir")?.let { aem.project.file(it) } ?: aem.projectMain.file(".aem/environment")
         dispatcherDistUrl = aem.props.string("environment.dispatcher.distUrl") ?: "http://download.macromedia.com/dispatcher/download/dispatcher-apache2.4-linux-x86_64-4.3.2.tar.gz"
-        hosts { // domains to be appended do host file automatically
+        hosts { // domains to be appended to hosts file automatically
             // ...
         }
         distributions {  // extra files for Docker containers that are missing in images
@@ -244,7 +244,7 @@ aem {
             // ...
         }
     }
-    fileTransfer { // config for resolving CRX packages, AEM instance Quickstart files using HTTP/SFTP/SMB
+    fileTransfer { // config for resolving CRX packages, AEM Quickstart files and backups using HTTP/SFTP/SMB
         sftp {
             user = props.string("fileTransfer.sftp.user")
             password = props.string("fileTransfer.sftp.password")
@@ -271,6 +271,12 @@ aem {
         packageCompose { // customizing built CRX package
             fromProject(":core")
             fromProject(":config")
+            
+            baseName = 'example-for-changing-zip-name'
+            
+            vaultDefinition { // place for overriding CRX Package / Vault properties
+                // ...
+            }
         }
         instanceSatisfy { // customizing CRX packages to be deployed as dependencies before built AEM application
             packages {
