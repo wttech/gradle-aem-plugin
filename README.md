@@ -205,18 +205,18 @@ version = "1.0.0"
 defaultTasks(":instanceSatisfy", ":packageDeploy")
 
 aem {
-    `package` {
+    `package` { // built CRX package options
         jcrRoot = aem.project.file("src/main/content")
         // ...
     }
-    instance {
+    instance { // AEM instances to work with
         local("http://localhost:4502") // local-author
         local("http://localhost:4503") // local-publish
         remote("http://192.168.100.101:4502", "int-author")
         remote("http://192.168.100.101:4503", "int-publish")
         // etc
     }
-    localInstance {
+    localInstance { // config for AEM instances to be created on local file system
         quickstart {
             jarUrl = aem.props.string("localInstance.quickstart.jarUrl")
             licenseUrl = aem.props.string("localInstance.quickstart.licenseUrl")
@@ -228,21 +228,23 @@ aem {
         rootDir = aem.props.string("localInstance.root")
         // ...
     }
-    environment {
+    environment { // config for AEM environment running on Docker
         rootDir = aem.props.string("environment.rootDir")?.let { aem.project.file(it) } ?: aem.projectMain.file(".aem/environment")
         dispatcherDistUrl = aem.props.string("environment.dispatcher.distUrl") ?: "http://download.macromedia.com/dispatcher/download/dispatcher-apache2.4-linux-x86_64-4.3.2.tar.gz"
-        hosts {
+        hosts { // domains to be appended do host file automatically
             // ...
         }
-        directories {
-            // ....
-        }
-        healthChecks {
+        distributions {  // extra files for Docker containers that are missing in images
             // ...
         }
-        // ...
+        directories { // dirs for volumes that must exist before running Docker containers
+            // ...
+        }
+        healthChecks { // checks (e.g GET requests) verifying running Docker containers like HTTPD
+            // ...
+        }
     }
-    fileTransfer {
+    fileTransfer { // config for resolving CRX packages, AEM instance Quickstart files using HTTP/SFTP/SMB
         sftp {
             user = props.string("fileTransfer.sftp.user")
             password = props.string("fileTransfer.sftp.password")
@@ -262,19 +264,20 @@ aem {
         credentials("foo", "bar") // shorthand to set all user / password pairs above
     }
     tasks {
-        bundle {
+        bundle { // customizing OSGi bundle manifest
             javaPackage = "com.company.example.aem"
             // ...
         }
-        packageCompose {
+        packageCompose { // customizing built CRX package
             fromProject(":core")
             fromProject(":config")
         }
-        instanceSatisfy {
+        instanceSatisfy { // customizing CRX packages to be deployed as dependencies before built AEM application
             packages {
                 url("http://.../package.zip")
             }
         }
+        // ... and all other tasks
     }
 }
 ```
