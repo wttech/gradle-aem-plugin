@@ -7,7 +7,10 @@ import java.io.File
 
 class QuickstartResolver(private val aem: AemExtension) {
 
-    private val downloadDir = AemTask.temporaryDir(aem.project, TEMPORARY_DIR)
+    /**
+     * Directory storing downloaded AEM Quickstart source files (JAR & license).
+     */
+    var downloadDir = AemTask.temporaryDir(aem.project, TEMPORARY_DIR)
 
     /**
      * URI pointing to AEM self-extractable JAR containing 'crx-quickstart'.
