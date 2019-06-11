@@ -303,9 +303,9 @@ To see all available options and actual documentation, please follow to:
 * `package` - [PackageOptions](src/main/kotlin/com/cognifide/gradle/aem/common/pkg/PackageOptions.kt)
 * `instance` - [InstanceOptions](src/main/kotlin/com/cognifide/gradle/aem/common/instance/InstanceOptions.kt)
 * `bundle` - [BundleJar](src/main/kotlin/com/cognifide/gradle/aem/bundle/BundleJar.kt)
-* `localInstance` - [LocalInstanceOptions](src/main/kotlin/com/cognifide/gradle/aem/instance/LocalInstanceManager.kt)
+* `localInstance` - [LocalInstanceManager](src/main/kotlin/com/cognifide/gradle/aem/instance/LocalInstanceManager.kt)
 * `environment` - [Environment](src/main/kotlin/com/cognifide/gradle/aem/environment/Environment.kt)
-* `fileTransfer` - [FileTransfer](src/main/kotlin/com/cognifide/gradle/aem/common/file/transfer/FileTransferManager.kt)
+* `fileTransfer` - [FileTransferManager](src/main/kotlin/com/cognifide/gradle/aem/common/file/transfer/FileTransferManager.kt)
 * `packageCompose` - [PackageCompose](src/main/kotlin/com/cognifide/gradle/aem/pkg/tasks/PackageCompose.kt)
 * `instanceSatisfy` - [InstanceSatisfy](src/main/kotlin/com/cognifide/gradle/aem/instance/satisfy/InstanceSatisfy.kt)
 * `...` - other tasks in similar way.
@@ -339,12 +339,12 @@ Instances could be defined in two ways, via:
 
 The configuration could be specified through *gradle.properties* file using dedicated syntax.
 
-`instance.$ENVIRONMENT-$TYPE_NAME.$PROP_NAME=$PROP_VALUE`
+`instance.$ENVIRONMENT-$ID.$PROP_NAME=$PROP_VALUE`
 
 Part | Possible values | Description |
 --- | --- | --- |
 `$ENVIRONMENT` | `local`, `int`, `stg` etc | Environment name. |
-`$TYPE_NAME` | `author`, `publish`, `publish2`, etc | Combination of AEM instance type and semantic suffix useful when more than one of instance of same type is being configured. |
+`$ID` | `author`, `publish`, `publish2`, etc | Combination of AEM instance type and semantic suffix useful when more than one of instance of same type is being configured. |
 `$PROP_NAME=$PROP_VALUE` | **Local instances:** `httpUrl=http://admin:admin@localhost:4502`<br>`type=local`(or remote)<br>`password=foo`<br>`runModes=nosamplecontent`<br>`jvmOpts=-server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true`, `startOpts=...`<br>`debugPort=24502`.<br><br>**Remote instances:** `httpUrl`, `type`, `user`, `password`. | Run modes, JVM opts and start opts should be comma delimited. |
 
 
