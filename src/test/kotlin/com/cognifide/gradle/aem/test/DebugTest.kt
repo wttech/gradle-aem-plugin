@@ -46,7 +46,6 @@ class DebugTest : AemTest() {
                 "aem.packageOptions.contentDir" to PathValueMatcher(),
                 "aem.packageOptions.metaCommonDir" to PathValueMatcher(),
                 "aem.tasks.bundles[*].bndPath" to PathValueMatcher(),
-                "aem.environment.dispatcherModuleFile" to PathValueMatcher(),
                 "aem.environment.dockerComposeFile" to PathValueMatcher(),
                 "aem.environment.dockerComposeSourceFile" to PathValueMatcher(),
                 "aem.environment.dockerRootPath" to PathValueMatcher(),

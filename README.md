@@ -807,8 +807,6 @@ Then file at path *build/aem/debug/debug.json* with content below is being gener
         "regulars": [],
         "caches": []
       },
-      "dispatcherDistUrl": "http://download.macromedia.com/dispatcher/download/dispatcher-apache2.4-linux-x86_64-4.3.2.tar.gz",
-      "dispatcherModuleName": "*/dispatcher-apache*.so",
       "dockerRuntime": {
           "name": "desktop",
           "hostIp": "127.0.0.1"
