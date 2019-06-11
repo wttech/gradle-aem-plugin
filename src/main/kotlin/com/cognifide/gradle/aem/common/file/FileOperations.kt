@@ -3,14 +3,8 @@ package com.cognifide.gradle.aem.common.file
 import com.cognifide.gradle.aem.AemPlugin
 import com.cognifide.gradle.aem.common.utils.Formats
 import com.cognifide.gradle.aem.common.utils.Patterns
-import java.io.File
-import java.io.FileOutputStream
-import java.io.InputStream
-import java.net.URL
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
 import net.lingala.zip4j.core.ZipFile
+import net.lingala.zip4j.model.FileHeader
 import net.lingala.zip4j.model.ZipParameters
 import net.lingala.zip4j.util.Zip4jConstants
 import org.apache.commons.io.FileUtils
@@ -20,6 +14,13 @@ import org.gradle.api.Project
 import org.gradle.util.GFileUtils
 import org.reflections.Reflections
 import org.reflections.scanners.ResourcesScanner
+import java.io.File
+import java.io.FileOutputStream
+import java.io.InputStream
+import java.net.URL
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 
 object FileOperations {
 
@@ -146,8 +147,26 @@ object FileOperations {
      * Only Zip4j correctly extracts AEM backup ZIP files.
      * Gradle zipTree and Zero-Turnaround ZipUtil is not working properly in that case.
      */
-    fun zipUnpack(zip: File, targetDir: File) {
+    fun zipUnpackAll(zip: File, targetDir: File) {
         ZipFile(zip).extractAll(targetDir.absolutePath)
+    }
+
+    @Suppress("unchecked_cast")
+    fun zipUnpackDir(zip: File, dirName: String, dir: File) {
+        val dirFileName = "$dirName/"
+        if (!zipContains(zip, dirFileName)) {
+            return
+        }
+
+        ZipFile(zip).apply {
+            (fileHeaders as List<FileHeader>).asSequence()
+                    .filter { it.fileName.startsWith(dirFileName) }
+                    .forEach { extractFile(it, dir.absolutePath) }
+        }
+    }
+
+    fun zipContains(zip: File, fileName: String): Boolean {
+        return ZipFile(zip).getFileHeader(fileName) != null
     }
 
     fun zipPack(zip: File, sourceDir: File) {
