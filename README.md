@@ -34,6 +34,8 @@ What is being done above by simply running super easy command `sh gradlew`?
 4. `:aem:environmentClean` -> cleaning AEM dispatcher cache and restarting HTTPD service / Apache Web Server.
 5. `:aem:environmentCheck" -> running health checks ensuring that all AEM instances / websites are responding correctly.
 
+Want to see it in action? Follow [here](https://github.com/Cognifide/gradle-aem-multi)!
+
 ### Features 
 
 * Automated complete AEM environment setup with [virtualized AEM dispatcher](#environment-plugin) and [native AEM instances](#instance-plugin) optimized for best development experience.
