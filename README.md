@@ -26,9 +26,9 @@ Be inspired by watching [live demo](https://adapt.to/2018/en/schedule/a-better-d
   <img src="docs/gradle-aem-multi-build.gif" alt="Gradle AEM Multi Build"/>
 </p>
 
-What is being done above by simply running super easy command `sh gradle`?
+What is being done above by simply running super easy command `sh gradlew`?
 
-1. `:aem:instanceSatisfy` -> checking for new dependent CRX packages to be installed that could arrive to our AEM instances automatically if somebody else add it to build configuration in the meantime.
+1. `:aem:instanceSatisfy` -> checking for new dependent CRX packages to be deployed (in a lazy & fail-safe manner) that could arrive to our AEM instances automatically if somebody else add it to build configuration in the meantime.
 2. `:aem:assembly:full:packageDeploy` -> building & deploying all-in-one CRX package to AEM instances in parallel, then awaiting for stable condition of AEM instances and built application.
 3. `:aem:migration:packageDeploy` -> building & deploying migration CRX package holding Groovy Scripts launched automatically
 4. `:aem:environmentClean` -> cleaning AEM dispatcher cache and restarting HTTPD service / Apache Web Server.
