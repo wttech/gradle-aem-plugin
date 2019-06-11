@@ -255,7 +255,7 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
 
         val status = checkStatus()
         if (status == Status.RUNNING) {
-            aem.logger.info("Instance already running. No need to start it: $this")
+            aem.logger.info("Instance already running. No need to start: $this")
             return
         }
 
@@ -277,7 +277,7 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
 
         val status = checkStatus()
         if (status != Status.RUNNING) {
-            aem.logger.info("Instance is not running (reports status '$status'). No need to stop it: $this")
+            aem.logger.info("Instance is not running (reports status '$status'). No need to stop: $this")
             return
         }
 

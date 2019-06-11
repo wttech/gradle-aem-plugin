@@ -20,7 +20,7 @@ class FileDownloader(private val aem: AemExtension) {
         if (processedKb > loggedKb) {
             val msg = if (fullLength > 0) {
                 "$operation: ${file.name} | ${Formats.bytesToHuman(processedBytes)}/${Formats.bytesToHuman(fullLength)}"
-                        .plus(" [${Formats.percent(processedBytes, fullLength)}]")
+                        .plus(" (${Formats.percent(processedBytes, fullLength)})")
             } else {
                 "$operation: ${file.name} | ${Formats.bytesToHuman(processedBytes)}"
             }

@@ -17,6 +17,9 @@ class Event {
 
     var info: String? = null
 
+    val details: String
+        get() = info?.takeIf { it.isNotBlank() } ?: topic
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -41,6 +44,6 @@ class Event {
     }
 
     override fun toString(): String {
-        return "Event(id='$id', topic='$topic', category='$category' received='$received')"
+        return "Event(details='$details', received='$received' id='$id')"
     }
 }

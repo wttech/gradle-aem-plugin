@@ -3,7 +3,7 @@ package com.cognifide.gradle.aem.common.instance.local
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.file.FileException
 import com.cognifide.gradle.aem.common.file.transfer.FileEntry
-import com.cognifide.gradle.aem.instance.tasks.InstanceBackup
+import com.cognifide.gradle.aem.common.utils.Formats
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 
@@ -20,17 +20,17 @@ class BackupResolver(private val aem: AemExtension) {
     var downloadUrl = aem.props.string("localInstance.backup.downloadUrl")
 
     /**
-     * Directory storing downloaded remote backup files.
-     */
-    var downloadDir: File = aem.props.string("localInstance.backup.downloadDir")?.let { aem.project.file(it) }
-            ?: aem.temporaryDir("instanceBackup/remote")
-
-    /**
      * Backup file from any source (local & remote sources).
      */
     @get:JsonIgnore
     val any: File?
         get() = resolve(localSources + remoteSources)
+
+    /**
+     * Directory storing locally created backup files.
+     */
+    var localDir: File = aem.props.string("localInstance.backup.localDir")?.let { aem.project.file(it) }
+            ?: aem.temporaryDir("instanceBackup/local")
 
     /**
      * Backup file from local source.
@@ -40,11 +40,23 @@ class BackupResolver(private val aem: AemExtension) {
         get() = resolve(localSources)
 
     /**
+     * Directory storing downloaded remote backup files.
+     */
+    var remoteDir: File = aem.props.string("localInstance.backup.remoteDir")?.let { aem.project.file(it) }
+            ?: aem.temporaryDir("instanceBackup/remote")
+
+    /**
      * Backup file from remote source.
      */
     @get:JsonIgnore
     val remote: File?
         get() = resolve(remoteSources)
+
+    /**
+     * Defines backup file naming rule.
+     * Must be in sync with selector rule.
+     */
+    var namer: () -> String = { "${aem.project.rootProject.name}-${ Formats.dateFileName()}-${aem.project.version}.backup.zip" }
 
     /**
      * Defines backup source selection rule.
@@ -66,7 +78,7 @@ class BackupResolver(private val aem: AemExtension) {
     private fun resolve(sources: List<BackupSource>): File? = sources.run { selector(this) }?.file
 
     private val localSources: List<BackupSource>
-        get() = aem.tasks.named<InstanceBackup>(InstanceBackup.NAME).get().available.map { file ->
+        get() = (localDir.listFiles { _, name -> name.endsWith(".backup.zip") } ?: arrayOf()).map { file ->
             BackupSource(BackupType.LOCAL, FileEntry.of(file)) { file }
         }
 
@@ -85,7 +97,7 @@ class BackupResolver(private val aem: AemExtension) {
 
                 if (fileEntry != null) {
                     listOf(BackupSource(BackupType.REMOTE, fileEntry) {
-                        File(downloadDir, name).apply { aem.fileTransfer.downloadFrom(dirUrl, name, this) }
+                        File(remoteDir, name).apply { aem.fileTransfer.downloadFrom(dirUrl, name, this) }
                     })
                 } else {
                     aem.logger.info("Instance backup at URL '$dirUrl/$name' is not available.")
@@ -100,7 +112,7 @@ class BackupResolver(private val aem: AemExtension) {
 
                 fileEntries.map { file ->
                     BackupSource(BackupType.REMOTE, file) {
-                        File(downloadDir, file.name).apply { aem.fileTransfer.downloadFrom(uploadUrl!!, name, this) }
+                        File(remoteDir, file.name).apply { aem.fileTransfer.downloadFrom(uploadUrl!!, name, this) }
                     }
                 }
             }

@@ -71,8 +71,7 @@ class InstancePlugin : AemPlugin() {
                 dependsOn(InstanceDestroy.NAME, InstanceSetup.NAME)
             }
             register<InstanceBackup>(InstanceBackup.NAME) {
-                dependsOn(InstanceDown.NAME)
-                finalizedBy(InstanceUp.NAME)
+                mustRunAfter(InstanceDown.NAME)
             }
 
             register<InstanceResolve>(InstanceResolve.NAME)
@@ -82,6 +81,7 @@ class InstancePlugin : AemPlugin() {
 
             registerOrConfigure<Up>(Up.NAME) {
                 dependsOn(InstanceUp.NAME)
+                mustRunAfter(InstanceBackup.NAME)
             }
             registerOrConfigure<Down>(Down.NAME) {
                 dependsOn(InstanceDown.NAME)

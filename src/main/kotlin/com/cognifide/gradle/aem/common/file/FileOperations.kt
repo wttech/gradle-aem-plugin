@@ -11,6 +11,8 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import net.lingala.zip4j.core.ZipFile
+import net.lingala.zip4j.model.ZipParameters
+import net.lingala.zip4j.util.Zip4jConstants
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
 import org.apache.commons.io.filefilter.TrueFileFilter
@@ -146,6 +148,14 @@ object FileOperations {
      */
     fun zipUnpack(zip: File, targetDir: File) {
         ZipFile(zip).extractAll(targetDir.absolutePath)
+    }
+
+    fun zipPack(zip: File, sourceDir: File) {
+        ZipFile(zip).apply {
+            addFolder(sourceDir, ZipParameters().apply {
+                compressionMethod = Zip4jConstants.COMP_STORE
+            })
+        }
     }
 
     fun lock(file: File) = file.writeText(Formats.toJson(mapOf("locked" to Formats.date())))

@@ -14,7 +14,7 @@ class PackageResolution(group: PackageGroup, id: String, action: (FileResolution
 
     init {
         then { origin ->
-            when (file.extension) {
+            when (origin.extension) {
                 "jar" -> wrap(origin)
                 "zip" -> origin
                 else -> throw PackageException("File $origin must have '*.jar' or '*.zip' extension")
