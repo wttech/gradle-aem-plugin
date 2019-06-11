@@ -84,7 +84,7 @@ class CheckRunner(internal val aem: AemExtension) {
             aem.parallel.each(instances) { instance ->
                 stateWatches[instance] = StopWatch().apply { start() }
 
-                while (isActive) {
+                do {
                     val checks = CheckGroup(this@CheckRunner, instance, checks).apply {
                         check()
                         if (logInstantly) {
@@ -94,18 +94,18 @@ class CheckRunner(internal val aem: AemExtension) {
 
                     currentChecks[instance] = checks
 
-                    if (checks.done || aborted) {
-                        break
-                    }
-
                     if (stateChanged(instance)) {
                         stateWatches[instance]?.apply { reset(); start() }
                     }
 
                     previousChecks = currentChecks.toMap()
 
+                    if (checks.done || aborted) {
+                        break
+                    }
+
                     Behaviors.waitFor(delay)
-                }
+                } while (isActive)
             }
 
             runningWatch.stop()

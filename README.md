@@ -23,7 +23,7 @@ Be inspired by watching [live demo](https://adapt.to/2018/en/schedule/a-better-d
 ### Screenshot
 
 <p align="center">
-  <img src="docs/example-build.gif" alt="Example Project Build"/>
+  <img src="docs/gradle-aem-multi.gif" alt="Gradle AEM Multi Build"/>
 </p>
 
 ### Features 
