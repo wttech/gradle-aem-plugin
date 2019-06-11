@@ -53,10 +53,16 @@ class BackupResolver(private val aem: AemExtension) {
         get() = resolve(remoteSources)
 
     /**
+     * File suffix indicating instance backup file.
+     */
+    var suffix = aem.props.string("localInstance.backup.suffix") ?: ".backup.zip"
+
+    /**
      * Defines backup file naming rule.
      * Must be in sync with selector rule.
      */
-    var namer: () -> String = { "${aem.project.rootProject.name}-${ Formats.dateFileName()}-${aem.project.version}.backup.zip" }
+    @get:JsonIgnore
+    var namer: () -> String = { "${aem.project.rootProject.name}-${ Formats.dateFileName()}-${aem.project.version}$suffix" }
 
     /**
      * Defines backup source selection rule.
@@ -78,7 +84,7 @@ class BackupResolver(private val aem: AemExtension) {
     private fun resolve(sources: List<BackupSource>): File? = sources.run { selector(this) }?.file
 
     private val localSources: List<BackupSource>
-        get() = (localDir.listFiles { _, name -> name.endsWith(".backup.zip") } ?: arrayOf()).map { file ->
+        get() = (localDir.listFiles { _, name -> name.endsWith(suffix) } ?: arrayOf()).map { file ->
             BackupSource(BackupType.LOCAL, FileEntry.of(file)) { file }
         }
 
@@ -89,10 +95,10 @@ class BackupResolver(private val aem: AemExtension) {
                 val name = downloadUrl!!.substringAfterLast("/")
 
                 val fileEntry = try {
-                    aem.fileTransfer.stat(dirUrl, name)
+                    aem.fileTransfer.stat(dirUrl, name) // 'stat' may be unsupported
                 } catch (e: FileException) {
                     aem.logger.debug("Cannot check instance backup file status at URL '$dirUrl/$name'", e)
-                    FileEntry(name) // 'stat' may be unsupported by some file transfers like 'http', 'url'
+                    FileEntry(name)
                 }
 
                 if (fileEntry != null) {

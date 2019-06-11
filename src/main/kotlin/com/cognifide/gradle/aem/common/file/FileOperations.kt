@@ -3,6 +3,13 @@ package com.cognifide.gradle.aem.common.file
 import com.cognifide.gradle.aem.AemPlugin
 import com.cognifide.gradle.aem.common.utils.Formats
 import com.cognifide.gradle.aem.common.utils.Patterns
+import java.io.File
+import java.io.FileOutputStream
+import java.io.InputStream
+import java.net.URL
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 import net.lingala.zip4j.core.ZipFile
 import net.lingala.zip4j.model.FileHeader
 import net.lingala.zip4j.model.ZipParameters
@@ -14,13 +21,6 @@ import org.gradle.api.Project
 import org.gradle.util.GFileUtils
 import org.reflections.Reflections
 import org.reflections.scanners.ResourcesScanner
-import java.io.File
-import java.io.FileOutputStream
-import java.io.InputStream
-import java.net.URL
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
 
 object FileOperations {
 

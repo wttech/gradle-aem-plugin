@@ -124,6 +124,7 @@
     "localInstanceManager" : {
       "rootDir" : "*/minimal/.aem/instance",
       "source" : "AUTO",
+      "scriptTimeout": 5000,
       "overridesDir" : "*/minimal/gradle/instance",
       "expandFiles" : [
         "**/start.bat",
@@ -140,7 +141,9 @@
       "backup": {
         "uploadUrl": null,
         "downloadUrl": null,
-        "downloadDir": "*/minimal/build/aem/instanceBackup/remote"
+        "remoteDir": "*/minimal/build/aem/instanceBackup/remote",
+        "localDir": "*/minimal/build/aem/instanceBackup/local",
+        "suffix": ".backup.zip"
       }
     },
     "environment" : {

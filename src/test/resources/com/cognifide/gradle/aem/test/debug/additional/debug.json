@@ -287,6 +287,7 @@
     "localInstanceManager" : {
       "rootDir" : "*/additional/.aem/instance",
       "source" : "AUTO",
+      "scriptTimeout": 5000,
       "overridesDir" : "*/additional/gradle/instance",
       "expandFiles" : [
         "**/start.bat",
@@ -303,7 +304,9 @@
       "backup": {
         "uploadUrl": null,
         "downloadUrl": null,
-        "downloadDir": "*/additional/build/aem/instanceBackup/remote"
+        "remoteDir": "*/additional/build/aem/instanceBackup/remote",
+        "localDir": "*/additional/build/aem/instanceBackup/local",
+        "suffix": ".backup.zip"
       }
     },
     "environment" : {

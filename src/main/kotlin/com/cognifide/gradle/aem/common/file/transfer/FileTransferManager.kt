@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.common.file.transfer
 
+import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.file.FileException
 import com.cognifide.gradle.aem.common.file.FileOperations
@@ -82,9 +83,15 @@ class FileTransferManager(private val aem: AemExtension) : FileTransfer {
      * Uploads file to directory at specified URL and set given name.
      */
     override fun uploadTo(dirUrl: String, fileName: String, source: File) {
-        if (stat(dirUrl, fileName) != null) {
-            aem.logger.info("Uploading file to URL '$dirUrl/$fileName' skipped as of it already exists on server.")
-            return
+        val fileUrl = "$dirUrl/$fileName"
+
+        try {
+            if (stat(dirUrl, fileName) != null) { // 'stat' may be unsupported
+                aem.logger.info("Uploading file to URL '$fileUrl' skipped as of it already exists on server.")
+                return
+            }
+        } catch (e: AemException) {
+            aem.logger.debug("Cannot check status of uploaded file at URL '$fileUrl'", e)
         }
 
         handling(dirUrl).uploadTo(dirUrl, fileName, source)

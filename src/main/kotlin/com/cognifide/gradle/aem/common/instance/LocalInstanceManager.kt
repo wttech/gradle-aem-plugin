@@ -7,10 +7,10 @@ import com.cognifide.gradle.aem.common.instance.local.QuickstartResolver
 import com.cognifide.gradle.aem.common.instance.local.Source
 import com.cognifide.gradle.aem.common.utils.onEachApply
 import com.fasterxml.jackson.annotation.JsonIgnore
-import org.gradle.util.GFileUtils
 import java.io.File
 import java.io.Serializable
 import java.util.concurrent.TimeUnit
+import org.gradle.util.GFileUtils
 
 class LocalInstanceManager(private val aem: AemExtension) : Serializable {
 
@@ -28,7 +28,7 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
     /**
      * Maximum time to wait for status script response.
      */
-    var scriptTimeout: Long = aem.props.long("localInstance.scriptTimeout") ?: TimeUnit.SECONDS.toMillis(10)
+    var scriptTimeout: Long = aem.props.long("localInstance.scriptTimeout") ?: TimeUnit.SECONDS.toMillis(5)
 
     /**
      * Collection of files potentially needed to create instance
