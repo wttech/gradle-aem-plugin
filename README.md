@@ -16,9 +16,9 @@ Swiss army knife for AEM related automation. Incremental build which takes secon
 
 AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget to **star this project** on GitHub :)
 
-Looking for dedicated version of plugin for [**Apache Sling**](https://sling.apache.org)? Check out [Gradle Sling Plugin](https://github.com/Cognifide/gradle-sling-plugin)!
-
 Be inspired by watching [live demo](https://adapt.to/2018/en/schedule/a-better-developer-experience-for-sling-based-applications.html) presented on official **Sling adaptTo() 2018** conference.
+
+Looking for dedicated version of plugin for [**Apache Sling**](https://sling.apache.org)? Check out [Gradle Sling Plugin](https://github.com/Cognifide/gradle-sling-plugin)!
 
 ### Screenshot
 
@@ -28,26 +28,26 @@ Be inspired by watching [live demo](https://adapt.to/2018/en/schedule/a-better-d
 
 What is being done above by simply running super easy command `sh gradlew`?
 
-1. `:aem:instanceSatisfy` -> checking for new dependent CRX packages to be deployed (in a lazy & fail-safe manner) that could arrive to our AEM instances automatically if somebody else add it to build configuration in the meantime.
-2. `:aem:assembly:full:packageDeploy` -> building & deploying all-in-one CRX package to AEM instances in parallel, then awaiting for stable condition of AEM instances and built application.
-3. `:aem:migration:packageDeploy` -> building & deploying migration CRX package holding Groovy Scripts launched automatically
-4. `:aem:environmentClean` -> cleaning AEM dispatcher cache and restarting HTTPD service / Apache Web Server.
-5. `:aem:environmentCheck" -> running health checks ensuring that all AEM instances / websites are responding correctly.
+    1. `:aem:instanceSatisfy` -> checking for new dependent CRX packages to be deployed (in a lazy & fail-safe manner) that could arrive to our AEM instances automatically if somebody else add it to build configuration in the meantime.
+    2. `:aem:assembly:full:packageDeploy` -> building & deploying all-in-one CRX package to AEM instances in parallel, then awaiting for stable condition of AEM instances and built application.
+    3. `:aem:migration:packageDeploy` -> building & deploying migration CRX package holding Groovy Scripts launched automatically
+    4. `:aem:environmentClean` -> cleaning AEM dispatcher cache and restarting HTTPD service / Apache Web Server.
+    5. `:aem:environmentCheck` -> running health checks ensuring that all AEM instances / websites are responding correctly.
 
 Want to see it in action? Follow [here](https://github.com/Cognifide/gradle-aem-multi)!
 
 ### Features 
 
-* Automated complete AEM environment setup with [virtualized AEM dispatcher](#environment-plugin) and [native AEM instances](#instance-plugin) optimized for best development experience.
-* [Powerful AEM DSL scripting capabilities](#implement-custom-aem-tasks) for performing JCR content migrations, managing AEM instances.
-* [Advanced AEM instance(s) stability & health checking](#task-instanceawait) after CRX package deployment.
-* [Continuous AEM incident monitoring](#task-instancetail) and interactive reporting (centralized log tailing of any AEM instances with no SSH).
-* Easy parallel [CRX package deployment](#task-packagedeploy) to many remote group of instances.
-* [Fail-safe dependent CRX packages installation](#task-instancesatisfy) from local and remote sources using various protocols (SMB / SSH / HTTP / custom).
-* [Fast JCR content synchronization](#task-sync) from running AEM instances with advanced content normalization.
-* [Composing CRX package](#task-packagecompose) from multiple separate JCR content roots, bundles.
-* [All-in-one CRX packages generation](#assembling-packages-merging-all-in-one) (assemblies), vault filters merging etc.
-* [Easy OSGi bundle customization](#bundle-plugin) with BND tool embedded.
+    * Automated complete AEM environment setup with [virtualized AEM dispatcher](#environment-plugin) and [native AEM instances](#instance-plugin) optimized for best development experience.
+    * [Powerful AEM DSL scripting capabilities](#implement-custom-aem-tasks) for performing JCR content migrations, managing AEM instances.
+    * [Advanced AEM instance(s) stability & health checking](#task-instanceawait) after CRX package deployment.
+    * [Continuous AEM incident monitoring](#task-instancetail) and interactive reporting (centralized log tailing of any AEM instances with no SSH).
+    * Easy parallel [CRX package deployment](#task-packagedeploy) to many remote group of instances.
+    * [Fail-safe dependent CRX packages installation](#task-instancesatisfy) from local and remote sources using various protocols (SMB / SSH / HTTP / custom).
+    * [Fast JCR content synchronization](#task-sync) from running AEM instances with advanced content normalization.
+    * [Composing CRX package](#task-packagecompose) from multiple separate JCR content roots, bundles.
+    * [All-in-one CRX packages generation](#assembling-packages-merging-all-in-one) (assemblies), vault filters merging etc.
+    * [Easy OSGi bundle customization](#bundle-plugin) with BND tool embedded.
 
 Gradle AEM Plugin is following strategy [convention over configuration](https://en.wikipedia.org/wiki/Convention_over_configuration). When following built-in conventions about project structure & naming, then only minimal configuration is required. 
 Still all features are **fully configurable**.
@@ -58,8 +58,8 @@ Major releases of plugin are introducing breaking changes. Build functionality i
 
 Documentation for previous series:
 
-* [6.2.0](https://github.com/Cognifide/gradle-aem-plugin/tree/6.2.0) (last in 6.x serie / with *aem* prefixes in task / property names)
-* [5.1.4](https://github.com/Cognifide/gradle-aem-plugin/tree/5.1.4) (last supporting Groovy DSL)
+    * [6.2.0](https://github.com/Cognifide/gradle-aem-plugin/tree/6.2.0) (last in 6.x serie / with *aem* prefixes in task / property names)
+    * [5.1.4](https://github.com/Cognifide/gradle-aem-plugin/tree/5.1.4) (last supporting Groovy DSL)
 
 ## Table of contents
 
@@ -240,11 +240,10 @@ aem {
     }
     environment { // config for AEM environment running on Docker
         rootDir = aem.props.string("environment.rootDir")?.let { aem.project.file(it) } ?: aem.projectMain.file(".aem/environment")
-        dispatcherDistUrl = aem.props.string("environment.dispatcher.distUrl") ?: "http://download.macromedia.com/dispatcher/download/dispatcher-apache2.4-linux-x86_64-4.3.2.tar.gz"
         hosts { // domains to be appended to hosts file automatically
             // ...
         }
-        distributions {  // extra files for Docker containers that are missing in images
+        distributions {  // extra files for Docker containers that are missing in images like AEM dispatcher HTTPD module
             // ...
         }
         directories { // dirs for volumes that must exist before running Docker containers
@@ -300,17 +299,15 @@ aem {
 
 To see all available options and actual documentation, please follow to:
 
-* `aem` - [AemExtension]()
-* `package` - [PackageOptions](src/main/kotlin/com/cognifide/gradle/aem/common/pkg/PackageOptions.kt)
-* `bundle` - [BundleJar](src/main/kotlin/com/cognifide/gradle/aem/bundle/BundleJar.kt)
-
-* `localInstance` - [LocalInstanceOptions](src/main/kotlin/com/cognifide/gradle/aem/instance/LocalInstanceOptions.kt)
-* `environment` - [Environment](src/main/kotlin/com/cognifide/gradle/aem/environment/Environment.kt)
-* `fileTransfer` - [FileTransfer](src/main/kotlin/com/cognifide/gradle/aem/common/file/transfer/FileTransferManager.kt)
-
-* `packageCompose` - [PackageCompose](src/main/kotlin/com/cognifide/gradle/aem/pkg/tasks/PackageCompose.kt)
-* `instanceSatisfy` - [InstanceSatisfy](src/main/kotlin/com/cognifide/gradle/aem/instance/satisfy/InstanceSatisfy.kt)
-* `...` - other tasks in similar way.
+    * `aem` - [AemExtension]()
+    * `package` - [PackageOptions](src/main/kotlin/com/cognifide/gradle/aem/common/pkg/PackageOptions.kt)
+    * `bundle` - [BundleJar](src/main/kotlin/com/cognifide/gradle/aem/bundle/BundleJar.kt)
+    * `localInstance` - [LocalInstanceOptions](src/main/kotlin/com/cognifide/gradle/aem/instance/LocalInstanceOptions.kt)
+    * `environment` - [Environment](src/main/kotlin/com/cognifide/gradle/aem/environment/Environment.kt)
+    * `fileTransfer` - [FileTransfer](src/main/kotlin/com/cognifide/gradle/aem/common/file/transfer/FileTransferManager.kt)
+    * `packageCompose` - [PackageCompose](src/main/kotlin/com/cognifide/gradle/aem/pkg/tasks/PackageCompose.kt)
+    * `instanceSatisfy` - [InstanceSatisfy](src/main/kotlin/com/cognifide/gradle/aem/instance/satisfy/InstanceSatisfy.kt)
+    * `...` - other tasks in similar way.
 
 ### Common plugin
 
