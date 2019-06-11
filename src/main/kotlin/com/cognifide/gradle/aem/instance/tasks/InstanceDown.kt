@@ -19,7 +19,11 @@ open class InstanceDown : LocalInstanceTask() {
 
     @TaskAction
     fun down() {
-        aem.parallel.with(instances) { down() }
+        aem.progress(instances.size) {
+            aem.parallel.with(instances) {
+                increment("Stopping instance '$name'") { down() }
+            }
+        }
 
         aem.instanceActions.awaitDown {
             instances = this@InstanceDown.instances

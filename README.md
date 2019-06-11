@@ -16,19 +16,29 @@ Swiss army knife for AEM related automation. Incremental build which takes secon
 
 AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget to **star this project** on GitHub :)
 
-Looking for dedicated version of plugin for [**Apache Sling**](https://sling.apache.org)? Check out [Gradle Sling Plugin](https://github.com/Cognifide/gradle-sling-plugin)!
-
 Be inspired by watching [live demo](https://adapt.to/2018/en/schedule/a-better-developer-experience-for-sling-based-applications.html) presented on official **Sling adaptTo() 2018** conference.
+
+Looking for dedicated version of plugin for [**Apache Sling**](https://sling.apache.org)? Check out [Gradle Sling Plugin](https://github.com/Cognifide/gradle-sling-plugin)!
 
 ### Screenshot
 
 <p align="center">
-  <img src="docs/example-build.gif" alt="Example Project Build"/>
+  <img src="docs/gradle-aem-multi-build.gif" alt="Gradle AEM Multi Build"/>
 </p>
+
+What is being done above by simply running super easy command `sh gradlew`?
+
+1. `:aem:instanceSatisfy` -> checking for new dependent CRX packages to be deployed (in a lazy & fail-safe manner) that could arrive to our AEM instances automatically if somebody else add it to build configuration in the meantime.
+2. `:aem:assembly:full:packageDeploy` -> building & deploying all-in-one CRX package to AEM instances in parallel, then awaiting for stable condition of AEM instances and built application.
+3. `:aem:migration:packageDeploy` -> building & deploying migration CRX package holding Groovy Scripts launched automatically
+4. `:aem:environmentClean` -> cleaning AEM dispatcher cache and restarting HTTPD service / Apache Web Server.
+5. `:aem:environmentCheck` -> running health checks ensuring that all AEM instances / websites are responding correctly.
+
+Want to see it in action? Follow [here](https://github.com/Cognifide/gradle-aem-multi)!
 
 ### Features 
 
-* Automated complete AEM environment setup with [virtualized AEM dispatcher](#environment-plugin) and [native AEM instances](#instance-plugin) optimized for best development performance
+* Automated complete AEM environment setup with [virtualized AEM dispatcher](#environment-plugin) and [native AEM instances](#instance-plugin) optimized for best development experience.
 * [Powerful AEM DSL scripting capabilities](#implement-custom-aem-tasks) for performing JCR content migrations, managing AEM instances.
 * [Advanced AEM instance(s) stability & health checking](#task-instanceawait) after CRX package deployment.
 * [Continuous AEM incident monitoring](#task-instancetail) and interactive reporting (centralized log tailing of any AEM instances with no SSH).
@@ -174,7 +184,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.cognifide.gradle:aem-plugin:6.2.0")
+    implementation("com.cognifide.gradle:aem-plugin:7.0.0-beta")
 }
 ```
 
@@ -205,18 +215,18 @@ version = "1.0.0"
 defaultTasks(":instanceSatisfy", ":packageDeploy")
 
 aem {
-    `package` {
+    `package` { // built CRX package options
         jcrRoot = aem.project.file("src/main/content")
         // ...
     }
-    instance {
+    instance { // AEM instances to work with
         local("http://localhost:4502") // local-author
         local("http://localhost:4503") // local-publish
         remote("http://192.168.100.101:4502", "int-author")
         remote("http://192.168.100.101:4503", "int-publish")
         // etc
     }
-    localInstance {
+    localInstance { // config for AEM instances to be created on local file system
         quickstart {
             jarUrl = aem.props.string("localInstance.quickstart.jarUrl")
             licenseUrl = aem.props.string("localInstance.quickstart.licenseUrl")
@@ -228,21 +238,22 @@ aem {
         rootDir = aem.props.string("localInstance.root")
         // ...
     }
-    environment {
+    environment { // config for AEM environment running on Docker
         rootDir = aem.props.string("environment.rootDir")?.let { aem.project.file(it) } ?: aem.projectMain.file(".aem/environment")
-        dispatcherDistUrl = aem.props.string("environment.dispatcher.distUrl") ?: "http://download.macromedia.com/dispatcher/download/dispatcher-apache2.4-linux-x86_64-4.3.2.tar.gz"
-        hosts {
+        hosts { // domains to be appended to hosts file automatically
             // ...
         }
-        directories {
-            // ....
-        }
-        healthChecks {
+        distributions {  // extra files for Docker containers that are missing in images like AEM dispatcher HTTPD module
             // ...
         }
-        // ...
+        directories { // dirs for volumes that must exist before running Docker containers
+            // ...
+        }
+        healthChecks { // checks (e.g GET requests) verifying running Docker containers like HTTPD
+            // ...
+        }
     }
-    fileTransfer {
+    fileTransfer { // config for resolving CRX packages, AEM Quickstart files and backups using HTTP/SFTP/SMB
         sftp {
             user = props.string("fileTransfer.sftp.user")
             password = props.string("fileTransfer.sftp.password")
@@ -262,33 +273,39 @@ aem {
         credentials("foo", "bar") // shorthand to set all user / password pairs above
     }
     tasks {
-        bundle {
+        bundle { // customizing OSGi bundle manifest
             javaPackage = "com.company.example.aem"
             // ...
         }
-        packageCompose {
+        packageCompose { // customizing built CRX package
             fromProject(":core")
             fromProject(":config")
+            
+            baseName = 'example-for-changing-zip-name'
+            
+            vaultDefinition { // place for overriding CRX Package / Vault properties
+                // ...
+            }
         }
-        instanceSatisfy {
+        instanceSatisfy { // customizing CRX packages to be deployed as dependencies before built AEM application
             packages {
                 url("http://.../package.zip")
             }
         }
+        // ... and all other tasks
     }
 }
 ```
 
 To see all available options and actual documentation, please follow to:
 
-* `aem` - [AemExtension]()
+* `aem` - [AemExtension](src/main/kotlin/com/cognifide/gradle/aem/AemExtension.kt)
 * `package` - [PackageOptions](src/main/kotlin/com/cognifide/gradle/aem/common/pkg/PackageOptions.kt)
+* `instance` - [InstanceOptions](src/main/kotlin/com/cognifide/gradle/aem/common/instance/InstanceOptions.kt)
 * `bundle` - [BundleJar](src/main/kotlin/com/cognifide/gradle/aem/bundle/BundleJar.kt)
-
-* `localInstance` - [LocalInstanceOptions](src/main/kotlin/com/cognifide/gradle/aem/instance/LocalInstanceOptions.kt)
+* `localInstance` - [LocalInstanceManager](src/main/kotlin/com/cognifide/gradle/aem/instance/LocalInstanceManager.kt)
 * `environment` - [Environment](src/main/kotlin/com/cognifide/gradle/aem/environment/Environment.kt)
-* `fileTransfer` - [FileTransfer](src/main/kotlin/com/cognifide/gradle/aem/common/file/transfer/FileTransferManager.kt)
-
+* `fileTransfer` - [FileTransferManager](src/main/kotlin/com/cognifide/gradle/aem/common/file/transfer/FileTransferManager.kt)
 * `packageCompose` - [PackageCompose](src/main/kotlin/com/cognifide/gradle/aem/pkg/tasks/PackageCompose.kt)
 * `instanceSatisfy` - [InstanceSatisfy](src/main/kotlin/com/cognifide/gradle/aem/instance/satisfy/InstanceSatisfy.kt)
 * `...` - other tasks in similar way.
@@ -322,12 +339,12 @@ Instances could be defined in two ways, via:
 
 The configuration could be specified through *gradle.properties* file using dedicated syntax.
 
-`instance.$ENVIRONMENT-$TYPE_NAME.$PROP_NAME=$PROP_VALUE`
+`instance.$ENVIRONMENT-$ID.$PROP_NAME=$PROP_VALUE`
 
 Part | Possible values | Description |
 --- | --- | --- |
 `$ENVIRONMENT` | `local`, `int`, `stg` etc | Environment name. |
-`$TYPE_NAME` | `author`, `publish`, `publish2`, etc | Combination of AEM instance type and semantic suffix useful when more than one of instance of same type is being configured. |
+`$ID` | `author`, `publish`, `publish2`, etc | Combination of AEM instance type and semantic suffix useful when more than one of instance of same type is being configured. |
 `$PROP_NAME=$PROP_VALUE` | **Local instances:** `httpUrl=http://admin:admin@localhost:4502`<br>`type=local`(or remote)<br>`password=foo`<br>`runModes=nosamplecontent`<br>`jvmOpts=-server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true`, `startOpts=...`<br>`debugPort=24502`.<br><br>**Remote instances:** `httpUrl`, `type`, `user`, `password`. | Run modes, JVM opts and start opts should be comma delimited. |
 
 
@@ -790,8 +807,6 @@ Then file at path *build/aem/debug/debug.json* with content below is being gener
         "regulars": [],
         "caches": []
       },
-      "dispatcherDistUrl": "http://download.macromedia.com/dispatcher/download/dispatcher-apache2.4-linux-x86_64-4.3.2.tar.gz",
-      "dispatcherModuleName": "*/dispatcher-apache*.so",
       "dockerRuntime": {
           "name": "desktop",
           "hostIp": "127.0.0.1"
@@ -1557,13 +1572,13 @@ Log files are stored under directory: *build/aem/instanceTail/${instance.name}/e
 
 ##### Tailing incidents
 
-By default, tailer is buffering cannonade of log entries of level *ERROR* and *WARN* in 5 seconds time window then interactively shows notification.
+By default, tailer is buffering cannonade of log entries of level *ERROR* in 5 seconds time window then interactively shows notification.
 Clicking on that notification will browse to incident log file created containing only desired exceptions. These incident files are stored under directory: *build/aem/instanceTail/${instance.name}/incidents/${timestamp}-error.log*.
 
 Which type of log entries are treated as a part of incident is determined by:
 
-* property `-Ptail.incidentLevels=[ERROR,WARN]`
-* wildcard exclusion rules defined in file which location is controlled by property `-Ptail.incidentFilterPath=aem/gradle/tail/incidentFilter.txt`
+* property `-Pinstance.tail.incidentLevels=[ERROR,WARN]`
+* wildcard exclusion rules defined in file which location is controlled by property `-Pinstance.tail.incidentFilter=aem/gradle/instanceTail/incidentFilter.txt`
 
 Sample content of  *incidentFilter.txt* file, which holds a fragments of log entries that will be treated as known issues (notifications will be no longer shown):
 
@@ -1586,7 +1601,8 @@ gradlew instanceTail -Pinstance.list=[http://admin:admin@192.168.1.1:4502,http:/
 
 ##### Standalone tailer tool
 
-Tailer could be used as standalone tool. Just download it from [here](dists/gradle-aem-tailer) (< 100 KB).
+Instance tailer could be used as standalone tool beside of e.g Maven based AEM application builds using [Content Package Maven Plugin](https://helpx.adobe.com/experience-manager/6-5/sites/developing/using/vlt-mavenplugin.html).
+Just download it from [here](dists/gradle-aem-tailer) (< 100 KB), extract anywhere on disk and run.
 
 ### Environment plugin
 
@@ -1676,12 +1692,6 @@ aem {
 }
 ```
 
-You can override this configuration in your build script or check docker services status using `docker service ls`:
-```
-ID                  NAME                MODE                REPLICAS            IMAGE               PORTS
-68jpi16eqmlq        aem_httpd           replicated          1/1                 httpd:2.4.39        *:80->80/tcp
-```
-
 #### Task `environmentUp`
 
 Turns on local AEM environment.
@@ -1712,10 +1722,10 @@ Common configuration like root of content for JCR package, should be defined in 
 
 ```kotlin
 allprojects {
-  plugins.withId("com.cognifide.aem.base") {
+  plugins.withId("com.cognifide.aem.common") {
     configure<AemExtension> {
         config {
-            packageRoot = file("src/main/aem") // overrides default dir named 'content'
+            contentDir = aem.project.file("src/main/aem") // overrides default dir named 'content'
         }
     }
   }
@@ -1731,7 +1741,7 @@ allprojects {
     }
   
     dependencies {
-        "compileOnly"("com.adobe.aem:uber-jar:6.4.0:obfuscated-apis") // and more
+        "compileOnly"("com.adobe.aem:uber-jar:${Build.AEM_VERSION}:apis") // and more
     }
   }
 }
@@ -1771,7 +1781,7 @@ Below snippet could be used to automatize creation of production content backups
 ```kotlin
 aem {
     tasks {
-        register("aemProdAuthorBackup") {
+        register("backupProductionAuthor") {
             doLast {
                 val pkg = aem.namedInstance("prod-author").sync {
                     downloadPackage {
@@ -1805,7 +1815,7 @@ To make an HTTP request to some AEM endpoint (servlet) simply write:
 ```kotlin
 aem {
     tasks {
-        register("aemHealthCheck") {
+        register("runHealthCheck") {
             doLast {
                 aem.sync {
                     http {
@@ -1827,7 +1837,7 @@ To parse endpoint response as [JSON](http://static.javadoc.io/com.jayway.jsonpat
 ```kotlin
 aem {
     tasks {
-        register("aemHealthCheck") {
+        register("runHealthCheck") {
             doLast {
                 aem.sync {
                     http {
@@ -1906,7 +1916,7 @@ To create new / update existing nodes to configure e.g replication agents write:
 ```kotlin
 aem {
     tasks {
-        register("migratePages") {
+        register("setupReplicationAgents") {
             description = "Corrects publish replication agent transport URI"
             doLast {
                 aem.sync {

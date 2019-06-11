@@ -5,11 +5,12 @@ import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.instance.local.BackupResolver
 import com.cognifide.gradle.aem.common.instance.local.QuickstartResolver
 import com.cognifide.gradle.aem.common.instance.local.Source
-import com.cognifide.gradle.aem.common.utils.Formats
 import com.cognifide.gradle.aem.common.utils.onEachApply
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 import java.io.Serializable
+import java.util.concurrent.TimeUnit
+import org.gradle.util.GFileUtils
 
 class LocalInstanceManager(private val aem: AemExtension) : Serializable {
 
@@ -25,11 +26,16 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
     var source = Source.of(aem.props.string("localInstance.source") ?: Source.AUTO.name)
 
     /**
+     * Maximum time to wait for status script response.
+     */
+    var scriptTimeout: Long = aem.props.long("localInstance.scriptTimeout") ?: TimeUnit.SECONDS.toMillis(5)
+
+    /**
      * Collection of files potentially needed to create instance
      */
     @get:JsonIgnore
     val sourceFiles: List<File>
-        get() = listOfNotNull(backupZip) + quickstart.allFiles
+        get() = listOfNotNull(backupZip) + quickstart.files
 
     /**
      * Path from which extra files for local AEM instances will be copied.
@@ -115,18 +121,16 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
     }
 
     fun createFromBackup(instances: List<LocalInstance>, backupZip: File) {
-        aem.logger.info("Extracting files from backup ZIP '$backupZip' to directory '$rootDir'")
+        aem.logger.info("Restoring instances from backup ZIP '$backupZip' to directory '$rootDir'")
 
-        val backupSize = Formats.size(backupZip)
+        GFileUtils.mkdirs(rootDir)
 
-        aem.progressIndicator {
-            message = "Extracting backup ZIP: ${backupZip.name}, size: $backupSize"
-
-            if (rootDir.exists()) {
-                rootDir.deleteRecursively()
+        aem.progress(instances.size) {
+            instances.onEachApply {
+                increment("Restoring instance '$name'") {
+                    FileOperations.zipUnpackDir(backupZip, id, rootDir)
+                }
             }
-            rootDir.mkdirs()
-            FileOperations.zipUnpack(backupZip, rootDir)
         }
 
         val missingInstances = instances.filter { !it.created }

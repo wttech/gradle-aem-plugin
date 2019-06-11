@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.common.instance.check
 
 import java.util.concurrent.TimeUnit
+import org.apache.commons.lang3.StringUtils
 
 @Suppress("MagicNumber")
 class EventsCheck(group: CheckGroup) : DefaultCheck(group) {
@@ -33,11 +34,15 @@ class EventsCheck(group: CheckGroup) : DefaultCheck(group) {
         if (unstable.isNotEmpty()) {
             statusLogger.error(
                     when (unstable.size) {
-                        1 -> "Event unstable '${unstable.first().topic}'"
+                        1 -> "Event unstable '${StringUtils.abbreviate(unstable.first().details, EVENT_DETAILS_LENGTH)}'"
                         else -> "Events unstable (${unstable.size})"
                     },
-                    "Events causing instability detected on $instance:\n${unstable.joinToString("\n")}"
+                    "Events causing instability (${unstable.size}) detected on $instance:\n${logValues(unstable)}"
             )
         }
+    }
+
+    companion object {
+        const val EVENT_DETAILS_LENGTH = 64
     }
 }

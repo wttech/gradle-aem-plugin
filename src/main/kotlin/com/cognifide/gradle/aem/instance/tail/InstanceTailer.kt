@@ -65,7 +65,7 @@ class InstanceTailer(val aem: AemExtension) {
      * Changes in that file are automatically considered (tailer restart is not required).
      */
     var incidentFilter: File = aem.props.string("instance.tail.incidentFilter")?.let { aem.project.file(it) }
-            ?: File(aem.configCommonDir, "tail/incidentFilter.txt")
+            ?: File(aem.configCommonDir, "instanceTail/incidentFilter.txt")
 
     /**
      * Time window in which exceptions will be aggregated and reported as single incident.
@@ -136,6 +136,7 @@ class InstanceTailer(val aem: AemExtension) {
 
         val logFile = logFiles.main(instance.name)
         aem.logger.lifecycle("Tailing logs to file: $logFile")
+        aem.logger.lifecycle("Filter incidents using file: $incidentFilter")
 
         return LogTailer(source, destination, logAnalyzerChannel)
     }

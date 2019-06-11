@@ -38,7 +38,7 @@ class ComponentsCheck(group: CheckGroup) : DefaultCheck(group) {
                         in 2..10 -> "Components inactive (${inactive.size})"
                         else -> "Components inactive (${Formats.percentExplained(inactive.size, total)})"
                     },
-                    "Inactive components detected on $instance:\n${inactive.joinToString("\n")}"
+                    "Inactive components detected on $instance:\n${logValues(inactive)}"
             )
         }
 
@@ -50,7 +50,7 @@ class ComponentsCheck(group: CheckGroup) : DefaultCheck(group) {
                         in 2..10 -> "Components failed (${failed.size})"
                         else -> "Components failed (${Formats.percentExplained(failed.size, total)})"
                     },
-                    "Components with failed activation detected on $instance:\n${failed.joinToString("\n")}"
+                    "Components with failed activation detected on $instance:\n${logValues(failed)}"
             )
         }
 
@@ -62,7 +62,7 @@ class ComponentsCheck(group: CheckGroup) : DefaultCheck(group) {
                         in 2..10 -> "Components unsatisfied (${unsatisfied.size})"
                         else -> "Components unsatisified (${Formats.percentExplained(unsatisfied.size, total)})"
                     },
-                    "Unsatisfied components detected on $instance:\n${unsatisfied.joinToString("\n")}"
+                    "Unsatisfied components detected on $instance:\n${logValues(unsatisfied)}"
             )
         }
     }

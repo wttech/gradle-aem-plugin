@@ -4,7 +4,6 @@ import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.file.resolver.FileResolver
-import com.cognifide.gradle.aem.common.utils.Patterns
 import com.cognifide.gradle.aem.environment.docker.base.CygPath
 import com.cognifide.gradle.aem.environment.docker.base.DockerRuntime
 import com.cognifide.gradle.aem.environment.docker.base.runtime.Toolbox
@@ -52,39 +51,16 @@ class Environment(@JsonIgnore val aem: AemExtension) : Serializable {
      */
     val directories = DirectoryOptions(this)
 
+    private val distributionsResolver = FileResolver(aem, AemTask.temporaryDir(aem.project, "environment", DISTRIBUTIONS_DIR))
+
     /**
      * Allows to provide remote files to Docker containers by mounted volumes.
      */
-    @JsonIgnore
-    val distributionsResolver = FileResolver(aem, AemTask.temporaryDir(aem.project, "environment", DISTRIBUTIONS_DIR))
+    fun distributions(options: FileResolver.() -> Unit) {
+        distributionsResolver.apply(options)
+    }
 
-    /**
-     * URI pointing to Dispatcher distribution TAR file.
-     */
-    var dispatcherDistUrl = aem.props.string("environment.dispatcher.distUrl")
-            ?: "http://download.macromedia.com/dispatcher/download/dispatcher-apache2.4-linux-x86_64-4.3.2.tar.gz"
-
-    var dispatcherModuleName = aem.props.string("environment.dispatcher.moduleName")
-            ?: "*/dispatcher-apache*.so"
-
-    @get:JsonIgnore
-    val dispatcherModuleSourceFile: File
-        get() {
-            if (dispatcherDistUrl.isBlank()) {
-                throw EnvironmentException("Dispatcher distribution URL needs to be configured in property" +
-                        " 'aem.env.dispatcher.distUrl' in order to use AEM environment.")
-            }
-
-            val tarFile = distributionsResolver.download(dispatcherDistUrl).file
-            val tarTree = aem.project.tarTree(tarFile)
-
-            return tarTree.find { Patterns.wildcard(it, dispatcherModuleName) }
-                    ?: throw EnvironmentException("Dispatcher distribution seems to be invalid." +
-                            " Cannot find file matching '$dispatcherModuleName' in '$tarFile'")
-        }
-
-    val dispatcherModuleFile: File
-        get() = File(rootDir, "$DISTRIBUTIONS_DIR/mod_dispatcher.so")
+    fun distributionFile(path: String) = File(rootDir, "$DISTRIBUTIONS_DIR/$path")
 
     val dockerRuntime: DockerRuntime = DockerRuntime.determine(aem)
 
@@ -166,9 +142,8 @@ class Environment(@JsonIgnore val aem: AemExtension) : Serializable {
     }
 
     private fun provideFiles() {
-        if (!dispatcherModuleFile.exists()) {
-            GFileUtils.copyFile(dispatcherModuleSourceFile, dispatcherModuleFile)
-        }
+        aem.logger.info("Resolving distribution files")
+        aem.logger.info("Resolved distribution files:\n${distributionsResolver.allFiles.joinToString("\n")}")
     }
 
     private fun syncDockerComposeFile() {

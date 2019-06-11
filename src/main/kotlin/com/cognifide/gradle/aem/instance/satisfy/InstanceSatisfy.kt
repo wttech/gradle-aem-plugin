@@ -49,11 +49,18 @@ open class InstanceSatisfy : PackageDeploy() {
     var listRetry = aem.retry { afterSquaredSecond(aem.props.long("instance.satisfy.listRetry") ?: 4) }
 
     /**
+     * Path in which downloaded CRX packages will be stored.
+     */
+    @Internal
+    var downloadDir = aem.props.string("instance.satisfy.downloadDir")?.let { aem.project.file(it) }
+            ?: AemTask.temporaryDir(project, name, "download")
+
+    /**
      * Provides a packages from local and remote sources.
      * Handles automatic wrapping OSGi bundles to CRX packages.
      */
     @Nested
-    val packageProvider = PackageResolver(aem, AemTask.temporaryDir(project, name, DOWNLOAD_DIR))
+    val packageProvider = PackageResolver(aem, downloadDir)
 
     @get:Internal
     val outputDirs: List<File>
@@ -207,7 +214,5 @@ open class InstanceSatisfy : PackageDeploy() {
 
     companion object {
         const val NAME = "instanceSatisfy"
-
-        const val DOWNLOAD_DIR = "download"
     }
 }

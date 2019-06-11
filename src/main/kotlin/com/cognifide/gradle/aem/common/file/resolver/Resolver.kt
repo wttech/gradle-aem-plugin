@@ -6,7 +6,6 @@ import com.cognifide.gradle.aem.common.file.FileException
 import com.cognifide.gradle.aem.common.file.transfer.http.HttpFileTransfer
 import com.cognifide.gradle.aem.common.file.transfer.sftp.SftpFileTransfer
 import com.cognifide.gradle.aem.common.file.transfer.smb.SmbFileTransfer
-import com.cognifide.gradle.aem.common.utils.Formats
 import com.google.common.hash.HashCode
 import java.io.File
 import java.util.*
@@ -14,7 +13,6 @@ import org.apache.commons.io.FilenameUtils
 import org.apache.commons.lang3.builder.HashCodeBuilder
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.tasks.Internal
-import org.gradle.util.GFileUtils
 
 /**
  * File downloader with groups supporting files from multiple sources: local and remote (SFTP, SMB, HTTP).
@@ -38,15 +36,23 @@ val downloadDir: File
     val groups: List<G>
         get() = groupsDefined.filter { it.resolutions.isNotEmpty() }
 
-    fun outputDirs(filter: G.() -> Boolean = { true }): List<File> {
+    @get:Internal
+    val outputDirs: List<File>
+        get() = outputDirs { true }
+
+    fun outputDirs(filter: G.() -> Boolean): List<File> {
         return groups.filter(filter).flatMap { it.dirs }
     }
 
-    fun allFiles(filter: G.() -> Boolean = { true }): List<File> {
+    @get:Internal
+    val allFiles: List<File>
+        get() = allFiles { true }
+
+    fun allFiles(filter: G.() -> Boolean): List<File> {
         return resolveGroups(filter).flatMap { it.files }
     }
 
-    fun resolveGroups(filter: G.() -> Boolean = { true }): List<G> {
+    fun resolveGroups(filter: G.() -> Boolean): List<G> {
         return groups.filter(filter).onEach { it.files }
     }
 
@@ -59,7 +65,7 @@ val downloadDir: File
      * Resolve file by dependency notation using defined Gradle repositories (Maven, Ivy etc).
      */
     fun resolve(notation: Any): FileResolution {
-        return groupFile(notation) {
+        return resolveFile(notation) {
             val configName = "fileResolver_dependency_${UUID.randomUUID()}"
             val configOptions: (Configuration) -> Unit = { it.isTransitive = false }
             val config = project.configurations.create(configName, configOptions)
@@ -86,7 +92,7 @@ val downloadDir: File
      * To use many remote servers with different settings, simply use dedicated methods 'download[Http/Sftp/Smb]'
      * when declaring each file to be downloaded.
      */
-    fun download(url: String): FileResolution = groupDownload(url) { aem.fileTransfer.download(url, it) }
+    fun download(url: String): FileResolution = resolveFileUrl(url) { aem.fileTransfer.download(url, it) }
 
     /**
      * Download file using HTTP file transfer with custom settings (like basic auth credentials).
@@ -94,7 +100,7 @@ val downloadDir: File
      * Use only when using more than one remote HTTP server to download files.
      */
     fun downloadHttp(url: String, options: HttpFileTransfer.() -> Unit): FileResolution {
-        return groupDownload(url) { aem.httpFile { options(); download(url, it) } }
+        return resolveFileUrl(url) { aem.httpFile { options(); download(url, it) } }
     }
 
     /**
@@ -103,7 +109,7 @@ val downloadDir: File
      * Use only when using more than one remote SFTP server to download files.
      */
     fun downloadSftp(url: String, options: SftpFileTransfer.() -> Unit): FileResolution {
-        return groupDownload(url) { aem.sftpFile { options(); download(url, it) } }
+        return resolveFileUrl(url) { aem.sftpFile { options(); download(url, it) } }
     }
 
     /**
@@ -112,7 +118,7 @@ val downloadDir: File
      * Use only when using more than one remote SMB server to download files.
      */
     fun downloadSmb(url: String, options: SmbFileTransfer.() -> Unit): FileResolution {
-        return groupDownload(url) { aem.smbFile { options(); download(url, it) } }
+        return resolveFileUrl(url) { aem.smbFile { options(); download(url, it) } }
     }
 
     /**
@@ -126,7 +132,7 @@ val downloadDir: File
      * Use local file directly (without copying).
      */
     fun useLocal(sourceFile: File): FileResolution {
-        return groupFile(sourceFile.absolutePath) { sourceFile }
+        return resolveFile(sourceFile.absolutePath) { sourceFile }
     }
 
     /**
@@ -150,40 +156,17 @@ val downloadDir: File
 
     abstract fun createGroup(name: String): G
 
-    protected open fun groupFile(hash: Any, resolver: (FileResolution) -> File): FileResolution {
+    private fun resolveFile(hash: Any, resolver: (FileResolution) -> File): FileResolution {
         val id = HashCode.fromInt(HashCodeBuilder().append(hash).toHashCode()).toString()
 
         return groupCurrent.resolve(id, resolver)
     }
 
-    private fun downloadFile(url: String, targetDir: File, downloader: (File) -> Unit): File {
-        GFileUtils.mkdirs(targetDir)
-
-        val file = File(targetDir, FilenameUtils.getName(url))
-        val lock = File(targetDir, DOWNLOAD_LOCK)
-        if (!lock.exists() && file.exists()) {
-            file.delete()
-        }
-
-        if (!file.exists()) {
-            downloader(file)
-            lock.printWriter().use { it.print(Formats.toJson(mapOf("downloaded" to Formats.date()))) }
-        }
-
-        return file
-    }
-
-    private fun groupDownload(url: String, downloader: (File) -> Unit): FileResolution {
-        return groupFile(url) { resolution ->
-            downloadFile(url, resolution.dir) { file ->
-                downloader(file)
-            }
-        }
+    private fun resolveFileUrl(url: String, resolver: (File) -> Unit): FileResolution {
+        return resolveFile(url) { File(it.dir, FilenameUtils.getName(url)).apply { resolver(this) } }
     }
 
     companion object {
         const val GROUP_DEFAULT = "default"
-
-        const val DOWNLOAD_LOCK = "download.lock"
     }
 }

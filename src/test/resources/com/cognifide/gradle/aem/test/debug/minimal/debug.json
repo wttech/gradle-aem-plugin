@@ -124,6 +124,7 @@
     "localInstanceManager" : {
       "rootDir" : "*/minimal/.aem/instance",
       "source" : "AUTO",
+      "scriptTimeout": 5000,
       "overridesDir" : "*/minimal/gradle/instance",
       "expandFiles" : [
         "**/start.bat",
@@ -134,12 +135,15 @@
       "expandProperties" : { },
       "quickstart": {
         "jarUrl": null,
-        "licenseUrl": null
+        "licenseUrl": null,
+        "downloadDir": "*/minimal/build/aem/instance/quickstart"
       },
       "backup": {
         "uploadUrl": null,
         "downloadUrl": null,
-        "downloadDir": "*/minimal/build/aem/instanceBackup/remote"
+        "remoteDir": "*/minimal/build/aem/instanceBackup/remote",
+        "localDir": "*/minimal/build/aem/instanceBackup/local",
+        "suffix": ".backup.zip"
       }
     },
     "environment" : {
@@ -148,8 +152,6 @@
         "regulars" : [ ],
         "caches" : [ ]
       },
-      "dispatcherDistUrl" : "http://download.macromedia.com/dispatcher/download/dispatcher-apache2.4-linux-x86_64-4.3.2.tar.gz",
-      "dispatcherModuleName" : "*/dispatcher-apache*.so",
       "dockerRuntime" : {
         "name": "desktop",
         "hostIp": "127.0.0.1"
@@ -162,7 +164,6 @@
       "dockerComposeFile" : "*/minimal/.aem/environment/docker-compose.yml",
       "dockerConfigPath" : "*/minimal/gradle/environment",
       "dockerRootPath" : "*/minimal/.aem/environment",
-      "dispatcherModuleFile" : "*/minimal/.aem/environment/distributions/mod_dispatcher.so",
       "httpdConfDir" : "*/minimal/gradle/environment/httpd/conf",
       "created" : false
     },

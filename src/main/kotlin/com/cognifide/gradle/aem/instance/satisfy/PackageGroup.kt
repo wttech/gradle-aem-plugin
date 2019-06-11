@@ -6,9 +6,7 @@ import com.cognifide.gradle.aem.common.instance.InstanceSync
 import java.io.File
 import org.gradle.api.tasks.Input
 
-class PackageGroup(val resolver: PackageResolver, name: String) : FileGroup(resolver.downloadDir, name) {
-
-    private val aem = resolver.aem
+class PackageGroup(val resolver: PackageResolver, name: String) : FileGroup(resolver.aem, resolver.downloadDir, name) {
 
     /**
      * Forces to upload and install package again regardless its state on instances (already uploaded / installed).

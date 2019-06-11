@@ -3,7 +3,7 @@ package com.cognifide.gradle.aem.common.instance.local
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.file.FileException
 import com.cognifide.gradle.aem.common.file.transfer.FileEntry
-import com.cognifide.gradle.aem.instance.tasks.InstanceBackup
+import com.cognifide.gradle.aem.common.utils.Formats
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 
@@ -20,16 +20,17 @@ class BackupResolver(private val aem: AemExtension) {
     var downloadUrl = aem.props.string("localInstance.backup.downloadUrl")
 
     /**
-     * Directory storing downloaded remote backup files.
-     */
-    var downloadDir: File = aem.temporaryDir("instanceBackup/remote")
-
-    /**
      * Backup file from any source (local & remote sources).
      */
     @get:JsonIgnore
     val any: File?
         get() = resolve(localSources + remoteSources)
+
+    /**
+     * Directory storing locally created backup files.
+     */
+    var localDir: File = aem.props.string("localInstance.backup.localDir")?.let { aem.project.file(it) }
+            ?: aem.temporaryDir("instanceBackup/local")
 
     /**
      * Backup file from local source.
@@ -39,11 +40,29 @@ class BackupResolver(private val aem: AemExtension) {
         get() = resolve(localSources)
 
     /**
+     * Directory storing downloaded remote backup files.
+     */
+    var remoteDir: File = aem.props.string("localInstance.backup.remoteDir")?.let { aem.project.file(it) }
+            ?: aem.temporaryDir("instanceBackup/remote")
+
+    /**
      * Backup file from remote source.
      */
     @get:JsonIgnore
     val remote: File?
         get() = resolve(remoteSources)
+
+    /**
+     * File suffix indicating instance backup file.
+     */
+    var suffix = aem.props.string("localInstance.backup.suffix") ?: ".backup.zip"
+
+    /**
+     * Defines backup file naming rule.
+     * Must be in sync with selector rule.
+     */
+    @get:JsonIgnore
+    var namer: () -> String = { "${aem.project.rootProject.name}-${ Formats.dateFileName()}-${aem.project.version}$suffix" }
 
     /**
      * Defines backup source selection rule.
@@ -65,7 +84,7 @@ class BackupResolver(private val aem: AemExtension) {
     private fun resolve(sources: List<BackupSource>): File? = sources.run { selector(this) }?.file
 
     private val localSources: List<BackupSource>
-        get() = aem.tasks.named<InstanceBackup>(InstanceBackup.NAME).get().available.map { file ->
+        get() = (localDir.listFiles { _, name -> name.endsWith(suffix) } ?: arrayOf()).map { file ->
             BackupSource(BackupType.LOCAL, FileEntry.of(file)) { file }
         }
 
@@ -76,15 +95,15 @@ class BackupResolver(private val aem: AemExtension) {
                 val name = downloadUrl!!.substringAfterLast("/")
 
                 val fileEntry = try {
-                    aem.fileTransfer.stat(dirUrl, name)
+                    aem.fileTransfer.stat(dirUrl, name) // 'stat' may be unsupported
                 } catch (e: FileException) {
                     aem.logger.debug("Cannot check instance backup file status at URL '$dirUrl/$name'", e)
-                    FileEntry(name) // 'stat' may be unsupported by some file transfers like 'http', 'url'
+                    FileEntry(name)
                 }
 
                 if (fileEntry != null) {
                     listOf(BackupSource(BackupType.REMOTE, fileEntry) {
-                        File(downloadDir, name).apply { remoteSourceDownload(dirUrl, name) }
+                        File(remoteDir, name).apply { aem.fileTransfer.downloadFrom(dirUrl, name, this) }
                     })
                 } else {
                     aem.logger.info("Instance backup at URL '$dirUrl/$name' is not available.")
@@ -99,19 +118,10 @@ class BackupResolver(private val aem: AemExtension) {
 
                 fileEntries.map { file ->
                     BackupSource(BackupType.REMOTE, file) {
-                        File(downloadDir, file.name).apply { remoteSourceDownload(uploadUrl!!, file.name) }
+                        File(remoteDir, file.name).apply { aem.fileTransfer.downloadFrom(uploadUrl!!, name, this) }
                     }
                 }
             }
             else -> listOf()
         }
-
-    private fun File.remoteSourceDownload(dirUrl: String, name: String) {
-        if (!exists()) {
-            aem.logger.info("Downloading remote backup from URL '$dirUrl/$name' to file '$this'")
-            aem.fileTransfer.downloadFrom(dirUrl, name, this)
-        } else {
-            aem.logger.info("Reusing previously downloaded remote backup from URL '$dirUrl/$name' to file '$this'")
-        }
-    }
 }

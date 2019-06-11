@@ -1,7 +1,9 @@
 package com.cognifide.gradle.aem.common.file.transfer
 
+import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.file.FileException
+import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.file.transfer.generic.CustomFileTransfer
 import com.cognifide.gradle.aem.common.file.transfer.generic.LocalFileTransfer
 import com.cognifide.gradle.aem.common.file.transfer.generic.UrlFileTransfer
@@ -11,7 +13,15 @@ import com.cognifide.gradle.aem.common.file.transfer.smb.SmbFileTransfer
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 import org.apache.commons.io.FilenameUtils
+import org.gradle.util.GFileUtils
 
+/**
+ * Facade for transferring files over multiple protocols HTTP/SFTP/SMB and custom.
+ *
+ * Handles locking files for avoiding uncompleted downloads.
+ * Prevents unnecessary download if file on local server already exist.
+ * Prevents unnecessary uploads if file on remote servers already exist.
+ */
 class FileTransferManager(private val aem: AemExtension) : FileTransfer {
 
     @JsonIgnore
@@ -49,7 +59,7 @@ class FileTransferManager(private val aem: AemExtension) : FileTransfer {
 
     private val custom = mutableListOf<CustomFileTransfer>()
 
-    private val all = (custom + arrayOf(http, sftp, smb, url, local)).filter { it.enabled }
+    private val all get() = (custom + arrayOf(http, sftp, smb, url, local)).filter { it.enabled }
 
     /**
      * Downloads file from specified URL to temporary directory with preserving file name.
@@ -59,12 +69,33 @@ class FileTransferManager(private val aem: AemExtension) : FileTransfer {
     /**
      * Downloads file of given name from directory at specified URL.
      */
-    override fun downloadFrom(dirUrl: String, fileName: String, target: File) = handling(dirUrl).downloadFrom(dirUrl, fileName, target)
+    override fun downloadFrom(dirUrl: String, fileName: String, target: File) {
+        if (target.exists()) {
+            aem.logger.info("Downloading file from URL '$dirUrl/$fileName' to '$target' skipped as of it already exists.")
+            return
+        }
+
+        GFileUtils.mkdirs(target.parentFile)
+        FileOperations.lockOperation(target) { handling(dirUrl).downloadFrom(dirUrl, fileName, it) }
+    }
 
     /**
      * Uploads file to directory at specified URL and set given name.
      */
-    override fun uploadTo(dirUrl: String, fileName: String, source: File) = handling(dirUrl).uploadTo(dirUrl, fileName, source)
+    override fun uploadTo(dirUrl: String, fileName: String, source: File) {
+        val fileUrl = "$dirUrl/$fileName"
+
+        try {
+            if (stat(dirUrl, fileName) != null) { // 'stat' may be unsupported
+                aem.logger.info("Uploading file to URL '$fileUrl' skipped as of it already exists on server.")
+                return
+            }
+        } catch (e: AemException) {
+            aem.logger.debug("Cannot check status of uploaded file at URL '$fileUrl'", e)
+        }
+
+        handling(dirUrl).uploadTo(dirUrl, fileName, source)
+    }
 
     /**
      * Lists files in directory available at specified URL.
