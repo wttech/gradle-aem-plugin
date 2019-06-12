@@ -63,4 +63,6 @@ class CheckGroup(
     fun timeout(options: TimeoutCheck.() -> Unit) = TimeoutCheck(this).apply(options)
 
     fun unavailable(options: UnavailableCheck.() -> Unit) = UnavailableCheck(this).apply(options)
+
+    fun unchanged(options: UnchangedCheck.() -> Unit) = UnchangedCheck(this).apply(options)
 }

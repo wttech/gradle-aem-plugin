@@ -111,7 +111,7 @@ open class PackageDeploy : PackageTask() {
     open fun deploy() {
         aem.progress(instances.size * packages.size) {
             aem.syncPackages(instances, packages) { pkg ->
-                increment("${pkg.name} -> ${instance.name}") {
+                increment("Deploying package '${pkg.name}' to instance '${instance.name}'") {
                     initializer()
 
                     if (distributed) {

@@ -11,9 +11,9 @@ import java.util.concurrent.TimeUnit
 class AwaitDownAction(aem: AemExtension) : LocalInstanceAction(aem) {
 
     private var timeoutOptions: TimeoutCheck.() -> Unit = {
-        state = aem.props.long("instance.awaitDown.timeout.state")
+        stateTime = aem.props.long("instance.awaitDown.timeout.stateTime")
                 ?: TimeUnit.MINUTES.toMillis(2)
-        constant = aem.props.long("instance.awaitDown.timeout.constant")
+        constantTime = aem.props.long("instance.awaitDown.timeout.constantTime")
                 ?: TimeUnit.MINUTES.toMillis(10)
     }
 
@@ -30,15 +30,24 @@ class AwaitDownAction(aem: AemExtension) : LocalInstanceAction(aem) {
         unavailableOptions = options
     }
 
+    private var unchangedOptions: UnchangedCheck.() -> Unit = {
+        awaitTime = aem.props.long("instance.awaitDown.unchanged.awaitTime")
+                ?: TimeUnit.SECONDS.toMillis(3)
+    }
+
+    fun unchanged(options: UnchangedCheck.() -> Unit) {
+        unchangedOptions = options
+    }
+
     private val runner = CheckRunner(aem).apply {
-        wait = aem.props.long("instance.awaitDown.wait") ?: TimeUnit.SECONDS.toMillis(5)
         delay = aem.props.long("instance.awaitDown.delay") ?: TimeUnit.SECONDS.toMillis(1)
         verbose = aem.props.boolean("instance.awaitDown.verbose") ?: true
 
         checks {
             listOf(
                     timeout(timeoutOptions),
-                    unavailable(unavailableOptions)
+                    unavailable(unavailableOptions),
+                    unchanged(unchangedOptions)
             )
         }
     }

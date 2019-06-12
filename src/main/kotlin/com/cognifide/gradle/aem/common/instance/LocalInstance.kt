@@ -287,6 +287,12 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
         } catch (e: InstanceException) {
             throw InstanceException("Instance stop script failed!", e)
         }
+
+        try {
+            sync.osgiFramework.stop()
+        } catch (e: InstanceException) {
+            // ignore, fallback for sure
+        }
     }
 
     @get:JsonIgnore

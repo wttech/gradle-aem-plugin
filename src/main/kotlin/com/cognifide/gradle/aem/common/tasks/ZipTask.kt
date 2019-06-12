@@ -15,7 +15,7 @@ open class ZipTask : Base(), AemTask {
 
     @Internal
     var copyProgress: ProgressIndicator.() -> Unit = {
-        update("Creating ZIP file: ${archiveFileName.get()}, current size: ${Formats.size(archiveFile.get().asFile)}")
+        update("Creating ZIP file: ${archiveFileName.get()} (${Formats.size(archiveFile.get().asFile)})")
     }
 
     init {
@@ -26,7 +26,7 @@ open class ZipTask : Base(), AemTask {
     @TaskAction
     override fun copy() {
         aem.progressIndicator {
-            updater = copyProgress
+            updater(copyProgress)
             super.copy()
             logger.info("ZIP file created: ${archiveFile.get().asFile}")
         }
