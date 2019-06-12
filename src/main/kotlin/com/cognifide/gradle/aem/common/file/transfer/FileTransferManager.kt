@@ -76,7 +76,7 @@ class FileTransferManager(private val aem: AemExtension) : FileTransfer {
 
         GFileUtils.mkdirs(target.parentFile)
 
-        val tmp = File(target.parentFile, "${target.name}.tmp")
+        val tmp = File(target.parentFile, "${target.name}$TMP_SUFFIX")
         if (tmp.exists() ) {
             tmp.delete()
         }
@@ -182,5 +182,7 @@ class FileTransferManager(private val aem: AemExtension) : FileTransfer {
 
     companion object {
         const val NAME = "manager"
+
+        const val TMP_SUFFIX = ".tmp"
     }
 }

@@ -138,7 +138,7 @@ open class InstanceSatisfy : PackageDeploy() {
 
     @Suppress("ComplexMethod")
     private fun ProgressIndicator.satisfyGroup(group: PackageGroup) {
-        step = group.name
+        step = "Satisfying '${group.name}'"
 
         aem.logger.info("Satisfying group of packages '${group.name}'.")
 

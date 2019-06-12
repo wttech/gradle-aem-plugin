@@ -18,11 +18,12 @@ class FileDownloader(private val aem: AemExtension) {
 
         val processedKb = processedBytes / KILOBYTE
         if (processedKb > loggedKb) {
+            val fileName = file.name.removeSuffix(FileTransferManager.TMP_SUFFIX)
             val msg = if (fullLength > 0) {
-                "$operation: ${file.name} | ${Formats.bytesToHuman(processedBytes)}/${Formats.bytesToHuman(fullLength)}"
+                "$operation: $fileName | ${Formats.bytesToHuman(processedBytes)}/${Formats.bytesToHuman(fullLength)}"
                         .plus(" (${Formats.percent(processedBytes, fullLength)})")
             } else {
-                "$operation: ${file.name} | ${Formats.bytesToHuman(processedBytes)}"
+                "$operation: $fileName | ${Formats.bytesToHuman(processedBytes)}"
             }
 
             progress(msg)
