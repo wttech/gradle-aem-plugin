@@ -52,10 +52,10 @@ abstract class DefaultCheck(protected val group: CheckGroup) : Check {
     fun <T : Any> state(value: T) = value.also { group.state(it) }
 
     val stateTime: Long
-        get() = runner.stateTime(instance)
+        get() = runner.progress(instance).stateTime
 
     val stateChanged: Boolean
-        get() = runner.stateChanged(instance)
+        get() = runner.progress(instance).stateChanged
 
     fun logValues(values: Collection<Any>): String {
         val other = values.size - LOG_VALUES_COUNT

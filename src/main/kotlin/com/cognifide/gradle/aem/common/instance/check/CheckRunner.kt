@@ -18,6 +18,15 @@ class CheckRunner(internal val aem: AemExtension) {
         checks = definitions
     }
 
+    private var progresses: Map<Instance, CheckProgress> = mapOf()
+
+    /**
+     * Get current checking progress of concrete instance.
+     */
+    fun progress(instance: Instance): CheckProgress {
+        return progresses[instance] ?: throw InstanceException("No progress available for instance '${instance.name}'!")
+    }
+
     /**
      * How long to wait before running checks.
      */
@@ -59,19 +68,16 @@ class CheckRunner(internal val aem: AemExtension) {
      */
     var logInstantly = aem.logger.isInfoEnabled
 
-    private val currentChecks = mutableMapOf<Instance, CheckGroup>()
-
-    private var previousChecks = mapOf<Instance, CheckGroup>()
-
-    private var stateWatches = mutableMapOf<Instance, StopWatch>()
-
     @Suppress("ComplexMethod")
     fun check(instances: Collection<Instance>) {
+        progresses = instances
+                .fold(mutableMapOf<Instance, CheckProgress>()) { r, i -> r[i] = CheckProgress() ; r }
+                .toSortedMap(compareBy { it.name })
+
         aem.progressIndicator {
             updater = {
-                val instanceSummaries = currentChecks.toSortedMap(compareBy { it.name })
-                        .map { (instance, checks) -> "${instance.name}: ${checks.summary}" }
-                update(instanceSummaries.joinToString(" | "))
+                val summaries = progresses.map { (i, c) -> "${i.name}: ${c.currentCheck?.summary ?: "In progress"}" }
+                update(summaries.joinToString(" | "))
             }
 
             step = "Waiting"
@@ -82,9 +88,16 @@ class CheckRunner(internal val aem: AemExtension) {
             runningWatch.start()
 
             aem.parallel.each(instances) { instance ->
-                stateWatches[instance] = StopWatch().apply { start() }
+                val progress = progresses[instance]!!
+
+                progress.stateWatch.start()
 
                 do {
+                    if (aborted) {
+                        aem.logger.info("Checking aborted for $instance")
+                        break
+                    }
+
                     val checks = CheckGroup(this@CheckRunner, instance, checks).apply {
                         check()
                         if (logInstantly) {
@@ -92,15 +105,17 @@ class CheckRunner(internal val aem: AemExtension) {
                         }
                     }
 
-                    currentChecks[instance] = checks
+                    progress.currentCheck = checks
 
-                    if (stateChanged(instance)) {
-                        stateWatches[instance]?.apply { reset(); start() }
+                    if (progress.stateChanged) {
+                        progress.stateChanges++
+                        progress.stateWatch.apply { reset(); start() }
                     }
 
-                    previousChecks = currentChecks.toMap()
+                    progress.previousCheck = progress.currentCheck
 
-                    if (checks.done || aborted) {
+                    if (checks.done) {
+                        aem.logger.info("Checking done for $instance")
                         break
                     }
 
@@ -110,23 +125,19 @@ class CheckRunner(internal val aem: AemExtension) {
 
             runningWatch.stop()
 
-            step = "Aborting"
+            if (aborted) {
+                step = "Aborting"
 
-            if (aborted && verbose) {
                 if (!logInstantly) {
-                    currentChecks.values.forEach { it.log() }
+                    progresses.values.forEach { it.currentCheck?.log() }
                 }
-                abortCause?.let { throw it }
+
+                if (verbose) {
+                    abortCause?.let { throw it }
+                } else {
+                    aem.logger.error("Checking error", abortCause)
+                }
             }
         }
     }
-
-    fun stateChanged(instance: Instance): Boolean {
-        val current = currentChecks[instance] ?: return true
-        val previous = previousChecks[instance] ?: return true
-
-        return current.state != previous.state
-    }
-
-    fun stateTime(instance: Instance): Long = stateWatches[instance]?.time ?: -1L
 }
