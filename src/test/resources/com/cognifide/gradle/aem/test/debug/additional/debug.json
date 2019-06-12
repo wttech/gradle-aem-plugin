@@ -285,7 +285,7 @@
       }
     },
     "localInstanceManager" : {
-      "rootDir" : "*/additional/.aem/instance",
+      "rootDir" : "*/additional/.instance",
       "source" : "AUTO",
       "scriptTimeout": 5000,
       "overridesDir" : "*/additional/gradle/instance",
@@ -310,14 +310,14 @@
       }
     },
     "environment" : {
-      "rootDir" : "*/additional/.aem/environment",
+      "rootDir" : "*/additional/.environment",
       "directories" : {
         "regulars" : [
-          "*/additional/.aem/environment/httpd/logs"
+          "*/additional/.environment/httpd/logs"
         ],
         "caches" : [
-          "*/additional/.aem/environment/httpd/cache/content/example/live",
-          "*/additional/.aem/environment/httpd/cache/content/example/demo"
+          "*/additional/.environment/httpd/cache/content/example/live",
+          "*/additional/.environment/httpd/cache/content/example/demo"
         ]
       },
       "dockerRuntime" : {
@@ -346,9 +346,9 @@
       },
       "configDir" : "*/additional/gradle/environment",
       "dockerComposeSourceFile" : "*/additional/gradle/environment/docker-compose.yml.peb",
-      "dockerComposeFile" : "*/additional/.aem/environment/docker-compose.yml",
+      "dockerComposeFile" : "*/additional/.environment/docker-compose.yml",
       "dockerConfigPath" : "*/additional/gradle/environment",
-      "dockerRootPath" : "*/additional/.aem/environment",
+      "dockerRootPath" : "*/additional/.environment",
       "httpdConfDir" : "*/additional/gradle/environment/httpd/conf",
       "created" : false
     },

@@ -288,10 +288,10 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
         return all.filter { instance ->
             when {
                 props.flag("instance.authors") -> {
-                    Patterns.wildcard(instance.name, "$env-${InstanceType.AUTHOR}*")
+                    Patterns.wildcard(instance.name, "$env-${IdType.AUTHOR}*")
                 }
                 props.flag("instance.publishers") -> {
-                    Patterns.wildcard(instance.name, "$env-${InstanceType.PUBLISH}*")
+                    Patterns.wildcard(instance.name, "$env-${IdType.PUBLISH}*")
                 }
                 else -> Patterns.wildcard(instance.name, nameMatcher)
             }
@@ -303,7 +303,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
      */
     @get:JsonIgnore
     val authorInstances: List<Instance>
-        get() = filterInstances().filter { it.type == InstanceType.AUTHOR }
+        get() = filterInstances().filter { it.type == IdType.AUTHOR }
 
     /**
      * Work in parallel with all author instances running on current environment.
@@ -315,7 +315,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
      */
     @get:JsonIgnore
     val publishInstances: List<Instance>
-        get() = filterInstances().filter { it.type == InstanceType.PUBLISH }
+        get() = filterInstances().filter { it.type == IdType.PUBLISH }
 
     /**
      * Work in parallel with all publish instances running on current environment.

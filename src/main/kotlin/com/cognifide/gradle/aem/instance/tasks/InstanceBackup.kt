@@ -57,8 +57,9 @@ open class InstanceBackup : AemDefaultTask() {
 
         aem.progress(aem.localInstances.size) {
             aem.localInstances.onEachApply {
-                increment("Backing up instance '$name'")
-                FileOperations.zipPack(file, dir)
+                increment("Backing up instance '$name'") {
+                    FileOperations.zipPack(file, dir)
+                }
             }
         }
 
