@@ -1715,9 +1715,9 @@ Allows to listen for Apache Web Server / Dispatcher configuration files changed 
 2. Edit files located in *aem/gradle/environment/httpd/conf* ,
 3. Notice that HTTPD service should be restarted automatically after file changes,
 4. Check results of [environment service health checks](#environment-service-health-checks),
-4. Optionally, check logs:
-   * httpd/dispatcher logs located in path **build/logs**
-   * dispatchers cache located in [build/cache](build/cache)
+4. Optionally, check:
+   * HTTPD and AEM Dispatcher logs located at path *aem/.environment/httpd/logs*
+   * AEM Dispatcher cache located at path *aem/.environment/httpd/cache*
 
 ## How to's
 
