@@ -38,7 +38,7 @@ Only changed parts of application are processed again:
 
 * Dependent CRX packages are installed only when they are not already installed on particular AEM instances.
 * CRX package is rebuild only when JCR content / files under *jcr_root* are changed.
-* Java code is recompiled only when code in *\*.java* is changed.
+* Java code is recompiled only when code in *\*.java* files is changed.
 * Front-end / Webpack build is run again only when code in *\*.scss* and *\*.js* etc files is changed.
 
 Want to see it in action? Follow [here](https://github.com/Cognifide/gradle-aem-multi)!
