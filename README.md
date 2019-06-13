@@ -1210,8 +1210,6 @@ Ensure having directory *aem/.instance* ignored in VCS and excluded from indexin
 
 Performs initial setup of local AEM instance(s). Automated version of `instanceCreate instanceUp instanceSatisfy packageDeploy`.
 
-![Setup task](docs/setup-task.png)
-
 #### Task `instanceResetup`
 
 Combination of `instanceDown instanceDestroy instanceSetup`. Allows to quickly back to initial state of local AEM instance(s).
