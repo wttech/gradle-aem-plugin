@@ -158,7 +158,7 @@ open class InstanceSatisfy : PackageDeploy() {
             }
 
             packageStates.forEach { pkg ->
-                increment("${pkg.file.name} -> ${instance.name}") {
+                increment("Deploying package '${pkg.file.name}' to instance '${instance.name}'") {
                     when {
                         greedy || group.greedy -> {
                             aem.logger.info("Satisfying package ${pkg.name} on ${instance.name} (greedy).")
