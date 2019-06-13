@@ -138,7 +138,7 @@ open class InstanceSatisfy : PackageDeploy() {
 
     @Suppress("ComplexMethod")
     private fun ProgressIndicator.satisfyGroup(group: PackageGroup) {
-        step = "Satisfying '${group.name}'"
+        step = "Group '${group.name}'"
 
         aem.logger.info("Satisfying group of packages '${group.name}'.")
 
@@ -158,7 +158,7 @@ open class InstanceSatisfy : PackageDeploy() {
             }
 
             packageStates.forEach { pkg ->
-                increment("Deploying package '${pkg.file.name}' to instance '${instance.name}'") {
+                increment("Satisfying package '${pkg.file.name}' on instance '${instance.name}'") {
                     when {
                         greedy || group.greedy -> {
                             aem.logger.info("Satisfying package ${pkg.name} on ${instance.name} (greedy).")
