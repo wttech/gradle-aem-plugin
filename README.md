@@ -30,9 +30,16 @@ What is being done above by simply running super easy command `sh gradlew`?
 
 1. `:aem:instanceSatisfy` -> checking for new dependent CRX packages to be deployed (in a lazy & fail-safe manner) that could arrive to our AEM instances automatically if somebody else add it to build configuration in the meantime.
 2. `:aem:assembly:full:packageDeploy` -> building & deploying all-in-one CRX package to AEM instances in parallel, then awaiting for stable condition of AEM instances and built application.
-3. `:aem:migration:packageDeploy` -> building & deploying migration CRX package holding Groovy Scripts launched automatically
-4. `:aem:environmentClean` -> cleaning AEM dispatcher cache and restarting HTTPD service / Apache Web Server.
-5. `:aem:environmentCheck` -> running health checks ensuring that all AEM instances / websites are responding correctly.
+3. `:aem:environmentClean` -> cleaning AEM dispatcher cache and restarting HTTPD service / Apache Web Server.
+4. `:aem:environmentCheck` -> running health checks ensuring that all AEM instances / websites are responding correctly.
+
+**Build is incremental** which guarantees optimized time every time regardless of build command used.
+Only changed parts of application are processed again:
+
+* Dependent CRX packages are installed only when they are not already installed on particular AEM instances.
+* CRX package is rebuild only when JCR content / files under *jcr_root* are changed.
+* Java code is recompiled only when code in *\*.java* is changed.
+* Front-end / Webpack build is run again only when code in *\*.scss* and *\*.js* etc files is changed.
 
 Want to see it in action? Follow [here](https://github.com/Cognifide/gradle-aem-multi)!
 
