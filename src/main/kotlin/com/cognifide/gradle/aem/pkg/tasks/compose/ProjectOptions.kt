@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.pkg.tasks.compose
 
-import com.cognifide.gradle.aem.common.AemExtension
-import com.cognifide.gradle.aem.pkg.tasks.Compose
+import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.pkg.tasks.PackageCompose
 import org.gradle.api.tasks.bundling.Jar
 
 class ProjectOptions {
@@ -11,7 +11,7 @@ class ProjectOptions {
      */
     var composeContent: Boolean = true
 
-    var composeTasks: AemExtension.() -> Collection<Compose> = { tasks.getAll(Compose::class.java) }
+    var composeTasks: AemExtension.() -> Collection<PackageCompose> = { tasks.getAll(PackageCompose::class.java) }
 
     var vaultHooks: Boolean = true
 

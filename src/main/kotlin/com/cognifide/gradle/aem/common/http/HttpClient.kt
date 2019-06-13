@@ -1,15 +1,18 @@
 package com.cognifide.gradle.aem.common.http
 
-import com.cognifide.gradle.aem.common.AemExtension
-import com.cognifide.gradle.aem.common.Formats
-import com.cognifide.gradle.aem.common.file.downloader.HttpFileDownloader
+import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.common.file.transfer.http.HttpFileTransfer
+import com.cognifide.gradle.aem.common.utils.Formats
+import com.cognifide.gradle.aem.common.utils.Utils
+import com.cognifide.gradle.aem.common.utils.formats.JsonPassword
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import com.jayway.jsonpath.DocumentContext
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
-import java.util.*
-import org.apache.commons.io.FilenameUtils
+import java.io.Serializable
 import org.apache.commons.io.IOUtils
 import org.apache.http.HttpEntity
 import org.apache.http.HttpResponse
@@ -27,17 +30,20 @@ import org.apache.http.impl.client.BasicCredentialsProvider
 import org.apache.http.impl.client.HttpClientBuilder
 import org.apache.http.message.BasicNameValuePair
 import org.apache.http.ssl.SSLContextBuilder
+import org.jsoup.Jsoup
+import org.jsoup.nodes.Document
 
 @Suppress("TooManyFunctions")
-open class HttpClient(val aem: AemExtension) {
+open class HttpClient(private val aem: AemExtension) : Serializable {
 
-    val project = aem.project
+    private val project = aem.project
 
     var baseUrl = ""
 
-    var basicUser = ""
+    var basicUser: String? = null
 
-    var basicPassword = ""
+    @JsonSerialize(using = JsonPassword::class, `as` = String::class)
+    var basicPassword: String? = null
 
     var authorizationPreemptive = false
 
@@ -47,8 +53,10 @@ open class HttpClient(val aem: AemExtension) {
 
     var connectionRetries = true
 
+    @JsonIgnore
     var requestConfigurer: HttpRequestBase.() -> Unit = { }
 
+    @JsonIgnore
     var clientBuilder: HttpClientBuilder.() -> Unit = {
         useSystemProperties()
 
@@ -66,7 +74,7 @@ open class HttpClient(val aem: AemExtension) {
             setConnectionRequestTimeout(connectionTimeout)
         }.build())
 
-        if (basicUser.isNotBlank() && basicPassword.isNotBlank()) {
+        if (!basicUser.isNullOrBlank() && !basicPassword.isNullOrBlank()) {
             setDefaultCredentialsProvider(BasicCredentialsProvider().apply {
                 setCredentials(AuthScope.ANY, UsernamePasswordCredentials(basicUser, basicPassword))
             })
@@ -82,11 +90,23 @@ open class HttpClient(val aem: AemExtension) {
         }
     }
 
+    @JsonIgnore
     var responseHandler: (HttpResponse) -> Unit = { }
 
     var responseChecks: Boolean = true
 
+    @JsonIgnore
     var responseChecker: (HttpResponse) -> Unit = { checkStatus(it) }
+
+    fun <T> request(method: String, uri: String, handler: HttpClient.(HttpResponse) -> T) = when (method.toLowerCase()) {
+        "get" -> get(uri, handler)
+        "post" -> post(uri, handler)
+        "put" -> put(uri, handler)
+        "patch" -> patch(uri, handler)
+        "head" -> head(uri, handler)
+        "delete" -> delete(uri, handler)
+        else -> throw RequestException("Invalid HTTP client method: '$method'")
+    }
 
     fun get(uri: String) = get(uri) { checkStatus(it) }
 
@@ -128,21 +148,21 @@ open class HttpClient(val aem: AemExtension) {
         return execute(HttpPatch(baseUrl(uri)).apply(options), handler)
     }
 
-    fun post(url: String, params: Map<String, Any> = mapOf()) = postUrlencoded(url, params)
+    fun post(url: String, params: Map<String, Any?> = mapOf()) = postUrlencoded(url, params)
 
     fun <T> post(uri: String, params: Map<String, Any> = mapOf(), handler: HttpClient.(HttpResponse) -> T): T {
         return postUrlencoded(uri, params, handler)
     }
 
-    fun postUrlencoded(uri: String, params: Map<String, Any> = mapOf()) = postUrlencoded(uri, params) { checkStatus(it) }
+    fun postUrlencoded(uri: String, params: Map<String, Any?> = mapOf()) = postUrlencoded(uri, params) { checkStatus(it) }
 
-    fun <T> postUrlencoded(uri: String, params: Map<String, Any> = mapOf(), handler: HttpClient.(HttpResponse) -> T): T {
+    fun <T> postUrlencoded(uri: String, params: Map<String, Any?> = mapOf(), handler: HttpClient.(HttpResponse) -> T): T {
         return post(uri, handler) { entity = createEntityUrlencoded(params) }
     }
 
-    fun postMultipart(uri: String, params: Map<String, Any> = mapOf()) = postMultipart(uri, params) { checkStatus(it) }
+    fun postMultipart(uri: String, params: Map<String, Any?> = mapOf()) = postMultipart(uri, params) { checkStatus(it) }
 
-    fun <T> postMultipart(uri: String, params: Map<String, Any> = mapOf(), handler: HttpClient.(HttpResponse) -> T): T {
+    fun <T> postMultipart(uri: String, params: Map<String, Any?> = mapOf(), handler: HttpClient.(HttpResponse) -> T): T {
         return post(uri, handler) { entity = createEntityMultipart(params) }
     }
 
@@ -164,6 +184,10 @@ open class HttpClient(val aem: AemExtension) {
         return Formats.asJson(asStream(response))
     }
 
+    fun asJson(jsonString: String): DocumentContext {
+        return Formats.asJson(jsonString)
+    }
+
     fun asString(response: HttpResponse): String {
         return IOUtils.toString(asStream(response), Charsets.UTF_8) ?: ""
     }
@@ -172,7 +196,7 @@ open class HttpClient(val aem: AemExtension) {
         return try {
             ObjectMapper().readValue(asStream(response), clazz)
         } catch (e: IOException) {
-            throw ResponseException("Cannot parse / malformed response: $response")
+            throw ResponseException("Cannot parse / malformed response: $response", e)
         }
     }
 
@@ -182,7 +206,24 @@ open class HttpClient(val aem: AemExtension) {
 
     open fun checkStatus(response: HttpResponse, checker: (Int) -> Boolean = { it in STATUS_CODE_VALID }) {
         if (!checker(response.statusLine.statusCode)) {
-            throw ResponseException("Unexpected response: ${response.statusLine}")
+            throw ResponseException("Unexpected response detected: ${response.statusLine}")
+        }
+    }
+
+    fun checkText(response: HttpResponse, containedText: String, ignoreCase: Boolean = true) {
+        val text = asString(response)
+        if (!text.contains(containedText, ignoreCase)) {
+            aem.logger.debug("Actual text:\n$text")
+            throw ResponseException("Response does not contain text: $text")
+        }
+    }
+
+    fun checkHtml(response: HttpResponse, validator: Document.() -> Boolean) {
+        val html = asString(response)
+        val doc = Jsoup.parse(html)
+        if (!validator(doc)) {
+            aem.logger.debug("Actual HTML:\n$html")
+            throw ResponseException("Response HTML does not pass validation")
         }
     }
 
@@ -214,39 +255,32 @@ open class HttpClient(val aem: AemExtension) {
 
     fun execute(method: HttpRequestBase) = execute(method) { checkStatus(it) }
 
-    open fun createEntityUrlencoded(params: Map<String, Any>): HttpEntity {
-        return UrlEncodedFormEntity(params.entries.fold(ArrayList<NameValuePair>()) { result, e ->
-            result.add(BasicNameValuePair(e.key, e.value.toString())); result
+    open fun createEntityUrlencoded(params: Map<String, Any?>): HttpEntity {
+        return UrlEncodedFormEntity(params.entries.fold(mutableListOf<NameValuePair>()) { result, (key, value) ->
+            Utils.unroll(value) { addEntityUrlencoded(result, key, it) }
+            result
         })
     }
 
-    open fun createEntityMultipart(params: Map<String, Any>): HttpEntity {
-        val builder = MultipartEntityBuilder.create()
-        for ((key, value) in params) {
-            if (value is File) {
-                if (value.exists()) {
-                    builder.addBinaryBody(key, value)
-                }
-            } else {
-                val str = value.toString()
-                if (str.isNotBlank()) {
-                    builder.addTextBody(key, str)
-                }
-            }
+    private fun addEntityUrlencoded(result: MutableList<NameValuePair>, key: String, value: Any?) {
+        result.add(BasicNameValuePair(key, value?.toString() ?: ""))
+    }
+
+    open fun createEntityMultipart(params: Map<String, Any?>): HttpEntity {
+        return MultipartEntityBuilder.create().apply {
+            params.forEach { (key, value) -> Utils.unroll(value) { addEntityMultipart(key, it) } }
+        }.build()
+    }
+
+    private fun MultipartEntityBuilder.addEntityMultipart(key: String, value: Any?) {
+        if (value is File && value.exists()) {
+            addBinaryBody(key, value)
+        } else {
+            addTextBody(key, value?.toString() ?: "")
         }
-
-        return builder.build()
     }
 
-    fun download(path: String) = download(path, aem.temporaryFile(FilenameUtils.getName(path)))
-
-    fun download(path: String, target: File) {
-        HttpFileDownloader(aem, this).download(path, target)
-    }
-
-    fun downloadTo(path: String, dir: File): File {
-        return File(dir, path.substringAfterLast("/")).apply { download(path, this) }
-    }
+    fun <T> fileTransfer(operation: HttpFileTransfer.() -> T): T = aem.httpFile { client = this@HttpClient; operation() }
 
     companion object {
         val STATUS_CODE_VALID = 200 until 300

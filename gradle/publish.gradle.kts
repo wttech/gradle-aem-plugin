@@ -2,9 +2,9 @@ import com.jfrog.bintray.gradle.BintrayExtension
 
 configure<GradlePluginDevelopmentExtension> {
     plugins {
-        create("config") {
-            id = "com.cognifide.aem.config"
-            implementationClass = "com.cognifide.gradle.aem.config.ConfigPlugin"
+        create("common") {
+            id = "com.cognifide.aem.common"
+            implementationClass = "com.cognifide.gradle.aem.common.CommonPlugin"
         }
         create("tooling") {
             id = "com.cognifide.aem.tooling"
@@ -21,6 +21,10 @@ configure<GradlePluginDevelopmentExtension> {
         create("instance") {
             id = "com.cognifide.aem.instance"
             implementationClass = "com.cognifide.gradle.aem.instance.InstancePlugin"
+        }
+        create("environment") {
+            id = "com.cognifide.aem.environment"
+            implementationClass = "com.cognifide.gradle.aem.environment.EnvironmentPlugin"
         }
     }
 }

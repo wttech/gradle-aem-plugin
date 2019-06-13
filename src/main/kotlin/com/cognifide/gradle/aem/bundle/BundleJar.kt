@@ -1,11 +1,11 @@
 package com.cognifide.gradle.aem.bundle
 
 import aQute.bnd.gradle.BundleTaskConvention
-import com.cognifide.gradle.aem.common.AemException
-import com.cognifide.gradle.aem.common.AemExtension
-import com.cognifide.gradle.aem.common.DependencyOptions
-import com.cognifide.gradle.aem.common.Formats
-import com.cognifide.gradle.aem.instance.Bundle
+import com.cognifide.gradle.aem.AemException
+import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.common.build.DependencyOptions
+import com.cognifide.gradle.aem.common.instance.service.osgi.Bundle
+import com.cognifide.gradle.aem.common.utils.Formats
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 import java.io.Serializable
@@ -40,7 +40,7 @@ val jar: Jar
      * Content path for OSGi bundle jars being placed in CRX package.
      */
     @Input
-    var installPath: String = aem.config.packageInstallPath
+    var installPath: String = aem.packageOptions.installPath
 
     /**
      * Suffix added to install path effectively allowing to install bundles only on specific instances.
@@ -65,7 +65,7 @@ val jar: Jar
      *
      * - generated OSGi specific manifest instructions like 'Bundle-SymbolicName', 'Export-Package'.
      * - generated AEM specific manifest instructions like 'Sling-Model-Packages'.
-     * - performed additional component stability checks within 'aemDeploy' or separately using 'aemAwait'.
+     * - performed additional component stability checks within 'packageDeploy' or separately using 'instanceAwait'.
      *
      * Default convention: '${project.group}.${project.name}'.
      *

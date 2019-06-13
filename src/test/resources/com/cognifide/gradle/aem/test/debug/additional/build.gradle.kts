@@ -14,59 +14,76 @@ dependencies {
 }
 
 aem {
-    config {
-        // custom env, no ports, by domain name
-        remoteInstance("http://author.example.com") {
-            environment = "prod"
-            typeName = "author"
+    environment {
+        hosts(
+                "example.com",
+                "demo.example.com",
+                "author.example.com",
+                "invalidation-only"
+        )
+        directories {
+            regular(
+                    "httpd/logs"
+            )
+            cache(
+                    "httpd/cache/content/example/live",
+                    "httpd/cache/content/example/demo"
+            )
         }
-        remoteInstance("http://example.com") {
+        healthChecks {
+            url("Live site", "http://example.com/en-us.html", text = "English")
+            url("Demo site", "http://demo.example.com/en-us.html", text = "English")
+            url("Author login", "http://author.example.com/libs/granite/core/content/login.html" +
+                    "?resource=%2F&\$\$login\$\$=%24%24login%24%24&j_reason=unknown&j_reason_code=unknown", text = "AEM Sign In")
+        }
+    }
+    
+    instance {
+        // custom env, no ports, by domain name
+        remote("http://author.example.com") {
             environment = "prod"
-            typeName = "publish"
+            id = "author"
+        }
+        remote("http://example.com") {
+            environment = "prod"
+            id = "publish"
         }
 
         // custom env, no ports, by IP
-        remoteInstance("http://192.168.1.1") {
-            typeName = "author"
-            environment = "int"
+        remote("http://192.168.1.1") {
+            name = "int-author"
             property("externalUrl", "http://author.aem.local")
         }
-        remoteInstance("http://192.168.1.2") {
-            typeName = "publish"
-            environment = "int"
+        remote("http://192.168.1.2") {
+            name = "int-publish"
             property("externalUrl", "http://aem.local")
         }
 
         // custom env, ports and credentials
-        remoteInstance("https://192.168.3.1:8082") {
-            typeName = "author"
-            environment = "stg"
+        remote("https://192.168.3.1:8082") {
+            name = "stg-author"
             user = "user1"
             password = "password1"
         }
-        remoteInstance("https://192.168.3.2:8083") {
-            typeName = "publish"
-            environment = "stg"
+        remote("https://192.168.3.2:8083") {
+            name = "stg-publish"
             user = "user2"
             password = "password2"
         }
 
         // custom ports but same url, multiple instances of same type
-        remoteInstance("http://192.168.2.1:4502") {
-            typeName = "author-1"
-            environment = "perf"
+        remote("http://192.168.2.1:4502") {
+            name = "perf-author-1"
         }
-        remoteInstance("http://192.168.2.1:5502") {
-            typeName = "author-2"
-            environment = "perf"
+        remote("http://192.168.2.1:5502") {
+            name = "perf-author-2"
+            id = "author-2"
         }
-        remoteInstance("http://192.168.2.2:4503") {
-            typeName = "publish-1"
-            environment = "perf"
+        remote("http://192.168.2.2:4503") {
+            name = "perf-publish-1"
         }
-        remoteInstance("http://192.168.2.2:5503") {
-            typeName = "publish-2"
-            environment = "perf"
+        remote("http://192.168.2.2:5503") {
+            name = "perf-publish-2"
         }
     }
 }

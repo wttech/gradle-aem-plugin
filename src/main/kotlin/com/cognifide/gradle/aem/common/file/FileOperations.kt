@@ -1,12 +1,18 @@
 package com.cognifide.gradle.aem.common.file
 
-import com.cognifide.gradle.aem.common.AemPlugin
-import com.cognifide.gradle.aem.common.Patterns
-import java.io.*
+import com.cognifide.gradle.aem.AemPlugin
+import com.cognifide.gradle.aem.common.utils.Formats
+import com.cognifide.gradle.aem.common.utils.Patterns
+import java.io.File
+import java.io.FileOutputStream
+import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import net.lingala.zip4j.core.ZipFile
+import net.lingala.zip4j.model.FileHeader
+import net.lingala.zip4j.model.ZipParameters
+import net.lingala.zip4j.util.Zip4jConstants
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
 import org.apache.commons.io.filefilter.TrueFileFilter
@@ -108,11 +114,55 @@ object FileOperations {
         Files.newDirectoryStream(dir).use { dirStream -> return !dirStream.iterator().hasNext() }
     }
 
+    fun removeDirContents(dir: File): Boolean {
+        val children = dir.listFiles() ?: arrayOf()
+        var result = true
+        children.forEach {
+            result = result && it.deleteRecursively()
+        }
+        return result
+    }
+
     /**
      * Only Zip4j correctly extracts AEM backup ZIP files.
      * Gradle zipTree and Zero-Turnaround ZipUtil is not working properly in that case.
      */
-    fun zipUnpack(zip: File, targetDir: File) {
+    fun zipUnpackAll(zip: File, targetDir: File) {
         ZipFile(zip).extractAll(targetDir.absolutePath)
+    }
+
+    @Suppress("unchecked_cast")
+    fun zipUnpackDir(zip: File, dirName: String, dir: File) {
+        val dirFileName = "$dirName/"
+        if (!zipContains(zip, dirFileName)) {
+            return
+        }
+
+        ZipFile(zip).apply {
+            (fileHeaders as List<FileHeader>).asSequence()
+                    .filter { it.fileName.startsWith(dirFileName) }
+                    .forEach { extractFile(it, dir.absolutePath) }
+        }
+    }
+
+    fun zipContains(zip: File, fileName: String): Boolean {
+        return ZipFile(zip).getFileHeader(fileName) != null
+    }
+
+    fun zipPack(zip: File, sourceDir: File) {
+        ZipFile(zip).apply {
+            addFolder(sourceDir, ZipParameters().apply {
+                compressionMethod = Zip4jConstants.COMP_STORE
+            })
+        }
+    }
+
+    fun lock(file: File) = file.writeText(Formats.toJson(mapOf("locked" to Formats.date())))
+
+    fun lock(file: File, callback: () -> Unit) {
+        if (!file.exists()) {
+            callback()
+            lock(file)
+        }
     }
 }

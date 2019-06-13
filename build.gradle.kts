@@ -1,5 +1,6 @@
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     id("org.jetbrains.kotlin.jvm")
@@ -35,13 +36,14 @@ dependencies {
     implementation("biz.aQute.bnd:biz.aQute.bnd.gradle:4.0.0")
     implementation("org.zeroturnaround:zt-zip:1.11")
     implementation("net.lingala.zip4j:zip4j:1.3.2")
-    implementation("com.hierynomus:sshj:0.21.1")
+    implementation("org.apache.sshd:sshd-sftp:2.2.0")
     implementation("org.apache.httpcomponents:httpclient:4.5.4")
     implementation("org.apache.httpcomponents:httpmime:4.5.4")
     implementation("org.osgi:org.osgi.core:6.0.0")
     implementation("io.pebbletemplates:pebble:3.0.4")
     implementation("com.dorkbox:Notify:3.7")
     implementation("com.jayway.jsonpath:json-path:2.4.0")
+    implementation("org.buildobjects:jproc:2.2.3")
 
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.3.1")
     testImplementation("org.junit.jupiter:junit-jupiter-params:5.3.1")
@@ -57,14 +59,26 @@ tasks {
 
     register<Zip>("tailerZip") {
         from("dists/gradle-aem-tailer")
-        archiveName = "gradle-aem-tailer.zip"
-        destinationDir = file("dists")
+
+        archiveFileName.set("gradle-aem-tailer.zip")
+        destinationDirectory.set(file("dists"))
     }
 
     register<Jar>("sourcesJar") {
-        classifier = "sources"
+        archiveClassifier.set("sources")
         dependsOn("classes")
         from(sourceSets["main"].allSource)
+    }
+
+    withType<JavaCompile>().configureEach{
+        sourceCompatibility = JavaVersion.VERSION_1_8.toString()
+        targetCompatibility = JavaVersion.VERSION_1_8.toString()
+    }
+
+    withType<KotlinCompile>().configureEach {
+        kotlinOptions {
+            jvmTarget = JavaVersion.VERSION_1_8.toString()
+        }
     }
 
     named<Task>("build") {
@@ -77,13 +91,19 @@ tasks {
 
     named<ProcessResources>("processResources") {
         dependsOn( "tailerZip")
+
+        val json = """
+        |{
+        |    "pluginVersion": "${project.version}",
+        |    "gradleVersion": "${project.gradle.gradleVersion}"
+        |}""".trimMargin()
+        val file = file("$buildDir/resources/main/build.json")
+
+        inputs.property("buildJson", json)
+        outputs.file(file)
+
         doLast {
-            file("$buildDir/resources/main/build.json").printWriter().use {
-                it.print("""{
-                    "pluginVersion": "${project.version}",
-                    "gradleVersion": "${project.gradle.gradleVersion}"
-            }""".trimIndent())
-            }
+            file.writeText(json)
         }
     }
 

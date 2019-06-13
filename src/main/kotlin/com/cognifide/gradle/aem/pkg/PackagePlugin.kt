@@ -1,13 +1,13 @@
 package com.cognifide.gradle.aem.pkg
 
-import com.cognifide.gradle.aem.common.AemExtension
-import com.cognifide.gradle.aem.common.AemPlugin
+import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.AemPlugin
+import com.cognifide.gradle.aem.common.CommonPlugin
 import com.cognifide.gradle.aem.instance.InstancePlugin
-import com.cognifide.gradle.aem.instance.tasks.Create
-import com.cognifide.gradle.aem.instance.tasks.Satisfy
-import com.cognifide.gradle.aem.instance.tasks.Up
+import com.cognifide.gradle.aem.instance.satisfy.InstanceSatisfy
+import com.cognifide.gradle.aem.instance.tasks.InstanceCreate
+import com.cognifide.gradle.aem.instance.tasks.InstanceUp
 import com.cognifide.gradle.aem.pkg.tasks.*
-import com.cognifide.gradle.aem.tooling.ToolingPlugin
 import org.gradle.api.Project
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 
@@ -20,14 +20,14 @@ class PackagePlugin : AemPlugin() {
     }
 
     private fun Project.setupDependentPlugins() {
-        plugins.apply(ToolingPlugin::class.java)
+        plugins.apply(CommonPlugin::class.java)
     }
 
     private fun Project.setupInstallRepository() {
         afterEvaluate {
-            val config = AemExtension.of(this).config
-            if (config.packageInstallRepository) {
-                val installDir = file("${config.packageJcrRoot}${config.packageInstallPath}")
+            val packageOptions = AemExtension.of(this).packageOptions
+            if (packageOptions.installRepository) {
+                val installDir = file("${packageOptions.jcrRootDir}${packageOptions.installPath}")
                 if (installDir.exists()) {
                     repositories.flatDir { it.dir(installDir) }
                 }
@@ -36,44 +36,44 @@ class PackagePlugin : AemPlugin() {
     }
 
     private fun Project.setupTasks() {
-        with(AemExtension.of(this).tasks) {
-            register<Compose>(Compose.NAME) {
+        tasks {
+            register<PackageCompose>(PackageCompose.NAME) {
                 dependsOn(LifecycleBasePlugin.ASSEMBLE_TASK_NAME, LifecycleBasePlugin.CHECK_TASK_NAME)
                 mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
             }
-            register<Upload>(Upload.NAME) {
-                dependsOn(Compose.NAME)
+            register<PackageUpload>(PackageUpload.NAME) {
+                dependsOn(PackageCompose.NAME)
             }
-            register<Install>(Install.NAME) {
-                dependsOn(Compose.NAME)
-                mustRunAfter(Upload.NAME)
+            register<PackageInstall>(PackageInstall.NAME) {
+                dependsOn(PackageCompose.NAME)
+                mustRunAfter(PackageUpload.NAME)
             }
-            register<Uninstall>(Uninstall.NAME) {
-                dependsOn(Compose.NAME)
-                mustRunAfter(Upload.NAME, Install.NAME)
+            register<PackageUninstall>(PackageUninstall.NAME) {
+                dependsOn(PackageCompose.NAME)
+                mustRunAfter(PackageUpload.NAME, PackageInstall.NAME)
             }
-            register<Activate>(Activate.NAME) {
-                dependsOn(Compose.NAME)
-                mustRunAfter(Upload.NAME, Install.NAME)
+            register<PackageActivate>(PackageActivate.NAME) {
+                dependsOn(PackageCompose.NAME)
+                mustRunAfter(PackageUpload.NAME, PackageInstall.NAME)
             }
-            register<Deploy>(Deploy.NAME) {
-                dependsOn(Compose.NAME)
+            register<PackageDeploy>(PackageDeploy.NAME) {
+                dependsOn(PackageCompose.NAME)
             }
-            register<Delete>(Delete.NAME) {
-                dependsOn(Compose.NAME)
-                mustRunAfter(Deploy.NAME, Upload.NAME, Install.NAME, Activate.NAME, Uninstall.NAME)
+            register<PackageDelete>(PackageDelete.NAME) {
+                dependsOn(PackageCompose.NAME)
+                mustRunAfter(PackageDeploy.NAME, PackageUpload.NAME, PackageInstall.NAME, PackageActivate.NAME, PackageUninstall.NAME)
             }
-            register<Purge>(Purge.NAME) {
-                dependsOn(Compose.NAME)
-                mustRunAfter(Deploy.NAME, Upload.NAME, Install.NAME, Activate.NAME, Uninstall.NAME)
+            register<PackagePurge>(PackagePurge.NAME) {
+                dependsOn(PackageCompose.NAME)
+                mustRunAfter(PackageDeploy.NAME, PackageUpload.NAME, PackageInstall.NAME, PackageActivate.NAME, PackageUninstall.NAME)
             }
         }
 
-        tasks.named(LifecycleBasePlugin.BUILD_TASK_NAME).configure { it.dependsOn(Compose.NAME) }
+        tasks.named(LifecycleBasePlugin.BUILD_TASK_NAME).configure { it.dependsOn(PackageCompose.NAME) }
 
         plugins.withId(InstancePlugin.ID) {
-            tasks.named(Deploy.NAME).configure { task ->
-                task.mustRunAfter(Create.NAME, Up.NAME, Satisfy.NAME)
+            tasks.named(PackageDeploy.NAME).configure { task ->
+                task.mustRunAfter(InstanceCreate.NAME, InstanceUp.NAME, InstanceSatisfy.NAME)
             }
         }
     }

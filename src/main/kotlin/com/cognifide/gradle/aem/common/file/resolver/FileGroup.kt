@@ -1,8 +1,9 @@
 package com.cognifide.gradle.aem.common.file.resolver
 
+import com.cognifide.gradle.aem.AemExtension
 import java.io.File
 
-open class FileGroup(val downloadDir: File, val name: String) {
+open class FileGroup(val aem: AemExtension, val downloadDir: File, val name: String) {
 
     private val _resolutions = mutableListOf<FileResolution>()
 
@@ -18,8 +19,6 @@ open class FileGroup(val downloadDir: File, val name: String) {
     protected open fun createResolution(id: String, resolver: (FileResolution) -> File) = FileResolution(this, id, resolver)
 
     fun resolve(id: String, resolver: (FileResolution) -> File): FileResolution {
-        return createResolution(id, resolver).apply {
-            _resolutions += this
-        }
+        return createResolution(id, resolver).apply { _resolutions += this }
     }
 }

@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.instance.tail
 
-import com.cognifide.gradle.aem.instance.Instance
+import com.cognifide.gradle.aem.common.instance.Instance
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
@@ -9,7 +9,7 @@ import kotlinx.coroutines.channels.consumeEach
 
 @UseExperimental(ObsoleteCoroutinesApi::class)
 class InstanceAnalyzer(
-    private val options: TailOptions,
+    private val tailer: InstanceTailer,
     private val instance: Instance,
     private val logsChannel: ReceiveChannel<Log>,
     private val notificationChannel: SendChannel<LogChunk>
@@ -22,9 +22,9 @@ class InstanceAnalyzer(
     fun listenTailed() {
         GlobalScope.launch {
             logsChannel.consumeEach { log ->
-                options.logListener(log, instance)
+                tailer.logListener(log, instance)
 
-                if (options.incidentChecker(log, instance)) {
+                if (tailer.incidentChecker(log, instance)) {
                     incidentChannel.send(log)
                 }
             }
@@ -36,7 +36,7 @@ class InstanceAnalyzer(
                     incidentCannonade.add(log)
                 }
 
-                if (incidentCannonade.lastOrNull()?.isOlderThan(instance, options.incidentDelay) == true) {
+                if (incidentCannonade.lastOrNull()?.isOlderThan(instance, tailer.incidentDelay) == true) {
                     notificationChannel.send(LogChunk(instance, incidentCannonade))
                     incidentCannonade = mutableListOf()
                 }

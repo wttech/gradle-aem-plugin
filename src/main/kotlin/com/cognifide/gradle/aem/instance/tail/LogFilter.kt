@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.instance.tail
 
-import com.cognifide.gradle.aem.common.Patterns
+import com.cognifide.gradle.aem.common.utils.Patterns
 import java.io.File
 
 /**

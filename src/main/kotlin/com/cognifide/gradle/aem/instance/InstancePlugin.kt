@@ -1,17 +1,24 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.common.AemExtension
-import com.cognifide.gradle.aem.common.AemPlugin
-import com.cognifide.gradle.aem.config.ConfigPlugin
+import com.cognifide.gradle.aem.AemPlugin
+import com.cognifide.gradle.aem.common.CommonPlugin
+import com.cognifide.gradle.aem.common.tasks.lifecycle.*
+import com.cognifide.gradle.aem.instance.satisfy.InstanceSatisfy
+import com.cognifide.gradle.aem.instance.tail.InstanceTail
 import com.cognifide.gradle.aem.instance.tasks.*
 import com.cognifide.gradle.aem.pkg.PackagePlugin
-import com.cognifide.gradle.aem.pkg.tasks.Deploy
+import com.cognifide.gradle.aem.pkg.tasks.PackageDeploy
 import org.gradle.api.Project
+import org.gradle.api.Task
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 
 /**
- * Separate plugin which provides tasks for managing local instances.
- * Most often should be applied only to one project in build.
+ * Separate plugin which provides tasks for:
+ * - managing local instances (create, up, down)
+ * - monitoring health condition (check)
+ * - automatically installing dependent CRX packages (satisfy)
+ *
+ * Most often should be applied only to one project in build (typically project named 'aem' or root project).
  * Applying it multiple times to same configuration could case confusing errors like AEM started multiple times.
  */
 class InstancePlugin : AemPlugin() {
@@ -22,59 +29,88 @@ class InstancePlugin : AemPlugin() {
     }
 
     private fun Project.setupDependentPlugins() {
-        plugins.apply(ConfigPlugin::class.java)
+        plugins.apply(CommonPlugin::class.java)
     }
 
+    @Suppress("LongMethod")
     private fun Project.setupTasks() {
-        with(AemExtension.of(this).tasks) {
-            register<Resolve>(Resolve.NAME) {
-                mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
+        tasks {
+            // Plugin tasks
+
+            register<InstanceDown>(InstanceDown.NAME)
+            register<InstanceUp>(InstanceUp.NAME) {
+                dependsOn(InstanceCreate.NAME)
+                mustRunAfter(InstanceDown.NAME, InstanceDestroy.NAME)
             }
-            register<Down>(Down.NAME)
-            register<Up>(Up.NAME) {
-                dependsOn(Create.NAME).mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME, Down.NAME)
+            register<InstanceRestart>(InstanceRestart.NAME) {
+                dependsOn(InstanceDown.NAME, InstanceUp.NAME)
             }
-            register<Restart>(Restart.NAME) {
-                dependsOn(Down.NAME, Up.NAME)
+            register<InstanceCreate>(InstanceCreate.NAME) {
+                mustRunAfter(InstanceDestroy.NAME, InstanceResolve.NAME)
             }
-            register<Create>(Create.NAME) {
-                dependsOn(Resolve.NAME).mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
+            register<InstanceDestroy>(InstanceDestroy.NAME) {
+                dependsOn(InstanceDown.NAME)
             }
-            register<Destroy>(Destroy.NAME) {
-                dependsOn(Down.NAME)
+            register<InstanceSatisfy>(InstanceSatisfy.NAME) {
+                mustRunAfter(InstanceResolve.NAME, InstanceCreate.NAME, InstanceUp.NAME)
             }
-            register<Satisfy>(Satisfy.NAME) {
-                dependsOn(Resolve.NAME).mustRunAfter(Create.NAME, Up.NAME)
+            register<InstanceReload>(InstanceReload.NAME) {
+                mustRunAfter(InstanceSatisfy.NAME)
+                plugins.withId(PackagePlugin.ID) { mustRunAfter(PackageDeploy.NAME) }
             }
-            register<Reload>(Reload.NAME) {
-                mustRunAfter(Satisfy.NAME)
-                plugins.withId(PackagePlugin.ID) { mustRunAfter(Deploy.NAME) }
+            register<InstanceCheck>(InstanceCheck.NAME) {
+                mustRunAfter(InstanceCreate.NAME, InstanceUp.NAME, InstanceSatisfy.NAME)
+                plugins.withId(PackagePlugin.ID) { mustRunAfter(PackageDeploy.NAME) }
             }
-            register<Await>(Await.NAME) {
-                mustRunAfter(Create.NAME, Up.NAME, Satisfy.NAME)
-                plugins.withId(PackagePlugin.ID) { mustRunAfter(Deploy.NAME) }
+            register<InstanceSetup>(InstanceSetup.NAME) {
+                dependsOn(InstanceCreate.NAME, InstanceUp.NAME, InstanceSatisfy.NAME)
+                mustRunAfter(InstanceDestroy.NAME)
+                plugins.withId(PackagePlugin.ID) { dependsOn(PackageDeploy.NAME) }
             }
-            register<Collect>(Collect.NAME) {
-                mustRunAfter(Satisfy.NAME)
+            register<InstanceResetup>(InstanceResetup.NAME) {
+                dependsOn(InstanceDestroy.NAME, InstanceSetup.NAME)
             }
-            register<Setup>(Setup.NAME) {
-                dependsOn(Create.NAME, Up.NAME, Satisfy.NAME).mustRunAfter(Destroy.NAME)
-                plugins.withId(PackagePlugin.ID) { dependsOn(Deploy.NAME) }
+            register<InstanceBackup>(InstanceBackup.NAME) {
+                mustRunAfter(InstanceDown.NAME)
             }
-            register<Resetup>(Resetup.NAME) {
-                dependsOn(Destroy.NAME, Setup.NAME)
+
+            register<InstanceResolve>(InstanceResolve.NAME)
+            register<InstanceTail>(InstanceTail.NAME)
+
+            // Common lifecycle
+
+            registerOrConfigure<Up>(Up.NAME) {
+                dependsOn(InstanceUp.NAME)
+                mustRunAfter(InstanceBackup.NAME)
             }
-            register<Backup>(Backup.NAME) {
-                dependsOn(Down.NAME)
-                finalizedBy(Up.NAME)
+            registerOrConfigure<Down>(Down.NAME) {
+                dependsOn(InstanceDown.NAME)
             }
-            register<Tail>(Tail.NAME)
+            registerOrConfigure<Destroy>(Destroy.NAME) {
+                dependsOn(InstanceDestroy.NAME)
+            }
+            registerOrConfigure<Restart>(Restart.NAME) {
+                dependsOn(InstanceRestart.NAME)
+            }
+            registerOrConfigure<Setup>(Setup.NAME) {
+                dependsOn(InstanceSetup.NAME)
+            }
+            registerOrConfigure<Resetup>(Resetup.NAME) {
+                dependsOn(InstanceResetup.NAME)
+            }
+            registerOrConfigure<Resolve>(Resolve.NAME) {
+                dependsOn(InstanceResolve.NAME)
+            }
+
+            // Gradle lifecycle
+
+            named<Task>(LifecycleBasePlugin.CHECK_TASK_NAME) {
+                dependsOn(InstanceCheck.NAME)
+            }
         }
     }
 
     companion object {
         const val ID = "com.cognifide.aem.instance"
-
-        const val FILES_PATH = "instance"
     }
 }

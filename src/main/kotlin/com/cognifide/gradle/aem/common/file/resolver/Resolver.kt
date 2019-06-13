@@ -1,31 +1,28 @@
 package com.cognifide.gradle.aem.common.file.resolver
 
-import com.cognifide.gradle.aem.common.AemExtension
-import com.cognifide.gradle.aem.common.DependencyOptions
-import com.cognifide.gradle.aem.common.Formats
+import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.common.build.DependencyOptions
 import com.cognifide.gradle.aem.common.file.FileException
-import com.cognifide.gradle.aem.common.file.downloader.HttpFileDownloader
-import com.cognifide.gradle.aem.common.file.downloader.SftpFileDownloader
-import com.cognifide.gradle.aem.common.file.downloader.SmbFileDownloader
-import com.cognifide.gradle.aem.common.file.downloader.UrlFileDownloader
-import com.cognifide.gradle.aem.common.http.HttpClient
+import com.cognifide.gradle.aem.common.file.transfer.http.HttpFileTransfer
+import com.cognifide.gradle.aem.common.file.transfer.sftp.SftpFileTransfer
+import com.cognifide.gradle.aem.common.file.transfer.smb.SmbFileTransfer
 import com.google.common.hash.HashCode
 import java.io.File
+import java.util.*
 import org.apache.commons.io.FilenameUtils
 import org.apache.commons.lang3.builder.HashCodeBuilder
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.tasks.Internal
-import org.gradle.util.GFileUtils
 
 /**
  * File downloader with groups supporting files from multiple sources: local and remote (SFTP, SMB, HTTP).
  */
 abstract class Resolver<G : FileGroup>(
     @get:Internal
-    val aem: AemExtension,
+val aem: AemExtension,
 
     @get:Internal
-    val downloadDir: File
+val downloadDir: File
 ) {
     private val project = aem.project
 
@@ -39,21 +36,23 @@ abstract class Resolver<G : FileGroup>(
     val groups: List<G>
         get() = groupsDefined.filter { it.resolutions.isNotEmpty() }
 
-    protected open fun resolve(hash: Any, resolver: (FileResolution) -> File): FileResolution {
-        val id = HashCode.fromInt(HashCodeBuilder().append(hash).toHashCode()).toString()
+    @get:Internal
+    val outputDirs: List<File>
+        get() = outputDirs { true }
 
-        return groupCurrent.resolve(id, resolver)
-    }
-
-    fun outputDirs(filter: G.() -> Boolean = { true }): List<File> {
+    fun outputDirs(filter: G.() -> Boolean): List<File> {
         return groups.filter(filter).flatMap { it.dirs }
     }
 
-    fun allFiles(filter: G.() -> Boolean = { true }): List<File> {
+    @get:Internal
+    val allFiles: List<File>
+        get() = allFiles { true }
+
+    fun allFiles(filter: G.() -> Boolean): List<File> {
         return resolveGroups(filter).flatMap { it.files }
     }
 
-    fun resolveGroups(filter: G.() -> Boolean = { true }): List<G> {
+    fun resolveGroups(filter: G.() -> Boolean): List<G> {
         return groups.filter(filter).onEach { it.files }
     }
 
@@ -62,9 +61,12 @@ abstract class Resolver<G : FileGroup>(
                 ?: throw FileException("File group '$name' is not defined.")
     }
 
-    fun dependency(notation: Any): FileResolution {
-        return resolve(notation) {
-            val configName = "fileResolver_dependency_${HashCodeBuilder().append(notation).append(downloadDir).build()}"
+    /**
+     * Resolve file by dependency notation using defined Gradle repositories (Maven, Ivy etc).
+     */
+    fun resolve(notation: Any): FileResolution {
+        return resolveFile(notation) {
+            val configName = "fileResolver_dependency_${UUID.randomUUID()}"
             val configOptions: (Configuration) -> Unit = { it.isTransitive = false }
             val config = project.configurations.create(configName, configOptions)
 
@@ -73,116 +75,69 @@ abstract class Resolver<G : FileGroup>(
         }
     }
 
-    fun dependency(dependencyOptions: DependencyOptions.() -> Unit): FileResolution {
-        return dependency(DependencyOptions.of(project.dependencies, dependencyOptions))
+    /**
+     * Resolve file using defined Gradle repositories (Maven, Ivy etc).
+     */
+    fun resolve(dependencyOptions: DependencyOptions.() -> Unit): FileResolution {
+        return resolve(DependencyOptions.of(project.dependencies, dependencyOptions))
     }
 
-    fun url(url: String): FileResolution {
-        return when {
-            SftpFileDownloader.handles(url) -> downloadSftpAuth(url)
-            SmbFileDownloader.handles(url) -> downloadSmbAuth(url)
-            HttpFileDownloader.handles(url) -> downloadHttpAuth(url)
-            UrlFileDownloader.handles(url) -> downloadUrl(url)
-            else -> local(url)
-        }
+    /**
+     * Download file using automatically determined file transfer (HTTP, SFTP, SMB, URL, local file system).
+     *
+     * Same global settings (like basic auth credentials of HTTP) of each particular file transfer will be used
+     * for all files downloaded. This shorthand method assumes that mostly only single HTTP / SFTP / SMB server
+     * will be used to download all files.
+     *
+     * To use many remote servers with different settings, simply use dedicated methods 'download[Http/Sftp/Smb]'
+     * when declaring each file to be downloaded.
+     */
+    fun download(url: String): FileResolution = resolveFileUrl(url) { aem.fileTransfer.download(url, it) }
+
+    /**
+     * Download file using HTTP file transfer with custom settings (like basic auth credentials).
+     *
+     * Use only when using more than one remote HTTP server to download files.
+     */
+    fun downloadHttp(url: String, options: HttpFileTransfer.() -> Unit): FileResolution {
+        return resolveFileUrl(url) { aem.httpFile { options(); download(url, it) } }
     }
 
-    fun downloadSftp(url: String): FileResolution {
-        return resolve(url) { resolution ->
-            download(url, resolution.dir) { file ->
-                SftpFileDownloader(project).download(url, file)
-            }
-        }
+    /**
+     * Download file using SFTP file transfer with custom settings (different credentials).
+     *
+     * Use only when using more than one remote SFTP server to download files.
+     */
+    fun downloadSftp(url: String, options: SftpFileTransfer.() -> Unit): FileResolution {
+        return resolveFileUrl(url) { aem.sftpFile { options(); download(url, it) } }
     }
 
-    private fun download(url: String, targetDir: File, downloader: (File) -> Unit): File {
-        GFileUtils.mkdirs(targetDir)
-
-        val file = File(targetDir, FilenameUtils.getName(url))
-        val lock = File(targetDir, DOWNLOAD_LOCK)
-        if (!lock.exists() && file.exists()) {
-            file.delete()
-        }
-
-        if (!file.exists()) {
-            downloader(file)
-            lock.printWriter().use { it.print(Formats.toJson(mapOf("downloaded" to Formats.date()))) }
-        }
-
-        return file
+    /**
+     * Download file using SMB file transfer with custom settings (different credentials, domain).
+     *
+     * Use only when using more than one remote SMB server to download files.
+     */
+    fun downloadSmb(url: String, options: SmbFileTransfer.() -> Unit): FileResolution {
+        return resolveFileUrl(url) { aem.smbFile { options(); download(url, it) } }
     }
 
-    fun downloadSftp(url: String, sftpOptions: SftpFileDownloader.() -> Unit = {}): FileResolution {
-        return resolve(url) { resolution ->
-            download(url, resolution.dir) { file ->
-                SftpFileDownloader(project)
-                        .apply(sftpOptions)
-                        .download(url, file)
-            }
-        }
+    /**
+     * Use local file directly (without copying).
+     */
+    fun useLocal(path: String): FileResolution {
+        return useLocal(project.file(path))
     }
 
-    fun downloadSftpAuth(url: String, username: String? = null, password: String? = null, hostChecking: Boolean? = null): FileResolution {
-        return downloadSftp(url) {
-            this.username = username ?: aem.config.resolverOptions.sftpUsername
-            this.password = password ?: aem.config.resolverOptions.sftpPassword
-            this.hostChecking = hostChecking ?: aem.config.resolverOptions.sftpHostChecking ?: false
-        }
+    /**
+     * Use local file directly (without copying).
+     */
+    fun useLocal(sourceFile: File): FileResolution {
+        return resolveFile(sourceFile.absolutePath) { sourceFile }
     }
 
-    fun downloadSmb(url: String, smbOptions: SmbFileDownloader.() -> Unit = {}): FileResolution {
-        return resolve(url) { resolution ->
-            download(url, resolution.dir) { file ->
-                SmbFileDownloader(project)
-                        .apply(smbOptions)
-                        .download(url, file)
-            }
-        }
-    }
-
-    fun downloadSmbAuth(url: String, domain: String? = null, username: String? = null, password: String? = null): FileResolution {
-        return downloadSmb(url) {
-            this.domain = domain ?: aem.config.resolverOptions.smbDomain
-            this.username = username ?: aem.config.resolverOptions.smbUsername
-            this.password = password ?: aem.config.resolverOptions.smbPassword
-        }
-    }
-
-    fun downloadHttp(url: String, httpOptions: HttpClient.() -> Unit = {}): FileResolution {
-        return resolve(url) { resolution ->
-            download(url, resolution.dir) { file ->
-                with(HttpFileDownloader(aem)) {
-                    client(httpOptions)
-                    download(url, file)
-                }
-            }
-        }
-    }
-
-    fun downloadHttpAuth(url: String, user: String? = null, password: String? = null, ignoreSsl: Boolean? = null): FileResolution {
-        return downloadHttp(url) {
-            basicUser = user ?: aem.config.resolverOptions.httpUsername ?: ""
-            basicPassword = password ?: aem.config.resolverOptions.httpPassword ?: ""
-            connectionIgnoreSsl = ignoreSsl ?: aem.config.resolverOptions.httpConnectionIgnoreSsl ?: true
-        }
-    }
-
-    fun downloadUrl(url: String): FileResolution {
-        return resolve(url) { resolution ->
-            download(url, resolution.dir) { file ->
-                UrlFileDownloader(project).download(url, file)
-            }
-        }
-    }
-
-    fun local(path: String): FileResolution {
-        return local(project.file(path))
-    }
-
-    fun local(sourceFile: File): FileResolution {
-        return resolve(sourceFile.absolutePath) { sourceFile }
-    }
-
+    /**
+     * Customize configuration for particular file group.
+     */
     fun config(configurer: G.() -> Unit) {
         groupCurrent.apply(configurer)
     }
@@ -194,11 +149,24 @@ abstract class Resolver<G : FileGroup>(
         groupCurrent = groupDefault
     }
 
+    /**
+     * Shorthand for creating named group with single file only to be downloaded.
+     */
+    fun group(name: String, downloadUrl: String) = group(name) { download(downloadUrl) }
+
     abstract fun createGroup(name: String): G
+
+    private fun resolveFile(hash: Any, resolver: (FileResolution) -> File): FileResolution {
+        val id = HashCode.fromInt(HashCodeBuilder().append(hash).toHashCode()).toString()
+
+        return groupCurrent.resolve(id, resolver)
+    }
+
+    private fun resolveFileUrl(url: String, resolver: (File) -> Unit): FileResolution {
+        return resolveFile(url) { File(it.dir, FilenameUtils.getName(url)).apply { resolver(this) } }
+    }
 
     companion object {
         const val GROUP_DEFAULT = "default"
-
-        const val DOWNLOAD_LOCK = "download.lock"
     }
 }
