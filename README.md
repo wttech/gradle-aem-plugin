@@ -1667,32 +1667,20 @@ All code base - application and environment - could be treated as a whole, fully
 
 #### Environment service health checks
 
-In case of the dispatcher it takes few seconds to start. Default service heath check can be described in the following configuration. By default it will wait for all three domains to be available:
+In case of the dispatcher it takes few seconds to start. Service health checks could be described by following configuration.
+For example, to wait for all domains to be available and having particular text in response, write:
 
 ```kotlin
 aem {
     environment {
-            hosts(
-                "example.com",
-                "demo.example.com",
-                "author.example.com",
-                "invalidation-only"
-            )
-            directories {
-                regular(
-                    "httpd/logs"
-                )
-                cache(
-                    "httpd/cache/content/example/live",
-                    "httpd/cache/content/example/demo"
-                )
-            }
-            healthChecks {
-                url("Live site", "http://example.com/en-us.html", text = "English")
-                url("Demo site", "http://demo.example.com/en-us.html", text = "English")
-                url("Author login", "http://author.example.com/libs/granite/core/content/login.html" +
-                        "?resource=%2F&\$\$login\$\$=%24%24login%24%24&j_reason=unknown&j_reason_code=unknown", text = "AEM Sign In")
-            }
+        // ...
+
+        healthChecks {
+            url("Live site", "http://example.com/en-us.html", text = "English")
+            url("Demo site", "http://demo.example.com/en-us.html", text = "English")
+            url("Author login", "http://author.example.com/libs/granite/core/content/login.html" +
+                    "?resource=%2F&\$\$login\$\$=%24%24login%24%24&j_reason=unknown&j_reason_code=unknown", text = "AEM Sign In")
+        }
     }
 }
 ```
