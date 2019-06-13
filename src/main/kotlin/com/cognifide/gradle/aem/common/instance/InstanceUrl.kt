@@ -49,8 +49,8 @@ class InstanceUrl(raw: String) {
     val id: String
         get() = type.name.toLowerCase()
 
-    val type: InstanceType
-        get() = InstanceType.byUrl(httpUrl)
+    val type: IdType
+        get() = IdType.byUrl(httpUrl)
 
     val debugPort: Int
         get() = if (config.port != -1) {

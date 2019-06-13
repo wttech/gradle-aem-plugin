@@ -19,21 +19,33 @@ class PackageGroup(val resolver: PackageResolver, name: String) : FileGroup(reso
      */
     var instanceName = "*"
 
+    internal var initializer: InstanceSync.() -> Unit = {}
+
     /**
      * Hook for preparing instance before deploying packages
      */
-    var initializer: InstanceSync.() -> Unit = {}
+    fun initializer(callback: InstanceSync.() -> Unit) {
+        this.initializer = callback
+    }
+
+    internal var finalizer: InstanceSync.() -> Unit = {}
 
     /**
      * Hook for cleaning instance after deploying packages
      */
-    var finalizer: InstanceSync.() -> Unit = {}
+    fun finalizer(callback: InstanceSync.() -> Unit) {
+        this.finalizer = callback
+    }
+
+    internal var completer: () -> Unit = { aem.instanceActions.awaitUp() }
 
     /**
      * Hook after deploying all packages to all instances called only when
      * at least one package was deployed on any instance.
      */
-    var completer: () -> Unit = { aem.instanceActions.awaitUp() }
+    fun completer(callback: () -> Unit) {
+        this.completer = callback
+    }
 
     override fun createResolution(id: String, resolver: (FileResolution) -> File): FileResolution {
         return PackageResolution(this, id, resolver)

@@ -14,6 +14,9 @@ abstract class DefaultCheck(protected val group: CheckGroup) : Check {
 
     val instance = group.instance
 
+    val progress: CheckProgress
+        get() = runner.progress(instance)
+
     val statusLogger = group.statusLogger
 
     var sync: InstanceSync = instance.sync.apply {
@@ -50,12 +53,6 @@ abstract class DefaultCheck(protected val group: CheckGroup) : Check {
         get() = statusLogger.entries.none { it.level == LogLevel.ERROR }
 
     fun <T : Any> state(value: T) = value.also { group.state(it) }
-
-    val stateTime: Long
-        get() = runner.stateTime(instance)
-
-    val stateChanged: Boolean
-        get() = runner.stateChanged(instance)
 
     fun logValues(values: Collection<Any>): String {
         val other = values.size - LOG_VALUES_COUNT

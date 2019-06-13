@@ -184,7 +184,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.cognifide.gradle:aem-plugin:7.0.0-beta")
+    implementation("com.cognifide.gradle:aem-plugin:7.0.0")
 }
 ```
 
@@ -1195,7 +1195,7 @@ Inherits from [Common Plugin](#common-plugin).
 #### Instance file structure
 
 By default, instance file are stored directly in project, under so called main AEM module usually named *aem*.
-Ensure having directory *aem/.aem* ignored in VCS and excluded from indexing by IDE.
+Ensure having directory *aem/.instance* ignored in VCS and excluded from indexing by IDE.
 
 ![Instance file structure](docs/instance-dir-structure.png)
 
@@ -1467,7 +1467,7 @@ aem {
                 group("tool.groovy-console") { 
                     download("https://github.com/OlsonDigital/aem-groovy-console/releases/download/11.0.0/aem-groovy-console-11.0.0.zip")
                     config {
-                        instanceName = "*-author" // additional filter intersecting 'deployInstanceName'
+                        instanceName = "*-author" // additional filter intersecting 'instance.name' property
                         initializer {
                             logger.info("Installing Groovy Console on $instance")
                         }
@@ -1652,7 +1652,7 @@ Screenshot below presents recommended file structure which does not need any add
 
 ![Environment file structure](docs/environment-dir-structure.png)
 
-Ensure having directory *aem/.aem* ignored in VCS and excluded from indexing by IDE.
+Ensure having directory *aem/.environment* ignored in VCS and excluded from indexing by IDE.
 
 Environment as a code paradigm is a main reason of locating environment configuration and runtime inside a project. 
 Nowadays, advanced web applications (like AEM applications) are multi-layered and closely related with environment.

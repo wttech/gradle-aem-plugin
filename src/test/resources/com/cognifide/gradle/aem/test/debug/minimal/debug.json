@@ -122,7 +122,7 @@
       }
     },
     "localInstanceManager" : {
-      "rootDir" : "*/minimal/.aem/instance",
+      "rootDir" : "*/minimal/.instance",
       "source" : "AUTO",
       "scriptTimeout": 5000,
       "overridesDir" : "*/minimal/gradle/instance",
@@ -147,7 +147,7 @@
       }
     },
     "environment" : {
-      "rootDir" : "*/minimal/.aem/environment",
+      "rootDir" : "*/minimal/.environment",
       "directories" : {
         "regulars" : [ ],
         "caches" : [ ]
@@ -161,9 +161,9 @@
       },
       "configDir" : "*/minimal/gradle/environment",
       "dockerComposeSourceFile" : "*/minimal/gradle/environment/docker-compose.yml.peb",
-      "dockerComposeFile" : "*/minimal/.aem/environment/docker-compose.yml",
+      "dockerComposeFile" : "*/minimal/.environment/docker-compose.yml",
       "dockerConfigPath" : "*/minimal/gradle/environment",
-      "dockerRootPath" : "*/minimal/.aem/environment",
+      "dockerRootPath" : "*/minimal/.environment",
       "httpdConfDir" : "*/minimal/gradle/environment/httpd/conf",
       "created" : false
     },

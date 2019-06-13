@@ -23,7 +23,7 @@ class Environment(@JsonIgnore val aem: AemExtension) : Serializable {
      * Path in which local AEM environment will be stored.
      */
     var rootDir: File = aem.props.string("environment.rootDir")?.let { aem.project.file(it) }
-            ?: aem.projectMain.file(".aem/environment")
+            ?: aem.projectMain.file(".environment")
 
     /**
      * Convention directory for storing environment specific configuration files.
@@ -52,6 +52,10 @@ class Environment(@JsonIgnore val aem: AemExtension) : Serializable {
     val directories = DirectoryOptions(this)
 
     private val distributionsResolver = FileResolver(aem, AemTask.temporaryDir(aem.project, "environment", DISTRIBUTIONS_DIR))
+
+    @get:JsonIgnore
+    val distributionFiles: List<File>
+        get() = distributionsResolver.allFiles
 
     /**
      * Allows to provide remote files to Docker containers by mounted volumes.

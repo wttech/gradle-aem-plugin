@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.common.instance.check
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.build.Behaviors
+import com.cognifide.gradle.aem.common.build.ProgressIndicator
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.InstanceException
 import kotlinx.coroutines.isActive
@@ -18,10 +19,14 @@ class CheckRunner(internal val aem: AemExtension) {
         checks = definitions
     }
 
+    private var progresses: Map<Instance, CheckProgress> = mapOf()
+
     /**
-     * How long to wait before running checks.
+     * Get current checking progress of concrete instance.
      */
-    var wait = 0L
+    fun progress(instance: Instance): CheckProgress {
+        return progresses[instance] ?: throw InstanceException("No progress available for instance '${instance.name}'!")
+    }
 
     /**
      * How long to wait after failed checking before checking again.
@@ -59,74 +64,75 @@ class CheckRunner(internal val aem: AemExtension) {
      */
     var logInstantly = aem.logger.isInfoEnabled
 
-    private val currentChecks = mutableMapOf<Instance, CheckGroup>()
-
-    private var previousChecks = mapOf<Instance, CheckGroup>()
-
-    private var stateWatches = mutableMapOf<Instance, StopWatch>()
-
-    @Suppress("ComplexMethod")
     fun check(instances: Collection<Instance>) {
         aem.progressIndicator {
-            updater = {
-                val instanceSummaries = currentChecks.toSortedMap(compareBy { it.name })
-                        .map { (instance, checks) -> "${instance.name}: ${checks.summary}" }
-                update(instanceSummaries.joinToString(" | "))
-            }
-
-            step = "Waiting"
-            Behaviors.waitFor(wait)
-
-            step = "Checking"
-
-            runningWatch.start()
-
-            aem.parallel.each(instances) { instance ->
-                stateWatches[instance] = StopWatch().apply { start() }
-
-                do {
-                    val checks = CheckGroup(this@CheckRunner, instance, checks).apply {
-                        check()
-                        if (logInstantly) {
-                            log()
-                        }
-                    }
-
-                    currentChecks[instance] = checks
-
-                    if (stateChanged(instance)) {
-                        stateWatches[instance]?.apply { reset(); start() }
-                    }
-
-                    previousChecks = currentChecks.toMap()
-
-                    if (checks.done || aborted) {
-                        break
-                    }
-
-                    Behaviors.waitFor(delay)
-                } while (isActive)
-            }
-
-            runningWatch.stop()
-
-            step = "Aborting"
-
-            if (aborted && verbose) {
-                if (!logInstantly) {
-                    currentChecks.values.forEach { it.log() }
-                }
-                abortCause?.let { throw it }
-            }
+            updater { update(progresses.values.joinToString(" | ") { it.summary }) }
+            doChecking(instances)
+            doAbort()
         }
     }
 
-    fun stateChanged(instance: Instance): Boolean {
-        val current = currentChecks[instance] ?: return true
-        val previous = previousChecks[instance] ?: return true
+    private fun ProgressIndicator.doChecking(instances: Collection<Instance>) {
+        step = "Checking"
 
-        return current.state != previous.state
+        runningWatch.start()
+
+        progresses = instances
+                .fold(mutableMapOf<Instance, CheckProgress>()) { r, i -> r[i] = CheckProgress(i) ; r }
+                .toSortedMap(compareBy { it.name })
+
+        aem.parallel.each(instances) { instance ->
+            val progress = progresses[instance]!!
+
+            progress.stateWatch.start()
+
+            do {
+                if (aborted) {
+                    aem.logger.info("Checking aborted for $instance")
+                    break
+                }
+
+                val checks = CheckGroup(this@CheckRunner, instance, checks).apply {
+                    check()
+                    if (logInstantly) {
+                        log()
+                    }
+                }
+
+                progress.currentCheck = checks
+
+                if (progress.stateChanged) {
+                    progress.stateChanges++
+                    progress.stateWatch.apply { reset(); start() }
+                }
+
+                progress.previousCheck = progress.currentCheck
+
+                if (checks.done) {
+                    aem.logger.info("Checking done for $instance")
+                    break
+                }
+
+                Behaviors.waitFor(delay)
+            } while (isActive)
+        }
+
+        runningWatch.stop()
     }
 
-    fun stateTime(instance: Instance): Long = stateWatches[instance]?.time ?: -1L
+    private fun ProgressIndicator.doAbort() {
+        if (aborted) {
+            step = "Aborting"
+
+            if (!logInstantly) {
+                progresses.values.forEach { it.currentCheck?.log() }
+            }
+
+            if (verbose) {
+                abortCause?.let { throw it }
+            } else {
+                aem.logger.error("Checking error", abortCause)
+            }
+        }
+    }
 }

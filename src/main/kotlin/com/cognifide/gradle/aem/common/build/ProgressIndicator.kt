@@ -15,7 +15,11 @@ class ProgressIndicator(private val project: Project) {
 
     var count = 0L
 
-    var updater: ProgressIndicator.() -> Unit = { update() }
+    private var updater: ProgressIndicator.() -> Unit = { update() }
+
+    fun updater(updater: ProgressIndicator.() -> Unit) {
+        this.updater = updater
+    }
 
     private var delay = 100
 

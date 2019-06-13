@@ -18,7 +18,7 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
      * Path in which local AEM instances will be stored.
      */
     var rootDir: File = aem.props.string("localInstance.root")?.let { aem.project.file(it) }
-            ?: aem.projectMain.file(".aem/instance")
+            ?: aem.projectMain.file(".instance")
 
     /**
      * Determines how instances will be created (from backup or quickstart built from the scratch).

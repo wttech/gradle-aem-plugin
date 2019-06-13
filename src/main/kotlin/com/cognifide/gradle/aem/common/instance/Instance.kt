@@ -53,8 +53,8 @@ interface Instance : Serializable {
         get() = environment == ENVIRONMENT_CMD
 
     @get:Internal
-    val type: InstanceType
-        get() = InstanceType.byId(id)
+    val type: IdType
+        get() = IdType.byId(id)
 
     @get:Internal
     @get:JsonIgnore
@@ -127,10 +127,6 @@ interface Instance : Serializable {
 
         const val PASSWORD_DEFAULT = "admin"
 
-        const val TYPE_REMOTE = "remote"
-
-        const val TYPE_LOCAL = "local"
-
         val LOCAL_PROPS = listOf("httpUrl", "type", "password", "jvmOpts", "startOpts", "runModes", "debugPort")
 
         val REMOTE_PROPS = listOf("httpUrl", "type", "user", "password")
@@ -159,17 +155,17 @@ interface Instance : Serializable {
                     result.apply { put(prop, value as String) }
                 }
 
-                if (props["httpUrl"] == null) {
+                if (props["httpUrl"].isNullOrBlank()) {
                     aem.logger.warn("Instance named '$name' must have property 'httpUrl' defined.")
                     return@mapNotNull null
                 }
 
                 val httpUrl = props["httpUrl"]!!
-                val type = props["type"] ?: TYPE_REMOTE
+                val type = PhysicalType.of(props["type"]) ?: PhysicalType.REMOTE
                 val (environment, id) = nameParts
 
                 when (type) {
-                    TYPE_LOCAL -> LocalInstance.create(aem, httpUrl) {
+                    PhysicalType.LOCAL -> LocalInstance.create(aem, httpUrl) {
                         this.environment = environment
                         this.id = id
 
@@ -181,7 +177,7 @@ interface Instance : Serializable {
 
                         this.properties.putAll(props.filterKeys { !LOCAL_PROPS.contains(it) })
                     }
-                    TYPE_REMOTE -> RemoteInstance.create(aem, httpUrl) {
+                    PhysicalType.REMOTE -> RemoteInstance.create(aem, httpUrl) {
                         this.environment = environment
                         this.id = id
 
@@ -189,10 +185,6 @@ interface Instance : Serializable {
                         props["password"]?.let { this.password = it }
 
                         this.properties.putAll(props.filterKeys { !REMOTE_PROPS.contains(it) })
-                    }
-                    else -> {
-                        aem.logger.warn("Invalid instance type '$type' defined in property '$property'. Supported types: 'local', 'remote'.")
-                        return@mapNotNull null
                     }
                 }
             }.sortedBy { it.name }

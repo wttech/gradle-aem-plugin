@@ -48,7 +48,7 @@ class CheckGroup(
         get() = checks.all { it.success }
 
     val summary: String
-        get() = checks.firstOrNull { it.failure }?.status ?: "Checks passed"
+        get() = checks.firstOrNull { it.failure }?.status ?: "Passed"
 
     // Factory methods / DSL
 
@@ -63,4 +63,6 @@ class CheckGroup(
     fun timeout(options: TimeoutCheck.() -> Unit) = TimeoutCheck(this).apply(options)
 
     fun unavailable(options: UnavailableCheck.() -> Unit) = UnavailableCheck(this).apply(options)
+
+    fun unchanged(options: UnchangedCheck.() -> Unit) = UnchangedCheck(this).apply(options)
 }

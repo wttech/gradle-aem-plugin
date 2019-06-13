@@ -30,7 +30,7 @@ class UnavailableCheck(group: CheckGroup) : DefaultCheck(group) {
                 )
             }
         } else {
-            if (utilisationTime !in 0..stateTime) {
+            if (utilisationTime !in 0..progress.stateTime) {
                 statusLogger.error(
                         "Awaiting utilized",
                         "HTTP server not responding. Waiting for utilization (port releasing) of $instance"

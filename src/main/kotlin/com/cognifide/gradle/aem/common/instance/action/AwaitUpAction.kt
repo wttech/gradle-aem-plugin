@@ -11,9 +11,9 @@ import java.util.concurrent.TimeUnit
 class AwaitUpAction(aem: AemExtension) : AnyInstanceAction(aem) {
 
     private var timeoutOptions: TimeoutCheck.() -> Unit = {
-        state = aem.props.long("instance.awaitUp.timeout.state")
+        stateTime = aem.props.long("instance.awaitUp.timeout.stateTime")
                 ?: TimeUnit.MINUTES.toMillis(5)
-        constant = aem.props.long("instance.awaitUp.timeout.constant")
+        constantTime = aem.props.long("instance.awaitUp.timeout.constantTime")
                 ?: TimeUnit.MINUTES.toMillis(30)
     }
 
@@ -55,8 +55,16 @@ class AwaitUpAction(aem: AemExtension) : AnyInstanceAction(aem) {
         componentsOptions = options
     }
 
+    private var unchangedOptions: UnchangedCheck.() -> Unit = {
+        awaitTime = aem.props.long("instance.awaitUp.unchanged.awaitTime")
+                ?: TimeUnit.SECONDS.toMillis(3)
+    }
+
+    fun unchanged(options: UnchangedCheck.() -> Unit) {
+        unchangedOptions = options
+    }
+
     private val runner = CheckRunner(aem).apply {
-        wait = aem.props.long("instance.awaitUp.wait") ?: TimeUnit.SECONDS.toMillis(1)
         delay = aem.props.long("instance.awaitUp.delay") ?: TimeUnit.SECONDS.toMillis(1)
         verbose = aem.props.boolean("instance.awaitUp.verbose") ?: true
 
@@ -65,7 +73,8 @@ class AwaitUpAction(aem: AemExtension) : AnyInstanceAction(aem) {
                     timeout(timeoutOptions),
                     bundles(bundlesOptions),
                     events(eventsOptions),
-                    components(componentsOptions)
+                    components(componentsOptions),
+                    unchanged(unchangedOptions)
             )
         }
     }

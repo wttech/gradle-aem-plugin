@@ -3,7 +3,6 @@ package com.cognifide.gradle.aem.common.file.transfer
 import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.file.FileException
-import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.file.transfer.generic.CustomFileTransfer
 import com.cognifide.gradle.aem.common.file.transfer.generic.LocalFileTransfer
 import com.cognifide.gradle.aem.common.file.transfer.generic.UrlFileTransfer
@@ -76,7 +75,14 @@ class FileTransferManager(private val aem: AemExtension) : FileTransfer {
         }
 
         GFileUtils.mkdirs(target.parentFile)
-        FileOperations.lockOperation(target) { handling(dirUrl).downloadFrom(dirUrl, fileName, it) }
+
+        val tmp = File(target.parentFile, "${target.name}$TMP_SUFFIX")
+        if (tmp.exists()) {
+            tmp.delete()
+        }
+
+        handling(dirUrl).downloadFrom(dirUrl, fileName, tmp)
+        tmp.renameTo(target)
     }
 
     /**
@@ -154,7 +160,7 @@ class FileTransferManager(private val aem: AemExtension) : FileTransfer {
      * Useful only in specific cases, when e.g company storage offers accessing files via multiple protocols
      * using same AD credentials.
      */
-    fun credentials(user: String, password: String, domain: String? = null) {
+    fun credentials(user: String?, password: String?, domain: String? = null) {
         http.client.basicUser = user
         http.client.basicPassword = password
 
@@ -176,5 +182,7 @@ class FileTransferManager(private val aem: AemExtension) : FileTransfer {
 
     companion object {
         const val NAME = "manager"
+
+        const val TMP_SUFFIX = ".tmp"
     }
 }

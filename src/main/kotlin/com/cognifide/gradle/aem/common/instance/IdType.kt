@@ -3,7 +3,7 @@ package com.cognifide.gradle.aem.common.instance
 import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.common.utils.Patterns
 
-enum class InstanceType {
+enum class IdType {
     AUTHOR,
     PUBLISH;
 
@@ -15,12 +15,12 @@ enum class InstanceType {
 
         private val AUTHOR_HOST_SUFFIXES = listOf("-author", "-autor")
 
-        fun byId(id: String): InstanceType {
+        fun byId(id: String): IdType {
             return values().find { id.startsWith(it.name, ignoreCase = true) }
-                    ?: throw AemException("Invalid instance ID '$id' (must start with 'author' or 'publish')!")
+                    ?: throw AemException("Invalid instance ID '$id'! Must start with prefix 'author' or 'publish'.")
         }
 
-        fun byUrl(url: String): InstanceType {
+        fun byUrl(url: String): IdType {
             val urlDetails = InstanceUrl.parse(url)
 
             return when {
