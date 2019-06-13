@@ -53,6 +53,10 @@ class Environment(@JsonIgnore val aem: AemExtension) : Serializable {
 
     private val distributionsResolver = FileResolver(aem, AemTask.temporaryDir(aem.project, "environment", DISTRIBUTIONS_DIR))
 
+    @get:JsonIgnore
+    val distributionFiles: List<File>
+        get() = distributionsResolver.allFiles
+
     /**
      * Allows to provide remote files to Docker containers by mounted volumes.
      */

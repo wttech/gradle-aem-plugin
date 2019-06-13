@@ -98,6 +98,9 @@ class InstancePlugin : AemPlugin() {
             registerOrConfigure<Resetup>(Resetup.NAME) {
                 dependsOn(InstanceResetup.NAME)
             }
+            registerOrConfigure<Resolve>(Resolve.NAME) {
+                dependsOn(InstanceResolve.NAME)
+            }
 
             // Gradle lifecycle
 
