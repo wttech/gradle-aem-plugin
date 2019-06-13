@@ -1204,7 +1204,7 @@ Inherits from [Common Plugin](#common-plugin).
 By default, instance file are stored directly in project, under so called main AEM module usually named *aem*.
 Ensure having directory *aem/.instance* ignored in VCS and excluded from indexing by IDE.
 
-![Instance file structure](docs/instance-dir-structure.png)
+![Instance file structure](docs/instance-file-structure.png)
 
 #### Task `instanceSetup`
 
@@ -1657,7 +1657,7 @@ As a consequence, if AEM project is located outside of *C:/Users* directory, the
 Environment plugin is a little more depending on convention in case of directory structure.
 Screenshot below presents recommended file structure which does not need any additional configuration.
 
-![Environment file structure](docs/environment-dir-structure.png)
+![Environment file structure](docs/environment-file-structure.png)
 
 Ensure having directory *aem/.environment* ignored in VCS and excluded from indexing by IDE.
 
