@@ -296,7 +296,7 @@ aem {
         }
         instanceSatisfy { // customizing CRX packages to be deployed as dependencies before built AEM application
             packages {
-                url("http://.../package.zip")
+                download("http://.../package.zip")
             }
         }
         // ... and all other tasks
@@ -1420,7 +1420,7 @@ This task might be also useful to check amended configuration to verify HTTP url
 
 Upload & install dependent CRX package(s) before deployment. Available methods:
 
-* `group(name: String, options: Resolver<PackageGroup>.() -> Unit)`, useful for declaring group of packages (or just optionally naming single package) to be installed only on demand. For instance: `group 'tools', { url('http://example.com/package.zip'); url('smb://internal-nt/package2.zip')  }`. Then to install only packages in group `tools`, use command: `gradlew instanceSatisfy -Pinstance.satisfy.group=tools`.
+* `group(name: String, options: Resolver<PackageGroup>.() -> Unit)`, useful for declaring group of packages (or just optionally naming single package) to be installed only on demand. For instance: `group("tools") { download('http://example.com/package.zip'); download('smb://internal-nt/package2.zip')  }`. Then to install only packages in group `tools`, use command: `gradlew instanceSatisfy -Pinstance.satisfy.group=tools`.
 * `useLocal(path: String)`, use CRX package from local file system.
 * `useLocal(file: File)`, same as above, but file can be even located outside the project.
 * `resolve(notation: String)`, use OSGi bundle that will be resolved from defined Gradle repositories (for example from Maven) then wrapped to CRX package.
@@ -1936,7 +1936,7 @@ Assuming that on AEM instances there is already installed Groovy Console e.g via
 aem {
     tasks {
         satisfy {
-            group("tool.groovyconsole") { url("https://github.com/icfnext/aem-groovy-console/releases/download/12.0.0/aem-groovy-console-12.0.0.zip") }
+            group("tool.groovyconsole") { download("https://github.com/icfnext/aem-groovy-console/releases/download/12.0.0/aem-groovy-console-12.0.0.zip") }
         }
         register("generatePosts") {
             doLast {
