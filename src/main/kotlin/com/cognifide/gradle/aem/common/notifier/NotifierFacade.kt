@@ -52,19 +52,19 @@ class NotifierFacade private constructor(private val aem: AemExtension) {
     }
 
     fun notify(title: String, text: String) {
-        notify(title, text, LogLevel.INFO)
+        notify(title, text, LogLevel.LIFECYCLE)
     }
 
     @Suppress("TooGenericExceptionCaught")
     fun notify(title: String, text: String, level: LogLevel) {
         log(title, text, level)
 
-        try {
-            if (enabled) {
+        if (enabled) {
+            try {
                 notifier.notify(title, text, level)
+            } catch (e: Exception) {
+                aem.logger.debug("AEM notifier is not available.", e)
             }
-        } catch (e: Exception) {
-            aem.logger.debug("AEM notifier is not available.", e)
         }
     }
 
