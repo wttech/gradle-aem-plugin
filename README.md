@@ -4,9 +4,9 @@
 [![Apache License, Version 2.0, January 2004](docs/apache-license-badge.svg)](http://www.apache.org/licenses/)
 ![Travis Build](https://travis-ci.org/Cognifide/gradle-aem-plugin.svg?branch=develop)
 
-# Gradle AEM Plugin
+<h1 style="display: none">Gradle AEM Plugin</h1>
 
-<p align="center">
+<p>
   <img src="docs/logo.png" alt="Gradle AEM Plugin Logo"/>
 </p>
 
