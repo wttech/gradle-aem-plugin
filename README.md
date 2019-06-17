@@ -144,6 +144,7 @@ Documentation for previous series:
         * [Task environmentDev](#task-environmentdev)
   * [How to's](#how-tos)
      * [Set AEM configuration properly for all / concrete project(s)](#set-aem-configuration-properly-for-all--concrete-projects)
+     * [Use lifecycle tasks](#use-lifecycle-tasks)
      * [Implement custom AEM tasks](#implement-custom-aem-tasks)
         * [Defining CRX package via code then downloading and sharing it using external HTTP endpoint](#defining-crx-package-via-code-then-downloading-and-sharing-it-using-external-http-endpoint)
         * [Calling AEM endpoints / making any HTTP requests](#calling-aem-endpoints--making-any-http-requests)
@@ -1689,9 +1690,13 @@ aem {
 
 Turns on local AEM environment.
 
+![Environment up task](docs/environment-up-task.gif)
+
 #### Task `environmentDown`
 
 Turns off local AEM environment.
+
+![Environment down task](docs/environment-down-task.gif)
 
 #### Task `environmentDev`
 
@@ -1759,6 +1764,23 @@ aem {
 
 Warning! Very often plugin users mistake is to configure `instanceSatisfy` task in `allprojects` closure. 
 As an effect there will be same dependent CRX package defined multiple times.
+
+### Use lifecycle tasks
+
+To control lifecycle of both:
+ 
+* AEM instances (author & publish) (provided from [instance plugin](#instance-plugin))
+* AEM environment (HTTPD server with AEM dispatcher) (provided by [environment plugin](#environment-plugin))
+
+use dynamically registered tasks (only if at least one of plugins above are applied):
+
+* `up` <=> `instanceUp` + `environmentUp`
+* `down` <=> `instanceDown` + `environmentDown`
+* `destroy` <=> `instanceDestroy` + `environmentDestroy`
+* `setup` <=> `instanceSetup` + `environmentSetup`
+* `resetup` <=> `instanceResetup` + `environmentResetup`
+* `resolve` <=> `instanceResolve` + `environmentResolve`
+ 
 
 ### Implement custom AEM tasks
 
