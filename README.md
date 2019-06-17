@@ -50,6 +50,7 @@ Want to see it in action? Follow [here](https://github.com/Cognifide/gradle-aem-
 * [Advanced AEM instance(s) stability & health checking](#task-instanceawait) after CRX package deployment.
 * [Continuous AEM incident monitoring](#task-instancetail) and interactive reporting (centralized log tailing of any AEM instances with no SSH).
 * Easy parallel [CRX package deployment](#task-packagedeploy) to many remote group of instances.
+* [Hot reloading for HTTPD / AEM dispatcher configuration files](#task-environmentdev) with health checking (web browser usage not needed).
 * [Fail-safe dependent CRX packages installation](#task-instancesatisfy) from local and remote sources using various protocols (SMB / SSH / HTTP / custom).
 * [Fast JCR content synchronization](#task-sync) from running AEM instances with advanced content normalization.
 * [Composing CRX package](#task-packagecompose) from multiple separate JCR content roots, bundles.
