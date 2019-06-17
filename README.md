@@ -1485,9 +1485,7 @@ aem {
                         }
                         completer {
                             logger.info("Reloading instance(s) after installing Groovy Console")
-                            aem.instanceActions.reload {
-                                delay = 3
-                            }
+                            aem.instanceActions.reloadAndAwaitUp()
                         }
                     }
                 }
@@ -1740,7 +1738,7 @@ Common configuration like root of content for JCR package, should be defined in 
 allprojects {
   plugins.withId("com.cognifide.aem.common") {
     configure<AemExtension> {
-        config {
+        `package` {
             contentDir = aem.project.file("src/main/aem") // overrides default dir named 'content'
         }
     }
