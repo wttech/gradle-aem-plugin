@@ -1513,7 +1513,7 @@ gradlew instanceSatisfy -Pinstance.satisfy.urls=[https://github.com/OlsonDigital
 
 Check health condition of AEM instance(s) of any type (local & remote).
 
-Custom behavior of each particular health check using following lambdas:
+Customize behavior of each particular health check using following lambdas:
 
 ```kotlin
 aem {
@@ -1521,16 +1521,26 @@ aem {
         instanceCheck {
             awaitUp {
                 timeout {
-                    // ...
+                    stateTime = aem.props.long("instance.awaitUp.timeout.stateTime") ?: TimeUnit.MINUTES.toMillis(2)
+                    constantTime = aem.props.long("instance.awaitUp.timeout.constantTime") ?: TimeUnit.MINUTES.toMillis(10)
                 }
                 bundles {
-                    // ...
+                    symbolicNamesIgnored = aem.props.list("instance.awaitUp.bundles.symbolicNamesIgnored") ?: listOf()
                 }
                 components {
-                    // ...
+                    platformComponents = aem.props.list("instance.awaitUp.components.platform") ?: listOf(
+                        "com.day.crx.packaging.*", 
+                        "org.apache.sling.installer.*"
+                    )
+                    specificComponents = aem.props.list("instance.awaitUp.components.specific") ?: aem.javaPackages.map { "$it.*" }
                 }
                 events {
-                    // ...
+                    unstableTopics = aem.props.list("instance.awaitUp.event.unstableTopics") ?: listOf(
+                        "org/osgi/framework/ServiceEvent/*",
+                        "org/osgi/framework/FrameworkEvent/*",
+                        "org/osgi/framework/BundleEvent/*"
+                    )
+                    unstableAgeMillis = aem.props.long("instance.awaitUp.event.unstableAgeMillis") ?: TimeUnit.SECONDS.toMillis(5)
                 }
             }
         }
@@ -1563,14 +1573,17 @@ Instead, tailer is continuously polling log files using HTTP endpoint provided b
 New log entries are being dynamically appended to log files stored on local file system in a separate file for each environment. 
 By having all log files in one place, AEM developer or QA engineer has an opportunity to comportably analyze logs, verify incidents occuring on AEM instances.
 
-To customize tailer behavior, see [TailOptions](src/main/kotlin/com/cognifide/gradle/aem/instance/tail/TailOptions.kt).
+To customize tailer behavior, see [InstanceTailer](src/main/kotlin/com/cognifide/gradle/aem/instance/tail/InstanceTailer.kt).
 
 ```kotlin
 aem {
     tasks {
         instanceTail {
             tailer {
-                // ...
+                logFilePath = aem.props.string("instance.tail.logFilePath") ?: "/logs/error.log"
+                logListener = { instance -> /* ... */ }
+                incidentFilter = aem.props.string("instance.tail.incidentFilter")?.let { aem.project.file(it) } ?: File(aem.configCommonDir, "instanceTail/incidentFilter.txt")
+                incidentDelay = aem.props.long("instance.tail.incidentDelay") ?: 5000L
             }
         }
     }
