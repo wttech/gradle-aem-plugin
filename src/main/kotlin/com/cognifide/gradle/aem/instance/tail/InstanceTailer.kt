@@ -45,6 +45,10 @@ class InstanceTailer(val aem: AemExtension) {
      */
     val logFilter = LogFilter()
 
+    fun logFilter(options: LogFilter.() -> Unit) {
+        logFilter.apply(options)
+    }
+
     /**
      * Determines which log entries are considered as incidents.
      */
