@@ -1702,7 +1702,7 @@ Turns off local AEM environment.
 
 Allows to listen for Apache Web Server / Dispatcher configuration files changed and then automatically reload HTTP service.
 
-**NOTE** On Windows, it is required to accept granting Docker to access local files.
+Workflow:
 
 1. Run command `gradlew environmentDev`,
 2. Edit files located in *aem/gradle/environment/httpd/conf* ,
@@ -1711,6 +1711,8 @@ Allows to listen for Apache Web Server / Dispatcher configuration files changed 
 4. Optionally, check:
    * HTTPD and AEM Dispatcher logs located at path *aem/.environment/httpd/logs*
    * AEM Dispatcher cache located at path *aem/.environment/httpd/cache*
+   
+![Environment up task](docs/environment-dev-task.gif)
 
 ## How to's
 
