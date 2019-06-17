@@ -4,72 +4,16 @@
 [![Apache License, Version 2.0, January 2004](docs/apache-license-badge.svg)](http://www.apache.org/licenses/)
 ![Travis Build](https://travis-ci.org/Cognifide/gradle-aem-plugin.svg?branch=develop)
 
-# Gradle AEM Plugin
-
-<p align="center">
-  <img src="docs/logo.png" alt="Gradle AEM Plugin Logo"/>
+<p>
+  <img src="docs/logo.png" alt="Gradle AEM Plugin"/>
 </p>
-
-## Description
-
-Swiss army knife for AEM related automation. Incremental build which takes seconds, not minutes. Developer who does not loose focus between build time gaps. Extend freely your build system directly in project. 
-
-AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget to **star this project** on GitHub :)
-
-Be inspired by watching [live demo](https://adapt.to/2018/en/schedule/a-better-developer-experience-for-sling-based-applications.html) presented on official **Sling adaptTo() 2018** conference.
-
-Looking for dedicated version of plugin for [**Apache Sling**](https://sling.apache.org)? Check out [Gradle Sling Plugin](https://github.com/Cognifide/gradle-sling-plugin)!
-
-### Screenshot
-
-<p align="center">
-  <img src="docs/gradle-aem-multi-build.gif" alt="Gradle AEM Multi Build"/>
-</p>
-
-What is being done above by simply running super easy command `sh gradlew`?
-
-1. `:aem:instanceSatisfy` -> checking for new dependent CRX packages to be deployed (in a lazy & fail-safe manner) that could arrive to our AEM instances automatically if somebody else add it to build configuration in the meantime.
-2. `:aem:assembly:full:packageDeploy` -> building & deploying all-in-one CRX package to AEM instances in parallel, then awaiting for stable condition of AEM instances and built application.
-3. `:aem:environmentClean` -> cleaning AEM dispatcher cache and restarting HTTPD service / Apache Web Server.
-4. `:aem:environmentCheck` -> running health checks ensuring that all AEM instances / websites are responding correctly.
-
-**Build is incremental** which guarantees optimized time every time regardless of build command used.
-Only changed parts of application are processed again:
-
-* Dependent CRX packages are installed only when they are not already installed on particular AEM instances.
-* CRX package is rebuild only when JCR content / files under *jcr_root* are changed.
-* Java code is recompiled only when code in *\*.java* files is changed.
-* Front-end / Webpack build is run again only when code in *\*.scss* and *\*.js* etc files is changed.
-
-Want to see it in action? Follow [here](https://github.com/Cognifide/gradle-aem-multi)!
-
-### Features 
-
-* Automated complete AEM environment setup with [virtualized AEM dispatcher](#environment-plugin) and [native AEM instances](#instance-plugin) optimized for best development experience.
-* [Powerful AEM DSL scripting capabilities](#implement-custom-aem-tasks) for performing JCR content migrations, managing AEM instances.
-* [Advanced AEM instance(s) stability & health checking](#task-instanceawait) after CRX package deployment.
-* [Continuous AEM incident monitoring](#task-instancetail) and interactive reporting (centralized log tailing of any AEM instances with no SSH).
-* Easy parallel [CRX package deployment](#task-packagedeploy) to many remote group of instances.
-* [Fail-safe dependent CRX packages installation](#task-instancesatisfy) from local and remote sources using various protocols (SMB / SSH / HTTP / custom).
-* [Fast JCR content synchronization](#task-sync) from running AEM instances with advanced content normalization.
-* [Composing CRX package](#task-packagecompose) from multiple separate JCR content roots, bundles.
-* [All-in-one CRX packages generation](#assembling-packages-merging-all-in-one) (assemblies), vault filters merging etc.
-* [Easy OSGi bundle customization](#bundle-plugin) with BND tool embedded.
-
-Gradle AEM Plugin is following strategy [convention over configuration](https://en.wikipedia.org/wiki/Convention_over_configuration). When following built-in conventions about project structure & naming, then only minimal configuration is required. 
-Still all features are **fully configurable**.
-
-## Important notice 
-
-Major releases of plugin are introducing breaking changes. Build functionality is mostly covered, however build scripts need corrections.
-
-Documentation for previous series:
-
-* [6.2.0](https://github.com/Cognifide/gradle-aem-plugin/tree/6.2.0) (last in 6.x serie / with *aem* prefixes in task / property names)
-* [5.1.4](https://github.com/Cognifide/gradle-aem-plugin/tree/5.1.4) (last supporting Groovy DSL)
 
 ## Table of contents
 
+  * [About](#about)
+     * [Screenshot](#screenshot)
+     * [Features](#features)
+     * [Important notice](#important-notice)
   * [Getting started](#getting-started)
   * [Configuration](#configuration)
      * [Plugin setup](#plugin-setup)
@@ -144,6 +88,7 @@ Documentation for previous series:
         * [Task environmentDev](#task-environmentdev)
   * [How to's](#how-tos)
      * [Set AEM configuration properly for all / concrete project(s)](#set-aem-configuration-properly-for-all--concrete-projects)
+     * [Use lifecycle tasks](#use-lifecycle-tasks)
      * [Implement custom AEM tasks](#implement-custom-aem-tasks)
         * [Defining CRX package via code then downloading and sharing it using external HTTP endpoint](#defining-crx-package-via-code-then-downloading-and-sharing-it-using-external-http-endpoint)
         * [Calling AEM endpoints / making any HTTP requests](#calling-aem-endpoints--making-any-http-requests)
@@ -163,6 +108,65 @@ Documentation for previous series:
   * [Building](#building)
   * [Contributing](#contributing)
   * [License](#license)
+
+## About
+
+Swiss army knife for AEM related automation. Incremental build which takes seconds, not minutes. Developer who does not loose focus between build time gaps. Extend freely your build system directly in project. 
+
+AEM developer - it's time to meet Gradle! You liked or used plugin? Don't forget to **star this project** on GitHub :)
+
+Be inspired by watching [live demo](https://adapt.to/2018/en/schedule/a-better-developer-experience-for-sling-based-applications.html) presented on official **Sling adaptTo() 2018** conference.
+
+Looking for dedicated version of plugin for [**Apache Sling**](https://sling.apache.org)? Check out [Gradle Sling Plugin](https://github.com/Cognifide/gradle-sling-plugin)!
+
+### Screenshot
+
+<p align="center">
+  <img src="docs/gradle-aem-multi-build.gif" alt="Gradle AEM Multi Build"/>
+</p>
+
+What is being done above by simply running super easy command `sh gradlew`?
+
+1. `:aem:instanceSatisfy` -> checking for new dependent CRX packages to be deployed (in a lazy & fail-safe manner) that could arrive to our AEM instances automatically if somebody else add it to build configuration in the meantime.
+2. `:aem:assembly:full:packageDeploy` -> building & deploying all-in-one CRX package to AEM instances in parallel, then awaiting for stable condition of AEM instances and built application.
+3. `:aem:environmentClean` -> cleaning AEM dispatcher cache and restarting HTTPD service / Apache Web Server.
+4. `:aem:environmentCheck` -> running health checks ensuring that all AEM instances / websites are responding correctly.
+
+**Build is incremental** which guarantees optimized time every time regardless of build command used.
+Only changed parts of application are processed again:
+
+* Dependent CRX packages are installed only when they are not already installed on particular AEM instances.
+* CRX package is rebuild only when JCR content / files under *jcr_root* are changed.
+* Java code is recompiled only when code in *\*.java* files is changed.
+* Front-end / Webpack build is run again only when code in *\*.scss* and *\*.js* etc files is changed.
+
+Want to see it in action? Follow [here](https://github.com/Cognifide/gradle-aem-multi)!
+
+### Features 
+
+* Automated complete AEM environment setup with [virtualized AEM dispatcher](#environment-plugin) and [native AEM instances](#instance-plugin) optimized for best development experience.
+* [Powerful AEM DSL scripting capabilities](#implement-custom-aem-tasks) for performing JCR content migrations, managing AEM instances.
+* [Advanced AEM instance(s) stability & health checking](#task-instanceawait) after CRX package deployment.
+* [Continuous AEM incident monitoring](#task-instancetail) and interactive reporting (centralized log tailing of any AEM instances with no SSH).
+* Easy parallel [CRX package deployment](#task-packagedeploy) to many remote group of instances.
+* [Hot reloading for HTTPD / AEM dispatcher configuration files](#task-environmentdev) with health checking (web browser usage not needed).
+* [Fail-safe dependent CRX packages installation](#task-instancesatisfy) from local and remote sources using various protocols (SMB / SSH / HTTP / custom).
+* [Fast JCR content synchronization](#task-sync) from running AEM instances with advanced content normalization.
+* [Composing CRX package](#task-packagecompose) from multiple separate JCR content roots, bundles.
+* [All-in-one CRX packages generation](#assembling-packages-merging-all-in-one) (assemblies), vault filters merging etc.
+* [Easy OSGi bundle customization](#bundle-plugin) with BND tool embedded.
+
+Gradle AEM Plugin is following strategy [convention over configuration](https://en.wikipedia.org/wiki/Convention_over_configuration). When following built-in conventions about project structure & naming, then only minimal configuration is required. 
+Still all features are **fully configurable**.
+
+### Important notice 
+
+Major releases of plugin are introducing breaking changes. Build functionality is mostly covered, however build scripts need corrections.
+
+Documentation for previous series:
+
+* [6.2.0](https://github.com/Cognifide/gradle-aem-plugin/tree/6.2.0) (last in 6.x serie / with *aem* prefixes in task / property names)
+* [5.1.4](https://github.com/Cognifide/gradle-aem-plugin/tree/5.1.4) (last supporting Groovy DSL)
 
 ## Getting started
 
@@ -296,7 +300,7 @@ aem {
         }
         instanceSatisfy { // customizing CRX packages to be deployed as dependencies before built AEM application
             packages {
-                url("http://.../package.zip")
+                download("http://.../package.zip")
             }
         }
         // ... and all other tasks
@@ -1420,7 +1424,7 @@ This task might be also useful to check amended configuration to verify HTTP url
 
 Upload & install dependent CRX package(s) before deployment. Available methods:
 
-* `group(name: String, options: Resolver<PackageGroup>.() -> Unit)`, useful for declaring group of packages (or just optionally naming single package) to be installed only on demand. For instance: `group 'tools', { url('http://example.com/package.zip'); url('smb://internal-nt/package2.zip')  }`. Then to install only packages in group `tools`, use command: `gradlew instanceSatisfy -Pinstance.satisfy.group=tools`.
+* `group(name: String, options: Resolver<PackageGroup>.() -> Unit)`, useful for declaring group of packages (or just optionally naming single package) to be installed only on demand. For instance: `group("tools") { download('http://example.com/package.zip'); download('smb://internal-nt/package2.zip')  }`. Then to install only packages in group `tools`, use command: `gradlew instanceSatisfy -Pinstance.satisfy.group=tools`.
 * `useLocal(path: String)`, use CRX package from local file system.
 * `useLocal(file: File)`, same as above, but file can be even located outside the project.
 * `resolve(notation: String)`, use OSGi bundle that will be resolved from defined Gradle repositories (for example from Maven) then wrapped to CRX package.
@@ -1509,7 +1513,7 @@ gradlew instanceSatisfy -Pinstance.satisfy.urls=[https://github.com/OlsonDigital
 
 Check health condition of AEM instance(s) of any type (local & remote).
 
-Custom behavior of each particular health check using following lambdas:
+Customize behavior of each particular health check using following lambdas:
 
 ```kotlin
 aem {
@@ -1517,16 +1521,26 @@ aem {
         instanceCheck {
             awaitUp {
                 timeout {
-                    // ...
+                    stateTime = aem.props.long("instance.awaitUp.timeout.stateTime") ?: TimeUnit.MINUTES.toMillis(2)
+                    constantTime = aem.props.long("instance.awaitUp.timeout.constantTime") ?: TimeUnit.MINUTES.toMillis(10)
                 }
                 bundles {
-                    // ...
+                    symbolicNamesIgnored = aem.props.list("instance.awaitUp.bundles.symbolicNamesIgnored") ?: listOf()
                 }
                 components {
-                    // ...
+                    platformComponents = aem.props.list("instance.awaitUp.components.platform") ?: listOf(
+                        "com.day.crx.packaging.*", 
+                        "org.apache.sling.installer.*"
+                    )
+                    specificComponents = aem.props.list("instance.awaitUp.components.specific") ?: aem.javaPackages.map { "$it.*" }
                 }
                 events {
-                    // ...
+                    unstableTopics = aem.props.list("instance.awaitUp.event.unstableTopics") ?: listOf(
+                        "org/osgi/framework/ServiceEvent/*",
+                        "org/osgi/framework/FrameworkEvent/*",
+                        "org/osgi/framework/BundleEvent/*"
+                    )
+                    unstableAgeMillis = aem.props.long("instance.awaitUp.event.unstableAgeMillis") ?: TimeUnit.SECONDS.toMillis(5)
                 }
             }
         }
@@ -1559,14 +1573,17 @@ Instead, tailer is continuously polling log files using HTTP endpoint provided b
 New log entries are being dynamically appended to log files stored on local file system in a separate file for each environment. 
 By having all log files in one place, AEM developer or QA engineer has an opportunity to comportably analyze logs, verify incidents occuring on AEM instances.
 
-To customize tailer behavior, see [TailOptions](src/main/kotlin/com/cognifide/gradle/aem/instance/tail/TailOptions.kt).
+To customize tailer behavior, see [InstanceTailer](src/main/kotlin/com/cognifide/gradle/aem/instance/tail/InstanceTailer.kt).
 
 ```kotlin
 aem {
     tasks {
         instanceTail {
             tailer {
-                // ...
+                logFilePath = aem.props.string("instance.tail.logFilePath") ?: "/logs/error.log"
+                logListener = { instance -> /* ... */ }
+                incidentFilter = aem.props.string("instance.tail.incidentFilter")?.let { aem.project.file(it) } ?: File(aem.configCommonDir, "instanceTail/incidentFilter.txt")
+                incidentDelay = aem.props.long("instance.tail.incidentDelay") ?: 5000L
             }
         }
     }
@@ -1689,15 +1706,19 @@ aem {
 
 Turns on local AEM environment.
 
+![Environment up task](docs/environment-up-task.gif)
+
 #### Task `environmentDown`
 
 Turns off local AEM environment.
+
+![Environment down task](docs/environment-down-task.gif)
 
 #### Task `environmentDev`
 
 Allows to listen for Apache Web Server / Dispatcher configuration files changed and then automatically reload HTTP service.
 
-**NOTE** On Windows, it is required to accept granting Docker to access local files.
+Workflow:
 
 1. Run command `gradlew environmentDev`,
 2. Edit files located in *aem/gradle/environment/httpd/conf* ,
@@ -1706,6 +1727,8 @@ Allows to listen for Apache Web Server / Dispatcher configuration files changed 
 4. Optionally, check:
    * HTTPD and AEM Dispatcher logs located at path *aem/.environment/httpd/logs*
    * AEM Dispatcher cache located at path *aem/.environment/httpd/cache*
+   
+![Environment up task](docs/environment-dev-task.gif)
 
 ## How to's
 
@@ -1759,6 +1782,23 @@ aem {
 
 Warning! Very often plugin users mistake is to configure `instanceSatisfy` task in `allprojects` closure. 
 As an effect there will be same dependent CRX package defined multiple times.
+
+### Use lifecycle tasks
+
+To control lifecycle of both:
+ 
+* AEM instances (author & publish) (provided from [instance plugin](#instance-plugin))
+* AEM environment (HTTPD server with AEM dispatcher) (provided by [environment plugin](#environment-plugin))
+
+use dynamically registered tasks (only if at least one of plugins above are applied):
+
+* `up` <=> `instanceUp` + `environmentUp`
+* `down` <=> `instanceDown` + `environmentDown`
+* `destroy` <=> `instanceDestroy` + `environmentDestroy`
+* `setup` <=> `instanceSetup` + `environmentSetup`
+* `resetup` <=> `instanceResetup` + `environmentResetup`
+* `resolve` <=> `instanceResolve` + `environmentResolve`
+ 
 
 ### Implement custom AEM tasks
 
@@ -1936,7 +1976,7 @@ Assuming that on AEM instances there is already installed Groovy Console e.g via
 aem {
     tasks {
         satisfy {
-            group("tool.groovyconsole") { url("https://github.com/icfnext/aem-groovy-console/releases/download/12.0.0/aem-groovy-console-12.0.0.zip") }
+            group("tool.groovyconsole") { download("https://github.com/icfnext/aem-groovy-console/releases/download/12.0.0/aem-groovy-console-12.0.0.zip") }
         }
         register("generatePosts") {
             doLast {
