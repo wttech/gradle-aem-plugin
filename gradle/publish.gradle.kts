@@ -34,6 +34,7 @@ configure<PublishingExtension> {
         create<MavenPublication>("mavenJava") {
             from(components["java"])
             artifact(tasks["sourcesJar"])
+            artifact(tasks["javadocJar"])
         }
     }
 }

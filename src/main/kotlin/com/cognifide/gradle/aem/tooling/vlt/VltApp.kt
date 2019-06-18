@@ -30,7 +30,7 @@ class VltApp(val project: Project) : VaultFsApp() {
 
     /**
      * TODO This could be potentially improved by overriding few methods of base class
-     * @see VaultFsApp.init
+     * @see VaultFsApp
      */
     @Synchronized
     fun execute(args: List<String>, workingPath: String) {
