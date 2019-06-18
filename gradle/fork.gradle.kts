@@ -7,6 +7,7 @@ configure<ForkExtension> {
                     label = "Version"
                     description = "Format 'X.Y.Z' (major.minor.patch)"
                     dynamic()
+                    defaultValue = project.version.toString()
                 }
 
         ))

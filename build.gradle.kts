@@ -1,9 +1,11 @@
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.dokka.gradle.DokkaTask
 
 plugins {
     id("org.jetbrains.kotlin.jvm")
+    id("org.jetbrains.dokka")
     id("java-gradle-plugin")
     id("maven-publish")
     id("io.gitlab.arturbosch.detekt")
@@ -70,6 +72,17 @@ tasks {
         from(sourceSets["main"].allSource)
     }
 
+    register<DokkaTask>("dokkaJavadoc") {
+        outputFormat = "javadoc"
+        outputDirectory = "$buildDir/javadoc"
+    }
+
+    register<Jar>("javadocJar") {
+        archiveClassifier.set("javadoc")
+        dependsOn("dokkaJavadoc")
+        from("$buildDir/javadoc")
+    }
+
     withType<JavaCompile>().configureEach{
         sourceCompatibility = JavaVersion.VERSION_1_8.toString()
         targetCompatibility = JavaVersion.VERSION_1_8.toString()
@@ -82,11 +95,11 @@ tasks {
     }
 
     named<Task>("build") {
-        dependsOn("sourcesJar")
+        dependsOn("sourcesJar", "javadocJar")
     }
 
     named<Task>("publishToMavenLocal") {
-        dependsOn("sourcesJar")
+        dependsOn("sourcesJar", "javadocJar")
     }
 
     named<ProcessResources>("processResources") {

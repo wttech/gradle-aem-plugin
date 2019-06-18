@@ -195,7 +195,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.cognifide.gradle:aem-plugin:7.0.0")
+    implementation("com.cognifide.gradle:aem-plugin:7.0.1")
 }
 ```
 
@@ -1431,7 +1431,7 @@ Upload & install dependent CRX package(s) before deployment. Available methods:
 * `download(url: String)`, use CRX package that will be downloaded from specified URL to local temporary directory.
 * `downloadHttp(url: String, options: HttpFileTransfer.() -> Unit)`, download package using HTTP with.
 * `downloadSftp(url: String, options: SftpFileTransfer.() -> Unit)`, download package using SFTP protocol.
-* `downloadSmbAuth(url: String, options: SmbFileTransfer.() -> Unit)`, download package using SMB protocol.
+* `downloadSmb(url: String, options: SmbFileTransfer.() -> Unit)`, download package using SMB protocol.
 
 Example configuration:
 
@@ -1632,7 +1632,9 @@ plugins {
 }
 ```
 
-Controls virtualized AEM environment consisting of Apache Web Server (HTTPD) with AEM dispatcher module installed.
+Controls virtualized AEM environment consisting of Apache Web Server (HTTPD) with AEM Dispatcher module installed.
+Web Server is deployed as [Docker Container](https://www.docker.com/resources/what-container) orchestrated by [Swarm](https://docs.docker.com/engine/swarm/). This solution is cross-platform just like Docker.
+
 Provides environment related tasks: `environmentUp`, `environmentDev`, `environmentHosts` etc.
 
 Should be applied only at root project / only once within whole build.
@@ -1644,17 +1646,17 @@ Inherits from [Common Plugin](#common-plugin).
 Most of the configuration steps are automated. However, there are three manual steps to make this setup fully operating:
 
 1. [Install Docker](https://docs.docker.com/install/)
-    * [Desktop](https://docs.docker.com/docker-for-windows/install/) (highly recommended, using Hyper-V)
-    * [Toolbox](https://docs.docker.com/toolbox/toolbox_install_windows/) (legacy, using VirtualBox)
+    * [Mac](https://docs.docker.com/docker-for-mac/)
+    * [Ubuntu](https://docs.docker.com/install/linux/docker-ce/ubuntu/)
+    * Windows
+        * [Desktop](https://docs.docker.com/docker-for-windows/install/) (highly recommended, using Hyper-V)
+        * [Toolbox](https://docs.docker.com/toolbox/toolbox_install_windows/) (legacy, using VirtualBox)
+
 2. Setup hosts on local machine (admin rights are required to access `/etc/hosts` or `C:\Windows\System32\drivers\etc\hosts` file)
     * In project based on [Gradle AEM Multi](https://github.com/Cognifide/gradle-aem-multi/blob/master/aem), just run script `aem/hosts` or `aem/hosts.bat`
-    * Otherwise: 
-        * Windows: 
-            * Start PowerShell with "Run as administrator"
-            * Execute: `./gradlew.bat environmentHosts --no-daemon`
-        * Unix: 
-            * Execute: `sudo gradlew environmentHosts --no-daemon`
-    
+    * Otherwise 
+        * Unix: execute `sudo gradlew environmentHosts --no-daemon`
+        * Windows: start PowerShell with "Run as administrator", then execute `./gradlew.bat environmentHosts --no-daemon`
     
 ##### Notice for Docker on Windows
 
