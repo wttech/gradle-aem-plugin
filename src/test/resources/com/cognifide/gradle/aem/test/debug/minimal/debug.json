@@ -86,6 +86,7 @@
       "metaCommonDir" : "*/minimal/gradle/package/META-INF",
       "installPath" : "/apps/minimal/install",
       "installRepository" : true,
+      "storagePath": "/etc/packages",
       "errors" : [
         "javax.jcr.nodetype.*Exception",
         "org.apache.jackrabbit.oak.api.*Exception",

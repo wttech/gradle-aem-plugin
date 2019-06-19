@@ -30,14 +30,15 @@ class VltApp(val project: Project) : VaultFsApp() {
 
     /**
      * TODO This could be potentially improved by overriding few methods of base class
-     * @see VaultFsApp
      */
     @Synchronized
     fun execute(args: List<String>, workingPath: String) {
         val cwd = System.getProperty(CURRENT_WORKING_DIR)
-
-        System.setProperty(CURRENT_WORKING_DIR, workingPath)
-        run(args.toTypedArray())
-        System.setProperty(CURRENT_WORKING_DIR, cwd)
+        try {
+            System.setProperty(CURRENT_WORKING_DIR, workingPath)
+            run(args.toTypedArray())
+        } finally {
+            System.setProperty(CURRENT_WORKING_DIR, cwd)
+        }
     }
 }

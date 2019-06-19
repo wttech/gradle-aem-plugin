@@ -13,6 +13,7 @@ import com.cognifide.gradle.aem.common.http.HttpClient
 import com.cognifide.gradle.aem.common.instance.*
 import com.cognifide.gradle.aem.common.notifier.NotifierFacade
 import com.cognifide.gradle.aem.common.pkg.PackageDefinition
+import com.cognifide.gradle.aem.common.pkg.PackageFile
 import com.cognifide.gradle.aem.common.pkg.PackageOptions
 import com.cognifide.gradle.aem.common.pkg.vlt.VltFilter
 import com.cognifide.gradle.aem.common.utils.Formats
@@ -148,7 +149,20 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
         packageOptions.apply(options)
     }
 
+    /**
+     * Defines common settings for built packages and deployment related behavior.
+     */
     fun pkg(options: PackageOptions.() -> Unit) = `package`(options)
+
+    /**
+     * Read CRX package properties of specified ZIP file.
+     */
+    fun `package`(file: File) = PackageFile(file)
+
+    /**
+     * Read CRX package properties of specified ZIP file.
+     */
+    fun pkg(file: File) = `package`(file)
 
     val instanceOptions = InstanceOptions(this)
 

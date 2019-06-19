@@ -32,6 +32,10 @@ class ProjectOptions {
 
     var bundleRunMode: String? = null
 
+    var packageDependent: Boolean = true
+
+    var packagePath: String? = null
+
     internal fun bundlePath(otherBundlePath: String, otherBundleRunMode: String?): String {
         val effectiveBundlePath = bundlePath ?: otherBundlePath
         val effectiveBundleRunMode = bundleRunMode ?: otherBundleRunMode
@@ -42,5 +46,9 @@ class ProjectOptions {
         }
 
         return result
+    }
+
+    internal fun packagePath(otherPackagePath: String): String {
+        return packagePath ?: otherPackagePath
     }
 }

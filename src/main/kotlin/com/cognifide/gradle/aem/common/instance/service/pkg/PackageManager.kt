@@ -8,13 +8,11 @@ import com.cognifide.gradle.aem.common.instance.InstanceService
 import com.cognifide.gradle.aem.common.instance.InstanceSync
 import com.cognifide.gradle.aem.common.pkg.PackageDefinition
 import com.cognifide.gradle.aem.common.pkg.PackageException
+import com.cognifide.gradle.aem.common.pkg.PackageFile
 import com.cognifide.gradle.aem.common.utils.Patterns
 import java.io.File
 import java.io.FileNotFoundException
 import org.apache.commons.io.FilenameUtils
-import org.jsoup.Jsoup
-import org.jsoup.parser.Parser
-import org.zeroturnaround.zip.ZipUtil
 
 /**
  * Allows to communicate with CRX Package Manager.
@@ -37,19 +35,8 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
                 ?: throw InstanceException("Package ${Package.coordinates(group, name, version)}' is not uploaded on $instance")
     }
 
-    fun find(file: File, refresh: Boolean = true, retry: Retry = aem.retry()): Package? {
-        if (!ZipUtil.containsEntry(file, Package.VLT_PROPERTIES)) {
-            throw PackageException("File is not a valid CRX package: $file")
-        }
-
-        val xml = ZipUtil.unpackEntry(file, Package.VLT_PROPERTIES).toString(Charsets.UTF_8)
-        val doc = Jsoup.parse(xml, "", Parser.xmlParser())
-
-        val group = doc.select("entry[key=group]").text()
-        val name = doc.select("entry[key=name]").text()
-        val version = doc.select("entry[key=version]").text()
-
-        return find(group, name, version, refresh, retry)
+    fun find(file: File, refresh: Boolean = true, retry: Retry = aem.retry()): Package? = PackageFile(file).run {
+        find(group, name, version, refresh, retry)
     }
 
     fun find(group: String, name: String, version: String, refresh: Boolean = true, retry: Retry = aem.retry()): Package? {
