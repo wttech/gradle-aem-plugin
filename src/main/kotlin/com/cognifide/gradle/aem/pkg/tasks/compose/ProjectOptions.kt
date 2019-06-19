@@ -5,7 +5,7 @@ import com.cognifide.gradle.aem.pkg.tasks.PackageCompose
 import org.gradle.api.tasks.bundling.Jar
 
 /**
- * Allows to customize default conventions related with specific project from which CRX package is being composed.
+ * Allows to override project specific options while composing merged CRX package.
  */
 class ProjectOptions {
 
@@ -50,48 +50,7 @@ class ProjectOptions {
     var bundleDependent: Boolean = true
 
     /**
-     * JCR content path of extra OSGi bundles taken from particular project.
-     */
-    var bundlePath: String? = null
-
-    /**
-     * Determines where extra OSGi bundles will be placed.
-     */
-    var bundleRunMode: String? = null
-
-    /**
-     * Controls if Vault filter should be automatically generated for extra OSGi bundles.
-     */
-    var bundleVaultFilter: Boolean = true
-
-    /**
      * Controls if nested CRX sub-packages from particular project should be taken.
      */
     var packageDependent: Boolean = true
-
-    /**
-     * JCR content path of nested CRX sub-packages taken from particular project.
-     */
-    var packagePath: String? = null
-
-    /**
-     * Controls if Vault filter should be automatically generated for CRX sub-packages.
-     */
-    var packageVaultFilter: Boolean = true
-
-    internal fun bundlePath(otherBundlePath: String, otherBundleRunMode: String?): String {
-        val effectiveBundlePath = bundlePath ?: otherBundlePath
-        val effectiveBundleRunMode = bundleRunMode ?: otherBundleRunMode
-
-        var result = effectiveBundlePath
-        if (!effectiveBundleRunMode.isNullOrBlank()) {
-            result = "$effectiveBundlePath.$effectiveBundleRunMode"
-        }
-
-        return result
-    }
-
-    internal fun packagePath(otherPackagePath: String): String {
-        return packagePath ?: otherPackagePath
-    }
 }

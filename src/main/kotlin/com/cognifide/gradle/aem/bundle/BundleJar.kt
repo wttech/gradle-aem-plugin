@@ -52,6 +52,14 @@ val jar: Jar
     var installRunMode: String? = null
 
     /**
+     * Determines if Vault workspace filter entry pointing directly to JAR file should be added automatically
+     * for built OSGi bundle.
+     */
+    @Input
+    @Optional
+    var vaultFilter: Boolean = true
+
+    /**
      * Enable or disable support for auto-generating OSGi specific JAR manifest attributes
      * like 'Bundle-SymbolicName', 'Export-Package' or AEM specific like 'Sling-Model-Packages'
      * using 'javaPackage' property.

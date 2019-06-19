@@ -15,6 +15,8 @@ import com.cognifide.gradle.aem.common.pkg.vlt.VltFilter
 import com.cognifide.gradle.aem.common.tasks.ZipTask
 import com.cognifide.gradle.aem.common.utils.Patterns
 import com.cognifide.gradle.aem.pkg.PackagePlugin
+import com.cognifide.gradle.aem.pkg.tasks.compose.BundleDependency
+import com.cognifide.gradle.aem.pkg.tasks.compose.PackageDependency
 import com.cognifide.gradle.aem.pkg.tasks.compose.ProjectOptions
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
@@ -26,7 +28,6 @@ import org.gradle.api.file.CopySpec
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.tasks.*
 import org.gradle.api.tasks.bundling.Jar
-import org.jsoup.nodes.Element
 
 @Suppress("TooManyFunctions")
 open class PackageCompose : ZipTask() {
@@ -46,31 +47,10 @@ open class PackageCompose : ZipTask() {
     var bundlePath: String = aem.packageOptions.installPath
 
     /**
-     * Suffix added to bundle path effectively allowing to install bundles only on specific instances.
-     *
-     * @see <https://helpx.adobe.com/experience-manager/6-4/sites/deploying/using/configure-runmodes.html#Definingadditionalbundlestobeinstalledforarunmode>
-     */
-    @Input
-    @Optional
-    var bundleRunMode: String? = null
-
-    /**
-     * Dependent OSGi bundles to be resolved from repositories and put into CRX package being built.
-     */
-    @Internal
-    val bundleFiles = project.configurations.create(BUNDLES_CONFIGURATION) { it.isTransitive = false }
-
-    /**
-     * Dependent CRX packages to be resolved from repositories and put into CRX package being built.
-     */
-    @Internal
-    val packageFiles = project.configurations.create(PACKAGES_CONFIGURATION) { it.isTransitive = false }
-
-    /**
      * Content path for CRX sub-packages being placed in CRX package being built.
      */
     @Internal
-    var packagePath: PackageFile.() -> String = { "${aem.packageOptions.storagePath}/$group" }
+    var packagePath: String = aem.packageOptions.storagePath
 
     /**
      * Ensures that for directory 'META-INF/vault' default files will be generated when missing:
@@ -140,9 +120,6 @@ open class PackageCompose : ZipTask() {
         get() = mapOf("definition" to vaultDefinition)
 
     @Internal
-    var vaultFilterDefault: (PackageCompose) -> Element = { VltFilter.createElement(it.bundlePath) }
-
-    @Internal
     var fromConvention = true
 
     private var conventionOptions: ProjectOptions.() -> Unit = {}
@@ -154,6 +131,10 @@ open class PackageCompose : ZipTask() {
     private var fromProjects = mutableListOf<() -> Unit>()
 
     private var fromTasks = mutableListOf<() -> Unit>()
+
+    private val bundleDependencies = mutableListOf<BundleDependency>()
+
+    private val packageDependencies = mutableListOf<PackageDependency>()
 
     init {
         description = "Composes CRX package from JCR content and built OSGi bundles"
@@ -178,8 +159,8 @@ open class PackageCompose : ZipTask() {
     }
 
     override fun projectsEvaluated() {
-        inputs.files(bundleFiles)
-        inputs.files(packageFiles)
+        bundleDependencies.forEach { inputs.files(it.configuration) }
+        packageDependencies.forEach { inputs.files(it.configuration) }
         metaDirs.forEach { dir -> inputs.dir(dir) }
         fromProjects.forEach { it() }
         fromTasks.forEach { it() }
@@ -278,14 +259,14 @@ open class PackageCompose : ZipTask() {
             }
 
             if (options.bundleDependent) {
-                other.bundleFiles.resolve().forEach {
-                    fromJarInternal(it, options.bundlePath(other.bundlePath, other.bundleRunMode), options.bundleVaultFilter)
+                other.bundleDependencies.forEach {
+                    fromJarInternal(it.file, it.installPath, it.vaultFilter)
                 }
             }
 
             if (options.packageDependent) {
-                other.packageFiles.resolve().forEach {
-                    fromZipInternal(it, options.packagePath(other.packagePath(PackageFile(it))), options.packageVaultFilter)
+                other.packageDependencies.forEach {
+                    fromZipInternal(it.file, it.storagePath, it.vaultFilter)
                 }
             }
 
@@ -325,37 +306,47 @@ open class PackageCompose : ZipTask() {
 
     private fun fromBundle(bundle: BundleJar, options: ProjectOptions) {
         if (options.bundleBuilt) {
-            fromJar(bundle.jar, options.bundlePath(bundle.installPath, bundle.installRunMode))
+            fromJar(bundle.jar, Package.bundlePath(bundle.installPath, bundle.installRunMode), bundle.vaultFilter)
         }
     }
 
-    fun fromJar(dependencyOptions: DependencyOptions.() -> Unit) {
-        DependencyOptions.add(aem, BUNDLES_CONFIGURATION, dependencyOptions)
+    fun fromJar(dependencyOptions: DependencyOptions.() -> Unit, installPath: String? = null, vaultFilter: Boolean? = null) {
+        val dependency = DependencyOptions.create(aem, dependencyOptions)
+        bundleDependencies.add(BundleDependency(aem, dependency,
+                installPath ?: this.bundlePath,
+                vaultFilter ?: aem.packageOptions.vaultFilterJars
+        ))
     }
 
-    fun fromJar(dependencyNotation: String) {
-        DependencyOptions.add(aem, BUNDLES_CONFIGURATION, dependencyNotation)
+    fun fromJar(dependencyNotation: String, installPath: String? = null, vaultFilter: Boolean? = null) {
+        val dependency = DependencyOptions.create(aem, dependencyNotation)
+        bundleDependencies.add(BundleDependency(aem, dependency,
+                installPath ?: this.bundlePath,
+                vaultFilter ?: aem.packageOptions.vaultFilterJars
+        ))
     }
 
-    fun fromJar(bundle: Jar, bundlePath: String? = null, vaultFilter: Boolean = true) {
+    fun fromJar(bundle: Jar, bundlePath: String? = null, vaultFilter: Boolean? = null) {
         fromTasks.add {
             dependsOn(bundle)
             fromJarInternal(bundle.archiveFile.get().asFile, bundlePath, vaultFilter)
         }
     }
 
-    fun fromJar(jar: File, bundlePath: String? = null, vaultFilter: Boolean = true) = fromJars(listOf(jar), bundlePath, vaultFilter)
+    fun fromJar(jar: File, bundlePath: String? = null, vaultFilter: Boolean? = null) {
+        fromJars(listOf(jar), bundlePath, vaultFilter)
+    }
 
-    fun fromJars(jars: Collection<File>, bundlePath: String? = null, vaultFilter: Boolean = true) {
+    fun fromJars(jars: Collection<File>, bundlePath: String? = null, vaultFilter: Boolean? = null) {
         fromTasks.add {
             jars.forEach { fromJarInternal(it, bundlePath, vaultFilter) }
         }
     }
 
-    private fun fromJarInternal(jar: File, bundlePath: String? = null, vaultFilter: Boolean) {
+    private fun fromJarInternal(jar: File, bundlePath: String? = null, vaultFilter: Boolean? = null) {
         val effectiveBundlePath = bundlePath ?: this.bundlePath
 
-        if (vaultFilter) {
+        if (vaultFilter ?: aem.packageOptions.vaultFilterJars) {
             vaultDefinition.filter("$effectiveBundlePath/${jar.name}")
         }
 
@@ -365,26 +356,37 @@ open class PackageCompose : ZipTask() {
         }
     }
 
-    fun fromZip(dependencyOptions: DependencyOptions.() -> Unit) {
-        DependencyOptions.add(aem, PACKAGES_CONFIGURATION) { apply(dependencyOptions); ext = "zip" }
+    fun fromZip(dependencyOptions: DependencyOptions.() -> Unit, storagePath: String? = null, vaultFilter: Boolean? = null) {
+        val dependency = DependencyOptions.create(aem) { apply(dependencyOptions); ext = "zip" }
+        packageDependencies.add(PackageDependency(aem, dependency,
+                storagePath ?: packagePath,
+                vaultFilter ?: aem.packageOptions.vaultFilterJars
+        ))
     }
 
-    fun fromZip(dependencyNotation: String) {
-        DependencyOptions.add(aem, PACKAGES_CONFIGURATION, StringUtils.appendIfMissing(dependencyNotation, "@zip"))
+    fun fromZip(dependencyNotation: String, storagePath: String? = null, vaultFilter: Boolean? = null) {
+        val dependency = DependencyOptions.create(aem, StringUtils.appendIfMissing(dependencyNotation, "@zip"))
+        packageDependencies.add(PackageDependency(aem, dependency,
+                storagePath ?: packagePath,
+                vaultFilter ?: aem.packageOptions.vaultFilterJars
+        ))
     }
 
-    fun fromZip(zip: File, packagePath: String? = null, vaultFilter: Boolean = true) = fromZips(listOf(zip), packagePath, vaultFilter)
+    fun fromZip(zip: File, packagePath: String? = null, vaultFilter: Boolean? = null) {
+        fromZips(listOf(zip), packagePath, vaultFilter)
+    }
 
-    fun fromZips(zips: Collection<File>, packagePath: String? = null, vaultFilter: Boolean = true) {
+    fun fromZips(zips: Collection<File>, packagePath: String? = null, vaultFilter: Boolean? = null) {
         fromTasks.add {
             zips.forEach { fromZipInternal(it, packagePath, vaultFilter) }
         }
     }
 
-    private fun fromZipInternal(file: File, packagePath: String? = null, vaultFilter: Boolean) {
-        val effectivePackagePath = packagePath ?: this.packagePath(PackageFile(file))
+    private fun fromZipInternal(file: File, packagePath: String? = null, vaultFilter: Boolean? = null) {
+        val effectivePackageDir = aem.packageOptions.storageDir(PackageFile(file))
+        val effectivePackagePath = "${packagePath ?: this.packagePath}/$effectivePackageDir"
 
-        if (vaultFilter) {
+        if (vaultFilter ?: aem.packageOptions.vaultFilterJars) {
             vaultDefinition.filter("$effectivePackagePath/${file.name}")
         }
 
@@ -397,8 +399,6 @@ open class PackageCompose : ZipTask() {
     private fun extractVaultFilters(other: PackageCompose) {
         if (other.vaultFilterFile.exists()) {
             vaultDefinition.filterElements.addAll(VltFilter(other.vaultFilterFile).rootElements)
-        } else if (project.plugins.hasPlugin(BundlePlugin.ID)) {
-            vaultDefinition.filterElements.add(vaultFilterDefault(other))
         }
     }
 
@@ -417,10 +417,6 @@ open class PackageCompose : ZipTask() {
 
     companion object {
         const val NAME = "packageCompose"
-
-        const val BUNDLES_CONFIGURATION = "bundles"
-
-        const val PACKAGES_CONFIGURATION = "packages"
 
         val NODE_TYPES_LIB: Pattern = Pattern.compile("<.+>")
     }

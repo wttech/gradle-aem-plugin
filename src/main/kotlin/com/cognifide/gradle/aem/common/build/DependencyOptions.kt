@@ -40,6 +40,10 @@ class DependencyOptions {
 
     companion object {
 
+        fun create(aem: AemExtension, notation: String): Dependency {
+            return aem.project.dependencies.create(notation)
+        }
+
         fun create(aem: AemExtension, options: DependencyOptions.() -> Unit): Dependency {
             return DependencyOptions().apply(options).run {
                 aem.project.dependencies.create(Utils.mapOfNonNullValues(

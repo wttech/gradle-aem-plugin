@@ -70,5 +70,14 @@ class Package private constructor() {
         const val VLT_NODETYPES_FILE = "nodetypes.cnd"
 
         fun coordinates(group: String, name: String, version: String) = "[group=$group][name=$name][version=$version]"
+
+        fun bundlePath(path: String, runMode: String?): String {
+            var result = path
+            if (!runMode.isNullOrBlank()) {
+                result = "$path.$runMode"
+            }
+
+            return result
+        }
     }
 }
