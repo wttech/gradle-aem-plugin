@@ -38,8 +38,9 @@
         * [Task debug](#task-debug)
      * [Package plugin](#package-plugin)
         * [Task packageCompose](#task-packagecompose)
-           * [Default configuration](#default-configuration)
-        * [Including additional OSGi bundle into CRX package](#including-additional-osgi-bundle-into-crx-package)
+           * [CRX package default configuration](#crx-package-default-configuration)
+           * [Including additional OSGi bundle into CRX package](#including-additional-osgi-bundle-into-crx-package)
+           * [Nesting CRX packages](#nesting-crx-packages)
            * [Assembling packages (merging all-in-one)](#assembling-packages-merging-all-in-one)
            * [Expandable properties](#expandable-properties)
         * [Task packageDeploy](#task-packagedeploy)
@@ -872,7 +873,7 @@ Compose CRX package from JCR content and bundles.
 
 Inherits from task [ZIP](https://docs.gradle.org/3.5/dsl/org.gradle.api.tasks.bundling.Zip.html).
 
-##### Default configuration
+##### CRX package default configuration
 
 ```kotlin
 aem {
@@ -884,7 +885,6 @@ aem {
             bundlePath = aem.packageOptions.installPath
             bundleRunMode = null
             metaDefaults = true
-            fromConvention = true
             vaultDefinition {
                 properties = mapOf(
                     "acHandling" to "merge_preserve",
@@ -920,26 +920,46 @@ aem {
                )
                bundleChecking = true
             }
+            fromConvention = true
+            convention {
+                packageVaultFilter = true
+                bundleVaultFilter = true
+            }
         }
     }    
 }
 ```
 
-#### Including additional OSGi bundle into CRX package
+##### Including additional OSGi bundle into CRX package
 
-Use dedicated task method named `fromJar`.
+Use dedicated task method named `fromJar`, for example:
 
 ```kotlin
 aem {
     tasks {
         packageCompose {
-            fromJar("group:name:version")
+            fromJar("com.github.mickleroy:aem-sass-compiler:1.0.1)
         }
     }
 }
 ```
 
-For the reference, see [usage in AEM Multi-Project Example](https://github.com/Cognifide/gradle-aem-multi/blob/master/aem/common/build.gradle.kts).
+For reference, see usage above in [AEM Multi-Project Example](https://github.com/Cognifide/gradle-aem-multi/blob/master/aem/common/build.gradle.kts).
+
+##### Nesting CRX packages
+
+Use dedicated task method named `fromZip`, For example:
+
+```kotlin
+aem {
+    tasks {
+        packageCompose {
+            fromZip("com.adobe.cq:core.wcm.components.all:2.4.0")
+            fromZip("com.adobe.cq:core.wcm.components.examples:2.4.0")
+        }
+    }
+}
+```
 
 ##### Assembling packages (merging all-in-one)
 

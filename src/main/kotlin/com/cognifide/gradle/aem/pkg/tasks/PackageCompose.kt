@@ -69,8 +69,8 @@ open class PackageCompose : ZipTask() {
     /**
      * Content path for CRX sub-packages being placed in CRX package being built.
      */
-    @Input
-    var packagePath: String = aem.packageOptions.storagePath
+    @Internal
+    var packagePath: PackageFile.() -> String = { "${aem.packageOptions.storagePath}/$group" }
 
     /**
      * Ensures that for directory 'META-INF/vault' default files will be generated when missing:
@@ -145,6 +145,12 @@ open class PackageCompose : ZipTask() {
     @Internal
     var fromConvention = true
 
+    private var conventionOptions: ProjectOptions.() -> Unit = {}
+
+    fun convention(options: ProjectOptions.() -> Unit) {
+        this.conventionOptions = options
+    }
+
     private var fromProjects = mutableListOf<() -> Unit>()
 
     private var fromTasks = mutableListOf<() -> Unit>()
@@ -212,9 +218,11 @@ open class PackageCompose : ZipTask() {
         fromProject()
     }
 
-    fun fromProject(path: String, options: ProjectOptions.() -> Unit = {}) = fromProject(project.project(path), options)
+    fun fromProject() {
+        fromProject(project, conventionOptions)
+    }
 
-    fun fromProject(options: ProjectOptions.() -> Unit = {}) = fromProject(project, options)
+    fun fromProject(path: String, options: ProjectOptions.() -> Unit = {}) = fromProject(project.project(path), options)
 
     fun fromProjects(pathFilter: String, options: ProjectOptions.() -> Unit = {}) {
         project.allprojects
@@ -271,13 +279,13 @@ open class PackageCompose : ZipTask() {
 
             if (options.bundleDependent) {
                 other.bundleFiles.resolve().forEach {
-                    fromJarInternal(it, options.bundlePath(other.bundlePath, other.bundleRunMode))
+                    fromJarInternal(it, options.bundlePath(other.bundlePath, other.bundleRunMode), options.bundleVaultFilter)
                 }
             }
 
             if (options.packageDependent) {
                 other.packageFiles.resolve().forEach {
-                    fromZipInternal(it, options.packagePath(other.packagePath))
+                    fromZipInternal(it, options.packagePath(other.packagePath(PackageFile(it))), options.packageVaultFilter)
                 }
             }
 
@@ -336,17 +344,23 @@ open class PackageCompose : ZipTask() {
         }
     }
 
-    fun fromJar(bundle: File, bundlePath: String? = null) = fromJars(listOf(bundle), bundlePath)
+    fun fromJar(jar: File, bundlePath: String? = null) = fromJars(listOf(jar), bundlePath)
 
-    fun fromJars(bundles: Collection<File>, bundlePath: String? = null) {
+    fun fromJars(jars: Collection<File>, bundlePath: String? = null) {
         fromTasks.add {
-            bundles.forEach { fromJarInternal(it, bundlePath) }
+            jars.forEach { fromJarInternal(it, bundlePath) }
         }
     }
 
-    private fun fromJarInternal(bundle: File, bundlePath: String? = null) {
-        into("${Package.JCR_ROOT}/${bundlePath ?: this.bundlePath}") { spec ->
-            spec.from(bundle)
+    private fun fromJarInternal(jar: File, bundlePath: String? = null, vaultFilter: Boolean = true) {
+        val effectiveBundlePath = bundlePath ?: this.bundlePath
+
+        if (vaultFilter) {
+            vaultDefinition.filter("$effectiveBundlePath/${jar.name}")
+        }
+
+        into("${Package.JCR_ROOT}/$effectiveBundlePath") { spec ->
+            spec.from(jar)
             fileFilterDelegate(spec)
         }
     }
@@ -359,19 +373,23 @@ open class PackageCompose : ZipTask() {
         DependencyOptions.add(aem, PACKAGES_CONFIGURATION, StringUtils.appendIfMissing(dependencyNotation, "@zip"))
     }
 
-    fun fromZip(pkg: File, storagePath: String? = null) = fromZips(listOf(pkg), storagePath)
+    fun fromZip(zip: File, packagePath: String? = null) = fromZips(listOf(zip), packagePath)
 
-    fun fromZips(packages: Collection<File>, storagePath: String? = null) {
+    fun fromZips(zips: Collection<File>, packagePath: String? = null) {
         fromTasks.add {
-            packages.forEach { fromZipInternal(it, storagePath) }
+            zips.forEach { fromZipInternal(it, packagePath) }
         }
     }
 
-    private fun fromZipInternal(pkg: File, storagePath: String? = null) {
-        val pkgPath = PackageFile(pkg).run { "${storagePath ?: aem.packageOptions.storagePath}/$group/${pkg.name}" }
+    private fun fromZipInternal(file: File, packagePath: String? = null, vaultFilter: Boolean = true) {
+        val effectivePackagePath = packagePath ?: this.packagePath(PackageFile(file))
 
-        into("${Package.JCR_ROOT}/$pkgPath") { spec ->
-            spec.from(pkg)
+        if (vaultFilter) {
+            vaultDefinition.filter("$effectivePackagePath/${file.name}")
+        }
+
+        into("${Package.JCR_ROOT}/$effectivePackagePath") { spec ->
+            spec.from(file)
             fileFilterDelegate(spec)
         }
     }
