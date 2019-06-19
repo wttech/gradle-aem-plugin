@@ -337,22 +337,22 @@ open class PackageCompose : ZipTask() {
         DependencyOptions.add(aem, BUNDLES_CONFIGURATION, dependencyNotation)
     }
 
-    fun fromJar(bundle: Jar, bundlePath: String? = null) {
+    fun fromJar(bundle: Jar, bundlePath: String? = null, vaultFilter: Boolean = true) {
         fromTasks.add {
             dependsOn(bundle)
-            fromJarInternal(bundle.archiveFile.get().asFile, bundlePath)
+            fromJarInternal(bundle.archiveFile.get().asFile, bundlePath, vaultFilter)
         }
     }
 
-    fun fromJar(jar: File, bundlePath: String? = null) = fromJars(listOf(jar), bundlePath)
+    fun fromJar(jar: File, bundlePath: String? = null, vaultFilter: Boolean = true) = fromJars(listOf(jar), bundlePath, vaultFilter)
 
-    fun fromJars(jars: Collection<File>, bundlePath: String? = null) {
+    fun fromJars(jars: Collection<File>, bundlePath: String? = null, vaultFilter: Boolean = true) {
         fromTasks.add {
-            jars.forEach { fromJarInternal(it, bundlePath) }
+            jars.forEach { fromJarInternal(it, bundlePath, vaultFilter) }
         }
     }
 
-    private fun fromJarInternal(jar: File, bundlePath: String? = null, vaultFilter: Boolean = true) {
+    private fun fromJarInternal(jar: File, bundlePath: String? = null, vaultFilter: Boolean) {
         val effectiveBundlePath = bundlePath ?: this.bundlePath
 
         if (vaultFilter) {
@@ -373,15 +373,15 @@ open class PackageCompose : ZipTask() {
         DependencyOptions.add(aem, PACKAGES_CONFIGURATION, StringUtils.appendIfMissing(dependencyNotation, "@zip"))
     }
 
-    fun fromZip(zip: File, packagePath: String? = null) = fromZips(listOf(zip), packagePath)
+    fun fromZip(zip: File, packagePath: String? = null, vaultFilter: Boolean = true) = fromZips(listOf(zip), packagePath, vaultFilter)
 
-    fun fromZips(zips: Collection<File>, packagePath: String? = null) {
+    fun fromZips(zips: Collection<File>, packagePath: String? = null, vaultFilter: Boolean = true) {
         fromTasks.add {
-            zips.forEach { fromZipInternal(it, packagePath) }
+            zips.forEach { fromZipInternal(it, packagePath, vaultFilter) }
         }
     }
 
-    private fun fromZipInternal(file: File, packagePath: String? = null, vaultFilter: Boolean = true) {
+    private fun fromZipInternal(file: File, packagePath: String? = null, vaultFilter: Boolean) {
         val effectivePackagePath = packagePath ?: this.packagePath(PackageFile(file))
 
         if (vaultFilter) {
