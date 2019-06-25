@@ -23,6 +23,10 @@ open class InstanceOptions(private val aem: AemExtension) : Serializable {
         connectionTimeout = aem.props.int("instance.http.connectionTimeout") ?: 30000
         connectionRetries = aem.props.boolean("instance.http.connectionRetries") ?: true
         connectionIgnoreSsl = aem.props.boolean("instance.http.connectionIgnoreSsl") ?: true
+
+        proxyHost = aem.props.string("instance.http.proxyHost")
+        proxyPort = aem.props.int("instance.http.proxyPort")
+        proxyScheme = aem.props.string("instance.http.proxyScheme")
     }
 
     /**

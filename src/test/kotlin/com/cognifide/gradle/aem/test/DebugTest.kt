@@ -37,7 +37,6 @@ class DebugTest : AemTest() {
                 "projectInfo.dir" to PathValueMatcher(),
                 "aem.configDir" to PathValueMatcher(),
                 "aem.configCommonDir" to PathValueMatcher(),
-                "aem.groovyScriptRootDir" to PathValueMatcher(),
                 "aem.localInstanceManager.rootDir" to PathValueMatcher(),
                 "aem.localInstanceManager.overridesDir" to PathValueMatcher(),
                 "aem.localInstanceManager.quickstart.downloadDir" to PathValueMatcher(),

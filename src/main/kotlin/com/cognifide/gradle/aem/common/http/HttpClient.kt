@@ -15,6 +15,7 @@ import java.io.InputStream
 import java.io.Serializable
 import org.apache.commons.io.IOUtils
 import org.apache.http.HttpEntity
+import org.apache.http.HttpHost
 import org.apache.http.HttpResponse
 import org.apache.http.NameValuePair
 import org.apache.http.auth.AuthScope
@@ -38,6 +39,14 @@ open class HttpClient(private val aem: AemExtension) : Serializable {
 
     private val project = aem.project
 
+    var connectionTimeout = 30000
+
+    var connectionIgnoreSsl = true
+
+    var connectionRetries = true
+
+    var authorizationPreemptive = false
+
     var baseUrl = ""
 
     var basicUser: String? = null
@@ -45,13 +54,11 @@ open class HttpClient(private val aem: AemExtension) : Serializable {
     @JsonSerialize(using = JsonPassword::class, `as` = String::class)
     var basicPassword: String? = null
 
-    var authorizationPreemptive = false
+    var proxyHost: String? = null
 
-    var connectionTimeout = 30000
+    var proxyPort: Int? = null
 
-    var connectionIgnoreSsl = true
-
-    var connectionRetries = true
+    var proxyScheme: String? = null
 
     @JsonIgnore
     var requestConfigurer: HttpRequestBase.() -> Unit = { }
@@ -73,6 +80,10 @@ open class HttpClient(private val aem: AemExtension) : Serializable {
             setConnectTimeout(connectionTimeout)
             setConnectionRequestTimeout(connectionTimeout)
         }.build())
+
+        if (!proxyHost.isNullOrBlank() && proxyPort != null) {
+            setProxy(HttpHost(proxyHost, proxyPort!!, proxyScheme))
+        }
 
         if (!basicUser.isNullOrBlank() && !basicPassword.isNullOrBlank()) {
             setDefaultCredentialsProvider(BasicCredentialsProvider().apply {

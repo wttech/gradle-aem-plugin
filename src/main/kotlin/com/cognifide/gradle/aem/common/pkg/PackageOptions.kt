@@ -49,18 +49,14 @@ class PackageOptions(aem: AemExtension) : Serializable {
     }
 
     /**
-     * Controls if Vault workspace filter should have automatically added entries pointing directly to OSGi bundle jars.
-     */
-    var vaultFilterJars: Boolean = true
-
-    /**
      * Content path at which CRX Package Manager is storing uploaded packages.
      */
     var storagePath: String = "/etc/packages"
 
     /**
-     * Calculate directory in storage path for each CRX package.
+     * Calculate directory under storage path for each CRX package.
      */
+    @get:JsonIgnore
     var storageDir: PackageFile.() -> String = { group }
 
     /**

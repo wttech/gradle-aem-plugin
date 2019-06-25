@@ -726,7 +726,6 @@ Then file at path *build/aem/debug/debug.json* with content below is being gener
     ],
     "env": "local",
     "lineSeparator": "LF",
-    "groovyScriptRootDir": ".../gradle-aem-multi/aem/assembly/full/gradle/groovyScript",
     "fileTransfer": {
       "http": {
         "enabled": true,
@@ -920,11 +919,10 @@ aem {
                )
                bundleChecking = true
             }
-            fromConvention = true
-            convention {
-                packageVaultFilter = true
-                bundleVaultFilter = true
+            merging {
+                vaultFilters = true
             }
+            fromConvention = true
         }
     }    
 }

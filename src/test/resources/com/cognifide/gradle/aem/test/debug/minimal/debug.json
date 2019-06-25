@@ -40,7 +40,10 @@
           "connectionTimeout": 30000,
           "connectionIgnoreSsl": true,
           "connectionRetries": true,
-          "responseChecks": true
+          "responseChecks": true,
+          "proxyHost": null,
+          "proxyPort": null,
+          "proxyScheme": null
         },
         "name": "httpd",
         "protocols": [

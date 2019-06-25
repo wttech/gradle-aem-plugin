@@ -7,7 +7,7 @@ import org.gradle.api.tasks.bundling.Jar
 /**
  * Allows to override project specific options while composing merged CRX package.
  */
-class ProjectOptions {
+class ProjectMergingOptions {
 
     /**
      * Controls if JCR content from particular project should be taken.

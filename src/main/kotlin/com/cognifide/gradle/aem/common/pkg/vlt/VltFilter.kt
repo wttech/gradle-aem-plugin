@@ -49,6 +49,8 @@ class VltFilter(
 
         const val BUILD_NAME = "filter.xml"
 
+        const val ROOTS_NAME = "roots.xml"
+
         const val SYNC_NAME = "sync.xml"
 
         const val TEMPORARY_NAME = "temporaryFilter.xml"
