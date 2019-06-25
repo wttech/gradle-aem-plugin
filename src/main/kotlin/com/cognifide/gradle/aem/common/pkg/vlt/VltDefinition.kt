@@ -5,7 +5,6 @@ import org.apache.commons.lang3.StringUtils
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Optional
-import org.jsoup.nodes.Element
 
 /**
  * Represents collection of metadata being a part of CRX package.
@@ -39,27 +38,31 @@ open class VltDefinition(private val aem: AemExtension) {
     var createdBy: String? = System.getProperty("user.name")
 
     @Internal
-    var filterElements: MutableList<Element> = mutableListOf()
+    var filterElements = mutableListOf<VltFilterElement>()
 
     @get:Internal
     val filterRoots: List<String>
-        get() = filterElements.map { it.attr("root") }
+        get() = filterElements.map { it.element.attr("root") }
 
     @get:Input
     val filters: String
-        get() = filterElements.map { it.toString() }.toSet().joinToString(aem.lineSeparatorString)
+        get() = filterElements.sortedBy { it.type }
+                .map { it.element.toString() }
+                .toSet()
+                .joinToString(aem.lineSeparatorString)
 
     fun filters(vararg roots: String) = filters(roots.asIterable())
 
     fun filters(roots: Iterable<String>) = roots.forEach { filter(it) }
 
     fun filter(
-        root: String,
-        mode: String? = null,
-        excludes: Iterable<String> = listOf(),
-        includes: Iterable<String> = listOf()
+            root: String,
+            mode: String? = null,
+            type: VltFilterType = VltFilterType.UNKNOWN,
+            excludes: Iterable<String> = listOf(),
+            includes: Iterable<String> = listOf()
     ) {
-        filterElements.add(VltFilter.createElement(root, mode, excludes, includes))
+        filterElements.add(VltFilterElement.of(root, mode, type, excludes, includes))
     }
 
     @Internal

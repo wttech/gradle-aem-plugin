@@ -12,6 +12,7 @@ import com.cognifide.gradle.aem.common.pkg.PackageFile
 import com.cognifide.gradle.aem.common.pkg.PackageFileFilter
 import com.cognifide.gradle.aem.common.pkg.vlt.VltDefinition
 import com.cognifide.gradle.aem.common.pkg.vlt.VltFilter
+import com.cognifide.gradle.aem.common.pkg.vlt.VltFilterType
 import com.cognifide.gradle.aem.common.tasks.ZipTask
 import com.cognifide.gradle.aem.common.utils.Patterns
 import com.cognifide.gradle.aem.pkg.PackagePlugin
@@ -407,7 +408,7 @@ open class PackageCompose : ZipTask() {
         val effectivePackagePath = "${packagePath ?: this.packagePath}/$effectivePackageDir"
 
         if (vaultFilter ?: mergingOptions.vaultFilters) {
-            vaultDefinition.filter("$effectivePackagePath/${file.name}") // TODO should be added to end...
+            vaultDefinition.filter("$effectivePackagePath/${file.name}", type = VltFilterType.FILE)
         }
 
         into("${Package.JCR_ROOT}/$effectivePackagePath") { spec ->
@@ -418,7 +419,7 @@ open class PackageCompose : ZipTask() {
 
     private fun extractVaultFilters(file: File) {
         if (file.exists()) {
-            vaultDefinition.filterElements.addAll(VltFilter(file).rootElements)
+            vaultDefinition.filterElements.addAll(VltFilter(file).elements)
         }
     }
 
