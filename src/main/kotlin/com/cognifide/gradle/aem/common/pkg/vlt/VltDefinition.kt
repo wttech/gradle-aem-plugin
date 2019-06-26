@@ -43,19 +43,7 @@ open class VltDefinition(private val aem: AemExtension) {
     @get:Internal
     val filterEffectives: Collection<FilterElement>
         get() = filterElements.asSequence()
-                .filter { custom ->
-                    // skip redundant dynamically added filters
-                    if (custom.type == FilterType.UNKNOWN) {
-                        return@filter true
-                    }
-
-                    filterElements.asSequence()
-                            .filter { custom != it }
-                            .none { general ->
-                                custom != general && custom.root.startsWith("${general.root}/") &&
-                                        general.excludes.isEmpty() && general.includes.isEmpty()
-                            }
-                }
+                .filter { isFilterNeeded(it) }
                 .sortedBy { it.type }
                 .toList()
 
@@ -118,5 +106,22 @@ open class VltDefinition(private val aem: AemExtension) {
         if (version.isBlank()) {
             version = aem.project.version.toString()
         }
+    }
+
+    private fun isFilterNeeded(custom: FilterElement): Boolean {
+        if (custom.type == FilterType.UNKNOWN) {
+            return true
+        }
+
+        return isFilterDynamicAndNotRedundant(custom)
+    }
+
+    private fun isFilterDynamicAndNotRedundant(custom: FilterElement): Boolean {
+        return filterElements.asSequence()
+                .filter { custom != it }
+                .none { general ->
+                    custom != general && custom.root.startsWith("${general.root}/") &&
+                            general.excludes.isEmpty() && general.includes.isEmpty()
+                }
     }
 }
