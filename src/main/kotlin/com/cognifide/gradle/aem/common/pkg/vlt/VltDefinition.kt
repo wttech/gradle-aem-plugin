@@ -41,26 +41,31 @@ open class VltDefinition(private val aem: AemExtension) {
     var filterElements = mutableListOf<FilterElement>()
 
     @get:Internal
-    val filterRoots: List<String>
-        get() = filterElements.map { it.root }
-
-    @get:Input
-    val filters: String
-        get() = filterElements
-                .asSequence()
-                .filter { custom -> // skip redundant dynamically added filters
+    val filterEffectives: Collection<FilterElement>
+        get() = filterElements.asSequence()
+                .filter { custom ->
+                    // skip redundant dynamically added filters
                     if (custom.type == FilterType.UNKNOWN) {
                         return@filter true
                     }
 
-                    filterElements.none { general ->
-                        custom.root.startsWith(general.root) && general.excludes.isEmpty() && general.includes.isEmpty()
-                    }
+                    filterElements.asSequence()
+                            .filter { custom != it }
+                            .none { general ->
+                                custom != general && custom.root.startsWith("${general.root}/") &&
+                                        general.excludes.isEmpty() && general.includes.isEmpty()
+                            }
                 }
                 .sortedBy { it.type }
-                .map { it.element.toString() }
-                .toSet()
-                .joinToString(aem.lineSeparatorString)
+                .toList()
+
+    @get:Internal
+    val filterRoots: Collection<String>
+        get() = filterEffectives.map { it.root }.toSet()
+
+    @get:Input
+    val filters: Collection<String>
+        get() = filterEffectives.map { it.element.toString() }.toSet()
 
     fun filters(vararg roots: String) = filters(roots.asIterable())
 
