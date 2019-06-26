@@ -12,7 +12,7 @@ import org.gradle.api.Project
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.Internal
 
-class VltFilter(
+class FilterFile(
     @InputFile
     val file: File,
 
@@ -20,8 +20,8 @@ class VltFilter(
 ) : Closeable {
 
     @get:Internal
-    val elements: List<VltFilterElement>
-        get() = VltFilterElement.parse(file.bufferedReader().use { it.readText() })
+    val elements: List<FilterElement>
+        get() = FilterElement.parse(file.readText())
 
     @get:Internal
     val roots: Set<String>
@@ -51,7 +51,7 @@ class VltFilter(
 
         const val TEMPORARY_NAME = "temporaryFilter.xml"
 
-        fun temporary(project: Project, paths: List<String>): VltFilter {
+        fun temporary(project: Project, paths: List<String>): FilterFile {
             val template = FileOperations.readResource("vlt/$TEMPORARY_NAME")!!
                     .bufferedReader().use { it.readText() }
             val content = AemExtension.of(project).props.expand(template, mapOf("paths" to paths))
@@ -60,7 +60,7 @@ class VltFilter(
             FileUtils.deleteQuietly(file)
             file.printWriter().use { it.print(content) }
 
-            return VltFilter(file, true)
+            return FilterFile(file, true)
         }
     }
 }

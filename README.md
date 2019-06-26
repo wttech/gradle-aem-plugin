@@ -237,6 +237,16 @@ aem {
         remote("http://192.168.100.101:4502", "int-author")
         remote("http://192.168.100.101:4503", "int-publish")
         // etc
+        
+        http { // allows to customize HTTP connection to AEM instances
+            connectionTimeout = aem.props.int("instance.http.connectionTimeout") ?: 30000
+            connectionRetries = aem.props.boolean("instance.http.connectionRetries") ?: true
+            connectionIgnoreSsl = aem.props.boolean("instance.http.connectionIgnoreSsl") ?: true
+    
+            proxyHost = aem.props.string("instance.http.proxyHost")
+            proxyPort = aem.props.int("instance.http.proxyPort")
+            proxyScheme = aem.props.string("instance.http.proxyScheme")
+        }
     }
     localInstance { // config for AEM instances to be created on local file system
         quickstart {

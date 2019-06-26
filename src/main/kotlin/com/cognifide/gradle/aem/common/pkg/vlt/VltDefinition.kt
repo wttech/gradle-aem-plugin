@@ -38,15 +38,26 @@ open class VltDefinition(private val aem: AemExtension) {
     var createdBy: String? = System.getProperty("user.name")
 
     @Internal
-    var filterElements = mutableListOf<VltFilterElement>()
+    var filterElements = mutableListOf<FilterElement>()
 
     @get:Internal
     val filterRoots: List<String>
-        get() = filterElements.map { it.element.attr("root") }
+        get() = filterElements.map { it.root }
 
     @get:Input
     val filters: String
-        get() = filterElements.sortedBy { it.type }
+        get() = filterElements
+                .asSequence()
+                .filter { custom -> // skip redundant dynamically added filters
+                    if (custom.type == FilterType.UNKNOWN) {
+                        return@filter true
+                    }
+
+                    filterElements.none { general ->
+                        custom.root.startsWith(general.root) && general.excludes.isEmpty() && general.includes.isEmpty()
+                    }
+                }
+                .sortedBy { it.type }
                 .map { it.element.toString() }
                 .toSet()
                 .joinToString(aem.lineSeparatorString)
@@ -55,14 +66,8 @@ open class VltDefinition(private val aem: AemExtension) {
 
     fun filters(roots: Iterable<String>) = roots.forEach { filter(it) }
 
-    fun filter(
-            root: String,
-            mode: String? = null,
-            type: VltFilterType = VltFilterType.UNKNOWN,
-            excludes: Iterable<String> = listOf(),
-            includes: Iterable<String> = listOf()
-    ) {
-        filterElements.add(VltFilterElement.of(root, mode, type, excludes, includes))
+    fun filter(root: String, definition: FilterElement.() -> Unit = {}) {
+        filterElements.add(FilterElement.of(root, definition))
     }
 
     @Internal

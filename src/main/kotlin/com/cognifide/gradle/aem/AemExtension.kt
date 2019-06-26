@@ -15,7 +15,7 @@ import com.cognifide.gradle.aem.common.notifier.NotifierFacade
 import com.cognifide.gradle.aem.common.pkg.PackageDefinition
 import com.cognifide.gradle.aem.common.pkg.PackageFile
 import com.cognifide.gradle.aem.common.pkg.PackageOptions
-import com.cognifide.gradle.aem.common.pkg.vlt.VltFilter
+import com.cognifide.gradle.aem.common.pkg.vlt.FilterFile
 import com.cognifide.gradle.aem.common.utils.Formats
 import com.cognifide.gradle.aem.common.utils.LineSeparator
 import com.cognifide.gradle.aem.common.utils.Patterns
@@ -465,12 +465,12 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     fun progressCountdown(options: ProgressCountdown.() -> Unit) = ProgressCountdown(project).apply(options).run()
 
     @get:JsonIgnore
-    val filter: VltFilter
+    val filter: FilterFile
         get() {
             val cmdFilterRoots = props.list("filter.roots") ?: listOf()
             if (cmdFilterRoots.isNotEmpty()) {
                 logger.debug("Using Vault filter roots specified as command line property: $cmdFilterRoots")
-                return VltFilter.temporary(project, cmdFilterRoots)
+                return FilterFile.temporary(project, cmdFilterRoots)
             }
 
             val cmdFilterPath = props.string("filter.path") ?: ""
@@ -479,28 +479,28 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
                         ?: throw VltException("Vault check out filter file does not exist at path: $cmdFilterPath" +
                                 " (or under directory: ${packageOptions.vltDir}).")
                 logger.debug("Using Vault filter file specified as command line property: $cmdFilterPath")
-                return VltFilter(cmdFilter)
+                return FilterFile(cmdFilter)
             }
 
             val conventionFilterFiles = listOf(
-                    "${packageOptions.vltDir}/${VltFilter.SYNC_NAME}",
-                    "${packageOptions.vltDir}/${VltFilter.BUILD_NAME}"
+                    "${packageOptions.vltDir}/${FilterFile.SYNC_NAME}",
+                    "${packageOptions.vltDir}/${FilterFile.BUILD_NAME}"
             )
             val conventionFilterFile = FileOperations.find(project, packageOptions.vltDir.toString(), conventionFilterFiles)
             if (conventionFilterFile != null) {
                 logger.debug("Using Vault filter file found by convention: $conventionFilterFile")
-                return VltFilter(conventionFilterFile)
+                return FilterFile(conventionFilterFile)
             }
 
             logger.debug("None of Vault filter files found by CMD properties or convention.")
 
-            return VltFilter.temporary(project, listOf())
+            return FilterFile.temporary(project, listOf())
         }
 
     /**
      * Get Vault filter object for specified file.
      */
-    fun filter(file: File) = VltFilter(file)
+    fun filter(file: File) = FilterFile(file)
 
     /**
      * Get Vault filter object for specified path.

@@ -10,9 +10,9 @@ import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.aem.common.pkg.PackageFile
 import com.cognifide.gradle.aem.common.pkg.PackageFileFilter
+import com.cognifide.gradle.aem.common.pkg.vlt.FilterFile
+import com.cognifide.gradle.aem.common.pkg.vlt.FilterType
 import com.cognifide.gradle.aem.common.pkg.vlt.VltDefinition
-import com.cognifide.gradle.aem.common.pkg.vlt.VltFilter
-import com.cognifide.gradle.aem.common.pkg.vlt.VltFilterType
 import com.cognifide.gradle.aem.common.tasks.ZipTask
 import com.cognifide.gradle.aem.common.utils.Patterns
 import com.cognifide.gradle.aem.pkg.PackagePlugin
@@ -99,7 +99,7 @@ open class PackageCompose : ZipTask() {
     @get:Internal
     @get:JsonIgnore
     val vaultFilterFile: File
-        get() = File(vaultDir, VltFilter.BUILD_NAME)
+        get() = File(vaultDir, FilterFile.BUILD_NAME)
 
     @get:Internal
     @get:JsonIgnore
@@ -190,8 +190,8 @@ open class PackageCompose : ZipTask() {
             }
         }
 
-        val filterBackup = File(metaDir, "${Package.VLT_DIR}/${VltFilter.ROOTS_NAME}")
-        val filterTemplate = File(metaDir, "${Package.VLT_DIR}/${VltFilter.BUILD_NAME}")
+        val filterBackup = File(metaDir, "${Package.VLT_DIR}/${FilterFile.ROOTS_NAME}")
+        val filterTemplate = File(metaDir, "${Package.VLT_DIR}/${FilterFile.BUILD_NAME}")
 
         if (mergingOptions.vaultFilters && filterTemplate.exists() && !filterBackup.exists()) {
             filterTemplate.renameTo(filterBackup)
@@ -368,7 +368,7 @@ open class PackageCompose : ZipTask() {
         val effectiveBundlePath = bundlePath ?: this.bundlePath
 
         if (vaultFilter ?: mergingOptions.vaultFilters) {
-            vaultDefinition.filter("$effectiveBundlePath/${jar.name}")
+            vaultDefinition.filter("$effectiveBundlePath/${jar.name}") { type = FilterType.FILE }
         }
 
         into("${Package.JCR_ROOT}/$effectiveBundlePath") { spec ->
@@ -408,7 +408,7 @@ open class PackageCompose : ZipTask() {
         val effectivePackagePath = "${packagePath ?: this.packagePath}/$effectivePackageDir"
 
         if (vaultFilter ?: mergingOptions.vaultFilters) {
-            vaultDefinition.filter("$effectivePackagePath/${file.name}", type = VltFilterType.FILE)
+            vaultDefinition.filter("$effectivePackagePath/${file.name}") { type = FilterType.FILE }
         }
 
         into("${Package.JCR_ROOT}/$effectivePackagePath") { spec ->
@@ -419,7 +419,7 @@ open class PackageCompose : ZipTask() {
 
     private fun extractVaultFilters(file: File) {
         if (file.exists()) {
-            vaultDefinition.filterElements.addAll(VltFilter(file).elements)
+            vaultDefinition.filterElements.addAll(FilterFile(file).elements)
         }
     }
 
