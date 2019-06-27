@@ -41,7 +41,7 @@ class NotifierFacade private constructor(private val aem: AemExtension) {
 
     fun log(title: String, message: String, level: LogLevel) {
         aem.logger.log(level, if (message.isNotBlank()) {
-            "${title.removeSuffix(".")}. $message"
+            "$title\n$message"
         } else {
             title
         })

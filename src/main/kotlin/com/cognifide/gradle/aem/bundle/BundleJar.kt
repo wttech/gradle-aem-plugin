@@ -52,6 +52,14 @@ val jar: Jar
     var installRunMode: String? = null
 
     /**
+     * Determines if Vault workspace filter entry pointing directly to JAR file should be added automatically
+     * for built OSGi bundle.
+     */
+    @Input
+    @Optional
+    var vaultFilter: Boolean = true
+
+    /**
      * Enable or disable support for auto-generating OSGi specific JAR manifest attributes
      * like 'Bundle-SymbolicName', 'Export-Package' or AEM specific like 'Sling-Model-Packages'
      * using 'javaPackage' property.
@@ -369,14 +377,30 @@ val jar: Jar
     fun importPackages(vararg pkgs: String) = importPackages(pkgs.toList())
 
     fun embedPackage(pkg: String, export: Boolean, dependencyOptions: DependencyOptions.() -> Unit) {
-        embedPackage(pkg, export, DependencyOptions.of(aem.project.dependencies, dependencyOptions))
+        embedPackages(listOf(pkg), export, dependencyOptions)
     }
 
-    fun embedPackage(pkg: String, export: Boolean, dependencyNotation: Any) {
+    fun embedPackages(vararg pkgs: String, export: Boolean, dependencyOptions: DependencyOptions.() -> Unit) {
+        embedPackages(pkgs.asIterable(), export, dependencyOptions)
+    }
+
+    fun embedPackages(pkgs: Iterable<String>, export: Boolean, dependencyOptions: DependencyOptions.() -> Unit) {
+        embedPackages(pkgs, export, DependencyOptions.create(aem, dependencyOptions))
+    }
+
+    fun embedPackage(pkg: String, export: Boolean, dependencyNotation: String) {
         embedPackages(listOf(pkg), export, dependencyNotation)
     }
 
-    fun embedPackages(pkgs: Iterable<String>, export: Boolean, dependencyNotation: Any) {
+    fun embedPackages(vararg pkgs: String, export: Boolean, dependencyNotation: String) {
+        embedPackages(pkgs.asIterable(), export, dependencyNotation)
+    }
+
+    fun embedPackages(pkgs: Iterable<String>, export: Boolean, dependencyNotation: String) {
+        embedPackages(pkgs, export, dependencyNotation as Any)
+    }
+
+    private fun embedPackages(pkgs: Iterable<String>, export: Boolean, dependencyNotation: Any) {
         aem.project.dependencies.add(JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME, dependencyNotation)
 
         if (export) {

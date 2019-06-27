@@ -14,50 +14,79 @@ open class InstanceOptions(private val aem: AemExtension) : Serializable {
     val defined: MutableMap<String, Instance> = mutableMapOf()
 
     /**
-     * Defines maximum time after which initializing connection to AEM will be aborted (e.g on upload, install).
+     * Customize HTTP connection to AEM instances.
      *
-     * Default value may look quite big, but it is just very fail-safe.
+     * Allows to e.g
+     * - set using HTTP proxy,
+     * - customize maximum time after which initializing connection to AEM will be aborted (e.g on upload, install),
+     * - customize any options offered by Apache HTTP Client builder (use its API directly).
      */
-    @JsonIgnore
-    var httpOptions: (InstanceHttpClient).() -> Unit = {
+    fun http(options: InstanceHttpClient.(Instance) -> Unit) {
+        httpOptions = options
+    }
+
+    @get:JsonIgnore
+    internal var httpOptions: InstanceHttpClient.(Instance) -> Unit = {
         connectionTimeout = aem.props.int("instance.http.connectionTimeout") ?: 30000
         connectionRetries = aem.props.boolean("instance.http.connectionRetries") ?: true
         connectionIgnoreSsl = aem.props.boolean("instance.http.connectionIgnoreSsl") ?: true
+
+        proxyHost = aem.props.string("instance.http.proxyHost")
+        proxyPort = aem.props.int("instance.http.proxyPort")
+        proxyScheme = aem.props.string("instance.http.proxyScheme")
     }
 
     /**
-     * Allows to control automatic system properties (and product version) gathering from running instance to instances defined.
+     * Allows to control automatic system properties (and product version) gathering from running instance to defined.
      * Essential for correctly working features that are using timestamps like instance tail and instance events check.
      */
     var statusProperties: Boolean = aem.props.boolean("instance.statusProperties") ?: !aem.offline
 
     /**
-     * Declare new deployment target (AEM instance).
+     * Define local instance (created on local file system).
      */
     fun local(httpUrl: String) {
         local(httpUrl) {}
     }
 
+    /**
+     * Define local instance (created on local file system).
+     */
     fun local(httpUrl: String, name: String) {
         local(httpUrl) { this.name = name }
     }
 
+    /**
+     * Define local instance (created on local file system).
+     */
     fun local(httpUrl: String, options: LocalInstance.() -> Unit) {
         define(LocalInstance.create(aem, httpUrl, options))
     }
 
+    /**
+     * Define remote instance (available on any host).
+     */
     fun remote(httpUrl: String) {
         remote(httpUrl) {}
     }
 
+    /**
+     * Define remote instance (available on any host).
+     */
     fun remote(httpUrl: String, name: String) {
         remote(httpUrl) { this.name = name }
     }
 
+    /**
+     * Define remote instance (available on any host).
+     */
     fun remote(httpUrl: String, options: RemoteInstance.() -> Unit) {
         define(RemoteInstance.create(aem, httpUrl, options))
     }
 
+    /**
+     * Get defined instance by name or create temporary definition if URL provided.
+     */
     fun parse(urlOrName: String): Instance {
         return defined[urlOrName] ?: Instance.parse(aem, urlOrName).ifEmpty {
             throw AemException("Instance cannot be determined by value '$urlOrName'.")

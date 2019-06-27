@@ -7,11 +7,13 @@ class ProgressCountdown(project: Project) {
 
     var time: Long = 0
 
+    var timePrefix = "Waiting... time left"
+
     var loggerInterval = 100
 
     private val logger = ProgressLogger.of(project)
 
-    private var progress: (Long) -> String = { "Waiting... time left: ${Formats.duration(it)}" }
+    private var progress: (Long) -> String = { "$timePrefix: ${Formats.duration(it)}" }
 
     fun progress(messageComposer: (Long) -> String) {
         this.progress = messageComposer

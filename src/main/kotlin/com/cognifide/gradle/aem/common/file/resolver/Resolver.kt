@@ -64,22 +64,22 @@ val downloadDir: File
     /**
      * Resolve file by dependency notation using defined Gradle repositories (Maven, Ivy etc).
      */
-    fun resolve(notation: Any): FileResolution {
-        return resolveFile(notation) {
-            val configName = "fileResolver_dependency_${UUID.randomUUID()}"
-            val configOptions: (Configuration) -> Unit = { it.isTransitive = false }
-            val config = project.configurations.create(configName, configOptions)
-
-            project.dependencies.add(config.name, notation)
-            config.singleFile
-        }
-    }
+    fun resolve(dependencyNotation: String): FileResolution = resolve(dependencyNotation as Any)
 
     /**
      * Resolve file using defined Gradle repositories (Maven, Ivy etc).
      */
-    fun resolve(dependencyOptions: DependencyOptions.() -> Unit): FileResolution {
-        return resolve(DependencyOptions.of(project.dependencies, dependencyOptions))
+    fun resolve(dependencyOptions: DependencyOptions.() -> Unit) = resolve(DependencyOptions.create(aem, dependencyOptions))
+
+    private fun resolve(dependencyNotation: Any): FileResolution {
+        return resolveFile(dependencyNotation) {
+            val configName = "fileResolver_dependency_${UUID.randomUUID()}"
+            val configOptions: (Configuration) -> Unit = { it.isTransitive = false }
+            val config = project.configurations.create(configName, configOptions)
+
+            project.dependencies.add(config.name, dependencyNotation)
+            config.singleFile
+        }
     }
 
     /**

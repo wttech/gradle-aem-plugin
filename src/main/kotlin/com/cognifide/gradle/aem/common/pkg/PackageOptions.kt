@@ -49,6 +49,17 @@ class PackageOptions(aem: AemExtension) : Serializable {
     }
 
     /**
+     * Content path at which CRX Package Manager is storing uploaded packages.
+     */
+    var storagePath: String = "/etc/packages"
+
+    /**
+     * Calculate directory under storage path for each CRX package.
+     */
+    @get:JsonIgnore
+    var storageDir: PackageFile.() -> String = { group }
+
+    /**
      * Configures a local repository from which unreleased JARs could be added as 'compileOnly' dependency
      * and be deployed within CRX package deployment.
      */

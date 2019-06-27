@@ -40,7 +40,10 @@
           "connectionTimeout": 30000,
           "connectionIgnoreSsl": true,
           "connectionRetries": true,
-          "responseChecks": true
+          "responseChecks": true,
+          "proxyHost": null,
+          "proxyPort": null,
+          "proxyScheme": null
         },
         "name": "httpd",
         "protocols": [
@@ -86,6 +89,7 @@
       "metaCommonDir" : "*/additional/gradle/package/META-INF",
       "installPath" : "/apps/additional/install",
       "installRepository" : true,
+      "storagePath": "/etc/packages",
       "errors" : [
         "javax.jcr.nodetype.*Exception",
         "org.apache.jackrabbit.oak.api.*Exception",
@@ -361,6 +365,7 @@
           "name" : "jar",
           "installPath" : "/apps/additional/install",
           "installRunMode" : null,
+          "vaultFilter": true,
           "attributesConvention" : true,
           "javaPackage" : "com.company.aem.additional",
           "javaPackageOptions" : "-split-package:=merge-first",

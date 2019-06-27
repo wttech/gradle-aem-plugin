@@ -3,7 +3,7 @@ package com.cognifide.gradle.aem.tooling.sync
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
-import com.cognifide.gradle.aem.common.pkg.vlt.VltFilter
+import com.cognifide.gradle.aem.common.pkg.vlt.FilterFile
 import java.io.File
 import org.gradle.api.tasks.Internal
 
@@ -17,7 +17,7 @@ class Downloader(@Internal private val aem: AemExtension) {
     /**
      * Determines VLT filter used to grab JCR content from AEM instance.
      */
-    var filter: VltFilter = aem.filter
+    var filter: FilterFile = aem.filter
 
     /**
      * Allows to disable extracting contents of download package to directory.
@@ -40,7 +40,7 @@ class Downloader(@Internal private val aem: AemExtension) {
 
     fun download() {
         val file = instance.sync.packageManager.download({
-            filterElements = filter.rootElements.toMutableList()
+            filterElements = filter.elements.toMutableList()
         }, retry)
 
         if (extract) {

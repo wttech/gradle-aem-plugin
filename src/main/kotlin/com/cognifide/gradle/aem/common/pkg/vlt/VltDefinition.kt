@@ -5,7 +5,6 @@ import org.apache.commons.lang3.StringUtils
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Optional
-import org.jsoup.nodes.Element
 
 /**
  * Represents collection of metadata being a part of CRX package.
@@ -39,27 +38,29 @@ open class VltDefinition(private val aem: AemExtension) {
     var createdBy: String? = System.getProperty("user.name")
 
     @Internal
-    var filterElements: MutableList<Element> = mutableListOf()
+    var filterElements = mutableListOf<FilterElement>()
 
     @get:Internal
-    val filterRoots: List<String>
-        get() = filterElements.map { it.attr("root") }
+    val filterEffectives: Collection<FilterElement>
+        get() = filterElements.asSequence()
+                .filter { isFilterNeeded(it) }
+                .sortedBy { it.type }
+                .toList()
+
+    @get:Internal
+    val filterRoots: Collection<String>
+        get() = filterEffectives.map { it.root }.toSet()
 
     @get:Input
-    val filters: String
-        get() = filterElements.joinToString(aem.lineSeparatorString)
+    val filters: Collection<String>
+        get() = filterEffectives.map { it.element.toString() }.toSet()
 
     fun filters(vararg roots: String) = filters(roots.asIterable())
 
     fun filters(roots: Iterable<String>) = roots.forEach { filter(it) }
 
-    fun filter(
-        root: String,
-        mode: String? = null,
-        excludes: Iterable<String> = listOf(),
-        includes: Iterable<String> = listOf()
-    ) {
-        filterElements.add(VltFilter.createElement(root, mode, excludes, includes))
+    fun filter(root: String, definition: FilterElement.() -> Unit = {}) {
+        filterElements.add(FilterElement.of(root, definition))
     }
 
     @Internal
@@ -105,5 +106,22 @@ open class VltDefinition(private val aem: AemExtension) {
         if (version.isBlank()) {
             version = aem.project.version.toString()
         }
+    }
+
+    private fun isFilterNeeded(custom: FilterElement): Boolean {
+        if (custom.type == FilterType.UNKNOWN) {
+            return true
+        }
+
+        return isFilterDynamicAndNotRedundant(custom)
+    }
+
+    private fun isFilterDynamicAndNotRedundant(custom: FilterElement): Boolean {
+        return filterElements.asSequence()
+                .filter { custom != it }
+                .none { general ->
+                    custom != general && custom.root.startsWith("${general.root}/") &&
+                            general.excludes.isEmpty() && general.includes.isEmpty()
+                }
     }
 }

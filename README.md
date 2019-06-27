@@ -38,8 +38,9 @@
         * [Task debug](#task-debug)
      * [Package plugin](#package-plugin)
         * [Task packageCompose](#task-packagecompose)
-           * [Default configuration](#default-configuration)
-        * [Including additional OSGi bundle into CRX package](#including-additional-osgi-bundle-into-crx-package)
+           * [CRX package default configuration](#crx-package-default-configuration)
+           * [Including additional OSGi bundle into CRX package](#including-additional-osgi-bundle-into-crx-package)
+           * [Nesting CRX packages](#nesting-crx-packages)
            * [Assembling packages (merging all-in-one)](#assembling-packages-merging-all-in-one)
            * [Expandable properties](#expandable-properties)
         * [Task packageDeploy](#task-packagedeploy)
@@ -171,8 +172,8 @@ Documentation for previous series:
 ## Getting started
 
 * Most effective way to experience Gradle AEM Plugin is to use *Quickstart* located in:
-  * [AEM Single-Project Example](https://github.com/Cognifide/gradle-aem-single#quickstart) - recommended for **application** development,
-  * [AEM Multi-Project Example](https://github.com/Cognifide/gradle-aem-multi#quickstart) - recommended for **project** development,
+  * [AEM Single-Project Example](https://github.com/Cognifide/gradle-aem-single#quickstart) - recommended for **application / library** development,
+  * [AEM Multi-Project Example](https://github.com/Cognifide/gradle-aem-multi#quickstart) - recommended for **long-term project** development,
 * The only software needed on your machine to start using plugin is Java 8.
 * As a build command, it is recommended to use Gradle Wrapper (`gradlew`) instead of locally installed Gradle (`gradle`) to easily have same version of build tool installed on all environments. Only at first build time, wrapper will be automatically downloaded and installed, then reused.
 
@@ -195,7 +196,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.cognifide.gradle:aem-plugin:7.0.1")
+    implementation("com.cognifide.gradle:aem-plugin:7.0.2")
 }
 ```
 
@@ -236,6 +237,16 @@ aem {
         remote("http://192.168.100.101:4502", "int-author")
         remote("http://192.168.100.101:4503", "int-publish")
         // etc
+        
+        http { // allows to customize HTTP connection to AEM instances
+            connectionTimeout = aem.props.int("instance.http.connectionTimeout") ?: 30000
+            connectionRetries = aem.props.boolean("instance.http.connectionRetries") ?: true
+            connectionIgnoreSsl = aem.props.boolean("instance.http.connectionIgnoreSsl") ?: true
+    
+            proxyHost = aem.props.string("instance.http.proxyHost")
+            proxyPort = aem.props.int("instance.http.proxyPort")
+            proxyScheme = aem.props.string("instance.http.proxyScheme")
+        }
     }
     localInstance { // config for AEM instances to be created on local file system
         quickstart {
@@ -725,7 +736,6 @@ Then file at path *build/aem/debug/debug.json* with content below is being gener
     ],
     "env": "local",
     "lineSeparator": "LF",
-    "groovyScriptRootDir": ".../gradle-aem-multi/aem/assembly/full/gradle/groovyScript",
     "fileTransfer": {
       "http": {
         "enabled": true,
@@ -872,7 +882,7 @@ Compose CRX package from JCR content and bundles.
 
 Inherits from task [ZIP](https://docs.gradle.org/3.5/dsl/org.gradle.api.tasks.bundling.Zip.html).
 
-##### Default configuration
+##### CRX package default configuration
 
 ```kotlin
 aem {
@@ -884,7 +894,6 @@ aem {
             bundlePath = aem.packageOptions.installPath
             bundleRunMode = null
             metaDefaults = true
-            fromConvention = true
             vaultDefinition {
                 properties = mapOf(
                     "acHandling" to "merge_preserve",
@@ -920,26 +929,45 @@ aem {
                )
                bundleChecking = true
             }
+            merging {
+                vaultFilters = true
+            }
+            fromConvention = true
         }
     }    
 }
 ```
 
-#### Including additional OSGi bundle into CRX package
+##### Including additional OSGi bundle into CRX package
 
-Use dedicated task method named `fromJar`.
+Use dedicated task method named `fromJar`, for example:
 
 ```kotlin
 aem {
     tasks {
         packageCompose {
-            fromJar("group:name:version")
+            fromJar("com.github.mickleroy:aem-sass-compiler:1.0.1)
         }
     }
 }
 ```
 
-For the reference, see [usage in AEM Multi-Project Example](https://github.com/Cognifide/gradle-aem-multi/blob/master/aem/common/build.gradle.kts).
+For reference, see usage above in [AEM Multi-Project Example](https://github.com/Cognifide/gradle-aem-multi/blob/master/aem/common/build.gradle.kts).
+
+##### Nesting CRX packages
+
+Use dedicated task method named `fromZip`, For example:
+
+```kotlin
+aem {
+    tasks {
+        packageCompose {
+            fromZip("com.adobe.cq:core.wcm.components.all:2.4.0")
+            fromZip("com.adobe.cq:core.wcm.components.examples:2.4.0")
+        }
+    }
+}
+```
 
 ##### Assembling packages (merging all-in-one)
 
@@ -1485,9 +1513,7 @@ aem {
                         }
                         completer {
                             logger.info("Reloading instance(s) after installing Groovy Console")
-                            aem.instanceActions.reload {
-                                delay = 3
-                            }
+                            aem.instanceActions.reloadAndAwaitUp()
                         }
                     }
                 }
@@ -1742,7 +1768,7 @@ Common configuration like root of content for JCR package, should be defined in 
 allprojects {
   plugins.withId("com.cognifide.aem.common") {
     configure<AemExtension> {
-        config {
+        `package` {
             contentDir = aem.project.file("src/main/aem") // overrides default dir named 'content'
         }
     }

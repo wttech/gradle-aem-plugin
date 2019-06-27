@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <workspaceFilter version="1.0">
-  {{ definition.filters | raw }}
+  {% for filter in definition.filters %}
+  {{ filter | raw }}
+  {% endfor %}
 </workspaceFilter>

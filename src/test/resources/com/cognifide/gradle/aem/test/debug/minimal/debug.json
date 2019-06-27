@@ -40,7 +40,10 @@
           "connectionTimeout": 30000,
           "connectionIgnoreSsl": true,
           "connectionRetries": true,
-          "responseChecks": true
+          "responseChecks": true,
+          "proxyHost": null,
+          "proxyPort": null,
+          "proxyScheme": null
         },
         "name": "httpd",
         "protocols": [
@@ -86,6 +89,7 @@
       "metaCommonDir" : "*/minimal/gradle/package/META-INF",
       "installPath" : "/apps/minimal/install",
       "installRepository" : true,
+      "storagePath": "/etc/packages",
       "errors" : [
         "javax.jcr.nodetype.*Exception",
         "org.apache.jackrabbit.oak.api.*Exception",

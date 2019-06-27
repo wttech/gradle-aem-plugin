@@ -103,10 +103,7 @@ class Environment(@JsonIgnore val aem: AemExtension) : Serializable {
         customize()
 
         stack.reset()
-        if (!httpd.deploy()) {
-            throw EnvironmentException("Environment deploy failed. HTTPD service cannot be started." +
-                    " Check HTTPD configuration, because it is probably wrong.")
-        }
+        httpd.deploy()
 
         aem.logger.info("Turned on: $this")
     }
