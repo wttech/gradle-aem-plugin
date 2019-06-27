@@ -9,9 +9,11 @@ import org.gradle.process.internal.streams.SafeStreams
 @Suppress("TooGenericExceptionCaught")
 object Docker {
 
+    const val COMMAND = "docker"
+
     fun exec(options: ProcBuilder.() -> Unit): ProcResult {
         return try {
-            ProcBuilder("docker")
+            ProcBuilder(COMMAND)
                     .withNoTimeout()
                     .withOutputStream(SafeStreams.systemOut())
                     .withErrorStream(SafeStreams.systemErr())
@@ -24,7 +26,7 @@ object Docker {
 
     fun execQuietly(options: ProcBuilder.() -> Unit): ProcResult {
         return try {
-            ProcBuilder("docker")
+            ProcBuilder(COMMAND)
                     .ignoreExitStatus()
                     .apply(options)
                     .run()
@@ -35,7 +37,7 @@ object Docker {
 
     fun execString(options: ProcBuilder.() -> Unit): String {
         return try {
-            ProcBuilder("docker")
+            ProcBuilder(COMMAND)
                     .withNoTimeout()
                     .apply(options)
                     .run()

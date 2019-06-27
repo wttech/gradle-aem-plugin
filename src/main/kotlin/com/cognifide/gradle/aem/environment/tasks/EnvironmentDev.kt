@@ -16,7 +16,7 @@ open class EnvironmentDev : AemDefaultTask() {
 
     @TaskAction
     fun dev() {
-        if (!aem.environment.running) {
+        if (!aem.environment.stack.running) {
             aem.notifier.notify("Environment development mode", "Cannot turn on as environment is not running.")
             return
         }
