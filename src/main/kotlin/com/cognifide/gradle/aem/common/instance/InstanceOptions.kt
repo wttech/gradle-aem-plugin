@@ -21,12 +21,12 @@ open class InstanceOptions(private val aem: AemExtension) : Serializable {
      * - customize maximum time after which initializing connection to AEM will be aborted (e.g on upload, install),
      * - customize any options offered by Apache HTTP Client builder (use its API directly).
      */
-    fun http(options: InstanceHttpClient.() -> Unit) {
+    fun http(options: InstanceHttpClient.(Instance) -> Unit) {
         httpOptions = options
     }
 
     @get:JsonIgnore
-    internal var httpOptions: InstanceHttpClient.() -> Unit = {
+    internal var httpOptions: InstanceHttpClient.(Instance) -> Unit = {
         connectionTimeout = aem.props.int("instance.http.connectionTimeout") ?: 30000
         connectionRetries = aem.props.boolean("instance.http.connectionRetries") ?: true
         connectionIgnoreSsl = aem.props.boolean("instance.http.connectionIgnoreSsl") ?: true
