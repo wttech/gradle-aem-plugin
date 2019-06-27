@@ -1688,6 +1688,10 @@ Most of the configuration steps are automated. However, there are three manual s
     
 ##### Notice for Docker on Windows
 
+Ensure having shared folders enabled via GUI
+
+![Docker Desktop Shared Drive](docs/docker-desktop-share.png)
+
 Because environment is using Docker volumes, on Windows, running task `environmentUp` will require additional user confirmation to allow virtualized container to access local configuration files.
 
 ##### Notice for Docker Toolbox
