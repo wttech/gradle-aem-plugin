@@ -38,7 +38,7 @@ class PackagePlugin : AemPlugin() {
     private fun Project.setupTasks() {
         tasks {
             register<PackageCompose>(PackageCompose.NAME) {
-                dependsOn(LifecycleBasePlugin.ASSEMBLE_TASK_NAME, LifecycleBasePlugin.CHECK_TASK_NAME)
+                dependsOn(LifecycleBasePlugin.ASSEMBLE_TASK_NAME)
                 mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
             }
             register<PackageUpload>(PackageUpload.NAME) {
