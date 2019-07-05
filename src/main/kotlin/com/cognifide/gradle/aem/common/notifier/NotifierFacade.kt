@@ -103,7 +103,7 @@ class NotifierFacade private constructor(private val aem: AemExtension) {
             return if (customThumbnail.exists()) {
                 customThumbnail.toURI().toURL()
             } else {
-                javaClass.getResource("/com/cognifide/gradle/aem/META-INF/vault/definition/thumbnail.png")
+                javaClass.getResource("/com/cognifide/gradle/aem/package/META-INF/vault/definition/thumbnail.png")
             }
         }
 
