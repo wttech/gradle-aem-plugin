@@ -38,10 +38,6 @@ object Patterns {
     }
 
     private fun wildcardMatch(path: String, matcher: String): Boolean {
-        return FilenameUtils.wildcardMatch(normalizePath(path), matcher, IOCase.INSENSITIVE)
-    }
-
-    fun normalizePath(path: String): String {
-        return path.replace("\\", "/")
+        return FilenameUtils.wildcardMatch(Formats.normalizePath(path), matcher, IOCase.INSENSITIVE)
     }
 }
