@@ -27,7 +27,7 @@ open class DockerStack(private val aem: AemExtension, val name: String) {
         try {
             Docker.exec { withArgs("stack", "deploy", "-c", composeFilePath, name) }
         } catch (e: DockerException) {
-            throw DockerStackException("Failed to initialize Docker stack '$name'!", e)
+            throw DockerStackException("Failed to deploy Docker stack '$name'!", e)
         }
     }
 

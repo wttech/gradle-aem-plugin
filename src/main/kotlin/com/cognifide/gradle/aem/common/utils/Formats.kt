@@ -161,6 +161,10 @@ object Formats {
         return base.relativize(source).toString()
     }
 
+    fun normalizePath(path: String): String {
+        return path.replace("\\", "/")
+    }
+
     fun normalizeSeparators(name: String, separator: String): String {
         return name.replace(":", separator)
                 .replace("-", separator)

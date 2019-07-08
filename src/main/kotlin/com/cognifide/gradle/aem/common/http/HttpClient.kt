@@ -225,7 +225,7 @@ open class HttpClient(private val aem: AemExtension) : Serializable {
         val text = asString(response)
         if (!text.contains(containedText, ignoreCase)) {
             aem.logger.debug("Actual text:\n$text")
-            throw ResponseException("Response does not contain text: $text")
+            throw ResponseException("Response does not contain text: $containedText")
         }
     }
 
