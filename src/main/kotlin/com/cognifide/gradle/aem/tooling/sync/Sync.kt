@@ -3,7 +3,6 @@ package com.cognifide.gradle.aem.tooling.sync
 import com.cognifide.gradle.aem.AemDefaultTask
 import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.common.utils.Formats
-import com.cognifide.gradle.aem.common.utils.Patterns
 import com.cognifide.gradle.aem.tooling.vlt.VltRunner
 import java.io.File
 import java.util.regex.Pattern
@@ -145,7 +144,7 @@ open class Sync : AemDefaultTask() {
     }
 
     private fun normalizeRoot(root: File): File {
-        return File(manglePath(Patterns.normalizePath(root.path).substringBefore("/${Cleaner.JCR_CONTENT_NODE}")))
+        return File(manglePath(Formats.normalizePath(root.path).substringBefore("/${Cleaner.JCR_CONTENT_NODE}")))
     }
 
     private fun manglePath(path: String): String {

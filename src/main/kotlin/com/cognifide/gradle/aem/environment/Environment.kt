@@ -4,6 +4,7 @@ import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.file.resolver.FileResolver
+import com.cognifide.gradle.aem.common.utils.Formats
 import com.cognifide.gradle.aem.environment.docker.base.CygPath
 import com.cognifide.gradle.aem.environment.docker.base.DockerRuntime
 import com.cognifide.gradle.aem.environment.docker.base.runtime.Toolbox
@@ -175,9 +176,9 @@ class Environment(@JsonIgnore val aem: AemExtension) : Serializable {
         } catch (e: Exception) {
             aem.logger.warn("Cannot determine Docker path for '$file' using 'cygpath', because it is not available.")
             aem.logger.debug("CygPath error", e)
-            file.toString()
+            Formats.normalizePath(file.toString())
         }
-        else -> file.toString()
+        else -> Formats.normalizePath(file.toString())
     }
 
     fun check(verbose: Boolean = true): List<HealthStatus> {
