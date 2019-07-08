@@ -11,6 +11,11 @@ open class EnvironmentCheck : AemDefaultTask() {
 
     @TaskAction
     fun check() {
+        if (aem.offline) {
+            aem.logger.info("Environment checking skipped as of offline mode is active.")
+            return
+        }
+
         aem.environment.check()
     }
 

@@ -18,6 +18,11 @@ open class InstanceCheck : AemDefaultTask() {
 
     @TaskAction
     fun check() {
+        if (aem.offline) {
+            aem.logger.info("Instance checking skipped as of offline mode is active.")
+            return
+        }
+
         aem.instanceActions.awaitUp(awaitUpOptions)
     }
 
