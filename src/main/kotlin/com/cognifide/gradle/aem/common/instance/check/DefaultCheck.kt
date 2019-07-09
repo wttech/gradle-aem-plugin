@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.common.instance.check
 
+import com.cognifide.gradle.aem.common.build.BuildScope
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.InstanceSync
 import com.cognifide.gradle.aem.common.instance.LocalInstance
@@ -22,26 +23,26 @@ abstract class DefaultCheck(protected val group: CheckGroup) : Check {
     var sync: InstanceSync = instance.sync.apply {
         val init = instance.run { this is LocalInstance && !initialized }
 
+        val scope = BuildScope.of(aem.project)
+        val authInitKey = "${instance.name}.authInit"
+        val authInit = scope.get(authInitKey) ?: false
+
         http.connectionTimeout = 1000
         http.connectionRetries = false
 
-        if (init) {
-            aem.logger.debug("Initializing instance using default credentials.")
+        if (init && authInit) {
             http.basicUser = Instance.USER_DEFAULT
             http.basicPassword = Instance.PASSWORD_DEFAULT
         }
 
         http.responseHandler = { response ->
             if (init && response.statusLine.statusCode == HttpStatus.SC_UNAUTHORIZED) {
-                if (http.basicUser == Instance.USER_DEFAULT) {
-                    aem.logger.debug("Switching instance credentials from defaults to customized.")
-                    http.basicUser = instance.user
-                    http.basicPassword = instance.password
+                if (authInit) {
+                    aem.logger.info("Switching instance credentials from customized to defaults.")
                 } else {
-                    aem.logger.debug("Switching instance credentials from customized to defaults.")
-                    http.basicUser = Instance.USER_DEFAULT
-                    http.basicPassword = Instance.PASSWORD_DEFAULT
+                    aem.logger.info("Switching instance credentials from defaults to customized.")
                 }
+                scope.put(authInitKey, !authInit)
             }
         }
     }
