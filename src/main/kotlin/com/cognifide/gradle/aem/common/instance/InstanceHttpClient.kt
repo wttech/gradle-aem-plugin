@@ -11,33 +11,47 @@ open class InstanceHttpClient(aem: AemExtension, val instance: Instance) : HttpC
 
     init {
         baseUrl = instance.httpUrl
-        basicUser = instance.user
-        basicPassword = instance.password
         authorizationPreemptive = true
 
-        if (instance.run { this is LocalInstance && !initialized }) {
-            val buildScope = BuildScope.of(aem.project)
-            val authInitKey = "${instance.name}.authInit"
-            val authInit = buildScope.get(authInitKey) ?: false
+        basicUser = instance.user
+        basicPassword = instance.password
 
-            if (authInit) {
-                basicUser = Instance.USER_DEFAULT
-                basicPassword = Instance.PASSWORD_DEFAULT
-            }
+        applyAuthOnInit(aem)
+        apply { aem.instanceOptions.httpOptions(this, instance) }
+    }
 
-            responseHandler = { response ->
-                if (response.statusLine.statusCode == HttpStatus.SC_UNAUTHORIZED) {
-                    if (authInit) {
-                        aem.logger.info("Switching instance credentials from customized to defaults.")
-                    } else {
-                        aem.logger.info("Switching instance credentials from defaults to customized.")
-                    }
-                    buildScope.put(authInitKey, !authInit)
-                }
-            }
+    private fun applyAuthOnInit(aem: AemExtension) {
+        if (!(instance.run { this is LocalInstance && !initialized })) {
+            return
         }
 
-        apply { aem.instanceOptions.httpOptions(this, instance) }
+        val cache = BuildScope.of(aem.project)
+        val cacheKey = "${instance.name}.authOnInit"
+
+        val authInit = cache.get(cacheKey) ?: false
+        if (authInit) {
+            basicUser = Instance.USER_DEFAULT
+            basicPassword = Instance.PASSWORD_DEFAULT
+        }
+
+        responseHandler = { response ->
+            if (response.statusLine.statusCode == HttpStatus.SC_UNAUTHORIZED) {
+                val authInitCurrent = cache.get(cacheKey) ?: false
+                if (authInitCurrent) {
+                    aem.logger.info("Switching instance credentials from customized to defaults.")
+
+                    basicUser = Instance.USER_DEFAULT
+                    basicPassword = Instance.PASSWORD_DEFAULT
+                } else {
+                    aem.logger.info("Switching instance credentials from defaults to customized.")
+
+                    basicUser = instance.user
+                    basicPassword = instance.password
+                }
+
+                cache.put(cacheKey, !authInitCurrent)
+            }
+        }
     }
 
     override fun checkStatus(response: HttpResponse, checker: (Int) -> Boolean) {
