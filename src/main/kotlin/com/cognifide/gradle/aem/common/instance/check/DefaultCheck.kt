@@ -21,30 +21,10 @@ abstract class DefaultCheck(protected val group: CheckGroup) : Check {
     val statusLogger = group.statusLogger
 
     var sync: InstanceSync = instance.sync.apply {
-        val init = instance.run { this is LocalInstance && !initialized }
-
-        val scope = BuildScope.of(aem.project)
-        val authInitKey = "${instance.name}.authInit"
-        val authInit = scope.get(authInitKey) ?: false
-
         http.connectionTimeout = 1000
         http.connectionRetries = false
 
-        if (init && authInit) {
-            http.basicUser = Instance.USER_DEFAULT
-            http.basicPassword = Instance.PASSWORD_DEFAULT
-        }
-
-        http.responseHandler = { response ->
-            if (init && response.statusLine.statusCode == HttpStatus.SC_UNAUTHORIZED) {
-                if (authInit) {
-                    aem.logger.info("Switching instance credentials from customized to defaults.")
-                } else {
-                    aem.logger.info("Switching instance credentials from defaults to customized.")
-                }
-                scope.put(authInitKey, !authInit)
-            }
-        }
+        applyInstanceInitialized()
     }
 
     override val status: String
@@ -60,6 +40,41 @@ abstract class DefaultCheck(protected val group: CheckGroup) : Check {
         return when {
             other > 0 -> values.take(LOG_VALUES_COUNT).joinToString("\n") + "\n... and other ($other)"
             else -> values.take(LOG_VALUES_COUNT).joinToString("\n")
+        }
+    }
+
+    private fun InstanceSync.applyInstanceInitialized() {
+        if (!(instance.run { this is LocalInstance && !initialized })) {
+            return
+        }
+
+        val cache = BuildScope.of(aem.project)
+        val cacheKey = "${instance.name}.authInit"
+
+        val authInit = cache.get(cacheKey) ?: false
+        if (authInit) {
+            http.basicUser = Instance.USER_DEFAULT
+            http.basicPassword = Instance.PASSWORD_DEFAULT
+        }
+
+        val originHttpResponseHandler = http.responseHandler
+
+        http.responseHandler = { response ->
+            originHttpResponseHandler(response)
+
+            if (response.statusLine.statusCode == HttpStatus.SC_UNAUTHORIZED) {
+                val authInitCurrent = cache.get(cacheKey) ?: false
+                if (authInitCurrent) {
+                    aem.logger.info("Switching instance credentials from customized to defaults.")
+                    http.basicUser = Instance.USER_DEFAULT
+                    http.basicPassword = Instance.PASSWORD_DEFAULT
+                } else {
+                    aem.logger.info("Switching instance credentials from defaults to customized.")
+                    http.basicUser = instance.user
+                    http.basicPassword = instance.password
+                }
+                cache.put(cacheKey, !authInitCurrent)
+            }
         }
     }
 
