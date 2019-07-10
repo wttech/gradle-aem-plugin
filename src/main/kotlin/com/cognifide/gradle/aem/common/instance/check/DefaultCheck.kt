@@ -49,7 +49,7 @@ abstract class DefaultCheck(protected val group: CheckGroup) : Check {
         }
 
         val cache = BuildScope.of(aem.project)
-        val cacheKey = "${instance.name}.authInit"
+        val cacheKey = "instance.${instance.name}.authInit"
 
         val authInit = cache.get(cacheKey) ?: false
         if (authInit) {
