@@ -64,7 +64,7 @@ abstract class DefaultCheck(protected val group: CheckGroup) : Check {
 
             if (response.statusLine.statusCode == HttpStatus.SC_UNAUTHORIZED) {
                 val authInitCurrent = cache.get(cacheKey) ?: false
-                if (authInitCurrent) {
+                if (!authInitCurrent) {
                     aem.logger.info("Switching instance credentials from customized to defaults.")
                     http.basicUser = Instance.USER_DEFAULT
                     http.basicPassword = Instance.PASSWORD_DEFAULT
