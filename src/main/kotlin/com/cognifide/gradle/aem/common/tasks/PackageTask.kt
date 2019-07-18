@@ -30,7 +30,8 @@ open class PackageTask : AemDefaultTask() {
         val unavailableInstances = instances.filter { !it.available }
         if (unavailableInstances.isNotEmpty()) {
             throw InstanceException("Instances are unavailable: ${unavailableInstances.names}.\n" +
-                    "Ensure having correct instance URLs defined, credentials correctly encoded and networking in correct state (internet accessible, VPN on/off).")
+                    "Ensure having correct instance URLs defined, credentials correctly encoded " +
+                    "and networking in correct state (internet accessible, VPN on/off).")
         }
     }
 
