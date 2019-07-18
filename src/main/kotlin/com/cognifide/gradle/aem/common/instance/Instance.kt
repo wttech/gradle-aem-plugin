@@ -63,6 +63,10 @@ interface Instance : Serializable {
 
     @get:Internal
     @get:JsonIgnore
+    val available: Boolean
+
+    @get:Internal
+    @get:JsonIgnore
     val zoneId: ZoneId
 
     @get:Input

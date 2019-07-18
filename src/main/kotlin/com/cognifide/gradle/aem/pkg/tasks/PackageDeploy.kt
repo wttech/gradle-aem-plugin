@@ -109,6 +109,8 @@ open class PackageDeploy : PackageTask() {
 
     @TaskAction
     open fun deploy() {
+        checkInstances()
+
         aem.progress(instances.size * packages.size) {
             aem.syncPackages(instances, packages) { pkg ->
                 increment("Deploying package '${pkg.name}' to instance '${instance.name}'") {

@@ -113,10 +113,11 @@ open class InstanceSatisfy : PackageDeploy() {
         packageProvider.apply(configurer)
     }
 
-    // TODO fix nesting progress indicator
     @TaskAction
     @Suppress("ComplexMethod")
     override fun deploy() {
+        checkInstances()
+
         aem.progress(packageGroups.sumBy { it.files.size * determineInstancesForGroup(it).size }) {
             packageGroups.forEach { satisfyGroup(it) }
         }
