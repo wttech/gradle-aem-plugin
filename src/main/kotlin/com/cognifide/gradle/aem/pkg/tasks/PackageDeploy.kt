@@ -35,14 +35,14 @@ open class PackageDeploy : PackageTask() {
      */
     @Internal
     @get:JsonIgnore
-    var uploadRetry = aem.retry { afterSquaredSecond(aem.props.long("package.deploy.uploadRetry") ?: 6) }
+    var uploadRetry = aem.retry { afterSquaredSecond(aem.props.long("package.deploy.uploadRetry") ?: 3) }
 
     /**
      * Repeat install when failed (brute-forcing).
      */
     @Internal
     @get:JsonIgnore
-    var installRetry = aem.retry { afterSquaredSecond(aem.props.long("package.deploy.installRetry") ?: 4) }
+    var installRetry = aem.retry { afterSquaredSecond(aem.props.long("package.deploy.installRetry") ?: 2) }
 
     /**
      * Determines if when on package install, sub-packages included in CRX package content should be also installed.
@@ -109,6 +109,8 @@ open class PackageDeploy : PackageTask() {
 
     @TaskAction
     open fun deploy() {
+        checkInstances()
+
         aem.progress(instances.size * packages.size) {
             aem.syncPackages(instances, packages) { pkg ->
                 increment("Deploying package '${pkg.name}' to instance '${instance.name}'") {

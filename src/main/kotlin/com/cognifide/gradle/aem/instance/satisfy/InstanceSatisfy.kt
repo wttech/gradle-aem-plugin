@@ -46,7 +46,7 @@ open class InstanceSatisfy : PackageDeploy() {
      */
     @Internal
     @get:JsonIgnore
-    var listRetry = aem.retry { afterSquaredSecond(aem.props.long("instance.satisfy.listRetry") ?: 4) }
+    var listRetry = aem.retry { afterSquaredSecond(aem.props.long("instance.satisfy.listRetry") ?: 3) }
 
     /**
      * Path in which downloaded CRX packages will be stored.
@@ -113,10 +113,11 @@ open class InstanceSatisfy : PackageDeploy() {
         packageProvider.apply(configurer)
     }
 
-    // TODO fix nesting progress indicator
     @TaskAction
     @Suppress("ComplexMethod")
     override fun deploy() {
+        checkInstances()
+
         aem.progress(packageGroups.sumBy { it.files.size * determineInstancesForGroup(it).size }) {
             packageGroups.forEach { satisfyGroup(it) }
         }

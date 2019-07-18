@@ -16,9 +16,7 @@ open class InstanceHttpClient(aem: AemExtension, val instance: Instance) : HttpC
         apply { aem.instanceOptions.httpOptions(this, instance) }
     }
 
-    override fun checkStatus(response: HttpResponse, checker: (Int) -> Boolean) {
-        if (!checker(response.statusLine.statusCode)) {
-            throw ResponseException("Unexpected response from $instance: ${response.statusLine}")
-        }
+    override fun throwStatusException(response: HttpResponse) {
+        throw ResponseException("Instance error. Unexpected response from $instance: ${response.statusLine}")
     }
 }

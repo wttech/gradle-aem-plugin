@@ -13,6 +13,8 @@ open class PackageActivate : PackageTask() {
 
     @TaskAction
     fun activate() {
+        checkInstances()
+
         aem.progress(instances.size * packages.size) {
             aem.syncPackages(instances, packages) { file ->
                 increment("${file.name} -> ${instance.name}") {

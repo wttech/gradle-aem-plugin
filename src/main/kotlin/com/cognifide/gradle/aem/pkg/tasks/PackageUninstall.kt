@@ -20,6 +20,8 @@ open class PackageUninstall : PackageTask() {
 
     @TaskAction
     fun uninstall() {
+        checkInstances()
+
         aem.progress(instances.size * packages.size) {
             aem.syncPackages(instances, packages) { file ->
                 increment("${file.name} -> ${instance.name}") {

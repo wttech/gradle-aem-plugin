@@ -211,14 +211,22 @@ open class HttpClient(private val aem: AemExtension) : Serializable {
         }
     }
 
+    fun checkStatus(response: HttpResponse, statusCodes: IntRange = STATUS_CODE_VALID) {
+        if (response.statusLine.statusCode !in statusCodes) {
+            throwStatusException(response)
+        }
+    }
+
     fun checkStatus(response: HttpResponse, statusCode: Int) = checkStatus(response, listOf(statusCode))
 
-    fun checkStatus(response: HttpResponse, statusCodes: List<Int>) = checkStatus(response) { statusCodes.contains(it) }
-
-    open fun checkStatus(response: HttpResponse, checker: (Int) -> Boolean = { it in STATUS_CODE_VALID }) {
-        if (!checker(response.statusLine.statusCode)) {
-            throw ResponseException("Unexpected response detected: ${response.statusLine}")
+    fun checkStatus(response: HttpResponse, statusCodes: List<Int>) {
+        if (!statusCodes.contains(response.statusLine.statusCode)) {
+            throwStatusException(response)
         }
+    }
+
+    open fun throwStatusException(response: HttpResponse) {
+        throw ResponseException("Unexpected response detected: ${response.statusLine}")
     }
 
     fun checkText(response: HttpResponse, containedText: String, ignoreCase: Boolean = true) {
