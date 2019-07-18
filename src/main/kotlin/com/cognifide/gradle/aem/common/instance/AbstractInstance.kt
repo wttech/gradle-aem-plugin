@@ -35,6 +35,9 @@ abstract class AbstractInstance(
     override val systemProperties: Map<String, String>
         get() = sync.status.systemProperties
 
+    override val available: Boolean
+        get() = systemProperties.isNotEmpty()
+
     override fun property(key: String, value: String?) {
         properties[key] = value
     }
