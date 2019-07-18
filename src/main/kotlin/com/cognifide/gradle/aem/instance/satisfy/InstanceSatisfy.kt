@@ -46,7 +46,7 @@ open class InstanceSatisfy : PackageDeploy() {
      */
     @Internal
     @get:JsonIgnore
-    var listRetry = aem.retry { afterSquaredSecond(aem.props.long("instance.satisfy.listRetry") ?: 4) }
+    var listRetry = aem.retry { afterSquaredSecond(aem.props.long("instance.satisfy.listRetry") ?: 3) }
 
     /**
      * Path in which downloaded CRX packages will be stored.
