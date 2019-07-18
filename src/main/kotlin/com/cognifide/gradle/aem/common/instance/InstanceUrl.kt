@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.common.instance
 import com.cognifide.gradle.aem.AemException
 import java.net.MalformedURLException
 import java.net.URL
+import java.net.URLDecoder
 import java.net.URLEncoder
 
 class InstanceUrl(raw: String) {
@@ -67,6 +68,7 @@ class InstanceUrl(raw: String) {
         return config.userInfo?.split(":")
                 ?.takeIf { it.size == 2 }
                 ?.get(index)
+                ?.let { decode(it) }
     }
 
     companion object {
@@ -81,6 +83,10 @@ class InstanceUrl(raw: String) {
 
         fun encode(text: String): String {
             return URLEncoder.encode(text, Charsets.UTF_8.name()) ?: text
+        }
+
+        fun decode(text: String): String {
+            return URLDecoder.decode(text, Charsets.UTF_8.name()) ?: text
         }
 
         fun parse(raw: String): InstanceUrl {
