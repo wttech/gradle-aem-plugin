@@ -2126,7 +2126,8 @@ To deploy only to instances specified explicitly:
 gradlew packageDeploy -Pinstance.list=[http://admin:admin@localhost:4502,http://admin:admin@localhost:4503]
 ```
 
-Instance urls must be delimited by colon. Remember to [encode instance user & password](#) properly.
+Instance urls must be delimited by colon. 
+Remember to [encode instance user & password](#instance-url-credentials-encoding) properly.
 
 ### Know how properties are being expanded in instance or package files
 
