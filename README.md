@@ -1,4 +1,4 @@
-![Cognifide logo](docs/cognifide-logo.png)
+[![Cognifide logo](docs/cognifide-logo.png)](http://cognifide.com)
 
 [ ![Download](https://api.bintray.com/packages/cognifide/maven-public/gradle-aem-plugin/images/download.svg) ](https://bintray.com/cognifide/maven-public/gradle-aem-plugin/_latestVersion)
 [![Gradle Status](https://gradleupdate.appspot.com/Cognifide/gradle-aem-plugin/status.svg?random=123)](https://gradleupdate.appspot.com/Cognifide/gradle-aem-plugin/status)
