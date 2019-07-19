@@ -124,15 +124,19 @@ val downloadDir: File
     /**
      * Use local file directly (without copying).
      */
-    fun useLocal(path: String): FileResolution {
-        return useLocal(project.file(path))
-    }
+    fun useLocal(path: String): FileResolution = useLocal(project.file(path))
 
     /**
      * Use local file directly (without copying).
      */
-    fun useLocal(sourceFile: File): FileResolution {
-        return resolveFile(sourceFile.absolutePath) { sourceFile }
+    fun useLocal(sourceFile: File): FileResolution = resolveFile(sourceFile.absolutePath) { sourceFile }
+
+    /**
+     * Use recent local file located in directory or fail when not found any.
+     */
+    fun useLocalRecent(dir: Any, filePattern: String = "**/*.zip"): FileResolution? = resolveFile(listOf(dir, filePattern)) {
+        aem.project.fileTree(dir) { it.include(filePattern) }.maxBy { it.name }
+                ?: throw FileException("Cannot find any local file under directory '$dir' matching file pattern '$filePattern'!")
     }
 
     /**

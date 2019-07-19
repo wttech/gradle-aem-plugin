@@ -160,11 +160,11 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
             // Force CMD to be launched in closable window mode.
             result = result.replace(
                     "start \"CQ\" cmd.exe /K",
-                    "start /min \"CQ\" cmd.exe /C"
+                    "start \"CQ\" cmd.exe /min /C"
             ) // AEM <= 6.2
             result = result.replace(
                     "start \"CQ\" cmd.exe /C",
-                    "start /min \"CQ\" cmd.exe /C"
+                    "start \"CQ\" cmd.exe /min /C"
             ) // AEM 6.3
 
             // Introduce missing CQ_START_OPTS injectable by parent script.
@@ -233,11 +233,11 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
             var result = origin
 
             // Update window title
-            val previousTitle = StringUtils.substringBetween(origin, "start /min \"", "\" cmd.exe ")
+            val previousTitle = StringUtils.substringBetween(origin, "start \"", "\" cmd.exe /min")
             if (previousTitle != null) {
                 result = StringUtils.replace(result,
-                        "start /min \"$previousTitle\" cmd.exe ",
-                        "start /min \"${this}\" cmd.exe "
+                        "start \"$previousTitle\" cmd.exe /min",
+                        "start \"${this}\" cmd.exe /min"
                 )
             }
 
