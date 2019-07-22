@@ -1,21 +1,20 @@
 package com.cognifide.gradle.aem.instance.tasks
 
-import com.cognifide.gradle.aem.AemDefaultTask
 import com.cognifide.gradle.aem.AemException
-import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.instance.InstanceException
 import com.cognifide.gradle.aem.common.instance.local.Status
 import com.cognifide.gradle.aem.common.instance.names
+import com.cognifide.gradle.aem.common.tasks.ZipTask
 import com.cognifide.gradle.aem.common.utils.Formats
-import com.cognifide.gradle.aem.common.utils.onEachApply
 import java.io.File
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
-open class InstanceBackup : AemDefaultTask() {
+open class InstanceBackup : ZipTask() {
 
     init {
         description = "Turns off local instance(s), archives to ZIP file, then turns on again."
+        outputs.upToDateWhen { false }
     }
 
     private val resolver = aem.localInstanceManager.backup
@@ -27,8 +26,12 @@ open class InstanceBackup : AemDefaultTask() {
     var mode: Mode = Mode.of(aem.props.string("instance.backup.mode")
             ?: Mode.ZIP_AND_UPLOAD.name)
 
+    override fun projectEvaluated() {
+        from(aem.localInstanceManager.rootDir)
+    }
+
     @TaskAction
-    fun backup() {
+    override fun copy() {
         when (mode) {
             Mode.ZIP_ONLY -> zip()
             Mode.ZIP_AND_UPLOAD -> {
@@ -55,13 +58,7 @@ open class InstanceBackup : AemDefaultTask() {
 
         val file = File(resolver.localDir, resolver.namer())
 
-        aem.progress(aem.localInstances.size) {
-            aem.localInstances.onEachApply {
-                increment("Backing up instance '$name'") {
-                    FileOperations.zipPack(file, dir)
-                }
-            }
-        }
+        super.copy()
 
         aem.logger.lifecycle("Backed up instances to file: $file (${Formats.size(file)})")
 
