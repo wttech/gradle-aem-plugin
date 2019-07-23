@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem.instance.tail
 
-import com.cognifide.gradle.aem.common.instance.checkAvailable
 import com.cognifide.gradle.aem.common.tasks.InstanceTask
 import kotlinx.coroutines.ObsoleteCoroutinesApi
 import org.gradle.api.tasks.Internal
@@ -22,8 +21,6 @@ open class InstanceTail : InstanceTask() {
 
     @TaskAction
     fun tail() {
-        instances.checkAvailable()
-
         tailer.apply {
             instances = this@InstanceTail.instances
             tail()
