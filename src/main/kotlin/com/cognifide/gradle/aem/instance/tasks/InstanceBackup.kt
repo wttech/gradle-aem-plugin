@@ -26,7 +26,11 @@ open class InstanceBackup : ZipTask() {
     var mode: Mode = Mode.of(aem.props.string("instance.backup.mode")
             ?: Mode.ZIP_AND_UPLOAD.name)
 
+    // TODO before 'from()' instances should be down
     override fun projectEvaluated() {
+        archiveFileName.set(aem.localInstanceManager.backup.namer())
+        destinationDirectory.set(aem.localInstanceManager.backup.localDir)
+
         from(aem.localInstanceManager.rootDir)
     }
 
