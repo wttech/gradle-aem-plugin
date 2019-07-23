@@ -7,7 +7,6 @@ import com.cognifide.gradle.aem.common.instance.InstanceException
 import com.cognifide.gradle.aem.common.instance.local.Status
 import com.cognifide.gradle.aem.common.instance.names
 import com.cognifide.gradle.aem.common.utils.Formats
-import com.cognifide.gradle.aem.common.utils.onEachApply
 import java.io.File
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
@@ -55,12 +54,9 @@ open class InstanceBackup : AemDefaultTask() {
 
         val file = File(resolver.localDir, resolver.namer())
 
-        aem.progress(aem.localInstances.size) {
-            aem.localInstances.onEachApply {
-                increment("Backing up instance '$name'") {
-                    FileOperations.zipPack(file, dir)
-                }
-            }
+        aem.progress {
+            message = "Backing up instances: ${aem.localInstances.names}"
+            FileOperations.zipPack(file, aem.localInstanceManager.rootDir)
         }
 
         aem.logger.lifecycle("Backed up instances to file: $file (${Formats.size(file)})")

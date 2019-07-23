@@ -161,7 +161,7 @@ class SftpFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
                     throw SftpFileException("Path at URL '$dirUrl' is not a directory.")
                 }
             } catch (e: IOException) {
-                throw SftpFileException("Directory at URL '$dirUrl' does not exist.", e)
+                throw SftpFileException("Directory at URL '$dirUrl' does not exist or not accessible: '${e.message}'!", e)
             }
 
             callback(dirPath)

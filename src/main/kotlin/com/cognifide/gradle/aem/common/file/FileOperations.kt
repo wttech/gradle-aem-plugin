@@ -11,8 +11,6 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import net.lingala.zip4j.core.ZipFile
 import net.lingala.zip4j.model.FileHeader
-import net.lingala.zip4j.model.ZipParameters
-import net.lingala.zip4j.util.Zip4jConstants
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
 import org.apache.commons.io.filefilter.TrueFileFilter
@@ -20,6 +18,7 @@ import org.gradle.api.Project
 import org.gradle.util.GFileUtils
 import org.reflections.Reflections
 import org.reflections.scanners.ResourcesScanner
+import org.zeroturnaround.zip.ZipUtil
 
 object FileOperations {
 
@@ -149,12 +148,10 @@ object FileOperations {
         return ZipFile(zip).getFileHeader(fileName) != null
     }
 
+    // TODO https://github.com/Cognifide/gradle-aem-plugin/issues/415
     fun zipPack(zip: File, sourceDir: File) {
-        ZipFile(zip).apply {
-            addFolder(sourceDir, ZipParameters().apply {
-                compressionMethod = Zip4jConstants.COMP_STORE
-            })
-        }
+        ZipUtil.pack(sourceDir, zip)
+        // ZipFile(zip).apply { addFolder(sourceDir, ZipParameters()) }
     }
 
     fun lock(file: File) = file.writeText(Formats.toJson(mapOf("locked" to Formats.date())))
