@@ -1249,7 +1249,8 @@ plugins {
 }
 ```
 
-Provides instance related tasks: `instanceCheck`, `instanceSetup`, `instanceCreate` etc.
+Provides instance related tasks: `instanceUp`, `instanceDown`, `instanceSetup`, `instanceBackup`, `instanceCheck`, `instanceSetup`, `instanceCreate` etc.
+Allows to create & customize AEM instances on local file system and control them. Also provides support for automated backups and restoring.
 
 Should be applied only at root project / only once within whole build.
 
