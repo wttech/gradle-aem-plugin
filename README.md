@@ -1307,12 +1307,10 @@ aem {
     localInstance {
         backup {
             selector = {  // default implementation below
-                val sorted = sortedWith(compareByDescending<BackupSource> { it.fileEntry.name }.thenBy { it.type.ordinal })
                 val name = aem.props.string("localInstance.backup.name") ?: ""
-        
                 when {
-                    name.isNotBlank() -> sorted.firstOrNull { it.fileEntry.name == name }
-                    else -> sorted.firstOrNull()
+                    name.isNotBlank() -> firstOrNull { it.fileEntry.name == name }
+                    else -> firstOrNull()
                 }
             }
         }
