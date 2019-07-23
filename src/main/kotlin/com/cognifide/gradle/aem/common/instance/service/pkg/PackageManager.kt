@@ -40,7 +40,17 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
     }
 
     fun find(group: String, name: String, version: String, refresh: Boolean = true, retry: Retry = aem.retry()): Package? {
-        return find({ it.resolvePackage(project, Package(group, name, version)) }, refresh, retry)
+        return find({ listResponse ->
+            val expected = Package(group, name, version)
+
+            aem.logger.info("Finding package '${expected.coordinates}' on $instance")
+            val actual = listResponse.resolvePackage(expected)
+            if (actual == null) {
+                aem.logger.info("Package not found '${expected.coordinates}' on $instance")
+            }
+
+            actual
+        }, refresh, retry)
     }
 
     private fun find(resolver: (ListResponse) -> Package?, refresh: Boolean, retry: Retry = aem.retry()): Package? {

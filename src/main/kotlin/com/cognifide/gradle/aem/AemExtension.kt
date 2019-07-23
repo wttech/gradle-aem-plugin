@@ -304,7 +304,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
                 props.flag("instance.authors") -> {
                     Patterns.wildcard(instance.name, "$env-${IdType.AUTHOR}*")
                 }
-                props.flag("instance.publishers") -> {
+                props.flag("instance.publishes") || props.flag("instance.publishers") -> {
                     Patterns.wildcard(instance.name, "$env-${IdType.PUBLISH}*")
                 }
                 else -> Patterns.wildcard(instance.name, nameMatcher)

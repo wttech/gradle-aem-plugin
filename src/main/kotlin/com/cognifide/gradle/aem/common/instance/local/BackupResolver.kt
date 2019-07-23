@@ -68,20 +68,22 @@ class BackupResolver(private val aem: AemExtension) {
      * Defines backup source selection rule.
      *
      * By default takes desired backup by name (if provided) or takes most recent backup.
-     * File names sorted lexically / descending. If same name on local & remote source found, local has precedence.
+     * Also by default, file names are sorted lexically / descending. If same name on local & remote source found, local has precedence.
+     * Still, this callback allows to customize order to be used.
      */
     @get:JsonIgnore
     var selector: Collection<BackupSource>.() -> BackupSource? = {
-        val sorted = sortedWith(compareByDescending<BackupSource> { it.fileEntry.name }.thenBy { it.type.ordinal })
         val name = aem.props.string("localInstance.backup.name") ?: ""
-
         when {
-            name.isNotBlank() -> sorted.firstOrNull { it.fileEntry.name == name }
-            else -> sorted.firstOrNull()
+            name.isNotBlank() -> firstOrNull { it.fileEntry.name == name }
+            else -> firstOrNull()
         }
     }
 
-    private fun resolve(sources: List<BackupSource>): File? = sources.run { selector(this) }?.file
+    private fun resolve(sources: List<BackupSource>): File? = sources
+            .filter { it.fileEntry.name.endsWith(suffix) }
+            .sortedWith(compareByDescending<BackupSource> { it.fileEntry.name }.thenBy { it.type.ordinal })
+            .run { selector(this) }?.file
 
     private val localSources: List<BackupSource>
         get() = (localDir.listFiles { _, name -> name.endsWith(suffix) } ?: arrayOf()).map { file ->

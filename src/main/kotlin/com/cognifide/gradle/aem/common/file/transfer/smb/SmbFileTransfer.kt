@@ -115,7 +115,7 @@ class SmbFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
                     throw SmbFileException("Path at URL '$dirUrl' is not a directory.")
                 }
             } catch (e: IOException) {
-                throw SmbFileException("Directory at URL '$dirUrl' does not exist.", e)
+                throw SmbFileException("Directory at URL '$dirUrl' does not exist or not accessible: '${e.message}'!", e)
             }
         }
     }

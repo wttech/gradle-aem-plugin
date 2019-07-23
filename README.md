@@ -197,7 +197,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.cognifide.gradle:aem-plugin:7.0.6")
+    implementation("com.cognifide.gradle:aem-plugin:7.0.7")
 }
 ```
 
@@ -1307,12 +1307,10 @@ aem {
     localInstance {
         backup {
             selector = {  // default implementation below
-                val sorted = sortedWith(compareByDescending<BackupSource> { it.fileEntry.name }.thenBy { it.type.ordinal })
                 val name = aem.props.string("localInstance.backup.name") ?: ""
-        
                 when {
-                    name.isNotBlank() -> sorted.firstOrNull { it.fileEntry.name == name }
-                    else -> sorted.firstOrNull()
+                    name.isNotBlank() -> firstOrNull { it.fileEntry.name == name }
+                    else -> firstOrNull()
                 }
             }
         }
@@ -1478,6 +1476,7 @@ Upload & install dependent CRX package(s) before deployment. Available methods:
 * `group(name: String, options: Resolver<PackageGroup>.() -> Unit)`, useful for declaring group of packages (or just optionally naming single package) to be installed only on demand. For instance: `group("tools") { download('http://example.com/package.zip'); download('smb://internal-nt/package2.zip')  }`. Then to install only packages in group `tools`, use command: `gradlew instanceSatisfy -Pinstance.satisfy.group=tools`.
 * `useLocal(path: String)`, use CRX package from local file system.
 * `useLocal(file: File)`, same as above, but file can be even located outside the project.
+* `useLocalRecent(dir: File, filePattern: String = "**/*.zip")`, useful to find and use most recent file in specified directory.
 * `resolve(notation: String)`, use OSGi bundle that will be resolved from defined Gradle repositories (for example from Maven) then wrapped to CRX package.
 * `download(url: String)`, use CRX package that will be downloaded from specified URL to local temporary directory.
 * `downloadHttp(url: String, options: HttpFileTransfer.() -> Unit)`, download package using HTTP with.

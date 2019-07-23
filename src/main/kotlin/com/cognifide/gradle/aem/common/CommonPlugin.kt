@@ -47,7 +47,7 @@ class CommonPlugin : AemPlugin() {
     private fun Project.setupTasks() {
         tasks {
             register<Debug>(Debug.NAME) {
-                dependsOn(LifecycleBasePlugin.BUILD_TASK_NAME)
+                mustRunAfter(LifecycleBasePlugin.BUILD_TASK_NAME)
             }
         }
     }
