@@ -29,7 +29,14 @@ object Formats {
 
     fun asPassword(value: String) = "*".repeat(value.length)
 
-    fun asVersion(value: String) = GradleVersion.version(value)
+    /**
+     * Trims e.g ".SP2" in "6.1.0.SP2" which is not valid Gradle version
+     */
+    fun asVersion(value: String): GradleVersion {
+        return GradleVersion.version(value.split(".").take(3).joinToString("."))
+    }
+
+    fun versionAtLeast(actual: String, required: String) = asVersion(actual) >= asVersion(required)
 
     fun jsonMapper(pretty: Boolean): ObjectMapper = ObjectMapper().apply {
         if (pretty) {
