@@ -2,15 +2,22 @@ package com.cognifide.gradle.aem.common.file.transfer
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.file.FileException
+import com.cognifide.gradle.aem.common.file.transfer.ParallelExecutor.queueTask
 import java.io.File
 import java.io.Serializable
+import kotlinx.coroutines.ObsoleteCoroutinesApi
 import org.apache.commons.io.FilenameUtils
 
+@ObsoleteCoroutinesApi
 abstract class AbstractFileTransfer(protected val aem: AemExtension) : FileTransfer, Serializable {
 
     override var enabled: Boolean = true
 
-    override fun download(fileUrl: String) = download(fileUrl, aem.temporaryFile(FilenameUtils.getName(fileUrl)))
+    override fun download(fileUrl: String) {
+        queueTask(fileUrl) {
+            download(fileUrl, aem.temporaryFile(FilenameUtils.getName(fileUrl)))
+        }
+    }
 
     override fun downloadFrom(dirUrl: String, fileName: String, target: File) {
         throw FileException("File transfer '$name' does not support 'download' operation.")

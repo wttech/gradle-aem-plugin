@@ -9,6 +9,9 @@ import com.cognifide.gradle.aem.common.file.transfer.smb.SmbFileTransfer
 import com.google.common.hash.HashCode
 import java.io.File
 import java.util.*
+import kotlinx.coroutines.ObsoleteCoroutinesApi
+import kotlinx.coroutines.newFixedThreadPoolContext
+import kotlinx.coroutines.runBlocking
 import org.apache.commons.io.FilenameUtils
 import org.apache.commons.lang3.builder.HashCodeBuilder
 import org.gradle.api.artifacts.Configuration
@@ -17,6 +20,7 @@ import org.gradle.api.tasks.Internal
 /**
  * File downloader with groups supporting files from multiple sources: local and remote (SFTP, SMB, HTTP).
  */
+@ObsoleteCoroutinesApi
 abstract class Resolver<G : FileGroup>(
     @get:Internal
 val aem: AemExtension,
@@ -24,6 +28,7 @@ val aem: AemExtension,
     @get:Internal
 val downloadDir: File
 ) {
+
     private val project = aem.project
 
     private val groupDefault = this.createGroup(GROUP_DEFAULT)
@@ -31,6 +36,10 @@ val downloadDir: File
     private var groupCurrent = groupDefault
 
     private val groupsDefined = mutableListOf<G>().apply { add(groupDefault) }
+
+    private val downloads: List<FileResolution.() -> File> = mutableListOf()
+
+    private val pool = newFixedThreadPoolContext(3, "downloadPool")
 
     @get:Internal
     val groups: List<G>
@@ -92,7 +101,10 @@ val downloadDir: File
      * To use many remote servers with different settings, simply use dedicated methods 'download[Http/Sftp/Smb]'
      * when declaring each file to be downloaded.
      */
-    fun download(url: String): FileResolution = resolveFileUrl(url) { aem.fileTransfer.download(url, it) }
+    fun download(url: String): FileResolution = resolveFileUrl(url) { file ->
+        println("Download $url on thread @${Thread.currentThread()}")
+        aem.fileTransfer.download(url, file)
+    }
 
     /**
      * Download file using HTTP file transfer with custom settings (like basic auth credentials).
@@ -158,8 +170,8 @@ val downloadDir: File
 
     private fun resolveFile(hash: Any, resolver: (FileResolution) -> File): FileResolution {
         val id = HashCode.fromInt(HashCodeBuilder().append(hash).toHashCode()).toString()
-
-        return groupCurrent.resolve(id, resolver)
+        return runBlocking(pool) {
+            groupCurrent.resolve(id, resolver) }
     }
 
     private fun resolveFileUrl(url: String, resolver: (File) -> Unit): FileResolution {

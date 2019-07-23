@@ -3,7 +3,6 @@ package com.cognifide.gradle.aem.common.file.transfer
 import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.file.FileException
-import com.cognifide.gradle.aem.common.file.transfer.ParallelFileTransferHandler.queueTask
 import com.cognifide.gradle.aem.common.file.transfer.generic.CustomFileTransfer
 import com.cognifide.gradle.aem.common.file.transfer.generic.LocalFileTransfer
 import com.cognifide.gradle.aem.common.file.transfer.generic.UrlFileTransfer
@@ -81,10 +80,8 @@ class FileTransferManager(private val aem: AemExtension) : FileTransfer {
         if (tmp.exists()) {
             tmp.delete()
         }
-        queueTask(handling(dirUrl)) {
-            downloadFrom(dirUrl, fileName, tmp)
-        }
 
+        handling(dirUrl).downloadFrom(dirUrl, fileName, tmp)
         tmp.renameTo(target)
     }
 

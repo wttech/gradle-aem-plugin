@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.common.file.transfer
 
+import com.cognifide.gradle.aem.common.file.transfer.ParallelExecutor.queueTask
 import java.io.File
 import org.apache.commons.io.FilenameUtils
 
@@ -29,8 +30,11 @@ interface FileTransfer {
      * Downloads file from specified URL.
      */
     fun download(fileUrl: String, target: File) {
-        val (dirUrl, fileName) = splitFileUrl(fileUrl)
-        downloadFrom(dirUrl, fileName, target)
+        queueTask(fileUrl) {
+            // println("FileTransfer: $fileUrl Running on thread ${Thread.currentThread()}")
+            val (dirUrl, fileName) = splitFileUrl(fileUrl)
+            downloadFrom(dirUrl, fileName, target)
+        }
     }
 
     /**
