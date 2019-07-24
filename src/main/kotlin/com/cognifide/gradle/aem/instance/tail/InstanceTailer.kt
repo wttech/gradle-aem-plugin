@@ -146,7 +146,6 @@ class InstanceTailer(val aem: AemExtension) {
 
         val logFile = logFiles.main(instance.name)
         aem.logger.lifecycle("Tailing logs to file: $logFile")
-        aem.logger.lifecycle("Filter incidents using file: $incidentFilter")
 
         return LogTailer(source, destination, logAnalyzerChannel)
     }
