@@ -2,8 +2,6 @@ package com.cognifide.gradle.aem.common.tasks
 
 import com.cognifide.gradle.aem.AemDefaultTask
 import com.cognifide.gradle.aem.common.instance.Instance
-import com.cognifide.gradle.aem.common.instance.InstanceException
-import com.cognifide.gradle.aem.common.instance.names
 import java.io.File
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFiles
