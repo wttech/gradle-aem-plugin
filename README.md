@@ -93,6 +93,7 @@
      * [Set AEM configuration properly for all / concrete project(s)](#set-aem-configuration-properly-for-all--concrete-projects)
      * [Use lifecycle tasks](#use-lifecycle-tasks)
      * [Implement custom AEM tasks](#implement-custom-aem-tasks)
+        * [Instance services](#instance-services)
         * [Defining CRX package via code then downloading and sharing it using external HTTP endpoint](#defining-crx-package-via-code-then-downloading-and-sharing-it-using-external-http-endpoint)
         * [Calling AEM endpoints / making any HTTP requests](#calling-aem-endpoints--making-any-http-requests)
         * [Downloading CRX package from external HTTP endpoint and deploying it on desired AEM instances](#downloading-crx-package-from-external-http-endpoint-and-deploying-it-on-desired-aem-instances)
@@ -1858,10 +1859,21 @@ use dynamically registered tasks (only if at least one of plugins above are appl
 
 ### Implement custom AEM tasks
 
-Most of built-in tasks logic is based on`aem` object of type [AemExtension](src/main/kotlin/com/cognifide/gradle/aem/common/AemExtension.kt). 
-It provides concise AEM related API for accessing AEM configuration, synchronizing with AEM instances via specialized methods of `aem.sync` to make tasks implementation a breeze.
+Most of built-in tasks logic is based on`aem` object of type [AemExtension](src/main/kotlin/com/cognifide/gradle/aem/AemExtension.kt). 
+It provides concise AEM related API for accessing AEM configuration, synchronizing with AEM instances via specialized instance services  of `aem.sync` to make tasks implementation a breeze.
 What is more, it also provides built-in HTTP client `aem.http` to be able to communicate with any external services like for downloading CRX packages from package shares like Nexus repositories, JFrog Artifactory etc.
 The options are almost unlimited. 
+
+#### Instance services
+
+While implementing custom AEM tasks, mix usages of following instance services:
+
+* `packageManager` [PackageManager](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/pkg/PackageManager.kt) - Allows to communicate with CRX Package Manager. 
+* `osgiFramework` [OsgiFramework](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/osgi/OsgiFramework.kt) - Controls OSGi framework using [Apache Felix Web Console endpoints](https://felix.apache.org/documentation/subprojects/apache-felix-web-console.html).
+* `repository` [Repository](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/repository/Repository.kt) - Allows to communicate with JCR Content Repository.
+* `http` [InstanceHttpClient](src/main/kotlin/com/cognifide/gradle/aem/common/instance/InstanceHttpClient.kt) - Provides extremely easy to use HTTP client designed especially to be used with AEM (covers basic authentication, allows to use only relative paths instead of full URLs etc) 
+* `status` [Status](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/status/Status.kt) - Allows to read statuses available at [Apache Felix Web Console](https://felix.apache.org/documentation/subprojects/apache-felix-web-console.html).
+* `groovyConsole` [GroovyConsole](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/groovy/GroovyConsole.kt) - Allows to execute Groovy code / scripts on AEM instance having [Groovy Console](https://github.com/icfnext/aem-groovy-console) CRX package installed.
 
 #### Defining CRX package via code then downloading and sharing it using external HTTP endpoint
 
