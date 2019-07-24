@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.common.instance.service.status
 import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.common.instance.InstanceService
 import com.cognifide.gradle.aem.common.instance.InstanceSync
+import com.cognifide.gradle.aem.common.utils.Formats
 import java.util.*
 
 /**
@@ -93,6 +94,6 @@ class Status(sync: InstanceSync) : InstanceService(sync) {
 
         val PRODUCT_VERSION_REGEX = Regex("^ {2}Adobe Experience Manager \\((.*)\\)$")
 
-        const val PRODUCT_VERSION_UNKNOWN = "<unknown>"
+        val PRODUCT_VERSION_UNKNOWN = Formats.VERSION_UNKNOWN.version
     }
 }

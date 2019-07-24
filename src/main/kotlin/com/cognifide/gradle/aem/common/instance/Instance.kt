@@ -205,3 +205,12 @@ interface Instance : Serializable {
 
 val Collection<Instance>.names: String
     get() = if (isNotEmpty()) joinToString(", ") { it.name } else "none"
+
+fun Collection<Instance>.checkAvailable() {
+    val unavailable = filter { !it.available }
+    if (unavailable.isNotEmpty()) {
+        throw InstanceException("Instances are unavailable: ${unavailable.names}.\n" +
+                "Ensure having correct instance URLs defined, credentials correctly encoded " +
+                "and networking in correct state (internet accessible, VPN on/off).")
+    }
+}
