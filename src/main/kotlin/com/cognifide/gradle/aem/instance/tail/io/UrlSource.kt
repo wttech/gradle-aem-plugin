@@ -18,7 +18,7 @@ class UrlSource(
     override fun <T> readChunk(parser: (BufferedReader) -> List<T>) =
         handleInstanceUnavailability {
             instance.sync.http {
-                get(tailer.errorLogEndpoint) {
+                get(tailer.errorLogEndpoint(instance)) {
                     asStream(it).bufferedReader().use(parser)
                 }
             }

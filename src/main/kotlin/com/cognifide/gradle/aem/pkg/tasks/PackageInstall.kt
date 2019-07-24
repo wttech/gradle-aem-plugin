@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.pkg.tasks
 
+import com.cognifide.gradle.aem.common.instance.checkAvailable
 import com.cognifide.gradle.aem.common.instance.names
 import com.cognifide.gradle.aem.common.tasks.PackageTask
 import com.cognifide.gradle.aem.common.utils.fileNames
@@ -13,7 +14,7 @@ open class PackageInstall : PackageTask() {
 
     @TaskAction
     fun install() {
-        checkInstances()
+        instances.checkAvailable()
 
         aem.progress(instances.size * packages.size) {
             aem.syncPackages(instances, packages) { file ->
