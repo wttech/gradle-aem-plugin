@@ -8,11 +8,11 @@ import com.cognifide.gradle.aem.common.utils.Formats
 import com.cognifide.gradle.aem.tooling.vlt.Vlt
 import java.io.Closeable
 import java.io.File
+import java.util.regex.Pattern
 import org.apache.commons.io.FileUtils
 import org.gradle.api.Project
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.Internal
-import java.util.regex.Pattern
 
 class FilterFile(
     @InputFile
@@ -37,8 +37,8 @@ class FilterFile(
                 .toList()
     }
 
-    private fun absoluteRoot(contentDir: File, it: String): File {
-        return File(contentDir, "${Package.JCR_ROOT}/${it.removeSurrounding("/")}")
+    private fun absoluteRoot(contentDir: File, root: String): File {
+        return File(contentDir, "${Package.JCR_ROOT}/${root.removeSurrounding("/")}")
     }
 
     private fun normalizeRoot(root: File): File {
