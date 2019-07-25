@@ -1860,9 +1860,7 @@ use dynamically registered tasks (only if at least one of plugins above are appl
 ### Implement custom AEM tasks
 
 Most of built-in tasks logic is based on`aem` object of type [AemExtension](src/main/kotlin/com/cognifide/gradle/aem/AemExtension.kt). 
-It provides concise AEM related API for accessing AEM configuration, synchronizing with AEM instances via specialized instance services  of `aem.sync` to make tasks implementation a breeze.
-What is more, it also provides built-in HTTP client `aem.http` to be able to communicate with any external services like for downloading CRX packages from package shares like Nexus repositories, JFrog Artifactory etc.
-The options are almost unlimited. 
+It provides concise AEM related API for accessing AEM configuration, synchronizing with AEM instances via specialized instance services  of `aem.sync` to make tasks implementation a breeze. The options for automating things around AEM are almost unlimited. 
 
 #### Instance services
 
