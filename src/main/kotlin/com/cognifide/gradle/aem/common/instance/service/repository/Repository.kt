@@ -26,11 +26,20 @@ class Repository(sync: InstanceSync) : InstanceService(sync) {
         verbose = aem.props.boolean("instance.repository.verbose") ?: true
     }
 
+    /**
+     * Manipulate node at given path (CRUD).
+     */
     fun node(path: String): Node {
         return Node(this, path)
     }
 
+    /**
+     * Calculate a value using node at given path (e.g read property and return it).
+     */
     fun <T> node(path: String, options: Node.() -> T): T = node(path).run(options)
 
+     /**
+     * Shorthand method for creating or updating node at given path.
+     */
     fun node(path: String, properties: Map<String, Any?>): RepositoryResult = node(path).save(properties)
 }
