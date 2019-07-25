@@ -132,6 +132,25 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         enableComponent(pid)
     }
 
+    fun getConfiguration(pid: String): ConfigurationState {
+        aem.logger.debug("Asking for OSGi components on $instance")
+        return sync.http.get("$CONFIGURATION_PATH/$pid?post=true") { asObjectFromJson(it, ConfigurationState::class.java) }
+    }
+
+    fun createConfiguration(pid: String, configuration: Map<String, Any> = mapOf()) {
+        val component = getComponent(pid)
+        val currentConfiguration = getConfiguration(pid)
+        if (component.id.isBlank()) {
+            aem.logger.error("Component with pid not found")
+            return
+        }
+
+        aem.logger.info("Sending configuration request to $component on $instance.")
+        sync.http.post("$CONFIGURATION_PATH/$pid", configuration) { response ->
+            aem.logger.info("Response from instance $instance and pid $pid: ${response.statusLine.statusCode}")
+        }
+    }
+
     fun restart() = shutdown("Restart")
 
     fun stop() = shutdown("Stop")
@@ -157,5 +176,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         const val EVENTS_LIST_JSON = "/system/console/events.json"
 
         const val VMSTAT_PATH = "/system/console/vmstat"
+
+        const val CONFIGURATION_PATH = "/system/console/configMgr"
     }
 }

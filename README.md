@@ -98,7 +98,7 @@
         * [Downloading CRX package from external HTTP endpoint and deploying it on desired AEM instances](#downloading-crx-package-from-external-http-endpoint-and-deploying-it-on-desired-aem-instances)
         * [Working with content repository (JCR)](#working-with-content-repository-jcr)
         * [Executing code on AEM runtime](#executing-code-on-aem-runtime)
-        * [Controlling OSGi bundles and components](#controlling-osgi-bundles-and-components)
+        * [Controlling OSGi bundles, components and configurations](#controlling-osgi-bundles-components-and-configurations)
      * [Understand why there are one or two plugins to be applied in build script](#understand-why-there-are-one-or-two-plugins-to-be-applied-in-build-script)
      * [Work effectively on start and daily basis](#work-effectively-on-start-and-daily-basis)
      * [Filter instances to work with](#filter-instances-to-work-with)
@@ -2050,7 +2050,7 @@ aem {
 }
 ```
 
-#### Controlling OSGi bundles and components
+#### Controlling OSGi bundles, components and comnfigurations
 
 To disable specific OSGi component by its PID value and only on publish instances use [OsgiFramework](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/osgi/OsgiFramework.kt) instance service and write:
 
@@ -2062,6 +2062,43 @@ aem {
             doLast {
                 aem.sync(aem.publishInstances) {
                     osgiFramework.disableComponent("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet")
+                    // osgiFramework.stopBundle("org.apache.sling.jcr.webdav")
+                }
+            }
+        }
+    }
+}
+```
+
+Custom configuration for the particular OSGi component can be created by [OsgiFramework](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/osgi/OsgiFramework.kt) as well:
+```kotlin
+aem {
+    tasks {
+        register("instanceSecure") {
+            doLast {
+                aem.sync(aem.publishInstances) {
+                    osgiFramework.createConfiguration("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", mapOf(
+                        "alias" to "/crx/server"
+                    ))
+                    // osgiFramework.stopBundle("org.apache.sling.jcr.webdav")
+                }
+            }
+        }
+    }
+}
+```
+`createConfiguration` will completely overwrite the existing configuration for given PID.
+
+To override particular fields in OSGi configuration only, use the `updateConfiguration` method as below:
+```kotlin
+aem {
+    tasks {
+        register("instanceSecure") {
+            doLast {
+                aem.sync(aem.publishInstances) {
+                    osgiFramework.updateConfiguration("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", mapOf(
+                        "alias" to "/crx/server"
+                    ))
                     // osgiFramework.stopBundle("org.apache.sling.jcr.webdav")
                 }
             }
