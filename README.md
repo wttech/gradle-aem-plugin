@@ -2080,7 +2080,6 @@ aem {
                     osgiFramework.createConfiguration("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", mapOf(
                         "alias" to "/crx/server"
                     ))
-                    // osgiFramework.stopBundle("org.apache.sling.jcr.webdav")
                 }
             }
         }
@@ -2099,7 +2098,6 @@ aem {
                     osgiFramework.updateConfiguration("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", mapOf(
                         "alias" to "/crx/server"
                     ))
-                    // osgiFramework.stopBundle("org.apache.sling.jcr.webdav")
                 }
             }
         }

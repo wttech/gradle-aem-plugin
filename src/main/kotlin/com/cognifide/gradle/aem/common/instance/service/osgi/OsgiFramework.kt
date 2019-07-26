@@ -132,21 +132,40 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         enableComponent(pid)
     }
 
-    fun getConfiguration(pid: String): ConfigurationState {
-        aem.logger.debug("Asking for OSGi components on $instance")
+    fun findConfiguration(pid: String) : ConfigurationState? {
         return sync.http.get("$CONFIGURATION_PATH/$pid?post=true") { asObjectFromJson(it, ConfigurationState::class.java) }
     }
 
-    fun createConfiguration(pid: String, configuration: Map<String, Any> = mapOf()) {
-        val component = getComponent(pid)
-        val currentConfiguration = getConfiguration(pid)
-        if (component.id.isBlank()) {
-            aem.logger.error("Component with pid not found")
-            return
-        }
+    fun getConfiguration(pid: String): ConfigurationState {
+        aem.logger.debug("Asking for OSGi configuration on $instance")
+        return findConfiguration(pid)
+                ?: throw InstanceException("OSGi Configuration for PID $pid was not found on $instance. Make sure the component exists.")
+    }
 
-        aem.logger.info("Sending configuration request to $component on $instance.")
-        sync.http.post("$CONFIGURATION_PATH/$pid", configuration) { response ->
+    fun createConfiguration(pid: String, properties: Map<String, Any> = mapOf()) {
+        val currentConfiguration = getConfiguration(pid)
+        val newConfiguration = getConfigPayload(currentConfiguration, properties)
+        aem.logger.info("Sending configuration request to $currentConfiguration on $instance.")
+        sync.http.post("$CONFIGURATION_PATH/$pid", newConfiguration) { response ->
+            aem.logger.info("Response from instance $instance and pid $pid: ${response.statusLine.statusCode}")
+        }
+    }
+
+    fun updateConfiguration(pid: String, properties: Map<String, Any> = mapOf()) {
+        val currentConfiguration = getConfiguration(pid)
+        val configurationDiff = currentConfiguration.properties.toMutableMap()
+        properties.entries.forEach { configurationDiff[it.key] = it.value }
+
+        sync.http.post("$CONFIGURATION_PATH/$pid", getConfigPayload(currentConfiguration, properties)) { response ->
+            aem.logger.info("Response from instance $instance and pid $pid: ${response.statusLine.statusCode}")
+        }
+    }
+
+    fun deleteConfiguration(pid: String) {
+        val payload = mapOf(
+            "apply" to 1,
+            "delete" to 1)
+        sync.http.post("$CONFIGURATION_PATH/$pid", payload) { response ->
             aem.logger.info("Response from instance $instance and pid $pid: ${response.statusLine.statusCode}")
         }
     }
@@ -161,6 +180,15 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
             sync.http.postUrlencoded(VMSTAT_PATH, mapOf("shutdown_type" to type))
         } catch (e: AemException) {
             throw InstanceException("Cannot trigger shutdown of $instance.", e)
+        }
+    }
+
+    private fun getConfigPayload(configuration: ConfigurationState, properties: Map<String, Any>) : Map<String, Any> {
+        return properties.toMutableMap().also { payload ->
+            payload["apply"] = true
+            payload["action"] = "ajaxConfigManager"
+            payload["\$location"] = configuration.bundleLocation
+            payload["propertyList"] = configuration.properties.keys.joinToString(",")
         }
     }
 

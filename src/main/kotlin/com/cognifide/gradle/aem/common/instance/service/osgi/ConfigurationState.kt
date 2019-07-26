@@ -2,28 +2,37 @@ package com.cognifide.gradle.aem.common.instance.service.osgi
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 
-@JsonDeserialize(using = ConfigurationDeserializer::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
 class ConfigurationState {
 
     @JsonProperty
     var pid: String = ""
 
+    @JsonProperty("properties")
+    private var configProperties: Map<String, ConfigurationProperty> = mutableMapOf()
+
     @JsonProperty
-    var properties: List<ConfigurationProperty> = listOf()
+    var bundleLocation: String = ""
+
+    @JsonProperty("service_location")
+    var serviceLocation: String = ""
+
+    val properties: Map<String, Any> by lazy {
+        configProperties.mapValues { it.value.value }
+    }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     class ConfigurationProperty {
 
-        @JsonProperty
-        var name: String = ""
+        @JsonProperty("value")
+        private var singleValue: Any? = null
 
-        @JsonProperty
-        var value: Any = Any()
+        @JsonProperty("values")
+        private var multiValue: Array<Any>? = null
 
-        @JsonProperty
-        var values: List<Any> = listOf()
+        val value: Any by lazy {
+            singleValue ?: multiValue ?: Any()
+        }
     }
 }
