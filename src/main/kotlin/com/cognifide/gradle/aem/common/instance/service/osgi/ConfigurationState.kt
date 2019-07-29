@@ -7,32 +7,17 @@ import com.fasterxml.jackson.annotation.JsonProperty
 class ConfigurationState {
 
     @JsonProperty
-    var pid: String = ""
-
-    @JsonProperty("properties")
-    private var configProperties: Map<String, ConfigurationProperty> = mutableMapOf()
+    var id: String = ""
 
     @JsonProperty
-    var bundleLocation: String = ""
+    var name: String = ""
 
-    @JsonProperty("service_location")
-    var serviceLocation: String = ""
+    @JsonProperty("has_config")
+    var hasConfig: Boolean = false
 
-    val properties: Map<String, Any> by lazy {
-        configProperties.mapValues { it.value.value }
-    }
+    @JsonProperty
+    var fpid: String = ""
 
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    class ConfigurationProperty {
-
-        @JsonProperty("value")
-        private var singleValue: Any? = null
-
-        @JsonProperty("values")
-        private var multiValue: Array<Any>? = null
-
-        val value: Any by lazy {
-            singleValue ?: multiValue ?: Any()
-        }
-    }
+    @JsonProperty
+    var nameHint: String = ""
 }

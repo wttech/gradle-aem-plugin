@@ -2078,7 +2078,9 @@ aem {
             doLast {
                 aem.sync(aem.publishInstances) {
                     osgiFramework.createConfiguration("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", mapOf(
-                        "alias" to "/crx/server"
+                        "alias" to "/crx/server",
+                        "dav.create-absolute-uri" to true,
+                        "dav.protectedhandlers" to "org.apache.jackrabbit.server.remoting.davex.AclRemoveHandler"
                     ))
                 }
             }
@@ -2103,6 +2105,22 @@ aem {
         }
     }
 }
+```
+
+The configuration for PID can also be deleted by the following:
+```kotlin
+aem {
+    tasks {
+        register("deleteConfig") {
+            doLast {
+                aem.sync(aem.instances) {
+                    osgiFramework.deleteConfiguration("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet")
+                }
+            }
+        }
+    }
+}
+
 ```
 
 ### Understand why there are one or two plugins to be applied in build script
