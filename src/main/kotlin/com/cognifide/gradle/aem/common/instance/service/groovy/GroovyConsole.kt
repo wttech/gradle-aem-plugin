@@ -33,7 +33,7 @@ class GroovyConsole(sync: InstanceSync) : InstanceService(sync) {
             aem.logger.info("Executing Groovy Code: $code")
             evalCodeInternal(code, data)
         } catch (e: AemException) {
-            throw InstanceException("Cannot evaluate Groovy code properly on $instance, code:\n$code", e)
+            throw InstanceException("Cannot evaluate Groovy code properly on $instance, code:\n$code, cause: ${e.message}", e)
         }
 
         if (verbose && result.exceptionStackTrace.isNotBlank()) {
@@ -59,7 +59,7 @@ class GroovyConsole(sync: InstanceSync) : InstanceService(sync) {
             aem.logger.info("Executing Groovy script: $file")
             evalCodeInternal(file.bufferedReader().use { it.readText() }, data)
         } catch (e: AemException) {
-            throw InstanceException("Cannot evaluate Groovy script properly on $instance, file: $file", e)
+            throw InstanceException("Cannot evaluate Groovy script properly on $instance, file: $file, cause: ${e.message}", e)
         }
 
         if (verbose && result.exceptionStackTrace.isNotBlank()) {

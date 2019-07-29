@@ -4,6 +4,7 @@ import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.common.build.ProgressIndicator
 import com.cognifide.gradle.aem.common.file.resolver.FileGroup
 import com.cognifide.gradle.aem.common.instance.Instance
+import com.cognifide.gradle.aem.common.instance.checkAvailable
 import com.cognifide.gradle.aem.common.instance.names
 import com.cognifide.gradle.aem.common.instance.service.pkg.PackageState
 import com.cognifide.gradle.aem.common.utils.Patterns
@@ -82,7 +83,7 @@ open class InstanceSatisfy : PackageDeploy() {
 
         val files = result.flatMap { it.files }
 
-        logger.info("Packages provided (${files.size}).")
+        logger.info("Packages provided (${files.size}):\n${files.joinToString("\n")}")
 
         result
     }
@@ -116,7 +117,7 @@ open class InstanceSatisfy : PackageDeploy() {
     @TaskAction
     @Suppress("ComplexMethod")
     override fun deploy() {
-        checkInstances()
+        instances.checkAvailable()
 
         aem.progress(packageGroups.sumBy { it.files.size * determineInstancesForGroup(it).size }) {
             packageGroups.forEach { satisfyGroup(it) }

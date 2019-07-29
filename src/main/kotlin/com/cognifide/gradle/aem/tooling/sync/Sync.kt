@@ -5,7 +5,6 @@ import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.common.utils.Formats
 import com.cognifide.gradle.aem.tooling.vlt.VltRunner
 import java.io.File
-import java.util.regex.Pattern
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
@@ -50,7 +49,7 @@ open class Sync : AemDefaultTask() {
                 return listOf()
             }
 
-            return filter.rootDirs(contentDir).map { normalizeRoot(it) }.distinct()
+            return filter.rootDirs(contentDir)
         }
 
     @Internal
@@ -110,7 +109,7 @@ open class Sync : AemDefaultTask() {
 
         filterRootFiles.forEach { root ->
             logger.lifecycle("Preparing root: $root")
-            cleaner.prepare(normalizeRoot(root))
+            cleaner.prepare(root)
         }
     }
 
@@ -143,25 +142,6 @@ open class Sync : AemDefaultTask() {
         }
     }
 
-    private fun normalizeRoot(root: File): File {
-        return File(manglePath(Formats.normalizePath(root.path).substringBefore("/${Cleaner.JCR_CONTENT_NODE}")))
-    }
-
-    private fun manglePath(path: String): String {
-        var mangledPath = path
-        if (path.contains(":")) {
-            val matcher = MANGLE_NAMESPACE_OUT_PATTERN.matcher(path)
-            val buffer = StringBuffer()
-            while (matcher.find()) {
-                val namespace = matcher.group(1)
-                matcher.appendReplacement(buffer, "/_${namespace}_")
-            }
-            matcher.appendTail(buffer)
-            mangledPath = buffer.toString()
-        }
-        return mangledPath
-    }
-
     enum class Transfer {
         VLT_CHECKOUT,
         PACKAGE_DOWNLOAD;
@@ -189,7 +169,5 @@ open class Sync : AemDefaultTask() {
 
     companion object {
         const val NAME = "sync"
-
-        private val MANGLE_NAMESPACE_OUT_PATTERN: Pattern = Pattern.compile("/([^:/]+):")
     }
 }

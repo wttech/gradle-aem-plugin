@@ -85,10 +85,16 @@ class InstanceTailer(val aem: AemExtension) {
 
     var linesChunkSize = aem.props.long("instance.tail.linesChunkSize") ?: 400L
 
-    val errorLogEndpoint: String
-        get() = "/system/console/slinglog/tailer.txt" +
-                "?tail=$linesChunkSize" +
-                "&name=${logFilePath.replace("/", "%2F")}"
+    // https://sridharmandra.blogspot.com/2016/08/tail-aem-logs-in-browser.html
+    fun errorLogEndpoint(instance: Instance): String {
+        val fileName = logFilePath.replace("/", "%2F")
+        val path = when {
+            Formats.versionAtLeast(instance.version, "6.2.0") -> ENDPOINT_PATH
+            else -> ENDPOINT_PATH_OLD
+        }
+
+        return "$path?tail=$linesChunkSize&name=$fileName"
+    }
 
     val logFile: String
         get() = Paths.get(logFilePath).fileName.toString()
@@ -140,12 +146,15 @@ class InstanceTailer(val aem: AemExtension) {
 
         val logFile = logFiles.main(instance.name)
         aem.logger.lifecycle("Tailing logs to file: $logFile")
-        aem.logger.lifecycle("Filter incidents using file: $incidentFilter")
 
         return LogTailer(source, destination, logAnalyzerChannel)
     }
 
     companion object {
+
+        const val ENDPOINT_PATH = "/system/console/slinglog/tailer.txt"
+
+        const val ENDPOINT_PATH_OLD = "/bin/crxde/logs"
 
         val INCIDENT_LEVELS_DEFAULT = listOf("ERROR")
 
