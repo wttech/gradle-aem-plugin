@@ -1,6 +1,6 @@
 [![Cognifide logo](docs/cognifide-logo.png)](http://cognifide.com)
 
-[ ![Download](https://api.bintray.com/packages/cognifide/maven-public/gradle-aem-plugin/images/download.svg) ](https://bintray.com/cognifide/maven-public/gradle-aem-plugin/_latestVersion)
+[![Download](https://api.bintray.com/packages/cognifide/maven-public/gradle-aem-plugin/images/download.svg) ](https://bintray.com/cognifide/maven-public/gradle-aem-plugin/_latestVersion)
 [![Gradle Status](https://gradleupdate.appspot.com/Cognifide/gradle-aem-plugin/status.svg?random=123)](https://gradleupdate.appspot.com/Cognifide/gradle-aem-plugin/status)
 ![Travis Build](https://travis-ci.org/Cognifide/gradle-aem-plugin.svg?branch=develop)
 [![Apache License, Version 2.0, January 2004](docs/apache-license-badge.svg)](http://www.apache.org/licenses/)
@@ -105,6 +105,7 @@
      * [Filter instances to work with](#filter-instances-to-work-with)
      * [Know how properties are being expanded in instance or package files](#know-how-properties-are-being-expanded-in-instance-or-package-files)
   * [Known issues](#known-issues)
+     * [Building artifacts on CI server / offline mode](#building-artifacts-on-ci-server--offline-mode)
      * [No OSGi services / components are registered](#no-osgi-services--components-are-registered)
      * [Caching task packageCompose](#caching-task-packagecompose)
      * [Vault tasks parallelism](#vault-tasks-parallelism)
@@ -199,7 +200,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.cognifide.gradle:aem-plugin:7.0.8")
+    implementation("com.cognifide.gradle:aem-plugin:7.0.9")
 }
 ```
 
@@ -2147,6 +2148,14 @@ The properties syntax comes from [Pebble Template Engine](https://github.com/Peb
 Expanding properties could be used separately on any string or file source in any custom task by using method `aem.props.expand()`.
 
 ## Known issues
+
+### Building artifacts on CI server / offline mode
+
+By default, plugin is configuring `instanceCheck` and `environmentCheck` tasks to be run with `check` lifecycle task.
+This assumption is handy, when Gradle AEM Plugin is used on local development environment where Gradle is executed on same machine as AEM.
+However, Gradle build users are very often used to build artifacts using e.g command `./gradlew build` or more strictly `./gradlew :aem:assembly:full:build` (recommended approach - build only desired package instead of all possible).
+Task `build` depends on `check` according to [base plugin](https://docs.gradle.org/current/userguide/base_plugin.html), so there is a little side-effect here. Building artifacts / CRX packages causing running AEM related tests (`instanceCheck` and `environmentCheck`).
+To prevent running these tests on CI (continuous integration server) and still using handy `build` or `check` lifecycle tasks, extra parameter is needed to be specified `-Poffline=true`. This indicates that AEM instance(s) are not available and should not be used if it is possible.
 
 ### No OSGi services / components are registered
 
