@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.instance.tail
 
+import com.cognifide.gradle.aem.common.instance.names
 import com.cognifide.gradle.aem.common.tasks.InstanceTask
 import kotlinx.coroutines.ObsoleteCoroutinesApi
 import org.gradle.api.tasks.Internal
@@ -23,6 +24,9 @@ open class InstanceTail : InstanceTask() {
     fun tail() {
         tailer.apply {
             instances = this@InstanceTail.instances
+
+            aem.logger.lifecycle("Tailing logs from instances: ${instances.names}")
+            aem.logger.lifecycle("Filter incidents using file: ${tailer.incidentFilter}")
             tail()
         }
     }

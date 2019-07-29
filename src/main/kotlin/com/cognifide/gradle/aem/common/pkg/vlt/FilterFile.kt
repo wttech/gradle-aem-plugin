@@ -4,9 +4,11 @@ import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
+import com.cognifide.gradle.aem.common.utils.Formats
 import com.cognifide.gradle.aem.tooling.vlt.Vlt
 import java.io.Closeable
 import java.io.File
+import java.util.regex.Pattern
 import org.apache.commons.io.FileUtils
 import org.gradle.api.Project
 import org.gradle.api.tasks.InputFile
@@ -28,7 +30,34 @@ class FilterFile(
         get() = elements.map { it.element.attr("root") }.toSet()
 
     fun rootDirs(contentDir: File): List<File> {
-        return roots.map { File(contentDir, "${Package.JCR_ROOT}/${it.removeSurrounding("/")}") }
+        return roots.asSequence()
+                .map { absoluteRoot(contentDir, it) }
+                .map { normalizeRoot(it) }
+                .distinct()
+                .toList()
+    }
+
+    private fun absoluteRoot(contentDir: File, root: String): File {
+        return File(contentDir, "${Package.JCR_ROOT}/${root.removeSurrounding("/")}")
+    }
+
+    private fun normalizeRoot(root: File): File {
+        return File(manglePath(Formats.normalizePath(root.path).substringBefore("/jcr:content")))
+    }
+
+    private fun manglePath(path: String): String {
+        var mangledPath = path
+        if (path.contains(":")) {
+            val matcher = MANGLE_NAMESPACE_PATTERN.matcher(path)
+            val buffer = StringBuffer()
+            while (matcher.find()) {
+                val namespace = matcher.group(1)
+                matcher.appendReplacement(buffer, "/_${namespace}_")
+            }
+            matcher.appendTail(buffer)
+            mangledPath = buffer.toString()
+        }
+        return mangledPath
     }
 
     override fun close() {
@@ -38,7 +67,7 @@ class FilterFile(
     }
 
     override fun toString(): String {
-        return "VltFilter(file=$file, temporary=$temporary)"
+        return "FilterFile(file=$file, temporary=$temporary)"
     }
 
     companion object {
@@ -62,5 +91,7 @@ class FilterFile(
 
             return FilterFile(file, true)
         }
+
+        private val MANGLE_NAMESPACE_PATTERN: Pattern = Pattern.compile("/([^:/]+):")
     }
 }

@@ -24,8 +24,8 @@ repositories {
 
 dependencies {
     implementation(gradleApi())
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.3.30")
-    implementation("org.jetbrains.kotlin:kotlin-reflect:1.3.30")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.3.41")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:1.3.41")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.2.0")
     implementation("org.apache.commons:commons-lang3:3.4")
     implementation("commons-io:commons-io:2.4")
