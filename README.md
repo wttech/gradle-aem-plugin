@@ -1,6 +1,6 @@
 [![Cognifide logo](docs/cognifide-logo.png)](http://cognifide.com)
 
-[ ![Download](https://api.bintray.com/packages/cognifide/maven-public/gradle-aem-plugin/images/download.svg) ](https://bintray.com/cognifide/maven-public/gradle-aem-plugin/_latestVersion)
+[![Download](https://api.bintray.com/packages/cognifide/maven-public/gradle-aem-plugin/images/download.svg) ](https://bintray.com/cognifide/maven-public/gradle-aem-plugin/_latestVersion)
 [![Gradle Status](https://gradleupdate.appspot.com/Cognifide/gradle-aem-plugin/status.svg?random=123)](https://gradleupdate.appspot.com/Cognifide/gradle-aem-plugin/status)
 ![Travis Build](https://travis-ci.org/Cognifide/gradle-aem-plugin.svg?branch=develop)
 [![Apache License, Version 2.0, January 2004](docs/apache-license-badge.svg)](http://www.apache.org/licenses/)
@@ -93,6 +93,7 @@
      * [Set AEM configuration properly for all / concrete project(s)](#set-aem-configuration-properly-for-all--concrete-projects)
      * [Use lifecycle tasks](#use-lifecycle-tasks)
      * [Implement custom AEM tasks](#implement-custom-aem-tasks)
+        * [Instance services](#instance-services)
         * [Defining CRX package via code then downloading and sharing it using external HTTP endpoint](#defining-crx-package-via-code-then-downloading-and-sharing-it-using-external-http-endpoint)
         * [Calling AEM endpoints / making any HTTP requests](#calling-aem-endpoints--making-any-http-requests)
         * [Downloading CRX package from external HTTP endpoint and deploying it on desired AEM instances](#downloading-crx-package-from-external-http-endpoint-and-deploying-it-on-desired-aem-instances)
@@ -104,6 +105,7 @@
      * [Filter instances to work with](#filter-instances-to-work-with)
      * [Know how properties are being expanded in instance or package files](#know-how-properties-are-being-expanded-in-instance-or-package-files)
   * [Known issues](#known-issues)
+     * [Building artifacts on CI server / offline mode](#building-artifacts-on-ci-server--offline-mode)
      * [No OSGi services / components are registered](#no-osgi-services--components-are-registered)
      * [Caching task packageCompose](#caching-task-packagecompose)
      * [Vault tasks parallelism](#vault-tasks-parallelism)
@@ -198,7 +200,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.cognifide.gradle:aem-plugin:7.0.8")
+    implementation("com.cognifide.gradle:aem-plugin:7.0.10")
 }
 ```
 
@@ -1858,10 +1860,19 @@ use dynamically registered tasks (only if at least one of plugins above are appl
 
 ### Implement custom AEM tasks
 
-Most of built-in tasks logic is based on`aem` object of type [AemExtension](src/main/kotlin/com/cognifide/gradle/aem/common/AemExtension.kt). 
-It provides concise AEM related API for accessing AEM configuration, synchronizing with AEM instances via specialized methods of `aem.sync` to make tasks implementation a breeze.
-What is more, it also provides built-in HTTP client `aem.http` to be able to communicate with any external services like for downloading CRX packages from package shares like Nexus repositories, JFrog Artifactory etc.
-The options are almost unlimited. 
+Most of built-in tasks logic is based on`aem` object of type [AemExtension](src/main/kotlin/com/cognifide/gradle/aem/AemExtension.kt). 
+It provides concise AEM related API for accessing AEM configuration, synchronizing with AEM instances via specialized instance services  of `aem.sync` to make tasks implementation a breeze. The options for automating things around AEM are almost unlimited. 
+
+#### Instance services
+
+While implementing custom AEM tasks, mix usages of following instance services:
+
+* `packageManager` [PackageManager](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/pkg/PackageManager.kt) - Allows to communicate with CRX Package Manager. 
+* `osgiFramework` [OsgiFramework](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/osgi/OsgiFramework.kt) - Controls OSGi framework using [Apache Felix Web Console endpoints](https://felix.apache.org/documentation/subprojects/apache-felix-web-console.html).
+* `repository` [Repository](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/repository/Repository.kt) - Allows to communicate with JCR Content Repository.
+* `http` [InstanceHttpClient](src/main/kotlin/com/cognifide/gradle/aem/common/instance/InstanceHttpClient.kt) - Provides extremely easy to use HTTP client designed especially to be used with AEM (covers basic authentication, allows to use only relative paths instead of full URLs etc) 
+* `status` [Status](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/status/Status.kt) - Allows to read statuses available at [Apache Felix Web Console](https://felix.apache.org/documentation/subprojects/apache-felix-web-console.html).
+* `groovyConsole` [GroovyConsole](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/groovy/GroovyConsole.kt) - Allows to execute Groovy code / scripts on AEM instance having [Groovy Console](https://github.com/icfnext/aem-groovy-console) CRX package installed.
 
 #### Defining CRX package via code then downloading and sharing it using external HTTP endpoint
 
@@ -2137,6 +2148,14 @@ The properties syntax comes from [Pebble Template Engine](https://github.com/Peb
 Expanding properties could be used separately on any string or file source in any custom task by using method `aem.props.expand()`.
 
 ## Known issues
+
+### Building artifacts on CI server / offline mode
+
+By default, plugin is configuring `instanceCheck` and `environmentCheck` tasks to be run with `check` lifecycle task.
+This assumption is handy, when Gradle AEM Plugin is used on local development environment where Gradle is executed on same machine as AEM.
+However, Gradle build users are very often used to build artifacts using e.g command `./gradlew build` or more strictly `./gradlew :aem:assembly:full:build` (recommended approach - build only desired package instead of all possible).
+Task `build` depends on `check` according to [base plugin](https://docs.gradle.org/current/userguide/base_plugin.html), so there is a little side-effect here. Building artifacts / CRX packages causing running AEM related tests (`instanceCheck` and `environmentCheck`).
+To prevent running these tests on CI (continuous integration server) and still using handy `build` or `check` lifecycle tasks, extra parameter is needed to be specified `-Poffline=true`. This indicates that AEM instance(s) are not available and should not be used if it is possible.
 
 ### No OSGi services / components are registered
 
