@@ -91,10 +91,16 @@ open class FileWatcher(val aem: AemExtension) {
             notify(Event(directory, EventType.DIR_DELETED))
         }
 
-        override fun onDirectoryChange(directory: File?) {}
+        override fun onDirectoryChange(directory: File?) {
+            // do nothing
+        }
 
-        override fun onStart(observer: FileAlterationObserver?) {}
+        override fun onStart(observer: FileAlterationObserver?) {
+            // do nothing
+        }
 
-        override fun onStop(observer: FileAlterationObserver?) {}
+        override fun onStop(observer: FileAlterationObserver?) {
+            // do nothing
+        }
     }
 }

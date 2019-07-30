@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.common.instance.service.status
 
 import com.cognifide.gradle.aem.AemException
+import com.cognifide.gradle.aem.common.http.RequestException
 import com.cognifide.gradle.aem.common.instance.InstanceService
 import com.cognifide.gradle.aem.common.instance.InstanceSync
 import com.cognifide.gradle.aem.common.utils.Formats
@@ -75,8 +76,8 @@ class Status(sync: InstanceSync) : InstanceService(sync) {
     fun readProductVersion(): String {
         val text = try {
             sync.http.get(PRODUCT_INFO_PATH) { asString(it) }
-        } catch (e: AemException) {
-            throw StatusException("Cannot request product version of $instance")
+        } catch (e: RequestException) {
+            throw StatusException("Cannot request product version of $instance. Cause: ${e.message}", e)
         }
 
         val version = text.lineSequence().mapNotNull {

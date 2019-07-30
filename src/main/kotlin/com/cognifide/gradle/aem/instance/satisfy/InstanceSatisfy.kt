@@ -83,7 +83,7 @@ open class InstanceSatisfy : PackageDeploy() {
 
         val files = result.flatMap { it.files }
 
-        logger.info("Packages provided (${files.size}).")
+        logger.info("Packages provided (${files.size}):\n${files.joinToString("\n")}")
 
         result
     }
