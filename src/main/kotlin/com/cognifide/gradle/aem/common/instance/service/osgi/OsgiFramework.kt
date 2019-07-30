@@ -161,6 +161,10 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         println(getConfigList().size)
     }
 
+    fun createConfiguration(pid: String, service: String, properties: Map<String, Any> = mapOf()) {
+        createConfiguration("$pid~$service", properties)
+    }
+
     fun updateConfiguration(pid: String, properties: Map<String, Any> = mapOf()) {
         val currentConfiguration = getConfiguration(pid)
         val configurationDiff = currentConfiguration.properties.toMutableMap()
@@ -171,6 +175,10 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         }
     }
 
+    fun updateConfiguration(pid: String, service: String, properties: Map<String, Any> = mapOf()) {
+        updateConfiguration("$pid~$service", properties)
+    }
+
     fun deleteConfiguration(pid: String) {
         val payload = mapOf(
             "apply" to 1,
@@ -178,6 +186,10 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         sync.http.post("$CONFIGURATION_PATH/$pid", payload) { response ->
             aem.logger.debug("Response from instance $instance and pid $pid: ${response.statusLine.statusCode}")
         }
+    }
+
+    fun deleteConfiguration(pid: String, service: String) {
+        deleteConfiguration("$pid~$service")
     }
 
     fun restart() = shutdown("Restart")
@@ -198,7 +210,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         val regex = Regex("configData = (.*);")
         sync.http.get(CONFIGURATION_PATH) { response ->
             val mapper = ObjectMapper()
-            val html = IOUtils.toString(response.entity.content, Charset.forName("UTF-8"))
+            val html = asString(response)
             val configJson = regex.find(html)?.groups?.get(1)?.value ?: "{}"
             val json = mapper.readTree(configJson)
             configList = mapper.readValue(json.get("pids").toString())
