@@ -76,12 +76,6 @@ object Formats {
         readValue(json, typeFactory.constructMapType(HashMap::class.java, String::class.java, Any::class.java))
     }
 
-    fun <A> jsonArrayProperty(json: String, property: String): List<A> {
-        val mapper = jsonMapper(false)
-        val jsonNode = mapper.readTree(json)
-        return mapper.readValue(jsonNode.get(property).toString())
-    }
-
     fun toList(value: String?, delimiter: String = ","): List<String>? {
         if (value.isNullOrBlank()) {
             return null

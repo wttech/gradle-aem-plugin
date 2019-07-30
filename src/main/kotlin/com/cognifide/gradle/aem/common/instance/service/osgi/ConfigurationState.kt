@@ -7,17 +7,24 @@ import com.fasterxml.jackson.annotation.JsonProperty
 class ConfigurationState {
 
     @JsonProperty
-    var id: String = ""
+    lateinit var pids: List<Pid>
 
-    @JsonProperty
-    var name: String = ""
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    class Pid {
 
-    @JsonProperty("has_config")
-    var hasConfig: Boolean = false
+        @JsonProperty
+        lateinit var id: String
 
-    @JsonProperty
-    var fpid: String = ""
+        @JsonProperty
+        lateinit var name: String
 
-    @JsonProperty
-    var nameHint: String = ""
+        @JsonProperty("has_config")
+        var hasConfig: Boolean = false
+
+        @JsonProperty
+        var fpid: String? = null
+
+        @JsonProperty
+        var nameHint: String? = null
+    }
 }

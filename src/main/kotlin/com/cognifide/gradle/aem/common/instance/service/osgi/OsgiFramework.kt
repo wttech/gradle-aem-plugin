@@ -4,7 +4,7 @@ import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.common.instance.InstanceException
 import com.cognifide.gradle.aem.common.instance.InstanceService
 import com.cognifide.gradle.aem.common.instance.InstanceSync
-import com.cognifide.gradle.aem.common.utils.Formats
+import com.cognifide.gradle.aem.common.utils.Formats.jsonMapper
 
 /**
  * Controls OSGi framework using Apache Felix Web Console endpoints.
@@ -133,48 +133,43 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         enableComponent(pid)
     }
 
-    fun findConfiguration(pid: String): OsgiConfiguration? {
-        return sync.http.get("$CONFIGURATION_PATH/$pid?post=true") { asObjectFromJson(it, OsgiConfiguration::class.java) }
+    fun findConfiguration(pid: String): Configuration? {
+        return sync.http.get("$CONFIGURATION_PATH/$pid?post=true") { asObjectFromJson(it, Configuration::class.java) }
     }
 
-    fun getConfiguration(pid: String): OsgiConfiguration {
+    fun getConfiguration(pid: String): Configuration {
         aem.logger.debug("Asking for OSGi configuration on $instance")
         return findConfiguration(pid)
                 ?: throw InstanceException("OSGi Configuration for PID $pid was not found on $instance. Make sure the component exists.")
     }
 
-    fun getConfigurations(pid: String): List<OsgiConfiguration> {
+    fun getConfigurations(pid: String): List<Configuration> {
         return getConfigList()
                 .filter { pid == it.fpid }
                 .mapNotNull { findConfiguration(it.id) }
     }
 
-    fun saveConfiguration(pid: String, properties: MutableMap<String, Any> = mutableMapOf()) {
+    fun saveConfiguration(pid: String, properties: Map<String, Any>) {
         val currentConfiguration = getConfiguration(pid)
-        val configurationDiff = currentConfiguration.properties.toMutableMap()
-        properties.entries.forEach { configurationDiff[it.key] = it.value }
 
         sync.http.post("$CONFIGURATION_PATH/$pid", createConfigPayload(currentConfiguration, properties)) { response ->
             aem.logger.debug("Response from instance $instance and pid $pid: ${response.statusLine.statusCode}")
         }
     }
 
-    fun saveConfiguration(pid: String, service: String, properties: MutableMap<String, Any> = mutableMapOf()) {
-        saveConfiguration("$pid~$service", properties)
-    }
+    fun saveConfiguration(pid: String, service: String, properties: Map<String, Any>) = saveConfiguration("$pid~$service", properties)
 
     fun deleteConfiguration(pid: String) {
         val payload = mapOf(
             "apply" to 1,
-            "delete" to 1)
+            "delete" to 1
+        )
         sync.http.post("$CONFIGURATION_PATH/$pid", payload) { response ->
             aem.logger.debug("Response from instance $instance and pid $pid: ${response.statusLine.statusCode}")
         }
     }
 
-    fun deleteConfiguration(pid: String, service: String) {
-        deleteConfiguration("$pid~$service")
-    }
+    fun deleteConfiguration(pid: String, service: String) = deleteConfiguration("$pid~$service")
 
     fun restart() = shutdown("Restart")
 
@@ -185,28 +180,28 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
             aem.logger.info("Triggering OSGi framework shutdown on $instance.")
             sync.http.postUrlencoded(VMSTAT_PATH, mapOf("shutdown_type" to type))
         } catch (e: AemException) {
-            throw InstanceException("Cannot trigger shutdown of $instance.", e)
+            throw InstanceException("Cannot trigger shutdown of $instance. Cause: ${e.message}", e)
         }
     }
 
-    private fun getConfigList(): List<ConfigurationState> {
-        var configList: List<ConfigurationState> = listOf()
+    private fun getConfigList(): List<ConfigurationState.Pid> {
+        lateinit var configList: ConfigurationState
         sync.http.get(CONFIGURATION_PATH) { response ->
             val html = asString(response)
             val configJson = CONFIGURATIONS_REGEX.find(html)?.groups?.get(1)?.value ?: "{}"
-            configList = Formats.jsonArrayProperty(configJson, "pids")
+            configList = jsonMapper(false).readValue(configJson, ConfigurationState::class.java)
         }
-        return configList
+        return configList.pids
     }
 
     /* Adding some mandatory parameters to save config request */
-    private fun createConfigPayload(configuration: OsgiConfiguration, properties: MutableMap<String, Any>): Map<String, Any> {
-        return properties.also { payload ->
-            payload["apply"] = true
-            payload["action"] = "ajaxConfigManager"
-            payload["\$location"] = configuration.bundleLocation
-            payload["propertylist"] = configuration.properties.keys.joinToString(",")
-        }
+    private fun createConfigPayload(configuration: Configuration, properties: Map<String, Any>): Map<String, Any> {
+        return properties + mapOf(
+            "apply" to true,
+            "action" to "ajaxConfigManager",
+            "\$location" to configuration.bundleLocation,
+            "propertylist" to configuration.properties.keys.joinToString(",")
+        )
     }
 
     companion object {
