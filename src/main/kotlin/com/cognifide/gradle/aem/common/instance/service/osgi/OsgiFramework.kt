@@ -6,8 +6,6 @@ import com.cognifide.gradle.aem.common.instance.InstanceService
 import com.cognifide.gradle.aem.common.instance.InstanceSync
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import java.nio.charset.Charset
-import org.apache.commons.io.IOUtils
 
 /**
  * Controls OSGi framework using Apache Felix Web Console endpoints.

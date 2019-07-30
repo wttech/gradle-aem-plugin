@@ -2099,7 +2099,25 @@ aem {
     }
 }
 ```
-`createConfiguration` will completely overwrite the existing configuration for given PID.
+`createConfiguration` may completely overwrite the existing configuration for given PID.
+
+It is also possible to add or modify the factory OSGi methods. This can be achieved by the following:
+```kotlin
+aem {
+    tasks {
+        register("instanceSecure") {
+            doLast {
+                aem.sync(aem.publishInstances) {
+                    osgiFramework.createConfiguration("org.apache.sling.serviceusermapping.impl.ServiceUserMapperImpl.amended", "groovy-console", mapOf(
+                        "service.ranking" to 1,
+                        "user.mapping" to arrayOf("aem-groovy-console=groovy-console-system-user")
+                    ))
+                }
+            }
+        }
+    }
+}
+```
 
 To override particular fields in OSGi configuration only, use the `updateConfiguration` method as below:
 ```kotlin
@@ -2110,6 +2128,23 @@ aem {
                 aem.sync(aem.publishInstances) {
                     osgiFramework.updateConfiguration("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", mapOf(
                         "alias" to "/crx/server"
+                    ))
+                }
+            }
+        }
+    }
+}
+```
+
+Factory OSGi configurations are supported as well:
+```kotlin
+aem {
+    tasks {
+        register("instanceSecure") {
+            doLast {
+                aem.sync(aem.publishInstances) {
+                    osgiFramework.updateConfiguration("org.apache.sling.serviceusermapping.impl.ServiceUserMapperImpl.amended", "groovy-console", mapOf(
+                        "service.ranking" to 1
                     ))
                 }
             }
@@ -2131,7 +2166,21 @@ aem {
         }
     }
 }
+```
 
+Factory OSGi configurations are supported as well:
+```kotlin
+aem {
+    tasks {
+        register("deleteConfig") {
+            doLast {
+                aem.sync(aem.instances) {
+                    osgiFramework.deleteConfiguration("org.apache.sling.serviceusermapping.impl.ServiceUserMapperImpl.amended", "groovy-console")
+                }
+            }
+        }
+    }
+}
 ```
 
 ### Understand why there are one or two plugins to be applied in build script
