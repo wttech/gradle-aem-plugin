@@ -66,7 +66,8 @@ class Node(private val repository: Repository, val path: String) : Serializable 
     fun children(): Sequence<Node> {
         logger.info("Reading child nodes of repository node '$path'")
 
-        return repository.http.get("$path.harray.1.json") { asJson(it) }
+        return try {
+            repository.http.get("$path.harray.1.json") { asJson(it) }
                 .run {
                     try {
                         read<JSONArray>(Property.CHILDREN.value)
@@ -81,6 +82,9 @@ class Node(private val repository: Repository, val path: String) : Serializable 
                     }
                 }
                 .asSequence()
+        } catch (e: RequestException) {
+            throw RepositoryException("Cannot read children of node: $path. Cause: ${e.message}", e)
+        }
     }
 
     /**
@@ -93,7 +97,7 @@ class Node(private val repository: Repository, val path: String) : Serializable 
             asObjectFromJson(it, RepositoryResult::class.java)
         }
     } catch (e: RequestException) {
-        throw RepositoryException("Cannot save repository node: $path", e)
+        throw RepositoryException("Cannot save repository node: $path. Cause: ${e.message}", e)
     }
 
     /**
@@ -106,7 +110,7 @@ class Node(private val repository: Repository, val path: String) : Serializable 
             asObjectFromJson(it, RepositoryResult::class.java)
         }
     } catch (e: RequestException) {
-        throw RepositoryException("Cannot delete repository node: $path", e)
+        throw RepositoryException("Cannot delete repository node: $path. Cause: ${e.message}", e)
     }
 
     /**
@@ -185,8 +189,12 @@ class Node(private val repository: Repository, val path: String) : Serializable 
     private fun reloadProperties(): Properties {
         logger.info("Reading properties of repository node '$path'")
 
-        return repository.http.get("$path.json") {
-            Properties(this@Node, asJson(it).json<LinkedHashMap<String, Any>>()).apply { propertiesLoaded = this }
+        return try {
+            repository.http.get("$path.json") {
+                Properties(this@Node, asJson(it).json<LinkedHashMap<String, Any>>()).apply { propertiesLoaded = this }
+            }
+        } catch (e: RequestException) {
+            throw RepositoryException("Cannot read properties of node: $path. Cause: ${e.message}", e)
         }
     }
 

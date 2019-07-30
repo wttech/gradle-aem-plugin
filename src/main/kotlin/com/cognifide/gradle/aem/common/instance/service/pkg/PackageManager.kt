@@ -64,9 +64,9 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
             return try {
                 sync.http.postMultipart(LIST_JSON) { asObjectFromJson(it, ListResponse::class.java) }
             } catch (e: RequestException) {
-                throw InstanceException("Cannot list packages on $instance. Reason: request failed.", e)
+                throw InstanceException("Cannot list packages on $instance. Cause: ${e.message}", e)
             } catch (e: ResponseException) {
-                throw InstanceException("Malformed response after listing packages on $instance.", e)
+                throw InstanceException("Malformed response after listing packages on $instance. Cause: ${e.message}", e)
             }
         }
     }
@@ -85,9 +85,9 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
             } catch (e: FileNotFoundException) {
                 throw PackageException("Package file $file to be uploaded not found!", e)
             } catch (e: RequestException) {
-                throw InstanceException("Cannot upload package $file to $instance. Reason: request failed.", e)
+                throw InstanceException("Cannot upload package $file to $instance. Cause: ${e.message}", e)
             } catch (e: ResponseException) {
-                throw InstanceException("Malformed response after uploading package $file to $instance.", e)
+                throw InstanceException("Malformed response after uploading package $file to $instance. Cause: ${e.message}", e)
             }
 
             if (!response.isSuccess) {
@@ -150,13 +150,13 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         val response = try {
             sync.http.postMultipart(url) { asObjectFromJson(it, BuildResponse::class.java) }
         } catch (e: RequestException) {
-            throw InstanceException("Cannot build package $remotePath on $instance. Reason: request failed.", e)
+            throw InstanceException("Cannot build package $remotePath on $instance. Cause: ${e.message}", e)
         } catch (e: ResponseException) {
-            throw InstanceException("Malformed response after building package $remotePath on $instance.", e)
+            throw InstanceException("Malformed response after building package $remotePath on $instance. Cause: ${e.message}", e)
         }
 
         if (!response.isSuccess) {
-            throw InstanceException("Cannot build package $remotePath on $instance. Reason: ${interpretFail(response.msg)}.")
+            throw InstanceException("Cannot build package $remotePath on $instance. Cause: ${interpretFail(response.msg)}")
         }
 
         return response
@@ -171,9 +171,9 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
             val response = try {
                 sync.http.postMultipart(url, mapOf("recursive" to recursive)) { InstallResponse.from(asStream(it), aem.packageOptions.responseBuffer) }
             } catch (e: RequestException) {
-                throw InstanceException("Cannot install package $remotePath on $instance. Reason: request failed.", e)
+                throw InstanceException("Cannot install package $remotePath on $instance. Cause: ${e.message}", e)
             } catch (e: ResponseException) {
-                throw InstanceException("Malformed response after installing package $remotePath on $instance.")
+                throw InstanceException("Malformed response after installing package $remotePath on $instance. Cause: ${e.message}", e)
             }
 
             if (response.hasPackageErrors(aem.packageOptions.errors)) {
@@ -187,8 +187,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
     }
 
     private fun interpretFail(message: String): String = when (message) {
-        // https://forums.adobe.com/thread/2338290
-        "Inaccessible value" -> "no disk space left (server respond with '$message'})"
+        "Inaccessible value" -> "no disk space left (server respond with '$message'})" // https://forums.adobe.com/thread/2338290
         else -> message
     }
 
@@ -229,13 +228,13 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         val response = try {
             sync.http.postMultipart(url) { asObjectFromJson(it, UploadResponse::class.java) }
         } catch (e: RequestException) {
-            throw InstanceException("Cannot activate package $remotePath on $instance. Reason: request failed.", e)
+            throw InstanceException("Cannot activate package $remotePath on $instance. Cause: ${e.message}", e)
         } catch (e: ResponseException) {
-            throw InstanceException("Malformed response after activating package $remotePath on $instance.", e)
+            throw InstanceException("Malformed response after activating package $remotePath on $instance. Cause: ${e.message}", e)
         }
 
         if (!response.isSuccess) {
-            throw InstanceException("Cannot activate package $remotePath on $instance. Reason: ${interpretFail(response.msg)}.")
+            throw InstanceException("Cannot activate package $remotePath on $instance. Cause: ${interpretFail(response.msg)}")
         }
 
         return response
@@ -249,9 +248,9 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         val response = try {
             sync.http.postMultipart(url) { DeleteResponse.from(asStream(it), aem.packageOptions.responseBuffer) }
         } catch (e: RequestException) {
-            throw InstanceException("Cannot delete package $remotePath from $instance. Reason: request failed.", e)
+            throw InstanceException("Cannot delete package $remotePath from $instance. Cause: ${e.message}", e)
         } catch (e: ResponseException) {
-            throw InstanceException("Malformed response after deleting package $remotePath from $instance.", e)
+            throw InstanceException("Malformed response after deleting package $remotePath from $instance. Cause: ${e.message}", e)
         }
 
         if (!response.success) {
@@ -269,9 +268,9 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         val response = try {
             sync.http.postMultipart(url) { UninstallResponse.from(asStream(it), aem.packageOptions.responseBuffer) }
         } catch (e: RequestException) {
-            throw InstanceException("Cannot uninstall package $remotePath on $instance. Reason: request failed.", e)
+            throw InstanceException("Cannot uninstall package $remotePath on $instance. Cause: ${e.message}", e)
         } catch (e: ResponseException) {
-            throw InstanceException("Malformed response after uninstalling package $remotePath from $instance.", e)
+            throw InstanceException("Malformed response after uninstalling package $remotePath from $instance. Cause ${e.message}", e)
         }
 
         if (!response.success) {
