@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.common.utils
 import com.fasterxml.jackson.core.util.DefaultIndenter
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import com.jayway.jsonpath.JsonPath
 import java.io.File
 import java.io.InputStream
@@ -73,6 +74,12 @@ object Formats {
 
     fun fromJsonToMap(json: String): Map<String, Any?> = ObjectMapper().run {
         readValue(json, typeFactory.constructMapType(HashMap::class.java, String::class.java, Any::class.java))
+    }
+
+    fun <A> jsonArrayProperty(json: String, property: String): List<A> {
+        val mapper = jsonMapper(false)
+        val jsonNode = mapper.readTree(json)
+        return mapper.readValue(jsonNode.get(property).toString())
     }
 
     fun toList(value: String?, delimiter: String = ","): List<String>? {

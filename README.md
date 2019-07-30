@@ -2061,7 +2061,7 @@ aem {
 }
 ```
 
-#### Controlling OSGi bundles, components and comnfigurations
+#### Controlling OSGi bundles, components and configurations
 
 To disable specific OSGi component by its PID value and only on publish instances use [OsgiFramework](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/osgi/OsgiFramework.kt) instance service and write:
 
@@ -2081,14 +2081,14 @@ aem {
 }
 ```
 
-Custom configuration for the particular OSGi component can be created by [OsgiFramework](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/osgi/OsgiFramework.kt) as well:
+Custom configuration for the particular OSGi component can be created and modified by [OsgiFramework](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/osgi/OsgiFramework.kt) as well:
 ```kotlin
 aem {
     tasks {
-        register("instanceSecure") {
+        register("enableCrx") {
             doLast {
                 aem.sync(aem.publishInstances) {
-                    osgiFramework.createConfiguration("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", mapOf(
+                    osgiFramework.saveConfiguration("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", mapOf(
                         "alias" to "/crx/server",
                         "dav.create-absolute-uri" to true,
                         "dav.protectedhandlers" to "org.apache.jackrabbit.server.remoting.davex.AclRemoveHandler"
@@ -2099,89 +2099,10 @@ aem {
     }
 }
 ```
-`createConfiguration` may completely overwrite the existing configuration for given PID.
+It is also possible to add or modify the factory OSGi methods. Additional `service` parameter can be passed to determine proper config to create or update.
+Only necessary properties can be passed while modifying the config. All other properties will be taken from the config as before the changes.
 
-It is also possible to add or modify the factory OSGi methods. This can be achieved by the following:
-```kotlin
-aem {
-    tasks {
-        register("instanceSecure") {
-            doLast {
-                aem.sync(aem.publishInstances) {
-                    osgiFramework.createConfiguration("org.apache.sling.serviceusermapping.impl.ServiceUserMapperImpl.amended", "groovy-console", mapOf(
-                        "service.ranking" to 1,
-                        "user.mapping" to arrayOf("aem-groovy-console=groovy-console-system-user")
-                    ))
-                }
-            }
-        }
-    }
-}
-```
-
-To override particular fields in OSGi configuration only, use the `updateConfiguration` method as below:
-```kotlin
-aem {
-    tasks {
-        register("instanceSecure") {
-            doLast {
-                aem.sync(aem.publishInstances) {
-                    osgiFramework.updateConfiguration("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", mapOf(
-                        "alias" to "/crx/server"
-                    ))
-                }
-            }
-        }
-    }
-}
-```
-
-Factory OSGi configurations are supported as well:
-```kotlin
-aem {
-    tasks {
-        register("instanceSecure") {
-            doLast {
-                aem.sync(aem.publishInstances) {
-                    osgiFramework.updateConfiguration("org.apache.sling.serviceusermapping.impl.ServiceUserMapperImpl.amended", "groovy-console", mapOf(
-                        "service.ranking" to 1
-                    ))
-                }
-            }
-        }
-    }
-}
-```
-
-The configuration for PID can also be deleted by the following:
-```kotlin
-aem {
-    tasks {
-        register("deleteConfig") {
-            doLast {
-                aem.sync(aem.instances) {
-                    osgiFramework.deleteConfiguration("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet")
-                }
-            }
-        }
-    }
-}
-```
-
-Factory OSGi configurations are supported as well:
-```kotlin
-aem {
-    tasks {
-        register("deleteConfig") {
-            doLast {
-                aem.sync(aem.instances) {
-                    osgiFramework.deleteConfiguration("org.apache.sling.serviceusermapping.impl.ServiceUserMapperImpl.amended", "groovy-console")
-                }
-            }
-        }
-    }
-}
-```
+Delete operation is also available for configurations, either standard or factory ones.
 
 ### Understand why there are one or two plugins to be applied in build script
 
