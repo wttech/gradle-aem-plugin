@@ -3,7 +3,6 @@ package com.cognifide.gradle.aem.common.utils
 import com.fasterxml.jackson.core.util.DefaultIndenter
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.jayway.jsonpath.JsonPath
 import java.io.File
 import java.io.InputStream
