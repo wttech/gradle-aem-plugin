@@ -212,20 +212,8 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
 
     /* Adding some mandatory parameters to save config request */
     private fun createConfigPayload(configuration: Configuration, properties: Map<String, Any>): Map<String, Any> {
-        val configDiff: MutableMap<String, Any> = mutableMapOf()
-        configuration.properties.forEach { oldProp ->
-            if (properties.containsKey(oldProp.key)) {
-                configDiff[oldProp.key] = properties[oldProp.key]!!
-            } else if (configuration.properties[oldProp.key] != null) {
-                configDiff[oldProp.key] = oldProp.value!!
-            }
-        }
-        return configDiff + mapOf(
-            "apply" to true,
-            "action" to "ajaxConfigManager",
-            "\$location" to configuration.bundleLocation,
-            "propertylist" to configuration.properties.keys.joinToString(",")
-        )
+        val configDiff = configuration.properties + properties
+        return configDiff.mapNotNull { (key, v) -> v?.let { key to it } }.toMap()
     }
 
     companion object {
