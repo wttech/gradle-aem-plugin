@@ -6,6 +6,7 @@ import com.cognifide.gradle.aem.common.instance.service.osgi.OsgiFramework
 import com.cognifide.gradle.aem.common.instance.service.pkg.PackageManager
 import com.cognifide.gradle.aem.common.instance.service.repository.Repository
 import com.cognifide.gradle.aem.common.instance.service.status.Status
+import com.cognifide.gradle.aem.common.instance.service.workflow.WorkflowManager
 
 class InstanceSync(val aem: AemExtension, val instance: Instance) {
 
@@ -50,4 +51,11 @@ class InstanceSync(val aem: AemExtension, val instance: Instance) {
      * Status retriever (system properties, product version etc).
      */
     fun <T> status(callback: Status.() -> T): T = status.run(callback)
+
+    var workflow = WorkflowManager(this)
+
+    /**
+     * Perform operations on workflows (enabling, disabling)
+     */
+    fun <T> workflow(callback: WorkflowManager.() -> T) = workflow.run(callback)
 }
