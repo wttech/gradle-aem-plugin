@@ -13,10 +13,10 @@ class Configuration {
     private var configProperties: Map<String, ConfigurationProperty> = mutableMapOf()
 
     @JsonProperty
-    lateinit var bundleLocation: String
+    var bundleLocation: String? = null
 
     @JsonProperty("service_location")
-    lateinit var serviceLocation: String
+    var serviceLocation: String? = null
 
     val properties: Map<String, Any?> by lazy {
         configProperties.mapValues { it.value.value }
