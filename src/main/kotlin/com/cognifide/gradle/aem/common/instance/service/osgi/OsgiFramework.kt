@@ -144,7 +144,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
     fun getConfiguration(pid: String): Configuration {
         aem.logger.debug("Asking for OSGi configuration on $instance")
         return findConfiguration(pid)
-                ?: throw InstanceException("OSGi Configuration for PID $pid was not found on $instance. Make sure the component exists.")
+                ?: throw InstanceException("OSGi configuration for PID $pid was not found on $instance. Make sure the component exists.")
     }
 
     fun getConfigurations(pid: String): List<Configuration> {
@@ -168,12 +168,12 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
     fun saveConfiguration(pid: String, service: String, properties: Map<String, Any>) = saveConfiguration("$pid~$service", properties)
 
     fun deleteConfiguration(pid: String) {
-        val payload = mapOf(
+        val properties = mapOf(
             "apply" to 1,
             "delete" to 1
         )
         try {
-            sync.http.post("$CONFIGURATION_PATH/$pid", payload) { response ->
+            sync.http.post("$CONFIGURATION_PATH/$pid", properties) { response ->
                 aem.logger.debug("Response from instance $instance and pid $pid: ${response.statusLine.statusCode}")
             }
         } catch (e: AemException) {
@@ -197,28 +197,26 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
     }
 
     private fun getConfigList(): List<ConfigurationState.Pid> {
-        lateinit var configList: ConfigurationState
-        try {
+        return try {
             sync.http.get(CONFIGURATION_PATH) { response ->
                 val html = asString(response)
                 val configJson = CONFIGURATIONS_REGEX.find(html)?.groups?.get(1)?.value ?: "{}"
-                configList = jsonMapper(false).readValue(configJson, ConfigurationState::class.java)
+                jsonMapper(false).readValue(configJson, ConfigurationState::class.java)
             }
         } catch (e: AemException) {
             throw InstanceException("OSGi configuration list cannot be fetched from $instance. Cause: ${e.message}", e)
-        }
-        return configList.pids
+        }.pids
     }
 
     /* Adding some mandatory parameters to save config request */
     private fun createConfigPayload(configuration: Configuration, properties: Map<String, Any>): Map<String, Any> {
-        val configDiff = configuration.properties + properties + mapOf(
+        val updatedConfig = configuration.properties + properties + mapOf(
                 "apply" to true,
                 "action" to "ajaxConfigManager",
                 "\$location" to configuration.bundleLocation,
                 "propertylist" to configuration.properties.keys.joinToString(",")
         )
-        return configDiff.mapNotNull { (key, v) -> v?.let { key to it } }.toMap()
+        return updatedConfig.mapNotNull { (key, v) -> v?.let { key to it } }.toMap()
     }
 
     companion object {
