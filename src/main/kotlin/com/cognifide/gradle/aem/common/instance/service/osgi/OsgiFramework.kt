@@ -212,7 +212,12 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
 
     /* Adding some mandatory parameters to save config request */
     private fun createConfigPayload(configuration: Configuration, properties: Map<String, Any>): Map<String, Any> {
-        val configDiff = configuration.properties + properties
+        val configDiff = configuration.properties + properties + mapOf(
+                "apply" to true,
+                "action" to "ajaxConfigManager",
+                "\$location" to configuration.bundleLocation,
+                "propertylist" to configuration.properties.keys.joinToString(",")
+        )
         return configDiff.mapNotNull { (key, v) -> v?.let { key to it } }.toMap()
     }
 
