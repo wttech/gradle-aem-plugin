@@ -117,10 +117,12 @@ open class PackageDeploy : PackageTask() {
                 increment("Deploying package '${pkg.name}' to instance '${instance.name}'") {
                     initializer()
 
-                    if (distributed) {
-                        packageManager.distribute(pkg, uploadForce, uploadRetry, installRecursive, installRetry)
-                    } else {
-                        packageManager.deploy(pkg, uploadForce, uploadRetry, installRecursive, installRetry)
+                    workflow.disableWhile(listOf()) {
+                        if (distributed) {
+                            packageManager.distribute(pkg, uploadForce, uploadRetry, installRecursive, installRetry)
+                        } else {
+                            packageManager.deploy(pkg, uploadForce, uploadRetry, installRecursive, installRetry)
+                        }
                     }
 
                     finalizer()

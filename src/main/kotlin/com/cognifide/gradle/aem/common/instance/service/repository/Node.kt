@@ -28,13 +28,18 @@ class Node(private val repository: Repository, val path: String) : Serializable 
         get() = path.substringAfterLast("/")
 
     /**
+     *
+     */
+    val exists: Boolean
+        get() = propertiesLoaded ?: reloadProperties(false) != null
+    /**
      * JCR node properties.
      *
      * Keep in mind that these values are loaded lazily and sometimes it is needed to reload them
      * using dedicated method.
      */
     val properties: Properties
-        get() = propertiesLoaded ?: reloadProperties()
+        get() = propertiesLoaded ?: reloadProperties(true) ?: throw RepositoryException("Node $path does not exist on instance.")
 
     /**
      * JCR primary type of node.
@@ -126,7 +131,7 @@ class Node(private val repository: Repository, val path: String) : Serializable 
      * Useful when saving and working on same node again (without instantiating variable).
      */
     fun reload() {
-        reloadProperties()
+        reloadProperties(true)
     }
 
     /**
@@ -186,7 +191,7 @@ class Node(private val repository: Repository, val path: String) : Serializable 
      */
     fun hasProperties(names: Iterable<String>): Boolean = names.all { properties.containsKey(it) }
 
-    private fun reloadProperties(): Properties {
+    private fun reloadProperties(verbose: Boolean): Properties? {
         logger.info("Reading properties of repository node '$path'")
 
         return try {
@@ -194,7 +199,13 @@ class Node(private val repository: Repository, val path: String) : Serializable 
                 Properties(this@Node, asJson(it).json<LinkedHashMap<String, Any>>()).apply { propertiesLoaded = this }
             }
         } catch (e: RequestException) {
-            throw RepositoryException("Cannot read properties of node: $path. Cause: ${e.message}", e)
+            val msg = "Cannot read properties of node: $path. Cause: ${e.message}"
+            if (verbose) {
+                throw RepositoryException(msg, e)
+            } else {
+                logger.debug(msg)
+                return null
+            }
         }
     }
 
