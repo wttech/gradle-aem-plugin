@@ -10,7 +10,7 @@ class Configuration {
     lateinit var pid: String
 
     @JsonProperty("properties")
-    private var configProperties: Map<String, ConfigurationProperty> = mutableMapOf()
+    private var rawProperties: Map<String, ConfigurationProperty> = mutableMapOf()
 
     @JsonProperty
     var bundleLocation: String? = null
@@ -19,7 +19,7 @@ class Configuration {
     var serviceLocation: String? = null
 
     val properties: Map<String, Any?> by lazy {
-        configProperties.mapValues { it.value.value }
+        rawProperties.mapValues { it.value.value }
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
