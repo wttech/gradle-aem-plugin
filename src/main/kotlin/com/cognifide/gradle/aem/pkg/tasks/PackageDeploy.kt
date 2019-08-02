@@ -4,6 +4,7 @@ import com.cognifide.gradle.aem.common.instance.InstanceSync
 import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
 import com.cognifide.gradle.aem.common.instance.checkAvailable
 import com.cognifide.gradle.aem.common.instance.names
+import com.cognifide.gradle.aem.common.instance.service.workflow.Workflow
 import com.cognifide.gradle.aem.common.tasks.PackageTask
 import com.cognifide.gradle.aem.common.utils.fileNames
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -117,7 +118,7 @@ open class PackageDeploy : PackageTask() {
                 increment("Deploying package '${pkg.name}' to instance '${instance.name}'") {
                     initializer()
 
-                    workflow.disableWhile(listOf()) {
+                    workflowManager.disableWhile(Workflow.DAM_ASSET) {
                         if (distributed) {
                             packageManager.distribute(pkg, uploadForce, uploadRetry, installRecursive, installRetry)
                         } else {

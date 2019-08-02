@@ -52,10 +52,10 @@ class InstanceSync(val aem: AemExtension, val instance: Instance) {
      */
     fun <T> status(callback: Status.() -> T): T = status.run(callback)
 
-    var workflow = WorkflowManager(this)
+    var workflowManager = WorkflowManager(this)
 
     /**
      * Perform operations on workflows (enabling, disabling)
      */
-    fun <T> workflow(callback: WorkflowManager.() -> T) = workflow.run(callback)
+    fun <T> workflowManager(callback: WorkflowManager.() -> T) = workflowManager.run(callback)
 }
