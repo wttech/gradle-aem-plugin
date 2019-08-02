@@ -134,21 +134,20 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
     }
 
     fun findConfiguration(pid: String): Configuration? {
-        try {
-            return sync.http.get("$CONFIGURATION_PATH/$pid?post=true") { asObjectFromJson(it, Configuration::class.java) }
+        return try {
+            sync.http.get("$CONFIGURATION_PATH/$pid?post=true") { asObjectFromJson(it, Configuration::class.java)  }
         } catch (e: AemException) {
-            throw InstanceException("OSGi configuration for PID '$pid' cannot be found on $instance. Cause: ${e.message}", e)
+            null
         }
     }
 
     fun getConfiguration(pid: String): Configuration {
-        aem.logger.debug("Asking for OSGi configuration on $instance")
         return findConfiguration(pid)
-                ?: throw InstanceException("OSGi configuration for PID $pid was not found on $instance. Make sure the component exists.")
+                ?: throw InstanceException("OSGi configuration for PID $pid cannot be found on $instance.")
     }
 
     fun getConfigurations(pid: String): List<Configuration> {
-        return getConfigList()
+        return getConfigurationsList()
                 .filter { pid == it.fpid }
                 .mapNotNull { findConfiguration(it.id) }
     }
@@ -157,7 +156,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         val currentConfiguration = getConfiguration(pid)
 
         try {
-            sync.http.post("$CONFIGURATION_PATH/$pid", createConfigPayload(currentConfiguration, properties)) { response ->
+            sync.http.post("$CONFIGURATION_PATH/$pid", configurationProperties(currentConfiguration, properties)) { response ->
                 aem.logger.debug("Response from instance $instance and pid $pid: ${response.statusLine.statusCode}")
             }
         } catch (e: AemException) {
@@ -174,7 +173,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         )
         try {
             sync.http.post("$CONFIGURATION_PATH/$pid", properties) { response ->
-                aem.logger.debug("Response from instance $instance and pid $pid: ${response.statusLine.statusCode}")
+                aem.logger.info("Response from instance $instance and pid $pid: ${response.statusLine.statusCode}")
             }
         } catch (e: AemException) {
             throw InstanceException("OSGi configuration for PID '$pid' cannot be deleted on $instance. Cause: ${e.message}", e)
@@ -196,7 +195,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         }
     }
 
-    private fun getConfigList(): List<ConfigurationState.Pid> {
+    private fun getConfigurationsList(): List<ConfigurationState.Pid> {
         return try {
             sync.http.get(CONFIGURATION_PATH) { response ->
                 val html = asString(response)
@@ -209,7 +208,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
     }
 
     /* Adding some mandatory parameters to save config request */
-    private fun createConfigPayload(configuration: Configuration, properties: Map<String, Any>): Map<String, Any> {
+    private fun configurationProperties(configuration: Configuration, properties: Map<String, Any>): Map<String, Any> {
         val updatedConfig = configuration.properties + properties + mapOf(
                 "apply" to true,
                 "action" to "ajaxConfigManager",
