@@ -11,19 +11,24 @@ class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
     val repository = sync.repository
 
     fun toggleWhile(names: List<String>, expectedState: Boolean, callback: () -> Unit) {
-        names.forEach { name ->
-            val currentState = find(name)?.properties?.get("enabled")
-            val changeRequired = expectedState != currentState
-            try {
+        try {
+            names.forEach { name ->
+                //todo move  "change required' block to Toggle class
+                val currentState = find(name)?.properties?.get("enabled")
+                val changeRequired = expectedState != currentState
                 if (changeRequired) {
                     toggle(name, expectedState)
-                    aem.logger.debug("Workflow $name switched on $instance. Current state: $expectedState")
+                    aem.logger.info("Workflow $name switched on $instance. Current state: $expectedState")
                 }
-                callback()
-            } finally {
+            }
+            callback()
+        } finally {
+            names.forEach { name ->
+                val currentState = find(name)?.properties?.get("enabled")
+                val changeRequired = expectedState == currentState
                 if (changeRequired) {
                     toggle(name, !expectedState)
-                    aem.logger.debug("Workflow $name switched back on $instance. Current state: ${!expectedState}")
+                    aem.logger.info("Workflow $name switched back on $instance. Current state: ${!expectedState}")
                 }
             }
         }
@@ -31,19 +36,13 @@ class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
 
     fun toggleWhile(workflow: Workflow, expectedState: Boolean, callback: () -> Unit) = toggleWhile(workflow.ids, expectedState, callback)
 
-    fun enable(name: String) {
-        find(name)?.saveProperty("enabled", true)
-                ?: throw InstanceException("Workflow $name was not found on $instance.")
-    }
+    fun enable(name: String) = saveState(name, true)
 
     fun enable(names: List<String>) = names.forEach { enable(it) }
 
     fun enable(workflow: Workflow) = enable(workflow.ids)
 
-    fun disable(name: String) {
-        find(name)?.saveProperty("enabled", false)
-                ?: throw InstanceException("Workflow $name was not found on $instance.")
-    }
+    fun disable(name: String) = saveState(name, false)
 
     fun disable(names: List<String>) = names.forEach { disable(it) }
 
@@ -58,12 +57,20 @@ class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
         }
     }
 
-    fun toggle(name: String, enable: Boolean) {
+    private fun toggle(name: String, enable: Boolean) {
         if (enable) {
             enable(name)
         } else {
             disable(name)
         }
+    }
+
+    private fun saveState(name: String, state: Boolean) {
+        val strategy: ToggleStrategy =
+                if (Formats.versionAtLeast(instance.version, "6.4.0")) Toggle64() else Toggle61()
+        find(name)?.let { launcherNode ->
+            strategy.toggle(launcherNode, state)
+        } ?: throw InstanceException("Workflow $name was not found on $instance.")
     }
 
     companion object {
