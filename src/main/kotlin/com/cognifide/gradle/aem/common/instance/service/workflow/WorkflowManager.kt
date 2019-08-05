@@ -10,16 +10,26 @@ class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
 
     val repository = sync.repository
 
-    fun disableWhile(names: List<String>, callback: () -> Unit) {
-        try {
-            disable(names)
-            callback()
-        } finally {
-            enable(names)
+    fun toggleWhile(names: List<String>, expectedState: Boolean, callback: () -> Unit) {
+        names.forEach { name ->
+            val currentState = find(name)?.properties?.get("enabled")
+            val changeRequired = expectedState != currentState
+            try {
+                if (changeRequired) {
+                    toggle(name, expectedState)
+                    aem.logger.debug("Workflow $name switched on $instance. Current state: $expectedState")
+                }
+                callback()
+            } finally {
+                if (changeRequired) {
+                    toggle(name, !expectedState)
+                    aem.logger.debug("Workflow $name switched back on $instance. Current state: ${!expectedState}")
+                }
+            }
         }
     }
 
-    fun disableWhile(workflow: Workflow, callback: () -> Unit) = disableWhile(workflow.ids, callback)
+    fun toggleWhile(workflow: Workflow, expectedState: Boolean, callback: () -> Unit) = toggleWhile(workflow.ids, expectedState, callback)
 
     fun enable(name: String) {
         find(name)?.saveProperty("enabled", true)
@@ -41,10 +51,18 @@ class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
 
     private fun find(name: String): Node? {
         val node = repository.node(getLauncherPath(name, instance.version))
-        return if (Formats.versionAtLeast(instance.version, "6.4.0"))  {
+        return if (Formats.versionAtLeast(instance.version, "6.4.0")) {
                 if (repository.node(PATH_6_4_LIBS + name).exists) node else null
             } else {
-                if(node.exists) node else null
+                if (node.exists) node else null
+        }
+    }
+
+    fun toggle(name: String, enable: Boolean) {
+        if (enable) {
+            enable(name)
+        } else {
+            disable(name)
         }
     }
 

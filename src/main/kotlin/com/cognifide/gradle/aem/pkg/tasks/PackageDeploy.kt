@@ -118,7 +118,7 @@ open class PackageDeploy : PackageTask() {
                 increment("Deploying package '${pkg.name}' to instance '${instance.name}'") {
                     initializer()
 
-                    workflowManager.disableWhile(Workflow.DAM_ASSET) {
+                    workflowManager.toggleWhile(Workflow.DAM_ASSET, false) {
                         if (distributed) {
                             packageManager.distribute(pkg, uploadForce, uploadRetry, installRecursive, installRetry)
                         } else {
