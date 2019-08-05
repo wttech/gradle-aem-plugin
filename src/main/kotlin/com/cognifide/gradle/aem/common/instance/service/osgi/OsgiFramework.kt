@@ -4,7 +4,7 @@ import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.common.instance.InstanceException
 import com.cognifide.gradle.aem.common.instance.InstanceService
 import com.cognifide.gradle.aem.common.instance.InstanceSync
-import com.cognifide.gradle.aem.common.utils.Formats.jsonMapper
+import com.cognifide.gradle.aem.common.utils.Formats
 
 /**
  * Controls OSGi framework using Apache Felix Web Console endpoints.
@@ -135,7 +135,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
 
     fun findConfiguration(pid: String): Configuration? {
         return try {
-            sync.http.get("$CONFIGURATION_PATH/$pid?post=true") { asObjectFromJson(it, Configuration::class.java)  }
+            sync.http.get("$CONFIGURATION_PATH/$pid?post=true") { asObjectFromJson(it, Configuration::class.java) }
         } catch (e: AemException) {
             null
         }
@@ -200,7 +200,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
             sync.http.get(CONFIGURATION_PATH) { response ->
                 val html = asString(response)
                 val configJson = CONFIGURATIONS_REGEX.find(html)?.groups?.get(1)?.value ?: "{}"
-                jsonMapper(false).readValue(configJson, ConfigurationState::class.java)
+                Formats.jsonMapper(false).readValue(configJson, ConfigurationState::class.java)
             }
         } catch (e: AemException) {
             throw InstanceException("OSGi configuration list cannot be fetched from $instance. Cause: ${e.message}", e)
