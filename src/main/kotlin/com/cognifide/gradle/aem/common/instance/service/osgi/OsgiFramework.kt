@@ -1,6 +1,8 @@
 package com.cognifide.gradle.aem.common.instance.service.osgi
 
 import com.cognifide.gradle.aem.AemException
+import com.cognifide.gradle.aem.common.http.RequestException
+import com.cognifide.gradle.aem.common.http.ResponseException
 import com.cognifide.gradle.aem.common.instance.InstanceException
 import com.cognifide.gradle.aem.common.instance.InstanceService
 import com.cognifide.gradle.aem.common.instance.InstanceSync
@@ -199,15 +201,20 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         return try {
             sync.http.get(CONFIGURATION_PATH) { response ->
                 val html = asString(response)
-                val configJson = CONFIGURATIONS_REGEX.find(html)?.groups?.get(1)?.value ?: "{}"
+                val configJson = CONFIGURATIONS_REGEX.find(html)?.groups?.get(1)?.value
+                        ?: throw ResponseException("OSGi configuration cannot be found in console response of $instance.")
                 Formats.jsonMapper(false).readValue(configJson, ConfigurationState::class.java)
             }
-        } catch (e: AemException) {
-            throw InstanceException("OSGi configuration list cannot be fetched from $instance. Cause: ${e.message}", e)
+        } catch (e: RequestException) {
+            throw InstanceException("OSGi configuration list cannot be parsed from response on $instance. Cause: ${e.message}", e)
+        } catch (e: ResponseException) {
+            throw InstanceException("Cannot get an OSGi configuration list response from $instance. Cause: ${e.message}", e)
         }.pids
     }
 
-    /* Adding some mandatory parameters to save config request */
+    /**
+     * Adding some mandatory parameters to save config request
+     */
     private fun configurationProperties(configuration: Configuration, properties: Map<String, Any>): Map<String, Any> {
         val updatedConfig = configuration.properties + properties + mapOf(
                 "apply" to true,
