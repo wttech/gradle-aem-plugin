@@ -153,10 +153,10 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
     }
 
     fun saveConfiguration(pid: String, properties: Map<String, Any>) {
-        val currentConfiguration = getConfiguration(pid)
+        val current = getConfiguration(pid)
 
         try {
-            sync.http.post("$CONFIGURATION_PATH/$pid", configurationProperties(currentConfiguration, properties)) { response ->
+            sync.http.post("$CONFIGURATION_PATH/$pid", configurationProperties(current, properties)) { response ->
                 aem.logger.debug("Response from instance $instance and pid $pid: ${response.statusLine.statusCode}")
             }
         } catch (e: AemException) {
