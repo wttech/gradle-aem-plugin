@@ -28,10 +28,11 @@ class Node(private val repository: Repository, val path: String) : Serializable 
         get() = path.substringAfterLast("/")
 
     /**
-     *
+     * Checks if node exists. Tries to read properties (cached / from repository).
      */
     val exists: Boolean
         get() = propertiesLoaded ?: reloadProperties(false) != null
+
     /**
      * JCR node properties.
      *
