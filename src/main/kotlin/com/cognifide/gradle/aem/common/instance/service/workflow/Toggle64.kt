@@ -18,18 +18,31 @@ class Toggle64 : ToggleStrategy {
      * - workflow is to be disabled - if it was a temporary node, delete it
      * - workflow is to be disabled - if it was not a temporary node, change property
      */
-    override fun toggle(launcherNode: Node, state: Boolean) {
+    override fun toggle(launcherNode: Node, expected: Boolean) {
+        //todo consider parallel running
         when {
-            launcherNode.exists -> launcherNode.saveProperty(ENABLED_PROP, state)
-            !launcherNode.exists && state -> {
+            !launcherNode.exists && !expected -> {
                 temporaryProps = true
                 launcherNode.save(mapOf(
                         "jcr:primaryType" to "cq:WorkflowLauncher",
-                        ENABLED_PROP to state
+                        ENABLED_PROP to expected
+                /* todo consider eventType property (it's required by launcher view to display workflows properly)
+                although not passing it effectively disables the workflow anyway */
                 ))
             }
-            !state && temporaryProps -> launcherNode.delete()
-            !state && !temporaryProps -> launcherNode.saveProperty(ENABLED_PROP, state)
+            expected && temporaryProps -> launcherNode.delete()
+            expected && !temporaryProps -> launcherNode.saveProperty(ENABLED_PROP, expected)
+            launcherNode.exists -> launcherNode.saveProperty(ENABLED_PROP, expected)
         }
+    }
+
+    override fun changeRequired(launcher: Node, expected: Boolean): Boolean {
+        var state = true
+        if (!launcher.exists) {
+            // todo fallback to /libs to get the property (get the repository object somehow)
+        } else {
+            state = launcher.properties[ENABLED_PROP] as Boolean
+        }
+        return expected != state
     }
 }
