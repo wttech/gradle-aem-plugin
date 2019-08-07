@@ -2116,11 +2116,11 @@ workflowManager.disable(listOf("update_asset_create", "update_asset_mod"))
 
 Additionally, framework provides a method which allows to disable or enable workflows only for particular set of tasks:
 ```kotlin
-register("disableWorkflowsWhileSomethingHappens") {
+register("disableDamAssetOnDeploy") {
             doLast {
                 aem.sync(aem.instances) {
                     workflowManager.toggleWhile(listOf("update_asset_create", "update_asset_mod"), false) {
-                        // custom task logic
+                        packageManager.deploy(file("my-package.zip"))
                     }
                 }
             }
