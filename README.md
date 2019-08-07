@@ -99,7 +99,7 @@
         * [Downloading CRX package from external HTTP endpoint and deploying it on desired AEM instances](#downloading-crx-package-from-external-http-endpoint-and-deploying-it-on-desired-aem-instances)
         * [Working with content repository (JCR)](#working-with-content-repository-jcr)
         * [Executing code on AEM runtime](#executing-code-on-aem-runtime)
-        * [Controlling OSGi bundles and components](#controlling-osgi-bundles-and-components)
+        * [Controlling OSGi bundles, components and configurations](#controlling-osgi-bundles-components-and-configurations)
      * [Understand why there are one or two plugins to be applied in build script](#understand-why-there-are-one-or-two-plugins-to-be-applied-in-build-script)
      * [Work effectively on start and daily basis](#work-effectively-on-start-and-daily-basis)
      * [Filter instances to work with](#filter-instances-to-work-with)
@@ -2061,7 +2061,7 @@ aem {
 }
 ```
 
-#### Controlling OSGi bundles and components
+#### Controlling OSGi bundles, components and configurations
 
 To disable specific OSGi component by its PID value and only on publish instances use [OsgiFramework](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/osgi/OsgiFramework.kt) instance service and write:
 
@@ -2080,6 +2080,29 @@ aem {
     }
 }
 ```
+
+Custom configuration for the particular OSGi component can be created and modified by [OsgiFramework](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/osgi/OsgiFramework.kt) as well:
+```kotlin
+aem {
+    tasks {
+        register("enableCrx") {
+            doLast {
+                aem.sync(aem.publishInstances) {
+                    osgiFramework.saveConfiguration("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", mapOf(
+                        "alias" to "/crx/server",
+                        "dav.create-absolute-uri" to true,
+                        "dav.protectedhandlers" to "org.apache.jackrabbit.server.remoting.davex.AclRemoveHandler"
+                    ))
+                }
+            }
+        }
+    }
+}
+```
+It is also possible to add or modify the factory OSGi methods. Additional `service` parameter can be passed to determine proper config to create or update.
+Only necessary properties can be passed while modifying the config. All other properties will be taken from the config as before the changes.
+
+Delete operation is also available for configurations, either standard or factory ones.
 
 ### Understand why there are one or two plugins to be applied in build script
 

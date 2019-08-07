@@ -1,9 +1,12 @@
 package com.cognifide.gradle.aem.common.instance.service.osgi
 
 import com.cognifide.gradle.aem.AemException
+import com.cognifide.gradle.aem.common.http.RequestException
+import com.cognifide.gradle.aem.common.http.ResponseException
 import com.cognifide.gradle.aem.common.instance.InstanceException
 import com.cognifide.gradle.aem.common.instance.InstanceService
 import com.cognifide.gradle.aem.common.instance.InstanceSync
+import com.cognifide.gradle.aem.common.utils.Formats
 
 /**
  * Controls OSGi framework using Apache Felix Web Console endpoints.
@@ -79,7 +82,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         return try {
             sync.http.get(COMPONENTS_LIST_JSON) { asObjectFromJson(it, ComponentState::class.java) }
         } catch (e: AemException) {
-            aem.logger.debug("Cannot determine OSGi components state on $instance", e)
+            aem.logger.debug("Cannot determine OSGi components state on $instance. Cause: ${e.message}", e)
             ComponentState.unknown()
         }
     }
@@ -90,7 +93,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         return try {
             sync.http.get(EVENTS_LIST_JSON) { asObjectFromJson(it, EventState::class.java) }
         } catch (e: AemException) {
-            aem.logger.debug("Cannot determine OSGi events state on $instance", e)
+            aem.logger.debug("Cannot determine OSGi events state on $instance. Cause: ${e.message}", e)
             EventState.unknown()
         }
     }
@@ -132,6 +135,55 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         enableComponent(pid)
     }
 
+    fun findConfiguration(pid: String): Configuration? {
+        return try {
+            sync.http.get("$CONFIGURATION_PATH/$pid?post=true") { asObjectFromJson(it, Configuration::class.java) }
+        } catch (e: AemException) {
+            null
+        }
+    }
+
+    fun getConfiguration(pid: String): Configuration {
+        return findConfiguration(pid)
+                ?: throw InstanceException("OSGi configuration for PID $pid cannot be found on $instance.")
+    }
+
+    fun getConfigurations(pid: String): List<Configuration> {
+        return getConfigurationsList()
+                .filter { pid == it.fpid }
+                .mapNotNull { findConfiguration(it.id) }
+    }
+
+    fun saveConfiguration(pid: String, properties: Map<String, Any>) {
+        val current = getConfiguration(pid)
+
+        try {
+            sync.http.post("$CONFIGURATION_PATH/$pid", configurationProperties(current, properties)) { response ->
+                aem.logger.debug("Response from instance $instance and pid $pid: ${response.statusLine.statusCode}")
+            }
+        } catch (e: AemException) {
+            throw InstanceException("OSGi configuration for PID '$pid' cannot be saved on $instance. Cause: ${e.message}", e)
+        }
+    }
+
+    fun saveConfiguration(pid: String, service: String, properties: Map<String, Any>) = saveConfiguration("$pid~$service", properties)
+
+    fun deleteConfiguration(pid: String) {
+        val properties = mapOf(
+            "apply" to 1,
+            "delete" to 1
+        )
+        try {
+            sync.http.post("$CONFIGURATION_PATH/$pid", properties) { response ->
+                aem.logger.info("Response from instance $instance and pid $pid: ${response.statusLine.statusCode}")
+            }
+        } catch (e: AemException) {
+            throw InstanceException("OSGi configuration for PID '$pid' cannot be deleted on $instance. Cause: ${e.message}", e)
+        }
+    }
+
+    fun deleteConfiguration(pid: String, service: String) = deleteConfiguration("$pid~$service")
+
     fun restart() = shutdown("Restart")
 
     fun stop() = shutdown("Stop")
@@ -141,8 +193,36 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
             aem.logger.info("Triggering OSGi framework shutdown on $instance.")
             sync.http.postUrlencoded(VMSTAT_PATH, mapOf("shutdown_type" to type))
         } catch (e: AemException) {
-            throw InstanceException("Cannot trigger shutdown of $instance.", e)
+            throw InstanceException("Cannot trigger shutdown of $instance. Cause: ${e.message}", e)
         }
+    }
+
+    private fun getConfigurationsList(): List<ConfigurationState.Pid> {
+        return try {
+            sync.http.get(CONFIGURATION_PATH) { response ->
+                val html = asString(response)
+                val configJson = CONFIGURATIONS_REGEX.find(html)?.groups?.get(1)?.value
+                        ?: throw ResponseException("OSGi configuration cannot be found in console response of $instance.")
+                Formats.jsonMapper(false).readValue(configJson, ConfigurationState::class.java)
+            }
+        } catch (e: RequestException) {
+            throw InstanceException("OSGi configuration list cannot be parsed from response on $instance. Cause: ${e.message}", e)
+        } catch (e: ResponseException) {
+            throw InstanceException("Cannot get an OSGi configuration list response from $instance. Cause: ${e.message}", e)
+        }.pids
+    }
+
+    /**
+     * Adding some mandatory parameters to save config request
+     */
+    private fun configurationProperties(configuration: Configuration, properties: Map<String, Any>): Map<String, Any> {
+        val updatedConfig = configuration.properties + properties + mapOf(
+                "apply" to true,
+                "action" to "ajaxConfigManager",
+                "\$location" to configuration.bundleLocation,
+                "propertylist" to configuration.properties.keys.joinToString(",")
+        )
+        return updatedConfig.mapNotNull { (key, v) -> v?.let { key to it } }.toMap()
     }
 
     companion object {
@@ -157,5 +237,11 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         const val EVENTS_LIST_JSON = "/system/console/events.json"
 
         const val VMSTAT_PATH = "/system/console/vmstat"
+
+        const val CONFIGURATION_PATH = "/system/console/configMgr"
+
+        private const val CONFIGURATIONS_PATTERN = "configData = (.*);"
+
+        val CONFIGURATIONS_REGEX = Regex(CONFIGURATIONS_PATTERN)
     }
 }
