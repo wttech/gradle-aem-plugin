@@ -7,7 +7,8 @@ enum class Workflow(val ids: List<String>) {
             "update_asset_mod",
             "update_asset_mod_reupload",
             "update_asset_mod_without_DM",
-            "update_asset_mod_without_DM_reupload"
+            "update_asset_mod_without_DM_reupload",
+            "dam_xmp_writeback"
     ));
 
     companion object {

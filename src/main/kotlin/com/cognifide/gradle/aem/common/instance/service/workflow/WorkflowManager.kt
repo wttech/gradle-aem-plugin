@@ -41,7 +41,7 @@ class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
     private fun find(name: String): Node? {
         val node = repository.node(determineLauncherPath(name, instance.version))
         return if (Formats.versionAtLeast(instance.version, "6.4.0")) {
-                if (repository.node(WF_LAUNCHER_PATH_6_4_LIBS + name).exists) node else null
+                if (repository.node("$WF_LAUNCHER_PATH_6_4_LIBS$name").exists) node else null
             } else {
                 if (node.exists) node else null
         }

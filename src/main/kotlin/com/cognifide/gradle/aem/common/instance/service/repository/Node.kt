@@ -7,6 +7,7 @@ import com.jayway.jsonpath.PathNotFoundException
 import java.io.Serializable
 import java.util.*
 import net.minidev.json.JSONArray
+import org.apache.http.HttpStatus
 import org.apache.jackrabbit.vault.util.JcrConstants
 
 /**
@@ -40,7 +41,7 @@ class Node(private val repository: Repository, val path: String) : Serializable 
      * using dedicated method.
      */
     val properties: Properties
-        get() = propertiesLoaded ?: reloadProperties(true) ?: throw RepositoryException("Node $path does not exist on instance.")
+        get() = propertiesLoaded ?: reloadProperties(true) ?: throw RepositoryException("Node $path does not exist on ${repository.instance}.")
 
     /**
      * JCR primary type of node.
@@ -128,6 +129,16 @@ class Node(private val repository: Repository, val path: String) : Serializable 
     }
 
     /**
+     * Copies the node from current node to given path
+     */
+    fun copyTo(destination: String) = copy("${parent.path}/", destination)
+
+    /**
+     * Copy the node from given path to current node
+     */
+    fun copyFrom(source: String) = copy(source, path)
+
+    /**
      * Synchronizes on demand previously loaded properties of node (by default properties are loaded lazily).
      * Useful when saving and working on same node again (without instantiating variable).
      */
@@ -206,6 +217,26 @@ class Node(private val repository: Repository, val path: String) : Serializable 
             } else {
                 logger.debug(msg)
                 return null
+            }
+        }
+    }
+
+    /**
+     * Copies the node to from source to destination
+     */
+    private fun copy(source: String, destination: String) {
+        if (!exists) {
+            try {
+                repository.http.postUrlencoded(source, mapOf(
+                        ":operation" to "copy",
+                        ":dest" to destination
+                )) { response ->
+                    if (HttpStatus.SC_CREATED != response.statusLine.statusCode) {
+                        throw RepositoryException("Could not copy node from $path to $destination on ${repository.instance}.")
+                    }
+                }
+            } catch (e: RequestException) {
+                throw RepositoryException("Could not send copy request to ${repository.instance}.")
             }
         }
     }
