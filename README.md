@@ -100,6 +100,7 @@
         * [Working with content repository (JCR)](#working-with-content-repository-jcr)
         * [Executing code on AEM runtime](#executing-code-on-aem-runtime)
         * [Controlling OSGi bundles, components and configurations](#controlling-osgi-bundles-components-and-configurations)
+        * [Controlling workflows](#controlling-workflows)
      * [Understand why there are one or two plugins to be applied in build script](#understand-why-there-are-one-or-two-plugins-to-be-applied-in-build-script)
      * [Work effectively on start and daily basis](#work-effectively-on-start-and-daily-basis)
      * [Filter instances to work with](#filter-instances-to-work-with)
@@ -2103,6 +2104,29 @@ It is also possible to add or modify the factory OSGi methods. Additional `servi
 Only necessary properties can be passed while modifying the config. All other properties will be taken from the config as before the changes.
 
 Delete operation is also available for configurations, either standard or factory ones.
+
+#### Controlling workflows
+
+[OsgiFramework](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/osgi/OsgiFramework.kt) allows to use `workflowManager` object to manage workflows in custom tasks.
+Workflows can be either enabled or disabled by calling a corresponding method, with name(s) provided as a parameter:
+```kotlin
+workflowManager.disable("update_asset_create")
+workflowManager.disable(listOf("update_asset_create", "update_asset_mod"))
+```
+
+Additionally, framework provides a method which allows to disable or enable workflows only for particular set of tasks:
+```kotlin
+register("disableWorkflowsWhileSomethingHappens") {
+            doLast {
+                aem.sync(aem.instances) {
+                    workflowManager.toggleWhile(listOf("update_asset_create", "update_asset_mod"), false) {
+                        // custom task logic
+                    }
+                }
+            }
+        }
+```
+Boolean parameter determines the expected state of workflows during the callback instructions.
 
 ### Understand why there are one or two plugins to be applied in build script
 
