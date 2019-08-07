@@ -6,8 +6,14 @@ import java.util.concurrent.TimeUnit
 
 class TimeoutCheck(group: CheckGroup) : DefaultCheck(group) {
 
-    var stateTime: Long = TimeUnit.MINUTES.toMillis(5)
+    /**
+     * Prevents too long inactivity time.
+     */
+    var stateTime: Long = TimeUnit.MINUTES.toMillis(10)
 
+    /**
+     * Prevents circular restarting of OSGi bundles & components.
+     */
     var constantTime: Long = TimeUnit.MINUTES.toMillis(30)
 
     override fun check() {
