@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.common.instance
 
 import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.common.instance.service.authorizable.AuthManager
 import com.cognifide.gradle.aem.common.instance.service.groovy.GroovyConsole
 import com.cognifide.gradle.aem.common.instance.service.osgi.OsgiFramework
 import com.cognifide.gradle.aem.common.instance.service.pkg.PackageManager
@@ -50,4 +51,11 @@ class InstanceSync(val aem: AemExtension, val instance: Instance) {
      * Status retriever (system properties, product version etc).
      */
     fun <T> status(callback: Status.() -> T): T = status.run(callback)
+
+    var authManager = AuthManager(this)
+
+    /**
+     * Authorizable manager - creating users, groups and setting permissions
+     */
+    fun <T> authManager(callback: AuthManager.() -> T): T = authManager.run(callback)
 }
