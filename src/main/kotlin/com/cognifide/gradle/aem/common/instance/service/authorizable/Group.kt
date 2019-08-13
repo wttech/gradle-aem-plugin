@@ -16,8 +16,8 @@ class Group(id: String, manager: AuthManager) : Authorizable(id, manager) {
             manager.http.postUrlencoded("${it.path}.rw.html", mapOf("addMembers" to user.id)) { response ->
                 val status = response.statusLine.statusCode
                 if (status == HttpStatus.SC_OK) {
-                    manager.aem.logger.info("Group $id created on ${manager.instance}")
-                } else throw ResponseException("Group was not created on ${manager.instance}. Response status: $status")
+                    manager.aem.logger.info("User ${user.id} added to $id on ${manager.instance}")
+                } else throw ResponseException("Could not add ${user.id} to $id on ${manager.instance}. Response status: $status")
             }
         }
     }
