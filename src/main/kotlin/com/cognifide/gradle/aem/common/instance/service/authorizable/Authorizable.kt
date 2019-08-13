@@ -6,19 +6,26 @@ abstract class Authorizable(val id: String, val manager: AuthManager) {
 
     protected abstract val type: String
 
+    protected abstract val rootPath: String
+
     protected val node: Node? = find(id)
 
-    abstract fun allow(path: String, permissions: List<Permission>)
+    fun allow(path: String, permissions: List<Permission>) = addPermissions(path, permissions, "granted")
 
-    abstract fun deny(path: String, permissions: List<Permission>)
+    fun deny(path: String, permissions: List<Permission>) = addPermissions(path, permissions, "denied")
 
-    protected fun find(id: String): Node? = manager.repository.node(GROUPS_ROOT)
+    private fun addPermissions(path: String, permissions: List<Permission>, level: String) {
+        val privileges = permissions.map { "privilege@${it.property}" to level }
+                .toMap()
+
+        manager.http.postUrlencoded("$path.modifyAce.json", privileges + mapOf(
+                "principalId" to id
+        )) { response ->
+            manager.aem.logger.info("Permissions $permissions $level for $id to $path on ${manager.instance}.")
+        }
+    }
+
+    protected fun find(id: String): Node? = manager.repository.node(rootPath)
             .traverse()
             .find { it.type == type && it.properties["rep:authorizableId"] == id }
-
-    companion object {
-        private const val GROUPS_ROOT = "/home/groups"
-
-        private const val USERS_ROOT = "/home/users"
-    }
 }
