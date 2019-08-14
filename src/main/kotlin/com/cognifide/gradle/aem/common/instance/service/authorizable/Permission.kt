@@ -7,5 +7,6 @@ enum class Permission(val property: String) {
     DELETE("jcr:removeNode"),
     READ_ACL("jcr:readAccessControl"),
     EDIT_ACL("jcr:modifyAccessControl"),
+    WRITE("jcr:write"),
     REPLICATE("crx:replicate");
 }

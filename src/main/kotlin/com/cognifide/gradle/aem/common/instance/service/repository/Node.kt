@@ -149,6 +149,14 @@ class Node(private val repository: Repository, val path: String) : Serializable 
         }
     }
 
+    fun search(propereties: Map<String, Any>) {
+        val queryString = properties.map { "${it.key}=${it.value}" }
+                .joinToString("&")
+        repository.http.get("/bin/querybuilder.json?$queryString") { response ->
+            println(response.entity.toString())
+        }
+    }
+
     /**
      * Update only single property of node.
      */
