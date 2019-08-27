@@ -1998,7 +1998,7 @@ aem {
                     repository {
                         node("/content/example")
                             .traverse()
-                            .filter { it.type == "cq:PageContent" && properties["sling:resourceType"] == "example/components/basicPage" }
+                            .filter { it.type == "cq:PageContent" && it.properties["sling:resourceType"] == "example/components/basicPage" }
                             .forEach { page ->
                                 logger.info("Migrating page: ${page.path}")
                                 page.saveProperty("sling:resourceType", "example/components/advancedPage")

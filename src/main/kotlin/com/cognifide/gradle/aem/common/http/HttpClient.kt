@@ -161,7 +161,7 @@ open class HttpClient(private val aem: AemExtension) : Serializable {
 
     fun post(url: String, params: Map<String, Any?> = mapOf()) = postUrlencoded(url, params)
 
-    fun <T> post(uri: String, params: Map<String, Any> = mapOf(), handler: HttpClient.(HttpResponse) -> T): T {
+    fun <T> post(uri: String, params: Map<String, Any?> = mapOf(), handler: HttpClient.(HttpResponse) -> T): T {
         return postUrlencoded(uri, params, handler)
     }
 

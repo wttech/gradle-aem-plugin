@@ -130,6 +130,15 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
 
     // ----- Configurations -----
 
+    /**
+     * Set properties for existing OSGi configuration.
+     * Declarative looking alias method.
+     */
+    fun configuration(pid: String, properties: Map<String, Any?>) = updateConfiguration(pid, properties)
+
+    /**
+     * Obtain all OSGi configuration PIDs.
+     */
     fun determineConfigurationState(): ConfigurationState {
         aem.logger.debug("Asking for OSGi configurations on $instance")
 
@@ -146,6 +155,10 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         }
     }
 
+    /**
+     * Find OSGi configuration by PID.
+     * Also ensures that for given configuration there is metatype service available (to reduce typo errors).
+     */
     fun findConfiguration(pid: String, metatypeChecking: Boolean = true): Configuration? {
         return try {
             sync.http.get("$CONFIGURATION_PATH/$pid?post=true") { response ->
@@ -156,17 +169,26 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         }
     }
 
+    /**
+     * Get OSGi configuration by PID.
+     */
     fun getConfiguration(pid: String): Configuration {
         return findConfiguration(pid)
                 ?: throw InstanceException("OSGi configuration for PID '$pid' cannot be found on $instance")
     }
 
+    /**
+     * Get all OSGi configurations.
+     */
     fun getConfigurations(pid: String): List<Configuration> {
         return determineConfigurationState().pids
                 .filter { pid == it.fpid }
                 .mapNotNull { findConfiguration(it.id) }
     }
 
+    /**
+     * Set properties for existing OSGi configuration.
+     */
     fun updateConfiguration(pid: String, properties: Map<String, Any?>) {
         try {
             aem.logger.info("Updating OSGi configuration for PID '$pid' on $instance using properties: $properties")
@@ -180,8 +202,14 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         }
     }
 
+    /**
+     * Set properties for existing OSGi configuration.
+     */
     fun updateConfiguration(pid: String, service: String, properties: Map<String, Any>) = updateConfiguration("$pid~$service", properties)
 
+    /**
+     * Set properties for existing OSGi configuration or create new.
+     */
     fun saveConfiguration(pid: String, properties: Map<String, Any?>) {
         try {
             aem.logger.info("Saving OSGi configuration for PID '$pid' on $instance using properties: $properties")
@@ -195,34 +223,42 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         }
     }
 
-    private fun configurationProperties(existingConfig: Configuration, properties: Map<String, Any?>): Map<String, Any> {
+    private fun configurationProperties(existingConfig: Configuration, properties: Map<String, Any?>): Map<String, Any?> {
         val valueProperties = existingConfig.properties + properties
-        val valueAndMetaProperties = valueProperties + mapOf(
+        return valueProperties + mapOf(
                 "apply" to true,
                 "action" to "ajaxConfigManager",
                 "\$location" to existingConfig.bundleLocation,
                 "propertylist" to valueProperties.keys.joinToString(",")
         )
-
-        // TODO allow existing properties removal by null?
-        return valueAndMetaProperties.mapNotNull { (key, v) -> v?.let { key to it } }.toMap()
     }
 
+    /**
+     * Set properties for existing OSGi configuration or create new.
+     */
     fun saveConfiguration(pid: String, service: String, properties: Map<String, Any>) = saveConfiguration("$pid~$service", properties)
 
+    /**
+     * Delete existing OSGi configuration.
+     */
     fun deleteConfiguration(pid: String) {
-        val properties = mapOf(
-            "apply" to 1,
-            "delete" to 1
-        )
         try {
             aem.logger.info("Deleting OSGi configuration for PID '$pid' on $instance")
+
+            val properties = mapOf(
+                    "apply" to 1,
+                    "delete" to 1
+            )
+
             sync.http.post("$CONFIGURATION_PATH/$pid", properties)
         } catch (e: AemException) {
             throw InstanceException("OSGi configuration for PID '$pid' cannot be deleted on $instance. Cause: ${e.message}", e)
         }
     }
 
+    /**
+     * Delete existing OSGi configuration.
+     */
     fun deleteConfiguration(pid: String, service: String) = deleteConfiguration("$pid~$service")
 
     // ----- Events -----

@@ -73,8 +73,6 @@ class Configuration {
     }
 
     companion object {
-        const val DESCRIPTION_METATYPE_ABSENCE = "absence of the OSGi Metatype Service" +
-                " or the absence of a MetaType descriptor for this configuration"
+        const val DESCRIPTION_METATYPE_ABSENCE = "absence of the OSGi Metatype Service or the absence of a MetaType descriptor for this configuration"
     }
-
 }
