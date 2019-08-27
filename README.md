@@ -1297,10 +1297,10 @@ By default plugin tries to automatically find most recent backup from all availa
 However to e.g avoid creating instances from the scratch accidentally, source mode can be adjusted by specifying property `localInstance.source`.
 Available values:
 
-* `auto` - Create instances from most recent backup (external or internal) or fallback to creating from the scratch if there is no backup available.
+* `auto` - Create instances from most recent backup (remote or local) or fallback to creating from the scratch if there is no backup available. Default mode.
 * `scratch` - Force creating instances from the scratch.
 * `backup_any` - Force using any backup available at local or remote source.
-* `backup_remote` - Force using backup available at remote source (specified as `localInstance.backup.[downloadUrl|uploadUrl]`).      
+* `backup_remote` - Force using backup available at remote source (specified as `localInstance.backup.downloadUrl` or `localInstance.backup.uploadUrl`).      
 * `backup_local` - Force using local backup (created by task `instanceBackup`).
 
 When mode is different than `scratch`, then backup ZIP file selection rule could be adjusted:
