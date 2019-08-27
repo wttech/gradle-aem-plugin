@@ -187,7 +187,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
                 "\$location" to existingConfig?.bundleLocation,
                 "propertylist" to effectiveProperties.keys.joinToString(",")
         )
-        return updatedConfig.mapNotNull { (key, v) -> v?.let { key to it } }.toMap() // TODO allow properties removal by null?
+        return updatedConfig.mapNotNull { (key, v) -> v?.let { key to it } }.toMap() // TODO allow existing properties removal by null?
     }
 
     fun saveConfiguration(pid: String, service: String, properties: Map<String, Any>) = saveConfiguration("$pid~$service", properties)
