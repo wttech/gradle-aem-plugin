@@ -167,27 +167,45 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
                 .mapNotNull { findConfiguration(it.id) }
     }
 
+    fun updateConfiguration(pid: String, properties: Map<String, Any?>) {
+        try {
+            aem.logger.info("Updating OSGi configuration for PID '$pid' on $instance using properties: $properties")
+
+            val config = getConfiguration(pid)
+            val props = configurationProperties(config, properties)
+
+            sync.http.post("$CONFIGURATION_PATH/$pid", props) { checkStatus(it, HttpStatus.SC_MOVED_TEMPORARILY) }
+        } catch (e: AemException) {
+            throw InstanceException("OSGi configuration for PID '$pid' cannot be updated on $instance. Cause: ${e.message}", e)
+        }
+    }
+
+    fun updateConfiguration(pid: String, service: String, properties: Map<String, Any>) = updateConfiguration("$pid~$service", properties)
+
     fun saveConfiguration(pid: String, properties: Map<String, Any?>) {
         try {
             aem.logger.info("Saving OSGi configuration for PID '$pid' on $instance using properties: $properties")
-            sync.http.post("$CONFIGURATION_PATH/$pid", configurationProperties(pid, properties)) {
-                checkStatus(it, HttpStatus.SC_MOVED_TEMPORARILY)
-            }
+
+            val config = findConfiguration(pid, false)!! // endpoint always return data even for non-existing PID
+            val props = configurationProperties(config, properties)
+
+            sync.http.post("$CONFIGURATION_PATH/$pid", props) { checkStatus(it, HttpStatus.SC_MOVED_TEMPORARILY) }
         } catch (e: AemException) {
             throw InstanceException("OSGi configuration for PID '$pid' cannot be saved on $instance. Cause: ${e.message}", e)
         }
     }
 
-    private fun configurationProperties(pid: String, properties: Map<String, Any?>): Map<String, Any> {
-        val existingConfig = findConfiguration(pid, false)
-        val effectiveProperties = (existingConfig?.properties ?: mapOf()) + properties
-        val updatedConfig = effectiveProperties + mapOf(
+    private fun configurationProperties(existingConfig: Configuration, properties: Map<String, Any?>): Map<String, Any> {
+        val valueProperties = existingConfig.properties + properties
+        val valueAndMetaProperties = valueProperties + mapOf(
                 "apply" to true,
                 "action" to "ajaxConfigManager",
-                "\$location" to existingConfig?.bundleLocation,
-                "propertylist" to effectiveProperties.keys.joinToString(",")
+                "\$location" to existingConfig.bundleLocation,
+                "propertylist" to valueProperties.keys.joinToString(",")
         )
-        return updatedConfig.mapNotNull { (key, v) -> v?.let { key to it } }.toMap() // TODO allow existing properties removal by null?
+
+        // TODO allow existing properties removal by null?
+        return valueAndMetaProperties.mapNotNull { (key, v) -> v?.let { key to it } }.toMap()
     }
 
     fun saveConfiguration(pid: String, service: String, properties: Map<String, Any>) = saveConfiguration("$pid~$service", properties)
