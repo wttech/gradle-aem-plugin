@@ -2088,7 +2088,7 @@ aem {
         register("enableCrx") {
             doLast {
                 aem.sync(aem.publishInstances) {
-                    osgiFramework.saveConfiguration("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", mapOf(
+                    osgiFramework.configuration("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", mapOf(
                         "alias" to "/crx/server",
                         "dav.create-absolute-uri" to true,
                         "dav.protectedhandlers" to "org.apache.jackrabbit.server.remoting.davex.AclRemoveHandler"
