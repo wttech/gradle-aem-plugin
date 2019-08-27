@@ -29,8 +29,8 @@ class Configuration {
         rawProperties.mapValues { it.value.value }
     }
 
-    val valid: Boolean
-        get() = !(description?.contains(DESCRIPTION_INVALID, ignoreCase = true) ?: false)
+    val metatypeAbsence: Boolean
+        get() = description.orEmpty().contains(DESCRIPTION_METATYPE_ABSENCE, ignoreCase = true)
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     class ConfigurationProperty {
@@ -62,6 +62,7 @@ class Configuration {
 
     override fun hashCode(): Int {
         return HashCodeBuilder()
+                .append(pid)
                 .append(rawProperties)
                 .toHashCode()
     }
@@ -71,7 +72,7 @@ class Configuration {
     }
 
     companion object {
-        const val DESCRIPTION_INVALID = "absence of the OSGi Metatype Service" +
+        const val DESCRIPTION_METATYPE_ABSENCE = "absence of the OSGi Metatype Service" +
                 " or the absence of a MetaType descriptor for this configuration"
     }
 

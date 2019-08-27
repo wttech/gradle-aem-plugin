@@ -146,18 +146,18 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         }
     }
 
-    fun findConfiguration(pid: String, validOnly: Boolean = true): Configuration? {
+    fun findConfiguration(pid: String, metatypeChecking: Boolean = true): Configuration? {
         return try {
             sync.http.get("$CONFIGURATION_PATH/$pid?post=true") { response ->
-                asObjectFromJson(response, Configuration::class.java).takeIf { !validOnly || it.valid }
+                asObjectFromJson(response, Configuration::class.java).takeIf { !metatypeChecking || !it.metatypeAbsence }
             }
         } catch (e: AemException) {
             throw InstanceException("Cannot read OSGi configuration for PID '$pid' on $instance. Cause: ${e.message}", e)
         }
     }
 
-    fun getConfiguration(pid: String, validOnly: Boolean = true): Configuration {
-        return findConfiguration(pid, validOnly)
+    fun getConfiguration(pid: String): Configuration {
+        return findConfiguration(pid)
                 ?: throw InstanceException("OSGi configuration for PID '$pid' cannot be found on $instance")
     }
 
@@ -167,7 +167,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
                 .mapNotNull { findConfiguration(it.id) }
     }
 
-    fun saveConfiguration(pid: String, properties: Map<String, Any>) {
+    fun saveConfiguration(pid: String, properties: Map<String, Any?>) {
         try {
             aem.logger.info("Saving OSGi configuration for PID '$pid' on $instance using properties: $properties")
             sync.http.post("$CONFIGURATION_PATH/$pid", configurationProperties(pid, properties)) {
@@ -178,16 +178,16 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         }
     }
 
-    private fun configurationProperties(pid: String, properties: Map<String, Any>): Map<String, Any> {
-        val existingConfig = getConfiguration(pid, false)
-        val propertyNames = (properties.keys + existingConfig.properties.keys).toSet()
-        val updatedConfig = existingConfig.properties + properties + mapOf(
+    private fun configurationProperties(pid: String, properties: Map<String, Any?>): Map<String, Any> {
+        val existingConfig = findConfiguration(pid, false)
+        val effectiveProperties = (existingConfig?.properties ?: mapOf()) + properties
+        val updatedConfig = effectiveProperties + mapOf(
                 "apply" to true,
                 "action" to "ajaxConfigManager",
-                "\$location" to existingConfig.bundleLocation,
-                "propertylist" to propertyNames.joinToString(",")
+                "\$location" to existingConfig?.bundleLocation,
+                "propertylist" to effectiveProperties.keys.joinToString(",")
         )
-        return updatedConfig.mapNotNull { (key, v) -> v?.let { key to it } }.toMap()
+        return updatedConfig.mapNotNull { (key, v) -> v?.let { key to it } }.toMap() // TODO allow properties removal by null?
     }
 
     fun saveConfiguration(pid: String, service: String, properties: Map<String, Any>) = saveConfiguration("$pid~$service", properties)
