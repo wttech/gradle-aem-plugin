@@ -91,7 +91,7 @@ class Node(val repository: Repository, val path: String) : Serializable {
     }
 
     /**
-     * Checks if node exists.
+     * Check if node exists.
      *
      * Not checks again if properties of node are already loaded (skips extra HTTP request / optimization).
      */
@@ -99,7 +99,7 @@ class Node(val repository: Repository, val path: String) : Serializable {
         get() = propertiesLoaded != null || exists()
 
     /**
-     * Checks if node exists.
+     * Check if node exists.
      *
      * Always ensures current state of node in repository.
      */
@@ -137,7 +137,7 @@ class Node(val repository: Repository, val path: String) : Serializable {
     }
 
     /**
-     * Deletes node and creates it again. Use with caution!
+     * Delete node and creates it again. Use with caution!
      */
     fun replace(properties: Map<String, Any?>): RepositoryResult {
         delete()
@@ -145,7 +145,7 @@ class Node(val repository: Repository, val path: String) : Serializable {
     }
 
     /**
-     * Synchronizes on demand previously loaded properties of node (by default properties are loaded lazily).
+     * Synchronize on demand previously loaded properties of node (by default properties are loaded lazily).
      * Useful when saving and working on same node again (without instantiating separate variable).
      */
     fun reload() {
@@ -153,7 +153,7 @@ class Node(val repository: Repository, val path: String) : Serializable {
     }
 
     /**
-     * Copies node to from source path to destination path.
+     * Copy node to from source path to destination path.
      */
     fun copy(targetPath: String) {
         try {
@@ -164,6 +164,16 @@ class Node(val repository: Repository, val path: String) : Serializable {
             throw RepositoryException("Cannot copy repository node from '$path' to '$targetPath' on $instance. Cause: '${e.message}'")
         }
     }
+
+    /**
+     * Copy node to path pointing to folder with preserving original node name.
+     */
+    fun copyTo(targetDir: String) = copy("$targetDir/$name")
+
+    /**
+     * Copy node from other path to current path.
+     */
+    fun copyFrom(sourcePath: String) = repository.node(sourcePath).copy(path)
 
     /**
      * Search nodes by traversing a node tree.

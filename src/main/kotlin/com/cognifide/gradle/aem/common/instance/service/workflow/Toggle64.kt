@@ -9,10 +9,7 @@ class Toggle64 : ToggleStrategy {
 
     override fun toggle(launcher: Node, expected: Boolean) {
         if (!launcher.exists) {
-            val workflowName = StringUtils.substringAfterLast(launcher.path, "/")
-            val otherLauncher = launcher.repository.node("$WF_LAUNCHER_PATH_6_4_LIBS$workflowName")
-            otherLauncher.copy(launcher.path)
-            launcher.reload()
+            launcher.copyFrom("$WF_LAUNCHER_PATH_6_4_LIBS${StringUtils.substringAfterLast(launcher.path, "/")}")
         }
         launcher.saveProperty(ENABLED_PROP, expected)
     }
@@ -22,7 +19,7 @@ class Toggle64 : ToggleStrategy {
         if (!launcher.exists) {
             // todo fallback to /libs to get the property (get the repository object somehow)
         } else {
-            state = launcher.properties[ENABLED_PROP] as Boolean
+            state = launcher.properties.boolean(ENABLED_PROP) ?: false
         }
         return expected != state
     }
