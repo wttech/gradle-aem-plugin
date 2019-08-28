@@ -240,9 +240,9 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
     /**
      * Get all OSGi configurations for specified factory PID.
      */
-    fun getConfigurations(pid: String): Sequence<Configuration> {
+    fun getConfigurations(fpid: String): Sequence<Configuration> {
         return determineConfigurationState().pids.asSequence()
-                .filter { pid == it.fpid }
+                .filter { fpid == it.fpid }
                 .mapNotNull { findConfiguration(it.id) }
     }
 
