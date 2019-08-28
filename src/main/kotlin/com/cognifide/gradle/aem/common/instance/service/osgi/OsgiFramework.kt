@@ -192,8 +192,8 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
     /**
      * Get all OSGi configurations.
      */
-    val configurations: List<Configuration>
-        get() = determineConfigurationState().pids
+    val configurations: Sequence<Configuration>
+        get() = determineConfigurationState().pids.asSequence()
                 .mapNotNull { findConfiguration(it.id) }
 
     /**
@@ -240,8 +240,8 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
     /**
      * Get all OSGi configurations for specified factory PID.
      */
-    fun getConfigurations(pid: String): List<Configuration> {
-        return determineConfigurationState().pids
+    fun getConfigurations(pid: String): Sequence<Configuration> {
+        return determineConfigurationState().pids.asSequence()
                 .filter { pid == it.fpid }
                 .mapNotNull { findConfiguration(it.id) }
     }
