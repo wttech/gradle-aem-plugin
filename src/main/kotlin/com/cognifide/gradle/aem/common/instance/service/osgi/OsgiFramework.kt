@@ -207,7 +207,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
                 val html = asString(response)
                 val configJson = CONFIGURATIONS_REGEX.find(html)?.groups?.get(1)?.value
                         ?: throw ResponseException("OSGi configuration cannot be found in console response of $instance.")
-                Formats.jsonMapper(false).readValue(configJson, ConfigurationState::class.java)
+                Formats.fromJson(configJson, ConfigurationState::class.java)
             }
         } catch (e: AemException) {
             aem.logger.debug("Cannot determine OSGi configuration state on $instance. Cause: ${e.message}", e)
