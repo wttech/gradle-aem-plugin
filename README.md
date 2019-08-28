@@ -200,7 +200,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.cognifide.gradle:aem-plugin:7.0.10")
+    implementation("com.cognifide.gradle:aem-plugin:7.1.0")
 }
 ```
 
@@ -1297,10 +1297,10 @@ By default plugin tries to automatically find most recent backup from all availa
 However to e.g avoid creating instances from the scratch accidentally, source mode can be adjusted by specifying property `localInstance.source`.
 Available values:
 
-* `auto` - Create instances from most recent backup (external or internal) or fallback to creating from the scratch if there is no backup available.
+* `auto` - Create instances from most recent backup (remote or local) or fallback to creating from the scratch if there is no backup available. Default mode.
 * `scratch` - Force creating instances from the scratch.
 * `backup_any` - Force using any backup available at local or remote source.
-* `backup_remote` - Force using backup available at remote source (specified as `localInstance.backup.[downloadUrl|uploadUrl]`).      
+* `backup_remote` - Force using backup available at remote source (specified as `localInstance.backup.downloadUrl` or `localInstance.backup.uploadUrl`).      
 * `backup_local` - Force using local backup (created by task `instanceBackup`).
 
 When mode is different than `scratch`, then backup ZIP file selection rule could be adjusted:
@@ -1998,7 +1998,7 @@ aem {
                     repository {
                         node("/content/example")
                             .traverse()
-                            .filter { it.type == "cq:PageContent" && properties["sling:resourceType"] == "example/components/basicPage" }
+                            .filter { it.type == "cq:PageContent" && it.properties["sling:resourceType"] == "example/components/basicPage" }
                             .forEach { page ->
                                 logger.info("Migrating page: ${page.path}")
                                 page.saveProperty("sling:resourceType", "example/components/advancedPage")
@@ -2063,8 +2063,25 @@ aem {
 
 #### Controlling OSGi bundles, components and configurations
 
-To disable specific OSGi component by its PID value and only on publish instances use [OsgiFramework](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/osgi/OsgiFramework.kt) instance service and write:
+Simply use [OsgiFramework](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/osgi/OsgiFramework.kt) instance service.
 
+To restart some bundle after deploying a CRX package, write:
+
+```kotlin
+aem {
+    tasks {
+        packageDeploy {
+            doLast {
+                aem.sync {
+                    osgiFramework.restartBundle("com.adobe.cq.dam.cq-scene7-imaging")
+                }           
+            }       
+        }
+    }
+}
+```
+
+To disable specific OSGi component by its PID value and only on publish instances, write:
 
 ```kotlin
 aem {
@@ -2081,14 +2098,15 @@ aem {
 }
 ```
 
-Custom configuration for the particular OSGi component can be created and modified by [OsgiFramework](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/osgi/OsgiFramework.kt) as well:
+To configure specific OSGi service by its PID:
+
 ```kotlin
 aem {
     tasks {
         register("enableCrx") {
             doLast {
                 aem.sync(aem.publishInstances) {
-                    osgiFramework.saveConfiguration("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", mapOf(
+                    osgiFramework.configure("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", mapOf(
                         "alias" to "/crx/server",
                         "dav.create-absolute-uri" to true,
                         "dav.protectedhandlers" to "org.apache.jackrabbit.server.remoting.davex.AclRemoveHandler"
@@ -2099,10 +2117,8 @@ aem {
     }
 }
 ```
-It is also possible to add or modify the factory OSGi methods. Additional `service` parameter can be passed to determine proper config to create or update.
-Only necessary properties can be passed while modifying the config. All other properties will be taken from the config as before the changes.
 
-Delete operation is also available for configurations, either standard or factory ones.
+All [CRUD](https://en.wikipedia.org/wiki/CRUD) methods for manipulating OSGi configurations are available. Also for configuration factories.
 
 ### Understand why there are one or two plugins to be applied in build script
 
