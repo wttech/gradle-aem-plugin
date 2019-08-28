@@ -18,6 +18,12 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
     // ----- Bundles -----
 
     /**
+     * Get all OSGi bundles.
+     */
+    val bundles: List<Bundle>
+        get() = determineBundleState().bundles
+
+    /**
      * Determine all OSGi bundle states.
      */
     fun determineBundleState(): BundleState {
@@ -105,7 +111,13 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
     // ----- Components -----
 
     /**
-     * Determine all OSGi component states.
+     * Get all OSGi components.
+     */
+    val components: List<Component>
+        get() = determineComponentState().components
+
+    /**
+     * Determine OSGi components state.
      */
     fun determineComponentState(): ComponentState {
         aem.logger.debug("Asking for OSGi components on $instance")
@@ -178,6 +190,13 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
     fun configure(pid: String, properties: Map<String, Any?>) = updateConfiguration(pid, properties)
 
     /**
+     * Get all OSGi configurations.
+     */
+    val configurations: List<Configuration>
+        get() = determineConfigurationState().pids
+                .mapNotNull { findConfiguration(it.id) }
+
+    /**
      * Determine all OSGi configuration PIDs.
      */
     fun determineConfigurationState(): ConfigurationState {
@@ -219,7 +238,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
     }
 
     /**
-     * Get all OSGi configurations.
+     * Get all OSGi configurations for specified factory PID.
      */
     fun getConfigurations(pid: String): List<Configuration> {
         return determineConfigurationState().pids
