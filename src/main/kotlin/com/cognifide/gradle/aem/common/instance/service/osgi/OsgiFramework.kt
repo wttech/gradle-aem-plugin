@@ -17,6 +17,9 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
 
     // ----- Bundles -----
 
+    /**
+     * Determine all OSGi bundle states.
+     */
     fun determineBundleState(): BundleState {
         aem.logger.debug("Asking for OSGi bundles on $instance")
 
@@ -28,17 +31,26 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         }
     }
 
+    /**
+     * Find OSGi bundle by symbolic name.
+     */
     fun findBundle(symbolicName: String): Bundle? {
         return determineBundleState().bundles.find {
             symbolicName.equals(it.symbolicName, ignoreCase = true)
         }
     }
 
+    /**
+     * Get OSGi bundle by symbolic name. Fail if not found.
+     */
     fun getBundle(symbolicName: String): Bundle {
         return findBundle(symbolicName)
                 ?: throw InstanceException("OSGi bundle '$symbolicName' cannot be found on $instance.")
     }
 
+    /**
+     * Start OSGi bundle. Does nothing if already started.
+     */
     fun startBundle(symbolicName: String) {
         val bundle = getBundle(symbolicName)
         if (bundle.stable) {
@@ -50,6 +62,9 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         sync.http.post("$BUNDLES_PATH/${bundle.id}", mapOf("action" to "start"))
     }
 
+    /**
+     * Stop OSGi bundle. Does nothing if already stopped.
+     */
     fun stopBundle(symbolicName: String) {
         val bundle = getBundle(symbolicName)
         if (!bundle.stable) {
@@ -61,17 +76,26 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         sync.http.post("$BUNDLES_PATH/${bundle.id}", mapOf("action" to "stop"))
     }
 
+    /**
+     * Stop then start again OSGi bundle. Works correctly even it is already stopped.
+     */
     fun restartBundle(symbolicName: String) {
         stopBundle(symbolicName)
         startBundle(symbolicName)
     }
 
+    /**
+     * Refresh OSGi bundle by symbolic name.
+     */
     fun refreshBundle(symbolicName: String) {
         val bundle = getBundle(symbolicName)
         aem.logger.info("Refreshing OSGi $bundle on $instance.")
         sync.http.post("$BUNDLES_PATH/${bundle.symbolicName}", mapOf("action" to "refresh"))
     }
 
+    /**
+     * Update OSGi bundle by symbolic name.
+     */
     fun updateBundle(symbolicName: String) {
         val bundle = getBundle(symbolicName)
         aem.logger.info("Updating OSGi $bundle on $instance.")
@@ -80,6 +104,9 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
 
     // ----- Components -----
 
+    /**
+     * Determine all OSGi component states.
+     */
     fun determineComponentState(): ComponentState {
         aem.logger.debug("Asking for OSGi components on $instance")
 
@@ -91,16 +118,25 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         }
     }
 
+    /**
+     * Find OSGi component by PID.
+     */
     fun findComponent(pid: String): Component? {
         return determineComponentState().components.find {
             pid.equals(it.uid, ignoreCase = true)
         }
     }
 
+    /**
+     * Get OSGi component by PID. Fail if not found.
+     */
     fun getComponent(pid: String): Component {
         return findComponent(pid) ?: throw InstanceException("OSGi component '$pid' cannot be found on $instance.")
     }
 
+    /**
+     * Enable OSGi component. Does nothing if already enabled.
+     */
     fun enableComponent(pid: String) {
         val component = getComponent(pid)
         if (component.id.isNotBlank()) {
@@ -112,6 +148,9 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         sync.http.post("$COMPONENTS_PATH/${component.uid}", mapOf("action" to "enable"))
     }
 
+    /**
+     * Disable OSGi component. Does nothing if already disabled.
+     */
     fun disableComponent(pid: String) {
         val component = getComponent(pid)
         if (component.id.isBlank()) {
@@ -123,6 +162,9 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         sync.http.post("$COMPONENTS_PATH/${component.id}", mapOf("action" to "disable"))
     }
 
+    /**
+     * Disable then enable again OSGi component. Works correctly even it is already disabled.
+     */
     fun restartComponent(pid: String) {
         disableComponent(pid)
         enableComponent(pid)
@@ -136,7 +178,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
     fun configure(pid: String, properties: Map<String, Any?>) = updateConfiguration(pid, properties)
 
     /**
-     * Obtain all OSGi configuration PIDs.
+     * Determine all OSGi configuration PIDs.
      */
     fun determineConfigurationState(): ConfigurationState {
         aem.logger.debug("Asking for OSGi configurations on $instance")
@@ -169,7 +211,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
     }
 
     /**
-     * Get OSGi configuration by PID.
+     * Get OSGi configuration by PID. Fail if not found.
      */
     fun getConfiguration(pid: String): Configuration {
         return findConfiguration(pid)
@@ -262,6 +304,9 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
 
     // ----- Events -----
 
+    /**
+     * Determine OSGi events for current moment.
+     */
     fun determineEventState(): EventState {
         aem.logger.debug("Asking for OSGi events on $instance")
 
@@ -275,8 +320,16 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
 
     // ----- Framework -----
 
+    /**
+     * Restart OSGi framework (Apache Felix)
+     */
     fun restart() = shutdown("Restart")
 
+    /**
+     * Stop OSGi framework (Apache Felix)
+     *
+     * Warning! After executing instance will be no longer available.
+     */
     fun stop() = shutdown("Stop")
 
     private fun shutdown(type: String) {
