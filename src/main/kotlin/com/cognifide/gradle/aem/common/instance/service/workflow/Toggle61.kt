@@ -5,8 +5,8 @@ import com.cognifide.gradle.aem.common.instance.service.workflow.ToggleStrategy.
 
 class Toggle61 : ToggleStrategy {
 
-    override fun toggle(launcherNode: Node, expected: Boolean) {
-        launcherNode.saveProperty(ENABLED_PROP, expected)
+    override fun toggle(launcher: Node, expected: Boolean) {
+        launcher.saveProperty(ENABLED_PROP, expected)
     }
 
     override fun changeRequired(launcher: Node, expected: Boolean): Boolean {

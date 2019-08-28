@@ -7,13 +7,14 @@ import org.apache.commons.lang3.StringUtils
 
 class Toggle64 : ToggleStrategy {
 
-    override fun toggle(launcherNode: Node, expected: Boolean) {
-        if (!launcherNode.exists) {
-            val workflowName = StringUtils.substringAfterLast(launcherNode.path, "/")
-            launcherNode.copyFrom("$WF_LAUNCHER_PATH_6_4_LIBS$workflowName")
-            launcherNode.reload()
+    override fun toggle(launcher: Node, expected: Boolean) {
+        if (!launcher.exists) {
+            val workflowName = StringUtils.substringAfterLast(launcher.path, "/")
+            val otherLauncher = launcher.repository.node("$WF_LAUNCHER_PATH_6_4_LIBS$workflowName")
+            otherLauncher.copy(launcher.path)
+            launcher.reload()
         }
-        launcherNode.saveProperty(ENABLED_PROP, expected)
+        launcher.saveProperty(ENABLED_PROP, expected)
     }
 
     override fun changeRequired(launcher: Node, expected: Boolean): Boolean {

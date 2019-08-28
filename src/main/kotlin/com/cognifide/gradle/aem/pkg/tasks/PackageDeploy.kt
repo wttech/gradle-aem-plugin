@@ -118,7 +118,8 @@ open class PackageDeploy : PackageTask() {
                 increment("Deploying package '${pkg.name}' to instance '${instance.name}'") {
                     initializer()
 
-                    workflowManager.toggleWhile(Workflow.DAM_ASSET, false) {
+                    // TODO parametrize via CMD
+                    workflowManager.toggle(Workflow.DAM_ASSET.ids, false) {
                         if (distributed) {
                             packageManager.distribute(pkg, uploadForce, uploadRetry, installRecursive, installRetry)
                         } else {

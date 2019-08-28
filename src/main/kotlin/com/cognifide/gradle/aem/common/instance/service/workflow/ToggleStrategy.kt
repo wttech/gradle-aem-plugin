@@ -2,9 +2,10 @@ package com.cognifide.gradle.aem.common.instance.service.workflow
 
 import com.cognifide.gradle.aem.common.instance.service.repository.Node
 
+// TODO to be redesigned / removed
 interface ToggleStrategy {
 
-    fun toggle(launcherNode: Node, expected: Boolean)
+    fun toggle(launcher: Node, expected: Boolean)
 
     fun changeRequired(launcher: Node, expected: Boolean): Boolean
 

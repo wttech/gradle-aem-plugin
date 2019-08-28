@@ -1,19 +1,21 @@
 package com.cognifide.gradle.aem.common.instance.service.repository
 
-import com.cognifide.gradle.aem.common.http.RequestException
+import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.common.utils.Formats
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.jayway.jsonpath.PathNotFoundException
-import java.io.Serializable
-import java.util.*
 import net.minidev.json.JSONArray
 import org.apache.http.HttpStatus
 import org.apache.jackrabbit.vault.util.JcrConstants
+import java.io.Serializable
+import java.util.*
 
 /**
  * Represents node stored in JCR content repository.
  */
-class Node(private val repository: Repository, val path: String) : Serializable {
+class Node(val repository: Repository, val path: String) : Serializable {
+
+    private val instance = repository.instance
 
     private val logger = repository.aem.logger
 
@@ -29,19 +31,13 @@ class Node(private val repository: Repository, val path: String) : Serializable 
         get() = path.substringAfterLast("/")
 
     /**
-     * Checks if node exists. Tries to read properties (cached / from repository).
-     */
-    val exists: Boolean
-        get() = propertiesLoaded ?: reloadProperties(false) != null
-
-    /**
      * JCR node properties.
      *
      * Keep in mind that these values are loaded lazily and sometimes it is needed to reload them
      * using dedicated method.
      */
     val properties: Properties
-        get() = propertiesLoaded ?: reloadProperties(true) ?: throw RepositoryException("Node $path does not exist on ${repository.instance}.")
+        get() = propertiesLoaded ?: reloadProperties()
 
     /**
      * JCR primary type of node.
@@ -71,7 +67,7 @@ class Node(private val repository: Repository, val path: String) : Serializable 
      */
     @Suppress("unchecked_cast")
     fun children(): Sequence<Node> {
-        logger.info("Reading child nodes of repository node '$path'")
+        logger.info("Reading child nodes of repository node '$path' on $instance")
 
         return try {
             repository.http.get("$path.harray.1.json") { asJson(it) }
@@ -89,35 +85,55 @@ class Node(private val repository: Repository, val path: String) : Serializable 
                     }
                 }
                 .asSequence()
-        } catch (e: RequestException) {
-            throw RepositoryException("Cannot read children of node: $path. Cause: ${e.message}", e)
+        } catch (e: AemException) {
+            throw RepositoryException("Cannot read children of node '$path' on $instance. Cause: ${e.message}", e)
         }
+    }
+
+    /**
+     * Checks if node exists.
+     *
+     * Not checks again if properties of node are already loaded (skips extra HTTP request / optimization).
+     */
+    val exists: Boolean
+        get() = propertiesLoaded != null || exists()
+
+    /**
+     * Checks if node exists.
+     *
+     * Always ensures current state of node in repository.
+     */
+    fun exists(): Boolean = try {
+        logger.info("Checking repository node '$path' existence on $instance")
+        repository.http.head(path) { it.statusLine.statusCode != HttpStatus.SC_NOT_FOUND }
+    } catch (e: AemException) {
+        throw RepositoryException("Cannot check repository node existence: $path on $instance. Cause: ${e.message}", e)
     }
 
     /**
      * Create or update node in repository.
      */
     fun save(properties: Map<String, Any?>): RepositoryResult = try {
-        logger.info("Saving repository node '$path', properties '$properties'")
+        logger.info("Saving repository node '$path' using properties '$properties' on $instance")
 
         repository.http.postMultipart(path, postProperties(properties) + operationProperties("")) {
             asObjectFromJson(it, RepositoryResult::class.java)
         }
-    } catch (e: RequestException) {
-        throw RepositoryException("Cannot save repository node: $path. Cause: ${e.message}", e)
+    } catch (e: AemException) {
+        throw RepositoryException("Cannot save repository node '$path' on $instance. Cause: ${e.message}", e)
     }
 
     /**
      * Delete node and all children from repository.
      */
     fun delete(): RepositoryResult = try {
-        logger.info("Deleting repository node '$path'")
+        logger.info("Deleting repository node '$path' on $instance")
 
         repository.http.postMultipart(path, operationProperties("delete")) {
             asObjectFromJson(it, RepositoryResult::class.java)
         }
-    } catch (e: RequestException) {
-        throw RepositoryException("Cannot delete repository node: $path. Cause: ${e.message}", e)
+    } catch (e: AemException) {
+        throw RepositoryException("Cannot delete repository node '$path' on $instance. Cause: ${e.message}", e)
     }
 
     /**
@@ -129,21 +145,24 @@ class Node(private val repository: Repository, val path: String) : Serializable 
     }
 
     /**
-     * Copies the node from current node to given path
-     */
-    fun copyTo(destination: String) = copy("${parent.path}/", destination)
-
-    /**
-     * Copy the node from given path to current node
-     */
-    fun copyFrom(source: String) = copy(source, path)
-
-    /**
      * Synchronizes on demand previously loaded properties of node (by default properties are loaded lazily).
-     * Useful when saving and working on same node again (without instantiating variable).
+     * Useful when saving and working on same node again (without instantiating separate variable).
      */
     fun reload() {
-        reloadProperties(true)
+        reloadProperties()
+    }
+
+    /**
+     * Copies node to from source path to destination path.
+     */
+    fun copy(targetPath: String) {
+        try {
+            repository.http.postUrlencoded(path, operationProperties("copy") + mapOf(
+                    ":dest" to targetPath
+            )) { checkStatus(it, HttpStatus.SC_CREATED) }
+        } catch (e: AemException) {
+            throw RepositoryException("Cannot copy repository node from '$path' to '$targetPath' on $instance. Cause: '${e.message}'")
+        }
     }
 
     /**
@@ -203,41 +222,16 @@ class Node(private val repository: Repository, val path: String) : Serializable 
      */
     fun hasProperties(names: Iterable<String>): Boolean = names.all { properties.containsKey(it) }
 
-    private fun reloadProperties(verbose: Boolean): Properties? {
-        logger.info("Reading properties of repository node '$path'")
+    private fun reloadProperties(): Properties {
+        logger.info("Reading properties of repository node '$path' on $instance")
 
         return try {
-            repository.http.get("$path.json") {
-                Properties(this@Node, asJson(it).json<LinkedHashMap<String, Any>>()).apply { propertiesLoaded = this }
+            repository.http.get(path) { response ->
+                val props = asJson(response).json<LinkedHashMap<String, Any>>()
+                Properties(this@Node, props).apply { propertiesLoaded = this }
             }
-        } catch (e: RequestException) {
-            val msg = "Cannot read properties of node: $path. Cause: ${e.message}"
-            if (verbose) {
-                throw RepositoryException(msg, e)
-            } else {
-                logger.debug(msg)
-                return null
-            }
-        }
-    }
-
-    /**
-     * Copies the node to from source to destination
-     */
-    private fun copy(source: String, destination: String) {
-        if (!exists) {
-            try {
-                repository.http.postUrlencoded(source, mapOf(
-                        ":operation" to "copy",
-                        ":dest" to destination
-                )) { response ->
-                    if (HttpStatus.SC_CREATED != response.statusLine.statusCode) {
-                        throw RepositoryException("Could not copy node from $path to $destination on ${repository.instance}.")
-                    }
-                }
-            } catch (e: RequestException) {
-                throw RepositoryException("Could not send copy request to ${repository.instance}.")
-            }
+        } catch (e: AemException) {
+            throw RepositoryException("Cannot read properties of node '$path' on $instance. Cause: ${e.message}", e)
         }
     }
 

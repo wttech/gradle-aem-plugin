@@ -9,45 +9,43 @@ import com.cognifide.gradle.aem.common.instance.InstanceSync
 import com.cognifide.gradle.aem.common.instance.service.repository.Node
 import com.cognifide.gradle.aem.common.utils.Formats
 
+// TODO introduce Workflow class which will hide launcher impl details
 class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
 
     val repository = sync.repository
 
-    fun toggleWhile(names: List<String>, expectedState: Boolean, callback: () -> Unit) {
-        val strategy: ToggleStrategy =
-                if (Formats.versionAtLeast(instance.version, "6.4.0")) Toggle64() else Toggle61()
+    val strategy: ToggleStrategy
+        get() = when {
+            Formats.versionAtLeast(instance.version, "6.4.0") -> Toggle64()
+            else -> Toggle61()
+        }
+
+    fun toggle(names: List<String>, expectedState: Boolean, callback: () -> Unit) {
         try {
-            toggleAll(names, expectedState, strategy)
+            toggleAll(names, expectedState)
             callback()
         } finally {
-            toggleAll(names, !expectedState, strategy)
+            toggleAll(names, !expectedState)
         }
     }
-
-    fun toggleWhile(workflow: Workflow, expectedState: Boolean, callback: () -> Unit) = toggleWhile(workflow.ids, expectedState, callback)
 
     fun enable(name: String) = saveState(name, true)
 
     fun enable(names: List<String>) = names.forEach { enable(it) }
 
-    fun enable(workflow: Workflow) = enable(workflow.ids)
-
     fun disable(name: String) = saveState(name, false)
 
     fun disable(names: List<String>) = names.forEach { disable(it) }
 
-    fun disable(workflow: Workflow) = disable(workflow.ids)
-
     private fun find(name: String): Node? {
         val node = repository.node(determineLauncherPath(name, instance.version))
-        return if (Formats.versionAtLeast(instance.version, "6.4.0")) {
-                if (repository.node("$WF_LAUNCHER_PATH_6_4_LIBS$name").exists) node else null
-            } else {
-                if (node.exists) node else null
+        return when {
+            Formats.versionAtLeast(instance.version, "6.4.0") -> if (repository.node("$WF_LAUNCHER_PATH_6_4_LIBS$name").exists) node else null
+            else -> if (node.exists) node else null
         }
     }
 
-    private fun toggleAll(names: List<String>, expectedState: Boolean, strategy: ToggleStrategy) {
+    private fun toggleAll(names: List<String>, expectedState: Boolean) {
         names.forEach { name ->
             find(name)?.let { launcher ->
                 if (strategy.changeRequired(launcher, expectedState)) {
@@ -59,11 +57,8 @@ class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
     }
 
     private fun saveState(name: String, state: Boolean) {
-        val strategy: ToggleStrategy =
-                if (Formats.versionAtLeast(instance.version, "6.4.0")) Toggle64() else Toggle61()
-        find(name)?.let { launcher ->
-            strategy.toggle(launcher, state)
-        } ?: throw InstanceException("Workflow $name was not found on $instance.")
+        find(name)?.let { strategy.toggle(it, state) }
+                ?: throw InstanceException("Workflow $name was not found on $instance.")
     }
 
     companion object {
