@@ -324,6 +324,12 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
     // ----- Events -----
 
     /**
+     * Get OSGi events for current moment.
+     */
+    val events: List<Event>
+        get() = determineEventState().events
+
+    /**
      * Determine OSGi events for current moment.
      */
     fun determineEventState(): EventState {
