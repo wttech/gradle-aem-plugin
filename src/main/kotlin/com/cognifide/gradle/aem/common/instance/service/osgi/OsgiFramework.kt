@@ -132,9 +132,8 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
 
     /**
      * Set properties for existing OSGi configuration.
-     * Declarative looking alias method.
      */
-    fun configuration(pid: String, properties: Map<String, Any?>) = updateConfiguration(pid, properties)
+    fun configure(pid: String, properties: Map<String, Any?>) = updateConfiguration(pid, properties)
 
     /**
      * Obtain all OSGi configuration PIDs.

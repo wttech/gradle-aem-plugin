@@ -2063,8 +2063,25 @@ aem {
 
 #### Controlling OSGi bundles, components and configurations
 
-To disable specific OSGi component by its PID value and only on publish instances use [OsgiFramework](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/osgi/OsgiFramework.kt) instance service and write:
+Simply use [OsgiFramework](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/osgi/OsgiFramework.kt) instance service.
 
+To restart some bundle after deploying a CRX package, write:
+
+```kotlin
+aem {
+    tasks {
+        packageDeploy {
+            doLast {
+                aem.sync {
+                    osgiFramework.restartBundle("com.adobe.cq.dam.cq-scene7-imaging")
+                }           
+            }       
+        }
+    }
+}
+```
+
+To disable specific OSGi component by its PID value and only on publish instances, write:
 
 ```kotlin
 aem {
@@ -2081,14 +2098,15 @@ aem {
 }
 ```
 
-Custom configuration for the particular OSGi component can be created and modified by [OsgiFramework](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/osgi/OsgiFramework.kt) as well:
+To configure specific OSGi service by its PID:
+
 ```kotlin
 aem {
     tasks {
         register("enableCrx") {
             doLast {
                 aem.sync(aem.publishInstances) {
-                    osgiFramework.configuration("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", mapOf(
+                    osgiFramework.configure("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", mapOf(
                         "alias" to "/crx/server",
                         "dav.create-absolute-uri" to true,
                         "dav.protectedhandlers" to "org.apache.jackrabbit.server.remoting.davex.AclRemoveHandler"
@@ -2099,10 +2117,8 @@ aem {
     }
 }
 ```
-It is also possible to add or modify the factory OSGi methods. Additional `service` parameter can be passed to determine proper config to create or update.
-Only necessary properties can be passed while modifying the config. All other properties will be taken from the config as before the changes.
 
-Delete operation is also available for configurations, either standard or factory ones.
+All [CRUD](https://en.wikipedia.org/wiki/CRUD) methods for manipulating OSGi configurations are available. Also for configuration factories.
 
 ### Understand why there are one or two plugins to be applied in build script
 
