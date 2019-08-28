@@ -9,6 +9,9 @@ class ConfigurationState {
     @JsonProperty
     lateinit var pids: List<Pid>
 
+    val unknown: Boolean
+        get() = pids.isEmpty()
+
     @JsonIgnoreProperties(ignoreUnknown = true)
     class Pid {
 
@@ -26,5 +29,16 @@ class ConfigurationState {
 
         @JsonProperty
         var nameHint: String? = null
+    }
+
+    override fun toString(): String {
+        return "ConfigurationState(total='${pids.size}')"
+    }
+
+    companion object {
+
+        fun unknown(): ConfigurationState = ConfigurationState().apply {
+            pids = listOf()
+        }
     }
 }
