@@ -28,13 +28,13 @@ class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
     fun toggle(type: String, flag: Boolean) = toggle(listOf(type), flag)
 
     fun toggle(types: Iterable<String>, flag: Boolean) {
-        workflows(types).filter { workflow ->
-            val exists = workflow.exists
-            if (!exists) {
+        workflows(types).forEach { workflow ->
+            if (workflow.exists) {
+                workflow.toggle(flag)
+            } else {
                 aem.logger.warn("Workflow '${workflow.id}' does not exist on $instance!")
             }
-            exists
-        }.forEach { it.toggle(flag) }
+        }
     }
 
     fun toggle(vararg types: String, flag: Boolean) = toggle(types.asIterable(), flag)
