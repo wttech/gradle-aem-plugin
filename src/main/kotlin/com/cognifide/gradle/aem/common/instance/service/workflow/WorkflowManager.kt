@@ -9,7 +9,8 @@ class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
 
     val repository = sync.repository
 
-    val configFrozen = Formats.versionAtLeast(instance.version, "6.4.0")
+    val configFrozen: Boolean
+        get() = Formats.versionAtLeast(instance.version, "6.4.0")
 
     fun workflow(id: String) = Workflow(this, id)
 
