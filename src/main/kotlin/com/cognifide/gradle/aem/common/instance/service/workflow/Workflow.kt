@@ -11,34 +11,34 @@ class Workflow(val manager: WorkflowManager, val id: String) {
 
     private val logger = manager.aem.logger
 
-    private val launcherNode: Node
+    val launcher: Node
         get() = repository.node(when {
             manager.configFrozen -> "/conf/global/settings/workflow/launcher/config/$id"
             else -> "/etc/workflow/launcher/config/$id"
         })
 
-    private val launcherFrozenNode: Node
+    val launcherFrozen: Node
         get() = when {
             manager.configFrozen -> repository.node("/libs/settings/workflow/launcher/config/$id")
             else -> throw AemException("Workflow launcher frozen node is not available!")
         }
 
     val exists: Boolean
-        get() = launcherNode.exists || (manager.configFrozen && launcherFrozenNode.exists)
+        get() = launcher.exists || (manager.configFrozen && launcherFrozen.exists)
 
     fun toggle(flag: Boolean) {
-        if (manager.configFrozen && !launcherNode.exists) {
-            logger.info("Copying workflow launcher from '${launcherFrozenNode.path}' to ${launcherNode.path} on $instance")
-            launcherNode.copyFrom(launcherFrozenNode.path)
+        if (manager.configFrozen && !launcher.exists) {
+            logger.info("Copying workflow launcher from '${launcherFrozen.path}' to ${launcher.path} on $instance")
+            launcher.copyFrom(launcherFrozen.path)
         }
 
         if (flag) {
-            logger.info("Enabling workflow launcher '${launcherNode.path}' on $instance")
+            logger.info("Enabling workflow launcher '${launcher.path}' on $instance")
         } else {
-            logger.info("Disabling workflow launcher '${launcherNode.path}' on $instance")
+            logger.info("Disabling workflow launcher '${launcher.path}' on $instance")
         }
 
-        launcherNode.saveProperty("enabled", flag)
+        launcher.saveProperty("enabled", flag)
     }
 
     fun enable() = toggle(true)
