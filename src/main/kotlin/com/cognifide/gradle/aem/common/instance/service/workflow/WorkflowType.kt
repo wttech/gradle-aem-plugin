@@ -16,6 +16,6 @@ enum class WorkflowType(val ids: List<String>) {
 
         fun ids(type: String) = ids(listOf(type))
 
-        fun ids(types: List<String>) = types.flatMap { of(it)?.ids ?: listOf() }
+        fun ids(types: Iterable<String>) = types.flatMap { of(it)?.ids ?: listOf() }
     }
 }

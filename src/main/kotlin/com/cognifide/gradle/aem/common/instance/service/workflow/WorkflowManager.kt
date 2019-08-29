@@ -11,30 +11,24 @@ class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
 
     val configFrozen = Formats.versionAtLeast(instance.version, "6.4.0")
 
-    fun enable(type: String) = toggle(type, true)
+    fun workflow(id: String) = Workflow(this, id)
 
-    fun enable(type: Iterable<String>) = type.forEach { enable(it) }
+    fun workflows(type: String) = workflows(listOf(type))
 
-    fun enable(vararg types: String) = enable(types.asIterable())
+    fun workflows(types: Iterable<String>) = WorkflowType.ids(types).map { Workflow(this, it) }
 
-    fun disable(type: String) = toggle(type, false)
+    fun workflows(vararg types: String) = workflows(types.asIterable())
 
-    fun disable(types: Iterable<String>) = types.forEach { disable(it) }
-
-    fun disable(vararg types: String) = disable(types.asIterable())
-
-    fun toggle(types: Iterable<String>, flag: Boolean) {
-        types.forEach { toggle(it, flag) }
-    }
-
-    fun toggle(vararg types: String, flag: Boolean) = toggle(types.asIterable(), flag)
+    // ----- DSL shorthands -----
 
     fun toggle(typeFlags: Map<String, Boolean>) {
         typeFlags.forEach { (type, flag) -> toggle(type, flag) }
     }
 
-    fun toggle(type: String, flag: Boolean) {
-        val workflows = WorkflowType.ids(type).map { Workflow(this, it) }
+    fun toggle(type: String, flag: Boolean) = toggle(listOf(type), flag)
+
+    fun toggle(types: Iterable<String>, flag: Boolean) {
+        val workflows = workflows(types)
 
         workflows.forEach { workflow ->
             if (!workflow.exists) {
@@ -46,6 +40,8 @@ class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
             workflow.toggle(flag)
         }
     }
+
+    fun toggle(vararg types: String, flag: Boolean) = toggle(types.asIterable(), flag)
 
     fun toggleTemporarily(typeFlags: Map<String, Boolean>, callback: () -> Unit) {
         if (typeFlags.isEmpty()) {

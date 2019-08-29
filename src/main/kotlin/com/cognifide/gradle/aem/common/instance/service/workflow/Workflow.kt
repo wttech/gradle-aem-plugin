@@ -22,11 +22,15 @@ class Workflow(val manager: WorkflowManager, val id: String) {
     val exists: Boolean
         get() = launcherNode.exists || (manager.configFrozen && launcherFrozenNode.exists)
 
-    fun toggle(state: Boolean) {
+    fun toggle(flag: Boolean) {
         if (manager.configFrozen && !launcherNode.exists) {
             launcherNode.copyFrom(launcherFrozenNode.path)
         }
 
-        launcherNode.saveProperty("enabled", state)
+        launcherNode.saveProperty("enabled", flag)
     }
+
+    fun enable() = toggle(true)
+
+    fun disable() = toggle(false)
 }

@@ -29,9 +29,7 @@ class Repository(sync: InstanceSync) : InstanceService(sync) {
     /**
      * Manipulate node at given path (CRUD).
      */
-    fun node(path: String): Node {
-        return Node(this, path)
-    }
+    fun node(path: String): Node = Node(this, path)
 
     /**
      * Calculate a value using node at given path (e.g read property and return it).
