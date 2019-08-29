@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem.common.instance.service.workflow
 
-import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.common.instance.service.repository.Node
 
 class Workflow(val manager: WorkflowManager, val id: String) {
@@ -20,7 +19,7 @@ class Workflow(val manager: WorkflowManager, val id: String) {
     val launcherFrozen: Node
         get() = when {
             manager.configFrozen -> repository.node("/libs/settings/workflow/launcher/config/$id")
-            else -> throw AemException("Workflow launcher frozen node is not available!")
+            else -> throw WorkflowException("Workflow launcher frozen is not available on $instance!")
         }
 
     val exists: Boolean
