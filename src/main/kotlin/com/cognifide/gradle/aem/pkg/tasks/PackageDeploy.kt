@@ -4,7 +4,6 @@ import com.cognifide.gradle.aem.common.instance.InstanceSync
 import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
 import com.cognifide.gradle.aem.common.instance.checkAvailable
 import com.cognifide.gradle.aem.common.instance.names
-import com.cognifide.gradle.aem.common.instance.service.workflow.Workflow
 import com.cognifide.gradle.aem.common.tasks.PackageTask
 import com.cognifide.gradle.aem.common.utils.fileNames
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -51,6 +50,13 @@ open class PackageDeploy : PackageTask() {
      */
     @Input
     var installRecursive: Boolean = aem.props.boolean("package.deploy.installRecursive") ?: true
+
+    /**
+     * Allows to temporarily enable or disable workflows during CRX package deployment.
+     */
+    @Input
+    var workflowToggle: Map<String, Boolean> = aem.props.map("package.deploy.workflowToggle")
+            ?.mapValues { it.value.toBoolean() } ?: mapOf()
 
     /**
      * Hook for preparing instance before deploying packages
@@ -118,8 +124,7 @@ open class PackageDeploy : PackageTask() {
                 increment("Deploying package '${pkg.name}' to instance '${instance.name}'") {
                     initializer()
 
-                    // TODO parametrize via CMD
-                    workflowManager.toggle(Workflow.DAM_ASSET.ids, false) {
+                    workflowManager.toggleTemporarily(workflowToggle) {
                         if (distributed) {
                             packageManager.distribute(pkg, uploadForce, uploadRetry, installRecursive, installRetry)
                         } else {

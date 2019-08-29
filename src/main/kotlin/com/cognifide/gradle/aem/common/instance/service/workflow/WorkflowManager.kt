@@ -1,70 +1,63 @@
 package com.cognifide.gradle.aem.common.instance.service.workflow
 
-import com.cognifide.gradle.aem.AemConstants.WF_LAUNCHER_PATH_6_1
-import com.cognifide.gradle.aem.AemConstants.WF_LAUNCHER_PATH_6_4
-import com.cognifide.gradle.aem.AemConstants.WF_LAUNCHER_PATH_6_4_LIBS
 import com.cognifide.gradle.aem.common.instance.InstanceException
 import com.cognifide.gradle.aem.common.instance.InstanceService
 import com.cognifide.gradle.aem.common.instance.InstanceSync
-import com.cognifide.gradle.aem.common.instance.service.repository.Node
 import com.cognifide.gradle.aem.common.utils.Formats
 
-// TODO introduce Workflow class which will hide launcher impl details
 class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
 
     val repository = sync.repository
 
-    val strategy: ToggleStrategy
-        get() = when {
-            Formats.versionAtLeast(instance.version, "6.4.0") -> Toggle64()
-            else -> Toggle61()
+    val configFrozen = Formats.versionAtLeast(instance.version, "6.4.0")
+
+    fun enable(type: String) = toggle(type, true)
+
+    fun enable(type: Iterable<String>) = type.forEach { enable(it) }
+
+    fun enable(vararg types: String) = enable(types.asIterable())
+
+    fun disable(type: String) = toggle(type, false)
+
+    fun disable(types: Iterable<String>) = types.forEach { disable(it) }
+
+    fun disable(vararg types: String) = disable(types.asIterable())
+
+    fun toggle(types: Iterable<String>, flag: Boolean) {
+        types.forEach { toggle(it, flag) }
+    }
+
+    fun toggle(vararg types: String, flag: Boolean) = toggle(types.asIterable(), flag)
+
+    fun toggle(typeFlags: Map<String, Boolean>) {
+        typeFlags.forEach { (type, flag) -> toggle(type, flag) }
+    }
+
+    fun toggle(type: String, flag: Boolean) {
+        val workflows = WorkflowType.ids(type).map { Workflow(this, it) }
+
+        workflows.forEach { workflow ->
+            if (!workflow.exists) {
+                throw InstanceException("Workflow '${workflow.id}' cannot be found on $instance!")
+            }
         }
 
-    fun toggle(names: List<String>, expectedState: Boolean, callback: () -> Unit) {
+        workflows.forEach { workflow ->
+            workflow.toggle(flag)
+        }
+    }
+
+    fun toggleTemporarily(typeFlags: Map<String, Boolean>, callback: () -> Unit) {
+        if (typeFlags.isEmpty()) {
+            callback()
+            return
+        }
+
         try {
-            toggleAll(names, expectedState)
+            toggle(typeFlags)
             callback()
         } finally {
-            toggleAll(names, !expectedState)
-        }
-    }
-
-    fun enable(name: String) = saveState(name, true)
-
-    fun enable(names: List<String>) = names.forEach { enable(it) }
-
-    fun disable(name: String) = saveState(name, false)
-
-    fun disable(names: List<String>) = names.forEach { disable(it) }
-
-    private fun find(name: String): Node? {
-        val node = repository.node(determineLauncherPath(name, instance.version))
-        return when {
-            Formats.versionAtLeast(instance.version, "6.4.0") -> if (repository.node("$WF_LAUNCHER_PATH_6_4_LIBS$name").exists) node else null
-            else -> if (node.exists) node else null
-        }
-    }
-
-    private fun toggleAll(names: List<String>, expectedState: Boolean) {
-        names.forEach { name ->
-            find(name)?.let { launcher ->
-                if (strategy.changeRequired(launcher, expectedState)) {
-                    strategy.toggle(launcher, expectedState)
-                    aem.logger.info("Workflow $name switched to $expectedState on $instance.")
-                }
-            } ?: throw InstanceException("Workflow $name was not found on $instance.")
-        }
-    }
-
-    private fun saveState(name: String, state: Boolean) {
-        find(name)?.let { strategy.toggle(it, state) }
-                ?: throw InstanceException("Workflow $name was not found on $instance.")
-    }
-
-    companion object {
-        fun determineLauncherPath(name: String, aemVersion: String): String {
-            return if (Formats.versionAtLeast(aemVersion, "6.4.0")) "$WF_LAUNCHER_PATH_6_4$name"
-            else "$WF_LAUNCHER_PATH_6_1$name"
+            toggle(typeFlags.mapValues { !it.value })
         }
     }
 }
