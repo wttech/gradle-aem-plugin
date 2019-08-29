@@ -12,7 +12,8 @@ open class EnvironmentHosts : AemDefaultTask() {
 
     @TaskAction
     fun appendHosts() {
-        Hosts.of(aem.environment.hosts.defined).append()
+        val hosts = Hosts.of(aem.environment.hosts.all)
+        hosts.append()
 
         aem.notifier.notify("Environment hosts", "Appended with success")
     }

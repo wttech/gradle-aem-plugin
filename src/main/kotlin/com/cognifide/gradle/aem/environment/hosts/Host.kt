@@ -16,6 +16,10 @@ class Host(val ip: String, val name: String) : Serializable {
     val text: String
         get() = "$ip\t$name"
 
+    @get:JsonIgnore
+    val httpUrl: String
+        get() = "http://$name"
+
     companion object {
         fun of(value: String): Host {
             val parts = value.trim().split(" ").map { it.trim() }
