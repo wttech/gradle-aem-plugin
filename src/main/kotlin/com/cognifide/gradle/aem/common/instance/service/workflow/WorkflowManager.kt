@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem.common.instance.service.workflow
 
-import com.cognifide.gradle.aem.common.instance.InstanceException
 import com.cognifide.gradle.aem.common.instance.InstanceService
 import com.cognifide.gradle.aem.common.instance.InstanceSync
 import com.cognifide.gradle.aem.common.utils.Formats
@@ -29,17 +28,13 @@ class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
     fun toggle(type: String, flag: Boolean) = toggle(listOf(type), flag)
 
     fun toggle(types: Iterable<String>, flag: Boolean) {
-        val workflows = workflows(types)
-
-        workflows.forEach { workflow ->
-            if (!workflow.exists) {
-                throw InstanceException("Workflow '${workflow.id}' cannot be found on $instance!")
+        workflows(types).filter { workflow ->
+            val exists = workflow.exists
+            if (!exists) {
+                aem.logger.warn("Workflow '${workflow.id}' does not exist on $instance!")
             }
-        }
-
-        workflows.forEach { workflow ->
-            workflow.toggle(flag)
-        }
+            exists
+        }.forEach { it.toggle(flag) }
     }
 
     fun toggle(vararg types: String, flag: Boolean) = toggle(types.asIterable(), flag)
