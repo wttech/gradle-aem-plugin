@@ -1364,7 +1364,9 @@ Predefined expandable properties:
 
 #### Task `instanceBackup`
 
-Turns off local AEM instance(s) then archives them into ZIP file, then turns on again.
+Archives local AEM instance(s) into ZIP file. Provides automated way to perform [offline backup](https://helpx.adobe.com/pl/experience-manager/6-5/sites/administering/using/backup-and-restore.html#OfflineBackup). Requires having instance(s) down.
+
+To perform [online backup](https://helpx.adobe.com/pl/experience-manager/6-5/sites/administering/using/backup-and-restore.html#OnlineBackup) consider to [implement custom AEM task](#implement-custom-aem-tasks) which will reflect cURL functionality from section [Automating AEM Online Backup](https://helpx.adobe.com/pl/experience-manager/6-5/sites/administering/using/backup-and-restore.html#OnlineBackup).
 
 The most recent file created by this task will be reused automatically while running task `instanceCreate`.
 
