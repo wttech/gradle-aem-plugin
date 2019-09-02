@@ -5,6 +5,7 @@ import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.file.resolver.FileResolver
 import com.cognifide.gradle.aem.common.utils.Formats
+import com.cognifide.gradle.aem.common.utils.Patterns
 import com.cognifide.gradle.aem.environment.docker.base.CygPath
 import com.cognifide.gradle.aem.environment.docker.base.DockerRuntime
 import com.cognifide.gradle.aem.environment.docker.base.runtime.Toolbox
@@ -84,7 +85,7 @@ class Environment(@JsonIgnore val aem: AemExtension) : Serializable {
     @JsonIgnore
     var healthChecker = HealthChecker(this)
 
-    val hosts = HostOptions()
+    val hosts = HostOptions(this)
 
     val created: Boolean
         get() = rootDir.exists()
@@ -226,7 +227,9 @@ class Environment(@JsonIgnore val aem: AemExtension) : Serializable {
     /**
      * Defines hosts to be appended to system specific hosts file.
      */
-    fun hosts(names: Iterable<String>) = hosts.define(dockerRuntime.hostIp, names)
+    fun hosts(names: Iterable<String>) = hosts.other(names.map { url ->
+        if (!url.contains("://")) "http://$url" else url // backward compatibility
+    })
 
     /**
      * Configures environment service health checks.
