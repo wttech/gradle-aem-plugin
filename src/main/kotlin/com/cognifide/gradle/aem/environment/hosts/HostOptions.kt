@@ -6,37 +6,32 @@ import net.minidev.json.annotate.JsonIgnore
 import java.io.Serializable
 
 /**
- * Manages host definitions in case of different purposes.
- *
- * Introduces conventions to distinguish hosts in groups:
- * - 'live' for accessing production site,
- * - 'demo' for accessing site on which automated tests could be performed,
- * - 'author' for accessing AEM author instance,
- * - 'other' for hosts like for AEM dispatcher HTTP server.
+ * Manages host definitions in case of different purposes indicated by tags.
  */
 class HostOptions(environment: Environment) : Serializable {
 
-    var defined = mutableMapOf<String, MutableList<Host>>()
-
-    @get:JsonIgnore
-    val all: List<Host>
-        get() = defined.flatMap { it.value }
+    var defined = mutableListOf<Host>()
 
     @JsonIgnore
     var ipDefault = environment.dockerRuntime.hostIp
 
-    fun define(group: String, name: String, ip: String = ipDefault) {
-        defined.getOrPut(group) { mutableListOf() }.add(Host(name, ip))
+    fun define(url: String, options: Host.() -> Unit = {}) {
+        defined.add(Host(url).apply { ip = ipDefault; options() })
     }
 
-    fun define(group: String, names: Iterable<String>, ip: String = ipDefault) {
-        names.forEach { define(group, it, ip) }
+    fun define(vararg urls: String, options: Host.() -> Unit = {}) = define(urls.asIterable(), options)
+
+    fun define(urls: Iterable<String>, options: Host.() -> Unit = {}) = urls.forEach { define(it, options) }
+
+    fun find(vararg tags: String) = find(tags.asIterable())
+
+    fun find(tags: Iterable<String>) = all(tags).first()
+
+    fun all(vararg tags: String) = all(tags.asIterable())
+
+    fun all(tags: Iterable<String>) = defined.filter { h -> tags.all { t -> h.tags.contains(t) } }.ifEmpty {
+        throw EnvironmentException("Environment has no hosts tagged with '$tags'!")
     }
-
-    fun host(group: String): Host = group(group).first()
-
-    fun group(group: String) = defined[group]
-            ?: throw EnvironmentException("Environment has no hosts defined in group '$group'")
 
     // ----- DSL shorthands / conventions -----
 
@@ -45,79 +40,51 @@ class HostOptions(environment: Environment) : Serializable {
      */
     @get:JsonIgnore
     val author: Host
-        get() = host(GROUP_AUTHOR)
+        get() = find(TAG_AUTHOR)
 
     /**
      * Get hosts responsible for accessing AEM author instances.
      */
     @get:JsonIgnore
     val authors: List<Host>
-        get() = group(GROUP_AUTHOR)
+        get() = all(TAG_AUTHOR)
 
-    fun author(name: String) = author(listOf(name))
+    fun author(vararg urls: String, options: Host.() -> Unit = {}) = author(urls.asIterable(), options)
 
-    fun author(vararg names: String) = author(names.asIterable())
-
-    fun author(names: Iterable<String>) = define(GROUP_AUTHOR, names)
+    fun author(urls: Iterable<String>, options: Host.() -> Unit = {}) = define(urls) { tag(TAG_AUTHOR); options() }
 
     /**
-     * Get host responsible for accessing demo site (e.g used for automated tests)
+     * Get host responsible for accessing AEM author instance.
      */
     @get:JsonIgnore
-    val demo: Host
-        get() = host(GROUP_DEMO)
+    val publish: Host
+        get() = find(TAG_PUBLISH)
 
     /**
-     * Get hosts responsible for accessing demo site (e.g content used for automated tests)
+     * Get hosts responsible for accessing AEM publish instances.
      */
     @get:JsonIgnore
-    val demos: List<Host>
-        get() = group(GROUP_DEMO)
+    val publishes: List<Host>
+        get() = all(TAG_PUBLISH)
 
-    fun demo(name: String) = demo(listOf(name))
+    fun publish(vararg urls: String, options: Host.() -> Unit = {}) = publish(urls.asIterable(), options)
 
-    fun demo(vararg names: String) = demo(names.asIterable())
-
-    fun demo(names: Iterable<String>) = define(GROUP_DEMO, names)
-
-    /**
-     * Get host responsible for accessing live site (production content).
-     */
-    @get:JsonIgnore
-    val live: Host
-        get() = host(GROUP_LIVE)
-
-    /**
-     * Get hosts responsible for accessing live site (production content).
-     */
-    @get:JsonIgnore
-    val lives: List<Host>
-        get() = group(GROUP_LIVE)
-
-    fun live(name: String) = live(listOf(name))
-
-    fun live(vararg names: String) = live(names.asIterable())
-
-    fun live(names: Iterable<String>) = define(GROUP_LIVE, names)
+    fun publish(urls: Iterable<String>, options: Host.() -> Unit = {}) = define(urls) { tag(TAG_PUBLISH); options() }
 
     @get:JsonIgnore
     val others: List<Host>
-        get() = group(GROUP_OTHER)
+        get() = all(TAG_OTHER)
 
-    fun other(name: String) = other(listOf(name))
+    fun other(vararg urls: String, options: Host.() -> Unit = {}) = other(urls.asIterable(), options)
 
-    fun other(vararg names: String) = other(names.asIterable())
-
-    fun other(names: Iterable<String>) = define(GROUP_OTHER, names)
+    fun other(urls: Iterable<String>, options: Host.() -> Unit = {}) = define(urls) { tag(TAG_OTHER); options() }
 
     companion object {
 
-        val GROUP_AUTHOR = "author"
+        val TAG_AUTHOR = "author"
 
-        val GROUP_DEMO = "demo"
+        val TAG_PUBLISH = "publish"
 
-        val GROUP_LIVE = "live"
-
-        val GROUP_OTHER = "other"
+        val TAG_OTHER = "other"
     }
 }
