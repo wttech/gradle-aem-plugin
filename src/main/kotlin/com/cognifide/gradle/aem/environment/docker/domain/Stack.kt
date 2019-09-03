@@ -7,7 +7,7 @@ import com.cognifide.gradle.aem.environment.docker.base.DockerException
 import com.cognifide.gradle.aem.environment.docker.base.DockerStack
 
 /**
- * Represents Docker stack named 'aem' and provides API for manipulating it.
+ * Represents AEM project specific AEM Docker stack and provides API for manipulating it.
  */
 class Stack(val environment: Environment) {
 
