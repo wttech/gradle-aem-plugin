@@ -5,7 +5,6 @@ import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.file.resolver.FileResolver
 import com.cognifide.gradle.aem.common.utils.Formats
-import com.cognifide.gradle.aem.common.utils.Patterns
 import com.cognifide.gradle.aem.environment.docker.base.CygPath
 import com.cognifide.gradle.aem.environment.docker.base.DockerRuntime
 import com.cognifide.gradle.aem.environment.docker.base.runtime.Toolbox
