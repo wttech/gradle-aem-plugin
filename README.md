@@ -75,7 +75,7 @@
         * [Task instanceReload](#task-instancereload)
         * [Task instanceResolve](#task-instanceresolve)
         * [Task instanceSatisfy](#task-instancesatisfy)
-        * [Task instanceCheck](#task-instancecheck)
+        * [Task instanceAwait](#task-instanceawait)
         * [Task instanceTail](#task-instancetail)
            * [Tailing incidents](#tailing-incidents)
            * [Tailing multiple instances](#tailing-multiple-instances)
@@ -89,6 +89,8 @@
         * [Task environmentUp](#task-environmentup)
         * [Task environmentDown](#task-environmentdown)
         * [Task environmentDev](#task-environmentdev)
+        * [Task environmentAwait](#task-environmentawait)
+        * [Task environmentClean](#task-environmentclean)
   * [How to's](#how-tos)
      * [Set AEM configuration properly for all / concrete project(s)](#set-aem-configuration-properly-for-all--concrete-projects)
      * [Use lifecycle tasks](#use-lifecycle-tasks)
@@ -105,7 +107,6 @@
      * [Filter instances to work with](#filter-instances-to-work-with)
      * [Know how properties are being expanded in instance or package files](#know-how-properties-are-being-expanded-in-instance-or-package-files)
   * [Known issues](#known-issues)
-     * [Building artifacts on CI server / offline mode](#building-artifacts-on-ci-server--offline-mode)
      * [No OSGi services / components are registered](#no-osgi-services--components-are-registered)
      * [Caching task packageCompose](#caching-task-packagecompose)
      * [Vault tasks parallelism](#vault-tasks-parallelism)
@@ -135,7 +136,7 @@ What is being done above by simply running super easy command `sh gradlew`?
 1. `:aem:instanceSatisfy` -> checking for new dependent CRX packages to be deployed (in a lazy & fail-safe manner) that could arrive to our AEM instances automatically if somebody else add it to build configuration in the meantime.
 2. `:aem:assembly:full:packageDeploy` -> building & deploying all-in-one CRX package to AEM instances in parallel, then awaiting for stable condition of AEM instances and built application.
 3. `:aem:environmentClean` -> cleaning AEM dispatcher cache and restarting HTTPD service / Apache Web Server.
-4. `:aem:environmentCheck` -> running health checks ensuring that all AEM instances / websites are responding correctly.
+4. `:aem:environmentAwait` -> running health checks ensuring that all AEM instances / websites are responding correctly.
 
 **Build is incremental** which guarantees optimized time every time regardless of build command used.
 Only changed parts of application are processed again:
@@ -1251,7 +1252,7 @@ plugins {
 }
 ```
 
-Provides instance related tasks: `instanceUp`, `instanceDown`, `instanceSetup`, `instanceBackup`, `instanceCheck`, `instanceSetup`, `instanceCreate` etc.
+Provides instance related tasks: `instanceUp`, `instanceDown`, `instanceSetup`, `instanceBackup`, `instanceAwait`, `instanceSetup`, `instanceCreate` etc.
 Allows to create & customize AEM instances on local file system and control them. Also provides support for automated backups and restoring.
 
 Should be applied only at root project / only once within whole build.
@@ -1563,7 +1564,7 @@ For instance:
 gradlew instanceSatisfy -Pinstance.satisfy.urls=[https://github.com/OlsonDigital/aem-groovy-console/releases/download/11.0.0/aem-groovy-console-11.0.0.zip,https://github.com/neva-dev/felix-search-webconsole-plugin/releases/download/search-webconsole-plugin-1.2.0/search-webconsole-plugin-1.2.0.jar]
 ```
 
-#### Task `instanceCheck`
+#### Task `instanceAwait`
 
 Check health condition of AEM instance(s) of any type (local & remote).
 
@@ -1572,7 +1573,7 @@ Customize behavior of each particular health check using following lambdas:
 ```kotlin
 aem {
     tasks {
-        instanceCheck {
+        instanceAwait {
             awaitUp {
                 timeout {
                     stateTime = aem.props.long("instance.awaitUp.timeout.stateTime") ?: TimeUnit.MINUTES.toMillis(2)
@@ -1763,6 +1764,8 @@ aem {
 }
 ```
 
+These checks are performed automatically after each file change applied when running task `environmentDev` or on demand when running task `environmentAwait`.
+
 #### Task `environmentUp`
 
 Turns on local AEM environment.
@@ -1789,7 +1792,16 @@ Workflow:
    * HTTPD and AEM Dispatcher logs located at path *aem/.environment/httpd/logs*
    * AEM Dispatcher cache located at path *aem/.environment/httpd/cache*
    
-![Environment up task](docs/environment-dev-task.gif)
+![Environment dev task](docs/environment-dev-task.gif)
+
+#### Task `environmentAwait`
+
+Performs [environment service health checks](#environment-service-health-checks) on demand.
+
+#### Task `environmentClean`
+
+Cleans virtualized AEM environment by restarting HTTPD service & removing Dispatcher cache files.
+In detail, removes all files declared as caches in environment directories section.
 
 ## How to's
 
@@ -2136,7 +2148,7 @@ Currently used plugin architecture solves that problem.
 Initially, to create fully configured local AEM instances simply run command `gradlew instanceSetup`.
 
 Later during development process, building and deploying to AEM should be done using the simplest command: `gradlew`.
-Above configuration uses [default tasks](https://docs.gradle.org/current/userguide/tutorial_using_tasks.html#sec:default_tasks), so that alternatively it is possible to do the same using explicitly specified command `gradlew instanceSatisfy packageDeploy instanceCheck`.
+Above configuration uses [default tasks](https://docs.gradle.org/current/userguide/tutorial_using_tasks.html#sec:default_tasks), so that alternatively it is possible to do the same using explicitly specified command `gradlew instanceSatisfy packageDeploy`.
 
 * Firstly dependent packages (like AEM hotfixes, Vanity URL Components etc) will be installed lazily (only when they are not installed yet).
 * In next step application is being built and deployed to all configured AEM instances.
@@ -2190,14 +2202,6 @@ The properties syntax comes from [Pebble Template Engine](https://github.com/Peb
 Expanding properties could be used separately on any string or file source in any custom task by using method `aem.props.expand()`.
 
 ## Known issues
-
-### Building artifacts on CI server / offline mode
-
-By default, plugin is configuring `instanceCheck` and `environmentCheck` tasks to be run with `check` lifecycle task.
-This assumption is handy, when Gradle AEM Plugin is used on local development environment where Gradle is executed on same machine as AEM.
-However, Gradle build users are very often used to build artifacts using e.g command `./gradlew build` or more strictly `./gradlew :aem:assembly:full:build` (recommended approach - build only desired package instead of all possible).
-Task `build` depends on `check` according to [base plugin](https://docs.gradle.org/current/userguide/base_plugin.html), so there is a little side-effect here. Building artifacts / CRX packages causing running AEM related tests (`instanceCheck` and `environmentCheck`).
-To prevent running these tests on CI (continuous integration server) and still using handy `build` or `check` lifecycle tasks, extra parameter is needed to be specified `-Poffline=true`. This indicates that AEM instance(s) are not available and should not be used if it is possible.
 
 ### No OSGi services / components are registered
 
