@@ -20,7 +20,7 @@ class EnvironmentHostsTest {
     @Test
     fun shouldAppendEtcHostsWithRequiredHosts() {
         // given
-        val hosts = listOf(Host("127.0.0.1", "example.com"), Host("127.0.0.1", "demo.example.com"))
+        val hosts = listOf(Host("http://example.com"), Host("http://demo.example.com"))
         val fileText = IO.text("com/cognifide/gradle/aem/test/environment-hosts/hosts")
 
         // when
@@ -33,7 +33,7 @@ class EnvironmentHostsTest {
     @Test
     fun appendingEtcHostsShouldBeIdempotent() {
         // given
-        val hosts = listOf(Host("127.0.0.1", "example.com"), Host("127.0.0.1", "demo.example.com"))
+        val hosts = listOf(Host( "http://example.com"), Host("http://demo.example.com"))
         val fileText = IO.text("com/cognifide/gradle/aem/test/environment-hosts/hosts_already_appended")
 
         // when
@@ -46,7 +46,7 @@ class EnvironmentHostsTest {
     @Test
     fun shouldIgnoreCommentsWhenAppending() {
         // given
-        val hosts = listOf(Host("127.0.0.1", "example.com"), Host("127.0.0.1", "demo.example.com"))
+        val hosts = listOf(Host("http://example.com"), Host("http://demo.example.com"))
         val fileText = IO.text("com/cognifide/gradle/aem/test/environment-hosts/hosts_with_comments")
 
         // when

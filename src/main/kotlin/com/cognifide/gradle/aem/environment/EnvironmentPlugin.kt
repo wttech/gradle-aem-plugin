@@ -49,7 +49,7 @@ class EnvironmentPlugin : AemPlugin() {
             register<EnvironmentDev>(EnvironmentDev.NAME) {
                 mustRunAfter(EnvironmentUp.NAME)
             }
-            register<EnvironmentCheck>(EnvironmentCheck.NAME) {
+            register<EnvironmentAwait>(EnvironmentAwait.NAME) {
                 mustRunAfter(EnvironmentUp.NAME)
             }
             register<EnvironmentClean>(EnvironmentClean.NAME) {
@@ -81,12 +81,11 @@ class EnvironmentPlugin : AemPlugin() {
             registerOrConfigure<Resolve>(Resolve.NAME) {
                 dependsOn(EnvironmentResolve.NAME)
             }
+            registerOrConfigure<Await>(Await.NAME) {
+                dependsOn(EnvironmentAwait.NAME)
+            }
 
             // Gradle lifecycle
-
-            named<Task>(LifecycleBasePlugin.CHECK_TASK_NAME) {
-                dependsOn(EnvironmentCheck.NAME)
-            }
 
             named<Task>(LifecycleBasePlugin.CLEAN_TASK_NAME) {
                 dependsOn(EnvironmentClean.NAME)
