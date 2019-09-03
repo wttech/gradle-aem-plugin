@@ -123,15 +123,9 @@ open class PackageDeploy : PackageTask() {
             aem.syncPackages(instances, packages) { pkg ->
                 increment("Deploying package '${pkg.name}' to instance '${instance.name}'") {
                     initializer()
-
                     workflowManager.toggleTemporarily(workflowToggle) {
-                        if (distributed) {
-                            packageManager.distribute(pkg, uploadForce, uploadRetry, installRecursive, installRetry)
-                        } else {
-                            packageManager.deploy(pkg, uploadForce, uploadRetry, installRecursive, installRetry)
-                        }
+                        packageManager.deploy(pkg, uploadForce, uploadRetry, installRecursive, installRetry, distributed)
                     }
-
                     finalizer()
                 }
             }
