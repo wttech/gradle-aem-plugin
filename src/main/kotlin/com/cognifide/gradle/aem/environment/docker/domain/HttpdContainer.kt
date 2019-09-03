@@ -5,8 +5,9 @@ import com.cognifide.gradle.aem.environment.Environment
 import com.cognifide.gradle.aem.environment.EnvironmentException
 import com.cognifide.gradle.aem.environment.docker.base.DockerContainer
 import com.cognifide.gradle.aem.environment.docker.base.DockerException
+import org.gradle.internal.os.OperatingSystem
 
-class HttpdContainer(environment: Environment) {
+class HttpdContainer(private val environment: Environment) {
 
     private val aem = environment.aem
 
@@ -56,7 +57,12 @@ class HttpdContainer(environment: Environment) {
             Behaviors.waitUntil(awaitRetry.delay) { timer ->
                 val running = container.running
                 if (timer.ticks == awaitRetry.times && !running) {
-                    throw EnvironmentException("Failed to await HTTPD service")
+                    val msg = mutableListOf("Failed to await HTTPD service!")
+                    if (OperatingSystem.current().isWindows) {
+                        msg.add("Ensure having shared drives configured and reset performed after changing Windows credentials.")
+                    }
+                    msg.add("Consider troubleshooting using command: 'docker stack ps ${environment.stack.stack.name} --no-trunc'.")
+                    throw EnvironmentException(msg.joinToString("\n"))
                 }
 
                 !running
