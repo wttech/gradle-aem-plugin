@@ -2,7 +2,7 @@ package com.cognifide.gradle.aem.environment.hosts
 
 import com.cognifide.gradle.aem.environment.Environment
 import com.cognifide.gradle.aem.environment.EnvironmentException
-import net.minidev.json.annotate.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.Serializable
 
 /**

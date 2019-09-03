@@ -1,6 +1,6 @@
 repositories {
-    jcenter()
     mavenLocal()
+    jcenter()
     maven { url = uri("http://dl.bintray.com/cognifide/maven-public") }
 }
 
