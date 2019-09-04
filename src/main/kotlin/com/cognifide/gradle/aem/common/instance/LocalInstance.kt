@@ -149,10 +149,13 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
         aem.logger.info("Copying quickstart license '$license' to directory '$quickstartDir'")
         manager.quickstart.license?.let { FileUtils.copyFile(it, license) }
 
-        GFileUtils.mkdirs(installDir)
-        aem.logger.info("Copying quickstart install files (pre-installed bundles and packages)" +
-                " to directory '$quickstartDir': ${manager.install.files.joinToString("\n")}")
-        manager.install.files.forEach { FileUtils.copyFileToDirectory(it, installDir) }
+        val installFiles = manager.install.files
+        if (installFiles.isNotEmpty()) {
+            GFileUtils.mkdirs(installDir)
+            aem.logger.info("Copying quickstart install files (pre-installed bundles and packages)" +
+                    " to directory '$quickstartDir': ${installFiles.joinToString("\n")}")
+            installFiles.forEach { FileUtils.copyFileToDirectory(it, installDir) }
+        }
     }
 
     private fun validateFiles() {
