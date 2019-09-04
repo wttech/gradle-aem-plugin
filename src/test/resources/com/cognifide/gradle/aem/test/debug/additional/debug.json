@@ -311,6 +311,9 @@
         "remoteDir": "*/additional/build/aem/instanceBackup/remote",
         "localDir": "*/additional/build/aem/instanceBackup/local",
         "suffix": ".backup.zip"
+      },
+      "install": {
+        "downloadDir": "*/additional/build/aem/instance/install"
       }
     },
     "environment" : {

@@ -65,6 +65,7 @@
         * [Task instanceResetup](#task-instanceresetup)
         * [Task instanceCreate](#task-instancecreate)
            * [Configuration of AEM instance source (JAR file or backup file)](#configuration-of-aem-instance-source-jar-file-or-backup-file)
+           * [Pre-installed OSGi bundles and CRX packages](#pre-installed-osgi-bundles-and-crx-packages)
            * [Extracted instance files configuration (optional)](#extracted-instance-files-configuration-optional)
         * [Task instanceBackup](#task-instancebackup)
            * [Work with remote instance backups](#work-with-remote-instance-backups)
@@ -1329,6 +1330,25 @@ aem {
 Notice that, default selector assumes that most recent backup will be selected.
 Ordering by file name including timestamp then local backups precedence when backup is available on both local & remote source.
 Still, backup selector could select exact backup by name when property `localInstance.backup.name` is specified.
+
+##### Pre-installed OSGi bundles and CRX packages
+
+Use dedicated section:
+
+```kotlin
+aem {
+    localInstance {
+        install {
+            files {
+                download("http://my-company.com/aem/packages/my-package.zip")
+            }
+        }
+    }
+}
+```
+
+Files section works in a same way as in [instance satisfy task](#task-instancesatisfy).
+For more details see AEM [File Install Provider](https://helpx.adobe.com/experience-manager/6-5/sites/deploying/using/custom-standalone-install.html#AddingaFileInstallProvider) documentation.
 
 ##### Extracted instance files configuration (optional)
 
