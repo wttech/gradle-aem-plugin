@@ -20,4 +20,11 @@ class InstallResolver(private val aem: AemExtension) {
     @get:JsonIgnore
     val files: List<File>
         get() = fileResolver.allFiles
+
+    init {
+        val urls = aem.props.list("localInstance.install.urls") ?: listOf()
+        urls.forEachIndexed { index, url ->
+            fileResolver.group("cmd.${index + 1}") { download(url) }
+        }
+    }
 }
