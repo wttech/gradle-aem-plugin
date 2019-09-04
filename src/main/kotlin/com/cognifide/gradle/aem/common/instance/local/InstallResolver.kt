@@ -9,7 +9,7 @@ import java.io.File
 class InstallResolver(private val aem: AemExtension) {
 
     var downloadDir = aem.props.string("localInstance.install.downloadDir")?.let { aem.project.file(it) }
-            ?: AemTask.temporaryDir(aem.project, "install")
+            ?: AemTask.temporaryDir(aem.project, "instance/install")
 
     private val fileResolver = FileResolver(aem, downloadDir)
 
@@ -20,5 +20,4 @@ class InstallResolver(private val aem: AemExtension) {
     @get:JsonIgnore
     val files: List<File>
         get() = fileResolver.allFiles
-
 }
