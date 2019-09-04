@@ -1375,9 +1375,9 @@ Most often it will be path: *build/aem/instanceBackup/local/xxx.backup.zip*. It 
 
 ```kotlin
 aem {
-    tasks {
+    localInstance {
         backup {
-            destinationDirectory.set(file("any/other/path"))
+            localDir = file("any/other/directory")
         }
     }
 }
