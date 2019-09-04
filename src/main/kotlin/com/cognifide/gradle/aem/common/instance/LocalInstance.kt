@@ -153,7 +153,7 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
         if (installFiles.isNotEmpty()) {
             GFileUtils.mkdirs(installDir)
             aem.logger.info("Copying quickstart install files (pre-installed bundles and packages)" +
-                    " to directory '$quickstartDir': ${installFiles.joinToString("\n")}")
+                    " to directory '$quickstartDir':\n${installFiles.joinToString("\n")}")
             installFiles.forEach { FileUtils.copyFileToDirectory(it, installDir) }
         }
     }
