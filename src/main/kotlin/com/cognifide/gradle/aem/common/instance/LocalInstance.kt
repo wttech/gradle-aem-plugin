@@ -105,6 +105,10 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
     val initialized: Boolean
         get() = locked(LOCK_INIT)
 
+    @get:JsonIgnore
+    val installDir: File
+        get() = File(quickstartDir, "install")
+
     private fun binScript(name: String, os: OperatingSystem = OperatingSystem.current()): Script {
         return if (os.isWindows) {
             Script(this, listOf("cmd", "/C"), File(dir, "$name.bat"), File(quickstartDir, "bin/$name.bat"))
@@ -141,6 +145,10 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
 
         manager.quickstart.license?.let { FileUtils.copyFile(it, license) }
         manager.quickstart.jar?.let { FileUtils.copyFile(it, jar) }
+
+        GFileUtils.mkdirs(installDir)
+
+        manager.install.files.forEach { FileUtils.copyFileToDirectory(it, installDir) }
     }
 
     private fun validateFiles() {
