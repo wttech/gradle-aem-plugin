@@ -117,6 +117,16 @@ interface Instance : Serializable {
     val json: String
         get() = Formats.toJson(this)
 
+    @get:Internal
+    @get:JsonIgnore
+    val author: Boolean
+        get() = type == IdType.AUTHOR
+
+    @get:Internal
+    @get:JsonIgnore
+    val publish: Boolean
+        get() = type == IdType.PUBLISH
+
     companion object {
 
         const val FILTER_ANY = "*"

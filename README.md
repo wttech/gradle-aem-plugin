@@ -65,6 +65,7 @@
         * [Task instanceResetup](#task-instanceresetup)
         * [Task instanceCreate](#task-instancecreate)
            * [Configuration of AEM instance source (JAR file or backup file)](#configuration-of-aem-instance-source-jar-file-or-backup-file)
+           * [Pre-installed OSGi bundles and CRX packages](#pre-installed-osgi-bundles-and-crx-packages)
            * [Extracted instance files configuration (optional)](#extracted-instance-files-configuration-optional)
         * [Task instanceBackup](#task-instancebackup)
            * [Work with remote instance backups](#work-with-remote-instance-backups)
@@ -102,6 +103,7 @@
         * [Working with content repository (JCR)](#working-with-content-repository-jcr)
         * [Executing code on AEM runtime](#executing-code-on-aem-runtime)
         * [Controlling OSGi bundles, components and configurations](#controlling-osgi-bundles-components-and-configurations)
+        * [Controlling workflows](#controlling-workflows)
      * [Understand why there are one or two plugins to be applied in build script](#understand-why-there-are-one-or-two-plugins-to-be-applied-in-build-script)
      * [Work effectively on start and daily basis](#work-effectively-on-start-and-daily-basis)
      * [Filter instances to work with](#filter-instances-to-work-with)
@@ -1114,6 +1116,7 @@ Add any of below command line parameters to customize CRX package deployment beh
 * `-Ppackage.deploy.installRecursive=false` - disable automatic installation of subpackages located inside CRX package being deployed.  
 * `-Ppackage.deploy.uploadRetry=n` - customize number of retries being performed after failed CRX package upload.
 * `-Ppackage.deploy.installRetry=n` - customize number of retries being performed after failed CRX package install.
+* `-Ppackage.deploy.workflowToggle=[id1=true,id2=false,...]` - temporarily enable or disable AEM workflows during deployment e.g when CRX package contains generated DAM asset renditions so that regeneration could be avoided and deploy time reduced. For example: `-Ppackage.deploy.workflowToggle=[dam_asset=false]`. Workflow ID *dam_asset* is a shorthand alias for all workflows related with DAM asset processing.
 
 #### Task `packageUpload`
 
@@ -1328,6 +1331,25 @@ Notice that, default selector assumes that most recent backup will be selected.
 Ordering by file name including timestamp then local backups precedence when backup is available on both local & remote source.
 Still, backup selector could select exact backup by name when property `localInstance.backup.name` is specified.
 
+##### Pre-installed OSGi bundles and CRX packages
+
+Use dedicated section:
+
+```kotlin
+aem {
+    localInstance {
+        install {
+            files {
+                download("http://my-company.com/aem/packages/my-package.zip")
+            }
+        }
+    }
+}
+```
+
+Files section works in a same way as in [instance satisfy task](#task-instancesatisfy).
+For more details see AEM [File Install Provider](https://helpx.adobe.com/experience-manager/6-5/sites/deploying/using/custom-standalone-install.html#AddingaFileInstallProvider) documentation.
+
 ##### Extracted instance files configuration (optional)
 
 Plugin allows to override or provide extra files to local AEM instance installations.
@@ -1521,7 +1543,7 @@ Although, by grouping packages, there are available new options:
 * group name could be used to filter out packages that will be deployed (`-Pinstance.satisfy.group=tools`, wildcards supported, comma delimited).
 * after satisfying particular group, there are being run instance stability checks automatically (this behavior could be customized).
 
-Task supports hooks for preparing (and finalizing) instance before (after) deploying packages in group on each instance. 
+Task supports extra configuration related with particular CRX package deployment and hooks for preparing (and finalizing) instance before (after) deploying packages in group on each instance. 
 Also there is a hook called when satisfying each package group on all instances completed (for instance for awaiting stable instances which is a default behavior).
 In other words, for instance, there is ability to run groovy console script before/after deploying some CRX package and then restarting instance(s) if it is exceptionally required.
 
@@ -1534,6 +1556,7 @@ aem {
                     download("https://github.com/OlsonDigital/aem-groovy-console/releases/download/11.0.0/aem-groovy-console-11.0.0.zip")
                     config {
                         instanceName = "*-author" // additional filter intersecting 'instance.name' property
+                        workflowToggle("dam_asset", false)
                         initializer {
                             logger.info("Installing Groovy Console on $instance")
                         }
@@ -1562,6 +1585,12 @@ For instance:
 
 ```bash
 gradlew instanceSatisfy -Pinstance.satisfy.urls=[https://github.com/OlsonDigital/aem-groovy-console/releases/download/11.0.0/aem-groovy-console-11.0.0.zip,https://github.com/neva-dev/felix-search-webconsole-plugin/releases/download/search-webconsole-plugin-1.2.0/search-webconsole-plugin-1.2.0.jar]
+```
+
+As of task inherits from task `packageDeploy` it is also possible to temporary enable or disable workflows during CRX package deployment:
+
+```bash
+gradlew :instanceSatisfy -Ppackage.deploy.workflowToggle=[dam_asset=false]
 ```
 
 #### Task `instanceAwait`
@@ -2134,6 +2163,51 @@ aem {
 ```
 
 All [CRUD](https://en.wikipedia.org/wiki/CRUD) methods for manipulating OSGi configurations are available. Also for configuration factories.
+
+#### Controlling workflows
+
+Simply use [Workflow Manager](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/workflow/WorkflowManager.kt) instance service.
+
+Workflows can be either enabled or disabled by:
+
+```kotlin
+aem {
+    tasks {
+        register("setupWorkflows") {
+            doLast {
+                aem.sync {
+                    workflowManager.workflow("update_asset_create").disable()
+                    workflowManager.workflow("update_asset_mod").disable()
+                
+                    workflowManager.workflows("dam_asset").forEach { it.enable() } // reverts above using shorthand alias
+                }
+            }        
+        }   
+    }   
+}
+
+
+```
+
+Also it is possible to enable or disable workflows only for particular action to be performed:
+
+```kotlin
+    workflowManager.toggleTemporarily("dam_asset", false) {
+        packageManager.deploy(file("my-package.zip"))
+    }
+```
+
+It is also possible to mix enabling and disabling workflows:
+
+```kotlin
+    workflowManager.toggleTemporarily(mapOf(
+        "update_asset_create" to false,
+        "update_asset_mod" to false
+        "update_asset_custom" to true 
+    )) {
+        // ...
+    }
+```
 
 ### Understand why there are one or two plugins to be applied in build script
 
