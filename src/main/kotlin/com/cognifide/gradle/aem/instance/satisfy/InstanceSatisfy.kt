@@ -202,7 +202,7 @@ open class InstanceSatisfy : PackageDeploy() {
     }
 
     private fun InstanceSync.satisfyPackage(group: PackageGroup, state: PackageState) {
-        workflowManager.toggleTemporarily(group.workflowToggle ?: workflowToggle) {
+        workflowManager.toggleTemporarily(workflowToggle + group.workflowToggle) {
             packageManager.deploy(
                     state.file,
                     group.uploadForce ?: uploadForce,

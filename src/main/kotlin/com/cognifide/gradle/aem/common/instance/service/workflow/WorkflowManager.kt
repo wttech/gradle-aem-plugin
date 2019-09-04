@@ -42,6 +42,11 @@ class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
     /**
      * Temporarily enable or disable workflows, do action, then restore workflows to initial state.
      */
+    fun toggleTemporarily(type: String, flag: Boolean, action: () -> Unit) = toggleTemporarily(mapOf(type to flag), action)
+
+    /**
+     * Temporarily enable or disable workflows, do action, then restore workflows to initial state.
+     */
     fun toggleTemporarily(typeFlags: Map<String, Boolean>, action: () -> Unit) {
         if (typeFlags.isEmpty()) {
             action()

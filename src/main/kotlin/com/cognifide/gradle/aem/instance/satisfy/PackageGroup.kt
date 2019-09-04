@@ -61,7 +61,14 @@ class PackageGroup(val resolver: PackageResolver, name: String) : FileGroup(reso
      * Allows to temporarily enable or disable workflows during CRX package deployment.
      */
     @Input
-    var workflowToggle: Map<String, Boolean>? = null
+    var workflowToggle = mutableMapOf<String, Boolean>()
+
+    /**
+     * Allows to temporarily enable or disable workflow during CRX package deployment.
+     */
+    fun workflowToggle(id: String, flag: Boolean) {
+        workflowToggle[id] = flag
+    }
 
     internal var initializer: InstanceSync.() -> Unit = {}
 
