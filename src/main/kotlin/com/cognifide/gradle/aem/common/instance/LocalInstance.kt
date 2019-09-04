@@ -143,11 +143,15 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
     private fun copyFiles() {
         GFileUtils.mkdirs(dir)
 
-        manager.quickstart.license?.let { FileUtils.copyFile(it, license) }
+        aem.logger.info("Copying quickstart JAR '$jar' to directory '$quickstartDir'")
         manager.quickstart.jar?.let { FileUtils.copyFile(it, jar) }
 
-        GFileUtils.mkdirs(installDir)
+        aem.logger.info("Copying quickstart license '$license' to directory '$quickstartDir'")
+        manager.quickstart.license?.let { FileUtils.copyFile(it, license) }
 
+        GFileUtils.mkdirs(installDir)
+        aem.logger.info("Copying quickstart install files (pre-installed bundles and packages)" +
+                " to directory '$quickstartDir': ${manager.install.files.joinToString("\n")}")
         manager.install.files.forEach { FileUtils.copyFileToDirectory(it, installDir) }
     }
 
