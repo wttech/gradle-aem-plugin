@@ -76,7 +76,7 @@ open class InstanceSatisfy : PackageDeploy() {
     val packageGroups by lazy {
         val result = if (cmdGroups) {
             logger.info("Providing packages defined via command line.")
-            packageProvider.resolveGroups { Patterns.wildcard(name, groupName) }
+            packageProvider.resolveGroups { Patterns.wildcard(name, "$GROUP_CMD.*") }
         } else {
             logger.info("Providing packages defined in build script.")
             packageProvider.resolveGroups(groupFilter)
@@ -108,7 +108,7 @@ open class InstanceSatisfy : PackageDeploy() {
         if (cmdGroups) {
             val urls = aem.props.list("instance.satisfy.urls") ?: listOf()
             urls.forEachIndexed { index, url ->
-                packageProvider.group("cmd.${index + 1}") { download(url) }
+                packageProvider.group("$GROUP_CMD.${index + 1}") { download(url) }
             }
         }
     }
@@ -221,5 +221,7 @@ open class InstanceSatisfy : PackageDeploy() {
 
     companion object {
         const val NAME = "instanceSatisfy"
+
+        const val GROUP_CMD = "cmd"
     }
 }
