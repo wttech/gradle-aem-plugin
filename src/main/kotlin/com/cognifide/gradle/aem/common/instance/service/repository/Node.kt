@@ -25,6 +25,11 @@ class Node(val repository: Repository, val path: String) : Serializable {
     private var propertiesLoaded: Properties? = null
 
     /**
+     * Cached node existence check result.
+     */
+    private var existsCheck: Boolean? = null
+
+    /**
      * Node name
      */
     val name: String
@@ -100,14 +105,18 @@ class Node(val repository: Repository, val path: String) : Serializable {
 
     /**
      * Check if node exists.
-     *
-     * Always ensures current state of node in repository.
      */
-    fun exists(): Boolean = try {
-        logger.info("Checking repository node '$path' existence on $instance")
-        repository.http.head(path) { it.statusLine.statusCode != HttpStatus.SC_NOT_FOUND }
-    } catch (e: AemException) {
-        throw RepositoryException("Cannot check repository node existence: $path on $instance. Cause: ${e.message}", e)
+    fun exists(recheck: Boolean = false): Boolean {
+        if (recheck || existsCheck == null) {
+            existsCheck = try {
+                logger.info("Checking repository node '$path' existence on $instance")
+                repository.http.head(path) { it.statusLine.statusCode != HttpStatus.SC_NOT_FOUND }
+            } catch (e: AemException) {
+                throw RepositoryException("Cannot check repository node existence: $path on $instance. Cause: ${e.message}", e)
+            }
+        }
+
+        return existsCheck!!
     }
 
     /**
@@ -236,7 +245,7 @@ class Node(val repository: Repository, val path: String) : Serializable {
         logger.info("Reading properties of repository node '$path' on $instance")
 
         return try {
-            repository.http.get(path) { response ->
+            repository.http.get("$path.json") { response ->
                 val props = asJson(response).json<LinkedHashMap<String, Any>>()
                 Properties(this@Node, props).apply { propertiesLoaded = this }
             }
@@ -278,7 +287,7 @@ class Node(val repository: Repository, val path: String) : Serializable {
         get() = Formats.toJson(this)
 
     override fun toString(): String {
-        return "Node(path='$path', properties=$properties)"
+        return "Node(path='$path', properties=$propertiesLoaded)"
     }
 
     enum class Property(val value: String) {

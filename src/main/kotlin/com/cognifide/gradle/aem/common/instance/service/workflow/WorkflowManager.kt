@@ -39,17 +39,30 @@ class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
 
     fun toggle(vararg types: String, flag: Boolean) = toggle(types.asIterable(), flag)
 
-    fun toggleTemporarily(typeFlags: Map<String, Boolean>, callback: () -> Unit) {
+    /**
+     * Temporarily enable or disable workflows, do action, then restore workflows to initial state.
+     */
+    fun toggleTemporarily(typeFlags: Map<String, Boolean>, action: () -> Unit) {
         if (typeFlags.isEmpty()) {
-            callback()
+            action()
             return
         }
 
+        val workflowToFlag = typeFlags.map { (type, flag) ->
+            workflows(type).filter { workflow ->
+                val exists = workflow.exists
+                if (!exists) {
+                    aem.logger.warn("Workflow '${workflow.id}' does not exist on $instance!")
+                }
+                exists
+            } to (flag)
+        }
+
         try {
-            toggle(typeFlags)
-            callback()
+            workflowToFlag.forEach { (workflows, flag) -> workflows.forEach { it.toggle(flag) } }
+            action()
         } finally {
-            toggle(typeFlags.mapValues { !it.value })
+            workflowToFlag.forEach { (workflows, _) -> workflows.forEach { it.restore() } }
         }
     }
 }
