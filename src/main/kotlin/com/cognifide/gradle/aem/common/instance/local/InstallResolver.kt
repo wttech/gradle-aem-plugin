@@ -24,7 +24,9 @@ class InstallResolver(private val aem: AemExtension) {
     init {
         val urls = aem.props.list("localInstance.install.urls") ?: listOf()
         urls.forEachIndexed { index, url ->
-            fileResolver.group("cmd.${index + 1}") { download(url) }
+            val no = index + 1
+            val fileName = url.substringAfterLast("/")
+            fileResolver.group("cmd.$no.$fileName") { download(url) }
         }
     }
 }

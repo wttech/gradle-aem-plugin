@@ -108,7 +108,9 @@ open class InstanceSatisfy : PackageDeploy() {
         if (cmdGroups) {
             val urls = aem.props.list("instance.satisfy.urls") ?: listOf()
             urls.forEachIndexed { index, url ->
-                packageProvider.group("$GROUP_CMD.${index + 1}") { download(url) }
+                val no = index + 1
+                val fileName = url.substringAfterLast("/")
+                packageProvider.group("$GROUP_CMD.$no.$fileName") { download(url) }
             }
         }
     }
