@@ -129,7 +129,7 @@ open class HttpClient(private val aem: AemExtension) : Serializable {
 
     fun head(uri: String) = head(uri) { checkStatus(it) }
 
-    fun <T> head(uri: String, handler: HttpClient.(HttpResponse) -> T): T = head(uri, handler)
+    fun <T> head(uri: String, handler: HttpClient.(HttpResponse) -> T): T = head(uri, handler) {}
 
     fun <T> head(uri: String, handler: HttpClient.(HttpResponse) -> T, options: HttpHead.() -> Unit): T {
         return execute(HttpHead(baseUrl(uri)).apply(options), handler)

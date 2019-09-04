@@ -4,6 +4,13 @@ import com.fasterxml.jackson.core.util.DefaultIndenter
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.jayway.jsonpath.JsonPath
+import org.apache.commons.io.FileUtils
+import org.apache.commons.lang3.StringUtils
+import org.apache.commons.lang3.time.DurationFormatUtils
+import org.apache.commons.validator.routines.UrlValidator
+import org.apache.jackrabbit.util.ISO8601
+import org.gradle.api.Project
+import org.gradle.util.GradleVersion
 import java.io.File
 import java.io.InputStream
 import java.math.BigInteger
@@ -14,13 +21,6 @@ import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.util.*
-import org.apache.commons.io.FileUtils
-import org.apache.commons.lang3.StringUtils
-import org.apache.commons.lang3.time.DurationFormatUtils
-import org.apache.commons.validator.routines.UrlValidator
-import org.apache.jackrabbit.util.ISO8601
-import org.gradle.api.Project
-import org.gradle.util.GradleVersion
 
 @Suppress("MagicNumber", "TooManyFunctions")
 object Formats {
@@ -86,6 +86,17 @@ object Formats {
         }
 
         return between.split(delimiter)
+    }
+
+    fun toMap(value: String?, valueDelimiter: String = ",", keyDelimiter: String = "="): Map<String, String>? {
+        return toList(value, valueDelimiter)?.map { v ->
+            v.split(keyDelimiter).let { e ->
+                when (e.size) {
+                    2 -> e[0] to e[1]
+                    else -> v to ""
+                }
+            }
+        }?.toMap()
     }
 
     fun toBase64(value: String): String {
