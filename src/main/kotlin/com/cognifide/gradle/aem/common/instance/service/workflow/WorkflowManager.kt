@@ -60,7 +60,7 @@ class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
             action()
         } finally {
             workflowToFlag.flatMap { it.first }.forEach { workflow ->
-                restoreRetry.withCountdown<Unit, AemException>("workflow restore '${workflow.id}'") {
+                restoreRetry.withCountdown<Unit, AemException>("workflow restore '${workflow.id}' on '${instance.name}'") {
                     workflow.restore()
                 }
             }
