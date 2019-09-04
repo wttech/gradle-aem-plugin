@@ -1115,6 +1115,7 @@ Add any of below command line parameters to customize CRX package deployment beh
 * `-Ppackage.deploy.installRecursive=false` - disable automatic installation of subpackages located inside CRX package being deployed.  
 * `-Ppackage.deploy.uploadRetry=n` - customize number of retries being performed after failed CRX package upload.
 * `-Ppackage.deploy.installRetry=n` - customize number of retries being performed after failed CRX package install.
+* `-Ppackage.deploy.workflowToggle=[id1=true,id2=false,...]` - temporarily enable or disable AEM workflows during deployment e.g when CRX package contains generated DAM asset renditions so that regeneration could be avoided and deploy time reduced. For example: `-Ppackage.deploy.workflowToggle=[dam_asset=false]`. Workflow ID *dam_asset* is a shorthand alias for all workflows related with DAM asset processing.
 
 #### Task `packageUpload`
 
@@ -1522,7 +1523,7 @@ Although, by grouping packages, there are available new options:
 * group name could be used to filter out packages that will be deployed (`-Pinstance.satisfy.group=tools`, wildcards supported, comma delimited).
 * after satisfying particular group, there are being run instance stability checks automatically (this behavior could be customized).
 
-Task supports hooks for preparing (and finalizing) instance before (after) deploying packages in group on each instance. 
+Task supports extra configuration related with particular CRX package deployment and hooks for preparing (and finalizing) instance before (after) deploying packages in group on each instance. 
 Also there is a hook called when satisfying each package group on all instances completed (for instance for awaiting stable instances which is a default behavior).
 In other words, for instance, there is ability to run groovy console script before/after deploying some CRX package and then restarting instance(s) if it is exceptionally required.
 
@@ -1535,6 +1536,7 @@ aem {
                     download("https://github.com/OlsonDigital/aem-groovy-console/releases/download/11.0.0/aem-groovy-console-11.0.0.zip")
                     config {
                         instanceName = "*-author" // additional filter intersecting 'instance.name' property
+                        workflowToggle("dam_asset", false)
                         initializer {
                             logger.info("Installing Groovy Console on $instance")
                         }
@@ -1563,6 +1565,12 @@ For instance:
 
 ```bash
 gradlew instanceSatisfy -Pinstance.satisfy.urls=[https://github.com/OlsonDigital/aem-groovy-console/releases/download/11.0.0/aem-groovy-console-11.0.0.zip,https://github.com/neva-dev/felix-search-webconsole-plugin/releases/download/search-webconsole-plugin-1.2.0/search-webconsole-plugin-1.2.0.jar]
+```
+
+As of task inherits from task `packageDeploy` it is also possible to temporary enable or disable workflows during CRX package deployment:
+
+```bash
+gradlew :instanceSatisfy -Ppackage.deploy.workflowToggle=[dam_asset=false]
 ```
 
 #### Task `instanceAwait`
