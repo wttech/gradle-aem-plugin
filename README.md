@@ -2138,26 +2138,48 @@ All [CRUD](https://en.wikipedia.org/wiki/CRUD) methods for manipulating OSGi con
 
 #### Controlling workflows
 
-[OsgiFramework](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/osgi/OsgiFramework.kt) allows to use `workflowManager` object to manage workflows in custom tasks.
-Workflows can be either enabled or disabled by calling a corresponding method, with name(s) provided as a parameter:
+Simply use [Workflow Manager](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/workflow/WorkflowManager.kt) instance service.
+
+Workflows can be either enabled or disabled by:
+
 ```kotlin
-workflowManager.disable("update_asset_create")
-workflowManager.disable(listOf("update_asset_create", "update_asset_mod"))
+aem {
+    tasks {
+        register("setupWorkflows") {
+            doLast {
+                aem.sync {
+                    workflowManager.workflow("update_asset_create").disable()
+                    workflowManager.workflow("update_asset_mod").disable()
+                
+                    workflowManager.workflows("dam_asset").forEach { it.enable() } // reverts above using shorthand alias
+                }
+            }        
+        }   
+    }   
+}
+
+
 ```
 
-Additionally, framework provides a method which allows to disable or enable workflows only for particular set of tasks:
+Also it is possible to enable or disable workflows only for particular action to be performed:
+
 ```kotlin
-register("disableDamAssetOnDeploy") {
-            doLast {
-                aem.sync(aem.instances) {
-                    workflowManager.toggleWhile(listOf("update_asset_create", "update_asset_mod"), false) {
-                        packageManager.deploy(file("my-package.zip"))
-                    }
-                }
-            }
-        }
+    workflowManager.toggleTemporarily("dam_asset", false) {
+        packageManager.deploy(file("my-package.zip"))
+    }
 ```
-Boolean parameter determines the expected state of workflows during the callback instructions.
+
+It is also possible to mix enabling and disabling workflows:
+
+```kotlin
+    workflowManager.toggleTemporarily(mapOf(
+        "update_asset_create" to false,
+        "update_asset_mod" to false
+        "update_asset_custom" to true 
+    )) {
+        // ...
+    }
+```
 
 ### Understand why there are one or two plugins to be applied in build script
 
