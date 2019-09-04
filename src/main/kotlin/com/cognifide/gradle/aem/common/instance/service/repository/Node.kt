@@ -17,8 +17,6 @@ class Node(val repository: Repository, val path: String) : Serializable {
 
     private val instance = repository.instance
 
-    private val logger = repository.aem.logger
-
     /**
      * Cached properties of node.
      */
@@ -72,7 +70,7 @@ class Node(val repository: Repository, val path: String) : Serializable {
      */
     @Suppress("unchecked_cast")
     fun children(): Sequence<Node> {
-        logger.info("Reading child nodes of repository node '$path' on $instance")
+        repository.log("Reading child nodes of repository node '$path' on $instance")
 
         return try {
             repository.http.get("$path.harray.1.json") { asJson(it) }
@@ -109,7 +107,7 @@ class Node(val repository: Repository, val path: String) : Serializable {
     fun exists(recheck: Boolean = false): Boolean {
         if (recheck || existsCheck == null) {
             existsCheck = try {
-                logger.info("Checking repository node '$path' existence on $instance")
+                repository.log("Checking repository node '$path' existence on $instance")
                 repository.http.head(path) { it.statusLine.statusCode != HttpStatus.SC_NOT_FOUND }
             } catch (e: AemException) {
                 throw RepositoryException("Cannot check repository node existence: $path on $instance. Cause: ${e.message}", e)
@@ -123,7 +121,7 @@ class Node(val repository: Repository, val path: String) : Serializable {
      * Create or update node in repository.
      */
     fun save(properties: Map<String, Any?>): RepositoryResult = try {
-        logger.info("Saving repository node '$path' using properties '$properties' on $instance")
+        repository.log("Saving repository node '$path' using properties '$properties' on $instance")
 
         repository.http.postMultipart(path, postProperties(properties) + operationProperties("")) {
             asObjectFromJson(it, RepositoryResult::class.java)
@@ -136,7 +134,7 @@ class Node(val repository: Repository, val path: String) : Serializable {
      * Delete node and all children from repository.
      */
     fun delete(): RepositoryResult = try {
-        logger.info("Deleting repository node '$path' on $instance")
+        repository.log("Deleting repository node '$path' on $instance")
 
         repository.http.postMultipart(path, operationProperties("delete")) {
             asObjectFromJson(it, RepositoryResult::class.java)
@@ -242,7 +240,7 @@ class Node(val repository: Repository, val path: String) : Serializable {
     fun hasProperties(names: Iterable<String>): Boolean = names.all { properties.containsKey(it) }
 
     private fun reloadProperties(): Properties {
-        logger.info("Reading properties of repository node '$path' on $instance")
+        repository.log("Reading properties of repository node '$path' on $instance")
 
         return try {
             repository.http.get("$path.json") { response ->
