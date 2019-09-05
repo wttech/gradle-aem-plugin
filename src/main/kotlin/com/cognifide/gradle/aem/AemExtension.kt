@@ -301,8 +301,8 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
         // Defined by build script, via properties or defaults are filterable by name
         return all.filter { instance ->
             when {
-                props.flag("instance.authors") -> instance.author
-                props.flag("instance.publishes") || props.flag("instance.publishers") -> instance.publish
+                props.flag("instance.author", "instance.authors") -> instance.author
+                props.flag("instance.publish", "instance.publishes", "instance.publishers") -> instance.publish
                 else -> Patterns.wildcard(instance.name, nameMatcher)
             }
         }

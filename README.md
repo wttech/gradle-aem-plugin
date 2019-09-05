@@ -2256,8 +2256,8 @@ Environment value comes from system environment variable `ENV` or property `env`
 To deploy only to author or publish instances:
 
 ```bash
-gradlew packageDeploy -Pinstance.authors
-gradlew packageDeploy -Pinstance.publishers
+gradlew packageDeploy -Pinstance.author
+gradlew packageDeploy -Pinstance.publish
 ```
 
 To deploy only to instances specified explicitly:

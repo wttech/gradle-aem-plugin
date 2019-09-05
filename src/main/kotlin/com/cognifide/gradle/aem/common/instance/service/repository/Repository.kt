@@ -47,11 +47,4 @@ class Repository(sync: InstanceSync) : InstanceService(sync) {
      */
     fun node(path: String, properties: Map<String, Any?>): RepositoryResult = node(path).save(properties)
 
-    internal fun log(message: String, e: Throwable? = null) {
-        if (verboseLogging) {
-            aem.logger.info(message, e)
-        } else {
-            aem.logger.debug(message, e)
-        }
-    }
 }

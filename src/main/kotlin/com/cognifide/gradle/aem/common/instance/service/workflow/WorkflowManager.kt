@@ -4,6 +4,7 @@ import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.common.instance.InstanceService
 import com.cognifide.gradle.aem.common.instance.InstanceSync
 import com.cognifide.gradle.aem.common.utils.Formats
+import java.util.*
 
 class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
 
@@ -59,9 +60,12 @@ class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
             workflowToFlag.forEach { (workflows, flag) -> workflows.forEach { it.toggle(flag) } }
             action()
         } finally {
-            workflowToFlag.flatMap { it.first }.forEach { workflow ->
-                restoreRetry.withCountdown<Unit, AemException>("workflow restore '${workflow.id}' on '${instance.name}'") {
-                    workflow.restore()
+            val stack = Stack<Workflow>().apply { addAll(workflowToFlag.flatMap { it.first }) }
+            restoreRetry.withCountdown<Unit, AemException>("workflow restore on '${instance.name}'") {
+                while (stack.isNotEmpty()) {
+                    val current = stack.peek()
+                    current.restore()
+                    stack.pop()
                 }
             }
         }
