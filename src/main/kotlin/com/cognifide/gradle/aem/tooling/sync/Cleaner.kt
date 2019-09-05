@@ -40,7 +40,8 @@ class Cleaner(private val aem: AemExtension) {
     var filesFlattened: PatternFilterable.() -> Unit = {
         include(listOf(
                 "**/_cq_dialog/.content.xml",
-                "**/_cq_htmlTag/.content.xml"
+                "**/_cq_htmlTag/.content.xml",
+                "**/_cq_template/.content.xml"
         ))
     }
 
@@ -185,7 +186,27 @@ class Cleaner(private val aem: AemExtension) {
 
     @Suppress("UNUSED_PARAMETER")
     fun normalizeContent(file: File, lines: List<String>): List<String> {
-        return cleanNamespaces(lines)
+        return mergeSinglePropertyLines(cleanNamespaces(lines))
+    }
+
+    fun mergeSinglePropertyLines(lines: List<String>): List<String> {
+        val result = mutableListOf<String>()
+        val iter = lines.listIterator()
+        while (iter.hasNext()) {
+            val line = iter.next()
+            if (line.trim().startsWith("<") && !line.trim().endsWith(">") && iter.hasNext()) {
+                val nextLine = iter.next()
+                if (!nextLine.trim().startsWith("<") && nextLine.trim().endsWith(">")) {
+                    result.add(line + " " + nextLine.trim())
+                } else {
+                    result.add(line)
+                    result.add(nextLine)
+                }
+            } else {
+                result.add(line)
+            }
+        }
+        return result
     }
 
     fun cleanNamespaces(lines: List<String>): List<String> {
@@ -395,8 +416,6 @@ class Cleaner(private val aem: AemExtension) {
 
     companion object {
         const val JCR_CONTENT_FILE = ".content.xml"
-
-        const val JCR_CONTENT_NODE = "jcr:content"
 
         const val JCR_MIXIN_TYPES_PROP = "jcr:mixinTypes"
 
