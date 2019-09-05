@@ -195,15 +195,22 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         return Patterns.wildcard(file, aem.packageOptions.snapshots)
     }
 
+    @Suppress("LongParameterList")
     fun deploy(
         file: File,
         uploadForce: Boolean = true,
         uploadRetry: Retry = aem.retry(),
         installRecursive: Boolean = true,
-        installRetry: Retry = aem.retry()
+        installRetry: Retry = aem.retry(),
+        activate: Boolean = false
     ) {
         val uploadResponse = upload(file, uploadForce, uploadRetry)
-        install(uploadResponse.path, installRecursive, installRetry)
+        val packagePath = uploadResponse.path
+
+        install(packagePath, installRecursive, installRetry)
+        if (activate) {
+            activate(packagePath)
+        }
     }
 
     fun distribute(
@@ -212,13 +219,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         uploadRetry: Retry = aem.retry(),
         installRecursive: Boolean = true,
         installRetry: Retry = aem.retry()
-    ) {
-        val uploadResponse = upload(file, uploadForce, uploadRetry)
-        val packagePath = uploadResponse.path
-
-        install(packagePath, installRecursive, installRetry)
-        activate(packagePath)
-    }
+    ) = deploy(file, uploadForce, uploadRetry, installRecursive, installRetry, true)
 
     fun activate(remotePath: String): UploadResponse {
         val url = "$JSON_PATH$remotePath/?cmd=replicate"

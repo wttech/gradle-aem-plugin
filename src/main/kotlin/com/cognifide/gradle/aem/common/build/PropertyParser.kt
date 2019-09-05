@@ -49,6 +49,12 @@ class PropertyParser(private val aem: AemExtension) {
         return Formats.toList(value, delimiter)
     }
 
+    fun map(name: String, valueDelimiter: String = ",", keyDelimiter: String = "="): Map<String, String>? {
+        val value = prop(name) ?: return null
+
+        return Formats.toMap(value, valueDelimiter, keyDelimiter)
+    }
+
     fun boolean(name: String) = prop(name)?.toBoolean()
 
     fun long(name: String) = prop(name)?.toLong()

@@ -52,6 +52,13 @@ open class PackageDeploy : PackageTask() {
     var installRecursive: Boolean = aem.props.boolean("package.deploy.installRecursive") ?: true
 
     /**
+     * Allows to temporarily enable or disable workflows during CRX package deployment.
+     */
+    @Input
+    var workflowToggle: Map<String, Boolean> = aem.props.map("package.deploy.workflowToggle")
+            ?.mapValues { it.value.toBoolean() } ?: mapOf()
+
+    /**
      * Hook for preparing instance before deploying packages
      */
     @Internal
@@ -116,13 +123,9 @@ open class PackageDeploy : PackageTask() {
             aem.syncPackages(instances, packages) { pkg ->
                 increment("Deploying package '${pkg.name}' to instance '${instance.name}'") {
                     initializer()
-
-                    if (distributed) {
-                        packageManager.distribute(pkg, uploadForce, uploadRetry, installRecursive, installRetry)
-                    } else {
-                        packageManager.deploy(pkg, uploadForce, uploadRetry, installRecursive, installRetry)
+                    workflowManager.toggleTemporarily(workflowToggle) {
+                        packageManager.deploy(pkg, uploadForce, uploadRetry, installRecursive, installRetry, distributed)
                     }
-
                     finalizer()
                 }
             }

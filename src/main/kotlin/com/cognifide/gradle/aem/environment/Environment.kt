@@ -84,7 +84,7 @@ class Environment(@JsonIgnore val aem: AemExtension) : Serializable {
     @JsonIgnore
     var healthChecker = HealthChecker(this)
 
-    val hosts = HostOptions()
+    val hosts = HostOptions(this)
 
     val created: Boolean
         get() = rootDir.exists()
@@ -226,7 +226,9 @@ class Environment(@JsonIgnore val aem: AemExtension) : Serializable {
     /**
      * Defines hosts to be appended to system specific hosts file.
      */
-    fun hosts(names: Iterable<String>) = hosts.define(dockerRuntime.hostIp, names)
+    fun hosts(names: Iterable<String>) = hosts.other(names.map { url ->
+        if (!url.contains("://")) "http://$url" else url // backward compatibility
+    })
 
     /**
      * Configures environment service health checks.

@@ -42,6 +42,7 @@ class DebugTest : AemTest() {
                 "aem.localInstanceManager.quickstart.downloadDir" to PathValueMatcher(),
                 "aem.localInstanceManager.backup.remoteDir" to PathValueMatcher(),
                 "aem.localInstanceManager.backup.localDir" to PathValueMatcher(),
+                "aem.localInstanceManager.install.downloadDir" to PathValueMatcher(),
                 "aem.packageOptions.contentDir" to PathValueMatcher(),
                 "aem.packageOptions.metaCommonDir" to PathValueMatcher(),
                 "aem.tasks.bundles[*].bndPath" to PathValueMatcher(),
