@@ -97,7 +97,7 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
         install.apply(options)
     }
 
-    @JsonIgnore
+    @get:JsonIgnore
     internal var initOptions: LocalInstance.() -> Unit = {}
 
     /**
