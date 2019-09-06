@@ -4,10 +4,10 @@ import com.cognifide.gradle.aem.AemDefaultTask
 import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
 import org.gradle.api.tasks.TaskAction
 
-open class InstanceCheck : AemDefaultTask() {
+open class InstanceAwait : AemDefaultTask() {
 
     init {
-        description = "Check health condition of all instances."
+        description = "Await for healthy condition of all AEM instances."
     }
 
     private var awaitUpOptions: AwaitUpAction.() -> Unit = {}
@@ -17,16 +17,11 @@ open class InstanceCheck : AemDefaultTask() {
     }
 
     @TaskAction
-    fun check() {
-        if (aem.offline) {
-            aem.logger.info("Instance checking skipped as of offline mode is active.")
-            return
-        }
-
+    fun await() {
         aem.instanceActions.awaitUp(awaitUpOptions)
     }
 
     companion object {
-        const val NAME = "instanceCheck"
+        const val NAME = "instanceAwait"
     }
 }

@@ -78,9 +78,9 @@
           "*://*"
         ]
       },
-      "local": {
+      "path": {
         "enabled": true,
-        "name": "local"
+        "name": "path"
       }
     },
     "packageOptions" : {
@@ -148,6 +148,9 @@
         "remoteDir": "*/minimal/build/aem/instanceBackup/remote",
         "localDir": "*/minimal/build/aem/instanceBackup/local",
         "suffix": ".backup.zip"
+      },
+      "install": {
+        "downloadDir": "*/minimal/build/aem/instance/install"
       }
     },
     "environment" : {

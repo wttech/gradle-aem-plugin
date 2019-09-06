@@ -15,12 +15,12 @@ dependencies {
 
 aem {
     environment {
-        hosts(
-                "example.com",
-                "demo.example.com",
-                "author.example.com",
-                "invalidation-only"
-        )
+        hosts {
+            publish("http://example.com") { tag("live") }
+            publish("http://demo.example.com") { tag("test") }
+            author("http://author.example.com")
+            other("http://dispatcher.example.com")
+        }
         directories {
             regular(
                     "httpd/logs"

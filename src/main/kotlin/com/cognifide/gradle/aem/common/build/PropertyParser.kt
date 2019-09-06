@@ -37,6 +37,8 @@ class PropertyParser(private val aem: AemExtension) {
         return find(name)?.ifBlank { null }
     }
 
+    fun flag(vararg names: String) = names.any { flag(it) }
+
     fun flag(name: String): Boolean {
         val value = find(name) ?: return false
 
@@ -47,6 +49,12 @@ class PropertyParser(private val aem: AemExtension) {
         val value = prop(name) ?: return null
 
         return Formats.toList(value, delimiter)
+    }
+
+    fun map(name: String, valueDelimiter: String = ",", keyDelimiter: String = "="): Map<String, String>? {
+        val value = prop(name) ?: return null
+
+        return Formats.toMap(value, valueDelimiter, keyDelimiter)
     }
 
     fun boolean(name: String) = prop(name)?.toBoolean()

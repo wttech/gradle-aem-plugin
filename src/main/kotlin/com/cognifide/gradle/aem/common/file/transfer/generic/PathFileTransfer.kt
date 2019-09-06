@@ -8,7 +8,10 @@ import java.io.File
 import java.io.IOException
 import org.gradle.util.GFileUtils
 
-class LocalFileTransfer(aem: AemExtension) : AbstractFileTransfer(aem) {
+/**
+ * File transfer which is copying files instead of using them directly.
+ */
+class PathFileTransfer(aem: AemExtension) : AbstractFileTransfer(aem) {
 
     override val name: String
         get() = NAME
@@ -76,6 +79,6 @@ class LocalFileTransfer(aem: AemExtension) : AbstractFileTransfer(aem) {
     private fun dirFiles(dirUrl: String) = (aem.project.file(dirUrl).listFiles() ?: arrayOf()).filter { it.isFile }
 
     companion object {
-        const val NAME = "local"
+        const val NAME = "path"
     }
 }

@@ -78,9 +78,9 @@
           "*://*"
         ]
       },
-      "local": {
+      "path": {
         "enabled": true,
-        "name": "local"
+        "name": "path"
       }
     },
     "packageOptions" : {
@@ -311,6 +311,9 @@
         "remoteDir": "*/additional/build/aem/instanceBackup/remote",
         "localDir": "*/additional/build/aem/instanceBackup/local",
         "suffix": ".backup.zip"
+      },
+      "install": {
+        "downloadDir": "*/additional/build/aem/instance/install"
       }
     },
     "environment" : {
@@ -329,22 +332,36 @@
         "hostIp": "127.0.0.1"
       },
       "hosts" : {
-        "defined" : [
+        "defined": [
           {
-            "ip" : "127.0.0.1",
-            "name" : "example.com"
+            "ip": "127.0.0.1",
+            "tags": [
+              "publish",
+              "live"
+            ],
+            "url": "http://example.com"
           },
           {
-            "ip" : "127.0.0.1",
-            "name" : "demo.example.com"
+            "ip": "127.0.0.1",
+            "tags": [
+              "publish",
+              "test"
+            ],
+            "url": "http://demo.example.com"
           },
           {
-            "ip" : "127.0.0.1",
-            "name" : "author.example.com"
+            "ip": "127.0.0.1",
+            "tags": [
+              "author"
+            ],
+            "url": "http://author.example.com"
           },
           {
-            "ip" : "127.0.0.1",
-            "name" : "invalidation-only"
+            "ip": "127.0.0.1",
+            "tags": [
+              "other"
+            ],
+            "url": "http://dispatcher.example.com"
           }
         ]
       },
