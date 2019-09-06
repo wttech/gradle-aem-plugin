@@ -166,6 +166,10 @@ object Formats {
         return DurationFormatUtils.formatDurationHMS(millis)
     }
 
+    fun durationFormatted(millis: Long) : String {
+        return DurationFormatUtils.formatDuration(millis, "mm:ss:SSS")
+    }
+
     fun rootProjectPath(file: File, project: Project): String {
         return rootProjectPath(file.absolutePath, project)
     }

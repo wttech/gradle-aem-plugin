@@ -6,6 +6,8 @@ import com.cognifide.gradle.aem.common.utils.Formats
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
+import java.text.SimpleDateFormat
+import java.util.concurrent.TimeUnit
 
 class FileDownloader(private val aem: AemExtension) {
 
@@ -13,8 +15,12 @@ class FileDownloader(private val aem: AemExtension) {
 
     private var loggedKb: Long = 0
 
-    fun ProgressLogger.logProgress(operation: String, readLength: Long, fullLength: Long, file: File) {
+    fun ProgressLogger.logProgress(operation: String, readLength: Long, fullLength: Long, file: File, nanoStartTime: Long) {
         processedBytes += readLength
+
+        val nanoElapsedTime = System.currentTimeMillis() - nanoStartTime
+        val allTimeForDownloading = (nanoElapsedTime * fullLength / processedBytes)
+        val remainingTimeNanoseconds = allTimeForDownloading - nanoElapsedTime
 
         val processedKb = processedBytes / KILOBYTE
         if (processedKb > loggedKb) {
@@ -22,6 +28,7 @@ class FileDownloader(private val aem: AemExtension) {
             val msg = if (fullLength > 0) {
                 "$operation: $fileName | ${Formats.bytesToHuman(processedBytes)}/${Formats.bytesToHuman(fullLength)}"
                         .plus(" (${Formats.percent(processedBytes, fullLength)})")
+                        .plus(" time left: ${Formats.durationFormatted(remainingTimeNanoseconds)}")
             } else {
                 "$operation: $fileName | ${Formats.bytesToHuman(processedBytes)}"
             }
@@ -41,10 +48,11 @@ class FileDownloader(private val aem: AemExtension) {
                 try {
                     val buf = ByteArray(TRANSFER_CHUNK_100_KB)
                     var read = inputStream.read(buf)
+                    val nanoStartTime = System.currentTimeMillis()
 
                     while (read >= 0) {
                         output.write(buf, 0, read)
-                        logProgress("Downloading", read.toLong(), size, target)
+                        logProgress("Downloading", read.toLong(), size, target, nanoStartTime)
                         read = inputStream.read(buf)
                     }
 
