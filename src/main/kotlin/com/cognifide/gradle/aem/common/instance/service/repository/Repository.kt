@@ -46,5 +46,4 @@ class Repository(sync: InstanceSync) : InstanceService(sync) {
      * Shorthand method for creating or updating node at given path.
      */
     fun node(path: String, properties: Map<String, Any?>): RepositoryResult = node(path).save(properties)
-
 }
