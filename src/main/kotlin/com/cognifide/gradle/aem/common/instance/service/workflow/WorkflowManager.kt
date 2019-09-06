@@ -1,8 +1,10 @@
 package com.cognifide.gradle.aem.common.instance.service.workflow
 
+import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.common.instance.InstanceService
 import com.cognifide.gradle.aem.common.instance.InstanceSync
 import com.cognifide.gradle.aem.common.utils.Formats
+import java.util.*
 
 class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
 
@@ -10,6 +12,8 @@ class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
 
     val configFrozen: Boolean
         get() = Formats.versionAtLeast(instance.version, "6.4.0")
+
+    var restoreRetry = aem.retry { afterSquaredSecond(aem.props.long("instance.workflowManager.restoreRetry") ?: 6) }
 
     fun workflow(id: String) = Workflow(this, id)
 
@@ -31,8 +35,6 @@ class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
         workflows(types).forEach { workflow ->
             if (workflow.exists) {
                 workflow.toggle(flag)
-            } else {
-                aem.logger.warn("Workflow '${workflow.id}' does not exist on $instance!")
             }
         }
     }
@@ -53,21 +55,24 @@ class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
             return
         }
 
-        val workflowToFlag = typeFlags.map { (type, flag) ->
-            workflows(type).filter { workflow ->
-                val exists = workflow.exists
-                if (!exists) {
-                    aem.logger.warn("Workflow '${workflow.id}' does not exist on $instance!")
-                }
-                exists
-            } to (flag)
-        }
-
+        val workflowToFlag = typeFlags.map { (type, flag) -> workflows(type).filter { it.exists } to (flag) }
         try {
             workflowToFlag.forEach { (workflows, flag) -> workflows.forEach { it.toggle(flag) } }
             action()
         } finally {
-            workflowToFlag.forEach { (workflows, _) -> workflows.forEach { it.restore() } }
+            val stack = Stack<Workflow>().apply { addAll(workflowToFlag.flatMap { it.first }) }
+            restoreRetry.withCountdown<Unit, AemException>("workflow restore on '${instance.name}'") { no ->
+                if (no > 1) {
+                    aem.logger.info("Retrying to restore workflow launchers (${stack.size}) on $instance:\n" +
+                            stack.joinToString("\n") { it.launcher.path })
+                }
+
+                while (stack.isNotEmpty()) {
+                    val current = stack.peek()
+                    current.restore()
+                    stack.pop()
+                }
+            }
         }
     }
 }

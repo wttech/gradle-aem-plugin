@@ -16,15 +16,21 @@ class Repository(sync: InstanceSync) : InstanceService(sync) {
      * Controls throwing exceptions in case of response statuses indicating repository errors.
      * Switching it to false, allows custom error handling in task scripting.
      */
-    var verbose: Boolean
+    var responseChecks: Boolean
         get() = http.responseChecks
         set(value) {
             http.responseChecks = value
         }
 
     init {
-        verbose = aem.props.boolean("instance.repository.verbose") ?: true
+        responseChecks = aem.props.boolean("instance.repository.responseChecks") ?: true
     }
+
+    /**
+     * Controls level of logging. By default repository related operations are only logged at debug level.
+     * This switch could increase logging level to info level.
+     */
+    var verboseLogging: Boolean = aem.props.boolean("instance.repository.verboseLogging") ?: false
 
     /**
      * Manipulate node at given path (CRUD).

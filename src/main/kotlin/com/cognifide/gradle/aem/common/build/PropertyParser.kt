@@ -37,6 +37,8 @@ class PropertyParser(private val aem: AemExtension) {
         return find(name)?.ifBlank { null }
     }
 
+    fun flag(vararg names: String) = names.any { flag(it) }
+
     fun flag(name: String): Boolean {
         val value = find(name) ?: return false
 

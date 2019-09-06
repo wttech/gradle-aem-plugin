@@ -15,9 +15,11 @@ import java.util.*
  */
 class Node(val repository: Repository, val path: String) : Serializable {
 
+    private val logger = repository.aem.logger
+
     private val instance = repository.instance
 
-    private val logger = repository.aem.logger
+    private val http = repository.http
 
     /**
      * Cached properties of node.
@@ -72,10 +74,10 @@ class Node(val repository: Repository, val path: String) : Serializable {
      */
     @Suppress("unchecked_cast")
     fun children(): Sequence<Node> {
-        logger.info("Reading child nodes of repository node '$path' on $instance")
+        log("Reading child nodes of repository node '$path' on $instance")
 
         return try {
-            repository.http.get("$path.harray.1.json") { asJson(it) }
+            http.get("$path.harray.1.json") { asJson(it) }
                 .run {
                     try {
                         read<JSONArray>(Property.CHILDREN.value)
@@ -109,8 +111,8 @@ class Node(val repository: Repository, val path: String) : Serializable {
     fun exists(recheck: Boolean = false): Boolean {
         if (recheck || existsCheck == null) {
             existsCheck = try {
-                logger.info("Checking repository node '$path' existence on $instance")
-                repository.http.head(path) { it.statusLine.statusCode != HttpStatus.SC_NOT_FOUND }
+                log("Checking repository node '$path' existence on $instance")
+                http.head(path) { it.statusLine.statusCode != HttpStatus.SC_NOT_FOUND }
             } catch (e: AemException) {
                 throw RepositoryException("Cannot check repository node existence: $path on $instance. Cause: ${e.message}", e)
             }
@@ -123,9 +125,9 @@ class Node(val repository: Repository, val path: String) : Serializable {
      * Create or update node in repository.
      */
     fun save(properties: Map<String, Any?>): RepositoryResult = try {
-        logger.info("Saving repository node '$path' using properties '$properties' on $instance")
+        log("Saving repository node '$path' using properties '$properties' on $instance")
 
-        repository.http.postMultipart(path, postProperties(properties) + operationProperties("")) {
+        http.postMultipart(path, postProperties(properties) + operationProperties("")) {
             asObjectFromJson(it, RepositoryResult::class.java)
         }
     } catch (e: AemException) {
@@ -136,9 +138,9 @@ class Node(val repository: Repository, val path: String) : Serializable {
      * Delete node and all children from repository.
      */
     fun delete(): RepositoryResult = try {
-        logger.info("Deleting repository node '$path' on $instance")
+        log("Deleting repository node '$path' on $instance")
 
-        repository.http.postMultipart(path, operationProperties("delete")) {
+        http.postMultipart(path, operationProperties("delete")) {
             asObjectFromJson(it, RepositoryResult::class.java)
         }
     } catch (e: AemException) {
@@ -166,7 +168,7 @@ class Node(val repository: Repository, val path: String) : Serializable {
      */
     fun copy(targetPath: String) {
         try {
-            repository.http.postUrlencoded(path, operationProperties("copy") + mapOf(
+            http.postUrlencoded(path, operationProperties("copy") + mapOf(
                     ":dest" to targetPath
             )) { checkStatus(it, HttpStatus.SC_CREATED) }
         } catch (e: AemException) {
@@ -242,10 +244,10 @@ class Node(val repository: Repository, val path: String) : Serializable {
     fun hasProperties(names: Iterable<String>): Boolean = names.all { properties.containsKey(it) }
 
     private fun reloadProperties(): Properties {
-        logger.info("Reading properties of repository node '$path' on $instance")
+        log("Reading properties of repository node '$path' on $instance")
 
         return try {
-            repository.http.get("$path.json") { response ->
+            http.get("$path.json") { response ->
                 val props = asJson(response).json<LinkedHashMap<String, Any>>()
                 Properties(this@Node, props).apply { propertiesLoaded = this }
             }
@@ -280,6 +282,14 @@ class Node(val repository: Repository, val path: String) : Serializable {
 
     private fun filterMetaProperties(properties: Map<String, Any>): Map<String, Any> {
         return properties.filterKeys { p -> !Property.values().any { it.value == p } }
+    }
+
+    private fun log(message: String, e: Throwable? = null) {
+        if (repository.verboseLogging) {
+            logger.info(message, e)
+        } else {
+            logger.debug(message, e)
+        }
     }
 
     @get:JsonIgnore
