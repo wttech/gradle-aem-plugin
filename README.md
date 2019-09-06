@@ -270,6 +270,12 @@ aem {
                 resolve("group:name:version") // OSGi bundle from Maven repository
             }
         }
+        init { // hook called once in scope of instance just created and up first time
+            sync {
+                logger.info("Initializing instance '$name'")
+                // ...
+            }
+        }   
         rootDir = aem.props.string("localInstance.root")
         // ...
     }

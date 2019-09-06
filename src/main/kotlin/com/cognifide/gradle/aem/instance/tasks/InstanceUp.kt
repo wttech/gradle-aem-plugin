@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem.instance.tasks
 
-import com.cognifide.gradle.aem.common.instance.LocalInstance
 import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
 import com.cognifide.gradle.aem.common.instance.names
 import com.cognifide.gradle.aem.common.tasks.LocalInstanceTask
@@ -13,15 +12,6 @@ open class InstanceUp : LocalInstanceTask() {
     }
 
     private var awaitOptions: AwaitUpAction.() -> Unit = {}
-
-    private var initOptions: LocalInstance.() -> Unit = {}
-
-    /**
-     * Hook called only when instance is up first time.
-     */
-    fun init(options: LocalInstance.() -> Unit) {
-        this.initOptions = options
-    }
 
     /**
      * Controls instance awaiting.
@@ -45,7 +35,7 @@ open class InstanceUp : LocalInstanceTask() {
 
         aem.progress(instances.size) {
             aem.parallel.with(instances) {
-                increment("Initializing instance '$name'") { init(initOptions) }
+                increment("Initializing instance '$name'") { init() }
             }
         }
 

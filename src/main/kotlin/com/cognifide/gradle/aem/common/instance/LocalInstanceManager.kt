@@ -97,6 +97,16 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
         install.apply(options)
     }
 
+    @JsonIgnore
+    internal var initOptions: LocalInstance.() -> Unit = {}
+
+    /**
+     * Configure action to be performed only once when instance is up first time.
+     */
+    fun init(options: LocalInstance.() -> Unit) {
+        this.initOptions = options
+    }
+
     @Suppress("ComplexMethod")
     fun create(instances: List<LocalInstance>) {
         when (source) {

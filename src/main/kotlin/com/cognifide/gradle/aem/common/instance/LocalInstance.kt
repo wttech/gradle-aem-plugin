@@ -329,14 +329,14 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
         }
     }
 
-    fun init(callback: LocalInstance.() -> Unit) {
+    fun init() {
         if (initialized) {
             aem.logger.debug("Already initialized: $this")
             return
         }
 
         aem.logger.info("Initializing: $this")
-        callback(this)
+        manager.initOptions(this)
         lock(LOCK_INIT)
     }
 
