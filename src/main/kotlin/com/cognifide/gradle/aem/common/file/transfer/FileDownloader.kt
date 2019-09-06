@@ -17,8 +17,8 @@ class FileDownloader(private val aem: AemExtension) {
         processedBytes += readLength
 
         val nanoElapsedTime = System.currentTimeMillis() - nanoStartTime
-        val allTimeForDownloading = (nanoElapsedTime * fullLength / processedBytes)
-        val remainingTimeNanoseconds = allTimeForDownloading - nanoElapsedTime
+        val allDownloadTime = (nanoElapsedTime * fullLength / processedBytes)
+        val nanoRemainingTime = allDownloadTime - nanoElapsedTime
 
         val processedKb = processedBytes / KILOBYTE
         if (processedKb > loggedKb) {
@@ -26,7 +26,7 @@ class FileDownloader(private val aem: AemExtension) {
             val msg = if (fullLength > 0) {
                 "$operation: $fileName | ${Formats.bytesToHuman(processedBytes)}/${Formats.bytesToHuman(fullLength)}"
                         .plus(" (${Formats.percent(processedBytes, fullLength)})")
-                        .plus(" time left: ${Formats.durationFormatted(remainingTimeNanoseconds)}")
+                        .plus(" time left: ${Formats.durationFormatted(nanoRemainingTime)}")
             } else {
                 "$operation: $fileName | ${Formats.bytesToHuman(processedBytes)}"
             }
