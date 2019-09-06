@@ -264,6 +264,12 @@ aem {
             uploadUrl = aem.props.string("localInstance.backup.uploadUrl")
             downloadUrl = aem.props.string("localInstance.backup.downloadUrl")
         }
+        install {
+            files { // CRX packages and OSGi bundles to be pre-installed on created AEM instances
+                download("http://.../package.zip") // CRX package downloaded over HTTP
+                resolve("group:name:version") // OSGi bundle from Maven repository
+            }
+        }
         rootDir = aem.props.string("localInstance.root")
         // ...
     }
