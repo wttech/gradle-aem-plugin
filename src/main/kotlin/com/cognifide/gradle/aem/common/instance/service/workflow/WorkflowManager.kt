@@ -61,7 +61,12 @@ class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
             action()
         } finally {
             val stack = Stack<Workflow>().apply { addAll(workflowToFlag.flatMap { it.first }) }
-            restoreRetry.withCountdown<Unit, AemException>("workflow restore on '${instance.name}'") {
+            restoreRetry.withCountdown<Unit, AemException>("workflow restore on '${instance.name}'") { no ->
+                if (no > 1) {
+                    aem.logger.info("Retrying to restore workflow launchers (${stack.size}) on $instance:\n" +
+                            stack.joinToString("\n") { it.launcher.path })
+                }
+
                 while (stack.isNotEmpty()) {
                     val current = stack.peek()
                     current.restore()

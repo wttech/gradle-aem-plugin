@@ -78,9 +78,9 @@
           "*://*"
         ]
       },
-      "local": {
+      "path": {
         "enabled": true,
-        "name": "local"
+        "name": "path"
       }
     },
     "packageOptions" : {
