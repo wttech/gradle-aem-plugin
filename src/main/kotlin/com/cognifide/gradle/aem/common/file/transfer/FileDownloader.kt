@@ -6,8 +6,6 @@ import com.cognifide.gradle.aem.common.utils.Formats
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
-import java.text.SimpleDateFormat
-import java.util.concurrent.TimeUnit
 
 class FileDownloader(private val aem: AemExtension) {
 
