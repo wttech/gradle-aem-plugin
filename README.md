@@ -271,8 +271,8 @@ aem {
             }
         }
         init { // hook called once in scope of instance just created and up first time
+            logger.info("Initializing instance '$name'")
             sync {
-                logger.info("Initializing instance '$name'")
                 // ...
             }
         }   
