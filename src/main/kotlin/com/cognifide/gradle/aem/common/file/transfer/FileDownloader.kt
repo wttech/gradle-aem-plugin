@@ -13,12 +13,15 @@ class FileDownloader(private val aem: AemExtension) {
 
     private var loggedKb: Long = 0
 
-    fun ProgressLogger.logProgress(operation: String, readLength: Long, fullLength: Long, file: File, startDownloadTime: Long) {
-        processedBytes += readLength
-
+    fun calculateRemainingDownloadTime(startDownloadTime: Long, fullLength: Long): Long {
         val elapsedDownloadTime = System.currentTimeMillis() - startDownloadTime
         val allDownloadTime = (elapsedDownloadTime * fullLength / processedBytes)
-        val remainingDownloadTime = allDownloadTime - elapsedDownloadTime
+
+        return allDownloadTime - elapsedDownloadTime
+    }
+
+    fun ProgressLogger.logProgress(operation: String, readLength: Long, fullLength: Long, file: File, startDownloadTime: Long) {
+        processedBytes += readLength
 
         val processedKb = processedBytes / KILOBYTE
         if (processedKb > loggedKb) {
@@ -26,7 +29,7 @@ class FileDownloader(private val aem: AemExtension) {
             val msg = if (fullLength > 0) {
                 "$operation: $fileName | ${Formats.bytesToHuman(processedBytes)}/${Formats.bytesToHuman(fullLength)}"
                         .plus(" (${Formats.percent(processedBytes, fullLength)})")
-                        .plus(" time left: ${Formats.durationFormatted(remainingDownloadTime)}")
+                        .plus(" time left: ${Formats.durationFormatted(calculateRemainingDownloadTime(startDownloadTime, fullLength))}")
             } else {
                 "$operation: $fileName | ${Formats.bytesToHuman(processedBytes)}"
             }
@@ -42,11 +45,11 @@ class FileDownloader(private val aem: AemExtension) {
             input.use { inputStream ->
                 val output = FileOutputStream(target)
                 var finished = false
+                val startDownloadTime = System.currentTimeMillis()
 
                 try {
                     val buf = ByteArray(TRANSFER_CHUNK_100_KB)
                     var read = inputStream.read(buf)
-                    val startDownloadTime = System.currentTimeMillis()
 
                     while (read >= 0) {
                         output.write(buf, 0, read)
