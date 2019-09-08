@@ -13,7 +13,7 @@ class FileDownloader(private val aem: AemExtension) {
 
     private var loggedKb: Long = 0
 
-    fun calculateRemainingDownloadTime(startDownloadTime: Long, fullLength: Long): Long {
+    fun remainingDownloadTime(startDownloadTime: Long, fullLength: Long): Long {
         val elapsedDownloadTime = System.currentTimeMillis() - startDownloadTime
         val allDownloadTime = (elapsedDownloadTime * fullLength / processedBytes)
 
@@ -29,7 +29,7 @@ class FileDownloader(private val aem: AemExtension) {
             val msg = if (fullLength > 0) {
                 "$operation: $fileName | ${Formats.bytesToHuman(processedBytes)}/${Formats.bytesToHuman(fullLength)}"
                         .plus(" (${Formats.percent(processedBytes, fullLength)})")
-                        .plus(" time left: ${Formats.durationFormatted(calculateRemainingDownloadTime(startDownloadTime, fullLength))}")
+                        .plus(" time left: ${Formats.durationFormatted(remainingDownloadTime(startDownloadTime, fullLength))}")
             } else {
                 "$operation: $fileName | ${Formats.bytesToHuman(processedBytes)}"
             }
