@@ -55,6 +55,7 @@ object Formats {
             })
         }
     }
+
     fun asJson(input: InputStream) = JsonPath.parse(input)
 
     fun asJson(value: String) = JsonPath.parse(value)
@@ -164,6 +165,10 @@ object Formats {
 
     fun duration(millis: Long): String {
         return DurationFormatUtils.formatDurationHMS(millis)
+    }
+
+    fun durationFormatted(millis: Long): String {
+        return DurationFormatUtils.formatDuration(millis, "mm:ss:SSS")
     }
 
     fun rootProjectPath(file: File, project: Project): String {
