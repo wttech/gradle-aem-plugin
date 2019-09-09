@@ -49,8 +49,15 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     val props = PropertyParser(this)
 
     /**
+     * Access configuration for local instances or environment from different project (cross-project configuring).
+     */
+    @get:JsonIgnore
+    val main: AemExtension
+        get() = of(projectMain)
+
+    /**
      * Project under which common configuration files are stored.
-     * Usually it is also a project which is building full assembly CRX package.
+     * Usually it is also configures local instances and environment (is applying corresponding plugins).
      *
      * Convention assumes in case of:
      * - multi-project build - subproject with path ':aem'

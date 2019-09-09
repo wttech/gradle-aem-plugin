@@ -30,7 +30,7 @@ class HostOptions(environment: Environment) : Serializable {
     fun all(vararg tags: String) = all(tags.asIterable())
 
     fun all(tags: Iterable<String>) = defined.filter { h -> tags.all { t -> h.tags.contains(t) } }.ifEmpty {
-        throw EnvironmentException("Environment has no hosts tagged with '$tags'!")
+        throw EnvironmentException("Environment has no hosts tagged with '${tags.joinToString(",")}'!")
     }
 
     // ----- DSL shorthands / conventions -----
