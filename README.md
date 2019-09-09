@@ -1928,7 +1928,9 @@ While implementing custom AEM tasks, mix usages of following instance services:
 * `repository` [Repository](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/repository/Repository.kt) - Allows to communicate with JCR Content Repository.
 * `http` [InstanceHttpClient](src/main/kotlin/com/cognifide/gradle/aem/common/instance/InstanceHttpClient.kt) - Provides extremely easy to use HTTP client designed especially to be used with AEM (covers basic authentication, allows to use only relative paths instead of full URLs etc) 
 * `status` [Status](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/status/Status.kt) - Allows to read statuses available at [Apache Felix Web Console](https://felix.apache.org/documentation/subprojects/apache-felix-web-console.html).
+* `workflowManager` [WorkflowManager](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/workflow/WorkflowManager.kt) - Allows to enable or disable [workflows](https://helpx.adobe.com/experience-manager/6-5/sites/authoring/using/workflows.html) on AEM instance.
 * `groovyConsole` [GroovyConsole](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/groovy/GroovyConsole.kt) - Allows to execute Groovy code / scripts on AEM instance having [Groovy Console](https://github.com/icfnext/aem-groovy-console) CRX package installed.
+
 
 #### Defining CRX package via code then downloading and sharing it using external HTTP endpoint
 
