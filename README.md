@@ -1421,6 +1421,10 @@ Most often only these few lines in *gradle.properties* files are required to hav
 
 ```ini
 localInstance.backup.uploadUrl=sftp://example.com/aem/packages
+
+# Default suffix is .backup.zip. If you have other suffix and this property is not set, remote backup will not work.
+localInstance.backup.suffix=Backup.zip
+
 fileTransfer.sftp.user=foo
 fileTransfer.sftp.password=pass
 ```
