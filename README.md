@@ -1417,14 +1417,12 @@ By having only this upload property specified, plugin will automatically downloa
 It is also possible to specify second property `instance.backup.downloadUrl` which will cause that concrete backup will be always in use.
 By having only this download property specified, plugin will not automatically upload any backups.
 
-Most often only these few lines in *gradle.properties* files are required to have automatic two-way backups working:
+Backup files created, by default, have suffix .backup.zip. This matters in case of resolving backups from remote sources to distinguish AEM backups from other files. To use a custom suffix `localInstance.backup.suffix` property has to be set. Most often it is not needed to update it.
+These few lines in *gradle.properties* files are required to have automatic two-way backups working:
 
 ```ini
 localInstance.backup.uploadUrl=sftp://example.com/aem/packages
-
-# Default suffix is .backup.zip. If you have other suffix and this property is not set, remote backup will not work.
-localInstance.backup.suffix=Backup.zip
-
+localInstance.backup.suffix=.backup.custom.zip
 fileTransfer.sftp.user=foo
 fileTransfer.sftp.password=pass
 ```
