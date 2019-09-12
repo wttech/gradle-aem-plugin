@@ -6,7 +6,7 @@ import org.gradle.api.tasks.TaskAction
 open class EnvironmentResolve : AemDefaultTask() {
 
     init {
-        description = "Resolve environment files from remote sources before running other tasks"
+        description = "Resolves environment files from remote sources before running other tasks"
     }
 
     @TaskAction

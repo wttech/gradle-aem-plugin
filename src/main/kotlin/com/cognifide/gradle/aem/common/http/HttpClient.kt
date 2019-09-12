@@ -101,6 +101,9 @@ open class HttpClient(private val aem: AemExtension) : Serializable {
         }
     }
 
+    @get:JsonIgnore
+    val client by lazy { HttpClientBuilder.create().apply(clientBuilder).build() }
+
     @JsonIgnore
     var responseHandler: (HttpResponse) -> Unit = { }
 
@@ -258,10 +261,7 @@ open class HttpClient(private val aem: AemExtension) : Serializable {
     open fun <T> execute(method: HttpRequestBase, handler: HttpClient.(HttpResponse) -> T): T {
         try {
             requestConfigurer(method)
-
-            val client = HttpClientBuilder.create().apply(clientBuilder).build()
             val response = client.execute(method)
-
             responseHandler(response)
 
             return handler.invoke(this, response)

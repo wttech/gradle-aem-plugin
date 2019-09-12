@@ -14,7 +14,7 @@ class PackageResolver(aem: AemExtension, downloadDir: File) : Resolver<PackageGr
      * Determines a path in JCR repository in which automatically wrapped bundles will be deployed.
      */
     @Input
-    var bundlePath: String = "/apps/gradle-aem-plugin/wrap/install"
+    var bundlePath: String = aem.props.string("package.resolver.bundlePath") ?: "/apps/gap/wrap/install"
 
     /**
      * A hook which could be used to override default properties used to generate a CRX package from OSGi bundle.

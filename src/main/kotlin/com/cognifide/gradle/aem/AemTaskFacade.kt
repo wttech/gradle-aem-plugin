@@ -5,6 +5,7 @@ import com.cognifide.gradle.aem.common.tasks.Debug
 import com.cognifide.gradle.aem.common.tasks.TaskSequence
 import com.cognifide.gradle.aem.common.tasks.lifecycle.*
 import com.cognifide.gradle.aem.environment.tasks.*
+import com.cognifide.gradle.aem.instance.provision.InstanceProvision
 import com.cognifide.gradle.aem.instance.satisfy.InstanceSatisfy
 import com.cognifide.gradle.aem.instance.tail.InstanceTail
 import com.cognifide.gradle.aem.instance.tasks.*
@@ -75,6 +76,8 @@ class AemTaskFacade(private val aem: AemExtension) : Serializable {
     fun instanceDestroy(configurer: InstanceDestroy.() -> Unit) = named(InstanceDestroy.NAME, configurer)
 
     fun instanceDown(configurer: InstanceDown.() -> Unit) = named(InstanceDown.NAME, configurer)
+
+    fun instanceProvision(configurer: InstanceProvision.() -> Unit) = named(InstanceProvision.NAME, configurer)
 
     fun instanceReload(configurer: InstanceReload.() -> Unit) = named(InstanceReload.NAME, configurer)
 

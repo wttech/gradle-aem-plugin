@@ -20,6 +20,7 @@ import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 import java.util.*
 
 @Suppress("MagicNumber", "TooManyFunctions")
@@ -161,6 +162,14 @@ object Formats {
 
     fun dateFileName(date: Date = Date()): String {
         return SimpleDateFormat("yyyyMMddHHmmss").format(date)
+    }
+
+    fun timeUp(thenMillis: Long, thenZoneId: ZoneId, durationMillis: Long): Boolean {
+        val nowTimestamp = LocalDateTime.now().atZone(ZoneId.systemDefault())
+        val thenTimestamp = dateTime(thenMillis, thenZoneId)
+        val diffMillis = ChronoUnit.MILLIS.between(thenTimestamp, nowTimestamp)
+
+        return diffMillis < durationMillis
     }
 
     fun duration(millis: Long): String {
