@@ -31,5 +31,4 @@ class Step(val provisioner: Provisioner, val id: String) {
     fun condition(callback: Condition.() -> Boolean) {
         this.conditionCallback = callback
     }
-
 }
