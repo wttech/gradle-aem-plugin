@@ -8,7 +8,7 @@ class Step(val provisioner: Provisioner, val id: String) {
 
     internal lateinit var actionCallback: Instance.() -> Unit
 
-    internal lateinit var conditionCallback: Condition.() -> Boolean
+    var conditionCallback: Condition.() -> Boolean = { once() }
 
     var description: String? = null
 
@@ -17,10 +17,6 @@ class Step(val provisioner: Provisioner, val id: String) {
     fun validate() {
         if (!::actionCallback.isInitialized) {
             throw ProvisionException("Step '$id' action is not defined!")
-        }
-
-        if (!::conditionCallback.isInitialized) {
-            throw ProvisionException("Step '$id' condition is not defined!")
         }
     }
 
