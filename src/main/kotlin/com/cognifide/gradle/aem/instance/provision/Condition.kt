@@ -12,7 +12,7 @@ class Condition(val step: InstanceStep) {
 
     fun once(): Boolean = !step.done
 
-    fun afterTime(millis: Long): Boolean {
+    fun afterMillis(millis: Long): Boolean {
         if (!step.done) {
             return true
         }
@@ -24,11 +24,11 @@ class Condition(val step: InstanceStep) {
         return diffMillis < millis
     }
 
-    fun afterDays(count: Long) = afterTime(TimeUnit.DAYS.toMillis(count))
+    fun afterDays(count: Long) = afterMillis(TimeUnit.DAYS.toMillis(count))
 
-    fun afterHours(count: Long) = afterTime(TimeUnit.HOURS.toMillis(count))
+    fun afterHours(count: Long) = afterMillis(TimeUnit.HOURS.toMillis(count))
 
-    fun afterMinutes(count: Long) = afterTime(TimeUnit.MINUTES.toMillis(count))
+    fun afterMinutes(count: Long) = afterMillis(TimeUnit.MINUTES.toMillis(count))
 
-    fun afterSeconds(count: Long) = afterTime(TimeUnit.SECONDS.toMillis(count))
+    fun afterSeconds(count: Long) = afterMillis(TimeUnit.SECONDS.toMillis(count))
 }
