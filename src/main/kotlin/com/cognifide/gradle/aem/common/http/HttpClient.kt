@@ -101,6 +101,7 @@ open class HttpClient(private val aem: AemExtension) : Serializable {
         }
     }
 
+    @get:JsonIgnore
     val client by lazy { HttpClientBuilder.create().apply(clientBuilder).build() }
 
     @JsonIgnore
