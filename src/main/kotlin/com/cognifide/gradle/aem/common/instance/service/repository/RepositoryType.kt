@@ -13,10 +13,12 @@ object RepositoryType {
         else -> hintSimpleType(value)
     }
 
+    @Suppress("ComplexMethod")
     fun hintSimpleType(value: Any?) = when (value) {
         is String -> "String"
         is Boolean -> "Boolean"
-        is Int, Long -> "Long"
+        is Int -> "Long"
+        is Long -> "Long"
         is Calendar -> "Date"
         is Date -> "Date"
         is Float -> "Decimal"
