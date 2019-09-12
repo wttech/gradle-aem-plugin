@@ -1665,6 +1665,8 @@ By running task `instanceSatisfy`, provisioner will perform all steps for which 
 Specifying condition could be even omitted, then, by default, each step will be performed only `once()` 
 which means that configured `action {}` will be executed only once on each AEM instance.
 
+Conditions could be more complex and use helpful methods: `always()`, `never()`, `afterDays(n)`, `afterHours(n)`, `afterMinutes(n)`, `afterMillis(n)` and `every(n)`.
+
 #### Task `instanceAwait`
 
 Check health condition of AEM instance(s) of any type (local & remote).
