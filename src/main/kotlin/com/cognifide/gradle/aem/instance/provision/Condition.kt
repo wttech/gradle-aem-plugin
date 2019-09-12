@@ -7,6 +7,10 @@ class Condition(val step: InstanceStep) {
 
     val instance = step.instance
 
+    fun always(): Boolean = true
+
+    fun never(): Boolean = false
+
     fun once(): Boolean = !step.done
 
     fun afterMillis(millis: Long): Boolean = once() || Formats.timeUp(step.endedAt.time, instance.zoneId, millis)
