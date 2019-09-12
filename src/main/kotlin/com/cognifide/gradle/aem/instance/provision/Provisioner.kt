@@ -62,7 +62,7 @@ class Provisioner(val aem: AemExtension) {
                 }
             }
 
-            metadatas.values.forEach { it.incrementCounter() }
+            aem.parallel.each(metadatas.values) { it.incrementCounter() }
         }
 
         return actions
