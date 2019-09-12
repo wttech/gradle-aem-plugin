@@ -25,9 +25,9 @@ class Provisioner(val aem: AemExtension) {
     var stepName = aem.props.string("instance.provision.step") ?: "*"
 
     /**
-     * Determines a path in JCR repository in which step markers will be stored.
+     * Determines a path in JCR repository in which provisioning metadata and step markers will be stored.
      */
-    var stepPath: String = aem.props.string("instance.provision.stepPath") ?: "/var/gap/provision/step"
+    var path: String = aem.props.string("instance.provision.path") ?: "/var/gap/provision/step"
 
     private val steps = mutableListOf<Step>()
 
@@ -46,16 +46,23 @@ class Provisioner(val aem: AemExtension) {
 
         val actions = mutableListOf<Action>()
 
-        steps.filter { Patterns.wildcard(it.id, stepName) }.forEach { definition ->
-            var intro = "Provisioning step '${definition.id}'"
-            if (!definition.description.isNullOrBlank()) {
-                intro += " / ${definition.description}"
-            }
-            aem.logger.info(intro)
+        val stepsFiltered = steps.filter { Patterns.wildcard(it.id, stepName) }
+        if (stepsFiltered.isNotEmpty()) {
+            val infos = instances.map { it to InstanceMetadata(this, it) }.toMap()
 
-            aem.parallel.each(instances) { instance ->
-                actions.add(InstanceStep(instance, definition).run { provisionStep() })
+            stepsFiltered.forEach { definition ->
+                var intro = "Provisioning step '${definition.id}'"
+                if (!definition.description.isNullOrBlank()) {
+                    intro += " / ${definition.description}"
+                }
+                aem.logger.info(intro)
+
+                aem.parallel.each(instances) { instance ->
+                    actions.add(InstanceStep(infos[instance]!!, definition).run { provisionStep() })
+                }
             }
+
+            infos.values.forEach { it.incrementCounter() }
         }
 
         return actions
