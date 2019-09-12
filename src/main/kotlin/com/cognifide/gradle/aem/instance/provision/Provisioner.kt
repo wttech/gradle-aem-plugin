@@ -27,7 +27,7 @@ class Provisioner(val aem: AemExtension) {
     /**
      * Determines a path in JCR repository in which provisioning metadata and step markers will be stored.
      */
-    var path: String = aem.props.string("instance.provision.path") ?: "/var/gap/provision/step"
+    var path: String = aem.props.string("instance.provision.path") ?: "/var/gap/provision"
 
     private val steps = mutableListOf<Step>()
 
