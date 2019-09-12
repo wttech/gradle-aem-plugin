@@ -11,15 +11,16 @@ open class InstanceProvision : AemDefaultTask() {
 
     @TaskAction
     fun provision() {
-        val actions = provisioner.provision()
+        val allActions = provisioner.provision()
+        val performedActions = allActions.filter { it.status != Status.SKIPPED }
 
-        val total = actions.count { it.status != Status.SKIPPED }
-        val ended = actions.count { it.status == Status.ENDED }
-        val failed = actions.count { it.status == Status.FAILED }
-        val instances = actions.map { it.step.instance }.toSet()
+        val instances = performedActions.map { it.step.instance }.toSet()
+        val performed = performedActions.count()
+        val ended = performedActions.count { it.status == Status.ENDED }
+        val failed = performedActions.count { it.status == Status.FAILED }
 
-        if (total > 0) {
-            aem.notifier.notify("Instances provisioned", "Performed $total steps(s)" +
+        if (performed > 0) {
+            aem.notifier.notify("Instances provisioned", "Performed $performed steps(s)" +
                     " ($ended ended, $failed failed) on ${instances.size} instance(s).")
         } else {
             aem.logger.info("No actions to perform / all instances provisioned.")
