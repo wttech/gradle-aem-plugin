@@ -32,14 +32,14 @@ class Provisioner(val aem: AemExtension) {
     private val steps = mutableListOf<Step>()
 
     /**
-     * Define provisioning step.
+     * Define provision step.
      */
     fun step(id: String, options: Step.() -> Unit) {
         steps.add(Step(this, id).apply(options))
     }
 
     /**
-     * Perform all provisioning steps.
+     * Perform all provision steps.
      */
     fun provision(): List<Action> {
         steps.forEach { it.validate() }
@@ -48,21 +48,21 @@ class Provisioner(val aem: AemExtension) {
 
         val stepsFiltered = steps.filter { Patterns.wildcard(it.id, stepName) }
         if (stepsFiltered.isNotEmpty()) {
-            val infos = instances.map { it to InstanceMetadata(this, it) }.toMap()
+            val metadatas = instances.map { it to InstanceMetadata(this, it) }.toMap()
 
             stepsFiltered.forEach { definition ->
-                var intro = "Provisioning step '${definition.id}'"
+                var intro = "Provision step '${definition.id}'"
                 if (!definition.description.isNullOrBlank()) {
                     intro += " / ${definition.description}"
                 }
                 aem.logger.info(intro)
 
                 aem.parallel.each(instances) { instance ->
-                    actions.add(InstanceStep(infos[instance]!!, definition).run { provisionStep() })
+                    actions.add(InstanceStep(metadatas[instance]!!, definition).run { provisionStep() })
                 }
             }
 
-            infos.values.forEach { it.incrementCounter() }
+            metadatas.values.forEach { it.incrementCounter() }
         }
 
         return actions
@@ -70,21 +70,21 @@ class Provisioner(val aem: AemExtension) {
 
     private fun InstanceStep.provisionStep(): Action {
         if (!greedy && !isPerformable()) {
-            aem.logger.info("Provisioning step '${definition.id}' skipped for $instance")
+            aem.logger.info("Provision step '${definition.id}' skipped for $instance")
             return Action(this, Status.SKIPPED)
         }
 
-        aem.logger.info("Provisioning step '${definition.id}' started at $instance")
+        aem.logger.info("Provision step '${definition.id}' started at $instance")
 
         return try {
             perform()
-            aem.logger.info("Provisioning step '${definition.id}' ended at $instance. Duration: $durationString")
+            aem.logger.info("Provision step '${definition.id}' ended at $instance. Duration: $durationString")
             Action(this, Status.ENDED)
         } catch (e: ProvisionException) {
             if (definition.failOnError) {
                 throw e
             } else {
-                aem.logger.error("Provisioning step '${definition.id} failed at $instance. Duration: $durationString. Cause: ${e.message}", e)
+                aem.logger.error("Provision step '${definition.id} failed at $instance. Duration: $durationString. Cause: ${e.message}", e)
                 Action(this, Status.FAILED)
             }
         }
