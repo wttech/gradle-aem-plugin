@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem.instance.provision
 
 import com.cognifide.gradle.aem.common.instance.Instance
-import com.cognifide.gradle.aem.common.instance.InstanceException
 
 class Step(val provisioner: Provisioner, val id: String) {
 
@@ -11,13 +10,17 @@ class Step(val provisioner: Provisioner, val id: String) {
 
     internal lateinit var conditionCallback: Condition.() -> Boolean
 
+    var description: String? = null
+
+    var failOnError: Boolean = true
+
     fun validate() {
         if (!::actionCallback.isInitialized) {
-            throw InstanceException("Step '$id' action is not defined!")
+            throw ProvisionException("Step '$id' action is not defined!")
         }
 
         if (!::conditionCallback.isInitialized) {
-            throw InstanceException("Step '$id' condition is not defined!")
+            throw ProvisionException("Step '$id' condition is not defined!")
         }
     }
 

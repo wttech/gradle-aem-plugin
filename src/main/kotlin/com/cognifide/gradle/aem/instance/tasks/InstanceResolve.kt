@@ -7,7 +7,7 @@ import org.gradle.api.tasks.TaskAction
 open class InstanceResolve : AemDefaultTask() {
 
     init {
-        description = "Resolve instance files from remote sources before running other tasks"
+        description = "Resolves instance files from remote sources before running other tasks"
     }
 
     @TaskAction

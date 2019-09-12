@@ -5,7 +5,7 @@ import com.cognifide.gradle.aem.AemDefaultTask
 open class Resolve : AemDefaultTask() {
 
     init {
-        description = "Resolve all files from remote sources before running other tasks."
+        description = "Resolves all files from remote sources before running other tasks."
     }
 
     companion object {
