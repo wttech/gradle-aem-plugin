@@ -25,4 +25,10 @@ class Condition(val step: InstanceStep) {
     }
 
     fun afterDays(count: Long) = afterTime(TimeUnit.DAYS.toMillis(count))
+
+    fun afterHours(count: Long) = afterTime(TimeUnit.HOURS.toMillis(count))
+
+    fun afterMinutes(count: Long) = afterTime(TimeUnit.MINUTES.toMillis(count))
+
+    fun afterSeconds(count: Long) = afterTime(TimeUnit.SECONDS.toMillis(count))
 }
