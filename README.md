@@ -76,6 +76,7 @@
         * [Task instanceReload](#task-instancereload)
         * [Task instanceResolve](#task-instanceresolve)
         * [Task instanceSatisfy](#task-instancesatisfy)
+        * [Task instanceProvision](#task-instanceprovision)
         * [Task instanceAwait](#task-instanceawait)
         * [Task instanceTail](#task-instancetail)
            * [Tailing incidents](#tailing-incidents)
@@ -1611,6 +1612,59 @@ As of task inherits from task `packageDeploy` it is also possible to temporary e
 gradlew :instanceSatisfy -Ppackage.deploy.workflowToggle=[dam_asset=false]
 ```
 
+#### Task `instanceProvision`
+
+Performs configuration actions for AEM instances in customizable conditions.
+Feature especially dedicated for pre-configuring AEM instances. Not all things like turning off OSGi bundles can be realized using CRX packages.
+For instance, provisioning could help to avoid using [OSGi Bundle Disabler](https://adobe-consulting-services.github.io/acs-aem-commons/features/osgi-disablers/bundle-disabler/index.html) and [OSGi Component Disabler](https://adobe-consulting-services.github.io/acs-aem-commons/features/osgi-disablers/component-disabler/index.html) etc and is a more powerful and general approach.
+
+Sample configuration:
+
+```kotlin
+aem {
+    tasks {
+        instanceProvision {
+            step("enable-crxde") {
+                description = "Enables CRX DE"
+                condition { instance.environment != "prod" && once() }
+                action {
+                    sync {
+                        osgiFramework.configure("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", mapOf(
+                            "alias" to "/crx/server"
+                        ))
+                    }
+                }
+            }
+            step("setup-replication-author") {
+                condition { instance.author && once() }
+                action {
+                    sync {
+                        repository {
+                            node("/etc/replication/agents.publish/flush/jcr:content", mapOf(
+                                "transportUri" to "http://dispatcher.example.com/dispatcher/invalidate.cache"
+                            ))
+                        }
+                    }       
+                }
+            }  
+            step("disable-unsecure-bundles") {
+                condition { instance.environment != "prod" && once() }
+                action {
+                    sync {
+                        osgiFramework.stopBundle("org.apache.sling.jcr.webdav")
+                        osgiFramework.stopBundle("com.day.crx.crxde-support")
+                    }   
+                }       
+            }           
+        }
+    }
+}
+```
+
+By running task `instanceSatisfy`, provisioner will perform all steps for which conditions are met.
+Specifying condition could be even omitted, then, by default, each step will be performed only `once()` 
+which means that configured `action {}` will be executed only once on each AEM instance.
+
 #### Task `instanceAwait`
 
 Check health condition of AEM instance(s) of any type (local & remote).
@@ -2084,7 +2138,7 @@ aem {
                 aem.sync {
                     repository {
                         node("/etc/replication/agents.publish/flush/jcr:content", mapOf( // shorthand for 'node(path).save(props)'
-                            "transportUri" to "http://invalidation-only/dispatcher/invalidate.cache"
+                            "transportUri" to "http://dispatcher.example.com/dispatcher/invalidate.cache"
                         ))
                     }
                 }
