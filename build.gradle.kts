@@ -7,6 +7,7 @@ plugins {
     id("org.jetbrains.kotlin.jvm")
     id("org.jetbrains.dokka")
     id("java-gradle-plugin")
+    id("com.gradle.plugin-publish")
     id("maven-publish")
     id("io.gitlab.arturbosch.detekt")
     id("com.jfrog.bintray")
@@ -35,7 +36,7 @@ dependencies {
     implementation("org.apache.jackrabbit.vault:vault-cli:3.2.4")
     implementation("org.jsoup:jsoup:1.10.3")
     implementation("org.samba.jcifs:jcifs:1.3.18-kohsuke-1")
-    implementation("biz.aQute.bnd:biz.aQute.bnd.gradle:4.0.0")
+    implementation("biz.aQute.bnd:biz.aQute.bnd.gradle:4.2.0")
     implementation("org.zeroturnaround:zt-zip:1.11")
     implementation("net.lingala.zip4j:zip4j:1.3.2")
     implementation("org.apache.sshd:sshd-sftp:2.2.0")
@@ -131,7 +132,7 @@ tasks {
     }
 
     named("afterReleaseBuild") {
-        dependsOn("bintrayUpload")
+        dependsOn("bintrayUpload", "publishPlugins")
     }
 
     named("updateVersion") {

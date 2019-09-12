@@ -1,33 +1,5 @@
+import com.gradle.publish.PluginBundleExtension
 import com.jfrog.bintray.gradle.BintrayExtension
-
-configure<GradlePluginDevelopmentExtension> {
-    plugins {
-        create("common") {
-            id = "com.cognifide.aem.common"
-            implementationClass = "com.cognifide.gradle.aem.common.CommonPlugin"
-        }
-        create("tooling") {
-            id = "com.cognifide.aem.tooling"
-            implementationClass = "com.cognifide.gradle.aem.tooling.ToolingPlugin"
-        }
-        create("package") {
-            id = "com.cognifide.aem.package"
-            implementationClass = "com.cognifide.gradle.aem.pkg.PackagePlugin"
-        }
-        create("bundle") {
-            id = "com.cognifide.aem.bundle"
-            implementationClass = "com.cognifide.gradle.aem.bundle.BundlePlugin"
-        }
-        create("instance") {
-            id = "com.cognifide.aem.instance"
-            implementationClass = "com.cognifide.gradle.aem.instance.InstancePlugin"
-        }
-        create("environment") {
-            id = "com.cognifide.aem.environment"
-            implementationClass = "com.cognifide.gradle.aem.environment.EnvironmentPlugin"
-        }
-    }
-}
 
 configure<PublishingExtension> {
     publications {
@@ -37,6 +9,54 @@ configure<PublishingExtension> {
             artifact(tasks["javadocJar"])
         }
     }
+}
+
+configure<GradlePluginDevelopmentExtension> {
+    plugins {
+        create("common") {
+            id = "com.cognifide.aem.common"
+            implementationClass = "com.cognifide.gradle.aem.common.CommonPlugin"
+            displayName = "AEM Common Plugin"
+            description = "Provides AEM DSL / 'aem' extension to build script on which all other logic is based."
+        }
+        create("tooling") {
+            id = "com.cognifide.aem.tooling"
+            implementationClass = "com.cognifide.gradle.aem.tooling.ToolingPlugin"
+            displayName = "AEM Tooling Plugin"
+            description = "Provides tasks like 'rcp', 'sync', 'vlt' for working with content using JCR File Vault."
+        }
+        create("package") {
+            id = "com.cognifide.aem.package"
+            implementationClass = "com.cognifide.gradle.aem.pkg.PackagePlugin"
+            displayName = "AEM Package Plugin"
+            description = "Provides tasks for working with CRX packages."
+        }
+        create("bundle") {
+            id = "com.cognifide.aem.bundle"
+            implementationClass = "com.cognifide.gradle.aem.bundle.BundlePlugin"
+            displayName = "AEM Bundle Plugin"
+            description = "Adds support for building OSGi bundles."
+        }
+        create("instance") {
+            id = "com.cognifide.aem.instance"
+            implementationClass = "com.cognifide.gradle.aem.instance.InstancePlugin"
+            displayName = "AEM Instance Plugin"
+            description = "Provides tasks for working with native local AEM instances."
+        }
+        create("environment") {
+            id = "com.cognifide.aem.environment"
+            implementationClass = "com.cognifide.gradle.aem.environment.EnvironmentPlugin"
+            displayName = "AEM Environment Plugin"
+            description = "Provides tasks for working with virtualized AEM environment."
+        }
+    }
+}
+
+configure<PluginBundleExtension> {
+    website = "https://github.com/Cognifide/gradle-aem-plugin"
+    vcsUrl = "https://github.com/Cognifide/gradle-aem-plugin.git"
+    description = "Gradle AEM Plugin"
+    tags = listOf("aem", "cq", "vault", "scr")
 }
 
 configure<BintrayExtension> {
