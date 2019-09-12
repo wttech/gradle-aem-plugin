@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem.instance.provision
 
-import com.cognifide.gradle.aem.common.instance.InstanceException
 import com.cognifide.gradle.aem.common.utils.Formats
 import java.util.*
 
@@ -16,7 +15,7 @@ class InstanceStep(val metadata: InstanceMetadata, val definition: Step) {
 
     val startedAt: Date
         get() = marker.properties.date(STARTED_AT_PROP)
-                ?: throw InstanceException("Provision step '${definition.id}' not yet started on $instance!")
+                ?: throw ProvisionException("Provision step '${definition.id}' not yet started on $instance!")
 
     val started: Boolean
         get() = marker.exists && marker.hasProperty(STARTED_AT_PROP)
@@ -26,7 +25,7 @@ class InstanceStep(val metadata: InstanceMetadata, val definition: Step) {
 
     val endedAt: Date
         get() = marker.properties.date(ENDED_AT_PROP)
-                ?: throw InstanceException("Provision step '${definition.id}' not yet ended on $instance!")
+                ?: throw ProvisionException("Provision step '${definition.id}' not yet ended on $instance!")
 
     val done: Boolean
         get() = ended
@@ -36,7 +35,7 @@ class InstanceStep(val metadata: InstanceMetadata, val definition: Step) {
 
     val failedAt: Date
         get() = marker.properties.date(FAILED_AT_PROP)
-                ?: throw InstanceException("Provision step '${definition.id}' not failed on $instance!")
+                ?: throw ProvisionException("Provision step '${definition.id}' not failed on $instance!")
 
     val duration: Long
         get() = endedAt.time - startedAt.time
@@ -59,8 +58,8 @@ class InstanceStep(val metadata: InstanceMetadata, val definition: Step) {
             definition.actionCallback(instance)
             marker.saveProperty(ENDED_AT_PROP, Date())
         } catch (e: Exception) {
-            logger.error("Provision step '${definition.id}' failed on $instance")
             marker.saveProperty(FAILED_AT_PROP, Date())
+            throw ProvisionException("Cannot perform provision step '${definition.id}' on $instance! Cause: ${e.message}")
         }
     }
 
