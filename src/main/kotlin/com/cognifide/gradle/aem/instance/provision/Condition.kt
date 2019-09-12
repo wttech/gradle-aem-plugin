@@ -18,7 +18,7 @@ class Condition(val step: InstanceStep) {
         }
 
         val nowTimestamp = LocalDateTime.now().atZone(ZoneId.systemDefault())
-        val thenTimestamp = Formats.dateTime(step.duration, step.instance.zoneId)
+        val thenTimestamp = Formats.dateTime(step.endedAt.time, step.instance.zoneId)
         val diffMillis = ChronoUnit.MILLIS.between(thenTimestamp, nowTimestamp)
 
         return diffMillis < millis
