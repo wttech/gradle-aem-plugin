@@ -1651,8 +1651,8 @@ aem {
                 condition { once() && instance.environment == "prod" }
                 action {
                     sync {
-                        osgiFramework.restartBundle("org.apache.sling.jcr.webdav")
-                        osgiFramework.restartBundle("com.adobe.granite.crxde-lite")
+                        osgiFramework.stopBundle("org.apache.sling.jcr.webdav")
+                        osgiFramework.stopBundle("com.adobe.granite.crxde-lite")
                     }
                 }
             }
