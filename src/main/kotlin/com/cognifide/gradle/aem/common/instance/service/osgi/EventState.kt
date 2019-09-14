@@ -26,7 +26,7 @@ class EventState private constructor() {
             return@filter false
         }
 
-        Formats.timeUp(event.received.toLong(), ageZoneId, ageMillis)
+        Formats.durationFit(event.received.toLong(), ageZoneId, ageMillis)
     }
 
     override fun equals(other: Any?): Boolean {

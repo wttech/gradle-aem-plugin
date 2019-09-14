@@ -164,20 +164,22 @@ object Formats {
         return SimpleDateFormat("yyyyMMddHHmmss").format(date)
     }
 
-    fun timeUp(thenMillis: Long, thenZoneId: ZoneId, durationMillis: Long): Boolean {
+    fun duration(millis: Long): String {
+        return DurationFormatUtils.formatDurationHMS(millis)
+    }
+
+    fun durationSince(millis: Long) = duration(System.currentTimeMillis() - millis)
+
+    fun durationShort(millis: Long): String {
+        return DurationFormatUtils.formatDuration(millis, "mm:ss:SSS")
+    }
+
+    fun durationFit(thenMillis: Long, thenZoneId: ZoneId, durationMillis: Long): Boolean {
         val nowTimestamp = LocalDateTime.now().atZone(ZoneId.systemDefault())
         val thenTimestamp = dateTime(thenMillis, thenZoneId)
         val diffMillis = ChronoUnit.MILLIS.between(thenTimestamp, nowTimestamp)
 
         return diffMillis < durationMillis
-    }
-
-    fun duration(millis: Long): String {
-        return DurationFormatUtils.formatDurationHMS(millis)
-    }
-
-    fun durationFormatted(millis: Long): String {
-        return DurationFormatUtils.formatDuration(millis, "mm:ss:SSS")
     }
 
     fun rootProjectPath(file: File, project: Project): String {

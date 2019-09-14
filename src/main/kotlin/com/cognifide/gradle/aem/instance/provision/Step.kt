@@ -12,7 +12,9 @@ class Step(val provisioner: Provisioner, val id: String) {
 
     var description: String? = null
 
-    var failOnError: Boolean = true
+    var continueOnFail: Boolean = false
+
+    var rerunOnFail: Boolean = true
 
     fun validate() {
         if (!::actionCallback.isInitialized) {
@@ -27,4 +29,9 @@ class Step(val provisioner: Provisioner, val id: String) {
     fun condition(callback: Condition.() -> Boolean) {
         this.conditionCallback = callback
     }
+
+    override fun toString(): String {
+        return "Step(id='$id', description=$description, continueOnFail=$continueOnFail, rerunOnFail=$rerunOnFail)"
+    }
+
 }

@@ -38,8 +38,14 @@ object RepositoryType {
         else -> value
     }
 
+    /**
+     * @see <https://github.com/apache/sling-org-apache-sling-servlets-get> - JsonObjectCreator.java
+     */
     private const val DATE_FORMAT_ECMA = "EEE MMM dd yyyy HH:mm:ss 'GMT'Z"
 
+    /**
+     * @see <https://github.com/apache/sling-org-apache-sling-servlets-get> - JsonObjectCreator.java
+     */
     private val DATE_LOCALE = Locale.US
 
     /**

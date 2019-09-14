@@ -1614,8 +1614,8 @@ gradlew :instanceSatisfy -Ppackage.deploy.workflowToggle=[dam_asset=false]
 
 #### Task `instanceProvision`
 
-Performs configuration actions for AEM instances in customizable conditions.
-Feature especially dedicated for pre-configuring AEM instances. Not all things like turning off OSGi bundles can be realized using CRX packages.
+Performs configuration actions for AEM instances in customizable conditions (specific circumstances).
+Feature dedicated for pre-configuring AEM instances as of not all things like turning off OSGi bundles is easy realizable via CRX packages.
 For instance, provisioning could help to avoid using [OSGi Bundle Disabler](https://adobe-consulting-services.github.io/acs-aem-commons/features/osgi-disablers/bundle-disabler/index.html) and [OSGi Component Disabler](https://adobe-consulting-services.github.io/acs-aem-commons/features/osgi-disablers/component-disabler/index.html) etc and is a more powerful and general approach.
 
 Sample configuration:
@@ -1626,36 +1626,36 @@ aem {
         instanceProvision {
             step("enable-crxde") {
                 description = "Enables CRX DE"
-                condition { instance.environment != "prod" && once() }
+                condition { once() && instance.environment != "prod" }
                 action {
                     sync {
                         osgiFramework.configure("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", mapOf(
-                            "alias" to "/crx/server"
+                                "alias" to "/crx/server"
                         ))
                     }
                 }
             }
             step("setup-replication-author") {
-                condition { instance.author && once() }
+                condition { once() && instance.author }
                 action {
                     sync {
                         repository {
                             node("/etc/replication/agents.publish/flush/jcr:content", mapOf(
-                                "transportUri" to "http://dispatcher.example.com/dispatcher/invalidate.cache"
+                                    "transportUri" to "http://dispatcher.example.com/dispatcher/invalidate.cache"
                             ))
                         }
-                    }       
+                    }
                 }
-            }  
+            }
             step("disable-unsecure-bundles") {
-                condition { instance.environment != "prod" && once() }
+                condition { once() && instance.environment == "prod" }
                 action {
                     sync {
-                        osgiFramework.stopBundle("org.apache.sling.jcr.webdav")
-                        osgiFramework.stopBundle("com.day.crx.crxde-support")
-                    }   
-                }       
-            }           
+                        osgiFramework.restartBundle("org.apache.sling.jcr.webdav")
+                        osgiFramework.restartBundle("com.adobe.granite.crxde-lite")
+                    }
+                }
+            }
         }
     }
 }
@@ -1665,7 +1665,10 @@ By running task `instanceSatisfy`, provisioner will perform all steps for which 
 Specifying condition could be even omitted, then, by default, each step will be performed only `once()` 
 which means that configured `action {}` will be executed only once on each AEM instance.
 
-Conditions could be more complex and use helpful methods: `always()`, `never()`, `afterDays(n)`, `afterHours(n)`, `afterMinutes(n)`, `afterMillis(n)` and `every(n)`.
+Conditions could be more complex and use helpful methods based on: 
+
+* time: `repeatAfterDays(n)`, `repeatAfterHours(n)`, `repeatAfterMinutes(n)`, `repeatAfterMillis(n)`
+* counter: `repeatEvery(n)`, `repeatEvery { counter: Long -> Boolean }`.
 
 #### Task `instanceAwait`
 

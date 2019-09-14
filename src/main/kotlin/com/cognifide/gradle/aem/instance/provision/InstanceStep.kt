@@ -1,17 +1,18 @@
 package com.cognifide.gradle.aem.instance.provision
 
+import com.cognifide.gradle.aem.common.instance.Instance
+import com.cognifide.gradle.aem.common.instance.service.repository.Node
 import com.cognifide.gradle.aem.common.utils.Formats
 import java.util.*
 
-class InstanceStep(val metadata: InstanceMetadata, val definition: Step) {
-
-    val instance = metadata.instance
+/**
+ * Represents provision step to be performed on concrete AEM instance.
+ */
+class InstanceStep(val instance: Instance, val definition: Step) {
 
     private val provisioner = definition.provisioner
 
     private val marker = instance.sync.repository.node("${provisioner.path}/step/${definition.id}")
-
-    private val logger = provisioner.aem.logger
 
     val startedAt: Date
         get() = marker.properties.date(STARTED_AT_PROP)
@@ -27,40 +28,65 @@ class InstanceStep(val metadata: InstanceMetadata, val definition: Step) {
         get() = marker.properties.date(ENDED_AT_PROP)
                 ?: throw ProvisionException("Provision step '${definition.id}' not yet ended on $instance!")
 
-    val done: Boolean
-        get() = ended
-
     val failed: Boolean
-        get() = marker.exists && marker.hasProperty(FAILED_AT_PROP)
-
-    val failedAt: Date
-        get() = marker.properties.date(FAILED_AT_PROP)
-                ?: throw ProvisionException("Provision step '${definition.id}' not failed on $instance!")
+        get() = marker.exists && marker.properties.boolean(FAILED_PROP) ?: false
 
     val duration: Long
         get() = endedAt.time - startedAt.time
 
     val durationString: String
-        get() = Formats.duration(duration)
+        get() = Formats.durationShort(duration)
+
+    val counter: Long
+        get() = marker.takeIf { it.exists }?.properties?.long(COUNTER_PROP) ?: 0L
 
     fun isPerformable(): Boolean {
         return definition.conditionCallback(Condition(this))
     }
 
+    /**
+     * Update provision step metadata on AEM instance.
+     *
+     * Condition 'every()' is basing on counter and allows to perform step every(n) times,
+     * so that counting is needed even for step that is actually not performed.
+     */
+    fun update() {
+        marker.save(mapOf(
+                Node.TYPE_UNSTRUCTURED,
+                COUNTER_PROP to counter + 1
+        ))
+    }
+
+    /**
+     * Perform provision step on AEM instance.
+     */
     @Suppress("TooGenericExceptionCaught")
     fun perform() {
         marker.save(mapOf(
-                MARKER_TYPE,
-                STARTED_AT_PROP to Date()
+                Node.TYPE_UNSTRUCTURED,
+                STARTED_AT_PROP to Date(),
+                COUNTER_PROP to counter + 1
         ))
 
         try {
             definition.actionCallback(instance)
-            marker.saveProperty(ENDED_AT_PROP, Date())
+            marker.save(mapOf(
+                    ENDED_AT_PROP to Date(),
+                    FAILED_PROP to false
+            ))
         } catch (e: Exception) {
-            marker.saveProperty(FAILED_AT_PROP, Date())
+            marker.save(mapOf(
+                    ENDED_AT_PROP to Date(),
+                    FAILED_PROP to true
+            ))
             throw ProvisionException("Cannot perform provision step '${definition.id}' on $instance! Cause: ${e.message}")
+        } finally {
+            marker.reload()
         }
+    }
+
+    override fun toString(): String {
+        return "InstanceStep(instance=$instance, definition=$definition, marker=$marker)"
     }
 
     companion object {
@@ -68,8 +94,8 @@ class InstanceStep(val metadata: InstanceMetadata, val definition: Step) {
 
         const val ENDED_AT_PROP = "endedAt"
 
-        const val FAILED_AT_PROP = "failedAt"
+        const val FAILED_PROP = "failed"
 
-        val MARKER_TYPE = "jcr:primaryType" to "nt:unstructured"
+        const val COUNTER_PROP = "counter"
     }
 }

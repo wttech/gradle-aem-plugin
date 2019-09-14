@@ -5,27 +5,37 @@ import java.util.concurrent.TimeUnit
 
 class Condition(val step: InstanceStep) {
 
-    val metadata = step.metadata
-
     val instance = step.instance
+
+    // Partial conditions
 
     fun always(): Boolean = true
 
     fun never(): Boolean = false
 
-    fun once(): Boolean = !step.done
+    fun rerunOnFail(): Boolean = step.ended && step.failed && step.definition.rerunOnFail
 
-    fun every(times: Long) = every { counter -> counter % times == 0L }
+    fun sinceEndedMoreThan(millis: Long) = step.ended && !Formats.durationFit(step.endedAt.time, instance.zoneId, millis)
 
-    fun every(counterPredicate: (Long) -> Boolean) = counterPredicate(metadata.counter)
+    // Complete conditions
 
-    fun afterMillis(millis: Long): Boolean = once() || Formats.timeUp(step.endedAt.time, instance.zoneId, millis)
+    fun once() = failSafeOnce()
 
-    fun afterDays(count: Long) = afterMillis(TimeUnit.DAYS.toMillis(count))
+    fun ultimateOnce() = !step.ended
 
-    fun afterHours(count: Long) = afterMillis(TimeUnit.HOURS.toMillis(count))
+    fun failSafeOnce(): Boolean = ultimateOnce() || rerunOnFail()
 
-    fun afterMinutes(count: Long) = afterMillis(TimeUnit.MINUTES.toMillis(count))
+    fun repeatAfter(millis: Long): Boolean = failSafeOnce() || sinceEndedMoreThan(millis)
 
-    fun afterSeconds(count: Long) = afterMillis(TimeUnit.SECONDS.toMillis(count))
+    fun repeatAfterDays(count: Long) = repeatAfter(TimeUnit.DAYS.toMillis(count))
+
+    fun repeatAfterHours(count: Long) = repeatAfter(TimeUnit.HOURS.toMillis(count))
+
+    fun repeatAfterMinutes(count: Long) = repeatAfter(TimeUnit.MINUTES.toMillis(count))
+
+    fun repeatAfterSeconds(count: Long) = repeatAfter(TimeUnit.SECONDS.toMillis(count))
+
+    fun repeatEvery(counterPredicate: (Long) -> Boolean) = counterPredicate(step.counter)
+
+    fun repeatEvery(times: Long) = repeatEvery { counter -> counter % times == 0L }
 }

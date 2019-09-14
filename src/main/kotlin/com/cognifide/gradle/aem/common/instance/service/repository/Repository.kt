@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.common.instance.service.repository
 
 import com.cognifide.gradle.aem.common.instance.InstanceService
 import com.cognifide.gradle.aem.common.instance.InstanceSync
+import org.apache.jackrabbit.vault.util.JcrConstants
 
 class Repository(sync: InstanceSync) : InstanceService(sync) {
 
@@ -46,4 +47,5 @@ class Repository(sync: InstanceSync) : InstanceService(sync) {
      * Shorthand method for creating or updating node at given path.
      */
     fun node(path: String, properties: Map<String, Any?>): RepositoryResult = node(path).save(properties)
+
 }
