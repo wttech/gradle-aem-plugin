@@ -1662,13 +1662,21 @@ aem {
 ```
 
 By running task `instanceSatisfy`, provisioner will perform all steps for which conditions are met.
-Specifying condition could be even omitted, then, by default, each step will be performed only `once()` 
+Specifying condition could be even omitted, then by default each step will be performed only `once()` 
 which means that configured `action {}` will be executed only once on each AEM instance.
 
 Conditions could be more complex and use helpful methods based on: 
 
-* time: `repeatAfterDays(n)`, `repeatAfterHours(n)`, `repeatAfterMinutes(n)`, `repeatAfterMillis(n)`
-* counter: `repeatEvery(n)`, `repeatEvery { counter: Long -> Boolean }`.
+* guaranteed execution: `once()`,
+* time: `repeatAfterDays(n)`, `repeatAfterHours(n)`, `repeatAfterMinutes(n)`, `repeatAfterMillis(n)`,
+* counter: `repeatEvery(times)`, `repeatEvery { counter: Long -> Boolean }`,
+* probability: `repeatProbably(probability)`.
+
+There are also options for making provisioning more fail-safe, especially when error will be triggered when performing step action.
+Then each step may be additionally configured with:
+
+* `continueOnFail = true` - logging error to console instead of breaking build with exception so that next step might be performed,
+* `rerunOnFail = true` - condition `once()` will try to perform step again even when it previously failed. Also affects conditions based on time.
 
 #### Task `instanceAwait`
 
