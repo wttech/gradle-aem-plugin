@@ -1617,6 +1617,7 @@ gradlew :instanceSatisfy -Ppackage.deploy.workflowToggle=[dam_asset=false]
 Performs configuration actions for AEM instances in customizable conditions (specific circumstances).
 Feature dedicated for pre-configuring AEM instances as of not all things like turning off OSGi bundles is easy realizable via CRX packages.
 For instance, provisioning could help to avoid using [OSGi Bundle Disabler](https://adobe-consulting-services.github.io/acs-aem-commons/features/osgi-disablers/bundle-disabler/index.html) and [OSGi Component Disabler](https://adobe-consulting-services.github.io/acs-aem-commons/features/osgi-disablers/component-disabler/index.html) etc and is a more powerful and general approach.
+Could be used for AEM related troubleshooting like periodic cache cleaning, restarting OSGi bundles, services etc.
 
 Sample configuration:
 
