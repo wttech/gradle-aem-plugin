@@ -20,6 +20,7 @@ import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 import java.util.*
 
 @Suppress("MagicNumber", "TooManyFunctions")
@@ -167,8 +168,18 @@ object Formats {
         return DurationFormatUtils.formatDurationHMS(millis)
     }
 
-    fun durationFormatted(millis: Long): String {
+    fun durationSince(millis: Long) = duration(System.currentTimeMillis() - millis)
+
+    fun durationShort(millis: Long): String {
         return DurationFormatUtils.formatDuration(millis, "mm:ss:SSS")
+    }
+
+    fun durationFit(thenMillis: Long, thenZoneId: ZoneId, durationMillis: Long): Boolean {
+        val nowTimestamp = LocalDateTime.now().atZone(ZoneId.systemDefault())
+        val thenTimestamp = dateTime(thenMillis, thenZoneId)
+        val diffMillis = ChronoUnit.MILLIS.between(thenTimestamp, nowTimestamp)
+
+        return diffMillis < durationMillis
     }
 
     fun rootProjectPath(file: File, project: Project): String {

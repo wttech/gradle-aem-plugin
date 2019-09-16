@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.instance
 import com.cognifide.gradle.aem.AemPlugin
 import com.cognifide.gradle.aem.common.CommonPlugin
 import com.cognifide.gradle.aem.common.tasks.lifecycle.*
+import com.cognifide.gradle.aem.instance.provision.InstanceProvision
 import com.cognifide.gradle.aem.instance.satisfy.InstanceSatisfy
 import com.cognifide.gradle.aem.instance.tail.InstanceTail
 import com.cognifide.gradle.aem.instance.tasks.*
@@ -52,6 +53,9 @@ class InstancePlugin : AemPlugin() {
             register<InstanceSatisfy>(InstanceSatisfy.NAME) {
                 mustRunAfter(InstanceResolve.NAME, InstanceCreate.NAME, InstanceUp.NAME)
             }
+            register<InstanceProvision>(InstanceProvision.NAME) {
+                mustRunAfter(InstanceResolve.NAME, InstanceCreate.NAME, InstanceUp.NAME, InstanceSatisfy.NAME)
+            }
             register<InstanceReload>(InstanceReload.NAME) {
                 mustRunAfter(InstanceSatisfy.NAME)
                 plugins.withId(PackagePlugin.ID) { mustRunAfter(PackageDeploy.NAME) }
@@ -61,7 +65,7 @@ class InstancePlugin : AemPlugin() {
                 plugins.withId(PackagePlugin.ID) { mustRunAfter(PackageDeploy.NAME) }
             }
             register<InstanceSetup>(InstanceSetup.NAME) {
-                dependsOn(InstanceCreate.NAME, InstanceUp.NAME, InstanceSatisfy.NAME)
+                dependsOn(InstanceCreate.NAME, InstanceUp.NAME, InstanceSatisfy.NAME, InstanceProvision.NAME)
                 mustRunAfter(InstanceDestroy.NAME)
                 plugins.withId(PackagePlugin.ID) { dependsOn(PackageDeploy.NAME) }
             }

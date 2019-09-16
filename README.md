@@ -76,6 +76,7 @@
         * [Task instanceReload](#task-instancereload)
         * [Task instanceResolve](#task-instanceresolve)
         * [Task instanceSatisfy](#task-instancesatisfy)
+        * [Task instanceProvision](#task-instanceprovision)
         * [Task instanceAwait](#task-instanceawait)
         * [Task instanceTail](#task-instancetail)
            * [Tailing incidents](#tailing-incidents)
@@ -203,7 +204,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.cognifide.gradle:aem-plugin:7.1.1")
+    implementation("com.cognifide.gradle:aem-plugin:7.2.0")
 }
 ```
 
@@ -1429,12 +1430,18 @@ By having only this upload property specified, plugin will automatically downloa
 It is also possible to specify second property `instance.backup.downloadUrl` which will cause that concrete backup will be always in use.
 By having only this download property specified, plugin will not automatically upload any backups.
 
-Most often only these few lines in *gradle.properties* files are required to have automatic two-way backups working:
+Backup files created, by default, have suffix .backup.zip. This matters in case of resolving backups from remote sources to distinguish AEM backups from other files. Most often it is not needed to update it.
+These few lines in *gradle.properties* files are required to have automatic two-way backups working:
 
 ```ini
 localInstance.backup.uploadUrl=sftp://example.com/aem/packages
 fileTransfer.sftp.user=foo
 fileTransfer.sftp.password=pass
+```
+
+To use a custom suffix instead of the default one, `localInstance.backup.suffix` property has to be set in *gradle.properties* file:
+```ini
+localInstance.backup.suffix=.backup.custom.zip
 ```
 
 Protocols SFTP & SMB are supported by default.
@@ -1603,6 +1610,86 @@ As of task inherits from task `packageDeploy` it is also possible to temporary e
 
 ```bash
 gradlew :instanceSatisfy -Ppackage.deploy.workflowToggle=[dam_asset=false]
+```
+
+#### Task `instanceProvision`
+
+Performs configuration actions for AEM instances in customizable conditions (specific circumstances).
+Feature dedicated for pre-configuring AEM instances as of not all things like turning off OSGi bundles is easy realizable via CRX packages.
+For instance, provisioning could help to avoid using [OSGi Bundle Disabler](https://adobe-consulting-services.github.io/acs-aem-commons/features/osgi-disablers/bundle-disabler/index.html) and [OSGi Component Disabler](https://adobe-consulting-services.github.io/acs-aem-commons/features/osgi-disablers/component-disabler/index.html) etc and is a more powerful and general approach.
+
+Sample configuration:
+
+```kotlin
+aem {
+    tasks {
+        instanceProvision {
+            step("enable-crxde") {
+                description = "Enables CRX DE"
+                condition { once() && instance.environment != "prod" }
+                action {
+                    sync {
+                        osgiFramework.configure("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", mapOf(
+                                "alias" to "/crx/server"
+                        ))
+                    }
+                }
+            }
+            step("setup-replication-author") {
+                condition { once() && instance.author }
+                action {
+                    sync {
+                        repository {
+                            node("/etc/replication/agents.publish/flush/jcr:content", mapOf(
+                                    "transportUri" to "http://dispatcher.example.com/dispatcher/invalidate.cache"
+                            ))
+                        }
+                    }
+                }
+            }
+            step("disable-unsecure-bundles") {
+                condition { once() && instance.environment == "prod" }
+                action {
+                    sync {
+                        osgiFramework.stopBundle("org.apache.sling.jcr.webdav")
+                        osgiFramework.stopBundle("com.adobe.granite.crxde-lite")
+
+                        instanceActions.awaitUp() // then remember set property: 'instance.awaitUp.bundles.symbolicNamesIgnored'
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+By running task `instanceProvision`, provisioner will perform all steps for which conditions are met.
+Specifying condition could be even omitted, then by default each step will be performed only `once()` 
+which means that configured `action {}` will be executed only once on each AEM instance.
+
+Conditions could be more complex and use helpful methods based on: 
+
+* guaranteed execution: `once()`,
+* time: `repeatAfterDays(n)`, `repeatAfterHours(n)`, `repeatAfterMinutes(n)`, `repeatAfterMillis(n)`,
+* counter: `repeatEvery(times)`, `repeatEvery { counter: Long -> Boolean }`,
+* probability: `repeatProbably(probability)`.
+
+There are also options for making provisioning more fail-safe, especially when error will be triggered when performing step action.
+Then each step may be additionally configured with:
+
+* `continueOnFail = true` - logging error to console instead of breaking build with exception so that next step might be performed,
+* `rerunOnFail = false` - disabling performing step again when previously failed. Considered only when using condition `once()` (which is alias for `failSafeOnce()`) and other conditions based on time.
+
+To perform some step(s) selectively, use step name property (values comma delimited, wildcards supported):
+
+```bash
+gradlew instanceProvision -Pinstance.provision.stepName=enable-crxde,...
+```
+
+To perform step(s) regardless conditions, use greedy property (may be combined with previous one):
+
+```bash
+gradlew instanceProvision -Pinstance.provision.greedy
 ```
 
 #### Task `instanceAwait`
@@ -1928,9 +2015,7 @@ While implementing custom AEM tasks, mix usages of following instance services:
 * `repository` [Repository](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/repository/Repository.kt) - Allows to communicate with JCR Content Repository.
 * `http` [InstanceHttpClient](src/main/kotlin/com/cognifide/gradle/aem/common/instance/InstanceHttpClient.kt) - Provides extremely easy to use HTTP client designed especially to be used with AEM (covers basic authentication, allows to use only relative paths instead of full URLs etc) 
 * `status` [Status](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/status/Status.kt) - Allows to read statuses available at [Apache Felix Web Console](https://felix.apache.org/documentation/subprojects/apache-felix-web-console.html).
-* `workflowManager` [WorkflowManager](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/workflow/WorkflowManager.kt) - Allows to enable or disable [workflows](https://helpx.adobe.com/experience-manager/6-5/sites/authoring/using/workflows.html) on AEM instance.
 * `groovyConsole` [GroovyConsole](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/groovy/GroovyConsole.kt) - Allows to execute Groovy code / scripts on AEM instance having [Groovy Console](https://github.com/icfnext/aem-groovy-console) CRX package installed.
-
 
 #### Defining CRX package via code then downloading and sharing it using external HTTP endpoint
 
@@ -2080,7 +2165,7 @@ aem {
                 aem.sync {
                     repository {
                         node("/etc/replication/agents.publish/flush/jcr:content", mapOf( // shorthand for 'node(path).save(props)'
-                            "transportUri" to "http://invalidation-only/dispatcher/invalidate.cache"
+                            "transportUri" to "http://dispatcher.example.com/dispatcher/invalidate.cache"
                         ))
                     }
                 }

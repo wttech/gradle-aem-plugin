@@ -5,11 +5,9 @@ import com.cognifide.gradle.aem.common.utils.Patterns
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
-import java.time.LocalDateTime
-import java.time.ZoneId
-import java.time.temporal.ChronoUnit
 import org.apache.commons.lang3.builder.EqualsBuilder
 import org.apache.commons.lang3.builder.HashCodeBuilder
+import java.time.ZoneId
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 class EventState private constructor() {
@@ -28,11 +26,7 @@ class EventState private constructor() {
             return@filter false
         }
 
-        val nowTimestamp = LocalDateTime.now().atZone(ZoneId.systemDefault())
-        val thenTimestamp = Formats.dateTime(event.received.toLong(), ageZoneId)
-        val diffMillis = ChronoUnit.MILLIS.between(thenTimestamp, nowTimestamp)
-
-        diffMillis < ageMillis
+        Formats.durationFit(event.received.toLong(), ageZoneId, ageMillis)
     }
 
     override fun equals(other: Any?): Boolean {

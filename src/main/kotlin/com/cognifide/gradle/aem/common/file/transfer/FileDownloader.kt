@@ -29,7 +29,7 @@ class FileDownloader(private val aem: AemExtension) {
             val msg = if (fullLength > 0) {
                 "$operation: $fileName | ${Formats.bytesToHuman(processedBytes)}/${Formats.bytesToHuman(fullLength)}"
                         .plus(" (${Formats.percent(processedBytes, fullLength)})")
-                        .plus(" time left: ${Formats.durationFormatted(remainingDownloadTime(startDownloadTime, fullLength))}")
+                        .plus(" time left: ${Formats.durationShort(remainingDownloadTime(startDownloadTime, fullLength))}")
             } else {
                 "$operation: $fileName | ${Formats.bytesToHuman(processedBytes)}"
             }

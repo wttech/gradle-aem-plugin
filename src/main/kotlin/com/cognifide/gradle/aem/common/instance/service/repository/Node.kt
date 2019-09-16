@@ -304,4 +304,8 @@ class Node(val repository: Repository, val path: String) : Serializable {
         CHILDREN("__children__"),
         NAME("__name__")
     }
+
+    companion object {
+        val TYPE_UNSTRUCTURED = JcrConstants.JCR_PRIMARYTYPE to JcrConstants.NT_UNSTRUCTURED
+    }
 }
