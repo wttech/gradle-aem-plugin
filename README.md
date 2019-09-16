@@ -1653,6 +1653,8 @@ aem {
                     sync {
                         osgiFramework.stopBundle("org.apache.sling.jcr.webdav")
                         osgiFramework.stopBundle("com.adobe.granite.crxde-lite")
+
+                        instanceActions.awaitUp() // then remember set property: 'instance.awaitUp.bundles.symbolicNamesIgnored'
                     }
                 }
             }
@@ -1677,6 +1679,18 @@ Then each step may be additionally configured with:
 
 * `continueOnFail = true` - logging error to console instead of breaking build with exception so that next step might be performed,
 * `rerunOnFail = false` - disabling performing step again when previously failed. Considered only when using condition `once()` (which is alias for `failSafeOnce()`) and other conditions based on time.
+
+To perform some step(s) selectively, use step name property (values comma delimited, wildcards supported):
+
+```bash
+gradlew instanceProvision -Pinstance.provision.stepName=enable-crxde,...
+```
+
+To perform step(s) regardless conditions, use greedy property (may be combined with previous one):
+
+```bash
+gradlew instanceProvision -Pinstance.provision.greedy
+```
 
 #### Task `instanceAwait`
 
