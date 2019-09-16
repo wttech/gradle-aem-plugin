@@ -1617,7 +1617,7 @@ gradlew :instanceSatisfy -Ppackage.deploy.workflowToggle=[dam_asset=false]
 Performs configuration actions for AEM instances in customizable conditions (specific circumstances).
 Feature dedicated for pre-configuring AEM instances as of not all things like turning off OSGi bundles is easy realizable via CRX packages.
 For instance, provisioning could help to avoid using [OSGi Bundle Disabler](https://adobe-consulting-services.github.io/acs-aem-commons/features/osgi-disablers/bundle-disabler/index.html) and [OSGi Component Disabler](https://adobe-consulting-services.github.io/acs-aem-commons/features/osgi-disablers/component-disabler/index.html) etc and is a more powerful and general approach.
-Could be used for AEM related troubleshooting like periodic cache cleaning, restarting OSGi bundles, services etc.
+Could be used for AEM related troubleshooting like periodic cache cleaning, restarting OSGi bundle or components after CRX package deployment etc.
 
 Sample configuration:
 
@@ -1668,9 +1668,10 @@ By running task `instanceProvision`, provisioner will perform all steps for whic
 Specifying condition could be even omitted, then by default each step will be performed only `once()` 
 which means that configured `action {}` will be executed only once on each AEM instance.
 
-Conditions could be more complex and use helpful methods based on: 
+Conditions could be more complex and use helpful methods basing on: 
 
-* guaranteed execution: `once()`,
+* guaranteed execution: `once()` <=> `failSafeOnce()`,
+* forced execution: `always()`, `never()`,
 * time: `repeatAfterDays(n)`, `repeatAfterHours(n)`, `repeatAfterMinutes(n)`, `repeatAfterMillis(n)`,
 * counter: `repeatEvery(times)`, `repeatEvery { counter: Long -> Boolean }`,
 * probability: `repeatProbably(probability)`.
@@ -1679,7 +1680,7 @@ There are also options for making provisioning more fail-safe, especially when e
 Then each step may be additionally configured with:
 
 * `continueOnFail = true` - logging error to console instead of breaking build with exception so that next step might be performed,
-* `rerunOnFail = false` - disabling performing step again when previously failed. Considered only when using condition `once()` (which is alias for `failSafeOnce()`) and other conditions based on time.
+* `rerunOnFail = false` - disabling performing step again when previously failed. Considered only when using condition `once()` or `failSafeOnce()` and other conditions based on time.
 
 To perform some step(s) selectively, use step name property (values comma delimited, wildcards supported):
 
