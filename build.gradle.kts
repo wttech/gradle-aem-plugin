@@ -55,7 +55,7 @@ dependencies {
     testImplementation("org.skyscreamer:jsonassert:1.5.0")
     testImplementation("org.junit-pioneer:junit-pioneer:0.2.2")
 
-    "detektPlugins"("io.gitlab.arturbosch.detekt:detekt-formatting:1.0.0-RC16")
+    "detektPlugins"("io.gitlab.arturbosch.detekt:detekt-formatting:1.0.1")
 }
 
 tasks {
@@ -142,6 +142,9 @@ tasks {
 
 detekt {
     config.from(file("detekt.yml"))
+    parallel = true
+    autoCorrect = true
+    failFast = true
 }
 
 apply(from = "gradle/publish.gradle.kts")

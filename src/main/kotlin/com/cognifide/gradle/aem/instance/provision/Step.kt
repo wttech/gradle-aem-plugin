@@ -33,5 +33,4 @@ class Step(val provisioner: Provisioner, val id: String) {
     override fun toString(): String {
         return "Step(id='$id', description=$description, continueOnFail=$continueOnFail, rerunOnFail=$rerunOnFail)"
     }
-
 }

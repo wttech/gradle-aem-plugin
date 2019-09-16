@@ -9,6 +9,7 @@ build:
 processors:
   active: true
   exclude:
+  # - 'DetektProgressListener'
   # - 'FunctionCountProcessor'
   # - 'PropertyCountProcessor'
   # - 'ClassCountProcessor'
@@ -184,6 +185,7 @@ formatting:
   autoCorrect: true
   AnnotationOnSeparateLine:
     active: false
+    autoCorrect: true
   ChainWrapping:
     active: true
     autoCorrect: true
@@ -193,12 +195,14 @@ formatting:
   Filename:
     active: true
   FinalNewline:
-    active: false
+    active: true
     autoCorrect: true
   ImportOrdering:
     active: false
+    autoCorrect: true
   Indentation:
     active: false
+    autoCorrect: true
     indentSize: 4
     continuationIndentSize: 4
   MaximumLineLength:
@@ -219,8 +223,6 @@ formatting:
   NoEmptyClassBody:
     active: true
     autoCorrect: true
-  NoItParamInMultilineLambda:
-    active: false
   NoLineBreakAfterElse:
     active: true
     autoCorrect: true
@@ -273,9 +275,6 @@ formatting:
     active: true
     autoCorrect: true
   SpacingAroundRangeOperator:
-    active: true
-    autoCorrect: true
-  SpacingAroundUnaryOperators:
     active: true
     autoCorrect: true
   StringTemplate:
@@ -434,6 +433,7 @@ style:
   ForbiddenComment:
     active: true
     values: 'TODO:,FIXME:,STOPSHIP:'
+    allowedPatterns: ""
   ForbiddenImport:
     active: false
     imports: ''
@@ -477,7 +477,7 @@ style:
   NestedClassesVisibility:
     active: false
   NewLineAtEndOfFile:
-    active: false
+    active: true
   NoTabs:
     active: false
   OptionalAbstractKeyword:
@@ -490,6 +490,8 @@ style:
     active: false
   ProtectedMemberInFinalClass:
     active: false
+  RedundantExplicitType:
+    active: false
   RedundantVisibilityModifierRule:
     active: false
   ReturnCount:
@@ -498,6 +500,7 @@ style:
     excludedFunctions: "equals"
     excludeLabeled: false
     excludeReturnFromLambda: true
+    excludeGuardClauses: false
   SafeCast:
     active: true
   SerialVersionUIDInSerializableClass:
@@ -537,6 +540,8 @@ style:
   UseDataClass:
     active: false
     excludeAnnotatedClasses: ""
+  UseIfInsteadOfWhen:
+    active: false
   UseRequire:
     active: false
   UselessCallOnNotNull:

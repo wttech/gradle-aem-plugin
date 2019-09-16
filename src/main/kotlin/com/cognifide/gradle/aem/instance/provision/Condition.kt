@@ -41,14 +41,9 @@ class Condition(val step: InstanceStep) {
     fun repeatAfter(millis: Long): Boolean = failSafeOnce() || sinceEndedMoreThan(millis)
 
     /**
-     * Repeat performing step after specified number of days since last time.
+     * Repeat performing step after specified number of seconds since last time.
      */
-    fun repeatAfterDays(count: Long) = repeatAfter(TimeUnit.DAYS.toMillis(count))
-
-    /**
-     * Repeat performing step after specified number of hours since last time.
-     */
-    fun repeatAfterHours(count: Long) = repeatAfter(TimeUnit.HOURS.toMillis(count))
+    fun repeatAfterSeconds(count: Long) = repeatAfter(TimeUnit.SECONDS.toMillis(count))
 
     /**
      * Repeat performing step after specified number of minutes since last time.
@@ -56,9 +51,14 @@ class Condition(val step: InstanceStep) {
     fun repeatAfterMinutes(count: Long) = repeatAfter(TimeUnit.MINUTES.toMillis(count))
 
     /**
-     * Repeat performing step after specified number of seconds since last time.
+     * Repeat performing step after specified number of hours since last time.
      */
-    fun repeatAfterSeconds(count: Long) = repeatAfter(TimeUnit.SECONDS.toMillis(count))
+    fun repeatAfterHours(count: Long) = repeatAfter(TimeUnit.HOURS.toMillis(count))
+
+    /**
+     * Repeat performing step after specified number of days since last time.
+     */
+    fun repeatAfterDays(count: Long) = repeatAfter(TimeUnit.DAYS.toMillis(count))
 
     /**
      * Repeat performing step basing on counter based predicate.

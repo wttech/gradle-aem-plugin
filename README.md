@@ -204,7 +204,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.cognifide.gradle:aem-plugin:7.2.0-SNAPSHOT")
+    implementation("com.cognifide.gradle:aem-plugin:7.2.0")
 }
 ```
 
@@ -1661,7 +1661,7 @@ aem {
 }
 ```
 
-By running task `instanceSatisfy`, provisioner will perform all steps for which conditions are met.
+By running task `instanceProvision`, provisioner will perform all steps for which conditions are met.
 Specifying condition could be even omitted, then by default each step will be performed only `once()` 
 which means that configured `action {}` will be executed only once on each AEM instance.
 
@@ -1676,7 +1676,7 @@ There are also options for making provisioning more fail-safe, especially when e
 Then each step may be additionally configured with:
 
 * `continueOnFail = true` - logging error to console instead of breaking build with exception so that next step might be performed,
-* `rerunOnFail = true` - condition `once()` will try to perform step again even when it previously failed. Also affects conditions based on time.
+* `rerunOnFail = false` - disabling performing step again when previously failed. Considered only when using condition `once()` (which is alias for `failSafeOnce()`) and other conditions based on time.
 
 #### Task `instanceAwait`
 
