@@ -69,7 +69,11 @@ class InstanceStep(val instance: Instance, val definition: Step) {
         ))
 
         try {
-            definition.actionCallback(instance)
+            with(definition) {
+                retry.withCountdown<Unit, Exception>("perform provision step '$id' for '${instance.name}'") {
+                    actionCallback(instance)
+                }
+            }
             marker.save(mapOf(
                     ENDED_AT_PROP to Date(),
                     FAILED_PROP to false

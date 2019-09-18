@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.instance.provision
 
+import com.cognifide.gradle.aem.common.build.Retry
 import com.cognifide.gradle.aem.common.instance.Instance
 
 class Step(val provisioner: Provisioner, val id: String) {
@@ -10,11 +11,25 @@ class Step(val provisioner: Provisioner, val id: String) {
 
     var conditionCallback: Condition.() -> Boolean = { once() }
 
+    /**
+     * Nice name of step describing purpose.
+     */
     var description: String? = null
 
-    var continueOnFail: Boolean = false
+    /**
+     * Allows to redo step action after delay if exception is thrown.
+     */
+    var retry: Retry = aem.retry { afterSquaredSecond(aem.props.long("instance.provision.step.retry") ?: 0L) }
 
-    var rerunOnFail: Boolean = true
+    /**
+     * Controls logging error to console instead of breaking build with exception so that next step might be performed.
+     */
+    var continueOnFail: Boolean = aem.props.boolean("instance.provision.step.continueOnFail") ?: false
+
+    /**
+     * Controls if step should be performed again when previously failed.
+     */
+    var rerunOnFail: Boolean = aem.props.boolean("instance.provision.step.rerunOnFail") ?: true
 
     fun validate() {
         if (!::actionCallback.isInitialized) {
@@ -28,6 +43,10 @@ class Step(val provisioner: Provisioner, val id: String) {
 
     fun condition(callback: Condition.() -> Boolean) {
         this.conditionCallback = callback
+    }
+
+    fun retry(options: Retry.() -> Unit) {
+        this.retry = aem.retry(options)
     }
 
     override fun toString(): String {
