@@ -35,7 +35,7 @@ class InstanceStep(val instance: Instance, val definition: Step) {
         get() = endedAt.time - startedAt.time
 
     val durationString: String
-        get() = Formats.durationShort(duration)
+        get() = Formats.duration(duration)
 
     val counter: Long
         get() = marker.takeIf { it.exists }?.properties?.long(COUNTER_PROP) ?: 0L
