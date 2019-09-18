@@ -2376,6 +2376,12 @@ Expanding properties could be used separately on any string or file source in an
 
 ## Known issues
 
+### Failed to await HTTPD service
+
+Noticed when using Docker Desktop for Windows, after hibernation task `environmentUp` may fail, because of some Docker related issue.
+To mitigate it, just RPM on Docker icon in the tray and choose *Restart*. After Docker ends restarting (tray icon will be no longer animated), 
+run task `environmentRestart`.
+
 ### No OSGi services / components are registered
 
 Since AEM 6.2 it is recommended to use new OSGi service component annotations to register OSGi components instead SCR annotations (still supported, but not by Gradle AEM Plugin).
