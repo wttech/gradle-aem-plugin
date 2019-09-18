@@ -8,12 +8,12 @@ import com.cognifide.gradle.aem.common.instance.local.Status
 import com.cognifide.gradle.aem.common.utils.Formats
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
-import java.io.File
-import java.io.Serializable
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
 import org.gradle.internal.os.OperatingSystem
 import org.gradle.util.GFileUtils
+import java.io.File
+import java.io.Serializable
 
 class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(aem), Serializable {
 
@@ -248,11 +248,11 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
             var result = origin
 
             // Update window title
-            val previousTitle = StringUtils.substringBetween(origin, "start /min \"", "\" cmd.exe ")
-            if (previousTitle != null) {
+            val previousWindowTitle = StringUtils.substringBetween(origin, "start /min \"", "\" cmd.exe ")
+            if (previousWindowTitle != null) {
                 result = StringUtils.replace(result,
-                        "start /min \"$previousTitle\" cmd.exe ",
-                        "start /min \"${this}\" cmd.exe "
+                        "start /min \"$previousWindowTitle\" cmd.exe ",
+                        "start /min \"$windowTitle\" cmd.exe "
                 )
             }
 
@@ -354,8 +354,10 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
 
     fun locked(name: String): Boolean = lockFile(name).exists()
 
+    val windowTitle get() = "LocalInstance(name='$name', httpUrl='$httpUrl', debugPort=$debugPort, user='$user', password='${Formats.asPassword(password)}')"
+
     override fun toString(): String {
-        return "LocalInstance(httpUrl='$httpUrl', user='$user', password='${Formats.asPassword(password)}', id='$id', debugPort=$debugPort)"
+        return "LocalInstance(name='$name', httpUrl='$httpUrl')"
     }
 
     companion object {
