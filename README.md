@@ -110,6 +110,7 @@
      * [Filter instances to work with](#filter-instances-to-work-with)
      * [Know how properties are being expanded in instance or package files](#know-how-properties-are-being-expanded-in-instance-or-package-files)
   * [Known issues](#known-issues)
+     * [Failed to await HTTPD service](#failed-to-await-httpd-service)
      * [No OSGi services / components are registered](#no-osgi-services--components-are-registered)
      * [Caching task packageCompose](#caching-task-packagecompose)
      * [Vault tasks parallelism](#vault-tasks-parallelism)
