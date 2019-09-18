@@ -10,7 +10,7 @@ class RemoteInstance private constructor(aem: AemExtension) : AbstractInstance(a
     override lateinit var password: String
 
     override fun toString(): String {
-        return "RemoteInstance(httpUrl='$httpUrl', name='$name')"
+        return "RemoteInstance(name='$name', httpUrl='$httpUrl')"
     }
 
     companion object {
