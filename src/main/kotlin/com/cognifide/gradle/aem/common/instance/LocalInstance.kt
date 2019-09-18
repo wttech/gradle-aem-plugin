@@ -354,6 +354,7 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
 
     fun locked(name: String): Boolean = lockFile(name).exists()
 
+    @get:JsonIgnore
     val windowTitle get() = "LocalInstance(name='$name', httpUrl='$httpUrl', debugPort=$debugPort, user='$user', password='${Formats.asPassword(password)}')"
 
     override fun toString(): String {
