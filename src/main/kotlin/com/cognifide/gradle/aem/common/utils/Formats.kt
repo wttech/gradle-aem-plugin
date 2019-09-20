@@ -164,15 +164,12 @@ object Formats {
         return SimpleDateFormat("yyyyMMddHHmmss").format(date)
     }
 
-    fun duration(millis: Long): String {
-        return DurationFormatUtils.formatDurationHMS(millis)
+    fun duration(millis: Long, long: Boolean = false): String = when {
+        long -> DurationFormatUtils.formatDuration(millis, "mm:ss:SSS")
+        else -> DurationFormatUtils.formatDurationHMS(millis)
     }
 
-    fun durationSince(millis: Long) = duration(System.currentTimeMillis() - millis)
-
-    fun durationShort(millis: Long): String {
-        return DurationFormatUtils.formatDuration(millis, "mm:ss:SSS")
-    }
+    fun durationSince(millis: Long, long: Boolean = false) = duration(System.currentTimeMillis() - millis, long)
 
     fun durationFit(thenMillis: Long, thenZoneId: ZoneId, durationMillis: Long): Boolean {
         val nowTimestamp = LocalDateTime.now().atZone(ZoneId.systemDefault())

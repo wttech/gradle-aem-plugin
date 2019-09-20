@@ -9,17 +9,17 @@ class Retry private constructor(val aem: AemExtension) {
 
     var delay: (Long) -> Long = { 0L }
 
-    fun retry(times: Long, delay: (Long) -> Long) {
+    fun after(times: Long, delay: (Long) -> Long) {
         this.delay = delay
         this.times = times
     }
 
     fun afterSecond(times: Long) {
-        retry(times) { SECOND_MILIS }
+        after(times) { SECOND_MILIS }
     }
 
     fun afterSquaredSecond(times: Long) {
-        retry(times) { n -> n * n * SECOND_MILIS }
+        after(times) { n -> n * n * SECOND_MILIS }
     }
 
     @Suppress("TooGenericExceptionCaught")

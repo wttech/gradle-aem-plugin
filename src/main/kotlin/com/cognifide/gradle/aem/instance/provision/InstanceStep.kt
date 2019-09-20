@@ -35,7 +35,7 @@ class InstanceStep(val instance: Instance, val definition: Step) {
         get() = endedAt.time - startedAt.time
 
     val durationString: String
-        get() = Formats.durationShort(duration)
+        get() = Formats.duration(duration)
 
     val counter: Long
         get() = marker.takeIf { it.exists }?.properties?.long(COUNTER_PROP) ?: 0L
@@ -69,7 +69,11 @@ class InstanceStep(val instance: Instance, val definition: Step) {
         ))
 
         try {
-            definition.actionCallback(instance)
+            with(definition) {
+                retry.withCountdown<Unit, Exception>("perform provision step '$id' for '${instance.name}'") {
+                    actionCallback(instance)
+                }
+            }
             marker.save(mapOf(
                     ENDED_AT_PROP to Date(),
                     FAILED_PROP to false

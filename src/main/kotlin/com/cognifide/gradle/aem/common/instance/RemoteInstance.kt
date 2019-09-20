@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem.common.instance
 
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.common.utils.Formats
 import java.io.Serializable
 
 class RemoteInstance private constructor(aem: AemExtension) : AbstractInstance(aem), Serializable {
@@ -11,12 +10,12 @@ class RemoteInstance private constructor(aem: AemExtension) : AbstractInstance(a
     override lateinit var password: String
 
     override fun toString(): String {
-        return "RemoteInstance(httpUrl='$httpUrl', user='$user', password='${Formats.asPassword(password)}', environment='$environment', id='$id')"
+        return "RemoteInstance(name='$name', httpUrl='$httpUrl')"
     }
 
     companion object {
 
-        fun create(aem: AemExtension, httpUrl: String, configurer: RemoteInstance.() -> Unit): RemoteInstance {
+        fun create(aem: AemExtension, httpUrl: String, configurer: RemoteInstance.() -> Unit = {}): RemoteInstance {
             return RemoteInstance(aem).apply {
                 val instanceUrl = InstanceUrl.parse(httpUrl)
 
@@ -28,10 +27,6 @@ class RemoteInstance private constructor(aem: AemExtension) : AbstractInstance(a
 
                 this.apply(configurer)
             }
-        }
-
-        fun create(aem: AemExtension, httpUrl: String): RemoteInstance {
-            return create(aem, httpUrl) {}
         }
     }
 }

@@ -27,9 +27,9 @@ class FileDownloader(private val aem: AemExtension) {
         if (processedKb > loggedKb) {
             val fileName = file.name.removeSuffix(FileTransferManager.TMP_SUFFIX)
             val msg = if (fullLength > 0) {
-                "$operation: $fileName | ${Formats.bytesToHuman(processedBytes)}/${Formats.bytesToHuman(fullLength)}"
-                        .plus(" (${Formats.percent(processedBytes, fullLength)})")
-                        .plus(" time left: ${Formats.durationShort(remainingDownloadTime(startDownloadTime, fullLength))}")
+                "$operation: $fileName | ${Formats.bytesToHuman(processedBytes)}/${Formats.bytesToHuman(fullLength)}" +
+                        " (${Formats.percent(processedBytes, fullLength)}," +
+                        " time left: ${Formats.duration(remainingDownloadTime(startDownloadTime, fullLength))})"
             } else {
                 "$operation: $fileName | ${Formats.bytesToHuman(processedBytes)}"
             }

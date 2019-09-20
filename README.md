@@ -205,7 +205,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.cognifide.gradle:aem-plugin:7.2.0")
+    implementation("com.cognifide.gradle:aem-plugin:7.2.1")
 }
 ```
 
@@ -1681,7 +1681,8 @@ There are also options for making provisioning more fail-safe, especially when e
 Then each step may be additionally configured with:
 
 * `continueOnFail = true` - logging error to console instead of breaking build with exception so that next step might be performed,
-* `rerunOnFail = false` - disabling performing step again when previously failed. Considered only when using condition `once()` or `failSafeOnce()` and other conditions based on time.
+* `rerunOnFail = false` - disabling performing step again when previously failed. Considered only when using condition `once()` or `failSafeOnce()` and other conditions based on time,
+* `retry { afterSquaredSecond(3) }` - redo step action on exception after delay time with distribution like `afterSquaredSecond(n)`, `afterSecond(n)` or custom `after(n, delayFunction)`.
 
 To perform some step(s) selectively, use step name property (values comma delimited, wildcards supported):
 
