@@ -23,6 +23,7 @@ val aem: AemExtension,
 
     @get:Internal
 val downloadDir: File
+
 ) {
     private val project = aem.project
 
@@ -132,12 +133,40 @@ val downloadDir: File
     fun useLocal(sourceFile: File): FileResolution = resolveFile(sourceFile.absolutePath) { sourceFile }
 
     /**
-     * Use recent local file located in directory or fail when not found any.
+     * Use local file from directory or file when not found any.
      */
-    fun useLocalRecent(dir: Any, filePattern: String = "**/*.zip"): FileResolution? = resolveFile(listOf(dir, filePattern)) {
-        aem.project.fileTree(dir) { it.include(filePattern) }.maxBy { it.name }
-                ?: throw FileException("Cannot find any local file under directory '$dir' matching file pattern '$filePattern'!")
+    fun useLocalBy(dir: Any, filePatterns: Iterable<String>, selector: (Iterable<File>).() -> File?): FileResolution? {
+        return resolveFile(listOf(dir, filePatterns)) {
+            aem.project.fileTree(dir) { it.include(filePatterns) }.run(selector)
+                    ?: throw FileException("Cannot find any local file under directory '$dir' matching file pattern '$filePatterns'!")
+        }
     }
+
+    /**
+     * Use local file from directory or file when not found any.
+     */
+    fun useLocalBy(dir: Any, selector: (Iterable<File>).() -> File?) = useLocalBy(dir, localFilePatterns, selector)
+
+    /**
+     * Use local file with name being highest version located in directory or fail when not found any.
+     * Highest version is determined by descending alphanumeric sorting.
+     */
+    fun useLocalLastNamed(dir: Any) = useLocalBy(dir) { maxBy { it.name } }
+
+    /**
+     * Use last modified local file located in directory or fail when not found any.
+     */
+    fun useLocalLastModified(dir: Any) = useLocalBy(dir) { maxBy { it.lastModified() } }
+
+    /**
+     * Use last modified local file located in directory or fail when not found any.
+     */
+    fun useLocalRecent(dir: Any) = useLocalLastModified(dir)
+
+    /**
+     * Files respected when searching for recent local files.
+     */
+    var localFilePatterns = listOf("**/*.zip", "**/*.jar")
 
     /**
      * Customize configuration for particular file group.
