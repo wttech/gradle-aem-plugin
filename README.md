@@ -111,7 +111,8 @@
      * [Know how properties are being expanded in instance or package files](#know-how-properties-are-being-expanded-in-instance-or-package-files)
   * [Known issues](#known-issues)
      * [Failed to await HTTPD service](#failed-to-await-httpd-service)
-     * [No OSGi services / components are registered](#no-osgi-services--components-are-registered)
+     * [BND tool error - Classes found in wrong directory](#bnd-tool-error---classes-found-in-wrong-directory)
+     * [No OSGi services / components registered](#no-osgi-services--components-registered)
      * [Caching task packageCompose](#caching-task-packagecompose)
      * [Vault tasks parallelism](#vault-tasks-parallelism)
   * [Compatibility](#compatibility)
@@ -2386,7 +2387,41 @@ Noticed when using Docker Desktop for Windows, after hibernation task `environme
 To mitigate it, just RPM on Docker icon in the tray and choose *Restart*. After Docker ends restarting (tray icon will be no longer animated), 
 run task `environmentRestart`.
 
-### No OSGi services / components are registered
+### BND tool error - Classes found in wrong directory
+
+After correcting bad Java package case from camelCase to lowercase according to [Oracle recommendations](https://docs.oracle.com/javase/tutorial/java/package/namingpkgs.html), BND tool may report error:
+
+```
+> Task :aem:sites:jar FAILED
+...
+error  : Classes found in the wrong directory: 
+```
+
+As a workaround, try completely remove Gradle caches using commands like:
+
+```bash
+sh gradlew clean
+sh gradlew --stop
+rm -fr .gradle
+```
+
+Then try to build again.
+
+Ultimately, try decreasing error to warning (as of probably there will be no side-effects):
+
+```aidl
+aem {
+    tasks {
+        bundle {
+            bndInstructions += mapOf(
+                "-fixupmessages.classesWrongDirectory" to "Classes found in the wrong directory*;is:=warning"
+            )
+        }
+    }
+}
+```
+
+### No OSGi services / components registered
 
 Since AEM 6.2 it is recommended to use new OSGi service component annotations to register OSGi components instead SCR annotations (still supported, but not by Gradle AEM Plugin).
 
@@ -2420,11 +2455,12 @@ In case of that workaround, Vault tasks should not be run in parallel (by separa
 
 ## Compatibility
 
-| Gradle AEM Plugin | Gradle Build Tool | Adobe Experience Manager |
-|:-----------------:|:-----------------:|:------------------------:|
-|   4.x.x -> 5.x.x  |     4.x -> 4.8    |        6.x and up        |
-|   6.0.0 -> 6.2.1  |     4.9 -> 5.0    |        6.x and up        |
-|   6.3.0 and up    |     5.1 and up    |        6.x and up        |
+| Gradle AEM Plugin | Gradle Build Tool | Adobe Experience Manager |   Java   |
+|:-----------------:|:-----------------:|:------------------------:|:--------:|
+|   4.x.x -> 5.x.x  |     4.x -> 4.8    |        6.x and up        |     8    |
+|   6.0.0 -> 6.2.1  |     4.9 -> 5.0    |        6.x and up        |     8    |
+|   6.3.0 and up    |     5.1 and up    |        6.x and up        |     8    |
+|   7.2.0 and up    |     5.1 and up    |        6.x and up        |    8,11  |
 
 ## Building
 
