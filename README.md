@@ -2407,20 +2407,6 @@ rm -fr .gradle
 
 Then try to build again.
 
-Ultimately, try decreasing error to warning (as of probably there will be no side-effects):
-
-```aidl
-aem {
-    tasks {
-        bundle {
-            bndInstructions += mapOf(
-                "-fixupmessages.classesWrongDirectory" to "Classes found in the wrong directory*;is:=warning"
-            )
-        }
-    }
-}
-```
-
 ### No OSGi services / components registered
 
 Since AEM 6.2 it is recommended to use new OSGi service component annotations to register OSGi components instead SCR annotations (still supported, but not by Gradle AEM Plugin).
