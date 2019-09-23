@@ -102,7 +102,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
      * Gradle's offline mode does much more. It will not use any Maven repository so that CI build
      * will fail which is not expected in integration tests.
      */
-    val offline = props.boolean("offline") ?: project.gradle.startParameter.isOffline
+    val offline = props.boolean("offline") ?: false
 
     /**
      * Determines current environment name to be used in e.g package deployment.
