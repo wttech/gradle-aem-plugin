@@ -2397,15 +2397,11 @@ After correcting bad Java package case from camelCase to lowercase according to 
 error  : Classes found in the wrong directory: 
 ```
 
-As a workaround, try completely remove Gradle caches using commands like:
+To fix above error simply run once following command to ensure building using fresh daemon and resources:
 
 ```bash
-sh gradlew clean
-sh gradlew --stop
-rm -fr .gradle
+sh gradle clean :aem:sites:jar --no-daemon --rerun-tasks
 ```
-
-Then try to build again.
 
 ### No OSGi services / components registered
 
