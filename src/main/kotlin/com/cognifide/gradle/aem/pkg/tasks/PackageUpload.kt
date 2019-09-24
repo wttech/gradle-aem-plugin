@@ -17,7 +17,7 @@ open class PackageUpload : PackageTask() {
         instances.checkAvailable()
 
         aem.progress(instances.size * packages.size) {
-            aem.syncPackages(instances, packages) { pkg ->
+            aem.syncFiles(instances, packages) { pkg ->
                 increment("${pkg.name} -> ${instance.name}") {
                     packageManager.upload(pkg)
                 }

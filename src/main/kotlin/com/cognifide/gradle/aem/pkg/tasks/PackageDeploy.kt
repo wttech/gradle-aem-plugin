@@ -120,7 +120,7 @@ open class PackageDeploy : PackageTask() {
         instances.checkAvailable()
 
         aem.progress(instances.size * packages.size) {
-            aem.syncPackages(instances, packages) { pkg ->
+            aem.syncFiles(instances, packages) { pkg ->
                 increment("Deploying package '${pkg.name}' to instance '${instance.name}'") {
                     initializer()
                     workflowManager.toggleTemporarily(workflowToggle) {

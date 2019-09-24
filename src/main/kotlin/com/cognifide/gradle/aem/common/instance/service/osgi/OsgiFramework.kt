@@ -1,18 +1,21 @@
 package com.cognifide.gradle.aem.common.instance.service.osgi
 
 import com.cognifide.gradle.aem.AemException
+import com.cognifide.gradle.aem.common.build.Retry
 import com.cognifide.gradle.aem.common.http.ResponseException
 import com.cognifide.gradle.aem.common.instance.InstanceException
 import com.cognifide.gradle.aem.common.instance.InstanceService
 import com.cognifide.gradle.aem.common.instance.InstanceSync
 import com.cognifide.gradle.aem.common.utils.Formats
 import org.apache.http.HttpStatus
+import java.io.File
 
 /**
  * Controls OSGi framework using Apache Felix Web Console endpoints.
  *
  * @see <https://felix.apache.org/documentation/subprojects/apache-felix-web-console.html>
  */
+@Suppress("TooManyFunctions")
 class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
 
     // ----- Bundles -----
@@ -106,6 +109,14 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         val bundle = getBundle(symbolicName)
         aem.logger.info("Updating OSGi $bundle on $instance.")
         sync.http.post("$BUNDLES_PATH/${bundle.symbolicName}", mapOf("action" to "update"))
+    }
+
+    fun installBundle(file: File, retry: Retry = aem.retry()) {
+        // TODO ...
+    }
+
+    fun uninstallBundle(file: File, retry: Retry = aem.retry()) {
+        // TODO ...
     }
 
     // ----- Components -----

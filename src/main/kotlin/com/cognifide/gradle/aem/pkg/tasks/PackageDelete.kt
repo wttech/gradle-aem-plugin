@@ -24,7 +24,7 @@ open class PackageDelete : PackageTask() {
         instances.checkAvailable()
 
         aem.progress(instances.size * packages.size) {
-            aem.syncPackages(instances, packages) { file ->
+            aem.syncFiles(instances, packages) { file ->
                 increment("${file.name} -> ${instance.name}") {
                     val pkg = packageManager.get(file)
                     packageManager.delete(pkg.path)
