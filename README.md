@@ -59,6 +59,8 @@
         * [Embedding JAR file into OSGi bundle](#embedding-jar-file-into-osgi-bundle)
         * [Configuring OSGi bundle manifest attributes](#configuring-osgi-bundle-manifest-attributes)
         * [Excluding packages being incidentally imported by OSGi bundle](#excluding-packages-being-incidentally-imported-by-osgi-bundle)
+        * [Task bundleInstall](#task-bundleinstall)
+        * [Task bundleUninstall](#task-bundleuninstall)
      * [Instance plugin](#instance-plugin)
         * [Instance file structure](#instance-file-structure)
         * [Task instanceSetup](#task-instancesetup)
@@ -1261,6 +1263,19 @@ aem {
     }
 }
 ```
+
+#### Task `bundleInstall`
+
+Installs OSGi bundle on AEM instance(s).
+
+Available options:
+
+* `-Pbundle.deploy.awaited=false` - disable stability & health checks after deploying OSGi bundle.
+* `-Pbundle.deploy.retry=n` - customize number of retries being performed after failed OSGi bundle installation.
+
+#### Task `bundleUninstall`
+
+Uninstalls OSGi bundle on AEM instance(s).
 
 ### Instance plugin
 
