@@ -19,7 +19,6 @@ open class BundleInstall : BundleTask() {
     @Input
     var awaited: Boolean = aem.props.boolean("bundle.install.awaited") ?: true
 
-
     /**
      * Repeat install when failed (brute-forcing).
      */
