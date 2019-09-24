@@ -146,7 +146,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
     }
 
     private fun uninstallBundleInternal(symbolicName: String) {
-        sync.http.post("$BUNDLES_PATH}/${getBundle(symbolicName).id}", mapOf("action" to "uninstall"))
+        sync.http.post("$BUNDLES_PATH/${getBundle(symbolicName).id}", mapOf("action" to "uninstall"))
     }
 
     // ----- Components -----
