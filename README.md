@@ -1644,8 +1644,12 @@ aem {
                 action {
                     sync {
                         repository {
-                            node("/etc/replication/agents.publish/flush/jcr:content", mapOf(
-                                    "transportUri" to "http://dispatcher.example.com/dispatcher/invalidate.cache"
+                            node("/etc/replication/agents.author/publish/jcr:content", mapOf(
+                                    "enabled" to true,
+                                    "userId" to instance.user,
+                                    "transportUri" to "http://localhost:4503/bin/receive?sling:authRequestLogin=1",
+                                    "transportUser" to instance.user,
+                                    "transportPassword" to instance.password
                             ))
                         }
                     }
