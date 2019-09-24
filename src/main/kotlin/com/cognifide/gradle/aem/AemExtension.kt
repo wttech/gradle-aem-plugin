@@ -32,6 +32,7 @@ import java.io.Serializable
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.bundling.Jar
 
 /**
  * Core of library, facade for implementing tasks, configuration aggregator.
@@ -290,7 +291,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
             return namedInstance
         }
 
-        throw InstanceException("Instance named '$nameMatcher' is not defined.")
+        throw AemException("Instance named '$nameMatcher' is not defined.")
     }
 
     /**
@@ -322,6 +323,10 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     val authorInstances: List<Instance>
         get() = filterInstances().filter { it.author }
 
+    @get:JsonIgnore
+    val authorInstance: Instance
+        get() = authorInstances.firstOrNull() ?: throw AemException("No author instances defined!")
+
     /**
      * Work in parallel with all author instances running on current environment.
      */
@@ -333,6 +338,10 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     @get:JsonIgnore
     val publishInstances: List<Instance>
         get() = filterInstances().filter { it.publish }
+
+    @get:JsonIgnore
+    val publishInstance: Instance
+        get() = publishInstances.firstOrNull() ?: throw AemException("No publish instances defined!")
 
     /**
      * Work in parallel with all publish instances running on current environment.
@@ -393,6 +402,23 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     }
 
     /**
+     * Get all OSGi bundles defined to be built.
+     */
+    @get:JsonIgnore
+    val bundles: List<File>
+        get() = tasks.bundles.map { it.jar.archiveFile.get().asFile }
+
+    /**
+     * Get all OSGi bundles built before running particular task.
+     */
+    fun dependentBundles(task: Task): List<File> {
+        return task.taskDependencies.getDependencies(task)
+                .filterIsInstance(Jar::class.java)
+                .filter { jar -> tasks.bundles.any { it.jar == jar } }
+                .map { it.archiveFile.get().asFile }
+    }
+
+    /**
      * In parallel, work with services of all instances matching default filtering.
      */
     fun sync(synchronizer: InstanceSync.() -> Unit) = sync(instances, synchronizer)
@@ -412,14 +438,19 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     /**
      * In parallel, work with built packages and services of instances matching default filtering.
      */
-    fun syncPackages(synchronizer: InstanceSync.(File) -> Unit) = syncPackages(instances, packages, synchronizer)
+    fun syncPackages(synchronizer: InstanceSync.(File) -> Unit) = syncFiles(instances, packages, synchronizer)
+
+    /**
+     * In parallel, work with built OSGi bundles and services of instances matching default filtering.
+     */
+    fun syncBundles(synchronizer: InstanceSync.(File) -> Unit) = syncFiles(instances, bundles, synchronizer)
 
     /**
      * In parallel, work with built packages and services of specified instances.
      */
-    fun syncPackages(instances: Iterable<Instance>, packages: Iterable<File>, synchronizer: InstanceSync.(File) -> Unit) {
-        packages.forEach { pkg -> // single AEM instance dislikes parallel package installation
-            parallel.with(instances) { // but same package could be in parallel deployed on different AEM instances
+    fun syncFiles(instances: Iterable<Instance>, packages: Iterable<File>, synchronizer: InstanceSync.(File) -> Unit) {
+        packages.forEach { pkg -> // single AEM instance dislikes parallel CRX package / OSGi bundle installation
+            parallel.with(instances) { // but same file could be in parallel deployed on different AEM instances
                 sync.apply { synchronizer(pkg) }
             }
         }

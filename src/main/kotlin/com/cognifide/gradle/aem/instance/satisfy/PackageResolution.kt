@@ -1,8 +1,7 @@
 package com.cognifide.gradle.aem.instance.satisfy
 
-import aQute.bnd.osgi.Jar
+import com.cognifide.gradle.aem.common.bundle.BundleFile
 import com.cognifide.gradle.aem.common.file.resolver.FileResolution
-import com.cognifide.gradle.aem.common.instance.service.osgi.Bundle
 import com.cognifide.gradle.aem.common.pkg.PackageException
 import java.io.File
 
@@ -32,20 +31,15 @@ class PackageResolution(group: PackageGroup, id: String, action: (FileResolution
 
         aem.logger.info("Wrapping OSGi bundle to CRX package: $jar")
 
-        val bundle = Jar(jar)
+        val bundle = BundleFile(jar)
         val bundlePath = "${resolver.bundlePath}/${jar.name}"
-        val description = bundle.manifest.mainAttributes.getValue(Bundle.ATTRIBUTE_DESCRIPTION) ?: ""
-        val symbolicName = bundle.manifest.mainAttributes.getValue(Bundle.ATTRIBUTE_SYMBOLIC_NAME)
-        val group = symbolicName.substringBeforeLast(".")
-        val version = bundle.manifest.mainAttributes.getValue(Bundle.ATTRIBUTE_VERSION)
 
         return aem.composePackage {
             this.archivePath = pkg
-            this.description = description
-
-            this.group = group
-            this.name = symbolicName
-            this.version = version
+            this.description = bundle.description
+            this.group = bundle.group
+            this.name = bundle.symbolicName
+            this.version = bundle.version
 
             filter(bundlePath)
             content { copyJcrFile(jar, bundlePath) }

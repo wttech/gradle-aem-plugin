@@ -2,6 +2,8 @@ package com.cognifide.gradle.aem.bundle
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.AemPlugin
+import com.cognifide.gradle.aem.bundle.tasks.BundleInstall
+import com.cognifide.gradle.aem.bundle.tasks.BundleUninstall
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import org.gradle.api.JavaVersion
 import org.gradle.api.Project
@@ -15,6 +17,7 @@ class BundlePlugin : AemPlugin() {
         setupDependentPlugins()
         setupJavaDefaults()
         setupJarTasks()
+        setupTasks()
     }
 
     private fun Project.setupDependentPlugins() {
@@ -39,6 +42,17 @@ class BundlePlugin : AemPlugin() {
 
     private fun Project.setupJarTasks() {
         AemExtension.of(this).tasks.jarsAsBundles()
+    }
+
+    private fun Project.setupTasks() {
+        tasks {
+            register<BundleInstall>(BundleInstall.NAME) {
+                dependsOn(JavaPlugin.JAR_TASK_NAME)
+            }
+            register<BundleUninstall>(BundleUninstall.NAME) {
+                dependsOn(JavaPlugin.JAR_TASK_NAME)
+            }
+        }
     }
 
     companion object {

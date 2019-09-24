@@ -6,21 +6,21 @@ import java.io.File
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFiles
 
-open class PackageTask : AemDefaultTask() {
+open class BundleTask : AemDefaultTask() {
 
     @Input
     var instances: List<Instance> = listOf()
 
     @InputFiles
-    var packages: List<File> = listOf()
+    var bundles: List<File> = listOf()
 
     override fun projectsEvaluated() {
         if (instances.isEmpty()) {
             instances = aem.instances
         }
 
-        if (packages.isEmpty()) {
-            packages = aem.dependentPackages(this)
+        if (bundles.isEmpty()) {
+            bundles = aem.dependentBundles(this)
         }
     }
 
@@ -28,9 +28,7 @@ open class PackageTask : AemDefaultTask() {
         instances += aem.instance(urlOrName)
     }
 
-    fun `package`(path: String) {
-        packages += project.file(path)
+    fun bundle(path: String) {
+        bundles += project.file(path)
     }
-
-    fun pkg(path: String) = `package`(path)
 }

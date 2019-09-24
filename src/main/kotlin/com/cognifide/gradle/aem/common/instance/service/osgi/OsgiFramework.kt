@@ -1,18 +1,22 @@
 package com.cognifide.gradle.aem.common.instance.service.osgi
 
 import com.cognifide.gradle.aem.AemException
+import com.cognifide.gradle.aem.common.build.Retry
+import com.cognifide.gradle.aem.common.bundle.BundleFile
 import com.cognifide.gradle.aem.common.http.ResponseException
 import com.cognifide.gradle.aem.common.instance.InstanceException
 import com.cognifide.gradle.aem.common.instance.InstanceService
 import com.cognifide.gradle.aem.common.instance.InstanceSync
 import com.cognifide.gradle.aem.common.utils.Formats
 import org.apache.http.HttpStatus
+import java.io.File
 
 /**
  * Controls OSGi framework using Apache Felix Web Console endpoints.
  *
  * @see <https://felix.apache.org/documentation/subprojects/apache-felix-web-console.html>
  */
+@Suppress("TooManyFunctions")
 class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
 
     // ----- Bundles -----
@@ -106,6 +110,43 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         val bundle = getBundle(symbolicName)
         aem.logger.info("Updating OSGi $bundle on $instance.")
         sync.http.post("$BUNDLES_PATH/${bundle.symbolicName}", mapOf("action" to "update"))
+    }
+
+    /**
+     * Install OSGi bundle JAR.
+     */
+    fun installBundle(bundle: File, retry: Retry = aem.retry()) {
+        aem.logger.info("Installing OSGi $bundle on $instance.")
+
+        retry.withCountdown<Unit, InstanceException>("install bundle '${bundle.name}' on '${instance.name}'") {
+            sync.http.postMultipart(BUNDLES_PATH, mapOf(
+                    "action" to "install",
+                    "bundlefile" to bundle,
+                    "bundlestart" to "start",
+                    "refreshPackages" to "refresh"
+            )) { checkStatus(it, HttpStatus.SC_MOVED_TEMPORARILY) }
+        }
+    }
+
+    /**
+     * Uninstall OSGi bundle JAR.
+     */
+    fun uninstallBundle(bundle: File) {
+        val bundleFile = BundleFile(bundle)
+        aem.logger.info("Uninstalling $bundleFile on $instance.")
+        uninstallBundleInternal(bundleFile.symbolicName)
+    }
+
+    /**
+     * Uninstall OSGi bundle by symbolic name.
+     */
+    fun uninstallBundle(symbolicName: String) {
+        aem.logger.info("Uninstalling OSGi bundle '$symbolicName' on $instance.")
+        uninstallBundleInternal(symbolicName)
+    }
+
+    private fun uninstallBundleInternal(symbolicName: String) {
+        sync.http.post("$BUNDLES_PATH/${getBundle(symbolicName).id}", mapOf("action" to "uninstall"))
     }
 
     // ----- Components -----
