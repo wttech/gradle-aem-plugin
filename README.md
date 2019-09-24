@@ -111,6 +111,7 @@
      * [Work effectively on start and daily basis](#work-effectively-on-start-and-daily-basis)
      * [Filter instances to work with](#filter-instances-to-work-with)
      * [Know how properties are being expanded in instance or package files](#know-how-properties-are-being-expanded-in-instance-or-package-files)
+     * [Customize convention for CRX package and OSGi bundle names and paths](#customize-convention-for-crx-package-and-osgi-bundle-names-and-paths)
   * [Known issues](#known-issues)
      * [Failed to await HTTPD service](#failed-to-await-httpd-service)
      * [BND tool error - Classes found in wrong directory](#bnd-tool-error---classes-found-in-wrong-directory)
@@ -1658,8 +1659,12 @@ aem {
                 action {
                     sync {
                         repository {
-                            node("/etc/replication/agents.publish/flush/jcr:content", mapOf(
-                                    "transportUri" to "http://dispatcher.example.com/dispatcher/invalidate.cache"
+                            node("/etc/replication/agents.author/publish/jcr:content", mapOf(
+                                    "enabled" to true,
+                                    "userId" to instance.user,
+                                    "transportUri" to "http://localhost:4503/bin/receive?sling:authRequestLogin=1",
+                                    "transportUser" to instance.user,
+                                    "transportPassword" to instance.password
                             ))
                         }
                     }
@@ -2393,6 +2398,40 @@ Remember to [encode instance user & password](#instance-url-credentials-encoding
 The properties syntax comes from [Pebble Template Engine](https://github.com/PebbleTemplates/pebble) which means that all its features (if statements, for loops, filters etc) can be used inside files being expanded.
 
 Expanding properties could be used separately on any string or file source in any custom task by using method `aem.props.expand()`.
+
+### Customize convention for CRX package and OSGi bundle names and paths
+
+Because of [bug](https://github.com/gradle/gradle/issues/8401) related with regresion introduced in Gradle 5.1, there are some difficulties with setting archives base names.
+AEM Plugin is overriding default Gradle convention for not only having project name in archive base name, but also to having prefix - root project name when project is one of subprojects (multi-project build case as in [Gradle AEM Multi](https://github.com/Cognifide/gradle-aem-multi/)).
+However overriding this convention might not be trivial and is not recommended as of AEM Plugin in most cases proposes **good enough battle-tested convention**. 
+
+Still, if it is really needed to be done - setting customized name for CRX packages and OSGi bundles built, use snippet:
+
+```kotlin
+subprojects {
+    afterEvaluate {
+        tasks {
+            withType<AbstractArchiveTask>().configureEach {
+                archiveBaseName.set("acme-${project.name}")
+            }
+        }
+    }
+}
+```
+
+Then, also common case is to customize paths in which OSGi bundles should be placed in built CRX package. As practice shows up, mostly desired snippet to be used is:
+
+```kotlin
+subprojects {
+    plugins.withId("com.cognifide.aem.package") {
+        configure<AemExtension> {
+            `package` {
+                installPath = "/apps/acme/${project.name}/install"
+            }
+        }
+    }
+}
+```
 
 ## Known issues
 
