@@ -20,6 +20,24 @@ open class BundleInstall : BundleTask() {
     var awaited: Boolean = aem.props.boolean("bundle.install.awaited") ?: true
 
     /**
+     * Controls if bundle after installation should be immediatelly started.
+     */
+    @Input
+    var start: Boolean = aem.props.boolean("bundle.install.start") ?: true
+
+    /**
+     * OSGi start level at which installed bundle will be started.
+     */
+    @Input
+    var startLevel: Int = aem.props.int("bundle.install.startLevel") ?: 20
+
+    /**
+     * Controls if bundle dependent packages should be refreshed within installation.
+     */
+    @Input
+    var refreshPackages: Boolean = aem.props.boolean("bundle.install.refreshPackages") ?: true
+
+    /**
      * Repeat install when failed (brute-forcing).
      */
     @Internal
@@ -77,7 +95,7 @@ open class BundleInstall : BundleTask() {
             aem.syncFiles(instances, bundles) { pkg ->
                 increment("Installing bundle '${pkg.name}' to instance '${instance.name}'") {
                     initializer()
-                    osgiFramework.installBundle(pkg, retry)
+                    osgiFramework.installBundle(pkg, start, startLevel, refreshPackages, retry)
                     finalizer()
                 }
             }
