@@ -70,7 +70,7 @@ open class BundleInstall : BundleTask() {
     }
 
     @TaskAction
-    open fun deploy() {
+    open fun install() {
         instances.checkAvailable()
 
         aem.progress(instances.size * bundles.size) {

@@ -13,7 +13,7 @@ open class BundleUninstall : BundleTask() {
     }
 
     @TaskAction
-    fun delete() {
+    fun uninstall() {
         instances.checkAvailable()
 
         aem.progress(instances.size * bundles.size) {
