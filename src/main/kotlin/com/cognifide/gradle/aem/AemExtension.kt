@@ -291,7 +291,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
             return namedInstance
         }
 
-        throw InstanceException("Instance named '$nameMatcher' is not defined.")
+        throw AemException("Instance named '$nameMatcher' is not defined.")
     }
 
     /**
@@ -323,6 +323,10 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     val authorInstances: List<Instance>
         get() = filterInstances().filter { it.author }
 
+    @get:JsonIgnore
+    val authorInstance: Instance
+        get() = authorInstances.firstOrNull() ?: throw AemException("No author instances defined!")
+
     /**
      * Work in parallel with all author instances running on current environment.
      */
@@ -334,6 +338,10 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     @get:JsonIgnore
     val publishInstances: List<Instance>
         get() = filterInstances().filter { it.publish }
+
+    @get:JsonIgnore
+    val publishInstance: Instance
+        get() = publishInstances.firstOrNull() ?: throw AemException("No publish instances defined!")
 
     /**
      * Work in parallel with all publish instances running on current environment.
