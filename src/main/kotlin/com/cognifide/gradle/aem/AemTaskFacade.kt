@@ -248,14 +248,13 @@ class AemTaskFacade(private val aem: AemExtension) : Serializable {
     fun sequence(name: String, sequenceOptions: TaskSequence.() -> Unit) = sequence(name, {}, sequenceOptions)
 
     fun sequence(name: String, taskOptions: Task.() -> Unit, sequenceOptions: TaskSequence.() -> Unit): TaskProvider<Task> {
-        val options = TaskSequence().apply(sequenceOptions)
-        val sequence = project.tasks.register(name) { task ->
+        return project.tasks.register(name) { task ->
+            val options = TaskSequence().apply(sequenceOptions)
+
             task.group = AemTask.GROUP
             task.dependsOn(options.dependentTasks).mustRunAfter(options.afterTasks)
             task.apply(taskOptions)
-        }
 
-        project.gradle.projectsEvaluated { _ ->
             val dependentTasks = pathed(options.dependentTasks)
             val afterTasks = pathed(options.afterTasks)
 
@@ -267,12 +266,10 @@ class AemTaskFacade(private val aem: AemExtension) : Serializable {
                     current.configure { it.mustRunAfter(previous) }
                 }
             }
-            dependentTasks.forEach { task ->
-                task.configure { it.mustRunAfter(afterTasks) }
+            dependentTasks.forEach { dependentTask ->
+                dependentTask.configure { it.mustRunAfter(afterTasks) }
             }
         }
-
-        return sequence
     }
 
     private fun initializeJarsAsBundles() {
