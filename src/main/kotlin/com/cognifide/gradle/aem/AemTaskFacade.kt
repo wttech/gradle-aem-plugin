@@ -248,33 +248,28 @@ class AemTaskFacade(private val aem: AemExtension) : Serializable {
     fun sequence(name: String, sequenceOptions: TaskSequence.() -> Unit) = sequence(name, {}, sequenceOptions)
 
     fun sequence(name: String, taskOptions: Task.() -> Unit, sequenceOptions: TaskSequence.() -> Unit): TaskProvider<Task> {
-        val sequence = project.tasks.register(name)
-
-        project.gradle.projectsEvaluated { _ ->
+        return project.tasks.register(name) { task ->
             val options = TaskSequence().apply(sequenceOptions)
-            val taskList = pathed(options.dependentTasks)
-            val afterList = pathed(options.afterTasks)
 
-            if (taskList.size > 1) {
-                for (i in 1 until taskList.size) {
-                    val previous = taskList[i - 1]
-                    val current = taskList[i]
+            task.group = AemTask.GROUP
+            task.dependsOn(options.dependentTasks).mustRunAfter(options.afterTasks)
+            task.apply(taskOptions)
+
+            val dependentTasks = pathed(options.dependentTasks)
+            val afterTasks = pathed(options.afterTasks)
+
+            if (dependentTasks.size > 1) {
+                for (i in 1 until dependentTasks.size) {
+                    val previous = dependentTasks[i - 1]
+                    val current = dependentTasks[i]
 
                     current.configure { it.mustRunAfter(previous) }
                 }
             }
-            taskList.forEach { task ->
-                task.configure { it.mustRunAfter(afterList) }
-            }
-
-            sequence.configure { task ->
-                task.group = AemTask.GROUP
-                task.dependsOn(taskList).mustRunAfter(afterList)
-                task.apply(taskOptions)
+            dependentTasks.forEach { dependentTask ->
+                dependentTask.configure { it.mustRunAfter(afterTasks) }
             }
         }
-
-        return sequence
     }
 
     private fun initializeJarsAsBundles() {

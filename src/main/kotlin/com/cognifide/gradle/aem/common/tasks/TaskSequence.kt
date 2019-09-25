@@ -6,12 +6,14 @@ class TaskSequence {
 
     var afterTasks: Collection<Any> = listOf()
 
-    fun dependsOrdered(vararg tasks: Any) {
-        dependsOrdered(tasks.toList())
+    fun dependsOrdered(vararg tasks: Any) = dependsOn(tasks)
+
+    fun dependsOn(vararg tasks: Any) {
+        dependsOn(tasks.toList())
     }
 
-    fun dependsOrdered(tasks: Collection<Any>) {
-        dependentTasks = tasks
+    fun dependsOn(tasks: Collection<Any>) {
+        dependentTasks += tasks
     }
 
     fun mustRunAfter(vararg tasks: Any) {
@@ -19,6 +21,6 @@ class TaskSequence {
     }
 
     fun mustRunAfter(tasks: Collection<Any>) {
-        afterTasks = tasks
+        afterTasks += tasks
     }
 }

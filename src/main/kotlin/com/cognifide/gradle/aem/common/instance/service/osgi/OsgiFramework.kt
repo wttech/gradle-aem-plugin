@@ -115,15 +115,16 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
     /**
      * Install OSGi bundle JAR.
      */
-    fun installBundle(bundle: File, retry: Retry = aem.retry()) {
+    fun installBundle(bundle: File, start: Boolean = true, startLevel: Int = 20, refreshPackages: Boolean = true, retry: Retry = aem.retry()) {
         aem.logger.info("Installing OSGi $bundle on $instance.")
 
         retry.withCountdown<Unit, InstanceException>("install bundle '${bundle.name}' on '${instance.name}'") {
             sync.http.postMultipart(BUNDLES_PATH, mapOf(
                     "action" to "install",
                     "bundlefile" to bundle,
-                    "bundlestart" to "start",
-                    "refreshPackages" to "refresh"
+                    "bundlestart" to "start".takeIf { start },
+                    "bundlestartlevel" to startLevel,
+                    "refreshPackages" to "refresh".takeIf { refreshPackages }
             )) { checkStatus(it, HttpStatus.SC_MOVED_TEMPORARILY) }
         }
     }
