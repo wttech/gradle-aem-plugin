@@ -116,7 +116,7 @@ open class Sync : AemDefaultTask() {
     private fun transferUsingVltCheckout() {
         vlt.apply {
             contentDir = this@Sync.contentDir
-            command = "--credentials ${instance.credentials} checkout --force --filter ${filter.file} ${instance.httpUrl}/crx/server/crx.default"
+            command = "--credentials ${instance.credentialsString} checkout --force --filter ${filter.file} ${instance.httpUrl}/crx/server/crx.default"
             run()
         }
     }

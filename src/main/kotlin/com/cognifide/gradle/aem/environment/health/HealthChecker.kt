@@ -11,7 +11,7 @@ class HealthChecker(val environment: Environment) {
 
     private val checks = mutableListOf<HealthCheck>()
 
-    private var urlOptions: HttpClient.() -> Unit = {
+    private var urlHttpOptions: HttpClient.() -> Unit = {
         connectionRetries = false
         connectionTimeout = 1000
     }
@@ -76,22 +76,25 @@ class HealthChecker(val environment: Environment) {
 
     // Shorthand methods for defining health checks
 
-    fun url(checkName: String, url: String, method: String = "GET", statusCode: Int = 200, text: String? = null) {
+    /**
+     * Check URL using specified criteria (HTTP options and e.g text & status code assertions).
+     */
+    fun url(checkName: String, url: String, criteria: UrlCheck.() -> Unit) {
         define(checkName) {
             aem.http {
-                request(method, url) { response ->
-                    apply(urlOptions)
+                val check = UrlCheck(url).apply(criteria)
 
-                    checkStatus(response, statusCode)
-                    if (text != null) {
-                        checkText(response, text)
-                    }
+                apply(urlHttpOptions)
+                apply(check.options)
+
+                request(check.method, check.url) { response ->
+                    check.checks.forEach { it(response) }
                 }
             }
         }
     }
 
-    fun urlOptions(options: HttpClient.() -> Unit) {
-        this.urlOptions = options
+    fun urlHttp(options: HttpClient.() -> Unit) {
+        this.urlHttpOptions = options
     }
 }
