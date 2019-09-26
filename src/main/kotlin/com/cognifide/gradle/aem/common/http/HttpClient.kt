@@ -54,6 +54,14 @@ open class HttpClient(private val aem: AemExtension) : Serializable {
     @JsonSerialize(using = JsonPassword::class, `as` = String::class)
     var basicPassword: String? = null
 
+    @get:JsonIgnore
+    var basicCredentials: Pair<String?, String?>
+        get() = basicUser to basicPassword
+        set(value) {
+            basicUser = value.first
+            basicPassword = value.second
+        }
+
     var proxyHost: String? = null
 
     var proxyPort: Int? = null
