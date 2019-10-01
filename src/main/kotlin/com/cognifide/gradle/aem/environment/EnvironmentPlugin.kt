@@ -84,12 +84,6 @@ class EnvironmentPlugin : AemPlugin() {
             registerOrConfigure<Await>(Await.NAME) {
                 dependsOn(EnvironmentAwait.NAME)
             }
-
-            // Gradle lifecycle
-
-            named<Task>(LifecycleBasePlugin.CLEAN_TASK_NAME) {
-                dependsOn(EnvironmentClean.NAME)
-            }
         }
     }
 
