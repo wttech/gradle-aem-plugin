@@ -297,6 +297,12 @@ open class PackageCompose : ZipTask() {
                 extractVaultNodeTypes(other.vaultNodeTypesFile)
             }
 
+            if (options.vaultProperties) {
+                other.vaultDefinition.properties.forEach { name, value ->
+                    vaultDefinition.properties.putIfAbsent(name, value)
+                }
+            }
+
             if (options.vaultHooks) {
                 val hooksDir = File(other.contentDir, Package.VLT_HOOKS_PATH)
                 if (hooksDir.exists()) {

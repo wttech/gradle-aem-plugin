@@ -35,6 +35,11 @@ class ProjectMergingOptions {
     var vaultNodeTypes: Boolean = true
 
     /**
+     * Controls if Vault properties (e.g hooks related) from particular project should be taken.
+     */
+    var vaultProperties: Boolean = true
+
+    /**
      * Determines if OSGi bundle built in particular project should be taken.
      */
     var bundleBuilt: Boolean = true

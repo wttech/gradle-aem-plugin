@@ -33,7 +33,7 @@ class RcpClient(
     data class Summary(val source: Instance, val target: Instance, val copiedPaths: Long, val duration: Long) {
 
         val durationString: String
-            get() = Formats.duration(duration)
+            get() = Formats.duration(duration, false)
 
         override fun toString(): String {
             return "VltRcpSummary(copiedPaths=$copiedPaths, duration=$durationString, source=$source, target=$target)"
