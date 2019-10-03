@@ -298,7 +298,7 @@ open class PackageCompose : ZipTask() {
             }
 
             if (options.vaultProperties) {
-                other.vaultDefinition.properties.forEach { name, value ->
+                other.vaultDefinition.properties.forEach { (name, value) ->
                     vaultDefinition.properties.putIfAbsent(name, value)
                 }
             }

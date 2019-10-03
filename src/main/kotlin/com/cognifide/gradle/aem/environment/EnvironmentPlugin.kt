@@ -7,8 +7,6 @@ import com.cognifide.gradle.aem.environment.tasks.*
 import com.cognifide.gradle.aem.instance.InstancePlugin
 import com.cognifide.gradle.aem.instance.tasks.InstanceUp
 import org.gradle.api.Project
-import org.gradle.api.Task
-import org.gradle.language.base.plugins.LifecycleBasePlugin
 
 /**
  * Separate plugin which provides tasks for managing local development environment additional to AEM, like:
