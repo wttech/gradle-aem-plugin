@@ -84,6 +84,18 @@ val downloadDir: File
     }
 
     /**
+     * Download files from same URL using automatically determined file transfer (HTTP, SFTP, SMB, URL, local file system).
+     */
+    fun download(urlDir: String, vararg fileNames: String) = download(urlDir, fileNames.asIterable())
+
+    /**
+     * Download files from same URL using automatically determined file transfer (HTTP, SFTP, SMB, URL, local file system).
+     */
+    fun download(urlDir: String, fileNames: Iterable<String>) = fileNames.map {
+        fileName -> download("$urlDir/$fileName")
+    }
+
+    /**
      * Download file using automatically determined file transfer (HTTP, SFTP, SMB, URL, local file system).
      *
      * Same global settings (like basic auth credentials of HTTP) of each particular file transfer will be used

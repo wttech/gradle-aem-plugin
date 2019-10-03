@@ -209,7 +209,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.cognifide.gradle:aem-plugin:7.3.1")
+    implementation("com.cognifide.gradle:aem-plugin:7.3.2")
 }
 ```
 
