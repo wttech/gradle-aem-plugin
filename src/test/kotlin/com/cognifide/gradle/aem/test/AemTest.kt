@@ -61,6 +61,4 @@ abstract class AemTest {
     fun readFile(file: File): String {
         return file.bufferedReader().use { it.readText() }
     }
-
-
 }
