@@ -26,13 +26,14 @@ class DockerPath(private val environment: Environment) {
         else -> Formats.normalizePath(path)
     }
 
+    @Suppress("TooGenericExceptionCaught")
     fun executeCygpath(path: String) = try {
         ProcBuilder(cygpathPath)
                 .withArg(path)
                 .run()
                 .outputString.trim()
-    } catch (e: ExternalProcessFailureException) {
-        throw DockerException("Cannot execute 'cygpath' for path: $path", e)
+    } catch (e: Exception) {
+        throw DockerException("Cannot execute '$cygpathPath' for path: $path", e)
     }
 
     fun imitateCygpath(path: String): String {
