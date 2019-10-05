@@ -3,7 +3,6 @@ package com.cognifide.gradle.aem.environment.docker.base
 import com.cognifide.gradle.aem.common.utils.Formats
 import com.cognifide.gradle.aem.environment.Environment
 import com.cognifide.gradle.aem.environment.docker.base.runtime.Toolbox
-import org.buildobjects.process.ExternalProcessFailureException
 import org.buildobjects.process.ProcBuilder
 import java.io.File
 
