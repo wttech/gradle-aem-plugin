@@ -12,7 +12,7 @@ class DockerPath(private val environment: Environment) {
     private val aem = environment.aem
 
     var cygpathPath = aem.props.string("environment.cygpath.path")
-            ?: "C:\\Program Files\\Git\\usr\\bin\\cygpath"
+            ?: "C:\\Program Files\\Git\\usr\\bin\\cygpath.exe"
 
     fun get(file: File) = get(file.toString())
 
