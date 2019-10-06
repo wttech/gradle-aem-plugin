@@ -163,6 +163,9 @@
         "name": "desktop",
         "hostIp": "127.0.0.1"
       },
+      "dockerPath" : {
+        "cygpathPath": "*/cygpath.exe"
+      },
       "hosts" : {
         "defined" : [ ]
       },
