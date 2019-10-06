@@ -48,6 +48,7 @@ class DebugTest : AemTest() {
                 "aem.tasks.bundles[*].bndPath" to PathValueMatcher(),
                 "aem.environment.dockerComposeFile" to PathValueMatcher(),
                 "aem.environment.dockerComposeSourceFile" to PathValueMatcher(),
+                "aem.environment.dockerPath.cygpathPath" to PathValueMatcher(),
                 "aem.environment.dockerRootPath" to PathValueMatcher(),
                 "aem.environment.dockerConfigPath" to PathValueMatcher(),
                 "aem.environment.directories.caches[*]" to PathValueMatcher(),

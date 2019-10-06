@@ -4,10 +4,8 @@ import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.file.resolver.FileResolver
-import com.cognifide.gradle.aem.common.utils.Formats
-import com.cognifide.gradle.aem.environment.docker.base.CygPath
+import com.cognifide.gradle.aem.environment.docker.base.DockerPath
 import com.cognifide.gradle.aem.environment.docker.base.DockerRuntime
-import com.cognifide.gradle.aem.environment.docker.base.runtime.Toolbox
 import com.cognifide.gradle.aem.environment.docker.domain.HttpdContainer
 import com.cognifide.gradle.aem.environment.docker.domain.Stack
 import com.cognifide.gradle.aem.environment.health.HealthChecker
@@ -75,11 +73,16 @@ class Environment(@JsonIgnore val aem: AemExtension) : Serializable {
     val dockerComposeSourceFile: File
         get() = File(configDir, "docker-compose.yml.peb")
 
+    /**
+     * Generator for paths in format expected in 'docker-compose.yml' files.
+     */
+    val dockerPath = DockerPath(this)
+
     val dockerConfigPath: String
-        get() = determineDockerPath(configDir)
+        get() = dockerPath.get(configDir)
 
     val dockerRootPath: String
-        get() = determineDockerPath(rootDir)
+        get() = dockerPath.get(rootDir)
 
     @JsonIgnore
     var healthChecker = HealthChecker(this)
@@ -167,18 +170,6 @@ class Environment(@JsonIgnore val aem: AemExtension) : Serializable {
                 GFileUtils.mkdirs(dir)
             }
         }
-    }
-
-    @Suppress("TooGenericExceptionCaught")
-    private fun determineDockerPath(file: File): String = when (dockerRuntime) {
-        is Toolbox -> try {
-            CygPath.calculate(file)
-        } catch (e: Exception) {
-            aem.logger.warn("Cannot determine Docker path for '$file' using 'cygpath', because it is not available.")
-            aem.logger.debug("CygPath error", e)
-            Formats.normalizePath(file.toString())
-        }
-        else -> Formats.normalizePath(file.toString())
     }
 
     fun check(verbose: Boolean = true): List<HealthStatus> {
