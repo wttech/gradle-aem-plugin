@@ -7,11 +7,13 @@ import com.cognifide.gradle.aem.bundle.tasks.BundleUninstall
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import org.gradle.api.JavaVersion
 import org.gradle.api.Project
+import org.gradle.api.Task
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.api.tasks.testing.Test
+import org.gradle.language.base.plugins.LifecycleBasePlugin
 
 class BundlePlugin : AemPlugin() {
 
@@ -34,10 +36,6 @@ class BundlePlugin : AemPlugin() {
         }
 
         tasks {
-            named<Jar>(JavaPlugin.JAR_TASK_NAME) {
-                archiveBaseName.set(aem.baseName)
-            }
-
             typed<JavaCompile> {
                 options.encoding = "UTF-8"
                 options.compilerArgs = options.compilerArgs + "-Xlint:deprecation"
@@ -49,13 +47,16 @@ class BundlePlugin : AemPlugin() {
     private fun Project.setupTasks() {
         tasks {
             register<BundleCompose>(BundleCompose.NAME) {
-                dependsOn(JavaPlugin.JAR_TASK_NAME)
+                dependsOn(JavaPlugin.CLASSES_TASK_NAME)
             }
             register<BundleInstall>(BundleInstall.NAME) {
-                dependsOn(JavaPlugin.JAR_TASK_NAME)
+                dependsOn(BundleCompose.NAME)
             }
             register<BundleUninstall>(BundleUninstall.NAME) {
-                dependsOn(JavaPlugin.JAR_TASK_NAME)
+                dependsOn(BundleCompose.NAME)
+            }
+            named<Task>(LifecycleBasePlugin.ASSEMBLE_TASK_NAME) {
+                dependsOn(BundleCompose.NAME)
             }
         }
     }

@@ -5,13 +5,11 @@ import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.bundle.BundleException
-import com.cognifide.gradle.aem.common.build.DependencyOptions
 import com.cognifide.gradle.aem.common.instance.service.osgi.Bundle
 import com.cognifide.gradle.aem.common.utils.Formats
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.exception.ExceptionUtils
-import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.tasks.*
 import org.gradle.api.tasks.bundling.Jar
@@ -24,10 +22,10 @@ open class BundleCompose : Jar(), AemTask {
     final override val aem = AemExtension.of(project)
 
     @Internal
-    val bundleConvention = BundleTaskConvention(this).also { convention.plugins.set("bundle", it) }
-
-    @Internal
     val javaConvention = project.convention.getPlugin(JavaPluginConvention::class.java)
+
+    @Nested
+    val bundleConvention = BundleTaskConvention(this).also { convention.plugins.set("bundle", it) }
 
     /**
      * Allows to configure BND tool specific options.
