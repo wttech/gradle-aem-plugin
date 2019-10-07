@@ -71,6 +71,13 @@
           "smb://*"
         ]
       },
+      "resolve": {
+        "enabled": true,
+        "name": "resolve",
+        "protocols": [
+          "resolve://*"
+        ]
+      },
       "url": {
         "enabled": true,
         "name": "url",

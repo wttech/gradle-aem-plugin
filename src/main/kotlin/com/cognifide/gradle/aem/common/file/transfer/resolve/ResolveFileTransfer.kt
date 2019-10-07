@@ -1,10 +1,10 @@
-package com.cognifide.gradle.aem.common.file.transfer.dependency
+package com.cognifide.gradle.aem.common.file.transfer.resolve
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.file.transfer.ProtocolFileTransfer
 import java.io.File
 
-class DependencyFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
+class ResolveFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
 
     private val configurations = aem.project.configurations
 
@@ -14,7 +14,7 @@ class DependencyFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
         get() = NAME
 
     override val protocols: List<String>
-        get() = listOf("dependency://*")
+        get() = listOf("$NAME://*")
 
     @Suppress("TooGenericExceptionCaught")
     override fun downloadFrom(dirUrl: String, fileName: String, target: File) {
@@ -25,11 +25,11 @@ class DependencyFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
                 inputStream().use { downloader().download(length(), it, target) }
             }
         } catch (e: Exception) {
-            throw DependencyFileException("Cannot resolve dependency '$notation' to file '$target'. Cause: ${e.message}", e)
+            throw ResolveFileException("Cannot resolve '$notation' to file '$target'. Cause: ${e.message}", e)
         }
     }
 
     companion object {
-        const val NAME = "dependency"
+        const val NAME = "resolve"
     }
 }
