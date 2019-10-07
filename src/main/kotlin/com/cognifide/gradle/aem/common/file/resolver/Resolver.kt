@@ -72,15 +72,8 @@ val downloadDir: File
      */
     fun resolve(dependencyOptions: DependencyOptions.() -> Unit) = resolve(DependencyOptions.create(aem, dependencyOptions))
 
-    private fun resolve(dependencyNotation: Any): FileResolution {
-        return resolveFile(dependencyNotation) {
-            val configName = "fileResolver_dependency_${UUID.randomUUID()}"
-            val configOptions: (Configuration) -> Unit = { it.isTransitive = false }
-            val config = project.configurations.create(configName, configOptions)
-
-            project.dependencies.add(config.name, dependencyNotation)
-            config.singleFile
-        }
+    private fun resolve(dependencyNotation: Any): FileResolution = resolveFile(dependencyNotation) {
+        project.configurations.detachedConfiguration(project.dependencies.create(dependencyNotation)).singleFile
     }
 
     /**
