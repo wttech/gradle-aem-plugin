@@ -141,6 +141,7 @@ open class PackageCompose : ZipTask() {
         description = "Composes CRX package from JCR content and built OSGi bundles"
 
         archiveBaseName.set(aem.baseName)
+        destinationDirectory.set(AemTask.temporaryDir(aem.project, name))
         duplicatesStrategy = DuplicatesStrategy.WARN
 
         doLast { aem.notifier.notify("Package composed", archiveFileName.get()) }
