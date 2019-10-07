@@ -18,7 +18,7 @@ class DependencyFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
 
     @Suppress("TooGenericExceptionCaught")
     override fun downloadFrom(dirUrl: String, fileName: String, target: File) {
-        val notation = fileName
+        val notation = dirUrl.substringAfter("://")
 
         try {
             configurations.detachedConfiguration(dependencies.create(notation)).singleFile.apply {
