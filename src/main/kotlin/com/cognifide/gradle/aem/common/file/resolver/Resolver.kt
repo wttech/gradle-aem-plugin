@@ -11,7 +11,6 @@ import java.io.File
 import java.util.*
 import org.apache.commons.io.FilenameUtils
 import org.apache.commons.lang3.builder.HashCodeBuilder
-import org.gradle.api.artifacts.Configuration
 import org.gradle.api.tasks.Internal
 
 /**
