@@ -59,9 +59,9 @@ class AemTaskFacade(val aem: AemExtension) : Serializable {
 
         bundleCompose {
             if (export) {
-                exportPackages(pkgs)
+                exportPackage(pkgs)
             } else {
-                privatePackages(pkgs)
+                privatePackage(pkgs)
             }
         }
     }

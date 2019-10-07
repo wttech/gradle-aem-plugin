@@ -326,44 +326,36 @@ open class BundleCompose : Jar(), AemTask {
             attribute(Bundle.ATTRIBUTE_SLING_MODEL_PACKAGES, value)
         }
 
-    fun exportPackage(pkg: String) = exportPackages(pkg)
-
-    fun exportPackages(pkgs: Iterable<String>) {
-        exportPackages += pkgs
+    fun exportPackage(pkgs: Iterable<String>) {
+        exportPackages = exportPackages + pkgs
     }
 
-    fun exportPackages(vararg pkgs: String) = exportPackages(pkgs.toList())
+    fun exportPackage(vararg pkgs: String) = exportPackage(pkgs.toList())
 
-    fun privatePackage(pkg: String) = privatePackages(listOf(pkg))
-
-    fun privatePackages(pkgs: Iterable<String>) {
-        privatePackages += pkgs
+    fun privatePackage(pkgs: Iterable<String>) {
+        privatePackages = privatePackages + pkgs
     }
 
-    fun privatePackages(vararg pkgs: String) = privatePackages(pkgs.toList())
+    fun privatePackage(vararg pkgs: String) = privatePackage(pkgs.toList())
 
-    fun excludePackage(pkg: String) = excludePackages(listOf(pkg))
-
-    fun excludePackages(pkgs: Iterable<String>) {
-        importPackages += pkgs.map { "!$it" }
+    fun excludePackage(pkgs: Iterable<String>) {
+        importPackages = importPackages + pkgs.map { "!$it" }
     }
 
-    fun excludePackages(vararg pkgs: String) = excludePackages(pkgs.toList())
+    fun excludePackage(vararg pkgs: String) = excludePackage(pkgs.toList())
 
-    fun importPackage(pkg: String) = importPackages(listOf(pkg))
-
-    fun importPackages(pkgs: Iterable<String>) {
-        importPackages += pkgs
+    fun importPackage(pkgs: Iterable<String>) {
+        importPackages = importPackages + pkgs
     }
 
-    fun importPackages(vararg pkgs: String) = importPackages(pkgs.toList())
+    fun importPackage(vararg pkgs: String) = importPackage(pkgs.toList())
 
-    fun wildcardPackages(pkgs: Iterable<String>): List<String> {
+    fun wildcardPackage(pkgs: Iterable<String>): List<String> {
         return pkgs.map { StringUtils.appendIfMissing(it, ".*") }
     }
 
-    fun wildcardPackages(vararg pkgs: String): List<String> {
-        return wildcardPackages(pkgs.toList())
+    fun wildcardPackage(vararg pkgs: String): List<String> {
+        return wildcardPackage(pkgs.toList())
     }
 
     @TaskAction
