@@ -7,28 +7,27 @@ import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.bundle.BundleException
 import com.cognifide.gradle.aem.common.build.DependencyOptions
 import com.cognifide.gradle.aem.common.instance.service.osgi.Bundle
-import aQute.bnd.gradle.Bundle as Base
 import com.cognifide.gradle.aem.common.utils.Formats
 import com.fasterxml.jackson.annotation.JsonIgnore
-import groovy.lang.MetaClass
-import java.io.File
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.tasks.*
+import org.gradle.api.tasks.bundling.Jar
+import java.io.File
 
 @Suppress("LargeClass", "TooManyFunctions")
-class BundleCompose : Base(), AemTask {
+open class BundleCompose : Jar(), AemTask {
 
     @Internal
     final override val aem = AemExtension.of(project)
 
     @Internal
-    val bundleConvention = convention.plugins["bundle"] as BundleTaskConvention
+    val bundleConvention = BundleTaskConvention(this).also { convention.plugins.set("bundle", it) }
 
     @Internal
-    val javaConvention = convention.plugins["java"] as JavaPluginConvention
+    val javaConvention = project.convention.getPlugin(JavaPluginConvention::class.java)
 
     /**
      * Allows to configure BND tool specific options.
@@ -402,32 +401,19 @@ class BundleCompose : Base(), AemTask {
     }
 
     @TaskAction
-    @Suppress("TooGenericExceptionCaught")
     override fun copy() {
+        super.copy()
+        runBndTool()
+    }
+
+    @Suppress("TooGenericExceptionCaught")
+    private fun runBndTool() {
         try {
-            super.copy()
+            bundleConvention.buildBundle()
         } catch (e: Exception) {
-            aem.logger.error("Bundle error: https://bnd.bndtools.org", ExceptionUtils.getRootCause(e))
+            aem.logger.error("BND tool error: https://bnd.bndtools.org", ExceptionUtils.getRootCause(e))
             throw BundleException("OSGi bundle cannot be built properly.", e)
         }
-    }
-
-    // TODO https://github.com/bndtools/bnd/issues/3470
-
-    override fun invokeMethod(p0: String?, p1: Any?): Any {
-        TODO("not implemented")
-    }
-
-    override fun setMetaClass(p0: MetaClass?) {
-        TODO("not implemented")
-    }
-
-    override fun getMetaClass(): MetaClass {
-        TODO("not implemented")
-    }
-
-    override fun getProperty(p0: String?): Any {
-        TODO("not implemented")
     }
 
     companion object {

@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.bundle
 
 import com.cognifide.gradle.aem.AemPlugin
+import com.cognifide.gradle.aem.bundle.tasks.BundleCompose
 import com.cognifide.gradle.aem.bundle.tasks.BundleInstall
 import com.cognifide.gradle.aem.bundle.tasks.BundleUninstall
 import com.cognifide.gradle.aem.pkg.PackagePlugin
@@ -43,6 +44,9 @@ class BundlePlugin : AemPlugin() {
 
     private fun Project.setupTasks() {
         tasks {
+            register<BundleCompose>(BundleCompose.NAME) {
+                dependsOn(JavaPlugin.JAR_TASK_NAME)
+            }
             register<BundleInstall>(BundleInstall.NAME) {
                 dependsOn(JavaPlugin.JAR_TASK_NAME)
             }
