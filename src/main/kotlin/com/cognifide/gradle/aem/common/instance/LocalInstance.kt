@@ -148,14 +148,6 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
 
         aem.logger.info("Copying quickstart license '$license' to directory '$quickstartDir'")
         manager.quickstart.license?.let { FileUtils.copyFile(it, license) }
-
-        val installFiles = manager.install.files
-        if (installFiles.isNotEmpty()) {
-            GFileUtils.mkdirs(installDir)
-            aem.logger.info("Copying quickstart install files (pre-installed bundles and packages)" +
-                    " to directory '$quickstartDir':\n${installFiles.joinToString("\n")}")
-            installFiles.forEach { FileUtils.copyFileToDirectory(it, installDir) }
-        }
     }
 
     private fun validateFiles() {
@@ -257,6 +249,18 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
             }
 
             result
+        }
+
+        val installFiles = manager.install.files
+        if (installFiles.isNotEmpty()) {
+            GFileUtils.mkdirs(installDir)
+            installFiles.forEach { source ->
+                val target = File(installDir, source.name)
+                if (!target.exists()) {
+                    aem.logger.info("Copying quickstart install file from '$source' to '$target'")
+                    FileUtils.copyFileToDirectory(source, installDir)
+                }
+            }
         }
 
         aem.logger.info("Customized: $this")

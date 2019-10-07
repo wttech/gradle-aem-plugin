@@ -7,6 +7,7 @@ import com.cognifide.gradle.aem.common.file.transfer.generic.CustomFileTransfer
 import com.cognifide.gradle.aem.common.file.transfer.generic.PathFileTransfer
 import com.cognifide.gradle.aem.common.file.transfer.generic.UrlFileTransfer
 import com.cognifide.gradle.aem.common.file.transfer.http.HttpFileTransfer
+import com.cognifide.gradle.aem.common.file.transfer.resolve.ResolveFileTransfer
 import com.cognifide.gradle.aem.common.file.transfer.sftp.SftpFileTransfer
 import com.cognifide.gradle.aem.common.file.transfer.smb.SmbFileTransfer
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -44,6 +45,12 @@ class FileTransferManager(private val aem: AemExtension) : FileTransfer {
         smb.apply(options)
     }
 
+    val resolve = ResolveFileTransfer(aem)
+
+    fun resolve(options: ResolveFileTransfer.() -> Unit) {
+        resolve.apply(options)
+    }
+
     val url = UrlFileTransfer(aem)
 
     fun url(options: UrlFileTransfer.() -> Unit) {
@@ -58,7 +65,7 @@ class FileTransferManager(private val aem: AemExtension) : FileTransfer {
 
     private val custom = mutableListOf<CustomFileTransfer>()
 
-    private val all get() = (custom + arrayOf(http, sftp, smb, url, path)).filter { it.enabled }
+    private val all get() = (custom + arrayOf(http, sftp, smb, resolve, url, path)).filter { it.enabled }
 
     /**
      * Downloads file from specified URL to temporary directory with preserving file name.
