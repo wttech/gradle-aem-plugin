@@ -358,40 +358,6 @@ open class BundleCompose : Jar(), AemTask {
 
     fun importPackages(vararg pkgs: String) = importPackages(pkgs.toList())
 
-    fun embedPackage(pkg: String, export: Boolean, dependencyOptions: DependencyOptions.() -> Unit) {
-        embedPackages(listOf(pkg), export, dependencyOptions)
-    }
-
-    fun embedPackages(vararg pkgs: String, export: Boolean, dependencyOptions: DependencyOptions.() -> Unit) {
-        embedPackages(pkgs.asIterable(), export, dependencyOptions)
-    }
-
-    fun embedPackages(pkgs: Iterable<String>, export: Boolean, dependencyOptions: DependencyOptions.() -> Unit) {
-        embedPackages(pkgs, export, DependencyOptions.create(aem, dependencyOptions))
-    }
-
-    fun embedPackage(pkg: String, export: Boolean, dependencyNotation: String) {
-        embedPackages(listOf(pkg), export, dependencyNotation)
-    }
-
-    fun embedPackages(vararg pkgs: String, export: Boolean, dependencyNotation: String) {
-        embedPackages(pkgs.asIterable(), export, dependencyNotation)
-    }
-
-    fun embedPackages(pkgs: Iterable<String>, export: Boolean, dependencyNotation: String) {
-        embedPackages(pkgs, export, dependencyNotation as Any)
-    }
-
-    private fun embedPackages(pkgs: Iterable<String>, export: Boolean, dependencyNotation: Any) {
-        aem.project.dependencies.add(JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME, dependencyNotation)
-
-        if (export) {
-            exportPackages(pkgs)
-        } else {
-            privatePackages(pkgs)
-        }
-    }
-
     fun wildcardPackages(pkgs: Iterable<String>): List<String> {
         return pkgs.map { StringUtils.appendIfMissing(it, ".*") }
     }

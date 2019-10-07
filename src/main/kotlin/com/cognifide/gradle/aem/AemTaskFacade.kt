@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem
 
 import com.cognifide.gradle.aem.bundle.tasks.BundleCompose
+import com.cognifide.gradle.aem.common.build.DependencyOptions
 import com.cognifide.gradle.aem.common.tasks.Debug
 import com.cognifide.gradle.aem.common.tasks.TaskSequence
 import com.cognifide.gradle.aem.common.tasks.lifecycle.*
@@ -14,25 +15,56 @@ import com.cognifide.gradle.aem.tooling.rcp.Rcp
 import com.cognifide.gradle.aem.tooling.sync.Sync
 import com.cognifide.gradle.aem.tooling.vlt.Vlt
 import com.fasterxml.jackson.annotation.JsonIgnore
-import java.io.Serializable
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.UnknownTaskException
+import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.TaskProvider
+import java.io.Serializable
 
 @Suppress("TooManyFunctions")
-class AemTaskFacade(private val aem: AemExtension) : Serializable {
+class AemTaskFacade(val aem: AemExtension) : Serializable {
 
     @JsonIgnore
     val project = aem.project
-
-    private val bundleMap = mutableMapOf<String, BundleCompose>()
 
     // Bundle plugin shorthands
 
     val bundles get() = getAll(BundleCompose::class.java)
 
     fun bundleCompose(configurer: BundleCompose.() -> Unit) = named(BundleCompose.NAME, configurer)
+
+    fun bundleExportEmbed(dependencyNotation: String, vararg pkgs: String) {
+        bundleEmbed(dependencyNotation, true, pkgs.asIterable())
+    }
+
+    fun bundleExportEmbed(dependencyNotation: String, pkgs: Iterable<String>) {
+        bundleEmbed(dependencyNotation, true, pkgs)
+    }
+
+    fun bundlePrivateEmbed(dependencyNotation: String, vararg pkgs: String) {
+        bundleEmbed(dependencyNotation, true, pkgs.asIterable())
+    }
+
+    fun bundlePrivateEmbed(dependencyNotation: String, pkgs: Iterable<String>) {
+        bundleEmbed(dependencyNotation, true, pkgs)
+    }
+
+    fun bundleEmbed(dependencyOptions: DependencyOptions.() -> Unit, export: Boolean, pkgs: Iterable<String>) {
+        bundleEmbed(DependencyOptions.create(aem, dependencyOptions), export, pkgs)
+    }
+
+    fun bundleEmbed(dependencyNotation: Any, export: Boolean, pkgs: Iterable<String>) {
+        project.dependencies.add(JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME, dependencyNotation)
+
+        bundleCompose {
+            if (export) {
+                exportPackages(pkgs)
+            } else {
+                privatePackages(pkgs)
+            }
+        }
+    }
 
     // Package plugin shorthands
 

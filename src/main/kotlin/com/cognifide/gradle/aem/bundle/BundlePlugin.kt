@@ -9,6 +9,7 @@ import org.gradle.api.JavaVersion
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.JavaPluginConvention
+import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.api.tasks.testing.Test
 
@@ -32,10 +33,14 @@ class BundlePlugin : AemPlugin() {
             targetCompatibility = JavaVersion.VERSION_1_8
         }
 
-        tasks.withType(JavaCompile::class.java).configureEach { compile ->
-            with(compile as JavaCompile) {
+        tasks {
+            named<Jar>(JavaPlugin.JAR_TASK_NAME) {
+                archiveBaseName.set(aem.baseName)
+            }
+
+            typed<JavaCompile> {
                 options.encoding = "UTF-8"
-                options.compilerArgs = compile.options.compilerArgs + "-Xlint:deprecation"
+                options.compilerArgs = options.compilerArgs + "-Xlint:deprecation"
                 options.isIncremental = true
             }
         }
@@ -58,15 +63,17 @@ class BundlePlugin : AemPlugin() {
     // @see <https://github.com/Cognifide/gradle-aem-plugin/issues/95>
     private fun Project.setupTestTask() {
         afterEvaluate {
-            tasks.named(JavaPlugin.TEST_TASK_NAME, Test::class.java) { test ->
-                val testImplConfig = project.configurations.getByName(JavaPlugin.TEST_IMPLEMENTATION_CONFIGURATION_NAME)
-                val compileOnlyConfig = project.configurations.getByName(JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME)
+            tasks {
+                named<Test>(JavaPlugin.TEST_TASK_NAME) {
+                    val testImplConfig = configurations.getByName(JavaPlugin.TEST_IMPLEMENTATION_CONFIGURATION_NAME)
+                    val compileOnlyConfig = configurations.getByName(JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME)
 
-                testImplConfig.extendsFrom(compileOnlyConfig)
+                    testImplConfig.extendsFrom(compileOnlyConfig)
 
-                project.tasks.withType(BundleCompose::class.java).forEach { jar ->
-                    test.dependsOn(jar)
-                    test.classpath += project.files(jar.archiveFile.get().asFile)
+                    bundles.forEach { jar ->
+                        dependsOn(jar)
+                        classpath += files(jar.archiveFile.get().asFile)
+                    }
                 }
             }
         }
