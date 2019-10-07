@@ -1,40 +1,43 @@
-package com.cognifide.gradle.aem.bundle
+package com.cognifide.gradle.aem.bundle.tasks
 
 import aQute.bnd.gradle.BundleTaskConvention
 import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.AemTask
+import com.cognifide.gradle.aem.bundle.BundleException
 import com.cognifide.gradle.aem.common.build.DependencyOptions
 import com.cognifide.gradle.aem.common.instance.service.osgi.Bundle
+import aQute.bnd.gradle.Bundle as Base
 import com.cognifide.gradle.aem.common.utils.Formats
 import com.fasterxml.jackson.annotation.JsonIgnore
+import groovy.lang.MetaClass
 import java.io.File
-import java.io.Serializable
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.gradle.api.plugins.JavaPlugin
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.Optional
-import org.gradle.api.tasks.bundling.Jar
+import org.gradle.api.plugins.JavaPluginConvention
+import org.gradle.api.tasks.*
 
-/**
- * The main purpose of this extension point is to provide a place for specifying custom
- * OSGi bundle related properties, because it is not possible to add properties to existing tasks
- * like 'jar' directly.
- */
 @Suppress("LargeClass", "TooManyFunctions")
-class BundleJar(
-    @Transient
-@JsonIgnore
-private val aem: AemExtension,
+class BundleCompose : Base(), AemTask {
 
     @Internal
-@Transient
-@JsonIgnore
-val jar: Jar
-) : Serializable {
+    final override val aem = AemExtension.of(project)
 
-    var name = jar.name
+    @Internal
+    val bundleConvention = convention.plugins["bundle"] as BundleTaskConvention
+
+    @Internal
+    val javaConvention = convention.plugins["java"] as JavaPluginConvention
+
+    /**
+     * Allows to configure BND tool specific options.
+     *
+     * @see <https://bnd.bndtools.org>
+     */
+    fun bndTool(options: BundleTaskConvention.() -> Unit) {
+        bundleConvention.apply(options)
+    }
 
     /**
      * Content path for OSGi bundle jars being placed in CRX package.
@@ -91,36 +94,6 @@ val jar: Jar
     @Input
     var javaPackageOptions: String = "-split-package:=merge-first"
 
-    /**
-     * Allows to disable BND tool.
-     */
-    @Input
-    var bndEnabled: Boolean = true
-
-    /**
-     * Bundle instructions file location consumed by BND tool.
-     *
-     * If file exists, instructions will be taken from it instead of directly specified
-     * in dedicated property.
-     *
-     * @see <https://bnd.bndtools.org>
-     */
-    @Input
-    var bndPath: String = "${aem.project.file("bnd.bnd")}"
-
-    /**
-     * Bundle instructions consumed by BND tool (still file has precedence).
-     *
-     * By default, plugin is increasing an importance of some warning so that it will
-     * fail a build instead just logging it.
-     *
-     * @see <https://bnd.bndtools.org/chapters/825-instructions-ref.html>
-     */
-    @Input
-    var bndInstructions: Map<String, Any> = mapOf(
-            "-fixupmessages.bundleActivator" to "${Bundle.ATTRIBUTE_ACTIVATOR} * is being imported *;is:=error"
-    )
-
     @Internal
     @JsonIgnore
     var importPackages: List<String> = listOf("*")
@@ -133,54 +106,45 @@ val jar: Jar
     @JsonIgnore
     var privatePackages: List<String> = listOf()
 
-    /**
-     * Configure jar task before evaluating build script.
-     */
-    internal fun initialize() {
-        proposeBaseName()
+    init {
+        applyArchiveDefaults()
+        applyBndToolDefaults()
     }
 
-    private fun proposeBaseName() {
-        jar.archiveBaseName.set(aem.baseName)
+    private fun applyArchiveDefaults() {
+        destinationDirectory.set(AemTask.temporaryDir(aem.project, name))
+        archiveBaseName.set(aem.baseName)
+        from(javaConvention.sourceSets.getByName(SourceSet.MAIN_SOURCE_SET_NAME).output)
     }
 
-    /**
-     * Configure jar task after evaluating build script.
-     */
-    internal fun finalize() {
+    private fun applyBndToolDefaults() {
+        val instructionFile = File("${aem.project.file("bnd.bnd")}")
+        if (instructionFile.isFile) {
+            bundleConvention.setBndfile(instructionFile)
+        }
+
+        bundleConvention.bnd(mapOf(
+                "-fixupmessages.bundleActivator" to "${Bundle.ATTRIBUTE_ACTIVATOR} * is being imported *;is:=error"
+        ))
+    }
+
+    override fun projectEvaluated() {
+        super.projectEvaluated()
+
         ensureJavaPackage()
         applyAttributesConvention()
         combinePackageAttributes()
-        setupBndTool()
     }
 
     private fun ensureJavaPackage() {
         if (javaPackage == null) {
             if ("${aem.project.group}".isBlank()) {
-                throw AemException("${aem.project.displayName.capitalize()} must has property 'group' defined to determine bundle package default.")
+                throw AemException("${aem.project.displayName.capitalize()} must has property 'group' defined" +
+                        " to determine bundle package default.")
             }
 
             javaPackage = Formats.normalizeSeparators("${aem.project.group}.${aem.project.name}", ".")
         }
-    }
-
-    /**
-     * Combine package attributes set explicitly with generated ones.
-     */
-    private fun combinePackageAttributes() {
-        combinePackageAttribute(Bundle.ATTRIBUTE_IMPORT_PACKAGE, importPackages)
-        combinePackageAttribute(Bundle.ATTRIBUTE_PRIVATE_PACKAGE, privatePackages)
-        combinePackageAttribute(Bundle.ATTRIBUTE_EXPORT_PACKAGE, exportPackages.toMutableList().apply {
-            if (attributesConvention && !javaPackage.isNullOrBlank()) {
-                val javaPackageExported = if (javaPackageOptions.isNotBlank()) {
-                    "$javaPackage.*;$javaPackageOptions"
-                } else {
-                    "$javaPackage.*"
-                }
-
-                add(javaPackageExported)
-            }
-        })
     }
 
     private fun combinePackageAttribute(name: String, pkgs: Iterable<String>) {
@@ -223,6 +187,25 @@ val jar: Jar
         }
     }
 
+    /**
+     * Combine package attributes set explicitly with generated ones.
+     */
+    private fun combinePackageAttributes() {
+        combinePackageAttribute(Bundle.ATTRIBUTE_IMPORT_PACKAGE, importPackages)
+        combinePackageAttribute(Bundle.ATTRIBUTE_PRIVATE_PACKAGE, privatePackages)
+        combinePackageAttribute(Bundle.ATTRIBUTE_EXPORT_PACKAGE, exportPackages.toMutableList().apply {
+            if (attributesConvention && !javaPackage.isNullOrBlank()) {
+                val javaPackageExported = if (javaPackageOptions.isNotBlank()) {
+                    "$javaPackage.*;$javaPackageOptions"
+                } else {
+                    "$javaPackage.*"
+                }
+
+                add(javaPackageExported)
+            }
+        })
+    }
+
     private fun findActivator(pkg: String): String? {
         for ((sourceSet, ext) in SOURCE_SETS) {
             for (activatorClass in ACTIVATOR_CLASSES) {
@@ -237,14 +220,14 @@ val jar: Jar
 
     @get:Input
     var attributes: MutableMap<String, Any?>
-        get() = mutableMapOf<String, Any?>().apply { putAll(jar.manifest.attributes) }
+        get() = mutableMapOf<String, Any?>().apply { putAll(manifest.attributes) }
         set(value) {
-            jar.manifest.attributes(value)
+            manifest.attributes(value)
         }
 
-    fun attribute(name: String, value: String?) = jar.manifest.attributes(mapOf(name to value))
+    fun attribute(name: String, value: String?) = manifest.attributes(mapOf(name to value))
 
-    fun attribute(name: String): String? = jar.manifest.attributes[name] as String?
+    fun attribute(name: String): String? = manifest.attributes[name] as String?
 
     fun hasAttribute(name: String) = attributes.containsKey(name)
 
@@ -418,39 +401,38 @@ val jar: Jar
         return wildcardPackages(pkgs.toList())
     }
 
-    private fun setupBndTool() {
-        if (!bndEnabled) {
-            aem.logger.info("BND tool is disabled for task '${jar.path}'.")
-            return
-        }
-
-        val bundleConvention = BundleTaskConvention(jar)
-
-        jar.doLast {
-            val instructionFile = File(bndPath)
-            if (instructionFile.isFile) {
-                bundleConvention.setBndfile(instructionFile)
-            }
-
-            if (bndInstructions.isNotEmpty()) {
-                bundleConvention.bnd(bndInstructions)
-            }
-
-            runBndTool(bundleConvention)
-        }
-    }
-
+    @TaskAction
     @Suppress("TooGenericExceptionCaught")
-    private fun runBndTool(convention: BundleTaskConvention) {
+    override fun copy() {
         try {
-            convention.buildBundle()
+            super.copy()
         } catch (e: Exception) {
-            aem.logger.error("BND tool error: https://bnd.bndtools.org", ExceptionUtils.getRootCause(e))
+            aem.logger.error("Bundle error: https://bnd.bndtools.org", ExceptionUtils.getRootCause(e))
             throw BundleException("OSGi bundle cannot be built properly.", e)
         }
     }
 
+    // TODO https://github.com/bndtools/bnd/issues/3470
+
+    override fun invokeMethod(p0: String?, p1: Any?): Any {
+        TODO("not implemented")
+    }
+
+    override fun setMetaClass(p0: MetaClass?) {
+        TODO("not implemented")
+    }
+
+    override fun getMetaClass(): MetaClass {
+        TODO("not implemented")
+    }
+
+    override fun getProperty(p0: String?): Any {
+        TODO("not implemented")
+    }
+
     companion object {
+        const val NAME = "bundleCompose"
+
         val ACTIVATOR_CLASSES = listOf("Activator", "BundleActivator")
 
         val SOURCE_SETS = mapOf(

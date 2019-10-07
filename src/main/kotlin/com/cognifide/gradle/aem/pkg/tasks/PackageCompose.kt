@@ -3,7 +3,7 @@ package com.cognifide.gradle.aem.pkg.tasks
 import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.AemTask
-import com.cognifide.gradle.aem.bundle.BundleJar
+import com.cognifide.gradle.aem.bundle.tasks.BundleCompose
 import com.cognifide.gradle.aem.bundle.BundlePlugin
 import com.cognifide.gradle.aem.common.build.DependencyOptions
 import com.cognifide.gradle.aem.common.file.FileOperations
@@ -256,24 +256,24 @@ open class PackageCompose : ZipTask() {
 
             if (project.plugins.hasPlugin(PackagePlugin.ID)) {
                 options.composeTasks(other).forEach {
-                    fromCompose(it, options)
+                    fromPackage(it, options)
                 }
             }
 
             if (project.plugins.hasPlugin(BundlePlugin.ID)) {
                 options.bundleTasks(other).forEach {
-                    fromBundle(other.tasks.bundle(it), options)
+                    fromBundle(it, options)
                 }
             }
         }
     }
 
-    fun fromCompose(composeTaskPath: String) {
-        fromCompose(aem.tasks.get(composeTaskPath, PackageCompose::class.java), ProjectMergingOptions())
+    fun fromPackage(composeTaskPath: String) {
+        fromPackage(aem.tasks.get(composeTaskPath, PackageCompose::class.java), ProjectMergingOptions())
     }
 
     @Suppress("ComplexMethod")
-    private fun fromCompose(other: PackageCompose, options: ProjectMergingOptions) {
+    private fun fromPackage(other: PackageCompose, options: ProjectMergingOptions) {
         fromTasks.add {
             if (this@PackageCompose != other) {
                 dependsOn(other.dependsOn)
@@ -327,13 +327,13 @@ open class PackageCompose : ZipTask() {
         }
     }
 
-    fun fromBundle(jarTaskPath: String) {
-        fromBundle(aem.tasks.bundle(jarTaskPath), ProjectMergingOptions())
+    fun fromBundle(composeTaskPath: String) {
+        fromBundle(aem.tasks.get(composeTaskPath, BundleCompose::class.java), ProjectMergingOptions())
     }
 
-    private fun fromBundle(bundle: BundleJar, options: ProjectMergingOptions) {
+    private fun fromBundle(bundle: BundleCompose, options: ProjectMergingOptions) {
         if (options.bundleBuilt) {
-            fromJar(bundle.jar, Package.bundlePath(bundle.installPath, bundle.installRunMode), bundle.vaultFilter)
+            fromJar(bundle, Package.bundlePath(bundle.installPath, bundle.installRunMode), bundle.vaultFilter)
         }
     }
 
@@ -353,10 +353,10 @@ open class PackageCompose : ZipTask() {
         ))
     }
 
-    fun fromJar(bundle: Jar, bundlePath: String? = null, vaultFilter: Boolean? = null) {
+    fun fromJar(jar: Jar, bundlePath: String? = null, vaultFilter: Boolean? = null) {
         fromTasks.add {
-            dependsOn(bundle)
-            fromJarInternal(bundle.archiveFile.get().asFile, bundlePath, vaultFilter)
+            dependsOn(jar)
+            fromJarInternal(jar.archiveFile.get().asFile, bundlePath, vaultFilter)
         }
     }
 
@@ -373,14 +373,7 @@ open class PackageCompose : ZipTask() {
     private fun fromJarInternal(jar: File, bundlePath: String? = null, vaultFilter: Boolean? = null) {
         val effectiveBundlePath = bundlePath ?: this.bundlePath
 
-        if (vaultFilter ?: mergingOptions.vaultFilters) {
-            vaultDefinition.filter("$effectiveBundlePath/${jar.name}") { type = FilterType.FILE }
-        }
-
-        into("${Package.JCR_ROOT}/$effectiveBundlePath") { spec ->
-            spec.from(jar)
-            fileFilterDelegate(spec)
-        }
+        fromArchiveInternal(vaultFilter, effectiveBundlePath, jar)
     }
 
     fun fromZip(dependencyOptions: DependencyOptions.() -> Unit, storagePath: String? = null, vaultFilter: Boolean? = null) {
@@ -413,11 +406,15 @@ open class PackageCompose : ZipTask() {
         val effectivePackageDir = aem.packageOptions.storageDir(PackageFile(file))
         val effectivePackagePath = "${packagePath ?: this.packagePath}/$effectivePackageDir"
 
+        fromArchiveInternal(vaultFilter, effectivePackagePath, file)
+    }
+
+    private fun fromArchiveInternal(vaultFilter: Boolean?, effectivePath: String, file: File) {
         if (vaultFilter ?: mergingOptions.vaultFilters) {
-            vaultDefinition.filter("$effectivePackagePath/${file.name}") { type = FilterType.FILE }
+            vaultDefinition.filter("$effectivePath/${file.name}") { type = FilterType.FILE }
         }
 
-        into("${Package.JCR_ROOT}/$effectivePackagePath") { spec ->
+        into("${Package.JCR_ROOT}/$effectivePath") { spec ->
             spec.from(file)
             fileFilterDelegate(spec)
         }
