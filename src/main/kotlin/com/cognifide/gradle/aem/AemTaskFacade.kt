@@ -43,11 +43,11 @@ class AemTaskFacade(val aem: AemExtension) : Serializable {
     }
 
     fun bundlePrivateEmbed(dependencyNotation: String, vararg pkgs: String) {
-        bundleEmbed(dependencyNotation, true, pkgs.asIterable())
+        bundleEmbed(dependencyNotation, false, pkgs.asIterable())
     }
 
     fun bundlePrivateEmbed(dependencyNotation: String, pkgs: Iterable<String>) {
-        bundleEmbed(dependencyNotation, true, pkgs)
+        bundleEmbed(dependencyNotation, false, pkgs)
     }
 
     fun bundleEmbed(dependencyOptions: DependencyOptions.() -> Unit, export: Boolean, pkgs: Iterable<String>) {
