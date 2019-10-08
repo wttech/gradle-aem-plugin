@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.environment
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.common.file.resolver.FileResolver
+import com.cognifide.gradle.aem.environment.docker.Docker
 import com.cognifide.gradle.aem.environment.health.HealthChecker
 import com.cognifide.gradle.aem.environment.health.HealthStatus
 import com.cognifide.gradle.aem.environment.hosts.HostOptions

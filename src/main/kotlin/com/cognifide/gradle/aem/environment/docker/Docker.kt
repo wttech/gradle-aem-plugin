@@ -1,7 +1,7 @@
-package com.cognifide.gradle.aem.environment
+package com.cognifide.gradle.aem.environment.docker
 
-import com.cognifide.gradle.aem.environment.docker.PathGenerator
-import com.cognifide.gradle.aem.environment.docker.Runtime
+import com.cognifide.gradle.aem.environment.Environment
+import com.cognifide.gradle.aem.environment.EnvironmentException
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.gradle.util.GFileUtils
 import java.io.File

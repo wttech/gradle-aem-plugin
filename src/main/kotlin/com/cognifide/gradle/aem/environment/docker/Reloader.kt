@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.environment
+package com.cognifide.gradle.aem.environment.docker
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.file.FileWatcher
