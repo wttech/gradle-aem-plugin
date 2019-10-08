@@ -10,6 +10,8 @@ interface Runtime {
 
     val hostIp: String
 
+    fun generatePath(path: String) // TODO ...
+
     companion object {
 
         fun determine(aem: AemExtension): Runtime {
