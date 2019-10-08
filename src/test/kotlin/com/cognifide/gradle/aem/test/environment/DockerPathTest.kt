@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.test.environment
 
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.environment.docker.base.DockerPath
+import com.cognifide.gradle.aem.environment.docker.base.PathGenerator
 import org.gradle.testfixtures.ProjectBuilder
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -23,5 +23,5 @@ class DockerPathTest {
         )
     }
 
-    private fun dockerPath() = DockerPath(AemExtension(ProjectBuilder.builder().build()).environment)
+    private fun dockerPath() = PathGenerator(AemExtension(ProjectBuilder.builder().build()).environment)
 }

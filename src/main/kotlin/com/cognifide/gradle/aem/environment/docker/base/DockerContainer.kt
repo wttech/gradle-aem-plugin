@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.environment.docker.base
 
 import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.environment.docker.DockerException
 
 open class DockerContainer(aem: AemExtension, val name: String) {
 

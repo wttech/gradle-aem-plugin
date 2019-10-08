@@ -12,7 +12,7 @@ open class EnvironmentClean : AemDefaultTask() {
     @TaskAction
     fun clean() {
         if (aem.environment.running) {
-            aem.environment.httpd.restart()
+            aem.environment.docker.httpd.restart()
         }
         aem.environment.clean()
     }

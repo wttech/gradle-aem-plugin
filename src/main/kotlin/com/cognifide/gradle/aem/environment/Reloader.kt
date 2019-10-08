@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.environment.docker.domain
+package com.cognifide.gradle.aem.environment
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.file.FileWatcher
@@ -8,7 +8,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 
 @UseExperimental(ObsoleteCoroutinesApi::class)
-open class HttpdReloader(val aem: AemExtension) {
+open class Reloader(val aem: AemExtension) {
 
     private val environment = aem.environment
 
@@ -45,7 +45,7 @@ open class HttpdReloader(val aem: AemExtension) {
 
             aem.logger.lifecycle("Reloading HTTP service due to file changes:\n${changes.joinToString("\n")}")
 
-            if (environment.httpd.restart(verbose = false)) {
+            if (environment.docker.httpd.restart(verbose = false)) {
                 environment.clean()
                 healthCheckRequests.send(Date())
             }

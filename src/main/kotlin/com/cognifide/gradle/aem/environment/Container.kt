@@ -1,24 +1,22 @@
-package com.cognifide.gradle.aem.environment.docker.domain
+package com.cognifide.gradle.aem.environment
 
 import com.cognifide.gradle.aem.common.build.Behaviors
-import com.cognifide.gradle.aem.environment.Environment
-import com.cognifide.gradle.aem.environment.EnvironmentException
 import com.cognifide.gradle.aem.environment.docker.base.DockerContainer
-import com.cognifide.gradle.aem.environment.docker.base.DockerException
+import com.cognifide.gradle.aem.environment.docker.DockerException
 import org.gradle.internal.os.OperatingSystem
 
-class HttpdContainer(private val environment: Environment) {
+class Container(private val environment: Environment, val name: String) {
 
     private val aem = environment.aem
 
-    val container = DockerContainer(aem, aem.props.string("environment.httpdContainer.containerName") ?: "${aem.project.rootProject.name}_httpd")
+    val base = DockerContainer(aem, name)
 
-    var awaitRetry = aem.retry { afterSecond(aem.props.long("environment.httpdContainer.awaitRetry") ?: 30) }
+    var awaitRetry = aem.retry { afterSecond(aem.props.long("environment.container.awaitRetry") ?: 30) }
 
-    var restartCommand = aem.props.string("environment.httpdContainer.restartCommand") ?: "/usr/local/apache2/bin/httpd -k restart"
+    var restartCommand = ""
 
     val running: Boolean
-        get() = container.running
+        get() = base.running
 
     fun deploy(): Boolean {
         await()
@@ -30,15 +28,15 @@ class HttpdContainer(private val environment: Environment) {
         var success = false
 
         aem.progressIndicator {
-            message = "Restarting HTTPD service"
+            message = "Restarting container '$name'"
 
             try {
-                container.exec(restartCommand, 0)
+                base.exec(restartCommand, 0)
                 success = true
             } catch (e: DockerException) {
                 success = false
                 if (verbose) {
-                    throw EnvironmentException("Failed to restart HTTPD service! Check logs then configuration.", e)
+                    throw EnvironmentException("Failed to restart service '$name'! Check logs then configuration.", e)
                 } else {
                     val processCause = e.processCause
                     if (processCause != null) {
@@ -55,13 +53,13 @@ class HttpdContainer(private val environment: Environment) {
         aem.progressIndicator {
             message = "Awaiting HTTPD service"
             Behaviors.waitUntil(awaitRetry.delay) { timer ->
-                val running = container.running
+                val running = base.running
                 if (timer.ticks == awaitRetry.times && !running) {
                     val msg = mutableListOf("Failed to await HTTPD service!")
                     if (OperatingSystem.current().isWindows) {
                         msg.add("Ensure having shared drives configured and reset performed after changing Windows credentials.")
                     }
-                    msg.add("Consider troubleshooting using command: 'docker stack ps ${environment.stack.stack.name} --no-trunc'.")
+                    msg.add("Consider troubleshooting using command: 'docker stack ps ${environment.docker.stack.base.name} --no-trunc'.")
                     throw EnvironmentException(msg.joinToString("\n"))
                 }
 

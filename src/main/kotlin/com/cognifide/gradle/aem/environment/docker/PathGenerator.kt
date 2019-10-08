@@ -1,12 +1,12 @@
-package com.cognifide.gradle.aem.environment.docker.base
+package com.cognifide.gradle.aem.environment.docker
 
 import com.cognifide.gradle.aem.common.utils.Formats
 import com.cognifide.gradle.aem.environment.Environment
-import com.cognifide.gradle.aem.environment.docker.base.runtime.Toolbox
+import com.cognifide.gradle.aem.environment.docker.runtime.Toolbox
 import org.buildobjects.process.ProcBuilder
 import java.io.File
 
-class DockerPath(private val environment: Environment) {
+class PathGenerator(private val environment: Environment) {
 
     private val aem = environment.aem
 
@@ -15,7 +15,7 @@ class DockerPath(private val environment: Environment) {
 
     fun get(file: File) = get(file.toString())
 
-    fun get(path: String) = when (environment.dockerRuntime) {
+    fun get(path: String) = when (environment.docker.runtime) {
         is Toolbox -> try {
             executeCygpath(path)
         } catch (e: DockerException) {
