@@ -39,15 +39,17 @@ open class DockerContainer(aem: AemExtension, val name: String) {
             }
         }
 
+    fun exec(command: String, exitCode: Int? = 0) = exec(command, exitCode?.let { listOf(it) } ?: listOf())
+
     @Suppress("SpreadOperator")
-    fun exec(command: String, exitCode: Int = 0) {
+    fun exec(command: String, exitCodes: Iterable<Int>) {
         if (!running) {
             throw DockerContainerException("Cannot exec command '$command' since Docker container '$name' is not running!")
         }
 
         Docker.exec {
             withArgs("exec", id, *command.split(" ").toTypedArray())
-            withExpectedExitStatuses(exitCode)
+            withExpectedExitStatuses(exitCodes.toSet())
         }
     }
 }

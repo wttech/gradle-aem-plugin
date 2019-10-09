@@ -52,16 +52,14 @@ class Container(private val docker: Docker, val name: String) {
 
     // DSL
 
-    fun exec(vararg commands: String) {
-        commands.forEach { exec(it) }
-    }
+    fun exec(command: String, exitCode: Int? = 0) = exec(command, exitCode?.let { listOf(it) } ?: listOf())
 
-    fun exec(command: String, exitCode: Int = 0) {
+    fun exec(command: String, exitCodes: Iterable<Int>) {
         aem.progressIndicator {
             message = "Executing command '$command' on container '$name'"
 
             try {
-                base.exec(command, exitCode)
+                base.exec(command, exitCodes)
             } catch (e: DockerException) {
                 throw EnvironmentException("Failed to execute command '$command' on container '$name', exit code: '${e.processCause?.exitValue ?: -1 }!", e)
             }
