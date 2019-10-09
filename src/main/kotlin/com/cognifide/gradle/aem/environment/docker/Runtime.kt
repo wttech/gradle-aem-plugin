@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.environment.docker
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.environment.docker.runtime.Desktop
 import com.cognifide.gradle.aem.environment.docker.runtime.Toolbox
+import java.io.File
 
 interface Runtime {
 
@@ -10,7 +11,9 @@ interface Runtime {
 
     val hostIp: String
 
-    fun generatePath(path: String) // TODO ...
+    fun determinePath(path: String): String
+
+    fun determinePath(file: File) = determinePath(file.toString())
 
     companion object {
 

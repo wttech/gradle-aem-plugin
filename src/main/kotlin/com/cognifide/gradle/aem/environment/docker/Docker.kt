@@ -2,7 +2,6 @@ package com.cognifide.gradle.aem.environment.docker
 
 import com.cognifide.gradle.aem.environment.Environment
 import com.cognifide.gradle.aem.environment.EnvironmentException
-import com.fasterxml.jackson.annotation.JsonIgnore
 import org.gradle.util.GFileUtils
 import java.io.File
 
@@ -10,78 +9,64 @@ class Docker(val environment: Environment) {
 
     private val aem = environment.aem
 
-    @get:JsonIgnore
     val running: Boolean
-        get() = stack.running && httpd.running
+        get() = stack.running && containers.running
 
     /**
      * Represents Docker stack named 'aem' and provides API for manipulating it.
      */
-    @JsonIgnore
     val stack = Stack(environment)
 
-    val containers = mutableListOf<Container>()
+    /**
+     * Provides API for manipulating Docker containers defined in 'docker-compose.yml'.
+     */
+    val containers = Containers(this)
 
     /**
-     * Represents Docker container named 'aem_httpd' and provides API for manipulating it.
+     * Configure additional behavior for Docker containers defined in 'docker-compose.yml'.
      */
-    @JsonIgnore
-    val httpd = Container(environment, "aem_httpd") // TODO do not hardcode it
+    fun <T> containers(options: Containers.() -> T) = containers.run(options)
 
     val runtime: Runtime = Runtime.determine(aem)
 
     val composeFile
         get() = File(environment.rootDir, "docker-compose.yml")
 
-    val composeSourceFile: File
+    val composeTemplateFile: File
         get() = File(environment.configDir, "docker-compose.yml.peb")
 
-    /**
-     * Generator for paths in format expected in 'docker-compose.yml' files.
-     */
-    val pathGenerator = PathGenerator(environment)
-
     val configPath: String
-        get() = pathGenerator.get(environment.configDir)
+        get() = runtime.determinePath(environment.configDir)
 
     val rootPath: String
-        get() = pathGenerator.get(environment.rootDir)
-
+        get() = runtime.determinePath(environment.rootDir)
 
     fun init() {
         syncComposeFile()
     }
 
     private fun syncComposeFile() {
-        aem.logger.info("Synchronizing Docker compose file: $composeSourceFile -> $composeFile")
+        aem.logger.info("Generating Docker compose file '$composeFile' from template '$composeTemplateFile'")
 
-        if (!composeSourceFile.exists()) {
-            throw EnvironmentException("Docker compose file does not exist: $composeSourceFile")
+        if (!composeTemplateFile.exists()) {
+            throw EnvironmentException("Docker compose file template does not exist: $composeTemplateFile")
         }
 
         GFileUtils.deleteFileQuietly(composeFile)
-        GFileUtils.copyFile(composeSourceFile, composeFile)
+        GFileUtils.copyFile(composeTemplateFile, composeFile)
         aem.props.expand(composeFile, mapOf("environment" to this))
     }
 
     fun up() {
         stack.reset()
-        httpd.deploy()
+        containers.deploy()
     }
 
-    fun clean() {
-        /*
-               directories.caches.forEach { dir ->
-            if (dir.exists()) {
-                aem.logger.info("Cleaning AEM environment cache directory: $dir")
-                FileOperations.removeDirContents(dir)
-            }
-        }
-         */
+    fun reload() {
+        containers.reload()
     }
 
     fun down() {
         stack.undeploy()
     }
-
 }

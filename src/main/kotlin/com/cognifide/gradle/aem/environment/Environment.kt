@@ -25,9 +25,7 @@ class Environment(@JsonIgnore val aem: AemExtension) : Serializable {
     val configDir
         get() = File(aem.configCommonDir, ENVIRONMENT_DIR)
 
-    val httpdConfDir
-        get() = File(aem.configCommonDir, "$ENVIRONMENT_DIR/httpd/conf")
-
+    @JsonIgnore
     val docker = Docker(this)
 
     fun docker(options: Docker.() -> Unit) {
@@ -121,10 +119,16 @@ class Environment(@JsonIgnore val aem: AemExtension) : Serializable {
         return healthChecker.check(verbose)
     }
 
-    fun clean() {
-        aem.logger.info("Cleaning $this")
+    fun reload() {
+        if (!running) {
+            throw EnvironmentException("Cannot reload environment as it is not running!")
+        }
 
-        docker.clean()
+        aem.logger.info("Reloading $this")
+
+        docker.reload()
+
+        aem.logger.info("Reloaded $this")
     }
 
     fun hosts(options: HostOptions.() -> Unit) {

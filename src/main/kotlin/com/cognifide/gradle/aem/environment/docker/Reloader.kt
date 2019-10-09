@@ -2,13 +2,19 @@ package com.cognifide.gradle.aem.environment.docker
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.file.FileWatcher
+import com.cognifide.gradle.aem.environment.Environment
 import java.util.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
+import java.io.File
 
 @UseExperimental(ObsoleteCoroutinesApi::class)
 open class Reloader(val aem: AemExtension) {
+
+    var dirs = mutableListOf(
+            File(aem.configCommonDir, "${Environment.ENVIRONMENT_DIR}/httpd/conf")
+    )
 
     private val environment = aem.environment
 
@@ -17,7 +23,7 @@ open class Reloader(val aem: AemExtension) {
     private val healthCheckRequests = Channel<Any>(Channel.UNLIMITED)
 
     private val fileWatcher = FileWatcher(aem).apply {
-        dir = aem.environment.httpdConfDir
+        dirs = this@Reloader.dirs
         onChange = { event ->
             GlobalScope.launch {
                 fileChanges.send(event)
@@ -31,7 +37,7 @@ open class Reloader(val aem: AemExtension) {
 
     fun start() {
         runBlocking {
-            aem.logger.lifecycle("Watching for HTTPD configuration file changes in directory: ${environment.httpdConfDir}")
+            aem.logger.lifecycle("Watching for file changes in directories:\n${dirs.joinToString("\n")}")
 
             fileWatcher.start()
             reloadHttpdOnFileChanges()
@@ -39,15 +45,18 @@ open class Reloader(val aem: AemExtension) {
         }
     }
 
+    @Suppress("TooGenericExceptionCaught")
     private fun CoroutineScope.reloadHttpdOnFileChanges() = launch(Dispatchers.IO) {
         while (true) {
             val changes = fileChanges.receiveAvailable()
 
-            aem.logger.lifecycle("Reloading HTTP service due to file changes:\n${changes.joinToString("\n")}")
+            aem.logger.lifecycle("Reloading environment due to file changes:\n${changes.joinToString("\n")}")
 
-            if (environment.docker.httpd.restart(verbose = false)) {
-                environment.clean()
+            try {
+                environment.reload()
                 healthCheckRequests.send(Date())
+            } catch (e: Exception) {
+                aem.logger.error("Cannot reload environment properly", e)
             }
         }
     }

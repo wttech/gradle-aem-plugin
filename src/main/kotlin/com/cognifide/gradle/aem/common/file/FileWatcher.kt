@@ -10,7 +10,7 @@ import org.apache.commons.io.monitor.FileAlterationObserver
 
 open class FileWatcher(val aem: AemExtension) {
 
-    lateinit var dir: File
+    lateinit var dirs: List<File>
 
     lateinit var onChange: (Event) -> Unit
 
@@ -25,8 +25,8 @@ open class FileWatcher(val aem: AemExtension) {
     }
 
     fun start() {
-        if (!::dir.isInitialized) {
-            throw AemException("File watcher directory is not specified!")
+        if (!::dirs.isInitialized) {
+            throw AemException("File watcher directories are not specified!")
         }
 
         if (!::onChange.isInitialized) {
@@ -34,15 +34,20 @@ open class FileWatcher(val aem: AemExtension) {
         }
 
         // register watching
-        val fao = FileAlterationObserver(dir)
-        fao.addListener(CustomFileAlterationListener { event ->
-            if (!Patterns.wildcard(event.file, ignores)) {
-                onChange(event)
+
+        val monitor = FileAlterationMonitor(interval).apply {
+            dirs.forEach { dir ->
+                addObserver(FileAlterationObserver(dir).apply {
+                    addListener(CustomFileAlterationListener { event ->
+                        if (!Patterns.wildcard(event.file, ignores)) {
+                            onChange(event)
+                        }
+                    })
+                })
             }
-        })
-        val monitor = FileAlterationMonitor(interval)
-        monitor.addObserver(fao)
-        monitor.start()
+
+            start()
+        }
 
         // handle on exit
         // TODO remove/refactor shutdown hook somehow
