@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem
 
 import com.cognifide.gradle.aem.bundle.BundlePlugin
+import com.cognifide.gradle.aem.bundle.tasks.BundleCompose
 import com.cognifide.gradle.aem.common.CommonPlugin
 import com.cognifide.gradle.aem.common.build.*
 import com.cognifide.gradle.aem.common.file.FileOperations
@@ -32,7 +33,6 @@ import java.io.Serializable
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.bundling.Jar
 
 /**
  * Core of library, facade for implementing tasks, configuration aggregator.
@@ -389,8 +389,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
      */
     @get:JsonIgnore
     val packages: List<File>
-        get() = project.tasks.withType(PackageCompose::class.java)
-                .map { it.archiveFile.get().asFile }
+        get() = tasks.packages.map { it.archiveFile.get().asFile }
 
     /**
      * Get all CRX packages built before running particular task.
@@ -406,15 +405,14 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
      */
     @get:JsonIgnore
     val bundles: List<File>
-        get() = tasks.bundles.map { it.jar.archiveFile.get().asFile }
+        get() = tasks.bundles.map { it.archiveFile.get().asFile }
 
     /**
      * Get all OSGi bundles built before running particular task.
      */
     fun dependentBundles(task: Task): List<File> {
         return task.taskDependencies.getDependencies(task)
-                .filterIsInstance(Jar::class.java)
-                .filter { jar -> tasks.bundles.any { it.jar == jar } }
+                .filterIsInstance(BundleCompose::class.java)
                 .map { it.archiveFile.get().asFile }
     }
 
@@ -614,6 +612,9 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
 
     @JsonIgnore
     val formats = Formats
+
+    @JsonIgnore
+    val patterns = Patterns
 
     @JsonIgnore
     val buildScope = BuildScope.of(project)
