@@ -52,6 +52,10 @@ class Container(private val docker: Docker, val name: String) {
 
     // DSL
 
+    fun exec(vararg commands: String) {
+        commands.forEach { exec(it) }
+    }
+
     fun exec(command: String, exitCode: Int = 0) {
         aem.progressIndicator {
             message = "Executing command '$command' on container '$name'"
