@@ -10,7 +10,7 @@ class Containers(private val docker: Docker) {
         defined.add(Container(docker, "${docker.stack.base.name}_$name").apply(definition))
     }
 
-    operator fun String.invoke(name: String, definition: Container.() -> Unit) = define(name, definition)
+    operator fun String.invoke(definition: Container.() -> Unit) = define(this, definition)
 
     fun named(name: String): Container = defined.firstOrNull { it.name == name }
             ?: throw DockerException("Container named '$name' is not defined!")

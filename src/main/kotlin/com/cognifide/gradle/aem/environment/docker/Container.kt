@@ -65,4 +65,13 @@ class Container(private val docker: Docker, val name: String) {
             }
         }
     }
+
+    fun ensureDir(vararg paths: String) = paths.forEach { path ->
+        exec("mkdir -p $path")
+    }
+
+    fun cleanDir(vararg paths: String) = paths.forEach { path ->
+        exec("rm -fr $path")
+        exec("mkdir -p $path")
+    }
 }
