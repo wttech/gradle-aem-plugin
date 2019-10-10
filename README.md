@@ -94,7 +94,8 @@
         * [Task environmentDown](#task-environmentdown)
         * [Task environmentDev](#task-environmentdev)
         * [Task environmentAwait](#task-environmentawait)
-        * [Task environmentClean](#task-environmentclean)
+        * [Task environmentReload](#task-environmentreload)
+        * [Task environmentHosts](#task-environmenthosts)
   * [How to's](#how-tos)
      * [Set AEM configuration properly for all / concrete project(s)](#set-aem-configuration-properly-for-all--concrete-projects)
      * [Use lifecycle tasks](#use-lifecycle-tasks)
@@ -209,7 +210,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.cognifide.gradle:aem-plugin:7.4.0")
+    implementation("com.cognifide.gradle:aem-plugin:8.0.0")
 }
 ```
 
@@ -288,16 +289,41 @@ aem {
     environment { // config for AEM environment running on Docker
         rootDir = aem.props.string("environment.rootDir")?.let { aem.project.file(it) } ?: aem.projectMain.file(".aem/environment")
         hosts { // domains to be appended to hosts file automatically
-            // ...
+            author("http://author.example.com")
+            publish("http://demo.example.com") { tag("test") }
+            publish("http://example.com") { tag("live") }
+            other("http://dispatcher.example.com")
         }
         distributions {  // extra files for Docker containers that are missing in images like AEM dispatcher HTTPD module
             // ...
         }
-        directories { // dirs for volumes that must exist before running Docker containers
-            // ...
+        docker { // Docker specific configuration
+            init {
+                ensureDir( // create directories for Docker volumes
+                        "httpd/cache",
+                        "httpd/logs"
+                )
+            }
+            containers {
+                "httpd" {
+                    reload { // configure running Docker container - HTTPD server with AEM dispatcher
+                        cleanDir(
+                                "/opt/aem/dispatcher/cache/content/example/live",
+                                "/opt/aem/dispatcher/cache/content/example/demo"
+                        )
+                        ensureDir("/usr/local/apache2/logs")
+                        exec("/usr/local/apache2/bin/httpd -k restart")
+                    }
+                }   
+            }                         
         }
         healthChecks { // checks (e.g GET requests) verifying running Docker containers like HTTPD
-            // ...
+              url("Live site", "http://example.com/en-us.html") { containsText("English US") }
+              url("Demo site", "http://demo.example.com/en-us.html") { containsText("English US") }
+              url("Author module 'Sites'", "http://author.example.com/sites.html") {
+                  options { basicCredentials = authorInstance.credentials }
+                  containsText("Sites")
+              }
         }
     }
     fileTransfer { // config for resolving CRX packages, AEM Quickstart files and backups using HTTP/SFTP/SMB
@@ -330,7 +356,7 @@ aem {
             
             baseName = 'example-for-changing-zip-name'
             
-            vaultDefinition { // place for overriding CRX Package / Vault properties
+            vaultDefinition { // place for overriding CRX Package / Vault properties, defining hooks
                 // ...
             }
         }
@@ -1951,10 +1977,13 @@ Workflow:
 
 Performs [environment service health checks](#environment-service-health-checks) on demand.
 
-#### Task `environmentClean`
+#### Task `environmentReload`
 
-Cleans virtualized AEM environment by restarting HTTPD service & removing Dispatcher cache files.
-In detail, removes all files declared as caches in environment directories section.
+Reloads virtualized AEM environment by reloading all Docker containers (e.g. removing Dispatcher cache files then restarting HTTPD server).
+
+#### Task `environmentHosts`
+
+Appends AEM environment specific hosts entries to OS specific hosts file.
 
 ## How to's
 
