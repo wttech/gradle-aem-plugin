@@ -32,7 +32,8 @@ class Environment(@JsonIgnore val aem: AemExtension) : Serializable {
         docker.apply(options)
     }
 
-    private val distributionsResolver = FileResolver(aem, AemTask.temporaryDir(aem.project, "environment", DISTRIBUTIONS_DIR))
+    @get:JsonIgnore
+    val distributionsResolver = DistributionResolver(this)
 
     @get:JsonIgnore
     val distributionFiles: List<File>
@@ -41,11 +42,9 @@ class Environment(@JsonIgnore val aem: AemExtension) : Serializable {
     /**
      * Allows to provide remote files to Docker containers by mounted volumes.
      */
-    fun distributions(options: FileResolver.() -> Unit) {
+    fun distributions(options: DistributionResolver.() -> Unit) {
         distributionsResolver.apply(options)
     }
-
-    fun distributionFile(path: String) = File(rootDir, "$DISTRIBUTIONS_DIR/$path")
 
     @JsonIgnore
     var healthChecker = HealthChecker(this)
