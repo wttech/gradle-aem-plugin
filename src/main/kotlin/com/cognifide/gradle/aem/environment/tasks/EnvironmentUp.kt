@@ -18,8 +18,7 @@ open class EnvironmentUp : AemDefaultTask() {
 
         aem.environment.up()
 
-        aem.notifier.notify("Environment up", "Turned on with success. HTTP server " +
-                "with AEM dispatcher is now available")
+        aem.notifier.notify("Environment up", "Turned on with success")
     }
 
     companion object {
