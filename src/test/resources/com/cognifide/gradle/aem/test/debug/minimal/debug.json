@@ -162,33 +162,14 @@
     },
     "environment" : {
       "rootDir" : "*/minimal/.environment",
-      "directories" : {
-        "regulars" : [ ],
-        "caches" : [ ]
-      },
-      "dockerRuntime" : {
-        "name": "desktop",
-        "hostIp": "127.0.0.1"
-      },
-      "dockerPath" : {
-        "cygpathPath": "*/cygpath.exe"
-      },
       "hosts" : {
         "defined" : [ ]
       },
       "configDir" : "*/minimal/gradle/environment",
-      "dockerComposeSourceFile" : "*/minimal/gradle/environment/docker-compose.yml.peb",
-      "dockerComposeFile" : "*/minimal/.environment/docker-compose.yml",
-      "dockerConfigPath" : "*/minimal/gradle/environment",
-      "dockerRootPath" : "*/minimal/.environment",
-      "httpdConfDir" : "*/minimal/gradle/environment/httpd/conf",
       "created" : false
     },
     "notifier" : {
       "enabled" : false
-    },
-    "tasks" : {
-      "bundles" : [ ]
     },
     "projectName" : "minimal",
     "configDir" : "*/minimal/gradle",

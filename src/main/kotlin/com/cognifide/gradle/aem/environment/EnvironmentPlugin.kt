@@ -50,7 +50,7 @@ class EnvironmentPlugin : AemPlugin() {
             register<EnvironmentAwait>(EnvironmentAwait.NAME) {
                 mustRunAfter(EnvironmentUp.NAME)
             }
-            register<EnvironmentClean>(EnvironmentClean.NAME) {
+            register<EnvironmentReload>(EnvironmentReload.NAME) {
                 mustRunAfter(EnvironmentUp.NAME)
             }
             register<EnvironmentHosts>(EnvironmentHosts.NAME)

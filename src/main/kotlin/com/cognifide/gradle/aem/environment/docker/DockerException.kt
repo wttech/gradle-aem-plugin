@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.environment.docker.base
+package com.cognifide.gradle.aem.environment.docker
 
 import com.cognifide.gradle.aem.AemException
 import org.buildobjects.process.ExternalProcessFailureException

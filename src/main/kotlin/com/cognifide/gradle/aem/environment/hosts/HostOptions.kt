@@ -13,7 +13,7 @@ class HostOptions(environment: Environment) : Serializable {
     var defined = mutableListOf<Host>()
 
     @JsonIgnore
-    var ipDefault = environment.dockerRuntime.hostIp
+    var ipDefault = environment.docker.runtime.hostIp
 
     fun define(url: String, options: Host.() -> Unit = {}) {
         defined.add(Host(url).apply { ip = ipDefault; options() })

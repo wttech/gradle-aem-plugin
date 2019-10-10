@@ -186,6 +186,8 @@ val downloadDir: File
         groupCurrent = groupDefault
     }
 
+    operator fun String.invoke(configurer: Resolver<G>.() -> Unit) = group(this, configurer)
+
     /**
      * Shorthand for creating named group with single file only to be downloaded.
      */

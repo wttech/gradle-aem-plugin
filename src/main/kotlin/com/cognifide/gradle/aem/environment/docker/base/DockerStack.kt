@@ -1,7 +1,8 @@
 package com.cognifide.gradle.aem.environment.docker.base
 
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.environment.docker.base.runtime.Toolbox
+import com.cognifide.gradle.aem.environment.docker.DockerException
+import com.cognifide.gradle.aem.environment.docker.runtime.Toolbox
 
 open class DockerStack(private val aem: AemExtension, val name: String) {
 
@@ -14,8 +15,8 @@ open class DockerStack(private val aem: AemExtension, val name: String) {
             withTimeoutMillis(initTimeout)
             withArgs("swarm", "init")
 
-            if (aem.environment.dockerRuntime is Toolbox) {
-                withArgs("--advertise-addr", aem.environment.dockerRuntime.hostIp)
+            if (aem.environment.docker.runtime is Toolbox) {
+                withArgs("--advertise-addr", aem.environment.docker.runtime.hostIp)
             }
         }
         if (result.exitValue != 0 && !result.errorString.contains("This node is already part of a swarm")) {

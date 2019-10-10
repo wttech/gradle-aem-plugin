@@ -1,23 +1,32 @@
-package com.cognifide.gradle.aem.environment.docker.domain
+package com.cognifide.gradle.aem.environment.docker
 
-import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.file.FileWatcher
+import com.cognifide.gradle.aem.environment.Environment
 import java.util.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
+import java.io.File
 
 @UseExperimental(ObsoleteCoroutinesApi::class)
-open class HttpdReloader(val aem: AemExtension) {
+open class Reloader(val environment: Environment) {
 
-    private val environment = aem.environment
+    var dirs = mutableListOf<File>()
+
+    private val aem = environment.aem
 
     private val fileChanges = Channel<FileWatcher.Event>(Channel.UNLIMITED)
 
     private val healthCheckRequests = Channel<Any>(Channel.UNLIMITED)
 
+    fun dir(vararg files: File) = files.forEach { dirs.add(it) }
+
+    fun dir(vararg paths: String) = paths.forEach { dirs.add(aem.project.file(it)) }
+
+    fun configDir(vararg paths: String) = paths.forEach { dir(File(environment.configDir, it)) }
+
     private val fileWatcher = FileWatcher(aem).apply {
-        dir = aem.environment.httpdConfDir
+        dirs = this@Reloader.dirs
         onChange = { event ->
             GlobalScope.launch {
                 fileChanges.send(event)
@@ -31,28 +40,31 @@ open class HttpdReloader(val aem: AemExtension) {
 
     fun start() {
         runBlocking {
-            aem.logger.lifecycle("Watching for HTTPD configuration file changes in directory: ${environment.httpdConfDir}")
+            aem.logger.lifecycle("Watching for file changes in directories:\n${dirs.joinToString("\n")}")
 
             fileWatcher.start()
-            reloadHttpdOnFileChanges()
-            checkHealthOnHttpdRestart()
+            reloadOnFileChanges()
+            checkHealthAfterReload()
         }
     }
 
-    private fun CoroutineScope.reloadHttpdOnFileChanges() = launch(Dispatchers.IO) {
+    @Suppress("TooGenericExceptionCaught")
+    private fun CoroutineScope.reloadOnFileChanges() = launch(Dispatchers.IO) {
         while (true) {
             val changes = fileChanges.receiveAvailable()
 
-            aem.logger.lifecycle("Reloading HTTP service due to file changes:\n${changes.joinToString("\n")}")
+            aem.logger.lifecycle("Reloading environment due to file changes:\n${changes.joinToString("\n")}")
 
-            if (environment.httpd.restart(verbose = false)) {
-                environment.clean()
+            try {
+                environment.reload()
                 healthCheckRequests.send(Date())
+            } catch (e: Exception) {
+                aem.logger.error("Cannot reload environment properly", e)
             }
         }
     }
 
-    private fun CoroutineScope.checkHealthOnHttpdRestart() = launch {
+    private fun CoroutineScope.checkHealthAfterReload() = launch {
         while (true) {
             healthCheckRequests.receiveAvailable()
             environment.check(false)
