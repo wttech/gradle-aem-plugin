@@ -12,6 +12,8 @@ class Toolbox(aem: AemExtension) : Base(aem) {
     override val hostIp: String
         get() = aem.props.string("environment.docker.toolbox.hostIp") ?: "192.168.99.100"
 
+    override val safeVolumes: Boolean = true
+
     var cygpathPath = aem.props.string("environment.cygpath.path")
             ?: "C:\\Program Files\\Git\\usr\\bin\\cygpath.exe"
 

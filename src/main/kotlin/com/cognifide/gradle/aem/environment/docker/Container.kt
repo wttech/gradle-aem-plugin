@@ -5,9 +5,9 @@ import com.cognifide.gradle.aem.environment.EnvironmentException
 import com.cognifide.gradle.aem.environment.docker.base.DockerContainer
 import org.gradle.internal.os.OperatingSystem
 
-class Container(private val docker: Docker, val name: String) {
+class Container(val docker: Docker, val name: String) {
 
-    private val aem = docker.environment.aem
+    val aem = docker.aem
 
     val base = DockerContainer(aem, name)
 
@@ -50,9 +50,9 @@ class Container(private val docker: Docker, val name: String) {
         }
     }
 
-    // DSL
-
-    fun exec(command: String, exitCode: Int? = 0) = exec(command, exitCode?.let { listOf(it) } ?: listOf())
+    fun exec(command: String, exitCode: Int? = 0) {
+        base.exec(command, exitCode?.let { listOf(it) } ?: listOf())
+    }
 
     fun exec(command: String, exitCodes: Iterable<Int>) {
         aem.progressIndicator {
@@ -61,7 +61,8 @@ class Container(private val docker: Docker, val name: String) {
             try {
                 base.exec(command, exitCodes)
             } catch (e: DockerException) {
-                throw EnvironmentException("Failed to execute command '$command' on container '$name', exit code: '${e.processCause?.exitValue ?: -1 }!", e)
+                throw EnvironmentException("Failed to execute command '$command' on container '$name'," +
+                        " exit code: '${e.processCause?.exitValue ?: -1 }!", e)
             }
         }
     }

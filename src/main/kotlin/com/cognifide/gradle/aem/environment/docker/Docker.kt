@@ -7,7 +7,7 @@ import java.io.File
 
 class Docker(val environment: Environment) {
 
-    private val aem = environment.aem
+    val aem = environment.aem
 
     val running: Boolean
         get() = stack.running && containers.running
@@ -43,6 +43,13 @@ class Docker(val environment: Environment) {
 
     fun init() {
         syncComposeFile()
+        initAction(this)
+    }
+
+    var initAction: Docker.() -> Unit = {}
+
+    fun init(action: Docker.() -> Unit) {
+        this.initAction = action
     }
 
     private fun syncComposeFile() {
@@ -54,7 +61,7 @@ class Docker(val environment: Environment) {
 
         GFileUtils.deleteFileQuietly(composeFile)
         GFileUtils.copyFile(composeTemplateFile, composeFile)
-        aem.props.expand(composeFile, mapOf("environment" to this))
+        aem.props.expand(composeFile, mapOf("docker" to this))
     }
 
     fun up() {
@@ -68,5 +75,13 @@ class Docker(val environment: Environment) {
 
     fun down() {
         stack.undeploy()
+    }
+
+    fun ensureDir(vararg paths: String) = paths.forEach { path ->
+        environment.file(path).apply { GFileUtils.mkdirs(this) }
+    }
+
+    fun cleanDir(vararg paths: String) = paths.forEach { path ->
+        environment.file(path).apply { deleteRecursively(); GFileUtils.mkdirs(this) }
     }
 }

@@ -67,7 +67,7 @@ class Environment(@JsonIgnore val aem: AemExtension) : Serializable {
 
         aem.logger.info("Turning on: $this")
 
-        customize()
+        init()
         docker.up()
 
         aem.logger.info("Turned on: $this")
@@ -97,8 +97,8 @@ class Environment(@JsonIgnore val aem: AemExtension) : Serializable {
         aem.logger.info("Destroyed: $this")
     }
 
-    private fun customize() {
-        aem.logger.info("Customizing AEM environment")
+    private fun init() {
+        aem.logger.info("Initializing AEM environment")
 
         provideFiles()
         docker.init()
@@ -153,6 +153,11 @@ class Environment(@JsonIgnore val aem: AemExtension) : Serializable {
     fun healthChecks(options: HealthChecker.() -> Unit) {
         healthChecker.apply(options)
     }
+
+    /**
+     * Get file under environment root directory
+     */
+    fun file(path: String) = File(rootDir, path)
 
     override fun toString(): String {
         return "Environment(root=$rootDir,running=$running)"

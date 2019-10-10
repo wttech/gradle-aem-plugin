@@ -11,6 +11,8 @@ interface Runtime {
 
     val hostIp: String
 
+    val safeVolumes: Boolean
+
     fun determinePath(path: String): String
 
     fun determinePath(file: File) = determinePath(file.toString())
