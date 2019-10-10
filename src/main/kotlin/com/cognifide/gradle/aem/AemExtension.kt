@@ -209,6 +209,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     /**
      * Provides API for easier creation of tasks (e.g in sequence) in the matter of Gradle task configuration avoidance.
      */
+    @JsonIgnore
     val tasks = AemTaskFacade(this)
 
     fun tasks(configurer: AemTaskFacade.() -> Unit) {

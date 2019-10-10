@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem.environment.docker
 
-import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.file.FileWatcher
 import com.cognifide.gradle.aem.environment.Environment
 import java.util.*
@@ -10,17 +9,21 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import java.io.File
 
 @UseExperimental(ObsoleteCoroutinesApi::class)
-open class Reloader(val aem: AemExtension) {
+open class Reloader(val environment: Environment) {
 
-    var dirs = mutableListOf(
-            File(aem.configCommonDir, "${Environment.ENVIRONMENT_DIR}/httpd/conf")
-    )
+    var dirs = mutableListOf<File>()
 
-    private val environment = aem.environment
+    private val aem = environment.aem
 
     private val fileChanges = Channel<FileWatcher.Event>(Channel.UNLIMITED)
 
     private val healthCheckRequests = Channel<Any>(Channel.UNLIMITED)
+
+    fun dir(vararg files: File) = files.forEach { dirs.add(it) }
+
+    fun dir(vararg paths: String) = paths.forEach { dirs.add(aem.project.file(it)) }
+
+    fun configDir(vararg paths: String) = paths.forEach { dir(File(environment.configDir, it)) }
 
     private val fileWatcher = FileWatcher(aem).apply {
         dirs = this@Reloader.dirs
@@ -40,13 +43,13 @@ open class Reloader(val aem: AemExtension) {
             aem.logger.lifecycle("Watching for file changes in directories:\n${dirs.joinToString("\n")}")
 
             fileWatcher.start()
-            reloadHttpdOnFileChanges()
-            checkHealthOnHttpdRestart()
+            reloadOnFileChanges()
+            checkHealthAfterReload()
         }
     }
 
     @Suppress("TooGenericExceptionCaught")
-    private fun CoroutineScope.reloadHttpdOnFileChanges() = launch(Dispatchers.IO) {
+    private fun CoroutineScope.reloadOnFileChanges() = launch(Dispatchers.IO) {
         while (true) {
             val changes = fileChanges.receiveAvailable()
 
@@ -61,7 +64,7 @@ open class Reloader(val aem: AemExtension) {
         }
     }
 
-    private fun CoroutineScope.checkHealthOnHttpdRestart() = launch {
+    private fun CoroutineScope.checkHealthAfterReload() = launch {
         while (true) {
             healthCheckRequests.receiveAvailable()
             environment.check(false)

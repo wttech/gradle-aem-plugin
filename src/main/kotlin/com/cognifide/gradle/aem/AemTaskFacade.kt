@@ -14,7 +14,6 @@ import com.cognifide.gradle.aem.pkg.tasks.*
 import com.cognifide.gradle.aem.tooling.rcp.Rcp
 import com.cognifide.gradle.aem.tooling.sync.Sync
 import com.cognifide.gradle.aem.tooling.vlt.Vlt
-import com.fasterxml.jackson.annotation.JsonIgnore
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.UnknownTaskException
@@ -25,7 +24,6 @@ import java.io.Serializable
 @Suppress("TooManyFunctions")
 class AemTaskFacade(val aem: AemExtension) : Serializable {
 
-    @JsonIgnore
     val project = aem.project
 
     // Bundle plugin shorthands

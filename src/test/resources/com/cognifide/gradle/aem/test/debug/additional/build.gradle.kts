@@ -10,7 +10,7 @@ repositories {
 }
 
 dependencies {
-    compile(group = "org.osgi", name = "osgi.cmpn", version = "6.0.0")
+    compileOnly("org.osgi:osgi.cmpn:6.0.0")
 }
 
 aem {
@@ -21,14 +21,23 @@ aem {
             author("http://author.example.com")
             other("http://dispatcher.example.com")
         }
-        directories {
-            regular(
-                    "httpd/logs"
-            )
-            cache(
-                    "httpd/cache/content/example/live",
-                    "httpd/cache/content/example/demo"
-            )
+        docker {
+            init {
+                ensureDir(
+                        "httpd/logs"
+                )
+            }
+            containers {
+                "httpd" {
+                    reload {
+                        ensureDir("/usr/local/apache2/logs")
+                        cleanDir(
+                                "httpd/cache/content/example/live",
+                                "httpd/cache/content/example/demo"
+                        )
+                    }
+                }
+            }
         }
         healthChecks {
             url("Live site", "http://example.com/en-us.html") { containsText("English") }

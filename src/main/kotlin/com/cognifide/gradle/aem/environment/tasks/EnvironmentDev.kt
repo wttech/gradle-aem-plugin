@@ -8,11 +8,11 @@ import org.gradle.api.tasks.TaskAction
 open class EnvironmentDev : AemDefaultTask() {
 
     init {
-        description = "Turns on environment development mode (interactive HTTPD configuration reloading on file changes)"
+        description = "Turns on environment development mode (interactive e.g HTTPD configuration reloading on file changes)"
     }
 
     @Internal
-    val httpdReloader = Reloader(aem)
+    val reloader = Reloader(aem.environment)
 
     @TaskAction
     fun dev() {
@@ -25,12 +25,12 @@ open class EnvironmentDev : AemDefaultTask() {
             // Whatever on parent logger to be able to pin children loggers from other threads
             progress("Watching files")
 
-            httpdReloader.start()
+            reloader.start()
         }
     }
 
-    fun httpdReloader(options: Reloader.() -> Unit) {
-        httpdReloader.apply(options)
+    fun reloader(options: Reloader.() -> Unit) {
+        reloader.apply(options)
     }
 
     companion object {
