@@ -11,9 +11,9 @@ open class EnvironmentResolve : AemDefaultTask() {
 
     @TaskAction
     fun resolve() {
-        logger.info("Resolving environment distribution files")
-        val files = aem.environment.resolve()
-        logger.info("Resolved environment distribution files:\n${files.joinToString("\n")}")
+        logger.info("Resolving environment files")
+        aem.environment.resolve()
+        logger.info("Resolved environment files")
     }
 
     companion object {

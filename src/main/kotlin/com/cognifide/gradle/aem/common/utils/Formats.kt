@@ -23,7 +23,6 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 import java.util.*
-import kotlin.reflect.KClass
 
 @Suppress("MagicNumber", "TooManyFunctions")
 object Formats {
@@ -72,7 +71,7 @@ object Formats {
         return jsonMapper(pretty).writeValueAsString(value) ?: "{}"
     }
 
-    inline fun <reified T: Any> fromJson(json: String) = fromJson(json, T::class.java)
+    inline fun <reified T : Any> fromJson(json: String) = fromJson(json, T::class.java)
 
     fun <T> fromJson(json: String, clazz: Class<T>): T = jsonMapper(false).readValue(json, clazz)
 
