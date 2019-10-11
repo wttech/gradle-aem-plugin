@@ -43,7 +43,7 @@ class Environment(@JsonIgnore val aem: AemExtension) : Serializable {
         get() = docker.running
 
     fun resolve(): List<File> {
-        return docker.containers.defined.flatMap { it.host.files }
+        return docker.containers.defined.flatMap { it.host.resolveFiles() }
     }
 
     fun up() {

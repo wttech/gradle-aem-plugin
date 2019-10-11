@@ -1,18 +1,22 @@
 package com.cognifide.gradle.aem.environment.docker
 
 import com.cognifide.gradle.aem.common.build.Behaviors
-import com.cognifide.gradle.aem.common.file.resolver.FileResolver
 import com.cognifide.gradle.aem.environment.EnvironmentException
 import com.cognifide.gradle.aem.environment.docker.base.DockerContainer
 import com.cognifide.gradle.aem.environment.docker.container.Host
 import org.gradle.internal.os.OperatingSystem
-import java.io.File
 
 class Container(val docker: Docker, val name: String) {
 
     val aem = docker.aem
 
-    val base = DockerContainer(aem, name)
+    val base = DockerContainer(aem, "${docker.stack.base.name}_$name")
+
+    val host = Host(this)
+
+    fun host(options: Host.() -> Unit) {
+        host.apply(options)
+    }
 
     var initAction: Container.() -> Unit = {}
 
@@ -32,18 +36,11 @@ class Container(val docker: Docker, val name: String) {
         reloadAction = action
     }
 
-    val host = Host(this)
-
-    fun <T> host(options: Host.() -> T) = host.run(options)
-
-    fun files(options: FileResolver.() -> Unit) {
-        host.fileResolver.apply(options)
-    }
-
     val running: Boolean
         get() = base.running
 
     fun init() {
+        host.resolveFiles()
         initAction()
     }
 

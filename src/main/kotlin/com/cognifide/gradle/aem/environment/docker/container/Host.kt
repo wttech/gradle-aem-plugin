@@ -13,20 +13,28 @@ class Host(val container: Container) {
 
     private val logger = container.aem.logger
 
-    val rootDir = File(container.docker.environment.rootDir, container.name)
+    private val docker = container.docker
 
-    internal val fileResolver = FileResolver(container.aem, File(rootDir, "files"))
+    val rootDir = File(docker.environment.rootDir, container.name)
+
+    private val fileResolver = FileResolver(container.aem, File(rootDir, "files"))
 
     /**
      * Get file under environment root directory
      */
     fun file(path: String) = File(rootDir, path)
 
-    /**
-     * Get all extra files related with container.
-     */
-    val files: List<File>
-        get() = fileResolver.allFiles
+    fun files(options: FileResolver.() -> Unit) {
+        fileResolver.apply(options)
+    }
+
+    fun resolveFiles(): List<File> {
+        logger.info("Resolving files for container '${container.name}'")
+        val files = fileResolver.allFiles
+        logger.info("Resolved files for container '${container.name}':\n${files.joinToString("\n")}")
+
+        return files
+    }
 
     fun ensureDir(vararg paths: String) = paths.forEach { path ->
         file(path).apply {
