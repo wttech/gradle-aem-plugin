@@ -19,14 +19,23 @@ class Containers(private val docker: Docker) {
     val running: Boolean get() = defined.all { it.running }
 
     fun resolve() {
-        aem.parallel.each(defined) { it.resolve() }
+        aem.progress {
+            message = "Resolving containers"
+            aem.parallel.each(defined) { it.resolve() }
+        }
     }
 
     fun up() {
-        aem.parallel.each(defined) { it.up() }
+        aem.progress {
+            message = "Turning on containers"
+            aem.parallel.each(defined) { it.up() }
+        }
     }
 
     fun reload() {
-        aem.parallel.each(defined) { it.reload() }
+        aem.progress {
+            message = "Reloading containers"
+            aem.parallel.each(defined) { it.reload() }
+        }
     }
 }
