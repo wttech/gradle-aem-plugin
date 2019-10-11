@@ -3,7 +3,6 @@ package com.cognifide.gradle.aem.common.utils
 import com.fasterxml.jackson.core.util.DefaultIndenter
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.jayway.jsonpath.JsonPath
 import org.apache.commons.io.FileUtils
@@ -80,12 +79,6 @@ object Formats {
     fun fromJsonToMap(json: String): Map<String, Any?> = ObjectMapper().run {
         readValue(json, typeFactory.constructMapType(HashMap::class.java, String::class.java, Any::class.java))
     }
-
-    fun ymlMapper(): ObjectMapper = ObjectMapper(YAMLFactory()).apply { registerModule(KotlinModule()) }
-
-    inline fun <reified T: Any> fromYml(yml: String): T = fromYml(yml, T::class.java)
-
-    fun <T> fromYml(yml: String, clazz: Class<T>): T = ymlMapper().readValue(yml, clazz)
 
     fun toList(value: String?, delimiter: String = ","): List<String>? {
         if (value.isNullOrBlank()) {

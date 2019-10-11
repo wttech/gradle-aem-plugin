@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.environment.docker
 
 import com.cognifide.gradle.aem.common.build.Behaviors
+import com.cognifide.gradle.aem.common.file.resolver.FileResolver
 import com.cognifide.gradle.aem.environment.EnvironmentException
 import com.cognifide.gradle.aem.environment.docker.base.DockerContainer
 import com.cognifide.gradle.aem.environment.docker.container.Host
@@ -8,8 +9,6 @@ import org.gradle.internal.os.OperatingSystem
 import java.io.File
 
 class Container(val docker: Docker, val name: String) {
-
-    val rootDir = File(docker.environment.rootDir, name)
 
     val aem = docker.aem
 
@@ -36,6 +35,10 @@ class Container(val docker: Docker, val name: String) {
     val host = Host(this)
 
     fun <T> host(options: Host.() -> T) = host.run(options)
+
+    fun files(options: FileResolver.() -> Unit) {
+        host.fileResolver.apply(options)
+    }
 
     val running: Boolean
         get() = base.running
@@ -91,16 +94,11 @@ class Container(val docker: Docker, val name: String) {
         }
     }
 
-    /**
-     * Get file under container specific environment directory
-     */
-    fun file(path: String) = File(rootDir, path)
-
-    fun execEnsureDir(vararg paths: String) = paths.forEach { path ->
+    fun ensureDir(vararg paths: String) = paths.forEach { path ->
         exec("mkdir -p $path")
     }
 
-    fun execCleanDir(vararg paths: String) = paths.forEach { path ->
+    fun cleanDir(vararg paths: String) = paths.forEach { path ->
         exec("rm -fr $path")
         exec("mkdir -p $path")
     }

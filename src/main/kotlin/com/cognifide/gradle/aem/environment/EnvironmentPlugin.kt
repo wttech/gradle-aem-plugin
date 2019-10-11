@@ -31,7 +31,7 @@ class EnvironmentPlugin : AemPlugin() {
 
             register<EnvironmentDown>(EnvironmentDown.NAME)
             register<EnvironmentUp>(EnvironmentUp.NAME) {
-                mustRunAfter(EnvironmentResolve.NAME, EnvironmentDown.NAME, EnvironmentDestroy.NAME)
+                mustRunAfter(EnvironmentDown.NAME, EnvironmentDestroy.NAME)
                 plugins.withId(InstancePlugin.ID) { mustRunAfter(InstanceUp.NAME) }
             }
             register<EnvironmentRestart>(EnvironmentRestart.NAME) {
@@ -54,7 +54,6 @@ class EnvironmentPlugin : AemPlugin() {
                 mustRunAfter(EnvironmentUp.NAME)
             }
             register<EnvironmentHosts>(EnvironmentHosts.NAME)
-            register<EnvironmentResolve>(EnvironmentResolve.NAME)
 
             // Common lifecycle
 

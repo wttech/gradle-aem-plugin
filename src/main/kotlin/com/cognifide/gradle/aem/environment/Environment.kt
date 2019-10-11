@@ -1,8 +1,6 @@
 package com.cognifide.gradle.aem.environment
 
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.AemTask
-import com.cognifide.gradle.aem.common.file.resolver.FileResolver
 import com.cognifide.gradle.aem.environment.docker.Docker
 import com.cognifide.gradle.aem.environment.health.HealthChecker
 import com.cognifide.gradle.aem.environment.health.HealthStatus
@@ -32,20 +30,6 @@ class Environment(@JsonIgnore val aem: AemExtension) : Serializable {
         docker.apply(options)
     }
 
-    @get:JsonIgnore
-    val distributionsResolver = DistributionResolver(this)
-
-    @get:JsonIgnore
-    val distributionFiles: List<File>
-        get() = distributionsResolver.allFiles
-
-    /**
-     * Allows to provide remote files to Docker containers by mounted volumes.
-     */
-    fun distributions(options: DistributionResolver.() -> Unit) {
-        distributionsResolver.apply(options)
-    }
-
     @JsonIgnore
     var healthChecker = HealthChecker(this)
 
@@ -58,6 +42,10 @@ class Environment(@JsonIgnore val aem: AemExtension) : Serializable {
     val running: Boolean
         get() = docker.running
 
+    fun resolve(): List<File> {
+        return docker.containers.defined.flatMap { it.host.files }
+    }
+
     fun up() {
         if (running) {
             aem.logger.info("Environment is already running!")
@@ -66,7 +54,7 @@ class Environment(@JsonIgnore val aem: AemExtension) : Serializable {
 
         aem.logger.info("Turning on: $this")
 
-        init()
+        docker.init()
         docker.up()
 
         aem.logger.info("Turned on: $this")
@@ -94,18 +82,6 @@ class Environment(@JsonIgnore val aem: AemExtension) : Serializable {
         rootDir.deleteRecursively()
 
         aem.logger.info("Destroyed: $this")
-    }
-
-    private fun init() {
-        aem.logger.info("Initializing AEM environment")
-
-        provideFiles()
-        docker.init()
-    }
-
-    private fun provideFiles() {
-        aem.logger.info("Resolving distribution files")
-        aem.logger.info("Resolved distribution files:\n${distributionsResolver.allFiles.joinToString("\n")}")
     }
 
     fun check(verbose: Boolean = true): List<HealthStatus> {
@@ -152,11 +128,6 @@ class Environment(@JsonIgnore val aem: AemExtension) : Serializable {
     fun healthChecks(options: HealthChecker.() -> Unit) {
         healthChecker.apply(options)
     }
-
-    /**
-     * Get file under environment root directory
-     */
-    fun file(path: String) = File(rootDir, path)
 
     override fun toString(): String {
         return "Environment(root=$rootDir,running=$running)"
