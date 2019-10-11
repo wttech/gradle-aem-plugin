@@ -3,7 +3,6 @@ package com.cognifide.gradle.aem.environment.docker
 import com.cognifide.gradle.aem.common.build.Behaviors
 import com.cognifide.gradle.aem.environment.EnvironmentException
 import com.cognifide.gradle.aem.environment.docker.base.DockerContainer
-import com.cognifide.gradle.aem.environment.docker.container.Host
 import org.gradle.internal.os.OperatingSystem
 
 class Container(val docker: Docker, val name: String) {
@@ -12,9 +11,9 @@ class Container(val docker: Docker, val name: String) {
 
     val base = DockerContainer(aem, "${docker.stack.base.name}_$name")
 
-    val host = Host(this)
+    val host = ContainerHostFiles(this)
 
-    fun host(options: Host.() -> Unit) {
+    fun host(options: ContainerHostFiles.() -> Unit) {
         host.apply(options)
     }
 

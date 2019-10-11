@@ -1,23 +1,26 @@
-package com.cognifide.gradle.aem.environment.docker.container
+package com.cognifide.gradle.aem.environment.docker
 
 import com.cognifide.gradle.aem.common.file.resolver.FileResolver
-import com.cognifide.gradle.aem.environment.docker.Container
 import org.gradle.util.GFileUtils
 import java.io.File
 
 /**
- * Manage files on host OS related with specific Docker container.
+ * File manager for host OS files related specific Docker container.
  * Provides DSL for e.g creating directories for volumes and providing extra files shared via volumes.
  */
-class Host(val container: Container) {
+class ContainerHostFiles(val container: Container) {
 
-    private val logger = container.aem.logger
+    private val aem = container.aem
+
+    private val logger = aem.logger
 
     private val docker = container.docker
 
     val rootDir = File(docker.environment.rootDir, container.name)
 
-    private val fileResolver = FileResolver(container.aem, File(rootDir, "files"))
+    var fileDir = File(rootDir, aem.props.string("environment.container.host.fileDir") ?: "files")
+
+    private val fileResolver = FileResolver(container.aem, fileDir)
 
     /**
      * Get file under environment root directory

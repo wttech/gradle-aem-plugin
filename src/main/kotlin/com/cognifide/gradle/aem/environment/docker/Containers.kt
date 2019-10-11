@@ -8,7 +8,7 @@ class Containers(private val docker: Docker) {
     val defined = mutableListOf<Container>()
 
     fun define(name: String, definition: Container.() -> Unit) {
-        defined.add(Container(docker, "${docker.stack.base.name}_$name").apply(definition))
+        defined.add(Container(docker, name).apply(definition))
     }
 
     operator fun String.invoke(definition: Container.() -> Unit) = define(this, definition)
