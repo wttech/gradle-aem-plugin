@@ -95,6 +95,10 @@ class Container(val docker: Docker, val name: String) {
     }
 
     fun cleanDir(vararg paths: String) = paths.forEach { path ->
+        exec("rm -fr $path/*")
+    }
+
+    fun flushDir(vararg paths: String) = paths.forEach { path ->
         exec("rm -fr $path")
         exec("mkdir -p $path")
     }
