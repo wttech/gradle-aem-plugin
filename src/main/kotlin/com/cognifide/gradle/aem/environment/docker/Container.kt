@@ -11,9 +11,9 @@ class Container(val docker: Docker, val name: String) {
 
     val base = DockerContainer(aem, "${docker.stack.base.name}_$name")
 
-    val host = ContainerHostFiles(this)
+    val host = ContainerHost(this)
 
-    fun host(options: ContainerHostFiles.() -> Unit) {
+    fun host(options: ContainerHost.() -> Unit) {
         host.apply(options)
     }
 
