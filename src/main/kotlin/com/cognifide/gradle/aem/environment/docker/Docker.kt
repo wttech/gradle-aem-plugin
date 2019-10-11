@@ -43,7 +43,7 @@ class Docker(val environment: Environment) {
 
     fun init() {
         syncComposeFile()
-        containers.init()
+        containers.resolve()
     }
 
     private fun syncComposeFile() {

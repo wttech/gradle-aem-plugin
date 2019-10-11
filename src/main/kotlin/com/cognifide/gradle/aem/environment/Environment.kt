@@ -43,7 +43,7 @@ class Environment(@JsonIgnore val aem: AemExtension) : Serializable {
         get() = docker.running
 
     fun resolve() {
-        return docker.containers.defined.forEach { it.resolve() }
+        docker.containers.resolve()
     }
 
     fun up() {
