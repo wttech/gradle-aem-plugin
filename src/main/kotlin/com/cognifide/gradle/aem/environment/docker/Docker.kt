@@ -43,13 +43,7 @@ class Docker(val environment: Environment) {
 
     fun init() {
         syncComposeFile()
-        initAction(this)
-    }
-
-    var initAction: Docker.() -> Unit = {}
-
-    fun init(action: Docker.() -> Unit) {
-        this.initAction = action
+        containers.init()
     }
 
     private fun syncComposeFile() {
@@ -75,13 +69,5 @@ class Docker(val environment: Environment) {
 
     fun down() {
         stack.undeploy()
-    }
-
-    fun ensureDir(vararg paths: String) = paths.forEach { path ->
-        environment.file(path).apply { GFileUtils.mkdirs(this) }
-    }
-
-    fun cleanDir(vararg paths: String) = paths.forEach { path ->
-        environment.file(path).apply { deleteRecursively(); GFileUtils.mkdirs(this) }
     }
 }

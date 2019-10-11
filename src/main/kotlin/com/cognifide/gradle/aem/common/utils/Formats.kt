@@ -3,6 +3,8 @@ package com.cognifide.gradle.aem.common.utils
 import com.fasterxml.jackson.core.util.DefaultIndenter
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
+import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.jayway.jsonpath.JsonPath
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
@@ -22,6 +24,7 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 import java.util.*
+import kotlin.reflect.KClass
 
 @Suppress("MagicNumber", "TooManyFunctions")
 object Formats {
@@ -50,6 +53,7 @@ object Formats {
     val VERSION_UNKNOWN = GradleVersion.version("0.0.0")
 
     fun jsonMapper(pretty: Boolean): ObjectMapper = ObjectMapper().apply {
+        registerModule(KotlinModule())
         if (pretty) {
             writer(DefaultPrettyPrinter().apply {
                 indentArraysWith(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE)
@@ -69,13 +73,19 @@ object Formats {
         return jsonMapper(pretty).writeValueAsString(value) ?: "{}"
     }
 
-    fun <T> fromJson(json: String, clazz: Class<T>): T {
-        return ObjectMapper().readValue(json, clazz)
-    }
+    inline fun <reified T: Any> fromJson(json: String) = fromJson(json, T::class.java)
+
+    fun <T> fromJson(json: String, clazz: Class<T>): T = jsonMapper(false).readValue(json, clazz)
 
     fun fromJsonToMap(json: String): Map<String, Any?> = ObjectMapper().run {
         readValue(json, typeFactory.constructMapType(HashMap::class.java, String::class.java, Any::class.java))
     }
+
+    fun ymlMapper(): ObjectMapper = ObjectMapper(YAMLFactory()).apply { registerModule(KotlinModule()) }
+
+    inline fun <reified T: Any> fromYml(yml: String): T = fromYml(yml, T::class.java)
+
+    fun <T> fromYml(yml: String, clazz: Class<T>): T = ymlMapper().readValue(yml, clazz)
 
     fun toList(value: String?, delimiter: String = ","): List<String>? {
         if (value.isNullOrBlank()) {

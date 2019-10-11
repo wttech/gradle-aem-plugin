@@ -33,6 +33,7 @@ import org.apache.http.message.BasicNameValuePair
 import org.apache.http.ssl.SSLContextBuilder
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
+import kotlin.reflect.KClass
 
 @Suppress("TooManyFunctions")
 open class HttpClient(private val aem: AemExtension) : Serializable {
@@ -213,6 +214,8 @@ open class HttpClient(private val aem: AemExtension) : Serializable {
     fun asString(response: HttpResponse): String {
         return IOUtils.toString(asStream(response), Charsets.UTF_8) ?: ""
     }
+
+    inline fun <reified T: Any> asObjectFromJson(response: HttpResponse) = asObjectFromJson(response, T::class.java)
 
     fun <T> asObjectFromJson(response: HttpResponse, clazz: Class<T>): T {
         return try {

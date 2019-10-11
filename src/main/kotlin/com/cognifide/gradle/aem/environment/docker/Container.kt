@@ -3,30 +3,54 @@ package com.cognifide.gradle.aem.environment.docker
 import com.cognifide.gradle.aem.common.build.Behaviors
 import com.cognifide.gradle.aem.environment.EnvironmentException
 import com.cognifide.gradle.aem.environment.docker.base.DockerContainer
+import com.cognifide.gradle.aem.environment.docker.container.Host
 import org.gradle.internal.os.OperatingSystem
+import java.io.File
 
 class Container(val docker: Docker, val name: String) {
+
+    val rootDir = File(docker.environment.rootDir, name)
 
     val aem = docker.aem
 
     val base = DockerContainer(aem, name)
 
+    var initAction: Container.() -> Unit = {}
+
+    fun init(action: Container.() -> Unit) {
+        initAction = action
+    }
+
+    var deployAction: Container.() -> Unit = {}
+
+    fun deploy(action: Container.() -> Unit) {
+        deployAction = action
+    }
+
     var reloadAction: Container.() -> Unit = {}
+
+    fun reload(action: Container.() -> Unit) {
+        reloadAction = action
+    }
+
+    val host = Host(this)
+
+    fun <T> host(options: Host.() -> T) = host.run(options)
 
     val running: Boolean
         get() = base.running
 
+    fun init() {
+        initAction()
+    }
+
     fun deploy() {
         await()
-        reload()
+        deployAction()
     }
 
     fun reload() {
         reloadAction()
-    }
-
-    fun reload(action: Container.() -> Unit) {
-        this.reloadAction = action
     }
 
     var awaitRetry = aem.retry { afterSecond(aem.props.long("environment.container.awaitRetry") ?: 30) }
@@ -67,11 +91,16 @@ class Container(val docker: Docker, val name: String) {
         }
     }
 
-    fun ensureDir(vararg paths: String) = paths.forEach { path ->
+    /**
+     * Get file under container specific environment directory
+     */
+    fun file(path: String) = File(rootDir, path)
+
+    fun execEnsureDir(vararg paths: String) = paths.forEach { path ->
         exec("mkdir -p $path")
     }
 
-    fun cleanDir(vararg paths: String) = paths.forEach { path ->
+    fun execCleanDir(vararg paths: String) = paths.forEach { path ->
         exec("rm -fr $path")
         exec("mkdir -p $path")
     }

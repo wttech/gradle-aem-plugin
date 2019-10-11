@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.environment.docker
 
+// TODO progress logger on dev task not visible
 class Containers(private val docker: Docker) {
 
     private val aem = docker.environment.aem
@@ -17,11 +18,15 @@ class Containers(private val docker: Docker) {
 
     val running: Boolean get() = defined.all { it.running }
 
+    fun init() {
+        defined.forEach { it.init() }
+    }
+
     fun deploy() {
-        aem.parallel.each(defined) { it.deploy() }
+        defined.forEach { it.deploy() }
     }
 
     fun reload() {
-        aem.parallel.map(defined) { it.reload() }
+        defined.forEach { it.reload() }
     }
 }
