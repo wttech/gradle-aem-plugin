@@ -59,12 +59,19 @@ class Container(val docker: Docker, val name: String) {
             Behaviors.waitUntil(awaitRetry.delay) { timer ->
                 val running = base.running
                 if (timer.ticks == awaitRetry.times && !running) {
-                    val msg = mutableListOf("Failed to await container '$name'!")
-                    if (OperatingSystem.current().isWindows) {
-                        msg.add("Ensure having shared drives configured and reset performed after changing Windows credentials.")
+                    mutableListOf<String>().apply {
+                        add("Failed to await container '$name'!")
+
+                        if (OperatingSystem.current().isWindows) {
+                            add("Ensure having shared drives configured and reset performed after changing Windows credentials.")
+                        }
+
+                        add("Consider troubleshooting:")
+                        add("* using command: 'docker stack ps ${docker.stack.base.name} --no-trunc'")
+                        add("* restarting Docker")
+
+                        throw EnvironmentException(joinToString("\n"))
                     }
-                    msg.add("Consider troubleshooting using command: 'docker stack ps ${docker.stack.base.name} --no-trunc'.")
-                    throw EnvironmentException(msg.joinToString("\n"))
                 }
 
                 !running
