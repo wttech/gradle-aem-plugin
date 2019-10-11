@@ -73,7 +73,7 @@ class Container(val docker: Docker, val name: String) {
     }
 
     fun exec(command: String, exitCode: Int? = 0) {
-        base.exec(command, exitCode?.let { listOf(it) } ?: listOf())
+        exec(command, exitCode?.let { listOf(it) } ?: listOf())
     }
 
     fun exec(command: String, exitCodes: Iterable<Int>) {
