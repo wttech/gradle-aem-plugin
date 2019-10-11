@@ -20,24 +20,7 @@ class ContainerHost(val container: Container) {
 
     var fileDir = File(rootDir, aem.props.string("environment.container.host.fileDir") ?: "files")
 
-    private val fileResolver = FileResolver(container.aem, fileDir)
-
-    /**
-     * Get file under environment root directory
-     */
     fun file(path: String) = File(rootDir, path)
-
-    fun files(options: FileResolver.() -> Unit) {
-        fileResolver.apply(options)
-    }
-
-    fun resolveFiles(): List<File> {
-        logger.info("Resolving files for container '${container.name}'")
-        val files = fileResolver.allFiles
-        logger.info("Resolved files for container '${container.name}':\n${files.joinToString("\n")}")
-
-        return files
-    }
 
     fun resolveFiles(options: FileResolver.() -> Unit): List<File> {
         logger.info("Resolving files for container '${container.name}'")

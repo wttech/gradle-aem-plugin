@@ -60,7 +60,7 @@ class Docker(val environment: Environment) {
 
     fun up() {
         stack.reset()
-        containers.deploy()
+        containers.up()
     }
 
     fun reload() {

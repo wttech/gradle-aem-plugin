@@ -18,12 +18,12 @@ class Containers(private val docker: Docker) {
 
     val running: Boolean get() = defined.all { it.running }
 
-    fun init() {
-        defined.forEach { it.init() }
+    fun resolve() {
+        defined.forEach { it.resolve() }
     }
 
-    fun deploy() {
-        defined.forEach { it.deploy() }
+    fun up() {
+        defined.forEach { it.up() }
     }
 
     fun reload() {

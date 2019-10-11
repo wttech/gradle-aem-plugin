@@ -17,16 +17,16 @@ class Container(val docker: Docker, val name: String) {
         host.apply(options)
     }
 
-    var initAction: Container.() -> Unit = {}
+    var resolveAction: Container.() -> Unit = {}
 
-    fun init(action: Container.() -> Unit) {
-        initAction = action
+    fun resolve(action: Container.() -> Unit) {
+        resolveAction = action
     }
 
-    var deployAction: Container.() -> Unit = {}
+    var upAction: Container.() -> Unit = {}
 
-    fun deploy(action: Container.() -> Unit) {
-        deployAction = action
+    fun up(action: Container.() -> Unit) {
+        upAction = action
     }
 
     var reloadAction: Container.() -> Unit = {}
@@ -38,14 +38,13 @@ class Container(val docker: Docker, val name: String) {
     val running: Boolean
         get() = base.running
 
-    fun init() {
-        host.resolveFiles()
-        initAction()
+    fun resolve() {
+        resolveAction()
     }
 
-    fun deploy() {
+    fun up() {
         await()
-        deployAction()
+        upAction()
     }
 
     fun reload() {

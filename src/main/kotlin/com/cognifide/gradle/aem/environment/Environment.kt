@@ -42,8 +42,8 @@ class Environment(@JsonIgnore val aem: AemExtension) : Serializable {
     val running: Boolean
         get() = docker.running
 
-    fun resolve(): List<File> {
-        return docker.containers.defined.flatMap { it.host.resolveFiles() }
+    fun resolve() {
+        return docker.containers.defined.forEach { it.resolve() }
     }
 
     fun up() {
