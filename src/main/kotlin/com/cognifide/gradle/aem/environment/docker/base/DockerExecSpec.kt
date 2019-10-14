@@ -5,7 +5,7 @@ import java.io.OutputStream
 
 open class DockerExecSpec {
 
-    lateinit var command: String
+    var command: String = ""
 
     var options: List<String> = listOf()
 

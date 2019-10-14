@@ -15,8 +15,6 @@ open class Reloader(val environment: Environment) {
 
     var dirs = mutableListOf<File>()
 
-    var containerName = aem.props.string("environment.reload.container") ?: "*"
-
     private val fileChanges = Channel<FileWatcher.Event>(Channel.UNLIMITED)
 
     private val healthCheckRequests = Channel<Any>(Channel.UNLIMITED)

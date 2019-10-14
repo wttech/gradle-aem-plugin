@@ -41,6 +41,10 @@ open class DockerContainer(aem: AemExtension, val name: String) {
 
     @Suppress("SpreadOperator")
     fun exec(spec: DockerExecSpec) {
+        if (spec.command.isBlank()) {
+            throw DockerContainerException("Exec command cannot be blank!")
+        }
+
         if (!running) {
             throw DockerContainerException("Cannot exec command '${spec.command}' since Docker container '$name' is not running!")
         }
