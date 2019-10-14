@@ -9,4 +9,6 @@ class ExecSpec : DockerExecSpec() {
     fun operation(operation: () -> String) {
         this.operation = operation
     }
+
+    fun operation(text: String) = operation { text }
 }
