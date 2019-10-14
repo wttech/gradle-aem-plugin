@@ -39,17 +39,26 @@ open class DockerContainer(aem: AemExtension, val name: String) {
             }
         }
 
-    fun exec(command: String, exitCode: Int? = 0) = exec(command, exitCode?.let { listOf(it) } ?: listOf())
-
     @Suppress("SpreadOperator")
-    fun exec(command: String, exitCodes: Iterable<Int>) {
+    fun exec(spec: DockerExecSpec) {
         if (!running) {
-            throw DockerContainerException("Cannot exec command '$command' since Docker container '$name' is not running!")
+            throw DockerContainerException("Cannot exec command '${spec.command}' since Docker container '$name' is not running!")
+        }
+
+        val args = mutableListOf<String>().apply {
+            add("exec")
+            addAll(spec.options)
+            add(id!!)
+            addAll(spec.command.split(" "))
         }
 
         Docker.exec {
-            withArgs("exec", id, *command.split(" ").toTypedArray())
-            withExpectedExitStatuses(exitCodes.toSet())
+            withArgs(*args.toTypedArray())
+            withExpectedExitStatuses(spec.exitCodes.toSet())
+
+            spec.input?.let { withInputStream(it) }
+            spec.output?.let { withOutputStream(it) }
+            spec.errors?.let { withErrorStream(it) }
         }
     }
 }

@@ -11,9 +11,11 @@ import java.io.File
 @UseExperimental(ObsoleteCoroutinesApi::class)
 open class Reloader(val environment: Environment) {
 
+    private val aem = environment.aem
+
     var dirs = mutableListOf<File>()
 
-    private val aem = environment.aem
+    var containerName = aem.props.string("environment.reload.container") ?: "*"
 
     private val fileChanges = Channel<FileWatcher.Event>(Channel.UNLIMITED)
 

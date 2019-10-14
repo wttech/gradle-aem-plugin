@@ -3,6 +3,8 @@ package com.cognifide.gradle.aem.environment.docker
 import com.cognifide.gradle.aem.common.build.Behaviors
 import com.cognifide.gradle.aem.environment.EnvironmentException
 import com.cognifide.gradle.aem.environment.docker.base.DockerContainer
+import com.cognifide.gradle.aem.environment.docker.container.Host
+import com.cognifide.gradle.aem.environment.docker.container.ExecSpec
 import org.gradle.internal.os.OperatingSystem
 
 class Container(val docker: Docker, val name: String) {
@@ -11,9 +13,9 @@ class Container(val docker: Docker, val name: String) {
 
     val base = DockerContainer(aem, "${docker.stack.base.name}_$name")
 
-    val host = ContainerHost(this)
+    val host = Host(this)
 
-    fun host(options: ContainerHost.() -> Unit) {
+    fun host(options: Host.() -> Unit) {
         host.apply(options)
     }
 
@@ -40,15 +42,6 @@ class Container(val docker: Docker, val name: String) {
 
     fun resolve() {
         resolveAction()
-    }
-
-    fun up() {
-        await()
-        upAction()
-    }
-
-    fun reload() {
-        reloadAction()
     }
 
     var awaitRetry = aem.retry { afterSecond(aem.props.long("environment.container.awaitRetry") ?: 30) }
@@ -79,33 +72,51 @@ class Container(val docker: Docker, val name: String) {
         }
     }
 
-    fun exec(command: String, exitCode: Int? = 0) {
-        exec(command, exitCode?.let { listOf(it) } ?: listOf())
+    fun up() {
+        await()
+
+        upAction()
     }
 
-    fun exec(command: String, exitCodes: Iterable<Int>) {
+    fun reload() {
+        reloadAction()
+    }
+
+    fun exec(execSpec: ExecSpec.() -> Unit) {
+        val spec = ExecSpec().apply(execSpec)
+        val operation = spec.operation()
+
         aem.progressIndicator {
-            message = "Executing command '$command' on container '$name'"
+            step = "Container '$name'"
+            message = operation
 
             try {
-                base.exec(command, exitCodes)
+                base.exec(spec)
             } catch (e: DockerException) {
-                throw EnvironmentException("Failed to execute command '$command' on container '$name'," +
+                throw EnvironmentException("Failed to perform operation '$operation' on container '$name'," +
                         " exit code: '${e.processCause?.exitValue ?: -1 }!", e)
             }
         }
     }
 
+    fun exec(command: String, exitCode: Int = 0) {
+        exec { this.command = command; exitCodes = listOf(exitCode) }
+    }
+
     fun ensureDir(vararg paths: String) = paths.forEach { path ->
-        exec("mkdir -p $path")
+        exec {
+            operation { "Ensuring directory at path '$path'" }
+            command = "mkdir -p $path"
+        }
     }
 
     fun cleanDir(vararg paths: String) = paths.forEach { path ->
-        exec("rm -fr $path/*")
-    }
-
-    fun flushDir(vararg paths: String) = paths.forEach { path ->
-        exec("rm -fr $path")
-        exec("mkdir -p $path")
+        exec {
+            operation { "Cleaning directory contents at path '$path'" }
+            command = "rm -fr $path/*"
+        }
     }
 }
+
+val Collection<Container>.names: String
+    get() = if (isNotEmpty()) joinToString(", ") { it.name } else "none"

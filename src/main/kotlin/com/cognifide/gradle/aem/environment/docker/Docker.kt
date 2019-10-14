@@ -20,12 +20,14 @@ class Docker(val environment: Environment) {
     /**
      * Provides API for manipulating Docker containers defined in 'docker-compose.yml'.
      */
-    val containers = Containers(this)
+    val containers = ContainerManager(this)
 
     /**
      * Configure additional behavior for Docker containers defined in 'docker-compose.yml'.
      */
-    fun <T> containers(options: Containers.() -> T) = containers.run(options)
+    fun containers(options: ContainerManager.() -> Unit) {
+        containers.apply(options)
+    }
 
     val runtime: Runtime = Runtime.determine(aem)
 

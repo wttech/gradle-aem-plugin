@@ -6,6 +6,8 @@ import org.apache.commons.io.IOCase
 
 object Patterns {
 
+    const val WILDCARD = "*"
+
     const val WILDCARD_NEGATION = "!"
 
     const val WILDCARD_SEPARATOR = ","

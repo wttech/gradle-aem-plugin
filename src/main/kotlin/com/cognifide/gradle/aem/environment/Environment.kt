@@ -135,7 +135,5 @@ class Environment(@JsonIgnore val aem: AemExtension) : Serializable {
 
     companion object {
         const val ENVIRONMENT_DIR = "environment"
-
-        const val DISTRIBUTIONS_DIR = "distributions"
     }
 }

@@ -75,8 +75,8 @@ class Stack(val environment: Environment) {
             Behaviors.waitUntil(undeployRetry.delay) { timer ->
                 val running = base.running
                 if (timer.ticks == undeployRetry.times && running) {
-                    throw EnvironmentException("Failed to stop stack named '$name'!"
-                            + " Try to stop manually using Docker command: 'docker stack rm $name'")
+                    throw EnvironmentException("Failed to stop stack named '$name'!" +
+                            " Try to stop manually using Docker command: 'docker stack rm $name'")
                 }
 
                 running
