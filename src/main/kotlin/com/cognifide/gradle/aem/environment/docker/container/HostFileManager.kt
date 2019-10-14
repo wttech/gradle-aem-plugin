@@ -9,7 +9,7 @@ import java.io.File
  * File manager for host OS files related specific Docker container.
  * Provides DSL for e.g creating directories for volumes and providing extra files shared via volumes.
  */
-class Host(val container: Container) {
+class HostFileManager(val container: Container) {
 
     private val aem = container.aem
 
@@ -23,9 +23,13 @@ class Host(val container: Container) {
 
     fun file(path: String) = File(rootDir, path)
 
+    val configDir = File(docker.environment.configDir, container.name)
+
+    fun configFile(path: String) = File(configDir, path)
+
     fun resolveFiles(options: FileResolver.() -> Unit): List<File> {
         logger.info("Resolving files for container '${container.name}'")
-        val files = FileResolver(container.aem, fileDir).apply(options).allFiles
+        val files = aem.resolveFiles(fileDir, options)
         logger.info("Resolved files for container '${container.name}':\n${files.joinToString("\n")}")
 
         return files

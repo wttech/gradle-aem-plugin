@@ -6,6 +6,7 @@ import com.cognifide.gradle.aem.common.CommonPlugin
 import com.cognifide.gradle.aem.common.build.*
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.file.FileWatcher
+import com.cognifide.gradle.aem.common.file.resolver.FileResolver
 import com.cognifide.gradle.aem.common.file.transfer.FileTransferManager
 import com.cognifide.gradle.aem.common.file.transfer.http.HttpFileTransfer
 import com.cognifide.gradle.aem.common.file.transfer.sftp.SftpFileTransfer
@@ -580,10 +581,22 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     fun retry(): Retry = Retry.none(this)
 
     /**
-     * React on file changes under configured directory.
+     * React on file changes under configured directories.
      */
-    fun fileWatcher(options: FileWatcher.() -> Unit) {
+    fun watchFiles(options: FileWatcher.() -> Unit) {
         FileWatcher(this).apply(options).start()
+    }
+
+    /**
+     * Resolve files from defined repositories or by using one of defined file transfers.
+     */
+    fun resolveFiles(options: FileResolver.() -> Unit) = resolveFiles(temporaryDir, options)
+
+    /**
+     * Resolve files from defined repositories or by using one of defined file transfers.
+     */
+    fun resolveFiles(downloadDir: File, options: FileResolver.() -> Unit): List<File> {
+        return FileResolver(this, downloadDir).apply(options).allFiles
     }
 
     /**

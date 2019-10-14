@@ -3,7 +3,8 @@ package com.cognifide.gradle.aem.environment.docker
 import com.cognifide.gradle.aem.common.build.Behaviors
 import com.cognifide.gradle.aem.environment.EnvironmentException
 import com.cognifide.gradle.aem.environment.docker.base.DockerContainer
-import com.cognifide.gradle.aem.environment.docker.container.Host
+import com.cognifide.gradle.aem.environment.docker.container.DevOptions
+import com.cognifide.gradle.aem.environment.docker.container.HostFileManager
 import com.cognifide.gradle.aem.environment.docker.container.ExecSpec
 import org.gradle.internal.os.OperatingSystem
 
@@ -13,16 +14,20 @@ class Container(val docker: Docker, val name: String) {
 
     val base = DockerContainer(aem, "${docker.stack.base.name}_$name")
 
-    val host = Host(this)
+    val host = HostFileManager(this)
 
-    fun host(options: Host.() -> Unit) {
+    fun host(options: HostFileManager.() -> Unit) {
         host.apply(options)
     }
 
-    var resolveAction: Container.() -> Unit = {}
+    var resolveAction: HostFileManager.() -> Unit = {}
 
-    fun resolve(action: Container.() -> Unit) {
+    fun resolve(action: HostFileManager.() -> Unit) {
         resolveAction = action
+    }
+
+    fun resolve() {
+        resolveAction(host)
     }
 
     var upAction: Container.() -> Unit = {}
@@ -37,12 +42,14 @@ class Container(val docker: Docker, val name: String) {
         reloadAction = action
     }
 
+    val devOptions = DevOptions(this)
+
+    fun dev(options: DevOptions.() -> Unit) {
+        devOptions.apply(options)
+    }
+
     val running: Boolean
         get() = base.running
-
-    fun resolve() {
-        resolveAction()
-    }
 
     var awaitRetry = aem.retry { afterSecond(aem.props.long("environment.container.awaitRetry") ?: 30) }
 
