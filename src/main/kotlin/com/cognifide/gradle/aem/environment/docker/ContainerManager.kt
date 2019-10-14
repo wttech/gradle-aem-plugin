@@ -32,7 +32,7 @@ class ContainerManager(private val docker: Docker) {
     val running: Boolean get() = defined.all { it.running }
 
     /**
-     * Determines which containers will be reloaded when running tasks 'environmentDev' or 'environmentReload'.
+     * Allows to filter which containers will be reloaded.
      */
     var reloadFilter = aem.props.string("environment.docker.container.reloadFilter") ?: Patterns.WILDCARD
 
