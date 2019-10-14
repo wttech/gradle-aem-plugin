@@ -64,7 +64,7 @@ open class Reloader(val environment: Environment) {
                     try {
                         reload()
                     } catch (e: Exception) {
-                        logger.error("Cannot reload container '$name' properly", e)
+                        logger.error("Cannot reload container '$name' properly!", e)
                     }
                 }
             }

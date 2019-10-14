@@ -100,28 +100,33 @@ class Container(val docker: Docker, val name: String) {
             try {
                 base.exec(spec)
             } catch (e: DockerException) {
-                throw EnvironmentException("Failed to perform operation '$operation' on container '$name'," +
-                        " exit code: '${e.processCause?.exitValue ?: -1 }!", e)
+                aem.logger.debug("Exec operation '$operation' error", e)
+                throw EnvironmentException("Failed to perform operation '$operation' on container '$name'!\n${e.message}")
             }
         }
     }
 
     fun exec(command: String, exitCode: Int = 0) {
-        exec { this.command = command; exitCodes = listOf(exitCode) }
+        exec {
+            this.command = command
+            this.exitCodes = listOf(exitCode)
+        }
+    }
+
+    fun execOperation(operation: String, command: String, exitCode: Int = 0) {
+        exec {
+            this.operation = { operation }
+            this.command = command
+            this.exitCodes = listOf(exitCode)
+        }
     }
 
     fun ensureDir(vararg paths: String) = paths.forEach { path ->
-        exec {
-            operation { "Ensuring directory at path '$path'" }
-            command = "mkdir -p $path"
-        }
+        execOperation("Ensuring directory at path '$path'", "mkdir -p $path")
     }
 
     fun cleanDir(vararg paths: String) = paths.forEach { path ->
-        exec {
-            operation { "Cleaning directory contents at path '$path'" }
-            command = "rm -fr $path/*"
-        }
+        execOperation("Cleaning directory contents at path '$path'", "rm -fr $path/*")
     }
 }
 
