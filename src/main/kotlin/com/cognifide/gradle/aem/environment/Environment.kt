@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.environment
 
 import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.common.utils.Patterns
 import com.cognifide.gradle.aem.environment.docker.Docker
 import com.cognifide.gradle.aem.environment.health.HealthChecker
 import com.cognifide.gradle.aem.environment.health.HealthStatus
@@ -94,14 +95,14 @@ class Environment(@JsonIgnore val aem: AemExtension) : Serializable {
         return healthChecker.check(verbose)
     }
 
-    fun reload() {
+    fun reload(containerName: String = Patterns.WILDCARD) {
         if (!running) {
             throw EnvironmentException("Cannot reload environment as it is not running!")
         }
 
         aem.logger.info("Reloading $this")
 
-        docker.reload()
+        docker.reload(containerName)
 
         aem.logger.info("Reloaded $this")
     }

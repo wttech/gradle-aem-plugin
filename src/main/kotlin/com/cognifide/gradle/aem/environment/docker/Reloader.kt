@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.environment.docker
 
 import com.cognifide.gradle.aem.common.file.FileWatcher
+import com.cognifide.gradle.aem.common.utils.Patterns
 import com.cognifide.gradle.aem.environment.Environment
 import java.util.*
 import kotlinx.coroutines.*
@@ -14,6 +15,8 @@ open class Reloader(val environment: Environment) {
     private val aem = environment.aem
 
     var dirs = mutableListOf<File>()
+
+    var containerName = Patterns.WILDCARD
 
     private val fileChanges = Channel<FileWatcher.Event>(Channel.UNLIMITED)
 
@@ -56,7 +59,7 @@ open class Reloader(val environment: Environment) {
             aem.logger.lifecycle("Reloading environment due to file changes:\n${changes.joinToString("\n")}")
 
             try {
-                environment.reload()
+                environment.reload(containerName)
                 healthCheckRequests.send(Date())
             } catch (e: Exception) {
                 aem.logger.error("Cannot reload environment properly", e)

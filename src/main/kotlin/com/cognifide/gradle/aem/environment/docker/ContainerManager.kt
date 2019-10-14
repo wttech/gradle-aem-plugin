@@ -31,11 +31,6 @@ class ContainerManager(private val docker: Docker) {
      */
     val running: Boolean get() = defined.all { it.running }
 
-    /**
-     * Allows to filter which containers will be reloaded.
-     */
-    var reloadFilter = aem.props.string("environment.docker.container.reloadFilter") ?: Patterns.WILDCARD
-
     fun resolve() {
         aem.progress {
             message = "Resolving container(s): ${defined.names}"
@@ -50,8 +45,8 @@ class ContainerManager(private val docker: Docker) {
         }
     }
 
-    fun reload() {
-        val containers = defined.filter { Patterns.wildcard(it.name, reloadFilter) }
+    fun reload(nameFilter: String = Patterns.WILDCARD) {
+        val containers = defined.filter { Patterns.wildcard(it.name, nameFilter) }
 
         aem.progress {
             message = "Reloading container(s): ${containers.names}"

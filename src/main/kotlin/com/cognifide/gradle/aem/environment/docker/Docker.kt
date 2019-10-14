@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.environment.docker
 
+import com.cognifide.gradle.aem.common.utils.Patterns
 import com.cognifide.gradle.aem.environment.Environment
 import com.cognifide.gradle.aem.environment.EnvironmentException
 import org.gradle.util.GFileUtils
@@ -65,8 +66,8 @@ class Docker(val environment: Environment) {
         containers.up()
     }
 
-    fun reload() {
-        containers.reload()
+    fun reload(containerName: String = Patterns.WILDCARD) {
+        containers.reload(containerName)
     }
 
     fun down() {
