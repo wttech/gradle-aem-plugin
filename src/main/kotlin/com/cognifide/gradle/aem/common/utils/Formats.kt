@@ -223,6 +223,23 @@ object Formats {
         val result = BigInteger(1, messageDigest.digest())
         return String.format("%1$032x", result)
     }
+
+    /**
+     * Splits command to arguments usually delimited by space
+     * while considering quoted string containing spaces as single argument.
+     */
+    fun commandToArgs(command: String): List<String> {
+        val quotedSpaceToken =  "@@@SPACE@@@"
+        var tokenizedCommand = command
+
+        Regex("'([^']+)'").findAll(command).iterator().forEachRemaining {
+            val quotedString = it.groupValues[1]
+            val tokenizedString = quotedString.replace(" ", quotedSpaceToken)
+            tokenizedCommand = tokenizedCommand.replace("'$quotedString'", tokenizedString)
+        }
+
+        return StringUtils.split(tokenizedCommand, " ").map { it.replace(quotedSpaceToken, " ") }
+    }
 }
 
 val Collection<File>.fileNames

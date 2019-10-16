@@ -106,27 +106,27 @@ class Container(val docker: Docker, val name: String) {
         }
     }
 
-    fun exec(command: String, exitCode: Int = 0) {
-        exec {
-            this.command = command
-            this.exitCodes = listOf(exitCode)
-        }
+    fun exec(command: String, exitCode: Int = 0) = exec {
+        this.command = command
+        this.exitCodes = listOf(exitCode)
     }
 
-    fun execOperation(operation: String, command: String, exitCode: Int = 0) {
-        exec {
-            this.operation = { operation }
-            this.command = command
-            this.exitCodes = listOf(exitCode)
-        }
+    fun exec(operation: String, command: String, exitCode: Int = 0) = exec {
+        this.operation = { operation }
+        this.command = command
+        this.exitCodes = listOf(exitCode)
     }
+
+    fun execShell(command: String, exitCode: Int = 0) = exec("sh -c '$command'", exitCode)
+
+    fun execShell(operation: String, command: String, exitCode: Int = 0) = exec(operation, "sh -c '$command'", exitCode)
 
     fun ensureDir(vararg paths: String) = paths.forEach { path ->
-        execOperation("Ensuring directory at path '$path'", "mkdir -p $path")
+        execShell("Ensuring directory at path '$path'", "mkdir -p $path")
     }
 
     fun cleanDir(vararg paths: String) = paths.forEach { path ->
-        execOperation("Cleaning directory contents at path '$path'", "rm -fr $path/*")
+        execShell("Cleaning directory contents at path '$path'", "rm -fr $path/*")
     }
 }
 
