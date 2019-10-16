@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.common.utils
 import com.fasterxml.jackson.core.util.DefaultIndenter
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.jayway.jsonpath.JsonPath
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
@@ -50,6 +51,7 @@ object Formats {
     val VERSION_UNKNOWN = GradleVersion.version("0.0.0")
 
     fun jsonMapper(pretty: Boolean): ObjectMapper = ObjectMapper().apply {
+        registerModule(KotlinModule())
         if (pretty) {
             writer(DefaultPrettyPrinter().apply {
                 indentArraysWith(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE)
@@ -69,9 +71,9 @@ object Formats {
         return jsonMapper(pretty).writeValueAsString(value) ?: "{}"
     }
 
-    fun <T> fromJson(json: String, clazz: Class<T>): T {
-        return ObjectMapper().readValue(json, clazz)
-    }
+    inline fun <reified T : Any> fromJson(json: String) = fromJson(json, T::class.java)
+
+    fun <T> fromJson(json: String, clazz: Class<T>): T = jsonMapper(false).readValue(json, clazz)
 
     fun fromJsonToMap(json: String): Map<String, Any?> = ObjectMapper().run {
         readValue(json, typeFactory.constructMapType(HashMap::class.java, String::class.java, Any::class.java))
@@ -220,6 +222,23 @@ object Formats {
         messageDigest.update(data, 0, data.size)
         val result = BigInteger(1, messageDigest.digest())
         return String.format("%1$032x", result)
+    }
+
+    /**
+     * Splits command to arguments usually delimited by space
+     * while considering quoted string containing spaces as single argument.
+     */
+    fun commandToArgs(command: String): List<String> {
+        val quotedSpaceToken = "@@@SPACE@@@"
+        var tokenizedCommand = command
+
+        Regex("'([^']+)'").findAll(command).iterator().forEachRemaining {
+            val quotedString = it.groupValues[1]
+            val tokenizedString = quotedString.replace(" ", quotedSpaceToken)
+            tokenizedCommand = tokenizedCommand.replace("'$quotedString'", tokenizedString)
+        }
+
+        return StringUtils.split(tokenizedCommand, " ").map { it.replace(quotedSpaceToken, " ") }
     }
 }
 

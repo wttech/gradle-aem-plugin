@@ -1,9 +1,8 @@
-package com.cognifide.gradle.aem.environment.docker.domain
+package com.cognifide.gradle.aem.environment.docker
 
 import com.cognifide.gradle.aem.common.build.Behaviors
 import com.cognifide.gradle.aem.environment.Environment
 import com.cognifide.gradle.aem.environment.EnvironmentException
-import com.cognifide.gradle.aem.environment.docker.base.DockerException
 import com.cognifide.gradle.aem.environment.docker.base.DockerStack
 
 /**
@@ -11,9 +10,12 @@ import com.cognifide.gradle.aem.environment.docker.base.DockerStack
  */
 class Stack(val environment: Environment) {
 
+    val name get() = base.name
+
     private val aem = environment.aem
 
-    val stack = DockerStack(aem, aem.props.string("environment.stack.name") ?: aem.project.rootProject.name)
+    val base = DockerStack(aem, aem.props.string("environment.stack.name")
+            ?: aem.project.rootProject.name)
 
     var deployRetry = aem.retry { afterSecond(aem.props.long("environment.stack.deployRetry") ?: 30) }
 
@@ -23,24 +25,24 @@ class Stack(val environment: Environment) {
         var error: Exception? = null
 
         aem.progressIndicator {
-            message = "Initializing AEM stack"
+            message = "Initializing stack"
 
             try {
-                stack.init()
+                base.init()
             } catch (e: DockerException) {
                 error = e
             }
         }
 
         if (error != null) {
-            throw EnvironmentException("AEM stack cannot be initialized. Is Docker running / installed?", error!!)
+            throw EnvironmentException("Stack cannot be initialized. Is Docker running / installed?", error!!)
         }
 
         true
     }
 
     val running: Boolean
-        get() = initialized && stack.running
+        get() = initialized && base.running
 
     fun reset() {
         undeploy()
@@ -49,14 +51,14 @@ class Stack(val environment: Environment) {
 
     fun deploy() {
         aem.progressIndicator {
-            message = "Starting AEM stack"
-            stack.deploy(environment.dockerComposeFile.path)
+            message = "Starting stack '$name'"
+            base.deploy(environment.docker.composeFile.path)
 
-            message = "Awaiting started AEM stack"
+            message = "Awaiting started stack '$name'"
             Behaviors.waitUntil(deployRetry.delay) { timer ->
-                val running = stack.running
+                val running = base.running
                 if (timer.ticks == deployRetry.times && !running) {
-                    throw EnvironmentException("Failed to start Docker Stack!")
+                    throw EnvironmentException("Failed to start stack named '$name'!")
                 }
 
                 !running
@@ -66,14 +68,15 @@ class Stack(val environment: Environment) {
 
     fun undeploy() {
         aem.progressIndicator {
-            message = "Stopping AEM stack"
-            stack.rm()
+            message = "Stopping stack '$name'"
+            base.rm()
 
-            message = "Awaiting stopped AEM stack"
+            message = "Awaiting stopped stack '$name'"
             Behaviors.waitUntil(undeployRetry.delay) { timer ->
-                val running = stack.running
+                val running = base.running
                 if (timer.ticks == undeployRetry.times && running) {
-                    throw EnvironmentException("Failed to stop Docker Stack! Try to stop manually using: 'docker stack rm ${stack.name}'")
+                    throw EnvironmentException("Failed to stop stack named '$name'!" +
+                            " Try to stop manually using Docker command: 'docker stack rm $name'")
                 }
 
                 running

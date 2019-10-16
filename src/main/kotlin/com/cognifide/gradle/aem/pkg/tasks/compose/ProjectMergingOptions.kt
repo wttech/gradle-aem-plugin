@@ -1,8 +1,8 @@
 package com.cognifide.gradle.aem.pkg.tasks.compose
 
 import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.bundle.tasks.BundleCompose
 import com.cognifide.gradle.aem.pkg.tasks.PackageCompose
-import org.gradle.api.tasks.bundling.Jar
 
 /**
  * Allows to override project specific options while composing merged CRX package.
@@ -17,7 +17,7 @@ class ProjectMergingOptions {
     /**
      * Determines compose task(s) in particular project to be considered when composing merged CRX package.
      */
-    var composeTasks: AemExtension.() -> Collection<PackageCompose> = { tasks.getAll(PackageCompose::class.java) }
+    var composeTasks: AemExtension.() -> Collection<PackageCompose> = { tasks.packages }
 
     /**
      * Controls if Vault hooks from particular project should be taken.
@@ -47,7 +47,7 @@ class ProjectMergingOptions {
     /**
      * Determines JAR task(s) in particular project to be considered when composing merged CRX package.
      */
-    var bundleTasks: AemExtension.() -> Collection<Jar> = { tasks.getAll(Jar::class.java) }
+    var bundleTasks: AemExtension.() -> Collection<BundleCompose> = { tasks.bundles }
 
     /**
      * Controls if extra OSGi bundles from particular project should be taken.

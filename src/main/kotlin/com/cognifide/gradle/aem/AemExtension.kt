@@ -1,10 +1,12 @@
 package com.cognifide.gradle.aem
 
 import com.cognifide.gradle.aem.bundle.BundlePlugin
+import com.cognifide.gradle.aem.bundle.tasks.BundleCompose
 import com.cognifide.gradle.aem.common.CommonPlugin
 import com.cognifide.gradle.aem.common.build.*
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.file.FileWatcher
+import com.cognifide.gradle.aem.common.file.resolver.FileResolver
 import com.cognifide.gradle.aem.common.file.transfer.FileTransferManager
 import com.cognifide.gradle.aem.common.file.transfer.http.HttpFileTransfer
 import com.cognifide.gradle.aem.common.file.transfer.sftp.SftpFileTransfer
@@ -32,7 +34,6 @@ import java.io.Serializable
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.bundling.Jar
 
 /**
  * Core of library, facade for implementing tasks, configuration aggregator.
@@ -209,6 +210,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     /**
      * Provides API for easier creation of tasks (e.g in sequence) in the matter of Gradle task configuration avoidance.
      */
+    @JsonIgnore
     val tasks = AemTaskFacade(this)
 
     fun tasks(configurer: AemTaskFacade.() -> Unit) {
@@ -389,8 +391,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
      */
     @get:JsonIgnore
     val packages: List<File>
-        get() = project.tasks.withType(PackageCompose::class.java)
-                .map { it.archiveFile.get().asFile }
+        get() = tasks.packages.map { it.archiveFile.get().asFile }
 
     /**
      * Get all CRX packages built before running particular task.
@@ -406,15 +407,14 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
      */
     @get:JsonIgnore
     val bundles: List<File>
-        get() = tasks.bundles.map { it.jar.archiveFile.get().asFile }
+        get() = tasks.bundles.map { it.archiveFile.get().asFile }
 
     /**
      * Get all OSGi bundles built before running particular task.
      */
     fun dependentBundles(task: Task): List<File> {
         return task.taskDependencies.getDependencies(task)
-                .filterIsInstance(Jar::class.java)
-                .filter { jar -> tasks.bundles.any { it.jar == jar } }
+                .filterIsInstance(BundleCompose::class.java)
                 .map { it.archiveFile.get().asFile }
     }
 
@@ -581,10 +581,22 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     fun retry(): Retry = Retry.none(this)
 
     /**
-     * React on file changes under configured directory.
+     * React on file changes under configured directories.
      */
-    fun fileWatcher(options: FileWatcher.() -> Unit) {
+    fun watchFiles(options: FileWatcher.() -> Unit) {
         FileWatcher(this).apply(options).start()
+    }
+
+    /**
+     * Resolve files from defined repositories or by using one of defined file transfers.
+     */
+    fun resolveFiles(options: FileResolver.() -> Unit) = resolveFiles(temporaryDir, options)
+
+    /**
+     * Resolve files from defined repositories or by using one of defined file transfers.
+     */
+    fun resolveFiles(downloadDir: File, options: FileResolver.() -> Unit): List<File> {
+        return FileResolver(this, downloadDir).apply(options).allFiles
     }
 
     /**
@@ -614,6 +626,9 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
 
     @JsonIgnore
     val formats = Formats
+
+    @JsonIgnore
+    val patterns = Patterns
 
     @JsonIgnore
     val buildScope = BuildScope.of(project)

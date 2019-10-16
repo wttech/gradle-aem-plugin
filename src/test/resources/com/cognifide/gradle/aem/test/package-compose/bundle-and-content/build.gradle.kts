@@ -20,7 +20,7 @@ dependencies {
 
 aem {
     tasks {
-        bundle {
+        bundleCompose {
             category = "example"
             vendor = "Company"
         }

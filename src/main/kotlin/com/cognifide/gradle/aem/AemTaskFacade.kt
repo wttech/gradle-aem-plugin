@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem
 
-import com.cognifide.gradle.aem.bundle.BundleJar
+import com.cognifide.gradle.aem.bundle.tasks.BundleCompose
+import com.cognifide.gradle.aem.common.build.DependencyOptions
 import com.cognifide.gradle.aem.common.tasks.Debug
 import com.cognifide.gradle.aem.common.tasks.TaskSequence
 import com.cognifide.gradle.aem.common.tasks.lifecycle.*
@@ -13,41 +14,59 @@ import com.cognifide.gradle.aem.pkg.tasks.*
 import com.cognifide.gradle.aem.tooling.rcp.Rcp
 import com.cognifide.gradle.aem.tooling.sync.Sync
 import com.cognifide.gradle.aem.tooling.vlt.Vlt
-import com.fasterxml.jackson.annotation.JsonIgnore
-import java.io.Serializable
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.UnknownTaskException
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.TaskProvider
-import org.gradle.api.tasks.bundling.Jar
-import org.gradle.api.tasks.testing.Test
+import java.io.Serializable
 
 @Suppress("TooManyFunctions")
-class AemTaskFacade(private val aem: AemExtension) : Serializable {
+class AemTaskFacade(val aem: AemExtension) : Serializable {
 
-    @JsonIgnore
     val project = aem.project
-
-    private val bundleMap = mutableMapOf<String, BundleJar>()
-
-    val bundles: List<BundleJar>
-        get() = getAll(Jar::class.java).map { bundle(it) }
-
-    internal fun jarsAsBundles() {
-        initializeJarsAsBundles()
-        project.afterEvaluate {
-            finalizeJarsAsBundles()
-        }
-    }
 
     // Bundle plugin shorthands
 
-    fun bundle(configurer: BundleJar.() -> Unit) = bundle(JavaPlugin.JAR_TASK_NAME, configurer)
+    val bundles get() = getAll(BundleCompose::class.java)
 
-    fun bundle(jarTaskName: String, configurer: BundleJar.() -> Unit) = named(jarTaskName, Jar::class.java) { bundle(this, configurer) }
+    fun bundleCompose(configurer: BundleCompose.() -> Unit) = named(BundleCompose.NAME, configurer)
+
+    fun bundleExportEmbed(dependencyNotation: String, vararg pkgs: String) {
+        bundleEmbed(dependencyNotation, true, pkgs.asIterable())
+    }
+
+    fun bundleExportEmbed(dependencyNotation: String, pkgs: Iterable<String>) {
+        bundleEmbed(dependencyNotation, true, pkgs)
+    }
+
+    fun bundlePrivateEmbed(dependencyNotation: String, vararg pkgs: String) {
+        bundleEmbed(dependencyNotation, false, pkgs.asIterable())
+    }
+
+    fun bundlePrivateEmbed(dependencyNotation: String, pkgs: Iterable<String>) {
+        bundleEmbed(dependencyNotation, false, pkgs)
+    }
+
+    fun bundleEmbed(dependencyOptions: DependencyOptions.() -> Unit, export: Boolean, pkgs: Iterable<String>) {
+        bundleEmbed(DependencyOptions.create(aem, dependencyOptions), export, pkgs)
+    }
+
+    fun bundleEmbed(dependencyNotation: Any, export: Boolean, pkgs: Iterable<String>) {
+        project.dependencies.add(JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME, dependencyNotation)
+
+        bundleCompose {
+            if (export) {
+                exportPackage(pkgs)
+            } else {
+                privatePackage(pkgs)
+            }
+        }
+    }
 
     // Package plugin shorthands
+
+    val packages get() = getAll(PackageCompose::class.java)
 
     fun packageActivate(configurer: PackageActivate.() -> Unit) = named(PackageActivate.NAME, configurer)
 
@@ -134,14 +153,6 @@ class AemTaskFacade(private val aem: AemExtension) : Serializable {
     fun up(configurer: Up.() -> Unit) = registerOrConfigure(Up.NAME, configurer)
 
     // Generic API & internals
-
-    internal fun bundle(jarTaskPath: String): BundleJar {
-        return bundle(get(jarTaskPath, Jar::class.java))
-    }
-
-    internal fun bundle(jar: Jar, configurer: BundleJar.() -> Unit = {}): BundleJar {
-        return bundleMap.getOrPut(jar.name) { BundleJar(aem, jar) }.apply(configurer)
-    }
 
     fun pathed(path: String): TaskProvider<Task> {
         val projectPath = path.substringBeforeLast(":", project.path).ifEmpty { ":" }
@@ -245,9 +256,9 @@ class AemTaskFacade(private val aem: AemExtension) : Serializable {
 
     fun <T : Task> getAll(type: Class<T>) = project.tasks.withType(type).toList()
 
-    fun sequence(name: String, sequenceOptions: TaskSequence.() -> Unit) = sequence(name, {}, sequenceOptions)
+    fun registerSequence(name: String, sequenceOptions: TaskSequence.() -> Unit) = registerSequence(name, {}, sequenceOptions)
 
-    fun sequence(name: String, taskOptions: Task.() -> Unit, sequenceOptions: TaskSequence.() -> Unit): TaskProvider<Task> {
+    fun registerSequence(name: String, taskOptions: Task.() -> Unit, sequenceOptions: TaskSequence.() -> Unit): TaskProvider<Task> {
         return project.tasks.register(name) { task ->
             val options = TaskSequence().apply(sequenceOptions)
 
@@ -268,31 +279,6 @@ class AemTaskFacade(private val aem: AemExtension) : Serializable {
             }
             dependentTasks.forEach { dependentTask ->
                 dependentTask.configure { it.mustRunAfter(afterTasks) }
-            }
-        }
-    }
-
-    private fun initializeJarsAsBundles() {
-        project.tasks.withType(Jar::class.java) {
-            bundle { initialize() }
-        }
-    }
-
-    private fun finalizeJarsAsBundles() {
-        project.tasks.withType(Jar::class.java) {
-            bundle { finalize() }
-        }
-
-        // @see <https://github.com/Cognifide/gradle-aem-plugin/issues/95>
-        named(JavaPlugin.TEST_TASK_NAME, Test::class.java) {
-            val testImplConfig = project.configurations.getByName(JavaPlugin.TEST_IMPLEMENTATION_CONFIGURATION_NAME)
-            val compileOnlyConfig = project.configurations.getByName(JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME)
-
-            testImplConfig.extendsFrom(compileOnlyConfig)
-
-            project.tasks.withType(Jar::class.java).forEach { jar ->
-                dependsOn(jar)
-                classpath += project.files(jar.archiveFile.get().asFile)
             }
         }
     }

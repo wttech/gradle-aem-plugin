@@ -325,22 +325,6 @@
     },
     "environment" : {
       "rootDir" : "*/additional/.environment",
-      "directories" : {
-        "regulars" : [
-          "*/additional/.environment/httpd/logs"
-        ],
-        "caches" : [
-          "*/additional/.environment/httpd/cache/content/example/live",
-          "*/additional/.environment/httpd/cache/content/example/demo"
-        ]
-      },
-      "dockerRuntime" : {
-        "name": "desktop",
-        "hostIp": "127.0.0.1"
-      },
-      "dockerPath" : {
-        "cygpathPath": "*/cygpath.exe"
-      },
       "hosts" : {
         "defined": [
           {
@@ -376,41 +360,10 @@
         ]
       },
       "configDir" : "*/additional/gradle/environment",
-      "dockerComposeSourceFile" : "*/additional/gradle/environment/docker-compose.yml.peb",
-      "dockerComposeFile" : "*/additional/.environment/docker-compose.yml",
-      "dockerConfigPath" : "*/additional/gradle/environment",
-      "dockerRootPath" : "*/additional/.environment",
-      "httpdConfDir" : "*/additional/gradle/environment/httpd/conf",
       "created" : false
     },
     "notifier" : {
       "enabled" : false
-    },
-    "tasks" : {
-      "bundles" : [
-        {
-          "name" : "jar",
-          "installPath" : "/apps/additional/install",
-          "installRunMode" : null,
-          "vaultFilter": true,
-          "attributesConvention" : true,
-          "javaPackage" : "com.company.aem.additional",
-          "javaPackageOptions" : "-split-package:=merge-first",
-          "bndEnabled" : true,
-          "bndPath" : "*/additional/bnd.bnd",
-          "bndInstructions" : {
-            "-fixupmessages.bundleActivator" : "Bundle-Activator * is being imported *;is:=error"
-          },
-          "attributes" : {
-            "Manifest-Version" : "1.0",
-            "Bundle-Name" : "Additional",
-            "Bundle-SymbolicName" : "com.company.aem.additional",
-            "Sling-Model-Packages" : "com.company.aem.additional",
-            "Import-Package" : "*",
-            "Export-Package" : "com.company.aem.additional.*;-split-package:=merge-first"
-          }
-        }
-      ]
     },
     "projectName" : "additional",
     "configDir" : "*/additional/gradle",

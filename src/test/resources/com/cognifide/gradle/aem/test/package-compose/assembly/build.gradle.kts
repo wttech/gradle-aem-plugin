@@ -27,7 +27,7 @@ allprojects {
     plugins.withId("com.cognifide.aem.bundle") {
         aem {
             tasks {
-                bundle {
+                bundleCompose {
                     category = "example"
                     vendor = "Company"
                 }
