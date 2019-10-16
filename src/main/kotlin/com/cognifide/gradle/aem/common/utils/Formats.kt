@@ -229,7 +229,7 @@ object Formats {
      * while considering quoted string containing spaces as single argument.
      */
     fun commandToArgs(command: String): List<String> {
-        val quotedSpaceToken =  "@@@SPACE@@@"
+        val quotedSpaceToken = "@@@SPACE@@@"
         var tokenizedCommand = command
 
         Regex("'([^']+)'").findAll(command).iterator().forEachRemaining {
