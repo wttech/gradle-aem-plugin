@@ -56,7 +56,6 @@ open class BundleCompose : Jar(), AemTask {
      * for built OSGi bundle.
      */
     @Input
-    @Optional
     var vaultFilter: Boolean = true
 
     /**

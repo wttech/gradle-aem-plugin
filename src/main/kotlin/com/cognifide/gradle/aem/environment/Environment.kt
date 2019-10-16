@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem.environment
 
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.common.utils.Patterns
 import com.cognifide.gradle.aem.environment.docker.Docker
 import com.cognifide.gradle.aem.environment.health.HealthChecker
 import com.cognifide.gradle.aem.environment.health.HealthStatus

@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem.environment.docker
 
-import com.cognifide.gradle.aem.common.utils.Patterns
 import com.cognifide.gradle.aem.environment.Environment
 import com.cognifide.gradle.aem.environment.EnvironmentException
 import org.gradle.util.GFileUtils
