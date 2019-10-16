@@ -22,13 +22,11 @@ aem {
             other("http://dispatcher.example.com")
         }
         docker {
-            init {
-                ensureDir(
-                        "httpd/logs"
-                )
-            }
             containers {
                 "httpd" {
+                    resolve {
+                        ensureDir("httpd/logs")
+                    }
                     reload {
                         ensureDir("/usr/local/apache2/logs")
                         cleanDir(
