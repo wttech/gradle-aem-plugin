@@ -10,6 +10,8 @@ import com.cognifide.gradle.aem.environment.docker.base.DockerStack
  */
 class Stack(val environment: Environment) {
 
+    val name get() = base.name
+
     private val aem = environment.aem
 
     val base = DockerStack(aem, aem.props.string("environment.stack.name")
@@ -23,7 +25,7 @@ class Stack(val environment: Environment) {
         var error: Exception? = null
 
         aem.progressIndicator {
-            message = "Initializing AEM stack"
+            message = "Initializing stack"
 
             try {
                 base.init()
@@ -33,7 +35,7 @@ class Stack(val environment: Environment) {
         }
 
         if (error != null) {
-            throw EnvironmentException("AEM stack cannot be initialized. Is Docker running / installed?", error!!)
+            throw EnvironmentException("Stack cannot be initialized. Is Docker running / installed?", error!!)
         }
 
         true
@@ -49,14 +51,14 @@ class Stack(val environment: Environment) {
 
     fun deploy() {
         aem.progressIndicator {
-            message = "Starting AEM stack"
+            message = "Starting stack '$name'"
             base.deploy(environment.docker.composeFile.path)
 
-            message = "Awaiting started AEM stack"
+            message = "Awaiting started stack '$name'"
             Behaviors.waitUntil(deployRetry.delay) { timer ->
                 val running = base.running
                 if (timer.ticks == deployRetry.times && !running) {
-                    throw EnvironmentException("Failed to start Docker Stack!")
+                    throw EnvironmentException("Failed to start stack named '$name'!")
                 }
 
                 !running
@@ -66,14 +68,15 @@ class Stack(val environment: Environment) {
 
     fun undeploy() {
         aem.progressIndicator {
-            message = "Stopping AEM stack"
+            message = "Stopping stack '$name'"
             base.rm()
 
-            message = "Awaiting stopped AEM stack"
+            message = "Awaiting stopped stack '$name'"
             Behaviors.waitUntil(undeployRetry.delay) { timer ->
                 val running = base.running
                 if (timer.ticks == undeployRetry.times && running) {
-                    throw EnvironmentException("Failed to stop Docker Stack! Try to stop manually using: 'docker stack rm ${base.name}'")
+                    throw EnvironmentException("Failed to stop stack named '$name'!" +
+                            " Try to stop manually using Docker command: 'docker stack rm $name'")
                 }
 
                 running

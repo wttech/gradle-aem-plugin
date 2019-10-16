@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.environment.tasks
 
 import com.cognifide.gradle.aem.AemDefaultTask
-import com.cognifide.gradle.aem.environment.docker.Reloader
+import com.cognifide.gradle.aem.environment.reloader.Reloader
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
@@ -16,8 +16,13 @@ open class EnvironmentDev : AemDefaultTask() {
 
     @TaskAction
     fun dev() {
-        if (!aem.environment.docker.stack.running) {
+        if (!aem.environment.running) {
             aem.notifier.notify("Environment development mode", "Cannot turn on as environment is not running.")
+            return
+        }
+
+        if (!reloader.configured) {
+            aem.notifier.notify("Environment development mode", "None of containers have configured watched directory!")
             return
         }
 
@@ -27,10 +32,6 @@ open class EnvironmentDev : AemDefaultTask() {
 
             reloader.start()
         }
-    }
-
-    fun reloader(options: Reloader.() -> Unit) {
-        reloader.apply(options)
     }
 
     companion object {

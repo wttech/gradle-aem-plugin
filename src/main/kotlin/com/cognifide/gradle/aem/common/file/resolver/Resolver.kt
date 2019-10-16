@@ -8,9 +8,9 @@ import com.cognifide.gradle.aem.common.file.transfer.sftp.SftpFileTransfer
 import com.cognifide.gradle.aem.common.file.transfer.smb.SmbFileTransfer
 import com.google.common.hash.HashCode
 import java.io.File
-import java.util.*
 import org.apache.commons.io.FilenameUtils
 import org.apache.commons.lang3.builder.HashCodeBuilder
+import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 
 /**
@@ -170,6 +170,7 @@ val downloadDir: File
     /**
      * Files respected when searching for recent local files.
      */
+    @Input
     var localFilePatterns = listOf("**/*.zip", "**/*.jar")
 
     /**

@@ -31,7 +31,7 @@ dependencies {
     implementation("org.apache.commons:commons-lang3:3.4")
     implementation("commons-io:commons-io:2.4")
     implementation("commons-validator:commons-validator:1.6")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.8.8")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.10.0")
     implementation("org.reflections:reflections:0.9.9")
     implementation("org.apache.jackrabbit.vault:vault-cli:3.2.4")
     implementation("org.jsoup:jsoup:1.10.3")

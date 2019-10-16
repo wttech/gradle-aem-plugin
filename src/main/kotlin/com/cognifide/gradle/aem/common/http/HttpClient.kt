@@ -214,6 +214,8 @@ open class HttpClient(private val aem: AemExtension) : Serializable {
         return IOUtils.toString(asStream(response), Charsets.UTF_8) ?: ""
     }
 
+    inline fun <reified T : Any> asObjectFromJson(response: HttpResponse) = asObjectFromJson(response, T::class.java)
+
     fun <T> asObjectFromJson(response: HttpResponse, clazz: Class<T>): T {
         return try {
             ObjectMapper().readValue(asStream(response), clazz)

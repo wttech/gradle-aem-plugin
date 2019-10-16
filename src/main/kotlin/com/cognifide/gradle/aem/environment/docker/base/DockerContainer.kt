@@ -1,15 +1,20 @@
 package com.cognifide.gradle.aem.environment.docker.base
 
 import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.common.utils.Formats
 import com.cognifide.gradle.aem.environment.docker.DockerException
 
-open class DockerContainer(aem: AemExtension, val name: String) {
+open class DockerContainer(private val aem: AemExtension, val name: String) {
+
+    private val logger = aem.logger
 
     var runningTimeout = aem.props.long("environment.dockerContainer.runningTimeout") ?: 10000L
 
     val id: String?
         get() {
             try {
+                logger.debug("Determining ID for Docker container '$name'")
+
                 val containerId = Docker.execString {
                     withArgs("ps", "-l", "-q", "-f", "name=$name")
                     withTimeoutMillis(runningTimeout)
@@ -27,11 +32,13 @@ open class DockerContainer(aem: AemExtension, val name: String) {
 
     val running: Boolean
         get() {
-            val containerId = id ?: return false
+            val currentId = id ?: return false
 
-            try {
-                return Docker.execString {
-                    withArgs("inspect", "-f", "{{.State.Running}}", containerId)
+            return try {
+                logger.debug("Checking running state of Docker container '$name'")
+
+                Docker.execString {
+                    withArgs("inspect", "-f", "{{.State.Running}}", currentId)
                     withTimeoutMillis(runningTimeout)
                 }.toBoolean()
             } catch (e: DockerException) {
@@ -39,17 +46,32 @@ open class DockerContainer(aem: AemExtension, val name: String) {
             }
         }
 
-    fun exec(command: String, exitCode: Int? = 0) = exec(command, exitCode?.let { listOf(it) } ?: listOf())
-
     @Suppress("SpreadOperator")
-    fun exec(command: String, exitCodes: Iterable<Int>) {
-        if (!running) {
-            throw DockerContainerException("Cannot exec command '$command' since Docker container '$name' is not running!")
+    fun exec(spec: DockerExecSpec) {
+        if (spec.command.isBlank()) {
+            throw DockerContainerException("Exec command cannot be blank!")
         }
 
+        if (!running) {
+            throw DockerContainerException("Cannot exec command '${spec.command}' since Docker container '$name' is not running!")
+        }
+
+        val args = mutableListOf<String>().apply {
+            add("exec")
+            addAll(spec.options)
+            add(id!!)
+            addAll(Formats.commandToArgs(spec.command))
+        }
+
+        logger.info("Executing command '${args.joinToString(" ")}' for Docker container '$name'")
+
         Docker.exec {
-            withArgs("exec", id, *command.split(" ").toTypedArray())
-            withExpectedExitStatuses(exitCodes.toSet())
+            withArgs(*args.toTypedArray())
+            withExpectedExitStatuses(spec.exitCodes.toSet())
+
+            spec.input?.let { withInputStream(it) }
+            spec.output?.let { withOutputStream(it) }
+            spec.errors?.let { withErrorStream(it) }
         }
     }
 }
