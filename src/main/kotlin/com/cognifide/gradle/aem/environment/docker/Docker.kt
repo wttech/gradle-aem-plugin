@@ -66,8 +66,8 @@ class Docker(val environment: Environment) {
         containers.up()
     }
 
-    fun reload(containerName: String = Patterns.WILDCARD) {
-        containers.reload(containerName)
+    fun reload() {
+        containers.reload()
     }
 
     fun down() {

@@ -95,14 +95,14 @@ class Environment(@JsonIgnore val aem: AemExtension) : Serializable {
         return healthChecker.check(verbose)
     }
 
-    fun reload(containerName: String = Patterns.WILDCARD) {
+    fun reload() {
         if (!running) {
             throw EnvironmentException("Cannot reload environment as it is not running!")
         }
 
         aem.logger.info("Reloading $this")
 
-        docker.reload(containerName)
+        docker.reload()
 
         aem.logger.info("Reloaded $this")
     }

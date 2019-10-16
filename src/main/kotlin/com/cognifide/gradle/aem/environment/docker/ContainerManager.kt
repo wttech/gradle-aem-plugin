@@ -1,7 +1,5 @@
 package com.cognifide.gradle.aem.environment.docker
 
-import com.cognifide.gradle.aem.common.utils.Patterns
-
 class ContainerManager(private val docker: Docker) {
 
     private val aem = docker.environment.aem
@@ -45,12 +43,10 @@ class ContainerManager(private val docker: Docker) {
         }
     }
 
-    fun reload(nameFilter: String = Patterns.WILDCARD) {
-        val containers = defined.filter { Patterns.wildcard(it.name, nameFilter) }
-
+    fun reload() {
         aem.progress {
-            message = "Reloading container(s): ${containers.names}"
-            aem.parallel.each(containers) { it.reload() }
+            message = "Reloading container(s): ${defined.names}"
+            aem.parallel.each(defined) { it.reload() }
         }
     }
 }
