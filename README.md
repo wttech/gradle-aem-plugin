@@ -238,7 +238,7 @@ plugins {
 
 group = "com.company.aem"
 version = "1.0.0"
-defaultTasks(":instanceSatisfy", ":packageDeploy")
+defaultTasks(":instanceSatisfy", ":instanceProvision", ":packageDeploy")
 
 aem {
     `package` { // built CRX package options
@@ -298,24 +298,29 @@ aem {
             // ...
         }
         docker { // Docker specific configuration
-            init {
-                ensureDir( // create directories for Docker volumes
-                        "httpd/cache",
-                        "httpd/logs"
-                )
-            }
             containers {
-                "httpd" {
-                    reload { // configure running Docker container - HTTPD server with AEM dispatcher
-                        cleanDir(
-                                "/opt/aem/dispatcher/cache/content/example/live",
-                                "/opt/aem/dispatcher/cache/content/example/demo"
-                        )
-                        ensureDir("/usr/local/apache2/logs")
-                        exec("/usr/local/apache2/bin/httpd -k restart")
+                "httpd" { // control container described in 'docker-compose.yml.peb'
+                    resolve {
+                        resolveFiles {
+                            download("http://download.macromedia.com/dispatcher/download/dispatcher-apache2.4-linux-x86_64-4.3.2.tar.gz").then {
+                                copyArchiveFile(it, "**/dispatcher-apache*.so", file("modules/mod_dispatcher.so"))
+                            }
+                        }
+                        ensureDir("cache", "logs")
                     }
-                }   
-            }                         
+                    up {
+                        ensureDir("/usr/local/apache2/logs", "/opt/aem/dispatcher/cache/content/example/demo", "/opt/aem/dispatcher/cache/content/example/live")
+                        execShell("Starting HTTPD server", "/usr/local/apache2/bin/httpd -k start")
+                    }
+                    reload {
+                        cleanDir("/opt/aem/dispatcher/cache/content/example/demo", "/opt/aem/dispatcher/cache/content/example/live")
+                        execShell("Restarting HTTPD server", "/usr/local/apache2/bin/httpd -k restart")
+                    }
+                    dev {
+                        watchConfigDir("conf")
+                    }
+                }
+            }                        
         }
         healthChecks { // checks (e.g GET requests) verifying running Docker containers like HTTPD
               url("Live site", "http://example.com/en-us.html") { containsText("English US") }
@@ -346,7 +351,7 @@ aem {
         credentials("foo", "bar") // shorthand to set all user / password pairs above
     }
     tasks {
-        bundle { // customizing OSGi bundle manifest
+        bundleCompose { // customizing OSGi bundle, manifest etc
             javaPackage = "com.company.example.aem"
             // ...
         }
@@ -360,9 +365,24 @@ aem {
                 // ...
             }
         }
+        instanceProvision {
+            step("enable-crxde") {
+                description = "Enables CRX DE"
+                condition { once() && instance.environment != "prod" }
+                action {
+                    sync {
+                        osgiFramework.configure("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", mapOf(
+                                "alias" to "/crx/server"
+                        ))
+                    }
+                }
+            }
+            // ...
+        }       
         instanceSatisfy { // customizing CRX packages to be deployed as dependencies before built AEM application
             packages {
-                download("http://.../package.zip")
+                "my-package" { download("http://.../my-package-1.0.0.zip") }
+                "my-bundle" { resolve("group:name:version") } // will be wrapped on-the-fly to CRX package
             }
         }
         // ... and all other tasks
