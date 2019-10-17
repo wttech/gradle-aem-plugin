@@ -294,9 +294,6 @@ aem {
             publish("http://example.com") { tag("live") }
             other("http://dispatcher.example.com")
         }
-        distributions {  // extra files for Docker containers that are missing in images like AEM dispatcher HTTPD module
-            // ...
-        }
         docker { // Docker specific configuration
             containers {
                 "httpd" { // control container described in 'docker-compose.yml.peb'
@@ -917,25 +914,12 @@ Then file at path *build/aem/debug/debug.json* with content below is being gener
     },
     "environment": {
       "rootDir": ".../gradle-aem-multi/aem/.aem/environment",
-      "directories": {
-        "regulars": [],
-        "caches": []
-      },
-      "dockerRuntime": {
-          "name": "desktop",
-          "hostIp": "127.0.0.1"
-      },
       "hosts": {
         "defined": []
       },
-      "dockerComposeFile": ".../gradle-aem-multi/aem/.aem/environment/docker-compose.yml",
-      "dockerComposeSourceFile": ".../gradle-aem-multi/aem/gradle/environment/docker-compose.yml.peb",
-      "dockerConfigPath": ".../gradle-aem-multi/aem/gradle/environment",
-      "dockerRootPath": ".../gradle-aem-multi/aem/.aem/environment",
       "dispatcherModuleFile": ".../gradle-aem-multi/aem/.aem/environment/distributions/mod_dispatcher.so",
       "configDir": ".../gradle-aem-multi/aem/gradle/environment",
       "created": true,
-      "httpdConfDir": ".../gradle-aem-multi/aem/gradle/environment/httpd/conf"
     },
     "notifier": {
       "enabled": true
