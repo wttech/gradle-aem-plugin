@@ -52,26 +52,29 @@ open class Sync : AemDefaultTask() {
             return filter.rootDirs(contentDir)
         }
 
-    @Internal
-    val vlt = VltClient(aem)
+    private var vltOptions: VltClient.() -> Unit = {}
 
     fun vlt(options: VltClient.() -> Unit) {
-        vlt.apply(options)
+        vltOptions = options
     }
 
-    @Internal
-    val cleaner = Cleaner(aem)
+    private val vlt by lazy { VltClient(aem).apply(vltOptions) }
+
+    private var cleanerOptions: Cleaner.() -> Unit = {}
 
     fun cleaner(options: Cleaner.() -> Unit) {
-        cleaner.apply(options)
+        cleanerOptions = options
     }
 
-    @Internal
-    val downloader = Downloader(aem)
+    private val cleaner by lazy { Cleaner(aem).apply(cleanerOptions) }
+
+    private var downloaderOptions: Downloader.() -> Unit = {}
 
     fun downloader(options: Downloader.() -> Unit) {
-        downloader.apply(options)
+        downloaderOptions = options
     }
+
+    private val downloader by lazy { Downloader(aem).apply(downloaderOptions) }
 
     init {
         description = "Check out then clean JCR content."
@@ -117,7 +120,7 @@ open class Sync : AemDefaultTask() {
         vlt.apply {
             contentDir = this@Sync.contentDir
             command = "--credentials ${instance.credentialsString} checkout --force --filter ${filter.file} ${instance.httpUrl}/crx/server/crx.default"
-            summary()
+            run()
         }
     }
 
@@ -125,7 +128,6 @@ open class Sync : AemDefaultTask() {
         downloader.apply {
             instance = this@Sync.instance
             filter = this@Sync.filter
-
             download()
         }
     }

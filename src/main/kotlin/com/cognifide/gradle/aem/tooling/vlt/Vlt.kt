@@ -17,7 +17,7 @@ open class Vlt : AemDefaultTask() {
 
     @TaskAction
     open fun run() {
-        val summary = aem.vlt { run(); summary() }
+        val summary = aem.vlt { options(); run(); summary() }
         aem.notifier.notify("Executing Vault command", "Command '${summary.command}' finished." +
                 " Duration: ${summary.durationString}")
     }

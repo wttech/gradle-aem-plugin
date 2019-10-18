@@ -17,7 +17,7 @@ open class Rcp : AemDefaultTask() {
 
     @TaskAction
     fun run() {
-        val summary = aem.rcp { copy(); summary() }
+        val summary = aem.rcp { options(); copy(); summary() }
 
         logger.info("RCP details: $summary")
 
