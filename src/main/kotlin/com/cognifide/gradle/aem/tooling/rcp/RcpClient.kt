@@ -44,6 +44,10 @@ class RcpClient(private val aem: AemExtension) {
         pathsFile.useLines { line -> line.map { pathMapping(it) }.forEach { copy(it.first, it.second) } }
     }
 
+    fun copy(path: String) = pathMapping(path).let { copy(it.first, it.second) }
+
+    fun copy(paths: Map<String, String>) = paths.forEach { (sourcePath, targetPath) -> copy(sourcePath, targetPath) }
+
     fun copy(sourcePath: String, targetPath: String) {
         checkInstances()
         stopWatch.apply { if (!isStarted) start() else resume() }
