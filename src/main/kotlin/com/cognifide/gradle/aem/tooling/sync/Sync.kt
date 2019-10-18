@@ -3,7 +3,7 @@ package com.cognifide.gradle.aem.tooling.sync
 import com.cognifide.gradle.aem.AemDefaultTask
 import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.common.utils.Formats
-import com.cognifide.gradle.aem.tooling.vlt.VltRunner
+import com.cognifide.gradle.aem.tooling.vlt.VltClient
 import java.io.File
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
@@ -53,9 +53,9 @@ open class Sync : AemDefaultTask() {
         }
 
     @Internal
-    val vlt = VltRunner(aem)
+    val vlt = VltClient(aem)
 
-    fun vlt(options: VltRunner.() -> Unit) {
+    fun vlt(options: VltClient.() -> Unit) {
         vlt.apply(options)
     }
 
@@ -117,7 +117,7 @@ open class Sync : AemDefaultTask() {
         vlt.apply {
             contentDir = this@Sync.contentDir
             command = "--credentials ${instance.credentialsString} checkout --force --filter ${filter.file} ${instance.httpUrl}/crx/server/crx.default"
-            run()
+            summary()
         }
     }
 
