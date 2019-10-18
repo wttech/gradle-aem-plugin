@@ -188,7 +188,7 @@ Documentation for previous series:
 Most effective way to experience Gradle AEM Plugin is to use *Quickstart* located in:
   * [AEM Single-Project Example](https://github.com/Cognifide/gradle-aem-single#quickstart) - recommended for **application/library** development,
   * [AEM Multi-Project Example](https://github.com/Cognifide/gradle-aem-multi#quickstart) - recommended for **long-term project** development,
-  * [AEM Boot](https://github.com/Cognifide/gradle-aem-boot#quickstart) - only booting local AEM instances and AEM dispatcher automatically. Useful when building CRX packages is covered by Maven & [Content Package Maven Plugin](https://helpx.adobe.com/experience-manager/6-5/sites/developing/using/vlt-mavenplugin.html).
+  * [AEM Boot](https://github.com/Cognifide/gradle-aem-boot#quickstart) - only booting local AEM instances and AEM dispatcher automatically. Useful when building CRX packages is covered separately, e.g by Maven & [Content Package Maven Plugin](https://helpx.adobe.com/experience-manager/6-5/sites/developing/using/vlt-mavenplugin.html).
   
 The only software needed on your machine to start using plugin is Java 8 or newer (also to setup local native AEM instances).
 Optionally, [Docker](https://www.docker.com/) is needed (when using automatic AEM dispatcher setup).
