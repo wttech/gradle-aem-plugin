@@ -25,15 +25,11 @@ class RcpClient(private val aem: AemExtension) {
 
     fun copy() {
         if (paths == null && pathsFile == null) {
-            throw AemException("RCP task need to have defined 'rcp.paths' or 'rcp.pathsFile")
+            throw AemException("RCP need to have defined 'rcp.paths' or 'rcp.pathsFile'!")
         }
 
         paths?.let { copy(it) }
         pathsFile?.let { copy(it) }
-    }
-
-    fun copy(paths: List<String>) {
-        paths.asSequence().map { pathMapping(it) }.forEach { copy(it.first, it.second) }
     }
 
     fun copy(pathsFile: File) {
@@ -41,12 +37,16 @@ class RcpClient(private val aem: AemExtension) {
             throw VltException("RCP paths file does not exist: $pathsFile")
         }
 
-        pathsFile.useLines { line -> line.map { pathMapping(it) }.forEach { copy(it.first, it.second) } }
+        pathsFile.useLines { copy(it) }
     }
 
-    fun copy(path: String) = pathMapping(path).let { copy(it.first, it.second) }
+    fun copy(paths: Sequence<String>) = paths.forEach { copy(it) }
+
+    fun copy(paths: Iterable<String>) = paths.forEach { copy(it) }
 
     fun copy(paths: Map<String, String>) = paths.forEach { (sourcePath, targetPath) -> copy(sourcePath, targetPath) }
+
+    fun copy(path: String) = pathMapping(path).let { copy(it.first, it.second) }
 
     fun copy(sourcePath: String, targetPath: String) {
         checkInstances()
