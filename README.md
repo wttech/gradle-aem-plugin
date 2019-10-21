@@ -185,11 +185,15 @@ Documentation for previous series:
 
 ## Getting started
 
-* Most effective way to experience Gradle AEM Plugin is to use *Quickstart* located in:
-  * [AEM Single-Project Example](https://github.com/Cognifide/gradle-aem-single#quickstart) - recommended for **application / library** development,
+Most effective way to experience Gradle AEM Plugin is to use *Quickstart* located in:
+  * [AEM Single-Project Example](https://github.com/Cognifide/gradle-aem-single#quickstart) - recommended for **application/library** development,
   * [AEM Multi-Project Example](https://github.com/Cognifide/gradle-aem-multi#quickstart) - recommended for **long-term project** development,
-* The only software needed on your machine to start using plugin is Java 8.
-* As a build command, it is recommended to use Gradle Wrapper (`gradlew`) instead of locally installed Gradle (`gradle`) to easily have same version of build tool installed on all environments. Only at first build time, wrapper will be automatically downloaded and installed, then reused.
+  * [AEM Boot](https://github.com/Cognifide/gradle-aem-boot#quickstart) - only booting local AEM instances and AEM dispatcher automatically. Useful when building CRX packages is covered separately, e.g by Maven & [Content Package Maven Plugin](https://helpx.adobe.com/experience-manager/6-5/sites/developing/using/vlt-mavenplugin.html).
+  
+The only software needed on your machine to start using plugin is Java 8 or newer (also to setup local native AEM instances).
+Optionally, [Docker](https://www.docker.com/) is needed (when using automatic AEM dispatcher setup).
+
+As a build command, it is recommended to use Gradle Wrapper (`gradlew`) instead of locally installed Gradle (`gradle`) to easily have same version of build tool installed on all environments. Only at first build time, wrapper will be automatically downloaded and installed, then reused.
 
 ## Configuration
 
@@ -294,9 +298,6 @@ aem {
             publish("http://example.com") { tag("live") }
             other("http://dispatcher.example.com")
         }
-        distributions {  // extra files for Docker containers that are missing in images like AEM dispatcher HTTPD module
-            // ...
-        }
         docker { // Docker specific configuration
             containers {
                 "httpd" { // control container described in 'docker-compose.yml.peb'
@@ -395,11 +396,12 @@ To see all available options and actual documentation, please follow to:
 * `aem` - [AemExtension](src/main/kotlin/com/cognifide/gradle/aem/AemExtension.kt)
 * `package` - [PackageOptions](src/main/kotlin/com/cognifide/gradle/aem/common/pkg/PackageOptions.kt)
 * `instance` - [InstanceOptions](src/main/kotlin/com/cognifide/gradle/aem/common/instance/InstanceOptions.kt)
-* `bundle` - [BundleJar](src/main/kotlin/com/cognifide/gradle/aem/bundle/BundleJar.kt)
 * `localInstance` - [LocalInstanceManager](src/main/kotlin/com/cognifide/gradle/aem/instance/LocalInstanceManager.kt)
 * `environment` - [Environment](src/main/kotlin/com/cognifide/gradle/aem/environment/Environment.kt)
 * `fileTransfer` - [FileTransferManager](src/main/kotlin/com/cognifide/gradle/aem/common/file/transfer/FileTransferManager.kt)
+* `bundleCompose` - [BundleCompose](src/main/kotlin/com/cognifide/gradle/aem/bundle/tasks/BundleCompose.kt)
 * `packageCompose` - [PackageCompose](src/main/kotlin/com/cognifide/gradle/aem/pkg/tasks/PackageCompose.kt)
+* `instanceProvision` - [InstanceProvision](src/main/kotlin/com/cognifide/gradle/aem/instance/provision/InstanceProvision.kt)
 * `instanceSatisfy` - [InstanceSatisfy](src/main/kotlin/com/cognifide/gradle/aem/instance/satisfy/InstanceSatisfy.kt)
 * `...` - other tasks in similar way.
 
@@ -917,25 +919,12 @@ Then file at path *build/aem/debug/debug.json* with content below is being gener
     },
     "environment": {
       "rootDir": ".../gradle-aem-multi/aem/.aem/environment",
-      "directories": {
-        "regulars": [],
-        "caches": []
-      },
-      "dockerRuntime": {
-          "name": "desktop",
-          "hostIp": "127.0.0.1"
-      },
       "hosts": {
         "defined": []
       },
-      "dockerComposeFile": ".../gradle-aem-multi/aem/.aem/environment/docker-compose.yml",
-      "dockerComposeSourceFile": ".../gradle-aem-multi/aem/gradle/environment/docker-compose.yml.peb",
-      "dockerConfigPath": ".../gradle-aem-multi/aem/gradle/environment",
-      "dockerRootPath": ".../gradle-aem-multi/aem/.aem/environment",
       "dispatcherModuleFile": ".../gradle-aem-multi/aem/.aem/environment/distributions/mod_dispatcher.so",
       "configDir": ".../gradle-aem-multi/aem/gradle/environment",
       "created": true,
-      "httpdConfDir": ".../gradle-aem-multi/aem/gradle/environment/httpd/conf"
     },
     "notifier": {
       "enabled": true
