@@ -76,10 +76,10 @@ open class InstanceSatisfy : PackageDeploy() {
     val packageGroups by lazy {
         val result = if (cmdGroups) {
             logger.info("Providing packages defined via command line.")
-            packageProvider.resolveGroups { Patterns.wildcard(name, "$GROUP_CMD.*") }
+            packageProvider.allGroups { Patterns.wildcard(name, "$GROUP_CMD.*") }
         } else {
             logger.info("Providing packages defined in build script.")
-            packageProvider.resolveGroups(groupFilter)
+            packageProvider.allGroups(groupFilter)
         }
 
         val files = result.flatMap { it.files }

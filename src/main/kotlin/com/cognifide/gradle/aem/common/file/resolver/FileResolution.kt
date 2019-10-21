@@ -14,6 +14,11 @@ open class FileResolution(val group: FileGroup, val id: String, private val reso
     private var thenOperations = mutableListOf<FileResolution.(File) -> File>()
 
     /**
+     * Resolve file immediatelly.
+     */
+    fun resolve() = file
+
+    /**
      * Perform operation on resolved file, but do not change it path (work in-place).
      */
     fun use(operation: FileResolution.(File) -> Unit) {

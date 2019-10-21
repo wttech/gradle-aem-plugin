@@ -10,7 +10,7 @@ data class RcpSummary(
     val duration: Long
 ) {
     val durationString: String
-        get() = Formats.duration(duration, false)
+        get() = Formats.duration(duration)
 
     override fun toString(): String {
         return "RcpSummary(copiedPaths=$copiedPaths, duration=$durationString, source=$source, target=$target)"
