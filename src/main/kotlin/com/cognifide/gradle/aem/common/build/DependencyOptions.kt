@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.common.build
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.utils.Utils
 import org.gradle.api.artifacts.Dependency
+import java.io.File
 
 /**
  * Based on: org.gradle.kotlin.dsl.accessors.runtime
@@ -63,6 +64,15 @@ class DependencyOptions {
 
         fun add(aem: AemExtension, configuration: String, notation: String) {
             aem.project.dependencies.add(configuration, notation)
+        }
+
+        fun resolve(aem: AemExtension, notation: Any): File {
+            val dependency = aem.project.dependencies.create(notation)
+            val config = aem.project.configurations.detachedConfiguration(dependency).apply {
+                isTransitive = false
+            }
+
+            return config.singleFile
         }
     }
 }

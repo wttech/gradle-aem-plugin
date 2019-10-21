@@ -10,12 +10,12 @@ import org.apache.commons.lang3.time.StopWatch
 
 class CheckRunner(internal val aem: AemExtension) {
 
-    private var checks: CheckGroup.() -> List<Check> = { throw InstanceException("No instance checks defined!") }
+    private var checks: CheckFactory.() -> List<Check> = { throw InstanceException("No instance checks defined!") }
 
     /**
      * Defines which checks should be performed (and repeated).
      */
-    fun checks(definitions: CheckGroup.() -> List<Check>) {
+    fun checks(definitions: CheckFactory.() -> List<Check>) {
         checks = definitions
     }
 

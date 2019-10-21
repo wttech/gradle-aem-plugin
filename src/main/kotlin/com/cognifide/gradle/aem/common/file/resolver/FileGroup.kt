@@ -21,4 +21,6 @@ open class FileGroup(val aem: AemExtension, val downloadDir: File, val name: Str
     fun resolve(id: String, resolver: (FileResolution) -> File): FileResolution {
         return createResolution(id, resolver).apply { _resolutions += this }
     }
+
+    fun resolve() = files
 }
