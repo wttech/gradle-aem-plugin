@@ -233,7 +233,7 @@ githubRelease {
     token((project.findProperty("github.token") ?: "").toString())
     tagName(project.version.toString())
     releaseName(project.version.toString())
-    releaseAssets(project.fileTree("build/libs") { include("**/${project.name}-${project.version}*.jar") })
+    releaseAssets(tasks["jar"], tasks["sourcesJar"], tasks["javadocJar"])
     draft((project.findProperty("github.draft") ?: "false").toString().toBoolean())
     prerelease((project.findProperty("github.prerelease") ?: "false").toString().toBoolean())
     overwrite((project.findProperty("github.override") ?: "false").toString().toBoolean())
