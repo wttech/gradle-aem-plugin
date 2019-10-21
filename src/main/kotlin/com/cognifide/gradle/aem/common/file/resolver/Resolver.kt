@@ -49,11 +49,17 @@ val downloadDir: File
         get() = allFiles { true }
 
     fun allFiles(filter: G.() -> Boolean): List<File> {
-        return resolveGroups(filter).flatMap { it.files }
+        return allGroups(filter).flatMap { it.files }
     }
 
-    fun resolveGroups(filter: G.() -> Boolean): List<G> {
-        return groups.filter(filter).onEach { it.files }
+    fun allGroups(filter: G.() -> Boolean): List<G> = groups.filter(filter).apply {
+        aem.progress {
+            step = "Resolving files"
+            total = size.toLong()
+            aem.parallel.each(this@apply) { group ->
+                increment("Group '${group.name}'") { group.resolve() }
+            }
+        }
     }
 
     fun group(name: String): G {
@@ -72,7 +78,7 @@ val downloadDir: File
     fun resolve(dependencyOptions: DependencyOptions.() -> Unit) = resolve(DependencyOptions.create(aem, dependencyOptions))
 
     private fun resolve(dependencyNotation: Any): FileResolution = resolveFile(dependencyNotation) {
-        project.configurations.detachedConfiguration(project.dependencies.create(dependencyNotation)).singleFile
+        DependencyOptions.resolve(aem, dependencyNotation)
     }
 
     /**

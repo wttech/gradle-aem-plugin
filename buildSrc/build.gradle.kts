@@ -13,4 +13,5 @@ dependencies {
     implementation("com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4")
     implementation("com.neva.gradle:fork-plugin:3.1.4")
     implementation("net.researchgate:gradle-release:2.6.0")
+    implementation("gradle.plugin.com.github.breadmoirai:github-release:2.2.9")
 }

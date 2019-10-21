@@ -27,7 +27,10 @@ import com.cognifide.gradle.aem.instance.*
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.PackageCompose
 import com.cognifide.gradle.aem.tooling.ToolingPlugin
+import com.cognifide.gradle.aem.tooling.rcp.RcpClient
 import com.cognifide.gradle.aem.tooling.vlt.VltException
+import com.cognifide.gradle.aem.tooling.vlt.VltClient
+import com.cognifide.gradle.aem.tooling.vlt.VltSummary
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 import java.io.Serializable
@@ -618,6 +621,21 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
      * Transfer files using over SMB protocol using custom settings.
      */
     fun <T> smbFile(consumer: SmbFileTransfer.() -> T) = fileTransfer.factory.smb(consumer)
+
+    /**
+     * Execute any Vault command.
+     */
+    fun vlt(command: String): VltSummary = vlt { this.command = command; run() }
+
+    /**
+     * Execute any Vault command with customized options like content directory.
+     */
+    fun <T> vlt(options: VltClient.() -> T) = VltClient(this).run(options)
+
+    /**
+     * Execute any Vault JCR content remote copying with customized options like content directory.
+     */
+    fun <T> rcp(options: RcpClient.() -> T) = RcpClient(this).run(options)
 
     // Utilities (to use without imports)
 

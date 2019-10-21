@@ -13,7 +13,9 @@ class BundleDependency(
 
     private val dependency = aem.project.dependencies.create(notation)
 
-    internal val configuration: Configuration = aem.project.configurations.detachedConfiguration(dependency)
+    internal val configuration: Configuration = aem.project.configurations.detachedConfiguration(dependency).apply {
+        isTransitive = false
+    }
 
     val file: File
         get() = configuration.resolve().first()

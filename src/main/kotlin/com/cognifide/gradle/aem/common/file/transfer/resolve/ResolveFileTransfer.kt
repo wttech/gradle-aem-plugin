@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.common.file.transfer.resolve
 
 import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.common.build.DependencyOptions
 import com.cognifide.gradle.aem.common.file.transfer.ProtocolFileTransfer
 import java.io.File
 
@@ -21,7 +22,7 @@ class ResolveFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
         val notation = dirUrl.substringAfter("://")
 
         try {
-            configurations.detachedConfiguration(dependencies.create(notation)).singleFile.apply {
+            DependencyOptions.resolve(aem, notation).apply {
                 inputStream().use { downloader().download(length(), it, target) }
             }
         } catch (e: Exception) {

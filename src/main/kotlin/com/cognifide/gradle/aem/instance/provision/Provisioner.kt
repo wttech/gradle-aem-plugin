@@ -75,14 +75,14 @@ class Provisioner(val aem: AemExtension) {
         return try {
             perform()
             aem.logger.info("Provision step '${definition.id}' ended at $instance." +
-                    " Duration: ${Formats.durationSince(startTime, true)}")
+                    " Duration: ${Formats.durationSince(startTime)}")
             Action(this, Status.ENDED)
         } catch (e: ProvisionException) {
             if (!definition.continueOnFail) {
                 throw e
             } else {
                 aem.logger.error("Provision step '${definition.id} failed at $instance." +
-                        " Duration: ${Formats.durationSince(startTime, true)}. Cause: ${e.message}")
+                        " Duration: ${Formats.durationSince(startTime)}. Cause: ${e.message}")
                 aem.logger.debug("Actual error", e)
                 Action(this, Status.FAILED)
             }
