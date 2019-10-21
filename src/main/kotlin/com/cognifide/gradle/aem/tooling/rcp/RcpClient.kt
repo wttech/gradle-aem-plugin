@@ -42,8 +42,6 @@ class RcpClient(private val aem: AemExtension) {
 
     fun copy(paths: Sequence<String>) = paths.forEach { copy(it) }
 
-    fun copy(vararg paths: String) = copy(paths.asIterable())
-
     fun copy(paths: Iterable<String>) = paths.forEach { copy(it) }
 
     fun copy(paths: Map<String, String>) = paths.forEach { (sourcePath, targetPath) -> copy(sourcePath, targetPath) }
