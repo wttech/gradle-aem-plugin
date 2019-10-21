@@ -24,8 +24,8 @@ open class BundleCompose : Jar(), AemTask {
     @Internal
     val javaConvention = project.convention.getPlugin(JavaPluginConvention::class.java)
 
-    @Nested
-    val bundleConvention = BundleTaskConvention(this).also { convention.plugins.set("bundle", it) }
+    @Internal
+    val bundleConvention = BundleTaskConvention(this).also { convention.plugins["bundle"] = it }
 
     /**
      * Allows to configure BND tool specific options.
