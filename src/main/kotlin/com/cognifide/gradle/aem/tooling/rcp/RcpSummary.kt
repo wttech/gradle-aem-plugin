@@ -4,10 +4,10 @@ import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.utils.Formats
 
 data class RcpSummary(
-        val source: Instance,
-        val target: Instance,
-        val copiedPaths: Long,
-        val duration: Long
+    val source: Instance,
+    val target: Instance,
+    val copiedPaths: Long,
+    val duration: Long
 ) {
     val durationString: String
         get() = Formats.duration(duration, false)
