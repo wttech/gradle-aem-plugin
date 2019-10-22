@@ -92,4 +92,16 @@ class PackageOptions(aem: AemExtension) : Serializable {
      * It is a protection against exceeding max Java heap size.
      */
     var responseBuffer = aem.props.int("package.responseBuffer") ?: 4096
+
+    /**
+     * CRX package validator service.
+     */
+    var validator = PackageValidator(aem)
+
+    /**
+     * Customize CRX package validator
+     */
+    fun validator(options: PackageValidator.() -> Unit) {
+        validator.apply(options)
+    }
 }

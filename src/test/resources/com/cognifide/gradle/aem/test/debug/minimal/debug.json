@@ -103,7 +103,11 @@
         "org.apache.jackrabbit.vault.packaging.*Exception",
         "org.xml.sax.*Exception"
       ],
-      "responseBuffer" : 4096
+      "responseBuffer" : 4096,
+      "validator": {
+        "enabled": true,
+        "verbose": true
+      }
     },
     "instanceOptions" : {
       "statusProperties": false,

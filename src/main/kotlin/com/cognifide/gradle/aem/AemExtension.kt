@@ -468,6 +468,11 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     }
 
     /**
+     * Validate any CRX package.
+     */
+    fun validatePackage(file: File) = packageOptions.validator.validate(file)
+
+    /**
      * Show asynchronous progress indicator with percentage while performing some action.
      */
     fun <T> progress(total: Int, action: ProgressIndicator.() -> T): T = progress(total.toLong(), action)

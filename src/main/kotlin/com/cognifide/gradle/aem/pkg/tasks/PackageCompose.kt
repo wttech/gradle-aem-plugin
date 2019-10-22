@@ -64,6 +64,12 @@ open class PackageCompose : ZipTask() {
     val metaDir = AemTask.temporaryDir(project, name, "metadata/${Package.META_PATH}")
 
     /**
+     * Controls if built CRX package should be validated.
+     */
+    @Input
+    var validation: Boolean = true
+
+    /**
      * CRX package Vault files will be composed from given sources.
      * Missing files required by package within installation will be auto-generated if 'vaultCopyMissingFiles' is enabled.
      */
@@ -172,6 +178,7 @@ open class PackageCompose : ZipTask() {
     override fun copy() {
         copyMetaFiles()
         super.copy()
+        validate()
     }
 
     private fun copyMetaFiles() {
@@ -439,6 +446,14 @@ open class PackageCompose : ZipTask() {
                 vaultDefinition.nodeTypeLines.add(line)
             }
         }
+    }
+
+    private fun validate() {
+        if (!validation) {
+            return
+        }
+
+        aem.validatePackage(archiveFile.get().asFile)
     }
 
     companion object {
