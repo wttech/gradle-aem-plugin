@@ -35,21 +35,22 @@ class PackageValidator(aem: AemExtension) {
     fun run(file: File): ValidationResult = try {
         Base.validate(file, DefaultValidationOptions().apply(options))
     } catch (e: Exception) {
-        throw PackageException("CRX package validator error! Cause: ${e.message}", e)
+        throw PackageException("Validating package internal error! Cause: ${e.message}", e)
     }
 
     fun validate(file: File) {
         if (!enabled) {
-            logger.debug("CRX package validation is disabled.")
             return
         }
+
+        logger.info("Validating package '$file'")
 
         val result = run(file)
 
         if (result.reason == Reason.SUCCESS) {
-            logger.info("CRX package '$file' successfully passed validation.")
+            logger.info("Validated'$file'.")
         } else {
-            val message = "CRX package '$file' does not pass validation!\n${PackageValidationError(result)}"
+            val message = "Validation of package '$file' ended with error!\n${PackageValidationError(result)}"
             if (verbose) {
                 throw PackageException(message)
             } else {

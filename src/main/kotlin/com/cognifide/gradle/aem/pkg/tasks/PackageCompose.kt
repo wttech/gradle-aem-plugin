@@ -34,7 +34,7 @@ import org.gradle.api.tasks.bundling.Jar
 open class PackageCompose : ZipTask() {
 
     /**
-     * Absolute path to JCR content to be included in CRX package.
+     * Absolute path to JCR content to be included in package.
      *
      * Must be absolute or relative to current working directory.
      */
@@ -42,13 +42,13 @@ open class PackageCompose : ZipTask() {
     var contentDir: File = aem.packageOptions.contentDir
 
     /**
-     * Content path for OSGi bundle jars being placed in CRX package.
+     * Content path for OSGi bundle jars being placed in package.
      */
     @Input
     var bundlePath: String = aem.packageOptions.installPath
 
     /**
-     * Content path for CRX sub-packages being placed in CRX package being built.
+     * Content path for CRX sub-packages being placed in package being built.
      */
     @Internal
     var packagePath: String = aem.packageOptions.storagePath
@@ -64,13 +64,13 @@ open class PackageCompose : ZipTask() {
     val metaDir = AemTask.temporaryDir(project, name, "metadata/${Package.META_PATH}")
 
     /**
-     * Controls if built CRX package should be validated.
+     * Controls if built package should be validated.
      */
     @Input
     var validation: Boolean = true
 
     /**
-     * CRX package Vault files will be composed from given sources.
+     * Package Vault files will be composed from given sources.
      * Missing files required by package within installation will be auto-generated if 'vaultCopyMissingFiles' is enabled.
      */
     @get:Internal
@@ -88,7 +88,7 @@ open class PackageCompose : ZipTask() {
         }
 
     /**
-     * Defines properties being used to generate CRX package metadata files.
+     * Defines properties being used to generate package metadata files.
      */
     @Nested
     val vaultDefinition = VltDefinition(aem)
