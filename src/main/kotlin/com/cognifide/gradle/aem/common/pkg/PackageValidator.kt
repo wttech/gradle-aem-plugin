@@ -49,7 +49,7 @@ class PackageValidator(aem: AemExtension) {
         if (result.reason == Reason.SUCCESS) {
             logger.info("CRX package '$file' successfully passed validation.")
         } else {
-            val message = "CRX package '$file' does not pass validation!\n${Error(result)}"
+            val message = "CRX package '$file' does not pass validation!\n${PackageValidationError(result)}"
             if (verbose) {
                 throw PackageException(message)
             } else {
@@ -61,25 +61,5 @@ class PackageValidator(aem: AemExtension) {
     private fun acHandlings(names: List<String>) = names.map { name ->
         ACHandling.values().firstOrNull { it.name.equals(name, true) }
                 ?: throw PackageException("Unsupported CRX package AC handling specified: '$name'!")
-    }
-
-    class Error(base: ValidationResult) {
-
-        val reason = base.reason.name
-
-        val invalidRoot = base.invalidRoot.toString()
-
-        val coveringRoot = base.coveringRoot.toString()
-
-        val forbiddenEntry = base.forbiddenEntry
-
-        val forbiddenACHandlingMode = base.forbiddenACHandlingMode.name
-
-        val cause = base.cause.message
-
-        override fun toString(): String {
-            return "Error(reason='$reason', invalidRoot='$invalidRoot', coveringRoot='$coveringRoot'," +
-                    " forbiddenEntry='$forbiddenEntry', forbiddenACHandlingMode='$forbiddenACHandlingMode', cause=$cause)"
-        }
     }
 }

@@ -44,7 +44,8 @@ class PackageFileFilter(private val aem: AemExtension) : Serializable {
      * Filter that ensures that only OSGi bundles will be put into CRX package under install path.
      */
     @Input
-    var bundleChecking: Boolean = true
+    var bundleChecking = aem.props.string("aem.package.bundleChecking")
+            ?.let { BundleChecking.of(it) } ?: BundleChecking.FAIL
 
     fun filter(spec: CopySpec, expandProperties: Map<String, Any> = mapOf()) {
         if (excluding) {
@@ -60,10 +61,15 @@ class PackageFileFilter(private val aem: AemExtension) : Serializable {
                 }
             }
 
-            if (bundleChecking && Patterns.wildcard(path, "**/install/*.jar")) {
+            if (bundleChecking != BundleChecking.DISABLED && Patterns.wildcard(path, "**/install/*.jar")) {
                 val bundle = fileDetail.file
                 if (!isBundle(bundle)) {
-                    aem.logger.warn("Jar being a part of composed CRX package is not a valid OSGi bundle: $bundle")
+                    val message = "Jar being a part of composed CRX package is not a valid OSGi bundle: $bundle"
+                    if (bundleChecking == BundleChecking.WARN) {
+                        aem.logger.warn(message)
+                    } else if (bundleChecking == BundleChecking.FAIL) {
+                        throw PackageException(message)
+                    }
                     fileDetail.exclude()
                 }
             }
