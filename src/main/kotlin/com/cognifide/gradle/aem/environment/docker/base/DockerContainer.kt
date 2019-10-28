@@ -62,8 +62,9 @@ open class DockerContainer(private val aem: AemExtension, val name: String) {
             add(id!!)
             addAll(Formats.commandToArgs(spec.command))
         }
+        val fullCommand = args.joinToString(" ")
 
-        logger.info("Executing command '${args.joinToString(" ")}' for Docker container '$name'")
+        logger.info("Executing command '$fullCommand' for Docker container '$name'")
 
         Docker.exec {
             withArgs(*args.toTypedArray())

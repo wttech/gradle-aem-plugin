@@ -2,12 +2,15 @@ package com.cognifide.gradle.aem.environment.docker
 
 import com.cognifide.gradle.aem.environment.Environment
 import com.cognifide.gradle.aem.environment.EnvironmentException
+import com.cognifide.gradle.aem.environment.docker.base.Docker as Base
 import org.gradle.util.GFileUtils
 import java.io.File
 
 class Docker(val environment: Environment) {
 
     val aem = environment.aem
+
+    private val logger = aem.logger
 
     val running: Boolean
         get() = stack.running && containers.running
@@ -49,7 +52,7 @@ class Docker(val environment: Environment) {
     }
 
     private fun syncComposeFile() {
-        aem.logger.info("Generating Docker compose file '$composeFile' from template '$composeTemplateFile'")
+        logger.info("Generating Docker compose file '$composeFile' from template '$composeTemplateFile'")
 
         if (!composeTemplateFile.exists()) {
             throw EnvironmentException("Docker compose file template does not exist: $composeTemplateFile")
@@ -71,5 +74,55 @@ class Docker(val environment: Environment) {
 
     fun down() {
         stack.undeploy()
+    }
+
+    fun exec(command: String, exitCode: Int = 0) = exec {
+        this.command = command
+        this.exitCodes = listOf(exitCode)
+    }
+
+    fun exec(operation: String, command: String, exitCode: Int = 0) = exec {
+        this.operation = { operation }
+        this.command = command
+        this.exitCodes = listOf(exitCode)
+    }
+
+    fun exec(options: ExecSpec.() -> Unit) {
+        val spec = ExecSpec().apply(options)
+        val operation = spec.operation()
+
+        aem.progressIndicator {
+            step = "Executing Docker command"
+            message = operation
+
+            try {
+                exec(spec)
+            } catch (e: DockerException) {
+                aem.logger.debug("Exec operation '$operation' error", e)
+                throw EnvironmentException("Failed to perform operation '$operation' on Docker!\n${e.message}")
+            }
+        }
+    }
+
+    @Suppress("SpreadOperator")
+    private fun exec(spec: ExecSpec) {
+        if (spec.command.isBlank()) {
+            throw DockerException("Exec command cannot be blank!")
+        }
+
+        if (!running) {
+            throw DockerException("Cannot exec command '${spec.command}'!")
+        }
+
+        logger.info("Executing Docker command '${spec.args.joinToString(" ")}'")
+
+        Base.exec {
+            withArgs(*spec.args.toTypedArray())
+            withExpectedExitStatuses(spec.exitCodes.toSet())
+
+            spec.input?.let { withInputStream(it) }
+            spec.output?.let { withOutputStream(it) }
+            spec.errors?.let { withErrorStream(it) }
+        }
     }
 }
