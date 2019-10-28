@@ -406,6 +406,13 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     }
 
     /**
+     * Get OSGi bundle defined to be built (could not yet exist).
+     */
+    @get:JsonIgnore
+    val bundle: File
+        get() = tasks.get(BundleCompose.NAME, BundleCompose::class.java).archiveFile.get().asFile
+
+    /**
      * Get all OSGi bundles defined to be built.
      */
     @get:JsonIgnore

@@ -3,14 +3,22 @@ package com.cognifide.gradle.aem.environment.docker
 import com.cognifide.gradle.aem.environment.docker.base.DockerSpec
 import org.gradle.process.internal.streams.SafeStreams
 
-class ExecSpec : DockerSpec() {
+class RunSpec : DockerSpec() {
 
     init {
         output = SafeStreams.systemOut()
         errors = SafeStreams.systemErr()
     }
 
-    var operation: () -> String = { "Executing command '$command'" }
+    lateinit var image: String
+
+    var volumes = mutableMapOf<String, String>()
+
+    fun volume(localPath: String, containerPath: String) {
+        volumes[localPath] = containerPath
+    }
+
+    var operation: () -> String = { "Running command '$command'" }
 
     fun operation(operation: () -> String) {
         this.operation = operation

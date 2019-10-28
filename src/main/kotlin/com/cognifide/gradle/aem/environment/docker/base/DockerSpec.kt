@@ -8,7 +8,7 @@ open class DockerSpec {
 
     var command: String = ""
 
-    val args: List<String>
+    open val args: List<String>
         get() = mutableListOf<String>().apply {
             addAll(options)
             addAll(Formats.commandToArgs(command))

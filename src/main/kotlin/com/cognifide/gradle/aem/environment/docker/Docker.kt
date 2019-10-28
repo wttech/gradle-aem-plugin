@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.environment.docker
 
+import com.cognifide.gradle.aem.common.utils.Formats
 import com.cognifide.gradle.aem.environment.Environment
 import com.cognifide.gradle.aem.environment.EnvironmentException
 import com.cognifide.gradle.aem.environment.docker.base.Docker as Base
@@ -76,19 +77,21 @@ class Docker(val environment: Environment) {
         stack.undeploy()
     }
 
-    fun exec(command: String, exitCode: Int = 0) = exec {
+    fun run(image: String, command: String, exitCode: Int = 0) = run {
+        this.image = image
         this.command = command
         this.exitCodes = listOf(exitCode)
     }
 
-    fun exec(operation: String, command: String, exitCode: Int = 0) = exec {
+    fun run(operation: String, image: String, command: String, exitCode: Int = 0) = run {
         this.operation = { operation }
+        this.image = image
         this.command = command
         this.exitCodes = listOf(exitCode)
     }
 
-    fun exec(options: ExecSpec.() -> Unit) {
-        val spec = ExecSpec().apply(options)
+    fun run(options: RunSpec.() -> Unit) {
+        val spec = RunSpec().apply(options)
         val operation = spec.operation()
 
         aem.progressIndicator {
@@ -96,25 +99,33 @@ class Docker(val environment: Environment) {
             message = operation
 
             try {
-                exec(spec)
+                run(spec)
             } catch (e: DockerException) {
-                aem.logger.debug("Exec operation '$operation' error", e)
-                throw EnvironmentException("Failed to perform operation '$operation' on Docker!\n${e.message}")
+                aem.logger.debug("Run operation '$operation' error", e)
+                throw EnvironmentException("Failed to run operation '$operation' on Docker!\n${e.message}")
             }
         }
     }
 
     @Suppress("SpreadOperator")
-    private fun exec(spec: ExecSpec) {
+    private fun run(spec: RunSpec) {
         if (spec.command.isBlank()) {
-            throw DockerException("Exec command cannot be blank!")
+            throw DockerException("Run command cannot be blank!")
         }
 
         if (!running) {
-            throw DockerException("Cannot exec command '${spec.command}'!")
+            throw DockerException("Cannot run command '${spec.command}'!")
         }
 
-        logger.info("Executing Docker command '${spec.args.joinToString(" ")}'")
+        val args = mutableListOf<String>().apply {
+            add("run")
+            addAll(spec.volumes.map { (localPath, containerPath) -> "${runtime.determinePath(localPath)}:$containerPath"})
+            add(spec.image)
+            addAll(Formats.commandToArgs(spec.command))
+        }
+        val fullCommand = args.joinToString(" ")
+
+        logger.info("Running Docker command '$fullCommand'")
 
         Base.exec {
             withArgs(*spec.args.toTypedArray())
