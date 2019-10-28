@@ -13,12 +13,20 @@ class RunSpec : DockerSpec() {
 
     var image: String = ""
 
-    var volumes = mutableMapOf<String, String>()
+    var volumes = mapOf<String, String>()
+
+    var ports = mapOf<String, String>()
+
+    fun port(hostPort: Int, containerPort: Int) = port(hostPort.toString(), containerPort.toString())
+
+    fun port(hostPort: String, containerPort: String) {
+        ports = ports + (hostPort to containerPort)
+    }
 
     fun volume(localFile: File, containerPath: String) = volume(localFile.absolutePath, containerPath)
 
     fun volume(localPath: String, containerPath: String) {
-        volumes[localPath] = containerPath
+        volumes = volumes + (localPath to containerPath)
     }
 
     var operation: () -> String = { "Running command '$command'" }
@@ -28,5 +36,4 @@ class RunSpec : DockerSpec() {
     }
 
     fun operation(text: String) = operation { text }
-
 }

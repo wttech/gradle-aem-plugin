@@ -118,7 +118,8 @@ class Docker(val environment: Environment) {
 
         val args = mutableListOf<String>().apply {
             add("run")
-            addAll(spec.volumes.map { (localPath, containerPath) -> "--volume=${runtime.determinePath(localPath)}:$containerPath"})
+            addAll(spec.volumes.map { (localPath, containerPath) -> "--volume=${runtime.determinePath(localPath)}:$containerPath" })
+            addAll(spec.options)
             add(spec.image)
             addAll(Formats.commandToArgs(spec.command))
         }
@@ -127,7 +128,7 @@ class Docker(val environment: Environment) {
         logger.info("Running Docker command '$fullCommand'")
 
         Base.exec {
-            withArgs(*spec.args.toTypedArray())
+            withArgs(*args.toTypedArray())
             withExpectedExitStatuses(spec.exitCodes.toSet())
 
             spec.input?.let { withInputStream(it) }

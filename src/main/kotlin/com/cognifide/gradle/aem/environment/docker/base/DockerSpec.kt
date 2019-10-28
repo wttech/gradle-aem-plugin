@@ -19,6 +19,10 @@ open class DockerSpec {
 
     var options: List<String> = listOf()
 
+    fun option(value: String) {
+        options = options + value
+    }
+
     var exitCodes: List<Int> = listOf(0)
 
     var input: InputStream? = null
