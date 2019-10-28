@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.environment.docker.base
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.utils.Formats
 import com.cognifide.gradle.aem.environment.docker.DockerException
+import com.cognifide.gradle.aem.environment.docker.DockerResult
 
 open class DockerContainer(private val aem: AemExtension, val name: String) {
 
@@ -47,7 +48,7 @@ open class DockerContainer(private val aem: AemExtension, val name: String) {
         }
 
     @Suppress("SpreadOperator")
-    fun exec(spec: DockerExecSpec) {
+    fun exec(spec: DockerExecSpec): DockerResult {
         if (spec.command.isBlank()) {
             throw DockerContainerException("Exec command cannot be blank!")
         }
@@ -66,13 +67,13 @@ open class DockerContainer(private val aem: AemExtension, val name: String) {
 
         logger.info("Executing command '$fullCommand' for Docker container '$name'")
 
-        Docker.exec {
+        return DockerResult(Docker.exec {
             withArgs(*args.toTypedArray())
             withExpectedExitStatuses(spec.exitCodes.toSet())
 
             spec.input?.let { withInputStream(it) }
             spec.output?.let { withOutputStream(it) }
             spec.errors?.let { withErrorStream(it) }
-        }
+        })
     }
 }

@@ -25,6 +25,10 @@ open class DockerSpec {
 
     var exitCodes: List<Int> = listOf(0)
 
+    fun ignoreExitCodes() {
+        exitCodes = listOf()
+    }
+
     var input: InputStream? = null
 
     var output: OutputStream? = null

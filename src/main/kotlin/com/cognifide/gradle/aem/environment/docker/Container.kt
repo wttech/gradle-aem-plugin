@@ -89,21 +89,25 @@ class Container(val docker: Docker, val name: String) {
         reloadAction()
     }
 
-    fun exec(execSpec: ExecSpec.() -> Unit) {
+    fun exec(execSpec: ExecSpec.() -> Unit): DockerResult {
         val spec = ExecSpec().apply(execSpec)
         val operation = spec.operation()
+
+        lateinit var result: DockerResult
 
         aem.progressIndicator {
             step = "Container '$name'"
             message = operation
 
             try {
-                base.exec(spec)
+                result = base.exec(spec)
             } catch (e: DockerException) {
                 aem.logger.debug("Exec operation '$operation' error", e)
                 throw EnvironmentException("Failed to perform operation '$operation' on container '$name'!\n${e.message}")
             }
         }
+
+        return result
     }
 
     fun exec(command: String, exitCode: Int = 0) = exec {

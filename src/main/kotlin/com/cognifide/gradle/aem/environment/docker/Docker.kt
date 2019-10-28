@@ -90,25 +90,29 @@ class Docker(val environment: Environment) {
         this.exitCodes = listOf(exitCode)
     }
 
-    fun run(options: RunSpec.() -> Unit) {
+    fun run(options: RunSpec.() -> Unit): DockerResult {
         val spec = RunSpec().apply(options)
         val operation = spec.operation()
 
-        aem.progressIndicator {
-            step = "Running Docker command"
+        lateinit var result: DockerResult
+
+        aem.progress {
+            step = "Docker"
             message = operation
 
             try {
-                run(spec)
+                result = run(spec)
             } catch (e: DockerException) {
                 aem.logger.debug("Run operation '$operation' error", e)
                 throw EnvironmentException("Failed to run operation '$operation' on Docker!\n${e.message}")
             }
         }
+
+        return result
     }
 
     @Suppress("SpreadOperator")
-    private fun run(spec: RunSpec) {
+    private fun run(spec: RunSpec): DockerResult {
         if (spec.image.isBlank()) {
             throw DockerException("Run image cannot be blank!")
         }
@@ -127,13 +131,13 @@ class Docker(val environment: Environment) {
 
         logger.info("Running Docker command '$fullCommand'")
 
-        Base.exec {
+        return DockerResult(Base.exec {
             withArgs(*args.toTypedArray())
             withExpectedExitStatuses(spec.exitCodes.toSet())
 
             spec.input?.let { withInputStream(it) }
             spec.output?.let { withOutputStream(it) }
             spec.errors?.let { withErrorStream(it) }
-        }
+        })
     }
 }
