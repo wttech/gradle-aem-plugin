@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.environment.docker
 
 import com.cognifide.gradle.aem.environment.docker.base.DockerSpec
 import org.gradle.process.internal.streams.SafeStreams
+import java.io.File
 
 class RunSpec : DockerSpec() {
 
@@ -10,9 +11,11 @@ class RunSpec : DockerSpec() {
         errors = SafeStreams.systemErr()
     }
 
-    lateinit var image: String
+    var image: String = ""
 
     var volumes = mutableMapOf<String, String>()
+
+    fun volume(localFile: File, containerPath: String) = volume(localFile.absolutePath, containerPath)
 
     fun volume(localPath: String, containerPath: String) {
         volumes[localPath] = containerPath

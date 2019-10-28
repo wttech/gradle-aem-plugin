@@ -28,8 +28,6 @@ class AemTaskFacade(val aem: AemExtension) : Serializable {
 
     // Bundle plugin shorthands
 
-    val
-
     val bundles get() = getAll(BundleCompose::class.java)
 
     fun bundleCompose(configurer: BundleCompose.() -> Unit) = named(BundleCompose.NAME, configurer)

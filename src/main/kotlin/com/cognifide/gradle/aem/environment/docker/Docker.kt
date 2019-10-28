@@ -95,7 +95,7 @@ class Docker(val environment: Environment) {
         val operation = spec.operation()
 
         aem.progressIndicator {
-            step = "Executing Docker command"
+            step = "Running Docker command"
             message = operation
 
             try {
@@ -109,12 +109,11 @@ class Docker(val environment: Environment) {
 
     @Suppress("SpreadOperator")
     private fun run(spec: RunSpec) {
+        if (spec.image.isBlank()) {
+            throw DockerException("Run image cannot be blank!")
+        }
         if (spec.command.isBlank()) {
             throw DockerException("Run command cannot be blank!")
-        }
-
-        if (!running) {
-            throw DockerException("Cannot run command '${spec.command}'!")
         }
 
         val args = mutableListOf<String>().apply {
