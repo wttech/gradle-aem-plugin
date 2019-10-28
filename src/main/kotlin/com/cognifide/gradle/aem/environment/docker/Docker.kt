@@ -118,7 +118,7 @@ class Docker(val environment: Environment) {
 
         val args = mutableListOf<String>().apply {
             add("run")
-            addAll(spec.volumes.map { (localPath, containerPath) -> "${runtime.determinePath(localPath)}:$containerPath"})
+            addAll(spec.volumes.map { (localPath, containerPath) -> "--volume=${runtime.determinePath(localPath)}:$containerPath"})
             add(spec.image)
             addAll(Formats.commandToArgs(spec.command))
         }
