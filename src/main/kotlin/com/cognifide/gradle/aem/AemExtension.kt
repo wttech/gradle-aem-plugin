@@ -383,7 +383,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     @Suppress("VariableNaming")
     @get:JsonIgnore
     val `package`: File
-        get() = tasks.get(PackageCompose.NAME, PackageCompose::class.java).archiveFile.get().asFile
+        get() = tasks.get(PackageCompose.NAME, PackageCompose::class.java).file
 
     @get:JsonIgnore
     val pkg: File
@@ -394,7 +394,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
      */
     @get:JsonIgnore
     val packages: List<File>
-        get() = tasks.packages.map { it.archiveFile.get().asFile }
+        get() = tasks.packages.map { it.file }
 
     /**
      * Get all CRX packages built before running particular task.
@@ -402,7 +402,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     fun dependentPackages(task: Task): List<File> {
         return task.taskDependencies.getDependencies(task)
                 .filterIsInstance(PackageCompose::class.java)
-                .map { it.archiveFile.get().asFile }
+                .map { it.file }
     }
 
     /**
@@ -410,14 +410,14 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
      */
     @get:JsonIgnore
     val bundle: File
-        get() = tasks.get(BundleCompose.NAME, BundleCompose::class.java).archiveFile.get().asFile
+        get() = tasks.get(BundleCompose.NAME, BundleCompose::class.java).file
 
     /**
      * Get all OSGi bundles defined to be built.
      */
     @get:JsonIgnore
     val bundles: List<File>
-        get() = tasks.bundles.map { it.archiveFile.get().asFile }
+        get() = tasks.bundles.map { it.file }
 
     /**
      * Get all OSGi bundles built before running particular task.

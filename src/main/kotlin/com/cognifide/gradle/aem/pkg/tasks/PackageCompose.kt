@@ -34,6 +34,13 @@ import org.gradle.api.tasks.bundling.Jar
 open class PackageCompose : ZipTask() {
 
     /**
+     * Shorthand for accessing built CRX package file.
+     */
+    @get:JsonIgnore
+    val file: File
+        get() = archiveFile.get().asFile
+
+    /**
      * Absolute path to JCR content to be included in CRX package.
      *
      * Must be absolute or relative to current working directory.

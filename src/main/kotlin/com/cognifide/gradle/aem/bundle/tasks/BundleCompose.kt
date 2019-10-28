@@ -28,6 +28,13 @@ open class BundleCompose : Jar(), AemTask {
     val bundleConvention = BundleTaskConvention(this).also { convention.plugins["bundle"] = it }
 
     /**
+     * Shorthand for accessing built OSGi bundle file.
+     */
+    @get:JsonIgnore
+    val file: File
+        get() = archiveFile.get().asFile
+
+    /**
      * Allows to configure BND tool specific options.
      *
      * @see <https://bnd.bndtools.org>
