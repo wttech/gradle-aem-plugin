@@ -1,6 +1,5 @@
-package com.cognifide.gradle.aem.environment.docker.base
+package com.cognifide.gradle.aem.environment.docker
 
-import com.cognifide.gradle.aem.environment.docker.DockerException
 import org.buildobjects.process.ExternalProcessFailureException
 import org.buildobjects.process.ProcBuilder
 import org.buildobjects.process.ProcResult
@@ -8,7 +7,7 @@ import org.buildobjects.process.TimeoutException
 import org.gradle.process.internal.streams.SafeStreams
 
 @Suppress("TooGenericExceptionCaught")
-object Docker {
+object DockerProcess {
 
     const val COMMAND = "docker"
 
@@ -46,6 +45,17 @@ object Docker {
         } catch (e: Exception) {
             throw composeException(e)
         }
+    }
+
+    fun execSpec(spec: DockerSpec): DockerResult {
+        return DockerResult(exec {
+            withArgs(*spec.args.toTypedArray())
+            withExpectedExitStatuses(spec.exitCodes.toSet())
+
+            spec.input?.let { withInputStream(it) }
+            spec.output?.let { withOutputStream(it) }
+            spec.errors?.let { withErrorStream(it) }
+        })
     }
 
     private fun composeException(e: Exception): DockerException {

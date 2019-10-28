@@ -1,10 +1,9 @@
 package com.cognifide.gradle.aem.environment.docker
 
-import com.cognifide.gradle.aem.environment.docker.base.DockerSpec
 import org.gradle.process.internal.streams.SafeStreams
 import java.io.File
 
-class RunSpec : DockerSpec() {
+class RunSpec : DockerDefaultSpec() {
 
     init {
         output = SafeStreams.systemOut()
@@ -29,7 +28,7 @@ class RunSpec : DockerSpec() {
         volumes = volumes + (localPath to containerPath)
     }
 
-    var operation: () -> String = { "Running command '$command'" }
+    var operation: () -> String = { "Running command '$fullCommand'" }
 
     fun operation(operation: () -> String) {
         this.operation = operation

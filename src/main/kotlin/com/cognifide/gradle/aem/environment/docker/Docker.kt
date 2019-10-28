@@ -3,7 +3,6 @@ package com.cognifide.gradle.aem.environment.docker
 import com.cognifide.gradle.aem.common.utils.Formats
 import com.cognifide.gradle.aem.environment.Environment
 import com.cognifide.gradle.aem.environment.EnvironmentException
-import com.cognifide.gradle.aem.environment.docker.base.Docker as Base
 import org.gradle.util.GFileUtils
 import java.io.File
 
@@ -104,7 +103,7 @@ class Docker(val environment: Environment) {
                 result = run(spec)
             } catch (e: DockerException) {
                 aem.logger.debug("Run operation '$operation' error", e)
-                throw EnvironmentException("Failed to run operation '$operation' on Docker!\n${e.message}")
+                throw EnvironmentException("Failed to run operation on Docker!\n$operation\n{e.message}")
             }
         }
 
@@ -120,24 +119,16 @@ class Docker(val environment: Environment) {
             throw DockerException("Run command cannot be blank!")
         }
 
-        val args = mutableListOf<String>().apply {
+        val customSpec = DockerCustomSpec(spec, mutableListOf<String>().apply {
             add("run")
             addAll(spec.volumes.map { (localPath, containerPath) -> "--volume=${runtime.determinePath(localPath)}:$containerPath" })
             addAll(spec.options)
             add(spec.image)
             addAll(Formats.commandToArgs(spec.command))
-        }
-        val fullCommand = args.joinToString(" ")
-
-        logger.info("Running Docker command '$fullCommand'")
-
-        return DockerResult(Base.exec {
-            withArgs(*args.toTypedArray())
-            withExpectedExitStatuses(spec.exitCodes.toSet())
-
-            spec.input?.let { withInputStream(it) }
-            spec.output?.let { withOutputStream(it) }
-            spec.errors?.let { withErrorStream(it) }
         })
+
+        logger.info("Running Docker command '${customSpec.fullCommand}'")
+
+        return DockerProcess.execSpec(customSpec)
     }
 }
