@@ -45,7 +45,7 @@ open class PackageCompose : ZipTask() {
      */
     @get:JsonIgnore
     val composedDir: File
-        get() = composedDir.parentFile
+        get() = composedFile.parentFile
 
     /**
      * Absolute path to JCR content to be included in CRX package.
