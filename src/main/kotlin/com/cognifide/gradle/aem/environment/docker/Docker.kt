@@ -103,7 +103,7 @@ class Docker(val environment: Environment) {
                 result = run(spec)
             } catch (e: DockerException) {
                 aem.logger.debug("Run operation '$operation' error", e)
-                throw EnvironmentException("Failed to run operation on Docker!\n$operation\n{e.message}")
+                throw EnvironmentException("Failed to run operation on Docker!\n$operation\n${e.message}")
             }
         }
 
