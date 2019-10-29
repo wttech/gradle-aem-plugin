@@ -1,6 +1,4 @@
-package com.cognifide.gradle.aem.environment.docker.stack
-
-import com.cognifide.gradle.aem.environment.docker.DockerException
+package com.cognifide.gradle.aem.environment.docker
 
 class StackException : DockerException {
 

@@ -15,7 +15,7 @@ class Container(val docker: Docker, val name: String) {
 
     private val logger = aem.logger
 
-    val stackName = "${docker.stack.base.name}_$name"
+    val internalName = "${docker.stack.internalName}_$name"
 
     val host = HostFileManager(this)
 
@@ -56,10 +56,10 @@ class Container(val docker: Docker, val name: String) {
     val id: String?
         get() {
             try {
-                logger.debug("Determining ID for Docker container '$stackName'")
+                logger.debug("Determining ID for Docker container '$internalName'")
 
                 val containerId = DockerProcess.execString {
-                    withArgs("ps", "-l", "-q", "-f", "name=$stackName")
+                    withArgs("ps", "-l", "-q", "-f", "name=$internalName")
                     withTimeoutMillis(runningTimeout)
                 }
 
@@ -69,7 +69,7 @@ class Container(val docker: Docker, val name: String) {
                     containerId
                 }
             } catch (e: DockerException) {
-                throw ContainerException("Failed to load Docker container ID for name '$stackName'!", e)
+                throw ContainerException("Failed to load Docker container ID for name '$internalName'!", e)
             }
         }
 
@@ -105,7 +105,7 @@ class Container(val docker: Docker, val name: String) {
                         }
 
                         add("Consider troubleshooting:")
-                        add("* using command: 'docker stack ps ${docker.stack.base.name} --no-trunc'")
+                        add("* using command: 'docker stack ps ${docker.stack.internalName} --no-trunc'")
                         add("* restarting Docker")
 
                         throw EnvironmentException(joinToString("\n"))
@@ -181,15 +181,14 @@ class Container(val docker: Docker, val name: String) {
             throw ContainerException("Cannot exec command '${spec.command}' since Docker container '$name' is not running!")
         }
 
-        val args = mutableListOf<String>().apply {
+        val customSpec = DockerCustomSpec(spec, mutableListOf<String>().apply {
             add("exec")
             addAll(spec.options)
             add(id!!)
             addAll(Formats.commandToArgs(spec.command))
-        }
-        val fullCommand = args.joinToString(" ")
+        })
 
-        logger.info("Executing command '$fullCommand' for Docker container '$name'")
+        logger.info("Executing command '${customSpec.fullCommand}' for Docker container '$name'")
 
         return DockerProcess.execSpec(spec)
     }

@@ -3,32 +3,27 @@ package com.cognifide.gradle.aem.environment.docker
 import com.cognifide.gradle.aem.common.build.Behaviors
 import com.cognifide.gradle.aem.environment.Environment
 import com.cognifide.gradle.aem.environment.EnvironmentException
-import com.cognifide.gradle.aem.environment.docker.stack.Stack
+import com.cognifide.gradle.aem.environment.docker.runtime.Toolbox
 
 /**
  * Represents AEM project specific AEM Docker stack and provides API for manipulating it.
  */
 class Stack(val environment: Environment) {
 
-    val name get() = base.name
-
     private val aem = environment.aem
 
-    val base = Stack(aem, aem.props.string("environment.stack.name")
-            ?: aem.project.rootProject.name)
+    val internalName = aem.props.string("environment.docker.stack.name") ?: aem.project.rootProject.name
 
-    var deployRetry = aem.retry { afterSecond(aem.props.long("environment.stack.deployRetry") ?: 30) }
+    var initTimeout = aem.props.long("environment.docker.stack.initTimeout") ?: 10000L
 
-    var undeployRetry = aem.retry { afterSecond(aem.props.long("environment.stack.undeployRetry") ?: 30) }
-
-    private val initialized: Boolean by lazy {
+    val initialized: Boolean by lazy {
         var error: Exception? = null
 
         aem.progressIndicator {
             message = "Initializing stack"
 
             try {
-                base.init()
+                initSwarm()
             } catch (e: DockerException) {
                 error = e
             }
@@ -41,24 +36,37 @@ class Stack(val environment: Environment) {
         true
     }
 
-    val running: Boolean
-        get() = initialized && base.running
+    private fun initSwarm() {
+        val result = DockerProcess.execQuietly {
+            withTimeoutMillis(initTimeout)
+            withArgs("swarm", "init")
 
-    fun reset() {
-        undeploy()
-        deploy()
+            if (aem.environment.docker.runtime is Toolbox) {
+                withArgs("--advertise-addr", aem.environment.docker.runtime.hostIp)
+            }
+        }
+        if (result.exitValue != 0 && !result.errorString.contains("This node is already part of a swarm")) {
+            throw StackException("Failed to initialize Docker Swarm. Is Docker running / installed? Error: '${result.errorString}'")
+        }
     }
+
+    var deployRetry = aem.retry { afterSecond(aem.props.long("environment.docker.stack.deployRetry") ?: 30) }
 
     fun deploy() {
         aem.progressIndicator {
-            message = "Starting stack '$name'"
-            base.deploy(environment.docker.composeFile.path)
+            message = "Starting stack '$internalName'"
 
-            message = "Awaiting started stack '$name'"
+            try {
+                DockerProcess.exec { withArgs("stack", "deploy", "-c", environment.docker.composeFile.path, internalName) }
+            } catch (e: DockerException) {
+                throw StackException("Failed to deploy Docker stack '$internalName'!", e)
+            }
+
+            message = "Awaiting started stack '$internalName'"
             Behaviors.waitUntil(deployRetry.delay) { timer ->
-                val running = base.running
+                val running = networkAvailable
                 if (timer.ticks == deployRetry.times && !running) {
-                    throw EnvironmentException("Failed to start stack named '$name'!")
+                    throw EnvironmentException("Failed to start stack named '$internalName'!")
                 }
 
                 !running
@@ -66,21 +74,51 @@ class Stack(val environment: Environment) {
         }
     }
 
+    var undeployRetry = aem.retry { afterSecond(aem.props.long("environment.docker.stack.undeployRetry") ?: 30) }
+
     fun undeploy() {
         aem.progressIndicator {
-            message = "Stopping stack '$name'"
-            base.rm()
+            message = "Stopping stack '$internalName'"
 
-            message = "Awaiting stopped stack '$name'"
+            try {
+                DockerProcess.exec { withArgs("stack", "rm", internalName) }
+            } catch (e: DockerException) {
+                throw StackException("Failed to remove Docker stack '$internalName'!", e)
+            }
+
+            message = "Awaiting stopped stack '$internalName'"
             Behaviors.waitUntil(undeployRetry.delay) { timer ->
-                val running = base.running
+                val running = networkAvailable
                 if (timer.ticks == undeployRetry.times && running) {
-                    throw EnvironmentException("Failed to stop stack named '$name'!" +
-                            " Try to stop manually using Docker command: 'docker stack rm $name'")
+                    throw EnvironmentException("Failed to stop stack named '$internalName'!" +
+                            " Try to stop manually using Docker command: 'docker stack rm $internalName'")
                 }
 
                 running
             }
         }
+    }
+
+    var networkTimeout = aem.props.long("environment.docker.stack.networkTimeout") ?: 10000L
+
+    val networkAvailable: Boolean
+        get() {
+            val result = DockerProcess.execQuietly {
+                withTimeoutMillis(networkTimeout)
+                withArgs("network", "inspect", "${internalName}_docker-net")
+            }
+            return when {
+                result.exitValue == 0 -> true
+                result.errorString.contains("Error: No such network") -> false
+                else -> throw StackException("Unable to determine Docker stack '$internalName' status. Error: '${result.errorString}'")
+            }
+        }
+
+    val running: Boolean
+        get() = initialized && networkAvailable
+
+    fun reset() {
+        undeploy()
+        deploy()
     }
 }
