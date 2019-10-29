@@ -110,7 +110,6 @@ class Docker(val environment: Environment) {
         return result
     }
 
-    @Suppress("SpreadOperator")
     private fun run(spec: RunSpec): DockerResult {
         if (spec.image.isBlank()) {
             throw DockerException("Run image cannot be blank!")

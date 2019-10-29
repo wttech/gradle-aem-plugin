@@ -384,7 +384,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     @Suppress("VariableNaming")
     @get:JsonIgnore
     val `package`: File
-        get() = tasks.get(PackageCompose.NAME, PackageCompose::class.java).file
+        get() = tasks.get(PackageCompose.NAME, PackageCompose::class.java).builtFile
 
     @get:JsonIgnore
     val pkg: File
@@ -395,7 +395,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
      */
     @get:JsonIgnore
     val packages: List<File>
-        get() = tasks.packages.map { it.file }
+        get() = tasks.packages.map { it.builtFile }
 
     /**
      * Get all CRX packages built before running particular task.
@@ -403,7 +403,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     fun dependentPackages(task: Task): List<File> {
         return task.taskDependencies.getDependencies(task)
                 .filterIsInstance(PackageCompose::class.java)
-                .map { it.file }
+                .map { it.builtFile }
     }
 
     /**
@@ -411,14 +411,14 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
      */
     @get:JsonIgnore
     val bundle: File
-        get() = tasks.get(BundleCompose.NAME, BundleCompose::class.java).file
+        get() = tasks.get(BundleCompose.NAME, BundleCompose::class.java).builtFile
 
     /**
      * Get all OSGi bundles defined to be built.
      */
     @get:JsonIgnore
     val bundles: List<File>
-        get() = tasks.bundles.map { it.file }
+        get() = tasks.bundles.map { it.builtFile }
 
     /**
      * Get all OSGi bundles built before running particular task.
@@ -599,7 +599,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     }
 
     /**
-     * Resolve single file from defined repositories or by using one of defined file transfers.
+     * Resolve single file from defined repositories or by using defined file transfers.
      */
     fun resolveFile(options: FileResolver.() -> Unit) = resolveFiles(options).firstOrNull()
             ?: throw AemException("There is no files resolved!")

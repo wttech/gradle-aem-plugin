@@ -47,6 +47,7 @@ object DockerProcess {
         }
     }
 
+    @Suppress("SpreadOperator")
     fun execSpec(spec: DockerSpec): DockerResult {
         return DockerResult(exec {
             withArgs(*spec.args.toTypedArray())

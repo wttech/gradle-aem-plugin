@@ -171,7 +171,6 @@ class Container(val docker: Docker, val name: String) {
         execShell("Cleaning directory contents at path '$path'", "rm -fr $path/*")
     }
 
-    @Suppress("SpreadOperator")
     private fun exec(spec: ExecSpec): DockerResult {
         if (spec.command.isBlank()) {
             throw ContainerException("Exec command cannot be blank!")
