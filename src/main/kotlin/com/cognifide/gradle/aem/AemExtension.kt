@@ -23,6 +23,7 @@ import com.cognifide.gradle.aem.common.utils.LineSeparator
 import com.cognifide.gradle.aem.common.utils.Patterns
 import com.cognifide.gradle.aem.environment.Environment
 import com.cognifide.gradle.aem.environment.EnvironmentPlugin
+import com.cognifide.gradle.aem.environment.docker.RunSpec
 import com.cognifide.gradle.aem.instance.*
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.PackageCompose
@@ -598,12 +599,18 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     }
 
     /**
-     * Resolve files from defined repositories or by using one of defined file transfers.
+     * Resolve single file from defined repositories or by using one of defined file transfers.
+     */
+    fun resolveFile(options: FileResolver.() -> Unit) = resolveFiles(options).firstOrNull()
+            ?: throw AemException("There is no files resolved!")
+
+    /**
+     * Resolve files from defined repositories or by using defined file transfers.
      */
     fun resolveFiles(options: FileResolver.() -> Unit) = resolveFiles(temporaryDir, options)
 
     /**
-     * Resolve files from defined repositories or by using one of defined file transfers.
+     * Resolve files from defined repositories or by using defined file transfers.
      */
     fun resolveFiles(downloadDir: File, options: FileResolver.() -> Unit): List<File> {
         return FileResolver(this, downloadDir).apply(options).allFiles
@@ -643,6 +650,11 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
      * Execute any Vault JCR content remote copying with customized options like content directory.
      */
     fun <T> rcp(options: RcpClient.() -> T) = RcpClient(this).run(options)
+
+    /**
+     * Execute any Docker command using all available images with mounting volumes etc, exposing ports etc.
+     */
+    fun runDocker(spec: RunSpec.() -> Unit) = environment.docker.run(spec)
 
     // Utilities (to use without imports)
 
