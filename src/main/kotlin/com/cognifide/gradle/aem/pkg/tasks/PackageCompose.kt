@@ -37,15 +37,15 @@ open class PackageCompose : ZipTask() {
      * Shorthand for built CRX package file.
      */
     @get:JsonIgnore
-    val builtFile: File
+    val composedFile: File
         get() = archiveFile.get().asFile
 
     /**
      * Shorthand for directory of built CRX package file.
      */
     @get:JsonIgnore
-    val builtDir: File
-        get() = builtFile.parentFile
+    val composedDir: File
+        get() = composedDir.parentFile
 
     /**
      * Absolute path to JCR content to be included in CRX package.

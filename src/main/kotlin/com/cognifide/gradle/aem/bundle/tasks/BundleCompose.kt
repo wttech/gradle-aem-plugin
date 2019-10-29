@@ -31,15 +31,15 @@ open class BundleCompose : Jar(), AemTask {
      * Shorthand for built OSGi bundle file.
      */
     @get:JsonIgnore
-    val builtFile: File
+    val composedFile: File
         get() = archiveFile.get().asFile
 
     /**
      * Shorthand for directory of built OSGi bundle file.
      */
     @get:JsonIgnore
-    val builtDir: File
-        get() = builtFile.parentFile
+    val composedDir: File
+        get() = composedFile.parentFile
 
     /**
      * Allows to configure BND tool specific options.
