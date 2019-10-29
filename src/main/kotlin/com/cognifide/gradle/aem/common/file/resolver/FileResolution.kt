@@ -48,7 +48,7 @@ open class FileResolution(val group: FileGroup, val id: String, private val reso
     /**
      * Copy source file to target directory only if target file does not exist.
      */
-    fun copyToDirectory(source: File, targetDir: File) {
+    fun copyFileToDirectory(source: File, targetDir: File) {
         val targetFile = File(targetDir, source.name)
         if (!targetFile.exists()) {
             source.copyTo(targetFile)
