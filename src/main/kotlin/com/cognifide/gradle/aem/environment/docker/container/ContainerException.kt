@@ -1,8 +1,8 @@
-package com.cognifide.gradle.aem.environment.docker.base
+package com.cognifide.gradle.aem.environment.docker.container
 
 import com.cognifide.gradle.aem.environment.docker.DockerException
 
-class DockerContainerException : DockerException {
+class ContainerException : DockerException {
 
     constructor(message: String, cause: Throwable) : super(message, cause)
 

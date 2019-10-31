@@ -9,8 +9,8 @@ class ContainerManager(private val docker: Docker) {
     /**
      * Define container.
      */
-    fun define(name: String, definition: Container.() -> Unit) {
-        defined.add(Container(docker, name).apply(definition))
+    fun define(name: String, definition: Container.() -> Unit): Container {
+        return Container(docker, name).apply { definition(); defined.add(this) }
     }
 
     /**
@@ -23,6 +23,13 @@ class ContainerManager(private val docker: Docker) {
      */
     fun named(name: String): Container = defined.firstOrNull { it.name == name }
             ?: throw DockerException("Container named '$name' is not defined!")
+
+    /**
+     * Do action for undefined container.
+     */
+    fun use(name: String, action: Container.() -> Unit) {
+        Container(docker, name).apply(action)
+    }
 
     /**
      * Checks if all containers are running.
