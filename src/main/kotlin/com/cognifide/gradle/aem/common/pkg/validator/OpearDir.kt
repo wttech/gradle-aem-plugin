@@ -1,16 +1,19 @@
 package com.cognifide.gradle.aem.common.pkg.validator
 
+import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.common.file.FileOperations
 import org.apache.commons.io.FileUtils
 import java.io.File
 
-class OpearOptions(validator: PackageValidator)  {
+class OpearDir(validator: PackageValidator) {
 
     private val aem = validator.aem
 
     private val logger = aem.logger
 
-    var dir = aem.project.file("build/aem/package/validator/opear-dir")
+    var root = AemTask.temporaryDir(aem.project, "package", "opear-dir")
+
+    var plan = File(root, aem.props.string("package.validator.opear.plan") ?: "plan.json")
 
     private var baseProvider: () -> File? = {
         aem.props.string("package.validator.opear.base")?.let { aem.resolveFile(it) }
@@ -28,21 +31,21 @@ class OpearOptions(validator: PackageValidator)  {
     )
 
     fun prepare() {
-        logger.info("Preparing OakPAL Opear directory '$dir'")
+        logger.info("Preparing OakPAL Opear directory '$root'")
 
-        dir.deleteRecursively()
-        dir.mkdirs()
+        root.deleteRecursively()
+        root.mkdirs()
 
         val baseFile = baseProvider()
         baseFile?.let { file ->
-            logger.info("Extracting OakPAL Opear configuration files from file '$file' to directory '$dir'")
-            FileOperations.zipUnpackAll(file, dir)
+            logger.info("Extracting OakPAL Opear configuration files from file '$file' to directory '$root'")
+            FileOperations.zipUnpackAll(file, root)
         }
 
         for (configDir in configDirs) {
             if (configDir.exists()) {
-                logger.info("Using project-specific OakPAL Opear configuration files from file '$configDir' to directory '$dir'")
-                FileUtils.copyDirectory(configDir, dir)
+                logger.info("Using project-specific OakPAL Opear configuration files from file '$configDir' to directory '$root'")
+                FileUtils.copyDirectory(configDir, root)
                 break
             }
         }

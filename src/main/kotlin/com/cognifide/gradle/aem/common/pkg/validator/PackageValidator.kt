@@ -18,29 +18,27 @@ class PackageValidator(internal val aem: AemExtension) {
 
     var reportFile = aem.project.file("build/aem/package/validator/oakpal-report.json")
 
-    private var opearOptions: OpearOptions.() -> Unit = {}
+    private var opearOptions: OpearDir.() -> Unit = {}
 
-    fun opear(options: OpearOptions.() -> Unit) {
+    fun opear(options: OpearDir.() -> Unit) {
         this.opearOptions = options
     }
 
-    fun validate(pkg: File, options: OpearOptions.() -> Unit = opearOptions) {
-        validate(pkg, OpearOptions(this).apply(options))
+    fun validate(pkg: File, options: OpearDir.() -> Unit = opearOptions) {
+        validate(pkg, OpearDir(this).apply(options))
     }
 
-    private fun validate(pkg: File, opearDir: OpearOptions) {
-        validate(pkg, opearDir.run { prepare(); dir })
-    }
+    fun validate(pkg: File, opearDir: OpearDir) {
+        opearDir.prepare()
 
-    fun validate(pkg: File, opearDir: File) {
-        val opear = OpearFile.fromDirectory(opearDir).getOrElse {
+        val opearFile = OpearFile.fromDirectory(opearDir.root).getOrElse {
             throw AemException("Opear directory cannot be read properly!")
         }
 
-        val planUsed = File(opearDir, "plan.json").takeIf { it.exists() }?.toURI()?.toURL() ?: opear.defaultPlan
+        val planUsed = opearDir.plan.takeIf { it.exists() }?.toURI()?.toURL() ?: opearFile.defaultPlan
         val scanResult = BasePlan.fromJson(planUsed)
                 .map { plan ->
-                    plan.toOakMachineBuilder(DefaultErrorListener(), opear.getPlanClassLoader(javaClass.classLoader))
+                    plan.toOakMachineBuilder(DefaultErrorListener(), opearFile.getPlanClassLoader(javaClass.classLoader))
                             .withNodeStoreSupplier { MemoryNodeStore() }
                             .build()
                 }

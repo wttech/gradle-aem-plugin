@@ -41,6 +41,7 @@ class DependencyOptions {
 
     companion object {
 
+        @Suppress("TooGenericExceptionCaught")
         fun isValid(aem: AemExtension, notation: String): Boolean = try {
             create(aem, notation)
             true
