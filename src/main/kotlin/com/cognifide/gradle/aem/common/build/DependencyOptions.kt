@@ -41,6 +41,13 @@ class DependencyOptions {
 
     companion object {
 
+        fun isValid(aem: AemExtension, notation: String): Boolean = try {
+            create(aem, notation)
+            true
+        } catch (e: Exception) {
+            false
+        }
+
         fun create(aem: AemExtension, notation: String): Dependency {
             return aem.project.dependencies.create(notation)
         }

@@ -606,6 +606,11 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     /**
      * Resolve single file from defined repositories or by using defined file transfers.
      */
+    fun resolveFile(value: String) = resolveFile { get(value) }
+
+    /**
+     * Resolve single file from defined repositories or by using defined file transfers.
+     */
     fun resolveFile(options: FileResolver.() -> Unit) = resolveFiles(options).firstOrNull()
             ?: throw AemException("There is no files resolved!")
 
