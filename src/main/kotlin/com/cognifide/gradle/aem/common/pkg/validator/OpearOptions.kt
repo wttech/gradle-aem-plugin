@@ -16,6 +16,8 @@ class OpearOptions(validator: PackageValidator)  {
         aem.props.string("package.validator.opear.base")?.let { aem.resolveFile(it) }
     }
 
+    fun base(value: String) = base { aem.resolveFile(value) }
+
     fun base(provider: () -> File?) {
         this.baseProvider = provider
     }
