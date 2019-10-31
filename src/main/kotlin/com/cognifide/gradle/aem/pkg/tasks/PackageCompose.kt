@@ -459,6 +459,7 @@ open class PackageCompose : ZipTask() {
         }
     }
 
+    // TODO mark validation configuration as input of task
     private fun validate() {
         if (validation) {
             aem.validatePackage(composedFile)
