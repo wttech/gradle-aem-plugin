@@ -37,7 +37,8 @@ class PackageValidator(internal val aem: AemExtension) {
             throw AemException("Opear directory cannot be read properly!")
         }
 
-        val scanResult = BasePlan.fromJson(opear.defaultPlan)
+        val planUsed = File(opearDir, "plan.json").takeIf { it.exists() }?.toURI()?.toURL() ?: opear.defaultPlan
+        val scanResult = BasePlan.fromJson(planUsed)
                 .map { plan ->
                     plan.toOakMachineBuilder(DefaultErrorListener(), opear.getPlanClassLoader(javaClass.classLoader))
                             .withNodeStoreSupplier { MemoryNodeStore() }
@@ -50,6 +51,8 @@ class PackageValidator(internal val aem: AemExtension) {
         } else {
             val reports = scanResult.getOrDefault(emptyList<CheckReport>())
             ReportMapper.writeReportsToFile(reports, reportFile)
+
+            // TODO fail build on errors etc
         }
     }
 }
