@@ -12,19 +12,17 @@ class PackageValidator(internal val aem: AemExtension) {
 
     private val logger = aem.logger
 
-    var enabled = aem.props.boolean("aem.package.validation.enabled") ?: true
+    var enabled = aem.props.boolean("aem.package.validator.enabled") ?: true
 
-    var verbose = aem.props.boolean("aem.package.validation.verbose") ?: true
+    var verbose = aem.props.boolean("aem.package.validator.verbose") ?: true
 
-    var opearCache = aem.project.file("build/aem/package/validator/opear-cache")
+    var reportFile = aem.project.file("build/aem/package/validator/oakpal-report.json")
 
     private var opearOptions: OpearOptions.() -> Unit = {}
 
     fun opear(options: OpearOptions.() -> Unit) {
         this.opearOptions = options
     }
-
-    var reportFile = aem.project.file("build/aem/package/validator/oakpal-report.json")
 
     fun validate(pkg: File, options: OpearOptions.() -> Unit = opearOptions) {
         validate(pkg, OpearOptions(this).apply(options))

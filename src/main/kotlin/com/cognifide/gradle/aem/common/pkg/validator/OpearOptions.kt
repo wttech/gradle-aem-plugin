@@ -12,13 +12,13 @@ class OpearOptions(validator: PackageValidator)  {
 
     var dir = aem.project.file("build/aem/package/validator/opear-dir")
 
-    private var checksResolver: (FileResolver.() -> Unit)? = null
+    private var baseResolver: (FileResolver.() -> Unit)? = null
 
-    fun checkResolver(resolver: FileResolver.() -> Unit) {
-        this.checksResolver = resolver
+    fun base(resolver: FileResolver.() -> Unit) {
+        this.baseResolver = resolver
     }
 
-    val checkArtifact: File? get() = checksResolver?.let { aem.resolveFile(it) }
+    val baseFile: File? get() = baseResolver?.let { aem.resolveFile(it) }
 
     val planFile: File get() = File(dir, "plan.json")
 
@@ -34,7 +34,7 @@ class OpearOptions(validator: PackageValidator)  {
         dir.deleteRecursively()
         dir.mkdirs()
 
-        checkArtifact?.let { FileOperations.zipUnpackAll(it, dir) }
+        baseFile?.let { FileOperations.zipUnpackAll(it, dir) }
 
         if (configDir.exists()) {
             FileUtils.copyDirectory(configDir, dir)
