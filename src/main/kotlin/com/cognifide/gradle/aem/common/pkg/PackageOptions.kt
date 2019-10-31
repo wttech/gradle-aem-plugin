@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.common.pkg
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
+import com.cognifide.gradle.aem.common.pkg.validator.PackageValidator
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 import java.io.Serializable
@@ -92,4 +93,16 @@ class PackageOptions(aem: AemExtension) : Serializable {
      * It is a protection against exceeding max Java heap size.
      */
     var responseBuffer = aem.props.int("package.responseBuffer") ?: 4096
+
+    /**
+     * CRX package validator service.
+     */
+    var validator = PackageValidator(aem)
+
+    /**
+     * Customize CRX package validator
+     */
+    fun validator(options: PackageValidator.() -> Unit) {
+        validator.apply(options)
+    }
 }

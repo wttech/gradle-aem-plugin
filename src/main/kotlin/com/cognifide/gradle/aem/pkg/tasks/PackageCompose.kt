@@ -10,6 +10,7 @@ import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.aem.common.pkg.PackageFile
 import com.cognifide.gradle.aem.common.pkg.PackageFileFilter
+import com.cognifide.gradle.aem.common.pkg.validator.OpearOptions
 import com.cognifide.gradle.aem.common.pkg.vlt.FilterFile
 import com.cognifide.gradle.aem.common.pkg.vlt.FilterType
 import com.cognifide.gradle.aem.common.pkg.vlt.VltDefinition
@@ -94,6 +95,9 @@ open class PackageCompose : ZipTask() {
                     .filter { it.exists() }
                     .toList()
         }
+
+    @Input
+    var validation = true
 
     /**
      * Defines properties being used to generate CRX package metadata files.
@@ -186,6 +190,7 @@ open class PackageCompose : ZipTask() {
     override fun copy() {
         copyMetaFiles()
         super.copy()
+        validate()
     }
 
     private fun copyMetaFiles() {
@@ -452,6 +457,12 @@ open class PackageCompose : ZipTask() {
             } else {
                 vaultDefinition.nodeTypeLines.add(line)
             }
+        }
+    }
+
+    private fun validate() {
+        if (validation) {
+            aem.validatePackage(composedFile)
         }
     }
 

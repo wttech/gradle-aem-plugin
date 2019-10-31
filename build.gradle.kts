@@ -48,6 +48,7 @@ dependencies {
     implementation("com.dorkbox:Notify:3.7")
     implementation("com.jayway.jsonpath:json-path:2.4.0")
     implementation("org.buildobjects:jproc:2.2.3")
+    implementation("net.adamcin.oakpal:oakpal-cli:1.5.1")
 
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.3.1")
     testImplementation("org.junit.jupiter:junit-jupiter-params:5.3.1")
