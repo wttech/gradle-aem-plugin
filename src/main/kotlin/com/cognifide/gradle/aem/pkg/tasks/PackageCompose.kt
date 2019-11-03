@@ -10,6 +10,7 @@ import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.aem.common.pkg.PackageFile
 import com.cognifide.gradle.aem.common.pkg.PackageFileFilter
+import com.cognifide.gradle.aem.common.pkg.PackageValidator
 import com.cognifide.gradle.aem.common.pkg.vlt.FilterFile
 import com.cognifide.gradle.aem.common.pkg.vlt.FilterType
 import com.cognifide.gradle.aem.common.pkg.vlt.VltDefinition
@@ -95,8 +96,12 @@ open class PackageCompose : ZipTask() {
                     .toList()
         }
 
-    @Input
-    var validation = true
+    @Nested
+    var validator = PackageValidator(aem)
+
+    fun validator(options: PackageValidator.() -> Unit) {
+        validator.apply(options)
+    }
 
     /**
      * Defines properties being used to generate CRX package metadata files.
@@ -167,6 +172,7 @@ open class PackageCompose : ZipTask() {
     @Suppress("ComplexMethod")
     override fun projectEvaluated() {
         vaultDefinition.ensureDefaults()
+        validator.root = File(composedDir, "OAKPAL_OPEAR")
 
         if (bundlePath.isBlank()) {
             throw AemException("Bundle path cannot be blank")
@@ -189,7 +195,7 @@ open class PackageCompose : ZipTask() {
     override fun copy() {
         copyMetaFiles()
         super.copy()
-        validate()
+        validateComposedFile()
     }
 
     private fun copyMetaFiles() {
@@ -459,10 +465,10 @@ open class PackageCompose : ZipTask() {
         }
     }
 
-    // TODO mark validation configuration as input of task
-    private fun validate() {
-        if (validation) {
-            aem.validatePackage(composedFile)
+    private fun validateComposedFile() {
+        aem.progress {
+            message = "Validating composed CRX package '${composedFile.name}'"
+            validator.perform(composedFile)
         }
     }
 

@@ -17,6 +17,7 @@ import com.cognifide.gradle.aem.common.notifier.NotifierFacade
 import com.cognifide.gradle.aem.common.pkg.PackageDefinition
 import com.cognifide.gradle.aem.common.pkg.PackageFile
 import com.cognifide.gradle.aem.common.pkg.PackageOptions
+import com.cognifide.gradle.aem.common.pkg.PackageValidator
 import com.cognifide.gradle.aem.common.pkg.vlt.FilterFile
 import com.cognifide.gradle.aem.common.utils.Formats
 import com.cognifide.gradle.aem.common.utils.LineSeparator
@@ -476,9 +477,14 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     }
 
     /**
-     * Validate any CRX package.
+     * Validate any CRX package(s).
      */
-    fun validatePackage(file: File) = packageOptions.validator.validate(file)
+    fun validatePackage(vararg packages: File, options: PackageValidator.() -> Unit = {}) = validatePackage(packages.asIterable(), options)
+
+    /**
+     * Validate any CRX package(s).
+     */
+    fun validatePackage(packages: Iterable<File>, options: PackageValidator.() -> Unit = {}) = PackageValidator(this).apply(options).perform(packages)
 
     /**
      * Show asynchronous progress indicator with percentage while performing some action.
