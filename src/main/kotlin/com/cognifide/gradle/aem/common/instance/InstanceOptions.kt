@@ -17,7 +17,7 @@ open class InstanceOptions(private val aem: AemExtension) : Serializable {
      * Customize default options for instance services.
      */
     fun sync(options: InstanceSync.() -> Unit) {
-        syncOptions = { options(); }
+        syncOptions = options
     }
 
     @get:JsonIgnore
