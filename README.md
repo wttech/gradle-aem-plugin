@@ -41,6 +41,7 @@
      * [Package plugin](#package-plugin)
         * [Task packageCompose](#task-packagecompose)
            * [CRX package default configuration](#crx-package-default-configuration)
+           * [CRX package validation](#crx-package-validation)
            * [Including additional OSGi bundle into CRX package](#including-additional-osgi-bundle-into-crx-package)
            * [Nesting CRX packages](#nesting-crx-packages)
            * [Assembling packages (merging all-in-one)](#assembling-packages-merging-all-in-one)
@@ -989,6 +990,12 @@ aem {
                 }
                 version = project.version.toString()
             }
+            validator {
+                enabled = true
+                verbose = true
+                severity("MAJOR")
+                planName = "plan.json"
+            }
             fileFilter {
                 expanding = true
                 expandFiles = listOf(
@@ -1019,6 +1026,50 @@ aem {
     }    
 }
 ```
+
+##### CRX package validation
+
+Built package is validated using [OakPAL tool](https://github.com/adamcin/oakpal).
+
+By default, **nothing need to be configured** so that [basic plan](https://github.com/adamcin/oakpal/blob/master/core/src/main/resources/net/adamcin/oakpal/core/basic-plan.json) will be in use.
+However, more detailed checks could be provided by configuring base artfiact containing OakPAL checks.
+
+It could be done via following snippet ([ACS AEM Commons OakPAL Checks](https://github.com/Adobe-Consulting-Services/acs-aem-commons/tree/master/oakpal-checks) as example):
+
+```kotlin
+aem {
+    `package` {
+        validator {
+            base("com.adobe.acs:acs-aem-commons-oakpal-checks:4.3.4")
+        }
+    }
+}
+```
+
+To use custom checks, only left thing is to choose them in custom plan.
+
+```json
+{
+  "checklists": [
+    "net.adamcin.oakpal.core/basic",
+    "acs-commons-integrators",
+    "content-class-aem65"
+  ],
+  "installHookPolicy": "SKIP"
+}
+```
+
+Simply create file at path [*[aem/]gradle/package/OAKPAL_OPEAR/plan.json*](https://github.com/Cognifide/gradle-aem-multi/blob/master/aem/gradle/package/OAKPAL_OPEAR/plan.json)
+
+Notice that running OakPAL requires to have included in CRX package up-to-date node type definitions coming from AEM instance.
+Such definitions could be manually downloaded using CRXDE Lite interface (*Tools / Export Node Type*) and put inside CRX package.
+After installing some dependent CRX packages, the list of exported node types may change.
+
+To keep it up-to-date, Gradle AEM Plugin is synchronizing node types from one of available instances automatically.
+Synchronized file containing node types, later used when building CRX packages is placed at path [*[aem/]gradle/package/nodetypes.export.cnd*](https://github.com/Cognifide/gradle-aem-multi/blob/master/aem/gradle/package/nodetypes.export.cnd). 
+Remember to save this file in VCS, so that CRX package validation will not fail on e.g CI server where AEM instance could be not available.
+
+To disable automatic synchronization of node types file, simply set property `package.nodeTypesSync=false`.
 
 ##### Including additional OSGi bundle into CRX package
 

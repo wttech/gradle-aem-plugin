@@ -22,7 +22,11 @@ class PackageValidator(@Internal val aem: AemExtension) {
 
     @Input
     var severity = aem.props.string("package.validator.severity")
-            ?.let { severity(it) } ?: Violation.Severity.MAJOR
+            ?.let { severityByName(it) } ?: Violation.Severity.MAJOR
+
+    fun severity(name: String) {
+        this.severity = severityByName(name)
+    }
 
     @Input
     var verbose = aem.props.boolean("package.validator.verbose") ?: true
@@ -202,7 +206,7 @@ class PackageValidator(@Internal val aem: AemExtension) {
 
     private val Iterable<File>.names get() = this.joinToString(", ") { it.name }
 
-    private fun severity(name: String): Violation.Severity {
+    private fun severityByName(name: String): Violation.Severity {
         return Violation.Severity.values().firstOrNull { it.name.equals(name, true) }
                 ?: throw PackageException("Unsupported package violation severity specified '$name'!")
     }
