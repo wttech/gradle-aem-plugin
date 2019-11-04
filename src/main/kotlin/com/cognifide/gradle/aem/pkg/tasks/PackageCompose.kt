@@ -172,7 +172,7 @@ open class PackageCompose : ZipTask() {
     @Suppress("ComplexMethod")
     override fun projectEvaluated() {
         vaultDefinition.ensureDefaults()
-        validator.root = File(composedDir, "OAKPAL_OPEAR")
+        validator.workDir = File(composedDir, "OAKPAL_OPEAR")
 
         if (bundlePath.isBlank()) {
             throw AemException("Bundle path cannot be blank")
@@ -452,29 +452,17 @@ open class PackageCompose : ZipTask() {
     }
 
     private fun extractVaultNodeTypes(file: File) {
-        if (!file.exists()) {
-            return
-        }
-
-        file.forEachLine { line ->
-            if (NODE_TYPES_LIB.matcher(line.trim()).matches()) {
-                vaultDefinition.nodeTypeLibs.add(line)
-            } else {
-                vaultDefinition.nodeTypeLines.add(line)
-            }
-        }
+        file.takeIf { it.exists() }?.let { vaultDefinition.nodeTypes(it) }
     }
 
     private fun validateComposedFile() {
         aem.progress {
-            message = "Validating composed CRX package '${composedFile.name}'"
+            message = "Validating CRX package '${composedFile.name}'"
             validator.perform(composedFile)
         }
     }
 
     companion object {
         const val NAME = "packageCompose"
-
-        val NODE_TYPES_LIB: Pattern = Pattern.compile("<.+>")
     }
 }

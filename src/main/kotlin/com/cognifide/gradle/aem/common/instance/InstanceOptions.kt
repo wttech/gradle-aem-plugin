@@ -43,6 +43,12 @@ open class InstanceOptions(private val aem: AemExtension) : Serializable {
     var statusProperties: Boolean = aem.props.boolean("instance.statusProperties") ?: !aem.offline
 
     /**
+     * Allows to control automatic node types gathering from running instance to defined.
+     * Essential for correctly working package validation.
+     */
+    var crxNodeTypes: Boolean = aem.props.boolean("instance.crxNodeTypes") ?: !aem.offline
+
+    /**
      * Define local instance (created on local file system).
      */
     fun local(httpUrl: String) {

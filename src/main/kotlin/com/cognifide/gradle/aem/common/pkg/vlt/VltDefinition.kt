@@ -5,6 +5,8 @@ import org.apache.commons.lang3.StringUtils
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Optional
+import java.io.File
+import java.util.regex.Pattern
 
 /**
  * Represents collection of metadata being a part of CRX package.
@@ -77,6 +79,18 @@ open class VltDefinition(private val aem: AemExtension) {
                 nodeTypeLines.joinToString(aem.lineSeparatorString)
         )
 
+    fun nodeTypes(file: File) = nodeTypes(file.readText())
+
+    fun nodeTypes(text: String) {
+        text.lineSequence().forEach { line ->
+            if (NODE_TYPES_LIB.matcher(line.trim()).matches()) {
+                nodeTypeLibs.add(line)
+            } else {
+                nodeTypeLines.add(line)
+            }
+        }
+    }
+
     /**
      * Additional entries added to file 'META-INF/vault/properties.xml'.
      */
@@ -106,6 +120,10 @@ open class VltDefinition(private val aem: AemExtension) {
         if (version.isBlank()) {
             version = aem.project.version.toString()
         }
+
+        aem.availableInstance?.sync {
+            nodeTypes(crx.nodeTypes)
+        }
     }
 
     private fun isFilterNeeded(custom: FilterElement): Boolean {
@@ -123,5 +141,9 @@ open class VltDefinition(private val aem: AemExtension) {
                     custom != general && custom.root.startsWith("${general.root}/") &&
                             general.excludes.isEmpty() && general.includes.isEmpty()
                 }
+    }
+
+    companion object {
+        val NODE_TYPES_LIB: Pattern = Pattern.compile("<.+>")
     }
 }

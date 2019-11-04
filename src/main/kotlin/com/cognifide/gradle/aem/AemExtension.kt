@@ -266,7 +266,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     fun instances(urlsOrNames: Iterable<String>): List<Instance> = urlsOrNames.map { instance(it) }
 
     /**
-     * Get or create instance using command line parameter named 'instance' which holds instance name or URL.
+     * Get instance from command line parameter named 'instance' which holds instance name or URL.
      * If it is not specified, then first instance matching default filtering fill be returned.
      *
      * Purpose of this method is to easily get any instance to work with (no matter how it will be defined).
@@ -283,6 +283,13 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
 
             return namedInstance(Instance.FILTER_ANY)
         }
+
+    /**
+     * Get available instance of any type (most often first defined).
+     */
+    @get:JsonIgnore
+    val availableInstance: Instance?
+        get() = instances.asSequence().firstOrNull { it.available }
 
     /**
      * Get all instances which names are matching wildcard filter specified via command line parameter 'instance.name'.
@@ -477,14 +484,14 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     }
 
     /**
-     * Validate any CRX package(s).
+     * Validate any CRX packages.
      */
-    fun validatePackage(vararg packages: File, options: PackageValidator.() -> Unit = {}) = validatePackage(packages.asIterable(), options)
+    fun validatePackage(vararg packages: File, options: PackageValidator.() -> Unit) = validatePackage(packages.asIterable(), options)
 
     /**
-     * Validate any CRX package(s).
+     * Validate any CRX packages.
      */
-    fun validatePackage(packages: Iterable<File>, options: PackageValidator.() -> Unit = {}) = PackageValidator(this).apply(options).perform(packages)
+    fun validatePackage(packages: Iterable<File>, options: PackageValidator.() -> Unit) = PackageValidator(this).apply(options).perform(packages)
 
     /**
      * Show asynchronous progress indicator with percentage while performing some action.
