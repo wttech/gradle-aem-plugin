@@ -57,7 +57,7 @@ class Workflow(val manager: WorkflowManager, val id: String) {
 
     fun restore() {
         when {
-            manager.restoreSetting && toggleIntended != null -> toggle(!toggleIntended!!)
+            manager.restoreIntended && toggleIntended != null -> toggle(!toggleIntended!!)
             toggleInitial != null -> toggle(toggleInitial!!)
         }
     }

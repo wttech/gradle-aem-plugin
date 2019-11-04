@@ -15,7 +15,7 @@ class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
 
     var restoreRetry = aem.retry { afterSquaredSecond(aem.props.long("instance.workflowManager.restoreRetry") ?: 6) }
 
-    var restoreSetting = aem.props.boolean("instance.workflowManager.restoreSetting") ?: false
+    var restoreIntended = aem.props.boolean("instance.workflowManager.restoreIntended") ?: false
 
     fun workflow(id: String) = Workflow(this, id)
 
