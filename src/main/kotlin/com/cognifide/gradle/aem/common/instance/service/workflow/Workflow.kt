@@ -23,6 +23,12 @@ class Workflow(val manager: WorkflowManager, val id: String) {
 
     private var toggleInitial: Boolean? = null
 
+    internal var toggleIntended: Boolean? = null
+
+    fun toggle() {
+        toggleIntended?.let { toggle(it) }
+    }
+
     fun toggle(flag: Boolean) {
         if (manager.configFrozen && !launcher.exists) {
             logger.info("Copying workflow launcher from '${launcherFrozen.path}' to ${launcher.path} on $instance")
@@ -50,8 +56,9 @@ class Workflow(val manager: WorkflowManager, val id: String) {
     }
 
     fun restore() {
-        if (toggleInitial != null) {
-            toggle(toggleInitial!!)
+        when {
+            manager.restoreSetting && toggleIntended != null -> toggle(!toggleIntended!!)
+            toggleInitial != null -> toggle(toggleInitial!!)
         }
     }
 

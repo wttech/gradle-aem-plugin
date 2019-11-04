@@ -15,6 +15,8 @@ class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
 
     var restoreRetry = aem.retry { afterSquaredSecond(aem.props.long("instance.workflowManager.restoreRetry") ?: 6) }
 
+    var restoreSetting = aem.props.boolean("instance.workflowManager.restoreSetting") ?: false
+
     fun workflow(id: String) = Workflow(this, id)
 
     fun workflows(type: String) = workflows(listOf(type))
@@ -55,12 +57,17 @@ class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
             return
         }
 
-        val workflowToFlag = typeFlags.map { (type, flag) -> workflows(type).filter { it.exists } to (flag) }
+        val workflows = typeFlags.flatMap { (type, flag) ->
+            workflows(type).filter { it.exists }.onEach {
+                it.toggleIntended = flag
+            }
+        }
+
         try {
-            workflowToFlag.forEach { (workflows, flag) -> workflows.forEach { it.toggle(flag) } }
+            workflows.forEach { it.toggle() }
             action()
         } finally {
-            val stack = Stack<Workflow>().apply { addAll(workflowToFlag.flatMap { it.first }) }
+            val stack = Stack<Workflow>().apply { addAll(workflows) }
             restoreRetry.withCountdown<Unit, AemException>("workflow restore on '${instance.name}'") { no ->
                 if (no > 1) {
                     aem.logger.info("Retrying to restore workflow launchers (${stack.size}) on $instance:\n" +
