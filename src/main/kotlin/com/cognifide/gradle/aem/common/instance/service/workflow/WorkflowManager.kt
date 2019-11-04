@@ -58,9 +58,7 @@ class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
         }
 
         val workflows = typeFlags.flatMap { (type, flag) ->
-            workflows(type).filter { it.exists }.onEach {
-                it.toggleIntended = flag
-            }
+            workflows(type).filter { it.exists }.onEach { it.toggleIntended = flag }
         }
 
         try {
