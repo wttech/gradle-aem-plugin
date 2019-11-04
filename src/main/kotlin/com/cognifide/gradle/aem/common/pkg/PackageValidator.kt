@@ -68,7 +68,14 @@ class PackageValidator(val aem: AemExtension) {
 
     fun configDirs(vararg dirs: File) = configDirs(dirs.asIterable())
 
-    fun prepare() {
+    fun perform(vararg packages: File) = perform(packages.asIterable())
+
+    fun perform(packages: Iterable<File>) {
+        prepareOpearDir()
+        runOakPal(packages)
+    }
+
+    private fun prepareOpearDir() {
         logger.info("Preparing OakPAL Opear directory '$root'")
 
         root.deleteRecursively()
@@ -86,11 +93,7 @@ class PackageValidator(val aem: AemExtension) {
         }
     }
 
-    fun perform(vararg packages: File) = perform(packages.asIterable())
-
-    fun perform(packages: Iterable<File>) {
-        prepare()
-
+    private fun runOakPal(packages: Iterable<File>) {
         val opearFile = OpearFile.fromDirectory(root).getOrElse {
             throw AemException("OakPAL Opear directory cannot be read properly!")
         }
@@ -111,30 +114,30 @@ class PackageValidator(val aem: AemExtension) {
             throw PackageException("Cannot validate CRX package(s) '${packages.names}' due to internal OAKPal failure!")
         } else {
             val reports = scanResult.getOrDefault(emptyList<CheckReport>())
-            saveReports(reports)
-            analyzeReports(reports)
+            saveReports(packages, reports)
+            analyzeReports(packages, reports)
         }
     }
 
     @Suppress("TooGenericExceptionCaught")
-    private fun saveReports(reports: List<CheckReport>?) {
+    private fun saveReports(packages: Iterable<File>, reports: List<CheckReport>?) {
         try {
             ReportMapper.writeReportsToFile(reports, reportFile)
         } catch (e: Exception) {
-            throw PackageException("Cannot save OAKPal reports! Cause: '${e.message}'", e)
+            throw PackageException("Cannot save OAKPal reports for packages '${packages.names}'! Cause: '${e.message}'", e)
         }
     }
 
-    private fun analyzeReports(reports: List<CheckReport>) {
+    private fun analyzeReports(packages: Iterable<File>, reports: List<CheckReport>) {
         val violatedReports = reports.filter { !it.violations.isEmpty() }
         val shouldFail = violatedReports.any { !it.getViolations(severity).isEmpty() }
 
         if (violatedReports.isEmpty()) {
-            logger.info("OakPAL checks passed properly!")
+            logger.info("OakPAL checks passed properly for packages '${packages.names}'!")
             return
         }
 
-        logger.info("OakPAL check results:")
+        logger.info("OakPAL check results for packages '${packages.names}':")
 
         violatedReports.forEach { report ->
             logger.info("  ${report.checkName}")
@@ -152,11 +155,13 @@ class PackageValidator(val aem: AemExtension) {
             }
         }
 
-        val errorMessage = "OAKPal check violations were reported at or above severity '$severity'!"
-        if (verbose && shouldFail) {
-            throw PackageException(errorMessage)
-        } else {
-            logger.error(errorMessage)
+        if (shouldFail) {
+            val failMessage = "OAKPal check violations were reported at or above severity '$severity' for packages '${packages.names}'!"
+            if (verbose) {
+                throw PackageException(failMessage)
+            } else {
+                logger.error(failMessage)
+            }
         }
     }
 
