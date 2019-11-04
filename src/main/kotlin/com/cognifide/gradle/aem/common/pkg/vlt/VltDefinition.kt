@@ -76,7 +76,7 @@ open class VltDefinition(private val aem: AemExtension) {
 
     @InputFile
     @Optional
-    var nodeTypeExported: File = File(aem.configCommonDir, "package/resources/nodetypes.exported.cnd")
+    var nodeTypeExported: File = File(aem.configCommonDir, "package/nodetypes.export.cnd")
 
     @get:Input
     val nodeTypes: String
