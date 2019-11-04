@@ -7,4 +7,6 @@ open class InstanceService(val sync: InstanceSync) {
     val instance = sync.instance
 
     val project = sync.aem.project
+
+    val logger = aem.logger
 }

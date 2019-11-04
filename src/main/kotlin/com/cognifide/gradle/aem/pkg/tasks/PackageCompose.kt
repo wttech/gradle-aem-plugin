@@ -22,7 +22,6 @@ import com.cognifide.gradle.aem.pkg.tasks.compose.PackageDependency
 import com.cognifide.gradle.aem.pkg.tasks.compose.ProjectMergingOptions
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
-import java.util.regex.Pattern
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
 import org.gradle.api.Project

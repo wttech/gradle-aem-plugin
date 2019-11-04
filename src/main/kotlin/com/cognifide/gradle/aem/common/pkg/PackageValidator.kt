@@ -96,7 +96,7 @@ class PackageValidator(val aem: AemExtension) {
             FileOperations.zipUnpackAll(file, workDir)
         }
 
-        configDirs.filter { it.exists() }.forEach {configDir ->
+        configDirs.filter { it.exists() }.forEach { configDir ->
             logger.info("Using project-specific OakPAL Opear configuration files from file '$configDir' to directory '$workDir'")
 
             FileUtils.copyDirectory(configDir, workDir)
@@ -147,6 +147,7 @@ class PackageValidator(val aem: AemExtension) {
         }
     }
 
+    @Suppress("ComplexMethod")
     private fun analyzeReports(packages: Iterable<File>, reports: List<CheckReport>) {
         val violatedReports = reports.filter { !it.violations.isEmpty() }
         val shouldFail = violatedReports.any { !it.getViolations(severity).isEmpty() }
@@ -193,7 +194,6 @@ class PackageValidator(val aem: AemExtension) {
                 throw PackageException(failMessage)
             } else {
                 logger.error(failMessage)
-
             }
         } else {
             violationLogger.logTo(logger)

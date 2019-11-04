@@ -1,8 +1,10 @@
 package com.cognifide.gradle.aem.common.pkg.vlt
 
+import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.AemExtension
 import org.apache.commons.lang3.StringUtils
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Optional
 import java.io.File
@@ -71,6 +73,10 @@ open class VltDefinition(private val aem: AemExtension) {
     @Internal
     var nodeTypeLines: MutableList<String> = mutableListOf()
 
+    @InputFile
+    @Optional
+    var nodeTypeExported: File = File(aem.configCommonDir, "package/META-INF/vault/nodetypes.exported.cnd")
+
     @get:Input
     val nodeTypes: String
         get() = StringUtils.join(
@@ -121,8 +127,18 @@ open class VltDefinition(private val aem: AemExtension) {
             version = aem.project.version.toString()
         }
 
-        aem.availableInstance?.sync {
-            nodeTypes(crx.nodeTypes)
+        aem.buildScope.doOnce("crxNodeTypesExported") {
+            aem.availableInstance?.sync {
+                try {
+                    nodeTypeExported.writeText(crx.nodeTypes)
+                } catch (e: AemException) {
+                    aem.logger.debug("Cannot export and save node types from $instance! Cause: ${e.message}", e)
+                }
+            } ?: aem.logger.debug("No available instances to export node types!")
+        }
+
+        nodeTypeExported.takeIf { it.exists() }?.let {
+            nodeTypes(it)
         }
     }
 

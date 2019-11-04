@@ -66,4 +66,8 @@ class InstanceSync(val aem: AemExtension, val instance: Instance) {
      * CRX DE Endpoints accessor (node types etc).
      */
     fun <T> crx(callback: Crx.() -> T): T = crx.run(callback)
+
+    init {
+        aem.instanceOptions.syncOptions(this)
+    }
 }

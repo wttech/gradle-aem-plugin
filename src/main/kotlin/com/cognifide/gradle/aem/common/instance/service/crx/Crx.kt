@@ -17,11 +17,11 @@ class Crx(sync: InstanceSync) : InstanceService(sync) {
      */
     val nodeTypes: String
         get() {
-            if (!aem.instanceOptions.crxNodeTypes) {
+            if (aem.offline) {
                 return NODE_TYPES_UNKNOWN
             }
 
-            return aem.buildScope.tryGetOrPut(EXPORT_NODE_TYPE_PATH) {
+            return aem.buildScope.tryGetOrPut("${instance.httpUrl}$EXPORT_NODE_TYPE_PATH") {
                 try {
                     readNodeTypes().apply {
                         aem.logger.info("Successfully read CRX node types of $instance")
@@ -47,7 +47,5 @@ class Crx(sync: InstanceSync) : InstanceService(sync) {
         const val NODE_TYPES_UNKNOWN = ""
 
         const val EXPORT_NODE_TYPE_PATH = "/crx/de/exportnodetype.jsp"
-
-
     }
 }

@@ -5,6 +5,7 @@ import com.cognifide.gradle.aem.common.http.HttpClient
 import com.cognifide.gradle.aem.common.http.ResponseException
 import org.apache.http.HttpResponse
 
+@Suppress("MagicNumber")
 open class InstanceHttpClient(aem: AemExtension, val instance: Instance) : HttpClient(aem) {
 
     init {
@@ -13,7 +14,13 @@ open class InstanceHttpClient(aem: AemExtension, val instance: Instance) : HttpC
         basicPassword = instance.password
         authorizationPreemptive = true
 
-        apply { aem.instanceOptions.httpOptions(this, instance) }
+        connectionTimeout = aem.props.int("instance.http.connectionTimeout") ?: 30000
+        connectionRetries = aem.props.boolean("instance.http.connectionRetries") ?: true
+        connectionIgnoreSsl = aem.props.boolean("instance.http.connectionIgnoreSsl") ?: true
+
+        proxyHost = aem.props.string("instance.http.proxyHost")
+        proxyPort = aem.props.int("instance.http.proxyPort")
+        proxyScheme = aem.props.string("instance.http.proxyScheme")
     }
 
     override fun throwStatusException(response: HttpResponse) {

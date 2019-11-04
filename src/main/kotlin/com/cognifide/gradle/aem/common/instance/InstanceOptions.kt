@@ -14,39 +14,14 @@ open class InstanceOptions(private val aem: AemExtension) : Serializable {
     val defined: MutableMap<String, Instance> = mutableMapOf()
 
     /**
-     * Customize HTTP connection to AEM instances.
-     *
-     * Allows to e.g
-     * - set using HTTP proxy,
-     * - customize maximum time after which initializing connection to AEM will be aborted (e.g on upload, install),
-     * - customize any options offered by Apache HTTP Client builder (use its API directly).
+     * Customize default options for instance services.
      */
-    fun http(options: InstanceHttpClient.(Instance) -> Unit) {
-        httpOptions = options
+    fun sync(options: InstanceSync.() -> Unit) {
+        syncOptions = { options(); }
     }
 
     @get:JsonIgnore
-    internal var httpOptions: InstanceHttpClient.(Instance) -> Unit = {
-        connectionTimeout = aem.props.int("instance.http.connectionTimeout") ?: 30000
-        connectionRetries = aem.props.boolean("instance.http.connectionRetries") ?: true
-        connectionIgnoreSsl = aem.props.boolean("instance.http.connectionIgnoreSsl") ?: true
-
-        proxyHost = aem.props.string("instance.http.proxyHost")
-        proxyPort = aem.props.int("instance.http.proxyPort")
-        proxyScheme = aem.props.string("instance.http.proxyScheme")
-    }
-
-    /**
-     * Allows to control automatic system properties (and product version) gathering from running instance to defined.
-     * Essential for correctly working features that are using timestamps like instance tail and instance events check.
-     */
-    var statusProperties: Boolean = aem.props.boolean("instance.statusProperties") ?: !aem.offline
-
-    /**
-     * Allows to control automatic node types gathering from running instance to defined.
-     * Essential for correctly working package validation.
-     */
-    var crxNodeTypes: Boolean = aem.props.boolean("instance.crxNodeTypes") ?: !aem.offline
+    internal var syncOptions: InstanceSync.() -> Unit = {}
 
     /**
      * Define local instance (created on local file system).
