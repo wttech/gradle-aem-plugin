@@ -77,7 +77,7 @@ open class PackageCompose : ZipTask() {
     var metaDefaults: Boolean = true
 
     @Internal
-    val metaDir = AemTask.temporaryDir(project, name, "metadata/${Package.META_PATH}")
+    val metaDir = AemTask.temporaryDir(project, name, Package.META_PATH)
 
     /**
      * CRX package Vault files will be composed from given sources.
