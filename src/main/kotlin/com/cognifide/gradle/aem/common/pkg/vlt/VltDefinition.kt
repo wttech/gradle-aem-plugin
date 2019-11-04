@@ -97,6 +97,22 @@ open class VltDefinition(private val aem: AemExtension) {
         }
     }
 
+    fun syncNodeTypes() {
+        aem.buildScope.doOnce("syncNodeTypes") {
+            aem.availableInstance?.sync {
+                try {
+                    nodeTypeExported.writeText(crx.nodeTypes)
+                } catch (e: AemException) {
+                    aem.logger.debug("Cannot export and save node types from $instance! Cause: ${e.message}", e)
+                }
+            } ?: aem.logger.debug("No available instances to export node types!")
+        }
+
+        nodeTypeExported.takeIf { it.exists() }?.let {
+            nodeTypes(it)
+        }
+    }
+
     /**
      * Additional entries added to file 'META-INF/vault/properties.xml'.
      */
@@ -125,20 +141,6 @@ open class VltDefinition(private val aem: AemExtension) {
 
         if (version.isBlank()) {
             version = aem.project.version.toString()
-        }
-
-        aem.buildScope.doOnce("crxNodeTypesExported") {
-            aem.availableInstance?.sync {
-                try {
-                    nodeTypeExported.writeText(crx.nodeTypes)
-                } catch (e: AemException) {
-                    aem.logger.debug("Cannot export and save node types from $instance! Cause: ${e.message}", e)
-                }
-            } ?: aem.logger.debug("No available instances to export node types!")
-        }
-
-        nodeTypeExported.takeIf { it.exists() }?.let {
-            nodeTypes(it)
         }
     }
 

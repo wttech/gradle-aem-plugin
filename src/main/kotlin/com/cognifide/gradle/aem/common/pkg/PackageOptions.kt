@@ -93,12 +93,17 @@ class PackageOptions(aem: AemExtension) : Serializable {
      */
     var responseBuffer = aem.props.int("package.responseBuffer") ?: 4096
 
-    internal var validatorOptions: PackageValidator.() -> Unit = {}
-
     /**
-     * Customize CRX package validation.
+     * Customize default validation options.
      */
     fun validator(options: PackageValidator.() -> Unit) {
         this.validatorOptions = options
     }
+
+    internal var validatorOptions: PackageValidator.() -> Unit = {}
+
+    /**
+     * Controls automatic node types exporting from available instance to be later used in package validation.
+     */
+    var nodeTypesSync = aem.props.boolean("package.nodeTypesSync") ?: true
 }

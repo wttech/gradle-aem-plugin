@@ -37,6 +37,7 @@ open class PackageCompose : ZipTask() {
      * Shorthand for built CRX package file.
      */
     @get:JsonIgnore
+    @get:Internal
     val composedFile: File
         get() = archiveFile.get().asFile
 
@@ -44,6 +45,7 @@ open class PackageCompose : ZipTask() {
      * Shorthand for directory of built CRX package file.
      */
     @get:JsonIgnore
+    @get:Internal
     val composedDir: File
         get() = composedFile.parentFile
 
@@ -127,6 +129,10 @@ open class PackageCompose : ZipTask() {
     val vaultNodeTypesFile: File
         get() = File(vaultDir, Package.VLT_NODETYPES_FILE)
 
+    @Internal
+    @JsonIgnore
+    var vaultNodeTypesSync: Boolean = aem.packageOptions.nodeTypesSync
+
     @Nested
     val fileFilter = PackageFileFilter(aem)
 
@@ -171,6 +177,10 @@ open class PackageCompose : ZipTask() {
     @Suppress("ComplexMethod")
     override fun projectEvaluated() {
         vaultDefinition.ensureDefaults()
+        if (vaultNodeTypesSync) {
+            vaultDefinition.syncNodeTypes()
+        }
+
         validator.workDir = File(composedDir, "OAKPAL_OPEAR")
 
         if (bundlePath.isBlank()) {

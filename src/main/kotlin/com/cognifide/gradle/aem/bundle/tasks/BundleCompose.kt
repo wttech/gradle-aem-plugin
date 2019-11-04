@@ -31,6 +31,7 @@ open class BundleCompose : Jar(), AemTask {
      * Shorthand for built OSGi bundle file.
      */
     @get:JsonIgnore
+    @get:Internal
     val composedFile: File
         get() = archiveFile.get().asFile
 
@@ -38,6 +39,7 @@ open class BundleCompose : Jar(), AemTask {
      * Shorthand for directory of built OSGi bundle file.
      */
     @get:JsonIgnore
+    @get:Internal
     val composedDir: File
         get() = composedFile.parentFile
 

@@ -13,7 +13,7 @@ import java.io.File
 import java.io.IOException
 import java.net.URL
 
-class PackageValidator(val aem: AemExtension) {
+class PackageValidator(@Internal val aem: AemExtension) {
 
     private val logger = aem.logger
 
