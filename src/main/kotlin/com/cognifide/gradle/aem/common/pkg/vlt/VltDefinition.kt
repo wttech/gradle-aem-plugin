@@ -7,6 +7,7 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Optional
+import org.gradle.util.GFileUtils
 import java.io.File
 import java.util.regex.Pattern
 
@@ -75,7 +76,7 @@ open class VltDefinition(private val aem: AemExtension) {
 
     @InputFile
     @Optional
-    var nodeTypeExported: File = File(aem.configCommonDir, "package/META-INF/vault/nodetypes.exported.cnd")
+    var nodeTypeExported: File = File(aem.configCommonDir, "package/resources/nodetypes.exported.cnd")
 
     @get:Input
     val nodeTypes: String
@@ -101,7 +102,10 @@ open class VltDefinition(private val aem: AemExtension) {
         aem.buildScope.doOnce("syncNodeTypes") {
             aem.availableInstance?.sync {
                 try {
-                    nodeTypeExported.writeText(crx.nodeTypes)
+                    nodeTypeExported.apply {
+                        GFileUtils.parentMkdirs(this)
+                        writeText(crx.nodeTypes)
+                    }
                 } catch (e: AemException) {
                     aem.logger.debug("Cannot export and save node types from $instance! Cause: ${e.message}", e)
                 }
