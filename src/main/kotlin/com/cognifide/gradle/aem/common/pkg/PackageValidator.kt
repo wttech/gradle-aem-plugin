@@ -18,20 +18,20 @@ class PackageValidator(@Internal val aem: AemExtension) {
     private val logger = aem.logger
 
     @Input
-    var enabled = aem.props.boolean("aem.package.validator.enabled") ?: true
+    var enabled = aem.props.boolean("package.validator.enabled") ?: true
 
     @Input
     var severity = aem.props.string("package.validator.severity")
             ?.let { severity(it) } ?: Violation.Severity.MAJOR
 
     @Input
-    var verbose = aem.props.boolean("aem.package.validator.verbose") ?: true
+    var verbose = aem.props.boolean("package.validator.verbose") ?: true
 
     @OutputDirectory
     var workDir = aem.temporaryDir("package/validator")
 
     @Input
-    var planName = aem.props.string("package.validator.opear.plan") ?: "plan.json"
+    var planName = aem.props.string("package.validator.plan") ?: "plan.json"
 
     @get:Internal
     val planFile get() = File(workDir, planName)
