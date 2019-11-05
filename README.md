@@ -994,7 +994,7 @@ aem {
                 enabled = true
                 verbose = true
                 severity("MAJOR")
-                planName = "plan.json"
+                planName = "default-plan.json"
             }
             fileFilter {
                 expanding = true
