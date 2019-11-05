@@ -107,7 +107,7 @@ open class VltDefinition(private val aem: AemExtension) {
     }
 
     fun useNodeTypes(sync: NodeTypesSync, fallback: Boolean = true) {
-        if (sync == NodeTypesSync.ALWAYS || (sync == NodeTypesSync.ONCE && !nodeTypeExported.exists())) {
+        if (sync == NodeTypesSync.ALWAYS || (sync == NodeTypesSync.WHEN_MISSING && !nodeTypeExported.exists())) {
             syncNodeTypes()
         }
 
