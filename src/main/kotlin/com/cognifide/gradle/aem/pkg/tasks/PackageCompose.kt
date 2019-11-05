@@ -185,14 +185,7 @@ open class PackageCompose : ZipTask() {
 
         vaultDefinition.apply {
             ensureDefaults()
-
-            if (vaultNodeTypesSync) {
-                if (!syncNodeTypes() && vaultNodeTypesFallback) {
-                    fallbackNodeTypes()
-                }
-            } else if (vaultNodeTypesFallback) {
-                fallbackNodeTypes()
-            }
+            useNodeTypes(vaultNodeTypesSync, vaultNodeTypesFallback)
         }
 
         validator.workDir = File(composedDir, Package.OAKPAL_OPEAR_PATH)

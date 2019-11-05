@@ -106,30 +106,26 @@ open class VltDefinition(private val aem: AemExtension) {
         }
     }
 
-    fun syncNodeTypes(): Boolean {
-        aem.buildScope.doOnce("syncNodeTypes") {
-            aem.availableInstance?.sync {
-                try {
-                    nodeTypeExported.apply {
-                        GFileUtils.parentMkdirs(this)
-                        writeText(crx.nodeTypes)
+    fun useNodeTypes(sync: Boolean = true, fallback: Boolean = true) {
+        if (sync) {
+            aem.buildScope.doOnce("syncNodeTypes") {
+                aem.availableInstance?.sync {
+                    try {
+                        nodeTypeExported.apply {
+                            GFileUtils.parentMkdirs(this)
+                            writeText(crx.nodeTypes)
+                        }
+                    } catch (e: AemException) {
+                        aem.logger.debug("Cannot export and save node types from $instance! Cause: ${e.message}", e)
                     }
-                } catch (e: AemException) {
-                    aem.logger.debug("Cannot export and save node types from $instance! Cause: ${e.message}", e)
-                }
-            } ?: aem.logger.debug("No available instances to export node types!")
+                } ?: aem.logger.debug("No available instances to export node types!")
+            }
         }
 
-        if (nodeTypeExported.exists()) {
-            nodeTypes(nodeTypeExported)
-            return true
+        when {
+            nodeTypeExported.exists() -> nodeTypes(nodeTypeExported)
+            fallback -> nodeTypes(nodeTypeFallback)
         }
-
-        return false
-    }
-
-    fun fallbackNodeTypes() {
-        nodeTypes(nodeTypeFallback)
     }
 
     /**
