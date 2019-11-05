@@ -103,10 +103,11 @@
         "org.apache.jackrabbit.vault.packaging.*Exception",
         "org.xml.sax.*Exception"
       ],
-      "responseBuffer" : 4096
+      "responseBuffer" : 4096,
+      "nodeTypesSync": false,
+      "nodeTypesFallback": true
     },
     "instanceOptions" : {
-      "statusProperties": false,
       "defined" : {
         "local-author" : {
           "properties" : { },

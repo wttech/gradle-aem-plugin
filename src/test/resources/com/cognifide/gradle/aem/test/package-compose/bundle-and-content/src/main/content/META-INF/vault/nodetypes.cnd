@@ -1,5 +1,0 @@
-<'rep'='internal'>
-
-[rep:RepoAccessControllable]
-  mixin
-  + rep:repoPolicy (rep:Policy) protected ignore

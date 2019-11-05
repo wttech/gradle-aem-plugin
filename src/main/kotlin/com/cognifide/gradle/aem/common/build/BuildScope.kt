@@ -38,6 +38,11 @@ class BuildScope {
         cache[key] = value
     }
 
+    fun doOnce(operation: String, action: () -> Unit) = tryGetOrPut(operation) {
+        action()
+        true
+    }
+
     companion object {
 
         fun of(project: Project): BuildScope {

@@ -96,7 +96,6 @@ class Docker(val environment: Environment) {
         lateinit var result: DockerResult
 
         aem.progress {
-            step = "Docker"
             message = operation
 
             try {

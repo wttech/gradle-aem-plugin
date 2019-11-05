@@ -68,6 +68,14 @@ val downloadDir: File
     }
 
     /**
+     * Resolve of download file in case of specified value (url or dependency notation).
+     */
+    fun get(value: String): FileResolution = when {
+        DependencyOptions.isValid(aem, value) -> resolve(value)
+        else -> download(value)
+    }
+
+    /**
      * Resolve file by dependency notation using defined Gradle repositories (Maven, Ivy etc).
      */
     fun resolve(dependencyNotation: String): FileResolution = resolve(dependencyNotation as Any)

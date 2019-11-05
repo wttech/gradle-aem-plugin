@@ -28,7 +28,12 @@ class RunSpec : DockerDefaultSpec() {
         volumes = volumes + (localPath to containerPath)
     }
 
-    var operation: () -> String = { "Running command '$fullCommand'" }
+    var operation: () -> String = {
+        when {
+            fullCommand.isBlank() -> "Running image '$image'"
+            else -> "Running image '$image' and command '$fullCommand'"
+        }
+    }
 
     fun operation(operation: () -> String) {
         this.operation = operation
