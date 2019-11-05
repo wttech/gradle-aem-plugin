@@ -251,10 +251,6 @@ githubRelease {
     |# Contributions
     |
     |None.
-    |
-    |# Change log
-    |
-    |${changelog().call()}
     """.trimMargin()
     }
 }
