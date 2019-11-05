@@ -133,6 +133,10 @@ open class PackageCompose : ZipTask() {
     @JsonIgnore
     var vaultNodeTypesSync: Boolean = aem.packageOptions.nodeTypesSync
 
+    @Internal
+    @JsonIgnore
+    var vaultNodeTypesFallback: Boolean = aem.packageOptions.nodeTypesFallback
+
     @Nested
     val fileFilter = PackageFileFilter(aem)
 
@@ -174,18 +178,24 @@ open class PackageCompose : ZipTask() {
         doLast { aem.notifier.notify("Package composed", archiveFileName.get()) }
     }
 
-    @Suppress("ComplexMethod")
     override fun projectEvaluated() {
-        vaultDefinition.ensureDefaults()
-        if (vaultNodeTypesSync) {
-            vaultDefinition.syncNodeTypes()
-        }
-
-        validator.workDir = File(composedDir, "OAKPAL_OPEAR")
-
         if (bundlePath.isBlank()) {
             throw AemException("Bundle path cannot be blank")
         }
+
+        vaultDefinition.apply {
+            ensureDefaults()
+
+            if (vaultNodeTypesSync) {
+                if (!syncNodeTypes() && vaultNodeTypesFallback) {
+                    fallbackNodeTypes()
+                }
+            } else if (vaultNodeTypesFallback) {
+                fallbackNodeTypes()
+            }
+        }
+
+        validator.workDir = File(composedDir, Package.OAKPAL_OPEAR_PATH)
 
         if (fromConvention) {
             fromConvention()

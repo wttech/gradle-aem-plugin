@@ -100,10 +100,17 @@ class PackageOptions(aem: AemExtension) : Serializable {
         this.validatorOptions = options
     }
 
+    @get:JsonIgnore
     internal var validatorOptions: PackageValidator.() -> Unit = {}
 
     /**
      * Controls automatic node types exporting from available instance to be later used in package validation.
      */
-    var nodeTypesSync = aem.props.boolean("package.nodeTypesSync") ?: true
+    var nodeTypesSync = aem.props.boolean("package.nodeTypesSync") ?: !aem.offline
+
+    /**
+     * Provides predefined / fallback node types if node types sync is disabled
+     * or cannot be done when AEM instance is unavailable and exported file is not yet created / saved in VCS.
+     */
+    var nodeTypesFallback = aem.props.boolean("package.nodeTypesFallback") ?: true
 }

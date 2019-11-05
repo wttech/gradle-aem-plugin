@@ -104,13 +104,10 @@
         "org.xml.sax.*Exception"
       ],
       "responseBuffer" : 4096,
-      "validator": {
-        "enabled": true,
-        "verbose": true
-      }
+      "nodeTypesSync": false,
+      "nodeTypesFallback": true
     },
     "instanceOptions" : {
-      "statusProperties": false,
       "defined" : {
         "local-author" : {
           "properties" : { },

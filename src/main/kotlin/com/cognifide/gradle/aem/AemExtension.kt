@@ -104,12 +104,12 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
         }, ".")
 
     /**
-     * Allows to disable features that are using running instances.
+     * Allows to disable features that are using running AEM instances.
      *
-     * Gradle's offline mode does much more. It will not use any Maven repository so that CI build
-     * will fail which is not expected in integration tests.
+     * It is more soft offline mode than Gradle's one which does much more.
+     * It will not use any Maven repository so that CI build will fail which is not expected in e.g integration tests.
      */
-    val offline = props.boolean("offline") ?: false
+    val offline = props.flag("offline")
 
     /**
      * Determines current environment name to be used in e.g package deployment.

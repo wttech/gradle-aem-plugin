@@ -2,9 +2,10 @@ package com.cognifide.gradle.aem.common.pkg.vlt
 
 import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.common.file.FileOperations
+import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import org.apache.commons.lang3.StringUtils
 import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Optional
 import org.gradle.util.GFileUtils
@@ -74,9 +75,16 @@ open class VltDefinition(private val aem: AemExtension) {
     @Internal
     var nodeTypeLines: MutableList<String> = mutableListOf()
 
-    @InputFile
-    @Optional
-    var nodeTypeExported: File = File(aem.configCommonDir, "package/nodetypes.export.cnd")
+    @Internal
+    var nodeTypeExported: File = File(aem.configCommonDir, Package.NODE_TYPES_EXPORT_PATH)
+
+    /**
+     * @see <https://github.com/Adobe-Consulting-Services/acs-aem-commons/blob/master/ui.apps/src/main/content/META-INF/vault/nodetypes.cnd>
+     */
+    private val nodeTypeFallback: String
+        get() = FileOperations.readResource(Package.NODE_TYPES_EXPORT_PATH)
+                ?.bufferedReader()?.readText()
+                ?: throw AemException("Cannot read fallback resource for exported node types!")
 
     @get:Input
     val nodeTypes: String
@@ -98,7 +106,7 @@ open class VltDefinition(private val aem: AemExtension) {
         }
     }
 
-    fun syncNodeTypes() {
+    fun syncNodeTypes(): Boolean {
         aem.buildScope.doOnce("syncNodeTypes") {
             aem.availableInstance?.sync {
                 try {
@@ -112,9 +120,16 @@ open class VltDefinition(private val aem: AemExtension) {
             } ?: aem.logger.debug("No available instances to export node types!")
         }
 
-        nodeTypeExported.takeIf { it.exists() }?.let {
-            nodeTypes(it)
+        if (nodeTypeExported.exists()) {
+            nodeTypes(nodeTypeExported)
+            return true
         }
+
+        return false
+    }
+
+    fun fallbackNodeTypes() {
+        nodeTypes(nodeTypeFallback)
     }
 
     /**

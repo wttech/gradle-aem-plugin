@@ -20,15 +20,13 @@ class DebugTest : AemTest() {
     }
 
     private fun buildDebugJsonFile(buildName: String) {
-        build("debug/$buildName", {
-            withArguments(":${Debug.NAME}", "-S", "-i", "-Poffline=true")
-        }, {
+        buildTask("debug/$buildName", ":${Debug.NAME}") {
             assertJsonCustomized(
                     readFile("debug/$buildName/debug.json"),
                     readFile(file("build/aem/${Debug.NAME}/debug.json")),
                     JSON_CUSTOMIZATIONS
             )
-        })
+        }
     }
 
     companion object {
