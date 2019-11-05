@@ -17,8 +17,8 @@ class CollectingLogger {
         _entries += LogEntry(level, details, summary)
     }
 
-    fun logTo(logger: Logger) {
-        _entries.forEach { logger.log(it.level, it.details) }
+    fun logTo(logger: Logger, levelMapper: (LogLevel) -> LogLevel = { it }) {
+        _entries.forEach { logger.log(levelMapper(it.level), it.details) }
     }
 
     val entries

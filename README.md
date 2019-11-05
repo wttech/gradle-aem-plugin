@@ -41,6 +41,7 @@
      * [Package plugin](#package-plugin)
         * [Task packageCompose](#task-packagecompose)
            * [CRX package default configuration](#crx-package-default-configuration)
+           * [CRX package validation](#crx-package-validation)
            * [Including additional OSGi bundle into CRX package](#including-additional-osgi-bundle-into-crx-package)
            * [Nesting CRX packages](#nesting-crx-packages)
            * [Assembling packages (merging all-in-one)](#assembling-packages-merging-all-in-one)
@@ -214,7 +215,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.cognifide.gradle:aem-plugin:8.0.0")
+    implementation("com.cognifide.gradle:aem-plugin:8.1.0")
 }
 ```
 
@@ -989,6 +990,12 @@ aem {
                 }
                 version = project.version.toString()
             }
+            validator {
+                enabled = true
+                verbose = true
+                severity("MAJOR")
+                planName = "default-plan.json"
+            }
             fileFilter {
                 expanding = true
                 expandFiles = listOf(
@@ -1020,6 +1027,53 @@ aem {
 }
 ```
 
+##### CRX package validation
+
+Built package is validated using [OakPAL tool](https://github.com/adamcin/oakpal).
+It helps preventing situation when CRX Package Manager reports message like *Package installed with errors*.
+Also gives immediate feedback for mistakes taken when using copy-pasting technique, 
+forgetting about using entities ('&' instead of '\&amp;), missing XML namespaces and much more.
+
+By default, **nothing need to be configured** so that [default plan](https://github.com/Cognifide/gradle-aem-plugin/blob/master/src/main/resources/com/cognifide/gradle/aem/package/OAKPAL_OPEAR/default-plan.json) will be in use.
+However, more detailed checks could be provided by configuring base artifact called Opear File containing OakPAL checks.
+
+It could be done via following snippet ([ACS AEM Commons OakPAL Checks](https://github.com/Adobe-Consulting-Services/acs-aem-commons/tree/master/oakpal-checks) as example):
+
+```kotlin
+aem {
+    `package` {
+        validator {
+            base("com.adobe.acs:acs-aem-commons-oakpal-checks:4.3.4")
+        }
+    }
+}
+```
+
+To use custom checks, only left thing is to choose them in custom plan.
+Simply create file at path [*[aem/]gradle/package/OAKPAL_OPEAR/default-plan.json*](https://github.com/Cognifide/gradle-aem-multi/blob/master/aem/gradle/package/OAKPAL_OPEAR/default-plan.json)
+
+```json
+{
+  "checklists": [
+    "net.adamcin.oakpal.core/basic",
+    "acs-commons-integrators",
+    "content-class-aem65"
+  ],
+  "installHookPolicy": "SKIP"
+}
+```
+
+Notice that running OakPAL requires to have included in CRX package up-to-date node type definitions coming from AEM instance.
+Such definitions could be manually downloaded using CRXDE Lite interface (*Tools / Export Node Type*) and put inside CRX package.
+After installing some dependent CRX packages, the list of exported node types may change.
+
+To keep it up-to-date, plugin is synchronizing node types from one of available AEM instances automatically.
+Synchronized file containing node types, later used when building CRX packages is placed at path [*[aem/]gradle/package/nodetypes.export.cnd*](https://github.com/Cognifide/gradle-aem-multi/blob/master/aem/gradle/package/nodetypes.export.cnd). 
+Remember to save this file in VCS, so that CRX package validation will not fail on e.g CI server where AEM instance could be not available.
+
+To disable automatic synchronization of node types file, simply set property `package.nodeTypesSync=false` or more generally `offline=true` (useful for CI builds).
+To disable using fallback node types, simply set property `package.nodeTypesFallback=false` (might be useful to explicitly show error when node types are not configured yet).
+
 ##### Including additional OSGi bundle into CRX package
 
 Use dedicated task method named `fromJar`, for example:
@@ -1028,7 +1082,7 @@ Use dedicated task method named `fromJar`, for example:
 aem {
     tasks {
         packageCompose {
-            fromJar("com.github.mickleroy:aem-sass-compiler:1.0.1)
+            fromJar("com.github.mickleroy:aem-sass-compiler:1.0.1")
         }
     }
 }

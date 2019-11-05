@@ -17,12 +17,14 @@ import com.cognifide.gradle.aem.common.notifier.NotifierFacade
 import com.cognifide.gradle.aem.common.pkg.PackageDefinition
 import com.cognifide.gradle.aem.common.pkg.PackageFile
 import com.cognifide.gradle.aem.common.pkg.PackageOptions
+import com.cognifide.gradle.aem.common.pkg.PackageValidator
 import com.cognifide.gradle.aem.common.pkg.vlt.FilterFile
 import com.cognifide.gradle.aem.common.utils.Formats
 import com.cognifide.gradle.aem.common.utils.LineSeparator
 import com.cognifide.gradle.aem.common.utils.Patterns
 import com.cognifide.gradle.aem.environment.Environment
 import com.cognifide.gradle.aem.environment.EnvironmentPlugin
+import com.cognifide.gradle.aem.environment.docker.RunSpec
 import com.cognifide.gradle.aem.instance.*
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.PackageCompose
@@ -102,12 +104,12 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
         }, ".")
 
     /**
-     * Allows to disable features that are using running instances.
+     * Allows to disable features that are using running AEM instances.
      *
-     * Gradle's offline mode does much more. It will not use any Maven repository so that CI build
-     * will fail which is not expected in integration tests.
+     * It is more soft offline mode than Gradle's one which does much more.
+     * It will not use any Maven repository so that CI build will fail which is not expected in e.g integration tests.
      */
-    val offline = props.boolean("offline") ?: false
+    val offline = props.flag("offline")
 
     /**
      * Determines current environment name to be used in e.g package deployment.
@@ -264,7 +266,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     fun instances(urlsOrNames: Iterable<String>): List<Instance> = urlsOrNames.map { instance(it) }
 
     /**
-     * Get or create instance using command line parameter named 'instance' which holds instance name or URL.
+     * Get instance from command line parameter named 'instance' which holds instance name or URL.
      * If it is not specified, then first instance matching default filtering fill be returned.
      *
      * Purpose of this method is to easily get any instance to work with (no matter how it will be defined).
@@ -281,6 +283,13 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
 
             return namedInstance(Instance.FILTER_ANY)
         }
+
+    /**
+     * Get available instance of any type (most often first defined).
+     */
+    @get:JsonIgnore
+    val availableInstance: Instance?
+        get() = instances.asSequence().firstOrNull { it.available }
 
     /**
      * Get all instances which names are matching wildcard filter specified via command line parameter 'instance.name'.
@@ -383,7 +392,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     @Suppress("VariableNaming")
     @get:JsonIgnore
     val `package`: File
-        get() = tasks.get(PackageCompose.NAME, PackageCompose::class.java).archiveFile.get().asFile
+        get() = tasks.get(PackageCompose.NAME, PackageCompose::class.java).composedFile
 
     @get:JsonIgnore
     val pkg: File
@@ -394,7 +403,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
      */
     @get:JsonIgnore
     val packages: List<File>
-        get() = tasks.packages.map { it.archiveFile.get().asFile }
+        get() = tasks.packages.map { it.composedFile }
 
     /**
      * Get all CRX packages built before running particular task.
@@ -402,15 +411,22 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     fun dependentPackages(task: Task): List<File> {
         return task.taskDependencies.getDependencies(task)
                 .filterIsInstance(PackageCompose::class.java)
-                .map { it.archiveFile.get().asFile }
+                .map { it.composedFile }
     }
+
+    /**
+     * Get OSGi bundle defined to be built (could not yet exist).
+     */
+    @get:JsonIgnore
+    val bundle: File
+        get() = tasks.get(BundleCompose.NAME, BundleCompose::class.java).composedFile
 
     /**
      * Get all OSGi bundles defined to be built.
      */
     @get:JsonIgnore
     val bundles: List<File>
-        get() = tasks.bundles.map { it.archiveFile.get().asFile }
+        get() = tasks.bundles.map { it.composedFile }
 
     /**
      * Get all OSGi bundles built before running particular task.
@@ -418,7 +434,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     fun dependentBundles(task: Task): List<File> {
         return task.taskDependencies.getDependencies(task)
                 .filterIsInstance(BundleCompose::class.java)
-                .map { it.archiveFile.get().asFile }
+                .map { it.composedFile }
     }
 
     /**
@@ -466,6 +482,16 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     fun composePackage(definition: PackageDefinition.() -> Unit): File {
         return PackageDefinition(this).compose(definition)
     }
+
+    /**
+     * Validate any CRX packages.
+     */
+    fun validatePackage(vararg packages: File, options: PackageValidator.() -> Unit) = validatePackage(packages.asIterable(), options)
+
+    /**
+     * Validate any CRX packages.
+     */
+    fun validatePackage(packages: Iterable<File>, options: PackageValidator.() -> Unit) = PackageValidator(this).apply(options).perform(packages)
 
     /**
      * Show asynchronous progress indicator with percentage while performing some action.
@@ -591,12 +617,23 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     }
 
     /**
-     * Resolve files from defined repositories or by using one of defined file transfers.
+     * Resolve single file from defined repositories or by using defined file transfers.
+     */
+    fun resolveFile(value: Any) = resolveFile { get(value) }
+
+    /**
+     * Resolve single file from defined repositories or by using defined file transfers.
+     */
+    fun resolveFile(options: FileResolver.() -> Unit) = resolveFiles(options).firstOrNull()
+            ?: throw AemException("There is no files resolved!")
+
+    /**
+     * Resolve files from defined repositories or by using defined file transfers.
      */
     fun resolveFiles(options: FileResolver.() -> Unit) = resolveFiles(temporaryDir, options)
 
     /**
-     * Resolve files from defined repositories or by using one of defined file transfers.
+     * Resolve files from defined repositories or by using defined file transfers.
      */
     fun resolveFiles(downloadDir: File, options: FileResolver.() -> Unit): List<File> {
         return FileResolver(this, downloadDir).apply(options).allFiles
@@ -636,6 +673,11 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
      * Execute any Vault JCR content remote copying with customized options like content directory.
      */
     fun <T> rcp(options: RcpClient.() -> T) = RcpClient(this).run(options)
+
+    /**
+     * Execute any Docker command using all available images with mounting volumes etc, exposing ports etc.
+     */
+    fun runDocker(spec: RunSpec.() -> Unit) = environment.docker.run(spec)
 
     // Utilities (to use without imports)
 

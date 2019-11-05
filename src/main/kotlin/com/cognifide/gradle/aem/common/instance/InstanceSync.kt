@@ -5,6 +5,7 @@ import com.cognifide.gradle.aem.common.instance.service.groovy.GroovyConsole
 import com.cognifide.gradle.aem.common.instance.service.osgi.OsgiFramework
 import com.cognifide.gradle.aem.common.instance.service.pkg.PackageManager
 import com.cognifide.gradle.aem.common.instance.service.repository.Repository
+import com.cognifide.gradle.aem.common.instance.service.crx.Crx
 import com.cognifide.gradle.aem.common.instance.service.status.Status
 import com.cognifide.gradle.aem.common.instance.service.workflow.WorkflowManager
 
@@ -58,4 +59,15 @@ class InstanceSync(val aem: AemExtension, val instance: Instance) {
      * Perform operations on workflows (enabling, disabling)
      */
     fun <T> workflowManager(callback: WorkflowManager.() -> T) = workflowManager.run(callback)
+
+    var crx = Crx(this)
+
+    /**
+     * CRX DE Endpoints accessor (node types etc).
+     */
+    fun <T> crx(callback: Crx.() -> T): T = crx.run(callback)
+
+    init {
+        aem.instanceOptions.syncOptions(this)
+    }
 }

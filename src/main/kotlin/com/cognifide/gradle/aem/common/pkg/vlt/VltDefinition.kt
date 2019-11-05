@@ -1,10 +1,16 @@
 package com.cognifide.gradle.aem.common.pkg.vlt
 
+import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.common.file.FileOperations
+import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import org.apache.commons.lang3.StringUtils
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Optional
+import org.gradle.util.GFileUtils
+import java.io.File
+import java.util.regex.Pattern
 
 /**
  * Represents collection of metadata being a part of CRX package.
@@ -69,6 +75,17 @@ open class VltDefinition(private val aem: AemExtension) {
     @Internal
     var nodeTypeLines: MutableList<String> = mutableListOf()
 
+    @Internal
+    var nodeTypeExported: File = File(aem.configCommonDir, Package.NODE_TYPES_EXPORT_PATH)
+
+    /**
+     * @see <https://github.com/Adobe-Consulting-Services/acs-aem-commons/blob/master/ui.apps/src/main/content/META-INF/vault/nodetypes.cnd>
+     */
+    private val nodeTypeFallback: String
+        get() = FileOperations.readResource(Package.NODE_TYPES_EXPORT_PATH)
+                ?.bufferedReader()?.readText()
+                ?: throw AemException("Cannot read fallback resource for exported node types!")
+
     @get:Input
     val nodeTypes: String
         get() = StringUtils.join(
@@ -76,6 +93,40 @@ open class VltDefinition(private val aem: AemExtension) {
                 aem.lineSeparatorString,
                 nodeTypeLines.joinToString(aem.lineSeparatorString)
         )
+
+    fun nodeTypes(file: File) = nodeTypes(file.readText())
+
+    fun nodeTypes(text: String) {
+        text.lineSequence().forEach { line ->
+            if (NODE_TYPES_LIB.matcher(line.trim()).matches()) {
+                nodeTypeLibs.add(line)
+            } else {
+                nodeTypeLines.add(line)
+            }
+        }
+    }
+
+    fun useNodeTypes(sync: Boolean = true, fallback: Boolean = true) {
+        if (sync) {
+            aem.buildScope.doOnce("syncNodeTypes") {
+                aem.availableInstance?.sync {
+                    try {
+                        nodeTypeExported.apply {
+                            GFileUtils.parentMkdirs(this)
+                            writeText(crx.nodeTypes)
+                        }
+                    } catch (e: AemException) {
+                        aem.logger.debug("Cannot export and save node types from $instance! Cause: ${e.message}", e)
+                    }
+                } ?: aem.logger.debug("No available instances to export node types!")
+            }
+        }
+
+        when {
+            nodeTypeExported.exists() -> nodeTypes(nodeTypeExported)
+            fallback -> nodeTypes(nodeTypeFallback)
+        }
+    }
 
     /**
      * Additional entries added to file 'META-INF/vault/properties.xml'.
@@ -123,5 +174,9 @@ open class VltDefinition(private val aem: AemExtension) {
                     custom != general && custom.root.startsWith("${general.root}/") &&
                             general.excludes.isEmpty() && general.includes.isEmpty()
                 }
+    }
+
+    companion object {
+        val NODE_TYPES_LIB: Pattern = Pattern.compile("<.+>")
     }
 }

@@ -10,6 +10,7 @@ import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.aem.common.pkg.PackageFile
 import com.cognifide.gradle.aem.common.pkg.PackageFileFilter
+import com.cognifide.gradle.aem.common.pkg.PackageValidator
 import com.cognifide.gradle.aem.common.pkg.vlt.FilterFile
 import com.cognifide.gradle.aem.common.pkg.vlt.FilterType
 import com.cognifide.gradle.aem.common.pkg.vlt.VltDefinition
@@ -21,7 +22,6 @@ import com.cognifide.gradle.aem.pkg.tasks.compose.PackageDependency
 import com.cognifide.gradle.aem.pkg.tasks.compose.ProjectMergingOptions
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
-import java.util.regex.Pattern
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
 import org.gradle.api.Project
@@ -32,6 +32,22 @@ import org.gradle.api.tasks.bundling.Jar
 
 @Suppress("TooManyFunctions", "LargeClass")
 open class PackageCompose : ZipTask() {
+
+    /**
+     * Shorthand for built CRX package file.
+     */
+    @get:JsonIgnore
+    @get:Internal
+    val composedFile: File
+        get() = archiveFile.get().asFile
+
+    /**
+     * Shorthand for directory of built CRX package file.
+     */
+    @get:JsonIgnore
+    @get:Internal
+    val composedDir: File
+        get() = composedFile.parentFile
 
     /**
      * Absolute path to JCR content to be included in CRX package.
@@ -61,7 +77,7 @@ open class PackageCompose : ZipTask() {
     var metaDefaults: Boolean = true
 
     @Internal
-    val metaDir = AemTask.temporaryDir(project, name, "metadata/${Package.META_PATH}")
+    val metaDir = AemTask.temporaryDir(project, name, Package.META_PATH)
 
     /**
      * CRX package Vault files will be composed from given sources.
@@ -80,6 +96,13 @@ open class PackageCompose : ZipTask() {
                     .filter { it.exists() }
                     .toList()
         }
+
+    @Nested
+    var validator = PackageValidator(aem)
+
+    fun validator(options: PackageValidator.() -> Unit) {
+        validator.apply(options)
+    }
 
     /**
      * Defines properties being used to generate CRX package metadata files.
@@ -105,6 +128,14 @@ open class PackageCompose : ZipTask() {
     @get:JsonIgnore
     val vaultNodeTypesFile: File
         get() = File(vaultDir, Package.VLT_NODETYPES_FILE)
+
+    @Internal
+    @JsonIgnore
+    var vaultNodeTypesSync: Boolean = aem.packageOptions.nodeTypesSync
+
+    @Internal
+    @JsonIgnore
+    var vaultNodeTypesFallback: Boolean = aem.packageOptions.nodeTypesFallback
 
     @Nested
     val fileFilter = PackageFileFilter(aem)
@@ -147,13 +178,17 @@ open class PackageCompose : ZipTask() {
         doLast { aem.notifier.notify("Package composed", archiveFileName.get()) }
     }
 
-    @Suppress("ComplexMethod")
     override fun projectEvaluated() {
-        vaultDefinition.ensureDefaults()
-
         if (bundlePath.isBlank()) {
             throw AemException("Bundle path cannot be blank")
         }
+
+        vaultDefinition.apply {
+            ensureDefaults()
+            useNodeTypes(vaultNodeTypesSync, vaultNodeTypesFallback)
+        }
+
+        validator.workDir = File(composedDir, Package.OAKPAL_OPEAR_PATH)
 
         if (fromConvention) {
             fromConvention()
@@ -172,6 +207,7 @@ open class PackageCompose : ZipTask() {
     override fun copy() {
         copyMetaFiles()
         super.copy()
+        validateComposedFile()
     }
 
     private fun copyMetaFiles() {
@@ -428,22 +464,17 @@ open class PackageCompose : ZipTask() {
     }
 
     private fun extractVaultNodeTypes(file: File) {
-        if (!file.exists()) {
-            return
-        }
+        file.takeIf { it.exists() }?.let { vaultDefinition.nodeTypes(it) }
+    }
 
-        file.forEachLine { line ->
-            if (NODE_TYPES_LIB.matcher(line.trim()).matches()) {
-                vaultDefinition.nodeTypeLibs.add(line)
-            } else {
-                vaultDefinition.nodeTypeLines.add(line)
-            }
+    private fun validateComposedFile() {
+        aem.progress {
+            message = "Validating CRX package '${composedFile.name}'"
+            validator.perform(composedFile)
         }
     }
 
     companion object {
         const val NAME = "packageCompose"
-
-        val NODE_TYPES_LIB: Pattern = Pattern.compile("<.+>")
     }
 }

@@ -1,8 +1,9 @@
 package com.cognifide.gradle.aem.environment.docker
 
 import com.cognifide.gradle.aem.common.build.Behaviors
+import com.cognifide.gradle.aem.common.utils.Formats
 import com.cognifide.gradle.aem.environment.EnvironmentException
-import com.cognifide.gradle.aem.environment.docker.base.DockerContainer
+import com.cognifide.gradle.aem.environment.docker.container.ContainerException
 import com.cognifide.gradle.aem.environment.docker.container.DevOptions
 import com.cognifide.gradle.aem.environment.docker.container.HostFileManager
 import com.cognifide.gradle.aem.environment.docker.container.ExecSpec
@@ -12,7 +13,9 @@ class Container(val docker: Docker, val name: String) {
 
     val aem = docker.aem
 
-    val base = DockerContainer(aem, "${docker.stack.base.name}_$name")
+    private val logger = aem.logger
+
+    val internalName = "${docker.stack.internalName}_$name"
 
     val host = HostFileManager(this)
 
@@ -48,16 +51,51 @@ class Container(val docker: Docker, val name: String) {
         devOptions.apply(options)
     }
 
-    val running: Boolean
-        get() = base.running
+    var runningTimeout = aem.props.long("environment.docker.container.runningTimeout") ?: 10000L
 
-    var awaitRetry = aem.retry { afterSecond(aem.props.long("environment.container.awaitRetry") ?: 30) }
+    val id: String?
+        get() {
+            try {
+                logger.debug("Determining ID for Docker container '$internalName'")
+
+                val containerId = DockerProcess.execString {
+                    withArgs("ps", "-l", "-q", "-f", "name=$internalName")
+                    withTimeoutMillis(runningTimeout)
+                }
+
+                return if (containerId.isBlank()) {
+                    null
+                } else {
+                    containerId
+                }
+            } catch (e: DockerException) {
+                throw ContainerException("Failed to load Docker container ID for name '$internalName'!", e)
+            }
+        }
+
+    val running: Boolean
+        get() {
+            val currentId = id ?: return false
+
+            return try {
+                logger.debug("Checking running state of Docker container '$name'")
+
+                DockerProcess.execString {
+                    withArgs("inspect", "-f", "{{.State.Running}}", currentId)
+                    withTimeoutMillis(runningTimeout)
+                }.toBoolean()
+            } catch (e: DockerException) {
+                throw ContainerException("Failed to check Docker container '$name' state!", e)
+            }
+        }
+
+    var awaitRetry = aem.retry { afterSecond(aem.props.long("environment.docker.container.awaitRetry") ?: 30) }
 
     fun await() {
         aem.progressIndicator {
             message = "Awaiting container '$name'"
             Behaviors.waitUntil(awaitRetry.delay) { timer ->
-                val running = base.running
+                val running = this@Container.running
                 if (timer.ticks == awaitRetry.times && !running) {
                     mutableListOf<String>().apply {
                         add("Failed to await container '$name'!")
@@ -67,7 +105,7 @@ class Container(val docker: Docker, val name: String) {
                         }
 
                         add("Consider troubleshooting:")
-                        add("* using command: 'docker stack ps ${docker.stack.base.name} --no-trunc'")
+                        add("* using command: 'docker stack ps ${docker.stack.internalName} --no-trunc'")
                         add("* restarting Docker")
 
                         throw EnvironmentException(joinToString("\n"))
@@ -89,21 +127,25 @@ class Container(val docker: Docker, val name: String) {
         reloadAction()
     }
 
-    fun exec(execSpec: ExecSpec.() -> Unit) {
+    fun exec(execSpec: ExecSpec.() -> Unit): DockerResult {
         val spec = ExecSpec().apply(execSpec)
         val operation = spec.operation()
+
+        lateinit var result: DockerResult
 
         aem.progressIndicator {
             step = "Container '$name'"
             message = operation
 
             try {
-                base.exec(spec)
+                result = exec(spec)
             } catch (e: DockerException) {
                 aem.logger.debug("Exec operation '$operation' error", e)
                 throw EnvironmentException("Failed to perform operation '$operation' on container '$name'!\n${e.message}")
             }
         }
+
+        return result
     }
 
     fun exec(command: String, exitCode: Int = 0) = exec {
@@ -127,6 +169,27 @@ class Container(val docker: Docker, val name: String) {
 
     fun cleanDir(vararg paths: String) = paths.forEach { path ->
         execShell("Cleaning directory contents at path '$path'", "rm -fr $path/*")
+    }
+
+    private fun exec(spec: ExecSpec): DockerResult {
+        if (spec.command.isBlank()) {
+            throw ContainerException("Exec command cannot be blank!")
+        }
+
+        if (!running) {
+            throw ContainerException("Cannot exec command '${spec.command}' since Docker container '$name' is not running!")
+        }
+
+        val customSpec = DockerCustomSpec(spec, mutableListOf<String>().apply {
+            add("exec")
+            addAll(spec.options)
+            add(id!!)
+            addAll(Formats.commandToArgs(spec.command))
+        })
+
+        logger.info("Executing command '${customSpec.fullCommand}' for Docker container '$name'")
+
+        return DockerProcess.execSpec(spec)
     }
 }
 
