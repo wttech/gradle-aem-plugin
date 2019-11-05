@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.common.pkg
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
+import com.cognifide.gradle.aem.common.pkg.vlt.NodeTypesSync
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 import java.io.Serializable
@@ -106,7 +107,8 @@ class PackageOptions(aem: AemExtension) : Serializable {
     /**
      * Controls automatic node types exporting from available instance to be later used in package validation.
      */
-    var nodeTypesSync = aem.props.boolean("package.nodeTypeSync") ?: !aem.offline
+    var nodeTypesSync = aem.props.string("package.nodeTypeSync")
+            ?.let { NodeTypesSync.of(it) } ?: if (aem.offline) NodeTypesSync.NEVER else NodeTypesSync.ONCE
 
     /**
      * Provides predefined / fallback node types if node types sync is disabled

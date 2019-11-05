@@ -13,6 +13,7 @@ import com.cognifide.gradle.aem.common.pkg.PackageFileFilter
 import com.cognifide.gradle.aem.common.pkg.PackageValidator
 import com.cognifide.gradle.aem.common.pkg.vlt.FilterFile
 import com.cognifide.gradle.aem.common.pkg.vlt.FilterType
+import com.cognifide.gradle.aem.common.pkg.vlt.NodeTypesSync
 import com.cognifide.gradle.aem.common.pkg.vlt.VltDefinition
 import com.cognifide.gradle.aem.common.tasks.ZipTask
 import com.cognifide.gradle.aem.common.utils.Patterns
@@ -131,7 +132,7 @@ open class PackageCompose : ZipTask() {
 
     @Internal
     @JsonIgnore
-    var vaultNodeTypesSync: Boolean = aem.packageOptions.nodeTypesSync
+    var vaultNodeTypesSync: NodeTypesSync = aem.packageOptions.nodeTypesSync
 
     @Internal
     @JsonIgnore
