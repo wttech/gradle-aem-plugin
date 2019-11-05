@@ -131,11 +131,11 @@ open class PackageCompose : ZipTask() {
 
     @Internal
     @JsonIgnore
-    var vaultNodeTypesSync: Boolean = aem.packageOptions.nodeTypesSync
+    var vaultNodeTypesSync: Boolean = aem.packageOptions.nodeTypeSync
 
     @Internal
     @JsonIgnore
-    var vaultNodeTypesFallback: Boolean = aem.packageOptions.nodeTypesFallback
+    var vaultNodeTypesFallback: Boolean = aem.packageOptions.nodeTypeFallback
 
     @Nested
     val fileFilter = PackageFileFilter(aem)
