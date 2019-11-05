@@ -42,14 +42,14 @@ class DependencyOptions {
     companion object {
 
         @Suppress("TooGenericExceptionCaught")
-        fun isValid(aem: AemExtension, notation: String): Boolean = try {
+        fun isValid(aem: AemExtension, notation: Any): Boolean = try {
             create(aem, notation)
             true
         } catch (e: Exception) {
             false
         }
 
-        fun create(aem: AemExtension, notation: String): Dependency {
+        fun create(aem: AemExtension, notation: Any): Dependency {
             return aem.project.dependencies.create(notation)
         }
 
@@ -70,7 +70,7 @@ class DependencyOptions {
             aem.project.dependencies.add(configuration, create(aem, options))
         }
 
-        fun add(aem: AemExtension, configuration: String, notation: String) {
+        fun add(aem: AemExtension, configuration: String, notation: Any) {
             aem.project.dependencies.add(configuration, notation)
         }
 

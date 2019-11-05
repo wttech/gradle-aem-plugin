@@ -619,7 +619,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     /**
      * Resolve single file from defined repositories or by using defined file transfers.
      */
-    fun resolveFile(value: String) = resolveFile { get(value) }
+    fun resolveFile(value: Any) = resolveFile { get(value) }
 
     /**
      * Resolve single file from defined repositories or by using defined file transfers.
