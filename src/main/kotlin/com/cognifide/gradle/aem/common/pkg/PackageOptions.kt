@@ -107,12 +107,12 @@ class PackageOptions(aem: AemExtension) : Serializable {
     /**
      * Controls automatic node types exporting from available instance to be later used in package validation.
      */
-    var nodeTypesSync = aem.props.string("package.nodeTypeSync")
+    var nodeTypesSync = aem.props.string("package.nodeTypesSync")
             ?.let { NodeTypesSync.of(it) } ?: if (aem.offline) NodeTypesSync.NEVER else NodeTypesSync.ONCE
 
     /**
      * Provides predefined / fallback node types if node types sync is disabled
      * or cannot be done when AEM instance is unavailable and exported file is not yet created / saved in VCS.
      */
-    var nodeTypesFallback = aem.props.boolean("package.nodeTypeFallback") ?: true
+    var nodeTypesFallback = aem.props.boolean("package.nodeTypesFallback") ?: true
 }
