@@ -4,6 +4,7 @@ import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.build.CollectingLogger
 import com.cognifide.gradle.aem.common.file.FileOperations
+import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import net.adamcin.oakpal.core.*
 import org.apache.commons.io.FileUtils
 import org.apache.jackrabbit.oak.plugins.memory.MemoryNodeStore
@@ -35,7 +36,7 @@ class PackageValidator(@Internal val aem: AemExtension) {
     var workDir = aem.temporaryDir("package/validator")
 
     @Input
-    var planName = aem.props.string("package.validator.plan") ?: "plan.json"
+    var planName = aem.props.string("package.validator.plan") ?: "default-plan.json"
 
     @get:Internal
     val planFile get() = File(workDir, planName)
@@ -94,6 +95,8 @@ class PackageValidator(@Internal val aem: AemExtension) {
 
         workDir.deleteRecursively()
         workDir.mkdirs()
+
+        FileOperations.copyResources(Package.OAKPAL_OPEAR_RESOURCES_PATH, workDir)
 
         baseFile?.let { file ->
             logger.info("Extracting OakPAL Opear base configuration files from '$file' to directory '$workDir'")

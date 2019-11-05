@@ -59,6 +59,8 @@ class Package private constructor() {
 
         const val META_RESOURCES_PATH = "package/$META_PATH"
 
+        const val OAKPAL_OPEAR_RESOURCES_PATH = "package/OAKPAL_OPEAR"
+
         const val VLT_DIR = "vault"
 
         const val VLT_PATH = "$META_PATH/$VLT_DIR"
