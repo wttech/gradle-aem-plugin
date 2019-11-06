@@ -32,6 +32,18 @@ val downloadDir: File
 
     private val groupsDefined = mutableListOf<G>().apply { add(groupDefault) }
 
+    /**
+     * Controls count of groups resolved in parallel.
+     */
+    @Internal
+    var parallelLevel = aem.props.int("resolver.parallelLevel") ?: 3
+
+    /**
+     * Files respected when searching for recent local files.
+     */
+    @Input
+    var localFilePatterns = aem.props.list("resolver.localFilePatterns") ?: listOf("**/*.zip", "**/*.jar")
+
     @get:Internal
     val groups: List<G>
         get() = groupsDefined.filter { it.resolutions.isNotEmpty() }
@@ -56,8 +68,19 @@ val downloadDir: File
         aem.progress {
             step = "Resolving files"
             total = size.toLong()
-            aem.parallel.each(this@apply) { group ->
-                increment("Group '${group.name}'") { group.resolve() }
+
+            if (parallelLevel <= 1) {
+                forEach { group ->
+                    increment("Group '${group.name}'") { group.resolve() }
+                }
+            } else {
+                val (parallel, sequential) = partition { it.parallelable }
+                aem.parallel.poolEach(parallelLevel, "resolver", parallel) { group ->
+                    increment("Group '${group.name}'") { group.resolve() }
+                }
+                sequential.forEach { group ->
+                    increment("Group '${group.name}'") { group.resolve() }
+                }
             }
         }
     }
@@ -90,7 +113,7 @@ val downloadDir: File
      */
     fun resolve(dependencyOptions: DependencyOptions.() -> Unit) = resolve(DependencyOptions.create(aem, dependencyOptions))
 
-    private fun resolve(dependencyNotation: Any): FileResolution = resolveFile(dependencyNotation) {
+    private fun resolve(dependencyNotation: Any): FileResolution = resolveFile(dependencyNotation, false) {
         DependencyOptions.resolve(aem, dependencyNotation)
     }
 
@@ -187,12 +210,6 @@ val downloadDir: File
     fun useLocalRecent(dir: Any) = useLocalLastModified(dir)
 
     /**
-     * Files respected when searching for recent local files.
-     */
-    @Input
-    var localFilePatterns = listOf("**/*.zip", "**/*.jar")
-
-    /**
      * Customize configuration for particular file group.
      */
     fun config(configurer: G.() -> Unit) {
@@ -215,8 +232,12 @@ val downloadDir: File
 
     abstract fun createGroup(name: String): G
 
-    private fun resolveFile(hash: Any, resolver: (FileResolution) -> File): FileResolution {
+    private fun resolveFile(hash: Any, parallelable: Boolean = true, resolver: (FileResolution) -> File): FileResolution {
         val id = HashCode.fromInt(HashCodeBuilder().append(hash).toHashCode()).toString()
+
+        if (!parallelable) {
+            groupCurrent.parallelable = false
+        }
 
         return groupCurrent.resolve(id, resolver)
     }

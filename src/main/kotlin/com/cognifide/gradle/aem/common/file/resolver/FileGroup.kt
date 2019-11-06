@@ -7,6 +7,8 @@ open class FileGroup(val aem: AemExtension, val downloadDir: File, val name: Str
 
     private val _resolutions = mutableListOf<FileResolution>()
 
+    internal var parallelable = true
+
     val resolutions: List<FileResolution>
         get() = _resolutions.toList()
 
