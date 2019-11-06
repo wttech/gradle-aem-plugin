@@ -17,33 +17,30 @@ class Cleaner(private val aem: AemExtension) {
     /**
      * Allows to control which files under each root root should be cleaned.
      */
-    var filesDotContent: PatternFilterable.() -> Unit = {
-        include("**/$JCR_CONTENT_FILE")
-    }
+    var filesDotContent: List<String> = listOf(
+            "**/$JCR_CONTENT_FILE"
+    )
 
     /**
      * Determines which files will be deleted within running cleaning
      * (e.g after checking out JCR content).
      */
-    var filesDeleted: PatternFilterable.() -> Unit = {
-        include(listOf(
-                "**/.vlt",
-                "**/.vlt*.tmp",
-                "**/install/*.jar"
-        ))
-    }
+    var filesDeleted: List<String> = listOf(
+            "**/.vlt",
+            "**/.vlt*.tmp",
+            "**/install/*.jar"
+    )
 
     /**
      * Determines which files will be flattened
      * (e.g /_cq_dialog/.content.xml will be replaced by _cq_dialog.xml).
      */
-    var filesFlattened: PatternFilterable.() -> Unit = {
-        include(listOf(
-                "**/_cq_dialog/.content.xml",
-                "**/_cq_htmlTag/.content.xml",
-                "**/_cq_template/.content.xml"
-        ))
-    }
+    var filesFlattened: List<String> = listOf(
+            "**/_cq_design_dialog/.content.xml",
+            "**/_cq_dialog/.content.xml",
+            "**/_cq_htmlTag/.content.xml",
+            "**/_cq_template/.content.xml"
+    )
 
     /**
      * Properties that will be skipped when pulling JCR content from AEM instance.
@@ -129,12 +126,13 @@ class Cleaner(private val aem: AemExtension) {
         deleteEmptyDirs(root)
     }
 
-    private fun eachFiles(root: File, filter: PatternFilterable.() -> Unit, action: (File) -> Unit) {
+    private fun eachFiles(root: File, regexes: List<String>, action: (File) -> Unit) {
         val rootFilter: PatternFilterable.() -> Unit = if (root.isDirectory) {
             { include("${root.name}/**") }
         } else {
             { include(root.name) }
         }
+        val filter: PatternFilterable.() -> Unit = { include(regexes) }
         aem.project.fileTree(root.parent).matching(rootFilter).matching(filter).forEach(action)
     }
 
@@ -305,12 +303,10 @@ class Cleaner(private val aem: AemExtension) {
 
     private fun deleteFiles(root: File) = eachFiles(root, filesDeleted) { deleteFile(it) }
 
-    private fun deleteBackupFiles(root: File) = eachFiles(root, {
-        include(listOf(
-                "**/$parentsBackupDirIndicator",
-                "**/*$parentsBackupSuffix"
-        ))
-    }) { deleteFile(it) }
+    private fun deleteBackupFiles(root: File) = eachFiles(root, listOf(
+            "**/$parentsBackupDirIndicator",
+            "**/*$parentsBackupSuffix"
+    )) { deleteFile(it) }
 
     private fun deleteFile(file: File) {
         if (!file.exists()) {

@@ -535,15 +535,20 @@ aem {
     tasks {
         sync {
             cleaner {
-                filesDotContent = { 
-                    include("**/.content.xml") 
-                }
-                filesDeleted = { 
-                    include("**/.vlt", "**/.vlt*.tmp") 
-                }
-                filesFlattened = { 
-                    include("**/_cq_dialog/.content.xml", "**/_cq_htmlTag/.content.xml") 
-                }
+                filesDotContent = listOf(
+                    "**/.content.xml"
+                )
+                filesDeleted = listOf(
+                    "**/.vlt",
+                    "**/.vlt*.tmp",
+                    "**/install/*.jar"
+                )
+                filesFlattened = listOf(
+                    "**/_cq_design_dialog/.content.xml",
+                    "**/_cq_dialog/.content.xml",
+                    "**/_cq_htmlTag/.content.xml",
+                    "**/_cq_template/.content.xml"
+                )
                 propertiesSkipped = listOf(
                     pathRule("jcr:uuid", listOf("**/home/users/*", "**/home/groups/*")),
                     "jcr:lastModified*",
@@ -582,22 +587,18 @@ aem {
         sync {
             cleaner {
                 propertiesSkipped += listOf(
-                        pathRule("dam:sha1", listOf(), listOf("**/content/dam/*.svg/*")),
-                        pathRule("dam:size", listOf(), listOf("**/content/dam/*.svg/*")),
-                        "cq:name",
-                        "cq:parentPath",
-                        "dam:copiedAt",
-                        "dam:parentAssetID",
-                        "dam:relativePath"
+                    pathRule("dam:sha1", listOf(), listOf("**/content/dam/*.svg/*")),
+                    pathRule("dam:size", listOf(), listOf("**/content/dam/*.svg/*")),
+                    "cq:name",
+                    "cq:parentPath",
+                    "dam:copiedAt",
+                    "dam:parentAssetID",
+                    "dam:relativePath"
                 )
-                filesDeleted = { 
-                    include(
-                        "**/.vlt",
-                         "**/.vlt*.tmp",
-                        "**/content/dam/**/_jcr_content/folderThumbnail*",
-                        "**/content/dam/**/_jcr_content/renditions/*"
-                    )
-                }
+                filesDeleted += listOf(
+                    "**/content/dam/**/_jcr_content/folderThumbnail*",
+                    "**/content/dam/**/_jcr_content/renditions/*"
+                )
             }  
         }
     }
