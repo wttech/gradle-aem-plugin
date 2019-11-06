@@ -159,29 +159,27 @@ class PackageValidator(@Internal val aem: AemExtension) {
         val violatedReports = reports.filter { !it.violations.isEmpty() }
         val shouldFail = violatedReports.any { !it.getViolations(severity).isEmpty() }
 
-        if (violatedReports.isEmpty()) {
-            logger.info("OakPAL checks passed properly for CRX package(s) '${listPackages(packages)}'!")
-            return
-        }
-
-        var violationSeverityReached = 0
         val violationLogger = CollectingLogger()
+        var violationSeverityReached = 0
 
         violationLogger.info("OakPAL check results for CRX package(s) '${listPackages(packages)}':")
 
         violatedReports.forEach { report ->
-            violationLogger.lifecycle("  ${report.checkName}")
-            for (violation in report.violations) {
-                val packageIds = violation.packages.map { it.downloadName }
-                val violationLog = when {
-                    packageIds.isNotEmpty() -> "    <${violation.severity}> ${violation.description} $packageIds"
-                    else -> "    <${violation.severity}> ${violation.description}"
-                }
-                if (violation.severity.isLessSevereThan(severity)) {
-                    violationLogger.info(violationLog)
-                } else {
-                    violationSeverityReached++
-                    violationLogger.error(violationLog)
+            if (report.violations.isNotEmpty())  {
+                violationLogger.info("  ${report.checkName}")
+
+                for (violation in report.violations) {
+                    val packageIds = violation.packages.map { it.downloadName }
+                    val violationLog = when {
+                        packageIds.isNotEmpty() -> "    <${violation.severity}> ${violation.description} $packageIds"
+                        else -> "    <${violation.severity}> ${violation.description}"
+                    }
+                    if (violation.severity.isLessSevereThan(severity)) {
+                        violationLogger.info(violationLog)
+                    } else {
+                        violationSeverityReached++
+                        violationLogger.error(violationLog)
+                    }
                 }
             }
         }
