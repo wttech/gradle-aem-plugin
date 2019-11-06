@@ -104,7 +104,7 @@
         "org.xml.sax.*Exception"
       ],
       "responseBuffer" : 4096,
-      "nodeTypesSync": false,
+      "nodeTypesSync": "WHEN_MISSING",
       "nodeTypesFallback": true
     },
     "instanceOptions" : {
