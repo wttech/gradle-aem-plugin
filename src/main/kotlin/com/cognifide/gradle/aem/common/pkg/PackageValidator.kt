@@ -104,7 +104,7 @@ class PackageValidator(@Internal val aem: AemExtension) {
         }
 
         configDirs.filter { it.exists() }.forEach { configDir ->
-            logger.info("Using project-specific OakPAL Opear configuration files from file '$configDir' to directory '$workDir'")
+            logger.info("Using project-specific OakPAL Opear configuration files from directory '$configDir' to '$workDir'")
 
             FileUtils.copyDirectory(configDir, workDir)
         }
@@ -117,7 +117,7 @@ class PackageValidator(@Internal val aem: AemExtension) {
 
         val plan = determinePlan(opearFile)
 
-        logger.info("Validating CRX packages(s) '${packages.names}' using OakPAL plan '$plan'")
+        logger.info("Validating CRX packages(s) '${listPackages(packages)}' using OakPAL plan '$plan'")
 
         val scanResult = OakpalPlan.fromJson(plan)
                 .map { p ->
@@ -128,7 +128,7 @@ class PackageValidator(@Internal val aem: AemExtension) {
                 .map { oak -> oak.scanPackages(packages.toList()) }
 
         if (scanResult.isFailure) {
-            throw PackageException("Cannot validate CRX package(s) '${packages.names}' due to internal OAKPal failure!")
+            throw PackageException("Cannot validate CRX package(s) '${listPackages(packages)}' due to internal OAKPal failure!")
         } else {
             val reports = scanResult.getOrDefault(emptyList<CheckReport>())
             saveReports(packages, reports)
@@ -145,12 +145,12 @@ class PackageValidator(@Internal val aem: AemExtension) {
     }
 
     private fun saveReports(packages: Iterable<File>, reports: List<CheckReport>?) {
-        logger.info("Saving OAKPal reports for packages '${packages.names}' to file '$reportFile'")
+        logger.info("Saving OAKPal reports for CRX package(s) '${listPackages(packages)}' to file '$reportFile'")
 
         try {
             ReportMapper.writeReportsToFile(reports, reportFile)
         } catch (e: IOException) {
-            throw PackageException("Cannot save OAKPal reports for packages '${packages.names}'! Cause: '${e.message}'", e)
+            throw PackageException("Cannot save OAKPal reports for CRX package(s) '${listPackages(packages)}'! Cause: '${e.message}'", e)
         }
     }
 
@@ -159,18 +159,14 @@ class PackageValidator(@Internal val aem: AemExtension) {
         val violatedReports = reports.filter { !it.violations.isEmpty() }
         val shouldFail = violatedReports.any { !it.getViolations(severity).isEmpty() }
 
-        if (violatedReports.isEmpty()) {
-            logger.info("OakPAL checks passed properly for packages '${packages.names}'!")
-            return
-        }
-
-        var violationSeverityReached = 0
         val violationLogger = CollectingLogger()
+        var violationSeverityReached = 0
 
-        violationLogger.info("OakPAL check results for packages '${packages.names}':")
+        violationLogger.info("OakPAL check violations for CRX package(s) '${listPackages(packages)}':")
 
-        violatedReports.forEach { report ->
-            violationLogger.lifecycle("  ${report.checkName}")
+        violatedReports.filter { it.violations.isNotEmpty() }.forEach { report ->
+            violationLogger.info("  ${report.checkName}")
+
             for (violation in report.violations) {
                 val packageIds = violation.packages.map { it.downloadName }
                 val violationLog = when {
@@ -195,7 +191,7 @@ class PackageValidator(@Internal val aem: AemExtension) {
             }
 
             val failMessage = "OAKPal check violations ($violationSeverityReached) were reported at or above" +
-                    " severity '$severity' for packages '${packages.names}'!"
+                    " severity '$severity' for CRX package(s) '${listPackages(packages)}'!"
 
             if (verbose) {
                 throw PackageException(failMessage)
@@ -207,7 +203,7 @@ class PackageValidator(@Internal val aem: AemExtension) {
         }
     }
 
-    private val Iterable<File>.names get() = this.joinToString(", ") { it.name }
+    private fun listPackages(files: Iterable<File>) = files.joinToString(", ")
 
     private fun severityByName(name: String): Violation.Severity {
         return Violation.Severity.values().firstOrNull { it.name.equals(name, true) }

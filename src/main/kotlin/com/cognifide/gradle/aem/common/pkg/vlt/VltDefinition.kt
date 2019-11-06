@@ -106,25 +106,35 @@ open class VltDefinition(private val aem: AemExtension) {
         }
     }
 
-    fun useNodeTypes(sync: Boolean = true, fallback: Boolean = true) {
-        if (sync) {
-            aem.buildScope.doOnce("syncNodeTypes") {
-                aem.availableInstance?.sync {
-                    try {
-                        nodeTypeExported.apply {
-                            GFileUtils.parentMkdirs(this)
-                            writeText(crx.nodeTypes)
-                        }
-                    } catch (e: AemException) {
-                        aem.logger.debug("Cannot export and save node types from $instance! Cause: ${e.message}", e)
-                    }
-                } ?: aem.logger.debug("No available instances to export node types!")
-            }
+    fun useNodeTypes(sync: NodeTypesSync, fallback: Boolean = true) {
+        if (sync == NodeTypesSync.ALWAYS || (sync == NodeTypesSync.WHEN_MISSING && !nodeTypeExported.exists())) {
+            syncNodeTypes()
         }
 
         when {
             nodeTypeExported.exists() -> nodeTypes(nodeTypeExported)
             fallback -> nodeTypes(nodeTypeFallback)
+        }
+    }
+
+    private fun syncNodeTypes() {
+        aem.buildScope.doOnce("syncNodeTypes") {
+            aem.availableInstance?.sync {
+                try {
+                    File(nodeTypeExported.parentFile, "${nodeTypeExported.name}.tmp").apply {
+                        GFileUtils.parentMkdirs(this)
+                        writeText(crx.nodeTypes)
+
+                        if (!nodeTypeExported.exists() || readLines().sorted() != nodeTypeExported.readLines().sorted()) {
+                            copyTo(nodeTypeExported, true)
+                        }
+
+                        delete()
+                    }
+                } catch (e: AemException) {
+                    aem.logger.debug("Cannot export and save node types from $instance! Cause: ${e.message}", e)
+                }
+            } ?: aem.logger.debug("No available instances to export node types!")
         }
     }
 
