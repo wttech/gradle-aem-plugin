@@ -109,6 +109,7 @@
         * [Executing code on AEM runtime](#executing-code-on-aem-runtime)
         * [Controlling OSGi bundles, components and configurations](#controlling-osgi-bundles-components-and-configurations)
         * [Controlling workflows](#controlling-workflows)
+        * [Running Docker image based tools](#running-docker-image-based-tools)
      * [Understand why there are one or two plugins to be applied in build script](#understand-why-there-are-one-or-two-plugins-to-be-applied-in-build-script)
      * [Work effectively on start and daily basis](#work-effectively-on-start-and-daily-basis)
      * [Filter instances to work with](#filter-instances-to-work-with)
@@ -1063,6 +1064,8 @@ Simply create file at path [*[aem/]gradle/package/OAKPAL_OPEAR/default-plan.json
 }
 ```
 
+There could be many plan files created. To validate CRX package using different plan than default one, specify property `-package.validator.planName=<file>`.
+
 Notice that running OakPAL requires to have included in CRX package up-to-date node type definitions coming from AEM instance.
 Such definitions could be manually downloaded using CRXDE Lite interface (*Tools / Export Node Type*) and put inside CRX package.
 After installing some dependent CRX packages, the list of exported node types may change.
@@ -1071,8 +1074,11 @@ To keep it up-to-date, plugin is synchronizing node types from one of available 
 Synchronized file containing node types, later used when building CRX packages is placed at path [*[aem/]gradle/package/nodetypes.export.cnd*](https://github.com/Cognifide/gradle-aem-multi/blob/master/aem/gradle/package/nodetypes.export.cnd). 
 Remember to save this file in VCS, so that CRX package validation will not fail on e.g CI server where AEM instance could be not available.
 
-To disable automatic synchronization of node types file, simply set property `package.nodeTypesSync=false` or more generally `offline=true` (useful for CI builds).
-To disable using fallback node types, simply set property `package.nodeTypesFallback=false` (might be useful to explicitly show error when node types are not configured yet).
+To configure node types synchronization behavior, use property `package.nodeTypesSync=<option>`. Available options: *when_missing* (default, sync only if file *nodetypes.export.cnd* does not exist), *always*, *never*.
+
+To disable using fallback node types, simply set property `package.nodeTypesFallback=false` (might be useful to explicitly show error when node types are not yet synchronized or provided manually).
+
+Package validation report is saved at path relative to project building CRX package: *build/aem/packageCompose/OAKPAL_OPEAR/report.json*.
 
 ##### Including additional OSGi bundle into CRX package
 
@@ -2424,6 +2430,35 @@ It is also possible to mix enabling and disabling workflows:
         // ...
     }
 ```
+
+#### Running Docker image based tools
+
+Regardless type of Docker runtime used, running any Docker images is super-easy via AEM DSL method `aem.runDocker()`.
+Under the hood, GAP ensures that volume paths passed to Docker are correct. Also correctly handles streaming process output,
+allows to set expected exit codes and other useful options.
+
+Consider following task registration:
+
+```
+aem {
+    tasks {
+        register("runTool")
+            doLast {
+                runDocker {
+                    operation("Runnning Docker based tool'")
+                    volume(file("resources"), "/resources")
+                    image = "any-vendor/any-image"
+                    command = "<any command>"
+                }
+            }
+        }
+    }
+}
+```
+
+Then **running any Docker image based tool** could be simply achieved via running CLI command:
+
+`sh gradlew runTool`.
 
 ### Understand why there are one or two plugins to be applied in build script
 
