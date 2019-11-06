@@ -595,9 +595,13 @@ aem {
                     "dam:parentAssetID",
                     "dam:relativePath"
                 )
+                mixinTypesSkipped += listOf(
+                    pathRule("dam:Thumbnails", listOf(), listOf("**/content/dam/*"))
+                )
                 filesDeleted += listOf(
                     "**/content/dam/**/_jcr_content/folderThumbnail*",
-                    "**/content/dam/**/_jcr_content/renditions/*"
+                    "**/content/dam/**/_jcr_content/_dam_thumbnails*",
+                    pathRule("**/content/dam/**/_jcr_content/renditions/*", listOf("**/_jcr_content/renditions/original*"), listOf())
                 )
             }  
         }

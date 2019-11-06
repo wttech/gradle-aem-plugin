@@ -126,14 +126,17 @@ class Cleaner(private val aem: AemExtension) {
         deleteEmptyDirs(root)
     }
 
-    private fun eachFiles(root: File, regexes: List<String>, action: (File) -> Unit) {
+    private fun eachFiles(root: File, filter: List<String>, action: (File) -> Unit) {
         val rootFilter: PatternFilterable.() -> Unit = if (root.isDirectory) {
             { include("${root.name}/**") }
         } else {
             { include(root.name) }
         }
-        val filter: PatternFilterable.() -> Unit = { include(regexes) }
-        aem.project.fileTree(root.parent).matching(rootFilter).matching(filter).forEach(action)
+        val rules by lazy { CleanerRule.manyFrom(filter) }
+        aem.project.fileTree(root.parent)
+                .matching(rootFilter)
+                .filter { matchAnyRule(it.path, it, rules) }
+                .forEach(action)
     }
 
     private fun cleanDotContents(root: File) = eachFiles(root, filesDotContent) { cleanDotContentFile(it) }
@@ -192,7 +195,9 @@ class Cleaner(private val aem: AemExtension) {
         val iter = lines.listIterator()
         while (iter.hasNext()) {
             val line = iter.next()
-            if (line.trim().startsWith("<") && !line.trim().endsWith(">") && iter.hasNext()) {
+            if (line.trim().startsWith(JCR_ROOT_PREFIX) || !iter.hasNext()) {
+                result.add(line)
+            } else if (line.trim().startsWith("<") && !line.trim().endsWith(">")) {
                 val nextLine = iter.next()
                 if (!nextLine.trim().startsWith("<") && nextLine.trim().endsWith(">")) {
                     result.add(line + " " + nextLine.trim())
