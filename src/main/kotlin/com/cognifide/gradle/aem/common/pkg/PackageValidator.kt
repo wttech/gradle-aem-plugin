@@ -162,24 +162,22 @@ class PackageValidator(@Internal val aem: AemExtension) {
         val violationLogger = CollectingLogger()
         var violationSeverityReached = 0
 
-        violationLogger.info("OakPAL check results for CRX package(s) '${listPackages(packages)}':")
+        violationLogger.info("OakPAL check violations for CRX package(s) '${listPackages(packages)}':")
 
-        violatedReports.forEach { report ->
-            if (report.violations.isNotEmpty())  {
-                violationLogger.info("  ${report.checkName}")
+        violatedReports.filter { it.violations.isNotEmpty() }.forEach { report ->
+            violationLogger.info("  ${report.checkName}")
 
-                for (violation in report.violations) {
-                    val packageIds = violation.packages.map { it.downloadName }
-                    val violationLog = when {
-                        packageIds.isNotEmpty() -> "    <${violation.severity}> ${violation.description} $packageIds"
-                        else -> "    <${violation.severity}> ${violation.description}"
-                    }
-                    if (violation.severity.isLessSevereThan(severity)) {
-                        violationLogger.info(violationLog)
-                    } else {
-                        violationSeverityReached++
-                        violationLogger.error(violationLog)
-                    }
+            for (violation in report.violations) {
+                val packageIds = violation.packages.map { it.downloadName }
+                val violationLog = when {
+                    packageIds.isNotEmpty() -> "    <${violation.severity}> ${violation.description} $packageIds"
+                    else -> "    <${violation.severity}> ${violation.description}"
+                }
+                if (violation.severity.isLessSevereThan(severity)) {
+                    violationLogger.info(violationLog)
+                } else {
+                    violationSeverityReached++
+                    violationLogger.error(violationLog)
                 }
             }
         }
