@@ -2446,8 +2446,9 @@ aem {
             doLast {
                 runDocker {
                     operation("Runnning Docker based tool'")
-                    volume(file("resources"), "/resources")
                     image = "any-vendor/any-image"
+                    volume(file("resources"), "/resources")
+                    port(8080, 80)
                     command = "<any command>"
                 }
             }
