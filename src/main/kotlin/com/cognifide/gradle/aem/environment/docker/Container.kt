@@ -140,8 +140,8 @@ class Container(val docker: Docker, val name: String) {
             try {
                 result = exec(spec)
             } catch (e: DockerException) {
-                aem.logger.debug("Exec operation '$operation' error", e)
-                throw EnvironmentException("Failed to perform operation '$operation' on container '$name'!\n${e.message}")
+                aem.logger.debug("Exec operation \"$operation\" error", e)
+                throw EnvironmentException("Failed to perform operation \"$operation\" on container '$name'!\n${e.message}")
             }
         }
 
@@ -189,7 +189,7 @@ class Container(val docker: Docker, val name: String) {
 
         logger.info("Executing command '${customSpec.fullCommand}' for Docker container '$name'")
 
-        return DockerProcess.execSpec(spec)
+        return DockerProcess.execSpec(customSpec)
     }
 }
 
