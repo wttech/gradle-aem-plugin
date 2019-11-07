@@ -13,6 +13,8 @@ abstract class AbstractInstance(
     protected val aem: AemExtension
 ) : Instance {
 
+    protected val logger = aem.logger
+
     override lateinit var httpUrl: String
 
     @get:Internal
