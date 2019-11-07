@@ -607,21 +607,30 @@ aem {
     tasks {
         sync {
             cleaner {
-                filesDotContent = { 
-                    include("**/.content.xml") 
+                filesDotContent = {
+                    include("**/.content.xml")
                 }
-                filesDeleted = { 
-                    include("**/.vlt", "**/.vlt*.tmp") 
+                filesDeleted = {
+                    include(
+                        "**/.vlt",
+                        "**/.vlt*.tmp",
+                        "**/install/*.jar"
+                    ) 
                 }
                 filesFlattened = { 
-                    include("**/_cq_dialog/.content.xml", "**/_cq_htmlTag/.content.xml") 
+                    include(
+                        "**/_cq_design_dialog/.content.xml",
+                        "**/_cq_dialog/.content.xml",
+                        "**/_cq_htmlTag/.content.xml",
+                        "**/_cq_template/.content.xml"
+                    )
                 }
                 propertiesSkipped = listOf(
                     pathRule("jcr:uuid", listOf("**/home/users/*", "**/home/groups/*")),
+                    pathRule("cq:lastModified*", listOf("**/content/experience-fragments/*")),
                     "jcr:lastModified*",
                     "jcr:created*",
                     "jcr:isCheckedOut",
-                    "cq:lastModified*",
                     "cq:lastReplicat*",
                     "dam:extracted",
                     "dam:assetState",
@@ -654,20 +663,30 @@ aem {
         sync {
             cleaner {
                 propertiesSkipped += listOf(
-                        pathRule("dam:sha1", listOf(), listOf("**/content/dam/*.svg/*")),
-                        pathRule("dam:size", listOf(), listOf("**/content/dam/*.svg/*")),
-                        "cq:name",
-                        "cq:parentPath",
-                        "dam:copiedAt",
-                        "dam:parentAssetID",
-                        "dam:relativePath"
+                    pathRule("dam:sha1", listOf(), listOf("**/content/dam/*.svg/*")),
+                    pathRule("dam:size", listOf(), listOf("**/content/dam/*.svg/*")),
+                    "cq:name",
+                    "cq:parentPath",
+                    "dam:copiedAt",
+                    "dam:parentAssetID",
+                    "dam:relativePath"
                 )
-                filesDeleted = { 
+                mixinTypesSkipped += listOf(
+                    pathRule("dam:Thumbnails", listOf(), listOf("**/content/dam/*"))
+                )
+                filesDeleted = {
                     include(
                         "**/.vlt",
-                         "**/.vlt*.tmp",
-                        "**/content/dam/**/_jcr_content/folderThumbnail*",
-                        "**/content/dam/**/_jcr_content/renditions/*"
+                        "**/.vlt*.tmp",
+                        "**/install/*.jar",
+                        "**/_jcr_content/folderThumbnail.dir/*",
+                        "**/_jcr_content/folderThumbnail/*",
+                        "**/_jcr_content/folderThumbnail",
+                        "**/_jcr_content/renditions/**"
+                    )
+                    exclude(
+                        "**/_jcr_content/renditions/original.dir/.content.xml",
+                        "**/_jcr_content/renditions/original"
                     )
                 }
             }  
