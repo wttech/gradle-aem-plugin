@@ -7,8 +7,6 @@ import com.cognifide.gradle.aem.environment.tasks.*
 import com.cognifide.gradle.aem.instance.InstancePlugin
 import com.cognifide.gradle.aem.instance.tasks.InstanceUp
 import org.gradle.api.Project
-import org.gradle.api.Task
-import org.gradle.language.base.plugins.LifecycleBasePlugin
 
 /**
  * Separate plugin which provides tasks for managing local development environment additional to AEM, like:
@@ -49,10 +47,10 @@ class EnvironmentPlugin : AemPlugin() {
             register<EnvironmentDev>(EnvironmentDev.NAME) {
                 mustRunAfter(EnvironmentUp.NAME)
             }
-            register<EnvironmentCheck>(EnvironmentCheck.NAME) {
+            register<EnvironmentAwait>(EnvironmentAwait.NAME) {
                 mustRunAfter(EnvironmentUp.NAME)
             }
-            register<EnvironmentClean>(EnvironmentClean.NAME) {
+            register<EnvironmentReload>(EnvironmentReload.NAME) {
                 mustRunAfter(EnvironmentUp.NAME)
             }
             register<EnvironmentHosts>(EnvironmentHosts.NAME)
@@ -81,15 +79,8 @@ class EnvironmentPlugin : AemPlugin() {
             registerOrConfigure<Resolve>(Resolve.NAME) {
                 dependsOn(EnvironmentResolve.NAME)
             }
-
-            // Gradle lifecycle
-
-            named<Task>(LifecycleBasePlugin.CHECK_TASK_NAME) {
-                dependsOn(EnvironmentCheck.NAME)
-            }
-
-            named<Task>(LifecycleBasePlugin.CLEAN_TASK_NAME) {
-                dependsOn(EnvironmentClean.NAME)
+            registerOrConfigure<Await>(Await.NAME) {
+                dependsOn(EnvironmentAwait.NAME)
             }
         }
     }

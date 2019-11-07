@@ -11,12 +11,11 @@ dependencies {
 
 aem {
     tasks {
-        bundle {
+        bundleCompose {
             exportPackage("org.hashids")
         }
         packageCompose {
             fromJar("org.jetbrains.kotlin:kotlin-osgi-bundle:1.2.21")
         }
     }
-
 }

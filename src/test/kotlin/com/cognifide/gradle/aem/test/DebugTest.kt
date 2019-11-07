@@ -20,15 +20,13 @@ class DebugTest : AemTest() {
     }
 
     private fun buildDebugJsonFile(buildName: String) {
-        build("debug/$buildName", {
-            withArguments(":${Debug.NAME}", "-S", "-i", "-Poffline=true")
-        }, {
+        buildTask("debug/$buildName", ":${Debug.NAME}") {
             assertJsonCustomized(
                     readFile("debug/$buildName/debug.json"),
                     readFile(file("build/aem/${Debug.NAME}/debug.json")),
                     JSON_CUSTOMIZATIONS
             )
-        })
+        }
     }
 
     companion object {
@@ -42,11 +40,13 @@ class DebugTest : AemTest() {
                 "aem.localInstanceManager.quickstart.downloadDir" to PathValueMatcher(),
                 "aem.localInstanceManager.backup.remoteDir" to PathValueMatcher(),
                 "aem.localInstanceManager.backup.localDir" to PathValueMatcher(),
+                "aem.localInstanceManager.install.downloadDir" to PathValueMatcher(),
                 "aem.packageOptions.contentDir" to PathValueMatcher(),
                 "aem.packageOptions.metaCommonDir" to PathValueMatcher(),
                 "aem.tasks.bundles[*].bndPath" to PathValueMatcher(),
                 "aem.environment.dockerComposeFile" to PathValueMatcher(),
                 "aem.environment.dockerComposeSourceFile" to PathValueMatcher(),
+                "aem.environment.dockerPath.cygpathPath" to PathValueMatcher(),
                 "aem.environment.dockerRootPath" to PathValueMatcher(),
                 "aem.environment.dockerConfigPath" to PathValueMatcher(),
                 "aem.environment.directories.caches[*]" to PathValueMatcher(),

@@ -71,6 +71,13 @@
           "smb://*"
         ]
       },
+      "resolve": {
+        "enabled": true,
+        "name": "resolve",
+        "protocols": [
+          "resolve://*"
+        ]
+      },
       "url": {
         "enabled": true,
         "name": "url",
@@ -78,9 +85,9 @@
           "*://*"
         ]
       },
-      "local": {
+      "path": {
         "enabled": true,
-        "name": "local"
+        "name": "path"
       }
     },
     "packageOptions" : {
@@ -96,10 +103,11 @@
         "org.apache.jackrabbit.vault.packaging.*Exception",
         "org.xml.sax.*Exception"
       ],
-      "responseBuffer" : 4096
+      "responseBuffer" : 4096,
+      "nodeTypesSync": "NEVER",
+      "nodeTypesFallback": true
     },
     "instanceOptions" : {
-      "statusProperties": false,
       "defined" : {
         "local-author" : {
           "properties" : { },
@@ -148,34 +156,21 @@
         "remoteDir": "*/minimal/build/aem/instanceBackup/remote",
         "localDir": "*/minimal/build/aem/instanceBackup/local",
         "suffix": ".backup.zip"
+      },
+      "install": {
+        "downloadDir": "*/minimal/build/aem/instance/install"
       }
     },
     "environment" : {
       "rootDir" : "*/minimal/.environment",
-      "directories" : {
-        "regulars" : [ ],
-        "caches" : [ ]
-      },
-      "dockerRuntime" : {
-        "name": "desktop",
-        "hostIp": "127.0.0.1"
-      },
       "hosts" : {
         "defined" : [ ]
       },
       "configDir" : "*/minimal/gradle/environment",
-      "dockerComposeSourceFile" : "*/minimal/gradle/environment/docker-compose.yml.peb",
-      "dockerComposeFile" : "*/minimal/.environment/docker-compose.yml",
-      "dockerConfigPath" : "*/minimal/gradle/environment",
-      "dockerRootPath" : "*/minimal/.environment",
-      "httpdConfDir" : "*/minimal/gradle/environment/httpd/conf",
       "created" : false
     },
     "notifier" : {
       "enabled" : false
-    },
-    "tasks" : {
-      "bundles" : [ ]
     },
     "projectName" : "minimal",
     "configDir" : "*/minimal/gradle",

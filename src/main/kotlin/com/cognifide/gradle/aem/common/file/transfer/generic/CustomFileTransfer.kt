@@ -19,7 +19,7 @@ class CustomFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
 
     override lateinit var name: String
 
-    override var protocols: List<String> = listOf()
+    override lateinit var protocols: List<String>
 
     private var downloader: ((dirUrl: String, fileName: String, target: File) -> Unit)? = null
 

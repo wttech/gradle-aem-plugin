@@ -1,9 +1,10 @@
+
 package com.cognifide.gradle.aem.tooling.sync
 
 import com.cognifide.gradle.aem.AemDefaultTask
 import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.common.utils.Formats
-import com.cognifide.gradle.aem.tooling.vlt.VltRunner
+import com.cognifide.gradle.aem.tooling.vlt.VltClient
 import java.io.File
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
@@ -52,26 +53,29 @@ open class Sync : AemDefaultTask() {
             return filter.rootDirs(contentDir)
         }
 
-    @Internal
-    val vlt = VltRunner(aem)
+    private var vltOptions: VltClient.() -> Unit = {}
 
-    fun vlt(options: VltRunner.() -> Unit) {
-        vlt.apply(options)
+    fun vlt(options: VltClient.() -> Unit) {
+        vltOptions = options
     }
 
-    @Internal
-    val cleaner = Cleaner(aem)
+    private val vlt by lazy { VltClient(aem).apply(vltOptions) }
+
+    private var cleanerOptions: Cleaner.() -> Unit = {}
 
     fun cleaner(options: Cleaner.() -> Unit) {
-        cleaner.apply(options)
+        cleanerOptions = options
     }
 
-    @Internal
-    val downloader = Downloader(aem)
+    private val cleaner by lazy { Cleaner(aem).apply(cleanerOptions) }
+
+    private var downloaderOptions: Downloader.() -> Unit = {}
 
     fun downloader(options: Downloader.() -> Unit) {
-        downloader.apply(options)
+        downloaderOptions = options
     }
+
+    private val downloader by lazy { Downloader(aem).apply(downloaderOptions) }
 
     init {
         description = "Check out then clean JCR content."
@@ -116,7 +120,7 @@ open class Sync : AemDefaultTask() {
     private fun transferUsingVltCheckout() {
         vlt.apply {
             contentDir = this@Sync.contentDir
-            command = "--credentials ${instance.credentials} checkout --force --filter ${filter.file} ${instance.httpUrl}/crx/server/crx.default"
+            command = "--credentials ${instance.credentialsString} checkout --force --filter ${filter.file} ${instance.httpUrl}/crx/server/crx.default"
             run()
         }
     }
@@ -125,7 +129,6 @@ open class Sync : AemDefaultTask() {
         downloader.apply {
             instance = this@Sync.instance
             filter = this@Sync.filter
-
             download()
         }
     }

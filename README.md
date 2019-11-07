@@ -41,6 +41,7 @@
      * [Package plugin](#package-plugin)
         * [Task packageCompose](#task-packagecompose)
            * [CRX package default configuration](#crx-package-default-configuration)
+           * [CRX package validation](#crx-package-validation)
            * [Including additional OSGi bundle into CRX package](#including-additional-osgi-bundle-into-crx-package)
            * [Nesting CRX packages](#nesting-crx-packages)
            * [Assembling packages (merging all-in-one)](#assembling-packages-merging-all-in-one)
@@ -59,12 +60,15 @@
         * [Embedding JAR file into OSGi bundle](#embedding-jar-file-into-osgi-bundle)
         * [Configuring OSGi bundle manifest attributes](#configuring-osgi-bundle-manifest-attributes)
         * [Excluding packages being incidentally imported by OSGi bundle](#excluding-packages-being-incidentally-imported-by-osgi-bundle)
+        * [Task bundleInstall](#task-bundleinstall)
+        * [Task bundleUninstall](#task-bundleuninstall)
      * [Instance plugin](#instance-plugin)
         * [Instance file structure](#instance-file-structure)
         * [Task instanceSetup](#task-instancesetup)
         * [Task instanceResetup](#task-instanceresetup)
         * [Task instanceCreate](#task-instancecreate)
            * [Configuration of AEM instance source (JAR file or backup file)](#configuration-of-aem-instance-source-jar-file-or-backup-file)
+           * [Pre-installed OSGi bundles and CRX packages](#pre-installed-osgi-bundles-and-crx-packages)
            * [Extracted instance files configuration (optional)](#extracted-instance-files-configuration-optional)
         * [Task instanceBackup](#task-instancebackup)
            * [Work with remote instance backups](#work-with-remote-instance-backups)
@@ -75,7 +79,8 @@
         * [Task instanceReload](#task-instancereload)
         * [Task instanceResolve](#task-instanceresolve)
         * [Task instanceSatisfy](#task-instancesatisfy)
-        * [Task instanceCheck](#task-instancecheck)
+        * [Task instanceProvision](#task-instanceprovision)
+        * [Task instanceAwait](#task-instanceawait)
         * [Task instanceTail](#task-instancetail)
            * [Tailing incidents](#tailing-incidents)
            * [Tailing multiple instances](#tailing-multiple-instances)
@@ -89,6 +94,9 @@
         * [Task environmentUp](#task-environmentup)
         * [Task environmentDown](#task-environmentdown)
         * [Task environmentDev](#task-environmentdev)
+        * [Task environmentAwait](#task-environmentawait)
+        * [Task environmentReload](#task-environmentreload)
+        * [Task environmentHosts](#task-environmenthosts)
   * [How to's](#how-tos)
      * [Set AEM configuration properly for all / concrete project(s)](#set-aem-configuration-properly-for-all--concrete-projects)
      * [Use lifecycle tasks](#use-lifecycle-tasks)
@@ -99,14 +107,18 @@
         * [Downloading CRX package from external HTTP endpoint and deploying it on desired AEM instances](#downloading-crx-package-from-external-http-endpoint-and-deploying-it-on-desired-aem-instances)
         * [Working with content repository (JCR)](#working-with-content-repository-jcr)
         * [Executing code on AEM runtime](#executing-code-on-aem-runtime)
-        * [Controlling OSGi bundles and components](#controlling-osgi-bundles-and-components)
+        * [Controlling OSGi bundles, components and configurations](#controlling-osgi-bundles-components-and-configurations)
+        * [Controlling workflows](#controlling-workflows)
+        * [Running Docker image based tools](#running-docker-image-based-tools)
      * [Understand why there are one or two plugins to be applied in build script](#understand-why-there-are-one-or-two-plugins-to-be-applied-in-build-script)
      * [Work effectively on start and daily basis](#work-effectively-on-start-and-daily-basis)
      * [Filter instances to work with](#filter-instances-to-work-with)
      * [Know how properties are being expanded in instance or package files](#know-how-properties-are-being-expanded-in-instance-or-package-files)
+     * [Customize convention for CRX package and OSGi bundle names and paths](#customize-convention-for-crx-package-and-osgi-bundle-names-and-paths)
   * [Known issues](#known-issues)
-     * [Building artifacts on CI server / offline mode](#building-artifacts-on-ci-server--offline-mode)
-     * [No OSGi services / components are registered](#no-osgi-services--components-are-registered)
+     * [Failed to await HTTPD service](#failed-to-await-httpd-service)
+     * [BND tool error - Classes found in wrong directory](#bnd-tool-error---classes-found-in-wrong-directory)
+     * [No OSGi services / components registered](#no-osgi-services--components-registered)
      * [Caching task packageCompose](#caching-task-packagecompose)
      * [Vault tasks parallelism](#vault-tasks-parallelism)
   * [Compatibility](#compatibility)
@@ -135,7 +147,7 @@ What is being done above by simply running super easy command `sh gradlew`?
 1. `:aem:instanceSatisfy` -> checking for new dependent CRX packages to be deployed (in a lazy & fail-safe manner) that could arrive to our AEM instances automatically if somebody else add it to build configuration in the meantime.
 2. `:aem:assembly:full:packageDeploy` -> building & deploying all-in-one CRX package to AEM instances in parallel, then awaiting for stable condition of AEM instances and built application.
 3. `:aem:environmentClean` -> cleaning AEM dispatcher cache and restarting HTTPD service / Apache Web Server.
-4. `:aem:environmentCheck` -> running health checks ensuring that all AEM instances / websites are responding correctly.
+4. `:aem:environmentAwait` -> running health checks ensuring that all AEM instances / websites are responding correctly.
 
 **Build is incremental** which guarantees optimized time every time regardless of build command used.
 Only changed parts of application are processed again:
@@ -150,7 +162,7 @@ Want to see it in action? Follow [here](https://github.com/Cognifide/gradle-aem-
 ### Features 
 
 * Automated complete AEM environment setup with [virtualized AEM dispatcher](#environment-plugin) and [native AEM instances](#instance-plugin) optimized for best development experience.
-* [Powerful AEM DSL scripting capabilities](#implement-custom-aem-tasks) for performing JCR content migrations, managing AEM instances.
+* [Powerful AEM DSL scripting capabilities](#implement-custom-aem-tasks) for performing JCR content migrations, managing AEM instances, integrating with Docker based tools.
 * [Advanced AEM instance(s) stability & health checking](#task-instanceawait) after CRX package deployment.
 * [Continuous AEM incident monitoring](#task-instancetail) and interactive reporting (centralized log tailing of any AEM instances with no SSH).
 * Easy parallel [CRX package deployment](#task-packagedeploy) to many remote group of instances.
@@ -158,6 +170,7 @@ Want to see it in action? Follow [here](https://github.com/Cognifide/gradle-aem-
 * [Fail-safe dependent CRX packages installation](#task-instancesatisfy) from local and remote sources using various protocols (SMB / SSH / HTTP / custom).
 * [Fast JCR content synchronization](#task-sync) from running AEM instances with advanced content normalization.
 * [Composing CRX package](#task-packagecompose) from multiple separate JCR content roots, bundles.
+* [Validating CRX package](#crx-package-validation) using seamless integration with [OakPAL tool](http://adamcin.net/oakpal).
 * [All-in-one CRX packages generation](#assembling-packages-merging-all-in-one) (assemblies), vault filters merging etc.
 * [Easy OSGi bundle customization](#bundle-plugin) with BND tool embedded.
 
@@ -175,11 +188,15 @@ Documentation for previous series:
 
 ## Getting started
 
-* Most effective way to experience Gradle AEM Plugin is to use *Quickstart* located in:
-  * [AEM Single-Project Example](https://github.com/Cognifide/gradle-aem-single#quickstart) - recommended for **application / library** development,
+Most effective way to experience Gradle AEM Plugin is to use *Quickstart* located in:
+  * [AEM Single-Project Example](https://github.com/Cognifide/gradle-aem-single#quickstart) - recommended for **application/library** development,
   * [AEM Multi-Project Example](https://github.com/Cognifide/gradle-aem-multi#quickstart) - recommended for **long-term project** development,
-* The only software needed on your machine to start using plugin is Java 8.
-* As a build command, it is recommended to use Gradle Wrapper (`gradlew`) instead of locally installed Gradle (`gradle`) to easily have same version of build tool installed on all environments. Only at first build time, wrapper will be automatically downloaded and installed, then reused.
+  * [AEM Boot](https://github.com/Cognifide/gradle-aem-boot#quickstart) - only booting local AEM instances and AEM dispatcher automatically. Useful when building CRX packages is covered separately, e.g by Maven & [Content Package Maven Plugin](https://helpx.adobe.com/experience-manager/6-5/sites/developing/using/vlt-mavenplugin.html).
+  
+The only software needed on your machine to start using plugin is Java 8 or newer (also to setup local native AEM instances).
+Optionally, [Docker](https://www.docker.com/) is needed (when using automatic AEM dispatcher setup).
+
+As a build command, it is recommended to use Gradle Wrapper (`gradlew`) instead of locally installed Gradle (`gradle`) to easily have same version of build tool installed on all environments. Only at first build time, wrapper will be automatically downloaded and installed, then reused.
 
 ## Configuration
 
@@ -200,7 +217,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.cognifide.gradle:aem-plugin:7.0.9")
+    implementation("com.cognifide.gradle:aem-plugin:8.1.1")
 }
 ```
 
@@ -228,7 +245,7 @@ plugins {
 
 group = "com.company.aem"
 version = "1.0.0"
-defaultTasks(":instanceSatisfy", ":packageDeploy")
+defaultTasks(":instanceSatisfy", ":instanceProvision", ":packageDeploy")
 
 aem {
     `package` { // built CRX package options
@@ -261,22 +278,61 @@ aem {
             uploadUrl = aem.props.string("localInstance.backup.uploadUrl")
             downloadUrl = aem.props.string("localInstance.backup.downloadUrl")
         }
+        install {
+            files { // CRX packages and OSGi bundles to be pre-installed on created AEM instances
+                download("http://.../package.zip") // CRX package downloaded over HTTP
+                resolve("group:name:version") // OSGi bundle from Maven repository
+            }
+        }
+        init { // hook called once in scope of instance just created and up first time
+            logger.info("Initializing instance '$name'")
+            sync {
+                // ...
+            }
+        }   
         rootDir = aem.props.string("localInstance.root")
         // ...
     }
     environment { // config for AEM environment running on Docker
         rootDir = aem.props.string("environment.rootDir")?.let { aem.project.file(it) } ?: aem.projectMain.file(".aem/environment")
         hosts { // domains to be appended to hosts file automatically
-            // ...
+            author("http://author.example.com")
+            publish("http://demo.example.com") { tag("test") }
+            publish("http://example.com") { tag("live") }
+            other("http://dispatcher.example.com")
         }
-        distributions {  // extra files for Docker containers that are missing in images like AEM dispatcher HTTPD module
-            // ...
-        }
-        directories { // dirs for volumes that must exist before running Docker containers
-            // ...
+        docker { // Docker specific configuration
+            containers {
+                "httpd" { // control container described in 'docker-compose.yml.peb'
+                    resolve {
+                        resolveFiles {
+                            download("http://download.macromedia.com/dispatcher/download/dispatcher-apache2.4-linux-x86_64-4.3.2.tar.gz").then {
+                                copyArchiveFile(it, "**/dispatcher-apache*.so", file("modules/mod_dispatcher.so"))
+                            }
+                        }
+                        ensureDir("cache", "logs")
+                    }
+                    up {
+                        ensureDir("/usr/local/apache2/logs", "/opt/aem/dispatcher/cache/content/example/demo", "/opt/aem/dispatcher/cache/content/example/live")
+                        execShell("Starting HTTPD server", "/usr/local/apache2/bin/httpd -k start")
+                    }
+                    reload {
+                        cleanDir("/opt/aem/dispatcher/cache/content/example/demo", "/opt/aem/dispatcher/cache/content/example/live")
+                        execShell("Restarting HTTPD server", "/usr/local/apache2/bin/httpd -k restart")
+                    }
+                    dev {
+                        watchConfigDir("conf")
+                    }
+                }
+            }                        
         }
         healthChecks { // checks (e.g GET requests) verifying running Docker containers like HTTPD
-            // ...
+              url("Live site", "http://example.com/en-us.html") { containsText("English US") }
+              url("Demo site", "http://demo.example.com/en-us.html") { containsText("English US") }
+              url("Author module 'Sites'", "http://author.example.com/sites.html") {
+                  options { basicCredentials = authorInstance.credentials }
+                  containsText("Sites")
+              }
         }
     }
     fileTransfer { // config for resolving CRX packages, AEM Quickstart files and backups using HTTP/SFTP/SMB
@@ -299,7 +355,7 @@ aem {
         credentials("foo", "bar") // shorthand to set all user / password pairs above
     }
     tasks {
-        bundle { // customizing OSGi bundle manifest
+        bundleCompose { // customizing OSGi bundle, manifest etc
             javaPackage = "com.company.example.aem"
             // ...
         }
@@ -309,13 +365,28 @@ aem {
             
             baseName = 'example-for-changing-zip-name'
             
-            vaultDefinition { // place for overriding CRX Package / Vault properties
+            vaultDefinition { // place for overriding CRX Package / Vault properties, defining hooks
                 // ...
             }
         }
+        instanceProvision {
+            step("enable-crxde") {
+                description = "Enables CRX DE"
+                condition { once() && instance.environment != "prod" }
+                action {
+                    sync {
+                        osgiFramework.configure("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", mapOf(
+                                "alias" to "/crx/server"
+                        ))
+                    }
+                }
+            }
+            // ...
+        }       
         instanceSatisfy { // customizing CRX packages to be deployed as dependencies before built AEM application
             packages {
-                download("http://.../package.zip")
+                "my-package" { download("http://.../my-package-1.0.0.zip") }
+                "my-bundle" { resolve("group:name:version") } // will be wrapped on-the-fly to CRX package
             }
         }
         // ... and all other tasks
@@ -328,11 +399,12 @@ To see all available options and actual documentation, please follow to:
 * `aem` - [AemExtension](src/main/kotlin/com/cognifide/gradle/aem/AemExtension.kt)
 * `package` - [PackageOptions](src/main/kotlin/com/cognifide/gradle/aem/common/pkg/PackageOptions.kt)
 * `instance` - [InstanceOptions](src/main/kotlin/com/cognifide/gradle/aem/common/instance/InstanceOptions.kt)
-* `bundle` - [BundleJar](src/main/kotlin/com/cognifide/gradle/aem/bundle/BundleJar.kt)
 * `localInstance` - [LocalInstanceManager](src/main/kotlin/com/cognifide/gradle/aem/instance/LocalInstanceManager.kt)
 * `environment` - [Environment](src/main/kotlin/com/cognifide/gradle/aem/environment/Environment.kt)
 * `fileTransfer` - [FileTransferManager](src/main/kotlin/com/cognifide/gradle/aem/common/file/transfer/FileTransferManager.kt)
+* `bundleCompose` - [BundleCompose](src/main/kotlin/com/cognifide/gradle/aem/bundle/tasks/BundleCompose.kt)
 * `packageCompose` - [PackageCompose](src/main/kotlin/com/cognifide/gradle/aem/pkg/tasks/PackageCompose.kt)
+* `instanceProvision` - [InstanceProvision](src/main/kotlin/com/cognifide/gradle/aem/instance/provision/InstanceProvision.kt)
 * `instanceSatisfy` - [InstanceSatisfy](src/main/kotlin/com/cognifide/gradle/aem/instance/satisfy/InstanceSatisfy.kt)
 * `...` - other tasks in similar way.
 
@@ -855,25 +927,12 @@ Then file at path *build/aem/debug/debug.json* with content below is being gener
     },
     "environment": {
       "rootDir": ".../gradle-aem-multi/aem/.aem/environment",
-      "directories": {
-        "regulars": [],
-        "caches": []
-      },
-      "dockerRuntime": {
-          "name": "desktop",
-          "hostIp": "127.0.0.1"
-      },
       "hosts": {
         "defined": []
       },
-      "dockerComposeFile": ".../gradle-aem-multi/aem/.aem/environment/docker-compose.yml",
-      "dockerComposeSourceFile": ".../gradle-aem-multi/aem/gradle/environment/docker-compose.yml.peb",
-      "dockerConfigPath": ".../gradle-aem-multi/aem/gradle/environment",
-      "dockerRootPath": ".../gradle-aem-multi/aem/.aem/environment",
       "dispatcherModuleFile": ".../gradle-aem-multi/aem/.aem/environment/distributions/mod_dispatcher.so",
       "configDir": ".../gradle-aem-multi/aem/gradle/environment",
       "created": true,
-      "httpdConfDir": ".../gradle-aem-multi/aem/gradle/environment/httpd/conf"
     },
     "notifier": {
       "enabled": true
@@ -938,6 +997,12 @@ aem {
                 }
                 version = project.version.toString()
             }
+            validator {
+                enabled = true
+                verbose = true
+                severity("MAJOR")
+                planName = "default-plan.json"
+            }
             fileFilter {
                 expanding = true
                 expandFiles = listOf(
@@ -969,6 +1034,60 @@ aem {
 }
 ```
 
+##### CRX package validation
+
+Built package is validated using [OakPAL tool](https://github.com/adamcin/oakpal).
+It helps preventing situation when CRX Package Manager reports message like *Package installed with errors*.
+Also gives immediate feedback for mistakes taken when using copy-pasting technique, 
+forgetting about using entities ('&' instead of '\&amp;), missing XML namespaces and much more.
+
+By default, **nothing need to be configured** so that [default plan](https://github.com/Cognifide/gradle-aem-plugin/blob/master/src/main/resources/com/cognifide/gradle/aem/package/OAKPAL_OPEAR/default-plan.json) will be in use.
+However, more detailed checks could be provided by configuring base artifact called Opear File containing OakPAL checks.
+
+It could be done via following snippet ([ACS AEM Commons OakPAL Checks](https://github.com/Adobe-Consulting-Services/acs-aem-commons/tree/master/oakpal-checks) as example):
+
+```kotlin
+aem {
+    `package` {
+        validator {
+            base("com.adobe.acs:acs-aem-commons-oakpal-checks:4.3.4")
+        }
+    }
+}
+```
+
+To use custom checks, only left thing is to choose them in custom plan.
+Simply create file at path [*[aem/]gradle/package/OAKPAL_OPEAR/default-plan.json*](https://github.com/Cognifide/gradle-aem-multi/blob/master/aem/gradle/package/OAKPAL_OPEAR/default-plan.json)
+
+```json
+{
+  "checklists": [
+    "net.adamcin.oakpal.core/basic",
+    "acs-commons-integrators",
+    "content-class-aem65"
+  ],
+  "installHookPolicy": "SKIP"
+}
+```
+
+See [plans documentation](http://adamcin.net/oakpal/the-oakpal-plan.html)and [examples](https://github.com/adamcin/oakpal/blob/master/core/src/test/resources/OakpalPlanTest/fullPlan.json) provided by OakPAL tool.
+
+There could be many plan files created. To validate CRX package using different plan than default one, specify property `-package.validator.planName=<file>`.
+
+Notice that running OakPAL requires to have included in CRX package up-to-date node type definitions coming from AEM instance.
+Such definitions could be manually downloaded using CRXDE Lite interface (*Tools / Export Node Type*) and put inside CRX package.
+After installing some dependent CRX packages, the list of exported node types may change.
+
+To keep it up-to-date, plugin is synchronizing node types from one of available AEM instances automatically.
+Synchronized file containing node types, later used when building CRX packages is placed at path [*[aem/]gradle/package/nodetypes.export.cnd*](https://github.com/Cognifide/gradle-aem-multi/blob/master/aem/gradle/package/nodetypes.export.cnd). 
+Remember to save this file in VCS, so that CRX package validation will not fail on e.g CI server where AEM instance could be not available.
+
+To configure node types synchronization behavior, use property `package.nodeTypesSync=<option>`. Available options: *when_missing* (default, sync only if file *nodetypes.export.cnd* does not exist), *always*, *never*.
+
+To disable using fallback node types, simply set property `package.nodeTypesFallback=false` (might be useful to explicitly show error when node types are not yet synchronized or provided manually).
+
+Package validation report is saved at path relative to project building CRX package: *build/aem/packageCompose/OAKPAL_OPEAR/report.json*.
+
 ##### Including additional OSGi bundle into CRX package
 
 Use dedicated task method named `fromJar`, for example:
@@ -977,7 +1096,7 @@ Use dedicated task method named `fromJar`, for example:
 aem {
     tasks {
         packageCompose {
-            fromJar("com.github.mickleroy:aem-sass-compiler:1.0.1)
+            fromJar("com.github.mickleroy:aem-sass-compiler:1.0.1")
         }
     }
 }
@@ -1118,6 +1237,7 @@ Add any of below command line parameters to customize CRX package deployment beh
 * `-Ppackage.deploy.installRecursive=false` - disable automatic installation of subpackages located inside CRX package being deployed.  
 * `-Ppackage.deploy.uploadRetry=n` - customize number of retries being performed after failed CRX package upload.
 * `-Ppackage.deploy.installRetry=n` - customize number of retries being performed after failed CRX package install.
+* `-Ppackage.deploy.workflowToggle=[id1=true,id2=false,...]` - temporarily enable or disable AEM workflows during deployment e.g when CRX package contains generated DAM asset renditions so that regeneration could be avoided and deploy time reduced. For example: `-Ppackage.deploy.workflowToggle=[dam_asset=false]`. Workflow ID *dam_asset* is a shorthand alias for all workflows related with DAM asset processing.
 
 #### Task `packageUpload`
 
@@ -1248,6 +1368,19 @@ aem {
 }
 ```
 
+#### Task `bundleInstall`
+
+Installs OSGi bundle on AEM instance(s).
+
+Available options:
+
+* `-Pbundle.deploy.awaited=false` - disable stability & health checks after deploying OSGi bundle.
+* `-Pbundle.deploy.retry=n` - customize number of retries being performed after failed OSGi bundle installation.
+
+#### Task `bundleUninstall`
+
+Uninstalls OSGi bundle on AEM instance(s).
+
 ### Instance plugin
 
 ```kotlin
@@ -1256,7 +1389,7 @@ plugins {
 }
 ```
 
-Provides instance related tasks: `instanceUp`, `instanceDown`, `instanceSetup`, `instanceBackup`, `instanceCheck`, `instanceSetup`, `instanceCreate` etc.
+Provides instance related tasks: `instanceUp`, `instanceDown`, `instanceSetup`, `instanceBackup`, `instanceAwait`, `instanceSetup`, `instanceCreate` etc.
 Allows to create & customize AEM instances on local file system and control them. Also provides support for automated backups and restoring.
 
 Should be applied only at root project / only once within whole build.
@@ -1302,10 +1435,10 @@ By default plugin tries to automatically find most recent backup from all availa
 However to e.g avoid creating instances from the scratch accidentally, source mode can be adjusted by specifying property `localInstance.source`.
 Available values:
 
-* `auto` - Create instances from most recent backup (external or internal) or fallback to creating from the scratch if there is no backup available.
+* `auto` - Create instances from most recent backup (remote or local) or fallback to creating from the scratch if there is no backup available. Default mode.
 * `scratch` - Force creating instances from the scratch.
 * `backup_any` - Force using any backup available at local or remote source.
-* `backup_remote` - Force using backup available at remote source (specified as `localInstance.backup.[downloadUrl|uploadUrl]`).      
+* `backup_remote` - Force using backup available at remote source (specified as `localInstance.backup.downloadUrl` or `localInstance.backup.uploadUrl`).      
 * `backup_local` - Force using local backup (created by task `instanceBackup`).
 
 When mode is different than `scratch`, then backup ZIP file selection rule could be adjusted:
@@ -1331,6 +1464,25 @@ aem {
 Notice that, default selector assumes that most recent backup will be selected.
 Ordering by file name including timestamp then local backups precedence when backup is available on both local & remote source.
 Still, backup selector could select exact backup by name when property `localInstance.backup.name` is specified.
+
+##### Pre-installed OSGi bundles and CRX packages
+
+Use dedicated section:
+
+```kotlin
+aem {
+    localInstance {
+        install {
+            files {
+                download("http://my-company.com/aem/packages/my-package.zip")
+            }
+        }
+    }
+}
+```
+
+Files section works in a same way as in [instance satisfy task](#task-instancesatisfy).
+For more details see AEM [File Install Provider](https://helpx.adobe.com/experience-manager/6-5/sites/deploying/using/custom-standalone-install.html#AddingaFileInstallProvider) documentation.
 
 ##### Extracted instance files configuration (optional)
 
@@ -1379,9 +1531,9 @@ Most often it will be path: *build/aem/instanceBackup/local/xxx.backup.zip*. It 
 
 ```kotlin
 aem {
-    tasks {
+    localInstance {
         backup {
-            destinationDirectory.set(file("any/other/path"))
+            localDir = file("any/other/directory")
         }
     }
 }
@@ -1399,12 +1551,18 @@ By having only this upload property specified, plugin will automatically downloa
 It is also possible to specify second property `instance.backup.downloadUrl` which will cause that concrete backup will be always in use.
 By having only this download property specified, plugin will not automatically upload any backups.
 
-Most often only these few lines in *gradle.properties* files are required to have automatic two-way backups working:
+Backup files created, by default, have suffix .backup.zip. This matters in case of resolving backups from remote sources to distinguish AEM backups from other files. Most often it is not needed to update it.
+These few lines in *gradle.properties* files are required to have automatic two-way backups working:
 
 ```ini
 localInstance.backup.uploadUrl=sftp://example.com/aem/packages
 fileTransfer.sftp.user=foo
 fileTransfer.sftp.password=pass
+```
+
+To use a custom suffix instead of the default one, `localInstance.backup.suffix` property has to be set in *gradle.properties* file:
+```ini
+localInstance.backup.suffix=.backup.custom.zip
 ```
 
 Protocols SFTP & SMB are supported by default.
@@ -1525,7 +1683,7 @@ Although, by grouping packages, there are available new options:
 * group name could be used to filter out packages that will be deployed (`-Pinstance.satisfy.group=tools`, wildcards supported, comma delimited).
 * after satisfying particular group, there are being run instance stability checks automatically (this behavior could be customized).
 
-Task supports hooks for preparing (and finalizing) instance before (after) deploying packages in group on each instance. 
+Task supports extra configuration related with particular CRX package deployment and hooks for preparing (and finalizing) instance before (after) deploying packages in group on each instance. 
 Also there is a hook called when satisfying each package group on all instances completed (for instance for awaiting stable instances which is a default behavior).
 In other words, for instance, there is ability to run groovy console script before/after deploying some CRX package and then restarting instance(s) if it is exceptionally required.
 
@@ -1538,6 +1696,7 @@ aem {
                     download("https://github.com/OlsonDigital/aem-groovy-console/releases/download/11.0.0/aem-groovy-console-11.0.0.zip")
                     config {
                         instanceName = "*-author" // additional filter intersecting 'instance.name' property
+                        workflowToggle("dam_asset", false)
                         initializer {
                             logger.info("Installing Groovy Console on $instance")
                         }
@@ -1568,7 +1727,100 @@ For instance:
 gradlew instanceSatisfy -Pinstance.satisfy.urls=[https://github.com/OlsonDigital/aem-groovy-console/releases/download/11.0.0/aem-groovy-console-11.0.0.zip,https://github.com/neva-dev/felix-search-webconsole-plugin/releases/download/search-webconsole-plugin-1.2.0/search-webconsole-plugin-1.2.0.jar]
 ```
 
-#### Task `instanceCheck`
+As of task inherits from task `packageDeploy` it is also possible to temporary enable or disable workflows during CRX package deployment:
+
+```bash
+gradlew :instanceSatisfy -Ppackage.deploy.workflowToggle=[dam_asset=false]
+```
+
+#### Task `instanceProvision`
+
+Performs configuration actions for AEM instances in customizable conditions (specific circumstances).
+Feature dedicated for pre-configuring AEM instances as of not all things like turning off OSGi bundles is easy realizable via CRX packages.
+For instance, provisioning could help to avoid using [OSGi Bundle Disabler](https://adobe-consulting-services.github.io/acs-aem-commons/features/osgi-disablers/bundle-disabler/index.html) and [OSGi Component Disabler](https://adobe-consulting-services.github.io/acs-aem-commons/features/osgi-disablers/component-disabler/index.html) etc and is a more powerful and general approach.
+Could be used for AEM related troubleshooting like periodic cache cleaning, restarting OSGi bundle or components before or after CRX package deployment etc.
+
+Sample configuration:
+
+```kotlin
+aem {
+    tasks {
+        instanceProvision {
+            step("enable-crxde") {
+                description = "Enables CRX DE"
+                condition { once() && instance.environment != "prod" }
+                action {
+                    sync {
+                        osgiFramework.configure("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", mapOf(
+                                "alias" to "/crx/server"
+                        ))
+                    }
+                }
+            }
+            step("setup-replication-author") {
+                condition { once() && instance.author }
+                action {
+                    sync {
+                        repository {
+                            node("/etc/replication/agents.author/publish/jcr:content", mapOf(
+                                    "enabled" to true,
+                                    "userId" to instance.user,
+                                    "transportUri" to "http://localhost:4503/bin/receive?sling:authRequestLogin=1",
+                                    "transportUser" to instance.user,
+                                    "transportPassword" to instance.password
+                            ))
+                        }
+                    }
+                }
+            }
+            step("disable-unsecure-bundles") {
+                condition { once() && instance.environment == "prod" }
+                action {
+                    sync {
+                        osgiFramework.stopBundle("org.apache.sling.jcr.webdav")
+                        osgiFramework.stopBundle("com.adobe.granite.crxde-lite")
+
+                        instanceActions.awaitUp() // include above in property: 'instance.awaitUp.bundles.symbolicNamesIgnored'
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+By running task `instanceProvision`, provisioner will perform all steps for which conditions are met.
+Specifying condition could be even omitted, then by default each step will be performed only `once()` 
+which means that configured `action {}` will be executed only once on each AEM instance.
+
+Conditions could be more complex and use helpful methods basing on: 
+
+* guaranteed execution: `once()` <=> `failSafeOnce()`,
+* forced execution: `always()`, `never()`,
+* time: `repeatAfterDays(n)`, `repeatAfterHours(n)`, `repeatAfterMinutes(n)`, `repeatAfterMillis(n)`,
+* counter: `repeatEvery(times)`, `repeatEvery { counter: Long -> Boolean }`,
+* probability: `repeatProbably(probability)`.
+
+There are also options for making provisioning more fail-safe, especially when error will be triggered when performing step action.
+Then each step may be additionally configured with:
+
+* `continueOnFail = true` - logging error to console instead of breaking build with exception so that next step might be performed,
+* `rerunOnFail = false` - disabling performing step again when previously failed. Considered only when using condition `once()` or `failSafeOnce()` and other conditions based on time,
+* `retry { afterSquaredSecond(3) }` - redo step action on exception after delay time with distribution like `afterSquaredSecond(n)`, `afterSecond(n)` or custom `after(n, delayFunction)`.
+
+To perform some step(s) selectively, use step name property (values comma delimited, wildcards supported):
+
+```bash
+gradlew instanceProvision -Pinstance.provision.stepName=enable-crxde,...
+```
+
+To perform step(s) regardless conditions, use greedy property (may be combined with previous one):
+
+```bash
+gradlew instanceProvision -Pinstance.provision.greedy
+```
+
+#### Task `instanceAwait`
 
 Check health condition of AEM instance(s) of any type (local & remote).
 
@@ -1577,7 +1829,7 @@ Customize behavior of each particular health check using following lambdas:
 ```kotlin
 aem {
     tasks {
-        instanceCheck {
+        instanceAwait {
             awaitUp {
                 timeout {
                     stateTime = aem.props.long("instance.awaitUp.timeout.stateTime") ?: TimeUnit.MINUTES.toMillis(2)
@@ -1721,11 +1973,12 @@ Most of the configuration steps are automated. However, there are three manual s
     
 ##### Notice for Docker on Windows
 
-Ensure having shared folders enabled via GUI
+Ensure having shared folders enabled via GUI:
 
 ![Docker Desktop Shared Drive](docs/docker-desktop-share.png)
 
-Because environment is using Docker volumes, on Windows, running task `environmentUp` will require additional user confirmation to allow virtualized container to access local configuration files.
+Please note that after each Windows credentials change (e.g forced by company policy), it is required to click button "Reset credentials" to ensure having shared drives working correctly.
+When running task `environmentUp` first time, Windows User Account Control (UAC) may require user confirmation to allow virtualized container to access local configuration files stored on shared drives.
 
 ##### Notice for Docker Toolbox
 
@@ -1767,6 +2020,8 @@ aem {
 }
 ```
 
+These checks are performed automatically after each file change applied when running task `environmentDev` or on demand when running task `environmentAwait`.
+
 #### Task `environmentUp`
 
 Turns on local AEM environment.
@@ -1793,7 +2048,19 @@ Workflow:
    * HTTPD and AEM Dispatcher logs located at path *aem/.environment/httpd/logs*
    * AEM Dispatcher cache located at path *aem/.environment/httpd/cache*
    
-![Environment up task](docs/environment-dev-task.gif)
+![Environment dev task](docs/environment-dev-task.gif)
+
+#### Task `environmentAwait`
+
+Performs [environment service health checks](#environment-service-health-checks) on demand.
+
+#### Task `environmentReload`
+
+Reloads virtualized AEM environment by reloading all Docker containers (e.g. removing Dispatcher cache files then restarting HTTPD server).
+
+#### Task `environmentHosts`
+
+Appends AEM environment specific hosts entries to OS specific hosts file.
 
 ## How to's
 
@@ -2005,7 +2272,7 @@ aem {
                     repository {
                         node("/content/example")
                             .traverse()
-                            .filter { it.type == "cq:PageContent" && properties["sling:resourceType"] == "example/components/basicPage" }
+                            .filter { it.type == "cq:PageContent" && it.properties["sling:resourceType"] == "example/components/basicPage" }
                             .forEach { page ->
                                 logger.info("Migrating page: ${page.path}")
                                 page.saveProperty("sling:resourceType", "example/components/advancedPage")
@@ -2029,7 +2296,7 @@ aem {
                 aem.sync {
                     repository {
                         node("/etc/replication/agents.publish/flush/jcr:content", mapOf( // shorthand for 'node(path).save(props)'
-                            "transportUri" to "http://invalidation-only/dispatcher/invalidate.cache"
+                            "transportUri" to "http://dispatcher.example.com/dispatcher/invalidate.cache"
                         ))
                     }
                 }
@@ -2068,10 +2335,27 @@ aem {
 }
 ```
 
-#### Controlling OSGi bundles and components
+#### Controlling OSGi bundles, components and configurations
 
-To disable specific OSGi component by its PID value and only on publish instances use [OsgiFramework](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/osgi/OsgiFramework.kt) instance service and write:
+Simply use [OsgiFramework](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/osgi/OsgiFramework.kt) instance service.
 
+To restart some bundle after deploying a CRX package, write:
+
+```kotlin
+aem {
+    tasks {
+        packageDeploy {
+            doLast {
+                aem.sync {
+                    osgiFramework.restartBundle("com.adobe.cq.dam.cq-scene7-imaging")
+                }           
+            }       
+        }
+    }
+}
+```
+
+To disable specific OSGi component by its PID value and only on publish instances, write:
 
 ```kotlin
 aem {
@@ -2088,6 +2372,103 @@ aem {
 }
 ```
 
+To configure specific OSGi service by its PID:
+
+```kotlin
+aem {
+    tasks {
+        register("enableCrx") {
+            doLast {
+                aem.sync(aem.publishInstances) {
+                    osgiFramework.configure("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", mapOf(
+                        "alias" to "/crx/server",
+                        "dav.create-absolute-uri" to true,
+                        "dav.protectedhandlers" to "org.apache.jackrabbit.server.remoting.davex.AclRemoveHandler"
+                    ))
+                }
+            }
+        }
+    }
+}
+```
+
+All [CRUD](https://en.wikipedia.org/wiki/CRUD) methods for manipulating OSGi configurations are available. Also for configuration factories.
+
+#### Controlling workflows
+
+Simply use [Workflow Manager](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/workflow/WorkflowManager.kt) instance service.
+
+Workflows can be either enabled or disabled by:
+
+```kotlin
+aem {
+    tasks {
+        register("setupWorkflows") {
+            doLast {
+                aem.sync {
+                    workflowManager.workflow("update_asset_create").disable()
+                    workflowManager.workflow("update_asset_mod").disable()
+                
+                    workflowManager.workflows("dam_asset").forEach { it.enable() } // reverts above using shorthand alias
+                }
+            }        
+        }   
+    }   
+}
+
+
+```
+
+Also it is possible to enable or disable workflows only for particular action to be performed:
+
+```kotlin
+    workflowManager.toggleTemporarily("dam_asset", false) {
+        packageManager.deploy(file("my-package.zip"))
+    }
+```
+
+It is also possible to mix enabling and disabling workflows:
+
+```kotlin
+    workflowManager.toggleTemporarily(mapOf(
+        "update_asset_create" to false,
+        "update_asset_mod" to false
+        "update_asset_custom" to true 
+    )) {
+        // ...
+    }
+```
+
+#### Running Docker image based tools
+
+Regardless type of Docker runtime used, running any Docker images is super-easy via AEM DSL method `aem.runDocker()`.
+Under the hood, GAP ensures that volume paths passed to Docker are correct. Also correctly handles streaming process output,
+allows to set expected exit codes and other useful options.
+
+Consider following task registration:
+
+```
+aem {
+    tasks {
+        register("runTool")
+            doLast {
+                runDocker {
+                    operation("Runnning Docker based tool'")
+                    image = "any-vendor/any-image"
+                    volume(file("resources"), "/resources")
+                    port(8080, 80)
+                    command = "<any command>"
+                }
+            }
+        }
+    }
+}
+```
+
+Then **running any Docker image based tool** could be simply achieved via running CLI command:
+
+`sh gradlew runTool`.
+
 ### Understand why there are one or two plugins to be applied in build script
 
 Gradle AEM Plugin assumes separation of 5 plugins to properly fit into Gradle tasks structure correctly.
@@ -2101,7 +2482,7 @@ Currently used plugin architecture solves that problem.
 Initially, to create fully configured local AEM instances simply run command `gradlew instanceSetup`.
 
 Later during development process, building and deploying to AEM should be done using the simplest command: `gradlew`.
-Above configuration uses [default tasks](https://docs.gradle.org/current/userguide/tutorial_using_tasks.html#sec:default_tasks), so that alternatively it is possible to do the same using explicitly specified command `gradlew instanceSatisfy packageDeploy instanceCheck`.
+Above configuration uses [default tasks](https://docs.gradle.org/current/userguide/tutorial_using_tasks.html#sec:default_tasks), so that alternatively it is possible to do the same using explicitly specified command `gradlew instanceSatisfy packageDeploy`.
 
 * Firstly dependent packages (like AEM hotfixes, Vanity URL Components etc) will be installed lazily (only when they are not installed yet).
 * In next step application is being built and deployed to all configured AEM instances.
@@ -2135,8 +2516,8 @@ Environment value comes from system environment variable `ENV` or property `env`
 To deploy only to author or publish instances:
 
 ```bash
-gradlew packageDeploy -Pinstance.authors
-gradlew packageDeploy -Pinstance.publishers
+gradlew packageDeploy -Pinstance.author
+gradlew packageDeploy -Pinstance.publish
 ```
 
 To deploy only to instances specified explicitly:
@@ -2154,17 +2535,65 @@ The properties syntax comes from [Pebble Template Engine](https://github.com/Peb
 
 Expanding properties could be used separately on any string or file source in any custom task by using method `aem.props.expand()`.
 
+### Customize convention for CRX package and OSGi bundle names and paths
+
+Because of [bug](https://github.com/gradle/gradle/issues/8401) related with regresion introduced in Gradle 5.1, there are some difficulties with setting archives base names.
+AEM Plugin is overriding default Gradle convention for not only having project name in archive base name, but also to having prefix - root project name when project is one of subprojects (multi-project build case as in [Gradle AEM Multi](https://github.com/Cognifide/gradle-aem-multi/)).
+However overriding this convention might not be trivial and is not recommended as of AEM Plugin in most cases proposes **good enough battle-tested convention**. 
+
+Still, if it is really needed to be done - setting customized name for CRX packages and OSGi bundles built, use snippet:
+
+```kotlin
+subprojects {
+    afterEvaluate {
+        tasks {
+            withType<AbstractArchiveTask>().configureEach {
+                archiveBaseName.set("acme-${project.name}")
+            }
+        }
+    }
+}
+```
+
+Then, also common case is to customize paths in which OSGi bundles should be placed in built CRX package. As practice shows up, mostly desired snippet to be used is:
+
+```kotlin
+subprojects {
+    plugins.withId("com.cognifide.aem.package") {
+        configure<AemExtension> {
+            `package` {
+                installPath = "/apps/acme/${project.name}/install"
+            }
+        }
+    }
+}
+```
+
 ## Known issues
 
-### Building artifacts on CI server / offline mode
+### Failed to await HTTPD service
 
-By default, plugin is configuring `instanceCheck` and `environmentCheck` tasks to be run with `check` lifecycle task.
-This assumption is handy, when Gradle AEM Plugin is used on local development environment where Gradle is executed on same machine as AEM.
-However, Gradle build users are very often used to build artifacts using e.g command `./gradlew build` or more strictly `./gradlew :aem:assembly:full:build` (recommended approach - build only desired package instead of all possible).
-Task `build` depends on `check` according to [base plugin](https://docs.gradle.org/current/userguide/base_plugin.html), so there is a little side-effect here. Building artifacts / CRX packages causing running AEM related tests (`instanceCheck` and `environmentCheck`).
-To prevent running these tests on CI (continuous integration server) and still using handy `build` or `check` lifecycle tasks, extra parameter is needed to be specified `-Poffline=true`. This indicates that AEM instance(s) are not available and should not be used if it is possible.
+Noticed when using Docker Desktop for Windows, after hibernation task `environmentUp` may fail, because of some Docker related issue.
+To mitigate it, just RPM on Docker icon in the tray and choose *Restart*. After Docker ends restarting (tray icon will be no longer animated), 
+run task `environmentRestart`.
 
-### No OSGi services / components are registered
+### BND tool error - Classes found in wrong directory
+
+After correcting bad Java package case from camelCase to lowercase according to [Oracle recommendations](https://docs.oracle.com/javase/tutorial/java/package/namingpkgs.html), BND tool may report error:
+
+```
+> Task :aem:sites:jar FAILED
+...
+error  : Classes found in the wrong directory: 
+```
+
+To fix above error simply run once following command to ensure building using fresh daemon and resources:
+
+```bash
+sh gradle clean :aem:sites:jar --no-daemon --rerun-tasks
+```
+
+### No OSGi services / components registered
 
 Since AEM 6.2 it is recommended to use new OSGi service component annotations to register OSGi components instead SCR annotations (still supported, but not by Gradle AEM Plugin).
 
@@ -2198,11 +2627,12 @@ In case of that workaround, Vault tasks should not be run in parallel (by separa
 
 ## Compatibility
 
-| Gradle AEM Plugin | Gradle Build Tool | Adobe Experience Manager |
-|:-----------------:|:-----------------:|:------------------------:|
-|   4.x.x -> 5.x.x  |     4.x -> 4.8    |        6.x and up        |
-|   6.0.0 -> 6.2.1  |     4.9 -> 5.0    |        6.x and up        |
-|   6.3.0 and up    |     5.1 and up    |        6.x and up        |
+| Gradle AEM Plugin | Gradle Build Tool | Adobe Experience Manager |   Java   |
+|:-----------------:|:-----------------:|:------------------------:|:--------:|
+|   4.x.x -> 5.x.x  |     4.x -> 4.8    |        6.x and up        |     8    |
+|   6.0.0 -> 6.2.1  |     4.9 -> 5.0    |        6.x and up        |     8    |
+|   6.3.0 and up    |     5.1 and up    |        6.x and up        |     8    |
+|   7.2.0 and up    |     5.1 and up    |        6.x and up        |    8,11  |
 
 ## Building
 

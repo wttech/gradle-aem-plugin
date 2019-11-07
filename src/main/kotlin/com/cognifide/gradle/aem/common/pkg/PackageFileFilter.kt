@@ -38,7 +38,7 @@ class PackageFileFilter(private val aem: AemExtension) : Serializable {
     @Input
     var expandProperties: Map<String, Any> = mapOf()
 
-    fun expandProperty(name: String, value: String) { expandProperties += mapOf(name to value) }
+    fun expandProperty(name: String, value: String) { expandProperties = expandProperties + mapOf(name to value) }
 
     /**
      * Filter that ensures that only OSGi bundles will be put into CRX package under install path.

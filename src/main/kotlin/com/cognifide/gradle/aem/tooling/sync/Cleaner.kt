@@ -50,10 +50,10 @@ class Cleaner(private val aem: AemExtension) {
      */
     var propertiesSkipped: List<String> = listOf(
             pathRule("jcr:uuid", listOf("**/home/users/*", "**/home/groups/*")),
+            pathRule("cq:lastModified*", listOf("**/content/experience-fragments/*")),
             "jcr:lastModified*",
             "jcr:created*",
             "jcr:isCheckedOut",
-            "cq:lastModified*",
             "cq:lastReplicat*",
             "dam:extracted",
             "dam:assetState",

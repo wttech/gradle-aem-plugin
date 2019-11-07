@@ -4,6 +4,7 @@ import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.common.build.ProgressIndicator
 import com.cognifide.gradle.aem.common.file.resolver.FileGroup
 import com.cognifide.gradle.aem.common.instance.Instance
+import com.cognifide.gradle.aem.common.instance.InstanceSync
 import com.cognifide.gradle.aem.common.instance.checkAvailable
 import com.cognifide.gradle.aem.common.instance.names
 import com.cognifide.gradle.aem.common.instance.service.pkg.PackageState
@@ -75,10 +76,10 @@ open class InstanceSatisfy : PackageDeploy() {
     val packageGroups by lazy {
         val result = if (cmdGroups) {
             logger.info("Providing packages defined via command line.")
-            packageProvider.resolveGroups { Patterns.wildcard(name, groupName) }
+            packageProvider.allGroups { Patterns.wildcard(name, "$GROUP_CMD.*") }
         } else {
             logger.info("Providing packages defined in build script.")
-            packageProvider.resolveGroups(groupFilter)
+            packageProvider.allGroups(groupFilter)
         }
 
         val files = result.flatMap { it.files }
@@ -94,6 +95,8 @@ open class InstanceSatisfy : PackageDeploy() {
 
     private val packageActions = mutableListOf<PackageAction>()
 
+    private var packageSatisfiedAny = false
+
     init {
         group = AemTask.GROUP
         description = "Satisfies AEM by uploading & installing dependent packages on instance(s)."
@@ -105,7 +108,9 @@ open class InstanceSatisfy : PackageDeploy() {
         if (cmdGroups) {
             val urls = aem.props.list("instance.satisfy.urls") ?: listOf()
             urls.forEachIndexed { index, url ->
-                packageProvider.group("cmd.${index + 1}") { download(url) }
+                val no = index + 1
+                val fileName = url.substringAfterLast("/").substringBeforeLast(".")
+                packageProvider.group("$GROUP_CMD.$no.$fileName") { download(url) }
             }
         }
     }
@@ -144,7 +149,6 @@ open class InstanceSatisfy : PackageDeploy() {
 
         aem.logger.info("Satisfying group of packages '${group.name}'.")
 
-        var packageSatisfiedAny = false
         val packageInstances = determineInstancesForGroup(group)
 
         aem.sync(packageInstances) {
@@ -164,32 +168,19 @@ open class InstanceSatisfy : PackageDeploy() {
                     when {
                         greedy || group.greedy -> {
                             aem.logger.info("Satisfying package ${pkg.name} on ${instance.name} (greedy).")
-
-                            packageManager.deploy(pkg.file, uploadForce, uploadRetry, installRecursive, installRetry)
-
-                            packageSatisfiedAny = true
-                            packageActions.add(PackageAction(pkg.file, instance))
+                            satisfyPackage(group, pkg)
                         }
                         packageManager.isSnapshot(pkg.file) -> {
                             aem.logger.info("Satisfying package ${pkg.name} on ${instance.name} (snapshot).")
-                            packageManager.deploy(pkg.file, uploadForce, uploadRetry, installRecursive, installRetry)
-
-                            packageSatisfiedAny = true
-                            packageActions.add(PackageAction(pkg.file, instance))
+                            satisfyPackage(group, pkg)
                         }
                         !pkg.uploaded -> {
                             aem.logger.info("Satisfying package ${pkg.name} on ${instance.name} (not uploaded).")
-                            packageManager.deploy(pkg.file, uploadForce, uploadRetry, installRecursive, installRetry)
-
-                            packageSatisfiedAny = true
-                            packageActions.add(PackageAction(pkg.file, instance))
+                            satisfyPackage(group, pkg)
                         }
                         !pkg.installed -> {
                             aem.logger.info("Satisfying package ${pkg.name} on ${instance.name} (not installed).")
-                            packageManager.install(pkg.state!!.path, installRecursive, installRetry)
-
-                            packageSatisfiedAny = true
-                            packageActions.add(PackageAction(pkg.file, instance))
+                            satisfyPackage(group, pkg)
                         }
                         else -> {
                             aem.logger.info("Not satisfying package: ${pkg.name} on ${instance.name} (already installed).")
@@ -212,9 +203,27 @@ open class InstanceSatisfy : PackageDeploy() {
         return instances.filter { Patterns.wildcard(it.name, group.instanceName) }
     }
 
+    private fun InstanceSync.satisfyPackage(group: PackageGroup, state: PackageState) {
+        workflowManager.toggleTemporarily(workflowToggle + group.workflowToggle) {
+            packageManager.deploy(
+                    state.file,
+                    group.uploadForce ?: uploadForce,
+                    group.uploadRetry ?: uploadRetry,
+                    group.installRecursive ?: installRecursive,
+                    group.installRetry ?: installRetry,
+                    group.distributed ?: distributed
+            )
+        }
+
+        packageSatisfiedAny = true
+        packageActions.add(PackageAction(state.file, instance))
+    }
+
     class PackageAction(val pkg: File, val instance: Instance)
 
     companion object {
         const val NAME = "instanceSatisfy"
+
+        const val GROUP_CMD = "cmd"
     }
 }

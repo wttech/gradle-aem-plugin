@@ -1,20 +1,26 @@
 package com.cognifide.gradle.aem.bundle
 
-import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.AemPlugin
+import com.cognifide.gradle.aem.bundle.tasks.BundleCompose
+import com.cognifide.gradle.aem.bundle.tasks.BundleInstall
+import com.cognifide.gradle.aem.bundle.tasks.BundleUninstall
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import org.gradle.api.JavaVersion
 import org.gradle.api.Project
+import org.gradle.api.Task
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.tasks.compile.JavaCompile
+import org.gradle.api.tasks.testing.Test
+import org.gradle.language.base.plugins.LifecycleBasePlugin
 
 class BundlePlugin : AemPlugin() {
 
     override fun Project.configure() {
         setupDependentPlugins()
         setupJavaDefaults()
-        setupJarTasks()
+        setupTasks()
+        setupTestTask()
     }
 
     private fun Project.setupDependentPlugins() {
@@ -28,17 +34,49 @@ class BundlePlugin : AemPlugin() {
             targetCompatibility = JavaVersion.VERSION_1_8
         }
 
-        tasks.withType(JavaCompile::class.java).configureEach { compile ->
-            with(compile as JavaCompile) {
+        tasks {
+            typed<JavaCompile> {
                 options.encoding = "UTF-8"
-                options.compilerArgs = compile.options.compilerArgs + "-Xlint:deprecation"
+                options.compilerArgs = options.compilerArgs + "-Xlint:deprecation"
                 options.isIncremental = true
             }
         }
     }
 
-    private fun Project.setupJarTasks() {
-        AemExtension.of(this).tasks.jarsAsBundles()
+    private fun Project.setupTasks() {
+        tasks {
+            register<BundleCompose>(BundleCompose.NAME) {
+                dependsOn(JavaPlugin.CLASSES_TASK_NAME)
+            }
+            register<BundleInstall>(BundleInstall.NAME) {
+                dependsOn(BundleCompose.NAME)
+            }
+            register<BundleUninstall>(BundleUninstall.NAME) {
+                dependsOn(BundleCompose.NAME)
+            }
+            named<Task>(LifecycleBasePlugin.ASSEMBLE_TASK_NAME) {
+                dependsOn(BundleCompose.NAME)
+            }
+        }
+    }
+
+    // @see <https://github.com/Cognifide/gradle-aem-plugin/issues/95>
+    private fun Project.setupTestTask() {
+        afterEvaluate {
+            tasks {
+                named<Test>(JavaPlugin.TEST_TASK_NAME) {
+                    val testImplConfig = configurations.getByName(JavaPlugin.TEST_IMPLEMENTATION_CONFIGURATION_NAME)
+                    val compileOnlyConfig = configurations.getByName(JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME)
+
+                    testImplConfig.extendsFrom(compileOnlyConfig)
+
+                    bundles.forEach { jar ->
+                        dependsOn(jar)
+                        classpath += files(jar.archiveFile.get().asFile)
+                    }
+                }
+            }
+        }
     }
 
     companion object {

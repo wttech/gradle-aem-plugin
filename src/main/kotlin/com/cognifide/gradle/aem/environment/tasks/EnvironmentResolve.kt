@@ -6,13 +6,14 @@ import org.gradle.api.tasks.TaskAction
 open class EnvironmentResolve : AemDefaultTask() {
 
     init {
-        description = "Resolve environment files from remote sources before running other tasks"
+        description = "Resolves environment files from remote sources before running other tasks"
     }
 
     @TaskAction
     fun resolve() {
-        logger.info("Resolving environment distribution files")
-        logger.info("Resolved environment distribution files:\n${aem.environment.distributionFiles.joinToString("\n")}")
+        logger.info("Resolving environment files")
+        aem.environment.resolve()
+        logger.info("Resolved environment files")
     }
 
     companion object {

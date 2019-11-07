@@ -1,23 +1,28 @@
 package com.cognifide.gradle.aem.environment.tasks
 
 import com.cognifide.gradle.aem.AemDefaultTask
-import com.cognifide.gradle.aem.environment.docker.domain.HttpdReloader
+import com.cognifide.gradle.aem.environment.reloader.Reloader
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
 open class EnvironmentDev : AemDefaultTask() {
 
     init {
-        description = "Turns on environment development mode (interactive HTTPD configuration reloading on file changes)"
+        description = "Turns on environment development mode (interactive e.g HTTPD configuration reloading on file changes)"
     }
 
     @Internal
-    val httpdReloader = HttpdReloader(aem)
+    val reloader = Reloader(aem.environment)
 
     @TaskAction
     fun dev() {
-        if (!aem.environment.stack.running) {
+        if (!aem.environment.running) {
             aem.notifier.notify("Environment development mode", "Cannot turn on as environment is not running.")
+            return
+        }
+
+        if (!reloader.configured) {
+            aem.notifier.notify("Environment development mode", "None of containers have configured watched directory!")
             return
         }
 
@@ -25,12 +30,8 @@ open class EnvironmentDev : AemDefaultTask() {
             // Whatever on parent logger to be able to pin children loggers from other threads
             progress("Watching files")
 
-            httpdReloader.start()
+            reloader.start()
         }
-    }
-
-    fun httpdReloader(options: HttpdReloader.() -> Unit) {
-        httpdReloader.apply(options)
     }
 
     companion object {

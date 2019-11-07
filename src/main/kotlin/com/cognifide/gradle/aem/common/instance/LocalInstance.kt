@@ -8,12 +8,12 @@ import com.cognifide.gradle.aem.common.instance.local.Status
 import com.cognifide.gradle.aem.common.utils.Formats
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
-import java.io.File
-import java.io.Serializable
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
 import org.gradle.internal.os.OperatingSystem
 import org.gradle.util.GFileUtils
+import java.io.File
+import java.io.Serializable
 
 class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(aem), Serializable {
 
@@ -105,6 +105,10 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
     val initialized: Boolean
         get() = locked(LOCK_INIT)
 
+    @get:JsonIgnore
+    val installDir: File
+        get() = File(quickstartDir, "install")
+
     private fun binScript(name: String, os: OperatingSystem = OperatingSystem.current()): Script {
         return if (os.isWindows) {
             Script(this, listOf("cmd", "/C"), File(dir, "$name.bat"), File(quickstartDir, "bin/$name.bat"))
@@ -139,8 +143,11 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
     private fun copyFiles() {
         GFileUtils.mkdirs(dir)
 
-        manager.quickstart.license?.let { FileUtils.copyFile(it, license) }
+        aem.logger.info("Copying quickstart JAR '$jar' to directory '$quickstartDir'")
         manager.quickstart.jar?.let { FileUtils.copyFile(it, jar) }
+
+        aem.logger.info("Copying quickstart license '$license' to directory '$quickstartDir'")
+        manager.quickstart.license?.let { FileUtils.copyFile(it, license) }
     }
 
     private fun validateFiles() {
@@ -233,15 +240,27 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
             var result = origin
 
             // Update window title
-            val previousTitle = StringUtils.substringBetween(origin, "start /min \"", "\" cmd.exe ")
-            if (previousTitle != null) {
+            val previousWindowTitle = StringUtils.substringBetween(origin, "start /min \"", "\" cmd.exe ")
+            if (previousWindowTitle != null) {
                 result = StringUtils.replace(result,
-                        "start /min \"$previousTitle\" cmd.exe ",
-                        "start /min \"${this}\" cmd.exe "
+                        "start /min \"$previousWindowTitle\" cmd.exe ",
+                        "start /min \"$windowTitle\" cmd.exe "
                 )
             }
 
             result
+        }
+
+        val installFiles = manager.install.files
+        if (installFiles.isNotEmpty()) {
+            GFileUtils.mkdirs(installDir)
+            installFiles.forEach { source ->
+                val target = File(installDir, source.name)
+                if (!target.exists()) {
+                    aem.logger.info("Copying quickstart install file from '$source' to '$target'")
+                    FileUtils.copyFileToDirectory(source, installDir)
+                }
+            }
         }
 
         aem.logger.info("Customized: $this")
@@ -314,14 +333,14 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
         }
     }
 
-    fun init(callback: LocalInstance.() -> Unit) {
+    fun init() {
         if (initialized) {
             aem.logger.debug("Already initialized: $this")
             return
         }
 
         aem.logger.info("Initializing: $this")
-        callback(this)
+        manager.initOptions(this)
         lock(LOCK_INIT)
     }
 
@@ -339,8 +358,11 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
 
     fun locked(name: String): Boolean = lockFile(name).exists()
 
+    @get:JsonIgnore
+    val windowTitle get() = "LocalInstance(name='$name', httpUrl='$httpUrl', debugPort=$debugPort, user='$user', password='${Formats.asPassword(password)}')"
+
     override fun toString(): String {
-        return "LocalInstance(httpUrl='$httpUrl', user='$user', password='${Formats.asPassword(password)}', id='$id', debugPort=$debugPort)"
+        return "LocalInstance(name='$name', httpUrl='$httpUrl')"
     }
 
     companion object {

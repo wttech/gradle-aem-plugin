@@ -13,10 +13,12 @@ object RepositoryType {
         else -> hintSimpleType(value)
     }
 
+    @Suppress("ComplexMethod")
     fun hintSimpleType(value: Any?) = when (value) {
         is String -> "String"
         is Boolean -> "Boolean"
-        is Int, Long -> "Long"
+        is Int -> "Long"
+        is Long -> "Long"
         is Calendar -> "Date"
         is Date -> "Date"
         is Float -> "Decimal"
@@ -36,8 +38,14 @@ object RepositoryType {
         else -> value
     }
 
+    /**
+     * @see <https://github.com/apache/sling-org-apache-sling-servlets-get> - JsonObjectCreator.java
+     */
     private const val DATE_FORMAT_ECMA = "EEE MMM dd yyyy HH:mm:ss 'GMT'Z"
 
+    /**
+     * @see <https://github.com/apache/sling-org-apache-sling-servlets-get> - JsonObjectCreator.java
+     */
     private val DATE_LOCALE = Locale.US
 
     /**

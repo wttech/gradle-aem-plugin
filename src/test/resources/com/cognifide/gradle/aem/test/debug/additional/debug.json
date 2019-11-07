@@ -71,6 +71,13 @@
           "smb://*"
         ]
       },
+      "resolve": {
+        "enabled": true,
+        "name": "resolve",
+        "protocols": [
+          "resolve://*"
+        ]
+      },
       "url": {
         "enabled": true,
         "name": "url",
@@ -78,9 +85,9 @@
           "*://*"
         ]
       },
-      "local": {
+      "path": {
         "enabled": true,
-        "name": "local"
+        "name": "path"
       }
     },
     "packageOptions" : {
@@ -96,10 +103,11 @@
         "org.apache.jackrabbit.vault.packaging.*Exception",
         "org.xml.sax.*Exception"
       ],
-      "responseBuffer" : 4096
+      "responseBuffer" : 4096,
+      "nodeTypesSync": "NEVER",
+      "nodeTypesFallback": true
     },
     "instanceOptions" : {
-      "statusProperties": false,
       "defined" : {
         "local-author" : {
           "properties" : { },
@@ -311,79 +319,52 @@
         "remoteDir": "*/additional/build/aem/instanceBackup/remote",
         "localDir": "*/additional/build/aem/instanceBackup/local",
         "suffix": ".backup.zip"
+      },
+      "install": {
+        "downloadDir": "*/additional/build/aem/instance/install"
       }
     },
     "environment" : {
       "rootDir" : "*/additional/.environment",
-      "directories" : {
-        "regulars" : [
-          "*/additional/.environment/httpd/logs"
-        ],
-        "caches" : [
-          "*/additional/.environment/httpd/cache/content/example/live",
-          "*/additional/.environment/httpd/cache/content/example/demo"
-        ]
-      },
-      "dockerRuntime" : {
-        "name": "desktop",
-        "hostIp": "127.0.0.1"
-      },
       "hosts" : {
-        "defined" : [
+        "defined": [
           {
-            "ip" : "127.0.0.1",
-            "name" : "example.com"
+            "ip": "127.0.0.1",
+            "tags": [
+              "publish",
+              "live"
+            ],
+            "url": "http://example.com"
           },
           {
-            "ip" : "127.0.0.1",
-            "name" : "demo.example.com"
+            "ip": "127.0.0.1",
+            "tags": [
+              "publish",
+              "test"
+            ],
+            "url": "http://demo.example.com"
           },
           {
-            "ip" : "127.0.0.1",
-            "name" : "author.example.com"
+            "ip": "127.0.0.1",
+            "tags": [
+              "author"
+            ],
+            "url": "http://author.example.com"
           },
           {
-            "ip" : "127.0.0.1",
-            "name" : "invalidation-only"
+            "ip": "127.0.0.1",
+            "tags": [
+              "other"
+            ],
+            "url": "http://dispatcher.example.com"
           }
         ]
       },
       "configDir" : "*/additional/gradle/environment",
-      "dockerComposeSourceFile" : "*/additional/gradle/environment/docker-compose.yml.peb",
-      "dockerComposeFile" : "*/additional/.environment/docker-compose.yml",
-      "dockerConfigPath" : "*/additional/gradle/environment",
-      "dockerRootPath" : "*/additional/.environment",
-      "httpdConfDir" : "*/additional/gradle/environment/httpd/conf",
       "created" : false
     },
     "notifier" : {
       "enabled" : false
-    },
-    "tasks" : {
-      "bundles" : [
-        {
-          "name" : "jar",
-          "installPath" : "/apps/additional/install",
-          "installRunMode" : null,
-          "vaultFilter": true,
-          "attributesConvention" : true,
-          "javaPackage" : "com.company.aem.additional",
-          "javaPackageOptions" : "-split-package:=merge-first",
-          "bndEnabled" : true,
-          "bndPath" : "*/additional/bnd.bnd",
-          "bndInstructions" : {
-            "-fixupmessages.bundleActivator" : "Bundle-Activator * is being imported *;is:=error"
-          },
-          "attributes" : {
-            "Manifest-Version" : "1.0",
-            "Bundle-Name" : "Additional",
-            "Bundle-SymbolicName" : "com.company.aem.additional",
-            "Sling-Model-Packages" : "com.company.aem.additional",
-            "Import-Package" : "*",
-            "Export-Package" : "com.company.aem.additional.*;-split-package:=merge-first"
-          }
-        }
-      ]
     },
     "projectName" : "additional",
     "configDir" : "*/additional/gradle",

@@ -3,14 +3,15 @@ package com.cognifide.gradle.aem.common.instance
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.instance.local.BackupResolver
+import com.cognifide.gradle.aem.common.instance.local.InstallResolver
 import com.cognifide.gradle.aem.common.instance.local.QuickstartResolver
 import com.cognifide.gradle.aem.common.instance.local.Source
 import com.cognifide.gradle.aem.common.utils.onEachApply
 import com.fasterxml.jackson.annotation.JsonIgnore
+import org.gradle.util.GFileUtils
 import java.io.File
 import java.io.Serializable
 import java.util.concurrent.TimeUnit
-import org.gradle.util.GFileUtils
 
 class LocalInstanceManager(private val aem: AemExtension) : Serializable {
 
@@ -86,6 +87,25 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
                 else -> null
             }
         }
+
+    val install = InstallResolver(aem)
+
+    /**
+     * Configure CRX packages, bundles to be pre-installed on instance(s).
+     */
+    fun install(options: InstallResolver.() -> Unit) {
+        install.apply(options)
+    }
+
+    @get:JsonIgnore
+    internal var initOptions: LocalInstance.() -> Unit = {}
+
+    /**
+     * Configure action to be performed only once when instance is up first time.
+     */
+    fun init(options: LocalInstance.() -> Unit) {
+        this.initOptions = options
+    }
 
     @Suppress("ComplexMethod")
     fun create(instances: List<LocalInstance>) {

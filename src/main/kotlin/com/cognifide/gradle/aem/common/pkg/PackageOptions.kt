@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.common.pkg
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
+import com.cognifide.gradle.aem.common.pkg.vlt.NodeTypesSync
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 import java.io.Serializable
@@ -92,4 +93,26 @@ class PackageOptions(aem: AemExtension) : Serializable {
      * It is a protection against exceeding max Java heap size.
      */
     var responseBuffer = aem.props.int("package.responseBuffer") ?: 4096
+
+    /**
+     * Customize default validation options.
+     */
+    fun validator(options: PackageValidator.() -> Unit) {
+        this.validatorOptions = options
+    }
+
+    @get:JsonIgnore
+    internal var validatorOptions: PackageValidator.() -> Unit = {}
+
+    /**
+     * Controls automatic node types exporting from available instance to be later used in package validation.
+     */
+    var nodeTypesSync = aem.props.string("package.nodeTypesSync")
+            ?.let { NodeTypesSync.of(it) } ?: if (aem.offline) NodeTypesSync.NEVER else NodeTypesSync.WHEN_MISSING
+
+    /**
+     * Provides predefined / fallback node types if node types sync is disabled
+     * or cannot be done when AEM instance is unavailable and exported file is not yet created / saved in VCS.
+     */
+    var nodeTypesFallback = aem.props.boolean("package.nodeTypesFallback") ?: true
 }

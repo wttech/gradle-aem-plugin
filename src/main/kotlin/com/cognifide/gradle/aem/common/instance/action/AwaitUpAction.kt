@@ -12,7 +12,7 @@ class AwaitUpAction(aem: AemExtension) : AnyInstanceAction(aem) {
 
     private var timeoutOptions: TimeoutCheck.() -> Unit = {
         stateTime = aem.props.long("instance.awaitUp.timeout.stateTime")
-                ?: TimeUnit.MINUTES.toMillis(5)
+                ?: TimeUnit.MINUTES.toMillis(10)
         constantTime = aem.props.long("instance.awaitUp.timeout.constantTime")
                 ?: TimeUnit.MINUTES.toMillis(30)
     }

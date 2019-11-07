@@ -3,7 +3,15 @@ package com.cognifide.gradle.aem.common.utils
 import com.fasterxml.jackson.core.util.DefaultIndenter
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.jayway.jsonpath.JsonPath
+import org.apache.commons.io.FileUtils
+import org.apache.commons.lang3.StringUtils
+import org.apache.commons.lang3.time.DurationFormatUtils
+import org.apache.commons.validator.routines.UrlValidator
+import org.apache.jackrabbit.util.ISO8601
+import org.gradle.api.Project
+import org.gradle.util.GradleVersion
 import java.io.File
 import java.io.InputStream
 import java.math.BigInteger
@@ -13,14 +21,8 @@ import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 import java.util.*
-import org.apache.commons.io.FileUtils
-import org.apache.commons.lang3.StringUtils
-import org.apache.commons.lang3.time.DurationFormatUtils
-import org.apache.commons.validator.routines.UrlValidator
-import org.apache.jackrabbit.util.ISO8601
-import org.gradle.api.Project
-import org.gradle.util.GradleVersion
 
 @Suppress("MagicNumber", "TooManyFunctions")
 object Formats {
@@ -49,12 +51,14 @@ object Formats {
     val VERSION_UNKNOWN = GradleVersion.version("0.0.0")
 
     fun jsonMapper(pretty: Boolean): ObjectMapper = ObjectMapper().apply {
+        registerModule(KotlinModule())
         if (pretty) {
             writer(DefaultPrettyPrinter().apply {
                 indentArraysWith(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE)
             })
         }
     }
+
     fun asJson(input: InputStream) = JsonPath.parse(input)
 
     fun asJson(value: String) = JsonPath.parse(value)
@@ -67,9 +71,9 @@ object Formats {
         return jsonMapper(pretty).writeValueAsString(value) ?: "{}"
     }
 
-    fun <T> fromJson(json: String, clazz: Class<T>): T {
-        return ObjectMapper().readValue(json, clazz)
-    }
+    inline fun <reified T : Any> fromJson(json: String) = fromJson(json, T::class.java)
+
+    fun <T> fromJson(json: String, clazz: Class<T>): T = jsonMapper(false).readValue(json, clazz)
 
     fun fromJsonToMap(json: String): Map<String, Any?> = ObjectMapper().run {
         readValue(json, typeFactory.constructMapType(HashMap::class.java, String::class.java, Any::class.java))
@@ -86,6 +90,17 @@ object Formats {
         }
 
         return between.split(delimiter)
+    }
+
+    fun toMap(value: String?, valueDelimiter: String = ",", keyDelimiter: String = "="): Map<String, String>? {
+        return toList(value, valueDelimiter)?.map { v ->
+            v.split(keyDelimiter).let { e ->
+                when (e.size) {
+                    2 -> e[0] to e[1]
+                    else -> v to ""
+                }
+            }
+        }?.toMap()
     }
 
     fun toBase64(value: String): String {
@@ -151,8 +166,16 @@ object Formats {
         return SimpleDateFormat("yyyyMMddHHmmss").format(date)
     }
 
-    fun duration(millis: Long): String {
-        return DurationFormatUtils.formatDurationHMS(millis)
+    fun duration(millis: Long): String = DurationFormatUtils.formatDuration(millis, "mm:ss")
+
+    fun durationSince(millis: Long) = duration(System.currentTimeMillis() - millis)
+
+    fun durationFit(thenMillis: Long, thenZoneId: ZoneId, durationMillis: Long): Boolean {
+        val nowTimestamp = LocalDateTime.now().atZone(ZoneId.systemDefault())
+        val thenTimestamp = dateTime(thenMillis, thenZoneId)
+        val diffMillis = ChronoUnit.MILLIS.between(thenTimestamp, nowTimestamp)
+
+        return diffMillis < durationMillis
     }
 
     fun rootProjectPath(file: File, project: Project): String {
@@ -196,6 +219,23 @@ object Formats {
         messageDigest.update(data, 0, data.size)
         val result = BigInteger(1, messageDigest.digest())
         return String.format("%1$032x", result)
+    }
+
+    /**
+     * Splits command to arguments usually delimited by space
+     * while considering quoted string containing spaces as single argument.
+     */
+    fun commandToArgs(command: String): List<String> {
+        val quotedSpaceToken = "@@@SPACE@@@"
+        var tokenizedCommand = command
+
+        Regex("'([^']+)'").findAll(command).iterator().forEachRemaining {
+            val quotedString = it.groupValues[1]
+            val tokenizedString = quotedString.replace(" ", quotedSpaceToken)
+            tokenizedCommand = tokenizedCommand.replace("'$quotedString'", tokenizedString)
+        }
+
+        return StringUtils.split(tokenizedCommand, " ").map { it.replace(quotedSpaceToken, " ") }
     }
 }
 

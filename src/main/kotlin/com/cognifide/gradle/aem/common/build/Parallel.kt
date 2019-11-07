@@ -16,10 +16,6 @@ object Parallel {
         }
     }
 
-    fun <A, B : Any> pool(threads: Int, name: String, iterable: Iterable<A>, mapper: CoroutineScope.(A) -> B): List<B> {
-        return map(newFixedThreadPoolContext(threads, name), iterable, mapper)
-    }
-
     private fun <A, B : Any> map(context: CoroutineContext, iterable: Iterable<A>, mapper: CoroutineScope.(A) -> B?): List<B> {
         return runBlocking(context) {
             iterable.map { value -> async { if (value != null) mapper(value) else null } }.mapNotNull { it.await() }
@@ -32,5 +28,13 @@ object Parallel {
 
     fun <A> with(iterable: Iterable<A>, callback: A.() -> Unit) {
         map(iterable) { it.apply(callback); Unit }
+    }
+
+    fun <A, B : Any> poolMap(threads: Int, name: String, iterable: Iterable<A>, mapper: CoroutineScope.(A) -> B): List<B> {
+        return map(newFixedThreadPoolContext(threads, name), iterable, mapper)
+    }
+
+    fun <A> poolEach(threads: Int, name: String, iterable: Iterable<A>, callback: CoroutineScope.(A) -> Unit) {
+        poolMap(threads, name, iterable) { callback(it); Unit }
     }
 }

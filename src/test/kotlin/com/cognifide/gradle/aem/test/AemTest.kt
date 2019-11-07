@@ -25,15 +25,15 @@ abstract class AemTest {
         FileUtils.deleteQuietly(tmpDir)
     }
 
-    fun buildTask(rootProjectDir: String, taskName: String, callback: AemBuild.() -> Unit) {
-        build(rootProjectDir, { withArguments(taskName, "-i", "-S") }, {
+    fun buildTask(rootProjectDir: String, taskName: String, vararg args: String = ARGS_DEFAULT, callback: AemBuild.() -> Unit) {
+        build(rootProjectDir, { withArguments(listOf<String>() + taskName + args.toList()) }, {
             assertTaskOutcome(taskName)
             callback()
         })
     }
 
-    fun buildTasks(rootProjectDir: String, taskName: String, callback: AemBuild.() -> Unit) {
-        build(rootProjectDir, { withArguments(taskName, "-i", "-S") }, {
+    fun buildTasks(rootProjectDir: String, taskName: String, vararg args: String = ARGS_DEFAULT, callback: AemBuild.() -> Unit) {
+        build(rootProjectDir, { withArguments(listOf<String>() + taskName + args.toList()) }, {
             assertTaskOutcomes(taskName)
             callback()
         })
@@ -62,5 +62,7 @@ abstract class AemTest {
         return file.bufferedReader().use { it.readText() }
     }
 
-
+    companion object {
+        val ARGS_DEFAULT = arrayOf("-i", "-S", "-Poffline")
+    }
 }

@@ -3,15 +3,17 @@ package com.cognifide.gradle.aem.pkg.tasks
 import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.AemTask
-import com.cognifide.gradle.aem.bundle.BundleJar
+import com.cognifide.gradle.aem.bundle.tasks.BundleCompose
 import com.cognifide.gradle.aem.bundle.BundlePlugin
 import com.cognifide.gradle.aem.common.build.DependencyOptions
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.aem.common.pkg.PackageFile
 import com.cognifide.gradle.aem.common.pkg.PackageFileFilter
+import com.cognifide.gradle.aem.common.pkg.PackageValidator
 import com.cognifide.gradle.aem.common.pkg.vlt.FilterFile
 import com.cognifide.gradle.aem.common.pkg.vlt.FilterType
+import com.cognifide.gradle.aem.common.pkg.vlt.NodeTypesSync
 import com.cognifide.gradle.aem.common.pkg.vlt.VltDefinition
 import com.cognifide.gradle.aem.common.tasks.ZipTask
 import com.cognifide.gradle.aem.common.utils.Patterns
@@ -21,7 +23,6 @@ import com.cognifide.gradle.aem.pkg.tasks.compose.PackageDependency
 import com.cognifide.gradle.aem.pkg.tasks.compose.ProjectMergingOptions
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
-import java.util.regex.Pattern
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
 import org.gradle.api.Project
@@ -32,6 +33,22 @@ import org.gradle.api.tasks.bundling.Jar
 
 @Suppress("TooManyFunctions", "LargeClass")
 open class PackageCompose : ZipTask() {
+
+    /**
+     * Shorthand for built CRX package file.
+     */
+    @get:JsonIgnore
+    @get:Internal
+    val composedFile: File
+        get() = archiveFile.get().asFile
+
+    /**
+     * Shorthand for directory of built CRX package file.
+     */
+    @get:JsonIgnore
+    @get:Internal
+    val composedDir: File
+        get() = composedFile.parentFile
 
     /**
      * Absolute path to JCR content to be included in CRX package.
@@ -81,6 +98,13 @@ open class PackageCompose : ZipTask() {
                     .toList()
         }
 
+    @Nested
+    var validator = PackageValidator(aem)
+
+    fun validator(options: PackageValidator.() -> Unit) {
+        validator.apply(options)
+    }
+
     /**
      * Defines properties being used to generate CRX package metadata files.
      */
@@ -105,6 +129,14 @@ open class PackageCompose : ZipTask() {
     @get:JsonIgnore
     val vaultNodeTypesFile: File
         get() = File(vaultDir, Package.VLT_NODETYPES_FILE)
+
+    @Internal
+    @JsonIgnore
+    var vaultNodeTypesSync: NodeTypesSync = aem.packageOptions.nodeTypesSync
+
+    @Internal
+    @JsonIgnore
+    var vaultNodeTypesFallback: Boolean = aem.packageOptions.nodeTypesFallback
 
     @Nested
     val fileFilter = PackageFileFilter(aem)
@@ -141,18 +173,23 @@ open class PackageCompose : ZipTask() {
         description = "Composes CRX package from JCR content and built OSGi bundles"
 
         archiveBaseName.set(aem.baseName)
+        destinationDirectory.set(AemTask.temporaryDir(aem.project, name))
         duplicatesStrategy = DuplicatesStrategy.WARN
 
         doLast { aem.notifier.notify("Package composed", archiveFileName.get()) }
     }
 
-    @Suppress("ComplexMethod")
     override fun projectEvaluated() {
-        vaultDefinition.ensureDefaults()
-
         if (bundlePath.isBlank()) {
             throw AemException("Bundle path cannot be blank")
         }
+
+        vaultDefinition.apply {
+            ensureDefaults()
+            useNodeTypes(vaultNodeTypesSync, vaultNodeTypesFallback)
+        }
+
+        validator.workDir = File(composedDir, Package.OAKPAL_OPEAR_PATH)
 
         if (fromConvention) {
             fromConvention()
@@ -171,6 +208,7 @@ open class PackageCompose : ZipTask() {
     override fun copy() {
         copyMetaFiles()
         super.copy()
+        validateComposedFile()
     }
 
     private fun copyMetaFiles() {
@@ -256,24 +294,24 @@ open class PackageCompose : ZipTask() {
 
             if (project.plugins.hasPlugin(PackagePlugin.ID)) {
                 options.composeTasks(other).forEach {
-                    fromCompose(it, options)
+                    fromPackage(it, options)
                 }
             }
 
             if (project.plugins.hasPlugin(BundlePlugin.ID)) {
                 options.bundleTasks(other).forEach {
-                    fromBundle(other.tasks.bundle(it), options)
+                    fromBundle(it, options)
                 }
             }
         }
     }
 
-    fun fromCompose(composeTaskPath: String) {
-        fromCompose(aem.tasks.get(composeTaskPath, PackageCompose::class.java), ProjectMergingOptions())
+    fun fromPackage(composeTaskPath: String) {
+        fromPackage(aem.tasks.get(composeTaskPath, PackageCompose::class.java), ProjectMergingOptions())
     }
 
     @Suppress("ComplexMethod")
-    private fun fromCompose(other: PackageCompose, options: ProjectMergingOptions) {
+    private fun fromPackage(other: PackageCompose, options: ProjectMergingOptions) {
         fromTasks.add {
             if (this@PackageCompose != other) {
                 dependsOn(other.dependsOn)
@@ -295,6 +333,12 @@ open class PackageCompose : ZipTask() {
 
             if (options.vaultNodeTypes) {
                 extractVaultNodeTypes(other.vaultNodeTypesFile)
+            }
+
+            if (options.vaultProperties) {
+                other.vaultDefinition.properties.forEach { (name, value) ->
+                    vaultDefinition.properties.putIfAbsent(name, value)
+                }
             }
 
             if (options.vaultHooks) {
@@ -321,13 +365,13 @@ open class PackageCompose : ZipTask() {
         }
     }
 
-    fun fromBundle(jarTaskPath: String) {
-        fromBundle(aem.tasks.bundle(jarTaskPath), ProjectMergingOptions())
+    fun fromBundle(composeTaskPath: String) {
+        fromBundle(aem.tasks.get(composeTaskPath, BundleCompose::class.java), ProjectMergingOptions())
     }
 
-    private fun fromBundle(bundle: BundleJar, options: ProjectMergingOptions) {
+    private fun fromBundle(bundle: BundleCompose, options: ProjectMergingOptions) {
         if (options.bundleBuilt) {
-            fromJar(bundle.jar, Package.bundlePath(bundle.installPath, bundle.installRunMode), bundle.vaultFilter)
+            fromJar(bundle, Package.bundlePath(bundle.installPath, bundle.installRunMode), bundle.vaultFilter)
         }
     }
 
@@ -347,10 +391,10 @@ open class PackageCompose : ZipTask() {
         ))
     }
 
-    fun fromJar(bundle: Jar, bundlePath: String? = null, vaultFilter: Boolean? = null) {
+    fun fromJar(jar: Jar, bundlePath: String? = null, vaultFilter: Boolean? = null) {
         fromTasks.add {
-            dependsOn(bundle)
-            fromJarInternal(bundle.archiveFile.get().asFile, bundlePath, vaultFilter)
+            dependsOn(jar)
+            fromJarInternal(jar.archiveFile.get().asFile, bundlePath, vaultFilter)
         }
     }
 
@@ -367,14 +411,7 @@ open class PackageCompose : ZipTask() {
     private fun fromJarInternal(jar: File, bundlePath: String? = null, vaultFilter: Boolean? = null) {
         val effectiveBundlePath = bundlePath ?: this.bundlePath
 
-        if (vaultFilter ?: mergingOptions.vaultFilters) {
-            vaultDefinition.filter("$effectiveBundlePath/${jar.name}") { type = FilterType.FILE }
-        }
-
-        into("${Package.JCR_ROOT}/$effectiveBundlePath") { spec ->
-            spec.from(jar)
-            fileFilterDelegate(spec)
-        }
+        fromArchiveInternal(vaultFilter, effectiveBundlePath, jar)
     }
 
     fun fromZip(dependencyOptions: DependencyOptions.() -> Unit, storagePath: String? = null, vaultFilter: Boolean? = null) {
@@ -407,11 +444,15 @@ open class PackageCompose : ZipTask() {
         val effectivePackageDir = aem.packageOptions.storageDir(PackageFile(file))
         val effectivePackagePath = "${packagePath ?: this.packagePath}/$effectivePackageDir"
 
+        fromArchiveInternal(vaultFilter, effectivePackagePath, file)
+    }
+
+    private fun fromArchiveInternal(vaultFilter: Boolean?, effectivePath: String, file: File) {
         if (vaultFilter ?: mergingOptions.vaultFilters) {
-            vaultDefinition.filter("$effectivePackagePath/${file.name}") { type = FilterType.FILE }
+            vaultDefinition.filter("$effectivePath/${file.name}") { type = FilterType.FILE }
         }
 
-        into("${Package.JCR_ROOT}/$effectivePackagePath") { spec ->
+        into("${Package.JCR_ROOT}/$effectivePath") { spec ->
             spec.from(file)
             fileFilterDelegate(spec)
         }
@@ -424,22 +465,17 @@ open class PackageCompose : ZipTask() {
     }
 
     private fun extractVaultNodeTypes(file: File) {
-        if (!file.exists()) {
-            return
-        }
+        file.takeIf { it.exists() }?.let { vaultDefinition.nodeTypes(it) }
+    }
 
-        file.forEachLine { line ->
-            if (NODE_TYPES_LIB.matcher(line.trim()).matches()) {
-                vaultDefinition.nodeTypeLibs.add(line)
-            } else {
-                vaultDefinition.nodeTypeLines.add(line)
-            }
+    private fun validateComposedFile() {
+        aem.progress {
+            message = "Validating CRX package '${composedFile.name}'"
+            validator.perform(composedFile)
         }
     }
 
     companion object {
         const val NAME = "packageCompose"
-
-        val NODE_TYPES_LIB: Pattern = Pattern.compile("<.+>")
     }
 }

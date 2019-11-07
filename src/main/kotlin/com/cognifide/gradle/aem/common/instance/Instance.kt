@@ -35,6 +35,16 @@ interface Instance : Serializable {
 
     @get:Internal
     @get:JsonIgnore
+    val credentials: Pair<String, String>
+        get() = user to password
+
+    @get:Internal
+    @get:JsonIgnore
+    val credentialsString
+        get() = "$user:$password"
+
+    @get:Internal
+    @get:JsonIgnore
     val hiddenPassword: String
         get() = "*".repeat(password.length)
 
@@ -55,11 +65,6 @@ interface Instance : Serializable {
     @get:Internal
     val type: IdType
         get() = IdType.byId(id)
-
-    @get:Internal
-    @get:JsonIgnore
-    val credentials: String
-        get() = "$user:$password"
 
     @get:Internal
     @get:JsonIgnore
@@ -116,6 +121,16 @@ interface Instance : Serializable {
     @get:JsonIgnore
     val json: String
         get() = Formats.toJson(this)
+
+    @get:Internal
+    @get:JsonIgnore
+    val author: Boolean
+        get() = type == IdType.AUTHOR
+
+    @get:Internal
+    @get:JsonIgnore
+    val publish: Boolean
+        get() = type == IdType.PUBLISH
 
     companion object {
 

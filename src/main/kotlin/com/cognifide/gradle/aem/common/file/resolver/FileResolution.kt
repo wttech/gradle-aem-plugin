@@ -14,6 +14,11 @@ open class FileResolution(val group: FileGroup, val id: String, private val reso
     private var thenOperations = mutableListOf<FileResolution.(File) -> File>()
 
     /**
+     * Resolve file immediatelly.
+     */
+    fun resolve() = file
+
+    /**
      * Perform operation on resolved file, but do not change it path (work in-place).
      */
     fun use(operation: FileResolution.(File) -> Unit) {
@@ -41,6 +46,16 @@ open class FileResolution(val group: FileGroup, val id: String, private val reso
     }
 
     /**
+     * Copy source file to target directory only if target file does not exist.
+     */
+    fun copyToDirectory(source: File, targetDir: File) {
+        val targetFile = File(targetDir, source.name)
+        if (!targetFile.exists()) {
+            source.copyTo(targetFile)
+        }
+    }
+
+    /**
      * Read files from ZIP/TAR archive.
      */
     fun archiveTree(archive: File): FileTree = when (archive.extension) {
@@ -51,17 +66,37 @@ open class FileResolution(val group: FileGroup, val id: String, private val reso
     /**
      * Read single file from ZIP/TAR archive.
      */
-    fun archiveFile(archive: File, entryPath: String): File = archiveTree(archive)
-            .matching { it.include(entryPath) }.singleFile
+    fun archiveFile(archive: File, entryPattern: String): File = archiveTree(archive)
+            .matching { it.include(entryPattern) }.singleFile
+
+    /**
+     * Read files from ZIP/TAR archive.
+     */
+    fun archiveFiles(archive: File, entriesPattern: String): Sequence<File> = archiveTree(archive)
+            .matching { it.include(entriesPattern) }.asSequence()
 
     /**
      * Extract & copy single archive file and copy it to target location only if it does not exist.
      */
-    fun copyArchiveFile(archive: File, entryPath: String, target: File) = target.apply {
+    fun copyArchiveFile(archive: File, entryPattern: String, target: File) = target.apply {
         if (!exists()) {
-            aem.logger.info("Copying resolved archive file '$archive' to file '$target'")
+            val archiveFile = archiveFile(archive, entryPattern)
+            aem.logger.info("Copying resolved archive file '$archiveFile' to '$this'")
+            archiveFile.copyTo(this)
+        }
+    }
 
-            archiveFile(archive, entryPath).copyTo(this)
+    /**
+     * Extract & copy archive files and copy them to target directory only if it each file does not exist.
+     */
+    fun copyArchiveFiles(archive: File, entriesPattern: String, targetDir: File) {
+        archiveFiles(archive, entriesPattern).forEach { archiveFile ->
+            File(targetDir, archiveFile.name).apply {
+                if (!exists()) {
+                    aem.logger.info("Copying resolved archive file '$archiveFile' to '$this'")
+                    archiveFile.copyTo(this)
+                }
+            }
         }
     }
 }

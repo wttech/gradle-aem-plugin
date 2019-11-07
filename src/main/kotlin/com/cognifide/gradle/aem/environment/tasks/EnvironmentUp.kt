@@ -6,7 +6,7 @@ import org.gradle.api.tasks.TaskAction
 open class EnvironmentUp : AemDefaultTask() {
 
     init {
-        description = "Turns on AEM virtualized environment (HTTPD service with AEM dispatcher module)"
+        description = "Turns on AEM virtualized environment (e.g HTTPD service with AEM dispatcher module)"
     }
 
     @TaskAction
@@ -18,8 +18,7 @@ open class EnvironmentUp : AemDefaultTask() {
 
         aem.environment.up()
 
-        aem.notifier.notify("Environment up", "Turned on with success. HTTP server " +
-                "with AEM dispatcher is now available")
+        aem.notifier.notify("Environment up", "Turned on with success")
     }
 
     companion object {

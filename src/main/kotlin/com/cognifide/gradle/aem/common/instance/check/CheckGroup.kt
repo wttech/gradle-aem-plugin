@@ -7,14 +7,14 @@ import org.apache.commons.lang3.builder.HashCodeBuilder
 class CheckGroup(
     val runner: CheckRunner,
     val instance: Instance,
-    checkFactory: CheckGroup.() -> List<Check>
+    checkFactory: CheckFactory.() -> List<Check>
 ) {
 
     val stateBuilder = HashCodeBuilder()
 
     val statusLogger = CollectingLogger()
 
-    var checks: List<Check> = checkFactory(this)
+    var checks: List<Check> = CheckFactory(this).run(checkFactory)
 
     @Suppress("TooGenericExceptionCaught")
     fun check() {
@@ -49,20 +49,4 @@ class CheckGroup(
 
     val summary: String
         get() = checks.firstOrNull { it.failure }?.status ?: "Passed"
-
-    // Factory methods / DSL
-
-    fun custom(callback: CustomCheck.() -> Unit) = CustomCheck(this, callback)
-
-    fun bundles(options: BundlesCheck.() -> Unit) = BundlesCheck(this).apply(options)
-
-    fun components(options: ComponentsCheck.() -> Unit) = ComponentsCheck(this).apply(options)
-
-    fun events(options: EventsCheck.() -> Unit) = EventsCheck(this).apply(options)
-
-    fun timeout(options: TimeoutCheck.() -> Unit) = TimeoutCheck(this).apply(options)
-
-    fun unavailable(options: UnavailableCheck.() -> Unit) = UnavailableCheck(this).apply(options)
-
-    fun unchanged(options: UnchangedCheck.() -> Unit) = UnchangedCheck(this).apply(options)
 }

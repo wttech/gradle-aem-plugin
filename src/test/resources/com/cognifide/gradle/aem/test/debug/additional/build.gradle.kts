@@ -10,31 +10,37 @@ repositories {
 }
 
 dependencies {
-    compile(group = "org.osgi", name = "osgi.cmpn", version = "6.0.0")
+    compileOnly("org.osgi:osgi.cmpn:6.0.0")
 }
 
 aem {
     environment {
-        hosts(
-                "example.com",
-                "demo.example.com",
-                "author.example.com",
-                "invalidation-only"
-        )
-        directories {
-            regular(
-                    "httpd/logs"
-            )
-            cache(
-                    "httpd/cache/content/example/live",
-                    "httpd/cache/content/example/demo"
-            )
+        hosts {
+            publish("http://example.com") { tag("live") }
+            publish("http://demo.example.com") { tag("test") }
+            author("http://author.example.com")
+            other("http://dispatcher.example.com")
+        }
+        docker {
+            containers {
+                "httpd" {
+                    resolve {
+                        ensureDir("httpd/logs")
+                    }
+                    reload {
+                        ensureDir("/usr/local/apache2/logs")
+                        cleanDir(
+                                "httpd/cache/content/example/live",
+                                "httpd/cache/content/example/demo"
+                        )
+                    }
+                }
+            }
         }
         healthChecks {
-            url("Live site", "http://example.com/en-us.html", text = "English")
-            url("Demo site", "http://demo.example.com/en-us.html", text = "English")
-            url("Author login", "http://author.example.com/libs/granite/core/content/login.html" +
-                    "?resource=%2F&\$\$login\$\$=%24%24login%24%24&j_reason=unknown&j_reason_code=unknown", text = "AEM Sign In")
+            url("Live site", "http://example.com/en-us.html") { containsText("English") }
+            url("Demo site", "http://demo.example.com/en-us.html") { containsText("English") }
+            url("Author module 'Sites'", "http://author.example.com/sites.html") { containsText("Sites") }
         }
     }
     

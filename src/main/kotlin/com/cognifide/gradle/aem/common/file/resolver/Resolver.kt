@@ -8,10 +8,9 @@ import com.cognifide.gradle.aem.common.file.transfer.sftp.SftpFileTransfer
 import com.cognifide.gradle.aem.common.file.transfer.smb.SmbFileTransfer
 import com.google.common.hash.HashCode
 import java.io.File
-import java.util.*
 import org.apache.commons.io.FilenameUtils
 import org.apache.commons.lang3.builder.HashCodeBuilder
-import org.gradle.api.artifacts.Configuration
+import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 
 /**
@@ -23,6 +22,7 @@ val aem: AemExtension,
 
     @get:Internal
 val downloadDir: File
+
 ) {
     private val project = aem.project
 
@@ -31,6 +31,18 @@ val downloadDir: File
     private var groupCurrent = groupDefault
 
     private val groupsDefined = mutableListOf<G>().apply { add(groupDefault) }
+
+    /**
+     * Controls count of groups resolved in parallel.
+     */
+    @Internal
+    var parallelLevel = aem.props.int("resolver.parallelLevel") ?: 3
+
+    /**
+     * Files respected when searching for recent local files.
+     */
+    @Input
+    var localFilePatterns = aem.props.list("resolver.localFilePatterns") ?: listOf("**/*.zip", "**/*.jar")
 
     @get:Internal
     val groups: List<G>
@@ -49,16 +61,46 @@ val downloadDir: File
         get() = allFiles { true }
 
     fun allFiles(filter: G.() -> Boolean): List<File> {
-        return resolveGroups(filter).flatMap { it.files }
+        return allGroups(filter).flatMap { it.files }
     }
 
-    fun resolveGroups(filter: G.() -> Boolean): List<G> {
-        return groups.filter(filter).onEach { it.files }
+    fun allGroups(filter: G.() -> Boolean): List<G> = groups.filter(filter).apply {
+        aem.progress {
+            step = "Resolving files"
+            total = size.toLong()
+
+            if (parallelLevel <= 1) {
+                forEach { group ->
+                    increment("Group '${group.name}'") { group.resolve() }
+                }
+            } else {
+                val (parallel, sequential) = partition { it.parallelable }
+                aem.parallel.poolEach(parallelLevel, "resolver", parallel) { group ->
+                    increment("Group '${group.name}'") { group.resolve() }
+                }
+                sequential.forEach { group ->
+                    increment("Group '${group.name}'") { group.resolve() }
+                }
+            }
+        }
     }
 
     fun group(name: String): G {
         return groupsDefined.find { it.name == name }
                 ?: throw FileException("File group '$name' is not defined.")
+    }
+
+    /**
+     * Resolve of download file in case of specified value (url or dependency notation).
+     */
+    fun get(value: Any): FileResolution = when {
+        DependencyOptions.isValid(aem, value) -> resolve(value)
+        else -> {
+            when (value) {
+                is String -> download(value)
+                else -> throw FileException("Cannot resolve file as value '$value' is not an URL nor dependency notation!")
+            }
+        }
     }
 
     /**
@@ -71,15 +113,20 @@ val downloadDir: File
      */
     fun resolve(dependencyOptions: DependencyOptions.() -> Unit) = resolve(DependencyOptions.create(aem, dependencyOptions))
 
-    private fun resolve(dependencyNotation: Any): FileResolution {
-        return resolveFile(dependencyNotation) {
-            val configName = "fileResolver_dependency_${UUID.randomUUID()}"
-            val configOptions: (Configuration) -> Unit = { it.isTransitive = false }
-            val config = project.configurations.create(configName, configOptions)
+    private fun resolve(dependencyNotation: Any): FileResolution = resolveFile(dependencyNotation, false) {
+        DependencyOptions.resolve(aem, dependencyNotation)
+    }
 
-            project.dependencies.add(config.name, dependencyNotation)
-            config.singleFile
-        }
+    /**
+     * Download files from same URL using automatically determined file transfer (HTTP, SFTP, SMB, URL, local file system).
+     */
+    fun download(urlDir: String, vararg fileNames: String) = download(urlDir, fileNames.asIterable())
+
+    /**
+     * Download files from same URL using automatically determined file transfer (HTTP, SFTP, SMB, URL, local file system).
+     */
+    fun download(urlDir: String, fileNames: Iterable<String>) = fileNames.map {
+        fileName -> download("$urlDir/$fileName")
     }
 
     /**
@@ -132,12 +179,35 @@ val downloadDir: File
     fun useLocal(sourceFile: File): FileResolution = resolveFile(sourceFile.absolutePath) { sourceFile }
 
     /**
-     * Use recent local file located in directory or fail when not found any.
+     * Use local file from directory or file when not found any.
      */
-    fun useLocalRecent(dir: Any, filePattern: String = "**/*.zip"): FileResolution? = resolveFile(listOf(dir, filePattern)) {
-        aem.project.fileTree(dir) { it.include(filePattern) }.maxBy { it.name }
-                ?: throw FileException("Cannot find any local file under directory '$dir' matching file pattern '$filePattern'!")
+    fun useLocalBy(dir: Any, filePatterns: Iterable<String>, selector: (Iterable<File>).() -> File?): FileResolution? {
+        return resolveFile(listOf(dir, filePatterns)) {
+            aem.project.fileTree(dir) { it.include(filePatterns) }.run(selector)
+                    ?: throw FileException("Cannot find any local file under directory '$dir' matching file pattern '$filePatterns'!")
+        }
     }
+
+    /**
+     * Use local file from directory or file when not found any.
+     */
+    fun useLocalBy(dir: Any, selector: (Iterable<File>).() -> File?) = useLocalBy(dir, localFilePatterns, selector)
+
+    /**
+     * Use local file with name being highest version located in directory or fail when not found any.
+     * Highest version is determined by descending alphanumeric sorting.
+     */
+    fun useLocalLastNamed(dir: Any) = useLocalBy(dir) { maxBy { it.name } }
+
+    /**
+     * Use last modified local file located in directory or fail when not found any.
+     */
+    fun useLocalLastModified(dir: Any) = useLocalBy(dir) { maxBy { it.lastModified() } }
+
+    /**
+     * Use last modified local file located in directory or fail when not found any.
+     */
+    fun useLocalRecent(dir: Any) = useLocalLastModified(dir)
 
     /**
      * Customize configuration for particular file group.
@@ -153,6 +223,8 @@ val downloadDir: File
         groupCurrent = groupDefault
     }
 
+    operator fun String.invoke(configurer: Resolver<G>.() -> Unit) = group(this, configurer)
+
     /**
      * Shorthand for creating named group with single file only to be downloaded.
      */
@@ -160,8 +232,12 @@ val downloadDir: File
 
     abstract fun createGroup(name: String): G
 
-    private fun resolveFile(hash: Any, resolver: (FileResolution) -> File): FileResolution {
+    private fun resolveFile(hash: Any, parallelable: Boolean = true, resolver: (FileResolution) -> File): FileResolution {
         val id = HashCode.fromInt(HashCodeBuilder().append(hash).toHashCode()).toString()
+
+        if (!parallelable) {
+            groupCurrent.parallelable = false
+        }
 
         return groupCurrent.resolve(id, resolver)
     }

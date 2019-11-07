@@ -54,6 +54,14 @@ open class HttpClient(private val aem: AemExtension) : Serializable {
     @JsonSerialize(using = JsonPassword::class, `as` = String::class)
     var basicPassword: String? = null
 
+    @get:JsonIgnore
+    var basicCredentials: Pair<String?, String?>
+        get() = basicUser to basicPassword
+        set(value) {
+            basicUser = value.first
+            basicPassword = value.second
+        }
+
     var proxyHost: String? = null
 
     var proxyPort: Int? = null
@@ -101,6 +109,9 @@ open class HttpClient(private val aem: AemExtension) : Serializable {
         }
     }
 
+    @get:JsonIgnore
+    val client by lazy { HttpClientBuilder.create().apply(clientBuilder).build() }
+
     @JsonIgnore
     var responseHandler: (HttpResponse) -> Unit = { }
 
@@ -129,7 +140,7 @@ open class HttpClient(private val aem: AemExtension) : Serializable {
 
     fun head(uri: String) = head(uri) { checkStatus(it) }
 
-    fun <T> head(uri: String, handler: HttpClient.(HttpResponse) -> T): T = head(uri, handler)
+    fun <T> head(uri: String, handler: HttpClient.(HttpResponse) -> T): T = head(uri, handler) {}
 
     fun <T> head(uri: String, handler: HttpClient.(HttpResponse) -> T, options: HttpHead.() -> Unit): T {
         return execute(HttpHead(baseUrl(uri)).apply(options), handler)
@@ -161,7 +172,7 @@ open class HttpClient(private val aem: AemExtension) : Serializable {
 
     fun post(url: String, params: Map<String, Any?> = mapOf()) = postUrlencoded(url, params)
 
-    fun <T> post(uri: String, params: Map<String, Any> = mapOf(), handler: HttpClient.(HttpResponse) -> T): T {
+    fun <T> post(uri: String, params: Map<String, Any?> = mapOf(), handler: HttpClient.(HttpResponse) -> T): T {
         return postUrlencoded(uri, params, handler)
     }
 
@@ -202,6 +213,8 @@ open class HttpClient(private val aem: AemExtension) : Serializable {
     fun asString(response: HttpResponse): String {
         return IOUtils.toString(asStream(response), Charsets.UTF_8) ?: ""
     }
+
+    inline fun <reified T : Any> asObjectFromJson(response: HttpResponse) = asObjectFromJson(response, T::class.java)
 
     fun <T> asObjectFromJson(response: HttpResponse, clazz: Class<T>): T {
         return try {
@@ -258,10 +271,7 @@ open class HttpClient(private val aem: AemExtension) : Serializable {
     open fun <T> execute(method: HttpRequestBase, handler: HttpClient.(HttpResponse) -> T): T {
         try {
             requestConfigurer(method)
-
-            val client = HttpClientBuilder.create().apply(clientBuilder).build()
             val response = client.execute(method)
-
             responseHandler(response)
 
             return handler.invoke(this, response)

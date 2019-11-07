@@ -28,7 +28,9 @@ open class PackageTask : AemDefaultTask() {
         instances += aem.instance(urlOrName)
     }
 
-    fun pkg(path: String) {
+    fun `package`(path: String) {
         packages += project.file(path)
     }
+
+    fun pkg(path: String) = `package`(path)
 }
