@@ -298,7 +298,7 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
         }
 
         customize()
-        
+
         try {
             logger.info("Executing start script: $startScript")
             startScript.executeAsync()
