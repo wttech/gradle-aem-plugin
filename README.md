@@ -607,26 +607,30 @@ aem {
     tasks {
         sync {
             cleaner {
-                filesDotContent = listOf(
-                    "**/.content.xml"
-                )
-                filesDeleted = listOf(
-                    "**/.vlt",
-                    "**/.vlt*.tmp",
-                    "**/install/*.jar"
-                )
-                filesFlattened = listOf(
-                    "**/_cq_design_dialog/.content.xml",
-                    "**/_cq_dialog/.content.xml",
-                    "**/_cq_htmlTag/.content.xml",
-                    "**/_cq_template/.content.xml"
-                )
+                filesDotContent = {
+                    include("**/.content.xml")
+                }
+                filesDeleted = {
+                    include(
+                        "**/.vlt",
+                        "**/.vlt*.tmp",
+                        "**/install/*.jar"
+                    ) 
+                }
+                filesFlattened = { 
+                    include(
+                        "**/_cq_design_dialog/.content.xml",
+                        "**/_cq_dialog/.content.xml",
+                        "**/_cq_htmlTag/.content.xml",
+                        "**/_cq_template/.content.xml"
+                    )
+                }
                 propertiesSkipped = listOf(
                     pathRule("jcr:uuid", listOf("**/home/users/*", "**/home/groups/*")),
+                    pathRule("cq:lastModified*", listOf("**/content/experience-fragments/*")),
                     "jcr:lastModified*",
                     "jcr:created*",
                     "jcr:isCheckedOut",
-                    "cq:lastModified*",
                     "cq:lastReplicat*",
                     "dam:extracted",
                     "dam:assetState",
@@ -670,11 +674,16 @@ aem {
                 mixinTypesSkipped += listOf(
                     pathRule("dam:Thumbnails", listOf(), listOf("**/content/dam/*"))
                 )
-                filesDeleted += listOf(
-                    "**/content/dam/**/_jcr_content/folderThumbnail*",
-                    "**/content/dam/**/_jcr_content/_dam_thumbnails*",
-                    pathRule("**/content/dam/**/_jcr_content/renditions/*", listOf("**/_jcr_content/renditions/original*"), listOf())
-                )
+                filesDeleted = { 
+                    include(
+                        "**/.vlt",
+                        "**/.vlt*.tmp",
+                        "**/install/*.jar"
+                        "**/content/dam/**/_jcr_content/folderThumbnail*",
+                        "**/content/dam/**/_jcr_content/_dam_thumbnails*",
+                        "**/content/dam/**/_jcr_content/renditions/*"
+                    )
+                }
             }  
         }
     }
