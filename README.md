@@ -674,14 +674,19 @@ aem {
                 mixinTypesSkipped += listOf(
                     pathRule("dam:Thumbnails", listOf(), listOf("**/content/dam/*"))
                 )
-                filesDeleted = { 
+                filesDeleted = {
                     include(
                         "**/.vlt",
                         "**/.vlt*.tmp",
-                        "**/install/*.jar"
-                        "**/content/dam/**/_jcr_content/folderThumbnail*",
-                        "**/content/dam/**/_jcr_content/_dam_thumbnails*",
-                        "**/content/dam/**/_jcr_content/renditions/*"
+                        "**/install/*.jar",
+                        "**/_jcr_content/folderThumbnail.dir/*",
+                        "**/_jcr_content/folderThumbnail/*",
+                        "**/_jcr_content/folderThumbnail",
+                        "**/_jcr_content/renditions/**"
+                    )
+                    exclude(
+                        "**/_jcr_content/renditions/original.dir/.content.xml",
+                        "**/_jcr_content/renditions/original"
                     )
                 }
             }  
