@@ -190,26 +190,26 @@ class Cleaner(private val aem: AemExtension) {
         return mergeSinglePropertyLines(cleanNamespaces(lines))
     }
 
-    fun mergeSinglePropertyLines(lines: List<String>): List<String> {
-        val result = mutableListOf<String>()
-        val iter = lines.listIterator()
-        while (iter.hasNext()) {
-            val line = iter.next()
-            if (line.trim().startsWith(JCR_ROOT_PREFIX) || !iter.hasNext()) {
-                result.add(line)
-            } else if (line.trim().startsWith("<") && !line.trim().endsWith(">")) {
-                val nextLine = iter.next()
-                if (!nextLine.trim().startsWith("<") && nextLine.trim().endsWith(">")) {
-                    result.add(line + " " + nextLine.trim())
+    fun mergeSinglePropertyLines(lines: List<String>) = mutableListOf<String>().apply {
+        val it = lines.listIterator()
+        while (it.hasNext()) {
+            val line = it.next()
+            val lineTrimmed = line.trim()
+            if (lineTrimmed.startsWith(JCR_ROOT_PREFIX) || !it.hasNext()) {
+                add(line)
+            } else if (lineTrimmed.startsWith("<") && !lineTrimmed.endsWith(">")) {
+                val nextLine = it.next()
+                val nextLineTrimmed = nextLine.trim()
+                if (!nextLineTrimmed.startsWith("<") && nextLineTrimmed.endsWith(">")) {
+                    add("$line $nextLineTrimmed")
                 } else {
-                    result.add(line)
-                    result.add(nextLine)
+                    add(line)
+                    add(nextLine)
                 }
             } else {
-                result.add(line)
+                add(line)
             }
         }
-        return result
     }
 
     fun cleanNamespaces(lines: List<String>): List<String> {
