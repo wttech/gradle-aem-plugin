@@ -44,18 +44,6 @@ open class AemDefaultTask : DefaultTask(), AemTask {
         this.doTaskGraphReady = callback
     }
 
-    fun afterConfigured(callback: Task.() -> Unit) {
-        afterConfigured(this, callback)
-    }
-
-    fun afterConfigured(task: Task, callback: Task.() -> Unit) {
-        project.gradle.taskGraph.whenReady { graph ->
-            if (graph.hasTask(task)) {
-                task.apply(callback)
-            }
-        }
-    }
-
     fun checkForce() {
         taskGraphReady { graph ->
             if (graph.hasTask(this)) {

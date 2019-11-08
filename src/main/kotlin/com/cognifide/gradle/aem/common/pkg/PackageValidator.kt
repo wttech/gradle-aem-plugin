@@ -86,6 +86,11 @@ class PackageValidator(@Internal val aem: AemExtension) {
     fun perform(vararg packages: File) = perform(packages.asIterable())
 
     fun perform(packages: Iterable<File>) {
+        if (!enabled) {
+            logger.info("Validating CRX packages(s) '${listPackages(packages)}' cannot be performed as of validator is disabled.")
+            return
+        }
+
         prepareOpearDir()
         runOakPal(packages)
     }

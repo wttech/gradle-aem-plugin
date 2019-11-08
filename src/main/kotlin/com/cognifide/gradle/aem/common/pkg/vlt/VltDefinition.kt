@@ -121,15 +121,9 @@ open class VltDefinition(private val aem: AemExtension) {
         aem.buildScope.doOnce("syncNodeTypes") {
             aem.availableInstance?.sync {
                 try {
-                    File(nodeTypeExported.parentFile, "${nodeTypeExported.name}.tmp").apply {
+                    nodeTypeExported.apply {
                         GFileUtils.parentMkdirs(this)
                         writeText(crx.nodeTypes)
-
-                        if (!nodeTypeExported.exists() || readLines().sorted() != nodeTypeExported.readLines().sorted()) {
-                            copyTo(nodeTypeExported, true)
-                        }
-
-                        delete()
                     }
                 } catch (e: AemException) {
                     aem.logger.debug("Cannot export and save node types from $instance! Cause: ${e.message}", e)
