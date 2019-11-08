@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem
 
 import org.gradle.api.DefaultTask
-import org.gradle.api.Task
 import org.gradle.api.execution.TaskExecutionGraph
 import org.gradle.api.tasks.Internal
 
