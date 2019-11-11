@@ -92,7 +92,7 @@ class PackageValidator(@Internal val aem: AemExtension) {
         }
 
         aem.progress {
-            message = "Validating CRX package(s) '${listPackages(packages)}'"
+            message = "Validating CRX package(s) '${packages.joinToString(", ") { it.name }}'"
 
             prepareOpearDir()
             runOakPal(packages)
