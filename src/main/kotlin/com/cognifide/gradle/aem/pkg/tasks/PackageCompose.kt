@@ -184,11 +184,7 @@ open class PackageCompose : ZipTask() {
             throw AemException("Bundle path cannot be blank")
         }
 
-        vaultDefinition.apply {
-            ensureDefaults()
-            useNodeTypes(vaultNodeTypesSync, vaultNodeTypesFallback)
-        }
-
+        vaultDefinition.ensureDefaults()
         validator.workDir = File(composedDir, Package.OAKPAL_OPEAR_PATH)
 
         if (fromConvention) {
@@ -206,12 +202,12 @@ open class PackageCompose : ZipTask() {
 
     @TaskAction
     override fun copy() {
-        copyMetaFiles()
+        prepareMetaFiles()
         super.copy()
         validateComposedFile()
     }
 
-    private fun copyMetaFiles() {
+    private fun prepareMetaFiles() {
         if (metaDir.exists()) {
             metaDir.deleteRecursively()
         }
@@ -242,8 +238,10 @@ open class PackageCompose : ZipTask() {
 
         if (mergingOptions.vaultFilters && filterBackup.exists()) {
             logger.info("Considering original package Vault filters specified in file: '$filterBackup'")
-            extractVaultFilters(filterBackup)
+            vaultDefinition.filterElements(filterBackup)
         }
+
+        vaultDefinition.useNodeTypes(vaultNodeTypesSync, vaultNodeTypesFallback)
     }
 
     fun fromConvention() {
@@ -327,12 +325,12 @@ open class PackageCompose : ZipTask() {
                 }
             }
 
-            if (options.vaultFilters) {
-                extractVaultFilters(other.vaultFilterFile)
+            if (options.vaultFilters && other.vaultFilterFile.exists()) {
+                vaultDefinition.filterElements(other.vaultFilterFile)
             }
 
-            if (options.vaultNodeTypes) {
-                extractVaultNodeTypes(other.vaultNodeTypesFile)
+            if (options.vaultNodeTypes && other.vaultNodeTypesFile.exists()) {
+                vaultDefinition.nodeTypes(other.vaultNodeTypesFile)
             }
 
             if (options.vaultProperties) {
@@ -458,21 +456,8 @@ open class PackageCompose : ZipTask() {
         }
     }
 
-    private fun extractVaultFilters(file: File) {
-        if (file.exists()) {
-            vaultDefinition.filterElements.addAll(FilterFile(file).elements)
-        }
-    }
-
-    private fun extractVaultNodeTypes(file: File) {
-        file.takeIf { it.exists() }?.let { vaultDefinition.nodeTypes(it) }
-    }
-
     private fun validateComposedFile() {
-        aem.progress {
-            message = "Validating CRX package '${composedFile.name}'"
-            validator.perform(composedFile)
-        }
+        validator.perform(composedFile)
     }
 
     companion object {

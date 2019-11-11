@@ -91,8 +91,12 @@ class PackageValidator(@Internal val aem: AemExtension) {
             return
         }
 
-        prepareOpearDir()
-        runOakPal(packages)
+        aem.progress {
+            message = "Validating CRX package(s) '${listPackages(packages)}'"
+
+            prepareOpearDir()
+            runOakPal(packages)
+        }
     }
 
     private fun prepareOpearDir() {

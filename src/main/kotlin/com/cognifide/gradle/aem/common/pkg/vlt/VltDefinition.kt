@@ -4,6 +4,7 @@ import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
+import com.cognifide.gradle.aem.common.pkg.PackageException
 import org.apache.commons.lang3.StringUtils
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
@@ -45,6 +46,14 @@ open class VltDefinition(private val aem: AemExtension) {
 
     @Internal
     var filterElements = mutableListOf<FilterElement>()
+
+    fun filterElements(file: File) {
+        if (!file.exists()) {
+            throw PackageException("Cannot load Vault filter elements. File does not exist: '$file'!")
+        }
+
+        filterElements.addAll(FilterFile(file).elements)
+    }
 
     @get:Internal
     val filterEffectives: Collection<FilterElement>
@@ -94,7 +103,13 @@ open class VltDefinition(private val aem: AemExtension) {
                 nodeTypeLines.joinToString(aem.lineSeparatorString)
         )
 
-    fun nodeTypes(file: File) = nodeTypes(file.readText())
+    fun nodeTypes(file: File) {
+        if (!file.exists()) {
+            throw PackageException("Cannot load Vault node types. File does not exist: '$file'!")
+        }
+
+        nodeTypes(file.readText())
+    }
 
     fun nodeTypes(text: String) {
         text.lineSequence().forEach { line ->
