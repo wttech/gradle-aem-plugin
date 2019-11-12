@@ -140,10 +140,6 @@ tasks {
     named("githubRelease") {
         mustRunAfter("createReleaseTag")
     }
-
-    named("updateVersion") {
-        enabled = false
-    }
 }
 
 detekt {
