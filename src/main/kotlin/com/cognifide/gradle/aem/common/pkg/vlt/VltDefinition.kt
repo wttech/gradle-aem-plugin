@@ -25,7 +25,7 @@ open class VltDefinition(private val aem: AemExtension) {
     var name: String = ""
 
     /**
-     * Group for categorizing in qCRX package manager
+     * Group for categorizing in CRX package manager
      */
     @Input
     var group: String = ""

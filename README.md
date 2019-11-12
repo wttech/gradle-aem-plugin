@@ -1314,7 +1314,7 @@ Then below section is absolutely redundant:
 ```kotlin
 aem {
     tasks {
-        bundle {
+        bundleCompose {
             javaPackage = "${project.group}.${project.name}" // "com.company.example.aem.sites"
         }
     }
@@ -1323,14 +1323,16 @@ aem {
 
 #### Embedding JAR file into OSGi bundle
 
-Use dedicated method in *bundle* section.
+Use one of dedicated methods `bundleExportEmbed` or `bundlePrivateEmbed`.
+These methods are above `bundleCompose` section as of dependency management is task agnostic and these methods 
+are configuring `compileOnly` dependency and setting correct OSGi manifest entry at once (simplification).
 
 ```kotlin
 aem {
     tasks {
-        bundle {
-            embedPackage("com.group.name",  true, 'group:name:version') // true -> exportPackage, false -> privatePackage
-        }
+        bundleExportEmbed("group:name:version", "com.group.name")
+        // or 
+        bundlePrivateEmbed("group:name:version", "com.group.name")
     }
 }
 ```
@@ -2095,7 +2097,7 @@ allprojects {
   plugins.withId("com.cognifide.aem.bundle") {
     configure<AemExtension> {
         tasks {
-            bundle {
+            bundleCompose {
                 category = "example"
                 vendor = "Company"
             }
@@ -2114,7 +2116,7 @@ For instance, subproject `:aem:core` specific configuration like OSGi bundle or 
 ```kotlin
 aem {
     tasks {
-        bundle {
+        bundleCompose {
             javaPackage = "com.company.example.aem.core"
         }
         packageCompose {
