@@ -164,8 +164,8 @@ open class PackageCompose : ZipTask() {
     /**
      * Configures extra files to be observed in case of Gradle task caching.
      */
-    @get:Internal
     @get:InputFiles
+    @get:JsonIgnore
     val configFiles: List<File>
         get() = mutableListOf<File>().apply {
             addAll(metaDirs)
