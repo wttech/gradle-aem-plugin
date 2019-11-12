@@ -2645,10 +2645,11 @@ In case of that workaround, Vault tasks should not be run in parallel (by separa
 
 | Gradle AEM Plugin | Gradle Build Tool | Adobe Experience Manager |   Java   |
 |:-----------------:|:-----------------:|:------------------------:|:--------:|
-|   4.x.x -> 5.x.x  |     4.x -> 4.8    |        6.x and up        |     8    |
+|     4.x -> 5.x    |     4.x -> 4.8    |        6.x and up        |     8    |
 |   6.0.0 -> 6.2.1  |     4.9 -> 5.0    |        6.x and up        |     8    |
-|   6.3.0 and up    |     5.1 and up    |        6.x and up        |     8    |
-|   7.2.0 and up    |     5.1 and up    |        6.x and up        |    8,11  |
+|   6.3.0 -> 6.x    |     5.1 -> 5.6    |        6.x and up        |     8    |
+|   7.2.0 -> 8.1.1  |     5.1 -> 5.6    |        6.x and up        |    8,11  |
+|   8.1.2 and up    |     6.0 and up    |        6.x and up        |    8,11  |
 
 ## Building
 
