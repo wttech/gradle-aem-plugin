@@ -137,6 +137,10 @@ tasks {
         dependsOn("bintrayUpload", "publishPlugins", "githubRelease")
     }
 
+    named("githubRelease") {
+        mustRunAfter("createReleaseTag")
+    }
+
     named("updateVersion") {
         enabled = false
     }
@@ -237,7 +241,7 @@ githubRelease {
     releaseAssets(tasks["jar"], tasks["sourcesJar"], tasks["javadocJar"])
     draft((project.findProperty("github.draft") ?: "false").toString().toBoolean())
     prerelease((project.findProperty("github.prerelease") ?: "false").toString().toBoolean())
-    overwrite((project.findProperty("github.override") ?: "false").toString().toBoolean())
+    overwrite((project.findProperty("github.override") ?: "true").toString().toBoolean())
 
     body { """
     |# What's new
