@@ -87,16 +87,8 @@ open class PackageCompose : ZipTask() {
     @get:Internal
     @get:JsonIgnore
     val metaDirs: List<File>
-        get() {
-            val dirs = listOf(
-                    aem.packageOptions.metaCommonDir,
-                    File(contentDir, Package.META_PATH)
-            )
-
-            return dirs.asSequence()
-                    .filter { it.exists() }
-                    .toList()
-        }
+        get() = listOf(aem.packageOptions.metaCommonDir, File(contentDir, Package.META_PATH))
+                .filter { it.exists() }
 
     @Nested
     var validator = PackageValidator(aem)
@@ -169,14 +161,25 @@ open class PackageCompose : ZipTask() {
 
     private val packageDependencies = mutableListOf<PackageDependency>()
 
+    /**
+     * Configures extra files to be observed in case of Gradle task caching.
+     */
+    @get:Internal
+    @get:InputFiles
+    val configFiles: List<File>
+        get() = mutableListOf<File>().apply {
+            addAll(metaDirs)
+            addAll(bundleDependencies.flatMap { it.configuration.resolve() })
+            addAll(packageDependencies.flatMap { it.configuration.resolve() })
+            add(vaultDefinition.nodeTypeExported)
+        }.filter { it.exists() }
+
     init {
         description = "Composes CRX package from JCR content and built OSGi bundles"
 
         archiveBaseName.set(aem.baseName)
         destinationDirectory.set(AemTask.temporaryDir(aem.project, name))
         duplicatesStrategy = DuplicatesStrategy.WARN
-
-        doLast { aem.notifier.notify("Package composed", archiveFileName.get()) }
     }
 
     override fun projectEvaluated() {
@@ -193,9 +196,6 @@ open class PackageCompose : ZipTask() {
     }
 
     override fun projectsEvaluated() {
-        bundleDependencies.forEach { inputs.files(it.configuration) }
-        packageDependencies.forEach { inputs.files(it.configuration) }
-        metaDirs.forEach { dir -> inputs.dir(dir) }
         fromProjects.forEach { it() }
         fromTasks.forEach { it() }
     }
@@ -205,6 +205,8 @@ open class PackageCompose : ZipTask() {
         prepareMetaFiles()
         super.copy()
         validateComposedFile()
+
+        aem.notifier.notify("Package composed", composedFile.name)
     }
 
     private fun prepareMetaFiles() {
