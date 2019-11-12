@@ -3,7 +3,6 @@ package com.cognifide.gradle.aem.environment.docker
 import com.cognifide.gradle.aem.common.utils.Formats
 import com.cognifide.gradle.aem.environment.Environment
 import com.cognifide.gradle.aem.environment.EnvironmentException
-import org.gradle.util.GFileUtils
 import java.io.File
 
 class Docker(val environment: Environment) {
@@ -58,8 +57,8 @@ class Docker(val environment: Environment) {
             throw EnvironmentException("Docker compose file template does not exist: $composeTemplateFile")
         }
 
-        GFileUtils.deleteFileQuietly(composeFile)
-        GFileUtils.copyFile(composeTemplateFile, composeFile)
+        composeFile.takeIf { it.exists() }?.delete()
+        composeTemplateFile.copyTo(composeFile)
         aem.props.expand(composeFile, mapOf("docker" to this))
     }
 

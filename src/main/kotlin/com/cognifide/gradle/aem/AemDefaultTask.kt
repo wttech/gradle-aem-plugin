@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem
 
 import org.gradle.api.DefaultTask
-import org.gradle.api.Task
 import org.gradle.api.execution.TaskExecutionGraph
 import org.gradle.api.tasks.Internal
 
@@ -42,18 +41,6 @@ open class AemDefaultTask : DefaultTask(), AemTask {
 
     fun taskGraphReady(callback: (TaskExecutionGraph) -> Unit) {
         this.doTaskGraphReady = callback
-    }
-
-    fun afterConfigured(callback: Task.() -> Unit) {
-        afterConfigured(this, callback)
-    }
-
-    fun afterConfigured(task: Task, callback: Task.() -> Unit) {
-        project.gradle.taskGraph.whenReady { graph ->
-            if (graph.hasTask(task)) {
-                task.apply(callback)
-            }
-        }
     }
 
     fun checkForce() {

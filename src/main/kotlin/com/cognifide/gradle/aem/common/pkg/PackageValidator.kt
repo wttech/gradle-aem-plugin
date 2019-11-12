@@ -86,8 +86,17 @@ class PackageValidator(@Internal val aem: AemExtension) {
     fun perform(vararg packages: File) = perform(packages.asIterable())
 
     fun perform(packages: Iterable<File>) {
-        prepareOpearDir()
-        runOakPal(packages)
+        if (!enabled) {
+            logger.info("Validating CRX packages(s) '${listPackages(packages)}' skipped as of validator is disabled.")
+            return
+        }
+
+        aem.progress {
+            message = "Validating CRX package(s) '${packages.joinToString(", ") { it.name }}'"
+
+            prepareOpearDir()
+            runOakPal(packages)
+        }
     }
 
     private fun prepareOpearDir() {
@@ -156,28 +165,30 @@ class PackageValidator(@Internal val aem: AemExtension) {
 
     @Suppress("ComplexMethod")
     private fun analyzeReports(packages: Iterable<File>, reports: List<CheckReport>) {
-        val violatedReports = reports.filter { !it.violations.isEmpty() }
+        val violatedReports = reports.filter { it.violations.isNotEmpty() }
         val shouldFail = violatedReports.any { !it.getViolations(severity).isEmpty() }
 
         val violationLogger = CollectingLogger()
         var violationSeverityReached = 0
 
-        violationLogger.info("OakPAL check violations for CRX package(s) '${listPackages(packages)}':")
+        if (violatedReports.isNotEmpty()) {
+            violationLogger.info("OakPAL check violations for CRX package(s) '${listPackages(packages)}':")
 
-        violatedReports.filter { it.violations.isNotEmpty() }.forEach { report ->
-            violationLogger.info("  ${report.checkName}")
+            violatedReports.forEach { report ->
+                violationLogger.info("  ${report.checkName}")
 
-            for (violation in report.violations) {
-                val packageIds = violation.packages.map { it.downloadName }
-                val violationLog = when {
-                    packageIds.isNotEmpty() -> "    <${violation.severity}> ${violation.description} $packageIds"
-                    else -> "    <${violation.severity}> ${violation.description}"
-                }
-                if (violation.severity.isLessSevereThan(severity)) {
-                    violationLogger.info(violationLog)
-                } else {
-                    violationSeverityReached++
-                    violationLogger.error(violationLog)
+                for (violation in report.violations) {
+                    val packageIds = violation.packages.map { it.downloadName }
+                    val violationLog = when {
+                        packageIds.isNotEmpty() -> "    <${violation.severity}> ${violation.description} $packageIds"
+                        else -> "    <${violation.severity}> ${violation.description}"
+                    }
+                    if (violation.severity.isLessSevereThan(severity)) {
+                        violationLogger.info(violationLog)
+                    } else {
+                        violationSeverityReached++
+                        violationLogger.error(violationLog)
+                    }
                 }
             }
         }
