@@ -163,7 +163,7 @@ class PackageValidator(@Internal val aem: AemExtension) {
         }
     }
 
-    @Suppress("ComplexMethod")
+    @Suppress("ComplexMethod", "NestedBlockDepth")
     private fun analyzeReports(packages: Iterable<File>, reports: List<CheckReport>) {
         val violatedReports = reports.filter { it.violations.isNotEmpty() }
         val shouldFail = violatedReports.any { !it.getViolations(severity).isEmpty() }
