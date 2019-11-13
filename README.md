@@ -46,6 +46,7 @@
            * [Nesting CRX packages](#nesting-crx-packages)
            * [Assembling packages (merging all-in-one)](#assembling-packages-merging-all-in-one)
            * [Expandable properties](#expandable-properties)
+        * [Task packagePrepare](#task-packageprepare)
         * [Task packageDeploy](#task-packagedeploy)
            * [Deploying only to desired instances](#deploying-only-to-desired-instances)
            * [Deploying options](#deploying-options)
@@ -1233,6 +1234,12 @@ Also file *nodetypes.cnd* is dynamically expanded from [template](src/main/resou
 
 Each JAR file in separate *hooks* directory will be combined into single directory when creating assembly package.
 
+#### Task `packagePrepare`
+
+Processes CRX package metadata - combines default files provided by plugin itself with overridden ones.
+Also responsible for synchronizing Vault node types consumed later by [CRX package validation](#crx-package-validation) in the end of [compose task](#task-packagecompose).
+Covers extracted logic being initially a part of compose task. Reason of separation is effectively better Gradle caching.
+ 
 #### Task `packageDeploy` 
 
 Upload & install CRX package into AEM instance(s). Primary, recommended form of deployment. Optimized version of `packageUpload packageInstall`.
