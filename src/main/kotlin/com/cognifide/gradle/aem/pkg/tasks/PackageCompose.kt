@@ -6,14 +6,12 @@ import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.bundle.tasks.BundleCompose
 import com.cognifide.gradle.aem.bundle.BundlePlugin
 import com.cognifide.gradle.aem.common.build.DependencyOptions
-import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.aem.common.pkg.PackageFile
 import com.cognifide.gradle.aem.common.pkg.PackageFileFilter
 import com.cognifide.gradle.aem.common.pkg.PackageValidator
 import com.cognifide.gradle.aem.common.pkg.vlt.FilterFile
 import com.cognifide.gradle.aem.common.pkg.vlt.FilterType
-import com.cognifide.gradle.aem.common.pkg.vlt.NodeTypesSync
 import com.cognifide.gradle.aem.common.pkg.vlt.VltDefinition
 import com.cognifide.gradle.aem.common.tasks.ZipTask
 import com.cognifide.gradle.aem.common.utils.Patterns
@@ -23,7 +21,6 @@ import com.cognifide.gradle.aem.pkg.tasks.compose.PackageDependency
 import com.cognifide.gradle.aem.pkg.tasks.compose.ProjectMergingOptions
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
-import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
 import org.gradle.api.Project
 import org.gradle.api.file.CopySpec
@@ -70,25 +67,6 @@ open class PackageCompose : ZipTask() {
     @Internal
     var packagePath: String = aem.packageOptions.storagePath
 
-    /**
-     * Ensures that for directory 'META-INF/vault' default files will be generated when missing:
-     * 'config.xml', 'filter.xml', 'properties.xml' and 'settings.xml'.
-     */
-    @Input
-    var metaDefaults: Boolean = true
-
-    @Internal
-    val metaDir = AemTask.temporaryDir(project, name, Package.META_PATH)
-
-    /**
-     * CRX package Vault files will be composed from given sources.
-     * Missing files required by package within installation will be auto-generated if 'vaultCopyMissingFiles' is enabled.
-     */
-    @get:Internal
-    @get:JsonIgnore
-    val metaDirs: List<File>
-        get() = listOf(aem.packageOptions.metaCommonDir, File(contentDir, Package.META_PATH))
-                .filter { it.exists() }
 
     @Nested
     var validator = PackageValidator(aem)
@@ -96,6 +74,9 @@ open class PackageCompose : ZipTask() {
     fun validator(options: PackageValidator.() -> Unit) {
         validator.apply(options)
     }
+
+    @get:InputDirectory
+    val metaDir get() = prepare.metaDir
 
     /**
      * Defines properties being used to generate CRX package metadata files.
@@ -121,14 +102,6 @@ open class PackageCompose : ZipTask() {
     @get:JsonIgnore
     val vaultNodeTypesFile: File
         get() = File(vaultDir, Package.VLT_NODETYPES_FILE)
-
-    @Internal
-    @JsonIgnore
-    var vaultNodeTypesSync: NodeTypesSync = aem.packageOptions.nodeTypesSync
-
-    @Internal
-    @JsonIgnore
-    var vaultNodeTypesFallback: Boolean = aem.packageOptions.nodeTypesFallback
 
     @Nested
     val fileFilter = PackageFileFilter(aem)
@@ -168,7 +141,7 @@ open class PackageCompose : ZipTask() {
     @get:JsonIgnore
     val configFiles: List<File>
         get() = mutableListOf<File>().apply {
-            addAll(metaDirs)
+            add(prepare.vaultNodeTypesFile)
             addAll(bundleDependencies.flatMap { it.configuration.resolve() })
             addAll(packageDependencies.flatMap { it.configuration.resolve() })
             add(vaultDefinition.nodeTypeExported)
@@ -182,12 +155,23 @@ open class PackageCompose : ZipTask() {
         duplicatesStrategy = DuplicatesStrategy.WARN
     }
 
+    private val prepare get() = aem.tasks.get<PackagePrepare>(PackagePrepare.NAME)
+
     override fun projectEvaluated() {
         if (bundlePath.isBlank()) {
             throw AemException("Bundle path cannot be blank")
         }
 
-        vaultDefinition.ensureDefaults()
+        vaultDefinition.apply {
+            if (mergingOptions.vaultFilters && prepare.filterBackup.exists()) {
+                logger.info("Considering original package Vault filters specified in file: '${prepare.filterBackup}'")
+                vaultDefinition.filterElements(prepare.filterBackup)
+            }
+            if (prepare.vaultNodeTypesFile.exists()) {
+                nodeTypes(prepare.vaultNodeTypesFile)
+            }
+        }
+
         validator.workDir = File(composedDir, Package.OAKPAL_OPEAR_PATH)
 
         if (fromConvention) {
@@ -202,48 +186,10 @@ open class PackageCompose : ZipTask() {
 
     @TaskAction
     override fun copy() {
-        prepareMetaFiles()
         super.copy()
-        validateComposedFile()
+        validator.perform(composedFile)
 
         aem.notifier.notify("Package composed", composedFile.name)
-    }
-
-    private fun prepareMetaFiles() {
-        if (metaDir.exists()) {
-            metaDir.deleteRecursively()
-        }
-
-        metaDir.mkdirs()
-
-        if (metaDirs.isEmpty()) {
-            logger.info("None of package metadata directories exist: $metaDirs. Only generated defaults will be used.")
-        } else {
-            metaDirs.onEach { dir ->
-                logger.info("Copying package metadata files from path: '$dir'")
-
-                FileUtils.copyDirectory(dir, metaDir)
-            }
-        }
-
-        val filterBackup = File(metaDir, "${Package.VLT_DIR}/${FilterFile.ROOTS_NAME}")
-        val filterTemplate = File(metaDir, "${Package.VLT_DIR}/${FilterFile.BUILD_NAME}")
-
-        if (mergingOptions.vaultFilters && filterTemplate.exists() && !filterBackup.exists()) {
-            filterTemplate.renameTo(filterBackup)
-        }
-
-        if (metaDefaults) {
-            logger.info("Providing package metadata files in directory: '$metaDir")
-            FileOperations.copyResources(Package.META_RESOURCES_PATH, metaDir, true)
-        }
-
-        if (mergingOptions.vaultFilters && filterBackup.exists()) {
-            logger.info("Considering original package Vault filters specified in file: '$filterBackup'")
-            vaultDefinition.filterElements(filterBackup)
-        }
-
-        vaultDefinition.useNodeTypes(vaultNodeTypesSync, vaultNodeTypesFallback)
     }
 
     fun fromConvention() {
@@ -456,10 +402,6 @@ open class PackageCompose : ZipTask() {
             spec.from(file)
             fileFilterDelegate(spec)
         }
-    }
-
-    private fun validateComposedFile() {
-        validator.perform(composedFile)
     }
 
     companion object {

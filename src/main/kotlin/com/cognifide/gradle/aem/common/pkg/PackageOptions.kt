@@ -115,4 +115,6 @@ class PackageOptions(aem: AemExtension) : Serializable {
      * or cannot be done when AEM instance is unavailable and exported file is not yet created / saved in VCS.
      */
     var nodeTypesFallback = aem.props.boolean("package.nodeTypesFallback") ?: true
+
+    var nodeTypesFile = File(aem.configCommonDir, Package.NODE_TYPES_EXPORT_PATH)
 }
