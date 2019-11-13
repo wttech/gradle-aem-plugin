@@ -21,8 +21,12 @@ class PackageFile(val file: File) : Serializable {
     val version: String
 
     init {
+        if (!file.exists()) {
+            throw PackageException("File does not exist: $file!")
+        }
+
         if (!ZipUtil.containsEntry(file, Package.VLT_PROPERTIES)) {
-            throw PackageException("File is not a valid CRX package: $file")
+            throw PackageException("File is not a valid CRX package: $file!")
         }
 
         this.properties = ZipUtil.unpackEntry(file, Package.VLT_PROPERTIES).toString(Charsets.UTF_8).run {
