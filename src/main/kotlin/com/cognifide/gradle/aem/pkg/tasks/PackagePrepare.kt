@@ -120,7 +120,7 @@ open class PackagePrepare : AemDefaultTask() {
     }
 
     fun syncNodeTypesOrFallback() = syncNodeTypesOrElse {
-        aem.logger.debug("Cannot synchronize node types because none of AEM instances are available! Using fallback instead.")
+        aem.logger.debug("Using fallback instead of synchronizing node types (forced or AEM instances are unavailable).")
         syncNodeTypesFallback()
     }
 

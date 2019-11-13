@@ -110,7 +110,7 @@ class PackageOptions(aem: AemExtension) : Serializable {
     var nodeTypesSync = aem.props.string("package.nodeTypesSync")
             ?.let { NodeTypesSync.of(it) } ?: when {
                 aem.offline -> NodeTypesSync.USE_FALLBACK
-                else -> NodeTypesSync.WHEN_AVAILABLE
+                else -> NodeTypesSync.WHEN_MISSING
             }
 
     /**
