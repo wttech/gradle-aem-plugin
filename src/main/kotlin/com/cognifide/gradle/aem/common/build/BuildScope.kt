@@ -22,6 +22,7 @@ class BuildScope {
         }
     }
 
+    @Synchronized
     fun <T : Any> tryGetOrPut(key: String, defaultValue: () -> T?): T? {
         var result: T? = get(key)
         if (result == null) {
@@ -38,6 +39,7 @@ class BuildScope {
         cache[key] = value
     }
 
+    @Synchronized // TODO bad synchronization ; sh gradlew packageCompose (when deleted sync.cnd at multi)
     fun doOnce(operation: String, action: () -> Unit) = tryGetOrPut(operation) {
         action()
         true
