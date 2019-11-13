@@ -83,7 +83,6 @@ open class VltDefinition(private val aem: AemExtension) {
     @Internal
     var nodeTypeExported = aem.packageOptions.nodeTypesFile
 
-
     @get:Input
     val nodeTypes: String
         get() = StringUtils.join(

@@ -55,7 +55,6 @@ open class PackagePrepare : AemDefaultTask() {
                 ?.bufferedReader()?.readText()
                 ?: throw AemException("Cannot read fallback resource for exported node types!")
 
-
     @TaskAction
     fun prepare() {
         copyMetaFiles()

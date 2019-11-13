@@ -19,7 +19,6 @@ import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.compose.BundleDependency
 import com.cognifide.gradle.aem.pkg.tasks.compose.PackageDependency
 import com.cognifide.gradle.aem.pkg.tasks.compose.ProjectMergingOptions
-import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 import org.apache.commons.lang3.StringUtils
 import org.gradle.api.Project
@@ -34,7 +33,6 @@ open class PackageCompose : ZipTask() {
     /**
      * Shorthand for built CRX package file.
      */
-    @get:JsonIgnore
     @get:Internal
     val composedFile: File
         get() = archiveFile.get().asFile
@@ -42,7 +40,6 @@ open class PackageCompose : ZipTask() {
     /**
      * Shorthand for directory of built CRX package file.
      */
-    @get:JsonIgnore
     @get:Internal
     val composedDir: File
         get() = composedFile.parentFile
@@ -67,7 +64,6 @@ open class PackageCompose : ZipTask() {
     @Internal
     var packagePath: String = aem.packageOptions.storagePath
 
-
     @Nested
     var validator = PackageValidator(aem)
 
@@ -89,17 +85,14 @@ open class PackageCompose : ZipTask() {
     }
 
     @get:Internal
-    @get:JsonIgnore
     val vaultDir: File
         get() = File(contentDir, Package.VLT_PATH)
 
     @get:Internal
-    @get:JsonIgnore
     val vaultFilterFile: File
         get() = File(vaultDir, FilterFile.BUILD_NAME)
 
     @get:Internal
-    @get:JsonIgnore
     val vaultNodeTypesFile: File
         get() = File(vaultDir, Package.VLT_NODETYPES_FILE)
 
@@ -138,10 +131,8 @@ open class PackageCompose : ZipTask() {
      * Configures extra files to be observed in case of Gradle task caching.
      */
     @get:InputFiles
-    @get:JsonIgnore
     val configFiles: List<File>
         get() = mutableListOf<File>().apply {
-            add(prepare.vaultNodeTypesFile)
             addAll(bundleDependencies.flatMap { it.configuration.resolve() })
             addAll(packageDependencies.flatMap { it.configuration.resolve() })
             add(vaultDefinition.nodeTypeExported)
@@ -163,6 +154,8 @@ open class PackageCompose : ZipTask() {
         }
 
         vaultDefinition.apply {
+            ensureDefaults()
+
             if (mergingOptions.vaultFilters && prepare.filterBackup.exists()) {
                 logger.info("Considering original package Vault filters specified in file: '${prepare.filterBackup}'")
                 vaultDefinition.filterElements(prepare.filterBackup)
