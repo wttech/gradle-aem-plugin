@@ -74,7 +74,7 @@ class FilterFile(
 
         const val BUILD_NAME = "filter.xml"
 
-        const val ROOTS_NAME = "roots.xml"
+        const val ORIGIN_NAME = "filterOrigin.xml"
 
         const val SYNC_NAME = "sync.xml"
 

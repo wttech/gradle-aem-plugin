@@ -8,6 +8,7 @@ import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.aem.common.pkg.vlt.FilterFile
 import com.cognifide.gradle.aem.common.pkg.vlt.NodeTypesSync
 import org.apache.commons.io.FileUtils
+import org.apache.jackrabbit.vault.packaging.PackageException
 import org.gradle.api.tasks.*
 import org.gradle.util.GFileUtils
 import java.io.File
@@ -25,15 +26,11 @@ open class PackagePrepare : AemDefaultTask() {
     val metaDir = AemTask.temporaryDir(project, name, Package.META_PATH)
 
     @get:Internal
-    val filterBackup get() = File(metaDir, "${Package.VLT_DIR}/${FilterFile.ROOTS_NAME}")
+    val vaultFilterOriginFile get() = File(metaDir, "${Package.VLT_DIR}/${FilterFile.ORIGIN_NAME}")
 
     @get:Internal
-    val filterTemplate get() = File(metaDir, "${Package.VLT_DIR}/${FilterFile.BUILD_NAME}")
+    val vaultFilterTemplateFile get() = File(metaDir, "${Package.VLT_DIR}/${FilterFile.BUILD_NAME}")
 
-    /**
-     * CRX package Vault files will be composed from given sources.
-     * Missing files required by package within installation will be auto-generated if 'vaultCopyMissingFiles' is enabled.
-     */
     @get:InputFiles
     val metaDirs: List<File>
         get() = listOf(
@@ -45,13 +42,13 @@ open class PackagePrepare : AemDefaultTask() {
     var vaultNodeTypesSync: NodeTypesSync = aem.packageOptions.nodeTypesSync
 
     @OutputFile
-    var vaultNodeTypesFile = aem.packageOptions.nodeTypesFile
+    var vaultNodeTypesSyncFile = aem.packageOptions.nodeTypesSyncFile
 
     /**
      * @see <https://github.com/Adobe-Consulting-Services/acs-aem-commons/blob/master/ui.apps/src/main/content/META-INF/vault/nodetypes.cnd>
      */
     private val nodeTypeFallback: String
-        get() = FileOperations.readResource(Package.NODE_TYPES_EXPORT_PATH)
+        get() = FileOperations.readResource(Package.NODE_TYPES_SYNC_PATH)
                 ?.bufferedReader()?.readText()
                 ?: throw AemException("Cannot read fallback resource for exported node types!")
 
@@ -78,8 +75,8 @@ open class PackagePrepare : AemDefaultTask() {
             }
         }
 
-        if (filterTemplate.exists() && !filterBackup.exists()) {
-            filterTemplate.renameTo(filterBackup)
+        if (vaultFilterTemplateFile.exists() && !vaultFilterOriginFile.exists()) {
+            vaultFilterTemplateFile.renameTo(vaultFilterOriginFile)
         }
 
         if (metaDefaults) {
@@ -89,23 +86,42 @@ open class PackagePrepare : AemDefaultTask() {
     }
 
     private fun syncNodeTypes() {
-        if (vaultNodeTypesSync == NodeTypesSync.ALWAYS ||
-                (vaultNodeTypesSync == NodeTypesSync.WHEN_MISSING && !vaultNodeTypesFile.exists())) {
+        when (vaultNodeTypesSync) {
+            NodeTypesSync.ALWAYS -> syncNodeTypesOrElse {
+                throw PackageException("Cannot synchronize node types because none of AEM instances are available!")
+            }
+            NodeTypesSync.WHEN_AVAILABLE -> syncNodeTypesOrFallback()
+            NodeTypesSync.WHEN_MISSING -> {
+                if (!vaultNodeTypesSyncFile.exists()) {
+                    syncNodeTypesOrFallback()
+                }
+            }
+            NodeTypesSync.USE_FALLBACK -> syncNodeTypesFallback()
+            NodeTypesSync.NEVER -> {}
+        }
+    }
+
+    fun syncNodeTypesOrElse(action: () -> Unit) {
+        aem.buildScope.doOnce("syncNodeTypes") {
             aem.availableInstance?.sync {
                 try {
-                    vaultNodeTypesFile.apply {
+                    vaultNodeTypesSyncFile.apply {
                         GFileUtils.parentMkdirs(this)
                         writeText(crx.nodeTypes)
                     }
                 } catch (e: AemException) {
-                    aem.logger.debug("Cannot export and save node types from $instance! Cause: ${e.message}", e)
+                    aem.logger.debug("Cannot synchronize node types using $instance! Cause: ${e.message}", e)
                 }
-            } ?: run {
-                vaultNodeTypesFile.writeText(nodeTypeFallback)
-                aem.logger.debug("No available instances to export node types! Using fallback instead.")
-            }
+            } ?: action()
         }
     }
+
+    fun syncNodeTypesOrFallback() = syncNodeTypesOrElse {
+        aem.logger.debug("Cannot synchronize node types because none of AEM instances are available! Using fallback instead.")
+        syncNodeTypesFallback()
+    }
+
+    fun syncNodeTypesFallback() = vaultNodeTypesSyncFile.writeText(nodeTypeFallback)
 
     init {
         description = "Prepares CRX package before composing."

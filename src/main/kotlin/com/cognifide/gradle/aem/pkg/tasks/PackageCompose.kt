@@ -72,7 +72,7 @@ open class PackageCompose : ZipTask() {
     }
 
     @get:InputDirectory
-    val metaDir get() = prepare.metaDir
+    var metaDir = File(contentDir, Package.META_PATH)
 
     /**
      * Defines properties being used to generate CRX package metadata files.
@@ -89,12 +89,19 @@ open class PackageCompose : ZipTask() {
         get() = File(contentDir, Package.VLT_PATH)
 
     @get:Internal
+    val vaultFilterOriginFile: File
+        get() = File(vaultDir, FilterFile.ORIGIN_NAME)
+
+    @get:Internal
     val vaultFilterFile: File
         get() = File(vaultDir, FilterFile.BUILD_NAME)
 
     @get:Internal
     val vaultNodeTypesFile: File
         get() = File(vaultDir, Package.VLT_NODETYPES_FILE)
+
+    @get:Internal
+    val vaultNodeTypesSyncFile = aem.packageOptions.nodeTypesSyncFile
 
     @Nested
     val fileFilter = PackageFileFilter(aem)
@@ -131,22 +138,12 @@ open class PackageCompose : ZipTask() {
      * Configures extra files to be observed in case of Gradle task caching.
      */
     @get:InputFiles
-    val configFiles: List<File>
+    val inputFiles: List<File>
         get() = mutableListOf<File>().apply {
+            add(vaultNodeTypesSyncFile)
             addAll(bundleDependencies.flatMap { it.configuration.resolve() })
             addAll(packageDependencies.flatMap { it.configuration.resolve() })
-            add(vaultDefinition.nodeTypeExported)
         }.filter { it.exists() }
-
-    init {
-        description = "Composes CRX package from JCR content and built OSGi bundles"
-
-        archiveBaseName.set(aem.baseName)
-        destinationDirectory.set(AemTask.temporaryDir(aem.project, name))
-        duplicatesStrategy = DuplicatesStrategy.WARN
-    }
-
-    private val prepare get() = aem.tasks.get<PackagePrepare>(PackagePrepare.NAME)
 
     override fun projectEvaluated() {
         if (bundlePath.isBlank()) {
@@ -156,12 +153,13 @@ open class PackageCompose : ZipTask() {
         vaultDefinition.apply {
             ensureDefaults()
 
-            if (mergingOptions.vaultFilters && prepare.filterBackup.exists()) {
-                logger.info("Considering original package Vault filters specified in file: '${prepare.filterBackup}'")
-                vaultDefinition.filterElements(prepare.filterBackup)
+            if (mergingOptions.vaultFilters && vaultFilterOriginFile.exists()) {
+                logger.info("Considering original package Vault filters specified in file: '$vaultFilterOriginFile'")
+                vaultDefinition.filterElements(vaultFilterOriginFile)
             }
-            if (prepare.vaultNodeTypesFile.exists()) {
-                nodeTypes(prepare.vaultNodeTypesFile)
+            if (vaultNodeTypesSyncFile.exists()) {
+                logger.info("Considering synchronized package Vault node types specified in file: '$vaultNodeTypesSyncFile")
+                nodeTypes(vaultNodeTypesSyncFile)
             }
         }
 
@@ -395,6 +393,14 @@ open class PackageCompose : ZipTask() {
             spec.from(file)
             fileFilterDelegate(spec)
         }
+    }
+
+    init {
+        description = "Composes CRX package from JCR content and built OSGi bundles"
+
+        archiveBaseName.set(aem.baseName)
+        destinationDirectory.set(AemTask.temporaryDir(aem.project, name))
+        duplicatesStrategy = DuplicatesStrategy.WARN
     }
 
     companion object {
