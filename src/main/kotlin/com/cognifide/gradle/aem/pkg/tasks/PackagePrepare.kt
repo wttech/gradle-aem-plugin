@@ -50,7 +50,7 @@ open class PackagePrepare : AemDefaultTask() {
     private val nodeTypeFallback: String
         get() = FileOperations.readResource(Package.NODE_TYPES_SYNC_PATH)
                 ?.bufferedReader()?.readText()
-                ?: throw AemException("Cannot read fallback resource for exported node types!")
+                ?: throw AemException("Cannot read fallback resource for node types!")
 
     @TaskAction
     fun prepare() {
@@ -111,6 +111,7 @@ open class PackagePrepare : AemDefaultTask() {
                     }
                 } catch (e: AemException) {
                     aem.logger.debug("Cannot synchronize node types using $instance! Cause: ${e.message}", e)
+                    action()
                 }
             } ?: action()
         }
