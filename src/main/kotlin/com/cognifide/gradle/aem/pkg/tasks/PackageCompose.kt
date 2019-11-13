@@ -90,7 +90,7 @@ open class PackageCompose : ZipTask() {
 
     @get:Internal
     val vaultFilterOriginFile: File
-        get() = File(vaultDir, FilterFile.ORIGIN_NAME)
+        get() = File(metaDir, "${Package.VLT_DIR}/${FilterFile.ORIGIN_NAME}")
 
     @get:Internal
     val vaultFilterFile: File
@@ -154,11 +154,9 @@ open class PackageCompose : ZipTask() {
             ensureDefaults()
 
             if (mergingOptions.vaultFilters && vaultFilterOriginFile.exists()) {
-                logger.info("Considering original package Vault filters specified in file: '$vaultFilterOriginFile'")
                 vaultDefinition.filterElements(vaultFilterOriginFile)
             }
             if (vaultNodeTypesSyncFile.exists()) {
-                logger.info("Considering synchronized package Vault node types specified in file: '$vaultNodeTypesSyncFile")
                 nodeTypes(vaultNodeTypesSyncFile)
             }
         }

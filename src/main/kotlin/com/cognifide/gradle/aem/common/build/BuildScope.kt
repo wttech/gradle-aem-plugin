@@ -39,7 +39,7 @@ class BuildScope {
         cache[key] = value
     }
 
-    @Synchronized // TODO bad synchronization ; sh gradlew packageCompose (when deleted sync.cnd at multi)
+    // TODO still bad synchronization (reduce critical section time length)
     fun doOnce(operation: String, action: () -> Unit) = tryGetOrPut(operation) {
         action()
         true
