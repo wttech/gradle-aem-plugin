@@ -31,12 +31,14 @@ open class PackagePrepare : AemDefaultTask() {
     @get:Internal
     val vaultFilterTemplateFile get() = File(metaDir, "${Package.VLT_DIR}/${FilterFile.BUILD_NAME}")
 
+    @Internal
+    var contentDir: File = aem.packageOptions.contentDir
+
     @get:InputFiles
-    val metaDirs: List<File>
-        get() = listOf(
-                aem.packageOptions.metaCommonDir,
-                File(aem.packageOptions.contentDir, Package.META_PATH)
-        ).filter { it.exists() }
+    val metaDirs: List<File> get() = listOf(
+            aem.packageOptions.metaCommonDir,
+            File(contentDir, Package.META_PATH)
+    ).filter { it.exists() }
 
     @Input
     var vaultNodeTypesSync: NodeTypesSync = aem.packageOptions.nodeTypesSync
