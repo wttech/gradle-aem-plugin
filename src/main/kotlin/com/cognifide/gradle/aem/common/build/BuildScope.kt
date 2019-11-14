@@ -22,7 +22,6 @@ class BuildScope {
         }
     }
 
-    @Synchronized
     fun <T : Any> tryGetOrPut(key: String, defaultValue: () -> T?): T? {
         var result: T? = get(key)
         if (result == null) {
@@ -39,7 +38,7 @@ class BuildScope {
         cache[key] = value
     }
 
-    // TODO still bad synchronization (reduce critical section time length)
+    @Synchronized
     fun doOnce(operation: String, action: () -> Unit) = tryGetOrPut(operation) {
         action()
         true

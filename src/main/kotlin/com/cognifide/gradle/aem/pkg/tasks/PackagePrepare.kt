@@ -103,20 +103,18 @@ open class PackagePrepare : AemDefaultTask() {
         }
     }
 
-    fun syncNodeTypesOrElse(action: () -> Unit) {
-        aem.buildScope.doOnce("syncNodeTypes") {
-            aem.availableInstance?.sync {
-                try {
-                    vaultNodeTypesSyncFile.apply {
-                        GFileUtils.parentMkdirs(this)
-                        writeText(crx.nodeTypes)
-                    }
-                } catch (e: AemException) {
-                    aem.logger.debug("Cannot synchronize node types using $instance! Cause: ${e.message}", e)
-                    action()
+    fun syncNodeTypesOrElse(action: () -> Unit) = aem.buildScope.doOnce("syncNodeTypes") {
+        aem.availableInstance?.sync {
+            try {
+                vaultNodeTypesSyncFile.apply {
+                    GFileUtils.parentMkdirs(this)
+                    writeText(crx.nodeTypes)
                 }
-            } ?: action()
-        }
+            } catch (e: AemException) {
+                aem.logger.debug("Cannot synchronize node types using $instance! Cause: ${e.message}", e)
+                action()
+            }
+        } ?: action()
     }
 
     fun syncNodeTypesOrFallback() = syncNodeTypesOrElse {

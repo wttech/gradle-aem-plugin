@@ -146,23 +146,6 @@ open class PackageCompose : ZipTask() {
         }.filter { it.exists() }
 
     override fun projectEvaluated() {
-        if (bundlePath.isBlank()) {
-            throw AemException("Bundle path cannot be blank")
-        }
-
-        vaultDefinition.apply {
-            ensureDefaults()
-
-            if (mergingOptions.vaultFilters && vaultFilterOriginFile.exists()) {
-                vaultDefinition.filterElements(vaultFilterOriginFile)
-            }
-            if (vaultNodeTypesSyncFile.exists()) {
-                nodeTypes(vaultNodeTypesSyncFile)
-            }
-        }
-
-        validator.workDir = File(composedDir, Package.OAKPAL_OPEAR_PATH)
-
         if (fromConvention) {
             fromConvention()
         }
@@ -175,8 +158,23 @@ open class PackageCompose : ZipTask() {
 
     @TaskAction
     override fun copy() {
+        vaultDefinition.apply {
+            ensureDefaults()
+
+            if (mergingOptions.vaultFilters && vaultFilterOriginFile.exists()) {
+                vaultDefinition.filterElements(vaultFilterOriginFile)
+            }
+            if (vaultNodeTypesSyncFile.exists()) {
+                nodeTypes(vaultNodeTypesSyncFile)
+            }
+        }
+
         super.copy()
-        validator.perform(composedFile)
+
+        validator.apply {
+            workDir = File(composedDir, Package.OAKPAL_OPEAR_PATH)
+            perform(composedFile)
+        }
 
         aem.notifier.notify("Package composed", composedFile.name)
     }
