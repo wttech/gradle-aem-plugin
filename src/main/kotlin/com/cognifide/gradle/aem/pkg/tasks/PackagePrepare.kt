@@ -92,13 +92,18 @@ open class PackagePrepare : AemDefaultTask() {
             NodeTypesSync.ALWAYS -> syncNodeTypesOrElse {
                 throw PackageException("Cannot synchronize node types because none of AEM instances are available!")
             }
-            NodeTypesSync.WHEN_AVAILABLE -> syncNodeTypesOrFallback()
-            NodeTypesSync.WHEN_MISSING -> {
+            NodeTypesSync.AUTO -> syncNodeTypesOrFallback()
+            NodeTypesSync.PRESERVE_AUTO -> {
                 if (!vaultNodeTypesSyncFile.exists()) {
                     syncNodeTypesOrFallback()
                 }
             }
-            NodeTypesSync.USE_FALLBACK -> syncNodeTypesFallback()
+            NodeTypesSync.FALLBACK -> syncNodeTypesFallback()
+            NodeTypesSync.PRESERVE_FALLBACK -> {
+                if (!vaultNodeTypesSyncFile.exists()) {
+                    syncNodeTypesFallback()
+                }
+            }
             NodeTypesSync.NEVER -> {}
         }
     }

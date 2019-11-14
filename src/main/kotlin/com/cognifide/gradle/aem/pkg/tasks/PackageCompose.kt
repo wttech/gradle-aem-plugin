@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem.pkg.tasks
 
-import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.bundle.tasks.BundleCompose
