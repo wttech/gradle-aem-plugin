@@ -96,8 +96,9 @@ class PackageFileFilter(private val aem: AemExtension) : Serializable {
                 "**/.gitmodules",
                 "**/.vlt",
                 "**/.vlt*.tmp",
+                "**/.vlt-sync-config.properties",
                 "**/node_modules/**",
-                "jcr_root/.vlt-sync-config.properties"
+                "**/vault/filter.*.xml"
         )
     }
 }

@@ -104,8 +104,8 @@
         "org.xml.sax.*Exception"
       ],
       "responseBuffer" : 4096,
-      "nodeTypesSync": "NEVER",
-      "nodeTypesFallback": true
+      "nodeTypesSync": "PRESERVE_FALLBACK",
+      "nodeTypesSyncFile": "*/additional/gradle/package/nodetypes.sync.cnd"
     },
     "instanceOptions" : {
       "defined" : {

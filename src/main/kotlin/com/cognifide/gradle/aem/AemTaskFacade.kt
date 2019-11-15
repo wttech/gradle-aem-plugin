@@ -239,6 +239,8 @@ class AemTaskFacade(val aem: AemExtension) : Serializable {
         register(name, AemDefaultTask::class.java, configurer)
     }
 
+    inline fun <reified T : Task> get(path: String) = get(path, T::class.java)
+
     @Suppress("unchecked_cast")
     fun <T : Task> get(path: String, type: Class<T>): T {
         val task = if (path.contains(":")) {
@@ -253,6 +255,8 @@ class AemTaskFacade(val aem: AemExtension) : Serializable {
 
         return task as T
     }
+
+    inline fun <reified T : Task> getAll() = getAll(T::class.java)
 
     fun <T : Task> getAll(type: Class<T>) = project.tasks.withType(type).toList()
 

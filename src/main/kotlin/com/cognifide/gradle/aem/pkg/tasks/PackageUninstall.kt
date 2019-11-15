@@ -9,10 +9,6 @@ import org.gradle.api.tasks.TaskAction
 
 open class PackageUninstall : PackageTask() {
 
-    init {
-        description = "Uninstalls AEM package on instance(s)."
-    }
-
     override fun taskGraphReady(graph: TaskExecutionGraph) {
         if (graph.hasTask(this)) {
             aem.props.checkForce()
@@ -33,6 +29,10 @@ open class PackageUninstall : PackageTask() {
         }
 
         aem.notifier.notify("Package uninstalled", "${packages.fileNames} from ${instances.names}")
+    }
+
+    init {
+        description = "Uninstalls AEM package on instance(s)."
     }
 
     companion object {

@@ -43,6 +43,7 @@ class DebugTest : AemTest() {
                 "aem.localInstanceManager.install.downloadDir" to PathValueMatcher(),
                 "aem.packageOptions.contentDir" to PathValueMatcher(),
                 "aem.packageOptions.metaCommonDir" to PathValueMatcher(),
+                "aem.packageOptions.nodeTypesSyncFile" to PathValueMatcher(),
                 "aem.tasks.bundles[*].bndPath" to PathValueMatcher(),
                 "aem.environment.dockerComposeFile" to PathValueMatcher(),
                 "aem.environment.dockerComposeSourceFile" to PathValueMatcher(),

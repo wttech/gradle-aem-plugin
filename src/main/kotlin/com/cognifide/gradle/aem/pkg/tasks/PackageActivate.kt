@@ -8,10 +8,6 @@ import org.gradle.api.tasks.TaskAction
 
 open class PackageActivate : PackageTask() {
 
-    init {
-        description = "Activates CRX package on instance(s)."
-    }
-
     @TaskAction
     fun activate() {
         instances.checkAvailable()
@@ -25,6 +21,10 @@ open class PackageActivate : PackageTask() {
             }
         }
         aem.notifier.notify("Package activated", "${packages.fileNames} on ${instances.names}")
+    }
+
+    init {
+        description = "Activates CRX package on instance(s)."
     }
 
     companion object {

@@ -63,7 +63,7 @@ class Package private constructor() {
 
         const val OAKPAL_OPEAR_RESOURCES_PATH = "package/$OAKPAL_OPEAR_PATH"
 
-        const val NODE_TYPES_EXPORT_PATH = "package/nodetypes.export.cnd"
+        const val NODE_TYPES_SYNC_PATH = "package/nodetypes.sync.cnd"
 
         const val VLT_DIR = "vault"
 

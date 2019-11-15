@@ -1,15 +1,11 @@
 package com.cognifide.gradle.aem.common.pkg.vlt
 
-import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.common.file.FileOperations
-import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.aem.common.pkg.PackageException
 import org.apache.commons.lang3.StringUtils
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Optional
-import org.gradle.util.GFileUtils
 import java.io.File
 import java.util.regex.Pattern
 
@@ -84,17 +80,6 @@ open class VltDefinition(private val aem: AemExtension) {
     @Internal
     var nodeTypeLines: MutableList<String> = mutableListOf()
 
-    @Internal
-    var nodeTypeExported: File = File(aem.configCommonDir, Package.NODE_TYPES_EXPORT_PATH)
-
-    /**
-     * @see <https://github.com/Adobe-Consulting-Services/acs-aem-commons/blob/master/ui.apps/src/main/content/META-INF/vault/nodetypes.cnd>
-     */
-    private val nodeTypeFallback: String
-        get() = FileOperations.readResource(Package.NODE_TYPES_EXPORT_PATH)
-                ?.bufferedReader()?.readText()
-                ?: throw AemException("Cannot read fallback resource for exported node types!")
-
     @get:Input
     val nodeTypes: String
         get() = StringUtils.join(
@@ -118,32 +103,6 @@ open class VltDefinition(private val aem: AemExtension) {
             } else {
                 nodeTypeLines.add(line)
             }
-        }
-    }
-
-    fun useNodeTypes(sync: NodeTypesSync, fallback: Boolean = true) {
-        if (sync == NodeTypesSync.ALWAYS || (sync == NodeTypesSync.WHEN_MISSING && !nodeTypeExported.exists())) {
-            syncNodeTypes()
-        }
-
-        when {
-            nodeTypeExported.exists() -> nodeTypes(nodeTypeExported)
-            fallback -> nodeTypes(nodeTypeFallback)
-        }
-    }
-
-    private fun syncNodeTypes() {
-        aem.buildScope.doOnce("syncNodeTypes") {
-            aem.availableInstance?.sync {
-                try {
-                    nodeTypeExported.apply {
-                        GFileUtils.parentMkdirs(this)
-                        writeText(crx.nodeTypes)
-                    }
-                } catch (e: AemException) {
-                    aem.logger.debug("Cannot export and save node types from $instance! Cause: ${e.message}", e)
-                }
-            } ?: aem.logger.debug("No available instances to export node types!")
         }
     }
 
