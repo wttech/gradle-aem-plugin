@@ -161,7 +161,7 @@ open class PackageCompose : ZipTask() {
             ensureDefaults()
 
             if (mergingOptions.vaultFilters && vaultFilterOriginFile.exists()) {
-                vaultDefinition.filterElements(vaultFilterOriginFile)
+                filterElements(vaultFilterOriginFile)
             }
             if (vaultNodeTypesSyncFile.exists()) {
                 nodeTypes(vaultNodeTypesSyncFile)

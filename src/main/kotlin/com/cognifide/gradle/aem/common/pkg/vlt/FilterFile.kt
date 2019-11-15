@@ -76,9 +76,9 @@ class FilterFile(
 
         const val ORIGIN_NAME = "filter.origin.xml"
 
-        const val SYNC_NAME = "sync.xml"
+        const val SYNC_NAME = "filter.sync.xml"
 
-        const val TEMPORARY_NAME = "temporaryFilter.xml"
+        const val TEMPORARY_NAME = "filter.tmp.xml"
 
         fun temporary(project: Project, paths: List<String>): FilterFile {
             val template = FileOperations.readResource("vlt/$TEMPORARY_NAME")!!
