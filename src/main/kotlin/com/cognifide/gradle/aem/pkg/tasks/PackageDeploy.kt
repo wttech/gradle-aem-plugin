@@ -81,10 +81,6 @@ open class PackageDeploy : PackageTask() {
 
     private var awaitUpOptions: AwaitUpAction.() -> Unit = {}
 
-    init {
-        description = "Deploys CRX package on instance(s). Upload then install (and optionally activate)."
-    }
-
     /**
      * Controls await up action.
      */
@@ -134,6 +130,10 @@ open class PackageDeploy : PackageTask() {
         completer()
 
         aem.notifier.notify("Package deployed", "${packages.fileNames} on ${instances.names}")
+    }
+
+    init {
+        description = "Deploys CRX package on instance(s). Upload then install (and optionally activate)."
     }
 
     companion object {

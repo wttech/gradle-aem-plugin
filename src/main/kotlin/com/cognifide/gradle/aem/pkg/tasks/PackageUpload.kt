@@ -8,10 +8,6 @@ import org.gradle.api.tasks.TaskAction
 
 open class PackageUpload : PackageTask() {
 
-    init {
-        description = "Uploads AEM package to instance(s)."
-    }
-
     @TaskAction
     fun upload() {
         instances.checkAvailable()
@@ -25,6 +21,10 @@ open class PackageUpload : PackageTask() {
         }
 
         aem.notifier.notify("Package uploaded", "${packages.fileNames} from ${instances.names}")
+    }
+
+    init {
+        description = "Uploads AEM package to instance(s)."
     }
 
     companion object {

@@ -11,10 +11,6 @@ import org.gradle.api.tasks.TaskAction
 
 open class PackagePurge : PackageTask() {
 
-    init {
-        description = "Uninstalls and then deletes CRX package on AEM instance(s)."
-    }
-
     override fun taskGraphReady(graph: TaskExecutionGraph) {
         if (graph.hasTask(this)) {
             aem.props.checkForce()
@@ -60,6 +56,10 @@ open class PackagePurge : PackageTask() {
             logger.info(e.message)
             logger.debug("Cannot delete package.", e)
         }
+    }
+
+    init {
+        description = "Uninstalls and then deletes CRX package on AEM instance(s)."
     }
 
     companion object {

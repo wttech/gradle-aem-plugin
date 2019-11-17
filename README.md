@@ -3,6 +3,7 @@
 [![Download](https://api.bintray.com/packages/cognifide/maven-public/gradle-aem-plugin/images/download.svg) ](https://bintray.com/cognifide/maven-public/gradle-aem-plugin/_latestVersion)
 [![Gradle Status](https://gradleupdate.appspot.com/Cognifide/gradle-aem-plugin/status.svg?random=123)](https://gradleupdate.appspot.com/Cognifide/gradle-aem-plugin/status)
 ![Travis Build](https://travis-ci.org/Cognifide/gradle-aem-plugin.svg?branch=develop)
+[![Gitter](https://badges.gitter.im/Cognifide/gradle-aem-plugin.svg)](https://gitter.im/Cognifide/gradle-aem-plugin?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 [![Apache License, Version 2.0, January 2004](docs/apache-license-badge.svg)](http://www.apache.org/licenses/)
 
 <p>
@@ -46,6 +47,7 @@
            * [Nesting CRX packages](#nesting-crx-packages)
            * [Assembling packages (merging all-in-one)](#assembling-packages-merging-all-in-one)
            * [Expandable properties](#expandable-properties)
+        * [Task packagePrepare](#task-packageprepare)
         * [Task packageDeploy](#task-packagedeploy)
            * [Deploying only to desired instances](#deploying-only-to-desired-instances)
            * [Deploying options](#deploying-options)
@@ -217,7 +219,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.cognifide.gradle:aem-plugin:8.1.2")
+    implementation("com.cognifide.gradle:aem-plugin:9.0.0")
 }
 ```
 
@@ -1233,6 +1235,12 @@ Also file *nodetypes.cnd* is dynamically expanded from [template](src/main/resou
 
 Each JAR file in separate *hooks* directory will be combined into single directory when creating assembly package.
 
+#### Task `packagePrepare`
+
+Processes CRX package metadata - combines default files provided by plugin itself with overridden ones.
+Also responsible for synchronizing Vault node types consumed later by [CRX package validation](#crx-package-validation) in the end of [compose task](#task-packagecompose).
+Covers extracted logic being initially a part of compose task. Reason of separation is effectively better Gradle caching.
+ 
 #### Task `packageDeploy` 
 
 Upload & install CRX package into AEM instance(s). Primary, recommended form of deployment. Optimized version of `packageUpload packageInstall`.

@@ -37,9 +37,13 @@ class PackagePlugin : AemPlugin() {
 
     private fun Project.setupTasks() {
         tasks {
-            register<PackageCompose>(PackageCompose.NAME) {
-                dependsOn(LifecycleBasePlugin.ASSEMBLE_TASK_NAME)
+            register<PackagePrepare>(PackagePrepare.NAME) {
                 mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
+            }
+            register<PackageCompose>(PackageCompose.NAME) {
+                dependsOn(LifecycleBasePlugin.ASSEMBLE_TASK_NAME, PackagePrepare.NAME)
+                mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
+                metaDir = get<PackagePrepare>(PackagePrepare.NAME).metaDir
             }
             register<PackageUpload>(PackageUpload.NAME) {
                 dependsOn(PackageCompose.NAME)

@@ -9,10 +9,6 @@ import org.gradle.api.tasks.TaskAction
 
 open class PackageDelete : PackageTask() {
 
-    init {
-        description = "Deletes AEM package on instance(s)."
-    }
-
     override fun taskGraphReady(graph: TaskExecutionGraph) {
         if (graph.hasTask(this)) {
             aem.props.checkForce()
@@ -33,6 +29,10 @@ open class PackageDelete : PackageTask() {
         }
 
         aem.notifier.notify("Package deleted", "${packages.fileNames} on ${instances.names}")
+    }
+
+    init {
+        description = "Deletes AEM package on instance(s)."
     }
 
     companion object {

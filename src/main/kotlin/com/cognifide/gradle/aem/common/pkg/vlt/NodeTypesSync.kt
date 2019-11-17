@@ -2,7 +2,10 @@ package com.cognifide.gradle.aem.common.pkg.vlt
 
 enum class NodeTypesSync {
     ALWAYS,
-    WHEN_MISSING,
+    AUTO,
+    PRESERVE_AUTO,
+    FALLBACK,
+    PRESERVE_FALLBACK,
     NEVER;
 
     companion object {

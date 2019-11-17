@@ -8,10 +8,6 @@ import org.gradle.api.tasks.TaskAction
 
 open class PackageInstall : PackageTask() {
 
-    init {
-        description = "Installs AEM package on instance(s)."
-    }
-
     @TaskAction
     fun install() {
         instances.checkAvailable()
@@ -26,6 +22,10 @@ open class PackageInstall : PackageTask() {
         }
 
         aem.notifier.notify("Package installed", "${packages.fileNames} from ${instances.names}")
+    }
+
+    init {
+        description = "Installs AEM package on instance(s)."
     }
 
     companion object {

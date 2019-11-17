@@ -38,6 +38,7 @@ class BuildScope {
         cache[key] = value
     }
 
+    @Synchronized
     fun doOnce(operation: String, action: () -> Unit) = tryGetOrPut(operation) {
         action()
         true
