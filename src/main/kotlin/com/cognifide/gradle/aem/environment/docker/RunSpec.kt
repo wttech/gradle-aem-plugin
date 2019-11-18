@@ -6,6 +6,7 @@ import java.io.File
 class RunSpec : DockerDefaultSpec() {
 
     init {
+        input = SafeStreams.emptyInput()
         output = SafeStreams.systemOut()
         errors = SafeStreams.systemErr()
     }
@@ -21,8 +22,11 @@ class RunSpec : DockerDefaultSpec() {
     fun port(hostPort: String, containerPort: String) {
         ports = ports + (hostPort to containerPort)
     }
+    fun port(port: Int) = port(port, port)
 
-    fun volume(localFile: File, containerPath: String) = volume(localFile.absolutePath, containerPath)
+    fun volume(localFile: File, containerPath: String) {
+        volume(localFile.absolutePath, containerPath)
+    }
 
     fun volume(localPath: String, containerPath: String) {
         volumes = volumes + (localPath to containerPath)
