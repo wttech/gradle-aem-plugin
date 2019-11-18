@@ -43,10 +43,9 @@ class PackageOptions(aem: AemExtension) : Serializable {
      * Beware that more nested bundle install directories are not supported by AEM by default (up to 4th depth level).
      * That's the reason of using dots in subproject names to avoid that limitation.
      */
-    var installPath: String = if (aem.project == aem.project.rootProject) {
-        "/apps/${aem.project.rootProject.name}/install"
-    } else {
-        "/apps/${aem.project.rootProject.name}/${aem.projectName}/install"
+    var installPath: String = when {
+        aem.project == aem.project.rootProject -> "/apps/${aem.project.rootProject.name}/install"
+        else -> "/apps/${aem.project.rootProject.name}/${aem.projectName}/install"
     }
 
     /**
@@ -108,10 +107,14 @@ class PackageOptions(aem: AemExtension) : Serializable {
      * Controls automatic node types exporting from available instance to be later used in package validation.
      */
     var nodeTypesSync = aem.props.string("package.nodeTypesSync")
-            ?.let { NodeTypesSync.of(it) } ?: when {
+            ?.let { NodeTypesSync.find(it) } ?: when {
                 aem.offline -> NodeTypesSync.PRESERVE_FALLBACK
                 else -> NodeTypesSync.PRESERVE_AUTO
             }
+
+    fun nodeTypesSync(name: String) {
+        nodeTypesSync = NodeTypesSync.of(name)
+    }
 
     /**
      * Determines location on which synchronized node types will be saved.

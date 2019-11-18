@@ -26,6 +26,10 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
      */
     var source = Source.of(aem.props.string("localInstance.source") ?: Source.AUTO.name)
 
+    fun source(name: String) {
+        source = Source.of(name)
+    }
+
     /**
      * Maximum time to wait for status script response.
      */

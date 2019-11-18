@@ -219,7 +219,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.cognifide.gradle:aem-plugin:9.0.1")
+    implementation("com.cognifide.gradle:aem-plugin:9.0.2")
 }
 ```
 
@@ -251,7 +251,18 @@ defaultTasks(":instanceSatisfy", ":instanceProvision", ":packageDeploy")
 
 aem {
     `package` { // built CRX package options
-        jcrRoot = aem.project.file("src/main/content")
+        contentDir = aem.project.file("src/main/content")
+        installPath = when {
+            aem.project == aem.project.rootProject -> "/apps/${aem.project.rootProject.name}/install"
+            else -> "/apps/${aem.project.rootProject.name}/${aem.projectName}/install"
+        }
+        nodeTypesSync("PRESERVE_AUTO")
+        validator {
+            enabled = aem.props.boolean("package.validator.enabled") ?: true
+            verbose = aem.props.boolean("package.validator.verbose") ?: true
+            planName = aem.props.string("package.validator.plan") ?: "default-plan.json"
+            severity("MAJOR")
+        }       
         // ...
     }
     instance { // AEM instances to work with
@@ -308,7 +319,7 @@ aem {
                 "httpd" { // control container described in 'docker-compose.yml.peb'
                     resolve {
                         resolveFiles {
-                            download("http://download.macromedia.com/dispatcher/download/dispatcher-apache2.4-linux-x86_64-4.3.2.tar.gz").then {
+                            download("http://download.macromedia.com/dispatcher/download/dispatcher-apache2.4-linux-x86_64-4.3.2.tar.gz").use {
                                 copyArchiveFile(it, "**/dispatcher-apache*.so", file("modules/mod_dispatcher.so"))
                             }
                         }
@@ -354,7 +365,7 @@ aem {
             }
         }
         
-        credentials("foo", "bar") // shorthand to set all user / password pairs above
+        credentials("foo", "bar", "company-net") // shorthand to set all user / password pairs and domain above
     }
     tasks {
         bundleCompose { // customizing OSGi bundle, manifest etc
