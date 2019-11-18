@@ -21,6 +21,7 @@ class RunSpec : DockerDefaultSpec() {
     fun port(hostPort: String, containerPort: String) {
         ports = ports + (hostPort to containerPort)
     }
+    fun port(port: Int) = port(port, port)
 
     fun volume(localFile: File, containerPath: String) {
         volume(localFile.absolutePath, containerPath)
