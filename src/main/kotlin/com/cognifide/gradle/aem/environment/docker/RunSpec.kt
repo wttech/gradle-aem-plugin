@@ -22,7 +22,9 @@ class RunSpec : DockerDefaultSpec() {
         ports = ports + (hostPort to containerPort)
     }
 
-    fun volume(localFile: File, containerPath: String) = volume(localFile.absolutePath, containerPath)
+    fun volume(localFile: File, containerPath: String) {
+        volume(localFile.absolutePath, containerPath)
+    }
 
     fun volume(localPath: String, containerPath: String) {
         volumes = volumes + (localPath to containerPath)
