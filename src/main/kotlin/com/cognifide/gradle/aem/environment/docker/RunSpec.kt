@@ -6,6 +6,7 @@ import java.io.File
 class RunSpec : DockerDefaultSpec() {
 
     init {
+        input = SafeStreams.emptyInput()
         output = SafeStreams.systemOut()
         errors = SafeStreams.systemErr()
     }
