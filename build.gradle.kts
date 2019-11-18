@@ -134,8 +134,12 @@ tasks {
         dependsOn(named("publishToMavenLocal"))
     }
 
+    named("afterReleaseBuild") {
+        dependsOn("bintrayUpload", "publishPlugins")
+    }
+
     named("release") {
-        finalizedBy("bintrayUpload", "publishPlugins", "githubRelease")
+        finalizedBy("githubRelease")
     }
 }
 
