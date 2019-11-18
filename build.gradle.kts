@@ -141,6 +141,10 @@ tasks {
     named("release") {
         finalizedBy("githubRelease")
     }
+
+    named("updateVersion") {
+        enabled = false
+    }
 }
 
 detekt {
