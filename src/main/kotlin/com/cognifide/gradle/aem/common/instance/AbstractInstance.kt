@@ -1,6 +1,8 @@
 package com.cognifide.gradle.aem.common.instance
 
 import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
+import com.cognifide.gradle.aem.common.instance.action.ReloadAction
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.time.ZoneId
 import org.apache.commons.lang3.builder.EqualsBuilder
@@ -51,6 +53,25 @@ abstract class AbstractInstance(
 
     override val version: String
         get() = sync.status.productVersion
+
+    fun reload(options: ReloadAction.() -> Unit = {}) {
+        aem.instanceActions.reload {
+            instances = listOf(this@AbstractInstance)
+            options()
+        }
+    }
+
+    fun awaitUp(options: AwaitUpAction.() -> Unit = {}) {
+        aem.instanceActions.awaitUp {
+            instances = listOf(this@AbstractInstance)
+            options()
+        }
+    }
+
+    fun reloadAndAwaitUp() {
+        reload()
+        awaitUp()
+    }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
