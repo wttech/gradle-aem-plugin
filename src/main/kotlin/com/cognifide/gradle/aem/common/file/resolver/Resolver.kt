@@ -223,6 +223,8 @@ val downloadDir: File
         groupCurrent = groupDefault
     }
 
+    operator fun String.invoke(value: Any) = group(this) { get(value) }
+
     operator fun String.invoke(configurer: Resolver<G>.() -> Unit) = group(this, configurer)
 
     /**
