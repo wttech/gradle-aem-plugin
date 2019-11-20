@@ -6,6 +6,7 @@ import com.cognifide.gradle.aem.common.file.FileException
 import com.cognifide.gradle.aem.common.file.transfer.http.HttpFileTransfer
 import com.cognifide.gradle.aem.common.file.transfer.sftp.SftpFileTransfer
 import com.cognifide.gradle.aem.common.file.transfer.smb.SmbFileTransfer
+import com.cognifide.gradle.aem.common.utils.Patterns
 import com.google.common.hash.HashCode
 import java.io.File
 import org.apache.commons.io.FilenameUtils
@@ -94,13 +95,8 @@ val downloadDir: File
      * Resolve of download file in case of specified value (url or dependency notation).
      */
     fun get(value: Any): FileResolution = when {
-        DependencyOptions.isValid(aem, value) -> resolve(value)
-        else -> {
-            when (value) {
-                is String -> download(value)
-                else -> throw FileException("Cannot resolve file as value '$value' is not an URL nor dependency notation!")
-            }
-        }
+        value is String && Patterns.wildcard(value, "*://*") -> download(value)
+        else -> resolve(value)
     }
 
     /**
