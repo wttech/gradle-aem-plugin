@@ -1580,7 +1580,7 @@ Instance backups created by this task could be used later by [create task](#task
 
 Backups can be automatically downloaded and uploaded from remote server.
  
-Minimal requirement to have it working is only to specify `instance.backup.uploadUrl`.
+Minimal requirement to have it working is only to specify `localInstance.backup.uploadUrl`.
 By having only this upload property specified, plugin will automatically download most recent backup found in directory determined by upload URL.
 
 It is also possible to specify second property `instance.backup.downloadUrl` which will cause that concrete backup will be always in use.
