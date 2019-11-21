@@ -46,7 +46,7 @@ class InstanceSync(val aem: AemExtension, val instance: Instance) {
      */
     fun <T> repository(callback: Repository.() -> T): T = repository.run(callback)
 
-    var status = Status(this)
+    val status = Status(this)
 
     /**
      * Status retriever (system properties, product version etc).
@@ -60,7 +60,7 @@ class InstanceSync(val aem: AemExtension, val instance: Instance) {
      */
     fun <T> workflowManager(callback: WorkflowManager.() -> T) = workflowManager.run(callback)
 
-    var crx = Crx(this)
+    val crx = Crx(this)
 
     /**
      * CRX DE Endpoints accessor (node types etc).
