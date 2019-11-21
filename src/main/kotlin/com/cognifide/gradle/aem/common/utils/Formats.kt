@@ -166,7 +166,7 @@ object Formats {
         return SimpleDateFormat("yyyyMMddHHmmss").format(date)
     }
 
-    fun duration(millis: Long): String = DurationFormatUtils.formatDuration(millis, "mm:ss")
+    fun duration(millis: Long): String = DurationFormatUtils.formatDuration(millis.coerceAtLeast(0L), "mm:ss")
 
     fun durationSince(millis: Long) = duration(System.currentTimeMillis() - millis)
 

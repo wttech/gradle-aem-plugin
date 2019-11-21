@@ -17,7 +17,7 @@ class FileDownloader(private val aem: AemExtension) {
         val elapsedDownloadTime = System.currentTimeMillis() - startDownloadTime
         val allDownloadTime = (elapsedDownloadTime * fullLength / processedBytes)
 
-        return allDownloadTime - elapsedDownloadTime
+        return (allDownloadTime - elapsedDownloadTime).coerceAtLeast(0L)
     }
 
     fun ProgressLogger.logProgress(operation: String, readLength: Long, fullLength: Long, file: File, startDownloadTime: Long) {
