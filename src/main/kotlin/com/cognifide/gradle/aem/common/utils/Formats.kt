@@ -23,6 +23,7 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 import java.util.*
+import java.util.regex.Pattern
 
 @Suppress("MagicNumber", "TooManyFunctions")
 object Formats {
@@ -237,6 +238,31 @@ object Formats {
 
         return StringUtils.split(tokenizedCommand, " ").map { it.replace(quotedSpaceToken, " ") }
     }
+
+    /**
+     * Converts e.g ':jcr:content' to '_jcr_content' (part of JCR path to be valid OS path).
+     */
+    fun manglePath(path: String): String = when {
+        !path.contains("/") -> manglePathInternal("/$path").removePrefix("/")
+        else -> manglePathInternal(path)
+    }
+
+    private fun manglePathInternal(path: String): String {
+        var mangledPath = path
+        if (path.contains(":")) {
+            val matcher = MANGLE_NAMESPACE_PATTERN.matcher(path)
+            val buffer = StringBuffer()
+            while (matcher.find()) {
+                val namespace = matcher.group(1)
+                matcher.appendReplacement(buffer, "/_${namespace}_")
+            }
+            matcher.appendTail(buffer)
+            mangledPath = buffer.toString()
+        }
+        return mangledPath
+    }
+
+    private val MANGLE_NAMESPACE_PATTERN: Pattern = Pattern.compile("/([^:/]+):")
 }
 
 val Collection<File>.fileNames

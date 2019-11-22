@@ -9,6 +9,7 @@ import com.cognifide.gradle.aem.common.instance.InstanceSync
 import com.cognifide.gradle.aem.common.pkg.PackageDefinition
 import com.cognifide.gradle.aem.common.pkg.PackageException
 import com.cognifide.gradle.aem.common.pkg.PackageFile
+import com.cognifide.gradle.aem.common.utils.Formats
 import com.cognifide.gradle.aem.common.utils.Patterns
 import java.io.File
 import java.io.FileNotFoundException
@@ -20,6 +21,8 @@ import org.apache.commons.io.FilenameUtils
  * @see <https://helpx.adobe.com/experience-manager/6-5/sites/administering/using/package-manager.html>
  */
 class PackageManager(sync: InstanceSync) : InstanceService(sync) {
+
+    private val http = sync.http
 
     fun get(file: File, refresh: Boolean = true, retry: Retry = aem.retry()): Package {
         if (!file.exists()) {
@@ -43,10 +46,10 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         return find({ listResponse ->
             val expected = Package(group, name, version)
 
-            aem.logger.info("Finding package '${expected.coordinates}' on $instance")
+            logger.info("Finding package '${expected.coordinates}' on $instance")
             val actual = listResponse.resolvePackage(expected)
             if (actual == null) {
-                aem.logger.info("Package not found '${expected.coordinates}' on $instance")
+                logger.info("Package not found '${expected.coordinates}' on $instance")
             }
 
             actual
@@ -54,7 +57,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
     }
 
     private fun find(resolver: (ListResponse) -> Package?, refresh: Boolean, retry: Retry = aem.retry()): Package? {
-        aem.logger.debug("Asking for uploaded packages on $instance")
+        logger.debug("Asking for uploaded packages on $instance")
 
         return resolver(aem.buildScope.getOrPut("instance.${instance.name}.packages", { list(retry) }, refresh))
     }
@@ -62,7 +65,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
     fun list(retry: Retry = aem.retry()): ListResponse {
         return retry.withCountdown<ListResponse, InstanceException>("list packages on '${instance.name}'") {
             return try {
-                sync.http.postMultipart(LIST_JSON) { asObjectFromJson(it, ListResponse::class.java) }
+                http.postMultipart(LIST_JSON) { asObjectFromJson(it, ListResponse::class.java) }
             } catch (e: RequestException) {
                 throw InstanceException("Cannot list packages on $instance. Cause: ${e.message}", e)
             } catch (e: ResponseException) {
@@ -75,10 +78,10 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         return retry.withCountdown<UploadResponse, InstanceException>("upload package '${file.name}' on '${instance.name}'") {
             val url = "$JSON_PATH/?cmd=upload"
 
-            aem.logger.info("Uploading package $file to $instance'")
+            logger.info("Uploading package $file to $instance'")
 
             val response = try {
-                sync.http.postMultipart(url, mapOf(
+                http.postMultipart(url, mapOf(
                         "package" to file,
                         "force" to (force || isSnapshot(file))
                 )) { asObjectFromJson(it, UploadResponse::class.java) }
@@ -100,11 +103,12 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
 
     /**
      * Create package on the fly, upload it to instance then build it.
-     * Finally download built package by replacing it with initially created.
+     * Next built package is downloaded - replacing initially created package.
+     * Finally built package is deleted on instance (preventing messing up).
      */
     fun download(definition: PackageDefinition.() -> Unit, retry: Retry): File {
         val file = aem.composePackage {
-            version = "download" // prevents CRX package from task 'Compose' being replaced
+            version = Formats.dateFileName()
             definition()
         }
 
@@ -132,9 +136,9 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
 
     fun download(remotePath: String, targetFile: File = aem.temporaryFile(FilenameUtils.getName(remotePath)), retry: Retry = aem.retry()) {
         return retry.withCountdown<Unit, InstanceException>("download package '$remotePath' on '${instance.name}'") {
-            aem.logger.info("Downloading package from $remotePath to file $targetFile")
+            logger.info("Downloading package from $remotePath to file $targetFile")
 
-            sync.http.fileTransfer { download(remotePath, targetFile) }
+            http.fileTransfer { download(remotePath, targetFile) }
 
             if (!targetFile.exists()) {
                 throw InstanceException("Downloaded package is missing: ${targetFile.path}")
@@ -145,10 +149,10 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
     fun build(remotePath: String): BuildResponse {
         val url = "$JSON_PATH$remotePath/?cmd=build"
 
-        aem.logger.info("Building package $remotePath on $instance")
+        logger.info("Building package $remotePath on $instance")
 
         val response = try {
-            sync.http.postMultipart(url) { asObjectFromJson(it, BuildResponse::class.java) }
+            http.postMultipart(url) { asObjectFromJson(it, BuildResponse::class.java) }
         } catch (e: RequestException) {
             throw InstanceException("Cannot build package $remotePath on $instance. Cause: ${e.message}", e)
         } catch (e: ResponseException) {
@@ -166,10 +170,10 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         return retry.withCountdown<InstallResponse, InstanceException>("install package '$remotePath' on '${instance.name}'") {
             val url = "$HTML_PATH$remotePath/?cmd=install"
 
-            aem.logger.info("Installing package $remotePath on $instance")
+            logger.info("Installing package $remotePath on $instance")
 
             val response = try {
-                sync.http.postMultipart(url, mapOf("recursive" to recursive)) { InstallResponse.from(asStream(it), aem.packageOptions.responseBuffer) }
+                http.postMultipart(url, mapOf("recursive" to recursive)) { InstallResponse.from(asStream(it), aem.packageOptions.responseBuffer) }
             } catch (e: RequestException) {
                 throw InstanceException("Cannot install package $remotePath on $instance. Cause: ${e.message}", e)
             } catch (e: ResponseException) {
@@ -224,10 +228,10 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
     fun activate(remotePath: String): UploadResponse {
         val url = "$JSON_PATH$remotePath/?cmd=replicate"
 
-        aem.logger.info("Activating package $remotePath on $instance")
+        logger.info("Activating package $remotePath on $instance")
 
         val response = try {
-            sync.http.postMultipart(url) { asObjectFromJson(it, UploadResponse::class.java) }
+            http.postMultipart(url) { asObjectFromJson(it, UploadResponse::class.java) }
         } catch (e: RequestException) {
             throw InstanceException("Cannot activate package $remotePath on $instance. Cause: ${e.message}", e)
         } catch (e: ResponseException) {
@@ -244,10 +248,10 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
     fun delete(remotePath: String): DeleteResponse {
         val url = "$HTML_PATH$remotePath/?cmd=delete"
 
-        aem.logger.info("Deleting package $remotePath on $instance")
+        logger.info("Deleting package $remotePath on $instance")
 
         val response = try {
-            sync.http.postMultipart(url) { DeleteResponse.from(asStream(it), aem.packageOptions.responseBuffer) }
+            http.postMultipart(url) { DeleteResponse.from(asStream(it), aem.packageOptions.responseBuffer) }
         } catch (e: RequestException) {
             throw InstanceException("Cannot delete package $remotePath from $instance. Cause: ${e.message}", e)
         } catch (e: ResponseException) {
@@ -264,10 +268,10 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
     fun uninstall(remotePath: String): UninstallResponse {
         val url = "$HTML_PATH$remotePath/?cmd=uninstall"
 
-        aem.logger.info("Uninstalling package using command: $url")
+        logger.info("Uninstalling package using command: $url")
 
         val response = try {
-            sync.http.postMultipart(url) { UninstallResponse.from(asStream(it), aem.packageOptions.responseBuffer) }
+            http.postMultipart(url) { UninstallResponse.from(asStream(it), aem.packageOptions.responseBuffer) }
         } catch (e: RequestException) {
             throw InstanceException("Cannot uninstall package $remotePath on $instance. Cause: ${e.message}", e)
         } catch (e: ResponseException) {
