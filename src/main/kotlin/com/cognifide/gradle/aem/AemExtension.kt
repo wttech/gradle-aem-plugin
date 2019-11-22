@@ -456,7 +456,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
      * Work with instance services of specified instance.
      */
     fun <T> syncInstance(instance: Instance, action: InstanceSync.() -> T) = sync(instance, action)
-    
+
     /**
      * In parallel, work with services of all specified instances.
      */
