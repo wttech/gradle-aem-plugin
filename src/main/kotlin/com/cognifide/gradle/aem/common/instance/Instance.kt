@@ -18,13 +18,11 @@ interface Instance : Serializable {
     val httpUrl: String
 
     @get:Internal
-    val httpPort: Int
-        get() = InstanceUrl.parse(httpUrl).httpPort
+    val httpPort: Int get() = InstanceUrl.parse(httpUrl).httpPort
 
     @get:Internal
     @get:JsonIgnore
-    val httpBasicAuthUrl: String
-        get() = InstanceUrl.parse(httpUrl).basicAuth(user, password)
+    val httpBasicAuthUrl: String get() = InstanceUrl.parse(httpUrl).basicAuth(user, password)
 
     @get:Input
     val user: String
@@ -35,18 +33,15 @@ interface Instance : Serializable {
 
     @get:Internal
     @get:JsonIgnore
-    val credentials: Pair<String, String>
-        get() = user to password
+    val credentials: Pair<String, String> get() = user to password
 
     @get:Internal
     @get:JsonIgnore
-    val credentialsString
-        get() = "$user:$password"
+    val credentialsString get() = "$user:$password"
 
     @get:Internal
     @get:JsonIgnore
-    val hiddenPassword: String
-        get() = "*".repeat(password.length)
+    val hiddenPassword: String get() = "*".repeat(password.length)
 
     @get:Input
     val name: String
@@ -59,12 +54,10 @@ interface Instance : Serializable {
 
     @get:Internal
     @get:JsonIgnore
-    val cmd: Boolean
-        get() = environment == ENVIRONMENT_CMD
+    val cmd: Boolean get() = environment == ENVIRONMENT_CMD
 
     @get:Internal
-    val type: IdType
-        get() = IdType.byId(id)
+    val type: IdType get() = IdType.byId(id)
 
     @get:Internal
     @get:JsonIgnore
@@ -91,9 +84,7 @@ interface Instance : Serializable {
     @get:JsonIgnore
     val sync: InstanceSync
 
-    fun <T> sync(synchronizer: InstanceSync.() -> T): T {
-        return sync.run(synchronizer)
-    }
+    fun <T> sync(action: InstanceSync.() -> T): T = sync.run(action)
 
     fun validate() {
         if (!Formats.URL_VALIDATOR.isValid(httpUrl)) {
@@ -119,18 +110,15 @@ interface Instance : Serializable {
 
     @get:Internal
     @get:JsonIgnore
-    val json: String
-        get() = Formats.toJson(this)
+    val json: String get() = Formats.toJson(this)
 
     @get:Internal
     @get:JsonIgnore
-    val author: Boolean
-        get() = type == IdType.AUTHOR
+    val author: Boolean get() = type == IdType.AUTHOR
 
     @get:Internal
     @get:JsonIgnore
-    val publish: Boolean
-        get() = type == IdType.PUBLISH
+    val publish: Boolean get() = type == IdType.PUBLISH
 
     companion object {
 

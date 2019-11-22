@@ -219,7 +219,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.cognifide.gradle:aem-plugin:9.0.8")
+    implementation("com.cognifide.gradle:aem-plugin:9.0.9")
 }
 ```
 
@@ -251,16 +251,16 @@ defaultTasks(":instanceSatisfy", ":instanceProvision", ":packageDeploy")
 
 aem {
     `package` { // built CRX package options
-        contentDir = aem.project.file("src/main/content")
+        contentDir = project.file("src/main/content")
         installPath = when {
-            aem.project == aem.project.rootProject -> "/apps/${aem.project.rootProject.name}/install"
-            else -> "/apps/${aem.project.rootProject.name}/${aem.projectName}/install"
+            project == project.rootProject -> "/apps/${project.rootProject.name}/install"
+            else -> "/apps/${project.rootProject.name}/${projectName}/install"
         }
         nodeTypesSync("PRESERVE_AUTO")
         validator {
-            enabled = aem.props.boolean("package.validator.enabled") ?: true
-            verbose = aem.props.boolean("package.validator.verbose") ?: true
-            planName = aem.props.string("package.validator.plan") ?: "default-plan.json"
+            enabled = props.boolean("package.validator.enabled") ?: true
+            verbose = props.boolean("package.validator.verbose") ?: true
+            planName = props.string("package.validator.plan") ?: "default-plan.json"
             severity("MAJOR")
         }       
         // ...
@@ -273,23 +273,23 @@ aem {
         // etc
         
         http { // allows to customize HTTP connection to AEM instances
-            connectionTimeout = aem.props.int("instance.http.connectionTimeout") ?: 30000
-            connectionRetries = aem.props.boolean("instance.http.connectionRetries") ?: true
-            connectionIgnoreSsl = aem.props.boolean("instance.http.connectionIgnoreSsl") ?: true
+            connectionTimeout = props.int("instance.http.connectionTimeout") ?: 30000
+            connectionRetries = props.boolean("instance.http.connectionRetries") ?: true
+            connectionIgnoreSsl = props.boolean("instance.http.connectionIgnoreSsl") ?: true
     
-            proxyHost = aem.props.string("instance.http.proxyHost")
-            proxyPort = aem.props.int("instance.http.proxyPort")
-            proxyScheme = aem.props.string("instance.http.proxyScheme")
+            proxyHost = props.string("instance.http.proxyHost")
+            proxyPort = props.int("instance.http.proxyPort")
+            proxyScheme = props.string("instance.http.proxyScheme")
         }
     }
     localInstance { // config for AEM instances to be created on local file system
         quickstart {
-            jarUrl = aem.props.string("localInstance.quickstart.jarUrl")
-            licenseUrl = aem.props.string("localInstance.quickstart.licenseUrl")
+            jarUrl = props.string("localInstance.quickstart.jarUrl")
+            licenseUrl = props.string("localInstance.quickstart.licenseUrl")
         }
         backup {
-            uploadUrl = aem.props.string("localInstance.backup.uploadUrl")
-            downloadUrl = aem.props.string("localInstance.backup.downloadUrl")
+            uploadUrl = props.string("localInstance.backup.uploadUrl")
+            downloadUrl = props.string("localInstance.backup.downloadUrl")
         }
         install {
             files { // CRX packages and OSGi bundles to be pre-installed on created AEM instances
@@ -303,11 +303,11 @@ aem {
                 // ...
             }
         }   
-        rootDir = aem.props.string("localInstance.root")
+        rootDir = props.string("localInstance.root")
         // ...
     }
     environment { // config for AEM environment running on Docker
-        rootDir = aem.props.string("environment.rootDir")?.let { aem.project.file(it) } ?: aem.projectMain.file(".aem/environment")
+        rootDir = props.string("environment.rootDir")?.let { project.file(it) } ?: projectMain.file(".aem/environment")
         hosts { // domains to be appended to hosts file automatically
             author("http://author.example.com")
             publish("http://demo.example.com") { tag("test") }
@@ -1006,9 +1006,9 @@ aem {
     tasks {
         packageCompose {
             duplicatesStrategy = DuplicatesStrategy.WARN
-            baseName = aem.baseName
-            contentDir = aem.packageOptions.rootDir
-            bundlePath = aem.packageOptions.installPath
+            baseName = baseName
+            contentDir = packageOptions.rootDir
+            bundlePath = packageOptions.installPath
             bundleRunMode = null
             metaDefaults = true
             vaultDefinition {
@@ -1016,11 +1016,11 @@ aem {
                     "acHandling" to "merge_preserve",
                     "requiresRoot" to false
                 )
-                name = aem.baseName
-                group = if (aem.project == aem.project.rootProject) {
-                    aem.project.group.toString()
+                name = baseName
+                group = if (project == project.rootProject) {
+                    project.group.toString()
                 } else {
-                    aem.project.rootProject.name
+                    project.rootProject.name
                 }
                 version = project.version.toString()
             }
@@ -1484,7 +1484,7 @@ aem {
     localInstance {
         backup {
             selector = {  // default implementation below
-                val name = aem.props.string("localInstance.backup.name") ?: ""
+                val name = props.string("localInstance.backup.name") ?: ""
                 when {
                     name.isNotBlank() -> firstOrNull { it.fileEntry.name == name }
                     else -> firstOrNull()
@@ -1527,8 +1527,8 @@ This behavior is controlled by:
 ```kotlin
 aem {
     localInstance {
-        rootDir = aem.props.string("localInstance.root")?.let { aem.project.file(it) } ?: aem.projectMain.file(".aem/instance")
-        overridesDir = File(aem.configCommonDir, LocalInstance.FILES_PATH)
+        rootDir = props.string("localInstance.root")?.let { project.file(it) } ?: projectMain.file(".aem/instance")
+        overridesDir = File(configCommonDir, LocalInstance.FILES_PATH)
         expandProperties = mapOf()
         expandFiles = listOf(
             "**/*.properties", 
@@ -1631,8 +1631,8 @@ aem {
         }
         tasks {
             register("doThings") {
-                aem.fileTransfer.download("s3://packages/my-package.zip")
-                aem.fileTransfer.upload("s3://packages", aem.`package`)
+                fileTransfer.download("s3://packages/my-package.zip")
+                fileTransfer.upload("s3://packages", `package`)
                 // etc
             }
         }
@@ -1740,7 +1740,7 @@ aem {
                         }
                         completer {
                             logger.info("Reloading instance(s) after installing Groovy Console")
-                            aem.instanceActions.reloadAndAwaitUp()
+                            instanceActions.reloadAndAwaitUp()
                         }
                     }
                 }
@@ -1867,26 +1867,26 @@ aem {
         instanceAwait {
             awaitUp {
                 timeout {
-                    stateTime = aem.props.long("instance.awaitUp.timeout.stateTime") ?: TimeUnit.MINUTES.toMillis(2)
-                    constantTime = aem.props.long("instance.awaitUp.timeout.constantTime") ?: TimeUnit.MINUTES.toMillis(10)
+                    stateTime = props.long("instance.awaitUp.timeout.stateTime") ?: TimeUnit.MINUTES.toMillis(2)
+                    constantTime = props.long("instance.awaitUp.timeout.constantTime") ?: TimeUnit.MINUTES.toMillis(10)
                 }
                 bundles {
-                    symbolicNamesIgnored = aem.props.list("instance.awaitUp.bundles.symbolicNamesIgnored") ?: listOf()
+                    symbolicNamesIgnored = props.list("instance.awaitUp.bundles.symbolicNamesIgnored") ?: listOf()
                 }
                 components {
-                    platformComponents = aem.props.list("instance.awaitUp.components.platform") ?: listOf(
+                    platformComponents = props.list("instance.awaitUp.components.platform") ?: listOf(
                         "com.day.crx.packaging.*", 
                         "org.apache.sling.installer.*"
                     )
-                    specificComponents = aem.props.list("instance.awaitUp.components.specific") ?: aem.javaPackages.map { "$it.*" }
+                    specificComponents = props.list("instance.awaitUp.components.specific") ?: javaPackages.map { "$it.*" }
                 }
                 events {
-                    unstableTopics = aem.props.list("instance.awaitUp.event.unstableTopics") ?: listOf(
+                    unstableTopics = props.list("instance.awaitUp.event.unstableTopics") ?: listOf(
                         "org/osgi/framework/ServiceEvent/*",
                         "org/osgi/framework/FrameworkEvent/*",
                         "org/osgi/framework/BundleEvent/*"
                     )
-                    unstableAgeMillis = aem.props.long("instance.awaitUp.event.unstableAgeMillis") ?: TimeUnit.SECONDS.toMillis(5)
+                    unstableAgeMillis = props.long("instance.awaitUp.event.unstableAgeMillis") ?: TimeUnit.SECONDS.toMillis(5)
                 }
             }
         }
@@ -1926,10 +1926,10 @@ aem {
     tasks {
         instanceTail {
             tailer {
-                logFilePath = aem.props.string("instance.tail.logFilePath") ?: "/logs/error.log"
+                logFilePath = props.string("instance.tail.logFilePath") ?: "/logs/error.log"
                 logListener = { instance -> /* ... */ }
-                incidentFilter = aem.props.string("instance.tail.incidentFilter")?.let { aem.project.file(it) } ?: File(aem.configCommonDir, "instanceTail/incidentFilter.txt")
-                incidentDelay = aem.props.long("instance.tail.incidentDelay") ?: 5000L
+                incidentFilter = props.string("instance.tail.incidentFilter")?.let { project.file(it) } ?: File(configCommonDir, "instanceTail/incidentFilter.txt")
+                incidentDelay = props.long("instance.tail.incidentDelay") ?: 5000L
             }
         }
     }
@@ -2108,7 +2108,7 @@ allprojects {
   plugins.withId("com.cognifide.aem.common") {
     configure<AemExtension> {
         `package` {
-            contentDir = aem.project.file("src/main/aem") // overrides default dir named 'content'
+            contentDir = project.file("src/main/aem") // overrides default dir named 'content'
         }
     }
   }
@@ -2192,7 +2192,7 @@ aem {
     tasks {
         register("backupProductionAuthor") {
             doLast {
-                val pkg = aem.namedInstance("prod-author").sync {
+                val pkg = namedInstance("prod-author").sync {
                     downloadPackage {
                         group = "example"
                         name = "backup"
@@ -2206,7 +2206,7 @@ aem {
                     }
                 }
     
-                aem.http {
+                http {
                     basicUser = "foo"
                     basicPassword = "bar"
                     postMultipart("http://my-aem-backup-service.com/package/upload", mapOf("file" to pkg)) 
@@ -2226,7 +2226,7 @@ aem {
     tasks {
         register("runHealthCheck") {
             doLast {
-                aem.sync {
+                syncInstances {
                     http {
                         get("/bin/example/healthCheck") { checkStatus(it, 200) }
                     }
@@ -2237,7 +2237,7 @@ aem {
 }
 ```
 
-There are unspecified AEM instances as `aem.sync` method parameter so that instances matching [default filtering](#filter-instances-to-work-with) will be used.
+There are unspecified AEM instances as parameter for method `syncInstances`, so that instances matching [default filtering](#filter-instances-to-work-with) will be used.
 
 The fragment `{ checkStatus(it, 200) }` could be even ommitted because, by default sync API checks status code that it belongs to range [200,300\).
 
@@ -2248,7 +2248,7 @@ aem {
     tasks {
         register("runHealthCheck") {
             doLast {
-                aem.sync {
+                syncInstances {
                     http {
                         val json = get("/bin/example/healthCheck") { asJson(it) }
                         val status = json.read("status") as String
@@ -2277,12 +2277,12 @@ aem {
         register("deployProductionContent") {
             doLast {
                 val instances = listOf(
-                        aem.instance("http://user:password@aem-host.com") // URL specified directly, could be parametrized by some gradle command line property
-                        // aem.namedInstance("local-publish") // reused AEM instance defined in 'gradle.properties'
+                        instance("http://user:password@aem-host.com") // URL specified directly, could be parametrized by some gradle command line property
+                        // namedInstance("local-publish") // reused AEM instance defined in 'gradle.properties'
                 )
-                val pkg = aem.httpFile { download("https://company.com/aem/backups/example-1.0.0-201901300932.backup.zip") }
+                val pkg = httpFile { download("https://company.com/aem/backups/example-1.0.0-201901300932.backup.zip") }
                 
-                aem.sync(instances) { 
+                sync(instances) { 
                     packageManager.deploy(pkg) 
                 }
             }
@@ -2303,7 +2303,7 @@ aem {
         register("migratePages") {
             description = "Migrates pages to new component"
             doLast {
-                aem.sync {
+                syncInstances {
                     repository {
                         node("/content/example")
                             .traverse()
@@ -2328,7 +2328,7 @@ aem {
         register("setupReplicationAgents") {
             description = "Corrects publish replication agent transport URI"
             doLast {
-                aem.sync {
+                syncInstances {
                     repository {
                         node("/etc/replication/agents.publish/flush/jcr:content", mapOf( // shorthand for 'node(path).save(props)'
                             "transportUri" to "http://dispatcher.example.com/dispatcher/invalidate.cache"
@@ -2356,7 +2356,7 @@ aem {
         }
         register("generatePosts") {
             doLast {
-                aem.sync {
+                syncInstances {
                     groovyConsole.evalCode("""
                         def postsService = getService("com.company.example.aem.sites.services.posts.PostsService")
                         
@@ -2381,7 +2381,7 @@ aem {
     tasks {
         packageDeploy {
             doLast {
-                aem.sync {
+                syncInstances {
                     osgiFramework.restartBundle("com.adobe.cq.dam.cq-scene7-imaging")
                 }           
             }       
@@ -2397,7 +2397,7 @@ aem {
     tasks {
         register("instanceSecure") {
             doLast {
-                aem.sync(aem.publishInstances) {
+                sync(publishInstances) {
                     osgiFramework.disableComponent("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet")
                     // osgiFramework.stopBundle("org.apache.sling.jcr.webdav")
                 }
@@ -2414,7 +2414,7 @@ aem {
     tasks {
         register("enableCrx") {
             doLast {
-                aem.sync(aem.publishInstances) {
+                sync(publishInstances) {
                     osgiFramework.configure("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", mapOf(
                         "alias" to "/crx/server",
                         "dav.create-absolute-uri" to true,
@@ -2440,7 +2440,7 @@ aem {
     tasks {
         register("setupWorkflows") {
             doLast {
-                aem.sync {
+                syncInstances {
                     workflowManager.workflow("update_asset_create").disable()
                     workflowManager.workflow("update_asset_mod").disable()
                 

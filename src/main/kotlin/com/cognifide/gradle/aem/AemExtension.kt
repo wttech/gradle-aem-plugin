@@ -440,37 +440,52 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     /**
      * In parallel, work with services of all instances matching default filtering.
      */
-    fun sync(synchronizer: InstanceSync.() -> Unit) = sync(instances, synchronizer)
+    fun sync(action: InstanceSync.() -> Unit) = sync(instances, action)
+
+    /**
+     * In parallel, work with services of all instances matching default filtering.
+     */
+    fun syncInstances(action: InstanceSync.() -> Unit) = sync(action)
 
     /**
      * Work with instance services of specified instance.
      */
-    fun <T> sync(instance: Instance, synchronizer: InstanceSync.() -> T) = instance.sync(synchronizer)
+    fun <T> sync(instance: Instance, action: InstanceSync.() -> T) = instance.sync(action)
+
+    /**
+     * Work with instance services of specified instance.
+     */
+    fun <T> syncInstance(instance: Instance, action: InstanceSync.() -> T) = sync(instance, action)
+    
+    /**
+     * In parallel, work with services of all specified instances.
+     */
+    fun sync(instances: Iterable<Instance>, action: InstanceSync.() -> Unit) {
+        parallel.with(instances) { this.sync.apply(action) }
+    }
 
     /**
      * In parallel, work with services of all specified instances.
      */
-    fun sync(instances: Iterable<Instance>, synchronizer: InstanceSync.() -> Unit) {
-        parallel.with(instances) { this.sync.apply(synchronizer) }
-    }
+    fun syncInstances(instances: Iterable<Instance>, action: InstanceSync.() -> Unit) = sync(instances, action)
 
     /**
      * In parallel, work with built packages and services of instances matching default filtering.
      */
-    fun syncPackages(synchronizer: InstanceSync.(File) -> Unit) = syncFiles(instances, packages, synchronizer)
+    fun syncPackages(action: InstanceSync.(File) -> Unit) = syncFiles(instances, packages, action)
 
     /**
      * In parallel, work with built OSGi bundles and services of instances matching default filtering.
      */
-    fun syncBundles(synchronizer: InstanceSync.(File) -> Unit) = syncFiles(instances, bundles, synchronizer)
+    fun syncBundles(action: InstanceSync.(File) -> Unit) = syncFiles(instances, bundles, action)
 
     /**
      * In parallel, work with built packages and services of specified instances.
      */
-    fun syncFiles(instances: Iterable<Instance>, packages: Iterable<File>, synchronizer: InstanceSync.(File) -> Unit) {
+    fun syncFiles(instances: Iterable<Instance>, packages: Iterable<File>, action: InstanceSync.(File) -> Unit) {
         packages.forEach { pkg -> // single AEM instance dislikes parallel CRX package / OSGi bundle installation
             parallel.with(instances) { // but same file could be in parallel deployed on different AEM instances
-                sync.apply { synchronizer(pkg) }
+                sync.apply { action(pkg) }
             }
         }
     }
