@@ -4,54 +4,63 @@ import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.aem.common.pkg.vlt.VltDefinition
-import java.io.File
 import org.apache.commons.io.FileUtils
 import org.gradle.util.GFileUtils
 import org.zeroturnaround.zip.ZipUtil
+import java.io.File
 
 /**
  * Package definition that could be used to compose CRX package in place.
  *
  * This is programmatic approach to create ZIP file. API reflects Gradle's AbstractArchiveTask.
  * Useful for writing complex custom tasks that cannot inherit from Gradle's ZIP task.
+ *
+ * @see <https://docs.gradle.org/current/dsl/org.gradle.api.tasks.bundling.Zip.html#org.gradle.api.tasks.bundling.Zip>
  */
 class PackageDefinition(private val aem: AemExtension) : VltDefinition(aem) {
 
-    var destinationDir: File = aem.temporaryDir
+    var destinationDirectory: File = aem.temporaryDir
 
-    var baseName: String = aem.baseName
+    var archiveBaseName: String = aem.baseName
 
-    var appendix: String? = null
+    var archiveAppendix: String? = null
 
-    var extension: String = "zip"
+    var archiveExtension: String = "zip"
 
-    var classifier: String? = null
+    var archiveClassifier: String? = null
+
+    var archiveVersion: String
+        get() = archiveVersionCustom ?: version
+        set(value) {
+            archiveVersionCustom = value
+        }
+
+    private var archiveVersionCustom: String? = null
 
     /**
      * ZIP file path
      */
     var archivePath: File
+        get() = archivePathCustom ?: File(destinationDirectory, archiveFileName)
         set(value) {
             archivePathCustom = value
         }
-        get() = archivePathCustom ?: File(destinationDir, archiveName)
 
     private var archivePathCustom: File? = null
-
-    val archiveBaseName: String
-        get() = listOf(baseName, appendix, version, classifier)
-                .filter { !it.isNullOrBlank() }.joinToString("-")
 
     /**
      * ZIP file name
      */
-    var archiveName: String
+    var archiveFileName: String
+        get() = archiveFileNameCustom ?: listOf(archiveBaseName, archiveAppendix, archiveVersion, archiveClassifier)
+                .filter { !it.isNullOrBlank() }
+                .joinToString("-")
+                .run { "$this.$archiveExtension" }
         set(value) {
-            archiveNameCustom = value
+            archiveFileNameCustom = value
         }
-        get() = archiveNameCustom ?: "$archiveBaseName.$extension"
 
-    private var archiveNameCustom: String? = null
+    private var archiveFileNameCustom: String? = null
 
     /**
      * Temporary directory being zipped to produce CRX package.
