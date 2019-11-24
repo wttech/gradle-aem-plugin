@@ -14,6 +14,8 @@ class Toolbox(aem: AemExtension) : Base(aem) {
 
     override val safeVolumes: Boolean = true
 
+    override val definedHostInternal: Boolean = true
+
     var cygpathPath = aem.props.string("environment.cygpath.path")
             ?: "C:\\Program Files\\Git\\usr\\bin\\cygpath.exe"
 

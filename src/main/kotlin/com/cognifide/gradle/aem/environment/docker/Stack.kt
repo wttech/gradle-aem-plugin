@@ -29,8 +29,8 @@ class Stack(val environment: Environment) {
             }
         }
 
-        if (error != null) {
-            throw EnvironmentException("Stack cannot be initialized. Is Docker running / installed?", error!!)
+        error?.let { e ->
+            throw EnvironmentException("Stack cannot be initialized. Is Docker running / installed? Error '${e.message}'", e)
         }
 
         true

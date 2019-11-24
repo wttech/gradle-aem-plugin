@@ -15,7 +15,13 @@ class Desktop(aem: AemExtension) : Base(aem) {
     override val safeVolumes: Boolean
         get() = !OperatingSystem.current().isWindows
 
+    override val definedHostInternal: Boolean
+        get() = OperatingSystem.current().isWindows
+
     override fun determinePath(path: String) = Formats.normalizePath(path)
+
+    val hostInternalIp: String
+        get() = aem.props.string("environment.docker.desktop.hostInternalIp") ?: "172.17.0.1"
 
     companion object {
         const val NAME = "desktop"
