@@ -13,6 +13,9 @@ interface Runtime {
 
     val safeVolumes: Boolean
 
+    /**
+     * @see <https://github.com/docker/for-linux/issues/264>
+     */
     val definedHostInternal: Boolean
 
     fun determinePath(path: String): String
