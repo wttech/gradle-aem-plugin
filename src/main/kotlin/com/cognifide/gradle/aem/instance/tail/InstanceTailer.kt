@@ -68,8 +68,11 @@ class InstanceTailer(val aem: AemExtension) {
      *
      * Changes in that file are automatically considered (tailer restart is not required).
      */
-    var incidentFilter: File = aem.props.string("instance.tail.incidentFilter")?.let { aem.project.file(it) }
-            ?: File(aem.configCommonDir, "instanceTail/incidentFilter.txt")
+    var incidentFilter: File = (
+            aem.props.string("instance.tail.incidentFilter")
+                    ?.let { aem.project.file(it) }
+                    ?: File(aem.configCommonDir, "instanceTail/incidentFilter.txt")
+            ).apply { parentFile.mkdirs(); createNewFile() }
 
     /**
      * Time window in which exceptions will be aggregated and reported as single incident.
