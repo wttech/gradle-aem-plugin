@@ -10,11 +10,20 @@ class Toolbox(aem: AemExtension) : Base(aem) {
         get() = NAME
 
     override val hostIp: String
-        get() = aem.props.string("environment.docker.toolbox.hostIp") ?: "192.168.99.100"
+        get() = detectHostIp() ?: aem.props.string("environment.docker.toolbox.hostIp") ?: "192.168.99.100"
+
+    @Suppress("TooGenericExceptionCaught")
+    fun detectHostIp() = try {
+        ProcBuilder("docker-machine").withArg("ip").run()
+                .outputString.trim().takeIf { it.isNotBlank() }
+    } catch (e: Exception) {
+        throw DockerException("Cannot detect Docker host IP (error while executing 'docker-machine ip'). Cause: ${e.message}", e)
+    }
 
     override val safeVolumes: Boolean = true
 
-    override val definedHostInternal: Boolean = true
+    override val hostInternalIp: String?
+        get() = aem.props.string("environment.docker.toolbox.hostInternalIp") ?: "10.0.2.2"
 
     var cygpathPath = aem.props.string("environment.cygpath.path")
             ?: "C:\\Program Files\\Git\\usr\\bin\\cygpath.exe"
@@ -30,9 +39,7 @@ class Toolbox(aem: AemExtension) : Base(aem) {
 
     @Suppress("TooGenericExceptionCaught")
     fun executeCygpath(path: String) = try {
-        ProcBuilder(cygpathPath)
-                .withArg(path)
-                .run()
+        ProcBuilder(cygpathPath).withArg(path).run()
                 .outputString.trim()
     } catch (e: Exception) {
         throw DockerException("Cannot execute '$cygpathPath' for path: $path", e)

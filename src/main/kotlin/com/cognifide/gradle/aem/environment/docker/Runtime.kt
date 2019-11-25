@@ -13,10 +13,7 @@ interface Runtime {
 
     val safeVolumes: Boolean
 
-    /**
-     * @see <https://github.com/docker/for-linux/issues/264>
-     */
-    val definedHostInternal: Boolean
+    val hostInternalIp: String?
 
     fun determinePath(path: String): String
 
