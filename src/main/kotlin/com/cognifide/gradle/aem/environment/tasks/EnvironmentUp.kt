@@ -11,8 +11,8 @@ open class EnvironmentUp : AemDefaultTask() {
 
     @TaskAction
     fun up() {
-        if (aem.environment.running) {
-            aem.notifier.notify("Environment up", "Cannot turn on as it is already running")
+        if (aem.environment.up) {
+            aem.notifier.notify("Environment up", "Cannot turn on as it is already up")
             return
         }
 

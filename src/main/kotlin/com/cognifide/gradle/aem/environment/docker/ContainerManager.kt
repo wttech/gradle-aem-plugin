@@ -36,6 +36,11 @@ class ContainerManager(private val docker: Docker) {
      */
     val running: Boolean get() = defined.all { it.running }
 
+    /**
+     * Checks if all containers are up (running and configured).
+     */
+    val up: Boolean get() = defined.all { it.up }
+
     fun resolve() {
         aem.progress {
             message = "Resolving container(s): ${defined.names}"
