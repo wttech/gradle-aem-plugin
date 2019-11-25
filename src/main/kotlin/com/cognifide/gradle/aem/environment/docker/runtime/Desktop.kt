@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.environment.docker.runtime
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.utils.Formats
+import com.cognifide.gradle.aem.environment.docker.DockerProcess
 import org.gradle.internal.os.OperatingSystem
 
 class Desktop(aem: AemExtension) : Base(aem) {
@@ -23,12 +24,10 @@ class Desktop(aem: AemExtension) : Base(aem) {
             else -> detectHostInternalIp() ?: aem.props.string("environment.docker.desktop.hostInternalIp") ?: "172.17.0.1"
         }
 
-    /**
-     * TODO implement automatic detection of IP 'host.docker.internal' for Unix OS other than Mac OSX e.g Ubuntu
-     *
-     * @see <https://nickjanetakis.com/blog/docker-tip-65-get-your-docker-hosts-ip-address-from-in-a-container>
-     */
-    private fun detectHostInternalIp(): String? = null
+    private fun detectHostInternalIp(): String? = DockerProcess.execString {
+        val args = listOf("run", "alpine", "/bin/ash", "-c", "ip -4 route list match 0/0 | cut -d ' ' -f 3")
+        withArgs(*args.toTypedArray())
+    }.takeIf { it.isNotBlank() }
 
     companion object {
         const val NAME = "desktop"
