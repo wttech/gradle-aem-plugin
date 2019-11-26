@@ -28,13 +28,13 @@ class UrlSource(
         try {
             val chunk = parser()
             if (!wasStable) {
-                logger.info("Tailing resumed for $instance")
+                logger.lifecycle("Tailing resumed for $instance")
                 wasStable = true
             }
             chunk
         } catch (ex: RequestException) {
             if (wasStable) {
-                logger.warn("Tailing paused for $instance due to '${ex.message}'. Waiting for resuming.")
+                logger.warn("Tailing paused for $instance due to '${ex.message}'. Awaiting resumption.")
             }
             wasStable = false
             emptyList<T>()

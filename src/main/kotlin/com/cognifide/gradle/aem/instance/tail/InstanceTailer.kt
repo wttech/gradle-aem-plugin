@@ -68,11 +68,10 @@ class InstanceTailer(val aem: AemExtension) {
      *
      * Changes in that file are automatically considered (tailer restart is not required).
      */
-    var incidentFilter: File = (
+    var incidentFilter: File =
             aem.props.string("instance.tail.incidentFilter")
                     ?.let { aem.project.file(it) }
                     ?: File(aem.configCommonDir, "instanceTail/incidentFilter.txt")
-            ).apply { parentFile.mkdirs(); createNewFile() }
 
     /**
      * Time window in which exceptions will be aggregated and reported as single incident.
@@ -110,6 +109,7 @@ class InstanceTailer(val aem: AemExtension) {
 
     fun tail() {
         checkStartLock()
+        initIncidentFilter()
 
         runBlocking {
             startAll().forEach { tailer ->
@@ -129,6 +129,11 @@ class InstanceTailer(val aem: AemExtension) {
             throw InstanceTailerException("Another instance of log tailer is running for this project.")
         }
         logFiles.lock()
+    }
+
+    private fun initIncidentFilter() = incidentFilter.run {
+        parentFile.mkdirs()
+        createNewFile()
     }
 
     private fun startAll(): List<LogTailer> {
