@@ -24,6 +24,7 @@ class Desktop(aem: AemExtension) : Base(aem) {
             else -> detectHostInternalIp() ?: aem.props.string("environment.docker.desktop.hostInternalIp") ?: "172.17.0.1"
         }
 
+    @Suppress("SpreadOperator")
     private fun detectHostInternalIp(): String? = DockerProcess.execString {
         val args = listOf("run", "alpine", "/bin/ash", "-c", "ip -4 route list match 0/0 | cut -d ' ' -f 3")
         withArgs(*args.toTypedArray())

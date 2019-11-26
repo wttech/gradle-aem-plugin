@@ -196,11 +196,11 @@ class Container(val docker: Docker, val name: String) {
 
     // TODO make it non-interactive / no-progress logger / more fast
     fun lock(name: String) {
-        execShell("Locking state '$name'","mkdir -p $LOCK_ROOT && touch $LOCK_ROOT/$name")
+        execShell("Locking state '$name'", "mkdir -p $LOCK_ROOT && touch $LOCK_ROOT/$name")
     }
 
     // TODO make it non-interactive / no-progress logger / more fast
-    fun isLocked(name: String): Boolean = execShell("Checking lock state '$name'","test -f $LOCK_ROOT/$name", null).exitCode == 0
+    fun isLocked(name: String): Boolean = execShell("Checking lock state '$name'", "test -f $LOCK_ROOT/$name", null).exitCode == 0
 
     companion object {
         const val LOCK_ROOT = "/var/gap/lock"

@@ -5,6 +5,9 @@ import com.cognifide.gradle.aem.common.CommonPlugin
 import com.cognifide.gradle.aem.common.tasks.lifecycle.*
 import com.cognifide.gradle.aem.environment.tasks.*
 import com.cognifide.gradle.aem.instance.InstancePlugin
+import com.cognifide.gradle.aem.instance.provision.InstanceProvision
+import com.cognifide.gradle.aem.instance.satisfy.InstanceSatisfy
+import com.cognifide.gradle.aem.instance.tasks.InstanceSetup
 import com.cognifide.gradle.aem.instance.tasks.InstanceUp
 import org.gradle.api.Project
 
@@ -32,7 +35,9 @@ class EnvironmentPlugin : AemPlugin() {
             register<EnvironmentDown>(EnvironmentDown.NAME)
             register<EnvironmentUp>(EnvironmentUp.NAME) {
                 mustRunAfter(EnvironmentResolve.NAME, EnvironmentDown.NAME, EnvironmentDestroy.NAME)
-                plugins.withId(InstancePlugin.ID) { mustRunAfter(InstanceUp.NAME) }
+                plugins.withId(InstancePlugin.ID) {
+                    mustRunAfter(InstanceUp.NAME, InstanceSatisfy.NAME, InstanceProvision.NAME, InstanceSetup.NAME)
+                }
             }
             register<EnvironmentRestart>(EnvironmentRestart.NAME) {
                 dependsOn(EnvironmentDown.NAME, EnvironmentUp.NAME)
