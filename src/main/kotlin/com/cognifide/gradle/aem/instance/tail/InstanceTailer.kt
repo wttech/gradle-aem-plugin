@@ -4,6 +4,7 @@ import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.utils.Formats
+import com.cognifide.gradle.aem.instance.tail.io.ConsolePrinter
 import com.cognifide.gradle.aem.instance.tail.io.FileDestination
 import com.cognifide.gradle.aem.instance.tail.io.LogFiles
 import com.cognifide.gradle.aem.instance.tail.io.UrlSource
@@ -72,6 +73,21 @@ class InstanceTailer(val aem: AemExtension) {
             aem.props.string("instance.tail.incidentFilter")
                     ?.let { aem.project.file(it) }
                     ?: File(aem.configCommonDir, "instanceTail/incidentFilter.txt")
+
+    /**
+     * Indicates if tailer will print logs of specified instances to console.
+     *
+     * When no instances are specified, it searches for the first author
+     */
+    var instancesToFollow = when (aem.project.hasProperty("instance.tail.follow")) {
+        true -> aem.props.string("instance.tail.follow").let {
+            when {
+                it.isNullOrBlank() -> listOf("local-author")
+                else -> Formats.toList(it)
+            }
+        }
+        else -> null
+    }
 
     /**
      * Time window in which exceptions will be aggregated and reported as single incident.
@@ -155,7 +171,11 @@ class InstanceTailer(val aem: AemExtension) {
         val logFile = logFiles.main(instance.name)
         aem.logger.lifecycle("Tailing logs to file: $logFile")
 
-        return LogTailer(source, destination, logAnalyzerChannel)
+        val printer = when (instancesToFollow?.contains(instance.name)) {
+            true -> ConsolePrinter(instance.name) { aem.logger.lifecycle(it) }
+            else -> null
+        }
+        return LogTailer(source, destination, logAnalyzerChannel, printer)
     }
 
     companion object {
