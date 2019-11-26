@@ -1956,6 +1956,12 @@ Error while executing script *diskusage.sh
 Error while executing script *cpu.sh
 ```
 
+##### Tailing to console
+
+To simply print logs to console use `-Pinstance.tail.follow` commandline option. By default logs of instance named "local-author" will be printed. However, you can point list of instances by name, and all logs fetched for them will be printed in one console:
+
+`./gradlew instanceTail -Pinstance.tail.follow=local-publish,int-publish,prod-publish`
+
 ##### Tailing multiple instances
 
 Common use case could be to tail many remote AEM instances at once that comes from multiple environments.
