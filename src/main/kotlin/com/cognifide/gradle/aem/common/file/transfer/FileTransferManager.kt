@@ -187,6 +187,15 @@ class FileTransferManager(private val aem: AemExtension) : FileTransfer {
     override val name: String
         get() = NAME
 
+    init {
+        // override specific credentials if common specified
+        credentials(
+                aem.props.string("fileTransfer.user"),
+                aem.props.string("fileTransfer.password"),
+                aem.props.string("fileTransfer.domain")
+        )
+    }
+
     companion object {
         const val NAME = "manager"
 

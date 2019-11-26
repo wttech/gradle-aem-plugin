@@ -14,6 +14,9 @@ class Docker(val environment: Environment) {
     val running: Boolean
         get() = stack.running && containers.running
 
+    val up: Boolean
+        get() = stack.running && containers.up
+
     /**
      * Represents Docker stack named 'aem' and provides API for manipulating it.
      */
