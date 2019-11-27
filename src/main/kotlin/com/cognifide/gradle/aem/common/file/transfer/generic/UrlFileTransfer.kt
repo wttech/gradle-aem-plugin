@@ -13,7 +13,7 @@ class UrlFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
         get() = NAME
 
     override val protocols: List<String>
-        get() = listOf("*://*")
+        get() = listOf(PROTOCOL)
 
     override fun downloadFrom(dirUrl: String, fileName: String, target: File) {
         val fileUrl = "$dirUrl/$fileName"
@@ -32,5 +32,7 @@ class UrlFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
 
     companion object {
         const val NAME = "url"
+
+        const val PROTOCOL = "*://*"
     }
 }

@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.common.file.resolver
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.build.DependencyOptions
 import com.cognifide.gradle.aem.common.file.FileException
+import com.cognifide.gradle.aem.common.file.transfer.generic.UrlFileTransfer
 import com.cognifide.gradle.aem.common.file.transfer.http.HttpFileTransfer
 import com.cognifide.gradle.aem.common.file.transfer.sftp.SftpFileTransfer
 import com.cognifide.gradle.aem.common.file.transfer.smb.SmbFileTransfer
@@ -11,6 +12,7 @@ import com.google.common.hash.HashCode
 import java.io.File
 import org.apache.commons.io.FilenameUtils
 import org.apache.commons.lang3.builder.HashCodeBuilder
+import org.gradle.api.InvalidUserDataException
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 
@@ -92,11 +94,15 @@ val downloadDir: File
     }
 
     /**
-     * Resolve of download file in case of specified value (url or dependency notation).
+     * Resolve file in case of various type of specified value: file, url to file, dependency notation.
      */
-    fun get(value: Any): FileResolution = when {
-        value is String && Patterns.wildcard(value, "*://*") -> download(value)
-        else -> resolve(value)
+    fun get(value: Any): FileResolution = try {
+        useLocal(project.file(value))
+    } catch (e: InvalidUserDataException) {
+        when {
+            value is String && Patterns.wildcard(value, UrlFileTransfer.PROTOCOL) -> download(value)
+            else -> resolve(value)
+        }
     }
 
     /**
