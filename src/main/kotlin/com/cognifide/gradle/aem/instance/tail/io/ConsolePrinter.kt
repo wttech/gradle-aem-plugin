@@ -12,4 +12,8 @@ class ConsolePrinter(
     }
 
     fun dump(newLogs: List<Log>) = newLogs.forEach { log(it.logWithLocalTimestamp) }
+
+    companion object {
+        fun devNull() = ConsolePrinter(InstanceLoggingInfo.default()) {}
+    }
 }

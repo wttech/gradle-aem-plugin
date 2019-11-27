@@ -10,7 +10,7 @@ class LogTailer(
     private val destination: LogDestination,
     instance: InstanceLoggingInfo = InstanceLoggingInfo.default(),
     private val logsAnalyzerChannel: SendChannel<Log>? = null,
-    private val printer: ConsolePrinter? = null
+    private val printer: ConsolePrinter = ConsolePrinter.devNull()
 ) {
 
     private val parser = LogParser(instance)
@@ -25,7 +25,7 @@ class LogTailer(
             lastLogChecksum = newLogs.last().checksum
             sendLogsToBeAnalyzed(newLogs)
             destination.dump(newLogs)
-            printer?.dump(newLogs)
+            printer.dump(newLogs)
         }
     }
 

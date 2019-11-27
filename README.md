@@ -1958,9 +1958,9 @@ Error while executing script *cpu.sh
 
 ##### Tailing to console
 
-To simply print logs to console use `-Pinstance.tail.follow` commandline option. By default logs of instance named "local-author" will be printed. However, you can point list of instances by name, and all logs fetched for them will be printed in one console:
+By default, tailer prints all logs to console (with instance name in front and timestamp converted to the machines time zone). You can simply turn it of:
 
-`./gradlew instanceTail -Pinstance.tail.follow=local-publish,int-publish,prod-publish`
+`./gradlew instanceTail -Pinstance.tail.follow=false`
 
 ##### Tailing multiple instances
 

@@ -4,7 +4,6 @@ import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.utils.Formats
-import com.cognifide.gradle.aem.common.utils.Patterns
 import com.cognifide.gradle.aem.instance.tail.io.ConsolePrinter
 import com.cognifide.gradle.aem.instance.tail.io.FileDestination
 import com.cognifide.gradle.aem.instance.tail.io.LogFiles
@@ -76,19 +75,9 @@ class InstanceTailer(val aem: AemExtension) {
                     ?: File(aem.configCommonDir, "instanceTail/incidentFilter.txt")
 
     /**
-     * Indicates if tailer will print logs of specified instances to console.
-     *
-     * When no instances are specified, it searches for the first author
+     * Indicates if tailer will print all logs to console.
      */
-    var instancesToFollow = when (aem.project.hasProperty("instance.tail.follow")) {
-        true -> aem.props.string("instance.tail.follow").let {
-            when {
-                it.isNullOrBlank() -> listOf("local-author")
-                else -> Formats.toList(it)
-            }
-        }
-        else -> null
-    }
+    var follow = aem.props.boolean("instance.tail.follow") ?: true
 
     /**
      * Time window in which exceptions will be aggregated and reported as single incident.
@@ -172,11 +161,13 @@ class InstanceTailer(val aem: AemExtension) {
         val logFile = logFiles.main(instance.name)
         aem.logger.lifecycle("Tailing logs to file: $logFile")
 
-        val printer = when (Patterns.wildcard(instance.name, instancesToFollow ?: listOf())) {
-            true -> ConsolePrinter(InstanceLoggingInfo.of(instance)) { aem.logger.lifecycle(it) }
-            else -> ConsolePrinter(InstanceLoggingInfo.of(instance)) { }
-        }
-        return LogTailer(source, destination, InstanceLoggingInfo.of(instance), logAnalyzerChannel, printer)
+        return LogTailer(source, destination, InstanceLoggingInfo.of(instance), logAnalyzerChannel, consolePrinter(instance))
+    }
+
+    private fun consolePrinter(instance: Instance) = if (follow) {
+        ConsolePrinter(InstanceLoggingInfo.of(instance)) { aem.logger.lifecycle(it) }
+    } else {
+        ConsolePrinter.devNull()
     }
 
     companion object {
