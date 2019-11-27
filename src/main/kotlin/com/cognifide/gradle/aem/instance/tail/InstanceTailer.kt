@@ -77,7 +77,7 @@ class InstanceTailer(val aem: AemExtension) {
     /**
      * Indicates if tailer will print all logs to console.
      */
-    var follow = aem.props.boolean("instance.tail.follow") ?: true
+    var console = aem.props.boolean("instance.tail.console") ?: true
 
     /**
      * Time window in which exceptions will be aggregated and reported as single incident.
@@ -164,7 +164,7 @@ class InstanceTailer(val aem: AemExtension) {
         return LogTailer(source, destination, InstanceLoggingInfo.of(instance), logAnalyzerChannel, consolePrinter(instance))
     }
 
-    private fun consolePrinter(instance: Instance) = if (follow) {
+    private fun consolePrinter(instance: Instance) = if (console) {
         ConsolePrinter(InstanceLoggingInfo.of(instance)) { aem.logger.lifecycle(it) }
     } else {
         ConsolePrinter.devNull()
