@@ -4,18 +4,19 @@ import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.utils.Formats
+import com.cognifide.gradle.aem.common.utils.Patterns
 import com.cognifide.gradle.aem.instance.tail.io.ConsolePrinter
 import com.cognifide.gradle.aem.instance.tail.io.FileDestination
 import com.cognifide.gradle.aem.instance.tail.io.LogFiles
 import com.cognifide.gradle.aem.instance.tail.io.UrlSource
-import java.io.File
-import java.nio.file.Paths
-import kotlin.math.max
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import java.io.File
+import java.nio.file.Paths
+import kotlin.math.max
 
 class InstanceTailer(val aem: AemExtension) {
 
@@ -61,7 +62,7 @@ class InstanceTailer(val aem: AemExtension) {
                 ?: aem.props.long("instance.tail.incidentOld")
                 ?: INCIDENT_OLD_DEFAULT
 
-        isLevel(levels) && !isOlderThan(instance, oldMillis) && !logFilter.isExcluded(this)
+        isLevel(levels) && !isOlderThan(oldMillis) && !logFilter.isExcluded(this)
     }
 
     /**
@@ -171,11 +172,11 @@ class InstanceTailer(val aem: AemExtension) {
         val logFile = logFiles.main(instance.name)
         aem.logger.lifecycle("Tailing logs to file: $logFile")
 
-        val printer = when (instancesToFollow?.contains(instance.name)) {
+        val printer = when (Patterns.wildcard(instance.name, instancesToFollow ?: listOf())) {
             true -> ConsolePrinter(instance.name) { aem.logger.lifecycle(it) }
-            else -> null
+            else -> ConsolePrinter(instance.name) { }
         }
-        return LogTailer(source, destination, logAnalyzerChannel, printer)
+        return LogTailer(source, destination, instance.zoneId, logAnalyzerChannel, printer)
     }
 
     companion object {

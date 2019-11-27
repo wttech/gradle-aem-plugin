@@ -10,5 +10,5 @@ class ConsolePrinter(
         log("Printing logs for $instanceName to console.")
     }
 
-    fun dump(newLogs: List<Log>) = newLogs.forEach { log("[$instanceName]\t${it.message}") }
+    fun dump(newLogs: List<Log>) = newLogs.forEach { log("[$instanceName]\t${it.logWithLocalTimestamp}") }
 }

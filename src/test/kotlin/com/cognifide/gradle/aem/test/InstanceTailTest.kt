@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test
 import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader
+import java.time.ZoneId
 import java.util.*
 
 class InstanceTailTest {
@@ -16,7 +17,7 @@ class InstanceTailTest {
     class MockSource(vararg resources: String) : LogSource {
 
         private val streamsStack = Stack<BufferedReader>().apply {
-            addAll(resources.reversed().map { MockSource.reader(it) })
+            addAll(resources.reversed().map { reader(it) })
         }
 
         override fun <T> readChunk(parser: (BufferedReader) -> List<T>): List<T> = streamsStack.pop().use(parser)
@@ -26,7 +27,7 @@ class InstanceTailTest {
 
             fun text(resource: String): String = FileUtils.readFileToString(file(resource), "UTF8")
 
-            private fun file(resource: String) = File(this::class.java.classLoader.getResource(resource).file)
+            private fun file(resource: String) = File(this::class.java.classLoader.getResource(resource)!!.file)
         }
 
     }
@@ -42,7 +43,7 @@ class InstanceTailTest {
     @Test
     fun shouldParseLogs() {
         // given
-        val parser = LogParser()
+        val parser = LogParser(DEFAULT_ZONE_ID)
         val logsChunk = MockSource.reader("com/cognifide/gradle/aem/test/instance-tail/10-logs-error.log")
 
         // when
@@ -52,14 +53,14 @@ class InstanceTailTest {
         assertEquals(10, logsList.size)
 
         logsList.first().apply {
-            assertEquals(Log.parseTimestamp("14.01.2019 12:19:48.350"), timestamp)
+            assertEquals(Log.parseTimestamp("14.01.2019 12:19:48.350", DEFAULT_ZONE_ID), timestamp)
             assertEquals("INFO", level)
             assertEquals("[0:0:0:0:0:0:0:1 [1547464785823] GET /rge.etkrggtkgk/etkrggtkgk/gaegkgr/ragrae/gaegkgr.gkg.rk HTTP/1.1]", source)
             assertEquals("egg.erggr.gaegkgr.gk.etkrggtkgk.kgrt.HggtLkgaeaeMegegraIgrt Sgeag ggktrkgg JS tkgaeae: /tkgk/etkrggtkgk/gaegkgr/ragrae/gaegkgr (gkgkpkrr)", message)
             assertEquals("c298a80e1b5083dea0c9dbf12b045a67", checksum)
         }
         logsList.last().apply {
-            assertEquals(Log.parseTimestamp("14.01.2019 12:20:43.111"), timestamp)
+            assertEquals(Log.parseTimestamp("14.01.2019 12:20:43.111", DEFAULT_ZONE_ID), timestamp)
             assertEquals("ERROR", level)
             assertEquals("[gea-arrgkkggae-rtreggga-1] egg.erggr.gaegkgr.arrgkkggae Sragker [6848, [gag.ereeer.reeaaeggkg.gea.erk.rgt.SrkkkggMBreg]]", source)
             assertEquals("SragkerEgrgg REGISTERED", message)
@@ -70,7 +71,7 @@ class InstanceTailTest {
     @Test
     fun shouldParseMultilineLogs() {
         // given
-        val parser = LogParser()
+        val parser = LogParser(DEFAULT_ZONE_ID)
         val logsChunk = MockSource.reader("com/cognifide/gradle/aem/test/instance-tail/aggregating/multiline/multiline-logs-error.log")
 
         // when
@@ -80,14 +81,14 @@ class InstanceTailTest {
         assertEquals(4, logsList.size)
 
         logsList[0].apply {
-            assertEquals(Log.parseTimestamp("14.01.2019 12:20:05.242"), timestamp)
+            assertEquals(Log.parseTimestamp("14.01.2019 12:20:05.242", DEFAULT_ZONE_ID), timestamp)
             assertEquals("WARN", level)
             assertEquals("[0:0:0:0:0:0:0:1 [1547464792884] GET /llr.resllleskr/resllleskr/rcslsll/rrcsess3.fsl.cr HTTP/1.1]", source)
             assertEqualsIgnoringCr(MockSource.text("com/cognifide/gradle/aem/test/instance-tail/aggregating/multiline/multiline-short.log"), message)
             assertEquals("148a7ab608478f4a609d428a28773fc8", checksum)
         }
         logsList[2].apply {
-            assertEquals(Log.parseTimestamp("14.01.2019 12:04:58.535"), timestamp)
+            assertEquals(Log.parseTimestamp("14.01.2019 12:04:58.535", DEFAULT_ZONE_ID), timestamp)
             assertEquals("WARN", level)
             assertEquals("[reslr-rsf-rkrlcsslsrl-2]", source)
             assertEqualsIgnoringCr(MockSource.text("com/cognifide/gradle/aem/test/instance-tail/aggregating/multiline/multiline-long.log"), message)
@@ -98,7 +99,7 @@ class InstanceTailTest {
     @Test
     fun shouldSkipIncompleteMultilineLogs() {
         // given
-        val parser = LogParser()
+        val parser = LogParser(DEFAULT_ZONE_ID)
         val logsChunk = MockSource.reader("com/cognifide/gradle/aem/test/instance-tail/aggregating/multiline/incomplete-multiline-logs-error.log")
 
         // when
@@ -108,7 +109,7 @@ class InstanceTailTest {
         assertEquals(3, logsList.size)
 
         logsList.first().apply {
-            assertEquals(Log.parseTimestamp("14.01.2019 12:20:05.242"), timestamp)
+            assertEquals(Log.parseTimestamp("14.01.2019 12:20:05.242", DEFAULT_ZONE_ID), timestamp)
             assertEquals("6fe84dd875d8ca95b4f061a57b3c815d", checksum)
         }
     }
@@ -120,7 +121,7 @@ class InstanceTailTest {
             "com/cognifide/gradle/aem/test/instance-tail/aggregating/overlapping/first-chunk-error.log",
             "com/cognifide/gradle/aem/test/instance-tail/aggregating/overlapping/second-chunk-error.log")
         val destination = MockDestination()
-        val tailer = LogTailer(source, destination)
+        val tailer = LogTailer(source, destination, DEFAULT_ZONE_ID)
 
         // when
         tailer.tail()
@@ -131,11 +132,11 @@ class InstanceTailTest {
         assertEquals(11, logs.size)
 
         logs.first().apply {
-            assertEquals(Log.parseTimestamp("14.01.2019 12:04:54.613"), timestamp)
+            assertEquals(Log.parseTimestamp("14.01.2019 12:04:54.613", DEFAULT_ZONE_ID), timestamp)
             assertEquals("d37f9ce5287800493de0b6ef5bb43338", checksum)
         }
         logs.last().apply {
-            assertEquals(Log.parseTimestamp("14.01.2019 12:04:58.773"), timestamp)
+            assertEquals(Log.parseTimestamp("14.01.2019 12:04:58.773", DEFAULT_ZONE_ID), timestamp)
             assertEquals("68b331e94d5fe5ec182207198b149535", checksum)
         }
     }
@@ -147,7 +148,7 @@ class InstanceTailTest {
             "com/cognifide/gradle/aem/test/instance-tail/aggregating/disjoint/first-chunk-error.log",
             "com/cognifide/gradle/aem/test/instance-tail/aggregating/disjoint/second-chunk-error.log")
         val destination = MockDestination()
-        val tailer = LogTailer(source, destination)
+        val tailer = LogTailer(source, destination, DEFAULT_ZONE_ID)
 
         // when
         tailer.tail()
@@ -158,11 +159,11 @@ class InstanceTailTest {
         assertEquals(10, logs.size)
 
         logs.first().apply {
-            assertEquals(Log.parseTimestamp("14.01.2019 12:04:54.613"), timestamp)
+            assertEquals(Log.parseTimestamp("14.01.2019 12:04:54.613", DEFAULT_ZONE_ID), timestamp)
             assertEquals("1310668b557d5e87686385dfd8c82bdb", checksum)
         }
         logs.last().apply {
-            assertEquals(Log.parseTimestamp("14.01.2019 12:04:58.773"), timestamp)
+            assertEquals(Log.parseTimestamp("14.01.2019 12:04:58.773", DEFAULT_ZONE_ID), timestamp)
             assertEquals("7071e8cc64b8d3821dea686b20ba5b58", checksum)
         }
     }
@@ -174,7 +175,7 @@ class InstanceTailTest {
             "com/cognifide/gradle/aem/test/instance-tail/aggregating/disjoint/first-chunk-error.log",
             "com/cognifide/gradle/aem/test/instance-tail/aggregating/disjoint/first-chunk-error.log")
         val destination = MockDestination()
-        val tailer = LogTailer(source, destination)
+        val tailer = LogTailer(source, destination, DEFAULT_ZONE_ID)
 
         // when
         tailer.tail()
@@ -185,11 +186,11 @@ class InstanceTailTest {
         assertEquals(5, logs.size)
 
         logs.first().apply {
-            assertEquals(Log.parseTimestamp("14.01.2019 12:04:54.613"), timestamp)
+            assertEquals(Log.parseTimestamp("14.01.2019 12:04:54.613", DEFAULT_ZONE_ID), timestamp)
             assertEquals("1310668b557d5e87686385dfd8c82bdb", checksum)
         }
         logs.last().apply {
-            assertEquals(Log.parseTimestamp("14.01.2019 12:04:58.519"), timestamp)
+            assertEquals(Log.parseTimestamp("14.01.2019 12:04:58.519", DEFAULT_ZONE_ID), timestamp)
             assertEquals("b410a72d5bc75b608c2c6f0014f9d88b", checksum)
         }
     }
@@ -205,7 +206,7 @@ class InstanceTailTest {
         //then
         assertTrue(logFilter.isExcluded(Log.create(listOf("14.01.2019 12:20:43.111 *ERROR* " +
             "[gea-arrgkkggae-rtreggga-1] egg.erggr.gaegkgr.arrgkkggae Sragker " +
-            "[6848, [gag.ereeer.reeaaeggkg.gea.erk.rgt.SrkkkggMBreg]] SragkerEgrgg REGISTERED"))))
+            "[6848, [gag.ereeer.reeaaeggkg.gea.erk.rgt.SrkkkggMBreg]] SragkerEgrgg REGISTERED"), DEFAULT_ZONE_ID)))
     }
 
     @Test
@@ -219,7 +220,7 @@ class InstanceTailTest {
         //then
         assertFalse(blacklist.isExcluded(Log.create(listOf("14.01.2019 12:20:43.111 *ERROR* " +
             "[gea-arrgkkggae-rtreggga-1] egg.erggr.gaegkgr.arrgkkggae Sragker " +
-            "[6848, [gag.ereeer.reeaaeggkg.gea.erk.rgt.SrkkkggMBreg]] SragkerEgrgg REGISTERED"))))
+            "[6848, [gag.ereeer.reeaaeggkg.gea.erk.rgt.SrkkkggMBreg]] SragkerEgrgg REGISTERED"), DEFAULT_ZONE_ID)))
     }
 
     @Test
@@ -233,7 +234,7 @@ class InstanceTailTest {
         //then
         assertTrue(logFilter.isExcluded(Log.create(listOf("14.01.2019 12:20:43.111 *ERROR* " +
             "[gea-arrgkkggae-rtreggga-1] egg.erggr.gaegkgr.arrgkkggae Sragker " +
-            "[6848, [gag.ereeer.reeaaeggkg.gea.erk.rgt.SrkkkggMBreg]] SragkerEgrgg REGISTERED"))))
+            "[6848, [gag.ereeer.reeaaeggkg.gea.erk.rgt.SrkkkggMBreg]] SragkerEgrgg REGISTERED"), DEFAULT_ZONE_ID)))
     }
 
     @Test
@@ -247,7 +248,7 @@ class InstanceTailTest {
         //then
         assertFalse(blacklist.isExcluded(Log.create(listOf("14.01.2019 12:20:43.111 *ERROR* " +
             "[gea-arrgkkggae-rtreggga-1] egg.erggr.gaegkgr.arrgkkggae Sragker " +
-            "[6848, [gag.ereeer.reeaaeggkg.gea.erk.rgt.SrkkkggMBreg]] SragkerEgrgg REGISTERED"))))
+            "[6848, [gag.ereeer.reeaaeggkg.gea.erk.rgt.SrkkkggMBreg]] SragkerEgrgg REGISTERED"), DEFAULT_ZONE_ID)))
     }
 
     private fun assertEqualsIgnoringCr(expected: String, actual: String) {
@@ -255,4 +256,8 @@ class InstanceTailTest {
     }
 
     private fun removeCr(expected: String) = expected.replace("\r", "")
+
+    companion object {
+        private val DEFAULT_ZONE_ID = ZoneId.systemDefault()
+    }
 }
