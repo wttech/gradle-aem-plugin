@@ -173,10 +173,10 @@ class InstanceTailer(val aem: AemExtension) {
         aem.logger.lifecycle("Tailing logs to file: $logFile")
 
         val printer = when (Patterns.wildcard(instance.name, instancesToFollow ?: listOf())) {
-            true -> ConsolePrinter(instance.name) { aem.logger.lifecycle(it) }
-            else -> ConsolePrinter(instance.name) { }
+            true -> ConsolePrinter(InstanceLoggingInfo.of(instance)) { aem.logger.lifecycle(it) }
+            else -> ConsolePrinter(InstanceLoggingInfo.of(instance)) { }
         }
-        return LogTailer(source, destination, instance.zoneId, logAnalyzerChannel, printer)
+        return LogTailer(source, destination, InstanceLoggingInfo.of(instance), logAnalyzerChannel, printer)
     }
 
     companion object {

@@ -1,14 +1,15 @@
 package com.cognifide.gradle.aem.instance.tail.io
 
+import com.cognifide.gradle.aem.instance.tail.InstanceLoggingInfo
 import com.cognifide.gradle.aem.instance.tail.Log
 
 class ConsolePrinter(
-    private val instanceName: String,
+    instance: InstanceLoggingInfo,
     private val log: (String) -> Unit
 ) {
     init {
-        log("Printing logs for $instanceName to console.")
+        log("Printing logs for ${instance.name} to console.")
     }
 
-    fun dump(newLogs: List<Log>) = newLogs.forEach { log("[$instanceName]\t${it.logWithLocalTimestamp}") }
+    fun dump(newLogs: List<Log>) = newLogs.forEach { log(it.logWithLocalTimestamp) }
 }

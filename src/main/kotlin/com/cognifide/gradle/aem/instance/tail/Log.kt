@@ -8,6 +8,7 @@ import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
 class Log(
+    val instance: InstanceLoggingInfo = InstanceLoggingInfo.default(),
     val text: String,
     val timestamp: ZonedDateTime,
     val level: String,
@@ -24,10 +25,12 @@ class Log(
                 ?.substringAfter(" ")?.capitalize() ?: ""
 
     val logWithLocalTimestamp: String
-        get() = "${timestamp.toLocalDateTime().format(DATE_TIME_FORMATTER)}\t$level\t$source\t$message"
-
-    val logWithZonedTimestamp: String
-        get() = "${timestamp.format(ZONED_DATE_TIME_FORMATTER)}\t$level\t$source\t$message"
+        get() =
+            "[${instance.name.padEnd(13)}]" +
+                    "$LOGS_SEPARATOR${timestamp.toLocalDateTime().format(PRINT_DATE_TIME_FORMATTER)}" +
+                    "$LOGS_SEPARATOR${level.padEnd(5)}" +
+                    "$LOGS_SEPARATOR$source" +
+                    "$LOGS_SEPARATOR$message"
 
     fun isLevel(vararg levels: String) = isLevel(levels.asIterable())
 
@@ -53,13 +56,15 @@ class Log(
         private const val LOG_PATTERN = "$TIMESTAMP\\s$LEVEL\\s$SOURCE\\s$MESSAGE"
 
         private const val DATE_TIME_FORMAT = "dd.MM.yyyy HH:mm:ss.SSS"
-        private const val ZONED_DATE_TIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss'Z'"
+        private const val PRINT_DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss.SSS"
+
+        private const val LOGS_SEPARATOR = "  "
 
         private val DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern(DATE_TIME_FORMAT)
 
-        private val ZONED_DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern(ZONED_DATE_TIME_FORMAT)
+        private val PRINT_DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern(PRINT_DATE_TIME_FORMAT)
 
-        fun create(logLines: List<String>, zoneId: ZoneId): Log {
+        fun create(instance: InstanceLoggingInfo, logLines: List<String>): Log {
             if (logLines.isEmpty() || logLines.first().isBlank()) {
                 throw InstanceTailerException("Passed log entry is empty!")
             }
@@ -71,15 +76,22 @@ class Log(
                 else -> {
                     val (timestamp, level, source, message) = result.destructured
                     val followingMessageLines = logLines.slice(1 until logLines.size)
-                    return Log(fullLog, parseTimestamp(timestamp, zoneId), level, source, listOf(message) + followingMessageLines)
+                    return Log(
+                            instance,
+                            fullLog,
+                            parseTimestamp(timestamp, instance),
+                            level,
+                            source,
+                            listOf(message) + followingMessageLines
+                    )
                 }
             }
         }
 
         fun isFirstLineOfLog(text: String) = matchLogLine(text) != null
 
-        fun parseTimestamp(timestamp: String, zoneId: ZoneId): ZonedDateTime {
-            return LocalDateTime.parse(timestamp, DATE_TIME_FORMATTER).atZone(zoneId)
+        fun parseTimestamp(timestamp: String, instance: InstanceLoggingInfo = InstanceLoggingInfo.default()): ZonedDateTime {
+            return LocalDateTime.parse(timestamp, DATE_TIME_FORMATTER).atZone(instance.zoneId)
                     ?: throw InstanceTailerException("Invalid timestamp in log:\n$timestamp\n required format: $DATE_TIME_FORMAT")
         }
 

@@ -1,10 +1,9 @@
 package com.cognifide.gradle.aem.instance.tail
 
 import java.io.BufferedReader
-import java.time.ZoneId
 
 class LogParser(
-    private val instanceZoneId: ZoneId
+    private val instance: InstanceLoggingInfo = InstanceLoggingInfo.default()
 ) {
 
     fun parse(reader: BufferedReader): List<Log> {
@@ -26,7 +25,7 @@ class LogParser(
     private fun read(reader: BufferedReader, firstLogLine: String?): Pair<Log?, String?> {
         val (completeLogLines, firstLineOfNextLog) = readSubsequentLogLines(reader, firstLogLine)
         return if (completeLogLines.isNotEmpty()) {
-            Log.create(completeLogLines, instanceZoneId) to firstLineOfNextLog
+            Log.create(instance, completeLogLines) to firstLineOfNextLog
         } else {
             null to null
         }

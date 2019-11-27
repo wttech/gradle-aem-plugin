@@ -4,17 +4,16 @@ import com.cognifide.gradle.aem.instance.tail.io.ConsolePrinter
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
-import java.time.ZoneId
 
 class LogTailer(
     private val source: LogSource,
     private val destination: LogDestination,
-    instanceZoneId: ZoneId,
+    instance: InstanceLoggingInfo = InstanceLoggingInfo.default(),
     private val logsAnalyzerChannel: SendChannel<Log>? = null,
     private val printer: ConsolePrinter? = null
 ) {
 
-    private val parser = LogParser(instanceZoneId)
+    private val parser = LogParser(instance)
 
     private var lastLogChecksum = ""
 
