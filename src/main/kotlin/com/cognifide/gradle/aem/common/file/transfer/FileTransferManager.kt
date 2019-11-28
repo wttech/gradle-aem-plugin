@@ -136,7 +136,7 @@ class FileTransferManager(private val aem: AemExtension) : FileTransfer {
     override fun handles(fileUrl: String) = all.any { it.handles(fileUrl) }
 
     /**
-     * Find file transfer supporting specified URL.
+     * Get file transfer supporting specified URL.
      */
     fun handling(fileUrl: String): FileTransfer = all.find { it.handles(fileUrl) }
             ?: throw FileException("File transfer supporting URL '$fileUrl' not found!")
@@ -180,12 +180,13 @@ class FileTransferManager(private val aem: AemExtension) : FileTransfer {
     }
 
     @get:JsonIgnore
-    override val enabled: Boolean
-        get() = true
+    override val enabled = false
 
     @get:JsonIgnore
-    override val name: String
-        get() = NAME
+    override val parallelable = false
+
+    @get:JsonIgnore
+    override val name = NAME
 
     init {
         // override specific credentials if common specified

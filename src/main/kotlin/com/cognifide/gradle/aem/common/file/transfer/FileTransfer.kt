@@ -16,6 +16,11 @@ interface FileTransfer {
     val enabled: Boolean
 
     /**
+     * Determines if operations using this transfer could be done in parallel.
+     */
+    val parallelable: Boolean
+
+    /**
      * Checks if supports particular URL
      */
     fun handles(fileUrl: String): Boolean
