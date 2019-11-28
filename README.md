@@ -1956,6 +1956,12 @@ Error while executing script *diskusage.sh
 Error while executing script *cpu.sh
 ```
 
+##### Tailing to console
+
+By default, tailer prints all logs to console (with instance name in front and timestamp converted to the machines time zone). To turn it off use:
+
+`./gradlew instanceTail -Pinstance.tail.console=false`
+
 ##### Tailing multiple instances
 
 Common use case could be to tail many remote AEM instances at once that comes from multiple environments.

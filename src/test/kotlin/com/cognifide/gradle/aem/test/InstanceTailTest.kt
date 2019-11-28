@@ -16,7 +16,7 @@ class InstanceTailTest {
     class MockSource(vararg resources: String) : LogSource {
 
         private val streamsStack = Stack<BufferedReader>().apply {
-            addAll(resources.reversed().map { MockSource.reader(it) })
+            addAll(resources.reversed().map { reader(it) })
         }
 
         override fun <T> readChunk(parser: (BufferedReader) -> List<T>): List<T> = streamsStack.pop().use(parser)
@@ -26,7 +26,7 @@ class InstanceTailTest {
 
             fun text(resource: String): String = FileUtils.readFileToString(file(resource), "UTF8")
 
-            private fun file(resource: String) = File(this::class.java.classLoader.getResource(resource).file)
+            private fun file(resource: String) = File(this::class.java.classLoader.getResource(resource)!!.file)
         }
 
     }
@@ -203,7 +203,7 @@ class InstanceTailTest {
         val logFilter = LogFilter().apply { excludeRule(filter) }
 
         //then
-        assertTrue(logFilter.isExcluded(Log.create(listOf("14.01.2019 12:20:43.111 *ERROR* " +
+        assertTrue(logFilter.isExcluded(Log.create(InstanceLogInfo.none(), listOf("14.01.2019 12:20:43.111 *ERROR* " +
             "[gea-arrgkkggae-rtreggga-1] egg.erggr.gaegkgr.arrgkkggae Sragker " +
             "[6848, [gag.ereeer.reeaaeggkg.gea.erk.rgt.SrkkkggMBreg]] SragkerEgrgg REGISTERED"))))
     }
@@ -217,7 +217,7 @@ class InstanceTailTest {
         val blacklist = LogFilter().apply { excludeRule(filter) }
 
         //then
-        assertFalse(blacklist.isExcluded(Log.create(listOf("14.01.2019 12:20:43.111 *ERROR* " +
+        assertFalse(blacklist.isExcluded(Log.create(InstanceLogInfo.none(), listOf("14.01.2019 12:20:43.111 *ERROR* " +
             "[gea-arrgkkggae-rtreggga-1] egg.erggr.gaegkgr.arrgkkggae Sragker " +
             "[6848, [gag.ereeer.reeaaeggkg.gea.erk.rgt.SrkkkggMBreg]] SragkerEgrgg REGISTERED"))))
     }
@@ -231,7 +231,7 @@ class InstanceTailTest {
         val logFilter = LogFilter().apply { excludeRule(filter) }
 
         //then
-        assertTrue(logFilter.isExcluded(Log.create(listOf("14.01.2019 12:20:43.111 *ERROR* " +
+        assertTrue(logFilter.isExcluded(Log.create(InstanceLogInfo.none(), listOf("14.01.2019 12:20:43.111 *ERROR* " +
             "[gea-arrgkkggae-rtreggga-1] egg.erggr.gaegkgr.arrgkkggae Sragker " +
             "[6848, [gag.ereeer.reeaaeggkg.gea.erk.rgt.SrkkkggMBreg]] SragkerEgrgg REGISTERED"))))
     }
@@ -245,7 +245,7 @@ class InstanceTailTest {
         val blacklist = LogFilter().apply { excludeRule(filter) }
 
         //then
-        assertFalse(blacklist.isExcluded(Log.create(listOf("14.01.2019 12:20:43.111 *ERROR* " +
+        assertFalse(blacklist.isExcluded(Log.create(InstanceLogInfo.none(), listOf("14.01.2019 12:20:43.111 *ERROR* " +
             "[gea-arrgkkggae-rtreggga-1] egg.erggr.gaegkgr.arrgkkggae Sragker " +
             "[6848, [gag.ereeer.reeaaeggkg.gea.erk.rgt.SrkkkggMBreg]] SragkerEgrgg REGISTERED"))))
     }
