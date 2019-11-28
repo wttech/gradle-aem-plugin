@@ -8,12 +8,12 @@ import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
 class Log(
-        val instance: InstanceLogInfo = InstanceLogInfo.none(),
-        val text: String,
-        val timestamp: ZonedDateTime,
-        val level: String,
-        val source: String,
-        messageLines: List<String>
+    val instance: InstanceLogInfo = InstanceLogInfo.none(),
+    val text: String,
+    val timestamp: ZonedDateTime,
+    val level: String,
+    val source: String,
+    messageLines: List<String>
 ) {
 
     val checksum = Formats.calculateChecksum(text)
