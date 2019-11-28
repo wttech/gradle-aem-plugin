@@ -63,9 +63,9 @@ class FileTransferManager(private val aem: AemExtension) : FileTransfer {
         path.apply(options)
     }
 
-    val custom = mutableListOf<CustomFileTransfer>()
+    private val custom = mutableListOf<CustomFileTransfer>()
 
-    val all get() = (custom + arrayOf(http, sftp, smb, resolve, url, path)).filter { it.enabled }
+    private val all get() = (custom + arrayOf(http, sftp, smb, resolve, url, path)).filter { it.enabled }
 
     /**
      * Downloads file from specified URL to temporary directory with preserving file name.

@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.common.file.transfer.generic
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.file.transfer.FileEntry
 import com.cognifide.gradle.aem.common.file.transfer.ProtocolFileTransfer
+import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 
 /**
@@ -20,6 +21,9 @@ class CustomFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
     override lateinit var name: String
 
     override lateinit var protocols: List<String>
+
+    @get:JsonIgnore
+    override var parallelable = true
 
     private var downloader: ((dirUrl: String, fileName: String, target: File) -> Unit)? = null
 
