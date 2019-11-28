@@ -165,7 +165,7 @@ class InstanceTailer(val aem: AemExtension) {
     }
 
     private fun consolePrinter(instance: Instance) = if (console) {
-        ConsolePrinter(InstanceLogInfo.of(instance)) { aem.logger.lifecycle(it) }
+        ConsolePrinter(InstanceLogInfo.of(instance), { aem.logger.lifecycle(it) })
     } else {
         ConsolePrinter.none()
     }
