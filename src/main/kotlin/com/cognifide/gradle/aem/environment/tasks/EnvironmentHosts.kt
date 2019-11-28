@@ -1,21 +1,26 @@
 package com.cognifide.gradle.aem.environment.tasks
 
 import com.cognifide.gradle.aem.AemDefaultTask
-import com.cognifide.gradle.aem.environment.hosts.Hosts
 import org.gradle.api.tasks.TaskAction
+import org.gradle.internal.os.OperatingSystem
 
 open class EnvironmentHosts : AemDefaultTask() {
 
     init {
-        description = "Append environment hosts to system hosts file. Requires super/admin user privileges."
+        description = "Prints environment hosts entries."
+    }
+
+    private val hostsFile = when {
+        OperatingSystem.current().isWindows -> """C:\Windows\System32\drivers\etc\hosts"""
+        else -> "/etc/hosts"
     }
 
     @TaskAction
     fun appendHosts() {
-        val hosts = Hosts.of(aem.environment.hosts.defined)
-        hosts.append()
-
-        aem.notifier.notify("Environment hosts", "Appended with success")
+        logger.lifecycle("""Printing hosts entries (append them to $hostsFile):""")
+        aem.environment.hosts.defined.forEach {
+            logger.quiet(it.text)
+        }
     }
 
     companion object {
