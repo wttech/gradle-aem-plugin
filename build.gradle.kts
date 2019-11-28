@@ -76,7 +76,7 @@ tasks {
     }
 
     register<DokkaTask>("dokkaJavadoc") {
-        outputFormat = "javadoc"
+        outputFormat = "html"
         outputDirectory = "$buildDir/javadoc"
     }
 
