@@ -1958,7 +1958,7 @@ Error while executing script *cpu.sh
 
 ##### Tailing to console
 
-By default, tailer prints all logs to console (with instance name in front and timestamp converted to the machines time zone). You can simply turn it of:
+By default, tailer prints all logs to console (with instance name in front and timestamp converted to the machines time zone). To turn it off use:
 
 `./gradlew instanceTail -Pinstance.tail.console=false`
 

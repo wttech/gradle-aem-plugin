@@ -1,10 +1,10 @@
 package com.cognifide.gradle.aem.instance.tail.io
 
-import com.cognifide.gradle.aem.instance.tail.InstanceLoggingInfo
+import com.cognifide.gradle.aem.instance.tail.InstanceLogInfo
 import com.cognifide.gradle.aem.instance.tail.Log
 
 class ConsolePrinter(
-    instance: InstanceLoggingInfo,
+    instance: InstanceLogInfo,
     private val log: (String) -> Unit
 ) {
     init {
@@ -14,6 +14,6 @@ class ConsolePrinter(
     fun dump(newLogs: List<Log>) = newLogs.forEach { log(it.logWithLocalTimestamp) }
 
     companion object {
-        fun devNull() = ConsolePrinter(InstanceLoggingInfo.default()) {}
+        fun none() = ConsolePrinter(InstanceLogInfo.none()) {}
     }
 }

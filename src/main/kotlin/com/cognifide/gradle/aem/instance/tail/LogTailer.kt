@@ -6,11 +6,11 @@ import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
 
 class LogTailer(
-    private val source: LogSource,
-    private val destination: LogDestination,
-    instance: InstanceLoggingInfo = InstanceLoggingInfo.default(),
-    private val logsAnalyzerChannel: SendChannel<Log>? = null,
-    private val printer: ConsolePrinter = ConsolePrinter.devNull()
+        private val source: LogSource,
+        private val destination: LogDestination,
+        instance: InstanceLogInfo = InstanceLogInfo.none(),
+        private val logsAnalyzerChannel: SendChannel<Log>? = null,
+        private val printer: ConsolePrinter = ConsolePrinter.none()
 ) {
 
     private val parser = LogParser(instance)

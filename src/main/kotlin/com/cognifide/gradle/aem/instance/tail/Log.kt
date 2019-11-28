@@ -8,12 +8,12 @@ import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
 class Log(
-    val instance: InstanceLoggingInfo = InstanceLoggingInfo.default(),
-    val text: String,
-    val timestamp: ZonedDateTime,
-    val level: String,
-    val source: String,
-    messageLines: List<String>
+        val instance: InstanceLogInfo = InstanceLogInfo.none(),
+        val text: String,
+        val timestamp: ZonedDateTime,
+        val level: String,
+        val source: String,
+        messageLines: List<String>
 ) {
 
     val checksum = Formats.calculateChecksum(text)
@@ -55,16 +55,13 @@ class Log(
 
         private const val LOG_PATTERN = "$TIMESTAMP\\s$LEVEL\\s$SOURCE\\s$MESSAGE"
 
-        private const val DATE_TIME_FORMAT = "dd.MM.yyyy HH:mm:ss.SSS"
-        private const val PRINT_DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss.SSS"
-
         private const val LOGS_SEPARATOR = "  "
 
-        private val DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern(DATE_TIME_FORMAT)
+        private val DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss.SSS")
 
-        private val PRINT_DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern(PRINT_DATE_TIME_FORMAT)
+        private val PRINT_DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")
 
-        fun create(instance: InstanceLoggingInfo, logLines: List<String>): Log {
+        fun create(instance: InstanceLogInfo, logLines: List<String>): Log {
             if (logLines.isEmpty() || logLines.first().isBlank()) {
                 throw InstanceTailerException("Passed log entry is empty!")
             }
@@ -90,9 +87,10 @@ class Log(
 
         fun isFirstLineOfLog(text: String) = matchLogLine(text) != null
 
-        fun parseTimestamp(timestamp: String, instance: InstanceLoggingInfo = InstanceLoggingInfo.default()): ZonedDateTime {
+        fun parseTimestamp(timestamp: String, instance: InstanceLogInfo = InstanceLogInfo.none()): ZonedDateTime {
             return LocalDateTime.parse(timestamp, DATE_TIME_FORMATTER).atZone(instance.zoneId)
-                    ?: throw InstanceTailerException("Invalid timestamp in log:\n$timestamp\n required format: $DATE_TIME_FORMAT")
+                    ?: throw InstanceTailerException("Invalid timestamp in log:\n$timestamp" +
+                            "\n required format: $DATE_TIME_FORMATTER")
         }
 
         private fun matchLogLine(text: String) = LOG_PATTERN.toRegex().matchEntire(text)

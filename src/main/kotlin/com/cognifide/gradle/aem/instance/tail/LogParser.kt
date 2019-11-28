@@ -3,7 +3,7 @@ package com.cognifide.gradle.aem.instance.tail
 import java.io.BufferedReader
 
 class LogParser(
-    private val instance: InstanceLoggingInfo = InstanceLoggingInfo.default()
+    private val instance: InstanceLogInfo = InstanceLogInfo.none()
 ) {
 
     fun parse(reader: BufferedReader): List<Log> {
