@@ -84,12 +84,16 @@ class Docker(val environment: Environment) {
         this.exitCodes = listOf(exitCode)
     }
 
+    fun runShell(image: String, command: String, exitCode: Int = 0) = run(image, "sh -c '$command'", exitCode)
+
     fun run(operation: String, image: String, command: String, exitCode: Int = 0) = run {
         this.operation = { operation }
         this.image = image
         this.command = command
         this.exitCodes = listOf(exitCode)
     }
+
+    fun runShell(operation: String, image: String, command: String, exitCode: Int = 0) = run(operation, image, "sh -c '$command'", exitCode)
 
     fun run(options: RunSpec.() -> Unit): DockerResult {
         val spec = RunSpec().apply(options)
