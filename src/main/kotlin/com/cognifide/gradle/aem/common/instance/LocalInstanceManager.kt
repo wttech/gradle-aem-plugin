@@ -40,7 +40,7 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
      */
     @get:JsonIgnore
     val sourceFiles: List<File>
-        get() = listOfNotNull(backupZip) + quickstart.files
+        get() = listOfNotNull(backupZip) + quickstart.files + install.files
 
     /**
      * Path from which extra files for local AEM instances will be copied.

@@ -3,11 +3,9 @@ package com.cognifide.gradle.aem.common.file.resolver
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.build.DependencyOptions
 import com.cognifide.gradle.aem.common.file.FileException
-import com.cognifide.gradle.aem.common.file.transfer.generic.UrlFileTransfer
 import com.cognifide.gradle.aem.common.file.transfer.http.HttpFileTransfer
 import com.cognifide.gradle.aem.common.file.transfer.sftp.SftpFileTransfer
 import com.cognifide.gradle.aem.common.file.transfer.smb.SmbFileTransfer
-import com.cognifide.gradle.aem.common.utils.Patterns
 import com.google.common.hash.HashCode
 import java.io.File
 import org.apache.commons.io.FilenameUtils
@@ -99,25 +97,24 @@ val downloadDir: File
     fun get(value: Any): FileResolution = try {
         useLocal(project.file(value))
     } catch (e: InvalidUserDataException) {
-        when {
-            value is String && Patterns.wildcard(value, UrlFileTransfer.PROTOCOL) -> download(value)
-            else -> resolve(value)
+        if (value !is String) {
+            throw FileException("Cannot resolve file using value: $value")
+        }
+
+        aem.fileTransfer.handling(value).run {
+            resolveFileUrl(value, parallelable) { download(value, it) }
         }
     }
 
     /**
      * Resolve file by dependency notation using defined Gradle repositories (Maven, Ivy etc).
      */
-    fun resolve(dependencyNotation: String): FileResolution = resolve(dependencyNotation as Any)
+    fun resolve(dependencyNotation: String): FileResolution = get(dependencyNotation)
 
     /**
      * Resolve file using defined Gradle repositories (Maven, Ivy etc).
      */
-    fun resolve(dependencyOptions: DependencyOptions.() -> Unit) = resolve(DependencyOptions.create(aem, dependencyOptions))
-
-    private fun resolve(dependencyNotation: Any): FileResolution = resolveFile(dependencyNotation, false) {
-        DependencyOptions.resolve(aem, dependencyNotation)
-    }
+    fun resolve(dependencyOptions: DependencyOptions.() -> Unit) = resolve(DependencyOptions().apply(dependencyOptions).notation)
 
     /**
      * Download files from same URL using automatically determined file transfer (HTTP, SFTP, SMB, URL, local file system).
@@ -246,8 +243,8 @@ val downloadDir: File
         return groupCurrent.resolve(id, resolver)
     }
 
-    private fun resolveFileUrl(url: String, resolver: (File) -> Unit): FileResolution {
-        return resolveFile(url) { File(it.dir, FilenameUtils.getName(url)).apply { resolver(this) } }
+    private fun resolveFileUrl(url: String, parallelable: Boolean = true, resolver: (File) -> Unit): FileResolution {
+        return resolveFile(url, parallelable) { File(it.dir, FilenameUtils.getName(url)).apply { resolver(this) } }
     }
 
     companion object {

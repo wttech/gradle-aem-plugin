@@ -7,15 +7,15 @@ import java.io.File
 
 class ResolveFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
 
-    private val configurations = aem.project.configurations
+    override val parallelable = false
 
-    private val dependencies = aem.project.dependencies
+    override val name = NAME
 
-    override val name: String
-        get() = NAME
+    override val protocols = listOf("$NAME://*")
 
-    override val protocols: List<String>
-        get() = listOf("$NAME://*")
+    override fun handles(fileUrl: String): Boolean {
+        return super.handles(fileUrl) || DependencyOptions.isNotation(fileUrl)
+    }
 
     @Suppress("TooGenericExceptionCaught")
     override fun downloadFrom(dirUrl: String, fileName: String, target: File) {

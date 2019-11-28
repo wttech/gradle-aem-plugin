@@ -110,7 +110,7 @@ open class InstanceSatisfy : PackageDeploy() {
             urls.forEachIndexed { index, url ->
                 val no = index + 1
                 val fileName = url.substringAfterLast("/").substringBeforeLast(".")
-                packageProvider.group("$GROUP_CMD.$no.$fileName") { download(url) }
+                packageProvider.group("$GROUP_CMD.$no.$fileName") { get(url) }
             }
         }
     }

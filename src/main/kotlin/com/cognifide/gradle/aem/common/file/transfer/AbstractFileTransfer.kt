@@ -10,6 +10,8 @@ abstract class AbstractFileTransfer(protected val aem: AemExtension) : FileTrans
 
     override var enabled: Boolean = true
 
+    override val parallelable = true
+
     override fun download(fileUrl: String) = download(fileUrl, aem.temporaryFile(FilenameUtils.getName(fileUrl)))
 
     override fun downloadFrom(dirUrl: String, fileName: String, target: File) {
