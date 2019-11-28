@@ -96,16 +96,22 @@ class Docker(val environment: Environment) {
         val operation = spec.operation()
 
         lateinit var result: DockerResult
-
-        aem.progress {
-            message = operation
-
+        val action = {
             try {
                 result = run(spec)
             } catch (e: DockerException) {
-                aem.logger.debug("Run operation '$operation' error", e)
+                logger.debug("Run operation '$operation' error", e)
                 throw EnvironmentException("Failed to run operation on Docker!\n$operation\n${e.message}")
             }
+        }
+
+        if (spec.indicator) {
+            aem.progress {
+                message = operation
+                action()
+            }
+        } else {
+            action()
         }
 
         return result

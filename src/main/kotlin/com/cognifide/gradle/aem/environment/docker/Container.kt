@@ -134,17 +134,24 @@ class Container(val docker: Docker, val name: String) {
         val operation = spec.operation()
 
         lateinit var result: DockerResult
-
-        aem.progressIndicator {
-            step = "Container '$name'"
-            message = operation
-
+        val action = {
             try {
                 result = exec(spec)
             } catch (e: DockerException) {
-                aem.logger.debug("Exec operation \"$operation\" error", e)
+                logger.debug("Exec operation \"$operation\" error", e)
                 throw ContainerException("Failed to perform operation \"$operation\" on container '$name'!\n${e.message}")
             }
+        }
+
+        if (spec.indicator) {
+            aem.progress {
+                step = "Container '$name'"
+                message = operation
+
+                action()
+            }
+        } else {
+            action()
         }
 
         return result
@@ -164,6 +171,12 @@ class Container(val docker: Docker, val name: String) {
     fun execShell(command: String, exitCode: Int? = 0) = exec("sh -c '$command'", exitCode)
 
     fun execShell(operation: String, command: String, exitCode: Int? = 0) = exec(operation, "sh -c '$command'", exitCode)
+
+    fun execShellQuiet(command: String, exitCode: Int? = 0) = exec {
+        this.indicator = false
+        this.command = "sh -c '$command'"
+        this.exitCodes = exitCode?.run { listOf(this) } ?: listOf()
+    }
 
     fun ensureDir(vararg paths: String) = paths.forEach { path ->
         execShell("Ensuring directory at path '$path'", "mkdir -p $path")
@@ -194,13 +207,11 @@ class Container(val docker: Docker, val name: String) {
         return DockerProcess.execSpec(customSpec)
     }
 
-    // TODO make it non-interactive / no-progress logger / more fast
     fun lock(name: String) {
-        execShell("Locking state '$name'", "mkdir -p $LOCK_ROOT && touch $LOCK_ROOT/$name")
+        execShellQuiet("mkdir -p $LOCK_ROOT && touch $LOCK_ROOT/$name")
     }
 
-    // TODO make it non-interactive / no-progress logger / more fast
-    fun isLocked(name: String): Boolean = execShell("Checking lock state '$name'", "test -f $LOCK_ROOT/$name", null).exitCode == 0
+    fun isLocked(name: String): Boolean = execShellQuiet("test -f $LOCK_ROOT/$name", null).exitCode == 0
 
     companion object {
         const val LOCK_ROOT = "/var/gap/lock"

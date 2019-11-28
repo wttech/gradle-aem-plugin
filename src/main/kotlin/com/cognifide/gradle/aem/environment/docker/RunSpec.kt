@@ -42,4 +42,6 @@ class RunSpec : DockerDefaultSpec() {
     }
 
     fun operation(text: String) = operation { text }
+
+    var indicator = true
 }
