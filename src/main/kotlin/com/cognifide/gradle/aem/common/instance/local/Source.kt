@@ -21,7 +21,8 @@ enum class Source {
     BACKUP_ANY,
 
     /**
-     * Force using backup available at remote source (available by using 'localInstance.backup.[downloadUrl|uploadUrl]').
+     * Force using backup available at remote source (available by using 'localInstance.backup.downloadUrl'
+     * or 'localInstance.backup.uploadUrl').
      */
     BACKUP_REMOTE,
 

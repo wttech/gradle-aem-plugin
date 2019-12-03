@@ -19,11 +19,11 @@ import org.gradle.api.tasks.Internal
  * File downloader with groups supporting files from multiple sources: local and remote (SFTP, SMB, HTTP).
  */
 abstract class Resolver<G : FileGroup>(
-        @get:Internal
-        val aem: AemExtension,
+    @get:Internal
+    val aem: AemExtension,
 
-        @get:Internal
-        val downloadDir: File
+    @get:Internal
+    val downloadDir: File
 
 ) {
     private val project = aem.project
