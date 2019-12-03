@@ -14,6 +14,9 @@ class Docker(val environment: Environment) {
     val running: Boolean
         get() = stack.running && containers.running
 
+    val up: Boolean
+        get() = stack.running && containers.up
+
     /**
      * Represents Docker stack named 'aem' and provides API for manipulating it.
      */
@@ -81,6 +84,8 @@ class Docker(val environment: Environment) {
         this.exitCodes = listOf(exitCode)
     }
 
+    fun runShell(image: String, command: String, exitCode: Int = 0) = run(image, "sh -c '$command'", exitCode)
+
     fun run(operation: String, image: String, command: String, exitCode: Int = 0) = run {
         this.operation = { operation }
         this.image = image
@@ -88,21 +93,29 @@ class Docker(val environment: Environment) {
         this.exitCodes = listOf(exitCode)
     }
 
+    fun runShell(operation: String, image: String, command: String, exitCode: Int = 0) = run(operation, image, "sh -c '$command'", exitCode)
+
     fun run(options: RunSpec.() -> Unit): DockerResult {
         val spec = RunSpec().apply(options)
         val operation = spec.operation()
 
         lateinit var result: DockerResult
-
-        aem.progress {
-            message = operation
-
+        val action = {
             try {
                 result = run(spec)
             } catch (e: DockerException) {
-                aem.logger.debug("Run operation '$operation' error", e)
+                logger.debug("Run operation '$operation' error", e)
                 throw EnvironmentException("Failed to run operation on Docker!\n$operation\n${e.message}")
             }
+        }
+
+        if (spec.indicator) {
+            aem.progress {
+                message = operation
+                action()
+            }
+        } else {
+            action()
         }
 
         return result

@@ -219,7 +219,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.cognifide.gradle:aem-plugin:9.0.9")
+    implementation("com.cognifide.gradle:aem-plugin:9.1.0")
 }
 ```
 
@@ -1955,6 +1955,12 @@ Sample content of  *incidentFilter.txt* file, which holds a fragments of log ent
 Error while executing script *diskusage.sh
 Error while executing script *cpu.sh
 ```
+
+##### Tailing to console
+
+By default, tailer prints all logs to console (with instance name in front and timestamp converted to the machines time zone). To turn it off use:
+
+`./gradlew instanceTail -Pinstance.tail.console=false`
 
 ##### Tailing multiple instances
 

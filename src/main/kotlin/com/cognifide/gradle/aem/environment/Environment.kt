@@ -42,12 +42,16 @@ class Environment(@JsonIgnore val aem: AemExtension) : Serializable {
     val running: Boolean
         get() = docker.running
 
+    @get:JsonIgnore
+    val up: Boolean
+        get() = docker.up
+
     fun resolve() {
         docker.containers.resolve()
     }
 
     fun up() {
-        if (running) {
+        if (up) {
             aem.logger.info("Environment is already running!")
             return
         }
@@ -85,8 +89,8 @@ class Environment(@JsonIgnore val aem: AemExtension) : Serializable {
     }
 
     fun check(verbose: Boolean = true): List<HealthStatus> {
-        if (!running) {
-            throw EnvironmentException("Cannot check environment as it is not running!")
+        if (!up) {
+            throw EnvironmentException("Cannot check environment as it is not up!")
         }
 
         aem.logger.info("Checking $this")
@@ -95,8 +99,8 @@ class Environment(@JsonIgnore val aem: AemExtension) : Serializable {
     }
 
     fun reload() {
-        if (!running) {
-            throw EnvironmentException("Cannot reload environment as it is not running!")
+        if (!up) {
+            throw EnvironmentException("Cannot reload environment as it is not up!")
         }
 
         aem.logger.info("Reloading $this")
@@ -130,7 +134,7 @@ class Environment(@JsonIgnore val aem: AemExtension) : Serializable {
     }
 
     override fun toString(): String {
-        return "Environment(root=$rootDir,running=$running)"
+        return "Environment(root=$rootDir, up=$up)"
     }
 
     companion object {

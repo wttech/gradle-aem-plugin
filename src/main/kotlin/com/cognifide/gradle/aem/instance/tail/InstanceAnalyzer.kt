@@ -36,7 +36,7 @@ class InstanceAnalyzer(
                     incidentCannonade.add(log)
                 }
 
-                if (incidentCannonade.lastOrNull()?.isOlderThan(instance, tailer.incidentDelay) == true) {
+                if (incidentCannonade.lastOrNull()?.isOlderThan(tailer.incidentDelay) == true) {
                     notificationChannel.send(LogChunk(instance, incidentCannonade))
                     incidentCannonade = mutableListOf()
                 }

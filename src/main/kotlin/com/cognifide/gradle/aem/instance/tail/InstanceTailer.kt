@@ -4,17 +4,18 @@ import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.utils.Formats
+import com.cognifide.gradle.aem.instance.tail.io.ConsolePrinter
 import com.cognifide.gradle.aem.instance.tail.io.FileDestination
 import com.cognifide.gradle.aem.instance.tail.io.LogFiles
 import com.cognifide.gradle.aem.instance.tail.io.UrlSource
-import java.io.File
-import java.nio.file.Paths
-import kotlin.math.max
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import java.io.File
+import java.nio.file.Paths
+import kotlin.math.max
 
 class InstanceTailer(val aem: AemExtension) {
 
@@ -60,7 +61,7 @@ class InstanceTailer(val aem: AemExtension) {
                 ?: aem.props.long("instance.tail.incidentOld")
                 ?: INCIDENT_OLD_DEFAULT
 
-        isLevel(levels) && !isOlderThan(instance, oldMillis) && !logFilter.isExcluded(this)
+        isLevel(levels) && !isOlderThan(oldMillis) && !logFilter.isExcluded(this)
     }
 
     /**
@@ -68,8 +69,15 @@ class InstanceTailer(val aem: AemExtension) {
      *
      * Changes in that file are automatically considered (tailer restart is not required).
      */
-    var incidentFilter: File = aem.props.string("instance.tail.incidentFilter")?.let { aem.project.file(it) }
-            ?: File(aem.configCommonDir, "instanceTail/incidentFilter.txt")
+    var incidentFilter: File =
+            aem.props.string("instance.tail.incidentFilter")
+                    ?.let { aem.project.file(it) }
+                    ?: File(aem.configCommonDir, "instanceTail/incidentFilter.txt")
+
+    /**
+     * Indicates if tailer will print all logs to console.
+     */
+    var console = aem.props.boolean("instance.tail.console") ?: true
 
     /**
      * Time window in which exceptions will be aggregated and reported as single incident.
@@ -107,6 +115,7 @@ class InstanceTailer(val aem: AemExtension) {
 
     fun tail() {
         checkStartLock()
+        initIncidentFilter()
 
         runBlocking {
             startAll().forEach { tailer ->
@@ -128,6 +137,11 @@ class InstanceTailer(val aem: AemExtension) {
         logFiles.lock()
     }
 
+    private fun initIncidentFilter() = incidentFilter.run {
+        parentFile.mkdirs()
+        createNewFile()
+    }
+
     private fun startAll(): List<LogTailer> {
         val notificationChannel = Channel<LogChunk>(Channel.UNLIMITED)
         val logNotifier = LogNotifier(notificationChannel, aem.notifier, logFiles)
@@ -147,7 +161,13 @@ class InstanceTailer(val aem: AemExtension) {
         val logFile = logFiles.main(instance.name)
         aem.logger.lifecycle("Tailing logs to file: $logFile")
 
-        return LogTailer(source, destination, logAnalyzerChannel)
+        return LogTailer(source, destination, InstanceLogInfo.of(instance), logAnalyzerChannel, consolePrinter(instance))
+    }
+
+    private fun consolePrinter(instance: Instance) = if (console) {
+        ConsolePrinter(InstanceLogInfo.of(instance), { aem.logger.lifecycle(it) })
+    } else {
+        ConsolePrinter.none()
     }
 
     companion object {

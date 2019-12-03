@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.common.build
 
 import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.common.utils.Patterns
 import com.cognifide.gradle.aem.common.utils.Utils
 import org.gradle.api.artifacts.Dependency
 import java.io.File
@@ -39,15 +40,17 @@ class DependencyOptions {
         this.ext = ext
     }
 
+    val notation: String get() = listOfNotNull(group, name, version, classifier).joinToString(":") +
+            classifier?.run { "@$this" }.orEmpty()
+
     companion object {
 
-        @Suppress("TooGenericExceptionCaught")
-        fun isValid(aem: AemExtension, notation: Any): Boolean = try {
-            create(aem, notation)
-            true
-        } catch (e: Exception) {
-            false
-        }
+        private val NOTATION_PATTERNS = listOf(
+                "*:*:*@*", // TODO regex [\w-_.]+
+                "*:*:*"
+        )
+
+        fun isNotation(text: String) = Patterns.wildcard(text, NOTATION_PATTERNS)
 
         fun create(aem: AemExtension, notation: Any): Dependency {
             return aem.project.dependencies.create(notation)

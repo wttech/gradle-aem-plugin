@@ -2,7 +2,6 @@ package com.cognifide.gradle.aem.environment.docker
 
 import com.cognifide.gradle.aem.common.build.Behaviors
 import com.cognifide.gradle.aem.common.utils.Formats
-import com.cognifide.gradle.aem.environment.EnvironmentException
 import com.cognifide.gradle.aem.environment.docker.container.ContainerException
 import com.cognifide.gradle.aem.environment.docker.container.DevOptions
 import com.cognifide.gradle.aem.environment.docker.container.HostFileManager
@@ -89,6 +88,9 @@ class Container(val docker: Docker, val name: String) {
             }
         }
 
+    val up: Boolean
+        get() = running && isLocked(LOCK_UP)
+
     var awaitRetry = aem.retry { afterSecond(aem.props.long("environment.docker.container.awaitRetry") ?: 30) }
 
     fun await() {
@@ -108,7 +110,7 @@ class Container(val docker: Docker, val name: String) {
                         add("* using command: 'docker stack ps ${docker.stack.internalName} --no-trunc'")
                         add("* restarting Docker")
 
-                        throw EnvironmentException(joinToString("\n"))
+                        throw ContainerException(joinToString("\n"))
                     }
                 }
 
@@ -119,8 +121,8 @@ class Container(val docker: Docker, val name: String) {
 
     fun up() {
         await()
-
         upAction()
+        lock(LOCK_UP)
     }
 
     fun reload() {
@@ -132,36 +134,49 @@ class Container(val docker: Docker, val name: String) {
         val operation = spec.operation()
 
         lateinit var result: DockerResult
-
-        aem.progressIndicator {
-            step = "Container '$name'"
-            message = operation
-
+        val action = {
             try {
                 result = exec(spec)
             } catch (e: DockerException) {
-                aem.logger.debug("Exec operation \"$operation\" error", e)
-                throw EnvironmentException("Failed to perform operation \"$operation\" on container '$name'!\n${e.message}")
+                logger.debug("Exec operation \"$operation\" error", e)
+                throw ContainerException("Failed to perform operation \"$operation\" on container '$name'!\n${e.message}")
             }
+        }
+
+        if (spec.indicator) {
+            aem.progress {
+                step = "Container '$name'"
+                message = operation
+
+                action()
+            }
+        } else {
+            action()
         }
 
         return result
     }
 
-    fun exec(command: String, exitCode: Int = 0) = exec {
+    fun exec(command: String, exitCode: Int? = 0) = exec {
         this.command = command
-        this.exitCodes = listOf(exitCode)
+        this.exitCodes = exitCode?.run { listOf(this) } ?: listOf()
     }
 
-    fun exec(operation: String, command: String, exitCode: Int = 0) = exec {
+    fun exec(operation: String, command: String, exitCode: Int? = 0) = exec {
         this.operation = { operation }
         this.command = command
-        this.exitCodes = listOf(exitCode)
+        this.exitCodes = exitCode?.run { listOf(this) } ?: listOf()
     }
 
-    fun execShell(command: String, exitCode: Int = 0) = exec("sh -c '$command'", exitCode)
+    fun execShell(command: String, exitCode: Int? = 0) = exec("sh -c '$command'", exitCode)
 
-    fun execShell(operation: String, command: String, exitCode: Int = 0) = exec(operation, "sh -c '$command'", exitCode)
+    fun execShell(operation: String, command: String, exitCode: Int? = 0) = exec(operation, "sh -c '$command'", exitCode)
+
+    fun execShellQuiet(command: String, exitCode: Int? = 0) = exec {
+        this.indicator = false
+        this.command = "sh -c '$command'"
+        this.exitCodes = exitCode?.run { listOf(this) } ?: listOf()
+    }
 
     fun ensureDir(vararg paths: String) = paths.forEach { path ->
         execShell("Ensuring directory at path '$path'", "mkdir -p $path")
@@ -190,6 +205,18 @@ class Container(val docker: Docker, val name: String) {
         logger.info("Executing command '${customSpec.fullCommand}' for Docker container '$name'")
 
         return DockerProcess.execSpec(customSpec)
+    }
+
+    fun lock(name: String) {
+        execShellQuiet("mkdir -p $LOCK_ROOT && touch $LOCK_ROOT/$name")
+    }
+
+    fun isLocked(name: String): Boolean = execShellQuiet("test -f $LOCK_ROOT/$name", null).exitCode == 0
+
+    companion object {
+        const val LOCK_ROOT = "/var/gap/lock"
+
+        const val LOCK_UP = "up"
     }
 }
 
