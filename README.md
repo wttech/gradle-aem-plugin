@@ -219,7 +219,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.cognifide.gradle:aem-plugin:9.1.1")
+    implementation("com.cognifide.gradle:aem-plugin:9.1.2")
 }
 ```
 
@@ -1815,7 +1815,7 @@ aem {
                         osgiFramework.stopBundle("org.apache.sling.jcr.webdav")
                         osgiFramework.stopBundle("com.adobe.granite.crxde-lite")
 
-                        instanceActions.awaitUp() // include above in property: 'instance.awaitUp.bundles.symbolicNamesIgnored'
+                        awaitUp() // include above in property: 'instance.awaitUp.bundles.symbolicNamesIgnored'
                     }
                 }
             }

@@ -22,6 +22,8 @@ open class InstanceUp : LocalInstanceTask() {
 
     @TaskAction
     fun up() {
+        aem.localInstanceManager.resolveSourceFiles()
+
         aem.progress(instances.size) {
             aem.parallel.with(instances) {
                 increment("Starting instance '$name'") { up() }

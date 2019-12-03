@@ -15,6 +15,8 @@ import java.util.concurrent.TimeUnit
 
 class LocalInstanceManager(private val aem: AemExtension) : Serializable {
 
+    private val logger = aem.logger
+
     /**
      * Path in which local AEM instances will be stored.
      */
@@ -28,6 +30,11 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
 
     fun source(name: String) {
         source = Source.of(name)
+    }
+
+    fun resolveSourceFiles() {
+        logger.info("Resolving local instance files")
+        logger.info("Resolved local instance files:\n${sourceFiles.joinToString("\n")}")
     }
 
     /**
@@ -145,7 +152,7 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
     }
 
     fun createFromBackup(instances: List<LocalInstance>, backupZip: File) {
-        aem.logger.info("Restoring instances from backup ZIP '$backupZip' to directory '$rootDir'")
+        logger.info("Restoring instances from backup ZIP '$backupZip' to directory '$rootDir'")
 
         GFileUtils.mkdirs(rootDir)
 
@@ -159,7 +166,7 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
 
         val missingInstances = instances.filter { !it.created }
         if (missingInstances.isNotEmpty()) {
-            aem.logger.info("Backup ZIP '$backupZip' does not contain all instances. Creating from scratch: ${missingInstances.names}")
+            logger.info("Backup ZIP '$backupZip' does not contain all instances. Creating from scratch: ${missingInstances.names}")
 
             createFromScratch(missingInstances)
         }
