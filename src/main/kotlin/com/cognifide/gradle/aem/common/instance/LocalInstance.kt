@@ -350,6 +350,7 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
         }
     }
 
+    @get:JsonIgnore
     val running: Boolean get() = created && checkStatus() == Status.RUNNING
 
     fun init() {
