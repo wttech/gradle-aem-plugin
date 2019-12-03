@@ -121,19 +121,22 @@ interface FileTransfer {
         return stat(dirUrl, fileName)
     }
 
-    private fun splitFileUrl(fileUrl: String): Pair<String, String> = when {
-        fileUrl.contains("://") -> {
-            val (protocol, path) = fileUrl.split("://")
-            val dirUrl = path.takeIf { it.contains("/") }?.substringBeforeLast("/").orEmpty()
-            val fileName = path.substringAfterLast("/")
+    companion object {
 
-            ("$protocol://$dirUrl") to fileName
-        }
-        else -> {
-            val dirUrl = fileUrl.substringBeforeLast("/")
-            val fileName = fileUrl.substringAfterLast("/")
+         fun splitFileUrl(fileUrl: String): Pair<String, String> = when {
+            fileUrl.contains("://") -> {
+                val (protocol, path) = fileUrl.split("://")
+                val dirUrl = path.takeIf { it.contains("/") }?.substringBeforeLast("/").orEmpty()
+                val fileName = path.substringAfterLast("/")
 
-            dirUrl to fileName
+                ("$protocol://$dirUrl") to fileName
+            }
+            else -> {
+                val dirUrl = fileUrl.substringBeforeLast("/")
+                val fileName = fileUrl.substringAfterLast("/")
+
+                dirUrl to fileName
+            }
         }
     }
 }

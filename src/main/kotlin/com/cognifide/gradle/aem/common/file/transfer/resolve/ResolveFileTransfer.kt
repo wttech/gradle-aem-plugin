@@ -17,17 +17,20 @@ class ResolveFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
         return super.handles(fileUrl) || DependencyOptions.isNotation(fileUrl)
     }
 
-    @Suppress("TooGenericExceptionCaught")
     override fun downloadFrom(dirUrl: String, fileName: String, target: File) {
-        val notation = dirUrl.substringAfter("://")
-
-        try {
-            DependencyOptions.resolve(aem, notation).apply {
-                inputStream().use { downloader().download(length(), it, target) }
-            }
-        } catch (e: Exception) {
-            throw ResolveFileException("Cannot resolve '$notation' to file '$target'. Cause: ${e.message}", e)
+        resolve(dirUrl).apply {
+            inputStream().use { downloader().download(length(), it, target) }
         }
+    }
+
+    @Suppress("TooGenericExceptionCaught")
+    fun resolve(value: Any) = try {
+        DependencyOptions.resolve(aem, when (value) {
+            is String -> value.substringAfter("://")
+            else -> value
+        })
+    } catch (e: Exception) {
+        throw ResolveFileException("Cannot resolve value '$value'. Cause: ${e.message}", e)
     }
 
     companion object {
