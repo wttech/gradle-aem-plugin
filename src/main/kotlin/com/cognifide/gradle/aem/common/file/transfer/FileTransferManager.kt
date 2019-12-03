@@ -75,7 +75,20 @@ class FileTransferManager(private val aem: AemExtension) : FileTransfer {
     /**
      * Downloads file of given name from directory at specified URL.
      */
-    override fun downloadFrom(dirUrl: String, fileName: String, target: File) {
+    override fun downloadFrom(dirUrl: String, fileName: String, target: File) = downloadUsing(handling(dirUrl), dirUrl, fileName, target)
+
+    /**
+     * Downloads file from specified URL using dedicated transfer type.
+     */
+    fun downloadUsing(transfer: FileTransfer, fileUrl: String, target: File) {
+        val (dirUrl, fileName) = FileTransfer.splitFileUrl(fileUrl)
+        return downloadUsing(transfer, dirUrl, fileName, target)
+    }
+
+    /**
+     * Downloads file of given name from directory at specified URL using dedicated transfer type.
+     */
+    fun downloadUsing(transfer: FileTransfer, dirUrl: String, fileName: String, target: File) {
         if (target.exists()) {
             aem.logger.info("Downloading file from URL '$dirUrl/$fileName' to '$target' skipped as of it already exists.")
             return
@@ -88,14 +101,27 @@ class FileTransferManager(private val aem: AemExtension) : FileTransfer {
             tmp.delete()
         }
 
-        handling(dirUrl).downloadFrom(dirUrl, fileName, tmp)
+        transfer.downloadFrom(dirUrl, fileName, tmp)
         tmp.renameTo(target)
     }
 
     /**
      * Uploads file to directory at specified URL and set given name.
      */
-    override fun uploadTo(dirUrl: String, fileName: String, source: File) {
+    override fun uploadTo(dirUrl: String, fileName: String, source: File) = uploadUsing(handling(dirUrl), dirUrl, fileName, source)
+
+    /**
+     * Uploads file to file at specified URL using dedicated transfer type.
+     */
+    fun uploadUsing(transfer: FileTransfer, fileUrl: String, source: File) {
+        val (dirUrl, fileName) = FileTransfer.splitFileUrl(fileUrl)
+        return uploadUsing(transfer, dirUrl, fileName, source)
+    }
+
+    /**
+     * Uploads file to directory at specified URL and set given name using dedicated transfer type.
+     */
+    fun uploadUsing(transfer: FileTransfer, dirUrl: String, fileName: String, source: File) {
         val fileUrl = "$dirUrl/$fileName"
 
         try {
@@ -107,7 +133,7 @@ class FileTransferManager(private val aem: AemExtension) : FileTransfer {
             aem.logger.debug("Cannot check status of uploaded file at URL '$fileUrl'", e)
         }
 
-        handling(dirUrl).uploadTo(dirUrl, fileName, source)
+        transfer.uploadTo(dirUrl, fileName, source)
     }
 
     /**

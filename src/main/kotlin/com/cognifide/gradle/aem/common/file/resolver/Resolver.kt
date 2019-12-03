@@ -4,6 +4,7 @@ import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.build.DependencyOptions
 import com.cognifide.gradle.aem.common.file.FileException
 import com.cognifide.gradle.aem.common.file.transfer.http.HttpFileTransfer
+import com.cognifide.gradle.aem.common.file.transfer.resolve.ResolveFileTransfer
 import com.cognifide.gradle.aem.common.file.transfer.sftp.SftpFileTransfer
 import com.cognifide.gradle.aem.common.file.transfer.smb.SmbFileTransfer
 import com.google.common.hash.HashCode
@@ -18,11 +19,11 @@ import org.gradle.api.tasks.Internal
  * File downloader with groups supporting files from multiple sources: local and remote (SFTP, SMB, HTTP).
  */
 abstract class Resolver<G : FileGroup>(
-    @get:Internal
-val aem: AemExtension,
+        @get:Internal
+        val aem: AemExtension,
 
-    @get:Internal
-val downloadDir: File
+        @get:Internal
+        val downloadDir: File
 
 ) {
     private val project = aem.project
@@ -92,24 +93,34 @@ val downloadDir: File
     }
 
     /**
-     * Resolve file in case of various type of specified value: file, url to file, dependency notation.
+     * Resolve file in case of various type of specified value: file, url to file, dependency notation, project dependency.
      */
-    fun get(value: Any): FileResolution = try {
-        useLocal(project.file(value))
-    } catch (e: InvalidUserDataException) {
-        if (value !is String) {
-            throw FileException("Cannot resolve file using value: $value")
-        }
-
-        aem.fileTransfer.handling(value).run {
-            resolveFileUrl(value, parallelable) { download(value, it) }
+    @Suppress("NestedBlockDepth")
+    fun get(value: Any): FileResolution = aem.fileTransfer.run {
+        try {
+            // local file
+            useLocal(project.file(value))
+        } catch (e: InvalidUserDataException) {
+            // files resolved using protocols
+            if (value is String) {
+                handling(value).run {
+                    if (this is ResolveFileTransfer) { // support for special protocol 'resolve'
+                        useLocal(resolve.resolve(value), parallelable)
+                    } else { // other protocols like 'http', 'sftp', 'smb'
+                        resolveFileUrl(value, parallelable) { downloadUsing(this, value, it) }
+                    }
+                }
+            } else {
+                // cross project / build dependencies
+                useLocal(resolve.resolve(value), false)
+            }
         }
     }
 
     /**
      * Resolve file by dependency notation using defined Gradle repositories (Maven, Ivy etc).
      */
-    fun resolve(dependencyNotation: String): FileResolution = get(dependencyNotation)
+    fun resolve(dependencyNotation: String): FileResolution = get(dependencyNotation as Any)
 
     /**
      * Resolve file using defined Gradle repositories (Maven, Ivy etc).
@@ -124,8 +135,8 @@ val downloadDir: File
     /**
      * Download files from same URL using automatically determined file transfer (HTTP, SFTP, SMB, URL, local file system).
      */
-    fun download(urlDir: String, fileNames: Iterable<String>) = fileNames.map {
-        fileName -> download("$urlDir/$fileName")
+    fun download(urlDir: String, fileNames: Iterable<String>) = fileNames.map { fileName ->
+        download("$urlDir/$fileName")
     }
 
     /**
@@ -138,7 +149,7 @@ val downloadDir: File
      * To use many remote servers with different settings, simply use dedicated methods 'download[Http/Sftp/Smb]'
      * when declaring each file to be downloaded.
      */
-    fun download(url: String): FileResolution = resolveFileUrl(url) { aem.fileTransfer.download(url, it) }
+    fun download(url: String): FileResolution = get(url as Any)
 
     /**
      * Download file using HTTP file transfer with custom settings (like basic auth credentials).
@@ -146,7 +157,7 @@ val downloadDir: File
      * Use only when using more than one remote HTTP server to download files.
      */
     fun downloadHttp(url: String, options: HttpFileTransfer.() -> Unit): FileResolution {
-        return resolveFileUrl(url) { aem.httpFile { options(); download(url, it) } }
+        return resolveFileUrl(url, true) { aem.httpFile { options(); download(url, it) } }
     }
 
     /**
@@ -155,7 +166,7 @@ val downloadDir: File
      * Use only when using more than one remote SFTP server to download files.
      */
     fun downloadSftp(url: String, options: SftpFileTransfer.() -> Unit): FileResolution {
-        return resolveFileUrl(url) { aem.sftpFile { options(); download(url, it) } }
+        return resolveFileUrl(url, true) { aem.sftpFile { options(); download(url, it) } }
     }
 
     /**
@@ -164,7 +175,7 @@ val downloadDir: File
      * Use only when using more than one remote SMB server to download files.
      */
     fun downloadSmb(url: String, options: SmbFileTransfer.() -> Unit): FileResolution {
-        return resolveFileUrl(url) { aem.smbFile { options(); download(url, it) } }
+        return resolveFileUrl(url, true) { aem.smbFile { options(); download(url, it) } }
     }
 
     /**
@@ -175,13 +186,13 @@ val downloadDir: File
     /**
      * Use local file directly (without copying).
      */
-    fun useLocal(sourceFile: File): FileResolution = resolveFile(sourceFile.absolutePath) { sourceFile }
+    fun useLocal(sourceFile: File): FileResolution = useLocal(sourceFile, true)
 
     /**
      * Use local file from directory or file when not found any.
      */
     fun useLocalBy(dir: Any, filePatterns: Iterable<String>, selector: (Iterable<File>).() -> File?): FileResolution? {
-        return resolveFile(listOf(dir, filePatterns)) {
+        return resolveFile(listOf(dir, filePatterns), true) {
             aem.project.fileTree(dir) { it.include(filePatterns) }.run(selector)
                     ?: throw FileException("Cannot find any local file under directory '$dir' matching file pattern '$filePatterns'!")
         }
@@ -224,6 +235,13 @@ val downloadDir: File
 
     operator fun String.invoke(value: Any) = group(this) { get(value) }
 
+    operator fun String.invoke(url: String, vararg fileNames: String) = group(this) {
+        when {
+            fileNames.isEmpty() -> download(url)
+            else -> download(url, fileNames.asIterable())
+        }
+    }
+
     operator fun String.invoke(configurer: Resolver<G>.() -> Unit) = group(this, configurer)
 
     /**
@@ -233,19 +251,20 @@ val downloadDir: File
 
     abstract fun createGroup(name: String): G
 
-    private fun resolveFile(hash: Any, parallelable: Boolean = true, resolver: (FileResolution) -> File): FileResolution {
+    private fun resolveFile(hash: Any, parallel: Boolean, resolver: (FileResolution) -> File): FileResolution {
         val id = HashCode.fromInt(HashCodeBuilder().append(hash).toHashCode()).toString()
-
-        if (!parallelable) {
+        if (!parallel) {
             groupCurrent.parallelable = false
         }
 
         return groupCurrent.resolve(id, resolver)
     }
 
-    private fun resolveFileUrl(url: String, parallelable: Boolean = true, resolver: (File) -> Unit): FileResolution {
-        return resolveFile(url, parallelable) { File(it.dir, FilenameUtils.getName(url)).apply { resolver(this) } }
+    private fun resolveFileUrl(url: String, parallel: Boolean, resolver: (File) -> Unit): FileResolution {
+        return resolveFile(url, parallel) { File(it.dir, FilenameUtils.getName(url)).apply { resolver(this) } }
     }
+
+    private fun useLocal(sourceFile: File, parallel: Boolean) = resolveFile(sourceFile.absolutePath, parallel) { sourceFile }
 
     companion object {
         const val GROUP_DEFAULT = "default"
