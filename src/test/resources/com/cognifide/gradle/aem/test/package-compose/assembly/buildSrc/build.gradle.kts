@@ -4,6 +4,6 @@ repositories {
 }
 
 dependencies {
-    implementation("com.cognifide.gradle:aem-plugin:9.1.2")
+    implementation("com.cognifide.gradle:aem-plugin:9.1.3")
     implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.3.60")
 }

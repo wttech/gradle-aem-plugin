@@ -19,18 +19,24 @@ open class InstanceDown : LocalInstanceTask() {
 
     @TaskAction
     fun down() {
-        aem.progress(instances.size) {
-            aem.parallel.with(instances) {
+        val upInstances = instances.filter { it.running }
+        if (upInstances.isEmpty()) {
+            logger.info("No instance(s) to turn off")
+            return
+        }
+
+        aem.progress(upInstances.size) {
+            aem.parallel.with(upInstances) {
                 increment("Stopping instance '$name'") { down() }
             }
         }
 
         aem.instanceActions.awaitDown {
-            instances = this@InstanceDown.instances
+            instances = upInstances
             awaitDownOptions()
         }
 
-        aem.notifier.notify("Instance(s) down", "Which: ${instances.names}")
+        aem.notifier.notify("Instance(s) down", "Which: ${upInstances.names}")
     }
 
     companion object {
