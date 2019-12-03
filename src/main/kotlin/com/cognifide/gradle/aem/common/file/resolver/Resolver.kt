@@ -105,14 +105,14 @@ abstract class Resolver<G : FileGroup>(
             if (value is String) {
                 handling(value).run {
                     if (this is ResolveFileTransfer) { // support for special protocol 'resolve'
-                        useLocal(resolve.resolve(value), parallelable)
+                        resolveFile(value, parallelable) { resolve.resolve(value) }
                     } else { // other protocols like 'http', 'sftp', 'smb'
                         resolveFileUrl(value, parallelable) { downloadUsing(this, value, it) }
                     }
                 }
             } else {
                 // cross project / build dependencies
-                useLocal(resolve.resolve(value), false)
+                resolveFile(value, false) { resolve.resolve(value) }
             }
         }
     }
