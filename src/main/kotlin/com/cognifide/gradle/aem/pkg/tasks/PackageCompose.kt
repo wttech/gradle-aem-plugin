@@ -315,7 +315,7 @@ open class PackageCompose : ZipTask() {
         ))
     }
 
-    fun fromJar(dependencyNotation: String, installPath: String? = null, vaultFilter: Boolean? = null) {
+    fun fromJar(dependencyNotation: Any, installPath: String? = null, vaultFilter: Boolean? = null) {
         val dependency = DependencyOptions.create(aem, dependencyNotation)
         bundleDependencies.add(BundleDependency(aem, dependency,
                 installPath ?: this.bundlePath,
@@ -355,7 +355,11 @@ open class PackageCompose : ZipTask() {
     }
 
     fun fromZip(dependencyNotation: String, storagePath: String? = null, vaultFilter: Boolean? = null) {
-        val dependency = DependencyOptions.create(aem, StringUtils.appendIfMissing(dependencyNotation, "@zip"))
+        fromZip(StringUtils.appendIfMissing(dependencyNotation, "@zip") as Any, storagePath, vaultFilter)
+    }
+
+    fun fromZip(dependencyNotation: Any, storagePath: String? = null, vaultFilter: Boolean? = null) {
+        val dependency = DependencyOptions.create(aem, dependencyNotation)
         packageDependencies.add(PackageDependency(aem, dependency,
                 storagePath ?: packagePath,
                 vaultFilter ?: mergingOptions.vaultFilters
