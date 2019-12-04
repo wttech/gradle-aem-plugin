@@ -104,6 +104,8 @@ class AemTaskFacade(val aem: AemExtension) : Serializable {
 
     fun instanceRestart(configurer: InstanceRestart.() -> Unit) = named(InstanceRestart.NAME, configurer)
 
+    val instanceSatisfy get() = get<InstanceSatisfy>(InstanceSatisfy.NAME)
+
     fun instanceSatisfy(configurer: InstanceSatisfy.() -> Unit) = named(InstanceSatisfy.NAME, configurer)
 
     fun instanceSetup(configurer: InstanceSetup.() -> Unit) = named(InstanceSetup.NAME, configurer)

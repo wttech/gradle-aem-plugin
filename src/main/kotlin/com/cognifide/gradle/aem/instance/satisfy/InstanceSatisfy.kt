@@ -119,6 +119,11 @@ open class InstanceSatisfy : PackageDeploy() {
         packageProvider.apply(configurer)
     }
 
+    fun resolvePackages() {
+        logger.info("Resolving CRX packages for satisfying instances")
+        logger.info("Resolved CRX packages:\n${allFiles.joinToString("\n")}")
+    }
+
     @TaskAction
     @Suppress("ComplexMethod")
     override fun deploy() {

@@ -297,8 +297,6 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
             return
         }
 
-        customize()
-
         try {
             logger.info("Executing start script: $startScript")
             startScript.executeAsync()
@@ -351,6 +349,9 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
             Status.UNKNOWN
         }
     }
+
+    @get:JsonIgnore
+    val running: Boolean get() = created && checkStatus() == Status.RUNNING
 
     fun init() {
         saveVersion()
