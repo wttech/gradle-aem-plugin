@@ -17,7 +17,7 @@ open class PackagePrepare : AemDefaultTask() {
 
     /**
      * Ensures that for directory 'META-INF/vault' default files will be generated when missing:
-     * 'config.xml', 'filter.xml', 'properties.xml' and 'settings.xml'.
+     * 'config.xml', 'filter.xml', 'privileges.xml', 'properties.xml' and 'settings.xml'.
      */
     @Input
     var metaDefaults: Boolean = true
