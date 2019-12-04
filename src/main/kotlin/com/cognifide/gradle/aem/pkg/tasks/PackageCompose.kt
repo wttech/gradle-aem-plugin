@@ -148,15 +148,7 @@ open class PackageCompose : ZipTask() {
         if (fromConvention) {
             fromConvention()
         }
-    }
 
-    override fun projectsEvaluated() {
-        fromProjects.forEach { it() }
-        fromTasks.forEach { it() }
-    }
-
-    @TaskAction
-    override fun copy() {
         vaultDefinition.apply {
             ensureDefaults()
 
@@ -167,7 +159,15 @@ open class PackageCompose : ZipTask() {
                 nodeTypes(vaultNodeTypesSyncFile)
             }
         }
+    }
 
+    override fun projectsEvaluated() {
+        fromProjects.forEach { it() }
+        fromTasks.forEach { it() }
+    }
+
+    @TaskAction
+    override fun copy() {
         super.copy()
 
         validator.apply {
@@ -373,6 +373,23 @@ open class PackageCompose : ZipTask() {
     fun fromZips(zips: Collection<File>, packagePath: String? = null, vaultFilter: Boolean? = null) {
         fromTasks.add {
             zips.forEach { fromZipInternal(it, packagePath, vaultFilter) }
+        }
+    }
+
+    fun fromSubpackage(composeTaskPath: String, storagePath: String? = null, vaultFilter: Boolean? = null) {
+        fromTasks.add {
+            val other = aem.tasks.pathed(composeTaskPath).get() as PackageCompose
+            val file = other.composedFile
+            val effectivePath = "${storagePath ?: this.packagePath}/${other.vaultDefinition.group}"
+
+            if (vaultFilter ?: mergingOptions.vaultFilters) {
+                vaultDefinition.filter("$effectivePath/${file.name}") { type = FilterType.FILE }
+            }
+
+            into("${Package.JCR_ROOT}/$effectivePath") { spec ->
+                spec.from(other)
+                fileFilterDelegate(spec)
+            }
         }
     }
 
