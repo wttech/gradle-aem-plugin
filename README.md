@@ -1374,7 +1374,7 @@ Regardless if this behavior is enabled or disabled, all of values are overiddabl
 ```kotlin
 aem {
     tasks {
-        bundle {
+        bundleCompose {
             displayName = 'My Bundle"
             symbolicName = "com.company.aem.example.common"
             slingModelPackages = "com.company.aem.example.common.models"
@@ -1395,9 +1395,9 @@ For instance:
 ```kotlin
 aem {
     tasks {
-        bundle {
-            excludePackages("org.junit", "org.mockito")
-            importPackages("!org.junit", "!org.mockito", "*") // alternatively
+        bundleCompose {
+            excludePackage("org.junit", "org.mockito")
+            importPackage("!org.junit", "!org.mockito", "*") // alternatively
         } 
     }
 }
