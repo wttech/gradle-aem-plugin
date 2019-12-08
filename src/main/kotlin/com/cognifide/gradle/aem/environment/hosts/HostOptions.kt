@@ -12,6 +12,10 @@ class HostOptions(environment: Environment) : Serializable {
 
     var defined = mutableListOf<Host>()
 
+    @get:JsonIgnore
+    val appendix: String
+        get() = defined.joinToString("\n") { it.text }
+
     @JsonIgnore
     var ipDefault = environment.docker.runtime.hostIp
 
