@@ -17,7 +17,7 @@ open class EnvironmentHosts : AemDefaultTask() {
 
     @TaskAction
     fun appendHosts() {
-        logger.lifecycle("Printing hosts entries (to be appended to $hostsFile):")
+        logger.lifecycle("Hosts entries to be appended to $hostsFile:")
         logger.quiet(aem.environment.hosts.defined.joinToString("\n") { it.text })
     }
 
