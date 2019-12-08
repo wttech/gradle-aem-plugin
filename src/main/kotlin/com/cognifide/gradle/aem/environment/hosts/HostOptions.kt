@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.environment.hosts
 import com.cognifide.gradle.aem.environment.Environment
 import com.cognifide.gradle.aem.environment.EnvironmentException
 import com.fasterxml.jackson.annotation.JsonIgnore
+import org.gradle.internal.os.OperatingSystem
 import java.io.Serializable
 
 /**
@@ -15,6 +16,12 @@ class HostOptions(environment: Environment) : Serializable {
     @get:JsonIgnore
     val appendix: String
         get() = defined.joinToString("\n") { it.text }
+
+    @get:JsonIgnore
+    val osFile = when {
+        OperatingSystem.current().isWindows -> """C:\Windows\System32\drivers\etc\hosts"""
+        else -> "/etc/hosts"
+    }
 
     @JsonIgnore
     var ipDefault = environment.docker.runtime.hostIp
