@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem.environment.tasks
 
 import com.cognifide.gradle.aem.AemDefaultTask
-import com.cognifide.gradle.aem.AemPlugin
 import org.gradle.api.tasks.TaskAction
 import org.gradle.internal.os.OperatingSystem
 
@@ -19,9 +18,7 @@ open class EnvironmentHosts : AemDefaultTask() {
     @TaskAction
     fun appendHosts() {
         logger.lifecycle("Printing hosts entries (to be appended to $hostsFile):")
-        logger.quiet("## ${AemPlugin.NAME}")
         logger.quiet(aem.environment.hosts.defined.joinToString("\n") { it.text })
-        logger.quiet("## ${AemPlugin.NAME}")
     }
 
     companion object {
