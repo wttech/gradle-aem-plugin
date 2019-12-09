@@ -1,10 +1,11 @@
 package com.cognifide.gradle.aem.environment.docker
 
+import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.utils.Formats
 import java.io.InputStream
 import java.io.OutputStream
 
-open class DockerDefaultSpec : DockerSpec {
+open class DockerDefaultSpec(protected val aem: AemExtension) : DockerSpec {
 
     override var command: String = ""
 

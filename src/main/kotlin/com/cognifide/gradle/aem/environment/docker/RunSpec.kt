@@ -1,9 +1,10 @@
 package com.cognifide.gradle.aem.environment.docker
 
+import com.cognifide.gradle.aem.AemExtension
 import org.gradle.process.internal.streams.SafeStreams
 import java.io.File
 
-class RunSpec : DockerDefaultSpec() {
+open class RunSpec(aem: AemExtension) : DockerDefaultSpec(aem) {
 
     init {
         input = SafeStreams.emptyInput()

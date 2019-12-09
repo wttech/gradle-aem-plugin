@@ -1,9 +1,10 @@
 package com.cognifide.gradle.aem.environment.docker.container
 
+import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.environment.docker.DockerDefaultSpec
 import org.gradle.process.internal.streams.SafeStreams
 
-class ExecSpec : DockerDefaultSpec() {
+class ExecSpec(aem: AemExtension) : DockerDefaultSpec(aem) {
 
     init {
         output = SafeStreams.systemOut()
