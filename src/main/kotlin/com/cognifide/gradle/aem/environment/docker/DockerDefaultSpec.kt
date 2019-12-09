@@ -25,6 +25,10 @@ open class DockerDefaultSpec : DockerSpec {
 
     override var exitCodes: List<Int> = listOf(0)
 
+    fun exitCode(code: Int) {
+        exitCodes = listOf(code)
+    }
+
     override fun ignoreExitCodes() {
         exitCodes = listOf()
     }

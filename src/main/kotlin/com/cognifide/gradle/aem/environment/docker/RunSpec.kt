@@ -11,6 +11,8 @@ class RunSpec : DockerDefaultSpec() {
         errors = SafeStreams.systemErr()
     }
 
+    var name: String? = null
+
     var image: String = ""
 
     var volumes = mapOf<String, String>()
@@ -30,15 +32,21 @@ class RunSpec : DockerDefaultSpec() {
         volumes = volumes + (localPath to containerPath)
     }
 
-    var operation: () -> String = {
+    var cleanup: Boolean = false
+
+    var detached: Boolean = false
+
+    private var operartonProvider: () -> String = {
         when {
             fullCommand.isBlank() -> "Running image '$image'"
             else -> "Running image '$image' and command '$fullCommand'"
         }
     }
 
-    fun operation(operation: () -> String) {
-        this.operation = operation
+    val operation: String get() = operartonProvider()
+
+    fun operation(textProvider: () -> String) {
+        this.operartonProvider = textProvider
     }
 
     fun operation(text: String) = operation { text }
