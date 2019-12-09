@@ -86,7 +86,7 @@ class GroovyConsole(sync: InstanceSync) : InstanceService(sync) {
      * Evaluate all Groovy scripts found by file name pattern on AEM instance in path-based alphabetical order.
      */
     fun evalScripts(fileNamePattern: String = "**/*.groovy", data: Map<String, Any> = mapOf()): Sequence<GroovyConsoleResult> {
-        val scripts = (scriptRootDir.listFiles() ?: arrayOf()).filter {
+        val scripts = (scriptRootDir.walkTopDown() ?: arrayOf()).filter {
             Patterns.wildcard(it, fileNamePattern)
         }.sortedBy { it.absolutePath }
         if (scripts.isEmpty()) {
