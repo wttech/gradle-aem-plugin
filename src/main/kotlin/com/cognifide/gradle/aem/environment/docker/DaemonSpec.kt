@@ -1,24 +1,25 @@
 package com.cognifide.gradle.aem.environment.docker
 
 import com.cognifide.gradle.aem.AemExtension
-import java.io.File
-import java.util.*
+import org.gradle.process.internal.streams.SafeStreams
 
 class DaemonSpec(aem: AemExtension) : RunSpec(aem) {
 
     var initTime = 3_000L
 
-    var outputFile: File? = null
+    var stopPrevious = true
 
-    fun uniqueName() {
-        name = UUID.randomUUID().toString()
-    }
+    var unique = false
 
-    fun outputFile(file: File) {
-        outputFile = file
-    }
+    var id: String? = null
+
+    val outputFile get() = aem.project.file("build/aem/environment/docker/$id.log")
 
     init {
+        input = SafeStreams.emptyInput()
+        output = null
+        errors = null
+
         cleanup = true
     }
 }

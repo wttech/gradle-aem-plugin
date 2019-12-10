@@ -24,6 +24,7 @@ import com.cognifide.gradle.aem.common.utils.LineSeparator
 import com.cognifide.gradle.aem.common.utils.Patterns
 import com.cognifide.gradle.aem.environment.Environment
 import com.cognifide.gradle.aem.environment.EnvironmentPlugin
+import com.cognifide.gradle.aem.environment.docker.DaemonSpec
 import com.cognifide.gradle.aem.environment.docker.RunSpec
 import com.cognifide.gradle.aem.instance.*
 import com.cognifide.gradle.aem.pkg.PackagePlugin
@@ -536,6 +537,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     /**
      * Grab user input interactively.
      */
+    @get:JsonIgnore
     val userInput by lazy { InternalApi(project).service(UserInputHandler::class) }
 
     /**
@@ -703,7 +705,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     /**
      * Execute any Docker command as long-lived cancellable daemon without possibility to return value.
      */
-    fun dockerDaemon(spec: RunSpec.() -> Unit) = environment.docker.daemon(spec)
+    fun dockerDaemon(spec: DaemonSpec.() -> Unit) = environment.docker.daemon(spec)
 
     // Utilities (to use without imports)
 
