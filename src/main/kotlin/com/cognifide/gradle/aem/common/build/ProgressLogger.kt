@@ -8,7 +8,7 @@ import org.gradle.internal.logging.progress.ProgressLogger as BaseLogger
 import org.gradle.internal.logging.progress.ProgressLoggerFactory
 
 @Suppress("SpreadOperator")
-open class ProgressLogger private constructor(val project: Project) {
+open class ProgressLogger private constructor(private val project: Project) {
 
     var header: String = "Operation in progress"
 
@@ -23,36 +23,9 @@ open class ProgressLogger private constructor(val project: Project) {
 
     private lateinit var stopWatch: StopWatch
 
-    private fun create(): BaseLogger {
-        val serviceFactory = invoke(project, "getServices")
-        val baseFactoryClass: Class<*> = ProgressLoggerFactory::class.java
-        val baseFactory = invoke(serviceFactory, "get", baseFactoryClass)
-
-        return invoke(
-                baseFactory,
-                "newOperation",
-                listOf(javaClass, baseParents.peek()),
-                listOf(javaClass.javaClass, BaseLogger::class.java)
-        ) as BaseLogger
-    }
-
-    private operator fun invoke(obj: Any, method: String, vararg args: Any): Any {
-        val argumentTypes = arrayOfNulls<Class<*>>(args.size)
-        for (i in args.indices) {
-            argumentTypes[i] = args[i].javaClass
-        }
-        val m = obj.javaClass.getMethod(method, *argumentTypes)
-        m.isAccessible = true
-
-        return m.invoke(obj, *args)
-    }
-
-    private fun invoke(obj: Any, method: String, args: List<Any?>, argTypes: List<Class<out Any>>): Any {
-        val m = obj.javaClass.getMethod(method, *argTypes.toTypedArray())
-        m.isAccessible = true
-
-        return m.invoke(obj, *args.toTypedArray())
-    }
+    private fun create(): BaseLogger = InternalApi(project)
+            .service(ProgressLoggerFactory::class)
+            .newOperation(javaClass, baseParents.peek())
 
     fun <T> launch(block: ProgressLogger.() -> T): T {
         stopWatch = StopWatch()
