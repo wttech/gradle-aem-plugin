@@ -161,7 +161,7 @@ class Docker(val environment: Environment) {
             if (id == null) {
                 val outputId = StringUtils.replaceEach(image, arrayOf("/", ":"), arrayOf(".", "."))
                 id = when {
-                    unique -> "$outputId.${RandomStringUtils.random(8, true, true)}"
+                    unique -> "$outputId.${daemonUniqueId()}"
                     else -> outputId
                 }
             }
@@ -177,6 +177,9 @@ class Docker(val environment: Environment) {
             daemonInternal(spec)
         }
     }
+
+    @Suppress("MagicNumber")
+    private fun daemonUniqueId() = RandomStringUtils.random(8, true, true)
 
     private fun daemonInternal(spec: DaemonSpec) = runBlocking {
         if (spec.stopPrevious) {
