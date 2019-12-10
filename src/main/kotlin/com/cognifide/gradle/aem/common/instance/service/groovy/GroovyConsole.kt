@@ -85,22 +85,21 @@ class GroovyConsole(sync: InstanceSync) : InstanceService(sync) {
     /**
      * Evaluate all Groovy scripts found by file name pattern on AEM instance in path-based alphabetical order.
      */
-    fun evalScripts(fileNamePattern: String = "**/*.groovy", data: Map<String, Any> = mapOf()): Sequence<GroovyConsoleResult> {
-        val scripts = (scriptRootDir.walkTopDown() ?: arrayOf()).filter {
+    fun evalScripts(fileNamePattern: String = "**/*.groovy", data: Map<String, Any> = mapOf()): List<GroovyConsoleResult> {
+        val scripts = scriptRootDir.walkTopDown().filter {
             Patterns.wildcard(it, fileNamePattern)
         }.sortedBy { it.absolutePath }
-        if (scripts.isEmpty()) {
+        if (scripts.none()) {
             throw AemException("No Groovy scripts found in directory: $scriptRootDir")
         }
-
         return evalScripts(scripts, data)
     }
 
     /**
      * Evaluate any Groovy scripts on AEM instance in specified order.
      */
-    fun evalScripts(scripts: Iterable<File>, data: Map<String, Any> = mapOf()): Sequence<GroovyConsoleResult> {
-        return scripts.asSequence().map { evalScript(it, data) }
+    fun evalScripts(scripts: Sequence<File>, data: Map<String, Any> = mapOf()): List<GroovyConsoleResult> {
+        return scripts.map { evalScript(it, data) }.toList()
     }
 
     companion object {
