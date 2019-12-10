@@ -35,6 +35,13 @@ class HostFileManager(val container: Container) {
         return files
     }
 
+    fun ensureDir() {
+        rootDir.apply {
+            logger.info("Ensuring root directory '$this' for container '${container.name}'")
+            GFileUtils.mkdirs(this)
+        }
+    }
+
     fun ensureDir(vararg paths: String) = paths.forEach { path ->
         file(path).apply {
             logger.info("Ensuring directory '$this' for container '${container.name}'")

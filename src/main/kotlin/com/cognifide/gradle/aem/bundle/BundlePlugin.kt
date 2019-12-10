@@ -8,6 +8,7 @@ import com.cognifide.gradle.aem.pkg.PackagePlugin
 import org.gradle.api.JavaVersion
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.artifacts.Dependency
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.tasks.compile.JavaCompile
@@ -47,6 +48,11 @@ class BundlePlugin : AemPlugin() {
         tasks {
             register<BundleCompose>(BundleCompose.NAME) {
                 dependsOn(JavaPlugin.CLASSES_TASK_NAME)
+            }.apply {
+                artifacts.add(Dependency.ARCHIVES_CONFIGURATION, this)
+                artifacts.add(JavaPlugin.API_ELEMENTS_CONFIGURATION_NAME, this)
+                artifacts.add(JavaPlugin.RUNTIME_ELEMENTS_CONFIGURATION_NAME, this)
+                artifacts.add(JavaPlugin.TEST_RUNTIME_CLASSPATH_CONFIGURATION_NAME, this)
             }
             register<BundleInstall>(BundleInstall.NAME) {
                 dependsOn(BundleCompose.NAME)
@@ -70,9 +76,9 @@ class BundlePlugin : AemPlugin() {
 
                     testImplConfig.extendsFrom(compileOnlyConfig)
 
-                    bundles.forEach { jar ->
-                        dependsOn(jar)
-                        classpath += files(jar.archiveFile.get().asFile)
+                    bundles.forEach { bundle ->
+                        dependsOn(bundle)
+                        classpath += files(bundle.composedFile)
                     }
                 }
             }
