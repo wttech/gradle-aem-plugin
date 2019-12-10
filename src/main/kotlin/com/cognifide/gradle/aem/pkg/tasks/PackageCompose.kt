@@ -235,6 +235,10 @@ open class PackageCompose : ZipTask() {
                     fromBundle(it, options)
                 }
             }
+
+            options.extraTasks(other).forEach {
+                dependsOn(it)
+            }
         }
     }
 

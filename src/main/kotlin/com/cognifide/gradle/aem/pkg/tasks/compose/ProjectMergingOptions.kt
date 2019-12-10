@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.pkg.tasks.compose
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.bundle.tasks.BundleCompose
 import com.cognifide.gradle.aem.pkg.tasks.PackageCompose
+import org.gradle.api.Task
 
 /**
  * Allows to override project specific options while composing merged CRX package.
@@ -48,6 +49,11 @@ class ProjectMergingOptions {
      * Determines JAR task(s) in particular project to be considered when composing merged CRX package.
      */
     var bundleTasks: AemExtension.() -> Collection<BundleCompose> = { tasks.bundles }
+
+    /**
+     * Determines extra task(s) in particular project to be executed when composing merged CRX package.
+     */
+    var extraTasks: AemExtension.() -> Collection<Task> = { tasks.checks }
 
     /**
      * Controls if extra OSGi bundles from particular project should be taken.
