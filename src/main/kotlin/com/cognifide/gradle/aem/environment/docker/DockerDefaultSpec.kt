@@ -1,10 +1,11 @@
 package com.cognifide.gradle.aem.environment.docker
 
+import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.utils.Formats
 import java.io.InputStream
 import java.io.OutputStream
 
-open class DockerDefaultSpec : DockerSpec {
+open class DockerDefaultSpec(protected val aem: AemExtension) : DockerSpec {
 
     override var command: String = ""
 
@@ -24,6 +25,10 @@ open class DockerDefaultSpec : DockerSpec {
     }
 
     override var exitCodes: List<Int> = listOf(0)
+
+    fun exitCode(code: Int) {
+        exitCodes = listOf(code)
+    }
 
     override fun ignoreExitCodes() {
         exitCodes = listOf()

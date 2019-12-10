@@ -2,8 +2,12 @@ package com.cognifide.gradle.aem.environment.docker
 
 import com.cognifide.gradle.aem.common.utils.Formats
 import com.cognifide.gradle.aem.environment.Environment
-import com.cognifide.gradle.aem.environment.EnvironmentException
+import kotlinx.coroutines.*
+import org.apache.commons.io.output.TeeOutputStream
+import org.apache.commons.lang3.RandomStringUtils
+import org.apache.commons.lang3.StringUtils
 import java.io.File
+import java.io.FileOutputStream
 
 class Docker(val environment: Environment) {
 
@@ -34,7 +38,7 @@ class Docker(val environment: Environment) {
         containers.apply(options)
     }
 
-    val runtime: Runtime = Runtime.determine(aem)
+    val runtime by lazy { Runtime.determine(aem) }
 
     val composeFile
         get() = File(environment.rootDir, "docker-compose.yml")
@@ -57,7 +61,7 @@ class Docker(val environment: Environment) {
         logger.info("Generating Docker compose file '$composeFile' from template '$composeTemplateFile'")
 
         if (!composeTemplateFile.exists()) {
-            throw EnvironmentException("Docker compose file template does not exist: $composeTemplateFile")
+            throw DockerException("Docker compose file template does not exist: $composeTemplateFile")
         }
 
         composeFile.takeIf { it.exists() }?.delete()
@@ -78,6 +82,8 @@ class Docker(val environment: Environment) {
         stack.undeploy()
     }
 
+    fun run(spec: RunSpec.() -> Unit) = runInteractive(spec)
+
     fun run(image: String, command: String, exitCode: Int = 0) = run {
         this.image = image
         this.command = command
@@ -87,25 +93,26 @@ class Docker(val environment: Environment) {
     fun runShell(image: String, command: String, exitCode: Int = 0) = run(image, "sh -c '$command'", exitCode)
 
     fun run(operation: String, image: String, command: String, exitCode: Int = 0) = run {
-        this.operation = { operation }
+        this.operation(operation)
         this.image = image
         this.command = command
-        this.exitCodes = listOf(exitCode)
+        this.exitCode(exitCode)
     }
 
     fun runShell(operation: String, image: String, command: String, exitCode: Int = 0) = run(operation, image, "sh -c '$command'", exitCode)
 
-    fun run(options: RunSpec.() -> Unit): DockerResult {
-        val spec = RunSpec().apply(options)
-        val operation = spec.operation()
+    private fun runInteractive(spec: RunSpec.() -> Unit) = runInteractive(RunSpec(aem).apply(spec))
+
+    private fun runInteractive(spec: RunSpec): DockerResult {
+        val operation = spec.operation
 
         lateinit var result: DockerResult
         val action = {
             try {
-                result = run(spec)
+                result = runInternal(spec)
             } catch (e: DockerException) {
                 logger.debug("Run operation '$operation' error", e)
-                throw EnvironmentException("Failed to run operation on Docker!\n$operation\n${e.message}")
+                throw DockerException("Failed to run operation on Docker!\n$operation\n${e.message}")
             }
         }
 
@@ -121,19 +128,18 @@ class Docker(val environment: Environment) {
         return result
     }
 
-    private fun run(spec: RunSpec): DockerResult {
+    private fun runInternal(spec: RunSpec): DockerResult {
         if (spec.image.isBlank()) {
             throw DockerException("Run image cannot be blank!")
-        }
-        if (spec.command.isBlank()) {
-            throw DockerException("Run command cannot be blank!")
         }
 
         val customSpec = DockerCustomSpec(spec, mutableListOf<String>().apply {
             add("run")
+            spec.name?.let { add("--name=$it") }
+            if (spec.detached) add("-d")
             addAll(spec.volumes.map { (localPath, containerPath) -> "-v=${runtime.determinePath(localPath)}:$containerPath" })
             addAll(spec.ports.map { (hostPort, containerPort) -> "-p=$hostPort:$containerPort" })
-            addAll(spec.options)
+            addAll(spec.options.apply { if (spec.cleanup) add("--rm") }.toSet())
             add(spec.image)
             addAll(Formats.commandToArgs(spec.command))
         })
@@ -141,5 +147,77 @@ class Docker(val environment: Environment) {
         logger.info("Running Docker command '${customSpec.fullCommand}'")
 
         return DockerProcess.execSpec(customSpec)
+    }
+
+    fun daemon(spec: DaemonSpec.() -> Unit) = daemonInteractive(spec)
+
+    private fun daemonInteractive(options: DaemonSpec.() -> Unit) {
+        val spec = DaemonSpec(aem).apply {
+            options()
+
+            if (image.isBlank()) {
+                throw DockerException("Docker daemon specification require image to be defined!")
+            }
+            if (id == null) {
+                val outputId = StringUtils.replaceEach(image, arrayOf("/", ":"), arrayOf(".", "."))
+                id = when {
+                    unique -> "$outputId.${daemonUniqueId()}"
+                    else -> outputId
+                }
+            }
+            if (name == null) {
+                name = "${stack.internalName}_$id"
+            }
+        }
+
+        aem.progress {
+            step = "Docker daemon"
+            message = spec.operation
+
+            daemonInternal(spec)
+        }
+    }
+
+    @Suppress("MagicNumber")
+    private fun daemonUniqueId() = RandomStringUtils.random(8, true, true)
+
+    private fun daemonInternal(spec: DaemonSpec) = runBlocking {
+        if (spec.stopPrevious) {
+            logger.info("Stopping previous Docker daemon \"${spec.operation}\"")
+            DockerProcess.execQuietly { withArgs("kill", spec.name) }
+        }
+
+        logger.lifecycle("Starting Docker daemon \"${spec.operation}\" with logs written to file: ${spec.outputFile}")
+        val runJob = async(Dispatchers.IO) {
+            spec.ignoreExitCodes()
+            spec.outputFile.parentFile.mkdirs()
+
+            val fileOutput = FileOutputStream(spec.outputFile)
+            spec.output = when {
+                spec.output != null -> TeeOutputStream(spec.output, fileOutput)
+                else -> fileOutput
+            }
+            spec.errors = when {
+                spec.errors != null -> TeeOutputStream(spec.errors, fileOutput)
+                else -> fileOutput
+            }
+
+            runInternal(spec)
+        }
+
+        delay(spec.initTime)
+
+        while (runJob.isActive) {
+            val answer = aem.userInput.askYesNoQuestion("Daemon \"${spec.operation}\" is running. Stop it?")
+            if (answer != null && answer == true) {
+                break
+            }
+        }
+
+        logger.info("Stopping current Docker daemon \"${spec.operation}\"")
+        DockerProcess.execQuietly { withArgs("kill", spec.name) }
+        runJob.cancelAndJoin()
+
+        logger.lifecycle("Stopped Docker daemon \"${spec.operation}\"")
     }
 }

@@ -24,6 +24,7 @@ import com.cognifide.gradle.aem.common.utils.LineSeparator
 import com.cognifide.gradle.aem.common.utils.Patterns
 import com.cognifide.gradle.aem.environment.Environment
 import com.cognifide.gradle.aem.environment.EnvironmentPlugin
+import com.cognifide.gradle.aem.environment.docker.DaemonSpec
 import com.cognifide.gradle.aem.environment.docker.RunSpec
 import com.cognifide.gradle.aem.instance.*
 import com.cognifide.gradle.aem.pkg.PackagePlugin
@@ -38,6 +39,7 @@ import java.io.File
 import java.io.Serializable
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.internal.tasks.userinput.UserInputHandler
 import org.gradle.api.tasks.Internal
 
 /**
@@ -533,6 +535,12 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     fun <T> progressLogger(action: ProgressLogger.() -> T): T = ProgressLogger.of(project).launch(action)
 
     /**
+     * Grab user input interactively.
+     */
+    @get:JsonIgnore
+    val userInput by lazy { InternalApi(project).service(UserInputHandler::class) }
+
+    /**
      * Wait some time after performing asynchronous operation.
      */
     fun waitFor(time: Long) = progressCountdown(time)
@@ -692,7 +700,12 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     /**
      * Execute any Docker command using all available images with mounting volumes etc, exposing ports etc.
      */
-    fun runDocker(spec: RunSpec.() -> Unit) = environment.docker.run(spec)
+    fun dockerRun(spec: RunSpec.() -> Unit) = environment.docker.run(spec)
+
+    /**
+     * Execute any Docker command as long-lived cancellable daemon without possibility to return value.
+     */
+    fun dockerDaemon(spec: DaemonSpec.() -> Unit) = environment.docker.daemon(spec)
 
     // Utilities (to use without imports)
 
