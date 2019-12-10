@@ -19,6 +19,8 @@ import org.gradle.api.Task
 import org.gradle.api.UnknownTaskException
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.TaskProvider
+import org.gradle.api.tasks.testing.Test
+import org.gradle.language.base.plugins.LifecycleBasePlugin
 import java.io.Serializable
 
 @Suppress("TooManyFunctions")
@@ -63,6 +65,10 @@ class AemTaskFacade(val aem: AemExtension) : Serializable {
             }
         }
     }
+
+    val tests get() = getAll(Test::class.java)
+
+    val checks get() = listOf(get(LifecycleBasePlugin.CHECK_TASK_NAME, Task::class.java))
 
     // Package plugin shorthands
 
