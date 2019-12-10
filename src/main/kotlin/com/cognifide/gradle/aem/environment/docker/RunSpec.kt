@@ -3,7 +3,6 @@ package com.cognifide.gradle.aem.environment.docker
 import com.cognifide.gradle.aem.AemExtension
 import org.gradle.process.internal.streams.SafeStreams
 import java.io.File
-import java.util.*
 
 open class RunSpec(aem: AemExtension) : DockerDefaultSpec(aem) {
 
@@ -33,17 +32,17 @@ open class RunSpec(aem: AemExtension) : DockerDefaultSpec(aem) {
 
     var detached: Boolean = false
 
-    private var operartonProvider: () -> String = {
+    private var operationProvider: () -> String = {
         when {
             fullCommand.isBlank() -> "Running image '$image'"
             else -> "Running image '$image' and command '$fullCommand'"
         }
     }
 
-    val operation: String get() = operartonProvider()
+    val operation: String get() = operationProvider()
 
     fun operation(textProvider: () -> String) {
-        this.operartonProvider = textProvider
+        this.operationProvider = textProvider
     }
 
     fun operation(text: String) = operation { text }

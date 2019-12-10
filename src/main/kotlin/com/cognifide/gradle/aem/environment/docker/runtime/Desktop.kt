@@ -31,7 +31,7 @@ class Desktop(aem: AemExtension) : Base(aem) {
             withArgs(*args.toTypedArray())
         }.takeIf { it.isNotBlank() }
     } catch (e: Exception) {
-        logger.debug("Cannot detect Docker host internal API. Cause: ${e.message}")
+        logger.debug("Cannot detect Docker host internal IP. Cause: ${e.message}", e)
         null
     }
 
