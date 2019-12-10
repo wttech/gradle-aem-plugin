@@ -130,7 +130,7 @@ class Container(val docker: Docker, val name: String) {
     }
 
     fun exec(execSpec: ExecSpec.() -> Unit): DockerResult {
-        val spec = ExecSpec().apply(execSpec)
+        val spec = ExecSpec(aem).apply(execSpec)
         val operation = spec.operation()
 
         lateinit var result: DockerResult
