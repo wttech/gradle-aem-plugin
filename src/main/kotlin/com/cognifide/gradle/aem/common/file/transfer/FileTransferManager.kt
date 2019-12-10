@@ -13,6 +13,7 @@ import com.cognifide.gradle.aem.common.file.transfer.smb.SmbFileTransfer
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 import org.apache.commons.io.FilenameUtils
+import org.gradle.api.tasks.Internal
 import org.gradle.util.GFileUtils
 
 /**
@@ -154,17 +155,17 @@ class FileTransferManager(private val aem: AemExtension) : FileTransfer {
     /**
      * Gets file status of given name in directory at specified URL.
      */
-    override fun stat(dirUrl: String, fileName: String) = handling(dirUrl).stat(dirUrl, fileName)
+    override fun stat(dirUrl: String, fileName: String): FileEntry? = handling(dirUrl).stat(dirUrl, fileName)
 
     /**
      * Check if there is any file transfer supporting specified URL.
      */
-    override fun handles(fileUrl: String) = all.any { it.handles(fileUrl) }
+    override fun handles(fileUrl: String): Boolean = all.any { it.handles(fileUrl) }
 
     /**
      * Get file transfer supporting specified URL.
      */
-    fun handling(fileUrl: String): FileTransfer = all.find { it.handles(fileUrl) }
+    fun handling(fileUrl: String): FileTransferHandler = all.find { it.handles(fileUrl) }
             ?: throw FileException("File transfer supporting URL '$fileUrl' not found!")
 
     /**
@@ -187,6 +188,26 @@ class FileTransferManager(private val aem: AemExtension) : FileTransfer {
         return all.find { it.name == name } ?: throw FileException("File transfer named '$name' not found!")
     }
 
+    @JsonIgnore
+    var user: String? = null
+
+    @JsonIgnore
+    var password: String? = null
+
+    @JsonIgnore
+    var domain: String? = null
+
+    @get:Internal
+    @get:JsonIgnore
+    val credentials: Pair<String, String> get() = when {
+        user != null && password != null -> (user!! to password!!)
+        else -> throw AemException("File transfer credentials are missing!")
+    }
+
+    @get:Internal
+    @get:JsonIgnore
+    val credentialsString get() = credentials.run { "$first:$second" }
+
     /**
      * Shorthand method to set same credentials for all protocols requiring it.
      *
@@ -194,6 +215,10 @@ class FileTransferManager(private val aem: AemExtension) : FileTransfer {
      * using same AD credentials.
      */
     fun credentials(user: String?, password: String?, domain: String? = null) {
+        this.user = user
+        this.password = password
+        this.domain = domain
+
         http.client.basicUser = user
         http.client.basicPassword = password
 
@@ -204,15 +229,6 @@ class FileTransferManager(private val aem: AemExtension) : FileTransfer {
         smb.password = password
         smb.domain = domain
     }
-
-    @get:JsonIgnore
-    override val enabled = false
-
-    @get:JsonIgnore
-    override val parallelable = false
-
-    @get:JsonIgnore
-    override val name = NAME
 
     init {
         // override specific credentials if common specified

@@ -7,7 +7,7 @@ import java.io.File
 import java.io.Serializable
 import org.apache.commons.io.FilenameUtils
 
-abstract class AbstractFileTransfer(protected val aem: AemExtension) : FileTransfer, Serializable {
+abstract class AbstractFileTransfer(protected val aem: AemExtension) : FileTransferHandler, Serializable {
 
     override var enabled: Boolean = true
 
