@@ -137,7 +137,8 @@ class PackageValidator(@Internal val aem: AemExtension) {
                 .map { oak -> oak.scanPackages(packages.toList()) }
 
         if (scanResult.isFailure) {
-            throw PackageException("Cannot validate CRX package(s) '${listPackages(packages)}' due to internal OAKPal failure!")
+            val e = scanResult.error.get()
+            throw PackageException("Cannot validate CRX package(s) '${listPackages(packages)}' due to OAKPal failure! Cause: '${e.message}'", e)
         } else {
             val reports = scanResult.getOrDefault(emptyList<CheckReport>())
             saveReports(packages, reports)
