@@ -11,7 +11,6 @@ plugins {
     id("maven-publish")
     id("io.gitlab.arturbosch.detekt")
     id("com.jfrog.bintray")
-    id("com.neva.fork")
     id("net.researchgate.release")
     id("com.github.breadmoirai.github-release")
 }
@@ -255,5 +254,3 @@ githubRelease {
     """.trimMargin()
     }
 }
-
-apply(from = "gradle/fork.gradle.kts")
