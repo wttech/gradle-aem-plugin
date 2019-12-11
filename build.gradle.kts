@@ -138,8 +138,8 @@ tasks {
         dependsOn("bintrayUpload", "publishPlugins")
     }
 
-    named("release") {
-        finalizedBy("githubRelease")
+    named("githubRelease") {
+        onlyIf { project.tasks["release"].didWork }
     }
 
     named("updateVersion") {
