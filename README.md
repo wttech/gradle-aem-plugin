@@ -1106,12 +1106,10 @@ Such definitions could be manually downloaded using CRXDE Lite interface (*Tools
 After installing some dependent CRX packages, the list of exported node types may change.
 
 To keep it up-to-date, plugin is synchronizing node types from one of available AEM instances automatically.
-Synchronized file containing node types, later used when building CRX packages is placed at path [*[aem/]gradle/package/nodetypes.export.cnd*](https://github.com/Cognifide/gradle-aem-multi/blob/master/aem/gradle/package/nodetypes.export.cnd). 
+Synchronized file containing node types, later used when building CRX packages is placed at path [*[aem/]gradle/package/nodetypes.sync.cnd*](https://github.com/Cognifide/gradle-aem-multi/blob/master/aem/gradle/package/nodetypes.sync.cnd). 
 Remember to save this file in VCS, so that CRX package validation will not fail on e.g CI server where AEM instance could be not available.
 
-To configure node types synchronization behavior, use property `package.nodeTypesSync=<option>`. Available options: *when_missing* (default, sync only if file *nodetypes.export.cnd* does not exist), *always*, *never*.
-
-To disable using fallback node types, simply set property `package.nodeTypesFallback=false` (might be useful to explicitly show error when node types are not yet synchronized or provided manually).
+To configure node types synchronization behavior, use property `package.nodeTypesSync=<option>`. Available options: *preserve_auto* (default, sync only if file *nodetypes.sync.cnd* does not exist), *always*, *auto*, *fallback*, *preserve_fallback*, *never*.
 
 Package validation report is saved at path relative to project building CRX package: *build/aem/packageCompose/OAKPAL_OPEAR/report.json*.
 
