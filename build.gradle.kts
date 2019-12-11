@@ -138,7 +138,11 @@ tasks {
     }
 
     named("githubRelease") {
-        onlyIf { project.tasks["bintrayUpload"].didWork }
+        dependsOn("release")
+    }
+
+    register("fullRelease") {
+        dependsOn("release", "githubRelease")
     }
 }
 
