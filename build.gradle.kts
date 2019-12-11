@@ -139,11 +139,7 @@ tasks {
     }
 
     named("githubRelease") {
-        onlyIf { project.tasks["release"].didWork }
-    }
-
-    named("updateVersion") {
-        enabled = false
+        onlyIf { project.tasks["bintrayUpload"].didWork }
     }
 }
 
