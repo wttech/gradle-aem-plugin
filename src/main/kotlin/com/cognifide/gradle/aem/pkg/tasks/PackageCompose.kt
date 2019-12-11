@@ -383,6 +383,9 @@ open class PackageCompose : ZipTask() {
     fun fromSubpackage(composeTaskPath: String, storagePath: String? = null, vaultFilter: Boolean? = null) {
         fromTasks.add {
             val other = aem.tasks.pathed(composeTaskPath).get() as PackageCompose
+
+            dependsOn(other)
+
             val file = other.composedFile
             val effectivePath = "${storagePath ?: this.packagePath}/${other.vaultDefinition.group}"
 
@@ -391,7 +394,7 @@ open class PackageCompose : ZipTask() {
             }
 
             into("${Package.JCR_ROOT}/$effectivePath") { spec ->
-                spec.from(other)
+                spec.from(other.composedFile)
                 fileFilterDelegate(spec)
             }
         }
