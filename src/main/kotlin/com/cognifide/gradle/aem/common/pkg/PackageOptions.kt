@@ -72,7 +72,7 @@ class PackageOptions(aem: AemExtension) : Serializable {
      * When declared exception is encountered during package installation process, no more
      * retries will be applied.
      */
-    var errors: List<String> = (aem.props.list("package.errors") ?: listOf(
+    var errors: List<String> = (aem.prop.list("package.errors") ?: listOf(
             "javax.jcr.nodetype.*Exception",
             "org.apache.jackrabbit.oak.api.*Exception",
             "org.apache.jackrabbit.vault.packaging.*Exception",
@@ -83,7 +83,7 @@ class PackageOptions(aem: AemExtension) : Serializable {
      * CRX package name conventions (with wildcard) indicating that package can change over time
      * while having same version specified. Affects CRX packages composed and satisfied.
      */
-    var snapshots: List<String> = aem.props.list("package.snapshots") ?: listOf()
+    var snapshots: List<String> = aem.prop.list("package.snapshots") ?: listOf()
 
     /**
      * Determines number of lines to process at once during reading Package Manager HTML responses.
@@ -91,7 +91,7 @@ class PackageOptions(aem: AemExtension) : Serializable {
      * The higher the value, the bigger consumption of memory but shorter execution time.
      * It is a protection against exceeding max Java heap size.
      */
-    var responseBuffer = aem.props.int("package.responseBuffer") ?: 4096
+    var responseBuffer = aem.prop.int("package.responseBuffer") ?: 4096
 
     /**
      * Customize default validation options.
@@ -106,7 +106,7 @@ class PackageOptions(aem: AemExtension) : Serializable {
     /**
      * Controls automatic node types exporting from available instance to be later used in package validation.
      */
-    var nodeTypesSync = aem.props.string("package.nodeTypesSync")
+    var nodeTypesSync = aem.prop.string("package.nodeTypesSync")
             ?.let { NodeTypesSync.find(it) } ?: when {
                 aem.offline -> NodeTypesSync.PRESERVE_FALLBACK
                 else -> NodeTypesSync.PRESERVE_AUTO

@@ -90,7 +90,7 @@ open class InstanceOptions(private val aem: AemExtension) : Serializable {
 
     init {
         // Define through command line
-        val instancesForced = aem.props.string("instance.list") ?: ""
+        val instancesForced = aem.prop.string("instance.list") ?: ""
         if (instancesForced.isNotBlank()) {
             define(Instance.parse(aem, instancesForced) { environment = Instance.ENVIRONMENT_CMD })
         }

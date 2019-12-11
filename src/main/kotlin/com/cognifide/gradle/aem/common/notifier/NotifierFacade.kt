@@ -18,7 +18,7 @@ class NotifierFacade private constructor(private val aem: AemExtension) {
     /**
      * Turn on/off default system notifications.
      */
-    var enabled: Boolean = aem.props.flag("notifier.enabled")
+    var enabled: Boolean = aem.prop.flag("notifier.enabled")
 
     /**
      * Hook for customizing notifications being displayed.

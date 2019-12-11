@@ -252,7 +252,7 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
         val propertiesAll = mapOf("instance" to this) + properties + manager.expandProperties
 
         FileOperations.amendFiles(dir, manager.expandFiles) { file, source ->
-            aem.props.expand(source, propertiesAll, file.absolutePath)
+            aem.prop.expand(source, propertiesAll, file.absolutePath)
         }
 
         FileOperations.amendFile(binScript("start", OperatingSystem.forName("windows")).bin) { origin ->

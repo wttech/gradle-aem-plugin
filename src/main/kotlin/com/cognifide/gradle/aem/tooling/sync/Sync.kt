@@ -15,7 +15,7 @@ open class Sync : AemDefaultTask() {
      * Determines what need to be done (content copied and clean or something else).
      */
     @Internal
-    var mode = Mode.of(aem.props.string("sync.mode")
+    var mode = Mode.of(aem.prop.string("sync.mode")
             ?: Mode.COPY_AND_CLEAN.name)
 
     fun mode(name: String) {
@@ -26,7 +26,7 @@ open class Sync : AemDefaultTask() {
      * Determines a method of getting JCR content from remote instance.
      */
     @Internal
-    var transfer = Transfer.of(aem.props.string("sync.transfer")
+    var transfer = Transfer.of(aem.prop.string("sync.transfer")
             ?: Transfer.PACKAGE_DOWNLOAD.name)
 
     fun transfer(name: String) {

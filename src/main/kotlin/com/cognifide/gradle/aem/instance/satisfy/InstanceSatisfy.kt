@@ -23,13 +23,13 @@ open class InstanceSatisfy : PackageDeploy() {
      * Forces to upload and install again all packages regardless their state on instances (already uploaded / installed).
      */
     @Input
-    var greedy = aem.props.flag("instance.satisfy.greedy")
+    var greedy = aem.prop.flag("instance.satisfy.greedy")
 
     /**
      * Determines which packages should be installed by default when satisfy task is being executed.
      */
     @Input
-    var groupName = aem.props.string("instance.satisfy.group") ?: "*"
+    var groupName = aem.prop.string("instance.satisfy.group") ?: "*"
 
     @get:Internal
     var groupFilter: FileGroup.() -> Boolean = { Patterns.wildcard(name, groupName) }
@@ -41,20 +41,20 @@ open class InstanceSatisfy : PackageDeploy() {
      * This flag can change that behavior, so that information will be refreshed after each package installation.
      */
     @Input
-    var listRefresh: Boolean = aem.props.boolean("instance.satisfy.listRefresh") ?: false
+    var listRefresh: Boolean = aem.prop.boolean("instance.satisfy.listRefresh") ?: false
 
     /**
      * Repeat listing package when failed (brute-forcing).
      */
     @Internal
     @get:JsonIgnore
-    var listRetry = aem.retry { afterSquaredSecond(aem.props.long("instance.satisfy.listRetry") ?: 3) }
+    var listRetry = aem.retry { afterSquaredSecond(aem.prop.long("instance.satisfy.listRetry") ?: 3) }
 
     /**
      * Path in which downloaded CRX packages will be stored.
      */
     @Internal
-    var downloadDir = aem.props.string("instance.satisfy.downloadDir")?.let { aem.project.file(it) }
+    var downloadDir = aem.prop.string("instance.satisfy.downloadDir")?.let { aem.project.file(it) }
             ?: AemTask.temporaryDir(project, name, "download")
 
     /**
@@ -106,7 +106,7 @@ open class InstanceSatisfy : PackageDeploy() {
 
     private fun defineCmdGroups() {
         if (cmdGroups) {
-            val urls = aem.props.list("instance.satisfy.urls") ?: listOf()
+            val urls = aem.prop.list("instance.satisfy.urls") ?: listOf()
             urls.forEachIndexed { index, url ->
                 val no = index + 1
                 val fileName = url.substringAfterLast("/").substringBeforeLast(".")

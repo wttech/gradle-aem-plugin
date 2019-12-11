@@ -17,32 +17,32 @@ open class BundleInstall : BundleTask() {
      * Check instance(s) health after installing bundles.
      */
     @Input
-    var awaited: Boolean = aem.props.boolean("bundle.install.awaited") ?: true
+    var awaited: Boolean = aem.prop.boolean("bundle.install.awaited") ?: true
 
     /**
      * Controls if bundle after installation should be immediatelly started.
      */
     @Input
-    var start: Boolean = aem.props.boolean("bundle.install.start") ?: true
+    var start: Boolean = aem.prop.boolean("bundle.install.start") ?: true
 
     /**
      * OSGi start level at which installed bundle will be started.
      */
     @Input
-    var startLevel: Int = aem.props.int("bundle.install.startLevel") ?: 20
+    var startLevel: Int = aem.prop.int("bundle.install.startLevel") ?: 20
 
     /**
      * Controls if bundle dependent packages should be refreshed within installation.
      */
     @Input
-    var refreshPackages: Boolean = aem.props.boolean("bundle.install.refreshPackages") ?: true
+    var refreshPackages: Boolean = aem.prop.boolean("bundle.install.refreshPackages") ?: true
 
     /**
      * Repeat install when failed (brute-forcing).
      */
     @Internal
     @get:JsonIgnore
-    var retry = aem.retry { afterSquaredSecond(aem.props.long("bundle.install.retry") ?: 2) }
+    var retry = aem.retry { afterSquaredSecond(aem.prop.long("bundle.install.retry") ?: 2) }
 
     /**
      * Hook for preparing instance before installing bundles

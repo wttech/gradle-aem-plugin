@@ -67,7 +67,7 @@ class FilterFile(
         fun temporary(project: Project, paths: List<String>): FilterFile {
             val template = FileOperations.readResource("vlt/$TEMPORARY_NAME")!!
                     .bufferedReader().use { it.readText() }
-            val content = AemExtension.of(project).props.expand(template, mapOf("paths" to paths))
+            val content = AemExtension.of(project).prop.expand(template, mapOf("paths" to paths))
             val file = AemTask.temporaryFile(project, Vlt.NAME, TEMPORARY_NAME)
 
             FileUtils.deleteQuietly(file)

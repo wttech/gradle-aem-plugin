@@ -13,9 +13,9 @@ class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
     val configFrozen: Boolean
         get() = Formats.versionAtLeast(instance.version, "6.4.0")
 
-    var restoreRetry = aem.retry { afterSquaredSecond(aem.props.long("instance.workflowManager.restoreRetry") ?: 6) }
+    var restoreRetry = aem.retry { afterSquaredSecond(aem.prop.long("instance.workflowManager.restoreRetry") ?: 6) }
 
-    var restoreIntended = aem.props.boolean("instance.workflowManager.restoreIntended") ?: false
+    var restoreIntended = aem.prop.boolean("instance.workflowManager.restoreIntended") ?: false
 
     fun workflow(id: String) = Workflow(this, id)
 

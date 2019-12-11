@@ -17,45 +17,45 @@ open class PackageDeploy : PackageTask() {
      * Check instance(s) health after deploying package(s).
      */
     @Input
-    var awaited: Boolean = aem.props.boolean("package.deploy.awaited") ?: true
+    var awaited: Boolean = aem.prop.boolean("package.deploy.awaited") ?: true
 
     /**
      * Enables deployment via CRX package activation from author to publishers when e.g they are not accessible.
      */
     @Input
-    var distributed: Boolean = aem.props.flag("package.deploy.distributed")
+    var distributed: Boolean = aem.prop.flag("package.deploy.distributed")
 
     /**
      * Force upload CRX package regardless if it was previously uploaded.
      */
     @Input
-    var uploadForce: Boolean = aem.props.boolean("package.deploy.uploadForce") ?: true
+    var uploadForce: Boolean = aem.prop.boolean("package.deploy.uploadForce") ?: true
 
     /**
      * Repeat upload when failed (brute-forcing).
      */
     @Internal
     @get:JsonIgnore
-    var uploadRetry = aem.retry { afterSquaredSecond(aem.props.long("package.deploy.uploadRetry") ?: 3) }
+    var uploadRetry = aem.retry { afterSquaredSecond(aem.prop.long("package.deploy.uploadRetry") ?: 3) }
 
     /**
      * Repeat install when failed (brute-forcing).
      */
     @Internal
     @get:JsonIgnore
-    var installRetry = aem.retry { afterSquaredSecond(aem.props.long("package.deploy.installRetry") ?: 2) }
+    var installRetry = aem.retry { afterSquaredSecond(aem.prop.long("package.deploy.installRetry") ?: 2) }
 
     /**
      * Determines if when on package install, sub-packages included in CRX package content should be also installed.
      */
     @Input
-    var installRecursive: Boolean = aem.props.boolean("package.deploy.installRecursive") ?: true
+    var installRecursive: Boolean = aem.prop.boolean("package.deploy.installRecursive") ?: true
 
     /**
      * Allows to temporarily enable or disable workflows during CRX package deployment.
      */
     @Input
-    var workflowToggle: Map<String, Boolean> = aem.props.map("package.deploy.workflowToggle")
+    var workflowToggle: Map<String, Boolean> = aem.prop.map("package.deploy.workflowToggle")
             ?.mapValues { it.value.toBoolean() } ?: mapOf()
 
     /**

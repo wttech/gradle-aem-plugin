@@ -55,7 +55,11 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
      * Allows to read project property specified in command line and system property as a fallback.
      */
     @JsonIgnore
-    val props = PropertyParser(this)
+    val prop = PropertyParser(this)
+
+    @get:JsonIgnore
+    @Deprecated("Use 'prop' instead!", replaceWith = ReplaceWith("prop"))
+    val props get() = prop
 
     /**
      * Access configuration for local instances or environment from different project (cross-project configuring).
@@ -73,7 +77,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
      * - single-project build - root project
      */
     @JsonIgnore
-    val projectMain: Project = project.findProject(props.string("projectMainPath") ?: ":aem") ?: project.rootProject
+    val projectMain: Project = project.findProject(prop.string("projectMainPath") ?: ":aem") ?: project.rootProject
 
     /**
      * Project name convention prefixes used to determine default:
@@ -84,7 +88,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
      *
      * in case of multi-project build and assembly packages.
      */
-    val projectPrefixes: List<String> = props.list("projectPrefixes") ?: listOf("aem.", "aem-", "aem_")
+    val projectPrefixes: List<String> = prop.list("projectPrefixes") ?: listOf("aem.", "aem-", "aem_")
 
     /**
      * Project name with skipped convention prefixes.
@@ -111,17 +115,17 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
      * It is more soft offline mode than Gradle's one which does much more.
      * It will not use any Maven repository so that CI build will fail which is not expected in e.g integration tests.
      */
-    val offline = props.flag("offline")
+    val offline = prop.flag("offline")
 
     /**
      * Determines current environment name to be used in e.g package deployment.
      */
-    val env: String = props.string("env") ?: run { System.getenv("ENV") ?: "local" }
+    val env: String = prop.string("env") ?: run { System.getenv("ENV") ?: "local" }
 
     /**
      * Specify characters to be used as line endings when cleaning up checked out JCR content.
      */
-    var lineSeparator: String = props.string("lineSeparator") ?: "LF"
+    var lineSeparator: String = prop.string("lineSeparator") ?: "LF"
 
     @JsonIgnore
     val lineSeparatorString: String = LineSeparator.string(lineSeparator)
@@ -131,7 +135,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
      * - Groovy Scripts to be launched by Groovy Console instance service in tasks defined in project.
      */
     val configDir: File
-        get() = project.file(props.string("configDir") ?: "gradle")
+        get() = project.file(prop.string("configDir") ?: "gradle")
 
     /**
      * Directory for storing common files used by plugin e.g:
@@ -141,7 +145,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
      * - tail incident filter
      */
     val configCommonDir: File
-        get() = projectMain.file(props.string("configCommonDir") ?: "gradle")
+        get() = projectMain.file(prop.string("configCommonDir") ?: "gradle")
 
     @get:Internal
     val fileTransfer = FileTransferManager(this)
@@ -278,7 +282,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     @get:JsonIgnore
     val anyInstance: Instance
         get() {
-            val cmdInstanceArg = props.string("instance")
+            val cmdInstanceArg = prop.string("instance")
             if (!cmdInstanceArg.isNullOrBlank()) {
                 return instance(cmdInstanceArg)
             }
@@ -299,7 +303,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
      *
      * If none instances will be found, throws exception.
      */
-    fun namedInstance(desiredName: String? = props.string("instance.name"), defaultName: String = "$env-*"): Instance {
+    fun namedInstance(desiredName: String? = prop.string("instance.name"), defaultName: String = "$env-*"): Instance {
         val nameMatcher: String = desiredName ?: defaultName
 
         val namedInstance = filterInstances(nameMatcher).firstOrNull()
@@ -313,7 +317,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     /**
      * Find all instances which names are matching wildcard filter specified via command line parameter 'instance.name'.
      */
-    fun filterInstances(nameMatcher: String = props.string("instance.name") ?: "$env-*"): List<Instance> {
+    fun filterInstances(nameMatcher: String = prop.string("instance.name") ?: "$env-*"): List<Instance> {
         val all = instanceOptions.defined.values
 
         // Specified by command line should not be filtered
@@ -325,8 +329,8 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
         // Defined by build script, via properties or defaults are filterable by name
         return all.filter { instance ->
             when {
-                props.flag("instance.author", "instance.authors") -> instance.author
-                props.flag("instance.publish", "instance.publishes", "instance.publishers") -> instance.publish
+                prop.flag("instance.author", "instance.authors") -> instance.author
+                prop.flag("instance.publish", "instance.publishes", "instance.publishers") -> instance.publish
                 else -> Patterns.wildcard(instance.name, nameMatcher)
             }
         }
@@ -558,13 +562,13 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     @get:JsonIgnore
     val filter: FilterFile
         get() {
-            val cmdFilterRoots = props.list("filter.roots") ?: listOf()
+            val cmdFilterRoots = prop.list("filter.roots") ?: listOf()
             if (cmdFilterRoots.isNotEmpty()) {
                 logger.debug("Using Vault filter roots specified as command line property: $cmdFilterRoots")
                 return FilterFile.temporary(project, cmdFilterRoots)
             }
 
-            val cmdFilterPath = props.string("filter.path") ?: ""
+            val cmdFilterPath = prop.string("filter.path") ?: ""
             if (cmdFilterPath.isNotEmpty()) {
                 val cmdFilter = FileOperations.find(project, packageOptions.vltDir.toString(), cmdFilterPath)
                         ?: throw VltException("Vault check out filter file does not exist at path: $cmdFilterPath" +

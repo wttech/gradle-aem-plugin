@@ -10,7 +10,7 @@ class Toolbox(aem: AemExtension) : Base(aem) {
         get() = NAME
 
     override val hostIp: String
-        get() = detectHostIp() ?: aem.props.string("environment.docker.toolbox.hostIp") ?: "192.168.99.100"
+        get() = detectHostIp() ?: aem.prop.string("environment.docker.toolbox.hostIp") ?: "192.168.99.100"
 
     @Suppress("TooGenericExceptionCaught")
     fun detectHostIp(): String? = try {
@@ -24,9 +24,9 @@ class Toolbox(aem: AemExtension) : Base(aem) {
     override val safeVolumes: Boolean = true
 
     override val hostInternalIp: String?
-        get() = aem.props.string("environment.docker.toolbox.hostInternalIp") ?: "10.0.2.2"
+        get() = aem.prop.string("environment.docker.toolbox.hostInternalIp") ?: "10.0.2.2"
 
-    var cygpathPath = aem.props.string("environment.cygpath.path")
+    var cygpathPath = aem.prop.string("environment.cygpath.path")
             ?: "C:\\Program Files\\Git\\usr\\bin\\cygpath.exe"
 
     override fun determinePath(path: String): String {

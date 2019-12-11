@@ -12,11 +12,11 @@ class HealthChecker(val environment: Environment) {
     private val checks = mutableListOf<HealthCheck>()
 
     private var httpOptions: HttpClient.() -> Unit = {
-        connectionRetries = aem.props.boolean("environment.health.http.connectionRetries") ?: false
-        connectionTimeout = aem.props.int("environment.health.http.connectionTimeout") ?: 1000
+        connectionRetries = aem.prop.boolean("environment.health.http.connectionRetries") ?: false
+        connectionTimeout = aem.prop.int("environment.health.http.connectionTimeout") ?: 1000
     }
 
-    var retry = aem.retry { afterSecond(aem.props.long("environment.health.retry") ?: 5) }
+    var retry = aem.retry { afterSecond(aem.prop.long("environment.health.retry") ?: 5) }
 
     fun define(name: String, check: () -> Unit) {
         checks += HealthCheck(name, check)

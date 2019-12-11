@@ -258,9 +258,9 @@ aem {
         }
         nodeTypesSync("PRESERVE_AUTO")
         validator {
-            enabled = props.boolean("package.validator.enabled") ?: true
-            verbose = props.boolean("package.validator.verbose") ?: true
-            planName = props.string("package.validator.plan") ?: "default-plan.json"
+            enabled = prop.boolean("package.validator.enabled") ?: true
+            verbose = prop.boolean("package.validator.verbose") ?: true
+            planName = prop.string("package.validator.plan") ?: "default-plan.json"
             severity("MAJOR")
         }       
         // ...
@@ -273,23 +273,23 @@ aem {
         // etc
         
         http { // allows to customize HTTP connection to AEM instances
-            connectionTimeout = props.int("instance.http.connectionTimeout") ?: 30000
-            connectionRetries = props.boolean("instance.http.connectionRetries") ?: true
-            connectionIgnoreSsl = props.boolean("instance.http.connectionIgnoreSsl") ?: true
+            connectionTimeout = prop.int("instance.http.connectionTimeout") ?: 30000
+            connectionRetries = prop.boolean("instance.http.connectionRetries") ?: true
+            connectionIgnoreSsl = prop.boolean("instance.http.connectionIgnoreSsl") ?: true
     
-            proxyHost = props.string("instance.http.proxyHost")
-            proxyPort = props.int("instance.http.proxyPort")
-            proxyScheme = props.string("instance.http.proxyScheme")
+            proxyHost = prop.string("instance.http.proxyHost")
+            proxyPort = prop.int("instance.http.proxyPort")
+            proxyScheme = prop.string("instance.http.proxyScheme")
         }
     }
     localInstance { // config for AEM instances to be created on local file system
         quickstart {
-            jarUrl = props.string("localInstance.quickstart.jarUrl")
-            licenseUrl = props.string("localInstance.quickstart.licenseUrl")
+            jarUrl = prop.string("localInstance.quickstart.jarUrl")
+            licenseUrl = prop.string("localInstance.quickstart.licenseUrl")
         }
         backup {
-            uploadUrl = props.string("localInstance.backup.uploadUrl")
-            downloadUrl = props.string("localInstance.backup.downloadUrl")
+            uploadUrl = prop.string("localInstance.backup.uploadUrl")
+            downloadUrl = prop.string("localInstance.backup.downloadUrl")
         }
         install {
             files { // CRX packages and OSGi bundles to be pre-installed on created AEM instances
@@ -303,11 +303,11 @@ aem {
                 // ...
             }
         }   
-        rootDir = props.string("localInstance.root")
+        rootDir = prop.string("localInstance.root")
         // ...
     }
     environment { // config for AEM environment running on Docker
-        rootDir = props.string("environment.rootDir")?.let { project.file(it) } ?: projectMain.file(".aem/environment")
+        rootDir = prop.string("environment.rootDir")?.let { project.file(it) } ?: projectMain.file(".aem/environment")
         hosts { // domains to be appended to hosts file automatically
             author("http://author.example.com")
             publish("http://demo.example.com") { tag("test") }
@@ -350,18 +350,18 @@ aem {
     }
     fileTransfer { // config for resolving CRX packages, AEM Quickstart files and backups using HTTP/SFTP/SMB
         sftp {
-            user = props.string("fileTransfer.sftp.user")
-            password = props.string("fileTransfer.sftp.password")
+            user = prop.string("fileTransfer.sftp.user")
+            password = prop.string("fileTransfer.sftp.password")
         }
         smb {
-            user = props.string("fileTransfer.smb.user")
-            password = props.string("fileTransfer.smb.password")
-            domain = props.string("fileTransfer.smb.domain")
+            user = prop.string("fileTransfer.smb.user")
+            password = prop.string("fileTransfer.smb.password")
+            domain = prop.string("fileTransfer.smb.domain")
         }
         http {
             client {
-                basicUser = props.string("fileTransfer.http.user")
-                basicPassword = props.string("fileTransfer.http.password")
+                basicUser = prop.string("fileTransfer.http.user")
+                basicPassword = prop.string("fileTransfer.http.password")
             }
         }
         
@@ -1482,7 +1482,7 @@ aem {
     localInstance {
         backup {
             selector = {  // default implementation below
-                val name = props.string("localInstance.backup.name") ?: ""
+                val name = prop.string("localInstance.backup.name") ?: ""
                 when {
                     name.isNotBlank() -> firstOrNull { it.fileEntry.name == name }
                     else -> firstOrNull()
@@ -1525,7 +1525,7 @@ This behavior is controlled by:
 ```kotlin
 aem {
     localInstance {
-        rootDir = props.string("localInstance.root")?.let { project.file(it) } ?: projectMain.file(".aem/instance")
+        rootDir = prop.string("localInstance.root")?.let { project.file(it) } ?: projectMain.file(".aem/instance")
         overridesDir = File(configCommonDir, LocalInstance.FILES_PATH)
         expandProperties = mapOf()
         expandFiles = listOf(
@@ -1865,26 +1865,26 @@ aem {
         instanceAwait {
             awaitUp {
                 timeout {
-                    stateTime = props.long("instance.awaitUp.timeout.stateTime") ?: TimeUnit.MINUTES.toMillis(2)
-                    constantTime = props.long("instance.awaitUp.timeout.constantTime") ?: TimeUnit.MINUTES.toMillis(10)
+                    stateTime = prop.long("instance.awaitUp.timeout.stateTime") ?: TimeUnit.MINUTES.toMillis(2)
+                    constantTime = prop.long("instance.awaitUp.timeout.constantTime") ?: TimeUnit.MINUTES.toMillis(10)
                 }
                 bundles {
-                    symbolicNamesIgnored = props.list("instance.awaitUp.bundles.symbolicNamesIgnored") ?: listOf()
+                    symbolicNamesIgnored = prop.list("instance.awaitUp.bundles.symbolicNamesIgnored") ?: listOf()
                 }
                 components {
-                    platformComponents = props.list("instance.awaitUp.components.platform") ?: listOf(
+                    platformComponents = prop.list("instance.awaitUp.components.platform") ?: listOf(
                         "com.day.crx.packaging.*", 
                         "org.apache.sling.installer.*"
                     )
-                    specificComponents = props.list("instance.awaitUp.components.specific") ?: javaPackages.map { "$it.*" }
+                    specificComponents = prop.list("instance.awaitUp.components.specific") ?: javaPackages.map { "$it.*" }
                 }
                 events {
-                    unstableTopics = props.list("instance.awaitUp.event.unstableTopics") ?: listOf(
+                    unstableTopics = prop.list("instance.awaitUp.event.unstableTopics") ?: listOf(
                         "org/osgi/framework/ServiceEvent/*",
                         "org/osgi/framework/FrameworkEvent/*",
                         "org/osgi/framework/BundleEvent/*"
                     )
-                    unstableAgeMillis = props.long("instance.awaitUp.event.unstableAgeMillis") ?: TimeUnit.SECONDS.toMillis(5)
+                    unstableAgeMillis = prop.long("instance.awaitUp.event.unstableAgeMillis") ?: TimeUnit.SECONDS.toMillis(5)
                 }
             }
         }
@@ -1924,10 +1924,10 @@ aem {
     tasks {
         instanceTail {
             tailer {
-                logFilePath = props.string("instance.tail.logFilePath") ?: "/logs/error.log"
+                logFilePath = prop.string("instance.tail.logFilePath") ?: "/logs/error.log"
                 logListener = { instance -> /* ... */ }
-                incidentFilter = props.string("instance.tail.incidentFilter")?.let { project.file(it) } ?: File(configCommonDir, "instanceTail/incidentFilter.txt")
-                incidentDelay = props.long("instance.tail.incidentDelay") ?: 5000L
+                incidentFilter = prop.string("instance.tail.incidentFilter")?.let { project.file(it) } ?: File(configCommonDir, "instanceTail/incidentFilter.txt")
+                incidentDelay = prop.long("instance.tail.incidentDelay") ?: 5000L
             }
         }
     }
@@ -2572,7 +2572,7 @@ Remember to [encode instance user & password](#instance-url-credentials-encoding
 
 The properties syntax comes from [Pebble Template Engine](https://github.com/PebbleTemplates/pebble) which means that all its features (if statements, for loops, filters etc) can be used inside files being expanded.
 
-Expanding properties could be used separately on any string or file source in any custom task by using method `aem.props.expand()`.
+Expanding properties could be used separately on any string or file source in any custom task by using method `aem.prop.expand()`.
 
 ### Customize convention for CRX package and OSGi bundle names and paths
 

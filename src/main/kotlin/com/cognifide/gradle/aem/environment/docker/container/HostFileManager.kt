@@ -19,7 +19,7 @@ class HostFileManager(val container: Container) {
 
     val rootDir = File(docker.environment.rootDir, container.name)
 
-    var fileDir = File(rootDir, aem.props.string("environment.container.host.fileDir") ?: "files")
+    var fileDir = File(rootDir, aem.prop.string("environment.container.host.fileDir") ?: "files")
 
     fun file(path: String) = File(rootDir, path)
 

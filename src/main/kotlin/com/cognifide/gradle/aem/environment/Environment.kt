@@ -14,7 +14,7 @@ class Environment(@JsonIgnore val aem: AemExtension) : Serializable {
     /**
      * Path in which local AEM environment will be stored.
      */
-    var rootDir: File = aem.props.string("environment.rootDir")?.let { aem.project.file(it) }
+    var rootDir: File = aem.prop.string("environment.rootDir")?.let { aem.project.file(it) }
             ?: aem.projectMain.file(".environment")
 
     /**

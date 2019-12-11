@@ -19,17 +19,17 @@ class Step(val provisioner: Provisioner, val id: String) {
     /**
      * Allows to redo step action after delay if exception is thrown.
      */
-    var retry: Retry = aem.retry { afterSquaredSecond(aem.props.long("instance.provision.step.retry") ?: 0L) }
+    var retry: Retry = aem.retry { afterSquaredSecond(aem.prop.long("instance.provision.step.retry") ?: 0L) }
 
     /**
      * Controls logging error to console instead of breaking build with exception so that next step might be performed.
      */
-    var continueOnFail: Boolean = aem.props.boolean("instance.provision.step.continueOnFail") ?: false
+    var continueOnFail: Boolean = aem.prop.boolean("instance.provision.step.continueOnFail") ?: false
 
     /**
      * Controls if step should be performed again when previously failed.
      */
-    var rerunOnFail: Boolean = aem.props.boolean("instance.provision.step.rerunOnFail") ?: true
+    var rerunOnFail: Boolean = aem.prop.boolean("instance.provision.step.rerunOnFail") ?: true
 
     fun validate() {
         if (!::actionCallback.isInitialized) {

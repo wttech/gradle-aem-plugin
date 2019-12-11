@@ -19,10 +19,10 @@ class PackageValidator(@Internal val aem: AemExtension) {
     private val logger = aem.logger
 
     @Input
-    var enabled = aem.props.boolean("package.validator.enabled") ?: true
+    var enabled = aem.prop.boolean("package.validator.enabled") ?: true
 
     @Input
-    var severity = aem.props.string("package.validator.severity")
+    var severity = aem.prop.string("package.validator.severity")
             ?.let { severityByName(it) } ?: Violation.Severity.MAJOR
 
     fun severity(name: String) {
@@ -30,13 +30,13 @@ class PackageValidator(@Internal val aem: AemExtension) {
     }
 
     @Input
-    var verbose = aem.props.boolean("package.validator.verbose") ?: true
+    var verbose = aem.prop.boolean("package.validator.verbose") ?: true
 
     @OutputDirectory
     var workDir = aem.temporaryDir("package/validator")
 
     @Input
-    var planName = aem.props.string("package.validator.plan") ?: "default-plan.json"
+    var planName = aem.prop.string("package.validator.plan") ?: "default-plan.json"
 
     @get:Internal
     val planFile get() = File(workDir, planName)
@@ -46,7 +46,7 @@ class PackageValidator(@Internal val aem: AemExtension) {
         get() = File(workDir, "report.json")
 
     private var baseProvider: () -> File? = {
-        aem.props.string("package.validator.opear.base")?.let { aem.resolveFile(it) }
+        aem.prop.string("package.validator.opear.base")?.let { aem.resolveFile(it) }
     }
 
     fun base(value: Any) = base { aem.resolveFile(value) }
