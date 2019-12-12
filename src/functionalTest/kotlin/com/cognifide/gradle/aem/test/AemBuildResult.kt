@@ -54,6 +54,8 @@ class AemBuildResult(val result: BuildResult, val projectDir: File) {
         assertTrue({ ZipUtil.unpackEntry(pkg, entry).isNotEmpty() }, "File '$entry' included in package '$pkg' cannot be empty.")
     }
 
+    fun assertPackageBundle(pkgPath: String, entry: String, tests: Jar.() -> Unit = {}) = assertPackageBundle(file(pkgPath), entry, tests)
+
     fun assertPackageBundle(pkg: File, entry: String, tests: Jar.() -> Unit = {}) {
         assertPackageFile(pkg, entry)
 

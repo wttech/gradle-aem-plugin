@@ -126,6 +126,7 @@ class BundlePluginTest: AemBuildTest() {
         runBuild(projectDir, "packageCompose", "-Poffline") {
             assertTask(":packageCompose")
             assertPackage("build/aem/packageCompose/bundle.extended-1.0.0.zip")
+            // assertPackageBundle("build/aem/packageCompose/bundle.extended-1.0.0.zip", "jcr_root/apps/bundle-extended/install/bundle.extended-1.0.0.zip")
         }
     }
 }
