@@ -16,82 +16,46 @@ class PackagePluginTest {
     }
 
     @Test
-    @Disabled
-    fun `can run default suite`() {
+    fun `should build package using minimal configuration`() {
         // given
-        val projectDir = configureProjectDir()
+        val projectDir = File("build/functionalTest/minimal").apply {
+            mkdirs()
+
+            resolve("settings.gradle.kts").writeText("")
+
+            resolve("build.gradle.kts").writeText("""
+                plugins {
+                    id("com.cognifide.aem.package")
+                }
+                """.trimIndent())
+
+            resolve("src/main/content/jcr_root/apps/example/.content.xml").apply {
+                parentFile.mkdirs()
+            }.writeText("""
+                <?xml version="1.0" encoding="UTF-8"?>
+                <jcr:root xmlns:sling="http://sling.apache.org/jcr/sling/1.0" xmlns:jcr="http://www.jcp.org/jcr/1.0"
+                    jcr:primaryType="sling:Folder"/>
+                """.trimIndent())
+
+            resolve("src/main/content/META-INF/vault/filter.xml").apply {
+                parentFile.mkdirs()
+            }.writeText("""
+                <?xml version="1.0" encoding="UTF-8"?>
+                <workspaceFilter version="1.0">
+                    <filter root="/apps/example/common"/>
+                </workspaceFilter>
+                """.trimIndent())
+        }
 
         // when
         val runner = GradleRunner.create()
         runner.forwardOutput()
         runner.withPluginClasspath()
-        runner.withArguments("lighthouseRun")
+        runner.withArguments("packageCompose", "-Poffline")
         runner.withProjectDir(projectDir)
         val result = runner.build();
 
         // then
-        assertEquals(result.task(":lighthouseRun")?.outcome, TaskOutcome.SUCCESS)
-    }
-
-    private fun configureProjectDir(): File {
-        val projectDir = File("build/functionalTest")
-
-        with(projectDir) {
-            mkdirs()
-            resolve("settings.gradle.kts").writeText("")
-            resolve("build.gradle.kts").writeText("""
-                plugins {
-                    id("com.cognifide.lighthouse")
-                }
-                """.trimIndent())
-
-            resolve("lighthouse").mkdirs()
-
-            resolve("lighthouse/suites.json").writeText("""
-                {
-                  "suites": [
-                    {
-                      "name": "youtube",
-                      "default": true,
-                      "baseUrl": "https://www.youtube.com",
-                      "paths": [
-                        "/",
-                        "/feed/trending"
-                      ],
-                      "args": [
-                        "--config-path=lighthouse/config.json",
-                        "--performance=60",
-                        "--accessibility=70",
-                        "--best-practices=80",
-                        "--seo=80",
-                        "--pwa=30"
-                      ]
-                    },
-                    {
-                      "name": "facebook",
-                      "baseUrl": "https://www.facebook.com",
-                      "paths": [
-                        "/"
-                      ],
-                      "args": [
-                        "--config-path=lighthouse/config.json",
-                        "--performance=75",
-                        "--accessibility=60",
-                        "--best-practices=80",
-                        "--seo=60",
-                        "--pwa=30"
-                      ]
-                    }
-                  ]
-                }
-                """.trimIndent())
-
-            resolve("lighthouse/config.json").writeText("""
-                {
-                  "extends": "lighthouse:default"
-                }
-                """.trimIndent())
-        }
-        return projectDir
+        assertEquals(result.task(":packageCompose")?.outcome, TaskOutcome.SUCCESS)
     }
 }
