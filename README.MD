@@ -2686,6 +2686,29 @@ In case of that workaround, Vault tasks should not be run in parallel (by separa
     * Run build, it will suspend, then connect remote at port 5005 by using IDE
     * Build will proceed and stop at previously set up breakpoint.
 
+## Testing
+
+Some functional tests are running directly on real AEM to ensure correctness of features.
+As of AEM is not available at public, it needs to be provided externally from remote server or by providing local file path.
+
+AEM files available locally:
+
+```bash
+gradlew functionalTest \
+-DlocalInstance.jarUrl=/Users/krystian.panek/Servers/aem65/cq-quickstart-6.5.0.jar \
+-DlocalInstance.licenseUrl=/Users/krystian.panek/Servers/aem65/license.properties \
+```
+
+AEM files hosted externally:
+
+```bash
+gradlew functionalTest \
+-DlocalInstance.jarUrl=https://my-company.com/cq/6.5.0/cq-quickstart-6.5.0.jar \
+-DlocalInstance.licenseUrl=https://my-company.com/cq/6.5.0/license.properties \
+-DfileTransfer.user=foo
+-DfileTransfer.password=pass
+```
+
 ## Contributing
 
 Issues reported or pull requests created will be very appreciated. 
