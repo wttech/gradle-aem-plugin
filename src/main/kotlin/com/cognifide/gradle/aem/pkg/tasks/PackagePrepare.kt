@@ -56,8 +56,8 @@ open class PackagePrepare : AemDefaultTask() {
 
     @TaskAction
     fun prepare() {
-        copyMetaFiles()
         syncNodeTypes()
+        copyMetaFiles()
     }
 
     private fun copyMetaFiles() {

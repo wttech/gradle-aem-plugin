@@ -2678,8 +2678,11 @@ In case of that workaround, Vault tasks should not be run in parallel (by separa
 
 1. Clone this project using command `git clone https://github.com/Cognifide/gradle-aem-plugin.git`
 2. To build plugin, simply enter cloned directory run command: `gradlew`
-3. To debug built plugin:
-    * Append to build command parameters `--no-daemon -Dorg.gradle.debug=true`
+3. To debug plugin under development in tests, use commands:
+    * For functional tests: `sh gradlew functionalTest --debug-jvm`
+    * For unit tests: `sh gradlew test --debug-jvm`
+4. To debug built plugin in project when published to local Maven repository:
+    * Append to any build command parameters `--no-daemon -Dorg.gradle.debug=true`
     * Run build, it will suspend, then connect remote at port 5005 by using IDE
     * Build will proceed and stop at previously set up breakpoint.
 
