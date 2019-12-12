@@ -9,6 +9,7 @@ import java.io.File
 abstract class BaseTest {
 
     fun projectDir(path: String, definition: File.() -> Unit) = File("build/functionalTest/$path").apply {
+        deleteRecursively()
         mkdirs()
         definition()
     }
@@ -33,6 +34,6 @@ abstract class BaseTest {
     }
 
     fun assertTask(result: BuildResult, taskPath: String, outcome: TaskOutcome = TaskOutcome.SUCCESS) {
-        assertEquals(result.task(taskPath)?.outcome, outcome)
+        assertEquals(outcome, result.task(taskPath)?.outcome)
     }
 }
