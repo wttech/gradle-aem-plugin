@@ -24,10 +24,13 @@ repositories {
 }
 
 dependencies {
+    implementation(platform("org.jetbrains.kotlin:kotlin-bom:1.3.61"))
+
     implementation(gradleApi())
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.3.60")
-    implementation("org.jetbrains.kotlin:kotlin-reflect:1.3.60")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.2.0")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib")
+    implementation("org.jetbrains.kotlin:kotlin-reflect")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.2")
     implementation("org.apache.commons:commons-lang3:3.4")
     implementation("commons-io:commons-io:2.4")
     implementation("commons-validator:commons-validator:1.6")
@@ -49,15 +52,15 @@ dependencies {
     implementation("org.buildobjects:jproc:2.2.3")
     implementation("net.adamcin.oakpal:oakpal-core:1.5.1")
 
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.3.1")
-    testImplementation("org.junit.jupiter:junit-jupiter-params:5.3.1")
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.3.1")
-    testImplementation(gradleTestKit())
-    testImplementation("org.skyscreamer:jsonassert:1.5.0")
-    testImplementation("org.junit-pioneer:junit-pioneer:0.2.2")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.5.2")
 
     "detektPlugins"("io.gitlab.arturbosch.detekt:detekt-formatting:1.0.1")
 }
+
+val functionalTestSourceSet = sourceSets.create("functionalTest") {}
+gradlePlugin.testSourceSets(functionalTestSourceSet)
+configurations.getByName("functionalTestImplementation").extendsFrom(configurations.getByName("testImplementation"))
+
 
 tasks {
 
@@ -96,7 +99,16 @@ tasks {
             freeCompilerArgs = freeCompilerArgs + "-Xuse-experimental=kotlin.Experimental"
         }
     }
+    register<Test>("functionalTest") {
+        testClassesDirs = functionalTestSourceSet.output.classesDirs
+        classpath = functionalTestSourceSet.runtimeClasspath
 
+        useJUnitPlatform()
+        mustRunAfter("test")
+    }
+    named<Task>("check") {
+        dependsOn("functionalTest")
+    }
     named<Task>("build") {
         dependsOn("sourcesJar", "javadocJar")
     }
@@ -123,16 +135,6 @@ tasks {
         }
     }
 
-    named<Test>("test") {
-        testLogging {
-            events = setOf(TestLogEvent.FAILED)
-            exceptionFormat = TestExceptionFormat.SHORT
-        }
-
-        useJUnitPlatform()
-        dependsOn(named("publishToMavenLocal"))
-    }
-
     named("afterReleaseBuild") {
         dependsOn("bintrayUpload", "publishPlugins")
     }
@@ -143,6 +145,11 @@ tasks {
 
     register("fullRelease") {
         dependsOn("release", "githubRelease")
+    }
+
+    withType<Test>().configureEach {
+        testLogging.showStandardStreams = true
+        useJUnitPlatform()
     }
 }
 
@@ -156,7 +163,7 @@ detekt {
 publishing {
     publications {
         create<MavenPublication>("mavenJava") {
-            from(components["java"])
+            artifact(tasks["jar"])
             artifact(tasks["sourcesJar"])
             artifact(tasks["javadocJar"])
         }

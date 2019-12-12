@@ -287,7 +287,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
                 return instance(cmdInstanceArg)
             }
 
-            return namedInstance(Instance.FILTER_ANY)
+            return findInstance(Instance.FILTER_ANY) ?: Instance.defaultAuthor(this)
         }
 
     /**
@@ -298,20 +298,22 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
         get() = instances.asSequence().firstOrNull { it.available }
 
     /**
-     * Get all instances which names are matching wildcard filter specified via command line parameter 'instance.name'.
+     * Find instance which name is matching wildcard filter specified via command line parameter 'instance.name'.
+     * By default, this method respects current environment which is used to work only with instances running locally.
+     */
+    fun findInstance(desiredName: String? = prop.string("instance.name"), defaultName: String = "$env-*"): Instance? {
+        return filterInstances(desiredName ?: defaultName).firstOrNull()
+    }
+
+    /**
+     * Get instance which name is matching wildcard filter specified via command line parameter 'instance.name'.
      * By default, this method respects current environment which is used to work only with instances running locally.
      *
-     * If none instances will be found, throws exception.
+     * If instance not found, throws exception.
      */
     fun namedInstance(desiredName: String? = prop.string("instance.name"), defaultName: String = "$env-*"): Instance {
-        val nameMatcher: String = desiredName ?: defaultName
-
-        val namedInstance = filterInstances(nameMatcher).firstOrNull()
-        if (namedInstance != null) {
-            return namedInstance
-        }
-
-        throw AemException("Instance named '$nameMatcher' is not defined.")
+        return findInstance(desiredName, defaultName)
+                ?: throw AemException("Instance named '${desiredName ?: defaultName}' is not defined.")
     }
 
     /**
