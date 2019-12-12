@@ -32,6 +32,7 @@ class PackagePluginTest: AemBuildTest() {
         runBuild(projectDir, "packageCompose", "-Poffline") {
             assertTask(":packageCompose")
             assertPackage("build/aem/packageCompose/package.minimal.zip")
+            assertPackageFile("build/aem/packageCompose/package.minimal.zip", "jcr_root/apps/example/.content.xml")
         }
     }
 }

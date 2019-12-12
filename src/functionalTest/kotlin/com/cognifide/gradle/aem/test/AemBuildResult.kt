@@ -49,6 +49,8 @@ class AemBuildResult(val result: BuildResult, val projectDir: File) {
         assertPackageVaultFiles(pkg)
     }
 
+    fun assertPackageFile(pkgPath: String, entry: String) = assertPackageFile(file(pkgPath), entry)
+
     fun assertPackageFile(pkg: File, entry: String) {
         assertTrue({ ZipUtil.containsEntry(pkg, entry) }, "File '$entry' is not included in package '$pkg'.")
         assertTrue({ ZipUtil.unpackEntry(pkg, entry).isNotEmpty() }, "File '$entry' included in package '$pkg' cannot be empty.")
