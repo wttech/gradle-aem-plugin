@@ -7,9 +7,9 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import java.io.File
 
-abstract class BaseTest {
+abstract class AemBuildTest {
 
-    fun projectDir(path: String, definition: File.() -> Unit) = File("build/functionalTest/$path").apply {
+    fun prepareProject(path: String, definition: File.() -> Unit) = File("build/functionalTest/$path").apply {
         deleteRecursively()
         mkdirs()
         definition()
@@ -25,7 +25,13 @@ abstract class BaseTest {
 
     fun File.gradleProperties(text: String) = file("gradle.properties", text)
 
-    fun runBuild(projectDir: File, vararg arguments: String) = runBuild(projectDir) { withArguments(*arguments, "-i", "-S") }
+    fun runBuild(projectDir: File, vararg arguments: String, asserter: AemBuildResult.() -> Unit) {
+        runBuild(projectDir, { withArguments(*arguments, "-i", "-S") }, asserter)
+    }
+
+    fun runBuild(projectDir: File, runnerOptions: GradleRunner.() -> Unit, asserter: AemBuildResult.() -> Unit) {
+        AemBuildResult(runBuild(projectDir, runnerOptions), projectDir).apply(asserter)
+    }
 
     fun runBuild(projectDir: File, options: GradleRunner.() -> Unit) = GradleRunner.create().run {
         forwardOutput()

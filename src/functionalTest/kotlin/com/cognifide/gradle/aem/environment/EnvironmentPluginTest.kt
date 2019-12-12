@@ -1,13 +1,12 @@
 package com.cognifide.gradle.aem.environment
-import com.cognifide.gradle.aem.test.BaseTest
+import com.cognifide.gradle.aem.test.AemBuildTest
 import org.junit.jupiter.api.Test
 
-class EnvironmentPluginTest: BaseTest() {
+class EnvironmentPluginTest: AemBuildTest() {
 
     @Test
     fun `should apply plugin correctly`() {
-        // given
-        val projectDir = projectDir("environment/minimal") {
+        val projectDir = prepareProject("environment-minimal") {
             settingsGradle("")
 
             buildGradle("""
@@ -17,10 +16,8 @@ class EnvironmentPluginTest: BaseTest() {
                 """)
         }
 
-        // when
-        val buildResult = runBuild(projectDir, "tasks", "-Poffline")
-
-        // then
-        assertTask(buildResult, ":tasks")
+        runBuild(projectDir, "tasks", "-Poffline") {
+            assertTask(":tasks")
+        }
     }
 }

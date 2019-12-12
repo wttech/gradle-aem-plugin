@@ -1,14 +1,13 @@
 package com.cognifide.gradle.aem.common
-import com.cognifide.gradle.aem.test.BaseTest
+import com.cognifide.gradle.aem.test.AemBuildTest
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
-class CommonPluginTest: BaseTest() {
+class CommonPluginTest: AemBuildTest() {
 
     @Test
     fun `should debug aem configuration`() {
-        // given
-        val projectDir = projectDir("common/debug") {
+        val projectDir = prepareProject("common-debug") {
             settingsGradle("")
 
             buildGradle("""
@@ -18,11 +17,9 @@ class CommonPluginTest: BaseTest() {
                 """)
         }
 
-        // when
-        val buildResult = runBuild(projectDir, "debug", "-Poffline")
-
-        // then
-        assertTask(buildResult, ":debug")
-        assertTrue(projectDir.resolve("build/aem/debug/debug.json").exists())
+        runBuild(projectDir, "debug", "-Poffline") {
+            assertTask(":debug")
+            assertFileExists("build/aem/debug/debug.json")
+        }
     }
 }

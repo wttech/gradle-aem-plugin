@@ -1,13 +1,12 @@
 package com.cognifide.gradle.aem.pkg
-import com.cognifide.gradle.aem.test.BaseTest
+import com.cognifide.gradle.aem.test.AemBuildTest
 import org.junit.jupiter.api.Test
 
-class PackagePluginTest: BaseTest() {
+class PackagePluginTest: AemBuildTest() {
 
     @Test
     fun `should build package using minimal configuration`() {
-        // given
-        val projectDir = projectDir("pkg/minimal") {
+        val projectDir = prepareProject("pkg-minimal") {
             settingsGradle("")
 
             buildGradle("""
@@ -30,10 +29,8 @@ class PackagePluginTest: BaseTest() {
                 """)
         }
 
-        // when
-        val buildResult = runBuild(projectDir, "packageCompose", "-Poffline")
-
-        // then
-        assertTask(buildResult, ":packageCompose")
+        runBuild(projectDir, "packageCompose", "-Poffline") {
+            assertTask(":packageCompose")
+        }
     }
 }

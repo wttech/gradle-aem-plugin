@@ -1,13 +1,13 @@
 package com.cognifide.gradle.aem.bundle
-import com.cognifide.gradle.aem.test.BaseTest
+import com.cognifide.gradle.aem.test.AemBuildTest
 import org.junit.jupiter.api.Test
 
-class BundlePluginTest: BaseTest() {
+class BundlePluginTest: AemBuildTest() {
 
     @Test
     fun `should build package with bundle using minimal configuration`() {
         // given
-        val projectDir = projectDir("bundle/minimal") {
+        val projectDir = prepareProject("bundle-minimal") {
             settingsGradle("")
 
             buildGradle("""
@@ -54,17 +54,15 @@ class BundlePluginTest: BaseTest() {
                 """)
         }
 
-        // when
-        val buildResult = runBuild(projectDir, "packageCompose", "-Poffline")
-
-        // then
-        assertTask(buildResult, ":packageCompose")
+        runBuild(projectDir, "packageCompose", "-Poffline") {
+            assertTask(":packageCompose")
+        }
     }
 
     @Test
     fun `should build package with bundle using extended configuration`() {
         // given
-        val projectDir = projectDir("bundle/extended") {
+        val projectDir = prepareProject("bundle-extended") {
             settingsGradle("")
 
             buildGradle("""
@@ -118,16 +116,12 @@ class BundlePluginTest: BaseTest() {
                 """)
         }
 
-        // when
-        val bundleBuildResult = runBuild(projectDir, "bundleCompose", "-Poffline")
+        runBuild(projectDir, "bundleCompose", "-Poffline") {
+            assertTask(":bundleCompose")
+        }
 
-        // then
-        assertTask(bundleBuildResult, ":bundleCompose")
-
-        // when
-        val packageBuildResult = runBuild(projectDir, "packageCompose", "-Poffline")
-
-        // then
-        assertTask(packageBuildResult, ":packageCompose")
+        runBuild(projectDir, "packageCompose", "-Poffline") {
+            assertTask(":packageCompose")
+        }
     }
 }

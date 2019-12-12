@@ -1,14 +1,13 @@
 package com.cognifide.gradle.aem.instance
-import com.cognifide.gradle.aem.test.BaseTest
+import com.cognifide.gradle.aem.test.AemBuildTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty
 
-class InstancePluginTest: BaseTest() {
+class InstancePluginTest: AemBuildTest() {
 
     @Test
     fun `should apply plugin correctly`() {
-        // given
-        val projectDir = projectDir("instance/minimal") {
+        val projectDir = prepareProject("instance-minimal") {
             settingsGradle("")
 
             buildGradle("""
@@ -18,17 +17,15 @@ class InstancePluginTest: BaseTest() {
                 """)
         }
 
-        // when
-        val buildResult = runBuild(projectDir, "tasks", "-Poffline")
-
-        // then
-        assertTask(buildResult, ":tasks")
+        runBuild(projectDir, "tasks", "-Poffline") {
+            assertTask( ":tasks")
+        }
     }
 
     @EnabledIfSystemProperty(named = "localInstance.jarUrl", matches = ".+")
     @Test
     fun `should setup local aem author and publish instances`() {
-        val projectDir = projectDir("instance/setup") {
+        val projectDir = prepareProject("instance-setup") {
             gradleProperties("""
                 fileTransfer.user=${System.getProperty("fileTransfer.user")}
                 fileTransfer.password=${System.getProperty("fileTransfer.password")}
@@ -88,13 +85,16 @@ class InstancePluginTest: BaseTest() {
                 """)
         }
 
-        val resolveResult = runBuild(projectDir, "instanceResolve")
-        assertTask(resolveResult, ":instanceResolve")
+        runBuild(projectDir, "instanceResolve") {
+            assertTask(":instanceResolve")
+        }
 
-        val setupResult = runBuild(projectDir, "instanceSetup")
-        assertTask(setupResult, ":instanceSetup")
+        runBuild(projectDir, "instanceSetup") {
+            assertTask(":instanceSetup")
+        }
 
-        val destroyResult = runBuild(projectDir, "instanceDestroy", "-Pforce")
-        assertTask(destroyResult, ":instanceDestroy")
+        runBuild(projectDir, "instanceDestroy", "-Pforce") {
+            assertTask(":instanceDestroy")
+        }
     }
 }
