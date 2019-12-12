@@ -37,12 +37,12 @@ class InstancePluginTest: BaseTest() {
                 localInstance.quickstart.jarUrl=${System.getProperty("localInstance.jarUrl")}
                 localInstance.quickstart.licenseUrl=${System.getProperty("localInstance.licenseUrl")}
                 
-                instance.local-author.httpUrl=http://localhost:4502
+                instance.local-author.httpUrl=http://localhost:9502
                 instance.local-author.type=local
                 instance.local-author.runModes=local,nosamplecontent
                 instance.local-author.jvmOpts=-server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true
 
-                instance.local-publish.httpUrl=http://localhost:4503
+                instance.local-publish.httpUrl=http://localhost:9503
                 instance.local-publish.type=local
                 instance.local-publish.runModes=local,nosamplecontent
                 instance.local-publish.jvmOpts=-server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true
@@ -65,7 +65,6 @@ class InstancePluginTest: BaseTest() {
                     tasks {
                         instanceSatisfy {
                             packages {
-                                "dep.acs-aem-commons"("https://github.com/Adobe-Consulting-Services/acs-aem-commons/releases/download/acs-aem-commons-4.0.0/acs-aem-commons-content-4.0.0-min.zip")
                                 "dep.core-components-all"("com.adobe.cq:core.wcm.components.all:2.8.0@zip")
                                 "tool.search-webconsole-plugin"("com.neva.felix:search-webconsole-plugin:1.2.0")
                             }
@@ -90,7 +89,7 @@ class InstancePluginTest: BaseTest() {
         }
 
         val resolveResult = runBuild(projectDir, "instanceResolve")
-        assertTask(resolveResult, "instanceResolve")
+        assertTask(resolveResult, ":instanceResolve")
 
         val setupResult = runBuild(projectDir, "instanceSetup")
         assertTask(setupResult, ":instanceSetup")

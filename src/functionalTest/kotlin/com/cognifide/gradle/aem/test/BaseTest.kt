@@ -4,6 +4,7 @@ import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
 import java.io.File
 
 abstract class BaseTest {
@@ -36,6 +37,9 @@ abstract class BaseTest {
     }
 
     fun assertTask(result: BuildResult, taskPath: String, outcome: TaskOutcome = TaskOutcome.SUCCESS) {
-        assertEquals(outcome, result.task(taskPath)?.outcome)
+        val task = result.task(taskPath)
+
+        assertNotNull(task, "Build result does not contain task with path '$taskPath'")
+        assertEquals(outcome, task?.outcome)
     }
 }
