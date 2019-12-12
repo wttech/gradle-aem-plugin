@@ -105,6 +105,7 @@ tasks {
 
         useJUnitPlatform()
         mustRunAfter("test")
+        outputs.upToDateWhen { false }
     }
     named<Task>("check") {
         dependsOn("functionalTest")
