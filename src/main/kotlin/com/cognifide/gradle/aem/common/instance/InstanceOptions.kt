@@ -78,7 +78,7 @@ open class InstanceOptions(private val aem: AemExtension) : Serializable {
      * Get defined instance by name or create temporary definition if URL provided.
      */
     fun parse(urlOrName: String): Instance {
-        return defined[urlOrName] ?: Instance.parse(aem, urlOrName).ifEmpty {
+        return _defined[urlOrName] ?: Instance.parse(aem, urlOrName).ifEmpty {
             throw AemException("Instance cannot be determined by value '$urlOrName'.")
         }.single().apply { validate() }
     }
@@ -88,13 +88,13 @@ open class InstanceOptions(private val aem: AemExtension) : Serializable {
     }
 
     private fun define(instance: Instance) {
-        if (defined.containsKey(instance.name)) {
+        if (_defined.containsKey(instance.name)) {
             throw AemException("Instance named '${instance.name}' is already defined. " +
                     "Enumerate instance types (for example 'author1', 'author2') " +
                     "or distinguish environments (for example 'local', 'int', 'stg').")
         }
 
-        defined[instance.name] = instance
+        _defined[instance.name] = instance
     }
 
     init {
@@ -108,7 +108,7 @@ open class InstanceOptions(private val aem: AemExtension) : Serializable {
         define(Instance.properties(aem))
 
         aem.project.afterEvaluate { _ ->
-            defined.values.forEach { it.validate() }
+            _defined.values.forEach { it.validate() }
         }
     }
 }
