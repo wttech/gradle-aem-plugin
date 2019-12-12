@@ -24,7 +24,7 @@ class PackagePluginTest: AemBuildTest() {
             file("src/main/content/META-INF/vault/filter.xml", """
                 <?xml version="1.0" encoding="UTF-8"?>
                 <workspaceFilter version="1.0">
-                    <filter root="/apps/example/common"/>
+                    <filter root="/apps/example"/>
                 </workspaceFilter>
                 """)
         }

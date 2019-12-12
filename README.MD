@@ -2688,8 +2688,8 @@ In case of that workaround, Vault tasks should not be run in parallel (by separa
 
 ## Testing
 
-Some functional tests are running directly on real AEM to ensure correctness of features.
-As of AEM is not available at public, it needs to be provided externally from remote server or by providing local file path.
+Part of functional tests are using real AEM to ensure correctness of features.
+As of AEM is not available to the public, it needs to be provided externally from remote server or by providing local file path.
 
 AEM files available locally:
 

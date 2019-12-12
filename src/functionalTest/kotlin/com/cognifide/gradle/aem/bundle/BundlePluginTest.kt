@@ -6,7 +6,6 @@ class BundlePluginTest: AemBuildTest() {
 
     @Test
     fun `should build package with bundle using minimal configuration`() {
-        // given
         val projectDir = prepareProject("bundle-minimal") {
             settingsGradle("")
 
@@ -62,7 +61,6 @@ class BundlePluginTest: AemBuildTest() {
 
     @Test
     fun `should build package with bundle using extended configuration`() {
-        // given
         val projectDir = prepareProject("bundle-extended") {
             settingsGradle("")
 
