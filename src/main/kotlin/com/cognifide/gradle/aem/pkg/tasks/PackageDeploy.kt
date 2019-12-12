@@ -6,7 +6,6 @@ import com.cognifide.gradle.aem.common.instance.checkAvailable
 import com.cognifide.gradle.aem.common.instance.names
 import com.cognifide.gradle.aem.common.tasks.PackageTask
 import com.cognifide.gradle.aem.common.utils.fileNames
-import com.fasterxml.jackson.annotation.JsonIgnore
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
@@ -35,14 +34,12 @@ open class PackageDeploy : PackageTask() {
      * Repeat upload when failed (brute-forcing).
      */
     @Internal
-    @get:JsonIgnore
     var uploadRetry = aem.retry { afterSquaredSecond(aem.prop.long("package.deploy.uploadRetry") ?: 3) }
 
     /**
      * Repeat install when failed (brute-forcing).
      */
     @Internal
-    @get:JsonIgnore
     var installRetry = aem.retry { afterSquaredSecond(aem.prop.long("package.deploy.installRetry") ?: 2) }
 
     /**
@@ -62,21 +59,18 @@ open class PackageDeploy : PackageTask() {
      * Hook for preparing instance before deploying packages
      */
     @Internal
-    @get:JsonIgnore
     var initializer: InstanceSync.() -> Unit = {}
 
     /**
      * Hook for cleaning instance after deploying packages
      */
     @Internal
-    @get:JsonIgnore
     var finalizer: InstanceSync.() -> Unit = {}
 
     /**
      * Hook after deploying all packages to all instances.
      */
     @Internal
-    @get:JsonIgnore
     var completer: () -> Unit = { awaitUp() }
 
     private var awaitUpOptions: AwaitUpAction.() -> Unit = {}

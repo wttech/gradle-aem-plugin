@@ -22,7 +22,9 @@ abstract class BaseTest {
 
     fun File.buildGradle(text: String) = file("build.gradle.kts", text)
 
-    fun runBuild(projectDir: File, vararg arguments: String) = runBuild(projectDir) { withArguments(*arguments) }
+    fun File.gradleProperties(text: String) = file("gradle.properties", text)
+
+    fun runBuild(projectDir: File, vararg arguments: String) = runBuild(projectDir) { withArguments(*arguments, "-i", "-S") }
 
     fun runBuild(projectDir: File, options: GradleRunner.() -> Unit) = GradleRunner.create().run {
         forwardOutput()

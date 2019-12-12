@@ -6,7 +6,6 @@ import com.cognifide.gradle.aem.common.instance.checkAvailable
 import com.cognifide.gradle.aem.common.instance.names
 import com.cognifide.gradle.aem.common.tasks.BundleTask
 import com.cognifide.gradle.aem.common.utils.fileNames
-import com.fasterxml.jackson.annotation.JsonIgnore
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
@@ -41,28 +40,24 @@ open class BundleInstall : BundleTask() {
      * Repeat install when failed (brute-forcing).
      */
     @Internal
-    @get:JsonIgnore
     var retry = aem.retry { afterSquaredSecond(aem.prop.long("bundle.install.retry") ?: 2) }
 
     /**
      * Hook for preparing instance before installing bundles
      */
     @Internal
-    @get:JsonIgnore
     var initializer: InstanceSync.() -> Unit = {}
 
     /**
      * Hook for cleaning instance after installing bundles
      */
     @Internal
-    @get:JsonIgnore
     var finalizer: InstanceSync.() -> Unit = {}
 
     /**
      * Hook after installing all bundles to all instances.
      */
     @Internal
-    @get:JsonIgnore
     var completer: () -> Unit = { awaitUp() }
 
     private var awaitUpOptions: AwaitUpAction.() -> Unit = {}

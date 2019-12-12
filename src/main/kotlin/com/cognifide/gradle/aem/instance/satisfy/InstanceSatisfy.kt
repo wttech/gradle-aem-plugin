@@ -10,7 +10,6 @@ import com.cognifide.gradle.aem.common.instance.names
 import com.cognifide.gradle.aem.common.instance.service.pkg.PackageState
 import com.cognifide.gradle.aem.common.utils.Patterns
 import com.cognifide.gradle.aem.pkg.tasks.PackageDeploy
-import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
@@ -47,7 +46,6 @@ open class InstanceSatisfy : PackageDeploy() {
      * Repeat listing package when failed (brute-forcing).
      */
     @Internal
-    @get:JsonIgnore
     var listRetry = aem.retry { afterSquaredSecond(aem.prop.long("instance.satisfy.listRetry") ?: 3) }
 
     /**

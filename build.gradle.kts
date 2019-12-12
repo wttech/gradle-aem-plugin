@@ -103,12 +103,16 @@ tasks {
         testClassesDirs = functionalTestSourceSet.output.classesDirs
         classpath = functionalTestSourceSet.runtimeClasspath
 
+        systemProperties(System.getProperties().asSequence().map {
+            it.key.toString() to it.value.toString() }.filter {
+                it.first.run { startsWith("fileTransfer.") || startsWith("localInstance.") }
+            }.toMap()
+        )
+
         useJUnitPlatform()
         mustRunAfter("test")
+        dependsOn("jar")
         outputs.upToDateWhen { false }
-    }
-    named<Task>("check") {
-        dependsOn("functionalTest")
     }
     named<Task>("build") {
         dependsOn("sourcesJar", "javadocJar")

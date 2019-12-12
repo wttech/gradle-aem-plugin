@@ -11,8 +11,8 @@ open class InstanceResolve : AemDefaultTask() {
 
     @TaskAction
     fun resolve() {
+        aem.tasks.instanceSatisfy.resolvePackages() // more light at first
         aem.localInstanceManager.resolveSourceFiles()
-        aem.tasks.instanceSatisfy.resolvePackages()
     }
 
     companion object {
