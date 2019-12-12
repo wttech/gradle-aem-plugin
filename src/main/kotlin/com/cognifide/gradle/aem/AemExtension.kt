@@ -320,7 +320,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
      * Find all instances which names are matching wildcard filter specified via command line parameter 'instance.name'.
      */
     fun filterInstances(nameMatcher: String = prop.string("instance.name") ?: "$env-*"): List<Instance> {
-        val all = instanceOptions.defined.values
+        val all = instanceOptions.definedList
 
         // Specified by command line should not be filtered
         val cmd = all.filter { it.environment == Instance.ENVIRONMENT_CMD }

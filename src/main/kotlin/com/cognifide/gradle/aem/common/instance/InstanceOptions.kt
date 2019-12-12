@@ -7,11 +7,20 @@ import java.io.Serializable
 
 open class InstanceOptions(private val aem: AemExtension) : Serializable {
 
+    private val _defined: MutableMap<String, Instance> = mutableMapOf()
+
     /**
-     * List of AEM instances on which packages could be deployed.
+     * List of AEM instances e.g on which packages could be deployed.
      * Instance stored in map ensures name uniqueness and allows to be referenced in expanded properties.
      */
-    val defined: MutableMap<String, Instance> = mutableMapOf()
+    val defined = _defined.ifEmpty {
+        mutableMapOf<String, Instance>().apply {
+            Instance.defaultAuthor(aem).let { put(it.name, it) }
+            Instance.defaultPublish(aem).let { put(it.name, it) }
+        }
+    }
+
+    val definedList get() = defined.values.toList()
 
     /**
      * Customize default options for instance services.
@@ -99,12 +108,6 @@ open class InstanceOptions(private val aem: AemExtension) : Serializable {
         define(Instance.properties(aem))
 
         aem.project.afterEvaluate { _ ->
-            // Ensure defaults if still no instances defined at all
-            if (defined.isEmpty()) {
-                define(Instance.defaults(aem) { environment = aem.env })
-            }
-
-            // Validate all
             defined.values.forEach { it.validate() }
         }
     }
