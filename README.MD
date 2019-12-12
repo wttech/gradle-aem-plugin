@@ -2696,7 +2696,7 @@ AEM files available locally:
 ```bash
 gradlew functionalTest \
 -DlocalInstance.jarUrl=/Users/krystian.panek/Servers/aem65/cq-quickstart-6.5.0.jar \
--DlocalInstance.licenseUrl=/Users/krystian.panek/Servers/aem65/license.properties \
+-DlocalInstance.licenseUrl=/Users/krystian.panek/Servers/aem65/license.properties
 ```
 
 AEM files hosted externally:
@@ -2705,7 +2705,7 @@ AEM files hosted externally:
 gradlew functionalTest \
 -DlocalInstance.jarUrl=https://my-company.com/cq/6.5.0/cq-quickstart-6.5.0.jar \
 -DlocalInstance.licenseUrl=https://my-company.com/cq/6.5.0/license.properties \
--DfileTransfer.user=foo
+-DfileTransfer.user=foo \
 -DfileTransfer.password=pass
 ```
 
