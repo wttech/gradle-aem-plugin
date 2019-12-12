@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Assertions.*
 import org.zeroturnaround.zip.ZipUtil
 import java.io.ByteArrayInputStream
 import java.io.File
+import java.util.jar.Attributes
 
 class AemBuildResult(val result: BuildResult, val projectDir: File) {
 
@@ -28,9 +29,20 @@ class AemBuildResult(val result: BuildResult, val projectDir: File) {
         result.tasks.filter { it.path.endsWith(":$taskName") }.forEach { assertTask(it.path, outcome) }
     }
 
-    fun assertPackage(path: String) {
-        assertPackage(file(path))
+    fun assertBundle(path: String) = assertBundle(file(path))
+
+    fun assertBundle(bundle: File, tests: Jar.() -> Unit = {}) {
+        assertTrue({ bundle.exists() }, "OSGi bundle does not exist: $bundle")
+
+        val jar = Jar(bundle)
+        val attributes = jar.manifest.mainAttributes
+
+        assertFalse({ isBundle(attributes) }, "File '$bundle' is not a valid OSGi bundle.")
+
+        jar.apply(tests)
     }
+
+    fun assertPackage(path: String) = assertPackage(file(path))
 
     fun assertPackage(pkg: File) {
         assertTrue({ pkg.exists() }, "Package does not exist: $pkg")
@@ -48,13 +60,12 @@ class AemBuildResult(val result: BuildResult, val projectDir: File) {
         val jar = Jar(pkg.name, ByteArrayInputStream(ZipUtil.unpackEntry(pkg, entry)))
         val attributes = jar.manifest.mainAttributes
 
-        assertFalse(
-                { attributes.getValue("Bundle-SymbolicName").isNullOrBlank() },
-                "File '$entry' included in package '$pkg' is not a valid OSGi bundle."
-        )
+        assertFalse({ isBundle(attributes) }, "File '$entry' included in package '$pkg' is not a valid OSGi bundle.")
 
         jar.apply(tests)
     }
+
+    fun isBundle(attributes: Attributes) = attributes.getValue("Bundle-SymbolicName").isNullOrBlank()
 
     fun assertPackageVaultFiles(pkg: File) {
         VAULT_FILES.onEach { assertPackageFile(pkg, it) }

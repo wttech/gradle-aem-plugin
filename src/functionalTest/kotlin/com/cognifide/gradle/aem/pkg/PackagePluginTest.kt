@@ -6,7 +6,7 @@ class PackagePluginTest: AemBuildTest() {
 
     @Test
     fun `should build package using minimal configuration`() {
-        val projectDir = prepareProject("pkg-minimal") {
+        val projectDir = prepareProject("package-minimal") {
             settingsGradle("")
 
             buildGradle("""
@@ -31,6 +31,7 @@ class PackagePluginTest: AemBuildTest() {
 
         runBuild(projectDir, "packageCompose", "-Poffline") {
             assertTask(":packageCompose")
+            assertPackage("build/aem/packageCompose/package.minimal.zip")
         }
     }
 }

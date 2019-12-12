@@ -54,8 +54,9 @@ class BundlePluginTest: AemBuildTest() {
                 """)
         }
 
-        runBuild(projectDir, "packageCompose", "-Poffline") {
-            assertTask(":packageCompose")
+        runBuild(projectDir, "bundleCompose", "-Poffline") {
+            assertTask(":bundleCompose")
+            assertBundle("build/aem/bundleCompose/bundle.minimal.jar")
         }
     }
 
@@ -71,6 +72,7 @@ class BundlePluginTest: AemBuildTest() {
                 }
                 
                 group = "com.company.example"
+                version = "1.0.0"
                 
                 repositories {
                     jcenter()
@@ -118,10 +120,12 @@ class BundlePluginTest: AemBuildTest() {
 
         runBuild(projectDir, "bundleCompose", "-Poffline") {
             assertTask(":bundleCompose")
+            assertBundle("build/aem/bundleCompose/bundle.extended-1.0.0.jar")
         }
 
         runBuild(projectDir, "packageCompose", "-Poffline") {
             assertTask(":packageCompose")
+            assertPackage("build/aem/packageCompose/bundle.extended-1.0.0.zip")
         }
     }
 }
