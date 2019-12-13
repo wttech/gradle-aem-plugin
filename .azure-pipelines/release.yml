@@ -3,11 +3,6 @@
 # Add steps that analyze code, save build artifacts, deploy, and more:
 # https://docs.microsoft.com/azure/devops/pipelines/languages/java
 
-name: 'Release'
-
-trigger:
-- master
-
 pool:
   vmImage: 'ubuntu-latest'
 
