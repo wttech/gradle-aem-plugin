@@ -123,8 +123,6 @@ tasks {
     }
 
     named<ProcessResources>("processResources") {
-        dependsOn( "tailerZip")
-
         val json = """
         |{
         |    "pluginVersion": "${project.version}",
