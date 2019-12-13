@@ -168,7 +168,7 @@ detekt {
 publishing {
     publications {
         create<MavenPublication>("mavenJava") {
-            artifact(tasks["jar"])
+            from(components["java"])
             artifact(tasks["sourcesJar"])
             artifact(tasks["javadocJar"])
         }
