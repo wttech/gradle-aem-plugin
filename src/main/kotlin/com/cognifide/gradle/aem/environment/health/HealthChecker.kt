@@ -16,7 +16,7 @@ class HealthChecker(val environment: Environment) {
         connectionTimeout = aem.prop.int("environment.health.http.connectionTimeout") ?: 1000
     }
 
-    var retry = aem.retry { afterSecond(aem.prop.long("environment.health.retry") ?: 5) }
+    var retry = aem.retry { afterSquaredSecond(aem.prop.long("environment.health.retry") ?: 3) }
 
     fun define(name: String, check: () -> Unit) {
         checks += HealthCheck(name, check)

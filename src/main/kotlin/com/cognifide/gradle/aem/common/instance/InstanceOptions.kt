@@ -13,7 +13,7 @@ open class InstanceOptions(private val aem: AemExtension) : Serializable {
      * List of AEM instances e.g on which packages could be deployed.
      * Instance stored in map ensures name uniqueness and allows to be referenced in expanded properties.
      */
-    val defined = definedCustom.ifEmpty {
+    val defined get() = definedCustom.ifEmpty {
         mutableMapOf<String, Instance>().apply {
             Instance.defaultAuthor(aem).let { put(it.name, it) }
             Instance.defaultPublish(aem).let { put(it.name, it) }
