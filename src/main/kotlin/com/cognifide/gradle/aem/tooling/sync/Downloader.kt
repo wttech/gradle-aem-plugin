@@ -25,18 +25,18 @@ class Downloader(@Internal private val aem: AemExtension) {
      * This operation can be modified using '-Pforce' command line to replace the contents of extract directory
      * with package content.
      */
-    var extract = aem.props.boolean("sync.downloader.extract") ?: true
+    var extract = aem.prop.boolean("sync.downloader.extract") ?: true
 
     /**
      * Path in which downloader JCR content will be extracted.
      */
-    var extractDir: File = aem.props.string("sync.downloader.extractDir")?.let { aem.project.file(it) }
+    var extractDir: File = aem.prop.string("sync.downloader.extractDir")?.let { aem.project.file(it) }
             ?: aem.packageOptions.jcrRootDir
 
     /**
      * Repeat download when failed (brute-forcing).
      */
-    var retry = aem.retry { afterSquaredSecond(aem.props.long("sync.downloader.retry") ?: 3) }
+    var retry = aem.retry { afterSquaredSecond(aem.prop.long("sync.downloader.retry") ?: 3) }
 
     fun download() {
         val file = instance.sync.packageManager.download({
@@ -50,7 +50,7 @@ class Downloader(@Internal private val aem: AemExtension) {
     }
 
     private fun extractDownloadedPackage(downloadedPackage: File, jcrRoot: File) {
-        if (jcrRoot.exists() && aem.props.isForce()) {
+        if (jcrRoot.exists() && aem.prop.isForce()) {
             jcrRoot.deleteRecursively()
         }
 

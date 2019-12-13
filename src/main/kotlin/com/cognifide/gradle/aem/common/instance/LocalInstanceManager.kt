@@ -20,13 +20,13 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
     /**
      * Path in which local AEM instances will be stored.
      */
-    var rootDir: File = aem.props.string("localInstance.root")?.let { aem.project.file(it) }
+    var rootDir: File = aem.prop.string("localInstance.root")?.let { aem.project.file(it) }
             ?: aem.projectMain.file(".instance")
 
     /**
      * Determines how instances will be created (from backup or quickstart built from the scratch).
      */
-    var source = Source.of(aem.props.string("localInstance.source") ?: Source.AUTO.name)
+    var source = Source.of(aem.prop.string("localInstance.source") ?: Source.AUTO.name)
 
     fun source(name: String) {
         source = Source.of(name)
@@ -40,7 +40,7 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
     /**
      * Maximum time to wait for status script response.
      */
-    var scriptTimeout: Long = aem.props.long("localInstance.scriptTimeout") ?: TimeUnit.SECONDS.toMillis(5)
+    var scriptTimeout: Long = aem.prop.long("localInstance.scriptTimeout") ?: TimeUnit.SECONDS.toMillis(5)
 
     /**
      * Collection of files potentially needed to create instance

@@ -14,13 +14,13 @@ open class InstanceHttpClient(aem: AemExtension, val instance: Instance) : HttpC
         basicPassword = instance.password
         authorizationPreemptive = true
 
-        connectionTimeout = aem.props.int("instance.http.connectionTimeout") ?: 30000
-        connectionRetries = aem.props.boolean("instance.http.connectionRetries") ?: true
-        connectionIgnoreSsl = aem.props.boolean("instance.http.connectionIgnoreSsl") ?: true
+        connectionTimeout = aem.prop.int("instance.http.connectionTimeout") ?: 30000
+        connectionRetries = aem.prop.boolean("instance.http.connectionRetries") ?: true
+        connectionIgnoreSsl = aem.prop.boolean("instance.http.connectionIgnoreSsl") ?: true
 
-        proxyHost = aem.props.string("instance.http.proxyHost")
-        proxyPort = aem.props.int("instance.http.proxyPort")
-        proxyScheme = aem.props.string("instance.http.proxyScheme")
+        proxyHost = aem.prop.string("instance.http.proxyHost")
+        proxyPort = aem.prop.int("instance.http.proxyPort")
+        proxyScheme = aem.prop.string("instance.http.proxyScheme")
     }
 
     override fun throwStatusException(response: HttpResponse) {

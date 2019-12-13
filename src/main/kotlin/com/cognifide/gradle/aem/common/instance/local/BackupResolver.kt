@@ -12,12 +12,12 @@ class BackupResolver(private val aem: AemExtension) {
     /**
      * URL to remote directory in which backup files are stored.
      */
-    var uploadUrl = aem.props.string("localInstance.backup.uploadUrl")
+    var uploadUrl = aem.prop.string("localInstance.backup.uploadUrl")
 
     /**
      * URL to remote backup file.
      */
-    var downloadUrl = aem.props.string("localInstance.backup.downloadUrl")
+    var downloadUrl = aem.prop.string("localInstance.backup.downloadUrl")
 
     /**
      * Backup file from any source (local & remote sources).
@@ -29,7 +29,7 @@ class BackupResolver(private val aem: AemExtension) {
     /**
      * Directory storing locally created backup files.
      */
-    var localDir: File = aem.props.string("localInstance.backup.localDir")?.let { aem.project.file(it) }
+    var localDir: File = aem.prop.string("localInstance.backup.localDir")?.let { aem.project.file(it) }
             ?: aem.temporaryDir("instanceBackup/local")
 
     /**
@@ -42,7 +42,7 @@ class BackupResolver(private val aem: AemExtension) {
     /**
      * Directory storing downloaded remote backup files.
      */
-    var remoteDir: File = aem.props.string("localInstance.backup.remoteDir")?.let { aem.project.file(it) }
+    var remoteDir: File = aem.prop.string("localInstance.backup.remoteDir")?.let { aem.project.file(it) }
             ?: aem.temporaryDir("instanceBackup/remote")
 
     /**
@@ -55,7 +55,7 @@ class BackupResolver(private val aem: AemExtension) {
     /**
      * File suffix indicating instance backup file.
      */
-    var suffix = aem.props.string("localInstance.backup.suffix") ?: ".backup.zip"
+    var suffix = aem.prop.string("localInstance.backup.suffix") ?: ".backup.zip"
 
     /**
      * Defines backup file naming rule.
@@ -73,7 +73,7 @@ class BackupResolver(private val aem: AemExtension) {
      */
     @get:JsonIgnore
     var selector: Collection<BackupSource>.() -> BackupSource? = {
-        val name = aem.props.string("localInstance.backup.name") ?: ""
+        val name = aem.prop.string("localInstance.backup.name") ?: ""
         when {
             name.isNotBlank() -> firstOrNull { it.fileEntry.name == name }
             else -> firstOrNull()

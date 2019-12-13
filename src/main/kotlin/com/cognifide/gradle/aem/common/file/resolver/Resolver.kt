@@ -38,13 +38,13 @@ abstract class Resolver<G : FileGroup>(
      * Controls count of groups resolved in parallel.
      */
     @Internal
-    var parallelLevel = aem.props.int("resolver.parallelLevel") ?: 3
+    var parallelLevel = aem.prop.int("resolver.parallelLevel") ?: 3
 
     /**
      * Files respected when searching for recent local files.
      */
     @Input
-    var localFilePatterns = aem.props.list("resolver.localFilePatterns") ?: listOf("**/*.zip", "**/*.jar")
+    var localFilePatterns = aem.prop.list("resolver.localFilePatterns") ?: listOf("**/*.zip", "**/*.jar")
 
     @get:Internal
     val groups: List<G>

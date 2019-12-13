@@ -10,7 +10,7 @@ class Repository(sync: InstanceSync) : InstanceService(sync) {
     /**
      * Take care about property value types saved in repository.
      */
-    var typeHints: Boolean = aem.props.boolean("instance.repository.typeHints") ?: true
+    var typeHints: Boolean = aem.prop.boolean("instance.repository.typeHints") ?: true
 
     /**
      * Controls throwing exceptions in case of response statuses indicating repository errors.
@@ -23,14 +23,14 @@ class Repository(sync: InstanceSync) : InstanceService(sync) {
         }
 
     init {
-        responseChecks = aem.props.boolean("instance.repository.responseChecks") ?: true
+        responseChecks = aem.prop.boolean("instance.repository.responseChecks") ?: true
     }
 
     /**
      * Controls level of logging. By default repository related operations are only logged at debug level.
      * This switch could increase logging level to info level.
      */
-    var verboseLogging: Boolean = aem.props.boolean("instance.repository.verboseLogging") ?: false
+    var verboseLogging: Boolean = aem.prop.boolean("instance.repository.verboseLogging") ?: false
 
     /**
      * Manipulate node at given path (CRUD).

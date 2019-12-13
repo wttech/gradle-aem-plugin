@@ -12,9 +12,9 @@ class Stack(val environment: Environment) {
 
     private val aem = environment.aem
 
-    val internalName = aem.props.string("environment.docker.stack.name") ?: aem.project.rootProject.name
+    val internalName = aem.prop.string("environment.docker.stack.name") ?: aem.project.rootProject.name
 
-    var initTimeout = aem.props.long("environment.docker.stack.initTimeout") ?: 10000L
+    var initTimeout = aem.prop.long("environment.docker.stack.initTimeout") ?: 10000L
 
     val initialized: Boolean by lazy {
         var error: Exception? = null
@@ -50,7 +50,7 @@ class Stack(val environment: Environment) {
         }
     }
 
-    var deployRetry = aem.retry { afterSecond(aem.props.long("environment.docker.stack.deployRetry") ?: 30) }
+    var deployRetry = aem.retry { afterSecond(aem.prop.long("environment.docker.stack.deployRetry") ?: 30) }
 
     fun deploy() {
         aem.progressIndicator {
@@ -74,7 +74,7 @@ class Stack(val environment: Environment) {
         }
     }
 
-    var undeployRetry = aem.retry { afterSecond(aem.props.long("environment.docker.stack.undeployRetry") ?: 30) }
+    var undeployRetry = aem.retry { afterSecond(aem.prop.long("environment.docker.stack.undeployRetry") ?: 30) }
 
     fun undeploy() {
         aem.progressIndicator {
@@ -99,7 +99,7 @@ class Stack(val environment: Environment) {
         }
     }
 
-    var networkTimeout = aem.props.long("environment.docker.stack.networkTimeout") ?: 10000L
+    var networkTimeout = aem.prop.long("environment.docker.stack.networkTimeout") ?: 10000L
 
     val networkAvailable: Boolean
         get() {

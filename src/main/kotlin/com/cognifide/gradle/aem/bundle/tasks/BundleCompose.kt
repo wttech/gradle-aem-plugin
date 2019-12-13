@@ -7,7 +7,6 @@ import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.bundle.BundleException
 import com.cognifide.gradle.aem.common.instance.service.osgi.Bundle
 import com.cognifide.gradle.aem.common.utils.Formats
-import com.fasterxml.jackson.annotation.JsonIgnore
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.gradle.api.plugins.JavaPluginConvention
@@ -30,7 +29,6 @@ open class BundleCompose : Jar(), AemTask {
     /**
      * Shorthand for built OSGi bundle file.
      */
-    @get:JsonIgnore
     @get:Internal
     val composedFile: File
         get() = archiveFile.get().asFile
@@ -38,7 +36,6 @@ open class BundleCompose : Jar(), AemTask {
     /**
      * Shorthand for directory of built OSGi bundle file.
      */
-    @get:JsonIgnore
     @get:Internal
     val composedDir: File
         get() = composedFile.parentFile
@@ -107,15 +104,12 @@ open class BundleCompose : Jar(), AemTask {
     var javaPackageOptions: String = "-split-package:=merge-first"
 
     @Internal
-    @JsonIgnore
     var importPackages: List<String> = listOf("*")
 
     @Internal
-    @JsonIgnore
     var exportPackages: List<String> = listOf()
 
     @Internal
-    @JsonIgnore
     var privatePackages: List<String> = listOf()
 
     init {
@@ -244,7 +238,6 @@ open class BundleCompose : Jar(), AemTask {
     fun hasAttribute(name: String) = attributes.containsKey(name)
 
     @get:Internal
-    @get:JsonIgnore
     var displayName: String?
         get() = attribute(Bundle.ATTRIBUTE_NAME)
         set(value) {
@@ -252,7 +245,6 @@ open class BundleCompose : Jar(), AemTask {
         }
 
     @get:Internal
-    @get:JsonIgnore
     var symbolicName: String?
         get() = attribute(Bundle.ATTRIBUTE_SYMBOLIC_NAME)
         set(value) {
@@ -260,7 +252,6 @@ open class BundleCompose : Jar(), AemTask {
         }
 
     @get:Internal
-    @get:JsonIgnore
     var activator: String?
         get() = attribute(Bundle.ATTRIBUTE_ACTIVATOR)
         set(value) {
@@ -268,7 +259,6 @@ open class BundleCompose : Jar(), AemTask {
         }
 
     @get:Internal
-    @get:JsonIgnore
     var category: String?
         get() = attribute(Bundle.ATTRIBUTE_CATEGORY)
         set(value) {
@@ -276,7 +266,6 @@ open class BundleCompose : Jar(), AemTask {
         }
 
     @get:Internal
-    @get:JsonIgnore
     var vendor: String?
         get() = attribute(Bundle.ATTRIBUTE_VENDOR)
         set(value) {
@@ -284,7 +273,6 @@ open class BundleCompose : Jar(), AemTask {
         }
 
     @get:Internal
-    @get:JsonIgnore
     var license: String?
         get() = attribute(Bundle.ATTRIBUTE_LICENSE)
         set(value) {
@@ -292,7 +280,6 @@ open class BundleCompose : Jar(), AemTask {
         }
 
     @get:Internal
-    @get:JsonIgnore
     var copyright: String?
         get() = attribute(Bundle.ATTRIBUTE_COPYRIGHT)
         set(value) {
@@ -300,7 +287,6 @@ open class BundleCompose : Jar(), AemTask {
         }
 
     @get:Internal
-    @get:JsonIgnore
     var docUrl: String?
         get() = attribute(Bundle.ATTRIBUTE_DOC_URL)
         set(value) {
@@ -308,7 +294,6 @@ open class BundleCompose : Jar(), AemTask {
         }
 
     @get:Internal
-    @get:JsonIgnore
     var developers: String?
         get() = attribute(Bundle.ATTRIBUTE_DEVELOPERS)
         set(value) {
@@ -316,7 +301,6 @@ open class BundleCompose : Jar(), AemTask {
         }
 
     @get:Internal
-    @get:JsonIgnore
     var contributors: String?
         get() = attribute(Bundle.ATTRIBUTE_CONTRIBUTORS)
         set(value) {
@@ -324,7 +308,6 @@ open class BundleCompose : Jar(), AemTask {
         }
 
     @get:Internal
-    @get:JsonIgnore
     var fragmentHost: String?
         get() = attribute(Bundle.ATTRIBUTE_FRAGMENT_HOST)
         set(value) {
@@ -332,7 +315,6 @@ open class BundleCompose : Jar(), AemTask {
         }
 
     @get:Internal
-    @get:JsonIgnore
     var slingModelPackages: String?
         get() = attribute(Bundle.ATTRIBUTE_SLING_MODEL_PACKAGES)
         set(value) {

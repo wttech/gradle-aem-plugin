@@ -11,7 +11,7 @@ class Desktop(aem: AemExtension) : Base(aem) {
         get() = NAME
 
     override val hostIp: String
-        get() = aem.props.string("environment.docker.desktop.hostIp") ?: "127.0.0.1"
+        get() = aem.prop.string("environment.docker.desktop.hostIp") ?: "127.0.0.1"
 
     override val safeVolumes: Boolean
         get() = !OperatingSystem.current().isWindows
@@ -21,7 +21,7 @@ class Desktop(aem: AemExtension) : Base(aem) {
     override val hostInternalIp: String?
         get() = when {
             OperatingSystem.current().isWindows || OperatingSystem.current().isMacOsX -> null
-            else -> detectHostInternalIp() ?: aem.props.string("environment.docker.desktop.hostInternalIp") ?: "172.17.0.1"
+            else -> detectHostInternalIp() ?: aem.prop.string("environment.docker.desktop.hostInternalIp") ?: "172.17.0.1"
         }
 
     @Suppress("SpreadOperator", "TooGenericExceptionCaught")

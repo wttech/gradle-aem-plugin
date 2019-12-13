@@ -13,12 +13,12 @@ import org.apache.commons.lang3.StringUtils
 
 class SmbFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
 
-    var domain: String? = aem.props.string("fileTransfer.smb.domain")
+    var domain: String? = aem.prop.string("fileTransfer.smb.domain")
 
-    var user: String? = aem.props.string("fileTransfer.smb.user")
+    var user: String? = aem.prop.string("fileTransfer.smb.user")
 
     @JsonSerialize(using = JsonPassword::class, `as` = String::class)
-    var password: String? = aem.props.string("fileTransfer.smb.password")
+    var password: String? = aem.prop.string("fileTransfer.smb.password")
 
     override val name: String
         get() = NAME

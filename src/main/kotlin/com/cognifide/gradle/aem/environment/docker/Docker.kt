@@ -66,7 +66,7 @@ class Docker(val environment: Environment) {
 
         composeFile.takeIf { it.exists() }?.delete()
         composeTemplateFile.copyTo(composeFile)
-        aem.props.expand(composeFile, mapOf("docker" to this))
+        aem.prop.expand(composeFile, mapOf("docker" to this))
     }
 
     fun up() {

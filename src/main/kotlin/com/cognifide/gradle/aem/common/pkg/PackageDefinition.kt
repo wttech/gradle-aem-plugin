@@ -113,7 +113,7 @@ class PackageDefinition(private val aem: AemExtension) : VltDefinition(aem) {
 
     fun expandFiles(dir: File, filePatterns: List<String> = PackageFileFilter.EXPAND_FILES_DEFAULT) {
         FileOperations.amendFiles(dir, filePatterns) { source, content ->
-            aem.props.expandPackage(content, mapOf("definition" to this), source.absolutePath)
+            aem.prop.expandPackage(content, mapOf("definition" to this), source.absolutePath)
         }
     }
 

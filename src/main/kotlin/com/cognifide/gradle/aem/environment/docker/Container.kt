@@ -50,7 +50,7 @@ class Container(val docker: Docker, val name: String) {
         devOptions.apply(options)
     }
 
-    var runningTimeout = aem.props.long("environment.docker.container.runningTimeout") ?: 10000L
+    var runningTimeout = aem.prop.long("environment.docker.container.runningTimeout") ?: 10000L
 
     val id: String?
         get() {
@@ -91,7 +91,7 @@ class Container(val docker: Docker, val name: String) {
     val up: Boolean
         get() = running && isLocked(LOCK_UP)
 
-    var awaitRetry = aem.retry { afterSecond(aem.props.long("environment.docker.container.awaitRetry") ?: 30) }
+    var awaitRetry = aem.retry { afterSecond(aem.prop.long("environment.docker.container.awaitRetry") ?: 30) }
 
     fun await() {
         aem.progressIndicator {

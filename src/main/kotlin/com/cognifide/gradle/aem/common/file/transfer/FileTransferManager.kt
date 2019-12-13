@@ -233,9 +233,9 @@ class FileTransferManager(private val aem: AemExtension) : FileTransfer {
     init {
         // override specific credentials if common specified
         credentials(
-                aem.props.string("fileTransfer.user"),
-                aem.props.string("fileTransfer.password"),
-                aem.props.string("fileTransfer.domain")
+                aem.prop.string("fileTransfer.user"),
+                aem.prop.string("fileTransfer.password"),
+                aem.prop.string("fileTransfer.domain")
         )
     }
 

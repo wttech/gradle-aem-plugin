@@ -23,7 +23,7 @@ open class InstanceBackup : AemDefaultTask() {
      * Determines what need to be done (backup zipped and uploaded or something else).
      */
     @Internal
-    var mode: Mode = Mode.of(aem.props.string("instance.backup.mode")
+    var mode: Mode = Mode.of(aem.prop.string("instance.backup.mode")
             ?: Mode.ZIP_AND_UPLOAD.name)
 
     @TaskAction

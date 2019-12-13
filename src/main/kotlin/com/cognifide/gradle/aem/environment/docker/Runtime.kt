@@ -22,7 +22,7 @@ interface Runtime {
     companion object {
 
         fun determine(aem: AemExtension): Runtime {
-            return aem.props.string("environment.docker.type")?.let { of(aem, it) } ?: detect(aem) ?: Desktop(aem)
+            return aem.prop.string("environment.docker.type")?.let { of(aem, it) } ?: detect(aem) ?: Desktop(aem)
         }
 
         fun of(aem: AemExtension, name: String): Runtime? = when (name.toLowerCase()) {

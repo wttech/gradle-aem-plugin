@@ -149,16 +149,7 @@ open class PackageCompose : ZipTask() {
             fromConvention()
         }
 
-        vaultDefinition.apply {
-            ensureDefaults()
-
-            if (mergingOptions.vaultFilters && vaultFilterOriginFile.exists()) {
-                filterElements(vaultFilterOriginFile)
-            }
-            if (vaultNodeTypesSyncFile.exists()) {
-                nodeTypes(vaultNodeTypesSyncFile)
-            }
-        }
+        vaultDefinition.ensureDefaults()
     }
 
     override fun projectsEvaluated() {
@@ -168,6 +159,16 @@ open class PackageCompose : ZipTask() {
 
     @TaskAction
     override fun copy() {
+        vaultDefinition.apply {
+            if (mergingOptions.vaultFilters && vaultFilterOriginFile.exists()) {
+                filterElements(vaultFilterOriginFile)
+            }
+
+            if (vaultNodeTypesSyncFile.exists()) {
+                nodeTypes(vaultNodeTypesSyncFile)
+            }
+        }
+
         super.copy()
 
         validator.apply {

@@ -18,17 +18,17 @@ class Provisioner(val aem: AemExtension) {
     /**
      * Forces to perform all steps regardless their state on instances (already performed).
      */
-    var greedy = aem.props.flag("instance.provision.greedy")
+    var greedy = aem.prop.flag("instance.provision.greedy")
 
     /**
      * Determines which steps should be performed selectively.
      */
-    var stepName = aem.props.string("instance.provision.step") ?: "*"
+    var stepName = aem.prop.string("instance.provision.step") ?: "*"
 
     /**
      * Determines a path in JCR repository in which provisioning metadata and step markers will be stored.
      */
-    var path: String = aem.props.string("instance.provision.path") ?: "/var/gap/provision"
+    var path: String = aem.prop.string("instance.provision.path") ?: "/var/gap/provision"
 
     private val steps = mutableListOf<Step>()
 

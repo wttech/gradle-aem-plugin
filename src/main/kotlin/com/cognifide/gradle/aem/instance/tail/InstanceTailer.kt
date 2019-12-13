@@ -32,7 +32,7 @@ class InstanceTailer(val aem: AemExtension) {
     /**
      * Determines log file being tracked on AEM instance.
      */
-    var logFilePath = aem.props.string("instance.tail.logFilePath") ?: "/logs/error.log"
+    var logFilePath = aem.prop.string("instance.tail.logFilePath") ?: "/logs/error.log"
 
     /**
      * Hook for tracking all log entries on each AEM instance.
@@ -55,10 +55,10 @@ class InstanceTailer(val aem: AemExtension) {
      */
     var incidentChecker: Log.(Instance) -> Boolean = { instance ->
         val levels = Formats.toList(instance.property("instance.tail.incidentLevels"))
-                ?: aem.props.list("instance.tail.incidentLevels")
+                ?: aem.prop.list("instance.tail.incidentLevels")
                 ?: INCIDENT_LEVELS_DEFAULT
         val oldMillis = instance.property("instance.tail.incidentOld")?.toLong()
-                ?: aem.props.long("instance.tail.incidentOld")
+                ?: aem.prop.long("instance.tail.incidentOld")
                 ?: INCIDENT_OLD_DEFAULT
 
         isLevel(levels) && !isOlderThan(oldMillis) && !logFilter.isExcluded(this)
@@ -70,28 +70,28 @@ class InstanceTailer(val aem: AemExtension) {
      * Changes in that file are automatically considered (tailer restart is not required).
      */
     var incidentFilter: File =
-            aem.props.string("instance.tail.incidentFilter")
+            aem.prop.string("instance.tail.incidentFilter")
                     ?.let { aem.project.file(it) }
                     ?: File(aem.configCommonDir, "instanceTail/incidentFilter.txt")
 
     /**
      * Indicates if tailer will print all logs to console.
      */
-    var console = aem.props.boolean("instance.tail.console") ?: true
+    var console = aem.prop.boolean("instance.tail.console") ?: true
 
     /**
      * Time window in which exceptions will be aggregated and reported as single incident.
      */
-    var incidentDelay = aem.props.long("instance.tail.incidentDelay") ?: 5000L
+    var incidentDelay = aem.prop.long("instance.tail.incidentDelay") ?: 5000L
 
     /**
      * Determines how often logs will be polled from AEM instance.
      */
-    var fetchInterval = aem.props.long("instance.tail.fetchInterval") ?: 500L
+    var fetchInterval = aem.prop.long("instance.tail.fetchInterval") ?: 500L
 
-    var lockInterval = aem.props.long("instance.tail.lockInterval") ?: max(1000L + fetchInterval, 2000L)
+    var lockInterval = aem.prop.long("instance.tail.lockInterval") ?: max(1000L + fetchInterval, 2000L)
 
-    var linesChunkSize = aem.props.long("instance.tail.linesChunkSize") ?: 400L
+    var linesChunkSize = aem.prop.long("instance.tail.linesChunkSize") ?: 400L
 
     // https://sridharmandra.blogspot.com/2016/08/tail-aem-logs-in-browser.html
     fun errorLogEndpoint(instance: Instance): String {

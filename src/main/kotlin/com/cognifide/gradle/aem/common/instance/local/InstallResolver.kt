@@ -8,7 +8,7 @@ import java.io.File
 
 class InstallResolver(private val aem: AemExtension) {
 
-    var downloadDir = aem.props.string("localInstance.install.downloadDir")?.let { aem.project.file(it) }
+    var downloadDir = aem.prop.string("localInstance.install.downloadDir")?.let { aem.project.file(it) }
             ?: AemTask.temporaryDir(aem.project, "instance/install")
 
     private val fileResolver = FileResolver(aem, downloadDir)
@@ -22,7 +22,7 @@ class InstallResolver(private val aem: AemExtension) {
         get() = fileResolver.allFiles
 
     init {
-        val urls = aem.props.list("localInstance.install.urls") ?: listOf()
+        val urls = aem.prop.list("localInstance.install.urls") ?: listOf()
         urls.forEachIndexed { index, url ->
             val no = index + 1
             val fileName = url.substringAfterLast("/").substringBeforeLast(".")

@@ -56,7 +56,7 @@ class PackageFileFilter(private val aem: AemExtension) : Serializable {
 
             if (expanding && Patterns.wildcard(path, expandFiles)) {
                 FileContentReader.filter(fileDetail) {
-                    aem.props.expandPackage(it, expandProperties + this.expandProperties, path)
+                    aem.prop.expandPackage(it, expandProperties + this.expandProperties, path)
                 }
             }
 

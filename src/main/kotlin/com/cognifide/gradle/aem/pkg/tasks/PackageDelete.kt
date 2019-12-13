@@ -11,7 +11,7 @@ open class PackageDelete : PackageTask() {
 
     override fun taskGraphReady(graph: TaskExecutionGraph) {
         if (graph.hasTask(this)) {
-            aem.props.checkForce()
+            aem.prop.checkForce()
         }
     }
 

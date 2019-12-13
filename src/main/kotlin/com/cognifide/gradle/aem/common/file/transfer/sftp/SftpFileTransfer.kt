@@ -18,12 +18,12 @@ import org.apache.sshd.common.subsystem.sftp.SftpException
 
 class SftpFileTransfer(aem: AemExtension) : ProtocolFileTransfer(aem) {
 
-    var user: String? = aem.props.string("fileTransfer.sftp.user")
+    var user: String? = aem.prop.string("fileTransfer.sftp.user")
 
     @JsonSerialize(using = JsonPassword::class, `as` = String::class)
-    var password: String? = aem.props.string("fileTransfer.sftp.password")
+    var password: String? = aem.prop.string("fileTransfer.sftp.password")
 
-    var timeout: Long = aem.props.long("fileTransfer.sftp.timeout") ?: 60000L
+    var timeout: Long = aem.prop.long("fileTransfer.sftp.timeout") ?: 60000L
 
     @JsonIgnore
     var clientOptions: SshClient.() -> Unit = {}

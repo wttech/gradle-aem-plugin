@@ -7,11 +7,20 @@ import java.io.Serializable
 
 open class InstanceOptions(private val aem: AemExtension) : Serializable {
 
+    private val definedCustom: MutableMap<String, Instance> = mutableMapOf()
+
     /**
-     * List of AEM instances on which packages could be deployed.
+     * List of AEM instances e.g on which packages could be deployed.
      * Instance stored in map ensures name uniqueness and allows to be referenced in expanded properties.
      */
-    val defined: MutableMap<String, Instance> = mutableMapOf()
+    val defined = definedCustom.ifEmpty {
+        mutableMapOf<String, Instance>().apply {
+            Instance.defaultAuthor(aem).let { put(it.name, it) }
+            Instance.defaultPublish(aem).let { put(it.name, it) }
+        }
+    }
+
+    val definedList get() = defined.values.toList()
 
     /**
      * Customize default options for instance services.
@@ -69,7 +78,7 @@ open class InstanceOptions(private val aem: AemExtension) : Serializable {
      * Get defined instance by name or create temporary definition if URL provided.
      */
     fun parse(urlOrName: String): Instance {
-        return defined[urlOrName] ?: Instance.parse(aem, urlOrName).ifEmpty {
+        return definedCustom[urlOrName] ?: Instance.parse(aem, urlOrName).ifEmpty {
             throw AemException("Instance cannot be determined by value '$urlOrName'.")
         }.single().apply { validate() }
     }
@@ -79,18 +88,18 @@ open class InstanceOptions(private val aem: AemExtension) : Serializable {
     }
 
     private fun define(instance: Instance) {
-        if (defined.containsKey(instance.name)) {
+        if (definedCustom.containsKey(instance.name)) {
             throw AemException("Instance named '${instance.name}' is already defined. " +
                     "Enumerate instance types (for example 'author1', 'author2') " +
                     "or distinguish environments (for example 'local', 'int', 'stg').")
         }
 
-        defined[instance.name] = instance
+        definedCustom[instance.name] = instance
     }
 
     init {
         // Define through command line
-        val instancesForced = aem.props.string("instance.list") ?: ""
+        val instancesForced = aem.prop.string("instance.list") ?: ""
         if (instancesForced.isNotBlank()) {
             define(Instance.parse(aem, instancesForced) { environment = Instance.ENVIRONMENT_CMD })
         }
@@ -99,13 +108,7 @@ open class InstanceOptions(private val aem: AemExtension) : Serializable {
         define(Instance.properties(aem))
 
         aem.project.afterEvaluate { _ ->
-            // Ensure defaults if still no instances defined at all
-            if (defined.isEmpty()) {
-                define(Instance.defaults(aem) { environment = aem.env })
-            }
-
-            // Validate all
-            defined.values.forEach { it.validate() }
+            definedCustom.values.forEach { it.validate() }
         }
     }
 }

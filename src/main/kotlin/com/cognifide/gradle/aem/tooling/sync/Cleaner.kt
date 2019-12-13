@@ -76,12 +76,12 @@ class Cleaner(private val aem: AemExtension) {
     /**
      * Controls unused namespaces skipping.
      */
-    var namespacesSkipped: Boolean = aem.props.boolean("sync.cleaner.namespacesSkipped") ?: true
+    var namespacesSkipped: Boolean = aem.prop.boolean("sync.cleaner.namespacesSkipped") ?: true
 
     /**
      * Controls backups for parent nodes of filter roots for keeping them untouched.
      */
-    var parentsBackupEnabled: Boolean = aem.props.boolean("sync.cleaner.parentsBackup") ?: true
+    var parentsBackupEnabled: Boolean = aem.prop.boolean("sync.cleaner.parentsBackup") ?: true
 
     /**
      * File suffix being added to parent node back up files.

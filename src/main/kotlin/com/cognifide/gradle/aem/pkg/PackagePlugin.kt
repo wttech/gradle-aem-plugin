@@ -9,6 +9,8 @@ import com.cognifide.gradle.aem.instance.tasks.InstanceCreate
 import com.cognifide.gradle.aem.instance.tasks.InstanceUp
 import com.cognifide.gradle.aem.pkg.tasks.*
 import org.gradle.api.Project
+import org.gradle.api.Task
+import org.gradle.api.artifacts.Dependency
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 
 class PackagePlugin : AemPlugin() {
@@ -41,9 +43,11 @@ class PackagePlugin : AemPlugin() {
                 mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
             }
             register<PackageCompose>(PackageCompose.NAME) {
-                dependsOn(LifecycleBasePlugin.ASSEMBLE_TASK_NAME, PackagePrepare.NAME)
+                dependsOn(PackagePrepare.NAME)
                 mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
                 metaDir = get<PackagePrepare>(PackagePrepare.NAME).metaDir
+            }.apply {
+                artifacts.add(Dependency.ARCHIVES_CONFIGURATION, this)
             }
             register<PackageUpload>(PackageUpload.NAME) {
                 dependsOn(PackageCompose.NAME)
@@ -71,9 +75,10 @@ class PackagePlugin : AemPlugin() {
                 dependsOn(PackageCompose.NAME)
                 mustRunAfter(PackageDeploy.NAME, PackageUpload.NAME, PackageInstall.NAME, PackageActivate.NAME, PackageUninstall.NAME)
             }
+            named<Task>(LifecycleBasePlugin.ASSEMBLE_TASK_NAME) {
+                dependsOn(PackageCompose.NAME)
+            }
         }
-
-        tasks.named(LifecycleBasePlugin.BUILD_TASK_NAME).configure { it.dependsOn(PackageCompose.NAME) }
 
         plugins.withId(InstancePlugin.ID) {
             tasks.named(PackageDeploy.NAME).configure { task ->
