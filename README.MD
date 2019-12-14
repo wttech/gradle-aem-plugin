@@ -1,9 +1,9 @@
 [![Cognifide logo](docs/cognifide-logo.png)](http://cognifide.com)
 
-[![Download](https://api.bintray.com/packages/cognifide/maven-public/gradle-aem-plugin/images/download.svg) ](https://bintray.com/cognifide/maven-public/gradle-aem-plugin/_latestVersion)
-[![Gradle Status](https://gradleupdate.appspot.com/Cognifide/gradle-aem-plugin/status.svg?random=123)](https://gradleupdate.appspot.com/Cognifide/gradle-aem-plugin/status)
-[![Build Status](https://dev.azure.com/gradle-aem/gradle-aem-plugin/_apis/build/status/Continuous%20Check?branchName=master)](https://dev.azure.com/gradle-aem/gradle-aem-plugin/_build/latest?definitionId=6&branchName=master)
 [![Gitter](https://badges.gitter.im/Cognifide/gradle-aem-plugin.svg)](https://gitter.im/Cognifide/gradle-aem-plugin?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+[![Download](https://api.bintray.com/packages/cognifide/maven-public/gradle-aem-plugin/images/download.svg) ](https://bintray.com/cognifide/maven-public/gradle-aem-plugin/_latestVersion)
+[![Build Status](https://dev.azure.com/gradle-aem/gradle-aem-plugin/_apis/build/status/Continuous%20Check?branchName=master)](https://dev.azure.com/gradle-aem/gradle-aem-plugin/_build/latest?definitionId=6&branchName=master)
+[![Gradle Status](https://gradleupdate.appspot.com/Cognifide/gradle-aem-plugin/status.svg?random=123)](https://gradleupdate.appspot.com/Cognifide/gradle-aem-plugin/status)
 [![Apache License, Version 2.0, January 2004](docs/apache-license-badge.svg)](http://www.apache.org/licenses/)
 
 <p>
