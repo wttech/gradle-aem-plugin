@@ -1984,7 +1984,7 @@ Evaluate Groovy script(s) on instance(s).
 Simple script usage:
 
 ```bash
-gradlew instanceGroovyScript -Pinstance.groovyScript=page-resource-type-update.groovy -Pinstance.groovyConsole.verbose=false 
+gradlew instanceGroovyScript -Pinstance.groovyScript=page-resource-type-update.groovy
 ```
 
 By default, script outputs and results are hidden. Simply turn on info logging level to see them.
@@ -1993,10 +1993,10 @@ To allow seeing particular script errors and continuing evaluation after error, 
 Multiple scripts usage with output logging and continuation on errors:
 
 ```bash
-gradlew instanceGroovyScript --info -Pinstance.groovyScript=* -Pinstance.groovyConsole.verbose=false 
+gradlew instanceGroovyScript --info -Pinstance.groovyScript=iteration-17/* -Pinstance.groovyConsole.verbose=false 
 ```
 
-Sample task output (first script ends with success, second second with failed):
+Sample task output (first script ends with success, second with error):
 
 ```
 Groovy script '/Users/krystian.panek/Projects/gradle-aem-single/gradle/groovyScript/iteration-1/page-resource-type-change.groovy' evaluated with success in '00:00:03.007' on LocalInstance(name='local-author', httpUrl='http://localhost:5502')
