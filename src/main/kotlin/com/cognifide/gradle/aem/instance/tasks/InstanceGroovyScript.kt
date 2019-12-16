@@ -8,7 +8,7 @@ import org.gradle.api.tasks.TaskAction
 open class InstanceGroovyScript : AemDefaultTask() {
 
     init {
-        description = "Evaluate Groovy Scripts on instance(s)."
+        description = "Evaluate Groovy script(s) on instance(s)."
     }
 
     @Internal

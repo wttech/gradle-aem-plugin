@@ -87,6 +87,7 @@
            * [Tailing incidents](#tailing-incidents)
            * [Tailing multiple instances](#tailing-multiple-instances)
            * [Standalone tailer tool](#standalone-tailer-tool)
+        * [Task instanceGroovyScript](#task-instancegroovyscript)
      * [Environment plugin](#environment-plugin)
         * [Environment configuration](#environment-configuration)
            * [Notice for Docker on Windows](#notice-for-docker-on-windows)
@@ -1975,6 +1976,43 @@ gradlew instanceTail -Pinstance.list=[http://admin:admin@192.168.1.1:4502,http:/
 
 Instance tailer could be used as standalone tool beside of e.g Maven based AEM application builds using [Content Package Maven Plugin](https://helpx.adobe.com/experience-manager/6-5/sites/developing/using/vlt-mavenplugin.html).
 Just download it from [here](dists/gradle-aem-tailer) (< 100 KB), extract anywhere on disk and run.
+
+#### Task `instanceGroovyScript`
+
+Evaluate Groovy script(s) on instance(s).
+
+Simple script usage:
+
+```bash
+gradlew instanceGroovyScript -Pinstance.groovyScript=page-resource-type-update.groovy -Pinstance.groovyConsole.verbose=false 
+```
+
+By default, script outputs and results are hidden. Simply turn on info logging level to see them.
+To allow seeing particular script errors and continuing evaluation after error, verbose mode of [Groovy Console](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/groovy/GroovyConsole.kt) instance service need to be disabled.
+
+Multiple scripts usage with output logging and continuation on errors:
+
+```bash
+gradlew instanceGroovyScript --info -Pinstance.groovyScript=* -Pinstance.groovyConsole.verbose=false 
+```
+
+Sample task output (first script ends with success, second second with failed):
+
+```
+Groovy script '/Users/krystian.panek/Projects/gradle-aem-single/gradle/groovyScript/iteration-1/page-resource-type-change.groovy' evaluated with success in '00:00:03.007' on LocalInstance(name='local-author', httpUrl='http://localhost:5502')
+Groovy script '/Users/krystian.panek/Projects/gradle-aem-single/gradle/groovyScript/iteration-1/page-resource-type-change.groovy' output:
+Updating page resource type at path '/content/example/home'...
+Page resource type at path '/content/example/home' successfully updated!
+Evaluating Groovy script '/Users/krystian.panek/Projects/gradle-aem-single/gradle/groovyScript/iteration-2/cleanup-content.groovy' on LocalInstance(name='local-author', httpUrl='http://localhost:5502')
+Groovy script '/Users/krystian.panek/Projects/gradle-aem-single/gradle/groovyScript/iteration-2/cleanup-content.groovy' evaluated with error on LocalInstance(name='local-author', httpUrl='http://localhost:5502')
+Groovy script '/Users/krystian.panek/Projects/gradle-aem-single/gradle/groovyScript/iteration-2/cleanup-content.groovy' exception:
+java.lang.Exception: Cannot clean content at path '/content/example' properly!
+        at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+        ...
+        at org.codehaus.groovy.runtime.callsite.ConstructorSite$ConstructorSiteNoUnwrapNoCoerce.callConstructor(ConstructorSite.java:105)
+        ...
+        at Script1.run(Script1.groovy:3)
+```
 
 ### Environment plugin
 

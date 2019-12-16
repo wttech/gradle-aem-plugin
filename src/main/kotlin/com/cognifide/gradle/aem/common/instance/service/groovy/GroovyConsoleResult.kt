@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.common.instance.service.groovy
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import org.apache.commons.lang3.StringUtils
 
@@ -17,6 +18,14 @@ class GroovyConsoleResult {
     lateinit var script: String
 
     var result: String? = null
+
+    @get:JsonIgnore
+    val error: Boolean
+        get() = exceptionStackTrace.isNotBlank()
+
+    @get:JsonIgnore
+    val success: Boolean
+        get() = !error
 
     override fun toString(): String {
         return StringBuilder().apply {
