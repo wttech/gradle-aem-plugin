@@ -1,9 +1,9 @@
-package com.cognifide.gradle.aem.tooling.rcp
+package com.cognifide.gradle.aem.instance.rcp
 
 import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.instance.Instance
-import com.cognifide.gradle.aem.tooling.vlt.VltException
+import com.cognifide.gradle.aem.common.pkg.vlt.VltException
 import org.apache.commons.lang3.time.StopWatch
 import java.io.File
 

@@ -4,6 +4,7 @@ import com.cognifide.gradle.aem.AemPlugin
 import com.cognifide.gradle.aem.common.CommonPlugin
 import com.cognifide.gradle.aem.common.tasks.lifecycle.*
 import com.cognifide.gradle.aem.instance.provision.InstanceProvision
+import com.cognifide.gradle.aem.instance.rcp.InstanceRcp
 import com.cognifide.gradle.aem.instance.satisfy.InstanceSatisfy
 import com.cognifide.gradle.aem.instance.tail.InstanceTail
 import com.cognifide.gradle.aem.instance.tasks.*
@@ -78,6 +79,8 @@ class InstancePlugin : AemPlugin() {
 
             register<InstanceResolve>(InstanceResolve.NAME)
             register<InstanceTail>(InstanceTail.NAME)
+            register<InstanceRcp>(InstanceRcp.NAME)
+            register<InstanceGroovyScript>(InstanceGroovyScript.NAME)
 
             // Common lifecycle
 

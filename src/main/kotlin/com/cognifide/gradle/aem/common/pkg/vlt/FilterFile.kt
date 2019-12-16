@@ -5,7 +5,7 @@ import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.aem.common.utils.Formats
-import com.cognifide.gradle.aem.tooling.vlt.Vlt
+import com.cognifide.gradle.aem.pkg.tasks.PackageVlt
 import java.io.Closeable
 import java.io.File
 import org.apache.commons.io.FileUtils
@@ -68,7 +68,7 @@ class FilterFile(
             val template = FileOperations.readResource("vlt/$TEMPORARY_NAME")!!
                     .bufferedReader().use { it.readText() }
             val content = AemExtension.of(project).prop.expand(template, mapOf("paths" to paths))
-            val file = AemTask.temporaryFile(project, Vlt.NAME, TEMPORARY_NAME)
+            val file = AemTask.temporaryFile(project, PackageVlt.NAME, TEMPORARY_NAME)
 
             FileUtils.deleteQuietly(file)
             file.printWriter().use { it.print(content) }

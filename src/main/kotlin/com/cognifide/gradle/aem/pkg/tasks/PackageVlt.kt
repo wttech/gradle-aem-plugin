@@ -1,9 +1,10 @@
-package com.cognifide.gradle.aem.tooling.vlt
+package com.cognifide.gradle.aem.pkg.tasks
 
 import com.cognifide.gradle.aem.AemDefaultTask
+import com.cognifide.gradle.aem.common.pkg.vlt.VltClient
 import org.gradle.api.tasks.TaskAction
 
-open class Vlt : AemDefaultTask() {
+open class PackageVlt : AemDefaultTask() {
 
     init {
         description = "Execute any Vault command."
@@ -23,6 +24,6 @@ open class Vlt : AemDefaultTask() {
     }
 
     companion object {
-        const val NAME = "vlt"
+        const val NAME = "packageVlt"
     }
 }

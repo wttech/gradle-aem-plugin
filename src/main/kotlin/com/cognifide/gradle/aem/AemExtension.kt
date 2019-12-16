@@ -29,11 +29,11 @@ import com.cognifide.gradle.aem.environment.docker.RunSpec
 import com.cognifide.gradle.aem.instance.*
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.PackageCompose
-import com.cognifide.gradle.aem.tooling.ToolingPlugin
-import com.cognifide.gradle.aem.tooling.rcp.RcpClient
-import com.cognifide.gradle.aem.tooling.vlt.VltException
-import com.cognifide.gradle.aem.tooling.vlt.VltClient
-import com.cognifide.gradle.aem.tooling.vlt.VltSummary
+import com.cognifide.gradle.aem.instance.rcp.RcpClient
+import com.cognifide.gradle.aem.common.pkg.vlt.VltException
+import com.cognifide.gradle.aem.common.pkg.vlt.VltClient
+import com.cognifide.gradle.aem.common.pkg.vlt.VltSummary
+import com.cognifide.gradle.aem.pkg.PackageSyncPlugin
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 import java.io.Serializable
@@ -734,12 +734,12 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
         const val TEMPORARY_DIR = "tmp"
 
         private val PLUGIN_IDS = listOf(
+                CommonPlugin.ID,
                 PackagePlugin.ID,
                 BundlePlugin.ID,
                 InstancePlugin.ID,
                 EnvironmentPlugin.ID,
-                ToolingPlugin.ID,
-                CommonPlugin.ID
+                PackageSyncPlugin.ID
         )
 
         fun of(project: Project): AemExtension {

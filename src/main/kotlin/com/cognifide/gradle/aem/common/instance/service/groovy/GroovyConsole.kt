@@ -24,6 +24,20 @@ class GroovyConsole(sync: InstanceSync) : InstanceService(sync) {
     var scriptRootDir: File = File(aem.configDir, "groovyScript")
 
     /**
+     * Check if console is installed on instance.
+     */
+    val available: Boolean get() = sync.osgiFramework.findBundle(SYMBOLIC_NAME) != null
+
+    /**
+     * Ensure by throwing exception that console is available on instance.
+     */
+    fun requireAvailable() {
+        if (!available) {
+            throw GroovyConsoleException("Groovy console is not available on $instance!")
+        }
+    }
+
+    /**
      * Evaluate Groovy code snippet on AEM instance.
      */
     fun evalCode(code: String, data: Map<String, Any> = mapOf()): GroovyConsoleResult {
@@ -106,5 +120,7 @@ class GroovyConsole(sync: InstanceSync) : InstanceService(sync) {
 
     companion object {
         const val EVAL_PATH = "/bin/groovyconsole/post.json"
+
+        const val SYMBOLIC_NAME = "aem-groovy-console"
     }
 }
