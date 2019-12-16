@@ -117,6 +117,10 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
         get() = binScript("status")
 
     @get:JsonIgnore
+    val touched: Boolean
+        get() = dir.exists()
+
+    @get:JsonIgnore
     val created: Boolean
         get() = locked(LOCK_CREATE)
 
