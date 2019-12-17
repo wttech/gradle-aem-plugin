@@ -6,7 +6,6 @@ import com.cognifide.gradle.aem.common.file.transfer.AbstractFileTransfer
 import com.cognifide.gradle.aem.common.file.transfer.FileEntry
 import java.io.File
 import java.io.IOException
-import org.gradle.util.GFileUtils
 
 /**
  * File transfer which is copying files instead of using them directly.
@@ -21,7 +20,7 @@ class PathFileTransfer(aem: AemExtension) : AbstractFileTransfer(aem) {
     override fun downloadFrom(dirUrl: String, fileName: String, target: File) {
         val fileUrl = "$dirUrl/$fileName"
         try {
-            GFileUtils.mkdirs(target.parentFile)
+            target.parentFile.mkdirs()
             file(dirUrl, fileName).apply { inputStream().use { downloader().download(length(), it, target) } }
         } catch (e: IOException) {
             throw FileException("Cannot download URL '$fileUrl' to file '$target'. Cause: '${e.message}'", e)
@@ -33,7 +32,7 @@ class PathFileTransfer(aem: AemExtension) : AbstractFileTransfer(aem) {
 
         try {
             val target = file(dirUrl, fileName)
-            GFileUtils.mkdirs(target.parentFile)
+            target.parentFile.mkdirs()
             target.outputStream().use { uploader().upload(source, it) }
         } catch (e: IOException) {
             throw FileException("Cannot upload file '$source' to URL '$fileUrl'. Cause: '${e.message}", e)

@@ -43,6 +43,8 @@ class FileDownloader(private val aem: AemExtension) {
     fun download(size: Long, input: InputStream, target: File) {
         aem.progressLogger {
             input.use { inputStream ->
+                target.parentFile.mkdirs()
+
                 val output = FileOutputStream(target)
                 var finished = false
                 val startDownloadTime = System.currentTimeMillis()

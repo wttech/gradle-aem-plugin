@@ -567,7 +567,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
             val cmdFilterRoots = prop.list("filter.roots") ?: listOf()
             if (cmdFilterRoots.isNotEmpty()) {
                 logger.debug("Using Vault filter roots specified as command line property: $cmdFilterRoots")
-                return FilterFile.temporary(project, cmdFilterRoots)
+                return FilterFile.temporary(this, cmdFilterRoots)
             }
 
             val cmdFilterPath = prop.string("filter.path") ?: ""
@@ -591,7 +591,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
 
             logger.debug("None of Vault filter files found by CMD properties or convention.")
 
-            return FilterFile.temporary(project, listOf())
+            return FilterFile.temporary(this, listOf())
         }
 
     /**
@@ -605,26 +605,16 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     fun filter(path: String) = filter(project.file(path))
 
     /**
-     * Determine temporary directory for particular task.
-     */
-    fun temporaryDir(task: Task) = temporaryDir(task.name)
-
-    /**
      * Determine temporary directory for particular service (any name).
      */
-    fun temporaryDir(name: String) = AemTask.temporaryDir(project, name)
-
-    /**
-     * Determine temporary file for particular service (any name).
-     */
-    fun temporaryFile(name: String) = AemTask.temporaryFile(project, TEMPORARY_DIR, name)
+    fun temporaryFile(path: String): File = project.buildDir.resolve("aem/$path")
 
     /**
      * Predefined temporary directory.
      */
     @get:JsonIgnore
     val temporaryDir: File
-        get() = temporaryDir(TEMPORARY_DIR)
+        get() = temporaryFile(TEMPORARY_DIR)
 
     /**
      * Factory method for configuration object determining how operation should be retried.

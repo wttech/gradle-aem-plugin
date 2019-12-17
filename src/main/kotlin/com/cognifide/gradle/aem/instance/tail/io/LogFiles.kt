@@ -7,13 +7,12 @@ import java.io.File
 import java.io.FileWriter
 import java.net.URI
 import org.apache.commons.io.FileUtils
-import org.gradle.util.GFileUtils
 
 class LogFiles(private val tailer: InstanceTailer) {
 
     fun main(instanceName: String): File {
         val file = File(tailer.rootDir, "$instanceName/${tailer.logFile}")
-        GFileUtils.mkdirs(file.parentFile)
+        file.parentFile.mkdirs()
 
         return file
     }
@@ -22,7 +21,7 @@ class LogFiles(private val tailer: InstanceTailer) {
 
     fun incidentFile(instanceName: String): File {
         val file = File(incidentDir(instanceName), "${Formats.dateFileName()}-${tailer.logFile}")
-        GFileUtils.mkdirs(file.parentFile)
+        file.parentFile.mkdirs()
 
         return file
     }
@@ -58,12 +57,7 @@ class LogFiles(private val tailer: InstanceTailer) {
     }
 
     private val lockFile: File
-        get() {
-            val file = File(tailer.rootDir, LOCK_FILE)
-            GFileUtils.mkdirs(file.parentFile)
-
-            return file
-        }
+        get() = tailer.rootDir.resolve(LOCK_FILE).apply { parentFile.mkdirs() }
 
     companion object {
 

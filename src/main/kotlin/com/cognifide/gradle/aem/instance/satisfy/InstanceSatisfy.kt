@@ -53,7 +53,7 @@ open class InstanceSatisfy : PackageDeploy() {
      */
     @Internal
     var downloadDir = aem.prop.string("instance.satisfy.downloadDir")?.let { aem.project.file(it) }
-            ?: AemTask.temporaryDir(project, name, "download")
+            ?: aem.temporaryFile("$name/download")
 
     /**
      * Provides a packages from local and remote sources.

@@ -5,7 +5,6 @@ import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.aem.common.pkg.vlt.VltDefinition
 import org.apache.commons.io.FileUtils
-import org.gradle.util.GFileUtils
 import org.zeroturnaround.zip.ZipUtil
 import java.io.File
 
@@ -99,7 +98,7 @@ class PackageDefinition(private val aem: AemExtension) : VltDefinition(aem) {
 
     fun copyJcrFile(file: File, path: String) {
         val pkgFile = File(pkgDir, "${Package.JCR_ROOT}$path")
-        GFileUtils.mkdirs(pkgFile.parentFile)
+        pkgFile.parentFile.mkdirs()
         FileUtils.copyFile(file, pkgFile)
     }
 

@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem.pkg.tasks
 
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.bundle.tasks.BundleCompose
 import com.cognifide.gradle.aem.bundle.BundlePlugin
 import com.cognifide.gradle.aem.common.build.DependencyOptions
@@ -423,7 +422,7 @@ open class PackageCompose : ZipTask() {
         description = "Composes CRX package from JCR content and built OSGi bundles"
 
         archiveBaseName.set(aem.baseName)
-        destinationDirectory.set(AemTask.temporaryDir(aem.project, name))
+        destinationDirectory.set(aem.temporaryFile(name))
         duplicatesStrategy = DuplicatesStrategy.WARN
     }
 
