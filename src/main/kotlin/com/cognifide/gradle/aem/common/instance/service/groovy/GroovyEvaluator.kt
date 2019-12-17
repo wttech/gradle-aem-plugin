@@ -12,7 +12,7 @@ class GroovyEvaluator(private val aem: AemExtension) {
 
     var failable = true
 
-    var instances = listOf<Instance>()
+    var instances = aem.instances
 
     var data: Map<String, Any?> = mapOf()
 
