@@ -31,8 +31,8 @@ import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.PackageCompose
 import com.cognifide.gradle.aem.instance.rcp.RcpClient
 import com.cognifide.gradle.aem.common.pkg.vlt.VltException
-import com.cognifide.gradle.aem.common.pkg.vlt.VltClient
-import com.cognifide.gradle.aem.common.pkg.vlt.VltSummary
+import com.cognifide.gradle.aem.pkg.tasks.vlt.VltClient
+import com.cognifide.gradle.aem.pkg.tasks.vlt.VltSummary
 import com.cognifide.gradle.aem.pkg.PackageSyncPlugin
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File

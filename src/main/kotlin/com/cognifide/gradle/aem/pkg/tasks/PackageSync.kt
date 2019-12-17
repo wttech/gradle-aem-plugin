@@ -3,7 +3,7 @@ package com.cognifide.gradle.aem.pkg.tasks
 import com.cognifide.gradle.aem.AemDefaultTask
 import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.common.utils.Formats
-import com.cognifide.gradle.aem.common.pkg.vlt.VltClient
+import com.cognifide.gradle.aem.pkg.tasks.vlt.VltClient
 import com.cognifide.gradle.aem.pkg.tasks.sync.Cleaner
 import com.cognifide.gradle.aem.pkg.tasks.sync.Downloader
 import java.io.File
@@ -109,7 +109,10 @@ open class PackageSync : AemDefaultTask() {
                 }
             }
 
-            aem.notifier.notify("Synchronized JCR content", "Instance: ${instance.name}. Directory: ${Formats.rootProjectPath(contentDir, project)}")
+            aem.notifier.notify(
+                    "Synchronized JCR content",
+                    "Instance: ${instance.name}. Directory: ${Formats.rootProjectPath(contentDir, project)}"
+            )
         } finally {
             if (mode != Mode.COPY_ONLY) {
                 cleanContent()

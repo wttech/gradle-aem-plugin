@@ -88,10 +88,12 @@ open class Debug : AemDefaultTask() {
         file.bufferedWriter().use { it.write(json) }
         logger.info(json)
 
-        aem.notifier.notify("Configuration dumped", "For $project to file: ${Formats.projectPath(file, project)}")
+        aem.notifier.notify("AEM configuration dumped", "For $project to file: ${Formats.projectPath(file, project)}")
     }
 
     companion object {
         const val NAME = "debug"
+
+        const val NAME_FALLBACK = "debugAem"
     }
 }

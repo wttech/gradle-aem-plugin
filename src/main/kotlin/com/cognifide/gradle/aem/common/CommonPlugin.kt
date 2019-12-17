@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.common
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.AemPlugin
 import com.cognifide.gradle.aem.common.tasks.Debug
+import org.gradle.api.GradleException
 import java.util.*
 import org.gradle.api.Project
 import org.gradle.api.plugins.BasePlugin
@@ -46,8 +47,11 @@ class CommonPlugin : AemPlugin() {
 
     private fun Project.setupTasks() {
         tasks {
-            register<Debug>(Debug.NAME) {
-                mustRunAfter(LifecycleBasePlugin.BUILD_TASK_NAME)
+            val options: Debug.() -> Unit = { mustRunAfter(LifecycleBasePlugin.BUILD_TASK_NAME) }
+            try {
+                register(Debug.NAME, options)
+            } catch (e: GradleException) {
+                register(Debug.NAME_FALLBACK, options)
             }
         }
     }

@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.common.pkg.vlt
+package com.cognifide.gradle.aem.pkg.tasks.vlt
 
 import com.cognifide.gradle.aem.common.utils.Formats
 import java.io.File

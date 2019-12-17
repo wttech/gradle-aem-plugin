@@ -1,7 +1,9 @@
-package com.cognifide.gradle.aem.common.pkg.vlt
+package com.cognifide.gradle.aem.pkg.tasks.vlt
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
+import com.cognifide.gradle.aem.common.pkg.vlt.VltApp
+import com.cognifide.gradle.aem.common.pkg.vlt.VltException
 import org.apache.commons.lang3.time.StopWatch
 import java.io.File
 
