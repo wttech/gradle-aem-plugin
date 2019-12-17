@@ -80,7 +80,7 @@ class InstancePlugin : AemPlugin() {
             register<InstanceResolve>(InstanceResolve.NAME)
             register<InstanceTail>(InstanceTail.NAME)
             register<InstanceRcp>(InstanceRcp.NAME)
-            register<InstanceGroovyScript>(InstanceGroovyScript.NAME)
+            register<InstanceGroovyEval>(InstanceGroovyEval.NAME)
 
             // Common lifecycle
 

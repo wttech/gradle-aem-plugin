@@ -40,7 +40,7 @@ class GroovyConsole(sync: InstanceSync) : InstanceService(sync) {
     /**
      * Evaluate Groovy code snippet on AEM instance.
      */
-    fun evalCode(code: String, data: Map<String, Any> = mapOf()): GroovyScriptResult {
+    fun evalCode(code: String, data: Map<String, Any?> = mapOf()): GroovyEvalResult {
         val result = try {
             aem.logger.info("Evaluating Groovy Code: $code")
             evalCodeInternal(code, data)
@@ -56,17 +56,17 @@ class GroovyConsole(sync: InstanceSync) : InstanceService(sync) {
         return result
     }
 
-    private fun evalCodeInternal(code: String, data: Map<String, Any>): GroovyScriptResult {
+    private fun evalCodeInternal(code: String, data: Map<String, Any?>): GroovyEvalResult {
         return sync.http.postMultipart(EVAL_PATH, mapOf(
                 "script" to code,
                 "data" to Formats.toJson(data)
-        )) { asObjectFromJson(it, GroovyScriptResult::class.java) }
+        )) { asObjectFromJson(it, GroovyEvalResult::class.java) }
     }
 
     /**
      * Evaluate any Groovy script on AEM instance.
      */
-    fun evalScript(file: File, data: Map<String, Any> = mapOf()): GroovyScriptResult {
+    fun evalScript(file: File, data: Map<String, Any?> = mapOf()): GroovyEvalResult {
         val result = try {
             aem.logger.info("Evaluating Groovy script '$file' on $instance")
             evalCodeInternal(file.bufferedReader().use { it.readText() }, data)
@@ -85,7 +85,7 @@ class GroovyConsole(sync: InstanceSync) : InstanceService(sync) {
     /**
      * Evaluate Groovy script found by its file name on AEM instance.
      */
-    fun evalScript(fileName: String, data: Map<String, Any> = mapOf()): GroovyScriptResult {
+    fun evalScript(fileName: String, data: Map<String, Any?> = mapOf()): GroovyEvalResult {
         val script = File(scriptRootDir, fileName)
         if (!script.exists()) {
             throw GroovyConsoleException("Groovy script '$fileName' not found in directory: $scriptRootDir")
@@ -110,7 +110,7 @@ class GroovyConsole(sync: InstanceSync) : InstanceService(sync) {
     fun evalScripts(
         pathPattern: String = "**/*.groovy",
         data: Map<String, Any> = mapOf(),
-        resultConsumer: GroovyScriptResult.() -> Unit = {}
+        resultConsumer: GroovyEvalResult.() -> Unit = {}
     ) {
         evalScripts(getScripts(pathPattern), data, resultConsumer)
     }
@@ -120,8 +120,8 @@ class GroovyConsole(sync: InstanceSync) : InstanceService(sync) {
      */
     fun evalScripts(
         scripts: Iterable<File>,
-        data: Map<String, Any> = mapOf(),
-        resultConsumer: GroovyScriptResult.() -> Unit = {}
+        data: Map<String, Any?> = mapOf(),
+        resultConsumer: GroovyEvalResult.() -> Unit = {}
     ) {
         scripts.forEach { resultConsumer(evalScript(it, data)) }
     }

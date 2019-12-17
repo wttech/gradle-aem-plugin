@@ -13,8 +13,8 @@ import com.cognifide.gradle.aem.common.file.transfer.sftp.SftpFileTransfer
 import com.cognifide.gradle.aem.common.file.transfer.smb.SmbFileTransfer
 import com.cognifide.gradle.aem.common.http.HttpClient
 import com.cognifide.gradle.aem.common.instance.*
-import com.cognifide.gradle.aem.common.instance.service.groovy.GroovyScriptEvaluator
-import com.cognifide.gradle.aem.common.instance.service.groovy.GroovyScriptSummary
+import com.cognifide.gradle.aem.common.instance.service.groovy.GroovyEvaluator
+import com.cognifide.gradle.aem.common.instance.service.groovy.GroovyEvalSummary
 import com.cognifide.gradle.aem.common.notifier.NotifierFacade
 import com.cognifide.gradle.aem.common.pkg.PackageDefinition
 import com.cognifide.gradle.aem.common.pkg.PackageFile
@@ -698,12 +698,12 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     /**
      * Execute Groovy script(s) using specified options.
      */
-    fun <T> groovyScript(options: GroovyScriptEvaluator.() -> T) = GroovyScriptEvaluator(this).run(options)
+    fun <T> groovyEval(options: GroovyEvaluator.() -> T) = GroovyEvaluator(this).run(options)
 
     /**
      * Execute Groovy script(s) matching file pattern on AEM instances.
      */
-    fun groovyScript(scriptPattern: String): GroovyScriptSummary = groovyScript { this.scriptPattern = scriptPattern; eval() }
+    fun groovyEval(scriptPattern: String): GroovyEvalSummary = groovyEval { this.scriptPattern = scriptPattern; eval() }
 
     /**
      * Execute any Docker command using all available images with mounting volumes etc, exposing ports etc.

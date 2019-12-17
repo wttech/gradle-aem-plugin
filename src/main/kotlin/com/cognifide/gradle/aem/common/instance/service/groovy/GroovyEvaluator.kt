@@ -1,22 +1,23 @@
 package com.cognifide.gradle.aem.common.instance.service.groovy
 
 import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.common.instance.Instance
 import org.apache.commons.lang3.time.StopWatch
 
-class GroovyScriptEvaluator(private val aem: AemExtension) {
+class GroovyEvaluator(private val aem: AemExtension) {
 
     private val logger = aem.logger
 
-    var scriptPattern: String = aem.prop.string("instance.groovyScript") ?: ""
+    var scriptPattern: String = ""
 
-    var failable = aem.prop.boolean("instance.groovyScript.failable") ?: true
+    var failable = true
 
-    var instances = aem.instances
+    var instances = listOf<Instance>()
 
-    var data: Map<String, Any> = mapOf()
+    var data: Map<String, Any?> = mapOf()
 
     @Suppress("ComplexMethod")
-    fun eval(): GroovyScriptSummary {
+    fun eval(): GroovyEvalSummary {
         if (scriptPattern.isBlank()) {
             throw GroovyConsoleException("Groovy script to be evaluated is not specified!")
         }
@@ -25,7 +26,7 @@ class GroovyScriptEvaluator(private val aem: AemExtension) {
         }
 
         val scripts = instances.first().sync.groovyConsole.getScripts(scriptPattern)
-        val statuses = mutableListOf<GroovyScriptStatus>()
+        val statuses = mutableListOf<GroovyEvalStatus>()
 
         val stopWatch = StopWatch().apply { start() }
         aem.progress(instances.size * scripts.size) {
@@ -40,7 +41,7 @@ class GroovyScriptEvaluator(private val aem: AemExtension) {
                     increment("Script '${script.name}' on '${instance.name}'")
 
                     groovyConsole.evalScript(script, data).apply {
-                        statuses.add(GroovyScriptStatus(script, instance, success))
+                        statuses.add(GroovyEvalStatus(script, instance, success))
 
                         val message = mutableListOf<String>().apply {
                             if (success) {
@@ -68,7 +69,7 @@ class GroovyScriptEvaluator(private val aem: AemExtension) {
         }
         stopWatch.stop()
 
-        val summary = GroovyScriptSummary(statuses, stopWatch.time)
+        val summary = GroovyEvalSummary(statuses, stopWatch.time)
         if (summary.failed > 0) {
             logger.error("Groovy script evaluation errors:\n${summary.statuses.joinToString("\n") { "Script '${it.script}' on ${it.instance}" }}")
             if (failable) {

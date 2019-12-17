@@ -2,9 +2,9 @@ package com.cognifide.gradle.aem.common.instance.service.groovy
 
 import com.cognifide.gradle.aem.common.utils.Formats
 
-data class GroovyScriptSummary(
-        val statuses: List<GroovyScriptStatus>,
-        val duration: Long
+data class GroovyEvalSummary(
+    val statuses: List<GroovyEvalStatus>,
+    val duration: Long
 ) {
     val total: Int
         get() = statuses.size
@@ -22,6 +22,6 @@ data class GroovyScriptSummary(
         get() = Formats.duration(duration)
 
     override fun toString(): String {
-        return "GroovyScriptSummary(successes=$succeeded, failed=$failed, total=$total, duration=$durationString)"
+        return "${javaClass.simpleName}(successes=$succeeded, failed=$failed, total=$total, duration=$durationString)"
     }
 }

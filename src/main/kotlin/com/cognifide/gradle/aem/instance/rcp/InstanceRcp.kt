@@ -17,7 +17,17 @@ open class InstanceRcp : AemDefaultTask() {
 
     @TaskAction
     fun run() {
-        val summary = aem.rcp { options(); copy(); summary() }
+        val summary = aem.rcp {
+            sourceInstance = aem.prop.string("instance.rcp.source")?.run { aem.instance(this) }
+            targetInstance = aem.prop.string("instance.rcp.target")?.run { aem.instance(this) }
+            paths = aem.prop.list("instance.rcp.paths")
+            pathsFile = aem.prop.string("instance.rcp.pathsFile")?.let { aem.project.file(it) }
+            opts = aem.prop.string("instance.rcp.opts") ?: "-b 100 -r -u"
+
+            options()
+            copy()
+            summary()
+        }
 
         logger.info("RCP details: $summary")
 

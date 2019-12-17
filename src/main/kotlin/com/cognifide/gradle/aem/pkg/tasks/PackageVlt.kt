@@ -18,7 +18,12 @@ open class PackageVlt : AemDefaultTask() {
 
     @TaskAction
     open fun run() {
-        val summary = aem.vlt { options(); run() }
+        val summary = aem.vlt {
+            command = aem.prop.string("package.vlt.command") ?: ""
+            contentRelativePath = aem.prop.string("package.vlt.path") ?: ""
+            options()
+            run()
+        }
         aem.notifier.notify(
                 "Executing Vault command",
                 "Command '${summary.command}' finished. Duration: ${summary.durationString}"
