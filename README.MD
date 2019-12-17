@@ -2439,7 +2439,10 @@ Succeeded: 2/4=50.00%. Elapsed time: 00:05
 
 ```
 
-To determineinstances on which scripts will be evaluated, simple use 
+By default, any failed script evaluation will cause that task will also fail.
+To avoid that (ignore failures), add parameter `-Pinstance.groovyEval.faulty=false`.
+
+To determine instances on which scripts will be evaluated, simply use [default filtering](#instance-filtering).
 
 ### Environment plugin
 
