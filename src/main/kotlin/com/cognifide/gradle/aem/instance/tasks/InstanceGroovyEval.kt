@@ -32,6 +32,6 @@ open class InstanceGroovyEval : AemDefaultTask() {
     }
 
     companion object {
-        const val NAME = "instanceGroovyScript"
+        const val NAME = "instanceGroovyEval"
     }
 }
