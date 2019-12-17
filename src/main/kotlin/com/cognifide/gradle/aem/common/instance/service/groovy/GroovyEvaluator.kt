@@ -21,7 +21,7 @@ class GroovyEvaluator(private val aem: AemExtension) {
         this.consoleOptions = options
     }
 
-    @Suppress("ComplexMethod")
+    @Suppress("ComplexMethod", "LongMethod")
     fun eval(): GroovyEvalSummary {
         if (scriptPattern.isBlank()) {
             throw GroovyConsoleException("Groovy script to be evaluated is not specified!")
