@@ -1,11 +1,9 @@
 package com.cognifide.gradle.aem.common.instance.service.groovy
 
 import com.cognifide.gradle.aem.AemException
-import com.cognifide.gradle.aem.common.instance.InstanceException
 import com.cognifide.gradle.aem.common.instance.InstanceService
 import com.cognifide.gradle.aem.common.instance.InstanceSync
 import com.cognifide.gradle.aem.common.utils.Formats
-import com.cognifide.gradle.aem.common.utils.Patterns
 import java.io.File
 
 /**
@@ -26,19 +24,33 @@ class GroovyConsole(sync: InstanceSync) : InstanceService(sync) {
     var scriptRootDir: File = File(aem.configDir, "groovyScript")
 
     /**
+     * Check if console is installed on instance.
+     */
+    val available: Boolean get() = sync.osgiFramework.findBundle(SYMBOLIC_NAME) != null
+
+    /**
+     * Ensure by throwing exception that console is available on instance.
+     */
+    fun requireAvailable() {
+        if (!available) {
+            throw GroovyConsoleException("Groovy console is not available on $instance!")
+        }
+    }
+
+    /**
      * Evaluate Groovy code snippet on AEM instance.
      */
     fun evalCode(code: String, data: Map<String, Any> = mapOf()): GroovyConsoleResult {
         val result = try {
-            aem.logger.info("Executing Groovy Code: $code")
+            aem.logger.info("Evaluating Groovy Code: $code")
             evalCodeInternal(code, data)
         } catch (e: AemException) {
-            throw InstanceException("Cannot evaluate Groovy code properly on $instance, code:\n$code, cause: ${e.message}", e)
+            throw GroovyConsoleException("Cannot evaluate Groovy code properly on $instance, code:\n$code, cause: ${e.message}", e)
         }
 
         if (verbose && result.exceptionStackTrace.isNotBlank()) {
             aem.logger.debug(result.toString())
-            throw InstanceException("Execution of Groovy code on $instance ended with exception:\n${result.exceptionStackTrace}")
+            throw GroovyConsoleException("Evaluation of Groovy code on $instance ended with exception:\n${result.exceptionStackTrace}")
         }
 
         return result
@@ -56,15 +68,15 @@ class GroovyConsole(sync: InstanceSync) : InstanceService(sync) {
      */
     fun evalScript(file: File, data: Map<String, Any> = mapOf()): GroovyConsoleResult {
         val result = try {
-            aem.logger.info("Executing Groovy script: $file")
+            aem.logger.info("Evaluating Groovy script '$file' on $instance")
             evalCodeInternal(file.bufferedReader().use { it.readText() }, data)
         } catch (e: AemException) {
-            throw InstanceException("Cannot evaluate Groovy script properly on $instance, file: $file, cause: ${e.message}", e)
+            throw GroovyConsoleException("Cannot evaluate Groovy script '$file' properly on $instance. Cause: ${e.message}", e)
         }
 
         if (verbose && result.exceptionStackTrace.isNotBlank()) {
             aem.logger.debug(result.toString())
-            throw InstanceException("Execution of Groovy script $file on $instance ended with exception:\n${result.exceptionStackTrace}")
+            throw GroovyConsoleException("Evaluation of Groovy script '$file' on $instance ended with exception:\n${result.exceptionStackTrace}")
         }
 
         return result
@@ -76,34 +88,39 @@ class GroovyConsole(sync: InstanceSync) : InstanceService(sync) {
     fun evalScript(fileName: String, data: Map<String, Any> = mapOf()): GroovyConsoleResult {
         val script = File(scriptRootDir, fileName)
         if (!script.exists()) {
-            throw AemException("Groovy script '$fileName' not found in directory: $scriptRootDir")
+            throw GroovyConsoleException("Groovy script '$fileName' not found in directory: $scriptRootDir")
         }
 
         return evalScript(script, data)
     }
 
     /**
+     * Find scripts matching file pattern in pre-configured directory.
+     */
+    fun getScripts(pathPattern: String): List<File> = project.fileTree(scriptRootDir)
+            .matching { it.include(pathPattern) }
+            .sortedBy { it.absolutePath }
+            .ifEmpty {
+                throw GroovyConsoleException("No Groovy scripts matching pattern '$pathPattern' found in directory: $scriptRootDir")
+            }
+
+    /**
      * Evaluate all Groovy scripts found by file name pattern on AEM instance in path-based alphabetical order.
      */
-    fun evalScripts(fileNamePattern: String = "**/*.groovy", data: Map<String, Any> = mapOf()): Sequence<GroovyConsoleResult> {
-        val scripts = (scriptRootDir.listFiles() ?: arrayOf()).filter {
-            Patterns.wildcard(it, fileNamePattern)
-        }.sortedBy { it.absolutePath }
-        if (scripts.isEmpty()) {
-            throw AemException("No Groovy scripts found in directory: $scriptRootDir")
-        }
-
-        return evalScripts(scripts, data)
+    fun evalScripts(pathPattern: String = "**/*.groovy", data: Map<String, Any> = mapOf(), resultConsumer: GroovyConsoleResult.() -> Unit = {}) {
+        evalScripts(getScripts(pathPattern), data, resultConsumer)
     }
 
     /**
      * Evaluate any Groovy scripts on AEM instance in specified order.
      */
-    fun evalScripts(scripts: Iterable<File>, data: Map<String, Any> = mapOf()): Sequence<GroovyConsoleResult> {
-        return scripts.asSequence().map { evalScript(it, data) }
+    fun evalScripts(scripts: Iterable<File>, data: Map<String, Any> = mapOf(), resultConsumer: GroovyConsoleResult.() -> Unit = {}) {
+        scripts.forEach { resultConsumer(evalScript(it, data)) }
     }
 
     companion object {
         const val EVAL_PATH = "/bin/groovyconsole/post.json"
+
+        const val SYMBOLIC_NAME = "aem-groovy-console"
     }
 }

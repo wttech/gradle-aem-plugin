@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem.instance.tail
 
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.utils.Formats
 import com.cognifide.gradle.aem.instance.tail.io.ConsolePrinter
@@ -22,7 +21,7 @@ class InstanceTailer(val aem: AemExtension) {
     /**
      * Directory where log files will be stored.
      */
-    var rootDir: File = AemTask.temporaryDir(aem.project, "instanceTail")
+    var rootDir: File = aem.temporaryFile(InstanceTail.NAME)
 
     /**
      * Instances from which logs will be tailed.

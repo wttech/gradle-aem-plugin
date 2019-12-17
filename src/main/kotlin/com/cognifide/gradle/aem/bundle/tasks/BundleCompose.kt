@@ -118,7 +118,7 @@ open class BundleCompose : Jar(), AemTask {
     }
 
     private fun applyArchiveDefaults() {
-        destinationDirectory.set(AemTask.temporaryDir(aem.project, name))
+        destinationDirectory.set(aem.temporaryFile(name))
         archiveBaseName.set(aem.baseName)
         from(javaConvention.sourceSets.getByName(SourceSet.MAIN_SOURCE_SET_NAME).output)
     }

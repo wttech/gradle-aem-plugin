@@ -179,19 +179,19 @@ gradlePlugin {
             id = "com.cognifide.aem.common"
             implementationClass = "com.cognifide.gradle.aem.common.CommonPlugin"
             displayName = "AEM Common Plugin"
-            description = "Provides AEM DSL / 'aem' extension to build script on which all other logic is based."
-        }
-        create("tooling") {
-            id = "com.cognifide.aem.tooling"
-            implementationClass = "com.cognifide.gradle.aem.tooling.ToolingPlugin"
-            displayName = "AEM Tooling Plugin"
-            description = "Provides tasks like 'rcp', 'sync', 'vlt' for working with content using JCR File Vault."
+            description = "Provides AEM DSL extension to build script on which all other logic is based."
         }
         create("package") {
             id = "com.cognifide.aem.package"
             implementationClass = "com.cognifide.gradle.aem.pkg.PackagePlugin"
             displayName = "AEM Package Plugin"
             description = "Provides tasks for working with CRX packages."
+        }
+        create("package.sync") {
+            id = "com.cognifide.aem.package.sync"
+            implementationClass = "com.cognifide.gradle.aem.pkg.PackageSyncPlugin"
+            displayName = "AEM Package Sync Plugin"
+            description = "Provides tasks for synchronizing JCR content from running AEM instance."
         }
         create("bundle") {
             id = "com.cognifide.aem.bundle"

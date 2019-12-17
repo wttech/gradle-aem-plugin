@@ -2,7 +2,6 @@ package com.cognifide.gradle.aem.pkg.tasks
 
 import com.cognifide.gradle.aem.AemDefaultTask
 import com.cognifide.gradle.aem.AemException
-import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.aem.common.pkg.vlt.FilterFile
@@ -10,7 +9,6 @@ import com.cognifide.gradle.aem.common.pkg.vlt.NodeTypesSync
 import org.apache.commons.io.FileUtils
 import org.apache.jackrabbit.vault.packaging.PackageException
 import org.gradle.api.tasks.*
-import org.gradle.util.GFileUtils
 import java.io.File
 
 open class PackagePrepare : AemDefaultTask() {
@@ -23,7 +21,7 @@ open class PackagePrepare : AemDefaultTask() {
     var metaDefaults: Boolean = true
 
     @OutputDirectory
-    val metaDir = AemTask.temporaryDir(project, name, Package.META_PATH)
+    val metaDir = aem.temporaryFile("$name/${Package.META_PATH}")
 
     @get:Internal
     val vaultFilterOriginFile get() = File(metaDir, "${Package.VLT_DIR}/${FilterFile.ORIGIN_NAME}")
@@ -112,7 +110,7 @@ open class PackagePrepare : AemDefaultTask() {
         aem.availableInstance?.sync {
             try {
                 vaultNodeTypesSyncFile.apply {
-                    GFileUtils.parentMkdirs(this)
+                    parentFile.mkdirs()
                     writeText(crx.nodeTypes)
                 }
             } catch (e: AemException) {

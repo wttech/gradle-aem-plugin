@@ -14,7 +14,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 import org.apache.commons.io.FilenameUtils
 import org.gradle.api.tasks.Internal
-import org.gradle.util.GFileUtils
 
 /**
  * Facade for transferring files over multiple protocols HTTP/SFTP/SMB and custom.
@@ -95,7 +94,7 @@ class FileTransferManager(private val aem: AemExtension) : FileTransfer {
             return
         }
 
-        GFileUtils.mkdirs(target.parentFile)
+        target.parentFile.mkdirs()
 
         val tmp = File(target.parentFile, "${target.name}$TMP_SUFFIX")
         if (tmp.exists()) {

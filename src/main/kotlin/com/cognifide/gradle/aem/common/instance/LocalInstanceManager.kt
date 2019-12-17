@@ -8,7 +8,6 @@ import com.cognifide.gradle.aem.common.instance.local.QuickstartResolver
 import com.cognifide.gradle.aem.common.instance.local.Source
 import com.cognifide.gradle.aem.common.utils.onEachApply
 import com.fasterxml.jackson.annotation.JsonIgnore
-import org.gradle.util.GFileUtils
 import java.io.File
 import java.io.Serializable
 import java.util.concurrent.TimeUnit
@@ -154,7 +153,7 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
     fun createFromBackup(instances: List<LocalInstance>, backupZip: File) {
         logger.info("Restoring instances from backup ZIP '$backupZip' to directory '$rootDir'")
 
-        GFileUtils.mkdirs(rootDir)
+        rootDir.mkdirs()
 
         aem.progress(instances.size) {
             instances.onEachApply {

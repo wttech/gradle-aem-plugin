@@ -1,9 +1,9 @@
-package com.cognifide.gradle.aem.tooling.rcp
+package com.cognifide.gradle.aem.instance.rcp
 
 import com.cognifide.gradle.aem.AemDefaultTask
 import org.gradle.api.tasks.TaskAction
 
-open class Rcp : AemDefaultTask() {
+open class InstanceRcp : AemDefaultTask() {
 
     init {
         description = "Copy JCR content from one instance to another."
@@ -31,6 +31,6 @@ open class Rcp : AemDefaultTask() {
     }
 
     companion object {
-        const val NAME = "rcp"
+        const val NAME = "instanceRcp"
     }
 }

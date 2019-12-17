@@ -2,7 +2,6 @@ package com.cognifide.gradle.aem.environment.docker.container
 
 import com.cognifide.gradle.aem.common.file.resolver.FileResolver
 import com.cognifide.gradle.aem.environment.docker.Container
-import org.gradle.util.GFileUtils
 import java.io.File
 
 /**
@@ -38,21 +37,21 @@ class HostFileManager(val container: Container) {
     fun ensureDir() {
         rootDir.apply {
             logger.info("Ensuring root directory '$this' for container '${container.name}'")
-            GFileUtils.mkdirs(this)
+            mkdirs()
         }
     }
 
     fun ensureDir(vararg paths: String) = paths.forEach { path ->
         file(path).apply {
             logger.info("Ensuring directory '$this' for container '${container.name}'")
-            GFileUtils.mkdirs(this)
+            mkdirs()
         }
     }
 
     fun cleanDir(vararg paths: String) = paths.forEach { path ->
         file(path).apply {
             logger.info("Cleaning directory '$this' for container '${container.name}'")
-            deleteRecursively(); GFileUtils.mkdirs(this)
+            deleteRecursively(); mkdirs()
         }
     }
 }

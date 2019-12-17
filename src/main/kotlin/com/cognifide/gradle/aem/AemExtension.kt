@@ -29,11 +29,11 @@ import com.cognifide.gradle.aem.environment.docker.RunSpec
 import com.cognifide.gradle.aem.instance.*
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.PackageCompose
-import com.cognifide.gradle.aem.tooling.ToolingPlugin
-import com.cognifide.gradle.aem.tooling.rcp.RcpClient
-import com.cognifide.gradle.aem.tooling.vlt.VltException
-import com.cognifide.gradle.aem.tooling.vlt.VltClient
-import com.cognifide.gradle.aem.tooling.vlt.VltSummary
+import com.cognifide.gradle.aem.instance.rcp.RcpClient
+import com.cognifide.gradle.aem.common.pkg.vlt.VltException
+import com.cognifide.gradle.aem.pkg.tasks.vlt.VltClient
+import com.cognifide.gradle.aem.pkg.tasks.vlt.VltSummary
+import com.cognifide.gradle.aem.pkg.PackageSyncPlugin
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 import java.io.Serializable
@@ -567,7 +567,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
             val cmdFilterRoots = prop.list("filter.roots") ?: listOf()
             if (cmdFilterRoots.isNotEmpty()) {
                 logger.debug("Using Vault filter roots specified as command line property: $cmdFilterRoots")
-                return FilterFile.temporary(project, cmdFilterRoots)
+                return FilterFile.temporary(this, cmdFilterRoots)
             }
 
             val cmdFilterPath = prop.string("filter.path") ?: ""
@@ -591,7 +591,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
 
             logger.debug("None of Vault filter files found by CMD properties or convention.")
 
-            return FilterFile.temporary(project, listOf())
+            return FilterFile.temporary(this, listOf())
         }
 
     /**
@@ -605,26 +605,16 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     fun filter(path: String) = filter(project.file(path))
 
     /**
-     * Determine temporary directory for particular task.
-     */
-    fun temporaryDir(task: Task) = temporaryDir(task.name)
-
-    /**
      * Determine temporary directory for particular service (any name).
      */
-    fun temporaryDir(name: String) = AemTask.temporaryDir(project, name)
-
-    /**
-     * Determine temporary file for particular service (any name).
-     */
-    fun temporaryFile(name: String) = AemTask.temporaryFile(project, TEMPORARY_DIR, name)
+    fun temporaryFile(path: String): File = project.buildDir.resolve("aem/$path")
 
     /**
      * Predefined temporary directory.
      */
     @get:JsonIgnore
     val temporaryDir: File
-        get() = temporaryDir(TEMPORARY_DIR)
+        get() = temporaryFile(TEMPORARY_DIR)
 
     /**
      * Factory method for configuration object determining how operation should be retried.
@@ -734,12 +724,12 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
         const val TEMPORARY_DIR = "tmp"
 
         private val PLUGIN_IDS = listOf(
+                CommonPlugin.ID,
                 PackagePlugin.ID,
                 BundlePlugin.ID,
                 InstancePlugin.ID,
                 EnvironmentPlugin.ID,
-                ToolingPlugin.ID,
-                CommonPlugin.ID
+                PackageSyncPlugin.ID
         )
 
         fun of(project: Project): AemExtension {

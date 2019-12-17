@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem.common.instance.local
 
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.AemTask
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 
@@ -11,7 +10,7 @@ class QuickstartResolver(private val aem: AemExtension) {
      * Directory storing downloaded AEM Quickstart source files (JAR & license).
      */
     var downloadDir = aem.prop.string("localInstance.quickstart.downloadDir")?.let { aem.project.file(it) }
-            ?: AemTask.temporaryDir(aem.project, TEMPORARY_DIR)
+            ?: aem.temporaryFile(TEMPORARY_DIR)
 
     /**
      * URI pointing to AEM self-extractable JAR containing 'crx-quickstart'.

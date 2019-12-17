@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.tooling.rcp
+package com.cognifide.gradle.aem.instance.rcp
 
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.utils.Formats

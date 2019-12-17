@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.tooling.vlt
+package com.cognifide.gradle.aem.common.pkg.vlt
 
 import org.apache.commons.cli2.CommandLine
 import org.apache.jackrabbit.vault.cli.VltExecutionContext as BaseExecutionContext

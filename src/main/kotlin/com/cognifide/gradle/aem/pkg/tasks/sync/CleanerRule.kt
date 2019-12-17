@@ -1,7 +1,7 @@
-package com.cognifide.gradle.aem.tooling.sync
+package com.cognifide.gradle.aem.pkg.tasks.sync
 
 import com.cognifide.gradle.aem.common.utils.Patterns
-import com.cognifide.gradle.aem.tooling.vlt.VltException
+import com.cognifide.gradle.aem.common.pkg.vlt.VltException
 import java.io.File
 
 class CleanerRule(value: String) {
