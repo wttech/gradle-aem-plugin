@@ -2,7 +2,6 @@ package com.cognifide.gradle.aem
 
 import com.cognifide.gradle.aem.bundle.tasks.BundleCompose
 import com.cognifide.gradle.aem.common.build.DependencyOptions
-import com.cognifide.gradle.aem.common.tasks.Debug
 import com.cognifide.gradle.aem.common.tasks.TaskSequence
 import com.cognifide.gradle.aem.common.tasks.lifecycle.*
 import com.cognifide.gradle.aem.environment.tasks.*

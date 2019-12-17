@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import org.apache.commons.lang3.StringUtils
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-class GroovyConsoleResult {
+class GroovyScriptResult {
 
     lateinit var exceptionStackTrace: String
 
@@ -29,7 +29,7 @@ class GroovyConsoleResult {
 
     override fun toString(): String {
         return StringBuilder().apply {
-            append("GroovyConsoleResult(output='${shorten(output)}', runningTime='$runningTime'")
+            append("GroovyScriptResult(output='${shorten(output)}', runningTime='$runningTime'")
             append(", exceptionStackTrace='${shorten(exceptionStackTrace)}', result='$result'")
             append(", script='${shorten(script)}', data='${shorten(data)}')")
         }.toString()

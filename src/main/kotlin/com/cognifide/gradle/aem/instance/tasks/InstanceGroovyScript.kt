@@ -1,8 +1,7 @@
 package com.cognifide.gradle.aem.instance.tasks
 
 import com.cognifide.gradle.aem.AemDefaultTask
-import com.cognifide.gradle.aem.common.instance.service.groovy.GroovyConsoleEvaluator
-import org.gradle.api.tasks.Internal
+import com.cognifide.gradle.aem.common.instance.service.groovy.GroovyScriptEvaluator
 import org.gradle.api.tasks.TaskAction
 
 open class InstanceGroovyScript : AemDefaultTask() {
@@ -11,16 +10,20 @@ open class InstanceGroovyScript : AemDefaultTask() {
         description = "Evaluate Groovy script(s) on instance(s)."
     }
 
-    @Internal
-    var evaluator = GroovyConsoleEvaluator(aem)
+    private var options: GroovyScriptEvaluator.() -> Unit = {}
 
-    fun options(options: GroovyConsoleEvaluator.() -> Unit) {
-        evaluator.apply(options)
+    fun options(options: GroovyScriptEvaluator.() -> Unit) {
+        this.options = options
     }
 
     @TaskAction
     fun eval() {
-        evaluator.eval()
+        val summary = aem.groovyScript { options(); eval() }
+
+        aem.notifier.notify(
+                "Evaluated Groovy script(s)",
+                "Succeeded ${summary.succeededPercent}"
+        )
     }
 
     companion object {
