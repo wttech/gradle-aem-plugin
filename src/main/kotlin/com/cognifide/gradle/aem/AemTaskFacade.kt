@@ -28,10 +28,6 @@ class AemTaskFacade(val aem: AemExtension) : Serializable {
 
     val project = aem.project
 
-    // Common plugin shorthands
-
-    fun debug(configurer: Debug.() -> Unit) = named(Debug.NAME, configurer)
-
     // Bundle plugin shorthands
 
     val bundles get() = getAll(BundleCompose::class.java)
