@@ -100,7 +100,7 @@
            * [Tailing multiple instances](#tailing-multiple-instances)
            * [Standalone tailer tool](#standalone-tailer-tool)
         * [Task instanceRcp](#task-instancercp)
-        * [Task instanceGroovyScript](#task-instancegroovyscript)
+        * [Task instanceGroovyEval](#task-instancegroovyeval)
      * [Environment plugin](#environment-plugin)
         * [Environment configuration](#environment-configuration)
            * [Notice for Docker on Windows](#notice-for-docker-on-windows)
@@ -2406,14 +2406,14 @@ Consider disabling AEM workflow launchers before running this task and re-enabli
 RCP task is internally using [Vault Remote Copy](http://jackrabbit.apache.org/filevault/rcp.html) which requires bundle *Apache Sling Simple WebDAV Access to repositories (org.apache.sling.jcr.webdav)* present in active state on instance.
 
 
-#### Task `instanceGroovyScript`
+#### Task `instanceGroovyEval`
 
 Evaluate Groovy script(s) on instance(s).
 
 Simple script usage:
 
 ```bash
-gradlew instanceGroovyScript -Pinstance.groovyScript=page-resource-type-update.groovy
+gradlew instanceGroovyEval -Pinstance.groovyEval=page-resource-type-update.groovy
 ```
 
 By default, script outputs and results are hidden. Simply turn on info logging level to see them.
@@ -2422,25 +2422,21 @@ To allow seeing particular script errors and continuing evaluation after error, 
 Multiple scripts usage with output logging and continuation on errors:
 
 ```bash
-gradlew instanceGroovyScript --info -Pinstance.groovyScript=iteration-17/* -Pinstance.groovyConsole.verbose=false 
+gradlew instanceGroovyEval -i -Pinstance.groovyEval=iteration-17/* -Pinstance.groovyConsole.verbose=false 
 ```
 
 Sample task output (first script ends with success, second with error):
 
 ```
-Groovy script '/Users/krystian.panek/Projects/gradle-aem-single/gradle/groovyScript/iteration-1/page-resource-type-change.groovy' evaluated with success in '00:00:03.007' on LocalInstance(name='local-author', httpUrl='http://localhost:5502')
-Groovy script '/Users/krystian.panek/Projects/gradle-aem-single/gradle/groovyScript/iteration-1/page-resource-type-change.groovy' output:
-Updating page resource type at path '/content/example/home'...
-Page resource type at path '/content/example/home' successfully updated!
-Evaluating Groovy script '/Users/krystian.panek/Projects/gradle-aem-single/gradle/groovyScript/iteration-2/cleanup-content.groovy' on LocalInstance(name='local-author', httpUrl='http://localhost:5502')
-Groovy script '/Users/krystian.panek/Projects/gradle-aem-single/gradle/groovyScript/iteration-2/cleanup-content.groovy' evaluated with error on LocalInstance(name='local-author', httpUrl='http://localhost:5502')
-Groovy script '/Users/krystian.panek/Projects/gradle-aem-single/gradle/groovyScript/iteration-2/cleanup-content.groovy' exception:
-java.lang.Exception: Cannot clean content at path '/content/example' properly!
-        at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
-        ...
-        at org.codehaus.groovy.runtime.callsite.ConstructorSite$ConstructorSiteNoUnwrapNoCoerce.callConstructor(ConstructorSite.java:105)
-        ...
-        at Script1.run(Script1.groovy:3)
+> Task :aem:instanceGroovyEval
+Groovy script evaluation errors (2):
+1) '/Users/krystian.panek/Projects/gradle-aem-multi/aem/gradle/groovyScript/page-resource-type-update.groovy' on LocalInstance(name='local-author', httpUrl='http://localhost:4502')
+java.lang.Exception: Cannot update page resource type due to repository error!
+2) '/Users/krystian.panek/Projects/gradle-aem-multi/aem/gradle/groovyScript/page-resource-type-update.groovy' on LocalInstance(name='local-publish', httpUrl='http://localhost:4503')
+java.lang.Exception: Cannot update page resource type due to repository error!
+Evaluated Groovy script(s)
+Succeeded: 2/4=50.00%. Elapsed time: 00:05
+
 ```
 
 To determineinstances on which scripts will be evaluated, simple use 

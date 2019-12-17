@@ -26,7 +26,7 @@ class GroovyConsole(sync: InstanceSync) : InstanceService(sync) {
     /**
      * Check if console is installed on instance.
      */
-    val available: Boolean get() = sync.osgiFramework.findBundle(SYMBOLIC_NAME) != null
+    val available: Boolean get() = sync.osgiFramework.findBundle(SYMBOLIC_NAME)?.stable ?: false
 
     /**
      * Ensure by throwing exception that console is available on instance.

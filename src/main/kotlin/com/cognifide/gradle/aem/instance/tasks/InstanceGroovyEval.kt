@@ -20,14 +20,15 @@ open class InstanceGroovyEval : AemDefaultTask() {
     fun eval() {
         val summary = aem.groovyEval {
             scriptPattern = aem.prop.string("instance.groovyEval.script") ?: ""
-            failable = aem.prop.boolean("instance.groovyEval.failable") ?: true
+            data = aem.prop.map("instance.groovyEval.data") ?: mapOf()
+            faulty = aem.prop.boolean("instance.groovyEval.faulty") ?: true
             options()
             eval()
         }
 
         aem.notifier.notify(
                 "Evaluated Groovy script(s)",
-                "Succeeded ${summary.succeededPercent}"
+                "Succeeded: ${summary.succeededPercent}. Elapsed time: ${summary.durationString}"
         )
     }
 
