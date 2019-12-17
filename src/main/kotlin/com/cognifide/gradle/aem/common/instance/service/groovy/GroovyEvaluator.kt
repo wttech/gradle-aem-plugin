@@ -41,7 +41,7 @@ class GroovyEvaluator(private val aem: AemExtension) {
                     increment("Script '${script.name}' on '${instance.name}'")
 
                     groovyConsole.evalScript(script, data).apply {
-                        statuses.add(GroovyEvalStatus(script, instance, success))
+                        statuses.add(GroovyEvalStatus(script, instance, success)) // TODO store first line of error and output in console
 
                         val message = mutableListOf<String>().apply {
                             if (success) {

@@ -10,10 +10,10 @@ data class GroovyEvalSummary(
         get() = statuses.size
 
     val failed: Int
-        get() = statuses.count { it.success }
+        get() = statuses.count { it.fail }
 
     val succeeded: Int
-        get() = total - failed
+        get() = statuses.count { it.success }
 
     val succeededPercent
         get() = Formats.percentExplained(succeeded, total)
