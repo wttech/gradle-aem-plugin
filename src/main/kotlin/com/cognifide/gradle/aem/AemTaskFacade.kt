@@ -297,7 +297,12 @@ class AemTaskFacade(val aem: AemExtension) : Serializable {
         }
     }
 
-    private fun composeException(taskName: String, type: Class<*>? = null, cause: Exception? = null, project: Project = this.project): AemException {
+    private fun composeException(
+        taskName: String,
+        type: Class<*>? = null,
+        cause: Exception? = null,
+        project: Project = this.project
+    ): AemException {
         val msg = if (type != null) {
             "${project.displayName.capitalize()} does not have task '$taskName' of type '$type'. Ensure correct plugins applied."
         } else {

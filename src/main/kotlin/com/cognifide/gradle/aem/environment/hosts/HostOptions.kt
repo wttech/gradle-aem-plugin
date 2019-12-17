@@ -92,10 +92,10 @@ class HostOptions(environment: Environment) : Serializable {
 
     companion object {
 
-        val TAG_AUTHOR = "author"
+        const val TAG_AUTHOR = "author"
 
-        val TAG_PUBLISH = "publish"
+        const val TAG_PUBLISH = "publish"
 
-        val TAG_OTHER = "other"
+        const val TAG_OTHER = "other"
     }
 }

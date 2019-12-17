@@ -107,14 +107,22 @@ class GroovyConsole(sync: InstanceSync) : InstanceService(sync) {
     /**
      * Evaluate all Groovy scripts found by file name pattern on AEM instance in path-based alphabetical order.
      */
-    fun evalScripts(pathPattern: String = "**/*.groovy", data: Map<String, Any> = mapOf(), resultConsumer: GroovyConsoleResult.() -> Unit = {}) {
+    fun evalScripts(
+        pathPattern: String = "**/*.groovy",
+        data: Map<String, Any> = mapOf(),
+        resultConsumer: GroovyConsoleResult.() -> Unit = {}
+    ) {
         evalScripts(getScripts(pathPattern), data, resultConsumer)
     }
 
     /**
      * Evaluate any Groovy scripts on AEM instance in specified order.
      */
-    fun evalScripts(scripts: Iterable<File>, data: Map<String, Any> = mapOf(), resultConsumer: GroovyConsoleResult.() -> Unit = {}) {
+    fun evalScripts(
+        scripts: Iterable<File>,
+        data: Map<String, Any> = mapOf(),
+        resultConsumer: GroovyConsoleResult.() -> Unit = {}
+    ) {
         scripts.forEach { resultConsumer(evalScript(it, data)) }
     }
 

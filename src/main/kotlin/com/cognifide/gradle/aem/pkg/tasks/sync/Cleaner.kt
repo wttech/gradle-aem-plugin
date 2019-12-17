@@ -8,9 +8,9 @@ import java.io.IOException
 import java.util.regex.Pattern
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.filefilter.EmptyFileFilter
-import org.apache.commons.lang3.CharEncoding
 import org.apache.commons.lang3.StringUtils
 import org.gradle.api.tasks.util.PatternFilterable
+import java.nio.charset.StandardCharsets
 
 class Cleaner(private val aem: AemExtension) {
 
@@ -149,10 +149,10 @@ class Cleaner(private val aem: AemExtension) {
         try {
             aem.logger.info("Cleaning file {}", file.path)
 
-            val inputLines = FileUtils.readLines(file, CharEncoding.UTF_8)
+            val inputLines = FileUtils.readLines(file, StandardCharsets.UTF_8.name())
             val filteredLines = filterLines(file, inputLines)
 
-            FileUtils.writeLines(file, CharEncoding.UTF_8, filteredLines, aem.lineSeparatorString)
+            FileUtils.writeLines(file, StandardCharsets.UTF_8.name(), filteredLines, aem.lineSeparatorString)
         } catch (e: IOException) {
             throw VltException(String.format("Error opening %s", file.path), e)
         }
@@ -185,11 +185,12 @@ class Cleaner(private val aem: AemExtension) {
         return contentProcess(file, result)
     }
 
-    @Suppress("UNUSED_PARAMETER")
+    @Suppress("unused_parameter")
     fun normalizeContent(file: File, lines: List<String>): List<String> {
         return mergeSinglePropertyLines(cleanNamespaces(lines))
     }
 
+    @Suppress("NestedBlockDepth")
     fun mergeSinglePropertyLines(lines: List<String>) = mutableListOf<String>().apply {
         val it = lines.listIterator()
         while (it.hasNext()) {

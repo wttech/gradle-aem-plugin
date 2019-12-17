@@ -115,7 +115,13 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
     /**
      * Install OSGi bundle JAR.
      */
-    fun installBundle(bundle: File, start: Boolean = true, startLevel: Int = 20, refreshPackages: Boolean = true, retry: Retry = aem.retry()) {
+    fun installBundle(
+        bundle: File,
+        start: Boolean = true,
+        startLevel: Int = 20,
+        refreshPackages: Boolean = true,
+        retry: Retry = aem.retry()
+    ) {
         aem.logger.info("Installing OSGi $bundle on $instance.")
 
         retry.withCountdown<Unit, InstanceException>("install bundle '${bundle.name}' on '${instance.name}'") {
