@@ -71,7 +71,8 @@ class GroovyEvaluator(private val aem: AemExtension) {
 
         val summary = GroovyEvalSummary(statuses, stopWatch.time)
         if (summary.failed > 0) {
-            logger.error("Groovy script evaluation errors:\n${summary.statuses.joinToString("\n") { "Script '${it.script}' on ${it.instance}" }}")
+            val failedStatuses = statuses.filter { it.fail }
+            logger.error("Groovy script evaluation errors:\n${failedStatuses.joinToString("\n") { "Script '${it.script}' on ${it.instance}" }}")
             if (failable) {
                 throw GroovyConsoleException("Groovy script evaluation ended with ${summary.failed} error(s)!")
             }
