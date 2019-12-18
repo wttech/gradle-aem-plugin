@@ -13,6 +13,8 @@ import com.cognifide.gradle.aem.common.file.transfer.sftp.SftpFileTransfer
 import com.cognifide.gradle.aem.common.file.transfer.smb.SmbFileTransfer
 import com.cognifide.gradle.aem.common.http.HttpClient
 import com.cognifide.gradle.aem.common.instance.*
+import com.cognifide.gradle.aem.common.instance.service.groovy.GroovyEvaluator
+import com.cognifide.gradle.aem.common.instance.service.groovy.GroovyEvalSummary
 import com.cognifide.gradle.aem.common.notifier.NotifierFacade
 import com.cognifide.gradle.aem.common.pkg.PackageDefinition
 import com.cognifide.gradle.aem.common.pkg.PackageFile
@@ -692,6 +694,16 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
      * Execute any Vault JCR content remote copying with customized options like content directory.
      */
     fun <T> rcp(options: RcpClient.() -> T) = RcpClient(this).run(options)
+
+    /**
+     * Execute Groovy script(s) using specified options.
+     */
+    fun <T> groovyEval(options: GroovyEvaluator.() -> T) = GroovyEvaluator(this).run(options)
+
+    /**
+     * Execute Groovy script(s) matching file pattern on AEM instances.
+     */
+    fun groovyEval(scriptPattern: String): GroovyEvalSummary = groovyEval { this.scriptPattern = scriptPattern; eval() }
 
     /**
      * Execute any Docker command using all available images with mounting volumes etc, exposing ports etc.

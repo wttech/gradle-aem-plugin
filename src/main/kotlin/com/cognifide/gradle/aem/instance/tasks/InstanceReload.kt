@@ -35,7 +35,7 @@ open class InstanceReload : InstanceTask() {
             awaitUpOptions()
         }
 
-        aem.notifier.notify("Instance(s) reloaded", "Which: ${instances.names}")
+        aem.notifier.lifecycle("Instance(s) reloaded", "Which: ${instances.names}")
     }
 
     companion object {

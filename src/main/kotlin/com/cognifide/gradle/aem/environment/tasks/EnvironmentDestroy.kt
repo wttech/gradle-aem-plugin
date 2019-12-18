@@ -12,14 +12,14 @@ open class EnvironmentDestroy : AemDefaultTask() {
 
     override fun taskGraphReady(graph: TaskExecutionGraph) {
         if (graph.hasTask(this)) {
-            aem.prop.checkForce()
+            aem.prop.checkForce(this)
         }
     }
 
     @TaskAction
     fun destroy() {
         if (!aem.environment.created) {
-            aem.notifier.notify("Environment destroyed", "Cannot destroy as it is not created")
+            logger.lifecycle("Environment cannot be destroyed as it is not created")
             return
         }
 
@@ -28,7 +28,7 @@ open class EnvironmentDestroy : AemDefaultTask() {
             aem.environment.destroy()
         }
 
-        aem.notifier.notify("Environment destroyed", "Destroyed with success.")
+        aem.notifier.lifecycle("Environment destroyed", "Destroyed with success.")
     }
 
     companion object {

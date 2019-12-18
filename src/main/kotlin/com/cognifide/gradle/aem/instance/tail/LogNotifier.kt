@@ -8,8 +8,10 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.launch
+import org.gradle.api.logging.LogLevel
+import java.awt.Desktop
 
-@ExperimentalCoroutinesApi
+@UseExperimental(ExperimentalCoroutinesApi::class)
 class LogNotifier(
     private val notificationChannel: ReceiveChannel<LogChunk>,
     private val notifier: NotifierFacade,
@@ -30,7 +32,11 @@ class LogNotifier(
         val message = chunk.logs.lastOrNull()?.cause ?: ""
         val instance = chunk.instance.name
 
-        notifier.notifyLogError("$errors error(s) on $instance", message, file)
+        notifier.notify("$errors error(s) on $instance", message, LogLevel.WARN) {
+            if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+                Desktop.getDesktop().browse(file)
+            }
+        }
     }
 
     private fun snapshotErrorsToSeparateFile(chunk: LogChunk): URI {

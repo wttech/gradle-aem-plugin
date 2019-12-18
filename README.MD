@@ -22,7 +22,7 @@
         * [Minimal](#minimal)
         * [Additional](#additional)
      * [Common plugin](#common-plugin)
-        * [Task aem](#task-aem)
+        * [Task debug](#task-debug)
         * [Instance conventions](#instance-conventions)
         * [Defining instances via properties file](#defining-instances-via-properties-file)
         * [Defining instances via build script](#defining-instances-via-build-script)
@@ -100,7 +100,7 @@
            * [Tailing multiple instances](#tailing-multiple-instances)
            * [Standalone tailer tool](#standalone-tailer-tool)
         * [Task instanceRcp](#task-instancercp)
-        * [Task instanceGroovyScript](#task-instancegroovyscript)
+        * [Task instanceGroovyEval](#task-instancegroovyeval)
      * [Environment plugin](#environment-plugin)
         * [Environment configuration](#environment-configuration)
            * [Notice for Docker on Windows](#notice-for-docker-on-windows)
@@ -437,7 +437,7 @@ Applied transparently by other plugins. Provides AEM extension to build script /
 Provides only one task useful for debugging purposes. 
 Apply other plugins to have useful tasks or implement own.
 
-#### Task `aem`
+#### Task `debug`
 
 Dumps effective AEM related build configuration of concrete project to JSON file.
 Useful to e.g validate if AEM instances are defined correctly.
@@ -2406,44 +2406,89 @@ Consider disabling AEM workflow launchers before running this task and re-enabli
 RCP task is internally using [Vault Remote Copy](http://jackrabbit.apache.org/filevault/rcp.html) which requires bundle *Apache Sling Simple WebDAV Access to repositories (org.apache.sling.jcr.webdav)* present in active state on instance.
 
 
-#### Task `instanceGroovyScript`
+#### Task `instanceGroovyEval`
 
 Evaluate Groovy script(s) on instance(s).
 
-Simple script usage:
+To determine instances on which scripts will be evaluated, simply use [default filtering](#instance-filtering).
+Dedicated place for storing scripts is path [*\[aem/\]gradle/groovyScript*](https://github.com/Cognifide/gradle-aem-multi/tree/master/aem/gradle/groovyScript).
+
+By default, task is running all scripts in alphabetical order located in subdirectory which name is a current project version.
+
+Basic usage:
 
 ```bash
-gradlew instanceGroovyScript -Pinstance.groovyScript=page-resource-type-update.groovy
+gradlew instanceGroovyEval
 ```
 
-By default, script outputs and results are hidden. Simply turn on info logging level to see them.
-To allow seeing particular script errors and continuing evaluation after error, verbose mode of [Groovy Console](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/groovy/GroovyConsole.kt) instance service need to be disabled.
+Output:
 
-Multiple scripts usage with output logging and continuation on errors:
+```
+No Groovy scripts matching pattern '1.0.0/**/*.groovy' found in directory: /Users/krystian.panek/Projects/gradle-aem-multi/aem/gradle/groovyScript
+```
+
+After adding some scripts 
+
+However, it is easily possible to run scripts matching any path pattern containing wildcards.
+ 
+Simple script usage (suffix *.groovy* is automatically added if missing):
 
 ```bash
-gradlew instanceGroovyScript --info -Pinstance.groovyScript=iteration-17/* -Pinstance.groovyConsole.verbose=false 
+gradlew instanceGroovyEval -Pinstance.groovyEval.script=content-cleanup
 ```
 
-Sample task output (first script ends with success, second with error):
+Output:
 
 ```
-Groovy script '/Users/krystian.panek/Projects/gradle-aem-single/gradle/groovyScript/iteration-1/page-resource-type-change.groovy' evaluated with success in '00:00:03.007' on LocalInstance(name='local-author', httpUrl='http://localhost:5502')
-Groovy script '/Users/krystian.panek/Projects/gradle-aem-single/gradle/groovyScript/iteration-1/page-resource-type-change.groovy' output:
-Updating page resource type at path '/content/example/home'...
-Page resource type at path '/content/example/home' successfully updated!
-Evaluating Groovy script '/Users/krystian.panek/Projects/gradle-aem-single/gradle/groovyScript/iteration-2/cleanup-content.groovy' on LocalInstance(name='local-author', httpUrl='http://localhost:5502')
-Groovy script '/Users/krystian.panek/Projects/gradle-aem-single/gradle/groovyScript/iteration-2/cleanup-content.groovy' evaluated with error on LocalInstance(name='local-author', httpUrl='http://localhost:5502')
-Groovy script '/Users/krystian.panek/Projects/gradle-aem-single/gradle/groovyScript/iteration-2/cleanup-content.groovy' exception:
-java.lang.Exception: Cannot clean content at path '/content/example' properly!
-        at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
-        ...
-        at org.codehaus.groovy.runtime.callsite.ConstructorSite$ConstructorSiteNoUnwrapNoCoerce.callConstructor(ConstructorSite.java:105)
-        ...
-        at Script1.run(Script1.groovy:3)
+Evaluated Groovy script(s)
+Succeeded: 2/2=100.00%. Elapsed time: 00:02
 ```
 
-To determineinstances on which scripts will be evaluated, simple use 
+By default, script outputs, results and exceptions are hidden. To see them, simply turn on info logging level by adding option `-i`.
+
+Output:
+
+```
+Groovy script '/Users/krystian.panek/Projects/gradle-aem-multi/aem/gradle/groovyScript/content-cleanup.groovy' evaluated with success in '00:00:02.520' on LocalInstance(name='local-author', httpUrl='http://localhost:4502')
+Groovy script '/Users/krystian.panek/Projects/gradle-aem-multi/aem/gradle/groovyScript/content-cleanup.groovy' output:
+Cleaning content at root '/content/example/demo'
+Cleaning page '/content/example/demo/en-gb/jcr:content'
+Cleaning page '/content/example/demo/jcr:content'
+Cleaning page '/content/example/demo/en-us/jcr:content'
+Cleaned content at root '/content/example/demo'
+Cleaning content at root '/content/example/live'
+Cleaning page '/content/example/live/jcr:content'
+Cleaning page '/content/example/live/en-us/jcr:content'
+Cleaned content at root '/content/example/live'
+Groovy script '/Users/krystian.panek/Projects/gradle-aem-multi/aem/gradle/groovyScript/content-cleanup.groovy' evaluated with success in '00:00:02.527' on LocalInstance(name='local-publish', httpUrl='http://localhost:4503')
+Groovy script '/Users/krystian.panek/Projects/gradle-aem-multi/aem/gradle/groovyScript/content-cleanup.groovy' output:
+Cleaning content at root '/content/example/demo'
+Cleaning page '/content/example/demo/en-gb/jcr:content'
+Cleaning page '/content/example/demo/jcr:content'
+Cleaning page '/content/example/demo/en-us/jcr:content'
+Cleaned content at root '/content/example/demo'
+Cleaning content at root '/content/example/live'
+Cleaning page '/content/example/live/jcr:content'
+Cleaning page '/content/example/live/en-us/jcr:content'
+Cleaned content at root '/content/example/live'
+
+...
+
+Evaluated Groovy script(s)
+Succeeded: 2/2=100.00%. Elapsed time: 00:02
+```
+
+To allow seeing particular script errors and continuing evaluation after error, 
+verbose mode of [Groovy Console](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/groovy/GroovyConsole.kt) instance service need to be disabled.
+
+Below is presented command for multiple scripts usage with output logging and continuation on errors:
+
+```bash
+gradlew instanceGroovyEval -i -Pinstance.groovyEval.script=iteration-17/* -Pinstance.groovyConsole.verbose=false 
+```
+
+By default, any failed script evaluation will cause that task will also fail.
+To avoid that (ignore failures), add parameter `-Pinstance.groovyEval.faulty=false`.
 
 ### Environment plugin
 

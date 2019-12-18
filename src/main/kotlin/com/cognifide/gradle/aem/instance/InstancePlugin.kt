@@ -76,11 +76,17 @@ class InstancePlugin : AemPlugin() {
             register<InstanceBackup>(InstanceBackup.NAME) {
                 mustRunAfter(InstanceDown.NAME)
             }
-
             register<InstanceResolve>(InstanceResolve.NAME)
-            register<InstanceTail>(InstanceTail.NAME)
-            register<InstanceRcp>(InstanceRcp.NAME)
-            register<InstanceGroovyScript>(InstanceGroovyScript.NAME)
+            register<InstanceTail>(InstanceTail.NAME) {
+                mustRunAfter(InstanceResolve.NAME, InstanceCreate.NAME, InstanceUp.NAME)
+            }
+            register<InstanceRcp>(InstanceRcp.NAME) {
+                mustRunAfter(InstanceResolve.NAME, InstanceCreate.NAME, InstanceUp.NAME)
+            }
+            register<InstanceGroovyEval>(InstanceGroovyEval.NAME) {
+                mustRunAfter(InstanceResolve.NAME, InstanceCreate.NAME, InstanceUp.NAME, InstanceSatisfy.NAME, InstanceProvision.NAME)
+                plugins.withId(PackagePlugin.ID) { mustRunAfter(PackageDeploy.NAME) }
+            }
 
             // Common lifecycle
 
