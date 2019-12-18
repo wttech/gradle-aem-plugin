@@ -74,22 +74,22 @@ class Component {
     }
 
     companion object {
-        val STATE_RAW_DISABLED_OR_NO_CONFIG = -1
+        const val STATE_RAW_DISABLED_OR_NO_CONFIG = -1
 
-        val STATE_RAW_UNSATISFIED = 2
+        const val STATE_RAW_UNSATISFIED = 2
 
-        val STATE_RAW_SATISTIED = 4
+        const val STATE_RAW_SATISTIED = 4
 
-        val STATE_RAW_ACTIVE = 8
+        const val STATE_RAW_ACTIVE = 8
 
-        val STATE_RAW_FAILED_ACTIVATION = 16
+        const val STATE_RAW_FAILED_ACTIVATION = 16
 
-        val STATE_ACTIVE = "active"
+        const val STATE_ACTIVE = "active"
 
-        val STATE_SATISFIED = "satisfied"
+        const val STATE_SATISFIED = "satisfied"
 
-        val STATE_NO_CONFIG = "no config"
+        const val STATE_NO_CONFIG = "no config"
 
-        val STATE_DISABLED = "disabled"
+        const val STATE_DISABLED = "disabled"
     }
 }

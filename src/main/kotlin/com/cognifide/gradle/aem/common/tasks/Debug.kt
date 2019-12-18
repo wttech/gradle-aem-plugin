@@ -79,7 +79,7 @@ open class Debug : AemDefaultTask() {
         }
 
     @TaskAction
-    fun debug() {
+    fun doDebug() {
         logger.lifecycle("Dumping AEM build configuration of $project to file: $file")
 
         val json = Formats.toJson(properties, true)

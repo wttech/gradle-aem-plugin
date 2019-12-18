@@ -2,7 +2,6 @@ package com.cognifide.gradle.aem
 
 import com.cognifide.gradle.aem.bundle.tasks.BundleCompose
 import com.cognifide.gradle.aem.common.build.DependencyOptions
-import com.cognifide.gradle.aem.common.tasks.Debug
 import com.cognifide.gradle.aem.common.tasks.TaskSequence
 import com.cognifide.gradle.aem.common.tasks.lifecycle.*
 import com.cognifide.gradle.aem.environment.tasks.*
@@ -27,10 +26,6 @@ import java.io.Serializable
 class AemTaskFacade(val aem: AemExtension) : Serializable {
 
     val project = aem.project
-
-    // Common plugin shorthands
-
-    fun debug(configurer: Debug.() -> Unit) = named(Debug.NAME, configurer)
 
     // Bundle plugin shorthands
 
@@ -297,7 +292,12 @@ class AemTaskFacade(val aem: AemExtension) : Serializable {
         }
     }
 
-    private fun composeException(taskName: String, type: Class<*>? = null, cause: Exception? = null, project: Project = this.project): AemException {
+    private fun composeException(
+        taskName: String,
+        type: Class<*>? = null,
+        cause: Exception? = null,
+        project: Project = this.project
+    ): AemException {
         val msg = if (type != null) {
             "${project.displayName.capitalize()} does not have task '$taskName' of type '$type'. Ensure correct plugins applied."
         } else {

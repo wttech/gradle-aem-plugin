@@ -16,7 +16,7 @@ class CheckGroup(
 
     var checks: List<Check> = CheckFactory(this).run(checkFactory)
 
-    @Suppress("TooGenericExceptionCaught")
+    @Suppress("TooGenericExceptionCaught", "LoopWithTooManyJumpStatements")
     fun check() {
         for (check in checks) {
             try {

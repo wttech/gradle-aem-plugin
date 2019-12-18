@@ -134,7 +134,11 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
 
     fun download(definition: PackageDefinition.() -> Unit) = download(definition, aem.retry())
 
-    fun download(remotePath: String, targetFile: File = aem.temporaryFile(FilenameUtils.getName(remotePath)), retry: Retry = aem.retry()) {
+    fun download(
+        remotePath: String,
+        targetFile: File = aem.temporaryFile(FilenameUtils.getName(remotePath)),
+        retry: Retry = aem.retry()
+    ) {
         return retry.withCountdown<Unit, InstanceException>("download package '$remotePath' on '${instance.name}'") {
             logger.info("Downloading package from $remotePath to file $targetFile")
 

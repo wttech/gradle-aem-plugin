@@ -7,15 +7,13 @@ import com.cognifide.gradle.aem.instance.tail.io.ConsolePrinter
 import com.cognifide.gradle.aem.instance.tail.io.FileDestination
 import com.cognifide.gradle.aem.instance.tail.io.LogFiles
 import com.cognifide.gradle.aem.instance.tail.io.UrlSource
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.nio.file.Paths
 import kotlin.math.max
 
+@ExperimentalCoroutinesApi
 class InstanceTailer(val aem: AemExtension) {
 
     /**

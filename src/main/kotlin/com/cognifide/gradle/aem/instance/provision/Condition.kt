@@ -4,6 +4,7 @@ import com.cognifide.gradle.aem.common.utils.Formats
 import java.util.concurrent.ThreadLocalRandom
 import java.util.concurrent.TimeUnit
 
+@Suppress("FunctionOnlyReturningConstant")
 class Condition(val step: InstanceStep) {
 
     val instance = step.instance
