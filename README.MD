@@ -22,7 +22,7 @@
         * [Minimal](#minimal)
         * [Additional](#additional)
      * [Common plugin](#common-plugin)
-        * [Task aem](#task-aem)
+        * [Task debug](#task-debug)
         * [Instance conventions](#instance-conventions)
         * [Defining instances via properties file](#defining-instances-via-properties-file)
         * [Defining instances via build script](#defining-instances-via-build-script)
@@ -437,7 +437,7 @@ Applied transparently by other plugins. Provides AEM extension to build script /
 Provides only one task useful for debugging purposes. 
 Apply other plugins to have useful tasks or implement own.
 
-#### Task `aem`
+#### Task `debug`
 
 Dumps effective AEM related build configuration of concrete project to JSON file.
 Useful to e.g validate if AEM instances are defined correctly.

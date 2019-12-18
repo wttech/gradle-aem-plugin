@@ -11,7 +11,7 @@ class GroovyEvaluator(private val aem: AemExtension) {
     val scriptDirDefault
         get() = aem.project.version.toString().removeSuffix("-SNAPSHOT")
 
-    var scriptPattern: String = "$scriptDirDefault/**"
+    var scriptPattern: String = "$scriptDirDefault/**/*"
 
     var scriptSuffix: String = ".groovy"
 
