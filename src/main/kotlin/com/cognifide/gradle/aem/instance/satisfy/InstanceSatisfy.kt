@@ -142,7 +142,7 @@ open class InstanceSatisfy : PackageDeploy() {
                         "${packages.size} package(s) on ${instances.size} instance(s).")
             }
         } else {
-            aem.logger.info("No actions to perform / all packages satisfied.")
+            logger.lifecycle("No actions to perform / all packages satisfied.")
         }
     }
 

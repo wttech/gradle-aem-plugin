@@ -44,10 +44,6 @@ class NotifierFacade private constructor(private val aem: AemExtension) {
         notify(title, "")
     }
 
-    fun notify(title: String, text: String) {
-        notify(title, text, LogLevel.LIFECYCLE)
-    }
-
     @Suppress("TooGenericExceptionCaught")
     fun notify(title: String, text: String, level: LogLevel, onClick: (Notify) -> Unit = {}) {
         log(title, text, level)
@@ -61,6 +57,8 @@ class NotifierFacade private constructor(private val aem: AemExtension) {
         }
     }
 
+    fun notify(title: String, text: String) = lifecycle(title, text)
+
     fun dorkbox(configurer: Notify.() -> Unit = {}): Notifier {
         return DorkboxNotifier(aem, configurer)
     }
@@ -72,6 +70,14 @@ class NotifierFacade private constructor(private val aem: AemExtension) {
             }
         }
     }
+
+    fun lifecycle(title: String, text: String) = notify(title, text, LogLevel.LIFECYCLE)
+
+    fun info(title: String, text: String) = notify(title, text, LogLevel.INFO)
+
+    fun warn(title: String, text: String) = notify(title, text, LogLevel.WARN)
+
+    fun error(title: String, text: String) = notify(title, text, LogLevel.ERROR)
 
     companion object {
 

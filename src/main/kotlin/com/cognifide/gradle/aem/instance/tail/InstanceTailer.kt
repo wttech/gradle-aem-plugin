@@ -13,7 +13,6 @@ import java.io.File
 import java.nio.file.Paths
 import kotlin.math.max
 
-@ExperimentalCoroutinesApi
 class InstanceTailer(val aem: AemExtension) {
 
     /**

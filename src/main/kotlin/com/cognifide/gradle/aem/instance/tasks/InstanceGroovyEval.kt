@@ -27,10 +27,10 @@ open class InstanceGroovyEval : AemDefaultTask() {
 
         val scripts = findScripts()
         if (scripts.isEmpty()) {
-            logger.info("Lack of Groovy script(s) to evaluate matching pattern '$scriptPattern'")
+            logger.lifecycle("Lack of Groovy script(s) to evaluate matching pattern '$scriptPattern'")
         } else {
             val summary = evalScripts(scripts)
-            aem.notifier.notify(
+            aem.notifier.lifecycle(
                     "Evaluated Groovy script(s)",
                     "Succeeded: ${summary.succeededPercent}. Elapsed time: ${summary.durationString}"
             )

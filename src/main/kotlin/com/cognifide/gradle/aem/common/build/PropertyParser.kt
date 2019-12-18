@@ -6,10 +6,10 @@ import com.cognifide.gradle.aem.common.utils.Formats
 import com.mitchellbosecke.pebble.PebbleEngine
 import com.mitchellbosecke.pebble.lexer.Syntax
 import com.mitchellbosecke.pebble.loader.StringLoader
+import org.apache.commons.text.StringSubstitutor
 import java.io.File
 import java.io.IOException
 import java.io.StringWriter
-import org.apache.commons.lang3.text.StrSubstitutor
 
 class PropertyParser(private val aem: AemExtension) {
 
@@ -158,7 +158,7 @@ class PropertyParser(private val aem: AemExtension) {
                 .build()
 
         private val TEMPLATE_INTERPOLATOR: (String, Map<String, Any?>) -> String = { source, props ->
-            StrSubstitutor.replace(source, props, TEMPLATE_VAR_PREFIX, TEMPLATE_VAR_SUFFIX)
+            StringSubstitutor.replace(source, props, TEMPLATE_VAR_PREFIX, TEMPLATE_VAR_SUFFIX)
         }
     }
 }

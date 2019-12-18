@@ -11,7 +11,7 @@ import kotlinx.coroutines.launch
 import org.gradle.api.logging.LogLevel
 import java.awt.Desktop
 
-@ExperimentalCoroutinesApi
+@UseExperimental(ExperimentalCoroutinesApi::class)
 class LogNotifier(
     private val notificationChannel: ReceiveChannel<LogChunk>,
     private val notifier: NotifierFacade,

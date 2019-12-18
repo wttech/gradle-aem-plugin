@@ -22,7 +22,7 @@ open class InstanceDestroy : LocalInstanceTask() {
     fun destroy() {
         val createdInstances = instances.filter { it.touched }
         if (createdInstances.isEmpty()) {
-            logger.info("No instance(s) to destroy")
+            logger.lifecycle("No instance(s) to destroy")
             return
         }
 

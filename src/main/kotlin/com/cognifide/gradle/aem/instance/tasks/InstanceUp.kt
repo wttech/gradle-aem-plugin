@@ -25,7 +25,7 @@ open class InstanceUp : LocalInstanceTask() {
     fun up() {
         val downInstances = instances.filter { !it.running }
         if (downInstances.isEmpty()) {
-            logger.info("No instance(s) to turn on")
+            logger.lifecycle("No instance(s) to turn on")
             return
         }
 
@@ -52,7 +52,7 @@ open class InstanceUp : LocalInstanceTask() {
             }
         }
 
-        aem.notifier.notify("Instance(s) up", "Which: ${downInstances.names}")
+        aem.notifier.lifecycle("Instance(s) up", "Which: ${downInstances.names}")
     }
 
     companion object {

@@ -12,13 +12,13 @@ open class EnvironmentUp : AemDefaultTask() {
     @TaskAction
     fun up() {
         if (aem.environment.up) {
-            aem.notifier.notify("Environment up", "Cannot turn on as it is already up")
+            logger.lifecycle("Environment up", "Cannot turn on as it is already up")
             return
         }
 
         aem.environment.up()
 
-        aem.notifier.notify("Environment up", "Turned on with success")
+        aem.notifier.lifecycle("Environment up", "Turned on with success")
     }
 
     companion object {

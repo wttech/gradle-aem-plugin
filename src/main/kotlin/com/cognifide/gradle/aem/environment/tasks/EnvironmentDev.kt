@@ -17,12 +17,12 @@ open class EnvironmentDev : AemDefaultTask() {
     @TaskAction
     fun dev() {
         if (!aem.environment.running) {
-            aem.notifier.notify("Environment development mode", "Cannot turn on as environment is not running.")
+            logger.error("Environment is not running.")
             return
         }
 
         if (!reloader.configured) {
-            aem.notifier.notify("Environment development mode", "None of containers have configured watched directory!")
+            logger.warn("None of Docker containers have configured watched directory!")
             return
         }
 

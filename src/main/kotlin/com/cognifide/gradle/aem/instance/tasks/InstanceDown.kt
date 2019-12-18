@@ -21,7 +21,7 @@ open class InstanceDown : LocalInstanceTask() {
     fun down() {
         val upInstances = instances.filter { it.running }
         if (upInstances.isEmpty()) {
-            logger.info("No instance(s) to turn off")
+            logger.lifecycle("No instance(s) to turn off")
             return
         }
 

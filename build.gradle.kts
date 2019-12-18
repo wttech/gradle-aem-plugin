@@ -32,6 +32,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.2")
     implementation("org.apache.commons:commons-lang3:3.9")
+    implementation("org.apache.commons:commons-text:1.8")
     implementation("commons-io:commons-io:2.6")
     implementation("commons-validator:commons-validator:1.6")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.10.1")

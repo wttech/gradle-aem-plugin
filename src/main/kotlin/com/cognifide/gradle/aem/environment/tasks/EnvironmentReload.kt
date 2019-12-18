@@ -12,6 +12,8 @@ open class EnvironmentReload : AemDefaultTask() {
     @TaskAction
     fun reload() {
         aem.environment.reload()
+
+        aem.notifier.lifecycle("Environment reloaded", "Reloaded with success")
     }
 
     companion object {
