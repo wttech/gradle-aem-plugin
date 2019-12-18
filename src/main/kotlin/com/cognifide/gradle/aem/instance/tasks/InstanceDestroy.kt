@@ -14,7 +14,7 @@ open class InstanceDestroy : LocalInstanceTask() {
 
     override fun taskGraphReady(graph: TaskExecutionGraph) {
         if (graph.hasTask(this)) {
-            aem.prop.checkForce()
+            aem.prop.checkForce(this)
         }
     }
 

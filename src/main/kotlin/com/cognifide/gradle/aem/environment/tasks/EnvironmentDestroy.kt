@@ -12,7 +12,7 @@ open class EnvironmentDestroy : AemDefaultTask() {
 
     override fun taskGraphReady(graph: TaskExecutionGraph) {
         if (graph.hasTask(this)) {
-            aem.prop.checkForce()
+            aem.prop.checkForce(this)
         }
     }
 

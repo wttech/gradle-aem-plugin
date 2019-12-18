@@ -7,6 +7,7 @@ import com.mitchellbosecke.pebble.PebbleEngine
 import com.mitchellbosecke.pebble.lexer.Syntax
 import com.mitchellbosecke.pebble.loader.StringLoader
 import org.apache.commons.text.StringSubstitutor
+import org.gradle.api.Task
 import java.io.File
 import java.io.IOException
 import java.io.StringWriter
@@ -129,9 +130,9 @@ class PropertyParser(private val aem: AemExtension) {
         return flag(FORCE_PROP)
     }
 
-    fun checkForce() {
+    fun checkForce(task: Task) {
         if (!isForce()) {
-            throw AemException("Unable to perform unsafe operation without param '-P$FORCE_PROP'")
+            throw AemException("Unable to perform unsafe operation without param '-P$FORCE_PROP' (running task '${task.path}')!")
         }
     }
 
