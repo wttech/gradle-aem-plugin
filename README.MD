@@ -2413,7 +2413,7 @@ Evaluate Groovy script(s) on instance(s).
 Simple script usage:
 
 ```bash
-gradlew instanceGroovyEval -Pinstance.groovyEval=page-resource-type-update.groovy
+gradlew instanceGroovyEval -Pinstance.groovyEval.script=page-resource-type-update.groovy
 ```
 
 By default, script outputs and results are hidden. Simply turn on info logging level to see them.
@@ -2422,7 +2422,7 @@ To allow seeing particular script errors and continuing evaluation after error, 
 Multiple scripts usage with output logging and continuation on errors:
 
 ```bash
-gradlew instanceGroovyEval -i -Pinstance.groovyEval=iteration-17/* -Pinstance.groovyConsole.verbose=false 
+gradlew instanceGroovyEval -i -Pinstance.groovyEval.script=iteration-17/* -Pinstance.groovyConsole.verbose=false 
 ```
 
 Sample task output (first script ends with success, second with error):
