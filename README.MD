@@ -2409,40 +2409,67 @@ RCP task is internally using [Vault Remote Copy](http://jackrabbit.apache.org/fi
 #### Task `instanceGroovyEval`
 
 Evaluate Groovy script(s) on instance(s).
+To determine instances on which scripts will be evaluated, simply use [default filtering](#instance-filtering).
 
 Simple script usage (suffix *.groovy* is automatically added if missing):
 
 ```bash
-gradlew instanceGroovyEval -Pinstance.groovyEval.script=page-resource-type-update
+gradlew instanceGroovyEval -Pinstance.groovyEval.script=content-cleanup
 ```
 
-By default, script outputs and results are hidden. Simply turn on info logging level to see them.
-To allow seeing particular script errors and continuing evaluation after error, verbose mode of [Groovy Console](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/groovy/GroovyConsole.kt) instance service need to be disabled.
+Output:
 
-Multiple scripts usage with output logging and continuation on errors:
+```
+Evaluated Groovy script(s)
+Succeeded: 2/2=100.00%. Elapsed time: 00:02
+
+```
+
+By default, script outputs and results are hidden. Simply turn on info logging level to see them by adding option `-i`.
+
+Output:
+
+```
+Groovy script '/Users/krystian.panek/Projects/gradle-aem-multi/aem/gradle/groovyScript/content-cleanup.groovy' evaluated with success in '00:00:02.520' on LocalInstance(name='local-author', httpUrl='http://localhost:4502')
+Groovy script '/Users/krystian.panek/Projects/gradle-aem-multi/aem/gradle/groovyScript/content-cleanup.groovy' output:
+Cleaning content at root '/content/example/demo'
+Cleaning page '/content/example/demo/en-gb/jcr:content'
+Cleaning page '/content/example/demo/jcr:content'
+Cleaning page '/content/example/demo/en-us/jcr:content'
+Cleaned content at root '/content/example/demo'
+Cleaning content at root '/content/example/live'
+Cleaning page '/content/example/live/jcr:content'
+Cleaning page '/content/example/live/en-us/jcr:content'
+Cleaned content at root '/content/example/live'
+Groovy script '/Users/krystian.panek/Projects/gradle-aem-multi/aem/gradle/groovyScript/content-cleanup.groovy' evaluated with success in '00:00:02.527' on LocalInstance(name='local-publish', httpUrl='http://localhost:4503')
+Groovy script '/Users/krystian.panek/Projects/gradle-aem-multi/aem/gradle/groovyScript/content-cleanup.groovy' output:
+Cleaning content at root '/content/example/demo'
+Cleaning page '/content/example/demo/en-gb/jcr:content'
+Cleaning page '/content/example/demo/jcr:content'
+Cleaning page '/content/example/demo/en-us/jcr:content'
+Cleaned content at root '/content/example/demo'
+Cleaning content at root '/content/example/live'
+Cleaning page '/content/example/live/jcr:content'
+Cleaning page '/content/example/live/en-us/jcr:content'
+Cleaned content at root '/content/example/live'
+
+...
+
+Evaluated Groovy script(s)
+Succeeded: 2/2=100.00%. Elapsed time: 00:02
+```
+
+To allow seeing particular script errors and continuing evaluation after error, 
+verbose mode of [Groovy Console](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/groovy/GroovyConsole.kt) instance service need to be disabled.
+
+Below is presented command for multiple scripts usage with output logging and continuation on errors:
 
 ```bash
 gradlew instanceGroovyEval -i -Pinstance.groovyEval.script=iteration-17/* -Pinstance.groovyConsole.verbose=false 
 ```
 
-Sample task output (first script ends with success, second with error):
-
-```
-> Task :aem:instanceGroovyEval
-Groovy script evaluation errors (2):
-1) '/Users/krystian.panek/Projects/gradle-aem-multi/aem/gradle/groovyScript/page-resource-type-update' on LocalInstance(name='local-author', httpUrl='http://localhost:4502')
-java.lang.Exception: Cannot update page resource type due to repository error!
-2) '/Users/krystian.panek/Projects/gradle-aem-multi/aem/gradle/groovyScript/page-resource-type-update' on LocalInstance(name='local-publish', httpUrl='http://localhost:4503')
-java.lang.Exception: Cannot update page resource type due to repository error!
-Evaluated Groovy script(s)
-Succeeded: 2/4=50.00%. Elapsed time: 00:05
-
-```
-
 By default, any failed script evaluation will cause that task will also fail.
 To avoid that (ignore failures), add parameter `-Pinstance.groovyEval.faulty=false`.
-
-To determine instances on which scripts will be evaluated, simply use [default filtering](#instance-filtering).
 
 ### Environment plugin
 
