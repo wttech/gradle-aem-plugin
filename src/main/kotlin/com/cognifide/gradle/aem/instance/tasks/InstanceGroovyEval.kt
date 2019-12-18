@@ -17,20 +17,24 @@ open class InstanceGroovyEval : AemDefaultTask() {
     }
 
     @TaskAction
-    fun eval() {
-        val summary = aem.groovyEval {
-            aem.prop.string("instance.groovyEval.script")?.let { scriptPattern = it }
-            aem.prop.string("instance.groovyEval.scriptSuffix")?.let { scriptSuffix = it }
-            aem.prop.map("instance.groovyEval.data")?.let { data = it }
-            aem.prop.boolean("instance.groovyEval.faulty")?.let { faulty = it }
-            options()
-            eval()
-        }
+    fun eval() = aem.groovyEval {
+        aem.prop.string("instance.groovyEval.script")?.let { scriptPattern = it }
+        aem.prop.string("instance.groovyEval.scriptSuffix")?.let { scriptSuffix = it }
+        aem.prop.map("instance.groovyEval.data")?.let { data = it }
+        aem.prop.boolean("instance.groovyEval.faulty")?.let { faulty = it }
 
-        aem.notifier.notify(
-                "Evaluated Groovy script(s)",
-                "Succeeded: ${summary.succeededPercent}. Elapsed time: ${summary.durationString}"
-        )
+        options()
+
+        val scripts = findScripts()
+        if (scripts.isEmpty()) {
+            logger.info("Lack of Groovy script(s) to evaluate matching pattern '$scriptPattern'")
+        } else {
+            val summary = evalScripts(scripts)
+            aem.notifier.notify(
+                    "Evaluated Groovy script(s)",
+                    "Succeeded: ${summary.succeededPercent}. Elapsed time: ${summary.durationString}"
+            )
+        }
     }
 
     companion object {

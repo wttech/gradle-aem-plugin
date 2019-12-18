@@ -24,4 +24,8 @@ data class GroovyEvalSummary(
     override fun toString(): String {
         return "${javaClass.simpleName}(successes=$succeeded, failed=$failed, total=$total, duration=$durationString)"
     }
+
+    companion object {
+        fun empty() = GroovyEvalSummary(listOf(), 0L)
+    }
 }

@@ -17,13 +17,14 @@ open class PackageVlt : AemDefaultTask() {
     private var options: VltClient.() -> Unit = {}
 
     @TaskAction
-    open fun run() {
-        val summary = aem.vlt {
-            aem.prop.string("package.vlt.command")?.let { command = it }
-            aem.prop.string("package.vlt.path")?.let { contentRelativePath = it }
-            options()
-            run()
-        }
+    open fun run() = aem.vlt {
+        aem.prop.string("package.vlt.command")?.let { command = it }
+        aem.prop.string("package.vlt.path")?.let { contentRelativePath = it }
+
+        options()
+
+        val summary = run()
+
         aem.notifier.notify(
                 "Executing Vault command",
                 "Command '${summary.command}' finished. Duration: ${summary.durationString}"

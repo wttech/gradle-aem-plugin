@@ -2413,6 +2413,24 @@ Evaluate Groovy script(s) on instance(s).
 To determine instances on which scripts will be evaluated, simply use [default filtering](#instance-filtering).
 Dedicated place for storing scripts is path [*\[aem/\]gradle/groovyScript*](https://github.com/Cognifide/gradle-aem-multi/tree/master/aem/gradle/groovyScript).
 
+By default, task is running all scripts in alphabetical order located in subdirectory which name is a current project version.
+
+Basic usage:
+
+```bash
+gradlew instanceGroovyEval
+```
+
+Output:
+
+```
+No Groovy scripts matching pattern '1.0.0/**/*.groovy' found in directory: /Users/krystian.panek/Projects/gradle-aem-multi/aem/gradle/groovyScript
+```
+
+After adding some scripts 
+
+However, it is easily possible to run scripts matching any path pattern containing wildcards.
+ 
 Simple script usage (suffix *.groovy* is automatically added if missing):
 
 ```bash
@@ -2424,7 +2442,6 @@ Output:
 ```
 Evaluated Groovy script(s)
 Succeeded: 2/2=100.00%. Elapsed time: 00:02
-
 ```
 
 By default, script outputs, results and exceptions are hidden. To see them, simply turn on info logging level by adding option `-i`.

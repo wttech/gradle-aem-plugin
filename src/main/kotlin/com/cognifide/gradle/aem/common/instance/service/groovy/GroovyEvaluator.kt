@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.common.instance.service.groovy
 import com.cognifide.gradle.aem.AemExtension
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.time.StopWatch
+import java.io.File
 
 class GroovyEvaluator(private val aem: AemExtension) {
 
@@ -27,8 +28,9 @@ class GroovyEvaluator(private val aem: AemExtension) {
         this.consoleOptions = options
     }
 
-    @Suppress("ComplexMethod", "LongMethod")
-    fun eval(): GroovyEvalSummary {
+    fun eval() = evalScripts(findScripts())
+
+    fun findScripts(): List<File> {
         if (scriptPattern.isBlank()) {
             throw GroovyConsoleException("Groovy script to be evaluated is not specified!")
         }
@@ -36,7 +38,33 @@ class GroovyEvaluator(private val aem: AemExtension) {
             throw GroovyConsoleException("No instances defined for Groovy script evaluation!")
         }
 
-        val scripts = instances.first().sync.groovyConsole.getScripts(StringUtils.appendIfMissing(scriptPattern, scriptSuffix))
+        return instances.first().sync.groovyConsole.findScripts(StringUtils.appendIfMissing(scriptPattern, scriptSuffix))
+    }
+
+    fun evalScripts(scripts: List<File>): GroovyEvalSummary {
+        val summary = evalScriptsInternal(scripts)
+        if (summary.failed > 0) {
+            val failedStatuses = summary.statuses.filter { it.fail }
+            val failMessages = failedStatuses.mapIndexed { no, status ->
+                "${no + 1}) '${status.script}' on ${status.instance}:\n${status.error}"
+            }
+            val failMessage = "Groovy script evaluation errors (${failedStatuses.size}):\n${failMessages.joinToString("\n")}"
+
+            if (faulty) {
+                throw GroovyConsoleException(failMessage)
+            } else {
+                logger.error(failMessage)
+            }
+        }
+
+        return summary
+    }
+
+    private fun evalScriptsInternal(scripts: List<File>): GroovyEvalSummary {
+        if (scripts.isEmpty()) {
+            return GroovyEvalSummary.empty()
+        }
+
         val statuses = mutableListOf<GroovyEvalStatus>()
 
         val stopWatch = StopWatch().apply { start() }
@@ -87,21 +115,6 @@ class GroovyEvaluator(private val aem: AemExtension) {
         }
         stopWatch.stop()
 
-        val summary = GroovyEvalSummary(statuses, stopWatch.time)
-        if (summary.failed > 0) {
-            val failedStatuses = statuses.filter { it.fail }
-            val failMessages = failedStatuses.mapIndexed { no, status ->
-                "${no + 1}) '${status.script}' on ${status.instance}:\n${status.error}"
-            }
-            val failMessage = "Groovy script evaluation errors (${failedStatuses.size}):\n${failMessages.joinToString("\n")}"
-
-            if (faulty) {
-                throw GroovyConsoleException(failMessage)
-            } else {
-                logger.error(failMessage)
-            }
-        }
-
-        return summary
+        return GroovyEvalSummary(statuses, stopWatch.time)
     }
 }

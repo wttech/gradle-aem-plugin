@@ -97,12 +97,10 @@ class GroovyConsole(sync: InstanceSync) : InstanceService(sync) {
     /**
      * Find scripts matching file pattern in pre-configured directory.
      */
-    fun getScripts(pathPattern: String): List<File> = project.fileTree(scriptRootDir)
+    fun findScripts(pathPattern: String): List<File> = project.fileTree(scriptRootDir)
             .matching { it.include(pathPattern) }
             .sortedBy { it.absolutePath }
-            .ifEmpty {
-                throw GroovyConsoleException("No Groovy scripts matching pattern '$pathPattern' found in directory: $scriptRootDir")
-            }
+            .toList()
 
     /**
      * Evaluate all Groovy scripts found by file name pattern on AEM instance in path-based alphabetical order.
@@ -112,7 +110,7 @@ class GroovyConsole(sync: InstanceSync) : InstanceService(sync) {
         data: Map<String, Any> = mapOf(),
         resultConsumer: GroovyEvalResult.() -> Unit = {}
     ) {
-        evalScripts(getScripts(pathPattern), data, resultConsumer)
+        evalScripts(findScripts(pathPattern), data, resultConsumer)
     }
 
     /**
