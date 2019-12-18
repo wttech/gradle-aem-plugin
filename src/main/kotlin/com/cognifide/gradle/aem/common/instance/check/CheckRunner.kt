@@ -72,6 +72,7 @@ class CheckRunner(internal val aem: AemExtension) {
         }
     }
 
+    @Suppress("LoopWithTooManyJumpStatements")
     private fun ProgressIndicator.doChecking(instances: Collection<Instance>) {
         step = "Checking"
 

@@ -1,18 +1,14 @@
 package com.cognifide.gradle.aem.instance.tail
 
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.utils.Formats
 import com.cognifide.gradle.aem.instance.tail.io.ConsolePrinter
 import com.cognifide.gradle.aem.instance.tail.io.FileDestination
 import com.cognifide.gradle.aem.instance.tail.io.LogFiles
 import com.cognifide.gradle.aem.instance.tail.io.UrlSource
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.nio.file.Paths
 import kotlin.math.max
@@ -22,7 +18,7 @@ class InstanceTailer(val aem: AemExtension) {
     /**
      * Directory where log files will be stored.
      */
-    var rootDir: File = AemTask.temporaryDir(aem.project, "instanceTail")
+    var rootDir: File = aem.temporaryFile(InstanceTail.NAME)
 
     /**
      * Instances from which logs will be tailed.

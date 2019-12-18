@@ -53,7 +53,7 @@ open class InstanceSatisfy : PackageDeploy() {
      */
     @Internal
     var downloadDir = aem.prop.string("instance.satisfy.downloadDir")?.let { aem.project.file(it) }
-            ?: AemTask.temporaryDir(project, name, "download")
+            ?: aem.temporaryFile("$name/download")
 
     /**
      * Provides a packages from local and remote sources.
@@ -142,7 +142,7 @@ open class InstanceSatisfy : PackageDeploy() {
                         "${packages.size} package(s) on ${instances.size} instance(s).")
             }
         } else {
-            aem.logger.info("No actions to perform / all packages satisfied.")
+            logger.lifecycle("All packages satisfied (no actions to perform).")
         }
     }
 

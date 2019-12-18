@@ -33,7 +33,7 @@ class PackageValidator(@Internal val aem: AemExtension) {
     var verbose = aem.prop.boolean("package.validator.verbose") ?: true
 
     @OutputDirectory
-    var workDir = aem.temporaryDir("package/validator")
+    var workDir = aem.temporaryFile("package/validator")
 
     @Input
     var planName = aem.prop.string("package.validator.plan") ?: "default-plan.json"

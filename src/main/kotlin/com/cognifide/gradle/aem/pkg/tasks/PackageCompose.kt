@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem.pkg.tasks
 
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.bundle.tasks.BundleCompose
 import com.cognifide.gradle.aem.bundle.BundlePlugin
 import com.cognifide.gradle.aem.common.build.DependencyOptions
@@ -312,7 +311,11 @@ open class PackageCompose : ZipTask() {
         }
     }
 
-    fun fromJar(dependencyOptions: DependencyOptions.() -> Unit, installPath: String? = null, vaultFilter: Boolean? = null) {
+    fun fromJar(
+        dependencyOptions: DependencyOptions.() -> Unit,
+        installPath: String? = null,
+        vaultFilter: Boolean? = null
+    ) {
         val dependency = DependencyOptions.create(aem, dependencyOptions)
         bundleDependencies.add(BundleDependency(aem, dependency,
                 installPath ?: this.bundlePath,
@@ -351,7 +354,11 @@ open class PackageCompose : ZipTask() {
         fromArchiveInternal(vaultFilter, effectiveBundlePath, jar)
     }
 
-    fun fromZip(dependencyOptions: DependencyOptions.() -> Unit, storagePath: String? = null, vaultFilter: Boolean? = null) {
+    fun fromZip(
+        dependencyOptions: DependencyOptions.() -> Unit,
+        storagePath: String? = null,
+        vaultFilter: Boolean? = null
+    ) {
         val dependency = DependencyOptions.create(aem) { apply(dependencyOptions); ext = "zip" }
         packageDependencies.add(PackageDependency(aem, dependency,
                 storagePath ?: packagePath,
@@ -423,7 +430,7 @@ open class PackageCompose : ZipTask() {
         description = "Composes CRX package from JCR content and built OSGi bundles"
 
         archiveBaseName.set(aem.baseName)
-        destinationDirectory.set(AemTask.temporaryDir(aem.project, name))
+        destinationDirectory.set(aem.temporaryFile(name))
         duplicatesStrategy = DuplicatesStrategy.WARN
     }
 

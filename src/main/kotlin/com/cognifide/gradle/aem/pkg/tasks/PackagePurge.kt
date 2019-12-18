@@ -13,7 +13,7 @@ open class PackagePurge : PackageTask() {
 
     override fun taskGraphReady(graph: TaskExecutionGraph) {
         if (graph.hasTask(this)) {
-            aem.prop.checkForce()
+            aem.prop.checkForce(this)
         }
     }
 

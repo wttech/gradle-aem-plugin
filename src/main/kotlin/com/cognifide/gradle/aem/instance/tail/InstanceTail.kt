@@ -2,11 +2,11 @@ package com.cognifide.gradle.aem.instance.tail
 
 import com.cognifide.gradle.aem.common.instance.names
 import com.cognifide.gradle.aem.common.tasks.InstanceTask
-import kotlinx.coroutines.ObsoleteCoroutinesApi
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
-@UseExperimental(ObsoleteCoroutinesApi::class)
+@UseExperimental(ExperimentalCoroutinesApi::class)
 open class InstanceTail : InstanceTask() {
 
     @Internal

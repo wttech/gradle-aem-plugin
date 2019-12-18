@@ -14,7 +14,7 @@ open class InstanceCreate : LocalInstanceTask() {
     fun create() {
         val uncreatedInstances = instances.filter { !it.created }
         if (uncreatedInstances.isEmpty()) {
-            logger.info("No instance(s) to create")
+            logger.lifecycle("No instance(s) to create")
             return
         }
 
@@ -23,7 +23,7 @@ open class InstanceCreate : LocalInstanceTask() {
         manager.create(uncreatedInstances)
         val createdInstances = uncreatedInstances.filter { it.created }
 
-        aem.notifier.notify("Instance(s) created", "Which: ${createdInstances.names}")
+        aem.notifier.lifecycle("Instance(s) created", "Which: ${createdInstances.names}")
     }
 
     companion object {

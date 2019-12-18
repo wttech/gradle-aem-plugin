@@ -59,7 +59,7 @@ open class InstanceBackup : AemDefaultTask() {
             FileOperations.zipPack(file, aem.localInstanceManager.rootDir)
         }
 
-        aem.logger.lifecycle("Backed up instances to file: $file (${Formats.size(file)})")
+        aem.notifier.lifecycle("Backed up local instances", "File: $file (${Formats.size(file)})")
 
         return file
     }
@@ -79,7 +79,7 @@ open class InstanceBackup : AemDefaultTask() {
         aem.logger.info("Uploading local instance(s) backup file '$file' to URL '$dirUrl'")
         aem.fileTransfer.uploadTo(dirUrl, file)
 
-        aem.logger.lifecycle("Uploaded local instances backup file '$file' to URL '$dirUrl'")
+        aem.notifier.lifecycle("Uploaded local instances backup", "File '$file' to URL '$dirUrl'")
     }
 
     enum class Mode {

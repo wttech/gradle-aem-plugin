@@ -2,14 +2,16 @@ package com.cognifide.gradle.aem.instance.tail
 
 import com.cognifide.gradle.aem.common.notifier.NotifierFacade
 import com.cognifide.gradle.aem.instance.tail.io.LogFiles
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import java.net.URI
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.ObsoleteCoroutinesApi
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.launch
+import org.gradle.api.logging.LogLevel
+import java.awt.Desktop
 
-@UseExperimental(ObsoleteCoroutinesApi::class)
+@UseExperimental(ExperimentalCoroutinesApi::class)
 class LogNotifier(
     private val notificationChannel: ReceiveChannel<LogChunk>,
     private val notifier: NotifierFacade,
@@ -30,7 +32,11 @@ class LogNotifier(
         val message = chunk.logs.lastOrNull()?.cause ?: ""
         val instance = chunk.instance.name
 
-        notifier.notifyLogError("$errors error(s) on $instance", message, file)
+        notifier.notify("$errors error(s) on $instance", message, LogLevel.WARN) {
+            if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+                Desktop.getDesktop().browse(file)
+            }
+        }
     }
 
     private fun snapshotErrorsToSeparateFile(chunk: LogChunk): URI {

@@ -33,9 +33,9 @@ abstract class AemPlugin : Plugin<Project> {
                     .bufferedReader().use { it.readText() })
         }
 
-        val ID = "gradle-aem-plugin"
+        const val ID = "gradle-aem-plugin"
 
-        val NAME = "Gradle AEM Plugin"
+        const val NAME = "Gradle AEM Plugin"
 
         val NAME_WITH_VERSION: String
             get() = "$NAME ${BUILD.pluginVersion}"

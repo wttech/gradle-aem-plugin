@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.common.utils.using
+import com.cognifide.gradle.aem.instance.rcp.InstanceRcp
 import com.cognifide.gradle.aem.instance.satisfy.InstanceSatisfy
 import com.cognifide.gradle.aem.instance.tasks.InstanceSetup
 import com.cognifide.gradle.aem.instance.tasks.InstanceUp
@@ -17,6 +18,7 @@ class InstancePluginTest {
         tasks.getByName(InstanceUp.NAME)
         tasks.getByName(InstanceSetup.NAME)
         tasks.getByName(InstanceSatisfy.NAME)
+        tasks.getByName(InstanceRcp.NAME)
     }
 
 }

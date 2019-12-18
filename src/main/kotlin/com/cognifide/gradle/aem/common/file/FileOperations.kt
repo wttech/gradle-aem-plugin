@@ -15,7 +15,6 @@ import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
 import org.apache.commons.io.filefilter.TrueFileFilter
 import org.gradle.api.Project
-import org.gradle.util.GFileUtils
 import org.reflections.Reflections
 import org.reflections.scanners.ResourcesScanner
 import org.zeroturnaround.zip.ZipUtil
@@ -47,7 +46,7 @@ object FileOperations {
     }
 
     private fun copy(resourcePath: String, outputFile: File) {
-        GFileUtils.mkdirs(outputFile.parentFile)
+        outputFile.parentFile.mkdirs()
 
         javaClass.getResourceAsStream("/$resourcePath").use { input ->
             FileOutputStream(outputFile).use { output ->
@@ -150,11 +149,15 @@ object FileOperations {
 
     // TODO https://github.com/Cognifide/gradle-aem-plugin/issues/415
     fun zipPack(zip: File, sourceDir: File) {
+        zip.parentFile.mkdirs()
         ZipUtil.pack(sourceDir, zip)
         // ZipFile(zip).apply { addFolder(sourceDir, ZipParameters()) }
     }
 
-    fun lock(file: File) = file.writeText(Formats.toJson(mapOf("locked" to Formats.date())))
+    fun lock(file: File) {
+        file.parentFile.mkdirs()
+        file.writeText(Formats.toJson(mapOf("locked" to Formats.date())))
+    }
 
     fun lock(file: File, callback: () -> Unit) {
         if (!file.exists()) {

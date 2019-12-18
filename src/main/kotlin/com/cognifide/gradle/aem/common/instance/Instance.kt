@@ -86,6 +86,7 @@ interface Instance : Serializable {
 
     fun <T> sync(action: InstanceSync.() -> T): T = sync.run(action)
 
+    @Suppress("ThrowsCount")
     fun validate() {
         if (!Formats.URL_VALIDATOR.isValid(httpUrl)) {
             throw AemException("Malformed URL address detected in $this")

@@ -31,22 +31,23 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.2")
-    implementation("org.apache.commons:commons-lang3:3.4")
-    implementation("commons-io:commons-io:2.4")
+    implementation("org.apache.commons:commons-lang3:3.9")
+    implementation("org.apache.commons:commons-text:1.8")
+    implementation("commons-io:commons-io:2.6")
     implementation("commons-validator:commons-validator:1.6")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.10.0")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.10.1")
     implementation("org.reflections:reflections:0.9.9")
     implementation("org.apache.jackrabbit.vault:vault-cli:3.2.4")
-    implementation("org.jsoup:jsoup:1.10.3")
+    implementation("org.jsoup:jsoup:1.12.1")
     implementation("org.samba.jcifs:jcifs:1.3.18-kohsuke-1")
     implementation("biz.aQute.bnd:biz.aQute.bnd.gradle:4.2.0")
-    implementation("org.zeroturnaround:zt-zip:1.11")
-    implementation("net.lingala.zip4j:zip4j:1.3.2")
-    implementation("org.apache.sshd:sshd-sftp:2.2.0")
-    implementation("org.apache.httpcomponents:httpclient:4.5.4")
-    implementation("org.apache.httpcomponents:httpmime:4.5.4")
+    implementation("org.zeroturnaround:zt-zip:1.13")
+    implementation("net.lingala.zip4j:zip4j:1.3.3")
+    implementation("org.apache.sshd:sshd-sftp:2.3.0")
+    implementation("org.apache.httpcomponents:httpclient:4.5.10")
+    implementation("org.apache.httpcomponents:httpmime:4.5.10")
     implementation("org.osgi:org.osgi.core:6.0.0")
-    implementation("io.pebbletemplates:pebble:3.0.4")
+    implementation("io.pebbletemplates:pebble:3.1.2")
     implementation("com.dorkbox:Notify:3.7")
     implementation("com.jayway.jsonpath:json-path:2.4.0")
     implementation("org.buildobjects:jproc:2.2.3")
@@ -54,7 +55,7 @@ dependencies {
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.5.2")
 
-    "detektPlugins"("io.gitlab.arturbosch.detekt:detekt-formatting:1.0.1")
+    "detektPlugins"("io.gitlab.arturbosch.detekt:detekt-formatting:1.2.2")
 }
 
 val functionalTestSourceSet = sourceSets.create("functionalTest") {}
@@ -179,19 +180,19 @@ gradlePlugin {
             id = "com.cognifide.aem.common"
             implementationClass = "com.cognifide.gradle.aem.common.CommonPlugin"
             displayName = "AEM Common Plugin"
-            description = "Provides AEM DSL / 'aem' extension to build script on which all other logic is based."
-        }
-        create("tooling") {
-            id = "com.cognifide.aem.tooling"
-            implementationClass = "com.cognifide.gradle.aem.tooling.ToolingPlugin"
-            displayName = "AEM Tooling Plugin"
-            description = "Provides tasks like 'rcp', 'sync', 'vlt' for working with content using JCR File Vault."
+            description = "Provides AEM DSL extension to build script on which all other logic is based."
         }
         create("package") {
             id = "com.cognifide.aem.package"
             implementationClass = "com.cognifide.gradle.aem.pkg.PackagePlugin"
             displayName = "AEM Package Plugin"
             description = "Provides tasks for working with CRX packages."
+        }
+        create("package.sync") {
+            id = "com.cognifide.aem.package.sync"
+            implementationClass = "com.cognifide.gradle.aem.pkg.PackageSyncPlugin"
+            displayName = "AEM Package Sync Plugin"
+            description = "Provides tasks for synchronizing JCR content from running AEM instance."
         }
         create("bundle") {
             id = "com.cognifide.aem.bundle"

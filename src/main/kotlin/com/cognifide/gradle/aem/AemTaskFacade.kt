@@ -2,7 +2,6 @@ package com.cognifide.gradle.aem
 
 import com.cognifide.gradle.aem.bundle.tasks.BundleCompose
 import com.cognifide.gradle.aem.common.build.DependencyOptions
-import com.cognifide.gradle.aem.common.tasks.Debug
 import com.cognifide.gradle.aem.common.tasks.TaskSequence
 import com.cognifide.gradle.aem.common.tasks.lifecycle.*
 import com.cognifide.gradle.aem.environment.tasks.*
@@ -11,9 +10,9 @@ import com.cognifide.gradle.aem.instance.satisfy.InstanceSatisfy
 import com.cognifide.gradle.aem.instance.tail.InstanceTail
 import com.cognifide.gradle.aem.instance.tasks.*
 import com.cognifide.gradle.aem.pkg.tasks.*
-import com.cognifide.gradle.aem.tooling.rcp.Rcp
-import com.cognifide.gradle.aem.tooling.sync.Sync
-import com.cognifide.gradle.aem.tooling.vlt.Vlt
+import com.cognifide.gradle.aem.instance.rcp.InstanceRcp
+import com.cognifide.gradle.aem.pkg.tasks.PackageSync
+import com.cognifide.gradle.aem.pkg.tasks.PackageVlt
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.UnknownTaskException
@@ -104,6 +103,8 @@ class AemTaskFacade(val aem: AemExtension) : Serializable {
 
     fun instanceProvision(configurer: InstanceProvision.() -> Unit) = named(InstanceProvision.NAME, configurer)
 
+    fun instanceRcp(configurer: InstanceRcp.() -> Unit) = named(InstanceRcp.NAME, configurer)
+
     fun instanceReload(configurer: InstanceReload.() -> Unit) = named(InstanceReload.NAME, configurer)
 
     fun instanceResetup(configurer: InstanceResetup.() -> Unit) = named(InstanceResetup.NAME, configurer)
@@ -136,15 +137,11 @@ class AemTaskFacade(val aem: AemExtension) : Serializable {
 
     fun environmentRestart(configurer: EnvironmentRestart.() -> Unit) = named(EnvironmentRestart.NAME, configurer)
 
-    // Tooling plugin shorthands
+    // Package sync plugin shorthands
 
-    fun debug(configurer: Debug.() -> Unit) = named(Debug.NAME, configurer)
+    fun packageSync(configurer: PackageSync.() -> Unit) = named(PackageSync.NAME, configurer)
 
-    fun rcp(configurer: Rcp.() -> Unit) = named(Rcp.NAME, configurer)
-
-    fun sync(configurer: Sync.() -> Unit) = named(Sync.NAME, configurer)
-
-    fun vlt(configurer: Vlt.() -> Unit) = named(Vlt.NAME, configurer)
+    fun packageVlt(configurer: PackageVlt.() -> Unit) = named(PackageVlt.NAME, configurer)
 
     // Common lifecycle
 
@@ -295,7 +292,12 @@ class AemTaskFacade(val aem: AemExtension) : Serializable {
         }
     }
 
-    private fun composeException(taskName: String, type: Class<*>? = null, cause: Exception? = null, project: Project = this.project): AemException {
+    private fun composeException(
+        taskName: String,
+        type: Class<*>? = null,
+        cause: Exception? = null,
+        project: Project = this.project
+    ): AemException {
         val msg = if (type != null) {
             "${project.displayName.capitalize()} does not have task '$taskName' of type '$type'. Ensure correct plugins applied."
         } else {

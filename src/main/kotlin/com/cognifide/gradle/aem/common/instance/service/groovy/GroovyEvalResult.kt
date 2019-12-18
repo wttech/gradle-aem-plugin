@@ -1,10 +1,11 @@
 package com.cognifide.gradle.aem.common.instance.service.groovy
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import org.apache.commons.lang3.StringUtils
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-class GroovyConsoleResult {
+class GroovyEvalResult {
 
     lateinit var exceptionStackTrace: String
 
@@ -18,9 +19,17 @@ class GroovyConsoleResult {
 
     var result: String? = null
 
+    @get:JsonIgnore
+    val error: Boolean
+        get() = exceptionStackTrace.isNotBlank()
+
+    @get:JsonIgnore
+    val success: Boolean
+        get() = !error
+
     override fun toString(): String {
         return StringBuilder().apply {
-            append("GroovyConsoleResult(output='${shorten(output)}', runningTime='$runningTime'")
+            append("${javaClass.simpleName}(output='${shorten(output)}', runningTime='$runningTime'")
             append(", exceptionStackTrace='${shorten(exceptionStackTrace)}', result='$result'")
             append(", script='${shorten(script)}', data='${shorten(data)}')")
         }.toString()

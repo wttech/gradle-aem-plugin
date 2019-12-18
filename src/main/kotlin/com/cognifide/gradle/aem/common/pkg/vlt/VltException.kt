@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.tooling.vlt
+package com.cognifide.gradle.aem.common.pkg.vlt
 
 import com.cognifide.gradle.aem.AemException
 

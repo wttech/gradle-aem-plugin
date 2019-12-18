@@ -1,23 +1,23 @@
-package com.cognifide.gradle.aem.tooling.rcp
+package com.cognifide.gradle.aem.instance.rcp
 
 import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.instance.Instance
-import com.cognifide.gradle.aem.tooling.vlt.VltException
+import com.cognifide.gradle.aem.common.pkg.vlt.VltException
 import org.apache.commons.lang3.time.StopWatch
 import java.io.File
 
 class RcpClient(private val aem: AemExtension) {
 
-    var sourceInstance: Instance? = aem.prop.string("rcp.source")?.run { aem.instance(this) }
+    var sourceInstance: Instance? = null
 
-    var targetInstance: Instance? = aem.prop.string("rcp.target")?.run { aem.instance(this) }
+    var targetInstance: Instance? = null
 
-    var paths = aem.prop.list("rcp.paths")
+    var paths: List<String>? = null
 
-    var pathsFile = aem.prop.string("rcp.pathsFile")?.let { aem.project.file(it) }
+    var pathsFile: File? = null
 
-    var opts: String = aem.prop.string("rcp.opts") ?: "-b 100 -r -u"
+    var opts: String = "-b 100 -r -u"
 
     val stopWatch = StopWatch()
 

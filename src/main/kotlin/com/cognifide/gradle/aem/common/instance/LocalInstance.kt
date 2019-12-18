@@ -11,7 +11,6 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
 import org.gradle.internal.os.OperatingSystem
-import org.gradle.util.GFileUtils
 import java.io.File
 import java.io.Serializable
 
@@ -117,6 +116,10 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
         get() = binScript("status")
 
     @get:JsonIgnore
+    val touched: Boolean
+        get() = dir.exists()
+
+    @get:JsonIgnore
     val created: Boolean
         get() = locked(LOCK_CREATE)
 
@@ -160,7 +163,7 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
     }
 
     private fun copyFiles() {
-        GFileUtils.mkdirs(dir)
+        dir.mkdirs()
 
         logger.info("Copying quickstart JAR '$jar' to directory '$quickstartDir'")
         manager.quickstart.jar?.let { FileUtils.copyFile(it, jar) }
@@ -215,7 +218,7 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
         }
 
         // Ensure that 'logs' directory exists
-        GFileUtils.mkdirs(File(quickstartDir, "logs"))
+        quickstartDir.resolve("logs").mkdirs()
     }
 
     private fun unpackFiles() {
@@ -272,7 +275,7 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
 
         val installFiles = manager.install.files
         if (installFiles.isNotEmpty()) {
-            GFileUtils.mkdirs(installDir)
+            installDir.mkdirs()
             installFiles.forEach { source ->
                 val target = File(installDir, source.name)
                 if (!target.exists()) {

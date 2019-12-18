@@ -2,7 +2,6 @@ package com.cognifide.gradle.aem.instance.tail
 
 import com.cognifide.gradle.aem.common.utils.Patterns
 import org.apache.commons.io.FileUtils
-import org.gradle.util.GFileUtils
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.io.BufferedReader
@@ -24,7 +23,7 @@ class InstanceTailTest {
         companion object {
             fun readerFromString(text: String) =  text.byteInputStream(Charset.forName("UTF8")).bufferedReader()
 
-            fun reader(resource: String) = BufferedReader(InputStreamReader(GFileUtils.openInputStream(file(resource))))
+            fun reader(resource: String) = BufferedReader(InputStreamReader(FileUtils.openInputStream(file(resource))))
 
             fun text(resource: String): String = FileUtils.readFileToString(file(resource), "UTF8")
 

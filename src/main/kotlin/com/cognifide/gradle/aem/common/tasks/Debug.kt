@@ -3,7 +3,6 @@ package com.cognifide.gradle.aem.common.tasks
 import com.cognifide.gradle.aem.AemDefaultTask
 import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.AemPlugin
-import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.common.instance.names
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.aem.common.utils.Formats
@@ -14,7 +13,7 @@ import org.gradle.api.tasks.TaskAction
 open class Debug : AemDefaultTask() {
 
     @Internal
-    val file = AemTask.temporaryFile(project, NAME, "debug.json")
+    val file = aem.temporaryFile("$name/debug.json")
 
     /**
      * Dump package states on defined instances.
@@ -80,18 +79,22 @@ open class Debug : AemDefaultTask() {
         }
 
     @TaskAction
-    fun debug() {
+    fun doDebug() {
         logger.lifecycle("Dumping AEM build configuration of $project to file: $file")
 
         val json = Formats.toJson(properties, true)
-
-        file.bufferedWriter().use { it.write(json) }
+        file.apply {
+            parentFile.mkdirs()
+            bufferedWriter().use { it.write(json) }
+        }
         logger.info(json)
 
-        aem.notifier.notify("Configuration dumped", "For $project to file: ${Formats.projectPath(file, project)}")
+        aem.notifier.notify("AEM configuration dumped", "For $project to file: ${Formats.projectPath(file, project)}")
     }
 
     companion object {
         const val NAME = "debug"
+
+        const val NAME_FALLBACK = "debugAem"
     }
 }

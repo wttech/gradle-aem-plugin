@@ -1,21 +1,22 @@
-
-package com.cognifide.gradle.aem.tooling.sync
+package com.cognifide.gradle.aem.pkg.tasks
 
 import com.cognifide.gradle.aem.AemDefaultTask
 import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.common.utils.Formats
-import com.cognifide.gradle.aem.tooling.vlt.VltClient
+import com.cognifide.gradle.aem.common.pkg.vlt.VltClient
+import com.cognifide.gradle.aem.pkg.tasks.sync.Cleaner
+import com.cognifide.gradle.aem.pkg.tasks.sync.Downloader
 import java.io.File
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
-open class Sync : AemDefaultTask() {
+open class PackageSync : AemDefaultTask() {
 
     /**
      * Determines what need to be done (content copied and clean or something else).
      */
     @Internal
-    var mode = Mode.of(aem.prop.string("sync.mode")
+    var mode = Mode.of(aem.prop.string("package.sync.mode")
             ?: Mode.COPY_AND_CLEAN.name)
 
     fun mode(name: String) {
@@ -26,7 +27,7 @@ open class Sync : AemDefaultTask() {
      * Determines a method of getting JCR content from remote instance.
      */
     @Internal
-    var transfer = Transfer.of(aem.prop.string("sync.transfer")
+    var transfer = Transfer.of(aem.prop.string("package.sync.transfer")
             ?: Transfer.PACKAGE_DOWNLOAD.name)
 
     fun transfer(name: String) {
@@ -108,7 +109,10 @@ open class Sync : AemDefaultTask() {
                 }
             }
 
-            aem.notifier.notify("Synchronized JCR content", "Instance: ${instance.name}. Directory: ${Formats.rootProjectPath(contentDir, project)}")
+            aem.notifier.notify(
+                    "Synchronized JCR content",
+                    "Instance: ${instance.name}. Directory: ${Formats.rootProjectPath(contentDir, project)}"
+            )
         } finally {
             if (mode != Mode.COPY_ONLY) {
                 cleanContent()
@@ -127,7 +131,7 @@ open class Sync : AemDefaultTask() {
 
     private fun transferUsingVltCheckout() {
         vlt.apply {
-            contentDir = this@Sync.contentDir
+            contentDir = this@PackageSync.contentDir
             command = "--credentials ${instance.credentialsString} checkout --force --filter ${filter.file} ${instance.httpUrl}/crx/server/crx.default"
             run()
         }
@@ -135,8 +139,8 @@ open class Sync : AemDefaultTask() {
 
     private fun transferUsingPackageDownload() {
         downloader.apply {
-            instance = this@Sync.instance
-            filter = this@Sync.filter
+            instance = this@PackageSync.instance
+            filter = this@PackageSync.filter
             download()
         }
     }
@@ -179,6 +183,6 @@ open class Sync : AemDefaultTask() {
     }
 
     companion object {
-        const val NAME = "sync"
+        const val NAME = "packageSync"
     }
 }

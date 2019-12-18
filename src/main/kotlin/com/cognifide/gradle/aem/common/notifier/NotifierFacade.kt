@@ -4,13 +4,6 @@ import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.build.BuildScope
 import com.fasterxml.jackson.annotation.JsonIgnore
 import dorkbox.notify.Notify
-import dorkbox.notify.Theme
-import java.awt.Color
-import java.awt.Desktop
-import java.net.URI
-import java.net.URL
-import java.util.concurrent.TimeUnit
-import javax.imageio.ImageIO
 import org.gradle.api.logging.LogLevel
 
 class NotifierFacade private constructor(private val aem: AemExtension) {
@@ -51,32 +44,22 @@ class NotifierFacade private constructor(private val aem: AemExtension) {
         notify(title, "")
     }
 
-    fun notify(title: String, text: String) {
-        notify(title, text, LogLevel.LIFECYCLE)
-    }
-
     @Suppress("TooGenericExceptionCaught")
-    fun notify(title: String, text: String, level: LogLevel) {
+    fun notify(title: String, text: String, level: LogLevel, onClick: (Notify) -> Unit = {}) {
         log(title, text, level)
 
         if (enabled) {
             try {
-                notifier.notify(title, text, level)
+                notifier.notify(title, text, level, onClick)
             } catch (e: Exception) {
                 aem.logger.debug("AEM notifier is not available.", e)
             }
         }
     }
 
-    fun dorkbox(): Notifier {
-        return dorkbox {
-            text(DORKBOX_DARK_LIGHT_THEME)
-                    .hideAfter(TimeUnit.SECONDS.toMillis(DORKBOX_HIDE_AFTER_SECONDS).toInt())
-                    .image(ImageIO.read(image))
-        }
-    }
+    fun notify(title: String, text: String) = lifecycle(title, text)
 
-    fun dorkbox(configurer: Notify.() -> Unit): Notifier {
+    fun dorkbox(configurer: Notify.() -> Unit = {}): Notifier {
         return DorkboxNotifier(aem, configurer)
     }
 
@@ -88,44 +71,21 @@ class NotifierFacade private constructor(private val aem: AemExtension) {
         }
     }
 
-    fun notifyLogError(title: String, message: String, file: URI) {
-        notifier.notify(title, message, LogLevel.INFO) {
-            if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
-                Desktop.getDesktop().browse(file)
-            }
-        }
-    }
+    fun lifecycle(title: String, text: String) = notify(title, text, LogLevel.LIFECYCLE)
 
-    @get:JsonIgnore
-    val image: URL
-        get() {
-            val customThumbnail = aem.project.file("${aem.packageOptions.metaCommonDir}/vault/definition/thumbnail.png")
-            return if (customThumbnail.exists()) {
-                customThumbnail.toURI().toURL()
-            } else {
-                javaClass.getResource("/com/cognifide/gradle/aem/package/META-INF/vault/definition/thumbnail.png")
-            }
-        }
+    fun info(title: String, text: String) = notify(title, text, LogLevel.INFO)
+
+    fun warn(title: String, text: String) = notify(title, text, LogLevel.WARN)
+
+    fun error(title: String, text: String) = notify(title, text, LogLevel.ERROR)
 
     companion object {
-
-        const val DORKBOX_HIDE_AFTER_SECONDS = 5L
-
-        val DORKBOX_DARK_LIGHT_THEME = Theme(
-                Notify.TITLE_TEXT_FONT,
-                Notify.MAIN_TEXT_FONT,
-                Color.DARK_GRAY,
-                Color(168, 168, 168),
-                Color(220, 220, 220),
-                Color(220, 220, 220),
-                Color.GRAY
-        )
 
         /**
          * Get project specific notifier (config can vary)
          */
         fun of(aem: AemExtension): NotifierFacade {
-            return BuildScope.of(aem.project).getOrPut(Notifier::class.java.canonicalName, { setup(aem) })
+            return BuildScope.of(aem.project).getOrPut(Notifier::class.java.canonicalName) { setup(aem) }
         }
 
         /**

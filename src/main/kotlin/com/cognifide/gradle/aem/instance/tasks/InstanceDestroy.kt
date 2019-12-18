@@ -14,15 +14,15 @@ open class InstanceDestroy : LocalInstanceTask() {
 
     override fun taskGraphReady(graph: TaskExecutionGraph) {
         if (graph.hasTask(this)) {
-            aem.prop.checkForce()
+            aem.prop.checkForce(this)
         }
     }
 
     @TaskAction
     fun destroy() {
-        val createdInstances = instances.filter { it.created }
+        val createdInstances = instances.filter { it.touched }
         if (createdInstances.isEmpty()) {
-            logger.info("No instance(s) to destroy")
+            logger.lifecycle("No instance(s) to destroy")
             return
         }
 

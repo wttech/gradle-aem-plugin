@@ -12,13 +12,13 @@ open class EnvironmentDown : AemDefaultTask() {
     @TaskAction
     fun down() {
         if (!aem.environment.running) {
-            aem.notifier.notify("Environment down", "Cannot turn off on as it is not running")
+            logger.lifecycle("Environment cannot be turned off on as it is not running")
             return
         }
 
         aem.environment.down()
 
-        aem.notifier.notify("Environment down", "Turned off with success")
+        aem.notifier.lifecycle("Environment down", "Turned off with success")
     }
 
     companion object {

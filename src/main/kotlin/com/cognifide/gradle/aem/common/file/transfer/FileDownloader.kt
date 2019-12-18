@@ -20,7 +20,13 @@ class FileDownloader(private val aem: AemExtension) {
         return (allDownloadTime - elapsedDownloadTime).coerceAtLeast(0L)
     }
 
-    fun ProgressLogger.logProgress(operation: String, readLength: Long, fullLength: Long, file: File, startDownloadTime: Long) {
+    fun ProgressLogger.logProgress(
+        operation: String,
+        readLength: Long,
+        fullLength: Long,
+        file: File,
+        startDownloadTime: Long
+    ) {
         processedBytes += readLength
 
         val processedKb = processedBytes / KILOBYTE
@@ -43,6 +49,8 @@ class FileDownloader(private val aem: AemExtension) {
     fun download(size: Long, input: InputStream, target: File) {
         aem.progressLogger {
             input.use { inputStream ->
+                target.parentFile.mkdirs()
+
                 val output = FileOutputStream(target)
                 var finished = false
                 val startDownloadTime = System.currentTimeMillis()

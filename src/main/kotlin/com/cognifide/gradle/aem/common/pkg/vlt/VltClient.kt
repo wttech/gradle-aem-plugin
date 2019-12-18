@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.tooling.vlt
+package com.cognifide.gradle.aem.common.pkg.vlt
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
@@ -9,7 +9,7 @@ class VltClient(val aem: AemExtension) {
 
     private val app = VltApp(aem.project)
 
-    var command: String = aem.prop.string("vlt.command") ?: ""
+    var command: String = ""
 
     var commandProperties: Map<String, Any> = mapOf("aem" to aem)
 
@@ -18,7 +18,7 @@ class VltClient(val aem: AemExtension) {
 
     var contentDir: File = aem.packageOptions.contentDir
 
-    var contentRelativePath: String = aem.prop.string("vlt.path") ?: ""
+    var contentRelativePath: String = ""
 
     val contentDirEffective: File
         get() {
