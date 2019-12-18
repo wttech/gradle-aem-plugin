@@ -132,7 +132,7 @@ class PropertyParser(private val aem: AemExtension) {
 
     fun checkForce(task: Task) {
         if (!isForce()) {
-            throw AemException("Unable to perform unsafe operation without param '-P$FORCE_PROP' (running task '${task.path}')!")
+            throw AemException("Unable to run unsafe task '${task.path}' without param '-P$FORCE_PROP'!")
         }
     }
 
