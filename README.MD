@@ -2409,7 +2409,9 @@ RCP task is internally using [Vault Remote Copy](http://jackrabbit.apache.org/fi
 #### Task `instanceGroovyEval`
 
 Evaluate Groovy script(s) on instance(s).
+
 To determine instances on which scripts will be evaluated, simply use [default filtering](#instance-filtering).
+Dedicated place for storing scripts is path [*\[aem/\]gradle/groovyScript*](https://github.com/Cognifide/gradle-aem-multi/tree/master/aem/gradle/groovyScript).
 
 Simple script usage (suffix *.groovy* is automatically added if missing):
 
@@ -2425,7 +2427,7 @@ Succeeded: 2/2=100.00%. Elapsed time: 00:02
 
 ```
 
-By default, script outputs and results are hidden. Simply turn on info logging level to see them by adding option `-i`.
+By default, script outputs, results and exceptions are hidden. To see them, simply turn on info logging level by adding option `-i`.
 
 Output:
 
