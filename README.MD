@@ -26,18 +26,18 @@
         * [Instance conventions](#instance-conventions)
         * [Defining instances via properties file](#defining-instances-via-properties-file)
         * [Defining instances via build script](#defining-instances-via-build-script)
-     * [Instance filtering](#instance-filtering)
-     * [Instance URL credentials encoding](#instance-url-credentials-encoding)
-     * [Implementing tasks](#implementing-tasks)
-        * [Instance services](#instance-services)
-        * [Defining CRX package via code then downloading and sharing it using external HTTP endpoint](#defining-crx-package-via-code-then-downloading-and-sharing-it-using-external-http-endpoint)
-        * [Calling AEM endpoints / making any HTTP requests](#calling-aem-endpoints--making-any-http-requests)
-        * [Downloading CRX package from external HTTP endpoint and deploying it on desired AEM instances](#downloading-crx-package-from-external-http-endpoint-and-deploying-it-on-desired-aem-instances)
-        * [Working with content repository (JCR)](#working-with-content-repository-jcr)
-        * [Executing code on AEM runtime](#executing-code-on-aem-runtime)
-        * [Controlling OSGi bundles, components and configurations](#controlling-osgi-bundles-components-and-configurations)
-        * [Controlling workflows](#controlling-workflows)
-        * [Running Docker image based tools](#running-docker-image-based-tools)
+        * [Instance filtering](#instance-filtering)
+        * [Instance URL credentials encoding](#instance-url-credentials-encoding)
+        * [Implementing tasks](#implementing-tasks)
+           * [Instance services](#instance-services)
+           * [Defining CRX package via code then downloading and sharing it using external HTTP endpoint](#defining-crx-package-via-code-then-downloading-and-sharing-it-using-external-http-endpoint)
+           * [Calling AEM endpoints / making any HTTP requests](#calling-aem-endpoints--making-any-http-requests)
+           * [Downloading CRX package from external HTTP endpoint and deploying it on desired AEM instances](#downloading-crx-package-from-external-http-endpoint-and-deploying-it-on-desired-aem-instances)
+           * [Working with content repository (JCR)](#working-with-content-repository-jcr)
+           * [Executing code on AEM runtime](#executing-code-on-aem-runtime)
+           * [Controlling OSGi bundles, components and configurations](#controlling-osgi-bundles-components-and-configurations)
+           * [Controlling workflows](#controlling-workflows)
+           * [Running Docker image based tools](#running-docker-image-based-tools)
         * [Properties expanding in instance or package files](#properties-expanding-in-instance-or-package-files)
      * [Package plugin](#package-plugin)
         * [Task packageCompose](#task-packagecompose)
@@ -728,7 +728,7 @@ aem {
 ```
 
 
-### Instance filtering
+#### Instance filtering
 
 When there are defined named AEM instances: `local-author`, `local-publish`, `integration-author` and `integration-publish`,
 then it is possible to:
@@ -770,7 +770,7 @@ Instance urls must be delimited by colon.
 Remember to [encode instance user & password](#instance-url-credentials-encoding) properly.
 
 
-### Instance URL credentials encoding
+#### Instance URL credentials encoding
 
 Remember to encode instance credentials (user & password) when passing it via properties: `instance.$INSTANCE_NAME.httpUrl` or `instance.list=[$INSTANCE_HTTP_URL1,$INSTANCE_HTTP_URL2,...]`.
 
@@ -792,13 +792,13 @@ sh gradlew :aem:assembly:full:packageDeploy -Pinstance.list=[http://admin:gxJMge
 Notice that when password is specified as separate `instance.$INSTANCE_NAME.password` property it does not need to be encoded.
 Otherwise, password value must be encoded by e.g [online URL encoder](https://meyerweb.com/eric/tools/dencoder/).
 
-### Implementing tasks
+#### Implementing tasks
 
 Most of built-in tasks logic is based on `aem` object of type [AemExtension](src/main/kotlin/com/cognifide/gradle/aem/AemExtension.kt). 
 It provides concise AEM related API for accessing AEM configuration, synchronizing with AEM instances via specialized instance services of `aem.sync` 
 to make tasks implementation a breeze. The options for automating things around AEM are almost unlimited. 
 
-#### Instance services
+##### Instance services
 
 While implementing custom AEM tasks, mix usages of following instance services:
 
@@ -811,7 +811,7 @@ While implementing custom AEM tasks, mix usages of following instance services:
 * `status` [Status](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/status/Status.kt) - Allows to read statuses available at [Apache Felix Web Console](https://felix.apache.org/documentation/subprojects/apache-felix-web-console.html).
 * `crx` [Crx](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/crx/Crx.kt) - Allows to read available node types of JCR repository / AEM instance.
 
-#### Defining CRX package via code then downloading and sharing it using external HTTP endpoint
+##### Defining CRX package via code then downloading and sharing it using external HTTP endpoint
 
 Below snippet could be used to automatize creation of production content backups.
 
@@ -845,7 +845,7 @@ aem {
 }
 ```
 
-#### Calling AEM endpoints / making any HTTP requests
+##### Calling AEM endpoints / making any HTTP requests
 
 To make an HTTP request to some AEM endpoint (servlet) simply write:
 
@@ -894,7 +894,7 @@ aem {
 
 There are also available convenient methods `asStream`, `asString` to be able to process endpoint responses.
 
-#### Downloading CRX package from external HTTP endpoint and deploying it on desired AEM instances
+##### Downloading CRX package from external HTTP endpoint and deploying it on desired AEM instances
 
 Below snippet could be used to automatize recovery from content backups (e.g for production or to replicate production content to test environment).
 
@@ -919,7 +919,7 @@ aem {
 }
 ```
 
-#### Working with content repository (JCR)
+##### Working with content repository (JCR)
 
 To make changes in AEM content repository, use [Repository](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/repository/Repository.kt) instance service which is a part of instance sync tool.
 
@@ -971,7 +971,7 @@ aem {
 
 Under the hood, repository service is using only AEM built-in [Sling Post Servlet](https://sling.apache.org/documentation/bundles/manipulating-content-the-slingpostservlet-servlets-post.html).
 
-#### Executing code on AEM runtime
+##### Executing code on AEM runtime
 
 It is also possible to easily execute any code on AEM runtime using [Groovy Console](https://github.com/icfnext/aem-groovy-console). 
 Assuming that on AEM instances there is already installed Groovy Console e.g via `instanceSatisfy` task, then it is possible to use [GroovyConsole](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/groovy/GroovyConsole.kt) instance service.
@@ -998,7 +998,7 @@ aem {
 }
 ```
 
-#### Controlling OSGi bundles, components and configurations
+##### Controlling OSGi bundles, components and configurations
 
 Simply use [OsgiFramework](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/osgi/OsgiFramework.kt) instance service.
 
@@ -1057,7 +1057,7 @@ aem {
 
 All [CRUD](https://en.wikipedia.org/wiki/CRUD) methods for manipulating OSGi configurations are available. Also for configuration factories.
 
-#### Controlling workflows
+##### Controlling workflows
 
 Simply use [Workflow Manager](src/main/kotlin/com/cognifide/gradle/aem/common/instance/service/workflow/WorkflowManager.kt) instance service.
 
@@ -1102,7 +1102,7 @@ It is also possible to mix enabling and disabling workflows:
     }
 ```
 
-#### Running Docker image based tools
+##### Running Docker image based tools
 
 Regardless type of Docker runtime used, running any Docker images is super-easy via AEM DSL methods `aem.dockerRun()` or `aem.dockerDaemon()`.
 Under the hood, GAP ensures that volume paths passed to Docker are correct. Also correctly handles streaming process output,
@@ -1533,7 +1533,7 @@ Cleaning assumes advanced JCR content normalization to minimize changes visible 
 ```kotlin
 aem {
     tasks {
-        sync {
+        packageSync {
             cleaner {
                 filesDotContent = {
                     include("**/.content.xml")
@@ -1588,7 +1588,7 @@ For such cases, see configuration below:
 ```kotlin
 aem {
     tasks {
-        sync {
+        packageSync {
             cleaner {
                 propertiesSkipped += listOf(
                     pathRule("dam:sha1", listOf(), listOf("**/content/dam/*.svg/*")),
@@ -1628,7 +1628,7 @@ aem {
 Available transfer types: *package_download* (default) and *vlt_checkout*.
 
 ```bash
-gradlew :site.demo:sync -Psync.type=vlt_checkout
+gradlew :site.demo:packageSync -Psync.type=vlt_checkout
 ```
 
 ##### Downloading package options
@@ -1638,13 +1638,13 @@ When transfer type is set to *package_download* then it is also possible to...
 Download package only without extracting:
 
 ```bash
-gradlew :site.demo:sync -PpackageDownload.extract=false
+gradlew :site.demo:packageSync -PpackageDownload.extract=false
 ```
 
 Download, delete all previous JCR root contents then extract fresh content:
 
 ```bash
-gradlew :site.demo:sync -Pforce
+gradlew :site.demo:packageSync -Pforce
 ```
 
 ##### Copying or cleaning content only
@@ -1652,21 +1652,21 @@ gradlew :site.demo:sync -Pforce
 Available mode types: *copy_and_clean* (default), *clean_only* and *copy_only*.
 
 ```bash
-gradlew :site.demo:sync -Psync.mode=clean_only
+gradlew :site.demo:packageSync -Psync.mode=clean_only
 ```
 
 ##### Filter file at custom path
    
 ```bash
-gradlew :site.demo:sync -Pfilter.path=custom-filter.xml
-gradlew :site.demo:sync -Pfilter.path=src/main/content/META-INF/vault/custom-filter.xml
-gradlew :site.demo:sync -Pfilter.path=C:/aem/custom-filter.xml
+gradlew :site.demo:packageSync -Pfilter.path=custom-filter.xml
+gradlew :site.demo:packageSync -Pfilter.path=src/main/content/META-INF/vault/custom-filter.xml
+gradlew :site.demo:packageSync -Pfilter.path=C:/aem/custom-filter.xml
 ```
 
 ##### Filter roots specified explicitly
    
 ```bash
-gradlew :site.demo:sync -Pfilter.roots=[/etc/tags/example,/content/dam/example]
+gradlew :site.demo:packageSync -Pfilter.roots=[/etc/tags/example,/content/dam/example]
 ```
 
 #### Task `packageVlt`
