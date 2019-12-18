@@ -9,7 +9,7 @@ class VltClient(val aem: AemExtension) {
 
     private val app = VltApp(aem.project)
 
-    var command: String = aem.prop.string("package.vlt.command") ?: ""
+    var command: String = ""
 
     var commandProperties: Map<String, Any> = mapOf("aem" to aem)
 
@@ -18,7 +18,7 @@ class VltClient(val aem: AemExtension) {
 
     var contentDir: File = aem.packageOptions.contentDir
 
-    var contentRelativePath: String = aem.prop.string("package.vlt.path") ?: ""
+    var contentRelativePath: String = ""
 
     val contentDirEffective: File
         get() {

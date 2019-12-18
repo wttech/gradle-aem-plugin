@@ -8,7 +8,10 @@ class GroovyEvaluator(private val aem: AemExtension) {
 
     private val logger = aem.logger
 
-    var scriptPattern: String = ""
+    val scriptDirDefault
+        get() = aem.project.version.toString().removeSuffix("-SNAPSHOT")
+
+    var scriptPattern: String = "$scriptDirDefault/**"
 
     var scriptSuffix: String = ".groovy"
 

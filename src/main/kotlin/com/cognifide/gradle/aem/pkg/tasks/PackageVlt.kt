@@ -19,8 +19,8 @@ open class PackageVlt : AemDefaultTask() {
     @TaskAction
     open fun run() {
         val summary = aem.vlt {
-            command = aem.prop.string("package.vlt.command") ?: ""
-            contentRelativePath = aem.prop.string("package.vlt.path") ?: ""
+            aem.prop.string("package.vlt.command")?.let { command = it }
+            aem.prop.string("package.vlt.path")?.let { contentRelativePath = it }
             options()
             run()
         }
