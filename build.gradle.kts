@@ -40,7 +40,7 @@ dependencies {
     implementation("org.apache.jackrabbit.vault:vault-cli:3.2.4")
     implementation("org.jsoup:jsoup:1.12.1")
     implementation("org.samba.jcifs:jcifs:1.3.18-kohsuke-1")
-    implementation("biz.aQute.bnd:biz.aQute.bnd.gradle:4.2.0")
+    implementation("biz.aQute.bnd:biz.aQute.bnd.gradle:5.0.0")
     implementation("org.zeroturnaround:zt-zip:1.13")
     implementation("net.lingala.zip4j:zip4j:1.3.3")
     implementation("org.apache.sshd:sshd-sftp:2.3.0")
