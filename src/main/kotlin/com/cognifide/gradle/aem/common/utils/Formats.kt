@@ -51,12 +51,16 @@ object Formats {
 
     val VERSION_UNKNOWN = GradleVersion.version("0.0.0")
 
-    fun jsonMapper(pretty: Boolean): ObjectMapper = ObjectMapper().apply {
+    fun jsonMapper() = ObjectMapper().apply {
         registerModule(KotlinModule())
-        if (pretty) {
-            writer(DefaultPrettyPrinter().apply {
+    }
+
+    fun jsonWriter(pretty: Boolean) = jsonMapper().run {
+        when {
+            pretty -> writer(DefaultPrettyPrinter().apply {
                 indentArraysWith(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE)
             })
+            else -> writer()
         }
     }
 
@@ -65,18 +69,18 @@ object Formats {
     fun asJson(value: String) = JsonPath.parse(value)
 
     fun toJson(value: Any, pretty: Boolean = true): String {
-        return jsonMapper(pretty).writeValueAsString(value) ?: ""
+        return jsonWriter(pretty).writeValueAsString(value) ?: ""
     }
 
     fun toJson(value: Map<String, Any?>, pretty: Boolean = true): String {
-        return jsonMapper(pretty).writeValueAsString(value) ?: "{}"
+        return jsonWriter(pretty).writeValueAsString(value) ?: "{}"
     }
 
     inline fun <reified T : Any> fromJson(json: String) = fromJson(json, T::class.java)
 
-    fun <T> fromJson(json: String, clazz: Class<T>): T = jsonMapper(false).readValue(json, clazz)
+    fun <T> fromJson(json: String, clazz: Class<T>): T = jsonMapper().readValue(json, clazz)
 
-    fun fromJsonToMap(json: String): Map<String, Any?> = ObjectMapper().run {
+    fun fromJsonToMap(json: String): Map<String, Any?> = jsonMapper().run {
         readValue(json, typeFactory.constructMapType(HashMap::class.java, String::class.java, Any::class.java))
     }
 
