@@ -2410,10 +2410,10 @@ RCP task is internally using [Vault Remote Copy](http://jackrabbit.apache.org/fi
 
 Evaluate Groovy script(s) on instance(s).
 
-Simple script usage:
+Simple script usage (suffix *.groovy* is automatically added if missing):
 
 ```bash
-gradlew instanceGroovyEval -Pinstance.groovyEval.script=page-resource-type-update.groovy
+gradlew instanceGroovyEval -Pinstance.groovyEval.script=page-resource-type-update
 ```
 
 By default, script outputs and results are hidden. Simply turn on info logging level to see them.
@@ -2430,9 +2430,9 @@ Sample task output (first script ends with success, second with error):
 ```
 > Task :aem:instanceGroovyEval
 Groovy script evaluation errors (2):
-1) '/Users/krystian.panek/Projects/gradle-aem-multi/aem/gradle/groovyScript/page-resource-type-update.groovy' on LocalInstance(name='local-author', httpUrl='http://localhost:4502')
+1) '/Users/krystian.panek/Projects/gradle-aem-multi/aem/gradle/groovyScript/page-resource-type-update' on LocalInstance(name='local-author', httpUrl='http://localhost:4502')
 java.lang.Exception: Cannot update page resource type due to repository error!
-2) '/Users/krystian.panek/Projects/gradle-aem-multi/aem/gradle/groovyScript/page-resource-type-update.groovy' on LocalInstance(name='local-publish', httpUrl='http://localhost:4503')
+2) '/Users/krystian.panek/Projects/gradle-aem-multi/aem/gradle/groovyScript/page-resource-type-update' on LocalInstance(name='local-publish', httpUrl='http://localhost:4503')
 java.lang.Exception: Cannot update page resource type due to repository error!
 Evaluated Groovy script(s)
 Succeeded: 2/4=50.00%. Elapsed time: 00:05

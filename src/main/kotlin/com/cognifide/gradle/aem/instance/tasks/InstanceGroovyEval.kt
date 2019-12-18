@@ -20,6 +20,7 @@ open class InstanceGroovyEval : AemDefaultTask() {
     fun eval() {
         val summary = aem.groovyEval {
             scriptPattern = aem.prop.string("instance.groovyEval.script") ?: ""
+            scriptSuffix = aem.prop.string("instance.groovyEval.scriptSuffix") ?: ""
             data = aem.prop.map("instance.groovyEval.data") ?: mapOf()
             faulty = aem.prop.boolean("instance.groovyEval.faulty") ?: true
             options()

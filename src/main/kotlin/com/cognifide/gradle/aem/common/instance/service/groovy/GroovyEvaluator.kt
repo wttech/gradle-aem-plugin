@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.common.instance.service.groovy
 
 import com.cognifide.gradle.aem.AemExtension
+import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.time.StopWatch
 
 class GroovyEvaluator(private val aem: AemExtension) {
@@ -8,6 +9,8 @@ class GroovyEvaluator(private val aem: AemExtension) {
     private val logger = aem.logger
 
     var scriptPattern: String = ""
+
+    var scriptSuffix: String = ".groovy"
 
     var instances = aem.instances
 
@@ -30,7 +33,7 @@ class GroovyEvaluator(private val aem: AemExtension) {
             throw GroovyConsoleException("No instances defined for Groovy script evaluation!")
         }
 
-        val scripts = instances.first().sync.groovyConsole.getScripts(scriptPattern)
+        val scripts = instances.first().sync.groovyConsole.getScripts(StringUtils.appendIfMissing(scriptPattern, scriptSuffix))
         val statuses = mutableListOf<GroovyEvalStatus>()
 
         val stopWatch = StopWatch().apply { start() }
