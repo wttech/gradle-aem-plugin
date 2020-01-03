@@ -56,6 +56,15 @@ class BundlePluginTest: AemBuildTest() {
         runBuild(projectDir, "bundleCompose", "-Poffline") {
             assertTask(":bundleCompose")
             assertBundle("build/aem/bundleCompose/bundle.minimal.jar")
+            assertZipEntry("build/aem/bundleCompose/bundle.minimal.jar", "OSGI-INF/com.company.aem.example.HelloService.xml", """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.3.0" name="com.company.aem.example.HelloService" immediate="true" activate="activate" deactivate="deactivate">
+                  <service>
+                    <provide interface="com.company.aem.example.HelloService"/>
+                  </service>
+                  <implementation class="com.company.aem.example.HelloService"/>
+                </scr:component>
+            """)
         }
     }
 
@@ -123,8 +132,11 @@ class BundlePluginTest: AemBuildTest() {
 
         runBuild(projectDir, "packageCompose", "-Poffline") {
             assertTask(":packageCompose")
-            assertPackage("build/aem/packageCompose/bundle.extended-1.0.0.zip")
-            assertPackageBundle("build/aem/packageCompose/bundle.extended-1.0.0.zip", "jcr_root/apps/bundle-extended/install/bundle.extended-1.0.0.jar")
+
+            val pkgPath = "build/aem/packageCompose/bundle.extended-1.0.0.zip"
+
+            assertPackage(pkgPath)
+            assertPackageBundle(pkgPath, "jcr_root/apps/bundle-extended/install/bundle.extended-1.0.0.jar")
         }
     }
 }

@@ -1628,7 +1628,7 @@ aem {
 Available transfer types: *package_download* (default) and *vlt_checkout*.
 
 ```bash
-gradlew :site.demo:packageSync -Psync.type=vlt_checkout
+gradlew :site.demo:packageSync -Ppackage.sync.type=vlt_checkout
 ```
 
 ##### Downloading package options
@@ -1652,7 +1652,7 @@ gradlew :site.demo:packageSync -Pforce
 Available mode types: *copy_and_clean* (default), *clean_only* and *copy_only*.
 
 ```bash
-gradlew :site.demo:packageSync -Psync.mode=clean_only
+gradlew :site.demo:packageSync -Ppackage.sync.mode=clean_only
 ```
 
 ##### Filter file at custom path

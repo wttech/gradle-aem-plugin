@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Assertions.*
 import org.zeroturnaround.zip.ZipUtil
 import java.io.ByteArrayInputStream
 import java.io.File
+import java.nio.charset.StandardCharsets
 import java.util.jar.Attributes
 
 class AemBuildResult(val result: BuildResult, val projectDir: File) {
@@ -17,6 +18,22 @@ class AemBuildResult(val result: BuildResult, val projectDir: File) {
 
     fun assertFileExists(file: File) {
         assertTrue({ file.exists() }, "File does not exist: $file")
+    }
+
+    fun assertZipEntry(zipPath: String, entry: String, expectedContent: String? = null) = assertZipEntry(file(zipPath), entry, expectedContent)
+
+    fun assertZipEntry(zip: File, entry: String, expectedContent: String? = null) {
+        assertTrue({ ZipUtil.containsEntry(zip, entry) }, "File '$entry' is not included in package '$zip'.")
+
+        val actualContent = ZipUtil.unpackEntry(zip, entry) ?: ByteArray(0)
+        if (expectedContent != null) {
+            val actualString = actualContent.toString(StandardCharsets.UTF_8).trim()
+            val expectedContentTrimmed = expectedContent.trimIndent().trim()
+
+            assertEquals(expectedContentTrimmed, actualString, "Content of entry '$entry' included in ZIP '$zip' differs from expected one.")
+        } else {
+            assertTrue(actualContent.isNotEmpty(), "File '$entry' included in ZIP '$zip' cannot be empty.")
+        }
     }
 
     fun assertTask(taskPath: String, outcome: TaskOutcome = TaskOutcome.SUCCESS) {
@@ -49,17 +66,10 @@ class AemBuildResult(val result: BuildResult, val projectDir: File) {
         assertPackageVaultFiles(pkg)
     }
 
-    fun assertPackageFile(pkgPath: String, entry: String) = assertPackageFile(file(pkgPath), entry)
-
-    fun assertPackageFile(pkg: File, entry: String) {
-        assertTrue({ ZipUtil.containsEntry(pkg, entry) }, "File '$entry' is not included in package '$pkg'.")
-        assertTrue({ ZipUtil.unpackEntry(pkg, entry).isNotEmpty() }, "File '$entry' included in package '$pkg' cannot be empty.")
-    }
-
     fun assertPackageBundle(pkgPath: String, entry: String, tests: Jar.() -> Unit = {}) = assertPackageBundle(file(pkgPath), entry, tests)
 
     fun assertPackageBundle(pkg: File, entry: String, tests: Jar.() -> Unit = {}) {
-        assertPackageFile(pkg, entry)
+        assertZipEntry(pkg, entry)
 
         val jar = Jar(pkg.name, ByteArrayInputStream(ZipUtil.unpackEntry(pkg, entry)))
         val attributes = jar.manifest.mainAttributes
@@ -72,13 +82,17 @@ class AemBuildResult(val result: BuildResult, val projectDir: File) {
     fun isBundle(attributes: Attributes) = attributes.getValue("Bundle-SymbolicName").isNullOrBlank()
 
     fun assertPackageVaultFiles(pkg: File) {
-        VAULT_FILES.onEach { assertPackageFile(pkg, it) }
+        VAULT_FILES.onEach { assertZipEntry(pkg, it) }
     }
 
     companion object {
         val VAULT_FILES = listOf(
-                "META-INF/vault/properties.xml",
+                "META-INF/vault/config.xml",
+                "META-INF/vault/definition/thumbnail.png",
                 "META-INF/vault/filter.xml",
+                "META-INF/vault/nodetypes.cnd",
+                "META-INF/vault/privileges.xml",
+                "META-INF/vault/properties.xml",
                 "META-INF/vault/settings.xml"
         )
     }
