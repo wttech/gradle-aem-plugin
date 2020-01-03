@@ -3,7 +3,7 @@ package com.cognifide.gradle.aem.common.instance.check
 import com.cognifide.gradle.aem.common.instance.Instance
 import org.apache.commons.lang3.time.StopWatch
 
-class CheckProgress(private val instance: Instance) {
+class CheckProgress(val instance: Instance) {
 
     var currentCheck: CheckGroup? = null
 

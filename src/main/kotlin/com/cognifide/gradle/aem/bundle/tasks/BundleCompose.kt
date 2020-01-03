@@ -69,7 +69,7 @@ open class BundleCompose : Jar(), AemTask {
      * for built OSGi bundle.
      */
     @Input
-    var vaultFilter: Boolean = true
+    var vaultFilter: Boolean = aem.prop.boolean("bundle.vaultFilter") ?: true
 
     /**
      * Enable or disable support for auto-generating OSGi specific JAR manifest attributes
@@ -77,7 +77,7 @@ open class BundleCompose : Jar(), AemTask {
      * using 'javaPackage' property.
      */
     @Input
-    var attributesConvention: Boolean = true
+    var attributesConvention: Boolean = aem.prop.boolean("bundle.attributesConvention") ?: true
 
     /**
      * Determines package in which OSGi bundle being built contains its classes.
@@ -101,7 +101,7 @@ open class BundleCompose : Jar(), AemTask {
      * @see <http://bnd.bndtools.org/heads/private_package.html>
      */
     @Input
-    var javaPackageOptions: String = "-split-package:=merge-first"
+    var javaPackageOptions: String = aem.prop.string("bundle.javaPackageOptions") ?: "-split-package:=merge-first"
 
     @Internal
     var importPackages: List<String> = listOf("*")
