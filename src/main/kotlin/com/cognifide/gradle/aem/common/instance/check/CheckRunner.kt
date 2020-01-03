@@ -19,13 +19,14 @@ class CheckRunner(internal val aem: AemExtension) {
         checks = definitions
     }
 
-    private var progresses: Map<Instance, CheckProgress> = mapOf()
+    var progresses = listOf<CheckProgress>()
 
     /**
      * Get current checking progress of concrete instance.
      */
     fun progress(instance: Instance): CheckProgress {
-        return progresses[instance] ?: throw InstanceException("No progress available for instance '${instance.name}'!")
+        return progresses.firstOrNull { it.instance == instance }
+                ?: throw InstanceException("No progress available for instance '${instance.name}'!")
     }
 
     /**
@@ -75,7 +76,7 @@ class CheckRunner(internal val aem: AemExtension) {
     private fun ProgressIndicator.doChecking(instances: Collection<Instance>) {
         step = "Checking"
 
-        val progresses = instances.map { CheckProgress(it) }
+        progresses = instances.map { CheckProgress(it) }
         updater { update(progresses.sortedBy { it.instance.name }.joinToString(" | ") { it.summary }) }
 
         runningWatch.start()
@@ -123,7 +124,7 @@ class CheckRunner(internal val aem: AemExtension) {
             step = "Aborting"
 
             if (!logInstantly) {
-                progresses.values.forEach { it.currentCheck?.log() }
+                progresses.forEach { it.currentCheck?.log() }
             }
 
             if (verbose) {
