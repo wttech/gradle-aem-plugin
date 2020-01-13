@@ -149,14 +149,20 @@ class Node(val repository: Repository, val path: String) : Serializable {
     ) = importInternal(importParams(properties, null, name, replace, replaceProperties))
 
     /**
-     * Import content structure defined in file into repository.
+     * Import content structure defined in JSON file into repository.
      */
     fun import(
-        jsonFile: File,
+        file: File,
         name: String? = null,
         replace: Boolean = false,
         replaceProperties: Boolean = false
-    ) = importInternal(importParams(null, jsonFile, name, replace, replaceProperties))
+    ): RepositoryResult {
+        if (!file.exists()) {
+            throw RepositoryException("File containing JSON content for node import does not exist: $file!")
+        }
+
+        return importInternal(importParams(null, file, name, replace, replaceProperties))
+    }
 
     private fun importInternal(params: Map<String, Any?>) = try {
         log("Importing node '$name' into repository node '$path' on $instance")
@@ -170,20 +176,22 @@ class Node(val repository: Repository, val path: String) : Serializable {
 
     private fun importParams(
         properties: Map<String, Any?>? = null,
-        jsonFile: File? = null,
+        file: File? = null,
         name: String? = null,
         replace: Boolean = false,
         replaceProperties: Boolean = false
-    ): Map<String, Any?> = mutableMapOf<String, Any?>().apply {
-        putAll(operationProperties("import"))
-        putAll(mapOf(
-                ":replace" to replace,
-                ":replaceProperties" to replaceProperties,
-                ":contentType" to "json"
-        ))
-        name?.let { put(":name", it) }
-        properties?.let { put(":content", Formats.toJson(properties)) }
-        jsonFile?.let { put(":contentFile", jsonFile) }
+    ): Map<String, Any?> {
+        return mutableMapOf<String, Any?>().apply {
+            putAll(operationProperties("import"))
+            putAll(mapOf(
+                    ":replace" to replace,
+                    ":replaceProperties" to replaceProperties,
+                    ":contentType" to "json"
+            ))
+            name?.let { put(":name", it) }
+            properties?.let { put(":content", Formats.toJson(properties)) }
+            file?.let { put(":contentFile", file) }
+        }
     }
 
     /**
