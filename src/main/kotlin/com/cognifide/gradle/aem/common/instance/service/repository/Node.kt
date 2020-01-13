@@ -137,6 +137,56 @@ class Node(val repository: Repository, val path: String) : Serializable {
     }
 
     /**
+     * Import node into repository.
+     *
+     * Effectively it is an alternative method for saving node supporting dots in node names.
+     */
+    fun import(
+        properties: Map<String, Any?>,
+        name: String? = null,
+        replace: Boolean = false,
+        replaceProperties: Boolean = false
+    ) = importInternal(importParams(properties, null, name, replace, replaceProperties))
+
+    /**
+     * Import content structure defined in file into repository.
+     */
+    fun import(
+        jsonFile: File,
+        name: String? = null,
+        replace: Boolean = false,
+        replaceProperties: Boolean = false
+    ) = importInternal(importParams(null, jsonFile, name, replace, replaceProperties))
+
+    private fun importInternal(params: Map<String, Any?>) = try {
+        log("Importing node '$name' into repository node '$path' on $instance")
+
+        http.postMultipart(path, params) {
+            asObjectFromJson(it, RepositoryResult::class.java)
+        }
+    } catch (e: AemException) {
+        throw RepositoryException("Cannot import node '$name' into repository node '$path' on $instance. Cause: ${e.message}", e)
+    }
+
+    private fun importParams(
+        properties: Map<String, Any?>? = null,
+        jsonFile: File? = null,
+        name: String? = null,
+        replace: Boolean = false,
+        replaceProperties: Boolean = false
+    ): Map<String, Any?> = mutableMapOf<String, Any?>().apply {
+        putAll(operationProperties("import"))
+        putAll(mapOf(
+                ":replace" to replace,
+                ":replaceProperties" to replaceProperties,
+                ":contentType" to "json"
+        ))
+        name?.let { put(":name", it) }
+        properties?.let { put(":content", Formats.toJson(properties)) }
+        jsonFile?.let { put(":contentFile", jsonFile) }
+    }
+
+    /**
      * Delete node and all children from repository.
      */
     fun delete(): RepositoryResult = try {
@@ -173,6 +223,20 @@ class Node(val repository: Repository, val path: String) : Serializable {
             http.postUrlencoded(path, operationProperties("copy") + mapOf(
                     ":dest" to targetPath
             )) { checkStatus(it, HttpStatus.SC_CREATED) }
+        } catch (e: AemException) {
+            throw RepositoryException("Cannot copy repository node from '$path' to '$targetPath' on $instance. Cause: '${e.message}'")
+        }
+    }
+
+    /**
+     * Move node to from source path to destination path.
+     */
+    fun move(targetPath: String, replace: Boolean = false) {
+        try {
+            http.postUrlencoded(path, operationProperties("move") + mapOf(
+                    ":dest" to targetPath,
+                    ":replace" to replace
+            )) { checkStatus(it, listOf(HttpStatus.SC_CREATED, HttpStatus.SC_OK)) }
         } catch (e: AemException) {
             throw RepositoryException("Cannot copy repository node from '$path' to '$targetPath' on $instance. Cause: '${e.message}'")
         }
