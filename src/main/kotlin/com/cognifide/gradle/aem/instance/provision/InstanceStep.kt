@@ -14,6 +14,9 @@ class InstanceStep(val instance: Instance, val definition: Step) {
 
     private val marker = instance.sync.repository.node("${provisioner.path}/step/${definition.id}")
 
+    val greedy: Boolean
+        get() = provisioner.greedy || provisioner.aem.prop.flag("instance.provision.${definition.id}.greedy")
+
     val startedAt: Date
         get() = marker.properties.date(STARTED_AT_PROP)
                 ?: throw ProvisionException("Provision step '${definition.id}' not yet started on $instance!")

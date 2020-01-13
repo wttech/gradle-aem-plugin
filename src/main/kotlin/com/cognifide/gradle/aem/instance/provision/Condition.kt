@@ -15,6 +15,8 @@ class Condition(val step: InstanceStep) {
 
     fun never(): Boolean = false
 
+    fun greedy(): Boolean = step.greedy
+
     fun rerunOnFail(): Boolean = step.ended && step.failed && step.definition.rerunOnFail
 
     fun sinceEndedMoreThan(millis: Long) = step.ended && !Formats.durationFit(step.endedAt.time, instance.zoneId, millis)
@@ -24,7 +26,7 @@ class Condition(val step: InstanceStep) {
     /**
      * Perform step only once, but try again if it fails.
      */
-    fun once() = failSafeOnce()
+    fun once() = greedy() || failSafeOnce()
 
     /**
      * Perform step only once, but try again if it fails.

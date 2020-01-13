@@ -16,7 +16,7 @@ class Provisioner(val aem: AemExtension) {
     var instances = aem.instances
 
     /**
-     * Forces to perform all steps regardless their state on instances (already performed).
+     * Forces to perform steps that supports greediness regardless their state on instances (already performed).
      */
     var greedy = aem.prop.flag("instance.provision.greedy")
 
@@ -63,7 +63,7 @@ class Provisioner(val aem: AemExtension) {
     }
 
     private fun InstanceStep.provisionStep(): Action {
-        if (!greedy && !isPerformable()) {
+        if (!isPerformable()) {
             update()
             aem.logger.info("Provision step '${definition.id}' skipped for $instance")
             return Action(this, Status.SKIPPED)

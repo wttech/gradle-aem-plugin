@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.common.instance.service.repository
 
 import com.cognifide.gradle.aem.common.instance.InstanceService
 import com.cognifide.gradle.aem.common.instance.InstanceSync
+import java.io.File
 
 class Repository(sync: InstanceSync) : InstanceService(sync) {
 
@@ -45,5 +46,23 @@ class Repository(sync: InstanceSync) : InstanceService(sync) {
      /**
      * Shorthand method for creating or updating node at given path.
      */
-    fun node(path: String, properties: Map<String, Any?>): RepositoryResult = node(path).save(properties)
+    fun node(path: String, properties: Map<String, Any?>): RepositoryResult {
+         val (dir, name) = splitPath(path)
+         return when {
+             name.contains(".") -> node(dir).import(properties, name, replace = true, replaceProperties = true)
+             else -> node(path).save(properties)
+         }
+    }
+
+    /**
+     * Shorthand method for importing content from JSON file at given path.
+     */
+    fun node(path: String, jsonFile: File): RepositoryResult {
+        val (dir, name) = splitPath(path)
+        return node(dir).import(jsonFile, name, replace = true, replaceProperties = true)
+    }
+
+    private fun splitPath(path: String): Pair<String, String> {
+        return path.substringBeforeLast("/") to path.substringAfterLast("/")
+    }
 }
