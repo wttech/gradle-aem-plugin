@@ -229,7 +229,7 @@ class Node(val repository: Repository, val path: String) : Serializable {
     }
 
     /**
-     * Move node to from source path to destination path.
+     * Move node from source path to destination path.
      */
     fun move(targetPath: String, replace: Boolean = false) {
         try {
@@ -238,7 +238,7 @@ class Node(val repository: Repository, val path: String) : Serializable {
                     ":replace" to replace
             )) { checkStatus(it, listOf(HttpStatus.SC_CREATED, HttpStatus.SC_OK)) }
         } catch (e: AemException) {
-            throw RepositoryException("Cannot copy repository node from '$path' to '$targetPath' on $instance. Cause: '${e.message}'")
+            throw RepositoryException("Cannot move repository node from '$path' to '$targetPath' on $instance. Cause: '${e.message}'")
         }
     }
 
