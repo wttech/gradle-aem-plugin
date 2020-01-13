@@ -226,28 +226,28 @@ class Node(val repository: Repository, val path: String) : Serializable {
     /**
      * Copy node to from source path to destination path.
      */
-    fun copy(targetPath: String) {
-        try {
-            http.postUrlencoded(path, operationProperties("copy") + mapOf(
-                    ":dest" to targetPath
-            )) { checkStatus(it, HttpStatus.SC_CREATED) }
-        } catch (e: AemException) {
-            throw RepositoryException("Cannot copy repository node from '$path' to '$targetPath' on $instance. Cause: '${e.message}'")
-        }
+    fun copy(targetPath: String): Node = try {
+        http.postUrlencoded(path, operationProperties("copy") + mapOf(
+                ":dest" to targetPath
+        )) { checkStatus(it, HttpStatus.SC_CREATED) }
+
+        Node(repository, targetPath)
+    } catch (e: AemException) {
+        throw RepositoryException("Cannot copy repository node from '$path' to '$targetPath' on $instance. Cause: '${e.message}'")
     }
 
     /**
      * Move node from source path to destination path.
      */
-    fun move(targetPath: String, replace: Boolean = false) {
-        try {
-            http.postUrlencoded(path, operationProperties("move") + mapOf(
-                    ":dest" to targetPath,
-                    ":replace" to replace
-            )) { checkStatus(it, listOf(HttpStatus.SC_CREATED, HttpStatus.SC_OK)) }
-        } catch (e: AemException) {
-            throw RepositoryException("Cannot move repository node from '$path' to '$targetPath' on $instance. Cause: '${e.message}'")
-        }
+    fun move(targetPath: String, replace: Boolean = false): Node = try {
+        http.postUrlencoded(path, operationProperties("move") + mapOf(
+                ":dest" to targetPath,
+                ":replace" to replace
+        )) { checkStatus(it, listOf(HttpStatus.SC_CREATED, HttpStatus.SC_OK)) }
+
+        Node(repository, targetPath)
+    } catch (e: AemException) {
+        throw RepositoryException("Cannot move repository node from '$path' to '$targetPath' on $instance. Cause: '${e.message}'")
     }
 
     /**
@@ -258,7 +258,7 @@ class Node(val repository: Repository, val path: String) : Serializable {
     /**
      * Copy node from other path to current path.
      */
-    fun copyFrom(sourcePath: String) = repository.node(sourcePath).copy(path)
+    fun copyFrom(sourcePath: String) = Node(repository, sourcePath).copy(path)
 
     /**
      * Search nodes by traversing a node tree.
