@@ -17,6 +17,8 @@ class RcpClient(private val aem: AemExtension) {
 
     var pathsFile: File? = null
 
+    var workspace = "crx"
+
     var opts: String = "-b 100 -r -u"
 
     val stopWatch = StopWatch()
@@ -51,9 +53,10 @@ class RcpClient(private val aem: AemExtension) {
     fun copy(sourcePath: String, targetPath: String) {
         checkInstances()
         stopWatch.apply { if (!isStarted) start() else resume() }
-        aem.vlt("rcp $opts ${sourceInstance!!.httpBasicAuthUrl}/crx/-/jcr:root$sourcePath ${targetInstance!!.httpBasicAuthUrl}/crx/-/jcr:root$targetPath")
+        aem.vlt("rcp $opts ${sourceInstance!!.httpBasicAuthUrl}/$workspace/-/jcr:root$sourcePath " +
+                "${targetInstance!!.httpBasicAuthUrl}/$workspace/-/jcr:root$targetPath")
         copiedPaths++
-        stopWatch.stop()
+        stopWatch.suspend()
     }
 
     fun summary(): RcpSummary {

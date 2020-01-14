@@ -21,6 +21,7 @@ open class InstanceRcp : AemDefaultTask() {
         aem.prop.string("instance.rcp.target")?.run { targetInstance = aem.instance(this) }
         aem.prop.list("instance.rcp.paths")?.let { paths = it }
         aem.prop.string("instance.rcp.pathsFile")?.let { pathsFile = aem.project.file(it) }
+        aem.prop.string("instance.rcp.workspace")?.let { workspace = it }
         aem.prop.string("instance.rcp.opts")?.let { opts = it }
 
         options()
