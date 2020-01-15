@@ -1255,7 +1255,7 @@ aem {
 
 ##### CRX package naming
 
-Composed package / ZIP file name and Vault properties are set by convention - they are derived from project names and Gradle `project.group` and `project.version` properties. 
+ZIP file name and metadata (Vault properties) of composed CRX package are set by convention - they are derived from project names and Gradle `project.group` and `project.version` properties. 
 However, only if it is required (adapting the project to fit convention is more recommended approach), following snippet might be useful, to know how to customize particular values:
 
 ```kotlin
