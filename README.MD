@@ -1197,8 +1197,8 @@ Inherits from task [ZIP](https://docs.gradle.org/3.5/dsl/org.gradle.api.tasks.bu
 aem {
     tasks {
         packageCompose {
+            archiveBaseName.set(this@aem.baseName)
             duplicatesStrategy = DuplicatesStrategy.WARN
-            baseName = baseName
             contentDir = packageOptions.rootDir
             bundlePath = packageOptions.installPath
             bundleRunMode = null
