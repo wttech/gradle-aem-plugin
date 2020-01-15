@@ -263,6 +263,7 @@ class AemTaskFacade(val aem: AemExtension) : Serializable {
 
     inline fun <reified T : Task> getAll() = getAll(T::class.java)
 
+    @Synchronized // TODO https://github.com/Cognifide/gradle-aem-plugin/issues/543
     fun <T : Task> getAll(type: Class<T>) = project.tasks.withType(type).toList()
 
     fun registerSequence(name: String, sequenceOptions: TaskSequence.() -> Unit) = registerSequence(name, {}, sequenceOptions)
