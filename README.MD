@@ -1262,11 +1262,11 @@ However, only if it is required (adapting the project to fit convention is more 
 aem {
     tasks {
         packageCompose {
-            // controlling ZIP file name by properties coming from inherited Gradle ZIP task
-            // https://docs.gradle.org/current/dsl/org.gradle.api.tasks.bundling.Zip.html
+            // Controlling ZIP file name by properties coming from inherited Gradle ZIP task: https://docs.gradle.org/current/dsl/org.gradle.api.tasks.bundling.Zip.html
             archiveBaseName.set("my-package")
-
-            vaultDefinition { // section for amending values visible in CRX package manager
+    
+            // Controlling values visible in CRX Package Manager
+            vaultDefinition { 
                 properties = mapOf(
                     "acHandling" to "merge_preserve",
                     "requiresRoot" to false
