@@ -1264,7 +1264,7 @@ aem {
         packageCompose {
             // controlling ZIP file name by properties coming from inherited Gradle ZIP task
             // https://docs.gradle.org/current/dsl/org.gradle.api.tasks.bundling.Zip.html
-            archiveBaseName.set("my-package.zip")
+            archiveBaseName.set("my-package")
 
             vaultDefinition { // section for amending values visible in CRX package manager
                 properties = mapOf(
