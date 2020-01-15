@@ -42,6 +42,7 @@
      * [Package plugin](#package-plugin)
         * [Task packageCompose](#task-packagecompose)
            * [CRX package default configuration](#crx-package-default-configuration)
+           * [CRX package naming](#crx-package-naming)
            * [CRX package validation](#crx-package-validation)
            * [Including additional OSGi bundle into CRX package](#including-additional-osgi-bundle-into-crx-package)
            * [Nesting CRX packages](#nesting-crx-packages)
@@ -1249,6 +1250,37 @@ aem {
             fromConvention = true
         }
     }    
+}
+```
+
+##### CRX package naming
+
+Composed package / ZIP file name and Vault properties are set by convention - they are derived from project names and Gradle `project.group` and `project.version` properties. 
+However, only if it is required (adapting the project to fit convention is more recommended approach), following snippet might be useful, to know how to customize particular values:
+
+```kotlin
+aem {
+    tasks {
+        packageCompose {
+            // controlling ZIP file name by properties coming from inherited Gradle ZIP task
+            // https://docs.gradle.org/current/dsl/org.gradle.api.tasks.bundling.Zip.html
+            archiveBaseName.set("my-package.zip")
+
+            vaultDefinition { // section for amending values visible in CRX package manager
+                properties = mapOf(
+                    "acHandling" to "merge_preserve",
+                    "requiresRoot" to false
+                )
+                name = baseName
+                group = if (project == project.rootProject) {
+                    project.group.toString()
+                } else {
+                    project.rootProject.name
+                }
+                version = project.version.toString()
+            }
+        }
+    }
 }
 ```
 
