@@ -1,7 +1,5 @@
 package com.cognifide.gradle.aem.pkg.tasks
 
-import com.cognifide.gradle.aem.common.instance.InstanceException
-import com.cognifide.gradle.aem.common.instance.InstanceSync
 import com.cognifide.gradle.aem.common.instance.checkAvailable
 import com.cognifide.gradle.aem.common.instance.names
 import com.cognifide.gradle.aem.common.tasks.PackageTask
@@ -11,55 +9,22 @@ import org.gradle.api.tasks.TaskAction
 
 open class PackagePurge : PackageTask() {
 
+    @TaskAction
+    fun purge() {
+        instances.checkAvailable()
+        sync { packageManager.purge(it) }
+        aem.notifier.notify("Package purged", "${packages.fileNames} from ${instances.names}")
+    }
+
     override fun taskGraphReady(graph: TaskExecutionGraph) {
         if (graph.hasTask(this)) {
             aem.prop.checkForce(this)
         }
     }
 
-    @TaskAction
-    fun purge() {
-        instances.checkAvailable()
-
-        aem.progress(instances.size * packages.size) {
-            aem.syncFiles(instances, packages) { file ->
-                increment("${file.name} -> ${instance.name}") {
-                    try {
-                        val pkg = packageManager.get(file)
-
-                        uninstall(this, pkg.path)
-                        delete(this, pkg.path)
-                    } catch (e: InstanceException) {
-                        aem.logger.info(e.message)
-                        aem.logger.debug("Nothing to purge.", e)
-                    }
-                }
-            }
-        }
-
-        aem.notifier.notify("Package purged", "${packages.fileNames} from ${instances.names}")
-    }
-
-    private fun uninstall(sync: InstanceSync, packagePath: String) {
-        try {
-            sync.packageManager.uninstall(packagePath)
-        } catch (e: InstanceException) {
-            logger.info("${e.message} Is it installed already?")
-            logger.debug("Cannot uninstall package.", e)
-        }
-    }
-
-    private fun delete(sync: InstanceSync, packagePath: String) {
-        try {
-            sync.packageManager.delete(packagePath)
-        } catch (e: InstanceException) {
-            logger.info(e.message)
-            logger.debug("Cannot delete package.", e)
-        }
-    }
-
     init {
         description = "Uninstalls and then deletes CRX package on AEM instance(s)."
+        awaited = aem.prop.boolean("package.purge.awaited") ?: true
     }
 
     companion object {

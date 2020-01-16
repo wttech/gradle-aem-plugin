@@ -9,26 +9,17 @@ import org.gradle.api.tasks.TaskAction
 
 open class PackageDelete : PackageTask() {
 
+    @TaskAction
+    fun delete() {
+        instances.checkAvailable()
+        sync { packageManager.delete(it) }
+        aem.notifier.notify("Package deleted", "${packages.fileNames} on ${instances.names}")
+    }
+
     override fun taskGraphReady(graph: TaskExecutionGraph) {
         if (graph.hasTask(this)) {
             aem.prop.checkForce(this)
         }
-    }
-
-    @TaskAction
-    fun delete() {
-        instances.checkAvailable()
-
-        aem.progress(instances.size * packages.size) {
-            aem.syncFiles(instances, packages) { file ->
-                increment("${file.name} -> ${instance.name}") {
-                    val pkg = packageManager.get(file)
-                    packageManager.delete(pkg.path)
-                }
-            }
-        }
-
-        aem.notifier.notify("Package deleted", "${packages.fileNames} on ${instances.names}")
     }
 
     init {

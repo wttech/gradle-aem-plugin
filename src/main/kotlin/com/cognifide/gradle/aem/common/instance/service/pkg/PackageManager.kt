@@ -170,6 +170,8 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         return response
     }
 
+    fun install(file: File) = install(get(file).path)
+
     fun install(remotePath: String, recursive: Boolean = true, retry: Retry = aem.retry()): InstallResponse {
         return retry.withCountdown<InstallResponse, InstanceException>("install package '$remotePath' on '${instance.name}'") {
             val url = "$HTML_PATH$remotePath/?cmd=install"
@@ -229,6 +231,8 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         installRetry: Retry = aem.retry()
     ) = deploy(file, uploadForce, uploadRetry, installRecursive, installRetry, true)
 
+    fun activate(file: File) = activate(get(file).path)
+
     fun activate(remotePath: String): UploadResponse {
         val url = "$JSON_PATH$remotePath/?cmd=replicate"
 
@@ -248,6 +252,8 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
 
         return response
     }
+
+    fun delete(file: File) = delete(get(file).path)
 
     fun delete(remotePath: String): DeleteResponse {
         val url = "$HTML_PATH$remotePath/?cmd=delete"
@@ -269,6 +275,8 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         return response
     }
 
+    fun uninstall(file: File) = uninstall(get(file).path)
+
     fun uninstall(remotePath: String): UninstallResponse {
         val url = "$HTML_PATH$remotePath/?cmd=uninstall"
 
@@ -287,6 +295,29 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         }
 
         return response
+    }
+
+    fun purge(file: File) {
+        try {
+            val pkg = get(file)
+
+            try {
+                uninstall(pkg.path)
+            } catch (e: InstanceException) {
+                logger.info("${e.message} Is it installed already?")
+                logger.debug("Cannot uninstall package.", e)
+            }
+
+            try {
+                delete(pkg.path)
+            } catch (e: InstanceException) {
+                logger.info(e.message)
+                logger.debug("Cannot delete package.", e)
+            }
+        } catch (e: InstanceException) {
+            aem.logger.info(e.message)
+            aem.logger.debug("Nothing to purge.", e)
+        }
     }
 
     companion object {
