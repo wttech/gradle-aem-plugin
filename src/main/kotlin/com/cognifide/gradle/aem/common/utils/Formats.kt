@@ -251,6 +251,10 @@ object Formats {
         else -> manglePathInternal(path)
     }
 
+    fun camelToSeparated(text: String, separator: String = "_"): String {
+        return text.replace("(.)(\\p{Upper})".toRegex(), "$1$separator$2").toLowerCase()
+    }
+
     private fun manglePathInternal(path: String): String {
         var mangledPath = path
         if (path.contains(":")) {

@@ -18,21 +18,13 @@ open class PackageUninstall : PackageTask() {
     @TaskAction
     fun uninstall() {
         instances.checkAvailable()
-
-        aem.progress(instances.size * packages.size) {
-            aem.syncFiles(instances, packages) { file ->
-                increment("${file.name} -> ${instance.name}") {
-                    val pkg = packageManager.get(file)
-                    packageManager.uninstall(pkg.path)
-                }
-            }
-        }
-
+        sync { packageManager.uninstall(it) }
         aem.notifier.notify("Package uninstalled", "${packages.fileNames} from ${instances.names}")
     }
 
     init {
         description = "Uninstalls AEM package on instance(s)."
+        awaited = aem.prop.boolean("package.uninstall.awaited") ?: true
     }
 
     companion object {
