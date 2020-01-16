@@ -42,6 +42,7 @@
      * [Package plugin](#package-plugin)
         * [Task packageCompose](#task-packagecompose)
            * [CRX package default configuration](#crx-package-default-configuration)
+           * [CRX package naming](#crx-package-naming)
            * [CRX package validation](#crx-package-validation)
            * [Including additional OSGi bundle into CRX package](#including-additional-osgi-bundle-into-crx-package)
            * [Nesting CRX packages](#nesting-crx-packages)
@@ -1196,8 +1197,8 @@ Inherits from task [ZIP](https://docs.gradle.org/3.5/dsl/org.gradle.api.tasks.bu
 aem {
     tasks {
         packageCompose {
+            archiveBaseName.set(this@aem.baseName)
             duplicatesStrategy = DuplicatesStrategy.WARN
-            baseName = baseName
             contentDir = packageOptions.rootDir
             bundlePath = packageOptions.installPath
             bundleRunMode = null
@@ -1249,6 +1250,37 @@ aem {
             fromConvention = true
         }
     }    
+}
+```
+
+##### CRX package naming
+
+ZIP file name and metadata (Vault properties) of composed CRX package are set by convention - they are derived from project names and Gradle `project.group` and `project.version` properties. 
+However, only if it is required (adapting the project to fit convention is more recommended approach), following snippet might be useful, to know how to customize particular values:
+
+```kotlin
+aem {
+    tasks {
+        packageCompose {
+            // Controlling ZIP file name by properties coming from inherited Gradle ZIP task: https://docs.gradle.org/current/dsl/org.gradle.api.tasks.bundling.Zip.html
+            archiveBaseName.set("my-package")
+    
+            // Controlling values visible in CRX Package Manager
+            vaultDefinition { 
+                properties = mapOf(
+                    "acHandling" to "merge_preserve",
+                    "requiresRoot" to false
+                )
+                name = baseName
+                group = if (project == project.rootProject) {
+                    project.group.toString()
+                } else {
+                    project.rootProject.name
+                }
+                version = project.version.toString()
+            }
+        }
+    }
 }
 ```
 
@@ -1676,7 +1708,7 @@ Execute any JCR File Vault command.
 For instance, to reflect `instanceRcp` functionality, command below could be executed:
 
 ```bash
-gradlew :site.demo:packageSync -Ppackage.vlt.command='rcp -b 100 -r -u -n http://admin:admin@localhost:4502/crx/-/jcr:root/content/dam/example http://admin:admin@localhost:4503/crx/-/jcr:root/content/dam/example' 
+gradlew :site.demo:packageVlt -Ppackage.vlt.command='rcp -b 100 -r -u -n http://admin:admin@localhost:4502/crx/-/jcr:root/content/dam/example http://admin:admin@localhost:4503/crx/-/jcr:root/content/dam/example' 
 ```
 
 For more details about available parameters, please visit [VLT Tool documentation](https://helpx.adobe.com/experience-manager/6-4/sites/developing/using/ht-vlttool.html).
@@ -2368,20 +2400,20 @@ Copy JCR content from one instance to another. Sample usages below.
 * Using predefined instances with multiple different source and target nodes:
 
   ```bash
-  gradlew :instanceRcp -Prcp.source.instance=int-author -Prcp.target.instance=local-author -Prcp.paths=[/content/example-demo=/content/example,/content/dam/example-demo=/content/dam/example]
+  gradlew :instanceRcp -Pinstance.rcp.source=int-author -Pinstance.rcp.target=local-author -Pinstance.rcp.paths=[/content/example-demo=/content/example,/content/dam/example-demo=/content/dam/example]
   ```
 
 * Using predefined instances with multiple same source and target nodes:
 
   ```bash
-  gradlew :rcp -Prcp.source.instance=stg-author -Prcp.target.instance=int-author -Prcp.paths=[/content/example,/content/example2]
+  gradlew :instanceRcp -Prcp.source.instance=stg-author -Pinstance.rcp.target.instance=int-author -Pinstance.rcp.paths=[/content/example,/content/example2]
   ```
   Right side of assignment could skipped if equals to left (same path on both source & target instance).
 
 * Using predefined instances with source and target nodes specified in file:
 
   ```bash
-  gradlew :rcp -Prcp.source.instance=int-author -Prcp.target.instance=local-author -Prcp.pathsFile=paths.txt
+  gradlew :instanceRcp -Pinstance.rcp.source=int-author -Pinstance.rcp.target=local-author -Pinstance.rcp.pathsFile=paths.txt
   ```
 
   File format:
@@ -2397,14 +2429,13 @@ Copy JCR content from one instance to another. Sample usages below.
 * Using dynamically defined instances:
 
   ```bash
-  gradlew :rcp -Prcp.source.instance=http://user:pass@192.168.66.66:4502 -Prcp.target.instance=http://user:pass@192.168.33.33:4502 -Prcp.paths=[/content/example-demo=/content/example]
+  gradlew :instanceRcp -Pinstance.rcp.source=http://user:pass@192.168.66.66:4502 -Pinstance.rcp.target=http://user:pass@192.168.33.33:4502 -Pinstance.rcp.paths=[/content/example-demo=/content/example]
   ```
 
 Keep in mind, that copying JCR content between instances, could be a trigger for running AEM workflows like *DAM Update Asset* which could cause heavy load on instance.
 Consider disabling AEM workflow launchers before running this task and re-enabling after.
 
 RCP task is internally using [Vault Remote Copy](http://jackrabbit.apache.org/filevault/rcp.html) which requires bundle *Apache Sling Simple WebDAV Access to repositories (org.apache.sling.jcr.webdav)* present in active state on instance.
-
 
 #### Task `instanceGroovyEval`
 
