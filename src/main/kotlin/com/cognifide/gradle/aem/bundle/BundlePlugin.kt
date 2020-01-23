@@ -11,6 +11,7 @@ import org.gradle.api.Task
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.JavaPluginConvention
+import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.api.tasks.testing.Test
 import org.gradle.language.base.plugins.LifecycleBasePlugin
@@ -63,6 +64,9 @@ class BundlePlugin : AemPlugin() {
             named<Task>(LifecycleBasePlugin.ASSEMBLE_TASK_NAME) {
                 dependsOn(BundleCompose.NAME)
             }
+            named<Jar>(JavaPlugin.JAR_TASK_NAME) {
+                archiveClassifier.set(LIB_CLASSIFIER)
+            }
         }
     }
 
@@ -87,5 +91,7 @@ class BundlePlugin : AemPlugin() {
 
     companion object {
         const val ID = "com.cognifide.aem.bundle"
+
+        const val LIB_CLASSIFIER = "lib"
     }
 }
