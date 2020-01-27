@@ -1942,8 +1942,8 @@ This behavior is controlled by:
 ```kotlin
 aem {
     localInstance {
-        rootDir = prop.string("localInstance.root")?.let { project.file(it) } ?: projectMain.file(".aem/instance")
-        overridesDir = File(configCommonDir, LocalInstance.FILES_PATH)
+        rootDir = File(".instance/[author|publish]")
+        overridesDir = File("gradle/instance/local/[common|author|publish]")
         expandProperties = mapOf()
         expandFiles = listOf(
             "**/*.properties", 
@@ -1966,7 +1966,27 @@ Properties:
 
 Predefined expandable properties:
 
-* `instance` - [LocalInstance](src/main/kotlin/com/cognifide/gradle/aem/common/instance/LocalInstance.kt) object.
+* `instance` - [LocalInstanceManager](src/main/kotlin/com/cognifide/gradle/aem/common/instance/LocalInstanceManager.kt) object.
+
+An example could be providing additional configuration for the `sling.properties` file when running AEM 6.5 on Java 11:
+
+We need to override only two properties in the final `sling.properties` file: 
+* `org.osgi.framework.system.packages.extra`
+* and `org.osgi.framework.bootdelegation`
+
+To achieve that, add file with your props under `gradle` directory in your project:
+`gradle/instance/local/common/crx-quickstart/conf/sling.properties` 
+
+```properties
+# those properties describe what will be exported in the system bundle - minimal dependency set;
+# in Java 11 system bundle by default exports fewer API classes and sometimes we need to extend
+# this set to make our prior Java 11 bundles work.
+org.osgi.framework.system.packages.extra=org.apache.sling.launchpad.api;version\=1.2.0 ${org.apache.sling.launcher.system.packages},com.sun.org.apache.xpath.internal;version\="{dollar}{felix.detect.java.version}",com.sun.activation.registries;version\="{dollar}{felix.detect.java.version}"
+#https://issues.apache.org/jira/browse/FELIX-6184
+org.osgi.framework.bootdelegation=sun.*,com.sun.*,jdk.internal.reflect,jdk.internal.reflect.*
+```
+
+Notice, that adding the file under `gradle/instance/local/common` will apply it both for author and publish instances.
 
 #### Task `instanceBackup`
 
