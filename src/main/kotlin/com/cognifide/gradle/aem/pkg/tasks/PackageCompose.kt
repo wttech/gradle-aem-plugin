@@ -1,9 +1,10 @@
 package com.cognifide.gradle.aem.pkg.tasks
 
 import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.AemTask
+import com.cognifide.gradle.aem.aem
 import com.cognifide.gradle.aem.bundle.tasks.BundleCompose
 import com.cognifide.gradle.aem.bundle.BundlePlugin
-import com.cognifide.gradle.aem.common.build.DependencyOptions
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.aem.common.pkg.PackageFile
 import com.cognifide.gradle.aem.common.pkg.PackageFileFilter
@@ -11,12 +12,13 @@ import com.cognifide.gradle.aem.common.pkg.PackageValidator
 import com.cognifide.gradle.aem.common.pkg.vlt.FilterFile
 import com.cognifide.gradle.aem.common.pkg.vlt.FilterType
 import com.cognifide.gradle.aem.common.pkg.vlt.VltDefinition
-import com.cognifide.gradle.aem.common.tasks.ZipTask
-import com.cognifide.gradle.aem.common.utils.Patterns
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.compose.BundleDependency
 import com.cognifide.gradle.aem.pkg.tasks.compose.PackageDependency
 import com.cognifide.gradle.aem.pkg.tasks.compose.ProjectMergingOptions
+import com.cognifide.gradle.common.build.DependencyOptions
+import com.cognifide.gradle.common.tasks.ZipTask
+import com.cognifide.gradle.common.utils.Patterns
 import java.io.File
 import org.apache.commons.lang3.StringUtils
 import org.gradle.api.Project
@@ -26,7 +28,9 @@ import org.gradle.api.tasks.*
 import org.gradle.api.tasks.bundling.Jar
 
 @Suppress("TooManyFunctions", "LargeClass")
-open class PackageCompose : ZipTask() {
+open class PackageCompose : ZipTask(), AemTask {
+
+    final override val aem = project.aem
 
     /**
      * Shorthand for built CRX package file.
@@ -175,7 +179,7 @@ open class PackageCompose : ZipTask() {
             perform(composedFile)
         }
 
-        aem.notifier.notify("Package composed", composedFile.name)
+        common.notifier.notify("Package composed", composedFile.name)
     }
 
     fun fromConvention() {
@@ -243,7 +247,7 @@ open class PackageCompose : ZipTask() {
     }
 
     fun fromPackage(composeTaskPath: String) {
-        fromPackage(aem.tasks.get(composeTaskPath, PackageCompose::class.java), ProjectMergingOptions())
+        fromPackage(common.tasks.get(composeTaskPath, PackageCompose::class.java), ProjectMergingOptions())
     }
 
     @Suppress("ComplexMethod")
@@ -302,7 +306,7 @@ open class PackageCompose : ZipTask() {
     }
 
     fun fromBundle(composeTaskPath: String) {
-        fromBundle(aem.tasks.get(composeTaskPath, BundleCompose::class.java), ProjectMergingOptions())
+        fromBundle(common.tasks.get(composeTaskPath, BundleCompose::class.java), ProjectMergingOptions())
     }
 
     private fun fromBundle(bundle: BundleCompose, options: ProjectMergingOptions) {
@@ -316,7 +320,7 @@ open class PackageCompose : ZipTask() {
         installPath: String? = null,
         vaultFilter: Boolean? = null
     ) {
-        val dependency = DependencyOptions.create(aem, dependencyOptions)
+        val dependency = DependencyOptions.create(project, dependencyOptions)
         bundleDependencies.add(BundleDependency(aem, dependency,
                 installPath ?: this.bundlePath,
                 vaultFilter ?: mergingOptions.vaultFilters
@@ -324,7 +328,7 @@ open class PackageCompose : ZipTask() {
     }
 
     fun fromJar(dependencyNotation: Any, installPath: String? = null, vaultFilter: Boolean? = null) {
-        val dependency = DependencyOptions.create(aem, dependencyNotation)
+        val dependency = DependencyOptions.create(project, dependencyNotation)
         bundleDependencies.add(BundleDependency(aem, dependency,
                 installPath ?: this.bundlePath,
                 vaultFilter ?: mergingOptions.vaultFilters
@@ -359,7 +363,7 @@ open class PackageCompose : ZipTask() {
         storagePath: String? = null,
         vaultFilter: Boolean? = null
     ) {
-        val dependency = DependencyOptions.create(aem) { apply(dependencyOptions); ext = "zip" }
+        val dependency = DependencyOptions.create(project) { apply(dependencyOptions); ext = "zip" }
         packageDependencies.add(PackageDependency(aem, dependency,
                 storagePath ?: packagePath,
                 vaultFilter ?: mergingOptions.vaultFilters
@@ -371,7 +375,7 @@ open class PackageCompose : ZipTask() {
     }
 
     fun fromZip(dependencyNotation: Any, storagePath: String? = null, vaultFilter: Boolean? = null) {
-        val dependency = DependencyOptions.create(aem, dependencyNotation)
+        val dependency = DependencyOptions.create(project, dependencyNotation)
         packageDependencies.add(PackageDependency(aem, dependency,
                 storagePath ?: packagePath,
                 vaultFilter ?: mergingOptions.vaultFilters
@@ -390,7 +394,7 @@ open class PackageCompose : ZipTask() {
 
     fun fromSubpackage(composeTaskPath: String, storagePath: String? = null, vaultFilter: Boolean? = null) {
         fromTasks.add {
-            val other = aem.tasks.pathed(composeTaskPath).get() as PackageCompose
+            val other = common.tasks.pathed(composeTaskPath).get() as PackageCompose
 
             dependsOn(other)
 
@@ -430,7 +434,7 @@ open class PackageCompose : ZipTask() {
         description = "Composes CRX package from JCR content and built OSGi bundles"
 
         archiveBaseName.set(aem.baseName)
-        destinationDirectory.set(aem.temporaryFile(name))
+        destinationDirectory.set(common.temporaryFile(name))
         duplicatesStrategy = DuplicatesStrategy.WARN
     }
 

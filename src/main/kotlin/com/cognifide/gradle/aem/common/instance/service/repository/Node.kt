@@ -2,7 +2,8 @@ package com.cognifide.gradle.aem.common.instance.service.repository
 
 import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.common.pkg.PackageDefinition
-import com.cognifide.gradle.aem.common.utils.Formats
+import com.cognifide.gradle.aem.common.utils.JcrUtil
+import com.cognifide.gradle.common.utils.Formats
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.jayway.jsonpath.PathNotFoundException
 import net.minidev.json.JSONArray
@@ -376,7 +377,7 @@ class Node(val repository: Repository, val path: String) : Serializable {
     fun download(options: PackageDefinition.() -> Unit = {}): File {
         val node = this
         return repository.sync.packageManager.download {
-            archiveBaseName = Formats.manglePath(node.name)
+            archiveBaseName = JcrUtil.manglePath(node.name)
             filter(node.path)
             options()
         }

@@ -1,11 +1,13 @@
 package com.cognifide.gradle.aem.instance.provision
 
-import com.cognifide.gradle.aem.common.build.Retry
 import com.cognifide.gradle.aem.common.instance.Instance
+import com.cognifide.gradle.common.build.Retry
 
 class Step(val provisioner: Provisioner, val id: String) {
 
     private val aem = provisioner.aem
+
+    private val common = aem.common
 
     internal lateinit var actionCallback: Instance.() -> Unit
 
@@ -19,7 +21,7 @@ class Step(val provisioner: Provisioner, val id: String) {
     /**
      * Allows to redo step action after delay if exception is thrown.
      */
-    var retry: Retry = aem.retry { afterSquaredSecond(aem.prop.long("instance.provision.step.retry") ?: 0L) }
+    var retry: Retry = common.retry { afterSquaredSecond(aem.prop.long("instance.provision.step.retry") ?: 0L) }
 
     /**
      * Controls logging error to console instead of breaking build with exception so that next step might be performed.
@@ -46,7 +48,7 @@ class Step(val provisioner: Provisioner, val id: String) {
     }
 
     fun retry(options: Retry.() -> Unit) {
-        this.retry = aem.retry(options)
+        this.retry = common.retry(options)
     }
 
     override fun toString(): String {

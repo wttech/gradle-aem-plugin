@@ -12,7 +12,7 @@ open class PackageInstall : PackageTask() {
     fun install() {
         instances.checkAvailable()
         sync { packageManager.install(it) }
-        aem.notifier.notify("Package installed", "${packages.fileNames} from ${instances.names}")
+        common.notifier.notify("Package installed", "${packages.fileNames} from ${instances.names}")
     }
 
     init {

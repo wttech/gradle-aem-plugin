@@ -1,16 +1,18 @@
 package com.cognifide.gradle.aem.common.instance.local
 
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.common.file.resolver.FileResolver
+import com.cognifide.gradle.common.file.resolver.FileResolver
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 
 class InstallResolver(private val aem: AemExtension) {
 
-    var downloadDir = aem.prop.string("localInstance.install.downloadDir")?.let { aem.project.file(it) }
-            ?: aem.temporaryFile("instance/install")
+    private val common = aem.common
 
-    private val fileResolver = FileResolver(aem, downloadDir)
+    var downloadDir = aem.prop.string("localInstance.install.downloadDir")?.let { aem.project.file(it) }
+            ?: common.temporaryFile("instance/install")
+
+    private val fileResolver = FileResolver(common, downloadDir)
 
     fun files(configurer: FileResolver.() -> Unit) {
         fileResolver.apply(configurer)

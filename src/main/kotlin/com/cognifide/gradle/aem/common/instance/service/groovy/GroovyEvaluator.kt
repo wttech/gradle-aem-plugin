@@ -7,6 +7,8 @@ import java.io.File
 
 class GroovyEvaluator(private val aem: AemExtension) {
 
+    private val common = aem.common
+
     private val logger = aem.logger
 
     val scriptDirDefault
@@ -68,7 +70,7 @@ class GroovyEvaluator(private val aem: AemExtension) {
         val statuses = mutableListOf<GroovyEvalStatus>()
 
         val stopWatch = StopWatch().apply { start() }
-        aem.progress(instances.size * scripts.size) {
+        common.progress(instances.size * scripts.size) {
             step = "Validating"
             aem.sync(instances) {
                 groovyConsole.requireAvailable()

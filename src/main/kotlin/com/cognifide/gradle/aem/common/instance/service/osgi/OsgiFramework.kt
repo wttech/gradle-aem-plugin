@@ -1,13 +1,13 @@
 package com.cognifide.gradle.aem.common.instance.service.osgi
 
 import com.cognifide.gradle.aem.AemException
-import com.cognifide.gradle.aem.common.build.Retry
 import com.cognifide.gradle.aem.common.bundle.BundleFile
-import com.cognifide.gradle.aem.common.http.ResponseException
 import com.cognifide.gradle.aem.common.instance.InstanceException
 import com.cognifide.gradle.aem.common.instance.InstanceService
 import com.cognifide.gradle.aem.common.instance.InstanceSync
-import com.cognifide.gradle.aem.common.utils.Formats
+import com.cognifide.gradle.common.build.Retry
+import com.cognifide.gradle.common.http.ResponseException
+import com.cognifide.gradle.common.utils.Formats
 import org.apache.http.HttpStatus
 import java.io.File
 
@@ -31,12 +31,12 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
      * Determine all OSGi bundle states.
      */
     fun determineBundleState(): BundleState {
-        aem.logger.debug("Asking for OSGi bundles on $instance")
+        logger.debug("Asking for OSGi bundles on $instance")
 
         return try {
             sync.http.get(BUNDLES_LIST_JSON) { asObjectFromJson(it, BundleState::class.java) }
         } catch (e: AemException) {
-            aem.logger.debug("Cannot request OSGi bundles state on $instance", e)
+            logger.debug("Cannot request OSGi bundles state on $instance", e)
             BundleState.unknown(e)
         }
     }
@@ -64,11 +64,11 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
     fun startBundle(symbolicName: String) {
         val bundle = getBundle(symbolicName)
         if (bundle.stable) {
-            aem.logger.info("Not starting already started OSGi $bundle on $instance.")
+            logger.info("Not starting already started OSGi $bundle on $instance.")
             return
         }
 
-        aem.logger.info("Starting OSGi $bundle on $instance.")
+        logger.info("Starting OSGi $bundle on $instance.")
         sync.http.post("$BUNDLES_PATH/${bundle.id}", mapOf("action" to "start"))
     }
 
@@ -78,11 +78,11 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
     fun stopBundle(symbolicName: String) {
         val bundle = getBundle(symbolicName)
         if (!bundle.stable) {
-            aem.logger.info("Not stopping already stopped OSGi $bundle on $instance.")
+            logger.info("Not stopping already stopped OSGi $bundle on $instance.")
             return
         }
 
-        aem.logger.info("Stopping OSGi $bundle on $instance.")
+        logger.info("Stopping OSGi $bundle on $instance.")
         sync.http.post("$BUNDLES_PATH/${bundle.id}", mapOf("action" to "stop"))
     }
 
@@ -99,7 +99,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
      */
     fun refreshBundle(symbolicName: String) {
         val bundle = getBundle(symbolicName)
-        aem.logger.info("Refreshing OSGi $bundle on $instance.")
+        logger.info("Refreshing OSGi $bundle on $instance.")
         sync.http.post("$BUNDLES_PATH/${bundle.symbolicName}", mapOf("action" to "refresh"))
     }
 
@@ -108,7 +108,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
      */
     fun updateBundle(symbolicName: String) {
         val bundle = getBundle(symbolicName)
-        aem.logger.info("Updating OSGi $bundle on $instance.")
+        logger.info("Updating OSGi $bundle on $instance.")
         sync.http.post("$BUNDLES_PATH/${bundle.symbolicName}", mapOf("action" to "update"))
     }
 
@@ -120,9 +120,9 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         start: Boolean = true,
         startLevel: Int = 20,
         refreshPackages: Boolean = true,
-        retry: Retry = aem.retry()
+        retry: Retry = common.retry()
     ) {
-        aem.logger.info("Installing OSGi $bundle on $instance.")
+        logger.info("Installing OSGi $bundle on $instance.")
 
         retry.withCountdown<Unit, InstanceException>("install bundle '${bundle.name}' on '${instance.name}'") {
             sync.http.postMultipart(BUNDLES_PATH, mapOf(
@@ -140,7 +140,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
      */
     fun uninstallBundle(bundle: File) {
         val bundleFile = BundleFile(bundle)
-        aem.logger.info("Uninstalling $bundleFile on $instance.")
+        logger.info("Uninstalling $bundleFile on $instance.")
         uninstallBundleInternal(bundleFile.symbolicName)
     }
 
@@ -148,7 +148,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
      * Uninstall OSGi bundle by symbolic name.
      */
     fun uninstallBundle(symbolicName: String) {
-        aem.logger.info("Uninstalling OSGi bundle '$symbolicName' on $instance.")
+        logger.info("Uninstalling OSGi bundle '$symbolicName' on $instance.")
         uninstallBundleInternal(symbolicName)
     }
 
@@ -168,12 +168,12 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
      * Determine OSGi components state.
      */
     fun determineComponentState(): ComponentState {
-        aem.logger.debug("Asking for OSGi components on $instance")
+        logger.debug("Asking for OSGi components on $instance")
 
         return try {
             sync.http.get(COMPONENTS_LIST_JSON) { asObjectFromJson(it, ComponentState::class.java) }
         } catch (e: AemException) {
-            aem.logger.debug("Cannot determine OSGi components state on $instance. Cause: ${e.message}", e)
+            logger.debug("Cannot determine OSGi components state on $instance. Cause: ${e.message}", e)
             ComponentState.unknown()
         }
     }
@@ -200,11 +200,11 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
     fun enableComponent(pid: String) {
         val component = getComponent(pid)
         if (component.id.isNotBlank()) {
-            aem.logger.info("Not enabling already enabled OSGi $component on $instance.")
+            logger.info("Not enabling already enabled OSGi $component on $instance.")
             return
         }
 
-        aem.logger.info("Enabling OSGi $component on $instance.")
+        logger.info("Enabling OSGi $component on $instance.")
         sync.http.post("$COMPONENTS_PATH/${component.uid}", mapOf("action" to "enable"))
     }
 
@@ -214,11 +214,11 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
     fun disableComponent(pid: String) {
         val component = getComponent(pid)
         if (component.id.isBlank()) {
-            aem.logger.info("Not disabling already disabled OSGi $component on $instance.")
+            logger.info("Not disabling already disabled OSGi $component on $instance.")
             return
         }
 
-        aem.logger.info("Disabling OSGi $component on $instance.")
+        logger.info("Disabling OSGi $component on $instance.")
         sync.http.post("$COMPONENTS_PATH/${component.id}", mapOf("action" to "disable"))
     }
 
@@ -248,7 +248,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
      * Determine all OSGi configuration PIDs.
      */
     fun determineConfigurationState(): ConfigurationState {
-        aem.logger.debug("Asking for OSGi configurations on $instance")
+        logger.debug("Asking for OSGi configurations on $instance")
 
         return try {
             sync.http.get(CONFIGURATION_PATH) { response ->
@@ -258,7 +258,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
                 Formats.fromJson(configJson, ConfigurationState::class.java)
             }
         } catch (e: AemException) {
-            aem.logger.debug("Cannot determine OSGi configuration state on $instance. Cause: ${e.message}", e)
+            logger.debug("Cannot determine OSGi configuration state on $instance. Cause: ${e.message}", e)
             ConfigurationState.unknown()
         }
     }
@@ -299,7 +299,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
      */
     fun updateConfiguration(pid: String, properties: Map<String, Any?>) {
         try {
-            aem.logger.info("Updating OSGi configuration for PID '$pid' on $instance using properties: $properties")
+            logger.info("Updating OSGi configuration for PID '$pid' on $instance using properties: $properties")
 
             val config = getConfiguration(pid)
             val props = configurationProperties(config, properties)
@@ -320,7 +320,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
      */
     fun saveConfiguration(pid: String, properties: Map<String, Any?>) {
         try {
-            aem.logger.info("Saving OSGi configuration for PID '$pid' on $instance using properties: $properties")
+            logger.info("Saving OSGi configuration for PID '$pid' on $instance using properties: $properties")
 
             val config = findConfiguration(pid, false)!! // endpoint always return data even for non-existing PID
             val props = configurationProperties(config, properties)
@@ -351,7 +351,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
      */
     fun deleteConfiguration(pid: String) {
         try {
-            aem.logger.info("Deleting OSGi configuration for PID '$pid' on $instance")
+            logger.info("Deleting OSGi configuration for PID '$pid' on $instance")
 
             val properties = mapOf(
                     "apply" to 1,
@@ -381,12 +381,12 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
      * Determine OSGi events for current moment.
      */
     fun determineEventState(): EventState {
-        aem.logger.debug("Asking for OSGi events on $instance")
+        logger.debug("Asking for OSGi events on $instance")
 
         return try {
             sync.http.get(EVENTS_LIST_JSON) { asObjectFromJson(it, EventState::class.java) }
         } catch (e: AemException) {
-            aem.logger.debug("Cannot determine OSGi events state on $instance. Cause: ${e.message}", e)
+            logger.debug("Cannot determine OSGi events state on $instance. Cause: ${e.message}", e)
             EventState.unknown()
         }
     }
@@ -407,7 +407,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
 
     private fun shutdown(type: String) {
         try {
-            aem.logger.info("Triggering OSGi framework shutdown on $instance.")
+            logger.info("Triggering OSGi framework shutdown on $instance.")
             sync.http.postUrlencoded(VMSTAT_PATH, mapOf("shutdown_type" to type))
         } catch (e: AemException) {
             throw InstanceException("Cannot trigger shutdown of $instance. Cause: ${e.message}", e)

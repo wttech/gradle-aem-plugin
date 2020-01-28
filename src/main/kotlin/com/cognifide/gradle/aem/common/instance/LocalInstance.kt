@@ -5,7 +5,7 @@ import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.instance.local.Script
 import com.cognifide.gradle.aem.common.instance.local.Status
-import com.cognifide.gradle.aem.common.utils.Formats
+import com.cognifide.gradle.common.utils.Formats
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.commons.io.FileUtils
@@ -91,14 +91,14 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
     override val version: String
         get() {
             var result = super.version
-            if (result == Formats.VERSION_UNKNOWN.version && versionFile.exists()) {
+            if (result == Formats.versionUnknown().version && versionFile.exists()) {
                 result = versionFile.readText()
             }
             return result
         }
 
     fun saveVersion() {
-        if (version != Formats.VERSION_UNKNOWN.version) {
+        if (version != Formats.versionUnknown().version) {
             versionFile.writeText(version)
         }
     }
@@ -224,8 +224,8 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
     private fun unpackFiles() {
         logger.info("Unpacking quickstart from JAR '$jar' to directory '$quickstartDir'")
 
-        aem.progressIndicator {
-            message = "Unpacking quickstart JAR: ${jar.name}, size: ${Formats.size(jar)}"
+        common.progressIndicator {
+            message = "Unpacking quickstart JAR: ${jar.name}, size: ${Formats.fileSize(jar)}"
             aem.project.javaexec { spec ->
                 spec.workingDir = dir
                 spec.main = "-jar"
@@ -382,8 +382,8 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
 
     @get:JsonIgnore
     val windowTitle get() = "LocalInstance(name='$name', httpUrl='$httpUrl'" +
-            (version.takeIf { it != Formats.VERSION_UNKNOWN.version }?.run { ", version=$this" } ?: "") +
-            ", debugPort=$debugPort, user='$user', password='${Formats.asPassword(password)}')"
+            (version.takeIf { it != Formats.versionUnknown().version }?.run { ", version=$this" } ?: "") +
+            ", debugPort=$debugPort, user='$user', password='${Formats.toPassword(password)}')"
 
     override fun toString(): String {
         return "LocalInstance(name='$name', httpUrl='$httpUrl')"

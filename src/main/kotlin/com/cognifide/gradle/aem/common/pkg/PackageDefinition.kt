@@ -18,7 +18,7 @@ import java.io.File
  */
 class PackageDefinition(private val aem: AemExtension) : VltDefinition(aem) {
 
-    var destinationDirectory: File = aem.temporaryDir
+    var destinationDirectory: File = common.temporaryDir
 
     var archiveBaseName: String = aem.baseName
 
@@ -110,9 +110,14 @@ class PackageDefinition(private val aem: AemExtension) : VltDefinition(aem) {
         expandFiles(metaDir, filePatterns)
     }
 
+    val expandProperties: Map<String, Any> get() = mapOf(
+            "definition" to this,
+            "aem" to aem
+    )
+
     fun expandFiles(dir: File, filePatterns: List<String> = PackageFileFilter.EXPAND_FILES_DEFAULT) {
         FileOperations.amendFiles(dir, filePatterns) { source, content ->
-            aem.prop.expandPackage(content, mapOf("definition" to this), source.absolutePath)
+            common.prop.expand(content, expandProperties, source.absolutePath)
         }
     }
 

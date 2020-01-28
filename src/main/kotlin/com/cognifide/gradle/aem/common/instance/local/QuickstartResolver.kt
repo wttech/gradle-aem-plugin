@@ -6,11 +6,13 @@ import java.io.File
 
 class QuickstartResolver(private val aem: AemExtension) {
 
+    private val common = aem.common
+
     /**
      * Directory storing downloaded AEM Quickstart source files (JAR & license).
      */
     var downloadDir = aem.prop.string("localInstance.quickstart.downloadDir")?.let { aem.project.file(it) }
-            ?: aem.temporaryFile(TEMPORARY_DIR)
+            ?: common.temporaryFile(TEMPORARY_DIR)
 
     /**
      * URI pointing to AEM self-extractable JAR containing 'crx-quickstart'.
@@ -19,7 +21,7 @@ class QuickstartResolver(private val aem: AemExtension) {
 
     @get:JsonIgnore
     val jar: File?
-        get() = jarUrl?.run { aem.fileTransfer.downloadTo(this, downloadDir) }
+        get() = jarUrl?.run { common.fileTransfer.downloadTo(this, downloadDir) }
 
     /**
      * URI pointing to AEM quickstart license file.
@@ -28,7 +30,7 @@ class QuickstartResolver(private val aem: AemExtension) {
 
     @get:JsonIgnore
     val license: File?
-        get() = licenseUrl?.run { aem.fileTransfer.downloadTo(this, downloadDir) }
+        get() = licenseUrl?.run { common.fileTransfer.downloadTo(this, downloadDir) }
 
     @get:JsonIgnore
     val files: List<File>

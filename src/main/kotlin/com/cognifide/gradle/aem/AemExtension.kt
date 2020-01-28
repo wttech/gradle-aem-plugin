@@ -3,31 +3,16 @@ package com.cognifide.gradle.aem
 import com.cognifide.gradle.aem.bundle.BundlePlugin
 import com.cognifide.gradle.aem.bundle.tasks.BundleCompose
 import com.cognifide.gradle.aem.common.CommonPlugin
-import com.cognifide.gradle.aem.common.build.*
 import com.cognifide.gradle.aem.common.file.FileOperations
-import com.cognifide.gradle.aem.common.file.FileWatcher
-import com.cognifide.gradle.aem.common.file.resolver.FileResolver
-import com.cognifide.gradle.aem.common.file.transfer.FileTransferManager
-import com.cognifide.gradle.aem.common.file.transfer.http.HttpFileTransfer
-import com.cognifide.gradle.aem.common.file.transfer.sftp.SftpFileTransfer
-import com.cognifide.gradle.aem.common.file.transfer.smb.SmbFileTransfer
-import com.cognifide.gradle.aem.common.http.HttpClient
 import com.cognifide.gradle.aem.common.instance.*
 import com.cognifide.gradle.aem.common.instance.service.groovy.GroovyEvaluator
 import com.cognifide.gradle.aem.common.instance.service.groovy.GroovyEvalSummary
-import com.cognifide.gradle.aem.common.notifier.NotifierFacade
 import com.cognifide.gradle.aem.common.pkg.PackageDefinition
 import com.cognifide.gradle.aem.common.pkg.PackageFile
 import com.cognifide.gradle.aem.common.pkg.PackageOptions
 import com.cognifide.gradle.aem.common.pkg.PackageValidator
 import com.cognifide.gradle.aem.common.pkg.vlt.FilterFile
-import com.cognifide.gradle.aem.common.utils.Formats
 import com.cognifide.gradle.aem.common.utils.LineSeparator
-import com.cognifide.gradle.aem.common.utils.Patterns
-import com.cognifide.gradle.aem.environment.Environment
-import com.cognifide.gradle.aem.environment.EnvironmentPlugin
-import com.cognifide.gradle.aem.environment.docker.DaemonSpec
-import com.cognifide.gradle.aem.environment.docker.RunSpec
 import com.cognifide.gradle.aem.instance.*
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.PackageCompose
@@ -35,38 +20,31 @@ import com.cognifide.gradle.aem.instance.rcp.RcpClient
 import com.cognifide.gradle.aem.common.pkg.vlt.VltException
 import com.cognifide.gradle.aem.common.pkg.vlt.VltClient
 import com.cognifide.gradle.aem.common.pkg.vlt.VltSummary
+import com.cognifide.gradle.aem.common.utils.normalizeSeparators
 import com.cognifide.gradle.aem.pkg.PackageSyncPlugin
-import com.fasterxml.jackson.annotation.JsonIgnore
+import com.cognifide.gradle.common.CommonExtension
+import com.cognifide.gradle.common.common
+import com.cognifide.gradle.common.utils.Patterns
 import java.io.File
 import java.io.Serializable
 import org.gradle.api.Project
 import org.gradle.api.Task
-import org.gradle.api.internal.tasks.userinput.UserInputHandler
-import org.gradle.api.tasks.Internal
 
 /**
  * Core of library, facade for implementing tasks, configuration aggregator.
  */
 @Suppress("TooManyFunctions")
-class AemExtension(@JsonIgnore val project: Project) : Serializable {
+class AemExtension(val project: Project) : Serializable {
 
-    @JsonIgnore
-    val logger = project.logger
+    val common = CommonExtension.of(project)
 
-    /**
-     * Allows to read project property specified in command line and system property as a fallback.
-     */
-    @JsonIgnore
-    val prop = PropertyParser(this)
+    val logger = common.logger
 
-    @get:JsonIgnore
-    @Deprecated("Use 'prop' instead!", replaceWith = ReplaceWith("prop"))
-    val props get() = prop
+    val prop = common.prop
 
     /**
-     * Access configuration for local instances or environment from different project (cross-project configuring).
+     * Access configuration for local instances from different project (cross-project configuring).
      */
-    @get:JsonIgnore
     val main: AemExtension
         get() = of(projectMain)
 
@@ -78,7 +56,6 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
      * - multi-project build - subproject with path ':aem'
      * - single-project build - root project
      */
-    @JsonIgnore
     val projectMain: Project = project.findProject(prop.string("projectMainPath") ?: ":aem") ?: project.rootProject
 
     /**
@@ -105,11 +82,11 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
      * and also for OSGi bundle JARs.
      */
     val baseName: String
-        get() = Formats.normalizeSeparators(if (project == project.rootProject) {
+        get() = (if (project == project.rootProject) {
             project.rootProject.name
         } else {
             "${project.rootProject.name}.$projectName"
-        }, ".")
+        }).normalizeSeparators(".")
 
     /**
      * Allows to disable features that are using running AEM instances.
@@ -127,9 +104,8 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     /**
      * Specify characters to be used as line endings when cleaning up checked out JCR content.
      */
-    var lineSeparator: String = prop.string("lineSeparator") ?: "LF"
+    var lineSeparator: String = prop.string("lineSeparator") ?: LineSeparator.SYSTEM.name
 
-    @JsonIgnore
     val lineSeparatorString: String = LineSeparator.string(lineSeparator)
 
     /**
@@ -137,30 +113,16 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
      * - Groovy Scripts to be launched by Groovy Console instance service in tasks defined in project.
      */
     val configDir: File
-        get() = project.file(prop.string("configDir") ?: "gradle")
+        get() = project.file(prop.string("configDir") ?: "src/main/aem")
 
     /**
      * Directory for storing common files used by plugin e.g:
      * - CRX package thumbnail
-     * - environment configuration files (HTTPD virtual hosts, Dispatcher)
      * - instance overrides files
      * - tail incident filter
      */
     val configCommonDir: File
-        get() = projectMain.file(prop.string("configCommonDir") ?: "gradle")
-
-    @get:Internal
-    val fileTransfer = FileTransferManager(this)
-
-    /**
-     * Define settings for file transfer facade which allows to perform basic file operations on remote servers
-     * like uploading and downloading files.
-     *
-     * Supports multiple protocols: HTTP, SFTP, SMB and other supported by JVM.
-     */
-    fun fileTransfer(options: FileTransferManager.() -> Unit) {
-        fileTransfer.apply(options)
-    }
+        get() = projectMain.file(prop.string("configCommonDir") ?: "src/main/aem")
 
     val packageOptions = PackageOptions(this)
 
@@ -203,65 +165,35 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     fun localInstance(options: LocalInstanceManager.() -> Unit) = localInstanceManager.apply(options)
 
     /**
-     * Provides API for controlling virtualized AEM environment with HTTPD and dispatcher module.
-     */
-    val environment = Environment(this)
-
-    fun environment(configurer: Environment.() -> Unit) {
-        environment.apply(configurer)
-    }
-
-    /**
-     * Provides API for displaying interactive notification during running build tasks.
-     */
-    val notifier = NotifierFacade.of(this)
-
-    fun notifier(configurer: NotifierFacade.() -> Unit) {
-        notifier.apply(configurer)
-    }
-
-    /**
-     * Provides API for easier creation of tasks (e.g in sequence) in the matter of Gradle task configuration avoidance.
-     */
-    @JsonIgnore
-    val tasks = AemTaskFacade(this)
-
-    fun tasks(configurer: AemTaskFacade.() -> Unit) {
-        tasks.apply(configurer)
-    }
-
-    /**
      * Provides API for performing actions affecting multiple instances at once.
      */
-    @JsonIgnore
     val instanceActions = InstanceActionPerformer(this)
 
     /**
      * Collection of all java packages from all projects applying bundle plugin.
      */
     val javaPackages: List<String>
-        get() = AemPlugin.withId(project, BundlePlugin.ID).flatMap { subproject ->
-            of(subproject).tasks.bundles.mapNotNull { it.javaPackage }
-        }
+        get() = project.rootProject.allprojects
+                .filter { it.plugins.hasPlugin(BundlePlugin.ID) }
+                .flatMap { p -> p.common.tasks.getAll(BundleCompose::class.java).mapNotNull { it.javaPackage } }
 
     /**
      * All instances matching default filtering.
      *
      * @see <https://github.com/Cognifide/gradle-aem-plugin#filter-instances-to-work-with>
      */
-    @get:JsonIgnore
     val instances: List<Instance>
         get() = filterInstances()
 
     /**
      * Work in parallel with instances matching default filtering.
      */
-    fun instances(consumer: (Instance) -> Unit) = parallel.with(instances, consumer)
+    fun instances(consumer: (Instance) -> Unit) = common.parallel.with(instances, consumer)
 
     /**
      * Work in parallel with instances which name is matching specified wildcard filter.
      */
-    fun instances(filter: String, consumer: (Instance) -> Unit) = parallel.with(filterInstances(filter), consumer)
+    fun instances(filter: String, consumer: (Instance) -> Unit) = common.parallel.with(filterInstances(filter), consumer)
 
     /**
      * Shorthand method for getting defined instance or creating temporary instance by URL.
@@ -281,7 +213,6 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
      *
      * @see <https://github.com/Cognifide/gradle-aem-plugin#filter-instances-to-work-with>
      */
-    @get:JsonIgnore
     val anyInstance: Instance
         get() {
             val cmdInstanceArg = prop.string("instance")
@@ -295,7 +226,6 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     /**
      * Get available instance of any type (most often first defined).
      */
-    @get:JsonIgnore
     val availableInstance: Instance?
         get() = instances.asSequence().firstOrNull { it.available }
 
@@ -343,77 +273,68 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     /**
      * Get all author instances running on current environment.
      */
-    @get:JsonIgnore
     val authorInstances: List<Instance>
         get() = filterInstances().filter { it.author }
 
-    @get:JsonIgnore
     val authorInstance: Instance
         get() = authorInstances.firstOrNull() ?: throw AemException("No author instances defined!")
 
     /**
      * Work in parallel with all author instances running on current environment.
      */
-    fun authorInstances(consumer: (Instance) -> Unit) = parallel.with(authorInstances, consumer)
+    fun authorInstances(consumer: (Instance) -> Unit) = common.parallel.with(authorInstances, consumer)
 
     /**
      * Get all publish instances running on current environment.
      */
-    @get:JsonIgnore
     val publishInstances: List<Instance>
         get() = filterInstances().filter { it.publish }
 
-    @get:JsonIgnore
     val publishInstance: Instance
         get() = publishInstances.firstOrNull() ?: throw AemException("No publish instances defined!")
 
     /**
      * Work in parallel with all publish instances running on current environment.
      */
-    fun publishInstances(consumer: Instance.() -> Unit) = parallel.with(publishInstances, consumer)
+    fun publishInstances(consumer: Instance.() -> Unit) = common.parallel.with(publishInstances, consumer)
 
     /**
      * Get all local instances.
      */
-    @get:JsonIgnore
     val localInstances: List<LocalInstance>
         get() = instances.filterIsInstance(LocalInstance::class.java)
 
     /**
      * Work in parallel with all local instances.
      */
-    fun localInstances(consumer: LocalInstance.() -> Unit) = parallel.with(localInstances, consumer)
+    fun localInstances(consumer: LocalInstance.() -> Unit) = common.parallel.with(localInstances, consumer)
 
     /**
      * Get all remote instances.
      */
-    @get:JsonIgnore
     val remoteInstances: List<RemoteInstance>
         get() = instances.filterIsInstance(RemoteInstance::class.java)
 
     /**
      * Work in parallel with all remote instances.
      */
-    fun remoteInstances(consumer: RemoteInstance.() -> Unit) = parallel.with(remoteInstances, consumer)
+    fun remoteInstances(consumer: RemoteInstance.() -> Unit) = common.parallel.with(remoteInstances, consumer)
 
     /**
      * Get CRX package defined to be built (could not yet exist).
      */
     @Suppress("VariableNaming")
-    @get:JsonIgnore
     val `package`: File
-        get() = tasks.get(PackageCompose.NAME, PackageCompose::class.java).composedFile
+        get() = common.tasks.get(PackageCompose.NAME, PackageCompose::class.java).composedFile
 
-    @get:JsonIgnore
     val pkg: File
         get() = `package`
 
     /**
      * Get all CRX packages defined to be built.
      */
-    @get:JsonIgnore
     val packages: List<File>
-        get() = tasks.packages.map { it.composedFile }
+        get() = common.tasks.getAll(PackageCompose::class.java).map { it.composedFile }
 
     /**
      * Get all CRX packages built before running particular task.
@@ -427,16 +348,14 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     /**
      * Get OSGi bundle defined to be built (could not yet exist).
      */
-    @get:JsonIgnore
     val bundle: File
-        get() = tasks.get(BundleCompose.NAME, BundleCompose::class.java).composedFile
+        get() = common.tasks.get(BundleCompose.NAME, BundleCompose::class.java).composedFile
 
     /**
      * Get all OSGi bundles defined to be built.
      */
-    @get:JsonIgnore
     val bundles: List<File>
-        get() = tasks.bundles.map { it.composedFile }
+        get() = common.tasks.getAll(BundleCompose::class.java).map { it.composedFile }
 
     /**
      * Get all OSGi bundles built before running particular task.
@@ -471,7 +390,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
      * In parallel, work with services of all specified instances.
      */
     fun sync(instances: Iterable<Instance>, action: InstanceSync.() -> Unit) {
-        parallel.with(instances) { this.sync.apply(action) }
+        common.parallel.with(instances) { this.sync.apply(action) }
     }
 
     /**
@@ -494,7 +413,7 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
      */
     fun syncFiles(instances: Iterable<Instance>, packages: Iterable<File>, action: InstanceSync.(File) -> Unit) {
         packages.forEach { pkg -> // single AEM instance dislikes parallel CRX package / OSGi bundle installation
-            parallel.with(instances) { // but same file could be in parallel deployed on different AEM instances
+            common.parallel.with(instances) { // but same file could be in parallel deployed on different AEM instances
                 sync.apply { action(pkg) }
             }
         }
@@ -519,51 +438,8 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     fun validatePackage(packages: Iterable<File>, options: PackageValidator.() -> Unit) = PackageValidator(this).apply(options).perform(packages)
 
     /**
-     * Show asynchronous progress indicator with percentage while performing some action.
+     * Vault filter determined by convention and properties.
      */
-    fun <T> progress(total: Int, action: ProgressIndicator.() -> T): T = progress(total.toLong(), action)
-
-    /**
-     * Show asynchronous progress indicator with percentage while performing some action.
-     */
-    fun <T> progress(total: Long, action: ProgressIndicator.() -> T): T {
-        return ProgressIndicator(project).apply { this.total = total }.launch(action)
-    }
-
-    fun <T> progress(action: ProgressIndicator.() -> T) = progressIndicator(action)
-
-    /**
-     * Show asynchronous progress indicator while performing some action.
-     */
-    fun <T> progressIndicator(action: ProgressIndicator.() -> T): T = ProgressIndicator(project).launch(action)
-
-    /**
-     * Show synchronous progress logger while performing some action.
-     */
-    fun <T> progressLogger(action: ProgressLogger.() -> T): T = ProgressLogger.of(project).launch(action)
-
-    /**
-     * Grab user input interactively.
-     */
-    @get:JsonIgnore
-    val userInput by lazy { InternalApi(project).service(UserInputHandler::class) }
-
-    /**
-     * Wait some time after performing asynchronous operation.
-     */
-    fun waitFor(time: Long) = progressCountdown(time)
-
-    /**
-     * Show synchronous progress countdown / time to wait after performing asynchronous operation.
-     */
-    fun progressCountdown(time: Long) = progressCountdown { this.time = time }
-
-    /**
-     * Show synchronous progress countdown / time to wait after performing asynchronous operation.
-     */
-    fun progressCountdown(options: ProgressCountdown.() -> Unit) = ProgressCountdown(project).apply(options).run()
-
-    @get:JsonIgnore
     val filter: FilterFile
         get() {
             val cmdFilterRoots = prop.list("filter.roots") ?: listOf()
@@ -607,80 +483,6 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
     fun filter(path: String) = filter(project.file(path))
 
     /**
-     * Determine temporary directory for particular service (any name).
-     */
-    fun temporaryFile(path: String): File = project.buildDir.resolve("aem/$path")
-
-    /**
-     * Predefined temporary directory.
-     */
-    @get:JsonIgnore
-    val temporaryDir: File
-        get() = temporaryFile(TEMPORARY_DIR)
-
-    /**
-     * Factory method for configuration object determining how operation should be retried.
-     */
-    fun retry(configurer: Retry.() -> Unit): Retry {
-        return retry().apply(configurer)
-    }
-
-    /**
-     * Factory method for configuration object determining that operation should not be retried.
-     */
-    fun retry(): Retry = Retry.none(this)
-
-    /**
-     * React on file changes under configured directories.
-     */
-    fun watchFiles(options: FileWatcher.() -> Unit) {
-        FileWatcher(this).apply(options).start()
-    }
-
-    /**
-     * Resolve single file from defined repositories or by using defined file transfers.
-     */
-    fun resolveFile(value: Any) = resolveFile { get(value) }
-
-    /**
-     * Resolve single file from defined repositories or by using defined file transfers.
-     */
-    fun resolveFile(options: FileResolver.() -> Unit) = resolveFiles(options).firstOrNull()
-            ?: throw AemException("There is no files resolved!")
-
-    /**
-     * Resolve files from defined repositories or by using defined file transfers.
-     */
-    fun resolveFiles(options: FileResolver.() -> Unit) = resolveFiles(temporaryDir, options)
-
-    /**
-     * Resolve files from defined repositories or by using defined file transfers.
-     */
-    fun resolveFiles(downloadDir: File, options: FileResolver.() -> Unit): List<File> {
-        return FileResolver(this, downloadDir).apply(options).allFiles
-    }
-
-    /**
-     * Perform any HTTP requests to external endpoints.
-     */
-    fun <T> http(consumer: HttpClient.() -> T) = HttpClient(this).run(consumer)
-
-    /**
-     * Download files using HTTP protocol using custom settings.
-     */
-    fun <T> httpFile(consumer: HttpFileTransfer.() -> T) = fileTransfer.factory.http(consumer)
-
-    /**
-     * Transfer files using over SFTP protocol using custom settings.
-     */
-    fun <T> sftpFile(consumer: SftpFileTransfer.() -> T) = fileTransfer.factory.sftp(consumer)
-
-    /**
-     * Transfer files using over SMB protocol using custom settings.
-     */
-    fun <T> smbFile(consumer: SmbFileTransfer.() -> T) = fileTransfer.factory.smb(consumer)
-
-    /**
      * Execute any Vault command.
      */
     fun vlt(command: String): VltSummary = vlt { this.command = command; run() }
@@ -705,42 +507,15 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
      */
     fun groovyEval(scriptPattern: String): GroovyEvalSummary = groovyEval { this.scriptPattern = scriptPattern; eval() }
 
-    /**
-     * Execute any Docker command using all available images with mounting volumes etc, exposing ports etc.
-     */
-    fun dockerRun(spec: RunSpec.() -> Unit) = environment.docker.run(spec)
-
-    /**
-     * Execute any Docker command as long-lived cancellable daemon without possibility to return value.
-     */
-    fun dockerDaemon(spec: DaemonSpec.() -> Unit) = environment.docker.daemon(spec)
-
-    // Utilities (to use without imports)
-
-    @JsonIgnore
-    val parallel = Parallel
-
-    @JsonIgnore
-    val formats = Formats
-
-    @JsonIgnore
-    val patterns = Patterns
-
-    @JsonIgnore
-    val buildScope = BuildScope.of(project)
-
     companion object {
 
         const val NAME = "aem"
-
-        const val TEMPORARY_DIR = "tmp"
 
         private val PLUGIN_IDS = listOf(
                 CommonPlugin.ID,
                 PackagePlugin.ID,
                 BundlePlugin.ID,
                 InstancePlugin.ID,
-                EnvironmentPlugin.ID,
                 PackageSyncPlugin.ID
         )
 
@@ -750,3 +525,6 @@ class AemExtension(@JsonIgnore val project: Project) : Serializable {
         }
     }
 }
+
+val Project.aem
+    get() = AemExtension.of(this)

@@ -9,6 +9,8 @@ import org.gradle.api.tasks.Internal
 
 class Downloader(@Internal private val aem: AemExtension) {
 
+    private val common = aem.common
+
     /**
      * Determines instance from which JCR content will be downloaded.
      */
@@ -36,7 +38,7 @@ class Downloader(@Internal private val aem: AemExtension) {
     /**
      * Repeat download when failed (brute-forcing).
      */
-    var retry = aem.retry { afterSquaredSecond(aem.prop.long("package.sync.downloader.retry") ?: 3) }
+    var retry = common.retry { afterSquaredSecond(aem.prop.long("package.sync.downloader.retry") ?: 3) }
 
     fun download() {
         val file = instance.sync.packageManager.download({
@@ -50,7 +52,7 @@ class Downloader(@Internal private val aem: AemExtension) {
     }
 
     private fun extractDownloadedPackage(downloadedPackage: File, jcrRoot: File) {
-        if (jcrRoot.exists() && aem.prop.isForce()) {
+        if (jcrRoot.exists() && common.prop.force) {
             jcrRoot.deleteRecursively()
         }
 

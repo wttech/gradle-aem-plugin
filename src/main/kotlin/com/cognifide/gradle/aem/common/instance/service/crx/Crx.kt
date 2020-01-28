@@ -1,9 +1,9 @@
 package com.cognifide.gradle.aem.common.instance.service.crx
 
 import com.cognifide.gradle.aem.AemException
-import com.cognifide.gradle.aem.common.http.RequestException
 import com.cognifide.gradle.aem.common.instance.InstanceService
 import com.cognifide.gradle.aem.common.instance.InstanceSync
+import com.cognifide.gradle.common.http.RequestException
 
 /**
  * Allows to communicate with CRX DE endpoints.
@@ -21,7 +21,7 @@ class Crx(sync: InstanceSync) : InstanceService(sync) {
                 return NODE_TYPES_UNKNOWN
             }
 
-            return aem.buildScope.tryGetOrPut("${instance.httpUrl}$EXPORT_NODE_TYPE_PATH") {
+            return common.buildScope.tryGetOrPut("${instance.httpUrl}$EXPORT_NODE_TYPE_PATH") {
                 try {
                     readNodeTypes().apply {
                         aem.logger.info("Successfully read CRX node types of $instance")

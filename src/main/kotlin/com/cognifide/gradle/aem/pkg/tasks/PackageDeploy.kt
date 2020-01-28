@@ -26,13 +26,13 @@ open class PackageDeploy : PackageTask() {
      * Repeat upload when failed (brute-forcing).
      */
     @Internal
-    var uploadRetry = aem.retry { afterSquaredSecond(aem.prop.long("package.deploy.uploadRetry") ?: 3) }
+    var uploadRetry = common.retry { afterSquaredSecond(aem.prop.long("package.deploy.uploadRetry") ?: 3) }
 
     /**
      * Repeat install when failed (brute-forcing).
      */
     @Internal
-    var installRetry = aem.retry { afterSquaredSecond(aem.prop.long("package.deploy.installRetry") ?: 2) }
+    var installRetry = common.retry { afterSquaredSecond(aem.prop.long("package.deploy.installRetry") ?: 2) }
 
     /**
      * Determines if when on package install, sub-packages included in CRX package content should be also installed.
@@ -57,7 +57,7 @@ open class PackageDeploy : PackageTask() {
             }
         }
 
-        aem.notifier.notify("Package deployed", "${packages.fileNames} on ${instances.names}")
+        common.notifier.notify("Package deployed", "${packages.fileNames} on ${instances.names}")
     }
 
     override fun projectsEvaluated() {

@@ -2,9 +2,9 @@ package com.cognifide.gradle.aem.common.pkg
 
 import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.common.build.CollectingLogger
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
+import com.cognifide.gradle.common.build.CollectingLogger
 import net.adamcin.oakpal.core.*
 import org.apache.commons.io.FileUtils
 import org.apache.jackrabbit.oak.plugins.memory.MemoryNodeStore
@@ -15,6 +15,8 @@ import java.io.IOException
 import java.net.URL
 
 class PackageValidator(@Internal val aem: AemExtension) {
+
+    private val common = aem.common
 
     private val logger = aem.logger
 
@@ -33,7 +35,7 @@ class PackageValidator(@Internal val aem: AemExtension) {
     var verbose = aem.prop.boolean("package.validator.verbose") ?: true
 
     @OutputDirectory
-    var workDir = aem.temporaryFile("package/validator")
+    var workDir = common.temporaryFile("package/validator")
 
     @Input
     var planName = aem.prop.string("package.validator.plan") ?: "default-plan.json"
@@ -46,10 +48,10 @@ class PackageValidator(@Internal val aem: AemExtension) {
         get() = File(workDir, "report.json")
 
     private var baseProvider: () -> File? = {
-        aem.prop.string("package.validator.opear.base")?.let { aem.resolveFile(it) }
+        aem.prop.string("package.validator.opear.base")?.let { common.resolveFile(it) }
     }
 
-    fun base(value: Any) = base { aem.resolveFile(value) }
+    fun base(value: Any) = base { common.resolveFile(value) }
 
     fun base(provider: () -> File?) {
         this.baseProvider = provider
@@ -91,7 +93,7 @@ class PackageValidator(@Internal val aem: AemExtension) {
             return
         }
 
-        aem.progress {
+        common.progress {
             message = "Validating CRX package(s) '${packages.joinToString(", ") { it.name }}'"
 
             prepareOpearDir()

@@ -21,7 +21,7 @@ open class PackagePrepare : AemDefaultTask() {
     var metaDefaults: Boolean = true
 
     @OutputDirectory
-    val metaDir = aem.temporaryFile("$name/${Package.META_PATH}")
+    val metaDir = common.temporaryFile("$name/${Package.META_PATH}")
 
     @get:Internal
     val vaultFilterOriginFile get() = File(metaDir, "${Package.VLT_DIR}/${FilterFile.ORIGIN_NAME}")
@@ -106,7 +106,7 @@ open class PackagePrepare : AemDefaultTask() {
         }
     }
 
-    fun syncNodeTypesOrElse(action: () -> Unit) = aem.buildScope.doOnce("syncNodeTypes") {
+    fun syncNodeTypesOrElse(action: () -> Unit) = common.buildScope.doOnce("syncNodeTypes") {
         aem.availableInstance?.sync {
             try {
                 vaultNodeTypesSyncFile.apply {

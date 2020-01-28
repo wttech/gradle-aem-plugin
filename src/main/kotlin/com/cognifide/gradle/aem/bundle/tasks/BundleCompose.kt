@@ -2,11 +2,13 @@ package com.cognifide.gradle.aem.bundle.tasks
 
 import aQute.bnd.gradle.BundleTaskConvention
 import com.cognifide.gradle.aem.AemException
-import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.AemTask
+import com.cognifide.gradle.aem.aem
 import com.cognifide.gradle.aem.bundle.BundleException
 import com.cognifide.gradle.aem.common.instance.service.osgi.Bundle
-import com.cognifide.gradle.aem.common.utils.Formats
+import com.cognifide.gradle.aem.common.utils.normalizeSeparators
+import com.cognifide.gradle.common.CommonTask
+import com.cognifide.gradle.common.common
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.gradle.api.plugins.JavaPluginConvention
@@ -15,10 +17,13 @@ import org.gradle.api.tasks.bundling.Jar
 import java.io.File
 
 @Suppress("LargeClass", "TooManyFunctions")
-open class BundleCompose : Jar(), AemTask {
+open class BundleCompose : Jar(), CommonTask, AemTask {
 
     @Internal
-    final override val aem = AemExtension.of(project)
+    final override val common = project.common
+
+    @Internal
+    final override val aem = project.aem
 
     @Internal
     val javaConvention = project.convention.getPlugin(JavaPluginConvention::class.java)
@@ -48,6 +53,12 @@ open class BundleCompose : Jar(), AemTask {
     fun bndTool(options: BundleTaskConvention.() -> Unit) {
         bundleConvention.apply(options)
     }
+
+    /**
+     * Add instructions to the BND property from a list of multi-line strings.
+     */
+    @Suppress("SpreadOperator")
+    fun bnd(vararg lines: CharSequence) = bundleConvention.bnd(*lines)
 
     /**
      * Content path for OSGi bundle jars being placed in CRX package.
@@ -112,13 +123,8 @@ open class BundleCompose : Jar(), AemTask {
     @Internal
     var privatePackages: List<String> = listOf()
 
-    init {
-        applyArchiveDefaults()
-        applyBndToolDefaults()
-    }
-
     private fun applyArchiveDefaults() {
-        destinationDirectory.set(aem.temporaryFile(name))
+        destinationDirectory.set(common.temporaryFile(name))
         archiveBaseName.set(aem.baseName)
         from(javaConvention.sourceSets.getByName(SourceSet.MAIN_SOURCE_SET_NAME).output)
     }
@@ -149,7 +155,7 @@ open class BundleCompose : Jar(), AemTask {
                         " to determine bundle package default.")
             }
 
-            javaPackage = Formats.normalizeSeparators("${aem.project.group}.${aem.project.name}", ".")
+            javaPackage = "${aem.project.group}.${aem.project.name}".normalizeSeparators(".")
         }
     }
 
@@ -367,6 +373,11 @@ open class BundleCompose : Jar(), AemTask {
             aem.logger.error("BND tool error: https://bnd.bndtools.org", ExceptionUtils.getRootCause(e))
             throw BundleException("OSGi bundle cannot be built properly.", e)
         }
+    }
+
+    init {
+        applyArchiveDefaults()
+        applyBndToolDefaults()
     }
 
     companion object {

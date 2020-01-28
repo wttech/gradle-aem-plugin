@@ -12,7 +12,7 @@ open class PackageActivate : PackageTask() {
     fun activate() {
         instances.checkAvailable()
         sync { packageManager.activate(it) }
-        aem.notifier.notify("Package activated", "${packages.fileNames} on ${instances.names}")
+        common.notifier.notify("Package activated", "${packages.fileNames} on ${instances.names}")
     }
 
     init {

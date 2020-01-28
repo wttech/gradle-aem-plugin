@@ -3,7 +3,7 @@ package com.cognifide.gradle.aem.common.instance.service.workflow
 import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.common.instance.InstanceService
 import com.cognifide.gradle.aem.common.instance.InstanceSync
-import com.cognifide.gradle.aem.common.utils.Formats
+import com.cognifide.gradle.common.utils.Formats
 import java.util.*
 
 class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
@@ -13,7 +13,7 @@ class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
     val configFrozen: Boolean
         get() = Formats.versionAtLeast(instance.version, "6.4.0")
 
-    var restoreRetry = aem.retry { afterSquaredSecond(aem.prop.long("instance.workflowManager.restoreRetry") ?: 6) }
+    var restoreRetry = common.retry { afterSquaredSecond(aem.prop.long("instance.workflowManager.restoreRetry") ?: 6) }
 
     var restoreIntended = aem.prop.boolean("instance.workflowManager.restoreIntended") ?: false
 

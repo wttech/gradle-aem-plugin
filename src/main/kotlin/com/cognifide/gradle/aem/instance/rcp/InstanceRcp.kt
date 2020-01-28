@@ -5,6 +5,8 @@ import org.gradle.api.tasks.TaskAction
 
 open class InstanceRcp : AemDefaultTask() {
 
+    private val notifier = common.notifier
+
     init {
         description = "Copy JCR content from one instance to another."
     }
@@ -32,10 +34,10 @@ open class InstanceRcp : AemDefaultTask() {
         logger.info("RCP details: $summary")
 
         if (!summary.source.cmd && !summary.target.cmd) {
-            aem.notifier.lifecycle("RCP finished", "Copied ${summary.copiedPaths} JCR root(s) from instance ${summary.source.name} to ${summary.target.name}." +
+            notifier.lifecycle("RCP finished", "Copied ${summary.copiedPaths} JCR root(s) from instance ${summary.source.name} to ${summary.target.name}." +
                     "Duration: ${summary.durationString}")
         } else {
-            aem.notifier.lifecycle("RCP finished", "Copied ${summary.copiedPaths} JCR root(s) between instances." +
+            notifier.lifecycle("RCP finished", "Copied ${summary.copiedPaths} JCR root(s) between instances." +
                     "Duration: ${summary.durationString}")
         }
     }

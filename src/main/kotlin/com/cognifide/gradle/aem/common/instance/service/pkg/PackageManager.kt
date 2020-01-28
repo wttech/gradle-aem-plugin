@@ -1,16 +1,16 @@
 package com.cognifide.gradle.aem.common.instance.service.pkg
 
-import com.cognifide.gradle.aem.common.build.Retry
-import com.cognifide.gradle.aem.common.http.RequestException
-import com.cognifide.gradle.aem.common.http.ResponseException
 import com.cognifide.gradle.aem.common.instance.InstanceException
 import com.cognifide.gradle.aem.common.instance.InstanceService
 import com.cognifide.gradle.aem.common.instance.InstanceSync
 import com.cognifide.gradle.aem.common.pkg.PackageDefinition
 import com.cognifide.gradle.aem.common.pkg.PackageException
 import com.cognifide.gradle.aem.common.pkg.PackageFile
-import com.cognifide.gradle.aem.common.utils.Formats
-import com.cognifide.gradle.aem.common.utils.Patterns
+import com.cognifide.gradle.common.build.Retry
+import com.cognifide.gradle.common.http.RequestException
+import com.cognifide.gradle.common.http.ResponseException
+import com.cognifide.gradle.common.utils.Formats
+import com.cognifide.gradle.common.utils.Patterns
 import java.io.File
 import java.io.FileNotFoundException
 import org.apache.commons.io.FilenameUtils
@@ -24,7 +24,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
 
     private val http = sync.http
 
-    fun get(file: File, refresh: Boolean = true, retry: Retry = aem.retry()): Package {
+    fun get(file: File, refresh: Boolean = true, retry: Retry = common.retry()): Package {
         if (!file.exists()) {
             throw PackageException("Package $file does not exist so it cannot be resolved on $instance")
         }
@@ -33,16 +33,16 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
                 ?: throw InstanceException("Package is not uploaded on $instance")
     }
 
-    fun get(group: String, name: String, version: String, refresh: Boolean = true, retry: Retry = aem.retry()): Package {
+    fun get(group: String, name: String, version: String, refresh: Boolean = true, retry: Retry = common.retry()): Package {
         return find(group, name, version, refresh, retry)
                 ?: throw InstanceException("Package ${Package.coordinates(group, name, version)}' is not uploaded on $instance")
     }
 
-    fun find(file: File, refresh: Boolean = true, retry: Retry = aem.retry()): Package? = PackageFile(file).run {
+    fun find(file: File, refresh: Boolean = true, retry: Retry = common.retry()): Package? = PackageFile(file).run {
         find(group, name, version, refresh, retry)
     }
 
-    fun find(group: String, name: String, version: String, refresh: Boolean = true, retry: Retry = aem.retry()): Package? {
+    fun find(group: String, name: String, version: String, refresh: Boolean = true, retry: Retry = common.retry()): Package? {
         return find({ listResponse ->
             val expected = Package(group, name, version)
 
@@ -56,13 +56,13 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         }, refresh, retry)
     }
 
-    private fun find(resolver: (ListResponse) -> Package?, refresh: Boolean, retry: Retry = aem.retry()): Package? {
+    private fun find(resolver: (ListResponse) -> Package?, refresh: Boolean, retry: Retry = common.retry()): Package? {
         logger.debug("Asking for uploaded packages on $instance")
 
-        return resolver(aem.buildScope.getOrPut("instance.${instance.name}.packages", { list(retry) }, refresh))
+        return resolver(common.buildScope.getOrPut("instance.${instance.name}.packages", { list(retry) }, refresh))
     }
 
-    fun list(retry: Retry = aem.retry()): ListResponse {
+    fun list(retry: Retry = common.retry()): ListResponse {
         return retry.withCountdown<ListResponse, InstanceException>("list packages on '${instance.name}'") {
             return try {
                 http.postMultipart(LIST_JSON) { asObjectFromJson(it, ListResponse::class.java) }
@@ -74,7 +74,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         }
     }
 
-    fun upload(file: File, force: Boolean = true, retry: Retry = aem.retry()): UploadResponse {
+    fun upload(file: File, force: Boolean = true, retry: Retry = common.retry()): UploadResponse {
         return retry.withCountdown<UploadResponse, InstanceException>("upload package '${file.name}' on '${instance.name}'") {
             val url = "$JSON_PATH/?cmd=upload"
 
@@ -132,12 +132,12 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         }
     }
 
-    fun download(definition: PackageDefinition.() -> Unit) = download(definition, aem.retry())
+    fun download(definition: PackageDefinition.() -> Unit) = download(definition, common.retry())
 
     fun download(
         remotePath: String,
-        targetFile: File = aem.temporaryFile(FilenameUtils.getName(remotePath)),
-        retry: Retry = aem.retry()
+        targetFile: File = common.temporaryFile(FilenameUtils.getName(remotePath)),
+        retry: Retry = common.retry()
     ) {
         return retry.withCountdown<Unit, InstanceException>("download package '$remotePath' on '${instance.name}'") {
             logger.info("Downloading package from $remotePath to file $targetFile")
@@ -172,7 +172,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
 
     fun install(file: File) = install(get(file).path)
 
-    fun install(remotePath: String, recursive: Boolean = true, retry: Retry = aem.retry()): InstallResponse {
+    fun install(remotePath: String, recursive: Boolean = true, retry: Retry = common.retry()): InstallResponse {
         return retry.withCountdown<InstallResponse, InstanceException>("install package '$remotePath' on '${instance.name}'") {
             val url = "$HTML_PATH$remotePath/?cmd=install"
 
@@ -209,9 +209,9 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
     fun deploy(
         file: File,
         uploadForce: Boolean = true,
-        uploadRetry: Retry = aem.retry(),
+        uploadRetry: Retry = common.retry(),
         installRecursive: Boolean = true,
-        installRetry: Retry = aem.retry(),
+        installRetry: Retry = common.retry(),
         activate: Boolean = false
     ) {
         val uploadResponse = upload(file, uploadForce, uploadRetry)
@@ -226,9 +226,9 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
     fun distribute(
         file: File,
         uploadForce: Boolean = true,
-        uploadRetry: Retry = aem.retry(),
+        uploadRetry: Retry = common.retry(),
         installRecursive: Boolean = true,
-        installRetry: Retry = aem.retry()
+        installRetry: Retry = common.retry()
     ) = deploy(file, uploadForce, uploadRetry, installRecursive, installRetry, true)
 
     fun activate(file: File) = activate(get(file).path)

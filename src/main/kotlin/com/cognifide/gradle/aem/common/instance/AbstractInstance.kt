@@ -15,6 +15,8 @@ abstract class AbstractInstance(
     protected val aem: AemExtension
 ) : Instance {
 
+    protected val common = aem.common
+
     protected val logger = aem.logger
 
     override lateinit var httpUrl: String

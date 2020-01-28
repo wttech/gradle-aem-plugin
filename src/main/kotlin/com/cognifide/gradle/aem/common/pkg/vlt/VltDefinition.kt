@@ -14,6 +14,8 @@ import java.util.regex.Pattern
  */
 open class VltDefinition(private val aem: AemExtension) {
 
+    protected val common = aem.common
+
     /**
      * Name visible in CRX package manager
      */

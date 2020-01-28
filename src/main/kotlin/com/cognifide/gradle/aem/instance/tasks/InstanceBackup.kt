@@ -6,16 +6,12 @@ import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.instance.InstanceException
 import com.cognifide.gradle.aem.common.instance.local.Status
 import com.cognifide.gradle.aem.common.instance.names
-import com.cognifide.gradle.aem.common.utils.Formats
+import com.cognifide.gradle.common.utils.Formats
 import java.io.File
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
 open class InstanceBackup : AemDefaultTask() {
-
-    init {
-        description = "Turns off local instance(s), archives to ZIP file, then turns on again."
-    }
 
     private val resolver = aem.localInstanceManager.backup
 
@@ -54,12 +50,12 @@ open class InstanceBackup : AemDefaultTask() {
 
         val file = File(resolver.localDir, resolver.namer())
 
-        aem.progress {
+        common.progress {
             message = "Backing up instances: ${aem.localInstances.names}"
             FileOperations.zipPack(file, aem.localInstanceManager.rootDir)
         }
 
-        aem.notifier.lifecycle("Backed up local instances", "File: $file (${Formats.size(file)})")
+        common.notifier.lifecycle("Backed up local instances", "File: $file (${Formats.fileSize(file)})")
 
         return file
     }
@@ -76,17 +72,21 @@ open class InstanceBackup : AemDefaultTask() {
             }
         }
 
-        aem.logger.info("Uploading local instance(s) backup file '$file' to URL '$dirUrl'")
-        aem.fileTransfer.uploadTo(dirUrl, file)
+        logger.info("Uploading local instance(s) backup file '$file' to URL '$dirUrl'")
+        common.fileTransfer.uploadTo(dirUrl, file)
 
-        aem.notifier.lifecycle("Uploaded local instances backup", "File '$file' to URL '$dirUrl'")
+        common.notifier.lifecycle("Uploaded local instances backup", "File '$file' to URL '$dirUrl'")
+    }
+
+    init {
+        description = "Turns off local instance(s), archives to ZIP file, then turns on again."
     }
 
     enum class Mode {
         ZIP_ONLY,
         ZIP_AND_UPLOAD,
-        UPLOAD_ONLY;
 
+        UPLOAD_ONLY;
         companion object {
             fun of(name: String): Mode {
                 return values().find { it.name.equals(name, true) }

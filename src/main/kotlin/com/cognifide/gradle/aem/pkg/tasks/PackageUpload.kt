@@ -12,7 +12,7 @@ open class PackageUpload : PackageTask() {
     fun upload() {
         instances.checkAvailable()
         sync { packageManager.upload(it) }
-        aem.notifier.notify("Package uploaded", "${packages.fileNames} from ${instances.names}")
+        common.notifier.notify("Package uploaded", "${packages.fileNames} from ${instances.names}")
     }
 
     init {

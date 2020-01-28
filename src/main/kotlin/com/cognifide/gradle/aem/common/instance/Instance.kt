@@ -2,9 +2,9 @@ package com.cognifide.gradle.aem.common.instance
 
 import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.common.utils.Formats
-import com.cognifide.gradle.aem.common.utils.Patterns
-import com.cognifide.gradle.aem.common.utils.formats.JsonPassword
+import com.cognifide.gradle.common.utils.Formats
+import com.cognifide.gradle.common.utils.Patterns
+import com.cognifide.gradle.common.utils.formats.JsonPassword
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import java.io.Serializable
@@ -88,8 +88,8 @@ interface Instance : Serializable {
 
     @Suppress("ThrowsCount")
     fun validate() {
-        if (!Formats.URL_VALIDATOR.isValid(httpUrl)) {
-            throw AemException("Malformed URL address detected in $this")
+        if (httpUrl.isBlank()) {
+            throw AemException("HTTP URL address cannot be blank in $this")
         }
 
         if (user.isBlank()) {

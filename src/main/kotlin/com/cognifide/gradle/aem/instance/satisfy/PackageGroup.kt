@@ -1,9 +1,9 @@
 package com.cognifide.gradle.aem.instance.satisfy
 
-import com.cognifide.gradle.aem.common.build.Retry
-import com.cognifide.gradle.aem.common.file.resolver.FileGroup
-import com.cognifide.gradle.aem.common.file.resolver.FileResolution
 import com.cognifide.gradle.aem.common.instance.InstanceSync
+import com.cognifide.gradle.common.build.Retry
+import com.cognifide.gradle.common.file.resolver.FileGroup
+import com.cognifide.gradle.common.file.resolver.FileResolution
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 import org.gradle.api.tasks.Input
@@ -12,7 +12,9 @@ import org.gradle.api.tasks.Internal
 /**
  * Allows to customize behavior of satisfy task for concrete group of packages.
  */
-class PackageGroup(val resolver: PackageResolver, name: String) : FileGroup(resolver.aem, resolver.downloadDir, name) {
+class PackageGroup(val resolver: PackageResolver, name: String) : FileGroup(resolver.common, resolver.downloadDir, name) {
+
+    private val aem = resolver.aem
 
     /**
      * Forces to upload and install package again regardless its state on instances (already uploaded / installed).

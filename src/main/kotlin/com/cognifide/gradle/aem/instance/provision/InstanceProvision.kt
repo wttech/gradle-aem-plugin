@@ -20,10 +20,10 @@ open class InstanceProvision : AemDefaultTask() {
         val failed = performedActions.count { it.status == Status.FAILED }
 
         if (performed > 0) {
-            aem.notifier.notify("Instances provisioned", "Performed $performed steps(s)" +
+            common.notifier.notify("Instances provisioned", "Performed $performed steps(s)" +
                     " ($ended ended, $failed failed) on ${instances.size} instance(s).")
         } else {
-            aem.logger.info("No actions to perform / all instances provisioned.")
+            logger.info("No actions to perform / all instances provisioned.")
         }
     }
 

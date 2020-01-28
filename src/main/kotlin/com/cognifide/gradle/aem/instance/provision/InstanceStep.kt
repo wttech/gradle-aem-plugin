@@ -2,7 +2,7 @@ package com.cognifide.gradle.aem.instance.provision
 
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.service.repository.Node
-import com.cognifide.gradle.aem.common.utils.Formats
+import com.cognifide.gradle.common.utils.Formats
 import java.util.*
 
 /**

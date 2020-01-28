@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.common.instance.service.groovy
 
-import com.cognifide.gradle.aem.common.utils.Formats
+import com.cognifide.gradle.common.utils.Formats
 
 data class GroovyEvalSummary(
     val statuses: List<GroovyEvalStatus>,

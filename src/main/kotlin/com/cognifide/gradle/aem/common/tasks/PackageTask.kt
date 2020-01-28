@@ -80,7 +80,7 @@ open class PackageTask : AemDefaultTask() {
     fun pkg(path: String) = `package`(path)
 
     fun sync(action: InstanceSync.(File) -> Unit) {
-        aem.progress(instances.size * packages.size) {
+        common.progress(instances.size * packages.size) {
             aem.syncFiles(instances, packages) { file ->
                 increment("${file.name} -> ${instance.name}") {
                     initializer()

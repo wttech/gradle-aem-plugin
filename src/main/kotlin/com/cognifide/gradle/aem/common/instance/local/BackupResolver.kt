@@ -1,13 +1,15 @@
 package com.cognifide.gradle.aem.common.instance.local
 
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.common.file.FileException
-import com.cognifide.gradle.aem.common.file.transfer.FileEntry
-import com.cognifide.gradle.aem.common.utils.Formats
+import com.cognifide.gradle.common.file.FileException
+import com.cognifide.gradle.common.file.transfer.FileEntry
+import com.cognifide.gradle.common.utils.Formats
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 
 class BackupResolver(private val aem: AemExtension) {
+
+    private val common = aem.common
 
     /**
      * URL to remote directory in which backup files are stored.
@@ -30,7 +32,7 @@ class BackupResolver(private val aem: AemExtension) {
      * Directory storing locally created backup files.
      */
     var localDir: File = aem.prop.string("localInstance.backup.localDir")?.let { aem.project.file(it) }
-            ?: aem.temporaryFile("instanceBackup/local")
+            ?: common.temporaryFile("instanceBackup/local")
 
     /**
      * Backup file from local source.
@@ -43,7 +45,7 @@ class BackupResolver(private val aem: AemExtension) {
      * Directory storing downloaded remote backup files.
      */
     var remoteDir: File = aem.prop.string("localInstance.backup.remoteDir")?.let { aem.project.file(it) }
-            ?: aem.temporaryFile("instanceBackup/remote")
+            ?: common.temporaryFile("instanceBackup/remote")
 
     /**
      * Backup file from remote source.
@@ -97,7 +99,7 @@ class BackupResolver(private val aem: AemExtension) {
                 val name = downloadUrl!!.substringAfterLast("/")
 
                 val fileEntry = try {
-                    aem.fileTransfer.stat(dirUrl, name) // 'stat' may be unsupported
+                    common.fileTransfer.stat(dirUrl, name) // 'stat' may be unsupported
                 } catch (e: FileException) {
                     aem.logger.debug("Cannot check instance backup file status at URL '$dirUrl/$name'", e)
                     FileEntry(name)
@@ -105,7 +107,7 @@ class BackupResolver(private val aem: AemExtension) {
 
                 if (fileEntry != null) {
                     listOf(BackupSource(BackupType.REMOTE, fileEntry) {
-                        File(remoteDir, name).apply { aem.fileTransfer.downloadFrom(dirUrl, name, this) }
+                        File(remoteDir, name).apply { common.fileTransfer.downloadFrom(dirUrl, name, this) }
                     })
                 } else {
                     aem.logger.info("Instance backup at URL '$dirUrl/$name' is not available.")
@@ -113,14 +115,14 @@ class BackupResolver(private val aem: AemExtension) {
                 }
             }
             uploadUrl != null -> {
-                val fileEntries = aem.fileTransfer.list(uploadUrl!!)
+                val fileEntries = common.fileTransfer.list(uploadUrl!!)
                 if (fileEntries.isEmpty()) {
                     aem.logger.info("No instance backups available at URL '$uploadUrl'.")
                 }
 
                 fileEntries.map { file ->
                     BackupSource(BackupType.REMOTE, file) {
-                        File(remoteDir, file.name).apply { aem.fileTransfer.downloadFrom(uploadUrl!!, name, this) }
+                        File(remoteDir, file.name).apply { common.fileTransfer.downloadFrom(uploadUrl!!, name, this) }
                     }
                 }
             }

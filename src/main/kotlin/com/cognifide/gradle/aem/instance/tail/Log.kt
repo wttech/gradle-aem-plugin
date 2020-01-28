@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.instance.tail
 
-import com.cognifide.gradle.aem.common.utils.Formats
+import com.cognifide.gradle.common.utils.Formats
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -16,7 +16,7 @@ class Log(
     messageLines: List<String>
 ) {
 
-    val checksum = Formats.calculateChecksum(text)
+    val checksum = Formats.toMd5(text)
 
     val message = messageLines.joinToString("\n")
 

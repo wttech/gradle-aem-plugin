@@ -1,15 +1,15 @@
 package com.cognifide.gradle.aem.instance.satisfy
 
 import com.cognifide.gradle.aem.AemTask
-import com.cognifide.gradle.aem.common.build.ProgressIndicator
-import com.cognifide.gradle.aem.common.file.resolver.FileGroup
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.InstanceSync
 import com.cognifide.gradle.aem.common.instance.checkAvailable
 import com.cognifide.gradle.aem.common.instance.names
 import com.cognifide.gradle.aem.common.instance.service.pkg.PackageState
-import com.cognifide.gradle.aem.common.utils.Patterns
+import com.cognifide.gradle.common.utils.Patterns
 import com.cognifide.gradle.aem.pkg.tasks.PackageDeploy
+import com.cognifide.gradle.common.build.ProgressIndicator
+import com.cognifide.gradle.common.file.resolver.FileGroup
 import java.io.File
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
@@ -46,14 +46,14 @@ open class InstanceSatisfy : PackageDeploy() {
      * Repeat listing package when failed (brute-forcing).
      */
     @Internal
-    var listRetry = aem.retry { afterSquaredSecond(aem.prop.long("instance.satisfy.listRetry") ?: 3) }
+    var listRetry = common.retry { afterSquaredSecond(aem.prop.long("instance.satisfy.listRetry") ?: 3) }
 
     /**
      * Path in which downloaded CRX packages will be stored.
      */
     @Internal
     var downloadDir = aem.prop.string("instance.satisfy.downloadDir")?.let { aem.project.file(it) }
-            ?: aem.temporaryFile("$name/download")
+            ?: common.temporaryFile("$name/download")
 
     /**
      * Provides a packages from local and remote sources.
@@ -127,7 +127,7 @@ open class InstanceSatisfy : PackageDeploy() {
     override fun deploy() {
         instances.checkAvailable()
 
-        aem.progress(packageGroups.sumBy { it.files.size * determineInstancesForGroup(it).size }) {
+        common.progress(packageGroups.sumBy { it.files.size * determineInstancesForGroup(it).size }) {
             packageGroups.forEach { satisfyGroup(it) }
         }
 
@@ -136,9 +136,9 @@ open class InstanceSatisfy : PackageDeploy() {
             val instances = packageActions.map { it.instance }.toSet()
 
             if (packages.size == 1) {
-                aem.notifier.notify("Package satisfied", "${packages.first().name} on ${instances.names}")
+                common.notifier.notify("Package satisfied", "${packages.first().name} on ${instances.names}")
             } else {
-                aem.notifier.notify("Packages satisfied", "Performed ${packageActions.size} action(s) for " +
+                common.notifier.notify("Packages satisfied", "Performed ${packageActions.size} action(s) for " +
                         "${packages.size} package(s) on ${instances.size} instance(s).")
             }
         } else {

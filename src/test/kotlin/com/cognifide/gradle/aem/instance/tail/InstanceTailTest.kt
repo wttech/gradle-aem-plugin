@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.instance.tail
 
-import com.cognifide.gradle.aem.common.utils.Patterns
+import com.cognifide.gradle.common.utils.Patterns
 import org.apache.commons.io.FileUtils
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test

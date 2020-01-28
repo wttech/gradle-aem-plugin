@@ -6,10 +6,6 @@ import org.gradle.api.tasks.TaskAction
 
 open class PackageVlt : AemDefaultTask() {
 
-    init {
-        description = "Execute any Vault command."
-    }
-
     fun options(configurer: VltClient.() -> Unit) {
         this.options = configurer
     }
@@ -25,10 +21,14 @@ open class PackageVlt : AemDefaultTask() {
 
         val summary = run()
 
-        aem.notifier.notify(
+        common.notifier.notify(
                 "Executing Vault command",
                 "Command '${summary.command}' finished. Duration: ${summary.durationString}"
         )
+    }
+
+    init {
+        description = "Execute any Vault command."
     }
 
     companion object {
