@@ -11,13 +11,13 @@ import org.apache.commons.io.FileUtils
 class LogFiles(private val tailer: InstanceTailer) {
 
     fun main(instanceName: String): File {
-        val file = File(tailer.rootDir, "$instanceName/${tailer.logFile}")
+        val file = File(tailer.logStorageDir, "$instanceName/${tailer.logFile}")
         file.parentFile.mkdirs()
 
         return file
     }
 
-    fun incidentDir(instanceName: String): File = File(tailer.rootDir, "$instanceName/$INCIDENT_DIR")
+    fun incidentDir(instanceName: String): File = File(tailer.logStorageDir, "$instanceName/$INCIDENT_DIR")
 
     fun incidentFile(instanceName: String): File {
         val file = File(incidentDir(instanceName), "${Formats.dateFileName()}-${tailer.logFile}")
@@ -57,7 +57,7 @@ class LogFiles(private val tailer: InstanceTailer) {
     }
 
     private val lockFile: File
-        get() = tailer.rootDir.resolve(LOCK_FILE).apply { parentFile.mkdirs() }
+        get() = tailer.logStorageDir.resolve(LOCK_FILE).apply { parentFile.mkdirs() }
 
     companion object {
 

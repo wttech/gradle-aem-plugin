@@ -12,7 +12,7 @@ open class InstanceOptions(private val aem: AemExtension) : Serializable {
     /**
      * Directory storing instance wide configuration files.
      */
-    var configDir =  aem.prop.file("instance.configDir") ?: aem.project.file("src/aem/instance")
+    var configDir = aem.prop.file("instance.configDir") ?: aem.project.file("src/aem/instance")
 
     /**
      * List of AEM instances e.g on which packages could be deployed.

@@ -54,7 +54,7 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
      * Path from which extra files for local AEM instances will be copied.
      * Useful for overriding default startup scripts ('start.bat' or 'start.sh') or providing some files inside 'crx-quickstart'.
      */
-    var overridesDir = aem.instanceOptions.configDir.resolve("local")
+    val overridesDir: File get() = aem.instanceOptions.configDir.resolve("local")
 
     /**
      * Wildcard file name filter expression that is used to filter in which instance files properties can be injected.

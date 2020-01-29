@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 import java.io.Serializable
 
-class PackageOptions(aem: AemExtension) : Serializable {
+class PackageOptions(private val aem: AemExtension) : Serializable {
 
     /**
      * Package specific configuration
@@ -35,7 +35,7 @@ class PackageOptions(aem: AemExtension) : Serializable {
      * Custom path to Vault files that will be used to build CRX package.
      * Useful to share same files for all packages, like package thumbnail.
      */
-    var metaCommonDir: File = configDir.resolve(Package.META_PATH)
+    val metaCommonDir: File get() = configDir.resolve(Package.META_PATH)
 
     /**
      * Content path for OSGi bundle jars being placed in CRX package.
@@ -111,9 +111,9 @@ class PackageOptions(aem: AemExtension) : Serializable {
      */
     var nodeTypesSync = aem.prop.string("package.nodeTypesSync")
             ?.let { NodeTypesSync.find(it) } ?: when {
-                aem.offline -> NodeTypesSync.PRESERVE_FALLBACK
-                else -> NodeTypesSync.PRESERVE_AUTO
-            }
+        aem.offline -> NodeTypesSync.PRESERVE_FALLBACK
+        else -> NodeTypesSync.PRESERVE_AUTO
+    }
 
     fun nodeTypesSync(name: String) {
         nodeTypesSync = NodeTypesSync.of(name)
@@ -122,6 +122,6 @@ class PackageOptions(aem: AemExtension) : Serializable {
     /**
      * Determines location on which synchronized node types will be saved.
      */
-    var nodeTypesSyncFile = aem.prop.file("package.nodeTypesSyncFile")
+    val nodeTypesSyncFile: File get() = aem.prop.file("package.nodeTypesSyncFile")
             ?: configDir.resolve(Package.NODE_TYPES_SYNC_FILE)
 }

@@ -56,7 +56,9 @@ class AemExtension(val project: Project) : Serializable {
      * - multi-project build - subproject with path ':aem'
      * - single-project build - root project
      */
-    val projectMain: Project = project.findProject(prop.string("projectMainPath") ?: ":aem") ?: project.rootProject
+    val projectMain: Project = prop.string("projectMainPath")?.let { project.findProject(it) }
+            ?: listOf(":aem", ":env").mapNotNull { project.findProject(it) }.firstOrNull()
+            ?: project.rootProject
 
     /**
      * Project name convention prefixes used to determine default:

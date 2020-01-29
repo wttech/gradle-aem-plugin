@@ -20,7 +20,8 @@ class InstanceTailer(val aem: AemExtension) {
     /**
      * Directory where log files will be stored.
      */
-    var rootDir: File = common.temporaryFile(InstanceTail.NAME)
+    var logStorageDir: File = aem.prop.file("instance.tail.logStorageDir")
+            ?: common.temporaryFile(InstanceTail.NAME)
 
     /**
      * Instances from which logs will be tailed.
@@ -30,7 +31,8 @@ class InstanceTailer(val aem: AemExtension) {
     /**
      * Determines log file being tracked on AEM instance.
      */
-    var logFilePath = aem.prop.string("instance.tail.logFilePath") ?: "/logs/error.log"
+    var logFilePath = aem.prop.string("instance.tail.logFilePath")
+            ?: "/logs/error.log"
 
     /**
      * Hook for tracking all log entries on each AEM instance.
@@ -67,7 +69,7 @@ class InstanceTailer(val aem: AemExtension) {
      *
      * Changes in that file are automatically considered (tailer restart is not required).
      */
-    var incidentFilter: File = aem.prop.file("instance.tail.incidentFilter")
+    val incidentFilter: File get() = aem.prop.file("instance.tail.incidentFilter")
                     ?: aem.instanceOptions.configDir.resolve("tail/incidentFilter.txt")
 
     /**
