@@ -10,6 +10,11 @@ import java.io.Serializable
 class PackageOptions(aem: AemExtension) : Serializable {
 
     /**
+     * Package specific configuration
+     */
+    var configDir: File = aem.project.file("src/aem/package")
+
+    /**
      * Package root directory containing 'jcr_root' and 'META-INF' directories.
      */
     var contentDir: File = aem.project.file("src/main/content")
@@ -18,21 +23,19 @@ class PackageOptions(aem: AemExtension) : Serializable {
      * JCR root directory.
      */
     @get:JsonIgnore
-    val jcrRootDir: File
-        get() = File(contentDir, Package.JCR_ROOT)
+    val jcrRootDir: File get() = contentDir.resolve(Package.JCR_ROOT)
 
     /**
      * Vault metadata files directory (package definition).
      */
     @get:JsonIgnore
-    val vltDir: File
-        get() = File(contentDir, Package.VLT_PATH)
+    val vltDir: File get() = contentDir.resolve(Package.VLT_PATH)
 
     /**
      * Custom path to Vault files that will be used to build CRX package.
      * Useful to share same files for all packages, like package thumbnail.
      */
-    var metaCommonDir: File = File(aem.configCommonDir, Package.META_RESOURCES_PATH)
+    var metaCommonDir: File = configDir.resolve(Package.META_PATH)
 
     /**
      * Content path for OSGi bundle jars being placed in CRX package.
@@ -119,5 +122,6 @@ class PackageOptions(aem: AemExtension) : Serializable {
     /**
      * Determines location on which synchronized node types will be saved.
      */
-    var nodeTypesSyncFile = File(aem.configCommonDir, Package.NODE_TYPES_SYNC_PATH)
+    var nodeTypesSyncFile = aem.prop.file("package.nodeTypesSyncFile")
+            ?: configDir.resolve(Package.NODE_TYPES_SYNC_FILE)
 }

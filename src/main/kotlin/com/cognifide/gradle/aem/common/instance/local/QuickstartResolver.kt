@@ -11,7 +11,7 @@ class QuickstartResolver(private val aem: AemExtension) {
     /**
      * Directory storing downloaded AEM Quickstart source files (JAR & license).
      */
-    var downloadDir = aem.prop.string("localInstance.quickstart.downloadDir")?.let { aem.project.file(it) }
+    var downloadDir = aem.prop.file("localInstance.quickstart.downloadDir")
             ?: common.temporaryFile(TEMPORARY_DIR)
 
     /**

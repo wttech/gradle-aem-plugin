@@ -32,7 +32,7 @@ class Downloader(@Internal private val aem: AemExtension) {
     /**
      * Path in which downloader JCR content will be extracted.
      */
-    var extractDir: File = aem.prop.string("package.sync.downloader.extractDir")?.let { aem.project.file(it) }
+    var extractDir: File = aem.prop.file("package.sync.downloader.extractDir")
             ?: aem.packageOptions.jcrRootDir
 
     /**

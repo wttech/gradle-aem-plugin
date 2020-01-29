@@ -9,7 +9,7 @@ class InstallResolver(private val aem: AemExtension) {
 
     private val common = aem.common
 
-    var downloadDir = aem.prop.string("localInstance.install.downloadDir")?.let { aem.project.file(it) }
+    var downloadDir = aem.prop.file("localInstance.install.downloadDir")
             ?: common.temporaryFile("instance/install")
 
     private val fileResolver = FileResolver(common, downloadDir)

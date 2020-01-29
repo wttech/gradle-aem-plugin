@@ -10,6 +10,11 @@ open class InstanceOptions(private val aem: AemExtension) : Serializable {
     private val definedCustom: MutableMap<String, Instance> = mutableMapOf()
 
     /**
+     * Directory storing instance wide configuration files.
+     */
+    var configDir =  aem.prop.file("instance.configDir") ?: aem.project.file("src/aem/instance")
+
+    /**
      * List of AEM instances e.g on which packages could be deployed.
      * Instance stored in map ensures name uniqueness and allows to be referenced in expanded properties.
      */

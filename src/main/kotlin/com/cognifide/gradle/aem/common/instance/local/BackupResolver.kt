@@ -31,7 +31,7 @@ class BackupResolver(private val aem: AemExtension) {
     /**
      * Directory storing locally created backup files.
      */
-    var localDir: File = aem.prop.string("localInstance.backup.localDir")?.let { aem.project.file(it) }
+    var localDir: File = aem.prop.file("localInstance.backup.localDir")
             ?: common.temporaryFile("instanceBackup/local")
 
     /**
@@ -44,7 +44,7 @@ class BackupResolver(private val aem: AemExtension) {
     /**
      * Directory storing downloaded remote backup files.
      */
-    var remoteDir: File = aem.prop.string("localInstance.backup.remoteDir")?.let { aem.project.file(it) }
+    var remoteDir: File = aem.prop.file("localInstance.backup.remoteDir")
             ?: common.temporaryFile("instanceBackup/remote")
 
     /**

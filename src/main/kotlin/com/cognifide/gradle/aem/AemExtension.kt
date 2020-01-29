@@ -108,22 +108,6 @@ class AemExtension(val project: Project) : Serializable {
 
     val lineSeparatorString: String = LineSeparator.string(lineSeparator)
 
-    /**
-     * Directory for storing project specific files used by plugin e.g:
-     * - Groovy Scripts to be launched by Groovy Console instance service in tasks defined in project.
-     */
-    val configDir: File
-        get() = project.file(prop.string("configDir") ?: "src/aem")
-
-    /**
-     * Directory for storing common files used by plugin e.g:
-     * - CRX package thumbnail
-     * - instance overrides files
-     * - tail incident filter
-     */
-    val configCommonDir: File
-        get() = projectMain.file(prop.string("configCommonDir") ?: "src/aem")
-
     val packageOptions = PackageOptions(this)
 
     /**

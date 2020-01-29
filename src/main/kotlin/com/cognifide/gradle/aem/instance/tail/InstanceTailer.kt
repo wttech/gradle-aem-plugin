@@ -67,10 +67,8 @@ class InstanceTailer(val aem: AemExtension) {
      *
      * Changes in that file are automatically considered (tailer restart is not required).
      */
-    var incidentFilter: File =
-            aem.prop.string("instance.tail.incidentFilter")
-                    ?.let { aem.project.file(it) }
-                    ?: File(aem.configCommonDir, "instanceTail/incidentFilter.txt")
+    var incidentFilter: File = aem.prop.file("instance.tail.incidentFilter")
+                    ?: aem.instanceOptions.configDir.resolve("tail/incidentFilter.txt")
 
     /**
      * Indicates if tailer will print all logs to console.

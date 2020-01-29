@@ -21,7 +21,8 @@ class GroovyConsole(sync: InstanceSync) : InstanceService(sync) {
     /**
      * Directory to search for scripts to be evaluated.
      */
-    var scriptRootDir: File = File(aem.configDir, "groovyScript")
+    var scriptDir: File = aem.prop.file("instance.groovyConsole.scriptDir")
+            ?: aem.instanceOptions.configDir.resolve( "groovyScript")
 
     /**
      * Check if console is installed on instance.
@@ -86,9 +87,9 @@ class GroovyConsole(sync: InstanceSync) : InstanceService(sync) {
      * Evaluate Groovy script found by its file name on AEM instance.
      */
     fun evalScript(fileName: String, data: Map<String, Any?> = mapOf()): GroovyEvalResult {
-        val script = File(scriptRootDir, fileName)
+        val script = File(scriptDir, fileName)
         if (!script.exists()) {
-            throw GroovyConsoleException("Groovy script '$fileName' not found in directory: $scriptRootDir")
+            throw GroovyConsoleException("Groovy script '$fileName' not found in directory: $scriptDir")
         }
 
         return evalScript(script, data)
@@ -97,7 +98,7 @@ class GroovyConsole(sync: InstanceSync) : InstanceService(sync) {
     /**
      * Find scripts matching file pattern in pre-configured directory.
      */
-    fun findScripts(pathPattern: String): List<File> = project.fileTree(scriptRootDir)
+    fun findScripts(pathPattern: String): List<File> = project.fileTree(scriptDir)
             .matching { it.include(pathPattern) }
             .sortedBy { it.absolutePath }
             .toList()

@@ -62,22 +62,10 @@ class PackageValidator(@Internal val aem: AemExtension) {
     val baseFile: File? get() = baseProvider()
 
     @get:InputFiles
-    val configDirs get() = _configDirs.filter { it.exists() }
+    val configDirs get() = listOf(configDir).filter { it.exists() }
 
-    private var _configDirs = mutableListOf(
-            File(aem.configCommonDir, CONFIG_DIR_PATH),
-            File(aem.configDir, CONFIG_DIR_PATH)
-    )
-
-    fun configDir(dir: File) {
-        _configDirs.add(dir)
-    }
-
-    fun configDirs(dirs: Iterable<File>) {
-        _configDirs = dirs.toMutableList()
-    }
-
-    fun configDirs(vararg dirs: File) = configDirs(dirs.asIterable())
+    @Internal
+    var configDir: File = aem.packageOptions.configDir.resolve(Package.OAKPAL_OPEAR_PATH)
 
     private var classLoaderProvider: () -> ClassLoader = { javaClass.classLoader }
 
@@ -226,9 +214,5 @@ class PackageValidator(@Internal val aem: AemExtension) {
 
     init {
         aem.packageOptions.validatorOptions(this)
-    }
-
-    companion object {
-        const val CONFIG_DIR_PATH = "package/OAKPAL_OPEAR"
     }
 }

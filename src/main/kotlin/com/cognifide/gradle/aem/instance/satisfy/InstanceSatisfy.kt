@@ -52,7 +52,7 @@ open class InstanceSatisfy : PackageDeploy() {
      * Path in which downloaded CRX packages will be stored.
      */
     @Internal
-    var downloadDir = aem.prop.string("instance.satisfy.downloadDir")?.let { aem.project.file(it) }
+    var downloadDir = aem.prop.file("instance.satisfy.downloadDir")
             ?: common.temporaryFile("$name/download")
 
     /**
