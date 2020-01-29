@@ -1,8 +1,8 @@
 package com.cognifide.gradle.aem.common.instance.service.status
 
-import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.common.instance.InstanceService
 import com.cognifide.gradle.aem.common.instance.InstanceSync
+import com.cognifide.gradle.common.CommonException
 import com.cognifide.gradle.common.http.RequestException
 import com.cognifide.gradle.common.utils.Formats
 import java.util.*
@@ -28,7 +28,7 @@ class Status(sync: InstanceSync) : InstanceService(sync) {
                     readSystemProperties().apply {
                         aem.logger.info("Successfully read system properties of $instance")
                     }
-                } catch (e: AemException) {
+                } catch (e: CommonException) {
                     aem.logger.debug("Cannot read system properties of $instance", e)
                     null
                 }
@@ -63,7 +63,7 @@ class Status(sync: InstanceSync) : InstanceService(sync) {
                     readProductVersion().apply {
                         aem.logger.info("Successfully read product version '$this' of $instance")
                     }
-                } catch (e: AemException) {
+                } catch (e: CommonException) {
                     aem.logger.debug("Cannot read product info of $instance")
                     null
                 }

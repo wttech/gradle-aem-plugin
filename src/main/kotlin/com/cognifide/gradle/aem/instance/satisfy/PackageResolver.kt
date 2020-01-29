@@ -8,7 +8,7 @@ import java.io.File
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 
-class PackageResolver(val aem: AemExtension, downloadDir: File) : Resolver<PackageGroup>(aem.common, downloadDir) {
+class PackageResolver(@Internal val aem: AemExtension, downloadDir: File) : Resolver<PackageGroup>(aem.common, downloadDir) {
 
     /**
      * Determines a path in JCR repository in which automatically wrapped bundles will be deployed.

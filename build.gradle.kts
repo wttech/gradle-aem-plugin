@@ -26,10 +26,13 @@ repositories {
 
 dependencies {
     implementation(gradleApi())
-//    implementation(platform("org.jetbrains.kotlin:kotlin-bom:1.3.61"))
-//    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-//    implementation("org.jetbrains.kotlin:kotlin-stdlib")
-//    implementation("org.jetbrains.kotlin:kotlin-reflect")
+
+    /* TODO
+    implementation(platform("org.jetbrains.kotlin:kotlin-bom:1.3.61"))
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib")
+    implementation("org.jetbrains.kotlin:kotlin-reflect")
+    */
 
     implementation("com.cognifide.gradle:common-plugin:1.0.0")
 

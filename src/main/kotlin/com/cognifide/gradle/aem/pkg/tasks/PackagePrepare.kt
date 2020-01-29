@@ -6,6 +6,7 @@ import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.aem.common.pkg.vlt.FilterFile
 import com.cognifide.gradle.aem.common.pkg.vlt.NodeTypesSync
+import com.cognifide.gradle.common.CommonException
 import org.apache.commons.io.FileUtils
 import org.apache.jackrabbit.vault.packaging.PackageException
 import org.gradle.api.tasks.*
@@ -113,7 +114,7 @@ open class PackagePrepare : AemDefaultTask() {
                     parentFile.mkdirs()
                     writeText(crx.nodeTypes)
                 }
-            } catch (e: AemException) {
+            } catch (e: CommonException) {
                 aem.logger.debug("Cannot synchronize node types using $instance! Cause: ${e.message}", e)
                 action()
             }

@@ -1,8 +1,8 @@
 package com.cognifide.gradle.aem.common.instance.service.groovy
 
-import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.common.instance.InstanceService
 import com.cognifide.gradle.aem.common.instance.InstanceSync
+import com.cognifide.gradle.common.CommonException
 import com.cognifide.gradle.common.utils.Formats
 import java.io.File
 
@@ -44,7 +44,7 @@ class GroovyConsole(sync: InstanceSync) : InstanceService(sync) {
         val result = try {
             aem.logger.info("Evaluating Groovy Code: $code")
             evalCodeInternal(code, data)
-        } catch (e: AemException) {
+        } catch (e: CommonException) {
             throw GroovyConsoleException("Cannot evaluate Groovy code properly on $instance, code:\n$code, cause: ${e.message}", e)
         }
 
@@ -70,7 +70,7 @@ class GroovyConsole(sync: InstanceSync) : InstanceService(sync) {
         val result = try {
             aem.logger.info("Evaluating Groovy script '$file' on $instance")
             evalCodeInternal(file.bufferedReader().use { it.readText() }, data)
-        } catch (e: AemException) {
+        } catch (e: CommonException) {
             throw GroovyConsoleException("Cannot evaluate Groovy script '$file' properly on $instance. Cause: ${e.message}", e)
         }
 

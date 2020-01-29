@@ -1,12 +1,12 @@
 package com.cognifide.gradle.aem.common.tasks
 
 import com.cognifide.gradle.aem.AemDefaultTask
-import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.AemPlugin
 import com.cognifide.gradle.aem.common.instance.names
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.common.utils.Formats
 import com.cognifide.gradle.aem.pkg.PackagePlugin
+import com.cognifide.gradle.common.CommonException
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
@@ -65,7 +65,7 @@ open class Debug : AemDefaultTask() {
                 aem.syncPackages { pkg ->
                     try {
                         put(instance.name, packageManager.find(pkg))
-                    } catch (e: AemException) {
+                    } catch (e: CommonException) {
                         logger.info("Cannot determine remote package, because instance is not available: $instance")
                         logger.debug("Detailed error", e)
                     }

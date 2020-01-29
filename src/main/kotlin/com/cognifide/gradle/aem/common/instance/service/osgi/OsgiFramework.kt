@@ -1,10 +1,10 @@
 package com.cognifide.gradle.aem.common.instance.service.osgi
 
-import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.common.bundle.BundleFile
 import com.cognifide.gradle.aem.common.instance.InstanceException
 import com.cognifide.gradle.aem.common.instance.InstanceService
 import com.cognifide.gradle.aem.common.instance.InstanceSync
+import com.cognifide.gradle.common.CommonException
 import com.cognifide.gradle.common.build.Retry
 import com.cognifide.gradle.common.http.ResponseException
 import com.cognifide.gradle.common.utils.Formats
@@ -35,7 +35,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
 
         return try {
             sync.http.get(BUNDLES_LIST_JSON) { asObjectFromJson(it, BundleState::class.java) }
-        } catch (e: AemException) {
+        } catch (e: CommonException) {
             logger.debug("Cannot request OSGi bundles state on $instance", e)
             BundleState.unknown(e)
         }
@@ -172,7 +172,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
 
         return try {
             sync.http.get(COMPONENTS_LIST_JSON) { asObjectFromJson(it, ComponentState::class.java) }
-        } catch (e: AemException) {
+        } catch (e: CommonException) {
             logger.debug("Cannot determine OSGi components state on $instance. Cause: ${e.message}", e)
             ComponentState.unknown()
         }
@@ -257,7 +257,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
                         ?: throw ResponseException("OSGi configuration cannot be found in console response of $instance.")
                 Formats.fromJson(configJson, ConfigurationState::class.java)
             }
-        } catch (e: AemException) {
+        } catch (e: CommonException) {
             logger.debug("Cannot determine OSGi configuration state on $instance. Cause: ${e.message}", e)
             ConfigurationState.unknown()
         }
@@ -272,7 +272,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
             sync.http.get("$CONFIGURATION_PATH/$pid?post=true") { response ->
                 asObjectFromJson(response, Configuration::class.java).takeIf { !metatypeChecking || !it.metatypeAbsence }
             }
-        } catch (e: AemException) {
+        } catch (e: CommonException) {
             throw InstanceException("Cannot read OSGi configuration for PID '$pid' on $instance. Cause: ${e.message}", e)
         }
     }
@@ -305,7 +305,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
             val props = configurationProperties(config, properties)
 
             sync.http.post("$CONFIGURATION_PATH/$pid", props) { checkStatus(it, HttpStatus.SC_MOVED_TEMPORARILY) }
-        } catch (e: AemException) {
+        } catch (e: CommonException) {
             throw InstanceException("OSGi configuration for PID '$pid' cannot be updated on $instance. Cause: ${e.message}", e)
         }
     }
@@ -326,7 +326,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
             val props = configurationProperties(config, properties)
 
             sync.http.post("$CONFIGURATION_PATH/$pid", props) { checkStatus(it, HttpStatus.SC_MOVED_TEMPORARILY) }
-        } catch (e: AemException) {
+        } catch (e: CommonException) {
             throw InstanceException("OSGi configuration for PID '$pid' cannot be saved on $instance. Cause: ${e.message}", e)
         }
     }
@@ -359,7 +359,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
             )
 
             sync.http.post("$CONFIGURATION_PATH/$pid", properties)
-        } catch (e: AemException) {
+        } catch (e: CommonException) {
             throw InstanceException("OSGi configuration for PID '$pid' cannot be deleted on $instance. Cause: ${e.message}", e)
         }
     }
@@ -385,7 +385,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
 
         return try {
             sync.http.get(EVENTS_LIST_JSON) { asObjectFromJson(it, EventState::class.java) }
-        } catch (e: AemException) {
+        } catch (e: CommonException) {
             logger.debug("Cannot determine OSGi events state on $instance. Cause: ${e.message}", e)
             EventState.unknown()
         }
@@ -409,7 +409,7 @@ class OsgiFramework(sync: InstanceSync) : InstanceService(sync) {
         try {
             logger.info("Triggering OSGi framework shutdown on $instance.")
             sync.http.postUrlencoded(VMSTAT_PATH, mapOf("shutdown_type" to type))
-        } catch (e: AemException) {
+        } catch (e: CommonException) {
             throw InstanceException("Cannot trigger shutdown of $instance. Cause: ${e.message}", e)
         }
     }
