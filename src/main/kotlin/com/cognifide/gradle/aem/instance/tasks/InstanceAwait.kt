@@ -6,10 +6,6 @@ import org.gradle.api.tasks.TaskAction
 
 open class InstanceAwait : AemDefaultTask() {
 
-    init {
-        description = "Await for healthy condition of all AEM instances."
-    }
-
     private var awaitUpOptions: AwaitUpAction.() -> Unit = {}
 
     fun awaitUp(options: AwaitUpAction.() -> Unit) {
@@ -19,6 +15,10 @@ open class InstanceAwait : AemDefaultTask() {
     @TaskAction
     fun await() {
         aem.instanceActions.awaitUp(awaitUpOptions)
+    }
+
+    init {
+        description = "Await for healthy condition of all AEM instances."
     }
 
     companion object {

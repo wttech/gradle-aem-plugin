@@ -1,23 +1,25 @@
 package com.cognifide.gradle.aem.bundle
 
-import com.cognifide.gradle.aem.AemPlugin
 import com.cognifide.gradle.aem.bundle.tasks.BundleCompose
 import com.cognifide.gradle.aem.bundle.tasks.BundleInstall
 import com.cognifide.gradle.aem.bundle.tasks.BundleUninstall
 import com.cognifide.gradle.aem.pkg.PackagePlugin
+import com.cognifide.gradle.common.CommonDefaultPlugin
+import com.cognifide.gradle.common.common
 import org.gradle.api.JavaVersion
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.JavaPluginConvention
+import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.api.tasks.testing.Test
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 
-class BundlePlugin : AemPlugin() {
+class BundlePlugin : CommonDefaultPlugin() {
 
-    override fun Project.configure() {
+    override fun Project.configureProject() {
         setupDependentPlugins()
         setupJavaDefaults()
         setupTasks()
@@ -44,25 +46,26 @@ class BundlePlugin : AemPlugin() {
         }
     }
 
-    private fun Project.setupTasks() {
-        tasks {
-            register<BundleCompose>(BundleCompose.NAME) {
-                dependsOn(JavaPlugin.CLASSES_TASK_NAME)
-            }.apply {
-                artifacts.add(Dependency.ARCHIVES_CONFIGURATION, this)
-                artifacts.add(JavaPlugin.API_ELEMENTS_CONFIGURATION_NAME, this)
-                artifacts.add(JavaPlugin.RUNTIME_ELEMENTS_CONFIGURATION_NAME, this)
-                artifacts.add(JavaPlugin.TEST_RUNTIME_CLASSPATH_CONFIGURATION_NAME, this)
-            }
-            register<BundleInstall>(BundleInstall.NAME) {
-                dependsOn(BundleCompose.NAME)
-            }
-            register<BundleUninstall>(BundleUninstall.NAME) {
-                dependsOn(BundleCompose.NAME)
-            }
-            named<Task>(LifecycleBasePlugin.ASSEMBLE_TASK_NAME) {
-                dependsOn(BundleCompose.NAME)
-            }
+    private fun Project.setupTasks() = tasks {
+        register<BundleCompose>(BundleCompose.NAME) {
+            dependsOn(JavaPlugin.CLASSES_TASK_NAME)
+        }.apply {
+            artifacts.add(Dependency.ARCHIVES_CONFIGURATION, this)
+            artifacts.add(JavaPlugin.API_ELEMENTS_CONFIGURATION_NAME, this)
+            artifacts.add(JavaPlugin.RUNTIME_ELEMENTS_CONFIGURATION_NAME, this)
+            artifacts.add(JavaPlugin.TEST_RUNTIME_CLASSPATH_CONFIGURATION_NAME, this)
+        }
+        register<BundleInstall>(BundleInstall.NAME) {
+            dependsOn(BundleCompose.NAME)
+        }
+        register<BundleUninstall>(BundleUninstall.NAME) {
+            dependsOn(BundleCompose.NAME)
+        }
+        named<Task>(LifecycleBasePlugin.ASSEMBLE_TASK_NAME) {
+            dependsOn(BundleCompose.NAME)
+        }
+        named<Jar>(JavaPlugin.JAR_TASK_NAME) {
+            archiveClassifier.set(LIB_CLASSIFIER)
         }
     }
 
@@ -76,7 +79,7 @@ class BundlePlugin : AemPlugin() {
 
                     testImplConfig.extendsFrom(compileOnlyConfig)
 
-                    bundles.forEach { bundle ->
+                    common.tasks.getAll(BundleCompose::class.java).forEach { bundle ->
                         dependsOn(bundle)
                         classpath += files(bundle.composedFile)
                     }
@@ -87,5 +90,7 @@ class BundlePlugin : AemPlugin() {
 
     companion object {
         const val ID = "com.cognifide.aem.bundle"
+
+        const val LIB_CLASSIFIER = "lib"
     }
 }

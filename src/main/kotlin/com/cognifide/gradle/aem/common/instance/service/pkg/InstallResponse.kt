@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.common.instance.service.pkg
 
-import com.cognifide.gradle.aem.common.utils.Patterns
+import com.cognifide.gradle.common.utils.Patterns
 import java.io.InputStream
 import java.util.regex.Pattern
 

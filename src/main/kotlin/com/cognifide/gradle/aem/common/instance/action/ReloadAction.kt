@@ -25,7 +25,7 @@ class ReloadAction(aem: AemExtension) : AnyInstanceAction(aem) {
     private fun reload() {
         val reloaded = mutableListOf<Instance>()
 
-        aem.parallel.with(instances) {
+        common.parallel.with(instances) {
             try {
                 sync.osgiFramework.restart()
                 reloaded += this

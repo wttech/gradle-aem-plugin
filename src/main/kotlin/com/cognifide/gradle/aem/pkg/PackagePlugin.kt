@@ -1,21 +1,21 @@
 package com.cognifide.gradle.aem.pkg
 
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.AemPlugin
 import com.cognifide.gradle.aem.common.CommonPlugin
 import com.cognifide.gradle.aem.instance.InstancePlugin
 import com.cognifide.gradle.aem.instance.satisfy.InstanceSatisfy
 import com.cognifide.gradle.aem.instance.tasks.InstanceCreate
 import com.cognifide.gradle.aem.instance.tasks.InstanceUp
 import com.cognifide.gradle.aem.pkg.tasks.*
+import com.cognifide.gradle.common.CommonDefaultPlugin
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.artifacts.Dependency
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 
-class PackagePlugin : AemPlugin() {
+class PackagePlugin : CommonDefaultPlugin() {
 
-    override fun Project.configure() {
+    override fun Project.configureProject() {
         setupDependentPlugins()
         setupInstallRepository()
         setupTasks()

@@ -2,7 +2,7 @@ package com.cognifide.gradle.aem.instance.tail
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.instance.Instance
-import com.cognifide.gradle.aem.common.utils.Formats
+import com.cognifide.gradle.common.utils.Formats
 import com.cognifide.gradle.aem.instance.tail.io.ConsolePrinter
 import com.cognifide.gradle.aem.instance.tail.io.FileDestination
 import com.cognifide.gradle.aem.instance.tail.io.LogFiles
@@ -15,10 +15,12 @@ import kotlin.math.max
 
 class InstanceTailer(val aem: AemExtension) {
 
+    private val common = aem.common
+
     /**
      * Directory where log files will be stored.
      */
-    var rootDir: File = aem.temporaryFile(InstanceTail.NAME)
+    var rootDir: File = common.temporaryFile(InstanceTail.NAME)
 
     /**
      * Instances from which logs will be tailed.
@@ -140,7 +142,7 @@ class InstanceTailer(val aem: AemExtension) {
 
     private fun startAll(): List<LogTailer> {
         val notificationChannel = Channel<LogChunk>(Channel.UNLIMITED)
-        val logNotifier = LogNotifier(notificationChannel, aem.notifier, logFiles)
+        val logNotifier = LogNotifier(notificationChannel, common.notifier, logFiles)
         logNotifier.listenTailed()
 
         return instances.map { start(it, notificationChannel) }

@@ -18,7 +18,7 @@ class ProjectMergingOptions {
     /**
      * Determines compose task(s) in particular project to be considered when composing merged CRX package.
      */
-    var composeTasks: AemExtension.() -> Collection<PackageCompose> = { tasks.packages }
+    var composeTasks: AemExtension.() -> Collection<PackageCompose> = { common.tasks.getAll(PackageCompose::class.java) }
 
     /**
      * Controls if Vault hooks from particular project should be taken.
@@ -48,12 +48,12 @@ class ProjectMergingOptions {
     /**
      * Determines JAR task(s) in particular project to be considered when composing merged CRX package.
      */
-    var bundleTasks: AemExtension.() -> Collection<BundleCompose> = { tasks.bundles }
+    var bundleTasks: AemExtension.() -> Collection<BundleCompose> = { common.tasks.getAll(BundleCompose::class.java) }
 
     /**
      * Determines extra task(s) in particular project to be executed when composing merged CRX package.
      */
-    var extraTasks: AemExtension.() -> Collection<Task> = { tasks.checks }
+    var extraTasks: AemExtension.() -> Collection<Task> = { common.tasks.checks }
 
     /**
      * Controls if extra OSGi bundles from particular project should be taken.

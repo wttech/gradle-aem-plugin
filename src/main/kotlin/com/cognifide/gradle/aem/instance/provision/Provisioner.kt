@@ -2,13 +2,17 @@
 package com.cognifide.gradle.aem.instance.provision
 
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.common.utils.Formats
-import com.cognifide.gradle.aem.common.utils.Patterns
+import com.cognifide.gradle.common.utils.Formats
+import com.cognifide.gradle.common.utils.Patterns
 
 /**
  * Configures AEM instances only in concrete circumstances (only once, after some time etc).
  */
 class Provisioner(val aem: AemExtension) {
+
+    private val common = aem.common
+
+    private val logger = aem.logger
 
     /**
      * Instances to perform provisioning.
@@ -54,8 +58,8 @@ class Provisioner(val aem: AemExtension) {
                 if (!definition.description.isNullOrBlank()) {
                     intro += " / ${definition.description}"
                 }
-                aem.logger.info(intro)
-                aem.parallel.each(instances) { actions.add(InstanceStep(it, definition).run { provisionStep() }) }
+                logger.info(intro)
+                common.parallel.each(instances) { actions.add(InstanceStep(it, definition).run { provisionStep() }) }
             }
         }
 
@@ -65,25 +69,25 @@ class Provisioner(val aem: AemExtension) {
     private fun InstanceStep.provisionStep(): Action {
         if (!isPerformable()) {
             update()
-            aem.logger.info("Provision step '${definition.id}' skipped for $instance")
+            logger.info("Provision step '${definition.id}' skipped for $instance")
             return Action(this, Status.SKIPPED)
         }
 
         val startTime = System.currentTimeMillis()
-        aem.logger.info("Provision step '${definition.id}' started at $instance")
+        logger.info("Provision step '${definition.id}' started at $instance")
 
         return try {
             perform()
-            aem.logger.info("Provision step '${definition.id}' ended at $instance." +
+            logger.info("Provision step '${definition.id}' ended at $instance." +
                     " Duration: ${Formats.durationSince(startTime)}")
             Action(this, Status.ENDED)
         } catch (e: ProvisionException) {
             if (!definition.continueOnFail) {
                 throw e
             } else {
-                aem.logger.error("Provision step '${definition.id} failed at $instance." +
+                logger.error("Provision step '${definition.id} failed at $instance." +
                         " Duration: ${Formats.durationSince(startTime)}. Cause: ${e.message}")
-                aem.logger.debug("Actual error", e)
+                logger.debug("Actual error", e)
                 Action(this, Status.FAILED)
             }
         }

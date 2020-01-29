@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.instance.provision
 
-import com.cognifide.gradle.aem.common.utils.Formats
+import com.cognifide.gradle.common.utils.Formats
 import java.util.concurrent.ThreadLocalRandom
 import java.util.concurrent.TimeUnit
 

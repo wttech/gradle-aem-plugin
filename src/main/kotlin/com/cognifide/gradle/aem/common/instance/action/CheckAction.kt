@@ -21,11 +21,11 @@ class CheckAction(aem: AemExtension) : AnyInstanceAction(aem) {
         }
 
         if (instances.isEmpty()) {
-            aem.logger.info("No instances to check.")
+            logger.info("No instances to check.")
             return
         }
 
-        aem.logger.info("Checking instance(s): ${instances.names}")
+        logger.info("Checking instance(s): ${instances.names}")
 
         runner.check(instances)
     }

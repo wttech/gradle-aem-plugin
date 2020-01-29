@@ -1,19 +1,19 @@
 package com.cognifide.gradle.aem.common.tasks
 
 import com.cognifide.gradle.aem.AemDefaultTask
-import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.AemPlugin
 import com.cognifide.gradle.aem.common.instance.names
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
-import com.cognifide.gradle.aem.common.utils.Formats
+import com.cognifide.gradle.common.utils.Formats
 import com.cognifide.gradle.aem.pkg.PackagePlugin
+import com.cognifide.gradle.common.CommonException
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
 open class Debug : AemDefaultTask() {
 
     @Internal
-    val file = aem.temporaryFile("$name/debug.json")
+    val file = common.temporaryFile("$name/debug.json")
 
     /**
      * Dump package states on defined instances.
@@ -21,18 +21,13 @@ open class Debug : AemDefaultTask() {
     @Internal
     var packageDeployed: Boolean = aem.prop.boolean("debug.packageDeployed") ?: !aem.offline
 
-    init {
-        description = "Dumps effective AEM build configuration of project to JSON file"
-    }
-
     @get:Internal
     val properties: Map<String, Any>
         get() {
             return mapOf(
                     "buildInfo" to buildProperties,
                     "projectInfo" to projectProperties,
-                    "packageDeployed" to packageProperties,
-                    "aem" to aem
+                    "packageDeployed" to packageProperties
             )
         }
 
@@ -70,7 +65,7 @@ open class Debug : AemDefaultTask() {
                 aem.syncPackages { pkg ->
                     try {
                         put(instance.name, packageManager.find(pkg))
-                    } catch (e: AemException) {
+                    } catch (e: CommonException) {
                         logger.info("Cannot determine remote package, because instance is not available: $instance")
                         logger.debug("Detailed error", e)
                     }
@@ -89,7 +84,11 @@ open class Debug : AemDefaultTask() {
         }
         logger.info(json)
 
-        aem.notifier.notify("AEM configuration dumped", "For $project to file: ${Formats.projectPath(file, project)}")
+        common.notifier.notify("AEM configuration dumped", "For $project to file: ${Formats.projectPath(file, project)}")
+    }
+
+    init {
+        description = "Dumps effective AEM build configuration of project to JSON file"
     }
 
     companion object {

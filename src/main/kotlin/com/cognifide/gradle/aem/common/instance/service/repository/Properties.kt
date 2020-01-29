@@ -1,7 +1,8 @@
 package com.cognifide.gradle.aem.common.instance.service.repository
 
+import com.cognifide.gradle.aem.common.utils.JcrUtil
 import com.cognifide.gradle.aem.common.instance.service.repository.Node as Base
-import com.cognifide.gradle.aem.common.utils.Formats
+import com.cognifide.gradle.common.utils.Formats
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.text.ParseException
 import java.util.*
@@ -91,9 +92,9 @@ class Properties(@JsonIgnore val node: Base, props: Map<String, Any>) : LinkedHa
         }
     }
 
-    fun calendar(name: String): Calendar? = date(name)?.let { Formats.dateToCalendar(it) }
+    fun calendar(name: String): Calendar? = date(name)?.let { JcrUtil.dateToCalendar(it) }
 
-    fun calendars(name: String): List<Calendar>? = dates(name)?.map { Formats.dateToCalendar(it) }
+    fun calendars(name: String): List<Calendar>? = dates(name)?.map { JcrUtil.dateToCalendar(it) }
 
     @get:JsonIgnore
     val json: String

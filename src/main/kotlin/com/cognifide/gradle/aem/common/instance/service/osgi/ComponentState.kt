@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.common.instance.service.osgi
 
-import com.cognifide.gradle.aem.common.utils.Patterns
+import com.cognifide.gradle.common.utils.Patterns
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty

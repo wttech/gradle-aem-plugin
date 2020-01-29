@@ -3,7 +3,8 @@ package com.cognifide.gradle.aem.common.pkg.vlt
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
-import com.cognifide.gradle.aem.common.utils.Formats
+import com.cognifide.gradle.aem.common.utils.JcrUtil
+import com.cognifide.gradle.common.utils.Formats
 import com.cognifide.gradle.aem.pkg.tasks.PackageVlt
 import java.io.Closeable
 import java.io.File
@@ -39,7 +40,7 @@ class FilterFile(
     }
 
     private fun normalizeRoot(root: File): File {
-        return File(Formats.manglePath(Formats.normalizePath(root.path).substringBefore("/jcr:content")))
+        return File(JcrUtil.manglePath(Formats.normalizePath(root.path).substringBefore("/jcr:content")))
     }
 
     override fun close() {
@@ -66,7 +67,7 @@ class FilterFile(
             val template = FileOperations.readResource("vlt/$TEMPORARY_NAME")!!
                     .bufferedReader().use { it.readText() }
             val content = aem.prop.expand(template, mapOf("paths" to paths))
-            val file = aem.temporaryFile("${PackageVlt.NAME}/$TEMPORARY_NAME")
+            val file = aem.common.temporaryFile("${PackageVlt.NAME}/$TEMPORARY_NAME")
 
             FileUtils.deleteQuietly(file)
             file.apply {

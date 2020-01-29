@@ -40,7 +40,7 @@ open class BundleInstall : BundleTask() {
      * Repeat install when failed (brute-forcing).
      */
     @Internal
-    var retry = aem.retry { afterSquaredSecond(aem.prop.long("bundle.install.retry") ?: 2) }
+    var retry = common.retry { afterSquaredSecond(aem.prop.long("bundle.install.retry") ?: 2) }
 
     /**
      * Hook for preparing instance before installing bundles
@@ -62,10 +62,6 @@ open class BundleInstall : BundleTask() {
 
     private var awaitUpOptions: AwaitUpAction.() -> Unit = {}
 
-    init {
-        description = "Installs OSGi bundle on instance(s)."
-    }
-
     /**
      * Controls await up action.
      */
@@ -86,7 +82,7 @@ open class BundleInstall : BundleTask() {
     open fun install() {
         instances.checkAvailable()
 
-        aem.progress(instances.size * bundles.size) {
+        common.progress(instances.size * bundles.size) {
             aem.syncFiles(instances, bundles) { pkg ->
                 increment("Installing bundle '${pkg.name}' to instance '${instance.name}'") {
                     initializer()
@@ -98,7 +94,11 @@ open class BundleInstall : BundleTask() {
 
         completer()
 
-        aem.notifier.notify("Bundle installed", "${bundles.fileNames} on ${instances.names}")
+        common.notifier.notify("Bundle installed", "${bundles.fileNames} on ${instances.names}")
+    }
+
+    init {
+        description = "Installs OSGi bundle on instance(s)."
     }
 
     companion object {

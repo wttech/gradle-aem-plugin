@@ -6,6 +6,7 @@ import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.aem.common.pkg.vlt.FilterFile
 import com.cognifide.gradle.aem.common.pkg.vlt.NodeTypesSync
+import com.cognifide.gradle.common.CommonException
 import org.apache.commons.io.FileUtils
 import org.apache.jackrabbit.vault.packaging.PackageException
 import org.gradle.api.tasks.*
@@ -21,7 +22,7 @@ open class PackagePrepare : AemDefaultTask() {
     var metaDefaults: Boolean = true
 
     @OutputDirectory
-    val metaDir = aem.temporaryFile("$name/${Package.META_PATH}")
+    val metaDir = common.temporaryFile("$name/${Package.META_PATH}")
 
     @get:Internal
     val vaultFilterOriginFile get() = File(metaDir, "${Package.VLT_DIR}/${FilterFile.ORIGIN_NAME}")
@@ -106,14 +107,14 @@ open class PackagePrepare : AemDefaultTask() {
         }
     }
 
-    fun syncNodeTypesOrElse(action: () -> Unit) = aem.buildScope.doOnce("syncNodeTypes") {
+    fun syncNodeTypesOrElse(action: () -> Unit) = common.buildScope.doOnce("syncNodeTypes") {
         aem.availableInstance?.sync {
             try {
                 vaultNodeTypesSyncFile.apply {
                     parentFile.mkdirs()
                     writeText(crx.nodeTypes)
                 }
-            } catch (e: AemException) {
+            } catch (e: CommonException) {
                 aem.logger.debug("Cannot synchronize node types using $instance! Cause: ${e.message}", e)
                 action()
             }

@@ -2,7 +2,7 @@ package com.cognifide.gradle.aem.pkg.tasks
 
 import com.cognifide.gradle.aem.AemDefaultTask
 import com.cognifide.gradle.aem.AemException
-import com.cognifide.gradle.aem.common.utils.Formats
+import com.cognifide.gradle.common.utils.Formats
 import com.cognifide.gradle.aem.common.pkg.vlt.VltClient
 import com.cognifide.gradle.aem.pkg.tasks.sync.Cleaner
 import com.cognifide.gradle.aem.pkg.tasks.sync.Downloader
@@ -98,7 +98,7 @@ open class PackageSync : AemDefaultTask() {
             }
 
             if (!contentDir.exists()) {
-                aem.notifier.notify("Cannot synchronize JCR content", "Directory does not exist: ${aem.packageOptions.jcrRootDir}")
+                common.notifier.notify("Cannot synchronize JCR content", "Directory does not exist: ${aem.packageOptions.jcrRootDir}")
                 return
             }
 
@@ -109,7 +109,7 @@ open class PackageSync : AemDefaultTask() {
                 }
             }
 
-            aem.notifier.notify(
+            common.notifier.notify(
                     "Synchronized JCR content",
                     "Instance: ${instance.name}. Directory: ${Formats.rootProjectPath(contentDir, project)}"
             )

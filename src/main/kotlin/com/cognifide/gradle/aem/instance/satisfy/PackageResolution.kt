@@ -1,8 +1,8 @@
 package com.cognifide.gradle.aem.instance.satisfy
 
 import com.cognifide.gradle.aem.common.bundle.BundleFile
-import com.cognifide.gradle.aem.common.file.resolver.FileResolution
 import com.cognifide.gradle.aem.common.pkg.PackageException
+import com.cognifide.gradle.common.file.resolver.FileResolution
 import java.io.File
 
 class PackageResolution(group: PackageGroup, id: String, action: (FileResolution) -> File) : FileResolution(group, id, action) {

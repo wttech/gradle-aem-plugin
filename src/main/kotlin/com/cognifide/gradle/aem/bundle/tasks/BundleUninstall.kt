@@ -8,15 +8,11 @@ import org.gradle.api.tasks.TaskAction
 
 open class BundleUninstall : BundleTask() {
 
-    init {
-        description = "Uninstalls OSGi bundle on instance(s)."
-    }
-
     @TaskAction
     fun uninstall() {
         instances.checkAvailable()
 
-        aem.progress(instances.size * bundles.size) {
+        common.progress(instances.size * bundles.size) {
             aem.syncFiles(instances, bundles) { file ->
                 increment("${file.name} -> ${instance.name}") {
                     osgiFramework.uninstallBundle(file)
@@ -24,7 +20,11 @@ open class BundleUninstall : BundleTask() {
             }
         }
 
-        aem.notifier.notify("Bundle uninstalled", "${bundles.fileNames} on ${instances.names}")
+        common.notifier.notify("Bundle uninstalled", "${bundles.fileNames} on ${instances.names}")
+    }
+
+    init {
+        description = "Uninstalls OSGi bundle on instance(s)."
     }
 
     companion object {

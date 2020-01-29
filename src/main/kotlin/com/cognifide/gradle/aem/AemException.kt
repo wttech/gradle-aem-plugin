@@ -1,8 +1,8 @@
 package com.cognifide.gradle.aem
 
-import org.gradle.api.GradleException
+import com.cognifide.gradle.common.CommonException
 
-open class AemException : GradleException {
+open class AemException : CommonException {
 
     constructor(message: String, cause: Throwable) : super(message, cause)
 

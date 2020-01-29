@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.instance.rcp
 
 import com.cognifide.gradle.aem.common.instance.Instance
-import com.cognifide.gradle.aem.common.utils.Formats
+import com.cognifide.gradle.common.utils.Formats
 
 data class RcpSummary(
     val source: Instance,

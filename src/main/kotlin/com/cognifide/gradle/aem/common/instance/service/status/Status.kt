@@ -1,10 +1,10 @@
 package com.cognifide.gradle.aem.common.instance.service.status
 
-import com.cognifide.gradle.aem.AemException
-import com.cognifide.gradle.aem.common.http.RequestException
 import com.cognifide.gradle.aem.common.instance.InstanceService
 import com.cognifide.gradle.aem.common.instance.InstanceSync
-import com.cognifide.gradle.aem.common.utils.Formats
+import com.cognifide.gradle.common.CommonException
+import com.cognifide.gradle.common.http.RequestException
+import com.cognifide.gradle.common.utils.Formats
 import java.util.*
 
 /**
@@ -23,12 +23,12 @@ class Status(sync: InstanceSync) : InstanceService(sync) {
                 return mapOf()
             }
 
-            return aem.buildScope.tryGetOrPut("${instance.httpUrl}$SYSTEM_PROPERTIES_PATH") {
+            return common.buildScope.tryGetOrPut("${instance.httpUrl}$SYSTEM_PROPERTIES_PATH") {
                 try {
                     readSystemProperties().apply {
                         aem.logger.info("Successfully read system properties of $instance")
                     }
-                } catch (e: AemException) {
+                } catch (e: CommonException) {
                     aem.logger.debug("Cannot read system properties of $instance", e)
                     null
                 }
@@ -58,12 +58,12 @@ class Status(sync: InstanceSync) : InstanceService(sync) {
                 return PRODUCT_VERSION_UNKNOWN
             }
 
-            return aem.buildScope.tryGetOrPut("${instance.httpUrl}$PRODUCT_INFO_PATH") {
+            return common.buildScope.tryGetOrPut("${instance.httpUrl}$PRODUCT_INFO_PATH") {
                 try {
                     readProductVersion().apply {
                         aem.logger.info("Successfully read product version '$this' of $instance")
                     }
-                } catch (e: AemException) {
+                } catch (e: CommonException) {
                     aem.logger.debug("Cannot read product info of $instance")
                     null
                 }
@@ -95,6 +95,6 @@ class Status(sync: InstanceSync) : InstanceService(sync) {
 
         val PRODUCT_VERSION_REGEX = Regex("^ {2}Adobe Experience Manager \\((.*)\\)$")
 
-        val PRODUCT_VERSION_UNKNOWN = Formats.VERSION_UNKNOWN.version
+        val PRODUCT_VERSION_UNKNOWN = Formats.versionUnknown().version
     }
 }

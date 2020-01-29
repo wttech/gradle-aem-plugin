@@ -1,5 +1,7 @@
 package com.cognifide.gradle.aem.common.utils
 
+import java.io.File
+
 object Utils {
 
     fun mapOfNonNullValues(vararg entries: Pair<String, String?>): Map<String, String> {
@@ -26,3 +28,12 @@ fun <T> Iterable<T>.onEachApply(block: T.() -> Unit): Iterable<T> {
 fun <T> using(receiver: T, block: T.() -> Unit) {
     with(receiver, block)
 }
+
+val Collection<File>.fileNames
+    get() = if (isNotEmpty()) joinToString(", ") { it.name } else "none"
+
+fun String.normalizeSeparators(separator: String): String = this.replace(":", separator)
+        .replace("-", separator)
+        .replace(".", separator)
+        .removePrefix(separator)
+        .removeSuffix(separator)

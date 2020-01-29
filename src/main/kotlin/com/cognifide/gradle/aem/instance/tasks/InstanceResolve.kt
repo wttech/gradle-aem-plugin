@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.instance.tasks
 
 import com.cognifide.gradle.aem.AemDefaultTask
+import com.cognifide.gradle.aem.instance.satisfy.InstanceSatisfy
 import org.gradle.api.tasks.TaskAction
 
 open class InstanceResolve : AemDefaultTask() {
@@ -11,7 +12,7 @@ open class InstanceResolve : AemDefaultTask() {
 
     @TaskAction
     fun resolve() {
-        aem.tasks.instanceSatisfy.resolvePackages() // more light at first
+        common.tasks.get<InstanceSatisfy>(InstanceSatisfy.NAME).resolvePackages() // more light at first
         aem.localInstanceManager.resolveSourceFiles()
     }
 

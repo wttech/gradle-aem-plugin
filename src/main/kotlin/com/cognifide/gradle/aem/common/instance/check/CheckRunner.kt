@@ -1,14 +1,16 @@
 package com.cognifide.gradle.aem.common.instance.check
 
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.common.build.Behaviors
-import com.cognifide.gradle.aem.common.build.ProgressIndicator
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.InstanceException
+import com.cognifide.gradle.common.build.Behaviors
+import com.cognifide.gradle.common.build.ProgressIndicator
 import kotlinx.coroutines.isActive
 import org.apache.commons.lang3.time.StopWatch
 
 class CheckRunner(internal val aem: AemExtension) {
+
+    private val common = aem.common
 
     private var checks: CheckFactory.() -> List<Check> = { throw InstanceException("No instance checks defined!") }
 
@@ -66,7 +68,7 @@ class CheckRunner(internal val aem: AemExtension) {
     var logInstantly = aem.logger.isInfoEnabled
 
     fun check(instances: Collection<Instance>) {
-        aem.progressIndicator {
+        common.progressIndicator {
             doChecking(instances)
             doAbort()
         }
@@ -81,7 +83,7 @@ class CheckRunner(internal val aem: AemExtension) {
 
         runningWatch.start()
 
-        aem.parallel.each(progresses) { progress ->
+        common.parallel.each(progresses) { progress ->
             val instance = progress.instance
             progress.stateWatch.start()
 

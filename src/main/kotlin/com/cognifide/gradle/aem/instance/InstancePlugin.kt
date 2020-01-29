@@ -1,8 +1,6 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.AemPlugin
 import com.cognifide.gradle.aem.common.CommonPlugin
-import com.cognifide.gradle.aem.common.tasks.lifecycle.*
 import com.cognifide.gradle.aem.instance.provision.InstanceProvision
 import com.cognifide.gradle.aem.instance.rcp.InstanceRcp
 import com.cognifide.gradle.aem.instance.satisfy.InstanceSatisfy
@@ -10,6 +8,7 @@ import com.cognifide.gradle.aem.instance.tail.InstanceTail
 import com.cognifide.gradle.aem.instance.tasks.*
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.PackageDeploy
+import com.cognifide.gradle.common.CommonDefaultPlugin
 import org.gradle.api.Project
 
 /**
@@ -21,9 +20,9 @@ import org.gradle.api.Project
  * Most often should be applied only to one project in build (typically project named 'aem' or root project).
  * Applying it multiple times to same configuration could case confusing errors like AEM started multiple times.
  */
-class InstancePlugin : AemPlugin() {
+class InstancePlugin : CommonDefaultPlugin() {
 
-    override fun Project.configure() {
+    override fun Project.configureProject() {
         setupDependentPlugins()
         setupTasks()
     }
@@ -34,6 +33,7 @@ class InstancePlugin : AemPlugin() {
 
     @Suppress("LongMethod")
     private fun Project.setupTasks() {
+
         tasks {
             // Plugin tasks
 
@@ -90,6 +90,7 @@ class InstancePlugin : AemPlugin() {
 
             // Common lifecycle
 
+            /* TODO
             registerOrConfigure<Up>(Up.NAME) {
                 dependsOn(InstanceUp.NAME)
                 mustRunAfter(InstanceBackup.NAME)
@@ -115,6 +116,7 @@ class InstancePlugin : AemPlugin() {
             registerOrConfigure<Await>(Await.NAME) {
                 dependsOn(InstanceAwait.NAME)
             }
+            */
         }
     }
 

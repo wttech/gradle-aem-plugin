@@ -1,8 +1,9 @@
 package com.cognifide.gradle.aem.common.instance.service.repository
 
-import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.common.pkg.PackageDefinition
-import com.cognifide.gradle.aem.common.utils.Formats
+import com.cognifide.gradle.aem.common.utils.JcrUtil
+import com.cognifide.gradle.common.CommonException
+import com.cognifide.gradle.common.utils.Formats
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.jayway.jsonpath.PathNotFoundException
 import net.minidev.json.JSONArray
@@ -94,7 +95,7 @@ class Node(val repository: Repository, val path: String) : Serializable {
                     }
                 }
                 .asSequence()
-        } catch (e: AemException) {
+        } catch (e: CommonException) {
             throw RepositoryException("Cannot read children of node '$path' on $instance. Cause: ${e.message}", e)
         }
     }
@@ -115,7 +116,7 @@ class Node(val repository: Repository, val path: String) : Serializable {
             existsCheck = try {
                 log("Checking repository node '$path' existence on $instance")
                 http.head(path) { it.statusLine.statusCode != HttpStatus.SC_NOT_FOUND }
-            } catch (e: AemException) {
+            } catch (e: CommonException) {
                 throw RepositoryException("Cannot check repository node existence: $path on $instance. Cause: ${e.message}", e)
             }
         }
@@ -132,7 +133,7 @@ class Node(val repository: Repository, val path: String) : Serializable {
         http.postMultipart(path, postProperties(properties) + operationProperties("")) {
             asObjectFromJson(it, RepositoryResult::class.java)
         }
-    } catch (e: AemException) {
+    } catch (e: CommonException) {
         throw RepositoryException("Cannot save repository node '$path' on $instance. Cause: ${e.message}", e)
     }
 
@@ -170,7 +171,7 @@ class Node(val repository: Repository, val path: String) : Serializable {
         http.postMultipart(path, params) {
             asObjectFromJson(it, RepositoryResult::class.java)
         }
-    } catch (e: AemException) {
+    } catch (e: CommonException) {
         throw RepositoryException("Cannot import node '$name' into repository node '$path' on $instance. Cause: ${e.message}", e)
     }
 
@@ -203,7 +204,7 @@ class Node(val repository: Repository, val path: String) : Serializable {
         http.postMultipart(path, operationProperties("delete")) {
             asObjectFromJson(it, RepositoryResult::class.java)
         }
-    } catch (e: AemException) {
+    } catch (e: CommonException) {
         throw RepositoryException("Cannot delete repository node '$path' on $instance. Cause: ${e.message}", e)
     }
 
@@ -232,7 +233,7 @@ class Node(val repository: Repository, val path: String) : Serializable {
         )) { checkStatus(it, HttpStatus.SC_CREATED) }
 
         Node(repository, targetPath)
-    } catch (e: AemException) {
+    } catch (e: CommonException) {
         throw RepositoryException("Cannot copy repository node from '$path' to '$targetPath' on $instance. Cause: '${e.message}'")
     }
 
@@ -246,7 +247,7 @@ class Node(val repository: Repository, val path: String) : Serializable {
         )) { checkStatus(it, listOf(HttpStatus.SC_CREATED, HttpStatus.SC_OK)) }
 
         Node(repository, targetPath)
-    } catch (e: AemException) {
+    } catch (e: CommonException) {
         throw RepositoryException("Cannot move repository node from '$path' to '$targetPath' on $instance. Cause: '${e.message}'")
     }
 
@@ -325,7 +326,7 @@ class Node(val repository: Repository, val path: String) : Serializable {
                 val props = asJson(response).json<LinkedHashMap<String, Any>>()
                 Properties(this@Node, props).apply { propertiesLoaded = this }
             }
-        } catch (e: AemException) {
+        } catch (e: CommonException) {
             throw RepositoryException("Cannot read properties of node '$path' on $instance. Cause: ${e.message}", e)
         }
     }
@@ -376,7 +377,7 @@ class Node(val repository: Repository, val path: String) : Serializable {
     fun download(options: PackageDefinition.() -> Unit = {}): File {
         val node = this
         return repository.sync.packageManager.download {
-            archiveBaseName = Formats.manglePath(node.name)
+            archiveBaseName = JcrUtil.manglePath(node.name)
             filter(node.path)
             options()
         }

@@ -14,6 +14,8 @@ import java.util.concurrent.TimeUnit
 
 class LocalInstanceManager(private val aem: AemExtension) : Serializable {
 
+    private val common = aem.common
+
     private val logger = aem.logger
 
     /**
@@ -155,7 +157,7 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
 
         rootDir.mkdirs()
 
-        aem.progress(instances.size) {
+        common.progress(instances.size) {
             instances.onEachApply {
                 increment("Restoring instance '$name'") {
                     FileOperations.zipUnpackDir(backupZip, id, rootDir)
@@ -170,7 +172,7 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
             createFromScratch(missingInstances)
         }
 
-        aem.progress(instances.size) {
+        common.progress(instances.size) {
             instances.onEachApply {
                 increment("Customizing instance '$name'") {
                     customize()
@@ -185,7 +187,7 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
                     "Ensure having specified local instance quickstart jar & license urls.")
         }
 
-        aem.progress(instances.size) {
+        common.progress(instances.size) {
             instances.onEachApply {
                 increment("Creating instance '$name'") {
                     create()
