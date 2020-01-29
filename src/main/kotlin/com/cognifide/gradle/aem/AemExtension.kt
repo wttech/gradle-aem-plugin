@@ -113,7 +113,7 @@ class AemExtension(val project: Project) : Serializable {
      * - Groovy Scripts to be launched by Groovy Console instance service in tasks defined in project.
      */
     val configDir: File
-        get() = project.file(prop.string("configDir") ?: "src/main/aem")
+        get() = project.file(prop.string("configDir") ?: "src/aem")
 
     /**
      * Directory for storing common files used by plugin e.g:
@@ -122,7 +122,7 @@ class AemExtension(val project: Project) : Serializable {
      * - tail incident filter
      */
     val configCommonDir: File
-        get() = projectMain.file(prop.string("configCommonDir") ?: "src/main/aem")
+        get() = projectMain.file(prop.string("configCommonDir") ?: "src/aem")
 
     val packageOptions = PackageOptions(this)
 
