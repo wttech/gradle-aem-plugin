@@ -1943,8 +1943,8 @@ This behavior could be customized by `localInstance` section of plugin DSL:
 ```kotlin
 aem {
     localInstance {
-        rootDir = File(".instance") // path under which local instance files are stored
-        overridesDir = File("gradle/instance/local") // path with directories instance specific (common, author, publish) holding files that can override default instance files
+        rootDir = file(".instance") // path under which local instance files are stored
+        overridesDir = file("gradle/instance/local") // path with directories instance specific (common, author, publish) holding files that can override default instance files
         expandProperties = mapOf() // place where additional properties can be defined
         expandFiles = listOf( // file patterns which allows using variables inside
             "**/*.properties", 
@@ -1968,7 +1968,7 @@ An example could be providing additional configuration for the `sling.properties
 It is needed to override only two properties in the final `sling.properties` file: 
 * `org.osgi.framework.system.packages.extra`
   * which describe extra packages that will be exported in the system bundle
-  * in Java 11 system bundle by default exports fewer API classes thank in Java 8
+  * in Java 11 system bundle by default exports fewer API classes than in Java 8
   * sometimes we need to extend this set to make pre-Java 11 bundles work
 * and `org.osgi.framework.bootdelegation`
   * to solve known [FELIX-6184](https://issues.apache.org/jira/browse/FELIX-6184) issue 
