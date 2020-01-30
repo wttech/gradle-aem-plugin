@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test
 class PackageSyncPluginTest: AemBuildTest() {
 
     @Test
-    fun `should build package using minimal configuration`() {
+    fun `should apply plugin correctly`() {
         val projectDir = prepareProject("package-sync-minimal") {
             settingsGradle("")
 

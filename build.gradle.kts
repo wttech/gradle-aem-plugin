@@ -55,9 +55,13 @@ dependencies {
     "detektPlugins"("io.gitlab.arturbosch.detekt:detekt-formatting:1.2.2")
 }
 
-val functionalTestSourceSet = sourceSets.create("functionalTest") {}
+val functionalTestSourceSet = sourceSets.create("functionalTest")
+
 gradlePlugin.testSourceSets(functionalTestSourceSet)
-configurations.getByName("functionalTestImplementation").extendsFrom(configurations.getByName("testImplementation"))
+
+configurations.getByName("functionalTestImplementation").apply {
+    extendsFrom(configurations.getByName("testImplementation"))
+}
 
 
 tasks {
@@ -100,6 +104,8 @@ tasks {
     register<Test>("functionalTest") {
         testClassesDirs = functionalTestSourceSet.output.classesDirs
         classpath = functionalTestSourceSet.runtimeClasspath
+
+        println(classpath.joinToString("\n"))
 
         systemProperties(System.getProperties().asSequence().map {
             it.key.toString() to it.value.toString() }.filter {

@@ -17,7 +17,7 @@ import org.gradle.api.tasks.bundling.Jar
 import java.io.File
 
 @Suppress("LargeClass", "TooManyFunctions")
-open class BundleCompose : Jar(), CommonTask, AemTask {
+open class BundleCompose : CommonTask, AemTask, Jar() {
 
     @Internal
     final override val common = project.common
@@ -57,7 +57,6 @@ open class BundleCompose : Jar(), CommonTask, AemTask {
     /**
      * Add instructions to the BND property from a list of multi-line strings.
      */
-    @Suppress("SpreadOperator")
     fun bnd(vararg lines: CharSequence) = bundleConvention.bnd(*lines)
 
     /**
