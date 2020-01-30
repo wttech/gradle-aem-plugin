@@ -7,20 +7,15 @@ import com.cognifide.gradle.aem.aem
 import com.cognifide.gradle.aem.bundle.BundleException
 import com.cognifide.gradle.aem.common.instance.service.osgi.Bundle
 import com.cognifide.gradle.aem.common.utils.normalizeSeparators
-import com.cognifide.gradle.common.CommonTask
-import com.cognifide.gradle.common.common
+import com.cognifide.gradle.common.tasks.JarTask
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.tasks.*
-import org.gradle.api.tasks.bundling.Jar
 import java.io.File
 
 @Suppress("LargeClass", "TooManyFunctions")
-open class BundleCompose : CommonTask, AemTask, Jar() {
-
-    @Internal
-    final override val common = project.common
+open class BundleCompose : JarTask(), AemTask {
 
     @Internal
     final override val aem = project.aem

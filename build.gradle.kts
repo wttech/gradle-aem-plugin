@@ -105,8 +105,6 @@ tasks {
         testClassesDirs = functionalTestSourceSet.output.classesDirs
         classpath = functionalTestSourceSet.runtimeClasspath
 
-        println(classpath.joinToString("\n"))
-
         systemProperties(System.getProperties().asSequence().map {
             it.key.toString() to it.value.toString() }.filter {
                 it.first.run { startsWith("fileTransfer.") || startsWith("localInstance.") }
