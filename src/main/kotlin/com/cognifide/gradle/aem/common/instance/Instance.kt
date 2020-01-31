@@ -135,7 +135,7 @@ interface Instance : Serializable {
 
         const val PASSWORD_DEFAULT = "admin"
 
-        val LOCAL_PROPS = listOf("httpUrl", "type", "password", "jvmOpts", "startOpts", "runModes", "debugPort")
+        val LOCAL_PROPS = listOf("httpUrl", "type", "password", "jvmOpts", "startOpts", "runModes", "debugPort", "debugAddress")
 
         val REMOTE_PROPS = listOf("httpUrl", "type", "user", "password")
 
@@ -186,6 +186,7 @@ interface Instance : Serializable {
                         props["startOpts"]?.let { this.startOpts = it.split(" ") }
                         props["runModes"]?.let { this.runModes = it.split(",") }
                         props["debugPort"]?.let { this.debugPort = it.toInt() }
+                        props["debugAddress"]?.let { this.debugAddress = it }
 
                         this.properties.putAll(props.filterKeys { !LOCAL_PROPS.contains(it) })
                     }
