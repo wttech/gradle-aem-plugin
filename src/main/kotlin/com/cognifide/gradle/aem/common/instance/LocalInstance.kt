@@ -24,7 +24,7 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
 
     var debugPort: Int = 5005
     var debugAddress: String = ""
-    private val debugAddressWithPort: String
+    private val debugSocketAddress: String
         get() = when (debugAddress) {
             "*" -> "0.0.0.0:$debugPort"
             "" -> "$debugPort"
@@ -46,7 +46,7 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
     private val jvmDebugOpt: String
         get() = when {
             SystemUtils.isJavaVersionAtLeast(JavaVersion.JAVA_9) ->
-                "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=$debugAddressWithPort"
+                "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=$debugSocketAddress"
             else ->
                 "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=$debugPort"
         }
