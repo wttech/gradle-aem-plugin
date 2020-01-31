@@ -669,11 +669,16 @@ Example for defining local instances (created on local file system):
 ```
 instance.local-author.httpUrl=http://localhost:4502
 instance.local-author.type=local
+instance.local-author.debugPort=14502
+# debugAddress can be used to enable access to debug port from outside the local network (Java 9+)
+instance.local-author.debugAddress=*
 instance.local-author.runModes=nosamplecontent
 instance.local-author.jvmOpts=-server -Xmx1024m -XX:MaxPermSize=256M -Djava.awt.headless=true
 
 instance.local-publish.httpUrl=http://localhost:4503
 instance.local-publish.type=local
+instance.local-publish.debugPort=14503
+instance.local-publish.debugAddress=*
 instance.local-publish.runModes=nosamplecontent
 instance.local-publish.jvmOpts=-server -Xmx1024m -XX:MaxPermSize=256M -Djava.awt.headless=true
 ```
