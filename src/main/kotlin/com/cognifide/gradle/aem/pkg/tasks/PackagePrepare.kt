@@ -7,6 +7,8 @@ import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.aem.common.pkg.vlt.FilterFile
 import com.cognifide.gradle.aem.common.pkg.vlt.NodeTypesSync
 import com.cognifide.gradle.common.CommonException
+import com.cognifide.gradle.common.build.dir
+import com.cognifide.gradle.common.build.file
 import org.apache.commons.io.FileUtils
 import org.apache.jackrabbit.vault.packaging.PackageException
 import org.gradle.api.tasks.*
@@ -22,21 +24,21 @@ open class PackagePrepare : AemDefaultTask() {
     var metaDefaults: Boolean = true
 
     @OutputDirectory
-    val metaDir = common.temporaryFile("$name/${Package.META_PATH}")
+    val metaDir = aem.obj.buildDir("$name/${Package.META_PATH}")
 
     @get:Internal
-    val vaultFilterOriginFile get() = File(metaDir, "${Package.VLT_DIR}/${FilterFile.ORIGIN_NAME}")
+    val vaultFilterOriginFile = aem.obj.relativeFile(metaDir,"${Package.VLT_DIR}/${FilterFile.ORIGIN_NAME}")
 
     @get:Internal
-    val vaultFilterTemplateFile get() = File(metaDir, "${Package.VLT_DIR}/${FilterFile.BUILD_NAME}")
+    val vaultFilterTemplateFile = aem.obj.relativeFile(metaDir, "${Package.VLT_DIR}/${FilterFile.BUILD_NAME}")
 
-    @Internal
-    var contentDir: File = aem.packageOptions.contentDir
+    @Internal // TODO @InputDir
+    var contentDir = aem.obj.dir(aem.packageOptions.contentDir)
 
-    @get:InputFiles
+    @get:InputFiles // TODO do not evaluate lazy by it own
     val metaDirs: List<File> get() = listOf(
-            aem.packageOptions.metaCommonDir,
-            File(contentDir, Package.META_PATH)
+            aem.packageOptions.metaCommonDir.dir,
+            contentDir.dir(Package.META_PATH).dir
     ).filter { it.exists() }
 
     @Input
@@ -60,11 +62,12 @@ open class PackagePrepare : AemDefaultTask() {
     }
 
     private fun copyMetaFiles() {
-        if (metaDir.exists()) {
-            metaDir.deleteRecursively()
+        val targetDir = metaDir.dir
+        if (targetDir.exists()) {
+            targetDir.deleteRecursively()
         }
 
-        metaDir.mkdirs()
+        metaDir.get().asFile.mkdirs()
 
         if (metaDirs.isEmpty()) {
             logger.info("None of package metadata directories exist: $metaDirs. Only generated defaults will be used.")
@@ -72,17 +75,17 @@ open class PackagePrepare : AemDefaultTask() {
             metaDirs.onEach { dir ->
                 logger.info("Copying package metadata files from path: '$dir'")
 
-                FileUtils.copyDirectory(dir, metaDir)
+                FileUtils.copyDirectory(dir, targetDir)
             }
         }
 
-        if (vaultFilterTemplateFile.exists() && !vaultFilterOriginFile.exists()) {
-            vaultFilterTemplateFile.renameTo(vaultFilterOriginFile)
+        if (vaultFilterTemplateFile.get().asFile.exists() && !vaultFilterOriginFile.get().asFile.exists()) {
+            vaultFilterTemplateFile.get().asFile.renameTo(vaultFilterOriginFile.get().asFile)
         }
 
         if (metaDefaults) {
             logger.info("Providing package metadata files in directory: '$metaDir")
-            FileOperations.copyResources(Package.META_RESOURCES_PATH, metaDir, true)
+            FileOperations.copyResources(Package.META_RESOURCES_PATH, targetDir, true)
         }
     }
 
@@ -93,13 +96,13 @@ open class PackagePrepare : AemDefaultTask() {
             }
             NodeTypesSync.AUTO -> syncNodeTypesOrFallback()
             NodeTypesSync.PRESERVE_AUTO -> {
-                if (!vaultNodeTypesSyncFile.exists()) {
+                if (!vaultNodeTypesSyncFile.file.exists()) {
                     syncNodeTypesOrFallback()
                 }
             }
             NodeTypesSync.FALLBACK -> syncNodeTypesFallback()
             NodeTypesSync.PRESERVE_FALLBACK -> {
-                if (!vaultNodeTypesSyncFile.exists()) {
+                if (!vaultNodeTypesSyncFile.file.exists()) {
                     syncNodeTypesFallback()
                 }
             }
@@ -110,7 +113,7 @@ open class PackagePrepare : AemDefaultTask() {
     fun syncNodeTypesOrElse(action: () -> Unit) = common.buildScope.doOnce("syncNodeTypes") {
         aem.availableInstance?.sync {
             try {
-                vaultNodeTypesSyncFile.apply {
+                vaultNodeTypesSyncFile.file.apply {
                     parentFile.mkdirs()
                     writeText(crx.nodeTypes)
                 }
@@ -126,7 +129,7 @@ open class PackagePrepare : AemDefaultTask() {
         syncNodeTypesFallback()
     }
 
-    fun syncNodeTypesFallback() = vaultNodeTypesSyncFile.writeText(nodeTypeFallback)
+    fun syncNodeTypesFallback() = vaultNodeTypesSyncFile.file.writeText(nodeTypeFallback)
 
     init {
         description = "Prepares CRX package before composing."

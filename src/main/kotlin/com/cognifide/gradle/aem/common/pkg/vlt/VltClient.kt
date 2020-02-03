@@ -16,13 +16,13 @@ class VltClient(val aem: AemExtension) {
     val commandEffective: String
         get() = aem.prop.expand(command, commandProperties)
 
-    var contentDir: File = aem.packageOptions.contentDir
+    val contentDir = aem.obj.dir(aem.packageOptions.contentDir)
 
     var contentRelativePath: String = ""
 
     val contentDirEffective: File
         get() {
-            var workingDir = File(contentDir, Package.JCR_ROOT)
+            var workingDir = contentDir.map { it.asFile.resolve(Package.JCR_ROOT) }.get()
             if (contentRelativePath.isNotBlank()) {
                 workingDir = File(workingDir, contentRelativePath)
             }

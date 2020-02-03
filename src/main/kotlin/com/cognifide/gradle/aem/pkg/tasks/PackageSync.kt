@@ -6,6 +6,7 @@ import com.cognifide.gradle.common.utils.Formats
 import com.cognifide.gradle.aem.common.pkg.vlt.VltClient
 import com.cognifide.gradle.aem.pkg.tasks.sync.Cleaner
 import com.cognifide.gradle.aem.pkg.tasks.sync.Downloader
+import com.cognifide.gradle.common.build.dir
 import java.io.File
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
@@ -50,16 +51,16 @@ open class PackageSync : AemDefaultTask() {
      * Location of JCR content root to which content will be copied.
      */
     @Internal
-    var contentDir = aem.packageOptions.contentDir
+    var contentDir = aem.obj.dir(aem.packageOptions.contentDir)
 
     private val filterRootFiles: List<File>
-        get() {
-            if (!contentDir.exists()) {
-                logger.warn("JCR content directory does not exist: $contentDir")
-                return listOf()
+        get() = contentDir.dir.run {
+            if (!exists()) {
+                logger.warn("JCR content directory does not exist: $this")
+                listOf<File>()
             }
 
-            return filter.rootDirs(contentDir)
+            filter.rootDirs(this)
         }
 
     private var vltOptions: VltClient.() -> Unit = {}
@@ -97,7 +98,7 @@ open class PackageSync : AemDefaultTask() {
                 prepareContent()
             }
 
-            if (!contentDir.exists()) {
+            if (!contentDir.dir.exists()) {
                 common.notifier.notify("Cannot synchronize JCR content", "Directory does not exist: ${aem.packageOptions.jcrRootDir}")
                 return
             }
@@ -111,7 +112,7 @@ open class PackageSync : AemDefaultTask() {
 
             common.notifier.notify(
                     "Synchronized JCR content",
-                    "Instance: ${instance.name}. Directory: ${Formats.rootProjectPath(contentDir, project)}"
+                    "Instance: ${instance.name}. Directory: ${Formats.rootProjectPath(contentDir.dir, project)}"
             )
         } finally {
             if (mode != Mode.COPY_ONLY) {
@@ -131,7 +132,7 @@ open class PackageSync : AemDefaultTask() {
 
     private fun transferUsingVltCheckout() {
         vlt.apply {
-            contentDir = this@PackageSync.contentDir
+            contentDir.convention(this@PackageSync.contentDir)
             command = "--credentials ${instance.credentialsString} checkout --force --filter ${filter.file} ${instance.httpUrl}/crx/server/crx.default"
             run()
         }

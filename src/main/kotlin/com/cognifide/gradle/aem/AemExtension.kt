@@ -36,11 +36,15 @@ import org.gradle.api.Task
 @Suppress("TooManyFunctions")
 class AemExtension(val project: Project) : Serializable {
 
+    // Shorthands
+
     val common = CommonExtension.of(project)
 
     val logger = common.logger
 
     val prop = common.prop
+
+    val obj = common.obj
 
     /**
      * Access configuration for local instances from different project (cross-project configuring).

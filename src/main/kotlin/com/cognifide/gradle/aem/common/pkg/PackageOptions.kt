@@ -4,7 +4,6 @@ import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.aem.common.pkg.vlt.NodeTypesSync
 import com.fasterxml.jackson.annotation.JsonIgnore
-import java.io.File
 import java.io.Serializable
 
 class PackageOptions(private val aem: AemExtension) : Serializable {
@@ -12,30 +11,28 @@ class PackageOptions(private val aem: AemExtension) : Serializable {
     /**
      * Package specific configuration
      */
-    var configDir: File = aem.project.file("src/aem/package")
+    val configDir = aem.obj.projectDir("src/aem/package")
 
     /**
      * Package root directory containing 'jcr_root' and 'META-INF' directories.
      */
-    var contentDir: File = aem.project.file("src/main/content")
+    val contentDir = aem.obj.projectDir("src/main/content")
 
     /**
      * JCR root directory.
      */
-    @get:JsonIgnore
-    val jcrRootDir: File get() = contentDir.resolve(Package.JCR_ROOT)
+    val jcrRootDir = aem.obj.relativeDir(contentDir, Package.JCR_ROOT)
 
     /**
      * Vault metadata files directory (package definition).
      */
-    @get:JsonIgnore
-    val vltDir: File get() = contentDir.resolve(Package.VLT_PATH)
+    val vltDir = aem.obj.relativeDir(contentDir, Package.VLT_PATH)
 
     /**
      * Custom path to Vault files that will be used to build CRX package.
      * Useful to share same files for all packages, like package thumbnail.
      */
-    val metaCommonDir: File get() = configDir.resolve(Package.META_PATH)
+    val metaCommonDir = aem.obj.relativeDir(configDir, Package.META_PATH)
 
     /**
      * Content path for OSGi bundle jars being placed in CRX package.
@@ -122,6 +119,8 @@ class PackageOptions(private val aem: AemExtension) : Serializable {
     /**
      * Determines location on which synchronized node types will be saved.
      */
-    val nodeTypesSyncFile: File get() = aem.prop.file("package.nodeTypesSyncFile")
-            ?: configDir.resolve(Package.NODE_TYPES_SYNC_FILE)
+    val nodeTypesSyncFile = aem.obj.file {
+        convention(configDir.file(Package.NODE_TYPES_SYNC_FILE))
+        aem.prop.file("package.nodeTypesSyncFile")?.let { fileValue(it) }
+    }
 }

@@ -4,6 +4,7 @@ import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.aem.common.pkg.vlt.FilterFile
+import com.cognifide.gradle.common.build.dir
 import java.io.File
 import org.gradle.api.tasks.Internal
 
@@ -32,8 +33,10 @@ class Downloader(@Internal private val aem: AemExtension) {
     /**
      * Path in which downloader JCR content will be extracted.
      */
-    var extractDir: File = aem.prop.file("package.sync.downloader.extractDir")
-            ?: aem.packageOptions.jcrRootDir
+    var extractDir = aem.obj.dir {
+        convention(aem.packageOptions.jcrRootDir)
+        aem.prop.file("package.sync.downloader.extractDir")?.let { set(it) }
+    }
 
     /**
      * Repeat download when failed (brute-forcing).
@@ -47,7 +50,7 @@ class Downloader(@Internal private val aem: AemExtension) {
 
         if (extract) {
             aem.logger.lifecycle("Extracting package $file to $extractDir")
-            extractDownloadedPackage(file, extractDir)
+            extractDownloadedPackage(file, extractDir.dir)
         }
     }
 
