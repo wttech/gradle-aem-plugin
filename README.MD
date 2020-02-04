@@ -169,13 +169,13 @@ Want to see it in action? Follow [here](https://github.com/Cognifide/gradle-aem-
 ### Features 
 
 * Automated complete AEM environment setup with [virtualized AEM dispatcher](#environment-plugin) and [native AEM instances](#instance-plugin) optimized for best development experience.
-* [Powerful AEM DSL scripting capabilities](#implement-custom-aem-tasks) for performing JCR content migrations, managing AEM instances, integrating with Docker based tools.
+* [Powerful AEM DSL scripting capabilities](#implementing-tasks) for performing JCR content migrations, managing AEM instances, integrating with Docker based tools.
 * [Advanced AEM instance(s) stability & health checking](#task-instanceawait) after CRX package deployment.
 * [Continuous AEM incident monitoring](#task-instancetail) and interactive reporting (centralized log tailing of any AEM instances with no SSH).
 * Easy parallel [CRX package deployment](#task-packagedeploy) to many remote group of instances.
 * [Hot reloading for HTTPD / AEM dispatcher configuration files](#task-environmentdev) with health checking (web browser usage not needed).
 * [Fail-safe dependent CRX packages installation](#task-instancesatisfy) from local and remote sources using various protocols (SMB / SSH / HTTP / custom).
-* [Fast JCR content synchronization](#task-sync) from running AEM instances with advanced content normalization.
+* [Fast JCR content synchronization](#task-packagesync) from running AEM instances with advanced content normalization.
 * [Composing CRX package](#task-packagecompose) from multiple separate JCR content roots, bundles.
 * [Validating CRX package](#crx-package-validation) using seamless integration with [OakPAL tool](http://adamcin.net/oakpal).
 * [All-in-one CRX packages generation](#assembling-packages-merging-all-in-one) (assemblies), vault filters merging etc.
@@ -312,7 +312,7 @@ aem {
         // ...
     }
     environment { // config for AEM environment running on Docker
-        rootDir = prop.string("environment.rootDir")?.let { project.file(it) } ?: projectMain.file(".aem/environment")
+        rootDir = prop.string("environment.rootDir")?.let { project.file(it) } ?: projectMain.file(".environment")
         hosts { // domains to be appended to hosts file automatically
             author("http://author.example.com")
             publish("http://demo.example.com") { tag("test") }
@@ -369,12 +369,22 @@ aem {
                 basicPassword = prop.string("fileTransfer.http.password")
             }
         }
-        
-        credentials("foo", "bar", "company-net") // shorthand to set all user / password pairs and domain above
+        credentials( // shorthand method for setting at once all user / password pairs and domain above
+            prop.string("fileTransfer.user"), 
+            prop.string("fileTransfer.password"),
+            prop.string("fileTransfer.domain")
+        ) 
     }
     tasks {
-        bundleCompose { // customizing OSGi bundle, manifest etc
-            javaPackage = "com.company.example.aem"
+        bundleCompose { 
+            // customizing OSGi bundle manifest
+            description = "Example application built by GAP"
+            docUrl = "https://github.com/Cognifide/gradle-aem-example"
+            exportPackage("com.company.example.aem.*") 
+            slingModelPackages = "com.company.example.aem"
+    
+            // for checking OSGi component health on runtime
+            javaPackage = "com.company.example.aem" 
             // ...
         }
         packageCompose { // customizing built CRX package
@@ -560,7 +570,7 @@ Generated file available at path: *build/aem/debug/debug.json*:
       }
     },
     "localInstanceManager" : {
-      "rootDir" : "*/minimal/.aem/instance",
+      "rootDir" : "*/minimal/.instance",
       "source" : "AUTO",
       "overridesDir" : ".../gradle-aem-multi/gradle/instance",
       "expandFiles" : [
@@ -581,11 +591,11 @@ Generated file available at path: *build/aem/debug/debug.json*:
       }
     },
     "environment": {
-      "rootDir": ".../gradle-aem-multi/aem/.aem/environment",
+      "rootDir": ".../gradle-aem-multi/aem/.environment",
       "hosts": {
         "defined": []
       },
-      "dispatcherModuleFile": ".../gradle-aem-multi/aem/.aem/environment/distributions/mod_dispatcher.so",
+      "dispatcherModuleFile": ".../gradle-aem-multi/aem/.environment/distributions/mod_dispatcher.so",
       "configDir": ".../gradle-aem-multi/aem/gradle/environment",
       "created": true,
     },
@@ -1326,7 +1336,7 @@ Simply create file at path [*[aem/]gradle/package/OAKPAL_OPEAR/default-plan.json
 }
 ```
 
-See [plans documentation](http://adamcin.net/oakpal/the-oakpal-plan.html)and [examples](https://github.com/adamcin/oakpal/blob/master/core/src/test/resources/OakpalPlanTest/fullPlan.json) provided by OakPAL tool.
+See [plans documentation](http://adamcin.net/oakpal/the-oakpal-plan.html) and [examples](https://github.com/adamcin/oakpal/blob/master/core/src/test/resources/OakpalPlanTest/fullPlan.json) provided by OakPAL tool.
 
 There could be many plan files created. To validate CRX package using different plan than default one, specify property `-package.validator.planName=<file>`.
 
