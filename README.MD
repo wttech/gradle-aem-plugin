@@ -2023,6 +2023,9 @@ aem {
 
 Instance backups created by this task could be used later by [create task](#task-instancecreate).
 
+It is also possible to upload only previously created local backup. In that case specify mode property by running `gradlew instanceBackup -Pinstance.backup.mode=upload_only`.
+Available modes: *zip_and_upload* (default), *zip_only*, *upload_only*.
+
 ##### Work with remote instance backups
 
 Backups can be automatically downloaded and uploaded from remote server.
