@@ -51,7 +51,7 @@ open class PackageSync : AemDefaultTask() {
      * Location of JCR content root to which content will be copied.
      */
     @Internal
-    var contentDir = aem.obj.dir(aem.packageOptions.contentDir)
+    val contentDir = aem.obj.dir(aem.packageOptions.contentDir)
 
     private val filterRootFiles: List<File>
         get() = contentDir.dir.run {

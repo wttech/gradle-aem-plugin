@@ -39,13 +39,13 @@ class PackagePlugin : CommonDefaultPlugin() {
 
     private fun Project.setupTasks() {
         tasks {
-            register<PackagePrepare>(PackagePrepare.NAME) {
+            val prepare = register<PackagePrepare>(PackagePrepare.NAME) {
                 mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
             }
             register<PackageCompose>(PackageCompose.NAME) {
                 dependsOn(PackagePrepare.NAME)
                 mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
-                metaDir = get<PackagePrepare>(PackagePrepare.NAME).metaDir
+                metaDir.convention(prepare.flatMap { it.metaDir })
             }.apply {
                 artifacts.add(Dependency.ARCHIVES_CONFIGURATION, this)
             }

@@ -63,7 +63,7 @@ class PackageValidator(@Internal val aem: AemExtension) {
     val baseFile: File? get() = baseProvider()
 
     @get:InputDirectory
-    var configDir = aem.obj.relativeDir(aem.packageOptions.configDir, Package.OAKPAL_OPEAR_PATH)
+    val configDir = aem.obj.relativeDir(aem.packageOptions.configDir, Package.OAKPAL_OPEAR_PATH)
 
     private var classLoaderProvider: () -> ClassLoader = { javaClass.classLoader }
 

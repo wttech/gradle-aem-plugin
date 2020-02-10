@@ -105,7 +105,7 @@ tasks {
         )
 
         useJUnitPlatform()
-       // failFast = true
+        failFast = true
         mustRunAfter("test")
         dependsOn("jar")
         outputs.upToDateWhen { false }

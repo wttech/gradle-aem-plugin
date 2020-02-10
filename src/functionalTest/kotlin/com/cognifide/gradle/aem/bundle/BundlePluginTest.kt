@@ -91,7 +91,7 @@ class BundlePluginTest: AemBuildTest() {
 
             buildGradle("""
                 plugins {
-                    id("com.cognifide.aem.bundle") version("11.0.0")
+                    id("com.cognifide.aem.bundle")
                 }
                 
                 group = "com.company.example"

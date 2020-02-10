@@ -27,13 +27,13 @@ open class PackagePrepare : AemDefaultTask() {
     val metaDir = aem.obj.buildDir("$name/${Package.META_PATH}")
 
     @get:Internal
-    val vaultFilterOriginFile = aem.obj.relativeFile(metaDir,"${Package.VLT_DIR}/${FilterFile.ORIGIN_NAME}")
+    val vaultFilterOriginFile = aem.obj.relativeFile(metaDir, "${Package.VLT_DIR}/${FilterFile.ORIGIN_NAME}")
 
     @get:Internal
     val vaultFilterTemplateFile = aem.obj.relativeFile(metaDir, "${Package.VLT_DIR}/${FilterFile.BUILD_NAME}")
 
     @Internal // TODO @InputDir
-    var contentDir = aem.obj.dir(aem.packageOptions.contentDir)
+    val contentDir = aem.obj.dir(aem.packageOptions.contentDir)
 
     @get:InputFiles // TODO do not evaluate lazy by it own
     val metaDirs: List<File> get() = listOf(
@@ -45,7 +45,7 @@ open class PackagePrepare : AemDefaultTask() {
     var vaultNodeTypesSync: NodeTypesSync = aem.packageOptions.nodeTypesSync
 
     @OutputFile
-    var vaultNodeTypesSyncFile = aem.packageOptions.nodeTypesSyncFile
+    val vaultNodeTypesSyncFile = aem.obj.file(aem.packageOptions.nodeTypesSyncFile)
 
     /**
      * @see <https://github.com/Adobe-Consulting-Services/acs-aem-commons/blob/master/ui.apps/src/main/content/META-INF/vault/nodetypes.cnd>

@@ -52,6 +52,7 @@ open class BundleCompose : JarTask(), AemTask {
     /**
      * Add instructions to the BND property from a list of multi-line strings.
      */
+    @Suppress("SpreadOperator")
     fun bnd(vararg lines: CharSequence) = bundleConvention.bnd(*lines)
 
     /**

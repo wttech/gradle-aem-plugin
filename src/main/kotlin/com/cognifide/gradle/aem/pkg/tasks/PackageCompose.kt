@@ -54,7 +54,7 @@ open class PackageCompose : ZipTask(), AemTask {
      * Must be absolute or relative to current working directory.
      */
     @Internal // TODO @InputDir
-    var contentDir = aem.obj.dir(aem.packageOptions.contentDir)
+    val contentDir = aem.obj.dir(aem.packageOptions.contentDir)
 
     /**
      * Content path for OSGi bundle jars being placed in CRX package.
@@ -76,7 +76,7 @@ open class PackageCompose : ZipTask(), AemTask {
     }
 
     @get:InputDirectory
-    var metaDir = aem.obj.relativeDir(contentDir, Package.META_PATH)
+    val metaDir = aem.obj.relativeDir(contentDir, Package.META_PATH)
 
     /**
      * Defines properties being used to generate CRX package metadata files.
