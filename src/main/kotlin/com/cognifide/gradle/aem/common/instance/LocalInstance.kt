@@ -9,7 +9,9 @@ import com.cognifide.gradle.common.utils.Formats
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.commons.io.FileUtils
+import org.apache.commons.lang3.JavaVersion
 import org.apache.commons.lang3.StringUtils
+import org.apache.commons.lang3.SystemUtils
 import org.gradle.internal.os.OperatingSystem
 import java.io.File
 import java.io.Serializable
@@ -21,17 +23,32 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
     override lateinit var password: String
 
     var debugPort: Int = 5005
+    var debugAddress: String = ""
+    private val debugSocketAddress: String
+        get() = when (debugAddress) {
+            "*" -> "0.0.0.0:$debugPort"
+            "" -> "$debugPort"
+            else -> "$debugAddress:$debugPort"
+        }
 
     @get:JsonIgnore
     val jvmOptsDefaults: List<String>
         get() = mutableListOf<String>().apply {
-            if (debugPort > 0) {
-                add("-Xdebug")
-                add("-Xrunjdwp:transport=dt_socket,address=$debugPort,server=y,suspend=n")
+            if (debugPort in 1..65535) {
+                add(jvmDebugOpt)
             }
             if (password != Instance.PASSWORD_DEFAULT) {
                 add("-Dadmin.password=$password")
             }
+        }
+
+    @get:JsonIgnore
+    private val jvmDebugOpt: String
+        get() = when {
+            SystemUtils.isJavaVersionAtLeast(JavaVersion.JAVA_9) ->
+                "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=$debugSocketAddress"
+            else ->
+                "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=$debugPort"
         }
 
     @get:JsonIgnore
