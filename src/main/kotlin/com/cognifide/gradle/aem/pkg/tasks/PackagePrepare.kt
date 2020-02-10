@@ -42,7 +42,7 @@ open class PackagePrepare : AemDefaultTask() {
     ).filter { it.exists() }
 
     @Input
-    var vaultNodeTypesSync: NodeTypesSync = aem.packageOptions.nodeTypesSync
+    val vaultNodeTypesSync = aem.obj.custom<NodeTypesSync>(aem.packageOptions.nodeTypesSync)
 
     @OutputFile
     val vaultNodeTypesSyncFile = aem.obj.file(aem.packageOptions.nodeTypesSyncFile)
@@ -90,7 +90,7 @@ open class PackagePrepare : AemDefaultTask() {
     }
 
     private fun syncNodeTypes() {
-        when (vaultNodeTypesSync) {
+        when (vaultNodeTypesSync.get()) {
             NodeTypesSync.ALWAYS -> syncNodeTypesOrElse {
                 throw PackageException("Cannot synchronize node types because none of AEM instances are available!")
             }
@@ -107,6 +107,7 @@ open class PackagePrepare : AemDefaultTask() {
                 }
             }
             NodeTypesSync.NEVER -> {}
+            null -> {}
         }
     }
 

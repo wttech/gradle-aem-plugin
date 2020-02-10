@@ -38,35 +38,33 @@ open class PackageCompose : ZipTask(), AemTask {
      * Shorthand for built CRX package file.
      */
     @get:Internal
-    val composedFile: File
-        get() = archiveFile.get().asFile
+    val composedFile: File get() = archiveFile.file
 
     /**
      * Shorthand for directory of built CRX package file.
      */
     @get:Internal
-    val composedDir: File
-        get() = composedFile.parentFile
+    val composedDir: File get() = composedFile.parentFile
 
     /**
      * Absolute path to JCR content to be included in CRX package.
      *
      * Must be absolute or relative to current working directory.
      */
-    @Internal // TODO @InputDir
+    @Internal
     val contentDir = aem.obj.dir(aem.packageOptions.contentDir)
 
     /**
      * Content path for OSGi bundle jars being placed in CRX package.
      */
     @Input
-    var bundlePath: String = aem.packageOptions.installPath
+    val bundlePath = aem.obj.string(aem.packageOptions.installPath)
 
     /**
      * Content path for CRX sub-packages being placed in CRX package being built.
      */
     @Internal
-    var packagePath: String = aem.packageOptions.storagePath
+    val packagePath = aem.obj.string(aem.packageOptions.storagePath)
 
     @Nested
     var validator = PackageValidator(aem)
@@ -88,19 +86,19 @@ open class PackageCompose : ZipTask(), AemTask {
         vaultDefinition.apply(options)
     }
 
-    @get:Internal
+    @Internal
     val vaultDir = aem.obj.relativeDir(contentDir, Package.VLT_PATH)
 
-    @get:Internal
+    @Internal
     val vaultFilterOriginFile = aem.obj.relativeFile(metaDir, "${Package.VLT_DIR}/${FilterFile.ORIGIN_NAME}")
 
-    @get:Internal
+    @Internal
     val vaultFilterFile = aem.obj.relativeFile(vaultDir, FilterFile.BUILD_NAME)
 
-    @get:Internal
+    @Internal
     val vaultNodeTypesFile = aem.obj.relativeFile(vaultDir, Package.VLT_NODETYPES_FILE)
 
-    @get:Internal
+    @Internal
     val vaultNodeTypesSyncFile = aem.packageOptions.nodeTypesSyncFile
 
     @Nested
@@ -309,7 +307,7 @@ open class PackageCompose : ZipTask(), AemTask {
 
     private fun fromBundle(bundle: BundleCompose, options: ProjectMergingOptions) {
         if (options.bundleBuilt) {
-            fromJar(bundle, Package.bundlePath(bundle.installPath, bundle.installRunMode), bundle.vaultFilter)
+            fromJar(bundle, Package.bundlePath(bundle.installPath.get(), bundle.installRunMode.orNull), bundle.vaultFilter.get())
         }
     }
 
@@ -320,7 +318,7 @@ open class PackageCompose : ZipTask(), AemTask {
     ) {
         val dependency = DependencyOptions.create(project, dependencyOptions)
         bundleDependencies.add(BundleDependency(aem, dependency,
-                installPath ?: this.bundlePath,
+                installPath ?: this.bundlePath.get(),
                 vaultFilter ?: mergingOptions.vaultFilters
         ))
     }
@@ -328,7 +326,7 @@ open class PackageCompose : ZipTask(), AemTask {
     fun fromJar(dependencyNotation: Any, installPath: String? = null, vaultFilter: Boolean? = null) {
         val dependency = DependencyOptions.create(project, dependencyNotation)
         bundleDependencies.add(BundleDependency(aem, dependency,
-                installPath ?: this.bundlePath,
+                installPath ?: this.bundlePath.get(),
                 vaultFilter ?: mergingOptions.vaultFilters
         ))
     }
@@ -351,7 +349,7 @@ open class PackageCompose : ZipTask(), AemTask {
     }
 
     private fun fromJarInternal(jar: File, bundlePath: String? = null, vaultFilter: Boolean? = null) {
-        val effectiveBundlePath = bundlePath ?: this.bundlePath
+        val effectiveBundlePath = bundlePath ?: this.bundlePath.get()
 
         fromArchiveInternal(vaultFilter, effectiveBundlePath, jar)
     }
@@ -363,7 +361,7 @@ open class PackageCompose : ZipTask(), AemTask {
     ) {
         val dependency = DependencyOptions.create(project) { apply(dependencyOptions); ext = "zip" }
         packageDependencies.add(PackageDependency(aem, dependency,
-                storagePath ?: packagePath,
+                storagePath ?: packagePath.get(),
                 vaultFilter ?: mergingOptions.vaultFilters
         ))
     }
@@ -375,7 +373,7 @@ open class PackageCompose : ZipTask(), AemTask {
     fun fromZip(dependencyNotation: Any, storagePath: String? = null, vaultFilter: Boolean? = null) {
         val dependency = DependencyOptions.create(project, dependencyNotation)
         packageDependencies.add(PackageDependency(aem, dependency,
-                storagePath ?: packagePath,
+                storagePath ?: packagePath.get(),
                 vaultFilter ?: mergingOptions.vaultFilters
         ))
     }

@@ -7,6 +7,7 @@ import com.cognifide.gradle.aem.aem
 import com.cognifide.gradle.aem.bundle.BundleException
 import com.cognifide.gradle.aem.common.instance.service.osgi.Bundle
 import com.cognifide.gradle.aem.common.utils.normalizeSeparators
+import com.cognifide.gradle.common.build.file
 import com.cognifide.gradle.common.tasks.JarTask
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.exception.ExceptionUtils
@@ -30,15 +31,13 @@ open class BundleCompose : JarTask(), AemTask {
      * Shorthand for built OSGi bundle file.
      */
     @get:Internal
-    val composedFile: File
-        get() = archiveFile.get().asFile
+    val composedFile: File get() = archiveFile.file
 
     /**
      * Shorthand for directory of built OSGi bundle file.
      */
     @get:Internal
-    val composedDir: File
-        get() = composedFile.parentFile
+    val composedDir: File get() = composedFile.parentFile
 
     /**
      * Allows to configure BND tool specific options.
@@ -59,7 +58,7 @@ open class BundleCompose : JarTask(), AemTask {
      * Content path for OSGi bundle jars being placed in CRX package.
      */
     @Input
-    var installPath: String = aem.packageOptions.installPath
+    val installPath = aem.obj.string(aem.packageOptions.installPath)
 
     /**
      * Suffix added to install path effectively allowing to install bundles only on specific instances.
@@ -68,14 +67,17 @@ open class BundleCompose : JarTask(), AemTask {
      */
     @Input
     @Optional
-    var installRunMode: String? = null
+    val installRunMode = aem.obj.string()
 
     /**
      * Determines if Vault workspace filter entry pointing directly to JAR file should be added automatically
      * for built OSGi bundle.
      */
     @Input
-    var vaultFilter: Boolean = aem.prop.boolean("bundle.vaultFilter") ?: true
+    val vaultFilter = aem.obj.boolean {
+        convention(true)
+        aem.prop.boolean("bundle.vaultFilter")?.let { set(it) }
+    }
 
     /**
      * Enable or disable support for auto-generating OSGi specific JAR manifest attributes
@@ -83,7 +85,10 @@ open class BundleCompose : JarTask(), AemTask {
      * using 'javaPackage' property.
      */
     @Input
-    var attributesConvention: Boolean = aem.prop.boolean("bundle.attributesConvention") ?: true
+    val attributesConvention = aem.obj.boolean {
+        convention(true)
+        aem.prop.boolean("bundle.attributesConvention")?.let { set(it) }
+    }
 
     /**
      * Determines package in which OSGi bundle being built contains its classes.
@@ -98,7 +103,7 @@ open class BundleCompose : JarTask(), AemTask {
      * Use empty string to disable automatic determining of that package and going further OSGi components checks.
      */
     @Input
-    var javaPackage: String? = null
+    val javaPackage = aem.obj.string()
 
     /**
      * Determines how conflicts will be resolved when coincidental classes will be detected.
@@ -107,16 +112,22 @@ open class BundleCompose : JarTask(), AemTask {
      * @see <http://bnd.bndtools.org/heads/private_package.html>
      */
     @Input
-    var javaPackageOptions: String = aem.prop.string("bundle.javaPackageOptions") ?: "-split-package:=merge-first"
+    val javaPackageOptions = aem.obj.string {
+        convention("-split-package:=merge-first")
+        aem.prop.string("bundle.javaPackageOptions")?.let { set(it) }
+    }
 
     @Internal
-    var importPackages: List<String> = listOf("*")
+    val importPackages = aem.obj.strings { convention(listOf()) }
+
+    @Input
+    val importPackageWildcard = aem.obj.boolean { convention(true) }
 
     @Internal
-    var exportPackages: List<String> = listOf()
+    val exportPackages = aem.obj.strings { convention(listOf()) }
 
     @Internal
-    var privatePackages: List<String> = listOf()
+    val privatePackages = aem.obj.strings { convention(listOf()) }
 
     private fun applyArchiveDefaults() {
         destinationDirectory.set(common.temporaryFile(name))
@@ -144,13 +155,13 @@ open class BundleCompose : JarTask(), AemTask {
     }
 
     private fun ensureJavaPackage() {
-        if (javaPackage == null) {
+        if (!javaPackage.isPresent) {
             if ("${aem.project.group}".isBlank()) {
                 throw AemException("${aem.project.displayName.capitalize()} must has property 'group' defined" +
                         " to determine bundle package default.")
             }
 
-            javaPackage = "${aem.project.group}.${aem.project.name}".normalizeSeparators(".")
+            javaPackage.convention("${aem.project.group}.${aem.project.name}".normalizeSeparators("."))
         }
     }
 
@@ -173,7 +184,7 @@ open class BundleCompose : JarTask(), AemTask {
      * Generate attributes by convention using Gradle project metadata.
      */
     private fun applyAttributesConvention() {
-        if (!attributesConvention) {
+        if (!attributesConvention.get()) {
             return
         }
 
@@ -181,16 +192,16 @@ open class BundleCompose : JarTask(), AemTask {
             displayName = aem.project.description
         }
 
-        if (!hasAttribute(Bundle.ATTRIBUTE_SYMBOLIC_NAME) && !javaPackage.isNullOrBlank()) {
-            symbolicName = javaPackage
+        if (!hasAttribute(Bundle.ATTRIBUTE_SYMBOLIC_NAME) && javaPackage.isPresent) {
+            symbolicName = javaPackage.get()
         }
 
-        if (!hasAttribute(Bundle.ATTRIBUTE_SLING_MODEL_PACKAGES) && !javaPackage.isNullOrBlank()) {
-            slingModelPackages = javaPackage
+        if (!hasAttribute(Bundle.ATTRIBUTE_SLING_MODEL_PACKAGES) && javaPackage.isPresent) {
+            slingModelPackages = javaPackage.get()
         }
 
-        if (!hasAttribute(Bundle.ATTRIBUTE_ACTIVATOR) && !javaPackage.isNullOrBlank()) {
-            findActivator(javaPackage!!)?.let { activator = it }
+        if (!hasAttribute(Bundle.ATTRIBUTE_ACTIVATOR) && javaPackage.isPresent) {
+            findActivator(javaPackage.get())?.let { activator = it }
         }
     }
 
@@ -198,17 +209,18 @@ open class BundleCompose : JarTask(), AemTask {
      * Combine package attributes set explicitly with generated ones.
      */
     private fun combinePackageAttributes() {
-        combinePackageAttribute(Bundle.ATTRIBUTE_IMPORT_PACKAGE, importPackages)
-        combinePackageAttribute(Bundle.ATTRIBUTE_PRIVATE_PACKAGE, privatePackages)
-        combinePackageAttribute(Bundle.ATTRIBUTE_EXPORT_PACKAGE, exportPackages.toMutableList().apply {
-            if (attributesConvention && !javaPackage.isNullOrBlank()) {
-                val javaPackageExported = if (javaPackageOptions.isNotBlank()) {
-                    "$javaPackage.*;$javaPackageOptions"
-                } else {
-                    "$javaPackage.*"
-                }
-
-                add(javaPackageExported)
+        combinePackageAttribute(Bundle.ATTRIBUTE_IMPORT_PACKAGE, importPackages.get().toMutableList().apply {
+            if (importPackageWildcard.get()) {
+                add("*")
+            }
+        })
+        combinePackageAttribute(Bundle.ATTRIBUTE_PRIVATE_PACKAGE, privatePackages.get())
+        combinePackageAttribute(Bundle.ATTRIBUTE_EXPORT_PACKAGE, exportPackages.get().toMutableList().apply {
+            if (attributesConvention.get() && javaPackage.isPresent) {
+                add(when {
+                    javaPackageOptions.isPresent -> "$javaPackage.*;$javaPackageOptions"
+                    else -> "$javaPackage.*"
+                })
             }
         })
     }
@@ -323,25 +335,25 @@ open class BundleCompose : JarTask(), AemTask {
         }
 
     fun exportPackage(pkgs: Iterable<String>) {
-        exportPackages = exportPackages + pkgs
+        exportPackages.addAll(pkgs)
     }
 
     fun exportPackage(vararg pkgs: String) = exportPackage(pkgs.toList())
 
     fun privatePackage(pkgs: Iterable<String>) {
-        privatePackages = privatePackages + pkgs
+        privatePackages.addAll(pkgs)
     }
 
     fun privatePackage(vararg pkgs: String) = privatePackage(pkgs.toList())
 
     fun excludePackage(pkgs: Iterable<String>) {
-        importPackages = importPackages + pkgs.map { "!$it" }
+        importPackages.addAll(pkgs.map { "!$it" })
     }
 
     fun excludePackage(vararg pkgs: String) = excludePackage(pkgs.toList())
 
     fun importPackage(pkgs: Iterable<String>) {
-        importPackages = importPackages + pkgs
+        importPackages.addAll(pkgs)
     }
 
     fun importPackage(vararg pkgs: String) = importPackage(pkgs.toList())

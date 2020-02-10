@@ -49,8 +49,7 @@ class AemExtension(val project: Project) : Serializable {
     /**
      * Access configuration for local instances from different project (cross-project configuring).
      */
-    val main: AemExtension
-        get() = of(projectMain)
+    val main: AemExtension get() = of(projectMain)
 
     /**
      * Project under which common configuration files are stored.
@@ -100,19 +99,25 @@ class AemExtension(val project: Project) : Serializable {
      * It is more soft offline mode than Gradle's one which does much more.
      * It will not use any Maven repository so that CI build will fail which is not expected in e.g integration tests.
      */
-    val offline = prop.flag("offline")
+    val offline = obj.boolean { convention(prop.flag("offline")) }
 
     /**
      * Determines current environment name to be used in e.g package deployment.
      */
-    val env: String = prop.string("env") ?: run { System.getenv("ENV") ?: "local" }
+    val env = obj.string {
+        convention(obj.provider { System.getenv("ENV") ?: "local" })
+        prop.string("env")?.let { set(it) }
+    }
 
     /**
      * Specify characters to be used as line endings when cleaning up checked out JCR content.
      */
-    var lineSeparator: String = prop.string("lineSeparator") ?: LineSeparator.SYSTEM.name
+    val lineSeparator = obj.string {
+        convention(LineSeparator.SYSTEM.name)
+        prop.string("lineSeparator")?.let { set(it) }
+    }
 
-    val lineSeparatorString: String = LineSeparator.string(lineSeparator)
+    val lineSeparatorString: String get() = LineSeparator.string(lineSeparator.get())
 
     val packageOptions = PackageOptions(this)
 
@@ -165,7 +170,7 @@ class AemExtension(val project: Project) : Serializable {
     val javaPackages: List<String>
         get() = project.rootProject.allprojects
                 .filter { it.plugins.hasPlugin(BundlePlugin.ID) }
-                .flatMap { p -> p.common.tasks.getAll(BundleCompose::class.java).mapNotNull { it.javaPackage } }
+                .flatMap { p -> p.common.tasks.getAll(BundleCompose::class.java).mapNotNull { it.javaPackage.orNull } }
 
     /**
      * All instances matching default filtering.

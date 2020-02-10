@@ -17,7 +17,7 @@ class Crx(sync: InstanceSync) : InstanceService(sync) {
      */
     val nodeTypes: String
         get() {
-            if (aem.offline) {
+            if (aem.offline.get()) {
                 return NODE_TYPES_UNKNOWN
             }
 

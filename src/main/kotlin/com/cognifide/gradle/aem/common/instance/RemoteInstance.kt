@@ -22,7 +22,7 @@ class RemoteInstance private constructor(aem: AemExtension) : AbstractInstance(a
                 this.httpUrl = instanceUrl.httpUrl
                 this.user = instanceUrl.user
                 this.password = instanceUrl.password
-                this.environment = aem.env
+                this.environment = aem.env.get()
                 this.id = instanceUrl.id
 
                 this.apply(configurer)

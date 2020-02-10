@@ -28,7 +28,7 @@ class CommonPluginTest {
                 assertTrue(publish)
             }
 
-            assertEquals("/apps/test/install", packageOptions.installPath)
+            assertEquals("/apps/test/install", packageOptions.installPath.get())
         }
 
         assertTrue(

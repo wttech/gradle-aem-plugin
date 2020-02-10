@@ -3,7 +3,6 @@ package com.cognifide.gradle.aem.common.pkg
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.aem.common.pkg.vlt.NodeTypesSync
-import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.Serializable
 
 class PackageOptions(private val aem: AemExtension) : Serializable {
@@ -43,27 +42,30 @@ class PackageOptions(private val aem: AemExtension) : Serializable {
      * Beware that more nested bundle install directories are not supported by AEM by default (up to 4th depth level).
      * That's the reason of using dots in subproject names to avoid that limitation.
      */
-    var installPath: String = when {
-        aem.project == aem.project.rootProject -> "/apps/${aem.project.rootProject.name}/install"
-        else -> "/apps/${aem.project.rootProject.name}/${aem.projectName}/install"
+    var installPath = aem.obj.string {
+        convention(aem.obj.provider {
+            when {
+                aem.project == aem.project.rootProject -> "/apps/${aem.project.rootProject.name}/install"
+                else -> "/apps/${aem.project.rootProject.name}/${aem.projectName}/install"
+            }
+        })
     }
 
     /**
      * Content path at which CRX Package Manager is storing uploaded packages.
      */
-    var storagePath: String = "/etc/packages"
+    var storagePath = aem.obj.string { convention("/etc/packages") }
 
     /**
      * Calculate directory under storage path for each CRX package.
      */
-    @get:JsonIgnore
     var storageDir: PackageFile.() -> String = { group }
 
     /**
      * Configures a local repository from which unreleased JARs could be added as 'compileOnly' dependency
      * and be deployed within CRX package deployment.
      */
-    var installRepository: Boolean = true
+    var installRepository = aem.obj.boolean { convention(true) }
 
     /**
      * Define patterns for known exceptions which could be thrown during package installation
@@ -72,18 +74,24 @@ class PackageOptions(private val aem: AemExtension) : Serializable {
      * When declared exception is encountered during package installation process, no more
      * retries will be applied.
      */
-    var errors: List<String> = (aem.prop.list("package.errors") ?: listOf(
-            "javax.jcr.nodetype.*Exception",
-            "org.apache.jackrabbit.oak.api.*Exception",
-            "org.apache.jackrabbit.vault.packaging.*Exception",
-            "org.xml.sax.*Exception"
-    ))
+    var errors = aem.obj.strings {
+        convention(listOf(
+                "javax.jcr.nodetype.*Exception",
+                "org.apache.jackrabbit.oak.api.*Exception",
+                "org.apache.jackrabbit.vault.packaging.*Exception",
+                "org.xml.sax.*Exception"
+        ))
+        aem.prop.list("package.errors")?.let { set(it) }
+    }
 
     /**
      * CRX package name conventions (with wildcard) indicating that package can change over time
      * while having same version specified. Affects CRX packages composed and satisfied.
      */
-    var snapshots: List<String> = aem.prop.list("package.snapshots") ?: listOf()
+    var snapshots = aem.obj.strings {
+        convention(listOf())
+        aem.prop.list("package.snapshots")?.let { set(it) }
+    }
 
     /**
      * Determines number of lines to process at once during reading Package Manager HTML responses.
@@ -91,7 +99,10 @@ class PackageOptions(private val aem: AemExtension) : Serializable {
      * The higher the value, the bigger consumption of memory but shorter execution time.
      * It is a protection against exceeding max Java heap size.
      */
-    var responseBuffer = aem.prop.int("package.responseBuffer") ?: 4096
+    var responseBuffer = aem.obj.int {
+        convention(4096)
+        aem.prop.int("package.responseBuffer")?.let { set(it) }
+    }
 
     /**
      * Customize default validation options.
@@ -100,20 +111,23 @@ class PackageOptions(private val aem: AemExtension) : Serializable {
         this.validatorOptions = options
     }
 
-    @get:JsonIgnore
     internal var validatorOptions: PackageValidator.() -> Unit = {}
 
     /**
      * Controls automatic node types exporting from available instance to be later used in package validation.
      */
-    var nodeTypesSync = aem.prop.string("package.nodeTypesSync")
-            ?.let { NodeTypesSync.find(it) } ?: when {
-        aem.offline -> NodeTypesSync.PRESERVE_FALLBACK
-        else -> NodeTypesSync.PRESERVE_AUTO
+    val nodeTypesSync = aem.obj.custom<NodeTypesSync> {
+        convention(aem.obj.provider {
+            when {
+                aem.offline.get() -> NodeTypesSync.PRESERVE_FALLBACK
+                else -> NodeTypesSync.PRESERVE_AUTO
+            }
+        })
+        aem.prop.string("package.nodeTypesSync")?.let { set(NodeTypesSync.of(it)) }
     }
 
     fun nodeTypesSync(name: String) {
-        nodeTypesSync = NodeTypesSync.of(name)
+        nodeTypesSync.set(NodeTypesSync.of(name))
     }
 
     /**
