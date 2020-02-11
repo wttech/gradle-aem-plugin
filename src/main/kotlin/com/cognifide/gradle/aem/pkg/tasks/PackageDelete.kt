@@ -12,7 +12,7 @@ open class PackageDelete : PackageTask() {
     fun delete() {
         instances.get().checkAvailable()
         sync { packageManager.delete(it) }
-        common.notifier.notify("Package deleted", "${packages.get().fileNames} on ${instances.get().names}")
+        common.notifier.notify("Package deleted", "${files.files.fileNames} on ${instances.get().names}")
     }
 
     init {

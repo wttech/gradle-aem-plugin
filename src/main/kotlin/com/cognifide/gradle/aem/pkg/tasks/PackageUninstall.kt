@@ -12,7 +12,7 @@ open class PackageUninstall : PackageTask() {
     fun uninstall() {
         instances.get().checkAvailable()
         sync { packageManager.uninstall(it) }
-        common.notifier.notify("Package uninstalled", "${packages.get().fileNames} from ${instances.get().names}")
+        common.notifier.notify("Package uninstalled", "${files.files.fileNames} from ${instances.get().names}")
     }
 
     init {

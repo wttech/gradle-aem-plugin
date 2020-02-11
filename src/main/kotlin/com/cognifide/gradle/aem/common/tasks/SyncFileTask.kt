@@ -12,12 +12,10 @@ import java.io.File
 open class SyncFileTask : AemDefaultTask() {
 
     @Input
-    var instances = aem.obj.list<Instance> {
-        convention(aem.obj.provider { aem.instances })
-    }
+    val instances = aem.obj.list<Instance> { convention(aem.obj.provider { aem.instances }) }
 
     @InputFiles
-    var files = aem.obj.list<File>()
+    val files = aem.obj.files()
 
     /**
      * Hook for preparing instance before deploying packages
@@ -62,8 +60,8 @@ open class SyncFileTask : AemDefaultTask() {
     }
 
     fun sync(action: InstanceSync.(File) -> Unit) {
-        common.progress(instances.get().size * files.get().size) {
-            aem.syncFiles(instances.get(), files.get()) { file ->
+        common.progress(instances.get().size * files.files.size) {
+            aem.syncFiles(instances.get(), files.files) { file ->
                 increment("${file.name} -> ${instance.name}") {
                     initializer()
                     action(file)

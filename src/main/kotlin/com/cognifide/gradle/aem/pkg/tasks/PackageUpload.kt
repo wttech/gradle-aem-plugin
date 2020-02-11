@@ -12,7 +12,7 @@ open class PackageUpload : PackageTask() {
     fun upload() {
         instances.get().checkAvailable()
         sync { packageManager.upload(it) }
-        common.notifier.notify("Package uploaded", "${packages.get().fileNames} from ${instances.get().names}")
+        common.notifier.notify("Package uploaded", "${files.files.fileNames} from ${instances.get().names}")
     }
 
     init {

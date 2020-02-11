@@ -57,7 +57,7 @@ open class PackageDeploy : PackageTask() {
             }
         }
 
-        common.notifier.notify("Package deployed", "${packages.get().fileNames} on ${instances.get().names}")
+        common.notifier.notify("Package deployed", "${files.files.fileNames} on ${instances.get().names}")
     }
 
     init {
@@ -71,7 +71,6 @@ open class PackageDeploy : PackageTask() {
             }
         })
 
-        packages.convention(aem.obj.provider { aem.dependentPackages(this) })
         aem.prop.boolean("package.deploy.awaited")?.let { awaited.set(it) }
     }
 

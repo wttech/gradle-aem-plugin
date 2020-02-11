@@ -12,7 +12,7 @@ open class BundleUninstall : BundleTask() {
     fun uninstall() {
         instances.get().checkAvailable()
         sync { osgiFramework.uninstallBundle(it) }
-        common.notifier.notify("Bundle uninstalled", "${bundles.get().fileNames} on ${instances.get().names}")
+        common.notifier.notify("Bundle uninstalled", "${files.files.fileNames} on ${instances.get().names}")
     }
 
     init {

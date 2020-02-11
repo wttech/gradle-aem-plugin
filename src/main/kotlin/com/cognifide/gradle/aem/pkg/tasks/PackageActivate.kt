@@ -12,7 +12,7 @@ open class PackageActivate : PackageTask() {
     fun activate() {
         instances.get().checkAvailable()
         sync { packageManager.activate(it) }
-        common.notifier.notify("Package activated", "${packages.get().fileNames} on ${instances.get().names}")
+        common.notifier.notify("Package activated", "${files.files.fileNames} on ${instances.get().names}")
     }
 
     init {

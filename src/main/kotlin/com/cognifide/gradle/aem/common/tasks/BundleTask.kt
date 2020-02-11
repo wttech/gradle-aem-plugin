@@ -1,13 +1,10 @@
 package com.cognifide.gradle.aem.common.tasks
 
-import org.gradle.api.tasks.Internal
+import com.cognifide.gradle.aem.bundle.tasks.BundleCompose
 
 open class BundleTask : SyncFileTask() {
 
-    @get:Internal
-    val bundles get() = files
-
     init {
-        bundles.convention(aem.obj.provider { aem.dependentBundles(this) })
+        files.from(common.tasks.getAll<BundleCompose>().map { it.composedFile }) // TODO realizablecollection / do flatMap as for providers
     }
 }

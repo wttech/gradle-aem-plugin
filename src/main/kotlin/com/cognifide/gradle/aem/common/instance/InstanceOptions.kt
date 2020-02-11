@@ -22,13 +22,7 @@ open class InstanceOptions(private val aem: AemExtension) {
                 Instance.parse(aem, it) { environment = Instance.ENVIRONMENT_CMD }
             } ?: listOf()
             val fromProperties = Instance.properties(aem)
-
-            (fromCmd + fromProperties).ifEmpty {
-                listOf(
-                        Instance.defaultAuthor(aem),
-                        Instance.defaultPublish(aem)
-                )
-            }
+            (fromCmd + fromProperties).ifEmpty { Instance.defaultPair(aem) }
         })
     }
 

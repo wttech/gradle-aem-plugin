@@ -12,7 +12,7 @@ open class PackageInstall : PackageTask() {
     fun install() {
         instances.get().checkAvailable()
         sync { packageManager.install(it) }
-        common.notifier.notify("Package installed", "${packages.get().fileNames} from ${instances.get().names}")
+        common.notifier.notify("Package installed", "${files.files.fileNames} from ${instances.get().names}")
     }
 
     init {

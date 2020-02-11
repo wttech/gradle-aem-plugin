@@ -139,6 +139,8 @@ interface Instance : Serializable {
 
         val REMOTE_PROPS = listOf("httpUrl", "type", "user", "password")
 
+        fun defaultPair(aem: AemExtension) = listOf(defaultAuthor(aem), defaultPublish(aem))
+
         fun defaultAuthor(aem: AemExtension) = RemoteInstance.create(aem, URL_AUTHOR_DEFAULT)
 
         fun defaultPublish(aem: AemExtension) = RemoteInstance.create(aem, URL_PUBLISH_DEFAULT)

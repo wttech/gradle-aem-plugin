@@ -12,7 +12,7 @@ open class PackagePurge : PackageTask() {
     fun purge() {
         instances.get().checkAvailable()
         sync { packageManager.purge(it) }
-        common.notifier.notify("Package purged", "${packages.get().fileNames} from ${instances.get().names}")
+        common.notifier.notify("Package purged", "${files.files.fileNames} from ${instances.get().names}")
     }
 
     init {

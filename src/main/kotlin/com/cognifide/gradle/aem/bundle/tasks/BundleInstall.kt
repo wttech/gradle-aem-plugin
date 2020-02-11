@@ -47,7 +47,7 @@ open class BundleInstall : BundleTask() {
     open fun install() {
         instances.get().checkAvailable()
         sync { osgiFramework.installBundle(it, start.get(), startLevel.get(), refreshPackages.get(), retry) }
-        common.notifier.notify("Bundle installed", "${bundles.get().fileNames} on ${instances.get().names}")
+        common.notifier.notify("Bundle installed", "${files.files.fileNames} on ${instances.get().names}")
     }
 
     init {
