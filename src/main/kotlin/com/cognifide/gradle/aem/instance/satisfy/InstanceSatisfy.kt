@@ -125,7 +125,7 @@ open class InstanceSatisfy : PackageDeploy() {
     @TaskAction
     @Suppress("ComplexMethod")
     override fun deploy() {
-        instances.checkAvailable()
+        instances.get().checkAvailable()
 
         common.progress(packageGroups.sumBy { it.files.size * determineInstancesForGroup(it).size }) {
             packageGroups.forEach { satisfyGroup(it) }
@@ -203,7 +203,7 @@ open class InstanceSatisfy : PackageDeploy() {
     }
 
     private fun determineInstancesForGroup(group: PackageGroup): List<Instance> {
-        return instances.filter { Patterns.wildcard(it.name, group.instanceName) }
+        return instances.get().filter { Patterns.wildcard(it.name, group.instanceName) }
     }
 
     private fun InstanceSync.satisfyPackage(group: PackageGroup, state: PackageState) {

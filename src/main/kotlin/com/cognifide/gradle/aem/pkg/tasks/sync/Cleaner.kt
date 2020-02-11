@@ -152,7 +152,7 @@ class Cleaner(private val aem: AemExtension) {
             val inputLines = FileUtils.readLines(file, StandardCharsets.UTF_8.name())
             val filteredLines = filterLines(file, inputLines)
 
-            FileUtils.writeLines(file, StandardCharsets.UTF_8.name(), filteredLines, aem.lineSeparatorString)
+            FileUtils.writeLines(file, StandardCharsets.UTF_8.name(), filteredLines, aem.commonOptions.lineSeparator.get().value)
         } catch (e: IOException) {
             throw VltException(String.format("Error opening %s", file.path), e)
         }

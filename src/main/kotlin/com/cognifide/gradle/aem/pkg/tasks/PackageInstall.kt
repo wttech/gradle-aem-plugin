@@ -10,14 +10,14 @@ open class PackageInstall : PackageTask() {
 
     @TaskAction
     fun install() {
-        instances.checkAvailable()
+        instances.get().checkAvailable()
         sync { packageManager.install(it) }
-        common.notifier.notify("Package installed", "${packages.fileNames} from ${instances.names}")
+        common.notifier.notify("Package installed", "${packages.get().fileNames} from ${instances.get().names}")
     }
 
     init {
         description = "Installs AEM package on instance(s)."
-        awaited = aem.prop.boolean("package.install.awaited") ?: true
+        aem.prop.boolean("package.install.awaited")?.let { awaited.set(it) }
     }
 
     companion object {

@@ -10,14 +10,14 @@ open class PackagePurge : PackageTask() {
 
     @TaskAction
     fun purge() {
-        instances.checkAvailable()
+        instances.get().checkAvailable()
         sync { packageManager.purge(it) }
-        common.notifier.notify("Package purged", "${packages.fileNames} from ${instances.names}")
+        common.notifier.notify("Package purged", "${packages.get().fileNames} from ${instances.get().names}")
     }
 
     init {
         description = "Uninstalls and then deletes CRX package on AEM instance(s)."
-        awaited = aem.prop.boolean("package.purge.awaited") ?: true
+        awaited.convention(aem.prop.boolean("package.purge.awaited") ?: true)
         checkForce()
     }
 

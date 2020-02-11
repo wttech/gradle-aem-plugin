@@ -377,7 +377,7 @@ class Node(val repository: Repository, val path: String) : Serializable {
     fun download(options: PackageDefinition.() -> Unit = {}): File {
         val node = this
         return repository.sync.packageManager.download {
-            archiveBaseName = JcrUtil.manglePath(node.name)
+            archiveBaseName.set(JcrUtil.manglePath(node.name))
             filter(node.path)
             options()
         }

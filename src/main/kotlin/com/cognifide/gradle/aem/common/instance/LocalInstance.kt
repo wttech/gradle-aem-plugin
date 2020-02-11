@@ -79,15 +79,14 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
         get() = (runModesDefault + runModes).joinToString(",")
 
     @get:JsonIgnore
-    val dir: File
-        get() = File(aem.localInstanceManager.rootDir, id)
+    val dir: File get() = aem.localInstanceManager.rootDir.get().asFile.resolve(id)
 
     @get:JsonIgnore
     val overridesDirs: List<File>
-        get() = listOf(
-                File(manager.overridesDir, "common"),
-                File(manager.overridesDir, id)
-        )
+        get() {
+            val parentDir = manager.overridesDir.get().asFile
+            return listOf(parentDir.resolve("common"), parentDir.resolve(id))
+        }
 
     @get:JsonIgnore
     val jar: File
@@ -269,9 +268,9 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
             FileUtils.copyDirectory(it, dir)
         }
 
-        val propertiesAll = mapOf("instance" to this) + properties + manager.expandProperties
+        val propertiesAll = mapOf("instance" to this) + properties + manager.expandProperties.get()
 
-        FileOperations.amendFiles(dir, manager.expandFiles) { file, source ->
+        FileOperations.amendFiles(dir, manager.expandFiles.get()) { file, source ->
             aem.prop.expand(source, propertiesAll, file.absolutePath)
         }
 
@@ -429,7 +428,7 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
                 this.password = instanceUrl.password
                 this.id = instanceUrl.id
                 this.debugPort = instanceUrl.debugPort
-                this.environment = aem.env.get()
+                this.environment = aem.commonOptions.env.get()
 
                 this.apply(configurer)
             }

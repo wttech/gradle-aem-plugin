@@ -49,7 +49,7 @@ open class PackageDeploy : PackageTask() {
 
     @TaskAction
     open fun deploy() {
-        instances.checkAvailable()
+        instances.get().checkAvailable()
 
         sync { file ->
             workflowManager.toggleTemporarily(workflowToggle) {
@@ -57,26 +57,25 @@ open class PackageDeploy : PackageTask() {
             }
         }
 
-        common.notifier.notify("Package deployed", "${packages.fileNames} on ${instances.names}")
-    }
-
-    override fun projectsEvaluated() {
-        if (instances.isEmpty()) {
-            instances = if (distributed) {
-                aem.authorInstances
-            } else {
-                aem.instances
-            }
-        }
-
-        if (packages.isEmpty()) {
-            packages = aem.dependentPackages(this)
-        }
+        common.notifier.notify("Package deployed", "${packages.get().fileNames} on ${instances.get().names}")
     }
 
     init {
         description = "Deploys CRX package on instance(s). Upload then install (and optionally activate)."
-        awaited = aem.prop.boolean("package.deploy.awaited") ?: true
+
+        instances.convention(aem.obj.provider {
+            if (distributed) {
+                aem.authorInstances
+            } else {
+                aem.instances
+            }
+        })
+
+        packages.convention(aem.obj.provider {
+            aem.dependentPackages(this)
+        })
+
+        awaited.convention(aem.prop.boolean("package.deploy.awaited") ?: true)
     }
 
     companion object {

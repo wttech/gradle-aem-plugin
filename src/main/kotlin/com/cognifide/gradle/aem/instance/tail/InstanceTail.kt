@@ -23,9 +23,9 @@ open class InstanceTail : InstanceTask() {
     @TaskAction
     fun tail() {
         tailer.apply {
-            instances = this@InstanceTail.instances
+            instances.convention(this@InstanceTail.instances)
 
-            aem.logger.lifecycle("Tailing logs from instances: ${instances.names}")
+            aem.logger.lifecycle("Tailing logs from instances: ${instances.get().names}")
             aem.logger.lifecycle("Filter incidents using file: ${tailer.incidentFilter}")
             tail()
         }
@@ -33,7 +33,7 @@ open class InstanceTail : InstanceTask() {
 
     override fun projectEvaluated() {
         super.projectEvaluated()
-        tailer.logFilter.excludeFile(tailer.incidentFilter)
+        tailer.logFilter.excludeFile(tailer.incidentFilter.get().asFile)
     }
 
     companion object {

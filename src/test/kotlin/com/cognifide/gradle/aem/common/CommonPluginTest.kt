@@ -15,7 +15,7 @@ class CommonPluginTest {
 
         extensions.getByName("aem")
         extensions.getByType(AemExtension::class.java).apply {
-            val instances = instanceOptions.definedList
+            val instances = instanceOptions.defined.get()
 
             assertEquals(2, instances.size)
 

@@ -5,7 +5,6 @@ import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.common.build.CollectingLogger
-import com.cognifide.gradle.common.build.dir
 import net.adamcin.oakpal.core.*
 import org.apache.commons.io.FileUtils
 import org.apache.jackrabbit.oak.plugins.memory.MemoryNodeStore
@@ -100,7 +99,7 @@ class PackageValidator(@Internal val aem: AemExtension) {
             FileOperations.zipUnpackAll(file, workDir)
         }
 
-        configDir.dir.takeIf { it.exists() }?.let { dir ->
+        configDir.get().asFile.takeIf { it.exists() }?.let { dir ->
             logger.info("Using project-specific OakPAL Opear configuration files from directory '$dir' to '$workDir'")
             FileUtils.copyDirectory(dir, workDir)
         }

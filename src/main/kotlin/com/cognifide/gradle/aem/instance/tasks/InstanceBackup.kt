@@ -52,7 +52,7 @@ open class InstanceBackup : AemDefaultTask() {
 
         common.progress {
             message = "Backing up instances: ${aem.localInstances.names}"
-            FileOperations.zipPack(file, aem.localInstanceManager.rootDir)
+            FileOperations.zipPack(file, aem.localInstanceManager.rootDir.get().asFile)
         }
 
         common.notifier.lifecycle("Backed up local instances", "File: $file (${Formats.fileSize(file)})")

@@ -1,7 +1,5 @@
 package com.cognifide.gradle.aem.bundle.tasks
 
-import com.cognifide.gradle.aem.common.instance.InstanceSync
-import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
 import com.cognifide.gradle.aem.common.instance.checkAvailable
 import com.cognifide.gradle.aem.common.instance.names
 import com.cognifide.gradle.aem.common.tasks.BundleTask
@@ -13,28 +11,31 @@ import org.gradle.api.tasks.TaskAction
 open class BundleInstall : BundleTask() {
 
     /**
-     * Check instance(s) health after installing bundles.
-     */
-    @Input
-    var awaited: Boolean = aem.prop.boolean("bundle.install.awaited") ?: true
-
-    /**
      * Controls if bundle after installation should be immediatelly started.
      */
     @Input
-    var start: Boolean = aem.prop.boolean("bundle.install.start") ?: true
+    val start = aem.obj.boolean {
+        convention(true)
+        aem.prop.boolean("bundle.install.start")?.let { set(it) }
+    }
 
     /**
      * OSGi start level at which installed bundle will be started.
      */
     @Input
-    var startLevel: Int = aem.prop.int("bundle.install.startLevel") ?: 20
+    val startLevel = aem.obj.int {
+        convention(20)
+        aem.prop.int("bundle.install.startLevel")?.let { set(it) }
+    }
 
     /**
      * Controls if bundle dependent packages should be refreshed within installation.
      */
     @Input
-    var refreshPackages: Boolean = aem.prop.boolean("bundle.install.refreshPackages") ?: true
+    val refreshPackages = aem.obj.boolean {
+        convention(true)
+        aem.prop.boolean("bundle.install.refreshPackages")?.let { set(it) }
+    }
 
     /**
      * Repeat install when failed (brute-forcing).
@@ -42,63 +43,16 @@ open class BundleInstall : BundleTask() {
     @Internal
     var retry = common.retry { afterSquaredSecond(aem.prop.long("bundle.install.retry") ?: 2) }
 
-    /**
-     * Hook for preparing instance before installing bundles
-     */
-    @Internal
-    var initializer: InstanceSync.() -> Unit = {}
-
-    /**
-     * Hook for cleaning instance after installing bundles
-     */
-    @Internal
-    var finalizer: InstanceSync.() -> Unit = {}
-
-    /**
-     * Hook after installing all bundles to all instances.
-     */
-    @Internal
-    var completer: () -> Unit = { awaitUp() }
-
-    private var awaitUpOptions: AwaitUpAction.() -> Unit = {}
-
-    /**
-     * Controls await up action.
-     */
-    fun awaitUp(options: AwaitUpAction.() -> Unit) {
-        this.awaitUpOptions = options
-    }
-
-    fun awaitUp() {
-        if (awaited) {
-            aem.instanceActions.awaitUp {
-                instances = this@BundleInstall.instances
-                awaitUpOptions()
-            }
-        }
-    }
-
     @TaskAction
     open fun install() {
-        instances.checkAvailable()
-
-        common.progress(instances.size * bundles.size) {
-            aem.syncFiles(instances, bundles) { pkg ->
-                increment("Installing bundle '${pkg.name}' to instance '${instance.name}'") {
-                    initializer()
-                    osgiFramework.installBundle(pkg, start, startLevel, refreshPackages, retry)
-                    finalizer()
-                }
-            }
-        }
-
-        completer()
-
-        common.notifier.notify("Bundle installed", "${bundles.fileNames} on ${instances.names}")
+        instances.get().checkAvailable()
+        sync { osgiFramework.installBundle(it, start.get(), startLevel.get(), refreshPackages.get(), retry) }
+        common.notifier.notify("Bundle installed", "${bundles.get().fileNames} on ${instances.get().names}")
     }
 
     init {
         description = "Installs OSGi bundle on instance(s)."
+        aem.prop.boolean("bundle.install.awaited")?.let { awaited.set(it) }
     }
 
     companion object {

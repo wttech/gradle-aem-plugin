@@ -23,11 +23,11 @@ open class InstanceReload : InstanceTask() {
     @TaskAction
     fun reload() {
         aem.instanceActions.reload {
-            instances = this@InstanceReload.instances
+            instances.convention(this@InstanceReload.instances)
             reloadOptions()
         }
         aem.instanceActions.awaitUp {
-            instances = this@InstanceReload.instances
+            instances.convention(this@InstanceReload.instances)
             awaitUpOptions()
         }
 

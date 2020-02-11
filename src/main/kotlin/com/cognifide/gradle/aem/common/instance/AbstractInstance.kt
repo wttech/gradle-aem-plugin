@@ -58,14 +58,14 @@ abstract class AbstractInstance(
 
     fun reload(options: ReloadAction.() -> Unit = {}) {
         aem.instanceActions.reload {
-            instances = listOf(this@AbstractInstance)
+            instances.convention(listOf(this@AbstractInstance))
             options()
         }
     }
 
     fun awaitUp(options: AwaitUpAction.() -> Unit = {}) {
         aem.instanceActions.awaitUp {
-            instances = listOf(this@AbstractInstance)
+            instances.convention(listOf(this@AbstractInstance))
             options()
         }
     }

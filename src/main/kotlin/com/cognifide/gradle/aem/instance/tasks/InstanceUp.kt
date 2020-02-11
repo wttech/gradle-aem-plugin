@@ -38,7 +38,7 @@ open class InstanceUp : LocalInstanceTask() {
         }
 
         aem.instanceActions.awaitUp {
-            instances = downInstances
+            instances.convention(downInstances)
             awaitOptions()
         }
 

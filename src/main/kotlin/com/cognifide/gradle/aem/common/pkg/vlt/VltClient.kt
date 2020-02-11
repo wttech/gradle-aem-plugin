@@ -16,7 +16,7 @@ class VltClient(val aem: AemExtension) {
     val commandEffective: String
         get() = aem.prop.expand(command, commandProperties)
 
-    val contentDir = aem.obj.dir(aem.packageOptions.contentDir)
+    val contentDir = aem.obj.dir { convention(aem.packageOptions.contentDir) }
 
     var contentRelativePath: String = ""
 

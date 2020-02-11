@@ -35,11 +35,11 @@ class PackageResolution(group: PackageGroup, id: String, action: (FileResolution
         val bundlePath = "${resolver.bundlePath}/${jar.name}"
 
         return aem.composePackage {
-            this.archivePath = pkg
-            this.description = bundle.description
-            this.group = bundle.group
-            this.name = bundle.symbolicName
-            this.version = bundle.version
+            this.archivePath.set(pkg)
+            this.description.set(bundle.description)
+            this.group.set(bundle.group)
+            this.name.set(bundle.symbolicName)
+            this.version.set(bundle.version)
 
             filter(bundlePath)
             content { copyJcrFile(jar, bundlePath) }

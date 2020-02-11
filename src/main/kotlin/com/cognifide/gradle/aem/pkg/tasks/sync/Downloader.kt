@@ -4,7 +4,6 @@ import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.aem.common.pkg.vlt.FilterFile
-import com.cognifide.gradle.common.build.dir
 import java.io.File
 import org.gradle.api.tasks.Internal
 
@@ -50,7 +49,7 @@ class Downloader(@Internal private val aem: AemExtension) {
 
         if (extract) {
             aem.logger.lifecycle("Extracting package $file to $extractDir")
-            extractDownloadedPackage(file, extractDir.dir)
+            extractDownloadedPackage(file, extractDir.get().asFile)
         }
     }
 

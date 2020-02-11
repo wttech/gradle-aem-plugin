@@ -19,7 +19,7 @@ class Status(sync: InstanceSync) : InstanceService(sync) {
      */
     val systemProperties: Map<String, String>
         get() {
-            if (aem.offline.get()) {
+            if (aem.commonOptions.offline.get()) {
                 return mapOf()
             }
 
@@ -54,7 +54,7 @@ class Status(sync: InstanceSync) : InstanceService(sync) {
      */
     val productVersion: String
         get() {
-            if (aem.offline.get()) {
+            if (aem.commonOptions.offline.get()) {
                 return PRODUCT_VERSION_UNKNOWN
             }
 

@@ -6,7 +6,6 @@ import com.cognifide.gradle.common.utils.Formats
 import com.cognifide.gradle.aem.common.pkg.vlt.VltClient
 import com.cognifide.gradle.aem.pkg.tasks.sync.Cleaner
 import com.cognifide.gradle.aem.pkg.tasks.sync.Downloader
-import com.cognifide.gradle.common.build.dir
 import java.io.File
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
@@ -51,10 +50,10 @@ open class PackageSync : AemDefaultTask() {
      * Location of JCR content root to which content will be copied.
      */
     @Internal
-    val contentDir = aem.obj.dir(aem.packageOptions.contentDir)
+    val contentDir = aem.obj.dir { convention(aem.packageOptions.contentDir) }
 
     private val filterRootFiles: List<File>
-        get() = contentDir.dir.run {
+        get() = contentDir.get().asFile.run {
             if (!exists()) {
                 logger.warn("JCR content directory does not exist: $this")
                 listOf<File>()
@@ -98,7 +97,7 @@ open class PackageSync : AemDefaultTask() {
                 prepareContent()
             }
 
-            if (!contentDir.dir.exists()) {
+            if (!contentDir.get().asFile.exists()) {
                 common.notifier.notify("Cannot synchronize JCR content", "Directory does not exist: ${aem.packageOptions.jcrRootDir}")
                 return
             }
@@ -112,7 +111,7 @@ open class PackageSync : AemDefaultTask() {
 
             common.notifier.notify(
                     "Synchronized JCR content",
-                    "Instance: ${instance.name}. Directory: ${Formats.rootProjectPath(contentDir.dir, project)}"
+                    "Instance: ${instance.name}. Directory: ${Formats.rootProjectPath(contentDir.get().asFile, project)}"
             )
         } finally {
             if (mode != Mode.COPY_ONLY) {

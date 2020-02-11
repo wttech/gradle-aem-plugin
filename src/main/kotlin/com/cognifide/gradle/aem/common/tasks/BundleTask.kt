@@ -1,34 +1,13 @@
 package com.cognifide.gradle.aem.common.tasks
 
-import com.cognifide.gradle.aem.AemDefaultTask
-import com.cognifide.gradle.aem.common.instance.Instance
-import java.io.File
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.InputFiles
+import org.gradle.api.tasks.Internal
 
-open class BundleTask : AemDefaultTask() {
+open class BundleTask : SyncFileTask() {
 
-    @Input
-    var instances: List<Instance> = listOf()
+    @get:Internal
+    val bundles get() = files
 
-    @InputFiles
-    var bundles: List<File> = listOf()
-
-    override fun projectsEvaluated() {
-        if (instances.isEmpty()) {
-            instances = aem.instances
-        }
-
-        if (bundles.isEmpty()) {
-            bundles = aem.dependentBundles(this)
-        }
-    }
-
-    fun instance(urlOrName: String) {
-        instances += aem.instance(urlOrName)
-    }
-
-    fun bundle(path: String) {
-        bundles += project.file(path)
+    init {
+        bundles.convention(aem.obj.provider { aem.dependentBundles(this) })
     }
 }

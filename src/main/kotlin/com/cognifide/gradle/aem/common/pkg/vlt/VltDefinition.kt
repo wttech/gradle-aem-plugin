@@ -21,27 +21,37 @@ open class VltDefinition(private val aem: AemExtension) {
      * Name visible in CRX package manager
      */
     @Input
-    var name: String = ""
+    val name = aem.obj.string { convention(aem.commonOptions.baseName) }
 
     /**
      * Group for categorizing in CRX package manager
      */
     @Input
-    var group: String = ""
+    val group = aem.obj.string {
+        convention(aem.obj.provider {
+            if (aem.project == aem.project.rootProject) {
+                aem.project.group.toString()
+            } else {
+                aem.project.rootProject.name
+            }
+        })
+    }
 
     /**
      * Version visible in CRX package manager.
      */
     @Input
-    var version: String = ""
+    val version = aem.obj.string {
+        convention(aem.obj.provider { aem.project.version.toString() })
+    }
 
     @Input
     @Optional
-    var description: String? = null
+    val description = aem.obj.string()
 
     @Input
     @Optional
-    var createdBy: String? = System.getProperty("user.name")
+    val createdBy = aem.obj.string { convention(System.getProperty("user.name")) }
 
     @Internal
     var filterElements = mutableListOf<FilterElement>()
@@ -85,11 +95,10 @@ open class VltDefinition(private val aem: AemExtension) {
 
     @get:Input
     val nodeTypes: String
-        get() = StringUtils.join(
-                nodeTypeLibs.joinToString(aem.lineSeparatorString),
-                aem.lineSeparatorString,
-                nodeTypeLines.joinToString(aem.lineSeparatorString)
-        )
+        get() {
+            val ls = aem.commonOptions.lineSeparator.get().value
+            return StringUtils.join(nodeTypeLibs.joinToString(ls), ls, nodeTypeLines.joinToString(ls))
+        }
 
     fun nodeTypes(file: File) {
         if (!file.exists()) {
@@ -120,24 +129,6 @@ open class VltDefinition(private val aem: AemExtension) {
 
     fun property(name: String, value: String) {
         properties[name] = value
-    }
-
-    fun ensureDefaults() {
-        if (group.isBlank()) {
-            group = if (aem.project == aem.project.rootProject) {
-                aem.project.group.toString()
-            } else {
-                aem.project.rootProject.name
-            }
-        }
-
-        if (name.isBlank()) {
-            name = aem.baseName
-        }
-
-        if (version.isBlank()) {
-            version = aem.project.version.toString()
-        }
     }
 
     private fun isFilterNeeded(custom: FilterElement): Boolean {

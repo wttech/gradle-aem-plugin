@@ -5,5 +5,5 @@ import com.cognifide.gradle.aem.common.instance.Instance
 
 abstract class AnyInstanceAction(aem: AemExtension) : AbstractAction(aem) {
 
-    var instances: List<Instance> = aem.instances
+    val instances = aem.obj.list<Instance> { convention(aem.obj.provider { aem.instances }) }
 }

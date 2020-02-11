@@ -7,7 +7,6 @@ import com.cognifide.gradle.aem.aem
 import com.cognifide.gradle.aem.bundle.BundleException
 import com.cognifide.gradle.aem.common.instance.service.osgi.Bundle
 import com.cognifide.gradle.aem.common.utils.normalizeSeparators
-import com.cognifide.gradle.common.build.file
 import com.cognifide.gradle.common.tasks.JarTask
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.exception.ExceptionUtils
@@ -31,7 +30,7 @@ open class BundleCompose : JarTask(), AemTask {
      * Shorthand for built OSGi bundle file.
      */
     @get:Internal
-    val composedFile: File get() = archiveFile.file
+    val composedFile: File get() = archiveFile.get().asFile
 
     /**
      * Shorthand for directory of built OSGi bundle file.
@@ -58,7 +57,7 @@ open class BundleCompose : JarTask(), AemTask {
      * Content path for OSGi bundle jars being placed in CRX package.
      */
     @Input
-    val installPath = aem.obj.string(aem.packageOptions.installPath)
+    val installPath = aem.obj.string { convention(aem.packageOptions.installPath) }
 
     /**
      * Suffix added to install path effectively allowing to install bundles only on specific instances.
@@ -131,7 +130,7 @@ open class BundleCompose : JarTask(), AemTask {
 
     private fun applyArchiveDefaults() {
         destinationDirectory.set(common.temporaryFile(name))
-        archiveBaseName.set(aem.baseName)
+        archiveBaseName.set(aem.commonOptions.baseName)
         from(javaConvention.sourceSets.getByName(SourceSet.MAIN_SOURCE_SET_NAME).output)
     }
 

@@ -10,21 +10,15 @@ import org.apache.commons.io.FileUtils
 
 class LogFiles(private val tailer: InstanceTailer) {
 
-    fun main(instanceName: String): File {
-        val file = File(tailer.logStorageDir, "$instanceName/${tailer.logFile}")
-        file.parentFile.mkdirs()
+    fun main(instanceName: String) = tailer.logStorageDir.get().asFile
+            .resolve("$instanceName/${tailer.logFile}")
+            .apply { parentFile.mkdirs() }
 
-        return file
-    }
+    fun incidentDir(instanceName: String) = tailer.logStorageDir.get().asFile
+            .resolve("$instanceName/$INCIDENT_DIR")
 
-    fun incidentDir(instanceName: String): File = File(tailer.logStorageDir, "$instanceName/$INCIDENT_DIR")
-
-    fun incidentFile(instanceName: String): File {
-        val file = File(incidentDir(instanceName), "${Formats.dateFileName()}-${tailer.logFile}")
-        file.parentFile.mkdirs()
-
-        return file
-    }
+    fun incidentFile(instanceName: String) = incidentDir(instanceName).resolve("${Formats.dateFileName()}-${tailer.logFile}")
+            .apply { parentFile.mkdirs() }
 
     fun clearMain(instanceName: String) = main(instanceName).bufferedWriter().use { it.write("") }
 
@@ -56,8 +50,7 @@ class LogFiles(private val tailer: InstanceTailer) {
         }
     }
 
-    private val lockFile: File
-        get() = tailer.logStorageDir.resolve(LOCK_FILE).apply { parentFile.mkdirs() }
+    private val lockFile: File get() = tailer.logStorageDir.get().asFile.resolve(LOCK_FILE).apply { parentFile.mkdirs() }
 
     companion object {
 

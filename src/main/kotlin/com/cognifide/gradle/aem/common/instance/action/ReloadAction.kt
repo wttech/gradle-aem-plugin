@@ -14,7 +14,7 @@ class ReloadAction(aem: AemExtension) : AnyInstanceAction(aem) {
             return
         }
 
-        if (instances.isEmpty()) {
+        if (instances.get().isEmpty()) {
             aem.logger.info("No instances to reload.")
             return
         }
@@ -25,7 +25,7 @@ class ReloadAction(aem: AemExtension) : AnyInstanceAction(aem) {
     private fun reload() {
         val reloaded = mutableListOf<Instance>()
 
-        common.parallel.with(instances) {
+        common.parallel.with(instances.get()) {
             try {
                 sync.osgiFramework.restart()
                 reloaded += this
@@ -36,7 +36,7 @@ class ReloadAction(aem: AemExtension) : AnyInstanceAction(aem) {
         }
 
         if (reloaded.isNotEmpty()) {
-            val unavailable = instances - reloaded
+            val unavailable = instances.get() - reloaded
 
             aem.logger.info("Reloading instance(s): ${reloaded.size} triggered, ${unavailable.size} unavailable")
         } else {

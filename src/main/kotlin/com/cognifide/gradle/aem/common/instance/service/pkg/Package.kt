@@ -23,9 +23,9 @@ class Package private constructor() {
     var lastUnpacked: Long? = null
 
     constructor(compose: PackageCompose) : this() {
-        this.group = compose.vaultDefinition.group
-        this.name = compose.vaultDefinition.name
-        this.version = compose.vaultDefinition.version
+        this.group = compose.vaultDefinition.group.get()
+        this.name = compose.vaultDefinition.name.get()
+        this.version = compose.vaultDefinition.version.get()
 
         this.downloadName = "$name-$version.zip"
         this.conventionPaths = listOf(

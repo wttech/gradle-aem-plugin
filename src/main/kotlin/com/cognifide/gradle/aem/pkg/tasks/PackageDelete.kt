@@ -10,9 +10,9 @@ open class PackageDelete : PackageTask() {
 
     @TaskAction
     fun delete() {
-        instances.checkAvailable()
+        instances.get().checkAvailable()
         sync { packageManager.delete(it) }
-        common.notifier.notify("Package deleted", "${packages.fileNames} on ${instances.names}")
+        common.notifier.notify("Package deleted", "${packages.get().fileNames} on ${instances.get().names}")
     }
 
     init {

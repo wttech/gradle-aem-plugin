@@ -44,9 +44,9 @@ class PackageOptions(private val aem: AemExtension) : Serializable {
      */
     var installPath = aem.obj.string {
         convention(aem.obj.provider {
-            when {
-                aem.project == aem.project.rootProject -> "/apps/${aem.project.rootProject.name}/install"
-                else -> "/apps/${aem.project.rootProject.name}/${aem.projectName}/install"
+            when (aem.project) {
+                aem.project.rootProject -> "/apps/${aem.project.rootProject.name}/install"
+                else -> "/apps/${aem.project.rootProject.name}/${aem.project.name}/install"
             }
         })
     }
@@ -116,10 +116,10 @@ class PackageOptions(private val aem: AemExtension) : Serializable {
     /**
      * Controls automatic node types exporting from available instance to be later used in package validation.
      */
-    val nodeTypesSync = aem.obj.custom<NodeTypesSync> {
+    val nodeTypesSync = aem.obj.typed<NodeTypesSync> {
         convention(aem.obj.provider {
             when {
-                aem.offline.get() -> NodeTypesSync.PRESERVE_FALLBACK
+                aem.commonOptions.offline.get() -> NodeTypesSync.PRESERVE_FALLBACK
                 else -> NodeTypesSync.PRESERVE_AUTO
             }
         })

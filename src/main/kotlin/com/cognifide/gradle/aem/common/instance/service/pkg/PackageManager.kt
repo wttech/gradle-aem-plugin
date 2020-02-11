@@ -108,7 +108,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
      */
     fun download(definition: PackageDefinition.() -> Unit, retry: Retry): File {
         val file = aem.composePackage {
-            version = Formats.dateFileName()
+            version.set(Formats.dateFileName())
             definition()
         }
 

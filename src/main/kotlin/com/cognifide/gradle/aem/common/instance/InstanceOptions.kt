@@ -1,31 +1,41 @@
 package com.cognifide.gradle.aem.common.instance
 
-import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.AemExtension
-import com.fasterxml.jackson.annotation.JsonIgnore
-import java.io.Serializable
 
-open class InstanceOptions(private val aem: AemExtension) : Serializable {
-
-    private val definedCustom: MutableMap<String, Instance> = mutableMapOf()
+open class InstanceOptions(private val aem: AemExtension) {
 
     /**
      * Directory storing instance wide configuration files.
      */
-    var configDir = aem.prop.file("instance.configDir") ?: aem.project.file("src/aem/instance")
+    val configDir = aem.obj.dir {
+        convention(aem.obj.projectDir("src/aem/instance"))
+        aem.prop.file("instance.configDir")?.let { set(it) }
+    }
 
     /**
      * List of AEM instances e.g on which packages could be deployed.
      * Instance stored in map ensures name uniqueness and allows to be referenced in expanded properties.
      */
-    val defined get() = definedCustom.ifEmpty {
-        mutableMapOf<String, Instance>().apply {
-            Instance.defaultAuthor(aem).let { put(it.name, it) }
-            Instance.defaultPublish(aem).let { put(it.name, it) }
-        }
+    val defined = aem.obj.list<Instance> {
+        convention(aem.obj.provider {
+            val fromCmd = aem.prop.string("instance.list")?.let {
+                Instance.parse(aem, it) { environment = Instance.ENVIRONMENT_CMD }
+            } ?: listOf()
+            val fromProperties = Instance.properties(aem)
+
+            (fromCmd + fromProperties).ifEmpty {
+                listOf(
+                        Instance.defaultAuthor(aem),
+                        Instance.defaultPublish(aem)
+                )
+            }
+        })
     }
 
-    val definedList get() = defined.values.toList()
+    /**
+     * Map of AEM instances with names as a keys.
+     */
+    val all = defined.map { p -> p.map { it.name to it }.toMap() }
 
     /**
      * Customize default options for instance services.
@@ -34,86 +44,49 @@ open class InstanceOptions(private val aem: AemExtension) : Serializable {
         syncOptions = options
     }
 
-    @get:JsonIgnore
     internal var syncOptions: InstanceSync.() -> Unit = {}
 
     /**
      * Define local instance (created on local file system).
      */
-    fun local(httpUrl: String) {
-        local(httpUrl) {}
-    }
+    fun local(httpUrl: String) = local(httpUrl) {}
 
     /**
      * Define local instance (created on local file system).
      */
-    fun local(httpUrl: String, name: String) {
-        local(httpUrl) { this.name = name }
-    }
+    fun local(httpUrl: String, name: String) = local(httpUrl) { this.name = name }
 
     /**
      * Define local instance (created on local file system).
      */
     fun local(httpUrl: String, options: LocalInstance.() -> Unit) {
-        define(LocalInstance.create(aem, httpUrl, options))
+        defined.add(aem.obj.provider { LocalInstance.create(aem, httpUrl, options) })
     }
 
     /**
      * Define remote instance (available on any host).
      */
-    fun remote(httpUrl: String) {
-        remote(httpUrl) {}
-    }
+    fun remote(httpUrl: String) = remote(httpUrl) {}
 
     /**
      * Define remote instance (available on any host).
      */
-    fun remote(httpUrl: String, name: String) {
-        remote(httpUrl) { this.name = name }
-    }
+    fun remote(httpUrl: String, name: String) = remote(httpUrl) { this.name = name }
 
     /**
      * Define remote instance (available on any host).
      */
     fun remote(httpUrl: String, options: RemoteInstance.() -> Unit) {
-        define(RemoteInstance.create(aem, httpUrl, options))
+        defined.add(aem.obj.provider { RemoteInstance.create(aem, httpUrl, options) })
     }
+
+    fun named(name: String) = defined.get().firstOrNull()
+            ?: throw InstanceException("Instance named '$name' is not defined!")
 
     /**
      * Get defined instance by name or create temporary definition if URL provided.
      */
-    fun parse(urlOrName: String): Instance {
-        return definedCustom[urlOrName] ?: Instance.parse(aem, urlOrName).ifEmpty {
-            throw AemException("Instance cannot be determined by value '$urlOrName'.")
-        }.single().apply { validate() }
-    }
-
-    private fun define(instances: Iterable<Instance>) {
-        instances.forEach { define(it) }
-    }
-
-    private fun define(instance: Instance) {
-        if (definedCustom.containsKey(instance.name)) {
-            throw AemException("Instance named '${instance.name}' is already defined. " +
-                    "Enumerate instance types (for example 'author1', 'author2') " +
-                    "or distinguish environments (for example 'local', 'int', 'stg').")
-        }
-
-        definedCustom[instance.name] = instance
-    }
-
-    init {
-        // Define through command line
-        val instancesForced = aem.prop.string("instance.list") ?: ""
-        if (instancesForced.isNotBlank()) {
-            define(Instance.parse(aem, instancesForced) { environment = Instance.ENVIRONMENT_CMD })
-        }
-
-        // Define through properties ]
-        define(Instance.properties(aem))
-
-        aem.project.afterEvaluate { _ ->
-            definedCustom.values.forEach { it.validate() }
-        }
-    }
+    fun parse(url: String): Instance = Instance.parse(aem, url).ifEmpty {
+        throw InstanceException("Instance URL cannot be parsed properly '$url'!")
+    }.single().apply { validate() }
 }

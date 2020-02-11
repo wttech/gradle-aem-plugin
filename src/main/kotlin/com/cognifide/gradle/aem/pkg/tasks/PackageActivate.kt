@@ -10,14 +10,14 @@ open class PackageActivate : PackageTask() {
 
     @TaskAction
     fun activate() {
-        instances.checkAvailable()
+        instances.get().checkAvailable()
         sync { packageManager.activate(it) }
-        common.notifier.notify("Package activated", "${packages.fileNames} on ${instances.names}")
+        common.notifier.notify("Package activated", "${packages.get().fileNames} on ${instances.get().names}")
     }
 
     init {
         description = "Activates CRX package on instance(s)."
-        awaited = aem.prop.boolean("package.activate.awaited") ?: true
+        awaited.convention(aem.prop.boolean("package.activate.awaited") ?: true)
     }
 
     companion object {
