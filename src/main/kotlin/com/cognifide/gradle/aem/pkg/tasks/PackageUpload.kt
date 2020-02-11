@@ -17,6 +17,7 @@ open class PackageUpload : PackageTask() {
 
     init {
         description = "Uploads AEM package to instance(s)."
+        awaited.convention(false)
     }
 
     companion object {

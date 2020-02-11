@@ -13,7 +13,6 @@ import com.cognifide.gradle.common.file.resolver.FileGroup
 import java.io.File
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
 
 open class InstanceSatisfy : PackageDeploy() {
@@ -22,16 +21,22 @@ open class InstanceSatisfy : PackageDeploy() {
      * Forces to upload and install again all packages regardless their state on instances (already uploaded / installed).
      */
     @Input
-    var greedy = aem.prop.flag("instance.satisfy.greedy")
+    val greedy = aem.obj.boolean {
+        convention(false)
+        aem.prop.boolean("instance.satisfy.greedy")?.let { set(it) }
+    }
 
     /**
      * Determines which packages should be installed by default when satisfy task is being executed.
      */
     @Input
-    var groupName = aem.prop.string("instance.satisfy.group") ?: "*"
+    val groupName = aem.obj.string {
+        convention("*")
+        aem.prop.string("instance.satisfy.group")?.let { set(it) }
+    }
 
     @get:Internal
-    var groupFilter: FileGroup.() -> Boolean = { Patterns.wildcard(name, groupName) }
+    var groupFilter: FileGroup.() -> Boolean = { Patterns.wildcard(name, groupName.get()) }
 
     /**
      * Packages are installed lazy which means already installed will no be installed again.
@@ -40,7 +45,10 @@ open class InstanceSatisfy : PackageDeploy() {
      * This flag can change that behavior, so that information will be refreshed after each package installation.
      */
     @Input
-    var listRefresh: Boolean = aem.prop.boolean("instance.satisfy.listRefresh") ?: false
+    val listRefresh = aem.obj.boolean {
+        convention(false)
+        aem.prop.boolean("instance.satisfy.listRefresh")?.let { set(it) }
+    }
 
     /**
      * Repeat listing package when failed (brute-forcing).
@@ -49,26 +57,25 @@ open class InstanceSatisfy : PackageDeploy() {
     var listRetry = common.retry { afterSquaredSecond(aem.prop.long("instance.satisfy.listRetry") ?: 3) }
 
     /**
-     * Path in which downloaded CRX packages will be stored.
-     */
-    @Internal
-    var downloadDir = aem.prop.file("instance.satisfy.downloadDir")
-            ?: common.temporaryFile("$name/download")
-
-    /**
      * Provides a packages from local and remote sources.
      * Handles automatic wrapping OSGi bundles to CRX packages.
      */
-    @Nested
-    val packageProvider = PackageResolver(aem, downloadDir)
+    @Internal
+    val packageProvider = PackageResolver(aem).apply {
+        downloadDir.convention(aem.obj.buildDir("$name/download"))
+        aem.prop.file("instance.satisfy.downloadDir")?.let { downloadDir.set(it) }
+        aem.prop.list("instance.satisfy.urls")?.forEachIndexed { index, url ->
+            val no = index + 1
+            val fileName = url.substringAfterLast("/").substringBeforeLast(".")
+            group("$GROUP_CMD.$no.$fileName") { get(url) }
+        }
+    }
 
     @get:Internal
-    val outputDirs: List<File>
-        get() = packageProvider.outputDirs(groupFilter)
+    val outputDirs: List<File> get() = packageProvider.outputDirs(groupFilter)
 
     @get:Internal
-    val allFiles: List<File>
-        get() = packageProvider.allFiles(groupFilter)
+    val allFiles: List<File> get() = packageProvider.allFiles(groupFilter)
 
     @get:Internal
     val packageGroups by lazy {
@@ -88,30 +95,11 @@ open class InstanceSatisfy : PackageDeploy() {
     }
 
     @get:Internal
-    val cmdGroups: Boolean
-        get() = project.findProperty("instance.satisfy.urls") != null
+    val cmdGroups: Boolean get() = project.findProperty("instance.satisfy.urls") != null
 
     private val packageActions = mutableListOf<PackageAction>()
 
     private var packageSatisfiedAny = false
-
-    init {
-        group = AemTask.GROUP
-        description = "Satisfies AEM by uploading & installing dependent packages on instance(s)."
-
-        defineCmdGroups()
-    }
-
-    private fun defineCmdGroups() {
-        if (cmdGroups) {
-            val urls = aem.prop.list("instance.satisfy.urls") ?: listOf()
-            urls.forEachIndexed { index, url ->
-                val no = index + 1
-                val fileName = url.substringAfterLast("/").substringBeforeLast(".")
-                packageProvider.group("$GROUP_CMD.$no.$fileName") { get(url) }
-            }
-        }
-    }
 
     fun packages(configurer: PackageResolver.() -> Unit) {
         packageProvider.apply(configurer)
@@ -156,10 +144,10 @@ open class InstanceSatisfy : PackageDeploy() {
 
         aem.sync(packageInstances) {
             val packageStates = group.files.map {
-                PackageState(it, packageManager.find(it, listRefresh, listRetry))
+                PackageState(it, packageManager.find(it, listRefresh.get(), listRetry))
             }
             val packageSatisfiableAny = packageStates.any {
-                greedy || group.greedy || packageManager.isSnapshot(it.file) || !it.uploaded || !it.installed
+                greedy.get() || group.greedy || packageManager.isSnapshot(it.file) || !it.uploaded || !it.installed
             }
 
             if (packageSatisfiableAny) {
@@ -169,7 +157,7 @@ open class InstanceSatisfy : PackageDeploy() {
             packageStates.forEach { pkg ->
                 increment("Satisfying package '${pkg.file.name}' on instance '${instance.name}'") {
                     when {
-                        greedy || group.greedy -> {
+                        greedy.get() || group.greedy -> {
                             aem.logger.info("Satisfying package ${pkg.name} on ${instance.name} (greedy).")
                             satisfyPackage(group, pkg)
                         }
@@ -220,6 +208,12 @@ open class InstanceSatisfy : PackageDeploy() {
 
         packageSatisfiedAny = true
         packageActions.add(PackageAction(state.file, instance))
+    }
+
+    init {
+        group = AemTask.GROUP
+        description = "Satisfies AEM by uploading & installing dependent packages on instance(s)."
+        aem.prop.boolean("package.satisfy.awaited")?.let { awaited.set(it) }
     }
 
     class PackageAction(val pkg: File, val instance: Instance)

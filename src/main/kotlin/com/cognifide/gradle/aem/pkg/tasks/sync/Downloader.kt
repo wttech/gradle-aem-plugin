@@ -14,12 +14,12 @@ class Downloader(@Internal private val aem: AemExtension) {
     /**
      * Determines instance from which JCR content will be downloaded.
      */
-    var instance: Instance = aem.anyInstance
+    val instance = aem.obj.typed<Instance> { convention(aem.obj.provider { aem.anyInstance }) }
 
     /**
      * Determines VLT filter used to grab JCR content from AEM instance.
      */
-    var filter: FilterFile = aem.filter
+    var filter = aem.obj.typed<FilterFile> { convention(aem.obj.provider { aem.filter }) }
 
     /**
      * Allows to disable extracting contents of download package to directory.
@@ -27,7 +27,10 @@ class Downloader(@Internal private val aem: AemExtension) {
      * This operation can be modified using '-Pforce' command line to replace the contents of extract directory
      * with package content.
      */
-    var extract = aem.prop.boolean("package.sync.downloader.extract") ?: true
+    var extract = aem.obj.boolean {
+        convention(true)
+        aem.prop.boolean("package.sync.downloader.extract")?.let { set(it) }
+    }
 
     /**
      * Path in which downloader JCR content will be extracted.
@@ -43,11 +46,11 @@ class Downloader(@Internal private val aem: AemExtension) {
     var retry = common.retry { afterSquaredSecond(aem.prop.long("package.sync.downloader.retry") ?: 3) }
 
     fun download() {
-        val file = instance.sync.packageManager.download({
-            filterElements = filter.elements.toMutableList()
+        val file = instance.get().sync.packageManager.download({
+            filterElements = filter.get().elements.toMutableList()
         }, retry)
 
-        if (extract) {
+        if (extract.get()) {
             aem.logger.lifecycle("Extracting package $file to $extractDir")
             extractDownloadedPackage(file, extractDir.get().asFile)
         }

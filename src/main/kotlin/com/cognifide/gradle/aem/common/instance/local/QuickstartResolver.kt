@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem.common.instance.local
 
 import com.cognifide.gradle.aem.AemExtension
-import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 
 class QuickstartResolver(private val aem: AemExtension) {
@@ -11,30 +10,30 @@ class QuickstartResolver(private val aem: AemExtension) {
     /**
      * Directory storing downloaded AEM Quickstart source files (JAR & license).
      */
-    var downloadDir = aem.prop.file("localInstance.quickstart.downloadDir")
-            ?: common.temporaryFile(TEMPORARY_DIR)
+    val downloadDir = aem.obj.dir {
+        convention(aem.obj.buildDir(TEMPORARY_DIR))
+        aem.prop.file("localInstance.quickstart.downloadDir")?.let { set(it) }
+    }
 
     /**
      * URI pointing to AEM self-extractable JAR containing 'crx-quickstart'.
      */
-    var jarUrl = aem.prop.string("localInstance.quickstart.jarUrl")
+    val jarUrl = aem.obj.string {
+        aem.prop.string("localInstance.quickstart.jarUrl")?.let { set(it) }
+    }
 
-    @get:JsonIgnore
-    val jar: File?
-        get() = jarUrl?.run { common.fileTransfer.downloadTo(this, downloadDir) }
+    val jar: File? get() = jarUrl?.run { common.fileTransfer.downloadTo(get(), downloadDir.get().asFile) }
 
     /**
      * URI pointing to AEM quickstart license file.
      */
-    var licenseUrl = aem.prop.string("localInstance.quickstart.licenseUrl")
+    val licenseUrl = aem.obj.string {
+        aem.prop.string("localInstance.quickstart.licenseUrl")?.let { set(it) }
+    }
 
-    @get:JsonIgnore
-    val license: File?
-        get() = licenseUrl?.run { common.fileTransfer.downloadTo(this, downloadDir) }
+    val license: File? get() = licenseUrl?.run { common.fileTransfer.downloadTo(get(), downloadDir.get().asFile) }
 
-    @get:JsonIgnore
-    val files: List<File>
-        get() = listOfNotNull(jar, license)
+    val files: List<File> get() = listOfNotNull(jar, license)
 
     companion object {
 

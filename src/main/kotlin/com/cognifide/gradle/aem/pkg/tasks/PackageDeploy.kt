@@ -71,11 +71,8 @@ open class PackageDeploy : PackageTask() {
             }
         })
 
-        packages.convention(aem.obj.provider {
-            aem.dependentPackages(this)
-        })
-
-        awaited.convention(aem.prop.boolean("package.deploy.awaited") ?: true)
+        packages.convention(aem.obj.provider { aem.dependentPackages(this) })
+        aem.prop.boolean("package.deploy.awaited")?.let { awaited.set(it) }
     }
 
     companion object {

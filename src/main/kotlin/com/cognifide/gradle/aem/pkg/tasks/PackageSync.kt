@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.pkg.tasks
 
 import com.cognifide.gradle.aem.AemDefaultTask
 import com.cognifide.gradle.aem.AemException
+import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.common.utils.Formats
 import com.cognifide.gradle.aem.common.pkg.vlt.VltClient
 import com.cognifide.gradle.aem.pkg.tasks.sync.Cleaner
@@ -16,29 +17,33 @@ open class PackageSync : AemDefaultTask() {
      * Determines what need to be done (content copied and clean or something else).
      */
     @Internal
-    var mode = Mode.of(aem.prop.string("package.sync.mode")
-            ?: Mode.COPY_AND_CLEAN.name)
+    val mode = aem.obj.typed<Mode> {
+        convention(Mode.COPY_AND_CLEAN)
+        aem.prop.string("package.sync.mode")?.let { set(Mode.of(it)) }
+    }
 
     fun mode(name: String) {
-        mode = Mode.of(name)
+        mode.set(Mode.of(name))
     }
 
     /**
      * Determines a method of getting JCR content from remote instance.
      */
     @Internal
-    var transfer = Transfer.of(aem.prop.string("package.sync.transfer")
-            ?: Transfer.PACKAGE_DOWNLOAD.name)
+    val transfer = aem.obj.typed<Transfer> {
+        convention(Transfer.PACKAGE_DOWNLOAD)
+        aem.prop.string("package.sync.transfer")?.let { set(Transfer.of(it)) }
+    }
 
     fun transfer(name: String) {
-        transfer = Transfer.of(name)
+        transfer.set(Transfer.of(name))
     }
 
     /**
      * Source instance from which JCR content will be copied.
      */
     @Internal
-    var instance = aem.anyInstance
+    val instance = aem.obj.typed<Instance> { convention(aem.obj.provider { aem.anyInstance }) }
 
     /**
      * Determines which content will be copied from source instance.
@@ -93,7 +98,7 @@ open class PackageSync : AemDefaultTask() {
     @TaskAction
     fun sync() {
         try {
-            if (mode != Mode.COPY_ONLY) {
+            if (mode.get() != Mode.COPY_ONLY) {
                 prepareContent()
             }
 
@@ -102,19 +107,20 @@ open class PackageSync : AemDefaultTask() {
                 return
             }
 
-            if (mode != Mode.CLEAN_ONLY) {
-                when (transfer) {
+            if (mode.get() != Mode.CLEAN_ONLY) {
+                when (transfer.get()) {
                     Transfer.VLT_CHECKOUT -> transferUsingVltCheckout()
                     Transfer.PACKAGE_DOWNLOAD -> transferUsingPackageDownload()
+                    null -> {}
                 }
             }
 
             common.notifier.notify(
                     "Synchronized JCR content",
-                    "Instance: ${instance.name}. Directory: ${Formats.rootProjectPath(contentDir.get().asFile, project)}"
+                    "Instance: ${instance.get().name}. Directory: ${Formats.rootProjectPath(contentDir.get().asFile, project)}"
             )
         } finally {
-            if (mode != Mode.COPY_ONLY) {
+            if (mode.get() != Mode.COPY_ONLY) {
                 cleanContent()
             }
         }
@@ -132,15 +138,16 @@ open class PackageSync : AemDefaultTask() {
     private fun transferUsingVltCheckout() {
         vlt.apply {
             contentDir.convention(this@PackageSync.contentDir)
-            command = "--credentials ${instance.credentialsString} checkout --force --filter ${filter.file} ${instance.httpUrl}/crx/server/crx.default"
+            command.convention("--credentials ${instance.get().credentialsString} checkout --force" +
+                    " --filter ${filter.file} ${instance.get().httpUrl}/crx/server/crx.default")
             run()
         }
     }
 
     private fun transferUsingPackageDownload() {
         downloader.apply {
-            instance = this@PackageSync.instance
-            filter = this@PackageSync.filter
+            instance.convention(this@PackageSync.instance)
+            filter.convention(this@PackageSync.filter)
             download()
         }
     }

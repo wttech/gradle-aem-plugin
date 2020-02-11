@@ -17,7 +17,7 @@ open class PackageUninstall : PackageTask() {
 
     init {
         description = "Uninstalls AEM package on instance(s)."
-        awaited.convention(aem.prop.boolean("package.uninstall.awaited") ?: true)
+        aem.prop.boolean("package.uninstall.awaited")?.let { awaited.set(it) }
         checkForce()
     }
 

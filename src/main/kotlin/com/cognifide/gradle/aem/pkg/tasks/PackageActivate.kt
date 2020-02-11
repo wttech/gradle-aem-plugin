@@ -17,7 +17,7 @@ open class PackageActivate : PackageTask() {
 
     init {
         description = "Activates CRX package on instance(s)."
-        awaited.convention(aem.prop.boolean("package.activate.awaited") ?: true)
+        aem.prop.boolean("package.activate.awaited")?.let { awaited.set(it) }
     }
 
     companion object {

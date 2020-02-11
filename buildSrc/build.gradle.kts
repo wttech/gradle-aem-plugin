@@ -7,7 +7,7 @@ repositories {
 }
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.3.61")
-    implementation("org.jetbrains.dokka:dokka-gradle-plugin:0.10.0")
+    implementation("org.jetbrains.dokka:dokka-gradle-plugin:0.10.1")
     implementation("com.gradle.plugin-publish:com.gradle.plugin-publish.gradle.plugin:0.10.1")
     implementation("io.gitlab.arturbosch.detekt:detekt-gradle-plugin:1.2.2")
     implementation("com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4")

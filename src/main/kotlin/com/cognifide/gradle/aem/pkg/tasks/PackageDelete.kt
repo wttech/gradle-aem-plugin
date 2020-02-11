@@ -17,6 +17,7 @@ open class PackageDelete : PackageTask() {
 
     init {
         description = "Deletes AEM package on instance(s)."
+        awaited.convention(false)
         checkForce()
     }
 

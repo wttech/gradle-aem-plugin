@@ -40,7 +40,7 @@ open class PackagePrepare : AemDefaultTask() {
     ).filter { it.exists() }
 
     @Input
-    val vaultNodeTypesSync = aem.obj.typed<NodeTypesSync>(aem.packageOptions.nodeTypesSync)
+    val vaultNodeTypesSync = aem.obj.typed<NodeTypesSync> { convention(aem.packageOptions.nodeTypesSync) }
 
     @OutputFile
     val vaultNodeTypesSyncFile = aem.obj.file { convention(aem.packageOptions.nodeTypesSyncFile) }

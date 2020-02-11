@@ -7,7 +7,7 @@ import java.io.File
 
 class PackageResolution(group: PackageGroup, id: String, action: (FileResolution) -> File) : FileResolution(group, id, action) {
 
-    private val resolver = group.resolver
+    private val resolver = group.packageResolver
 
     private val aem = resolver.aem
 

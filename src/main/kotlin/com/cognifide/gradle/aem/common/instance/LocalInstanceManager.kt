@@ -46,14 +46,20 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
     /**
      * Maximum time to wait for status script response.
      */
-    var scriptTimeout: Long = aem.prop.long("localInstance.scriptTimeout") ?: TimeUnit.SECONDS.toMillis(5)
+    val scriptTimeout = aem.obj.long {
+        convention(TimeUnit.SECONDS.toMillis(5))
+        aem.prop.long("localInstance.scriptTimeout")?.let { set(it) }
+    }
 
     /**
      * Collection of files potentially needed to create instance
      */
     @get:JsonIgnore
-    val sourceFiles: List<File>
-        get() = listOfNotNull(backupZip) + quickstart.files + install.files
+    val sourceFiles = aem.obj.files {
+        from(aem.obj.provider {
+            listOfNotNull(backupZip) + quickstart.files + install.files
+        })
+    }
 
     /**
      * Path from which extra files for local AEM instances will be copied.

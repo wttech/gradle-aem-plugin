@@ -9,22 +9,21 @@ class VltClient(val aem: AemExtension) {
 
     private val app = VltApp(aem.project)
 
-    var command: String = ""
+    val command = aem.obj.string()
 
-    var commandProperties: Map<String, Any> = mapOf("aem" to aem)
+    val commandProperties = aem.obj.map<String, Any> { convention(mapOf("aem" to aem)) }
 
-    val commandEffective: String
-        get() = aem.prop.expand(command, commandProperties)
+    val commandEffective: String get() = aem.prop.expand(command.get(), commandProperties.get())
 
     val contentDir = aem.obj.dir { convention(aem.packageOptions.contentDir) }
 
-    var contentRelativePath: String = ""
+    val contentRelativePath = aem.obj.string()
 
     val contentDirEffective: File
         get() {
             var workingDir = contentDir.map { it.asFile.resolve(Package.JCR_ROOT) }.get()
-            if (contentRelativePath.isNotBlank()) {
-                workingDir = File(workingDir, contentRelativePath)
+            if (contentRelativePath.isPresent) {
+                workingDir = File(workingDir, contentRelativePath.get())
             }
 
             return workingDir

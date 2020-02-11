@@ -25,7 +25,7 @@ class Script(val instance: LocalInstance, val shellCommand: List<String>, val wr
         return try {
             ProcBuilder(command, *args.toTypedArray())
                     .withWorkingDirectory(instance.dir)
-                    .withTimeoutMillis(instance.manager.scriptTimeout)
+                    .withTimeoutMillis(instance.manager.scriptTimeout.get())
                     .ignoreExitStatus()
                     .apply(options)
                     .run()

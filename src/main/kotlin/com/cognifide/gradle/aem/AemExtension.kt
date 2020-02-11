@@ -409,7 +409,7 @@ class AemExtension(val project: Project) : Serializable {
     /**
      * Execute any Vault command.
      */
-    fun vlt(command: String): VltSummary = vlt { this.command = command; run() }
+    fun vlt(command: String): VltSummary = vlt { this.command.set(command); run() }
 
     /**
      * Execute any Vault command with customized options like content directory.
@@ -429,7 +429,7 @@ class AemExtension(val project: Project) : Serializable {
     /**
      * Execute Groovy script(s) matching file pattern on AEM instances.
      */
-    fun groovyEval(scriptPattern: String): GroovyEvalSummary = groovyEval { this.scriptPattern = scriptPattern; eval() }
+    fun groovyEval(scriptPattern: String): GroovyEvalSummary = groovyEval { this.scriptPattern.set(scriptPattern); eval() }
 
     companion object {
 
