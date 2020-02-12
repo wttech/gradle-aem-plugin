@@ -65,7 +65,9 @@ open class PackageCompose : ZipTask(), AemTask {
     val packagePath = aem.obj.string { convention(aem.packageOptions.storagePath) }
 
     @Nested
-    var validator = PackageValidator(aem)
+    var validator = PackageValidator(aem).apply {
+        workDir.convention(destinationDirectory.dir(Package.OAKPAL_OPEAR_PATH))
+    }
 
     fun validator(options: PackageValidator.() -> Unit) {
         validator.apply(options)
@@ -165,11 +167,7 @@ open class PackageCompose : ZipTask(), AemTask {
         }
 
         super.copy()
-
-        validator.apply {
-            workDir.set(composedDir.resolve(Package.OAKPAL_OPEAR_PATH))
-            perform(composedFile)
-        }
+        validator.perform(composedFile)
 
         common.notifier.notify("Package composed", composedFile.name)
     }

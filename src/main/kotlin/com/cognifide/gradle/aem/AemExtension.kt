@@ -4,7 +4,6 @@ import com.cognifide.gradle.aem.bundle.BundlePlugin
 import com.cognifide.gradle.aem.bundle.tasks.BundleCompose
 import com.cognifide.gradle.aem.common.CommonOptions
 import com.cognifide.gradle.aem.common.CommonPlugin
-import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.instance.*
 import com.cognifide.gradle.aem.common.instance.service.groovy.GroovyEvaluator
 import com.cognifide.gradle.aem.common.instance.service.groovy.GroovyEvalSummary
@@ -17,7 +16,6 @@ import com.cognifide.gradle.aem.instance.*
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.PackageCompose
 import com.cognifide.gradle.aem.instance.rcp.RcpClient
-import com.cognifide.gradle.aem.common.pkg.vlt.VltException
 import com.cognifide.gradle.aem.common.pkg.vlt.VltClient
 import com.cognifide.gradle.aem.common.pkg.vlt.VltSummary
 import com.cognifide.gradle.aem.pkg.PackageSyncPlugin
@@ -27,7 +25,6 @@ import com.cognifide.gradle.common.utils.Patterns
 import java.io.File
 import java.io.Serializable
 import org.gradle.api.Project
-import org.gradle.api.Task
 
 /**
  * Core of library, facade for implementing tasks.
@@ -157,8 +154,7 @@ class AemExtension(val project: Project) : Serializable {
     /**
      * Get available instance of any type (most often first defined).
      */
-    val availableInstance: Instance?
-        get() = instances.asSequence().firstOrNull { it.available }
+    val availableInstance: Instance? get() = instances.asSequence().firstOrNull { it.available }
 
     /**
      * Find instance which name is matching wildcard filter specified via command line parameter 'instance.name'.
@@ -240,8 +236,7 @@ class AemExtension(val project: Project) : Serializable {
     /**
      * Get all remote instances.
      */
-    val remoteInstances: List<RemoteInstance>
-        get() = instances.filterIsInstance(RemoteInstance::class.java)
+    val remoteInstances: List<RemoteInstance> get() = instances.filterIsInstance(RemoteInstance::class.java)
 
     /**
      * Work in parallel with all remote instances.
@@ -252,8 +247,7 @@ class AemExtension(val project: Project) : Serializable {
      * Get CRX package defined to be built (could not yet exist).
      */
     @Suppress("VariableNaming")
-    val `package`: File
-        get() = common.tasks.get(PackageCompose.NAME, PackageCompose::class.java).composedFile
+    val `package`: File get() = common.tasks.get(PackageCompose.NAME, PackageCompose::class.java).composedFile
 
     val pkg: File get() = `package`
 
@@ -263,32 +257,14 @@ class AemExtension(val project: Project) : Serializable {
     val packages: List<File> get() = common.tasks.getAll(PackageCompose::class.java).map { it.composedFile }
 
     /**
-     * Get all CRX packages built before running particular task.
-     */
-    fun dependentPackages(task: Task): List<File> = task.taskDependencies.getDependencies(task)
-            .filterIsInstance(PackageCompose::class.java)
-            .map { it.composedFile }
-
-    /**
      * Get OSGi bundle defined to be built (could not yet exist).
      */
-    val bundle: File
-        get() = common.tasks.get(BundleCompose.NAME, BundleCompose::class.java).composedFile
+    val bundle: File get() = common.tasks.get(BundleCompose.NAME, BundleCompose::class.java).composedFile
 
     /**
      * Get all OSGi bundles defined to be built.
      */
-    val bundles: List<File>
-        get() = common.tasks.getAll(BundleCompose::class.java).map { it.composedFile }
-
-    /**
-     * Get all OSGi bundles built before running particular task.
-     */
-    fun dependentBundles(task: Task): List<File> {
-        return task.taskDependencies.getDependencies(task)
-                .filterIsInstance(BundleCompose::class.java)
-                .map { it.composedFile }
-    }
+    val bundles: List<File> get() = common.tasks.getAll(BundleCompose::class.java).map { it.composedFile }
 
     /**
      * In parallel, work with services of all instances matching default filtering.
@@ -347,9 +323,7 @@ class AemExtension(val project: Project) : Serializable {
      * Build minimal CRX package in-place / only via code.
      * All details like Vault properties, archive destination directory, file name are customizable.
      */
-    fun composePackage(definition: PackageDefinition.() -> Unit): File {
-        return PackageDefinition(this).compose(definition)
-    }
+    fun composePackage(definition: PackageDefinition.() -> Unit): File = PackageDefinition(this).compose(definition)
 
     /**
      * Validate any CRX packages.
@@ -364,37 +338,7 @@ class AemExtension(val project: Project) : Serializable {
     /**
      * Vault filter determined by convention and properties.
      */
-    val filter: FilterFile
-        get() {
-            val cmdFilterRoots = prop.list("filter.roots") ?: listOf()
-            if (cmdFilterRoots.isNotEmpty()) {
-                logger.debug("Using Vault filter roots specified as command line property: $cmdFilterRoots")
-                return FilterFile.temporary(this, cmdFilterRoots)
-            }
-
-            val cmdFilterPath = prop.string("filter.path") ?: ""
-            if (cmdFilterPath.isNotEmpty()) {
-                val cmdFilter = FileOperations.find(project, packageOptions.vltDir.toString(), cmdFilterPath)
-                        ?: throw VltException("Vault check out filter file does not exist at path: $cmdFilterPath" +
-                                " (or under directory: ${packageOptions.vltDir}).")
-                logger.debug("Using Vault filter file specified as command line property: $cmdFilterPath")
-                return FilterFile(cmdFilter)
-            }
-
-            val conventionFilterFiles = listOf(
-                    "${packageOptions.vltDir}/${FilterFile.SYNC_NAME}",
-                    "${packageOptions.vltDir}/${FilterFile.BUILD_NAME}"
-            )
-            val conventionFilterFile = FileOperations.find(project, packageOptions.vltDir.toString(), conventionFilterFiles)
-            if (conventionFilterFile != null) {
-                logger.debug("Using Vault filter file found by convention: $conventionFilterFile")
-                return FilterFile(conventionFilterFile)
-            }
-
-            logger.debug("None of Vault filter files found by CMD properties or convention.")
-
-            return FilterFile.temporary(this, listOf())
-        }
+    val filter: FilterFile get() = FilterFile.default(this)
 
     /**
      * Get Vault filter object for specified file.

@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.bundle
 import com.cognifide.gradle.aem.bundle.tasks.BundleCompose
 import com.cognifide.gradle.aem.bundle.tasks.BundleInstall
 import com.cognifide.gradle.aem.bundle.tasks.BundleUninstall
+import com.cognifide.gradle.aem.common.tasks.BundleTask
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.common.CommonDefaultPlugin
 import com.cognifide.gradle.common.common
@@ -47,7 +48,7 @@ class BundlePlugin : CommonDefaultPlugin() {
     }
 
     private fun Project.setupTasks() = tasks {
-        register<BundleCompose>(BundleCompose.NAME) {
+        val compose = register<BundleCompose>(BundleCompose.NAME) {
             dependsOn(JavaPlugin.CLASSES_TASK_NAME)
         }.apply {
             artifacts.add(Dependency.ARCHIVES_CONFIGURATION, this)
@@ -60,6 +61,9 @@ class BundlePlugin : CommonDefaultPlugin() {
         }
         register<BundleUninstall>(BundleUninstall.NAME) {
             dependsOn(BundleCompose.NAME)
+        }
+        typed<BundleTask> {
+            files.from(compose.map { it.composedFile })
         }
         named<Task>(LifecycleBasePlugin.ASSEMBLE_TASK_NAME) {
             dependsOn(BundleCompose.NAME)

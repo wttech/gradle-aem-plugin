@@ -10,7 +10,6 @@ import com.cognifide.gradle.common.CommonException
 import org.apache.commons.io.FileUtils
 import org.apache.jackrabbit.vault.packaging.PackageException
 import org.gradle.api.tasks.*
-import java.io.File
 
 open class PackagePrepare : AemDefaultTask() {
 
@@ -24,20 +23,20 @@ open class PackagePrepare : AemDefaultTask() {
     @OutputDirectory
     val metaDir = aem.obj.buildDir("$name/${Package.META_PATH}")
 
-    @get:Internal
+    @Internal
     val vaultFilterOriginFile = aem.obj.relativeFile(metaDir, "${Package.VLT_DIR}/${FilterFile.ORIGIN_NAME}")
 
-    @get:Internal
+    @Internal
     val vaultFilterTemplateFile = aem.obj.relativeFile(metaDir, "${Package.VLT_DIR}/${FilterFile.BUILD_NAME}")
 
-    @Internal // TODO @InputDir
+    @Internal
     val contentDir = aem.obj.dir { convention(aem.packageOptions.contentDir) }
 
-    @get:InputFiles // TODO do not evaluate lazy by it own
-    val metaDirs: List<File> get() = listOf(
-            aem.packageOptions.metaCommonDir.get().asFile,
-            contentDir.dir(Package.META_PATH).get().asFile
-    ).filter { it.exists() }
+    @InputFiles
+    val metaDirs = aem.obj.files {
+        from(aem.packageOptions.metaCommonDir)
+        from(contentDir.dir(Package.META_PATH))
+    }
 
     @Input
     val vaultNodeTypesSync = aem.obj.typed<NodeTypesSync> { convention(aem.packageOptions.nodeTypesSync) }
@@ -60,17 +59,18 @@ open class PackagePrepare : AemDefaultTask() {
     }
 
     private fun copyMetaFiles() {
-        val targetDir = metaDir.get().asFile
-        if (targetDir.exists()) {
-            targetDir.deleteRecursively()
+        val targetDir = metaDir.get().asFile.apply {
+            if (exists()) {
+                deleteRecursively()
+                mkdirs()
+            }
         }
 
-        metaDir.get().asFile.mkdirs()
-
-        if (metaDirs.isEmpty()) {
-            logger.info("None of package metadata directories exist: $metaDirs. Only generated defaults will be used.")
+        val sourceDirs = metaDirs.filter { it.exists() }
+        if (sourceDirs.isEmpty) {
+            logger.info("None of package metadata directories exist: $sourceDirs. Only generated defaults will be used.")
         } else {
-            metaDirs.onEach { dir ->
+            sourceDirs.onEach { dir ->
                 logger.info("Copying package metadata files from path: '$dir'")
 
                 FileUtils.copyDirectory(dir, targetDir)
@@ -82,7 +82,7 @@ open class PackagePrepare : AemDefaultTask() {
         }
 
         if (metaDefaults.get()) {
-            logger.info("Providing package metadata files in directory: '$metaDir")
+            logger.info("Providing package metadata files in directory: '$targetDir")
             FileOperations.copyResources(Package.META_RESOURCES_PATH, targetDir, true)
         }
     }

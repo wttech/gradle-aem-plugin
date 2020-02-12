@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.pkg
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.CommonPlugin
+import com.cognifide.gradle.aem.common.tasks.PackageTask
 import com.cognifide.gradle.aem.instance.InstancePlugin
 import com.cognifide.gradle.aem.instance.satisfy.InstanceSatisfy
 import com.cognifide.gradle.aem.instance.tasks.InstanceCreate
@@ -42,7 +43,7 @@ class PackagePlugin : CommonDefaultPlugin() {
             val prepare = register<PackagePrepare>(PackagePrepare.NAME) {
                 mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
             }
-            register<PackageCompose>(PackageCompose.NAME) {
+            val compose = register<PackageCompose>(PackageCompose.NAME) {
                 dependsOn(PackagePrepare.NAME)
                 mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
                 metaDir.convention(prepare.flatMap { it.metaDir })
@@ -77,6 +78,9 @@ class PackagePlugin : CommonDefaultPlugin() {
             }
             named<Task>(LifecycleBasePlugin.ASSEMBLE_TASK_NAME) {
                 dependsOn(PackageCompose.NAME)
+            }
+            typed<PackageTask> {
+                files.from(compose.map { it.composedFile })
             }
         }
 
