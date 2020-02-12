@@ -96,11 +96,20 @@ class InstanceTailer(val aem: AemExtension) {
     /**
      * Determines how often logs will be polled from AEM instance.
      */
-    var fetchInterval = aem.prop.long("instance.tail.fetchInterval") ?: 500L
+    val fetchInterval = aem.obj.long {
+        convention(500L)
+        aem.prop.long("instance.tail.fetchInterval")?.let { set(it) }
+    }
 
-    var lockInterval = aem.prop.long("instance.tail.lockInterval") ?: max(1000L + fetchInterval, 2000L)
+    val lockInterval = aem.obj.long {
+        convention(fetchInterval.map { max(1000L + it, 2000L) })
+        aem.prop.long("instance.tail.lockInterval")?.let { set(it) }
+    }
 
-    var linesChunkSize = aem.prop.long("instance.tail.linesChunkSize") ?: 400L
+    val linesChunkSize = aem.obj.long {
+        convention(400L)
+        aem.prop.long("instance.tail.linesChunkSize")?.let { set(it) }
+    }
 
     // https://sridharmandra.blogspot.com/2016/08/tail-aem-logs-in-browser.html
     fun errorLogEndpoint(instance: Instance): String {
@@ -132,7 +141,7 @@ class InstanceTailer(val aem: AemExtension) {
                     while (isActive) {
                         logFiles.lock()
                         tailer.tail()
-                        delay(fetchInterval)
+                        delay(fetchInterval.get())
                     }
                 }
             }

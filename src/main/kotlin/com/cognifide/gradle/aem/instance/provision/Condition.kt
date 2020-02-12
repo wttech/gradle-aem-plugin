@@ -17,7 +17,7 @@ class Condition(val step: InstanceStep) {
 
     fun greedy(): Boolean = step.greedy
 
-    fun rerunOnFail(): Boolean = step.ended && step.failed && step.definition.rerunOnFail
+    fun rerunOnFail(): Boolean = step.ended && step.failed && step.definition.rerunOnFail.get()
 
     fun sinceEndedMoreThan(millis: Long) = step.ended && !Formats.durationFit(step.endedAt.time, instance.zoneId, millis)
 

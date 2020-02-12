@@ -28,8 +28,7 @@ class BackupResolver(private val aem: AemExtension) {
     /**
      * Backup file from any source (local & remote sources).
      */
-    val any: File?
-        get() = resolve(localSources + remoteSources)
+    val any: File? get() = resolve(localSources + remoteSources)
 
     /**
      * Directory storing locally created backup files.
@@ -60,7 +59,10 @@ class BackupResolver(private val aem: AemExtension) {
     /**
      * File suffix indicating instance backup file.
      */
-    var suffix = aem.prop.string("localInstance.backup.suffix") ?: ".backup.zip"
+    val suffix = aem.obj.string {
+        convention(SUFFIX_DEFAULT)
+        aem.prop.string("localInstance.backup.suffix")?.let { set(it) }
+    }
 
     /**
      * Defines backup file naming rule.
@@ -84,12 +86,12 @@ class BackupResolver(private val aem: AemExtension) {
     }
 
     private fun resolve(sources: List<BackupSource>): File? = sources
-            .filter { it.fileEntry.name.endsWith(suffix) }
+            .filter { it.fileEntry.name.endsWith(suffix.get()) }
             .sortedWith(compareByDescending<BackupSource> { it.fileEntry.name }.thenBy { it.type.ordinal })
             .run { selector(this) }?.file
 
     private val localSources: List<BackupSource>
-        get() = (localDir.get().asFile.listFiles { _, name -> name.endsWith(suffix) } ?: arrayOf()).map { file ->
+        get() = (localDir.get().asFile.listFiles { _, name -> name.endsWith(suffix.get()) } ?: arrayOf()).map { file ->
             BackupSource(BackupType.LOCAL, FileEntry.of(file)) { file }
         }
 
@@ -129,4 +131,8 @@ class BackupResolver(private val aem: AemExtension) {
             }
             else -> listOf()
         }
+
+    companion object {
+        const val SUFFIX_DEFAULT = ".backup.zip"
+    }
 }

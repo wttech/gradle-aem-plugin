@@ -31,7 +31,7 @@ open class InstanceReload : InstanceTask() {
             awaitUpOptions()
         }
 
-        common.notifier.lifecycle("Instance(s) reloaded", "Which: ${instances.names}")
+        common.notifier.lifecycle("Instance(s) reloaded", "Which: ${instances.get().names}")
     }
 
     init {

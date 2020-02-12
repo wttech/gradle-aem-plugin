@@ -167,7 +167,7 @@ open class PackageCompose : ZipTask(), AemTask {
         super.copy()
 
         validator.apply {
-            workDir = File(composedDir, Package.OAKPAL_OPEAR_PATH)
+            workDir.set(composedDir.resolve(Package.OAKPAL_OPEAR_PATH))
             perform(composedFile)
         }
 

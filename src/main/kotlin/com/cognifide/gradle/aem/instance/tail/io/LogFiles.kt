@@ -39,7 +39,7 @@ class LogFiles(private val tailer: InstanceTailer) {
     }
 
     fun isLocked(): Boolean {
-        return lockFile.exists() && lockFile.lastModified() + tailer.lockInterval > System.currentTimeMillis()
+        return lockFile.exists() && lockFile.lastModified() + tailer.lockInterval.get() > System.currentTimeMillis()
     }
 
     private fun lock(file: File) {

@@ -13,7 +13,7 @@ class VltClient(val aem: AemExtension) {
 
     val commandProperties = aem.obj.map<String, Any> { convention(mapOf("aem" to aem)) }
 
-    val commandEffective: String get() = aem.prop.expand(command.get(), commandProperties.get())
+    val commandEffective get() = aem.prop.expand(command.get(), commandProperties.get())
 
     val contentDir = aem.obj.dir { convention(aem.packageOptions.contentDir) }
 

@@ -7,11 +7,7 @@ import org.gradle.api.tasks.Input
 open class InstanceTask : AemDefaultTask() {
 
     @Input
-    var instances: List<Instance> = listOf()
-
-    override fun projectsEvaluated() {
-        if (instances.isEmpty()) {
-            instances = aem.instances
-        }
+    val instances = aem.obj.list<Instance> {
+        convention(aem.obj.provider { aem.instances })
     }
 }

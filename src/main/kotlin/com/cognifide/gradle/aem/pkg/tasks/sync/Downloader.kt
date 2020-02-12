@@ -19,7 +19,7 @@ class Downloader(@Internal private val aem: AemExtension) {
     /**
      * Determines VLT filter used to grab JCR content from AEM instance.
      */
-    var filter = aem.obj.typed<FilterFile> { convention(aem.obj.provider { aem.filter }) }
+    val filter = aem.obj.typed<FilterFile> { convention(aem.obj.provider { aem.filter }) }
 
     /**
      * Allows to disable extracting contents of download package to directory.
@@ -27,7 +27,7 @@ class Downloader(@Internal private val aem: AemExtension) {
      * This operation can be modified using '-Pforce' command line to replace the contents of extract directory
      * with package content.
      */
-    var extract = aem.obj.boolean {
+    val extract = aem.obj.boolean {
         convention(true)
         aem.prop.boolean("package.sync.downloader.extract")?.let { set(it) }
     }
@@ -35,7 +35,7 @@ class Downloader(@Internal private val aem: AemExtension) {
     /**
      * Path in which downloader JCR content will be extracted.
      */
-    var extractDir = aem.obj.dir {
+    val extractDir = aem.obj.dir {
         convention(aem.packageOptions.jcrRootDir)
         aem.prop.file("package.sync.downloader.extractDir")?.let { set(it) }
     }

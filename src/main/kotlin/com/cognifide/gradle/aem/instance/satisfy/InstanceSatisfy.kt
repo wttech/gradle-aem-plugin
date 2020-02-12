@@ -195,14 +195,14 @@ open class InstanceSatisfy : PackageDeploy() {
     }
 
     private fun InstanceSync.satisfyPackage(group: PackageGroup, state: PackageState) {
-        workflowManager.toggleTemporarily(workflowToggle + group.workflowToggle) {
+        workflowManager.toggleTemporarily(workflowToggle.get() + group.workflowToggle) {
             packageManager.deploy(
                     state.file,
-                    group.uploadForce ?: uploadForce,
+                    group.uploadForce ?: uploadForce.get(),
                     group.uploadRetry ?: uploadRetry,
-                    group.installRecursive ?: installRecursive,
+                    group.installRecursive ?: installRecursive.get(),
                     group.installRetry ?: installRetry,
-                    group.distributed ?: distributed
+                    group.distributed ?: distributed.get()
             )
         }
 

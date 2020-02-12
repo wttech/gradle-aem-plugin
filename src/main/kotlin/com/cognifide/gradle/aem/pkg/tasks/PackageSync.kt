@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.pkg.tasks
 import com.cognifide.gradle.aem.AemDefaultTask
 import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.common.instance.Instance
+import com.cognifide.gradle.aem.common.pkg.vlt.FilterFile
 import com.cognifide.gradle.common.utils.Formats
 import com.cognifide.gradle.aem.common.pkg.vlt.VltClient
 import com.cognifide.gradle.aem.pkg.tasks.sync.Cleaner
@@ -49,7 +50,7 @@ open class PackageSync : AemDefaultTask() {
      * Determines which content will be copied from source instance.
      */
     @Internal
-    var filter = aem.filter
+    val filter = aem.obj.typed<FilterFile> { convention(aem.obj.provider { aem.filter }) }
 
     /**
      * Location of JCR content root to which content will be copied.
@@ -64,7 +65,7 @@ open class PackageSync : AemDefaultTask() {
                 listOf<File>()
             }
 
-            filter.rootDirs(this)
+            filter.get().rootDirs(this)
         }
 
     private var vltOptions: VltClient.() -> Unit = {}
@@ -139,7 +140,7 @@ open class PackageSync : AemDefaultTask() {
         vlt.apply {
             contentDir.convention(this@PackageSync.contentDir)
             command.convention("--credentials ${instance.get().credentialsString} checkout --force" +
-                    " --filter ${filter.file} ${instance.get().httpUrl}/crx/server/crx.default")
+                    " --filter ${filter.get().file} ${instance.get().httpUrl}/crx/server/crx.default")
             run()
         }
     }
