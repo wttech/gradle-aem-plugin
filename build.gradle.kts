@@ -1,5 +1,3 @@
-import org.gradle.api.tasks.testing.logging.TestExceptionFormat
-import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.dokka.gradle.DokkaTask
 
@@ -20,14 +18,13 @@ description = "Gradle AEM Plugin"
 defaultTasks("build", "publishToMavenLocal")
 
 repositories {
-    mavenLocal()
     jcenter()
 }
 
 dependencies {
     implementation(gradleApi())
 
-    implementation("com.cognifide.gradle:common-plugin:1.0.0")
+    implementation("com.cognifide.gradle:common-plugin:0.1.0")
 
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.10.1")
     implementation("com.jayway.jsonpath:json-path:2.4.0")
@@ -94,6 +91,12 @@ tasks {
             freeCompilerArgs = freeCompilerArgs + "-Xuse-experimental=kotlin.Experimental"
         }
     }
+
+    withType<Test>().configureEach {
+        testLogging.showStandardStreams = true
+        useJUnitPlatform()
+    }
+
     register<Test>("functionalTest") {
         testClassesDirs = functionalTestSourceSet.output.classesDirs
         classpath = functionalTestSourceSet.runtimeClasspath
@@ -144,11 +147,6 @@ tasks {
 
     register("fullRelease") {
         dependsOn("release", "githubRelease")
-    }
-
-    withType<Test>().configureEach {
-        testLogging.showStandardStreams = true
-        useJUnitPlatform()
     }
 }
 
