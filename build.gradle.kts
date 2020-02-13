@@ -4,15 +4,15 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.dokka.gradle.DokkaTask
 
 plugins {
-    id("org.jetbrains.kotlin.jvm")
-    id("org.jetbrains.dokka")
     id("java-gradle-plugin")
-    id("com.gradle.plugin-publish")
     id("maven-publish")
-    id("io.gitlab.arturbosch.detekt")
-    id("com.jfrog.bintray")
-    id("net.researchgate.release")
-    id("com.github.breadmoirai.github-release")
+    id("org.jetbrains.kotlin.jvm") version "1.3.61"
+    id("org.jetbrains.dokka") version "0.10.1"
+    id("com.gradle.plugin-publish") version "0.10.1"
+    id("io.gitlab.arturbosch.detekt") version "1.2.2"
+    id("com.jfrog.bintray") version "1.8.4"
+    id("net.researchgate.release") version "2.8.1"
+    id("com.github.breadmoirai.github-release") version "2.2.10"
 }
 
 group = "com.cognifide.gradle"
