@@ -42,7 +42,7 @@ class PackageOptions(private val aem: AemExtension) : Serializable {
      * Beware that more nested bundle install directories are not supported by AEM by default (up to 4th depth level).
      * That's the reason of using dots in subproject names to avoid that limitation.
      */
-    var installPath = aem.obj.string {
+    val installPath = aem.obj.string {
         convention(aem.obj.provider {
             when (aem.project) {
                 aem.project.rootProject -> "/apps/${aem.project.rootProject.name}/install"
@@ -54,18 +54,18 @@ class PackageOptions(private val aem: AemExtension) : Serializable {
     /**
      * Content path at which CRX Package Manager is storing uploaded packages.
      */
-    var storagePath = aem.obj.string { convention("/etc/packages") }
+    val storagePath = aem.obj.string { convention("/etc/packages") }
 
     /**
      * Calculate directory under storage path for each CRX package.
      */
-    var storageDir: PackageFile.() -> String = { group }
+    val storageDir: PackageFile.() -> String = { group }
 
     /**
      * Configures a local repository from which unreleased JARs could be added as 'compileOnly' dependency
      * and be deployed within CRX package deployment.
      */
-    var installRepository = aem.obj.boolean { convention(true) }
+    val installRepository = aem.obj.boolean { convention(true) }
 
     /**
      * Customize default validation options.
