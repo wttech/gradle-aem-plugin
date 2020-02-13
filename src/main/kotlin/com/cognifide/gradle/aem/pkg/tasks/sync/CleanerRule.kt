@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.pkg.tasks.sync
 
 import com.cognifide.gradle.common.utils.Patterns
-import com.cognifide.gradle.aem.common.pkg.vlt.VltException
+import com.cognifide.gradle.aem.common.pkg.vault.VaultException
 import java.io.File
 
 class CleanerRule(value: String) {
@@ -21,7 +21,7 @@ class CleanerRule(value: String) {
                 excludedPaths = paths.filter { it.contains(EXCLUDE_FLAG) }.map { it.removePrefix(EXCLUDE_FLAG).trim() }
                 includedPaths = paths.filter { !it.contains(EXCLUDE_FLAG) }.map { it.trim() }
             } else {
-                throw VltException("Cannot parse VLT content property: '$value'")
+                throw VaultException("Cannot parse VLT content property: '$value'")
             }
         }
     }

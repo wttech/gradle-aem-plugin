@@ -1,16 +1,16 @@
 package com.cognifide.gradle.aem.pkg.tasks
 
 import com.cognifide.gradle.aem.AemDefaultTask
-import com.cognifide.gradle.aem.common.pkg.vlt.VltClient
+import com.cognifide.gradle.aem.common.pkg.vault.VaultClient
 import org.gradle.api.tasks.TaskAction
 
 open class PackageVlt : AemDefaultTask() {
 
-    fun options(configurer: VltClient.() -> Unit) {
+    fun options(configurer: VaultClient.() -> Unit) {
         this.options = configurer
     }
 
-    private var options: VltClient.() -> Unit = {}
+    private var options: VaultClient.() -> Unit = {}
 
     @TaskAction
     open fun run() = aem.vlt {

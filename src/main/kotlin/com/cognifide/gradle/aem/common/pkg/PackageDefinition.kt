@@ -3,7 +3,7 @@ package com.cognifide.gradle.aem.common.pkg
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
-import com.cognifide.gradle.aem.common.pkg.vlt.VltDefinition
+import com.cognifide.gradle.aem.common.pkg.vault.VaultDefinition
 import org.apache.commons.io.FileUtils
 import org.zeroturnaround.zip.ZipUtil
 import java.io.File
@@ -16,7 +16,7 @@ import java.io.File
  *
  * @see <https://docs.gradle.org/current/dsl/org.gradle.api.tasks.bundling.Zip.html#org.gradle.api.tasks.bundling.Zip>
  */
-class PackageDefinition(private val aem: AemExtension) : VltDefinition(aem) {
+class PackageDefinition(private val aem: AemExtension) : VaultDefinition(aem) {
 
     val destinationDirectory = aem.obj.buildDir("package")
 

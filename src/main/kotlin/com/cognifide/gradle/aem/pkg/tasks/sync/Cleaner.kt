@@ -2,7 +2,7 @@ package com.cognifide.gradle.aem.pkg.tasks.sync
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
-import com.cognifide.gradle.aem.common.pkg.vlt.VltException
+import com.cognifide.gradle.aem.common.pkg.vault.VaultException
 import java.io.File
 import java.io.IOException
 import java.util.regex.Pattern
@@ -186,7 +186,7 @@ class Cleaner(private val aem: AemExtension) {
 
             FileUtils.writeLines(file, StandardCharsets.UTF_8.name(), filteredLines, aem.commonOptions.lineSeparator.get().value)
         } catch (e: IOException) {
-            throw VltException(String.format("Error opening %s", file.path), e)
+            throw VaultException(String.format("Error opening %s", file.path), e)
         }
     }
 

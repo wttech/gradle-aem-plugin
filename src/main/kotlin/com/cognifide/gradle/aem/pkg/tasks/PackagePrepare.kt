@@ -4,8 +4,8 @@ import com.cognifide.gradle.aem.AemDefaultTask
 import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
-import com.cognifide.gradle.aem.common.pkg.vlt.FilterFile
-import com.cognifide.gradle.aem.common.pkg.vlt.NodeTypesSync
+import com.cognifide.gradle.aem.common.pkg.vault.FilterFile
+import com.cognifide.gradle.aem.common.pkg.vault.NodeTypesSync
 import com.cognifide.gradle.common.CommonException
 import org.apache.commons.io.FileUtils
 import org.apache.jackrabbit.vault.packaging.PackageException

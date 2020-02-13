@@ -2,7 +2,7 @@ package com.cognifide.gradle.aem.common.pkg
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
-import com.cognifide.gradle.aem.common.pkg.vlt.NodeTypesSync
+import com.cognifide.gradle.aem.common.pkg.vault.NodeTypesSync
 import java.io.Serializable
 
 class PackageOptions(private val aem: AemExtension) : Serializable {
