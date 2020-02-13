@@ -67,8 +67,12 @@ class PackageValidator(@Internal val aem: AemExtension) {
         baseFile.fileProvider(aem.obj.provider(provider))
     }
 
-    @InputDirectory
+    // TODO https://github.com/gradle/gradle/issues/2016
+    @Internal
     val configDir = aem.obj.relativeDir(aem.packageOptions.configDir, Package.OAKPAL_OPEAR_PATH)
+
+    @InputFiles
+    val configFiles = aem.obj.files { from(configDir) }
 
     private var classLoaderProvider: () -> ClassLoader = { javaClass.classLoader }
 

@@ -214,8 +214,8 @@ open class BundleCompose : JarTask(), AemTask {
         combinePackageAttribute(Bundle.ATTRIBUTE_EXPORT_PACKAGE, exportPackages.get().toMutableList().apply {
             if (attributesConvention.get() && !javaPackage.get().isNullOrBlank()) {
                 add(when {
-                    javaPackageOptions.isPresent -> "$javaPackage.*;$javaPackageOptions"
-                    else -> "$javaPackage.*"
+                    javaPackageOptions.isPresent -> "${javaPackage.get()}.*;${javaPackageOptions.get()}"
+                    else -> "${javaPackage.get()}.*"
                 })
             }
         })

@@ -266,8 +266,8 @@ open class PackageCompose : ZipTask(), AemTask {
             }
 
             if (options.vaultProperties) {
-                other.vaultDefinition.properties.forEach { (name, value) ->
-                    vaultDefinition.properties.putIfAbsent(name, value)
+                other.vaultDefinition.properties.get().forEach { (name, value) ->
+                    vaultDefinition.properties.put(name, value) // TODO putIfAbsent (make it more lazy)
                 }
             }
 
