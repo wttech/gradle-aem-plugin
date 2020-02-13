@@ -1,5 +1,7 @@
 package com.cognifide.gradle.aem.bundle
+
 import com.cognifide.gradle.aem.test.AemBuildTest
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 class BundlePluginTest: AemBuildTest() {
@@ -55,8 +57,8 @@ class BundlePluginTest: AemBuildTest() {
 
         runBuild(projectDir, "bundleCompose", "-Poffline") {
             assertTask(":bundleCompose")
-            assertBundle("build/aem/bundleCompose/bundle.minimal.jar")
-            assertZipEntry("build/aem/bundleCompose/bundle.minimal.jar", "OSGI-INF/com.company.aem.example.HelloService.xml", """
+            assertBundle("build/bundleCompose/bundle.minimal.jar")
+            assertZipEntry("build/bundleCompose/bundle.minimal.jar", "OSGI-INF/com.company.aem.example.HelloService.xml", """
                 <?xml version="1.0" encoding="UTF-8"?>
                 <scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.3.0" name="com.company.aem.example.HelloService" immediate="true" activate="activate" deactivate="deactivate">
                   <service>
@@ -71,7 +73,21 @@ class BundlePluginTest: AemBuildTest() {
     @Test
     fun `should build package with bundle using extended configuration`() {
         val projectDir = prepareProject("bundle-extended") {
-            settingsGradle("")
+            /**
+             * This is not required here but it proves that there is some issue with Gradle TestKit;
+             * This generated project works when running using Gradle Wrapper.
+             */
+            settingsGradle("""
+                pluginManagement {
+                    plugins {
+                        repositories {
+                            mavenLocal()
+                            jcenter()
+                            gradlePluginPortal()
+                        }
+                    } 
+                } 
+            """)
 
             buildGradle("""
                 plugins {
@@ -92,14 +108,23 @@ class BundlePluginTest: AemBuildTest() {
                     compileOnly("com.adobe.aem:uber-jar:6.5.0:apis")
                 }
                 
-                aem {
-                    tasks {
-                        bundleCompose {
-                            category = "example"
-                            vendor = "Company"
-                        }
+                /*
+                tasks {
+                    bundleCompose { // this line breaks build when running using Gradle TestKit
+                        category = "example"
+                        vendor = "Company"
                     }
                 }
+                */
+                
+                /*
+                ScriptCompilationException(errors=[ScriptCompilationError(message=Supertypes of the following classes cannot be resolved. Please make sure you have the required dependencies in the classpath:
+                    class com.cognifide.gradle.aem.bundle.tasks.BundleCompose, unresolved supertypes: com.cognifide.gradle.common.tasks.JarTask
+                , location=null)])
+                    at org.gradle.kotlin.dsl.support.KotlinCompilerKt.compileKotlinScriptModuleTo(KotlinCompiler.kt:175)
+                    at org.gradle.kotlin.dsl.support.KotlinCompilerKt.compileKotlinScriptToDirectory(KotlinCompiler.kt:135)
+                    at org.gradle.kotlin.dsl.execution.ResidualProgramCompiler$ compileScript1.invoke(ResidualProgramCompiler.k
+                 */
                 """)
 
             file("src/main/java/com/company/example/PageService.java", """
@@ -127,13 +152,13 @@ class BundlePluginTest: AemBuildTest() {
 
         runBuild(projectDir, "bundleCompose", "-Poffline") {
             assertTask(":bundleCompose")
-            assertBundle("build/aem/bundleCompose/bundle.extended-1.0.0.jar")
+            assertBundle("build/bundleCompose/bundle.extended-1.0.0.jar")
         }
 
         runBuild(projectDir, "packageCompose", "-Poffline") {
             assertTask(":packageCompose")
 
-            val pkgPath = "build/aem/packageCompose/bundle.extended-1.0.0.zip"
+            val pkgPath = "build/packageCompose/bundle.extended-1.0.0.zip"
 
             assertPackage(pkgPath)
             assertPackageBundle(pkgPath, "jcr_root/apps/bundle-extended/install/bundle.extended-1.0.0.jar")

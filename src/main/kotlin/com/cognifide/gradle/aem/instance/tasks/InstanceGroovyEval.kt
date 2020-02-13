@@ -14,10 +14,10 @@ open class InstanceGroovyEval : AemDefaultTask() {
 
     @TaskAction
     fun eval() = aem.groovyEval {
-        aem.prop.string("instance.groovyEval.script")?.let { scriptPattern = it }
-        aem.prop.string("instance.groovyEval.scriptSuffix")?.let { scriptSuffix = it }
-        aem.prop.map("instance.groovyEval.data")?.let { data = it }
-        aem.prop.boolean("instance.groovyEval.faulty")?.let { faulty = it }
+        aem.prop.string("instance.groovyEval.script")?.let { scriptPattern.set(it) }
+        aem.prop.string("instance.groovyEval.scriptSuffix")?.let { scriptSuffix.set(it) }
+        aem.prop.map("instance.groovyEval.data")?.let { data.set(it) }
+        aem.prop.boolean("instance.groovyEval.faulty")?.let { faulty.set(it) }
 
         options()
 

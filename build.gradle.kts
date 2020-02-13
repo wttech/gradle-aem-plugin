@@ -27,13 +27,6 @@ repositories {
 dependencies {
     implementation(gradleApi())
 
-    /* TODO
-    implementation(platform("org.jetbrains.kotlin:kotlin-bom:1.3.61"))
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-    implementation("org.jetbrains.kotlin:kotlin-stdlib")
-    implementation("org.jetbrains.kotlin:kotlin-reflect")
-    */
-
     implementation("com.cognifide.gradle:common-plugin:1.0.0")
 
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.10.1")
@@ -55,9 +48,13 @@ dependencies {
     "detektPlugins"("io.gitlab.arturbosch.detekt:detekt-formatting:1.2.2")
 }
 
-val functionalTestSourceSet = sourceSets.create("functionalTest") {}
+val functionalTestSourceSet = sourceSets.create("functionalTest")
+
 gradlePlugin.testSourceSets(functionalTestSourceSet)
-configurations.getByName("functionalTestImplementation").extendsFrom(configurations.getByName("testImplementation"))
+
+configurations.getByName("functionalTestImplementation").apply {
+    extendsFrom(configurations.getByName("testImplementation"))
+}
 
 
 tasks {
@@ -108,6 +105,7 @@ tasks {
         )
 
         useJUnitPlatform()
+        failFast = true
         mustRunAfter("test")
         dependsOn("jar")
         outputs.upToDateWhen { false }

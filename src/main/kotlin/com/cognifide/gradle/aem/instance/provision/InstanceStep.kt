@@ -14,18 +14,15 @@ class InstanceStep(val instance: Instance, val definition: Step) {
 
     private val marker = instance.sync.repository.node("${provisioner.path}/step/${definition.id}")
 
-    val greedy: Boolean
-        get() = provisioner.greedy || provisioner.aem.prop.flag("instance.provision.${definition.id}.greedy")
+    val greedy: Boolean get() = provisioner.greedy.get() || provisioner.aem.prop.flag("instance.provision.${definition.id}.greedy")
 
     val startedAt: Date
         get() = marker.properties.date(STARTED_AT_PROP)
                 ?: throw ProvisionException("Provision step '${definition.id}' not yet started on $instance!")
 
-    val started: Boolean
-        get() = marker.exists && marker.hasProperty(STARTED_AT_PROP)
+    val started: Boolean get() = marker.exists && marker.hasProperty(STARTED_AT_PROP)
 
-    val ended: Boolean
-        get() = marker.exists && marker.hasProperty(ENDED_AT_PROP)
+    val ended: Boolean get() = marker.exists && marker.hasProperty(ENDED_AT_PROP)
 
     val endedAt: Date
         get() = marker.properties.date(ENDED_AT_PROP)
@@ -34,18 +31,13 @@ class InstanceStep(val instance: Instance, val definition: Step) {
     val failed: Boolean
         get() = marker.exists && marker.properties.boolean(FAILED_PROP) ?: false
 
-    val duration: Long
-        get() = endedAt.time - startedAt.time
+    val duration: Long get() = endedAt.time - startedAt.time
 
-    val durationString: String
-        get() = Formats.duration(duration)
+    val durationString: String get() = Formats.duration(duration)
 
-    val counter: Long
-        get() = marker.takeIf { it.exists }?.properties?.long(COUNTER_PROP) ?: 0L
+    val counter: Long get() = marker.takeIf { it.exists }?.properties?.long(COUNTER_PROP) ?: 0L
 
-    fun isPerformable(): Boolean {
-        return definition.conditionCallback(Condition(this))
-    }
+    fun isPerformable(): Boolean = definition.conditionCallback(Condition(this))
 
     /**
      * Update provision step metadata on AEM instance.

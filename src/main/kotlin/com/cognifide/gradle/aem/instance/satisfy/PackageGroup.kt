@@ -4,6 +4,7 @@ import com.cognifide.gradle.aem.common.instance.InstanceSync
 import com.cognifide.gradle.common.build.Retry
 import com.cognifide.gradle.common.file.resolver.FileGroup
 import com.cognifide.gradle.common.file.resolver.FileResolution
+import com.cognifide.gradle.common.file.resolver.Resolver
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 import org.gradle.api.tasks.Input
@@ -12,9 +13,10 @@ import org.gradle.api.tasks.Internal
 /**
  * Allows to customize behavior of satisfy task for concrete group of packages.
  */
-class PackageGroup(val resolver: PackageResolver, name: String) : FileGroup(resolver.common, resolver.downloadDir, name) {
+@Suppress("unchecked_cast")
+class PackageGroup(val packageResolver: PackageResolver, name: String) : FileGroup(packageResolver as Resolver<FileGroup>, name) {
 
-    private val aem = resolver.aem
+    private val aem = packageResolver.aem
 
     /**
      * Forces to upload and install package again regardless its state on instances (already uploaded / installed).

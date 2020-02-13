@@ -12,5 +12,7 @@ enum class BackupType {
     /**
      * File downloaded from remote server (via file transfer).
      */
-    REMOTE
+    REMOTE;
+
+    val dirName get() = name.toLowerCase()
 }

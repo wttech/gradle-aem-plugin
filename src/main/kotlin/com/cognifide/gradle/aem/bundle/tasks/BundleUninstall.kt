@@ -10,17 +10,9 @@ open class BundleUninstall : BundleTask() {
 
     @TaskAction
     fun uninstall() {
-        instances.checkAvailable()
-
-        common.progress(instances.size * bundles.size) {
-            aem.syncFiles(instances, bundles) { file ->
-                increment("${file.name} -> ${instance.name}") {
-                    osgiFramework.uninstallBundle(file)
-                }
-            }
-        }
-
-        common.notifier.notify("Bundle uninstalled", "${bundles.fileNames} on ${instances.names}")
+        instances.get().checkAvailable()
+        sync { osgiFramework.uninstallBundle(it) }
+        common.notifier.notify("Bundle uninstalled", "${files.files.fileNames} on ${instances.get().names}")
     }
 
     init {

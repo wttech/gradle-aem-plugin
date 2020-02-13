@@ -48,11 +48,11 @@ open class InstanceBackup : AemDefaultTask() {
             throw InstanceException("Cannot create local instance backup, because there are instances still running: ${running.names}")
         }
 
-        val file = File(resolver.localDir, resolver.namer())
+        val file = resolver.localDir.get().asFile.resolve(resolver.namer())
 
         common.progress {
             message = "Backing up instances: ${aem.localInstances.names}"
-            FileOperations.zipPack(file, aem.localInstanceManager.rootDir)
+            FileOperations.zipPack(file, aem.localInstanceManager.rootDir.get().asFile)
         }
 
         common.notifier.lifecycle("Backed up local instances", "File: $file (${Formats.fileSize(file)})")
@@ -61,7 +61,7 @@ open class InstanceBackup : AemDefaultTask() {
     }
 
     private fun upload(file: File, verbose: Boolean) {
-        val dirUrl = resolver.uploadUrl
+        val dirUrl = resolver.uploadUrl.get()
         if (dirUrl.isNullOrBlank()) {
             val message = "Cannot upload local instance backup as of URL is not defined."
             if (verbose) {

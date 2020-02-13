@@ -341,7 +341,7 @@ class Node(val repository: Repository, val path: String) : Serializable {
                 null -> props["$name@Delete"] = ""
                 else -> {
                     props[name] = RepositoryType.normalize(value)
-                    if (repository.typeHints) {
+                    if (repository.typeHints.get()) {
                         RepositoryType.hint(value)?.let { props["$name@TypeHint"] = it }
                     }
                 }
@@ -360,7 +360,7 @@ class Node(val repository: Repository, val path: String) : Serializable {
     }
 
     private fun log(message: String, e: Throwable? = null) {
-        if (repository.verboseLogging) {
+        if (repository.verboseLogging.get()) {
             logger.info(message, e)
         } else {
             logger.debug(message, e)
@@ -377,7 +377,7 @@ class Node(val repository: Repository, val path: String) : Serializable {
     fun download(options: PackageDefinition.() -> Unit = {}): File {
         val node = this
         return repository.sync.packageManager.download {
-            archiveBaseName = JcrUtil.manglePath(node.name)
+            archiveBaseName.set(JcrUtil.manglePath(node.name))
             filter(node.path)
             options()
         }

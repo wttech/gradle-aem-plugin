@@ -10,13 +10,14 @@ open class PackageDelete : PackageTask() {
 
     @TaskAction
     fun delete() {
-        instances.checkAvailable()
+        instances.get().checkAvailable()
         sync { packageManager.delete(it) }
-        common.notifier.notify("Package deleted", "${packages.fileNames} on ${instances.names}")
+        common.notifier.notify("Package deleted", "${files.files.fileNames} on ${instances.get().names}")
     }
 
     init {
         description = "Deletes AEM package on instance(s)."
+        awaited.convention(false)
         checkForce()
     }
 

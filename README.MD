@@ -1676,7 +1676,7 @@ aem {
 Available transfer types: *package_download* (default) and *vlt_checkout*.
 
 ```bash
-gradlew :site.demo:packageSync -Ppackage.sync.type=vlt_checkout
+gradlew :site.demo:packageSync -Ppackage.sync.transfer=vlt_checkout
 ```
 
 ##### Downloading package options
@@ -1686,7 +1686,7 @@ When transfer type is set to *package_download* then it is also possible to...
 Download package only without extracting:
 
 ```bash
-gradlew :site.demo:packageSync -PpackageDownload.extract=false
+gradlew :site.demo:packageSync -Ppackage.sync.downloader.extract=false
 ```
 
 Download, delete all previous JCR root contents then extract fresh content:

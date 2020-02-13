@@ -26,12 +26,18 @@ class Step(val provisioner: Provisioner, val id: String) {
     /**
      * Controls logging error to console instead of breaking build with exception so that next step might be performed.
      */
-    var continueOnFail: Boolean = aem.prop.boolean("instance.provision.step.continueOnFail") ?: false
+    val continueOnFail = aem.obj.boolean {
+        convention(false)
+        aem.prop.boolean("instance.provision.step.continueOnFail")?.let { set(it) }
+    }
 
     /**
      * Controls if step should be performed again when previously failed.
      */
-    var rerunOnFail: Boolean = aem.prop.boolean("instance.provision.step.rerunOnFail") ?: true
+    val rerunOnFail = aem.obj.boolean {
+        convention(true)
+        aem.prop.boolean("instance.provision.step.rerunOnFail")?.let { set(it) }
+    }
 
     fun validate() {
         if (!::actionCallback.isInitialized) {

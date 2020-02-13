@@ -12,12 +12,17 @@ import org.apache.commons.lang3.StringUtils
 import org.gradle.api.tasks.util.PatternFilterable
 import java.nio.charset.StandardCharsets
 
+@Suppress("TooManyFunctions")
 class Cleaner(private val aem: AemExtension) {
 
     /**
      * Allows to control which files under each root root should be cleaned.
      */
-    var filesDotContent: PatternFilterable.() -> Unit = {
+    fun filesDotContent(filter: PatternFilterable.() -> Unit) {
+        this.filesDotContent = filter
+    }
+
+    private var filesDotContent: PatternFilterable.() -> Unit = {
         include("**/$JCR_CONTENT_FILE")
     }
 
@@ -25,7 +30,11 @@ class Cleaner(private val aem: AemExtension) {
      * Determines which files will be deleted within running cleaning
      * (e.g after checking out JCR content).
      */
-    var filesDeleted: PatternFilterable.() -> Unit = {
+    fun filesDeleted(filter: PatternFilterable.() -> Unit) {
+        this.filesDeleted = filter
+    }
+
+    private var filesDeleted: PatternFilterable.() -> Unit = {
         include(listOf(
                 "**/.vlt",
                 "**/.vlt*.tmp",
@@ -37,7 +46,11 @@ class Cleaner(private val aem: AemExtension) {
      * Determines which files will be flattened
      * (e.g /_cq_dialog/.content.xml will be replaced by _cq_dialog.xml).
      */
-    var filesFlattened: PatternFilterable.() -> Unit = {
+    fun filesFlattened(filter: PatternFilterable.() -> Unit) {
+        this.filesFlattened = filter
+    }
+
+    private var filesFlattened: PatternFilterable.() -> Unit = {
         include(listOf(
                 "**/_cq_design_dialog/.content.xml",
                 "**/_cq_dialog/.content.xml",
@@ -52,64 +65,83 @@ class Cleaner(private val aem: AemExtension) {
      * After special delimiter '!' there could be specified one or many path patterns
      * (ANT style, delimited with ',') in which property shouldn't be removed.
      */
-    var propertiesSkipped: List<String> = listOf(
-            pathRule("jcr:uuid", listOf("**/home/users/*", "**/home/groups/*")),
-            pathRule("cq:lastModified*", listOf("**/content/experience-fragments/*")),
-            "jcr:lastModified*",
-            "jcr:created*",
-            "jcr:isCheckedOut",
-            "cq:lastReplicat*",
-            "dam:extracted",
-            "dam:assetState",
-            "dc:modified",
-            "*_x0040_*"
-    )
+    val propertiesSkipped = aem.obj.strings {
+        convention(listOf(
+                pathRule("jcr:uuid", listOf("**/home/users/*", "**/home/groups/*")),
+                pathRule("cq:lastModified*", listOf("**/content/experience-fragments/*")),
+                "jcr:lastModified*",
+                "jcr:created*",
+                "jcr:isCheckedOut",
+                "cq:lastReplicat*",
+                "dam:extracted",
+                "dam:assetState",
+                "dc:modified",
+                "*_x0040_*"
+        ))
+    }
 
     /**
      * Mixin types that will be skipped when pulling JCR content from AEM instance.
      */
-    var mixinTypesSkipped: List<String> = listOf(
-            "cq:ReplicationStatus",
-            "mix:versionable"
-    )
+    val mixinTypesSkipped = aem.obj.strings {
+        convention(listOf(
+                "cq:ReplicationStatus",
+                "mix:versionable"
+        ))
+    }
 
     /**
      * Controls unused namespaces skipping.
      */
-    var namespacesSkipped: Boolean = aem.prop.boolean("package.sync.cleaner.namespacesSkipped") ?: true
+    val namespacesSkipped = aem.obj.boolean {
+        convention(true)
+        aem.prop.boolean("package.sync.cleaner.namespacesSkipped")?.let { set(it) }
+    }
 
     /**
      * Controls backups for parent nodes of filter roots for keeping them untouched.
      */
-    var parentsBackupEnabled: Boolean = aem.prop.boolean("package.sync.cleaner.parentsBackup") ?: true
+    val parentsBackupEnabled = aem.obj.boolean {
+        convention(true)
+        aem.prop.boolean("package.sync.cleaner.parentsBackup")?.let { set(it) }
+    }
 
     /**
      * File suffix being added to parent node back up files.
      * Customize it only if really needed to resolve conflict with file being checked out.
      */
-    var parentsBackupSuffix = ".bak"
+    val parentsBackupSuffix = aem.obj.string { convention(".bak") }
 
-    private val parentsBackupDirIndicator
-        get() = "${parentsBackupSuffix}dir"
+    private val parentsBackupDirIndicator get() = "${parentsBackupSuffix.get()}dir"
 
     /**
      * Hook for customizing particular line processing for '.content.xml' files.
      */
-    var lineProcess: (File, String) -> String = { file, line -> normalizeLine(file, line) }
+    fun lineProcess(callback: (File, String) -> String) {
+        this.lineProcess = callback
+    }
+
+    private var lineProcess: (File, String) -> String = { file, line -> normalizeLine(file, line) }
 
     /**
      * Hook for additional all lines processing for '.content.xml' files.
      */
-    var contentProcess: (File, List<String>) -> List<String> = { file, lines -> normalizeContent(file, lines) }
+    fun contentProcess(callback: (File, List<String>) -> List<String>) {
+        this.contentProcess = callback
+    }
+
+    private var contentProcess: (File, List<String>) -> List<String> = { file, lines -> normalizeContent(file, lines) }
+
+    // ===== [Implementation] =====
 
     fun prepare(root: File) {
-        if (parentsBackupEnabled) {
+        if (parentsBackupEnabled.get()) {
             doParentsBackup(root)
         }
     }
 
     fun beforeClean(root: File) {
-        if (parentsBackupEnabled) {
+        if (parentsBackupEnabled.get()) {
             doRootBackup(root)
         }
     }
@@ -117,7 +149,7 @@ class Cleaner(private val aem: AemExtension) {
     fun clean(root: File) {
         flattenFiles(root)
 
-        if (parentsBackupEnabled) {
+        if (parentsBackupEnabled.get()) {
             undoParentsBackup(root)
         } else {
             cleanParents(root)
@@ -152,7 +184,7 @@ class Cleaner(private val aem: AemExtension) {
             val inputLines = FileUtils.readLines(file, StandardCharsets.UTF_8.name())
             val filteredLines = filterLines(file, inputLines)
 
-            FileUtils.writeLines(file, StandardCharsets.UTF_8.name(), filteredLines, aem.lineSeparatorString)
+            FileUtils.writeLines(file, StandardCharsets.UTF_8.name(), filteredLines, aem.commonOptions.lineSeparator.get().value)
         } catch (e: IOException) {
             throw VltException(String.format("Error opening %s", file.path), e)
         }
@@ -214,7 +246,7 @@ class Cleaner(private val aem: AemExtension) {
     }
 
     fun cleanNamespaces(lines: List<String>): List<String> {
-        if (!namespacesSkipped) {
+        if (!namespacesSkipped.get()) {
             return lines
         }
 
@@ -241,11 +273,11 @@ class Cleaner(private val aem: AemExtension) {
     }
 
     fun skipProperties(file: File, line: String): String {
-        if (propertiesSkipped.isEmpty()) {
+        if (propertiesSkipped.get().isEmpty()) {
             return line
         }
 
-        val rules by lazy { CleanerRule.manyFrom(propertiesSkipped) }
+        val rules by lazy { CleanerRule.manyFrom(propertiesSkipped.get()) }
 
         return eachProp(line) { propOccurrence, _ ->
             if (matchAnyRule(propOccurrence, file, rules)) {
@@ -257,11 +289,11 @@ class Cleaner(private val aem: AemExtension) {
     }
 
     fun normalizeMixins(file: File, line: String): String {
-        if (mixinTypesSkipped.isEmpty()) {
+        if (mixinTypesSkipped.get().isEmpty()) {
             return line
         }
 
-        val rules by lazy { CleanerRule.manyFrom(mixinTypesSkipped) }
+        val rules by lazy { CleanerRule.manyFrom(mixinTypesSkipped.get()) }
 
         return eachProp(line) { propName, propValue ->
             if (propName == JCR_MIXIN_TYPES_PROP) {
@@ -343,7 +375,7 @@ class Cleaner(private val aem: AemExtension) {
         eachParentFiles(root) { parent, siblingFiles ->
             parent.mkdirs()
             if (File(parent, parentsBackupDirIndicator).createNewFile()) {
-                siblingFiles.filter { !it.name.endsWith(parentsBackupSuffix) }
+                siblingFiles.filter { !it.name.endsWith(parentsBackupSuffix.get()) }
                         .forEach { origin ->
                             val backup = File(parent, origin.name + parentsBackupSuffix)
                             aem.logger.info("Doing backup of parent file: $origin")
@@ -370,9 +402,9 @@ class Cleaner(private val aem: AemExtension) {
     private fun undoParentsBackup(root: File) {
         eachParentFiles(root) { _, siblingFiles ->
             if (siblingFiles.any { it.name == parentsBackupDirIndicator }) {
-                siblingFiles.filter { !it.name.endsWith(parentsBackupSuffix) }.forEach { FileUtils.deleteQuietly(it) }
-                siblingFiles.filter { it.name.endsWith(parentsBackupSuffix) }.forEach { backup ->
-                    val origin = File(backup.path.removeSuffix(parentsBackupSuffix))
+                siblingFiles.filter { !it.name.endsWith(parentsBackupSuffix.get()) }.forEach { FileUtils.deleteQuietly(it) }
+                siblingFiles.filter { it.name.endsWith(parentsBackupSuffix.get()) }.forEach { backup ->
+                    val origin = File(backup.path.removeSuffix(parentsBackupSuffix.get()))
                     aem.logger.info("Undoing backup of parent file: $backup")
                     backup.renameTo(origin)
                 }

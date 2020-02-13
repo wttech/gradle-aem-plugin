@@ -21,63 +21,54 @@ class PackageValidator(@Internal val aem: AemExtension) {
     private val logger = aem.logger
 
     @Input
-    var enabled = aem.prop.boolean("package.validator.enabled") ?: true
+    val enabled = aem.obj.boolean {
+        convention(true)
+        aem.prop.boolean("package.validator.enabled")?.let { set(it) }
+    }
 
     @Input
-    var severity = aem.prop.string("package.validator.severity")
-            ?.let { severityByName(it) } ?: Violation.Severity.MAJOR
+    val severity = aem.obj.typed<Violation.Severity> {
+        convention(Violation.Severity.MAJOR)
+        aem.prop.string("package.validator.severity")?.let { set(severityByName(it)) }
+    }
 
     fun severity(name: String) {
-        this.severity = severityByName(name)
+        severity.set(severityByName(name))
     }
 
     @Input
-    var verbose = aem.prop.boolean("package.validator.verbose") ?: true
+    val verbose = aem.obj.boolean {
+        convention(true)
+        aem.prop.boolean("package.validator.verbose")?.let { set(it) }
+    }
 
     @OutputDirectory
-    var workDir = common.temporaryFile("package/validator")
+    val workDir = aem.obj.buildDir("package/validator")
 
     @Input
-    var planName = aem.prop.string("package.validator.plan") ?: "default-plan.json"
-
-    @get:Internal
-    val planFile get() = File(workDir, planName)
-
-    @get:Internal
-    val reportFile: File
-        get() = File(workDir, "report.json")
-
-    private var baseProvider: () -> File? = {
-        aem.prop.string("package.validator.opear.base")?.let { common.resolveFile(it) }
+    val planName = aem.obj.string {
+        convention("default-plan.json")
+        aem.prop.string("package.validator.plan")?.let { set(it) }
     }
+
+    @Internal
+    val planFile = aem.obj.file { convention(workDir.file(planName)) }
+
+    @Internal
+    val reportFile = aem.obj.file { convention(workDir.file("report.json")) }
+
+    @InputFile
+    @Optional
+    val baseFile = aem.obj.file()
 
     fun base(value: Any) = base { common.resolveFile(value) }
 
-    fun base(provider: () -> File?) {
-        this.baseProvider = provider
+    fun base(provider: () -> File) {
+        baseFile.fileProvider(aem.obj.provider(provider))
     }
 
-    @get:InputFile
-    @get:Optional
-    val baseFile: File? get() = baseProvider()
-
-    @get:InputFiles
-    val configDirs get() = _configDirs.filter { it.exists() }
-
-    private var _configDirs = mutableListOf(
-            File(aem.configCommonDir, CONFIG_DIR_PATH),
-            File(aem.configDir, CONFIG_DIR_PATH)
-    )
-
-    fun configDir(dir: File) {
-        _configDirs.add(dir)
-    }
-
-    fun configDirs(dirs: Iterable<File>) {
-        _configDirs = dirs.toMutableList()
-    }
-
-    fun configDirs(vararg dirs: File) = configDirs(dirs.asIterable())
+    @InputDirectory
+    val configDir = aem.obj.relativeDir(aem.packageOptions.configDir, Package.OAKPAL_OPEAR_PATH)
 
     private var classLoaderProvider: () -> ClassLoader = { javaClass.classLoader }
 
@@ -88,7 +79,7 @@ class PackageValidator(@Internal val aem: AemExtension) {
     fun perform(vararg packages: File) = perform(packages.asIterable())
 
     fun perform(packages: Iterable<File>) {
-        if (!enabled) {
+        if (!enabled.get()) {
             logger.info("Validating CRX packages(s) '${listPackages(packages)}' skipped as of validator is disabled.")
             return
         }
@@ -104,25 +95,29 @@ class PackageValidator(@Internal val aem: AemExtension) {
     private fun prepareOpearDir() {
         logger.info("Preparing OakPAL Opear directory '$workDir'")
 
+        val workDir = workDir.get().asFile.apply {
+            deleteRecursively()
+            mkdirs()
+        }
+
         workDir.deleteRecursively()
         workDir.mkdirs()
 
         FileOperations.copyResources(Package.OAKPAL_OPEAR_RESOURCES_PATH, workDir)
 
-        baseFile?.let { file ->
+        baseFile.orNull?.asFile?.let { file ->
             logger.info("Extracting OakPAL Opear base configuration files from '$file' to directory '$workDir'")
             FileOperations.zipUnpackAll(file, workDir)
         }
 
-        configDirs.filter { it.exists() }.forEach { configDir ->
-            logger.info("Using project-specific OakPAL Opear configuration files from directory '$configDir' to '$workDir'")
-
-            FileUtils.copyDirectory(configDir, workDir)
+        configDir.get().asFile.takeIf { it.exists() }?.let { dir ->
+            logger.info("Using project-specific OakPAL Opear configuration files from directory '$dir' to '$workDir'")
+            FileUtils.copyDirectory(dir, workDir)
         }
     }
 
     private fun runOakPal(packages: Iterable<File>) {
-        val opearFile = OpearFile.fromDirectory(workDir).getOrElse {
+        val opearFile = OpearFile.fromDirectory(workDir.get().asFile).getOrElse {
             throw AemException("OakPAL Opear directory cannot be read properly!")
         }
 
@@ -149,18 +144,19 @@ class PackageValidator(@Internal val aem: AemExtension) {
     }
 
     private fun determinePlan(opearFile: OpearFile): URL {
+        val planFile = planFile.get().asFile
         if (planFile.exists()) {
             return planFile.toURI().toURL()
         }
 
-        return opearFile.getSpecificPlan(planName).getOrDefault(opearFile.defaultPlan)
+        return opearFile.getSpecificPlan(planName.get()).getOrDefault(opearFile.defaultPlan)
     }
 
     private fun saveReports(packages: Iterable<File>, reports: List<CheckReport>?) {
-        logger.info("Saving OAKPal reports for CRX package(s) '${listPackages(packages)}' to file '$reportFile'")
+        logger.info("Saving OAKPal reports for CRX package(s) '${listPackages(packages)}' to file '${reportFile.get().asFile}'")
 
         try {
-            ReportMapper.writeReportsToFile(reports, reportFile)
+            ReportMapper.writeReportsToFile(reports, reportFile.get().asFile)
         } catch (e: IOException) {
             throw PackageException("Cannot save OAKPal reports for CRX package(s) '${listPackages(packages)}'! Cause: '${e.message}'", e)
         }
@@ -169,7 +165,7 @@ class PackageValidator(@Internal val aem: AemExtension) {
     @Suppress("ComplexMethod", "NestedBlockDepth")
     private fun analyzeReports(packages: Iterable<File>, reports: List<CheckReport>) {
         val violatedReports = reports.filter { it.violations.isNotEmpty() }
-        val shouldFail = violatedReports.any { !it.getViolations(severity).isEmpty() }
+        val shouldFail = violatedReports.any { !it.getViolations(severity.get()).isEmpty() }
 
         val violationLogger = CollectingLogger()
         var violationSeverityReached = 0
@@ -186,7 +182,7 @@ class PackageValidator(@Internal val aem: AemExtension) {
                         packageIds.isNotEmpty() -> "    <${violation.severity}> ${violation.description} $packageIds"
                         else -> "    <${violation.severity}> ${violation.description}"
                     }
-                    if (violation.severity.isLessSevereThan(severity)) {
+                    if (violation.severity.isLessSevereThan(severity.get())) {
                         violationLogger.info(violationLog)
                     } else {
                         violationSeverityReached++
@@ -207,7 +203,7 @@ class PackageValidator(@Internal val aem: AemExtension) {
             val failMessage = "OAKPal check violations ($violationSeverityReached) were reported at or above" +
                     " severity '$severity' for CRX package(s) '${listPackages(packages)}'!"
 
-            if (verbose) {
+            if (verbose.get()) {
                 throw PackageException(failMessage)
             } else {
                 logger.error(failMessage)
@@ -226,9 +222,6 @@ class PackageValidator(@Internal val aem: AemExtension) {
 
     init {
         aem.packageOptions.validatorOptions(this)
-    }
-
-    companion object {
-        const val CONFIG_DIR_PATH = "package/OAKPAL_OPEAR"
+        aem.prop.string("package.validator.opear.base")?.let { base(it) }
     }
 }

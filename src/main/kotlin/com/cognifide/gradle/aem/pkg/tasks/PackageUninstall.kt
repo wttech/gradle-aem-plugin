@@ -10,14 +10,14 @@ open class PackageUninstall : PackageTask() {
 
     @TaskAction
     fun uninstall() {
-        instances.checkAvailable()
+        instances.get().checkAvailable()
         sync { packageManager.uninstall(it) }
-        common.notifier.notify("Package uninstalled", "${packages.fileNames} from ${instances.names}")
+        common.notifier.notify("Package uninstalled", "${files.files.fileNames} from ${instances.get().names}")
     }
 
     init {
         description = "Uninstalls AEM package on instance(s)."
-        awaited = aem.prop.boolean("package.uninstall.awaited") ?: true
+        aem.prop.boolean("package.uninstall.awaited")?.let { awaited.set(it) }
         checkForce()
     }
 

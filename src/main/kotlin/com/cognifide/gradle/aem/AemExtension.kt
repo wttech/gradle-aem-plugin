@@ -2,8 +2,8 @@ package com.cognifide.gradle.aem
 
 import com.cognifide.gradle.aem.bundle.BundlePlugin
 import com.cognifide.gradle.aem.bundle.tasks.BundleCompose
+import com.cognifide.gradle.aem.common.CommonOptions
 import com.cognifide.gradle.aem.common.CommonPlugin
-import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.instance.*
 import com.cognifide.gradle.aem.common.instance.service.groovy.GroovyEvaluator
 import com.cognifide.gradle.aem.common.instance.service.groovy.GroovyEvalSummary
@@ -12,15 +12,12 @@ import com.cognifide.gradle.aem.common.pkg.PackageFile
 import com.cognifide.gradle.aem.common.pkg.PackageOptions
 import com.cognifide.gradle.aem.common.pkg.PackageValidator
 import com.cognifide.gradle.aem.common.pkg.vlt.FilterFile
-import com.cognifide.gradle.aem.common.utils.LineSeparator
 import com.cognifide.gradle.aem.instance.*
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.PackageCompose
 import com.cognifide.gradle.aem.instance.rcp.RcpClient
-import com.cognifide.gradle.aem.common.pkg.vlt.VltException
 import com.cognifide.gradle.aem.common.pkg.vlt.VltClient
 import com.cognifide.gradle.aem.common.pkg.vlt.VltSummary
-import com.cognifide.gradle.aem.common.utils.normalizeSeparators
 import com.cognifide.gradle.aem.pkg.PackageSyncPlugin
 import com.cognifide.gradle.common.CommonExtension
 import com.cognifide.gradle.common.common
@@ -28,13 +25,14 @@ import com.cognifide.gradle.common.utils.Patterns
 import java.io.File
 import java.io.Serializable
 import org.gradle.api.Project
-import org.gradle.api.Task
 
 /**
- * Core of library, facade for implementing tasks, configuration aggregator.
+ * Core of library, facade for implementing tasks.
  */
 @Suppress("TooManyFunctions")
 class AemExtension(val project: Project) : Serializable {
+
+    // Shorthands
 
     val common = CommonExtension.of(project)
 
@@ -42,87 +40,18 @@ class AemExtension(val project: Project) : Serializable {
 
     val prop = common.prop
 
-    /**
-     * Access configuration for local instances from different project (cross-project configuring).
-     */
-    val main: AemExtension
-        get() = of(projectMain)
+    val obj = common.obj
+
+    // ===
+
+    val commonOptions = CommonOptions(this)
 
     /**
-     * Project under which common configuration files are stored.
-     * Usually it is also configures local instances and environment (is applying corresponding plugins).
-     *
-     * Convention assumes in case of:
-     * - multi-project build - subproject with path ':aem'
-     * - single-project build - root project
+     * Defines common settings like environment name, line endings when generating files etc
      */
-    val projectMain: Project = project.findProject(prop.string("projectMainPath") ?: ":aem") ?: project.rootProject
-
-    /**
-     * Project name convention prefixes used to determine default:
-     *
-     * - bundle install subdirectory
-     * - CRX package base name
-     * - OSGi bundle JAR base name
-     *
-     * in case of multi-project build and assembly packages.
-     */
-    val projectPrefixes: List<String> = prop.list("projectPrefixes") ?: listOf("aem.", "aem-", "aem_")
-
-    /**
-     * Project name with skipped convention prefixes.
-     */
-    val projectName: String
-        get() = project.name.run {
-            var n = this; projectPrefixes.forEach { n = n.removePrefix(it) }; n
-        }
-
-    /**
-     * Base name used as default for CRX packages being created by compose or collect task
-     * and also for OSGi bundle JARs.
-     */
-    val baseName: String
-        get() = (if (project == project.rootProject) {
-            project.rootProject.name
-        } else {
-            "${project.rootProject.name}.$projectName"
-        }).normalizeSeparators(".")
-
-    /**
-     * Allows to disable features that are using running AEM instances.
-     *
-     * It is more soft offline mode than Gradle's one which does much more.
-     * It will not use any Maven repository so that CI build will fail which is not expected in e.g integration tests.
-     */
-    val offline = prop.flag("offline")
-
-    /**
-     * Determines current environment name to be used in e.g package deployment.
-     */
-    val env: String = prop.string("env") ?: run { System.getenv("ENV") ?: "local" }
-
-    /**
-     * Specify characters to be used as line endings when cleaning up checked out JCR content.
-     */
-    var lineSeparator: String = prop.string("lineSeparator") ?: LineSeparator.SYSTEM.name
-
-    val lineSeparatorString: String = LineSeparator.string(lineSeparator)
-
-    /**
-     * Directory for storing project specific files used by plugin e.g:
-     * - Groovy Scripts to be launched by Groovy Console instance service in tasks defined in project.
-     */
-    val configDir: File
-        get() = project.file(prop.string("configDir") ?: "src/aem")
-
-    /**
-     * Directory for storing common files used by plugin e.g:
-     * - CRX package thumbnail
-     * - instance overrides files
-     * - tail incident filter
-     */
-    val configCommonDir: File
-        get() = projectMain.file(prop.string("configCommonDir") ?: "src/aem")
+    fun common(options: CommonOptions.() -> Unit) {
+        commonOptions.apply(options)
+    }
 
     val packageOptions = PackageOptions(this)
 
@@ -175,15 +104,14 @@ class AemExtension(val project: Project) : Serializable {
     val javaPackages: List<String>
         get() = project.rootProject.allprojects
                 .filter { it.plugins.hasPlugin(BundlePlugin.ID) }
-                .flatMap { p -> p.common.tasks.getAll(BundleCompose::class.java).mapNotNull { it.javaPackage } }
+                .flatMap { p -> p.common.tasks.getAll(BundleCompose::class.java).mapNotNull { it.javaPackage.orNull } }
 
     /**
      * All instances matching default filtering.
      *
      * @see <https://github.com/Cognifide/gradle-aem-plugin#filter-instances-to-work-with>
      */
-    val instances: List<Instance>
-        get() = filterInstances()
+    val instances get() = filterInstances()
 
     /**
      * Work in parallel with instances matching default filtering.
@@ -226,14 +154,13 @@ class AemExtension(val project: Project) : Serializable {
     /**
      * Get available instance of any type (most often first defined).
      */
-    val availableInstance: Instance?
-        get() = instances.asSequence().firstOrNull { it.available }
+    val availableInstance: Instance? get() = instances.asSequence().firstOrNull { it.available }
 
     /**
      * Find instance which name is matching wildcard filter specified via command line parameter 'instance.name'.
      * By default, this method respects current environment which is used to work only with instances running locally.
      */
-    fun findInstance(desiredName: String? = prop.string("instance.name"), defaultName: String = "$env-*"): Instance? {
+    fun findInstance(desiredName: String? = prop.string("instance.name"), defaultName: String = "${commonOptions.env.get()}-*"): Instance? {
         return filterInstances(desiredName ?: defaultName).firstOrNull()
     }
 
@@ -243,7 +170,7 @@ class AemExtension(val project: Project) : Serializable {
      *
      * If instance not found, throws exception.
      */
-    fun namedInstance(desiredName: String? = prop.string("instance.name"), defaultName: String = "$env-*"): Instance {
+    fun namedInstance(desiredName: String? = prop.string("instance.name"), defaultName: String = "${commonOptions.env.get()}-*"): Instance {
         return findInstance(desiredName, defaultName)
                 ?: throw AemException("Instance named '${desiredName ?: defaultName}' is not defined.")
     }
@@ -251,8 +178,8 @@ class AemExtension(val project: Project) : Serializable {
     /**
      * Find all instances which names are matching wildcard filter specified via command line parameter 'instance.name'.
      */
-    fun filterInstances(nameMatcher: String = prop.string("instance.name") ?: "$env-*"): List<Instance> {
-        val all = instanceOptions.definedList
+    fun filterInstances(nameMatcher: String = prop.string("instance.name") ?: "${commonOptions.env.get()}-*"): List<Instance> {
+        val all = instanceOptions.defined.get()
 
         // Specified by command line should not be filtered
         val cmd = all.filter { it.environment == Instance.ENVIRONMENT_CMD }
@@ -273,11 +200,10 @@ class AemExtension(val project: Project) : Serializable {
     /**
      * Get all author instances running on current environment.
      */
-    val authorInstances: List<Instance>
-        get() = filterInstances().filter { it.author }
+    val authorInstances: List<Instance> get() = filterInstances().filter { it.author }
 
-    val authorInstance: Instance
-        get() = authorInstances.firstOrNull() ?: throw AemException("No author instances defined!")
+    val authorInstance: Instance get() = authorInstances.firstOrNull()
+            ?: throw AemException("No author instances defined!")
 
     /**
      * Work in parallel with all author instances running on current environment.
@@ -287,11 +213,10 @@ class AemExtension(val project: Project) : Serializable {
     /**
      * Get all publish instances running on current environment.
      */
-    val publishInstances: List<Instance>
-        get() = filterInstances().filter { it.publish }
+    val publishInstances: List<Instance> get() = filterInstances().filter { it.publish }
 
-    val publishInstance: Instance
-        get() = publishInstances.firstOrNull() ?: throw AemException("No publish instances defined!")
+    val publishInstance: Instance get() = publishInstances.firstOrNull()
+            ?: throw AemException("No publish instances defined!")
 
     /**
      * Work in parallel with all publish instances running on current environment.
@@ -301,8 +226,7 @@ class AemExtension(val project: Project) : Serializable {
     /**
      * Get all local instances.
      */
-    val localInstances: List<LocalInstance>
-        get() = instances.filterIsInstance(LocalInstance::class.java)
+    val localInstances: List<LocalInstance> get() = instances.filterIsInstance(LocalInstance::class.java)
 
     /**
      * Work in parallel with all local instances.
@@ -312,8 +236,7 @@ class AemExtension(val project: Project) : Serializable {
     /**
      * Get all remote instances.
      */
-    val remoteInstances: List<RemoteInstance>
-        get() = instances.filterIsInstance(RemoteInstance::class.java)
+    val remoteInstances: List<RemoteInstance> get() = instances.filterIsInstance(RemoteInstance::class.java)
 
     /**
      * Work in parallel with all remote instances.
@@ -324,47 +247,24 @@ class AemExtension(val project: Project) : Serializable {
      * Get CRX package defined to be built (could not yet exist).
      */
     @Suppress("VariableNaming")
-    val `package`: File
-        get() = common.tasks.get(PackageCompose.NAME, PackageCompose::class.java).composedFile
+    val `package`: File get() = common.tasks.get(PackageCompose.NAME, PackageCompose::class.java).composedFile
 
-    val pkg: File
-        get() = `package`
+    val pkg: File get() = `package`
 
     /**
      * Get all CRX packages defined to be built.
      */
-    val packages: List<File>
-        get() = common.tasks.getAll(PackageCompose::class.java).map { it.composedFile }
-
-    /**
-     * Get all CRX packages built before running particular task.
-     */
-    fun dependentPackages(task: Task): List<File> {
-        return task.taskDependencies.getDependencies(task)
-                .filterIsInstance(PackageCompose::class.java)
-                .map { it.composedFile }
-    }
+    val packages: List<File> get() = common.tasks.getAll(PackageCompose::class.java).map { it.composedFile }
 
     /**
      * Get OSGi bundle defined to be built (could not yet exist).
      */
-    val bundle: File
-        get() = common.tasks.get(BundleCompose.NAME, BundleCompose::class.java).composedFile
+    val bundle: File get() = common.tasks.get(BundleCompose.NAME, BundleCompose::class.java).composedFile
 
     /**
      * Get all OSGi bundles defined to be built.
      */
-    val bundles: List<File>
-        get() = common.tasks.getAll(BundleCompose::class.java).map { it.composedFile }
-
-    /**
-     * Get all OSGi bundles built before running particular task.
-     */
-    fun dependentBundles(task: Task): List<File> {
-        return task.taskDependencies.getDependencies(task)
-                .filterIsInstance(BundleCompose::class.java)
-                .map { it.composedFile }
-    }
+    val bundles: List<File> get() = common.tasks.getAll(BundleCompose::class.java).map { it.composedFile }
 
     /**
      * In parallel, work with services of all instances matching default filtering.
@@ -423,9 +323,7 @@ class AemExtension(val project: Project) : Serializable {
      * Build minimal CRX package in-place / only via code.
      * All details like Vault properties, archive destination directory, file name are customizable.
      */
-    fun composePackage(definition: PackageDefinition.() -> Unit): File {
-        return PackageDefinition(this).compose(definition)
-    }
+    fun composePackage(definition: PackageDefinition.() -> Unit): File = PackageDefinition(this).compose(definition)
 
     /**
      * Validate any CRX packages.
@@ -440,37 +338,7 @@ class AemExtension(val project: Project) : Serializable {
     /**
      * Vault filter determined by convention and properties.
      */
-    val filter: FilterFile
-        get() {
-            val cmdFilterRoots = prop.list("filter.roots") ?: listOf()
-            if (cmdFilterRoots.isNotEmpty()) {
-                logger.debug("Using Vault filter roots specified as command line property: $cmdFilterRoots")
-                return FilterFile.temporary(this, cmdFilterRoots)
-            }
-
-            val cmdFilterPath = prop.string("filter.path") ?: ""
-            if (cmdFilterPath.isNotEmpty()) {
-                val cmdFilter = FileOperations.find(project, packageOptions.vltDir.toString(), cmdFilterPath)
-                        ?: throw VltException("Vault check out filter file does not exist at path: $cmdFilterPath" +
-                                " (or under directory: ${packageOptions.vltDir}).")
-                logger.debug("Using Vault filter file specified as command line property: $cmdFilterPath")
-                return FilterFile(cmdFilter)
-            }
-
-            val conventionFilterFiles = listOf(
-                    "${packageOptions.vltDir}/${FilterFile.SYNC_NAME}",
-                    "${packageOptions.vltDir}/${FilterFile.BUILD_NAME}"
-            )
-            val conventionFilterFile = FileOperations.find(project, packageOptions.vltDir.toString(), conventionFilterFiles)
-            if (conventionFilterFile != null) {
-                logger.debug("Using Vault filter file found by convention: $conventionFilterFile")
-                return FilterFile(conventionFilterFile)
-            }
-
-            logger.debug("None of Vault filter files found by CMD properties or convention.")
-
-            return FilterFile.temporary(this, listOf())
-        }
+    val filter: FilterFile get() = FilterFile.default(this)
 
     /**
      * Get Vault filter object for specified file.
@@ -485,7 +353,7 @@ class AemExtension(val project: Project) : Serializable {
     /**
      * Execute any Vault command.
      */
-    fun vlt(command: String): VltSummary = vlt { this.command = command; run() }
+    fun vlt(command: String): VltSummary = vlt { this.command.set(command); run() }
 
     /**
      * Execute any Vault command with customized options like content directory.
@@ -505,7 +373,7 @@ class AemExtension(val project: Project) : Serializable {
     /**
      * Execute Groovy script(s) matching file pattern on AEM instances.
      */
-    fun groovyEval(scriptPattern: String): GroovyEvalSummary = groovyEval { this.scriptPattern = scriptPattern; eval() }
+    fun groovyEval(scriptPattern: String): GroovyEvalSummary = groovyEval { this.scriptPattern.set(scriptPattern); eval() }
 
     companion object {
 

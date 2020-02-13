@@ -14,13 +14,19 @@ open class PackageDeploy : PackageTask() {
      * Enables deployment via CRX package activation from author to publishers when e.g they are not accessible.
      */
     @Input
-    var distributed: Boolean = aem.prop.flag("package.deploy.distributed")
+    val distributed = aem.obj.boolean {
+        convention(false)
+        aem.prop.boolean("package.deploy.distributed")?.let { set(it) }
+    }
 
     /**
      * Force upload CRX package regardless if it was previously uploaded.
      */
     @Input
-    var uploadForce: Boolean = aem.prop.boolean("package.deploy.uploadForce") ?: true
+    val uploadForce = aem.obj.boolean {
+        convention(true)
+        aem.prop.boolean("package.deploy.uploadForce")?.let { set(it) }
+    }
 
     /**
      * Repeat upload when failed (brute-forcing).
@@ -38,45 +44,45 @@ open class PackageDeploy : PackageTask() {
      * Determines if when on package install, sub-packages included in CRX package content should be also installed.
      */
     @Input
-    var installRecursive: Boolean = aem.prop.boolean("package.deploy.installRecursive") ?: true
+    val installRecursive = aem.obj.boolean {
+        convention(true)
+        aem.prop.boolean("package.deploy.installRecursive")?.let { set(it) }
+    }
 
     /**
      * Allows to temporarily enable or disable workflows during CRX package deployment.
      */
     @Input
-    var workflowToggle: Map<String, Boolean> = aem.prop.map("package.deploy.workflowToggle")
-            ?.mapValues { it.value.toBoolean() } ?: mapOf()
+    val workflowToggle = aem.obj.map<String, Boolean> {
+        convention(mapOf())
+        aem.prop.map("package.deploy.workflowToggle")?.let { m -> set(m.mapValues { it.value.toBoolean() }) }
+    }
 
     @TaskAction
     open fun deploy() {
-        instances.checkAvailable()
+        instances.get().checkAvailable()
 
         sync { file ->
-            workflowManager.toggleTemporarily(workflowToggle) {
-                packageManager.deploy(file, uploadForce, uploadRetry, installRecursive, installRetry, distributed)
+            workflowManager.toggleTemporarily(workflowToggle.get()) {
+                packageManager.deploy(file, uploadForce.get(), uploadRetry, installRecursive.get(), installRetry, distributed.get())
             }
         }
 
-        common.notifier.notify("Package deployed", "${packages.fileNames} on ${instances.names}")
-    }
-
-    override fun projectsEvaluated() {
-        if (instances.isEmpty()) {
-            instances = if (distributed) {
-                aem.authorInstances
-            } else {
-                aem.instances
-            }
-        }
-
-        if (packages.isEmpty()) {
-            packages = aem.dependentPackages(this)
-        }
+        common.notifier.notify("Package deployed", "${files.files.fileNames} on ${instances.get().names}")
     }
 
     init {
         description = "Deploys CRX package on instance(s). Upload then install (and optionally activate)."
-        awaited = aem.prop.boolean("package.deploy.awaited") ?: true
+
+        instances.convention(aem.obj.provider {
+            if (distributed.get()) {
+                aem.authorInstances
+            } else {
+                aem.instances
+            }
+        })
+
+        aem.prop.boolean("package.deploy.awaited")?.let { awaited.set(it) }
     }
 
     companion object {

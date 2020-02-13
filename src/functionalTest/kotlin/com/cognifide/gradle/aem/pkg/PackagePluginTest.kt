@@ -35,7 +35,7 @@ class PackagePluginTest: AemBuildTest() {
         runBuild(projectDir, "packageCompose", "-Poffline") {
             assertTask(":packageCompose")
 
-            val pkgPath = "build/aem/packageCompose/package.minimal-1.0.0.zip"
+            val pkgPath = "build/packageCompose/package.minimal-1.0.0.zip"
 
             assertPackage(pkgPath)
 

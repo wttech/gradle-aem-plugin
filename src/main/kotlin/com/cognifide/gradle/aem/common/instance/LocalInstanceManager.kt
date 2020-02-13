@@ -21,16 +21,21 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
     /**
      * Path in which local AEM instances will be stored.
      */
-    var rootDir: File = aem.prop.string("localInstance.root")?.let { aem.project.file(it) }
-            ?: aem.projectMain.file(".instance")
+    val rootDir = aem.obj.dir {
+        convention(aem.obj.projectDir(".instance"))
+        aem.prop.file("localInstance.root")?.let { set(it) }
+    }
 
     /**
      * Determines how instances will be created (from backup or quickstart built from the scratch).
      */
-    var source = Source.of(aem.prop.string("localInstance.source") ?: Source.AUTO.name)
+    val source = aem.obj.typed<Source> {
+        convention(Source.AUTO)
+        aem.prop.string("localInstance.source")?.let { set(Source.of(it)) }
+    }
 
     fun source(name: String) {
-        source = Source.of(name)
+        source.set(Source.of(name))
     }
 
     fun resolveSourceFiles() {
@@ -41,35 +46,45 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
     /**
      * Maximum time to wait for status script response.
      */
-    var scriptTimeout: Long = aem.prop.long("localInstance.scriptTimeout") ?: TimeUnit.SECONDS.toMillis(5)
+    val scriptTimeout = aem.obj.long {
+        convention(TimeUnit.SECONDS.toMillis(5))
+        aem.prop.long("localInstance.scriptTimeout")?.let { set(it) }
+    }
 
     /**
      * Collection of files potentially needed to create instance
      */
     @get:JsonIgnore
-    val sourceFiles: List<File>
-        get() = listOfNotNull(backupZip) + quickstart.files + install.files
+    val sourceFiles = aem.obj.files {
+        from(aem.obj.provider {
+            listOfNotNull(backupZip) + quickstart.files + install.files
+        })
+    }
 
     /**
      * Path from which extra files for local AEM instances will be copied.
      * Useful for overriding default startup scripts ('start.bat' or 'start.sh') or providing some files inside 'crx-quickstart'.
      */
-    var overridesDir = aem.configCommonDir.resolve(LocalInstance.FILES_PATH)
+    val overridesDir = aem.obj.relativeDir(aem.instanceOptions.configDir, "local")
 
     /**
      * Wildcard file name filter expression that is used to filter in which instance files properties can be injected.
      */
-    var expandFiles: List<String> = listOf(
-            "**/start.bat",
-            "**/stop.bat",
-            "**/start",
-            "**/stop"
-    )
+    val expandFiles = aem.obj.strings {
+        convention(listOf(
+                "**/start.bat",
+                "**/stop.bat",
+                "**/start",
+                "**/stop"
+        ))
+    }
 
     /**
      * Custom properties that can be injected into instance files.
      */
-    var expandProperties: Map<String, Any> = mapOf()
+    val expandProperties = aem.obj.map<String, Any> {
+        convention(mapOf())
+    }
 
     val quickstart = QuickstartResolver(aem)
 
@@ -92,7 +107,7 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
     @get:JsonIgnore
     val backupZip: File?
         get() {
-            return when (source) {
+            return when (source.get()) {
                 Source.AUTO, Source.BACKUP_ANY -> backup.any
                 Source.BACKUP_LOCAL -> backup.local
                 Source.BACKUP_REMOTE -> backup.remote
@@ -121,7 +136,7 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
 
     @Suppress("ComplexMethod")
     fun create(instances: List<LocalInstance>) {
-        when (source) {
+        when (source.get()) {
             Source.AUTO -> {
                 val backupZip = backup.any
                 if (backupZip != null) {
@@ -149,18 +164,19 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
                 createFromBackup(instances, backupZip)
             }
             Source.SCRATCH -> createFromScratch(instances)
+            null -> {}
         }
     }
 
     fun createFromBackup(instances: List<LocalInstance>, backupZip: File) {
         logger.info("Restoring instances from backup ZIP '$backupZip' to directory '$rootDir'")
 
-        rootDir.mkdirs()
+        rootDir.get().asFile.mkdirs()
 
         common.progress(instances.size) {
             instances.onEachApply {
                 increment("Restoring instance '$name'") {
-                    FileOperations.zipUnpackDir(backupZip, id, rootDir)
+                    FileOperations.zipUnpackDir(backupZip, id, rootDir.get().asFile)
                 }
             }
         }

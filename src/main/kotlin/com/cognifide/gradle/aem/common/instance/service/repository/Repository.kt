@@ -6,32 +6,31 @@ import java.io.File
 
 class Repository(sync: InstanceSync) : InstanceService(sync) {
 
-    internal val http = RepositoryHttpClient(aem, instance)
-
     /**
      * Take care about property value types saved in repository.
      */
-    var typeHints: Boolean = aem.prop.boolean("instance.repository.typeHints") ?: true
-
-    /**
-     * Controls throwing exceptions in case of response statuses indicating repository errors.
-     * Switching it to false, allows custom error handling in task scripting.
-     */
-    var responseChecks: Boolean
-        get() = http.responseChecks
-        set(value) {
-            http.responseChecks = value
-        }
-
-    init {
-        responseChecks = aem.prop.boolean("instance.repository.responseChecks") ?: true
+    val typeHints = aem.obj.boolean {
+        convention(true)
+        aem.prop.boolean("instance.repository.typeHints")?.let { set(it) }
     }
 
     /**
      * Controls level of logging. By default repository related operations are only logged at debug level.
      * This switch could increase logging level to info level.
      */
-    var verboseLogging: Boolean = aem.prop.boolean("instance.repository.verboseLogging") ?: false
+    val verboseLogging = aem.obj.boolean {
+        convention(false)
+        aem.prop.boolean("instance.repository.verboseLogging")?.let { set(it) }
+    }
+
+    /**
+     * Controls throwing exceptions in case of response statuses indicating repository errors.
+     * Switching it to false, allows custom error handling in task scripting.
+     */
+    val responseChecks = aem.obj.boolean {
+        convention(true)
+        aem.prop.boolean("instance.repository.responseChecks")?.let { set(it) }
+    }
 
     /**
      * Manipulate node at given path (CRUD).
@@ -64,5 +63,11 @@ class Repository(sync: InstanceSync) : InstanceService(sync) {
 
     private fun splitPath(path: String): Pair<String, String> {
         return path.substringBeforeLast("/") to path.substringAfterLast("/")
+    }
+
+    internal val http by lazy {
+        RepositoryHttpClient(aem, instance).apply {
+            responseChecks = this@Repository.responseChecks.get()
+        }
     }
 }

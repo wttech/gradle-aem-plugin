@@ -2,6 +2,7 @@
 package com.cognifide.gradle.aem.instance.provision
 
 import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.common.utils.Formats
 import com.cognifide.gradle.common.utils.Patterns
 
@@ -17,22 +18,33 @@ class Provisioner(val aem: AemExtension) {
     /**
      * Instances to perform provisioning.
      */
-    var instances = aem.instances
+    val instances = aem.obj.list<Instance> {
+        convention(aem.obj.provider { aem.instances })
+    }
 
     /**
      * Forces to perform steps that supports greediness regardless their state on instances (already performed).
      */
-    var greedy = aem.prop.flag("instance.provision.greedy")
+    val greedy = aem.obj.boolean {
+        convention(false)
+        aem.prop.boolean("instance.provision.greedy")?.let { set(it) }
+    }
 
     /**
      * Determines which steps should be performed selectively.
      */
-    var stepName = aem.prop.string("instance.provision.step") ?: "*"
+    val stepName = aem.obj.string {
+        convention("*")
+        aem.prop.string("instance.provision.step")?.let { set(it) }
+    }
 
     /**
      * Determines a path in JCR repository in which provisioning metadata and step markers will be stored.
      */
-    var path: String = aem.prop.string("instance.provision.path") ?: "/var/gap/provision"
+    val path = aem.obj.string {
+        convention("/var/gap/provision")
+        aem.prop.string("instance.provision.path")?.let { set(it) }
+    }
 
     private val steps = mutableListOf<Step>()
 
@@ -51,7 +63,7 @@ class Provisioner(val aem: AemExtension) {
 
         val actions = mutableListOf<Action>()
 
-        val stepsFiltered = steps.filter { Patterns.wildcard(it.id, stepName) }
+        val stepsFiltered = steps.filter { Patterns.wildcard(it.id, stepName.get()) }
         if (stepsFiltered.isNotEmpty()) {
             stepsFiltered.forEach { definition ->
                 var intro = "Provision step '${definition.id}'"
@@ -59,7 +71,7 @@ class Provisioner(val aem: AemExtension) {
                     intro += " / ${definition.description}"
                 }
                 logger.info(intro)
-                common.parallel.each(instances) { actions.add(InstanceStep(it, definition).run { provisionStep() }) }
+                common.parallel.each(instances.get()) { actions.add(InstanceStep(it, definition).run { provisionStep() }) }
             }
         }
 
@@ -82,7 +94,7 @@ class Provisioner(val aem: AemExtension) {
                     " Duration: ${Formats.durationSince(startTime)}")
             Action(this, Status.ENDED)
         } catch (e: ProvisionException) {
-            if (!definition.continueOnFail) {
+            if (!definition.continueOnFail.get()) {
                 throw e
             } else {
                 logger.error("Provision step '${definition.id} failed at $instance." +

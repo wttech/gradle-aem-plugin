@@ -63,6 +63,37 @@ class FilterFile(
 
         const val TEMPORARY_NAME = "filter.tmp.xml"
 
+        fun default(aem: AemExtension): FilterFile = aem.run {
+            val cmdFilterRoots = prop.list("filter.roots") ?: listOf()
+            if (cmdFilterRoots.isNotEmpty()) {
+                logger.debug("Using Vault filter roots specified as command line property: $cmdFilterRoots")
+                return temporary(this, cmdFilterRoots)
+            }
+
+            val cmdFilterPath = prop.string("filter.path") ?: ""
+            if (cmdFilterPath.isNotEmpty()) {
+                val cmdFilter = FileOperations.find(project, packageOptions.vltDir.toString(), cmdFilterPath)
+                        ?: throw VltException("Vault check out filter file does not exist at path: $cmdFilterPath" +
+                                " (or under directory: ${packageOptions.vltDir}).")
+                logger.debug("Using Vault filter file specified as command line property: $cmdFilterPath")
+                return FilterFile(cmdFilter)
+            }
+
+            val conventionFilterFiles = listOf(
+                    "${packageOptions.vltDir}/$SYNC_NAME",
+                    "${packageOptions.vltDir}/$BUILD_NAME"
+            )
+            val conventionFilterFile = FileOperations.find(project, packageOptions.vltDir.toString(), conventionFilterFiles)
+            if (conventionFilterFile != null) {
+                logger.debug("Using Vault filter file found by convention: $conventionFilterFile")
+                return FilterFile(conventionFilterFile)
+            }
+
+            logger.debug("None of Vault filter files found by CMD properties or convention.")
+
+            return temporary(this, listOf())
+        }
+
         fun temporary(aem: AemExtension, paths: List<String>): FilterFile {
             val template = FileOperations.readResource("vlt/$TEMPORARY_NAME")!!
                     .bufferedReader().use { it.readText() }

@@ -23,9 +23,9 @@ class Package private constructor() {
     var lastUnpacked: Long? = null
 
     constructor(compose: PackageCompose) : this() {
-        this.group = compose.vaultDefinition.group
-        this.name = compose.vaultDefinition.name
-        this.version = compose.vaultDefinition.version
+        this.group = compose.vaultDefinition.group.get()
+        this.name = compose.vaultDefinition.name.get()
+        this.version = compose.vaultDefinition.version.get()
 
         this.downloadName = "$name-$version.zip"
         this.conventionPaths = listOf(
@@ -63,7 +63,9 @@ class Package private constructor() {
 
         const val OAKPAL_OPEAR_RESOURCES_PATH = "package/$OAKPAL_OPEAR_PATH"
 
-        const val NODE_TYPES_SYNC_PATH = "package/nodetypes.sync.cnd"
+        const val NODE_TYPES_SYNC_FILE = "nodetypes.sync.cnd"
+
+        const val NODE_TYPES_SYNC_PATH = "package/$NODE_TYPES_SYNC_FILE"
 
         const val VLT_DIR = "vault"
 

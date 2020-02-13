@@ -121,6 +121,16 @@ interface Instance : Serializable {
     @get:JsonIgnore
     val publish: Boolean get() = type == IdType.PUBLISH
 
+    /**
+     * Indicates repository restructure performed in AEM 6.4.0 / preparations for making AEM available on cloud.
+     *
+     * After this changes, nodes under '/apps' or '/libs' are frozen and some features (like workflow manager)
+     * requires to copy these nodes under '/var' by plugin (or AEM itself).
+     *
+     * @see <https://docs.adobe.com/content/help/en/experience-manager-64/deploying/restructuring/repository-restructuring.html>
+     */
+    val frozen get() = Formats.versionAtLeast(version, "6.4.0")
+
     companion object {
 
         const val FILTER_ANY = "*"
@@ -138,6 +148,8 @@ interface Instance : Serializable {
         val LOCAL_PROPS = listOf("httpUrl", "type", "password", "jvmOpts", "startOpts", "runModes", "debugPort", "debugAddress")
 
         val REMOTE_PROPS = listOf("httpUrl", "type", "user", "password")
+
+        fun defaultPair(aem: AemExtension) = listOf(defaultAuthor(aem), defaultPublish(aem))
 
         fun defaultAuthor(aem: AemExtension) = RemoteInstance.create(aem, URL_AUTHOR_DEFAULT)
 

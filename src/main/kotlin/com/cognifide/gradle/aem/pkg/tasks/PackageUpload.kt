@@ -10,13 +10,14 @@ open class PackageUpload : PackageTask() {
 
     @TaskAction
     fun upload() {
-        instances.checkAvailable()
+        instances.get().checkAvailable()
         sync { packageManager.upload(it) }
-        common.notifier.notify("Package uploaded", "${packages.fileNames} from ${instances.names}")
+        common.notifier.notify("Package uploaded", "${files.files.fileNames} from ${instances.get().names}")
     }
 
     init {
         description = "Uploads AEM package to instance(s)."
+        awaited.convention(false)
     }
 
     companion object {
