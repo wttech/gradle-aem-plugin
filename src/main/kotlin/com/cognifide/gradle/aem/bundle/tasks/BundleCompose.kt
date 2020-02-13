@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem.bundle.tasks
 
 import aQute.bnd.gradle.BundleTaskConvention
-import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.aem
 import com.cognifide.gradle.aem.bundle.BundleException
@@ -102,7 +101,17 @@ open class BundleCompose : JarTask(), AemTask {
      * Use empty string to disable automatic determining of that package and going further OSGi components checks.
      */
     @Input
-    val javaPackage = aem.obj.string()
+    val javaPackage = aem.obj.string {
+        convention(aem.obj.provider {
+            val group = aem.project.group.toString()
+            val name = aem.project.name
+
+            when {
+                group.isNotBlank() -> "$group.$name".normalizeSeparators(".")
+                else -> name.normalizeSeparators(".")
+            }
+        })
+    }
 
     /**
      * Determines how conflicts will be resolved when coincidental classes will be detected.
@@ -148,20 +157,8 @@ open class BundleCompose : JarTask(), AemTask {
     override fun projectEvaluated() {
         super.projectEvaluated()
 
-        ensureJavaPackage()
         applyAttributesConvention()
         combinePackageAttributes()
-    }
-
-    private fun ensureJavaPackage() {
-        if (!javaPackage.isPresent) {
-            if ("${aem.project.group}".isBlank()) {
-                throw AemException("${aem.project.displayName.capitalize()} must has property 'group' defined" +
-                        " to determine bundle package default.")
-            }
-
-            javaPackage.convention("${aem.project.group}.${aem.project.name}".normalizeSeparators("."))
-        }
     }
 
     private fun combinePackageAttribute(name: String, pkgs: Iterable<String>) {
@@ -191,15 +188,15 @@ open class BundleCompose : JarTask(), AemTask {
             displayName = aem.project.description
         }
 
-        if (!hasAttribute(Bundle.ATTRIBUTE_SYMBOLIC_NAME) && javaPackage.isPresent) {
+        if (!hasAttribute(Bundle.ATTRIBUTE_SYMBOLIC_NAME) && !javaPackage.get().isNullOrBlank()) {
             symbolicName = javaPackage.get()
         }
 
-        if (!hasAttribute(Bundle.ATTRIBUTE_SLING_MODEL_PACKAGES) && javaPackage.isPresent) {
+        if (!hasAttribute(Bundle.ATTRIBUTE_SLING_MODEL_PACKAGES) && !javaPackage.get().isNullOrBlank()) {
             slingModelPackages = javaPackage.get()
         }
 
-        if (!hasAttribute(Bundle.ATTRIBUTE_ACTIVATOR) && javaPackage.isPresent) {
+        if (!hasAttribute(Bundle.ATTRIBUTE_ACTIVATOR) && !javaPackage.get().isNullOrBlank()) {
             findActivator(javaPackage.get())?.let { activator = it }
         }
     }
@@ -215,10 +212,10 @@ open class BundleCompose : JarTask(), AemTask {
         })
         combinePackageAttribute(Bundle.ATTRIBUTE_PRIVATE_PACKAGE, privatePackages.get())
         combinePackageAttribute(Bundle.ATTRIBUTE_EXPORT_PACKAGE, exportPackages.get().toMutableList().apply {
-            if (attributesConvention.get() && javaPackage.isPresent) {
+            if (attributesConvention.get() && !javaPackage.get().isNullOrBlank()) {
                 add(when {
-                    javaPackageOptions.isPresent -> "$javaPackage.*;$javaPackageOptions"
-                    else -> "$javaPackage.*"
+                    javaPackageOptions.isPresent -> "${javaPackage.get()}.*;${javaPackageOptions.get()}"
+                    else -> "${javaPackage.get()}.*"
                 })
             }
         })

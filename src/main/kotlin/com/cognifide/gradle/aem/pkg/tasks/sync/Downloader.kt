@@ -40,15 +40,10 @@ class Downloader(@Internal private val aem: AemExtension) {
         aem.prop.file("package.sync.downloader.extractDir")?.let { set(it) }
     }
 
-    /**
-     * Repeat download when failed (brute-forcing).
-     */
-    var retry = common.retry { afterSquaredSecond(aem.prop.long("package.sync.downloader.retry") ?: 3) }
-
     fun download() {
-        val file = instance.get().sync.packageManager.download({
+        val file = instance.get().sync.packageManager.download {
             filterElements = filter.get().elements.toMutableList()
-        }, retry)
+        }
 
         if (extract.get()) {
             aem.logger.lifecycle("Extracting package $file to $extractDir")

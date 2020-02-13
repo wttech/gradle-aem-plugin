@@ -63,7 +63,7 @@ class BundlePlugin : CommonDefaultPlugin() {
             dependsOn(BundleCompose.NAME)
         }
         typed<BundleTask> {
-            files.from(compose.map { it.composedFile })
+            files.from(compose.map { it.archiveFile })
         }
         named<Task>(LifecycleBasePlugin.ASSEMBLE_TASK_NAME) {
             dependsOn(BundleCompose.NAME)

@@ -72,12 +72,10 @@ open class VltDefinition(private val aem: AemExtension) {
                 .toList()
 
     @get:Internal
-    val filterRoots: Collection<String>
-        get() = filterEffectives.map { it.root }.toSet()
+    val filterRoots: Collection<String> get() = filterEffectives.map { it.root }.toSet()
 
     @get:Input
-    val filters: Collection<String>
-        get() = filterEffectives.map { it.element.toString() }.toSet()
+    val filters: Collection<String> get() = filterEffectives.map { it.element.toString() }.toSet()
 
     fun filters(vararg roots: String) = filters(roots.asIterable())
 
@@ -122,13 +120,15 @@ open class VltDefinition(private val aem: AemExtension) {
      * Additional entries added to file 'META-INF/vault/properties.xml'.
      */
     @Input
-    var properties: MutableMap<String, Any> = mutableMapOf(
-            "acHandling" to "merge_preserve",
-            "requiresRoot" to false
-    )
+    val properties = aem.obj.map<String, Any> {
+        convention(mapOf(
+                "acHandling" to "merge_preserve",
+                "requiresRoot" to false
+        ))
+    }
 
     fun property(name: String, value: String) {
-        properties[name] = value
+        properties.put(name, value)
     }
 
     private fun isFilterNeeded(custom: FilterElement): Boolean {

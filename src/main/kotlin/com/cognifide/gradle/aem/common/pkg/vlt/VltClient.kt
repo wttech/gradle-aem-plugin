@@ -22,7 +22,7 @@ class VltClient(val aem: AemExtension) {
     val contentDirEffective: File
         get() {
             var workingDir = contentDir.map { it.asFile.resolve(Package.JCR_ROOT) }.get()
-            if (contentRelativePath.isPresent) {
+            if (!contentRelativePath.get().isNullOrBlank()) {
                 workingDir = File(workingDir, contentRelativePath.get())
             }
 

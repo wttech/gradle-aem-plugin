@@ -35,7 +35,7 @@ class PackagePluginTest: AemBuildTest() {
         runBuild(projectDir, "packageCompose", "-Poffline") {
             assertTask(":packageCompose")
 
-            val pkgPath = "build/packageCompose/package.minimal-1.0.0.zip"
+            val pkgPath = "build/packageCompose/package-minimal-1.0.0.zip"
 
             assertPackage(pkgPath)
 
@@ -57,7 +57,7 @@ class PackagePluginTest: AemBuildTest() {
                 <properties>
                     
                     <entry key="group">com.company.example</entry>
-                    <entry key="name">package.minimal</entry>
+                    <entry key="name">package-minimal</entry>
                     <entry key="version">1.0.0</entry>
                     
                     <entry key="createdBy">${System.getProperty("user.name")}</entry>

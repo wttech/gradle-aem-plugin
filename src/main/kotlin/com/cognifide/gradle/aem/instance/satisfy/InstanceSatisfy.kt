@@ -39,24 +39,6 @@ open class InstanceSatisfy : PackageDeploy() {
     var groupFilter: FileGroup.() -> Boolean = { Patterns.wildcard(name, groupName.get()) }
 
     /**
-     * Packages are installed lazy which means already installed will no be installed again.
-     * By default, information about currently installed packages is being retrieved from AEM only once.
-     *
-     * This flag can change that behavior, so that information will be refreshed after each package installation.
-     */
-    @Input
-    val listRefresh = aem.obj.boolean {
-        convention(false)
-        aem.prop.boolean("instance.satisfy.listRefresh")?.let { set(it) }
-    }
-
-    /**
-     * Repeat listing package when failed (brute-forcing).
-     */
-    @Internal
-    var listRetry = common.retry { afterSquaredSecond(aem.prop.long("instance.satisfy.listRetry") ?: 3) }
-
-    /**
      * Provides a packages from local and remote sources.
      * Handles automatic wrapping OSGi bundles to CRX packages.
      */
@@ -138,13 +120,13 @@ open class InstanceSatisfy : PackageDeploy() {
     private fun ProgressIndicator.satisfyGroup(group: PackageGroup) {
         step = "Group '${group.name}'"
 
-        aem.logger.info("Satisfying group of packages '${group.name}'.")
+        logger.info("Satisfying group of packages '${group.name}'.")
 
         val packageInstances = determineInstancesForGroup(group)
 
         aem.sync(packageInstances) {
             val packageStates = group.files.map {
-                PackageState(it, packageManager.find(it, listRefresh.get(), listRetry))
+                PackageState(it, packageManager.find(it))
             }
             val packageSatisfiableAny = packageStates.any {
                 greedy.get() || group.greedy || packageManager.isSnapshot(it.file) || !it.uploaded || !it.installed
@@ -158,23 +140,23 @@ open class InstanceSatisfy : PackageDeploy() {
                 increment("Satisfying package '${pkg.file.name}' on instance '${instance.name}'") {
                     when {
                         greedy.get() || group.greedy -> {
-                            aem.logger.info("Satisfying package ${pkg.name} on ${instance.name} (greedy).")
+                            logger.info("Satisfying package ${pkg.name} on ${instance.name} (greedy).")
                             satisfyPackage(group, pkg)
                         }
                         packageManager.isSnapshot(pkg.file) -> {
-                            aem.logger.info("Satisfying package ${pkg.name} on ${instance.name} (snapshot).")
+                            logger.info("Satisfying package ${pkg.name} on ${instance.name} (snapshot).")
                             satisfyPackage(group, pkg)
                         }
                         !pkg.uploaded -> {
-                            aem.logger.info("Satisfying package ${pkg.name} on ${instance.name} (not uploaded).")
+                            logger.info("Satisfying package ${pkg.name} on ${instance.name} (not uploaded).")
                             satisfyPackage(group, pkg)
                         }
                         !pkg.installed -> {
-                            aem.logger.info("Satisfying package ${pkg.name} on ${instance.name} (not installed).")
+                            logger.info("Satisfying package ${pkg.name} on ${instance.name} (not installed).")
                             satisfyPackage(group, pkg)
                         }
                         else -> {
-                            aem.logger.info("Not satisfying package: ${pkg.name} on ${instance.name} (already installed).")
+                            logger.info("Not satisfying package: ${pkg.name} on ${instance.name} (already installed).")
                         }
                     }
                 }
@@ -195,17 +177,7 @@ open class InstanceSatisfy : PackageDeploy() {
     }
 
     private fun InstanceSync.satisfyPackage(group: PackageGroup, state: PackageState) {
-        workflowManager.toggleTemporarily(workflowToggle.get() + group.workflowToggle) {
-            packageManager.deploy(
-                    state.file,
-                    group.uploadForce ?: uploadForce.get(),
-                    group.uploadRetry ?: uploadRetry,
-                    group.installRecursive ?: installRecursive.get(),
-                    group.installRetry ?: installRetry,
-                    group.distributed ?: distributed.get()
-            )
-        }
-
+        packageManager.deploy(state.file, group.distributed ?: distributed.get())
         packageSatisfiedAny = true
         packageActions.add(PackageAction(state.file, instance))
     }

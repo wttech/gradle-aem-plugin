@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.instance.provision
 
 import com.cognifide.gradle.aem.common.instance.Instance
+import com.cognifide.gradle.aem.common.instance.InstanceSync
 import com.cognifide.gradle.common.build.Retry
 
 class Step(val provisioner: Provisioner, val id: String) {
@@ -48,6 +49,8 @@ class Step(val provisioner: Provisioner, val id: String) {
     fun action(callback: Instance.() -> Unit) {
         this.actionCallback = callback
     }
+
+    fun sync(callback: InstanceSync.() -> Unit) = action { sync(callback) }
 
     fun condition(callback: Condition.() -> Boolean) {
         this.conditionCallback = callback
