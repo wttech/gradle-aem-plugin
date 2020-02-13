@@ -2125,44 +2125,47 @@ This task might be also useful to check amended configuration to verify HTTP url
 
 #### Task `instanceSatisfy` 
 
-Upload & install dependent CRX package(s) before deployment. Available methods:
+Upload & install dependent CRX package(s) before deployment. 
 
-* `group(name: String, options: Resolver<PackageGroup>.() -> Unit)`, useful for declaring group of packages (or just optionally naming single package) to be installed only on demand. For instance: `group("tools") { download('http://example.com/package.zip'); download('smb://internal-nt/package2.zip')  }`. Then to install only packages in group `tools`, use command: `gradlew instanceSatisfy -Pinstance.satisfy.group=tools`.
-* `useLocal(path: String)`, use CRX package from local file system.
-* `useLocal(file: File)`, same as above, but file can be even located outside the project.
-* `useLocalRecent(dir: File, filePattern: String = "**/*.zip")`, useful to find and use most recent file in specified directory.
-* `resolve(notation: String)`, use OSGi bundle that will be resolved from defined Gradle repositories (for example from Maven) then wrapped to CRX package.
-* `download(url: String)`, use CRX package that will be downloaded from specified URL to local temporary directory.
-* `downloadHttp(url: String, options: HttpFileTransfer.() -> Unit)`, download package using HTTP with.
-* `downloadSftp(url: String, options: SftpFileTransfer.() -> Unit)`, download package using SFTP protocol.
-* `downloadSmb(url: String, options: SmbFileTransfer.() -> Unit)`, download package using SMB protocol.
-
-Example configuration:
+Illustrative configuration:
 
 ```kotlin
 aem {
     tasks {
         instanceSatisfy {
             packages {
-                group("default") {
-                    useLocal("pkg/vanityurls-components-1.0.2.zip")
-                    download("smb://company-share/aem/packages/my-lib.zip")
-                    download("sftp://company-share/aem/packages/other-lib.zip")
-                    download("file:///C:/Libraries/aem/package/extra-lib.zip")
-                }
+                "tool.search-webconsole-plugin"("com.neva.felix:search-webconsole-plugin:1.2.0")
+                // is shorthand syntax for (effectively same as)
+                group("tool.search-webconsole-plugin") { get("com.neva.felix:search-webconsole-plugin:1.2.0") }
 
-                group("tools") {
-                    resolve("com.neva.felix:search-webconsole-plugin:1.2.0")
-                    download("https://github.com/Cognifide/APM/releases/download/cqsm-3.0.0/apm-3.0.0.zip")
-                    download("https://github.com/Adobe-Consulting-Services/acs-aem-tools/releases/download/acs-aem-tools-1.0.0/acs-aem-tools-content-1.0.0-min.zip")
-                }
+                "tool.apm" { download("https://github.com/Cognifide/APM/releases/download/cqsm-3.0.0/apm-3.0.0.zip") }
+                "tool.acs-aem-tools" { download("https://github.com/Adobe-Consulting-Services/acs-aem-tools/releases/download/acs-aem-tools-1.0.0/acs-aem-tools-content-1.0.0-min.zip") }
+
+                "dependency.vanityurls-components" { useLocal("pkg/vanityurls-components-1.0.2.zip") }
+                
+                "application.example-core" { downloadSmb("smb://company-share/aem/packages/example-core-1.0.0.zip") { /* credentials here */ } }
+                "application.example-extension" { downloadSftp("sftp://company-share/aem/packages/example-extension.zip") { /* credentials here */ } }
             }
         }
     }
 }
 ```
 
+Available methods:
+
+* `group(name: String, options: Resolver<PackageGroup>.() -> Unit)`, useful for declaring group of packages (or just optionally naming single package) to be installed only on demand. For instance: `group("tools") { download('http://example.com/package.zip'); download('smb://internal-nt/package2.zip')  }`. Then to install only packages in group `tools`, use command: `gradlew instanceSatisfy -Pinstance.satisfy.group=tools`.
+* `get(urlOrNotation: Any)`, shorthand method for delegating to `resolve` or `download` methods depending on type of value provided.
+* `resolve(notation: String)`, use OSGi bundle that will be resolved from defined Gradle repositories (for example from Maven) then wrapped to CRX package.
+* `download(url: String)`, use CRX package that will be downloaded from specified URL to local temporary directory.
+* `downloadHttp(url: String, options: HttpFileTransfer.() -> Unit)`, download package using HTTP with.
+* `downloadSftp(url: String, options: SftpFileTransfer.() -> Unit)`, download package using SFTP protocol.
+* `downloadSmb(url: String, options: SmbFileTransfer.() -> Unit)`, download package using SMB protocol.
+* `useLocal(path: String)`, use CRX package from local file system.
+* `useLocal(file: File)`, same as above, but file can be even located outside the project.
+* `useLocalRecent(dir: File, filePattern: String = "**/*.zip")`, useful to find and use most recent file in specified directory.
+
 By default, all packages will be deployed when running task `instanceSatisfy`.
+
 Although, by grouping packages, there are available new options:
 
 * group name could be used to filter out packages that will be deployed (`-Pinstance.satisfy.group=tools`, wildcards supported, comma delimited).
@@ -2175,15 +2178,18 @@ In other words, for instance, there is ability to run groovy console script befo
 ```kotlin
 aem {
     tasks {
-        satisfy {
+        instanceSatisfy {
             packages {
                 group("tool.groovy-console") { 
                     download("https://github.com/OlsonDigital/aem-groovy-console/releases/download/11.0.0/aem-groovy-console-11.0.0.zip")
                     config {
                         instanceName = "*-author" // additional filter intersecting 'instance.name' property
-                        workflowToggle("dam_asset", false)
                         initializer {
                             logger.info("Installing Groovy Console on $instance")
+
+                            packageManager {
+                                workflowToggle.put("dam_asset", false)
+                            }
                         }
                         finalizer {
                             logger.info("Installed Groovy Console on $instance")
@@ -2234,39 +2240,33 @@ aem {
             step("enable-crxde") {
                 description = "Enables CRX DE"
                 condition { once() && instance.environment != "prod" }
-                action {
-                    sync {
-                        osgiFramework.configure("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", mapOf(
-                                "alias" to "/crx/server"
-                        ))
-                    }
+`               sync {
+                    osgiFramework.configure("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", mapOf(
+                            "alias" to "/crx/server"
+                    ))
                 }
             }
             step("setup-replication-author") {
                 condition { once() && instance.author }
-                action {
-                    sync {
-                        repository {
-                            node("/etc/replication/agents.author/publish/jcr:content", mapOf(
-                                    "enabled" to true,
-                                    "userId" to instance.user,
-                                    "transportUri" to "http://localhost:4503/bin/receive?sling:authRequestLogin=1",
-                                    "transportUser" to instance.user,
-                                    "transportPassword" to instance.password
-                            ))
-                        }
+                sync {
+                    repository {
+                        node("/etc/replication/agents.author/publish/jcr:content", mapOf(
+                                "enabled" to true,
+                                "userId" to instance.user,
+                                "transportUri" to "http://localhost:4503/bin/receive?sling:authRequestLogin=1",
+                                "transportUser" to instance.user,
+                                "transportPassword" to instance.password
+                        ))
                     }
                 }
             }
             step("disable-unsecure-bundles") {
                 condition { once() && instance.environment == "prod" }
-                action {
-                    sync {
-                        osgiFramework.stopBundle("org.apache.sling.jcr.webdav")
-                        osgiFramework.stopBundle("com.adobe.granite.crxde-lite")
+                sync {
+                    osgiFramework.stopBundle("org.apache.sling.jcr.webdav")
+                    osgiFramework.stopBundle("com.adobe.granite.crxde-lite")
 
-                        awaitUp() // include above in property: 'instance.awaitUp.bundles.symbolicNamesIgnored'
-                    }
+                    awaitUp() // include above in property: 'instance.awaitUp.bundles.symbolicNamesIgnored'
                 }
             }
         }
