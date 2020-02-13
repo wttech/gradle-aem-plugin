@@ -3,9 +3,9 @@ package com.cognifide.gradle.aem.pkg.tasks
 import com.cognifide.gradle.aem.AemDefaultTask
 import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.common.instance.Instance
-import com.cognifide.gradle.aem.common.pkg.vlt.FilterFile
+import com.cognifide.gradle.aem.common.pkg.vault.FilterFile
 import com.cognifide.gradle.common.utils.Formats
-import com.cognifide.gradle.aem.common.pkg.vlt.VltClient
+import com.cognifide.gradle.aem.common.pkg.vault.VaultClient
 import com.cognifide.gradle.aem.pkg.tasks.sync.Cleaner
 import com.cognifide.gradle.aem.pkg.tasks.sync.Downloader
 import java.io.File
@@ -68,13 +68,13 @@ open class PackageSync : AemDefaultTask() {
             filter.get().rootDirs(this)
         }
 
-    private var vltOptions: VltClient.() -> Unit = {}
+    private var vaultOptions: VaultClient.() -> Unit = {}
 
-    fun vlt(options: VltClient.() -> Unit) {
-        vltOptions = options
+    fun vlt(options: VaultClient.() -> Unit) {
+        vaultOptions = options
     }
 
-    private val vlt by lazy { VltClient(aem).apply(vltOptions) }
+    private val vlt by lazy { VaultClient(aem).apply(vaultOptions) }
 
     private var cleanerOptions: Cleaner.() -> Unit = {}
 

@@ -3,7 +3,7 @@ package com.cognifide.gradle.aem.instance.rcp
 import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.instance.Instance
-import com.cognifide.gradle.aem.common.pkg.vlt.VltException
+import com.cognifide.gradle.aem.common.pkg.vault.VaultException
 import org.apache.commons.lang3.time.StopWatch
 import java.io.File
 
@@ -36,7 +36,7 @@ class RcpClient(private val aem: AemExtension) {
 
     fun copy(pathsFile: File) {
         if (!pathsFile.exists()) {
-            throw VltException("RCP paths file does not exist: $pathsFile")
+            throw VaultException("RCP paths file does not exist: $pathsFile")
         }
 
         pathsFile.useLines { copy(it) }
@@ -70,17 +70,17 @@ class RcpClient(private val aem: AemExtension) {
         return when (parts.size) {
             1 -> Pair(path, path)
             2 -> Pair(parts[0], parts[1])
-            else -> throw VltException("RCP path has invalid format: $path")
+            else -> throw VaultException("RCP path has invalid format: $path")
         }
     }
 
     private fun checkInstances() {
         if (sourceInstance == null) {
-            throw VltException("Source RCP instance is not defined.'")
+            throw VaultException("Source RCP instance is not defined.'")
         }
 
         if (targetInstance == null) {
-            throw VltException("Target RCP instance is not defined.")
+            throw VaultException("Target RCP instance is not defined.")
         }
     }
 }

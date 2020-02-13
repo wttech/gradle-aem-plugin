@@ -1,10 +1,10 @@
-package com.cognifide.gradle.aem.common.pkg.vlt
+package com.cognifide.gradle.aem.common.pkg.vault
 
 import org.apache.commons.cli2.CommandLine
-import org.apache.jackrabbit.vault.cli.VltExecutionContext as BaseExecutionContext
+import org.apache.jackrabbit.vault.cli.VltExecutionContext
 import org.apache.jackrabbit.vault.util.console.CliCommand
 
-class VltExecutionContext(app: VltApp) : BaseExecutionContext(app) {
+class VaultExecutionContext(app: VaultApp) : VltExecutionContext(app) {
 
     @Suppress("TooGenericExceptionCaught")
     override fun execute(commandLine: CommandLine): Boolean {
@@ -14,7 +14,7 @@ class VltExecutionContext(app: VltApp) : BaseExecutionContext(app) {
                     return true
                 }
             } catch (e: Exception) {
-                throw VltException("Error while executing command: $command")
+                throw VaultException("Error while executing command: $command")
             }
         }
 

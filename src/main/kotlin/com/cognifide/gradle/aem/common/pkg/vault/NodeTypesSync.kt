@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.common.pkg.vlt
+package com.cognifide.gradle.aem.common.pkg.vault
 
 import com.cognifide.gradle.aem.common.pkg.PackageException
 

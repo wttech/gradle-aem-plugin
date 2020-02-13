@@ -1,26 +1,19 @@
-package com.cognifide.gradle.aem.common.pkg.vlt
+package com.cognifide.gradle.aem.common.pkg.vault
 
 import java.io.File
 import org.apache.jackrabbit.vault.cli.VaultFsApp
-import org.apache.jackrabbit.vault.util.console.ExecutionContext
 import org.apache.jackrabbit.vault.util.console.commands.CmdConsole
 import org.gradle.api.Project
 
-class VltApp(val project: Project) : VaultFsApp() {
+class VaultApp(val project: Project) : VaultFsApp() {
 
     companion object {
         const val CURRENT_WORKING_DIR = "user.dir"
     }
 
-    private val executionContext by lazy {
-        val result = VltExecutionContext(this)
-        result.installCommand(CmdConsole())
-        result
-    }
+    private val executionContext by lazy { VaultExecutionContext(this).apply { installCommand(CmdConsole()) } }
 
-    override fun getDefaultContext(): ExecutionContext {
-        return executionContext
-    }
+    override fun getDefaultContext() = executionContext
 
     fun execute(command: String, workingPath: String) = execute(command.split(" "), workingPath)
 

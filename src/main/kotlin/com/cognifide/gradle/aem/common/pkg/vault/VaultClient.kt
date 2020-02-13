@@ -1,13 +1,13 @@
-package com.cognifide.gradle.aem.common.pkg.vlt
+package com.cognifide.gradle.aem.common.pkg.vault
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import org.apache.commons.lang3.time.StopWatch
 import java.io.File
 
-class VltClient(val aem: AemExtension) {
+class VaultClient(val aem: AemExtension) {
 
-    private val app = VltApp(aem.project)
+    private val app = VaultApp(aem.project)
 
     val command = aem.obj.string()
 
@@ -29,9 +29,9 @@ class VltClient(val aem: AemExtension) {
             return workingDir
         }
 
-    fun run(): VltSummary {
+    fun run(): VaultSummary {
         if (commandEffective.isBlank()) {
-            throw VltException("Vault command cannot be blank.")
+            throw VaultException("Vault command cannot be blank.")
         }
 
         aem.logger.lifecycle("Working directory: $contentDirEffective")
@@ -41,6 +41,6 @@ class VltClient(val aem: AemExtension) {
         app.execute(commandEffective, contentDirEffective)
         stopWatch.stop()
 
-        return VltSummary(commandEffective, contentDirEffective, stopWatch.time)
+        return VaultSummary(commandEffective, contentDirEffective, stopWatch.time)
     }
 }

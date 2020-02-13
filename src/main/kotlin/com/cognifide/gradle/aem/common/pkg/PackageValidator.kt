@@ -97,7 +97,7 @@ class PackageValidator(@Internal val aem: AemExtension) {
     }
 
     private fun prepareOpearDir() {
-        logger.info("Preparing OakPAL Opear directory '$workDir'")
+        logger.info("Preparing OakPAL Opear directory '${workDir.get()}'")
 
         val workDir = workDir.get().asFile.apply {
             deleteRecursively()

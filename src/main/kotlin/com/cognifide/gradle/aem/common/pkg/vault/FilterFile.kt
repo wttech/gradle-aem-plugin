@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.common.pkg.vlt
+package com.cognifide.gradle.aem.common.pkg.vault
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.file.FileOperations
@@ -73,7 +73,7 @@ class FilterFile(
             val cmdFilterPath = prop.string("filter.path") ?: ""
             if (cmdFilterPath.isNotEmpty()) {
                 val cmdFilter = FileOperations.find(project, packageOptions.vltDir.toString(), cmdFilterPath)
-                        ?: throw VltException("Vault check out filter file does not exist at path: $cmdFilterPath" +
+                        ?: throw VaultException("Vault check out filter file does not exist at path: $cmdFilterPath" +
                                 " (or under directory: ${packageOptions.vltDir}).")
                 logger.debug("Using Vault filter file specified as command line property: $cmdFilterPath")
                 return FilterFile(cmdFilter)

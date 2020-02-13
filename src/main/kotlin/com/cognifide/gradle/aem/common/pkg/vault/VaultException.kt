@@ -1,8 +1,8 @@
-package com.cognifide.gradle.aem.common.pkg.vlt
+package com.cognifide.gradle.aem.common.pkg.vault
 
 import com.cognifide.gradle.aem.AemException
 
-class VltException : AemException {
+class VaultException : AemException {
 
     constructor(message: String, cause: Throwable) : super(message, cause)
 

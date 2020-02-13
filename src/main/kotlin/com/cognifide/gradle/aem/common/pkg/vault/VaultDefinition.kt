@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.common.pkg.vlt
+package com.cognifide.gradle.aem.common.pkg.vault
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.pkg.PackageException
@@ -12,7 +12,7 @@ import java.util.regex.Pattern
 /**
  * Represents collection of metadata being a part of CRX package.
  */
-open class VltDefinition(private val aem: AemExtension) {
+open class VaultDefinition(private val aem: AemExtension) {
 
     @Internal
     protected val common = aem.common

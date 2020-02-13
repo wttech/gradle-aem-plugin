@@ -3,7 +3,7 @@ package com.cognifide.gradle.aem.pkg.tasks.sync
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
-import com.cognifide.gradle.aem.common.pkg.vlt.FilterFile
+import com.cognifide.gradle.aem.common.pkg.vault.FilterFile
 import java.io.File
 import org.gradle.api.tasks.Internal
 

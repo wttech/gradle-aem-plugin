@@ -11,13 +11,13 @@ import com.cognifide.gradle.aem.common.pkg.PackageDefinition
 import com.cognifide.gradle.aem.common.pkg.PackageFile
 import com.cognifide.gradle.aem.common.pkg.PackageOptions
 import com.cognifide.gradle.aem.common.pkg.PackageValidator
-import com.cognifide.gradle.aem.common.pkg.vlt.FilterFile
+import com.cognifide.gradle.aem.common.pkg.vault.FilterFile
 import com.cognifide.gradle.aem.instance.*
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.PackageCompose
 import com.cognifide.gradle.aem.instance.rcp.RcpClient
-import com.cognifide.gradle.aem.common.pkg.vlt.VltClient
-import com.cognifide.gradle.aem.common.pkg.vlt.VltSummary
+import com.cognifide.gradle.aem.common.pkg.vault.VaultClient
+import com.cognifide.gradle.aem.common.pkg.vault.VaultSummary
 import com.cognifide.gradle.aem.pkg.PackageSyncPlugin
 import com.cognifide.gradle.common.CommonExtension
 import com.cognifide.gradle.common.common
@@ -353,12 +353,12 @@ class AemExtension(val project: Project) : Serializable {
     /**
      * Execute any Vault command.
      */
-    fun vlt(command: String): VltSummary = vlt { this.command.set(command); run() }
+    fun vlt(command: String): VaultSummary = vlt { this.command.set(command); run() }
 
     /**
      * Execute any Vault command with customized options like content directory.
      */
-    fun <T> vlt(options: VltClient.() -> T) = VltClient(this).run(options)
+    fun <T> vlt(options: VaultClient.() -> T) = VaultClient(this).run(options)
 
     /**
      * Execute any Vault JCR content remote copying with customized options like content directory.

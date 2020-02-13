@@ -9,9 +9,9 @@ import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.aem.common.pkg.PackageFile
 import com.cognifide.gradle.aem.common.pkg.PackageFileFilter
 import com.cognifide.gradle.aem.common.pkg.PackageValidator
-import com.cognifide.gradle.aem.common.pkg.vlt.FilterFile
-import com.cognifide.gradle.aem.common.pkg.vlt.FilterType
-import com.cognifide.gradle.aem.common.pkg.vlt.VltDefinition
+import com.cognifide.gradle.aem.common.pkg.vault.FilterFile
+import com.cognifide.gradle.aem.common.pkg.vault.FilterType
+import com.cognifide.gradle.aem.common.pkg.vault.VaultDefinition
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.compose.BundleDependency
 import com.cognifide.gradle.aem.pkg.tasks.compose.PackageDependency
@@ -80,9 +80,9 @@ open class PackageCompose : ZipTask(), AemTask {
      * Defines properties being used to generate CRX package metadata files.
      */
     @Nested
-    val vaultDefinition = VltDefinition(aem)
+    val vaultDefinition = VaultDefinition(aem)
 
-    fun vaultDefinition(options: VltDefinition.() -> Unit) {
+    fun vaultDefinition(options: VaultDefinition.() -> Unit) {
         vaultDefinition.apply(options)
     }
 
