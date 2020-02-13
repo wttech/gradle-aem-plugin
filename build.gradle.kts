@@ -19,6 +19,7 @@ defaultTasks("build", "publishToMavenLocal")
 
 repositories {
     jcenter()
+    gradlePluginPortal()
 }
 
 dependencies {
