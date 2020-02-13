@@ -97,7 +97,7 @@ class BackupResolver(private val aem: AemExtension) {
 
     private val remoteSources: List<BackupSource>
         get() = when {
-            downloadUrl.isPresent -> {
+            !downloadUrl.get().isNullOrBlank() -> {
                 val dirUrl = downloadUrl.get().substringBeforeLast("/")
                 val name = downloadUrl.get().substringAfterLast("/")
 
@@ -117,7 +117,7 @@ class BackupResolver(private val aem: AemExtension) {
                     listOf()
                 }
             }
-            uploadUrl.isPresent -> {
+            !uploadUrl.get().isNullOrBlank() -> {
                 val fileEntries = common.fileTransfer.list(uploadUrl.get())
                 if (fileEntries.isEmpty()) {
                     aem.logger.info("No instance backups available at URL '$uploadUrl'.")

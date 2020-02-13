@@ -82,5 +82,5 @@ open class InstanceOptions(private val aem: AemExtension) {
      */
     fun parse(url: String): Instance = Instance.parse(aem, url).ifEmpty {
         throw InstanceException("Instance URL cannot be parsed properly '$url'!")
-    }.single().apply { validate() }
+    }.single()
 }

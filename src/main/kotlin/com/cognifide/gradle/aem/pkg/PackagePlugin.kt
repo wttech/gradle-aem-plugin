@@ -80,7 +80,7 @@ class PackagePlugin : CommonDefaultPlugin() {
                 dependsOn(PackageCompose.NAME)
             }
             typed<PackageTask> {
-                files.from(compose.map { it.composedFile })
+                files.from(compose.map { it.archiveFile })
             }
         }
 

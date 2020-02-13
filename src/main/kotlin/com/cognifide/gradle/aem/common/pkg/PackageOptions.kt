@@ -68,43 +68,6 @@ class PackageOptions(private val aem: AemExtension) : Serializable {
     var installRepository = aem.obj.boolean { convention(true) }
 
     /**
-     * Define patterns for known exceptions which could be thrown during package installation
-     * making it impossible to succeed.
-     *
-     * When declared exception is encountered during package installation process, no more
-     * retries will be applied.
-     */
-    var errors = aem.obj.strings {
-        convention(listOf(
-                "javax.jcr.nodetype.*Exception",
-                "org.apache.jackrabbit.oak.api.*Exception",
-                "org.apache.jackrabbit.vault.packaging.*Exception",
-                "org.xml.sax.*Exception"
-        ))
-        aem.prop.list("package.errors")?.let { set(it) }
-    }
-
-    /**
-     * CRX package name conventions (with wildcard) indicating that package can change over time
-     * while having same version specified. Affects CRX packages composed and satisfied.
-     */
-    var snapshots = aem.obj.strings {
-        convention(listOf())
-        aem.prop.list("package.snapshots")?.let { set(it) }
-    }
-
-    /**
-     * Determines number of lines to process at once during reading Package Manager HTML responses.
-     *
-     * The higher the value, the bigger consumption of memory but shorter execution time.
-     * It is a protection against exceeding max Java heap size.
-     */
-    var responseBuffer = aem.obj.int {
-        convention(4096)
-        aem.prop.int("package.responseBuffer")?.let { set(it) }
-    }
-
-    /**
      * Customize default validation options.
      */
     fun validator(options: PackageValidator.() -> Unit) {

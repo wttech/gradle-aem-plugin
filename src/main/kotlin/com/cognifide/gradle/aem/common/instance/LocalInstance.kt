@@ -417,7 +417,7 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
 
         const val LOCK_INIT = "init"
 
-        fun create(aem: AemExtension, httpUrl: String, configurer: LocalInstance.() -> Unit): LocalInstance {
+        fun create(aem: AemExtension, httpUrl: String, configurer: LocalInstance.() -> Unit = {}): LocalInstance {
             return LocalInstance(aem).apply {
                 val instanceUrl = InstanceUrl.parse(httpUrl)
                 if (instanceUrl.user != USER) {
@@ -430,12 +430,9 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
                 this.debugPort = instanceUrl.debugPort
                 this.environment = aem.commonOptions.env.get()
 
-                this.apply(configurer)
+                configurer()
+                validate()
             }
-        }
-
-        fun create(aem: AemExtension, httpUrl: String): LocalInstance {
-            return create(aem, httpUrl) {}
         }
     }
 }

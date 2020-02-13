@@ -80,6 +80,43 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
      */
     var downloadRetry = common.retry { afterSquaredSecond(aem.prop.long("package.manager.downloadRetry") ?: 3) }
 
+    /**
+     * Define patterns for known exceptions which could be thrown during package installation
+     * making it impossible to succeed.
+     *
+     * When declared exception is encountered during package installation process, no more
+     * retries will be applied.
+     */
+    val errors = aem.obj.strings {
+        convention(listOf(
+                "javax.jcr.nodetype.*Exception",
+                "org.apache.jackrabbit.oak.api.*Exception",
+                "org.apache.jackrabbit.vault.packaging.*Exception",
+                "org.xml.sax.*Exception"
+        ))
+        aem.prop.list("package.manager.errors")?.let { set(it) }
+    }
+
+    /**
+     * CRX package name conventions (with wildcard) indicating that package can change over time
+     * while having same version specified. Affects CRX packages composed and satisfied.
+     */
+    val snapshots = aem.obj.strings {
+        convention(listOf())
+        aem.prop.list("package.manager.snapshots")?.let { set(it) }
+    }
+
+    /**
+     * Determines number of lines to process at once during reading Package Manager HTML responses.
+     *
+     * The higher the value, the bigger consumption of memory but shorter execution time.
+     * It is a protection against exceeding max Java heap size.
+     */
+    val responseBuffer = aem.obj.int {
+        convention(4096)
+        aem.prop.int("package.manager.responseBuffer")?.let { set(it) }
+    }
+
     fun get(file: File): Package {
         if (!file.exists()) {
             throw PackageException("Package $file does not exist so it cannot be resolved on $instance")
@@ -224,7 +261,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
 
             val response = try {
                 http.postMultipart(url, mapOf("recursive" to installRecursive.get())) {
-                    InstallResponse.from(asStream(it), aem.packageOptions.responseBuffer.get())
+                    InstallResponse.from(asStream(it), responseBuffer.get())
                 }
             } catch (e: RequestException) {
                 throw InstanceException("Cannot install package $remotePath on $instance. Cause: ${e.message}", e)
@@ -232,7 +269,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
                 throw InstanceException("Malformed response after installing package $remotePath on $instance. Cause: ${e.message}", e)
             }
 
-            if (response.hasPackageErrors(aem.packageOptions.errors.get())) {
+            if (response.hasPackageErrors(errors.get())) {
                 throw PackageException("Cannot install malformed package $remotePath on $instance. Status: ${response.status}. Errors: ${response.errors}")
             } else if (!response.success) {
                 throw InstanceException("Cannot install package $remotePath on $instance. Status: ${response.status}. Errors: ${response.errors}")
@@ -247,7 +284,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         else -> message
     }
 
-    fun isSnapshot(file: File): Boolean = Patterns.wildcard(file, aem.packageOptions.snapshots.get())
+    fun isSnapshot(file: File): Boolean = Patterns.wildcard(file, snapshots.get())
 
     fun deploy(file: File, activate: Boolean = false) {
         val uploadResponse = upload(file)
@@ -293,7 +330,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         logger.info("Deleting package $remotePath on $instance")
 
         val response = try {
-            http.postMultipart(url) { DeleteResponse.from(asStream(it), aem.packageOptions.responseBuffer.get()) }
+            http.postMultipart(url) { DeleteResponse.from(asStream(it), responseBuffer.get()) }
         } catch (e: RequestException) {
             throw InstanceException("Cannot delete package $remotePath from $instance. Cause: ${e.message}", e)
         } catch (e: ResponseException) {
@@ -315,7 +352,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         logger.info("Uninstalling package using command: $url")
 
         val response = try {
-            http.postMultipart(url) { UninstallResponse.from(asStream(it), aem.packageOptions.responseBuffer.get()) }
+            http.postMultipart(url) { UninstallResponse.from(asStream(it), responseBuffer.get()) }
         } catch (e: RequestException) {
             throw InstanceException("Cannot uninstall package $remotePath on $instance. Cause: ${e.message}", e)
         } catch (e: ResponseException) {
