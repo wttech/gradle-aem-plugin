@@ -11,21 +11,18 @@ import org.buildobjects.process.TimeoutException
 
 class Script(val instance: LocalInstance, val shellCommand: List<String>, val wrapper: File, val bin: File) {
 
-    val commandLine: List<String>
-        get() = shellCommand + listOf(wrapper.absolutePath)
+    val commandLine: List<String> get() = shellCommand + listOf(wrapper.absolutePath)
 
-    val command: String
-        get() = commandLine.first()
+    val command: String get() = commandLine.first()
 
-    val args: List<String>
-        get() = commandLine.subList(1, commandLine.size)
+    val args: List<String> get() = commandLine.subList(1, commandLine.size)
 
     @Suppress("SpreadOperator", "TooGenericExceptionCaught")
     fun executeSync(options: ProcBuilder.() -> Unit = {}): ProcResult {
         return try {
             ProcBuilder(command, *args.toTypedArray())
                     .withWorkingDirectory(instance.dir)
-                    .withTimeoutMillis(instance.manager.scriptTimeout)
+                    .withTimeoutMillis(instance.manager.scriptTimeout.get())
                     .ignoreExitStatus()
                     .apply(options)
                     .run()

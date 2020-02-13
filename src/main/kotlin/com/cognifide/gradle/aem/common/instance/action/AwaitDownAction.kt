@@ -58,11 +58,11 @@ class AwaitDownAction(aem: AemExtension) : LocalInstanceAction(aem) {
         }
 
         if (instances.isEmpty()) {
-            aem.logger.info("No instances to await down.")
+            logger.info("No instances to await down.")
             return
         }
 
-        aem.logger.info("Awaiting instance(s) down: ${instances.names}")
+        logger.info("Awaiting instance(s) down: ${instances.names}")
 
         runner.check(instances)
     }

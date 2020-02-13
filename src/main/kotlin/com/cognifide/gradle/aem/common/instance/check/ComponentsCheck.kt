@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.common.instance.check
 
-import com.cognifide.gradle.aem.common.utils.Formats
+import com.cognifide.gradle.common.utils.Formats
 
 @Suppress("MagicNumber")
 class ComponentsCheck(group: CheckGroup) : DefaultCheck(group) {

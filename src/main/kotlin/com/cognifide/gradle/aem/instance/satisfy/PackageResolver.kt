@@ -2,19 +2,21 @@ package com.cognifide.gradle.aem.instance.satisfy
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.bundle.BundleFile
-import com.cognifide.gradle.aem.common.file.resolver.Resolver
 import com.cognifide.gradle.aem.common.pkg.PackageDefinition
-import java.io.File
+import com.cognifide.gradle.common.file.resolver.Resolver
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 
-class PackageResolver(aem: AemExtension, downloadDir: File) : Resolver<PackageGroup>(aem, downloadDir) {
+class PackageResolver(@Internal val aem: AemExtension) : Resolver<PackageGroup>(aem.common) {
 
     /**
      * Determines a path in JCR repository in which automatically wrapped bundles will be deployed.
      */
     @Input
-    var bundlePath: String = aem.prop.string("package.resolver.bundlePath") ?: "/apps/gap/wrap/install"
+    val bundlePath = aem.obj.string {
+        convention("/apps/gap/wrap/install")
+        aem.prop.string("package.resolver.bundlePath")?.let { set(it) }
+    }
 
     /**
      * A hook which could be used to override default properties used to generate a CRX package from OSGi bundle.

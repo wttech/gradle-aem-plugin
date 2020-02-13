@@ -2,33 +2,49 @@
 package com.cognifide.gradle.aem.instance.provision
 
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.common.utils.Formats
-import com.cognifide.gradle.aem.common.utils.Patterns
+import com.cognifide.gradle.aem.common.instance.Instance
+import com.cognifide.gradle.common.utils.Formats
+import com.cognifide.gradle.common.utils.Patterns
 
 /**
  * Configures AEM instances only in concrete circumstances (only once, after some time etc).
  */
 class Provisioner(val aem: AemExtension) {
 
+    private val common = aem.common
+
+    private val logger = aem.logger
+
     /**
      * Instances to perform provisioning.
      */
-    var instances = aem.instances
+    val instances = aem.obj.list<Instance> {
+        convention(aem.obj.provider { aem.instances })
+    }
 
     /**
-     * Forces to perform all steps regardless their state on instances (already performed).
+     * Forces to perform steps that supports greediness regardless their state on instances (already performed).
      */
-    var greedy = aem.prop.flag("instance.provision.greedy")
+    val greedy = aem.obj.boolean {
+        convention(false)
+        aem.prop.boolean("instance.provision.greedy")?.let { set(it) }
+    }
 
     /**
      * Determines which steps should be performed selectively.
      */
-    var stepName = aem.prop.string("instance.provision.step") ?: "*"
+    val stepName = aem.obj.string {
+        convention("*")
+        aem.prop.string("instance.provision.step")?.let { set(it) }
+    }
 
     /**
      * Determines a path in JCR repository in which provisioning metadata and step markers will be stored.
      */
-    var path: String = aem.prop.string("instance.provision.path") ?: "/var/gap/provision"
+    val path = aem.obj.string {
+        convention("/var/gap/provision")
+        aem.prop.string("instance.provision.path")?.let { set(it) }
+    }
 
     private val steps = mutableListOf<Step>()
 
@@ -47,15 +63,15 @@ class Provisioner(val aem: AemExtension) {
 
         val actions = mutableListOf<Action>()
 
-        val stepsFiltered = steps.filter { Patterns.wildcard(it.id, stepName) }
+        val stepsFiltered = steps.filter { Patterns.wildcard(it.id, stepName.get()) }
         if (stepsFiltered.isNotEmpty()) {
             stepsFiltered.forEach { definition ->
                 var intro = "Provision step '${definition.id}'"
                 if (!definition.description.isNullOrBlank()) {
                     intro += " / ${definition.description}"
                 }
-                aem.logger.info(intro)
-                aem.parallel.each(instances) { actions.add(InstanceStep(it, definition).run { provisionStep() }) }
+                logger.info(intro)
+                common.parallel.each(instances.get()) { actions.add(InstanceStep(it, definition).run { provisionStep() }) }
             }
         }
 
@@ -63,27 +79,27 @@ class Provisioner(val aem: AemExtension) {
     }
 
     private fun InstanceStep.provisionStep(): Action {
-        if (!greedy && !isPerformable()) {
+        if (!isPerformable()) {
             update()
-            aem.logger.info("Provision step '${definition.id}' skipped for $instance")
+            logger.info("Provision step '${definition.id}' skipped for $instance")
             return Action(this, Status.SKIPPED)
         }
 
         val startTime = System.currentTimeMillis()
-        aem.logger.info("Provision step '${definition.id}' started at $instance")
+        logger.info("Provision step '${definition.id}' started at $instance")
 
         return try {
             perform()
-            aem.logger.info("Provision step '${definition.id}' ended at $instance." +
+            logger.info("Provision step '${definition.id}' ended at $instance." +
                     " Duration: ${Formats.durationSince(startTime)}")
             Action(this, Status.ENDED)
         } catch (e: ProvisionException) {
-            if (!definition.continueOnFail) {
+            if (!definition.continueOnFail.get()) {
                 throw e
             } else {
-                aem.logger.error("Provision step '${definition.id} failed at $instance." +
+                logger.error("Provision step '${definition.id} failed at $instance." +
                         " Duration: ${Formats.durationSince(startTime)}. Cause: ${e.message}")
-                aem.logger.debug("Actual error", e)
+                logger.debug("Actual error", e)
                 Action(this, Status.FAILED)
             }
         }

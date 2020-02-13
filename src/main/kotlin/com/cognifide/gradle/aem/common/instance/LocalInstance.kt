@@ -5,11 +5,13 @@ import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.instance.local.Script
 import com.cognifide.gradle.aem.common.instance.local.Status
-import com.cognifide.gradle.aem.common.utils.Formats
+import com.cognifide.gradle.common.utils.Formats
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.commons.io.FileUtils
+import org.apache.commons.lang3.JavaVersion
 import org.apache.commons.lang3.StringUtils
+import org.apache.commons.lang3.SystemUtils
 import org.gradle.internal.os.OperatingSystem
 import java.io.File
 import java.io.Serializable
@@ -21,17 +23,32 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
     override lateinit var password: String
 
     var debugPort: Int = 5005
+    var debugAddress: String = ""
+    private val debugSocketAddress: String
+        get() = when (debugAddress) {
+            "*" -> "0.0.0.0:$debugPort"
+            "" -> "$debugPort"
+            else -> "$debugAddress:$debugPort"
+        }
 
     @get:JsonIgnore
     val jvmOptsDefaults: List<String>
         get() = mutableListOf<String>().apply {
-            if (debugPort > 0) {
-                add("-Xdebug")
-                add("-Xrunjdwp:transport=dt_socket,address=$debugPort,server=y,suspend=n")
+            if (debugPort in 1..65535) {
+                add(jvmDebugOpt)
             }
             if (password != Instance.PASSWORD_DEFAULT) {
                 add("-Dadmin.password=$password")
             }
+        }
+
+    @get:JsonIgnore
+    private val jvmDebugOpt: String
+        get() = when {
+            SystemUtils.isJavaVersionAtLeast(JavaVersion.JAVA_9) ->
+                "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=$debugSocketAddress"
+            else ->
+                "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=$debugPort"
         }
 
     @get:JsonIgnore
@@ -62,15 +79,14 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
         get() = (runModesDefault + runModes).joinToString(",")
 
     @get:JsonIgnore
-    val dir: File
-        get() = File(aem.localInstanceManager.rootDir, id)
+    val dir: File get() = aem.localInstanceManager.rootDir.get().asFile.resolve(id)
 
     @get:JsonIgnore
     val overridesDirs: List<File>
-        get() = listOf(
-                File(manager.overridesDir, "common"),
-                File(manager.overridesDir, id)
-        )
+        get() {
+            val parentDir = manager.overridesDir.get().asFile
+            return listOf(parentDir.resolve("common"), parentDir.resolve(id))
+        }
 
     @get:JsonIgnore
     val jar: File
@@ -91,14 +107,14 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
     override val version: String
         get() {
             var result = super.version
-            if (result == Formats.VERSION_UNKNOWN.version && versionFile.exists()) {
+            if (result == Formats.versionUnknown().version && versionFile.exists()) {
                 result = versionFile.readText()
             }
             return result
         }
 
     fun saveVersion() {
-        if (version != Formats.VERSION_UNKNOWN.version) {
+        if (version != Formats.versionUnknown().version) {
             versionFile.writeText(version)
         }
     }
@@ -224,8 +240,8 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
     private fun unpackFiles() {
         logger.info("Unpacking quickstart from JAR '$jar' to directory '$quickstartDir'")
 
-        aem.progressIndicator {
-            message = "Unpacking quickstart JAR: ${jar.name}, size: ${Formats.size(jar)}"
+        common.progressIndicator {
+            message = "Unpacking quickstart JAR: ${jar.name}, size: ${Formats.fileSize(jar)}"
             aem.project.javaexec { spec ->
                 spec.workingDir = dir
                 spec.main = "-jar"
@@ -252,9 +268,9 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
             FileUtils.copyDirectory(it, dir)
         }
 
-        val propertiesAll = mapOf("instance" to this) + properties + manager.expandProperties
+        val propertiesAll = mapOf("instance" to this) + properties + manager.expandProperties.get()
 
-        FileOperations.amendFiles(dir, manager.expandFiles) { file, source ->
+        FileOperations.amendFiles(dir, manager.expandFiles.get()) { file, source ->
             aem.prop.expand(source, propertiesAll, file.absolutePath)
         }
 
@@ -382,8 +398,8 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
 
     @get:JsonIgnore
     val windowTitle get() = "LocalInstance(name='$name', httpUrl='$httpUrl'" +
-            (version.takeIf { it != Formats.VERSION_UNKNOWN.version }?.run { ", version=$this" } ?: "") +
-            ", debugPort=$debugPort, user='$user', password='${Formats.asPassword(password)}')"
+            (version.takeIf { it != Formats.versionUnknown().version }?.run { ", version=$this" } ?: "") +
+            ", debugPort=$debugPort, user='$user', password='${Formats.toPassword(password)}')"
 
     override fun toString(): String {
         return "LocalInstance(name='$name', httpUrl='$httpUrl')"
@@ -391,7 +407,7 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
 
     companion object {
 
-        const val FILES_PATH = "instance"
+        const val FILES_PATH = "instance/local"
 
         const val ENVIRONMENT = "local"
 
@@ -401,7 +417,7 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
 
         const val LOCK_INIT = "init"
 
-        fun create(aem: AemExtension, httpUrl: String, configurer: LocalInstance.() -> Unit): LocalInstance {
+        fun create(aem: AemExtension, httpUrl: String, configurer: LocalInstance.() -> Unit = {}): LocalInstance {
             return LocalInstance(aem).apply {
                 val instanceUrl = InstanceUrl.parse(httpUrl)
                 if (instanceUrl.user != USER) {
@@ -412,14 +428,11 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
                 this.password = instanceUrl.password
                 this.id = instanceUrl.id
                 this.debugPort = instanceUrl.debugPort
-                this.environment = aem.env
+                this.environment = aem.commonOptions.env.get()
 
-                this.apply(configurer)
+                configurer()
+                validate()
             }
-        }
-
-        fun create(aem: AemExtension, httpUrl: String): LocalInstance {
-            return create(aem, httpUrl) {}
         }
     }
 }

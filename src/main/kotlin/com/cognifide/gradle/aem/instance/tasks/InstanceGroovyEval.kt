@@ -6,10 +6,6 @@ import org.gradle.api.tasks.TaskAction
 
 open class InstanceGroovyEval : AemDefaultTask() {
 
-    init {
-        description = "Evaluate Groovy script(s) on instance(s)."
-    }
-
     private var options: GroovyEvaluator.() -> Unit = {}
 
     fun options(options: GroovyEvaluator.() -> Unit) {
@@ -18,10 +14,10 @@ open class InstanceGroovyEval : AemDefaultTask() {
 
     @TaskAction
     fun eval() = aem.groovyEval {
-        aem.prop.string("instance.groovyEval.script")?.let { scriptPattern = it }
-        aem.prop.string("instance.groovyEval.scriptSuffix")?.let { scriptSuffix = it }
-        aem.prop.map("instance.groovyEval.data")?.let { data = it }
-        aem.prop.boolean("instance.groovyEval.faulty")?.let { faulty = it }
+        aem.prop.string("instance.groovyEval.script")?.let { scriptPattern.set(it) }
+        aem.prop.string("instance.groovyEval.scriptSuffix")?.let { scriptSuffix.set(it) }
+        aem.prop.map("instance.groovyEval.data")?.let { data.set(it) }
+        aem.prop.boolean("instance.groovyEval.faulty")?.let { faulty.set(it) }
 
         options()
 
@@ -30,11 +26,15 @@ open class InstanceGroovyEval : AemDefaultTask() {
             logger.lifecycle("Lack of Groovy script(s) to evaluate matching pattern '$scriptPattern'")
         } else {
             val summary = evalScripts(scripts)
-            aem.notifier.lifecycle(
+            common.notifier.lifecycle(
                     "Evaluated Groovy script(s)",
                     "Succeeded: ${summary.succeededPercent}. Elapsed time: ${summary.durationString}"
             )
         }
+    }
+
+    init {
+        description = "Evaluate Groovy script(s) on instance(s)."
     }
 
     companion object {

@@ -1,9 +1,9 @@
 package com.cognifide.gradle.aem.common.instance.check
 
-import com.cognifide.gradle.aem.common.build.BuildScope
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.InstanceSync
 import com.cognifide.gradle.aem.common.instance.LocalInstance
+import com.cognifide.gradle.common.build.BuildScope
 import org.apache.http.HttpStatus
 import org.gradle.api.logging.LogLevel
 

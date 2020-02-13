@@ -8,18 +8,18 @@ class LogParser(
 
     fun parse(reader: BufferedReader): List<Log> {
         val firstLogLine = skipIncomplete(reader)
-        return parse(reader, firstLogLine)
+        return parse(reader, firstLogLine, listOf())
     }
 
-    private fun parse(reader: BufferedReader, firstLineOfLog: String?): List<Log> {
+    private tailrec fun parse(reader: BufferedReader, firstLineOfLog: String?, result: List<Log>): List<Log> {
         val (log, firstLineOfNextLog) = read(reader, firstLineOfLog)
         if (log == null) {
-            return emptyList()
+            return result
         }
         if (firstLineOfNextLog == null) {
-            return listOf(log)
+            return result + log
         }
-        return listOf(log) + parse(reader, firstLineOfNextLog)
+        return parse(reader, firstLineOfNextLog, result + log)
     }
 
     private fun read(reader: BufferedReader, firstLogLine: String?): Pair<Log?, String?> {
@@ -46,7 +46,7 @@ class LogParser(
         }
     }
 
-    private fun skipIncomplete(reader: BufferedReader): String? {
+    private tailrec fun skipIncomplete(reader: BufferedReader): String? {
         val line: String? = readLine(reader)
         return when {
             line == null -> null

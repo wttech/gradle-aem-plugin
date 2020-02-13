@@ -2,10 +2,10 @@ package com.cognifide.gradle.aem.common.pkg
 
 import aQute.bnd.osgi.Jar
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.common.file.FileContentReader
 import com.cognifide.gradle.aem.common.instance.service.osgi.Bundle
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
-import com.cognifide.gradle.aem.common.utils.Patterns
+import com.cognifide.gradle.common.file.FileContentReader
+import com.cognifide.gradle.common.utils.Patterns
 import java.io.File
 import java.io.Serializable
 import org.gradle.api.file.CopySpec
@@ -51,12 +51,14 @@ class PackageFileFilter(private val aem: AemExtension) : Serializable {
             spec.exclude(excludeFiles)
         }
 
+        val expandPropertiesAll = expandProperties + this.expandProperties + mapOf("aem" to aem)
+
         spec.eachFile { fileDetail ->
             val path = "/${fileDetail.relativePath.pathString.removePrefix("/")}"
 
             if (expanding && Patterns.wildcard(path, expandFiles)) {
                 FileContentReader.filter(fileDetail) {
-                    aem.prop.expandPackage(it, expandProperties + this.expandProperties, path)
+                    aem.prop.expand(it, expandPropertiesAll, path)
                 }
             }
 

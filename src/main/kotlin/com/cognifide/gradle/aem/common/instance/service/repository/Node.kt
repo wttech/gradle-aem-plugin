@@ -1,8 +1,9 @@
 package com.cognifide.gradle.aem.common.instance.service.repository
 
-import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.common.pkg.PackageDefinition
-import com.cognifide.gradle.aem.common.utils.Formats
+import com.cognifide.gradle.aem.common.utils.JcrUtil
+import com.cognifide.gradle.common.CommonException
+import com.cognifide.gradle.common.utils.Formats
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.jayway.jsonpath.PathNotFoundException
 import net.minidev.json.JSONArray
@@ -94,7 +95,7 @@ class Node(val repository: Repository, val path: String) : Serializable {
                     }
                 }
                 .asSequence()
-        } catch (e: AemException) {
+        } catch (e: CommonException) {
             throw RepositoryException("Cannot read children of node '$path' on $instance. Cause: ${e.message}", e)
         }
     }
@@ -115,7 +116,7 @@ class Node(val repository: Repository, val path: String) : Serializable {
             existsCheck = try {
                 log("Checking repository node '$path' existence on $instance")
                 http.head(path) { it.statusLine.statusCode != HttpStatus.SC_NOT_FOUND }
-            } catch (e: AemException) {
+            } catch (e: CommonException) {
                 throw RepositoryException("Cannot check repository node existence: $path on $instance. Cause: ${e.message}", e)
             }
         }
@@ -132,8 +133,66 @@ class Node(val repository: Repository, val path: String) : Serializable {
         http.postMultipart(path, postProperties(properties) + operationProperties("")) {
             asObjectFromJson(it, RepositoryResult::class.java)
         }
-    } catch (e: AemException) {
+    } catch (e: CommonException) {
         throw RepositoryException("Cannot save repository node '$path' on $instance. Cause: ${e.message}", e)
+    }
+
+    /**
+     * Import node into repository.
+     *
+     * Effectively it is an alternative method for saving node supporting dots in node names.
+     */
+    fun import(
+        properties: Map<String, Any?>,
+        name: String? = null,
+        replace: Boolean = false,
+        replaceProperties: Boolean = false
+    ) = importInternal(importParams(properties, null, name, replace, replaceProperties))
+
+    /**
+     * Import content structure defined in JSON file into repository.
+     */
+    fun import(
+        file: File,
+        name: String? = null,
+        replace: Boolean = false,
+        replaceProperties: Boolean = false
+    ): RepositoryResult {
+        if (!file.exists()) {
+            throw RepositoryException("File containing JSON content for node import does not exist: $file!")
+        }
+
+        return importInternal(importParams(null, file, name, replace, replaceProperties))
+    }
+
+    private fun importInternal(params: Map<String, Any?>) = try {
+        log("Importing node '$name' into repository node '$path' on $instance")
+
+        http.postMultipart(path, params) {
+            asObjectFromJson(it, RepositoryResult::class.java)
+        }
+    } catch (e: CommonException) {
+        throw RepositoryException("Cannot import node '$name' into repository node '$path' on $instance. Cause: ${e.message}", e)
+    }
+
+    private fun importParams(
+        properties: Map<String, Any?>? = null,
+        file: File? = null,
+        name: String? = null,
+        replace: Boolean = false,
+        replaceProperties: Boolean = false
+    ): Map<String, Any?> {
+        return mutableMapOf<String, Any?>().apply {
+            putAll(operationProperties("import"))
+            putAll(mapOf(
+                    ":replace" to replace,
+                    ":replaceProperties" to replaceProperties,
+                    ":contentType" to "json"
+            ))
+            name?.let { put(":name", it) }
+            properties?.let { put(":content", Formats.toJson(properties)) }
+            file?.let { put(":contentFile", file) }
+        }
     }
 
     /**
@@ -145,7 +204,7 @@ class Node(val repository: Repository, val path: String) : Serializable {
         http.postMultipart(path, operationProperties("delete")) {
             asObjectFromJson(it, RepositoryResult::class.java)
         }
-    } catch (e: AemException) {
+    } catch (e: CommonException) {
         throw RepositoryException("Cannot delete repository node '$path' on $instance. Cause: ${e.message}", e)
     }
 
@@ -168,14 +227,28 @@ class Node(val repository: Repository, val path: String) : Serializable {
     /**
      * Copy node to from source path to destination path.
      */
-    fun copy(targetPath: String) {
-        try {
-            http.postUrlencoded(path, operationProperties("copy") + mapOf(
-                    ":dest" to targetPath
-            )) { checkStatus(it, HttpStatus.SC_CREATED) }
-        } catch (e: AemException) {
-            throw RepositoryException("Cannot copy repository node from '$path' to '$targetPath' on $instance. Cause: '${e.message}'")
-        }
+    fun copy(targetPath: String): Node = try {
+        http.postUrlencoded(path, operationProperties("copy") + mapOf(
+                ":dest" to targetPath
+        )) { checkStatus(it, HttpStatus.SC_CREATED) }
+
+        Node(repository, targetPath)
+    } catch (e: CommonException) {
+        throw RepositoryException("Cannot copy repository node from '$path' to '$targetPath' on $instance. Cause: '${e.message}'")
+    }
+
+    /**
+     * Move node from source path to destination path.
+     */
+    fun move(targetPath: String, replace: Boolean = false): Node = try {
+        http.postUrlencoded(path, operationProperties("move") + mapOf(
+                ":dest" to targetPath,
+                ":replace" to replace
+        )) { checkStatus(it, listOf(HttpStatus.SC_CREATED, HttpStatus.SC_OK)) }
+
+        Node(repository, targetPath)
+    } catch (e: CommonException) {
+        throw RepositoryException("Cannot move repository node from '$path' to '$targetPath' on $instance. Cause: '${e.message}'")
     }
 
     /**
@@ -186,7 +259,7 @@ class Node(val repository: Repository, val path: String) : Serializable {
     /**
      * Copy node from other path to current path.
      */
-    fun copyFrom(sourcePath: String) = repository.node(sourcePath).copy(path)
+    fun copyFrom(sourcePath: String) = Node(repository, sourcePath).copy(path)
 
     /**
      * Search nodes by traversing a node tree.
@@ -253,7 +326,7 @@ class Node(val repository: Repository, val path: String) : Serializable {
                 val props = asJson(response).json<LinkedHashMap<String, Any>>()
                 Properties(this@Node, props).apply { propertiesLoaded = this }
             }
-        } catch (e: AemException) {
+        } catch (e: CommonException) {
             throw RepositoryException("Cannot read properties of node '$path' on $instance. Cause: ${e.message}", e)
         }
     }
@@ -268,7 +341,7 @@ class Node(val repository: Repository, val path: String) : Serializable {
                 null -> props["$name@Delete"] = ""
                 else -> {
                     props[name] = RepositoryType.normalize(value)
-                    if (repository.typeHints) {
+                    if (repository.typeHints.get()) {
                         RepositoryType.hint(value)?.let { props["$name@TypeHint"] = it }
                     }
                 }
@@ -287,7 +360,7 @@ class Node(val repository: Repository, val path: String) : Serializable {
     }
 
     private fun log(message: String, e: Throwable? = null) {
-        if (repository.verboseLogging) {
+        if (repository.verboseLogging.get()) {
             logger.info(message, e)
         } else {
             logger.debug(message, e)
@@ -304,7 +377,7 @@ class Node(val repository: Repository, val path: String) : Serializable {
     fun download(options: PackageDefinition.() -> Unit = {}): File {
         val node = this
         return repository.sync.packageManager.download {
-            archiveBaseName = Formats.manglePath(node.name)
+            archiveBaseName.set(JcrUtil.manglePath(node.name))
             filter(node.path)
             options()
         }

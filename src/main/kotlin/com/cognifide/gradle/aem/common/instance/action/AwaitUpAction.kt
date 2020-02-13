@@ -84,13 +84,13 @@ class AwaitUpAction(aem: AemExtension) : AnyInstanceAction(aem) {
             return
         }
 
-        if (instances.isEmpty()) {
-            aem.logger.info("No instances to await up.")
+        if (instances.get().isEmpty()) {
+            logger.info("No instances to await up.")
             return
         }
 
-        aem.logger.info("Awaiting instance(s) up: ${instances.names}")
+        logger.info("Awaiting instance(s) up: ${instances.get().names}")
 
-        runner.check(instances)
+        runner.check(instances.get())
     }
 }

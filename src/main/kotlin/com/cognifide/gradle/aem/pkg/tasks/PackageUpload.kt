@@ -10,21 +10,14 @@ open class PackageUpload : PackageTask() {
 
     @TaskAction
     fun upload() {
-        instances.checkAvailable()
-
-        aem.progress(instances.size * packages.size) {
-            aem.syncFiles(instances, packages) { pkg ->
-                increment("${pkg.name} -> ${instance.name}") {
-                    packageManager.upload(pkg)
-                }
-            }
-        }
-
-        aem.notifier.notify("Package uploaded", "${packages.fileNames} from ${instances.names}")
+        instances.get().checkAvailable()
+        sync { packageManager.upload(it) }
+        common.notifier.notify("Package uploaded", "${files.files.fileNames} from ${instances.get().names}")
     }
 
     init {
         description = "Uploads AEM package to instance(s)."
+        awaited.convention(false)
     }
 
     companion object {

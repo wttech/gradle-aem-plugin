@@ -19,6 +19,8 @@ abstract class AemBuildTest {
         resolve(path).apply { parentFile.mkdirs() }.writeText(text.trimIndent())
     }
 
+    fun File.buildSrc(text: String) = file("buildSrc/build.gradle.kts", text)
+
     fun File.settingsGradle(text: String) = file("settings.gradle.kts", text)
 
     fun File.buildGradle(text: String) = file("build.gradle.kts", text)

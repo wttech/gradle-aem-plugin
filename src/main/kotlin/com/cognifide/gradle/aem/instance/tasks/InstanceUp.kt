@@ -8,10 +8,6 @@ import org.gradle.api.tasks.TaskAction
 
 open class InstanceUp : LocalInstanceTask() {
 
-    init {
-        description = "Turns on local AEM instance(s)."
-    }
-
     private var awaitOptions: AwaitUpAction.() -> Unit = {}
 
     /**
@@ -29,30 +25,34 @@ open class InstanceUp : LocalInstanceTask() {
             return
         }
 
-        aem.progress(downInstances.size) {
+        common.progress(downInstances.size) {
             downInstances.onEachApply {
                 increment("Customizing instance '$name'") { customize() }
             }
         }
 
-        aem.progress(downInstances.size) {
-            aem.parallel.with(downInstances) {
+        common.progress(downInstances.size) {
+            common.parallel.with(downInstances) {
                 increment("Starting instance '$name'") { up() }
             }
         }
 
         aem.instanceActions.awaitUp {
-            instances = downInstances
+            instances.convention(downInstances)
             awaitOptions()
         }
 
-        aem.progress(downInstances.size) {
-            aem.parallel.with(downInstances) {
+        common.progress(downInstances.size) {
+            common.parallel.with(downInstances) {
                 increment("Initializing instance '$name'") { init() }
             }
         }
 
-        aem.notifier.lifecycle("Instance(s) up", "Which: ${downInstances.names}")
+        common.notifier.lifecycle("Instance(s) up", "Which: ${downInstances.names}")
+    }
+
+    init {
+        description = "Turns on local AEM instance(s)."
     }
 
     companion object {

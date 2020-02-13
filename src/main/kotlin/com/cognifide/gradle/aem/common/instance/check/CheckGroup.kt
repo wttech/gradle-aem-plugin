@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.common.instance.check
 
-import com.cognifide.gradle.aem.common.build.CollectingLogger
 import com.cognifide.gradle.aem.common.instance.Instance
+import com.cognifide.gradle.common.build.CollectingLogger
 import org.apache.commons.lang3.builder.HashCodeBuilder
 
 class CheckGroup(

@@ -1,9 +1,9 @@
 package com.cognifide.gradle.aem.instance.tail.io
 
-import com.cognifide.gradle.aem.common.http.RequestException
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.instance.tail.InstanceTailer
 import com.cognifide.gradle.aem.instance.tail.LogSource
+import com.cognifide.gradle.common.http.RequestException
 import java.io.BufferedReader
 
 class UrlSource(

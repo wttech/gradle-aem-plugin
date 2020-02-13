@@ -1,12 +1,12 @@
 package com.cognifide.gradle.aem.common.instance
 
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.common.http.HttpClient
-import com.cognifide.gradle.aem.common.http.ResponseException
+import com.cognifide.gradle.common.http.HttpClient
+import com.cognifide.gradle.common.http.ResponseException
 import org.apache.http.HttpResponse
 
 @Suppress("MagicNumber")
-open class InstanceHttpClient(aem: AemExtension, val instance: Instance) : HttpClient(aem) {
+open class InstanceHttpClient(aem: AemExtension, val instance: Instance) : HttpClient(aem.common) {
 
     init {
         baseUrl = instance.httpUrl

@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.instance.tail.io
 
-import com.cognifide.gradle.aem.common.utils.Formats
+import com.cognifide.gradle.common.utils.Formats
 import com.cognifide.gradle.aem.instance.tail.InstanceTailer
 import java.io.BufferedWriter
 import java.io.File
@@ -10,21 +10,15 @@ import org.apache.commons.io.FileUtils
 
 class LogFiles(private val tailer: InstanceTailer) {
 
-    fun main(instanceName: String): File {
-        val file = File(tailer.rootDir, "$instanceName/${tailer.logFile}")
-        file.parentFile.mkdirs()
+    fun main(instanceName: String) = tailer.logStorageDir.get().asFile
+            .resolve("$instanceName/${tailer.logFile}")
+            .apply { parentFile.mkdirs() }
 
-        return file
-    }
+    fun incidentDir(instanceName: String) = tailer.logStorageDir.get().asFile
+            .resolve("$instanceName/$INCIDENT_DIR")
 
-    fun incidentDir(instanceName: String): File = File(tailer.rootDir, "$instanceName/$INCIDENT_DIR")
-
-    fun incidentFile(instanceName: String): File {
-        val file = File(incidentDir(instanceName), "${Formats.dateFileName()}-${tailer.logFile}")
-        file.parentFile.mkdirs()
-
-        return file
-    }
+    fun incidentFile(instanceName: String) = incidentDir(instanceName).resolve("${Formats.dateFileName()}-${tailer.logFile}")
+            .apply { parentFile.mkdirs() }
 
     fun clearMain(instanceName: String) = main(instanceName).bufferedWriter().use { it.write("") }
 
@@ -45,7 +39,7 @@ class LogFiles(private val tailer: InstanceTailer) {
     }
 
     fun isLocked(): Boolean {
-        return lockFile.exists() && lockFile.lastModified() + tailer.lockInterval > System.currentTimeMillis()
+        return lockFile.exists() && lockFile.lastModified() + tailer.lockInterval.get() > System.currentTimeMillis()
     }
 
     private fun lock(file: File) {
@@ -56,8 +50,7 @@ class LogFiles(private val tailer: InstanceTailer) {
         }
     }
 
-    private val lockFile: File
-        get() = tailer.rootDir.resolve(LOCK_FILE).apply { parentFile.mkdirs() }
+    private val lockFile: File get() = tailer.logStorageDir.get().asFile.resolve(LOCK_FILE).apply { parentFile.mkdirs() }
 
     companion object {
 

@@ -12,124 +12,126 @@
 
 ## Table of contents
 
-  * [About](#about)
-     * [Screenshot](#screenshot)
-     * [Features](#features)
-     * [Important notice](#important-notice)
-  * [Getting started](#getting-started)
-  * [Configuration](#configuration)
-     * [Plugin setup](#plugin-setup)
-        * [Minimal](#minimal)
-        * [Additional](#additional)
-     * [Common plugin](#common-plugin)
-        * [Task debug](#task-debug)
-        * [Instance conventions](#instance-conventions)
-        * [Defining instances via properties file](#defining-instances-via-properties-file)
-        * [Defining instances via build script](#defining-instances-via-build-script)
-        * [Instance filtering](#instance-filtering)
-        * [Instance URL credentials encoding](#instance-url-credentials-encoding)
-        * [Implementing tasks](#implementing-tasks)
-           * [Instance services](#instance-services)
-           * [Defining CRX package via code then downloading and sharing it using external HTTP endpoint](#defining-crx-package-via-code-then-downloading-and-sharing-it-using-external-http-endpoint)
-           * [Calling AEM endpoints / making any HTTP requests](#calling-aem-endpoints--making-any-http-requests)
-           * [Downloading CRX package from external HTTP endpoint and deploying it on desired AEM instances](#downloading-crx-package-from-external-http-endpoint-and-deploying-it-on-desired-aem-instances)
-           * [Working with content repository (JCR)](#working-with-content-repository-jcr)
-           * [Executing code on AEM runtime](#executing-code-on-aem-runtime)
-           * [Controlling OSGi bundles, components and configurations](#controlling-osgi-bundles-components-and-configurations)
-           * [Controlling workflows](#controlling-workflows)
-           * [Running Docker image based tools](#running-docker-image-based-tools)
-        * [Properties expanding in instance or package files](#properties-expanding-in-instance-or-package-files)
-     * [Package plugin](#package-plugin)
-        * [Task packageCompose](#task-packagecompose)
-           * [CRX package default configuration](#crx-package-default-configuration)
-           * [CRX package validation](#crx-package-validation)
-           * [Including additional OSGi bundle into CRX package](#including-additional-osgi-bundle-into-crx-package)
-           * [Nesting CRX packages](#nesting-crx-packages)
-           * [Assembling packages (merging all-in-one)](#assembling-packages-merging-all-in-one)
-           * [Expandable properties](#expandable-properties)
-        * [Task packagePrepare](#task-packageprepare)
-        * [Task packageDeploy](#task-packagedeploy)
-           * [Deploying only to desired instances](#deploying-only-to-desired-instances)
-           * [Deploying options](#deploying-options)
-        * [Task packageUpload](#task-packageupload)
-        * [Task packageDelete](#task-packagedelete)
-        * [Task packageInstall](#task-packageinstall)
-        * [Task packageUninstall](#task-packageuninstall)
-        * [Task packagePurge](#task-packagepurge)
-        * [Task packageActivate](#task-packageactivate)
-     * [Package sync plugin](#package-sync-plugin)
-        * [Task packageSync](#task-packagesync)
-           * [Cleaning features](#cleaning-features)
-           * [Default cleaning configuration](#default-cleaning-configuration)
-           * [Rendition cleaning configuration](#rendition-cleaning-configuration)
-           * [Using alternative transfer type](#using-alternative-transfer-type)
-           * [Downloading package options](#downloading-package-options)
-           * [Copying or cleaning content only](#copying-or-cleaning-content-only)
-           * [Filter file at custom path](#filter-file-at-custom-path)
-           * [Filter roots specified explicitly](#filter-roots-specified-explicitly)
-        * [Task packageVlt](#task-packagevlt)
-     * [Bundle plugin](#bundle-plugin)
-        * [Bundle conventions](#bundle-conventions)
-        * [Embedding JAR file into OSGi bundle](#embedding-jar-file-into-osgi-bundle)
-        * [Configuring OSGi bundle manifest attributes](#configuring-osgi-bundle-manifest-attributes)
-        * [Excluding packages being incidentally imported by OSGi bundle](#excluding-packages-being-incidentally-imported-by-osgi-bundle)
-        * [Task bundleInstall](#task-bundleinstall)
-        * [Task bundleUninstall](#task-bundleuninstall)
-     * [Instance plugin](#instance-plugin)
-        * [Instance file structure](#instance-file-structure)
-        * [Task instanceSetup](#task-instancesetup)
-        * [Task instanceResetup](#task-instanceresetup)
-        * [Task instanceCreate](#task-instancecreate)
-           * [Configuration of AEM instance source (JAR file or backup file)](#configuration-of-aem-instance-source-jar-file-or-backup-file)
-           * [Pre-installed OSGi bundles and CRX packages](#pre-installed-osgi-bundles-and-crx-packages)
-           * [Extracted instance files configuration (optional)](#extracted-instance-files-configuration-optional)
-        * [Task instanceBackup](#task-instancebackup)
-           * [Work with remote instance backups](#work-with-remote-instance-backups)
-        * [Task instanceDestroy](#task-instancedestroy)
-        * [Task instanceUp](#task-instanceup)
-        * [Task instanceDown](#task-instancedown)
-        * [Task instanceRestart](#task-instancerestart)
-        * [Task instanceReload](#task-instancereload)
-        * [Task instanceResolve](#task-instanceresolve)
-        * [Task instanceSatisfy](#task-instancesatisfy)
-        * [Task instanceProvision](#task-instanceprovision)
-        * [Task instanceAwait](#task-instanceawait)
-        * [Task instanceTail](#task-instancetail)
-           * [Tailing incidents](#tailing-incidents)
-           * [Tailing to console](#tailing-to-console)
-           * [Tailing multiple instances](#tailing-multiple-instances)
-           * [Standalone tailer tool](#standalone-tailer-tool)
-        * [Task instanceRcp](#task-instancercp)
-        * [Task instanceGroovyEval](#task-instancegroovyeval)
-     * [Environment plugin](#environment-plugin)
-        * [Environment configuration](#environment-configuration)
-           * [Notice for Docker on Windows](#notice-for-docker-on-windows)
-           * [Notice for Docker Toolbox](#notice-for-docker-toolbox)
-        * [Environment file structure](#environment-file-structure)
-        * [Environment service health checks](#environment-service-health-checks)
-        * [Task environmentUp](#task-environmentup)
-        * [Task environmentDown](#task-environmentdown)
-        * [Task environmentDev](#task-environmentdev)
-        * [Task environmentAwait](#task-environmentawait)
-        * [Task environmentReload](#task-environmentreload)
-        * [Task environmentHosts](#task-environmenthosts)
-  * [How to's](#how-tos)
-     * [Set AEM configuration properly for all / concrete project(s)](#set-aem-configuration-properly-for-all--concrete-projects)
-     * [Use lifecycle tasks](#use-lifecycle-tasks)
-     * [Understand why there are one or two plugins to be applied in build script](#understand-why-there-are-one-or-two-plugins-to-be-applied-in-build-script)
-     * [Work effectively on start and daily basis](#work-effectively-on-start-and-daily-basis)
-     * [Customize convention for CRX package and OSGi bundle names and paths](#customize-convention-for-crx-package-and-osgi-bundle-names-and-paths)
-  * [Known issues](#known-issues)
-     * [Failed to await HTTPD service](#failed-to-await-httpd-service)
-     * [BND tool error - Classes found in wrong directory](#bnd-tool-error---classes-found-in-wrong-directory)
-     * [No OSGi services / components registered](#no-osgi-services--components-registered)
-     * [Caching task packageCompose](#caching-task-packagecompose)
-     * [Vault tasks parallelism](#vault-tasks-parallelism)
-  * [Compatibility](#compatibility)
-  * [Building](#building)
-  * [Testing](#testing)
-  * [Contributing](#contributing)
-  * [License](#license)
+* [About](#about)
+   * [Screenshot](#screenshot)
+   * [Features](#features)
+   * [Important notice](#important-notice)
+* [Getting started](#getting-started)
+* [Configuration](#configuration)
+   * [Plugin setup](#plugin-setup)
+      * [Minimal](#minimal)
+      * [Additional](#additional)
+   * [Common plugin](#common-plugin)
+      * [Task debug](#task-debug)
+      * [Instance conventions](#instance-conventions)
+      * [Defining instances via properties file](#defining-instances-via-properties-file)
+      * [Defining instances via build script](#defining-instances-via-build-script)
+      * [Instance filtering](#instance-filtering)
+      * [Instance URL credentials encoding](#instance-url-credentials-encoding)
+      * [Implementing tasks](#implementing-tasks)
+         * [Instance services](#instance-services)
+         * [Defining CRX package via code then downloading and sharing it using external HTTP endpoint](#defining-crx-package-via-code-then-downloading-and-sharing-it-using-external-http-endpoint)
+         * [Calling AEM endpoints / making any HTTP requests](#calling-aem-endpoints--making-any-http-requests)
+         * [Downloading CRX package from external HTTP endpoint and deploying it on desired AEM instances](#downloading-crx-package-from-external-http-endpoint-and-deploying-it-on-desired-aem-instances)
+         * [Working with content repository (JCR)](#working-with-content-repository-jcr)
+         * [Executing code on AEM runtime](#executing-code-on-aem-runtime)
+         * [Controlling OSGi bundles, components and configurations](#controlling-osgi-bundles-components-and-configurations)
+         * [Controlling workflows](#controlling-workflows)
+         * [Running Docker image based tools](#running-docker-image-based-tools)
+      * [Properties expanding in instance or package files](#properties-expanding-in-instance-or-package-files)
+   * [Package plugin](#package-plugin)
+      * [Task packageCompose](#task-packagecompose)
+         * [CRX package default configuration](#crx-package-default-configuration)
+         * [CRX package naming](#crx-package-naming)
+         * [CRX package validation](#crx-package-validation)
+         * [Including additional OSGi bundle into CRX package](#including-additional-osgi-bundle-into-crx-package)
+         * [Nesting CRX packages](#nesting-crx-packages)
+         * [Assembling packages (merging all-in-one)](#assembling-packages-merging-all-in-one)
+         * [Expandable properties](#expandable-properties)
+      * [Task packagePrepare](#task-packageprepare)
+      * [Task packageDeploy](#task-packagedeploy)
+         * [Deploying only to desired instances](#deploying-only-to-desired-instances)
+         * [Deploying options](#deploying-options)
+      * [Task packageUpload](#task-packageupload)
+      * [Task packageDelete](#task-packagedelete)
+      * [Task packageInstall](#task-packageinstall)
+      * [Task packageUninstall](#task-packageuninstall)
+      * [Task packagePurge](#task-packagepurge)
+      * [Task packageActivate](#task-packageactivate)
+   * [Package sync plugin](#package-sync-plugin)
+      * [Task packageSync](#task-packagesync)
+         * [Cleaning features](#cleaning-features)
+         * [Default cleaning configuration](#default-cleaning-configuration)
+         * [Rendition cleaning configuration](#rendition-cleaning-configuration)
+         * [Using alternative transfer type](#using-alternative-transfer-type)
+         * [Downloading package options](#downloading-package-options)
+         * [Copying or cleaning content only](#copying-or-cleaning-content-only)
+         * [Filter file at custom path](#filter-file-at-custom-path)
+         * [Filter roots specified explicitly](#filter-roots-specified-explicitly)
+      * [Task packageVlt](#task-packagevlt)
+   * [Bundle plugin](#bundle-plugin)
+      * [Bundle conventions](#bundle-conventions)
+      * [Embedding JAR file into OSGi bundle](#embedding-jar-file-into-osgi-bundle)
+      * [Configuring OSGi bundle manifest attributes](#configuring-osgi-bundle-manifest-attributes)
+      * [Excluding packages being incidentally imported by OSGi bundle](#excluding-packages-being-incidentally-imported-by-osgi-bundle)
+      * [Task bundleInstall](#task-bundleinstall)
+      * [Task bundleUninstall](#task-bundleuninstall)
+   * [Instance plugin](#instance-plugin)
+      * [Instance file structure](#instance-file-structure)
+      * [Task instanceSetup](#task-instancesetup)
+      * [Task instanceResetup](#task-instanceresetup)
+      * [Task instanceCreate](#task-instancecreate)
+         * [Configuration of AEM instance source (JAR file or backup file)](#configuration-of-aem-instance-source-jar-file-or-backup-file)
+         * [Pre-installed OSGi bundles and CRX packages](#pre-installed-osgi-bundles-and-crx-packages)
+         * [Customization of extracted instance files (optional)](#customization-of-extracted-instance-files-optional)
+            * [Customization of sling.properties files](#customization-of-slingproperties-files)
+      * [Task instanceBackup](#task-instancebackup)
+         * [Work with remote instance backups](#work-with-remote-instance-backups)
+      * [Task instanceDestroy](#task-instancedestroy)
+      * [Task instanceUp](#task-instanceup)
+      * [Task instanceDown](#task-instancedown)
+      * [Task instanceRestart](#task-instancerestart)
+      * [Task instanceReload](#task-instancereload)
+      * [Task instanceResolve](#task-instanceresolve)
+      * [Task instanceSatisfy](#task-instancesatisfy)
+      * [Task instanceProvision](#task-instanceprovision)
+      * [Task instanceAwait](#task-instanceawait)
+      * [Task instanceTail](#task-instancetail)
+         * [Tailing incidents](#tailing-incidents)
+         * [Tailing to console](#tailing-to-console)
+         * [Tailing multiple instances](#tailing-multiple-instances)
+         * [Standalone tailer tool](#standalone-tailer-tool)
+      * [Task instanceRcp](#task-instancercp)
+      * [Task instanceGroovyEval](#task-instancegroovyeval)
+   * [Environment plugin](#environment-plugin)
+      * [Environment configuration](#environment-configuration)
+         * [Notice for Docker on Windows](#notice-for-docker-on-windows)
+         * [Notice for Docker Toolbox](#notice-for-docker-toolbox)
+      * [Environment file structure](#environment-file-structure)
+      * [Environment service health checks](#environment-service-health-checks)
+      * [Task environmentUp](#task-environmentup)
+      * [Task environmentDown](#task-environmentdown)
+      * [Task environmentDev](#task-environmentdev)
+      * [Task environmentAwait](#task-environmentawait)
+      * [Task environmentReload](#task-environmentreload)
+      * [Task environmentHosts](#task-environmenthosts)
+* [How to's](#how-tos)
+   * [Set AEM configuration properly for all / concrete project(s)](#set-aem-configuration-properly-for-all--concrete-projects)
+   * [Use lifecycle tasks](#use-lifecycle-tasks)
+   * [Understand why there are one or two plugins to be applied in build script](#understand-why-there-are-one-or-two-plugins-to-be-applied-in-build-script)
+   * [Work effectively on start and daily basis](#work-effectively-on-start-and-daily-basis)
+   * [Customize convention for CRX package and OSGi bundle names and paths](#customize-convention-for-crx-package-and-osgi-bundle-names-and-paths)
+* [Known issues](#known-issues)
+   * [Failed to await HTTPD service](#failed-to-await-httpd-service)
+   * [BND tool error - Classes found in wrong directory](#bnd-tool-error---classes-found-in-wrong-directory)
+   * [No OSGi services / components registered](#no-osgi-services--components-registered)
+   * [Caching task packageCompose](#caching-task-packagecompose)
+   * [Vault tasks parallelism](#vault-tasks-parallelism)
+* [Compatibility](#compatibility)
+* [Building](#building)
+* [Testing](#testing)
+* [Contributing](#contributing)
+* [License](#license)
 
 ## About
 
@@ -167,13 +169,13 @@ Want to see it in action? Follow [here](https://github.com/Cognifide/gradle-aem-
 ### Features 
 
 * Automated complete AEM environment setup with [virtualized AEM dispatcher](#environment-plugin) and [native AEM instances](#instance-plugin) optimized for best development experience.
-* [Powerful AEM DSL scripting capabilities](#implement-custom-aem-tasks) for performing JCR content migrations, managing AEM instances, integrating with Docker based tools.
+* [Powerful AEM DSL scripting capabilities](#implementing-tasks) for performing JCR content migrations, managing AEM instances, integrating with Docker based tools.
 * [Advanced AEM instance(s) stability & health checking](#task-instanceawait) after CRX package deployment.
 * [Continuous AEM incident monitoring](#task-instancetail) and interactive reporting (centralized log tailing of any AEM instances with no SSH).
 * Easy parallel [CRX package deployment](#task-packagedeploy) to many remote group of instances.
 * [Hot reloading for HTTPD / AEM dispatcher configuration files](#task-environmentdev) with health checking (web browser usage not needed).
 * [Fail-safe dependent CRX packages installation](#task-instancesatisfy) from local and remote sources using various protocols (SMB / SSH / HTTP / custom).
-* [Fast JCR content synchronization](#task-sync) from running AEM instances with advanced content normalization.
+* [Fast JCR content synchronization](#task-packagesync) from running AEM instances with advanced content normalization.
 * [Composing CRX package](#task-packagecompose) from multiple separate JCR content roots, bundles.
 * [Validating CRX package](#crx-package-validation) using seamless integration with [OakPAL tool](http://adamcin.net/oakpal).
 * [All-in-one CRX packages generation](#assembling-packages-merging-all-in-one) (assemblies), vault filters merging etc.
@@ -310,7 +312,7 @@ aem {
         // ...
     }
     environment { // config for AEM environment running on Docker
-        rootDir = prop.string("environment.rootDir")?.let { project.file(it) } ?: projectMain.file(".aem/environment")
+        rootDir = prop.string("environment.rootDir")?.let { project.file(it) } ?: projectMain.file(".environment")
         hosts { // domains to be appended to hosts file automatically
             author("http://author.example.com")
             publish("http://demo.example.com") { tag("test") }
@@ -367,12 +369,22 @@ aem {
                 basicPassword = prop.string("fileTransfer.http.password")
             }
         }
-        
-        credentials("foo", "bar", "company-net") // shorthand to set all user / password pairs and domain above
+        credentials( // shorthand method for setting at once all user / password pairs and domain above
+            prop.string("fileTransfer.user"), 
+            prop.string("fileTransfer.password"),
+            prop.string("fileTransfer.domain")
+        ) 
     }
     tasks {
-        bundleCompose { // customizing OSGi bundle, manifest etc
-            javaPackage = "com.company.example.aem"
+        bundleCompose { 
+            // customizing OSGi bundle manifest
+            description = "Example application built by GAP"
+            docUrl = "https://github.com/Cognifide/gradle-aem-example"
+            exportPackage("com.company.example.aem.*") 
+            slingModelPackages = "com.company.example.aem"
+    
+            // for checking OSGi component health on runtime
+            javaPackage = "com.company.example.aem" 
             // ...
         }
         packageCompose { // customizing built CRX package
@@ -434,177 +446,8 @@ plugins {
 
 Applied transparently by other plugins. Provides AEM extension to build script / **AEM Gradle DSL** which consists of instance definitions, common configuration, methods for controlling local instances and virtualized environment.
 
-Provides only one task useful for debugging purposes. 
+It does not provide any tasks. 
 Apply other plugins to have useful tasks or implement own.
-
-#### Task `debug`
-
-Dumps effective AEM related build configuration of concrete project to JSON file.
-Useful to e.g validate if AEM instances are defined correctly.
-
-Sample usage for root project `:` (append `-i` to print debug information also to console):
-
-```bash
-gradlew :aem
-```
-
-Generated file available at path: *build/aem/debug/debug.json*:
-
-```javascript
-{
-  "buildInfo": {
-    "plugin": {
-      "pluginVersion": "7.0.0",
-      "gradleVersion": "5.4"
-    },
-    "gradle": {
-      "version": "5.4.1",
-      "homeDir": ".../gradle-5.4.1"
-    },
-    "java": {
-      "version": "1.8",
-      "homeDir": ".../jdk1.8.0_121/jre"
-    }
-  },
-  "projectInfo": {
-    "displayName": "project ':aem:assembly:full'",
-    "path": ":aem:assembly:full",
-    "name": "full",
-    "dir": ".../gradle-aem-multi/aem/assembly/full"
-  },
-  "packageDeployed": {
-    "local-author": {
-      "group": "example",
-      "name": "example.full",
-      "version": "1.0.0-SNAPSHOT",
-      "path": "/etc/packages/example/example.full-1.0.0-SNAPSHOT.zip",
-      "downloadName": "example.full-1.0.0-SNAPSHOT.zip",
-      "lastUnpacked": 1558622734756,
-      "installed": true
-    },
-    // ...
-  },
-  "aem": {
-    "projectPrefixes": [
-      "aem.",
-      "aem-",
-      "aem_"
-    ],
-    "env": "local",
-    "lineSeparator": "LF",
-    "fileTransfer": {
-      "http": {
-        "enabled": true,
-        "client": {
-          "baseUrl": "",
-          "basicUser": null,
-          "basicPassword": null,
-          "authorizationPreemptive": false,
-          "connectionTimeout": 30000,
-          "connectionIgnoreSsl": true,
-          "connectionRetries": true,
-          "responseChecks": true
-        },
-        "name": "httpd",
-        "protocols": [
-          "http://*",
-          "https://*"
-        ]
-      },
-      "sftp": {
-        "enabled": true,
-        "user": null,
-        "password": null,
-        "timeout": 60000,
-        "name": "sftp",
-        "protocols": [
-          "sftp://*"
-        ]
-      },
-      // ...
-    },
-    "packageOptions": {
-      "rootDir": ".../gradle-aem-multi/aem/assembly/full/src/main/content",
-      "snapshots": [],
-      "metaCommonRootDir": ".../gradle-aem-multi/aem/gradle/package/META-INF",
-      "installPath": "/apps/example/full/install",
-      "installRepository": true,
-      "errors": [
-        "javax.jcr.nodetype.*Exception",
-        "org.apache.jackrabbit.oak.api.*Exception",
-        "org.apache.jackrabbit.vault.packaging.*Exception",
-        "org.xml.sax.*Exception"
-      ],
-      "responseBuffer": 4096
-    },
-    "instanceOptions": {
-      "defined": {
-        "local-author": {
-          "properties": {},
-          "httpUrl": "http://localhost:4502",
-          "user": "admin",
-          "password": "*****",
-          "id": "author",
-          "environment": "local",
-          "debugPort": 14502,
-          "name": "local-author",
-          "type": "AUTHOR",
-          "httpPort": 4502,
-          "runModes": "author,local",
-          "startOpts": "",
-          "jvmOpts": "-Xdebug -Xrunjdwp:transport=dt_socket,address=14502,server=y,suspend=n -server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true"
-        }
-        // ...
-      }
-    },
-    "localInstanceManager" : {
-      "rootDir" : "*/minimal/.aem/instance",
-      "source" : "AUTO",
-      "overridesDir" : ".../gradle-aem-multi/gradle/instance",
-      "expandFiles" : [
-        "**/start.bat",
-        "**/stop.bat",
-        "**/start",
-        "**/stop"
-      ],
-      "expandProperties" : { },
-      "quickstart": {
-        "jarUrl": null,
-        "licenseUrl": null
-      },
-      "backup": {
-        "uploadUrl": null,
-        "downloadUrl": null,
-        "downloadDir": ".../gradle-aem-multi/build/aem/instanceBackup/remote"
-      }
-    },
-    "environment": {
-      "rootDir": ".../gradle-aem-multi/aem/.aem/environment",
-      "hosts": {
-        "defined": []
-      },
-      "dispatcherModuleFile": ".../gradle-aem-multi/aem/.aem/environment/distributions/mod_dispatcher.so",
-      "configDir": ".../gradle-aem-multi/aem/gradle/environment",
-      "created": true,
-    },
-    "notifier": {
-      "enabled": true
-    },
-    "tasks": {
-      "bundles": []
-    },
-    "projectName": "full",
-    "baseName": "example.full",
-    "configCommonDir": ".../gradle-aem-multi/aem/gradle",
-    "configDir": ".../gradle-aem-multi/aem/assembly/full/gradle",
-    "javaPackages": [
-      "com.company.example.aem.common",
-      "com.company.example.aem.sites"
-    ]
-  }
-}
-```
-
 
 #### Instance conventions
 
@@ -667,11 +510,16 @@ Example for defining local instances (created on local file system):
 ```
 instance.local-author.httpUrl=http://localhost:4502
 instance.local-author.type=local
+instance.local-author.debugPort=14502
+# debugAddress can be used to enable access to debug port from outside the local network (Java 9+)
+instance.local-author.debugAddress=*
 instance.local-author.runModes=nosamplecontent
 instance.local-author.jvmOpts=-server -Xmx1024m -XX:MaxPermSize=256M -Djava.awt.headless=true
 
 instance.local-publish.httpUrl=http://localhost:4503
 instance.local-publish.type=local
+instance.local-publish.debugPort=14503
+instance.local-publish.debugAddress=*
 instance.local-publish.runModes=nosamplecontent
 instance.local-publish.jvmOpts=-server -Xmx1024m -XX:MaxPermSize=256M -Djava.awt.headless=true
 ```
@@ -1196,8 +1044,8 @@ Inherits from task [ZIP](https://docs.gradle.org/3.5/dsl/org.gradle.api.tasks.bu
 aem {
     tasks {
         packageCompose {
+            archiveBaseName.set(this@aem.baseName)
             duplicatesStrategy = DuplicatesStrategy.WARN
-            baseName = baseName
             contentDir = packageOptions.rootDir
             bundlePath = packageOptions.installPath
             bundleRunMode = null
@@ -1252,6 +1100,37 @@ aem {
 }
 ```
 
+##### CRX package naming
+
+ZIP file name and metadata (Vault properties) of composed CRX package are set by convention - they are derived from project names and Gradle `project.group` and `project.version` properties. 
+However, only if it is required (adapting the project to fit convention is more recommended approach), following snippet might be useful, to know how to customize particular values:
+
+```kotlin
+aem {
+    tasks {
+        packageCompose {
+            // Controlling ZIP file name by properties coming from inherited Gradle ZIP task: https://docs.gradle.org/current/dsl/org.gradle.api.tasks.bundling.Zip.html
+            archiveBaseName.set("my-package")
+    
+            // Controlling values visible in CRX Package Manager
+            vaultDefinition { 
+                properties = mapOf(
+                    "acHandling" to "merge_preserve",
+                    "requiresRoot" to false
+                )
+                name = baseName
+                group = if (project == project.rootProject) {
+                    project.group.toString()
+                } else {
+                    project.rootProject.name
+                }
+                version = project.version.toString()
+            }
+        }
+    }
+}
+```
+
 ##### CRX package validation
 
 Built package is validated using [OakPAL tool](https://github.com/adamcin/oakpal).
@@ -1288,7 +1167,7 @@ Simply create file at path [*[aem/]gradle/package/OAKPAL_OPEAR/default-plan.json
 }
 ```
 
-See [plans documentation](http://adamcin.net/oakpal/the-oakpal-plan.html)and [examples](https://github.com/adamcin/oakpal/blob/master/core/src/test/resources/OakpalPlanTest/fullPlan.json) provided by OakPAL tool.
+See [plans documentation](http://adamcin.net/oakpal/the-oakpal-plan.html) and [examples](https://github.com/adamcin/oakpal/blob/master/core/src/test/resources/OakpalPlanTest/fullPlan.json) provided by OakPAL tool.
 
 There could be many plan files created. To validate CRX package using different plan than default one, specify property `-package.validator.planName=<file>`.
 
@@ -1405,7 +1284,7 @@ aem {
 Predefined expandable properties:
 
 * `aem` - [AemExtension](src/main/kotlin/com/cognifide/gradle/aem/AemExtension.kt) object,
-* `definition` - [VltDefinition](src/main/kotlin/com/cognifide/gradle/aem/common/pkg/vlt/VltDefinition.kt) object,
+* `definition` - [VaultDefinition](src/main/kotlin/com/cognifide/gradle/aem/common/pkg/vault/VaultDefinition.kt) object,
 * `rootProject` - project with directory in which *settings.gradle* is located,
 * `project` - current project.
 
@@ -1628,7 +1507,7 @@ aem {
 Available transfer types: *package_download* (default) and *vlt_checkout*.
 
 ```bash
-gradlew :site.demo:packageSync -Psync.type=vlt_checkout
+gradlew :site.demo:packageSync -Ppackage.sync.transfer=vlt_checkout
 ```
 
 ##### Downloading package options
@@ -1638,7 +1517,7 @@ When transfer type is set to *package_download* then it is also possible to...
 Download package only without extracting:
 
 ```bash
-gradlew :site.demo:packageSync -PpackageDownload.extract=false
+gradlew :site.demo:packageSync -Ppackage.sync.downloader.extract=false
 ```
 
 Download, delete all previous JCR root contents then extract fresh content:
@@ -1652,7 +1531,7 @@ gradlew :site.demo:packageSync -Pforce
 Available mode types: *copy_and_clean* (default), *clean_only* and *copy_only*.
 
 ```bash
-gradlew :site.demo:packageSync -Psync.mode=clean_only
+gradlew :site.demo:packageSync -Ppackage.sync.mode=clean_only
 ```
 
 ##### Filter file at custom path
@@ -1676,7 +1555,7 @@ Execute any JCR File Vault command.
 For instance, to reflect `instanceRcp` functionality, command below could be executed:
 
 ```bash
-gradlew :site.demo:packageSync -Ppackage.vlt.command='rcp -b 100 -r -u -n http://admin:admin@localhost:4502/crx/-/jcr:root/content/dam/example http://admin:admin@localhost:4503/crx/-/jcr:root/content/dam/example' 
+gradlew :site.demo:packageVlt -Ppackage.vlt.command='rcp -b 100 -r -u -n http://admin:admin@localhost:4502/crx/-/jcr:root/content/dam/example http://admin:admin@localhost:4503/crx/-/jcr:root/content/dam/example' 
 ```
 
 For more details about available parameters, please visit [VLT Tool documentation](https://helpx.adobe.com/experience-manager/6-4/sites/developing/using/ht-vlttool.html).
@@ -1902,39 +1781,55 @@ aem {
 Files section works in a same way as in [instance satisfy task](#task-instancesatisfy).
 For more details see AEM [File Install Provider](https://helpx.adobe.com/experience-manager/6-5/sites/deploying/using/custom-standalone-install.html#AddingaFileInstallProvider) documentation.
 
-##### Extracted instance files configuration (optional)
+##### Customization of extracted instance files (optional)
 
-Plugin allows to override or provide extra files to local AEM instance installations.
-This behavior is controlled by:
+The plugin allows us to override or provide extra files to local AEM instance installations.
+This behavior could be customized by `localInstance` section of plugin DSL:
 
 ```kotlin
 aem {
     localInstance {
-        rootDir = prop.string("localInstance.root")?.let { project.file(it) } ?: projectMain.file(".aem/instance")
-        overridesDir = File(configCommonDir, LocalInstance.FILES_PATH)
-        expandProperties = mapOf()
-        expandFiles = listOf(
+        rootDir = file(".instance") // path under which local instance files are stored
+        overridesDir = file("gradle/instance/local") // path with directories instance specific (common, author, publish) holding files that can override default instance files
+        expandProperties = mapOf() // place where additional properties can be defined
+        expandFiles = listOf( // file patterns which allows using variables inside
             "**/*.properties", 
             "**/*.sh", 
             "**/*.bat", 
             "**/*.xml",
             "**/start",
             "**/stop"
-        )
+        ) 
     }
 }
 ```
 
-Properties:
+Besides `expandProperties`, there is one predefined variable [instance](src/main/kotlin/com/cognifide/gradle/aem/common/instance/LocalInstance.kt) 
+that can be used to customize scripts and other files 
+(see [start script](src/main/resources/com/cognifide/gradle/aem/instance/local/start)).
 
-* *rootDir* determines where AEM instance files will be extracted on local file system.
-* *overridesDir* determines project location that holds extra instance files that will override plugin defaults (start / stop scripts) and / or extracted AEM files.
-* *expandProperties* is a place for defining custom properties that can be expanded in AEM instance files.
-* *expandFiles* specifies which AEM instance files have an ability to use [expandable properties](#expandable-properties) inside.
+###### Customization of `sling.properties` files
 
-Predefined expandable properties:
+An example could be providing additional configuration for the `sling.properties` file when running AEM 6.5 on Java 11.
+It is needed to override only two properties in the final `sling.properties` file: 
+* `org.osgi.framework.system.packages.extra`
+  * which describe extra packages that will be exported in the system bundle
+  * in Java 11 system bundle by default exports fewer API classes than in Java 8
+  * sometimes we need to extend this set to make pre-Java 11 bundles work
+* and `org.osgi.framework.bootdelegation`
+  * to solve known [FELIX-6184](https://issues.apache.org/jira/browse/FELIX-6184) issue 
 
-* `instance` - [LocalInstance](src/main/kotlin/com/cognifide/gradle/aem/common/instance/LocalInstance.kt) object.
+To achieve that, add file with your props under `gradle` directory in your project:
+`gradle/instance/local/common/crx-quickstart/conf/sling.properties` 
+
+```properties
+org.osgi.framework.system.packages.extra=org.apache.sling.launchpad.api;version\=1.2.0 ${org.apache.sling.launcher.system.packages},com.sun.org.apache.xpath.internal;version\="{dollar}{felix.detect.java.version}",com.sun.activation.registries;version\="{dollar}{felix.detect.java.version}"
+org.osgi.framework.bootdelegation=sun.*,com.sun.*,jdk.internal.reflect,jdk.internal.reflect.*
+```
+
+Now, when creating a new instance with this configuration, only those two properties will get overridden in `slin.properties`.
+
+Notice, that adding the file under `gradle/instance/local/common` will apply it both for author and publish instances.
 
 #### Task `instanceBackup`
 
@@ -1958,6 +1853,9 @@ aem {
 ```
 
 Instance backups created by this task could be used later by [create task](#task-instancecreate).
+
+It is also possible to upload only previously created local backup. In that case specify mode property by running `gradlew instanceBackup -Pinstance.backup.mode=upload_only`.
+Available modes: *zip_and_upload* (default), *zip_only*, *upload_only*.
 
 ##### Work with remote instance backups
 
@@ -2058,44 +1956,47 @@ This task might be also useful to check amended configuration to verify HTTP url
 
 #### Task `instanceSatisfy` 
 
-Upload & install dependent CRX package(s) before deployment. Available methods:
+Upload & install dependent CRX package(s) before deployment. 
 
-* `group(name: String, options: Resolver<PackageGroup>.() -> Unit)`, useful for declaring group of packages (or just optionally naming single package) to be installed only on demand. For instance: `group("tools") { download('http://example.com/package.zip'); download('smb://internal-nt/package2.zip')  }`. Then to install only packages in group `tools`, use command: `gradlew instanceSatisfy -Pinstance.satisfy.group=tools`.
-* `useLocal(path: String)`, use CRX package from local file system.
-* `useLocal(file: File)`, same as above, but file can be even located outside the project.
-* `useLocalRecent(dir: File, filePattern: String = "**/*.zip")`, useful to find and use most recent file in specified directory.
-* `resolve(notation: String)`, use OSGi bundle that will be resolved from defined Gradle repositories (for example from Maven) then wrapped to CRX package.
-* `download(url: String)`, use CRX package that will be downloaded from specified URL to local temporary directory.
-* `downloadHttp(url: String, options: HttpFileTransfer.() -> Unit)`, download package using HTTP with.
-* `downloadSftp(url: String, options: SftpFileTransfer.() -> Unit)`, download package using SFTP protocol.
-* `downloadSmb(url: String, options: SmbFileTransfer.() -> Unit)`, download package using SMB protocol.
-
-Example configuration:
+Illustrative configuration:
 
 ```kotlin
 aem {
     tasks {
         instanceSatisfy {
             packages {
-                group("default") {
-                    useLocal("pkg/vanityurls-components-1.0.2.zip")
-                    download("smb://company-share/aem/packages/my-lib.zip")
-                    download("sftp://company-share/aem/packages/other-lib.zip")
-                    download("file:///C:/Libraries/aem/package/extra-lib.zip")
-                }
+                "tool.search-webconsole-plugin"("com.neva.felix:search-webconsole-plugin:1.2.0")
+                // is shorthand syntax for (effectively same as)
+                group("tool.search-webconsole-plugin") { get("com.neva.felix:search-webconsole-plugin:1.2.0") }
 
-                group("tools") {
-                    resolve("com.neva.felix:search-webconsole-plugin:1.2.0")
-                    download("https://github.com/Cognifide/APM/releases/download/cqsm-3.0.0/apm-3.0.0.zip")
-                    download("https://github.com/Adobe-Consulting-Services/acs-aem-tools/releases/download/acs-aem-tools-1.0.0/acs-aem-tools-content-1.0.0-min.zip")
-                }
+                "tool.apm" { download("https://github.com/Cognifide/APM/releases/download/cqsm-3.0.0/apm-3.0.0.zip") }
+                "tool.acs-aem-tools" { download("https://github.com/Adobe-Consulting-Services/acs-aem-tools/releases/download/acs-aem-tools-1.0.0/acs-aem-tools-content-1.0.0-min.zip") }
+
+                "dependency.vanityurls-components" { useLocal("pkg/vanityurls-components-1.0.2.zip") }
+                
+                "application.example-core" { downloadSmb("smb://company-share/aem/packages/example-core-1.0.0.zip") { /* credentials here */ } }
+                "application.example-extension" { downloadSftp("sftp://company-share/aem/packages/example-extension.zip") { /* credentials here */ } }
             }
         }
     }
 }
 ```
 
+Available methods:
+
+* `group(name: String, options: Resolver<PackageGroup>.() -> Unit)`, useful for declaring group of packages (or just optionally naming single package) to be installed only on demand. For instance: `group("tools") { download('http://example.com/package.zip'); download('smb://internal-nt/package2.zip')  }`. Then to install only packages in group `tools`, use command: `gradlew instanceSatisfy -Pinstance.satisfy.group=tools`.
+* `get(urlOrNotation: Any)`, shorthand method for delegating to `resolve` or `download` methods depending on type of value provided.
+* `resolve(notation: String)`, use OSGi bundle that will be resolved from defined Gradle repositories (for example from Maven) then wrapped to CRX package.
+* `download(url: String)`, use CRX package that will be downloaded from specified URL to local temporary directory.
+* `downloadHttp(url: String, options: HttpFileTransfer.() -> Unit)`, download package using HTTP with.
+* `downloadSftp(url: String, options: SftpFileTransfer.() -> Unit)`, download package using SFTP protocol.
+* `downloadSmb(url: String, options: SmbFileTransfer.() -> Unit)`, download package using SMB protocol.
+* `useLocal(path: String)`, use CRX package from local file system.
+* `useLocal(file: File)`, same as above, but file can be even located outside the project.
+* `useLocalRecent(dir: File, filePattern: String = "**/*.zip")`, useful to find and use most recent file in specified directory.
+
 By default, all packages will be deployed when running task `instanceSatisfy`.
+
 Although, by grouping packages, there are available new options:
 
 * group name could be used to filter out packages that will be deployed (`-Pinstance.satisfy.group=tools`, wildcards supported, comma delimited).
@@ -2108,15 +2009,18 @@ In other words, for instance, there is ability to run groovy console script befo
 ```kotlin
 aem {
     tasks {
-        satisfy {
+        instanceSatisfy {
             packages {
                 group("tool.groovy-console") { 
                     download("https://github.com/OlsonDigital/aem-groovy-console/releases/download/11.0.0/aem-groovy-console-11.0.0.zip")
                     config {
                         instanceName = "*-author" // additional filter intersecting 'instance.name' property
-                        workflowToggle("dam_asset", false)
                         initializer {
                             logger.info("Installing Groovy Console on $instance")
+
+                            packageManager {
+                                workflowToggle.put("dam_asset", false)
+                            }
                         }
                         finalizer {
                             logger.info("Installed Groovy Console on $instance")
@@ -2167,39 +2071,33 @@ aem {
             step("enable-crxde") {
                 description = "Enables CRX DE"
                 condition { once() && instance.environment != "prod" }
-                action {
-                    sync {
-                        osgiFramework.configure("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", mapOf(
-                                "alias" to "/crx/server"
-                        ))
-                    }
+`               sync {
+                    osgiFramework.configure("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", mapOf(
+                            "alias" to "/crx/server"
+                    ))
                 }
             }
             step("setup-replication-author") {
                 condition { once() && instance.author }
-                action {
-                    sync {
-                        repository {
-                            node("/etc/replication/agents.author/publish/jcr:content", mapOf(
-                                    "enabled" to true,
-                                    "userId" to instance.user,
-                                    "transportUri" to "http://localhost:4503/bin/receive?sling:authRequestLogin=1",
-                                    "transportUser" to instance.user,
-                                    "transportPassword" to instance.password
-                            ))
-                        }
+                sync {
+                    repository {
+                        node("/etc/replication/agents.author/publish/jcr:content", mapOf(
+                                "enabled" to true,
+                                "userId" to instance.user,
+                                "transportUri" to "http://localhost:4503/bin/receive?sling:authRequestLogin=1",
+                                "transportUser" to instance.user,
+                                "transportPassword" to instance.password
+                        ))
                     }
                 }
             }
             step("disable-unsecure-bundles") {
                 condition { once() && instance.environment == "prod" }
-                action {
-                    sync {
-                        osgiFramework.stopBundle("org.apache.sling.jcr.webdav")
-                        osgiFramework.stopBundle("com.adobe.granite.crxde-lite")
+                sync {
+                    osgiFramework.stopBundle("org.apache.sling.jcr.webdav")
+                    osgiFramework.stopBundle("com.adobe.granite.crxde-lite")
 
-                        awaitUp() // include above in property: 'instance.awaitUp.bundles.symbolicNamesIgnored'
-                    }
+                    awaitUp() // include above in property: 'instance.awaitUp.bundles.symbolicNamesIgnored'
                 }
             }
         }
@@ -2368,20 +2266,20 @@ Copy JCR content from one instance to another. Sample usages below.
 * Using predefined instances with multiple different source and target nodes:
 
   ```bash
-  gradlew :instanceRcp -Prcp.source.instance=int-author -Prcp.target.instance=local-author -Prcp.paths=[/content/example-demo=/content/example,/content/dam/example-demo=/content/dam/example]
+  gradlew :instanceRcp -Pinstance.rcp.source=int-author -Pinstance.rcp.target=local-author -Pinstance.rcp.paths=[/content/example-demo=/content/example,/content/dam/example-demo=/content/dam/example]
   ```
 
 * Using predefined instances with multiple same source and target nodes:
 
   ```bash
-  gradlew :rcp -Prcp.source.instance=stg-author -Prcp.target.instance=int-author -Prcp.paths=[/content/example,/content/example2]
+  gradlew :instanceRcp -Prcp.source.instance=stg-author -Pinstance.rcp.target.instance=int-author -Pinstance.rcp.paths=[/content/example,/content/example2]
   ```
   Right side of assignment could skipped if equals to left (same path on both source & target instance).
 
 * Using predefined instances with source and target nodes specified in file:
 
   ```bash
-  gradlew :rcp -Prcp.source.instance=int-author -Prcp.target.instance=local-author -Prcp.pathsFile=paths.txt
+  gradlew :instanceRcp -Pinstance.rcp.source=int-author -Pinstance.rcp.target=local-author -Pinstance.rcp.pathsFile=paths.txt
   ```
 
   File format:
@@ -2397,14 +2295,13 @@ Copy JCR content from one instance to another. Sample usages below.
 * Using dynamically defined instances:
 
   ```bash
-  gradlew :rcp -Prcp.source.instance=http://user:pass@192.168.66.66:4502 -Prcp.target.instance=http://user:pass@192.168.33.33:4502 -Prcp.paths=[/content/example-demo=/content/example]
+  gradlew :instanceRcp -Pinstance.rcp.source=http://user:pass@192.168.66.66:4502 -Pinstance.rcp.target=http://user:pass@192.168.33.33:4502 -Pinstance.rcp.paths=[/content/example-demo=/content/example]
   ```
 
 Keep in mind, that copying JCR content between instances, could be a trigger for running AEM workflows like *DAM Update Asset* which could cause heavy load on instance.
 Consider disabling AEM workflow launchers before running this task and re-enabling after.
 
 RCP task is internally using [Vault Remote Copy](http://jackrabbit.apache.org/filevault/rcp.html) which requires bundle *Apache Sling Simple WebDAV Access to repositories (org.apache.sling.jcr.webdav)* present in active state on instance.
-
 
 #### Task `instanceGroovyEval`
 

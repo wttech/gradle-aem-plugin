@@ -1,13 +1,13 @@
 package com.cognifide.gradle.aem.instance.satisfy
 
 import com.cognifide.gradle.aem.common.bundle.BundleFile
-import com.cognifide.gradle.aem.common.file.resolver.FileResolution
 import com.cognifide.gradle.aem.common.pkg.PackageException
+import com.cognifide.gradle.common.file.resolver.FileResolution
 import java.io.File
 
 class PackageResolution(group: PackageGroup, id: String, action: (FileResolution) -> File) : FileResolution(group, id, action) {
 
-    private val resolver = group.resolver
+    private val resolver = group.packageResolver
 
     private val aem = resolver.aem
 
@@ -35,11 +35,11 @@ class PackageResolution(group: PackageGroup, id: String, action: (FileResolution
         val bundlePath = "${resolver.bundlePath}/${jar.name}"
 
         return aem.composePackage {
-            this.archivePath = pkg
-            this.description = bundle.description
-            this.group = bundle.group
-            this.name = bundle.symbolicName
-            this.version = bundle.version
+            this.archivePath.set(pkg)
+            this.description.set(bundle.description)
+            this.group.set(bundle.group)
+            this.name.set(bundle.symbolicName)
+            this.version.set(bundle.version)
 
             filter(bundlePath)
             content { copyJcrFile(jar, bundlePath) }

@@ -2,27 +2,24 @@ package com.cognifide.gradle.aem.common
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.AemPlugin
-import com.cognifide.gradle.aem.common.tasks.Debug
-import org.gradle.api.GradleException
+import com.cognifide.gradle.common.CommonDefaultPlugin
 import java.util.*
 import org.gradle.api.Project
 import org.gradle.api.plugins.BasePlugin
-import org.gradle.language.base.plugins.LifecycleBasePlugin
 
 /**
  * Provides 'aem' extension to build script on which all other build logic is based.
  */
-class CommonPlugin : AemPlugin() {
+class CommonPlugin : CommonDefaultPlugin() {
 
-    override fun Project.configure() {
+    override fun Project.configureProject() {
         setupGreet()
         setupDependentPlugins()
         setupStructureProperties()
         setupExtensions()
-        setupTasks()
     }
 
-    private fun Project.setupGreet() {
+    private fun Project.setupGreet() = AemPlugin.apply {
         once { logger.info("Using: $NAME_WITH_VERSION") }
     }
 
@@ -43,17 +40,6 @@ class CommonPlugin : AemPlugin() {
 
     private fun Project.setupExtensions() {
         extensions.add(AemExtension.NAME, AemExtension(this))
-    }
-
-    private fun Project.setupTasks() {
-        tasks {
-            val options: Debug.() -> Unit = { mustRunAfter(LifecycleBasePlugin.BUILD_TASK_NAME) }
-            try {
-                register(Debug.NAME, options)
-            } catch (e: GradleException) {
-                register(Debug.NAME_FALLBACK, options)
-            }
-        }
     }
 
     companion object {

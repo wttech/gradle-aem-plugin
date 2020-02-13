@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.instance.provision
 
-import com.cognifide.gradle.aem.common.utils.Formats
+import com.cognifide.gradle.common.utils.Formats
 import java.util.concurrent.ThreadLocalRandom
 import java.util.concurrent.TimeUnit
 
@@ -15,7 +15,9 @@ class Condition(val step: InstanceStep) {
 
     fun never(): Boolean = false
 
-    fun rerunOnFail(): Boolean = step.ended && step.failed && step.definition.rerunOnFail
+    fun greedy(): Boolean = step.greedy
+
+    fun rerunOnFail(): Boolean = step.ended && step.failed && step.definition.rerunOnFail.get()
 
     fun sinceEndedMoreThan(millis: Long) = step.ended && !Formats.durationFit(step.endedAt.time, instance.zoneId, millis)
 
@@ -24,7 +26,7 @@ class Condition(val step: InstanceStep) {
     /**
      * Perform step only once, but try again if it fails.
      */
-    fun once() = failSafeOnce()
+    fun once() = greedy() || failSafeOnce()
 
     /**
      * Perform step only once, but try again if it fails.

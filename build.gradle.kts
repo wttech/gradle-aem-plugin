@@ -1,18 +1,16 @@
-import org.gradle.api.tasks.testing.logging.TestExceptionFormat
-import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.dokka.gradle.DokkaTask
 
 plugins {
-    id("org.jetbrains.kotlin.jvm")
-    id("org.jetbrains.dokka")
     id("java-gradle-plugin")
-    id("com.gradle.plugin-publish")
     id("maven-publish")
-    id("io.gitlab.arturbosch.detekt")
-    id("com.jfrog.bintray")
-    id("net.researchgate.release")
-    id("com.github.breadmoirai.github-release")
+    id("org.jetbrains.kotlin.jvm") version "1.3.61"
+    id("org.jetbrains.dokka") version "0.10.1"
+    id("com.gradle.plugin-publish") version "0.10.1"
+    id("io.gitlab.arturbosch.detekt") version "1.2.2"
+    id("com.jfrog.bintray") version "1.8.4"
+    id("net.researchgate.release") version "2.8.1"
+    id("com.github.breadmoirai.github-release") version "2.2.10"
 }
 
 group = "com.cognifide.gradle"
@@ -21,36 +19,26 @@ defaultTasks("build", "publishToMavenLocal")
 
 repositories {
     jcenter()
+    gradlePluginPortal()
 }
 
 dependencies {
-    implementation(platform("org.jetbrains.kotlin:kotlin-bom:1.3.61"))
-
     implementation(gradleApi())
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-    implementation("org.jetbrains.kotlin:kotlin-stdlib")
-    implementation("org.jetbrains.kotlin:kotlin-reflect")
+
+    implementation("com.cognifide.gradle:common-plugin:0.1.0")
+
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.10.1")
+    implementation("com.jayway.jsonpath:json-path:2.4.0")
+    implementation("org.jsoup:jsoup:1.12.1")
+    implementation("org.buildobjects:jproc:2.2.3")
+    implementation("org.reflections:reflections:0.9.9")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.2")
     implementation("org.apache.commons:commons-lang3:3.9")
-    implementation("org.apache.commons:commons-text:1.8")
-    implementation("commons-io:commons-io:2.6")
-    implementation("commons-validator:commons-validator:1.6")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.10.1")
-    implementation("org.reflections:reflections:0.9.9")
-    implementation("org.apache.jackrabbit.vault:vault-cli:3.2.4")
-    implementation("org.jsoup:jsoup:1.12.1")
-    implementation("org.samba.jcifs:jcifs:1.3.18-kohsuke-1")
+    implementation("org.apache.jackrabbit.vault:vault-cli:3.4.0")
     implementation("biz.aQute.bnd:biz.aQute.bnd.gradle:5.0.0")
     implementation("org.zeroturnaround:zt-zip:1.13")
     implementation("net.lingala.zip4j:zip4j:1.3.3")
-    implementation("org.apache.sshd:sshd-sftp:2.3.0")
-    implementation("org.apache.httpcomponents:httpclient:4.5.10")
-    implementation("org.apache.httpcomponents:httpmime:4.5.10")
     implementation("org.osgi:org.osgi.core:6.0.0")
-    implementation("io.pebbletemplates:pebble:3.1.2")
-    implementation("com.dorkbox:Notify:3.7")
-    implementation("com.jayway.jsonpath:json-path:2.4.0")
-    implementation("org.buildobjects:jproc:2.2.3")
     implementation("net.adamcin.oakpal:oakpal-core:1.5.1")
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.5.2")
@@ -58,9 +46,13 @@ dependencies {
     "detektPlugins"("io.gitlab.arturbosch.detekt:detekt-formatting:1.2.2")
 }
 
-val functionalTestSourceSet = sourceSets.create("functionalTest") {}
+val functionalTestSourceSet = sourceSets.create("functionalTest")
+
 gradlePlugin.testSourceSets(functionalTestSourceSet)
-configurations.getByName("functionalTestImplementation").extendsFrom(configurations.getByName("testImplementation"))
+
+configurations.getByName("functionalTestImplementation").apply {
+    extendsFrom(configurations.getByName("testImplementation"))
+}
 
 
 tasks {
@@ -100,6 +92,12 @@ tasks {
             freeCompilerArgs = freeCompilerArgs + "-Xuse-experimental=kotlin.Experimental"
         }
     }
+
+    withType<Test>().configureEach {
+        testLogging.showStandardStreams = true
+        useJUnitPlatform()
+    }
+
     register<Test>("functionalTest") {
         testClassesDirs = functionalTestSourceSet.output.classesDirs
         classpath = functionalTestSourceSet.runtimeClasspath
@@ -111,6 +109,7 @@ tasks {
         )
 
         useJUnitPlatform()
+        failFast = true
         mustRunAfter("test")
         dependsOn("jar")
         outputs.upToDateWhen { false }
@@ -149,11 +148,6 @@ tasks {
 
     register("fullRelease") {
         dependsOn("release", "githubRelease")
-    }
-
-    withType<Test>().configureEach {
-        testLogging.showStandardStreams = true
-        useJUnitPlatform()
     }
 }
 
@@ -205,12 +199,6 @@ gradlePlugin {
             implementationClass = "com.cognifide.gradle.aem.instance.InstancePlugin"
             displayName = "AEM Instance Plugin"
             description = "Provides tasks for working with native local AEM instances."
-        }
-        create("environment") {
-            id = "com.cognifide.aem.environment"
-            implementationClass = "com.cognifide.gradle.aem.environment.EnvironmentPlugin"
-            displayName = "AEM Environment Plugin"
-            description = "Provides tasks for working with virtualized AEM environment."
         }
     }
 }

@@ -1,21 +1,22 @@
 package com.cognifide.gradle.aem.pkg
 
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.AemPlugin
 import com.cognifide.gradle.aem.common.CommonPlugin
+import com.cognifide.gradle.aem.common.tasks.PackageTask
 import com.cognifide.gradle.aem.instance.InstancePlugin
 import com.cognifide.gradle.aem.instance.satisfy.InstanceSatisfy
 import com.cognifide.gradle.aem.instance.tasks.InstanceCreate
 import com.cognifide.gradle.aem.instance.tasks.InstanceUp
 import com.cognifide.gradle.aem.pkg.tasks.*
+import com.cognifide.gradle.common.CommonDefaultPlugin
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.artifacts.Dependency
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 
-class PackagePlugin : AemPlugin() {
+class PackagePlugin : CommonDefaultPlugin() {
 
-    override fun Project.configure() {
+    override fun Project.configureProject() {
         setupDependentPlugins()
         setupInstallRepository()
         setupTasks()
@@ -28,7 +29,7 @@ class PackagePlugin : AemPlugin() {
     private fun Project.setupInstallRepository() {
         afterEvaluate {
             val packageOptions = AemExtension.of(this).packageOptions
-            if (packageOptions.installRepository) {
+            if (packageOptions.installRepository.get()) {
                 val installDir = file("${packageOptions.jcrRootDir}${packageOptions.installPath}")
                 if (installDir.exists()) {
                     repositories.flatDir { it.dir(installDir) }
@@ -39,13 +40,13 @@ class PackagePlugin : AemPlugin() {
 
     private fun Project.setupTasks() {
         tasks {
-            register<PackagePrepare>(PackagePrepare.NAME) {
+            val prepare = register<PackagePrepare>(PackagePrepare.NAME) {
                 mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
             }
-            register<PackageCompose>(PackageCompose.NAME) {
+            val compose = register<PackageCompose>(PackageCompose.NAME) {
                 dependsOn(PackagePrepare.NAME)
                 mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
-                metaDir = get<PackagePrepare>(PackagePrepare.NAME).metaDir
+                metaDir.convention(prepare.flatMap { it.metaDir })
             }.apply {
                 artifacts.add(Dependency.ARCHIVES_CONFIGURATION, this)
             }
@@ -77,6 +78,9 @@ class PackagePlugin : AemPlugin() {
             }
             named<Task>(LifecycleBasePlugin.ASSEMBLE_TASK_NAME) {
                 dependsOn(PackageCompose.NAME)
+            }
+            typed<PackageTask> {
+                files.from(compose.map { it.archiveFile })
             }
         }
 

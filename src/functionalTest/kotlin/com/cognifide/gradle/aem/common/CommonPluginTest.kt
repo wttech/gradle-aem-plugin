@@ -6,20 +6,23 @@ import org.junit.jupiter.api.Test
 class CommonPluginTest: AemBuildTest() {
 
     @Test
-    fun `should debug aem configuration`() {
-        val projectDir = prepareProject("common-debug") {
+    fun `should apply plugin correctly`() {
+        val projectDir = prepareProject("common-minimal") {
             settingsGradle("")
 
             buildGradle("""
                 plugins {
                     id("com.cognifide.aem.common")
                 }
+                
+                aem {
+                    // anything
+                }
                 """)
         }
 
-        runBuild(projectDir, "debug", "-Poffline") {
-            assertTask(":debug")
-            assertFileExists("build/aem/debug/debug.json")
+        runBuild(projectDir, "tasks") {
+            assertTask(":tasks")
         }
     }
 }

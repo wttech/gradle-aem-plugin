@@ -1,0 +1,2 @@
+libs.granite.ui.components.coral.foundation.table Failed to wrap datasource for lookahead
+org.apache.sling.commons.compiler.impl.EclipseJavaCompiler Using unsupported java version '11', assuming latest supported version '9'

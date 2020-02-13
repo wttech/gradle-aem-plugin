@@ -2,33 +2,40 @@ package com.cognifide.gradle.aem.instance.tail
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.instance.Instance
-import com.cognifide.gradle.aem.common.utils.Formats
+import com.cognifide.gradle.common.utils.Formats
 import com.cognifide.gradle.aem.instance.tail.io.ConsolePrinter
 import com.cognifide.gradle.aem.instance.tail.io.FileDestination
 import com.cognifide.gradle.aem.instance.tail.io.LogFiles
 import com.cognifide.gradle.aem.instance.tail.io.UrlSource
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import java.io.File
 import java.nio.file.Paths
 import kotlin.math.max
 
 class InstanceTailer(val aem: AemExtension) {
 
-    /**
-     * Directory where log files will be stored.
-     */
-    var rootDir: File = aem.temporaryFile(InstanceTail.NAME)
+    private val common = aem.common
 
     /**
      * Instances from which logs will be tailed.
      */
-    var instances: List<Instance> = listOf()
+    val instances = aem.obj.list<Instance>()
+
+    /**
+     * Directory where log files will be stored.
+     */
+    val logStorageDir = aem.obj.dir {
+        convention(aem.obj.buildDir(InstanceTail.NAME))
+        aem.prop.file("instance.tail.logStorageDir")?.let { set(it) }
+    }
 
     /**
      * Determines log file being tracked on AEM instance.
      */
-    var logFilePath = aem.prop.string("instance.tail.logFilePath") ?: "/logs/error.log"
+    var logFilePath = aem.obj.string {
+        convention("/logs/error.log")
+        aem.prop.string("instance.tail.logFilePath")?.let { set(it) }
+    }
 
     /**
      * Hook for tracking all log entries on each AEM instance.
@@ -65,33 +72,48 @@ class InstanceTailer(val aem: AemExtension) {
      *
      * Changes in that file are automatically considered (tailer restart is not required).
      */
-    var incidentFilter: File =
-            aem.prop.string("instance.tail.incidentFilter")
-                    ?.let { aem.project.file(it) }
-                    ?: File(aem.configCommonDir, "instanceTail/incidentFilter.txt")
+    val incidentFilter = aem.obj.file {
+        convention(aem.instanceOptions.configDir.file("tail/incidentFilter.txt"))
+        aem.prop.file("instance.tail.incidentFilter")?.let { set(it) }
+    }
 
     /**
      * Indicates if tailer will print all logs to console.
      */
-    var console = aem.prop.boolean("instance.tail.console") ?: true
+    val console = aem.obj.boolean {
+        convention(true)
+        aem.prop.boolean("instance.tail.console")?.let { set(it) }
+    }
 
     /**
      * Time window in which exceptions will be aggregated and reported as single incident.
      */
-    var incidentDelay = aem.prop.long("instance.tail.incidentDelay") ?: 5000L
+    val incidentDelay = aem.obj.long {
+        convention(5000L)
+        aem.prop.long("instance.tail.incidentDelay")?.let { set(it) }
+    }
 
     /**
      * Determines how often logs will be polled from AEM instance.
      */
-    var fetchInterval = aem.prop.long("instance.tail.fetchInterval") ?: 500L
+    val fetchInterval = aem.obj.long {
+        convention(500L)
+        aem.prop.long("instance.tail.fetchInterval")?.let { set(it) }
+    }
 
-    var lockInterval = aem.prop.long("instance.tail.lockInterval") ?: max(1000L + fetchInterval, 2000L)
+    val lockInterval = aem.obj.long {
+        convention(fetchInterval.map { max(1000L + it, 2000L) })
+        aem.prop.long("instance.tail.lockInterval")?.let { set(it) }
+    }
 
-    var linesChunkSize = aem.prop.long("instance.tail.linesChunkSize") ?: 400L
+    val linesChunkSize = aem.obj.long {
+        convention(400L)
+        aem.prop.long("instance.tail.linesChunkSize")?.let { set(it) }
+    }
 
     // https://sridharmandra.blogspot.com/2016/08/tail-aem-logs-in-browser.html
     fun errorLogEndpoint(instance: Instance): String {
-        val fileName = logFilePath.replace("/", "%2F")
+        val fileName = logFilePath.get().replace("/", "%2F")
         val path = when {
             Formats.versionAtLeast(instance.version, "6.2.0") -> ENDPOINT_PATH
             else -> ENDPOINT_PATH_OLD
@@ -101,7 +123,7 @@ class InstanceTailer(val aem: AemExtension) {
     }
 
     val logFile: String
-        get() = Paths.get(logFilePath).fileName.toString()
+        get() = Paths.get(logFilePath.get()).fileName.toString()
 
     fun incidentFilter(options: LogFilter.() -> Unit) {
         logFilter.apply(options)
@@ -119,7 +141,7 @@ class InstanceTailer(val aem: AemExtension) {
                     while (isActive) {
                         logFiles.lock()
                         tailer.tail()
-                        delay(fetchInterval)
+                        delay(fetchInterval.get())
                     }
                 }
             }
@@ -133,17 +155,17 @@ class InstanceTailer(val aem: AemExtension) {
         logFiles.lock()
     }
 
-    private fun initIncidentFilter() = incidentFilter.run {
+    private fun initIncidentFilter() = incidentFilter.get().asFile.run {
         parentFile.mkdirs()
         createNewFile()
     }
 
     private fun startAll(): List<LogTailer> {
         val notificationChannel = Channel<LogChunk>(Channel.UNLIMITED)
-        val logNotifier = LogNotifier(notificationChannel, aem.notifier, logFiles)
+        val logNotifier = LogNotifier(notificationChannel, common.notifier, logFiles)
         logNotifier.listenTailed()
 
-        return instances.map { start(it, notificationChannel) }
+        return instances.get().map { start(it, notificationChannel) }
     }
 
     private fun start(instance: Instance, notificationChannel: Channel<LogChunk>): LogTailer {
@@ -160,7 +182,7 @@ class InstanceTailer(val aem: AemExtension) {
         return LogTailer(source, destination, InstanceLogInfo.of(instance), logAnalyzerChannel, consolePrinter(instance))
     }
 
-    private fun consolePrinter(instance: Instance) = if (console) {
+    private fun consolePrinter(instance: Instance) = if (console.get()) {
         ConsolePrinter(InstanceLogInfo.of(instance), { aem.logger.lifecycle(it) })
     } else {
         ConsolePrinter.none()

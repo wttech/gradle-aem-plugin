@@ -2,9 +2,9 @@ package com.cognifide.gradle.aem.common.instance
 
 import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.common.utils.Formats
-import com.cognifide.gradle.aem.common.utils.Patterns
-import com.cognifide.gradle.aem.common.utils.formats.JsonPassword
+import com.cognifide.gradle.common.utils.Formats
+import com.cognifide.gradle.common.utils.Patterns
+import com.cognifide.gradle.common.utils.formats.JsonPassword
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import java.io.Serializable
@@ -88,8 +88,8 @@ interface Instance : Serializable {
 
     @Suppress("ThrowsCount")
     fun validate() {
-        if (!Formats.URL_VALIDATOR.isValid(httpUrl)) {
-            throw AemException("Malformed URL address detected in $this")
+        if (httpUrl.isBlank()) {
+            throw AemException("HTTP URL address cannot be blank in $this")
         }
 
         if (user.isBlank()) {
@@ -121,6 +121,16 @@ interface Instance : Serializable {
     @get:JsonIgnore
     val publish: Boolean get() = type == IdType.PUBLISH
 
+    /**
+     * Indicates repository restructure performed in AEM 6.4.0 / preparations for making AEM available on cloud.
+     *
+     * After this changes, nodes under '/apps' or '/libs' are frozen and some features (like workflow manager)
+     * requires to copy these nodes under '/var' by plugin (or AEM itself).
+     *
+     * @see <https://docs.adobe.com/content/help/en/experience-manager-64/deploying/restructuring/repository-restructuring.html>
+     */
+    val frozen get() = Formats.versionAtLeast(version, "6.4.0")
+
     companion object {
 
         const val FILTER_ANY = "*"
@@ -135,9 +145,11 @@ interface Instance : Serializable {
 
         const val PASSWORD_DEFAULT = "admin"
 
-        val LOCAL_PROPS = listOf("httpUrl", "type", "password", "jvmOpts", "startOpts", "runModes", "debugPort")
+        val LOCAL_PROPS = listOf("httpUrl", "type", "password", "jvmOpts", "startOpts", "runModes", "debugPort", "debugAddress")
 
         val REMOTE_PROPS = listOf("httpUrl", "type", "user", "password")
+
+        fun defaultPair(aem: AemExtension) = listOf(defaultAuthor(aem), defaultPublish(aem))
 
         fun defaultAuthor(aem: AemExtension) = RemoteInstance.create(aem, URL_AUTHOR_DEFAULT)
 
@@ -186,6 +198,7 @@ interface Instance : Serializable {
                         props["startOpts"]?.let { this.startOpts = it.split(" ") }
                         props["runModes"]?.let { this.runModes = it.split(",") }
                         props["debugPort"]?.let { this.debugPort = it.toInt() }
+                        props["debugAddress"]?.let { this.debugAddress = it }
 
                         this.properties.putAll(props.filterKeys { !LOCAL_PROPS.contains(it) })
                     }

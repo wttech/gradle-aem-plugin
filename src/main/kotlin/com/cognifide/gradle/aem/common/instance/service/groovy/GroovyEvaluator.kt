@@ -1,26 +1,28 @@
 package com.cognifide.gradle.aem.common.instance.service.groovy
 
 import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.common.instance.Instance
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.time.StopWatch
 import java.io.File
 
 class GroovyEvaluator(private val aem: AemExtension) {
 
+    private val common = aem.common
+
     private val logger = aem.logger
 
-    val scriptDirDefault
-        get() = aem.project.version.toString().removeSuffix("-SNAPSHOT")
+    val scriptDirDefault = aem.obj.string { convention(aem.obj.provider { aem.project.version.toString().removeSuffix("-SNAPSHOT") }) }
 
-    var scriptPattern: String = "$scriptDirDefault/**/*"
+    val scriptPattern = aem.obj.string { convention(scriptDirDefault.map { "$it/**/*" }) }
 
-    var scriptSuffix: String = ".groovy"
+    val scriptSuffix = aem.obj.string { convention(".groovy") }
 
-    var instances = aem.instances
+    val instances = aem.obj.list<Instance> { convention(aem.obj.provider { aem.instances }) }
 
-    var data: Map<String, Any?> = mapOf()
+    val data = aem.obj.map<String, Any?> { convention(mapOf()) }
 
-    var faulty = true
+    val faulty = aem.obj.boolean { convention(true) }
 
     private var consoleOptions: GroovyConsole.() -> Unit = {}
 
@@ -31,14 +33,17 @@ class GroovyEvaluator(private val aem: AemExtension) {
     fun eval() = evalScripts(findScripts())
 
     fun findScripts(): List<File> {
-        if (scriptPattern.isBlank()) {
+        if (scriptPattern.get().isBlank()) {
             throw GroovyConsoleException("Groovy script to be evaluated is not specified!")
         }
-        if (instances.isEmpty()) {
+        if (instances.get().isEmpty()) {
             throw GroovyConsoleException("No instances defined for Groovy script evaluation!")
         }
 
-        return instances.first().sync.groovyConsole.findScripts(StringUtils.appendIfMissing(scriptPattern, scriptSuffix))
+        val groovyConsole = instances.get().first().sync.groovyConsole
+        val pathPattern = StringUtils.appendIfMissing(scriptPattern.get(), scriptSuffix.get())
+
+        return groovyConsole.findScripts(pathPattern)
     }
 
     fun evalScripts(scripts: List<File>): GroovyEvalSummary {
@@ -50,7 +55,7 @@ class GroovyEvaluator(private val aem: AemExtension) {
             }
             val failMessage = "Groovy script evaluation errors (${failedStatuses.size}):\n${failMessages.joinToString("\n")}"
 
-            if (faulty) {
+            if (faulty.get()) {
                 throw GroovyConsoleException(failMessage)
             } else {
                 logger.error(failMessage)
@@ -68,20 +73,20 @@ class GroovyEvaluator(private val aem: AemExtension) {
         val statuses = mutableListOf<GroovyEvalStatus>()
 
         val stopWatch = StopWatch().apply { start() }
-        aem.progress(instances.size * scripts.size) {
+        common.progress(instances.get().size * scripts.size) {
             step = "Validating"
-            aem.sync(instances) {
+            aem.sync(instances.get()) {
                 groovyConsole.requireAvailable()
             }
 
             step = "Evaluating"
-            aem.sync(instances) {
+            aem.sync(instances.get()) {
                 groovyConsole.apply(consoleOptions)
 
                 scripts.forEach { script ->
                     increment("Script '${script.name}' on '${instance.name}'")
 
-                    groovyConsole.evalScript(script, data).apply {
+                    groovyConsole.evalScript(script, data.get()).apply {
                         val message = mutableListOf<String>().apply {
                             if (success) {
                                 add("Groovy script '$script' evaluated with success in '$runningTime' on $instance")
