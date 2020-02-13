@@ -16,17 +16,14 @@ open class InstanceTail : InstanceTask() {
         tailer.apply(options)
     }
 
-    init {
-        description = "Tails logs from all configured instances (local & remote) and notifies about unknown errors."
-    }
-
     @TaskAction
     fun tail() {
         tailer.apply {
             instances.convention(this@InstanceTail.instances)
 
-            aem.logger.lifecycle("Tailing logs from instances: ${instances.get().names}")
-            aem.logger.lifecycle("Filter incidents using file: ${tailer.incidentFilter}")
+            logger.lifecycle("Tailing logs from instances: ${instances.get().names}")
+            logger.lifecycle("Filter incidents using file: ${tailer.incidentFilter.get()}")
+
             tail()
         }
     }
@@ -34,6 +31,10 @@ open class InstanceTail : InstanceTask() {
     override fun projectEvaluated() {
         super.projectEvaluated()
         tailer.logFilter.excludeFile(tailer.incidentFilter.get().asFile)
+    }
+
+    init {
+        description = "Tails logs from all configured instances (local & remote) and notifies about unknown errors."
     }
 
     companion object {
