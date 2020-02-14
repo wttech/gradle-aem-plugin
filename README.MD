@@ -374,7 +374,7 @@ subprojects {
     plugins.withId("com.cognifide.aem.package") {
         configure<AemExtension> {
             `package` {
-                installPath = "/apps/acme/${project.name}/install"
+                installPath.set("/apps/acme/${project.name}/install")
             }
         }
     }
