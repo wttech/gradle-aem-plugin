@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem.instance
 
-import com.cognifide.gradle.aem.common.CommonPlugin
 import com.cognifide.gradle.aem.instance.provision.InstanceProvision
 import com.cognifide.gradle.aem.instance.rcp.InstanceRcp
 import com.cognifide.gradle.aem.instance.satisfy.InstanceSatisfy
@@ -9,6 +8,8 @@ import com.cognifide.gradle.aem.instance.tasks.*
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.PackageDeploy
 import com.cognifide.gradle.common.CommonDefaultPlugin
+import com.cognifide.gradle.common.RuntimePlugin
+import com.cognifide.gradle.common.tasks.runtime.*
 import org.gradle.api.Project
 
 /**
@@ -28,7 +29,7 @@ class InstancePlugin : CommonDefaultPlugin() {
     }
 
     private fun Project.setupDependentPlugins() {
-        plugins.apply(CommonPlugin::class.java)
+        plugins.apply(RuntimePlugin::class.java)
     }
 
     @Suppress("LongMethod")
@@ -88,35 +89,33 @@ class InstancePlugin : CommonDefaultPlugin() {
                 plugins.withId(PackagePlugin.ID) { mustRunAfter(PackageDeploy.NAME) }
             }
 
-            // Common lifecycle
-
-            /* TODO
-            registerOrConfigure<Up>(Up.NAME) {
+            // Runtime lifecycle
+            
+            named<Up>(Up.NAME) {
                 dependsOn(InstanceUp.NAME)
                 mustRunAfter(InstanceBackup.NAME)
             }
-            registerOrConfigure<Down>(Down.NAME) {
+            named<Down>(Down.NAME) {
                 dependsOn(InstanceDown.NAME)
             }
-            registerOrConfigure<Destroy>(Destroy.NAME) {
+            named<Destroy>(Destroy.NAME) {
                 dependsOn(InstanceDestroy.NAME)
             }
-            registerOrConfigure<Restart>(Restart.NAME) {
+            named<Restart>(Restart.NAME) {
                 dependsOn(InstanceRestart.NAME)
             }
-            registerOrConfigure<Setup>(Setup.NAME) {
+            named<Setup>(Setup.NAME) {
                 dependsOn(InstanceSetup.NAME)
             }
-            registerOrConfigure<Resetup>(Resetup.NAME) {
+            named<Resetup>(Resetup.NAME) {
                 dependsOn(InstanceResetup.NAME)
             }
-            registerOrConfigure<Resolve>(Resolve.NAME) {
+            named<Resolve>(Resolve.NAME) {
                 dependsOn(InstanceResolve.NAME)
             }
-            registerOrConfigure<Await>(Await.NAME) {
+            named<Await>(Await.NAME) {
                 dependsOn(InstanceAwait.NAME)
             }
-            */
         }
     }
 
