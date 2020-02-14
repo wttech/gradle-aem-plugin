@@ -136,9 +136,13 @@ plugins {
 group = "com.company.example.aem.core"
 ```
 
-#### Full plugins setup
+#### Complete plugins setup
 
 Illustrative configuration below assumes building and deploying on AEM instance(s) via command: `gradlew` (default tasks will be used).
+Intention of snippet below is to demonstrate: 
+
+* How particular values could be customized via Gradle AEM DSL,
+* What are the default values and how they are determined.
 
 ```kotlin
 plugins {
