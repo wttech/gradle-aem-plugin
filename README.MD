@@ -58,10 +58,8 @@ Looking for dedicated version of plugin for [**Apache Sling**](https://sling.apa
 
 What is being done above by simply running super easy command `sh gradlew`?
 
-1. `:aem:instanceSatisfy` -> checking for new dependent CRX packages to be deployed (in a lazy & fail-safe manner) that could arrive to our AEM instances automatically if somebody else add it to build configuration in the meantime.
-2. `:aem:assembly:full:packageDeploy` -> building & deploying all-in-one CRX package to AEM instances in parallel, then awaiting for stable condition of AEM instances and built application.
-3. `:aem:environmentClean` -> cleaning AEM dispatcher cache and restarting HTTPD service / Apache Web Server.
-4. `:aem:environmentAwait` -> running health checks ensuring that all AEM instances / websites are responding correctly.
+* `:aem:instanceSatisfy` -> checking for new dependent CRX packages to be deployed (in a lazy & fail-safe manner) that could arrive to our AEM instances automatically if somebody else add it to build configuration in the meantime.
+* `:aem:assembly:full:packageDeploy` -> building & deploying all-in-one CRX package to AEM instances in parallel, then awaiting for stable condition of AEM instances and built application.
 
 **Build is incremental** which guarantees optimized time every time regardless of build command used.
 Only changed parts of application are processed again:
@@ -266,7 +264,6 @@ To see all available options and actual documentation, please follow to:
 * `package` - [PackageOptions](src/main/kotlin/com/cognifide/gradle/aem/common/pkg/PackageOptions.kt)
 * `instance` - [InstanceOptions](src/main/kotlin/com/cognifide/gradle/aem/common/instance/InstanceOptions.kt)
 * `localInstance` - [LocalInstanceManager](src/main/kotlin/com/cognifide/gradle/aem/instance/LocalInstanceManager.kt)
-* `environment` - [Environment](src/main/kotlin/com/cognifide/gradle/aem/environment/Environment.kt)
 * `fileTransfer` - [FileTransferManager](src/main/kotlin/com/cognifide/gradle/aem/common/file/transfer/FileTransferManager.kt)
 * `bundleCompose` - [BundleCompose](src/main/kotlin/com/cognifide/gradle/aem/bundle/tasks/BundleCompose.kt)
 * `packageCompose` - [PackageCompose](src/main/kotlin/com/cognifide/gradle/aem/pkg/tasks/PackageCompose.kt)
@@ -337,22 +334,6 @@ aem {
 
 Warning! Very often plugin users mistake is to configure `instanceSatisfy` task in `allprojects` closure. 
 As an effect there will be same dependent CRX package defined multiple times.
-
-### Use lifecycle tasks
-
-To control lifecycle of both:
- 
-* AEM instances (author & publish) (provided from [instance plugin](#instance-plugin))
-* AEM environment (HTTPD server with AEM dispatcher) (provided by [environment plugin](#environment-plugin))
-
-use dynamically registered tasks (only if at least one of plugins above are applied):
-
-* `up` <=> `instanceUp` + `environmentUp`
-* `down` <=> `instanceDown` + `environmentDown`
-* `destroy` <=> `instanceDestroy` + `environmentDestroy`
-* `setup` <=> `instanceSetup` + `environmentSetup`
-* `resetup` <=> `instanceResetup` + `environmentResetup`
-* `resolve` <=> `instanceResolve` + `environmentResolve`
  
 ### Understand why there are one or two plugins to be applied in build script
 
@@ -408,12 +389,6 @@ subprojects {
 ```
 
 ## Known issues
-
-### Failed to await HTTPD service
-
-Noticed when using Docker Desktop for Windows, after hibernation task `environmentUp` may fail, because of some Docker related issue.
-To mitigate it, just RPM on Docker icon in the tray and choose *Restart*. After Docker ends restarting (tray icon will be no longer animated), 
-run task `environmentRestart`.
 
 ### BND tool error - Classes found in wrong directory
 
