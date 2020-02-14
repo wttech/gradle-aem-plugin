@@ -17,11 +17,11 @@
      * [Features](#features)
      * [Important notice](#important-notice)
   * [Getting started](#getting-started)
-  * [Configuration](#configuration)
-     * [Plugin setup](#plugin-setup)
-        * [Minimal](#minimal)
-        * [Additional](#additional)
   * [Plugins](#plugins)
+     * [Plugins setup](#plugins-setup)
+        * [Minimal plugins setup](#minimal-plugins-setup)
+        * [Full plugins setup](#full-plugins-setup)
+     * [Plugins documentation](#plugins-documentation)
   * [How to's](#how-tos)
      * [Set AEM configuration properly for all / concrete project(s)](#set-aem-configuration-properly-for-all--concrete-projects)
      * [Use lifecycle tasks](#use-lifecycle-tasks)
@@ -111,47 +111,39 @@ Optionally, [Docker](https://www.docker.com/) is needed (when using automatic AE
 
 As a build command, it is recommended to use Gradle Wrapper (`gradlew`) instead of locally installed Gradle (`gradle`) to easily have same version of build tool installed on all environments. Only at first build time, wrapper will be automatically downloaded and installed, then reused.
 
-## Configuration
+## Plugins 
 
-### Plugin setup
+### Plugins setup
 
-Released versions of plugin are available on [Bintray](https://bintray.com/cognifide/maven-public/gradle-aem-plugin), 
-so that this repository needs to be included in *buildscript* section.
+Released versions of plugin are available on: 
 
-#### Minimal
+* [Gradle Plugin Portal](https://plugins.gradle.org/search?term=com.cognifide.aem),
+* [Bintray](https://bintray.com/cognifide/maven-public/gradle-aem-plugin) (when using this repository proper URL need to be added into `buildscript` section).
+
+Recommended way is to apply plugin using Gradle Plugin Portal and techniques described there.
+
+#### Minimal plugins setup
 
 Configuration below assumes building and deploying CRX packages to AEM instance(s) via command: `gradlew packageDeploy`.
-
-File *buildSrc/build.gradle.kts*:
-
-```kotlin
-repositories {
-    jcenter()
-}
-
-dependencies {
-    implementation("com.cognifide.gradle:aem-plugin:<version>")
-}
-```
 
 File *build.gradle.kts*:
 
 ```kotlin
 plugins {
-    id("com.cognifide.aem.bundle") // or 'package' for JCR content only
+    id("com.cognifide.aem.bundle") version "<version>" // or 'package' for JCR content only
 }
 
-group = "com.company.aem"
+group = "com.company.example.aem.core"
 ```
 
-#### Additional
+#### Full plugins setup
 
-Configuration below assumes building and deploying on AEM instance(s) via command: `gradlew` (default tasks will be used).
+Illustrative configuration below assumes building and deploying on AEM instance(s) via command: `gradlew` (default tasks will be used).
 
 ```kotlin
 plugins {
-    id("com.cognifide.aem.bundle")
-    id("com.cognifide.aem.instance")
+    id("com.cognifide.aem.bundle") version "<version>"
+    id("com.cognifide.aem.instance") version "<version>"
     id("org.jetbrains.kotlin.jvm") // or any other like 'java' to compile OSGi bundle
 }
 
@@ -278,7 +270,7 @@ To see all available options and actual documentation, please follow to:
 * `instanceSatisfy` - [InstanceSatisfy](src/main/kotlin/com/cognifide/gradle/aem/instance/satisfy/InstanceSatisfy.kt)
 * `...` - other tasks in similar way.
 
-## Plugins
+### Plugins documentation
 
 Gradle AEM Plugin to be more concise is now more like set of plugins.
 Each plugin has its own documentation:
