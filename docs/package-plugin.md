@@ -7,24 +7,36 @@
 # Package plugin
 
   * [About](#about)
-  * [Instance conventions](#instance-conventions)
-  * [Defining instances via properties file](#defining-instances-via-properties-file)
-  * [Defining instances via build script](#defining-instances-via-build-script)
-     * [Instance filtering](#instance-filtering)
-     * [Instance URL credentials encoding](#instance-url-credentials-encoding)
-     * [Implementing tasks](#implementing-tasks)
-        * [Instance services](#instance-services)
-        * [Defining CRX package via code then downloading and sharing it using external HTTP endpoint](#defining-crx-package-via-code-then-downloading-and-sharing-it-using-external-http-endpoint)
-        * [Calling AEM endpoints / making any HTTP requests](#calling-aem-endpoints--making-any-http-requests)
-        * [Downloading CRX package from external HTTP endpoint and deploying it on desired AEM instances](#downloading-crx-package-from-external-http-endpoint-and-deploying-it-on-desired-aem-instances)
-        * [Working with content repository (JCR)](#working-with-content-repository-jcr)
-        * [Executing code on AEM runtime](#executing-code-on-aem-runtime)
-        * [Controlling OSGi bundles, components and configurations](#controlling-osgi-bundles-components-and-configurations)
-        * [Controlling workflows](#controlling-workflows)
-        * [Running Docker image based tools](#running-docker-image-based-tools)
-  * [Properties expanding in instance or package files](#properties-expanding-in-instance-or-package-files)
+  * [Task packageCompose](#task-packagecompose)
+     * [CRX package default configuration](#crx-package-default-configuration)
+     * [CRX package naming](#crx-package-naming)
+     * [CRX package validation](#crx-package-validation)
+     * [Including additional OSGi bundle into CRX package](#including-additional-osgi-bundle-into-crx-package)
+     * [Nesting CRX packages](#nesting-crx-packages)
+     * [Assembling packages (merging all-in-one)](#assembling-packages-merging-all-in-one)
+     * [Expandable properties](#expandable-properties)
+  * [Task packagePrepare](#task-packageprepare)
+  * [Task packageDeploy](#task-packagedeploy)
+     * [Deploying only to desired instances](#deploying-only-to-desired-instances)
+     * [Deploying options](#deploying-options)
+  * [Task packageUpload](#task-packageupload)
+  * [Task packageDelete](#task-packagedelete)
+  * [Task packageInstall](#task-packageinstall)
+  * [Task packageUninstall](#task-packageuninstall)
+  * [Task packagePurge](#task-packagepurge)
+  * [Task packageActivate](#task-packageactivate)
+  * [Known issues](#known-issues)
+     * [Caching task packageCompose](#caching-task-packagecompose)
 
 ## About
+
+Main responsibility of this plugin is to build CRX/AEM package.
+
+Provides CRX package related tasks: `packageCompose`, `packageDeploy`, `packageActivate`, `packagePurge` etc.
+
+Should be applied to all projects that are composing CRX packages from *JCR content only*.
+
+To apply plugin use snippet:
 
 ```kotlin
 plugins {
@@ -32,11 +44,7 @@ plugins {
 }
 ```
 
-Should be applied to all projects that are composing CRX packages from *JCR content only*.
-
-Provides CRX package related tasks: `packageCompose`, `packageDeploy`, `packageActivate`, `packagePurge` etc.
-
-Inherits from [Common Plugin](#common-plugin).
+This plugin implicitly applies also [Common Plugin](common-plugin.md).
 
 ## Task `packageCompose`
 
@@ -373,3 +381,10 @@ To prevent data loss, this unsafe task execution must be confirmed by parameter 
 ## Task `packageActivate` 
 
 Replicate installed CRX package to other AEM instance(s).
+
+## Known issues
+
+### Caching task `packageCompose`
+
+Expandable properties with dynamically calculated value (unique per build) like `created` and `buildCount` are not used by default generated properties file intentionally, 
+because such usages will effectively forbid caching `packageCompose` task and it will be never `UP-TO-DATE`.

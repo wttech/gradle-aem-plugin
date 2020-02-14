@@ -20,20 +20,13 @@
   * [Plugins](#plugins)
      * [Plugins setup](#plugins-setup)
         * [Minimal plugins setup](#minimal-plugins-setup)
-        * [Full plugins setup](#full-plugins-setup)
+        * [Complete plugins setup](#complete-plugins-setup)
      * [Plugins documentation](#plugins-documentation)
   * [How to's](#how-tos)
      * [Set AEM configuration properly for all / concrete project(s)](#set-aem-configuration-properly-for-all--concrete-projects)
-     * [Use lifecycle tasks](#use-lifecycle-tasks)
      * [Understand why there are one or two plugins to be applied in build script](#understand-why-there-are-one-or-two-plugins-to-be-applied-in-build-script)
      * [Work effectively on start and daily basis](#work-effectively-on-start-and-daily-basis)
      * [Customize convention for CRX package and OSGi bundle names and paths](#customize-convention-for-crx-package-and-osgi-bundle-names-and-paths)
-  * [Known issues](#known-issues)
-     * [Failed to await HTTPD service](#failed-to-await-httpd-service)
-     * [BND tool error - Classes found in wrong directory](#bnd-tool-error---classes-found-in-wrong-directory)
-     * [No OSGi services / components registered](#no-osgi-services--components-registered)
-     * [Caching task packageCompose](#caching-task-packagecompose)
-     * [Vault tasks parallelism](#vault-tasks-parallelism)
   * [Compatibility](#compatibility)
   * [Building](#building)
   * [Testing](#testing)
@@ -387,56 +380,6 @@ subprojects {
     }
 }
 ```
-
-## Known issues
-
-### BND tool error - Classes found in wrong directory
-
-After correcting bad Java package case from camelCase to lowercase according to [Oracle recommendations](https://docs.oracle.com/javase/tutorial/java/package/namingpkgs.html), BND tool may report error:
-
-```
-> Task :aem:sites:jar FAILED
-...
-error  : Classes found in the wrong directory: 
-```
-
-To fix above error simply run once following command to ensure building using fresh daemon and resources:
-
-```bash
-sh gradle clean :aem:sites:jar --no-daemon --rerun-tasks
-```
-
-### No OSGi services / components registered
-
-Since AEM 6.2 it is recommended to use new OSGi service component annotations to register OSGi components instead SCR annotations (still supported, but not by Gradle AEM Plugin).
-
-For the reference, please read post on official [Adobe Blog](http://blogs.adobe.com/experiencedelivers/experience-management/using-osgi-annotations-aem6-2/).
-
-Basically, Gradle AEM Plugin is designed to be used while implementing new projects on AEM in version greater than 6.2.
-Because, of that fact, there is no direct possibility to reuse code written for older AEM's which is using SCR annotations.
-However it is very easy to migrate these annotations to new ones and generally speaking it is not much expensive task to do.
-
-```java
-import org.apache.felix.scr.annotations.Component;
-```
-
-->
-
-```java
-import org.osgi.service.component.annotations.Component;
-```
-
-New API fully covers functionality of old one, so nothing to worry about while migrating.
-
-### Caching task `packageCompose`
-
-Expandable properties with dynamically calculated value (unique per build) like `created` and `buildCount` are not used by default generated properties file intentionally, 
-because such usages will effectively forbid caching `packageCompose` task and it will be never `UP-TO-DATE`.
-
-### Vault tasks parallelism
-
-Vault tool current working directory cannot be easily configured, because of its API. AEM plugin is temporarily changing current working directory for Vault, then returning it back to original value.
-In case of that workaround, Vault tasks should not be run in parallel (by separated daemon processed / JVM synchronization bypassed), because of potential unpredictable behavior.
 
 ## Compatibility
 

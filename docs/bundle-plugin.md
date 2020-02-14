@@ -6,9 +6,30 @@
 
 # Bundle plugin
 
+  * [About](#about)
+  * [Bundle conventions](#bundle-conventions)
+  * [Embedding JAR file into OSGi bundle](#embedding-jar-file-into-osgi-bundle)
+  * [Configuring OSGi bundle manifest attributes](#configuring-osgi-bundle-manifest-attributes)
+  * [Excluding packages being incidentally imported by OSGi bundle](#excluding-packages-being-incidentally-imported-by-osgi-bundle)
+  * [Task bundleInstall](#task-bundleinstall)
+  * [Task bundleUninstall](#task-bundleuninstall)
+  * [Known issues](#known-issues)
+     * [BND tool error - Classes found in wrong directory](#bnd-tool-error---classes-found-in-wrong-directory)
+     * [No OSGi services / components registered](#no-osgi-services--components-registered)
+
+## About
+
 Should be applied to all projects that are composing CRX packages from both *OSGi bundle* being built and optionally *JCR content*. 
 
-Inherits from [Package Plugin](#package-plugin).
+To apply plugin use snippet:
+
+```kotlin
+plugins {
+    id("com.cognifide.aem.bundle")
+}
+```
+
+This plugin implicitly applies also [Package Plugin](package-plugin.md).
 
 ## Bundle conventions
 
@@ -119,3 +140,43 @@ Available options:
 ## Task `bundleUninstall`
 
 Uninstalls OSGi bundle on AEM instance(s).
+
+## Known issues
+
+### BND tool error - Classes found in wrong directory
+
+After correcting bad Java package case from camelCase to lowercase according to [Oracle recommendations](https://docs.oracle.com/javase/tutorial/java/package/namingpkgs.html), BND tool may report error:
+
+```
+> Task :aem:sites:jar FAILED
+...
+error  : Classes found in the wrong directory: 
+```
+
+To fix above error simply run once following command to ensure building using fresh daemon and resources:
+
+```bash
+sh gradle clean :aem:sites:jar --no-daemon --rerun-tasks
+```
+
+### No OSGi services / components registered
+
+Since AEM 6.2 it is recommended to use new OSGi service component annotations to register OSGi components instead SCR annotations (still supported, but not by Gradle AEM Plugin).
+
+For the reference, please read post on official [Adobe Blog](http://blogs.adobe.com/experiencedelivers/experience-management/using-osgi-annotations-aem6-2/).
+
+Basically, Gradle AEM Plugin is designed to be used while implementing new projects on AEM in version greater than 6.2.
+Because, of that fact, there is no direct possibility to reuse code written for older AEM's which is using SCR annotations.
+However it is very easy to migrate these annotations to new ones and generally speaking it is not much expensive task to do.
+
+```java
+import org.apache.felix.scr.annotations.Component;
+```
+
+->
+
+```java
+import org.osgi.service.component.annotations.Component;
+```
+
+New API fully covers functionality of old one, so nothing to worry about while migrating.

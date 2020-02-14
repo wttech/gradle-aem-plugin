@@ -6,6 +6,7 @@
 
 # Package sync plugin
 
+  * [About](#about)
   * [Task packageSync](#task-packagesync)
      * [Cleaning features](#cleaning-features)
      * [Default cleaning configuration](#default-cleaning-configuration)
@@ -16,15 +17,21 @@
      * [Filter file at custom path](#filter-file-at-custom-path)
      * [Filter roots specified explicitly](#filter-roots-specified-explicitly)
   * [Task packageVlt](#task-packagevlt)
+  * [Known issues](#known-issues)
+     * [Vault tasks parallelism](#vault-tasks-parallelism)
+
+## About
+
+Provides tasks for JCR content synchronization using running AEM instance.
+Allows to download JCR content in automated manner so manual editing files like *.content.xml* might be redundant.
+
+To apply plugin use snippet:
 
 ```kotlin
 plugins {
     id("com.cognifide.aem.package.sync")
 }
 ```
-
-Provides tasks for JCR content synchronization using running AEM instance.
-Allows to download JCR content in automated manner so manual editing files like *.content.xml* might be redundant.
 
 ## Task `packageSync`
 
@@ -207,3 +214,10 @@ gradlew :site.demo:packageVlt -Ppackage.vlt.command='rcp -b 100 -r -u -n http://
 For more details about available parameters, please visit [VLT Tool documentation](https://helpx.adobe.com/experience-manager/6-4/sites/developing/using/ht-vlttool.html).
 
 While using task `sync` be aware that Gradle requires to have working directory with file *build.gradle.kts* in it, but Vault tool can work at any directory under *jcr_root*. To change working directory for Vault, use property `aem.vlt.path` which is relative path to be appended to *jcr_root* for project task being currently executed.
+
+## Known issues
+
+### Vault tasks parallelism
+
+Vault tool current working directory cannot be easily configured, because of its API. AEM plugin is temporarily changing current working directory for Vault, then returning it back to original value.
+In case of that workaround, Vault tasks should not be run in parallel (by separated daemon processed / JVM synchronization bypassed), because of potential unpredictable behavior.

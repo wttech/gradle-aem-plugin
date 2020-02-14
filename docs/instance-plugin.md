@@ -1,3 +1,47 @@
+[![Cognifide logo](cognifide-logo.png)](http://cognifide.com)
+
+<p>
+  <img src="logo.png" alt="Gradle AEM Plugin"/>
+</p>
+
+# Instance plugin
+
+  * [About](#about)
+  * [Instance file structure](#instance-file-structure)
+  * [Task instanceSetup](#task-instancesetup)
+  * [Task instanceResetup](#task-instanceresetup)
+  * [Task instanceCreate](#task-instancecreate)
+     * [Configuration of AEM instance source (JAR file or backup file)](#configuration-of-aem-instance-source-jar-file-or-backup-file)
+     * [Pre-installed OSGi bundles and CRX packages](#pre-installed-osgi-bundles-and-crx-packages)
+     * [Customization of extracted instance files (optional)](#customization-of-extracted-instance-files-optional)
+     * [Customization of sling.properties files](#customization-of-slingproperties-files)
+  * [Task instanceBackup](#task-instancebackup)
+     * [Work with remote instance backups](#work-with-remote-instance-backups)
+  * [Task instanceDestroy](#task-instancedestroy)
+  * [Task instanceUp](#task-instanceup)
+  * [Task instanceDown](#task-instancedown)
+  * [Task instanceRestart](#task-instancerestart)
+  * [Task instanceReload](#task-instancereload)
+  * [Task instanceResolve](#task-instanceresolve)
+  * [Task instanceSatisfy](#task-instancesatisfy)
+  * [Task instanceProvision](#task-instanceprovision)
+  * [Task instanceAwait](#task-instanceawait)
+  * [Task instanceTail](#task-instancetail)
+     * [Tailing incidents](#tailing-incidents)
+     * [Tailing to console](#tailing-to-console)
+     * [Tailing multiple instances](#tailing-multiple-instances)
+     * [Standalone tailer tool](#standalone-tailer-tool)
+  * [Task instanceRcp](#task-instancercp)
+  * [Task instanceGroovyEval](#task-instancegroovyeval)
+
+## About
+
+Provides instance related tasks: `instanceUp`, `instanceDown`, `instanceSetup`, `instanceBackup`, `instanceAwait`, `instanceSetup`, `instanceCreate` etc.
+Allows to create & customize AEM instances on local file system and control them. Also provides support for automated backups and restoring.
+
+Should be applied only at root project / only once within whole build.
+
+To apply plugin use snippet:
 
 ```kotlin
 plugins {
@@ -5,35 +49,30 @@ plugins {
 }
 ```
 
-Provides instance related tasks: `instanceUp`, `instanceDown`, `instanceSetup`, `instanceBackup`, `instanceAwait`, `instanceSetup`, `instanceCreate` etc.
-Allows to create & customize AEM instances on local file system and control them. Also provides support for automated backups and restoring.
+This plugin implicitly applies also [Common Plugin](common-plugin.md).
 
-Should be applied only at root project / only once within whole build.
-
-Inherits from [Common Plugin](#common-plugin).
-
-#### Instance file structure
+## Instance file structure
 
 By default, instance file are stored directly in project, under so called main AEM module usually named *aem*.
 Ensure having directory *aem/.instance* ignored in VCS and excluded from indexing by IDE.
 
 ![Instance file structure](docs/instance-file-structure.png)
 
-#### Task `instanceSetup`
+## Task `instanceSetup`
 
 Performs initial setup of local AEM instance(s). Automated version of `instanceCreate instanceUp instanceSatisfy packageDeploy`.
 
-#### Task `instanceResetup`
+## Task `instanceResetup`
 
 Combination of `instanceDown instanceDestroy instanceSetup`. Allows to quickly back to initial state of local AEM instance(s).
 
 To prevent data loss, this unsafe task execution must be confirmed by parameter `-Pforce`.
 
-#### Task `instanceCreate`
+## Task `instanceCreate`
  
 Create AEM instance(s) at local file system. Extracts *crx-quickstart* from downloaded JAR and applies configuration according to [instance definitions](#defining-instances-via-properties-file). 
 
-##### Configuration of AEM instance source (JAR file or backup file)
+### Configuration of AEM instance source (JAR file or backup file)
 
 To create instances from scratch, specify:
 
@@ -81,7 +120,7 @@ Notice that, default selector assumes that most recent backup will be selected.
 Ordering by file name including timestamp then local backups precedence when backup is available on both local & remote source.
 Still, backup selector could select exact backup by name when property `localInstance.backup.name` is specified.
 
-##### Pre-installed OSGi bundles and CRX packages
+### Pre-installed OSGi bundles and CRX packages
 
 Use dedicated section:
 
@@ -100,7 +139,7 @@ aem {
 Files section works in a same way as in [instance satisfy task](#task-instancesatisfy).
 For more details see AEM [File Install Provider](https://helpx.adobe.com/experience-manager/6-5/sites/deploying/using/custom-standalone-install.html#AddingaFileInstallProvider) documentation.
 
-##### Customization of extracted instance files (optional)
+### Customization of extracted instance files (optional)
 
 The plugin allows us to override or provide extra files to local AEM instance installations.
 This behavior could be customized by `localInstance` section of plugin DSL:
@@ -127,7 +166,7 @@ Besides `expandProperties`, there is one predefined variable [instance](src/main
 that can be used to customize scripts and other files 
 (see [start script](src/main/resources/com/cognifide/gradle/aem/instance/local/start)).
 
-###### Customization of `sling.properties` files
+### Customization of `sling.properties` files
 
 An example could be providing additional configuration for the `sling.properties` file when running AEM 6.5 on Java 11.
 It is needed to override only two properties in the final `sling.properties` file: 
@@ -150,7 +189,7 @@ Now, when creating a new instance with this configuration, only those two proper
 
 Notice, that adding the file under `gradle/instance/local/common` will apply it both for author and publish instances.
 
-#### Task `instanceBackup`
+## Task `instanceBackup`
 
 Archives local AEM instance(s) into ZIP file. Provides automated way to perform [offline backup](https://helpx.adobe.com/pl/experience-manager/6-5/sites/administering/using/backup-and-restore.html#OfflineBackup). Requires having instance(s) down.
 
@@ -176,7 +215,7 @@ Instance backups created by this task could be used later by [create task](#task
 It is also possible to upload only previously created local backup. In that case specify mode property by running `gradlew instanceBackup -Pinstance.backup.mode=upload_only`.
 Available modes: *zip_and_upload* (default), *zip_only*, *upload_only*.
 
-##### Work with remote instance backups
+### Work with remote instance backups
 
 Backups can be automatically downloaded and uploaded from remote server.
  
@@ -240,29 +279,29 @@ aem {
 }
 ```
 
-#### Task `instanceDestroy` 
+## Task `instanceDestroy` 
 
 Destroy local AEM instance(s).
 
 To prevent data loss, this unsafe task execution must be confirmed by parameter `-Pforce`.
     
-#### Task `instanceUp`
+## Task `instanceUp`
 
 Turn on local AEM instance(s).
 
-#### Task `instanceDown`
+## Task `instanceDown`
 
 Turn off local AEM instance(s).
 
-#### Task `instanceRestart`
+## Task `instanceRestart`
 
 Turn off and then turn on local AEM instance(s).
 
-#### Task `instanceReload`
+## Task `instanceReload`
 
 Reload OSGi Framework (Apache Felix) on local and remote AEM instance(s).
 
-#### Task `instanceResolve`
+## Task `instanceResolve`
 
 Resolve instance files from remote sources before running other tasks.
 
@@ -273,7 +312,7 @@ Files considered:
 
 This task might be also useful to check amended configuration to verify HTTP urls, SMB / SSH credentials etc and fail fast when they are wrong.
 
-#### Task `instanceSatisfy` 
+## Task `instanceSatisfy` 
 
 Upload & install dependent CRX package(s) before deployment. 
 
@@ -374,7 +413,7 @@ As of task inherits from task `packageDeploy` it is also possible to temporary e
 gradlew :instanceSatisfy -Ppackage.deploy.workflowToggle=[dam_asset=false]
 ```
 
-#### Task `instanceProvision`
+## Task `instanceProvision`
 
 Performs configuration actions for AEM instances in customizable conditions (specific circumstances).
 Feature dedicated for pre-configuring AEM instances as of not all things like turning off OSGi bundles is easy realizable via CRX packages.
@@ -455,7 +494,7 @@ To perform step(s) regardless conditions, use greedy property (may be combined w
 gradlew instanceProvision -Pinstance.provision.greedy
 ```
 
-#### Task `instanceAwait`
+## Task `instanceAwait`
 
 Check health condition of AEM instance(s) of any type (local & remote).
 
@@ -509,7 +548,7 @@ aem {
 }
 ```
 
-#### Task `instanceTail`
+## Task `instanceTail`
 
 Continuosly downloads logs from any local or remote AEM instances.
 Detects and interactively notifies about unknown errors as incident reports.
@@ -538,7 +577,7 @@ aem {
 
 Log files are stored under directory: *build/aem/instanceTail/${instance.name}/error.log*.
 
-##### Tailing incidents
+### Tailing incidents
 
 By default, tailer is buffering cannonade of log entries of level *ERROR* in 5 seconds time window then interactively shows notification.
 Clicking on that notification will browse to incident log file created containing only desired exceptions. These incident files are stored under directory: *build/aem/instanceTail/${instance.name}/incidents/${timestamp}-error.log*.
@@ -556,13 +595,13 @@ Error while executing script *diskusage.sh
 Error while executing script *cpu.sh
 ```
 
-##### Tailing to console
+### Tailing to console
 
 By default, tailer prints all logs to console (with instance name in front and timestamp converted to the machines time zone). To turn it off use:
 
 `./gradlew instanceTail -Pinstance.tail.console=false`
 
-##### Tailing multiple instances
+### Tailing multiple instances
 
 Common use case could be to tail many remote AEM instances at once that comes from multiple environments.
 To cover such case, it is possible to run tailer using predefined instances and defined dynamically. Number of specified instance URLs is unlimited.
@@ -573,12 +612,12 @@ Simply use command:
 gradlew instanceTail -Pinstance.list=[http://admin:admin@192.168.1.1:4502,http://admin:admin@author.example.com]
 ```
 
-##### Standalone tailer tool
+### Standalone tailer tool
 
 Instance tailer could be used as standalone tool beside of e.g Maven based AEM application builds using [Content Package Maven Plugin](https://helpx.adobe.com/experience-manager/6-5/sites/developing/using/vlt-mavenplugin.html).
 Just download it from [here](dists/gradle-aem-tailer) (< 100 KB), extract anywhere on disk and run.
 
-#### Task `instanceRcp`
+## Task `instanceRcp`
 
 Copy JCR content from one instance to another. Sample usages below.
 
@@ -622,7 +661,7 @@ Consider disabling AEM workflow launchers before running this task and re-enabli
 
 RCP task is internally using [Vault Remote Copy](http://jackrabbit.apache.org/filevault/rcp.html) which requires bundle *Apache Sling Simple WebDAV Access to repositories (org.apache.sling.jcr.webdav)* present in active state on instance.
 
-#### Task `instanceGroovyEval`
+## Task `instanceGroovyEval`
 
 Evaluate Groovy script(s) on instance(s).
 
