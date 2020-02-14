@@ -49,7 +49,7 @@ plugins {
 }
 ```
 
-This plugin implicitly applies also [Common Plugin](common-plugin.md).
+This plugin implicitly applies also [Common Plugin](common-plugin.md) and [Runtime Plugin](https://github.com/Cognifide/gradle-common-plugin).
 
 ## Instance file structure
 

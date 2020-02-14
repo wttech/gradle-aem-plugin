@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.instance
 
+import com.cognifide.gradle.aem.common.CommonPlugin
 import com.cognifide.gradle.aem.instance.provision.InstanceProvision
 import com.cognifide.gradle.aem.instance.rcp.InstanceRcp
 import com.cognifide.gradle.aem.instance.satisfy.InstanceSatisfy
@@ -29,6 +30,7 @@ class InstancePlugin : CommonDefaultPlugin() {
     }
 
     private fun Project.setupDependentPlugins() {
+        plugins.apply(CommonPlugin::class.java)
         plugins.apply(RuntimePlugin::class.java)
     }
 
@@ -90,7 +92,7 @@ class InstancePlugin : CommonDefaultPlugin() {
             }
 
             // Runtime lifecycle
-            
+
             named<Up>(Up.NAME) {
                 dependsOn(InstanceUp.NAME)
                 mustRunAfter(InstanceBackup.NAME)
