@@ -382,9 +382,10 @@ class AemExtension(val project: Project) : Serializable {
         private val PLUGIN_IDS = listOf(
                 CommonPlugin.ID,
                 PackagePlugin.ID,
+                PackageSyncPlugin.ID,
                 BundlePlugin.ID,
                 InstancePlugin.ID,
-                PackageSyncPlugin.ID
+                LocalInstancePlugin.ID
         )
 
         fun of(project: Project): AemExtension {

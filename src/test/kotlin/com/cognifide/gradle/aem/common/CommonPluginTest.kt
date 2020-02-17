@@ -11,9 +11,9 @@ class CommonPluginTest {
 
     @Test
     fun `plugin registers extension`() = using(ProjectBuilder.builder().build()) {
-        plugins.apply("com.cognifide.aem.common")
+        plugins.apply(CommonPlugin.ID)
 
-        extensions.getByName("aem")
+        extensions.getByName(AemExtension.NAME)
         extensions.getByType(AemExtension::class.java).apply {
             val instances = instanceOptions.defined.get()
 

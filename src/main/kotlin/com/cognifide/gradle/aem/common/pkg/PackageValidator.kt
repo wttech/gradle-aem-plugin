@@ -205,7 +205,7 @@ class PackageValidator(@Internal val aem: AemExtension) {
             }
 
             val failMessage = "OAKPal check violations ($violationSeverityReached) were reported at or above" +
-                    " severity '$severity' for CRX package(s) '${listPackages(packages)}'!"
+                    " severity '${severity.get()}' for CRX package(s) '${listPackages(packages)}'!"
 
             if (verbose.get()) {
                 throw PackageException(failMessage)

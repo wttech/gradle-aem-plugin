@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.bundle
 
+import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.bundle.tasks.BundleCompose
 import com.cognifide.gradle.aem.bundle.tasks.BundleInstall
 import com.cognifide.gradle.aem.bundle.tasks.BundleUninstall
@@ -12,9 +13,9 @@ class BundlePluginTest {
 
     @Test
     fun `plugin registers extension and tasks`() = using(ProjectBuilder.builder().build()) {
-        plugins.apply("com.cognifide.aem.bundle")
+        plugins.apply(BundlePlugin.ID)
 
-        extensions.getByName("aem")
+        extensions.getByName(AemExtension.NAME)
 
         tasks.named(BundleCompose.NAME, BundleCompose::class.java).get().apply {
             assertEquals("test.jar", composedFile.name)

@@ -199,7 +199,13 @@ gradlePlugin {
             id = "com.cognifide.aem.instance"
             implementationClass = "com.cognifide.gradle.aem.instance.InstancePlugin"
             displayName = "AEM Instance Plugin"
-            description = "Provides tasks for working with native local AEM instances."
+            description = "Provides tasks for working with remote AEM instances."
+        }
+        create("instance.local") {
+            id = "com.cognifide.aem.instance.local"
+            implementationClass = "com.cognifide.gradle.aem.instance.LocalInstancePlugin"
+            displayName = "AEM Local Instance Plugin"
+            description = "Provides tasks for working with local AEM instances."
         }
     }
 }

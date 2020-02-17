@@ -112,8 +112,7 @@ open class PackageCompose : ZipTask(), AemTask {
     var fileFilterDelegate: ((CopySpec) -> Unit) = { fileFilter.filter(it, fileProperties) }
 
     @get:Internal
-    val fileProperties
-        get() = mapOf("definition" to vaultDefinition)
+    val fileProperties get() = mapOf("definition" to vaultDefinition.toMap())
 
     @Internal
     var fromConvention = true
@@ -422,9 +421,8 @@ open class PackageCompose : ZipTask(), AemTask {
 
     init {
         description = "Composes CRX package from JCR content and built OSGi bundles"
-
         archiveBaseName.set(aem.commonOptions.baseName)
-        destinationDirectory.set(aem.obj.buildDir(name))
+        destinationDirectory.set(project.layout.buildDirectory.dir(name))
         duplicatesStrategy = DuplicatesStrategy.WARN
     }
 

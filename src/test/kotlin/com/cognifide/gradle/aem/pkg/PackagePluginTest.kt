@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.pkg
 
+import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.utils.using
 import com.cognifide.gradle.aem.pkg.tasks.*
 import org.gradle.testfixtures.ProjectBuilder
@@ -10,9 +11,9 @@ class PackagePluginTest {
 
     @Test
     fun `plugin registers extension and tasks`() = using(ProjectBuilder.builder().build()) {
-        plugins.apply("com.cognifide.aem.package")
+        plugins.apply(PackagePlugin.ID)
 
-        extensions.getByName("aem")
+        extensions.getByName(AemExtension.NAME)
 
         tasks.getByName(PackageActivate.NAME)
 
