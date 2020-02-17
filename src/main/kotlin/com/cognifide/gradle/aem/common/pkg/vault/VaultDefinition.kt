@@ -148,17 +148,6 @@ open class VaultDefinition(private val aem: AemExtension) {
                 }
     }
 
-    fun toMap() = mapOf(
-            "name" to name.get(),
-            "group" to group.get(),
-            "version" to version.get(),
-            "description" to description.orNull,
-            "createdBy" to createdBy.orNull,
-            "filters" to filters,
-            "nodeTypes" to nodeTypes,
-            "properties" to properties.get()
-    )
-
     companion object {
         val NODE_TYPES_LIB: Pattern = Pattern.compile("<.+>")
     }
