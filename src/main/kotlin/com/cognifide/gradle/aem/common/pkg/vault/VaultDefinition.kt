@@ -148,6 +148,37 @@ open class VaultDefinition(private val aem: AemExtension) {
                 }
     }
 
+    /**
+     * Any properties that could be used in any text file being a part of composed package.
+     */
+    @get:Internal
+    val fileProperties get() = mapOf(
+            "definition" to Delegate(this),
+            "aem" to aem
+    )
+
+    /**
+     * Provide nicer syntax for accessing Gradle lazy properties in Pebble template files.
+     */
+    class Delegate(private val base: VaultDefinition) {
+
+        val group get() = base.group.get()
+
+        val name get() = base.name.get()
+
+        val version get() = base.version.get()
+
+        val description get() = base.description.orNull
+
+        val createdBy get() = base.createdBy.orNull
+
+        val properties get() = base.properties.get()
+
+        val filters get() = base.filters // TODO lazy
+
+        val nodeTypes get() = base.nodeTypes // TODO collection and lazy
+    }
+
     companion object {
         val NODE_TYPES_LIB: Pattern = Pattern.compile("<.+>")
     }

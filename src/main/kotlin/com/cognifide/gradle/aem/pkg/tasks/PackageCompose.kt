@@ -14,7 +14,6 @@ import com.cognifide.gradle.aem.common.pkg.vault.FilterType
 import com.cognifide.gradle.aem.common.pkg.vault.VaultDefinition
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.compose.BundleDependency
-import com.cognifide.gradle.aem.pkg.tasks.compose.Definition
 import com.cognifide.gradle.aem.pkg.tasks.compose.PackageDependency
 import com.cognifide.gradle.aem.pkg.tasks.compose.ProjectMergingOptions
 import com.cognifide.gradle.common.build.DependencyOptions
@@ -110,10 +109,7 @@ open class PackageCompose : ZipTask(), AemTask {
     }
 
     @Internal
-    var fileFilterDelegate: ((CopySpec) -> Unit) = { fileFilter.filter(it, fileProperties) }
-
-    @get:Internal
-    val fileProperties get() = mapOf("definition" to Definition(vaultDefinition))
+    var fileFilterDelegate: ((CopySpec) -> Unit) = { fileFilter.filter(it, vaultDefinition.fileProperties) }
 
     @Internal
     var fromConvention = true

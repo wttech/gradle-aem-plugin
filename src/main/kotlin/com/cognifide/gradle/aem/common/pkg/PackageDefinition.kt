@@ -95,14 +95,11 @@ class PackageDefinition(private val aem: AemExtension) : VaultDefinition(aem) {
         expandFiles(metaDir, filePatterns)
     }
 
-    val expandProperties: Map<String, Any> get() = mapOf(
-            "definition" to this,
-            "aem" to aem
-    )
+    val expandProperties = aem.obj.map<String, Any> { convention(aem.obj.provider { fileProperties }) }
 
     fun expandFiles(dir: File, filePatterns: List<String> = PackageFileFilter.EXPAND_FILES_DEFAULT) {
         FileOperations.amendFiles(dir, filePatterns) { source, content ->
-            common.prop.expand(content, expandProperties, source.absolutePath)
+            common.prop.expand(content, expandProperties.get(), source.absolutePath)
         }
     }
 
