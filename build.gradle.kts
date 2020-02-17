@@ -113,7 +113,7 @@ tasks {
         failFast = true
         mustRunAfter("test")
         dependsOn("jar")
-        outputs.upToDateWhen { false }
+        outputs.dir("build/functionalTest")
     }
     named<Task>("build") {
         dependsOn("sourcesJar", "javadocJar")
