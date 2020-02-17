@@ -158,3 +158,5 @@ classes/
 !src/main/kotlin/com/cognifide/gradle/aem/common/build
 .idea/*
 !.idea/runConfigurations
+.instance
+.environment
