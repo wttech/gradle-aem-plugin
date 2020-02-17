@@ -274,6 +274,7 @@ Each plugin has its own documentation:
 * [Package Sync](docs/package-sync-plugin.md)
 * [Bundle](docs/bundle-plugin.md)
 * [Instance](docs/instance-plugin.md)
+* [Local Instance](docs/local-instance-plugin.md)
 
 ## How to's
 
