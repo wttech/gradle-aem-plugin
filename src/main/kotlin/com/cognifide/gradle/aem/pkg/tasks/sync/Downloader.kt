@@ -42,7 +42,7 @@ class Downloader(@Internal private val aem: AemExtension) {
 
     fun download() {
         val file = instance.get().sync.packageManager.download {
-            filterElements = filter.get().elements.toMutableList()
+            filterElements.set(filter.get().elements)
         }
 
         if (extract.get()) {

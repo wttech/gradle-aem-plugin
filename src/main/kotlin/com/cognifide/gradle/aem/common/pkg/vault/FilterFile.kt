@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.common.pkg.vault
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
+import com.cognifide.gradle.aem.common.pkg.PackageException
 import com.cognifide.gradle.aem.common.utils.JcrUtil
 import com.cognifide.gradle.common.utils.Formats
 import com.cognifide.gradle.aem.pkg.tasks.PackageVlt
@@ -21,7 +22,12 @@ class FilterFile(
 
     @get:Internal
     val elements: List<FilterElement>
-        get() = FilterElement.parse(file.readText())
+        get() = file.run {
+            if (!exists()) {
+                throw PackageException("Cannot load Vault filter elements. File does not exist: '$this'!")
+            }
+            FilterElement.parse(readText())
+        }
 
     @get:Internal
     val roots: Set<String>

@@ -130,14 +130,15 @@ open class PackageCompose : ZipTask(), AemTask {
 
     /**
      * Configures extra files to be observed in case of Gradle task caching.
+     *
+     * TODO https://github.com/gradle/gradle/issues/2016
      */
     @get:InputFiles
-    val inputFiles: List<File>
-        get() = mutableListOf<File>().apply {
-            add(vaultNodeTypesSyncFile.get().asFile)
-            addAll(bundleDependencies.flatMap { it.configuration.resolve() })
-            addAll(packageDependencies.flatMap { it.configuration.resolve() })
-        }.filter { it.exists() }
+    val inputFiles = aem.obj.files {
+        from(vaultNodeTypesSyncFile)
+        from(bundleDependencies.map { it.configuration })
+        from(packageDependencies.map { it.configuration })
+    }
 
     override fun projectEvaluated() {
         if (fromConvention) {
@@ -148,20 +149,18 @@ open class PackageCompose : ZipTask(), AemTask {
     override fun projectsEvaluated() {
         fromProjects.forEach { it() }
         fromTasks.forEach { it() }
+
+        vaultDefinition.apply {
+            if (mergingOptions.vaultFilters) {
+                filters(vaultFilterOriginFile.asFile, true)
+            }
+
+            nodeTypes(vaultNodeTypesSyncFile.asFile, true)
+        }
     }
 
     @TaskAction
     override fun copy() {
-        vaultDefinition.apply {
-            if (mergingOptions.vaultFilters && vaultFilterOriginFile.get().asFile.exists()) {
-                filterElements(vaultFilterOriginFile.get().asFile)
-            }
-
-            if (vaultNodeTypesSyncFile.get().asFile.exists()) {
-                nodeTypes(vaultNodeTypesSyncFile.get().asFile)
-            }
-        }
-
         super.copy()
         validator.perform(composedFile)
 
@@ -255,12 +254,12 @@ open class PackageCompose : ZipTask(), AemTask {
                 }
             }
 
-            if (options.vaultFilters && other.vaultFilterFile.get().asFile.exists()) {
-                vaultDefinition.filterElements(other.vaultFilterFile.get().asFile)
+            if (options.vaultFilters) {
+                vaultDefinition.filters(other.vaultFilterFile.asFile, true)
             }
 
-            if (options.vaultNodeTypes && other.vaultNodeTypesFile.get().asFile.exists()) {
-                vaultDefinition.nodeTypes(other.vaultNodeTypesFile.get().asFile)
+            if (options.vaultNodeTypes) {
+                vaultDefinition.nodeTypes(other.vaultNodeTypesFile.asFile, true)
             }
 
             if (options.vaultProperties) {

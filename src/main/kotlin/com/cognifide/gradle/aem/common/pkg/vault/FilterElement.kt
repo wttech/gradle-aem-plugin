@@ -1,10 +1,12 @@
 package com.cognifide.gradle.aem.common.pkg.vault
 
+import org.gradle.api.tasks.Internal
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import org.jsoup.parser.Parser
+import java.io.Serializable
 
-class FilterElement(val root: String) {
+class FilterElement(val root: String) : Serializable {
 
     var mode: String? = null
 
@@ -14,6 +16,7 @@ class FilterElement(val root: String) {
 
     var includes: Collection<String> = listOf()
 
+    @get:Internal
     val element: Element
         get() = Element(FILTER_TAG).apply {
             attr(ROOT_ATTR, root)
