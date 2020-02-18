@@ -84,12 +84,12 @@ class PackagePluginTest: AemBuildTest() {
             """)
 
             gradleProperties("""
-                version="1.0.0"
+                version=1.0.0
             """)
 
             // Assembly project
 
-            file("assembly/build.gradle.kts",""""
+            file("assembly/build.gradle","""
                 plugins {
                     id("com.cognifide.aem.package")
                 }
@@ -106,7 +106,7 @@ class PackagePluginTest: AemBuildTest() {
 
             // UI apps project
 
-            file("ui.apps/build.gradle.kts", """
+            file("ui.apps/build.gradle", """
                 plugins {
                     id("com.cognifide.aem.bundle")
                 }
@@ -123,8 +123,15 @@ class PackagePluginTest: AemBuildTest() {
                 }
                 """)
 
+            file("ui.apps/src/main/content/META-INF/vault/filter.xml", """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <workspaceFilter version="1.0">
+                    <filter root="/apps/example/ui.apps"/>
+                </workspaceFilter>
+            """)
+
             file("ui.apps/src/main/java/com/company/example/aem/HelloService.java", """
-                package com.company.example.aem.example;
+                package com.company.example.aem;
                 
                 import org.osgi.service.component.annotations.Activate;
                 import org.osgi.service.component.annotations.Component;
@@ -151,7 +158,7 @@ class PackagePluginTest: AemBuildTest() {
 
             // UI content project
 
-            file("ui.content/build.gradle.kts", """
+            file("ui.content/build.gradle", """
                 plugins {
                     id("com.cognifide.aem.package")
                 }
@@ -180,13 +187,13 @@ class PackagePluginTest: AemBuildTest() {
 
             // Check if bundle was build in sub-project
             assertBundle("ui.apps/build/bundleCompose/example-ui.apps-1.0.0.jar")
-            assertZipEntry("ui.apps/build/bundleCompose/example-ui.apps-1.0.0.jar", "OSGI-INF/com.company.aem.example.HelloService.xml", """
+            assertZipEntry("ui.apps/build/bundleCompose/example-ui.apps-1.0.0.jar", "OSGI-INF/com.company.example.aem.HelloService.xml", """
                 <?xml version="1.0" encoding="UTF-8"?>
-                <scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.3.0" name="com.company.aem.example.HelloService" immediate="true" activate="activate" deactivate="deactivate">
+                <scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.3.0" name="com.company.example.aem.HelloService" immediate="true" activate="activate" deactivate="deactivate">
                   <service>
-                    <provide interface="com.company.aem.example.HelloService"/>
+                    <provide interface="com.company.example.aem.HelloService"/>
                   </service>
-                  <implementation class="com.company.aem.example.HelloService"/>
+                  <implementation class="com.company.example.aem.HelloService"/>
                 </scr:component>
             """)
 
@@ -195,11 +202,11 @@ class PackagePluginTest: AemBuildTest() {
                 <?xml version="1.0" encoding="UTF-8"?>
                 <workspaceFilter version="1.0">
                   
-                  <filter root="/apps/example"></filter>
+                  <filter root="/apps/example/ui.apps"></filter>
+                  
                   <filter root="/content/example"></filter>
                   
                 </workspaceFilter>
-
             """)
 
             assertZipEntry(pkgPath, "META-INF/vault/properties.xml", """
@@ -208,7 +215,7 @@ class PackagePluginTest: AemBuildTest() {
                 <properties>
                     
                     <entry key="group">com.company.example.aem</entry>
-                    <entry key="name">example</entry>
+                    <entry key="name">example-assembly</entry>
                     <entry key="version">1.0.0</entry>
                     
                     <entry key="createdBy">${System.getProperty("user.name")}</entry>
@@ -222,7 +229,7 @@ class PackagePluginTest: AemBuildTest() {
             """)
 
             assertZipEntry(pkgPath, "jcr_root/content/example/.content.xml")
-            assertZipEntry(pkgPath, "jcr_root/apps/example/install/example-ui.apps-1.0.0.jar")
+            assertZipEntry(pkgPath, "jcr_root/apps/example/ui.apps/install/example-ui.apps-1.0.0.jar")
         }
     }
 }

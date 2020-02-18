@@ -17,6 +17,13 @@ group = "com.cognifide.gradle"
 description = "Gradle AEM Plugin"
 defaultTasks("build", "publishToMavenLocal")
 
+val functionalTestSourceSet = sourceSets.create("functionalTest")
+gradlePlugin.testSourceSets(functionalTestSourceSet)
+
+configurations.getByName("functionalTestImplementation").apply {
+    extendsFrom(configurations.getByName("testImplementation"))
+}
+
 repositories {
     mavenLocal()
     jcenter()
@@ -46,15 +53,6 @@ dependencies {
 
     "detektPlugins"("io.gitlab.arturbosch.detekt:detekt-formatting:1.2.2")
 }
-
-val functionalTestSourceSet = sourceSets.create("functionalTest")
-
-gradlePlugin.testSourceSets(functionalTestSourceSet)
-
-configurations.getByName("functionalTestImplementation").apply {
-    extendsFrom(configurations.getByName("testImplementation"))
-}
-
 
 tasks {
 

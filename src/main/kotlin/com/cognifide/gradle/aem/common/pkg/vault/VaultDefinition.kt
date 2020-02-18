@@ -29,10 +29,12 @@ open class VaultDefinition(private val aem: AemExtension) {
     @Input
     val group = aem.obj.string {
         convention(aem.obj.provider {
-            if (aem.project == aem.project.rootProject) {
-                aem.project.group.toString()
-            } else {
-                aem.project.rootProject.name
+            aem.project.group.toString().ifBlank {
+                when {
+                    aem.project != aem.project.rootProject -> aem.project.rootProject.name
+                    else -> throw VaultException("Cannot determine package group by convention!" +
+                            " Please define project group property explicitly.")
+                }
             }
         })
     }

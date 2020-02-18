@@ -179,6 +179,7 @@ open class PackageCompose : ZipTask(), AemTask {
 
     fun fromProject(path: String, options: ProjectMergingOptions.() -> Unit) = fromProject(path, ProjectMergingOptions().apply(options))
 
+    @JvmOverloads // TODO should we add it everywhere?
     fun fromProject(path: String, options: ProjectMergingOptions = ProjectMergingOptions()) = fromProject(project.project(path), options)
 
     fun fromProjects(pathFilter: String, options: ProjectMergingOptions.() -> Unit) = fromProjects(pathFilter, ProjectMergingOptions().apply(options))
@@ -210,6 +211,7 @@ open class PackageCompose : ZipTask(), AemTask {
 
     fun fromProject(project: Project, options: ProjectMergingOptions.() -> Unit) = fromProject(project, ProjectMergingOptions().apply(options))
 
+    @JvmOverloads
     fun fromProject(project: Project, options: ProjectMergingOptions = ProjectMergingOptions()) {
         fromProjects.add {
             val other by lazy { AemExtension.of(project) }

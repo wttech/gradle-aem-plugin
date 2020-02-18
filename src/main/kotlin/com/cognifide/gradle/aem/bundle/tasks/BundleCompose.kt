@@ -107,9 +107,9 @@ open class BundleCompose : JarTask(), AemTask {
             val name = aem.project.name
 
             when {
-                group.isNotBlank() -> "$group.$name".normalizeSeparators(".")
-                else -> name.normalizeSeparators(".")
-            }
+                group.isNotBlank() -> "$group.$name"
+                else -> name
+            }.normalizeSeparators(".")
         })
     }
 

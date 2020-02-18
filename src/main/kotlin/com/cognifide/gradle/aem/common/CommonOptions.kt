@@ -2,7 +2,6 @@ package com.cognifide.gradle.aem.common
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.utils.LineSeparator
-import com.cognifide.gradle.aem.common.utils.normalizeSeparators
 
 open class CommonOptions(private val aem: AemExtension) {
 
@@ -15,9 +14,9 @@ open class CommonOptions(private val aem: AemExtension) {
     val baseName = aem.obj.string {
         convention(aem.obj.provider {
             (if (project == project.rootProject) {
-                project.rootProject.name.normalizeSeparators("-")
+                project.rootProject.name
             } else {
-                "${project.rootProject.name.normalizeSeparators("-")}.${project.name.normalizeSeparators("-")}"
+                "${project.rootProject.name}-${project.name}"
             })
         })
     }
