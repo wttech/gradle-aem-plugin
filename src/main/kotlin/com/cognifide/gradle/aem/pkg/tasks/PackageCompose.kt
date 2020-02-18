@@ -314,6 +314,7 @@ open class PackageCompose : ZipTask(), AemTask {
         ))
     }
 
+    @JvmOverloads
     fun fromJar(dependencyNotation: Any, installPath: String? = null, vaultFilter: Boolean? = null) {
         val dependency = DependencyOptions.create(project, dependencyNotation)
         bundleDependencies.add(BundleDependency(aem, dependency,
@@ -357,6 +358,7 @@ open class PackageCompose : ZipTask(), AemTask {
         ))
     }
 
+    @JvmOverloads
     fun fromZip(dependencyNotation: String, storagePath: String? = null, vaultFilter: Boolean? = null) {
         fromZip(StringUtils.appendIfMissing(dependencyNotation, "@zip") as Any, storagePath, vaultFilter)
     }

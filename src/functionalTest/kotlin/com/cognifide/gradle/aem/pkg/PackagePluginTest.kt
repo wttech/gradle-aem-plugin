@@ -250,4 +250,49 @@ class PackagePluginTest: AemBuildTest() {
             """)
         }
     }
+
+    @Test
+    fun `should build package with nested bundle downloaded from Maven repository`() {
+        val projectDir = prepareProject("package-nested-bundle") {
+            settingsGradle("")
+
+            file("build.gradle", """
+                plugins {
+                    id("com.cognifide.aem.package")
+                }
+                
+                group = "com.company.example"
+                version = "1.0.0"
+                
+                repositories {
+                    jcenter()
+                }
+                
+                packageCompose {
+                    fromJar("org.jsoup:jsoup:1.10.2")
+                    fromJar("com.github.mickleroy:aem-sass-compiler:1.0.1")
+                }
+                """)
+        }
+
+        runBuild(projectDir, "packageCompose", "-Poffline") {
+            assertTask(":packageCompose")
+
+            val pkgPath = "build/packageCompose/package-nested-bundle-1.0.0.zip"
+
+            assertPackage(pkgPath)
+
+            assertZipEntry(pkgPath, "jcr_root/apps/package-nested-bundle/install/jsoup-1.10.2.jar")
+            assertZipEntry(pkgPath, "jcr_root/apps/package-nested-bundle/install/aem-sass-compiler-1.0.1.jar")
+
+            assertZipEntryEquals(pkgPath, "META-INF/vault/filter.xml", """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <workspaceFilter version="1.0">
+                  <filter root="/apps/package-nested-bundle/install/jsoup-1.10.2.jar"/>
+                  <filter root="/apps/package-nested-bundle/install/aem-sass-compiler-1.0.1.jar"/>
+                  
+                </workspaceFilter>
+            """)
+        }
+    }
 }
