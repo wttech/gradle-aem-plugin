@@ -89,7 +89,8 @@ class BundlePluginTest: AemBuildTest() {
                 } 
             """)
 
-            buildGradle("""
+            // TODO rewrite back to Kotlin DSL after https://github.com/gradle/gradle/issues/12262
+            file("build.gradle", """
                 plugins {
                     id("com.cognifide.aem.bundle")
                 }
@@ -99,7 +100,7 @@ class BundlePluginTest: AemBuildTest() {
                 
                 repositories {
                     jcenter()
-                    maven("https://repo.adobe.com/nexus/content/groups/public")
+                    maven { url = "https://repo.adobe.com/nexus/content/groups/public" }
                 }
                 
                 dependencies {
@@ -107,24 +108,13 @@ class BundlePluginTest: AemBuildTest() {
                     compileOnly("org.osgi:osgi.cmpn:6.0.0")
                     compileOnly("com.adobe.aem:uber-jar:6.5.0:apis")
                 }
-                
-                /*
+
                 tasks {
-                    bundleCompose { // this line breaks build when running using Gradle TestKit
+                    bundleCompose {
                         category = "example"
                         vendor = "Company"
                     }
                 }
-                */
-                
-                /*
-                ScriptCompilationException(errors=[ScriptCompilationError(message=Supertypes of the following classes cannot be resolved. Please make sure you have the required dependencies in the classpath:
-                    class com.cognifide.gradle.aem.bundle.tasks.BundleCompose, unresolved supertypes: com.cognifide.gradle.common.tasks.JarTask
-                , location=null)])
-                    at org.gradle.kotlin.dsl.support.KotlinCompilerKt.compileKotlinScriptModuleTo(KotlinCompiler.kt:175)
-                    at org.gradle.kotlin.dsl.support.KotlinCompilerKt.compileKotlinScriptToDirectory(KotlinCompiler.kt:135)
-                    at org.gradle.kotlin.dsl.execution.ResidualProgramCompiler$ compileScript1.invoke(ResidualProgramCompiler.k
-                 */
                 """)
 
             file("src/main/java/com/company/example/PageService.java", """

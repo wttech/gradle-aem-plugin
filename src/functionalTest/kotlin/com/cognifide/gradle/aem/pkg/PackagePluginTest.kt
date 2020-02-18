@@ -89,6 +89,7 @@ class PackagePluginTest: AemBuildTest() {
 
             // Assembly project
 
+            // TODO rewrite back to Kotlin DSL after https://github.com/gradle/gradle/issues/12262
             file("assembly/build.gradle","""
                 plugins {
                     id("com.cognifide.aem.package")
