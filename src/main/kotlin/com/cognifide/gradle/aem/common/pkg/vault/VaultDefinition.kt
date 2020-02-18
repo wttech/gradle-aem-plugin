@@ -77,7 +77,7 @@ open class VaultDefinition(private val aem: AemExtension) {
     val filterRoots: Collection<String> get() = filterEffectives.map { it.root }.toSet()
 
     @get:Input
-    val filters: Collection<String> get() = filterEffectives.map { it.element.toString() }.toSet()
+    val filters: Collection<String> get() = filterEffectives.map { it.toString() }.toSet()
 
     fun filters(vararg roots: String) = filters(roots.asIterable())
 

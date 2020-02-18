@@ -45,7 +45,7 @@ class PackagePluginTest: AemBuildTest() {
                 <?xml version="1.0" encoding="UTF-8"?>
                 <workspaceFilter version="1.0">
                   
-                  <filter root="/apps/example"></filter>
+                  <filter root="/apps/example"/>
                   
                 </workspaceFilter>
 
@@ -203,9 +203,9 @@ class PackagePluginTest: AemBuildTest() {
                 <?xml version="1.0" encoding="UTF-8"?>
                 <workspaceFilter version="1.0">
                   
-                  <filter root="/apps/example/ui.apps"></filter>
+                  <filter root="/apps/example/ui.apps"/>
                   
-                  <filter root="/content/example"></filter>
+                  <filter root="/content/example"/>
                   
                 </workspaceFilter>
             """)

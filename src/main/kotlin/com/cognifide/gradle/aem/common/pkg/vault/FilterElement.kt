@@ -31,6 +31,8 @@ class FilterElement(val root: String) {
             }.forEach { appendChild(it) }
         }
 
+    override fun toString() = element.toString().replace("></filter>", "/>")
+
     companion object {
 
         fun of(root: String, definition: FilterElement.() -> Unit) = FilterElement(root).apply(definition)

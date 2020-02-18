@@ -108,7 +108,6 @@ tasks {
         )
 
         useJUnitPlatform()
-        failFast = true
         mustRunAfter("test")
         dependsOn("jar")
         outputs.dir("build/functionalTest")
@@ -154,7 +153,6 @@ detekt {
     config.from(file("detekt.yml"))
     parallel = true
     autoCorrect = true
-    failFast = true
 }
 
 publishing {
