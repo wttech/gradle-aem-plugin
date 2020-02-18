@@ -252,8 +252,8 @@ class PackagePluginTest: AemBuildTest() {
     }
 
     @Test
-    fun `should build package with nested bundle downloaded from Maven repository`() {
-        val projectDir = prepareProject("package-nested-bundle") {
+    fun `should build package with nested bundle and subpackages from Maven repository`() {
+        val projectDir = prepareProject("package-nesting") {
             settingsGradle("")
 
             file("build.gradle", """
@@ -271,25 +271,47 @@ class PackagePluginTest: AemBuildTest() {
                 packageCompose {
                     fromJar("org.jsoup:jsoup:1.10.2")
                     fromJar("com.github.mickleroy:aem-sass-compiler:1.0.1")
+                    
+                    fromZip("com.adobe.cq:core.wcm.components.all:2.8.0")
+                    fromZip("com.adobe.cq:core.wcm.components.examples:2.8.0")
                 }
                 """)
+
+            file("src/aem/package/OAKPAL_OPEAR/default-plan.json", """
+                {
+                  "checklists": [
+                    "net.adamcin.oakpal.core/basic"
+                  ],
+                  "installHookPolicy": "SKIP",
+                  "checks": [
+                    {
+                      "name": "basic/subpackages",
+                      "config": {
+                        "denyAll": false
+                      }
+                    }
+                  ]
+                } 
+            """)
         }
 
         runBuild(projectDir, "packageCompose", "-Poffline") {
             assertTask(":packageCompose")
 
-            val pkgPath = "build/packageCompose/package-nested-bundle-1.0.0.zip"
+            val pkgPath = "build/packageCompose/package-nesting-1.0.0.zip"
 
             assertPackage(pkgPath)
 
-            assertZipEntry(pkgPath, "jcr_root/apps/package-nested-bundle/install/jsoup-1.10.2.jar")
-            assertZipEntry(pkgPath, "jcr_root/apps/package-nested-bundle/install/aem-sass-compiler-1.0.1.jar")
+            assertZipEntry(pkgPath, "jcr_root/apps/package-nesting/install/jsoup-1.10.2.jar")
+            assertZipEntry(pkgPath, "jcr_root/apps/package-nesting/install/aem-sass-compiler-1.0.1.jar")
 
             assertZipEntryEquals(pkgPath, "META-INF/vault/filter.xml", """
                 <?xml version="1.0" encoding="UTF-8"?>
                 <workspaceFilter version="1.0">
-                  <filter root="/apps/package-nested-bundle/install/jsoup-1.10.2.jar"/>
-                  <filter root="/apps/package-nested-bundle/install/aem-sass-compiler-1.0.1.jar"/>
+                  <filter root="/apps/package-nesting/install/jsoup-1.10.2.jar"/>
+                  <filter root="/apps/package-nesting/install/aem-sass-compiler-1.0.1.jar"/>
+                  <filter root="/etc/packages/adobe/cq60/core.wcm.components.all-2.8.0.zip"/>
+                  <filter root="/etc/packages/adobe/cq60/core.wcm.components.examples-2.8.0.zip"/>
                   
                 </workspaceFilter>
             """)
