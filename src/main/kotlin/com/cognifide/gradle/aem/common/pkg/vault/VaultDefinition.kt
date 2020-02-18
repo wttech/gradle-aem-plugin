@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.common.pkg.vault
 
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.common.pkg.PackageException
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Optional
@@ -67,6 +67,15 @@ open class VaultDefinition(private val aem: AemExtension) {
         filterElements.addAll(aem.obj.provider { FilterFile(file).elements })
     }
 
+    fun filters(provider: Provider<File>, optionallyExist: Boolean = false) {
+        filterElements.addAll(provider.map { file ->
+            when {
+                file.exists() || !optionallyExist -> FilterFile(file).elements
+                else -> listOf()
+            }
+        })
+    }
+
     @get:Internal
     val filters get() = filterEffectives.map { it.toString() }.toSet()
 
@@ -85,23 +94,34 @@ open class VaultDefinition(private val aem: AemExtension) {
     @Input
     var nodeTypeLines = aem.obj.strings { convention(listOf()) }
 
-    fun nodeTypes(file: File) {
-        if (!file.exists()) {
-            throw PackageException("Cannot load Vault node types. File does not exist: '$file'!")
-        }
-
-        nodeTypes(file.readText())
+    fun nodeTypes(provider: Provider<File>, optionallyExist: Boolean = false) {
+        nodeTypeLibs(provider, optionallyExist)
+        nodeTypeLines(provider, optionallyExist)
     }
 
-    fun nodeTypes(text: String) {
-        text.lineSequence().forEach { line ->
-            if (NODE_TYPES_LIB.matcher(line.trim()).matches()) {
-                nodeTypeLibs.add(line)
+    fun nodeTypeLibs(provider: Provider<File>, optionallyExist: Boolean = false) {
+        nodeTypeLibs.addAll(nodeTypeReader(provider, optionallyExist) { isNodeTypeLib(it) })
+    }
+
+    fun nodeTypeLines(provider: Provider<File>, optionallyExist: Boolean = false) {
+        nodeTypeLines.addAll(nodeTypeReader(provider, optionallyExist) { !isNodeTypeLib(it) })
+    }
+
+    private fun nodeTypeReader(provider: Provider<File>, optionallyExist: Boolean = false, lineFilter: (String) -> Boolean) = provider.map { file ->
+        if (!file.exists()) {
+            if (optionallyExist) {
+                return@map listOf<String>()
             } else {
-                nodeTypeLines.add(line)
+                throw VaultException("Node types file does not exist: $file!")
             }
         }
+
+        file.bufferedReader().use { reader ->
+            reader.lineSequence().mapNotNull { it.takeIf(lineFilter) }.toList()
+        }
     }
+
+    private fun isNodeTypeLib(line: String) = NODE_TYPES_LIB.matcher(line.trim()).matches()
 
     /**
      * Additional entries added to file 'META-INF/vault/properties.xml'.

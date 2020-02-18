@@ -148,20 +148,18 @@ open class PackageCompose : ZipTask(), AemTask {
     override fun projectsEvaluated() {
         fromProjects.forEach { it() }
         fromTasks.forEach { it() }
+
+        vaultDefinition.apply {
+            if (mergingOptions.vaultFilters) {
+                filters(vaultFilterOriginFile.asFile, true)
+            }
+
+            nodeTypes(vaultNodeTypesSyncFile.asFile, true)
+        }
     }
 
     @TaskAction
     override fun copy() {
-        vaultDefinition.apply {
-            if (mergingOptions.vaultFilters && vaultFilterOriginFile.get().asFile.exists()) {
-                filters(vaultFilterOriginFile.get().asFile)
-            }
-
-            if (vaultNodeTypesSyncFile.get().asFile.exists()) {
-                nodeTypes(vaultNodeTypesSyncFile.get().asFile)
-            }
-        }
-
         super.copy()
         validator.perform(composedFile)
 
@@ -255,12 +253,12 @@ open class PackageCompose : ZipTask(), AemTask {
                 }
             }
 
-            if (options.vaultFilters && other.vaultFilterFile.get().asFile.exists()) {
-                vaultDefinition.filters(other.vaultFilterFile.get().asFile)
+            if (options.vaultFilters) {
+                vaultDefinition.filters(other.vaultFilterFile.asFile, true)
             }
 
-            if (options.vaultNodeTypes && other.vaultNodeTypesFile.get().asFile.exists()) {
-                vaultDefinition.nodeTypes(other.vaultNodeTypesFile.get().asFile)
+            if (options.vaultNodeTypes) {
+                vaultDefinition.nodeTypes(other.vaultNodeTypesFile.asFile, true)
             }
 
             if (options.vaultProperties) {
