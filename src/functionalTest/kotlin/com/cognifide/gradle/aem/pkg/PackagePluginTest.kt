@@ -304,6 +304,8 @@ class PackagePluginTest: AemBuildTest() {
 
             assertZipEntry(pkgPath, "jcr_root/apps/package-nesting/install/jsoup-1.10.2.jar")
             assertZipEntry(pkgPath, "jcr_root/apps/package-nesting/install/aem-sass-compiler-1.0.1.jar")
+            assertZipEntry(pkgPath, "jcr_root/etc/packages/adobe/cq60/core.wcm.components.all-2.8.0.zip")
+            assertZipEntry(pkgPath, "jcr_root/etc/packages/adobe/cq60/core.wcm.components.examples-2.8.0.zip")
 
             assertZipEntryEquals(pkgPath, "META-INF/vault/filter.xml", """
                 <?xml version="1.0" encoding="UTF-8"?>
