@@ -6,7 +6,7 @@ import org.jsoup.nodes.Element
 import org.jsoup.parser.Parser
 import java.io.Serializable
 
-class FilterElement(val root: String): Serializable {
+class FilterElement(val root: String) : Serializable {
 
     var mode: String? = null
 
