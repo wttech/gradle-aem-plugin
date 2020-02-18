@@ -46,8 +46,10 @@ class AemBuildResult(val result: BuildResult, val projectDir: File) {
     fun assertZipEntryMatching(zipPath: String, entry: String, expectedContent: String) = assertZipEntryMatching(file(zipPath), entry, expectedContent)
 
     fun assertZipEntryMatching(zip: File, entry: String, expectedContent: String) = assertZipEntry(zip, entry) { actual ->
-        assertTrue(FilenameUtils.wildcardMatch(actual, expectedContent.trimIndent().trim()),
-                "Content of entry '$entry' included in ZIP '$zip' does not match expected pattern.")
+        val expectedContentTrimmed = expectedContent.trimIndent().trim()
+        assertTrue(FilenameUtils.wildcardMatch(actual, expectedContentTrimmed),
+                "Content of entry '$entry' included in ZIP '$zip' does not match expected pattern.\n\n" +
+                        "==> expected content pattern:\n\n$expectedContentTrimmed\n\n==> actual content:\n\n$actual\n\n")
     }
 
     fun assertTask(taskPath: String, outcome: TaskOutcome = TaskOutcome.SUCCESS) {

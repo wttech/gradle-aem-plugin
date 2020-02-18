@@ -233,6 +233,19 @@ class PackagePluginTest: AemBuildTest() {
             assertZipEntry(pkg, "jcr_root/content/example/.content.xml")
             assertZipEntry(pkg, "jcr_root/apps/example/ui.apps/install/example-ui.apps-1.0.0.jar")
             assertZipEntryMatching(pkg, "META-INF/vault/nodetypes.cnd", """
+                <'example'='http://example.com/example/1.0'>
+                <'sling'='http://sling.apache.org/jcr/sling/1.0'>
+                *
+                <'fd'='http://www.adobe.com/aemfd/fd/1.0'>
+                *
+                [example:Folder] > nt:folder
+                  - * (undefined) multiple
+                  - * (undefined)
+                  + * (nt:base) = example:Folder version
+                
+                [sling:OrderedFolder] > sling:Folder
+                  orderable
+                  + * (nt:base) = sling:OrderedFolder version
                 *
             """)
         }
