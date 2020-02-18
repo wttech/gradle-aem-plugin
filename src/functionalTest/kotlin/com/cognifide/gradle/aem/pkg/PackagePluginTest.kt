@@ -118,6 +118,12 @@ class PackagePluginTest: AemBuildTest() {
                     compileOnly("org.slf4j:slf4j-api:1.5.10")
                     compileOnly("org.osgi:osgi.cmpn:6.0.0")
                 }
+                
+                packageCompose {
+                    vaultDefinition {
+                        property("installhook.actool.class", "biz.netcentric.cq.tools.actool.installhook.AcToolInstallHook")
+                    }
+                }
                 """)
 
             file("ui.apps/src/main/content/META-INF/vault/nodetypes.cnd", """
@@ -167,6 +173,12 @@ class PackagePluginTest: AemBuildTest() {
             file("ui.content/build.gradle", """
                 plugins {
                     id("com.cognifide.aem.package")
+                }
+                
+                packageCompose {
+                    vaultDefinition {
+                        property("installhook.aecu.class", "de.valtech.aecu.core.installhook.AecuInstallHook")
+                    }
                 }
             """)
 
@@ -226,6 +238,8 @@ class PackagePluginTest: AemBuildTest() {
                     
                     <entry key="acHandling">merge_preserve</entry>
                     <entry key="requiresRoot">false</entry>
+                    <entry key="installhook.actool.class">biz.netcentric.cq.tools.actool.installhook.AcToolInstallHook</entry>
+                    <entry key="installhook.aecu.class">de.valtech.aecu.core.installhook.AecuInstallHook</entry>
                     
                 </properties>
             """)
@@ -256,6 +270,7 @@ class PackagePluginTest: AemBuildTest() {
         val projectDir = prepareProject("package-nesting") {
             settingsGradle("")
 
+            // TODO rewrite back to Kotlin DSL after https://github.com/gradle/gradle/issues/12262
             file("build.gradle", """
                 plugins {
                     id("com.cognifide.aem.package")

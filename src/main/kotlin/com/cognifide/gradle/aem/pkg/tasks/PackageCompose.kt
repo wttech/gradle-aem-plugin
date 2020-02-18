@@ -19,8 +19,10 @@ import com.cognifide.gradle.aem.pkg.tasks.compose.ProjectMergingOptions
 import com.cognifide.gradle.common.build.DependencyOptions
 import com.cognifide.gradle.common.tasks.ZipTask
 import com.cognifide.gradle.common.utils.Patterns
+import com.cognifide.gradle.common.utils.using
 import java.io.File
 import org.apache.commons.lang3.StringUtils
+import org.gradle.api.Action
 import org.gradle.api.Project
 import org.gradle.api.file.CopySpec
 import org.gradle.api.file.DuplicatesStrategy
@@ -86,6 +88,8 @@ open class PackageCompose : ZipTask(), AemTask {
         vaultDefinition.apply(options)
     }
 
+    fun vaultDefinition(options: Action<in VaultDefinition>) = options.execute(vaultDefinition)
+
     @Internal
     val vaultDir = aem.obj.relativeDir(contentDir, Package.VLT_PATH)
 
@@ -104,9 +108,9 @@ open class PackageCompose : ZipTask(), AemTask {
     @Nested
     val fileFilter = PackageFileFilter(aem)
 
-    fun fileFilter(configurer: PackageFileFilter.() -> Unit) {
-        fileFilter.apply(configurer)
-    }
+    fun fileFilter(configurer: PackageFileFilter.() -> Unit) = fileFilter.using(configurer)
+
+    fun fileFilter(configurer: Action<in PackageFileFilter>) = configurer.execute(fileFilter)
 
     @Internal
     var fileFilterDelegate: ((CopySpec) -> Unit) = { fileFilter.filter(it, vaultDefinition.fileProperties) }
