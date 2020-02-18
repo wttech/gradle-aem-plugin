@@ -130,14 +130,15 @@ open class PackageCompose : ZipTask(), AemTask {
 
     /**
      * Configures extra files to be observed in case of Gradle task caching.
+     *
+     * TODO https://github.com/gradle/gradle/issues/2016
      */
     @get:InputFiles
-    val inputFiles: List<File>
-        get() = mutableListOf<File>().apply {
-            add(vaultNodeTypesSyncFile.get().asFile)
-            addAll(bundleDependencies.flatMap { it.configuration.resolve() })
-            addAll(packageDependencies.flatMap { it.configuration.resolve() })
-        }.filter { it.exists() }
+    val inputFiles = aem.obj.files {
+        from(vaultNodeTypesSyncFile)
+        from(bundleDependencies.map { it.configuration })
+        from(packageDependencies.map { it.configuration })
+    }
 
     override fun projectEvaluated() {
         if (fromConvention) {

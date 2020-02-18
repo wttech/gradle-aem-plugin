@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.test
 
 import aQute.bnd.osgi.Jar
+import org.apache.commons.io.FilenameUtils
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.jupiter.api.Assertions.*
@@ -20,20 +21,33 @@ class AemBuildResult(val result: BuildResult, val projectDir: File) {
         assertTrue({ file.exists() }, "File does not exist: $file")
     }
 
-    fun assertZipEntry(zipPath: String, entry: String, expectedContent: String? = null) = assertZipEntry(file(zipPath), entry, expectedContent)
-
-    fun assertZipEntry(zip: File, entry: String, expectedContent: String? = null) {
+    fun assertZipEntry(zip: File, entry: String, matcher: (String) -> Unit) {
         assertTrue({ ZipUtil.containsEntry(zip, entry) }, "File '$entry' is not included in package '$zip'.")
 
         val actualContent = ZipUtil.unpackEntry(zip, entry) ?: ByteArray(0)
-        if (expectedContent != null) {
-            val actualString = actualContent.toString(StandardCharsets.UTF_8).trim()
-            val expectedContentTrimmed = expectedContent.trimIndent().trim()
+        val actualString = actualContent.toString(StandardCharsets.UTF_8).trim()
 
-            assertEquals(expectedContentTrimmed, actualString, "Content of entry '$entry' included in ZIP '$zip' differs from expected one.")
-        } else {
-            assertTrue(actualContent.isNotEmpty(), "File '$entry' included in ZIP '$zip' cannot be empty.")
-        }
+        matcher(actualString)
+    }
+
+    fun assertZipEntry(zipPath: String, entry: String) = assertZipEntry(file(zipPath), entry)
+
+    fun assertZipEntry(zip: File, entry: String) = assertZipEntry(zip, entry) { actualContent ->
+        assertTrue(actualContent.isNotEmpty(), "File '$entry' included in ZIP '$zip' cannot be empty.")
+    }
+
+    fun assertZipEntryEquals(zipPath: String, entry: String, expectedContent: String) = assertZipEntryEquals(file(zipPath), entry, expectedContent)
+
+    fun assertZipEntryEquals(zip: File, entry: String, expectedContent: String) = assertZipEntry(zip, entry) { actual ->
+        assertEquals(expectedContent.trimIndent().trim(), actual,
+                "Content of entry '$entry' included in ZIP '$zip' differs from expected one.")
+    }
+
+    fun assertZipEntryMatching(zipPath: String, entry: String, expectedContent: String) = assertZipEntryMatching(file(zipPath), entry, expectedContent)
+
+    fun assertZipEntryMatching(zip: File, entry: String, expectedContent: String) = assertZipEntry(zip, entry) { actual ->
+        assertTrue(FilenameUtils.wildcardMatch(actual, expectedContent.trimIndent().trim()),
+                "Content of entry '$entry' included in ZIP '$zip' does not match expected pattern.")
     }
 
     fun assertTask(taskPath: String, outcome: TaskOutcome = TaskOutcome.SUCCESS) {

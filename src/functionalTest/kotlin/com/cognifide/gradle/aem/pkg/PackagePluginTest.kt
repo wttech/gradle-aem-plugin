@@ -41,17 +41,15 @@ class PackagePluginTest: AemBuildTest() {
 
             assertZipEntry(pkgPath, "jcr_root/apps/example/.content.xml")
 
-            assertZipEntry(pkgPath, "META-INF/vault/filter.xml", """
+            assertZipEntryEquals(pkgPath, "META-INF/vault/filter.xml", """
                 <?xml version="1.0" encoding="UTF-8"?>
                 <workspaceFilter version="1.0">
-                  
                   <filter root="/apps/example"/>
                   
                 </workspaceFilter>
-
             """)
 
-            assertZipEntry(pkgPath, "META-INF/vault/properties.xml", """
+            assertZipEntryEquals(pkgPath, "META-INF/vault/properties.xml", """
                 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
                 <!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
                 <properties>
@@ -62,9 +60,7 @@ class PackagePluginTest: AemBuildTest() {
                     
                     <entry key="createdBy">${System.getProperty("user.name")}</entry>
                     
-                    
                     <entry key="acHandling">merge_preserve</entry>
-                    
                     <entry key="requiresRoot">false</entry>
                     
                 </properties>
@@ -124,6 +120,15 @@ class PackagePluginTest: AemBuildTest() {
                 }
                 """)
 
+            file("ui.apps/src/main/content/META-INF/vault/nodetypes.cnd", """
+                <'example'='http://example.com/example/1.0'>
+
+                [example:Folder] > nt:folder
+                  - * (undefined) multiple
+                  - * (undefined)
+                  + * (nt:base) = example:Folder version
+            """)
+
             file("ui.apps/src/main/content/META-INF/vault/filter.xml", """
                 <?xml version="1.0" encoding="UTF-8"?>
                 <workspaceFilter version="1.0">
@@ -182,13 +187,13 @@ class PackagePluginTest: AemBuildTest() {
         runBuild(projectDir, ":assembly:packageCompose", "-Poffline") {
             assertTask(":assembly:packageCompose")
 
-            val pkgPath = "assembly/build/packageCompose/example-assembly-1.0.0.zip"
+            val pkg = file("assembly/build/packageCompose/example-assembly-1.0.0.zip")
 
-            assertPackage(pkgPath)
+            assertPackage(pkg)
 
             // Check if bundle was build in sub-project
             assertBundle("ui.apps/build/bundleCompose/example-ui.apps-1.0.0.jar")
-            assertZipEntry("ui.apps/build/bundleCompose/example-ui.apps-1.0.0.jar", "OSGI-INF/com.company.example.aem.HelloService.xml", """
+            assertZipEntryEquals("ui.apps/build/bundleCompose/example-ui.apps-1.0.0.jar", "OSGI-INF/com.company.example.aem.HelloService.xml", """
                 <?xml version="1.0" encoding="UTF-8"?>
                 <scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.3.0" name="com.company.example.aem.HelloService" immediate="true" activate="activate" deactivate="deactivate">
                   <service>
@@ -199,18 +204,16 @@ class PackagePluginTest: AemBuildTest() {
             """)
 
             // Check assembled package
-            assertZipEntry(pkgPath, "META-INF/vault/filter.xml", """
+            assertZipEntryEquals(pkg, "META-INF/vault/filter.xml", """
                 <?xml version="1.0" encoding="UTF-8"?>
                 <workspaceFilter version="1.0">
-                  
                   <filter root="/apps/example/ui.apps"/>
-                  
                   <filter root="/content/example"/>
                   
                 </workspaceFilter>
             """)
 
-            assertZipEntry(pkgPath, "META-INF/vault/properties.xml", """
+            assertZipEntryEquals(pkg, "META-INF/vault/properties.xml", """
                 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
                 <!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
                 <properties>
@@ -221,16 +224,17 @@ class PackagePluginTest: AemBuildTest() {
                     
                     <entry key="createdBy">${System.getProperty("user.name")}</entry>
                     
-                    
                     <entry key="acHandling">merge_preserve</entry>
-                    
                     <entry key="requiresRoot">false</entry>
                     
                 </properties>
             """)
 
-            assertZipEntry(pkgPath, "jcr_root/content/example/.content.xml")
-            assertZipEntry(pkgPath, "jcr_root/apps/example/ui.apps/install/example-ui.apps-1.0.0.jar")
+            assertZipEntry(pkg, "jcr_root/content/example/.content.xml")
+            assertZipEntry(pkg, "jcr_root/apps/example/ui.apps/install/example-ui.apps-1.0.0.jar")
+            assertZipEntryMatching(pkg, "META-INF/vault/nodetypes.cnd", """
+                *
+            """)
         }
     }
 }
