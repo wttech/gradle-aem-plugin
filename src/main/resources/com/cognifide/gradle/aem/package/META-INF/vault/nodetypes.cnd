@@ -1,1 +1,7 @@
-{{definition.nodeTypes | raw}}
+{% for lib in definition.nodeTypeLibs %}
+{{ lib | raw }}
+{% endfor %}
+
+{% for line in definition.nodeTypeLines %}
+{{ line | raw }}
+{% endfor %}

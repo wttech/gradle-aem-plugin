@@ -2,7 +2,6 @@ package com.cognifide.gradle.aem.common.pkg.vault
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.pkg.PackageException
-import org.apache.commons.lang3.StringUtils
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Optional
@@ -43,9 +42,7 @@ open class VaultDefinition(private val aem: AemExtension) {
      * Version visible in CRX package manager.
      */
     @Input
-    val version = aem.obj.string {
-        convention(aem.obj.provider { aem.project.version.toString() })
-    }
+    val version = aem.obj.string { convention(aem.obj.provider { aem.project.version.toString() }) }
 
     @Input
     @Optional
@@ -55,50 +52,38 @@ open class VaultDefinition(private val aem: AemExtension) {
     @Optional
     val createdBy = aem.obj.string { convention(System.getProperty("user.name")) }
 
-    @Internal
-    var filterElements = mutableListOf<FilterElement>()
+    @Input
+    val filterElements = aem.obj.list<FilterElement> { convention(listOf()) }
 
-    fun filterElements(file: File) {
-        if (!file.exists()) {
-            throw PackageException("Cannot load Vault filter elements. File does not exist: '$file'!")
-        }
-
-        filterElements.addAll(FilterFile(file).elements)
+    fun filter(root: String, definition: FilterElement.() -> Unit = {}) {
+        filterElements.add(aem.obj.provider { FilterElement.of(root, definition) })
     }
-
-    @get:Internal
-    val filterEffectives: Collection<FilterElement>
-        get() = filterElements.asSequence()
-                .filter { isFilterNeeded(it) }
-                .sortedBy { it.type }
-                .toList()
-
-    @get:Internal
-    val filterRoots: Collection<String> get() = filterEffectives.map { it.root }.toSet()
-
-    @get:Input
-    val filters: Collection<String> get() = filterEffectives.map { it.toString() }.toSet()
 
     fun filters(vararg roots: String) = filters(roots.asIterable())
 
     fun filters(roots: Iterable<String>) = roots.forEach { filter(it) }
 
-    fun filter(root: String, definition: FilterElement.() -> Unit = {}) {
-        filterElements.add(FilterElement.of(root, definition))
+    fun filters(file: File) {
+        filterElements.addAll(aem.obj.provider { FilterFile(file).elements })
     }
 
-    @Internal
-    var nodeTypeLibs: MutableList<String> = mutableListOf()
+    @get:Internal
+    val filters get() = filterEffectives.map { it.toString() }.toSet()
 
-    @Internal
-    var nodeTypeLines: MutableList<String> = mutableListOf()
+    @get:Internal
+    val filterRoots get() = filterEffectives.map { it.root }.toSet()
 
-    @get:Input
-    val nodeTypes: String
-        get() {
-            val ls = aem.commonOptions.lineSeparator.get().value
-            return StringUtils.join(nodeTypeLibs.joinToString(ls), ls, nodeTypeLines.joinToString(ls))
-        }
+    private val filterEffectives: Collection<FilterElement>
+        get() = filterElements.get().asSequence()
+                .filter { isFilterNeeded(it) }
+                .sortedBy { it.type }
+                .toList()
+
+    @Input
+    val nodeTypeLibs = aem.obj.strings { convention(listOf()) }
+
+    @Input
+    var nodeTypeLines = aem.obj.strings { convention(listOf()) }
 
     fun nodeTypes(file: File) {
         if (!file.exists()) {
@@ -142,7 +127,7 @@ open class VaultDefinition(private val aem: AemExtension) {
     }
 
     private fun isFilterDynamicAndNotRedundant(custom: FilterElement): Boolean {
-        return filterElements.asSequence()
+        return filterElements.get().asSequence()
                 .filter { custom != it }
                 .none { general ->
                     custom != general && custom.root.startsWith("${general.root}/") &&
@@ -176,9 +161,11 @@ open class VaultDefinition(private val aem: AemExtension) {
 
         val properties get() = base.properties.get()
 
-        val filters get() = base.filters // TODO lazy
+        val filters get() = base.filters
 
-        val nodeTypes get() = base.nodeTypes // TODO collection and lazy
+        val nodeTypeLibs get() = base.nodeTypeLibs.get()
+
+        val nodeTypeLines get() = base.nodeTypeLines.get()
     }
 
     companion object {

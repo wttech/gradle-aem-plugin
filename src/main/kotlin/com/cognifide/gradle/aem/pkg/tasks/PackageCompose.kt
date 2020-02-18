@@ -154,7 +154,7 @@ open class PackageCompose : ZipTask(), AemTask {
     override fun copy() {
         vaultDefinition.apply {
             if (mergingOptions.vaultFilters && vaultFilterOriginFile.get().asFile.exists()) {
-                filterElements(vaultFilterOriginFile.get().asFile)
+                filters(vaultFilterOriginFile.get().asFile)
             }
 
             if (vaultNodeTypesSyncFile.get().asFile.exists()) {
@@ -256,7 +256,7 @@ open class PackageCompose : ZipTask(), AemTask {
             }
 
             if (options.vaultFilters && other.vaultFilterFile.get().asFile.exists()) {
-                vaultDefinition.filterElements(other.vaultFilterFile.get().asFile)
+                vaultDefinition.filters(other.vaultFilterFile.get().asFile)
             }
 
             if (options.vaultNodeTypes && other.vaultNodeTypesFile.get().asFile.exists()) {
