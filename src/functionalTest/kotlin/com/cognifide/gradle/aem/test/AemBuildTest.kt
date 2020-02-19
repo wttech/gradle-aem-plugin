@@ -67,5 +67,5 @@ abstract class AemBuildTest {
         """)
     }
 
-    private fun rootPath(rootPath: String, path: String) = rootPath.takeIf { it.isNotBlank() }?.let { "$it/$path"} ?: path
+    fun rootPath(rootPath: String, path: String) = rootPath.takeIf { it.isNotBlank() }?.let { "$it/$path"} ?: path
 }

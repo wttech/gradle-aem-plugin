@@ -295,6 +295,7 @@ open class PackageCompose : ZipTask(), AemTask {
         }
     }
 
+    // TODO support project path only somehow
     fun fromBundle(composeTaskPath: String) {
         fromBundle(common.tasks.get(composeTaskPath, BundleCompose::class.java), ProjectMergingOptions())
     }
@@ -359,6 +360,7 @@ open class PackageCompose : ZipTask(), AemTask {
         }
     }
 
+    // TODO support project path only somehow
     fun fromSubpackage(composeTaskPath: String, storagePath: String? = null, vaultFilter: Boolean? = null) {
         fromTasks.add {
             val other = common.tasks.pathed(composeTaskPath).get() as PackageCompose
@@ -366,7 +368,7 @@ open class PackageCompose : ZipTask(), AemTask {
             dependsOn(other)
 
             val file = other.composedFile
-            val effectivePath = "${storagePath ?: this.packagePath}/${other.vaultDefinition.group}"
+            val effectivePath = "${storagePath ?: this.packagePath.get()}/${other.vaultDefinition.group.get()}"
 
             if (vaultFilter ?: mergingOptions.vaultFilters) {
                 vaultDefinition.filter("$effectivePath/${file.name}") { type = FilterType.FILE }
@@ -381,7 +383,7 @@ open class PackageCompose : ZipTask(), AemTask {
 
     private fun fromZipInternal(file: File, packagePath: String? = null, vaultFilter: Boolean? = null) {
         val effectivePackageDir = aem.packageOptions.storageDir(PackageFile(file))
-        val effectivePackagePath = "${packagePath ?: this.packagePath}/$effectivePackageDir"
+        val effectivePackagePath = "${packagePath ?: this.packagePath.get()}/$effectivePackageDir"
 
         fromArchiveInternal(vaultFilter, effectivePackagePath, file)
     }
