@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.bundle
 
 import com.cognifide.gradle.aem.test.AemBuildTest
 import org.junit.jupiter.api.Test
+import java.io.File
 
 class BundlePluginTest: AemBuildTest() {
 
@@ -27,43 +28,19 @@ class BundlePluginTest: AemBuildTest() {
                 }
                 """)
 
-            file("src/main/java/com/company/example/HelloService.java", """
-                package com.company.aem.example;
-                
-                import org.osgi.service.component.annotations.Activate;
-                import org.osgi.service.component.annotations.Component;
-                import org.osgi.service.component.annotations.Deactivate;
-                import org.slf4j.Logger;
-                import org.slf4j.LoggerFactory;
-                
-                @Component(immediate = true, service = HelloService.class)
-                class HelloService {
-                                   
-                    private static final Logger LOG = LoggerFactory.getLogger(HelloService.class);
-                    
-                    @Activate
-                    protected void activate() {
-                        LOG.info("Hello world!");
-                    }
-                    
-                    @Deactivate
-                    protected void deactivate() {
-                        LOG.info("Good bye world!");
-                    }
-                }
-                """)
+            helloServiceJava()
         }
 
         runBuild(projectDir, "bundleCompose", "-Poffline") {
             assertTask(":bundleCompose")
             assertBundle("build/bundleCompose/bundle-minimal.jar")
-            assertZipEntryEquals("build/bundleCompose/bundle-minimal.jar", "OSGI-INF/com.company.aem.example.HelloService.xml", """
+            assertZipEntryEquals("build/bundleCompose/bundle-minimal.jar", "OSGI-INF/com.company.example.aem.HelloService.xml", """
                 <?xml version="1.0" encoding="UTF-8"?>
-                <scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.3.0" name="com.company.aem.example.HelloService" immediate="true" activate="activate" deactivate="deactivate">
+                <scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.3.0" name="com.company.example.aem.HelloService" immediate="true" activate="activate" deactivate="deactivate">
                   <service>
-                    <provide interface="com.company.aem.example.HelloService"/>
+                    <provide interface="com.company.example.aem.HelloService"/>
                   </service>
-                  <implementation class="com.company.aem.example.HelloService"/>
+                  <implementation class="com.company.example.aem.HelloService"/>
                 </scr:component>
             """)
         }
@@ -115,27 +92,7 @@ class BundlePluginTest: AemBuildTest() {
                 }
                 """)
 
-            file("src/main/java/com/company/example/PageService.java", """
-                package com.company.aem.example;
-                
-                import org.osgi.service.component.annotations.Activate;
-                import org.osgi.service.component.annotations.Component;
-                import org.osgi.service.component.annotations.Deactivate;
-                import org.osgi.service.component.annotations.Reference;
-                import com.day.cq.wcm.api.PageManager;
-                import com.day.cq.wcm.api.Page;
-                
-                @Component(immediate = true, service = PageService.class)
-                class PageService {
-    
-                    @Reference
-                    private PageManager pageManager;
-                    
-                    public Page getHomePage() {
-                        return pageManager.getPage("/content/example/home");
-                    }
-                }
-                """)
+            helloServiceJava()
         }
 
         runBuild(projectDir, "bundleCompose", "-Poffline") {
@@ -151,5 +108,79 @@ class BundlePluginTest: AemBuildTest() {
             assertPackage(pkgPath)
             assertPackageBundle(pkgPath, "jcr_root/apps/bundle-extended/install/bundle-extended-1.0.0.jar")
         }
+    }
+
+    @Test
+    fun `should build bundle with embed code`() {
+        val projectDir = prepareProject("bundle-embed") {
+            settingsGradle("")
+
+            buildGradle("""
+                plugins {
+                    id("com.cognifide.aem.bundle")
+                }
+                
+                group = "com.company.example"
+                
+                repositories {
+                    jcenter()
+                }
+                
+                dependencies {
+                    compileOnly("org.slf4j:slf4j-api:1.5.10")
+                    compileOnly("org.osgi:osgi.cmpn:6.0.0")
+                }
+                
+                aem {
+                    tasks {
+                        bundleCompose {
+                            embedPackage("org.hashids:hashids:1.0.1", "org.hashids")
+                        }
+                    }
+                }
+                """)
+
+            helloServiceJava()
+        }
+
+        runBuild(projectDir, "bundleCompose", "-Poffline") {
+            assertTask(":bundleCompose")
+
+            val jar = file("build/bundleCompose/bundle-embed.jar")
+
+            assertBundle(jar)
+
+            assertZipEntry(jar, "OSGI-INF/com.company.example.aem.HelloService.xml")
+            assertZipEntry(jar, "com/company/example/aem/HelloService.class")
+            assertZipEntry(jar, "org/hashids/Hashids.class")
+        }
+    }
+
+    private fun File.helloServiceJava() {
+        file("src/main/java/com/company/example/aem/HelloService.java", """
+            package com.company.example.aem;
+            
+            import org.osgi.service.component.annotations.Activate;
+            import org.osgi.service.component.annotations.Component;
+            import org.osgi.service.component.annotations.Deactivate;
+            import org.slf4j.Logger;
+            import org.slf4j.LoggerFactory;
+            
+            @Component(immediate = true, service = HelloService.class)
+            class HelloService {
+                               
+                private static final Logger LOG = LoggerFactory.getLogger(HelloService.class);
+                
+                @Activate
+                protected void activate() {
+                    LOG.info("Hello world!");
+                }
+                
+                @Deactivate
+                protected void deactivate() {
+                    LOG.info("Good bye world!");
+                }
+            }
+        """)
     }
 }

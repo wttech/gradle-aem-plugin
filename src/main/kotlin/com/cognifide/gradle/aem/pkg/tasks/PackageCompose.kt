@@ -16,7 +16,6 @@ import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.compose.BundleDependency
 import com.cognifide.gradle.aem.pkg.tasks.compose.PackageDependency
 import com.cognifide.gradle.aem.pkg.tasks.compose.ProjectMergingOptions
-import com.cognifide.gradle.common.build.DependencyOptions
 import com.cognifide.gradle.common.tasks.ZipTask
 import com.cognifide.gradle.common.utils.Patterns
 import com.cognifide.gradle.common.utils.using
@@ -306,22 +305,10 @@ open class PackageCompose : ZipTask(), AemTask {
         }
     }
 
-    fun fromJar(
-        dependencyOptions: DependencyOptions.() -> Unit,
-        installPath: String? = null,
-        vaultFilter: Boolean? = null
-    ) {
-        val dependency = DependencyOptions.create(project, dependencyOptions)
-        bundleDependencies.add(BundleDependency(aem, dependency,
-                installPath ?: this.bundlePath.get(),
-                vaultFilter ?: mergingOptions.vaultFilters
-        ))
-    }
-
     @JvmOverloads
     fun fromJar(dependencyNotation: Any, installPath: String? = null, vaultFilter: Boolean? = null) {
-        val dependency = DependencyOptions.create(project, dependencyNotation)
-        bundleDependencies.add(BundleDependency(aem, dependency,
+        bundleDependencies.add(BundleDependency(aem,
+                project.dependencies.create(dependencyNotation),
                 installPath ?: this.bundlePath.get(),
                 vaultFilter ?: mergingOptions.vaultFilters
         ))
@@ -350,26 +337,13 @@ open class PackageCompose : ZipTask(), AemTask {
         fromArchiveInternal(vaultFilter, effectiveBundlePath, jar)
     }
 
-    fun fromZip(
-        dependencyOptions: DependencyOptions.() -> Unit,
-        storagePath: String? = null,
-        vaultFilter: Boolean? = null
-    ) {
-        val dependency = DependencyOptions.create(project) { apply(dependencyOptions); ext = "zip" }
-        packageDependencies.add(PackageDependency(aem, dependency,
-                storagePath ?: packagePath.get(),
-                vaultFilter ?: mergingOptions.vaultFilters
-        ))
-    }
-
     @JvmOverloads
     fun fromZip(dependencyNotation: String, storagePath: String? = null, vaultFilter: Boolean? = null) {
         fromZip(StringUtils.appendIfMissing(dependencyNotation, "@zip") as Any, storagePath, vaultFilter)
     }
 
     fun fromZip(dependencyNotation: Any, storagePath: String? = null, vaultFilter: Boolean? = null) {
-        val dependency = DependencyOptions.create(project, dependencyNotation)
-        packageDependencies.add(PackageDependency(aem, dependency,
+        packageDependencies.add(PackageDependency(aem, project.dependencies.create(dependencyNotation),
                 storagePath ?: packagePath.get(),
                 vaultFilter ?: mergingOptions.vaultFilters
         ))

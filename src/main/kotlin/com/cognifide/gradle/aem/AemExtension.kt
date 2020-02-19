@@ -25,6 +25,7 @@ import com.cognifide.gradle.common.utils.Patterns
 import java.io.File
 import java.io.Serializable
 import org.gradle.api.Project
+import org.gradle.api.plugins.JavaPlugin
 
 /**
  * Core of library, facade for implementing tasks.
@@ -265,6 +266,26 @@ class AemExtension(val project: Project) : Serializable {
      * Get all OSGi bundles defined to be built.
      */
     val bundles: List<File> get() = common.tasks.getAll(BundleCompose::class.java).map { it.composedFile }
+
+    /**
+     * Shorthand for embedding code inside OSGi bundle being composed when configuration on demand is enabled.
+     * When this feature is not enabled, it is preferred to use [BundleCompose.embedPackage].
+     */
+    fun bundleEmbed(dependencyNotation: Any, pkgs: Iterable<String>, export: Boolean = false) {
+        project.dependencies.add(JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME, dependencyNotation)
+        common.tasks.named<BundleCompose>(BundleCompose.NAME) {
+            when {
+                export -> exportPackage(pkgs)
+                else -> privatePackage(pkgs)
+            }
+        }
+    }
+
+    /**
+     * Shorthand for embedding code inside OSGi bundle being composed when configuration on demand is enabled.
+     * When this feature is not enabled, it is preferred to use [BundleCompose.embedPackage].
+     */
+    fun bundleEmbed(dependencyNotation: Any, vararg pkgs: String, export: Boolean = false) = bundleEmbed(dependencyNotation, pkgs.asIterable(), export)
 
     /**
      * In parallel, work with services of all instances matching default filtering.

@@ -199,8 +199,8 @@ open class VaultDefinition(private val aem: AemExtension) {
     companion object {
         val NODE_TYPES_LIB: Pattern = Pattern.compile("<.+>")
 
-        val AC_HANDLING_PROPERTY = "acHandling"
+        const val AC_HANDLING_PROPERTY = "acHandling"
 
-        val REQUIRES_ROOT_PROPERTY = "requiresRoot"
+        const val REQUIRES_ROOT_PROPERTY = "requiresRoot"
     }
 }

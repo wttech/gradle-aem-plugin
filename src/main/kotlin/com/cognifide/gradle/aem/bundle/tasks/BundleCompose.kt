@@ -9,6 +9,7 @@ import com.cognifide.gradle.aem.common.utils.normalizeSeparators
 import com.cognifide.gradle.common.tasks.JarTask
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.exception.ExceptionUtils
+import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.tasks.*
 import java.io.File
@@ -221,9 +222,26 @@ open class BundleCompose : JarTask(), AemTask {
         })
     }
 
+    @Input
+    val activatorClasses = aem.obj.strings {
+        convention(listOf("Activator", "BundleActivator"))
+    }
+
+    @Input
+    val activatorSourceSets = aem.obj.map<String, String> {
+        convention(mapOf(
+                "java" to "java",
+                "kotlin" to "kt",
+                "scala" to "scala"
+        ))
+    }
+
+    /**
+     * Find activator class by conventional class names in source sets.
+     */
     private fun findActivator(pkg: String): String? {
-        for ((sourceSet, ext) in SOURCE_SETS) {
-            for (activatorClass in ACTIVATOR_CLASSES) {
+        for ((sourceSet, ext) in activatorSourceSets.get()) {
+            for (activatorClass in activatorClasses.get()) {
                 if (aem.project.file("src/main/$sourceSet/${pkg.replace(".", "/")}/$activatorClass.$ext").exists()) {
                     return "$pkg.$activatorClass"
                 }
@@ -354,6 +372,25 @@ open class BundleCompose : JarTask(), AemTask {
 
     fun importPackage(vararg pkgs: String) = importPackage(pkgs.toList())
 
+    fun embedPackage(dependencyNotation: Any, vararg pkgs: String, export: Boolean = false) = embedPackage(dependencyNotation, pkgs.asIterable(), export)
+
+    /**
+     * Copy packages from external dependency (JAR) to currently built OSGi bundle.
+     *
+     * This utility method does not work when Gradle feature "configuration on demand" is enabled as of dependencies
+     * should be configured before task is configured nor executed.
+     *
+     * @see <https://docs.gradle.org/current/userguide/multi_project_builds.html#sec:configuration_on_demand>
+     */
+    fun embedPackage(dependencyNotation: Any, pkgs: Iterable<String>, export: Boolean = false) {
+        project.dependencies.add(JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME, dependencyNotation)
+
+        when {
+            export -> exportPackage(pkgs)
+            else -> privatePackage(pkgs)
+        }
+    }
+
     fun wildcardPackage(pkgs: Iterable<String>): List<String> {
         return pkgs.map { StringUtils.appendIfMissing(it, ".*") }
     }
@@ -368,6 +405,9 @@ open class BundleCompose : JarTask(), AemTask {
         runBndTool()
     }
 
+    /**
+     * Customize JAR being built to be valid OSGi bundle.
+     */
     @Suppress("TooGenericExceptionCaught")
     private fun runBndTool() {
         try {
@@ -385,13 +425,5 @@ open class BundleCompose : JarTask(), AemTask {
 
     companion object {
         const val NAME = "bundleCompose"
-
-        val ACTIVATOR_CLASSES = listOf("Activator", "BundleActivator")
-
-        val SOURCE_SETS = mapOf(
-                "java" to "java",
-                "kotlin" to "kt",
-                "scala" to "scala"
-        )
     }
 }
