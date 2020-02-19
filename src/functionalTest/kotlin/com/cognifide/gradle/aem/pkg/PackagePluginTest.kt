@@ -143,31 +143,7 @@ class PackagePluginTest: AemBuildTest() {
                 </workspaceFilter>
             """)
 
-            file("ui.apps/src/main/java/com/company/example/aem/HelloService.java", """
-                package com.company.example.aem;
-                
-                import org.osgi.service.component.annotations.Activate;
-                import org.osgi.service.component.annotations.Component;
-                import org.osgi.service.component.annotations.Deactivate;
-                import org.slf4j.Logger;
-                import org.slf4j.LoggerFactory;
-                
-                @Component(immediate = true, service = HelloService.class)
-                class HelloService {
-                                   
-                    private static final Logger LOG = LoggerFactory.getLogger(HelloService.class);
-                    
-                    @Activate
-                    protected void activate() {
-                        LOG.info("Hello world!");
-                    }
-                    
-                    @Deactivate
-                    protected void deactivate() {
-                        LOG.info("Good bye world!");
-                    }
-                }
-            """)
+            helloServiceJava("ui.apps")
 
             // UI content project
 
@@ -337,5 +313,10 @@ class PackagePluginTest: AemBuildTest() {
                 </workspaceFilter>
             """)
         }
+    }
+
+    @Test
+    fun `should build package with nested bundle and sub-package built by sub-projects`() {
+        // TODO
     }
 }

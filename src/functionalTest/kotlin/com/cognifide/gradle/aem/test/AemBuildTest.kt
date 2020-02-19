@@ -38,4 +38,34 @@ abstract class AemBuildTest {
         apply(options)
         build()
     }
+
+    fun File.helloServiceJava(rootPath: String = "") {
+        file(rootPath(rootPath, "src/main/java/com/company/example/aem/HelloService.java"), """
+            package com.company.example.aem;
+            
+            import org.osgi.service.component.annotations.Activate;
+            import org.osgi.service.component.annotations.Component;
+            import org.osgi.service.component.annotations.Deactivate;
+            import org.slf4j.Logger;
+            import org.slf4j.LoggerFactory;
+            
+            @Component(immediate = true, service = HelloService.class)
+            class HelloService {
+                               
+                private static final Logger LOG = LoggerFactory.getLogger(HelloService.class);
+                
+                @Activate
+                protected void activate() {
+                    LOG.info("Hello world!");
+                }
+                
+                @Deactivate
+                protected void deactivate() {
+                    LOG.info("Good bye world!");
+                }
+            }
+        """)
+    }
+
+    private fun rootPath(rootPath: String, path: String) = rootPath.takeIf { it.isNotBlank() }?.let { "$it/$path"} ?: path
 }
