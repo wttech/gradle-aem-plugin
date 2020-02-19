@@ -404,8 +404,8 @@ RCP task is internally using [Vault Remote Copy](http://jackrabbit.apache.org/fi
 
 Evaluate Groovy script(s) on instance(s).
 
-To determine instances on which scripts will be evaluated, simply use [default filtering](#instance-filtering).
-Dedicated place for storing scripts is path [*\[aem/\]gradle/groovyScript*](https://github.com/Cognifide/gradle-aem-multi/tree/master/aem/gradle/groovyScript).
+To determine instances on which scripts will be evaluated, simply use [default filtering](common-plugin.md#instance-filtering).
+Dedicated place for storing scripts is path [*src/aem/instance/groovyScript*](https://github.com/Cognifide/gradle-aem-multi/tree/master/aem/gradle/groovyScript).
 
 By default, task is running all scripts in alphabetical order located in subdirectory which name is a current project version.
 

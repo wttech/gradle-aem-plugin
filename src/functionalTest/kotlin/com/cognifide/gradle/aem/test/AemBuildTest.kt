@@ -38,7 +38,6 @@ abstract class AemBuildTest {
     fun runBuild(projectDir: File, options: GradleRunner.() -> Unit) = GradleRunner.create().run {
         forwardOutput()
         withPluginClasspath()
-        withDebug(true)
         withProjectDir(projectDir)
         apply(options)
         build()

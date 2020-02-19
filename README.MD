@@ -15,7 +15,7 @@
   * [About](#about)
      * [Screenshot](#screenshot)
      * [Features](#features)
-     * [Important notice](#important-notice)
+     * [Compatibility](#compatibility)
   * [Getting started](#getting-started)
   * [Plugins](#plugins)
      * [Plugins setup](#plugins-setup)
@@ -27,7 +27,6 @@
      * [Understand why there are one or two plugins to be applied in build script](#understand-why-there-are-one-or-two-plugins-to-be-applied-in-build-script)
      * [Work effectively on start and daily basis](#work-effectively-on-start-and-daily-basis)
      * [Customize convention for CRX package and OSGi bundle names and paths](#customize-convention-for-crx-package-and-osgi-bundle-names-and-paths)
-  * [Compatibility](#compatibility)
   * [Building](#building)
   * [Testing](#testing)
   * [Contributing](#contributing)
@@ -66,29 +65,30 @@ Want to see it in action? Follow [here](https://github.com/Cognifide/gradle-aem-
 
 ### Features 
 
-* Automated [native AEM instances](#instance-plugin) setup optimized for best development experience.
-* [Powerful AEM DSL scripting capabilities](#implementing-tasks) for performing JCR content migrations, managing AEM instances, integrating with Docker based tools.
-* [Advanced AEM instance(s) stability & health checking](#task-instanceawait) after CRX package deployment.
-* [Continuous AEM incident monitoring](#task-instancetail) and interactive reporting (centralized log tailing of any AEM instances with no SSH).
-* Easy parallel [CRX package deployment](#task-packagedeploy) to many remote group of instances.
-* [Fail-safe dependent CRX packages installation](#task-instancesatisfy) from local and remote sources using various protocols (SMB / SSH / HTTP / custom).
-* [Fast JCR content synchronization](#task-packagesync) from running AEM instances with advanced content normalization.
-* [Composing CRX package](#task-packagecompose) from multiple separate JCR content roots, bundles.
-* [Validating CRX package](#crx-package-validation) using seamless integration with [OakPAL tool](http://adamcin.net/oakpal).
-* [All-in-one CRX packages generation](#assembling-packages-merging-all-in-one) (assemblies), vault filters merging etc.
-* [Easy OSGi bundle customization](#bundle-plugin) with BND tool embedded.
+* Automated [native AEM instances](docs/instance-plugin.md) setup optimized for best development experience.
+* [Powerful AEM DSL scripting capabilities](docs/common-plugin.md#implementing-tasks) for performing JCR content migrations, managing AEM instances, integrating with Docker based tools.
+* [Advanced AEM instance(s) stability & health checking](docs/instance-plugin.md#task-instanceawait) after CRX package deployment.
+* [Continuous AEM incident monitoring](docs/instance-plugin.md#task-instancetail) and interactive reporting (centralized log tailing of any AEM instances with no SSH).
+* Easy parallel [CRX package deployment](docs/package-plugin.md#task-packagedeploy) to many remote group of instances.
+* [Fail-safe dependent CRX packages installation](docs/instance-plugin.md#task-instancesatisfy) from local and remote sources using various protocols (SMB / SSH / HTTP / custom).
+* [Fast JCR content synchronization](docs/package-sync-plugin.md#task-packagesync) from running AEM instances with advanced content normalization.
+* [Composing CRX package](docs/package-plugin.md#task-packagecompose) from multiple separate JCR content roots, bundles.
+* [Validating CRX package](docs/package-plugin.md#crx-package-validation) using seamless integration with [OakPAL tool](http://adamcin.net/oakpal).
+* [All-in-one CRX packages generation](docs/package-plugin.md#assembling-packages-merging-all-in-one) (assemblies), vault filters merging etc.
+* [Easy OSGi bundle customization](docs/bundle-plugin.md) with BND tool embedded.
 
 Gradle AEM Plugin is following strategy [convention over configuration](https://en.wikipedia.org/wiki/Convention_over_configuration). When following built-in conventions about project structure & naming, then only minimal configuration is required. 
 Still all features are **fully configurable**.
 
-### Important notice 
+## Compatibility
 
-Major releases of plugin are introducing breaking changes. Build functionality is mostly covered, however build scripts need corrections.
-
-Documentation for previous series:
-
-* [6.2.0](https://github.com/Cognifide/gradle-aem-plugin/tree/6.2.0) (last in 6.x serie / with *aem* prefixes in task / property names)
-* [5.1.4](https://github.com/Cognifide/gradle-aem-plugin/tree/5.1.4) (last supporting Groovy DSL)
+| Gradle AEM Plugin | Gradle Build Tool | Adobe Experience Manager |   Java   |
+|:-----------------:|:-----------------:|:------------------------:|:--------:|
+|     4.x -> 5.x    |     4.x -> 4.8    |        6.x and up        |     8    |
+|   6.0.0 -> 6.2.1  |     4.9 -> 5.0    |        6.x and up        |     8    |
+|   6.3.0 -> 6.x    |     5.1 -> 5.6    |        6.x and up        |     8    |
+|   7.2.0 -> 8.1.1  |     5.1 -> 5.6    |        6.x and up        |    8,11  |
+|   8.1.2 and up    |     6.0 and up    |        6.x and up        |    8,11  |
 
 ## Getting started
 
@@ -382,16 +382,6 @@ subprojects {
 }
 ```
 
-## Compatibility
-
-| Gradle AEM Plugin | Gradle Build Tool | Adobe Experience Manager |   Java   |
-|:-----------------:|:-----------------:|:------------------------:|:--------:|
-|     4.x -> 5.x    |     4.x -> 4.8    |        6.x and up        |     8    |
-|   6.0.0 -> 6.2.1  |     4.9 -> 5.0    |        6.x and up        |     8    |
-|   6.3.0 -> 6.x    |     5.1 -> 5.6    |        6.x and up        |     8    |
-|   7.2.0 -> 8.1.1  |     5.1 -> 5.6    |        6.x and up        |    8,11  |
-|   8.1.2 and up    |     6.0 and up    |        6.x and up        |    8,11  |
-
 ## Building
 
 1. Clone this project using command `git clone https://github.com/Cognifide/gradle-aem-plugin.git`
@@ -405,6 +395,8 @@ subprojects {
     * Build will proceed and stop at previously set up breakpoint.
 
 ## Testing
+
+## AEM usage
 
 Part of functional tests are using real AEM to ensure correctness of features.
 As of AEM is not available to the public, it needs to be provided externally from remote server or by providing local file path.
@@ -426,6 +418,15 @@ gradlew functionalTest \
 -DfileTransfer.user=foo \
 -DfileTransfer.password=pass
 ```
+
+## Debugging tests
+
+To debug plugin source code while:
+
+* running functional tests, append `--debug-jvm -Porg.gradle.testkit.debug=true`.
+* project using plugin, append `--no-daemon -Dorg.gradle.debug=true`.
+
+Gradle will stop for a moment and wait until remote connection at port 5005 will be established from e.g IDE.
 
 ## Contributing
 

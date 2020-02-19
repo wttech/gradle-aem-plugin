@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem.bundle
 
 import com.cognifide.gradle.aem.test.AemBuildTest
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 class BundlePluginTest: AemBuildTest() {
@@ -89,8 +88,7 @@ class BundlePluginTest: AemBuildTest() {
                 } 
             """)
 
-            // TODO rewrite back to Kotlin DSL after https://github.com/gradle/gradle/issues/12262
-            file("build.gradle", """
+            buildGradle("""
                 plugins {
                     id("com.cognifide.aem.bundle")
                 }
@@ -100,7 +98,7 @@ class BundlePluginTest: AemBuildTest() {
                 
                 repositories {
                     jcenter()
-                    maven { url = "https://repo.adobe.com/nexus/content/groups/public" }
+                    maven("https://repo.adobe.com/nexus/content/groups/public")
                 }
                 
                 dependencies {

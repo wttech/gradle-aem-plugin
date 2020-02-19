@@ -85,8 +85,7 @@ class PackagePluginTest: AemBuildTest() {
 
             // Assembly project
 
-            // TODO rewrite back to Kotlin DSL after https://github.com/gradle/gradle/issues/12262
-            file("assembly/build.gradle","""
+            file("assembly/build.gradle.kts","""
                 plugins {
                     id("com.cognifide.aem.package")
                 }
@@ -103,7 +102,7 @@ class PackagePluginTest: AemBuildTest() {
 
             // UI apps project
 
-            file("ui.apps/build.gradle", """
+            file("ui.apps/build.gradle.kts", """
                 plugins {
                     id("com.cognifide.aem.bundle")
                 }
@@ -170,7 +169,7 @@ class PackagePluginTest: AemBuildTest() {
 
             // UI content project
 
-            file("ui.content/build.gradle", """
+            file("ui.content/build.gradle.kts", """
                 plugins {
                     id("com.cognifide.aem.package")
                 }
@@ -270,8 +269,7 @@ class PackagePluginTest: AemBuildTest() {
         val projectDir = prepareProject("package-nesting") {
             settingsGradle("")
 
-            // TODO rewrite back to Kotlin DSL after https://github.com/gradle/gradle/issues/12262
-            file("build.gradle", """
+            buildGradle("""
                 plugins {
                     id("com.cognifide.aem.package")
                 }
