@@ -16,11 +16,12 @@ import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.compose.BundleDependency
 import com.cognifide.gradle.aem.pkg.tasks.compose.PackageDependency
 import com.cognifide.gradle.aem.pkg.tasks.compose.ProjectMergingOptions
-import com.cognifide.gradle.common.build.DependencyOptions
 import com.cognifide.gradle.common.tasks.ZipTask
 import com.cognifide.gradle.common.utils.Patterns
+import com.cognifide.gradle.common.utils.using
 import java.io.File
 import org.apache.commons.lang3.StringUtils
+import org.gradle.api.Action
 import org.gradle.api.Project
 import org.gradle.api.file.CopySpec
 import org.gradle.api.file.DuplicatesStrategy
@@ -86,6 +87,8 @@ open class PackageCompose : ZipTask(), AemTask {
         vaultDefinition.apply(options)
     }
 
+    fun vaultDefinition(options: Action<in VaultDefinition>) = options.execute(vaultDefinition)
+
     @Internal
     val vaultDir = aem.obj.relativeDir(contentDir, Package.VLT_PATH)
 
@@ -104,9 +107,9 @@ open class PackageCompose : ZipTask(), AemTask {
     @Nested
     val fileFilter = PackageFileFilter(aem)
 
-    fun fileFilter(configurer: PackageFileFilter.() -> Unit) {
-        fileFilter.apply(configurer)
-    }
+    fun fileFilter(configurer: PackageFileFilter.() -> Unit) = fileFilter.using(configurer)
+
+    fun fileFilter(configurer: Action<in PackageFileFilter>) = configurer.execute(fileFilter)
 
     @Internal
     var fileFilterDelegate: ((CopySpec) -> Unit) = { fileFilter.filter(it, vaultDefinition.fileProperties) }
@@ -292,6 +295,7 @@ open class PackageCompose : ZipTask(), AemTask {
         }
     }
 
+    // TODO support project path only somehow
     fun fromBundle(composeTaskPath: String) {
         fromBundle(common.tasks.get(composeTaskPath, BundleCompose::class.java), ProjectMergingOptions())
     }
@@ -302,21 +306,10 @@ open class PackageCompose : ZipTask(), AemTask {
         }
     }
 
-    fun fromJar(
-        dependencyOptions: DependencyOptions.() -> Unit,
-        installPath: String? = null,
-        vaultFilter: Boolean? = null
-    ) {
-        val dependency = DependencyOptions.create(project, dependencyOptions)
-        bundleDependencies.add(BundleDependency(aem, dependency,
-                installPath ?: this.bundlePath.get(),
-                vaultFilter ?: mergingOptions.vaultFilters
-        ))
-    }
-
+    @JvmOverloads
     fun fromJar(dependencyNotation: Any, installPath: String? = null, vaultFilter: Boolean? = null) {
-        val dependency = DependencyOptions.create(project, dependencyNotation)
-        bundleDependencies.add(BundleDependency(aem, dependency,
+        bundleDependencies.add(BundleDependency(aem,
+                project.dependencies.create(dependencyNotation),
                 installPath ?: this.bundlePath.get(),
                 vaultFilter ?: mergingOptions.vaultFilters
         ))
@@ -345,25 +338,13 @@ open class PackageCompose : ZipTask(), AemTask {
         fromArchiveInternal(vaultFilter, effectiveBundlePath, jar)
     }
 
-    fun fromZip(
-        dependencyOptions: DependencyOptions.() -> Unit,
-        storagePath: String? = null,
-        vaultFilter: Boolean? = null
-    ) {
-        val dependency = DependencyOptions.create(project) { apply(dependencyOptions); ext = "zip" }
-        packageDependencies.add(PackageDependency(aem, dependency,
-                storagePath ?: packagePath.get(),
-                vaultFilter ?: mergingOptions.vaultFilters
-        ))
-    }
-
+    @JvmOverloads
     fun fromZip(dependencyNotation: String, storagePath: String? = null, vaultFilter: Boolean? = null) {
         fromZip(StringUtils.appendIfMissing(dependencyNotation, "@zip") as Any, storagePath, vaultFilter)
     }
 
     fun fromZip(dependencyNotation: Any, storagePath: String? = null, vaultFilter: Boolean? = null) {
-        val dependency = DependencyOptions.create(project, dependencyNotation)
-        packageDependencies.add(PackageDependency(aem, dependency,
+        packageDependencies.add(PackageDependency(aem, project.dependencies.create(dependencyNotation),
                 storagePath ?: packagePath.get(),
                 vaultFilter ?: mergingOptions.vaultFilters
         ))
@@ -379,6 +360,7 @@ open class PackageCompose : ZipTask(), AemTask {
         }
     }
 
+    // TODO support project path only somehow
     fun fromSubpackage(composeTaskPath: String, storagePath: String? = null, vaultFilter: Boolean? = null) {
         fromTasks.add {
             val other = common.tasks.pathed(composeTaskPath).get() as PackageCompose
@@ -386,7 +368,7 @@ open class PackageCompose : ZipTask(), AemTask {
             dependsOn(other)
 
             val file = other.composedFile
-            val effectivePath = "${storagePath ?: this.packagePath}/${other.vaultDefinition.group}"
+            val effectivePath = "${storagePath ?: this.packagePath.get()}/${other.vaultDefinition.group.get()}"
 
             if (vaultFilter ?: mergingOptions.vaultFilters) {
                 vaultDefinition.filter("$effectivePath/${file.name}") { type = FilterType.FILE }
@@ -401,7 +383,7 @@ open class PackageCompose : ZipTask(), AemTask {
 
     private fun fromZipInternal(file: File, packagePath: String? = null, vaultFilter: Boolean? = null) {
         val effectivePackageDir = aem.packageOptions.storageDir(PackageFile(file))
-        val effectivePackagePath = "${packagePath ?: this.packagePath}/$effectivePackageDir"
+        val effectivePackagePath = "${packagePath ?: this.packagePath.get()}/$effectivePackageDir"
 
         fromArchiveInternal(vaultFilter, effectivePackagePath, file)
     }

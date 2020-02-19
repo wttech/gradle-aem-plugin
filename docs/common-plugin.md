@@ -112,7 +112,7 @@ instance.local-publish.runModes=nosamplecontent
 instance.local-publish.jvmOpts=-server -Xmx1024m -XX:MaxPermSize=256M -Djava.awt.headless=true
 ```
 
-Notice! Remember to define also AEM [source files](#configuration-of-aem-instance-source-jar-file-or-backup-file).
+Notice! Remember to define also AEM [source files](local-instance-plugin.md#configuration-of-aem-instance-source-jar-file-or-backup-file).
 
 ## Defining instances via build script
 
@@ -209,7 +209,7 @@ Remember to [encode instance user & password](#instance-url-credentials-encoding
 
 Remember to encode instance credentials (user & password) when passing it via properties: `instance.$INSTANCE_NAME.httpUrl` or `instance.list=[$INSTANCE_HTTP_URL1,$INSTANCE_HTTP_URL2,...]`.
 
-For example, let's assume that instance is created by [instance plugin](#instance-plugin) using following properties:
+For example, let's assume that instance is created by [instance plugin](instance-plugin.md) using following properties:
 
 ```ini
 instance.local-author.httpUrl=http://localhost:4502

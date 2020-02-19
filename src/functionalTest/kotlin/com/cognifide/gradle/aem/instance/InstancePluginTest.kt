@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.instance
 import com.cognifide.gradle.aem.test.AemBuildTest
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty
 
@@ -23,6 +24,7 @@ class InstancePluginTest: AemBuildTest() {
     }
 
     @EnabledIfSystemProperty(named = "localInstance.jarUrl", matches = ".+")
+    @Tag("localInstance")
     @Test
     fun `should setup local aem author and publish instances`() {
         val projectDir = prepareProject("instance-setup") {

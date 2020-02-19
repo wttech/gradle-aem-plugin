@@ -22,7 +22,8 @@ class AemBuildResult(val result: BuildResult, val projectDir: File) {
     }
 
     fun assertZipEntry(zip: File, entry: String, matcher: (String) -> Unit) {
-        assertTrue({ ZipUtil.containsEntry(zip, entry) }, "File '$entry' is not included in package '$zip'.")
+        assertFileExists(zip)
+        assertTrue({ ZipUtil.containsEntry(zip, entry) }, "File '$entry' is not included in ZIP '$zip'.")
 
         val actualContent = ZipUtil.unpackEntry(zip, entry) ?: ByteArray(0)
         val actualString = actualContent.toString(StandardCharsets.UTF_8).trim()

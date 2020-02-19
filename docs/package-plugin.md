@@ -340,7 +340,7 @@ Upload & install CRX package into AEM instance(s). Primary, recommended form of 
 
 ### Deploying only to desired instances
 
-Simply follow general rules about [instance filtering](#instance-filtering).
+Simply follow general rules about [instance filtering](common-plugin.md#instance-filtering).
 
 ### Deploying options
 

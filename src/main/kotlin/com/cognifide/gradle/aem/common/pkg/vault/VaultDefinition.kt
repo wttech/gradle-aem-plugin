@@ -128,14 +128,22 @@ open class VaultDefinition(private val aem: AemExtension) {
      */
     @Input
     val properties = aem.obj.map<String, Any> {
-        convention(mapOf(
-                "acHandling" to "merge_preserve",
-                "requiresRoot" to false
+        set(mapOf(
+                AC_HANDLING_PROPERTY to "merge_preserve",
+                REQUIRES_ROOT_PROPERTY to false
         ))
     }
 
     fun property(name: String, value: String) {
         properties.put(name, value)
+    }
+
+    fun acHandling(value: Boolean) {
+        properties.put(AC_HANDLING_PROPERTY, value)
+    }
+
+    fun requiresRoot(value: Boolean) {
+        properties.put(REQUIRES_ROOT_PROPERTY, value)
     }
 
     private fun isFilterNeeded(custom: FilterElement): Boolean {
@@ -190,5 +198,9 @@ open class VaultDefinition(private val aem: AemExtension) {
 
     companion object {
         val NODE_TYPES_LIB: Pattern = Pattern.compile("<.+>")
+
+        const val AC_HANDLING_PROPERTY = "acHandling"
+
+        const val REQUIRES_ROOT_PROPERTY = "requiresRoot"
     }
 }
