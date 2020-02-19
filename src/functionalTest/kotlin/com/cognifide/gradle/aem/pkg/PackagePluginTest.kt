@@ -118,9 +118,11 @@ class PackagePluginTest: AemBuildTest() {
                     compileOnly("org.osgi:osgi.cmpn:6.0.0")
                 }
                 
-                packageCompose {
-                    vaultDefinition {
-                        property("installhook.actool.class", "biz.netcentric.cq.tools.actool.installhook.AcToolInstallHook")
+                tasks {
+                    packageCompose {
+                        vaultDefinition {
+                            property("installhook.actool.class", "biz.netcentric.cq.tools.actool.installhook.AcToolInstallHook")
+                        }
                     }
                 }
                 """)
@@ -174,9 +176,11 @@ class PackagePluginTest: AemBuildTest() {
                     id("com.cognifide.aem.package")
                 }
                 
-                packageCompose {
-                    vaultDefinition {
-                        property("installhook.aecu.class", "de.valtech.aecu.core.installhook.AecuInstallHook")
+                tasks {
+                    packageCompose {
+                        vaultDefinition {
+                            property("installhook.aecu.class", "de.valtech.aecu.core.installhook.AecuInstallHook")
+                        }
                     }
                 }
             """)
@@ -281,12 +285,14 @@ class PackagePluginTest: AemBuildTest() {
                     jcenter()
                 }
                 
-                packageCompose {
-                    fromJar("org.jsoup:jsoup:1.10.2")
-                    fromJar("com.github.mickleroy:aem-sass-compiler:1.0.1")
-                    
-                    fromZip("com.adobe.cq:core.wcm.components.all:2.8.0")
-                    fromZip("com.adobe.cq:core.wcm.components.examples:2.8.0")
+                tasks {
+                    packageCompose {
+                        fromJar("org.jsoup:jsoup:1.10.2")
+                        fromJar("com.github.mickleroy:aem-sass-compiler:1.0.1")
+                        
+                        fromZip("com.adobe.cq:core.wcm.components.all:2.8.0")
+                        fromZip("com.adobe.cq:core.wcm.components.examples:2.8.0")
+                    }
                 }
                 """)
 
