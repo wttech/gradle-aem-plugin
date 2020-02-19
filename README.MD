@@ -29,6 +29,8 @@
      * [Customize convention for CRX package and OSGi bundle names and paths](#customize-convention-for-crx-package-and-osgi-bundle-names-and-paths)
   * [Building](#building)
   * [Testing](#testing)
+     * [Local instance tests](#local-instance-tests)
+     * [Debugging tests](#debugging-tests)
   * [Contributing](#contributing)
   * [License](#license)
 
@@ -396,7 +398,7 @@ subprojects {
 
 ## Testing
 
-## AEM usage
+## Local instance tests
 
 Part of functional tests are using real AEM to ensure correctness of features.
 As of AEM is not available to the public, it needs to be provided externally from remote server or by providing local file path.
