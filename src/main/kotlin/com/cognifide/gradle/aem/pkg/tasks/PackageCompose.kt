@@ -1,32 +1,28 @@
 package com.cognifide.gradle.aem.pkg.tasks
 
-import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.aem
 import com.cognifide.gradle.aem.bundle.tasks.BundleCompose
 import com.cognifide.gradle.aem.bundle.BundlePlugin
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
-import com.cognifide.gradle.aem.common.pkg.PackageFile
+import com.cognifide.gradle.aem.common.pkg.PackageException
 import com.cognifide.gradle.aem.common.pkg.PackageFileFilter
 import com.cognifide.gradle.aem.common.pkg.PackageValidator
 import com.cognifide.gradle.aem.common.pkg.vault.FilterFile
-import com.cognifide.gradle.aem.common.pkg.vault.FilterType
 import com.cognifide.gradle.aem.common.pkg.vault.VaultDefinition
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.compose.BundleDependency
 import com.cognifide.gradle.aem.pkg.tasks.compose.PackageDependency
-import com.cognifide.gradle.aem.pkg.tasks.compose.ProjectMergingOptions
+import com.cognifide.gradle.common.common
 import com.cognifide.gradle.common.tasks.ZipTask
 import com.cognifide.gradle.common.utils.Patterns
 import com.cognifide.gradle.common.utils.using
 import java.io.File
-import org.apache.commons.lang3.StringUtils
 import org.gradle.api.Action
 import org.gradle.api.Project
 import org.gradle.api.file.CopySpec
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.tasks.*
-import org.gradle.api.tasks.bundling.Jar
 
 @Suppress("TooManyFunctions", "LargeClass")
 open class PackageCompose : ZipTask(), AemTask {
@@ -74,7 +70,7 @@ open class PackageCompose : ZipTask(), AemTask {
         validator.apply(options)
     }
 
-    @get:InputDirectory
+    @InputDirectory
     val metaDir = aem.obj.relativeDir(contentDir, Package.META_PATH)
 
     /**
@@ -93,6 +89,9 @@ open class PackageCompose : ZipTask(), AemTask {
     val vaultDir = aem.obj.relativeDir(contentDir, Package.VLT_PATH)
 
     @Internal
+    val vaultHooksDir = aem.obj.relativeDir(contentDir, Package.VLT_HOOKS_PATH)
+
+    @Internal
     val vaultFilterOriginFile = aem.obj.relativeFile(metaDir, "${Package.VLT_DIR}/${FilterFile.ORIGIN_NAME}")
 
     @Internal
@@ -102,7 +101,7 @@ open class PackageCompose : ZipTask(), AemTask {
     val vaultNodeTypesFile = aem.obj.relativeFile(vaultDir, Package.VLT_NODETYPES_FILE)
 
     @Internal
-    val vaultNodeTypesSyncFile = aem.packageOptions.nodeTypesSyncFile
+    val vaultNodeTypesSyncFile = aem.obj.file { convention(aem.packageOptions.nodeTypesSyncFile) }
 
     @Nested
     val fileFilter = PackageFileFilter(aem)
@@ -114,52 +113,19 @@ open class PackageCompose : ZipTask(), AemTask {
     @Internal
     var fileFilterDelegate: ((CopySpec) -> Unit) = { fileFilter.filter(it, vaultDefinition.fileProperties) }
 
-    @Internal
-    var fromConvention = true
-
-    private var mergingOptions = ProjectMergingOptions()
-
-    fun merging(options: ProjectMergingOptions.() -> Unit) {
-        this.mergingOptions.apply(options)
-    }
-
     private var fromProjects = mutableListOf<() -> Unit>()
 
     private var fromTasks = mutableListOf<() -> Unit>()
 
-    private val bundleDependencies = mutableListOf<BundleDependency>()
+    @Input
+    val bundleDependencies = aem.obj.list<BundleDependency> { convention(listOf()) }
 
-    private val packageDependencies = mutableListOf<PackageDependency>()
-
-    /**
-     * Configures extra files to be observed in case of Gradle task caching.
-     *
-     * TODO https://github.com/gradle/gradle/issues/2016
-     */
-    @get:InputFiles
-    val inputFiles = aem.obj.files {
-        from(vaultNodeTypesSyncFile)
-        from(bundleDependencies.map { it.configuration })
-        from(packageDependencies.map { it.configuration })
-    }
-
-    override fun projectEvaluated() {
-        if (fromConvention) {
-            fromConvention()
-        }
-    }
+    @Input
+    val packageDependencies = aem.obj.list<PackageDependency> { convention(listOf()) }
 
     override fun projectsEvaluated() {
         fromProjects.forEach { it() }
         fromTasks.forEach { it() }
-
-        vaultDefinition.apply {
-            if (mergingOptions.vaultFilters) {
-                filters(vaultFilterOriginFile.asFile, true)
-            }
-
-            nodeTypes(vaultNodeTypesSyncFile.asFile, true)
-        }
     }
 
     @TaskAction
@@ -170,35 +136,19 @@ open class PackageCompose : ZipTask(), AemTask {
         common.notifier.notify("Package composed", composedFile.name)
     }
 
-    fun fromConvention() {
-        fromMeta()
-        fromProject()
-    }
+    fun fromProject(path: String) = fromProject(project.project(path))
 
-    fun fromProject() {
-        fromProject(project, mergingOptions)
-    }
-
-    fun fromProject(path: String, options: ProjectMergingOptions.() -> Unit) = fromProject(path, ProjectMergingOptions().apply(options))
-
-    @JvmOverloads // TODO should we add it everywhere?
-    fun fromProject(path: String, options: ProjectMergingOptions = ProjectMergingOptions()) = fromProject(project.project(path), options)
-
-    fun fromProjects(pathFilter: String, options: ProjectMergingOptions.() -> Unit) = fromProjects(pathFilter, ProjectMergingOptions().apply(options))
-
-    fun fromProjects(pathFilter: String, options: ProjectMergingOptions = ProjectMergingOptions()) {
+    fun fromProjects(pathFilter: String) {
         project.allprojects
                 .filter { Patterns.wildcard(it.path, pathFilter) }
-                .forEach { fromProject(it, options) }
+                .forEach { fromProject(it) }
     }
 
-    fun fromSubprojects(options: ProjectMergingOptions.() -> Unit) = fromSubprojects(ProjectMergingOptions().apply(options))
-
-    fun fromSubprojects(options: ProjectMergingOptions = ProjectMergingOptions()) {
+    fun fromSubprojects() {
         if (project == project.rootProject) {
-            fromProjects(":*", options)
+            fromProjects(":*")
         } else {
-            fromProjects("${project.path}:*", options)
+            fromProjects("${project.path}:*")
         }
     }
 
@@ -211,91 +161,43 @@ open class PackageCompose : ZipTask(), AemTask {
         }
     }
 
-    fun fromProject(project: Project, options: ProjectMergingOptions.() -> Unit) = fromProject(project, ProjectMergingOptions().apply(options))
+    fun fromProject(other: Project) {
+        fromProjects.add { composeProject(other) }
+    }
 
-    @JvmOverloads
-    fun fromProject(project: Project, options: ProjectMergingOptions = ProjectMergingOptions()) {
-        fromProjects.add {
-            val other by lazy { AemExtension.of(project) }
-
-            if (project.plugins.hasPlugin(PackagePlugin.ID)) {
-                options.composeTasks(other).forEach {
-                    fromPackage(it, options)
-                }
-            }
-
-            if (project.plugins.hasPlugin(BundlePlugin.ID)) {
-                options.bundleTasks(other).forEach {
-                    fromBundle(it, options)
-                }
-            }
-
-            options.extraTasks(other).forEach {
-                dependsOn(it)
-            }
+    fun fromContent(dir: Any) {
+        into(Package.JCR_ROOT) { spec ->
+            spec.from(dir)
+            fileFilterDelegate(spec)
         }
     }
 
-    fun fromPackage(composeTaskPath: String) {
-        fromPackage(common.tasks.get(composeTaskPath, PackageCompose::class.java), ProjectMergingOptions())
+    fun fromVaultHooks(dir: Any) {
+        into(Package.VLT_HOOKS_PATH) { spec ->
+            spec.from(dir)
+            fileFilterDelegate(spec)
+        }
     }
 
-    @Suppress("ComplexMethod")
-    private fun fromPackage(other: PackageCompose, options: ProjectMergingOptions) {
-        fromTasks.add {
-            if (this@PackageCompose != other) {
-                dependsOn(other.dependsOn)
-            }
+    private fun fromPackage() {
+        composeSelf()
+    }
 
-            if (options.composeContent) {
-                val contentDir = other.contentDir.file(Package.JCR_ROOT).get().asFile
-                if (contentDir.exists()) {
-                    into(Package.JCR_ROOT) { spec ->
-                        spec.from(contentDir)
-                        fileFilterDelegate(spec)
-                    }
-                }
-            }
+    fun fromPackage(other: PackageCompose) {
+        fromTasks.add { composeOther(other) }
+    }
 
-            if (options.vaultFilters) {
-                vaultDefinition.filters(other.vaultFilterFile.asFile, true)
-            }
-
-            if (options.vaultNodeTypes) {
-                vaultDefinition.nodeTypes(other.vaultNodeTypesFile.asFile, true)
-            }
-
-            if (options.vaultProperties) {
-                other.vaultDefinition.properties.get().forEach { (name, value) ->
-                    vaultDefinition.properties.put(name, value) // TODO putIfAbsent (make it more lazy)
-                }
-            }
-
-            if (options.vaultHooks) {
-                val hooksDir = other.contentDir.dir(Package.VLT_HOOKS_PATH).get().asFile
-                if (hooksDir.exists()) {
-                    into(Package.VLT_HOOKS_PATH) { spec ->
-                        spec.from(hooksDir)
-                        fileFilterDelegate(spec)
-                    }
-                }
-            }
-
-            if (options.bundleDependent) {
-                other.bundleDependencies.forEach {
-                    fromJarInternal(it.file, it.installPath, it.vaultFilter)
-                }
-            }
-
-            if (options.packageDependent) {
-                other.packageDependencies.forEach {
-                    fromZipInternal(it.file, it.storagePath, it.vaultFilter)
-                }
-            }
-        }
+    fun fromBundle(other: BundleCompose) {
+        fromTasks.add { composeBundle(other) }
     }
 
     // TODO support project path only somehow
+    /*
+
+    //    fun fromPackage(composeTaskPath: String) {
+//        fromPackage(common.tasks.get(composeTaskPath, PackageCompose::class.java),))
+//    }
+
     fun fromBundle(composeTaskPath: String) {
         fromBundle(common.tasks.get(composeTaskPath, BundleCompose::class.java), ProjectMergingOptions())
     }
@@ -397,6 +299,84 @@ open class PackageCompose : ZipTask(), AemTask {
             spec.from(file)
             fileFilterDelegate(spec)
         }
+    }
+     */
+
+    private var composeProject: PackageCompose.(Project) -> Unit = { other ->
+        if (other.plugins.hasPlugin(PackagePlugin.ID)) {
+            fromPackage(other.common.tasks.get(NAME))
+        }
+
+        if (other.plugins.hasPlugin(BundlePlugin.ID)) {
+            fromBundle(other.common.tasks.get(BundleCompose.NAME))
+        }
+
+        dependsOn(other.common.tasks.checks)
+    }
+
+    fun composeProject(action: PackageCompose.(other: Project) -> Unit) {
+        this.composeProject = action
+    }
+
+    private var composeSelf: PackageCompose.() -> Unit = {
+        fromMeta()
+        fromContent(contentDir)
+        fromVaultHooks(vaultHooksDir)
+
+        vaultDefinition.filters(vaultFilterOriginFile)
+        vaultDefinition.nodeTypes(vaultNodeTypesSyncFile)
+    }
+
+    fun composeSelf(action: PackageCompose.() -> Unit) {
+        this.composeSelf = action
+    }
+
+    private var composeOther: PackageCompose.(PackageCompose) -> Unit = { other ->
+        if (this@PackageCompose == other) {
+            throw PackageException("Package cannot be composed due to configuration error (circular reference)!")
+        }
+
+        dependsOn(other.dependsOn)
+
+        fromContent(other.contentDir)
+        fromVaultHooks(other.vaultHooksDir)
+
+        vaultDefinition.filters(other.vaultFilterFile)
+        vaultDefinition.nodeTypes(other.vaultNodeTypesFile)
+        vaultDefinition.properties.putAll(other.vaultDefinition.properties) // TODO putIfAbsent if possible
+
+        bundleDependencies.addAll(other.bundleDependencies)
+        packageDependencies.addAll(other.packageDependencies)
+    }
+
+    fun composeOther(action: PackageCompose.(PackageCompose) -> Unit) {
+        this.composeOther = action
+    }
+
+    private var composeBundle: PackageCompose.(BundleCompose) -> Unit = { other ->
+        fromBundleBuilt(other)
+    }
+
+    fun fromBundleBuilt(task: BundleCompose) {
+        bundleDependencies.add(aem.obj.provider { BundleDependency(
+                project.dependencies.create(task.archiveFile),
+                Package.bundlePath(task.installPath.get(), task.installRunMode.orNull),
+                task.vaultFilter.get())
+        })
+    }
+
+    fun composeBundle(action: PackageCompose.(other: BundleCompose) -> Unit) {
+        this.composeBundle = action
+    }
+
+    /**
+     * Configures extra files to be observed in case of Gradle task caching.
+     *
+     * TODO https://github.com/gradle/gradle/issues/2016
+     */
+    @get:InputFiles
+    val inputFiles = aem.obj.files {
+        from(vaultNodeTypesSyncFile)
     }
 
     init {

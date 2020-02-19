@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.common.pkg.vault
 
 import com.cognifide.gradle.aem.AemExtension
+import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
@@ -67,7 +68,9 @@ open class VaultDefinition(private val aem: AemExtension) {
         filterElements.addAll(aem.obj.provider { FilterFile(file).elements })
     }
 
-    fun filters(provider: Provider<File>, optionallyExist: Boolean = false) {
+    fun filters(file: RegularFileProperty, optionallyExist: Boolean = true) = filters(file.asFile, optionallyExist)
+
+    fun filters(provider: Provider<File>, optionallyExist: Boolean = true) {
         filterElements.addAll(provider.map { file ->
             when {
                 file.exists() || !optionallyExist -> FilterFile(file).elements
@@ -94,14 +97,20 @@ open class VaultDefinition(private val aem: AemExtension) {
     @Input
     var nodeTypeLines = aem.obj.strings { convention(listOf()) }
 
+    fun nodeTypes(file: RegularFileProperty, optionallyExist: Boolean = false) = nodeTypes(file.asFile, optionallyExist)
+
     fun nodeTypes(provider: Provider<File>, optionallyExist: Boolean = false) {
         nodeTypeLibs(provider, optionallyExist)
         nodeTypeLines(provider, optionallyExist)
     }
 
+    fun nodeTypeLibs(file: RegularFileProperty, optionallyExist: Boolean = false) = nodeTypeLibs(file.asFile, optionallyExist)
+
     fun nodeTypeLibs(provider: Provider<File>, optionallyExist: Boolean = false) {
         nodeTypeLibs.addAll(nodeTypeReader(provider, optionallyExist) { isNodeTypeLib(it) })
     }
+
+    fun nodeTypeLines(file: RegularFileProperty, optionallyExist: Boolean = false) = nodeTypeLines(file.asFile, optionallyExist)
 
     fun nodeTypeLines(provider: Provider<File>, optionallyExist: Boolean = false) {
         nodeTypeLines.addAll(nodeTypeReader(provider, optionallyExist) { !isNodeTypeLib(it) })
