@@ -196,7 +196,7 @@ open class PackageCompose : ZipTask(), AemTask {
     fun mergePackage(taskPath: String) = mergePackage(common.tasks.pathed(taskPath))
 
     fun mergePackage(task: TaskProvider<PackageCompose>) {
-        fromTasks.add { task.get().ccomposeOther(this) }
+        fromTasks.add { task.get().composeOther(this) }
     }
 
     fun nestPackage(dependencyNotation: Any) {
