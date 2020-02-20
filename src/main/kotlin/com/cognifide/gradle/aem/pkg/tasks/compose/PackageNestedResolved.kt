@@ -14,10 +14,10 @@ class PackageNestedResolved(private val target: PackageCompose,  @Input val nota
         DependencyOptions.resolveFile(project, DependencyOptions.hintNotation(notation, NOTATION_EXTENSION)) })
     }
 
-    override val dirPath = aem.obj.string { convention(target.nestedPath) }
+    override val dirPath = aem.obj.string { convention(target.nestedPath) } // TODO append group extracted from notation
 
     override val fileName = aem.obj.string { convention(aem.obj.provider {
-        DependencyOptions.determineFileName(project, DependencyOptions.hintNotation(notation, NOTATION_EXTENSION)) })
+        DependencyOptions.determineFileName(project, DependencyOptions.hintNotation(notation, NOTATION_EXTENSION)) }) // TODO impl determineFileName
     }
 
     override val vaultFilter = aem.obj.boolean { convention(target.vaultFilters) }

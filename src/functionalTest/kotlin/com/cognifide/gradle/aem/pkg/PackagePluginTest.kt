@@ -280,8 +280,8 @@ class PackagePluginTest: AemBuildTest() {
             assertZipEntryEquals(pkg, "META-INF/vault/filter.xml", """
                 <?xml version="1.0" encoding="UTF-8"?>
                 <workspaceFilter version="1.0">
-                  <filter root="/etc/packages/com.company.example/example-ui.content-1.0.0.zip"/>
                   <filter root="/apps/example/ui.apps/install/example-ui.apps-1.0.0.jar"/>
+                  <filter root="/etc/packages/com.company.example/example-ui.content-1.0.0.zip"/>
                   
                 </workspaceFilter>
             """)
