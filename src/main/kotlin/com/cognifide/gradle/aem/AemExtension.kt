@@ -105,7 +105,7 @@ class AemExtension(val project: Project) : Serializable {
     val javaPackages: List<String>
         get() = project.rootProject.allprojects
                 .filter { it.plugins.hasPlugin(BundlePlugin.ID) }
-                .flatMap { p -> p.common.tasks.getAll(BundleCompose::class.java).mapNotNull { it.javaPackage.orNull } }
+                .flatMap { p -> p.common.tasks.getAll<BundleCompose>().mapNotNull { it.javaPackage.orNull } }
 
     /**
      * All instances matching default filtering.
@@ -248,24 +248,24 @@ class AemExtension(val project: Project) : Serializable {
      * Get CRX package defined to be built (could not yet exist).
      */
     @Suppress("VariableNaming")
-    val `package`: File get() = common.tasks.get(PackageCompose.NAME, PackageCompose::class.java).composedFile
+    val `package`: File get() = common.tasks.get<PackageCompose>(PackageCompose.NAME).composedFile
 
     val pkg: File get() = `package`
 
     /**
      * Get all CRX packages defined to be built.
      */
-    val packages: List<File> get() = common.tasks.getAll(PackageCompose::class.java).map { it.composedFile }
+    val packages: List<File> get() = common.tasks.getAll<PackageCompose>().map { it.composedFile }
 
     /**
      * Get OSGi bundle defined to be built (could not yet exist).
      */
-    val bundle: File get() = common.tasks.get(BundleCompose.NAME, BundleCompose::class.java).composedFile
+    val bundle: File get() = common.tasks.get<BundleCompose>(BundleCompose.NAME).composedFile
 
     /**
      * Get all OSGi bundles defined to be built.
      */
-    val bundles: List<File> get() = common.tasks.getAll(BundleCompose::class.java).map { it.composedFile }
+    val bundles: List<File> get() = common.tasks.getAll<BundleCompose>().map { it.composedFile }
 
     /**
      * Shorthand for embedding code inside OSGi bundle being composed when configuration on demand is enabled.

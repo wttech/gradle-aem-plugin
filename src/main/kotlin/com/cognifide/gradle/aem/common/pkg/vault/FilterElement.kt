@@ -38,7 +38,7 @@ class FilterElement(val root: String) : Serializable {
 
     companion object {
 
-        fun of(root: String, definition: FilterElement.() -> Unit) = FilterElement(root).apply(definition)
+        fun of(root: String, definition: FilterElement.() -> Unit = {}) = FilterElement(root).apply(definition)
 
         fun parse(xml: String): List<FilterElement> {
             val document = Jsoup.parse(xml, "", Parser.xmlParser())

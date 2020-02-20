@@ -57,11 +57,6 @@ class PackageOptions(private val aem: AemExtension) : Serializable {
     val storagePath = aem.obj.string { convention("/etc/packages") }
 
     /**
-     * Calculate directory under storage path for each CRX package.
-     */
-    val storageDir: PackageFile.() -> String = { group }
-
-    /**
      * Configures a local repository from which unreleased JARs could be added as 'compileOnly' dependency
      * and be deployed within CRX package deployment.
      */

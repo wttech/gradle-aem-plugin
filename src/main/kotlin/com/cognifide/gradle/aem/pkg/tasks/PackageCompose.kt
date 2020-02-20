@@ -1,34 +1,32 @@
 package com.cognifide.gradle.aem.pkg.tasks
 
-import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.aem
 import com.cognifide.gradle.aem.bundle.tasks.BundleCompose
 import com.cognifide.gradle.aem.bundle.BundlePlugin
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
-import com.cognifide.gradle.aem.common.pkg.PackageFile
+import com.cognifide.gradle.aem.common.pkg.PackageException
 import com.cognifide.gradle.aem.common.pkg.PackageFileFilter
 import com.cognifide.gradle.aem.common.pkg.PackageValidator
 import com.cognifide.gradle.aem.common.pkg.vault.FilterFile
 import com.cognifide.gradle.aem.common.pkg.vault.FilterType
 import com.cognifide.gradle.aem.common.pkg.vault.VaultDefinition
 import com.cognifide.gradle.aem.pkg.PackagePlugin
-import com.cognifide.gradle.aem.pkg.tasks.compose.BundleDependency
-import com.cognifide.gradle.aem.pkg.tasks.compose.PackageDependency
-import com.cognifide.gradle.aem.pkg.tasks.compose.ProjectMergingOptions
+import com.cognifide.gradle.aem.pkg.tasks.compose.*
+import com.cognifide.gradle.common.common
 import com.cognifide.gradle.common.tasks.ZipTask
 import com.cognifide.gradle.common.utils.Patterns
 import com.cognifide.gradle.common.utils.using
 import java.io.File
-import org.apache.commons.lang3.StringUtils
 import org.gradle.api.Action
 import org.gradle.api.Project
 import org.gradle.api.file.CopySpec
 import org.gradle.api.file.DuplicatesStrategy
+import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.provider.ListProperty
 import org.gradle.api.tasks.*
-import org.gradle.api.tasks.bundling.Jar
 
-@Suppress("TooManyFunctions", "LargeClass")
+@Suppress("TooManyFunctions")
 open class PackageCompose : ZipTask(), AemTask {
 
     final override val aem = project.aem
@@ -45,13 +43,14 @@ open class PackageCompose : ZipTask(), AemTask {
     @get:Internal
     val composedDir: File get() = composedFile.parentFile
 
-    /**
-     * Absolute path to JCR content to be included in CRX package.
-     *
-     * Must be absolute or relative to current working directory.
-     */
     @Internal
     val contentDir = aem.obj.dir { convention(aem.packageOptions.contentDir) }
+
+    @Internal
+    val jcrRootDir = aem.obj.relativeDir(contentDir, Package.JCR_ROOT)
+
+    @Internal
+    val metaDir = aem.obj.relativeDir(contentDir, Package.META_PATH)
 
     /**
      * Content path for OSGi bundle jars being placed in CRX package.
@@ -63,7 +62,7 @@ open class PackageCompose : ZipTask(), AemTask {
      * Content path for CRX sub-packages being placed in CRX package being built.
      */
     @Internal
-    val packagePath = aem.obj.string { convention(aem.packageOptions.storagePath) }
+    val nestedPath = aem.obj.string { convention(aem.packageOptions.storagePath) }
 
     @Nested
     var validator = PackageValidator(aem).apply {
@@ -73,9 +72,6 @@ open class PackageCompose : ZipTask(), AemTask {
     fun validator(options: PackageValidator.() -> Unit) {
         validator.apply(options)
     }
-
-    @get:InputDirectory
-    val metaDir = aem.obj.relativeDir(contentDir, Package.META_PATH)
 
     /**
      * Defines properties being used to generate CRX package metadata files.
@@ -93,16 +89,208 @@ open class PackageCompose : ZipTask(), AemTask {
     val vaultDir = aem.obj.relativeDir(contentDir, Package.VLT_PATH)
 
     @Internal
+    val vaultHooksDir = aem.obj.relativeDir(contentDir, Package.VLT_HOOKS_PATH)
+
+    @Internal
     val vaultFilterOriginFile = aem.obj.relativeFile(metaDir, "${Package.VLT_DIR}/${FilterFile.ORIGIN_NAME}")
 
     @Internal
     val vaultFilterFile = aem.obj.relativeFile(vaultDir, FilterFile.BUILD_NAME)
 
     @Internal
+    val vaultFilters = aem.obj.boolean { convention(true) }
+
+    @Internal
     val vaultNodeTypesFile = aem.obj.relativeFile(vaultDir, Package.VLT_NODETYPES_FILE)
 
     @Internal
-    val vaultNodeTypesSyncFile = aem.packageOptions.nodeTypesSyncFile
+    val vaultNodeTypesSyncFile = aem.obj.file { convention(aem.packageOptions.nodeTypesSyncFile) }
+
+    @Nested
+    val bundlesInstalled = aem.obj.list<BundleInstalled> { convention(listOf()) }
+
+    @Nested
+    val packagesNested = aem.obj.list<PackageNested> { convention(listOf()) }
+
+    private var fromProjects = mutableListOf<() -> Unit>()
+
+    private var fromTasks = mutableListOf<() -> Unit>()
+
+    override fun projectsEvaluated() {
+        super.projectsEvaluated()
+        fromProjects.forEach { it() }
+        fromTasks.forEach { it() }
+        composeSelf.invoke()
+    }
+
+    @TaskAction
+    override fun copy() {
+        super.copy()
+        validator.perform(composedFile)
+        common.notifier.notify("Package composed", composedFile.name)
+    }
+
+    fun fromProject(path: String) = fromProject(project.project(path))
+
+    fun fromProjects(pathFilter: String) {
+        project.allprojects
+                .filter { Patterns.wildcard(it.path, pathFilter) }
+                .forEach { fromProject(it) }
+    }
+
+    fun fromSubprojects() {
+        if (project == project.rootProject) {
+            fromProjects(":*")
+        } else {
+            fromProjects("${project.path}:*")
+        }
+    }
+
+    fun fromMeta(metaDir: Any) {
+        into(Package.META_PATH) { spec ->
+            spec.from(metaDir)
+            fileFilterDelegate(spec)
+        }
+    }
+
+    fun fromProject(other: Project) {
+        fromProjects.add { composeProject(other) }
+    }
+
+    fun fromRoot(dir: Any) {
+        into(Package.JCR_ROOT) { spec ->
+            spec.from(dir)
+            fileFilterDelegate(spec)
+        }
+    }
+
+    fun fromBundlesInstalled(bundles: ListProperty<BundleInstalled>) = bundles.get().forEach { fromArchive(it) }
+
+    fun fromPackagesNested(pkgs: ListProperty<PackageNested>) = pkgs.get().forEach { fromArchive(it) }
+
+    private fun fromArchive(archive: RepositoryArchive) {
+        if (archive.vaultFilter.get()) { // TODO lazy?
+            vaultDefinition.filter(aem.obj.provider { "${archive.dirPath.get()}/${archive.fileName.get()}" }) { type = FilterType.FILE }
+        }
+
+        into("${Package.JCR_ROOT}/${archive.dirPath.get()}") { spec ->
+            spec.from(archive.file)
+            fileFilterDelegate(spec)
+        }
+    }
+
+    fun fromVaultHooks(dir: Any) {
+        into(Package.VLT_HOOKS_PATH) { spec ->
+            spec.from(dir)
+            fileFilterDelegate(spec)
+        }
+    }
+
+    fun fromVaultFilters(file: RegularFileProperty) {
+        vaultDefinition.filters(file)
+    }
+
+    fun fromVaultNodeTypes(file: RegularFileProperty) {
+        vaultDefinition.nodeTypes(file)
+    }
+
+    fun mergePackageProject(projectPath: String) = mergePackage("$projectPath:$NAME")
+
+    fun mergePackage(taskPath: String) = mergePackage(common.tasks.pathed(taskPath))
+
+    fun mergePackage(task: TaskProvider<PackageCompose>) {
+        fromTasks.add { task.get().composeOther(this) }
+    }
+
+    fun nestPackage(dependencyNotation: Any, options: PackageNestedResolved.() -> Unit = {}) {
+        fromTasks.add { packagesNested.add(PackageNestedResolved(this, dependencyNotation).apply(options)) }
+    }
+
+    fun nestPackageProject(projectPath: String, options: PackageNestedBuilt.() -> Unit = {}) {
+        nestPackageBuilt("$projectPath:$NAME", options)
+    }
+
+    fun nestPackageBuilt(taskPath: String, options: PackageNestedBuilt.() -> Unit = {}) {
+        nestPackageBuilt(common.tasks.pathed(taskPath), options)
+    }
+
+    fun nestPackageBuilt(task: TaskProvider<PackageCompose>, options: PackageNestedBuilt.() -> Unit = {}) {
+        fromTasks.add {
+            dependsOn(task)
+            packagesNested.add(PackageNestedBuilt(this, task).apply(options))
+        }
+    }
+
+    fun installBundle(dependencyNotation: Any, options: BundleInstalledResolved.() -> Unit = {}) {
+        fromTasks.add { bundlesInstalled.add(BundleInstalledResolved(this, dependencyNotation).apply(options)) }
+    }
+
+    fun installBundleProject(projectPath: String, options: BundleInstalledBuilt.() -> Unit = {}) {
+        installBundleBuilt("$projectPath:${BundleCompose.NAME}", options)
+    }
+
+    fun installBundleBuilt(taskPath: String, options: BundleInstalledBuilt.() -> Unit = {}) {
+        installBundleBuilt(common.tasks.pathed(taskPath), options)
+    }
+
+    fun installBundleBuilt(task: TaskProvider<BundleCompose>, options: BundleInstalledBuilt.() -> Unit = {}) {
+        fromTasks.add {
+            dependsOn(task)
+            bundlesInstalled.add(BundleInstalledBuilt(this, task).apply(options))
+        }
+    }
+
+    private var composeProject: PackageCompose.(Project) -> Unit = { other ->
+        if (other.plugins.hasPlugin(PackagePlugin.ID)) {
+            mergePackage(other.common.tasks.named(NAME)) // TODO merge vs nest by default?
+        }
+        if (other.plugins.hasPlugin(BundlePlugin.ID)) {
+            installBundleBuilt(other.common.tasks.named(BundleCompose.NAME))
+        }
+        dependsOn(other.common.tasks.checks)
+    }
+
+    fun composeProject(action: PackageCompose.(other: Project) -> Unit) {
+        this.composeProject = action
+    }
+
+    private var composeSelf: () -> Unit = {
+        fromMeta(metaDir)
+        fromRoot(jcrRootDir)
+        fromBundlesInstalled(bundlesInstalled)
+        fromPackagesNested(packagesNested)
+        fromVaultHooks(vaultHooksDir)
+        fromVaultFilters(vaultFilterOriginFile)
+        fromVaultNodeTypes(vaultNodeTypesSyncFile)
+    }
+
+    fun composeSelf(action: () -> Unit) {
+        this.composeSelf = action
+    }
+
+    fun composeSelf() = composeSelf {}
+
+    private var composeOther: (PackageCompose) -> Unit = { other ->
+        if (this == other) {
+            throw PackageException("Package cannot be composed due to configuration error (circular reference)!")
+        }
+
+        other.dependsOn(dependsOn)
+
+        other.fromRoot(jcrRootDir)
+        other.fromVaultHooks(vaultHooksDir)
+
+        other.vaultDefinition.filters(vaultFilterFile)
+        other.vaultDefinition.nodeTypes(vaultNodeTypesFile)
+        other.vaultDefinition.properties.putAll(vaultDefinition.properties)
+
+        other.bundlesInstalled.addAll(bundlesInstalled)
+        other.packagesNested.addAll(packagesNested)
+    }
+
+    fun composeOther(action: (PackageCompose) -> Unit) {
+        this.composeOther = action
+    }
 
     @Nested
     val fileFilter = PackageFileFilter(aem)
@@ -114,290 +302,8 @@ open class PackageCompose : ZipTask(), AemTask {
     @Internal
     var fileFilterDelegate: ((CopySpec) -> Unit) = { fileFilter.filter(it, vaultDefinition.fileProperties) }
 
-    @Internal
-    var fromConvention = true
-
-    private var mergingOptions = ProjectMergingOptions()
-
-    fun merging(options: ProjectMergingOptions.() -> Unit) {
-        this.mergingOptions.apply(options)
-    }
-
-    private var fromProjects = mutableListOf<() -> Unit>()
-
-    private var fromTasks = mutableListOf<() -> Unit>()
-
-    private val bundleDependencies = mutableListOf<BundleDependency>()
-
-    private val packageDependencies = mutableListOf<PackageDependency>()
-
-    /**
-     * Configures extra files to be observed in case of Gradle task caching.
-     *
-     * TODO https://github.com/gradle/gradle/issues/2016
-     */
-    @get:InputFiles
-    val inputFiles = aem.obj.files {
-        from(vaultNodeTypesSyncFile)
-        from(bundleDependencies.map { it.configuration })
-        from(packageDependencies.map { it.configuration })
-    }
-
-    override fun projectEvaluated() {
-        if (fromConvention) {
-            fromConvention()
-        }
-    }
-
-    override fun projectsEvaluated() {
-        fromProjects.forEach { it() }
-        fromTasks.forEach { it() }
-
-        vaultDefinition.apply {
-            if (mergingOptions.vaultFilters) {
-                filters(vaultFilterOriginFile.asFile, true)
-            }
-
-            nodeTypes(vaultNodeTypesSyncFile.asFile, true)
-        }
-    }
-
-    @TaskAction
-    override fun copy() {
-        super.copy()
-        validator.perform(composedFile)
-
-        common.notifier.notify("Package composed", composedFile.name)
-    }
-
-    fun fromConvention() {
-        fromMeta()
-        fromProject()
-    }
-
-    fun fromProject() {
-        fromProject(project, mergingOptions)
-    }
-
-    fun fromProject(path: String, options: ProjectMergingOptions.() -> Unit) = fromProject(path, ProjectMergingOptions().apply(options))
-
-    @JvmOverloads // TODO should we add it everywhere?
-    fun fromProject(path: String, options: ProjectMergingOptions = ProjectMergingOptions()) = fromProject(project.project(path), options)
-
-    fun fromProjects(pathFilter: String, options: ProjectMergingOptions.() -> Unit) = fromProjects(pathFilter, ProjectMergingOptions().apply(options))
-
-    fun fromProjects(pathFilter: String, options: ProjectMergingOptions = ProjectMergingOptions()) {
-        project.allprojects
-                .filter { Patterns.wildcard(it.path, pathFilter) }
-                .forEach { fromProject(it, options) }
-    }
-
-    fun fromSubprojects(options: ProjectMergingOptions.() -> Unit) = fromSubprojects(ProjectMergingOptions().apply(options))
-
-    fun fromSubprojects(options: ProjectMergingOptions = ProjectMergingOptions()) {
-        if (project == project.rootProject) {
-            fromProjects(":*", options)
-        } else {
-            fromProjects("${project.path}:*", options)
-        }
-    }
-
-    fun fromMeta() = fromMeta(metaDir)
-
-    fun fromMeta(metaDir: Any) {
-        into(Package.META_PATH) { spec ->
-            spec.from(metaDir)
-            fileFilterDelegate(spec)
-        }
-    }
-
-    fun fromProject(project: Project, options: ProjectMergingOptions.() -> Unit) = fromProject(project, ProjectMergingOptions().apply(options))
-
-    @JvmOverloads
-    fun fromProject(project: Project, options: ProjectMergingOptions = ProjectMergingOptions()) {
-        fromProjects.add {
-            val other by lazy { AemExtension.of(project) }
-
-            if (project.plugins.hasPlugin(PackagePlugin.ID)) {
-                options.composeTasks(other).forEach {
-                    fromPackage(it, options)
-                }
-            }
-
-            if (project.plugins.hasPlugin(BundlePlugin.ID)) {
-                options.bundleTasks(other).forEach {
-                    fromBundle(it, options)
-                }
-            }
-
-            options.extraTasks(other).forEach {
-                dependsOn(it)
-            }
-        }
-    }
-
-    fun fromPackage(composeTaskPath: String) {
-        fromPackage(common.tasks.get(composeTaskPath, PackageCompose::class.java), ProjectMergingOptions())
-    }
-
-    @Suppress("ComplexMethod")
-    private fun fromPackage(other: PackageCompose, options: ProjectMergingOptions) {
-        fromTasks.add {
-            if (this@PackageCompose != other) {
-                dependsOn(other.dependsOn)
-            }
-
-            if (options.composeContent) {
-                val contentDir = other.contentDir.file(Package.JCR_ROOT).get().asFile
-                if (contentDir.exists()) {
-                    into(Package.JCR_ROOT) { spec ->
-                        spec.from(contentDir)
-                        fileFilterDelegate(spec)
-                    }
-                }
-            }
-
-            if (options.vaultFilters) {
-                vaultDefinition.filters(other.vaultFilterFile.asFile, true)
-            }
-
-            if (options.vaultNodeTypes) {
-                vaultDefinition.nodeTypes(other.vaultNodeTypesFile.asFile, true)
-            }
-
-            if (options.vaultProperties) {
-                other.vaultDefinition.properties.get().forEach { (name, value) ->
-                    vaultDefinition.properties.put(name, value) // TODO putIfAbsent (make it more lazy)
-                }
-            }
-
-            if (options.vaultHooks) {
-                val hooksDir = other.contentDir.dir(Package.VLT_HOOKS_PATH).get().asFile
-                if (hooksDir.exists()) {
-                    into(Package.VLT_HOOKS_PATH) { spec ->
-                        spec.from(hooksDir)
-                        fileFilterDelegate(spec)
-                    }
-                }
-            }
-
-            if (options.bundleDependent) {
-                other.bundleDependencies.forEach {
-                    fromJarInternal(it.file, it.installPath, it.vaultFilter)
-                }
-            }
-
-            if (options.packageDependent) {
-                other.packageDependencies.forEach {
-                    fromZipInternal(it.file, it.storagePath, it.vaultFilter)
-                }
-            }
-        }
-    }
-
-    // TODO support project path only somehow
-    fun fromBundle(composeTaskPath: String) {
-        fromBundle(common.tasks.get(composeTaskPath, BundleCompose::class.java), ProjectMergingOptions())
-    }
-
-    private fun fromBundle(bundle: BundleCompose, options: ProjectMergingOptions) {
-        if (options.bundleBuilt) {
-            fromJar(bundle, Package.bundlePath(bundle.installPath.get(), bundle.installRunMode.orNull), bundle.vaultFilter.get())
-        }
-    }
-
-    @JvmOverloads
-    fun fromJar(dependencyNotation: Any, installPath: String? = null, vaultFilter: Boolean? = null) {
-        bundleDependencies.add(BundleDependency(aem,
-                project.dependencies.create(dependencyNotation),
-                installPath ?: this.bundlePath.get(),
-                vaultFilter ?: mergingOptions.vaultFilters
-        ))
-    }
-
-    fun fromJar(jar: Jar, bundlePath: String? = null, vaultFilter: Boolean? = null) {
-        fromTasks.add {
-            dependsOn(jar)
-            fromJarInternal(jar.archiveFile.get().asFile, bundlePath, vaultFilter)
-        }
-    }
-
-    fun fromJar(jar: File, bundlePath: String? = null, vaultFilter: Boolean? = null) {
-        fromJars(listOf(jar), bundlePath, vaultFilter)
-    }
-
-    fun fromJars(jars: Collection<File>, bundlePath: String? = null, vaultFilter: Boolean? = null) {
-        fromTasks.add {
-            jars.forEach { fromJarInternal(it, bundlePath, vaultFilter) }
-        }
-    }
-
-    private fun fromJarInternal(jar: File, bundlePath: String? = null, vaultFilter: Boolean? = null) {
-        val effectiveBundlePath = bundlePath ?: this.bundlePath.get()
-
-        fromArchiveInternal(vaultFilter, effectiveBundlePath, jar)
-    }
-
-    @JvmOverloads
-    fun fromZip(dependencyNotation: String, storagePath: String? = null, vaultFilter: Boolean? = null) {
-        fromZip(StringUtils.appendIfMissing(dependencyNotation, "@zip") as Any, storagePath, vaultFilter)
-    }
-
-    fun fromZip(dependencyNotation: Any, storagePath: String? = null, vaultFilter: Boolean? = null) {
-        packageDependencies.add(PackageDependency(aem, project.dependencies.create(dependencyNotation),
-                storagePath ?: packagePath.get(),
-                vaultFilter ?: mergingOptions.vaultFilters
-        ))
-    }
-
-    fun fromZip(zip: File, packagePath: String? = null, vaultFilter: Boolean? = null) {
-        fromZips(listOf(zip), packagePath, vaultFilter)
-    }
-
-    fun fromZips(zips: Collection<File>, packagePath: String? = null, vaultFilter: Boolean? = null) {
-        fromTasks.add {
-            zips.forEach { fromZipInternal(it, packagePath, vaultFilter) }
-        }
-    }
-
-    // TODO support project path only somehow
-    fun fromSubpackage(composeTaskPath: String, storagePath: String? = null, vaultFilter: Boolean? = null) {
-        fromTasks.add {
-            val other = common.tasks.pathed(composeTaskPath).get() as PackageCompose
-
-            dependsOn(other)
-
-            val file = other.composedFile
-            val effectivePath = "${storagePath ?: this.packagePath.get()}/${other.vaultDefinition.group.get()}"
-
-            if (vaultFilter ?: mergingOptions.vaultFilters) {
-                vaultDefinition.filter("$effectivePath/${file.name}") { type = FilterType.FILE }
-            }
-
-            into("${Package.JCR_ROOT}/$effectivePath") { spec ->
-                spec.from(other.composedFile)
-                fileFilterDelegate(spec)
-            }
-        }
-    }
-
-    private fun fromZipInternal(file: File, packagePath: String? = null, vaultFilter: Boolean? = null) {
-        val effectivePackageDir = aem.packageOptions.storageDir(PackageFile(file))
-        val effectivePackagePath = "${packagePath ?: this.packagePath.get()}/$effectivePackageDir"
-
-        fromArchiveInternal(vaultFilter, effectivePackagePath, file)
-    }
-
-    private fun fromArchiveInternal(vaultFilter: Boolean?, effectivePath: String, file: File) {
-        if (vaultFilter ?: mergingOptions.vaultFilters) {
-            vaultDefinition.filter("$effectivePath/${file.name}") { type = FilterType.FILE }
-        }
-
-        into("${Package.JCR_ROOT}/$effectivePath") { spec ->
-            spec.from(file)
-            fileFilterDelegate(spec)
-        }
-    }
+    @get:InputFiles // TODO https://github.com/gradle/gradle/issues/2016
+    val inputFiles = aem.obj.files { from(vaultNodeTypesSyncFile) }
 
     init {
         description = "Composes CRX package from JCR content and built OSGi bundles"
