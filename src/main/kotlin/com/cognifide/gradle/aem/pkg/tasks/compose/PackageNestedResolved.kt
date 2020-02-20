@@ -10,11 +10,19 @@ class PackageNestedResolved(private val target: PackageCompose,  @Input val nota
 
     private val project = aem.project
 
-    override val file = aem.obj.file { fileProvider(aem.obj.provider { DependencyOptions.resolveFile(project, notation) }) }
+    override val file = aem.obj.file { fileProvider(aem.obj.provider {
+        DependencyOptions.resolveFile(project, DependencyOptions.hintNotation(notation, NOTATION_EXTENSION)) })
+    }
 
     override val dirPath = aem.obj.string { convention(target.nestedPath) }
 
-    override val fileName = aem.obj.string { convention(aem.obj.provider { DependencyOptions.determineFileName(project, notation) }) }
+    override val fileName = aem.obj.string { convention(aem.obj.provider {
+        DependencyOptions.determineFileName(project, DependencyOptions.hintNotation(notation, NOTATION_EXTENSION)) })
+    }
 
     override val vaultFilter = aem.obj.boolean { convention(target.vaultFilters) }
+
+    companion object {
+        const val NOTATION_EXTENSION = "zip"
+    }
 }
