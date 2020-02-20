@@ -5,6 +5,7 @@ import com.cognifide.gradle.aem.bundle.tasks.BundleInstall
 import com.cognifide.gradle.aem.bundle.tasks.BundleUninstall
 import com.cognifide.gradle.aem.common.tasks.BundleTask
 import com.cognifide.gradle.aem.pkg.PackagePlugin
+import com.cognifide.gradle.aem.pkg.tasks.PackageCompose
 import com.cognifide.gradle.common.CommonDefaultPlugin
 import com.cognifide.gradle.common.common
 import org.gradle.api.JavaVersion
@@ -71,6 +72,9 @@ class BundlePlugin : CommonDefaultPlugin() {
         named<Jar>(JavaPlugin.JAR_TASK_NAME) {
             archiveClassifier.set(LIB_CLASSIFIER)
         }
+        named<PackageCompose>(PackageCompose.NAME) {
+            installBundle(compose)
+        }
     }
 
     // @see <https://github.com/Cognifide/gradle-aem-plugin/issues/95>
@@ -83,7 +87,7 @@ class BundlePlugin : CommonDefaultPlugin() {
 
                     testImplConfig.extendsFrom(compileOnlyConfig)
 
-                    common.tasks.getAll(BundleCompose::class.java).forEach { bundle ->
+                    common.tasks.getAll<BundleCompose>().forEach { bundle ->
                         dependsOn(bundle)
                         classpath += files(bundle.composedFile)
                     }

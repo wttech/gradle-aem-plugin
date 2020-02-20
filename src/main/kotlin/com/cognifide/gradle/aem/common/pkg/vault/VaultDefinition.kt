@@ -60,6 +60,10 @@ open class VaultDefinition(private val aem: AemExtension) {
         filterElements.add(aem.obj.provider { FilterElement.of(root, definition) })
     }
 
+    fun filter(root: Provider<String>, definition: FilterElement.() -> Unit = {}) {
+        filterElements.add(root.map { FilterElement.of(it, definition) })
+    }
+
     fun filters(vararg roots: String) = filters(roots.asIterable())
 
     fun filters(roots: Iterable<String>) = roots.forEach { filter(it) }
