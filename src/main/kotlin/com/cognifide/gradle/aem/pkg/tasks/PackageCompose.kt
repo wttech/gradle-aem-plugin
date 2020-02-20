@@ -256,7 +256,7 @@ open class PackageCompose : ZipTask(), AemTask {
         fromMeta(metaDir)
         fromContent(contentDir)
         fromBundlesInstalled(bundlesInstalled)
-        //fromPackagesNested(packagesNested)
+        fromPackagesNested(packagesNested)
         fromVaultHooks(vaultHooksDir)
         fromVaultFilters(vaultFilterOriginFile)
         fromVaultNodeTypes(vaultNodeTypesSyncFile)
