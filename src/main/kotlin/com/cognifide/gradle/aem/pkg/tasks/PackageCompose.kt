@@ -119,7 +119,7 @@ open class PackageCompose : ZipTask(), AemTask {
         super.projectsEvaluated()
         fromProjects.forEach { it() }
         fromTasks.forEach { it() }
-        composeSelf()
+        composeSelf.invoke()
     }
 
     @TaskAction
@@ -196,7 +196,7 @@ open class PackageCompose : ZipTask(), AemTask {
     fun mergePackage(taskPath: String) = mergePackage(common.tasks.pathed(taskPath))
 
     fun mergePackage(task: TaskProvider<PackageCompose>) {
-        fromTasks.add { task.get().composeOther(this) }
+        fromTasks.add { task.get().ccomposeOther(this) }
     }
 
     fun nestPackage(dependencyNotation: Any) {
