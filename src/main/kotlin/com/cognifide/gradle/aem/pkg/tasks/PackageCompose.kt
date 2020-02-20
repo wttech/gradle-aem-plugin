@@ -126,7 +126,6 @@ open class PackageCompose : ZipTask(), AemTask {
     override fun copy() {
         super.copy()
         validator.perform(composedFile)
-
         common.notifier.notify("Package composed", composedFile.name)
     }
 
@@ -258,6 +257,8 @@ open class PackageCompose : ZipTask(), AemTask {
         this.composeSelf = action
     }
 
+    fun composeSelf() = composeSelf {}
+
     private var composeOther: (PackageCompose) -> Unit = { other ->
         if (this == other) {
             throw PackageException("Package cannot be composed due to configuration error (circular reference)!")
@@ -290,15 +291,8 @@ open class PackageCompose : ZipTask(), AemTask {
     @Internal
     var fileFilterDelegate: ((CopySpec) -> Unit) = { fileFilter.filter(it, vaultDefinition.fileProperties) }
 
-    /**
-     * Configures extra files to be observed in case of Gradle task caching.
-     *
-     * TODO https://github.com/gradle/gradle/issues/2016
-     */
-    @get:InputFiles
-    val inputFiles = aem.obj.files {
-        from(vaultNodeTypesSyncFile)
-    }
+    @get:InputFiles // TODO https://github.com/gradle/gradle/issues/2016
+    val inputFiles = aem.obj.files { from(vaultNodeTypesSyncFile) }
 
     init {
         description = "Composes CRX package from JCR content and built OSGi bundles"
