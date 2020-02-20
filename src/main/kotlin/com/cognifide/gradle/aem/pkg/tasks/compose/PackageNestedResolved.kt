@@ -4,7 +4,7 @@ import com.cognifide.gradle.aem.pkg.tasks.PackageCompose
 import com.cognifide.gradle.common.build.DependencyOptions
 import org.gradle.api.tasks.Input
 
-class PackageNestedResolved(private val target: PackageCompose,  @Input val notation: Any) : PackageNested {
+class PackageNestedResolved(private val target: PackageCompose, @Input val notation: Any) : PackageNested {
 
     private val aem = target.aem
 

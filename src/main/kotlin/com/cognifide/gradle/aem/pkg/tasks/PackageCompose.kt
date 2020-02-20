@@ -26,6 +26,7 @@ import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.tasks.*
 
+@Suppress("TooManyFunctions")
 open class PackageCompose : ZipTask(), AemTask {
 
     final override val aem = project.aem
@@ -201,33 +202,41 @@ open class PackageCompose : ZipTask(), AemTask {
         fromTasks.add { task.get().composeOther(this) }
     }
 
-    fun nestPackage(dependencyNotation: Any) {
-        fromTasks.add { packagesNested.add(PackageNestedResolved(this, dependencyNotation)) }
+    fun nestPackage(dependencyNotation: Any, options: PackageNestedResolved.() -> Unit = {}) {
+        fromTasks.add { packagesNested.add(PackageNestedResolved(this, dependencyNotation).apply(options)) }
     }
 
-    fun nestPackageProject(projectPath: String) = nestPackageBuilt("$projectPath:$NAME")
+    fun nestPackageProject(projectPath: String, options: PackageNestedBuilt.() -> Unit = {}) {
+        nestPackageBuilt("$projectPath:$NAME", options)
+    }
 
-    fun nestPackageBuilt(taskPath: String) = nestPackageBuilt(common.tasks.pathed(taskPath))
+    fun nestPackageBuilt(taskPath: String, options: PackageNestedBuilt.() -> Unit = {}) {
+        nestPackageBuilt(common.tasks.pathed(taskPath), options)
+    }
 
-    fun nestPackageBuilt(task: TaskProvider<PackageCompose>) {
+    fun nestPackageBuilt(task: TaskProvider<PackageCompose>, options: PackageNestedBuilt.() -> Unit = {}) {
         fromTasks.add {
             dependsOn(task)
-            packagesNested.add(PackageNestedBuilt(this, task))
+            packagesNested.add(PackageNestedBuilt(this, task).apply(options))
         }
     }
 
-    fun installBundle(dependencyNotation: Any) {
-        fromTasks.add { bundlesInstalled.add(BundleInstalledResolved(this, dependencyNotation)) }
+    fun installBundle(dependencyNotation: Any, options: BundleInstalledResolved.() -> Unit = {}) {
+        fromTasks.add { bundlesInstalled.add(BundleInstalledResolved(this, dependencyNotation).apply(options)) }
     }
 
-    fun installBundleProject(projectPath: String) = installBundleBuilt("$projectPath:${BundleCompose.NAME}")
+    fun installBundleProject(projectPath: String, options: BundleInstalledBuilt.() -> Unit = {}) {
+        installBundleBuilt("$projectPath:${BundleCompose.NAME}", options)
+    }
 
-    fun installBundleBuilt(taskPath: String) = installBundleBuilt(common.tasks.pathed(taskPath))
+    fun installBundleBuilt(taskPath: String, options: BundleInstalledBuilt.() -> Unit = {}) {
+        installBundleBuilt(common.tasks.pathed(taskPath), options)
+    }
 
-    fun installBundleBuilt(task: TaskProvider<BundleCompose>) {
+    fun installBundleBuilt(task: TaskProvider<BundleCompose>, options: BundleInstalledBuilt.() -> Unit = {}) {
         fromTasks.add {
             dependsOn(task)
-            bundlesInstalled.add(BundleInstalledBuilt(this, task))
+            bundlesInstalled.add(BundleInstalledBuilt(this, task).apply(options))
         }
     }
 
