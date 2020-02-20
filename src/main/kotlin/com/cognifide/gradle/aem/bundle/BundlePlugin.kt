@@ -73,7 +73,7 @@ class BundlePlugin : CommonDefaultPlugin() {
             archiveClassifier.set(LIB_CLASSIFIER)
         }
         named<PackageCompose>(PackageCompose.NAME) {
-            installBundle(compose)
+            installBundleBuilt(compose)
         }
     }
 

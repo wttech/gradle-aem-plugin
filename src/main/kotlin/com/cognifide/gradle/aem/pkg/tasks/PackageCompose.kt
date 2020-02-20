@@ -42,13 +42,14 @@ open class PackageCompose : ZipTask(), AemTask {
     @get:Internal
     val composedDir: File get() = composedFile.parentFile
 
-    /**
-     * Absolute path to JCR content to be included in CRX package.
-     *
-     * Must be absolute or relative to current working directory.
-     */
     @Internal
     val contentDir = aem.obj.dir { convention(aem.packageOptions.contentDir) }
+
+    @Internal
+    val jcrRootDir = aem.obj.relativeDir(contentDir, Package.JCR_ROOT)
+
+    @Internal
+    val metaDir = aem.obj.relativeDir(contentDir, Package.META_PATH)
 
     /**
      * Content path for OSGi bundle jars being placed in CRX package.
@@ -60,7 +61,7 @@ open class PackageCompose : ZipTask(), AemTask {
      * Content path for CRX sub-packages being placed in CRX package being built.
      */
     @Internal
-    val packagePath = aem.obj.string { convention(aem.packageOptions.storagePath) }
+    val nestedPath = aem.obj.string { convention(aem.packageOptions.storagePath) }
 
     @Nested
     var validator = PackageValidator(aem).apply {
@@ -70,9 +71,6 @@ open class PackageCompose : ZipTask(), AemTask {
     fun validator(options: PackageValidator.() -> Unit) {
         validator.apply(options)
     }
-
-    @InputDirectory
-    val metaDir = aem.obj.relativeDir(contentDir, Package.META_PATH)
 
     /**
      * Defines properties being used to generate CRX package metadata files.
@@ -106,16 +104,6 @@ open class PackageCompose : ZipTask(), AemTask {
 
     @Internal
     val vaultNodeTypesSyncFile = aem.obj.file { convention(aem.packageOptions.nodeTypesSyncFile) }
-
-    @Nested
-    val fileFilter = PackageFileFilter(aem)
-
-    fun fileFilter(configurer: PackageFileFilter.() -> Unit) = fileFilter.using(configurer)
-
-    fun fileFilter(configurer: Action<in PackageFileFilter>) = configurer.execute(fileFilter)
-
-    @Internal
-    var fileFilterDelegate: ((CopySpec) -> Unit) = { fileFilter.filter(it, vaultDefinition.fileProperties) }
 
     @Nested
     val bundlesInstalled = aem.obj.list<BundleInstalled> { convention(listOf()) }
@@ -169,7 +157,7 @@ open class PackageCompose : ZipTask(), AemTask {
         fromProjects.add { composeProject(other) }
     }
 
-    fun fromContent(dir: Any) {
+    fun fromRoot(dir: Any) {
         into(Package.JCR_ROOT) { spec ->
             spec.from(dir)
             fileFilterDelegate(spec)
@@ -212,25 +200,18 @@ open class PackageCompose : ZipTask(), AemTask {
         fromTasks.add { task.get().composeOther(this) }
     }
 
-    fun nestPackage(taskPath: String) = nestPackage(common.tasks.pathed(taskPath))
-
-    fun nestPackage(task: TaskProvider<PackageCompose>) {
-        fromTasks.add {
-            dependsOn(task)
-            packagesNested.add(PackageNestedBuilt(this, task))
-        }
-    }
-
     fun nestPackage(dependencyNotation: Any) {
         fromTasks.add { packagesNested.add(PackageNestedResolved(this, dependencyNotation)) }
     }
 
-    fun installBundle(taskPath: String) = installBundle(common.tasks.pathed(taskPath))
+    fun nestPackageProject(projectPath: String) = nestPackageBuilt("$projectPath:$NAME")
 
-    fun installBundle(task: TaskProvider<BundleCompose>) {
+    fun nestPackageBuilt(taskPath: String) = nestPackageBuilt(common.tasks.pathed(taskPath))
+
+    fun nestPackageBuilt(task: TaskProvider<PackageCompose>) {
         fromTasks.add {
             dependsOn(task)
-            bundlesInstalled.add(BundleInstalledBuilt(this, task))
+            packagesNested.add(PackageNestedBuilt(this, task))
         }
     }
 
@@ -238,12 +219,23 @@ open class PackageCompose : ZipTask(), AemTask {
         fromTasks.add { bundlesInstalled.add(BundleInstalledResolved(this, dependencyNotation)) }
     }
 
+    fun installBundleProject(projectPath: String) = installBundleBuilt("$projectPath:${BundleCompose.NAME}")
+
+    fun installBundleBuilt(taskPath: String) = installBundleBuilt(common.tasks.pathed(taskPath))
+
+    fun installBundleBuilt(task: TaskProvider<BundleCompose>) {
+        fromTasks.add {
+            dependsOn(task)
+            bundlesInstalled.add(BundleInstalledBuilt(this, task))
+        }
+    }
+
     private var composeProject: PackageCompose.(Project) -> Unit = { other ->
         if (other.plugins.hasPlugin(PackagePlugin.ID)) {
-            nestPackage(other.common.tasks.named(NAME))
+            mergePackage(other.common.tasks.named(NAME)) // TODO merge vs nest by default?
         }
         if (other.plugins.hasPlugin(BundlePlugin.ID)) {
-            installBundle(other.common.tasks.named(BundleCompose.NAME))
+            installBundleBuilt(other.common.tasks.named(BundleCompose.NAME))
         }
         dependsOn(other.common.tasks.checks)
     }
@@ -254,7 +246,7 @@ open class PackageCompose : ZipTask(), AemTask {
 
     private var composeSelf: () -> Unit = {
         fromMeta(metaDir)
-        fromContent(contentDir)
+        fromRoot(jcrRootDir)
         fromBundlesInstalled(bundlesInstalled)
         fromPackagesNested(packagesNested)
         fromVaultHooks(vaultHooksDir)
@@ -273,7 +265,7 @@ open class PackageCompose : ZipTask(), AemTask {
 
         other.dependsOn(dependsOn)
 
-        other.fromContent(contentDir)
+        other.fromRoot(jcrRootDir)
         other.fromVaultHooks(vaultHooksDir)
 
         other.vaultDefinition.filters(vaultFilterFile)
@@ -287,6 +279,16 @@ open class PackageCompose : ZipTask(), AemTask {
     fun composeOther(action: (PackageCompose) -> Unit) {
         this.composeOther = action
     }
+
+    @Nested
+    val fileFilter = PackageFileFilter(aem)
+
+    fun fileFilter(configurer: PackageFileFilter.() -> Unit) = fileFilter.using(configurer)
+
+    fun fileFilter(configurer: Action<in PackageFileFilter>) = configurer.execute(fileFilter)
+
+    @Internal
+    var fileFilterDelegate: ((CopySpec) -> Unit) = { fileFilter.filter(it, vaultDefinition.fileProperties) }
 
     /**
      * Configures extra files to be observed in case of Gradle task caching.

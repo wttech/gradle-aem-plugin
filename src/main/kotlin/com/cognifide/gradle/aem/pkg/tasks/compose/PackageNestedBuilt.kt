@@ -9,7 +9,7 @@ class PackageNestedBuilt(target: PackageCompose, private val task: TaskProvider<
 
     override val file = aem.obj.file { fileProvider(aem.obj.provider { task.get().archiveFile.get().asFile }) }
 
-    override val dirPath = aem.obj.string { convention(task.flatMap { t -> t.packagePath }) }
+    override val dirPath = aem.obj.string { convention(task.flatMap { t -> t.nestedPath }) }
 
     override val fileName = aem.obj.string { convention(task.flatMap { t -> t.archiveFileName }) }
 

@@ -191,11 +191,11 @@ class PackagePluginTest: AemBuildTest() {
                 
                 tasks {
                     packageCompose {
-                        fromJar("org.jsoup:jsoup:1.10.2")
-                        fromJar("com.github.mickleroy:aem-sass-compiler:1.0.1")
+                        installBundle("org.jsoup:jsoup:1.10.2")
+                        installBundle("com.github.mickleroy:aem-sass-compiler:1.0.1")
                         
-                        fromZip("com.adobe.cq:core.wcm.components.all:2.8.0")
-                        fromZip("com.adobe.cq:core.wcm.components.examples:2.8.0")
+                        nestPackage("com.adobe.cq:core.wcm.components.all:2.8.0")
+                        nestPackage("com.adobe.cq:core.wcm.components.examples:2.8.0")
                     }
                 }
                 """)
@@ -255,8 +255,8 @@ class PackagePluginTest: AemBuildTest() {
                 
                 tasks {
                     packageCompose {
-                        fromSubpackage(":ui.content:packageCompose")
-                        fromBundle(":ui.apps:bundleCompose")
+                        nestPackageBuilt(":ui.content:packageCompose")
+                        installBundleBuilt(":ui.apps:bundleCompose")
                     }
                 }
                 """)

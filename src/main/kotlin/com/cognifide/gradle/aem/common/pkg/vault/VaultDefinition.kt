@@ -101,26 +101,26 @@ open class VaultDefinition(private val aem: AemExtension) {
     @Input
     var nodeTypeLines = aem.obj.strings { convention(listOf()) }
 
-    fun nodeTypes(file: RegularFileProperty, optionallyExist: Boolean = false) = nodeTypes(file.asFile, optionallyExist)
+    fun nodeTypes(file: RegularFileProperty, optionallyExist: Boolean = true) = nodeTypes(file.asFile, optionallyExist)
 
-    fun nodeTypes(provider: Provider<File>, optionallyExist: Boolean = false) {
+    fun nodeTypes(provider: Provider<File>, optionallyExist: Boolean = true) {
         nodeTypeLibs(provider, optionallyExist)
         nodeTypeLines(provider, optionallyExist)
     }
 
-    fun nodeTypeLibs(file: RegularFileProperty, optionallyExist: Boolean = false) = nodeTypeLibs(file.asFile, optionallyExist)
+    fun nodeTypeLibs(file: RegularFileProperty, optionallyExist: Boolean = true) = nodeTypeLibs(file.asFile, optionallyExist)
 
-    fun nodeTypeLibs(provider: Provider<File>, optionallyExist: Boolean = false) {
+    fun nodeTypeLibs(provider: Provider<File>, optionallyExist: Boolean = true) {
         nodeTypeLibs.addAll(nodeTypeReader(provider, optionallyExist) { isNodeTypeLib(it) })
     }
 
-    fun nodeTypeLines(file: RegularFileProperty, optionallyExist: Boolean = false) = nodeTypeLines(file.asFile, optionallyExist)
+    fun nodeTypeLines(file: RegularFileProperty, optionallyExist: Boolean = true) = nodeTypeLines(file.asFile, optionallyExist)
 
-    fun nodeTypeLines(provider: Provider<File>, optionallyExist: Boolean = false) {
+    fun nodeTypeLines(provider: Provider<File>, optionallyExist: Boolean = true) {
         nodeTypeLines.addAll(nodeTypeReader(provider, optionallyExist) { !isNodeTypeLib(it) })
     }
 
-    private fun nodeTypeReader(provider: Provider<File>, optionallyExist: Boolean = false, lineFilter: (String) -> Boolean) = provider.map { file ->
+    private fun nodeTypeReader(provider: Provider<File>, optionallyExist: Boolean = true, lineFilter: (String) -> Boolean) = provider.map { file ->
         if (!file.exists()) {
             if (optionallyExist) {
                 return@map listOf<String>()

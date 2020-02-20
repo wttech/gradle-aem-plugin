@@ -12,7 +12,7 @@ class PackageNestedResolved(private val target: PackageCompose,  @Input val nota
 
     override val file = aem.obj.file { fileProvider(aem.obj.provider { DependencyOptions.resolveFile(project, notation) }) }
 
-    override val dirPath = aem.obj.string { convention(target.packagePath) }
+    override val dirPath = aem.obj.string { convention(target.nestedPath) }
 
     override val fileName = aem.obj.string { convention(aem.obj.provider { DependencyOptions.determineFileName(project, notation) }) }
 
