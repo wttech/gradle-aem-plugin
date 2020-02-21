@@ -18,7 +18,6 @@ import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.tasks.*
-import java.io.File
 
 @Suppress("TooManyFunctions")
 open class PackageCompose : ZipTask(), AemTask {
@@ -29,13 +28,13 @@ open class PackageCompose : ZipTask(), AemTask {
      * Shorthand for built CRX package file.
      */
     @get:Internal
-    val composedFile: File get() = archiveFile.get().asFile
+    val composedFile get() = archiveFile.get().asFile
 
     /**
      * Shorthand for directory of built CRX package file.
      */
     @get:Internal
-    val composedDir: File get() = composedFile.parentFile
+    val composedDir get() = composedFile.parentFile
 
     @Internal
     val contentDir = aem.obj.dir { convention(aem.packageOptions.contentDir) }
@@ -104,12 +103,11 @@ open class PackageCompose : ZipTask(), AemTask {
     @Nested
     val packagesNested = aem.obj.list<PackageNested> { convention(listOf()) }
 
-    private var fromTasks = mutableListOf<() -> Unit>()
+    private var definitions = mutableListOf<() -> Unit>()
 
     override fun projectsEvaluated() {
         super.projectsEvaluated()
-        fromTasks.forEach { it() }
-        defaults.invoke()
+        (definitions + definition).forEach { it() }
     }
 
     @TaskAction
@@ -118,6 +116,8 @@ open class PackageCompose : ZipTask(), AemTask {
         validator.perform(composedFile)
         common.notifier.notify("Package composed", composedFile.name)
     }
+
+    fun fromScratch() = noDefaults()
 
     fun fromMeta(metaDir: Any) {
         into(Package.META_PATH) { spec ->
@@ -175,11 +175,11 @@ open class PackageCompose : ZipTask(), AemTask {
     fun mergePackage(taskPath: String) = mergePackage(common.tasks.pathed(taskPath))
 
     fun mergePackage(task: TaskProvider<PackageCompose>) {
-        fromTasks.add { task.get().merging(this) }
+        definitions.add { task.get().merging(this) }
     }
 
     fun nestPackage(dependencyNotation: Any, options: PackageNestedResolved.() -> Unit = {}) {
-        fromTasks.add { packagesNested.add(PackageNestedResolved(this, dependencyNotation).apply(options)) }
+        definitions.add { packagesNested.add(PackageNestedResolved(this, dependencyNotation).apply(options)) }
     }
 
     fun nestPackageProject(projectPath: String, options: PackageNestedBuilt.() -> Unit = {}) {
@@ -191,14 +191,14 @@ open class PackageCompose : ZipTask(), AemTask {
     }
 
     fun nestPackageBuilt(task: TaskProvider<PackageCompose>, options: PackageNestedBuilt.() -> Unit = {}) {
-        fromTasks.add {
+        definitions.add {
             dependsOn(task)
             packagesNested.add(PackageNestedBuilt(this, task).apply(options))
         }
     }
 
     fun installBundle(dependencyNotation: Any, options: BundleInstalledResolved.() -> Unit = {}) {
-        fromTasks.add { bundlesInstalled.add(BundleInstalledResolved(this, dependencyNotation).apply(options)) }
+        definitions.add { bundlesInstalled.add(BundleInstalledResolved(this, dependencyNotation).apply(options)) }
     }
 
     fun installBundleProject(projectPath: String, options: BundleInstalledBuilt.() -> Unit = {}) {
@@ -210,13 +210,13 @@ open class PackageCompose : ZipTask(), AemTask {
     }
 
     fun installBundleBuilt(task: TaskProvider<BundleCompose>, options: BundleInstalledBuilt.() -> Unit = {}) {
-        fromTasks.add {
+        definitions.add {
             dependsOn(task)
             bundlesInstalled.add(BundleInstalledBuilt(this, task).apply(options))
         }
     }
 
-    private var defaults: () -> Unit = {
+    private var definition: () -> Unit = {
         fromMeta(metaDir)
         fromRoot(jcrRootDir)
         fromBundlesInstalled(bundlesInstalled)
@@ -229,15 +229,15 @@ open class PackageCompose : ZipTask(), AemTask {
     /**
      * Override default behavior for composing this package.
      */
-    fun defaults(action: () -> Unit) {
-        this.defaults = action
+    fun definition(definition: () -> Unit) {
+        this.definition = definition
     }
 
     /**
      * Clear default behavior for composing this package.
      * After calling this method, particular 'from*()' methods need to be called.
      */
-    fun noDefaults() = defaults {}
+    fun noDefaults() = definition {}
 
     private var merging: (PackageCompose) -> Unit = { other ->
         if (this == other) {
@@ -249,10 +249,10 @@ open class PackageCompose : ZipTask(), AemTask {
         other.fromRoot(jcrRootDir)
         other.fromVaultHooks(vaultHooksDir)
 
-        other.vaultDefinition.filters(vaultFilterFile)
-        other.vaultDefinition.nodeTypes(vaultNodeTypesFile)
-        other.vaultDefinition.properties.putAll(vaultDefinition.properties)
+        other.fromVaultFilters(vaultFilterFile)
+        other.fromVaultNodeTypes(vaultNodeTypesFile)
 
+        other.vaultDefinition.properties.putAll(vaultDefinition.properties)
         other.bundlesInstalled.addAll(bundlesInstalled)
         other.packagesNested.addAll(packagesNested)
     }

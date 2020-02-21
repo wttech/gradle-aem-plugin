@@ -16,5 +16,5 @@ class BundleInstalledBuilt(target: PackageCompose, private val task: TaskProvide
 
     override val vaultFilter = aem.obj.boolean { convention(task.flatMap { t -> t.vaultFilter }) }
 
-    override val runMode = aem.obj.string { convention(task.flatMap { t -> t.installRunMode })}
+    override val runMode = aem.obj.string { convention(task.flatMap { t -> t.installRunMode }) }
 }
