@@ -344,7 +344,7 @@ class AemExtension(val project: Project) : Serializable {
      * Build minimal CRX package in-place / only via code.
      * All details like Vault properties, archive destination directory, file name are customizable.
      */
-    fun composePackage(definition: PackageDefinition.() -> Unit): File = PackageDefinition(this).compose(definition)
+    fun composePackage(definition: PackageDefinition.() -> Unit): File = PackageDefinition(this).apply(definition).compose()
 
     /**
      * Validate any CRX packages.

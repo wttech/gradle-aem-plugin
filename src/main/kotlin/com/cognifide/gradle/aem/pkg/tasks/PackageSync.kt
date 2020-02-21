@@ -76,21 +76,19 @@ open class PackageSync : AemDefaultTask() {
 
     private val vlt by lazy { VaultClient(aem).apply(vaultOptions) }
 
-    private var cleanerOptions: Cleaner.() -> Unit = {}
-
     fun cleaner(options: Cleaner.() -> Unit) {
-        cleanerOptions = options
+        cleaner.apply(options)
     }
 
-    private val cleaner by lazy { Cleaner(aem).apply(cleanerOptions) }
-
-    private var downloaderOptions: Downloader.() -> Unit = {}
+    private val cleaner = Cleaner(aem)
 
     fun downloader(options: Downloader.() -> Unit) {
-        downloaderOptions = options
+        downloader.apply(options)
     }
 
-    private val downloader by lazy { Downloader(aem).apply(downloaderOptions) }
+    private val downloader = Downloader(aem).apply {
+        definition { archiveBaseName.convention("sync.downloader") }
+    }
 
     init {
         description = "Check out then clean JCR content."
@@ -112,7 +110,8 @@ open class PackageSync : AemDefaultTask() {
                 when (transfer.get()) {
                     Transfer.VLT_CHECKOUT -> transferUsingVltCheckout()
                     Transfer.PACKAGE_DOWNLOAD -> transferUsingPackageDownload()
-                    null -> {}
+                    null -> {
+                    }
                 }
             }
 

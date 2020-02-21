@@ -3,7 +3,9 @@ package com.cognifide.gradle.aem.pkg.tasks.sync
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
+import com.cognifide.gradle.aem.common.pkg.PackageDefinition
 import com.cognifide.gradle.aem.common.pkg.vault.FilterFile
+import com.cognifide.gradle.common.utils.using
 import java.io.File
 import org.gradle.api.tasks.Internal
 
@@ -20,6 +22,15 @@ class Downloader(@Internal private val aem: AemExtension) {
      * Determines VLT filter used to grab JCR content from AEM instance.
      */
     val filter = aem.obj.typed<FilterFile> { convention(aem.obj.provider { aem.filter }) }
+
+    /**
+     * Allows to configure downloaded package details.
+     */
+    val definition = PackageDefinition(aem).apply {
+        filterElements.set(filter.map { it.elements })
+    }
+
+    fun definition(options: PackageDefinition.() -> Unit) = definition.using(options)
 
     /**
      * Allows to disable extracting contents of download package to directory.
@@ -41,10 +52,7 @@ class Downloader(@Internal private val aem: AemExtension) {
     }
 
     fun download() {
-        val file = instance.get().sync.packageManager.download {
-            filterElements.set(filter.get().elements)
-        }
-
+        val file = instance.get().sync { packageManager.download(definition) }
         if (extract.get()) {
             aem.logger.lifecycle("Extracting package $file to $extractDir")
             extractDownloadedPackage(file, extractDir.get().asFile)

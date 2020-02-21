@@ -34,15 +34,15 @@ class PackageDefinition(private val aem: AemExtension) : VaultDefinition(aem) {
      * ZIP file path
      */
     val archivePath = aem.obj.file {
-        convention(destinationDirectory.file(archiveFileName))
+        set(aem.obj.provider { destinationDirectory.file(archiveFileName).get() })
     }
 
     /**
      * ZIP file name
      */
     val archiveFileName = aem.obj.string {
-        convention(aem.obj.provider {
-            listOf(archiveBaseName.get(), archiveAppendix.get(), archiveVersion.get(), archiveClassifier.get())
+        set(aem.obj.provider {
+            listOf(archiveBaseName.orNull, archiveAppendix.orNull, archiveVersion.orNull, archiveClassifier.orNull)
                     .filter { !it.isNullOrBlank() }
                     .joinToString("-")
                     .run { "$this.$archiveExtension" }
@@ -106,9 +106,7 @@ class PackageDefinition(private val aem: AemExtension) : VaultDefinition(aem) {
     /**
      * Compose a CRX package basing on configured definition.
      */
-    fun compose(definition: PackageDefinition.() -> Unit): File {
-        definition()
-
+    fun compose(): File {
         archivePath.get().asFile.delete()
         pkgDir.deleteRecursively()
         metaDir.mkdirs()
