@@ -13,12 +13,7 @@ import org.apache.commons.io.FileUtils
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.Internal
 
-class FilterFile(
-    @InputFile
-    val file: File,
-
-    private val temporary: Boolean = false
-) : Closeable {
+class FilterFile(@InputFile val file: File, private val temporary: Boolean = false) : Closeable {
 
     @get:Internal
     val elements: List<FilterElement>
@@ -30,8 +25,7 @@ class FilterFile(
         }
 
     @get:Internal
-    val roots: Set<String>
-        get() = elements.map { it.element.attr("root") }.toSet()
+    val roots: Set<String> get() = elements.map { it.element.attr("root") }.toSet()
 
     fun rootDirs(contentDir: File): List<File> {
         return roots.asSequence()
@@ -55,9 +49,7 @@ class FilterFile(
         }
     }
 
-    override fun toString(): String {
-        return "FilterFile(file=$file, temporary=$temporary)"
-    }
+    override fun toString(): String = "FilterFile(file=$file, temporary=$temporary)"
 
     companion object {
 

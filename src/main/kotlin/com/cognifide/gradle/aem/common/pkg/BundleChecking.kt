@@ -1,0 +1,12 @@
+package com.cognifide.gradle.aem.common.pkg
+
+enum class BundleChecking {
+    NONE,
+    WARN,
+    FAIL;
+
+    companion object {
+        fun of(name: String) = values().find { it.name.equals(name, true) }
+                ?: throw PackageException("Unsupported bundle checking: $name")
+    }
+}
