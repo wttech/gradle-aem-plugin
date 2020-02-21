@@ -10,6 +10,7 @@ import net.minidev.json.JSONArray
 import org.apache.http.HttpStatus
 import org.apache.jackrabbit.vault.util.JcrConstants
 import java.io.File
+import java.io.InputStream
 import java.io.Serializable
 import java.util.*
 
@@ -372,15 +373,41 @@ class Node(val repository: Repository, val path: String) : Serializable {
         get() = Formats.toJson(this)
 
     /**
+     * Upload file to node.
+     */
+    fun upload(file: File) {
+        http.postMultipart(parent.path, mapOf(name to file))
+    }
+
+    /**
+     * Upload file to current folder node with preserving original file name.
+     */
+    fun uploadTo(file: File) = repository.node("$path/${file.name}").apply { upload(file) }
+
+    /**
+     * Read file stored in node.
+     */
+    fun <T> read(reader: (InputStream) -> T) = http.get(path) { reader(asStream(it)) }
+
+    /**
+     * Download file stored in node to specified local file.
+     */
+    fun download(targetFile: File) {
+        read { input -> targetFile.outputStream().use { output -> input.copyTo(output) } }
+    }
+
+    /**
+     * Download file stored in node to specified local directory with preserving file name.
+     */
+    fun downloadTo(targetDir: File) = download(targetDir.resolve(name))
+
+    /**
      * Download node as CRX package.
      */
-    fun download(options: PackageDefinition.() -> Unit = {}): File {
-        val node = this
-        return repository.sync.packageManager.download {
-            archiveBaseName.set(JcrUtil.manglePath(node.name))
-            filter(node.path)
-            options()
-        }
+    fun downloadPackage(options: PackageDefinition.() -> Unit = {}) = repository.sync.packageManager.download {
+        archiveBaseName.set(JcrUtil.manglePath(this@Node.name))
+        filter(this@Node.path)
+        options()
     }
 
     override fun toString(): String {
