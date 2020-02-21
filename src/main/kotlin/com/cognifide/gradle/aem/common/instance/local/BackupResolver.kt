@@ -68,7 +68,7 @@ class BackupResolver(private val aem: AemExtension) {
      * Defines backup file naming rule.
      * Must be in sync with selector rule.
      */
-    var namer: () -> String = { "${aem.project.rootProject.name}-${ Formats.dateFileName()}-${aem.project.version}$suffix" }
+    var namer: () -> String = { "${aem.project.rootProject.name}-${ Formats.dateFileName()}-${aem.project.version}${suffix.get()}" }
 
     /**
      * Defines backup source selection rule.
