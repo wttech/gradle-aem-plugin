@@ -146,6 +146,7 @@ class PackagePluginTest: AemBuildTest() {
                     <entry key="acHandling">merge_preserve</entry>
                     <entry key="requiresRoot">false</entry>
                     <entry key="installhook.actool.class">biz.netcentric.cq.tools.actool.installhook.AcToolInstallHook</entry>
+                    <entry key="ui.apps.merged">test</entry>
                     <entry key="installhook.aecu.class">de.valtech.aecu.core.installhook.AecuInstallHook</entry>
                     
                 </properties>
@@ -309,6 +310,9 @@ class PackagePluginTest: AemBuildTest() {
                 packageCompose {
                     vaultDefinition {
                         property("installhook.actool.class", "biz.netcentric.cq.tools.actool.installhook.AcToolInstallHook")
+                    }
+                    merged { assembly ->
+                        assembly.vaultDefinition.property("ui.apps.merged", "test")
                     }
                 }
             }

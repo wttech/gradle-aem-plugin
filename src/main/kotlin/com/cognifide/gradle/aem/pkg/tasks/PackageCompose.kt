@@ -109,7 +109,7 @@ open class PackageCompose : ZipTask(), AemTask {
     override fun projectsEvaluated() {
         super.projectsEvaluated()
         fromTasks.forEach { it() }
-        whenDefaults.invoke()
+        defaults.invoke()
     }
 
     @TaskAction
@@ -168,7 +168,7 @@ open class PackageCompose : ZipTask(), AemTask {
     fun mergePackage(taskPath: String) = mergePackage(common.tasks.pathed(taskPath))
 
     fun mergePackage(task: TaskProvider<PackageCompose>) {
-        fromTasks.add { task.get().whenMergingPackage(this) }
+        fromTasks.add { task.get().merging(this) }
     }
 
     fun nestPackage(dependencyNotation: Any, options: PackageNestedResolved.() -> Unit = {}) {
@@ -209,7 +209,7 @@ open class PackageCompose : ZipTask(), AemTask {
         }
     }
 
-    private var whenDefaults: () -> Unit = {
+    private var defaults: () -> Unit = {
         fromMeta(metaDir)
         fromRoot(jcrRootDir)
         fromBundlesInstalled(bundlesInstalled)
@@ -222,17 +222,17 @@ open class PackageCompose : ZipTask(), AemTask {
     /**
      * Override default behavior for composing this package.
      */
-    fun whenDefaults(action: () -> Unit) {
-        this.whenDefaults = action
+    fun defaults(action: () -> Unit) {
+        this.defaults = action
     }
 
     /**
      * Clear default behavior for composing this package.
      * After calling this method, particular 'from*()' methods need to be called.
      */
-    fun noDefaults() = whenDefaults {}
+    fun noDefaults() = defaults {}
 
-    private var whenMergingPackage: (PackageCompose) -> Unit = { other ->
+    private var merging: (PackageCompose) -> Unit = { other ->
         if (this == other) {
             throw PackageException("Package cannot be composed due to configuration error (circular reference)!")
         }
@@ -253,15 +253,19 @@ open class PackageCompose : ZipTask(), AemTask {
     /**
      * Override default behavior for merging this package into assembly package.
      */
-    fun whenMergingPackage(action: (PackageCompose) -> Unit) {
-        this.whenMergingPackage = action
+    fun merging(action: (PackageCompose) -> Unit) {
+        this.merging = action
     }
 
     /**
      * Add some extra behavior when merging this package into assembly package.
      */
-    fun whenMergedPackage(action: (PackageCompose) -> Unit) {
-        this.whenMergingPackage = { other -> whenMergingPackage(other); action(other) }
+    fun merged(action: (PackageCompose) -> Unit) {
+        val defaultAction = this.merging
+        this.merging = { other ->
+            defaultAction(other)
+            action(other)
+        }
     }
 
     @Nested
