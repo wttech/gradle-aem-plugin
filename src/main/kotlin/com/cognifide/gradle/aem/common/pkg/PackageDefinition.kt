@@ -34,14 +34,14 @@ class PackageDefinition(private val aem: AemExtension) : VaultDefinition(aem) {
      * ZIP file path
      */
     val archivePath = aem.obj.file {
-        set(aem.obj.provider { destinationDirectory.file(archiveFileName).get() })
+        convention(aem.obj.provider { destinationDirectory.file(archiveFileName).get() })
     }
 
     /**
      * ZIP file name
      */
     val archiveFileName = aem.obj.string {
-        set(aem.obj.provider {
+        convention(aem.obj.provider {
             listOf(archiveBaseName.orNull, archiveAppendix.orNull, archiveVersion.orNull, archiveClassifier.orNull)
                     .filter { !it.isNullOrBlank() }
                     .joinToString("-")

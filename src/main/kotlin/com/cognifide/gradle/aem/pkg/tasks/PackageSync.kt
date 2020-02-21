@@ -88,8 +88,8 @@ open class PackageSync : AemDefaultTask() {
 
     private val downloader = Downloader(aem).apply {
         definition {
-            archiveBaseName.convention("package-sync-downloader")
-            version.set(null as String?)
+            destinationDirectory.convention(project.layout.buildDirectory.dir(this@PackageSync.name))
+            archiveFileName.convention("downloader.zip")
         }
     }
 

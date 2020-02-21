@@ -190,23 +190,23 @@ open class VaultDefinition(private val aem: AemExtension) {
      */
     class Delegate(private val base: VaultDefinition) {
 
-        val group get() = base.group.get()
+        val group get() = base.group.orNull
 
-        val name get() = base.name.get()
+        val name get() = base.name.orNull
 
-        val version get() = base.version.get()
+        val version get() = base.version.orNull
 
         val description get() = base.description.orNull
 
         val createdBy get() = base.createdBy.orNull
 
-        val properties get() = base.properties.get()
+        val nodeTypeLibs get() = base.nodeTypeLibs.orNull ?: listOf()
+
+        val nodeTypeLines get() = base.nodeTypeLines.orNull ?: listOf()
+
+        val properties get() = base.properties.orNull ?: mapOf()
 
         val filters get() = base.filters
-
-        val nodeTypeLibs get() = base.nodeTypeLibs.get()
-
-        val nodeTypeLines get() = base.nodeTypeLines.get()
     }
 
     companion object {
