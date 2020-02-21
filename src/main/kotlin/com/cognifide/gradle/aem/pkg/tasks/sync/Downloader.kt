@@ -33,6 +33,14 @@ class Downloader(@Internal private val aem: AemExtension) {
     fun definition(options: PackageDefinition.() -> Unit) = definition.using(options)
 
     /**
+     * Allows to delete existing contents before extracting downloaded one.
+     */
+    val clean = aem.obj.boolean {
+        convention(false)
+        aem.prop.boolean("package.sync.downloader.clean")?.let { set(it) }
+    }
+
+    /**
      * Allows to disable extracting contents of download package to directory.
      *
      * This operation can be modified using '-Pforce' command line to replace the contents of extract directory
@@ -54,17 +62,20 @@ class Downloader(@Internal private val aem: AemExtension) {
     fun download() {
         val file = instance.get().sync { packageManager.download(definition) }
         if (extract.get()) {
-            aem.logger.lifecycle("Extracting package $file to $extractDir")
-            extractDownloadedPackage(file, extractDir.get().asFile)
+            extractDir.get().asFile.using {
+                aem.logger.lifecycle("Extracting package $file to $this")
+                extractDownloadedPackage(file, this)
+            }
         }
     }
 
     private fun extractDownloadedPackage(downloadedPackage: File, jcrRoot: File) {
-        if (jcrRoot.exists() && common.prop.force) {
-            jcrRoot.deleteRecursively()
+        jcrRoot.apply {
+            if (exists() && clean.get()) {
+                deleteRecursively()
+            }
+            mkdirs()
         }
-
-        jcrRoot.mkdirs()
 
         aem.project.copy { spec ->
             spec.into(jcrRoot.parentFile.path)

@@ -45,7 +45,7 @@ class PackageDefinition(private val aem: AemExtension) : VaultDefinition(aem) {
             listOf(archiveBaseName.orNull, archiveAppendix.orNull, archiveVersion.orNull, archiveClassifier.orNull)
                     .filter { !it.isNullOrBlank() }
                     .joinToString("-")
-                    .run { "$this.$archiveExtension" }
+                    .run { "$this.${archiveExtension.get()}" }
         })
     }
 

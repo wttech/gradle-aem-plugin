@@ -87,11 +87,7 @@ open class PackageSync : AemDefaultTask() {
     }
 
     private val downloader = Downloader(aem).apply {
-        definition { archiveBaseName.convention("sync.downloader") }
-    }
-
-    init {
-        description = "Check out then clean JCR content."
+        definition { archiveBaseName.convention("package-sync-downloader") }
     }
 
     @TaskAction
@@ -107,11 +103,9 @@ open class PackageSync : AemDefaultTask() {
             }
 
             if (mode.get() != Mode.CLEAN_ONLY) {
-                when (transfer.get()) {
+                when (transfer.get()!!) {
                     Transfer.VLT_CHECKOUT -> transferUsingVltCheckout()
                     Transfer.PACKAGE_DOWNLOAD -> transferUsingPackageDownload()
-                    null -> {
-                    }
                 }
             }
 
@@ -127,7 +121,7 @@ open class PackageSync : AemDefaultTask() {
     }
 
     private fun prepareContent() {
-        logger.info("Preparing files to be cleaned up (before copying new ones) using: $filter")
+        logger.info("Preparing files to be cleaned up (before copying new ones) using: ${filter.get()}")
 
         filterRootFiles.forEach { root ->
             logger.lifecycle("Preparing root: $root")
@@ -153,7 +147,7 @@ open class PackageSync : AemDefaultTask() {
     }
 
     private fun cleanContent() {
-        logger.info("Cleaning copied files using: $filter")
+        logger.info("Cleaning copied files using: ${filter.get()}")
 
         filterRootFiles.forEach { root ->
             cleaner.beforeClean(root)
@@ -162,6 +156,10 @@ open class PackageSync : AemDefaultTask() {
         filterRootFiles.forEach { root ->
             cleaner.clean(root)
         }
+    }
+
+    init {
+        description = "Check out then clean JCR content."
     }
 
     enum class Transfer {
