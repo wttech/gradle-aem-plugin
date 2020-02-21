@@ -93,8 +93,8 @@ class PackagePluginTest: AemBuildTest() {
                 
                 tasks {
                     packageCompose {
-                        fromProject(":ui.apps")
-                        fromProject(":ui.content")
+                        mergePackageProject(":ui.apps")
+                        mergePackageProject(":ui.content")
                     }
                 }
             """)

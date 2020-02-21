@@ -3,7 +3,6 @@ package com.cognifide.gradle.aem.pkg.tasks
 import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.aem
 import com.cognifide.gradle.aem.bundle.tasks.BundleCompose
-import com.cognifide.gradle.aem.bundle.BundlePlugin
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.aem.common.pkg.PackageException
 import com.cognifide.gradle.aem.common.pkg.PackageFileFilter
@@ -11,20 +10,15 @@ import com.cognifide.gradle.aem.common.pkg.PackageValidator
 import com.cognifide.gradle.aem.common.pkg.vault.FilterFile
 import com.cognifide.gradle.aem.common.pkg.vault.FilterType
 import com.cognifide.gradle.aem.common.pkg.vault.VaultDefinition
-import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.compose.*
-import com.cognifide.gradle.common.common
 import com.cognifide.gradle.common.tasks.ZipTask
-import com.cognifide.gradle.common.utils.Patterns
 import com.cognifide.gradle.common.utils.using
-import java.io.File
-import org.gradle.api.Action
-import org.gradle.api.Project
 import org.gradle.api.file.CopySpec
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.tasks.*
+import java.io.File
 
 @Suppress("TooManyFunctions")
 open class PackageCompose : ZipTask(), AemTask {
@@ -83,8 +77,6 @@ open class PackageCompose : ZipTask(), AemTask {
         vaultDefinition.apply(options)
     }
 
-    fun vaultDefinition(options: Action<in VaultDefinition>) = options.execute(vaultDefinition)
-
     @Internal
     val vaultDir = aem.obj.relativeDir(contentDir, Package.VLT_PATH)
 
@@ -112,15 +104,12 @@ open class PackageCompose : ZipTask(), AemTask {
     @Nested
     val packagesNested = aem.obj.list<PackageNested> { convention(listOf()) }
 
-    private var fromProjects = mutableListOf<() -> Unit>()
-
     private var fromTasks = mutableListOf<() -> Unit>()
 
     override fun projectsEvaluated() {
         super.projectsEvaluated()
-        fromProjects.forEach { it() }
         fromTasks.forEach { it() }
-        composeSelf.invoke()
+        whenDefaults.invoke()
     }
 
     @TaskAction
@@ -130,31 +119,11 @@ open class PackageCompose : ZipTask(), AemTask {
         common.notifier.notify("Package composed", composedFile.name)
     }
 
-    fun fromProject(path: String) = fromProject(project.project(path))
-
-    fun fromProjects(pathFilter: String) {
-        project.allprojects
-                .filter { Patterns.wildcard(it.path, pathFilter) }
-                .forEach { fromProject(it) }
-    }
-
-    fun fromSubprojects() {
-        if (project == project.rootProject) {
-            fromProjects(":*")
-        } else {
-            fromProjects("${project.path}:*")
-        }
-    }
-
     fun fromMeta(metaDir: Any) {
         into(Package.META_PATH) { spec ->
             spec.from(metaDir)
             fileFilterDelegate(spec)
         }
-    }
-
-    fun fromProject(other: Project) {
-        fromProjects.add { composeProject(other) }
     }
 
     fun fromRoot(dir: Any) {
@@ -199,7 +168,7 @@ open class PackageCompose : ZipTask(), AemTask {
     fun mergePackage(taskPath: String) = mergePackage(common.tasks.pathed(taskPath))
 
     fun mergePackage(task: TaskProvider<PackageCompose>) {
-        fromTasks.add { task.get().composeOther(this) }
+        fromTasks.add { task.get().whenMergingPackage(this) }
     }
 
     fun nestPackage(dependencyNotation: Any, options: PackageNestedResolved.() -> Unit = {}) {
@@ -240,21 +209,7 @@ open class PackageCompose : ZipTask(), AemTask {
         }
     }
 
-    private var composeProject: PackageCompose.(Project) -> Unit = { other ->
-        if (other.plugins.hasPlugin(PackagePlugin.ID)) {
-            mergePackage(other.common.tasks.named(NAME)) // TODO merge vs nest by default?
-        }
-        if (other.plugins.hasPlugin(BundlePlugin.ID)) {
-            installBundleBuilt(other.common.tasks.named(BundleCompose.NAME))
-        }
-        dependsOn(other.common.tasks.checks)
-    }
-
-    fun composeProject(action: PackageCompose.(other: Project) -> Unit) {
-        this.composeProject = action
-    }
-
-    private var composeSelf: () -> Unit = {
+    private var whenDefaults: () -> Unit = {
         fromMeta(metaDir)
         fromRoot(jcrRootDir)
         fromBundlesInstalled(bundlesInstalled)
@@ -264,13 +219,20 @@ open class PackageCompose : ZipTask(), AemTask {
         fromVaultNodeTypes(vaultNodeTypesSyncFile)
     }
 
-    fun composeSelf(action: () -> Unit) {
-        this.composeSelf = action
+    /**
+     * Override default behavior for composing this package.
+     */
+    fun whenDefaults(action: () -> Unit) {
+        this.whenDefaults = action
     }
 
-    fun composeSelf() = composeSelf {}
+    /**
+     * Clear default behavior for composing this package.
+     * After calling this method, particular 'from*()' methods need to be called.
+     */
+    fun noDefaults() = whenDefaults {}
 
-    private var composeOther: (PackageCompose) -> Unit = { other ->
+    private var whenMergingPackage: (PackageCompose) -> Unit = { other ->
         if (this == other) {
             throw PackageException("Package cannot be composed due to configuration error (circular reference)!")
         }
@@ -288,16 +250,24 @@ open class PackageCompose : ZipTask(), AemTask {
         other.packagesNested.addAll(packagesNested)
     }
 
-    fun composeOther(action: (PackageCompose) -> Unit) {
-        this.composeOther = action
+    /**
+     * Override default behavior for merging this package into assembly package.
+     */
+    fun whenMergingPackage(action: (PackageCompose) -> Unit) {
+        this.whenMergingPackage = action
+    }
+
+    /**
+     * Add some extra behavior when merging this package into assembly package.
+     */
+    fun whenMergedPackage(action: (PackageCompose) -> Unit) {
+        this.whenMergingPackage = { other -> whenMergingPackage(other); action(other) }
     }
 
     @Nested
     val fileFilter = PackageFileFilter(aem)
 
     fun fileFilter(configurer: PackageFileFilter.() -> Unit) = fileFilter.using(configurer)
-
-    fun fileFilter(configurer: Action<in PackageFileFilter>) = configurer.execute(fileFilter)
 
     @Internal
     var fileFilterDelegate: ((CopySpec) -> Unit) = { fileFilter.filter(it, vaultDefinition.fileProperties) }
