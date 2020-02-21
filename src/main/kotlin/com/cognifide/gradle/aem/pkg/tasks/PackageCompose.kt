@@ -138,11 +138,18 @@ open class PackageCompose : ZipTask(), AemTask {
     fun fromPackagesNested(pkgs: ListProperty<PackageNested>) = pkgs.get().forEach { fromArchive(it) }
 
     private fun fromArchive(archive: RepositoryArchive) {
-        if (archive.vaultFilter.get()) { // TODO lazy?
-            vaultDefinition.filter(aem.obj.provider { "${archive.dirPath.get()}/${archive.fileName.get()}" }) { type = FilterType.FILE }
+        val dirPath = archive.dirPath.map { path ->
+            when {
+                archive is BundleInstalled && archive.runMode.isPresent -> "$path.${archive.runMode.get()}"
+                else -> path
+            }
         }
 
-        into("${Package.JCR_ROOT}/${archive.dirPath.get()}") { spec ->
+        if (archive.vaultFilter.get()) { // TODO lazy?
+            vaultDefinition.filter(aem.obj.provider { "${dirPath.get()}/${archive.fileName.get()}" }) { type = FilterType.FILE }
+        }
+
+        into("${Package.JCR_ROOT}/${dirPath.get()}") { spec ->
             spec.from(archive.file)
             fileFilterDelegate(spec)
         }
