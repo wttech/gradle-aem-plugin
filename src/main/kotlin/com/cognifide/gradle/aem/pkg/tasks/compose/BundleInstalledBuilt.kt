@@ -15,4 +15,6 @@ class BundleInstalledBuilt(target: PackageCompose, private val task: TaskProvide
     override val fileName = aem.obj.string { convention(task.flatMap { t -> t.archiveFileName }) }
 
     override val vaultFilter = aem.obj.boolean { convention(task.flatMap { t -> t.vaultFilter }) }
+
+    override val runMode = aem.obj.string { convention(task.flatMap { t -> t.installRunMode }) }
 }

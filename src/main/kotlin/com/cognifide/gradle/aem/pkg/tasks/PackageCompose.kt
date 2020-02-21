@@ -3,7 +3,6 @@ package com.cognifide.gradle.aem.pkg.tasks
 import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.aem
 import com.cognifide.gradle.aem.bundle.tasks.BundleCompose
-import com.cognifide.gradle.aem.bundle.BundlePlugin
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.aem.common.pkg.PackageException
 import com.cognifide.gradle.aem.common.pkg.PackageFileFilter
@@ -11,15 +10,9 @@ import com.cognifide.gradle.aem.common.pkg.PackageValidator
 import com.cognifide.gradle.aem.common.pkg.vault.FilterFile
 import com.cognifide.gradle.aem.common.pkg.vault.FilterType
 import com.cognifide.gradle.aem.common.pkg.vault.VaultDefinition
-import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.compose.*
-import com.cognifide.gradle.common.common
 import com.cognifide.gradle.common.tasks.ZipTask
-import com.cognifide.gradle.common.utils.Patterns
 import com.cognifide.gradle.common.utils.using
-import java.io.File
-import org.gradle.api.Action
-import org.gradle.api.Project
 import org.gradle.api.file.CopySpec
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.file.RegularFileProperty
@@ -35,13 +28,13 @@ open class PackageCompose : ZipTask(), AemTask {
      * Shorthand for built CRX package file.
      */
     @get:Internal
-    val composedFile: File get() = archiveFile.get().asFile
+    val composedFile get() = archiveFile.get().asFile
 
     /**
      * Shorthand for directory of built CRX package file.
      */
     @get:Internal
-    val composedDir: File get() = composedFile.parentFile
+    val composedDir get() = composedFile.parentFile
 
     @Internal
     val contentDir = aem.obj.dir { convention(aem.packageOptions.contentDir) }
@@ -83,8 +76,6 @@ open class PackageCompose : ZipTask(), AemTask {
         vaultDefinition.apply(options)
     }
 
-    fun vaultDefinition(options: Action<in VaultDefinition>) = options.execute(vaultDefinition)
-
     @Internal
     val vaultDir = aem.obj.relativeDir(contentDir, Package.VLT_PATH)
 
@@ -112,15 +103,11 @@ open class PackageCompose : ZipTask(), AemTask {
     @Nested
     val packagesNested = aem.obj.list<PackageNested> { convention(listOf()) }
 
-    private var fromProjects = mutableListOf<() -> Unit>()
-
-    private var fromTasks = mutableListOf<() -> Unit>()
+    private var definitions = mutableListOf<() -> Unit>()
 
     override fun projectsEvaluated() {
         super.projectsEvaluated()
-        fromProjects.forEach { it() }
-        fromTasks.forEach { it() }
-        composeSelf.invoke()
+        (definitions + definition).forEach { it() }
     }
 
     @TaskAction
@@ -130,31 +117,13 @@ open class PackageCompose : ZipTask(), AemTask {
         common.notifier.notify("Package composed", composedFile.name)
     }
 
-    fun fromProject(path: String) = fromProject(project.project(path))
-
-    fun fromProjects(pathFilter: String) {
-        project.allprojects
-                .filter { Patterns.wildcard(it.path, pathFilter) }
-                .forEach { fromProject(it) }
-    }
-
-    fun fromSubprojects() {
-        if (project == project.rootProject) {
-            fromProjects(":*")
-        } else {
-            fromProjects("${project.path}:*")
-        }
-    }
+    fun fromScratch() = noDefaults()
 
     fun fromMeta(metaDir: Any) {
         into(Package.META_PATH) { spec ->
             spec.from(metaDir)
             fileFilterDelegate(spec)
         }
-    }
-
-    fun fromProject(other: Project) {
-        fromProjects.add { composeProject(other) }
     }
 
     fun fromRoot(dir: Any) {
@@ -169,11 +138,18 @@ open class PackageCompose : ZipTask(), AemTask {
     fun fromPackagesNested(pkgs: ListProperty<PackageNested>) = pkgs.get().forEach { fromArchive(it) }
 
     private fun fromArchive(archive: RepositoryArchive) {
-        if (archive.vaultFilter.get()) { // TODO lazy?
-            vaultDefinition.filter(aem.obj.provider { "${archive.dirPath.get()}/${archive.fileName.get()}" }) { type = FilterType.FILE }
+        val dirPath = archive.dirPath.map { path ->
+            when {
+                archive is BundleInstalled && archive.runMode.isPresent -> "$path.${archive.runMode.get()}"
+                else -> path
+            }
         }
 
-        into("${Package.JCR_ROOT}/${archive.dirPath.get()}") { spec ->
+        if (archive.vaultFilter.get()) { // TODO lazy?
+            vaultDefinition.filter(aem.obj.provider { "${dirPath.get()}/${archive.fileName.get()}" }) { type = FilterType.FILE }
+        }
+
+        into("${Package.JCR_ROOT}/${dirPath.get()}") { spec ->
             spec.from(archive.file)
             fileFilterDelegate(spec)
         }
@@ -186,12 +162,26 @@ open class PackageCompose : ZipTask(), AemTask {
         }
     }
 
-    fun fromVaultFilters(file: RegularFileProperty) {
+    fun withBundlesInstalled(others: ListProperty<BundleInstalled>) {
+        bundlesInstalled.addAll(others)
+    }
+
+    fun withPackagesNested(others: ListProperty<PackageNested>) {
+        packagesNested.addAll(others)
+    }
+
+    fun withVaultFilters(file: RegularFileProperty) {
         vaultDefinition.filters(file)
     }
 
-    fun fromVaultNodeTypes(file: RegularFileProperty) {
+    fun withVaultNodeTypes(file: RegularFileProperty) {
         vaultDefinition.nodeTypes(file)
+    }
+
+    fun withVaultDefinition(other: VaultDefinition) {
+        vaultDefinition.properties.putAll(other.properties)
+        vaultDefinition.nodeTypeLibs.addAll(other.nodeTypeLibs)
+        vaultDefinition.nodeTypeLines.addAll(other.nodeTypeLines)
     }
 
     fun mergePackageProject(projectPath: String) = mergePackage("$projectPath:$NAME")
@@ -199,11 +189,11 @@ open class PackageCompose : ZipTask(), AemTask {
     fun mergePackage(taskPath: String) = mergePackage(common.tasks.pathed(taskPath))
 
     fun mergePackage(task: TaskProvider<PackageCompose>) {
-        fromTasks.add { task.get().composeOther(this) }
+        definitions.add { task.get().merging(this) }
     }
 
     fun nestPackage(dependencyNotation: Any, options: PackageNestedResolved.() -> Unit = {}) {
-        fromTasks.add { packagesNested.add(PackageNestedResolved(this, dependencyNotation).apply(options)) }
+        definitions.add { packagesNested.add(PackageNestedResolved(this, dependencyNotation).apply(options)) }
     }
 
     fun nestPackageProject(projectPath: String, options: PackageNestedBuilt.() -> Unit = {}) {
@@ -215,14 +205,14 @@ open class PackageCompose : ZipTask(), AemTask {
     }
 
     fun nestPackageBuilt(task: TaskProvider<PackageCompose>, options: PackageNestedBuilt.() -> Unit = {}) {
-        fromTasks.add {
+        definitions.add {
             dependsOn(task)
             packagesNested.add(PackageNestedBuilt(this, task).apply(options))
         }
     }
 
     fun installBundle(dependencyNotation: Any, options: BundleInstalledResolved.() -> Unit = {}) {
-        fromTasks.add { bundlesInstalled.add(BundleInstalledResolved(this, dependencyNotation).apply(options)) }
+        definitions.add { bundlesInstalled.add(BundleInstalledResolved(this, dependencyNotation).apply(options)) }
     }
 
     fun installBundleProject(projectPath: String, options: BundleInstalledBuilt.() -> Unit = {}) {
@@ -234,70 +224,75 @@ open class PackageCompose : ZipTask(), AemTask {
     }
 
     fun installBundleBuilt(task: TaskProvider<BundleCompose>, options: BundleInstalledBuilt.() -> Unit = {}) {
-        fromTasks.add {
+        definitions.add {
             dependsOn(task)
             bundlesInstalled.add(BundleInstalledBuilt(this, task).apply(options))
         }
     }
 
-    private var composeProject: PackageCompose.(Project) -> Unit = { other ->
-        if (other.plugins.hasPlugin(PackagePlugin.ID)) {
-            mergePackage(other.common.tasks.named(NAME)) // TODO merge vs nest by default?
-        }
-        if (other.plugins.hasPlugin(BundlePlugin.ID)) {
-            installBundleBuilt(other.common.tasks.named(BundleCompose.NAME))
-        }
-        dependsOn(other.common.tasks.checks)
-    }
+    private var definition: () -> Unit = {
+        withVaultFilters(vaultFilterOriginFile)
+        withVaultNodeTypes(vaultNodeTypesSyncFile)
 
-    fun composeProject(action: PackageCompose.(other: Project) -> Unit) {
-        this.composeProject = action
-    }
-
-    private var composeSelf: () -> Unit = {
         fromMeta(metaDir)
         fromRoot(jcrRootDir)
         fromBundlesInstalled(bundlesInstalled)
         fromPackagesNested(packagesNested)
         fromVaultHooks(vaultHooksDir)
-        fromVaultFilters(vaultFilterOriginFile)
-        fromVaultNodeTypes(vaultNodeTypesSyncFile)
     }
 
-    fun composeSelf(action: () -> Unit) {
-        this.composeSelf = action
+    /**
+     * Override default behavior for composing this package.
+     */
+    fun definition(definition: () -> Unit) {
+        this.definition = definition
     }
 
-    fun composeSelf() = composeSelf {}
+    /**
+     * Clear default behavior for composing this package.
+     * After calling this method, particular 'from*()' methods need to be called.
+     */
+    fun noDefaults() = definition {}
 
-    private var composeOther: (PackageCompose) -> Unit = { other ->
+    private var merging: (PackageCompose) -> Unit = { other ->
         if (this == other) {
             throw PackageException("Package cannot be composed due to configuration error (circular reference)!")
         }
 
         other.dependsOn(dependsOn)
 
+        other.withVaultFilters(vaultFilterFile)
+        other.withVaultNodeTypes(vaultNodeTypesFile)
+        other.withVaultDefinition(vaultDefinition)
+        other.withBundlesInstalled(bundlesInstalled)
+        other.withPackagesNested(packagesNested)
+
         other.fromRoot(jcrRootDir)
         other.fromVaultHooks(vaultHooksDir)
-
-        other.vaultDefinition.filters(vaultFilterFile)
-        other.vaultDefinition.nodeTypes(vaultNodeTypesFile)
-        other.vaultDefinition.properties.putAll(vaultDefinition.properties)
-
-        other.bundlesInstalled.addAll(bundlesInstalled)
-        other.packagesNested.addAll(packagesNested)
     }
 
-    fun composeOther(action: (PackageCompose) -> Unit) {
-        this.composeOther = action
+    /**
+     * Override default behavior for merging this package into assembly package.
+     */
+    fun merging(action: (PackageCompose) -> Unit) {
+        this.merging = action
+    }
+
+    /**
+     * Add some extra behavior when merging this package into assembly package.
+     */
+    fun merged(action: (PackageCompose) -> Unit) {
+        val defaultAction = this.merging
+        this.merging = { other ->
+            defaultAction(other)
+            action(other)
+        }
     }
 
     @Nested
     val fileFilter = PackageFileFilter(aem)
 
     fun fileFilter(configurer: PackageFileFilter.() -> Unit) = fileFilter.using(configurer)
-
-    fun fileFilter(configurer: Action<in PackageFileFilter>) = configurer.execute(fileFilter)
 
     @Internal
     var fileFilterDelegate: ((CopySpec) -> Unit) = { fileFilter.filter(it, vaultDefinition.fileProperties) }

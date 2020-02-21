@@ -85,13 +85,11 @@ open class InstanceBackup : AemDefaultTask() {
     enum class Mode {
         ZIP_ONLY,
         ZIP_AND_UPLOAD,
-
         UPLOAD_ONLY;
+
         companion object {
-            fun of(name: String): Mode {
-                return values().find { it.name.equals(name, true) }
-                        ?: throw AemException("Unsupported instance backup mode: $name")
-            }
+            fun of(name: String) = values().find { it.name.equals(name, true) }
+                    ?: throw AemException("Unsupported instance backup mode: $name")
         }
     }
 

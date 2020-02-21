@@ -19,4 +19,6 @@ class BundleInstalledResolved(private val target: PackageCompose, @Input val not
     override val fileName = aem.obj.string { convention(aem.obj.provider { dependencyFile.file.name }) }
 
     override val vaultFilter = aem.obj.boolean { convention(target.vaultFilters) }
+
+    override val runMode = aem.obj.string()
 }
