@@ -15,6 +15,8 @@ class PackageFileFilter(private val task: PackageCompose) : Serializable {
 
     private val aem = task.aem
 
+    private val pkg get() = task.archiveFile.get().asFile
+
     @Input
     val excluding = aem.obj.boolean { convention(true) }
 
@@ -70,7 +72,7 @@ class PackageFileFilter(private val task: PackageCompose) : Serializable {
             if (bundleChecking.get() != BundleChecking.NONE && Patterns.wildcard(path, "**/install/*.jar")) {
                 val bundle = fileDetail.file
                 if (!isBundle(bundle)) {
-                    val errorMessage = "JAR file being added to CRX package built by task '${task.path}' is not a valid OSGi bundle '$bundle'!"
+                    val errorMessage = "JAR file being added to CRX package '$pkg' is not a valid OSGi bundle '$bundle'!"
                     when (bundleChecking.get()) {
                         BundleChecking.WARN -> {
                             aem.logger.warn(errorMessage)
