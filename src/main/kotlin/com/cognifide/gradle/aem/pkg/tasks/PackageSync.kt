@@ -87,7 +87,10 @@ open class PackageSync : AemDefaultTask() {
     }
 
     private val downloader = Downloader(aem).apply {
-        definition { archiveBaseName.convention("package-sync-downloader") }
+        definition {
+            archiveBaseName.convention("package-sync-downloader")
+            version.set(null as String?)
+        }
     }
 
     @TaskAction
@@ -103,9 +106,10 @@ open class PackageSync : AemDefaultTask() {
             }
 
             if (mode.get() != Mode.CLEAN_ONLY) {
-                when (transfer.get()!!) {
+                when (transfer.get()) {
                     Transfer.VLT_CHECKOUT -> transferUsingVltCheckout()
                     Transfer.PACKAGE_DOWNLOAD -> transferUsingPackageDownload()
+                    else -> {}
                 }
             }
 
