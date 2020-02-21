@@ -99,7 +99,7 @@ open class VaultDefinition(private val aem: AemExtension) {
     val nodeTypeLibs = aem.obj.strings { convention(listOf()) }
 
     @Input
-    var nodeTypeLines = aem.obj.strings { convention(listOf()) }
+    val nodeTypeLines = aem.obj.strings { convention(listOf()) }
 
     fun nodeTypes(file: RegularFileProperty, optionallyExist: Boolean = true) = nodeTypes(file.asFile, optionallyExist)
 

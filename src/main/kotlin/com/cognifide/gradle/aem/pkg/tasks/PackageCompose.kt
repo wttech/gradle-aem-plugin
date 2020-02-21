@@ -162,12 +162,26 @@ open class PackageCompose : ZipTask(), AemTask {
         }
     }
 
-    fun fromVaultFilters(file: RegularFileProperty) {
+    fun withBundlesInstalled(others: ListProperty<BundleInstalled>) {
+        bundlesInstalled.addAll(others)
+    }
+
+    fun withPackagesNested(others: ListProperty<PackageNested>) {
+        packagesNested.addAll(others)
+    }
+
+    fun withVaultFilters(file: RegularFileProperty) {
         vaultDefinition.filters(file)
     }
 
-    fun fromVaultNodeTypes(file: RegularFileProperty) {
+    fun withVaultNodeTypes(file: RegularFileProperty) {
         vaultDefinition.nodeTypes(file)
+    }
+
+    fun withVaultDefinition(other: VaultDefinition) {
+        vaultDefinition.properties.putAll(other.properties)
+        vaultDefinition.nodeTypeLibs.addAll(other.nodeTypeLibs)
+        vaultDefinition.nodeTypeLines.addAll(other.nodeTypeLines)
     }
 
     fun mergePackageProject(projectPath: String) = mergePackage("$projectPath:$NAME")
@@ -217,13 +231,14 @@ open class PackageCompose : ZipTask(), AemTask {
     }
 
     private var definition: () -> Unit = {
+        withVaultFilters(vaultFilterOriginFile)
+        withVaultNodeTypes(vaultNodeTypesSyncFile)
+
         fromMeta(metaDir)
         fromRoot(jcrRootDir)
         fromBundlesInstalled(bundlesInstalled)
         fromPackagesNested(packagesNested)
         fromVaultHooks(vaultHooksDir)
-        fromVaultFilters(vaultFilterOriginFile)
-        fromVaultNodeTypes(vaultNodeTypesSyncFile)
     }
 
     /**
@@ -246,15 +261,14 @@ open class PackageCompose : ZipTask(), AemTask {
 
         other.dependsOn(dependsOn)
 
+        other.withVaultFilters(vaultFilterFile)
+        other.withVaultNodeTypes(vaultNodeTypesFile)
+        other.withVaultDefinition(vaultDefinition)
+        other.withBundlesInstalled(bundlesInstalled)
+        other.withPackagesNested(packagesNested)
+
         other.fromRoot(jcrRootDir)
         other.fromVaultHooks(vaultHooksDir)
-
-        other.fromVaultFilters(vaultFilterFile)
-        other.fromVaultNodeTypes(vaultNodeTypesFile)
-
-        other.vaultDefinition.properties.putAll(vaultDefinition.properties)
-        other.bundlesInstalled.addAll(bundlesInstalled)
-        other.packagesNested.addAll(packagesNested)
     }
 
     /**
