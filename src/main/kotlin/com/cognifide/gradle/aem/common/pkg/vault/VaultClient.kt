@@ -22,8 +22,8 @@ class VaultClient(val aem: AemExtension) {
     val contentDirEffective: File
         get() {
             var workingDir = contentDir.map { it.asFile.resolve(Package.JCR_ROOT) }.get()
-            if (!contentRelativePath.get().isNullOrBlank()) {
-                workingDir = File(workingDir, contentRelativePath.get())
+            if (!contentRelativePath.orNull.isNullOrBlank()) {
+                workingDir = workingDir.resolve(contentRelativePath.get())
             }
 
             return workingDir

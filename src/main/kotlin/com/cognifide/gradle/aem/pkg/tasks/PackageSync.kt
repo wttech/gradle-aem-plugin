@@ -76,24 +76,21 @@ open class PackageSync : AemDefaultTask() {
 
     private val vlt by lazy { VaultClient(aem).apply(vaultOptions) }
 
-    private var cleanerOptions: Cleaner.() -> Unit = {}
-
     fun cleaner(options: Cleaner.() -> Unit) {
-        cleanerOptions = options
+        cleaner.apply(options)
     }
 
-    private val cleaner by lazy { Cleaner(aem).apply(cleanerOptions) }
-
-    private var downloaderOptions: Downloader.() -> Unit = {}
+    private val cleaner = Cleaner(aem)
 
     fun downloader(options: Downloader.() -> Unit) {
-        downloaderOptions = options
+        downloader.apply(options)
     }
 
-    private val downloader by lazy { Downloader(aem).apply(downloaderOptions) }
-
-    init {
-        description = "Check out then clean JCR content."
+    private val downloader = Downloader(aem).apply {
+        definition {
+            destinationDirectory.convention(project.layout.buildDirectory.dir(this@PackageSync.name))
+            archiveFileName.convention("downloader.zip")
+        }
     }
 
     @TaskAction
@@ -112,7 +109,7 @@ open class PackageSync : AemDefaultTask() {
                 when (transfer.get()) {
                     Transfer.VLT_CHECKOUT -> transferUsingVltCheckout()
                     Transfer.PACKAGE_DOWNLOAD -> transferUsingPackageDownload()
-                    null -> {}
+                    else -> {}
                 }
             }
 
@@ -128,7 +125,7 @@ open class PackageSync : AemDefaultTask() {
     }
 
     private fun prepareContent() {
-        logger.info("Preparing files to be cleaned up (before copying new ones) using: $filter")
+        logger.info("Preparing files to be cleaned up (before copying new ones) using: ${filter.get()}")
 
         filterRootFiles.forEach { root ->
             logger.lifecycle("Preparing root: $root")
@@ -154,7 +151,7 @@ open class PackageSync : AemDefaultTask() {
     }
 
     private fun cleanContent() {
-        logger.info("Cleaning copied files using: $filter")
+        logger.info("Cleaning copied files using: ${filter.get()}")
 
         filterRootFiles.forEach { root ->
             cleaner.beforeClean(root)
@@ -163,6 +160,10 @@ open class PackageSync : AemDefaultTask() {
         filterRootFiles.forEach { root ->
             cleaner.clean(root)
         }
+    }
+
+    init {
+        description = "Check out then clean JCR content."
     }
 
     enum class Transfer {

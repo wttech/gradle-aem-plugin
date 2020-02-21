@@ -193,11 +193,18 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
      * Next built package is downloaded - replacing initially created package.
      * Finally built package is deleted on instance (preventing messing up).
      */
-    fun download(definition: PackageDefinition.() -> Unit): File {
-        val file = aem.composePackage {
-            version.set(Formats.dateFileName())
-            definition()
-        }
+    fun download(definition: PackageDefinition.() -> Unit) = download(PackageDefinition(aem).apply {
+        version.set(Formats.dateFileName())
+        definition()
+    })
+
+    /**
+     * Create package on the fly, upload it to instance then build it.
+     * Next built package is downloaded - replacing initially created package.
+     * Finally built package is deleted on instance (preventing messing up).
+     */
+    fun download(definition: PackageDefinition): File {
+        val file = definition.compose()
 
         return downloadRetry.withCountdown<File, InstanceException>("download package '${file.name}' on '${instance.name}'") {
             var path: String? = null

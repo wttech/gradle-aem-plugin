@@ -189,15 +189,15 @@ open class BundleCompose : JarTask(), AemTask {
             displayName = aem.project.description
         }
 
-        if (!hasAttribute(Bundle.ATTRIBUTE_SYMBOLIC_NAME) && !javaPackage.get().isNullOrBlank()) {
+        if (!hasAttribute(Bundle.ATTRIBUTE_SYMBOLIC_NAME) && !javaPackage.orNull.isNullOrBlank()) {
             symbolicName = javaPackage.get()
         }
 
-        if (!hasAttribute(Bundle.ATTRIBUTE_SLING_MODEL_PACKAGES) && !javaPackage.get().isNullOrBlank()) {
+        if (!hasAttribute(Bundle.ATTRIBUTE_SLING_MODEL_PACKAGES) && !javaPackage.orNull.isNullOrBlank()) {
             slingModelPackages = javaPackage.get()
         }
 
-        if (!hasAttribute(Bundle.ATTRIBUTE_ACTIVATOR) && !javaPackage.get().isNullOrBlank()) {
+        if (!hasAttribute(Bundle.ATTRIBUTE_ACTIVATOR) && !javaPackage.orNull.isNullOrBlank()) {
             findActivator(javaPackage.get())?.let { activator = it }
         }
     }
@@ -213,7 +213,7 @@ open class BundleCompose : JarTask(), AemTask {
         })
         combinePackageAttribute(Bundle.ATTRIBUTE_PRIVATE_PACKAGE, privatePackages.get())
         combinePackageAttribute(Bundle.ATTRIBUTE_EXPORT_PACKAGE, exportPackages.get().toMutableList().apply {
-            if (attributesConvention.get() && !javaPackage.get().isNullOrBlank()) {
+            if (attributesConvention.get() && !javaPackage.orNull.isNullOrBlank()) {
                 add(when {
                     javaPackageOptions.isPresent -> "${javaPackage.get()}.*;${javaPackageOptions.get()}"
                     else -> "${javaPackage.get()}.*"
