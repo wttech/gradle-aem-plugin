@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.common.instance.check
 
+import com.cognifide.gradle.aem.common.utils.shortenClass
 import com.cognifide.gradle.common.utils.Formats
 
 @Suppress("MagicNumber")
@@ -34,7 +35,7 @@ class ComponentsCheck(group: CheckGroup) : DefaultCheck(group) {
         if (inactive.isNotEmpty()) {
             statusLogger.error(
                     when (inactive.size) {
-                        1 -> "Component inactive '${inactive.first().uid}'"
+                        1 -> "Component inactive '${inactive.first().uid.shortenClass()}'"
                         in 2..10 -> "Components inactive (${inactive.size})"
                         else -> "Components inactive (${Formats.percentExplained(inactive.size, total)})"
                     },
@@ -46,7 +47,7 @@ class ComponentsCheck(group: CheckGroup) : DefaultCheck(group) {
         if (failed.isNotEmpty()) {
             statusLogger.error(
                     when (failed.size) {
-                        1 -> "Component failed '${failed.first().uid}'"
+                        1 -> "Component failed '${failed.first().uid.shortenClass()}'"
                         in 2..10 -> "Components failed (${failed.size})"
                         else -> "Components failed (${Formats.percentExplained(failed.size, total)})"
                     },
@@ -58,7 +59,7 @@ class ComponentsCheck(group: CheckGroup) : DefaultCheck(group) {
         if (unsatisfied.isNotEmpty()) {
             statusLogger.error(
                     when (unsatisfied.size) {
-                        1 -> "Component unsatisfied '${unsatisfied.first().uid}'"
+                        1 -> "Component unsatisfied '${unsatisfied.first().uid.shortenClass()}'"
                         in 2..10 -> "Components unsatisfied (${unsatisfied.size})"
                         else -> "Components unsatisified (${Formats.percentExplained(unsatisfied.size, total)})"
                     },
