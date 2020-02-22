@@ -76,6 +76,9 @@ class PackageFileFilter(private val task: PackageCompose) : Serializable {
                     when (bundleChecking.get()) {
                         BundleChecking.WARN -> {
                             aem.logger.warn(errorMessage)
+                        }
+                        BundleChecking.EXCLUDE -> {
+                            aem.logger.info(errorMessage)
                             fileDetail.exclude()
                         }
                         BundleChecking.FAIL -> {

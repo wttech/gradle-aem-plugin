@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.common.pkg
 enum class BundleChecking {
     NONE,
     WARN,
+    EXCLUDE,
     FAIL;
 
     companion object {
