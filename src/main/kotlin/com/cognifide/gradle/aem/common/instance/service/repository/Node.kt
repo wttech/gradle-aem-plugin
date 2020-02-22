@@ -18,6 +18,7 @@ import java.util.*
 /**
  * Represents node stored in JCR content repository.
  */
+@Suppress("TooManyFunctions")
 class Node(val repository: Repository, val path: String) : Serializable {
 
     private val logger = repository.aem.logger
@@ -387,9 +388,42 @@ class Node(val repository: Repository, val path: String) : Serializable {
 
     /**
      * Upload file to node.
+     *
+     * If node path points to DAM, separate / dedicated endpoint is used automatically,
+     * so that metadata and renditions are generated immediately.
      */
-    fun upload(file: File) {
-        http.postMultipart(parent.path, mapOf(name to file))
+    fun upload(file: File) = when {
+        repository.damUploads.get() && path.startsWith("$DAM_PATH/") -> uploadDamAsset(file)
+        else -> uploadFile(file)
+    }
+
+    /**
+     * Upload asset using default Sling endpoint.
+     */
+    fun uploadFile(file: File) {
+        log("Uploading file '$file' to repository node '$path' on $instance")
+
+        return try {
+            http.postMultipart(parent.path, mapOf(name to file))
+        } catch (e: CommonException) {
+            throw RepositoryException("Cannot upload file '$file' to node '$path' on $instance. Cause: ${e.message}", e)
+        }
+    }
+
+    /**
+     * Upload asset using dedicated DAM endpoint.
+     */
+    fun uploadDamAsset(file: File) {
+        log("Uploading DAM asset '$file' to repository node '$path' on $instance")
+
+        return try {
+            http.postMultipart("${parent.path}$DAM_UPLOAD_SUFFIX", mapOf(
+                    "file" to file,
+                    "fileName" to name
+            ))
+        } catch (e: CommonException) {
+            throw RepositoryException("Cannot upload DAM asset '$file' to node '$path' on $instance. Cause: ${e.message}", e)
+        }
     }
 
     /**
@@ -454,5 +488,9 @@ class Node(val repository: Repository, val path: String) : Serializable {
 
     companion object {
         val TYPE_UNSTRUCTURED = JcrConstants.JCR_PRIMARYTYPE to JcrConstants.NT_UNSTRUCTURED
+
+        const val DAM_PATH = "/content/dam"
+
+        const val DAM_UPLOAD_SUFFIX = ".createasset.html"
     }
 }

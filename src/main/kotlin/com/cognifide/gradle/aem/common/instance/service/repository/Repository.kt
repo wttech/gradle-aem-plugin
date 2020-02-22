@@ -33,6 +33,15 @@ class Repository(sync: InstanceSync) : InstanceService(sync) {
     }
 
     /**
+     * When trying to upload file under '/content/dam', repository will use for upload dedicated AEM service
+     * instead of using Sling service.
+     */
+    val damUploads = aem.obj.boolean {
+        convention(true)
+        aem.prop.boolean("instance.repository.damUploads")?.let { set(it) }
+    }
+
+    /**
      * Manipulate node at given path (CRUD).
      */
     fun node(path: String): Node = Node(this, path)
