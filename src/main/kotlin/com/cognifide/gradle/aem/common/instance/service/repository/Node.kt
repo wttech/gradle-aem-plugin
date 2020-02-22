@@ -7,15 +7,18 @@ import com.cognifide.gradle.common.utils.Formats
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.jayway.jsonpath.PathNotFoundException
 import net.minidev.json.JSONArray
+import org.apache.commons.io.FilenameUtils
 import org.apache.http.HttpStatus
 import org.apache.jackrabbit.vault.util.JcrConstants
 import java.io.File
+import java.io.InputStream
 import java.io.Serializable
 import java.util.*
 
 /**
  * Represents node stored in JCR content repository.
  */
+@Suppress("TooManyFunctions")
 class Node(val repository: Repository, val path: String) : Serializable {
 
     private val logger = repository.aem.logger
@@ -37,8 +40,19 @@ class Node(val repository: Repository, val path: String) : Serializable {
     /**
      * Node name
      */
-    val name: String
-        get() = path.substringAfterLast("/")
+    val name: String get() = path.substringAfterLast("/")
+
+    /**
+     * File node base name.
+     */
+    @get:JsonIgnore
+    val baseName: String get() = FilenameUtils.getBaseName(name)
+
+    /**
+     * File node extension.
+     */
+    @get:JsonIgnore
+    val extension: String get() = FilenameUtils.getExtension(name)
 
     /**
      * JCR node properties.
@@ -46,22 +60,24 @@ class Node(val repository: Repository, val path: String) : Serializable {
      * Keep in mind that these values are loaded lazily and sometimes it is needed to reload them
      * using dedicated method.
      */
-    val properties: Properties
-        get() = propertiesLoaded ?: reloadProperties()
+    val properties: Properties get() = propertiesLoaded ?: reloadProperties()
 
     /**
      * JCR primary type of node.
      */
     @get:JsonIgnore
-    val type: String
-        get() = properties.string(JcrConstants.JCR_PRIMARYTYPE)!!
+    val type: String get() = properties.string(JcrConstants.JCR_PRIMARYTYPE)!!
 
     /**
      * Parent node.
      */
     @get:JsonIgnore
-    val parent: Node
-        get() = Node(repository, path.substringBeforeLast("/"))
+    val parent: Node get() = Node(repository, path.substringBeforeLast("/"))
+
+    /**
+     * Get child node by name.
+     */
+    fun child(name: String) = Node(repository, "$path/$name")
 
     /**
      * Get all node child nodes.
@@ -69,8 +85,7 @@ class Node(val repository: Repository, val path: String) : Serializable {
      * Because of performance issues, using method is more preferred.
      */
     @get:JsonIgnore
-    val children: List<Node>
-        get() = children().toList()
+    val children: List<Node> get() = children().toList()
 
     /**
      * Loop over all node child nodes.
@@ -100,13 +115,17 @@ class Node(val repository: Repository, val path: String) : Serializable {
         }
     }
 
+    @get:JsonIgnore
+    val siblings: List<Node> get() = siblings().toList()
+
+    fun siblings() = parent.children().filter { it != this }
+
     /**
      * Check if node exists.
      *
      * Not checks again if properties of node are already loaded (skips extra HTTP request / optimization).
      */
-    val exists: Boolean
-        get() = propertiesLoaded != null || exists()
+    val exists: Boolean get() = propertiesLoaded != null || exists()
 
     /**
      * Check if node exists.
@@ -359,28 +378,103 @@ class Node(val repository: Repository, val path: String) : Serializable {
         return properties.filterKeys { p -> !Property.values().any { it.value == p } }
     }
 
-    private fun log(message: String, e: Throwable? = null) {
-        if (repository.verboseLogging.get()) {
-            logger.info(message, e)
-        } else {
-            logger.debug(message, e)
-        }
+    private fun log(message: String, e: Throwable? = null) = when {
+        repository.verboseLogging.get() -> logger.info(message, e)
+        else -> logger.debug(message, e)
     }
 
     @get:JsonIgnore
-    val json: String
-        get() = Formats.toJson(this)
+    val json: String get() = Formats.toJson(this)
+
+    /**
+     * Upload file to node.
+     *
+     * If node path points to DAM, separate / dedicated endpoint is used automatically,
+     * so that metadata and renditions are generated immediately.
+     */
+    fun upload(file: File) = when {
+        repository.damUploads.get() && path.startsWith("$DAM_PATH/") -> uploadDamAsset(file)
+        else -> uploadFile(file)
+    }
+
+    /**
+     * Upload asset using default Sling endpoint.
+     */
+    fun uploadFile(file: File) {
+        log("Uploading file '$file' to repository node '$path' on $instance")
+
+        return try {
+            http.postMultipart(parent.path, mapOf(name to file))
+        } catch (e: CommonException) {
+            throw RepositoryException("Cannot upload file '$file' to node '$path' on $instance. Cause: ${e.message}", e)
+        }
+    }
+
+    /**
+     * Upload asset using dedicated DAM endpoint.
+     */
+    fun uploadDamAsset(file: File) {
+        log("Uploading DAM asset '$file' to repository node '$path' on $instance")
+
+        return try {
+            http.postMultipart("${parent.path}$DAM_UPLOAD_SUFFIX", mapOf(
+                    "file" to file,
+                    "fileName" to name
+            ))
+        } catch (e: CommonException) {
+            throw RepositoryException("Cannot upload DAM asset '$file' to node '$path' on $instance. Cause: ${e.message}", e)
+        }
+    }
+
+    /**
+     * Upload file to current folder node with preserving original file name.
+     */
+    fun uploadTo(file: File) = repository.node("$path/${file.name}").apply { upload(file) }
+
+    /**
+     * Read file stored in node.
+     */
+    fun <T> read(reader: (InputStream) -> T) = http.get(path) { reader(asStream(it)) }
+
+    /**
+     * Download file stored in node to specified local file.
+     */
+    fun download(targetFile: File) {
+        read { input -> targetFile.outputStream().use { output -> input.copyTo(output) } }
+    }
+
+    /**
+     * Download file stored in node to temporary directory with preserving file name.
+     */
+    fun download() = downloadTo(repository.aem.common.temporaryDir)
+
+    /**
+     * Download file stored in node to specified local directory with preserving file name.
+     */
+    fun downloadTo(targetDir: File) = targetDir.resolve(name).apply { download(this) }
 
     /**
      * Download node as CRX package.
      */
-    fun download(options: PackageDefinition.() -> Unit = {}): File {
-        val node = this
-        return repository.sync.packageManager.download {
-            archiveBaseName.set(JcrUtil.manglePath(node.name))
-            filter(node.path)
-            options()
-        }
+    fun downloadPackage(options: PackageDefinition.() -> Unit = {}) = repository.sync.packageManager.download {
+        archiveBaseName.set(JcrUtil.manglePath(this@Node.name))
+        filter(this@Node.path)
+        options()
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as Node
+
+        if (path != other.path) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return path.hashCode()
     }
 
     override fun toString(): String {
@@ -394,5 +488,9 @@ class Node(val repository: Repository, val path: String) : Serializable {
 
     companion object {
         val TYPE_UNSTRUCTURED = JcrConstants.JCR_PRIMARYTYPE to JcrConstants.NT_UNSTRUCTURED
+
+        const val DAM_PATH = "/content/dam"
+
+        const val DAM_UPLOAD_SUFFIX = ".createasset.html"
     }
 }
