@@ -290,7 +290,7 @@ open class PackageCompose : ZipTask(), AemTask {
     }
 
     @Nested
-    val fileFilter = PackageFileFilter(aem)
+    val fileFilter = PackageFileFilter(this)
 
     fun fileFilter(configurer: PackageFileFilter.() -> Unit) = fileFilter.using(configurer)
 
