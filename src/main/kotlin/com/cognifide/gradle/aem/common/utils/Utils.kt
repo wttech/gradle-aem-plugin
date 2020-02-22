@@ -39,7 +39,7 @@ fun String.normalizeSeparators(separator: String): String = this.replace(":", se
         .removePrefix(separator)
         .removeSuffix(separator)
 
-fun String.shortenClass(maxLength: Int = 40): String {
+fun String.shortenClass(maxLength: Int = 32): String {
     val pkgs = split(".").toMutableList()
     var result = this
     if (result.length > maxLength && pkgs.size >= 3) {
