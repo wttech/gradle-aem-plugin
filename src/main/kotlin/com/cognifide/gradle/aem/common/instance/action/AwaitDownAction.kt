@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.common.instance.action
 
 import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.check.*
 import com.cognifide.gradle.aem.common.instance.names
 import java.util.concurrent.TimeUnit
@@ -8,7 +9,7 @@ import java.util.concurrent.TimeUnit
 /**
  * Awaits for unavailable local instances.
  */
-class AwaitDownAction(aem: AemExtension) : LocalInstanceAction(aem) {
+class AwaitDownAction(aem: AemExtension) : DefaultAction(aem) {
 
     private var timeoutOptions: TimeoutCheck.() -> Unit = {
         stateTime = aem.prop.long("instance.awaitDown.timeout.stateTime")
@@ -52,11 +53,7 @@ class AwaitDownAction(aem: AemExtension) : LocalInstanceAction(aem) {
         }
     }
 
-    override fun perform() {
-        if (!enabled) {
-            return
-        }
-
+    override fun perform(instances: Collection<Instance>) {
         if (instances.isEmpty()) {
             logger.info("No instances to await down.")
             return

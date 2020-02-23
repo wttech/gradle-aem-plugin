@@ -22,15 +22,7 @@ open class InstanceReload : InstanceTask() {
 
     @TaskAction
     fun reload() {
-        aem.instanceActions.reload {
-            instances.convention(this@InstanceReload.instances)
-            reloadOptions()
-        }
-        aem.instanceActions.awaitUp {
-            instances.convention(this@InstanceReload.instances)
-            awaitUpOptions()
-        }
-
+        instanceManager.awaitReloaded(instances.get(), reloadOptions, awaitUpOptions)
         common.notifier.lifecycle("Instance(s) reloaded", "Which: ${instances.get().names}")
     }
 

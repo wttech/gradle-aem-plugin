@@ -8,17 +8,7 @@ open class InstanceCreate : LocalInstanceTask() {
 
     @TaskAction
     fun create() {
-        val uncreatedInstances = instances.filter { !it.created }
-        if (uncreatedInstances.isEmpty()) {
-            logger.lifecycle("No instance(s) to create")
-            return
-        }
-
-        logger.info("Creating instances: ${uncreatedInstances.names}")
-
-        manager.create(uncreatedInstances)
-        val createdInstances = uncreatedInstances.filter { it.created }
-
+        val createdInstances = localInstanceManager.create(instances.get())
         common.notifier.lifecycle("Instance(s) created", "Which: ${createdInstances.names}")
     }
 

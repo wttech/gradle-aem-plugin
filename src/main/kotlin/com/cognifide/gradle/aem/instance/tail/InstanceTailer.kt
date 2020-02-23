@@ -73,7 +73,7 @@ class InstanceTailer(val aem: AemExtension) {
      * Changes in that file are automatically considered (tailer restart is not required).
      */
     val incidentFilter = aem.obj.file {
-        convention(aem.instanceOptions.configDir.file("tail/incidentFilter.txt"))
+        convention(aem.instanceManager.configDir.file("tail/incidentFilter.txt"))
         aem.prop.file("instance.tail.incidentFilter")?.let { set(it) }
     }
 

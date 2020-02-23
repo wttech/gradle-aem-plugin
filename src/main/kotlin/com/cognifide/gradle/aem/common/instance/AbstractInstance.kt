@@ -1,7 +1,9 @@
 package com.cognifide.gradle.aem.common.instance
 
 import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.common.instance.action.AwaitDownAction
 import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
+import com.cognifide.gradle.aem.common.instance.action.CheckAction
 import com.cognifide.gradle.aem.common.instance.action.ReloadAction
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.time.ZoneId
@@ -9,11 +11,7 @@ import org.apache.commons.lang3.builder.EqualsBuilder
 import org.apache.commons.lang3.builder.HashCodeBuilder
 import org.gradle.api.tasks.Internal
 
-abstract class AbstractInstance(
-    @Transient
-    @JsonIgnore
-    protected val aem: AemExtension
-) : Instance {
+abstract class AbstractInstance(@Transient @JsonIgnore protected val aem: AemExtension) : Instance {
 
     protected val common = aem.common
 
@@ -33,16 +31,13 @@ abstract class AbstractInstance(
 
     override lateinit var environment: String
 
-    override val sync: InstanceSync
-        get() = InstanceSync(aem, this)
+    override val sync: InstanceSync get() = InstanceSync(aem, this)
 
     override var properties = mutableMapOf<String, String?>()
 
-    override val systemProperties: Map<String, String>
-        get() = sync.status.systemProperties
+    override val systemProperties: Map<String, String> get() = sync.status.systemProperties
 
-    override val available: Boolean
-        get() = systemProperties.isNotEmpty()
+    override val available: Boolean get() = systemProperties.isNotEmpty()
 
     override fun property(key: String, value: String?) {
         properties[key] = value
@@ -50,30 +45,24 @@ abstract class AbstractInstance(
 
     final override fun property(key: String): String? = properties[key] ?: systemProperties[key]
 
-    override val zoneId: ZoneId
-        get() = property("user.timezone")?.let { ZoneId.of(it) } ?: ZoneId.systemDefault()
+    override val zoneId: ZoneId get() = property("user.timezone")?.let { ZoneId.of(it) } ?: ZoneId.systemDefault()
 
-    override val version: String
-        get() = sync.status.productVersion
+    override val version: String get() = sync.status.productVersion
 
-    fun reload(options: ReloadAction.() -> Unit = {}) {
-        aem.instanceActions.reload {
-            instances.convention(listOf(this@AbstractInstance))
-            options()
-        }
+    @get:JsonIgnore
+    val manager: InstanceManager get() = aem.instanceManager
+
+    fun reload(options: ReloadAction.() -> Unit = {}) = manager.reload(this, options)
+
+    fun awaitUp(options: AwaitUpAction.() -> Unit = {}) = manager.awaitUp(this, options)
+
+    fun awaitDown(options: AwaitDownAction.() -> Unit = {}) = manager.awaitDown(this, options)
+
+    fun awaitReloaded(reloadOptions: ReloadAction.() -> Unit = {}, awaitUpOptions: AwaitUpAction.() -> Unit = {}) {
+        manager.awaitReloaded(this, reloadOptions, awaitUpOptions)
     }
 
-    fun awaitUp(options: AwaitUpAction.() -> Unit = {}) {
-        aem.instanceActions.awaitUp {
-            instances.convention(listOf(this@AbstractInstance))
-            options()
-        }
-    }
-
-    fun reloadAndAwaitUp() {
-        reload()
-        awaitUp()
-    }
+    fun check(options: CheckAction.() -> Unit) = manager.check(this, options)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

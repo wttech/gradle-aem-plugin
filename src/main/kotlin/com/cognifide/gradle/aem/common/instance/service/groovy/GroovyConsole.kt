@@ -25,7 +25,7 @@ class GroovyConsole(sync: InstanceSync) : InstanceService(sync) {
      * Directory to search for scripts to be evaluated.
      */
     val scriptDir = aem.obj.dir {
-        convention(aem.instanceOptions.configDir.dir("groovyScript"))
+        convention(aem.instanceManager.configDir.dir("groovyScript"))
         aem.prop.file("instance.groovyConsole.scriptDir")?.let { set(it) }
     }
 

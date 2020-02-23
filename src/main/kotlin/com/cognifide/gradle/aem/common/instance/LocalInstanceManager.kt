@@ -2,6 +2,8 @@ package com.cognifide.gradle.aem.common.instance
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.file.FileOperations
+import com.cognifide.gradle.aem.common.instance.action.AwaitDownAction
+import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
 import com.cognifide.gradle.aem.common.instance.local.BackupResolver
 import com.cognifide.gradle.aem.common.instance.local.InstallResolver
 import com.cognifide.gradle.aem.common.instance.local.QuickstartResolver
@@ -17,6 +19,17 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
     private val common = aem.common
 
     private val logger = aem.logger
+
+    private val base = aem.instanceManager
+
+    /**
+     * Path from which e.g extra files for local AEM instances will be copied.
+     * Useful for overriding default startup scripts ('start.bat' or 'start.sh') or providing some files inside 'crx-quickstart'.
+     */
+    val configDir = aem.obj.dir {
+        convention(base.configDir.dir("local"))
+        aem.prop.file("localInstance.configDir")?.let { set(it) }
+    }
 
     /**
      * Path in which local AEM instances will be stored.
@@ -60,12 +73,6 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
             listOfNotNull(backupZip) + quickstart.files + install.files
         })
     }
-
-    /**
-     * Path from which extra files for local AEM instances will be copied.
-     * Useful for overriding default startup scripts ('start.bat' or 'start.sh') or providing some files inside 'crx-quickstart'.
-     */
-    val overridesDir = aem.obj.relativeDir(aem.instanceOptions.configDir, "local")
 
     /**
      * Wildcard file name filter expression that is used to filter in which instance files properties can be injected.
@@ -134,8 +141,24 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
         this.initOptions = options
     }
 
+    /**
+     * Returns only instances that are newly created.
+     */
+    fun create(instances: Collection<LocalInstance>): List<LocalInstance> {
+        val uncreatedInstances = instances.filter { !it.created }
+        if (uncreatedInstances.isEmpty()) {
+            logger.lifecycle("No instance(s) to create")
+            return listOf()
+        }
+
+        logger.info("Creating instances: ${uncreatedInstances.names}")
+        createBySource(uncreatedInstances)
+
+        return uncreatedInstances.filter { it.created }
+    }
+
     @Suppress("ComplexMethod")
-    fun create(instances: List<LocalInstance>) {
+    fun createBySource(instances: Collection<LocalInstance>) {
         when (source.get()) {
             Source.AUTO -> {
                 val backupZip = backup.any
@@ -168,7 +191,7 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
         }
     }
 
-    fun createFromBackup(instances: List<LocalInstance>, backupZip: File) {
+    fun createFromBackup(instances: Collection<LocalInstance>, backupZip: File) {
         logger.info("Restoring instances from backup ZIP '$backupZip' to directory '$rootDir'")
 
         rootDir.get().asFile.mkdirs()
@@ -197,7 +220,7 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
         }
     }
 
-    fun createFromScratch(instances: List<LocalInstance>) {
+    fun createFromScratch(instances: Collection<LocalInstance>) {
         if (quickstart.jar == null || quickstart.license == null) {
             throw InstanceException("Cannot create instances due to lacking source files. " +
                     "Ensure having specified local instance quickstart jar & license urls.")
@@ -210,5 +233,79 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
                 }
             }
         }
+    }
+
+    /**
+     * Returns destroyed instances.
+     */
+    fun destroy(instances: Collection<LocalInstance>): List<LocalInstance> {
+        val createdInstances = instances.filter { it.touched }
+        if (createdInstances.isEmpty()) {
+            logger.lifecycle("No instance(s) to destroy")
+            return listOf()
+        }
+
+        logger.info("Destroying instance(s): ${createdInstances.names}")
+
+        common.progress(createdInstances.size) {
+            createdInstances.onEachApply {
+                increment("Destroying '$name'") {
+                    destroy()
+                }
+            }
+        }
+
+        return createdInstances
+    }
+
+    fun up(instances: Collection<LocalInstance>, awaitUpOptions: AwaitUpAction.() -> Unit = {}): List<LocalInstance> {
+        val downInstances = instances.filter { !it.running }
+        if (downInstances.isEmpty()) {
+            logger.lifecycle("No instance(s) to turn on")
+            return listOf()
+        }
+
+        common.progress(downInstances.size) {
+            downInstances.onEachApply {
+                increment("Customizing instance '$name'") { customize() }
+            }
+        }
+
+        common.progress(downInstances.size) {
+            common.parallel.with(downInstances) {
+                increment("Starting instance '$name'") { up() }
+            }
+        }
+
+        base.awaitUp(downInstances, awaitUpOptions)
+
+        common.progress(downInstances.size) {
+            common.parallel.with(downInstances) {
+                increment("Initializing instance '$name'") { init() }
+            }
+        }
+
+        return downInstances
+    }
+
+    /**
+     * Returns instances turned off.
+     */
+    fun down(instances: Collection<LocalInstance>, awaitDownOptions: AwaitDownAction.() -> Unit = {}): List<LocalInstance> {
+        val upInstances = instances.filter { it.running }
+        if (upInstances.isEmpty()) {
+            logger.lifecycle("No instance(s) to turn off")
+            return listOf()
+        }
+
+        common.progress(upInstances.size) {
+            common.parallel.with(upInstances) {
+                increment("Stopping instance '$name'") { down() }
+            }
+        }
+
+        base.awaitDown(upInstances, awaitDownOptions)
+
+        return upInstances
     }
 }

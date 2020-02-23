@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.common.instance.action
 
 import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.check.*
 import com.cognifide.gradle.aem.common.instance.names
 import java.util.concurrent.TimeUnit
@@ -8,7 +9,7 @@ import java.util.concurrent.TimeUnit
 /**
  * Awaits for stable condition of all instances of any type.
  */
-class AwaitUpAction(aem: AemExtension) : AnyInstanceAction(aem) {
+class AwaitUpAction(aem: AemExtension) : DefaultAction(aem) {
 
     private var timeoutOptions: TimeoutCheck.() -> Unit = {
         stateTime = aem.prop.long("instance.awaitUp.timeout.stateTime")
@@ -79,18 +80,14 @@ class AwaitUpAction(aem: AemExtension) : AnyInstanceAction(aem) {
         }
     }
 
-    override fun perform() {
-        if (!enabled) {
-            return
-        }
-
-        if (instances.get().isEmpty()) {
+    override fun perform(instances: Collection<Instance>) {
+        if (instances.isEmpty()) {
             logger.info("No instances to await up.")
             return
         }
 
-        logger.info("Awaiting instance(s) up: ${instances.get().names}")
+        logger.info("Awaiting instance(s) up: ${instances.names}")
 
-        runner.check(instances.get())
+        runner.check(instances)
     }
 }

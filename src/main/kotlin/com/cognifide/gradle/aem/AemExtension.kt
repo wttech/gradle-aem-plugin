@@ -78,13 +78,13 @@ class AemExtension(val project: Project) : Serializable {
      */
     fun pkg(file: File) = `package`(file)
 
-    val instanceOptions = InstanceOptions(this)
+    val instanceManager = InstanceManager(this)
 
     /**
      * Defines instances to work with.
      */
-    fun instance(options: InstanceOptions.() -> Unit) {
-        instanceOptions.apply(options)
+    fun instance(options: InstanceManager.() -> Unit) {
+        instanceManager.apply(options)
     }
 
     val localInstanceManager = LocalInstanceManager(this)
@@ -93,11 +93,6 @@ class AemExtension(val project: Project) : Serializable {
      * Define common settings valid only for instances created at local file system.
      */
     fun localInstance(options: LocalInstanceManager.() -> Unit) = localInstanceManager.apply(options)
-
-    /**
-     * Provides API for performing actions affecting multiple instances at once.
-     */
-    val instanceActions = InstanceActionPerformer(this)
 
     /**
      * Collection of all java packages from all projects applying bundle plugin.
@@ -127,7 +122,7 @@ class AemExtension(val project: Project) : Serializable {
     /**
      * Shorthand method for getting defined instance or creating temporary instance by URL.
      */
-    fun instance(urlOrName: String): Instance = instanceOptions.parse(urlOrName)
+    fun instance(urlOrName: String): Instance = instanceManager.parse(urlOrName)
 
     /**
      * Shorthand method for getting defined instances or creating temporary instances by URLs.
@@ -180,7 +175,7 @@ class AemExtension(val project: Project) : Serializable {
      * Find all instances which names are matching wildcard filter specified via command line parameter 'instance.name'.
      */
     fun filterInstances(nameMatcher: String = prop.string("instance.name") ?: "${commonOptions.env.get()}-*"): List<Instance> {
-        val all = instanceOptions.defined.get()
+        val all = instanceManager.defined.get()
 
         // Specified by command line should not be filtered
         val cmd = all.filter { it.environment == Instance.ENVIRONMENT_CMD }
