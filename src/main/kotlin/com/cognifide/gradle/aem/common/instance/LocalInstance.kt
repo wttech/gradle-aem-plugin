@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem.common.instance
 
-import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.instance.local.Script
@@ -190,11 +189,11 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
 
     private fun validateFiles() {
         if (!jar.exists()) {
-            throw AemException("Instance JAR file not found at path: ${jar.absolutePath}. Is instance JAR URL configured?")
+            throw InstanceException("Instance JAR file not found at path: ${jar.absolutePath}. Is instance JAR URL configured?")
         }
 
         if (!license.exists()) {
-            throw AemException("License file not found at path: ${license.absolutePath}. Is instance license URL configured?")
+            throw InstanceException("License file not found at path: ${license.absolutePath}. Is instance license URL configured?")
         }
     }
 
@@ -403,6 +402,16 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
 
     override fun toString(): String {
         return "LocalInstance(name='$name', httpUrl='$httpUrl')"
+    }
+
+    override fun validate() {
+        super.validate()
+
+        val userDir = property("user.dir")
+        if (!userDir.isNullOrBlank() && dir != File(userDir)) {
+            throw InstanceException("Detected conflict with $this!\n"
+                    + "Some instance is already running at URL '$httpUrl' located at path '$userDir'.")
+        }
     }
 
     companion object {
