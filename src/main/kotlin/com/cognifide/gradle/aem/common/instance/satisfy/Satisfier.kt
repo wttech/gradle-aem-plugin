@@ -148,7 +148,7 @@ class Satisfier(private val manager: InstanceManager) {
         }
 
         if (allActions.isEmpty()) {
-            logger.lifecycle("All packages satisfied (no actions to perform).")
+            logger.lifecycle("No actions to perform / all packages satisfied.")
         }
 
         return allActions

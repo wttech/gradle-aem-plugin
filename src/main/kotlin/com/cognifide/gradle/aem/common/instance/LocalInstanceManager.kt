@@ -143,7 +143,7 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
     fun create(instances: Collection<LocalInstance>): List<LocalInstance> {
         val uncreatedInstances = instances.filter { !it.created }
         if (uncreatedInstances.isEmpty()) {
-            logger.lifecycle("No instance(s) to create")
+            logger.lifecycle("No instances to create.")
             return listOf()
         }
 
@@ -245,7 +245,7 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
     fun destroy(instances: Collection<LocalInstance>): List<LocalInstance> {
         val createdInstances = instances.filter { it.touched }
         if (createdInstances.isEmpty()) {
-            logger.lifecycle("No instance(s) to destroy")
+            logger.lifecycle("No instances to destroy.")
             return listOf()
         }
 
@@ -269,7 +269,7 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
     fun up(instances: Collection<LocalInstance>, awaitUpOptions: AwaitUpAction.() -> Unit = {}): List<LocalInstance> {
         val downInstances = instances.filter { !it.running }
         if (downInstances.isEmpty()) {
-            logger.lifecycle("No instance(s) to turn on")
+            logger.lifecycle("No instances to turn on.")
             return listOf()
         }
 
@@ -324,7 +324,7 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
     fun down(instances: Collection<LocalInstance>, awaitDownOptions: AwaitDownAction.() -> Unit = {}): List<LocalInstance> {
         val upInstances = instances.filter { it.running }
         if (upInstances.isEmpty()) {
-            logger.lifecycle("No instance(s) to turn off")
+            logger.lifecycle("No instances to turn off.")
             return listOf()
         }
 
