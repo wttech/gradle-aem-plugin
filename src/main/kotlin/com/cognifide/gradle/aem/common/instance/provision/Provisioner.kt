@@ -1,15 +1,17 @@
 
 package com.cognifide.gradle.aem.common.instance.provision
 
-import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.instance.Instance
+import com.cognifide.gradle.aem.common.instance.InstanceManager
 import com.cognifide.gradle.common.utils.Formats
 import com.cognifide.gradle.common.utils.Patterns
 
 /**
  * Configures AEM instances only in concrete circumstances (only once, after some time etc).
  */
-class Provisioner(val aem: AemExtension) {
+class Provisioner(val manager: InstanceManager) {
+
+    internal val aem = manager.aem
 
     private val common = aem.common
 

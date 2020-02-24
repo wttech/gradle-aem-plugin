@@ -1,13 +1,13 @@
 package com.cognifide.gradle.aem.instance.tail.io
 
 import com.cognifide.gradle.aem.common.instance.Instance
-import com.cognifide.gradle.aem.instance.tail.InstanceTailer
+import com.cognifide.gradle.aem.instance.tail.Tailer
 import com.cognifide.gradle.aem.instance.tail.LogSource
 import com.cognifide.gradle.common.http.RequestException
 import java.io.BufferedReader
 
 class UrlSource(
-    private val tailer: InstanceTailer,
+    private val tailer: Tailer,
     private val instance: Instance
 ) : LogSource {
 

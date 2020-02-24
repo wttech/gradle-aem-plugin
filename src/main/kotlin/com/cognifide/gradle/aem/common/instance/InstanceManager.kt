@@ -4,9 +4,10 @@ import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.instance.action.*
 import com.cognifide.gradle.aem.common.instance.provision.Provisioner
 import com.cognifide.gradle.aem.common.instance.satisfy.Satisfier
+import com.cognifide.gradle.aem.instance.tail.Tailer
 import com.cognifide.gradle.common.utils.using
 
-open class InstanceManager(private val aem: AemExtension) {
+open class InstanceManager(val aem: AemExtension) {
 
     /**
      * Directory storing instance wide configuration files.
@@ -16,13 +17,25 @@ open class InstanceManager(private val aem: AemExtension) {
         aem.prop.file("instance.configDir")?.let { set(it) }
     }
 
-    val satisfier = Satisfier(aem)
+    /**
+     * Directory storing outputs of instance tasks.
+     */
+    val buildDir = aem.obj.dir {
+        convention(aem.obj.buildDir("instance"))
+        aem.prop.file("instance.buildDir")?.let { set(it) }
+    }
+
+    val satisfier = Satisfier(this)
 
     fun satisfier(options: Satisfier.() -> Unit) = satisfier.using(options)
 
-    val provisioner = Provisioner(aem)
+    val provisioner = Provisioner(this)
 
     fun provisioner(options: Provisioner.() -> Unit) = provisioner.using(options)
+
+    val tailer = Tailer(this)
+
+    fun tailer(options: Tailer.() -> Unit) = tailer.using(options)
 
     fun resolveFiles() {
         satisfier.resolve()

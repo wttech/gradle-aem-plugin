@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.common.instance.satisfy
 
-import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.instance.Instance
+import com.cognifide.gradle.aem.common.instance.InstanceManager
 import com.cognifide.gradle.aem.common.instance.InstanceSync
 import com.cognifide.gradle.aem.common.instance.service.pkg.PackageState
 import com.cognifide.gradle.common.utils.Patterns
@@ -9,7 +9,9 @@ import com.cognifide.gradle.common.file.resolver.FileGroup
 import com.cognifide.gradle.common.utils.using
 import java.io.File
 
-class Satisfier(private val aem: AemExtension) {
+class Satisfier(private val manager: InstanceManager) {
+
+    private val aem = manager.aem
 
     private val common = aem.common
 
@@ -52,7 +54,7 @@ class Satisfier(private val aem: AemExtension) {
     fun packages(configurer: PackageResolver.() -> Unit) = packageProvider.using(configurer)
 
     private val packageProvider = PackageResolver(aem).apply {
-        downloadDir.convention(aem.obj.buildDir("instance/satisfy/packages"))
+        downloadDir.convention(manager.buildDir.dir("satisfy/packages"))
         aem.prop.file("instance.satisfy.downloadDir")?.let { downloadDir.set(it) }
         aem.prop.list("instance.satisfy.urls")?.forEachIndexed { index, url ->
             val no = index + 1

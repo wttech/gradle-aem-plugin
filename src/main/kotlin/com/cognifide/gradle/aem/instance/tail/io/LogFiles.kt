@@ -1,14 +1,14 @@
 package com.cognifide.gradle.aem.instance.tail.io
 
 import com.cognifide.gradle.common.utils.Formats
-import com.cognifide.gradle.aem.instance.tail.InstanceTailer
+import com.cognifide.gradle.aem.instance.tail.Tailer
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileWriter
 import java.net.URI
 import org.apache.commons.io.FileUtils
 
-class LogFiles(private val tailer: InstanceTailer) {
+class LogFiles(private val tailer: Tailer) {
 
     fun main(instanceName: String) = tailer.logStorageDir.get().asFile
             .resolve("$instanceName/${tailer.logFile}")

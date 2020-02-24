@@ -1,12 +1,13 @@
 package com.cognifide.gradle.aem.instance.tail
 
 import com.cognifide.gradle.common.utils.Patterns
+import org.gradle.api.Project
 import java.io.File
 
 /**
  * Allows to reduce logs from analyzing (skip them in incident notifications).
  */
-class LogFilter {
+class LogFilter(private val project: Project) {
 
     /**
      * Rules defined at build configuration phase.
@@ -16,7 +17,7 @@ class LogFilter {
     /**
      * Rules that can be added to file (one each line with wildcards) during tailer runtime (without restarting).
      */
-    val excludeFiles = mutableListOf<File>()
+    val excludeFiles = project.objects.fileCollection()
 
     fun isExcluded(log: Log): Boolean {
         return excludeRules.any { it(log) } || excludeFiles.any { matchWildcardFile(log, it) }
@@ -26,8 +27,8 @@ class LogFilter {
         excludeRules += predicate
     }
 
-    fun excludeFile(file: File) {
-        excludeFiles += file
+    fun excludeFile(file: Any) {
+        excludeFiles.from(file)
     }
 
     fun excludeWildcard(vararg matchers: String) = excludeWildcard(matchers.asIterable())

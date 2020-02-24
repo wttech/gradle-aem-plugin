@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.instance.tail
 
 import com.cognifide.gradle.common.utils.Patterns
 import org.apache.commons.io.FileUtils
+import org.gradle.testfixtures.ProjectBuilder
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.io.BufferedReader
@@ -201,7 +202,7 @@ class InstanceTailTest {
         val filter: (Log) -> Boolean = { log -> log.message.isNotEmpty() }
 
         //when
-        val logFilter = LogFilter().apply { excludeRule(filter) }
+        val logFilter = LogFilter(project).apply { excludeRule(filter) }
 
         //then
         assertTrue(logFilter.isExcluded(Log.create(InstanceLogInfo.none(), listOf("14.01.2019 12:20:43.111 *ERROR* " +
@@ -215,7 +216,7 @@ class InstanceTailTest {
         val filter: (Log) -> Boolean = { log -> log.message.isEmpty() }
 
         //when
-        val blacklist = LogFilter().apply { excludeRule(filter) }
+        val blacklist = LogFilter(project).apply { excludeRule(filter) }
 
         //then
         assertFalse(blacklist.isExcluded(Log.create(InstanceLogInfo.none(), listOf("14.01.2019 12:20:43.111 *ERROR* " +
@@ -229,7 +230,7 @@ class InstanceTailTest {
         val filter: (Log) -> Boolean = { Patterns.wildcard(it.text, "*egg.erggr.gaegkgr.*") }
 
         //when
-        val logFilter = LogFilter().apply { excludeRule(filter) }
+        val logFilter = LogFilter(project).apply { excludeRule(filter) }
 
         //then
         assertTrue(logFilter.isExcluded(Log.create(InstanceLogInfo.none(), listOf("14.01.2019 12:20:43.111 *ERROR* " +
@@ -243,7 +244,7 @@ class InstanceTailTest {
         val filter: (Log) -> Boolean = { Patterns.wildcard(it.text, "a.b.cde.*") }
 
         //when
-        val blacklist = LogFilter().apply { excludeRule(filter) }
+        val blacklist = LogFilter(project).apply { excludeRule(filter) }
 
         //then
         assertFalse(blacklist.isExcluded(Log.create(InstanceLogInfo.none(), listOf("14.01.2019 12:20:43.111 *ERROR* " +
@@ -256,4 +257,6 @@ class InstanceTailTest {
     }
 
     private fun removeCr(expected: String) = expected.replace("\r", "")
+
+    private val project get() = ProjectBuilder.builder().build()
 }

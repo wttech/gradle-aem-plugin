@@ -9,7 +9,7 @@ import kotlinx.coroutines.channels.consumeEach
 
 @UseExperimental(ExperimentalCoroutinesApi::class)
 class InstanceAnalyzer(
-    private val tailer: InstanceTailer,
+    private val tailer: Tailer,
     private val instance: Instance,
     private val logsChannel: ReceiveChannel<Log>,
     private val notificationChannel: SendChannel<LogChunk>
@@ -22,9 +22,9 @@ class InstanceAnalyzer(
     fun listenTailed() {
         GlobalScope.launch {
             logsChannel.consumeEach { log ->
-                tailer.logListener(log, instance)
+                tailer.logListener.invoke(log, instance)
 
-                if (tailer.incidentChecker(log, instance)) {
+                if (tailer.incidentChecker.invoke(log, instance)) {
                     incidentChannel.send(log)
                 }
             }
