@@ -10,10 +10,10 @@ import java.util.concurrent.TimeUnit
  */
 class UnchangedCheck(group: CheckGroup) : DefaultCheck(group) {
 
-    var awaitTime: Long = TimeUnit.SECONDS.toMillis(3)
+    val awaitTime = aem.obj.long { convention(TimeUnit.SECONDS.toMillis(3)) }
 
     override fun check() {
-        if (progress.stateChanges <= 1 && progress.stateTime < awaitTime) {
+        if (progress.stateChanges <= 1 && progress.stateTime < awaitTime.get()) {
             statusLogger.error(
                     "State unchanged",
                     "Awaiting state to be changed on $instance"

@@ -12,10 +12,14 @@ import java.util.concurrent.TimeUnit
 class AwaitUpAction(aem: AemExtension) : DefaultAction(aem) {
 
     private var timeoutOptions: TimeoutCheck.() -> Unit = {
-        stateTime = aem.prop.long("instance.awaitUp.timeout.stateTime")
-                ?: TimeUnit.MINUTES.toMillis(10)
-        constantTime = aem.prop.long("instance.awaitUp.timeout.constantTime")
-                ?: TimeUnit.MINUTES.toMillis(30)
+        stateTime.apply {
+            convention(TimeUnit.MINUTES.toMillis(10))
+            aem.prop.long("instance.awaitUp.timeout.stateTime")?.let { set(it) }
+        }
+        constantTime.apply {
+            convention(TimeUnit.MINUTES.toMillis(30))
+            aem.prop.long("instance.awaitUp.timeout.constantTime")?.let { set(it) }
+        }
     }
 
     fun timeout(options: TimeoutCheck.() -> Unit) {
@@ -23,8 +27,10 @@ class AwaitUpAction(aem: AemExtension) : DefaultAction(aem) {
     }
 
     private var bundlesOptions: BundlesCheck.() -> Unit = {
-        symbolicNamesIgnored = aem.prop.list("instance.awaitUp.bundles.symbolicNamesIgnored")
-                ?: listOf()
+        symbolicNamesIgnored.apply {
+            convention(listOf())
+            aem.prop.list("instance.awaitUp.bundles.symbolicNamesIgnored")?.let { set(it) }
+        }
     }
 
     fun bundles(options: BundlesCheck.() -> Unit) {
@@ -32,13 +38,18 @@ class AwaitUpAction(aem: AemExtension) : DefaultAction(aem) {
     }
 
     private var eventsOptions: EventsCheck.() -> Unit = {
-        unstableTopics = aem.prop.list("instance.awaitUp.event.unstableTopics") ?: listOf(
-                "org/osgi/framework/ServiceEvent/*",
-                "org/osgi/framework/FrameworkEvent/*",
-                "org/osgi/framework/BundleEvent/*"
-        )
-        unstableAgeMillis = aem.prop.long("instance.awaitUp.event.unstableAgeMillis")
-                ?: TimeUnit.SECONDS.toMillis(5)
+        unstableTopics.apply {
+            convention(listOf(
+                    "org/osgi/framework/ServiceEvent/*",
+                    "org/osgi/framework/FrameworkEvent/*",
+                    "org/osgi/framework/BundleEvent/*"
+            ))
+            aem.prop.list("instance.awaitUp.event.unstableTopics")?.let { set(it) }
+        }
+        unstableAgeMillis.apply {
+            convention(TimeUnit.SECONDS.toMillis(5))
+            aem.prop.long("instance.awaitUp.event.unstableAgeMillis")?.let { set(it) }
+        }
     }
 
     fun events(options: EventsCheck.() -> Unit) {
@@ -46,10 +57,14 @@ class AwaitUpAction(aem: AemExtension) : DefaultAction(aem) {
     }
 
     private var componentsOptions: ComponentsCheck.() -> Unit = {
-        platformComponents = aem.prop.list("instance.awaitUp.components.platform")
-                ?: listOf("com.day.crx.packaging.*", "org.apache.sling.installer.*")
-        specificComponents = aem.prop.list("instance.awaitUp.components.specific")
-                ?: aem.javaPackages.map { "$it.*" }
+        platformComponents.apply {
+            convention(listOf("com.day.crx.packaging.*", "org.apache.sling.installer.*"))
+            aem.prop.list("instance.awaitUp.components.platform")?.let { set(it) }
+        }
+        specificComponents.apply {
+            convention(aem.obj.provider { aem.javaPackages.map { "$it.*" } })
+            aem.prop.list("instance.awaitUp.components.specific")?.let { set(it) }
+        }
     }
 
     fun components(options: ComponentsCheck.() -> Unit) {
@@ -57,8 +72,10 @@ class AwaitUpAction(aem: AemExtension) : DefaultAction(aem) {
     }
 
     private var unchangedOptions: UnchangedCheck.() -> Unit = {
-        awaitTime = aem.prop.long("instance.awaitUp.unchanged.awaitTime")
-                ?: TimeUnit.SECONDS.toMillis(3)
+        awaitTime.apply {
+            convention(TimeUnit.SECONDS.toMillis(3))
+            aem.prop.long("instance.awaitUp.unchanged.awaitTime")?.let { set(it) }
+        }
     }
 
     fun unchanged(options: UnchangedCheck.() -> Unit) {
@@ -66,8 +83,14 @@ class AwaitUpAction(aem: AemExtension) : DefaultAction(aem) {
     }
 
     private val runner = CheckRunner(aem).apply {
-        delay = aem.prop.long("instance.awaitUp.delay") ?: TimeUnit.SECONDS.toMillis(1)
-        verbose = aem.prop.boolean("instance.awaitUp.verbose") ?: true
+        delay.apply {
+            convention(TimeUnit.SECONDS.toMillis(1))
+            aem.prop.long("instance.awaitUp.delay")?.let { set(it) }
+        }
+        verbose.apply {
+            convention(true)
+            aem.prop.boolean("instance.awaitUp.verbose")?.let { set(it) }
+        }
 
         checks {
             listOf(

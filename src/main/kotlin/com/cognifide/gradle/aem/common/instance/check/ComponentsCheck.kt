@@ -6,13 +6,13 @@ import com.cognifide.gradle.common.utils.Formats
 @Suppress("MagicNumber")
 class ComponentsCheck(group: CheckGroup) : DefaultCheck(group) {
 
-    var platformComponents = listOf<String>()
+    val platformComponents = aem.obj.strings { convention(listOf()) }
 
-    var specificComponents = listOf<String>()
+    val specificComponents  = aem.obj.strings { convention(listOf()) }
 
     init {
         sync.apply {
-            http.connectionTimeout = 10000
+            http.connectionTimeout.convention(10_000)
         }
     }
 
@@ -31,7 +31,7 @@ class ComponentsCheck(group: CheckGroup) : DefaultCheck(group) {
 
         val total = state.components.size
 
-        val inactive = state.find(platformComponents, listOf()).filter { !it.active }
+        val inactive = state.find(platformComponents.get(), listOf()).filter { !it.active }
         if (inactive.isNotEmpty()) {
             statusLogger.error(
                     when (inactive.size) {
@@ -43,7 +43,7 @@ class ComponentsCheck(group: CheckGroup) : DefaultCheck(group) {
             )
         }
 
-        val failed = state.find(specificComponents, listOf()).filter { it.failedActivation }
+        val failed = state.find(specificComponents.get(), listOf()).filter { it.failedActivation }
         if (failed.isNotEmpty()) {
             statusLogger.error(
                     when (failed.size) {
@@ -55,7 +55,7 @@ class ComponentsCheck(group: CheckGroup) : DefaultCheck(group) {
             )
         }
 
-        val unsatisfied = state.find(specificComponents, listOf()).filter { it.unsatisfied }
+        val unsatisfied = state.find(specificComponents.get(), listOf()).filter { it.unsatisfied }
         if (unsatisfied.isNotEmpty()) {
             statusLogger.error(
                     when (unsatisfied.size) {

@@ -9,18 +9,33 @@ import org.apache.http.HttpResponse
 open class InstanceHttpClient(aem: AemExtension, val instance: Instance) : HttpClient(aem.common) {
 
     init {
-        baseUrl = instance.httpUrl
-        basicUser = instance.user
-        basicPassword = instance.password
-        authorizationPreemptive = true
+        baseUrl.set(instance.httpUrl)
+        basicUser.set(instance.user)
+        basicPassword.set(instance.password)
+        authorizationPreemptive.set(true)
 
-        connectionTimeout = aem.prop.int("instance.http.connectionTimeout") ?: 30000
-        connectionRetries = aem.prop.boolean("instance.http.connectionRetries") ?: true
-        connectionIgnoreSsl = aem.prop.boolean("instance.http.connectionIgnoreSsl") ?: true
+        connectionTimeout.apply {
+            convention(30_000)
+            aem.prop.int("instance.http.connectionTimeout")?.let { set(it) }
+        }
+        connectionRetries.apply {
+            convention(true)
+            aem.prop.boolean("instance.http.connectionRetries")?.let { set(it) }
 
-        proxyHost = aem.prop.string("instance.http.proxyHost")
-        proxyPort = aem.prop.int("instance.http.proxyPort")
-        proxyScheme = aem.prop.string("instance.http.proxyScheme")
+        }
+        connectionIgnoreSsl.apply {
+            convention(true)
+            aem.prop.boolean("instance.http.connectionIgnoreSsl")?.let { set(it) }
+        }
+        proxyHost.apply {
+            aem.prop.string("instance.http.proxyHost")?.let { set(it) }
+        }
+        proxyPort.apply {
+            aem.prop.int("instance.http.proxyPort")?.let { set(it) }
+        }
+        proxyScheme.apply {
+            aem.prop.string("instance.http.proxyScheme")?.let { set(it) }
+        }
     }
 
     override fun throwStatusException(response: HttpResponse) {

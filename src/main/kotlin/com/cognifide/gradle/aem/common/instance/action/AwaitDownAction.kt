@@ -12,10 +12,14 @@ import java.util.concurrent.TimeUnit
 class AwaitDownAction(aem: AemExtension) : DefaultAction(aem) {
 
     private var timeoutOptions: TimeoutCheck.() -> Unit = {
-        stateTime = aem.prop.long("instance.awaitDown.timeout.stateTime")
-                ?: TimeUnit.MINUTES.toMillis(2)
-        constantTime = aem.prop.long("instance.awaitDown.timeout.constantTime")
-                ?: TimeUnit.MINUTES.toMillis(10)
+        stateTime.apply {
+            convention(TimeUnit.MINUTES.toMillis(2))
+            aem.prop.long("instance.awaitDown.timeout.stateTime")?.let { set(it) }
+        }
+        constantTime.apply {
+            convention(TimeUnit.MINUTES.toMillis(10))
+            aem.prop.long("instance.awaitDown.timeout.constantTime")?.let { set(it) }
+        }
     }
 
     fun timeout(options: TimeoutCheck.() -> Unit) {
@@ -23,8 +27,10 @@ class AwaitDownAction(aem: AemExtension) : DefaultAction(aem) {
     }
 
     private var unavailableOptions: UnavailableCheck.() -> Unit = {
-        utilisationTime = aem.prop.long("instance.awaitDown.unavailable.utilizationTime")
-                ?: TimeUnit.SECONDS.toMillis(10)
+        utilisationTime.apply {
+            convention(TimeUnit.SECONDS.toMillis(10))
+            aem.prop.long("instance.awaitDown.unavailable.utilizationTime")?.let { set(it) }
+        }
     }
 
     fun unavailable(options: UnavailableCheck.() -> Unit) {
@@ -32,8 +38,10 @@ class AwaitDownAction(aem: AemExtension) : DefaultAction(aem) {
     }
 
     private var unchangedOptions: UnchangedCheck.() -> Unit = {
-        awaitTime = aem.prop.long("instance.awaitDown.unchanged.awaitTime")
-                ?: TimeUnit.SECONDS.toMillis(3)
+        awaitTime.apply {
+            convention(TimeUnit.SECONDS.toMillis(3))
+            aem.prop.long("instance.awaitDown.unchanged.awaitTime")?.let { set(it) }
+        }
     }
 
     fun unchanged(options: UnchangedCheck.() -> Unit) {
@@ -41,8 +49,14 @@ class AwaitDownAction(aem: AemExtension) : DefaultAction(aem) {
     }
 
     private val runner = CheckRunner(aem).apply {
-        delay = aem.prop.long("instance.awaitDown.delay") ?: TimeUnit.SECONDS.toMillis(1)
-        verbose = aem.prop.boolean("instance.awaitDown.verbose") ?: true
+        delay.apply {
+            convention(TimeUnit.SECONDS.toMillis(1))
+            aem.prop.long("instance.awaitDown.delay")?.let { set(it) }
+        }
+        verbose.apply {
+            convention(true)
+            aem.prop.boolean("instance.awaitDown.verbose")?.let { set(it) }
+        }
 
         checks {
             listOf(
