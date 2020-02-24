@@ -21,8 +21,6 @@ open class InstanceProvision : InstanceTask() {
         if (performed > 0) {
             common.notifier.notify("Instances provisioned", "Performed $performed steps(s)" +
                     " ($ended ended, $failed failed) on ${instances.size} instance(s).")
-        } else {
-            logger.info("No actions to perform / all instances provisioned.")
         }
     }
 
