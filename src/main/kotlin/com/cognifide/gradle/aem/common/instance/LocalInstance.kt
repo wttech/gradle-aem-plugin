@@ -321,10 +321,9 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
 
     @get:JsonIgnore
     val runningDir get() = property("user.dir")?.let { aem.project.file(it) }
-            ?: throw InstanceException("Instance is not running: $this")
 
     @get:JsonIgnore
-    val runningOther get() = dir != runningDir
+    val runningOther get() = runningDir?.let { dir != it } ?: false
 
     internal fun init(callback: LocalInstance.() -> Unit) {
         apply(callback)
