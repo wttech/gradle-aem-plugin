@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.instance.tail
+package com.cognifide.gradle.aem.common.instance.tail
 
 import com.cognifide.gradle.common.utils.Formats
 import java.time.LocalDateTime
@@ -63,13 +63,13 @@ class Log(
 
         fun create(instance: InstanceLogInfo, logLines: List<String>): Log {
             if (logLines.isEmpty() || logLines.first().isBlank()) {
-                throw InstanceTailerException("Passed log entry is empty!")
+                throw TailerException("Passed log entry is empty!")
             }
 
             val fullLog = logLines.joinToString("\n")
 
             when (val result = matchLogLine(logLines.first())) {
-                null -> throw InstanceTailerException("Passed text is not a log entry\nPattern:\n$LOG_PATTERN\nText:\n${logLines.first()}")
+                null -> throw TailerException("Passed text is not a log entry\nPattern:\n$LOG_PATTERN\nText:\n${logLines.first()}")
                 else -> {
                     val (timestamp, level, source, message) = result.destructured
                     val followingMessageLines = logLines.slice(1 until logLines.size)
@@ -89,7 +89,7 @@ class Log(
 
         fun parseTimestamp(timestamp: String, instance: InstanceLogInfo = InstanceLogInfo.none()): ZonedDateTime {
             return LocalDateTime.parse(timestamp, DATE_TIME_FORMATTER).atZone(instance.zoneId)
-                    ?: throw InstanceTailerException("Invalid timestamp in log:\n$timestamp" +
+                    ?: throw TailerException("Invalid timestamp in log:\n$timestamp" +
                             "\n required format: $DATE_TIME_FORMATTER")
         }
 

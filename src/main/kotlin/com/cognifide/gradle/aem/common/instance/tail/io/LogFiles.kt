@@ -1,7 +1,7 @@
-package com.cognifide.gradle.aem.instance.tail.io
+package com.cognifide.gradle.aem.common.instance.tail.io
 
 import com.cognifide.gradle.common.utils.Formats
-import com.cognifide.gradle.aem.instance.tail.Tailer
+import com.cognifide.gradle.aem.common.instance.tail.Tailer
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileWriter

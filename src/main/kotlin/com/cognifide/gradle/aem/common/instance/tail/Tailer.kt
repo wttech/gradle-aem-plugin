@@ -1,12 +1,12 @@
-package com.cognifide.gradle.aem.instance.tail
+package com.cognifide.gradle.aem.common.instance.tail
 
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.InstanceManager
 import com.cognifide.gradle.common.utils.Formats
-import com.cognifide.gradle.aem.instance.tail.io.ConsolePrinter
-import com.cognifide.gradle.aem.instance.tail.io.FileDestination
-import com.cognifide.gradle.aem.instance.tail.io.LogFiles
-import com.cognifide.gradle.aem.instance.tail.io.UrlSource
+import com.cognifide.gradle.aem.common.instance.tail.io.ConsolePrinter
+import com.cognifide.gradle.aem.common.instance.tail.io.FileDestination
+import com.cognifide.gradle.aem.common.instance.tail.io.LogFiles
+import com.cognifide.gradle.aem.common.instance.tail.io.UrlSource
 import com.cognifide.gradle.common.utils.using
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -106,6 +106,8 @@ class Tailer(val manager: InstanceManager) {
         this.incidentChecker = predicate
     }
 
+    fun tail(instance: Instance) = tail(listOf(instance))
+
     /**
      * Run tailer daemons (tracking instance logs).
      */
@@ -154,7 +156,7 @@ class Tailer(val manager: InstanceManager) {
 
     private fun checkStartLock() {
         if (logFiles.isLocked()) {
-            throw InstanceTailerException("Another instance of log tailer is running for this project.")
+            throw TailerException("Another instance of log tailer is running for this project.")
         }
         logFiles.lock()
     }

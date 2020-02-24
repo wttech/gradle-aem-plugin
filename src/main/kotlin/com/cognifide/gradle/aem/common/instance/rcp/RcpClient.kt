@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.instance.rcp
+package com.cognifide.gradle.aem.common.instance.rcp
 
 import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.AemExtension

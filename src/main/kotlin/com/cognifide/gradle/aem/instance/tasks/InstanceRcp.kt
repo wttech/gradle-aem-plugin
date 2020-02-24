@@ -1,15 +1,12 @@
-package com.cognifide.gradle.aem.instance.rcp
+package com.cognifide.gradle.aem.instance.tasks
 
 import com.cognifide.gradle.aem.AemDefaultTask
+import com.cognifide.gradle.aem.common.instance.rcp.RcpClient
 import org.gradle.api.tasks.TaskAction
 
 open class InstanceRcp : AemDefaultTask() {
 
     private val notifier = common.notifier
-
-    init {
-        description = "Copy JCR content from one instance to another."
-    }
 
     fun options(configurer: RcpClient.() -> Unit) {
         this.options = configurer
@@ -40,6 +37,10 @@ open class InstanceRcp : AemDefaultTask() {
             notifier.lifecycle("RCP finished", "Copied ${summary.copiedPaths} JCR root(s) between instances." +
                     "Duration: ${summary.durationString}")
         }
+    }
+
+    init {
+        description = "Copy JCR content from one instance to another."
     }
 
     companion object {

@@ -1,7 +1,7 @@
-package com.cognifide.gradle.aem.instance.tail.io
+package com.cognifide.gradle.aem.common.instance.tail.io
 
-import com.cognifide.gradle.aem.instance.tail.InstanceLogInfo
-import com.cognifide.gradle.aem.instance.tail.Log
+import com.cognifide.gradle.aem.common.instance.tail.InstanceLogInfo
+import com.cognifide.gradle.aem.common.instance.tail.Log
 
 class ConsolePrinter(
     instance: InstanceLogInfo,

@@ -1,6 +1,6 @@
-package com.cognifide.gradle.aem.instance.tail
+package com.cognifide.gradle.aem.common.instance.tail
 
-import com.cognifide.gradle.aem.instance.tail.io.ConsolePrinter
+import com.cognifide.gradle.aem.common.instance.tail.io.ConsolePrinter
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch

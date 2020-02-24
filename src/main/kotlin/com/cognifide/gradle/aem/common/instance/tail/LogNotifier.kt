@@ -1,6 +1,6 @@
-package com.cognifide.gradle.aem.instance.tail
+package com.cognifide.gradle.aem.common.instance.tail
 
-import com.cognifide.gradle.aem.instance.tail.io.LogFiles
+import com.cognifide.gradle.aem.common.instance.tail.io.LogFiles
 import com.cognifide.gradle.common.notifier.NotifierFacade
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import java.net.URI

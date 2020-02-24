@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.instance.tail
+package com.cognifide.gradle.aem.common.instance.tail
 
 import java.io.BufferedReader
 

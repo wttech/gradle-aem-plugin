@@ -2,7 +2,7 @@ package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.common.CommonPlugin
 import com.cognifide.gradle.aem.instance.tasks.InstanceProvision
-import com.cognifide.gradle.aem.instance.rcp.InstanceRcp
+import com.cognifide.gradle.aem.instance.tasks.InstanceRcp
 import com.cognifide.gradle.aem.instance.tasks.InstanceSatisfy
 import com.cognifide.gradle.aem.instance.tasks.InstanceTail
 import com.cognifide.gradle.aem.instance.tasks.*

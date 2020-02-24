@@ -81,8 +81,10 @@ class Satisfier(private val manager: InstanceManager) {
 
     private val cmdGroups: Boolean get() = aem.prop.list("instance.satisfy.urls") != null
 
+    fun satisfy(instance: Instance) = satisfy(listOf(instance))
+
     @Suppress("ComplexMethod")
-    fun satisfy(instances: Collection<Instance>): MutableList<PackageAction> {
+    fun satisfy(instances: Collection<Instance>): List<PackageAction> {
         val allActions = mutableListOf<PackageAction>()
 
         common.progress(packageGroups.sumBy { it.files.size * groupInstances(instances, it).size }) {

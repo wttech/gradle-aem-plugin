@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.instance.tail
+package com.cognifide.gradle.aem.common.instance.tail
 
 import com.cognifide.gradle.aem.common.instance.Instance
 import kotlinx.coroutines.*

@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.instance.tail
+package com.cognifide.gradle.aem.common.instance.tail
 
 import com.cognifide.gradle.common.utils.Patterns
 import org.gradle.api.Project
