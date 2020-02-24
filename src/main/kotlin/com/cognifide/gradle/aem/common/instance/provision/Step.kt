@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.instance.provision
+package com.cognifide.gradle.aem.common.instance.provision
 
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.InstanceSync

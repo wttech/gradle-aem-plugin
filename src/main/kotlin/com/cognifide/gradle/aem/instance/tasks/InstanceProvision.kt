@@ -1,19 +1,18 @@
-package com.cognifide.gradle.aem.instance.provision
+package com.cognifide.gradle.aem.instance.tasks
 
-import com.cognifide.gradle.aem.AemDefaultTask
-import org.gradle.api.tasks.Internal
+import com.cognifide.gradle.aem.common.instance.checkAvailable
+import com.cognifide.gradle.aem.common.instance.provision.Status
+import com.cognifide.gradle.aem.common.tasks.InstanceTask
 import org.gradle.api.tasks.TaskAction
 
-open class InstanceProvision : AemDefaultTask() {
-
-    @Internal
-    val provisioner = Provisioner(aem)
+open class InstanceProvision : InstanceTask() {
 
     @TaskAction
     fun provision() {
-        val allActions = provisioner.provision()
-        val performedActions = allActions.filter { it.status != Status.SKIPPED }
+        instances.get().checkAvailable()
 
+        val allActions = instanceManager.provisioner.provision(instances.get())
+        val performedActions = allActions.filter { it.status != Status.SKIPPED }
         val instances = performedActions.map { it.step.instance }.toSet()
         val performed = performedActions.count()
         val ended = performedActions.count { it.status == Status.ENDED }
@@ -27,18 +26,11 @@ open class InstanceProvision : AemDefaultTask() {
         }
     }
 
-    fun provisioner(options: Provisioner.() -> Unit) {
-        provisioner.apply(options)
-    }
-
-    fun step(id: String, options: Step.() -> Unit) = provisioner.step(id, options)
-
     init {
         description = "Configures instances only in concrete circumstances (only once, after some time etc)"
     }
 
     companion object {
-
         const val NAME = "instanceProvision"
     }
 }

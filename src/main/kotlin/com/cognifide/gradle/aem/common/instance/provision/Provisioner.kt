@@ -1,5 +1,5 @@
 
-package com.cognifide.gradle.aem.instance.provision
+package com.cognifide.gradle.aem.common.instance.provision
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.instance.Instance
@@ -14,13 +14,6 @@ class Provisioner(val aem: AemExtension) {
     private val common = aem.common
 
     private val logger = aem.logger
-
-    /**
-     * Instances to perform provisioning.
-     */
-    val instances = aem.obj.list<Instance> {
-        convention(aem.obj.provider { aem.instances })
-    }
 
     /**
      * Forces to perform steps that supports greediness regardless their state on instances (already performed).
@@ -56,9 +49,14 @@ class Provisioner(val aem: AemExtension) {
     }
 
     /**
-     * Perform all provision steps.
+     * Perform all provision steps for specified instance.
      */
-    fun provision(): List<Action> {
+    fun provision(instance: Instance) = provision(listOf(instance))
+
+    /**
+     * Perform all provision steps for all instances in parallel.
+     */
+    fun provision(instances: Collection<Instance>): List<Action> {
         steps.forEach { it.validate() }
 
         val actions = mutableListOf<Action>()
@@ -71,7 +69,7 @@ class Provisioner(val aem: AemExtension) {
                     intro += " / ${definition.description}"
                 }
                 logger.info(intro)
-                common.parallel.each(instances.get()) { actions.add(InstanceStep(it, definition).run { provisionStep() }) }
+                common.parallel.each(instances) { actions.add(InstanceStep(it, definition).run { provisionStep() }) }
             }
         }
 

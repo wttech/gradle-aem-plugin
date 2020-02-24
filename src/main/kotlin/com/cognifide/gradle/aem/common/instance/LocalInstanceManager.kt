@@ -17,7 +17,7 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
 
     private val logger = aem.logger
 
-    private val base = aem.instanceManager
+    val base = aem.instanceManager
 
     /**
      * Path from which e.g extra files for local AEM instances will be copied.
@@ -48,7 +48,7 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
         source.set(Source.of(name))
     }
 
-    fun resolveSourceFiles() {
+    fun resolveFiles() {
         logger.info("Resolving local instance files")
         logger.info("Resolved local instance files:\n${sourceFiles.joinToString("\n")}")
     }

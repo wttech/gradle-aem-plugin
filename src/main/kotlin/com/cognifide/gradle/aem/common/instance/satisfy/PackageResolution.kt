@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.instance.satisfy
+package com.cognifide.gradle.aem.common.instance.satisfy
 
 import com.cognifide.gradle.aem.common.bundle.BundleFile
 import com.cognifide.gradle.aem.common.pkg.PackageException

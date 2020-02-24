@@ -2,6 +2,9 @@ package com.cognifide.gradle.aem.common.instance
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.instance.action.*
+import com.cognifide.gradle.aem.common.instance.provision.Provisioner
+import com.cognifide.gradle.aem.common.instance.satisfy.Satisfier
+import com.cognifide.gradle.common.utils.using
 
 open class InstanceManager(private val aem: AemExtension) {
 
@@ -11,6 +14,18 @@ open class InstanceManager(private val aem: AemExtension) {
     val configDir = aem.obj.dir {
         convention(aem.obj.projectDir("src/aem/instance"))
         aem.prop.file("instance.configDir")?.let { set(it) }
+    }
+
+    val satisfier = Satisfier(aem)
+
+    fun satisfier(options: Satisfier.() -> Unit) = satisfier.using(options)
+
+    val provisioner = Provisioner(aem)
+
+    fun provisioner(options: Provisioner.() -> Unit) = provisioner.using(options)
+
+    fun resolveFiles() {
+        satisfier.resolve()
     }
 
     // ===== Definition API =====
