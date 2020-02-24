@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.instance
 
 import com.cognifide.gradle.aem.test.AemBuildTest
+import org.gradle.internal.impldep.org.testng.AssertJUnit.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty
 
@@ -87,8 +88,8 @@ class LocalInstancePluginTest : AemBuildTest() {
                                 sync {
                                     osgiFramework {
                                         val crxDe = getConfiguration("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet")
-                                        if(crxDe.properties["alias"] != "/crx/server") {
-                                            throw Exception("CRX/DE is not enabled on this instance!")
+                                        if (crxDe.properties["alias"] != "/crx/server") {
+                                            throw Exception("CRX/DE is not enabled on ${'$'}instance!!")
                                         }
                                     }
                                 }
@@ -117,20 +118,21 @@ class LocalInstancePluginTest : AemBuildTest() {
             assertTask(":instanceBackup")
             val localBackupDir = file("build/instanceBackup/local")
             assertFileExists(localBackupDir)
-            assert(1 == localBackupDir.walk().filter { it.name.endsWith(".backup.zip") }.count())
+            assertEquals("Backup file should end with *.backup.zip suffix!",
+                    1, localBackupDir.walk().filter { it.name.endsWith(".backup.zip") }.count())
         }
 
         runBuild(projectDir, "instanceDestroy", "-Pforce") {
             assertTask(":instanceDestroy")
-            assertFileDoesntExist(file(".instance/author"))
-            assertFileDoesntExist(file(".instance/publish"))
+            assertFileNotExists(".instance/author")
+            assertFileNotExists(".instance/publish")
         }
 
         runBuild(projectDir, "instanceUp") {
             assertTask(":instanceCreate")
             assertTask(":instanceUp")
-            assertFileExists(file(".instance/author"))
-            assertFileExists(file(".instance/publish"))
+            assertFileExists(".instance/author")
+            assertFileExists(".instance/publish")
         }
 
         runBuild(projectDir, "assertIfCrxDeEnabled") {
@@ -141,6 +143,8 @@ class LocalInstancePluginTest : AemBuildTest() {
             assertTask(":instanceDestroy")
         }
 
-        runBuild(projectDir, "clean") {}
+        runBuild(projectDir, "clean") {
+            assertTask(":clean")
+        }
     }
 }
