@@ -17,8 +17,14 @@ class AemBuildResult(val result: BuildResult, val projectDir: File) {
 
     fun assertFileExists(path: String) = assertFileExists(file(path))
 
+    fun assertFileNotExists(path: String) = assertFileNotExists(file(path))
+
     fun assertFileExists(file: File) {
         assertTrue({ file.exists() }, "File does not exist: $file")
+    }
+
+    fun assertFileNotExists(file: File) {
+        assertFalse({ file.exists() }, "File exists: $file")
     }
 
     fun assertZipEntry(zip: File, entry: String, matcher: (String) -> Unit) {
