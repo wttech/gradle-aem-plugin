@@ -106,20 +106,39 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
             return result
         }
 
-    fun saveVersion() {
+    internal fun saveVersion() {
         if (version != Formats.versionUnknown().version) {
             versionFile.writeText(version)
         }
     }
 
-    @get:JsonIgnore
-    val startScript: Script get() = binScript("start")
+    private val startScript: Script get() = binScript("start")
 
-    @get:JsonIgnore
-    val stopScript: Script get() = binScript("stop")
+    internal fun executeStartScript() = try {
+        logger.info("Executing start script: $startScript")
+        startScript.executeAsync()
+    } catch (e: InstanceException) {
+        throw InstanceException("Instance start script failed! Check resources like disk free space, open HTTP ports etc.", e)
+    }
 
-    @get:JsonIgnore
-    val statusScript: Script get() = binScript("status")
+    private val stopScript: Script get() = binScript("stop")
+
+    internal fun executeStopScript() {
+        try {
+            logger.info("Executing stop script: $stopScript")
+            stopScript.executeAsync()
+        } catch (e: InstanceException) {
+            throw InstanceException("Instance stop script failed!", e)
+        }
+
+        try {
+            sync.osgiFramework.stop()
+        } catch (e: InstanceException) {
+            // ignore, fallback for sure
+        }
+    }
+
+    private val statusScript: Script get() = binScript("status")
 
     @get:JsonIgnore
     val touched: Boolean get() = dir.exists()
@@ -144,14 +163,9 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
     @get:JsonIgnore
     val localManager: LocalInstanceManager get() = aem.localInstanceManager
 
-    fun create() {
-        if (created) {
-            logger.info(("Instance already created: $this"))
-            return
-        }
+    fun create() = localManager.create(this)
 
-        logger.info("Creating: $this")
-
+    internal fun prepare() {
         cleanDir(true)
         copyFiles()
         validateFiles()
@@ -159,8 +173,6 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
         correctFiles()
         customize()
         lock(LOCK_CREATE)
-
-        logger.info("Created: $this")
     }
 
     private fun copyFiles() {
@@ -235,6 +247,8 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
         }
     }
 
+    internal fun delete() = cleanDir(true)
+
     private fun cleanDir(create: Boolean) {
         if (dir.exists()) {
             dir.deleteRecursively()
@@ -244,9 +258,7 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
         }
     }
 
-    fun customize() {
-        logger.info("Customizing: $this")
-
+    internal fun customize() {
         FileOperations.copyResources(FILES_PATH, dir, false)
 
         overridesDirs.filter { it.exists() }.forEach {
@@ -285,55 +297,11 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
                 }
             }
         }
-
-        logger.info("Customized: $windowTitle")
     }
 
-    fun up() {
-        if (!created) {
-            logger.info("Instance not created, so it could not be up: $this")
-            return
-        }
+    fun up() = localManager.up(this)
 
-        val status = checkStatus()
-        if (status == Status.RUNNING) {
-            logger.info("Instance already running. No need to start: $this")
-            return
-        }
-
-        try {
-            logger.info("Executing start script: $startScript")
-            startScript.executeAsync()
-        } catch (e: InstanceException) {
-            throw InstanceException("Instance start script failed! Check resources like disk free space, open HTTP ports etc.", e)
-        }
-    }
-
-    fun down() {
-        if (!created) {
-            logger.info("Instance not created, so it could not be down: $this")
-            return
-        }
-
-        val status = checkStatus()
-        if (status != Status.RUNNING) {
-            logger.info("Instance is not running (reports status '$status'). No need to stop: $this")
-            return
-        }
-
-        try {
-            logger.info("Executing stop script: $stopScript")
-            stopScript.executeAsync()
-        } catch (e: InstanceException) {
-            throw InstanceException("Instance stop script failed!", e)
-        }
-
-        try {
-            sync.osgiFramework.stop()
-        } catch (e: InstanceException) {
-            // ignore, fallback for sure
-        }
-    }
+    fun down() = localManager.down(this)
 
     @get:JsonIgnore
     val status: Status
@@ -357,29 +325,18 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
     @get:JsonIgnore
     val running: Boolean get() = created && checkStatus() == Status.RUNNING
 
-    fun init() {
-        saveVersion()
-
-        if (!initialized) {
-            logger.info("Initializing: $this")
-            localManager.initOptions(this)
-            lock(LOCK_INIT)
-        }
+    internal fun init(callback: LocalInstance.() -> Unit) {
+        apply(callback)
+        lock(LOCK_INIT)
     }
 
-    fun destroy() {
-        logger.info("Destroying: $this")
-
-        cleanDir(false)
-
-        logger.info("Destroyed: $this")
-    }
+    fun destroy() = localManager.destroy(this)
 
     private fun lockFile(name: String): File = File(dir, "$name.lock")
 
-    fun lock(name: String) = FileOperations.lock(lockFile(name))
+    private fun lock(name: String) = FileOperations.lock(lockFile(name))
 
-    fun locked(name: String): Boolean = lockFile(name).exists()
+    private fun locked(name: String): Boolean = lockFile(name).exists()
 
     @get:JsonIgnore
     val windowTitle get() = "LocalInstance(name='$name', httpUrl='$httpUrl'" +
@@ -393,7 +350,7 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
     override fun validate() {
         super.validate()
 
-        // TODO determine when & where to put such validation; in execution time?
+        // TODO determine when & where to put such validation; in execution time?)
         val userDir = property("user.dir")
         if (!userDir.isNullOrBlank() && dir != File(userDir)) {
             throw InstanceException("Detected conflict with $this!\n" +

@@ -52,8 +52,6 @@ abstract class AbstractInstance(@Transient @JsonIgnore protected val aem: AemExt
     @get:JsonIgnore
     val manager: InstanceManager get() = aem.instanceManager
 
-    fun reload(options: ReloadAction.() -> Unit = {}) = manager.reload(this, options)
-
     fun awaitUp(options: AwaitUpAction.() -> Unit = {}) = manager.awaitUp(this, options)
 
     fun awaitDown(options: AwaitDownAction.() -> Unit = {}) = manager.awaitDown(this, options)
@@ -61,6 +59,8 @@ abstract class AbstractInstance(@Transient @JsonIgnore protected val aem: AemExt
     fun awaitReloaded(reloadOptions: ReloadAction.() -> Unit = {}, awaitUpOptions: AwaitUpAction.() -> Unit = {}) {
         manager.awaitReloaded(this, reloadOptions, awaitUpOptions)
     }
+
+    fun reload(options: ReloadAction.() -> Unit = {}) = manager.reload(this, options)
 
     fun check(options: CheckAction.() -> Unit) = manager.check(this, options)
 

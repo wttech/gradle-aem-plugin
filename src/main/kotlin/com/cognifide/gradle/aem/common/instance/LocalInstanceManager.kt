@@ -4,10 +4,7 @@ import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.instance.action.AwaitDownAction
 import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
-import com.cognifide.gradle.aem.common.instance.local.BackupResolver
-import com.cognifide.gradle.aem.common.instance.local.InstallResolver
-import com.cognifide.gradle.aem.common.instance.local.QuickstartResolver
-import com.cognifide.gradle.aem.common.instance.local.Source
+import com.cognifide.gradle.aem.common.instance.local.*
 import com.cognifide.gradle.aem.common.utils.onEachApply
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
@@ -141,9 +138,8 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
         this.initOptions = options
     }
 
-    /**
-     * Returns only instances that are newly created.
-     */
+    fun create(instance: LocalInstance) = create(listOf(instance))
+
     fun create(instances: Collection<LocalInstance>): List<LocalInstance> {
         val uncreatedInstances = instances.filter { !it.created }
         if (uncreatedInstances.isEmpty()) {
@@ -214,7 +210,9 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
         common.progress(instances.size) {
             instances.onEachApply {
                 increment("Customizing instance '$name'") {
+                    logger.info("Customizing: $this")
                     customize()
+                    logger.info("Customized: $this")
                 }
             }
         }
@@ -229,15 +227,21 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
         common.progress(instances.size) {
             instances.onEachApply {
                 increment("Creating instance '$name'") {
-                    create()
+                    if (created) {
+                        logger.info(("Instance already created: $this"))
+                        return@increment
+                    }
+
+                    logger.info("Creating: $this")
+                    prepare()
+                    logger.info("Created: $this")
                 }
             }
         }
     }
 
-    /**
-     * Returns destroyed instances.
-     */
+    fun destroy(instance: LocalInstance): Boolean = destroy(listOf(instance)).isNotEmpty()
+
     fun destroy(instances: Collection<LocalInstance>): List<LocalInstance> {
         val createdInstances = instances.filter { it.touched }
         if (createdInstances.isEmpty()) {
@@ -250,13 +254,17 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
         common.progress(createdInstances.size) {
             createdInstances.onEachApply {
                 increment("Destroying '$name'") {
-                    destroy()
+                    logger.info("Destroying: $this")
+                    delete()
+                    logger.info("Destroyed: $this")
                 }
             }
         }
 
         return createdInstances
     }
+
+    fun up(instance: LocalInstance, awaitUpOptions: AwaitUpAction.() -> Unit = {}) = up(listOf(instance), awaitUpOptions).isNotEmpty()
 
     fun up(instances: Collection<LocalInstance>, awaitUpOptions: AwaitUpAction.() -> Unit = {}): List<LocalInstance> {
         val downInstances = instances.filter { !it.running }
@@ -267,13 +275,30 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
 
         common.progress(downInstances.size) {
             downInstances.onEachApply {
-                increment("Customizing instance '$name'") { customize() }
+                increment("Customizing instance '$name'") {
+                    logger.info("Customizing: $this")
+                    customize()
+                    logger.info("Customized: $this")
+                }
             }
         }
 
         common.progress(downInstances.size) {
             common.parallel.with(downInstances) {
-                increment("Starting instance '$name'") { up() }
+                increment("Starting instance '$name'") {
+                    if (!created) {
+                        logger.info("Instance not created, so it could not be up: $this")
+                        return@increment
+                    }
+
+                    val status = checkStatus()
+                    if (status == Status.RUNNING) {
+                        logger.info("Instance already running. No need to start: $this")
+                        return@increment
+                    }
+
+                    executeStartScript()
+                }
             }
         }
 
@@ -281,16 +306,21 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
 
         common.progress(downInstances.size) {
             common.parallel.with(downInstances) {
-                increment("Initializing instance '$name'") { init() }
+                increment("Initializing instance '$name'") {
+                    saveVersion()
+                    if (!initialized) {
+                        logger.info("Initializing: $this")
+                        init(initOptions)
+                    }
+                }
             }
         }
 
         return downInstances
     }
 
-    /**
-     * Returns instances turned off.
-     */
+    fun down(instance: LocalInstance, awaitDownOptions: AwaitDownAction.() -> Unit = {}) = down(listOf(instance), awaitDownOptions).isNotEmpty()
+
     fun down(instances: Collection<LocalInstance>, awaitDownOptions: AwaitDownAction.() -> Unit = {}): List<LocalInstance> {
         val upInstances = instances.filter { it.running }
         if (upInstances.isEmpty()) {
@@ -300,7 +330,20 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
 
         common.progress(upInstances.size) {
             common.parallel.with(upInstances) {
-                increment("Stopping instance '$name'") { down() }
+                increment("Stopping instance '$name'") {
+                    if (!created) {
+                        logger.info("Instance not created, so it could not be down: $this")
+                        return@increment
+                    }
+
+                    val status = checkStatus()
+                    if (status != Status.RUNNING) {
+                        logger.info("Instance is not running (reports status '$status'). No need to stop: $this")
+                        return@increment
+                    }
+
+                    executeStopScript()
+                }
             }
         }
 
