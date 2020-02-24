@@ -227,11 +227,27 @@ interface Instance : Serializable {
 val Collection<Instance>.names: String
     get() = if (isNotEmpty()) joinToString(", ") { it.name } else "none"
 
+fun Collection<Instance>.check() {
+    checkAvailable()
+    filterIsInstance<LocalInstance>().checkRunningOther()
+}
+
 fun Collection<Instance>.checkAvailable() {
     val unavailable = filter { !it.available }
     if (unavailable.isNotEmpty()) {
-        throw InstanceException("Instances are unavailable: ${unavailable.names}.\n" +
-                "Ensure having correct instance URLs defined, credentials correctly encoded " +
-                "and networking in correct state (internet accessible, VPN on/off).")
+        throw InstanceException("Instances are unavailable (${unavailable.size}):\n" +
+                unavailable.joinToString("\n") { "Instance '${it.name}' at URL '${it.httpUrl}'" } + "\n\n" +
+                "Ensure having correct URLs defined, credentials correctly encoded and networking in correct state (internet accessible, VPN on/off)"
+        )
+    }
+}
+
+fun Collection<LocalInstance>.checkRunningOther() {
+    val running = filter { it.runningOther }
+    if (running.isNotEmpty()) {
+        throw InstanceException("Instances are already running (${running.size}):\n" +
+                running.joinToString("\n") { "Instance '${it.name}' at URL '${it.httpUrl}' located at path '${it.runningDir}'" } + "\n\n" +
+                "Ensure having these instances down."
+        )
     }
 }

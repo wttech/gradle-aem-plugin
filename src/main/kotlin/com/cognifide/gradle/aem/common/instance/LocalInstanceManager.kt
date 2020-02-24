@@ -6,12 +6,17 @@ import com.cognifide.gradle.aem.common.instance.action.AwaitDownAction
 import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
 import com.cognifide.gradle.aem.common.instance.local.*
 import com.cognifide.gradle.aem.common.utils.onEachApply
+import com.cognifide.gradle.aem.instance.LocalInstancePlugin
+import com.cognifide.gradle.aem.pluginProject
+import com.cognifide.gradle.common.utils.using
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 import java.io.Serializable
 import java.util.concurrent.TimeUnit
 
 class LocalInstanceManager(private val aem: AemExtension) : Serializable {
+
+    private val project = aem.project
 
     private val common = aem.common
 
@@ -20,20 +25,42 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
     val base = aem.instanceManager
 
     /**
-     * Path from which e.g extra files for local AEM instances will be copied.
-     * Useful for overriding default startup scripts ('start.bat' or 'start.sh') or providing some files inside 'crx-quickstart'.
+     * Using local AEM instances is acceptable in any project so that lookup for project applying local instance plugin is required
+     * Needed to determine e.g directory in which AEM quickstart will be stored and override files.
      */
-    val configDir = aem.obj.dir {
-        convention(base.configDir.dir("local"))
-        aem.prop.file("localInstance.configDir")?.let { set(it) }
+    val projectDir = aem.obj.dir {
+        convention(aem.obj.provider {
+            project.pluginProject(LocalInstancePlugin.ID)?.layout?.projectDirectory ?: throw LocalInstanceException(
+                    "Using local AEM instances requires having at least one project applying plugin '${LocalInstancePlugin.ID}'" +
+                    " or setting property 'localInstance.projectDir'!"
+            )
+        })
+        aem.prop.file("localInstance.projectDir")?.let { set(it) }
     }
 
     /**
      * Path in which local AEM instances will be stored.
      */
     val rootDir = aem.obj.dir {
-        convention(aem.obj.projectDir(".instance"))
-        aem.prop.file("localInstance.root")?.let { set(it) }
+        convention(projectDir.dir(".instance"))
+        aem.prop.file("localInstance.rootDir")?.let { set(it) }
+    }
+
+    /**
+     * Path for storing local AEM instances related resources.
+     */
+    val configDir = aem.obj.dir {
+        convention(projectDir.dir("src/aem/localInstance"))
+        aem.prop.file("localInstance.configDir")?.let { set(it) }
+    }
+
+    /**
+     * Path from which e.g extra files for local AEM instances will be copied.
+     * Useful for overriding default startup scripts ('start.bat' or 'start.sh') or providing some files inside 'crx-quickstart'.
+     */
+    val overrideDir = aem.obj.dir {
+        convention(configDir.dir("override"))
+        aem.prop.file("localInstance.overrideDir")?.let { set(it) }
     }
 
     /**
@@ -86,27 +113,21 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
     /**
      * Custom properties that can be injected into instance files.
      */
-    val expandProperties = aem.obj.map<String, Any> {
-        convention(mapOf())
-    }
+    val expandProperties = aem.obj.map<String, Any> { convention(mapOf()) }
 
     val quickstart = QuickstartResolver(aem)
 
     /**
      * Configure AEM source files when creating instances from the scratch.
      */
-    fun quickstart(options: QuickstartResolver.() -> Unit) {
-        quickstart.apply(options)
-    }
+    fun quickstart(options: QuickstartResolver.() -> Unit) = quickstart.using(options)
 
     /**
      * Configure AEM backup sources.
      */
     val backup = BackupResolver(aem)
 
-    fun backup(options: BackupResolver.() -> Unit) {
-        backup.apply(options)
-    }
+    fun backup(options: BackupResolver.() -> Unit) = backup.using(options)
 
     @get:JsonIgnore
     val backupZip: File?
@@ -124,9 +145,7 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
     /**
      * Configure CRX packages, bundles to be pre-installed on instance(s).
      */
-    fun install(options: InstallResolver.() -> Unit) {
-        install.apply(options)
-    }
+    fun install(options: InstallResolver.() -> Unit) = install.using(options)
 
     @get:JsonIgnore
     internal var initOptions: LocalInstance.() -> Unit = {}
@@ -169,17 +188,17 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
                 if (backupZip != null) {
                     createFromBackup(instances, backupZip)
                 } else {
-                    throw InstanceException("Cannot create instance(s) because no backups available!")
+                    throw LocalInstanceException("Cannot create instance(s) because no backups available!")
                 }
             }
             Source.BACKUP_LOCAL -> {
                 val backupZip = backup.local
-                        ?: throw InstanceException("Cannot create instance(s) because no local backups available!")
+                        ?: throw LocalInstanceException("Cannot create instance(s) because no local backups available!")
                 createFromBackup(instances, backupZip)
             }
             Source.BACKUP_REMOTE -> {
                 val backupZip = backup.remote
-                        ?: throw InstanceException("Cannot create instance(s) because no remote backups available!")
+                        ?: throw LocalInstanceException("Cannot create instance(s) because no remote backups available!")
                 createFromBackup(instances, backupZip)
             }
             Source.SCRATCH -> createFromScratch(instances)
@@ -220,7 +239,7 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
 
     fun createFromScratch(instances: Collection<LocalInstance>) {
         if (quickstart.jar == null || quickstart.license == null) {
-            throw InstanceException("Cannot create instances due to lacking source files. " +
+            throw LocalInstanceException("Cannot create instances due to lacking source files. " +
                     "Ensure having specified local instance quickstart jar & license urls.")
         }
 

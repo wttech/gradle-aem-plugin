@@ -5,15 +5,33 @@ import com.cognifide.gradle.aem.common.instance.action.*
 import com.cognifide.gradle.aem.common.instance.provision.Provisioner
 import com.cognifide.gradle.aem.common.instance.satisfy.Satisfier
 import com.cognifide.gradle.aem.common.instance.tail.Tailer
+import com.cognifide.gradle.aem.instance.InstancePlugin
+import com.cognifide.gradle.aem.pluginProject
 import com.cognifide.gradle.common.utils.using
 
 open class InstanceManager(val aem: AemExtension) {
+
+    private val project = aem.project
+
+    /**
+     * Using remote AEM instances is acceptable in any project, so that lookup for project applying local instance plugin is required
+     * Needed to determine common directory storing instance related resources (tailer incident filter, Groovy scripts etc).
+     */
+    val projectDir = aem.obj.dir {
+        convention(aem.obj.provider {
+            project.pluginProject(InstancePlugin.ID)?.layout?.projectDirectory ?: throw InstanceException(
+                    "Using remote AEM instances requires having at least one project applying plugin '${InstancePlugin.ID}'" +
+                    " or setting property 'instance.projectDir'!"
+            )
+        })
+        aem.prop.file("instance.projectDir")?.let { set(it) }
+    }
 
     /**
      * Directory storing instance wide configuration files.
      */
     val configDir = aem.obj.dir {
-        convention(aem.obj.projectDir("src/aem/instance"))
+        convention(projectDir.dir("src/aem/instance"))
         aem.prop.file("instance.configDir")?.let { set(it) }
     }
 
@@ -21,7 +39,7 @@ open class InstanceManager(val aem: AemExtension) {
      * Directory storing outputs of instance tasks.
      */
     val buildDir = aem.obj.dir {
-        convention(aem.obj.buildDir("instance"))
+        convention(projectDir.dir("build/instance"))
         aem.prop.file("instance.buildDir")?.let { set(it) }
     }
 
