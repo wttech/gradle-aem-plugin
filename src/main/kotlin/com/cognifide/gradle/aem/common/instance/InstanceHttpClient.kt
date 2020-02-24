@@ -21,7 +21,6 @@ open class InstanceHttpClient(aem: AemExtension, val instance: Instance) : HttpC
         connectionRetries.apply {
             convention(true)
             aem.prop.boolean("instance.http.connectionRetries")?.let { set(it) }
-
         }
         connectionIgnoreSsl.apply {
             convention(true)

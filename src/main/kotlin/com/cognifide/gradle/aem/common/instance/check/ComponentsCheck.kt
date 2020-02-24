@@ -8,7 +8,7 @@ class ComponentsCheck(group: CheckGroup) : DefaultCheck(group) {
 
     val platformComponents = aem.obj.strings { convention(listOf()) }
 
-    val specificComponents  = aem.obj.strings { convention(listOf()) }
+    val specificComponents = aem.obj.strings { convention(listOf()) }
 
     init {
         sync.apply {
