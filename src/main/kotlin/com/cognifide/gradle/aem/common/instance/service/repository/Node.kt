@@ -120,6 +120,8 @@ class Node(val repository: Repository, val path: String) : Serializable {
 
     fun siblings() = parent.children().filter { it != this }
 
+    fun sibling(name: String) = parent.child(name)
+
     /**
      * Check if node exists.
      *
@@ -478,7 +480,7 @@ class Node(val repository: Repository, val path: String) : Serializable {
     }
 
     override fun toString(): String {
-        return "Node(path='$path', properties=$propertiesLoaded)"
+        return "Node(path='$path', properties=$properties)"
     }
 
     enum class Property(val value: String) {

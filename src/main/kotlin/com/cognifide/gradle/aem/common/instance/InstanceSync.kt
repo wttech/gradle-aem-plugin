@@ -68,6 +68,6 @@ class InstanceSync(val aem: AemExtension, val instance: Instance) {
     fun <T> crx(callback: Crx.() -> T): T = crx.run(callback)
 
     init {
-        aem.instanceOptions.syncOptions(this)
+        aem.instanceManager.syncOptions(this)
     }
 }

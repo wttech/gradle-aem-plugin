@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem.instance.satisfy
 
-import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.InstanceSync
 import com.cognifide.gradle.aem.common.instance.checkAvailable
@@ -129,7 +128,7 @@ open class InstanceSatisfy : PackageDeploy() {
                 PackageState(it, packageManager.find(it))
             }
             val packageSatisfiableAny = packageStates.any {
-                greedy.get() || group.greedy || packageManager.isSnapshot(it.file) || !it.uploaded || !it.installed
+                (group.greedy.orNull ?: greedy.get()) || packageManager.isSnapshot(it.file) || !it.uploaded || !it.installed
             }
 
             if (packageSatisfiableAny) {
@@ -139,7 +138,7 @@ open class InstanceSatisfy : PackageDeploy() {
             packageStates.forEach { pkg ->
                 increment("Satisfying package '${pkg.file.name}' on instance '${instance.name}'") {
                     when {
-                        greedy.get() || group.greedy -> {
+                        group.greedy.orNull ?: greedy.get() -> {
                             logger.info("Satisfying package ${pkg.name} on ${instance.name} (greedy).")
                             satisfyPackage(group, pkg)
                         }
@@ -168,22 +167,21 @@ open class InstanceSatisfy : PackageDeploy() {
         }
 
         if (packageSatisfiedAny) {
-            group.completer()
+            group.completer(packageInstances)
         }
     }
 
-    private fun determineInstancesForGroup(group: PackageGroup): List<Instance> {
-        return instances.get().filter { Patterns.wildcard(it.name, group.instanceName) }
+    private fun determineInstancesForGroup(group: PackageGroup) = instances.get().filter {
+        Patterns.wildcard(it.name, group.instanceName.get())
     }
 
     private fun InstanceSync.satisfyPackage(group: PackageGroup, state: PackageState) {
-        packageManager.deploy(state.file, group.distributed ?: distributed.get())
+        packageManager.deploy(state.file, group.distributed.orNull ?: distributed.get())
         packageSatisfiedAny = true
         packageActions.add(PackageAction(state.file, instance))
     }
 
     init {
-        group = AemTask.GROUP
         description = "Satisfies AEM by uploading & installing dependent packages on instance(s)."
         aem.prop.boolean("package.satisfy.awaited")?.let { awaited.set(it) }
     }

@@ -52,10 +52,7 @@ open class SyncFileTask : AemDefaultTask() {
 
     fun awaitUp() {
         if (awaited.get()) {
-            aem.instanceActions.awaitUp {
-                instances.convention(this@SyncFileTask.instances)
-                awaitUpOptions()
-            }
+            aem.instanceManager.awaitUp(instances.get(), awaitUpOptions)
         }
     }
 

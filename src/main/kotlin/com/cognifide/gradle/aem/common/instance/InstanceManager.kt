@@ -1,8 +1,9 @@
 package com.cognifide.gradle.aem.common.instance
 
 import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.common.instance.action.*
 
-open class InstanceOptions(private val aem: AemExtension) {
+open class InstanceManager(private val aem: AemExtension) {
 
     /**
      * Directory storing instance wide configuration files.
@@ -11,6 +12,8 @@ open class InstanceOptions(private val aem: AemExtension) {
         convention(aem.obj.projectDir("src/aem/instance"))
         aem.prop.file("instance.configDir")?.let { set(it) }
     }
+
+    // ===== Definition API =====
 
     /**
      * List of AEM instances e.g on which packages could be deployed.
@@ -83,4 +86,31 @@ open class InstanceOptions(private val aem: AemExtension) {
     fun parse(url: String): Instance = Instance.parse(aem, url).ifEmpty {
         throw InstanceException("Instance URL cannot be parsed properly '$url'!")
     }.single()
+
+    // ===== Actions API =====
+
+    fun awaitUp(instance: Instance, options: AwaitUpAction.() -> Unit = {}) = awaitUp(listOf(instance), options)
+
+    fun awaitUp(instances: Collection<Instance>, options: AwaitUpAction.() -> Unit = {}) = AwaitUpAction(aem).apply(options).perform(instances)
+
+    fun awaitDown(instance: Instance, options: AwaitDownAction.() -> Unit = {}) = awaitDown(listOf(instance), options)
+
+    fun awaitDown(instances: Collection<Instance>, options: AwaitDownAction.() -> Unit = {}) = AwaitDownAction(aem).apply(options).perform(instances)
+
+    fun awaitReloaded(instance: Instance, reloadOptions: ReloadAction.() -> Unit = {}, awaitUpOptions: AwaitUpAction.() -> Unit = {}) {
+        awaitReloaded(listOf(instance), reloadOptions, awaitUpOptions)
+    }
+
+    fun awaitReloaded(instances: Collection<Instance>, reloadOptions: ReloadAction.() -> Unit = {}, awaitUpOptions: AwaitUpAction.() -> Unit = {}) {
+        reload(instances, reloadOptions)
+        awaitUp(instances, awaitUpOptions)
+    }
+
+    fun reload(instance: Instance, options: ReloadAction.() -> Unit = {}) = reload(listOf(instance), options)
+
+    fun reload(instances: Collection<Instance>, options: ReloadAction.() -> Unit = {}) = ReloadAction(aem).apply(options).perform(instances)
+
+    fun check(instance: Instance, options: CheckAction.() -> Unit) = check(listOf(instance), options)
+
+    fun check(instances: Collection<Instance>, options: CheckAction.() -> Unit) = CheckAction(aem).apply(options).perform(instances)
 }

@@ -1,10 +1,10 @@
 package com.cognifide.gradle.aem.instance.tasks
 
-import com.cognifide.gradle.aem.AemDefaultTask
+import com.cognifide.gradle.aem.common.tasks.LocalInstanceTask
 import com.cognifide.gradle.aem.instance.satisfy.InstanceSatisfy
 import org.gradle.api.tasks.TaskAction
 
-open class InstanceResolve : AemDefaultTask() {
+open class InstanceResolve : LocalInstanceTask() {
 
     init {
         description = "Resolves instance files from remote sources before running other tasks"
@@ -13,7 +13,7 @@ open class InstanceResolve : AemDefaultTask() {
     @TaskAction
     fun resolve() {
         common.tasks.get<InstanceSatisfy>(InstanceSatisfy.NAME).resolvePackages() // more light at first
-        aem.localInstanceManager.resolveSourceFiles()
+        localInstanceManager.resolveSourceFiles()
     }
 
     companion object {

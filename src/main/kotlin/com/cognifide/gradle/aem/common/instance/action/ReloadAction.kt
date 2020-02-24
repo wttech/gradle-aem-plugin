@@ -7,25 +7,21 @@ import com.cognifide.gradle.aem.common.instance.InstanceException
 /**
  * Reloads all instances (both remote and local instances).
  */
-class ReloadAction(aem: AemExtension) : AnyInstanceAction(aem) {
+class ReloadAction(aem: AemExtension) : DefaultAction(aem) {
 
-    override fun perform() {
-        if (!enabled) {
-            return
-        }
-
-        if (instances.get().isEmpty()) {
+    override fun perform(instances: Collection<Instance>) {
+        if (instances.isEmpty()) {
             aem.logger.info("No instances to reload.")
             return
         }
 
-        reload()
+        reload(instances)
     }
 
-    private fun reload() {
+    private fun reload(instances: Collection<Instance>) {
         val reloaded = mutableListOf<Instance>()
 
-        common.parallel.with(instances.get()) {
+        common.parallel.with(instances) {
             try {
                 sync.osgiFramework.restart()
                 reloaded += this
@@ -36,7 +32,7 @@ class ReloadAction(aem: AemExtension) : AnyInstanceAction(aem) {
         }
 
         if (reloaded.isNotEmpty()) {
-            val unavailable = instances.get() - reloaded
+            val unavailable = instances - reloaded
 
             aem.logger.info("Reloading instance(s): ${reloaded.size} triggered, ${unavailable.size} unavailable")
         } else {
