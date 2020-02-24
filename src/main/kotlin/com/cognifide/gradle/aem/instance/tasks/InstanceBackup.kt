@@ -61,7 +61,7 @@ open class InstanceBackup : AemDefaultTask() {
     }
 
     private fun upload(file: File, verbose: Boolean) {
-        val dirUrl = resolver.uploadUrl.get()
+        val dirUrl = resolver.uploadUrl.orNull
         if (dirUrl.isNullOrBlank()) {
             val message = "Cannot upload local instance backup as of URL is not defined."
             if (verbose) {
