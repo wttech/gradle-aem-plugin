@@ -22,8 +22,6 @@ open class InstanceSatisfy : InstanceTask() {
                 common.notifier.notify("Packages satisfied", "Performed ${packageActions.size} action(s) for " +
                         "${packages.size} package(s) on ${packageInstances.size} instance(s).")
             }
-        } else {
-            logger.lifecycle("All packages satisfied (no actions to perform).")
         }
     }
 

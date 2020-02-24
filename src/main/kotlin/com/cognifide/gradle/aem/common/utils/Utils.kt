@@ -39,6 +39,7 @@ fun String.normalizeSeparators(separator: String): String = this.replace(":", se
         .removePrefix(separator)
         .removeSuffix(separator)
 
+@Suppress("MagicNumber")
 fun String.shortenClass(maxLength: Int = 32): String {
     val pkgs = split(".").toMutableList()
     var result = this

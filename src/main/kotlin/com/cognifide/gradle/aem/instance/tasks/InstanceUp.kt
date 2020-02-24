@@ -18,8 +18,10 @@ open class InstanceUp : LocalInstanceTask() {
 
     @TaskAction
     fun up() {
-        val downInstances = localInstanceManager.up(instances.get(), awaitOptions)
-        common.notifier.lifecycle("Instance(s) up", "Which: ${downInstances.names}")
+        val upInstances = localInstanceManager.up(instances.get(), awaitOptions)
+        if (upInstances.isNotEmpty()) {
+            common.notifier.lifecycle("Instance(s) up", "Which: ${upInstances.names}")
+        }
     }
 
     init {
