@@ -15,7 +15,7 @@ import com.cognifide.gradle.aem.common.pkg.vault.FilterFile
 import com.cognifide.gradle.aem.instance.*
 import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.PackageCompose
-import com.cognifide.gradle.aem.instance.rcp.RcpClient
+import com.cognifide.gradle.aem.common.instance.rcp.RcpClient
 import com.cognifide.gradle.aem.common.pkg.vault.VaultClient
 import com.cognifide.gradle.aem.common.pkg.vault.VaultSummary
 import com.cognifide.gradle.aem.pkg.PackageSyncPlugin
@@ -413,3 +413,8 @@ class AemExtension(val project: Project) : Serializable {
 
 val Project.aem
     get() = AemExtension.of(this)
+
+fun Project.pluginProject(id: String): Project? = when {
+    plugins.hasPlugin(id) -> this
+    else -> rootProject.allprojects.firstOrNull { it.plugins.hasPlugin(id) }
+}

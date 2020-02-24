@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.pkg.tasks
 
-import com.cognifide.gradle.aem.common.instance.checkAvailable
+import com.cognifide.gradle.aem.common.instance.check
 import com.cognifide.gradle.aem.common.instance.names
 import com.cognifide.gradle.aem.common.tasks.PackageTask
 import com.cognifide.gradle.aem.common.utils.fileNames
@@ -20,7 +20,7 @@ open class PackageDeploy : PackageTask() {
 
     @TaskAction
     open fun deploy() {
-        instances.get().checkAvailable()
+        instances.get().check()
         sync { packageManager.deploy(it, distributed.get()) }
         common.notifier.notify("Package deployed", "${files.files.fileNames} on ${instances.get().names}")
     }

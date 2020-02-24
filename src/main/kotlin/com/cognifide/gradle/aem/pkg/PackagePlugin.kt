@@ -4,7 +4,7 @@ import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.CommonPlugin
 import com.cognifide.gradle.aem.common.tasks.PackageTask
 import com.cognifide.gradle.aem.instance.InstancePlugin
-import com.cognifide.gradle.aem.instance.satisfy.InstanceSatisfy
+import com.cognifide.gradle.aem.instance.tasks.InstanceSatisfy
 import com.cognifide.gradle.aem.instance.tasks.InstanceCreate
 import com.cognifide.gradle.aem.instance.tasks.InstanceUp
 import com.cognifide.gradle.aem.pkg.tasks.*

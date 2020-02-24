@@ -64,6 +64,12 @@ abstract class AbstractInstance(@Transient @JsonIgnore protected val aem: AemExt
 
     fun check(options: CheckAction.() -> Unit) = manager.check(this, options)
 
+    fun provision() = manager.provisioner.provision(this)
+
+    fun satisfy() = manager.satisfier.satisfy(this)
+
+    fun tail() = manager.tailer.tail(this)
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false

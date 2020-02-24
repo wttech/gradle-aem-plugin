@@ -3,25 +3,6 @@ package com.cognifide.gradle.aem.common.utils
 import org.apache.commons.lang3.StringUtils
 import java.io.File
 
-object Utils {
-
-    fun mapOfNonNullValues(vararg entries: Pair<String, String?>): Map<String, String> {
-        return mutableMapOf<String, String>().apply {
-            for ((k, v) in entries) {
-                if (v != null) {
-                    put(k, v)
-                }
-            }
-        }
-    }
-
-    fun unroll(value: Any?, callback: (Any?) -> Unit) = when (value) {
-        is Array<*> -> value.forEach { callback(it) }
-        is Iterable<*> -> value.forEach { callback(it) }
-        else -> callback(value)
-    }
-}
-
 fun <T> Iterable<T>.onEachApply(block: T.() -> Unit): Iterable<T> {
     return this.onEach { it.apply(block) }
 }
@@ -39,6 +20,7 @@ fun String.normalizeSeparators(separator: String): String = this.replace(":", se
         .removePrefix(separator)
         .removeSuffix(separator)
 
+@Suppress("MagicNumber")
 fun String.shortenClass(maxLength: Int = 32): String {
     val pkgs = split(".").toMutableList()
     var result = this
