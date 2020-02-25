@@ -63,15 +63,14 @@ class LocalInstancePluginTest : AemBuildTest() {
                 }
                 
                 aem {
-                    tasks {
-                        instanceSatisfy {
+                    instance {
+                        satisfier {
                             packages {
                                 "dep.core-components-all"("com.adobe.cq:core.wcm.components.all:2.8.0@zip")
                                 "tool.search-webconsole-plugin"("com.neva.felix:search-webconsole-plugin:1.2.0")
                             }
                         }
-                
-                        instanceProvision {
+                        provisioner {
                             step("enable-crxde") {
                                 description = "Enables CRX DE"
                                 condition { once() && instance.environment != "prod" }
@@ -84,7 +83,9 @@ class LocalInstancePluginTest : AemBuildTest() {
                                 }
                             }
                         }
-                        
+                    }
+                    
+                    tasks {
                         register("assertIfCrxDeEnabled") {
                             doLast {
                                 sync {
