@@ -2,7 +2,6 @@ package com.cognifide.gradle.aem.common.pkg
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
-import com.cognifide.gradle.aem.common.pkg.vault.NodeTypesSync
 import java.io.Serializable
 
 class PackageOptions(private val aem: AemExtension) : Serializable {
@@ -70,29 +69,4 @@ class PackageOptions(private val aem: AemExtension) : Serializable {
     }
 
     internal var validatorOptions: PackageValidator.() -> Unit = {}
-
-    /**
-     * Controls automatic node types exporting from available instance to be later used in package validation.
-     */
-    val nodeTypesSync = aem.obj.typed<NodeTypesSync> {
-        convention(aem.obj.provider {
-            when {
-                aem.commonOptions.offline.get() -> NodeTypesSync.PRESERVE_FALLBACK
-                else -> NodeTypesSync.PRESERVE_AUTO
-            }
-        })
-        aem.prop.string("package.nodeTypesSync")?.let { set(NodeTypesSync.of(it)) }
-    }
-
-    fun nodeTypesSync(name: String) {
-        nodeTypesSync.set(NodeTypesSync.of(name))
-    }
-
-    /**
-     * Determines location on which synchronized node types will be saved.
-     */
-    val nodeTypesSyncFile = aem.obj.file {
-        convention(configDir.file(Package.NODE_TYPES_SYNC_FILE))
-        aem.prop.file("package.nodeTypesSyncFile")?.let { fileValue(it) }
-    }
 }

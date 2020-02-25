@@ -57,7 +57,7 @@ class Satisfier(private val manager: InstanceManager) {
     }
 
     private var validatorOptions: PackageValidator.() -> Unit = {
-        planName.convention("satisfy-plan.json")
+        planName.convention("plan-satisfy.json")
     }
 
     /**

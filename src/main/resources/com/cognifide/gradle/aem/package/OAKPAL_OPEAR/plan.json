@@ -1,8 +1,6 @@
 {
   "checklists": [
-    "net.adamcin.oakpal.core/basic",
-    "acs-commons-integrators",
-    "content-class-aem65"
+    "net.adamcin.oakpal.core/basic"
   ],
   "installHookPolicy": "SKIP",
   "checks": [

@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.common.pkg
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
+import com.cognifide.gradle.aem.common.pkg.vault.CndSync
 import com.cognifide.gradle.common.build.CollectingLogger
 import net.adamcin.oakpal.core.*
 import org.apache.commons.io.FileUtils
@@ -55,7 +56,7 @@ class PackageValidator(@Internal val aem: AemExtension) {
 
     @Input
     val planName = aem.obj.string {
-        convention("default-plan.json")
+        convention("plan.json")
         aem.prop.string("package.validator.plan")?.let { set(it) }
     }
 
@@ -93,7 +94,19 @@ class PackageValidator(@Internal val aem: AemExtension) {
     val jcrPrivileges = aem.obj.strings { convention(listOf("crx:replicate")) }
 
     @Internal
-    val cndFiles = aem.obj.files { from(workDir.file("nodetypes.cnd")) }
+    val cndFile = aem.obj.file { convention(workDir.file("nodetypes.cnd")) }
+
+    @Internal
+    val cndFiles = aem.obj.files { from(cndFile) }
+
+    @Internal
+    val cndSync = CndSync(aem).apply {
+        aem.prop.string("package.validator.cndSync.type")?.let { type(it) }
+        file.apply {
+            convention(configDir.file("nodetypes.cnd"))
+            aem.prop.file("package.validator.cndSync.file")?.let { set(it) }
+        }
+    }
 
     fun oakMachine(options: OakMachine.Builder.() -> Unit) {
         this.oakMachineOptions = options
@@ -118,7 +131,7 @@ class PackageValidator(@Internal val aem: AemExtension) {
     fun perform(vararg packages: File) = perform(packages.asIterable())
 
     fun perform(packages: Iterable<File>) {
-        logger.info("Considered CRX packages in validation:${packages.joinToString("\n")}")
+        logger.info("Considered CRX packages in validation:\n${packages.joinToString("\n")}")
 
         if (!enabled.get()) {
             logger.info("Validation of CRX packages is skipped as of validator is disabled!")
@@ -131,61 +144,11 @@ class PackageValidator(@Internal val aem: AemExtension) {
                 else -> "Validating CRX packages (${packages.count()})"
             }
 
-            syncNodeTypes()
+            cndSync.sync()
             prepareOpearDir()
             runOakPal(packages)
         }
     }
-
-    private fun syncNodeTypes() {
-        // TODO ...
-    }
-
-    /*
-        private fun syncNodeTypes() {
-        when (vaultNodeTypesSync.get()) {
-            NodeTypesSync.ALWAYS -> syncNodeTypesOrElse {
-                throw PackageException("Cannot synchronize node types because none of AEM instances are available!")
-            }
-            NodeTypesSync.AUTO -> syncNodeTypesOrFallback()
-            NodeTypesSync.PRESERVE_AUTO -> {
-                if (!vaultNodeTypesSyncFile.get().asFile.exists()) {
-                    syncNodeTypesOrFallback()
-                }
-            }
-            NodeTypesSync.FALLBACK -> syncNodeTypesFallback()
-            NodeTypesSync.PRESERVE_FALLBACK -> {
-                if (!vaultNodeTypesSyncFile.get().asFile.exists()) {
-                    syncNodeTypesFallback()
-                }
-            }
-            NodeTypesSync.NEVER -> {}
-            null -> {}
-        }
-    }
-
-    fun syncNodeTypesOrElse(action: () -> Unit) = common.buildScope.doOnce("syncNodeTypes") {
-        aem.availableInstance?.sync {
-            try {
-                vaultNodeTypesSyncFile.get().asFile.apply {
-                    parentFile.mkdirs()
-                    writeText(crx.nodeTypes)
-                }
-            } catch (e: CommonException) {
-                aem.logger.debug("Cannot synchronize node types using $instance! Cause: ${e.message}", e)
-                action()
-            }
-        } ?: action()
-    }
-
-    fun syncNodeTypesOrFallback() = syncNodeTypesOrElse {
-        aem.logger.debug("Using fallback instead of synchronizing node types (forced or AEM instances are unavailable).")
-        syncNodeTypesFallback()
-    }
-
-    fun syncNodeTypesFallback() = vaultNodeTypesSyncFile.get().asFile.writeText(nodeTypeFallback)
-
-     */
 
     private fun prepareOpearDir() {
         logger.info("Preparing OakPAL Opear directory '${workDir.get()}'")
@@ -194,9 +157,6 @@ class PackageValidator(@Internal val aem: AemExtension) {
             deleteRecursively()
             mkdirs()
         }
-
-        workDir.deleteRecursively()
-        workDir.mkdirs()
 
         FileOperations.copyResources(Package.OAKPAL_OPEAR_RESOURCES_PATH, workDir)
 
