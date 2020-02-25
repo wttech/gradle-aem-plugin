@@ -1,4 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<privileges xmlns:crx="http://www.day.com/crx/1.0">
-    <privilege abstract="false" name="crx:replicate"/>
-</privileges>

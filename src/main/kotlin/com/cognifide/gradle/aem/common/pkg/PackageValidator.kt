@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem.common.pkg
 
-import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
@@ -20,12 +19,18 @@ class PackageValidator(@Internal val aem: AemExtension) {
 
     private val logger = aem.logger
 
+    /**
+     * Allows to disable package validation at all.
+     */
     @Input
     val enabled = aem.obj.boolean {
         convention(true)
         aem.prop.boolean("package.validator.enabled")?.let { set(it) }
     }
 
+    /**
+     * Determines which level of validation message is indicating failed validation.
+     */
     @Input
     val severity = aem.obj.typed<Violation.Severity> {
         convention(Violation.Severity.MAJOR)
@@ -36,6 +41,9 @@ class PackageValidator(@Internal val aem: AemExtension) {
         severity.set(severityByName(name))
     }
 
+    /**
+     * Controls if failed validation should also fail current build.
+     */
     @Input
     val verbose = aem.obj.boolean {
         convention(true)
@@ -52,7 +60,11 @@ class PackageValidator(@Internal val aem: AemExtension) {
     }
 
     @Internal
-    val planFile = aem.obj.file { convention(workDir.file(planName)) }
+    val planFile = aem.obj.file {
+        convention(workDir.map { dir ->
+            dir.file(planName).get().takeIf { it.asFile.exists() } ?: dir.file("plan.json")
+        })
+    }
 
     @Internal
     val reportFile = aem.obj.file { convention(workDir.file("report.json")) }
@@ -74,27 +86,106 @@ class PackageValidator(@Internal val aem: AemExtension) {
     @InputFiles
     val configFiles = aem.obj.files { from(configDir) }
 
-    private var classLoaderProvider: () -> ClassLoader = { javaClass.classLoader }
+    @Input
+    val jcrNamespaces = aem.obj.map<String, String> { convention(mapOf("crx" to "http://www.day.com/crx/1.0")) }
 
-    fun classLoader(provider: () -> ClassLoader) {
-        this.classLoaderProvider = provider
+    @Input
+    val jcrPrivileges = aem.obj.strings { convention(listOf("crx:replicate")) }
+
+    @Internal
+    val cndFiles = aem.obj.files { from(workDir.file("nodetypes.cnd")) }
+
+    fun oakMachine(options: OakMachine.Builder.() -> Unit) {
+        this.oakMachineOptions = options
     }
+
+    private var oakMachineOptions: OakMachine.Builder.() -> Unit = { defaultOptions() }
+
+    private fun OakMachine.Builder.defaultOptions() {
+        withInitStage(InitStage.Builder().apply {
+            cndFiles.filter { it.exists() }.forEach { withOrderedCndUrl(it.toURI().toURL()) }
+            jcrNamespaces.get().forEach { (prefix, uri) -> withNs(prefix, uri) }
+            withPrivileges(jcrPrivileges.get())
+        }.build())
+    }
+
+    fun planClassLoader(provider: () -> ClassLoader) {
+        this.planClassLoaderProvider = provider
+    }
+
+    private var planClassLoaderProvider: () -> ClassLoader = { javaClass.classLoader }
 
     fun perform(vararg packages: File) = perform(packages.asIterable())
 
     fun perform(packages: Iterable<File>) {
+        logger.info("Considered CRX packages in validation:${packages.joinToString("\n")}")
+
         if (!enabled.get()) {
-            logger.info("Validating CRX packages(s) '${listPackages(packages)}' skipped as of validator is disabled.")
+            logger.info("Validation of CRX packages is skipped as of validator is disabled!")
             return
         }
 
         common.progress {
-            message = "Validating CRX package(s) '${packages.joinToString(", ") { it.name }}'"
+            message = when (packages.count()) {
+                1 -> "Validating CRX package '${packages.first().name}'"
+                else -> "Validating CRX packages (${packages.count()})"
+            }
 
+            syncNodeTypes()
             prepareOpearDir()
             runOakPal(packages)
         }
     }
+
+    private fun syncNodeTypes() {
+        // TODO ...
+    }
+
+    /*
+        private fun syncNodeTypes() {
+        when (vaultNodeTypesSync.get()) {
+            NodeTypesSync.ALWAYS -> syncNodeTypesOrElse {
+                throw PackageException("Cannot synchronize node types because none of AEM instances are available!")
+            }
+            NodeTypesSync.AUTO -> syncNodeTypesOrFallback()
+            NodeTypesSync.PRESERVE_AUTO -> {
+                if (!vaultNodeTypesSyncFile.get().asFile.exists()) {
+                    syncNodeTypesOrFallback()
+                }
+            }
+            NodeTypesSync.FALLBACK -> syncNodeTypesFallback()
+            NodeTypesSync.PRESERVE_FALLBACK -> {
+                if (!vaultNodeTypesSyncFile.get().asFile.exists()) {
+                    syncNodeTypesFallback()
+                }
+            }
+            NodeTypesSync.NEVER -> {}
+            null -> {}
+        }
+    }
+
+    fun syncNodeTypesOrElse(action: () -> Unit) = common.buildScope.doOnce("syncNodeTypes") {
+        aem.availableInstance?.sync {
+            try {
+                vaultNodeTypesSyncFile.get().asFile.apply {
+                    parentFile.mkdirs()
+                    writeText(crx.nodeTypes)
+                }
+            } catch (e: CommonException) {
+                aem.logger.debug("Cannot synchronize node types using $instance! Cause: ${e.message}", e)
+                action()
+            }
+        } ?: action()
+    }
+
+    fun syncNodeTypesOrFallback() = syncNodeTypesOrElse {
+        aem.logger.debug("Using fallback instead of synchronizing node types (forced or AEM instances are unavailable).")
+        syncNodeTypesFallback()
+    }
+
+    fun syncNodeTypesFallback() = vaultNodeTypesSyncFile.get().asFile.writeText(nodeTypeFallback)
+
+     */
 
     private fun prepareOpearDir() {
         logger.info("Preparing OakPAL Opear directory '${workDir.get()}'")
@@ -122,24 +213,25 @@ class PackageValidator(@Internal val aem: AemExtension) {
 
     private fun runOakPal(packages: Iterable<File>) {
         val opearFile = OpearFile.fromDirectory(workDir.get().asFile).getOrElse {
-            throw AemException("OakPAL Opear directory cannot be read properly!")
+            throw PackageException("OakPAL Opear directory cannot be read properly!")
         }
 
         val plan = determinePlan(opearFile)
 
-        logger.info("Validating CRX packages(s) '${listPackages(packages)}' using OakPAL plan '$plan'")
+        logger.info("Validating CRX packages using OakPAL plan '$plan'")
 
         val scanResult = OakpalPlan.fromJson(plan)
                 .map { p ->
-                    p.toOakMachineBuilder(DefaultErrorListener(), opearFile.getPlanClassLoader(classLoaderProvider()))
-                            .withNodeStoreSupplier { MemoryNodeStore() }
-                            .build()
+                    p.toOakMachineBuilder(DefaultErrorListener(), opearFile.getPlanClassLoader(planClassLoaderProvider())).apply {
+                        withNodeStoreSupplier { MemoryNodeStore() }
+                        oakMachineOptions()
+                    }.build()
                 }
                 .map { oak -> oak.scanPackages(packages.toList()) }
 
         if (scanResult.isFailure) {
             val e = scanResult.error.get()
-            throw PackageException("Cannot validate CRX package(s) '${listPackages(packages)}' due to OAKPal failure! Cause: '${e.message}'", e)
+            throw PackageException("Validating CRX packages aborted due to OAKPal failure! Cause: '${e.message}'", e)
         } else {
             val reports = scanResult.getOrDefault(emptyList<CheckReport>())
             saveReports(packages, reports)
@@ -157,12 +249,12 @@ class PackageValidator(@Internal val aem: AemExtension) {
     }
 
     private fun saveReports(packages: Iterable<File>, reports: List<CheckReport>?) {
-        logger.info("Saving OAKPal reports for CRX package(s) '${listPackages(packages)}' to file '${reportFile.get().asFile}'")
+        logger.info("Saving OAKPal reports to file '${reportFile.get().asFile}' for CRX package(s):\n${packages.joinToString("\n")}")
 
         try {
             ReportMapper.writeReportsToFile(reports, reportFile.get().asFile)
         } catch (e: IOException) {
-            throw PackageException("Cannot save OAKPal reports for CRX package(s) '${listPackages(packages)}'! Cause: '${e.message}'", e)
+            throw PackageException("Cannot save OAKPal reports to '${reportFile.get().asFile}'! Cause: '${e.message}'", e)
         }
     }
 
@@ -175,7 +267,7 @@ class PackageValidator(@Internal val aem: AemExtension) {
         var violationSeverityReached = 0
 
         if (violatedReports.isNotEmpty()) {
-            violationLogger.info("OakPAL check violations for CRX package(s) '${listPackages(packages)}':")
+            violationLogger.info("OakPAL check violations for CRX package(s):\n${packages.joinToString("\n")}")
 
             violatedReports.forEach { report ->
                 violationLogger.info("  ${report.checkName}")
@@ -205,7 +297,7 @@ class PackageValidator(@Internal val aem: AemExtension) {
             }
 
             val failMessage = "OAKPal check violations ($violationSeverityReached) were reported at or above" +
-                    " severity '${severity.get()}' for CRX package(s) '${listPackages(packages)}'!"
+                    " severity '${severity.get()}' for CRX package(s):\n${packages.joinToString("\n")}!"
 
             if (verbose.get()) {
                 throw PackageException(failMessage)
@@ -217,8 +309,6 @@ class PackageValidator(@Internal val aem: AemExtension) {
         }
     }
 
-    private fun listPackages(files: Iterable<File>) = files.joinToString(", ")
-
     private fun severityByName(name: String): Violation.Severity {
         return Violation.Severity.values().firstOrNull { it.name.equals(name, true) }
                 ?: throw PackageException("Unsupported package violation severity specified '$name'!")
@@ -226,6 +316,6 @@ class PackageValidator(@Internal val aem: AemExtension) {
 
     init {
         aem.packageOptions.validatorOptions(this)
-        aem.prop.string("package.validator.opear.base")?.let { base(it) }
+        aem.prop.string("package.validator.base")?.let { base(it) }
     }
 }

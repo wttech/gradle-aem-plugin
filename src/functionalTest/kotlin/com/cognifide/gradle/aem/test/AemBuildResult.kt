@@ -110,13 +110,14 @@ class AemBuildResult(val result: BuildResult, val projectDir: File) {
 
     companion object {
         val VAULT_FILES = listOf(
+                // Essentials
                 "META-INF/vault/config.xml",
-                "META-INF/vault/definition/thumbnail.png",
                 "META-INF/vault/filter.xml",
-                "META-INF/vault/nodetypes.cnd",
-                "META-INF/vault/privileges.xml",
                 "META-INF/vault/properties.xml",
-                "META-INF/vault/settings.xml"
+                "META-INF/vault/settings.xml",
+
+                // Extra
+                "META-INF/vault/definition/thumbnail.png"
         )
     }
 

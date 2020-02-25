@@ -8,7 +8,7 @@ class BundleInstalledBuilt(target: PackageCompose, private val task: TaskProvide
 
     private val aem = target.aem
 
-    override val file = aem.obj.file { fileProvider(aem.obj.provider { task.get().archiveFile.get().asFile }) }
+    override val file = aem.obj.file { convention(task.flatMap { it.archiveFile }) }
 
     override val dirPath = aem.obj.string { convention(task.flatMap { t -> t.installPath }) }
 
