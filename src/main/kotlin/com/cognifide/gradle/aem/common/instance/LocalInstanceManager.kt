@@ -35,7 +35,7 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
                     " or setting property 'localInstance.projectDir'!"
             )
         })
-        aem.prop.file("localInstance.projectDir")?.let { set(it) }
+        aem.prop.string("localInstance.projectDir")?.let { set(project.rootProject.file(it)) }
     }
 
     /**

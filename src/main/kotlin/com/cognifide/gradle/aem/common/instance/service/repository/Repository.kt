@@ -76,7 +76,7 @@ class Repository(sync: InstanceSync) : InstanceService(sync) {
 
     internal val http by lazy {
         RepositoryHttpClient(aem, instance).apply {
-            responseChecks = this@Repository.responseChecks.get()
+            responseChecks.set(this@Repository.responseChecks)
         }
     }
 }

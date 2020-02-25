@@ -9,7 +9,7 @@ class UnavailableCheck(group: CheckGroup) : DefaultCheck(group) {
     /**
      * Status of remote instances cannot be checked easily. Because of that, check will work just a little bit longer.
      */
-    var utilisationTime = TimeUnit.SECONDS.toMillis(15)
+    val utilisationTime = aem.obj.long { convention(TimeUnit.SECONDS.toMillis(15)) }
 
     override fun check() {
         val bundleState = state(sync.osgiFramework.determineBundleState())
@@ -30,7 +30,7 @@ class UnavailableCheck(group: CheckGroup) : DefaultCheck(group) {
                 )
             }
         } else {
-            if (utilisationTime !in 0..progress.stateTime) {
+            if (utilisationTime.get() !in 0..progress.stateTime) {
                 statusLogger.error(
                         "Awaiting utilized",
                         "HTTP server not responding. Waiting for utilization (port releasing) of $instance"

@@ -7,14 +7,14 @@ import org.apache.commons.lang3.StringUtils
 @Suppress("MagicNumber")
 class EventsCheck(group: CheckGroup) : DefaultCheck(group) {
 
-    var unstableTopics = listOf<String>()
+    val unstableTopics = aem.obj.strings { convention(listOf()) }
 
-    var unstableAgeMillis = TimeUnit.SECONDS.toMillis(5)
+    val unstableAgeMillis = aem.obj.long { convention(TimeUnit.SECONDS.toMillis(5)) }
 
     init {
         sync.apply {
-            http.connectionTimeout = 250
-            http.connectionRetries = false
+            http.connectionTimeout.convention(250)
+            http.connectionRetries.convention(false)
         }
     }
 
@@ -31,7 +31,7 @@ class EventsCheck(group: CheckGroup) : DefaultCheck(group) {
             return
         }
 
-        val unstable = state.matching(unstableTopics, unstableAgeMillis, instance.zoneId)
+        val unstable = state.matching(unstableTopics.get(), unstableAgeMillis.get(), instance.zoneId)
         if (unstable.isNotEmpty()) {
             statusLogger.error(
                     when (unstable.size) {

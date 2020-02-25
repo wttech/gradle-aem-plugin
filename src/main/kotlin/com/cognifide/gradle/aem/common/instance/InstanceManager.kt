@@ -24,7 +24,7 @@ open class InstanceManager(val aem: AemExtension) {
                     " or setting property 'instance.projectDir'!"
             )
         })
-        aem.prop.file("instance.projectDir")?.let { set(it) }
+        aem.prop.string("instance.projectDir")?.let { set(project.rootProject.file(it)) }
     }
 
     /**

@@ -21,7 +21,7 @@ class CheckRunner(internal val aem: AemExtension) {
         checks = definitions
     }
 
-    var progresses = listOf<CheckProgress>()
+    private var progresses = listOf<CheckProgress>()
 
     /**
      * Get current checking progress of concrete instance.
@@ -34,31 +34,29 @@ class CheckRunner(internal val aem: AemExtension) {
     /**
      * How long to wait after failed checking before checking again.
      */
-    var delay = 0L
+    val delay = aem.obj.long { convention(0L) }
 
     /**
      * Controls if aborted running should fail build.
      */
-    var verbose = true
+    val verbose = aem.obj.boolean { convention(true) }
 
     /**
      * Time since running started.
      */
-    val runningTime: Long
-        get() = runningWatch.time
+    val runningTime: Long get() = runningWatch.time
 
     private val runningWatch = StopWatch()
 
     /**
      * Error causing running stopped.
      */
-    var abortCause: Exception? = null
+    internal var abortCause: Exception? = null
 
     /**
      * Verify if running is stopped.
      */
-    val aborted: Boolean
-        get() = abortCause != null
+    val aborted: Boolean get() = abortCause != null
 
     /**
      * Controls logging behavior
@@ -114,7 +112,7 @@ class CheckRunner(internal val aem: AemExtension) {
                     break
                 }
 
-                Behaviors.waitFor(delay)
+                Behaviors.waitFor(delay.get())
             } while (isActive)
         }
 
@@ -129,7 +127,7 @@ class CheckRunner(internal val aem: AemExtension) {
                 progresses.forEach { it.currentCheck?.log() }
             }
 
-            if (verbose) {
+            if (verbose.get()) {
                 abortCause?.let { throw it }
             } else {
                 aem.logger.error("Checking error", abortCause)
