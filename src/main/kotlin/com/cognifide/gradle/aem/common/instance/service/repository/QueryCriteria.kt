@@ -2,9 +2,14 @@ package com.cognifide.gradle.aem.common.instance.service.repository
 
 class QueryCriteria {
 
-    private val defaultParams =  mapOf("p.hits" to "full")
+    val params = mutableMapOf(
+            "p.limit" to "100" // performance optimization for batch processing (default is 10)
+    )
 
-    val params = mutableMapOf<String, String>()
+    private val forcedParams = mapOf(
+            "p.guessTotal" to "true",
+            "p.hits" to "full"
+    )
 
     fun type(value: String) {
         params["type"] = value
@@ -39,9 +44,13 @@ class QueryCriteria {
         }
     }
 
+    fun orderByPath() = orderBy("path")
+
     fun orderByScore() = orderBy("@jcr:score", "desc")
 
-    fun orderByLastModified() = orderBy("@jcr:content/cq:lastModified", "desc")
+    fun orderByLastModified() = orderBy("@cq:lastModified", "desc")
+
+    fun orderByContentLastModified() = orderBy("@jcr:content/cq:lastModified", "desc")
 
     fun offset(value: Int) {
         params["p.offset"] = value.toString()
@@ -56,31 +65,31 @@ class QueryCriteria {
     val limit: Int get() = params["p.limit"]?.toInt() ?: 10
 
     fun property(name: String, value: String, operation: String? = null) {
-        propertyIndex.let { i ->
-            params["${i}_property"] = name
-            params["${i}_property.value"] = value
+        propertyIndex.let { p ->
+            params["${p}_property"] = name
+            params["${p}_property.value"] = value
             if (operation != null) {
-                params["${i}_property.operation"] = operation
+                params["${p}_property.operation"] = operation
             }
         }
     }
 
     fun property(name: String, values: Iterable<String>, and: Boolean = true) {
-        propertyIndex.let { i ->
-            params["${i}_property"] = name
-            params["${i}_property.and"] = and.toString()
+        propertyIndex.let { p ->
+            params["${p}_property"] = name
+            params["${p}_property.and"] = and.toString()
             values.forEachIndexed { v, value ->
-                params["${i}_property.${v}_value"] = value
+                params["${p}_property.${v + 1}_value"] = value
             }
         }
     }
 
-    val propertyIndex get() = params.keys
+    val propertyIndex: Int get() = (params.keys
             .filter { it.endsWith("_property") }
             .map { it.split("_")[0].toInt() }
-            .max()
+            .max() ?: 0) + 1
 
-    val queryString get() = (defaultParams + params).entries
+    val queryString get() = (params + forcedParams).entries
             .joinToString("&") { (k, v) -> "$k=$v" }
 
     fun copy() = QueryCriteria().apply { params.putAll(this@QueryCriteria.params) }

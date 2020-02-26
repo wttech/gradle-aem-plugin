@@ -75,15 +75,15 @@ class Repository(sync: InstanceSync) : InstanceService(sync) {
     /**
      * Execute repository query to find desired nodes.
      */
-    fun query(criteria: QueryCriteria.() -> Unit) = query(QueryCriteria().apply(criteria))
+    fun query(criteria: QueryCriteria.() -> Unit): Query = query(QueryCriteria().apply(criteria))
 
     /**
      * Execute repository query to find desired nodes.
      */
     fun query(criteria: QueryCriteria): Query = try {
-        log("Querying repository using $criteria on $instance")
-
-        val result = http.get("${QUERY_BUILDER_PATH}?${criteria.queryString}") { asObjectFromJson<QueryResult>(it) }
+        val path = "$QUERY_BUILDER_PATH?${criteria.queryString}"
+        log("Querying repository using '$path' on $instance")
+        val result = http.get(path) { asObjectFromJson<QueryResult>(it) }
         Query(this, criteria, result)
     } catch (e: RequestException) {
         throw RepositoryException("Cannot perform $criteria on $instance. Cause: ${e.message}", e)
