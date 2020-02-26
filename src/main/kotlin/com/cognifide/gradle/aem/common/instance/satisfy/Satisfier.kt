@@ -159,23 +159,23 @@ class Satisfier(private val manager: InstanceManager) {
                         increment("${pkg.file.name} -> ${instance.name}") {
                             when {
                                 group.greedy.orNull ?: greedy.get() -> {
-                                    logger.info("Satisfying package ${pkg.name} on ${instance.name} (greedy).")
+                                    logger.info("Satisfying package '${pkg.name}' on '${instance.name}' (greedy).")
                                     groupActions.add(satisfyPackage(group, pkg))
                                 }
                                 packageManager.isSnapshot(pkg.file) -> {
-                                    logger.info("Satisfying package ${pkg.name} on ${instance.name} (snapshot).")
+                                    logger.info("Satisfying package '${pkg.name}' on '${instance.name}' (snapshot).")
                                     groupActions.add(satisfyPackage(group, pkg))
                                 }
                                 !pkg.uploaded -> {
-                                    logger.info("Satisfying package ${pkg.name} on ${instance.name} (not uploaded).")
+                                    logger.info("Satisfying package '${pkg.name}' on '${instance.name}' (not uploaded).")
                                     groupActions.add(satisfyPackage(group, pkg))
                                 }
                                 !pkg.installed -> {
-                                    logger.info("Satisfying package ${pkg.name} on ${instance.name} (not installed).")
+                                    logger.info("Satisfying package '${pkg.name}' on '${instance.name}' (not installed).")
                                     groupActions.add(satisfyPackage(group, pkg))
                                 }
                                 else -> {
-                                    logger.info("Not satisfying package: ${pkg.name} on ${instance.name} (already installed).")
+                                    logger.info("Not satisfying package '${pkg.name}' on '${instance.name}' (already installed).")
                                 }
                             }
                         }
