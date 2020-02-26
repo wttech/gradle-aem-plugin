@@ -77,7 +77,9 @@ class QueryCriteria {
     fun property(name: String, values: Iterable<String>, and: Boolean = true) {
         propertyIndex.let { p ->
             params["${p}_property"] = name
-            params["${p}_property.and"] = and.toString()
+            if (and) {
+                params["${p}_property.and"] = "true"
+            }
             values.forEachIndexed { v, value ->
                 params["${p}_property.${v + 1}_value"] = value
             }
