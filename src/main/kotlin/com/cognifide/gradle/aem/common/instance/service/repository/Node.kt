@@ -303,6 +303,14 @@ class Node(val repository: Repository, val path: String) : Serializable {
     }
 
     /**
+     * Search nodes by querying repository under node path.
+     */
+    fun query(options: Query.() -> Unit = {}): Sequence<Node> = repository.query {
+        path(this@Node.path)
+        options()
+    }
+
+    /**
      * Update only single property of node.
      */
     fun saveProperty(name: String, value: Any?): RepositoryResult = save(mapOf(name to value))

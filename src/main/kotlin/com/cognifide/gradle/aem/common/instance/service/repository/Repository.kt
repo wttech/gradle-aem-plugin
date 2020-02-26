@@ -70,6 +70,18 @@ class Repository(sync: InstanceSync) : InstanceService(sync) {
         return node(dir).import(jsonFile, name, replace = true, replaceProperties = true)
     }
 
+    /**
+     * Execute repository query to find desired nodes.
+     */
+    fun query(options: Query.() -> Unit): Sequence<Node> = sequence {
+        val query = Query().apply(options)
+        do {
+            val result = http.get("${QUERY_BUILDER_PATH}?${query.queryString}") { asObjectFromJson<QueryResult>(it) }
+            yieldAll(result.nodes)
+            query.nextPage()
+        } while (result.more)
+    }
+
     private fun splitPath(path: String): Pair<String, String> {
         return path.substringBeforeLast("/") to path.substringAfterLast("/")
     }
@@ -78,5 +90,9 @@ class Repository(sync: InstanceSync) : InstanceService(sync) {
         RepositoryHttpClient(aem, instance).apply {
             responseChecks.set(this@Repository.responseChecks)
         }
+    }
+
+    companion object {
+        const val QUERY_BUILDER_PATH = "/bin/querybuilder.json"
     }
 }
