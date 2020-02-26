@@ -2,7 +2,7 @@ package com.cognifide.gradle.aem.common.instance.local
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.common.file.resolver.FileResolver
-import java.io.File
+import com.cognifide.gradle.common.utils.using
 
 class InstallResolver(private val aem: AemExtension) {
 
@@ -18,9 +18,7 @@ class InstallResolver(private val aem: AemExtension) {
         }
     }
 
-    fun files(configurer: FileResolver.() -> Unit) {
-        fileResolver.apply(configurer)
-    }
+    fun files(configurer: FileResolver.() -> Unit) = fileResolver.using(configurer)
 
-    val files: List<File> get() = fileResolver.allFiles
+    val files get() = fileResolver.files
 }

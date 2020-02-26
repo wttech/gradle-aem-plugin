@@ -22,7 +22,7 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
 
     private val logger = aem.logger
 
-    val base = aem.instanceManager
+    val base by lazy { aem.instanceManager }
 
     /**
      * Using local AEM instances is acceptable in any project so that lookup for project applying local instance plugin is required
@@ -115,7 +115,7 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
      */
     val expandProperties = aem.obj.map<String, Any> { convention(mapOf()) }
 
-    val quickstart = QuickstartResolver(aem)
+    val quickstart by lazy { QuickstartResolver(aem) }
 
     /**
      * Configure AEM source files when creating instances from the scratch.
@@ -125,7 +125,7 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
     /**
      * Configure AEM backup sources.
      */
-    val backup = BackupResolver(aem)
+    val backup by lazy { BackupResolver(aem) }
 
     fun backup(options: BackupResolver.() -> Unit) = backup.using(options)
 
@@ -140,7 +140,7 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
             }
         }
 
-    val install = InstallResolver(aem)
+    val install by lazy { InstallResolver(aem) }
 
     /**
      * Configure CRX packages, bundles to be pre-installed on instance(s).

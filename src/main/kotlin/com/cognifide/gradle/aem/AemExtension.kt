@@ -45,7 +45,7 @@ class AemExtension(val project: Project) : Serializable {
 
     // ===
 
-    val commonOptions = CommonOptions(this)
+    val commonOptions by lazy { CommonOptions(this) }
 
     /**
      * Defines common settings like environment name, line endings when generating files etc
@@ -54,7 +54,7 @@ class AemExtension(val project: Project) : Serializable {
         commonOptions.apply(options)
     }
 
-    val packageOptions = PackageOptions(this)
+    val packageOptions by lazy { PackageOptions(this) }
 
     /**
      * Defines common settings for built packages and deployment related behavior.
@@ -78,8 +78,6 @@ class AemExtension(val project: Project) : Serializable {
      */
     fun pkg(file: File) = `package`(file)
 
-    val instanceManager = InstanceManager(this)
-
     /**
      * Defines instances to work with.
      */
@@ -87,12 +85,14 @@ class AemExtension(val project: Project) : Serializable {
         instanceManager.apply(options)
     }
 
-    val localInstanceManager = LocalInstanceManager(this)
+    val instanceManager by lazy { InstanceManager(this) }
 
     /**
      * Define common settings valid only for instances created at local file system.
      */
     fun localInstance(options: LocalInstanceManager.() -> Unit) = localInstanceManager.apply(options)
+
+    val localInstanceManager by lazy { LocalInstanceManager(this) }
 
     /**
      * Collection of all java packages from all projects applying bundle plugin.
@@ -344,12 +344,12 @@ class AemExtension(val project: Project) : Serializable {
     /**
      * Validate any CRX packages.
      */
-    fun validatePackage(vararg packages: File, options: PackageValidator.() -> Unit) = validatePackage(packages.asIterable(), options)
+    fun validatePackage(vararg packages: File, options: PackageValidator.() -> Unit = {}) = validatePackage(packages.asIterable(), options)
 
     /**
      * Validate any CRX packages.
      */
-    fun validatePackage(packages: Iterable<File>, options: PackageValidator.() -> Unit) = PackageValidator(this).apply(options).perform(packages)
+    fun validatePackage(packages: Iterable<File>, options: PackageValidator.() -> Unit = {}) = PackageValidator(this).apply(options).perform(packages)
 
     /**
      * Vault filter determined by convention and properties.

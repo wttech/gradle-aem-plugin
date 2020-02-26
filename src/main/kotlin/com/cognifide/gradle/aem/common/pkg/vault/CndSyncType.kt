@@ -2,12 +2,9 @@ package com.cognifide.gradle.aem.common.pkg.vault
 
 import com.cognifide.gradle.aem.common.pkg.PackageException
 
-enum class NodeTypesSync {
+enum class CndSyncType {
     ALWAYS,
-    AUTO,
-    PRESERVE_AUTO,
-    FALLBACK,
-    PRESERVE_FALLBACK,
+    PRESERVE,
     NEVER;
 
     companion object {
@@ -15,6 +12,6 @@ enum class NodeTypesSync {
         fun find(name: String) = values().firstOrNull { it.name.equals(name, true) }
 
         fun of(name: String) = find(name)
-                ?: throw PackageException("Unsupported package node types sync mode '$name'!")
+                ?: throw PackageException("Unsupported CND file sync mode '$name'!")
     }
 }
