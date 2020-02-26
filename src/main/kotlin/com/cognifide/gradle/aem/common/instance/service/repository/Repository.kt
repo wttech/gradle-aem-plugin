@@ -42,19 +42,19 @@ class Repository(sync: InstanceSync) : InstanceService(sync) {
     }
 
     /**
-     * Manipulate node at given path (CRUD).
+     * Get node at given path.
      */
-    fun node(path: String): Node = Node(this, path)
+    fun node(path: String) = Node(this, path)
 
     /**
-     * Calculate a value using node at given path (e.g read property and return it).
+     * Get node at given path and perform action in its scope (and optionally return result).
      */
-    fun <T> node(path: String, options: Node.() -> T): T = node(path).run(options)
+    fun <T> node(path: String, action: Node.() -> T): T = node(path).run(action)
 
      /**
      * Shorthand method for creating or updating node at given path.
      */
-    fun node(path: String, properties: Map<String, Any?>): RepositoryResult {
+    fun save(path: String, properties: Map<String, Any?>): RepositoryResult {
          val (dir, name) = splitPath(path)
          return when {
              name.contains(".") -> node(dir).import(properties, name, replace = true, replaceProperties = true)
@@ -65,7 +65,7 @@ class Repository(sync: InstanceSync) : InstanceService(sync) {
     /**
      * Shorthand method for importing content from JSON file at given path.
      */
-    fun node(path: String, jsonFile: File): RepositoryResult {
+    fun import(path: String, jsonFile: File): RepositoryResult {
         val (dir, name) = splitPath(path)
         return node(dir).import(jsonFile, name, replace = true, replaceProperties = true)
     }
