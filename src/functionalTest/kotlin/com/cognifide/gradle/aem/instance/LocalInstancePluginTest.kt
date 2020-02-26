@@ -46,6 +46,8 @@ class LocalInstancePluginTest : AemBuildTest() {
                 instance.local-publish.type=local
                 instance.local-publish.runModes=local,nosamplecontent
                 instance.local-publish.jvmOpts=-server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true
+                
+                localInstance.backup.uploadUrl=build/backups-upload
                 """)
 
             settingsGradle("")
@@ -94,6 +96,7 @@ class LocalInstancePluginTest : AemBuildTest() {
                                     }
                                 }
                             }
+                            mustRunAfter("instanceSetup")
                         }
                     }
                 }
@@ -116,13 +119,29 @@ class LocalInstancePluginTest : AemBuildTest() {
 
         runBuild(projectDir, "instanceBackup") {
             assertTask(":instanceBackup")
-            val localBackupDir = file("build/instanceBackup/local")
+
+            val localBackupDir = "build/instanceBackup/local"
             assertFileExists(localBackupDir)
+            val localBackups = file(localBackupDir).walk().filter { it.name.endsWith(".backup.zip") }.toList()
             assertEquals("Backup file should end with *.backup.zip suffix!",
-                    1, localBackupDir.walk().filter { it.name.endsWith(".backup.zip") }.count())
+                    1, localBackups.count())
+
+            val remoteBackupDir = "build/backups-upload"
+            assertFileExists(remoteBackupDir)
+            val remoteBackups = file(remoteBackupDir).walk().filter { it.name.endsWith(".backup.zip") }.toList()
+            assertEquals("Backup file should end with *.backup.zip suffix!",
+                    1, remoteBackups.count())
+
+            val localBackup = localBackups.first()
+            val remoteBackup = remoteBackups.first()
+            assertEquals("Local & remote backup names does not match!",
+                    localBackup.name, remoteBackup.name)
+            assertEquals("Local & remote backup size does not match!",
+                    localBackup.length(), remoteBackup.length())
         }
 
         runBuild(projectDir, "instanceDestroy", "-Pforce") {
+            assertTask(":instanceDown")
             assertTask(":instanceDestroy")
             assertFileNotExists(".instance/author")
             assertFileNotExists(".instance/publish")
@@ -137,6 +156,20 @@ class LocalInstancePluginTest : AemBuildTest() {
 
         runBuild(projectDir, "assertIfCrxDeEnabled") {
             assertTask(":assertIfCrxDeEnabled")
+        }
+
+        runBuild(projectDir, "instanceResetup", "-Pforce", "assertIfCrxDeEnabled") {
+            assertTask(":instanceDown")
+            assertTask(":instanceDestroy")
+            assertTask(":instanceCreate")
+            assertTask(":instanceUp")
+            assertTask(":instanceSatisfy")
+            assertTask(":instanceProvision")
+            assertTask(":instanceSetup")
+            assertTask(":instanceResetup ")
+            assertTask(":assertIfCrxDeEnabled")
+            assertFileExists(".instance/author")
+            assertFileExists(".instance/publish")
         }
 
         runBuild(projectDir, "instanceDestroy", "-Pforce") {
