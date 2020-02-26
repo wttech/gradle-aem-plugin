@@ -58,8 +58,9 @@ open class PackageCompose : ZipTask(), AemTask {
     val nestedPath = aem.obj.string { convention(aem.packageOptions.storagePath) }
 
     @Nested
-    var validator = PackageValidator(aem).apply {
+    val validator = PackageValidator(aem).apply {
         workDir.convention(destinationDirectory.dir(Package.OAKPAL_OPEAR_PATH))
+        planName.convention("plan-compose.json")
     }
 
     fun validator(options: PackageValidator.() -> Unit) {
@@ -93,9 +94,6 @@ open class PackageCompose : ZipTask(), AemTask {
 
     @Internal
     val vaultNodeTypesFile = aem.obj.relativeFile(vaultDir, Package.VLT_NODETYPES_FILE)
-
-    @Internal
-    val vaultNodeTypesSyncFile = aem.obj.file { convention(aem.packageOptions.nodeTypesSyncFile) }
 
     @Nested
     val bundlesInstalled = aem.obj.list<BundleInstalled> { convention(listOf()) }
@@ -232,7 +230,6 @@ open class PackageCompose : ZipTask(), AemTask {
 
     private var definition: () -> Unit = {
         withVaultFilters(vaultFilterOriginFile)
-        withVaultNodeTypes(vaultNodeTypesSyncFile)
 
         fromMeta(metaDir)
         fromRoot(jcrRootDir)
@@ -296,9 +293,6 @@ open class PackageCompose : ZipTask(), AemTask {
 
     @Internal
     var fileFilterDelegate: ((CopySpec) -> Unit) = { fileFilter.filter(it, vaultDefinition.fileProperties) }
-
-    @get:InputFiles // TODO https://github.com/gradle/gradle/issues/2016
-    val inputFiles = aem.obj.files { from(vaultNodeTypesSyncFile) }
 
     init {
         description = "Composes CRX package from JCR content and built OSGi bundles"

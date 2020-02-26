@@ -43,15 +43,15 @@ open class InstanceManager(val aem: AemExtension) {
         aem.prop.file("instance.buildDir")?.let { set(it) }
     }
 
-    val satisfier = Satisfier(this)
+    val satisfier by lazy { Satisfier(this) }
 
     fun satisfier(options: Satisfier.() -> Unit) = satisfier.using(options)
 
-    val provisioner = Provisioner(this)
+    val provisioner by lazy { Provisioner(this) }
 
     fun provisioner(options: Provisioner.() -> Unit) = provisioner.using(options)
 
-    val tailer = Tailer(this)
+    val tailer by lazy { Tailer(this) }
 
     fun tailer(options: Tailer.() -> Unit) = tailer.using(options)
 

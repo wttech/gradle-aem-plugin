@@ -155,20 +155,18 @@ class PackagePluginTest: AemBuildTest() {
             assertZipEntry(pkg, "jcr_root/content/example/.content.xml")
             assertZipEntry(pkg, "jcr_root/apps/example/ui.apps/install/example-ui.apps-1.0.0.jar")
             assertZipEntryMatching(pkg, "META-INF/vault/nodetypes.cnd", """
-                <'example'='http://example.com/example/1.0'>
-                <'sling'='http://sling.apache.org/jcr/sling/1.0'>
+                <'apps'='http://apps.com/apps/1.0'>
+                <'content'='http://content.com/content/1.0'>
                 *
-                <'fd'='http://www.adobe.com/aemfd/fd/1.0'>
-                *
-                [example:Folder] > nt:folder
+                [apps:Folder] > nt:folder
                   - * (undefined) multiple
                   - * (undefined)
-                  + * (nt:base) = example:Folder version
-                
-                [sling:OrderedFolder] > sling:Folder
-                  orderable
-                  + * (nt:base) = sling:OrderedFolder version
+                  + * (nt:base) = apps:Folder version
                 *
+                [content:Folder] > nt:folder
+                  - * (undefined) multiple
+                  - * (undefined)
+                  + * (nt:base) = content:Folder version
             """)
         }
     }
@@ -322,12 +320,12 @@ class PackagePluginTest: AemBuildTest() {
             """)
 
         file("ui.apps/src/main/content/META-INF/vault/nodetypes.cnd", """
-            <'example'='http://example.com/example/1.0'>
+            <'apps'='http://apps.com/apps/1.0'>
 
-            [example:Folder] > nt:folder
+            [apps:Folder] > nt:folder
               - * (undefined) multiple
               - * (undefined)
-              + * (nt:base) = example:Folder version
+              + * (nt:base) = apps:Folder version
         """)
 
         file("ui.apps/src/main/content/META-INF/vault/filter.xml", """
@@ -368,6 +366,15 @@ class PackagePluginTest: AemBuildTest() {
             <workspaceFilter version="1.0">
                 <filter root="/content/example"/>
             </workspaceFilter>
+        """)
+
+        file("ui.content/src/main/content/META-INF/vault/nodetypes.cnd", """
+            <'content'='http://content.com/content/1.0'>
+
+            [content:Folder] > nt:folder
+              - * (undefined) multiple
+              - * (undefined)
+              + * (nt:base) = content:Folder version
         """)
     }
 

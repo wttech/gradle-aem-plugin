@@ -5,6 +5,7 @@ import com.cognifide.gradle.aem.common.instance.InstanceSync
 import com.cognifide.gradle.common.file.resolver.FileGroup
 import com.cognifide.gradle.common.file.resolver.FileResolution
 import com.cognifide.gradle.common.file.resolver.Resolver
+import com.cognifide.gradle.common.utils.Patterns
 import java.io.File
 
 /**
@@ -16,9 +17,18 @@ class PackageGroup(val packageResolver: PackageResolver, name: String) : FileGro
     private val aem = packageResolver.aem
 
     /**
-     * Instance name filter for excluding group from deployment.
+     * Limits packages installation to instances which names are matching wildcard pattern(s).
      */
-    val instanceName = aem.obj.string { convention("*") }
+    fun instanceNamed(namePattern: String) = condition { Patterns.wildcard(it.name, namePattern) }
+
+    /**
+     * Limits packages installation to instances that are passing predicate.
+     */
+    fun condition(predicate: (Instance) -> Boolean) {
+        this.condition = predicate
+    }
+
+    internal var condition: (Instance) -> Boolean = { true }
 
     /**
      * Forces to upload and install package again regardless its state on instances (already uploaded / installed).
