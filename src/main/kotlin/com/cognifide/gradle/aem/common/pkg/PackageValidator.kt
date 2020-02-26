@@ -128,20 +128,27 @@ class PackageValidator(@Internal val aem: AemExtension) {
 
     private var planClassLoaderProvider: () -> ClassLoader = { javaClass.classLoader }
 
-    fun perform(vararg packages: File) = perform(packages.asIterable())
+    fun perform(vararg packages: File) = perform(packages.toList())
 
-    fun perform(packages: Iterable<File>) {
-        logger.info("Considered CRX packages in validation:\n${packages.joinToString("\n")}")
+    fun perform(packages: Iterable<File>) = perform(packages.toList())
+
+    fun perform(packages: Collection<File>) {
+        if (packages.isEmpty()) {
+            logger.info("No packages provided for validation.")
+            return
+        }
+
+        logger.info("Packages provided for validation:\n${packages.joinToString("\n")}")
 
         if (!enabled.get()) {
-            logger.info("Validation of CRX packages is skipped as of validator is disabled!")
+            logger.info("Packages validation is skipped as of validator is disabled!")
             return
         }
 
         common.progress {
-            message = when (packages.count()) {
-                1 -> "Validating CRX package '${packages.first().name}'"
-                else -> "Validating CRX packages (${packages.count()})"
+            message = when (packages.size) {
+                1 -> "Validating package '${packages.first().name}'"
+                else -> "Validating packages (${packages.count()})"
             }
 
             cndSync.sync()
@@ -178,7 +185,7 @@ class PackageValidator(@Internal val aem: AemExtension) {
 
         val plan = determinePlan(opearFile)
 
-        logger.info("Validating CRX packages using OakPAL plan '$plan'")
+        logger.info("Validating packages using OakPAL plan '$plan'")
 
         val scanResult = OakpalPlan.fromJson(plan)
                 .map { p ->
@@ -191,7 +198,7 @@ class PackageValidator(@Internal val aem: AemExtension) {
 
         if (scanResult.isFailure) {
             val e = scanResult.error.get()
-            throw PackageException("Validating CRX packages aborted due to OAKPal failure! Cause: '${e.message}'", e)
+            throw PackageException("Validating packages aborted due to OAKPal failure! Cause: '${e.message}'", e)
         } else {
             val reports = scanResult.getOrDefault(emptyList<CheckReport>())
             saveReports(packages, reports)
@@ -209,7 +216,7 @@ class PackageValidator(@Internal val aem: AemExtension) {
     }
 
     private fun saveReports(packages: Iterable<File>, reports: List<CheckReport>?) {
-        logger.info("Saving OAKPal reports to file '${reportFile.get().asFile}' for CRX package(s):\n${packages.joinToString("\n")}")
+        logger.info("Saving OAKPal reports to file '${reportFile.get().asFile}' for package(s):\n${packages.joinToString("\n")}")
 
         try {
             ReportMapper.writeReportsToFile(reports, reportFile.get().asFile)
@@ -227,7 +234,7 @@ class PackageValidator(@Internal val aem: AemExtension) {
         var violationSeverityReached = 0
 
         if (violatedReports.isNotEmpty()) {
-            violationLogger.info("OakPAL check violations for CRX package(s):\n${packages.joinToString("\n")}")
+            violationLogger.info("OakPAL check violations for package(s):\n${packages.joinToString("\n")}")
 
             violatedReports.forEach { report ->
                 violationLogger.info("  ${report.checkName}")
@@ -256,7 +263,7 @@ class PackageValidator(@Internal val aem: AemExtension) {
                 }
             }
 
-            val failMessage = "OAKPal check violations ($violationSeverityReached) were reported at or above" +
+            val failMessage = "OakPAL check violations ($violationSeverityReached) were reported at or above" +
                     " severity '${severity.get()}' for CRX package(s):\n${packages.joinToString("\n")}!"
 
             if (verbose.get()) {

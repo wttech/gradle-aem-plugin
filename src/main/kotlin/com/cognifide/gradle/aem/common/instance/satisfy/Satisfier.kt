@@ -89,29 +89,55 @@ class Satisfier(private val manager: InstanceManager) {
     fun satisfy(instance: Instance) = satisfy(listOf(instance))
 
     fun satisfy(instances: Collection<Instance>): List<PackageAction> {
-        val packageGroups = satisfiedGroups()
-        val packageFilesValidated = packageFilesValidated(packageGroups)
+        val groupsSatisfiable = groupsSatisfiable()
 
         if (validated.get()) {
-            aem.validatePackage(packageFilesValidated, validatorOptions)
+            val filesSatisfiable = filesSatisfied(instances, groupsSatisfiable)
+            val filesValidatable = filesValidatable(groupsSatisfiable)
+            val filesValidated = filesSatisfiable.intersect(filesValidatable)
+
+            aem.validatePackage(filesValidated, validatorOptions)
         }
 
-        val packageActions = satisfy(instances, packageGroups)
-        if (packageActions.isEmpty()) {
+        val packageActionsPerformed = satisfy(instances, groupsSatisfiable)
+        if (packageActionsPerformed.isEmpty()) {
             logger.lifecycle("No actions to perform / all packages satisfied.")
         }
 
-        return packageActions
+        return packageActionsPerformed
+    }
+
+    private fun filesSatisfied(instances: Collection<Instance>, packageGroups: List<PackageGroup>): List<File> {
+        val result = mutableListOf<File>()
+
+        common.progress(packageGroups.sumBy { it.files.size * groupInstances(instances, it).size }) {
+            packageGroups.forEach { group ->
+                step = "Analyzing group '${group.name}'"
+
+                val groupInstances = groupInstances(instances, group)
+                aem.sync(groupInstances) {
+                    val packageStates = group.files.map {
+                        PackageState(it, packageManager.find(it))
+                    }
+                    val packageSatisfiable = packageStates.filter {
+                        (group.greedy.orNull ?: greedy.get()) || packageManager.isSnapshot(it.file) || !it.uploaded || !it.installed
+                    }.map { it.file }
+
+                    result.addAll(packageSatisfiable)
+                }
+            }
+        }
+
+        return result
     }
 
     @Suppress("ComplexMethod")
     private fun satisfy(instances: Collection<Instance>, packageGroups: List<PackageGroup>): List<PackageAction> {
         val allActions = mutableListOf<PackageAction>()
+
         common.progress(packageGroups.sumBy { it.files.size * groupInstances(instances, it).size }) {
             packageGroups.forEach { group ->
-                step = "Group '${group.name}'"
-
-                logger.info("Satisfying group of packages '${group.name}'.")
+                step = "Satisfying group '${group.name}'"
 
                 val groupInstances = groupInstances(instances, group)
                 val groupActions = mutableListOf<PackageAction>()
@@ -120,16 +146,17 @@ class Satisfier(private val manager: InstanceManager) {
                     val packageStates = group.files.map {
                         PackageState(it, packageManager.find(it))
                     }
-                    val packageSatisfiableAny = packageStates.any {
+                    val packageSatisfiable = packageStates.filter {
                         (group.greedy.orNull ?: greedy.get()) || packageManager.isSnapshot(it.file) || !it.uploaded || !it.installed
                     }
+                    val packageSatisfiableAny = packageSatisfiable.isNotEmpty()
 
                     if (packageSatisfiableAny) {
                         apply(group.initializer)
                     }
 
                     packageStates.forEach { pkg ->
-                        increment("Satisfying package '${pkg.file.name}' on instance '${instance.name}'") {
+                        increment("${pkg.file.name} -> ${instance.name}") {
                             when {
                                 group.greedy.orNull ?: greedy.get() -> {
                                     logger.info("Satisfying package ${pkg.name} on ${instance.name} (greedy).")
@@ -170,7 +197,7 @@ class Satisfier(private val manager: InstanceManager) {
         return allActions
     }
 
-    private fun satisfiedGroups(): List<PackageGroup> {
+    private fun groupsSatisfiable(): List<PackageGroup> {
         val result = if (cmdGroups) {
             logger.info("Providing packages defined via command line.")
             packageProvider.resolveGroups("$GROUP_CMD.*")
@@ -186,7 +213,7 @@ class Satisfier(private val manager: InstanceManager) {
         return result
     }
 
-    private fun packageFilesValidated(packageGroups: List<PackageGroup>) = packageGroups
+    private fun filesValidatable(packageGroups: List<PackageGroup>) = packageGroups
             .filter { Patterns.wildcard(it.name, groupValidated.get()) }
             .flatMap { it.files }
 
