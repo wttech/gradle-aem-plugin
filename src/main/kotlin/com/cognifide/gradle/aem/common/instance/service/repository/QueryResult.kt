@@ -1,9 +1,19 @@
 package com.cognifide.gradle.aem.common.instance.service.repository
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 class QueryResult {
+
+    var success: Boolean = false
+
+    var results: Long = 0
+
+    var total: Long = 0
 
     val more: Boolean = true
 
-    val nodes: Iterable<Node> = listOf()
+    var offset: Long = 0
 
+    var hits: List<Map<String, Any>> = listOf()
 }

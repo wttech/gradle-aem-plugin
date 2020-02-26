@@ -19,7 +19,7 @@ import java.util.*
  * Represents node stored in JCR content repository.
  */
 @Suppress("TooManyFunctions")
-class Node(val repository: Repository, val path: String) : Serializable {
+class Node(val repository: Repository, val path: String, props: Map<String, Any>? = null) : Serializable {
 
     private val logger = repository.aem.logger
 
@@ -30,7 +30,7 @@ class Node(val repository: Repository, val path: String) : Serializable {
     /**
      * Cached properties of node.
      */
-    private var propertiesLoaded: Properties? = null
+    private var propertiesLoaded = props?.let { Properties(this, filterMetaProperties(props)) }
 
     /**
      * Cached node existence check result.
@@ -104,11 +104,7 @@ class Node(val repository: Repository, val path: String) : Serializable {
                     }
                 }
                 .map { child -> child as Map<String, Any> }
-                .map { props ->
-                    Node(repository, "$path/${props[Property.NAME.value]}").apply {
-                        propertiesLoaded = Properties(this, filterMetaProperties(props))
-                    }
-                }
+                .map { props -> Node(repository, "$path/${props[Property.NAME.value]}", props) }
                 .asSequence()
         } catch (e: CommonException) {
             throw RepositoryException("Cannot read children of node '$path' on $instance. Cause: ${e.message}", e)
@@ -305,9 +301,18 @@ class Node(val repository: Repository, val path: String) : Serializable {
     /**
      * Search nodes by querying repository under node path.
      */
-    fun query(options: Query.() -> Unit = {}): Sequence<Node> = repository.query {
-        path(this@Node.path)
-        options()
+    fun query(criteria: QueryCriteria.() -> Unit) = query(QueryCriteria().apply(criteria))
+
+    /**
+     * Search nodes by querying repository under node path.
+     */
+    fun query(criteria: QueryCriteria): Sequence<Node> = sequence {
+        var currentCriteria = criteria.apply { path(this@Node.path) }
+        do {
+            val query = repository.query(currentCriteria)
+            yieldAll(query.nodes)
+            currentCriteria = currentCriteria.forMore()
+        } while (query.result.more)
     }
 
     /**
@@ -492,6 +497,8 @@ class Node(val repository: Repository, val path: String) : Serializable {
     }
 
     enum class Property(val value: String) {
+        PATH("jcr:path"),
+        SCORE("jcr:score"),
         CHILDREN("__children__"),
         NAME("__name__")
     }

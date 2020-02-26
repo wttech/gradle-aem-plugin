@@ -2,6 +2,8 @@ package com.cognifide.gradle.aem.common.instance.service.repository
 
 import com.cognifide.gradle.aem.common.instance.InstanceService
 import com.cognifide.gradle.aem.common.instance.InstanceSync
+import com.cognifide.gradle.common.http.RequestException
+import com.cognifide.gradle.common.http.ResponseException
 import java.io.File
 
 class Repository(sync: InstanceSync) : InstanceService(sync) {
@@ -73,13 +75,18 @@ class Repository(sync: InstanceSync) : InstanceService(sync) {
     /**
      * Execute repository query to find desired nodes.
      */
-    fun query(options: Query.() -> Unit): Sequence<Node> = sequence {
-        val query = Query().apply(options)
-        do {
-            val result = http.get("${QUERY_BUILDER_PATH}?${query.queryString}") { asObjectFromJson<QueryResult>(it) }
-            yieldAll(result.nodes)
-            query.nextPage()
-        } while (result.more)
+    fun query(criteria: QueryCriteria.() -> Unit) = query(QueryCriteria().apply(criteria))
+
+    /**
+     * Execute repository query to find desired nodes.
+     */
+    fun query(criteria: QueryCriteria): Query = try {
+        val result = http.get("${QUERY_BUILDER_PATH}?${criteria.queryString}") { asObjectFromJson<QueryResult>(it) }
+        Query(this, criteria, result)
+    } catch (e: RequestException) {
+        throw RepositoryException("Cannot perform $criteria on $instance. Cause: ${e.message}", e)
+    } catch (e: ResponseException) {
+        throw RepositoryException("Malformed response after querying $criteria on $instance. Cause: ${e.message}", e)
     }
 
     private fun splitPath(path: String): Pair<String, String> {
