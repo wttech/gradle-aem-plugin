@@ -18,11 +18,19 @@ class Satisfier(private val manager: InstanceManager) {
     private val logger = aem.logger
 
     /**
-     * Enables deployment via CRX package activation from author to publishers when e.g they are not accessible.
+     * Enables deployment via package activation from author to publishers when e.g they are not accessible.
      */
     val distributed = aem.obj.boolean {
         convention(false)
         aem.prop.boolean("instance.satisfy.distributed")?.let { set(it) }
+    }
+
+    /**
+     * Allows to disable package validation before satisfying.
+     */
+    val validated = aem.obj.boolean {
+        convention(true)
+        aem.prop.boolean("instance.satisfy.validated")?.let { set(it) }
     }
 
     /**
@@ -84,7 +92,9 @@ class Satisfier(private val manager: InstanceManager) {
         val packageGroups = satisfiedGroups()
         val packageFilesValidated = packageFilesValidated(packageGroups)
 
-        aem.validatePackage(packageFilesValidated, validatorOptions)
+        if (validated.get()) {
+            aem.validatePackage(packageFilesValidated, validatorOptions)
+        }
 
         val packageActions = satisfy(instances, packageGroups)
         if (packageActions.isEmpty()) {
@@ -180,9 +190,7 @@ class Satisfier(private val manager: InstanceManager) {
             .filter { Patterns.wildcard(it.name, groupValidated.get()) }
             .flatMap { it.files }
 
-    private fun groupInstances(instances: Collection<Instance>, group: PackageGroup) = instances.filter {
-        Patterns.wildcard(it.name, group.instanceName.get())
-    }
+    private fun groupInstances(instances: Collection<Instance>, group: PackageGroup) = instances.filter { group.condition(it) }
 
     private fun InstanceSync.satisfyPackage(group: PackageGroup, state: PackageState): PackageAction {
         packageManager.deploy(state.file, group.distributed.orNull ?: distributed.get())
