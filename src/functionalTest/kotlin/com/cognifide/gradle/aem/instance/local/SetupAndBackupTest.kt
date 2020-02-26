@@ -1,11 +1,11 @@
-package com.cognifide.gradle.aem.instance
+package com.cognifide.gradle.aem.instance.local
 
 import com.cognifide.gradle.aem.test.AemBuildTest
 import org.gradle.internal.impldep.org.testng.AssertJUnit.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty
 
-class LocalInstancePluginTest : AemBuildTest() {
+class SetupAndBackupTest : AemBuildTest() {
 
     @Test
     fun `should apply plugin correctly`() {
@@ -27,8 +27,8 @@ class LocalInstancePluginTest : AemBuildTest() {
 
     @EnabledIfSystemProperty(named = "localInstance.jarUrl", matches = ".+")
     @Test
-    fun `should setup local aem author and publish instances`() {
-        val projectDir = prepareProject("local-instance-setup") {
+    fun `should setup and backup local aem author and publish instances`() {
+        val projectDir = prepareProject("local-instance-setup-n-backup") {
             gradleProperties("""
                 fileTransfer.user=${System.getProperty("fileTransfer.user")}
                 fileTransfer.password=${System.getProperty("fileTransfer.password")}
@@ -157,20 +157,6 @@ class LocalInstancePluginTest : AemBuildTest() {
 
         runBuild(projectDir, "assertIfCrxDeEnabled") {
             assertTask(":assertIfCrxDeEnabled")
-        }
-
-        runBuild(projectDir, "instanceResetup", "-Pforce", "assertIfCrxDeEnabled") {
-            assertTask(":instanceDown")
-            assertTask(":instanceDestroy")
-            assertTask(":instanceCreate")
-            assertTask(":instanceUp")
-            assertTask(":instanceSatisfy")
-            assertTask(":instanceProvision")
-            assertTask(":instanceSetup")
-            assertTask(":instanceResetup ")
-            assertTask(":assertIfCrxDeEnabled")
-            assertFileExists(".instance/author")
-            assertFileExists(".instance/publish")
         }
 
         runBuild(projectDir, "instanceDestroy", "-Pforce") {

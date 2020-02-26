@@ -242,7 +242,7 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
         }
     }
 
-    internal fun delete() = cleanDir(true)
+    internal fun delete() = cleanDir(create = false)
 
     private fun cleanDir(create: Boolean) {
         if (dir.exists()) {
