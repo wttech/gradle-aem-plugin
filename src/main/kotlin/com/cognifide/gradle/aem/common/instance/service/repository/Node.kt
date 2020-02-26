@@ -393,10 +393,7 @@ class Node(val repository: Repository, val path: String, props: Map<String, Any>
         return properties.filterKeys { p -> !Property.values().any { it.value == p } }
     }
 
-    private fun log(message: String, e: Throwable? = null) = when {
-        repository.verboseLogging.get() -> logger.info(message, e)
-        else -> logger.debug(message, e)
-    }
+    private fun log(message: String, e: Throwable? = null) = repository.log(message, e)
 
     @get:JsonIgnore
     val json: String get() = Formats.toJson(this)

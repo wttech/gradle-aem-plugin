@@ -89,5 +89,5 @@ class QueryCriteria {
         offset(offset + limit)
     }
 
-    override fun toString(): String = "QueryCriteria(queryString=$queryString)"
+    override fun toString(): String = "QueryCriteria($queryString)"
 }

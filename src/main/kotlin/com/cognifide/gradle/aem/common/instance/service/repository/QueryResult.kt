@@ -16,4 +16,6 @@ class QueryResult {
     var offset: Long = 0
 
     var hits: List<Map<String, Any>> = listOf()
+
+    override fun toString(): String = "QueryResult(success=$success, results=$results, total=$total, more=$more, offset=$offset)"
 }

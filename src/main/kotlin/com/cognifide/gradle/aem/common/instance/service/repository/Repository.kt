@@ -81,6 +81,8 @@ class Repository(sync: InstanceSync) : InstanceService(sync) {
      * Execute repository query to find desired nodes.
      */
     fun query(criteria: QueryCriteria): Query = try {
+        log("Querying repository using $criteria on $instance")
+
         val result = http.get("${QUERY_BUILDER_PATH}?${criteria.queryString}") { asObjectFromJson<QueryResult>(it) }
         Query(this, criteria, result)
     } catch (e: RequestException) {
@@ -91,6 +93,11 @@ class Repository(sync: InstanceSync) : InstanceService(sync) {
 
     private fun splitPath(path: String): Pair<String, String> {
         return path.substringBeforeLast("/") to path.substringAfterLast("/")
+    }
+
+    internal fun log(message: String, e: Throwable? = null) = when {
+        verboseLogging.get() -> logger.info(message, e)
+        else -> logger.debug(message, e)
     }
 
     internal val http by lazy {
