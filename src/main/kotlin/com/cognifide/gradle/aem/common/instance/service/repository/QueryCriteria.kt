@@ -118,13 +118,17 @@ class QueryCriteria {
         }
     }
 
-    fun orderByPath() = orderBy("path")
+    fun orderByPath(sort: String = "asc") = orderBy("path", sort)
 
-    fun orderByScore() = orderBy("@jcr:score", "desc")
+    fun orderByName(sort: String = "asc") = orderBy("nodename", sort)
 
-    fun orderByLastModified() = orderBy("@cq:lastModified", "desc")
+    fun orderByProperty(name: String, sort: String = "asc") = orderBy("@$name", sort)
 
-    fun orderByContentLastModified() = orderBy("@jcr:content/cq:lastModified", "desc")
+    fun orderByScore() = orderByProperty("jcr:score", "desc")
+
+    fun orderByLastModified(sort: String = "desc") = orderByProperty("cq:lastModified", sort)
+
+    fun orderByContentLastModified(sort: String = "desc") = orderByProperty("jcr:content/cq:lastModified", sort)
 
     fun offset(value: Int) {
         params["p.offset"] = value.toString()
