@@ -3,16 +3,24 @@ package com.cognifide.gradle.aem.common.instance.service.repository
 @Suppress("TooManyFunctions")
 class QueryCriteria {
 
+    // All params
+
     val params = mutableMapOf(
             "p.limit" to "100" // performance optimization for batch processing (default is 10)
     )
 
-    private val forcedParams = mapOf(
-            "p.guessTotal" to "true",
-            "p.hits" to "full"
-    )
+    // Custom params
 
-    // Node type filtering
+    fun property(definition: (Int) -> Unit) {
+        definition(propertyIndex)
+    }
+
+    private val propertyIndex: Int get() = (params.keys
+            .filter { it.endsWith("_property") }
+            .map { it.split("_")[0].toInt() }
+            .max() ?: 0) + 1
+
+    // Node type filtering params
 
     fun type(value: String) {
         params["type"] = value
@@ -26,7 +34,7 @@ class QueryCriteria {
 
     fun damAsset() = type("dam:Asset")
 
-    // Specialized filtering
+    // Specialized filtering params
 
     fun name(wildcardPattern: String) {
         params["nodename"] = wildcardPattern
@@ -56,7 +64,7 @@ class QueryCriteria {
 
     fun contentTag(value: String) = tag(value, "jcr:content/cq:tags")
 
-    // Custom property filtering
+    // Custom property filtering params
 
     fun propertyWhere(name: String, value: String? = null, operation: String? = null) = property { p ->
         params["${p}_property"] = name
@@ -88,10 +96,6 @@ class QueryCriteria {
         false -> propertyWhere(name, value, "unequals")
     }
 
-    fun property(definition: (Int) -> Unit) {
-        definition(propertyIndex)
-    }
-
     fun propertyContains(name: String, values: Iterable<String>, all: Boolean = true) = property { pi ->
         params["${pi}_property"] = name
         if (all) {
@@ -108,12 +112,7 @@ class QueryCriteria {
 
     fun propertyContainsAny(name: String, vararg values: String) = propertyContains(name, values.asIterable(), false)
 
-    private val propertyIndex: Int get() = (params.keys
-            .filter { it.endsWith("_property") }
-            .map { it.split("_")[0].toInt() }
-            .max() ?: 0) + 1
-
-    // Ordering
+    // Ordering params
 
     fun orderBy(value: String, sort: String = "asc") {
         params["orderby"] = value
@@ -138,7 +137,7 @@ class QueryCriteria {
         params["p.offset"] = value.toString()
     }
 
-    // Paginating
+    // Paginating params
 
     val offset: Int get() = params["p.offset"]?.toInt() ?: 0
 
@@ -150,7 +149,7 @@ class QueryCriteria {
 
     // Rest
 
-    val queryString get() = (params + forcedParams).entries
+    val queryString get() = (params + FORCED_PARAMS).entries
             .joinToString("&") { (k, v) -> "$k=$v" }
 
     fun copy() = QueryCriteria().apply { params.putAll(this@QueryCriteria.params) }
@@ -160,4 +159,11 @@ class QueryCriteria {
     }
 
     override fun toString(): String = "QueryCriteria($queryString)"
+
+    companion object {
+        private val FORCED_PARAMS = mapOf(
+                "p.guessTotal" to "true",
+                "p.hits" to "full"
+        )
+    }
 }
