@@ -11,22 +11,22 @@ class QueryCriteria {
             "p.hits" to "full"
     )
 
+    // Node type filtering
+
     fun type(value: String) {
         params["type"] = value
     }
 
-    fun files() = type("nt:file")
+    fun file() = type("nt:file")
 
-    fun pages() = type("cq:Page")
+    fun page() = type("cq:Page")
 
-    fun pageContents() = type("cq:PageContent")
+    fun pageContent() = type("cq:PageContent")
 
-    fun fullText(value: String) {
-        params["fulltext"] = value
-    }
+    // Specialized filtering
 
-    fun name(pattern: String) {
-        params["nodename"] = pattern
+    fun name(wildcardPattern: String) {
+        params["nodename"] = wildcardPattern
     }
 
     fun path(value: String) {
@@ -36,6 +36,45 @@ class QueryCriteria {
     fun depth(value: Int) {
         params["p.nodedepth"] = value.toString()
     }
+
+    fun fullText(value: String, relativePath: String? = null) {
+        params["fulltext"] = value
+        if (relativePath != null) {
+            params["fulltext.relPath"] = relativePath
+        }
+    }
+
+    fun tag(value: String, property: String? = null) {
+        params["tagid"] = value
+        if (property != null) {
+            params["tagid.property"] = property
+        }
+    }
+
+    fun contentTag(value: String) = tag(value, "jcr:content/cq:tags")
+
+    // Custom property filtering
+
+    fun property(name: String, values: Iterable<String>, and: Boolean = true) = propertyIndex { pi ->
+        params["${pi}_property"] = name
+        if (and) {
+            params["${pi}_property.and"] = "true"
+        }
+        values.forEachIndexed { vi, value ->
+            params["${pi}_property.${vi + 1}_value"] = value
+        }
+    }
+
+    fun propertyIndex(definition: (Int) -> Unit) {
+        definition(propertyIndex)
+    }
+
+    private val propertyIndex: Int get() = (params.keys
+            .filter { it.endsWith("_property") }
+            .map { it.split("_")[0].toInt() }
+            .max() ?: 0) + 1
+
+    // Ordering
 
     fun orderBy(value: String, sort: String = "asc") {
         params["orderby"] = value
@@ -56,6 +95,8 @@ class QueryCriteria {
         params["p.offset"] = value.toString()
     }
 
+    // Paginating
+
     val offset: Int get() = params["p.offset"]?.toInt() ?: 0
 
     fun limit(value: Int) {
@@ -64,32 +105,13 @@ class QueryCriteria {
 
     val limit: Int get() = params["p.limit"]?.toInt() ?: 10
 
-    fun property(name: String, value: String, operation: String? = null) {
-        propertyIndex.let { p ->
-            params["${p}_property"] = name
-            params["${p}_property.value"] = value
-            if (operation != null) {
-                params["${p}_property.operation"] = operation
-            }
+    fun property(name: String, value: String, operation: String? = null) = propertyIndex { p ->
+        params["${p}_property"] = name
+        params["${p}_property.value"] = value
+        if (operation != null) {
+            params["${p}_property.operation"] = operation
         }
     }
-
-    fun property(name: String, values: Iterable<String>, and: Boolean = true) {
-        propertyIndex.let { p ->
-            params["${p}_property"] = name
-            if (and) {
-                params["${p}_property.and"] = "true"
-            }
-            values.forEachIndexed { v, value ->
-                params["${p}_property.${v + 1}_value"] = value
-            }
-        }
-    }
-
-    val propertyIndex: Int get() = (params.keys
-            .filter { it.endsWith("_property") }
-            .map { it.split("_")[0].toInt() }
-            .max() ?: 0) + 1
 
     val queryString get() = (params + forcedParams).entries
             .joinToString("&") { (k, v) -> "$k=$v" }
