@@ -1,4 +1,4 @@
-package com.cognifide.gradle.aem.instance
+package com.cognifide.gradle.aem.instance.local
 
 import com.cognifide.gradle.aem.test.AemBuildTest
 import org.gradle.internal.impldep.org.testng.AssertJUnit.assertEquals
@@ -24,11 +24,10 @@ class LocalInstancePluginTest : AemBuildTest() {
         }
     }
 
-
     @EnabledIfSystemProperty(named = "localInstance.jarUrl", matches = ".+")
     @Test
-    fun `should setup local aem author and publish instances`() {
-        val projectDir = prepareProject("local-instance-setup") {
+    fun `should setup and backup local aem author and publish instances`() {
+        val projectDir = prepareProject("local-instance-setup-n-backup") {
             gradleProperties("""
                 fileTransfer.user=${System.getProperty("fileTransfer.user")}
                 fileTransfer.password=${System.getProperty("fileTransfer.password")}
@@ -63,15 +62,14 @@ class LocalInstancePluginTest : AemBuildTest() {
                 }
                 
                 aem {
-                    tasks {
-                        instanceSatisfy {
+                    instance {
+                        satisfier {
                             packages {
                                 "dep.core-components-all"("com.adobe.cq:core.wcm.components.all:2.8.0@zip")
                                 "tool.search-webconsole-plugin"("com.neva.felix:search-webconsole-plugin:1.2.0")
                             }
                         }
-                
-                        instanceProvision {
+                        provisioner {
                             step("enable-crxde") {
                                 description = "Enables CRX DE"
                                 condition { once() && instance.environment != "prod" }
@@ -84,7 +82,9 @@ class LocalInstancePluginTest : AemBuildTest() {
                                 }
                             }
                         }
-                        
+                    }
+                    
+                    tasks {
                         register("assertIfCrxDeEnabled") {
                             doLast {
                                 sync {
@@ -158,7 +158,43 @@ class LocalInstancePluginTest : AemBuildTest() {
             assertTask(":assertIfCrxDeEnabled")
         }
 
-        runBuild(projectDir, "instanceResetup", "-Pforce", "assertIfCrxDeEnabled") {
+        runBuild(projectDir, "instanceDestroy", "-Pforce") {
+            assertTask(":instanceDestroy")
+        }
+
+        runBuild(projectDir, "clean") {
+            assertTask(":clean")
+        }
+    }
+
+    @EnabledIfSystemProperty(named = "localInstance.jarUrl", matches = ".+")
+    @Test
+    fun `should re-setup local aem author and publish instances`() {
+        val projectDir = prepareProject("local-instance-resetup") {
+            gradleProperties("""
+                fileTransfer.user=${System.getProperty("fileTransfer.user")}
+                fileTransfer.password=${System.getProperty("fileTransfer.password")}
+                fileTransfer.domain=${System.getProperty("fileTransfer.domain")}
+                
+                localInstance.quickstart.jarUrl=${System.getProperty("localInstance.jarUrl")}
+                localInstance.quickstart.licenseUrl=${System.getProperty("localInstance.licenseUrl")}
+                
+                instance.local-author.httpUrl=http://localhost:9502
+                instance.local-author.type=local
+                instance.local-author.runModes=local,nosamplecontent
+                instance.local-author.jvmOpts=-server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true
+                """)
+
+            settingsGradle("")
+
+            buildGradle("""
+                plugins {
+                    id("com.cognifide.aem.instance.local")
+                }
+                """)
+        }
+
+        runBuild(projectDir, "instanceResetup", "-Pforce") {
             assertTask(":instanceDown")
             assertTask(":instanceDestroy")
             assertTask(":instanceCreate")
@@ -166,10 +202,9 @@ class LocalInstancePluginTest : AemBuildTest() {
             assertTask(":instanceSatisfy")
             assertTask(":instanceProvision")
             assertTask(":instanceSetup")
-            assertTask(":instanceResetup ")
-            assertTask(":assertIfCrxDeEnabled")
+            assertTask(":instanceResetup")
             assertFileExists(".instance/author")
-            assertFileExists(".instance/publish")
+            assertFileNotExists(".instance/publish")
         }
 
         runBuild(projectDir, "instanceDestroy", "-Pforce") {
