@@ -83,7 +83,7 @@ class QueryCriteria {
         false -> propertyWhere(name, value, "equals")
     }
 
-    fun propertyUnequals(name: String, value: String, ignoreCase: Boolean = false) = when (ignoreCase) {
+    fun propertyNotEquals(name: String, value: String, ignoreCase: Boolean = false) = when (ignoreCase) {
         true -> propertyWhere(name, value, "unequalsIgnoreCase")
         false -> propertyWhere(name, value, "unequals")
     }
@@ -92,9 +92,7 @@ class QueryCriteria {
         definition(propertyIndex)
     }
 
-    fun propertyContains(name: String, vararg values: String, all: Boolean = false) = propertyContains(name, values.asIterable(), all)
-
-    fun propertyContains(name: String, values: Iterable<String>, all: Boolean = false) = property { pi ->
+    fun propertyContains(name: String, values: Iterable<String>, all: Boolean = true) = property { pi ->
         params["${pi}_property"] = name
         if (all) {
             params["${pi}_property.and"] = "true"
@@ -103,6 +101,13 @@ class QueryCriteria {
             params["${pi}_property.${vi + 1}_value"] = value
         }
     }
+
+    fun propertyContains(name: String, vararg values: String, all: Boolean = true) = propertyContains(name, values.asIterable(), all)
+
+    fun propertyContainsAny(name: String, values: Iterable<String>) = propertyContains(name, values, false)
+
+    fun propertyContainsAny(name: String, vararg values: String) = propertyContains(name, values.asIterable(), false)
+
     private val propertyIndex: Int get() = (params.keys
             .filter { it.endsWith("_property") }
             .map { it.split("_")[0].toInt() }
