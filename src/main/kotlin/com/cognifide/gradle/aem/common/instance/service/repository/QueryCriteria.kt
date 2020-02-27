@@ -58,7 +58,7 @@ class QueryCriteria {
 
     // Custom property filtering
 
-    fun propertyWhere(name: String, value: String? = null, operation: String? = null) = propertyIndex { p ->
+    fun propertyWhere(name: String, value: String? = null, operation: String? = null) = property { p ->
         params["${p}_property"] = name
         if (value != null) {
             params["${p}_property.value"] = value
@@ -72,9 +72,11 @@ class QueryCriteria {
 
     fun propertyLike(name: String, value: String) = propertyWhere(name, value, "like")
 
-    fun propertyExists(name: String) = propertyWhere(name, null, "exists")
+    fun propertyExists(name: String) = propertyWhere(name, true.toString(), "exists")
 
-    fun propertyNotExists(name: String) = propertyWhere(name, null, "not")
+    fun propertyNotExists(name: String) = propertyWhere(name, false.toString(), "exists")
+
+    fun propertyNot(name: String) = propertyWhere(name, null, "not")
 
     fun propertyEquals(name: String, value: String, ignoreCase: Boolean = false) = when (ignoreCase) {
         true -> propertyWhere(name, value, "equalsIgnoreCase")
@@ -86,11 +88,11 @@ class QueryCriteria {
         false -> propertyWhere(name, value, "unequals")
     }
 
-    fun propertyIndex(definition: (Int) -> Unit) {
+    fun property(definition: (Int) -> Unit) {
         definition(propertyIndex)
     }
 
-    fun propertyContains(name: String, values: Iterable<String>, all: Boolean = true) = propertyIndex { pi ->
+    fun propertyContains(name: String, values: Iterable<String>, all: Boolean = true) = property { pi ->
         params["${pi}_property"] = name
         if (all) {
             params["${pi}_property.and"] = "true"
