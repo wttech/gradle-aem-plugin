@@ -18,10 +18,28 @@ class QueryCriteria {
             .map { it.split("_")[0].toInt() }
             .max() ?: 0) + 1
 
+    fun group(name: String, values: Iterable<String>, or: Boolean = true) {
+        params["group.p.or"] = or.toString()
+        values.forEachIndexed { vi, value ->
+            params["group.${vi + 1}_$name"] = value
+        }
+    }
+
     // Node type filtering params
 
     fun type(value: String) {
         params["type"] = value
+    }
+
+    fun types(vararg values: String) = types(values.asIterable())
+
+    fun types(values: Iterable<String>) {
+        values.toList().apply {
+            when (size) {
+                1 -> type(first())
+                else -> group("type", values)
+            }
+        }
     }
 
     fun file() = type("nt:file")
@@ -47,14 +65,8 @@ class QueryCriteria {
     fun paths(values: Iterable<String>) {
         values.toList().apply {
             when (size) {
-                0 -> throw RepositoryException("Query criteria paths are not specified!")
                 1 -> path(first())
-                else -> {
-                    params["group.p.or"] = "true"
-                    values.forEachIndexed { vi, value ->
-                        params["group.${vi + 1}_path"] = value
-                    }
-                }
+                else -> group("path", values)
             }
         }
     }
