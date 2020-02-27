@@ -19,7 +19,7 @@ import java.util.*
  * Represents node stored in JCR content repository.
  */
 @Suppress("TooManyFunctions")
-class Node(val repository: Repository, val path: String) : Serializable {
+class Node(val repository: Repository, val path: String, props: Map<String, Any>? = null) : Serializable {
 
     private val logger = repository.aem.logger
 
@@ -27,10 +27,12 @@ class Node(val repository: Repository, val path: String) : Serializable {
 
     private val http = repository.http
 
+    private val project = repository.aem.project
+
     /**
      * Cached properties of node.
      */
-    private var propertiesLoaded: Properties? = null
+    private var propertiesLoaded = props?.let { Properties(this, filterMetaProperties(props)) }
 
     /**
      * Cached node existence check result.
@@ -72,7 +74,24 @@ class Node(val repository: Repository, val path: String) : Serializable {
      * Parent node.
      */
     @get:JsonIgnore
-    val parent: Node get() = Node(repository, path.substringBeforeLast("/"))
+    val parent: Node get() = Node(repository, path.substringBeforeLast("/").ifEmpty { "/" })
+
+    @get:JsonIgnore
+    val root: Boolean get() = path == "/"
+
+    /**
+     * Get all parent nodes.
+     */
+    fun parents(): Sequence<Node> = sequence {
+        var current = this@Node
+        while (!current.root) {
+            current = current.parent
+            yield(current)
+        }
+    }
+
+    @get:JsonIgnore
+    val parents: List<Node> get() = parents.toList()
 
     /**
      * Get child node by name.
@@ -80,7 +99,7 @@ class Node(val repository: Repository, val path: String) : Serializable {
     fun child(name: String) = Node(repository, "$path/$name")
 
     /**
-     * Get all node child nodes.
+     * Get all child nodes.
      *
      * Because of performance issues, using method is more preferred.
      */
@@ -104,11 +123,7 @@ class Node(val repository: Repository, val path: String) : Serializable {
                     }
                 }
                 .map { child -> child as Map<String, Any> }
-                .map { props ->
-                    Node(repository, "$path/${props[Property.NAME.value]}").apply {
-                        propertiesLoaded = Properties(this, filterMetaProperties(props))
-                    }
-                }
+                .map { props -> Node(repository, "$path/${props[Property.NAME.value]}", props) }
                 .asSequence()
         } catch (e: CommonException) {
             throw RepositoryException("Cannot read children of node '$path' on $instance. Cause: ${e.message}", e)
@@ -303,6 +318,18 @@ class Node(val repository: Repository, val path: String) : Serializable {
     }
 
     /**
+     * Search nodes by querying repository under node path.
+     */
+    fun query(criteria: QueryCriteria.() -> Unit) = query(QueryCriteria().apply(criteria))
+
+    /**
+     * Search nodes by querying repository under node path.
+     *
+     * Note that this method is automatically querying more results (incrementing offset internally).
+     */
+    fun query(criteria: QueryCriteria): Sequence<Node> = repository.query(criteria.apply { path(this@Node.path) }).nodeSequence()
+
+    /**
      * Update only single property of node.
      */
     fun saveProperty(name: String, value: Any?): RepositoryResult = save(mapOf(name to value))
@@ -380,10 +407,7 @@ class Node(val repository: Repository, val path: String) : Serializable {
         return properties.filterKeys { p -> !Property.values().any { it.value == p } }
     }
 
-    private fun log(message: String, e: Throwable? = null) = when {
-        repository.verboseLogging.get() -> logger.info(message, e)
-        else -> logger.debug(message, e)
-    }
+    private fun log(message: String, e: Throwable? = null) = repository.log(message, e)
 
     @get:JsonIgnore
     val json: String get() = Formats.toJson(this)
@@ -441,6 +465,11 @@ class Node(val repository: Repository, val path: String) : Serializable {
     /**
      * Download file stored in node to specified local file.
      */
+    fun download(targetFilePath: String) = download(project.file(targetFilePath))
+
+    /**
+     * Download file stored in node to specified local file.
+     */
     fun download(targetFile: File) {
         read { input -> targetFile.outputStream().use { output -> input.copyTo(output) } }
     }
@@ -449,6 +478,11 @@ class Node(val repository: Repository, val path: String) : Serializable {
      * Download file stored in node to temporary directory with preserving file name.
      */
     fun download() = downloadTo(repository.aem.common.temporaryDir)
+
+    /**
+     * Download file stored in node to specified local directory with preserving file name.
+     */
+    fun downloadTo(targetDirPath: String) = downloadTo(project.file(targetDirPath))
 
     /**
      * Download file stored in node to specified local directory with preserving file name.
@@ -484,6 +518,8 @@ class Node(val repository: Repository, val path: String) : Serializable {
     }
 
     enum class Property(val value: String) {
+        PATH("jcr:path"),
+        SCORE("jcr:score"),
         CHILDREN("__children__"),
         NAME("__name__")
     }

@@ -2,6 +2,8 @@ package com.cognifide.gradle.aem.common.instance.service.repository
 
 import com.cognifide.gradle.aem.common.instance.InstanceService
 import com.cognifide.gradle.aem.common.instance.InstanceSync
+import com.cognifide.gradle.common.http.RequestException
+import com.cognifide.gradle.common.http.ResponseException
 import java.io.File
 
 class Repository(sync: InstanceSync) : InstanceService(sync) {
@@ -42,19 +44,19 @@ class Repository(sync: InstanceSync) : InstanceService(sync) {
     }
 
     /**
-     * Manipulate node at given path (CRUD).
+     * Get node at given path.
      */
-    fun node(path: String): Node = Node(this, path)
+    fun node(path: String) = Node(this, path)
 
     /**
-     * Calculate a value using node at given path (e.g read property and return it).
+     * Get node at given path and perform action in its scope (and optionally return result).
      */
-    fun <T> node(path: String, options: Node.() -> T): T = node(path).run(options)
+    fun <T> node(path: String, action: Node.() -> T): T = node(path).run(action)
 
      /**
      * Shorthand method for creating or updating node at given path.
      */
-    fun node(path: String, properties: Map<String, Any?>): RepositoryResult {
+    fun save(path: String, properties: Map<String, Any?>): RepositoryResult {
          val (dir, name) = splitPath(path)
          return when {
              name.contains(".") -> node(dir).import(properties, name, replace = true, replaceProperties = true)
@@ -65,18 +67,46 @@ class Repository(sync: InstanceSync) : InstanceService(sync) {
     /**
      * Shorthand method for importing content from JSON file at given path.
      */
-    fun node(path: String, jsonFile: File): RepositoryResult {
+    fun import(path: String, jsonFile: File): RepositoryResult {
         val (dir, name) = splitPath(path)
         return node(dir).import(jsonFile, name, replace = true, replaceProperties = true)
+    }
+
+    /**
+     * Execute repository query to find desired nodes.
+     */
+    fun query(criteria: QueryCriteria.() -> Unit): Query = query(QueryCriteria().apply(criteria))
+
+    /**
+     * Execute repository query to find desired nodes.
+     */
+    fun query(criteria: QueryCriteria): Query = try {
+        val path = "$QUERY_BUILDER_PATH?${criteria.queryString}"
+        log("Querying repository using URL '${instance.httpUrl}$path'")
+        val result = http.get(path) { asObjectFromJson<QueryResult>(it) }
+        Query(this, criteria, result)
+    } catch (e: RequestException) {
+        throw RepositoryException("Cannot perform $criteria on $instance. Cause: ${e.message}", e)
+    } catch (e: ResponseException) {
+        throw RepositoryException("Malformed response after querying $criteria on $instance. Cause: ${e.message}", e)
     }
 
     private fun splitPath(path: String): Pair<String, String> {
         return path.substringBeforeLast("/") to path.substringAfterLast("/")
     }
 
+    internal fun log(message: String, e: Throwable? = null) = when {
+        verboseLogging.get() -> logger.info(message, e)
+        else -> logger.debug(message, e)
+    }
+
     internal val http by lazy {
         RepositoryHttpClient(aem, instance).apply {
             responseChecks.set(this@Repository.responseChecks)
         }
+    }
+
+    companion object {
+        const val QUERY_BUILDER_PATH = "/bin/querybuilder.json"
     }
 }
