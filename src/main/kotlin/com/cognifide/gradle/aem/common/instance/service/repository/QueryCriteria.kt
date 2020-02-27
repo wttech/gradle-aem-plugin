@@ -129,24 +129,24 @@ class QueryCriteria {
 
     // Ordering params
 
-    fun orderBy(value: String, sort: String = "asc") {
+    fun orderBy(value: String, desc: Boolean = false) {
         params["orderby"] = value
-        if (sort != "asc") {
-            params["orderby.sort"] = sort
+        if (desc) {
+            params["orderby.sort"] = "desc"
         }
     }
 
-    fun orderByPath(sort: String = "asc") = orderBy("path", sort)
+    fun orderByPath(desc: Boolean = false) = orderBy("path", desc)
 
-    fun orderByName(sort: String = "asc") = orderBy("nodename", sort)
+    fun orderByName(desc: Boolean = false) = orderBy("nodename", desc)
 
-    fun orderByProperty(name: String, sort: String = "asc") = orderBy("@$name", sort)
+    fun orderByProperty(name: String, desc: Boolean = false) = orderBy("@$name", desc)
 
-    fun orderByScore() = orderByProperty("jcr:score", "desc")
+    fun orderByScore(desc: Boolean = true) = orderByProperty("jcr:score", desc)
 
-    fun orderByLastModified(sort: String = "desc") = orderByProperty("cq:lastModified", sort)
+    fun orderByLastModified(desc: Boolean = true) = orderByProperty("cq:lastModified", desc)
 
-    fun orderByContentLastModified(sort: String = "desc") = orderByProperty("jcr:content/cq:lastModified", sort)
+    fun orderByContentLastModified(desc: Boolean = true) = orderByProperty("jcr:content/cq:lastModified", desc)
 
     // Paginating params
 
