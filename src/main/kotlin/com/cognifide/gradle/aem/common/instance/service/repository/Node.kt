@@ -305,15 +305,10 @@ class Node(val repository: Repository, val path: String, props: Map<String, Any>
 
     /**
      * Search nodes by querying repository under node path.
+     *
+     * Note that this method is automatically querying more results (incrementing offset internally).
      */
-    fun query(criteria: QueryCriteria): Sequence<Node> = sequence {
-        var currentCriteria = criteria.apply { path(this@Node.path) }
-        do {
-            val query = repository.query(currentCriteria)
-            yieldAll(query.nodes)
-            currentCriteria = currentCriteria.forMore()
-        } while (query.result.more)
-    }
+    fun query(criteria: QueryCriteria): Sequence<Node> = repository.query(criteria.apply { path(this@Node.path) }).nodeSequence()
 
     /**
      * Update only single property of node.

@@ -4,5 +4,16 @@ class Query(val repository: Repository, val criteria: QueryCriteria, val result:
 
     val nodes: List<Node> get() = result.hits.map { Node(repository, it["jcr:path"] as String, it) }
 
+    fun nodeSequence(): Sequence<Node> = sequence {
+        yieldAll(nodes)
+
+        var criteriaMore = criteria.forMore()
+        do {
+            val query = repository.query(criteriaMore)
+            yieldAll(query.nodes)
+            criteriaMore = criteriaMore.forMore()
+        } while (query.result.more)
+    }
+
     override fun toString(): String = "Query(criteria=$criteria, result=$result)"
 }

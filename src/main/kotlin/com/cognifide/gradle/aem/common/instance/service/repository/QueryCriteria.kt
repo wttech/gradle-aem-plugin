@@ -5,9 +5,7 @@ class QueryCriteria {
 
     // All params
 
-    val params = mutableMapOf(
-            "p.limit" to "100" // performance optimization for batch processing (default is 10)
-    )
+    val params = mutableMapOf<String, String>()
 
     // Custom params
 
@@ -42,6 +40,23 @@ class QueryCriteria {
 
     fun path(value: String) {
         params["path"] = value
+    }
+
+    fun paths(vararg values: String) = paths(values.asIterable())
+
+    fun paths(values: Iterable<String>) {
+        values.toList().apply {
+            when (size) {
+                0 -> throw RepositoryException("Query criteria paths are not specified!")
+                1 -> path(first())
+                else -> {
+                    params["group.p.or"] = "true"
+                    values.forEachIndexed { vi, value ->
+                        params["group.${vi + 1}_path"] = value
+                    }
+                }
+            }
+        }
     }
 
     fun depth(value: Int) {
@@ -159,6 +174,10 @@ class QueryCriteria {
     }
 
     override fun toString(): String = "QueryCriteria($queryString)"
+
+    init {
+        limit(100) // performance improvement (default is 10)
+    }
 
     companion object {
         private val FORCED_PARAMS = mapOf(
