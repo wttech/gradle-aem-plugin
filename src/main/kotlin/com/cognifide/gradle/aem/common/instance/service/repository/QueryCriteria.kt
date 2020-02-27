@@ -133,11 +133,11 @@ class QueryCriteria {
 
     fun orderByContentLastModified(sort: String = "desc") = orderByProperty("jcr:content/cq:lastModified", sort)
 
+    // Paginating params
+
     fun offset(value: Int) {
         params["p.offset"] = value.toString()
     }
-
-    // Paginating params
 
     val offset: Int get() = params["p.offset"]?.toInt() ?: 0
 
