@@ -27,6 +27,8 @@ class Node(val repository: Repository, val path: String, props: Map<String, Any>
 
     private val http = repository.http
 
+    private val project = repository.aem.project
+
     /**
      * Cached properties of node.
      */
@@ -72,7 +74,24 @@ class Node(val repository: Repository, val path: String, props: Map<String, Any>
      * Parent node.
      */
     @get:JsonIgnore
-    val parent: Node get() = Node(repository, path.substringBeforeLast("/"))
+    val parent: Node get() = Node(repository, path.substringBeforeLast("/").ifEmpty { "/" })
+
+    @get:JsonIgnore
+    val root: Boolean get() = path == "/"
+
+    /**
+     * Get all parent nodes.
+     */
+    fun parents(): Sequence<Node> = sequence {
+        var current = this@Node
+        while (!current.root) {
+            current = current.parent
+            yield(current)
+        }
+    }
+
+    @get:JsonIgnore
+    val parents: List<Node> get() = parents.toList()
 
     /**
      * Get child node by name.
@@ -80,7 +99,7 @@ class Node(val repository: Repository, val path: String, props: Map<String, Any>
     fun child(name: String) = Node(repository, "$path/$name")
 
     /**
-     * Get all node child nodes.
+     * Get all child nodes.
      *
      * Because of performance issues, using method is more preferred.
      */
@@ -446,6 +465,11 @@ class Node(val repository: Repository, val path: String, props: Map<String, Any>
     /**
      * Download file stored in node to specified local file.
      */
+    fun download(targetFilePath: String) = download(project.file(targetFilePath))
+
+    /**
+     * Download file stored in node to specified local file.
+     */
     fun download(targetFile: File) {
         read { input -> targetFile.outputStream().use { output -> input.copyTo(output) } }
     }
@@ -454,6 +478,11 @@ class Node(val repository: Repository, val path: String, props: Map<String, Any>
      * Download file stored in node to temporary directory with preserving file name.
      */
     fun download() = downloadTo(repository.aem.common.temporaryDir)
+
+    /**
+     * Download file stored in node to specified local directory with preserving file name.
+     */
+    fun downloadTo(targetDirPath: String) = downloadTo(project.file(targetDirPath))
 
     /**
      * Download file stored in node to specified local directory with preserving file name.

@@ -34,6 +34,8 @@ open class QueryParams(private val enumerated: Boolean) {
 
     fun damAsset() = type("dam:Asset")
 
+    fun damAssetContent() = type("dam:AssetContent")
+
     // Specialized filtering params
 
     fun name(wildcardPattern: String) = param {
@@ -107,10 +109,4 @@ open class QueryParams(private val enumerated: Boolean) {
     }
 
     fun propertyContains(name: String, vararg values: String, all: Boolean = true) = propertyContains(name, values.asIterable(), all)
-
-    fun propertyContainsAny(name: String, values: Iterable<String>) = propertyContains(name, values, false)
-
-    fun propertyContainsAny(name: String, vararg values: String) = propertyContains(name, values.asIterable(), false)
-
-
 }

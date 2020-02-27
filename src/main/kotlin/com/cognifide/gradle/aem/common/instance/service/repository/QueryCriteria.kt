@@ -22,6 +22,28 @@ class QueryCriteria : QueryParams(false) {
             .map { it.split("_")[0].toInt() }
             .max() ?: 0) + 1
 
+    // Multi-value shorthands
+
+    fun paths(vararg values: String) = paths(values.asIterable())
+
+    fun paths(values: Iterable<String>) = or { values.forEach { path(it) } }
+
+    fun types(vararg values: String) = types(values.asIterable())
+
+    fun types(values: Iterable<String>) = or { values.forEach { type(it) } }
+
+    fun names(vararg values: String) = names(values.asIterable())
+
+    fun names(values: Iterable<String>) = or { values.forEach { name(it) } }
+
+    fun fullTexts(vararg values: String, all: Boolean = false) = fullTexts(values.asIterable(), all)
+
+    fun fullTexts(values: Iterable<String>, all: Boolean = false) = group(all) { values.forEach { fullText(it) } }
+
+    fun tags(vararg values: String, all: Boolean = true) = tags(values.asIterable(), all)
+
+    fun tags(values: Iterable<String>, all: Boolean = true) = group(!all) { values.forEach { tag(it) } }
+
     // Ordering params
 
     fun orderBy(value: String, desc: Boolean = false) {
@@ -71,10 +93,12 @@ class QueryCriteria : QueryParams(false) {
     override fun toString(): String = "QueryCriteria($queryString)"
 
     init {
-        limit(100) // performance improvement (default is 10)
+        limit(LIMIT_DEFAULT) // performance improvement (default is 10)
     }
 
     companion object {
+        const val LIMIT_DEFAULT = 100
+
         private val FORCED_PARAMS = mapOf(
                 "p.guessTotal" to "true",
                 "p.hits" to "full"
