@@ -92,7 +92,9 @@ class QueryCriteria {
         definition(propertyIndex)
     }
 
-    fun propertyContains(name: String, values: Iterable<String>, all: Boolean = true) = property { pi ->
+    fun propertyContains(name: String, vararg values: String, all: Boolean = false) = propertyContains(name, values.asIterable(), all)
+
+    fun propertyContains(name: String, values: Iterable<String>, all: Boolean = false) = property { pi ->
         params["${pi}_property"] = name
         if (all) {
             params["${pi}_property.and"] = "true"
@@ -101,15 +103,6 @@ class QueryCriteria {
             params["${pi}_property.${vi + 1}_value"] = value
         }
     }
-
-    fun propertyAll(name: String, vararg values: String) = propertyAll(name, values.asIterable())
-
-    fun propertyAll(name: String, values: Iterable<String>) = propertyContains(name, values, true)
-
-    fun propertyAny(name: String, vararg values: String) = propertyAny(name, values.asIterable())
-
-    fun propertyAny(name: String, values: Iterable<String>) = propertyContains(name, values, false)
-
     private val propertyIndex: Int get() = (params.keys
             .filter { it.endsWith("_property") }
             .map { it.split("_")[0].toInt() }
