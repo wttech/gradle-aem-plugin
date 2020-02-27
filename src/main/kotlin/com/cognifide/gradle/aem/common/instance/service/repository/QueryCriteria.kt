@@ -102,7 +102,11 @@ class QueryCriteria {
         }
     }
 
+    fun propertyAll(name: String, vararg values: String) = propertyAll(name, values.asIterable())
+
     fun propertyAll(name: String, values: Iterable<String>) = propertyContains(name, values, true)
+
+    fun propertyAny(name: String, vararg values: String) = propertyAny(name, values.asIterable())
 
     fun propertyAny(name: String, values: Iterable<String>) = propertyContains(name, values, false)
 
