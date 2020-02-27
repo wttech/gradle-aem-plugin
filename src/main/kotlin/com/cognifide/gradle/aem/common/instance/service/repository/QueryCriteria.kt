@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.common.instance.service.repository
 
+@Suppress("TooManyFunctions")
 class QueryCriteria {
 
     val params = mutableMapOf(
@@ -22,6 +23,8 @@ class QueryCriteria {
     fun page() = type("cq:Page")
 
     fun pageContent() = type("cq:PageContent")
+
+    fun damAsset() = type("dam:Asset")
 
     // Specialized filtering
 
@@ -55,9 +58,41 @@ class QueryCriteria {
 
     // Custom property filtering
 
-    fun property(name: String, values: Iterable<String>, and: Boolean = true) = propertyIndex { pi ->
+    fun propertyWhere(name: String, value: String? = null, operation: String? = null) = propertyIndex { p ->
+        params["${p}_property"] = name
+        if (value != null) {
+            params["${p}_property.value"] = value
+        }
+        if (operation != null) {
+            params["${p}_property.operation"] = operation
+        }
+    }
+
+    fun property(name: String, value: String) = propertyWhere(name, value)
+
+    fun propertyLike(name: String, value: String) = propertyWhere(name, value, "like")
+
+    fun propertyExists(name: String) = propertyWhere(name, null, "exists")
+
+    fun propertyNotExists(name: String) = propertyWhere(name, null, "not")
+
+    fun propertyEquals(name: String, value: String, ignoreCase: Boolean = false) = when (ignoreCase) {
+        true -> propertyWhere(name, value, "equalsIgnoreCase")
+        false -> propertyWhere(name, value, "equals")
+    }
+
+    fun propertyUnequals(name: String, value: String, ignoreCase: Boolean = false) = when (ignoreCase) {
+        true -> propertyWhere(name, value, "unequalsIgnoreCase")
+        false -> propertyWhere(name, value, "unequals")
+    }
+
+    fun propertyIndex(definition: (Int) -> Unit) {
+        definition(propertyIndex)
+    }
+
+    fun propertyContains(name: String, values: Iterable<String>, all: Boolean = true) = propertyIndex { pi ->
         params["${pi}_property"] = name
-        if (and) {
+        if (all) {
             params["${pi}_property.and"] = "true"
         }
         values.forEachIndexed { vi, value ->
@@ -65,9 +100,9 @@ class QueryCriteria {
         }
     }
 
-    fun propertyIndex(definition: (Int) -> Unit) {
-        definition(propertyIndex)
-    }
+    fun propertyAll(name: String, values: Iterable<String>) = propertyContains(name, values, true)
+
+    fun propertyAny(name: String, values: Iterable<String>) = propertyContains(name, values, false)
 
     private val propertyIndex: Int get() = (params.keys
             .filter { it.endsWith("_property") }
@@ -105,13 +140,7 @@ class QueryCriteria {
 
     val limit: Int get() = params["p.limit"]?.toInt() ?: 10
 
-    fun property(name: String, value: String, operation: String? = null) = propertyIndex { p ->
-        params["${p}_property"] = name
-        params["${p}_property.value"] = value
-        if (operation != null) {
-            params["${p}_property.operation"] = operation
-        }
-    }
+    // Rest
 
     val queryString get() = (params + forcedParams).entries
             .joinToString("&") { (k, v) -> "$k=$v" }
