@@ -76,7 +76,7 @@ class LocalInstancePluginTest : AemBuildTest() {
     @EnabledIfSystemProperty(named = "localInstance.quickstart.jarUrl", matches = ".+")
     @Test
     fun `should setup and backup local aem author and publish instances`() {
-        val projectDir = prepareProject("local-instance-setup-n-backup") {
+        val projectDir = prepareProject("local-instance-setup-and-backup") {
             gradleProperties("""
                 fileTransfer.user=${System.getProperty("fileTransfer.user")}
                 fileTransfer.password=${System.getProperty("fileTransfer.password")}
