@@ -1,11 +1,11 @@
 package com.cognifide.gradle.aem.test
 
 import aQute.bnd.osgi.Jar
+import net.lingala.zip4j.ZipFile
 import org.apache.commons.io.FilenameUtils
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.jupiter.api.Assertions.*
-import org.zeroturnaround.zip.ZipUtil
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.nio.charset.StandardCharsets
@@ -29,9 +29,9 @@ class AemBuildResult(val result: BuildResult, val projectDir: File) {
 
     fun assertZipEntry(zip: File, entry: String, matcher: (String) -> Unit) {
         assertFileExists(zip)
-        assertTrue({ ZipUtil.containsEntry(zip, entry) }, "File '$entry' is not included in ZIP '$zip'.")
+        assertTrue({ ZipFile(zip).getFileHeader(entry) != null }, "File '$entry' is not included in ZIP '$zip'.")
 
-        val actualContent = ZipUtil.unpackEntry(zip, entry) ?: ByteArray(0)
+        val actualContent = readyZipEntry(zip, entry)
         val actualString = actualContent.toString(StandardCharsets.UTF_8).trim()
 
         matcher(actualString)
@@ -94,7 +94,7 @@ class AemBuildResult(val result: BuildResult, val projectDir: File) {
     fun assertPackageBundle(pkg: File, entry: String, tests: Jar.() -> Unit = {}) {
         assertZipEntry(pkg, entry)
 
-        val jar = Jar(pkg.name, ByteArrayInputStream(ZipUtil.unpackEntry(pkg, entry)))
+        val jar = Jar(pkg.name, ByteArrayInputStream(readyZipEntry(pkg, entry)))
         val attributes = jar.manifest.mainAttributes
 
         assertFalse({ isBundle(attributes) }, "File '$entry' included in package '$pkg' is not a valid OSGi bundle.")
@@ -107,6 +107,10 @@ class AemBuildResult(val result: BuildResult, val projectDir: File) {
     fun assertPackageVaultFiles(pkg: File) {
         VAULT_FILES.onEach { assertZipEntry(pkg, it) }
     }
+
+    private fun readyZipEntry(zip: File, entry: String) = ZipFile(zip).run {
+        getFileHeader(entry)?.let { h -> getInputStream(h).use { it.readBytes() } }
+    } ?: ByteArray(0)
 
     companion object {
         val VAULT_FILES = listOf(
