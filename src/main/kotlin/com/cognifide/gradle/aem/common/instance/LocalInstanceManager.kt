@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.common.instance
 
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.common.file.FileOperations
+import com.cognifide.gradle.aem.common.file.ZipFile
 import com.cognifide.gradle.aem.common.instance.action.AwaitDownAction
 import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
 import com.cognifide.gradle.aem.common.instance.local.*
@@ -214,7 +214,7 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
         common.progress(instances.size) {
             instances.onEachApply {
                 increment("Restoring instance '$name'") {
-                    FileOperations.zipUnpackDir(backupZip, id, rootDir.get().asFile)
+                    ZipFile(backupZip).unpackDir(id, rootDir.get().asFile)
                 }
             }
         }
