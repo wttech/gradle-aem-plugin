@@ -167,27 +167,33 @@ class BackupManager(private val aem: AemExtension) {
         val zip = ZipFile(file)
 
         common.progress(instances.size) {
-            step = "Backing up"
             instances.onEachApply {
-                increment(name) { zip.addDir(dir) }
+                increment("Backing up instance '$name'") {
+                    common.progress {
+                        updater { update("Adding files to '${file.name}' (${Formats.fileSize(file)})") }
+                        zip.addDir(dir)
+                    }
+                }
             }
         }
     }
 
-    fun upload(file: File, verbose: Boolean) {
+    fun upload(file: File, verbose: Boolean): Boolean {
         val dirUrl = uploadUrl.orNull
         if (dirUrl.isNullOrBlank()) {
-            val message = "Cannot upload local instance backup as of URL is not defined."
+            val message = "Skipped uploading local instance backup as of URL is not defined."
             if (verbose) {
                 throw InstanceException(message)
             } else {
                 logger.info(message)
-                return
+                return false
             }
         }
 
         logger.info("Uploading local instance(s) backup file '$file' to URL '$dirUrl'")
         common.fileTransfer.uploadTo(dirUrl, file)
+
+        return true
     }
 
     companion object {

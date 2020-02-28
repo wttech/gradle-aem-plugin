@@ -28,7 +28,7 @@ open class InstanceBackup : AemDefaultTask() {
                 upload(zip, false)
             }
             Mode.UPLOAD_ONLY -> {
-                val zip = manager.local ?: throw InstanceException("No local instance backup to upload!")
+                val zip = manager.local ?: throw InstanceException("No instance backup to upload!")
                 upload(zip, true)
             }
         }
@@ -36,13 +36,15 @@ open class InstanceBackup : AemDefaultTask() {
 
     private fun zip(): File {
         val file = manager.create(aem.localInstances)
-        common.notifier.lifecycle("Backed up local instances", "File: ${file.name}, Size: ${Formats.fileSize(file)}")
+        common.notifier.lifecycle("Backed up instances", "File: ${file.name}, Size: ${Formats.fileSize(file)}")
         return file
     }
 
     private fun upload(file: File, verbose: Boolean) {
-        manager.upload(file, verbose)
-        common.notifier.lifecycle("Uploaded local instances backup", "File: ${file.name}")
+        val uploaded = manager.upload(file, verbose)
+        if (uploaded) {
+            common.notifier.lifecycle("Uploaded instances backup", "File: ${file.name}")
+        }
     }
 
     init {
