@@ -141,7 +141,7 @@ class Tailer(val manager: InstanceManager) {
 
     // https://sridharmandra.blogspot.com/2016/08/tail-aem-logs-in-browser.html
     fun errorLogEndpoint(instance: Instance): String {
-        val fileName = logFilePath.get().replace("/", "%2F")
+        val fileName = logFilePath.get()
         val path = when {
             Formats.versionAtLeast(instance.version, "6.2.0") -> ENDPOINT_PATH
             else -> ENDPOINT_PATH_OLD
