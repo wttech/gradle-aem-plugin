@@ -1,5 +1,7 @@
 package com.cognifide.gradle.aem.common.instance.check
 
+import com.cognifide.gradle.aem.common.utils.shortenClass
+
 @Suppress("MagicNumber")
 class BundlesCheck(group: CheckGroup) : DefaultCheck(group) {
 
@@ -29,7 +31,7 @@ class BundlesCheck(group: CheckGroup) : DefaultCheck(group) {
         if (unstable.isNotEmpty()) {
             statusLogger.error(
                     when (unstable.size) {
-                        1 -> "Bundle unstable '${unstable.first().symbolicName}'"
+                        1 -> "Bundle unstable '${unstable.first().symbolicName.shortenClass()}'"
                         in 2..10 -> "Bundles unstable (${unstable.size})"
                         else -> "Bundles stable (${state.stablePercent})"
                     },
