@@ -6,7 +6,7 @@ import com.cognifide.gradle.aem.common.instance.provision.Provisioner
 import com.cognifide.gradle.aem.common.instance.satisfy.Satisfier
 import com.cognifide.gradle.aem.common.instance.tail.Tailer
 import com.cognifide.gradle.aem.instance.InstancePlugin
-import com.cognifide.gradle.aem.pluginProject
+import com.cognifide.gradle.common.pluginProject
 import com.cognifide.gradle.common.utils.using
 
 open class InstanceManager(val aem: AemExtension) {

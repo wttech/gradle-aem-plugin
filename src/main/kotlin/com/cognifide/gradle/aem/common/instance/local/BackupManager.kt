@@ -5,14 +5,13 @@ import com.cognifide.gradle.aem.common.file.ZipFile
 import com.cognifide.gradle.aem.common.instance.InstanceException
 import com.cognifide.gradle.aem.common.instance.LocalInstance
 import com.cognifide.gradle.aem.common.instance.names
-import com.cognifide.gradle.aem.instance.tasks.InstanceBackup
 import com.cognifide.gradle.common.file.FileException
 import com.cognifide.gradle.common.file.transfer.FileEntry
 import com.cognifide.gradle.common.utils.Formats
 import com.cognifide.gradle.common.utils.onEachApply
 import java.io.File
 
-class BackupResolver(private val aem: AemExtension) {
+class BackupManager(private val aem: AemExtension) {
 
     private val common = aem.common
 
@@ -41,7 +40,7 @@ class BackupResolver(private val aem: AemExtension) {
      * Directory storing locally created backup files.
      */
     val localDir = aem.obj.dir {
-        convention(aem.obj.buildDir("${InstanceBackup.NAME}/${BackupType.LOCAL.dirName}"))
+        convention(aem.obj.buildDir("$OUTPUT_DIR/${BackupType.LOCAL.dirName}"))
         aem.prop.file("localInstance.backup.localDir")?.let { set(it) }
     }
 
@@ -54,7 +53,7 @@ class BackupResolver(private val aem: AemExtension) {
      * Directory storing downloaded remote backup files.
      */
     val remoteDir = aem.obj.dir {
-        convention(aem.obj.projectDir("${InstanceBackup.NAME}/${BackupType.REMOTE.dirName}"))
+        convention(aem.obj.projectDir("$OUTPUT_DIR/${BackupType.REMOTE.dirName}"))
         aem.prop.file("localInstance.backup.remoteDir")?.let { set(it) }
     }
 
@@ -75,7 +74,11 @@ class BackupResolver(private val aem: AemExtension) {
      * Defines backup file naming rule.
      * Must be in sync with selector rule.
      */
-    var namer: () -> String = { "${aem.project.rootProject.name}-${ Formats.dateFileName()}-${aem.project.version}${suffix.get()}" }
+    fun namer(provider: () -> String) {
+        this.namer = provider
+    }
+
+    private var namer: () -> String = { "${aem.project.rootProject.name}-${Formats.dateFileName()}-${aem.project.version}${suffix.get()}" }
 
     /**
      * Get newly created file basing on namer rule.
@@ -89,7 +92,11 @@ class BackupResolver(private val aem: AemExtension) {
      * Also by default, file names are sorted lexically / descending. If same name on local & remote source found, local has precedence.
      * Still, this callback allows to customize order to be used.
      */
-    var selector: Collection<BackupSource>.() -> BackupSource? = {
+    fun selector(selector: Collection<BackupSource>.() -> BackupSource?) {
+        this.selector = selector
+    }
+
+    private var selector: Collection<BackupSource>.() -> BackupSource? = {
         val name = aem.prop.string("localInstance.backup.name") ?: ""
         when {
             name.isNotBlank() -> firstOrNull { it.fileEntry.name == name }
@@ -184,6 +191,8 @@ class BackupResolver(private val aem: AemExtension) {
     }
 
     companion object {
+        const val OUTPUT_DIR = "instance/backup"
+
         const val SUFFIX_DEFAULT = ".backup.zip"
     }
 }

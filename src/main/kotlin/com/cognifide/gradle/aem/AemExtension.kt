@@ -411,10 +411,4 @@ class AemExtension(val project: Project) : Serializable {
     }
 }
 
-val Project.aem
-    get() = AemExtension.of(this)
-
-fun Project.pluginProject(id: String): Project? = when {
-    plugins.hasPlugin(id) -> this
-    else -> rootProject.allprojects.firstOrNull { it.plugins.hasPlugin(id) }
-}
+val Project.aem get() = AemExtension.of(this)

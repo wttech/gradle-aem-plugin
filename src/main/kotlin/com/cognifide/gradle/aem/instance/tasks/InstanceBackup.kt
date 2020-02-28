@@ -9,7 +9,7 @@ import org.gradle.api.tasks.TaskAction
 
 open class InstanceBackup : AemDefaultTask() {
 
-    private val resolver = aem.localInstanceManager.backup
+    private val manager get() = aem.localInstanceManager.backup
 
     /**
      * Determines what need to be done (backup zipped and uploaded or something else).
@@ -27,20 +27,20 @@ open class InstanceBackup : AemDefaultTask() {
                 upload(zip, false)
             }
             Mode.UPLOAD_ONLY -> {
-                val zip = resolver.local ?: throw InstanceException("No local instance backup to upload!")
+                val zip = manager.local ?: throw InstanceException("No local instance backup to upload!")
                 upload(zip, true)
             }
         }
     }
 
     private fun zip(): File {
-        val file = resolver.create(aem.localInstances)
+        val file = manager.create(aem.localInstances)
         common.notifier.lifecycle("Backed up local instances", "File: ${file.name}")
         return file
     }
 
     private fun upload(file: File, verbose: Boolean) {
-        resolver.upload(file, verbose)
+        manager.upload(file, verbose)
         common.notifier.lifecycle("Uploaded local instances backup", "File: ${file.name}")
     }
 
