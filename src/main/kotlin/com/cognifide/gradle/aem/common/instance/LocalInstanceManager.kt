@@ -1,15 +1,14 @@
 package com.cognifide.gradle.aem.common.instance
 
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.common.file.FileOperations
+import com.cognifide.gradle.aem.common.file.ZipFile
 import com.cognifide.gradle.aem.common.instance.action.AwaitDownAction
 import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
 import com.cognifide.gradle.aem.common.instance.local.*
 import com.cognifide.gradle.aem.common.utils.onEachApply
 import com.cognifide.gradle.aem.instance.LocalInstancePlugin
-import com.cognifide.gradle.aem.pluginProject
+import com.cognifide.gradle.common.pluginProject
 import com.cognifide.gradle.common.utils.using
-import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
 import java.io.Serializable
 import java.util.concurrent.TimeUnit
@@ -91,7 +90,6 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
     /**
      * Collection of files potentially needed to create instance
      */
-    @get:JsonIgnore
     val sourceFiles = aem.obj.files {
         from(aem.obj.provider {
             listOfNotNull(backupZip) + quickstart.files + install.files
@@ -125,11 +123,10 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
     /**
      * Configure AEM backup sources.
      */
-    val backup by lazy { BackupResolver(aem) }
+    val backup by lazy { BackupManager(aem) }
 
-    fun backup(options: BackupResolver.() -> Unit) = backup.using(options)
+    fun backup(options: BackupManager.() -> Unit) = backup.using(options)
 
-    @get:JsonIgnore
     val backupZip: File?
         get() {
             return when (source.get()) {
@@ -147,7 +144,6 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
      */
     fun install(options: InstallResolver.() -> Unit) = install.using(options)
 
-    @get:JsonIgnore
     internal var initOptions: LocalInstance.() -> Unit = {}
 
     /**
@@ -207,14 +203,14 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
     }
 
     fun createFromBackup(instances: Collection<LocalInstance>, backupZip: File) {
-        logger.info("Restoring instances from backup ZIP '$backupZip' to directory '$rootDir'")
+        logger.info("Restoring instances from backup ZIP '$backupZip' to directory '${rootDir.get()}'")
 
         rootDir.get().asFile.mkdirs()
 
         common.progress(instances.size) {
             instances.onEachApply {
                 increment("Restoring instance '$name'") {
-                    FileOperations.zipUnpackDir(backupZip, id, rootDir.get().asFile)
+                    ZipFile(backupZip).unpackDir(id, rootDir.get().asFile)
                 }
             }
         }

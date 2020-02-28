@@ -41,12 +41,11 @@ class CheckGroup(
         stateBuilder.append(value)
     }
 
-    val state: Int
-        get() = stateBuilder.toHashCode()
+    val state: Int get() = stateBuilder.toHashCode()
 
-    val done: Boolean
-        get() = checks.all { it.success }
+    val done: Boolean get() = checks.all { it.success }
 
-    val summary: String
-        get() = checks.firstOrNull { it.failure }?.status ?: "Passed"
+    val status get() = if (done) "Passed" else "Not passed"
+
+    val summary: String get() = checks.firstOrNull { it.failure }?.status ?: "Passed"
 }

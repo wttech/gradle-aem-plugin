@@ -1,15 +1,21 @@
 package com.cognifide.gradle.aem.common.instance.local
 
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.instance.tasks.InstanceBackup
+import com.cognifide.gradle.aem.common.file.ZipFile
+import com.cognifide.gradle.aem.common.instance.InstanceException
+import com.cognifide.gradle.aem.common.instance.LocalInstance
+import com.cognifide.gradle.aem.common.instance.names
 import com.cognifide.gradle.common.file.FileException
 import com.cognifide.gradle.common.file.transfer.FileEntry
 import com.cognifide.gradle.common.utils.Formats
+import com.cognifide.gradle.common.utils.onEachApply
 import java.io.File
 
-class BackupResolver(private val aem: AemExtension) {
+class BackupManager(private val aem: AemExtension) {
 
     private val common = aem.common
+
+    private val logger = aem.logger
 
     /**
      * URL to remote directory in which backup files are stored.
@@ -34,7 +40,7 @@ class BackupResolver(private val aem: AemExtension) {
      * Directory storing locally created backup files.
      */
     val localDir = aem.obj.dir {
-        convention(aem.obj.buildDir("${InstanceBackup.NAME}/${BackupType.LOCAL.dirName}"))
+        convention(aem.obj.buildDir("$OUTPUT_DIR/${BackupType.LOCAL.dirName}"))
         aem.prop.file("localInstance.backup.localDir")?.let { set(it) }
     }
 
@@ -47,7 +53,7 @@ class BackupResolver(private val aem: AemExtension) {
      * Directory storing downloaded remote backup files.
      */
     val remoteDir = aem.obj.dir {
-        convention(aem.obj.projectDir("${InstanceBackup.NAME}/${BackupType.REMOTE.dirName}"))
+        convention(aem.obj.projectDir("$OUTPUT_DIR/${BackupType.REMOTE.dirName}"))
         aem.prop.file("localInstance.backup.remoteDir")?.let { set(it) }
     }
 
@@ -68,7 +74,16 @@ class BackupResolver(private val aem: AemExtension) {
      * Defines backup file naming rule.
      * Must be in sync with selector rule.
      */
-    var namer: () -> String = { "${aem.project.rootProject.name}-${ Formats.dateFileName()}-${aem.project.version}${suffix.get()}" }
+    fun namer(provider: () -> String) {
+        this.namer = provider
+    }
+
+    private var namer: () -> String = { "${aem.project.rootProject.name}-${Formats.dateFileName()}-${aem.project.version}${suffix.get()}" }
+
+    /**
+     * Get newly created file basing on namer rule.
+     */
+    val namedFile: File get() = localDir.get().asFile.resolve(namer())
 
     /**
      * Defines backup source selection rule.
@@ -77,7 +92,11 @@ class BackupResolver(private val aem: AemExtension) {
      * Also by default, file names are sorted lexically / descending. If same name on local & remote source found, local has precedence.
      * Still, this callback allows to customize order to be used.
      */
-    var selector: Collection<BackupSource>.() -> BackupSource? = {
+    fun selector(selector: Collection<BackupSource>.() -> BackupSource?) {
+        this.selector = selector
+    }
+
+    private var selector: Collection<BackupSource>.() -> BackupSource? = {
         val name = aem.prop.string("localInstance.backup.name") ?: ""
         when {
             name.isNotBlank() -> firstOrNull { it.fileEntry.name == name }
@@ -104,7 +123,7 @@ class BackupResolver(private val aem: AemExtension) {
                 val fileEntry = try {
                     common.fileTransfer.stat(dirUrl, name) // 'stat' may be unsupported
                 } catch (e: FileException) {
-                    aem.logger.debug("Cannot check instance backup file status at URL '$dirUrl/$name'", e)
+                    logger.debug("Cannot check instance backup file status at URL '$dirUrl/$name'", e)
                     FileEntry(name)
                 }
 
@@ -113,14 +132,14 @@ class BackupResolver(private val aem: AemExtension) {
                         remoteDir.get().asFile.resolve(name).apply { common.fileTransfer.downloadFrom(dirUrl, name, this) }
                     })
                 } else {
-                    aem.logger.info("Instance backup at URL '$dirUrl/$name' is not available.")
+                    logger.info("Instance backup at URL '$dirUrl/$name' is not available.")
                     listOf()
                 }
             }
             !uploadUrl.orNull.isNullOrBlank() -> {
                 val fileEntries = common.fileTransfer.list(uploadUrl.get())
                 if (fileEntries.isEmpty()) {
-                    aem.logger.info("No instance backups available at URL '$uploadUrl'.")
+                    logger.info("No instance backups available at URL '$uploadUrl'.")
                 }
 
                 fileEntries.map { file ->
@@ -132,7 +151,54 @@ class BackupResolver(private val aem: AemExtension) {
             else -> listOf()
         }
 
+    fun create(instances: Collection<LocalInstance>) = namedFile.apply { create(this, instances) }
+
+    fun create(file: File, instances: Collection<LocalInstance>) {
+        val uncreated = instances.filter { !it.created }
+        if (uncreated.isNotEmpty()) {
+            throw InstanceException("Cannot create local instance backup, because there are instances not yet created: ${uncreated.names}")
+        }
+
+        val running = instances.filter { it.status == Status.RUNNING }
+        if (running.isNotEmpty()) {
+            throw InstanceException("Cannot create local instance backup, because there are instances still running: ${running.names}")
+        }
+
+        val zip = ZipFile(file)
+
+        common.progress(instances.size) {
+            instances.onEachApply {
+                increment("Backing up instance '$name'") {
+                    common.progress {
+                        updater { update("Adding files to '${file.name}' (${Formats.fileSize(file)})") }
+                        zip.addDir(dir)
+                    }
+                }
+            }
+        }
+    }
+
+    fun upload(file: File, verbose: Boolean): Boolean {
+        val dirUrl = uploadUrl.orNull
+        if (dirUrl.isNullOrBlank()) {
+            val message = "Skipped uploading local instance backup as of URL is not defined."
+            if (verbose) {
+                throw InstanceException(message)
+            } else {
+                logger.info(message)
+                return false
+            }
+        }
+
+        logger.info("Uploading local instance(s) backup file '$file' to URL '$dirUrl'")
+        common.fileTransfer.uploadTo(dirUrl, file)
+
+        return true
+    }
+
     companion object {
+        const val OUTPUT_DIR = "instance/backup"
+
         const val SUFFIX_DEFAULT = ".backup.zip"
     }
 }

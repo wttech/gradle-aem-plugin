@@ -21,9 +21,9 @@ class CheckProgress(val instance: Instance) {
 
     internal var stateWatch = StopWatch()
 
-    val stateTime: Long
-        get() = stateWatch.time
+    val stateTime: Long get() = stateWatch.time
 
-    val summary: String
-        get() = "${instance.name}: ${currentCheck?.summary ?: "In progress"}"
+    val summary: String get() = "${instance.name}: ${currentCheck?.summary ?: "In progress"}"
+
+    val shortSummary: String get() = "${instance.name}: ${currentCheck?.status ?: "In progress"}"
 }

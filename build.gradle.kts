@@ -33,7 +33,7 @@ repositories {
 dependencies {
     implementation(gradleApi())
 
-    implementation("com.cognifide.gradle:common-plugin:0.1.15")
+    implementation("com.cognifide.gradle:common-plugin:0.1.16")
 
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.10.1")
     implementation("com.jayway.jsonpath:json-path:2.4.0")
@@ -44,8 +44,7 @@ dependencies {
     implementation("org.apache.commons:commons-lang3:3.9")
     implementation("org.apache.jackrabbit.vault:vault-cli:3.4.0")
     implementation("biz.aQute.bnd:biz.aQute.bnd.gradle:5.0.0")
-    implementation("org.zeroturnaround:zt-zip:1.13")
-    implementation("net.lingala.zip4j:zip4j:1.3.3")
+    implementation("net.lingala.zip4j:zip4j:2.3.2")
     implementation("org.osgi:org.osgi.core:6.0.0")
     implementation("net.adamcin.oakpal:oakpal-core:1.5.1")
 

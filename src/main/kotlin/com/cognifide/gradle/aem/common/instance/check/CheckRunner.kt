@@ -77,7 +77,11 @@ class CheckRunner(internal val aem: AemExtension) {
         step = "Checking"
 
         progresses = instances.map { CheckProgress(it) }
-        updater { update(progresses.sortedBy { it.instance.name }.joinToString(" | ") { it.summary }) }
+        updater {
+            update(progresses.sortedBy { it.instance.name }.joinToString(" | ") {
+                if (instances.size <= 2) it.summary else it.shortSummary
+            })
+        }
 
         runningWatch.start()
 

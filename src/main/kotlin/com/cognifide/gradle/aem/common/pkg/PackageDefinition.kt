@@ -2,10 +2,10 @@ package com.cognifide.gradle.aem.common.pkg
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.file.FileOperations
+import com.cognifide.gradle.aem.common.file.ZipFile
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.aem.common.pkg.vault.VaultDefinition
 import org.apache.commons.io.FileUtils
-import org.zeroturnaround.zip.ZipUtil
 import java.io.File
 
 /**
@@ -115,7 +115,7 @@ class PackageDefinition(private val aem: AemExtension) : VaultDefinition(aem) {
         content()
         process()
 
-        ZipUtil.pack(pkgDir, archivePath.get().asFile)
+        ZipFile(archivePath.get().asFile).addDir(pkgDir)
         pkgDir.deleteRecursively()
 
         return archivePath.get().asFile

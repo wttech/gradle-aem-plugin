@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.common.pkg
 
+import com.cognifide.gradle.aem.common.file.ZipFile
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.io.File
@@ -7,7 +8,6 @@ import java.io.Serializable
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.parser.Parser
-import org.zeroturnaround.zip.ZipUtil
 
 class PackageFile(val file: File) : Serializable {
 
@@ -25,11 +25,13 @@ class PackageFile(val file: File) : Serializable {
             throw PackageException("File does not exist: $file!")
         }
 
-        if (!ZipUtil.containsEntry(file, Package.VLT_PROPERTIES)) {
+        val zip = ZipFile(file)
+
+        if (!zip.contains(Package.VLT_PROPERTIES)) {
             throw PackageException("File is not a valid CRX package: $file!")
         }
 
-        this.properties = ZipUtil.unpackEntry(file, Package.VLT_PROPERTIES).toString(Charsets.UTF_8).run {
+        this.properties = zip.readFileAsText(Package.VLT_PROPERTIES).run {
             Jsoup.parse(this, "", Parser.xmlParser())
         }
         this.group = properties.select("entry[key=group]").text()

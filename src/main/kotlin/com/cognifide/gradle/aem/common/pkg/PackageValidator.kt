@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.common.pkg
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.file.FileOperations
+import com.cognifide.gradle.aem.common.file.ZipFile
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.aem.common.pkg.vault.CndSync
 import com.cognifide.gradle.common.build.CollectingLogger
@@ -169,7 +170,7 @@ class PackageValidator(@Internal val aem: AemExtension) {
 
         baseFile.orNull?.asFile?.let { file ->
             logger.info("Extracting OakPAL Opear base configuration files from '$file' to directory '$workDir'")
-            FileOperations.zipUnpackAll(file, workDir)
+            ZipFile(file).unpackAll(workDir)
         }
 
         configDir.get().asFile.takeIf { it.exists() }?.let { dir ->
