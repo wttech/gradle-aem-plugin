@@ -89,7 +89,7 @@ class Status(sync: InstanceSync) : InstanceService(sync) {
 
     companion object {
 
-        const val SYSTEM_PROPERTIES_PATH = "/system/console/status-System%20Properties.txt"
+        const val SYSTEM_PROPERTIES_PATH = "/system/console/status-System Properties.txt"
 
         const val PRODUCT_INFO_PATH = "/system/console/status-productinfo.txt"
 
