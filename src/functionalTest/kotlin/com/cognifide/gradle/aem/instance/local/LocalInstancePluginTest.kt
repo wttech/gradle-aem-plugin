@@ -171,13 +171,13 @@ class LocalInstancePluginTest : AemBuildTest() {
 
             val localBackupDir = "build/instance/backup/local"
             assertFileExists(localBackupDir)
-            val localBackups = file(localBackupDir).walk().filter { it.name.endsWith(".backup.zip") }.toList()
+            val localBackups = files(localBackupDir, "**/*.backup.zip")
             assertEquals("Backup file should end with *.backup.zip suffix!",
                     1, localBackups.count())
 
             val remoteBackupDir = "build/backups-upload"
             assertFileExists(remoteBackupDir)
-            val remoteBackups = file(remoteBackupDir).walk().filter { it.name.endsWith(".backup.zip") }.toList()
+            val remoteBackups = files(remoteBackupDir, "**/*.backup.zip")
             assertEquals("Backup file should end with *.backup.zip suffix!",
                     1, remoteBackups.count())
 
