@@ -12,13 +12,10 @@ import org.apache.commons.lang3.JavaVersion
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.SystemUtils
 import org.gradle.internal.os.OperatingSystem
-import java.io.Serializable
 
-class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(aem), Serializable {
+class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
 
-    override val user: String = USER
-
-    override lateinit var password: String
+    override var user: String = USER
 
     var debugPort: Int = 5005
 

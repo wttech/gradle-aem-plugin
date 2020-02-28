@@ -17,7 +17,7 @@ class AemBuildResult(val result: BuildResult, val projectDir: File) {
     fun file(path: String): File = projectDir.resolve(path)
 
     fun files(path: String, pattern: String) = projectDir.resolve(path)
-            .walk().filter { Patterns.wildcard(it.absolutePath, pattern) }.asSequence()
+            .walk().filter { Patterns.wildcard(it.absolutePath, pattern) }.toList()
 
     fun assertFileExists(path: String) = assertFileExists(file(path))
 

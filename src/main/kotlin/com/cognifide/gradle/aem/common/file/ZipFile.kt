@@ -8,6 +8,9 @@ import net.lingala.zip4j.model.enums.CompressionMethod
 import org.apache.commons.lang3.StringUtils
 import java.io.File
 
+/**
+ * Only Zip4j correctly extracts AEM backup ZIP files (files bigger than 10 GB)
+ */
 class ZipFile(private val baseFile: File) {
 
     private val base = Base(baseFile)
@@ -16,12 +19,18 @@ class ZipFile(private val baseFile: File) {
 
     fun containsDir(dirName: String) = base.getFileHeader(StringUtils.appendIfMissing(dirName, "/")) != null
 
-    /**
-     * Only Zip4j correctly extracts AEM backup ZIP files.
-     * Gradle zipTree and Zero-Turnaround ZipUtil is not working properly in that case.
-     */
     fun unpackAll(targetDir: File) {
         base.extractAll(targetDir.absolutePath)
+    }
+
+    fun packAll(sourceDir: File, options: ZipParameters.() -> Unit = {}) {
+        val effectiveOptions = options(options)
+        (sourceDir.listFiles() ?: arrayOf<File>()).forEach { f ->
+            when {
+                f.isDirectory -> base.addFolder(f, effectiveOptions)
+                f.isFile -> base.addFile(f, effectiveOptions)
+            }
+        }
     }
 
     fun unpackDir(dirName: String, dir: File) {

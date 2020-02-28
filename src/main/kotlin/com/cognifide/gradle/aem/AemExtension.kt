@@ -232,12 +232,12 @@ class AemExtension(val project: Project) : Serializable {
     /**
      * Get all remote instances.
      */
-    val remoteInstances: List<RemoteInstance> get() = instances.filterIsInstance(RemoteInstance::class.java)
+    val remoteInstances: List<Instance> get() = instances - localInstances
 
     /**
      * Work in parallel with all remote instances.
      */
-    fun remoteInstances(consumer: RemoteInstance.() -> Unit) = common.parallel.with(remoteInstances, consumer)
+    fun remoteInstances(consumer: Instance.() -> Unit) = common.parallel.with(remoteInstances, consumer)
 
     /**
      * Get CRX package defined to be built (could not yet exist).
