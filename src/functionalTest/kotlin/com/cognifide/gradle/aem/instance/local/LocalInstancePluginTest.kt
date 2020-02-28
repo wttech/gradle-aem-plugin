@@ -95,7 +95,7 @@ class LocalInstancePluginTest : AemBuildTest() {
                 instance.local-publish.runModes=local,nosamplecontent
                 instance.local-publish.jvmOpts=-server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true
                 
-                localInstance.backup.uploadUrl=build/backups-upload
+                localInstance.backup.uploadUrl=build/instance/backup/upload
                 """)
 
             settingsGradle("")
@@ -175,7 +175,7 @@ class LocalInstancePluginTest : AemBuildTest() {
             assertEquals("Backup file should end with *.backup.zip suffix!",
                     1, localBackups.count())
 
-            val remoteBackupDir = "build/backups-upload"
+            val remoteBackupDir = "build/instance/backup/upload"
             assertFileExists(remoteBackupDir)
             val remoteBackups = files(remoteBackupDir, "**/*.backup.zip")
             assertEquals("Backup file should end with *.backup.zip suffix!",
