@@ -225,8 +225,8 @@ class LocalInstancePluginTest : AemBuildTest() {
                 fileTransfer.password=${System.getProperty("fileTransfer.password")}
                 fileTransfer.domain=${System.getProperty("fileTransfer.domain")}
                 
-                localInstance.quickstart.jarUrl=${System.getProperty("localInstance.jarUrl")}
-                localInstance.quickstart.licenseUrl=${System.getProperty("localInstance.licenseUrl")}
+                localInstance.quickstart.jarUrl=${System.getProperty("localInstance.quickstart.jarUrl")}
+                localInstance.quickstart.licenseUrl=${System.getProperty("localInstance.quickstart.licenseUrl")}
                 
                 instance.local-author.httpUrl=http://localhost:9502
                 instance.local-author.type=local
