@@ -203,7 +203,7 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
     }
 
     fun createFromBackup(instances: Collection<LocalInstance>, backupZip: File) {
-        logger.info("Restoring instances from backup ZIP '$backupZip' to directory '$rootDir'")
+        logger.info("Restoring instances from backup ZIP '$backupZip' to directory '${rootDir.get()}'")
 
         rootDir.get().asFile.mkdirs()
 

@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.instance.tasks
 import com.cognifide.gradle.aem.AemDefaultTask
 import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.common.instance.InstanceException
+import com.cognifide.gradle.common.utils.Formats
 import java.io.File
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
@@ -35,7 +36,7 @@ open class InstanceBackup : AemDefaultTask() {
 
     private fun zip(): File {
         val file = manager.create(aem.localInstances)
-        common.notifier.lifecycle("Backed up local instances", "File: ${file.name}")
+        common.notifier.lifecycle("Backed up local instances", "File: ${file.name}, Size: ${Formats.fileSize(file)}")
         return file
     }
 
