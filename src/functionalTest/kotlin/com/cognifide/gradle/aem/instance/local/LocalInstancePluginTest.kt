@@ -216,9 +216,9 @@ class LocalInstancePluginTest : AemBuildTest() {
         }
     }
 
-    @EnabledIfSystemProperty(named = "localInstance.jarUrl", matches = ".+")
+    @EnabledIfSystemProperty(named = "localInstance.quickstart.jarUrl", matches = ".+")
     @Test
-    fun `should re-setup local aem author and publish instances`() {
+    fun `should repeat setup of local aem author and publish instances`() {
         val projectDir = prepareProject("local-instance-resetup") {
             gradleProperties("""
                 fileTransfer.user=${System.getProperty("fileTransfer.user")}
