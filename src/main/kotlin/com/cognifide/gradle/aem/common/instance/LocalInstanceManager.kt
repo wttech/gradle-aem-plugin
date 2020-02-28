@@ -1,13 +1,12 @@
 package com.cognifide.gradle.aem.common.instance
 
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.common.file.ZipFile
 import com.cognifide.gradle.aem.common.instance.action.AwaitDownAction
 import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
 import com.cognifide.gradle.aem.common.instance.local.*
-import com.cognifide.gradle.aem.common.utils.onEachApply
 import com.cognifide.gradle.aem.instance.LocalInstancePlugin
 import com.cognifide.gradle.common.pluginProject
+import com.cognifide.gradle.common.utils.onEachApply
 import com.cognifide.gradle.common.utils.using
 import java.io.File
 import java.io.Serializable
@@ -169,51 +168,37 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
     }
 
     @Suppress("ComplexMethod")
-    fun createBySource(instances: Collection<LocalInstance>) {
-        when (source.get()) {
-            Source.AUTO -> {
-                val backupZip = backup.any
-                if (backupZip != null) {
-                    createFromBackup(instances, backupZip)
-                } else {
-                    createFromScratch(instances)
-                }
+    fun createBySource(instances: Collection<LocalInstance>) = when (source.get()) {
+        Source.AUTO -> {
+            val backupZip = backup.any
+            when {
+                backupZip != null -> createFromBackup(instances, backupZip)
+                else -> createFromScratch(instances)
             }
-            Source.BACKUP_ANY -> {
-                val backupZip = backup.any
-                if (backupZip != null) {
-                    createFromBackup(instances, backupZip)
-                } else {
-                    throw LocalInstanceException("Cannot create instance(s) because no backups available!")
-                }
-            }
-            Source.BACKUP_LOCAL -> {
-                val backupZip = backup.local
-                        ?: throw LocalInstanceException("Cannot create instance(s) because no local backups available!")
-                createFromBackup(instances, backupZip)
-            }
-            Source.BACKUP_REMOTE -> {
-                val backupZip = backup.remote
-                        ?: throw LocalInstanceException("Cannot create instance(s) because no remote backups available!")
-                createFromBackup(instances, backupZip)
-            }
-            Source.SCRATCH -> createFromScratch(instances)
-            null -> {}
         }
+        Source.BACKUP_ANY -> {
+            val backupZip = backup.any
+            when {
+                backupZip != null -> createFromBackup(instances, backupZip)
+                else -> throw LocalInstanceException("Cannot create instance(s) because no backups available!")
+            }
+        }
+        Source.BACKUP_LOCAL -> {
+            val backupZip = backup.local
+                    ?: throw LocalInstanceException("Cannot create instance(s) because no local backups available!")
+            createFromBackup(instances, backupZip)
+        }
+        Source.BACKUP_REMOTE -> {
+            val backupZip = backup.remote
+                    ?: throw LocalInstanceException("Cannot create instance(s) because no remote backups available!")
+            createFromBackup(instances, backupZip)
+        }
+        Source.SCRATCH -> createFromScratch(instances)
+        null -> {}
     }
 
     fun createFromBackup(instances: Collection<LocalInstance>, backupZip: File) {
-        logger.info("Restoring instances from backup ZIP '$backupZip' to directory '${rootDir.get()}'")
-
-        rootDir.get().asFile.mkdirs()
-
-        common.progress(instances.size) {
-            instances.onEachApply {
-                increment("Restoring instance '$name'") {
-                    ZipFile(backupZip).unpackDir(id, rootDir.get().asFile)
-                }
-            }
-        }
+        backup.restore(backupZip, rootDir.get().asFile, instances)
 
         val missingInstances = instances.filter { !it.created }
         if (missingInstances.isNotEmpty()) {

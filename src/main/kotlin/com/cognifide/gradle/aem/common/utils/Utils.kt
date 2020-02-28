@@ -3,14 +3,6 @@ package com.cognifide.gradle.aem.common.utils
 import org.apache.commons.lang3.StringUtils
 import java.io.File
 
-fun <T> Iterable<T>.onEachApply(block: T.() -> Unit): Iterable<T> {
-    return this.onEach { it.apply(block) }
-}
-
-fun <T> using(receiver: T, block: T.() -> Unit) {
-    with(receiver, block)
-}
-
 val Collection<File>.fileNames
     get() = if (isNotEmpty()) joinToString(", ") { it.name } else "none"
 
