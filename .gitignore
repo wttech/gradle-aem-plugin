@@ -160,3 +160,4 @@ classes/
 !.idea/runConfigurations
 .instance
 .environment
+gradle.user.properties

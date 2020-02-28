@@ -7,10 +7,11 @@ plugins {
     id("org.jetbrains.kotlin.jvm") version "1.3.61"
     id("org.jetbrains.dokka") version "0.10.1"
     id("com.gradle.plugin-publish") version "0.10.1"
-    id("io.gitlab.arturbosch.detekt") version "1.2.2"
+    id("io.gitlab.arturbosch.detekt") version "1.6.0"
     id("com.jfrog.bintray") version "1.8.4"
     id("net.researchgate.release") version "2.8.1"
     id("com.github.breadmoirai.github-release") version "2.2.10"
+    id("com.neva.fork") version "4.2.2"
 }
 
 group = "com.cognifide.gradle"
@@ -50,7 +51,7 @@ dependencies {
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.5.2")
 
-    "detektPlugins"("io.gitlab.arturbosch.detekt:detekt-formatting:1.2.2")
+    "detektPlugins"("io.gitlab.arturbosch.detekt:detekt-formatting:1.6.0")
 }
 
 tasks {
@@ -259,3 +260,38 @@ githubRelease {
     """.trimMargin()
     }
 }
+
+fork {
+    properties {
+        define("Local instance", mapOf(
+                "localInstanceQuickstartJarUri" to {
+                    label = "Quickstart URI"
+                    description = "For file named 'cq-quickstart-x.x.x.jar'"
+                },
+                "localInstanceQuickstartLicenseUri" to {
+                    label = "Quickstart License URI"
+                    description = "For file named 'license.properties'"
+                }
+        ))
+        define("File transfer", mapOf(
+                "companyUser" to {
+                    label = "User"
+                    description = "Authorized to access AEM files"
+                    defaultValue = System.getProperty("user.name").orEmpty()
+                    optional()
+                },
+                "companyPassword" to {
+                    label = "Password"
+                    description = "For above user"
+                    optional()
+                },
+                "companyDomain" to {
+                    label = "Domain"
+                    description = "Needed only when accessing AEM files over SMB"
+                    defaultValue = System.getenv("USERDOMAIN").orEmpty()
+                    optional()
+                }
+        ))
+    }
+}
+
