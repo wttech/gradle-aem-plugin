@@ -24,7 +24,53 @@ class LocalInstancePluginTest : AemBuildTest() {
         }
     }
 
-    @EnabledIfSystemProperty(named = "localInstance.jarUrl", matches = ".+")
+    @Test
+    fun `should resolve instance files properly`() {
+        val projectDir = prepareProject("instance-resolve") {
+            settingsGradle("")
+
+            file("src/aem/files/cq-quickstart-6.5.0.jar", "")
+            file("src/aem/files/license.properties", "")
+
+            gradleProperties("""
+                localInstance.quickstart.jarUrl=src/aem/files/cq-quickstart-6.5.0.jar
+                localInstance.quickstart.licenseUrl=src/aem/files/license.properties
+            """)
+
+            buildGradle("""
+                plugins {
+                    id("com.cognifide.aem.instance.local")
+                }
+                
+                repositories {
+                    jcenter()
+                }
+                
+                aem {
+                    instance {
+                        satisfier {
+                            packages {
+                               "dep.ac-tool"("https://repo1.maven.org/maven2/biz/netcentric/cq/tools/accesscontroltool", "accesscontroltool-package/2.3.2/accesscontroltool-package-2.3.2.zip", "accesscontroltool-oakindex-package/2.3.2/accesscontroltool-oakindex-package-2.3.2.zip")
+                               "dep.search-webconsole-plugin"("com.neva.felix:search-webconsole-plugin:1.3.0")
+                               "tool.aem-groovy-console"("https://github.com/icfnext/aem-groovy-console/releases/download/14.0.0/aem-groovy-console-14.0.0.zip")
+                            }
+                        }
+                    }
+                }
+                """)
+        }
+
+        runBuild(projectDir, "instanceResolve", "-Poffline") {
+            assertTask(":instanceResolve")
+
+            assertFileExists("build/instance/quickstart/cq-quickstart-6.5.0.jar")
+            assertFileExists("build/instance/quickstart/license.properties")
+
+            assertEquals(listOf<String>(), files("build/instance/satisfy", "**/*.zip"))
+        }
+    }
+
+    @EnabledIfSystemProperty(named = "localInstance.quickstart.jarUrl", matches = ".+")
     @Test
     fun `should setup and backup local aem author and publish instances`() {
         val projectDir = prepareProject("local-instance-setup-n-backup") {
@@ -33,8 +79,8 @@ class LocalInstancePluginTest : AemBuildTest() {
                 fileTransfer.password=${System.getProperty("fileTransfer.password")}
                 fileTransfer.domain=${System.getProperty("fileTransfer.domain")}
                 
-                localInstance.quickstart.jarUrl=${System.getProperty("localInstance.jarUrl")}
-                localInstance.quickstart.licenseUrl=${System.getProperty("localInstance.licenseUrl")}
+                localInstance.quickstart.jarUrl=${System.getProperty("localInstance.quickstart.jarUrl")}
+                localInstance.quickstart.licenseUrl=${System.getProperty("localInstance.quickstart.licenseUrl")}
                 
                 instance.local-author.httpUrl=http://localhost:9502
                 instance.local-author.type=local

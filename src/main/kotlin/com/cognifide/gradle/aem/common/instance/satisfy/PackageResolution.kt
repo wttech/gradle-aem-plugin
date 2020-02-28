@@ -32,7 +32,7 @@ class PackageResolution(group: PackageGroup, id: String, action: (FileResolution
         aem.logger.info("Wrapping OSGi bundle to CRX package: $jar")
 
         val bundle = BundleFile(jar)
-        val bundlePath = "${resolver.bundlePath}/${jar.name}"
+        val bundlePath = "${resolver.bundlePath.get()}/${jar.name}"
 
         return aem.composePackage {
             this.archivePath.set(pkg)

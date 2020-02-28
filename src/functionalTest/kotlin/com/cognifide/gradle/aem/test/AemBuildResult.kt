@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.test
 
 import aQute.bnd.osgi.Jar
+import com.cognifide.gradle.common.utils.Patterns
 import net.lingala.zip4j.ZipFile
 import org.apache.commons.io.FilenameUtils
 import org.gradle.testkit.runner.BuildResult
@@ -14,6 +15,9 @@ import java.util.jar.Attributes
 class AemBuildResult(val result: BuildResult, val projectDir: File) {
 
     fun file(path: String): File = projectDir.resolve(path)
+
+    fun files(path: String, pattern: String) = projectDir.resolve(path)
+            .walk().filter { Patterns.wildcard(it.absolutePath, pattern) }.asSequence()
 
     fun assertFileExists(path: String) = assertFileExists(file(path))
 

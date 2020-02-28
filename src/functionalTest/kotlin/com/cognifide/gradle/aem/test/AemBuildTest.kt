@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.test
 
+import com.cognifide.gradle.common.utils.Patterns
 import org.gradle.testkit.runner.GradleRunner
 import java.io.File
 
