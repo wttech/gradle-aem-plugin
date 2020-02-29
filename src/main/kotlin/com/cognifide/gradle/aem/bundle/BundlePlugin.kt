@@ -48,6 +48,7 @@ class BundlePlugin : CommonDefaultPlugin() {
         }
     }
 
+    // TODO Configure dependencies by provider references
     private fun Project.setupTasks() = tasks {
         val compose = register<BundleCompose>(BundleCompose.NAME) {
             dependsOn(JavaPlugin.CLASSES_TASK_NAME)
@@ -72,8 +73,10 @@ class BundlePlugin : CommonDefaultPlugin() {
         named<Jar>(JavaPlugin.JAR_TASK_NAME) {
             archiveClassifier.set(LIB_CLASSIFIER)
         }
+        val test = named<Test>(JavaPlugin.TEST_TASK_NAME)
         named<PackageCompose>(PackageCompose.NAME) {
             installBundleBuilt(compose)
+            dependsOn(test)
         }
     }
 

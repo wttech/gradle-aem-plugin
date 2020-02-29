@@ -38,13 +38,14 @@ class PackagePlugin : CommonDefaultPlugin() {
         }
     }
 
+    // TODO Configure dependencies by provider references
     private fun Project.setupTasks() {
         tasks {
             val prepare = register<PackagePrepare>(PackagePrepare.NAME) {
                 mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
             }
             val compose = register<PackageCompose>(PackageCompose.NAME) {
-                dependsOn(PackagePrepare.NAME)
+                dependsOn(prepare)
                 mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
                 metaDir.convention(prepare.flatMap { it.metaDir })
             }.apply {
