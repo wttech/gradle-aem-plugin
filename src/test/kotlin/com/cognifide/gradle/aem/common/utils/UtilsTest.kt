@@ -16,5 +16,4 @@ class UtilsTest {
     fun `should shorten class properly`(input: String, maxLength: Int, expected: String) {
         assertEquals(expected, input.shortenClass(maxLength))
     }
-
 }

@@ -24,5 +24,4 @@ class LocalInstancePluginTest {
         tasks.getByName(InstanceSatisfy.NAME)
         tasks.getByName(InstanceRcp.NAME)
     }
-
 }

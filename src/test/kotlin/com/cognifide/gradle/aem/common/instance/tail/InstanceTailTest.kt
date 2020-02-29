@@ -22,7 +22,7 @@ class InstanceTailTest {
         override fun <T> readChunk(parser: (BufferedReader) -> List<T>): List<T> = streamsStack.pop().use(parser)
 
         companion object {
-            fun readerFromString(text: String) =  text.byteInputStream(Charset.forName("UTF8")).bufferedReader()
+            fun readerFromString(text: String) = text.byteInputStream(Charset.forName("UTF8")).bufferedReader()
 
             fun reader(resource: String) = BufferedReader(InputStreamReader(FileUtils.openInputStream(file(resource))))
 
@@ -30,7 +30,6 @@ class InstanceTailTest {
 
             private fun file(resource: String) = File(this::class.java.getResource(resource)!!.file)
         }
-
     }
 
     class MockDestination : LogDestination {
@@ -45,7 +44,7 @@ class InstanceTailTest {
     fun shouldParseLogs() {
         // given
         val parser = LogParser()
-        val logsChunk = MockSource.readerFromString("14.01.2019 12:19:48.350 *INFO* [0:0:0:0:0:0:0:1 [1547464785823] GET /rge.etkrggtkgk/etkrggtkgk/gaegkgr/ragrae/gaegkgr.gkg.rk HTTP/1.1] egg.erggr.gaegkgr.gk.etkrggtkgk.kgrt.HggtLkgaeaeMegegraIgrt Sgeag ggktrkgg JS tkgaeae: /tkgk/etkrggtkgk/gaegkgr/ragrae/gaegkgr (gkgkpkrr)\n14.01.2019 12:19:48.358 *INFO* [0:0:0:0:0:0:0:1 [1547464785823] GET /rge.etkrggtkgk/etkrggtkgk/gaegkgr/ragrae/gaegkgr.gkg.rk HTTP/1.1] egg.erggr.gaegkgr.gk.etkrggtkgk.kgrt.HggtLkgaeaeMegegraIgrt pkgkkerr ggktrkgg tkgaeae /tkgk/etkrggtkgk/gaegkgr/ragrae/gaegkgr.rk\n14.01.2019 12:19:48.360 *INFO* [0:0:0:0:0:0:0:1 [1547464785819] GET /rge.etkrggtkgk/etkrggtkgk/gaegkgr/gerrakg.gkg.rk HTTP/1.1] egg.erggr.gaegkgr.gk.etkrggtkgk.kgrt.HggtLkgaeaeMegegraIgrt Sgeag ggktrkgg JS tkgaeae: /tkgk/etkrggtkgk/gaegkgr/gerrakg (gkgkpkrr)\n14.01.2019 12:19:48.405 *INFO* [0:0:0:0:0:0:0:1 [1547464785819] GET /rge.etkrggtkgk/etkrggtkgk/gaegkgr/gerrakg.gkg.rk HTTP/1.1] egg.erggr.gaegkgr.gk.etkrggtkgk.kgrt.HggtLkgaeaeMegegraIgrt pkgkkerr ggktrkgg tkgaeae /tkgk/etkrggtkgk/gaegkgr/gerrakg.rk\n14.01.2019 12:19:48.406 *INFO* [0:0:0:0:0:0:0:1 [1547464785819] GET /rge.etkrggtkgk/etkrggtkgk/gaegkgr/egaetgk3.gkg.ekk HTTP/1.1] egg.erggr.gaegkgr.gk.etkrggtkgk.kgrt.HggtLkgaeaeMegegraIgrt Sgeag ggktrkgg CSS tkgaeae: /tkgk/etkrggtkgk/gaegkgr/egaetgk3 (gkgkpkrr)\n14.01.2019 12:19:52.747 *INFO* [0:0:0:0:0:0:0:1 [1547464785819] GET /rge.etkrggtkgk/etkrggtkgk/gaegkgr/egaetgk3.gkg.ekk HTTP/1.1] egg.erggr.gaegkgr.gk.etkrggtkgk.kgrt.HggtLkgaeaeMegegraIgrt pkgkkerr ggktrkgg tkgaeae /tkgk/etkrggtkgk/gaegkgr/egaetgk3.ekk\n14.01.2019 12:19:52.775 *INFO* [0:0:0:0:0:0:0:1 [1547464785832] GET /rge.etkrggtkgk/etkrggtkgk/gaegkgr/gggrgg.gkg.rk HTTP/1.1] egg.erggr.gaegkgr.gk.etkrggtkgk.kgrt.HggtLkgaeaeMegegraIgrt Sgeag ggktrkgg JS tkgaeae: /tkgk/etkrggtkgk/gaegkgr/gggrgg (gkgkpkrr)\n14.01.2019 12:19:55.303 *INFO* [0:0:0:0:0:0:0:1 [1547464785832] GET /rge.etkrggtkgk/etkrggtkgk/gaegkgr/gggrgg.gkg.rk HTTP/1.1] egg.erggr.gaegkgr.gk.etkrggtkgk.kgrt.HggtLkgaeaeMegegraIgrt pkgkkerr ggktrkgg tkgaeae /tkgk/etkrggtkgk/gaegkgr/gggrgg.rk\n14.01.2019 12:19:55.327 *INFO* [0:0:0:0:0:0:0:1 [1547464792884] GET /rge.etkrggtkgk/etkrggtkgk/gaegkgr/egaetgk3.gkg.rk HTTP/1.1] egg.erggr.gaegkgr.gk.etkrggtkgk.kgrt.HggtLkgaeaeMegegraIgrt Sgeag ggktrkgg JS tkgaeae: /tkgk/etkrggtkgk/gaegkgr/egaetgk3 (gkgkpkrr)\n14.01.2019 12:20:43.111 *ERROR* [gea-arrgkkggae-rtreggga-1] egg.erggr.gaegkgr.arrgkkggae Sragker [6848, [gag.ereeer.reeaaeggkg.gea.erk.rgt.SrkkkggMBreg]] SragkerEgrgg REGISTERED\n")
+        val logsChunk = MockSource.text("logs-chunk.txt").byteInputStream().bufferedReader()
 
         // when
         val logsList = parser.parse(logsChunk)
@@ -57,7 +56,8 @@ class InstanceTailTest {
             assertEquals(Log.parseTimestamp("14.01.2019 12:19:48.350"), timestamp)
             assertEquals("INFO", level)
             assertEquals("[0:0:0:0:0:0:0:1 [1547464785823] GET /rge.etkrggtkgk/etkrggtkgk/gaegkgr/ragrae/gaegkgr.gkg.rk HTTP/1.1]", source)
-            assertEquals("egg.erggr.gaegkgr.gk.etkrggtkgk.kgrt.HggtLkgaeaeMegegraIgrt Sgeag ggktrkgg JS tkgaeae: /tkgk/etkrggtkgk/gaegkgr/ragrae/gaegkgr (gkgkpkrr)", message)
+            assertEquals("egg.erggr.gaegkgr.gk.etkrggtkgk.kgrt.HggtLkgaeaeMegegraIgrt Sgeag ggktrkgg JS tkgaeae:" +
+                    " /tkgk/etkrggtkgk/gaegkgr/ragrae/gaegkgr (gkgkpkrr)", message)
             assertEquals("c298a80e1b5083dea0c9dbf12b045a67", checksum)
         }
         logsList.last().apply {
@@ -198,13 +198,13 @@ class InstanceTailTest {
 
     @Test
     fun shouldFilterOutAllErrorBasedOnLambdas() {
-        //given
+        // given
         val filter: (Log) -> Boolean = { log -> log.message.isNotEmpty() }
 
-        //when
+        // when
         val logFilter = LogFilter(project).apply { excludeRule(filter) }
 
-        //then
+        // then
         assertTrue(logFilter.isExcluded(Log.create(InstanceLogInfo.none(), listOf("14.01.2019 12:20:43.111 *ERROR* " +
             "[gea-arrgkkggae-rtreggga-1] egg.erggr.gaegkgr.arrgkkggae Sragker " +
             "[6848, [gag.ereeer.reeaaeggkg.gea.erk.rgt.SrkkkggMBreg]] SragkerEgrgg REGISTERED"))))
@@ -212,13 +212,13 @@ class InstanceTailTest {
 
     @Test
     fun shouldLetGoAllErrorBasedOnLambdas() {
-        //given
+        // given
         val filter: (Log) -> Boolean = { log -> log.message.isEmpty() }
 
-        //when
+        // when
         val blacklist = LogFilter(project).apply { excludeRule(filter) }
 
-        //then
+        // then
         assertFalse(blacklist.isExcluded(Log.create(InstanceLogInfo.none(), listOf("14.01.2019 12:20:43.111 *ERROR* " +
             "[gea-arrgkkggae-rtreggga-1] egg.erggr.gaegkgr.arrgkkggae Sragker " +
             "[6848, [gag.ereeer.reeaaeggkg.gea.erk.rgt.SrkkkggMBreg]] SragkerEgrgg REGISTERED"))))
@@ -226,13 +226,13 @@ class InstanceTailTest {
 
     @Test
     fun shouldFilterOutAllErrorBasedOnWildcard() {
-        //given
+        // given
         val filter: (Log) -> Boolean = { Patterns.wildcard(it.text, "*egg.erggr.gaegkgr.*") }
 
-        //when
+        // when
         val logFilter = LogFilter(project).apply { excludeRule(filter) }
 
-        //then
+        // then
         assertTrue(logFilter.isExcluded(Log.create(InstanceLogInfo.none(), listOf("14.01.2019 12:20:43.111 *ERROR* " +
             "[gea-arrgkkggae-rtreggga-1] egg.erggr.gaegkgr.arrgkkggae Sragker " +
             "[6848, [gag.ereeer.reeaaeggkg.gea.erk.rgt.SrkkkggMBreg]] SragkerEgrgg REGISTERED"))))
@@ -240,13 +240,13 @@ class InstanceTailTest {
 
     @Test
     fun shouldLetGoAllErrorBasedOnWildcard() {
-        //given
+        // given
         val filter: (Log) -> Boolean = { Patterns.wildcard(it.text, "a.b.cde.*") }
 
-        //when
+        // when
         val blacklist = LogFilter(project).apply { excludeRule(filter) }
 
-        //then
+        // then
         assertFalse(blacklist.isExcluded(Log.create(InstanceLogInfo.none(), listOf("14.01.2019 12:20:43.111 *ERROR* " +
             "[gea-arrgkkggae-rtreggga-1] egg.erggr.gaegkgr.arrgkkggae Sragker " +
             "[6848, [gag.ereeer.reeaaeggkg.gea.erk.rgt.SrkkkggMBreg]] SragkerEgrgg REGISTERED"))))

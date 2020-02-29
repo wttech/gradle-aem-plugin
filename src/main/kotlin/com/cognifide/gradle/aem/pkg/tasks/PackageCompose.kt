@@ -143,7 +143,7 @@ open class PackageCompose : ZipTask(), AemTask {
             }
         }
 
-        if (archive.vaultFilter.get()) { // TODO lazy?
+        if (archive.vaultFilter.get()) {
             vaultDefinition.filter(aem.obj.provider { "${dirPath.get()}/${archive.fileName.get()}" }) { type = FilterType.FILE }
         }
 

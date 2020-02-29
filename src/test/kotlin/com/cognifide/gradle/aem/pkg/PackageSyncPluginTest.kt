@@ -16,5 +16,4 @@ class PackageSyncPluginTest {
         tasks.getByName(PackageSync.NAME)
         tasks.getByName(PackageVlt.NAME)
     }
-
 }

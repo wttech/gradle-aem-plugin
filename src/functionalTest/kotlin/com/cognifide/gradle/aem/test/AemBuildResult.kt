@@ -66,7 +66,7 @@ class AemBuildResult(val result: BuildResult, val projectDir: File) {
     fun assertTask(taskPath: String, outcome: TaskOutcome = TaskOutcome.SUCCESS) {
         val task = result.task(taskPath)
         assertNotNull(task, "Build result does not contain task with path '$taskPath'")
-        assertEquals(outcome, task!!.outcome)
+        assertEquals(outcome, task?.outcome)
     }
 
     fun assertTasks(taskName: String, outcome: TaskOutcome = TaskOutcome.SUCCESS) {
@@ -128,5 +128,4 @@ class AemBuildResult(val result: BuildResult, val projectDir: File) {
                 "META-INF/vault/definition/thumbnail.png"
         )
     }
-
 }

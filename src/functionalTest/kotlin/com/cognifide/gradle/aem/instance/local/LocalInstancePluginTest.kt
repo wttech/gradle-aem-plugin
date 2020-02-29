@@ -5,6 +5,7 @@ import org.gradle.internal.impldep.org.testng.AssertJUnit.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty
 
+@Suppress("LongMethod", "MaxLineLength")
 class LocalInstancePluginTest : AemBuildTest() {
 
     @Test

@@ -36,5 +36,4 @@ class CommonPluginTest {
                 "Common plugin should not provide any tasks which belongs to group AEM."
         )
     }
-
 }

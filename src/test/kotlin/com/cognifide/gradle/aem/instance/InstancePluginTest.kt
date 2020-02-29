@@ -19,5 +19,4 @@ class InstancePluginTest {
         tasks.getByName(InstanceSatisfy.NAME)
         tasks.getByName(InstanceRcp.NAME)
     }
-
 }

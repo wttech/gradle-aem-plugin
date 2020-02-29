@@ -2,9 +2,9 @@ package com.cognifide.gradle.aem.bundle
 
 import com.cognifide.gradle.aem.test.AemBuildTest
 import org.junit.jupiter.api.Test
-import java.io.File
 
-class BundlePluginTest: AemBuildTest() {
+@Suppress("LongMethod", "MaxLineLength")
+class BundlePluginTest : AemBuildTest() {
 
     @Test
     fun `should build package with bundle using minimal configuration`() {

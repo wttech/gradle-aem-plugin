@@ -1,9 +1,8 @@
 package com.cognifide.gradle.aem.common
 import com.cognifide.gradle.aem.test.AemBuildTest
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
-class CommonPluginTest: AemBuildTest() {
+class CommonPluginTest : AemBuildTest() {
 
     @Test
     fun `should apply plugin correctly`() {

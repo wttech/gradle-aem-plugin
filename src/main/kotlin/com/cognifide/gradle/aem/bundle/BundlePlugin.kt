@@ -87,10 +87,9 @@ class BundlePlugin : CommonDefaultPlugin() {
 
                     testImplConfig.extendsFrom(compileOnlyConfig)
 
-                    common.tasks.getAll<BundleCompose>().forEach { bundle ->
-                        dependsOn(bundle)
-                        classpath += files(bundle.composedFile)
-                    }
+                    val bundle = common.tasks.get<BundleCompose>(BundleCompose.NAME)
+                    dependsOn(bundle)
+                    classpath += files(bundle.composedFile)
                 }
             }
         }

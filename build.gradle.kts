@@ -96,7 +96,9 @@ tasks {
         testLogging.showStandardStreams = true
         useJUnitPlatform()
     }
-
+    named<Test>("test") {
+        dependsOn("detektTest")
+    }
     register<Test>("functionalTest") {
         testClassesDirs = functionalTestSourceSet.output.classesDirs
         classpath = functionalTestSourceSet.runtimeClasspath
@@ -109,7 +111,7 @@ tasks {
 
         useJUnitPlatform()
         mustRunAfter("test")
-        dependsOn("jar")
+        dependsOn("jar", "detektFunctionalTest")
         outputs.dir("build/functionalTest")
     }
     named<Task>("build") {
