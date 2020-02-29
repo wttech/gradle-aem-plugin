@@ -117,7 +117,7 @@ class BackupManager(private val aem: AemExtension) {
     private val remoteSources: List<BackupSource>
         get() = when {
             !downloadUrl.orNull.isNullOrBlank() -> listOfNotNull(remoteDownloadSource)
-            !uploadUrl.orNull.isNullOrBlank() -> remoteUploadedSources
+            !uploadUrl.orNull.isNullOrBlank() -> remoteUploadSources
             else -> listOf()
         }
 
@@ -144,7 +144,7 @@ class BackupManager(private val aem: AemExtension) {
             }
         }
 
-    private val remoteUploadedSources: List<BackupSource>
+    private val remoteUploadSources: List<BackupSource>
         get() {
             val fileEntries = common.fileTransfer.list(uploadUrl.get())
             if (fileEntries.isEmpty()) {
