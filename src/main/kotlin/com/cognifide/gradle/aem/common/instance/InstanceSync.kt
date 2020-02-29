@@ -20,6 +20,8 @@ class InstanceSync(val aem: AemExtension, val instance: Instance) {
 
     val osgiFramework by lazy { OsgiFramework(this) }
 
+    val osgi get() = osgiFramework
+
     /**
      * Control OSGi framework (Apache Felix) on AEM instance.
      */

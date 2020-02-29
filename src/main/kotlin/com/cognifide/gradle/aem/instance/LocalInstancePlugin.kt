@@ -25,80 +25,80 @@ class LocalInstancePlugin : CommonDefaultPlugin() {
     @Suppress("LongMethod")
     private fun Project.setupTasks() = tasks {
 
-            // Plugin tasks
+        // Plugin tasks
 
-            register<InstanceDown>(InstanceDown.NAME)
-            register<InstanceUp>(InstanceUp.NAME) {
-                dependsOn(InstanceCreate.NAME)
-                mustRunAfter(InstanceDown.NAME, InstanceDestroy.NAME)
-            }
-            register<InstanceRestart>(InstanceRestart.NAME) {
-                dependsOn(InstanceDown.NAME, InstanceUp.NAME)
-            }
-            register<InstanceCreate>(InstanceCreate.NAME) {
-                mustRunAfter(InstanceDestroy.NAME, InstanceResolve.NAME)
-            }
-            register<InstanceDestroy>(InstanceDestroy.NAME) {
-                dependsOn(InstanceDown.NAME)
-            }
-            named<InstanceSatisfy>(InstanceSatisfy.NAME) {
-                mustRunAfter(InstanceResolve.NAME, InstanceCreate.NAME, InstanceUp.NAME)
-            }
-            named<InstanceProvision>(InstanceProvision.NAME) {
-                mustRunAfter(InstanceResolve.NAME, InstanceCreate.NAME, InstanceUp.NAME)
-            }
-            named<InstanceAwait>(InstanceAwait.NAME) {
-                mustRunAfter(InstanceCreate.NAME, InstanceUp.NAME)
-            }
-            named<InstanceSetup>(InstanceSetup.NAME) {
-                dependsOn(InstanceCreate.NAME, InstanceUp.NAME)
-                mustRunAfter(InstanceDestroy.NAME)
-            }
-            register<InstanceResetup>(InstanceResetup.NAME) {
-                dependsOn(InstanceDestroy.NAME, InstanceSetup.NAME)
-            }
-            register<InstanceBackup>(InstanceBackup.NAME) {
-                mustRunAfter(InstanceDown.NAME)
-            }
-            register<InstanceResolve>(InstanceResolve.NAME)
-            named<InstanceTail>(InstanceTail.NAME) {
-                mustRunAfter(InstanceResolve.NAME, InstanceCreate.NAME, InstanceUp.NAME)
-            }
-            named<InstanceRcp>(InstanceRcp.NAME) {
-                mustRunAfter(InstanceResolve.NAME, InstanceCreate.NAME, InstanceUp.NAME)
-            }
-            named<InstanceGroovyEval>(InstanceGroovyEval.NAME) {
-                mustRunAfter(InstanceResolve.NAME, InstanceCreate.NAME, InstanceUp.NAME)
-            }
-
-            // Runtime lifecycle
-
-            named<Up>(Up.NAME) {
-                dependsOn(InstanceUp.NAME)
-                mustRunAfter(InstanceBackup.NAME)
-            }
-            named<Down>(Down.NAME) {
-                dependsOn(InstanceDown.NAME)
-            }
-            named<Destroy>(Destroy.NAME) {
-                dependsOn(InstanceDestroy.NAME)
-            }
-            named<Restart>(Restart.NAME) {
-                dependsOn(InstanceRestart.NAME)
-            }
-            named<Setup>(Setup.NAME) {
-                dependsOn(InstanceSetup.NAME)
-            }
-            named<Resetup>(Resetup.NAME) {
-                dependsOn(InstanceResetup.NAME)
-            }
-            named<Resolve>(Resolve.NAME) {
-                dependsOn(InstanceResolve.NAME)
-            }
-            named<Await>(Await.NAME) {
-                dependsOn(InstanceAwait.NAME)
-            }
+        val down = register<InstanceDown>(InstanceDown.NAME)
+        val destroy = register<InstanceDestroy>(InstanceDestroy.NAME) {
+            dependsOn(down)
         }
+        val resolve = register<InstanceResolve>(InstanceResolve.NAME)
+        val create = register<InstanceCreate>(InstanceCreate.NAME) {
+            mustRunAfter(destroy, resolve)
+        }
+        val up = register<InstanceUp>(InstanceUp.NAME) {
+            dependsOn(create)
+            mustRunAfter(down, destroy)
+        }
+        val restart = register<InstanceRestart>(InstanceRestart.NAME) {
+            dependsOn(down, up)
+        }
+        named<InstanceSatisfy>(InstanceSatisfy.NAME) {
+            mustRunAfter(resolve, create, up)
+        }
+        named<InstanceProvision>(InstanceProvision.NAME) {
+            mustRunAfter(resolve, create, up)
+        }
+        val await = named<InstanceAwait>(InstanceAwait.NAME) {
+            mustRunAfter(create, up)
+        }
+        val setup = named<InstanceSetup>(InstanceSetup.NAME) {
+            dependsOn(create, up)
+            mustRunAfter(destroy)
+        }
+        val resetup = register<InstanceResetup>(InstanceResetup.NAME) {
+            dependsOn(destroy, setup)
+        }
+        val backup = register<InstanceBackup>(InstanceBackup.NAME) {
+            mustRunAfter(down)
+        }
+        named<InstanceTail>(InstanceTail.NAME) {
+            mustRunAfter(resolve, create, up)
+        }
+        named<InstanceRcp>(InstanceRcp.NAME) {
+            mustRunAfter(resolve, create, up)
+        }
+        named<InstanceGroovyEval>(InstanceGroovyEval.NAME) {
+            mustRunAfter(resolve, create, up)
+        }
+
+        // Runtime lifecycle
+
+        named<Up>(Up.NAME) {
+            dependsOn(up)
+            mustRunAfter(backup)
+        }
+        named<Down>(Down.NAME) {
+            dependsOn(down)
+        }
+        named<Destroy>(Destroy.NAME) {
+            dependsOn(destroy)
+        }
+        named<Restart>(Restart.NAME) {
+            dependsOn(restart)
+        }
+        named<Setup>(Setup.NAME) {
+            dependsOn(setup)
+        }
+        named<Resetup>(Resetup.NAME) {
+            dependsOn(resetup)
+        }
+        named<Resolve>(Resolve.NAME) {
+            dependsOn(resolve)
+        }
+        named<Await>(Await.NAME) {
+            dependsOn(await)
+        }
+    }
 
     companion object {
         const val ID = "com.cognifide.aem.instance.local"

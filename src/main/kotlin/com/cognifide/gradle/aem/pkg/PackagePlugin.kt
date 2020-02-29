@@ -38,7 +38,6 @@ class PackagePlugin : CommonDefaultPlugin() {
         }
     }
 
-    // TODO Configure dependencies by provider references
     private fun Project.setupTasks() {
         tasks {
             val prepare = register<PackagePrepare>(PackagePrepare.NAME) {
@@ -51,43 +50,40 @@ class PackagePlugin : CommonDefaultPlugin() {
             }.apply {
                 artifacts.add(Dependency.ARCHIVES_CONFIGURATION, this)
             }
-            register<PackageUpload>(PackageUpload.NAME) {
-                dependsOn(PackageCompose.NAME)
+            val upload = register<PackageUpload>(PackageUpload.NAME) {
+                dependsOn(compose)
             }
-            register<PackageInstall>(PackageInstall.NAME) {
-                dependsOn(PackageCompose.NAME)
-                mustRunAfter(PackageUpload.NAME)
+            val install = register<PackageInstall>(PackageInstall.NAME) {
+                dependsOn(compose)
+                mustRunAfter(upload)
             }
-            register<PackageUninstall>(PackageUninstall.NAME) {
-                dependsOn(PackageCompose.NAME)
-                mustRunAfter(PackageUpload.NAME, PackageInstall.NAME)
+            val uninstall = register<PackageUninstall>(PackageUninstall.NAME) {
+                dependsOn(compose)
+                mustRunAfter(upload, install)
             }
-            register<PackageActivate>(PackageActivate.NAME) {
-                dependsOn(PackageCompose.NAME)
-                mustRunAfter(PackageUpload.NAME, PackageInstall.NAME)
+            val activate = register<PackageActivate>(PackageActivate.NAME) {
+                dependsOn(compose)
+                mustRunAfter(upload, install)
             }
-            register<PackageDeploy>(PackageDeploy.NAME) {
-                dependsOn(PackageCompose.NAME)
+            val deploy = register<PackageDeploy>(PackageDeploy.NAME) {
+                dependsOn(compose)
+                plugins.withId(InstancePlugin.ID) {
+                    mustRunAfter(named<Task>(InstanceCreate.NAME), named<Task>(InstanceUp.NAME), named<Task>(InstanceSatisfy.NAME))
+                }
             }
             register<PackageDelete>(PackageDelete.NAME) {
-                dependsOn(PackageCompose.NAME)
-                mustRunAfter(PackageDeploy.NAME, PackageUpload.NAME, PackageInstall.NAME, PackageActivate.NAME, PackageUninstall.NAME)
+                dependsOn(compose)
+                mustRunAfter(deploy, upload, install, activate, uninstall)
             }
             register<PackagePurge>(PackagePurge.NAME) {
-                dependsOn(PackageCompose.NAME)
-                mustRunAfter(PackageDeploy.NAME, PackageUpload.NAME, PackageInstall.NAME, PackageActivate.NAME, PackageUninstall.NAME)
+                dependsOn(compose)
+                mustRunAfter(deploy, upload, install, activate, uninstall)
             }
             named<Task>(LifecycleBasePlugin.ASSEMBLE_TASK_NAME) {
-                dependsOn(PackageCompose.NAME)
+                dependsOn(compose)
             }
             typed<PackageTask> {
                 files.from(compose.map { it.archiveFile })
-            }
-        }
-
-        plugins.withId(InstancePlugin.ID) {
-            tasks.named(PackageDeploy.NAME).configure { task ->
-                task.mustRunAfter(InstanceCreate.NAME, InstanceUp.NAME, InstanceSatisfy.NAME)
             }
         }
     }

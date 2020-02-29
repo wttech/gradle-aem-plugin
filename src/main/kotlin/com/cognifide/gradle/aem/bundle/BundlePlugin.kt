@@ -48,7 +48,6 @@ class BundlePlugin : CommonDefaultPlugin() {
         }
     }
 
-    // TODO Configure dependencies by provider references
     private fun Project.setupTasks() = tasks {
         val compose = register<BundleCompose>(BundleCompose.NAME) {
             dependsOn(JavaPlugin.CLASSES_TASK_NAME)
@@ -59,16 +58,16 @@ class BundlePlugin : CommonDefaultPlugin() {
             artifacts.add(JavaPlugin.TEST_RUNTIME_CLASSPATH_CONFIGURATION_NAME, this)
         }
         register<BundleInstall>(BundleInstall.NAME) {
-            dependsOn(BundleCompose.NAME)
+            dependsOn(compose)
         }
         register<BundleUninstall>(BundleUninstall.NAME) {
-            dependsOn(BundleCompose.NAME)
+            dependsOn(compose)
         }
         typed<BundleTask> {
             files.from(compose.map { it.archiveFile })
         }
         named<Task>(LifecycleBasePlugin.ASSEMBLE_TASK_NAME) {
-            dependsOn(BundleCompose.NAME)
+            dependsOn(compose)
         }
         named<Jar>(JavaPlugin.JAR_TASK_NAME) {
             archiveClassifier.set(LIB_CLASSIFIER)
