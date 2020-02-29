@@ -9,7 +9,7 @@ import org.apache.commons.io.FileUtils
 import java.io.File
 
 /**
- * Package definition that could be used to compose CRX package in place.
+ * Package builder that could be used to compose CRX package in place.
  *
  * This is programmatic approach to create ZIP file. API reflects Gradle's AbstractArchiveTask.
  * Useful for writing complex custom tasks that cannot inherit from Gradle's ZIP task.
@@ -115,7 +115,7 @@ class PackageDefinition(private val aem: AemExtension) : VaultDefinition(aem) {
         content()
         process()
 
-        ZipFile(archivePath.get().asFile).addDir(pkgDir)
+        ZipFile(archivePath.get().asFile).packAll(pkgDir)
         pkgDir.deleteRecursively()
 
         return archivePath.get().asFile

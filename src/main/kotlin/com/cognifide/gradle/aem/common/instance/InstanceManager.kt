@@ -119,8 +119,8 @@ open class InstanceManager(val aem: AemExtension) {
     /**
      * Define remote instance (available on any host).
      */
-    fun remote(httpUrl: String, options: RemoteInstance.() -> Unit) {
-        defined.add(aem.obj.provider { RemoteInstance.create(aem, httpUrl, options) })
+    fun remote(httpUrl: String, options: Instance.() -> Unit) {
+        defined.add(aem.obj.provider { Instance.create(aem, httpUrl, options) })
     }
 
     fun named(name: String) = defined.get().firstOrNull()

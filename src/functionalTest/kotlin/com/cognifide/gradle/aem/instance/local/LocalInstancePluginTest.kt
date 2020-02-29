@@ -5,6 +5,7 @@ import org.gradle.internal.impldep.org.testng.AssertJUnit.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty
 
+@Suppress("LongMethod", "MaxLineLength")
 class LocalInstancePluginTest : AemBuildTest() {
 
     @Test
@@ -24,17 +25,66 @@ class LocalInstancePluginTest : AemBuildTest() {
         }
     }
 
-    @EnabledIfSystemProperty(named = "localInstance.jarUrl", matches = ".+")
+    @Test
+    fun `should resolve instance files properly`() {
+        val projectDir = prepareProject("instance-resolve") {
+            settingsGradle("")
+
+            file("src/aem/files/cq-quickstart-6.5.0.jar", "")
+            file("src/aem/files/license.properties", "")
+
+            gradleProperties("""
+                localInstance.quickstart.jarUrl=src/aem/files/cq-quickstart-6.5.0.jar
+                localInstance.quickstart.licenseUrl=src/aem/files/license.properties
+            """)
+
+            buildGradle("""
+                plugins {
+                    id("com.cognifide.aem.instance.local")
+                }
+                
+                repositories {
+                    jcenter()
+                }
+                
+                aem {
+                    instance {
+                        satisfier {
+                            packages {
+                               "dep.ac-tool"("https://repo1.maven.org/maven2/biz/netcentric/cq/tools/accesscontroltool", "accesscontroltool-package/2.3.2/accesscontroltool-package-2.3.2.zip", "accesscontroltool-oakindex-package/2.3.2/accesscontroltool-oakindex-package-2.3.2.zip")
+                               "dep.search-webconsole-plugin"("com.neva.felix:search-webconsole-plugin:1.3.0")
+                               "tool.aem-groovy-console"("https://github.com/icfnext/aem-groovy-console/releases/download/14.0.0/aem-groovy-console-14.0.0.zip")
+                            }
+                        }
+                    }
+                }
+                """)
+        }
+
+        runBuild(projectDir, "instanceResolve", "-Poffline") {
+            assertTask(":instanceResolve")
+
+            assertFileExists("build/instance/quickstart/cq-quickstart-6.5.0.jar")
+            assertFileExists("build/instance/quickstart/license.properties")
+
+            assertFileExists("build/instance/satisfy/packages/9554134f/aem-groovy-console-14.0.0.zip")
+            assertFileExists("build/instance/satisfy/packages/c40605f3/accesscontroltool-package-2.3.2.zip")
+            assertFileExists("build/instance/satisfy/packages/96d08261/accesscontroltool-oakindex-package-2.3.2.zip")
+            assertPackage("build/instance/satisfy/packages/a8bf0bdf/search-webconsole-plugin-1.3.0.zip")
+        }
+    }
+
+    @EnabledIfSystemProperty(named = "localInstance.quickstart.jarUrl", matches = ".+")
     @Test
     fun `should setup and backup local aem author and publish instances`() {
-        val projectDir = prepareProject("local-instance-setup-n-backup") {
+        val projectDir = prepareProject("local-instance-setup-and-backup") {
             gradleProperties("""
                 fileTransfer.user=${System.getProperty("fileTransfer.user")}
                 fileTransfer.password=${System.getProperty("fileTransfer.password")}
                 fileTransfer.domain=${System.getProperty("fileTransfer.domain")}
                 
-                localInstance.quickstart.jarUrl=${System.getProperty("localInstance.jarUrl")}
-                localInstance.quickstart.licenseUrl=${System.getProperty("localInstance.licenseUrl")}
+                localInstance.quickstart.jarUrl=${System.getProperty("localInstance.quickstart.jarUrl")}
+                localInstance.quickstart.licenseUrl=${System.getProperty("localInstance.quickstart.licenseUrl")}
                 
                 instance.local-author.httpUrl=http://localhost:9502
                 instance.local-author.type=local
@@ -46,7 +96,7 @@ class LocalInstancePluginTest : AemBuildTest() {
                 instance.local-publish.runModes=local,nosamplecontent
                 instance.local-publish.jvmOpts=-server -Xmx2048m -XX:MaxPermSize=512M -Djava.awt.headless=true
                 
-                localInstance.backup.uploadUrl=build/backups-upload
+                localInstance.backup.uploadUrl=build/instance/backup/upload
                 """)
 
             settingsGradle("")
@@ -122,13 +172,13 @@ class LocalInstancePluginTest : AemBuildTest() {
 
             val localBackupDir = "build/instance/backup/local"
             assertFileExists(localBackupDir)
-            val localBackups = file(localBackupDir).walk().filter { it.name.endsWith(".backup.zip") }.toList()
+            val localBackups = files(localBackupDir, "**/*.backup.zip")
             assertEquals("Backup file should end with *.backup.zip suffix!",
                     1, localBackups.count())
 
-            val remoteBackupDir = "build/backups-upload"
+            val remoteBackupDir = "build/instance/backup/upload"
             assertFileExists(remoteBackupDir)
-            val remoteBackups = file(remoteBackupDir).walk().filter { it.name.endsWith(".backup.zip") }.toList()
+            val remoteBackups = files(remoteBackupDir, "**/*.backup.zip")
             assertEquals("Backup file should end with *.backup.zip suffix!",
                     1, remoteBackups.count())
 
@@ -167,17 +217,17 @@ class LocalInstancePluginTest : AemBuildTest() {
         }
     }
 
-    @EnabledIfSystemProperty(named = "localInstance.jarUrl", matches = ".+")
+    @EnabledIfSystemProperty(named = "localInstance.quickstart.jarUrl", matches = ".+")
     @Test
-    fun `should re-setup local aem author and publish instances`() {
+    fun `should repeat setup of local aem author and publish instances`() {
         val projectDir = prepareProject("local-instance-resetup") {
             gradleProperties("""
                 fileTransfer.user=${System.getProperty("fileTransfer.user")}
                 fileTransfer.password=${System.getProperty("fileTransfer.password")}
                 fileTransfer.domain=${System.getProperty("fileTransfer.domain")}
                 
-                localInstance.quickstart.jarUrl=${System.getProperty("localInstance.jarUrl")}
-                localInstance.quickstart.licenseUrl=${System.getProperty("localInstance.licenseUrl")}
+                localInstance.quickstart.jarUrl=${System.getProperty("localInstance.quickstart.jarUrl")}
+                localInstance.quickstart.licenseUrl=${System.getProperty("localInstance.quickstart.licenseUrl")}
                 
                 instance.local-author.httpUrl=http://localhost:9502
                 instance.local-author.type=local

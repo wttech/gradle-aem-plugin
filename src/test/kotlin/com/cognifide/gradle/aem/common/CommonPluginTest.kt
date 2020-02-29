@@ -2,7 +2,7 @@ package com.cognifide.gradle.aem.common
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.AemTask
-import com.cognifide.gradle.aem.common.utils.using
+import com.cognifide.gradle.common.utils.using
 import org.gradle.testfixtures.ProjectBuilder
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test
 class CommonPluginTest {
 
     @Test
-    fun `plugin registers extension`() = using(ProjectBuilder.builder().build()) {
+    fun `plugin registers extension`() = ProjectBuilder.builder().build().using {
         plugins.apply(CommonPlugin.ID)
 
         extensions.getByName(AemExtension.NAME)
@@ -36,5 +36,4 @@ class CommonPluginTest {
                 "Common plugin should not provide any tasks which belongs to group AEM."
         )
     }
-
 }

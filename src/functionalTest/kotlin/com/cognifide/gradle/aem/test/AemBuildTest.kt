@@ -3,7 +3,7 @@ package com.cognifide.gradle.aem.test
 import org.gradle.testkit.runner.GradleRunner
 import java.io.File
 
-abstract class AemBuildTest {
+open class AemBuildTest {
 
     fun prepareProject(path: String, definition: File.() -> Unit) = File("build/functionalTest/$path").apply {
         deleteRecursively()
@@ -67,5 +67,5 @@ abstract class AemBuildTest {
         """)
     }
 
-    fun rootPath(rootPath: String, path: String) = rootPath.takeIf { it.isNotBlank() }?.let { "$it/$path"} ?: path
+    fun rootPath(rootPath: String, path: String) = rootPath.takeIf { it.isNotBlank() }?.let { "$it/$path" } ?: path
 }

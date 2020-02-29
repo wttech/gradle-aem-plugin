@@ -194,7 +194,7 @@ aem {
                     osgiFramework.stopBundle("org.apache.sling.jcr.webdav")
                     osgiFramework.stopBundle("com.adobe.granite.crxde-lite")
 
-                    awaitUp() // include above in property: 'instance.awaitUp.bundles.symbolicNamesIgnored'
+                    instance.awaitUp() // include above in property: 'instance.awaitUp.bundles.symbolicNamesIgnored'
                 }
             }
         }

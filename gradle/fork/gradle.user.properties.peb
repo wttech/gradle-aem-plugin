@@ -1,0 +1,6 @@
+systemProp.fileTransfer.user={{companyUser}}
+systemProp.fileTransfer.password={{companyPassword}}
+systemProp.fileTransfer.domain={{companyDomain}}
+
+systemProp.localInstance.quickstart.jarUrl={{ localInstanceQuickstartJarUri }}
+systemProp.localInstance.quickstart.licenseUrl={{ localInstanceQuickstartLicenseUri }}

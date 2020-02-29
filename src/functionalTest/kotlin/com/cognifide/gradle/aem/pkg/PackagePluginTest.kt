@@ -3,7 +3,8 @@ import com.cognifide.gradle.aem.test.AemBuildTest
 import org.junit.jupiter.api.Test
 import java.io.File
 
-class PackagePluginTest: AemBuildTest() {
+@Suppress("LongMethod", "MaxLineLength")
+class PackagePluginTest : AemBuildTest() {
 
     @Test
     fun `should build package using minimal configuration`() {
@@ -84,7 +85,7 @@ class PackagePluginTest: AemBuildTest() {
                 version=1.0.0
             """)
 
-            file("assembly/build.gradle.kts","""
+            file("assembly/build.gradle.kts", """
                 plugins {
                     id("com.cognifide.aem.package")
                 }
