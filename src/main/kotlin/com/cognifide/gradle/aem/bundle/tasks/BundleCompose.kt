@@ -419,6 +419,8 @@ open class BundleCompose : JarTask(), AemTask {
     }
 
     init {
+        group = AemTask.GROUP
+        description = "Composes OSGi bundle from compiled and embed classes with BND tool processing."
         applyArchiveDefaults()
         applyBndToolDefaults()
     }

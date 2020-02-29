@@ -5,6 +5,7 @@ import com.cognifide.gradle.aem.pkg.tasks.PackageSync
 import com.cognifide.gradle.aem.pkg.tasks.PackageVlt
 import com.cognifide.gradle.common.CommonDefaultPlugin
 import org.gradle.api.Project
+import org.gradle.api.Task
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 
 /**
@@ -22,11 +23,12 @@ class PackageSyncPlugin : CommonDefaultPlugin() {
     }
 
     private fun Project.setupTasks() = tasks {
+        val clean = named<Task>(LifecycleBasePlugin.CLEAN_TASK_NAME)
         register<PackageVlt>(PackageVlt.NAME) {
-            mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
+            mustRunAfter(clean)
         }
         register<PackageSync>(PackageSync.NAME) {
-            mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
+            mustRunAfter(clean)
         }
     }
 

@@ -10,6 +10,7 @@ import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.PackageDeploy
 import com.cognifide.gradle.common.CommonDefaultPlugin
 import org.gradle.api.Project
+import org.gradle.api.Task
 
 class InstancePlugin : CommonDefaultPlugin() {
 
@@ -26,29 +27,29 @@ class InstancePlugin : CommonDefaultPlugin() {
 
         // Plugin tasks
 
-        register<InstanceSatisfy>(InstanceSatisfy.NAME)
-        register<InstanceProvision>(InstanceProvision.NAME) {
-            mustRunAfter(InstanceSatisfy.NAME)
+        val satisfy = register<InstanceSatisfy>(InstanceSatisfy.NAME)
+        val provision = register<InstanceProvision>(InstanceProvision.NAME) {
+            mustRunAfter(satisfy)
         }
         register<InstanceReload>(InstanceReload.NAME) {
-            mustRunAfter(InstanceSatisfy.NAME)
-            plugins.withId(PackagePlugin.ID) { mustRunAfter(PackageDeploy.NAME) }
+            mustRunAfter(satisfy)
+            plugins.withId(PackagePlugin.ID) { mustRunAfter(named<Task>(PackageDeploy.NAME)) }
         }
         register<InstanceAwait>(InstanceAwait.NAME) {
-            mustRunAfter(InstanceSatisfy.NAME)
-            plugins.withId(PackagePlugin.ID) { mustRunAfter(PackageDeploy.NAME) }
+            mustRunAfter(satisfy)
+            plugins.withId(PackagePlugin.ID) { mustRunAfter(named<Task>(PackageDeploy.NAME)) }
         }
         register<InstanceSetup>(InstanceSetup.NAME) {
-            dependsOn(InstanceSatisfy.NAME, InstanceProvision.NAME)
-            plugins.withId(PackagePlugin.ID) { dependsOn(PackageDeploy.NAME) }
+            dependsOn(satisfy, provision)
+            plugins.withId(PackagePlugin.ID) { dependsOn(named<Task>(PackageDeploy.NAME)) }
         }
         register<InstanceTail>(InstanceTail.NAME)
         register<InstanceRcp>(InstanceRcp.NAME) {
-            mustRunAfter(InstanceSatisfy.NAME, InstanceProvision.NAME)
+            mustRunAfter(satisfy, provision)
         }
         register<InstanceGroovyEval>(InstanceGroovyEval.NAME) {
-            mustRunAfter(InstanceSatisfy.NAME, InstanceProvision.NAME)
-            plugins.withId(PackagePlugin.ID) { mustRunAfter(PackageDeploy.NAME) }
+            mustRunAfter(satisfy, provision)
+            plugins.withId(PackagePlugin.ID) { mustRunAfter(named<Task>(PackageDeploy.NAME)) }
         }
     }
 
