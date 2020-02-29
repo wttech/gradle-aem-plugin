@@ -115,7 +115,15 @@ open class PackageCompose : ZipTask(), AemTask {
         common.notifier.notify("Package composed", composedFile.name)
     }
 
-    fun fromScratch() = noDefaults()
+    fun fromDefaults() {
+        withVaultFilters(vaultFilterOriginFile)
+
+        fromMeta(metaDir)
+        fromRoot(jcrRootDir)
+        fromBundlesInstalled(bundlesInstalled)
+        fromPackagesNested(packagesNested)
+        fromVaultHooks(vaultHooksDir)
+    }
 
     fun fromMeta(metaDir: Any) {
         into(Package.META_PATH) { spec ->
@@ -229,13 +237,7 @@ open class PackageCompose : ZipTask(), AemTask {
     }
 
     private var definition: () -> Unit = {
-        withVaultFilters(vaultFilterOriginFile)
-
-        fromMeta(metaDir)
-        fromRoot(jcrRootDir)
-        fromBundlesInstalled(bundlesInstalled)
-        fromPackagesNested(packagesNested)
-        fromVaultHooks(vaultHooksDir)
+        fromDefaults()
     }
 
     /**
@@ -295,7 +297,8 @@ open class PackageCompose : ZipTask(), AemTask {
     var fileFilterDelegate: ((CopySpec) -> Unit) = { fileFilter.filter(it, vaultDefinition.fileProperties) }
 
     init {
-        description = "Composes CRX package from JCR content and built OSGi bundles"
+        group = AemTask.GROUP
+        description = "Composes CRX package from JCR content and built or resolved OSGi bundles"
         archiveBaseName.set(aem.commonOptions.baseName)
         destinationDirectory.set(project.layout.buildDirectory.dir(name))
         duplicatesStrategy = DuplicatesStrategy.WARN
