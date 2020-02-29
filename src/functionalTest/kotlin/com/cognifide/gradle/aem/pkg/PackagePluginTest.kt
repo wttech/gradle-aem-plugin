@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.pkg
 import com.cognifide.gradle.aem.test.AemBuildTest
+import org.gradle.testkit.runner.TaskOutcome
 import org.junit.jupiter.api.Test
 import java.io.File
 
@@ -67,6 +68,10 @@ class PackagePluginTest : AemBuildTest() {
                     
                 </properties>
             """)
+        }
+
+        runBuild(projectDir, "packageCompose", "-Poffline") {
+            assertTask(":packageCompose", TaskOutcome.UP_TO_DATE)
         }
     }
 
@@ -170,6 +175,10 @@ class PackagePluginTest : AemBuildTest() {
                   + * (nt:base) = content:Folder version
             """)
         }
+
+        runBuild(projectDir, ":assembly:packageCompose", "-Poffline") {
+            assertTask(":assembly:packageCompose", TaskOutcome.UP_TO_DATE)
+        }
     }
 
     @Test
@@ -228,6 +237,10 @@ class PackagePluginTest : AemBuildTest() {
                   
                 </workspaceFilter>
             """)
+        }
+
+        runBuild(projectDir, "packageCompose", "-Poffline") {
+            assertTask(":packageCompose", TaskOutcome.UP_TO_DATE)
         }
     }
 
