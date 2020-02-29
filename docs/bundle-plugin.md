@@ -29,7 +29,9 @@ plugins {
 }
 ```
 
-This plugin implicitly applies also [Package Plugin](package-plugin.md).
+This plugin implicitly applies [Common Plugin](common-plugin.md).
+
+When applying this plugin together with [Package Plugin](package-plugin.md), built OSGi bundle will be automatically put inside built CRX package.
 
 ## Bundle conventions
 
