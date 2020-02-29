@@ -99,15 +99,6 @@ class BundlePluginTest : AemBuildTest() {
             assertTask(":bundleCompose")
             assertBundle("build/bundleCompose/bundle-extended-1.0.0.jar")
         }
-
-        runBuild(projectDir, "packageCompose", "-Poffline") {
-            assertTask(":packageCompose")
-
-            val pkgPath = "build/packageCompose/bundle-extended-1.0.0.zip"
-
-            assertPackage(pkgPath)
-            assertPackageBundle(pkgPath, "jcr_root/apps/bundle-extended/install/bundle-extended-1.0.0.jar")
-        }
     }
 
     @Test

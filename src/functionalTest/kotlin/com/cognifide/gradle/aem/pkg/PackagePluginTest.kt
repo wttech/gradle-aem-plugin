@@ -295,6 +295,7 @@ class PackagePluginTest : AemBuildTest() {
         file("ui.apps/build.gradle.kts", """
             plugins {
                 id("com.cognifide.aem.bundle")
+                id("com.cognifide.aem.package")
             }
             
             group = "com.company.example.aem"

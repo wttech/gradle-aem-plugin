@@ -3,9 +3,8 @@ package com.cognifide.gradle.aem.bundle
 import com.cognifide.gradle.aem.bundle.tasks.BundleCompose
 import com.cognifide.gradle.aem.bundle.tasks.BundleInstall
 import com.cognifide.gradle.aem.bundle.tasks.BundleUninstall
+import com.cognifide.gradle.aem.common.CommonPlugin
 import com.cognifide.gradle.aem.common.tasks.BundleTask
-import com.cognifide.gradle.aem.pkg.PackagePlugin
-import com.cognifide.gradle.aem.pkg.tasks.PackageCompose
 import com.cognifide.gradle.common.CommonDefaultPlugin
 import com.cognifide.gradle.common.common
 import org.gradle.api.JavaVersion
@@ -30,7 +29,7 @@ class BundlePlugin : CommonDefaultPlugin() {
 
     private fun Project.setupDependentPlugins() {
         plugins.apply(JavaPlugin::class.java)
-        plugins.apply(PackagePlugin::class.java)
+        plugins.apply(CommonPlugin::class.java)
     }
 
     private fun Project.setupJavaDefaults() {
@@ -72,27 +71,20 @@ class BundlePlugin : CommonDefaultPlugin() {
         named<Jar>(JavaPlugin.JAR_TASK_NAME) {
             archiveClassifier.set(LIB_CLASSIFIER)
         }
-        val test = named<Test>(JavaPlugin.TEST_TASK_NAME)
-        named<PackageCompose>(PackageCompose.NAME) {
-            installBundleBuilt(compose)
-            dependsOn(test)
-        }
     }
 
     // @see <https://github.com/Cognifide/gradle-aem-plugin/issues/95>
-    private fun Project.setupTestTask() {
-        afterEvaluate {
-            tasks {
-                named<Test>(JavaPlugin.TEST_TASK_NAME) {
-                    val testImplConfig = configurations.getByName(JavaPlugin.TEST_IMPLEMENTATION_CONFIGURATION_NAME)
-                    val compileOnlyConfig = configurations.getByName(JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME)
+    private fun Project.setupTestTask() = afterEvaluate {
+        tasks {
+            named<Test>(JavaPlugin.TEST_TASK_NAME) {
+                val testImplConfig = configurations.getByName(JavaPlugin.TEST_IMPLEMENTATION_CONFIGURATION_NAME)
+                val compileOnlyConfig = configurations.getByName(JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME)
 
-                    testImplConfig.extendsFrom(compileOnlyConfig)
+                testImplConfig.extendsFrom(compileOnlyConfig)
 
-                    val bundle = common.tasks.get<BundleCompose>(BundleCompose.NAME)
-                    dependsOn(bundle)
-                    classpath += files(bundle.composedFile)
-                }
+                val bundle = common.tasks.get<BundleCompose>(BundleCompose.NAME)
+                dependsOn(bundle)
+                classpath += files(bundle.composedFile)
             }
         }
     }
