@@ -116,39 +116,46 @@ class BackupManager(private val aem: AemExtension) {
 
     private val remoteSources: List<BackupSource>
         get() = when {
-            !downloadUrl.orNull.isNullOrBlank() -> {
-                val dirUrl = downloadUrl.get().substringBeforeLast("/")
-                val name = downloadUrl.get().substringAfterLast("/")
-
-                val fileEntry = try {
-                    common.fileTransfer.stat(dirUrl, name) // 'stat' may be unsupported
-                } catch (e: FileException) {
-                    logger.debug("Cannot check instance backup file status at URL '$dirUrl/$name'", e)
-                    FileEntry(name)
-                }
-
-                if (fileEntry != null) {
-                    listOf(BackupSource(BackupType.REMOTE, fileEntry) {
-                        remoteDir.get().asFile.resolve(name).apply { common.fileTransfer.downloadFrom(dirUrl, name, this) }
-                    })
-                } else {
-                    logger.info("Instance backup at URL '$dirUrl/$name' is not available.")
-                    listOf()
-                }
-            }
-            !uploadUrl.orNull.isNullOrBlank() -> {
-                val fileEntries = common.fileTransfer.list(uploadUrl.get())
-                if (fileEntries.isEmpty()) {
-                    logger.info("No instance backups available at URL '$uploadUrl'.")
-                }
-
-                fileEntries.map { file ->
-                    BackupSource(BackupType.REMOTE, file) {
-                        remoteDir.get().asFile.resolve(file.name).apply { common.fileTransfer.downloadFrom(uploadUrl.get(), name, this) }
-                    }
-                }
-            }
+            !downloadUrl.orNull.isNullOrBlank() -> listOfNotNull(remoteDownloadSource)
+            !uploadUrl.orNull.isNullOrBlank() -> remoteUploadedSources
             else -> listOf()
+        }
+
+    private val remoteDownloadSource: BackupSource?
+        get() {
+            val dirUrl = downloadUrl.get().substringBeforeLast("/")
+            val name = downloadUrl.get().substringAfterLast("/")
+
+            val fileEntry = try {
+                common.fileTransfer.stat(dirUrl, name) // 'stat' may be unsupported
+            } catch (e: FileException) {
+                logger.warn("Cannot check instance backup file status at URL '$dirUrl/$name'! Cause: ${e.message}")
+                logger.debug("Actual error", e)
+                FileEntry(name)
+            }
+
+            return if (fileEntry != null) {
+                BackupSource(BackupType.REMOTE, fileEntry) {
+                    remoteDir.get().asFile.resolve(name).apply { common.fileTransfer.downloadFrom(dirUrl, name, this) }
+                }
+            } else {
+                logger.info("Instance backup at URL '$dirUrl/$name' is not available.")
+                null
+            }
+        }
+
+    private val remoteUploadedSources: List<BackupSource>
+        get() {
+            val fileEntries = common.fileTransfer.list(uploadUrl.get())
+            if (fileEntries.isEmpty()) {
+                logger.info("No instance backups available at URL '$uploadUrl'.")
+            }
+
+            return fileEntries.map { file ->
+                BackupSource(BackupType.REMOTE, file) {
+                    remoteDir.get().asFile.resolve(file.name).apply { common.fileTransfer.downloadFrom(uploadUrl.get(), name, this) }
+                }
+            }
         }
 
     fun create(instances: Collection<LocalInstance>) = namedFile.apply { create(this, instances) }
