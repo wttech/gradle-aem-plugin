@@ -1,7 +1,9 @@
 package com.cognifide.gradle.aem.bundle
 
 import com.cognifide.gradle.aem.test.AemBuildTest
+import org.gradle.testkit.runner.TaskOutcome
 import org.junit.jupiter.api.Test
+import java.io.File
 
 @Suppress("LongMethod", "MaxLineLength")
 class BundlePluginTest : AemBuildTest() {
@@ -68,6 +70,7 @@ class BundlePluginTest : AemBuildTest() {
             buildGradle("""
                 plugins {
                     id("com.cognifide.aem.bundle")
+                    id("maven-publish")
                 }
                 
                 group = "com.company.example"
@@ -90,6 +93,14 @@ class BundlePluginTest : AemBuildTest() {
                         vendor = "Company"
                     }
                 }
+                
+                publishing {
+                    publications {
+                        create<MavenPublication>("mavenJava") {
+                            from(components["java"])
+                        }
+                    }
+                }
                 """)
 
             helloServiceJava()
@@ -98,6 +109,15 @@ class BundlePluginTest : AemBuildTest() {
         runBuild(projectDir, "bundleCompose", "-Poffline") {
             assertTask(":bundleCompose")
             assertBundle("build/bundleCompose/bundle-extended-1.0.0.jar")
+        }
+
+        runBuild(projectDir, "publishToMavenLocal", "-Poffline") {
+            assertTask(":bundleCompose", TaskOutcome.UP_TO_DATE)
+
+            val mavenDir = File("${System.getProperty("user.home")}/.m2/repository/com/company/example/bundle-extended/1.0.0")
+            assertFileExists(mavenDir.resolve("bundle-extended-1.0.0.jar"))
+            assertFileExists(mavenDir.resolve("bundle-extended-1.0.0.pom"))
+            assertFileExists(mavenDir.resolve("bundle-extended-1.0.0.module"))
         }
     }
 
