@@ -112,7 +112,6 @@ open class PackageCompose : ZipTask(), AemTask {
     override fun copy() {
         super.copy()
         validator.perform(composedFile)
-        common.notifier.notify("Package composed", composedFile.name)
     }
 
     fun fromDefaults() {
