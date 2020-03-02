@@ -277,7 +277,6 @@ Each plugin has its own documentation:
 * [Bundle](docs/bundle-plugin.md) - building OSGi bundle(s),
 * [Instance](docs/instance-plugin.md) - managing remote AEM instance(s), automatic installation of service packs, performing provisioning actions,
 * [Local Instance](docs/local-instance-plugin.md) - setting up local AEM instance(s),
-
 * [Environment](https://github.com/Cognifide/gradle-environment-plugin) (standalone plugin for setting AEM dispatcher running on Docker),
 * [Common](https://github.com/Cognifide/gradle-common-plugin) (standalone plugin for transferring files over protocols SFTP/SMB/HTTP, e.g downloading AEM files, uploading AEM backups).
 
