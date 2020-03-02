@@ -61,7 +61,7 @@ Then below section is absolutely redundant:
 aem {
     tasks {
         bundleCompose {
-            javaPackage = "${project.group}.${project.name}" // "com.company.example.aem.sites"
+            javaPackage.set("${project.group}.${project.name}") // "com.company.example.aem.sites"
         }
     }
 }
@@ -76,9 +76,10 @@ are configuring `compileOnly` dependency and setting correct OSGi manifest entry
 ```kotlin
 aem {
     tasks {
-        bundleExportEmbed("group:name:version", "com.group.name")
-        // or 
-        bundlePrivateEmbed("group:name:version", "com.group.name")
+        bundleCompose {
+            embedPackage("group:name:version", "com.group.name.*") // package will be a part of 'Private-Package'
+            embedPackage("group:name:version", "com.group.name.*", export = true) // for 'Export-Package'
+        }
     }
 }
 ```
@@ -124,7 +125,6 @@ aem {
     tasks {
         bundleCompose {
             excludePackage("org.junit", "org.mockito")
-            importPackage("!org.junit", "!org.mockito", "*") // alternatively
         } 
     }
 }
