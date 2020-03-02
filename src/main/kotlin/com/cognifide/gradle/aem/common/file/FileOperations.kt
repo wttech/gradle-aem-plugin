@@ -68,6 +68,8 @@ object FileOperations {
         file.printWriter().use { it.print(source) }
     }
 
+    fun find(project: Project, dir: File, fileNames: List<String>) = find(project, dir.toString(), fileNames)
+
     fun find(project: Project, dirIfFileName: String, pathOrFileNames: List<String>): File? {
         for (pathOrFileName in pathOrFileNames) {
             val file = find(project, dirIfFileName, pathOrFileName)
@@ -78,6 +80,8 @@ object FileOperations {
 
         return null
     }
+
+    fun find(project: Project, dir: File, pathOrFileName: String) = find(project, dir.toString(), pathOrFileName)
 
     fun find(project: Project, dirIfFileName: String, pathOrFileName: String): File? {
         if (pathOrFileName.isBlank()) {
