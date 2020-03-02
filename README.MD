@@ -150,16 +150,16 @@ defaultTasks(":instanceSatisfy", ":instanceProvision", ":packageDeploy")
 
 aem {
     `package` { // built CRX package options
-        contentDir = project.file("src/main/content")
-        installPath = when {
+        contentDir.set(project.file("src/main/content"))
+        installPath.set(when {
             project == project.rootProject -> "/apps/${project.rootProject.name}/install"
             else -> "/apps/${project.rootProject.name}/${projectName}/install"
-        }
+        })
         nodeTypesSync("PRESERVE_AUTO")
         validator {
-            enabled = prop.boolean("package.validator.enabled") ?: true
-            verbose = prop.boolean("package.validator.verbose") ?: true
-            planName = prop.string("package.validator.plan") ?: "default-plan.json"
+            enabled.set(prop.boolean("package.validator.enabled") ?: true)
+            verbose.set(prop.boolean("package.validator.verbose") ?: true)
+            planName.set(prop.string("package.validator.plan") ?: "plan.json")
             severity("MAJOR")
         }       
         // ...
@@ -172,29 +172,49 @@ aem {
         // etc
         
         http { // allows to customize HTTP connection to AEM instances
-            connectionTimeout = prop.int("instance.http.connectionTimeout") ?: 30000
-            connectionRetries = prop.boolean("instance.http.connectionRetries") ?: true
-            connectionIgnoreSsl = prop.boolean("instance.http.connectionIgnoreSsl") ?: true
+            connectionTimeout.set(prop.int("instance.http.connectionTimeout") ?: 30000)
+            connectionRetries.set(prop.boolean("instance.http.connectionRetries") ?: true)
+            connectionIgnoreSsl.set(prop.boolean("instance.http.connectionIgnoreSsl") ?: true)
     
-            proxyHost = prop.string("instance.http.proxyHost")
-            proxyPort = prop.int("instance.http.proxyPort")
-            proxyScheme = prop.string("instance.http.proxyScheme")
+            proxyHost.set(prop.string("instance.http.proxyHost"))
+            proxyPort.set(prop.int("instance.http.proxyPort"))
+            proxyScheme.set(prop.string("instance.http.proxyScheme"))
         }
+     
+        satisfier { // customizing CRX packages to be deployed as dependencies before built AEM application
+            packages {
+                "my-package"("http://.../my-package-1.0.0.zip")
+                "my-bundle"("group:name:version") // will be wrapped on-the-fly to CRX package
+            }
+        }
+
+        provisioner { // configuring AEM instances in various circumstances (e.g only once)
+            step("enable-crxde") {
+                description = "Enables CRX DE"
+                condition { once() && instance.environment != "prod" }
+                sync {
+                    osgi.configure("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", mapOf(
+                            "alias" to "/crx/server"
+                    ))
+                }
+            }
+            // ...
+        }  
     }
     localInstance { // config for AEM instances to be created on local file system
         quickstart {
-            jarUrl = prop.string("localInstance.quickstart.jarUrl")
-            licenseUrl = prop.string("localInstance.quickstart.licenseUrl")
+            jarUrl.set(prop.string("localInstance.quickstart.jarUrl"))
+            licenseUrl.set(prop.string("localInstance.quickstart.licenseUrl"))
         }
         backup {
-            uploadUrl = prop.string("localInstance.backup.uploadUrl")
-            downloadUrl = prop.string("localInstance.backup.downloadUrl")
+            uploadUrl.set(prop.string("localInstance.backup.uploadUrl"))
+            downloadUrl.set(prop.string("localInstance.backup.downloadUrl"))
         }
-        install {
-            files { // CRX packages and OSGi bundles to be pre-installed on created AEM instances
-                download("http://.../package.zip") // CRX package downloaded over HTTP
-                resolve("group:name:version") // OSGi bundle from Maven repository
-            }
+        install { // CRX packages and OSGi bundles to be pre-installed on created AEM instances
+            files(
+                "http://.../package.zip" // CRX package downloaded over HTTP
+                "group:name:version" // OSGi bundle from Maven repository
+            )
         }
         init { // hook called once in scope of instance just created and up first time
             logger.info("Initializing instance '$name'")
@@ -202,7 +222,7 @@ aem {
                 // ...
             }
         }   
-        rootDir = prop.string("localInstance.root")
+        rootDir.set(prop.string("localInstance.root"))
         // ...
     }
 
@@ -215,37 +235,20 @@ aem {
             slingModelPackages = "com.company.example.aem"
     
             // for checking OSGi component health on runtime
-            javaPackage = "com.company.example.aem" 
+            javaPackage.set("com.company.example.aem")
+
+            // other / more advanced options
+            importPackageWildcard.set(true)
             // ...
         }
         packageCompose { // customizing built CRX package
-            fromProject(":core")
-            fromProject(":config")
+            nestPackageProject(":core")
+            nestPackageProject(":config")
             
-            baseName = 'example-for-changing-zip-name'
+            archiveBaseName.set("example-for-changing-zip-name")
             
             vaultDefinition { // place for overriding CRX Package / Vault properties, defining hooks
                 // ...
-            }
-        }
-        instanceProvision {
-            step("enable-crxde") {
-                description = "Enables CRX DE"
-                condition { once() && instance.environment != "prod" }
-                action {
-                    sync {
-                        osgiFramework.configure("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", mapOf(
-                                "alias" to "/crx/server"
-                        ))
-                    }
-                }
-            }
-            // ...
-        }       
-        instanceSatisfy { // customizing CRX packages to be deployed as dependencies before built AEM application
-            packages {
-                "my-package" { download("http://.../my-package-1.0.0.zip") }
-                "my-bundle" { resolve("group:name:version") } // will be wrapped on-the-fly to CRX package
             }
         }
         // ... and all other tasks
@@ -257,13 +260,12 @@ To see all available options and actual documentation, please follow to:
 
 * `aem` - [AemExtension](src/main/kotlin/com/cognifide/gradle/aem/AemExtension.kt)
 * `package` - [PackageOptions](src/main/kotlin/com/cognifide/gradle/aem/common/pkg/PackageOptions.kt)
-* `instance` - [InstanceOptions](src/main/kotlin/com/cognifide/gradle/aem/common/instance/InstanceOptions.kt)
-* `localInstance` - [LocalInstanceManager](src/main/kotlin/com/cognifide/gradle/aem/instance/LocalInstanceManager.kt)
-* `fileTransfer` - [FileTransferManager](src/main/kotlin/com/cognifide/gradle/aem/common/file/transfer/FileTransferManager.kt)
+* `instance` - [InstanceManager](src/main/kotlin/com/cognifide/gradle/aem/common/instance/InstanceManager.kt)
+* `localInstance` - [LocalInstanceManager](src/main/kotlin/com/cognifide/gradle/aem/common/instance/LocalInstanceManager.kt)
 * `bundleCompose` - [BundleCompose](src/main/kotlin/com/cognifide/gradle/aem/bundle/tasks/BundleCompose.kt)
 * `packageCompose` - [PackageCompose](src/main/kotlin/com/cognifide/gradle/aem/pkg/tasks/PackageCompose.kt)
-* `instanceProvision` - [InstanceProvision](src/main/kotlin/com/cognifide/gradle/aem/instance/provision/InstanceProvision.kt)
-* `instanceSatisfy` - [InstanceSatisfy](src/main/kotlin/com/cognifide/gradle/aem/instance/satisfy/InstanceSatisfy.kt)
+* `instanceProvision` - [InstanceProvision](src/main/kotlin/com/cognifide/gradle/aem/instance/tasks/InstanceProvision.kt)
+* `instanceSatisfy` - [InstanceSatisfy](src/main/kotlin/com/cognifide/gradle/aem/instance/tasks/InstanceSatisfy.kt)
 * `...` - other tasks in similar way.
 
 ### Plugins documentation
@@ -271,12 +273,14 @@ To see all available options and actual documentation, please follow to:
 Gradle AEM Plugin to be more concise is now more like set of plugins.
 Each plugin has its own documentation:
 
-* [Common](docs/common-plugin.md)
-* [Package](docs/package-plugin.md)
-* [Package Sync](docs/package-sync-plugin.md)
-* [Bundle](docs/bundle-plugin.md)
-* [Instance](docs/instance-plugin.md)
-* [Local Instance](docs/local-instance-plugin.md)
+* [Common](docs/common-plugin.md) - defining common options like AEM instances available etc, base for custom Gradle tasks scripting for AEM,
+* [Package](docs/package-plugin.md) - building and deploying CRX package(s),
+* [Package Sync](docs/package-sync-plugin.md) - synchronizing JCR content from running AEM instances into built CRX packages,
+* [Bundle](docs/bundle-plugin.md) - building and deploying OSGi bundle(s),
+* [Instance](docs/instance-plugin.md) - managing remote AEM instance(s), automatic installation of service packs, performing provisioning actions,
+* [Local Instance](docs/local-instance-plugin.md) - setting up local AEM instance(s),
+* [Environment](https://github.com/Cognifide/gradle-environment-plugin) - standalone plugin for setting AEM dispatcher running on Docker,
+* [Common](https://github.com/Cognifide/gradle-common-plugin) - standalone plugin for transferring files over protocols SFTP/SMB/HTTP, e.g downloading AEM files, uploading AEM backups.
 
 ## How to's
 
@@ -289,7 +293,7 @@ allprojects {
   plugins.withId("com.cognifide.aem.common") {
     configure<AemExtension> {
         `package` {
-            contentDir = project.file("src/main/aem") // overrides default dir named 'content'
+            contentDir.set(project.file("src/main/aem")) // overrides default dir named 'content'
         }
     }
   }
@@ -317,20 +321,17 @@ For instance, subproject `:aem:core` specific configuration like OSGi bundle or 
 aem {
     tasks {
         bundleCompose {
-            javaPackage = "com.company.example.aem.core"
+            javaPackage.set("com.company.example.aem.core")
         }
         packageCompose {
-            fromProjects(':content:*')
-            baseName = "example-core"
+            nestPackageProject(':content')
+            archiveBaseName.set("example-core")
             duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         }
     }
 }
 ```
 
-Warning! Very often plugin users mistake is to configure `instanceSatisfy` task in `allprojects` closure. 
-As an effect there will be same dependent CRX package defined multiple times.
- 
 ### Understand why there are one or two plugins to be applied in build script
 
 Gradle AEM Plugin assumes separation of 5 plugins to properly fit into Gradle tasks structure correctly.
