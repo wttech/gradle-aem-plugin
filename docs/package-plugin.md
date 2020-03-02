@@ -60,28 +60,25 @@ aem {
         packageCompose {
             archiveBaseName.set(this@aem.baseName)
             duplicatesStrategy = DuplicatesStrategy.WARN
-            contentDir = packageOptions.rootDir
-            bundlePath = packageOptions.installPath
-            bundleRunMode = null
-            metaDefaults = true
+            contentDir.set(packageOptions.contentDir)
+            metaDir.set(contentDir.dir("META-INF"))
+            bundlePath.set(packageOptions.installPath)
+            nestedPath.set(packageOptions.storagePath)
             vaultDefinition {
-                properties = mapOf(
+                properties.set(mapOf(
                     "acHandling" to "merge_preserve",
                     "requiresRoot" to false
-                )
-                name = baseName
-                group = if (project == project.rootProject) {
-                    project.group.toString()
-                } else {
-                    project.rootProject.name
-                }
-                version = project.version.toString()
+                ))
+                name.set(archiveBaseName)
+                group.set(project.grouop)
             }
             validator {
-                enabled = true
-                verbose = true
+                enabled.set(true)
+                verbose.set(true)
                 severity("MAJOR")
-                planName = "default-plan.json"
+                planName.set("plan.json")
+                jcrPrivileges.set(listOf("crx:replicate"))
+                cndFiles.from(packageOptions.configDir.file("nodetypes.cnd"))
             }
             fileFilter {
                 expanding = true
@@ -128,17 +125,12 @@ aem {
     
             // Controlling values visible in CRX Package Manager
             vaultDefinition { 
-                properties = mapOf(
+                properties.set(mapOf(
                     "acHandling" to "merge_preserve",
                     "requiresRoot" to false
-                )
-                name = baseName
-                group = if (project == project.rootProject) {
-                    project.group.toString()
-                } else {
-                    project.rootProject.name
-                }
-                version = project.version.toString()
+                ))
+                name.set(archiveBaseName)
+                group.set(project.group)
             }
         }
     }
@@ -152,7 +144,7 @@ It helps preventing situation when CRX Package Manager reports message like *Pac
 Also gives immediate feedback for mistakes taken when using copy-pasting technique, 
 forgetting about using entities ('&' instead of '\&amp;), missing XML namespaces and much more.
 
-By default, **nothing need to be configured** so that [default plan](https://github.com/Cognifide/gradle-aem-plugin/blob/master/src/main/resources/com/cognifide/gradle/aem/package/OAKPAL_OPEAR/default-plan.json) will be in use.
+By default, **nothing need to be configured** so that [default plan](https://github.com/Cognifide/gradle-aem-plugin/blob/master/src/main/resources/com/cognifide/gradle/aem/package/OAKPAL_OPEAR/plan.json) will be in use.
 However, more detailed checks could be provided by configuring base artifact called Opear File containing OakPAL checks.
 
 It could be done via following snippet ([ACS AEM Commons OakPAL Checks](https://github.com/Adobe-Consulting-Services/acs-aem-commons/tree/master/oakpal-checks) as example):
@@ -168,7 +160,9 @@ aem {
 ```
 
 To use custom checks, only left thing is to choose them in custom plan.
-Simply create file at path [*[aem/]gradle/package/OAKPAL_OPEAR/default-plan.json*](https://github.com/Cognifide/gradle-aem-multi/blob/master/aem/gradle/package/OAKPAL_OPEAR/default-plan.json)
+Simply create files *plan-compose.json* *plan-satisfy.json* or only *plan.json* under path [src/main/resources/com/cognifide/gradle/aem/package/OAKPAL_OPEAR](https://github.com/Cognifide/gradle-aem-multi/blob/master/app/aem/common/package/OAKPAL_OPEAR)
+
+Sample plan content:
 
 ```json
 {
@@ -177,7 +171,21 @@ Simply create file at path [*[aem/]gradle/package/OAKPAL_OPEAR/default-plan.json
     "acs-commons-integrators",
     "content-class-aem65"
   ],
-  "installHookPolicy": "SKIP"
+  "installHookPolicy": "SKIP",
+  "checks": [
+    {
+      "name": "basic/subpackages",
+      "config": {
+        "denyAll": false
+      }
+    },
+    {
+      "name": "basic/acHandling",
+      "config": {
+        "levelSet": "no_unsafe"
+      }
+    }
+  ]
 }
 ```
 
@@ -282,14 +290,14 @@ aem {
     tasks {
         packageCompose {
             fileFilter {
-                expandProperties = mapOf(
+                expandProperties.set(mapOf(
                     "organization" to "Company"
-                )
-                expandFiles = listOf(
+                ))
+                expandFiles.set(listOf(
                     "**/META-INF/*.xml",
                     "**/META-INF/*.MF",
                     "**/META-INF/*.cnd"
-                )
+                ))
             }
         }
     }
