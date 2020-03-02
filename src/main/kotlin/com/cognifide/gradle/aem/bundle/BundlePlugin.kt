@@ -31,7 +31,7 @@ class BundlePlugin : CommonDefaultPlugin() {
 
     private fun Project.setupDependentPlugins() {
         if (plugins.hasPlugin(PackagePlugin::class.java)) {
-            throw AemException("Bundle plugin '$ID' should be applied before package plugin '${PackagePlugin.ID}'!")
+            throw AemException("Bundle plugin '$ID' must be applied before package plugin '${PackagePlugin.ID}'!")
         }
 
         plugins.apply(JavaPlugin::class.java)

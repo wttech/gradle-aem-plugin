@@ -24,7 +24,7 @@ class InstancePlugin : CommonDefaultPlugin() {
 
     private fun Project.setupDependentPlugins() {
         if (plugins.hasPlugin(PackagePlugin::class.java)) {
-            throw AemException("Instance plugin '$ID' should be applied before package plugin '${PackagePlugin.ID}'!")
+            throw AemException("Instance plugin '$ID' must be applied before package plugin '${PackagePlugin.ID}'!")
         }
 
         plugins.apply(CommonPlugin::class.java)
