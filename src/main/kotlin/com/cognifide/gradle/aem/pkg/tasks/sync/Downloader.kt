@@ -63,7 +63,7 @@ class Downloader(@Internal private val aem: AemExtension) {
         val file = instance.get().sync { packageManager.download(definition) }
         if (extract.get()) {
             extractDir.get().asFile.using {
-                aem.logger.lifecycle("Extracting package $file to $this")
+                aem.logger.info("Extracting package $file to $this")
                 extractDownloadedPackage(file, this)
             }
         }

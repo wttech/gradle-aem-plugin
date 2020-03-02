@@ -128,7 +128,6 @@ open class PackageSync : AemDefaultTask() {
         logger.info("Preparing files to be cleaned up (before copying new ones) using: ${filter.get()}")
 
         filterRootFiles.forEach { root ->
-            logger.lifecycle("Preparing root: $root")
             cleaner.prepare(root)
         }
     }
