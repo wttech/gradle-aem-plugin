@@ -1,14 +1,10 @@
 package com.cognifide.gradle.aem.instance.tasks
 
-import com.cognifide.gradle.aem.AemDefaultTask
 import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
+import com.cognifide.gradle.aem.common.tasks.InstanceTask
 import org.gradle.api.tasks.TaskAction
 
-open class InstanceAwait : AemDefaultTask() {
-
-    init {
-        description = "Await for healthy condition of all AEM instances."
-    }
+open class InstanceAwait : InstanceTask() {
 
     private var awaitUpOptions: AwaitUpAction.() -> Unit = {}
 
@@ -18,7 +14,11 @@ open class InstanceAwait : AemDefaultTask() {
 
     @TaskAction
     fun await() {
-        aem.instanceActions.awaitUp(awaitUpOptions)
+        instanceManager.awaitUp(instances.get(), awaitUpOptions)
+    }
+
+    init {
+        description = "Await for healthy condition of all AEM instances."
     }
 
     companion object {

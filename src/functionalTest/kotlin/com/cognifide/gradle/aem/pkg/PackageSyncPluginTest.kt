@@ -2,10 +2,10 @@ package com.cognifide.gradle.aem.pkg
 import com.cognifide.gradle.aem.test.AemBuildTest
 import org.junit.jupiter.api.Test
 
-class PackageSyncPluginTest: AemBuildTest() {
+class PackageSyncPluginTest : AemBuildTest() {
 
     @Test
-    fun `should build package using minimal configuration`() {
+    fun `should apply plugin correctly`() {
         val projectDir = prepareProject("package-sync-minimal") {
             settingsGradle("")
 

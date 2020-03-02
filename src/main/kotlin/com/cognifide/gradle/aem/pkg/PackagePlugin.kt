@@ -1,21 +1,24 @@
 package com.cognifide.gradle.aem.pkg
 
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.AemPlugin
+import com.cognifide.gradle.aem.bundle.BundlePlugin
+import com.cognifide.gradle.aem.bundle.tasks.BundleCompose
 import com.cognifide.gradle.aem.common.CommonPlugin
+import com.cognifide.gradle.aem.common.tasks.PackageTask
 import com.cognifide.gradle.aem.instance.InstancePlugin
-import com.cognifide.gradle.aem.instance.satisfy.InstanceSatisfy
-import com.cognifide.gradle.aem.instance.tasks.InstanceCreate
-import com.cognifide.gradle.aem.instance.tasks.InstanceUp
+import com.cognifide.gradle.aem.instance.tasks.*
 import com.cognifide.gradle.aem.pkg.tasks.*
+import com.cognifide.gradle.common.CommonDefaultPlugin
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.artifacts.Dependency
+import org.gradle.api.plugins.JavaPlugin
+import org.gradle.api.tasks.testing.Test
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 
-class PackagePlugin : AemPlugin() {
+class PackagePlugin : CommonDefaultPlugin() {
 
-    override fun Project.configure() {
+    override fun Project.configureProject() {
         setupDependentPlugins()
         setupInstallRepository()
         setupTasks()
@@ -28,7 +31,7 @@ class PackagePlugin : AemPlugin() {
     private fun Project.setupInstallRepository() {
         afterEvaluate {
             val packageOptions = AemExtension.of(this).packageOptions
-            if (packageOptions.installRepository) {
+            if (packageOptions.installRepository.get()) {
                 val installDir = file("${packageOptions.jcrRootDir}${packageOptions.installPath}")
                 if (installDir.exists()) {
                     repositories.flatDir { it.dir(installDir) }
@@ -37,53 +40,69 @@ class PackagePlugin : AemPlugin() {
         }
     }
 
-    private fun Project.setupTasks() {
-        tasks {
-            register<PackagePrepare>(PackagePrepare.NAME) {
-                mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
-            }
-            register<PackageCompose>(PackageCompose.NAME) {
-                dependsOn(PackagePrepare.NAME)
-                mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
-                metaDir = get<PackagePrepare>(PackagePrepare.NAME).metaDir
-            }.apply {
-                artifacts.add(Dependency.ARCHIVES_CONFIGURATION, this)
-            }
-            register<PackageUpload>(PackageUpload.NAME) {
-                dependsOn(PackageCompose.NAME)
-            }
-            register<PackageInstall>(PackageInstall.NAME) {
-                dependsOn(PackageCompose.NAME)
-                mustRunAfter(PackageUpload.NAME)
-            }
-            register<PackageUninstall>(PackageUninstall.NAME) {
-                dependsOn(PackageCompose.NAME)
-                mustRunAfter(PackageUpload.NAME, PackageInstall.NAME)
-            }
-            register<PackageActivate>(PackageActivate.NAME) {
-                dependsOn(PackageCompose.NAME)
-                mustRunAfter(PackageUpload.NAME, PackageInstall.NAME)
-            }
-            register<PackageDeploy>(PackageDeploy.NAME) {
-                dependsOn(PackageCompose.NAME)
-            }
-            register<PackageDelete>(PackageDelete.NAME) {
-                dependsOn(PackageCompose.NAME)
-                mustRunAfter(PackageDeploy.NAME, PackageUpload.NAME, PackageInstall.NAME, PackageActivate.NAME, PackageUninstall.NAME)
-            }
-            register<PackagePurge>(PackagePurge.NAME) {
-                dependsOn(PackageCompose.NAME)
-                mustRunAfter(PackageDeploy.NAME, PackageUpload.NAME, PackageInstall.NAME, PackageActivate.NAME, PackageUninstall.NAME)
-            }
-            named<Task>(LifecycleBasePlugin.ASSEMBLE_TASK_NAME) {
-                dependsOn(PackageCompose.NAME)
+    @Suppress("LongMethod")
+    private fun Project.setupTasks() = tasks {
+        val clean = named<Task>(LifecycleBasePlugin.CLEAN_TASK_NAME)
+        val prepare = register<PackagePrepare>(PackagePrepare.NAME) {
+            mustRunAfter(clean)
+        }
+        val compose = register<PackageCompose>(PackageCompose.NAME) {
+            dependsOn(prepare)
+            mustRunAfter(clean)
+            metaDir.convention(prepare.flatMap { it.metaDir })
+        }.apply {
+            artifacts.add(Dependency.ARCHIVES_CONFIGURATION, this)
+
+            plugins.withId(BundlePlugin.ID) {
+                val test = named<Test>(JavaPlugin.TEST_TASK_NAME)
+                val bundle = named<BundleCompose>(BundleCompose.NAME)
+
+                configure { task ->
+                    task.installBundleBuilt(bundle)
+                    task.dependsOn(test)
+                }
             }
         }
-
-        plugins.withId(InstancePlugin.ID) {
-            tasks.named(PackageDeploy.NAME).configure { task ->
-                task.mustRunAfter(InstanceCreate.NAME, InstanceUp.NAME, InstanceSatisfy.NAME)
+        val upload = register<PackageUpload>(PackageUpload.NAME) {
+            dependsOn(compose)
+        }
+        val install = register<PackageInstall>(PackageInstall.NAME) {
+            dependsOn(compose)
+            mustRunAfter(upload)
+        }
+        val uninstall = register<PackageUninstall>(PackageUninstall.NAME) {
+            dependsOn(compose)
+            mustRunAfter(upload, install)
+        }
+        val activate = register<PackageActivate>(PackageActivate.NAME) {
+            dependsOn(compose)
+            mustRunAfter(upload, install)
+        }
+        val deploy = register<PackageDeploy>(PackageDeploy.NAME) {
+            dependsOn(compose)
+            plugins.withId(InstancePlugin.ID) {
+                mustRunAfter(
+                        named<Task>(InstanceCreate.NAME),
+                        named<Task>(InstanceUp.NAME),
+                        named<Task>(InstanceSatisfy.NAME),
+                        named<Task>(InstanceProvision.NAME),
+                        named<Task>(InstanceSetup.NAME)
+                )
             }
+        }
+        register<PackageDelete>(PackageDelete.NAME) {
+            dependsOn(compose)
+            mustRunAfter(deploy, upload, install, activate, uninstall)
+        }
+        register<PackagePurge>(PackagePurge.NAME) {
+            dependsOn(compose)
+            mustRunAfter(deploy, upload, install, activate, uninstall)
+        }
+        named<Task>(LifecycleBasePlugin.ASSEMBLE_TASK_NAME) {
+            dependsOn(compose)
+        }
+        typed<PackageTask> {
+            files.from(compose.map { it.archiveFile })
         }
     }
 

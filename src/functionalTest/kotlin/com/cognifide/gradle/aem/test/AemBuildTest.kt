@@ -1,13 +1,9 @@
 package com.cognifide.gradle.aem.test
 
-import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
-import org.gradle.testkit.runner.TaskOutcome
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
 import java.io.File
 
-abstract class AemBuildTest {
+open class AemBuildTest {
 
     fun prepareProject(path: String, definition: File.() -> Unit) = File("build/functionalTest/$path").apply {
         deleteRecursively()
@@ -18,6 +14,8 @@ abstract class AemBuildTest {
     fun File.file(path: String, text: String) {
         resolve(path).apply { parentFile.mkdirs() }.writeText(text.trimIndent())
     }
+
+    fun File.buildSrc(text: String) = file("buildSrc/build.gradle.kts", text)
 
     fun File.settingsGradle(text: String) = file("settings.gradle.kts", text)
 
@@ -36,16 +34,38 @@ abstract class AemBuildTest {
     fun runBuild(projectDir: File, options: GradleRunner.() -> Unit) = GradleRunner.create().run {
         forwardOutput()
         withPluginClasspath()
-        withDebug(true)
         withProjectDir(projectDir)
         apply(options)
         build()
     }
 
-    fun assertTask(result: BuildResult, taskPath: String, outcome: TaskOutcome = TaskOutcome.SUCCESS) {
-        val task = result.task(taskPath)
-
-        assertNotNull(task, "Build result does not contain task with path '$taskPath'")
-        assertEquals(outcome, task?.outcome)
+    fun File.helloServiceJava(rootPath: String = "") {
+        file(rootPath(rootPath, "src/main/java/com/company/example/aem/HelloService.java"), """
+            package com.company.example.aem;
+            
+            import org.osgi.service.component.annotations.Activate;
+            import org.osgi.service.component.annotations.Component;
+            import org.osgi.service.component.annotations.Deactivate;
+            import org.slf4j.Logger;
+            import org.slf4j.LoggerFactory;
+            
+            @Component(immediate = true, service = HelloService.class)
+            class HelloService {
+                               
+                private static final Logger LOG = LoggerFactory.getLogger(HelloService.class);
+                
+                @Activate
+                protected void activate() {
+                    LOG.info("Hello world!");
+                }
+                
+                @Deactivate
+                protected void deactivate() {
+                    LOG.info("Good bye world!");
+                }
+            }
+        """)
     }
+
+    fun rootPath(rootPath: String, path: String) = rootPath.takeIf { it.isNotBlank() }?.let { "$it/$path" } ?: path
 }

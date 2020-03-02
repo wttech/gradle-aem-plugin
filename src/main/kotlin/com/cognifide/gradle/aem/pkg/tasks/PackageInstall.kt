@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.pkg.tasks
 
-import com.cognifide.gradle.aem.common.instance.checkAvailable
+import com.cognifide.gradle.aem.common.instance.check
 import com.cognifide.gradle.aem.common.instance.names
 import com.cognifide.gradle.aem.common.tasks.PackageTask
 import com.cognifide.gradle.aem.common.utils.fileNames
@@ -10,14 +10,14 @@ open class PackageInstall : PackageTask() {
 
     @TaskAction
     fun install() {
-        instances.checkAvailable()
+        instances.get().check()
         sync { packageManager.install(it) }
-        aem.notifier.notify("Package installed", "${packages.fileNames} from ${instances.names}")
+        common.notifier.notify("Package installed", "${files.files.fileNames} from ${instances.get().names}")
     }
 
     init {
         description = "Installs AEM package on instance(s)."
-        awaited = aem.prop.boolean("package.install.awaited") ?: true
+        aem.prop.boolean("package.install.awaited")?.let { awaited.set(it) }
     }
 
     companion object {

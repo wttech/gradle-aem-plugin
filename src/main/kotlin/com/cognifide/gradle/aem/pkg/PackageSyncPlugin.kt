@@ -1,19 +1,19 @@
 package com.cognifide.gradle.aem.pkg
 
-import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.AemPlugin
 import com.cognifide.gradle.aem.common.CommonPlugin
 import com.cognifide.gradle.aem.pkg.tasks.PackageSync
 import com.cognifide.gradle.aem.pkg.tasks.PackageVlt
+import com.cognifide.gradle.common.CommonDefaultPlugin
 import org.gradle.api.Project
+import org.gradle.api.Task
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 
 /**
  * Provides tasks useful for synchronizing JCR content from running AEM instance into built CRX package.
  */
-class PackageSyncPlugin : AemPlugin() {
+class PackageSyncPlugin : CommonDefaultPlugin() {
 
-    override fun Project.configure() {
+    override fun Project.configureProject() {
         setupDependentPlugins()
         setupTasks()
     }
@@ -22,14 +22,13 @@ class PackageSyncPlugin : AemPlugin() {
         plugins.apply(CommonPlugin::class.java)
     }
 
-    private fun Project.setupTasks() {
-        with(AemExtension.of(this).tasks) {
-            register<PackageVlt>(PackageVlt.NAME) {
-                mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
-            }
-            register<PackageSync>(PackageSync.NAME) {
-                mustRunAfter(LifecycleBasePlugin.CLEAN_TASK_NAME)
-            }
+    private fun Project.setupTasks() = tasks {
+        val clean = named<Task>(LifecycleBasePlugin.CLEAN_TASK_NAME)
+        register<PackageVlt>(PackageVlt.NAME) {
+            mustRunAfter(clean)
+        }
+        register<PackageSync>(PackageSync.NAME) {
+            mustRunAfter(clean)
         }
     }
 

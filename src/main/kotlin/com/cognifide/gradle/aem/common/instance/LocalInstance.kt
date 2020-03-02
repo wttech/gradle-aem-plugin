@@ -1,11 +1,10 @@
 package com.cognifide.gradle.aem.common.instance
 
-import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.instance.local.Script
 import com.cognifide.gradle.aem.common.instance.local.Status
-import com.cognifide.gradle.aem.common.utils.Formats
+import com.cognifide.gradle.common.utils.Formats
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.commons.io.FileUtils
@@ -13,17 +12,15 @@ import org.apache.commons.lang3.JavaVersion
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.SystemUtils
 import org.gradle.internal.os.OperatingSystem
-import java.io.File
-import java.io.Serializable
 
-class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(aem), Serializable {
+class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
 
-    override val user: String = USER
-
-    override lateinit var password: String
+    override var user: String = USER
 
     var debugPort: Int = 5005
+
     var debugAddress: String = ""
+
     private val debugSocketAddress: String
         get() = when (debugAddress) {
             "*" -> "0.0.0.0:$debugPort"
@@ -57,117 +54,110 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
     )
 
     @get:JsonProperty("jvmOpts")
-    val jvmOptsString: String
-        get() = (jvmOptsDefaults + jvmOpts).joinToString(" ")
+    val jvmOptsString: String get() = (jvmOptsDefaults + jvmOpts).joinToString(" ")
 
     @get:JsonIgnore
     var startOpts: List<String> = listOf()
 
     @get:JsonProperty("startOpts")
-    val startOptsString: String
-        get() = startOpts.joinToString(" ")
+    val startOptsString: String get() = startOpts.joinToString(" ")
 
     @get:JsonIgnore
-    val runModesDefault
-        get() = listOf(type.name.toLowerCase())
+    val runModesDefault get() = listOf(type.name.toLowerCase())
 
     @get:JsonIgnore
     var runModes: List<String> = listOf(ENVIRONMENT)
 
     @get:JsonProperty("runModes")
-    val runModesString: String
-        get() = (runModesDefault + runModes).joinToString(",")
+    val runModesString: String get() = (runModesDefault + runModes).joinToString(",")
 
     @get:JsonIgnore
-    val dir: File
-        get() = File(aem.localInstanceManager.rootDir, id)
+    val dir get() = aem.localInstanceManager.rootDir.get().asFile.resolve(id)
 
     @get:JsonIgnore
-    val overridesDirs: List<File>
-        get() = listOf(
-                File(manager.overridesDir, "common"),
-                File(manager.overridesDir, id)
-        )
+    val overridesDirs get() = localManager.overrideDir.get().asFile.run { listOf(resolve("common"), resolve(id)) }
 
     @get:JsonIgnore
-    val jar: File
-        get() = File(dir, "aem-quickstart.jar")
+    val jar get() = dir.resolve("aem-quickstart.jar")
 
     @get:JsonIgnore
-    val quickstartDir: File
-        get() = File(dir, "crx-quickstart")
+    val quickstartDir get() = dir.resolve("crx-quickstart")
 
     @get:JsonIgnore
-    val license: File
-        get() = File(dir, "license.properties")
+    val license get() = dir.resolve("license.properties")
 
     @get:JsonIgnore
-    val versionFile
-        get() = File(dir, "version.txt")
+    val versionFile get() = dir.resolve("version.txt")
 
     override val version: String
         get() {
             var result = super.version
-            if (result == Formats.VERSION_UNKNOWN.version && versionFile.exists()) {
+            if (result == Formats.versionUnknown().version && versionFile.exists()) {
                 result = versionFile.readText()
             }
             return result
         }
 
-    fun saveVersion() {
-        if (version != Formats.VERSION_UNKNOWN.version) {
+    internal fun saveVersion() {
+        if (version != Formats.versionUnknown().version) {
             versionFile.writeText(version)
         }
     }
 
-    @get:JsonIgnore
-    val startScript: Script
-        get() = binScript("start")
+    private val startScript: Script get() = binScript("start")
+
+    internal fun executeStartScript() = try {
+        logger.info("Executing start script: $startScript")
+        startScript.executeAsync()
+    } catch (e: InstanceException) {
+        throw InstanceException("Instance start script failed! Check resources like disk free space, open HTTP ports etc.", e)
+    }
+
+    private val stopScript: Script get() = binScript("stop")
+
+    internal fun executeStopScript() {
+        try {
+            logger.info("Executing stop script: $stopScript")
+            stopScript.executeAsync()
+        } catch (e: InstanceException) {
+            throw InstanceException("Instance stop script failed!", e)
+        }
+
+        try {
+            sync.osgiFramework.stop()
+        } catch (e: InstanceException) {
+            // ignore, fallback for sure
+        }
+    }
+
+    private val statusScript: Script get() = binScript("status")
 
     @get:JsonIgnore
-    val stopScript: Script
-        get() = binScript("stop")
+    val touched: Boolean get() = dir.exists()
 
     @get:JsonIgnore
-    val statusScript: Script
-        get() = binScript("status")
+    val created: Boolean get() = locked(LOCK_CREATE)
 
     @get:JsonIgnore
-    val touched: Boolean
-        get() = dir.exists()
+    val initialized: Boolean get() = locked(LOCK_INIT)
 
     @get:JsonIgnore
-    val created: Boolean
-        get() = locked(LOCK_CREATE)
-
-    @get:JsonIgnore
-    val initialized: Boolean
-        get() = locked(LOCK_INIT)
-
-    @get:JsonIgnore
-    val installDir: File
-        get() = File(quickstartDir, "install")
+    val installDir get() = quickstartDir.resolve("install")
 
     private fun binScript(name: String, os: OperatingSystem = OperatingSystem.current()): Script {
         return if (os.isWindows) {
-            Script(this, listOf("cmd", "/C"), File(dir, "$name.bat"), File(quickstartDir, "bin/$name.bat"))
+            Script(this, listOf("cmd", "/C"), dir.resolve("$name.bat"), quickstartDir.resolve("bin/$name.bat"))
         } else {
-            Script(this, listOf("sh"), File(dir, name), File(quickstartDir, "bin/$name"))
+            Script(this, listOf("sh"), dir.resolve(name), quickstartDir.resolve("bin/$name"))
         }
     }
 
     @get:JsonIgnore
-    val manager: LocalInstanceManager
-        get() = aem.localInstanceManager
+    val localManager: LocalInstanceManager get() = aem.localInstanceManager
 
-    fun create() {
-        if (created) {
-            logger.info(("Instance already created: $this"))
-            return
-        }
+    fun create() = localManager.create(this)
 
-        logger.info("Creating: $this")
-
+    internal fun prepare() {
         cleanDir(true)
         copyFiles()
         validateFiles()
@@ -175,27 +165,25 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
         correctFiles()
         customize()
         lock(LOCK_CREATE)
-
-        logger.info("Created: $this")
     }
 
     private fun copyFiles() {
         dir.mkdirs()
 
         logger.info("Copying quickstart JAR '$jar' to directory '$quickstartDir'")
-        manager.quickstart.jar?.let { FileUtils.copyFile(it, jar) }
+        localManager.quickstart.jar?.let { FileUtils.copyFile(it, jar) }
 
         logger.info("Copying quickstart license '$license' to directory '$quickstartDir'")
-        manager.quickstart.license?.let { FileUtils.copyFile(it, license) }
+        localManager.quickstart.license?.let { FileUtils.copyFile(it, license) }
     }
 
     private fun validateFiles() {
         if (!jar.exists()) {
-            throw AemException("Instance JAR file not found at path: ${jar.absolutePath}. Is instance JAR URL configured?")
+            throw InstanceException("Instance JAR file not found at path: ${jar.absolutePath}. Is instance JAR URL configured?")
         }
 
         if (!license.exists()) {
-            throw AemException("License file not found at path: ${license.absolutePath}. Is instance license URL configured?")
+            throw InstanceException("License file not found at path: ${license.absolutePath}. Is instance license URL configured?")
         }
     }
 
@@ -241,8 +229,8 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
     private fun unpackFiles() {
         logger.info("Unpacking quickstart from JAR '$jar' to directory '$quickstartDir'")
 
-        aem.progressIndicator {
-            message = "Unpacking quickstart JAR: ${jar.name}, size: ${Formats.size(jar)}"
+        common.progressIndicator {
+            message = "Unpacking quickstart JAR: ${jar.name}, size: ${Formats.fileSize(jar)}"
             aem.project.javaexec { spec ->
                 spec.workingDir = dir
                 spec.main = "-jar"
@@ -250,6 +238,8 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
             }
         }
     }
+
+    internal fun delete() = cleanDir(create = false)
 
     private fun cleanDir(create: Boolean) {
         if (dir.exists()) {
@@ -260,18 +250,16 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
         }
     }
 
-    fun customize() {
-        logger.info("Customizing: $this")
-
+    internal fun customize() {
         FileOperations.copyResources(FILES_PATH, dir, false)
 
         overridesDirs.filter { it.exists() }.forEach {
             FileUtils.copyDirectory(it, dir)
         }
 
-        val propertiesAll = mapOf("instance" to this) + properties + manager.expandProperties
+        val propertiesAll = mapOf("instance" to this) + properties + localManager.expandProperties.get()
 
-        FileOperations.amendFiles(dir, manager.expandFiles) { file, source ->
+        FileOperations.amendFiles(dir, localManager.expandFiles.get()) { file, source ->
             aem.prop.expand(source, propertiesAll, file.absolutePath)
         }
 
@@ -290,70 +278,25 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
             result
         }
 
-        val installFiles = manager.install.files
+        val installFiles = localManager.install.files
         if (installFiles.isNotEmpty()) {
             installDir.mkdirs()
             installFiles.forEach { source ->
-                val target = File(installDir, source.name)
+                val target = installDir.resolve(source.name)
                 if (!target.exists()) {
                     logger.info("Copying quickstart install file from '$source' to '$target'")
                     FileUtils.copyFileToDirectory(source, installDir)
                 }
             }
         }
-
-        logger.info("Customized: $windowTitle")
     }
 
-    fun up() {
-        if (!created) {
-            logger.info("Instance not created, so it could not be up: $this")
-            return
-        }
+    fun up() = localManager.up(this)
 
-        val status = checkStatus()
-        if (status == Status.RUNNING) {
-            logger.info("Instance already running. No need to start: $this")
-            return
-        }
-
-        try {
-            logger.info("Executing start script: $startScript")
-            startScript.executeAsync()
-        } catch (e: InstanceException) {
-            throw InstanceException("Instance start script failed! Check resources like disk free space, open HTTP ports etc.", e)
-        }
-    }
-
-    fun down() {
-        if (!created) {
-            logger.info("Instance not created, so it could not be down: $this")
-            return
-        }
-
-        val status = checkStatus()
-        if (status != Status.RUNNING) {
-            logger.info("Instance is not running (reports status '$status'). No need to stop: $this")
-            return
-        }
-
-        try {
-            logger.info("Executing stop script: $stopScript")
-            stopScript.executeAsync()
-        } catch (e: InstanceException) {
-            throw InstanceException("Instance stop script failed!", e)
-        }
-
-        try {
-            sync.osgiFramework.stop()
-        } catch (e: InstanceException) {
-            // ignore, fallback for sure
-        }
-    }
+    fun down() = localManager.down(this)
 
     @get:JsonIgnore
-    val status: Status
-        get() = checkStatus()
+    val status: Status get() = checkStatus()
 
     fun checkStatus(): Status {
         if (!created) {
@@ -373,38 +316,31 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
     @get:JsonIgnore
     val running: Boolean get() = created && checkStatus() == Status.RUNNING
 
-    fun init() {
-        saveVersion()
+    @get:JsonIgnore
+    val runningDir get() = property("user.dir")?.let { aem.project.file(it) }
 
-        if (!initialized) {
-            logger.info("Initializing: $this")
-            manager.initOptions(this)
-            lock(LOCK_INIT)
-        }
+    @get:JsonIgnore
+    val runningOther get() = runningDir?.let { dir != it } ?: false
+
+    internal fun init(callback: LocalInstance.() -> Unit) {
+        apply(callback)
+        lock(LOCK_INIT)
     }
 
-    fun destroy() {
-        logger.info("Destroying: $this")
+    fun destroy() = localManager.destroy(this)
 
-        cleanDir(false)
+    private fun lockFile(name: String) = dir.resolve("$name.lock")
 
-        logger.info("Destroyed: $this")
-    }
+    private fun lock(name: String) = FileOperations.lock(lockFile(name))
 
-    private fun lockFile(name: String): File = File(dir, "$name.lock")
-
-    fun lock(name: String) = FileOperations.lock(lockFile(name))
-
-    fun locked(name: String): Boolean = lockFile(name).exists()
+    private fun locked(name: String): Boolean = lockFile(name).exists()
 
     @get:JsonIgnore
     val windowTitle get() = "LocalInstance(name='$name', httpUrl='$httpUrl'" +
-            (version.takeIf { it != Formats.VERSION_UNKNOWN.version }?.run { ", version=$this" } ?: "") +
-            ", debugPort=$debugPort, user='$user', password='${Formats.asPassword(password)}')"
+            (version.takeIf { it != Formats.versionUnknown().version }?.run { ", version=$this" } ?: "") +
+            ", debugPort=$debugPort, user='$user', password='${Formats.toPassword(password)}')"
 
-    override fun toString(): String {
-        return "LocalInstance(name='$name', httpUrl='$httpUrl')"
-    }
+    override fun toString() = "LocalInstance(name='$name', httpUrl='$httpUrl')"
 
     companion object {
 
@@ -418,7 +354,7 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
 
         const val LOCK_INIT = "init"
 
-        fun create(aem: AemExtension, httpUrl: String, configurer: LocalInstance.() -> Unit): LocalInstance {
+        fun create(aem: AemExtension, httpUrl: String, configurer: LocalInstance.() -> Unit = {}): LocalInstance {
             return LocalInstance(aem).apply {
                 val instanceUrl = InstanceUrl.parse(httpUrl)
                 if (instanceUrl.user != USER) {
@@ -429,14 +365,11 @@ class LocalInstance private constructor(aem: AemExtension) : AbstractInstance(ae
                 this.password = instanceUrl.password
                 this.id = instanceUrl.id
                 this.debugPort = instanceUrl.debugPort
-                this.environment = aem.env
+                this.environment = aem.commonOptions.env.get()
 
-                this.apply(configurer)
+                configurer()
+                validate()
             }
-        }
-
-        fun create(aem: AemExtension, httpUrl: String): LocalInstance {
-            return create(aem, httpUrl) {}
         }
     }
 }

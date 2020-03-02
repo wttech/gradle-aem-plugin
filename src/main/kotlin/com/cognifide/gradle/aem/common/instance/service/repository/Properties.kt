@@ -1,7 +1,8 @@
 package com.cognifide.gradle.aem.common.instance.service.repository
 
+import com.cognifide.gradle.aem.common.utils.JcrUtil
 import com.cognifide.gradle.aem.common.instance.service.repository.Node as Base
-import com.cognifide.gradle.aem.common.utils.Formats
+import com.cognifide.gradle.common.utils.Formats
 import com.fasterxml.jackson.annotation.JsonIgnore
 import java.text.ParseException
 import java.util.*
@@ -91,13 +92,34 @@ class Properties(@JsonIgnore val node: Base, props: Map<String, Any>) : LinkedHa
         }
     }
 
-    fun calendar(name: String): Calendar? = date(name)?.let { Formats.dateToCalendar(it) }
+    fun calendar(name: String): Calendar? = date(name)?.let { JcrUtil.dateToCalendar(it) }
 
-    fun calendars(name: String): List<Calendar>? = dates(name)?.map { Formats.dateToCalendar(it) }
+    fun calendars(name: String): List<Calendar>? = dates(name)?.map { JcrUtil.dateToCalendar(it) }
 
     @get:JsonIgnore
-    val json: String
-        get() = Formats.toJson(this)
+    val json: String get() = Formats.toJson(this)
+
+    // Predefined constants
+
+    val type get() = string("jcr:primaryType")
+
+    val mixinTypes get() = strings("jcr:mixinTypes")
+
+    val title get() = string("jcr:title")
+
+    val description get() = string("jcr:description")
+
+    val created get() = date("jcr:created")
+
+    val createdBy get() = string("jcr:createdBy")
+
+    val lastModified get() = date("jcr:lastModified")
+
+    val lastModifiedBy get() = string("jcr:lastModifiedBy")
+
+    val fileReference get() = string("fileReference")
+
+    val resourceType get() = string("sling:resourceType")
 
     override fun toString(): String {
         return "Properties(json=${Formats.toJson(this, false)})"

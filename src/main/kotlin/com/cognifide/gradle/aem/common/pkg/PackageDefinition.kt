@@ -2,76 +2,61 @@ package com.cognifide.gradle.aem.common.pkg
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.file.FileOperations
+import com.cognifide.gradle.aem.common.file.ZipFile
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
-import com.cognifide.gradle.aem.common.pkg.vlt.VltDefinition
+import com.cognifide.gradle.aem.common.pkg.vault.VaultDefinition
 import org.apache.commons.io.FileUtils
-import org.zeroturnaround.zip.ZipUtil
 import java.io.File
 
 /**
- * Package definition that could be used to compose CRX package in place.
+ * Package builder that could be used to compose CRX package in place.
  *
  * This is programmatic approach to create ZIP file. API reflects Gradle's AbstractArchiveTask.
  * Useful for writing complex custom tasks that cannot inherit from Gradle's ZIP task.
  *
  * @see <https://docs.gradle.org/current/dsl/org.gradle.api.tasks.bundling.Zip.html#org.gradle.api.tasks.bundling.Zip>
  */
-class PackageDefinition(private val aem: AemExtension) : VltDefinition(aem) {
+class PackageDefinition(private val aem: AemExtension) : VaultDefinition(aem) {
 
-    var destinationDirectory: File = aem.temporaryDir
+    val destinationDirectory = aem.obj.buildDir("package")
 
-    var archiveBaseName: String = aem.baseName
+    val archiveBaseName = aem.obj.string { convention(aem.commonOptions.baseName) }
 
-    var archiveAppendix: String? = null
+    val archiveAppendix = aem.obj.string()
 
-    var archiveExtension: String = "zip"
+    val archiveExtension = aem.obj.string { convention("zip") }
 
-    var archiveClassifier: String? = null
+    val archiveClassifier = aem.obj.string()
 
-    var archiveVersion: String
-        get() = archiveVersionCustom ?: version
-        set(value) {
-            archiveVersionCustom = value
-        }
-
-    private var archiveVersionCustom: String? = null
+    val archiveVersion = aem.obj.string { convention(version) }
 
     /**
      * ZIP file path
      */
-    var archivePath: File
-        get() = archivePathCustom ?: File(destinationDirectory, archiveFileName)
-        set(value) {
-            archivePathCustom = value
-        }
-
-    private var archivePathCustom: File? = null
+    val archivePath = aem.obj.file {
+        convention(aem.obj.provider { destinationDirectory.file(archiveFileName).get() })
+    }
 
     /**
      * ZIP file name
      */
-    var archiveFileName: String
-        get() = archiveFileNameCustom ?: listOf(archiveBaseName, archiveAppendix, archiveVersion, archiveClassifier)
-                .filter { !it.isNullOrBlank() }
-                .joinToString("-")
-                .run { "$this.$archiveExtension" }
-        set(value) {
-            archiveFileNameCustom = value
-        }
-
-    private var archiveFileNameCustom: String? = null
+    val archiveFileName = aem.obj.string {
+        convention(aem.obj.provider {
+            listOf(archiveBaseName.orNull, archiveAppendix.orNull, archiveVersion.orNull, archiveClassifier.orNull)
+                    .filter { !it.isNullOrBlank() }
+                    .joinToString("-")
+                    .run { "$this.${archiveExtension.get()}" }
+        })
+    }
 
     /**
      * Temporary directory being zipped to produce CRX package.
      */
-    val pkgDir: File
-        get() = File(archivePath.parentFile, archivePath.nameWithoutExtension)
+    val pkgDir: File get() = archivePath.get().asFile.parentFile.resolve(archivePath.get().asFile.nameWithoutExtension)
 
-    val metaDir: File
-        get() = File(pkgDir, Package.META_PATH)
+    val metaDir: File get() = pkgDir.resolve(Package.META_PATH)
 
-    val jcrDir: File
-        get() = File(pkgDir, Package.JCR_ROOT)
+    val jcrDir: File get() = pkgDir.resolve(Package.JCR_ROOT)
 
     private var process: PackageDefinition.() -> Unit = {
         copyMetaFiles()
@@ -110,20 +95,19 @@ class PackageDefinition(private val aem: AemExtension) : VltDefinition(aem) {
         expandFiles(metaDir, filePatterns)
     }
 
+    val expandProperties = aem.obj.map<String, Any> { convention(aem.obj.provider { fileProperties }) }
+
     fun expandFiles(dir: File, filePatterns: List<String> = PackageFileFilter.EXPAND_FILES_DEFAULT) {
         FileOperations.amendFiles(dir, filePatterns) { source, content ->
-            aem.prop.expandPackage(content, mapOf("definition" to this), source.absolutePath)
+            common.prop.expand(content, expandProperties.get(), source.absolutePath)
         }
     }
 
     /**
      * Compose a CRX package basing on configured definition.
      */
-    fun compose(definition: PackageDefinition.() -> Unit): File {
-        definition()
-        ensureDefaults()
-
-        archivePath.delete()
+    fun compose(): File {
+        archivePath.get().asFile.delete()
         pkgDir.deleteRecursively()
         metaDir.mkdirs()
         jcrDir.mkdirs()
@@ -131,9 +115,9 @@ class PackageDefinition(private val aem: AemExtension) : VltDefinition(aem) {
         content()
         process()
 
-        ZipUtil.pack(pkgDir, archivePath)
+        ZipFile(archivePath.get().asFile).packAll(pkgDir)
         pkgDir.deleteRecursively()
 
-        return archivePath
+        return archivePath.get().asFile
     }
 }

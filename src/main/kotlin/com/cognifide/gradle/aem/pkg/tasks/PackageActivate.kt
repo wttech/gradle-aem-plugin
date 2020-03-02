@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.pkg.tasks
 
-import com.cognifide.gradle.aem.common.instance.checkAvailable
+import com.cognifide.gradle.aem.common.instance.check
 import com.cognifide.gradle.aem.common.instance.names
 import com.cognifide.gradle.aem.common.tasks.PackageTask
 import com.cognifide.gradle.aem.common.utils.fileNames
@@ -10,14 +10,14 @@ open class PackageActivate : PackageTask() {
 
     @TaskAction
     fun activate() {
-        instances.checkAvailable()
+        instances.get().check()
         sync { packageManager.activate(it) }
-        aem.notifier.notify("Package activated", "${packages.fileNames} on ${instances.names}")
+        common.notifier.notify("Package activated", "${files.files.fileNames} on ${instances.get().names}")
     }
 
     init {
         description = "Activates CRX package on instance(s)."
-        awaited = aem.prop.boolean("package.activate.awaited") ?: true
+        aem.prop.boolean("package.activate.awaited")?.let { awaited.set(it) }
     }
 
     companion object {

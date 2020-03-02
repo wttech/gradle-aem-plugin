@@ -1,14 +1,16 @@
 package com.cognifide.gradle.aem.common.instance.check
 
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.common.build.Behaviors
-import com.cognifide.gradle.aem.common.build.ProgressIndicator
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.InstanceException
+import com.cognifide.gradle.common.build.Behaviors
+import com.cognifide.gradle.common.build.ProgressIndicator
 import kotlinx.coroutines.isActive
 import org.apache.commons.lang3.time.StopWatch
 
 class CheckRunner(internal val aem: AemExtension) {
+
+    private val common = aem.common
 
     private var checks: CheckFactory.() -> List<Check> = { throw InstanceException("No instance checks defined!") }
 
@@ -19,7 +21,7 @@ class CheckRunner(internal val aem: AemExtension) {
         checks = definitions
     }
 
-    var progresses = listOf<CheckProgress>()
+    private var progresses = listOf<CheckProgress>()
 
     /**
      * Get current checking progress of concrete instance.
@@ -32,31 +34,29 @@ class CheckRunner(internal val aem: AemExtension) {
     /**
      * How long to wait after failed checking before checking again.
      */
-    var delay = 0L
+    val delay = aem.obj.long { convention(0L) }
 
     /**
      * Controls if aborted running should fail build.
      */
-    var verbose = true
+    val verbose = aem.obj.boolean { convention(true) }
 
     /**
      * Time since running started.
      */
-    val runningTime: Long
-        get() = runningWatch.time
+    val runningTime: Long get() = runningWatch.time
 
     private val runningWatch = StopWatch()
 
     /**
      * Error causing running stopped.
      */
-    var abortCause: Exception? = null
+    internal var abortCause: Exception? = null
 
     /**
      * Verify if running is stopped.
      */
-    val aborted: Boolean
-        get() = abortCause != null
+    val aborted: Boolean get() = abortCause != null
 
     /**
      * Controls logging behavior
@@ -66,7 +66,7 @@ class CheckRunner(internal val aem: AemExtension) {
     var logInstantly = aem.logger.isInfoEnabled
 
     fun check(instances: Collection<Instance>) {
-        aem.progressIndicator {
+        common.progressIndicator {
             doChecking(instances)
             doAbort()
         }
@@ -77,11 +77,15 @@ class CheckRunner(internal val aem: AemExtension) {
         step = "Checking"
 
         progresses = instances.map { CheckProgress(it) }
-        updater { update(progresses.sortedBy { it.instance.name }.joinToString(" | ") { it.summary }) }
+        updater {
+            update(progresses.sortedBy { it.instance.name }.joinToString(" | ") {
+                if (instances.size <= 2) it.summary else it.shortSummary
+            })
+        }
 
         runningWatch.start()
 
-        aem.parallel.each(progresses) { progress ->
+        common.parallel.each(progresses) { progress ->
             val instance = progress.instance
             progress.stateWatch.start()
 
@@ -112,7 +116,7 @@ class CheckRunner(internal val aem: AemExtension) {
                     break
                 }
 
-                Behaviors.waitFor(delay)
+                Behaviors.waitFor(delay.get())
             } while (isActive)
         }
 
@@ -127,7 +131,7 @@ class CheckRunner(internal val aem: AemExtension) {
                 progresses.forEach { it.currentCheck?.log() }
             }
 
-            if (verbose) {
+            if (verbose.get()) {
                 abortCause?.let { throw it }
             } else {
                 aem.logger.error("Checking error", abortCause)

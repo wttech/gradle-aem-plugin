@@ -3,21 +3,42 @@ package com.cognifide.gradle.aem.pkg.tasks.sync
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
-import com.cognifide.gradle.aem.common.pkg.vlt.FilterFile
+import com.cognifide.gradle.aem.common.pkg.PackageDefinition
+import com.cognifide.gradle.aem.common.pkg.vault.FilterFile
+import com.cognifide.gradle.common.utils.using
 import java.io.File
 import org.gradle.api.tasks.Internal
 
 class Downloader(@Internal private val aem: AemExtension) {
 
+    private val common = aem.common
+
     /**
      * Determines instance from which JCR content will be downloaded.
      */
-    var instance: Instance = aem.anyInstance
+    val instance = aem.obj.typed<Instance> { convention(aem.obj.provider { aem.anyInstance }) }
 
     /**
      * Determines VLT filter used to grab JCR content from AEM instance.
      */
-    var filter: FilterFile = aem.filter
+    val filter = aem.obj.typed<FilterFile> { convention(aem.obj.provider { aem.filter }) }
+
+    /**
+     * Allows to configure downloaded package details.
+     */
+    val definition = PackageDefinition(aem).apply {
+        filterElements.set(filter.map { it.elements })
+    }
+
+    fun definition(options: PackageDefinition.() -> Unit) = definition.using(options)
+
+    /**
+     * Allows to delete existing contents before extracting downloaded one.
+     */
+    val clean = aem.obj.boolean {
+        convention(false)
+        aem.prop.boolean("package.sync.downloader.clean")?.let { set(it) }
+    }
 
     /**
      * Allows to disable extracting contents of download package to directory.
@@ -25,36 +46,36 @@ class Downloader(@Internal private val aem: AemExtension) {
      * This operation can be modified using '-Pforce' command line to replace the contents of extract directory
      * with package content.
      */
-    var extract = aem.prop.boolean("package.sync.downloader.extract") ?: true
+    val extract = aem.obj.boolean {
+        convention(true)
+        aem.prop.boolean("package.sync.downloader.extract")?.let { set(it) }
+    }
 
     /**
      * Path in which downloader JCR content will be extracted.
      */
-    var extractDir: File = aem.prop.string("package.sync.downloader.extractDir")?.let { aem.project.file(it) }
-            ?: aem.packageOptions.jcrRootDir
-
-    /**
-     * Repeat download when failed (brute-forcing).
-     */
-    var retry = aem.retry { afterSquaredSecond(aem.prop.long("package.sync.downloader.retry") ?: 3) }
+    val extractDir = aem.obj.dir {
+        convention(aem.packageOptions.jcrRootDir)
+        aem.prop.file("package.sync.downloader.extractDir")?.let { set(it) }
+    }
 
     fun download() {
-        val file = instance.sync.packageManager.download({
-            filterElements = filter.elements.toMutableList()
-        }, retry)
-
-        if (extract) {
-            aem.logger.lifecycle("Extracting package $file to $extractDir")
-            extractDownloadedPackage(file, extractDir)
+        val file = instance.get().sync { packageManager.download(definition) }
+        if (extract.get()) {
+            extractDir.get().asFile.using {
+                aem.logger.lifecycle("Extracting package $file to $this")
+                extractDownloadedPackage(file, this)
+            }
         }
     }
 
     private fun extractDownloadedPackage(downloadedPackage: File, jcrRoot: File) {
-        if (jcrRoot.exists() && aem.prop.isForce()) {
-            jcrRoot.deleteRecursively()
+        jcrRoot.apply {
+            if (exists() && clean.get()) {
+                deleteRecursively()
+            }
+            mkdirs()
         }
-
-        jcrRoot.mkdirs()
 
         aem.project.copy { spec ->
             spec.into(jcrRoot.parentFile.path)

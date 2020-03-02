@@ -6,24 +6,16 @@ import org.gradle.api.tasks.TaskAction
 
 open class InstanceCreate : LocalInstanceTask() {
 
-    init {
-        description = "Creates local AEM instance(s)."
-    }
-
     @TaskAction
     fun create() {
-        val uncreatedInstances = instances.filter { !it.created }
-        if (uncreatedInstances.isEmpty()) {
-            logger.lifecycle("No instance(s) to create")
-            return
+        val createdInstances = localInstanceManager.create(instances.get())
+        if (createdInstances.isNotEmpty()) {
+            common.notifier.lifecycle("Instance(s) created", "Which: ${createdInstances.names}")
         }
+    }
 
-        logger.info("Creating instances: ${uncreatedInstances.names}")
-
-        manager.create(uncreatedInstances)
-        val createdInstances = uncreatedInstances.filter { it.created }
-
-        aem.notifier.lifecycle("Instance(s) created", "Which: ${createdInstances.names}")
+    init {
+        description = "Creates local AEM instance(s)."
     }
 
     companion object {

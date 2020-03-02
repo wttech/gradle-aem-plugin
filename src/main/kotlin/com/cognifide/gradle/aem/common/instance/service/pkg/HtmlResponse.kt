@@ -1,6 +1,6 @@
 package com.cognifide.gradle.aem.common.instance.service.pkg
 
-import com.cognifide.gradle.aem.common.http.ResponseException
+import com.cognifide.gradle.common.http.ResponseException
 import java.io.InputStream
 import java.util.regex.Pattern
 

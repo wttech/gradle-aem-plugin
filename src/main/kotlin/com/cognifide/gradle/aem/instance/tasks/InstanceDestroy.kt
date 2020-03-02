@@ -2,41 +2,21 @@ package com.cognifide.gradle.aem.instance.tasks
 
 import com.cognifide.gradle.aem.common.instance.names
 import com.cognifide.gradle.aem.common.tasks.LocalInstanceTask
-import com.cognifide.gradle.aem.common.utils.onEachApply
-import org.gradle.api.execution.TaskExecutionGraph
 import org.gradle.api.tasks.TaskAction
 
 open class InstanceDestroy : LocalInstanceTask() {
 
-    init {
-        description = "Destroys local AEM instance(s)."
-    }
-
-    override fun taskGraphReady(graph: TaskExecutionGraph) {
-        if (graph.hasTask(this)) {
-            aem.prop.checkForce(this)
-        }
-    }
-
     @TaskAction
     fun destroy() {
-        val createdInstances = instances.filter { it.touched }
-        if (createdInstances.isEmpty()) {
-            logger.lifecycle("No instance(s) to destroy")
-            return
+        val destroyedInstances = localInstanceManager.destroy(instances.get())
+        if (destroyedInstances.isNotEmpty()) {
+            common.notifier.notify("Instance(s) destroyed", "Which: ${destroyedInstances.names}")
         }
+    }
 
-        logger.info("Destroying instance(s): ${createdInstances.names}")
-
-        aem.progress(createdInstances.size) {
-            createdInstances.onEachApply {
-                increment("Destroying '$name'") {
-                    destroy()
-                }
-            }
-        }
-
-        aem.notifier.notify("Instance(s) destroyed", "Which: ${createdInstances.names}")
+    init {
+        description = "Destroys local AEM instance(s)."
+        checkForce()
     }
 
     companion object {

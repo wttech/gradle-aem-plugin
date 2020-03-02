@@ -2,8 +2,7 @@ package com.cognifide.gradle.aem.common
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.AemTask
-import com.cognifide.gradle.aem.common.tasks.Debug
-import com.cognifide.gradle.aem.common.utils.using
+import com.cognifide.gradle.common.utils.using
 import org.gradle.testfixtures.ProjectBuilder
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
@@ -11,12 +10,12 @@ import org.junit.jupiter.api.Test
 class CommonPluginTest {
 
     @Test
-    fun `plugin registers extension and debug task only`() = using(ProjectBuilder.builder().build()) {
-        plugins.apply("com.cognifide.aem.common")
+    fun `plugin registers extension`() = ProjectBuilder.builder().build().using {
+        plugins.apply(CommonPlugin.ID)
 
-        extensions.getByName("aem")
+        extensions.getByName(AemExtension.NAME)
         extensions.getByType(AemExtension::class.java).apply {
-            val instances = instanceOptions.definedList
+            val instances = instanceManager.defined.get()
 
             assertEquals(2, instances.size)
 
@@ -29,13 +28,12 @@ class CommonPluginTest {
                 assertTrue(publish)
             }
 
-            assertEquals("/apps/test/install", packageOptions.installPath)
+            assertEquals("/apps/test/install", packageOptions.installPath.get())
         }
 
         assertTrue(
-                tasks.filter { Debug.NAME != it.name }.none { it.group == AemTask.GROUP },
-                "Common plugin should not provide any tasks other than 'debug' task."
+                tasks.none { it.group == AemTask.GROUP },
+                "Common plugin should not provide any tasks which belongs to group AEM."
         )
     }
-
 }

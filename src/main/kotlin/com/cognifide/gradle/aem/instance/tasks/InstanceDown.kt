@@ -7,10 +7,6 @@ import org.gradle.api.tasks.TaskAction
 
 open class InstanceDown : LocalInstanceTask() {
 
-    init {
-        description = "Turns off local AEM instance(s)."
-    }
-
     private var awaitDownOptions: AwaitDownAction.() -> Unit = {}
 
     fun awaitDown(options: AwaitDownAction.() -> Unit) {
@@ -19,24 +15,14 @@ open class InstanceDown : LocalInstanceTask() {
 
     @TaskAction
     fun down() {
-        val upInstances = instances.filter { it.running }
-        if (upInstances.isEmpty()) {
-            logger.lifecycle("No instance(s) to turn off")
-            return
+        val downInstances = localInstanceManager.down(instances.get(), awaitDownOptions)
+        if (downInstances.isNotEmpty()) {
+            common.notifier.notify("Instance(s) down", "Which: ${downInstances.names}")
         }
+    }
 
-        aem.progress(upInstances.size) {
-            aem.parallel.with(upInstances) {
-                increment("Stopping instance '$name'") { down() }
-            }
-        }
-
-        aem.instanceActions.awaitDown {
-            instances = upInstances
-            awaitDownOptions()
-        }
-
-        aem.notifier.notify("Instance(s) down", "Which: ${upInstances.names}")
+    init {
+        description = "Turns off local AEM instance(s)."
     }
 
     companion object {

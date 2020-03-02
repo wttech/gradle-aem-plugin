@@ -1,7 +1,7 @@
 package com.cognifide.gradle.aem.common.instance.check
 
-import com.cognifide.gradle.aem.common.build.CollectingLogger
 import com.cognifide.gradle.aem.common.instance.Instance
+import com.cognifide.gradle.common.build.CollectingLogger
 import org.apache.commons.lang3.builder.HashCodeBuilder
 
 class CheckGroup(
@@ -41,12 +41,11 @@ class CheckGroup(
         stateBuilder.append(value)
     }
 
-    val state: Int
-        get() = stateBuilder.toHashCode()
+    val state: Int get() = stateBuilder.toHashCode()
 
-    val done: Boolean
-        get() = checks.all { it.success }
+    val done: Boolean get() = checks.all { it.success }
 
-    val summary: String
-        get() = checks.firstOrNull { it.failure }?.status ?: "Passed"
+    val status get() = if (done) "Passed" else "Not passed"
+
+    val summary: String get() = checks.firstOrNull { it.failure }?.status ?: "Passed"
 }

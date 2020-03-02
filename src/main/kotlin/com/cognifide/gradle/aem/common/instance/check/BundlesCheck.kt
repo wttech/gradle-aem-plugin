@@ -1,14 +1,16 @@
 package com.cognifide.gradle.aem.common.instance.check
 
+import com.cognifide.gradle.aem.common.utils.shortenClass
+
 @Suppress("MagicNumber")
 class BundlesCheck(group: CheckGroup) : DefaultCheck(group) {
 
-    var symbolicNamesIgnored = listOf<String>()
+    val symbolicNamesIgnored = aem.obj.strings { convention(listOf()) }
 
     init {
         sync.apply {
-            http.connectionTimeout = 750
-            http.connectionRetries = false
+            http.connectionTimeout.convention(750)
+            http.connectionRetries.convention(false)
         }
     }
 
@@ -25,11 +27,11 @@ class BundlesCheck(group: CheckGroup) : DefaultCheck(group) {
             return
         }
 
-        val unstable = state.bundlesExcept(symbolicNamesIgnored).filter { !it.stable }
+        val unstable = state.bundlesExcept(symbolicNamesIgnored.get()).filter { !it.stable }
         if (unstable.isNotEmpty()) {
             statusLogger.error(
                     when (unstable.size) {
-                        1 -> "Bundle unstable '${unstable.first().symbolicName}'"
+                        1 -> "Bundle unstable '${unstable.first().symbolicName.shortenClass()}'"
                         in 2..10 -> "Bundles unstable (${unstable.size})"
                         else -> "Bundles stable (${state.stablePercent})"
                     },

@@ -1,9 +1,9 @@
 package com.cognifide.gradle.aem.common.instance.check
 
-import com.cognifide.gradle.aem.common.build.BuildScope
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.InstanceSync
 import com.cognifide.gradle.aem.common.instance.LocalInstance
+import com.cognifide.gradle.common.build.BuildScope
 import org.apache.http.HttpStatus
 import org.gradle.api.logging.LogLevel
 
@@ -15,23 +15,20 @@ abstract class DefaultCheck(protected val group: CheckGroup) : Check {
 
     val instance = group.instance
 
-    val progress: CheckProgress
-        get() = runner.progress(instance)
+    val progress: CheckProgress get() = runner.progress(instance)
 
     val statusLogger = group.statusLogger
 
     var sync: InstanceSync = instance.sync.apply {
-        http.connectionTimeout = 1000
-        http.connectionRetries = false
+        http.connectionTimeout.convention(1000)
+        http.connectionRetries.convention(false)
 
         applyInstanceInitialized()
     }
 
-    override val status: String
-        get() = statusLogger.entries.firstOrNull()?.summary ?: "Check passed"
+    override val status: String get() = statusLogger.entries.firstOrNull()?.summary ?: "Check passed"
 
-    override val success: Boolean
-        get() = statusLogger.entries.none { it.level == LogLevel.ERROR }
+    override val success: Boolean get() = statusLogger.entries.none { it.level == LogLevel.ERROR }
 
     fun <T : Any> state(value: T) = value.also { group.state(it) }
 
@@ -53,25 +50,21 @@ abstract class DefaultCheck(protected val group: CheckGroup) : Check {
 
         val authInit = cache.get(cacheKey) ?: false
         if (authInit) {
-            http.basicUser = Instance.USER_DEFAULT
-            http.basicPassword = Instance.PASSWORD_DEFAULT
+            http.basicUser.set(Instance.USER_DEFAULT)
+            http.basicPassword.set(Instance.PASSWORD_DEFAULT)
         }
 
-        val originHttpResponseHandler = http.responseHandler
-
-        http.responseHandler = { response ->
-            originHttpResponseHandler(response)
-
+        http.responseHandler { response ->
             if (response.statusLine.statusCode == HttpStatus.SC_UNAUTHORIZED) {
                 val authInitCurrent = cache.get(cacheKey) ?: false
                 if (!authInitCurrent) {
                     aem.logger.info("Switching instance '${instance.name}' credentials from customized to defaults.")
-                    http.basicUser = Instance.USER_DEFAULT
-                    http.basicPassword = Instance.PASSWORD_DEFAULT
+                    http.basicUser.set(Instance.USER_DEFAULT)
+                    http.basicPassword.set(Instance.PASSWORD_DEFAULT)
                 } else {
                     aem.logger.info("Switching instance '${instance.name}' credentials from defaults to customized.")
-                    http.basicUser = instance.user
-                    http.basicPassword = instance.password
+                    http.basicUser.set(instance.user)
+                    http.basicPassword.set(instance.password)
                 }
                 cache.put(cacheKey, !authInitCurrent)
             }

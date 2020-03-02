@@ -1,28 +1,13 @@
 package com.cognifide.gradle.aem
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import com.cognifide.gradle.common.utils.Formats
 import java.io.Serializable
-import org.gradle.api.Plugin
-import org.gradle.api.Project
 
-abstract class AemPlugin : Plugin<Project> {
+class AemPlugin : Serializable {
 
-    override fun apply(project: Project) {
-        with(project) { configure() }
-    }
+    lateinit var pluginVersion: String
 
-    abstract fun Project.configure()
-
-    protected fun Project.tasks(configurer: AemTaskFacade.() -> Unit) {
-        return AemExtension.of(this).tasks(configurer)
-    }
-
-    class Build : Serializable {
-
-        lateinit var pluginVersion: String
-
-        lateinit var gradleVersion: String
-    }
+    lateinit var gradleVersion: String
 
     companion object {
 
@@ -40,22 +25,18 @@ abstract class AemPlugin : Plugin<Project> {
         val NAME_WITH_VERSION: String
             get() = "$NAME ${BUILD.pluginVersion}"
 
-        private fun fromJson(json: String): Build {
-            return ObjectMapper().readValue(json, Build::class.java)
+        private fun fromJson(json: String): AemPlugin {
+            return Formats.fromJson(json, AemPlugin::class.java)
         }
 
         private var once = false
 
         @Synchronized
-        fun once(callback: (Build) -> Unit) {
+        fun once(callback: AemPlugin.() -> Unit) {
             if (!once) {
                 callback(BUILD)
                 once = true
             }
-        }
-
-        fun withId(project: Project, id: String): List<Project> {
-            return project.rootProject.allprojects.filter { it.plugins.hasPlugin(id) }
         }
     }
 }
