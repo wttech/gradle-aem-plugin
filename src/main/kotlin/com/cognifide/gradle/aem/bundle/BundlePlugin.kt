@@ -1,10 +1,12 @@
 package com.cognifide.gradle.aem.bundle
 
+import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.bundle.tasks.BundleCompose
 import com.cognifide.gradle.aem.bundle.tasks.BundleInstall
 import com.cognifide.gradle.aem.bundle.tasks.BundleUninstall
 import com.cognifide.gradle.aem.common.CommonPlugin
 import com.cognifide.gradle.aem.common.tasks.BundleTask
+import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.common.CommonDefaultPlugin
 import com.cognifide.gradle.common.common
 import org.gradle.api.JavaVersion
@@ -28,6 +30,10 @@ class BundlePlugin : CommonDefaultPlugin() {
     }
 
     private fun Project.setupDependentPlugins() {
+        if (plugins.hasPlugin(PackagePlugin::class.java)) {
+            throw AemException("Bundle plugin '$ID' should be applied before package plugin '${PackagePlugin.ID}'!")
+        }
+
         plugins.apply(JavaPlugin::class.java)
         plugins.apply(CommonPlugin::class.java)
     }
