@@ -35,9 +35,14 @@ class InstancePlugin : CommonDefaultPlugin() {
         val mustRunAfterPackageDeploy: TaskProvider<*>.() -> Unit = {
             if (plugins.hasPlugin(PackagePlugin::class.java)) {
                 val deploy = named<Task>(PackageDeploy.NAME)
-                configureApply {
-                    mustRunAfter(deploy)
-                }
+                configureApply { mustRunAfter(deploy) }
+            }
+        }
+
+        val dependsOnPackageDeploy: TaskProvider<*>.() -> Unit = {
+            if (plugins.hasPlugin(PackagePlugin::class.java)) {
+                val deploy = named<Task>(PackageDeploy.NAME)
+                configureApply { dependsOn(deploy) }
             }
         }
 
@@ -58,7 +63,7 @@ class InstancePlugin : CommonDefaultPlugin() {
 
         register<InstanceSetup>(InstanceSetup.NAME) {
             dependsOn(satisfy, provision)
-        }.apply(mustRunAfterPackageDeploy)
+        }.apply(dependsOnPackageDeploy)
 
         register<InstanceTail>(InstanceTail.NAME)
 
