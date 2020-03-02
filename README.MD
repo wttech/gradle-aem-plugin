@@ -271,7 +271,7 @@ To see all available options and actual documentation, please follow to:
 Gradle AEM Plugin to be more concise is now more like set of plugins.
 Each plugin has its own documentation:
 
-* [Common](docs/common-plugin.md) - defining common options like AEM instances available etc,
+* [Common](docs/common-plugin.md) - defining common options like AEM instances available etc, base for custom Gradle tasks scripting for AEM
 * [Package](docs/package-plugin.md) - building CRX package(s),
 * [Package Sync](docs/package-sync-plugin.md) - synchronizing JCR content from running AEM instances into built CRX packages,
 * [Bundle](docs/bundle-plugin.md) - building OSGi bundle(s),
