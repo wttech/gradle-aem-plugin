@@ -205,7 +205,7 @@ Use dedicated task method named `fromJar`, for example:
 aem {
     tasks {
         packageCompose {
-            fromJar("com.github.mickleroy:aem-sass-compiler:1.0.1")
+            installBundle("com.github.mickleroy:aem-sass-compiler:1.0.1")
         }
     }
 }
@@ -221,8 +221,8 @@ Use dedicated task method named `fromZip`, For example:
 aem {
     tasks {
         packageCompose {
-            fromZip("com.adobe.cq:core.wcm.components.all:2.4.0")
-            fromZip("com.adobe.cq:core.wcm.components.examples:2.4.0")
+            nestPackage("com.adobe.cq:core.wcm.components.all:2.4.0")
+            nestPackage("com.adobe.cq:core.wcm.components.examples:2.4.0")
         }
     }
 }
@@ -233,8 +233,8 @@ aem {
 Let's assume following project structure:
 
 * *aem/build.gradle.kts* (project `:aem`, no source files at all)
-* *aem/sites/build.gradle.kts*  (project `:aem:sites`, JCR content and OSGi bundle)
 * *aem/common/build.gradle.kts*  (project `:aem:common`, JCR content and OSGi bundle)
+* *aem/sites/build.gradle.kts*  (project `:aem:sites`, JCR content and OSGi bundle)
 * *aem/site.live/build.gradle.kts*  (project `:aem:site.live`, JCR content only)
 * *aem/site.demo/build.gradle.kts*  (project `:aem:site.demo`, JCR content only)
 
@@ -248,9 +248,10 @@ plugins {
 aem {
     tasks {
         packageCompose {
-            fromProject(":aem:sites")
-            fromProject(":aem:common")
-            fromProjects(":aem:site.*")
+            mergePackageProject(":aem:common")
+            mergePackageProject(":aem:sites")
+            mergePackageProject(":aem:site.live")
+            mergePackageProject(":aem:site.demo")
         }
     }    
 }
@@ -264,9 +265,9 @@ Gradle AEM Plugin is configured in a way that project can have:
 * source code to compile OSGi bundle,
 * both.
 
-By distinguishing `fromProject`, `fromBundle` or `fromCompose` there is ability to create any assembly CRX package with content of any type without restructuring the project.
+By mixing usages of methods `nestPackage*`, `installBundle*` or `mergePackage*` there is ability to create any assembly CRX package with content of any type without restructuring the project.
 
-When using `fromProject` there is an ability to pass lambda to customize options like `bundlePath`, `bundleRunMode`, decide to include only JCR contents, only bundles and more.
+When using `installBundle` there is an ability to pass lambda to customize options like bundle run mode.
 
 However, one rule must be kept while developing a multi-module project: **all Vault filter roots of all projects must be exclusive**. In general, they are most often exclusive, to avoid strange JCR installer behaviors, but sometimes exceptional [workspace filter](http://jackrabbit.apache.org/filevault/filter.html) rules are being applied like `mode="merge"` etc.
 
@@ -318,8 +319,7 @@ This feature is especially useful to generate valid *META-INF/properties.xml* fi
     {% if definition.createdBy is not empty %}
     <entry key="createdBy">{{definition.createdBy}}</entry>
     {% endif %}
-    {% for e in definition.properties %}
-    <entry key="{{e.key}}">{{e.value | raw}}</entry>
+    {% for e in definition.properties %}<entry key="{{e.key}}">{{e.value | raw}}</entry>
     {% endfor %}
 </properties>
 ```
