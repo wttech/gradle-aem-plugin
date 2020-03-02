@@ -6,9 +6,7 @@ import com.cognifide.gradle.aem.bundle.tasks.BundleCompose
 import com.cognifide.gradle.aem.common.CommonPlugin
 import com.cognifide.gradle.aem.common.tasks.PackageTask
 import com.cognifide.gradle.aem.instance.InstancePlugin
-import com.cognifide.gradle.aem.instance.tasks.InstanceSatisfy
-import com.cognifide.gradle.aem.instance.tasks.InstanceCreate
-import com.cognifide.gradle.aem.instance.tasks.InstanceUp
+import com.cognifide.gradle.aem.instance.tasks.*
 import com.cognifide.gradle.aem.pkg.tasks.*
 import com.cognifide.gradle.common.CommonDefaultPlugin
 import org.gradle.api.Project
@@ -42,64 +40,69 @@ class PackagePlugin : CommonDefaultPlugin() {
         }
     }
 
-    private fun Project.setupTasks() {
-        tasks {
-            val clean = named<Task>(LifecycleBasePlugin.CLEAN_TASK_NAME)
-            val prepare = register<PackagePrepare>(PackagePrepare.NAME) {
-                mustRunAfter(clean)
-            }
-            val compose = register<PackageCompose>(PackageCompose.NAME) {
-                dependsOn(prepare)
-                mustRunAfter(clean)
-                metaDir.convention(prepare.flatMap { it.metaDir })
-            }.apply {
-                artifacts.add(Dependency.ARCHIVES_CONFIGURATION, this)
+    @Suppress("LongMethod")
+    private fun Project.setupTasks() = tasks {
+        val clean = named<Task>(LifecycleBasePlugin.CLEAN_TASK_NAME)
+        val prepare = register<PackagePrepare>(PackagePrepare.NAME) {
+            mustRunAfter(clean)
+        }
+        val compose = register<PackageCompose>(PackageCompose.NAME) {
+            dependsOn(prepare)
+            mustRunAfter(clean)
+            metaDir.convention(prepare.flatMap { it.metaDir })
+        }.apply {
+            artifacts.add(Dependency.ARCHIVES_CONFIGURATION, this)
 
-                plugins.withId(BundlePlugin.ID) {
-                    val test = named<Test>(JavaPlugin.TEST_TASK_NAME)
-                    val bundle = named<BundleCompose>(BundleCompose.NAME)
+            plugins.withId(BundlePlugin.ID) {
+                val test = named<Test>(JavaPlugin.TEST_TASK_NAME)
+                val bundle = named<BundleCompose>(BundleCompose.NAME)
 
-                    configure { task ->
-                        task.installBundleBuilt(bundle)
-                        task.dependsOn(test)
-                    }
+                configure { task ->
+                    task.installBundleBuilt(bundle)
+                    task.dependsOn(test)
                 }
             }
-            val upload = register<PackageUpload>(PackageUpload.NAME) {
-                dependsOn(compose)
+        }
+        val upload = register<PackageUpload>(PackageUpload.NAME) {
+            dependsOn(compose)
+        }
+        val install = register<PackageInstall>(PackageInstall.NAME) {
+            dependsOn(compose)
+            mustRunAfter(upload)
+        }
+        val uninstall = register<PackageUninstall>(PackageUninstall.NAME) {
+            dependsOn(compose)
+            mustRunAfter(upload, install)
+        }
+        val activate = register<PackageActivate>(PackageActivate.NAME) {
+            dependsOn(compose)
+            mustRunAfter(upload, install)
+        }
+        val deploy = register<PackageDeploy>(PackageDeploy.NAME) {
+            dependsOn(compose)
+            plugins.withId(InstancePlugin.ID) {
+                mustRunAfter(
+                        named<Task>(InstanceCreate.NAME),
+                        named<Task>(InstanceUp.NAME),
+                        named<Task>(InstanceSatisfy.NAME),
+                        named<Task>(InstanceProvision.NAME),
+                        named<Task>(InstanceSetup.NAME)
+                )
             }
-            val install = register<PackageInstall>(PackageInstall.NAME) {
-                dependsOn(compose)
-                mustRunAfter(upload)
-            }
-            val uninstall = register<PackageUninstall>(PackageUninstall.NAME) {
-                dependsOn(compose)
-                mustRunAfter(upload, install)
-            }
-            val activate = register<PackageActivate>(PackageActivate.NAME) {
-                dependsOn(compose)
-                mustRunAfter(upload, install)
-            }
-            val deploy = register<PackageDeploy>(PackageDeploy.NAME) {
-                dependsOn(compose)
-                plugins.withId(InstancePlugin.ID) {
-                    mustRunAfter(named<Task>(InstanceCreate.NAME), named<Task>(InstanceUp.NAME), named<Task>(InstanceSatisfy.NAME))
-                }
-            }
-            register<PackageDelete>(PackageDelete.NAME) {
-                dependsOn(compose)
-                mustRunAfter(deploy, upload, install, activate, uninstall)
-            }
-            register<PackagePurge>(PackagePurge.NAME) {
-                dependsOn(compose)
-                mustRunAfter(deploy, upload, install, activate, uninstall)
-            }
-            named<Task>(LifecycleBasePlugin.ASSEMBLE_TASK_NAME) {
-                dependsOn(compose)
-            }
-            typed<PackageTask> {
-                files.from(compose.map { it.archiveFile })
-            }
+        }
+        register<PackageDelete>(PackageDelete.NAME) {
+            dependsOn(compose)
+            mustRunAfter(deploy, upload, install, activate, uninstall)
+        }
+        register<PackagePurge>(PackagePurge.NAME) {
+            dependsOn(compose)
+            mustRunAfter(deploy, upload, install, activate, uninstall)
+        }
+        named<Task>(LifecycleBasePlugin.ASSEMBLE_TASK_NAME) {
+            dependsOn(compose)
+        }
+        typed<PackageTask> {
+            files.from(compose.map { it.archiveFile })
         }
     }
 
