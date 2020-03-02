@@ -20,5 +20,9 @@ class InstallResolver(private val aem: AemExtension) {
 
     fun files(configurer: FileResolver.() -> Unit) = fileResolver.using(configurer)
 
+    fun files(vararg values: Any) = fileResolver.getAll(values)
+
+    fun files(values: Iterable<Any>) = fileResolver.getAll(values)
+
     val files get() = fileResolver.files
 }
