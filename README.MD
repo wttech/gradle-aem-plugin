@@ -210,11 +210,11 @@ aem {
             uploadUrl.set(prop.string("localInstance.backup.uploadUrl"))
             downloadUrl.set(prop.string("localInstance.backup.downloadUrl"))
         }
-        install {
-            files { // CRX packages and OSGi bundles to be pre-installed on created AEM instances
-                download("http://.../package.zip") // CRX package downloaded over HTTP
-                resolve("group:name:version") // OSGi bundle from Maven repository
-            }
+        install { // CRX packages and OSGi bundles to be pre-installed on created AEM instances
+            files(
+                "http://.../package.zip" // CRX package downloaded over HTTP
+                "group:name:version" // OSGi bundle from Maven repository
+            )
         }
         init { // hook called once in scope of instance just created and up first time
             logger.info("Initializing instance '$name'")
@@ -222,7 +222,7 @@ aem {
                 // ...
             }
         }   
-        rootDir = prop.string("localInstance.root")
+        rootDir.set(prop.string("localInstance.root"))
         // ...
     }
 
@@ -235,14 +235,17 @@ aem {
             slingModelPackages = "com.company.example.aem"
     
             // for checking OSGi component health on runtime
-            javaPackage = "com.company.example.aem" 
+            javaPackage.set("com.company.example.aem")
+
+            // other / more advanced options
+            importPackageWildcard.set(true)
             // ...
         }
         packageCompose { // customizing built CRX package
-            fromProject(":core")
-            fromProject(":config")
+            nestPackageProject(":core")
+            nestPackageProject(":config")
             
-            baseName = 'example-for-changing-zip-name'
+            archiveBaseName.set("example-for-changing-zip-name")
             
             vaultDefinition { // place for overriding CRX Package / Vault properties, defining hooks
                 // ...
@@ -290,7 +293,7 @@ allprojects {
   plugins.withId("com.cognifide.aem.common") {
     configure<AemExtension> {
         `package` {
-            contentDir = project.file("src/main/aem") // overrides default dir named 'content'
+            contentDir.set(project.file("src/main/aem")) // overrides default dir named 'content'
         }
     }
   }
@@ -318,20 +321,17 @@ For instance, subproject `:aem:core` specific configuration like OSGi bundle or 
 aem {
     tasks {
         bundleCompose {
-            javaPackage = "com.company.example.aem.core"
+            javaPackage.set("com.company.example.aem.core")
         }
         packageCompose {
-            fromProjects(':content:*')
-            baseName = "example-core"
+            nestPackageProject(':content')
+            archiveBaseName.set("example-core")
             duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         }
     }
 }
 ```
 
-Warning! Very often plugin users mistake is to configure `instanceSatisfy` task in `allprojects` closure. 
-As an effect there will be same dependent CRX package defined multiple times.
- 
 ### Understand why there are one or two plugins to be applied in build script
 
 Gradle AEM Plugin assumes separation of 5 plugins to properly fit into Gradle tasks structure correctly.
