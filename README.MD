@@ -272,9 +272,9 @@ Gradle AEM Plugin to be more concise is now more like set of plugins.
 Each plugin has its own documentation:
 
 * [Common](docs/common-plugin.md) - defining common options like AEM instances available etc, base for custom Gradle tasks scripting for AEM,
-* [Package](docs/package-plugin.md) - building CRX package(s),
+* [Package](docs/package-plugin.md) - building and deploying CRX package(s),
 * [Package Sync](docs/package-sync-plugin.md) - synchronizing JCR content from running AEM instances into built CRX packages,
-* [Bundle](docs/bundle-plugin.md) - building OSGi bundle(s),
+* [Bundle](docs/bundle-plugin.md) - building and deploying OSGi bundle(s),
 * [Instance](docs/instance-plugin.md) - managing remote AEM instance(s), automatic installation of service packs, performing provisioning actions,
 * [Local Instance](docs/local-instance-plugin.md) - setting up local AEM instance(s),
 * [Environment](https://github.com/Cognifide/gradle-environment-plugin) - standalone plugin for setting AEM dispatcher running on Docker,
