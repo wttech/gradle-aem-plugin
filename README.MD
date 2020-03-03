@@ -125,8 +125,6 @@ File *build.gradle.kts*:
 plugins {
     id("com.cognifide.aem.package") version "<version>"
 }
-
-group = "com.company.example"
 ```
 
 #### Complete plugins setup
