@@ -6,15 +6,19 @@ import com.cognifide.gradle.aem.instance.tasks.InstanceSatisfy
 import com.cognifide.gradle.aem.instance.tasks.InstanceDown
 import com.cognifide.gradle.aem.instance.tasks.InstanceSetup
 import com.cognifide.gradle.aem.instance.tasks.InstanceUp
-import com.cognifide.gradle.common.utils.using
-import org.gradle.testfixtures.ProjectBuilder
+import com.cognifide.gradle.aem.pkg.PackagePlugin
+import com.cognifide.gradle.aem.test.AemTest
+import org.gradle.api.internal.plugins.PluginApplicationException
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
-class LocalInstancePluginTest {
+class LocalInstancePluginTest : AemTest() {
 
     @Test
-    fun `plugin registers extension and tasks`() = ProjectBuilder.builder().build().using {
+    fun `plugin registers extension and tasks`() = usingProject {
         plugins.apply(LocalInstancePlugin.ID)
+        assertTrue(plugins.hasPlugin(InstancePlugin.ID))
 
         extensions.getByName(AemExtension.NAME)
         tasks.getByName(InstanceUp.NAME)
@@ -23,5 +27,13 @@ class LocalInstancePluginTest {
         tasks.getByName(InstanceSetup.NAME)
         tasks.getByName(InstanceSatisfy.NAME)
         tasks.getByName(InstanceRcp.NAME)
+    }
+
+    @Test
+    fun `should not be applied after package plugin`() = usingProject {
+        plugins.apply(PackagePlugin.ID)
+        assertThrows<PluginApplicationException> {
+            plugins.apply(LocalInstancePlugin.ID)
+        }
     }
 }

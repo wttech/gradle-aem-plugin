@@ -1,10 +1,12 @@
 package com.cognifide.gradle.aem.instance
 
+import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.instance.tasks.InstanceProvision
 import com.cognifide.gradle.aem.instance.tasks.InstanceRcp
 import com.cognifide.gradle.aem.instance.tasks.InstanceSatisfy
 import com.cognifide.gradle.aem.instance.tasks.InstanceTail
 import com.cognifide.gradle.aem.instance.tasks.*
+import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.common.CommonDefaultPlugin
 import com.cognifide.gradle.common.RuntimePlugin
 import com.cognifide.gradle.common.tasks.runtime.*
@@ -18,6 +20,10 @@ class LocalInstancePlugin : CommonDefaultPlugin() {
     }
 
     private fun Project.setupDependentPlugins() {
+        if (plugins.hasPlugin(PackagePlugin::class.java)) {
+            throw AemException("Local instance plugin '${InstancePlugin.ID}' must be applied before package plugin '${PackagePlugin.ID}'!")
+        }
+
         plugins.apply(InstancePlugin::class.java)
         plugins.apply(RuntimePlugin::class.java)
     }

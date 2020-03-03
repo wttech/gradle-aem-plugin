@@ -26,6 +26,7 @@ configurations.getByName("functionalTestImplementation").apply {
 }
 
 repositories {
+    mavenLocal()
     jcenter()
     gradlePluginPortal()
 }
@@ -33,7 +34,7 @@ repositories {
 dependencies {
     implementation(gradleApi())
 
-    implementation("com.cognifide.gradle:common-plugin:0.1.19")
+    implementation("com.cognifide.gradle:common-plugin:0.1.21")
 
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.10.1")
     implementation("com.jayway.jsonpath:json-path:2.4.0")
@@ -95,9 +96,11 @@ tasks {
         testLogging.showStandardStreams = true
         useJUnitPlatform()
     }
+
     named<Test>("test") {
         dependsOn("detektTest")
     }
+
     register<Test>("functionalTest") {
         testClassesDirs = functionalTestSourceSet.output.classesDirs
         classpath = functionalTestSourceSet.runtimeClasspath
@@ -113,6 +116,7 @@ tasks {
         dependsOn("jar", "detektFunctionalTest")
         outputs.dir("build/functionalTest")
     }
+
     named<Task>("build") {
         dependsOn("sourcesJar", "javadocJar")
     }

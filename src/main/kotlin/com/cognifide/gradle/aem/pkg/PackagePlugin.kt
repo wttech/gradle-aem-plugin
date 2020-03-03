@@ -9,6 +9,7 @@ import com.cognifide.gradle.aem.instance.InstancePlugin
 import com.cognifide.gradle.aem.instance.tasks.*
 import com.cognifide.gradle.aem.pkg.tasks.*
 import com.cognifide.gradle.common.CommonDefaultPlugin
+import com.cognifide.gradle.common.tasks.configureApply
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.artifacts.Dependency
@@ -28,14 +29,12 @@ class PackagePlugin : CommonDefaultPlugin() {
         plugins.apply(CommonPlugin::class.java)
     }
 
-    private fun Project.setupInstallRepository() {
-        afterEvaluate {
-            val packageOptions = AemExtension.of(this).packageOptions
-            if (packageOptions.installRepository.get()) {
-                val installDir = file("${packageOptions.jcrRootDir}${packageOptions.installPath}")
-                if (installDir.exists()) {
-                    repositories.flatDir { it.dir(installDir) }
-                }
+    private fun Project.setupInstallRepository() = afterEvaluate {
+        val packageOptions = AemExtension.of(this).packageOptions
+        if (packageOptions.installRepository.get()) {
+            val installDir = file("${packageOptions.jcrRootDir.get().asFile}${packageOptions.installPath}")
+            if (installDir.exists()) {
+                repositories.flatDir { it.dir(installDir) }
             }
         }
     }
@@ -53,13 +52,13 @@ class PackagePlugin : CommonDefaultPlugin() {
         }.apply {
             artifacts.add(Dependency.ARCHIVES_CONFIGURATION, this)
 
-            plugins.withId(BundlePlugin.ID) {
+            if (plugins.hasPlugin(BundlePlugin::class.java)) {
                 val test = named<Test>(JavaPlugin.TEST_TASK_NAME)
                 val bundle = named<BundleCompose>(BundleCompose.NAME)
 
-                configure { task ->
-                    task.installBundleBuilt(bundle)
-                    task.dependsOn(test)
+                configureApply {
+                    installBundleBuilt(bundle)
+                    dependsOn(test)
                 }
             }
         }
@@ -80,16 +79,20 @@ class PackagePlugin : CommonDefaultPlugin() {
         }
         val deploy = register<PackageDeploy>(PackageDeploy.NAME) {
             dependsOn(compose)
-            plugins.withId(InstancePlugin.ID) {
-                mustRunAfter(
-                        named<Task>(InstanceCreate.NAME),
-                        named<Task>(InstanceUp.NAME),
-                        named<Task>(InstanceSatisfy.NAME),
-                        named<Task>(InstanceProvision.NAME),
-                        named<Task>(InstanceSetup.NAME)
-                )
+        }.apply {
+            if (plugins.hasPlugin(InstancePlugin::class.java)) {
+                val create = named<Task>(InstanceCreate.NAME)
+                val up = named<Task>(InstanceUp.NAME)
+                val satisfy = named<Task>(InstanceSatisfy.NAME)
+                val provision = named<Task>(InstanceProvision.NAME)
+                val setup = named<Task>(InstanceSetup.NAME)
+
+                configureApply {
+                    mustRunAfter(create, up, satisfy, provision, setup)
+                }
             }
         }
+
         register<PackageDelete>(PackageDelete.NAME) {
             dependsOn(compose)
             mustRunAfter(deploy, upload, install, activate, uninstall)

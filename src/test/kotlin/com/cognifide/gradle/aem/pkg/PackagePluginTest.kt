@@ -2,15 +2,14 @@ package com.cognifide.gradle.aem.pkg
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.pkg.tasks.*
-import com.cognifide.gradle.common.utils.using
-import org.gradle.testfixtures.ProjectBuilder
+import com.cognifide.gradle.aem.test.AemTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
-class PackagePluginTest {
+class PackagePluginTest : AemTest() {
 
     @Test
-    fun `plugin registers extension and tasks`() = ProjectBuilder.builder().build().using {
+    fun `plugin registers extension and tasks`() = usingProject {
         plugins.apply(PackagePlugin.ID)
 
         extensions.getByName(AemExtension.NAME)
