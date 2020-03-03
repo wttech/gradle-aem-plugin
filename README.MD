@@ -123,10 +123,10 @@ File *build.gradle.kts*:
 
 ```kotlin
 plugins {
-    id("com.cognifide.aem.bundle") version "<version>" // or 'package' for JCR content only
+    id("com.cognifide.aem.package") version "<version>"
 }
 
-group = "com.company.example.aem.core"
+group = "com.company.example"
 ```
 
 #### Complete plugins setup
@@ -139,9 +139,11 @@ Intention of snippet below is to demonstrate:
 
 ```kotlin
 plugins {
-    id("com.cognifide.aem.bundle") version "<version>"
-    id("com.cognifide.aem.instance") version "<version>"
-    id("org.jetbrains.kotlin.jvm") // or any other like 'java' to compile OSGi bundle
+    id("com.cognifide.environment") version "<version>" // useful to setup AEM dispatcher running on Docker
+    id("com.cognifide.aem.local.instance") version "<version>" // useful to setup local AEM instances running natively
+    id("org.jetbrains.kotlin.jvm") // needed when AEM code written in Kotlin, yes it could be :)
+    id("com.cognifide.aem.bundle") version "<version>" // needed to built OSGi bundle
+    id("com.cognifide.aem.package") version "<version>" // needed to build CRX package from JCR content and built OSGi bundle
 }
 
 group = "com.company.aem"
