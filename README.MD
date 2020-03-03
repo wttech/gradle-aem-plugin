@@ -117,7 +117,13 @@ Recommended way is to apply plugin using Gradle Plugin Portal and techniques des
 
 #### Minimal plugins setup
 
-Configuration below assumes building and deploying CRX packages to AEM instance(s) via command: `gradlew packageDeploy`.
+Configuration assumes:
+ 
+* building and deploying CRX packages to AEM instance(s) via command: `gradlew packageDeploy`.
+* JCR content placed under directory *src/main/content/jcr_root* 
+* Vault filters located at path *src/main/content/META-INF/vault/filter.xml*,
+
+Then the only thing needed to build CRX package is plugin application (all the rest is obtained automatically by convention):
 
 File *build.gradle.kts*:
 
