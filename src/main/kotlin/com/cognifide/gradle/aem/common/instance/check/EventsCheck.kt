@@ -7,7 +7,13 @@ import org.apache.commons.lang3.StringUtils
 @Suppress("MagicNumber")
 class EventsCheck(group: CheckGroup) : DefaultCheck(group) {
 
-    val unstableTopics = aem.obj.strings { convention(listOf()) }
+    val unstableTopics = aem.obj.strings {
+        convention(listOf(
+                "org/osgi/framework/ServiceEvent/*",
+                "org/osgi/framework/FrameworkEvent/*",
+                "org/osgi/framework/BundleEvent/*"
+        ))
+    }
 
     val unstableAgeMillis = aem.obj.long { convention(TimeUnit.SECONDS.toMillis(5)) }
 

@@ -4,7 +4,7 @@ import org.jetbrains.dokka.gradle.DokkaTask
 plugins {
     id("java-gradle-plugin")
     id("maven-publish")
-    id("org.jetbrains.kotlin.jvm") version "1.3.61"
+    id("org.jetbrains.kotlin.jvm") version "1.3.70"
     id("org.jetbrains.dokka") version "0.10.1"
     id("com.gradle.plugin-publish") version "0.10.1"
     id("io.gitlab.arturbosch.detekt") version "1.6.0"
@@ -34,7 +34,7 @@ repositories {
 dependencies {
     implementation(gradleApi())
 
-    implementation("com.cognifide.gradle:common-plugin:0.1.23")
+    implementation("com.cognifide.gradle:common-plugin:0.1.24")
 
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.10.1")
     implementation("com.jayway.jsonpath:json-path:2.4.0")

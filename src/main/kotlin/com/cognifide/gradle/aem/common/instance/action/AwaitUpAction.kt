@@ -28,7 +28,6 @@ class AwaitUpAction(aem: AemExtension) : DefaultAction(aem) {
 
     private var bundlesOptions: BundlesCheck.() -> Unit = {
         symbolicNamesIgnored.apply {
-            convention(listOf())
             aem.prop.list("instance.awaitUp.bundles.symbolicNamesIgnored")?.let { set(it) }
         }
     }
@@ -39,11 +38,6 @@ class AwaitUpAction(aem: AemExtension) : DefaultAction(aem) {
 
     private var eventsOptions: EventsCheck.() -> Unit = {
         unstableTopics.apply {
-            convention(listOf(
-                    "org/osgi/framework/ServiceEvent/*",
-                    "org/osgi/framework/FrameworkEvent/*",
-                    "org/osgi/framework/BundleEvent/*"
-            ))
             aem.prop.list("instance.awaitUp.event.unstableTopics")?.let { set(it) }
         }
         unstableAgeMillis.apply {
@@ -58,7 +52,6 @@ class AwaitUpAction(aem: AemExtension) : DefaultAction(aem) {
 
     private var componentsOptions: ComponentsCheck.() -> Unit = {
         platformComponents.apply {
-            convention(listOf("com.day.crx.packaging.*", "org.apache.sling.installer.*"))
             aem.prop.list("instance.awaitUp.components.platform")?.let { set(it) }
         }
         specificComponents.apply {

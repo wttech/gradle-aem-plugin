@@ -6,6 +6,7 @@ import com.cognifide.gradle.aem.common.instance.action.AwaitDownAction
 import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
 import com.cognifide.gradle.aem.common.instance.action.CheckAction
 import com.cognifide.gradle.aem.common.instance.action.ReloadAction
+import com.cognifide.gradle.aem.common.instance.check.CheckRunner
 import com.cognifide.gradle.common.utils.Formats
 import com.cognifide.gradle.common.utils.Patterns
 import com.cognifide.gradle.common.utils.formats.JsonPassword
@@ -134,6 +135,14 @@ open class Instance(@Transient @JsonIgnore protected val aem: AemExtension) : Se
     fun reload(options: ReloadAction.() -> Unit = {}) = manager.reload(this, options)
 
     fun check(options: CheckAction.() -> Unit) = manager.check(this, options)
+
+    fun checkState(options: CheckRunner.() -> Unit = {}) = CheckRunner(aem).apply {
+        checks { listOf(bundles(), events(), components()) }
+        options()
+    }.check(this)
+
+    @get:JsonIgnore
+    val state: String get() = checkState().summary
 
     fun provision() = manager.provisioner.provision(this)
 

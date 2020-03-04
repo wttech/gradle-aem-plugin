@@ -6,38 +6,55 @@ import com.cognifide.gradle.common.utils.Formats
 import com.cognifide.gradle.common.utils.onEachApply
 import de.vandermeer.asciitable.AsciiTable
 import de.vandermeer.skb.interfaces.transformers.textformat.TextAlignment
+import org.gradle.api.Incubating
 import org.gradle.api.tasks.TaskAction
 
+@Incubating
 open class InstanceStatus : InstanceTask() {
 
     @TaskAction
     fun status() {
-        println(AsciiTable().apply {
-            context.width = 160
+        val table = common.progress(instances.get().size) {
+            AsciiTable().apply {
+                context.width = 160
 
-            addRule()
-            addRow("Instance", "Packages installed")
-            addRule()
-
-            instances.get().onEachApply {
-                var instanceDetails = "Name: $name<br>HTTP URL: $httpUrl<br>Available: $available<br>"
-                if (this is LocalInstance) {
-                    instanceDetails += "Created: ${if (created) Formats.relativePath(dir.path, project.rootProject.projectDir.path) else "not yet"}"
-                }
-                val packagesInstalled = if (available) {
-                    sync {
-                        aem.packagesBuilt.mapNotNull { packageManager.find(it.vaultDefinition) }
-                    }.filter { it.installed }.joinToString("<br>") { it.dependencyNotation }.ifBlank { "none" }
-                } else {
-                    ""
-                }
-
-                addRow(instanceDetails, packagesInstalled)
                 addRule()
-            }
+                addRow("Instance", "Packages installed")
+                addRule()
 
-            setTextAlignment(TextAlignment.LEFT)
-        }.render())
+                instances.get().onEachApply {
+                    increment("Checking status of instance '$name'") {
+                        val instanceDetails = mutableListOf<String>().apply {
+                            add("Name: $name")
+                            add("HTTP URL: $httpUrl (${if (available) "available" else "not available"})")
+
+                            if (this@onEachApply is LocalInstance) {
+                                add("Created at: ${if (created) Formats.relativePath(dir.path, project.rootProject.projectDir.path) else "not yet"}")
+                            }
+
+                            if (available) {
+                                add("State check: $state")
+                            }
+                        }.joinToString("<br>")
+
+                        val packagesInstalled = if (available) {
+                            sync {
+                                aem.packagesBuilt.mapNotNull { packageManager.find(it.vaultDefinition) }
+                            }.filter { it.installed }.joinToString("<br>") { it.dependencyNotation }.ifBlank { "none" }
+                        } else {
+                            "unknown"
+                        }
+
+                        addRow(instanceDetails, packagesInstalled)
+                        addRule()
+                    }
+                }
+
+                setTextAlignment(TextAlignment.LEFT)
+            }
+        }
+
+        println(table.render())
     }
 
     init {
