@@ -75,7 +75,6 @@ class InstancePlugin : CommonDefaultPlugin() {
         register<InstanceGroovyEval>(InstanceGroovyEval.NAME) {
             mustRunAfter(satisfy, provision)
         }.apply(mustRunAfterPackageDeploy)
-
     }
 
     companion object {

@@ -51,7 +51,10 @@ class LocalInstancePluginTest : AemBuildTest() {
                     instance {
                         satisfier {
                             packages {
-                               "dep.ac-tool"("https://repo1.maven.org/maven2/biz/netcentric/cq/tools/accesscontroltool", "accesscontroltool-package/2.3.2/accesscontroltool-package-2.3.2.zip", "accesscontroltool-oakindex-package/2.3.2/accesscontroltool-oakindex-package-2.3.2.zip")
+                               "dep.ac-tool"(
+                                   "https://repo1.maven.org/maven2/biz/netcentric/cq/tools/accesscontroltool/accesscontroltool-package/2.3.2/accesscontroltool-package-2.3.2.zip", 
+                                   "https://repo1.maven.org/maven2/biz/netcentric/cq/tools/accesscontroltool/accesscontroltool-oakindex-package/2.3.2/accesscontroltool-oakindex-package-2.3.2.zip"
+                                )
                                "dep.search-webconsole-plugin"("com.neva.felix:search-webconsole-plugin:1.3.0")
                                "tool.aem-groovy-console"("https://github.com/icfnext/aem-groovy-console/releases/download/14.0.0/aem-groovy-console-14.0.0.zip")
                             }

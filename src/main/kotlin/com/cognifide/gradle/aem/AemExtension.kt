@@ -17,7 +17,6 @@ import com.cognifide.gradle.aem.pkg.PackagePlugin
 import com.cognifide.gradle.aem.pkg.tasks.PackageCompose
 import com.cognifide.gradle.aem.common.instance.rcp.RcpClient
 import com.cognifide.gradle.aem.common.pkg.vault.VaultClient
-import com.cognifide.gradle.aem.common.pkg.vault.VaultDefinition
 import com.cognifide.gradle.aem.common.pkg.vault.VaultSummary
 import com.cognifide.gradle.aem.pkg.PackageSyncPlugin
 import com.cognifide.gradle.common.CommonExtension
