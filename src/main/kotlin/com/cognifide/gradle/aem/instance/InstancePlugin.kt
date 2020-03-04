@@ -65,6 +65,7 @@ class InstancePlugin : CommonDefaultPlugin() {
             dependsOn(satisfy, provision)
         }.apply(dependsOnPackageDeploy)
 
+        register<InstanceStatus>(InstanceStatus.NAME)
         register<InstanceTail>(InstanceTail.NAME)
 
         register<InstanceRcp>(InstanceRcp.NAME) {
@@ -74,6 +75,7 @@ class InstancePlugin : CommonDefaultPlugin() {
         register<InstanceGroovyEval>(InstanceGroovyEval.NAME) {
             mustRunAfter(satisfy, provision)
         }.apply(mustRunAfterPackageDeploy)
+
     }
 
     companion object {

@@ -6,6 +6,7 @@ import com.cognifide.gradle.aem.common.instance.InstanceSync
 import com.cognifide.gradle.aem.common.pkg.PackageDefinition
 import com.cognifide.gradle.aem.common.pkg.PackageException
 import com.cognifide.gradle.aem.common.pkg.PackageFile
+import com.cognifide.gradle.aem.common.pkg.vault.VaultDefinition
 import com.cognifide.gradle.common.http.RequestException
 import com.cognifide.gradle.common.http.ResponseException
 import com.cognifide.gradle.common.utils.Formats
@@ -125,12 +126,16 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         return find(file) ?: throw InstanceException("Package is not uploaded on $instance")
     }
 
+    fun get(definition: VaultDefinition) = get(definition.group.get(), definition.name.get(), definition.version.get())
+
     fun get(group: String, name: String, version: String): Package {
         return find(group, name, version)
                 ?: throw InstanceException("Package ${Package.coordinates(group, name, version)}' is not uploaded on $instance")
     }
 
     fun find(file: File): Package? = PackageFile(file).run { find(group, name, version) }
+
+    fun find(definition: VaultDefinition) = find(definition.group.get(), definition.name.get(), definition.version.get())
 
     fun find(group: String, name: String, version: String): Package? = find { listResponse ->
         val expected = Package(group, name, version)

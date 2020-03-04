@@ -302,7 +302,7 @@ val Collection<Instance>.names: String
 
 fun Collection<Instance>.check() {
     checkAvailable()
-    filterIsInstance<LocalInstance>().checkRunningOther()
+    checkRunningOther()
 }
 
 fun Collection<Instance>.checkAvailable() {
@@ -315,8 +315,8 @@ fun Collection<Instance>.checkAvailable() {
     }
 }
 
-fun Collection<LocalInstance>.checkRunningOther() {
-    val running = filter { it.runningOther }
+fun Collection<Instance>.checkRunningOther() {
+    val running = filterIsInstance<LocalInstance>().filter { it.runningOther }
     if (running.isNotEmpty()) {
         throw InstanceException("Instances are already running (${running.size}):\n" +
                 running.joinToString("\n") { "Instance '${it.name}' at URL '${it.httpUrl}' located at path '${it.runningDir}'" } + "\n\n" +

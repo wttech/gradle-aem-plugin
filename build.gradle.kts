@@ -48,6 +48,7 @@ dependencies {
     implementation("net.lingala.zip4j:zip4j:2.3.2")
     implementation("org.osgi:org.osgi.core:6.0.0")
     implementation("net.adamcin.oakpal:oakpal-core:1.5.1")
+    implementation("de.vandermeer:asciitable:0.3.2")
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.5.2")
 
