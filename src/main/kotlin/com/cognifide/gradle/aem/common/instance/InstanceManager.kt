@@ -137,26 +137,34 @@ open class InstanceManager(val aem: AemExtension) {
 
     fun awaitUp(instance: Instance, options: AwaitUpAction.() -> Unit = {}) = awaitUp(listOf(instance), options)
 
-    fun awaitUp(instances: Collection<Instance>, options: AwaitUpAction.() -> Unit = {}) = AwaitUpAction(aem).apply(options).perform(instances)
+    fun awaitUp(instances: Collection<Instance> = aem.instances, options: AwaitUpAction.() -> Unit = {}) {
+        AwaitUpAction(aem).apply(options).perform(instances)
+    }
 
     fun awaitDown(instance: Instance, options: AwaitDownAction.() -> Unit = {}) = awaitDown(listOf(instance), options)
 
-    fun awaitDown(instances: Collection<Instance>, options: AwaitDownAction.() -> Unit = {}) = AwaitDownAction(aem).apply(options).perform(instances)
+    fun awaitDown(instances: Collection<Instance> = aem.instances, options: AwaitDownAction.() -> Unit = {}) {
+        AwaitDownAction(aem).apply(options).perform(instances)
+    }
 
     fun awaitReloaded(instance: Instance, reloadOptions: ReloadAction.() -> Unit = {}, awaitUpOptions: AwaitUpAction.() -> Unit = {}) {
         awaitReloaded(listOf(instance), reloadOptions, awaitUpOptions)
     }
 
-    fun awaitReloaded(instances: Collection<Instance>, reloadOptions: ReloadAction.() -> Unit = {}, awaitUpOptions: AwaitUpAction.() -> Unit = {}) {
+    fun awaitReloaded(
+        instances: Collection<Instance> = aem.instances,
+        reloadOptions: ReloadAction.() -> Unit = {},
+        awaitUpOptions: AwaitUpAction.() -> Unit = {}
+    ) {
         reload(instances, reloadOptions)
         awaitUp(instances, awaitUpOptions)
     }
 
     fun reload(instance: Instance, options: ReloadAction.() -> Unit = {}) = reload(listOf(instance), options)
 
-    fun reload(instances: Collection<Instance>, options: ReloadAction.() -> Unit = {}) = ReloadAction(aem).apply(options).perform(instances)
+    fun reload(instances: Collection<Instance> = aem.instances, options: ReloadAction.() -> Unit = {}) = ReloadAction(aem).apply(options).perform(instances)
 
     fun check(instance: Instance, options: CheckAction.() -> Unit) = check(listOf(instance), options)
 
-    fun check(instances: Collection<Instance>, options: CheckAction.() -> Unit) = CheckAction(aem).apply(options).perform(instances)
+    fun check(instances: Collection<Instance> = aem.instances, options: CheckAction.() -> Unit) = CheckAction(aem).apply(options).perform(instances)
 }

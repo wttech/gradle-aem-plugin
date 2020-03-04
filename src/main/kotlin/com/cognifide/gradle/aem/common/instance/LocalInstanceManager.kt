@@ -154,7 +154,7 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
 
     fun create(instance: LocalInstance) = create(listOf(instance))
 
-    fun create(instances: Collection<LocalInstance>): List<LocalInstance> {
+    fun create(instances: Collection<LocalInstance> = aem.localInstances): List<LocalInstance> {
         val uncreatedInstances = instances.filter { !it.created }
         if (uncreatedInstances.isEmpty()) {
             logger.lifecycle("No instances to create.")
@@ -168,7 +168,7 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
     }
 
     @Suppress("ComplexMethod")
-    fun createBySource(instances: Collection<LocalInstance>) = when (source.get()) {
+    fun createBySource(instances: Collection<LocalInstance> = aem.localInstances) = when (source.get()) {
         Source.AUTO -> {
             val backupZip = backup.any
             when {
@@ -197,7 +197,7 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
         null -> {}
     }
 
-    fun createFromBackup(instances: Collection<LocalInstance>, backupZip: File) {
+    fun createFromBackup(instances: Collection<LocalInstance> = aem.localInstances, backupZip: File) {
         backup.restore(backupZip, rootDir.get().asFile, instances)
 
         val missingInstances = instances.filter { !it.created }
@@ -218,7 +218,7 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
         }
     }
 
-    fun createFromScratch(instances: Collection<LocalInstance>) {
+    fun createFromScratch(instances: Collection<LocalInstance> = aem.localInstances) {
         if (quickstart.jar == null || quickstart.license == null) {
             throw LocalInstanceException("Cannot create instances due to lacking source files. " +
                     "Ensure having specified local instance quickstart jar & license urls.")
@@ -242,7 +242,7 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
 
     fun destroy(instance: LocalInstance): Boolean = destroy(listOf(instance)).isNotEmpty()
 
-    fun destroy(instances: Collection<LocalInstance>): List<LocalInstance> {
+    fun destroy(instances: Collection<LocalInstance> = aem.localInstances): List<LocalInstance> {
         val createdInstances = instances.filter { it.touched }
         if (createdInstances.isEmpty()) {
             logger.lifecycle("No instances to destroy.")
@@ -266,7 +266,7 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
 
     fun up(instance: LocalInstance, awaitUpOptions: AwaitUpAction.() -> Unit = {}) = up(listOf(instance), awaitUpOptions).isNotEmpty()
 
-    fun up(instances: Collection<LocalInstance>, awaitUpOptions: AwaitUpAction.() -> Unit = {}): List<LocalInstance> {
+    fun up(instances: Collection<LocalInstance> = aem.localInstances, awaitUpOptions: AwaitUpAction.() -> Unit = {}): List<LocalInstance> {
         val downInstances = instances.filter { !it.running }
         if (downInstances.isEmpty()) {
             logger.lifecycle("No instances to turn on.")
@@ -321,7 +321,7 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
 
     fun down(instance: LocalInstance, awaitDownOptions: AwaitDownAction.() -> Unit = {}) = down(listOf(instance), awaitDownOptions).isNotEmpty()
 
-    fun down(instances: Collection<LocalInstance>, awaitDownOptions: AwaitDownAction.() -> Unit = {}): List<LocalInstance> {
+    fun down(instances: Collection<LocalInstance> = aem.localInstances, awaitDownOptions: AwaitDownAction.() -> Unit = {}): List<LocalInstance> {
         val upInstances = instances.filter { it.running }
         if (upInstances.isEmpty()) {
             logger.lifecycle("No instances to turn off.")

@@ -6,7 +6,12 @@ import com.cognifide.gradle.common.utils.Formats
 @Suppress("MagicNumber")
 class ComponentsCheck(group: CheckGroup) : DefaultCheck(group) {
 
-    val platformComponents = aem.obj.strings { convention(listOf()) }
+    val platformComponents = aem.obj.strings {
+        convention(listOf(
+                "com.day.crx.packaging.*",
+                "org.apache.sling.installer.*"
+        ))
+    }
 
     val specificComponents = aem.obj.strings { convention(listOf()) }
 

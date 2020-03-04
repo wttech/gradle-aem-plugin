@@ -95,13 +95,7 @@ class CheckRunner(internal val aem: AemExtension) {
                     break
                 }
 
-                val checks = CheckGroup(this@CheckRunner, instance, checks).apply {
-                    check()
-                    if (logInstantly) {
-                        log()
-                    }
-                }
-
+                val checks = check(instance)
                 progress.currentCheck = checks
 
                 if (progress.stateChanged) {
@@ -121,6 +115,13 @@ class CheckRunner(internal val aem: AemExtension) {
         }
 
         runningWatch.stop()
+    }
+
+    fun check(instance: Instance) = CheckGroup(this@CheckRunner, instance, this.checks).apply {
+        check()
+        if (logInstantly) {
+            log()
+        }
     }
 
     private fun ProgressIndicator.doAbort() {

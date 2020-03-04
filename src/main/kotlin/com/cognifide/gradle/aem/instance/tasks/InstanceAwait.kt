@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.instance.tasks
 
 import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
+import com.cognifide.gradle.aem.common.instance.checkRunningOther
 import com.cognifide.gradle.aem.common.tasks.InstanceTask
 import org.gradle.api.tasks.TaskAction
 
@@ -14,6 +15,8 @@ open class InstanceAwait : InstanceTask() {
 
     @TaskAction
     fun await() {
+        instances.get().checkRunningOther()
+
         instanceManager.awaitUp(instances.get(), awaitUpOptions)
     }
 

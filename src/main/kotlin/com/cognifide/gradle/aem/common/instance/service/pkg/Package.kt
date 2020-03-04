@@ -45,11 +45,12 @@ class Package private constructor() {
     }
 
     @get:JsonIgnore
-    val coordinates: String
-        get() = coordinates(group, name, version)
+    val coordinates: String get() = coordinates(group, name, version)
 
-    val installed: Boolean
-        get() = lastUnpacked?.let { it > 0 } ?: false
+    @get:JsonIgnore
+    val dependencyNotation: String get() = "$group:$name:$version"
+
+    val installed: Boolean get() = lastUnpacked?.let { it > 0 } ?: false
 
     companion object {
 

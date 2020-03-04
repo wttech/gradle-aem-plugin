@@ -96,11 +96,28 @@ class AemExtension(val project: Project) : Serializable {
 
     /**
      * Collection of all java packages from all projects applying bundle plugin.
+     *
+     * Use with caution as of this property is eagerly configuring all tasks building bundles.
      */
-    val javaPackages: List<String>
+    val bundlesBuilt: List<BundleCompose>
         get() = project.rootProject.allprojects
                 .filter { it.plugins.hasPlugin(BundlePlugin.ID) }
-                .flatMap { p -> p.common.tasks.getAll<BundleCompose>().mapNotNull { it.javaPackage.orNull } }
+                .flatMap { p -> p.common.tasks.getAll<BundleCompose>() }
+
+    /**
+     * Collection of all java packages from all projects applying bundle plugin.
+     */
+    val javaPackages: List<String> get() = bundlesBuilt.mapNotNull { it.javaPackage.orNull }
+
+    /**
+     * Collection of Vault definitions from all packages from all projects applying package plugin.
+     *
+     * Use with caution as of this property is eagerly configuring all tasks building packages.
+     */
+    val packagesBuilt: List<PackageCompose>
+        get() = project.rootProject.allprojects
+                .filter { it.plugins.hasPlugin(PackagePlugin.ID) }
+                .flatMap { p -> p.common.tasks.getAll<PackageCompose>() }
 
     /**
      * All instances matching default filtering.

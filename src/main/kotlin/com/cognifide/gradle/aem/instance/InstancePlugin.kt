@@ -65,6 +65,7 @@ class InstancePlugin : CommonDefaultPlugin() {
             dependsOn(satisfy, provision)
         }.apply(dependsOnPackageDeploy)
 
+        register<InstanceStatus>(InstanceStatus.NAME)
         register<InstanceTail>(InstanceTail.NAME)
 
         register<InstanceRcp>(InstanceRcp.NAME) {
