@@ -137,17 +137,25 @@ open class InstanceManager(val aem: AemExtension) {
 
     fun awaitUp(instance: Instance, options: AwaitUpAction.() -> Unit = {}) = awaitUp(listOf(instance), options)
 
-    fun awaitUp(instances: Collection<Instance> = aem.instances, options: AwaitUpAction.() -> Unit = {}) = AwaitUpAction(aem).apply(options).perform(instances)
+    fun awaitUp(instances: Collection<Instance> = aem.instances, options: AwaitUpAction.() -> Unit = {}) {
+        AwaitUpAction(aem).apply(options).perform(instances)
+    }
 
     fun awaitDown(instance: Instance, options: AwaitDownAction.() -> Unit = {}) = awaitDown(listOf(instance), options)
 
-    fun awaitDown(instances: Collection<Instance> = aem.instances, options: AwaitDownAction.() -> Unit = {}) = AwaitDownAction(aem).apply(options).perform(instances)
+    fun awaitDown(instances: Collection<Instance> = aem.instances, options: AwaitDownAction.() -> Unit = {}) {
+        AwaitDownAction(aem).apply(options).perform(instances)
+    }
 
     fun awaitReloaded(instance: Instance, reloadOptions: ReloadAction.() -> Unit = {}, awaitUpOptions: AwaitUpAction.() -> Unit = {}) {
         awaitReloaded(listOf(instance), reloadOptions, awaitUpOptions)
     }
 
-    fun awaitReloaded(instances: Collection<Instance> = aem.instances, reloadOptions: ReloadAction.() -> Unit = {}, awaitUpOptions: AwaitUpAction.() -> Unit = {}) {
+    fun awaitReloaded(
+        instances: Collection<Instance> = aem.instances,
+        reloadOptions: ReloadAction.() -> Unit = {},
+        awaitUpOptions: AwaitUpAction.() -> Unit = {}
+    ) {
         reload(instances, reloadOptions)
         awaitUp(instances, awaitUpOptions)
     }
