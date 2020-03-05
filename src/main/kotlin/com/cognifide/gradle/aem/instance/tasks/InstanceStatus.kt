@@ -15,6 +15,8 @@ open class InstanceStatus : InstanceTask() {
     @TaskAction
     @Suppress("MagicNumber")
     fun status() {
+        instanceManager.examine(instances.get())
+
         val table = common.progress(instances.get().size) {
             AsciiTable().apply {
                 context.width = 160
