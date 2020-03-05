@@ -298,38 +298,8 @@ open class Instance(@Transient @JsonIgnore protected val aem: AemExtension) : Se
                 }
             }.sortedBy { it.name }
         }
-
-        fun defaults(aem: AemExtension, configurer: Instance.() -> Unit = {}) = listOf(
-                create(aem, URL_AUTHOR_DEFAULT, configurer),
-                create(aem, URL_PUBLISH_DEFAULT, configurer)
-        )
     }
 }
 
 val Collection<Instance>.names: String
     get() = if (isNotEmpty()) joinToString(", ") { it.name } else "none"
-
-fun Collection<Instance>.check() {
-    checkAvailable()
-    checkRunningOther()
-}
-
-fun Collection<Instance>.checkAvailable() {
-    val unavailable = filter { !it.available }
-    if (unavailable.isNotEmpty()) {
-        throw InstanceException("Instances are unavailable (${unavailable.size}):\n" +
-                unavailable.joinToString("\n") { "Instance '${it.name}' at URL '${it.httpUrl}'" } + "\n\n" +
-                "Ensure having correct URLs defined, credentials correctly encoded and networking in correct state (internet accessible, VPN on/off)"
-        )
-    }
-}
-
-fun Collection<Instance>.checkRunningOther() {
-    val running = filterIsInstance<LocalInstance>().filter { it.runningOther }
-    if (running.isNotEmpty()) {
-        throw InstanceException("Instances are already running (${running.size}):\n" +
-                running.joinToString("\n") { "Instance '${it.name}' at URL '${it.httpUrl}' located at path '${it.runningDir}'" } + "\n\n" +
-                "Ensure having these instances down."
-        )
-    }
-}

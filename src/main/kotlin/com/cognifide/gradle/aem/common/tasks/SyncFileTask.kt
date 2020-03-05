@@ -11,6 +11,9 @@ import java.io.File
 
 open class SyncFileTask : AemDefaultTask() {
 
+    @get:Internal
+    val instanceManager get() = aem.instanceManager
+
     @Input
     val instances = aem.obj.list<Instance> { convention(aem.obj.provider { aem.instances }) }
 
@@ -57,6 +60,8 @@ open class SyncFileTask : AemDefaultTask() {
     }
 
     fun sync(action: InstanceSync.(File) -> Unit) {
+        instanceManager.examine(instances.get())
+
         common.progress(instances.get().size * files.files.size) {
             aem.syncFiles(instances.get(), files.files) { file ->
                 increment("${file.name} -> ${instance.name}") {

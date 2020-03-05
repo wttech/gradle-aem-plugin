@@ -167,4 +167,29 @@ open class InstanceManager(val aem: AemExtension) {
     fun check(instance: Instance, options: CheckAction.() -> Unit) = check(listOf(instance), options)
 
     fun check(instances: Collection<Instance> = aem.instances, options: CheckAction.() -> Unit) = CheckAction(aem).apply(options).perform(instances)
+
+    fun examine(instances: Collection<Instance> = aem.instances) {
+        examineAvailable(instances)
+        examineRunningOther(instances)
+    }
+
+    fun examineAvailable(instances: Collection<Instance> = aem.instances) {
+        val unavailable = instances.filter { !it.available }
+        if (unavailable.isNotEmpty()) {
+            throw InstanceException("Instances are unavailable (${unavailable.size}):\n" +
+                    unavailable.joinToString("\n") { "Instance '${it.name}' at URL '${it.httpUrl}'" } + "\n\n" +
+                    "Ensure having correct URLs defined, credentials correctly encoded and networking in correct state (internet accessible, VPN on/off)"
+            )
+        }
+    }
+
+    fun examineRunningOther(instances: Collection<Instance>) {
+        val running = instances.filterIsInstance<LocalInstance>().filter { it.runningOther }
+        if (running.isNotEmpty()) {
+            throw InstanceException("Instances are already running (${running.size}):\n" +
+                    running.joinToString("\n") { "Instance '${it.name}' at URL '${it.httpUrl}' located at path '${it.runningDir}'" } + "\n\n" +
+                    "Ensure having these instances down."
+            )
+        }
+    }
 }

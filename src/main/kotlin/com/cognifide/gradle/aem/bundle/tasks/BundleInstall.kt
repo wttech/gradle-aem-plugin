@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem.bundle.tasks
 
-import com.cognifide.gradle.aem.common.instance.check
 import com.cognifide.gradle.aem.common.instance.names
 import com.cognifide.gradle.aem.common.tasks.BundleTask
 import com.cognifide.gradle.aem.common.utils.fileNames
@@ -45,7 +44,6 @@ open class BundleInstall : BundleTask() {
 
     @TaskAction
     open fun install() {
-        instances.get().check()
         sync { osgiFramework.installBundle(it, start.get(), startLevel.get(), refreshPackages.get(), retry) }
         common.notifier.notify("Bundle installed", "${files.files.fileNames} on ${instances.get().names}")
     }
