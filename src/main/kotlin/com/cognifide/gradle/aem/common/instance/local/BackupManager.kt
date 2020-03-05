@@ -78,7 +78,18 @@ class BackupManager(private val aem: AemExtension) {
         this.namer = provider
     }
 
-    private var namer: () -> String = { "${aem.project.rootProject.name}-${Formats.dateFileName()}-${aem.project.version}${suffix.get()}" }
+    private var namer: () -> String = {
+        val parts = mutableListOf<String>().apply {
+            add(aem.project.rootProject.name)
+            add(Formats.dateFileName())
+            val version = aem.project.version.toString()
+            if (version.isNotBlank() && version != "unspecified") {
+                add(version)
+            }
+
+        }
+        "${parts.joinToString("-")}${suffix.get()}"
+    }
 
     /**
      * Get newly created file basing on namer rule.
