@@ -18,6 +18,8 @@ import java.io.Serializable
 import java.time.ZoneId
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
+import java.time.LocalDateTime
+import java.time.ZoneOffset
 
 open class Instance(@Transient @JsonIgnore protected val aem: AemExtension) : Serializable {
 
@@ -91,14 +93,26 @@ open class Instance(@Transient @JsonIgnore protected val aem: AemExtension) : Se
     @get:Input
     var properties = mutableMapOf<String, String?>()
 
+    @get:Internal
     @get:JsonIgnore
     val systemProperties: Map<String, String> get() = sync.status.systemProperties
+
+    @get:Internal
+    @get:JsonIgnore
+    val slingProperties: Map<String, String> get() = sync.status.slingProperties
+
+    @get:Internal
+    @get:JsonIgnore
+    val slingSettings: Map<String, String> get() = sync.status.slingSettings
 
     fun property(key: String, value: String?) {
         properties[key] = value
     }
 
-    fun property(key: String): String? = properties[key] ?: systemProperties[key]
+    fun property(key: String): String? = properties[key]
+            ?: systemProperties[key]
+            ?: slingProperties[key]
+            ?: slingSettings[key]
 
     @get:Internal
     @get:JsonIgnore
@@ -108,6 +122,21 @@ open class Instance(@Transient @JsonIgnore protected val aem: AemExtension) : Se
     @get:JsonIgnore
     val zoneId: ZoneId get() = property("user.timezone")?.let { ZoneId.of(it) } ?: ZoneId.systemDefault()
 
+    @get:Internal
+    @get:JsonIgnore
+    val zoneOffset: ZoneOffset get() = zoneId.rules.getOffset(LocalDateTime.now())
+
+    @get:Internal
+    @get:JsonIgnore
+    val runningPath: String? get() = systemProperties["user.dir"]
+
+    @get:JsonIgnore
+    @get:Internal
+    val runningModes: List<String>? get() = slingSettings["Run_Modes"]
+            ?.removeSurrounding("[", "]")
+            ?.split(",")?.map { it.trim() }
+
+    @get:Internal
     @get:JsonIgnore
     open val version: String get() = sync.status.productVersion
 
@@ -121,6 +150,7 @@ open class Instance(@Transient @JsonIgnore protected val aem: AemExtension) : Se
      */
     val frozen get() = Formats.versionAtLeast(version, "6.4.0")
 
+    @get:Internal
     @get:JsonIgnore
     val manager: InstanceManager get() = aem.instanceManager
 

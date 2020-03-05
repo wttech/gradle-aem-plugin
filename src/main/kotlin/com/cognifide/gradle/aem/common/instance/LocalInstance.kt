@@ -317,7 +317,7 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
     val running: Boolean get() = created && checkStatus() == Status.RUNNING
 
     @get:JsonIgnore
-    val runningDir get() = property("user.dir")?.let { aem.project.file(it) }
+    val runningDir get() = runningPath?.let { aem.project.file(it) }
 
     @get:JsonIgnore
     val runningOther get() = runningDir?.let { dir != it } ?: false

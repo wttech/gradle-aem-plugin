@@ -2,7 +2,6 @@ package com.cognifide.gradle.aem.instance.tasks
 
 import com.cognifide.gradle.aem.common.instance.LocalInstance
 import com.cognifide.gradle.aem.common.tasks.InstanceTask
-import com.cognifide.gradle.common.utils.Formats
 import com.cognifide.gradle.common.utils.onEachApply
 import de.vandermeer.asciitable.AsciiTable
 import de.vandermeer.skb.interfaces.transformers.textformat.TextAlignment
@@ -15,8 +14,6 @@ open class InstanceStatus : InstanceTask() {
     @TaskAction
     @Suppress("MagicNumber")
     fun status() {
-        instanceManager.examine(instances.get())
-
         val table = common.progress(instances.get().size) {
             AsciiTable().apply {
                 context.width = 160
@@ -28,14 +25,19 @@ open class InstanceStatus : InstanceTask() {
                 instances.get().onEachApply {
                     increment("Checking status of instance '$name'") {
                         val instanceDetails = mutableListOf<String>().apply {
-                            add("Name: $name")
-                            add("HTTP URL: $httpUrl (${if (available) "available" else "not available"})")
-
-                            if (this@onEachApply is LocalInstance) {
-                                add("Created at: ${if (created) Formats.relativePath(dir.path, project.rootProject.projectDir.path) else "not yet"}")
-                            }
+                            add("Name: $name | Physical type: ${if (this@onEachApply is LocalInstance) "local" else "remote"}")
+                            add("URL: $httpUrl (${if (available) "available" else "not available"})")
 
                             if (available) {
+                                add("Time zone: ${zoneId.id} (GMT${zoneOffset.id})")
+
+                                if (!runningPath.isNullOrBlank()) {
+                                    add("Run path: $runningPath")
+                                }
+                                if (runningModes != null) {
+                                    add("Run modes: ${runningModes!!.joinToString(",")}")
+                                }
+
                                 add("State check: $state")
                             }
                         }.joinToString("<br>")
