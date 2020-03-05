@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem.instance.tasks
 
-import com.cognifide.gradle.aem.common.instance.check
 import com.cognifide.gradle.aem.common.instance.names
 import com.cognifide.gradle.aem.common.tasks.InstanceTask
 import org.gradle.api.tasks.TaskAction
@@ -9,7 +8,7 @@ open class InstanceSatisfy : InstanceTask() {
 
     @TaskAction
     fun satisfy() {
-        instances.get().check()
+        instanceManager.examine(instances.get())
 
         val packageActions = instanceManager.satisfier.satisfy(instances.get())
         if (packageActions.isNotEmpty()) {

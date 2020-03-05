@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem.instance.tasks
 
-import com.cognifide.gradle.aem.common.instance.check
 import com.cognifide.gradle.aem.common.instance.provision.Status
 import com.cognifide.gradle.aem.common.tasks.InstanceTask
 import org.gradle.api.tasks.TaskAction
@@ -9,7 +8,7 @@ open class InstanceProvision : InstanceTask() {
 
     @TaskAction
     fun provision() {
-        instances.get().check()
+        instanceManager.examine(instances.get())
 
         val allActions = instanceManager.provisioner.provision(instances.get())
         val performedActions = allActions.filter { it.status != Status.SKIPPED }

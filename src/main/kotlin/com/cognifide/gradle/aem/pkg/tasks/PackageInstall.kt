@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem.pkg.tasks
 
-import com.cognifide.gradle.aem.common.instance.check
 import com.cognifide.gradle.aem.common.instance.names
 import com.cognifide.gradle.aem.common.tasks.PackageTask
 import com.cognifide.gradle.aem.common.utils.fileNames
@@ -10,7 +9,6 @@ open class PackageInstall : PackageTask() {
 
     @TaskAction
     fun install() {
-        instances.get().check()
         sync { packageManager.install(it) }
         common.notifier.notify("Package installed", "${files.files.fileNames} from ${instances.get().names}")
     }

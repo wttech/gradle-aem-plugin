@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem.instance.tasks
 
 import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
-import com.cognifide.gradle.aem.common.instance.checkRunningOther
 import com.cognifide.gradle.aem.common.instance.names
 import com.cognifide.gradle.aem.common.tasks.LocalInstanceTask
 import org.gradle.api.tasks.TaskAction
@@ -19,7 +18,7 @@ open class InstanceUp : LocalInstanceTask() {
 
     @TaskAction
     fun up() {
-        instances.get().checkRunningOther()
+        localInstanceManager.base.examineRunningOther(instances.get())
 
         val upInstances = localInstanceManager.up(instances.get(), awaitOptions)
         if (upInstances.isNotEmpty()) {
