@@ -86,7 +86,6 @@ class BackupManager(private val aem: AemExtension) {
             if (version.isNotBlank() && version != "unspecified") {
                 add(version)
             }
-
         }
         "${parts.joinToString("-")}${suffix.get()}"
     }
