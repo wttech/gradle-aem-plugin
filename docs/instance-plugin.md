@@ -7,6 +7,7 @@
 # Instance plugin
 
 * [About](#about)
+* [Task instanceStatus](#task-instancestatus)
 * [Task instanceReload](#task-instancereload)
 * [Task instanceResolve](#task-instanceresolve)
 * [Task instanceSatisfy](#task-instancesatisfy)
@@ -36,6 +37,15 @@ plugins {
 ```
 
 This plugin implicitly applies also [Common Plugin](common-plugin.md) and [Runtime Plugin](https://github.com/Cognifide/gradle-common-plugin).
+
+## Task `instanceStatus`
+
+Print actual information about configured AEM instances.
+
+Provides information about physical type of instance (local / remote), current condition (state check) etc.
+When task is run with `--info` also prints out information about instance time zone, operating system and Java version.
+
+![Instance status task](instance-status-task.png)
 
 ## Task `instanceReload`
 
