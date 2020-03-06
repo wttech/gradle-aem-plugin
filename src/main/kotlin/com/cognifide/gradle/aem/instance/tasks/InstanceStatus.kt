@@ -13,7 +13,7 @@ import org.gradle.api.tasks.TaskAction
 open class InstanceStatus : InstanceTask() {
 
     @TaskAction
-    @Suppress("MagicNumber")
+    @Suppress("MagicNumber", "LongMethod")
     fun status() {
         val table = common.progress(instances.get().size) {
             AsciiTable().apply {
