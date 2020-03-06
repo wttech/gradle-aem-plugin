@@ -71,7 +71,7 @@ tasks {
     }
 
     register<DokkaTask>("dokkaJavadoc") {
-        outputFormat = "html"
+        outputFormat = "javadoc"
         outputDirectory = "$buildDir/javadoc"
     }
 
@@ -119,11 +119,11 @@ tasks {
     }
 
     named<Task>("build") {
-        dependsOn("sourcesJar", "javadocJar")
+        dependsOn("sourcesJar"/*, "javadocJar"*/) // TODO fix dokka
     }
 
     named<Task>("publishToMavenLocal") {
-        dependsOn("sourcesJar", "javadocJar")
+        dependsOn("sourcesJar"/*, "javadocJar"*/) // TODO fix dokka
     }
 
     named<ProcessResources>("processResources") {
