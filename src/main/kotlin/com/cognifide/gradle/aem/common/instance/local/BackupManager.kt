@@ -139,7 +139,7 @@ class BackupManager(private val aem: AemExtension) {
             val fileEntry = try {
                 common.fileTransfer.stat(dirUrl, name) // 'stat' may be unsupported
             } catch (e: FileException) {
-                logger.warn("Cannot check instance backup file status at URL '$dirUrl/$name'! Cause: ${e.message}")
+                logger.info("Cannot check instance backup file status at URL '$dirUrl/$name'! Cause: ${e.message}")
                 logger.debug("Actual error", e)
                 FileEntry(name)
             }
