@@ -35,10 +35,14 @@ open class InstanceStatus : InstanceTask() {
                                 add("Name: $name (${if (local) "local" else "remote"})")
                                 add("URL: $httpUrl (${if (available) "available" else "not available"})")
 
-                                if (available) {
-                                    add("State check: $state")
+                                if (this@onEachApply is LocalInstance) {
+                                    add("Debug port: $debugPort")
+                                }
 
-                                    add("Run path: ${if (local) Formats.relativePath(runningPath, aem.project.rootProject.projectDir.path) else runningPath}")
+                                if (available) {
+                                    add("Version: $version")
+                                    add("State check: $state")
+                                    add("Run path: $runningPath")
                                     add("Run modes: ${runningModes.joinToString(",")}")
 
                                     if (logger.isInfoEnabled) {
