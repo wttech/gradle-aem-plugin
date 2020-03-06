@@ -27,17 +27,7 @@ open class VaultDefinition(private val aem: AemExtension) {
      * Group for categorizing in CRX package manager
      */
     @Input
-    val group = aem.obj.string {
-        convention(aem.obj.provider {
-            aem.project.group.toString().ifBlank {
-                when {
-                    aem.project != aem.project.rootProject -> aem.project.rootProject.name
-                    else -> throw VaultException("Cannot determine package group by convention!" +
-                            " Please define project group property explicitly.")
-                }
-            }
-        })
-    }
+    val group = aem.obj.string { convention(aem.obj.provider { aem.project.group.toString() }) }
 
     /**
      * Version visible in CRX package manager.
