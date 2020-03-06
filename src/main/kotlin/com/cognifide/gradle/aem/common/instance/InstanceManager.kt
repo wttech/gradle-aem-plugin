@@ -188,7 +188,7 @@ open class InstanceManager(val aem: AemExtension) {
     fun examineRunningOther(instances: Collection<Instance>) {
         val running = instances.filterIsInstance<LocalInstance>().filter { it.runningOther }
         if (running.isNotEmpty()) {
-            throw InstanceException("Instances are already running (${running.size}):\n" +
+            throw InstanceException("Other instances are running (${running.size}):\n" +
                     running.joinToString("\n") { "Instance '${it.name}' at URL '${it.httpUrl}' located at path '${it.runningDir}'" } + "\n\n" +
                     "Ensure having these instances down."
             )
