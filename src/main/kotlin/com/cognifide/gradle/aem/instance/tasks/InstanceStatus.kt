@@ -51,12 +51,16 @@ open class InstanceStatus : InstanceTask() {
 
                             val packagesInstalled = if (available) {
                                 sync {
-                                    aem.packagesBuilt.mapNotNull {
-                                        val pkg = packageManager.find(it.vaultDefinition)
-                                        if (pkg != null) it to pkg else null
-                                    }
-                                }.filter { it.second.installed }.joinToString("<br>") {
-                                    "${it.first.path} (${Formats.date(date(it.second.lastUnpacked!!))})"
+                                    aem.packagesBuilt.map { task ->
+                                        sync {
+                                            val pkg = packageManager.find(task.vaultDefinition)
+                                            if (pkg != null && pkg.installed) {
+                                                "${task.path} (${Formats.date(date(pkg.lastUnpacked!!))})"
+                                            } else {
+                                                "${task.path} (not yet)"
+                                            }
+                                        }
+                                    }.joinToString("<br>")
                                 }.ifBlank { "none" }
                             } else {
                                 "unknown"
