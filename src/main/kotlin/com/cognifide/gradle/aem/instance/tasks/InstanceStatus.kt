@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.instance.tasks
 
 import com.cognifide.gradle.aem.common.instance.LocalInstance
 import com.cognifide.gradle.aem.common.tasks.InstanceTask
+import com.cognifide.gradle.common.utils.Formats
 import com.cognifide.gradle.common.utils.onEachApply
 import de.vandermeer.asciitable.AsciiTable
 import de.vandermeer.skb.interfaces.transformers.textformat.TextAlignment
@@ -22,36 +23,48 @@ open class InstanceStatus : InstanceTask() {
                 addRow("Instance", "Packages installed")
                 addRule()
 
-                instances.get().onEachApply {
-                    increment("Checking status of instance '$name'") {
-                        val instanceDetails = mutableListOf<String>().apply {
-                            add("Name: $name | Physical type: ${if (this@onEachApply is LocalInstance) "local" else "remote"}")
-                            add("URL: $httpUrl (${if (available) "available" else "not available"})")
+                if (instances.get().isEmpty()) {
+                    addRow("none, none")
+                    addRule()
+                } else {
+                    instances.get().onEachApply {
+                        val local = this is LocalInstance
 
-                            if (available) {
-                                add("Time zone: ${zoneId.id} (GMT${zoneOffset.id})")
+                        increment("Checking status of instance '$name'") {
+                            val instanceDetails = mutableListOf<String>().apply {
+                                add("Name: $name (${if (local) "local" else "remote"})")
+                                add("URL: $httpUrl (${if (available) "available" else "not available"})")
 
-                                if (!runningPath.isNullOrBlank()) {
-                                    add("Run path: $runningPath")
+                                if (available) {
+                                    add("State check: $state")
+
+                                    add("Run path: ${if (local) Formats.relativePath(runningPath, aem.project.rootProject.projectDir.path) else runningPath}")
+                                    add("Run modes: ${runningModes.joinToString(",")}")
+
+                                    if (logger.isInfoEnabled) {
+                                        add("Time zone: ${zoneId.id} (GMT${zoneOffset.id})")
+                                        add("Operating system: $osInfo")
+                                        add("Java: $javaInfo")
+                                    }
                                 }
-                                if (runningModes != null) {
-                                    add("Run modes: ${runningModes!!.joinToString(",")}")
-                                }
+                            }.joinToString("<br>")
 
-                                add("State check: $state")
+                            val packagesInstalled = if (available) {
+                                sync {
+                                    aem.packagesBuilt.mapNotNull {
+                                        val pkg = packageManager.find(it.vaultDefinition)
+                                        if (pkg != null) it to pkg else null
+                                    }
+                                }.filter { it.second.installed }.joinToString("<br>") {
+                                    "${it.first.path} (${Formats.date(date(it.second.lastUnpacked!!))})"
+                                }.ifBlank { "none" }
+                            } else {
+                                "unknown"
                             }
-                        }.joinToString("<br>")
 
-                        val packagesInstalled = if (available) {
-                            sync {
-                                aem.packagesBuilt.mapNotNull { packageManager.find(it.vaultDefinition) }
-                            }.filter { it.installed }.joinToString("<br>") { it.dependencyNotation }.ifBlank { "none" }
-                        } else {
-                            "unknown"
+                            addRow(instanceDetails, packagesInstalled)
+                            addRule()
                         }
-
-                        addRow(instanceDetails, packagesInstalled)
-                        addRule()
                     }
                 }
 

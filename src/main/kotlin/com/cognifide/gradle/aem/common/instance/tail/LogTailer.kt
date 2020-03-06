@@ -8,12 +8,12 @@ import kotlinx.coroutines.launch
 class LogTailer(
     private val source: LogSource,
     private val destination: LogDestination,
-    instance: InstanceLogInfo = InstanceLogInfo.none(),
+    info: LogInfo = NoLogInfo(),
     private val logsAnalyzerChannel: SendChannel<Log>? = null,
     private val printer: ConsolePrinter = ConsolePrinter.none()
 ) {
 
-    private val parser = LogParser(instance)
+    private val parser = LogParser(info)
 
     private var lastLogChecksum = ""
 

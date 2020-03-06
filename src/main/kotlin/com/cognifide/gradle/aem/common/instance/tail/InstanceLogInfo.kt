@@ -3,10 +3,9 @@ package com.cognifide.gradle.aem.common.instance.tail
 import com.cognifide.gradle.aem.common.instance.Instance
 import java.time.ZoneId
 
-data class InstanceLogInfo(val name: String, val zoneId: ZoneId) {
+class InstanceLogInfo(private val instance: Instance) : LogInfo {
 
-    companion object {
-        fun none() = InstanceLogInfo("unspecified", ZoneId.systemDefault())
-        fun of(instance: Instance) = InstanceLogInfo(instance.name, instance.zoneId)
-    }
+    override val name: String get() = instance.name
+
+    override val zoneId: ZoneId get() = instance.zoneId
 }
