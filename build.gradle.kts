@@ -166,7 +166,7 @@ publishing {
         create<MavenPublication>("mavenJava") {
             from(components["java"])
             artifact(tasks["sourcesJar"])
-            artifact(tasks["javadocJar"])
+            /*artifact(tasks["javadocJar"]) TODO fix dokka */
         }
     }
 }
@@ -246,7 +246,7 @@ githubRelease {
     token((project.findProperty("github.token") ?: "").toString())
     tagName(project.version.toString())
     releaseName(project.version.toString())
-    releaseAssets(tasks["jar"], tasks["sourcesJar"], tasks["javadocJar"])
+    releaseAssets(tasks["jar"], tasks["sourcesJar"]/*, tasks["javadocJar"] TODO fix dokka */)
     draft((project.findProperty("github.draft") ?: "false").toString().toBoolean())
     prerelease((project.findProperty("github.prerelease") ?: "false").toString().toBoolean())
     overwrite((project.findProperty("github.override") ?: "true").toString().toBoolean())
