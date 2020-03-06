@@ -3,11 +3,13 @@ package com.cognifide.gradle.aem.pkg.tasks
 import com.cognifide.gradle.aem.AemDefaultTask
 import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.common.instance.Instance
+import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.aem.common.pkg.vault.FilterFile
 import com.cognifide.gradle.common.utils.Formats
 import com.cognifide.gradle.aem.common.pkg.vault.VaultClient
 import com.cognifide.gradle.aem.pkg.tasks.sync.Cleaner
 import com.cognifide.gradle.aem.pkg.tasks.sync.Downloader
+import com.cognifide.gradle.common.utils.using
 import java.io.File
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
@@ -68,28 +70,34 @@ open class PackageSync : AemDefaultTask() {
             filter.get().rootDirs(this)
         }
 
-    private var vaultOptions: VaultClient.() -> Unit = {}
-
-    fun vlt(options: VaultClient.() -> Unit) {
-        vaultOptions = options
-    }
-
-    private val vlt by lazy { VaultClient(aem).apply(vaultOptions) }
-
-    fun cleaner(options: Cleaner.() -> Unit) {
-        cleaner.apply(options)
-    }
+    fun cleaner(options: Cleaner.() -> Unit) = cleaner.using(options)
 
     private val cleaner = Cleaner(aem)
 
-    fun downloader(options: Downloader.() -> Unit) {
-        downloader.apply(options)
+    fun vaultClient(options: VaultClient.() -> Unit) = vaultClient.using(options)
+
+    private val vaultClient by lazy {
+        VaultClient(aem).apply {
+            contentDir.convention(this@PackageSync.contentDir)
+            command.convention(aem.obj.provider {
+                "--credentials ${instance.get().credentialsString} checkout --force" +
+                        " --filter ${filter.get().file} ${instance.get().httpUrl}/crx/server/crx.default"
+            })
+        }
     }
 
-    private val downloader = Downloader(aem).apply {
-        definition {
-            destinationDirectory.convention(project.layout.buildDirectory.dir(this@PackageSync.name))
-            archiveFileName.convention("downloader.zip")
+    fun downloader(options: Downloader.() -> Unit) = downloader.using(options)
+
+    private val downloader by lazy {
+        Downloader(aem).apply {
+            instance.convention(this@PackageSync.instance)
+            filter.convention(this@PackageSync.filter)
+            extractDir.convention(contentDir.dir(Package.JCR_ROOT))
+
+            definition {
+                destinationDirectory.convention(project.layout.buildDirectory.dir(this@PackageSync.name))
+                archiveFileName.convention("downloader.zip")
+            }
         }
     }
 
@@ -107,8 +115,8 @@ open class PackageSync : AemDefaultTask() {
 
             if (mode.get() != Mode.CLEAN_ONLY) {
                 when (transfer.get()) {
-                    Transfer.VLT_CHECKOUT -> transferUsingVltCheckout()
-                    Transfer.PACKAGE_DOWNLOAD -> transferUsingPackageDownload()
+                    Transfer.VLT_CHECKOUT -> vaultClient.run()
+                    Transfer.PACKAGE_DOWNLOAD -> downloader.download()
                     else -> {}
                 }
             }
@@ -129,23 +137,6 @@ open class PackageSync : AemDefaultTask() {
 
         filterRootFiles.forEach { root ->
             cleaner.prepare(root)
-        }
-    }
-
-    private fun transferUsingVltCheckout() {
-        vlt.apply {
-            contentDir.convention(this@PackageSync.contentDir)
-            command.convention("--credentials ${instance.get().credentialsString} checkout --force" +
-                    " --filter ${filter.get().file} ${instance.get().httpUrl}/crx/server/crx.default")
-            run()
-        }
-    }
-
-    private fun transferUsingPackageDownload() {
-        downloader.apply {
-            instance.convention(this@PackageSync.instance)
-            filter.convention(this@PackageSync.filter)
-            download()
         }
     }
 
