@@ -53,7 +53,7 @@ class BackupManager(private val aem: AemExtension) {
      * Directory storing downloaded remote backup files.
      */
     val remoteDir = aem.obj.dir {
-        convention(aem.obj.projectDir("$OUTPUT_DIR/${BackupType.REMOTE.dirName}"))
+        convention(aem.obj.buildDir("$OUTPUT_DIR/${BackupType.REMOTE.dirName}"))
         aem.prop.file("localInstance.backup.remoteDir")?.let { set(it) }
     }
 
