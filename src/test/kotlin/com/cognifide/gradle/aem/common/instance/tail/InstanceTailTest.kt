@@ -205,7 +205,7 @@ class InstanceTailTest {
         val logFilter = LogFilter(project).apply { excludeRule(filter) }
 
         // then
-        assertTrue(logFilter.isExcluded(Log.create(InstanceLogInfo.none(), listOf("14.01.2019 12:20:43.111 *ERROR* " +
+        assertTrue(logFilter.isExcluded(Log.create(NoLogInfo(), listOf("14.01.2019 12:20:43.111 *ERROR* " +
             "[gea-arrgkkggae-rtreggga-1] egg.erggr.gaegkgr.arrgkkggae Sragker " +
             "[6848, [gag.ereeer.reeaaeggkg.gea.erk.rgt.SrkkkggMBreg]] SragkerEgrgg REGISTERED"))))
     }
@@ -219,7 +219,7 @@ class InstanceTailTest {
         val blacklist = LogFilter(project).apply { excludeRule(filter) }
 
         // then
-        assertFalse(blacklist.isExcluded(Log.create(InstanceLogInfo.none(), listOf("14.01.2019 12:20:43.111 *ERROR* " +
+        assertFalse(blacklist.isExcluded(Log.create(NoLogInfo(), listOf("14.01.2019 12:20:43.111 *ERROR* " +
             "[gea-arrgkkggae-rtreggga-1] egg.erggr.gaegkgr.arrgkkggae Sragker " +
             "[6848, [gag.ereeer.reeaaeggkg.gea.erk.rgt.SrkkkggMBreg]] SragkerEgrgg REGISTERED"))))
     }
@@ -233,7 +233,7 @@ class InstanceTailTest {
         val logFilter = LogFilter(project).apply { excludeRule(filter) }
 
         // then
-        assertTrue(logFilter.isExcluded(Log.create(InstanceLogInfo.none(), listOf("14.01.2019 12:20:43.111 *ERROR* " +
+        assertTrue(logFilter.isExcluded(Log.create(NoLogInfo(), listOf("14.01.2019 12:20:43.111 *ERROR* " +
             "[gea-arrgkkggae-rtreggga-1] egg.erggr.gaegkgr.arrgkkggae Sragker " +
             "[6848, [gag.ereeer.reeaaeggkg.gea.erk.rgt.SrkkkggMBreg]] SragkerEgrgg REGISTERED"))))
     }
@@ -247,7 +247,7 @@ class InstanceTailTest {
         val blacklist = LogFilter(project).apply { excludeRule(filter) }
 
         // then
-        assertFalse(blacklist.isExcluded(Log.create(InstanceLogInfo.none(), listOf("14.01.2019 12:20:43.111 *ERROR* " +
+        assertFalse(blacklist.isExcluded(Log.create(NoLogInfo(), listOf("14.01.2019 12:20:43.111 *ERROR* " +
             "[gea-arrgkkggae-rtreggga-1] egg.erggr.gaegkgr.arrgkkggae Sragker " +
             "[6848, [gag.ereeer.reeaaeggkg.gea.erk.rgt.SrkkkggMBreg]] SragkerEgrgg REGISTERED"))))
     }

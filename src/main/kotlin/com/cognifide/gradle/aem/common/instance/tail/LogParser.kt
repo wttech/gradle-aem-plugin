@@ -2,9 +2,7 @@ package com.cognifide.gradle.aem.common.instance.tail
 
 import java.io.BufferedReader
 
-class LogParser(
-    private val instance: InstanceLogInfo = InstanceLogInfo.none()
-) {
+class LogParser(private val info: LogInfo = NoLogInfo()) {
 
     fun parse(reader: BufferedReader): List<Log> {
         val firstLogLine = skipIncomplete(reader)
@@ -25,7 +23,7 @@ class LogParser(
     private fun read(reader: BufferedReader, firstLogLine: String?): Pair<Log?, String?> {
         val (completeLogLines, firstLineOfNextLog) = readSubsequentLogLines(reader, firstLogLine)
         return if (completeLogLines.isNotEmpty()) {
-            Log.create(instance, completeLogLines) to firstLineOfNextLog
+            Log.create(info, completeLogLines) to firstLineOfNextLog
         } else {
             null to null
         }

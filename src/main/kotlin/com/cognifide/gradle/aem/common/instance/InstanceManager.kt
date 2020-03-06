@@ -168,6 +168,8 @@ open class InstanceManager(val aem: AemExtension) {
 
     fun check(instances: Collection<Instance> = aem.instances, options: CheckAction.() -> Unit) = CheckAction(aem).apply(options).perform(instances)
 
+    fun examine(instance: Instance) = examine(listOf(instance))
+
     fun examine(instances: Collection<Instance> = aem.instances) {
         examineAvailable(instances)
         examineRunningOther(instances)

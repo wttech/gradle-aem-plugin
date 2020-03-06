@@ -16,8 +16,8 @@ import org.apache.commons.lang3.builder.EqualsBuilder
 import org.apache.commons.lang3.builder.HashCodeBuilder
 import java.io.Serializable
 import java.time.ZoneId
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.Internal
+import java.time.LocalDateTime
+import java.time.ZoneOffset
 
 open class Instance(@Transient @JsonIgnore protected val aem: AemExtension) : Serializable {
 
@@ -25,58 +25,43 @@ open class Instance(@Transient @JsonIgnore protected val aem: AemExtension) : Se
 
     protected val logger = aem.logger
 
-    @get:Input
     lateinit var httpUrl: String
 
-    @get:Internal
     @get:JsonIgnore
     val httpPort: Int get() = InstanceUrl.parse(httpUrl).httpPort
 
-    @get:Internal
     @get:JsonIgnore
     val httpBasicAuthUrl: String get() = InstanceUrl.parse(httpUrl).basicAuth(user, password)
 
-    @get:Input
     open lateinit var user: String
 
-    @get:Input
     @get:JsonSerialize(using = JsonPassword::class, `as` = String::class)
     lateinit var password: String
 
-    @get:Internal
     @get:JsonIgnore
     val credentials: Pair<String, String> get() = user to password
 
-    @get:Internal
     @get:JsonIgnore
     val credentialsString get() = "$user:$password"
 
-    @get:Internal
     @get:JsonIgnore
     val hiddenPassword: String get() = "*".repeat(password.length)
 
-    @get:Input
     lateinit var environment: String
 
-    @get:Internal
     @get:JsonIgnore
     val cmd: Boolean get() = environment == ENVIRONMENT_CMD
 
-    @get:Input
     lateinit var id: String
 
-    @get:Internal
     val type: IdType get() = IdType.byId(id)
 
-    @get:Internal
     @get:JsonIgnore
     val author: Boolean get() = type == IdType.AUTHOR
 
-    @get:Internal
     @get:JsonIgnore
     val publish: Boolean get() = type == IdType.PUBLISH
 
-    @get:Internal
     var name: String
         get() = "$environment-$id"
         set(value) {
@@ -84,29 +69,65 @@ open class Instance(@Transient @JsonIgnore protected val aem: AemExtension) : Se
             id = value.substringAfter("-")
         }
 
-    @get:Internal
     @get:JsonIgnore
     val sync get() = InstanceSync(aem, this)
 
-    @get:Input
     var properties = mutableMapOf<String, String?>()
 
     @get:JsonIgnore
     val systemProperties: Map<String, String> get() = sync.status.systemProperties
 
+    @get:JsonIgnore
+    val slingProperties: Map<String, String> get() = sync.status.slingProperties
+
+    @get:JsonIgnore
+    val slingSettings: Map<String, String> get() = sync.status.slingSettings
+
     fun property(key: String, value: String?) {
         properties[key] = value
     }
 
-    fun property(key: String): String? = properties[key] ?: systemProperties[key]
+    fun property(key: String): String? = properties[key]
+            ?: systemProperties[key]
+            ?: slingProperties[key]
+            ?: slingSettings[key]
 
-    @get:Internal
     @get:JsonIgnore
     val available: Boolean get() = systemProperties.isNotEmpty()
 
-    @get:Internal
     @get:JsonIgnore
-    val zoneId: ZoneId get() = property("user.timezone")?.let { ZoneId.of(it) } ?: ZoneId.systemDefault()
+    val zoneId: ZoneId get() = systemProperties["user.timezone"]?.let { ZoneId.of(it) }
+            ?: throw InstanceException("Cannot read timezone of $this!")
+
+    @get:JsonIgnore
+    val zoneOffset: ZoneOffset get() = zoneId.rules.getOffset(LocalDateTime.now())
+
+    @get:JsonIgnore
+    val zoneInfo: String get() = "${zoneId.id} (GMT${zoneOffset.id})"
+
+    fun date(timestamp: Long) = Formats.dateAt(timestamp, zoneId)
+
+    @get:JsonIgnore
+    val osInfo: String get() = mutableListOf<String>().apply {
+        systemProperties["os.name"]?.let { add(it) }
+        systemProperties["os.arch"]?.let { add(it) }
+    }.joinToString(" ")
+
+    @get:JsonIgnore
+    val javaInfo: String get() = mutableListOf<String>().apply {
+        systemProperties["java.vm.name"]?.let { add(it.removePrefix("Java ")) }
+        systemProperties["java.version"]?.let { add("($it)") }
+    }.joinToString(" ")
+
+    @get:JsonIgnore
+    val runningPath: String get() = systemProperties["user.dir"]
+            ?: throw InstanceException("Cannot read running path of $this!")
+
+    @get:JsonIgnore
+    val runningModes: List<String> get() = slingSettings["Run_Modes"]
+            ?.removeSurrounding("[", "]")
+            ?.split(",")?.map { it.trim() }
+            ?: throw InstanceException("Cannot read running modes of $this!")
 
     @get:JsonIgnore
     open val version: String get() = sync.status.productVersion
@@ -150,6 +171,8 @@ open class Instance(@Transient @JsonIgnore protected val aem: AemExtension) : Se
 
     fun tail() = manager.tailer.tail(this)
 
+    fun examine() = manager.examine(this)
+
     fun <T> sync(action: InstanceSync.() -> T): T = sync.run(action)
 
     override fun equals(other: Any?): Boolean {
@@ -173,7 +196,6 @@ open class Instance(@Transient @JsonIgnore protected val aem: AemExtension) : Se
 
     override fun toString(): String = "Instance(name='$name', httpUrl='$httpUrl')"
 
-    @get:Internal
     @get:JsonIgnore
     val json get() = Formats.toJson(this)
 

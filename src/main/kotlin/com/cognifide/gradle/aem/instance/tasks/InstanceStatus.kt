@@ -23,31 +23,52 @@ open class InstanceStatus : InstanceTask() {
                 addRow("Instance", "Packages installed")
                 addRule()
 
-                instances.get().onEachApply {
-                    increment("Checking status of instance '$name'") {
-                        val instanceDetails = mutableListOf<String>().apply {
-                            add("Name: $name")
-                            add("HTTP URL: $httpUrl (${if (available) "available" else "not available"})")
+                if (instances.get().isEmpty()) {
+                    addRow("none, none")
+                    addRule()
+                } else {
+                    instances.get().onEachApply {
+                        val local = this is LocalInstance
 
-                            if (this@onEachApply is LocalInstance) {
-                                add("Created at: ${if (created) Formats.relativePath(dir.path, project.rootProject.projectDir.path) else "not yet"}")
+                        increment("Checking status of instance '$name'") {
+                            val instanceDetails = mutableListOf<String>().apply {
+                                add("Name: $name (${if (local) "local" else "remote"})")
+                                add("URL: $httpUrl (${if (available) "available" else "not available"})")
+
+                                if (available) {
+                                    add("State check: $state")
+
+                                    add("Run path: ${if (local) Formats.relativePath(runningPath, aem.project.rootProject.projectDir.path) else runningPath}")
+                                    add("Run modes: ${runningModes.joinToString(",")}")
+
+                                    if (logger.isInfoEnabled) {
+                                        add("Time zone: ${zoneId.id} (GMT${zoneOffset.id})")
+                                        add("Operating system: $osInfo")
+                                        add("Java: $javaInfo")
+                                    }
+                                }
+                            }.joinToString("<br>")
+
+                            val packagesInstalled = if (available) {
+                                sync {
+                                    aem.packagesBuilt.map { task ->
+                                        sync {
+                                            val pkg = packageManager.find(task.vaultDefinition)
+                                            if (pkg != null && pkg.installed) {
+                                                "${task.path} (${Formats.date(date(pkg.lastUnpacked!!))})"
+                                            } else {
+                                                "${task.path} (not yet)"
+                                            }
+                                        }
+                                    }.joinToString("<br>")
+                                }.ifBlank { "none" }
+                            } else {
+                                "unknown"
                             }
 
-                            if (available) {
-                                add("State check: $state")
-                            }
-                        }.joinToString("<br>")
-
-                        val packagesInstalled = if (available) {
-                            sync {
-                                aem.packagesBuilt.mapNotNull { packageManager.find(it.vaultDefinition) }
-                            }.filter { it.installed }.joinToString("<br>") { it.dependencyNotation }.ifBlank { "none" }
-                        } else {
-                            "unknown"
+                            addRow(instanceDetails, packagesInstalled)
+                            addRule()
                         }
-
-                        addRow(instanceDetails, packagesInstalled)
-                        addRule()
                     }
                 }
 
