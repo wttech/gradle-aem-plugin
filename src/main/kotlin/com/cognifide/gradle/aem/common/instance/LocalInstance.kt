@@ -305,7 +305,9 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
 
         return try {
             val procResult = statusScript.executeSync()
-            Status.byExitCode(procResult.exitValue)
+            Status.byExitCode(procResult.exitValue).also { status ->
+                logger.debug("Instance status of $this is: $status")
+            }
         } catch (e: InstanceException) {
             logger.info("Instance status not available: $this")
             logger.debug("Instance status error", e)
