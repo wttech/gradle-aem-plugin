@@ -206,6 +206,7 @@ class PackagePluginTest : AemBuildTest() {
                         
                         nestPackage("com.adobe.cq:core.wcm.components.all:2.8.0")
                         nestPackage("com.adobe.cq:core.wcm.components.examples:2.8.0")
+                        nestPackage("https://github.com/icfnext/aem-groovy-console/releases/download/14.0.0/aem-groovy-console-14.0.0.zip")
                     }
                 }
                 """)
@@ -225,6 +226,7 @@ class PackagePluginTest : AemBuildTest() {
             assertZipEntry(pkg, "jcr_root/apps/package-nesting-repository/install.author/search-webconsole-plugin-1.3.0.jar")
             assertZipEntry(pkg, "jcr_root/etc/packages/adobe/cq60/core.wcm.components.all-2.8.0.zip")
             assertZipEntry(pkg, "jcr_root/etc/packages/adobe/cq60/core.wcm.components.examples-2.8.0.zip")
+            assertZipEntry(pkg, "jcr_root/etc/packages/ICF Next/aem-groovy-console-14.0.0.zip")
 
             assertZipEntryEquals(pkg, "META-INF/vault/filter.xml", """
                 <?xml version="1.0" encoding="UTF-8"?>
@@ -234,6 +236,7 @@ class PackagePluginTest : AemBuildTest() {
                   <filter root="/apps/package-nesting-repository/install.author/search-webconsole-plugin-1.3.0.jar"/>
                   <filter root="/etc/packages/adobe/cq60/core.wcm.components.all-2.8.0.zip"/>
                   <filter root="/etc/packages/adobe/cq60/core.wcm.components.examples-2.8.0.zip"/>
+                  <filter root="/etc/packages/ICF Next/aem-groovy-console-14.0.0.zip"/>
                   
                 </workspaceFilter>
             """)

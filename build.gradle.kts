@@ -34,7 +34,7 @@ repositories {
 dependencies {
     implementation(gradleApi())
 
-    implementation("com.cognifide.gradle:common-plugin:0.1.26")
+    implementation("com.cognifide.gradle:common-plugin:0.1.27")
 
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.10.1")
     implementation("com.jayway.jsonpath:json-path:2.4.0")
@@ -119,11 +119,11 @@ tasks {
     }
 
     named<Task>("build") {
-        dependsOn("sourcesJar"/*, "javadocJar"*/) // TODO fix dokka
+        dependsOn("sourcesJar", "javadocJar")
     }
 
     named<Task>("publishToMavenLocal") {
-        dependsOn("sourcesJar"/*, "javadocJar"*/) // TODO fix dokka
+        dependsOn("sourcesJar", "javadocJar")
     }
 
     named<ProcessResources>("processResources") {
@@ -166,7 +166,7 @@ publishing {
         create<MavenPublication>("mavenJava") {
             from(components["java"])
             artifact(tasks["sourcesJar"])
-            /*artifact(tasks["javadocJar"]) TODO fix dokka */
+            artifact(tasks["javadocJar"])
         }
     }
 }
@@ -246,7 +246,7 @@ githubRelease {
     token((project.findProperty("github.token") ?: "").toString())
     tagName(project.version.toString())
     releaseName(project.version.toString())
-    releaseAssets(tasks["jar"], tasks["sourcesJar"]/*, tasks["javadocJar"] TODO fix dokka */)
+    releaseAssets(tasks["jar"], tasks["sourcesJar"], tasks["javadocJar"])
     draft((project.findProperty("github.draft") ?: "false").toString().toBoolean())
     prerelease((project.findProperty("github.prerelease") ?: "false").toString().toBoolean())
     overwrite((project.findProperty("github.override") ?: "true").toString().toBoolean())
