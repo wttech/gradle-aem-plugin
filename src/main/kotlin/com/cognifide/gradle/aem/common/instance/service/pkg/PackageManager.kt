@@ -235,7 +235,7 @@ class PackageManager(sync: InstanceSync) : InstanceService(sync) {
         return downloadRetry.withCountdown<Unit, InstanceException>("download package '$remotePath' on '${instance.name}'") {
             logger.info("Downloading package from $remotePath to file $targetFile")
 
-            http.fileTransfer { download(remotePath, targetFile) }
+            http.download(remotePath, targetFile)
 
             if (!targetFile.exists()) {
                 throw InstanceException("Downloaded package is missing: ${targetFile.path}")
