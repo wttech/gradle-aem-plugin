@@ -12,7 +12,7 @@ class InstanceStep(val instance: Instance, val definition: Step) {
 
     private val provisioner = definition.provisioner
 
-    private val marker = instance.sync.repository.node("${provisioner.path}/step/${definition.id}")
+    private val marker get() = instance.sync.repository.node("${provisioner.path.get()}/step/${definition.id}")
 
     val greedy: Boolean get() = provisioner.greedy.get() || provisioner.aem.prop.flag("instance.provision.${definition.id}.greedy")
 
