@@ -55,13 +55,15 @@ open class InstanceStatus : InstanceTask() {
 
                             val packagesInstalled = if (available) {
                                 sync {
-                                    aem.packagesBuilt.map { task ->
+                                    aem.packagesBuilt.sortedBy { it.path }.map { task ->
                                         sync {
                                             val pkg = packageManager.find(task.vaultDefinition)
+                                            val path = task.path.removeSuffix(":${task.name}")
+
                                             if (pkg != null && pkg.installed) {
-                                                "${task.path} (${Formats.date(date(pkg.lastUnpacked!!))})"
+                                                "$path (${Formats.date(date(pkg.lastUnpacked!!))})"
                                             } else {
-                                                "${task.path} (not yet)"
+                                                "$path (not yet)"
                                             }
                                         }
                                     }.joinToString("<br>")

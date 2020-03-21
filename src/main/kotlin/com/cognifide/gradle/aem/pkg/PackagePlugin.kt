@@ -62,23 +62,27 @@ class PackagePlugin : CommonDefaultPlugin() {
                 }
             }
         }
-        val upload = register<PackageUpload>(PackageUpload.NAME) {
+        val validate = register<PackageValidate>(PackageValidate.NAME) {
             dependsOn(compose)
+            packages.from(compose.flatMap { it.archiveFile })
+        }
+        val upload = register<PackageUpload>(PackageUpload.NAME) {
+            dependsOn(compose, validate)
         }
         val install = register<PackageInstall>(PackageInstall.NAME) {
-            dependsOn(compose)
+            dependsOn(compose, validate)
             mustRunAfter(upload)
         }
         val uninstall = register<PackageUninstall>(PackageUninstall.NAME) {
-            dependsOn(compose)
+            dependsOn(compose, validate)
             mustRunAfter(upload, install)
         }
         val activate = register<PackageActivate>(PackageActivate.NAME) {
-            dependsOn(compose)
+            dependsOn(compose, validate)
             mustRunAfter(upload, install)
         }
         val deploy = register<PackageDeploy>(PackageDeploy.NAME) {
-            dependsOn(compose)
+            dependsOn(compose, validate)
         }.apply {
             if (plugins.hasPlugin(InstancePlugin::class.java)) {
                 val create = named<Task>(InstanceCreate.NAME)
@@ -94,15 +98,18 @@ class PackagePlugin : CommonDefaultPlugin() {
         }
 
         register<PackageDelete>(PackageDelete.NAME) {
-            dependsOn(compose)
+            dependsOn(compose, validate)
             mustRunAfter(deploy, upload, install, activate, uninstall)
         }
         register<PackagePurge>(PackagePurge.NAME) {
-            dependsOn(compose)
+            dependsOn(compose, validate)
             mustRunAfter(deploy, upload, install, activate, uninstall)
         }
         named<Task>(LifecycleBasePlugin.ASSEMBLE_TASK_NAME) {
             dependsOn(compose)
+        }
+        named<Task>(LifecycleBasePlugin.CHECK_TASK_NAME) {
+            dependsOn(validate)
         }
         typed<PackageTask> {
             files.from(compose.map { it.archiveFile })

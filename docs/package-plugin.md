@@ -16,6 +16,7 @@
      * [Assembling packages (merging all-in-one)](#assembling-packages-merging-all-in-one)
      * [Expandable properties](#expandable-properties)
   * [Task packagePrepare](#task-packageprepare)
+  * [Task packageValidate](#task-packagevalidate)
   * [Task packageDeploy](#task-packagedeploy)
      * [Deploying only to desired instances](#deploying-only-to-desired-instances)
      * [Deploying options](#deploying-options)
@@ -71,14 +72,6 @@ aem {
                 ))
                 name.set(archiveBaseName)
                 group.set(project.grouop)
-            }
-            validator {
-                enabled.set(true)
-                verbose.set(true)
-                severity("MAJOR")
-                planName.set("plan.json")
-                jcrPrivileges.set(listOf("crx:replicate"))
-                cndFiles.from(packageOptions.configDir.file("nodetypes.cnd"))
             }
             fileFilter {
                 expanding = true
@@ -342,9 +335,34 @@ Processes CRX package metadata - combines default files provided by plugin itsel
 Also responsible for synchronizing Vault node types consumed later by [CRX package validation](#crx-package-validation) in the end of [compose task](#task-packagecompose).
 Covers extracted logic being initially a part of compose task. Reason of separation is effectively better Gradle caching.
  
+## Task `packageValidate`
+
+Validates composed CRX package.
+
+For setting common options see section [CRX package validation](#crx-package-validation). 
+
+For setting project/package specific options use snippet below:
+
+```kotlin
+tasks {
+    packageValidate {
+        validator {
+            enabled.set(true)
+            verbose.set(true)
+            severity("MAJOR")
+            planName.set("plan.json")
+            jcrPrivileges.set(listOf("crx:replicate"))
+            cndFiles.from(packageOptions.configDir.file("nodetypes.cnd"))
+        }
+    }
+}
+```
+ 
 ## Task `packageDeploy` 
 
-Upload & install CRX package into AEM instance(s). Primary, recommended form of deployment. Optimized version of `packageUpload packageInstall`.
+Upload & install CRX package into AEM instance(s). 
+
+Recommended form of deployment. Optimized version of `packageUpload packageInstall`.
 
 ### Deploying only to desired instances
 

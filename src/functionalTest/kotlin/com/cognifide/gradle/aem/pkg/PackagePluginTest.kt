@@ -70,8 +70,9 @@ class PackagePluginTest : AemBuildTest() {
             """)
         }
 
-        runBuild(projectDir, "packageCompose", "-Poffline") {
+        runBuild(projectDir, "packageValidate", "-Poffline") {
             assertTask(":packageCompose", TaskOutcome.UP_TO_DATE)
+            assertTask(":packageValidate")
         }
     }
 
@@ -176,8 +177,9 @@ class PackagePluginTest : AemBuildTest() {
             """)
         }
 
-        runBuild(projectDir, ":assembly:packageCompose", "-Poffline") {
+        runBuild(projectDir, ":assembly:packageValidate", "-Poffline") {
             assertTask(":assembly:packageCompose", TaskOutcome.UP_TO_DATE)
+            assertTask(":assembly:packageValidate")
         }
     }
 
@@ -242,8 +244,9 @@ class PackagePluginTest : AemBuildTest() {
             """)
         }
 
-        runBuild(projectDir, "packageCompose", "-Poffline") {
+        runBuild(projectDir, "packageValidate", "-Poffline") {
             assertTask(":packageCompose", TaskOutcome.UP_TO_DATE)
+            assertTask(":packageValidate")
         }
     }
 
