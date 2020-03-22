@@ -20,6 +20,11 @@ class Step(val provisioner: Provisioner, val id: String) {
     var description: String? = null
 
     /**
+     * Implementation version number.
+     */
+    var version: Long = 1L
+
+    /**
      * Allows to redo step action after delay if exception is thrown.
      */
     var retry: Retry = common.retry { afterSquaredSecond(aem.prop.long("instance.provision.step.retry") ?: 0L) }

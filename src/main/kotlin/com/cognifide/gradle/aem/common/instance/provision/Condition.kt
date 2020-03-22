@@ -36,7 +36,7 @@ class Condition(val step: InstanceStep) {
     /**
      * Perform step only once regardless if it fails or not.
      */
-    fun ultimateOnce() = !step.ended
+    fun ultimateOnce() = !step.ended || step.changed
 
     /**
      * Repeat performing step after specified number of milliseconds since last time.
