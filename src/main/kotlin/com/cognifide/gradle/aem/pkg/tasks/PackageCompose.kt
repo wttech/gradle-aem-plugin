@@ -6,7 +6,6 @@ import com.cognifide.gradle.aem.bundle.tasks.BundleCompose
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.aem.common.pkg.PackageException
 import com.cognifide.gradle.aem.common.pkg.PackageFileFilter
-import com.cognifide.gradle.aem.common.pkg.PackageValidator
 import com.cognifide.gradle.aem.common.pkg.vault.FilterFile
 import com.cognifide.gradle.aem.common.pkg.vault.FilterType
 import com.cognifide.gradle.aem.common.pkg.vault.VaultDefinition
@@ -19,7 +18,6 @@ import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.tasks.*
 
-@Suppress("TooManyFunctions")
 open class PackageCompose : ZipTask(), AemTask {
 
     final override val aem = project.aem
@@ -56,16 +54,6 @@ open class PackageCompose : ZipTask(), AemTask {
      */
     @Internal
     val nestedPath = aem.obj.string { convention(aem.packageOptions.storagePath) }
-
-    @Nested
-    val validator = PackageValidator(aem).apply {
-        workDir.convention(destinationDirectory.dir(Package.OAKPAL_OPEAR_PATH))
-        planName.convention("plan-compose.json")
-    }
-
-    fun validator(options: PackageValidator.() -> Unit) {
-        validator.apply(options)
-    }
 
     /**
      * Defines properties being used to generate CRX package metadata files.
@@ -106,12 +94,6 @@ open class PackageCompose : ZipTask(), AemTask {
     override fun projectsEvaluated() {
         super.projectsEvaluated()
         (definitions + definition).forEach { it() }
-    }
-
-    @TaskAction
-    override fun copy() {
-        super.copy()
-        validator.perform(composedFile)
     }
 
     fun fromDefaults() {
