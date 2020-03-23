@@ -9,7 +9,7 @@ class InstallResolver(private val aem: AemExtension) {
     private val common = aem.common
 
     private val fileResolver = FileResolver(common).apply {
-        downloadDir.convention(aem.obj.buildDir("instance/install"))
+        downloadDir.convention(aem.obj.buildDir("localInstance/install"))
         aem.prop.file("localInstance.install.downloadDir")?.let { downloadDir.set(it) }
         aem.prop.list("localInstance.install.urls")?.forEachIndexed { index, url ->
             val no = index + 1

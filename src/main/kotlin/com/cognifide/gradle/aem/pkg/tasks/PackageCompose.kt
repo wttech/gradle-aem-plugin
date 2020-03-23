@@ -51,10 +51,28 @@ open class PackageCompose : ZipTask(), AemTask {
     val bundlePath = aem.obj.string { convention(aem.packageOptions.installPath) }
 
     /**
+     * Controls running tests for built bundles before placing them at [bundlePath].
+     */
+    @Input
+    val bundleTest = aem.obj.boolean {
+        convention(true)
+        aem.prop.boolean("package.bundleTest")?.let { set(it) }
+    }
+
+    /**
      * Content path for CRX sub-packages being placed in CRX package being built.
      */
-    @Internal
+    @Input
     val nestedPath = aem.obj.string { convention(aem.packageOptions.storagePath) }
+
+    /**
+     * Controls validating built packages before placing them at [nestedPath].
+     */
+    @Input
+    val nestedValidation = aem.obj.boolean {
+        convention(true)
+        aem.prop.boolean("package.nestedValidation")?.let { set(it) }
+    }
 
     /**
      * Defines properties being used to generate CRX package metadata files.
@@ -186,7 +204,9 @@ open class PackageCompose : ZipTask(), AemTask {
 
     fun nestPackageProject(projectPath: String, options: PackageNestedBuilt.() -> Unit = {}) {
         nestPackageBuilt("$projectPath:$NAME", options)
-        dependsOn("$projectPath:${PackageValidate.NAME}")
+        if (nestedValidation.get()) {
+            dependsOn("$projectPath:${PackageValidate.NAME}")
+        }
     }
 
     fun nestPackageBuilt(taskPath: String, options: PackageNestedBuilt.() -> Unit = {}) {
@@ -206,7 +226,9 @@ open class PackageCompose : ZipTask(), AemTask {
 
     fun installBundleProject(projectPath: String, options: BundleInstalledBuilt.() -> Unit = {}) {
         installBundleBuilt("$projectPath:${BundleCompose.NAME}", options)
-        dependsOn("$projectPath:${JavaPlugin.TEST_TASK_NAME}")
+        if (bundleTest.get()) {
+            dependsOn("$projectPath:${JavaPlugin.TEST_TASK_NAME}")
+        }
     }
 
     fun installBundleBuilt(taskPath: String, options: BundleInstalledBuilt.() -> Unit = {}) {

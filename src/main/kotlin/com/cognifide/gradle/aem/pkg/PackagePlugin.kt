@@ -2,7 +2,6 @@ package com.cognifide.gradle.aem.pkg
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.bundle.BundlePlugin
-import com.cognifide.gradle.aem.bundle.tasks.BundleCompose
 import com.cognifide.gradle.aem.common.CommonPlugin
 import com.cognifide.gradle.aem.common.tasks.PackageTask
 import com.cognifide.gradle.aem.instance.InstancePlugin
@@ -13,8 +12,6 @@ import com.cognifide.gradle.common.tasks.configureApply
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.artifacts.Dependency
-import org.gradle.api.plugins.JavaPlugin
-import org.gradle.api.tasks.testing.Test
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 
 class PackagePlugin : CommonDefaultPlugin() {
@@ -52,13 +49,9 @@ class PackagePlugin : CommonDefaultPlugin() {
         }.apply {
             artifacts.add(Dependency.ARCHIVES_CONFIGURATION, this)
 
-            if (plugins.hasPlugin(BundlePlugin::class.java)) {
-                val test = named<Test>(JavaPlugin.TEST_TASK_NAME)
-                val bundle = named<BundleCompose>(BundleCompose.NAME)
-
-                configureApply {
-                    installBundleBuilt(bundle)
-                    dependsOn(test)
+            afterEvaluate {
+                if (plugins.hasPlugin(BundlePlugin::class.java)) {
+                    configureApply { installBundleProject(project.path) }
                 }
             }
         }

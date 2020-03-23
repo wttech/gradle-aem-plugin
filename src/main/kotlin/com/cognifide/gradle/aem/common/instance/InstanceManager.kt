@@ -31,7 +31,7 @@ open class InstanceManager(val aem: AemExtension) {
      * Directory storing instance wide configuration files.
      */
     val configDir = aem.obj.dir {
-        convention(projectDir.dir("src/aem/instance"))
+        convention(projectDir.dir(aem.prop.string("instance.configPath") ?: "src/aem/instance"))
         aem.prop.file("instance.configDir")?.let { set(it) }
     }
 
