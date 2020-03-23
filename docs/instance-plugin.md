@@ -327,22 +327,22 @@ Instead, tailer is continuously polling log files using HTTP endpoint provided b
 New log entries are being dynamically appended to log files stored on local file system in a separate file for each environment. 
 By having all log files in one place, AEM developer or QA engineer has an opportunity to comportably analyze logs, verify incidents occuring on AEM instances.
 
-To customize tailer behavior, see [InstanceTailer](src/main/kotlin/com/cognifide/gradle/aem/instance/tail/InstanceTailer.kt).
+To customize tailer behavior, see [Tailer](src/main/kotlin/com/cognifide/gradle/aem/common/instance/tail/Tailer.kt).
 
 ```kotlin
 aem {
     instance {
         tailer {
-            logFilePath = prop.string("instance.tail.logFilePath") ?: "/logs/error.log"
-            logListener = { instance -> /* ... */ }
-            incidentFilter = prop.string("instance.tail.incidentFilter")?.let { project.file(it) } ?: File(configCommonDir, "instanceTail/incidentFilter.txt")
-            incidentDelay = prop.long("instance.tail.incidentDelay") ?: 5000L
+            logFilePath.set(prop.string("instance.tail.logFilePath") ?: "/logs/error.log")
+            logListener { instance -> /* ... */ }
+            incidentFilter.set(file(prop.string("instance.tail.incidentFilter") ?: "src/aem/instance/tail/incidentFilter.txt"))
+            incidentDelay.set(prop.long("instance.tail.incidentDelay") ?: 5000L)
         }
     }
 }
 ```
 
-Log files are stored under directory: *build/aem/instanceTail/${instance.name}/error.log*.
+Log files are stored under directory: *build/instance/tail/${instance.name}/error.log*.
 
 ### Tailing incidents
 
@@ -352,7 +352,7 @@ Clicking on that notification will browse to incident log file created containin
 Which type of log entries are treated as a part of incident is determined by:
 
 * property `-Pinstance.tail.incidentLevels=[ERROR,WARN]`
-* wildcard exclusion rules defined in file which location is controlled by property `-Pinstance.tail.incidentFilter=aem/gradle/instanceTail/incidentFilter.txt`
+* wildcard exclusion rules defined in file which location is controlled by property `-Pinstance.tail.incidentFilter=src/aem/instance/tail/incidentFilter.txt`
 
 Sample content of  *incidentFilter.txt* file, which holds a fragments of log entries that will be treated as known issues (notifications will be no longer shown):
 
@@ -471,8 +471,8 @@ By default, script outputs, results and exceptions are hidden. To see them, simp
 Output:
 
 ```
-Groovy script '/Users/krystian.panek/Projects/gradle-aem-multi/aem/gradle/groovyScript/content-cleanup.groovy' evaluated with success in '00:00:02.520' on LocalInstance(name='local-author', httpUrl='http://localhost:4502')
-Groovy script '/Users/krystian.panek/Projects/gradle-aem-multi/aem/gradle/groovyScript/content-cleanup.groovy' output:
+Groovy script '/Users/krystian.panek/Projects/gradle-aem-multi/src/aem/instance/groovyScript/content-cleanup.groovy' evaluated with success in '00:00:02.520' on LocalInstance(name='local-author', httpUrl='http://localhost:4502')
+Groovy script '/Users/krystian.panek/Projects/gradle-aem-multi/src/aem/instance/groovyScript/content-cleanup.groovy' output:
 Cleaning content at root '/content/example/demo'
 Cleaning page '/content/example/demo/en-gb/jcr:content'
 Cleaning page '/content/example/demo/jcr:content'
@@ -482,8 +482,8 @@ Cleaning content at root '/content/example/live'
 Cleaning page '/content/example/live/jcr:content'
 Cleaning page '/content/example/live/en-us/jcr:content'
 Cleaned content at root '/content/example/live'
-Groovy script '/Users/krystian.panek/Projects/gradle-aem-multi/aem/gradle/groovyScript/content-cleanup.groovy' evaluated with success in '00:00:02.527' on LocalInstance(name='local-publish', httpUrl='http://localhost:4503')
-Groovy script '/Users/krystian.panek/Projects/gradle-aem-multi/aem/gradle/groovyScript/content-cleanup.groovy' output:
+Groovy script '/Users/krystian.panek/Projects/gradle-aem-multi/src/aem/instance/groovyScript/content-cleanup.groovy' evaluated with success in '00:00:02.527' on LocalInstance(name='local-publish', httpUrl='http://localhost:4503')
+Groovy script '/Users/krystian.panek/Projects/gradle-aem-multi/src/aem/instance/groovyScript/content-cleanup.groovy' output:
 Cleaning content at root '/content/example/demo'
 Cleaning page '/content/example/demo/en-gb/jcr:content'
 Cleaning page '/content/example/demo/jcr:content'
