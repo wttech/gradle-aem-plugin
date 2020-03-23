@@ -273,12 +273,13 @@ class PackagePluginTest : AemBuildTest() {
                 
                 repositories {
                     jcenter()
+                    maven("https://repo.adobe.com/nexus/content/groups/public")
                 }
                 
                 tasks {
                     packageCompose {
-                        nestPackageBuilt(":ui.content:packageCompose")
-                        installBundleBuilt(":ui.apps:bundleCompose")
+                        nestPackageProject(":ui.content")
+                        installBundleProject(":ui.apps")
                     }
                 }
                 """)
@@ -291,6 +292,10 @@ class PackagePluginTest : AemBuildTest() {
 
         runBuild(projectDir, "packageCompose", "-Poffline") {
             assertTask(":packageCompose")
+            assertTask(":ui.apps:bundleCompose")
+            assertTask(":ui.apps:test")
+            assertTask(":ui.content:packageCompose")
+            assertTask(":ui.content:packageValidate")
 
             val pkg = file("build/packageCompose/example-1.0.0.zip")
 
@@ -321,11 +326,15 @@ class PackagePluginTest : AemBuildTest() {
             
             repositories {
                 jcenter()
+                maven("https://repo.adobe.com/nexus/content/groups/public")
             }
             
             dependencies {
                 compileOnly("org.slf4j:slf4j-api:1.5.10")
                 compileOnly("org.osgi:osgi.cmpn:6.0.0")
+                
+                testImplementation("org.junit.jupiter:junit-jupiter:5.5.2")
+                testImplementation("io.wcm:io.wcm.testing.aem-mock.junit5:2.5.2")
             }
             
             tasks {

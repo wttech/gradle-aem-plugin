@@ -39,6 +39,8 @@ open class AemBuildTest {
         build()
     }
 
+    // === Samples  ===
+
     fun File.helloServiceJava(rootPath: String = "") {
         file(rootPath(rootPath, "src/main/java/com/company/example/aem/HelloService.java"), """
             package com.company.example.aem;
@@ -62,6 +64,29 @@ open class AemBuildTest {
                 @Deactivate
                 protected void deactivate() {
                     LOG.info("Good bye world!");
+                }
+            }
+        """)
+
+        file(rootPath(rootPath, "src/test/java/com/company/example/aem/HelloServiceTest.java"), """
+            package com.company.example.aem;
+            
+            import static org.junit.jupiter.api.Assertions.*;
+            
+            import org.junit.jupiter.api.Test;
+            import org.junit.jupiter.api.extension.ExtendWith;
+            import io.wcm.testing.mock.aem.junit5.AemContext;
+            import io.wcm.testing.mock.aem.junit5.AemContextExtension;
+            
+            @ExtendWith(AemContextExtension.class)
+            class HelloServiceTest {
+                
+                private final AemContext context = new AemContext();
+                    
+                @Test
+                void shouldUseService() {
+                    context.registerInjectActivateService(new HelloService());
+                    assertNotNull(context.getService(HelloService.class));
                 }
             }
         """)

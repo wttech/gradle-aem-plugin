@@ -172,10 +172,7 @@ open class PackageCompose : ZipTask(), AemTask {
         vaultDefinition.nodeTypeLines.addAll(other.nodeTypeLines)
     }
 
-    fun mergePackageProject(projectPath: String) {
-        mergePackage("$projectPath:$NAME")
-        dependsOn("$projectPath:${PackageValidate.NAME}")
-    }
+    fun mergePackageProject(projectPath: String) = mergePackage("$projectPath:$NAME")
 
     fun mergePackage(taskPath: String) = mergePackage(common.tasks.pathed(taskPath))
 

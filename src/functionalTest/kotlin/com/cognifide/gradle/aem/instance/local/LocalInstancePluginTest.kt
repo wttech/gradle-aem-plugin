@@ -111,7 +111,7 @@ class LocalInstancePluginTest : AemBuildTest() {
                 
                 repositories {
                     jcenter()
-                    maven { url = uri("https://repo.adobe.com/nexus/content/groups/public") }
+                    maven("https://repo.adobe.com/nexus/content/groups/public")
                 }
                 
                 aem {
