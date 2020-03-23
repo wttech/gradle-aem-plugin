@@ -15,6 +15,7 @@ import com.cognifide.gradle.common.utils.using
 import org.gradle.api.file.CopySpec
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.tasks.*
 
@@ -171,7 +172,10 @@ open class PackageCompose : ZipTask(), AemTask {
         vaultDefinition.nodeTypeLines.addAll(other.nodeTypeLines)
     }
 
-    fun mergePackageProject(projectPath: String) = mergePackage("$projectPath:$NAME")
+    fun mergePackageProject(projectPath: String) {
+        mergePackage("$projectPath:$NAME")
+        dependsOn("$projectPath:${PackageValidate.NAME}")
+    }
 
     fun mergePackage(taskPath: String) = mergePackage(common.tasks.pathed(taskPath))
 
@@ -185,6 +189,7 @@ open class PackageCompose : ZipTask(), AemTask {
 
     fun nestPackageProject(projectPath: String, options: PackageNestedBuilt.() -> Unit = {}) {
         nestPackageBuilt("$projectPath:$NAME", options)
+        dependsOn("$projectPath:${PackageValidate.NAME}")
     }
 
     fun nestPackageBuilt(taskPath: String, options: PackageNestedBuilt.() -> Unit = {}) {
@@ -204,6 +209,7 @@ open class PackageCompose : ZipTask(), AemTask {
 
     fun installBundleProject(projectPath: String, options: BundleInstalledBuilt.() -> Unit = {}) {
         installBundleBuilt("$projectPath:${BundleCompose.NAME}", options)
+        dependsOn("$projectPath:${JavaPlugin.TEST_TASK_NAME}")
     }
 
     fun installBundleBuilt(taskPath: String, options: BundleInstalledBuilt.() -> Unit = {}) {
