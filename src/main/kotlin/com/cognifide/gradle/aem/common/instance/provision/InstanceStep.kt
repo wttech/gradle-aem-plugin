@@ -24,6 +24,10 @@ class InstanceStep(val instance: Instance, val definition: Step) {
 
     val ended: Boolean get() = marker.exists && marker.hasProperty(ENDED_AT_PROP)
 
+    val version: Long get() = marker.takeIf { it.exists }?.properties?.long(VERSION_PROP) ?: 1L
+
+    val changed: Boolean get() = version != definition.version
+
     val endedAt: Date
         get() = marker.properties.date(ENDED_AT_PROP)
                 ?: throw ProvisionException("Provision step '${definition.id}' not yet ended on $instance!")
@@ -70,11 +74,13 @@ class InstanceStep(val instance: Instance, val definition: Step) {
                 }
             }
             marker.save(mapOf(
+                    VERSION_PROP to definition.version,
                     ENDED_AT_PROP to Date(),
                     FAILED_PROP to false
             ))
         } catch (e: Exception) {
             marker.save(mapOf(
+                    VERSION_PROP to definition.version,
                     ENDED_AT_PROP to Date(),
                     FAILED_PROP to true
             ))
@@ -96,5 +102,7 @@ class InstanceStep(val instance: Instance, val definition: Step) {
         const val FAILED_PROP = "failed"
 
         const val COUNTER_PROP = "counter"
+
+        const val VERSION_PROP = "version"
     }
 }

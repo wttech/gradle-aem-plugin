@@ -228,7 +228,7 @@ class BackupManager(private val aem: AemExtension) {
     }
 
     companion object {
-        const val OUTPUT_DIR = "instance/backup"
+        const val OUTPUT_DIR = "localInstance/backup"
 
         const val SUFFIX_DEFAULT = ".backup.zip"
     }

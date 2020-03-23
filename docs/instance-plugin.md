@@ -69,8 +69,8 @@ Illustrative configuration:
 
 ```kotlin
 aem {
-    tasks {
-        instanceSatisfy {
+    instance {
+        satisfier {
             packages {
                 "tool.search-webconsole-plugin"("com.neva.felix:search-webconsole-plugin:1.2.0")
                 // is shorthand syntax for (effectively same as)
@@ -115,8 +115,8 @@ In other words, for instance, there is ability to run groovy console script befo
 
 ```kotlin
 aem {
-    tasks {
-        instanceSatisfy {
+    instance {
+        satisfier {
             packages {
                 group("tool.groovy-console") { 
                     download("https://github.com/OlsonDigital/aem-groovy-console/releases/download/11.0.0/aem-groovy-console-11.0.0.zip")
@@ -173,13 +173,13 @@ Sample configuration:
 
 ```kotlin
 aem {
-    tasks {
-        instanceProvision {
+    instance {
+        provisioner {
             step("enable-crxde") {
                 description = "Enables CRX DE"
                 condition { once() && instance.environment != "prod" }
-`               sync {
-                    osgiFramework.configure("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", mapOf(
+                sync {
+                    osgi.configure("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", mapOf(
                             "alias" to "/crx/server"
                     ))
                 }
@@ -201,8 +201,8 @@ aem {
             step("disable-unsecure-bundles") {
                 condition { once() && instance.environment == "prod" }
                 sync {
-                    osgiFramework.stopBundle("org.apache.sling.jcr.webdav")
-                    osgiFramework.stopBundle("com.adobe.granite.crxde-lite")
+                    osgi.stopBundle("org.apache.sling.jcr.webdav")
+                    osgi.stopBundle("com.adobe.granite.crxde-lite")
 
                     instance.awaitUp() // include above in property: 'instance.awaitUp.bundles.symbolicNamesIgnored'
                 }
@@ -214,7 +214,7 @@ aem {
 
 By running task `instanceProvision`, provisioner will perform all steps for which conditions are met.
 Specifying condition could be even omitted, then by default each step will be performed only `once()` 
-which means that configured `action {}` will be executed only once on each AEM instance.
+which means that configured `action {}` (or action set via shorthand `sync {}`) will be executed only once on each AEM instance.
 
 Conditions could be more complex and use helpful methods basing on: 
 
@@ -255,26 +255,46 @@ aem {
         instanceAwait {
             awaitUp {
                 timeout {
-                    stateTime = prop.long("instance.awaitUp.timeout.stateTime") ?: TimeUnit.MINUTES.toMillis(2)
-                    constantTime = prop.long("instance.awaitUp.timeout.constantTime") ?: TimeUnit.MINUTES.toMillis(10)
+                    stateTime.apply {
+                        convention(TimeUnit.MINUTES.toMillis(2))
+                        set(prop.long("instance.awaitUp.timeout.stateTime"))
+                    }
+                    constantTime.apply {
+                        convention(TimeUnit.MINUTES.toMillis(10))
+                        set(prop.long("instance.awaitUp.timeout.constantTime"))
+                    }
                 }
                 bundles {
-                    symbolicNamesIgnored = prop.list("instance.awaitUp.bundles.symbolicNamesIgnored") ?: listOf()
+                    symbolicNamesIgnored.apply {
+                        convention(listOf())
+                        set(prop.list("instance.awaitUp.bundles.symbolicNamesIgnored"))
+                    }
                 }
                 components {
-                    platformComponents = prop.list("instance.awaitUp.components.platform") ?: listOf(
-                        "com.day.crx.packaging.*", 
-                        "org.apache.sling.installer.*"
-                    )
-                    specificComponents = prop.list("instance.awaitUp.components.specific") ?: javaPackages.map { "$it.*" }
+                    platformComponents.apply {
+                        convention(listOf(
+                            "com.day.crx.packaging.*", 
+                            "org.apache.sling.installer.*"
+                        ))
+                        set(prop.list("instance.awaitUp.components.platform"))
+                    }
+                    specificComponents.apply {
+                        convention(obj.provider { javaPackages.map { "$it.*" } })
+                        set(prop.list("instance.awaitUp.components.specific"))
+                    }
                 }
                 events {
-                    unstableTopics = prop.list("instance.awaitUp.event.unstableTopics") ?: listOf(
-                        "org/osgi/framework/ServiceEvent/*",
-                        "org/osgi/framework/FrameworkEvent/*",
-                        "org/osgi/framework/BundleEvent/*"
-                    )
-                    unstableAgeMillis = prop.long("instance.awaitUp.event.unstableAgeMillis") ?: TimeUnit.SECONDS.toMillis(5)
+                    unstableTopics.apply {
+                        convention(listOf(
+                            "org/osgi/framework/ServiceEvent/*",
+                            "org/osgi/framework/FrameworkEvent/*",
+                            "org/osgi/framework/BundleEvent/*"
+                        ))
+                    }   set(prop.list("instance.awaitUp.event.unstableTopics"))
+                    unstableAgeMillis.apply {
+                        convention(TimeUnit.SECONDS.toMillis(5))
+                        set(prop.long("instance.awaitUp.event.unstableAgeMillis"))
+                    }
                 }
             }
         }
@@ -311,14 +331,12 @@ To customize tailer behavior, see [InstanceTailer](src/main/kotlin/com/cognifide
 
 ```kotlin
 aem {
-    tasks {
-        instanceTail {
-            tailer {
-                logFilePath = prop.string("instance.tail.logFilePath") ?: "/logs/error.log"
-                logListener = { instance -> /* ... */ }
-                incidentFilter = prop.string("instance.tail.incidentFilter")?.let { project.file(it) } ?: File(configCommonDir, "instanceTail/incidentFilter.txt")
-                incidentDelay = prop.long("instance.tail.incidentDelay") ?: 5000L
-            }
+    instance {
+        tailer {
+            logFilePath = prop.string("instance.tail.logFilePath") ?: "/logs/error.log"
+            logListener = { instance -> /* ... */ }
+            incidentFilter = prop.string("instance.tail.incidentFilter")?.let { project.file(it) } ?: File(configCommonDir, "instanceTail/incidentFilter.txt")
+            incidentDelay = prop.long("instance.tail.incidentDelay") ?: 5000L
         }
     }
 }

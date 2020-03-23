@@ -6,7 +6,6 @@ import com.cognifide.gradle.aem.bundle.tasks.BundleCompose
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.aem.common.pkg.PackageException
 import com.cognifide.gradle.aem.common.pkg.PackageFileFilter
-import com.cognifide.gradle.aem.common.pkg.PackageValidator
 import com.cognifide.gradle.aem.common.pkg.vault.FilterFile
 import com.cognifide.gradle.aem.common.pkg.vault.FilterType
 import com.cognifide.gradle.aem.common.pkg.vault.VaultDefinition
@@ -16,10 +15,10 @@ import com.cognifide.gradle.common.utils.using
 import org.gradle.api.file.CopySpec
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.tasks.*
 
-@Suppress("TooManyFunctions")
 open class PackageCompose : ZipTask(), AemTask {
 
     final override val aem = project.aem
@@ -52,19 +51,27 @@ open class PackageCompose : ZipTask(), AemTask {
     val bundlePath = aem.obj.string { convention(aem.packageOptions.installPath) }
 
     /**
-     * Content path for CRX sub-packages being placed in CRX package being built.
+     * Controls running tests for built bundles before placing them at [bundlePath].
      */
-    @Internal
-    val nestedPath = aem.obj.string { convention(aem.packageOptions.storagePath) }
-
-    @Nested
-    val validator = PackageValidator(aem).apply {
-        workDir.convention(destinationDirectory.dir(Package.OAKPAL_OPEAR_PATH))
-        planName.convention("plan-compose.json")
+    @Input
+    val bundleTest = aem.obj.boolean {
+        convention(true)
+        aem.prop.boolean("package.bundleTest")?.let { set(it) }
     }
 
-    fun validator(options: PackageValidator.() -> Unit) {
-        validator.apply(options)
+    /**
+     * Content path for CRX sub-packages being placed in CRX package being built.
+     */
+    @Input
+    val nestedPath = aem.obj.string { convention(aem.packageOptions.storagePath) }
+
+    /**
+     * Controls validating built packages before placing them at [nestedPath].
+     */
+    @Input
+    val nestedValidation = aem.obj.boolean {
+        convention(true)
+        aem.prop.boolean("package.nestedValidation")?.let { set(it) }
     }
 
     /**
@@ -106,12 +113,6 @@ open class PackageCompose : ZipTask(), AemTask {
     override fun projectsEvaluated() {
         super.projectsEvaluated()
         (definitions + definition).forEach { it() }
-    }
-
-    @TaskAction
-    override fun copy() {
-        super.copy()
-        validator.perform(composedFile)
     }
 
     fun fromDefaults() {
@@ -203,6 +204,9 @@ open class PackageCompose : ZipTask(), AemTask {
 
     fun nestPackageProject(projectPath: String, options: PackageNestedBuilt.() -> Unit = {}) {
         nestPackageBuilt("$projectPath:$NAME", options)
+        if (nestedValidation.get()) {
+            dependsOn("$projectPath:${PackageValidate.NAME}")
+        }
     }
 
     fun nestPackageBuilt(taskPath: String, options: PackageNestedBuilt.() -> Unit = {}) {
@@ -222,6 +226,9 @@ open class PackageCompose : ZipTask(), AemTask {
 
     fun installBundleProject(projectPath: String, options: BundleInstalledBuilt.() -> Unit = {}) {
         installBundleBuilt("$projectPath:${BundleCompose.NAME}", options)
+        if (bundleTest.get()) {
+            dependsOn("$projectPath:${JavaPlugin.TEST_TASK_NAME}")
+        }
     }
 
     fun installBundleBuilt(taskPath: String, options: BundleInstalledBuilt.() -> Unit = {}) {

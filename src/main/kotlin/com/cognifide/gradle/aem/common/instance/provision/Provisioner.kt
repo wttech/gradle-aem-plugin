@@ -75,7 +75,7 @@ class Provisioner(val manager: InstanceManager) {
             }
         }
 
-        if (actions.isEmpty()) {
+        if (actions.none { it.status != Status.SKIPPED }) {
             logger.lifecycle("No steps to perform / all instances provisioned.")
         }
 

@@ -48,7 +48,7 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
      * Path for storing local AEM instances related resources.
      */
     val configDir = aem.obj.dir {
-        convention(projectDir.dir("src/aem/localInstance"))
+        convention(projectDir.dir(aem.prop.string("localInstance.configPath") ?: "src/aem/localInstance"))
         aem.prop.file("localInstance.configDir")?.let { set(it) }
     }
 

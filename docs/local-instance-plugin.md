@@ -137,17 +137,18 @@ This behavior could be customized by `localInstance` section of plugin DSL:
 ```kotlin
 aem {
     localInstance {
-        rootDir = file(".instance") // path under which local instance files are stored
-        overridesDir = file("gradle/instance/local") // path with directories instance specific (common, author, publish) holding files that can override default instance files
-        expandProperties = mapOf() // place where additional properties can be defined
-        expandFiles = listOf( // file patterns which allows using variables inside
+        rootDir.set(file(".instance")) // path under which local instance files are stored
+        configDir.set(file("src/aem/localInstance"))
+        overrideDir.set(configDir.dir("override")) // path with directories instance specific (common, author, publish) holding files that can override default instance files
+        expandProperties.set(mapOf<String, Any>()) // place where additional properties can be defined
+        expandFiles.set(listOf( // file patterns which allows using variables inside
             "**/*.properties", 
             "**/*.sh", 
             "**/*.bat", 
             "**/*.xml",
             "**/start",
             "**/stop"
-        ) 
+        ))
     }
 }
 ```
@@ -167,17 +168,17 @@ It is needed to override only two properties in the final `sling.properties` fil
 * and `org.osgi.framework.bootdelegation`
   * to solve known [FELIX-6184](https://issues.apache.org/jira/browse/FELIX-6184) issue 
 
-To achieve that, add file with your props under `gradle` directory in your project:
-`gradle/instance/local/common/crx-quickstart/conf/sling.properties` 
+To achieve that, add file with your props under `src/aem/localInstance` directory in your project:
+`src/aem/localInstance/common/crx-quickstart/conf/sling.properties` 
 
 ```properties
 org.osgi.framework.system.packages.extra=org.apache.sling.launchpad.api;version\=1.2.0 ${org.apache.sling.launcher.system.packages},com.sun.org.apache.xpath.internal;version\="{dollar}{felix.detect.java.version}",com.sun.activation.registries;version\="{dollar}{felix.detect.java.version}"
 org.osgi.framework.bootdelegation=sun.*,com.sun.*,jdk.internal.reflect,jdk.internal.reflect.*
 ```
 
-Now, when creating a new instance with this configuration, only those two properties will get overridden in `slin.properties`.
+Now, when creating a new instance with this configuration, only those two properties will get overridden in `sling.properties`.
 
-Notice, that adding the file under `gradle/instance/local/common` will apply it both for author and publish instances.
+Notice that adding the file under `src/aem/localInstance/common` will apply it both for author and publish instances.
 
 ## Task `instanceBackup`
 
@@ -194,7 +195,7 @@ Most often it will be path: *build/aem/instanceBackup/local/xxx.backup.zip*. It 
 aem {
     localInstance {
         backup {
-            localDir = file("any/other/directory")
+            localDir.set(file("any/other/directory"))
         }
     }
 }
