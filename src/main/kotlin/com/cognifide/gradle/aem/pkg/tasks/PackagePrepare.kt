@@ -61,7 +61,6 @@ open class PackagePrepare : AemDefaultTask() {
             }
         }
 
-        // TODO this causes metaDir to be read while executing but this is output property
         if (vaultFilterTemplateFile.get().asFile.exists() && !vaultFilterOriginFile.get().asFile.exists()) {
             vaultFilterTemplateFile.get().asFile.renameTo(vaultFilterOriginFile.get().asFile)
         }
