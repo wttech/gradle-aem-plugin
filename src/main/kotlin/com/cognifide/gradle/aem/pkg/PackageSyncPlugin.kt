@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.pkg
 
 import com.cognifide.gradle.aem.common.CommonPlugin
+import com.cognifide.gradle.aem.pkg.tasks.PackageConfig
 import com.cognifide.gradle.aem.pkg.tasks.PackageSync
 import com.cognifide.gradle.aem.pkg.tasks.PackageVlt
 import com.cognifide.gradle.common.CommonDefaultPlugin
@@ -24,12 +25,12 @@ class PackageSyncPlugin : CommonDefaultPlugin() {
 
     private fun Project.setupTasks() = tasks {
         val clean = named<Task>(LifecycleBasePlugin.CLEAN_TASK_NAME)
-        register<PackageVlt>(PackageVlt.NAME) {
-            mustRunAfter(clean)
-        }
+
+        register<PackageVlt>(PackageVlt.NAME)
         register<PackageSync>(PackageSync.NAME) {
             mustRunAfter(clean)
         }
+        register<PackageConfig>(PackageConfig.NAME)
     }
 
     companion object {

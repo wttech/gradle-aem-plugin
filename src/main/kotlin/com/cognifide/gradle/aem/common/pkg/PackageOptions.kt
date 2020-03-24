@@ -9,7 +9,7 @@ class PackageOptions(private val aem: AemExtension) : Serializable {
     /**
      * Package specific configuration
      */
-    val configDir = aem.obj.projectDir(aem.prop.string("package.configPath") ?: "src/aem/package")
+    val commonDir = aem.obj.projectDir(aem.prop.string("package.commonPath") ?: "src/aem/package")
 
     /**
      * Package root directory containing 'jcr_root' and 'META-INF' directories.
@@ -30,27 +30,40 @@ class PackageOptions(private val aem: AemExtension) : Serializable {
      * Custom path to Vault files that will be used to build CRX package.
      * Useful to share same files for all packages, like package thumbnail.
      */
-    val metaCommonDir = aem.obj.relativeDir(configDir, Package.META_PATH)
+    val metaCommonDir = aem.obj.relativeDir(commonDir, Package.META_PATH)
 
     /**
-     * Content path for OSGi bundle jars being placed in CRX package.
-     *
-     * Default convention assumes that sub-projects have separate bundle paths, because of potential re-installation of sub-packages.
-     * When all sub-projects will have same bundle path, reinstalling one sub-package may end with deletion of other bundles coming from another sub-package.
-     * As a consequence, generally it is recommended to avoid providing value by putting it into properties file.
-     *
-     * Beware that more nested bundle install directories are not supported by AEM by default (up to 4th depth level).
-     * That's the reason of using dots in sub-project names to avoid that limitation.
+     * Content path for AEM application placed in CRX package.
      */
-    val installPath = aem.obj.string {
+    val appPath = aem.obj.string {
         convention(aem.obj.provider {
             when (aem.project) {
-                aem.project.rootProject -> "/apps/${aem.project.rootProject.name}/install"
-                else -> "/apps/${aem.project.rootProject.name}/${aem.project.name}/install"
+                aem.project.rootProject -> "/apps/${aem.project.rootProject.name}"
+                else -> "/apps/${aem.project.rootProject.name}/${aem.project.name}"
             }
         })
-        aem.prop.string("package.installPath")?.let { set(it) }
+        aem.prop.string("package.appPath")?.let { set(it) }
     }
+
+    /**
+     * Repository path for OSGi bundles (JAR files) placed in CRX package.
+     */
+    val installPath = aem.obj.string { convention(appPath.map { "$it/install" }) }
+
+    /**
+     * Source directory for OSGi bundles (JAR files) placed in CRX package.
+     */
+    val installDir = aem.obj.dir { convention(jcrRootDir.dir(installPath.map { it.removePrefix("/") })) }
+
+    /**
+     * Repository path for OSGi configurations placed in CRX package.
+     */
+    val configPath = aem.obj.string { convention(appPath.map { "$it/config" }) }
+
+    /**
+     * Source directory for XML files holding OSGi configurations placed in CRX package.
+     */
+    val configDir = aem.obj.dir { convention(jcrRootDir.dir(configPath.map { it.removePrefix("/") })) }
 
     /**
      * Content path at which CRX Package Manager is storing uploaded packages.
