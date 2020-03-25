@@ -5,7 +5,6 @@ import com.cognifide.gradle.aem.common.file.ZipFile
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.aem.common.instance.service.repository.Node
-import com.cognifide.gradle.aem.common.pkg.PackageException
 import com.cognifide.gradle.aem.common.utils.shortenClass
 import com.cognifide.gradle.common.utils.Patterns
 import org.gradle.api.tasks.Internal
@@ -39,25 +38,24 @@ open class PackageConfig : AemDefaultTask() {
 
     @TaskAction
     fun sync() = instance.get().sync {
-
         common.progress {
             step = "Preparing"
 
-            val pid = pid.orNull ?: aem.javaPackages.map { "$it.*" }.joinToString(",")
-            val rootNode = repository.node(rootPath.get())
-            val configPids = osgi.determineConfigurationState().pids.map { it.id }.filter { Patterns.wildcard(it, pid) }
-
+            val configPidPattern = pid.orNull ?: aem.javaPackages.joinToString(",") { "$it.*" }
+            val configPids = osgi.determineConfigurationState().pids.map { it.id }.filter { Patterns.wildcard(it, configPidPattern) }
             total = configPids.size.toLong()
 
             step = "Processing"
 
+            val rootNode = repository.node(rootPath.get())
             val configNodes = mutableListOf<Node>()
-            common.parallel.poolEach(configPids) { pid ->
-                increment("Configuration '${pid.shortenClass(64)}'") {
-                    val config = osgi.findConfiguration(pid)
+
+            common.parallel.poolEach(configPids) { configPid ->
+                increment("Configuration '${configPid.shortenClass(PID_LENGTH)}'") {
+                    val config = osgi.findConfiguration(configPid)
                     if (config != null) {
                         rootNode.import(config.properties + mapOf("jcr:primaryType" to "sling:OsgiConfig"), config.pid, true)
-                        configNodes.add( rootNode.child(config.pid))
+                        configNodes.add(rootNode.child(config.pid))
                     }
                 }
             }
@@ -81,6 +79,8 @@ open class PackageConfig : AemDefaultTask() {
 
             rootNode.delete()
             configPkg.delete()
+
+            logger.lifecycle("Saved ${configPids.size} OSGi configuration XML file(s) to directory: ${saveDir.get().asFile}")
         }
     }
 
@@ -90,5 +90,7 @@ open class PackageConfig : AemDefaultTask() {
 
     companion object {
         const val NAME = "packageConfig"
+
+        const val PID_LENGTH = 64
     }
 }
