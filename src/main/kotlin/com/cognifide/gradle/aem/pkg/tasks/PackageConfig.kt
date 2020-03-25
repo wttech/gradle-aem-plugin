@@ -4,7 +4,10 @@ import com.cognifide.gradle.aem.AemDefaultTask
 import com.cognifide.gradle.aem.common.file.ZipFile
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
+import com.cognifide.gradle.aem.common.instance.service.repository.Node
 import com.cognifide.gradle.aem.common.pkg.PackageException
+import com.cognifide.gradle.aem.common.utils.shortenClass
+import com.cognifide.gradle.common.utils.Patterns
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
@@ -35,18 +38,50 @@ open class PackageConfig : AemDefaultTask() {
     val pid = aem.obj.string { convention(aem.prop.string("package.config.pid")) }
 
     @TaskAction
-    fun saveOsgiConfig() = instance.get().sync {
-        val pid = pid.orNull ?: throw PackageException("OSGi config PID is not specified!")
-        val config = osgi.getConfiguration(pid)
+    fun sync() = instance.get().sync {
 
-        val rootNode = repository.node(rootPath.get())
-        rootNode.import(config.properties + mapOf("jcr:primaryType" to "sling:OsgiConfig"), pid, true)
+        common.progress {
+            step = "Preparing"
 
-        val configNode = rootNode.child(pid)
-        val configPkg = configNode.downloadPackage()
-        val configZip  = ZipFile(configPkg)
-        configZip.unpackFileTo("${Package.JCR_ROOT}${configNode.path}.xml", saveDir.get().asFile)
-        configPkg.delete()
+            val pid = pid.orNull ?: aem.javaPackages.map { "$it.*" }.joinToString(",")
+            val rootNode = repository.node(rootPath.get())
+            val configPids = osgi.determineConfigurationState().pids.map { it.id }.filter { Patterns.wildcard(it, pid) }
+
+            total = configPids.size.toLong()
+
+            step = "Processing"
+
+            val configNodes = mutableListOf<Node>()
+            common.parallel.poolEach(configPids) { pid ->
+                increment("Configuration '${pid.shortenClass(64)}'") {
+                    val config = osgi.findConfiguration(pid)
+                    if (config != null) {
+                        rootNode.import(config.properties + mapOf("jcr:primaryType" to "sling:OsgiConfig"), config.pid, true)
+                        configNodes.add( rootNode.child(config.pid))
+                    }
+                }
+            }
+
+            step = "Downloading"
+
+            val configPkg = packageManager.download {
+                filters(configNodes.map { it.path })
+                archiveFileName.convention("config.zip")
+            }
+
+            step = "Extracting"
+
+            val configZip = ZipFile(configPkg)
+            configNodes.forEach { configNode ->
+                val configFile = saveDir.get().asFile.resolve("${configNode.name.replace("~", "-")}.xml")
+                configZip.unpackFile("${Package.JCR_ROOT}${configNode.path}.xml", configFile)
+            }
+
+            step = "Cleaning"
+
+            rootNode.delete()
+            configPkg.delete()
+        }
     }
 
     init {
