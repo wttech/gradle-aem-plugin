@@ -9,6 +9,7 @@ import com.cognifide.gradle.aem.common.utils.shortenClass
 import com.cognifide.gradle.common.utils.Patterns
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
+import java.io.File
 
 open class PackageConfig : AemDefaultTask() {
 
@@ -43,49 +44,57 @@ open class PackageConfig : AemDefaultTask() {
 
             val configPidPattern = pid.orNull ?: aem.javaPackages.joinToString(",") { "$it.*" }
             val configPids = osgi.determineConfigurationState().pids.map { it.id }.filter { Patterns.wildcard(it, configPidPattern) }
-            total = configPids.size.toLong()
 
-            step = "Processing"
+            if (configPids.isEmpty()) {
+                logger.lifecycle("None of OSGi configuration XML files synchronized matching PID '$configPidPattern'!")
+            } else {
+                total = configPids.size.toLong()
 
-            val rootNode = repository.node(rootPath.get())
-            val configNodes = mutableListOf<Node>()
+                step = "Processing"
 
-            common.parallel.poolEach(configPids) { configPid ->
-                increment("Configuration '${configPid.shortenClass(PID_LENGTH)}'") {
-                    val config = osgi.findConfiguration(configPid)
-                    if (config != null) {
-                        rootNode.import(config.properties + mapOf("jcr:primaryType" to "sling:OsgiConfig"), config.pid, true)
-                        configNodes.add(rootNode.child(config.pid))
+                val rootNode = repository.node(rootPath.get())
+                val configNodes = mutableListOf<Node>()
+
+                common.parallel.poolEach(configPids) { configPid ->
+                    increment("Configuration '${configPid.shortenClass(PID_LENGTH)}'") {
+                        val config = osgi.findConfiguration(configPid)
+                        if (config != null) {
+                            rootNode.import(config.properties + mapOf("jcr:primaryType" to "sling:OsgiConfig"), config.pid, true)
+                            configNodes.add(rootNode.child(config.pid))
+                        }
                     }
                 }
+
+                step = "Downloading"
+
+                val configPkg = packageManager.download {
+                    filters(configNodes.map { it.path })
+                    archiveFileName.convention("config.zip")
+                }
+
+                step = "Extracting"
+
+                val configZip = ZipFile(configPkg)
+                val configFiles = mutableListOf<File>()
+                configNodes.forEach { configNode ->
+                    val configFile = saveDir.get().asFile.resolve("${configNode.name.replace("~", "-")}.xml")
+                    configZip.unpackFile("${Package.JCR_ROOT}${configNode.path}.xml", configFile)
+                    configFiles.add(configFile)
+                }
+
+                step = "Cleaning"
+
+                rootNode.delete()
+                configPkg.delete()
+
+                logger.lifecycle("Synchronized OSGi configuration XML file(s) (${configPids.size}) matching PID '$configPidPattern':\n" +
+                        configFiles.joinToString("\n"))
             }
-
-            step = "Downloading"
-
-            val configPkg = packageManager.download {
-                filters(configNodes.map { it.path })
-                archiveFileName.convention("config.zip")
-            }
-
-            step = "Extracting"
-
-            val configZip = ZipFile(configPkg)
-            configNodes.forEach { configNode ->
-                val configFile = saveDir.get().asFile.resolve("${configNode.name.replace("~", "-")}.xml")
-                configZip.unpackFile("${Package.JCR_ROOT}${configNode.path}.xml", configFile)
-            }
-
-            step = "Cleaning"
-
-            rootNode.delete()
-            configPkg.delete()
-
-            logger.lifecycle("Saved ${configPids.size} OSGi configuration XML file(s) to directory: ${saveDir.get().asFile}")
         }
     }
 
     init {
-        description = "Saves current OSGi configuration of given PID as XML file being a part of JCR content."
+        description = "Synchronizes OSGi configuration as XML files put into JCR content."
     }
 
     companion object {
