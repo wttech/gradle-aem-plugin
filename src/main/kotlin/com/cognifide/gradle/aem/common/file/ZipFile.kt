@@ -11,7 +11,7 @@ import java.io.File
 /**
  * Only Zip4j correctly extracts AEM backup ZIP files (files bigger than 10 GB)
  */
-class ZipFile(private val baseFile: File) {
+class ZipFile(val baseFile: File) {
 
     private val base = Base(baseFile)
 
@@ -44,6 +44,18 @@ class ZipFile(private val baseFile: File) {
                     .filter { it.fileName.startsWith(dirFileName) }
                     .forEach { extractFile(it, dir.absolutePath) }
         }
+    }
+
+    fun unpackFile(fileName: String, targetFile: File) {
+        if (!contains(fileName)) {
+            throw ZipException("ZIP file '$baseFile' does not contain file '$fileName'!")
+        }
+
+        base.extractFile(fileName, targetFile.parentFile.absolutePath, targetFile.name)
+    }
+
+    fun unpackFileTo(fileName: String, targetDir: File) {
+        unpackFile(fileName, targetDir.resolve(fileName.substringAfterLast("/")))
     }
 
     fun addDir(sourceDir: File, options: ZipParameters.() -> Unit = {}) {
