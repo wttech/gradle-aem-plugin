@@ -356,6 +356,8 @@ class PackagePluginTest : AemBuildTest() {
             
             tasks {
                 packageCompose {
+                    installBundleBuilt()
+                
                     vaultDefinition {
                         property("installhook.actool.class", "biz.netcentric.cq.tools.actool.installhook.AcToolInstallHook")
                     }

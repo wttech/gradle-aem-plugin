@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.pkg.tasks
 
 import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.aem
+import com.cognifide.gradle.aem.bundle.BundlePlugin
 import com.cognifide.gradle.aem.bundle.tasks.BundleCompose
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.aem.common.pkg.PackageException
@@ -221,7 +222,9 @@ open class PackageCompose : ZipTask(), AemTask {
     }
 
     fun installBundle(dependencyNotation: Any, options: BundleInstalledResolved.() -> Unit = {}) {
-        definitions.add { bundlesInstalled.add(BundleInstalledResolved(this, dependencyNotation).apply(options)) }
+        definitions.add {
+            bundlesInstalled.add(BundleInstalledResolved(this, dependencyNotation).apply(options))
+        }
     }
 
     fun installBundleProject(projectPath: String, options: BundleInstalledBuilt.() -> Unit = {}) {
@@ -241,6 +244,8 @@ open class PackageCompose : ZipTask(), AemTask {
             bundlesInstalled.add(BundleInstalledBuilt(this, task).apply(options))
         }
     }
+
+    fun installBundleBuilt(options: BundleInstalledBuilt.() -> Unit = {}) = installBundleProject(project.path, options)
 
     private var definition: () -> Unit = {
         fromDefaults()
