@@ -67,12 +67,6 @@ class PackagePlugin @Inject constructor(private val objectFactory: ObjectFactory
                 metaDir.convention(prepare.flatMap { it.metaDir })
             }.apply {
                 configuration.outgoing.artifacts.add(LazyPublishArtifact(this))
-
-                afterEvaluate {
-                    if (plugins.hasPlugin(BundlePlugin::class.java)) {
-                        configureApply { installBundleProject(project.path) }
-                    }
-                }
             }
             val validate = register<PackageValidate>(PackageValidate.NAME) {
                 dependsOn(compose)

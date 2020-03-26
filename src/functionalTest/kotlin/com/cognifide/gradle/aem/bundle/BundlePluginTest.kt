@@ -9,7 +9,7 @@ import java.io.File
 class BundlePluginTest : AemBuildTest() {
 
     @Test
-    fun `should build package with bundle using minimal configuration`() {
+    fun `should build bundle using minimal configuration`() {
         val projectDir = prepareProject("bundle-minimal") {
             settingsGradle("")
 
@@ -49,7 +49,7 @@ class BundlePluginTest : AemBuildTest() {
     }
 
     @Test
-    fun `should build package with bundle using extended configuration`() {
+    fun `should build bundle using extended configuration`() {
         val projectDir = prepareProject("bundle-extended") {
             /**
              * This is not required here but it proves that there is some issue with Gradle TestKit;
@@ -100,7 +100,7 @@ class BundlePluginTest : AemBuildTest() {
                 publishing {
                     publications {
                         create<MavenPublication>("mavenJava") {
-                            from(components["java"])
+                            from(components["aem"])
                         }
                     }
                 }

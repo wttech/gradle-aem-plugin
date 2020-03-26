@@ -110,7 +110,7 @@ class PackagePluginTest : AemBuildTest() {
                 publishing {
                     publications {
                         create<MavenPublication>("maven") {
-                            gradle.projectsEvaluated { artifact(tasks["packageCompose"]) }
+                            from(components["aem"])
                         }
                     }
                 }
