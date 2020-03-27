@@ -11,6 +11,7 @@
   * [Embedding JAR file into OSGi bundle](#embedding-jar-file-into-osgi-bundle)
   * [Configuring OSGi bundle manifest attributes](#configuring-osgi-bundle-manifest-attributes)
   * [Excluding packages being incidentally imported by OSGi bundle](#excluding-packages-being-incidentally-imported-by-osgi-bundle)
+  * [Publishing bundles](#publishing-bundles)
   * [Task bundleInstall](#task-bundleinstall)
   * [Task bundleUninstall](#task-bundleuninstall)
   * [Known issues](#known-issues)
@@ -129,6 +130,36 @@ aem {
     }
 }
 ```
+
+### Publishing bundles
+
+Simply add following snippets to file _build.gradle.kts_ for each project applying bundle plugin.
+
+```kotlin
+plugins {
+    id("com.cognifide.aem.bundle")
+    id("maven-publish")
+}
+
+publishing {
+    repositories {
+        maven {
+            // specify here e.g Nexus URL and credentials
+        }   
+    }
+
+    publications {
+        create<MavenPublication>("maven") {
+            from(components["aem"])
+        }
+    }
+}
+```
+
+To publish bundle to repository (upload it to e.g Nexus repository) simply run one of [publish tasks](https://docs.gradle.org/current/userguide/publishing_maven.html#publishing_maven:tasks) (typically `publish`).
+
+It might be worth to configure [publishing repositories](https://docs.gradle.org/current/userguide/publishing_maven.html#publishing_maven:repositories) globally. Consider moving `publishing { repositories { /* ... */ } }` section to root project's _build.gradle.kts_ into `allprojects { }` section. 
+Then defining publishing repositories in each subproject will be no longer necessary.
 
 ## Task `bundleInstall`
 

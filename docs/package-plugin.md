@@ -15,6 +15,7 @@
      * [Nesting CRX packages](#nesting-crx-packages)
      * [Assembling packages (merging all-in-one)](#assembling-packages-merging-all-in-one)
      * [Expandable properties](#expandable-properties)
+     * [Publishing packages](#publishing-packages)
   * [Task packagePrepare](#task-packageprepare)
   * [Task packageValidate](#task-packagevalidate)
   * [Task packageDeploy](#task-packagedeploy)
@@ -347,6 +348,36 @@ This feature is especially useful to generate valid *META-INF/properties.xml* fi
 Also file *nodetypes.cnd* is dynamically expanded from [template](src/main/resources/com/cognifide/gradle/aem/package/META-INF/vault/nodetypes.cnd) to generate file containing all node types from all sub packages being merged into assembly package.
 
 Each JAR file in separate *hooks* directory will be combined into single directory when creating assembly package.
+
+### Publishing packages
+
+Simply add following snippets to file _build.gradle.kts_ for each project applying package plugin.
+
+```kotlin
+plugins {
+    id("com.cognifide.aem.package")
+    id("maven-publish")
+}
+
+publishing {
+    repositories {
+        maven {
+            // specify here e.g Nexus URL and credentials
+        }   
+    }
+
+    publications {
+        create<MavenPublication>("maven") {
+            from(components["aem"])
+        }
+    }
+}
+```
+
+To publish package to repository (upload it to e.g Nexus repository) simply run one of [publish tasks](https://docs.gradle.org/current/userguide/publishing_maven.html#publishing_maven:tasks) (typically `publish`).
+
+It might be worth to configure [publishing repositories](https://docs.gradle.org/current/userguide/publishing_maven.html#publishing_maven:repositories) globally. Consider moving `publishing { repositories { /* ... */ } }` section to root project's _build.gradle.kts_ into `allprojects { }` section. 
+Then defining publishing repositories in each subproject will be no longer necessary.
 
 ## Task `packagePrepare`
 
