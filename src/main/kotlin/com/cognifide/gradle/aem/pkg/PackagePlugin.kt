@@ -1,7 +1,6 @@
 package com.cognifide.gradle.aem.pkg
 
 import com.cognifide.gradle.aem.AemExtension
-import com.cognifide.gradle.aem.bundle.BundlePlugin
 import com.cognifide.gradle.aem.common.CommonPlugin
 import com.cognifide.gradle.aem.common.tasks.PackageTask
 import com.cognifide.gradle.aem.instance.InstancePlugin

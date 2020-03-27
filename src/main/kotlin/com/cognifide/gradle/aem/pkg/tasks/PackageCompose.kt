@@ -20,6 +20,7 @@ import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.tasks.*
 
+@Suppress("TooManyFunctions")
 open class PackageCompose : ZipTask(), AemTask {
 
     final override val aem = project.aem
@@ -59,6 +60,16 @@ open class PackageCompose : ZipTask(), AemTask {
         convention(true)
         aem.prop.boolean("package.bundleTest")?.let { set(it) }
     }
+
+    /**
+     * Allows to customize install path or run mode of built bundle to be installed.
+     * Affects only project having both package and bundle plugins applied.
+     */
+    fun bundleBuilt(options: BundleInstalledBuilt.() -> Unit) {
+        this.bundleBuiltOptions = options
+    }
+
+    private var bundleBuiltOptions: BundleInstalledBuilt.() -> Unit = {}
 
     /**
      * Content path for CRX sub-packages being placed in CRX package being built.
@@ -117,6 +128,7 @@ open class PackageCompose : ZipTask(), AemTask {
     }
 
     fun fromDefaults() {
+        withBundleBuilt()
         withVaultFilters(vaultFilterOriginFile)
 
         fromMeta(metaDir)
@@ -166,6 +178,20 @@ open class PackageCompose : ZipTask(), AemTask {
         into(Package.VLT_HOOKS_PATH) { spec ->
             spec.from(dir)
             fileFilterDelegate(spec)
+        }
+    }
+
+    fun withBundleBuilt() {
+        if (!project.plugins.hasPlugin(BundlePlugin::class.java)) {
+            return
+        }
+
+        val compose = project.tasks.named(BundleCompose.NAME, BundleCompose::class.java)
+        dependsOn(compose)
+        bundlesInstalled.add(BundleInstalledBuilt(this, compose).apply(bundleBuiltOptions))
+
+        if (bundleTest.get()) {
+            dependsOn(project.tasks.named(JavaPlugin.TEST_TASK_NAME))
         }
     }
 
@@ -244,8 +270,6 @@ open class PackageCompose : ZipTask(), AemTask {
             bundlesInstalled.add(BundleInstalledBuilt(this, task).apply(options))
         }
     }
-
-    fun installBundleBuilt(options: BundleInstalledBuilt.() -> Unit = {}) = installBundleProject(project.path, options)
 
     private var definition: () -> Unit = {
         fromDefaults()

@@ -106,8 +106,9 @@ class PackagePluginTest : AemBuildTest() {
                     }
                 }
 
-    
                 publishing {
+                    
+                
                     publications {
                         create<MavenPublication>("maven") {
                             from(components["aem"])
@@ -191,13 +192,13 @@ class PackagePluginTest : AemBuildTest() {
             assertTask(":assembly:packageCompose", TaskOutcome.UP_TO_DATE)
             assertTask(":assembly:packageValidate")
         }
-//
-//        runBuild(projectDir, ":assembly:publishToMavenLocal", "-Poffline") {
-//            val mavenDir = File("${System.getProperty("user.home")}/.m2/repository/com/company/example/assembly/1.0.0")
-//            assertFileExists(mavenDir.resolve("example-assembly-1.0.0.jar"))
-//            assertFileExists(mavenDir.resolve("example-assembly-1.0.0.pom"))
-//            assertFileExists(mavenDir.resolve("example-assembly-1.0.0.module"))
-//        }
+
+        runBuild(projectDir, ":assembly:publishToMavenLocal", "-Poffline") {
+            val mavenDir = File("${System.getProperty("user.home")}/.m2/repository/com/company/example/aem/assembly/1.0.0")
+            assertFileExists(mavenDir.resolve("assembly-1.0.0.zip"))
+            assertFileExists(mavenDir.resolve("assembly-1.0.0.pom"))
+            assertFileExists(mavenDir.resolve("assembly-1.0.0.module"))
+        }
     }
 
     @Test
@@ -356,8 +357,6 @@ class PackagePluginTest : AemBuildTest() {
             
             tasks {
                 packageCompose {
-                    installBundleBuilt()
-                
                     vaultDefinition {
                         property("installhook.actool.class", "biz.netcentric.cq.tools.actool.installhook.AcToolInstallHook")
                     }
