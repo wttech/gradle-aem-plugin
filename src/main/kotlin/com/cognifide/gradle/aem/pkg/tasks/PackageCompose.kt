@@ -2,6 +2,7 @@ package com.cognifide.gradle.aem.pkg.tasks
 
 import com.cognifide.gradle.aem.AemTask
 import com.cognifide.gradle.aem.aem
+import com.cognifide.gradle.aem.bundle.BundlePlugin
 import com.cognifide.gradle.aem.bundle.tasks.BundleCompose
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
 import com.cognifide.gradle.aem.common.pkg.PackageException
@@ -19,6 +20,7 @@ import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.tasks.*
 
+@Suppress("TooManyFunctions")
 open class PackageCompose : ZipTask(), AemTask {
 
     final override val aem = project.aem
@@ -58,6 +60,16 @@ open class PackageCompose : ZipTask(), AemTask {
         convention(true)
         aem.prop.boolean("package.bundleTest")?.let { set(it) }
     }
+
+    /**
+     * Allows to customize install path or run mode of built bundle to be installed.
+     * Affects only project having both package and bundle plugins applied.
+     */
+    fun bundleBuilt(options: BundleInstalledBuilt.() -> Unit) {
+        this.bundleBuiltOptions = options
+    }
+
+    private var bundleBuiltOptions: BundleInstalledBuilt.() -> Unit = {}
 
     /**
      * Content path for CRX sub-packages being placed in CRX package being built.
@@ -116,6 +128,7 @@ open class PackageCompose : ZipTask(), AemTask {
     }
 
     fun fromDefaults() {
+        withBundleBuilt()
         withVaultFilters(vaultFilterOriginFile)
 
         fromMeta(metaDir)
@@ -165,6 +178,20 @@ open class PackageCompose : ZipTask(), AemTask {
         into(Package.VLT_HOOKS_PATH) { spec ->
             spec.from(dir)
             fileFilterDelegate(spec)
+        }
+    }
+
+    fun withBundleBuilt() {
+        if (!project.plugins.hasPlugin(BundlePlugin::class.java)) {
+            return
+        }
+
+        val compose = project.tasks.named(BundleCompose.NAME, BundleCompose::class.java)
+        dependsOn(compose)
+        bundlesInstalled.add(BundleInstalledBuilt(this, compose).apply(bundleBuiltOptions))
+
+        if (bundleTest.get()) {
+            dependsOn(project.tasks.named(JavaPlugin.TEST_TASK_NAME))
         }
     }
 
@@ -221,7 +248,9 @@ open class PackageCompose : ZipTask(), AemTask {
     }
 
     fun installBundle(dependencyNotation: Any, options: BundleInstalledResolved.() -> Unit = {}) {
-        definitions.add { bundlesInstalled.add(BundleInstalledResolved(this, dependencyNotation).apply(options)) }
+        definitions.add {
+            bundlesInstalled.add(BundleInstalledResolved(this, dependencyNotation).apply(options))
+        }
     }
 
     fun installBundleProject(projectPath: String, options: BundleInstalledBuilt.() -> Unit = {}) {

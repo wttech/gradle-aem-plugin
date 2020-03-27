@@ -94,6 +94,7 @@ class PackagePluginTest : AemBuildTest() {
             file("assembly/build.gradle.kts", """
                 plugins {
                     id("com.cognifide.aem.package")
+                    id("maven-publish")
                 }
                 
                 group = "com.company.example.aem"
@@ -102,6 +103,18 @@ class PackagePluginTest : AemBuildTest() {
                     packageCompose {
                         mergePackageProject(":ui.apps")
                         mergePackageProject(":ui.content")
+                    }
+                }
+
+                publishing {
+                    repositories {
+                        maven(rootProject.file("build/repository"))
+                    }
+                
+                    publications {
+                        create<MavenPublication>("maven") {
+                            from(components["aem"])
+                        }
                     }
                 }
             """)
@@ -180,6 +193,13 @@ class PackagePluginTest : AemBuildTest() {
         runBuild(projectDir, ":assembly:packageValidate", "-Poffline") {
             assertTask(":assembly:packageCompose", TaskOutcome.UP_TO_DATE)
             assertTask(":assembly:packageValidate")
+        }
+
+        runBuild(projectDir, ":assembly:publish", "-Poffline") {
+            val mavenDir = projectDir.resolve("build/repository/com/company/example/aem/assembly/1.0.0")
+            assertFileExists(mavenDir.resolve("assembly-1.0.0.zip"))
+            assertFileExists(mavenDir.resolve("assembly-1.0.0.pom"))
+            assertFileExists(mavenDir.resolve("assembly-1.0.0.module"))
         }
     }
 

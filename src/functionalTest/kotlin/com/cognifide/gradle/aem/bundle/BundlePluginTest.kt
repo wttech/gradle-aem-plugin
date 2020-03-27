@@ -3,13 +3,12 @@ package com.cognifide.gradle.aem.bundle
 import com.cognifide.gradle.aem.test.AemBuildTest
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.jupiter.api.Test
-import java.io.File
 
 @Suppress("LongMethod", "MaxLineLength")
 class BundlePluginTest : AemBuildTest() {
 
     @Test
-    fun `should build package with bundle using minimal configuration`() {
+    fun `should build bundle using minimal configuration`() {
         val projectDir = prepareProject("bundle-minimal") {
             settingsGradle("")
 
@@ -49,7 +48,7 @@ class BundlePluginTest : AemBuildTest() {
     }
 
     @Test
-    fun `should build package with bundle using extended configuration`() {
+    fun `should build bundle using extended configuration`() {
         val projectDir = prepareProject("bundle-extended") {
             /**
              * This is not required here but it proves that there is some issue with Gradle TestKit;
@@ -98,9 +97,13 @@ class BundlePluginTest : AemBuildTest() {
                 }
                 
                 publishing {
+                    repositories {
+                        maven(rootProject.file("build/repository"))
+                    }
+                
                     publications {
-                        create<MavenPublication>("mavenJava") {
-                            from(components["java"])
+                        create<MavenPublication>("maven") {
+                            from(components["aem"])
                         }
                     }
                 }
@@ -114,10 +117,10 @@ class BundlePluginTest : AemBuildTest() {
             assertBundle("build/bundleCompose/bundle-extended-1.0.0.jar")
         }
 
-        runBuild(projectDir, "publishToMavenLocal", "-Poffline") {
+        runBuild(projectDir, "publish", "-Poffline") {
             assertTask(":bundleCompose", TaskOutcome.UP_TO_DATE)
 
-            val mavenDir = File("${System.getProperty("user.home")}/.m2/repository/com/company/example/bundle-extended/1.0.0")
+            val mavenDir = projectDir.resolve("build/repository/com/company/example/bundle-extended/1.0.0")
             assertFileExists(mavenDir.resolve("bundle-extended-1.0.0.jar"))
             assertFileExists(mavenDir.resolve("bundle-extended-1.0.0.pom"))
             assertFileExists(mavenDir.resolve("bundle-extended-1.0.0.module"))
