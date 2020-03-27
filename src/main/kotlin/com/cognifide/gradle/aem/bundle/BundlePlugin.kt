@@ -14,6 +14,9 @@ import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.type.ArtifactTypeDefinition
+import org.gradle.api.attributes.Bundling
+import org.gradle.api.attributes.Category
+import org.gradle.api.attributes.LibraryElements
 import org.gradle.api.attributes.Usage
 import org.gradle.api.component.AdhocComponentWithVariants
 import org.gradle.api.internal.artifacts.ArtifactAttributes
@@ -26,6 +29,7 @@ import org.gradle.api.tasks.testing.Test
 import org.gradle.internal.component.external.descriptor.MavenScope
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 import javax.inject.Inject
+
 
 class BundlePlugin @Inject constructor(private val objectFactory: ObjectFactory) : CommonDefaultPlugin() {
 
@@ -62,7 +66,12 @@ class BundlePlugin @Inject constructor(private val objectFactory: ObjectFactory)
 
     private fun Project.setupTasks() {
         val configuration = configurations.create(CONFIGURATION) { c ->
-            c.attributes.attribute(Usage.USAGE_ATTRIBUTE, objectFactory.named(Usage::class.java, Usage.JAVA_RUNTIME))
+            c.attributes.apply {
+                attribute(Usage.USAGE_ATTRIBUTE, objectFactory.named(Usage::class.java, Usage.JAVA_RUNTIME))
+                attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, objectFactory.named(LibraryElements::class.java, LibraryElements.JAR))
+                attribute(Bundling.BUNDLING_ATTRIBUTE, objectFactory.named(Bundling::class.java, Bundling.EXTERNAL))
+                attribute(Category.CATEGORY_ATTRIBUTE, objectFactory.named(Category::class.java, Category.LIBRARY))
+            }
             c.outgoing.attributes.attribute(ArtifactAttributes.ARTIFACT_FORMAT, ArtifactTypeDefinition.JAR_TYPE)
         }
 

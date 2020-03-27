@@ -12,6 +12,9 @@ import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.type.ArtifactTypeDefinition
+import org.gradle.api.attributes.Bundling
+import org.gradle.api.attributes.Category
+import org.gradle.api.attributes.LibraryElements
 import org.gradle.api.attributes.Usage
 import org.gradle.api.component.AdhocComponentWithVariants
 import org.gradle.api.internal.artifacts.ArtifactAttributes
@@ -45,7 +48,7 @@ class PackagePlugin @Inject constructor(private val objectFactory: ObjectFactory
     @Suppress("LongMethod")
     private fun Project.setupTasks() {
         val configuration = configurations.create(CONFIGURATION) { c ->
-            c.attributes.attribute(Usage.USAGE_ATTRIBUTE, objectFactory.named(Usage::class.java, Usage.JAVA_RUNTIME))
+            c.attributes.attribute(Category.CATEGORY_ATTRIBUTE, objectFactory.named(Category::class.java, Category.LIBRARY))
             c.outgoing.attributes.attribute(ArtifactAttributes.ARTIFACT_FORMAT, ArtifactTypeDefinition.ZIP_TYPE)
         }
         configurations.named(Dependency.ARCHIVES_CONFIGURATION) { it.extendsFrom(configuration) }
