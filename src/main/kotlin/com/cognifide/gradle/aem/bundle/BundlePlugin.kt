@@ -67,7 +67,7 @@ class BundlePlugin @Inject constructor(private val objectFactory: ObjectFactory)
     private fun Project.setupTasks() {
         val configuration = configurations.create(CONFIGURATION) { c ->
             c.attributes.apply {
-                attribute(Usage.USAGE_ATTRIBUTE, objectFactory.named(Usage::class.java, Usage.JAVA_RUNTIME))
+                attribute(Usage.USAGE_ATTRIBUTE, objectFactory.named(Usage::class.java, Usage.JAVA_API))
                 attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, objectFactory.named(LibraryElements::class.java, LibraryElements.JAR))
                 attribute(Bundling.BUNDLING_ATTRIBUTE, objectFactory.named(Bundling::class.java, Bundling.EXTERNAL))
                 attribute(Category.CATEGORY_ATTRIBUTE, objectFactory.named(Category::class.java, Category.LIBRARY))
