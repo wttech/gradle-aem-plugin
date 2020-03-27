@@ -20,6 +20,7 @@ import org.gradle.api.attributes.LibraryElements
 import org.gradle.api.attributes.Usage
 import org.gradle.api.component.AdhocComponentWithVariants
 import org.gradle.api.internal.artifacts.ArtifactAttributes
+import org.gradle.api.internal.artifacts.JavaEcosystemSupport
 import org.gradle.api.internal.artifacts.dsl.LazyPublishArtifact
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.plugins.JavaPlugin
@@ -73,6 +74,9 @@ class BundlePlugin @Inject constructor(private val objectFactory: ObjectFactory)
                 attribute(Category.CATEGORY_ATTRIBUTE, objectFactory.named(Category::class.java, Category.LIBRARY))
             }
             c.outgoing.attributes.attribute(ArtifactAttributes.ARTIFACT_FORMAT, ArtifactTypeDefinition.JAR_TYPE)
+            afterEvaluate {
+                JavaEcosystemSupport.configureDefaultTargetPlatform(c, convention.getPlugin(JavaPluginConvention::class.java).targetCompatibility)
+            }
         }
 
         configurations.named(Dependency.ARCHIVES_CONFIGURATION) { it.extendsFrom(configuration) }
