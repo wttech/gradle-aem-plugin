@@ -31,7 +31,6 @@ import org.gradle.internal.component.external.descriptor.MavenScope
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 import javax.inject.Inject
 
-
 class BundlePlugin @Inject constructor(private val objectFactory: ObjectFactory) : CommonDefaultPlugin() {
 
     override fun Project.configureProject() {
