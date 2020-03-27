@@ -107,7 +107,9 @@ class PackagePluginTest : AemBuildTest() {
                 }
 
                 publishing {
-                    
+                    repositories {
+                        maven(rootProject.file("build/repository"))
+                    }
                 
                     publications {
                         create<MavenPublication>("maven") {
@@ -193,8 +195,8 @@ class PackagePluginTest : AemBuildTest() {
             assertTask(":assembly:packageValidate")
         }
 
-        runBuild(projectDir, ":assembly:publishToMavenLocal", "-Poffline") {
-            val mavenDir = File("${System.getProperty("user.home")}/.m2/repository/com/company/example/aem/assembly/1.0.0")
+        runBuild(projectDir, ":assembly:publish", "-Poffline") {
+            val mavenDir = projectDir.resolve("build/repository/com/company/example/aem/assembly/1.0.0")
             assertFileExists(mavenDir.resolve("assembly-1.0.0.zip"))
             assertFileExists(mavenDir.resolve("assembly-1.0.0.pom"))
             assertFileExists(mavenDir.resolve("assembly-1.0.0.module"))
