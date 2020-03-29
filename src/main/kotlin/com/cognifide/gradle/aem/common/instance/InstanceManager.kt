@@ -8,6 +8,8 @@ import com.cognifide.gradle.aem.common.instance.tail.Tailer
 import com.cognifide.gradle.aem.instance.InstancePlugin
 import com.cognifide.gradle.common.pluginProject
 import com.cognifide.gradle.common.utils.using
+import org.gradle.util.GradleVersion
+import org.gradle.api.JavaVersion
 
 open class InstanceManager(val aem: AemExtension) {
 
@@ -170,11 +172,19 @@ open class InstanceManager(val aem: AemExtension) {
 
     fun examine(instance: Instance) = examine(listOf(instance))
 
+    /**
+     * Checks as much as it can be despite type of instance before performing any other operations.
+     *
+     * Assumes that instances are already running.
+     */
     fun examine(instances: Collection<Instance> = aem.instances) {
         examineAvailable(instances)
-        examineRunningOther(instances)
+        examinePrerequisites(instances)
     }
 
+    /**
+     * Checks if instances are available before performing any other operations.
+     */
     fun examineAvailable(instances: Collection<Instance> = aem.instances) {
         val unavailable = instances.filter { !it.available }
         if (unavailable.isNotEmpty()) {
@@ -185,8 +195,62 @@ open class InstanceManager(val aem: AemExtension) {
         }
     }
 
-    fun examineRunningOther(instances: Collection<Instance>) {
-        val running = instances.filterIsInstance<LocalInstance>().filter { it.runningOther }
+    /**
+     * Checks if local instances defined are meeting prerequisites before performing any other operations.
+     *
+     * Assumes that instances could not be running yet.
+     */
+    fun examinePrerequisites(instances: Collection<Instance> = aem.instances) {
+        val localInstances = instances.filterIsInstance<LocalInstance>()
+        examineJavaCompatibility(localInstances)
+        examineRunningOther(localInstances)
+    }
+
+    /**
+     * Defines compatibility related to AEM versions and Java versions.
+     *
+     * AEM version is definable as range inclusive at a start, exclusive at an end.
+     * Java Version is definable as list of supported versions comma delimited.
+     */
+    val javaCompatibility = aem.obj.map<String, String> {
+        convention(mapOf(
+                "6.0.0-6.5.0" to "1.7,1.8",
+                "6.5.0-6.6.0" to "1.8,11"
+        ))
+        aem.prop.map("instance.javaCompatibility")?.let { set(it) }
+    }
+
+    @Suppress("NestedBlockDepth")
+    fun examineJavaCompatibility(instances: Collection<LocalInstance> = aem.localInstances) {
+        if (javaCompatibility.get().isEmpty()) {
+            return
+        }
+
+        val versionCurrent = JavaVersion.current()
+        val errors = mutableListOf<String>()
+
+        instances.forEach { instance ->
+            val aemVersion = GradleVersion.version(instance.version)
+            javaCompatibility.get().forEach { (aemVersionRange, versionList) ->
+                val (aemFrom, aemTo) = aemVersionRange.split("-").map { GradleVersion.version(it) }
+                if (aemVersion >= aemFrom && aemVersion < aemTo) {
+                    val versions = versionList.split(",").map { JavaVersion.toVersion(it) }
+                    if (!versions.contains(versionCurrent)) {
+                        errors.add("Instance '${instance.name}' at URL '${instance.httpUrl}' is AEM $aemVersion and requires Java $versions!")
+                    }
+                }
+            }
+
+            if (errors.isNotEmpty()) {
+                throw InstanceException("Some instances are requiring different Java version than current $versionCurrent:\n" +
+                        errors.joinToString("\n")
+                )
+            }
+        }
+    }
+
+    fun examineRunningOther(instances: Collection<LocalInstance> = aem.localInstances) {
+        val running = instances.filter { it.runningOther }
         if (running.isNotEmpty()) {
             throw InstanceException("Other instances are running (${running.size}):\n" +
                     running.joinToString("\n") { "Instance '${it.name}' at URL '${it.httpUrl}' located at path '${it.runningDir}'" } + "\n\n" +

@@ -2,9 +2,11 @@ package com.cognifide.gradle.aem.common.instance
 
 import com.cognifide.gradle.aem.AemExtension
 import com.cognifide.gradle.aem.common.file.FileOperations
+import com.cognifide.gradle.aem.common.file.ZipFile
 import com.cognifide.gradle.aem.common.instance.local.Script
 import com.cognifide.gradle.aem.common.instance.local.Status
 import com.cognifide.gradle.common.utils.Formats
+import com.cognifide.gradle.common.utils.Patterns
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.commons.io.FileUtils
@@ -86,23 +88,22 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
     @get:JsonIgnore
     val license get() = dir.resolve("license.properties")
 
-    @get:JsonIgnore
-    val versionFile get() = dir.resolve("version.txt")
-
     override val version: String
         get() {
-            var result = super.version
-            if (result == Formats.versionUnknown().version && versionFile.exists()) {
-                result = versionFile.readText()
+            val remoteVersion = super.version
+            if (remoteVersion != Formats.versionUnknown().version) {
+                return remoteVersion
             }
-            return result
+            val standaloneVersion = readStandaloneVersion()
+            if (standaloneVersion != null) {
+                return standaloneVersion
+            }
+            return Formats.versionUnknown().version
         }
 
-    internal fun saveVersion() {
-        if (version != Formats.versionUnknown().version) {
-            versionFile.writeText(version)
-        }
-    }
+    private fun readStandaloneVersion(): String? = ZipFile(jar).listDir("app")
+            .firstOrNull { Patterns.wildcard(it, "cq-quickstart-*-standalone*.jar") }
+            ?.let { StringUtils.substringBetween(it, "cq-quickstart-", "-standalone") }
 
     private val startScript: Script get() = binScript("start")
 

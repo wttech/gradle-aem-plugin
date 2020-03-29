@@ -33,18 +33,23 @@ class ZipFile(val baseFile: File) {
         }
     }
 
-    fun unpackDir(dirName: String, dir: File) {
+    private fun dirFileHeaders(dirName: String): Sequence<FileHeader> {
         val dirFileName = "$dirName/"
         if (!contains(dirFileName)) {
             throw ZipException("ZIP file '$baseFile' does not contain directory '$dirName'!")
         }
 
-        base.apply {
+        return base.run {
             (fileHeaders as List<FileHeader>).asSequence()
                     .filter { it.fileName.startsWith(dirFileName) }
-                    .forEach { extractFile(it, dir.absolutePath) }
         }
     }
+
+    fun unpackDir(dirName: String, dir: File) {
+        dirFileHeaders(dirName).forEach { base.extractFile(it, dir.absolutePath) }
+    }
+
+    fun listDir(dirName: String) = dirFileHeaders(dirName).map { it.fileName }
 
     fun unpackFile(fileName: String, targetFile: File) {
         if (!contains(fileName)) {
