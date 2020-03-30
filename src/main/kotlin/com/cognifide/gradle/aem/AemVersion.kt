@@ -76,4 +76,3 @@ class AemVersion(value: String) : Comparable<AemVersion> {
 }
 
 fun String.javaVersions(delimiter: String = ",") = this.split(delimiter).map { JavaVersion.toVersion(it) }
-
