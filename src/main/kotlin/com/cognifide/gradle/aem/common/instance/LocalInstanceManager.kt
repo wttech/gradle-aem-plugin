@@ -8,6 +8,9 @@ import com.cognifide.gradle.aem.instance.LocalInstancePlugin
 import com.cognifide.gradle.common.pluginProject
 import com.cognifide.gradle.common.utils.onEachApply
 import com.cognifide.gradle.common.utils.using
+import org.buildobjects.process.ProcBuilder
+import org.gradle.api.JavaVersion
+import org.gradle.util.GradleVersion
 import java.io.File
 import java.io.Serializable
 import java.util.concurrent.TimeUnit
@@ -349,5 +352,80 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
         base.awaitDown(upInstances, awaitDownOptions)
 
         return upInstances
+    }
+
+    /**
+     * Pre-conditionally check if 'java' is available in shell scripts.
+     *
+     * Gradle is intelligently looking by its own for installed Java, but AEM control scripts
+     * are just requiring 'java' command available in 'PATH' environment variable.
+     */
+    @Suppress("TooGenericExceptionCaught", "MagicNumber")
+    fun examineJavaAvailable() {
+        try {
+            logger.info("Examining Java properly installed")
+            val result = ProcBuilder("java", "-version")
+                    .withWorkingDirectory(rootDir.get().asFile)
+                    .withTimeoutMillis(5000)
+                    .withExpectedExitStatuses(0)
+                    .run()
+            logger.info("Installed Java:\n${result.outputString.ifBlank { result.errorString }}")
+        } catch (e: Exception) {
+            throw LocalInstanceException("Local instances support requires Java properly installed! Cause: '${e.message}'\n" +
+                    "Ensure having directory with 'java' executable listed in 'PATH' environment variable.", e)
+        }
+    }
+
+    /**
+     * Defines compatibility related to AEM versions and Java versions.
+     *
+     * AEM version is definable as range inclusive at a start, exclusive at an end.
+     * Java Version is definable as list of supported versions comma delimited.
+     */
+    val javaCompatibility = aem.obj.map<String, String> {
+        convention(mapOf(
+                "6.0.0-6.5.0" to "1.7,1.8",
+                "6.5.0-6.6.0" to "1.8,11"
+        ))
+        aem.prop.map("instance.javaCompatibility")?.let { set(it) }
+    }
+
+    @Suppress("NestedBlockDepth")
+    fun examineJavaCompatibility(instances: Collection<LocalInstance> = aem.localInstances) {
+        if (javaCompatibility.get().isEmpty()) {
+            return
+        }
+
+        val versionCurrent = JavaVersion.current()
+        val errors = mutableListOf<String>()
+
+        instances.forEach { instance ->
+            val aemVersion = GradleVersion.version(instance.version)
+            javaCompatibility.get().forEach { (aemVersionRange, versionList) ->
+                val (aemFrom, aemTo) = aemVersionRange.split("-").map { GradleVersion.version(it) }
+                if (aemVersion >= aemFrom && aemVersion < aemTo) {
+                    val versions = versionList.split(",").map { JavaVersion.toVersion(it) }
+                    if (!versions.contains(versionCurrent)) {
+                        errors.add("Instance '${instance.name}' at URL '${instance.httpUrl}' is AEM $aemVersion and requires Java $versions!")
+                    }
+                }
+            }
+        }
+
+        if (errors.isNotEmpty()) {
+            throw LocalInstanceException("Some instances are requiring different Java version than current $versionCurrent:\n" +
+                    errors.joinToString("\n")
+            )
+        }
+    }
+
+    fun examineRunningOther(instances: Collection<LocalInstance> = aem.localInstances) {
+        val running = instances.filter { it.runningOther }
+        if (running.isNotEmpty()) {
+            throw LocalInstanceException("Other instances are running (${running.size}):\n" +
+                    running.joinToString("\n") { "Instance '${it.name}' at URL '${it.httpUrl}' located at path '${it.runningDir}'" } + "\n\n" +
+                    "Ensure having these instances down."
+            )
+        }
     }
 }

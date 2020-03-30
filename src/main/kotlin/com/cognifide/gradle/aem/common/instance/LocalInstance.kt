@@ -101,7 +101,8 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
             return Formats.versionUnknown().version
         }
 
-    private fun readStandaloneVersion(): String? = ZipFile(jar).listDir("app")
+    private fun readStandaloneVersion(): String? = ZipFile(jar).listDir("static/app")
+            .map { it.substringAfterLast("/") }
             .firstOrNull { Patterns.wildcard(it, "cq-quickstart-*-standalone*.jar") }
             ?.let { StringUtils.substringBetween(it, "cq-quickstart-", "-standalone") }
 

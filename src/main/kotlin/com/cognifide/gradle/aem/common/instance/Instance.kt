@@ -175,6 +175,14 @@ open class Instance(@Transient @JsonIgnore protected val aem: AemExtension) : Se
 
     fun <T> sync(action: InstanceSync.() -> T): T = sync.run(action)
 
+    val local: LocalInstance
+        get() {
+            if (this !is LocalInstance) {
+                throw InstanceException("Instance '$name' is not defined as local!")
+            }
+            return this
+        }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
