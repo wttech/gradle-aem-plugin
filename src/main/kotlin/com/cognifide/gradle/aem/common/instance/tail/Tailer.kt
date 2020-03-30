@@ -1,5 +1,6 @@
 package com.cognifide.gradle.aem.common.instance.tail
 
+import com.cognifide.gradle.aem.AemVersion
 import com.cognifide.gradle.aem.common.instance.Instance
 import com.cognifide.gradle.aem.common.instance.InstanceManager
 import com.cognifide.gradle.common.utils.Formats
@@ -143,7 +144,7 @@ class Tailer(val manager: InstanceManager) {
     fun errorLogEndpoint(instance: Instance): String {
         val fileName = logFilePath.get()
         val path = when {
-            Formats.versionAtLeast(instance.version, "6.2.0") -> ENDPOINT_PATH
+            instance.version.atLeast(AemVersion.VERSION_6_2_0) -> ENDPOINT_PATH
             else -> ENDPOINT_PATH_OLD
         }
 

@@ -1,6 +1,7 @@
 package com.cognifide.gradle.aem.common.instance
 
 import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.AemVersion
 import com.cognifide.gradle.aem.common.file.FileOperations
 import com.cognifide.gradle.aem.common.file.ZipFile
 import com.cognifide.gradle.aem.common.instance.local.Script
@@ -88,23 +89,25 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
     @get:JsonIgnore
     val license get() = dir.resolve("license.properties")
 
-    override val version: String
+    override val version: AemVersion
         get() {
             val remoteVersion = super.version
-            if (remoteVersion != Formats.versionUnknown().version) {
+            if (remoteVersion != AemVersion.UNKNOWN) {
                 return remoteVersion
             }
             val standaloneVersion = readStandaloneVersion()
-            if (standaloneVersion != null) {
+            if (standaloneVersion != AemVersion.UNKNOWN) {
                 return standaloneVersion
             }
-            return Formats.versionUnknown().version
+            return AemVersion.UNKNOWN
         }
 
-    private fun readStandaloneVersion(): String? = ZipFile(jar).listDir("static/app")
+    private fun readStandaloneVersion(): AemVersion = ZipFile(jar).listDir("static/app")
             .map { it.substringAfterLast("/") }
             .firstOrNull { Patterns.wildcard(it, "cq-quickstart-*-standalone*.jar") }
             ?.let { StringUtils.substringBetween(it, "cq-quickstart-", "-standalone") }
+            ?.let { AemVersion(it) }
+            ?: AemVersion.UNKNOWN
 
     private val startScript: Script get() = binScript("start")
 
@@ -341,7 +344,7 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
 
     @get:JsonIgnore
     val windowTitle get() = "LocalInstance(name='$name', httpUrl='$httpUrl'" +
-            (version.takeIf { it != Formats.versionUnknown().version }?.run { ", version=$this" } ?: "") +
+            (version.takeIf { it != AemVersion.UNKNOWN }?.run { ", version=$this" } ?: "") +
             ", debugPort=$debugPort, user='$user', password='${Formats.toPassword(password)}')"
 
     override fun toString() = "LocalInstance(name='$name', httpUrl='$httpUrl')"

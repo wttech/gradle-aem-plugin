@@ -1,16 +1,17 @@
 package com.cognifide.gradle.aem.common.instance
 
 import com.cognifide.gradle.aem.AemExtension
+import com.cognifide.gradle.aem.AemVersion
 import com.cognifide.gradle.aem.common.instance.action.AwaitDownAction
 import com.cognifide.gradle.aem.common.instance.action.AwaitUpAction
 import com.cognifide.gradle.aem.common.instance.local.*
 import com.cognifide.gradle.aem.instance.LocalInstancePlugin
+import com.cognifide.gradle.aem.javaVersions
 import com.cognifide.gradle.common.pluginProject
 import com.cognifide.gradle.common.utils.onEachApply
 import com.cognifide.gradle.common.utils.using
 import org.buildobjects.process.ProcBuilder
 import org.gradle.api.JavaVersion
-import org.gradle.util.GradleVersion
 import java.io.File
 import java.io.Serializable
 import java.util.concurrent.TimeUnit
@@ -380,12 +381,12 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
      * Defines compatibility related to AEM versions and Java versions.
      *
      * AEM version is definable as range inclusive at a start, exclusive at an end.
-     * Java Version is definable as list of supported versions comma delimited.
+     * Java Version is definable as list of supported versions pipe delimited.
      */
     val javaCompatibility = aem.obj.map<String, String> {
         convention(mapOf(
-                "6.0.0-6.5.0" to "1.7,1.8",
-                "6.5.0-6.6.0" to "1.8,11"
+                "6.0.0-6.5.0" to "1.7|1.8",
+                "6.5.0-6.6.0" to "1.8|11"
         ))
         aem.prop.map("instance.javaCompatibility")?.let { set(it) }
     }
@@ -400,12 +401,11 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
         val errors = mutableListOf<String>()
 
         instances.forEach { instance ->
-            val aemVersion = GradleVersion.version(instance.version)
+            val aemVersion = instance.version
             javaCompatibility.get().forEach { (aemVersionRange, versionList) ->
-                val (aemFrom, aemTo) = aemVersionRange.split("-").map { GradleVersion.version(it) }
-                if (aemVersion >= aemFrom && aemVersion < aemTo) {
-                    val versions = versionList.split(",").map { JavaVersion.toVersion(it) }
-                    if (!versions.contains(versionCurrent)) {
+                if (aemVersion in AemVersion.unclosedRange(aemVersionRange)) {
+                    val versions = versionList.javaVersions()
+                    if (versionCurrent !in versions) {
                         errors.add("Instance '${instance.name}' at URL '${instance.httpUrl}' is AEM $aemVersion and requires Java $versions!")
                     }
                 }
