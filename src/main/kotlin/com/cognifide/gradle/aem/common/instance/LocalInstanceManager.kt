@@ -410,7 +410,7 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
             result
         }
         if (errors.isNotEmpty()) {
-            throw LocalInstanceException("Some instances are requiring different Java version than current $versionCurrent:\n" +
+            throw LocalInstanceException("Some instances require different Java version than current $versionCurrent:\n" +
                     errors.joinToString("\n")
             )
         }
