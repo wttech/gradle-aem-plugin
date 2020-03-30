@@ -388,7 +388,7 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
                 "6.0.0-6.5.0" to "1.7|1.8",
                 "6.5.0-6.6.0" to "1.8|11"
         ))
-        aem.prop.map("instance.javaCompatibility")?.let { set(it) }
+        aem.prop.map("localInstance.javaCompatibility")?.let { set(it) }
     }
 
     fun examineJavaCompatibility(instances: Collection<LocalInstance> = aem.localInstances) {
@@ -400,8 +400,8 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
         val errors = instances.fold(mutableListOf<String>()) { result, instance ->
             val aemVersion = instance.version
             javaCompatibility.get().forEach { (aemVersionRange, versionList) ->
-                if (aemVersion in AemVersion.unclosedRange(aemVersionRange)) {
-                    val versions = versionList.javaVersions()
+                if (aemVersion in AemVersion.unclosedRange(aemVersionRange, "-")) {
+                    val versions = versionList.javaVersions("|")
                     if (versionCurrent !in versions) {
                         result.add("Instance '${instance.name}' at URL '${instance.httpUrl}' is AEM $aemVersion and requires Java $versions!")
                     }

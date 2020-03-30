@@ -8,6 +8,8 @@ open class InstanceCreate : LocalInstanceTask() {
 
     @TaskAction
     fun create() {
+        localInstanceManager.examineJavaAvailable()
+
         val createdInstances = localInstanceManager.create(instances.get())
         if (createdInstances.isNotEmpty()) {
             common.notifier.lifecycle("Instance(s) created", "Which: ${createdInstances.names}")

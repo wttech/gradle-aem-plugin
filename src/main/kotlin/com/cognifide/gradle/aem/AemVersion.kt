@@ -9,8 +9,6 @@ class AemVersion(value: String) : Comparable<AemVersion> {
 
     val version get() = base.version
 
-    override fun toString() = version
-
     fun atLeast(other: AemVersion) = other >= this
 
     fun atLeast(other: String) = atLeast(AemVersion(other))
@@ -29,7 +27,21 @@ class AemVersion(value: String) : Comparable<AemVersion> {
      */
     val frozen get() = atLeast(VERSION_6_4_0)
 
+    // === Overriddes ===
+
+    override fun toString() = version
+
     override fun compareTo(other: AemVersion): Int = base.compareTo(other.base)
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+        other as AemVersion
+        if (base != other.base) return false
+        return true
+    }
+
+    override fun hashCode(): Int = base.hashCode()
 
     class UnclosedRange(val start: AemVersion, val end: AemVersion) {
         operator fun contains(version: AemVersion) = version >= start && version < end
@@ -51,8 +63,8 @@ class AemVersion(value: String) : Comparable<AemVersion> {
 
         val VERSION_6_5_0 = AemVersion("6.5.0")
 
-        fun unclosedRange(value: String): UnclosedRange {
-            val versions = value.split("-")
+        fun unclosedRange(value: String, delimiter: String = "-"): UnclosedRange {
+            val versions = value.split(delimiter)
             if (versions.size != 2) {
                 throw AemException("AEM version range has invalid format: '$value'!")
             }
@@ -63,4 +75,5 @@ class AemVersion(value: String) : Comparable<AemVersion> {
     }
 }
 
-fun String.javaVersions() = this.split(",").map { JavaVersion.toVersion(it) }
+fun String.javaVersions(delimiter: String = ",") = this.split(delimiter).map { JavaVersion.toVersion(it) }
+
