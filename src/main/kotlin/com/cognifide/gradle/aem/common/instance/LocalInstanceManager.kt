@@ -391,27 +391,24 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
         aem.prop.map("instance.javaCompatibility")?.let { set(it) }
     }
 
-    @Suppress("NestedBlockDepth")
     fun examineJavaCompatibility(instances: Collection<LocalInstance> = aem.localInstances) {
         if (javaCompatibility.get().isEmpty()) {
             return
         }
 
         val versionCurrent = JavaVersion.current()
-        val errors = mutableListOf<String>()
-
-        instances.forEach { instance ->
+        val errors = instances.fold(mutableListOf<String>()) { result, instance ->
             val aemVersion = instance.version
             javaCompatibility.get().forEach { (aemVersionRange, versionList) ->
                 if (aemVersion in AemVersion.unclosedRange(aemVersionRange)) {
                     val versions = versionList.javaVersions()
                     if (versionCurrent !in versions) {
-                        errors.add("Instance '${instance.name}' at URL '${instance.httpUrl}' is AEM $aemVersion and requires Java $versions!")
+                        result.add("Instance '${instance.name}' at URL '${instance.httpUrl}' is AEM $aemVersion and requires Java $versions!")
                     }
                 }
             }
+            result
         }
-
         if (errors.isNotEmpty()) {
             throw LocalInstanceException("Some instances are requiring different Java version than current $versionCurrent:\n" +
                     errors.joinToString("\n")
