@@ -307,7 +307,6 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
         common.progress(downInstances.size) {
             common.parallel.with(downInstances) {
                 increment("Initializing instance '$name'") {
-                    saveVersion()
                     if (!initialized) {
                         logger.info("Initializing: $this")
                         init(initOptions)

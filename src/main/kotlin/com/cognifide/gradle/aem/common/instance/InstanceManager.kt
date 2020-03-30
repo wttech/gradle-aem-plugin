@@ -240,12 +240,12 @@ open class InstanceManager(val aem: AemExtension) {
                     }
                 }
             }
+        }
 
-            if (errors.isNotEmpty()) {
-                throw InstanceException("Some instances are requiring different Java version than current $versionCurrent:\n" +
-                        errors.joinToString("\n")
-                )
-            }
+        if (errors.isNotEmpty()) {
+            throw InstanceException("Some instances are requiring different Java version than current $versionCurrent:\n" +
+                    errors.joinToString("\n")
+            )
         }
     }
 
