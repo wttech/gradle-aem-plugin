@@ -7,7 +7,7 @@ plugins {
     id("maven-publish")
     id("org.jetbrains.kotlin.jvm") version "1.3.70"
     id("org.jetbrains.dokka") version "0.10.1"
-    id("com.gradle.plugin-publish") version "0.10.1"
+    id("com.gradle.plugin-publish") version "0.11.0"
     id("io.gitlab.arturbosch.detekt") version "1.7.0"
     id("com.jfrog.bintray") version "1.8.4"
     id("net.researchgate.release") version "2.8.1"
