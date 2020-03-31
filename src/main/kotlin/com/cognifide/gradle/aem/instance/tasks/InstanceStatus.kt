@@ -39,7 +39,7 @@ open class InstanceStatus : InstanceTask() {
                                 add("Name: $name | Version: $version")
 
                                 if (this@onEachApply is LocalInstance) {
-                                    add("Status: ${status.name.toLowerCase().capitalize()} | Debug port: $debugPort")
+                                    add("Status: ${status.displayName} | Debug port: $debugPort")
                                 }
 
                                 if (available) {

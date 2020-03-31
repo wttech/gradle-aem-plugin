@@ -7,7 +7,6 @@ import com.cognifide.gradle.aem.common.file.ZipFile
 import com.cognifide.gradle.aem.common.instance.local.Script
 import com.cognifide.gradle.aem.common.instance.local.Status
 import com.cognifide.gradle.common.utils.Formats
-import com.cognifide.gradle.common.utils.Patterns
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.apache.commons.io.FileUtils
@@ -108,9 +107,8 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
 
     private fun readStandaloneVersion(): AemVersion = ZipFile(jar).listDir("static/app")
             .map { it.substringAfterLast("/") }
-            .firstOrNull { Patterns.wildcard(it, "cq-quickstart-*-standalone*.jar") }
-            ?.let { StringUtils.substringBetween(it, "cq-quickstart-", "-standalone") }
-            ?.let { AemVersion(it) }
+            .firstOrNull { it.startsWith("cq-quickstart-") && it.endsWith(".jar") }
+            ?.let { AemVersion(it.removePrefix("cq-quickstart-").substringBefore("-")) }
             ?: AemVersion.UNKNOWN
 
     private val startScript: Script get() = binScript("start")
