@@ -50,7 +50,7 @@ class AwaitDownAction(aem: AemExtension) : DefaultAction(aem) {
 
     private val runner = CheckRunner(aem).apply {
         delay.apply {
-            convention(TimeUnit.SECONDS.toMillis(1))
+            convention(TimeUnit.SECONDS.toMillis(2))
             aem.prop.long("instance.awaitDown.delay")?.let { set(it) }
         }
         verbose.apply {

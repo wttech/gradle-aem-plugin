@@ -90,7 +90,8 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
     val license get() = dir.resolve("license.properties")
 
     @get:JsonIgnore
-    val pid: Int get() = quickstartDir.resolve("conf/cq.pid").readText().trim().toInt()
+    val pid: Int get() = quickstartDir.resolve("conf/cq.pid")
+            .takeIf { it.exists() }?.readText()?.trim()?.toInt() ?: 0
 
     override val version: AemVersion
         get() {
@@ -114,27 +115,22 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
 
     private val startScript: Script get() = binScript("start")
 
-    internal fun executeStartScript() = try {
-        logger.info("Executing start script: $startScript")
-        startScript.executeAsync()
-    } catch (e: InstanceException) {
-        throw InstanceException("Instance start script failed! Check resources like disk free space, open HTTP ports etc.", e)
+    internal fun executeStartScript() {
+        try {
+            startScript.executeVerbosely()
+        } catch (e: InstanceException) {
+            throw InstanceException("Instance start script failed! Check resources like disk free space, open HTTP ports etc.", e)
+        }
     }
 
     private val stopScript: Script get() = binScript("stop")
 
     internal fun executeStopScript() {
+        val pidOrigin = pid
         try {
-            logger.info("Executing stop script: $stopScript")
-            stopScript.executeAsync()
+            stopScript.executeVerbosely()
         } catch (e: InstanceException) {
-            throw InstanceException("Instance stop script failed!", e)
-        }
-
-        try {
-            sync.osgiFramework.stop()
-        } catch (e: InstanceException) {
-            // ignore, fallback for sure
+            throw InstanceException("Instance stop script failed! Consider killing process manually using PID: $pidOrigin", e)
         }
     }
 
@@ -312,7 +308,7 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
         }
 
         return try {
-            val procResult = statusScript.executeSync()
+            val procResult = statusScript.executeQuietly { withTimeoutMillis(localManager.statusTimeout.get()) }
             Status.byExitCode(procResult.exitValue).also { status ->
                 logger.debug("Instance status of $this is: $status")
             }
