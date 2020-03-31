@@ -411,7 +411,7 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
             result
         }
         if (errors.isNotEmpty()) {
-            throw LocalInstanceException("Some instances require different Java version than current $versionCurrent:\n" +
+            throw LocalInstanceException("Some instances (${errors.size}) require different Java version than current $versionCurrent:\n" +
                     errors.joinToString("\n")
             )
         }
@@ -420,7 +420,7 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
     fun examineRunningOther(instances: Collection<LocalInstance> = aem.localInstances) {
         val running = instances.filter { it.runningOther }
         if (running.isNotEmpty()) {
-            throw LocalInstanceException("Other instances are running (${running.size}):\n" +
+            throw LocalInstanceException("Other instances (${running.size}) are running:\n" +
                     running.joinToString("\n") { "Instance '${it.name}' at URL '${it.httpUrl}' located at path '${it.runningDir}'" } + "\n\n" +
                     "Ensure having these instances down."
             )

@@ -202,7 +202,7 @@ open class InstanceManager(val aem: AemExtension) {
     fun examineAvailable(instances: Collection<Instance> = aem.instances) {
         val unavailable = instances.filter { !it.available }
         if (unavailable.isNotEmpty()) {
-            throw InstanceException("Instances are unavailable (${unavailable.size}):\n" +
+            throw InstanceException("Some instances (${unavailable.size}) are unavailable:\n" +
                     unavailable.joinToString("\n") { "Instance '${it.name}' at URL '${it.httpUrl}'" } + "\n\n" +
                     "Ensure having correct URLs defined, credentials correctly encoded and networking in correct state (internet accessible, VPN on/off)"
             )

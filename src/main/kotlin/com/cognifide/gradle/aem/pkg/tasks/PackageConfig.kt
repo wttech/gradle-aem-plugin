@@ -38,57 +38,61 @@ open class PackageConfig : AemDefaultTask() {
     val pid = aem.obj.string { convention(aem.prop.string("package.config.pid")) }
 
     @TaskAction
-    fun sync() = instance.get().sync {
-        common.progress {
-            step = "Preparing"
+    fun sync() {
+        instance.get().examine()
 
-            val configPidPattern = pid.orNull ?: aem.javaPackages.joinToString(",") { "$it.*" }
-            val configPids = osgi.determineConfigurationState().pids.map { it.id }.filter { Patterns.wildcard(it, configPidPattern) }
+        instance.get().sync {
+            common.progress {
+                step = "Preparing"
 
-            if (configPids.isEmpty()) {
-                logger.lifecycle("None of OSGi configuration XML files synchronized matching PID '$configPidPattern'!")
-            } else {
-                total = configPids.size.toLong()
+                val configPidPattern = pid.orNull ?: aem.javaPackages.joinToString(",") { "$it.*" }
+                val configPids = osgi.determineConfigurationState().pids.map { it.id }.filter { Patterns.wildcard(it, configPidPattern) }
 
-                step = "Processing"
+                if (configPids.isEmpty()) {
+                    logger.lifecycle("None of OSGi configuration XML files synchronized matching PID '$configPidPattern'!")
+                } else {
+                    total = configPids.size.toLong()
 
-                val rootNode = repository.node(rootPath.get())
-                val configNodes = mutableListOf<Node>()
+                    step = "Processing"
 
-                common.parallel.poolEach(configPids) { configPid ->
-                    increment("Configuration '${configPid.shortenClass(PID_LENGTH)}'") {
-                        val config = osgi.findConfiguration(configPid)
-                        if (config != null) {
-                            rootNode.import(config.properties + mapOf("jcr:primaryType" to "sling:OsgiConfig"), config.pid, true)
-                            configNodes.add(rootNode.child(config.pid))
+                    val rootNode = repository.node(rootPath.get())
+                    val configNodes = mutableListOf<Node>()
+
+                    common.parallel.poolEach(configPids) { configPid ->
+                        increment("Configuration '${configPid.shortenClass(PID_LENGTH)}'") {
+                            val config = osgi.findConfiguration(configPid)
+                            if (config != null) {
+                                rootNode.import(config.properties + mapOf("jcr:primaryType" to "sling:OsgiConfig"), config.pid, true)
+                                configNodes.add(rootNode.child(config.pid))
+                            }
                         }
                     }
+
+                    step = "Downloading"
+
+                    val configPkg = packageManager.download {
+                        filters(configNodes.map { it.path })
+                        archiveFileName.convention("config.zip")
+                    }
+
+                    step = "Extracting"
+
+                    val configZip = ZipFile(configPkg)
+                    val configFiles = mutableListOf<File>()
+                    configNodes.forEach { configNode ->
+                        val configFile = saveDir.get().asFile.resolve("${configNode.name.replace("~", "-")}.xml")
+                        configZip.unpackFile("${Package.JCR_ROOT}${configNode.path}.xml", configFile)
+                        configFiles.add(configFile)
+                    }
+
+                    step = "Cleaning"
+
+                    rootNode.delete()
+                    configPkg.delete()
+
+                    logger.lifecycle("Synchronized OSGi configuration XML file(s) (${configPids.size}) matching PID '$configPidPattern':\n" +
+                            configFiles.joinToString("\n"))
                 }
-
-                step = "Downloading"
-
-                val configPkg = packageManager.download {
-                    filters(configNodes.map { it.path })
-                    archiveFileName.convention("config.zip")
-                }
-
-                step = "Extracting"
-
-                val configZip = ZipFile(configPkg)
-                val configFiles = mutableListOf<File>()
-                configNodes.forEach { configNode ->
-                    val configFile = saveDir.get().asFile.resolve("${configNode.name.replace("~", "-")}.xml")
-                    configZip.unpackFile("${Package.JCR_ROOT}${configNode.path}.xml", configFile)
-                    configFiles.add(configFile)
-                }
-
-                step = "Cleaning"
-
-                rootNode.delete()
-                configPkg.delete()
-
-                logger.lifecycle("Synchronized OSGi configuration XML file(s) (${configPids.size}) matching PID '$configPidPattern':\n" +
-                        configFiles.joinToString("\n"))
             }
         }
     }
