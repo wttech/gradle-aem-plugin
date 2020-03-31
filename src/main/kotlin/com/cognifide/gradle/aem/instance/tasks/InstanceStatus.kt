@@ -111,7 +111,7 @@ open class InstanceStatus : InstanceTask() {
     }
 
     init {
-        description = "Prints status of all AEM instances."
+        description = "Prints status of AEM instances and installed packages."
     }
 
     companion object {
