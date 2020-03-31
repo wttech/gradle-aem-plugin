@@ -89,6 +89,9 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
     @get:JsonIgnore
     val license get() = dir.resolve("license.properties")
 
+    @get:JsonIgnore
+    val pid: Int get() = quickstartDir.resolve("conf/cq.pid").readText().trim().toInt()
+
     override val version: AemVersion
         get() {
             val remoteVersion = super.version
