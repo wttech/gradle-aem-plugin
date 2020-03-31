@@ -403,7 +403,8 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
                 if (aemVersion in AemVersion.unclosedRange(aemVersionRange, "-")) {
                     val versions = versionList.javaVersions("|")
                     if (versionCurrent !in versions) {
-                        result.add("Instance '${instance.name}' at URL '${instance.httpUrl}' is AEM $aemVersion and requires Java $versions!")
+                        result.add("Instance '${instance.name}' at URL '${instance.httpUrl}' is AEM $aemVersion" +
+                                " and requires Java ${versions.joinToString("|")}!")
                     }
                 }
             }
