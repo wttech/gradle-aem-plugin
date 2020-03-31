@@ -369,7 +369,7 @@ class LocalInstance private constructor(aem: AemExtension) : Instance(aem) {
                 this.password = instanceUrl.password
                 this.id = instanceUrl.id
                 this.debugPort = instanceUrl.debugPort
-                this.environment = aem.commonOptions.env.get()
+                this.env = aem.commonOptions.env.get()
 
                 configurer()
                 validate()

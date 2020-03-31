@@ -195,7 +195,7 @@ class AemExtension(val project: Project) : Serializable {
         val all = instanceManager.defined.get()
 
         // Specified by command line should not be filtered
-        val cmd = all.filter { it.environment == Instance.ENVIRONMENT_CMD }
+        val cmd = all.filter { it.env == Instance.ENV_CMD }
         if (cmd.isNotEmpty()) {
             return cmd
         }

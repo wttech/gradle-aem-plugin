@@ -138,25 +138,25 @@ aem {
         remote("http://192.168.10.1:4502") { // integration-author1
             user = "user1" 
             password = "password2"
-            environment = "integration"
+            env = "integration"
             id = "author1"
         } 
         remote("http://192.168.10.1:8080") { // integration-author2
             user = "user1" 
             password = "password2"
-            environment = "integration"
+            env = "integration"
             id = "author2"
         } 
         remote("http://192.168.10.2:4503") { // integration-publish1
             user = "user2"
             password = "password2"
-            environment = "integration"
+            env = "integration"
             id = "publish1"
         } 
         remote("http://192.168.10.2:8080") { // integration-publish2
             user = "user2"
             password = "password2"
-            environment = "integration"
+            env = "integration"
             id = "publish2"
         } 
     }
@@ -185,7 +185,7 @@ gradlew packageDeploy -Pinstance.name=*-author
 gradlew packageDeploy -Pinstance.name=local-author,integration-author
 ```
 
-Default value of that instance name filter is `${environment}-*`, so that typically `local-*`.
+Default value of that instance name filter is `${env}-*`, so that typically `local-*`.
 Environment value comes from system environment variable `ENV` or property `env`.
 
 To deploy only to author or publish instances:

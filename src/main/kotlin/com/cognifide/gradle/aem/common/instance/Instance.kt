@@ -48,10 +48,10 @@ open class Instance(@Transient @JsonIgnore protected val aem: AemExtension) : Se
     @get:JsonIgnore
     val hiddenPassword: String get() = "*".repeat(password.length)
 
-    lateinit var environment: String
+    lateinit var env: String
 
     @get:JsonIgnore
-    val cmd: Boolean get() = environment == ENVIRONMENT_CMD
+    val cmd: Boolean get() = env == ENV_CMD
 
     lateinit var id: String
 
@@ -74,9 +74,9 @@ open class Instance(@Transient @JsonIgnore protected val aem: AemExtension) : Se
     val publish: Boolean get() = type == IdType.PUBLISH
 
     var name: String
-        get() = "$environment-$id"
+        get() = "$env-$id"
         set(value) {
-            environment = value.substringBefore("-")
+            env = value.substringBefore("-")
             id = value.substringAfter("-")
         }
 
@@ -214,12 +214,12 @@ open class Instance(@Transient @JsonIgnore protected val aem: AemExtension) : Se
             throw AemException("Password cannot be blank in $this")
         }
 
-        if (environment.isBlank()) {
+        if (env.isBlank()) {
             throw AemException("Environment cannot be blank in $this")
         }
 
         if (id.isBlank()) {
-            throw AemException("Type name cannot be blank in $this")
+            throw AemException("ID cannot be blank in $this")
         }
     }
 
@@ -232,7 +232,7 @@ open class Instance(@Transient @JsonIgnore protected val aem: AemExtension) : Se
                 this.httpUrl = instanceUrl.httpUrl
                 this.user = instanceUrl.user
                 this.password = instanceUrl.password
-                this.environment = aem.commonOptions.env.get()
+                this.env = aem.commonOptions.env.get()
                 this.id = instanceUrl.id
 
                 configurer()
@@ -242,7 +242,7 @@ open class Instance(@Transient @JsonIgnore protected val aem: AemExtension) : Se
 
         const val FILTER_ANY = "*"
 
-        const val ENVIRONMENT_CMD = "cmd"
+        const val ENV_CMD = "cmd"
 
         const val URL_AUTHOR_DEFAULT = "http://localhost:4502"
 
@@ -293,11 +293,11 @@ open class Instance(@Transient @JsonIgnore protected val aem: AemExtension) : Se
 
                 val httpUrl = props["httpUrl"]!!
                 val type = PhysicalType.of(props["type"]) ?: PhysicalType.REMOTE
-                val (environment, id) = nameParts
+                val (env, id) = nameParts
 
                 when (type) {
                     PhysicalType.LOCAL -> LocalInstance.create(aem, httpUrl) {
-                        this.environment = environment
+                        this.env = env
                         this.id = id
 
                         props["password"]?.let { this.password = it }
@@ -310,7 +310,7 @@ open class Instance(@Transient @JsonIgnore protected val aem: AemExtension) : Se
                         this.properties.putAll(props.filterKeys { !LOCAL_PROPS.contains(it) })
                     }
                     PhysicalType.REMOTE -> create(aem, httpUrl) {
-                        this.environment = environment
+                        this.env = env
                         this.id = id
 
                         props["user"]?.let { this.user = it }

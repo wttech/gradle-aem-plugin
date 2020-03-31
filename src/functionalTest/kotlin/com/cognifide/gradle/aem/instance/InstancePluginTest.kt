@@ -37,7 +37,7 @@ class InstancePluginTest : AemBuildTest() {
                         provisioner {
                             step("enable-crxde") {
                                 description = "Enables CRX DE"
-                                condition { once() && instance.environment != "prod" }
+                                condition { once() && instance.env != "prod" }
                                 sync {
                                     osgiFramework.configure("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", mapOf(
                                             "alias" to "/crx/server"
@@ -59,7 +59,7 @@ class InstancePluginTest : AemBuildTest() {
                                 }
                             }
                             step("disable-unsecure-bundles") {
-                                condition { once() && instance.environment == "prod" }
+                                condition { once() && instance.env == "prod" }
                                 sync {
                                     osgiFramework.stopBundle("org.apache.sling.jcr.webdav")
                                     osgiFramework.stopBundle("com.adobe.granite.crxde-lite")

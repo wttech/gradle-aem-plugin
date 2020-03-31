@@ -125,7 +125,7 @@ class LocalInstancePluginTest : AemBuildTest() {
                         provisioner {
                             step("enable-crxde") {
                                 description = "Enables CRX DE"
-                                condition { once() && instance.environment != "prod" }
+                                condition { once() && instance.env != "prod" }
                                 action {
                                     sync {
                                         osgiFramework.configure("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", mapOf(

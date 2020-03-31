@@ -177,7 +177,7 @@ aem {
         provisioner {
             step("enable-crxde") {
                 description = "Enables CRX DE"
-                condition { once() && instance.environment != "prod" }
+                condition { once() && instance.env != "prod" }
                 sync {
                     osgi.configure("org.apache.sling.jcr.davex.impl.servlets.SlingDavExServlet", mapOf(
                             "alias" to "/crx/server"
@@ -199,7 +199,7 @@ aem {
                 }
             }
             step("disable-unsecure-bundles") {
-                condition { once() && instance.environment == "prod" }
+                condition { once() && instance.env == "prod" }
                 sync {
                     osgi.stopBundle("org.apache.sling.jcr.webdav")
                     osgi.stopBundle("com.adobe.granite.crxde-lite")
