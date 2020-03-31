@@ -3,6 +3,7 @@ package com.cognifide.gradle.aem.common.instance.service.workflow
 import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.common.instance.InstanceService
 import com.cognifide.gradle.aem.common.instance.InstanceSync
+import com.cognifide.gradle.common.CommonException
 import java.util.*
 
 class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
@@ -73,8 +74,13 @@ class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
 
                 while (stack.isNotEmpty()) {
                     val current = stack.peek()
-                    current.restore()
-                    stack.pop()
+                    try {
+                        current.restore()
+                        stack.pop()
+                    } catch (e: CommonException) {
+                        aem.logger.info("Retrying to restore workflow launcher '${current.launcher.path}' failed on $instance! Cause: '${e.message}'")
+                        aem.logger.debug("Error details", e)
+                    }
                 }
             }
         }

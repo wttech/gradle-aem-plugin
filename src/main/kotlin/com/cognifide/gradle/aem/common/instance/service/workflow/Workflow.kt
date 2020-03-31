@@ -66,6 +66,8 @@ class Workflow(val manager: WorkflowManager, val id: String) {
 
     fun disable() = toggle(false)
 
+    override fun toString(): String = "Workflow(id='$id', instance=$instance)"
+
     companion object {
 
         const val ENABLED_PROP = "enabled"
