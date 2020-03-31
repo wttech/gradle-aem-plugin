@@ -144,7 +144,7 @@ Intention of snippet below is to demonstrate:
 ```kotlin
 plugins {
     id("com.cognifide.environment") version "<version>" // useful to setup AEM dispatcher running on Docker
-    id("com.cognifide.aem.local.instance") version "<version>" // useful to setup local AEM instances running natively
+    id("com.cognifide.aem.instance.local") version "<version>" // useful to setup local AEM instances running natively, skip '.local' to work with remote only
     id("org.jetbrains.kotlin.jvm") // needed when AEM code written in Kotlin, yes it could be :)
     id("com.cognifide.aem.bundle") version "<version>" // needed to built OSGi bundle
     id("com.cognifide.aem.package") version "<version>" // needed to build CRX package from JCR content and built OSGi bundle
@@ -157,9 +157,9 @@ defaultTasks(":instanceSatisfy", ":instanceProvision", ":packageDeploy")
 aem {
     `package` { // built CRX package options
         contentDir.set(project.file("src/main/content"))
-        installPath.set(when {
-            project == project.rootProject -> "/apps/${project.rootProject.name}/install"
-            else -> "/apps/${project.rootProject.name}/${projectName}/install"
+        appPath.set(when {
+            project == project.rootProject -> "/apps/${project.rootProject.name}"
+            else -> "/apps/${project.rootProject.name}/${projectName}"
         })
         nodeTypesSync("PRESERVE_AUTO")
         validator {
