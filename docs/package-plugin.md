@@ -424,11 +424,11 @@ Add any of below command line parameters to customize CRX package deployment beh
 
 * `-Ppackage.deploy.awaited=false` - disable stability & health checks after deploying CRX package.
 * `-Ppackage.deploy.distributed=true` - use alternative form of deployment. At first, deploys CRX package to author instances, then triggers replication of CRX package so that it will be installed also on publish instances.
-* `-Ppackage.deploy.uploadForce=false` - disable force installation (by default even unchanged CRX package is forced to be reinstalled)
-* `-Ppackage.deploy.installRecursive=false` - disable automatic installation of subpackages located inside CRX package being deployed.  
-* `-Ppackage.deploy.uploadRetry=n` - customize number of retries being performed after failed CRX package upload.
-* `-Ppackage.deploy.installRetry=n` - customize number of retries being performed after failed CRX package install.
-* `-Ppackage.deploy.workflowToggle=[id1=true,id2=false,...]` - temporarily enable or disable AEM workflows during deployment e.g when CRX package contains generated DAM asset renditions so that regeneration could be avoided and deploy time reduced. For example: `-Ppackage.deploy.workflowToggle=[dam_asset=false]`. Workflow ID *dam_asset* is a shorthand alias for all workflows related with DAM asset processing.
+* `-Ppackage.manager.uploadForce=false` - disable force installation (by default even unchanged CRX package is forced to be reinstalled)
+* `-Ppackage.manager.installRecursive=false` - disable automatic installation of subpackages located inside CRX package being deployed.  
+* `-Ppackage.manager.uploadRetry=n` - customize number of retries being performed after failed CRX package upload.
+* `-Ppackage.manager.installRetry=n` - customize number of retries being performed after failed CRX package install.
+* `-Ppackage.manager.workflowToggle=[id1=true,id2=false,...]` - temporarily enable or disable AEM workflows during deployment e.g when CRX package contains generated DAM asset renditions so that regeneration could be avoided and deploy time reduced. For example: `-Ppackage.deploy.workflowToggle=[dam_asset=false]`. Workflow ID *dam_asset* is a shorthand alias for all workflows related with DAM asset processing.
 
 ## Task `packageUpload`
 
