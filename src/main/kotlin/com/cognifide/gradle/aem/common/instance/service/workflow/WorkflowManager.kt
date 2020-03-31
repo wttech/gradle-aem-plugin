@@ -1,6 +1,5 @@
 package com.cognifide.gradle.aem.common.instance.service.workflow
 
-import com.cognifide.gradle.aem.AemException
 import com.cognifide.gradle.aem.common.instance.InstanceService
 import com.cognifide.gradle.aem.common.instance.InstanceSync
 import com.cognifide.gradle.common.CommonException
@@ -10,12 +9,14 @@ class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
 
     val repository = sync.repository
 
+    var toggleRetry = common.retry { afterSquaredSecond(aem.prop.long("instance.workflowManager.toggleRetry") ?: 3) }
+
+    var restoreRetry = common.retry { afterSquaredSecond(aem.prop.long("instance.workflowManager.restoreRetry") ?: 6) }
+
     var restoreIntended = aem.obj.boolean {
         convention(false)
         aem.prop.boolean("instance.workflowManager.restoreIntended")?.let { set(it) }
     }
-
-    var restoreRetry = common.retry { afterSquaredSecond(aem.prop.long("instance.workflowManager.restoreRetry") ?: 6) }
 
     fun workflow(id: String) = Workflow(this, id)
 
@@ -60,28 +61,42 @@ class WorkflowManager(sync: InstanceSync) : InstanceService(sync) {
         val workflows = typeFlags.flatMap { (type, flag) ->
             workflows(type).filter { it.exists }.onEach { it.toggleIntended = flag }
         }
-
         try {
-            workflows.forEach { it.toggle() }
+            toggle(workflows)
             action()
         } finally {
-            val stack = Stack<Workflow>().apply { addAll(workflows) }
-            restoreRetry.withCountdown<Unit, AemException>("workflow restore on '${instance.name}'") { no ->
-                if (no > 1) {
-                    aem.logger.info("Retrying to restore workflow launchers (${stack.size}) on $instance:\n" +
-                            stack.joinToString("\n") { it.launcher.path })
-                }
+            restore(workflows)
+        }
+    }
 
-                while (stack.isNotEmpty()) {
-                    val current = stack.peek()
-                    try {
-                        current.restore()
-                        stack.pop()
-                    } catch (e: CommonException) {
-                        aem.logger.info("Retrying to restore workflow launcher '${current.launcher.path}' failed on $instance! Cause: '${e.message}'")
-                        aem.logger.debug("Error details", e)
-                    }
-                }
+    private fun toggle(workflows: List<Workflow>) {
+        val stack = Stack<Workflow>().apply { addAll(workflows) }
+        toggleRetry.withCountdown<Unit, CommonException>("workflow toggle on '${instance.name}'") { no ->
+            if (no > 1) {
+                aem.logger.info("Retrying to toggle workflow launchers (${stack.size}) on $instance:\n" +
+                        stack.joinToString("\n") { it.launcher.path })
+            }
+
+            while (stack.isNotEmpty()) {
+                val current = stack.peek()
+                current.toggle()
+                stack.pop()
+            }
+        }
+    }
+
+    private fun restore(workflows: List<Workflow>) {
+        val stack = Stack<Workflow>().apply { addAll(workflows) }
+        restoreRetry.withCountdown<Unit, CommonException>("workflow restore on '${instance.name}'") { no ->
+            if (no > 1) {
+                aem.logger.info("Retrying to restore workflow launchers (${stack.size}) on $instance:\n" +
+                        stack.joinToString("\n") { it.launcher.path })
+            }
+
+            while (stack.isNotEmpty()) {
+                val current = stack.peek()
+                current.restore()
+                stack.pop()
             }
         }
     }
