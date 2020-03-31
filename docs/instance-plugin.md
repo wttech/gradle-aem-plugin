@@ -159,7 +159,7 @@ gradlew instanceSatisfy -Pinstance.satisfy.urls=[https://github.com/OlsonDigital
 As of task inherits from task `packageDeploy` it is also possible to temporary enable or disable workflows during CRX package deployment:
 
 ```bash
-gradlew :instanceSatisfy -Ppackage.deploy.workflowToggle=[dam_asset=false]
+gradlew :instanceSatisfy -Ppackage.manager.workflowToggle=[dam_asset=false]
 ```
 
 ## Task `instanceProvision`

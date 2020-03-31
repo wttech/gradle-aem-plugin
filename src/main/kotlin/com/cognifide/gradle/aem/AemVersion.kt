@@ -9,7 +9,7 @@ class AemVersion(value: String) : Comparable<AemVersion> {
 
     val version get() = base.version
 
-    fun atLeast(other: AemVersion) = other >= this
+    fun atLeast(other: AemVersion) = this >= other
 
     fun atLeast(other: String) = atLeast(AemVersion(other))
 
