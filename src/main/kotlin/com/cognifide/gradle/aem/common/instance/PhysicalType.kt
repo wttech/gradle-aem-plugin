@@ -8,6 +8,11 @@ enum class PhysicalType {
 
     companion object {
 
+        fun byInstance(instance: Instance) = when (instance) {
+            is LocalInstance -> LOCAL
+            else -> REMOTE
+        }
+
         fun of(type: String?): PhysicalType? {
             if (type.isNullOrBlank()) {
                 return null

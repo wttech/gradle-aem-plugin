@@ -16,7 +16,7 @@ import java.io.File
 import java.io.Serializable
 import java.util.concurrent.TimeUnit
 
-class LocalInstanceManager(private val aem: AemExtension) : Serializable {
+class LocalInstanceManager(internal val aem: AemExtension) : Serializable {
 
     private val project = aem.project
 
@@ -85,9 +85,9 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
     /**
      * Maximum time to wait for status script response.
      */
-    val scriptTimeout = aem.obj.long {
+    val statusTimeout = aem.obj.long {
         convention(TimeUnit.SECONDS.toMillis(5))
-        aem.prop.long("localInstance.scriptTimeout")?.let { set(it) }
+        aem.prop.long("localInstance.statusTimeout")?.let { set(it) }
     }
 
     /**
@@ -364,13 +364,13 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
     @Suppress("TooGenericExceptionCaught", "MagicNumber")
     fun examineJavaAvailable() {
         try {
-            logger.info("Examining Java properly installed")
+            logger.debug("Examining Java properly installed")
             val result = ProcBuilder("java", "-version")
                     .withWorkingDirectory(rootDir.get().asFile)
                     .withTimeoutMillis(5000)
                     .withExpectedExitStatuses(0)
                     .run()
-            logger.info("Installed Java:\n${result.outputString.ifBlank { result.errorString }}")
+            logger.debug("Installed Java:\n${result.outputString.ifBlank { result.errorString }}")
         } catch (e: Exception) {
             throw LocalInstanceException("Local instances support requires Java properly installed! Cause: '${e.message}'\n" +
                     "Ensure having directory with 'java' executable listed in 'PATH' environment variable.", e)
@@ -393,8 +393,11 @@ class LocalInstanceManager(private val aem: AemExtension) : Serializable {
 
     fun examineJavaCompatibility(instances: Collection<LocalInstance> = aem.localInstances) {
         if (javaCompatibility.get().isEmpty()) {
+            logger.debug("Examining Java compatibility skipped as configuration not provided!")
             return
         }
+
+        logger.debug("Examining Java compatibility for configuration: ${javaCompatibility.get()}")
 
         val versionCurrent = JavaVersion.current()
         val errors = instances.fold(mutableListOf<String>()) { result, instance ->

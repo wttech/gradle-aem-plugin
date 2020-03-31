@@ -33,19 +33,16 @@ open class InstanceStatus : InstanceTask() {
                     addRule()
                 } else {
                     instances.get().onEachApply {
-                        val local = this is LocalInstance
-
                         increment("Checking status of instance '$name'") {
                             val instanceDetails = mutableListOf<String>().apply {
-                                add("Name: $name (${if (local) "local" else "remote"})")
-                                add("URL: $httpUrl (${if (available) "available" else "not available"})")
+                                add("URL: $httpUrl | Available: $available")
+                                add("Name: $name | Version: $version")
 
                                 if (this@onEachApply is LocalInstance) {
-                                    add("Debug port: $debugPort")
+                                    add("Status: ${status.displayName} | Debug port: $debugPort")
                                 }
 
                                 if (available) {
-                                    add("Version: $version")
                                     add("State check: $state")
                                     add("Run path: $runningPath")
                                     add("Run modes: ${runningModes.joinToString(",")}")

@@ -57,6 +57,16 @@ open class Instance(@Transient @JsonIgnore protected val aem: AemExtension) : Se
 
     val type: IdType get() = IdType.byId(id)
 
+    val physicalType: PhysicalType get() = PhysicalType.byInstance(this)
+
+    @get:JsonIgnore
+    val local: Boolean get() = physicalType == PhysicalType.LOCAL
+
+    fun <T> local(action: LocalInstance.() -> T) = when (this) {
+        is LocalInstance -> this.run(action)
+        else -> throw InstanceException("Instance '$name' is not defined as local!")
+    }
+
     @get:JsonIgnore
     val author: Boolean get() = type == IdType.AUTHOR
 
@@ -165,14 +175,6 @@ open class Instance(@Transient @JsonIgnore protected val aem: AemExtension) : Se
     fun examine() = manager.examine(this)
 
     fun <T> sync(action: InstanceSync.() -> T): T = sync.run(action)
-
-    val local: LocalInstance
-        get() {
-            if (this !is LocalInstance) {
-                throw InstanceException("Instance '$name' is not defined as local!")
-            }
-            return this
-        }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

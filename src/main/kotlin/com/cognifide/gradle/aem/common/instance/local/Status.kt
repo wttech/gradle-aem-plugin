@@ -9,6 +9,8 @@ enum class Status(val exitStatus: Int) {
     NOT_RUNNING(3),
     UNKNOWN(4);
 
+    val displayName: String get() = name.toLowerCase().replace("_", " ").capitalize()
+
     companion object {
 
         fun byExitCode(exitStatus: Int) = values().find { it.exitStatus == exitStatus }
