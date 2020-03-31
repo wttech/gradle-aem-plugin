@@ -5,7 +5,6 @@ import com.cognifide.gradle.aem.aem
 import com.cognifide.gradle.aem.bundle.BundlePlugin
 import com.cognifide.gradle.aem.bundle.tasks.BundleCompose
 import com.cognifide.gradle.aem.common.instance.service.pkg.Package
-import com.cognifide.gradle.aem.common.pkg.PackageException
 import com.cognifide.gradle.aem.common.pkg.PackageFileFilter
 import com.cognifide.gradle.aem.common.pkg.vault.FilterFile
 import com.cognifide.gradle.aem.common.pkg.vault.FilterType
@@ -165,7 +164,7 @@ open class PackageCompose : ZipTask(), AemTask {
         }
 
         if (archive.vaultFilter.get()) {
-            vaultDefinition.filter(aem.obj.provider { "${dirPath.get()}/${archive.fileName.get()}" }) { type = FilterType.FILE }
+            vaultDefinition.filter(dirPath.map { "$it/${archive.fileName.get()}" }) { type = FilterType.FILE }
         }
 
         into("${Package.JCR_ROOT}/${dirPath.get()}") { spec ->
@@ -222,6 +221,7 @@ open class PackageCompose : ZipTask(), AemTask {
     fun mergePackage(taskPath: String) = mergePackage(common.tasks.pathed(taskPath))
 
     fun mergePackage(task: TaskProvider<PackageCompose>) {
+        dependsOn(task)
         definitions.add { task.get().merging(this) }
     }
 
@@ -241,16 +241,12 @@ open class PackageCompose : ZipTask(), AemTask {
     }
 
     fun nestPackageBuilt(task: TaskProvider<PackageCompose>, options: PackageNestedBuilt.() -> Unit = {}) {
-        definitions.add {
-            dependsOn(task)
-            packagesNested.add(PackageNestedBuilt(this, task).apply(options))
-        }
+        dependsOn(task)
+        definitions.add { packagesNested.add(PackageNestedBuilt(this, task).apply(options)) }
     }
 
     fun installBundle(dependencyNotation: Any, options: BundleInstalledResolved.() -> Unit = {}) {
-        definitions.add {
-            bundlesInstalled.add(BundleInstalledResolved(this, dependencyNotation).apply(options))
-        }
+        definitions.add { bundlesInstalled.add(BundleInstalledResolved(this, dependencyNotation).apply(options)) }
     }
 
     fun installBundleProject(projectPath: String, options: BundleInstalledBuilt.() -> Unit = {}) {
@@ -265,10 +261,8 @@ open class PackageCompose : ZipTask(), AemTask {
     }
 
     fun installBundleBuilt(task: TaskProvider<BundleCompose>, options: BundleInstalledBuilt.() -> Unit = {}) {
-        definitions.add {
-            dependsOn(task)
-            bundlesInstalled.add(BundleInstalledBuilt(this, task).apply(options))
-        }
+        dependsOn(task)
+        definitions.add { bundlesInstalled.add(BundleInstalledBuilt(this, task).apply(options)) }
     }
 
     private var definition: () -> Unit = {
@@ -289,12 +283,6 @@ open class PackageCompose : ZipTask(), AemTask {
     fun noDefaults() = definition {}
 
     private var merging: (PackageCompose) -> Unit = { other ->
-        if (this == other) {
-            throw PackageException("Package cannot be composed due to configuration error (circular reference)!")
-        }
-
-        other.dependsOn(dependsOn)
-
         other.withVaultFilters(vaultFilterFile)
         other.withVaultNodeTypes(vaultNodeTypesFile)
         other.withVaultDefinition(vaultDefinition)
